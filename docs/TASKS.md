@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS B2 — The healers and the revive
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b2`, `/home/user/spells-b2`.
+- **Authorisation:** owner approved design v2 and its revive rules; batch 2 as briefed.
+- **Scope:** the Cleric, High Priestess, Wanderer and Druid kits (Spirit Guardians, Healing Mist, Mass Resurrection with its Wall of Light, Wall of Thorns, renames and tiers); the revive face on skill 2; placeholder looks.
+- **Status:** ready for review. Parity: none beyond 6 at levels 1, 10 and 30; the healers within 4.5. Full `npm test` passes; screenshots `docs/samples/spells-b2-*`. [Notes](notes/spells-b2.md). Next: batch 3, tanks and supports.
+
 ### STAND-RETREAT — The Last Stand falls back room by room
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/stand-retreat`, `/home/user/stand-retreat`.

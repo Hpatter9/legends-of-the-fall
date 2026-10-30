@@ -12,10 +12,10 @@ carry on. The words on screen are the new names.
 
 | Hero | Skill 1 | Skill 2 (and its revive face) | Ultimate |
 | --- | --- | --- | --- |
-| Cleric | **Guiding Bolt** (key Smite): renamed | **Prayer of Healing** (Benediction): renamed. Revive: **Revivify** | **Spirit Guardians** (key Divine Intervention, so the painted look carries on): an aura round her for 8 s, reach 2 (`toolkit/auras.ts`). Foes inside take 0.35 of her attack, times the ultimate's strength, each second, and are slowed. Friends inside heal 2% of their health, times the strength, each second. The friends inside as it rises are cleansed. It replaces Divine Intervention's heal of the whole team. |
-| High Priestess | **Cure Wounds** (Holy Light): renamed | **Death Ward** (Guardian Angel): renamed; it now costs 50 mana (was 60). Revive: **Resurrection** | **Mass Resurrection** (Resurrection): up to **three** fallen (was two) rise at **40%** (was 50%), each once a wave. Every ally is healed and cleansed, and a **Wall of Light** (3 tiles, 5 s, the choke rule's line) rises between the foes and her friends. |
+| Cleric | **Guiding Bolt** (key Smite): renamed | **Prayer of Healing** (Benediction): renamed. Revive: **Revivify** | **Spirit Guardians** (key Divine Intervention, so the painted look carries on): an aura round her for **10 s**, reach **3** (`toolkit/auras.ts`). Foes inside take 0.35 of her attack, times the ultimate's strength, each second, and are slowed. Friends inside heal **8%** of their health, times the strength, each second. The friends inside as it rises are cleansed. It replaces Divine Intervention's heal of the whole team. The design said 8 s, reach 2 and 2%; it was tuned up for the Last Stand (below). |
+| High Priestess | **Cure Wounds** (Holy Light): renamed | **Death Ward** (Guardian Angel): renamed; it now costs 55 mana (was 60). Revive: **Resurrection** | **Mass Resurrection** (Resurrection): up to **three** fallen (was two) rise at **40%** (was 50%), each once a wave. Every ally is healed and cleansed, and a **Wall of Light** (3 tiles, 5 s, the choke rule's line) rises between the foes and her friends. |
 | Wanderer | **Healing Draught** (Flask Toss): renamed | **Healing Mist** (key Sanctuary): **reworked** into an aura round him for 5 s, reach 2. The friends in it are guarded (half damage) for 2 s at once, and heal 0.7 of his attack (as cast) each second. Sanctuary used to heal the whole field at once. Revive: **Elixir of Life** | **Panacea** (Dawn Light): renamed |
-| Druid | **Conjure Treant** (Call Treant): renamed | **Wild Shape** (Treeform): renamed; it now costs 50 mana (was 60). Revive: **Reincarnate** | **Wall of Thorns** (Heart of the Grove): two treants and the heal as before, and a hedge of thorns 4 tiles long across the foes' way for 8 s. |
+| Druid | **Conjure Treant** (Call Treant): renamed | **Wild Shape** (Treeform): renamed; it now costs 55 mana (was 60). Revive: **Reincarnate** | **Wall of Thorns** (Heart of the Grove): two treants and the heal as before, and a hedge of thorns 4 tiles long across the foes' way for 8 s. |
 
 **Tier skills, renamed:**
 - On Prayer of Healing: Greater Prayer, Prayer of Miracles, Saint's Prayer.
@@ -34,7 +34,8 @@ queued. When `reviveReady` holds, the healer casts the revive instead of skill 2
 - it is not the Last Stand;
 - the wave has fewer than two skill revives (`b.revives`);
 - the healer's own 30 s (`ks.atRev`) have come round; it is ready at the start of a fight;
-- the healer can pay skill 2's cost and 20 more (`reviveCost`);
+- the healer can pay skill 2's cost and 20 more (`reviveCost`): 80 mana for the Cleric and the Wanderer, 75 for the High Priestess
+  and the Druid;
 - a placed hero of its side lies fallen and has not been raised this wave (`fallenFor`).
 
 `raiseFallen` raises the fallen hero nearest the healer (ties: the one that fell first, then the lower id):
@@ -57,28 +58,31 @@ raised. Things that stop a death (feathers, talents, Deathless, Death Ward) and 
   Light and the hedge of thorns draw as the toolkit's walls.
 - **The revive faces' looks** borrow the Resurrection painting, tinted (`kitLooks.ts`; Reincarnate borrows Heart of the Grove's).
 
-## Balance (`node tools/kits/tune.mjs`, 12,000 fights, as the parity tests play them)
+## Balance
+
+**Parity** (`node tools/kits/tune.mjs`, 12,000 fights, as the parity tests play them; "main" was measured in a clean checkout of main):
 
 | | The four healers | Every hero | Main, the same measure |
 | --- | --- | --- | --- |
-| Level 1 (stage 5) | unchanged (the fights hash as on main) | within 6 | the same |
-| Level 10 (stage 24) | Cleric −1.5, Priestess +1.8, Wanderer +1.4, Druid +5.8 | Lightning Mage +6.1; every other within 6 | Druid +6.1, Priestess +5.4, Lightning Mage +5.7 |
-| Level 30 (stage 78) | Cleric −1.2, Priestess −1.3, Wanderer −1.9, Druid +1.6 | all within 4 (spread 4.5) | Cleric −3.4 (spread 6.9) |
+| Level 1 (stage 5) | unchanged (these fights hash as on main) | within 6 (knight +3.9, Samurai Commander +4.9, Illusionist −4.7) | the same |
+| Level 10 (stage 24) | Cleric −1.6, Priestess +3.7, Wanderer +1.8, Druid +4.5 | **none beyond 6** (Lightning Mage +5.7, Minotaur −5.2) | Druid +6.1 (beyond 6), Priestess +5.4 |
+| Level 30 (stage 78) | Cleric +4.3, Priestess −0.4, Wanderer −1.7, Druid +1.6 | none beyond 6; only the Cleric beyond 4; spread 6.6 | Cleric −3.4; spread 6.9 |
 
-Notes on the table:
-- **The Cleric at level 30:** with Divine Intervention's old numbers, Spirit Guardians left her at −15. Her ultimate's `tuned` went
-  from rate 0.58, power 1.12 to rate 1.1, power 2.2.
-- **Level 10:** the Druid and the High Priestess were already the strongest healers on main. Their skill 2 costs went from 60 to 50.
-  At 36,000 fights the Druid reads +4.6.
-- **The Lightning Mage** (+5.7 on main, +6.1 here) is outside this batch's heroes. Its number moved only because the average moved
-  (33.7% → 33.2%). Level 10 has no parity test.
+What was tuned:
+- **Spirit Guardians**: 10 s, reach 3, 8% a second; the ultimate's `tuned` went from rate 0.58, power 1.12 to rate 1.0, power 1.0.
+  With the design's first numbers and Divine Intervention's old tune, the Cleric was −15 at level 30. Tuned for parity alone, at
+  power 2.2, she was within 2, but the Last Stand fell about two waves sooner.
+- **Wild Shape and Death Ward**: they cost 55 (was 60), the bottom of the mana skill-2 band. That brought the Druid from +6.1 and
+  the Priestess from +5.4 at level 10 into the band.
 
-**The modes** (each tool is the game's own, seeded; "main" was measured in a clean checkout of main):
-- **The daily** plays the starting five at level 1, with no healer, so its fights hash as on main and its clear rate is unchanged.
-- **The Calamity** (150 greedy runs): mean maps cleared 1.43 (main 1.44); map shares 99/43/1/0/0/0, the same.
-- **The Last Stand:** there are no revives there, and its fights hash as on main. The table below runs the party of eight, with the
-  Cleric, at several levels.
-- **The armies on Normal** (`tools/curve/run.mjs`, the recruits' party with the Cleric, 24 saves): the table below, against main.
+**The modes:**
+
+| Mode | This batch | Main | Note |
+| --- | --- | --- | --- |
+| Last Stand (party of eight, with the Cleric; 30 greedy runs; mean, median) | L10 9.2 (9), L20 10.5 (10), L30 15.0 (15), L60 18.4 (18), L100 24.7 (24) | 9.2 (9), 10.5 (10), 15.9 (16), 19.2 (20), 25.8 (25) | Targets 9, 10, 14, 20, 25. No revives there: the gap is Divine Intervention's team heal against Spirit Guardians' ring, kept within a wave. |
+| Calamity (150 greedy runs; mean maps cleared; map shares) | 1.43; 99/43/1/0/0/0 | 1.44; 99/43/1/0/0/0 | A healer joins a Calamity run only now and then. |
+| Daily (60 dates; cleared with hearts / without) | 80% / 62% | the same | The daily plays the starting five at level 1, with no healer, so its fights hash as on main. Its rate sits outside 66–75% on main as well; this batch does not touch it. |
+| Armies on Normal (`tools/curve/run.mjs`, the recruits with the Cleric, 24 saves; mean tries) | beasts 2.3, wildwood 3.3, labyrinth 22.3, ogres 26.0 (the cap) | 2.3, 3.3, 25.9, 26.0 | From the Labyrinth on, the late armies (LATE-RETUNE) are tuned for players who use hearts, so the curve tool, which uses none, hits its cap of 25 tries on main too. The Infernal, Yokai and Golems were 26.0 (the cap) on both. |
 
 ## The proof that nothing else changed
 
