@@ -1516,13 +1516,6 @@ class Game {
         this.b.autoUlt = this.ultAutoOn();
       },
       autoOn: () => this.ultAutoOn(),
-      anchor: (id) => {
-        const box = this.spriteBox(id);
-        if (!box) return null;
-        const r = this.app.canvas.getBoundingClientRect();
-        const k = r.width / this.app.screen.width;
-        return { x: r.left + (box.x + box.w / 2) * k, y: r.top + (box.y + box.h / 2) * k };
-      },
       dockTop: () => $('panel').getBoundingClientRect().top,
       ultFull: () => fullScene(settings().ultFull, this.ultAutoOn()),
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),

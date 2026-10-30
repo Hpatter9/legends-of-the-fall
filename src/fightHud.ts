@@ -4,7 +4,7 @@
 // pearlescent glow filling along the row; full, the row brightens, a sheen crosses it and the portrait says TAP, and a tap on the row fires it
 // (`orderUltimate`, the sim's own command). A tap on a chip opens that skill's sheet (and its Skill 1, Skill 2 and Ultimate tabs; a long press on
 // a row opens the ultimate's), and the page holds the fight while it is open (`holding`). A cast lights the row in the skill's element and a
-// cut-in banner (portrait, name, skill) shows by the caster. A party over five (the Last Stand's eight, a Calamity's ten) takes two columns of
+// cut-in banner (portrait, name, skill) slides in at the screen's left edge above the rows. A party over five (the Last Stand's eight, a Calamity's ten) takes two columns of
 // compact rows. The Auto switch (`autoEl`) is placed by the page, by the king's spells.
 //
 // It only reads the battle and calls the sim's command; every name, cost and gap comes from the kit data (`fightHudRules.ts`). Nothing blinks:
@@ -33,9 +33,7 @@ export interface FightHudOpts {
   onRefused?: (u: Unit) => void;
   /** Any tap on a hero's row (before its ultimate is ordered or refused): the Last Stand pans its camera to the hero. */
   onTap?: (u: Unit) => void;
-  /** Where a fighter stands on the page (the middle of its sprite), for the cast banner; null when it cannot be told. */
-  anchor?: (id: number) => { x: number; y: number } | null;
-  /** The top of the page's bottom panel: the skill's sheet sits just above it. */
+  /** The top of the page's bottom panel: the skill's sheet and the cast banners sit just above it. */
   dockTop?: () => number;
   /** Whether ultimates play their full moment (`ultMoment.ts`, the setting): then the row lights but no banner shows, the moment has it all. */
   ultFull?: () => boolean;
@@ -394,14 +392,23 @@ export class FightHud {
       this.later(1100, () => chip.classList.remove('fired'));
     }
     if (which === 'ult' && this.opts.ultFull?.()) return;
-    const at = this.opts.anchor?.(u.id);
-    if (at) this.banner(u, s, at, colour, which === 'ult');
+    this.banner(u, s, colour, which === 'ult');
   }
 
-  /** A cut-in banner by the caster: its portrait and the skill's name on a ribbon of the element's colour. */
-  private banner(u: Unit, s: Skill, at: { x: number; y: number }, colour: string, ult: boolean): void {
-    // (one banner a hero at a time: a new cast takes the old one's place)
-    this.fxLayer.querySelector(`[data-unit="${u.id}"]`)?.remove();
+  /** A slim cut-in banner at the screen's left edge, just above the hero rows (the owner: the banners by the caster hid too much of the
+   *  fight): the portrait, the hero's name and the skill's name on a ribbon of the element's colour. Banners stack upwards, three at most. */
+  private banner(u: Unit, s: Skill, colour: string, ult: boolean): void {
+    let stack = this.fxLayer.querySelector<HTMLElement>('.fhCutStack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.className = 'fhCutStack';
+      this.fxLayer.append(stack);
+    }
+    const dock = this.opts.dockTop?.();
+    stack.style.bottom = `${dock !== undefined ? Math.max(8, Math.round(innerHeight - dock) + 6) : 8}px`;
+    // (one banner a hero at a time: a new cast takes the old one's place; the oldest goes when a fourth comes)
+    stack.querySelector(`[data-unit="${u.id}"]`)?.remove();
+    while (stack.children.length >= 3) stack.firstElementChild!.remove();
     const el = document.createElement('div');
     el.className = `fhCutIn${ult ? ' ult' : ''}`;
     el.dataset.unit = String(u.id);
@@ -414,20 +421,13 @@ export class FightHud {
       img.alt = '';
       img.src = art;
       el.append(img);
-    } else el.append(portrait(battleSheet(u.def, this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0, u.grade ?? 1), 40, u.grade ?? 1));
-    const txt = document.createElement('span');
+    } else el.append(portrait(battleSheet(u.def, this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0, u.grade ?? 1), 22, u.grade ?? 1));
     const small = document.createElement('small');
     small.textContent = heroName(u.def);
     const name = document.createElement('b');
     name.textContent = s.name;
-    txt.append(small, name);
-    el.append(txt);
-    // (above the hero, kept on the screen)
-    const w = Math.min(ult ? 250 : 210, innerWidth - 16);
-    el.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, at.x - w / 2))}px`;
-    el.style.top = `${Math.max(96, at.y - 92)}px`;
-    el.style.width = `${w}px`;
-    this.fxLayer.append(el);
+    el.append(small, name);
+    stack.append(el);
     this.later(this.reduced ? 1200 : 1400, () => el.remove());
   }
 }

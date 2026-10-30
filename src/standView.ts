@@ -247,12 +247,6 @@ export class StandView {
       autoOn: () => !!this.host.meta().ultAuto,
       // (a tap on a row also takes the camera to that hero)
       onTap: (u) => this.panTo(u.id),
-      anchor: (id) => {
-        const sp = this.sprites.get(id);
-        if (!sp) return null;
-        const k = this.world.scale.x;
-        return { x: this.world.x + sp.x * k, y: this.world.y + (sp.y - sp.tall / 2) * k };
-      },
       dockTop: () => this.parts.bottom.getBoundingClientRect().top,
       ultFull: () => fullScene(settings().ultFull, !!this.host.meta().ultAuto),
       ultArt: (u) => heroArtUrl(u.def, u.awaken ?? 0),

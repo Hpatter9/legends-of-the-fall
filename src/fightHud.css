@@ -147,16 +147,18 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 
 /* ---- the cut-in banner by the caster (over the board) ---- */
 .fhFx { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
-.fhCutIn { position: absolute; display: flex; align-items: center; gap: 6px; box-sizing: border-box; padding: 3px 8px 3px 4px; color: #fff; text-shadow: var(--outline);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--cast) 70%, #2a0f20), color-mix(in srgb, var(--cast) 45%, #10060c) 75%, transparent);
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cast) 70%, transparent));
-  border-top: 2px solid color-mix(in srgb, var(--cast) 60%, #fff); border-bottom: 2px solid color-mix(in srgb, var(--cast) 60%, #000);
-  clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%); animation: fhCutIn 1.4s ease-out 1 forwards; }
-.fhCutIn canvas { width: 36px; height: 36px; image-rendering: pixelated; flex: none; }
-.fhCutIn span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.fhCutIn small { font: 400 12px/12px 'Pixelify Sans', var(--body); opacity: 0.9; }
-.fhCutIn b { font: 400 16px/16px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fhCutIn.ult b { font-size: 18px; line-height: 18px; color: #fff4c0; }
+/* (the cast banners: slim, stacked at the screen's left edge just above the hero rows, out of the fight's way) */
+.fhCutStack { position: fixed; left: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.fhCutIn { display: flex; align-items: center; gap: 5px; box-sizing: border-box; height: 26px; max-width: min(200px, 56vw); padding: 2px 14px 2px 3px;
+  color: #fff; text-shadow: var(--outline);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--cast) 70%, #2a0f20), color-mix(in srgb, var(--cast) 45%, #10060c) 80%, transparent);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--cast) 60%, transparent));
+  border-top: 1px solid color-mix(in srgb, var(--cast) 60%, #fff); border-bottom: 1px solid color-mix(in srgb, var(--cast) 60%, #000);
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%); animation: fhCutIn 1.4s ease-out 1 forwards; }
+.fhCutIn canvas { width: 22px; height: 22px; image-rendering: pixelated; flex: none; }
+.fhCutIn small { font: 400 11px/11px 'Pixelify Sans', var(--body); opacity: 0.85; flex: none; }
+.fhCutIn b { font: 400 13px/13px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.fhCutIn.ult b { color: #fff4c0; }
 
 /* ---- the skill's sheet (the fight is held while it is open) ---- */
 .fhSheet { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; padding: 0 10px calc(var(--fs-dock, 8px) + 6px); background: rgb(var(--black-rgb) / 0.35); }
@@ -264,7 +266,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 @keyframes umRush { 0% { background-position-x: 0; } 100% { background-position-x: 300px; } }
 @keyframes umFlash { 0% { opacity: 0; } 18% { opacity: 0.68; } 100% { opacity: 0; } }
 /* (the short version: the hero rows' banner shows the hero's face) */
-.fhCutIn img.face { width: 40px; height: 40px; object-fit: cover; object-position: 50% 12%; flex: none; border: 1px solid color-mix(in srgb, var(--cast) 60%, #fff); }
+.fhCutIn img.face { width: 22px; height: 22px; object-fit: cover; object-position: 50% 12%; flex: none; border: 1px solid color-mix(in srgb, var(--cast) 60%, #fff); }
 @media (prefers-reduced-motion: reduce) {
   .umBand, .umEdges, .umArt, .umWords b, .umWords small { animation: umFade 0.3s ease-out both; }
   .umSlash.out .umBand, .umSlash.out .umEdges { animation: umFadeOut 0.3s ease-in both; }
