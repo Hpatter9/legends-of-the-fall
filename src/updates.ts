@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.266.0',
+    date: '2026-10-30',
+    title: 'Battle music stays in battle',
+    notes: ['Fight music no longer follows you to the camp: leaving mid-fight, or the victory music after a won run, now gives way to the camp\'s own music.'],
+  },
+  {
+    version: '0.265.0',
+    date: '2026-10-30',
+    title: 'Kwame the Knight redrawn',
+    notes: ['Kwame\'s everyday sprite now matches his awakened form: the same face and curly hair, in plain steel and blue, so awakening reads as an upgrade.'],
+  },
+  {
     version: '0.264.0',
     date: '2026-10-30',
     title: '130 new quests',
