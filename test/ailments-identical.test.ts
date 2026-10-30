@@ -5,6 +5,8 @@
 // owner's ask, `docs/notes/tier-promises.md`. Only those three moved; the proof stands for every other mode.)
 // (RPG-SPELLS batch 2, docs/notes/spells-b2.md, re-recorded field30, bosses, armyFoes, spells, lands, army and stand: each has the Cleric, High Priestess,
 // Wanderer or Druid at level 10 or more, whose kits the owner approved reworking (the revive, Spirit Guardians, Healing Mist...). Only those moved.)
+// (RPG-SPELLS batch 3, docs/notes/spells-b3.md, re-recorded field1, field30, bosses, armyFoes, spells, lands, army and stand: each has one of the
+// tanks and supports the owner approved reworking (Shield Rush, Divine Smite, Seismic Slam, Tunnel Strike, Bane...). Only those moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

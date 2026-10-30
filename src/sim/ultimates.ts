@@ -48,6 +48,7 @@ import { charmFor, cleanse, harmed, setDot, stunFor } from './ailments';
 import { fallenFor, raiseFallen } from './kits/revive';
 import { startPool } from './heroKits';
 import { chokeLine, raiseAura, raiseWall } from './toolkit';
+import { chargeNearest, fissureSpires, knightsAura, thunderclap } from './kits/tanks';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
 const dur = (me: Unit, ms: number): number => durOf(me, Math.round(ms * Math.sqrt(castPower())));
@@ -541,17 +542,26 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
   const inSight = (b: Battle, me: Unit, reach = 9) => foesOf(b, me).some((f) => apart(me, f) <= reach);
   const all: Record<string, Skill> = {
     // ---- the front line ----
-    knight: ult('Last Bastion', 'Every foe within 5 tiles must go for him for 6s; he takes half damage and a quarter of his health forms a shield', 700, 'defend', (b, me, out) =>
-      fortify(b, me, out, { reach: 5, taunt: 6000, guard: 6000, shield: 0.25 })),
-    peasant: ult('Mass Muster', 'Every ally closes ranks and takes half damage for 6s, and a sixth of their health comes back', 700, 'attack2', (b, me, out) => {
+    // (RPG-SPELLS batch 3: the tanks' and supports' ultimates, renamed, with what the toolkit adds: the Knight's aura, the Peasant's charge,
+    // the Fissure's spires, the Bard's thunderclap; the Commander's charge is below, with the first eight)
+    knight: ult('Indomitable', 'Every foe within 5 tiles must go for him for 6s; he takes half damage, a quarter of his health forms a shield, and the allies within 2 of him take a fifth less for 6s', 700, 'defend', (b, me, out) => {
+      if (!fortify(b, me, out, { reach: 5, taunt: 6000, guard: 6000, shield: 0.25 })) return false;
+      knightsAura(b, me, dur(me, 6000), out);
+      return true;
+    }, 'Last Bastion'),
+    peasant: ult('Call to Arms', 'Every ally closes ranks and takes half damage for 6s, a sixth of their health comes back, and he leads a charge of up to 3 tiles at the nearest foe', 700, 'attack2', (b, me, out) => {
       if (!inSight(b, me)) return false;
       bless(b, me, out, { guard: 6000, healShare: 1 / 6 });
+      chargeNearest(b, me, 3, 1.5, out);
       return true;
-    }),
-    paladin: ult('Divine Aegis', 'Foes within 4 tiles are struck and must go for him for 5s; the allies near him are healed and shielded', 800, 'attack2', (b, me, out) =>
-      fortify(b, me, out, { reach: 4, taunt: 5000, guard: 5000, allies: 3, heal: 7, smite: 1.2 })),
-    juggernaut: ult('Cataclysm', 'The ground splits: every foe within 6 tiles is hurt hard and held still for 2s', 900, 'attack', (b, me, out) =>
-      smite(b, me, out, { reach: 6, mult: 2.2, stun: 2000 })),
+    }, 'Mass Muster'),
+    paladin: ult('Holy Nova', 'Foes within 4 tiles are struck and must go for him for 5s; the allies near him are healed and shielded', 800, 'attack2', (b, me, out) =>
+      fortify(b, me, out, { reach: 4, taunt: 5000, guard: 5000, allies: 3, heal: 7, smite: 1.2 }), 'Divine Aegis'),
+    juggernaut: ult('Fissure', 'The ground splits: every foe within 6 tiles is hurt hard and held still for 2s, and rock spires rise where the rift is widest for 6s', 900, 'attack', (b, me, out) => {
+      if (!smite(b, me, out, { reach: 6, mult: 2.2, stun: 2000 })) return false;
+      fissureSpires(b, me, dur(me, 6000), out);
+      return true;
+    }, 'Cataclysm'),
     minotaur: ult('Stampede', 'Up to three charges in a row, each at the weakest foe in line, shoving and stunning', 600, 'attack2', stampede),
     kraken: ult('Maelstrom', 'A whirlpool drags every foe within 6 tiles toward him, hurts and slows it', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 6, mult: 1.8, slow: 4000, stun: 800, pull: true })),
@@ -617,8 +627,9 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       return true;
     }, 'Dawn Light'),
     priestess: ult('Mass Resurrection', 'Up to three fallen heroes rise with 40% of their health (each once a wave), every ally is healed and cleansed, and a Wall of Light rises between the foes and her friends for 5s', 1000, 'attack2', resurrection, 'Resurrection'),
-    wolfBard: ult('Battle Hymn', 'Allies are hastened and rallied (attack up a quarter) for 6s; every foe within 7 tiles is slowed', 800, 'attack2', (b, me, out) => {
+    wolfBard: ult('Battle Hymn', 'The opening chord shoves the foes within 2 tiles 2 tiles back; then allies are hastened and rallied (attack up a quarter) for 6s, and every foe within 7 tiles is slowed', 800, 'attack2', (b, me, out) => {
       if (!inSight(b, me)) return false;
+      thunderclap(b, me, out);
       smite(b, me, out, { reach: 7, mult: 0, slow: 5000 });
       bless(b, me, out, { haste: 6000, banner: 6000, song: 6000 });
       return true;
@@ -639,6 +650,20 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
   };
   // the first eight heroes' ultimates are copied and gated at `ULT_LEVEL` like the rest (a foe's own copy of one, such as the Gorgon Queen's, stays as it was) and all forty-five take their balance
   for (const kind of FIRST_EIGHT) all[kind] = { ...first(kind)!, unlock: ULT_LEVEL };
+  // (RPG-SPELLS batch 3: the Samurai Commander's Rally Cry is the Rallying Cry, and his melee allies charge; the hero's copy only, so a foe that
+  // borrows the old one keeps it)
+  const rally = all.samuraiCommander;
+  all.samuraiCommander = {
+    ...rally,
+    name: 'Rallying Cry',
+    key: 'Rally Cry',
+    text: 'The war banner flies over every ally: attack up a quarter for 9s and a quarter of their health back; every melee ally within 4 charges up to 2 tiles at its nearest foe',
+    cast: (b, me, out) => {
+      if (!rally.cast(b, me, out)) return false;
+      for (const a of alliesOf(b, me).filter((x) => x !== me && apart(x, me) <= 4).sort(byId)) chargeNearest(b, a, 2, 1.2, out);
+      return true;
+    },
+  };
   for (const [kind, t] of Object.entries(TUNE)) all[kind].tuned = t;
   return all;
 }

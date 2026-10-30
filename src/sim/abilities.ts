@@ -19,6 +19,7 @@ import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
 import { kitStrike, kitTick } from './kits/effects';
 import { raiseAura } from './toolkit/auras';
+import { divineSmite, seismicSlam } from './kits/tanks';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 
@@ -759,15 +760,6 @@ function burstAround(b: Battle, me: Unit, out: BattleEvent[], reach: number, mul
   return true;
 }
 
-/** Paladin: foes near him must go for him for a few seconds, and the allies beside him are healed. */
-const CHALLENGE_MS = 3000;
-function holyChallenge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 3));
-  if (!near.length) return false;
-  for (const f of near) f.taunt = { to: me.id, until: b.t + durOf(me, CHALLENGE_MS) };
-  for (const a of b.units) if (a.alive && a.side === me.side && apart(me, a) <= 2) mendUnit(a, atkOf(me) * 2.5, out, me);
-  return true;
-}
 
 /** Wanderer, Healing Mist (RPG-SPELLS batch 2; it was Sanctuary): a healing mist hangs round him for 5s (an aura, `toolkit/auras.ts`). The
  *  friends within 2 of him are guarded (half damage) for 2s at once, and heal each second while they stand in it. Only when some friend is hurt. */
@@ -1185,9 +1177,6 @@ function dragonBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Juggernaut: the ground heaves, hurting every foe within three tiles and holding it still. */
-const QUAKE_MS = 1200;
-const quake = (b: Battle, me: Unit, out: BattleEvent[]) => burstAround(b, me, out, reachOf(me, 3), 1.2, durOf(me, QUAKE_MS));
 
 /** Great Sage: stars fall on up to three separate crowds a moment after the call. */
 const STARFALL_MS = 900;
@@ -1315,7 +1304,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Iron Fists', text: 'Blows ignore 3 of the foe\'s defence', pierce: 3 },
   },
   peasant: {
-    skill: { name: 'Hold the Line', text: 'Allies within 2 tiles take half damage for 3s', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 500, anim: 'attack', cast: holdTheLine },
+    skill: { name: 'Phalanx', key: 'Hold the Line', text: 'Allies within 2 tiles take half damage for 3s', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 500, anim: 'attack', cast: holdTheLine },
     passive: { name: 'Strength in Numbers', text: 'Takes 7% less from each ally beside him (up to 3)', huddle: 0.07 },
   },
   lightningMage: {
@@ -1342,7 +1331,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Mountain Breath', text: 'Heals 2% of his health each second', regen: 0.02 },
   },
   paladin: {
-    skill: { name: 'Holy Challenge', text: 'Foes within 3 tiles must attack him for 3s, and allies beside him are healed', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 600, anim: 'attack', cast: holyChallenge },
+    skill: { name: 'Divine Smite', key: 'Holy Challenge', text: 'A radiant blow on the foe before him (half as hard again on the undead and fiends); the foes within 3 must attack him for 3s, and the allies beside him are healed', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 600, anim: 'attack', cast: divineSmite },
     passive: { name: 'Blessed Bulwark', text: 'Blows from the front lose a fifth, and he heals for 60% of what he blocks', block: 0.2, blockHeal: 0.6 },
   },
   cleric: {
@@ -1396,7 +1385,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Sea Legs', text: 'Slips 12% of blows and climbs ledges at no extra cost', dodge: 0.12, sure: true },
   },
   wolfBard: {
-    skill: { name: 'Dirge', text: 'Every foe within 4 tiles is hurt a little and slowed for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: dirge },
+    skill: { name: 'Vicious Mockery', key: 'Dirge', text: 'His mocking verse hurts every foe within 4 tiles a little, slows them for 4s and weakens them', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: dirge },
     passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
   },
   beastmaster: {
@@ -1440,7 +1429,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Dragon Scales', text: 'Takes a quarter less from shots', scales: 0.25 },
   },
   juggernaut: {
-    skill: { name: 'Earthquake', text: 'Every foe within 3 tiles is hurt and held still for 1.2s', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 700, anim: 'attack2', cast: quake },
+    skill: { name: 'Seismic Slam', key: 'Earthquake', text: 'He slams the ground: the foes beside him are thrown 2 tiles; every foe within 3 is hurt and held still for 0.8s', need: CHARGE_MAX, dealt: 4, taken: 7, perSec: 2, castMs: 700, anim: 'attack2', cast: seismicSlam },
     passive: { name: 'Living Rampart', text: 'Blows from the front lose a third, and he cannot be knocked back', block: 0.33, steady: true },
   },
   sage: {

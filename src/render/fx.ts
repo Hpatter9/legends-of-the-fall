@@ -111,7 +111,7 @@ let kitArt: { walls: Texture[]; barrel: Texture } | null = null;
 const MARK_WORDS: Record<string, string> = {
   parry: 'Parry', smoke: 'Smoke', pinned: 'Pinned', charged: 'Charged', vow: "Martyr's Vow", hunter: 'Hunter', brute: 'Brute', dance: 'Dancing',
   stone: 'Stone', puppet: 'Puppet', siege: 'Anchored', angel: 'Warded', rewind: 'Rewound', prey: 'Prey', suppressed: 'Pinned down',
-  dirge: 'Dirge', anthem: 'Anthem', bounty: 'Bounty', condemned: 'Condemned',
+  dirge: 'Dirge', anthem: 'Anthem', bounty: 'Bounty', condemned: 'Bane',
 };
 
 /** A small random offset (the renderer's own, not the sim's). */

@@ -204,8 +204,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'peasant',
     [['Hardy Stock', 'jerkin', { hp: HP }], ['Sharpened Spear', 'spear', { atk: ATK }], ['Thick Boots', 'boots', { def: 1 }], ['Packed Lunch', 'vial', { regen: 0.004 }]],
     [
-      { name: 'Shields Up', icon: 'aegis', text: 'Hold the Line lasts half as long again (4.5s).', tal: { dur: 0.5 } },
-      { name: 'Pitchfork Wall', icon: 'spear', text: 'Hold the Line covers allies 1 tile further.', tal: { reach: 1 } },
+      { name: 'Shields Up', icon: 'aegis', text: 'Phalanx lasts half as long again (4.5s).', tal: { dur: 0.5 } },
+      { name: 'Pitchfork Wall', icon: 'spear', text: 'Phalanx covers allies 1 tile further.', tal: { reach: 1 } },
     ],
     [
       { name: 'Rabble Rouser', icon: 'drum', text: 'Every 10s, allies within 3 tiles hit a quarter harder for 4s.', abilities: [ab('tl_peasant_rouser', 'Rabble Rouser', 'tick', 'rally', { n: 10, w: 4, show: true })] },
@@ -324,11 +324,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'samuraiCommander',
     [['Lacquered Armour', 'lamellar', { hp: HP }], ['Commander\'s Blade', 'katana', { atk: ATK }], ['War Paint', 'charm', { crit: 0.03 }], ['Marching Drill', 'boots', { moveSpeed: 0.06 }]],
     [
-      { name: 'Lasting Banner', icon: 'drum', text: 'War Banner and Rally Cry last 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Lasting Banner', icon: 'drum', text: 'War Banner and Rallying Cry last 60% longer.', tal: { dur: 0.6 } },
       { name: 'Far Banner', icon: 'bell', text: 'War Banner covers allies 2 tiles further.', tal: { reach: 2 } },
     ],
     [
-      { name: 'Inspiring Presence', icon: 'circlet', text: 'Rally Cry charges 60% faster.', tal: { ultRate: 0.6 }, stats: { charge: 0.1 } },
+      { name: 'Inspiring Presence', icon: 'circlet', text: 'Rallying Cry charges 60% faster.', tal: { ultRate: 0.6 }, stats: { charge: 0.1 } },
       { name: "Warlord's Stride", icon: 'harness', text: 'Every 8s he is hasted for 3s, and he hits 5% harder.', stats: { atk: 0.05 }, abilities: [ab('tl_samuraiCommander_stride', "Warlord's Stride", 'tick', 'haste', { n: 8, w: 3, show: true })] },
     ],
   ),
@@ -336,11 +336,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'paladin',
     [['Blessed Plate', 'plate', { hp: HP }], ['Holy Mace', 'mace', { atk: ATK }], ['Oath of Steel', 'aegis', { def: 1 }], ['Prayer', 'scroll', { regen: 0.004 }]],
     [
-      { name: 'Righteous Anger', icon: 'bell', text: 'Holy Challenge holds foes on him 70% longer.', tal: { dur: 0.7 } },
-      { name: 'Lay on Hands', icon: 'emerald', text: 'Holy Challenge heals 45% more.', tal: { pow: 0.45 } },
+      { name: 'Righteous Anger', icon: 'bell', text: 'Divine Smite holds foes on him 70% longer.', tal: { dur: 0.7 } },
+      { name: 'Lay on Hands', icon: 'emerald', text: 'Divine Smite heals and strikes 45% harder.', tal: { pow: 0.45 } },
     ],
     [
-      { name: 'Aegis of Light', icon: 'bastion', text: 'Holy Challenge gives him a shield of 15% of his health.', tal: { castShield: 0.15 } },
+      { name: 'Aegis of Light', icon: 'bastion', text: 'Divine Smite gives him a shield of 15% of his health.', tal: { castShield: 0.15 } },
       { name: 'Retribution', icon: 'thornplate', text: '30% of blows taken are answered with half the blow.', abilities: [ab('tl_paladin_retribution', 'Retribution', 'struck', 'reflect', { p: 0.3, v: 0.5 })] },
     ],
   ),
@@ -494,11 +494,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'wolfBard',
     [['Fine Fur', 'hide', { hp: HP }], ['Sharp Notes', 'lyre', { atk: ATK }], ['Quick Fingers', 'ring', { atkSpeed: 0.04 }], ['Travelling Cloak', 'cloak', { def: 1 }]],
     [
-      { name: 'Long Verse', icon: 'scroll', text: 'Dirge lasts 60% longer.', tal: { dur: 0.6 } },
-      { name: 'Loud Chorus', icon: 'bell', text: 'Dirge reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Long Verse', icon: 'scroll', text: 'Vicious Mockery lasts 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Loud Chorus', icon: 'bell', text: 'Vicious Mockery reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
-      { name: 'Encore', icon: 'drum', text: 'Dirge gives back 40% of its cost, and +10% pool refill.', tal: { refund: 40 }, stats: { charge: 0.1 } },
+      { name: 'Encore', icon: 'drum', text: 'Vicious Mockery gives back 40% of its cost, and +10% pool refill.', tal: { refund: 40 }, stats: { charge: 0.1 } },
       { name: 'Rousing Ballad', icon: 'emerald', text: 'Every 8s the weakest ally is healed 15% of its health.', abilities: [ab('tl_wolfBard_ballad', 'Rousing Ballad', 'tick', 'healAlly', { n: 8, v: 0.15, show: true })] },
     ],
   ),
@@ -626,8 +626,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'juggernaut',
     [['Reinforced Plating', 'plate', { hp: HP }], ['Piston Fists', 'fist', { atk: ATK }], ['Heavy Treads', 'boots', { def: 1 }], ['Coolant Leak', 'vial', { regen: 0.004 }]],
     [
-      { name: 'Deeper Fault', icon: 'idol', text: 'Earthquake holds foes 60% longer.', tal: { dur: 0.6 } },
-      { name: 'Wider Quake', icon: 'bell', text: 'Earthquake reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Deeper Fault', icon: 'idol', text: 'Seismic Slam holds foes 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Wider Quake', icon: 'bell', text: 'Seismic Slam reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
       { name: 'Unstoppable', icon: 'bastion', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },

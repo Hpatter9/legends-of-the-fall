@@ -7,12 +7,12 @@ import type { Element } from './fxRules';
 
 /** Each new skill: the existing skill whose signature it plays, a tint for it (none keeps the painting's own colours), and its element. */
 export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el: Element }>> = {
-  'Shield Bash': { as: 'Shield Wall', tint: 0xffd27a, el: 'earth' },
+  'Shield Rush': { as: 'Shield Wall', tint: 0xffd27a, el: 'earth' },
   'Parry Stance': { as: 'Iaido', tint: 0xe8f4ff, el: 'wind' },
   'Smoke Bomb': { as: 'Shadow Step', tint: 0x9a9aa8, el: 'dark' },
   'Pinning Shot': { as: 'Volley', tint: 0xffe08a, el: 'wind' },
   Wildfire: { as: 'Meteor', tint: 0xff7a30, el: 'fire' },
-  'Brace Spears': { as: 'Hold the Line', tint: 0xd8c08a, el: 'earth' },
+  'Spear Wall': { as: 'Hold the Line', tint: 0xd8c08a, el: 'earth' },
   'Stillness Palm': { as: 'Thousand Fists', tint: 0xa8e0ff, el: 'light' },
   'Flask Toss': { as: 'Sanctuary', tint: 0x9cff9a, el: 'light' },
   Overload: { as: 'Chain Lightning', tint: 0xc8a8ff, el: 'lightning' },
@@ -24,7 +24,7 @@ export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el:
   'Pied Piper': { as: 'Pipes of Pan', tint: 0xff9ad8, el: 'wind' },
   'Stone Garden': { as: 'Stone Curse', tint: 0xc8c8b8, el: 'earth' },
   'Plant the Standard': { as: 'War Banner', tint: 0xff8a6a, el: 'fire' },
-  "Martyr's Vow": { as: 'Holy Challenge', tint: 0xffe8a8, el: 'light' },
+  'Aura of Protection': { as: 'Holy Challenge', tint: 0xffe8a8, el: 'light' },
   Smite: { as: 'Judgement', tint: 0xfff0b0, el: 'light' },
   Treeform: { as: 'Call Treant', tint: 0x9ce07a, el: 'earth' },
   'Blood Fury': { as: 'Bloodlust', tint: 0xff5050, el: 'fire' },
@@ -48,7 +48,7 @@ export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el:
   'Siege Mode': { as: 'Shell Barrage', tint: 0xb0b8c0, el: 'fire' },
   'Guardian Angel': { as: 'Holy Light', tint: 0xfff6c8, el: 'light' },
   Jump: { as: 'Dive', tint: 0xff9a60, el: 'fire' },
-  'Raise Rampart': { as: 'Earthquake', tint: 0xc8b090, el: 'earth' },
+  'Tunnel Strike': { as: 'Earthquake', tint: 0xc8b090, el: 'earth' },
   'Font of Wisdom': { as: 'Starfall', tint: 0x90b8ff, el: 'light' },
   'Blood Price': { as: 'Hellblade Sweep', tint: 0xff4060, el: 'dark' },
   Condemn: { as: 'Judgement', tint: 0xff8060, el: 'fire' },
