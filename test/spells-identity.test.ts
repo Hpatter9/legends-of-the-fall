@@ -14,6 +14,10 @@
 // Batch 4 (the melee heroes, docs/notes/spells-b4.md) re-recorded field30, bosses, armyFoes, spells, lands, stand, heroes10 and heroes30: each has
 // one of the ten at level 10 or more (their skill 1s did not change, so the level-1 scenarios did not move). The `...Others` scenarios now leave
 // the ten out of every team (recorded on main's code before the batch) and did not move; nor did field1, army, daily, tower, calamity or heroes1.
+// Batch 5 (the ranged heroes and summoners, docs/notes/spells-b5.md) re-recorded field1, field30, bosses, armyFoes, spells, heroes1, heroes10 and
+// heroes30: each has one of the eight (field1 and heroes1 at level 1, where the Siege Bot's Bombard, which now throws, is skill 1). The
+// `...Others` scenarios now leave the eight out of every team (recorded on main's code before the batch) and did not move; nor did lands, army,
+// daily, tower, stand or calamity.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

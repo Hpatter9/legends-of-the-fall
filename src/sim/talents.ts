@@ -384,7 +384,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'ranger',
     [['Keen Sight', 'spectacles', { crit: 0.03 }], ['Hunting Bow', 'bow', { atk: ATK }], ['Forest Stride', 'boots', { moveSpeed: 0.06 }], ['Camouflage', 'hide', { hp: 0.04 }]],
     [
-      { name: 'Third Snare', icon: 'crossbow', text: 'Snare Trap lays a third trap.', tal: { extra: 1 } },
+      { name: 'Third Snare', icon: 'crossbow', text: 'Snare lays a third trap.', tal: { extra: 1 } },
       { name: 'Iron Jaws', icon: 'mace', text: 'The foe in a trap is held 75% longer (3.5s).', tal: { dur: 0.75 } },
     ],
     [
@@ -420,12 +420,12 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'gunslinger',
     [['Steady Aim', 'spectacles', { crit: 0.03 }], ['Hot Powder', 'blunderbuss', { atk: ATK }], ['Duster Coat', 'cloak', { hp: 0.04 }], ['Light Trigger', 'ring', { atkSpeed: 0.04 }]],
     [
-      { name: 'Longer Barrel', icon: 'longbow', text: 'Dead Eye reaches 2 tiles further down the line.', tal: { reach: 2 } },
-      { name: 'Hollow Points', icon: 'shard', text: 'Dead Eye hits 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Longer Barrel', icon: 'longbow', text: 'Piercing Shot reaches 2 tiles further down the line.', tal: { reach: 2 } },
+      { name: 'Hollow Points', icon: 'shard', text: 'Piercing Shot hits 40% harder.', tal: { pow: 0.4 } },
     ],
     [
       { name: 'Trick Shot', icon: 'charm', text: 'Every 3rd shot hits nearly twice as hard.', abilities: [ab('tl_gunslinger_trick', 'Trick Shot', 'nth', 'smite', { n: 3, v: 0.9 })] },
-      { name: 'Quick Draw', icon: 'ring', text: 'Dead Eye gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+      { name: 'Quick Draw', icon: 'ring', text: 'Piercing Shot gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
     ],
   ),
 
@@ -446,12 +446,12 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'rifleBot',
     [['Scope Upgrade', 'spectacles', { crit: 0.03 }], ['Overclocked Barrel', 'blunderbuss', { atk: ATK }], ['Plated Casing', 'plate', { hp: 0.04 }], ['Servo Joints', 'ring', { atkSpeed: 0.04 }]],
     [
-      { name: 'Extended Magazine', icon: 'crossbow', text: 'Burst Fire shoots a fourth round.', tal: { extra: 1 } },
-      { name: 'Armour-piercing Rounds', icon: 'shard', text: 'Burst Fire hits 35% harder.', tal: { pow: 0.35 } },
+      { name: 'Extended Magazine', icon: 'crossbow', text: 'Rapid Shot shoots a fourth round.', tal: { extra: 1 } },
+      { name: 'Armour-piercing Rounds', icon: 'shard', text: 'Rapid Shot hits 35% harder.', tal: { pow: 0.35 } },
     ],
     [
       { name: 'Suppressing Fire', icon: 'bell', text: '40% of his shots slow the foe for 1.5s.', abilities: [ab('tl_rifleBot_suppress', 'Suppressing Fire', 'hit', 'slow', { p: 0.4, w: 1.5 })] },
-      { name: 'Target Lock', icon: 'ring', text: 'Burst Fire gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+      { name: 'Target Lock', icon: 'ring', text: 'Rapid Shot gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
     ],
   ),
   mercenary: tree(
@@ -579,7 +579,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     [['Barnacled Bones', 'bone', { hp: HP }], ['Rusty Cutlass', 'sword', { atk: ATK }], ['Sea Boots', 'boots', { def: 1 }], ['Ghostly Grog', 'vial', { regen: 0.004 }]],
     [
       { name: 'Double Charge', icon: 'ruby', text: 'A second, smaller broadside follows the first.', tal: { extra: 1 } },
-      { name: 'Heavy Shot', icon: 'maul', text: 'Broadside hits 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Heavy Shot', icon: 'maul', text: 'Cannonade hits 40% harder.', tal: { pow: 0.4 } },
     ],
     [
       { name: 'Ghost Crew', icon: 'drum', text: 'Every 10s, allies within 3 tiles hit a quarter harder for 4s.', abilities: [ab('tl_dreadPirate_crew', 'Ghost Crew', 'tick', 'rally', { n: 10, w: 4, show: true })] },
@@ -591,7 +591,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     [['Heavy Armour', 'plate', { hp: HP }], ['High-yield Shells', 'blunderbuss', { atk: ATK }], ['Targeting Scope', 'spectacles', { crit: 0.03 }], ['Auto-loader', 'ring', { atkSpeed: 0.04 }]],
     [
       { name: 'Twin Shells', icon: 'crossbow', text: 'A second, smaller shell follows the first.', tal: { extra: 1 } },
-      { name: 'Longer Barrel', icon: 'longbow', text: 'Shell Barrage reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Longer Barrel', icon: 'longbow', text: 'Bombard reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
       { name: 'Cluster Rounds', icon: 'orb', text: '40% of his shots burst: half again on the foes beside the target.', abilities: [ab('tl_siegeBot_cluster', 'Cluster Rounds', 'hit', 'splash', { p: 0.4, v: 0.5 })] },

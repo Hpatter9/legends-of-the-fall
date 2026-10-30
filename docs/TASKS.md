@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS B5 — The ranged heroes and summoners
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b5`, `/home/user/spells-b5`.
+- **Authorisation:** owner approved design v2; batch 5 as briefed.
+- **Scope:** Archer, Ranger, Gunslinger, Rifle Bot, Siege Bot, Dread Pirate, Beastmaster and Reaper kits on the toolkit (the leap back, the roll, the jets, blasts that throw, leaping wolves, the Reaper's drag), renames and tiers.
+- **Status:** ready for review. Parity: none beyond 6 at levels 1, 10 and 30 (none beyond 4 at 30); the Siege Bot and Dread Pirate nearer the middle than on main; the Last Stand, Calamity, daily and armies as main. Full `npm test` passes; screenshots `docs/samples/spells-b5-*`. [Notes](notes/spells-b5.md). Next: the rest of design v2.
+
 ### RPG-SPELLS B4 — The melee heroes
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b4`, `/home/user/spells-b4`.

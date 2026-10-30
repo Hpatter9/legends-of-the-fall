@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.252.0',
+    date: '2026-10-30',
+    title: 'Archers, guns and summoners move',
+    notes: ['The Archer leaps back for her Aimed Shot, the Gunslinger rolls clear, and the Rifle Bot jets to high ground.', 'Siege Bot shells and the Dread Pirate\'s Powder Keg launch foes; the Reaper drags them in before his Harvest of Souls.'],
+  },
+  {
     version: '0.251.0',
     date: '2026-10-30',
     title: 'Melee heroes on the move',

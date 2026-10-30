@@ -40,6 +40,7 @@ import { settleJump } from './kits/blades';
 import { settleKeg } from './kits/shooters';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
+import { blastThrows, type Throws } from './kits/ranged';
 import { airborne, erupt, shotWall, tickToolkit, WALL, type Aura, type Burrowing, type Wall, type WallKind } from './toolkit';
 
 export const TICK_MS = 100;
@@ -227,6 +228,8 @@ export interface Pending {
   v?: number;
   /** How many tiles wider than a 3x3 a volley or judgement falls (a tier skill's reach; none for most). */
   r?: number;
+  /** What the blast throws when it lands (RPG-SPELLS batch 5: the Siege Bot's shells; `kits/ranged.ts`). */
+  throws?: Throws;
 }
 
 /** What hurt: a blow, a skill's strike, or burning or bleeding. */
@@ -802,6 +805,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   if (p.kind === 'erupt') return erupt(b, p, out);
   if (p.kind === 'rain' || p.kind === 'meteor') {
     landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out, p.r);
+    if (p.throws) blastThrows(b, by, { u: p.u!, v: p.v! }, p.throws, out);
     if (p.barrels && b.barrels) for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - p.u!), Math.abs(Math.floor(i / b.board.w) - p.v!)) <= 1)) blast(b, i, out);
     return;
   }

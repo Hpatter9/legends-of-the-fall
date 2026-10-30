@@ -186,9 +186,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Infinite Reflections', 'The decoys last far longer, three more appear, she is hastened greatly, and her friends\' skill meters jump by 15', { dur: 0.4, castHaste: 1400 }, [haste(0, 1400), { kind: 'summon', unit: 'decoy', n: 3, cap: 4 }, charge(3, 15)]),
   ],
   gunslinger: [
-    t('Long Eye', 'The slug carries a tile further and hits harder', { reach: 1, pow: 0.07 }),
-    t('Dead Eye Deluxe', 'The slug carries two tiles further, hits much harder, and a second slug follows', { reach: 2, pow: 0.14 }, [echo(600, 0.375)]),
-    t('High Noon', 'The slug carries three tiles further and hits far harder, and two more slugs follow, one after the other', { reach: 3, pow: 0.4 }, [echo(600, 0.7), echo(1200, 0.55)]),
+    t('Steady Aim', 'The slug carries a tile further and hits harder', { reach: 1, pow: 0.07 }),
+    t('Through and Through', 'The slug carries two tiles further, hits much harder, and a second slug follows', { reach: 2, pow: 0.14 }, [echo(600, 0.375)]),
+    t('Lightning Draw', 'The slug carries three tiles further and hits far harder, and two more slugs follow, one after the other', { reach: 3, pow: 0.4 }, [echo(600, 0.7), echo(1200, 0.55)]),
   ],
   shambler: [
     t('Thicker Rot', 'The rot lasts longer and heals him a little', { dur: 0.14, castHeal: 0.017 }),
@@ -238,7 +238,7 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   reaper: [
     t('Keener Scythe', 'The scythe reaches a tile further and cuts harder', { pow: 0.087, reach: 1 }),
     t('Soul Scythe', 'The scythe cuts much harder, a tile further, and heals him', { pow: 0.175, reach: 1, castHeal: 0.035 }),
-    t('Harvest of Souls', 'The scythe cuts harder, two tiles further, heals him, and reaps again a moment later', { pow: 0.18, reach: 2, castHeal: 0.035 }, [mend(0, 0.2), echo(900, 0.3)]),
+    t('Grim Harvest', 'The scythe cuts harder, two tiles further, heals him, and reaps again a moment later', { pow: 0.18, reach: 2, castHeal: 0.035 }, [mend(0, 0.2), echo(900, 0.3)]),
   ],
   timeWitch: [
     t('Longer Surge', 'The surge lasts longer', { dur: 0.14 }),
@@ -251,9 +251,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Tempest Step', 'The discharge hits much harder and holds long; he blinks and discharges again, and lightning crackles round him', { pow: 0.15, dur: 0.29 }, [echo(800, 0.45), nova(1.5, 0.12)]),
   ],
   dreadPirate: [
-    t('Double Broadside', 'A second, smaller broadside follows the first', { extra: 1 }),
-    t('Ghost Armada', 'Two more broadsides follow, and each hits harder', { extra: 2, pow: 0.07 }),
-    t('The Drowned Fleet', 'Two more broadsides follow and each hits harder, as at tier 3; then a ghostly volley fires again, and he is warded', { extra: 2, pow: 0.07 }, [echo(1200, 0.1), ward(0, 0.02)]),
+    t('Double Cannonade', 'A second, smaller cannonade follows the first', { extra: 1 }),
+    t('Ghost Armada', 'Two more cannonades follow, and each hits harder', { extra: 2, pow: 0.07 }),
+    t('The Drowned Fleet', 'Two more cannonades follow and each hits harder, as at tier 3; then a ghostly volley fires again, and he is warded', { extra: 2, pow: 0.07 }, [echo(1200, 0.1), ward(0, 0.02)]),
   ],
   siegeBot: [
     t('Heavier Shell', 'The shell hits a little harder', { pow: 0.07 }),

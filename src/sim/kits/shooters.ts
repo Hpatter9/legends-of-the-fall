@@ -1,6 +1,7 @@
 // The shooters' new skills (COMBAT-002): the Archer's pin, the Ranger's caltrops, the Gunslinger's fanned hammer, the Rifle Bot's suppressing
 // fire, the Siege Bot's anchor and the Dread Pirate's powder kegs.
 
+import { KEG_THROWS, blastThrows, leapBack, rollAway } from './ranged';
 import { canStrike, strikeDef, wayTo, atkOf, blast, type Battle, type BattleEvent, type Pending, type Unit } from '../battle';
 import { apart, crowd, foesOf, landArea, slowFor } from '../abilities';
 import { kx, KIT } from './effects';
@@ -8,6 +9,8 @@ import { foesNear, mark, ms, nearestFoe, strike, stun } from './common';
 
 /** Archer, Pinning Shot: the farthest foe in reach is pinned 2s and takes a quarter more from shots for 4s. */
 export function pinningShot(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  // (RPG-SPELLS batch 5, Aimed Shot: with a foe beside her she leaps back first, to higher ground if she can)
+  if (foesOf(b, me).some((x) => canStrike(b.board, strikeDef(b, me), me, x))) leapBack(b, me, out);
   const def = strikeDef(b, me);
   const f = foesOf(b, me)
     .filter((x) => canStrike(b.board, def, me, x))
@@ -36,6 +39,8 @@ export function spikeField(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Gunslinger, Fan the Hammer: three fast shots at the nearest foe in reach, then a long reload (the cast's time). */
 export function fanTheHammer(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  // (RPG-SPELLS batch 5: with a foe within 2 she rolls clear first)
+  if (foesOf(b, me).some((x) => canStrike(b.board, strikeDef(b, me), me, x))) rollAway(b, me, out);
   const def = strikeDef(b, me);
   const f = foesOf(b, me)
     .filter((x) => canStrike(b.board, def, me, x))
@@ -111,6 +116,8 @@ export function settleKeg(b: Battle, p: Pending, out: BattleEvent[]): void {
   if (!by) return;
   out.push({ kind: 'boom', u: p.u!, v: p.v! });
   landArea(b, 'rain', by, p.u!, p.v!, p.dmg, out);
+  // (RPG-SPELLS batch 5: the blast throws its 3x3 a tile outward, and 2 at its heart)
+  blastThrows(b, by, { u: p.u!, v: p.v! }, KEG_THROWS, out);
   const within = (u: number, v: number) => Math.max(Math.abs(u - p.u!), Math.abs(v - p.v!)) <= 2;
   if (b.barrels) for (const i of b.barrels.filter((i) => within(i % b.board.w, Math.floor(i / b.board.w)))) blast(b, i, out);
   const chained = b.pending.filter((q) => q.kind === 'keg' && within(q.u!, q.v!));
