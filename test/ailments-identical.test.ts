@@ -25,6 +25,7 @@ import { ARMIES } from '../src/sim/armies';
 import { CAL_SCALE } from '../src/sim/calamity';
 import { DAILY_ANSWER } from '../src/sim/modes';
 import { KITS } from '../src/sim/abilities';
+import { BOSS_BIG } from '../src/sim/bossAttacks';
 
 // (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
 // by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
@@ -32,6 +33,8 @@ import { KITS } from '../src/sim/abilities';
 // player must answer (a card with no way off); `army` and every other scenario keep their hashes)
 // (STAND-RETREAT, the owner's ask, re-recorded `stand`: a Last Stand run now begins in the courtyard and falls back to the library after wave 5,
 // where the room used to be drawn from the seed; every other scenario keeps its hash)
+// (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks are switched off for
+// this proof, as the ailments are; with them off every scenario plays as recorded)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
@@ -51,9 +54,11 @@ test('with the new ailments off, every mode plays as it did before the ailment m
   CAL_SCALE.bossHp = 1;
   DAILY_ANSWER.ult = 0.17;
   plague.power = 0.99;
+  BOSS_BIG.on = false;
   try {
     assert.deepEqual(scenarioHashes(), recorded);
   } finally {
+    BOSS_BIG.on = true;
     AILMENT_SWITCH.on = was;
     infernal.start = tuned.start;
     Object.assign(yokai, late.yokai);

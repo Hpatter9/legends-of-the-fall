@@ -23,6 +23,7 @@ import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
+import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
@@ -311,6 +312,9 @@ export type BattleEvent =
   | { kind: 'mark'; to: number; by: number; what: string; ms: number }
   /** The land acts (`hazards.ts`): a strike is told (`tell`, `ms` before it comes) or goes off, a spring wells up, the current carries walkers (`tiles` where they now stand). `id` is the hazard's place in the board's list. */
   | { kind: 'hazard'; id: number; what: HazardKind; phase: 'tell' | 'go'; tiles: number[]; ms: number }
+  /** A boss's signature attack (BOSS-BIG, `bossAttacks.ts`): its windup begins with its tiles marked for `ms` (`warn`), it lands (`land`; the
+   *  hits follow), or it fizzles, its boss fallen first. `n` ties the three together. */
+  | { kind: 'bossSig'; phase: 'warn' | 'land' | 'fizzle'; by: number; n: number; key: string; name: string; el: SigElement; tiles: number[]; ms: number; rage: boolean }
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
@@ -392,6 +396,11 @@ export interface Battle {
   auras?: Aura[];
   /** Duchess the goat joins this fight as it begins (`duchessFight.ts`): set when the fight is made; unset in almost every fight. */
   duchess?: true;
+  /** BOSS-BIG (`bossAttacks.ts`): the bosses' signature attacks winding up (their tiles marked), each boss's own clock for them, and how
+   *  many have begun this fight. None until a boss with one acts. */
+  warnings?: BossWarning[];
+  sigs?: Record<number, SigState>;
+  sigN?: number;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -592,7 +601,8 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   const def = UNITS[defId];
   const castle = def.side === 'hero' ? b.heroBoost : undefined;
   const eq = def.side === 'hero' ? boost.equip : undefined;
-  const hp = Math.round(def.hp * (boost.hp ?? 1) * (castle?.hp ?? 1) * (1 + (eq?.hp ?? 0)));
+  // (a boss with signature attacks has a little less health, BOSS-BIG's re-tune: `sigHp`)
+  const hp = Math.round(def.hp * (boost.hp ?? 1) * (castle?.hp ?? 1) * (1 + (eq?.hp ?? 0)) * (def.side === 'foe' ? sigHp(defId) : 1));
   const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp, maxHp: hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
   const power = (boost.atk ?? 1) * (castle?.atk ?? 1) * (1 + (eq?.atk ?? 0));
   if (power !== 1) unit.power = power;
@@ -769,6 +779,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.warnings) tickSignatures(b, out);
   if (b.walls?.length || b.auras) tickToolkit(b, out);
   tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
@@ -1101,6 +1112,14 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // (a feared fighter runs from the nearest foe and strikes nobody, STATUS-FX)
   if (isFeared(b, me)) return flee(b, me, out);
+  // (BOSS-BIG: a boss's great attack is marked on the ground before it lands; a fighter standing in it steps out first, and walks round it)
+  const danger = b.warnings ? dangerFor(b, me) : null;
+  if (danger) {
+    const off = dodgeStep(b, me, danger);
+    if (off >= 0) return stepTo(b, me, off, out);
+  }
+  // (and a boss lets its own go when one is due, `bossAttacks.ts`)
+  if (me.side === 'foe' && trySignature(b, me, out)) return;
   // (the Last Stand has its own mind for heroes and foes; every other fight goes on below as it always did)
   if (b.stand && standDecide(b, me, rng, out)) return;
   const def = strikeDef(b, me);
@@ -1144,6 +1163,8 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // else walk toward the nearest foe it can get a blow at
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  // (round a boss's marked ground, BOSS-BIG)
+  if (danger) for (const i of danger) blocked.add(i);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   const wound = 1 - me.hp / me.maxHp;
   // a badly hurt fighter with nobody to strike makes for a shrine close by

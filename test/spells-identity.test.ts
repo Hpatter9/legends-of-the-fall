@@ -30,7 +30,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
+import { BOSS_BIG } from '../src/sim/bossAttacks';
 
+// (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks, and the heroes'
+// stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
+// with them on, the scenarios with no boss (every field fight, every hero alone, the tower's and the Calamity's early floors) still do, so
+// the dodge changes nothing where no boss has marked the ground. Only bosses, armyFoes, army, daily and stand move.)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
-  assert.deepEqual(identityHashes(), recorded);
+  BOSS_BIG.on = false;
+  try {
+    assert.deepEqual(identityHashes(), recorded);
+  } finally {
+    BOSS_BIG.on = true;
+  }
+});
+
+test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
+  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
+  const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
+  assert.deepEqual(identityHashes(rest), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
+  const now = identityHashes(moved);
+  for (const k of moved) assert.notEqual(now[k], (recorded as Record<string, string>)[k], `${k} has a boss whose signatures move it`);
 });

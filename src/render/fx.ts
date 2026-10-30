@@ -50,6 +50,7 @@ import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
 import { coverAlpha, overFighter } from './overFighter';
+import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
 /** Shapes for the legacy named skill cues; their scale and release timing remain the skill's own. */
@@ -189,7 +190,19 @@ export class Fx {
   private lava: [number, number][] = [];
   private water: [number, number][] = [];
 
+  /** BOSS-BIG: a boss's signature attack's marks and blow (`bossFx.ts`). */
+  private bossFx: BossFx;
+
   constructor(private sprites: Map<number, UnitSprite>) {
+    this.bossFx = new BossFx({
+      root: this.root,
+      particles: this.particles,
+      calm: () => this.calm(),
+      label: (text, x, y, fill, size, life) => void this.label(text, x, y, fill, size, life),
+      impact: (b, el, spots) => this.ultImpact(b, el, spots),
+      stop: (ms) => (this.stopLeft = Math.max(this.stopLeft, ms)),
+      shake: (level) => (this.trauma = Math.max(this.trauma, level)),
+    });
     this.root.zIndex = 1e7;
     this.flashLayer.visible = false;
     this.dimLayer.rect(-3000, -3000, 6000, 6000).fill(0x07040f);
@@ -216,6 +229,7 @@ export class Fx {
     this.gusts.clear();
     this.particles.clear();
     this.moment.clear();
+    this.bossFx.clear();
     this.epic = new Set();
     this.setEpic(false);
   }
@@ -327,6 +341,7 @@ export class Fx {
         }
       } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
       else if (e.kind === 'hazard') this.hazard(b, e);
+      else if (e.kind === 'bossSig') this.bossFx.show(b, e);
       else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e, slashes.get(e));
       else if (e.kind === 'phase') this.phaseShock(e.by);
       else if (e.kind === 'comboCast') this.comboCast(e);
@@ -805,6 +820,7 @@ export class Fx {
       else it.view.destroy({ children: true });
     }
     this.clock += dt;
+    this.bossFx.step(dt);
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
     const s = this.calm() || this.still ? 0 : shakeOf(this.trauma);
     if (this.thudLeft > 0 && !this.still) {

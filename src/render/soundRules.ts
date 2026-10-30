@@ -29,6 +29,8 @@ export type Cue =
   | 'ultimate' | 'bossSkill' | 'kingCast' | 'kingSpell'
   // an ultimate's moment (ULT-EPIC, `ultMoment.ts`): the band slashing across, and the blow landing
   | 'ultSlash' | 'ultImpact'
+  // a boss's signature attack (BOSS-BIG, `bossFx.ts`): its windup's sting, and its blow landing, both darker than the ultimate's
+  | 'bossSlash' | 'bossImpact'
   // the summoning hall's build-up and stinger, and a ribbon slamming in
   | 'riseSummon' | 'stingSummon' | 'slam'
   // deaths
@@ -137,6 +139,8 @@ export const CUES: Record<Cue, CueSpec> = {
   bossSkill: c(500, 900, 4, 3, 1.43),
   ultSlash: c(0, 700, 3, 3, 2.49),
   ultImpact: c(0, 1400, 5, 3, 1),
+  bossSlash: c(0, 900, 3, 3, 1.6),
+  bossImpact: c(0, 1600, 5, 3, 1),
   kingCast: c(0, 600, 2, 3),
   kingSpell: c(0, 1200, 3, 3),
 
@@ -224,6 +228,9 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'miss' }];
     case 'boom':
       return [{ cue: 'fireBoom', gain: 0.9 }];
+    // (BOSS-BIG: a boss's signature: its windup's dark sting, its blow's deep boom; a fizzle is quiet)
+    case 'bossSig':
+      return e.phase === 'warn' ? [{ cue: 'bossSlash' }] : e.phase === 'land' ? [{ cue: 'bossImpact' }] : [];
     case 'hazard':
       // (the living land: a strike is heard as it goes off; the river's current and a spring's welling are quiet)
       if (e.phase !== 'go') return [];
