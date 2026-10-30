@@ -3,7 +3,7 @@ import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, defOf, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { CHARGE_MAX, KITS, onStrike, tickStatus } from '../src/sim/abilities';
+import { CHARGE_MAX, KITS, onStrike, tickStatus, keyOf } from '../src/sim/abilities';
 import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
 import { HERO_TRAITS, TRAITS, membersOf } from '../src/sim/traits';
 import { ratingOf } from '../src/sim/stars';
@@ -37,8 +37,8 @@ test('the eight class heroes are registered, drawn at a sensible size, with a fo
     const d = UNITS[id];
     assert.equal(d.side, 'hero');
     assert.ok(d.forms?.length === 3, id);
-    assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
-    assert.ok(SKILL_FX[KITS[id].skill.name], id);
+    assert.ok(keyOf(KITS[id].skill) && KITS[id].passive.name, id);
+    assert.ok(SKILL_FX[keyOf(KITS[id].skill)], id);
     for (const f of d.forms!) assert.ok((layout as Record<string, unknown>)[f], f);
     const fig = (layout as Record<string, { figure: number }>)[d.sheet].figure * d.scale;
     // (heroes stand in one of three height bands: small 42, medium 50, large 60; see docs/notes/hero-art.md)

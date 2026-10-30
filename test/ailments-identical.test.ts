@@ -3,6 +3,8 @@
 // the same events, tick by tick, and the same health at the end (`tools/status-fx/logs.ts`; the fixture was recorded on main's code).
 // (TIER-PROMISES re-recorded three of its scenarios, `army`, `daily` and `tower`, whose merged heroes' tier skills now do what their words say: the
 // owner's ask, `docs/notes/tier-promises.md`. Only those three moved; the proof stands for every other mode.)
+// (RPG-SPELLS batch 2, docs/notes/spells-b2.md, re-recorded field30, bosses, armyFoes, spells, lands and army: each has the Cleric, High Priestess,
+// Wanderer or Druid at level 10 or more, whose kits the owner approved reworking (the revive, Spirit Guardians, Healing Mist...). Only those moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { addUnit, apart, atkOf, hurt, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike, ULT_LEVEL } from '../src/sim/abilities';
+import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike, ULT_LEVEL, keyOf } from '../src/sim/abilities';
 import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
 import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitEffects } from '../src/sim/traits';
 import { TREES } from '../src/sim/talents';
@@ -43,8 +43,8 @@ test('twenty heroes join, each with a kit, a tree, traits, a tavern spot and a s
     const d = UNITS[id];
     assert.equal(d.side, 'hero');
     assert.ok(KITS[id].ultimate, `${id} ultimate`);
-    assert.ok(KITS[id].skill.name && KITS[id].passive.name, id);
-    for (const s of [KITS[id].skill, KITS[id].ultimate]) if (s) assert.ok(SKILL_FX[s.name] && SKILL_ELEMENT[s.name], s.name);
+    assert.ok(keyOf(KITS[id].skill) && KITS[id].passive.name, id);
+    for (const s of [KITS[id].skill, KITS[id].ultimate]) if (s) assert.ok(SKILL_FX[keyOf(s)] && SKILL_ELEMENT[keyOf(s)], s.name);
     assert.equal(TREES[id]?.nodes.length, 16, `${id} tree`);
     const [o, c] = HERO_TRAITS[id];
     assert.equal(TRAITS[o].kind, 'origin');
@@ -103,7 +103,7 @@ test('every new hero\'s skill fires in a fight when its charge is full', () => {
     ally.hp = Math.round(ally.maxHp * 0.3);
     [[3, 4], [4, 4], [3, 3], [2, 4], [6, 2], [0, 2], [3, 2]].forEach(([u, v]) => spawn(b, 'skeleton', u, v));
     const ev = run(b, 3000);
-    assert.ok(skillsBy(ev, me).includes(KITS[id].skill.name), `${id} cast ${KITS[id].skill.name}`);
+    assert.ok(skillsBy(ev, me).includes(keyOf(KITS[id].skill)), `${id} cast ${keyOf(KITS[id].skill)}`);
   }
 });
 
@@ -115,7 +115,7 @@ test('the Great Sage\'s, Demon Swordsman\'s and Tyrant\'s ultimates fire when th
     spawn(b, 'knight', 4, 6);
     [[3, 4], [4, 4], [3, 3]].forEach(([u, v]) => spawn(b, 'skeleton', u, v));
     const ev = run(b, 3000);
-    assert.ok(skillsBy(ev, me).includes(KITS[id].ultimate!.name), id);
+    assert.ok(skillsBy(ev, me).includes(keyOf(KITS[id].ultimate!)), id);
     assert.ok((me.charge2 ?? 0) < CHARGE_MAX, id);
   }
 });

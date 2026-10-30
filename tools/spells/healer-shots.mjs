@@ -47,7 +47,7 @@ async function open(w, h) {
   await page.evaluate((party) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { mode: { kind: 'army', army: 'undead' }, stage: 2, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { mode: { kind: 'army', army: 'undead' }, stage: 9, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
@@ -131,11 +131,11 @@ for (const [w, h] of SIZES) {
   {
     const { ctx, page } = await open(w, h);
     await lookAt(page, 'cleric', 2.2, -30);
-    await page.evaluate(() => { const g = window.__game; g.b.autoUlt = true; const c = g.b.units.find((x) => x.def === 'cleric'); c.charge2 = 100; c.busyUntil = g.b.t; });
+    await page.evaluate(() => { const g = window.__game; g.b.autoUlt = true; const k = g.b.units.find((x) => x.def === 'knight'); k.hp = Math.round(k.maxHp * 0.6); const c = g.b.units.find((x) => x.def === 'cleric'); c.charge2 = 100; c.ultOrder = g.b.t; c.busyUntil = g.b.t; });
     await page.waitForFunction(() => window.__game.b.auras?.some((a) => a.what === 'Spirit Guardians'), null, { timeout: 15000, polling: 'raf' }).catch(() => {});
     await runThenHold(page, 1200);
     await page.screenshot({ path: `docs/samples/spells-b2-guardians-${size}.png` });
-    console.log(size, 'guardians', await page.evaluate(() => JSON.stringify(window.__game.b.auras?.map((a) => a.what))));
+    console.log(size, 'guardians', await page.evaluate(() => { const g = window.__game; const c = g.b.units.find((x) => x.def === 'cleric'); return JSON.stringify({ auras: g.b.auras?.map((a) => a.what), level: c.level, c2: c.charge2, alive: c.alive, t: g.b.t, cast: c.cast, phase: g.b.phase }); }));
     await ctx.close();
   }
 }

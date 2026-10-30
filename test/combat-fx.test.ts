@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { KITS } from '../src/sim/abilities';
+import { KITS, keyOf } from '../src/sim/abilities';
 import { castSpell, FREEZE_MS, SPELL_IDS } from '../src/sim/spells';
 import { fight, stepBattle } from '../src/sim/battle';
 import { readyBattle } from './helpers';
@@ -64,13 +64,13 @@ describe('missiles', () => {
 describe('skills and spells', () => {
   it('names an element for every skill, ultimate and spell', () => {
     for (const k of Object.values(KITS)) {
-      assert.ok(SKILL_ELEMENT[k.skill.name], k.skill.name);
-      if (k.ultimate) assert.ok(SKILL_ELEMENT[k.ultimate.name], k.ultimate.name);
+      assert.ok(SKILL_ELEMENT[keyOf(k.skill)], keyOf(k.skill));
+      if (k.ultimate) assert.ok(SKILL_ELEMENT[keyOf(k.ultimate)], keyOf(k.ultimate));
     }
     for (const id of SPELL_IDS) assert.ok(SPELL_ELEMENT[id], id);
   });
   it('knows no skill that does not exist', () => {
-    const names = new Set(Object.values(KITS).flatMap((k) => [k.skill.name, k.ultimate?.name]));
+    const names = new Set(Object.values(KITS).flatMap((k) => [keyOf(k.skill), (k.ultimate ? keyOf(k.ultimate) : undefined)]));
     for (const n of Object.keys(SKILL_ELEMENT)) assert.ok(names.has(n), n);
   });
 });

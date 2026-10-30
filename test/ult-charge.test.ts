@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, place, startBattle, stepBattle, type Battle } from '../src/sim/battle';
-import { CHARGE_MAX, KITS, ULT_LEVEL, ultimateOf } from '../src/sim/abilities';
+import { CHARGE_MAX, ULT_LEVEL, ultimateOf, ultKeyOf } from '../src/sim/abilities';
 import { ULT_FILL } from '../src/sim/heroKits';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { gradeBoost } from '../src/sim/run';
@@ -50,7 +50,7 @@ test('with its ultimate open, a hero fires it about once a fight, the first by a
       for (const e of stepBattle(b)) {
         if (e.kind !== 'skill') continue;
         const u = b.units.find((x) => x.id === e.by)!;
-        if (u.side !== 'hero' || u.owner !== undefined || KITS[u.def].ultimate?.name !== e.name) continue;
+        if (u.side !== 'hero' || u.owner !== undefined || ultKeyOf(u) !== e.name) continue;
         count.set(u.id, (count.get(u.id) ?? 0) + 1);
         if (!first.has(u.id)) first.set(u.id, b.t);
       }
