@@ -1,7 +1,9 @@
 // A menu showcase of the real battle frames: one attack, then idle, with fixed feet and no cropped weapons.
 import { sheetInfo } from './sheets';
 
-export function revealSprite(sheet: string, reduced: boolean): { canvas: HTMLCanvasElement; start(attack: boolean): void; stop(): void } {
+// (RECAP-REVEAL: `opts.walk` lets an earned hero's arrival, `earnedArrival.ts`, show it walking in first: the walk frames join the
+//  crop, and `walk()` loops them until `start`. The summoning reveal does not ask, and is cropped and played as before)
+export function revealSprite(sheet: string, reduced: boolean, opts: { walk?: boolean } = {}): { canvas: HTMLCanvasElement; start(attack: boolean): void; stop(): void; walk(): void; facesRight: boolean } {
   const canvas = document.createElement('canvas');
   canvas.className = 'trFigure';
   canvas.setAttribute('aria-hidden', 'true');
@@ -10,9 +12,10 @@ export function revealSprite(sheet: string, reduced: boolean): { canvas: HTMLCan
   let raf = 0;
   let started = false;
   const stop = () => { cancelAnimationFrame(raf); };
-  if (!info) return { canvas, start() {}, stop };
-  const { img, w, h, perRow, rows, counts, figure } = info;
+  if (!info) return { canvas, start() {}, stop, walk() {}, facesRight: true };
+  const { img, w, h, perRow, rows, counts, figure, facesRight } = info;
   const hasAttack = rows.includes('attack') && counts.attack > 0;
+  const hasWalk = !!opts.walk && rows.includes('walk') && counts.walk > 0;
   const source = (anim: string, frame: number) => ({
     x: (frame % perRow) * w,
     y: (rows.indexOf(anim) + Math.floor(frame / perRow)) * h,
@@ -21,7 +24,7 @@ export function revealSprite(sheet: string, reduced: boolean): { canvas: HTMLCan
   canvas.width = w;
   canvas.height = h;
   let x0 = w, y0 = h, x1 = 0, y1 = 0;
-  for (const anim of hasAttack ? ['idle', 'attack'] : ['idle']) {
+  for (const anim of [...(hasAttack ? ['idle', 'attack'] : ['idle']), ...(hasWalk ? ['walk'] : [])]) {
     for (let n = 0; n < counts[anim]; n++) {
       const s = source(anim, n);
       g.clearRect(0, 0, w, h);
@@ -56,9 +59,20 @@ export function revealSprite(sheet: string, reduced: boolean): { canvas: HTMLCan
   draw('idle', 0);
   return {
     canvas,
+    facesRight,
+    walk() {
+      if (started || !hasWalk || reduced) return;
+      const at = performance.now();
+      const tick = (now: number) => {
+        draw('walk', Math.floor(Math.max(0, now - at) / 110) % counts.walk);
+        raf = requestAnimationFrame(tick);
+      };
+      tick(at);
+    },
     start(attack) {
       if (started) return;
       started = true;
+      cancelAnimationFrame(raf);
       const at = performance.now();
       const attackMs = attack && hasAttack && !reduced ? 650 : 0;
       const tick = (now: number) => {

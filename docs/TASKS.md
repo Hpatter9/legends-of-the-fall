@@ -20,6 +20,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Cause:** the fight's weather is rolled per board, so about one wave in eight is night: a flat deep-blue tint at 0.36 over the whole screen took about 30% of the light off the board (rain, about one in eight too, took 15%). No dim was left on or stacking.
 - **Fix:** flat tints capped at 0.15 (night 0.14, rain 0.1, ash and embers 0.08); night's mood moves to darkened edges (a vignette clear over the board). A dim from a fall is lifted when a heart burns and the wave starts again.
 - **Status:** ready for review. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/dark-wave.md); [before](samples/dark-wave-before-393x852.png); [after](samples/dark-wave-after-393x852.png). No merge or version bump.
+### RPG-SPELLS B0/B1 — Fixed skill keys and the movement toolkit
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b01`, `/home/user/spells-b01`.
+- **Authorisation:** owner approved design v2 (`docs/notes/rpg-spells-design.md`) and said build; batches 0 and 1 first.
+- **Scope:** skill keys (`keyOf`, `skillShown`, foes' own copies); the toolkit in `src/sim/toolkit/` (move rule, charge, teleport, pull, shove/launch, burrow, six walls, auras, swap, AI choices, boss rules) with placeholder looks. No hero uses it yet.
+- **Status:** ready for review. Every fight hashes as on main (`test/spells-identity.test.ts`); full `npm test` passes; staged screenshots in `docs/samples/spells-b01-*`. [Notes](notes/spells-b01.md). Next: batch 2, healers and the revive.
 
 ### CAL-SANCTUARY — Portal expeditions and destination arenas
 
@@ -105,6 +111,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** `src/sim/midEvents.ts`, `src/sim/market.ts` (new), `src/sim/events.ts` (road draw, market, new effects), `src/sim/run.ts` (optional `Buff.twist`, `Run.road`, `gearStage`, the twist in `startStage`), `src/sim/autoplay.ts` (no-leave cards), `src/events.ts` (icons, buys), small hooks in `src/main.ts` (`afterEvent`, `placeSquad`, the banner) and `src/twistView.ts` (`twistIcon`); `test/midEvents.test.ts`, the `daily` hash of `test/fixtures/ailment-logs.json`; `tools/mid-events/`; `docs/notes/mid-events.md`.
 - **Completion criteria:** the cart sells 5-6 wares with limited buys and a rummage; 12 road events and 2 follow-ups with real choices, weighted by army and land, no repeats; deterministic side streams; old saves load; daily and army pace unchanged; typecheck, full tests, web build; three portrait sizes.
 - **Validation and handoff:** [notes](notes/mid-events.md).
+### RECAP-REVEAL — Every item on the wave card; no spoils in the end recap; earned heroes walk in
+
+- **Goal:** the owner's asks: "The wave recap should show all items gained, spoils don't really matter if they leave" and "When a hero is obtained through a task, they shouldn't act like they came from the summoner. They can have a similar reveal, but not from the summoner."
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/recap-reveal`, `/home/user/recap-reveal` (from main 0.233.0, merged up to 0.235.0); PR none.
+- **Allowed files or systems:** new `src/sim/waveGains.ts`, `src/sim/heroArrival.ts`, `src/earnedArrival.ts`, `test/recap-reveal.test.ts`, `tools/recap-reveal/shots.mjs`; `src/sim/waveCard.ts` (optional `gains`), `src/waveCardView.ts` (the chips), `src/recapView.ts` and `src/towerView.ts` (spoils lists removed), `src/sim/runRecap.ts` (comment), `src/render/revealSprite.ts` (optional walk), `src/summonTarot.ts` (`queueReveal` picks the arrival), small hooks in `src/main.ts` (snapshot before the settlement, gains on the card), `src/battleReports.css`; `docs/notes/recap-reveal.md`.
+- **Completion criteria:** the short card lists every item a wave gained, grouped, with icons, without covering most of the board; the end recap and the spire's summary drop the run-only spoils; the ten milestone heroes arrive at the keep's overlook with their deed named and no summoner, keeping the queue, skip guard, seen flag and reduced motion; typecheck, affected and full tests, web build; three portrait sizes in Chromium.
+- **Validation and handoff:** [notes](notes/recap-reveal.md).
 
 ### WAVE-RECAP-2 — The short card for the spire and the Calamity; their detail in their summaries
 

@@ -1,6 +1,6 @@
 // Shard rewards use tarot cards. New allies get a chamber charge, an arrival impact and a full-art reveal,
 // with the real battle sprite performing one attack in front before settling into idle.
-// The existing seen-hero queue covers stone pulls, earned heroes and interrupted reveals.
+// The existing seen-hero queue covers stone pulls, earned heroes (who walk in instead: `earnedArrival.ts`) and interrupted reveals.
 // Atlas effects are from the credited Pixel Effects pack; reduced motion uses a calm fade.
 
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -19,6 +19,8 @@ import { SKIP_GUARD_MS } from './render/summonRules';
 import arcanaUrl from './art/tarot/arcana.png';
 import sanctumUrl from './art/hall/sanctum.png';
 import { summoner } from './summoner';
+import { earnedArrival } from './earnedArrival';
+import { arrivalOf } from './sim/heroArrival';
 import swordIcon from './art/talent/sword.png';
 import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
@@ -251,7 +253,8 @@ export function queueReveal(meta: Meta, kind: string, opts: { lucky?: boolean; f
   line = line.then(async () => {
     playing++;
     try {
-      if (opts.force || !heroSeen(meta, kind)) await firstReveal(meta, kind, { lucky: opts.lucky });
+      // (RECAP-REVEAL: a hero earned by a deed walks in to the keep instead; one out of a pull is the summoner's)
+      if (opts.force || !heroSeen(meta, kind)) await (arrivalOf(kind, opts.force) === 'earned' ? earnedArrival(meta, kind) : firstReveal(meta, kind, { lucky: opts.lucky }));
     } finally {
       playing--;
       waiting.delete(kind);

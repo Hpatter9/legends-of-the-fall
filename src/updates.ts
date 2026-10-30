@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.243.0',
+    date: '2026-10-30',
+    title: 'Groundwork for the new spells',
+    notes: ['Behind the scenes: charges, teleports, pulls, knockbacks, burrowing, walls and auras are built for the heroes\' new spells.', 'Fights play exactly as before.'],
+  },
+  {
+    version: '0.242.0',
+    date: '2026-10-30',
+    title: 'Every find on the wave card; earned heroes ride in',
+    notes: ['The wave card lists everything a wave brought in: gear, relics, chests, shards, tomes, stones and new heroes.', 'The end recap no longer lists the run\'s spoils, which leave with the run.', 'Heroes earned by a deed now ride in on their own, with the deed named, not through the summoner.'],
+  },
+  {
     version: '0.241.0',
     date: '2026-10-30',
     title: 'A closer look at placement; earned helpers',

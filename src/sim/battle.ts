@@ -40,6 +40,7 @@ import { settleJump } from './kits/blades';
 import { settleKeg } from './kits/shooters';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
+import { airborne, erupt, shotWall, tickToolkit, WALL, type Aura, type Burrowing, type Wall, type WallKind } from './toolkit';
 
 export const TICK_MS = 100;
 /** The chance a walker who steps onto ice slides a tile further. */
@@ -75,7 +76,7 @@ export interface Unit {
   /** Free to act again from this time. */
   busyUntil: number;
   /** The step being walked: the tile it left, and when and for how long. */
-  step?: { u: number; v: number; h: number; at: number; ms: number };
+  step?: { u: number; v: number; h: number; at: number; ms: number; arc?: number };
   /** The blow being swung, from when and for how long. */
   swing?: { at: number; ms: number; to: number };
   hurtAt?: number;
@@ -188,6 +189,12 @@ export interface Unit {
   tricksterLogUsed?: boolean;
   /** Guardian emergency aegis shield spent once per fight. */
   guardianShieldUsed?: boolean;
+  /** The movement toolkit (`toolkit/`, RPG-SPELLS): in the air after a launch until then (melee cannot reach it); underground while it
+   *  burrows (it cannot act, be targeted or be struck, and its tile is free); an aura's guard (a share less damage taken) and attack lift. */
+  air?: number;
+  under?: Burrowing;
+  auraGuard?: { share: number; until: number };
+  auraAtk?: { mult: number; until: number };
 }
 
 /** What the Last Stand adds to a battle (`stand.ts`, `standAi.ts`): the king's unit, where he stands, and the flow fields the foes walk by. Absent in every other fight. */
@@ -204,7 +211,7 @@ export interface StandMode {
 
 export interface Pending {
   at: number;
-  kind: 'release' | 'land' | 'rain' | 'meteor' | 'echo' | 'combo' | 'keg' | 'jump';
+  kind: 'release' | 'land' | 'rain' | 'meteor' | 'echo' | 'combo' | 'keg' | 'jump' | 'erupt';
   /** A salvo that sets off the powder barrels where it lands (the Dread Pirate's Ghost Fleet). */
   barrels?: boolean;
   by: number;
@@ -231,6 +238,7 @@ export type BattleEvent =
   | { kind: 'immune'; to: number; what: AilmentKey }
   /** A frozen fighter's ice shattered under a heavy blow (the extra hit follows, tagged `shatter`). */
   | { kind: 'shatter'; to: number }
+  /** A skill is cast: `name` is the skill's fixed key (`keyOf`), what the page looks its look and sound up by; the words it shows are `skillShown`. */
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
@@ -278,7 +286,18 @@ export type BattleEvent =
   /** A fighter is drawn with another sheet (a form, a guise), or its own again (null). */
   | { kind: 'look'; by: number; sheet: string | null }
   /** Timed terrain from a kit is laid on a tile for `ms` (0: it is gone again). */
-  | { kind: 'terrain'; u: number; v: number; what: TerrainFx['kind']; ms: number }
+  | { kind: 'terrain'; u: number; v: number; what: TerrainFx['kind'] | WallKind; ms: number; side?: Side }
+  /** The movement toolkit (RPG-SPELLS): a fighter shoved or dragged along `path` (its landing last); thrown in an arc from `from` to
+   *  `land` (`peak` in levels); slammed into something; fallen `levels`; an ice wall shattered; a burrower going down (with its tunnel's
+   *  `path`) or coming up; two fighters swapped; an aura raised (`at` null: round its caster). */
+  | { kind: 'shove'; to: number; path: At[]; ms: number; how: 'shove' | 'drag' | 'launch' }
+  | { kind: 'launch'; to: number; from: At; land: At; ms: number; peak: number }
+  | { kind: 'slam'; to: number; at: At; what: 'wall' | 'unit' | 'edge' | 'barrel' | 'cliff' }
+  | { kind: 'fall'; to: number; levels: number }
+  | { kind: 'wallBreak'; u: number; v: number }
+  | { kind: 'burrow'; by: number; phase: 'down' | 'up'; u: number; v: number; ms: number; path: At[] }
+  | { kind: 'swap'; a: number; b: number }
+  | { kind: 'aura'; by: number; at: At | null; reach: number; what: string; ms: number }
   /** A fighter a skill called up fades away (a wraith, a standard). */
   | { kind: 'fade'; to: number }
   /** A kit marks a fighter (a bounty, a condemnation, a charge, a pin, a stance) for `ms`. */
@@ -357,6 +376,9 @@ export interface Battle {
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
   terrain?: TerrainFx[];
+  /** The movement toolkit's walls and auras (`toolkit/walls.ts`, `toolkit/auras.ts`; RPG-SPELLS): none until a skill raises one. */
+  walls?: Wall[];
+  auras?: Aura[];
   /** Duchess the goat joins this fight as it begins (`duchessFight.ts`): set when the fight is made; unset in almost every fight. */
   duchess?: true;
 }
@@ -425,7 +447,7 @@ export interface Stage {
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
-export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => b.units.find((x) => x.alive && x.u === u && x.v === v);
+export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => b.units.find((x) => x.alive && x.u === u && x.v === v && !x.under);
 /** Whether a tile is on the heroes' rows. */
 export const isDeployTile = (v: number, depth = D) => v >= depth - DEPLOY_ROWS;
 
@@ -736,6 +758,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.walls?.length || b.auras) tickToolkit(b, out);
   tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
   if (b.board.hazards) tickHazards(b, out);
@@ -768,6 +791,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   const def = defOf(by);
   if (p.kind === 'keg') return settleKeg(b, p, out);
   if (p.kind === 'jump') return settleJump(b, p, out);
+  if (p.kind === 'erupt') return erupt(b, p, out);
   if (p.kind === 'rain' || p.kind === 'meteor') {
     landArea(b, p.kind, by, p.u!, p.v!, p.dmg, out, p.r);
     if (p.barrels && b.barrels) for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - p.u!), Math.abs(Math.floor(i / b.board.w) - p.v!)) <= 1)) blast(b, i, out);
@@ -797,6 +821,24 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
         out.push({ kind: 'dodge', to: to.id });
         return;
       }
+    }
+  }
+  // (the movement toolkit, RPG-SPELLS: a blow cannot reach a fighter in the air, or one underground; a Wall of Light stops the other
+  // side's shots, and a Wind Wall turns them back on the shooter)
+  if ((!def.shot && airborne(b, target)) || target.under) {
+    out.push({ kind: 'dodge', to: target.id });
+    return;
+  }
+  if (def.shot && b.walls?.length) {
+    const wall = shotWall(b, by, target);
+    if (wall === 'block') {
+      out.push({ kind: 'dodge', to: target.id });
+      return;
+    }
+    if (wall === 'back') {
+      out.push({ kind: 'dodge', to: target.id });
+      if (by.alive) hurt(b, by, by, Math.max(1, Math.round(p.dmg * WALL.WIND_BACK)), false, false, out, 'skill');
+      return;
     }
   }
   // (a fighter in tall growth is a little hard to hit: its own hash of the moment, so no stream moves)
@@ -830,9 +872,13 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
 /** Apply a hit; return whether it reached health, including a lethal hit or revival. */
 export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash: boolean, out: BattleEvent[], src: HitSrc = 'blow'): boolean {
   if (!to.alive) return false;
+  // (a burrower underground is struck by nothing but its own ailments, RPG-SPELLS)
+  if (to.under && src !== 'dot') return false;
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return false;
   dmg = left;
+  // (an aura's guard takes its share off, RPG-SPELLS)
+  if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)
   const shatter = shatterOf(b, by, to, dmg, heavy, src);
   if (to.shield) {
@@ -1023,7 +1069,7 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
   if (!higher) return -1;
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * board.w + x.u);
-  const walk = walkFrom(board, me, def.jump, blocked);
+  const walk = walkFrom(board, me, def.jump, blocked, me.side);
   const ht = tileOf(b, target).h;
   const wound = 1 - me.hp / me.maxHp;
   const now = perchValue(def, here, ht) + groundScore(def, wound, tileOf(b, me).ground);
@@ -1068,7 +1114,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   me.cast = undefined;
   if (tryCast(b, me, out)) return;
   // strike the weakest foe in reach (first stepping up to higher ground a step or two away, if it holds the target too)
-  const inReach = foes.filter((f) => canStrike(b.board, def, me, f)).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
+  const inReach = foes.filter((f) => canStrike(b.board, def, me, f) && !(f.air !== undefined && !def.shot && airborne(b, f))).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
   // (a foe the Tyrant condemned is every hero's first target, when it can be reached)
   if (b.kits && me.side === 'hero') {
     const doomed = inReach.find((f) => f.kx?.condemned && f.kx.condemned.until > b.t);
@@ -1086,7 +1132,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // else walk toward the nearest foe it can get a blow at
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
-  const walk = walkFrom(b.board, me, def.jump, blocked);
+  const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   const wound = 1 - me.hp / me.maxHp;
   // a badly hurt fighter with nobody to strike makes for a shrine close by
   if (wound > 0.4 && b.groundFx) {
@@ -1120,7 +1166,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     if (goal >= 0) return stepTo(b, me, firstStep(walk, goal)!, out);
   }
   // nobody can be got at from here: close in on the nearest anyway, round the others if the way is free
-  const open = walkFrom(b.board, me, def.jump, new Set());
+  const open = walkFrom(b.board, me, def.jump, new Set(), me.side);
   const near = byDistance[0];
   const next = firstStep(open, near.v * b.board.w + near.u);
   if (next !== null && !blocked.has(next)) return stepTo(b, me, next, out);
@@ -1185,7 +1231,7 @@ function flee(b: Battle, me: Unit, out: BattleEvent[]): void {
   const def = defOf(me);
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
-  const walk = walkFrom(b.board, me, def.jump, blocked);
+  const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   const steps: { i: number; u: number; v: number }[] = [];
   for (let i = 0; i < walk.cost.length; i++) {
     const t = b.board.tiles[i];

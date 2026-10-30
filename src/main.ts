@@ -4,6 +4,7 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
+import * as toolkit from './sim/toolkit';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
@@ -14,6 +15,7 @@ import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
 import { closeMapLeg, noteFightStats, notePayout, noteWave, recapOf } from './sim/runRecap';
 import { towerHeadline, waveHeadline, waveNotes, type WaveMoments } from './sim/waveCard';
+import { gainsSince, snapGains } from './sim/waveGains';
 import { drawWaveNotes } from './waveCardView';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
@@ -436,6 +438,8 @@ class Game {
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
+    (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (a hero's first awakening has its cinematic)
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
@@ -2518,6 +2522,8 @@ class Game {
       const daily = run.mode?.kind === 'daily';
       const rating = ratingOf(b, isBossRun(run));
       const before = run.gold;
+      // (RECAP-REVEAL: what the save and run held before the wave is settled, so the card can list everything it brought in)
+      const held = snapGains(this.meta, run);
       noteFight(run, b);
       // (the heroes' skills keep their charge for the next wave)
       if (won) keepCharges(run, b);
@@ -2576,7 +2582,7 @@ class Game {
       // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
       this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
       const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
-      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], ...(this.dropGain ? { drops: this.dropGain.words } : {}) };
+      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -2604,7 +2610,7 @@ class Game {
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         drawOreGain($('oreDrop'), this.oreGain);
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
-        drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : []);
+        drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : [], this.waveCard?.gains ?? []);
         for (const id of ['xp', 'fightStats']) $(id).hidden = true;
       }
       saveMeta(this.meta);
