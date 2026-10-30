@@ -188,7 +188,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
         speedRow(s.speed),
         toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
         toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
-        toggleRow('Full ultimate scenes', 'On, the fight pauses as an ultimate fires: the hero slashes across the screen, its name shows and the board dims round the caster. Off, a quick banner while the fight runs on', 'ultFull', s.ultFull),
+        toggleRow('Full ultimate scenes', 'On, the fight pauses as an ultimate fires: the hero slashes across the screen, its name shows and the board dims round the caster. Off, a quick banner while the fight runs on. With Auto on, always the quick banner', 'ultFull', s.ultFull),
         resetTipsRow(),
       ];
     case 'ruler':

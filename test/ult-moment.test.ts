@@ -6,7 +6,7 @@ import { bareBoard } from './bare';
 import { addUnit, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, ULT_LEVEL, keyOf, ultimateOf } from '../src/sim/abilities';
 import { ALL_HEROES } from '../src/sim/units';
-import { ULT_MOMENT, UltQueue, ultShape, type UltShape } from '../src/ultMomentRules';
+import { fullScene, ULT_MOMENT, UltQueue, ultShape, type UltShape } from '../src/ultMomentRules';
 
 function arena(): Battle {
   const b = startBattle(5);
@@ -128,4 +128,11 @@ test('the whole moment stays within a couple of seconds', () => {
   const instant = ULT_MOMENT.OPEN_MS + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;
   assert.ok(instant >= 1500 && instant <= 2600, String(instant));
   assert.ok(ULT_MOMENT.OPEN_MS + ULT_MOMENT.MAX_DELAY_MS + ULT_MOMENT.FADE_MS <= 3200);
+});
+
+test('with Auto on the moment is always the short banner; the full one needs the setting on and Auto off', () => {
+  assert.equal(fullScene(true, false), true);
+  assert.equal(fullScene(true, true), false);
+  assert.equal(fullScene(false, false), false);
+  assert.equal(fullScene(false, true), false);
 });

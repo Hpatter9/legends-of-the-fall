@@ -75,6 +75,7 @@ import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { FightHud } from './fightHud';
 import { heroArtUrl, UltMoments } from './ultMoment';
+import { fullScene } from './ultMomentRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
@@ -927,7 +928,7 @@ class Game {
         const born = b.units.length;
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
-        if (settings().ultFull && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
+        if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
@@ -1506,7 +1507,7 @@ class Game {
         return { x: r.left + (box.x + box.w / 2) * k, y: r.top + (box.y + box.h / 2) * k };
       },
       dockTop: () => $('panel').getBoundingClientRect().top,
-      ultFull: () => settings().ultFull,
+      ultFull: () => fullScene(settings().ultFull, this.ultAutoOn()),
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
     });
     this.ultm = new UltMoments({

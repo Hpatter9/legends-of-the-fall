@@ -85,3 +85,10 @@ is unchanged (it is set from the deploy screen's panel).
 - Screenshots: `node tools/battle-hud/shots.mjs` writes `docs/samples/battle-hud-final-<scene>-<width>.png` (deploy, fight, sheet, ult, cast,
   spells, daily, calamity, stand, kits at 393, 360 and 412 wide); `node tools/battle-hud/shots.mjs ult-cutin slash name dim linger short`
   writes `docs/samples/ult-cutin-*.png`.
+
+## Auto plays the short banner (AUTO-SHORT-ULT)
+
+The owner: with Auto on, ultimates take the short banner, not the full moment. `fullScene(setting, auto)` (`src/ultMomentRules.ts`) is true
+only with "Full ultimate scenes" on and Auto off; Auto is the fight's Auto switch (`meta.ultAuto`) or an auto-replay (`main.ts`
+`ultAutoOn`), and the Last Stand's Auto switch in `standView.ts`. Both fight loops and the hero rows' banner ask it each tick, so flipping
+Auto mid-fight changes the next ultimate. The setting's line says so. Test: `test/ult-moment.test.ts`.
