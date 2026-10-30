@@ -224,11 +224,11 @@ export function tempest(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** The Werewolf's Full Moon howl: the foes within 3 are frightened (they run from him) for 2s. */
+/** The Werewolf's Full Moon howl: the foes within 3 are frightened (they run from him) for 1.5s (as long whatever the ultimate's strength). */
 export function howl(moon: Skill['cast']): Skill['cast'] {
   return (b, me, out) => {
     if (!moon(b, me, out)) return false;
-    for (const f of foesOf(b, me)) if (apart(me, f) <= 3) fearFor(b, f, ultMs(me, 2000), me);
+    for (const f of foesOf(b, me)) if (apart(me, f) <= 3) fearFor(b, f, durOf(me, 1500), me);
     out.push({ kind: 'song', by: me.id, ms: 600 });
     return true;
   };

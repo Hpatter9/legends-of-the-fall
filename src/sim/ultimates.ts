@@ -501,10 +501,10 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   ninjaMonk: { rate: 2.41, power: 3.07 },
   wanderer: { rate: 0.37, power: 0.96 },
   lightningMage: { rate: 0.92, power: 1.24 },
-  kitsune: { rate: 0.6, power: 0.71 },
-  karasu: { rate: 0.77, power: 3.07 },
+  kitsune: { rate: 0.8, power: 3 }, // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
+  karasu: { rate: 0.77, power: 6 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
   yamabushi: { rate: 1.85, power: 3.07 },
-  werewolf: { rate: 0.73, power: 3.05 },
+  werewolf: { rate: 0.73, power: 2.3 }, // (RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
   minotaur: { rate: 1.51, power: 2.85 },
   satyr: { rate: 0.69, power: 0.89 },
   gorgon: { rate: 1.29, power: 2.2 },
@@ -517,7 +517,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   warlock: { rate: 0.5, power: 0.95 }, // (RPG-SPELLS batch 6: 1.07 before; the Circle of Death's ring made it +6.3 at level 30)
   illusionist: { rate: 1.08, power: 0.47 },
   gunslinger: { rate: 0.37, power: 1.7 },
-  shambler: { rate: 1.04, power: 0.9 }, // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
+  shambler: { rate: 1.04, power: 0.75 }, // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
   rifleBot: { rate: 1.01, power: 2.17 },
   mercenary: { rate: 1.21, power: 3.07 },
   mummy: { rate: 0.99, power: 0.49 },

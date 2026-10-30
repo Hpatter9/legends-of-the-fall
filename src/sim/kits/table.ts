@@ -37,10 +37,10 @@ export const TUNE1: Readonly<Record<string, number>> = {
   wanderer: 1.5,
   lightningMage: 0.75, // (RPG-SPELLS batch 6: 0.93 before; she stood +5.9 at level 10)
   kitsune: 1.0,
-  karasu: 0.4,
+  karasu: 0.33, // (RPG-SPELLS batch 7: 0.4 before; striking from behind made Swoop +4 at level 1)
   yamabushi: 0.62,
   werewolf: 0.34,
-  minotaur: 0.45,
+  minotaur: 0.5, // (RPG-SPELLS batch 7: 0.45 before; he was -5.7 at level 10 on main)
   satyr: 0.3,
   gorgon: 0.56,
   samuraiCommander: 0.22,
@@ -52,7 +52,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   warlock: 0.5, // (RPG-SPELLS batch 6: 0.59 before; Eldritch Blast's shove made him +3.3 at level 1)
   illusionist: 0.14,
   gunslinger: 0.47,
-  shambler: 0.78,
+  shambler: 1.8, // (RPG-SPELLS batch 7: Contagion's rot; 0.78 was Rotting Touch's)
   rifleBot: 0.94,
   mercenary: 0.54,
   mummy: 1.41,
