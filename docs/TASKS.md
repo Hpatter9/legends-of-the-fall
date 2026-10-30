@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS B3 — The tanks and supports
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b3`, `/home/user/spells-b3`.
+- **Authorisation:** owner approved design v2; batch 3 as briefed.
+- **Scope:** Knight, Paladin, Peasant, Juggernaut, Samurai Commander, Wolf Bard and Tyrant kits on the toolkit (Shield Rush, Divine Smite, Aura of Protection, Spear Wall, Seismic Slam, Tunnel Strike, Bane, the ultimates' additions), renames and tiers.
+- **Status:** ready for review. Parity: none beyond 6 at levels 1, 10 and 30; Last Stand within half a wave of main to level 60. Full `npm test` passes; screenshots `docs/samples/spells-b3-*`. [Notes](notes/spells-b3.md). Next: batch 4, melee.
+
 ### RPG-SPELLS B2 — The healers and the revive
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b2`, `/home/user/spells-b2`.
