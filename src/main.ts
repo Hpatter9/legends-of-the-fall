@@ -46,6 +46,7 @@ import { benchXp, fightXp, gainXp, levelOfKind, type LevelUp } from './sim/level
 import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
+import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from './sim/featureUnlocks';
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
@@ -65,7 +66,7 @@ import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastJoined, toastSpells, toastStones } from './achievementsView';
+import { toastAchievements, toastJoined, toastLines, toastSpells, toastStones } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
@@ -93,6 +94,7 @@ import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
 import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
+import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
@@ -420,6 +422,8 @@ class Game {
       this.goat.show(!this.homeUp);
       // (a board that is not in a fight stops its ticker under the home screen; coming back starts it again)
       if (!this.homeUp) this.app.ticker.start();
+      // (an earned deploy helper is told on the deploy screen the player comes back to: DEPLOY-ZOOM)
+      if (!this.homeUp && this.b.phase === 'deploy' && !this.auto) this.tellUnlocks();
       else if (this.b.phase !== 'fight') this.app.ticker.stop();
     };
     // (the tips on the home screen are still looked after, a few times a second)
@@ -478,8 +482,10 @@ class Game {
     showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
     this.showTheme();
     this.syncSprites(true);
-    // (a new wave's deploy: the camera frames the board afresh, whatever the player did with it last wave)
+    // (a new wave's deploy: the camera frames the board afresh, whatever the player did with it last wave; it starts at the usual view and
+    // eases in on the placement rows, DEPLOY-ZOOM)
     this.manualCam = false;
+    this.zoom = this.tzoom = 1;
     this.layout();
     this.revealDestination();
     this.refresh();
@@ -810,9 +816,16 @@ class Game {
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
-    // (the fight's opening framing; from here a drag or a pinch makes the camera the player's until the next wave)
+    // (the fight's opening framing; from here a drag or a pinch makes the camera the player's until the next wave. The follow eases out from
+    // the deploy's close view rather than jumping, unless motion is reduced: DEPLOY-ZOOM)
     this.manualCam = false;
+    const was = { cx: this.cx, cy: this.cy, zoom: this.zoom };
     this.layout();
+    if (!reducedMotion()) {
+      Object.assign(this, was);
+      this.clampCam();
+      this.place();
+    }
     this.refresh();
   }
 
@@ -970,6 +983,7 @@ class Game {
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
+    if (b.phase === 'deploy') this.deployEase(dt);
     if (b.phase === 'fight' && !this.intro && !this.destinationReveal) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
@@ -1247,7 +1261,20 @@ class Game {
   private focus(snap = false): void {
     const { x0, x1, y0, y1 } = this.bbox;
     const b = this.b.board;
-    if (this.b.phase === 'deploy' && !b.riftWorld) {
+    const rows = this.b.phase === 'deploy' ? this.deployFrame() : null;
+    if (rows) {
+      // (deploying: the placement rows, framed close; the zoom is left where it is and eases in, `deployEase`, DEPLOY-ZOOM)
+      this.tx = rows.cx;
+      this.ty = rows.cy;
+      this.held = null;
+      if (snap) {
+        this.cx = this.tx;
+        this.cy = this.ty;
+      }
+      this.clampCam();
+      this.place();
+      return;
+    } else if (this.b.phase === 'deploy' && !b.riftWorld) {
       let sx = 0;
       let sy = 0;
       let n = 0;
@@ -1272,6 +1299,40 @@ class Game {
     }
     this.clampCam();
     this.place();
+  }
+
+  /** The deploy camera's view (DEPLOY-ZOOM, `deployCam.ts`): the tiles a hero may be placed on, framed as close as fits; null for none. */
+  private deployFrame(): View | null {
+    const b = this.b.board;
+    const tops: Top[] = [];
+    for (let v = 0; v < b.d; v++)
+      if (isDeployTile(v, b.d))
+        for (let u = 0; u < b.w; u++) {
+          const t = tileAt(b, u, v);
+          if (!standable(t)) continue;
+          const [x, y] = at(u, v, t.h);
+          tops.push({ x, y });
+        }
+    const box = deployBox(tops);
+    if (!box) return null;
+    const { lo, hi } = this.camLimits();
+    return deployView(box, this.area.w, this.area.h, this.scale, lo, hi);
+  }
+
+  /** Each frame of a deploy: the camera eases in on the placement rows (a cut with reduced motion), unless the player has taken it, or an
+   *  intro, the march, a reveal or the look along the road has it (DEPLOY-ZOOM). */
+  private deployEase(dt: number): void {
+    if (this.manualCam || this.intro || this.chain.active || this.destinationReveal || this.survey || this.drag?.pan) return;
+    const v = this.deployFrame();
+    if (!v) return;
+    this.tx = v.cx;
+    this.ty = v.cy;
+    this.tzoom = v.zoom;
+    if (reducedMotion()) {
+      this.zoom = v.zoom;
+      this.cx = v.cx;
+      this.cy = v.cy;
+    } else this.zoom = easeTo(this.zoom, v.zoom, dt, EASE_ZOOM_MS);
   }
 
   /** What the camera may reach: the fight's board, and any road behind it to look back along. */
@@ -1448,7 +1509,7 @@ class Game {
     $('fight').addEventListener('click', () => this.begin());
     // (MERGE-TWO: one tap merges every pair ready, then the pairs those make, up to rank 4, and stops)
     $('mergeAll').addEventListener('click', () => {
-      if (this.b.phase !== 'deploy') return;
+      if (this.b.phase !== 'deploy' || !autoMergeOpen(this.meta)) return;
       const done = autoMerge(this.run);
       if (done.length) this.showMerges(done);
     });
@@ -1498,7 +1559,7 @@ class Game {
       // (the last choice is remembered; ×3 is only for tiers already cleared, so the setting keeps ×2 at most)
       setSetting('speed', Math.min(this.speed, 2) as 1 | 2);
     });
-    $('auto').addEventListener('click', () => this.autoArrange(true));
+    $('auto').addEventListener('click', () => autoPlaceOpen(this.meta) && this.autoArrange(true));
     $('autoStop').addEventListener('click', () => this.endAuto('stopped'));
     $('asumOk').addEventListener('click', () => this.closeAutoSummary());
     // (a hidden tab draws no frames, so the replay and its fight stand still; the banner says so, and the screen lock is asked for again on return)
@@ -1533,6 +1594,15 @@ class Game {
     this.syncSprites();
     if (manual) play('summon');
     this.refresh();
+  }
+
+  /** The one-time notice of an earned deploy helper (Auto merge, Auto place), shown on the deploy screen after its army falls (DEPLOY-ZOOM). */
+  private tellUnlocks(): void {
+    const due = featuresToTell(this.meta);
+    if (!due.length) return;
+    markTold(this.meta, due);
+    saveMeta(this.meta);
+    toastLines(due.map((f) => FEATURES[f].line));
   }
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
@@ -2001,7 +2071,8 @@ class Game {
       d.moved = true;
       // (a manual pan pauses the fight camera's follow for a few seconds; in a fight, the camera is the player's until the next wave)
       this.pausedUntil = performance.now() + PAUSE_MS;
-      if (this.b.phase === 'fight') this.takeCam();
+      // (in a deploy too, so the close view of the placement rows lets go of a player who pans away: DEPLOY-ZOOM)
+      if (this.b.phase === 'fight' || this.b.phase === 'deploy') this.takeCam();
       this.held = null;
       this.cx = d.pan.cx - (e.clientX - d.x) / this.world.scale.x;
       this.cy = d.pan.cy - (e.clientY - d.y) / this.world.scale.y;
@@ -2561,7 +2632,10 @@ class Game {
     buy.disabled = block !== null;
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
-    const pairs = b.phase === 'deploy' && run.mode?.kind !== 'calamity' ? mergeReady(run).length : 0;
+    // (DEPLOY-ZOOM: Auto merge is earned by beating the second army, Auto place the fourth, `featureUnlocks.ts`; each is told once)
+    const pairs = b.phase === 'deploy' && run.mode?.kind !== 'calamity' && autoMergeOpen(this.meta) ? mergeReady(run).length : 0;
+    $('auto').hidden = !autoPlaceOpen(this.meta);
+    if (b.phase === 'deploy' && !this.auto && !this.homeUp && $('home').hidden) this.tellUnlocks();
     const mergeAll = $('mergeAll') as HTMLButtonElement;
     mergeAll.hidden = pairs === 0;
     mergeAll.textContent = `Auto merge · ${pairs}`;
