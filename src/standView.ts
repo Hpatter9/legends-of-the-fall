@@ -24,6 +24,8 @@ import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
 import { FightHud } from './fightHud';
+import { HoldPress, UnitInfoCard } from './unitInfo';
+import { infoOf } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { fullScene } from './ultMomentRules';
 import { portrait } from './render/sheets';
@@ -146,6 +148,9 @@ export class StandView {
   /** The eight heroes' rows (`fightHud.ts`, BATTLE-HUD): two columns of compact rows, their pools, skills and ultimates (a tap fires one); its Auto
    *  switch stands by the spell orbs under the top bar. */
   private hud!: FightHud;
+  /** UNIT-INFO (docs/notes/unit-info.md): a press-and-hold on a unit in the deploy or a break opens its info card (the break waits while it is open). */
+  private press = new HoldPress();
+  private info = new UnitInfoCard();
   /** The ultimates' moments (`ultMoment.ts`, ULT-CUTIN). */
   private ultm!: UltMoments;
   private shown = new Map<string, string>();
@@ -665,6 +670,9 @@ export class StandView {
     let drag: { x: number; y: number; ghost: HTMLElement | null } | null = null;
     card.addEventListener('pointerdown', (e) => {
       drag = { x: e.clientX, y: e.clientY, ghost: null };
+      // (UNIT-INFO: a finger resting on the card opens the hero's info card)
+      const unit = this.s?.b.units.find((u) => u.side === 'hero' && u.tag === id);
+      if (unit) this.press.start(e.clientX, e.clientY, () => ((drag = null), this.openInfo(unit)));
       try {
         card.setPointerCapture(e.pointerId);
       } catch {
@@ -672,6 +680,7 @@ export class StandView {
       }
     });
     card.addEventListener('pointermove', (e) => {
+      this.press.move(e.clientX, e.clientY);
       if (!drag) return;
       if (!drag.ghost && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 10) {
         const pic = card.querySelector('canvas');
@@ -686,6 +695,7 @@ export class StandView {
       if (drag.ghost) drag.ghost.style.transform = `translate(${e.clientX - 24}px, ${e.clientY - 56}px)`;
     });
     const up = (e: PointerEvent) => {
+      this.press.cancel();
       const d = drag;
       drag = null;
       if (!d || !this.s) return;
@@ -835,6 +845,7 @@ export class StandView {
       }
       this.pointers.set(e.pointerId, { x: e.clientX - colLeft(), y: e.clientY });
       if (this.pointers.size === 2) {
+        this.press.cancel();
         const [a, b] = [...this.pointers.values()];
         this.gesture = { kind: 'pinch', x: 0, y: 0, cx: this.cx, cy: this.cy, moved: true, d0: Math.hypot(a.x - b.x, a.y - b.y), s0: this.tscale };
         return;
@@ -842,12 +853,16 @@ export class StandView {
       const x = e.clientX - colLeft();
       const hero = this.heroAt(x, e.clientY);
       this.gesture = { kind: hero !== null ? 'hero' : 'pan', x, y: e.clientY, cx: this.cx, cy: this.cy, moved: false, hero: hero ?? undefined };
+      // (UNIT-INFO: a finger resting on a unit in the deploy or a break opens its card; the gesture it began is let go)
+      const held = this.s && (this.s.phase === 'deploy' || this.s.phase === 'break') && !this.spell ? this.unitAt(x, e.clientY) : undefined;
+      if (held) this.press.start(e.clientX, e.clientY, () => ((this.gesture = null), this.openInfo(held)));
     });
     inp.addEventListener('pointermove', (e) => {
       const p = this.pointers.get(e.pointerId);
       if (!p || !this.gesture) return;
       p.x = e.clientX - colLeft();
       p.y = e.clientY;
+      this.press.move(e.clientX, e.clientY);
       const g = this.gesture;
       if (g.kind === 'pinch' && this.pointers.size >= 2) {
         const [a, b] = [...this.pointers.values()];
@@ -864,6 +879,7 @@ export class StandView {
     });
     const up = (e: PointerEvent) => {
       const g = this.gesture;
+      this.press.cancel();
       this.pointers.delete(e.pointerId);
       if (!g) return;
       if (g.kind === 'pinch') {
@@ -945,6 +961,34 @@ export class StandView {
   }
   /** A hero just found (its ring pulses a moment). */
   private flashAt: { id: number; left: number } | null = null;
+
+  /** UNIT-INFO: any unit under a point on the screen (its sprite), nearest first: the heroes, the king, the foes. */
+  private unitAt(sx: number, sy: number): Unit | undefined {
+    const s = this.s;
+    if (!s) return undefined;
+    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
+    let best: Unit | undefined;
+    let near = Infinity;
+    for (const u of s.b.units) {
+      const sp = u.alive ? this.sprites.get(u.id) : undefined;
+      if (!sp) continue;
+      const d = Math.hypot(Math.abs(wx - sp.x) / 1.3, wy - (sp.y - sp.tall / 2));
+      if (d < Math.max(22, sp.tall * 0.55) && d < near) {
+        near = d;
+        best = u;
+      }
+    }
+    return best;
+  }
+
+  /** UNIT-INFO: the card of unit `u` (a pure read of it). */
+  private openInfo(u: Unit): void {
+    const m = this.host.meta();
+    const pic = u.side === 'hero' && u.tag !== undefined ? portrait(lookSheet(u.def, heroRank(m, u.def), 1), 48, 1) : portrait(u.look ?? UNITS[u.def].sheet, 48, 1);
+    this.info.open(infoOf(this.s!.b, u, { meta: m, autoUlt: !!m.ultAuto }), pic);
+    play('tap');
+  }
 
   /** The roster id of the hero under a point on the screen (its sprite), if any. */
   private heroAt(sx: number, sy: number): number | null {
@@ -1087,7 +1131,7 @@ export class StandView {
     const t0 = performance.now();
     // (a skill's sheet open on the hero rows holds the fight too: BATTLE-HUD)
     const live = s.phase === 'wave' || s.phase === 'break' || s.phase === 'retreat';
-    const fighting = live && !this.hold && !this.paused && !this.hud.holding;
+    const fighting = live && !this.hold && !this.paused && !this.hud.holding && !this.info.isOpen;
     // (an ultimate's moment (ULT-CUTIN) moves on in real time; while it holds the fight only its effects move)
     if (live) this.ultm.frame(s.b, dt, !fighting);
     else if (this.ultm.queue.current) this.ultm.clear();
