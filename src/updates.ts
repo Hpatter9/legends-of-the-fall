@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.241.0',
+    date: '2026-10-30',
+    title: 'A closer look at placement; earned helpers',
+    notes: ['Each wave opens zoomed in on your placement rows, so heroes are easy to place. Pan or pinch away any time.', 'Auto merge unlocks once the second army is beaten, and Auto place once the fourth is. Until then, merge and place by hand.'],
+  },
+  {
     version: '0.240.0',
     date: '2026-10-30',
     title: 'Rare shards and tomes from armies',
