@@ -23,7 +23,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### ULT-EPIC — An ultimate's payoff
 
-- **Owner:** Claude worker. **Branch/worktree:** `claude/ult-epic`, `/home/user/lotf-ult-epic` (from main 0.258.0, with `art/ult-kit` merged).
+- **Owner:** Claude worker. **Branch/worktree:** `claude/ult-epic`, `/home/user/lotf-ult-epic` (from main 0.258.0, with `art/ult-kit` and main 0.259.0 merged).
 - **Goal:** the owner-approved plan after the director's capture of ULT-CUTIN: the ultimate's own effects about twice the size, a huge burst of its element and a 0.15 s hit-stop and shake on the blow, the dim lifted over the whole effect and eased off as it lands, a moving banner (speed lines, drift, a stamped name), slash and impact stings, a short camera lean; the owner's painted kit (13 sheets, session `u-ultimate`) imported and used, with fallbacks.
 - **Scope:** new `src/ultEpicRules.ts`, `test/ult-epic.test.ts`, `tools/ult-epic/`; `src/ultMoment.ts`, `src/ultMomentRules.ts`, `src/fightHud.css`; small hooks in `src/render/fx.ts`, `particles.ts`, `spellArt.ts`, `src/main.ts`, `src/standView.ts`; two cues in `soundRules.ts`/`audioProcessors.ts`; `tools/spell-fx/spell-parts.json`, `spell-fixes.json`, the `u-ultimate` atlas and its `index.json` entry only.
 - **Status:** ready for review. [Note](notes/ult-epic.md); before/after `samples/ult-epic-before-393.png`, `samples/ult-epic-after-393.png`. One sheet worth repainting: `ult-speedlines` (its middle glow is a blob that beads when tiled).

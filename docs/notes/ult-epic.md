@@ -1,6 +1,6 @@
 ## ULT-EPIC: an ultimate's payoff
 
-Branch `claude/ult-epic` (from main 0.258.0). The director captured eight ultimates in the real game after ULT-CUTIN (docs/notes/battle-hud.md)
+Branch `claude/ult-epic` (from main 0.258.0; main 0.259.0 merged in). The director captured eight ultimates in the real game after ULT-CUTIN (docs/notes/battle-hud.md)
 and found the opening good but the payoff flat: after the banner the ultimate played the same effect as a normal skill at normal size on a
 board still dark but for a ~200 px pool round the caster, the banner held still like a title card, and nothing marked the blow landing. The
 owner approved a plan; this is all of it, with the owner's painted kit. Before and after, at 393x852: `docs/samples/ult-epic-before-393.png`
@@ -47,7 +47,7 @@ Issen, Holy Nova, Stampede, Meteor Swarm, Maelstrom and Call Lightning. Also: th
 The owner's 13 painted sheets (PR #231, branch `art/ult-kit`, merged here) are in `art-source/spell-fx/u-ultimate/`: `ult-speedlines`
 (`beam`, 6 frames, a loop), `ult-edge` (`beam`, 4), `ult-gather` (`cast`, 8, once) and `ult-burst-<element>` (`impact`, once, 4 tiles) for the
 ten elements. They are in `tools/spell-fx/spell-parts.json` under `u-ultimate` (`import-spell-art.py --check`: 13 of 13 pass) and packed
-into `src/art/fx/spells/u-ultimate.webp` (1536x672, 229 KB; all the atlases 3.03 MB of the 5 MB cap) with its entry in `index.json`. Only
+into `src/art/fx/spells/u-ultimate.webp` (1536x672, 229 KB; all the atlases 3.28 MB of the 5 MB cap with main 0.259.0's repaints) with its entry in `index.json`. Only
 that session was added: every other atlas is byte for byte as on main and their `index.json` entries are unchanged (another worker is
 importing repaints of b, e, f and g). `build.mjs` already copies every atlas and lists it in the service worker. Contact sheet of the
 sources: `docs/samples/ult-epic-kit-contact.png` (the coverage of each frame in yellow); in fights: `docs/samples/ult-epic-after-393.png`,
