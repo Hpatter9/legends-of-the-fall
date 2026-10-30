@@ -4,6 +4,9 @@
 #   gwen-face.png   her card's portrait: the facing-down stand, head and shoulders, 2x nearest.
 #   pedlar-face.png, pilgrim-face.png  the passersby's card portraits: Tiny RPG Town's npc sheet (16 px, facing down), the bearded
 #                   man and the brown-haired youth, 4x nearest.
+#   messenger-face.png, hunter-face.png  (batch 1b) the other two passersby: the same npc sheet's blonde youth (row 2) and the
+#                   woman in the headband (row 1), 4x nearest.
+#   duchess-face.png (batch 1b) Duchess's card portrait: the first frame of the game's own goat sheet (src/art/duchess/goat.png).
 #   board.png       the quest board: Craftpix's medieval field-work set "Quest Board", trimmed and scaled to 64 px across.
 # The owner's painted givers and board papers will replace these under the same keys (`src/questArt.ts`).
 import os, sys
@@ -27,7 +30,7 @@ sheet.save(os.path.join(out, 'gwen.png'))
 face = cell(10, 0).crop((16, 8, 48, 40)).resize((64, 64), Image.NEAREST)
 face.save(os.path.join(out, 'gwen-face.png'))
 npc = Image.open(os.path.join(root, 'tiny-rpg-town-files', 'tiny-rpg-town-files', 'Assets', 'Environments', 'Town', 'spritesheets', 'npc.png')).convert('RGBA')
-for name, row in (('pedlar', 0), ('pilgrim', 3)):
+for name, row in (('pedlar', 0), ('pilgrim', 3), ('messenger', 2), ('hunter', 1)):
     npc.crop((0, row * 16, 16, row * 16 + 16)).resize((64, 64), Image.NEAREST).save(os.path.join(out, f'{name}-face.png'))
 board = Image.open(os.path.join(root, 'assets', 'craftpix-net-867123-free-medieval-field-work-2d-tileset-for-platformer', 'PNG', 'Environment',
                                 'Cartoon_Medieval_Field_Work_Level_Set_Environment - Quest Board.png')).convert('RGBA')
@@ -41,4 +44,10 @@ for y in range(board.height):
         r, g, b, a = px[x, y]
         px[x, y] = (r, g, b, 255 if a >= 128 else 0)
 board.save(os.path.join(out, 'board.png'))
+goat = Image.open(os.path.join(out, '..', 'duchess', 'goat.png')).convert('RGBA').crop((0, 0, 48, 48))
+goat = goat.crop(goat.getbbox())
+side = max(goat.size)
+sq = Image.new('RGBA', (side, side))
+sq.paste(goat, ((side - goat.width) // 2, side - goat.height))
+sq.resize((64, 64), Image.NEAREST).save(os.path.join(out, 'duchess-face.png'))
 print('gwen', sheet.size, 'face', face.size, 'board', board.size)
