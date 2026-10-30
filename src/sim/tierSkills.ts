@@ -101,9 +101,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Hundred Fists', 'Five more strikes, each far harder, a long stun, and a great burst of force round him that holds the foes near', { extra: 5, dur: 0.23, pow: 0.35 }, [nova(2, 0.5, 250)]),
   ],
   wanderer: [
-    t('Brighter Sanctuary', 'Heals more, and shields him', { pow: 0.105, castShield: 0.028 }),
-    t('Radiant Sanctuary', 'Heals far more, and hastens the allies near him', { pow: 0.21 }, [haste(4, 1050)]),
-    t('Pilgrim\'s Dawn', 'Heals far more, hastens the allies near him for longer, and frees them of every ailment', { pow: 0.3 }, [haste(4, 1400), cleanse(4)]),
+    t('Brighter Mist', 'The mist heals more, and shields him', { pow: 0.105, castShield: 0.028 }),
+    t('Radiant Mist', 'The mist heals far more, and hastens the allies near him', { pow: 0.21 }, [haste(4, 1050)]),
+    t('Pilgrim\'s Dawn', 'The mist heals far more, hastens the allies near him for longer, and frees them of every ailment', { pow: 0.3 }, [haste(4, 1400), cleanse(4)]),
   ],
   lightningMage: [
     t('Forked Chain', 'The bolt jumps through one more foe', { extra: 1 }),
@@ -156,9 +156,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Holy Vanguard', 'The challenge reaches three tiles further and lasts much longer; he and his allies near are mended well and warded', { reach: 3, dur: 0.22, castShield: 0.05 }, [mend(3, 0.4), ward(3, 0.025)]),
   ],
   cleric: [
-    t('Warm Benediction', 'Heals more, and for longer', { pow: 0.105, dur: 0.105 }),
-    t('Miracle', 'Heals far more, for much longer, and every ally is shielded', { pow: 0.21, dur: 0.21 }, [ward(99, 0.03)]),
-    t('Saint\'s Grace', 'Heals greatly, for far longer; every ally is shielded more and freed of every ailment', { pow: 0.3, dur: 0.3 }, [ward(99, 0.045), cleanse(99)]),
+    t('Greater Prayer', 'The prayer heals more, and for longer', { pow: 0.105, dur: 0.105 }),
+    t('Prayer of Miracles', 'The prayer heals far more, for much longer, and every ally is shielded', { pow: 0.21, dur: 0.21 }, [ward(99, 0.03)]),
+    t('Saint\'s Prayer', 'The prayer heals greatly, for far longer; every ally is shielded more and freed of every ailment', { pow: 0.3, dur: 0.3 }, [ward(99, 0.045), cleanse(99)]),
   ],
   druid: [
     t('Grove', 'A second treant can stand beside the first', { extra: 1 }),
@@ -261,8 +261,8 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Siege Breaker', 'The shell hits harder and a second, smaller shell follows it, as at tier 3; then a light shell falls again after the barrage', { pow: 0.14, extra: 1 }, [echo(1100, 0.1)]),
   ],
   priestess: [
-    t('Brighter Light', 'The light heals more', { pow: 0.105 }),
-    t('Holy Radiance', 'Heals far more, and every ally is shielded and mended', { pow: 0.21 }, [ward(99, 0.024), mend(99, 0.3)]),
+    t('Greater Cure Wounds', 'It heals more', { pow: 0.105 }),
+    t('Mass Cure Wounds', 'It heals far more, and every ally is shielded and mended', { pow: 0.21 }, [ward(99, 0.024), mend(99, 0.3)]),
     t('Celestial Choir', 'Heals greatly; every ally is shielded more, mended well and freed of every ailment', { pow: 0.4 }, [ward(99, 0.045), mend(99, 0.55), cleanse(99)]),
   ],
   dragoon: [

@@ -10,7 +10,7 @@
 import { type Battle, type Unit } from './sim/battle';
 import { heroClassLabel, heroName } from './sim/heroNames';
 import { ultimateOf } from './sim/abilities';
-import { costOf, heroKitOf, resOf, skill2Open, SKILL2_LEVEL, ultFull } from './sim/heroKits';
+import { costOf, heroKitOf, resOf, reviveReady, skill2Open, SKILL2_LEVEL, ultFull } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
 import { formOf, UNITS } from './sim/units';
 import { portrait } from './render/sheets';
@@ -166,7 +166,9 @@ export class HeroBar {
       const can1 = !!hk && res + 1e-9 >= costOf(u, hk.s1);
       const open2 = skill2Open(u);
       const can2 = !!hk && open2 && res + 1e-9 >= costOf(u, hk.s2);
-      const state = `${Math.round(meter * 100)}|${Math.round(hp * 100)}|${Math.round((res / max) * 100)}|${+can1}${+can2}${+open2}|${+ready}${+queued}${+locked}${+u.alive}`;
+      // (a healer's revive face is ready and a friend lies fallen: pip 2 shows an ankh, RPG-SPELLS batch 2)
+      const ankh = !!hk?.s2.revive && reviveReady(b, u);
+      const state = `${Math.round(meter * 100)}|${Math.round(hp * 100)}|${Math.round((res / max) * 100)}|${+can1}${+can2}${+open2}${+ankh}|${+ready}${+queued}${+locked}${+u.alive}`;
       if (state === t.last) continue;
       t.last = state;
       t.arc.style.strokeDashoffset = `${RING * (1 - meter)}`;
@@ -175,7 +177,9 @@ export class HeroBar {
       t.p1.classList.toggle('lit', can1 && u.alive);
       t.p2.classList.toggle('lit', can2 && u.alive);
       t.p2.classList.toggle('shut', !open2);
-      t.p2.title = open2 ? '' : `Skill 2 opens at level ${SKILL2_LEVEL}`;
+      t.p2.title = open2 ? (ankh ? `${hk!.s2.revive!.skill.name}: a fallen friend can be raised` : '') : `Skill 2 opens at level ${SKILL2_LEVEL}`;
+      t.p2.textContent = ankh ? '\u2625' : '2';
+      t.p2.classList.toggle('ankh', ankh);
       t.el.classList.toggle('ready', ready && !queued);
       t.el.classList.toggle('queued', queued && u.alive);
       t.el.classList.toggle('locked', locked);

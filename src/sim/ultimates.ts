@@ -45,6 +45,9 @@ import {
   type Skill,
 } from './abilities';
 import { charmFor, cleanse, harmed, setDot, stunFor } from './ailments';
+import { fallenFor, raiseFallen } from './kits/revive';
+import { startPool } from './heroKits';
+import { chokeLine, raiseAura, raiseWall } from './toolkit';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
 const dur = (me: Unit, ms: number): number => durOf(me, Math.round(ms * Math.sqrt(castPower())));
@@ -428,20 +431,39 @@ function hallOfMirrors(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** High Priestess: up to two fallen heroes rise with half their health, and everyone is healed. */
 function resurrection(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  // (none rise in the Last Stand: there the fallen stay down)
-  const fallen = b.units.filter((a) => !b.stand && !a.alive && a.side === me.side && a.owner === undefined && !defOf(a).summon).sort((x, y) => (x.diedAt ?? 0) - (y.diedAt ?? 0) || x.id - y.id);
+  // (none rise in the Last Stand: there the fallen stay down; a hero raised once this wave, by a revive or before, stays down too: `fallenFor`)
+  const fallen = fallenFor(b, me).sort((x, y) => (x.diedAt ?? 0) - (y.diedAt ?? 0) || x.id - y.id);
   if (!fallen.length && !wounded(b, me)) return false;
-  for (const x of fallen.slice(0, 2)) {
-    x.alive = true;
-    x.hp = Math.max(1, Math.round(x.maxHp * 0.5));
-    x.diedAt = undefined;
-    x.busyUntil = b.t + 500;
-    x.charge = 0;
-    x.charge2 = undefined;
-    cleanse(b, x);
-    out.push({ kind: 'heal', to: x.id, amount: x.hp });
-  }
+  for (const x of fallen.slice(0, MASS_RISE)) raiseFallen(b, me, x, MASS_SHARE, out, startPool);
   bless(b, me, out, { heal: 5, cleanse: true });
+  // (a Wall of Light rises between the foes and her friends: her side walks through it, the foes cannot, and their shots stop at it)
+  const line = chokeLine(b, me, LIGHT_WALL);
+  if (line) raiseWall(b, me, line, 'light', dur(me, LIGHT_MS), out);
+  return true;
+}
+
+/** Mass Resurrection (RPG-SPELLS batch 2): how many rise, at what share of their health, and the Wall of Light's length and time. */
+const MASS_RISE = 3;
+const MASS_SHARE = 0.4;
+const LIGHT_WALL = 3;
+const LIGHT_MS = 5000;
+/** The Druid's Wall of Thorns: its length and time. */
+const THORN_WALL = 4;
+const THORN_MS = 8000;
+
+/** The Cleric's Spirit Guardians (RPG-SPELLS batch 2): an aura round her for 8s (reach 2): foes in it are hurt (a share of her attack, times
+ *  the ultimate's strength) and slowed each second; friends in it heal a share of their health each second; the friends in it as it rises are
+ *  cleansed. Cast when a foe is within 3 of her or a friend is hurt. */
+const GUARDIAN_MS = 8000;
+const GUARDIAN_REACH = 2;
+const GUARDIAN_DMG = 0.35;
+const GUARDIAN_HEAL = 0.02;
+const GUARDIAN_SLOW = 1200;
+function spiritGuardians(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  if (!foesOf(b, me).some((f) => apart(me, f) <= 3) && !wounded(b, me)) return false;
+  const reach = reachOf(me, GUARDIAN_REACH);
+  for (const a of alliesOf(b, me)) if (apart(me, a) <= reach) cleanse(b, a);
+  raiseAura(b, me, { what: 'Spirit Guardians', reach, ms: dur(me, GUARDIAN_MS), every: 1000, ally: { heal: share(GUARDIAN_HEAL) }, foe: { dmg: GUARDIAN_DMG * castPower(), slow: GUARDIAN_SLOW } }, out);
   return true;
 }
 
@@ -514,7 +536,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */
 export function heroUltimates(first: (kind: string) => Skill | undefined): Record<string, Skill> {
-  const ult = (name: string, text: string, castMs: number, anim: Skill['anim'], cast: Skill['cast']): Skill => ({ name, text, need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs, anim, unlock: ULT_LEVEL, cast });
+  const ult = (name: string, text: string, castMs: number, anim: Skill['anim'], cast: Skill['cast'], key?: string): Skill => ({ name, ...(key ? { key } : {}), text, need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs, anim, unlock: ULT_LEVEL, cast });
   const inSight = (b: Battle, me: Unit, reach = 9) => foesOf(b, me).some((f) => apart(me, f) <= reach);
   const all: Record<string, Skill> = {
     // ---- the front line ----
@@ -586,17 +608,14 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       sky(b, me, out, { n: 3, reach: 8, mult: 2.4, ms: 800, kind: 'rain', gap: 200, repeat: true, barrels: true })),
     timeWitch: ult('Time Stop', 'Every foe within 8 tiles is stopped where it stands for 2.6s, while her friends are hastened for 5s', 900, 'attack2', timeStop),
     // ---- the healers and callers ----
-    cleric: ult('Divine Intervention', 'Every ally is cleansed, healed, shielded and mended over 5s', 900, 'attack2', (b, me, out) => {
-      if (!wounded(b, me)) return false;
-      bless(b, me, out, { heal: 9, cleanse: true, shield: 0.12, hot: { amount: 1.5, ms: 5000 } });
-      return true;
-    }),
-    wanderer: ult('Dawn Light', 'A dawn heals every ally, shields them for 3s and hastens them for 4s', 800, 'attack2', (b, me, out) => {
+    // (RPG-SPELLS batch 2: Divine Intervention became Spirit Guardians, an aura round her)
+    cleric: ult('Spirit Guardians', 'Spirits circle her for 8s: foes within 2 are hurt each second and slowed; friends within 2 heal each second, and are cleansed as the spirits come', 900, 'attack2', spiritGuardians, 'Divine Intervention'),
+    wanderer: ult('Panacea', 'A cure for every ill: every ally is healed, shielded for 3s and hastened for 4s', 800, 'attack2', (b, me, out) => {
       if (!wounded(b, me)) return false;
       bless(b, me, out, { heal: 9, guard: 3000, haste: 4000 });
       return true;
-    }),
-    priestess: ult('Resurrection', 'Up to two fallen heroes rise with half their health, and every ally is healed and cleansed', 1000, 'attack2', resurrection),
+    }, 'Dawn Light'),
+    priestess: ult('Mass Resurrection', 'Up to three fallen heroes rise with 40% of their health (each once a wave), every ally is healed and cleansed, and a Wall of Light rises between the foes and her friends for 5s', 1000, 'attack2', resurrection, 'Resurrection'),
     wolfBard: ult('Battle Hymn', 'Allies are hastened and rallied (attack up a quarter) for 6s; every foe within 7 tiles is slowed', 800, 'attack2', (b, me, out) => {
       if (!inSight(b, me)) return false;
       smite(b, me, out, { reach: 7, mult: 0, slow: 5000 });
@@ -609,11 +628,13 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       return true;
     }),
     beastmaster: ult('Hunt of the Pack', 'Four wolves answer his call at once', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4)),
-    druid: ult('Heart of the Grove', 'Two treants rise at her side and every ally is healed', 900, 'attack2', (b, me, out) => {
+    druid: ult('Wall of Thorns', 'A hedge of thorns rises across the foes\' way for 8s, two treants rise at her side, and every ally is healed', 900, 'attack2', (b, me, out) => {
       if (!summon(b, me, 'treant', 2)) return false;
       bless(b, me, out, { heal: 4 });
+      const line = chokeLine(b, me, THORN_WALL);
+      if (line) raiseWall(b, me, line, 'thorns', dur(me, THORN_MS), out);
       return true;
-    }),
+    }, 'Heart of the Grove'),
   };
   // the first eight heroes' ultimates are copied and gated at `ULT_LEVEL` like the rest (a foe's own copy of one, such as the Gorgon Queen's, stays as it was) and all forty-five take their balance
   for (const kind of FIRST_EIGHT) all[kind] = { ...first(kind)!, unlock: ULT_LEVEL };

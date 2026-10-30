@@ -52,6 +52,11 @@ export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el:
   'Font of Wisdom': { as: 'Starfall', tint: 0x90b8ff, el: 'light' },
   'Blood Price': { as: 'Hellblade Sweep', tint: 0xff4060, el: 'dark' },
   Condemn: { as: 'Judgement', tint: 0xff8060, el: 'fire' },
+  // (RPG-SPELLS batch 2: the healers' revive faces, until their painted effects arrive)
+  'Revive: Revivify': { as: 'Resurrection', tint: 0xffe08a, el: 'light' },
+  'Revive: Resurrection': { as: 'Resurrection', tint: 0xfffaf0, el: 'light' },
+  'Revive: Elixir of Life': { as: 'Resurrection', tint: 0xa8ffc0, el: 'light' },
+  'Revive: Reincarnate': { as: 'Heart of the Grove', tint: 0xb8f090, el: 'forest' },
 };
 
 const tinted = (steps: Step[], tint: number | undefined): Step[] => (tint === undefined ? steps : steps.map((x) => ({ ...x, t: tint })));

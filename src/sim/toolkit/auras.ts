@@ -20,7 +20,8 @@ export interface AuraOpts {
   every: number;
   /** Round the caster ('self', the default) or on a tile. */
   at?: 'self' | At;
-  ally?: { guard?: number; atk?: number; heal?: number; ward?: boolean; mana?: number; stamina?: number };
+  /** `heal` is a share of each ally's max health a tick; `flat` a set amount (from the caster's attack when it was raised). */
+  ally?: { guard?: number; atk?: number; heal?: number; flat?: number; ward?: boolean; mana?: number; stamina?: number };
   foe?: { dmg?: number; slow?: number; ail?: AuraAil };
 }
 
@@ -93,6 +94,7 @@ export function tickAuras(b: Battle, out: BattleEvent[]): void {
           } else x.auraAtk.until = Math.max(x.auraAtk.until, hold);
         }
         if (o.heal) mendUnit(x, x.maxHp * o.heal, out, by);
+        if (o.flat) mendUnit(x, o.flat, out, by);
         if (o.ward) ward(b, x, a.every + 100);
         const pool = poolOf(x);
         if (pool === 'mana' && o.mana) addRes(x, o.mana);

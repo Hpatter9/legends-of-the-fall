@@ -228,8 +228,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'wanderer',
     [['Kind Heart', 'amulet', { hp: HP }], ['Travelling Light', 'boots', { moveSpeed: 0.06 }], ['Quiet Prayer', 'scroll', { charge: 0.1 }], ['Road-worn Cloak', 'cloak', { def: 1 }]],
     [
-      { name: 'Lasting Light', icon: 'lyre', text: 'Sanctuary shields for 3.5s.', tal: { dur: 0.75 } },
-      { name: 'Radiant Wave', icon: 'emerald', text: 'Sanctuary heals half as much again.', tal: { pow: 0.5 } },
+      { name: 'Lasting Light', icon: 'lyre', text: 'Healing Mist guards for 3.5s and hangs longer.', tal: { dur: 0.75 } },
+      { name: 'Radiant Wave', icon: 'emerald', text: 'Healing Mist heals half as much again.', tal: { pow: 0.5 } },
     ],
     [
       { name: 'Second Chance', icon: 'feather', text: 'Once a fight, when she would fall she rises at 30% health.', abilities: [ab('tl_wanderer_chance', 'Second Chance', 'death', 'revive', { v: 0.3 })] },
@@ -348,8 +348,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'cleric',
     [['Devout', 'amulet', { hp: HP }], ['Censer', 'bell', { charge: 0.1 }], ['Pilgrim Boots', 'boots', { moveSpeed: 0.06 }], ['Plain Robes', 'vestments', { def: 1 }]],
     [
-      { name: 'Prolonged Blessing', icon: 'lyre', text: 'Benediction heals for 8s.', tal: { dur: 0.6 } },
-      { name: 'Empowered Prayer', icon: 'tome', text: 'Benediction heals half as much again each second.', tal: { pow: 0.5 } },
+      { name: 'Prolonged Blessing', icon: 'lyre', text: 'Prayer of Healing heals for 8s.', tal: { dur: 0.6 } },
+      { name: 'Empowered Prayer', icon: 'tome', text: 'Prayer of Healing heals half as much again each second.', tal: { pow: 0.5 } },
     ],
     [
       { name: 'Healing Hands', icon: 'emerald', text: 'Every 7s the weakest ally is healed 15% of its health.', abilities: [ab('tl_cleric_hands', 'Healing Hands', 'tick', 'healAlly', { n: 7, v: 0.15, show: true })] },
@@ -602,8 +602,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'priestess',
     [['Holy Vestments', 'vestments', { hp: HP }], ['Radiant Focus', 'tome', { atk: ATK }], ['Prayer Beads', 'amulet', { charge: 0.1 }], ['Pilgrim Sandals', 'boots', { moveSpeed: 0.06 }]],
     [
-      { name: 'Overflowing Light', icon: 'emerald', text: 'Holy Light heals half as much again.', tal: { pow: 0.5 } },
-      { name: 'Healing Rain', icon: 'bell', text: 'Holy Light reaches the allies 2 tiles further round its target.', tal: { reach: 2 } },
+      { name: 'Overflowing Light', icon: 'emerald', text: 'Cure Wounds heals half as much again.', tal: { pow: 0.5 } },
+      { name: 'Healing Rain', icon: 'bell', text: 'Cure Wounds reaches the allies 2 tiles further round its target.', tal: { reach: 2 } },
     ],
     [
       { name: 'Divine Intervention', icon: 'feather', text: 'Once a fight, when she would fall she rises at 40% health.', abilities: [ab('tl_priestess_divine', 'Divine Intervention', 'death', 'revive', { v: 0.4 })] },

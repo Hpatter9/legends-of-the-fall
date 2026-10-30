@@ -14,6 +14,7 @@ import { CHARGE_MAX, keyOf, kitOf, powered, began, tal, ultimateOf, ultTune, typ
 import { UNITS } from './units';
 import { HERO_TABLE } from './kits/table';
 import { SKILL2_WHEN } from './kits/when';
+import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
 
 export type Pool = 'mana' | 'stamina';
 
@@ -93,6 +94,8 @@ export interface Slot {
   heals?: boolean;
   /** Something a hit of this skill leaves on the foe it hit (a mark): called for each foe struck. */
   onHit?: (b: Battle, me: Unit, to: Unit, out: BattleEvent[]) => void;
+  /** A healer's skill 2 has a revive face (RPG-SPELLS batch 2, `kits/revive.ts`): cast instead when a friend lies fallen and it is ready. */
+  revive?: ReviveFace;
 }
 
 export interface HeroKit {
@@ -112,6 +115,8 @@ export interface KitState {
   /** When it was last struck (a mana hero's focus), and until when a stamina hero is winded. */
   hitAt?: number;
   winded?: number;
+  /** When a healer last cast its revive face. */
+  atRev?: number;
 }
 
 let table: Record<string, HeroKit> | undefined;
@@ -276,6 +281,8 @@ function reserve(b: Battle, me: Unit, hk: HeroKit, n: 1 | 2): boolean {
  *  each when open, affordable, past its gap and with something to do (its cast's own check), skill 1 held back while skill 2 is nearly affordable.
  *  False when it casts nothing (it strikes or walks instead). */
 export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): boolean {
+  // (a healer's revive goes before anything but an ultimate the player has queued, RPG-SPELLS batch 2)
+  if (hk.s2.revive && me.ultOrder === undefined && castRevive(b, me, hk, out)) return true;
   const ult = ultimateOf(me);
   if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false)) {
     if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out)) {
@@ -316,6 +323,32 @@ export const ultFull = (u: Unit): boolean => {
 export function skillShown(u: Unit, key: string): string {
   const hk = heroKitOf(u);
   const kit = kitOf(u);
-  for (const s of [hk?.s1.skill, hk?.s2.skill, kit?.skill, ultimateOf(u), kit?.ultimate]) if (s && keyOf(s) === key) return s.name;
+  for (const s of [hk?.s1.skill, hk?.s2.skill, hk?.s2.revive?.skill, kit?.skill, ultimateOf(u), kit?.ultimate]) if (s && keyOf(s) === key) return s.name;
   return key;
+}
+
+/** What a healer's revive costs: its skill 2's cost and `REVIVE.EXTRA` more (the tier 3 discount does not apply). */
+export const reviveCost = (hk: HeroKit): number => hk.s2.cost + REVIVE.EXTRA;
+
+/** Whether a healer's revive face is ready now: it has one and skill 2 is open, it is not the Last Stand, the wave's two skill revives
+ *  are not spent, its own 30 s have come round, it can pay, and a friend lies fallen who has not been raised this wave. */
+export function reviveReady(b: Battle, me: Unit): boolean {
+  const hk = heroKitOf(me);
+  if (!hk?.s2.revive || !me.alive || !skill2Open(me) || b.stand) return false;
+  if ((b.revives ?? 0) >= REVIVE.PER_WAVE) return false;
+  const at = me.ks?.atRev;
+  if (at !== undefined && b.t - at < REVIVE.GAP_MS) return false;
+  if (resOf(me, hk.pool) + 1e-9 < reviveCost(hk)) return false;
+  return fallenFor(b, me).length > 0;
+}
+
+/** Cast a healer's revive: the fallen friend nearest it rises (`raiseFallen`), the healer pays and is busy casting. False when it is not ready. */
+function castRevive(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): boolean {
+  if (!reviveReady(b, me)) return false;
+  const x = fallenFor(b, me)[0];
+  addRes(me, -reviveCost(hk));
+  ks(me).atRev = b.t;
+  b.revives = (b.revives ?? 0) + 1;
+  raiseFallen(b, me, x, REVIVE.SHARE, out, (u) => startPool(u));
+  return began(b, me, hk.s2.revive!.skill, out, 'skill2');
 }

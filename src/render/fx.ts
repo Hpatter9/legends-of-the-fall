@@ -350,6 +350,7 @@ export class Fx {
       }
       else if (e.kind === 'terrain') this.kitTerrain(b, e);
       // (the movement toolkit, RPG-SPELLS batch 1: placeholder looks from the pack until the painted effects arrive)
+      else if (e.kind === 'revive') this.revive(e);
       else if (e.kind === 'shove' || e.kind === 'launch' || e.kind === 'slam' || e.kind === 'fall' || e.kind === 'burrow' || e.kind === 'swap' || e.kind === 'aura' || e.kind === 'wallBreak') this.toolkit(b, e);
       else if (e.kind === 'mark') this.kitMark(e);
       else if (e.kind === 'hit') {
@@ -1181,6 +1182,22 @@ export class Fx {
       const [x, y] = centre();
       return [x, y - 4];
     }, 1.3, live);
+  }
+
+  /** A healer raised a fallen hero (RPG-SPELLS batch 2): it gets up where it lay (the heart revive's `getUp`), in a column of light with a
+   *  burst at its feet, and a thread of light runs to it from its healer. Pack strips until the painted revives arrive. */
+  private revive(e: Extract<BattleEvent, { kind: 'revive' }>): void {
+    const to = this.sprites.get(e.to);
+    if (!to) return;
+    to.getUp();
+    const x = to.x;
+    const y = to.y;
+    this.lookOnce({ once: 'light-pillar', tint: 0xfff0b0 }, x, y - to.tall * 0.6, 2.2);
+    this.lookOnce({ once: 'light-nova' }, x, y - 4, 1.8);
+    this.label('Revived!', x, y - to.tall - 14, 0xfff2a0, 14, 1400, true);
+    const by = this.sprites.get(e.by);
+    if (by && by !== to) this.thread(by.x, by.y - by.tall * 0.5, x, y - to.tall * 0.5, 'light-sparkle');
+    this.trauma = Math.min(1, this.trauma + 0.15);
   }
 
   /** The world position of a tile's top. */
