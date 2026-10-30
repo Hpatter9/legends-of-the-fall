@@ -450,3 +450,6 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 - Original pixel artwork generated with OpenAI image generation for the owner-approved legendary gear and compact hero form concepts. Forty-five collectible heroes and four supporting Werewolf/Druid forms have separately drawn front/rear animation views, mirrored for four facings. Mage eye glow is part of the artwork. The fifteen human identities follow the heritage brief and keep their people, palettes and class equipment in the upgraded forms.
 - `tools/ascended/roster.json`, `heritage.json` and `sources.json` record the character/equipment briefs and source provenance. The originals remain in the ignored art workspace. `pack.cjs` crops, selects intact poses, applies hard alpha and scales nearest-neighbour without repainting the artwork. The corresponding `src/art/heroes/awakened-*.webp` menu cutouts are extracted from the emitted idle poses. See `docs/notes/ascended-hero-forms.md`.
+## Spell and movement effects (painted)
+
+- Spell and movement effects (`src/art/fx/spells/`): original painted effects made with OpenAI image generation for this game. Session A sources are retained in `art-source/spell-fx/a-toolkit/`; runtime import is pending.

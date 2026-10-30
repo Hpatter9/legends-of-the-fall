@@ -1,0 +1,77 @@
+{
+  "blink": {
+    "original": "originals/a-toolkit/blink.png",
+    "original_sha256": "4b7e58339126430d36ef92604bdc34ca46a9a4ed6fbfe5263f915ef626ea0d0b",
+    "packed_sha256": "1605fac19752de17042c256c912d035bb094f6b76de89066c378469ff9b7b31e"
+  },
+  "burrow": {
+    "original": "originals/a-toolkit/burrow.png",
+    "original_sha256": "d14fa94d306394af1c0f73ede6c81db1d1ddb2bc119c57a41782272fcdbaa0de",
+    "packed_sha256": "479be308ea647d1a8bb2bfb67d4f6c5bebe85d782b8f5f1eb5ae0a3c8e87a462"
+  },
+  "dash": {
+    "original": "originals/a-toolkit/dash.png",
+    "original_sha256": "a24b59c97c57d4ab1b30123f4c204f10cf826204caf5018c7c8c1eb0eaa2a3de",
+    "packed_sha256": "c060d386e090491d9dd4dfd1bd0889ecd1a14f709b5fd350cd0c61a7468c84b7"
+  },
+  "launch": {
+    "original": "originals/a-toolkit/launch.png",
+    "original_sha256": "c3df6b6d8f87e33ffeec17ea62341ac7f5044d621466893004b96053036977bd",
+    "packed_sha256": "c636c794a8bc6054ed09e09e4a60a6baa39aad5580f7cbc393659188c0fbce97"
+  },
+  "pull": {
+    "original": "originals/a-toolkit/pull.png",
+    "original_sha256": "f506816de60b9d44a4381f38150bff10f496b235bdfd6dca7f0b595a24342c93",
+    "packed_sha256": "595ae5969a91f9ed3da18660e74ae059026aa331d4dbab414ccfbf21a3caf43d"
+  },
+  "shove": {
+    "original": "originals/a-toolkit/shove.png",
+    "original_sha256": "40b25758c178d9d116ced13747ed2a6193f0babfd84145c952230c221c6f16f0",
+    "packed_sha256": "637d3dac51e7bca7ec75273ab338963c2ff61ead093a2b25f1883a247e9e2931"
+  },
+  "slam": {
+    "original": "originals/a-toolkit/slam.png",
+    "original_sha256": "16599085d2ae8fbb6a930e4f881bf4399d88e6befc1e39c93424870a13999343",
+    "packed_sha256": "c167fd1ab33b455c6238eb794a83b5ac3e78446f7525e8add6383aa85e37f51f"
+  },
+  "swap": {
+    "original": "originals/a-toolkit/swap.png",
+    "original_sha256": "2be07bf27db064b5f730f57b26da3393dfe59ebd31f629a146bd92872bdfd1ec",
+    "packed_sha256": "f8f37ccbc83a12470e0624abcd402eb1ac0c2561af191c91c6320a19adab0b9e"
+  },
+  "teleport-slash": {
+    "original": "originals/a-toolkit/teleport-slash.png",
+    "original_sha256": "df2590745e346cc330459de8cdc126a96cd04a27f022d0f7558a7b3bb0f396fa",
+    "packed_sha256": "315ab8795835b3161cb21441b8e0bf20f951875583283d70d7b0f75c1aa0bc91"
+  },
+  "wall-fire": {
+    "original": "originals/a-toolkit/wall-fire.png",
+    "original_sha256": "695f06254b4fac5b3f61026264e8753021d44dbe2c637f07fa9c48bd7ca6e6cd",
+    "packed_sha256": "38a3d31b10e649147784b3be348d949af326b4b79b17ad5f13afc299980ff61e"
+  },
+  "wall-ice": {
+    "original": "originals/a-toolkit/wall-ice.png",
+    "original_sha256": "b3f22d150effa102d3a4fb2b84572588bb3f88a1ae27ed157b583dd0d6f9b4db",
+    "packed_sha256": "7f74800776483f2b63b8d1a23a8e5a9bc1a3e626de64ef810aa925209df631e2"
+  },
+  "wall-light": {
+    "original": "originals/a-toolkit/wall-light.png",
+    "original_sha256": "330416932523ff4e30d166478f8efce3778a759a574250cee33096e5cf54a314",
+    "packed_sha256": "6742bd441baccd7177f43e806c0b5147f63d3c6cdcc3c551229acd4c89bddb35"
+  },
+  "wall-stone": {
+    "original": "originals/a-toolkit/wall-stone.png",
+    "original_sha256": "479270ca14d18cc3ff5559ce5c9cab4c86d98d42848520e95da1a453ba7e8f46",
+    "packed_sha256": "0e40c83a0cdf6ae9249c234fc8b8aa2bded114bcf790d33b711afc99cc4e72e9"
+  },
+  "wall-thorns": {
+    "original": "originals/a-toolkit/wall-thorns.png",
+    "original_sha256": "1d08aa8c2a1d6fdaf900cfad088074531b08b316142ba692f2637a51aa13dcdf",
+    "packed_sha256": "56cd44e6ecb2af4d2963edeb8052e89f26d88b71c571a7fd5ad9874389867dd3"
+  },
+  "wall-wind": {
+    "original": "originals/a-toolkit/wall-wind.png",
+    "original_sha256": "ea3d2e4f7f05215cdb5deb1b39254a8e7df37d9229ad79b6cd264dee621844ca",
+    "packed_sha256": "1f10d62eff913421c3bcc92fe01fcaa86a8c8711d9837008b0a87c83969ecbd3"
+  }
+}
