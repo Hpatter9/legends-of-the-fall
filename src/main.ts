@@ -69,7 +69,7 @@ import { showDailyStart } from './dailyView';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastJoined, toastLines, toastSpells, toastStones } from './achievementsView';
-import { readyQuests } from './sim/quests';
+import { readyQuests, ultsIn } from './sim/quests';
 import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
 import { grantSpells } from './sim/spellSources';
@@ -126,6 +126,9 @@ import heartUrl from './art/rogue/heart.png';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
+/** A toast for a quest a fight has turned up (QUESTS-1b: spoils on a boss, the rift's voice): it waits on the quest board. */
+const toastFound = (ids: readonly string[]): void =>
+  toastLines(ids.map((id) => `${questById(id)?.giver === 'rift' ? 'A voice in the rift' : 'Spoils found'}: ${questById(id)?.title ?? id} · see the quest board`));
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
 
@@ -247,6 +250,8 @@ class Game {
   private spellGhost = document.createElement('div');
   /** The fight's numbers for each hero, tallied as the ticks come in. */
   private stats: FightStats = [];
+  /** The ultimates fired this fight, one hero kind each (QUESTS-1b: the quests' goals read them when the fight settles). */
+  private ultsFired: string[] = [];
   /** A boss's title card: how long it has been on, and the boss it is about. */
   private intro: { t: number; boss: Unit; slammed: boolean } | null = null;
   /** The stages whose boss has had its card this session (a stage's card plays once). */
@@ -831,6 +836,7 @@ class Game {
     // (the opening grumble belongs to a new fight)
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
+    this.ultsFired = [];
     // (the music: the battle's one track, the same for every wave of an army or a daily, `battleMusic.ts`)
     startFight(trackOfRun(this.run));
     startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo, duoCombosOf(kindsOf(this.b.units)));
@@ -941,6 +947,7 @@ class Game {
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
+        this.ultsFired.push(...ultsIn(events, b.units));
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
@@ -2632,8 +2639,11 @@ class Game {
       if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       // (QUESTS: the quests this fight completes are told after the achievements' toasts)
       const readyBefore = readyQuests(this.meta);
-      const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
+      const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
+      const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
+      // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
+      const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
       this.runStars = settleArmyRun(this.meta, run);
       // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
       this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
@@ -2703,6 +2713,7 @@ class Game {
       saveRun(run);
       toastAchievements(earned);
       if (questsDone.length) setTimeout(() => toastQuests(questsDone), earned.length * 2800);
+      if (questsFound.length) setTimeout(() => toastFound(questsFound), (earned.length + (questsDone.length ? 1 : 0)) * 2800);
     }
     document.body.dataset.phase = b.phase;
     document.body.dataset.roster = run.roster.length ? 'some' : 'none';

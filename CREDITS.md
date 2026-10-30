@@ -4,7 +4,8 @@
 
 - **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
 
-- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
+- **The Knight's plain form** (`hero_soldier.png`, `hero_soldier_back.png` and their `_deep` copies, which the game bundles): his awakened sheets (`src/art/awakened/awakened_knight*.png`, credited under Awakened hero equipment below), frame for frame, with the gold, the red cape, the green inlays, the blade's blue core and the shield's lion recoloured to steel and dark blue cloth and a plain steel cross put on the shield by `tools/knight/plain.py`. No new artwork was generated; the face, hair, outlines and alpha are the awakened sheets' own. See `docs/notes/knight-sprite.md`.
+- **Resonance hero pilot** (`hero_samurai_archer.png`; the Knight's pilot sheet has since been replaced, above): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
 
 Most of the art is from free **Craftpix.net** packs (craftpix.net, free licence: use in games allowed, no redistributing
 the raw files), copied one sprite at a time from the private assets repository (`hpatter9/chronos-assets`).
@@ -198,7 +199,11 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   the white sleeveless shirt, a brown cloth belt and the grey ponytail; CC-BY-SA 3.0 / GPL 3.0, the LPC artists listed in that pack's
   `AUTHORS.txt`). Her stand is the walk-left row's first frame; her talk the spellcast-left frames. Placeholders until the owner's
   painted giver portraits land.
-- **The passersby's portraits** (`pedlar-face.png`, `pilgrim-face.png`): the **Tiny RPG Town** pack's `npc.png` (16 px faces, scaled 4x).
+- **The passersby's portraits** (`pedlar-face.png`, `pilgrim-face.png`; batch 1b's `messenger-face.png`, `hunter-face.png`): the **Tiny
+  RPG Town** pack's `npc.png` (16 px faces, scaled 4x).
+- **Duchess's card portrait** (`duchess-face.png`, batch 1b): the first frame of the game's own goat sheet (`src/art/duchess/goat.png`,
+  credited with Duchess), squared and scaled. The spoils' and the rift's cards show two of the gear icons already in the game
+  (`src/art/items/star_chart.png`, `rift_shard.png`); the heroes and the ruler show their own painted portraits.
 - **The quest board** (`board.png`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer** ("Quest Board", craftpix.net free
   licence), trimmed and scaled to 64 px across with hard alpha.
 
@@ -441,7 +446,7 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 ## Heritage looks
 
-- `src/art/units/*_{deep,brown,tan,olive}.png` (23 sheets, front and rear, for twelve human heroes; the Cleric's back shows no skin and is used as it is): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
+- `src/art/units/*_{deep,brown,tan,olive}.png` (23 sheets, front and rear, for twelve human heroes; the Cleric's back shows no skin and is used as it is; the Knight's two are now copies of his plain form, above, which already has his tone): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
 
 
 ## Last Stand ornate room artwork (`src/art/stand/ornate/`)

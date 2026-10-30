@@ -141,6 +141,7 @@ export class Home {
       onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), openLog: () => this.openQuests('active') }),
       onBoard: () => this.openQuests('board'),
       onQuests: () => this.openQuests('active'),
+      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), openLog: () => this.openQuests('active') }),
     });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
