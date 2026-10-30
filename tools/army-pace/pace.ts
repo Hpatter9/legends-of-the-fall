@@ -8,16 +8,20 @@
 //   node tools/army-pace/run.mjs tiers 55,70,85,100     each tier of the armies in ONLY on its own: mean tries to clear
 //   node tools/army-pace/run.mjs tune golems:64          bisect an army's Normal `start` so this player at that level takes TARGET (2.8) tries
 //   node tools/army-pace/run.mjs cell golems:60 yokai:55 one army:level Normal cell
+//   node tools/army-pace/run.mjs gate 55,65              the armies' Normals in order, each tried only once the one before is beaten (the army
+//                                                        gate, `docs/notes/army-gate.md`): FROM (infernal) on, the armies before it beaten
 //
-// Environment: SAVES (default 12), CAP (25 tries a tier, or to clear), ONLY (army ids), START, GROWTH (army:value,...), ARMY (the army `stars` chases: orcs).
-import { ARMIES, armyById } from '../../src/sim/armies';
+// Environment: SAVES (default 12), CAP (25 tries a tier, or to clear), ONLY (army ids), START, GROWTH (army:value,...), ARMY (the army `stars` chases: orcs),
+// HEARTS=1 (a lost wave burns a heart and is fought again, as the page does; by default a loss ends the try, as every figure in the notes was
+// measured; the star "clear without using a heart" is then met by every clear).
+import { ARMIES, ARMY_WAVES, armyById, armyUnlocked } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
 import { BUILDINGS, maxLevel, newCastle, xpRate, type BuildingId, type Castle } from '../../src/sim/castle';
 import { fightXp, gainXp, levelOfKind } from '../../src/sim/levels';
 import { heroRank, type Meta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';
-import { armyRun, boostOf, finish, isBossRun, noteFight, startStage, tierOfRun, type Owned, type Run } from '../../src/sim/run';
+import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, startStage, tierOfRun, type Owned, type Run } from '../../src/sim/run';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
@@ -27,6 +31,7 @@ import { savedAt } from '../autoplay';
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 const SAVES = Number(process.env.SAVES ?? 12);
 const CAP = Number(process.env.CAP ?? 25);
+const HEARTS = process.env.HEARTS === '1';
 const SPREAD: BuildingId[] = ['barracks', 'armoury', 'library', 'treasury', 'stable', 'mage'].filter((id) => id in BUILDINGS) as BuildingId[];
 const CASTLE_MAX = (Object.keys(BUILDINGS) as BuildingId[]).reduce((n, id) => n + maxLevel(id), 0);
 /** The castle levels a player has at a hero level: the climb's (`tools/curve`: none to level 30, 6 at 38, 13 at 40, 18 at 46, 22 at 52), then a level more every two hero levels to the top. */
@@ -94,6 +99,10 @@ function attempt(meta: Meta, id: string, seed: number, castle: Castle, tier: num
     fight(b);
     playOut(b);
     const ok = b.phase === 'won';
+    if (!ok && HEARTS && canRetry(run)) {
+      retryWave(run);
+      continue;
+    }
     if (ok) won = run.stage;
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
@@ -211,6 +220,46 @@ if (cmd === 'stars') {
     }
     put(Math.round(((lo + hi) / 2) * 100) / 100);
     console.log(`${id}: ${tier ? `tier ${tier} lift` : 'start'} ${get()} -> ${normalTries(i, +lv, SAVES, tier).tries.toFixed(2)} tries at Lv ${lv}`);
+  }
+} else if (cmd === 'gate') {
+  // (LATE-RETUNE: an army opens only once the army before it is beaten, ARMY-GATE. Each save starts at a level with the armies before FROM
+  // beaten (their Normal's clear star and one more, as the stars' pace has it); it tries FROM's Normal until it falls (at most CAP tries), then
+  // the next army's once `armyUnlocked` says so, carrying XP. An army never beaten keeps the rest shut. Per army: the mean tries of the saves
+  // that reached it, the share of saves that beat it, the mean tries from FROM to beating it, and the party's level then.)
+  const from = Math.max(0, ARMIES.findIndex((a) => a.id === (process.env.FROM ?? 'infernal')));
+  const beat = (m: Meta, id: string, mask: number) => {
+    const r = (m.armies[id] ??= { waves: ARMY_WAVES, best: 0, won: 0, clears: 0, stars: {} });
+    r.best = r.won = ARMY_WAVES;
+    r.clears++;
+    r.met = { ...(r.met ?? {}), 0: (r.met?.[0] ?? 0) | mask };
+  };
+  for (const L of levels) {
+    const reach = ARMIES.map(() => ({ saves: 0, tries: 0, beat: 0, sum: 0, level: 0 }));
+    for (let save = 1; save <= SAVES; save++) {
+      const meta = savedAt(L, party, save);
+      for (let i = 0; i < from; i++) beat(meta, ARMIES[i].id, 0b11);
+      const castle = castleAt(L);
+      let sum = 0;
+      for (let i = from; i < ARMIES.length && armyUnlocked(meta, ARMIES[i].id); i++) {
+        reach[i].saves++;
+        let n = 0;
+        let won: { cleared: boolean; mask: number } = { cleared: false, mask: 0 };
+        while (n < CAP && !won.cleared) won = attempt(meta, ARMIES[i].id, mixSeed(save, 0x6a7e, i * 100 + n++), castle, 0);
+        reach[i].tries += n;
+        sum += n;
+        if (!won.cleared) break;
+        beat(meta, ARMIES[i].id, won.mask);
+        reach[i].beat++;
+        reach[i].sum += sum;
+        reach[i].level += levelOfParty(meta);
+      }
+    }
+    console.log(`Lv ${L} (${SAVES} saves, from ${ARMIES[from].name}; at most ${CAP} tries an army)`);
+    ARMIES.forEach((a, i) => {
+      const r = reach[i];
+      if (i < from) return;
+      console.log(`  ${a.name.padEnd(22)} ${r.saves ? `reached ${r.saves}/${SAVES}  tries ${(r.tries / r.saves).toFixed(1)}  beaten ${r.beat}/${SAVES}` : 'never reached'}${r.beat ? `  tries from ${ARMIES[from].name} ${(r.sum / r.beat).toFixed(1)}  at Lv ${(r.level / r.beat).toFixed(0)}` : ''}`);
+    });
   }
 } else if (cmd === 'cell') {
   for (const c of rest) {
