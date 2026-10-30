@@ -26,6 +26,8 @@ export interface Wall {
   until: number;
   /** What the tile was (a stone wall sets `wall`; the others `bar`). */
   was?: { wall?: Tile['wall'] };
+  /** How hard a fire wall burns, from the skill that laid it (RPG-SPELLS batch 6: the Wall of Fire's strength); 1 when unset. */
+  pow?: number;
 }
 
 export const WALL = {
@@ -90,13 +92,13 @@ function setTile(b: Battle, w: Wall, on: boolean): void {
 
 /** Raise walls of `kind` on `tiles` for `ms`: only on free standable tiles with no wall, barrel or fighter, and never one that would
  *  seal anyone in. The tiles raised (none: nothing to do). */
-export function raiseWall(b: Battle, me: Unit, tiles: At[], kind: WallKind, ms: number, out: BattleEvent[]): At[] {
+export function raiseWall(b: Battle, me: Unit, tiles: At[], kind: WallKind, ms: number, out: BattleEvent[], pow?: number): At[] {
   const laid: At[] = [];
   for (const at of tiles) {
     const t = tileAt(b.board, at.u, at.v);
     if (!t || !standable(t) || unitAt(b, at.u, at.v) || wallAt(b, at.u, at.v)) continue;
     if (b.stand && apart(at, b.stand.at) <= 1) continue;
-    const w: Wall = { i: at.v * b.board.w + at.u, kind, side: me.side, by: me.id, until: b.t + ms };
+    const w: Wall = { i: at.v * b.board.w + at.u, kind, side: me.side, by: me.id, until: b.t + ms, ...(pow !== undefined && pow !== 1 ? { pow } : {}) };
     if (blocksWalk(kind)) {
       setTile(b, w, true);
       if (!noneSealed(b)) {
@@ -132,7 +134,7 @@ export function tickWalls(b: Battle, out: BattleEvent[]): void {
       const at = { u: w.i % b.board.w, v: Math.floor(w.i / b.board.w) };
       const by = b.units.find((y) => y.id === w.by) ?? x;
       const d = apart(at, x);
-      if (w.kind === 'fire' && d === 0 && !defOf(x).flies) burnFor(b, by, x, WALL.FIRE_MS, WALL.FIRE_SHARE);
+      if (w.kind === 'fire' && d === 0 && !defOf(x).flies) burnFor(b, by, x, WALL.FIRE_MS, WALL.FIRE_SHARE * (w.pow ?? 1));
       if (!second || d !== 1 || touched.has(w.kind)) continue;
       touched.add(w.kind);
       if (w.kind === 'thorns') {

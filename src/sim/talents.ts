@@ -180,7 +180,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'wizard',
     [['Ember Focus', 'wand', { atk: ATK }], ['Warded Robes', 'robe', { hp: 0.04 }], ['Quick Chant', 'scroll', { charge: 0.1 }], ['Cinder Ring', 'ring', { def: 1 }]],
     [
-      { name: 'Twin Meteor', icon: 'orb', text: 'A second, smaller meteor follows the first.', tal: { extra: 1 } },
+      { name: 'Twin Fireball', icon: 'orb', text: 'A second, smaller fireball follows the first.', tal: { extra: 1 } },
       { name: 'Searing Ground', icon: 'ruby', text: 'The burning ground lasts nearly twice as long (7s).', tal: { dur: 0.75 } },
     ],
     [
@@ -396,8 +396,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'warlock',
     [['Dark Focus', 'tome', { atk: 0.03 }], ['Shadow Weave', 'silk', { hp: 0.03 }], ['Whispers', 'scroll', { charge: 0.06 }], ['Bone Charm', 'bone', { def: 1 }]],
     [
-      { name: 'Lingering Curse', icon: 'orb', text: 'Hex burns for 7s.', tal: { dur: 0.4 } },
-      { name: 'Soul Feast', icon: 'shard', text: 'Casting Hex heals him 15% of his health.', tal: { castHeal: 0.15 } },
+      { name: 'Lingering Curse', icon: 'orb', text: 'Eldritch Blast\'s hex burns for 7s.', tal: { dur: 0.4 } },
+      { name: 'Soul Feast', icon: 'shard', text: 'Casting Eldritch Blast heals him 15% of his health.', tal: { castHeal: 0.15 } },
     ],
     [
       { name: 'Blood Pact', icon: 'ruby', text: 'Heals for a further 10% of the damage his blows deal.', tal: { leech: 0.1 } },
@@ -554,12 +554,12 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'timeWitch',
     [['Hourglass Sand', 'orb', { charge: 0.1 }], ['Chrono Focus', 'wand', { atk: ATK }], ['Silk Sleeves', 'silk', { hp: 0.04 }], ['Pocket Watch', 'pendant', { dodge: 0.03 }]],
     [
-      { name: 'Stretched Seconds', icon: 'scroll', text: 'Temporal Surge lasts 60% longer.', tal: { dur: 0.6 } },
-      { name: 'Wider Field', icon: 'bell', text: 'Temporal Surge reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Stretched Seconds', icon: 'scroll', text: 'Slow lasts 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Wider Field', icon: 'bell', text: 'Slow reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
       { name: 'Time Loop', icon: 'sapphire', text: 'Once a fight, when she would fall she rises at 30% health.', abilities: [ab('tl_timeWitch_loop', 'Time Loop', 'death', 'revive', { v: 0.3 })] },
-      { name: 'Borrowed Time', icon: 'ring', text: 'Temporal Surge gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
+      { name: 'Borrowed Time', icon: 'ring', text: 'Slow gives back 40% of its cost, and +8% attack speed.', tal: { refund: 40 }, stats: { atkSpeed: 0.08 } },
     ],
   ),
   arcBlade: tree(
@@ -638,11 +638,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'sage',
     [['Ancient Tomes', 'tome', { atk: ATK }], ['Wide Hat', 'circlet', { hp: HP }], ["Sage's Sandals", 'boots', { moveSpeed: 0.06 }], ['Quiet Mind', 'scroll', { charge: 0.1 }]],
     [
-      { name: 'Fourth Star', icon: 'orb', text: 'Starfall calls a fourth star.', tal: { extra: 1 } },
-      { name: 'Brighter Stars', icon: 'sapphire', text: 'Starfall hits 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Fourth Missile', icon: 'orb', text: 'Magic Missile looses a fourth dart.', tal: { extra: 1 } },
+      { name: 'Brighter Missiles', icon: 'sapphire', text: 'Magic Missile hits 40% harder.', tal: { pow: 0.4 } },
     ],
     [
-      { name: 'Cosmic Wisdom', icon: 'ring', text: 'Astral Convergence charges 50% faster, and its shields last 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
+      { name: 'Cosmic Wisdom', icon: 'ring', text: 'Arcane Surge charges 50% faster, and its shields last 40% longer.', tal: { ultRate: 0.5, dur: 0.4 } },
       { name: 'Eternal Study', icon: 'spectacles', text: '+8% attack and +10% faster pool refill.', stats: { atk: 0.08, charge: 0.1 } },
     ],
   ),

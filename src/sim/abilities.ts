@@ -21,6 +21,7 @@ import { kitStrike, kitTick } from './kits/effects';
 import { raiseAura } from './toolkit/auras';
 import { divineSmite, seismicSlam } from './kits/tanks';
 import { BOMBARD_THROWS } from './kits/ranged';
+import { blastShoves } from './kits/mages';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 
@@ -868,6 +869,14 @@ function hex(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
+/** Warlock, Eldritch Blast (RPG-SPELLS batch 6; keyed Hex): the hex, then each foe it struck is shoved a tile back. */
+function eldritchBlast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const first = out.length;
+  if (!hex(b, me, out)) return false;
+  blastShoves(b, me, out, first);
+  return true;
+}
+
 /** Illusionist: slips away to the safest tile within 4, leaving a decoy where she stood and another beside it; the foes near turn on the decoys. */
 const DECOY_MS = 3000;
 const DECOY_HP = 0.45;
@@ -1298,7 +1307,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Eagle Eye', text: 'Reaches twice as far from height', },
   },
   wizard: {
-    skill: { name: 'Meteor', text: 'A meteor blasts a 3x3 and leaves it burning', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack', cast: meteor },
+    skill: { name: 'Fireball', key: 'Meteor', text: 'A ball of fire flies to the thickest 3x3 and bursts, leaving it burning', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack', cast: meteor },
     passive: { name: 'Cinders', text: 'Its blows set the foe alight', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } },
   },
   ninjaMonk: {
@@ -1353,7 +1362,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Long Shot', text: 'Arrows deal 35% more to foes 4 or more tiles away', far: 0.35 },
   },
   warlock: {
-    skill: { name: 'Hex', text: 'Curses the three toughest foes in reach: they burn for 5s and he drinks 60% of it', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 700, anim: 'attack2', cast: hex },
+    skill: { name: 'Eldritch Blast', key: 'Hex', text: 'Three beams of dark force at the three toughest foes in reach: each is hexed (burns for 5s, and he drinks 60% of it) and shoved a tile back', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 700, anim: 'attack2', cast: eldritchBlast },
     passive: { name: 'Dark Pact', text: 'Heals for a fifth of the damage his blows deal', leech: 0.2 },
   },
   illusionist: {
@@ -1407,7 +1416,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Wraith Form', text: 'Slips 20% of blows', dodge: 0.2 },
   },
   timeWitch: {
-    skill: { name: 'Temporal Surge', text: 'Allies within 3 tiles are hasted, and foes within 4 slowed, for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: temporalSurge },
+    skill: { name: 'Slow', key: 'Temporal Surge', text: 'A slowing field round her for 4s: foes within 4 tiles are slowed, and her friends within 3 hastened', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: temporalSurge },
     passive: { name: 'Stutter', text: 'Slips 20% of blows', dodge: 0.2 },
   },
   arcBlade: {
@@ -1435,8 +1444,8 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Living Rampart', text: 'Blows from the front lose a third, and he cannot be knocked back', block: 0.33, steady: true },
   },
   sage: {
-    skill: { name: 'Starfall', text: 'Stars fall on up to three separate crowds a moment after the call', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: starfall },
-    ultimate: { name: 'Astral Convergence', text: 'Every ally\'s pool fills by half and a starlit shield forms round it for 4s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: astralConvergence },
+    skill: { name: 'Magic Missile', key: 'Starfall', text: 'Three darts of force streak to up to three separate crowds and burst, each on a 3x3', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: starfall },
+    ultimate: { name: 'Arcane Surge', key: 'Astral Convergence', text: 'Every ally\'s pool fills by half and an arcane shield forms round it for 4s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: astralConvergence },
     passive: { name: 'Arcane Insight', text: 'His blows ignore 4 defence', pierce: 4 },
   },
   demonSwordsman: {
@@ -1520,7 +1529,8 @@ KITS.minotaurChampion = { skill: KITS.minotaur.skill, passive: { name: 'Unyieldi
 
 // The Yokai Night Parade (`foes.ts`): fox spirits trick and curse, crows dive and possess, the tengu monk blows heroes about.
 KITS.yokaiFox = { skill: KITS.illusionist.skill, passive: { name: 'Fox Guile', text: 'Slips 20% of blows', dodge: 0.2 } };
-KITS.yokaiWitch = { skill: KITS.warlock.skill, passive: { name: 'Black Curse', text: 'Heals for a sixth of the damage its blows deal', leech: 0.16 } };
+// (the old Hex, as before the Warlock's became Eldritch Blast in RPG-SPELLS batch 6)
+KITS.yokaiWitch = { skill: { name: 'Hex', text: 'Curses the three toughest foes in reach: they burn for 5s and he drinks 60% of it', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 700, anim: 'attack2', cast: hex }, passive: { name: 'Black Curse', text: 'Heals for a sixth of the damage its blows deal', leech: 0.16 } };
 KITS.yokaiCrow = { skill: KITS.karasu.skill, passive: KITS.karasu.passive };
 KITS.yokaiSeer = { skill: { ...KITS.kitsune.skill, name: 'Possession', text: 'The strongest hero nearby is possessed and fights its own side for 3.5s' }, passive: { name: 'Evil Eye', text: 'Blows deal 30% more to shooters', prey: 1.3 } };
 KITS.yokaiMonk = { skill: KITS.yamabushi.skill, passive: KITS.yamabushi.passive };
@@ -1541,7 +1551,8 @@ KITS.crystalGolem = {
   skill: { name: 'Shard Burst', text: 'Crystal shards hurt every hero within 2 tiles and hold them still for 1.2s', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 600, anim: 'attack', cast: shardBurst },
   passive: { name: 'Crystal Skin', text: 'A third of the damage of a melee blow it takes is sent back', thorns: 0.33 },
 };
-KITS.magmaGolem = { skill: { ...KITS.wizard.skill, name: 'Magma Burst', text: 'A gout of magma blasts a 3x3 and leaves it burning' }, passive: { name: 'Molten Skin', text: 'Its blows set the hero alight', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } } };
+// (its own key: the Fire Wizard's skill is keyed Meteor, RPG-SPELLS batch 6)
+KITS.magmaGolem = { skill: { ...KITS.wizard.skill, name: 'Magma Burst', key: 'Magma Burst', text: 'A gout of magma blasts a 3x3 and leaves it burning' }, passive: { name: 'Molten Skin', text: 'Its blows set the hero alight', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } } };
 KITS.sapphireColossus = {
   skill: { name: 'Shard Storm', text: 'Crystal shards hurt every hero within 2 tiles and hold them still for 1.2s', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack', cast: shardBurst },
   passive: { name: 'Crystal Armour', text: 'Blows from the front lose a quarter, and a third of a melee blow is sent back', block: 0.25, thorns: 0.33 },

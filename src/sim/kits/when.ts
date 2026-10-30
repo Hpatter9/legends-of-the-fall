@@ -4,8 +4,9 @@
 import { UNITS } from '../units';
 import { atkOf, type Battle, type Unit } from '../battle';
 import { apart, foesOf } from '../abilities';
-import { harmed, hasAil } from '../ailments';
+import { harmed } from '../ailments';
 import { THUNDER_STORE } from './melee';
+import { FIRE_WALL, FONT, inTrouble } from './mages';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -21,7 +22,8 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Parry Stance': (b, me) => foesOf(b, me).some((f) => apart(f, me) === 1 && !UNITS[f.def].shot),
   'Smoke Bomb': (b, me) => foesOf(b, me).some((f) => Math.abs(f.u - me.u) <= 1 && Math.abs(f.v - me.v) <= 1),
   'Turning Wind': (b, me) => foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8),
-  Wildfire: (b, me) => foesOf(b, me).some((f) => apart(me, f) <= 7 && (hasAil(f, 'burn') || b.zones.some((z) => z.side === me.side && !z.slow && Math.abs(z.u - f.u) <= 1 && Math.abs(z.v - f.v) <= 1))),
+  // (RPG-SPELLS batch 6: the Wall of Fire took Wildfire's place, Transposition Trade Places', Font of Magic Font of Wisdom's)
+  Wildfire: (b, me) => foesWithin(b, me, FIRE_WALL.REACH),
   Overload: (b, me) => foesOf(b, me).some((f) => on(f.kx?.charged, b) && apart(me, f) <= 8),
   'Fox Guise': (b, me) => !on(me.kx?.guise?.until, b) && foesWithin(b, me, 7),
   Shift: (b, me) => foesWithin(b, me, 4) && (me.kx?.wolfAt === undefined || b.t - me.kx.wolfAt >= 4000) && me.kx?.wolf !== (me.hp < me.maxHp * 0.5 || foesOf(b, me).filter((f) => apart(f, me) === 1).length >= 3 ? 'brute' : 'hunter'),
@@ -33,7 +35,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   Treeform: (b, me) => !me.kx?.tree && foesWithin(b, me, 2),
   'Blood Fury': (b, me) => foesWithin(b, me, 2) && !on(me.kx?.fury, b) && me.hp > me.maxHp * 0.2,
   'Blood Price': (b, me) => foesWithin(b, me, 2) && !(me.kx?.blood ?? 0) && me.hp > me.maxHp * 0.3,
-  'Trade Places': (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.6 && foesOf(b, me).some((f) => apart(f, a) === 1)),
+  'Trade Places': (b, me) => allies(b, me).some((a) => inTrouble(b, me, a)),
   Devour: (b, me) => body(b, me, 2, 10000),
   'Mark for Coin': (b, me) => foesOf(b, me).some((f) => apart(f, me) <= 7 && !on(f.kx?.bounty?.until, b)),
   'Puppet Strings': (b, me) => foesOf(b, me).length > 1 && foesWithin(b, me, 4),
@@ -45,7 +47,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Siege Mode': (b, me) => !on(me.kx?.siege, b) && !foesWithin(b, me, 1) && foesWithin(b, me, UNITS[me.def].range + 2),
   'Guardian Angel': (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.7 && !on(a.kx?.angel, b) && foesOf(b, me).some((f) => apart(f, a) <= 2)),
   Jump: (b, me) => foesOf(b, me).some((f) => apart(me, f) >= 2 && apart(me, f) <= 7),
-  'Font of Wisdom': (b, me) => allies(b, me).filter((a) => a !== me && apart(a, me) <= 4 && a.charge < 34).length >= 1,
+  'Font of Wisdom': (b, me) => allies(b, me).filter((a) => a !== me && apart(a, me) <= FONT.REACH && a.charge < 34).length >= 1,
   Condemn: (b, me) => foesOf(b, me).some((f) => apart(f, me) <= 7 && !on(f.kx?.condemned?.until, b)),
   'Change the Tune': (b, me) => foesWithin(b, me, 5),
   Benediction: (b, me) => allies(b, me).some((a) => harmed(a) || a.hp < a.maxHp * 0.85),

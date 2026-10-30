@@ -22,7 +22,8 @@ export interface AuraOpts {
   at?: 'self' | At;
   /** `heal` is a share of each ally's max health a tick; `flat` a set amount (from the caster's attack when it was raised). */
   ally?: { guard?: number; atk?: number; heal?: number; flat?: number; ward?: boolean; mana?: number; stamina?: number };
-  foe?: { dmg?: number; slow?: number; ail?: AuraAil };
+  /** `drink`: the caster heals this share of the harm the aura deals (RPG-SPELLS batch 6: the Warlock's Circle of Death). */
+  foe?: { dmg?: number; slow?: number; ail?: AuraAil; drink?: number };
 }
 
 export interface Aura extends AuraOpts {
@@ -101,7 +102,11 @@ export function tickAuras(b: Battle, out: BattleEvent[]): void {
         if (pool === 'stamina' && o.stamina) addRes(x, o.stamina);
       } else if (x.side !== a.side && a.foe) {
         const o = a.foe;
-        if (o.dmg) hurt(b, by, x, Math.max(1, Math.round(atkOf(by) * o.dmg - defenceOf(x) * 0.5)), false, false, out, 'skill');
+        if (o.dmg) {
+          const before = by.dealt ?? 0;
+          hurt(b, by, x, Math.max(1, Math.round(atkOf(by) * o.dmg - defenceOf(x) * 0.5)), false, false, out, 'skill');
+          if (o.drink && by.alive) mendUnit(by, ((by.dealt ?? 0) - before) * o.drink, out);
+        }
         if (!x.alive) continue;
         if (o.slow) chillFor(b, x, o.slow, false, false, by);
         if (o.ail === 'burn') burnFor(b, by, x);

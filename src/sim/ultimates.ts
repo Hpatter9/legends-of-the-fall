@@ -49,7 +49,8 @@ import { fallenFor, raiseFallen } from './kits/revive';
 import { startPool } from './heroKits';
 import { chokeLine, raiseAura, raiseWall } from './toolkit';
 import { chargeNearest, fissureSpires, knightsAura, thunderclap } from './kits/tanks';
-import { ORBITAL_THROWS, jets, reaperDrag, type Throws } from './kits/ranged';
+import { ORBITAL_THROWS, SWARM_THROWS, jets, reaperDrag, type Throws } from './kits/ranged';
+import { CALL, CIRCLE, callLightning, circleOfDeath } from './kits/mages';
 import { berserkerLeap, burningLine, cavalryCharge, hellChains, lastBlowLaunch, lightningStorm } from './kits/melee';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
@@ -93,8 +94,10 @@ interface Sky {
   repeat?: boolean;
   /** A second blow on each spot this many ms after, for this share of the first. */
   echo?: { gap: number; share: number };
-  /** What the first salvo throws when it lands (RPG-SPELLS batch 5: the Orbital Strike). */
+  /** What the first salvo throws when it lands (RPG-SPELLS batch 5: the Orbital Strike); with `throwsAll`, every salvo (batch 6: the
+   *  Meteor Swarm). */
   throws?: Throws;
+  throwsAll?: boolean;
   /** Each salvo sets off the powder barrels where it lands. */
   barrels?: boolean;
 }
@@ -108,7 +111,7 @@ function sky(b: Battle, me: Unit, out: BattleEvent[], o: Sky): boolean {
     aimed.push(aim);
     const ms = o.ms + i * o.gap;
     const id = o.kind === 'meteor' ? 'meteor' : 'volley';
-    b.pending.push({ at: b.t + ms, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult, heavy: o.kind === 'meteor', u: aim.u, v: aim.v, ...(o.barrels ? { barrels: true } : {}), ...(o.throws && i === 0 ? { throws: o.throws } : {}) });
+    b.pending.push({ at: b.t + ms, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult, heavy: o.kind === 'meteor', u: aim.u, v: aim.v, ...(o.barrels ? { barrels: true } : {}), ...(o.throws && (i === 0 || o.throwsAll) ? { throws: o.throws } : {}) });
     out.push({ kind: 'area', by: me.id, id, u: aim.u, v: aim.v, ms });
     if (o.echo) {
       b.pending.push({ at: b.t + ms + o.echo.gap, kind: o.kind, by: me.id, to: aim.id, dmg: atkOf(me) * o.mult * o.echo.share, heavy: o.kind === 'meteor', u: aim.u, v: aim.v });
@@ -599,15 +602,20 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     buccaneer: ult('Keelhaul', 'Hooks the three nearest shooters (or foes) in beside him; each cut is a roll of the die (x1 to x3), and each is held 1.5s', 700, 'attack2', keelhaul),
     // ---- the guile ----
     illusionist: ult('Hall of Mirrors', 'Four decoys appear round her and every foe within 6 tiles turns on them for 4.5s', 800, 'attack2', hallOfMirrors),
-    warlock: ult('Soul Harvest', 'Every foe within 7 tiles is cursed and burns for 6s; he drinks from each', 800, 'attack2', (b, me, out) =>
-      smite(b, me, out, { reach: 7, mult: 1.0, curse: { ms: 6000, dot: 0.45 }, drink: { each: 0.06, cap: 0.36 } })),
+    // (RPG-SPELLS batch 6: a ring of death holds round him as well)
+    warlock: ult('Circle of Death', 'Every foe within 7 tiles is cursed and burns for 6s, and he drinks from each; a ring of death holds round him for 6s: a foe within 2 takes 0.4 of his attack a second, and he drinks a third of it', 800, 'attack2', (b, me, out) => {
+      if (!smite(b, me, out, { reach: 7, mult: 1.0, curse: { ms: 6000, dot: 0.45 }, drink: { each: 0.06, cap: 0.36 } })) return false;
+      circleOfDeath(b, me, out, dur(me, CIRCLE.MS));
+      return true;
+    }, 'Soul Harvest'),
     // ---- the shooters ----
     archer: ult('Hail of Arrows', 'Five volleys fall on separate crowds across the field', 700, 'attack2', (b, me, out) =>
       sky(b, me, out, { n: 5, reach: 9, mult: 1.6, ms: 600, kind: 'rain', gap: 140, repeat: true }), 'Arrow Storm'),
-    wizard: ult('Armageddon', 'Three meteors fall on separate crowds, each leaving the ground burning', 900, 'attack', (b, me, out) =>
-      sky(b, me, out, { n: 3, reach: 8, mult: 2.6, ms: 1000, kind: 'meteor', gap: 220, repeat: true })),
-    lightningMage: ult('Thunderstorm', 'Bolts strike the six toughest foes within 8 tiles, each stunned for 0.8s', 800, 'attack', (b, me, out) =>
-      smite(b, me, out, { reach: 8, mult: 2.4, top: 6, order: (x, y) => y.hp - x.hp || x.id - y.id, stun: 800, arcs: true, sight: false })),
+    wizard: ult('Meteor Swarm', 'Three meteors fall on separate crowds, each leaving the ground burning; the foe at the heart of each is thrown a tile', 900, 'attack', (b, me, out) =>
+      sky(b, me, out, { n: 3, reach: 8, mult: 2.6, ms: 1000, kind: 'meteor', gap: 220, repeat: true, throws: SWARM_THROWS, throwsAll: true }), 'Armageddon'),
+    // (RPG-SPELLS batch 6: a storm cloud that strikes once a second, where six bolts fell at once)
+    lightningMage: ult('Call Lightning', 'A storm cloud gathers over her for 6s: each second a bolt strikes the toughest foe within 6 tiles, stunned for 0.8s and Charged', 800, 'attack', (b, me, out) =>
+      callLightning(b, me, out, dur(me, CALL.MS)), 'Thunderstorm'),
     ranger: ult('Entangle', 'A net of vines hurts every foe in sight within 8 tiles and holds it for 2.2s; each takes a third more from every blow for 6s', 800, 'attack2', (b, me, out) =>
       smite(b, me, out, { reach: 8, sight: true, mult: 1.0, stun: 2200, brittle: 6000 }), "Hunter's Net"),
     gunslinger: ult('High Noon', 'Six shots at the hardest-hitting foes in reach', 700, 'attack2', (b, me, out) =>

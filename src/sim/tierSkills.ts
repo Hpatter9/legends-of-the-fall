@@ -86,9 +86,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Sky Darkened', 'The rain of arrows falls over a far wider patch and hits much harder, and a lighter rain of it comes down a second time', { extra: 2, reach: 2, pow: 0.14 }, [echo(1300, 0.2)]),
   ],
   wizard: [
-    t('Twin Meteor', 'A second, smaller meteor follows the first', { extra: 1 }),
-    t('Meteor Shower', 'Two more meteors follow, and the ground burns longer', { extra: 2, dur: 0.175 }),
-    t('Cataclysm', 'The meteors hit far harder and the ground burns much longer, and the whole shower falls a second time', { extra: 2, dur: 0.35, pow: 0.15 }, [echo(1400, 0.55)]),
+    t('Greater Fireball', 'A second, smaller fireball follows the first', { extra: 1 }),
+    t('Delayed Blast Fireball', 'Two more fireballs follow, and the ground burns longer', { extra: 2, dur: 0.175 }),
+    t('Fireball Barrage', 'The fireballs hit far harder and the ground burns much longer, and the whole barrage bursts a second time', { extra: 2, dur: 0.35, pow: 0.15 }, [echo(1400, 0.55)]),
   ],
   peasant: [
     t('Tight Phalanx', 'The phalanx holds a little longer, and the allies near him are mended', { dur: 0.14 }, [mend(2, 0.3)]),
@@ -176,9 +176,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Hunter\'s Maze', 'Lays three more traps, what they hold is held far longer, and they bite much harder', { extra: 3, dur: 0.35, pow: 0.18 }),
   ],
   warlock: [
-    t('Deep Hex', 'The curse burns longer and deeper', { dur: 0.14, pow: 0.07 }),
-    t('Doom', 'The curse burns much longer and deeper, and dark force bursts round him', { dur: 0.28, pow: 0.14 }, [nova(3, 0.15)]),
-    t('Abyssal Doom', 'The curse burns far longer and deeper, and the dark force that bursts round him holds the foes it strikes', { dur: 0.4, pow: 0.26 }, [nova(3, 0.28, 250)]),
+    t('Agonising Blast', 'The blast\'s hex burns longer and deeper', { dur: 0.14, pow: 0.07 }),
+    t('Eldritch Barrage', 'The blast\'s hex burns much longer and deeper, and dark force bursts round him', { dur: 0.28, pow: 0.14 }, [nova(3, 0.15)]),
+    t('Abyssal Blast', 'The blast\'s hex burns far longer and deeper, and the dark force that bursts round him holds the foes it strikes', { dur: 0.4, pow: 0.26 }, [nova(3, 0.28, 250)]),
   ],
   illusionist: [
     t('Longer Mirage', 'The decoys last longer, and she is hastened', { dur: 0.14, castHaste: 700 }),
@@ -241,9 +241,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Grim Harvest', 'The scythe cuts harder, two tiles further, heals him, and reaps again a moment later', { pow: 0.18, reach: 2, castHeal: 0.035 }, [mend(0, 0.2), echo(900, 0.3)]),
   ],
   timeWitch: [
-    t('Longer Surge', 'The surge lasts longer', { dur: 0.14 }),
-    t('Time Loop', 'The surge lasts much longer, a tile further, and her friends\' skill meters jump by 20', { dur: 0.28, reach: 1 }, [charge(4, 20)]),
-    t('Eternity', 'The surge lasts far longer, two tiles further; her friends\' skill meters jump by 30, and they are hastened', { dur: 0.4, reach: 2 }, [charge(4, 30), haste(4, 700)]),
+    t('Mass Slow', 'The slowing field lasts longer', { dur: 0.14 }),
+    t('Time Loop', 'The slowing field lasts much longer, a tile further, and her friends\' skill meters jump by 20', { dur: 0.28, reach: 1 }, [charge(4, 20)]),
+    t('Eternity', 'The slowing field lasts far longer, two tiles further; her friends\' skill meters jump by 30, and they are hastened', { dur: 0.4, reach: 2 }, [charge(4, 30), haste(4, 700)]),
   ],
   arcBlade: [
     t('Thunder Stride', 'The discharge holds longer and hits harder', { dur: 0.175, pow: 0.07 }),
@@ -277,9 +277,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Earthshatter', 'The slam reaches three tiles further, hits harder and holds far longer; the ground splits round him, and he and the allies beside him are warded', { reach: 3, dur: 0.3, pow: 0.08, castShield: 0.07 }, [nova(2.5, 0.22, 200), ward(2, 0.03)]),
   ],
   sage: [
-    t('Fourth Star', 'Starfall calls a fourth star', { extra: 1 }),
-    t('Constellation', 'Two more stars fall, and every ally\'s skill meter jumps by 25', { extra: 2 }, [charge(99, 25)]),
-    t('Heavens Unbound', 'Three more stars fall, each a little harder, and every ally\'s skill meter jumps by 25', { extra: 3, pow: 0.05 }, [charge(99, 25)]),
+    t('Empowered Missile', 'Magic Missile looses a fourth dart', { extra: 1 }),
+    t('Twinned Missile', 'Two more darts streak out, and every ally\'s skill meter jumps by 25', { extra: 2 }, [charge(99, 25)]),
+    t('Missile Storm', 'Three more darts streak out, each a little harder, and every ally\'s skill meter jumps by 25', { extra: 3, pow: 0.05 }, [charge(99, 25)]),
   ],
   demonSwordsman: [
     t('Great Cleave', 'The cleave reaches a tile further and heals him a little', { reach: 1, castHeal: 0.021 }),
