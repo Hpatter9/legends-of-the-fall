@@ -4,7 +4,6 @@
   "healing-mist.motes": {"frames": [2, 3, 4, 3], "why": "the first frame is empty, the second faint and the last breaks into sparks: the leaf would blink"},
   "mana-font.ground": {"frames": [2, 3, 4, 5, 4, 3], "why": "the circle lights up from faint lines over the first frames: it would pop dark each loop"},
   "spirit-guardians.ground": {"frames": [1, 3, 5, 5, 3, 1], "why": "the ring swaps gold and pale blue every frame, a strobe at play speed: it keeps the blue frames"},
-  "keg-blast.travel": {"frames": [0, 2, 0, 2], "why": "the repainted keg turns a quarter each frame, so its hoops flip between across and upright (a strobe at play speed): it keeps the two frames with the hoops across, the fuse going round"},
   "quivering-palm.cast": {"fade": 2, "why": "the gathering light ends at its brightest: it fades out over two more frames"},
   "tentacles.cast": {"fade": 2, "why": "the tentacle ends risen at full: it sinks away (fades) over two more frames"},
   "ult-burst-fire.impact": {"frames": [1, 2, 3, 4, 5, 6], "why": "ULT-EPIC: the first frame is a small seed (7% of the cell) and the game holds a burst's first frame through the 0.15 s freeze on the blow, so it starts on the bloom; it ends on the seventh, faint wisps (the eighth is all but empty)"},
