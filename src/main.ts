@@ -46,6 +46,7 @@ import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
+import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
@@ -99,7 +100,7 @@ import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
-import { onDevGrant, onSettings, openSettings, setSetting, settings } from './settings';
+import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
@@ -155,6 +156,8 @@ interface Drag {
   fromBoard: boolean;
   /** Dragging the board itself (it began on no hero), from this camera centre. */
   pan?: { cx: number; cy: number };
+  /** The finger's last moments, for the flick back to the bench (BENCH-TITLES). */
+  trail?: DragPoint[];
 }
 
 class Game {
@@ -1500,6 +1503,7 @@ class Game {
     // (a hidden tab draws no frames, so the replay and its fight stand still; the banner says so, and the screen lock is asked for again on return)
     document.addEventListener('visibilitychange', () => this.auto && this.refreshAuto());
     $('gear').addEventListener('click', () => openSettings());
+    refreshUpdatesDot(); // (the gears' dot while the Updates page has news: settings.ts)
   }
 
   /** The fastest speed this fight may run at: ×3 on an army tier already cleared, or during an auto-replay; ×2 otherwise. */
@@ -1844,6 +1848,8 @@ class Game {
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
+      // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
+      this.fx.undim();
       this.acc = 0;
       this.endWait = 0;
       for (const u of fallen) if (u.alive) this.sprites.get(u.id)?.getUp();
@@ -2025,6 +2031,8 @@ class Game {
     }
     const sell = !d.fromBoard && onto === null && overRecycle(e.clientX, e.clientY);
     $('recycleZone').classList.toggle('hot', sell);
+    pushTrail((d.trail ??= []), { x: e.clientX, y: e.clientY, t: e.timeStamp });
+    this.markReturn(d.id, onto === null && !sell && overReturn(e.clientX, e.clientY));
     this.hover = sell ? null : this.tileAtScreen(e.clientX, e.clientY - 24);
     this.markTiles();
   }
@@ -2045,6 +2053,8 @@ class Game {
       const onto = this.mergeTargetAt(d.id, e.clientX, e.clientY);
       if (onto !== null) this.mergeHeroes(Number(d.id), onto);
       else if (!d.fromBoard && overRecycle(e.clientX, e.clientY)) this.recycleDropped(d.id);
+      // (BENCH-TITLES: a hero on the board let go anywhere over the bench's wide area, or flicked down toward it, goes back)
+      else if (this.onBoard(d.id) && (overReturn(e.clientX, e.clientY) || (d.fromBoard && flickToBench([...(d.trail ?? []), { x: e.clientX, y: e.clientY, t: e.timeStamp }], panelBox())))) this.takeBack(d.id);
       else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
@@ -2072,10 +2082,28 @@ class Game {
     $('recycleZone').hidden = true;
     $('recycleZone').classList.remove('hot');
     for (const c of $('bench').querySelectorAll('.dragging, .mergeCan, .mergeHot')) c.classList.remove('dragging', 'mergeCan', 'mergeHot');
+    this.markReturn(null, false);
     this.hover = null;
     this.ghost.visible = false;
     this.refresh();
     this.markTiles();
+  }
+
+  /** Whether roster hero `id` stands on the board now. */
+  private onBoard(id: string): boolean {
+    return this.b.units.some((u) => u.side === 'hero' && String(u.tag) === id);
+  }
+
+  /** BENCH-TITLES: while a hero standing on the board is dragged, the bench's panel is outlined as the place to send it back, and
+   *  lit with "Return to bench" while the finger is over it (`hot`). Nothing shows for a bench hero not on the board, or `id` null. */
+  private markReturn(id: string | null, hot: boolean): void {
+    const can = id !== null && this.onBoard(id);
+    const panel = $('panel');
+    panel.classList.toggle('returnCan', can && !hot);
+    panel.classList.toggle('returnHot', can && hot);
+    const tag = $('returnTag');
+    tag.hidden = !can;
+    if (can) tag.textContent = hot ? '↓ Return to bench' : '↓ Drag here for the bench';
   }
 
   /** The hero a dragged hero `id` would merge into if let go at (x, y): a matching card on the bench under the finger, or a matching hero on
@@ -2700,6 +2728,16 @@ function overRecycle(x: number, y: number): boolean {
   if (z.hidden) return false;
   const r = z.getBoundingClientRect();
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+/** The bottom panel's box (BENCH-TITLES: the bench's drop area is built on it, `benchDrop.ts`). */
+function panelBox(): DOMRect {
+  return $('panel').getBoundingClientRect();
+}
+
+/** Over the bench's wide drop area: the whole panel and a little of the board above it (BENCH-TITLES). */
+function overReturn(x: number, y: number): boolean {
+  return inReturnZone(x, y, panelBox());
 }
 
 function overBench(x: number, y: number): boolean {

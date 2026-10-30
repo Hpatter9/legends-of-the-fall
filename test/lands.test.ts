@@ -5,7 +5,7 @@ import { AREAS, CLASSIC_AREAS, makeBoard, type Area } from '../src/sim/board';
 import { ARMIES, landOf, landsOf } from '../src/sim/armies';
 import { spireArea } from '../src/sim/lands';
 import { LAND_WEATHER, WEATHERS, weatherFor, weatherOf } from '../src/sim/weather';
-import { countFor, fogFor, lookOf, MAX_PARTICLES, MAX_TINT, tintAt, LIT_PROPS } from '../src/render/weatherRules';
+import { boardLight, countFor, fogFor, lookOf, MAX_PARTICLES, MAX_TINT, MAX_VIGNETTE, tintAt, vignetteAt, LIT_PROPS } from '../src/render/weatherRules';
 import { armyRun, chainOf } from '../src/sim/run';
 import { HEROES } from '../src/sim/units';
 
@@ -128,6 +128,22 @@ test('weather looks are capped, halved on a battery saver, still under reduced m
   assert.equal(lookOf('clear', 'plains').count, 0);
   assert.ok(lookOf('rain', 'plains').count > 0);
   assert.ok(lookOf('night', 'shrine').glow > 0);
+});
+
+test('DARK-WAVE: no weather darkens the board much (a night wave read as the screen going dark); the mood is at the edges', () => {
+  for (const area of AREAS)
+    for (const w of WEATHERS) {
+      const look = lookOf(w, area);
+      // (the board in the middle keeps at least 85% of its light, whatever the weather)
+      assert.ok(boardLight(look) >= 0.85, `${area} ${w} keeps ${boardLight(look)}`);
+      assert.ok(look.vignette <= MAX_VIGNETTE, `${area} ${w} edges`);
+      assert.equal(vignetteAt(look, 0), 0);
+      assert.ok(vignetteAt(look, 10_000) <= MAX_VIGNETTE);
+    }
+  assert.ok(MAX_TINT <= 0.15);
+  // (night still reads as night: a blue cast and dark edges)
+  const night = lookOf('night', 'highlands');
+  assert.ok(night.alpha > 0 && night.vignette > 0);
 });
 
 test('only the lands with a lit prop have night glows, and the props they name exist', () => {
