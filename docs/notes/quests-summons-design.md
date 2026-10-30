@@ -1059,3 +1059,22 @@ built on everything the ultimate now has (ULT-EPIC: hit-stop, shake, element fla
 
 Art part 2 (the figures, the attack beats, the battle sheets) is written to deliver these layers and beats once the six designs are
 chosen.
+
+## The six Eidolons chosen (the owner's picks; these replace "The six great summons" above)
+
+Same elements and order, easiest first; each chain and trial is to be rewritten for its new being when its batch is built.
+
+| # | Eidolon | Element | Attack (beats) | Trial at the end |
+| --- | --- | --- | --- | --- |
+| 1 | Askel, the Cinderhound: a colossal hound of living embers | fire | The Burning Run: howl, runs a ring of fire round the field, the ring erupts inward, embers rain | none |
+| 2 | Nivra, the Rime Wyrm: a serpent-dragon of ice that bursts through the ground | ice | Frozen Deep: frost cracks the ground, it bursts up mid-field, a ring of frost breath freezes every foe, the ice shatters | yes |
+| 3 | Aurelan, the Lion of Dawn: a golden lion with a sunrise mane | light | Dawnbreak Roar: a pillar of sunlight, it leaps down, a crescent wave of light rolls across, a sunrise wash | yes |
+| 4 | Voltara, the Copper Goddess: a clockwork goddess of copper coils | lightning | Overload: her coils spin up, a lattice of lightning chains every foe, one colossal bolt mid-field, static | yes |
+| 5 | Gorm, the Quarry Titan: a giant of cut stone blocks and amber seams | earth | Landslide: he builds himself from blocks, the hammer slams, pillars burst up under foes, rubble rains | yes |
+| 6 | Vaelkhar, the Dragon King: a colossal black dragon under an eclipse | dark | Crown of Night: the sun goes dark, he descends, a torrent of black fire sweeps the field, it collapses into a void | yes, the hardest |
+
+**The horn's own effects** (the owner: "make sure the horn has nice looking effects too"): light motes stream into the horn and swell
+where they land whenever it gains (a boss wave's gain is a big rush; a foe's a single mote); a sheen sweeps along it and a warm aura of
+drifting runes breathes round it once it is full (a glow that eases, never blinks); blowing it is a cone of gold sound-light and a ring
+of force across the field that starts the summoning circle. Painted in art part 2 (`horn-fill`, `horn-ready`, `horn-blast`,
+`horn-shine`); the horn's four paintings are in part 1.
