@@ -156,8 +156,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'kunoichi',
     [['Light Foot', 'boots', { moveSpeed: 0.06 }], ['Poisoned Edge', 'dagger', { atk: ATK }], ['Dancer', 'silk', { dodge: 0.03 }], ['Keen Eyes', 'spectacles', { crit: 0.03 }]],
     [
-      { name: 'Lingering Shadow', icon: 'shadowcloak', text: 'After Shadow Step she is hasted for 3s.', tal: { castHaste: 3000 } },
-      { name: 'Deadly Backstab', icon: 'dagger', text: 'Shadow Step stabs 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Lingering Shadow', icon: 'shadowcloak', text: 'After Sneak Attack she is hasted for 3s.', tal: { castHaste: 3000 } },
+      { name: 'Deadly Backstab', icon: 'dagger', text: 'Sneak Attack stabs 40% harder.', tal: { pow: 0.4 } },
     ],
     [
       { name: 'Smoke Bomb', icon: 'vial', text: 'Every 9s she cannot be targeted for 2s.', abilities: [ab('tl_kunoichi_smoke', 'Smoke Bomb', 'tick', 'stealth', { n: 9, w: 2, show: true })] },
@@ -192,8 +192,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'ninjaMonk',
     [['Iron Knuckles', 'fist', { atk: ATK }], ['Lotus Stance', 'gi', { dodge: 0.03 }], ['Swift Hands', 'ring', { atkSpeed: 0.04 }], ['Hard Body', 'plate', { hp: HP }]],
     [
-      { name: 'Pressure Points', icon: 'bone', text: 'Thousand Fists holds the foe for 2.4s.', tal: { dur: 0.6 } },
-      { name: 'Fourth Fist', icon: 'fist', text: 'Thousand Fists lands a fourth strike.', tal: { extra: 1 } },
+      { name: 'Pressure Points', icon: 'bone', text: 'Flurry of Blows holds the foe for 2.4s.', tal: { dur: 0.6 } },
+      { name: 'Fourth Fist', icon: 'fist', text: 'Flurry of Blows lands a fourth strike.', tal: { extra: 1 } },
     ],
     [
       { name: 'Stunning Palm', icon: 'idol', text: 'Every 3rd blow stuns the foe for 0.8s.', abilities: [ab('tl_ninjaMonk_palm', 'Stunning Palm', 'nth', 'stun', { n: 3, w: 0.8 })] },
@@ -458,12 +458,12 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'mercenary',
     [['Veteran Grit', 'jerkin', { hp: HP }], ['Notched Sabre', 'sword', { atk: ATK }], ['Coin Purse', 'pendant', { crit: 0.03 }], ['Marching Boots', 'boots', { moveSpeed: 0.06 }]],
     [
-      { name: 'Bigger Bounty', icon: 'dagger', text: 'Bounty Hunt cuts 40% deeper.', tal: { pow: 0.4 } },
-      { name: 'Quick Contract', icon: 'ring', text: 'After Bounty Hunt he is hasted for 3s.', tal: { castHaste: 3000 } },
+      { name: 'Bigger Bounty', icon: 'dagger', text: 'Ambush cuts 40% deeper.', tal: { pow: 0.4 } },
+      { name: 'Quick Contract', icon: 'ring', text: 'After Ambush he is hasted for 3s.', tal: { castHaste: 3000 } },
     ],
     [
       { name: 'Dirty Fighter', icon: 'axe', text: 'Every 3rd blow hits nearly twice as hard.', abilities: [ab('tl_mercenary_dirty', 'Dirty Fighter', 'nth', 'smite', { n: 3, v: 0.9 })] },
-      { name: 'Hired Protection', icon: 'bastion', text: 'Bounty Hunt gives him a shield of 12% of his health, and +8% hp.', tal: { castShield: 0.12 }, stats: { hp: 0.08 } },
+      { name: 'Hired Protection', icon: 'bastion', text: 'Ambush gives him a shield of 12% of his health, and +8% hp.', tal: { castShield: 0.12 }, stats: { hp: 0.08 } },
     ],
   ),
   mummy: tree(
@@ -530,12 +530,12 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'lancer',
     [['Barding', 'plate', { hp: HP }], ['Steel Lance', 'spear', { atk: ATK }], ['Spurs', 'boots', { moveSpeed: 0.06 }], ['Pennon', 'charm', { crit: 0.03 }]],
     [
-      { name: 'Longer Run-up', icon: 'longbow', text: 'Lance Charge runs 2 tiles further.', tal: { reach: 2 } },
-      { name: 'Hard Charge', icon: 'maul', text: 'Lance Charge hits 35% harder.', tal: { pow: 0.35 } },
+      { name: 'Longer Run-up', icon: 'longbow', text: 'Charge runs 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Hard Charge', icon: 'maul', text: 'Charge hits 35% harder.', tal: { pow: 0.35 } },
     ],
     [
       { name: 'Victory Lap', icon: 'ruby', text: 'Each kill gives back 30% of the pool.', abilities: [ab('tl_lancer_lap', 'Victory Lap', 'kill', 'charge', { v: 60 })] },
-      { name: 'Shock Impact', icon: 'idol', text: 'Foes struck by Lance Charge are held for 0.8s.', tal: { skillStun: 800 } },
+      { name: 'Shock Impact', icon: 'idol', text: 'Foes struck by Charge are held for 0.8s.', tal: { skillStun: 800 } },
     ],
   ),
   reaper: tree(
@@ -566,8 +566,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'arcBlade',
     [['Capacitors', 'ring', { charge: 0.1 }], ['Plasma Edge', 'blade', { atk: ATK }], ['Hardened Chassis', 'plate', { hp: HP }], ['Servo Boots', 'boots', { moveSpeed: 0.06 }]],
     [
-      { name: 'Bigger Discharge', icon: 'stormstaff', text: 'Voltage Blink hits 40% harder.', tal: { pow: 0.4 } },
-      { name: 'Longer Arc', icon: 'bell', text: 'Voltage Blink jumps 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Bigger Discharge', icon: 'stormstaff', text: 'Thunder Step hits 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Longer Arc', icon: 'bell', text: 'Thunder Step jumps 2 tiles further.', tal: { reach: 2 } },
     ],
     [
       { name: 'Overload', icon: 'orb', text: '30% of his blows leap on to a second foe.', abilities: [ab('tl_arcBlade_overload', 'Overload', 'hit', 'chain', { p: 0.3, v: 0.6 })] },
@@ -650,11 +650,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'demonSwordsman',
     [['Infernal Plate', 'plate', { hp: HP }], ['Demonblade', 'blade', { atk: ATK }], ['Dark Reflexes', 'shadowcloak', { dodge: 0.03 }], ['Hellfire Veins', 'ruby', { regen: 0.004 }]],
     [
-      { name: 'Wider Sweep', icon: 'scythe', text: 'Hellblade Sweep reaches 2 tiles further.', tal: { reach: 2 } },
-      { name: 'Hellish Edge', icon: 'claymore', text: 'Hellblade Sweep cuts 40% deeper.', tal: { pow: 0.4 } },
+      { name: 'Wider Sweep', icon: 'scythe', text: 'Cleave reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Hellish Edge', icon: 'claymore', text: 'Cleave cuts 40% deeper.', tal: { pow: 0.4 } },
     ],
     [
-      { name: 'Demon Ascendant', icon: 'idol', text: 'Demon Form charges 40% faster and lasts 30% longer.', tal: { ultRate: 0.4, dur: 0.3 } },
+      { name: 'Demon Ascendant', icon: 'idol', text: 'Metamorphosis charges 40% faster and lasts 30% longer.', tal: { ultRate: 0.4, dur: 0.3 } },
       { name: 'Soul Eater', icon: 'amulet', text: 'Each kill heals him 12% of his health.', abilities: [ab('tl_demonSwordsman_eater', 'Soul Eater', 'kill', 'heal', { v: 0.12 })] },
     ],
   ),

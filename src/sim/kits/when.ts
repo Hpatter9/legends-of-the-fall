@@ -5,6 +5,7 @@ import { UNITS } from '../units';
 import { atkOf, type Battle, type Unit } from '../battle';
 import { apart, foesOf } from '../abilities';
 import { harmed, hasAil } from '../ailments';
+import { THUNDER_STORE } from './melee';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -40,7 +41,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Wheel About': (b, me) => foesWithin(b, me, 1),
   'Bound Soul': (b, me) => body(b, me, 4, 12000),
   Rewind: (b, me) => allies(b, me).some((a) => !!a.kx?.hist?.some((s) => b.t - s.t <= 4000 && (s.hp - a.hp) / a.maxHp >= 0.2)),
-  Grounding: (b, me) => foesWithin(b, me, 2) && (me.kx?.stored ?? 0) >= atkOf(me) * 1.2,
+  Grounding: (b, me) => foesWithin(b, me, 2) && (me.kx?.stored ?? 0) >= atkOf(me) * THUNDER_STORE,
   'Siege Mode': (b, me) => !on(me.kx?.siege, b) && !foesWithin(b, me, 1) && foesWithin(b, me, UNITS[me.def].range + 2),
   'Guardian Angel': (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.7 && !on(a.kx?.angel, b) && foesOf(b, me).some((f) => apart(f, a) <= 2)),
   Jump: (b, me) => foesOf(b, me).some((f) => apart(me, f) >= 2 && apart(me, f) <= 7),
