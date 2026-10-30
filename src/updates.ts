@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.238.0',
+    date: '2026-10-30',
+    title: 'A real market and new roadside events',
+    notes: ['The passing cart is a small market: gear, fight potions, a sellsword and sometimes a relic, up to three buys a visit.', 'Twelve new events between waves: a wounded scout, the Pale Lady\'s shrine, deserters, a dice-playing countess, an ambush, a forge, a cursed crown, refugees, a champion\'s duel, storms and more.', 'Some choices come back a couple of waves later.', 'Shrines and cursed paths now really change the next fight.'],
+  },
+  {
     version: '0.237.0',
     date: '2026-10-30',
     title: 'Night no longer darkens the battle',
