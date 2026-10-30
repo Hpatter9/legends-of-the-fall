@@ -12,6 +12,7 @@ import { foesOf, mendUnit, net, roll } from '../abilities';
 import { addRes, heroKitOf, skill2Open } from '../heroKits';
 import { UNITS, type UnitDef } from '../units';
 import { AILMENT_SWITCH, ailmentsOf, dotOf, setDot } from '../ailments';
+import { stormBolt } from './mages';
 
 /** The kits' marks and stances on a fighter (hero or foe): each a time it lasts until, or a small state. */
 export interface KitFx {
@@ -45,6 +46,8 @@ export interface KitFx {
   fury?: number;
   /** Warlock: draining a foe (Soul Siphon). */
   siphon?: { to: number; until: number; next: number };
+  /** Lightning Mage: her Call Lightning cloud, until then; the next bolt, and the ultimate's strength when it was called (RPG-SPELLS batch 6). */
+  storm?: { until: number; next: number; pow: number };
   /** Shambler: times he has grown from a meal; and a body that has been eaten (or raised) is gone. */
   grown?: number;
   spent?: boolean;
@@ -389,6 +392,10 @@ export function kitTick(b: Battle, out: BattleEvent[]): void {
         const friend = b.units.filter((a) => a.alive && a.side === u.side && a.hp < a.maxHp).sort((p, q) => p.hp / p.maxHp - q.hp / q.maxHp || p.id - q.id)[0];
         if (friend && drained > 0) mendUnit(friend, drained, out, u);
       }
+    }
+    if (x.storm) {
+      if (b.t >= x.storm.until) x.storm = undefined;
+      else if (b.t >= x.storm.next) stormBolt(b, u, out);
     }
     // (a Siege Bot with a foe beside it unanchors early)
     if (on(x.siege, b) && b.units.some((f) => f.alive && f.side !== u.side && apart(f, u) === 1)) x.siege = b.t;

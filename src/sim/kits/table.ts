@@ -10,7 +10,8 @@ import type { HeroKit, Slot } from '../heroKits';
 import { bullRush, devour, flood, parryStance, puppetStrings, turningWind } from './front';
 import { bloodFury, bloodPrice, boundSoul, grounding, jump, markForCoin, pilfer, rollTheBones, shift, smokeBomb, smokeNeeded, stillnessPalm, wheelAbout } from './blades';
 import { fanTheHammer, pinningShot, powderKeg, siegeMode, spikeField, suppressingFire } from './shooters';
-import { changeTune, charge, flaskNeeded, flaskToss, fontOfWisdom, foxGuise, guardianAngel, overload, piedPiper, rewind, smite, soulSiphon, stoneGarden, tradePlaces, treeform, wildfire } from './casters';
+import { changeTune, charge, flaskNeeded, flaskToss, foxGuise, guardianAngel, piedPiper, rewind, smite, soulSiphon, stoneGarden, treeform } from './casters';
+import { fontOfMagic, stormSurge, transposition, wallOfFire } from './mages';
 import { plantStandard, sicEm } from './callers';
 import { REVIVE_FACES } from './revive';
 import { auraOfProtection, bane, shieldRush, spearWall, tunnelStrike } from './tanks';
@@ -33,7 +34,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   peasant: 0.49,
   ninjaMonk: 0.5,
   wanderer: 1.5,
-  lightningMage: 0.93,
+  lightningMage: 0.75, // (RPG-SPELLS batch 6: 0.93 before; she stood +5.9 at level 10)
   kitsune: 1.0,
   karasu: 0.4,
   yamabushi: 0.62,
@@ -47,7 +48,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   druid: 0.77,
   barbarian: 0.65,
   ranger: 0.3,
-  warlock: 0.59,
+  warlock: 0.5, // (RPG-SPELLS batch 6: 0.59 before; Eldritch Blast's shove made him +3.3 at level 1)
   illusionist: 0.14,
   gunslinger: 0.47,
   shambler: 0.78,
@@ -82,7 +83,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   samurai: 2.16,
   kunoichi: 0.61,
   archer: 0.69,
-  wizard: 2.26,
+  wizard: 8, // (RPG-SPELLS batch 6: the Wall of Fire's burn; 2.26 was Wildfire's eruption)
   peasant: 0.52,
   ninjaMonk: 1.0,
   wanderer: 0.31,
@@ -120,7 +121,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   priestess: 0.12,
   dragoon: 1.84,
   juggernaut: 2.48,
-  sage: 1.13,
+  sage: 0.8, // (RPG-SPELLS batch 6: Font of Magic's flow; at 0.8 it gives about the 25 mana Font of Wisdom gave at once; 1.13 before)
   demonSwordsman: 3.06,
   tyrant: 2.13,
 };
@@ -147,7 +148,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     samurai: S('samurai', 30, sk('Riposte', 'For 2.5s every melee blow on him is parried and answered with a cut', 400, 'defend', parryStance, 'Parry Stance'), 40, 'A duellist: dashes through a line, parries and answers'),
     kunoichi: S('kunoichi', 25, sk('Smoke Bomb', 'She cannot be targeted for 2s; foes in the smoke miss half their blows for 3s, her next blow crits, and she blinks clear to the safest tile within 3', 400, 'attack2', smokeBomb), 40, 'Blinks behind the weak, vanishes in smoke', {}, { emergency: smokeNeeded }),
     archer: S('archer', 30, sk('Aimed Shot', 'With a foe beside her she first leaps 2 tiles back, to higher ground if she can; then the farthest foe in reach is pinned for 2s and takes a quarter more from shots for 4s', 600, 'attack', pinningShot, 'Pinning Shot'), 40, 'A sniper: volleys from the heights, pins the far ones'),
-    wizard: M('wizard', 50, sk('Wildfire', 'Every burning foe erupts: its 3x3 is hurt and set alight, so fire runs through a pack', 800, 'attack', wildfire), 55, 'A pyromancer: fire that runs from foe to foe', { gap: 7000 }),
+    wizard: M('wizard', 50, sk('Wall of Fire', 'A wall of fire 4 tiles long across the lane the most foes are walking, for 6s: a foe in it or crossing it burns', 800, 'attack', wallOfFire, 'Wildfire'), 55, 'A pyromancer: fire that runs from foe to foe', { gap: 7000 }),
     peasant: S('peasant', 30, sk('Spear Wall', 'A line of sharpened stakes, 3 tiles across his front, for 6s: foes cannot walk through it, and one beside a stake is pricked and bleeds', 500, 'attack', spearWall), 40, 'Formation militia: closes ranks behind a wall of stakes', {}, { gap: 9000 }),
     ninjaMonk: S('ninjaMonk', 25, sk('Quivering Palm', 'Spends his Flow (a stack a blow on the same foe, up to five) in one palm, and the foe loses skill charge; with nobody in reach he leaps up to 4 tiles to the foe with the fullest meter', 500, 'attack2', stillnessPalm, 'Stillness Palm'), 40, 'A combo striker: builds his flow on one foe, then spends it'),
     wanderer: {
@@ -156,7 +157,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
       s2: { skill: old('wanderer'), cost: 60, tune: TUNE2.wanderer ?? 1, heals: true, emergency: hurtUnder(0.35), revive: REVIVE_FACES.wanderer },
       role: 'An alchemist: draughts for friends, firebrew for foes, an elixir for the fallen',
     },
-    lightningMage: M('lightningMage', 45, sk('Overload', 'Every Charged foe discharges: hurt, stunned for 0.8s, and the bolt arcs to a foe beside it', 700, 'attack', overload), 55, 'A storm marker: lightning that marks, then sets the marks off', { onHit: charge }),
+    lightningMage: M('lightningMage', 45, sk('Storm Surge', 'With a foe beside her she first blinks to the safest tile within 3; then every Charged foe discharges: hurt, stunned for 0.8s, and the bolt arcs to a foe beside it', 700, 'attack', stormSurge, 'Overload'), 55, 'A storm marker: lightning that marks, then sets the marks off', { onHit: charge }),
     kitsune: M('kitsune', 45, sk('Fox Guise', 'For 5s she takes the shape of the strongest foe in sight: its looks, reach and attack; foes pick her last', 600, 'attack', foxGuise), 60, 'A shapeshifter: charms a foe, or wears its shape', {}, { gap: 12000 }),
     karasu: S('karasu', 30, sk('Pilfer', 'Dives on the foe with the fullest skill meter, steals half its charge and any shield; friends near him gain pool', 450, 'attack', pilfer), 40, 'A thief: dives on the back line and robs it'),
     yamabushi: S('yamabushi', 30, sk('Turning Wind', 'The foes beside him are shoved back; for 4s, shots aimed at friends within 2 of him are blown back at the shooter for half', 500, 'attack', turningWind), 40, 'A reflector: wind that shoves foes and turns arrows'),
@@ -175,8 +176,8 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     druid: M('druid', 50, sk('Wild Shape', 'For 6s she becomes a treant: a third more health, more defence, foes beside her must strike her; she heals 15% after', 700, 'attack2', treeform, 'Treeform'), 55, 'A shapeshifter: calls a treant, or becomes one; she can raise the fallen', {}, { gap: 12000, revive: REVIVE_FACES.druid }),
     barbarian: S('barbarian', 30, sk('Rage', 'Paid in blood: for 4s his blows come 30% faster and drink an eighth, and he cannot fall below 1 health', 400, 'attack2', bloodFury, 'Blood Fury'), 25, 'A berserker: stronger the more he bleeds', {}, { hpCost: 0.1, gap: 14000 }),
     ranger: S('ranger', 30, sk('Spike Growth', 'Caltrops on the 3x3 round the nearest foe for 6s: whoever stands in it is slowed and bleeds', 500, 'attack', spikeField, 'Spike Field'), 45, 'A trapper: snares and fields of caltrops', { gap: 9000 }),
-    warlock: M('warlock', 45, sk('Soul Siphon', 'Channels 2s on the weakest foe in reach, draining it; what he drains heals his most hurt friend', 2000, 'attack2', soulSiphon), 60, 'A leech: drinks his foes and feeds his friends'),
-    illusionist: M('illusionist', 50, sk('Trade Places', 'The friend in most trouble swaps out to a safe tile, and a decoy takes its place', 400, 'attack2', tradePlaces), 70, 'A trickster: decoys, and friends swapped out of danger', { emergency: selfUnder(0.25), gap: 14000 }, { gap: 15000 }),
+    warlock: M('warlock', 45, sk('Drain Life', 'Channels 2s on the weakest foe in reach, draining it; what he drains heals his most hurt friend', 2000, 'attack2', soulSiphon, 'Soul Siphon'), 60, 'A leech: drinks his foes and feeds his friends'),
+    illusionist: M('illusionist', 50, sk('Transposition', 'She and the friend in most trouble within 5 change places, and a decoy springs up beside the friend; the foes that were striking the friend now face her (she slips a quarter of blows)', 400, 'attack2', transposition, 'Trade Places'), 70, 'A trickster: decoys, and friends swapped out of danger', { emergency: selfUnder(0.25), gap: 14000 }, { gap: 15000 }),
     gunslinger: S('gunslinger', 35, sk('Fan the Hammer', 'With a foe within 2 she first rolls clear; then three fast shots at the nearest foe in reach, and a long reload', 1900, 'attack', fanTheHammer), 45, 'A quick-draw: slugs through a line, or three fast shots'),
     shambler: S('shambler', 30, sk('Devour', 'Eats a body that fell near him: heals a fifth and grows a tenth bigger for the fight (three times at most)', 700, 'attack', devour), 40, 'A corpse-eater: rots his foes and eats the fallen'),
     rifleBot: S('rifleBot', 30, sk('Suppressing Fire', 'Fire on the three-wide lane with most foes: each is struck, slowed for 3s, and its skill stops charging', 700, 'attack2', suppressingFire), 45, 'A suppressor: bursts, and a lane of fire'),
@@ -195,7 +196,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     priestess: M('priestess', 45, sk('Death Ward', 'The friend most at risk is warded for 4s: the first blow that would fell it leaves it at 1 health and heals it 30%', 600, 'attack2', guardianAngel, 'Guardian Angel'), 55, 'A resurrector: mends the worst hurt, wards the dying and raises the fallen', { heals: true, emergency: hurtUnder(0.35) }, { heals: true, gap: 12000, revive: REVIVE_FACES.priestess }),
     dragoon: S('dragoon', 35, sk('Dragon Dive', 'She leaps out of the fight and lands on the thickest crowd: double on her mark, and the 3x3 struck, held and thrown a tile outward', 400, 'attack2', jump, 'Jump'), 45, 'A dragoon: breathes fire and jumps'),
     juggernaut: S('juggernaut', 30, sk('Tunnel Strike', 'Drills into the ground and comes up under the foe within 6 with most foes round it: it is struck hard and thrown 2 tiles, and the foes beside it are struck and shoved', 700, 'attack2', tunnelStrike), 45, 'A siege engine: slams foes into the air and tunnels under them', {}, { gap: 10000 }),
-    sage: M('sage', 50, sk('Font of Wisdom', 'Every friend within 4 gains 25 mana or 15 stamina', 600, 'attack2', fontOfWisdom), 55, 'A mana battery: stars, and his friends\' pools filled', {}, { gap: 8000 }),
+    sage: M('sage', 50, sk('Font of Magic', 'A font of magic rises on his tile for 8s: friends within 3 of it gain 4 mana or 2 stamina a second', 600, 'attack2', fontOfMagic, 'Font of Wisdom'), 55, 'A mana battery: stars, and his friends\' pools filled', {}, { gap: 8000 }),
     demonSwordsman: S('demonSwordsman', 30, sk('Blood Pact', 'Paid in blood: his next three blows deal 60% more and drink 30%', 400, 'attack2', bloodPrice, 'Blood Price'), 25, 'A blood pact: pays health for power', {}, { hpCost: 0.1, gap: 6000 }),
     tyrant: M('tyrant', 45, sk('Bane', 'Iron chains drag the toughest foe within 6 up to 3 tiles towards him and mark it for 6s: every hero goes for it and deals 20% more (if it falls, every hero gains pool); the two foes nearest it are weakened', 500, 'attack2', bane, 'Condemn'), 60, 'A condemner: names a foe for the whole party', {}, { gap: 10000 }),
   };

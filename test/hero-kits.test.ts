@@ -319,6 +319,7 @@ test('a fight replays the same from its seed, its placing and its log of orders'
   assert.equal(playTapped(11).trace, first.trace);
 });
 
+// (an ultimate's event carries its key: RPG-SPELLS renamed several, keeping the old names as keys)
 test('a manual fight whose player never taps fires no hero ultimate; a headless one fires them', () => {
   const play = (auto?: boolean) => {
     const b = startBattle(5, 'orcs', { foes: { hp: 3, atk: 1.5 } });
@@ -327,7 +328,7 @@ test('a manual fight whose player never taps fires no hero ultimate; a headless 
     ['knight', 'samurai', 'archer', 'cleric', 'wizard'].forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, { ...gradeBoost(1, 0, ULT_LEVEL), charge2: 90 }));
     fight(b);
     let ults = 0;
-    while (b.phase === 'fight') for (const e of stepBattle(b)) if (e.kind === 'skill' && b.units.some((u) => u.id === e.by && ultimateOf(u)?.name === e.name)) ults++;
+    while (b.phase === 'fight') for (const e of stepBattle(b)) if (e.kind === 'skill' && b.units.some((u) => u.id === e.by && (ultimateOf(u) && keyOf(ultimateOf(u)!)) === e.name)) ults++;
     return ults;
   };
   assert.equal(play(false), 0);

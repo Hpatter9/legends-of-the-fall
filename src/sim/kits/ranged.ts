@@ -77,6 +77,8 @@ export const BOMBARD_THROWS: Throws = { heart: 2, ring: 1, ringHow: 'shove' };
 export const ORBITAL_THROWS: Throws = { heart: 2, ring: 2, ringHow: 'launch' };
 /** The Dread Pirate's Powder Keg: the blast launches its 3x3 a tile outward, and 2 at its heart. */
 export const KEG_THROWS: Throws = { heart: 2, ring: 1, ringHow: 'launch' };
+/** The Fire Wizard's Meteor Swarm (RPG-SPELLS batch 6): each meteor launches the foe at its heart a tile. */
+export const SWARM_THROWS: Throws = { heart: 1, ring: 0, ringHow: 'launch' };
 
 /** The Beastmaster's Pack Tactics: a wolf leaps (up to 4 tiles, an arc) to its tile beside the marked foe; farther than that it blinks, as
  *  before. True when it moved. */

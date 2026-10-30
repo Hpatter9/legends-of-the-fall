@@ -1,37 +1,18 @@
-// The casters' new skills (COMBAT-002): the Fire Wizard's wildfire, the Lightning Mage's marks and overload, the Kitsune's guise, the Satyr's
-// pied piper, the Gorgon's stone garden, the Warlock's siphon, the Illusionist's trade, the Time Witch's rewind, the Great Sage's font, the Tyrant's
-// condemnation, the Wolf Bard's tune, the Cleric's smite, the Wanderer's flasks, the High Priestess's angel and the Druid's treeform.
+// The casters' new skills (COMBAT-002): the Lightning Mage's marks and overload, the Kitsune's guise, the Satyr's pied piper, the Gorgon's
+// stone garden, the Warlock's siphon, the Time Witch's rewind, the Tyrant's condemnation, the Wolf Bard's tune, the Cleric's smite, the
+// Wanderer's flasks, the High Priestess's angel and the Druid's treeform. (RPG-SPELLS batch 6 put the Fire Wizard's Wall of Fire, the
+// Illusionist's Transposition and the Great Sage's Font of Magic in place of Wildfire, Trade Places and Font of Wisdom: `mages.ts`.)
 
 import { sightClear } from '../board';
-import { addUnit, atkOf, canStrike, strikeDef, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
-import { apart, castPower, crowd, drag, foesOf, mendUnit, near3x3, net } from '../abilities';
+import { atkOf, canStrike, strikeDef, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
+import { apart, castPower, crowd, drag, foesOf, mendUnit, net } from '../abilities';
 import { hurt } from '../battle';
-import { addRes, poolOf } from '../heroKits';
 import { formOf, UNITS } from '../units';
 import { kx, setLook } from './effects';
-import { alliesOf, blinkTo, foesNear, free, freeNear, mark, ms, nearestFoe, strike, strongest, stun, toughest } from './common';
-import { cleanse, hasAil, setDot } from '../ailments';
+import { alliesOf, blinkTo, foesNear, free, mark, ms, nearestFoe, strike, strongest, stun, toughest } from './common';
+import { cleanse } from '../ailments';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
-const burning = (b: Battle, f: Unit, side: Unit['side']) => hasAil(f, 'burn') || b.zones.some((z) => z.side === side && !z.slow && near3x3(f, z));
-
-/** Fire Wizard, Wildfire: every burning foe within 7 erupts: its 3x3 is hurt and set alight, so fire runs through a pack (each foe is struck once). */
-export function wildfire(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const foes = foesOf(b, me);
-  const lit = foes.filter((f) => apart(me, f) <= 7 && burning(b, f, me.side));
-  if (!lit.length) return false;
-  const struck = new Set<number>();
-  for (const src of lit) {
-    out.push({ kind: 'area', by: me.id, id: 'meteor', u: src.u, v: src.v, ms: 0 });
-    for (const f of foes) {
-      if (struck.has(f.id) || !f.alive || !near3x3(f, src)) continue;
-      struck.add(f.id);
-      strike(b, me, f, 1.2, out);
-      if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms: 3000, by: me.id, next: b.t + 500, until: b.t + ms(me, 3000) });
-    }
-  }
-  return true;
-}
 
 /** Lightning Mage: Chain Lightning leaves each foe it struck Charged for 5s. */
 export const charge = (b: Battle, me: Unit, f: Unit, out: BattleEvent[]) => {
@@ -113,27 +94,6 @@ export function soulSiphon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Illusionist, Trade Places: the friend in most trouble (beside a foe, under 60%) swaps out to a safe tile within 3, and a decoy takes its place; the foes on it keep beating the decoy for 3s. */
-export function tradePlaces(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const foes = foesOf(b, me);
-  const ally = alliesOf(b, me)
-    .filter((a) => a.owner === undefined && !UNITS[a.def].summon && a.hp < a.maxHp * 0.6 && foes.some((f) => apart(f, a) === 1))
-    .sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
-  if (!ally) return false;
-  const safety = (c: { u: number; v: number }) => Math.min(...foes.map((f) => apart(c, f)));
-  const to = freeNear(b, ally, 3).sort((x, y) => safety(y) - safety(x) || apart(ally, x) - apart(ally, y) || x.v - y.v || x.u - y.u)[0];
-  if (!to || safety(to) < 2) return false;
-  const from = { u: ally.u, v: ally.v };
-  blinkTo(b, ally, to, out);
-  const d = addUnit(b, 'decoy', from.u, from.v);
-  d.owner = me.id;
-  d.hp = d.maxHp = Math.max(1, Math.round(me.maxHp * 0.45 * castPower()));
-  d.busyUntil = b.t + 1500;
-  d.expires = b.t + ms(me, 5000);
-  for (const f of foes) if (apart(f, from) <= 2) f.taunt = { to: d.id, until: b.t + ms(me, 3000) };
-  return true;
-}
-
 /** Time Witch, Rewind: the friend that lost most in the last 4s goes back to how it was: its health (if it had more), its tile (if free), and its new ailments gone. */
 export function rewind(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   let best: { a: Unit; then: { hp: number; u: number; v: number }; lost: number } | undefined;
@@ -154,17 +114,6 @@ export function rewind(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   a.busyUntil = Math.min(a.busyUntil, b.t + 200);
   a.kx!.hist = [];
   mark(out, me, a, 'rewind', 800);
-  return true;
-}
-
-/** Great Sage, Font of Wisdom: every friend within 4 gains 25 mana or 15 stamina. Needs two friends near under a third of their pools. */
-export function fontOfWisdom(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = alliesOf(b, me).filter((a) => a !== me && apart(a, me) <= 4 && poolOf(a));
-  if (near.filter((a) => a.charge < 34).length < Math.min(2, near.length) || !near.length || !foesOf(b, me).length) return false;
-  for (const a of near) {
-    addRes(a, poolOf(a) === 'mana' ? 25 : 15);
-    out.push({ kind: 'heal', to: a.id, amount: 0, by: me.id });
-  }
   return true;
 }
 
