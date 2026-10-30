@@ -505,7 +505,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   gorgon: { rate: 1.29, power: 2.2 },
   samuraiCommander: { rate: 1.1, power: 1.6 },
   paladin: { rate: 1.31, power: 0.83 },
-  cleric: { rate: 0.58, power: 1.12 },
+  cleric: { rate: 1.1, power: 2.2 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
   druid: { rate: 1.19, power: 0.4 },
   barbarian: { rate: 0.9, power: 2.14 },
   ranger: { rate: 0.84, power: 1.11 },
