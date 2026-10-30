@@ -191,6 +191,17 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   the bench and the bard's stage trimmed to their pixels). The bar room's wall is the old `wall.png` without its top 48 rows. Nothing is
   scaled; `tools/tavern/hall.py` does the cuts, `docs/notes/tavern-hall.md` lists the prompts.
 
+## The quests' placeholders (`src/art/quests/`, cut by `tools/quests/cut.py`; QUESTS batch 1)
+
+- **Gwen Tallow** behind the tavern's bar (`gwen.png`) and her card's portrait (`gwen-face.png`): composed from the
+  **Universal LPC Spritesheet** layers (`Universal-LPC-spritesheet-master` in the packs: the female body, brown shoes, the underdress,
+  the white sleeveless shirt, a brown cloth belt and the grey ponytail; CC-BY-SA 3.0 / GPL 3.0, the LPC artists listed in that pack's
+  `AUTHORS.txt`). Her stand is the walk-left row's first frame; her talk the spellcast-left frames. Placeholders until the owner's
+  painted giver portraits land.
+- **The passersby's portraits** (`pedlar-face.png`, `pilgrim-face.png`): the **Tiny RPG Town** pack's `npc.png` (16 px faces, scaled 4x).
+- **The quest board** (`board.png`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer** ("Quest Board", craftpix.net free
+  licence), trimmed and scaled to 64 px across with hard alpha.
+
 ## Art generated with PixelLab
 
 - **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.

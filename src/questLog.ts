@@ -1,0 +1,146 @@
+// The quest log (QUESTS batch 1): a sheet over the home screen (the hero sheet's `#hmSheet`, so it opens and closes the same way)
+// with its tabs as a row of pills. Active: the quests taken, each with its goal, a bar, a Track pin and, once done, Hand in.
+// Board: everything on offer from every giver, with Take. Done: the quests handed in, newest first, with their giver's last word.
+// The Eidolons tab (the six great summons' chains) comes with a later batch: its place is kept in `LOG_TABS`.
+
+import { faceOf, rewardText } from './questCard';
+import { GIVERS, questById } from './sim/questData';
+import { ACTIVE_MAX, cannotTake, handIn, isDone, progressOf, takeQuest, trackedQuest, trackQuest } from './sim/quests';
+import type { Meta } from './sim/meta';
+import { play } from './render/sound';
+import { todayKey } from './modes';
+
+export type LogTab = 'active' | 'board' | 'eidolons' | 'done';
+
+/** The log's tabs in order. The Eidolons tab (Askel, Nivra, Aurelan, Voltara, Gorm and Vaelkhar's chains) waits for its batch. */
+export const LOG_TABS: readonly { id: LogTab; label: string; shown: boolean }[] = [
+  { id: 'active', label: 'Active', shown: true },
+  { id: 'board', label: 'Board', shown: true },
+  { id: 'eidolons', label: 'Eidolons', shown: false },
+  { id: 'done', label: 'Done', shown: true },
+];
+
+const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text) e.textContent = text;
+  return e;
+};
+
+export interface LogHooks {
+  /** The save changed: save it and redraw the home screen. */
+  changed(): void;
+  close(): void;
+}
+
+/** Draw the log on a tab into the sheet's box. */
+export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogHooks): void {
+  box.className = 'hsheet qlog';
+  box.replaceChildren();
+  const redraw = (t: LogTab = tab) => drawQuestLog(box, m, t, hooks);
+  const head = el('div', 'qlHead');
+  head.append(el('h3', '', 'Quests'));
+  const shut = el('button', 'qlShut', '✕');
+  shut.setAttribute('aria-label', 'Close the quest log');
+  shut.addEventListener('click', hooks.close);
+  head.append(shut);
+  const tabs = el('div', 'qlTabs');
+  tabs.setAttribute('role', 'tablist');
+  const s = m.quests;
+  const count: Partial<Record<LogTab, number>> = { active: s?.active.length ?? 0, board: s?.offers.length ?? 0 };
+  for (const t of LOG_TABS.filter((x) => x.shown)) {
+    const b = el('button', `qlTab${t.id === tab ? ' on' : ''}`, t.label);
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', String(t.id === tab));
+    if (t.id === 'active') b.textContent = `Active ${count.active}/${ACTIVE_MAX}`;
+    if (t.id === 'board' && count.board) b.append(el('i', 'qlDot', String(count.board)));
+    b.addEventListener('click', () => redraw(t.id));
+    tabs.append(b);
+  }
+  const list = el('div', 'qlList');
+  if (tab === 'active') drawActive(list, m, () => redraw(), hooks);
+  else if (tab === 'board') drawBoard(list, m, () => redraw(), hooks);
+  else drawDone(list, m);
+  box.append(head, tabs, list);
+}
+
+const empty = (list: HTMLElement, line: string) => list.append(el('p', 'qlEmpty', line));
+
+function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHooks): void {
+  const act = m.quests?.active ?? [];
+  if (!act.length) return empty(list, 'No quests taken. Gwen keeps the board in the tavern: see the Board tab.');
+  const pinned = trackedQuest(m)?.id;
+  for (const a of [...act].reverse()) {
+    const q = questById(a.id)!;
+    const row = el('div', `qlRow${isDone(a) ? ' done' : ''}`);
+    const body = el('div', 'qlBody');
+    const p = progressOf(a);
+    const bar = el('i', 'qlBar');
+    const fill = el('span');
+    fill.style.width = `${Math.round((p.now / p.need) * 100)}%`;
+    bar.append(fill);
+    body.append(el('b', '', q.title), el('small', '', q.text), bar, el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(q.reward)}`));
+    const side = el('div', 'qlSide');
+    if (isDone(a)) {
+      const give = el('button', 'primary', 'Hand in');
+      give.addEventListener('click', () => {
+        if (!handIn(m, a.id)) return;
+        play('coinClaim');
+        hooks.changed();
+        redraw();
+      });
+      side.append(give);
+    } else {
+      const pin = el('button', `qlPin${pinned === a.id ? ' on' : ''}`, pinned === a.id ? 'Tracked' : 'Track');
+      pin.setAttribute('aria-pressed', String(pinned === a.id));
+      pin.addEventListener('click', () => {
+        trackQuest(m, a.id);
+        hooks.changed();
+        redraw();
+      });
+      side.append(pin);
+    }
+    row.append(faceOf(q.giver), body, side);
+    list.append(row);
+  }
+}
+
+function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHooks): void {
+  const offers = m.quests?.offers ?? [];
+  if (!offers.length) return empty(list, 'Nothing on offer today. Gwen pins a new quest each day; passersby come and go.');
+  for (const o of offers) {
+    const q = questById(o.id)!;
+    const g = GIVERS[q.giver];
+    const row = el('div', 'qlRow');
+    const body = el('div', 'qlBody');
+    body.append(el('b', '', q.title), el('small', 'qlGiver', g.slot === 'passerby' ? `${g.name}, passing today` : g.name), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward)));
+    const side = el('div', 'qlSide');
+    const take = el('button', 'primary', 'Take');
+    const why = cannotTake(m, q.id);
+    take.disabled = !!why;
+    if (why === 'full') take.title = `Your log is full: ${ACTIVE_MAX} quests at a time`;
+    take.addEventListener('click', () => {
+      if (!takeQuest(m, q.id, todayKey())) return;
+      play('tap');
+      hooks.changed();
+      redraw();
+    });
+    side.append(take);
+    row.append(faceOf(q.giver), body, side);
+    list.append(row);
+  }
+  if ((m.quests?.active.length ?? 0) >= ACTIVE_MAX) list.append(el('p', 'qlEmpty', `Your log is full: ${ACTIVE_MAX} quests at a time. Hand one in to take another.`));
+}
+
+function drawDone(list: HTMLElement, m: Meta): void {
+  const done = m.quests?.done ?? [];
+  if (!done.length) return empty(list, 'No quests handed in yet.');
+  for (const id of [...done].reverse()) {
+    const q = questById(id)!;
+    const row = el('div', 'qlRow done');
+    const body = el('div', 'qlBody');
+    body.append(el('b', '', q.title), el('small', 'qlGiver', GIVERS[q.giver].name), el('small', 'qlWord', `“${q.done[0]}”`));
+    row.append(faceOf(q.giver), body);
+    list.append(row);
+  }
+}

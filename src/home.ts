@@ -38,6 +38,10 @@ import { CampScene } from './camp';
 import { readyKinds } from './sim/rankUp';
 import type { ComebackGo } from './sim/comeback';
 import { announceArmy } from './armyShown';
+import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
+import { questById } from './sim/questData';
+import { drawQuestLog, type LogTab } from './questLog';
+import { closeGiverCard, openGiverCard } from './questCard';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -132,7 +136,12 @@ export class Home {
   ) {
     // (the Battle page is the war camp: tapping a hero opens their sheet, the war table opens the party)
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
-    this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster());
+    // (QUESTS: Gwen behind the bar opens her card, the board opens the log's Board tab, the Quests button its Active tab)
+    this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster(), {
+      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), openLog: () => this.openQuests('active') }),
+      onBoard: () => this.openQuests('board'),
+      onQuests: () => this.openQuests('active'),
+    });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
       onSummon: (n) => this.summon(n),
@@ -169,6 +178,8 @@ export class Home {
       this.pages.set(t.id, page);
       const b = el('button', `hmTab${t.id === 'battle' ? ' hero' : ''}`);
       b.append(icon(ICONS[t.id]), el('span', '', t.label), el('i', 'badge'));
+      // (QUESTS: the Heroes tab's gold "!" while a quest waits at the tavern to be taken or handed in)
+      if (t.id === 'heroes') b.append(el('i', 'qbadge', '!'));
       b.addEventListener('click', () => this.show(t.id));
       bar.append(b);
       this.tabBtns.set(t.id, b);
@@ -250,6 +261,7 @@ export class Home {
   }
 
   private go(then: () => void): void {
+    closeGiverCard();
     $('home').hidden = true;
     this.camp.stop();
     this.tavern.stop();
@@ -266,8 +278,34 @@ export class Home {
     this.tab = tab;
     // (the tab bar stays under the armies: a tap on it leaves them)
     if ($('hmSub').classList.contains('armies')) this.closeSub();
+    // (the Heroes tab opens the tavern itself: its All heroes button opens the list; QUESTS)
+    closeGiverCard();
     this.refresh();
-    if (tab === 'heroes') this.openRoster();
+  }
+
+  /** The quests' state changed (taken, handed in, pinned): save, and redraw the home screen. */
+  private questsChanged(): void {
+    saveMeta(this.meta);
+    this.refresh();
+  }
+
+  /** The quest log, over the home screen (the hero sheet's place). */
+  openQuests(tab: LogTab = 'active'): void {
+    closeGiverCard();
+    this.closeSheet();
+    $('hmSheet').hidden = false;
+    this.tavern.stop();
+    this.tavern.paintOnce();
+    this.camp.stop();
+    const draw = (t: LogTab) =>
+      drawQuestLog($('hmSheetBox'), this.meta, t, {
+        changed: () => {
+          saveMeta(this.meta);
+          this.refresh();
+        },
+        close: () => this.closeSheet(),
+      });
+    draw(tab);
   }
 
   /** Redraw the page that is showing (after crowns or unlocks change elsewhere). */
@@ -288,6 +326,8 @@ export class Home {
       if (!count) chip.replaceChildren(icon(pic), el('b', '', String(n)));
       else if (count.textContent !== String(n)) count.textContent = String(n);
     };
+    // (QUESTS: the day's offers are drawn the first time a date is seen, and kept; old ones come down)
+    if (refreshOffers(m, todayKey())) saveMeta(m);
     chipCount('hmCrowns', ICONS.crowns, m.crowns);
     chipCount('hmStones', ICONS.stones, stonesOf(m));
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
@@ -311,6 +351,7 @@ export class Home {
     this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0);
     // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
     this.tabBtns.get('heroes')!.classList.toggle('new', readyKinds(m, m.unlocked).length > 0);
+    this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));
     this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
     this.drawBattle();
     this.tavern.update(m);
@@ -377,6 +418,19 @@ export class Home {
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
     } else go.append(el('span', 'hmSpacer'));
+    // (QUESTS: the tracked quest's chip above the command bar; a tap opens the log)
+    const tracked = trackedQuest(m);
+    const tq = tracked && questById(tracked.id);
+    if (tracked && tq) {
+      const p = progressOf(tracked);
+      const chip = el('button', `hmQuest${isDone(tracked) ? ' done' : ''}`);
+      chip.id = 'hmQuest';
+      chip.append(el('b', '', tq.title), el('span', '', isDone(tracked) ? 'Done: hand it in' : `${p.now}/${p.need}`));
+      chip.setAttribute('aria-label', `Quest: ${tq.title}, ${isDone(tracked) ? 'done, hand it in at the tavern' : `${p.now} of ${p.need}`}. Open the quest log`);
+      chip.addEventListener('click', () => this.openQuests('active'));
+      fr.classList.add('withQuest');
+      fr.append(chip);
+    }
     fr.append(go);
     // (the camp's places, each tapped in the scene: a picture with its name plate under it)
     const place = (id: string, cls: string, title: string, line: string, label: string, onTap: () => void): HTMLButtonElement => {

@@ -1,0 +1,70 @@
+/* ===== Quests (QUESTS batch 1): the Heroes tab's gold "!", the tavern's buttons, a giver's card, the quest log and the Battle tab's
+   tracked chip. Text 12px or more, never bold under 12px. Nothing blinks: the marks are steady. ===== */
+
+/* the Heroes tab's gold "!" while a quest waits at the tavern (beside the red dot of a rank ready, never over it) */
+.hmTab i.qbadge { position: absolute; top: 2px; left: 22%; display: none; width: 16px; height: 16px; font: 400 12px/14px var(--display); font-style: normal; text-align: center; color: var(--s1); background: var(--gold-hi); border: 1px solid var(--s1); border-radius: 50%; }
+.hmTab.quest i.qbadge { display: block; }
+
+/* the tavern's three buttons, top right in a column */
+.tvBtns { position: absolute; right: 8px; top: 8px; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.tvBtns .tvRoster, .tvBtns .tvTrophies { position: static; right: auto; top: auto; }
+.tvQuests { position: relative; min-height: 36px; padding: 3px 12px 4px; font: 400 12px var(--body); color: var(--gold-hi); background: rgb(var(--s1-rgb) / 0.88); border: 2px solid var(--gold-hi); border-radius: 8px; box-shadow: 0 2px 4px rgb(var(--black-rgb) / 0.4); }
+.tvQuests i.qDot { position: absolute; top: -5px; right: -5px; display: none; width: 12px; height: 12px; background: var(--gold-hi); border: 2px solid var(--s1); border-radius: 50%; }
+.tvQuests.new i.qDot { display: block; }
+
+/* a giver's face */
+.qFace { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--s2); border: 2px solid var(--gold-lo); border-radius: 8px; overflow: hidden; }
+.qFace img { width: 100%; height: 100%; image-rendering: pixelated; }
+.qFace.big { width: 64px; height: 64px; }
+
+/* a giver's card, rising from the bottom over the lower part of the screen */
+.qcWrap { position: absolute; inset: 0; z-index: 6; display: flex; align-items: flex-end; justify-content: center; padding: 0 10px calc(70px + env(safe-area-inset-bottom)); background: rgb(var(--s0-rgb) / 0.35); }
+.qcCard { width: min(400px, 100%); max-height: 70%; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--panel-bg); border: 3px solid var(--gold-lo); border-radius: 12px; box-shadow: 0 0 0 2px var(--s1), 0 8px 24px rgb(var(--black-rgb) / 0.7); animation: qcRise 0.25s ease-out; }
+@keyframes qcRise { from { transform: translateY(24px); opacity: 0; } }
+.qcHead { display: flex; align-items: center; gap: 10px; }
+.qcWho { display: flex; flex-direction: column; }
+.qcWho b { font: 400 16px var(--display); color: var(--gold-hi); }
+.qcWho small { font: 400 12px var(--body); color: var(--dim); }
+.qcLines h4 { margin: 0 0 4px; font: 400 14px var(--display); color: var(--gold-hi); }
+.qcLines p { margin: 0 0 6px; font: 400 14px/1.35 var(--body); color: var(--s14, #e8e0d0); }
+.qcLines .qcGoal { color: var(--gold-hi); }
+.qcLines .qcPay { font-size: 12px; color: var(--dim); }
+.qcLines .qcWarn { font-size: 12px; color: var(--red); }
+.qcRow { display: flex; gap: 8px; }
+.qcRow button { flex: 1; min-height: 44px; }
+
+/* the quest log */
+.hsheet.qlog { height: 100%; max-height: 100%; }
+.qlHead { display: flex; align-items: center; justify-content: space-between; }
+.qlHead h3 { margin: 0; }
+.qlShut { min-width: 44px; min-height: 44px; }
+.qlTabs { display: flex; gap: 6px; }
+.qlTab { position: relative; flex: 1; min-height: 40px; padding: 0 6px; font: 400 12px var(--display); border-radius: 20px; color: var(--dim); }
+.qlTab.on { color: var(--gold-hi); box-shadow: inset 0 0 0 2px var(--gold-hi); }
+.qlTab .qlDot { display: inline-block; min-width: 16px; margin-left: 4px; font: 400 12px/16px var(--body); font-style: normal; color: var(--s1); background: var(--gold-hi); border-radius: 8px; }
+.qlList { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.qlRow { display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px; background: rgb(var(--s1-rgb) / 0.55); border: 2px solid var(--s6); border-radius: 10px; }
+.qlRow.done { border-color: var(--gold-lo); }
+.qlBody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.qlBody b { font: 400 14px var(--display); color: var(--gold-hi); }
+.qlBody small { font: 400 12px/1.25 var(--body); color: var(--s12, #d0c8b8); }
+.qlBody .qlGiver, .qlBody .qlCount { color: var(--dim); }
+.qlBody .qlWord { font-style: italic; }
+.qlBar { display: block; height: 6px; margin: 2px 0; background: var(--s2); border-radius: 3px; overflow: hidden; }
+.qlBar span { display: block; height: 100%; background: var(--gold-hi); }
+.qlSide { flex: none; display: flex; flex-direction: column; gap: 4px; }
+.qlSide button { min-width: 72px; min-height: 40px; }
+.qlPin.on { color: var(--gold-hi); box-shadow: inset 0 0 0 2px var(--gold-hi); }
+.qlEmpty { margin: 8px 4px; font: 400 14px/1.35 var(--body); color: var(--dim); }
+
+/* the Battle tab's tracked quest: a slim chip in the command bar's top row, at the right; the army's line moves to the left for it */
+.hmFront.withQuest .hmBanner { align-self: flex-start; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hmFront .hmQuest { position: absolute; right: 8px; top: 4px; max-width: calc(50% - 12px); height: 28px; min-height: 28px; margin: 0; padding: 0 10px; display: flex; align-items: center; gap: 8px; font: 400 12px/1 var(--body); color: var(--gold-hi); background: rgb(var(--s1-rgb) / 0.88); border: 2px solid var(--gold-lo); border-radius: 14px; white-space: nowrap; }
+.hmFront .hmQuest b { min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 400 12px/1 var(--display); color: var(--gold-hi); }
+.hmFront .hmQuest span { flex: none; color: var(--dim); }
+.hmFront .hmQuest.done { border-color: var(--gold-hi); }
+.hmFront .hmQuest.done span { color: var(--gold-hi); }
+
+@media (prefers-reduced-motion: reduce) {
+  .qcCard { animation: none; }
+}

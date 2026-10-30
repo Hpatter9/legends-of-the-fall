@@ -25,6 +25,7 @@ import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
 import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
+import { noteQuests, questFightOf } from './quests';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -214,7 +215,10 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   if (fight.battle) noteFoes(m, fight.battle);
   // (and a combo that went off is seen, for the codex)
   if (fight.battle) noteCombos(m, fight.battle);
-  return checkAchievements({ battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m });
+  const ctx = { battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m };
+  // (the quests taken count the fight too, from the same facts: `quests.ts`; the page sees a quest done by `readyQuests`)
+  noteQuests(m, questFightOf(ctx));
+  return checkAchievements(ctx);
 }
 
 /** The daily's standing for a date, in words: "not tried", "wave 4/10" (a run going), "fell at 6/10" or "cleared ✓". */

@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### QUESTS-1 — Quests batch 1: the tavern and the first quests
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/quests-1`, `/home/user/lotf-quests1` (from main 0.262.0, with `claude/quests-design` merged).
+- **Goal:** batch 1 of the approved quests and Eidolons design: the Heroes tab opens the tavern; All heroes, Quests and the gold "!"; the quest rules and saves; the log (Active, Board, Done; the Eidolons tab's place kept); Gwen Tallow and the quest board (pack placeholders); six ordinary quests; the tracked chip.
+- **Scope:** new `src/sim/quests.ts`, `src/sim/questData.ts`, `src/questLog.ts`, `src/questCard.ts`, `src/questArt.ts`, `src/quests.css`, `src/art/quests/`, `tools/quests/`, `test/quests.test.ts`; hooks in `src/sim/modes.ts` (`settleRun`), `src/sim/meta.ts`, `src/home.ts`, `src/tavern.ts`, `src/standView.ts`, `src/main.ts`, `build.mjs` (the CSS); `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/quests.md); screenshots `samples/quests-1-*.png`.
+
 ### QUESTS-SUMMONS — Design: quests, the tavern, quest battles and six great summons
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/quests-design`, `/home/user/lotf-quest-design` (from main 0.262.0).
