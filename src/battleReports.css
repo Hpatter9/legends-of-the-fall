@@ -141,6 +141,21 @@ body[data-move] #result #banner { background: #15251ac4; }
 #result #waveNotes .wn.fell { border-left-color: #a8705f; color: #e2c7b8; }
 #result #waveNotes .wn.fell > span, #result #waveNotes .wn.heart > span { color: #e2917d; }
 #result #waveNotes .wn.heart { border-left-color: #c75f53; }
+/* RECAP-REVEAL: everything the wave brought in, as small chips with the packs' icons; many wrap, and past three rows they scroll a little. */
+#result #waveNotes .wg { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-height: 86px; overflow-y: auto; overscroll-behavior: contain; padding: 1px 0; }
+#result #waveNotes .wgChip { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 2px 7px 2px 3px; border: 1px solid #9c845488; border-radius: 4px; background: #0d1a13cc; color: #ebdfc1; font: 400 12px/1.2 var(--body); white-space: nowrap; opacity: 0; animation: reportArrive .3s ease-out forwards; animation-delay: calc(var(--i) * .07s + .15s); }
+#result #waveNotes .wgChip .wgIco { flex: none; width: 20px; height: 20px; object-fit: contain; image-rendering: pixelated; }
+#result #waveNotes .wgChip canvas.wgIco { border-radius: 3px; background: #0006; }
+#result #waveNotes .wgChip .eqIcon.wgIco { display: inline-grid; place-items: center; padding: 0; }
+#result #waveNotes .wgChip .eqIcon.wgIco img { width: 16px; height: 16px; image-rendering: pixelated; }
+#result #waveNotes .wgChest { position: relative; overflow: hidden; }
+#result #waveNotes .wgChest > .chestPic { position: absolute; left: 0; top: 0; transform: scale(.476); transform-origin: 0 0; }
+#result #waveNotes .wgChip.r2 { border-color: #5aa0e0aa; }
+#result #waveNotes .wgChip.r3 { border-color: #b07ae8bb; }
+#result #waveNotes .wgChip.r4 { border-color: #f0c050cc; }
+#result #waveNotes .wgChip.r5 { border-color: #ff6a5acc; }
+#result #waveNotes .wgChip:is(.joined, .recruit) { border-color: #ebce85; color: #f6dc9b; }
+#result #waveNotes .wgChip.chest { border-color: #d8bf86; }
 /* A short card's stars sit in one row: the gems, with each rule's words dropped (a star's pay still flies to the purse). */
 #result.short #stars { flex-direction: row; justify-content: center; gap: 6px; }
 #result.short #stars .star { display: flex; padding: 3px 8px; border-radius: 4px; }
@@ -164,11 +179,11 @@ body #result.passing #banner { padding: 8px 10px 7px; width: 100%; font-size: cl
 #result.passing #stars .star { background: #0d1a13aa; }
 body[data-move] #result.passing > :is(#stars, #armyStars, #oreDrop, #waveNotes) { opacity: 1; pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) {
-  #result #waveNotes .wn { animation: none; opacity: 1; }
+  #result #waveNotes :is(.wn, .wgChip) { animation: none; opacity: 1; }
   #result #waveNotes .wn.drop::after { animation: none; display: none; }
   #result.passing { transition: none; }
 }
-/* WAVE-RECAP: the end recap's wave-by-wave strip (each wave's stars, time and MVP) and the spoils the battle found. */
+/* WAVE-RECAP: the end recap's wave-by-wave strip (each wave's stars, time and MVP). */
 :is(#recap, .rcDetail) .rcWaves { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 5px; }
 :is(#recap, .rcDetail) .rcWave { position: relative; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 1px 4px; padding: 5px 6px; border: 1px solid #9c845488; border-radius: 4px; background: var(--report-surface); }
 :is(#recap, .rcDetail) .rcWave b { color: #f2d494; font: 700 13px var(--body); }
@@ -179,9 +194,7 @@ body[data-move] #result.passing > :is(#stars, #armyStars, #oreDrop, #waveNotes) 
 :is(#recap, .rcDetail) .rcWave em { grid-column: 1; color: #e2917d; font: normal 10px var(--body); }
 :is(#recap, .rcDetail) .rcWave.lost { border-color: #a8705f99; }
 :is(#recap, .rcDetail) .rcWave.lost .rcWaveStars { color: #e2a08f; letter-spacing: 0; }
-:is(#recap, .rcDetail) .rcFound { display: flex; flex-direction: column; gap: 4px; }
-:is(#recap, .rcDetail) .rcFound p { margin: 0; padding: 6px 9px; border-left: 2px solid #9fd3e6aa; background: #0d1a13aa; color: #ebdfc1; font: 400 13px/1.35 var(--body); }
-/* WAVE-RECAP-2: the same detail (fights one by one, the company, XP, spoils) in the spire's and the Calamity's summaries and map recaps. */
+/* WAVE-RECAP-2: the same detail (fights one by one, the company, XP) in the spire's and the Calamity's summaries and map recaps. */
 .rcDetail {
   --report-surface: radial-gradient(ellipse at 50% 0, #6c70402b, transparent 65%), linear-gradient(120deg, #243127f8, #121d18fa), url(ui/page.png);
   --report-rim: #9c8454;
