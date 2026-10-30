@@ -206,12 +206,12 @@ export const ARMIES: readonly Army[] = [
     area: 'volcano',
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
-    start: 9.4, // (was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
+    start: 12.5, // (LATE-RETUNE, hearts: 10.2 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts, `docs/notes/late-retune.md`; 9.4 until two of a kind merged, MERGE-TWO, and made the late game easy, `docs/notes/late-retune.md`; was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
     xpStart: 3.01,
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
-    tierLift: [1, 2.97, 2.38, 0.76, 0.87], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 3.27, 2.51, 0.76, 0.87], // (LATE-RETUNE, hearts: Hard 2.97 and Elite 2.38, raised so each tier stays over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2000, atk: 50 },
     last: { hp: 1840, atk: 41 },
     pay: 4.1,
@@ -225,14 +225,14 @@ export const ARMIES: readonly Army[] = [
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 12.5, // (was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 14.2, // (LATE-RETUNE, hearts: 12.8 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.5 until two of a kind merged, MERGE-TWO, and its bosses stronger, `docs/notes/late-retune.md`; it stays under the Golem Forge's; was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.38,
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
-    tierLift: [1, 3.45, 2.76, 0.79, 0.67], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
-    mid: { hp: 2200, atk: 52 },
-    last: { hp: 2500, atk: 50 },
+    tierLift: [1, 3.99, 3.06, 0.88, 0.72], // (LATE-RETUNE, hearts: 3.57, 2.81, 0.81, 0.68, raised so each tier stays over the tougher Normal; before that 3.45, 2.76, 0.79, 0.67, raised a little with Normal's `start` so the harder tiers keep their step over it; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    mid: { hp: 2600, atk: 58 }, // (LATE-RETUNE: 2200 and 52, `docs/notes/late-retune.md`)
+    last: { hp: 3000, atk: 57 }, // (LATE-RETUNE: 2500 and 50)
     pay: 5.11,
     clear: 1450,
   },
@@ -244,12 +244,12 @@ export const ARMIES: readonly Army[] = [
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 12.7, // (was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 14.6, // (LATE-RETUNE, hearts: 13.7 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.7 until two of a kind merged, MERGE-TWO, `docs/notes/late-retune.md`; was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.63,
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,
-    tierLift: [1, 3.3, 2.5, 0.74, 0.73], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 3.8, 2.92, 0.84, 0.73], // (LATE-RETUNE, hearts: 3.49, 2.69, 0.78, raised so each tier stays over the tougher Normal; before that 3.3, 2.5, 0.74, raised to stay over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2040, atk: 55 },
     pay: 6.26,

@@ -5,13 +5,15 @@
 //
 //   node tools/merge-two/run.mjs orcs:4:55 infernal:0:55          SAVES (default 24) tries a cell
 //   node tools/merge-two/run.mjs early:beasts:20 spire:max         the starting five at a level (no castle or talents); the spire's climb
-import { armyById } from '../../src/sim/armies';
+import { ARMIES, armyById } from '../../src/sim/armies';
+import { armyRules } from '../../src/sim/armyStars';
+import { TIERS } from '../../src/sim/tiers';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
 import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '../../src/sim/castle';
 import { levelOfKind } from '../../src/sim/levels';
 import { heroRank, type Meta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';
-import { armyRun, boostOf, finish, isBossRun, noteFight, startStage, gradeBoost, type Owned } from '../../src/sim/run';
+import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, startStage, gradeBoost, tierOfRun, type Owned } from '../../src/sim/run';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
@@ -23,8 +25,22 @@ import * as run_ from '../../src/sim/run';
 // (GB=1,1.4,1.9,2.8 tries other grade multipliers: a tuning run, nothing is written; only on a tree that has `GRADE_BOOST`)
 if (process.env.GB) (run_ as unknown as { GRADE_BOOST: number[] }).GRADE_BOOST.splice(0, 4, ...process.env.GB.split(',').map(Number));
 
+// (START=infernal:11,yokai:14 sets an army's Normal `start`; TIERK=4:1.2 scales a tier's hp and attack (4:1.2:1.1 each on its own): tuning runs, nothing is written)
+for (const kv of (process.env.START ?? '').split(',').filter(Boolean)) {
+  const [aid, v] = kv.split(':');
+  (ARMIES.find((a) => a.id === aid) as unknown as { start: number }).start = Number(v);
+}
+for (const kv of (process.env.TIERK ?? '').split(',').filter(Boolean)) {
+  const [i, hp, atk] = kv.split(':').map(Number);
+  const t = TIERS[i] as { hp: number; atk: number };
+  t.hp *= hp;
+  t.atk *= atk ?? hp;
+}
+
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 const SAVES = Number(process.env.SAVES ?? 24);
+// (HEARTS=1: a lost wave burns a heart and is fought again, as the page does; by default a loss ends the try, as the notes' figures were measured)
+const HEARTS = process.env.HEARTS === '1';
 const SPREAD: BuildingId[] = ['barracks', 'armoury', 'library', 'treasury', 'stable', 'mage'].filter((id) => id in BUILDINGS) as BuildingId[];
 const CASTLE_MAX = (Object.keys(BUILDINGS) as BuildingId[]).reduce((n, id) => n + maxLevel(id), 0);
 const castleLevels = (L: number): number => {
@@ -82,6 +98,8 @@ for (const cell of process.argv.slice(2)) {
   let summons = 0;
   /** Tries whose squad fielded a grade-4 hero by wave 10, and by the last wave. */
   let top10 = 0;
+  /** Tries that met each of the tier's star rules. */
+  const starsMet: number[] = [];
   let topEnd = 0;
   const mult: Record<number, number[]> = { 5: [], 10: [], 15: [] };
   const grades: Record<number, number[]> = { 5: [0, 0, 0, 0, 0], 10: [0, 0, 0, 0, 0], 15: [0, 0, 0, 0, 0] };
@@ -109,6 +127,10 @@ for (const cell of process.argv.slice(2)) {
       fight(b);
       playOut(b);
       const ok = b.phase === 'won';
+      if (!ok && HEARTS && canRetry(run)) {
+        retryWave(run);
+        continue;
+      }
       if (ok) won = run.stage;
       noteFight(run, b);
       finish(run, ok, ratingOf(b, isBossRun(run)).stars);
@@ -117,7 +139,11 @@ for (const cell of process.argv.slice(2)) {
     summons += run.summons;
     if (t10) top10++;
     if (tEnd) topEnd++;
-    if (run.cleared && won === army.waves.length) cleared++;
+    if (run.cleared && won === army.waves.length) {
+      cleared++;
+      // (each star's rule as the game settles it, `armyRules`, so the tool follows the stars' rules as they change)
+      armyRules(army, tierOfRun(run), run).forEach((r, i) => r.earned && (starsMet[i] = (starsMet[i] ?? 0) + 1));
+    }
   }
   const at = (w: number) => {
     const m = mult[w];
@@ -125,5 +151,5 @@ for (const cell of process.argv.slice(2)) {
     const tot = g.reduce((a, b) => a + b, 0) || 1;
     return m.length ? `w${w} x${(m.reduce((a, b) => a + b, 0) / m.length).toFixed(2)} [${g.slice(1).map((n) => Math.round((100 * n) / tot)).join('/')}]` : `w${w} -`;
   };
-  console.log(`${cell}\tclear ${Math.round((100 * cleared) / SAVES)}%\twaves ${(waves / SAVES).toFixed(1)}/${army.waves.length}\thires ${(summons / SAVES).toFixed(1)}\tg4 by w10 ${Math.round((100 * top10) / SAVES)}% by end ${Math.round((100 * topEnd) / SAVES)}%\t${at(5)}\t${at(10)}\t${at(15)}`);
+  console.log(`${cell}\tclear ${Math.round((100 * cleared) / SAVES)}%\twaves ${(waves / SAVES).toFixed(1)}/${army.waves.length}\thires ${(summons / SAVES).toFixed(1)}\tstars ${Array.from(starsMet, (n) => `${Math.round((100 * (n ?? 0)) / SAVES)}%`).join('/') || '-'}\tg4 by w10 ${Math.round((100 * top10) / SAVES)}% by end ${Math.round((100 * topEnd) / SAVES)}%\t${at(5)}\t${at(10)}\t${at(15)}`);
 }
