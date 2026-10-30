@@ -22,6 +22,8 @@ import { raiseAura } from './toolkit/auras';
 import { divineSmite, seismicSlam } from './kits/tanks';
 import { BOMBARD_THROWS } from './kits/ranged';
 import { blastShoves } from './kits/mages';
+import { monsterKits } from './kits/monsters';
+import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 
@@ -514,6 +516,8 @@ interface ChargeOpts {
   knock: boolean;
   /** Ms of haste the charger gains afterwards. */
   haste: number;
+  /** Tiles the foe struck is launched along the charge (RPG-SPELLS batch 7: the Minotaur's gore), in place of the knock back. */
+  launch?: number;
 }
 function chargeAt(b: Battle, me: Unit, out: BattleEvent[], o: ChargeOpts): boolean {
   const def = defOf(me);
@@ -556,6 +560,7 @@ function chargeAt(b: Battle, me: Unit, out: BattleEvent[], o: ChargeOpts): boole
   if (o.stun) {
     stunFor(b, f, durOf(me, STUN_MS), true);
   }
+  if (o.launch) displace(b, me, f, way, o.launch, 'launch', out);
   if (!o.knock) return true;
   const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
   const t = tileAt(b.board, to.u, to.v);
@@ -1600,6 +1605,10 @@ for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ulti
     if (skill !== k.skill || ultimate !== k.ultimate) KITS[id] = { ...k, skill, ...(k.ultimate ? { ultimate } : {}) };
   }
 }
+
+// (RPG-SPELLS batch 7: the monster heroes' reworked skill 1s and ultimates go on their own kits only, now the foes that borrow them have their
+// own copies: `kits/monsters.ts`)
+monsterKits(KITS, (me) => tal(me, 'extra'));
 
 export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
 /** The key of a fighter's kit skill, and of its kit's ultimate (the page looks a cast's look and sound up by these). */

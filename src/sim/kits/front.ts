@@ -1,8 +1,9 @@
 // The front line's new skills (COMBAT-002): the Knight's bash, the Samurai's parry, the Peasant's pikes, the Paladin's vow, the Juggernaut's
-// rampart, the Kraken Mate's flood, the Shambler's meal, the Mummy's strings, the Yamabushi's turning wind and the Minotaur's rush.
+// rampart, the Shambler's meal, the Mummy's strings and the Minotaur's rush. (RPG-SPELLS batch 7 put the Kraken Mate's Tidal Wave and the
+// Yamabushi's Wind Wall in place of the flood and the turning wind: `monsters.ts`.)
 
 import { atkOf, defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
-import { DIR, apart, foesOf, kitOf, mendUnit, slowFor } from '../abilities';
+import { DIR, apart, foesOf, kitOf, mendUnit } from '../abilities';
 import { UNITS } from '../units';
 import { kx, layTerrain, KIT } from './effects';
 import { alliesOf, foesNear, free, mark, ms, nearestFoe, shove, strike, strongest, stun } from './common';
@@ -80,18 +81,6 @@ export function raiseRampart(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Kraken Mate, Flood: the 3x3 round him turns to shallow water for 8s (it slows whoever walks it), and the foes in it are slowed 2s. */
-export function flood(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = foesOf(b, me).filter((f) => Math.abs(f.u - me.u) <= 1 && Math.abs(f.v - me.v) <= 1);
-  if (!near.length) return false;
-  for (let dv = -1; dv <= 1; dv++) for (let du = -1; du <= 1; du++) layTerrain(b, { u: me.u + du, v: me.v + dv }, 'flood', ms(me, 8000), out);
-  for (const f of near) {
-    strike(b, me, f, 0.6, out);
-    if (f.alive) slowFor(b, f, ms(me, 2000));
-  }
-  return true;
-}
-
 /** Shambler, Devour: eats a body that fell beside him in the last 10s: heals a fifth of his health and grows a tenth bigger for the fight (three times at most). */
 export function devour(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const body = b.units
@@ -122,20 +111,6 @@ export function puppetStrings(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   f.busyUntil = Math.min(f.busyUntil, b.t + 300);
   out.push({ kind: 'arc', from: me.id, to: f.id });
   mark(out, me, f, 'puppet', ms(me, 3000));
-  return true;
-}
-
-/** Yamabushi Tengu, Turning Wind: the foes beside him are struck and shoved back, and for 4s shots aimed at his friends within 2 are blown back at the
- *  shooter for half. Only with a shooter on the field. */
-export function turningWind(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8)) return false;
-  // (the wind turns about him: the foes beside him are struck and shoved back a tile)
-  for (const f of foesNear(b, me, 1)) {
-    strike(b, me, f, 0.8, out);
-    if (f.alive && !kitOf(f)?.passive.steady) shove(b, f, me, 1);
-  }
-  kx(me).reflect = b.t + ms(me, 4000);
-  out.push({ kind: 'song', by: me.id, ms: ms(me, 4000) });
   return true;
 }
 

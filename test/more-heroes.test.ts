@@ -120,13 +120,14 @@ test('the Great Sage\'s, Demon Swordsman\'s and Tyrant\'s ultimates fire when th
   }
 });
 
-test('Rotting Touch makes every foe within two tiles rot, and the Shambler drinks some of it', () => {
+// (RPG-SPELLS batch 7: Rotting Touch became Contagion, a cloud of rot round him that acts each second)
+test('Contagion makes every foe within two tiles rot, and the Shambler drinks some of it', () => {
   const b = arena();
   const me = spawn(b, 'shambler', 3, 6, CHARGE_MAX);
   me.hp = 100;
   const near = spawn(b, 'skeleton', 3, 5);
   const far = spawn(b, 'skeleton', 3, 0);
-  run(b, 200);
+  run(b, 1300);
   assert.equal(dotOf(near)?.kind, 'curse');
   assert.equal(dotOf(far), undefined);
   run(b, 1500);

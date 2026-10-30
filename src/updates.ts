@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.254.0',
+    date: '2026-10-30',
+    title: 'Monsters join the spell rework',
+    notes: ['The Kitsune turns foes into foxes with Mass Polymorph, the Kraken drags shooters in, and the Shambler burrows up through the crowd.', 'Every hero\'s skills now play like classic RPG spells and moves.'],
+  },
+  {
     version: '0.253.0',
     date: '2026-10-30',
     title: 'Casters cast like casters',

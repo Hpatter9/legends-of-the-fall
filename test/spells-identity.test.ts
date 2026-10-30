@@ -22,6 +22,10 @@
 // heroes30: each has one of the six (field1 and heroes1 at level 1, where the Warlock's Eldritch Blast, skill 1, now shoves). The `...Others`
 // scenarios now leave the six out of every team (recorded on main's code before the batch) and did not move; nor did daily, tower or calamity.
 // (The Yokai Witch, which borrowed the Warlock's Hex, keeps the old Hex.)
+// Batch 7 (the monster heroes, docs/notes/spells-b7.md) re-recorded field1, field30, bosses, armyFoes, spells, lands, army, heroes1, heroes10 and
+// heroes30: each has one of the ten. The `...Others` scenarios now leave the ten out of every team (recorded on main's code before the batch)
+// and did not move; nor did daily, tower, stand or calamity. (The foes that borrow their moves, the wolf packs, the maze minotaurs and gorgons,
+// the grove satyrs, the yokai and the Nine-Tailed Fox, keep the old ones: `monsterKits` puts the new ones on the heroes' own kits only.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

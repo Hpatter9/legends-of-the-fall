@@ -8,7 +8,7 @@ import { hurt } from '../battle';
 import { addRes } from '../heroKits';
 import { kx, raiseWraith, setLook } from './effects';
 import { alliesOf, blinkTo, foesNear, freeNear, mark, ms, strike, strongest, stun } from './common';
-import { chillFor, setDot } from '../ailments';
+import { chillFor, setDot, silenceFor } from '../ailments';
 import { diveLaunch, smokeBlink, stepOfTheWind, THUNDER_STORE, thunderShove } from './melee';
 
 /** Kunoichi, Smoke Bomb: she cannot be targeted for 2s, the foes in the 3x3 round her miss half their blows for 3s, and her next blow crits. */
@@ -58,6 +58,8 @@ export function pilfer(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     me.facing = wayTo(me, f);
     strike(b, me, f, 1.5, out, true);
     f.charge = Math.round(f.charge / 2);
+    // (RPG-SPELLS batch 7: and it is silenced for 1.5s)
+    if (f.alive) silenceFor(b, f, ms(me, 1500), me);
     if (f.shield) {
       me.shield = f.shield;
       f.shield = undefined;

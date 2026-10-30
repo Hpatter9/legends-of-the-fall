@@ -145,26 +145,29 @@ test('a fight with the new ultimates is deterministic', () => {
   assert.ok(OTHERS.slice(0, 5).some((k) => a.includes(keyOf(KITS[k].ultimate!))));
 });
 
-test('Nine-Tailed Dream charms the three strongest foes', () => {
+// (RPG-SPELLS batch 7: the hero's Nine-Tailed Dream became Mass Polymorph; the Nine-Tailed Fox's own copy still charms, `test/monsters.test.ts`)
+test('Mass Polymorph turns the three strongest foes into little foxes', () => {
   const b = arena();
   const me = addUnit(b, 'kitsune', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const foes = [4, 3, 2, 5].map((u, i) => addUnit(b, 'skeleton', u, 4 + (i % 2)));
   me.charge2 = CHARGE_MAX;
   cast(b, me);
-  assert.equal(foes.filter((f) => f.charmUntil && f.charmUntil > b.t).length, 3);
+  assert.equal(foes.filter((f) => f.kx?.poly && f.kx.poly.until > b.t).length, 3);
   assert.equal(me.charge2, 0);
   assert.equal(ultimateReady(me), false);
 });
 
-test('Feather Storm falls on a crowd for more than double', () => {
+// (RPG-SPELLS batch 7: the hero's Feather Storm became the Cloud of Daggers, a cloud that hangs on the crowd and cuts each second)
+test('Cloud of Daggers hangs on a crowd and cuts every foe in it', () => {
   const b = arena();
   const me = addUnit(b, 'karasu', 3, 8, gradeBoost(1, 0, ULT_LEVEL));
   const foes = [addUnit(b, 'skeleton', 3, 5), addUnit(b, 'skeleton', 4, 5), addUnit(b, 'skeleton', 3, 4)];
+  // (held where they stand, so the cloud is seen on all three)
+  for (const f of foes) f.busyUntil = 1e9;
   const hp = foes.map((f) => f.hp);
   me.charge2 = CHARGE_MAX;
   cast(b, me);
   run(b, 1200);
-  // (at the ultimates' level the storm is tuned down to a share of the first-written blow, so it hurts every foe but not by more than double)
   assert.ok(foes.every((f, i) => f.hp < hp[i]));
 });
 

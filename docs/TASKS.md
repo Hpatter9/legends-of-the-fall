@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS B7 — The monster heroes
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b7`, `/home/user/spells-b7`.
+- **Authorisation:** owner approved design v2 (Mass Polymorph approved); batch 7 as briefed.
+- **Scope:** Kitsune, Karasu Tengu, Yamabushi Tengu, Werewolf, Minotaur, Satyr, Gorgon, Shambler, Mummy and Kraken Mate kits on the toolkit (Mass Polymorph, Alter Self, Swoop, Cloud of Daggers, Gust of Wind, Wind Wall, Tempest, Pounce, the howl, the goring launches, Contagion, Plague Tide's burrow, Hold Person, the sand-wind, Grasping Tentacles, Tidal Wave), renames and tiers; the foes that borrow them keep the old moves. Wrap-up in `docs/notes/rpg-spells.md`.
+- **Status:** ready for review. Parity: none beyond 6 at levels 1, 10 and 30 (at 30 only the Cleric beyond 4, +4.2); the Last Stand, Calamity, daily and armies exactly as main. Full `npm test` passes; screenshots `docs/samples/spells-b7-*`. [Notes](notes/spells-b7.md), [wrap-up](notes/rpg-spells.md). Next: batch 8 (paintings and sounds, as sessions B and D–G land) and batch 9 (the full rebalance).
+
 ### RPG-SPELLS B6 — The casters
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b6`, `/home/user/spells-b6`.

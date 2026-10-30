@@ -13,6 +13,7 @@ import { addRes, heroKitOf, skill2Open } from '../heroKits';
 import { UNITS, type UnitDef } from '../units';
 import { AILMENT_SWITCH, ailmentsOf, dotOf, setDot } from '../ailments';
 import { stormBolt } from './mages';
+import { monsterTick } from './monsters';
 
 /** The kits' marks and stances on a fighter (hero or foe): each a time it lasts until, or a small state. */
 export interface KitFx {
@@ -48,6 +49,10 @@ export interface KitFx {
   siphon?: { to: number; until: number; next: number };
   /** Lightning Mage: her Call Lightning cloud, until then; the next bolt, and the ultimate's strength when it was called (RPG-SPELLS batch 6). */
   storm?: { until: number; next: number; pow: number };
+  /** Polymorphed by the Kitsune until then (RPG-SPELLS batch 7): the attack share it was cut to, and the look it had (none for a boss, which keeps its shape). */
+  poly?: { until: number; mult: number; look?: string | null };
+  /** Shambler: his Plague Tide's wave, sent when he comes up from his burrow (its strength and how long the curse lasts). */
+  tide?: { pow: number; ms: number };
   /** Shambler: times he has grown from a meal; and a body that has been eaten (or raised) is gone. */
   grown?: number;
   spent?: boolean;
@@ -393,6 +398,7 @@ export function kitTick(b: Battle, out: BattleEvent[]): void {
         if (friend && drained > 0) mendUnit(friend, drained, out, u);
       }
     }
+    if (x.poly || x.tide) monsterTick(b, u, out);
     if (x.storm) {
       if (b.t >= x.storm.until) x.storm = undefined;
       else if (b.t >= x.storm.next) stormBolt(b, u, out);
