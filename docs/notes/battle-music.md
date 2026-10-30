@@ -2,6 +2,9 @@
 
 **Changed by [music-theme.md](music-theme.md):** the tracks are now the main theme in each army's dress; an army run takes its army's own track at every tier, and the daily, the Last Stand, spire floors and field fights the general `battle` (the seed and the depth no longer pick; `battle2` and `battle3` are gone). The rest below still holds.
 
+**Changed by the camp fix below ([Off the board: no battle music at the camp](#off-the-board-no-battle-music-at-the-camp)):** the
+camp, its tabs and the maps always play their own music now, even while a fight runs on behind the home screen.
+
 The owner's ask: "The battle music should stay on and consistent through battle. Then at the end we need victory music if we win."
 
 ## What was wrong
@@ -122,3 +125,55 @@ the daily were checked by the tests, not played in the browser.
 - I cannot hear sound: the bed level (0.6) and when the triumph loop comes in under the fanfare (6 s before its end) are by design.
 - Which battle track a run gets is my call (above). If you would rather the boss track came in for an army's boss wave after all,
   or the tiers each had a fixed track, it is one line in `trackOfRun`.
+
+## Off the board: no battle music at the camp
+
+The owner: "Music sounds like it runs from the fights into the main screen after. Am I hearing that right?" Yes.
+
+**What was wrong.** The Home button works mid-fight: the home screen comes up and the fight carries on behind it (the frame
+loop keeps stepping a fight while `homeUp`; an auto-replay's fight, the daily's and an army wave's alike). `atPlace` kept the
+battle while `fighting` was true, and `musicOf` played the battle's track whenever a fight was running, wherever the player
+was. So the battle track went on playing at the camp, on every tab, until the fight ended behind it; and a won battle ending
+there rang its fanfare at the camp. A new run begun from the camp while the old fight was still running also left the old
+battle's track on the new board's deploy (the old fight never sent its `end`).
+
+A second leak was in the player (`MusicPlayer.play`, `audioProcessors.ts`): a new track, once baked, let go only the track
+asked for just before it. Leaving a won battle's results does two changes at once (`endVictory` asks for the deployment's
+music, then the home screen's camp follows before it has baked), so the triumph loop was never let go and played on under
+the camp's music. The same held for any two quick changes (a battle track, a map, then the camp).
+
+**The rule now** (`battleMusic.ts`): off the board (the camp, any tab, the armies, a tower or Calamity map) the music is
+the place's own, whatever happened before. A cinematic's score is separate and above it, as before.
+
+- `musicOf`: anywhere but the board, the place's track at full level; the triumph bed and the battle track only on the board.
+- `atPlace`: a fight still running behind the home screen keeps its battle (and drops any victory), so going back to the board
+  brings the battle's track back; a battle that is over or left is let go, as before.
+- `endAt(state, end)` (new, pure; `endWave` in `sound.ts` plays what it says): a fight that ends while the player is off the
+  board rings no sting and holds no victory music.
+- `MusicPlayer.play`: a track that comes in lets go of every other loop, not only the one asked for before it.
+- `main.ts` `newBattle`: a board replaced while its fight was still running calls `endFight()`, so the new board has the
+  deployment's music.
+
+**Before and after, in the page** (`tools/music-camp/probe.mjs`, Chromium at 393x852, `__audioDebug()` read on the home screen;
+`node tools/music-camp/probe.mjs <port> [paths]` after `npm run web`):
+
+| Way back to the camp | Before (what played on the home screen) | After |
+|---|---|---|
+| An army wave: Home mid-fight (the fight runs on behind) | **the battle track** (`orcs`), `place: camp` | `camp` (the battle kept, unheard) |
+| ... then the wave ends behind the camp | `camp` | `camp` |
+| An auto-replay: Home mid-fight | **the battle track** (`orcs`) | `camp` |
+| The daily: Home mid-fight | **the battle track** (`battle`) | `camp` |
+| The Last Stand: Home over the stand (the probe reached it by the page's Home) | **the battle track** (`battle`) | not re-run; the same rule (`musicOf`) |
+| A won army run: the results, the recap, then home | not reached by the first probe; the same player code, and the after-run of the state fix alone showed **`triumph` and `camp` both sounding** at the camp | `camp` only |
+| A won army run: Home straight from the results | `camp` | `camp` |
+| A wave won: Home from its result | `camp` | `camp` |
+| A run lost: the result, the recap, then home | `camp` (the defeat sting lets the battle go) | `camp` |
+| The Last Stand: left mid-wave | `camp` (`leave` calls `endFight`) | `camp` |
+| The Last Stand given up, Home from its end card; a Calamity spot | not reached in the page (the machine was heavily loaded: the end card did not come within 90 s, and the Calamity map's spot did not open) | covered by the pure tests: every place and state |
+
+**Tests** (`test/battle-music.test.ts`): "off the board ... there is never battle or victory music, whatever happened before"
+(every battle, fighting, victory and place, asked straight, after the move and after a fight ends there) and "a fight ending
+on the board rings its sting ..."; "two track changes in a row leave only the last one playing ..." (the player; it fails on
+the old `play`). **Changed for the owner's requirement:** the old assert "a fight still being fought keeps
+its battle, wherever the page says the player is" (the battle track at the camp) now says the camp plays the camp's music
+and the battle comes back on the board.
