@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.253.0',
+    date: '2026-10-30',
+    title: 'Casters cast like casters',
+    notes: ['The Fire Wizard throws Fireballs, lays a Wall of Fire and calls a Meteor Swarm; the Lightning Mage calls a storm cloud with Call Lightning.', 'The Warlock\'s Eldritch Blast shoves foes back, the Sage raises a Font of Magic, and the Illusionist swaps places with a friend in trouble.'],
+  },
+  {
     version: '0.252.0',
     date: '2026-10-30',
     title: 'Archers, guns and summoners move',
