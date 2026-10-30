@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.244.0',
+    date: '2026-10-30',
+    title: 'The late armies fight harder',
+    notes: ['The Infernal Host, the Yokai and the Golem Forge are much tougher, so they come after the first army\'s eleven stars, even when you use hearts.', 'The Tyrant\'s and the Juggernaut\'s tier 4 skills are toned down.'],
+  },
+  {
     version: '0.243.0',
     date: '2026-10-30',
     title: 'Groundwork for the new spells',
