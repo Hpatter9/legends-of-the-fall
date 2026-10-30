@@ -1,0 +1,514 @@
+{
+ "_": "RPG-SPELLS painted effects: every sheet the brief (art-source/spell-fx/BRIEF.md) asks for, by session, and its rows in order as [part, kind, fewest frames, most frames, size in tiles]. Read by tools/spell-fx/import-spell-art.py.",
+ "cell": 256,
+ "a-toolkit": {
+  "dash": [
+   ["trail", "once", 6, 8, 3.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "blink": [
+   ["cast", "once", 6, 8, 1.2],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "teleport-slash": [
+   ["trail", "once", 6, 8, 3.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "pull": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.0]
+  ],
+  "shove": [
+   ["impact", "once", 6, 8, 1.6],
+   ["trail", "once", 6, 8, 2.0]
+  ],
+  "launch": [
+   ["cast", "once", 6, 8, 1.4],
+   ["motes", "loop", 4, 6, 0.5],
+   ["impact", "once", 6, 8, 1.6]
+  ],
+  "slam": [["impact", "once", 6, 8, 1.2]],
+  "burrow": [
+   ["cast", "once", 6, 8, 1.4],
+   ["ground", "loop", 6, 8, 1.0],
+   ["impact", "once", 6, 8, 1.8]
+  ],
+  "swap": [
+   ["cast", "once", 6, 8, 1.3],
+   ["beam", "loop", 4, 6, 1.0]
+  ],
+  "wall-stone": [
+   ["rise", "once", 6, 8, 1.0],
+   ["stand", "loop", 4, 8, 1.0],
+   ["break", "once", 6, 8, 1.0]
+  ],
+  "wall-ice": [
+   ["rise", "once", 6, 8, 1.0],
+   ["stand", "loop", 4, 8, 1.0],
+   ["break", "once", 6, 8, 1.0]
+  ],
+  "wall-thorns": [
+   ["rise", "once", 6, 8, 1.0],
+   ["stand", "loop", 4, 8, 1.0],
+   ["break", "once", 6, 8, 1.0]
+  ],
+  "wall-light": [
+   ["rise", "once", 6, 8, 1.0],
+   ["stand", "loop", 4, 8, 1.0],
+   ["break", "once", 6, 8, 1.0]
+  ],
+  "wall-fire": [
+   ["rise", "once", 6, 8, 1.0],
+   ["stand", "loop", 4, 8, 1.0],
+   ["break", "once", 6, 8, 1.0]
+  ],
+  "wall-wind": [
+   ["stand", "loop", 4, 8, 1.0],
+   ["impact", "once", 6, 8, 1.0]
+  ]
+ },
+ "b-auras": {
+  "aura-protection": [
+   ["ground", "loop", 6, 8, 5.0],
+   ["motes", "loop", 4, 6, 0.4]
+  ],
+  "spirit-guardians": [
+   ["ground", "loop", 6, 8, 5.0],
+   ["motes", "loop", 4, 6, 0.6]
+  ],
+  "aura-rot": [
+   ["ground", "loop", 6, 8, 5.0],
+   ["motes", "loop", 4, 6, 0.5]
+  ],
+  "storm-cloud": [
+   ["ground", "loop", 6, 8, 2.5],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "mana-font": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["motes", "loop", 4, 6, 0.5]
+  ],
+  "healing-mist": [
+   ["ground", "loop", 6, 8, 5.0],
+   ["motes", "loop", 4, 6, 0.4]
+  ],
+  "cloud-of-daggers": [
+   ["ground", "loop", 6, 8, 3.0],
+   ["motes", "loop", 4, 6, 0.4]
+  ],
+  "slow-field": [
+   ["ground", "loop", 6, 8, 8.0],
+   ["motes", "loop", 4, 6, 0.4]
+  ],
+  "spike-growth": [
+   ["ground", "loop", 6, 8, 3.0],
+   ["impact", "once", 6, 8, 1.0]
+  ],
+  "bardic-notes": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["motes", "loop", 4, 6, 0.4]
+  ]
+ },
+ "c-healers": {
+  "revivify": [
+   ["cast", "once", 6, 8, 1.6],
+   ["impact", "once", 6, 8, 1.6]
+  ],
+  "resurrection": [
+   ["cast", "once", 6, 8, 1.8],
+   ["impact", "once", 6, 8, 1.8]
+  ],
+  "elixir": [
+   ["cast", "once", 6, 8, 1.0],
+   ["impact", "once", 6, 8, 1.4]
+  ],
+  "reincarnate": [
+   ["cast", "once", 6, 8, 1.6],
+   ["impact", "once", 6, 8, 1.4]
+  ],
+  "mass-resurrection": [
+   ["ground", "loop", 6, 8, 8.0],
+   ["impact", "once", 6, 8, 1.6]
+  ],
+  "guiding-bolt": [
+   ["travel", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "prayer": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["motes", "loop", 4, 6, 0.4]
+  ],
+  "cure-wounds": [["impact", "once", 6, 8, 1.4]],
+  "death-ward": [
+   ["stand", "loop", 4, 8, 1.3],
+   ["impact", "once", 6, 8, 1.4]
+  ],
+  "healing-draught": [
+   ["travel", "loop", 4, 6, 0.6],
+   ["impact", "once", 6, 8, 1.2]
+  ]
+ },
+ "d-casters": {
+  "fireball": [
+   ["travel", "loop", 4, 6, 0.8],
+   ["impact", "once", 6, 8, 3.0]
+  ],
+  "meteor-swarm": [
+   ["travel", "loop", 4, 6, 1.2],
+   ["impact", "once", 6, 8, 3.0]
+  ],
+  "magic-missile": [
+   ["travel", "loop", 4, 6, 0.6],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "eldritch-blast": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "drain-life": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.0]
+  ],
+  "circle-of-death": [
+   ["ground", "loop", 6, 8, 5.0],
+   ["impact", "once", 6, 8, 1.0]
+  ],
+  "thunderwave": [["impact", "once", 6, 8, 4.0]],
+  "time-stop": [
+   ["cast", "once", 6, 8, 3.0],
+   ["stand", "loop", 4, 8, 1.2]
+  ],
+  "polymorph": [
+   ["impact", "once", 6, 8, 1.4],
+   ["cast", "once", 6, 8, 1.0]
+  ],
+  "hunters-mark": [["stand", "loop", 4, 8, 0.6]],
+  "bane-mark": [
+   ["stand", "loop", 4, 8, 0.6],
+   ["impact", "once", 6, 8, 1.0]
+  ],
+  "mockery": [
+   ["motes", "loop", 4, 6, 0.5],
+   ["impact", "once", 6, 8, 1.0]
+  ]
+ },
+ "e-moves": {
+  "issen": [
+   ["trail", "once", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.4]
+  ],
+  "sneak-attack": [["impact", "once", 6, 8, 1.2]],
+  "flurry": [["impact", "once", 6, 8, 1.2]],
+  "quivering-palm": [
+   ["cast", "once", 6, 8, 1.0],
+   ["impact", "once", 6, 8, 1.4]
+  ],
+  "berserker-leap": [["impact", "once", 6, 8, 3.0]],
+  "rage": [["stand", "loop", 4, 8, 1.3]],
+  "cleave": [["impact", "once", 6, 8, 2.5]],
+  "riposte": [["impact", "once", 6, 8, 1.0]],
+  "grappling-hook": [
+   ["travel", "loop", 4, 6, 0.6],
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.0]
+  ],
+  "dragon-dive": [
+   ["cast", "once", 6, 8, 1.2],
+   ["impact", "once", 6, 8, 3.0]
+  ],
+  "seismic-slam": [["impact", "once", 6, 8, 3.5]],
+  "pounce": [["impact", "once", 6, 8, 1.2]],
+  "tentacles": [
+   ["cast", "once", 6, 8, 1.2],
+   ["beam", "loop", 4, 6, 1.0]
+  ],
+  "tidal-wave": [
+   ["travel", "loop", 4, 6, 3.0],
+   ["impact", "once", 6, 8, 2.0]
+  ],
+  "keg-blast": [
+   ["travel", "loop", 4, 6, 0.6],
+   ["impact", "once", 6, 8, 3.0]
+  ]
+ },
+ "f-martial": {
+  "aimed-shot": [
+   ["travel", "loop", 4, 6, 0.8],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "blood-pact": [
+   ["cast", "once", 6, 8, 1.2],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "bombard": [
+   ["travel", "loop", 4, 6, 0.8],
+   ["impact", "once", 6, 8, 3.0]
+  ],
+  "call-to-arms": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "cannonade": [
+   ["travel", "loop", 4, 6, 0.6],
+   ["impact", "once", 6, 8, 2.5]
+  ],
+  "cavalry-charge": [
+   ["cast", "once", 6, 8, 2.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "divine-smite": [
+   ["cast", "once", 6, 8, 1.2],
+   ["impact", "once", 6, 8, 1.6]
+  ],
+  "dragon-breath": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "entangle": [
+   ["ground", "loop", 6, 8, 3.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "fan-the-hammer": [
+   ["cast", "once", 6, 8, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "fissure": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.6]
+  ],
+  "gore": [
+   ["cast", "once", 6, 8, 1.2],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "high-noon": [
+   ["cast", "once", 6, 8, 1.6],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "holy-nova": [
+   ["ground", "loop", 6, 8, 8.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "iaido": [
+   ["trail", "once", 6, 8, 4.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "lightning-storm": [
+   ["trail", "once", 6, 8, 3.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "loaded-dice": [
+   ["cast", "once", 6, 8, 0.8],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "metamorphosis": [
+   ["cast", "once", 6, 8, 1.8],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "orbital-strike": [
+   ["cast", "once", 6, 8, 1.5],
+   ["impact", "once", 6, 8, 3.5]
+  ],
+  "overclock": [
+   ["cast", "once", 6, 8, 1.3],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "phalanx": [
+   ["ground", "loop", 6, 8, 4.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "piercing-shot": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "rapid-shot": [
+   ["cast", "once", 6, 8, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "siege-mode": [
+   ["ground", "loop", 6, 8, 2.0],
+   ["impact", "once", 6, 8, 1.5]
+  ],
+  "smoke-bomb": [
+   ["cast", "once", 6, 8, 2.0],
+   ["impact", "loop", 6, 8, 2.0]
+  ],
+  "snare": [
+   ["ground", "loop", 6, 8, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "suppressing-fire": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "thunder-step": [
+   ["cast", "once", 6, 8, 1.4],
+   ["impact", "once", 6, 8, 3.0]
+  ],
+  "volley": [
+   ["travel", "loop", 4, 6, 0.6],
+   ["impact", "once", 6, 8, 3.0]
+  ],
+  "whirlwind": [
+   ["ground", "loop", 6, 8, 3.0],
+   ["impact", "once", 6, 8, 1.2]
+  ]
+ },
+ "g-spells": {
+  "alter-self": [
+   ["cast", "once", 6, 8, 1.3],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "animate-dead": [
+   ["cast", "once", 6, 8, 1.3],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "arcane-surge": [
+   ["ground", "loop", 6, 8, 8.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "bacchanal": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "battle-hymn": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "chain-lightning": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "charm": [
+   ["travel", "loop", 4, 6, 0.5],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "conjure-treant": [
+   ["cast", "once", 6, 8, 1.6],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "devour": [
+   ["cast", "once", 6, 8, 1.3],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "dominate": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "flesh-to-stone": [
+   ["ground", "loop", 6, 8, 2.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "full-moon": [
+   ["cast", "once", 6, 8, 2.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "gaze": [
+   ["beam", "loop", 4, 6, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "gust": [
+   ["cast", "once", 6, 8, 2.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "hall-of-mirrors": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "harvest": [
+   ["ground", "loop", 6, 8, 5.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "hold-person": [
+   ["ground", "loop", 6, 8, 2.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "irresistible-dance": [
+   ["ground", "loop", 6, 8, 4.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "judgement": [
+   ["cast", "once", 6, 8, 1.6],
+   ["impact", "once", 6, 8, 3.0]
+  ],
+  "maelstrom": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "mirror-image": [
+   ["cast", "once", 6, 8, 1.4],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "panacea": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "pharaoh": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "pilfer": [
+   ["cast", "once", 6, 8, 1.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "pipes": [
+   ["ground", "loop", 6, 8, 4.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "plague-tide": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "plant-standard": [
+   ["cast", "once", 6, 8, 1.4],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "rallying-cry": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "reap": [
+   ["ground", "loop", 6, 8, 4.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "reign-of-terror": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "rewind": [
+   ["cast", "once", 6, 8, 1.3],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "shapechange": [
+   ["cast", "once", 6, 8, 1.4],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "stone-curse": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "storm-surge": [
+   ["cast", "once", 6, 8, 1.4],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "summon-beast": [
+   ["cast", "once", 6, 8, 1.3],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "swoop": [
+   ["trail", "once", 6, 8, 2.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "tempest": [
+   ["ground", "loop", 6, 8, 7.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "war-banner": [
+   ["ground", "loop", 6, 8, 6.0],
+   ["impact", "once", 6, 8, 1.2]
+  ],
+  "wild-shape": [
+   ["cast", "once", 6, 8, 1.6],
+   ["impact", "once", 6, 8, 1.2]
+  ]
+ }
+}

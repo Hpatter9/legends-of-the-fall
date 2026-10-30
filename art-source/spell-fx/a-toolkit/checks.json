@@ -1,0 +1,311 @@
+{
+  "dash": {
+    "size": [
+      1536,
+      512
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "trail",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "blink": {
+    "size": [
+      1536,
+      512
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "teleport-slash": {
+    "size": [
+      1536,
+      512
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "trail",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "pull": {
+    "size": [
+      1536,
+      512
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "beam",
+        "frames": 4
+      },
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "shove": {
+    "size": [
+      1536,
+      512
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "impact",
+        "frames": 6
+      },
+      {
+        "part": "trail",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "launch": {
+    "size": [
+      2048,
+      768
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 6
+      },
+      {
+        "part": "motes",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "slam": {
+    "size": [
+      1536,
+      256
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "burrow": {
+    "size": [
+      2048,
+      768
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 6
+      },
+      {
+        "part": "ground",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "swap": {
+    "size": [
+      1536,
+      512
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 6
+      },
+      {
+        "part": "beam",
+        "frames": 4
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "wall-stone": {
+    "size": [
+      1536,
+      768
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "rise",
+        "frames": 6
+      },
+      {
+        "part": "stand",
+        "frames": 6
+      },
+      {
+        "part": "break",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "wall-ice": {
+    "size": [
+      1536,
+      768
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "rise",
+        "frames": 6
+      },
+      {
+        "part": "stand",
+        "frames": 6
+      },
+      {
+        "part": "break",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "wall-thorns": {
+    "size": [
+      1536,
+      768
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "rise",
+        "frames": 6
+      },
+      {
+        "part": "stand",
+        "frames": 6
+      },
+      {
+        "part": "break",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "wall-light": {
+    "size": [
+      1536,
+      768
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "rise",
+        "frames": 6
+      },
+      {
+        "part": "stand",
+        "frames": 6
+      },
+      {
+        "part": "break",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "wall-fire": {
+    "size": [
+      1536,
+      768
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "rise",
+        "frames": 6
+      },
+      {
+        "part": "stand",
+        "frames": 6
+      },
+      {
+        "part": "break",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  },
+  "wall-wind": {
+    "size": [
+      1536,
+      512
+    ],
+    "cell": 256,
+    "rows": [
+      {
+        "part": "stand",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": [],
+    "status": "pass"
+  }
+}

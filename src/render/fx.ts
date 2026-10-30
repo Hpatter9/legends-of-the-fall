@@ -42,8 +42,10 @@ import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, im
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
-import { MOVE_LOOKS, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
-import type { WallKind } from '../sim/toolkit';
+import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
+import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
+import { loadSpellArt, spellFrames } from './spellArt';
+import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
 import { coverAlpha, overFighter } from './overFighter';
 import type { Element, Family } from './fxRules';
@@ -84,6 +86,8 @@ export async function loadFx(): Promise<void> {
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
   await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
+  // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
+  void loadSpellArt();
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
   const tex = async (url: string) => Texture.from(await loadImage(url));
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
@@ -271,6 +275,7 @@ export class Fx {
     this.particles.calm = this.calm();
     this.enter(b);
     let royalSky: 'meteor' | 'starfall' | undefined;
+    const slashes = slashesOf(events);
     for (const e of events) {
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
       else if (e.kind === 'skill') this.skillName(e.by, e.name, e.ms);
@@ -284,7 +289,7 @@ export class Fx {
         }
       } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
       else if (e.kind === 'hazard') this.hazard(b, e);
-      else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e);
+      else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e, slashes.get(e));
       else if (e.kind === 'phase') this.phaseShock(e.by);
       else if (e.kind === 'comboCast') this.comboCast(e);
       else if (e.kind === 'comboLand') this.comboLand(b, e);
@@ -998,8 +1003,222 @@ export class Fx {
 
   // ---- the movement toolkit (RPG-SPELLS batch 1): placeholders from the pack (`toolkitLooks.ts`) until the painted effects arrive ----
 
+  // RPG-SPELLS painted effects (docs/notes/spell-art.md): each helper draws a painted part when its atlas has loaded and says so;
+  // false means none is painted, and the caller draws its placeholder. Normal blending (the brief's rule), and a painting laid over
+  // a fighter's body is thinned (FX-CLEAR, `overFighter.ts`). Loops never fade to nothing until they end; reduced motion holds a
+  // loop's first frame.
+
+  /** A painted part played once at (x, y): its foot there when it stands on the ground, else its middle. */
+  private paintOnce(key: string, x: number, y: number, o: { mult?: number; delay?: number; rotation?: number; stretchX?: number; stretchY?: number } = {}): boolean {
+    const frames = spellFrames(key);
+    const p = spellPart(key);
+    if (!frames.length || !p) return false;
+    const scale = spellScale(key, o.mult);
+    const drawn = p.cell * scale;
+    this.particles.spawn({
+      frames,
+      x,
+      y: y + (0.5 - spellAnchorY(key)) * drawn,
+      scale,
+      frameMs: 70,
+      prio: true,
+      half: drawn * 0.42 * Math.max(1, Math.abs(o.stretchX ?? 1)),
+      ...(o.delay ? { delay: o.delay } : {}),
+      ...(o.rotation ? { rotation: o.rotation } : {}),
+      ...(o.stretchX ? { stretchX: o.stretchX } : {}),
+      ...(o.stretchY ? { stretchY: o.stretchY } : {}),
+    });
+    return true;
+  }
+
+  /** A painted streak (painted pointing right) laid along the line from (x0, y0) to (x1, y1), stretched to reach. */
+  private paintAlong(key: string, x0: number, y0: number, x1: number, y1: number, o: { delay?: number } = {}): boolean {
+    const p = spellPart(key);
+    if (!p || !spellFrames(key).length) return false;
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    if (len < 4) return true;
+    const drawn = p.cell * spellScale(key);
+    return this.paintOnce(key, (x0 + x1) / 2, (y0 + y1) / 2, {
+      ...o,
+      rotation: Math.atan2(y1 - y0, x1 - x0),
+      stretchX: Math.max(0.4, Math.min(2.5, len / (drawn * 0.84))),
+      // (a streak going left is turned half round: flipped, so its painting stays the right way up)
+      ...(x1 < x0 ? { stretchY: -1 } : {}),
+    });
+  }
+
+  /** A painted loop following `where` while `live` holds, then fading out. */
+  private paintLoop(key: string, where: () => [number, number], live: () => boolean, o: { mult?: number; depthOf?: () => number; alpha?: number; onGone?: () => void } = {}): boolean {
+    const frames = spellFrames(key);
+    if (!frames.length) return false;
+    const sp = new Sprite(frames[0]);
+    sp.anchor.set(0.5, spellAnchorY(key));
+    sp.scale.set(spellScale(key, o.mult));
+    const full = o.alpha ?? 1;
+    sp.alpha = 0;
+    this.root.addChild(sp);
+    let t = 0;
+    let gone = false;
+    this.items.push({
+      view: sp,
+      step: (dt) => {
+        t += dt;
+        const [x, y] = where();
+        sp.position.set(x, y);
+        if (o.depthOf) sp.zIndex = o.depthOf();
+        if (!this.reduced) sp.texture = frames[Math.floor(t / 90) % frames.length];
+        if (!gone && !live()) gone = true;
+        if (gone) {
+          sp.alpha = Math.max(0, sp.alpha - dt / 300);
+          if (sp.alpha <= 0) o.onGone?.();
+          return sp.alpha > 0;
+        }
+        // (in over 150 ms, so it does not pop)
+        sp.alpha = Math.min(full, sp.alpha + (full * dt) / 150);
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** A painted beam (seamless at its ends) tiled from `a` to `z` for `ms`: as many whole segments as reach, squeezed to fit. */
+  private paintBeam(key: string, a: () => [number, number], z: () => [number, number], ms: number): boolean {
+    const frames = spellFrames(key);
+    const p = spellPart(key);
+    if (!frames.length || !p) return false;
+    const scale = spellScale(key);
+    const seg = p.cell * scale;
+    const view = new Container();
+    this.root.addChild(view);
+    const parts: Sprite[] = [];
+    let t = 0;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        if (t >= ms) return false;
+        const [ax, ay] = a();
+        const [zx, zy] = z();
+        const len = Math.max(1, Math.hypot(zx - ax, zy - ay));
+        const n = Math.max(1, Math.round(len / seg));
+        while (parts.length < n) {
+          const sp = new Sprite(frames[0]);
+          sp.anchor.set(0, 0.5);
+          view.addChild(sp);
+          parts.push(sp);
+        }
+        const ang = Math.atan2(zy - ay, zx - ax);
+        const piece = len / n;
+        const tex = frames[this.reduced ? 0 : Math.floor(t / 90) % frames.length];
+        const fade = Math.min(1, t / 120, (ms - t) / 200);
+        parts.forEach((sp, i) => {
+          sp.visible = i < n;
+          if (i >= n) return;
+          const mx = ax + Math.cos(ang) * piece * (i + 0.5);
+          const my = ay + Math.sin(ang) * piece * (i + 0.5);
+          sp.texture = tex;
+          sp.position.set(ax + Math.cos(ang) * piece * i, ay + Math.sin(ang) * piece * i);
+          sp.rotation = ang;
+          sp.scale.set(piece / p.cell, scale);
+          sp.alpha = coverAlpha(fade, this.overBody(mx, my, seg * 0.2));
+        });
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** A painted wall tile at its foot (x, y): it rises, stands (a gentle loop) while `live` holds, then breaks down to nothing, all in
+   *  the one sprite, so nothing blinks between the parts. A wall with no rise (the wind) comes in over 200 ms, and with no break
+   *  fades out. */
+  private paintWall(sheet: string, x: number, y: number, live: () => boolean): boolean {
+    const stand = spellFrames(`${sheet}.stand`);
+    if (!stand.length) return false;
+    const rise = spellFrames(`${sheet}.rise`);
+    const fall = spellFrames(`${sheet}.break`);
+    const sp = new Sprite(rise[0] ?? stand[0]);
+    sp.anchor.set(0.5, spellAnchorY(`${sheet}.stand`));
+    sp.scale.set(spellScale(`${sheet}.stand`));
+    sp.position.set(x, y);
+    sp.zIndex = 0;
+    sp.alpha = rise.length ? 1 : 0;
+    this.root.addChild(sp);
+    const riseMs = rise.length * 70;
+    let t = 0;
+    let end = -1;
+    this.items.push({
+      view: sp,
+      step: (dt) => {
+        t += dt;
+        if (end < 0 && t >= Math.min(riseMs, 200) && !live()) end = t;
+        if (end >= 0) {
+          const f = Math.floor((t - end) / 70);
+          if (!fall.length) {
+            sp.alpha = Math.max(0, sp.alpha - dt / 300);
+            return sp.alpha > 0;
+          }
+          if (f >= fall.length) return false;
+          sp.texture = fall[f];
+          // (the last frames thin out, so the rubble goes softly)
+          sp.alpha = Math.min(1, (fall.length - (t - end) / 70) / 2);
+          return true;
+        }
+        if (!rise.length) sp.alpha = Math.min(1, sp.alpha + dt / 200);
+        if (t < riseMs) sp.texture = rise[Math.floor(t / 70)];
+        else sp.texture = this.reduced ? stand[0] : stand[Math.floor((t - riseMs) / 110) % stand.length];
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** A painted shove (a burst of air and a skid along the ground) or pull (a tether from the one dragged to the puller's side, and a
+   *  grip as it yanks). A launch's own event draws the throw. */
+  private paintShove(b: Battle, e: Extract<BattleEvent, { kind: 'shove' }>): boolean {
+    const to = this.sprites.get(e.to);
+    const last = e.path[e.path.length - 1];
+    if (!to || !last || e.how === 'launch') return false;
+    const [lx, ly] = this.tilePos(b, last.u, last.v);
+    if (e.how === 'drag') {
+      if (!spellFrames(PAINT.tether).length) return false;
+      // (the puller stands one tile on from where the drag stops, the way it came: the sprite is still where it was dragged from)
+      const d = Math.max(1, Math.hypot(lx - to.x, ly - to.y));
+      const step = Math.hypot(TW / 2, TH / 2);
+      const [px, py] = [lx + ((lx - to.x) / d) * step, ly + ((ly - to.y) / d) * step];
+      const lift = to.tall * 0.45;
+      this.paintBeam(PAINT.tether, () => [to.x, to.y - lift], () => [px, py - lift], e.ms + 250);
+      this.paintOnce(PAINT.grip, to.x, to.y - lift);
+      return true;
+    }
+    if (!spellFrames(PAINT.shove).length) return false;
+    const left = lx < to.x;
+    this.paintOnce(PAINT.shove, to.x, to.y - to.tall * 0.45, left ? { stretchX: -1 } : {});
+    if (!settings().saver || e.path.length > 2) this.paintAlong(PAINT.skid, to.x, to.y - 2, lx, ly - 2, { delay: 40 });
+    return true;
+  }
+
+  /** A painted aura (session B): its ground loop, sized to the reach's diamond, and a few motes circling it. */
+  private paintAura(sheet: string, reach: number, centre: () => [number, number], live: () => boolean, onGone: () => void): boolean {
+    const ground = spellPart(`${sheet}.ground`);
+    if (!ground || !spellFrames(`${sheet}.ground`).length) return false;
+    this.paintLoop(`${sheet}.ground`, centre, live, { mult: ((reach + 0.5) * 2) / ground.size, depthOf: () => -1, alpha: 0.85, onGone });
+    if (!spellFrames(`${sheet}.motes`).length) return true;
+    const n = settings().saver ? 1 : 3;
+    const r = (reach + 0.5) * TW * 0.35;
+    const born = performance.now();
+    for (let i = 0; i < n; i++)
+      this.paintLoop(`${sheet}.motes`, () => {
+        const [x, y] = centre();
+        const a = (this.reduced ? 0 : (performance.now() - born) / 1400) + (i * Math.PI * 2) / n;
+        return [x + Math.cos(a) * r, y - 14 + Math.sin(a) * r * 0.5];
+      }, live);
+    return true;
+  }
+
+
   /** A look's one-off strip at a point. */
   private lookOnce(l: Look, x: number, y: number, scale: number): void {
+    if (l.paint && this.paintOnce(l.paint, x, y)) return;
     const frames = l.once ? PACK[l.once] : undefined;
     if (!frames?.length) return;
     this.particles.spawn({ frames, x, y, scale, frameMs: 60, add: true, prio: true, ...(l.tint ? { tint: l.tint } : {}), ...(l.alpha ? { alpha: l.alpha } : {}) });
@@ -1008,6 +1227,7 @@ export class Fx {
   /** A look's strip looped at a point while `live` holds (it may move, `where`); it fades out when `live` stops holding. Reduced motion
    *  holds its first frame. */
   private lookLoop(l: Look, where: () => [number, number], scale: number, live: () => boolean, depthOf?: () => number): void {
+    if (l.paint && this.paintLoop(l.paint, where, live, { depthOf })) return;
     const frames = l.loop ? PACK[l.loop] : undefined;
     if (!frames?.length) return;
     const sp = new Sprite(frames[0]);
@@ -1043,6 +1263,7 @@ export class Fx {
     const [x, y] = this.tilePos(b, u, v);
     const i = v * b.board.w + u;
     const live = () => !!b.walls?.some((w) => w.i === i && w.kind === kind && w.until > b.t);
+    if (look.paint && this.paintWall(look.paint, x, y + 2, live)) return;
     this.lookOnce(look, x, y - 8, 1.6);
     if (look.prop && kitArt) {
       const sp = new Sprite(kitArt.walls[(u + v) % 2]);
@@ -1061,6 +1282,7 @@ export class Fx {
   private toolkit(b: Battle, e: Extract<BattleEvent, { kind: 'shove' | 'launch' | 'slam' | 'fall' | 'burrow' | 'swap' | 'aura' | 'wallBreak' }>): void {
     const saver = settings().saver;
     if (e.kind === 'shove') {
+      if (this.paintShove(b, e)) return;
       // (dust kicked up along the slide)
       for (const at2 of saver ? e.path.slice(-1) : e.path) {
         const [x, y] = this.tilePos(b, at2.u, at2.v);
@@ -1070,6 +1292,12 @@ export class Fx {
       const [x0, y0] = this.tilePos(b, e.from.u, e.from.v);
       const [x1, y1] = this.tilePos(b, e.land.u, e.land.v);
       this.lookOnce(MOVE_LOOKS.lift, x0, y0 - 6, 1.4);
+      // (painted: a chunk of rock or two spinning along with the one thrown)
+      const flier = this.sprites.get(e.to);
+      const until = b.t + e.ms;
+      if (flier)
+        for (const [dx, dy] of saver ? [[-10, 0]] : [[-12, -2], [10, -14]])
+          this.paintLoop(PAINT.flight, () => [flier.x + dx, flier.y - flier.tall * 0.4 + dy], () => b.t < until);
       this.later(e.ms, () => {
         this.lookOnce(MOVE_LOOKS.land, x1, y1 - 4, 1.5);
         this.trauma = Math.min(1, this.trauma + 0.15);
@@ -1106,7 +1334,11 @@ export class Fx {
       };
       const me = b.units.find((x) => x.id === e.by);
       const under = () => !!me?.under && me.alive;
-      // (a heaped ridge of earth over the tunnel, with the dust strip churning on it: drawn, until the painted burrow arrives)
+      if (spellFrames(MOVE_LOOKS.mound.paint).length) {
+        this.lookLoop(MOVE_LOOKS.mound, where, 1.4, under, () => depth(near.u, near.v) + 5);
+        return;
+      }
+      // (a heaped ridge of earth over the tunnel, with the dust strip churning on it: drawn where the painted burrow is not loaded)
       const g = new Graphics();
       g.ellipse(0, 0, 22, 9).fill({ color: 0x4a3426, alpha: 0.95 });
       g.ellipse(0, -4, 16, 7).fill({ color: 0x7a5a40, alpha: 0.95 });
@@ -1135,9 +1367,15 @@ export class Fx {
         const s = this.sprites.get(id);
         if (s) this.lookOnce(MOVE_LOOKS.swap, s.x, s.y - s.tall * 0.45, 1.4);
       }
+      // (painted: a ribbon of light linking the two as they trade places)
+      const sa = this.sprites.get(e.a);
+      const sb = this.sprites.get(e.b);
+      if (sa && sb) this.paintBeam(PAINT.swapLink, () => [sa.x, sa.y - sa.tall * 0.45], () => [sb.x, sb.y - sb.tall * 0.45], 500);
     } else if (e.kind === 'aura') {
       this.aura(b, e);
     } else {
+      // (a painted ice wall plays its own break as the sim lets it go: `paintWall`)
+      if (spellFrames('wall-ice.stand').length) return;
       const [x, y] = this.tilePos(b, e.u, e.v);
       this.lookOnce(MOVE_LOOKS.shatter, x, y - 10, 1.6);
     }
@@ -1155,6 +1393,7 @@ export class Fx {
       const c = e.at ?? me ?? { u: 0, v: 0 };
       return this.tilePos(b, c.u, c.v);
     };
+    if (look.paint && this.paintAura(look.paint, e.reach, centre, live, () => this.auraShown.delete(`${e.by}:${e.what}`))) return;
     const g = new Graphics();
     const r = e.reach + 0.5;
     g.poly([0, (-TH / 2) * r * 2, (TW / 2) * r * 2, 0, 0, (TH / 2) * r * 2, (-TW / 2) * r * 2, 0]).fill({ color: look.ring, alpha: 0.1 }).stroke({ color: look.ring, width: 2, alpha: 0.7 });
@@ -1206,11 +1445,31 @@ export class Fx {
   }
 
   /** A dash leaves a streak between the tiles; a blink a puff of smoke at each end. */
-  private streak(b: Battle, e: Extract<BattleEvent, { kind: 'dash' | 'blink' }>): void {
+  private streak(b: Battle, e: Extract<BattleEvent, { kind: 'dash' | 'blink' }>, slash?: Slash): void {
     const by = this.sprites.get(e.by);
     const lift = (by?.tall ?? 40) * 0.45;
     const [x0, y0] = this.tilePos(b, e.from.u, e.from.v);
     const [x1, y1] = this.tilePos(b, e.to.u, e.to.v);
+    if (e.kind === 'blink' && spellFrames(PAINT.blinkOut).length) {
+      // (painted: vanishing in a swirl, appearing out of a point; a blink that strikes leaves a slash streak and a crossed cut on the
+      // foe, each hop of a teleport slash in turn)
+      const delay = slash ? slash.hop * SLASH_HOP_MS : 0;
+      this.paintOnce(PAINT.blinkOut, x0, y0 - lift, { delay });
+      this.paintOnce(PAINT.blinkIn, x1, y1 - lift, { delay: delay + 60 });
+      const foe = slash && this.sprites.get(slash.struck);
+      if (foe) {
+        this.paintAlong(PAINT.slash, x0, y0 - lift, x1, y1 - lift, { delay });
+        this.paintOnce(PAINT.slashHit, foe.x, foe.y - foe.tall * 0.5, { delay: delay + 80 });
+      }
+      return;
+    }
+    if (e.kind === 'dash' && spellFrames(PAINT.dash).length) {
+      // (painted: a long smear of speed along the run, after-images, and dust kicked up where it stops)
+      if (by && !this.reduced) this.afterimages(by, x0, y0, x1, y1);
+      this.paintAlong(PAINT.dash, x0, y0 - lift, x1, y1 - lift);
+      this.paintOnce(PAINT.dashStop, x1, y1 - 6, { delay: 60 });
+      return;
+    }
     if (e.kind === 'blink') {
       for (const [x, y] of [[x0, y0], [x1, y1]]) {
         const sp = new Sprite(impact.frames[0]);
@@ -1234,22 +1493,7 @@ export class Fx {
       return;
     }
     // (dust kicked up along the run, and a wind slash at its end)
-    if (by && !this.reduced) {
-      const count = settings().saver ? 2 : 4;
-      for (let i = 0; i < count; i++) {
-        const f = (i + 1) / (count + 1);
-        const ghost = by.afterimage();
-        ghost.position.set(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f);
-        ghost.alpha = 0;
-        this.root.addChild(ghost);
-        let age = -i * 30;
-        this.items.push({ view: ghost, step: (dt) => {
-          age += dt;
-          ghost.alpha = age < 0 ? 0 : 0.32 * Math.max(0, 1 - age / 240);
-          return age < 240;
-        } });
-      }
-    }
+    if (by && !this.reduced) this.afterimages(by, x0, y0, x1, y1);
     for (let i = 0; i <= 5; i++)
       this.particles.spawn({ frames: VFX.dustWhite, x: x0 + ((x1 - x0) * i) / 5, y: y0 + ((y1 - y0) * i) / 5, scale: 0.7, life: 420, delay: i * 25, vy: -0.02, grow: 0.0008, alpha: 0.8 });
     const left = x1 < x0;
@@ -1272,6 +1516,24 @@ export class Fx {
         return t < 350;
       },
     });
+  }
+
+  /** A dash's after-images, fading along the run. */
+  private afterimages(by: UnitSprite, x0: number, y0: number, x1: number, y1: number): void {
+    const count = settings().saver ? 2 : 4;
+    for (let i = 0; i < count; i++) {
+      const f = (i + 1) / (count + 1);
+      const ghost = by.afterimage();
+      ghost.position.set(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f);
+      ghost.alpha = 0;
+      this.root.addChild(ghost);
+      let age = -i * 30;
+      this.items.push({ view: ghost, step: (dt) => {
+        age += dt;
+        ghost.alpha = age < 0 ? 0 : 0.32 * Math.max(0, 1 - age / 240);
+        return age < 240;
+      } });
+    }
   }
 
   /** A 3x3 of tiles marked as a volley or meteor comes down on it after `ms`. */
@@ -1892,4 +2154,31 @@ export class Fx {
       },
     });
   }
+}
+
+/** A blink that strikes (a teleport slash's hop, or any blink behind a foe and a blow): the foe struck and which hop of the caster's
+ *  this is in the tick (for the page to stagger them, `SLASH_HOP_MS`). */
+interface Slash {
+  struck: number;
+  hop: number;
+}
+
+/** The blinks in a tick's events that strike: each followed, before the caster's next blink, by its skill blow on a foe. */
+function slashesOf(events: readonly BattleEvent[]): Map<BattleEvent, Slash> {
+  const out = new Map<BattleEvent, Slash>();
+  const hops = new Map<number, number>();
+  events.forEach((e, i) => {
+    if (e.kind !== 'blink') return;
+    const hop = hops.get(e.by) ?? 0;
+    hops.set(e.by, hop + 1);
+    for (let j = i + 1; j < events.length; j++) {
+      const n = events[j];
+      if (n.kind === 'blink' && n.by === e.by) break;
+      if (n.kind === 'hit' && n.by === e.by && n.to !== e.by && n.src === 'skill') {
+        out.set(e, { struck: n.to, hop });
+        break;
+      }
+    }
+  });
+  return out;
 }

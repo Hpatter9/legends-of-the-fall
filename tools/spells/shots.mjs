@@ -3,11 +3,14 @@
 // the page's effects, then holding the fight still at the moment that shows it: a launch mid-air, walls of every kind, an aura, a
 // burrow's mound, a teleport slash. After `npm run web`:
 //   node tools/spells/shots.mjs              every size         SIZES=393x852 node tools/spells/shots.mjs    one
+// PREFIX names the pictures (docs/samples/<PREFIX>-<move>-<size>.png; spells-b01 by default; the painted effects' pass used
+// PREFIX=spell-art, docs/notes/spell-art.md).
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
 const PORT = Number(process.env.PORT ?? 8840);
+const PREFIX = process.env.PREFIX ?? 'spells-b01';
 const root = 'out/web';
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
 const srv = createServer((q, r) => {
@@ -114,7 +117,7 @@ for (const [w, h] of SIZES) {
     await lookAt(page, 'juggernaut', 2.2, -50);
     const at = await stage(page, `${hero} ${nearFoe} const f = foes[0]; if (!f) return null; const p = tk.launch(g.b, me, f, 3, out); if (!p) return null; const s = g.sprites.get(f.id); g.tx = g.cx = s.x; g.ty = g.cy = s.y - 40; return [p.land.u, p.land.v, f.u, f.v, p.from.u, p.from.v];`, { def: 'juggernaut' });
     await runThenHold(page, 260);
-    await page.screenshot({ path: `docs/samples/spells-b01-launch-${size}.png` });
+    await page.screenshot({ path: `docs/samples/${PREFIX}-launch-${size}.png` });
     console.log(size, 'launch', JSON.stringify(at));
     await ctx.close();
   }
@@ -125,7 +128,7 @@ for (const [w, h] of SIZES) {
     await lookAt(page, 'juggernaut', 2.4, -40);
     const row = await stage(page, `${hero} ${nearFoe} const kinds = ['stone', 'ice', 'thorns', 'light', 'fire', 'wind']; const laid = []; let v = me.v - 1; let u = 0; for (const k of kinds) { for (let tries = 0; tries < 40; tries++, u++) { if (u >= g.b.board.w) { u = 0; v--; } if (tk.raiseWall(g.b, me, [{ u, v }], k, 20000, out).length) { laid.push(k + '@' + u + ',' + v); u++; break; } } } return { v, laid };`, { def: 'juggernaut' });
     await runThenHold(page, 400);
-    await page.screenshot({ path: `docs/samples/spells-b01-walls-${size}.png` });
+    await page.screenshot({ path: `docs/samples/${PREFIX}-walls-${size}.png` });
     console.log(size, 'walls', JSON.stringify(row));
     await ctx.close();
   }
@@ -135,7 +138,7 @@ for (const [w, h] of SIZES) {
     await lookAt(page, 'paladin', 2.2, -10);
     const at = await stage(page, `${hero} tk.raiseAura(g.b, me, { what: 'Spirit Guardians', reach: 2, ms: 20000, every: 500, ally: { heal: 0.01 }, foe: { dmg: 0.2, slow: 600 } }, out); return [me.u, me.v];`, { def: 'paladin' });
     await runThenHold(page, 700);
-    await page.screenshot({ path: `docs/samples/spells-b01-aura-${size}.png` });
+    await page.screenshot({ path: `docs/samples/${PREFIX}-aura-${size}.png` });
     console.log(size, 'aura', JSON.stringify(at));
     await ctx.close();
   }
@@ -146,7 +149,7 @@ for (const [w, h] of SIZES) {
     const at = await stage(page, `${hero} const ok = tk.burrow(g.b, me, { reach: 8, mult: 1.6, launch: 2, splash: 0.6 }, out); return ok ? [me.u, me.v, me.under.until - g.b.t] : null;`, { def: 'juggernaut' });
     await runThenHold(page, at ? Math.round(at[2] * 0.5) : 300);
 
-    await page.screenshot({ path: `docs/samples/spells-b01-burrow-${size}.png` });
+    await page.screenshot({ path: `docs/samples/${PREFIX}-burrow-${size}.png` });
     console.log(size, 'burrow', JSON.stringify(at));
     await ctx.close();
   }
@@ -156,7 +159,7 @@ for (const [w, h] of SIZES) {
     await lookAt(page, 'kunoichi', 1.7, -60);
     const at = await stage(page, `${hero} const hit = tk.teleportSlash(g.b, me, { k: 3, reach: 6, mult: 1.4, order: (x, y) => x.hp - y.hp }, out); return [me.u, me.v, hit.length];`, { def: 'kunoichi' });
     await runThenHold(page, 150);
-    await page.screenshot({ path: `docs/samples/spells-b01-slash-${size}.png` });
+    await page.screenshot({ path: `docs/samples/${PREFIX}-slash-${size}.png` });
     console.log(size, 'slash', JSON.stringify(at));
     await ctx.close();
   }
