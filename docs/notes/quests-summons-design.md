@@ -1020,3 +1020,20 @@ frame); and the four passersby walking (6 frames each) in the camp's isometric s
    the tavern and a painted portrait for her cards; or the owner may prefer an existing figure behind the bar.
 7. **A great summon in a trial.** May the player call a bound summon against a great being? *Recommended: yes, but the being takes
    only 25%* (its adds fall as usual), so the summons already won help with the next trial without carrying it.
+
+## The owner's decisions (after the first draft)
+
+- **The name:** the great summons are **Eidolons**.
+- **The gauge is a War Horn** (replacing "the sigil"): a carved ivory horn bound in iron and gold that fills with light; calling the
+  Eidolon is blowing the horn. It shows in a fight beside the spell orbs and at the camp.
+- **Filling:** 1000 to fill. A boss wave adds 100 (about ten boss waves). **Ordinary foes also count: 100 ordinary foes slain add a
+  tenth (1 each).** Auto-replay adds **half** (boss waves 50, foes 0.5).
+- **Strike shares kept:** ordinary foes fall; elites and mid-bosses 65%; last bosses 45%; Calamity guardians 40%.
+- **Quests that need a particular hero don't show until that hero is owned** (every quest, not only ordinary ones). The Eidolon
+  chains therefore only ever ask for heroes from the two starter packs (or none), so no chain can stall.
+- **One Eidolon chain at a time**, and **one Eidolon chosen** to answer the horn. Choosing another keeps the horn's fill (one shared
+  horn; it never refills or empties on a switch).
+- A horn blown in the daily counts towards the day's best. Gwen Tallow is the new keeper. A bound Eidolon may be called in a fight
+  against another being, which takes 25%.
+- **The six Eidolons' designs are being workshopped** (five ideas each were offered); the art for their figures, effects and boss
+  sheets waits on that choice. Part 1 of the art (the horn, the calling's effects, the givers, the board) is asked for now.
