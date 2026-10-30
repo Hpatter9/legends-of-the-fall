@@ -7,11 +7,12 @@
 import type { Battle, Unit } from '../battle';
 import { CHARGE_MAX, KITS, type Skill } from '../abilities';
 import type { HeroKit, Slot } from '../heroKits';
-import { bullRush, devour, flood, parryStance, puppetStrings, turningWind } from './front';
+import { bullRush, devour, parryStance, puppetStrings } from './front';
 import { bloodFury, bloodPrice, boundSoul, grounding, jump, markForCoin, pilfer, rollTheBones, shift, smokeBomb, smokeNeeded, stillnessPalm, wheelAbout } from './blades';
 import { fanTheHammer, pinningShot, powderKeg, siegeMode, spikeField, suppressingFire } from './shooters';
-import { changeTune, charge, flaskNeeded, flaskToss, foxGuise, guardianAngel, piedPiper, rewind, smite, soulSiphon, stoneGarden, treeform } from './casters';
+import { changeTune, charge, flaskNeeded, flaskToss, guardianAngel, piedPiper, rewind, smite, soulSiphon, stoneGarden, treeform } from './casters';
 import { fontOfMagic, stormSurge, transposition, wallOfFire } from './mages';
+import { alterSelf, tidalWave, windWall } from './monsters';
 import { plantStandard, sicEm } from './callers';
 import { REVIVE_FACES } from './revive';
 import { auraOfProtection, bane, shieldRush, spearWall, tunnelStrike } from './tanks';
@@ -158,13 +159,13 @@ export function HERO_TABLE(): Record<string, HeroKit> {
       role: 'An alchemist: draughts for friends, firebrew for foes, an elixir for the fallen',
     },
     lightningMage: M('lightningMage', 45, sk('Storm Surge', 'With a foe beside her she first blinks to the safest tile within 3; then every Charged foe discharges: hurt, stunned for 0.8s, and the bolt arcs to a foe beside it', 700, 'attack', stormSurge, 'Overload'), 55, 'A storm marker: lightning that marks, then sets the marks off', { onHit: charge }),
-    kitsune: M('kitsune', 45, sk('Fox Guise', 'For 5s she takes the shape of the strongest foe in sight: its looks, reach and attack; foes pick her last', 600, 'attack', foxGuise), 60, 'A shapeshifter: charms a foe, or wears its shape', {}, { gap: 12000 }),
-    karasu: S('karasu', 30, sk('Pilfer', 'Dives on the foe with the fullest skill meter, steals half its charge and any shield; friends near him gain pool', 450, 'attack', pilfer), 40, 'A thief: dives on the back line and robs it'),
-    yamabushi: S('yamabushi', 30, sk('Turning Wind', 'The foes beside him are shoved back; for 4s, shots aimed at friends within 2 of him are blown back at the shooter for half', 500, 'attack', turningWind), 40, 'A reflector: wind that shoves foes and turns arrows'),
-    werewolf: S('werewolf', 25, sk('Shift', 'Changes form: the Hunter (quicker, bites bleed) or the Brute (takes a quarter less, blows splash); Brute when badly hurt or crowded', 400, 'attack', shift), 40, 'A shapeshifter: a hunting wolf and a great brute'),
+    kitsune: M('kitsune', 45, sk('Alter Self', 'She blinks in fox-fire beside the strongest foe in sight and takes its shape for 5s: its looks, reach and attack; foes pick her last', 600, 'attack', alterSelf, 'Fox Guise'), 60, 'A shapeshifter: charms a foe, or wears its shape', {}, { gap: 12000 }),
+    karasu: S('karasu', 30, sk('Pilfer', 'Dives on the foe with the fullest skill meter, steals half its charge and any shield, and silences it for 1.5s; friends near him gain pool', 450, 'attack', pilfer), 40, 'A thief: dives on the back line and robs it'),
+    yamabushi: S('yamabushi', 30, sk('Wind Wall', 'A wall of wind 3 tiles long in front of the friends a shooter is aiming at, for 4s: shots through it fly back at the shooter for half', 500, 'attack', windWall, 'Turning Wind'), 40, 'A reflector: wind that shoves foes and turns arrows'),
+    werewolf: S('werewolf', 25, sk('Shapechange', 'Changes form: the Hunter (quicker, bites bleed) or the Brute (takes a quarter less, blows splash); Brute when badly hurt or crowded', 400, 'attack', shift, 'Shift'), 40, 'A shapeshifter: a hunting wolf and a great brute'),
     minotaur: S('minotaur', 35, sk('Bull Rush', 'Every foe beside him is struck and shoved two tiles; one that hits something is stunned for 1.5s', 550, 'attack', bullRush), 45, 'A bulldozer: slams foes into walls and each other'),
-    satyr: M('satyr', 40, sk('Pied Piper', 'The foes within 4 dance toward one spot ahead of him for 2s, bunched and not striking', 600, 'attack', piedPiper), 60, 'A lure: pipes that hasten friends and gather foes', { gap: 9000 }),
-    gorgon: M('gorgon', 45, sk('Stone Garden', 'Every stunned or slowed foe within 5 turns to stone for 2s; one that dies as stone stays as a statue', 700, 'attack', stoneGarden), 60, 'A petrifier: stone foes that stay as statues'),
+    satyr: M('satyr', 40, sk('Irresistible Dance', 'The foes within 4 dance towards one spot ahead of him for 2s, bunched and not striking', 600, 'attack', piedPiper, 'Pied Piper'), 60, 'A lure: pipes that hasten friends and gather foes', { gap: 9000 }),
+    gorgon: M('gorgon', 45, sk('Flesh to Stone', 'Every stunned or slowed foe within 5 turns to stone for 2s; one that dies as stone stays as a statue', 700, 'attack', stoneGarden, 'Stone Garden'), 60, 'A petrifier: stone foes that stay as statues'),
     samuraiCommander: S('samuraiCommander', 30, sk('Plant the Standard', 'Plants a standard for 10s: friends within 2 of it take a tenth less and hit a tenth harder while it stands', 600, 'attack2', plantStandard), 45, 'A banner-bearer: plants a standard that must be knocked down', { gap: 11000 }),
     paladin: M('paladin', 40, sk('Aura of Protection', 'For 8s the allies within 3 of him take 30% less, heal 1% of their health a second, and each shrugs off the next ailment', 600, 'defend', auraOfProtection), 60, 'A holy shield: smites the wicked and guards his friends', {}, { gap: 9000 }),
     cleric: {
@@ -182,11 +183,11 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     shambler: S('shambler', 30, sk('Devour', 'Eats a body that fell near him: heals a fifth and grows a tenth bigger for the fight (three times at most)', 700, 'attack', devour), 40, 'A corpse-eater: rots his foes and eats the fallen'),
     rifleBot: S('rifleBot', 30, sk('Suppressing Fire', 'Fire on the three-wide lane with most foes: each is struck, slowed for 3s, and its skill stops charging', 700, 'attack2', suppressingFire), 45, 'A suppressor: bursts, and a lane of fire'),
     mercenary: S('mercenary', 30, sk('Hunter\'s Mark', 'Throws a blade at the strongest foe and marks it for 10s: every hero deals a quarter more to it; if it dies marked he heals and his stamina fills', 400, 'attack2', markForCoin, 'Mark for Coin'), 40, 'A bounty hunter: marks the strongest and is paid for it'),
-    mummy: M('mummy', 40, sk('Puppet Strings', 'The hardest-hitting foe within 4 is bound for 3s: it walks to, and strikes, its own side', 600, 'attack2', puppetStrings), 60, 'A puppeteer: binds a foe and walks it into its friends'),
+    mummy: M('mummy', 40, sk('Dominate Monster', 'The hardest-hitting foe within 4 is bound for 3s: it walks to, and strikes, its own side', 600, 'attack2', puppetStrings, 'Puppet Strings'), 60, 'A puppeteer: binds a foe and walks it into its friends'),
     buccaneer: S('buccaneer', 30, sk('Loaded Dice', 'Two dice: 2-4 a weak cut and he is slowed; 5-9 x1.6; 10-11 x2.2 and a bleed; doubles or 12 x3 and every friend hastened', 450, 'attack2', rollTheBones, 'Roll the Bones'), 40, 'A gambler: hooks, and the dice', { gap: 10000 }),
     wolfBard: M('wolfBard', 40, sk('Bardic Inspiration', 'Switches his standing song (Dirge weakens foes near, Anthem lifts friends near) and doubles it for 6s', 600, 'attack2', changeTune, 'Change the Tune'), 55, 'A songweaver: a standing song he switches'),
     beastmaster: S('beastmaster', 35, sk('Pack Tactics', 'Every wolf of his leaps at the foe he marks: struck and slowed, and the wolves hit a quarter harder for 4s; with none, one answers', 600, 'attack2', sicEm, "Sic 'Em"), 40, 'A summoner: calls the pack and sets it on a foe', { gap: 9000 }),
-    kraken: S('kraken', 30, sk('Flood', 'The 3x3 round him turns to shallow water for 8s, and the foes in it are slowed', 600, 'attack2', flood), 45, 'A tide-caller: drags foes in and floods the ground'),
+    kraken: S('kraken', 30, sk('Tidal Wave', 'A wave rolls from him down the three-wide lane with most foes, hurting each and shoving it 2 tiles; where it breaks it freezes into a Wall of Ice 3 tiles across, for 6s', 600, 'attack2', tidalWave, 'Flood'), 45, 'A tide-caller: drags foes in and floods the ground'),
     lancer: S('lancer', 30, sk('Disengage', 'Rides up to 3 tiles clear of the melee and gains full Momentum (his next blow +50%)', 400, 'attack', wheelAbout, 'Wheel About'), 40, 'Momentum cavalry: hits harder the further he rides'),
     reaper: S('reaper', 30, sk('Animate Dead', 'The last foe that fell near him rises as a wraith on his side for 8s, at half its health and attack', 600, 'attack2', boundSoul, 'Bound Soul'), 40, 'A soul harvester: the foes he reaps rise for him'),
     timeWitch: M('timeWitch', 45, sk('Rewind', 'The friend that lost most in the last 4s goes back: its health, its tile, and its new ailments gone', 600, 'attack2', rewind), 60, 'A time-bender: hastes, slows, and turns a friend\'s clock back', { gap: 9000 }, { heals: true, gap: 10000 }),

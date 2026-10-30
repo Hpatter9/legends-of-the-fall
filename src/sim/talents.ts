@@ -240,11 +240,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'kitsune',
     [['Fox Cunning', 'spectacles', { crit: 0.03 }], ['Soft Paws', 'boots', { moveSpeed: 0.06 }], ['Spirit Fur', 'silk', { hp: HP }], ['Bright Tails', 'charm', { atk: ATK }]],
     [
-      { name: 'Lingering Charm', icon: 'pendant', text: 'Fox Charm and the Nine-Tailed Dream last half as long again.', tal: { dur: 0.5 } },
-      { name: 'Far-sighted', icon: 'spectacles', text: 'Fox Charm reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Lingering Charm', icon: 'pendant', text: 'Charm Monster and Mass Polymorph last half as long again.', tal: { dur: 0.5 } },
+      { name: 'Far-sighted', icon: 'spectacles', text: 'Charm Monster reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
-      { name: 'Nine Tails Unbound', icon: 'orb', text: 'The Nine-Tailed Dream charges 40% faster, and +10% pool refill.', tal: { ultRate: 0.4 }, stats: { charge: 0.1 } },
+      { name: 'Nine Tails Unbound', icon: 'orb', text: 'Mass Polymorph charges 40% faster, and +10% pool refill.', tal: { ultRate: 0.4 }, stats: { charge: 0.1 } },
       { name: 'Foxfire', icon: 'ruby', text: '35% of her blows set the foe alight.', abilities: [ab('tl_kitsune_foxfire', 'Foxfire', 'hit', 'burn', { p: 0.35, v: 0.3 })] },
     ],
   ),
@@ -252,11 +252,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'karasu',
     [['Black Feathers', 'feather', { atk: ATK }], ['Hollow Bones', 'bone', { moveSpeed: 0.06 }], ['Sharp Talons', 'dagger', { crit: 0.03 }], ['Wing Muscle', 'harness', { hp: 0.04 }]],
     [
-      { name: 'Talon Strike', icon: 'scythe', text: 'Dive strikes 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Talon Strike', icon: 'scythe', text: 'Swoop strikes 40% harder.', tal: { pow: 0.4 } },
       { name: 'Wind Rider', icon: 'feather', text: 'After a dive he is hasted for 3s.', tal: { castHaste: 3000 } },
     ],
     [
-      { name: 'Storm Caller', icon: 'stormstaff', text: 'Feather Storm hits 40% harder and charges 40% faster.', tal: { ultPow: 0.4, ultRate: 0.4 } },
+      { name: 'Storm Caller', icon: 'stormstaff', text: 'Cloud of Daggers hits 40% harder and charges 40% faster.', tal: { ultPow: 0.4, ultRate: 0.4 } },
       { name: 'Rending Talons', icon: 'axe', text: '35% of his blows make the foe bleed.', abilities: [ab('tl_karasu_rend', 'Rending Talons', 'hit', 'bleed', { p: 0.35, v: 0.25 })] },
     ],
   ),
@@ -264,8 +264,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'yamabushi',
     [['Mountain Stance', 'plate', { hp: 0.03 }], ['Staff Drill', 'spear', { atk: 0.03 }], ['Iron Sandals', 'boots', { def: 1 }], ['Deep Breath', 'elixir', { regen: 0.002 }]],
     [
-      { name: 'Gale Force', icon: 'feather', text: 'Wind Gust reaches 1 tile further.', tal: { reach: 1 } },
-      { name: 'Hurricane', icon: 'stormstaff', text: 'Wind Gust and Tempest hit a fifth harder.', tal: { pow: 0.2 } },
+      { name: 'Gale Force', icon: 'feather', text: 'Gust of Wind reaches 1 tile further.', tal: { reach: 1 } },
+      { name: 'Hurricane', icon: 'stormstaff', text: 'Gust of Wind and Tempest hit a fifth harder.', tal: { pow: 0.2 } },
     ],
     [
       { name: 'Eye of the Storm', icon: 'orb', text: 'Tempest hits a quarter harder, stuns 30% longer and charges 20% faster.', tal: { ultPow: 0.25, dur: 0.3, ultRate: 0.2 } },
@@ -276,7 +276,7 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'werewolf',
     [['Thick Pelt', 'hide', { hp: HP }], ['Sharp Fangs', 'bone', { atk: ATK }], ['Night Hunter', 'boots', { moveSpeed: 0.06 }], ['Wild Eyes', 'spectacles', { crit: 0.03 }]],
     [
-      { name: 'Bloodthirst', icon: 'scythe', text: 'Ravage bites 30% harder, and heals him for that much more.', tal: { pow: 0.3 } },
+      { name: 'Bloodthirst', icon: 'scythe', text: 'Pounce bites 30% harder, and heals him for that much more.', tal: { pow: 0.3 } },
       { name: 'Savage Pace', icon: 'boots', text: 'His kill frenzy stacks two higher (five).', tal: { frenzyMax: 2 } },
     ],
     [
@@ -313,10 +313,10 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     [['Scale Plates', 'scale', { def: 1 }], ['Baleful Eye', 'spectacles', { atk: ATK }], ['Stone Heart', 'idol', { hp: HP }], ['Slow Coil', 'charm', { charge: 0.1 }]],
     [
       { name: 'Longer Stare', icon: 'emerald', text: 'The foes she stiffens stay stone 60% longer.', tal: { dur: 0.6 } },
-      { name: 'Wide Gaze', icon: 'spectacles', text: 'Her gaze and Stone Curse reach 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Wide Gaze', icon: 'spectacles', text: 'Her gaze and the Gaze of Medusa reach 2 tiles further.', tal: { reach: 2 } },
     ],
     [
-      { name: 'Stone Mastery', icon: 'sapphire', text: 'Stone Curse hits 50% harder and charges 50% faster.', tal: { ultPow: 0.5, ultRate: 0.5 } },
+      { name: 'Stone Mastery', icon: 'sapphire', text: 'The Gaze of Medusa hits 50% harder and charges 50% faster.', tal: { ultPow: 0.5, ultRate: 0.5 } },
       { name: 'Basilisk Venom', icon: 'vial', text: '35% of her shots curse the foe.', abilities: [ab('tl_gorgon_venom', 'Basilisk Venom', 'hit', 'curse', { p: 0.35, v: 0.2 })] },
     ],
   ),
@@ -434,8 +434,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'shambler',
     [['Grave Soil', 'hide', { hp: HP }], ['Rusted Nails', 'bone', { atk: ATK }], ['Thick Skin', 'scale', { def: 1 }], ['Festering Wounds', 'vial', { regen: 0.004 }]],
     [
-      { name: 'Lingering Rot', icon: 'elixir', text: 'Rotting Touch festers for 6s.', tal: { dur: 0.5 } },
-      { name: 'Wider Stench', icon: 'bell', text: 'Rotting Touch reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Lingering Rot', icon: 'elixir', text: 'Contagion festers half as long again.', tal: { dur: 0.5 } },
+      { name: 'Wider Stench', icon: 'bell', text: 'Contagion reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
       { name: 'Plague Carrier', icon: 'vial', text: '35% of his blows make the foe bleed.', abilities: [ab('tl_shambler_plague', 'Plague Carrier', 'hit', 'bleed', { p: 0.35, v: 0.25 })] },
@@ -470,8 +470,8 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'mummy',
     [['Linen Layers', 'silk', { hp: HP }], ['Dusty Fists', 'fist', { atk: ATK }], ['Ancient Amulet', 'amulet', { def: 1 }], ['Embalmed', 'elixir', { regen: 0.004 }]],
     [
-      { name: 'Tight Bindings', icon: 'bone', text: 'Binding Wraps slow for 5s.', tal: { dur: 0.65 } },
-      { name: 'Long Wraps', icon: 'bell', text: 'Binding Wraps reach 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Tight Bindings', icon: 'bone', text: 'Hold Person slows for 5s.', tal: { dur: 0.65 } },
+      { name: 'Long Wraps', icon: 'bell', text: 'Hold Person reaches 2 tiles further.', tal: { reach: 2 } },
     ],
     [
       { name: "Pharaoh's Curse", icon: 'ruby', text: '35% of his blows curse the foe.', abilities: [ab('tl_mummy_curse', "Pharaoh's Curse", 'hit', 'curse', { p: 0.35, v: 0.2 })] },
@@ -518,11 +518,11 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
     'kraken',
     [['Barnacle Plates', 'scale', { def: 1 }], ['Hooked Claws', 'dagger', { atk: ATK }], ['Deep Lungs', 'amulet', { hp: HP }], ['Brine-soaked', 'vial', { regen: 0.004 }]],
     [
-      { name: 'Riptide', icon: 'bell', text: 'Undertow reaches 2 tiles further.', tal: { reach: 2 } },
-      { name: 'Crushing Depths', icon: 'maul', text: 'Undertow hits 40% harder.', tal: { pow: 0.4 } },
+      { name: 'Riptide', icon: 'bell', text: 'Grasping Tentacles reach 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Crushing Depths', icon: 'maul', text: 'Grasping Tentacles hit 40% harder.', tal: { pow: 0.4 } },
     ],
     [
-      { name: "Kraken's Grasp", icon: 'idol', text: 'Foes struck by Undertow are held for 0.7s.', tal: { skillStun: 700 } },
+      { name: "Kraken's Grasp", icon: 'idol', text: 'Foes struck by Grasping Tentacles are held for 0.7s.', tal: { skillStun: 700 } },
       { name: 'Ink Screen', icon: 'shadowcloak', text: 'Hidden for 2s at the start and again every 14s.', abilities: [ab('tl_kraken_ink', 'Ink Screen', 'start', 'stealth', { w: 2 }), ab('tl_kraken_ink2', 'Ink Screen', 'tick', 'stealth', { n: 14, w: 2, show: true })] },
     ],
   ),

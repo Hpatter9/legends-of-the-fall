@@ -111,14 +111,14 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Thunder Throne', 'The bolt jumps through four more foes, holds each longer and hits harder, and a thunderclap bursts round her', { extra: 4, skillStun: 210, pow: 0.18 }, [nova(2, 0.28, 150)]),
   ],
   kitsune: [
-    t('Lingering Charm', 'Fox Charm lasts longer', { dur: 0.14 }),
+    t('Lingering Charm', 'Charm Monster lasts longer', { dur: 0.14 }),
     t('Hundred Fox Fires', 'The charm lasts much longer, and fox fire flares round her, burning the foes near', { dur: 0.28 }, [nova(3, 0.21)]),
     t('Nine-Tailed Inferno', 'The charm lasts far longer and reaches a tile further, and a great ring of fox fire burns and holds the foes near', { dur: 0.5, reach: 1, pow: 0.12 }, [nova(3, 0.38, 250)]),
   ],
   karasu: [
-    t('Swift Dive', 'Dive gives back 30 charge and strikes harder', { refund: 30, pow: 0.07 }),
-    t('Storm Dive', 'Strikes harder; a gale bursts where he lands, and a second dive follows', { pow: 0.105 }, [nova(2, 0.21), echo(700, 0.45)]),
-    t('Tengu King\'s Descent', 'Strikes far harder; a great gale bursts where he lands, holds the foes near and wraps him in a shield of wind, and two more dives follow', { pow: 0.45 }, [nova(2.5, 0.5, 200), ward(0, 0.06), echo(700, 0.8), echo(1400, 0.4)]),
+    t('Swift Swoop', 'Swoop gives back 30 charge and strikes harder', { refund: 30, pow: 0.07 }),
+    t('Storm Swoop', 'Strikes harder; a gale bursts where he lands, and a second swoop follows', { pow: 0.105 }, [nova(2, 0.21), echo(700, 0.45)]),
+    t('Tengu King\'s Descent', 'Strikes far harder; a great gale bursts where he lands, holds the foes near and wraps him in a shield of wind, and two more swoops follow', { pow: 0.45 }, [nova(2.5, 0.5, 200), ward(0, 0.06), echo(700, 0.8), echo(1400, 0.4)]),
   ],
   yamabushi: [
     t('Stronger Gust', 'The gust reaches a tile further and stuns briefly', { reach: 1, skillStun: 175 }),
@@ -126,7 +126,7 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Wrath of the Mountain', 'The gust reaches three tiles further, hits far harder and stuns far longer; a whirlwind bursts round him, and a second gust follows', { reach: 3, pow: 0.3, skillStun: 500 }, [nova(2.5, 0.3, 200), echo(900, 0.4)]),
   ],
   werewolf: [
-    t('Savage Ravage', 'Bites harder and heals him a little', { pow: 0.087, castHeal: 0.028 }),
+    t('Savage Pounce', 'Bites harder and heals him a little', { pow: 0.087, castHeal: 0.028 }),
     t('Blood Moon', 'Bites much harder, heals him well and hastens him', { pow: 0.158, castHeal: 0.052, castHaste: 1050 }),
     t('Alpha\'s Howl', 'Bites far harder and bites again, heals him greatly, and his howl hastens him and the allies near', { pow: 0.38, castHeal: 0.07, castHaste: 1400 }, [mend(0, 0.5), haste(3, 900), echo(700, 0.4)]),
   ],
@@ -138,7 +138,7 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
   satyr: [
     t('Livelier Pipes', 'The pipes last longer and reach a tile further', { dur: 0.14, reach: 1 }),
     t('Pan\'s Frenzy', 'The pipes last much longer and reach two tiles further; his friends\' skill meters jump by 20', { dur: 0.28, reach: 2 }, [charge(3, 20)]),
-    t('Bacchanal', 'The pipes last far longer and reach three tiles further; his friends\' skill meters jump by 30, and they are hastened', { dur: 0.4, reach: 3 }, [charge(3, 30), haste(3, 800)]),
+    t('Pan\'s Revel', 'The pipes last far longer and reach three tiles further; his friends\' skill meters jump by 30, and they are hastened', { dur: 0.4, reach: 3 }, [charge(3, 30), haste(3, 800)]),
   ],
   gorgon: [
     t('Deeper Gaze', 'The gaze reaches a tile further, holds longer and hits harder', { reach: 1, dur: 0.21, pow: 0.3 }),
@@ -226,9 +226,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Lord of the Wild Hunt', 'Two great dire wolves can run beside him with up to three wolves; each call brings a dire wolf beside the wolf', { extra: 2 }, [{ kind: 'summon', unit: 'direWolf', n: 1, cap: 1 }]),
   ],
   kraken: [
-    t('Stronger Undertow', 'The undertow reaches a tile further and slows longer', { reach: 1, dur: 0.175 }),
-    t('Maelstrom Tide', 'The undertow reaches two tiles further, hits harder and holds each foe briefly', { reach: 2, pow: 0.105, skillStun: 210 }),
-    t('Abyssal Maw', 'The undertow reaches three tiles further, hits much harder, slows and holds each foe longer', { reach: 3, pow: 0.16, skillStun: 320, dur: 0.2 }),
+    t('Longer Tentacles', 'The tentacles reach a tile further and slow longer', { reach: 1, dur: 0.175 }),
+    t('Maelstrom Tide', 'The tentacles reach two tiles further, hits harder and holds each foe briefly', { reach: 2, pow: 0.105, skillStun: 210 }),
+    t('Abyssal Maw', 'The tentacles reach three tiles further, hits much harder, slows and holds each foe longer', { reach: 3, pow: 0.16, skillStun: 320, dur: 0.2 }),
   ],
   lancer: [
     t('Longer Charge', 'Charges a tile further, and he rides faster for longer after it', { reach: 1, castHaste: 700 }),

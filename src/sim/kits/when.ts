@@ -7,6 +7,8 @@ import { apart, foesOf } from '../abilities';
 import { harmed } from '../ailments';
 import { THUNDER_STORE } from './melee';
 import { FONT, fireLane, inTrouble } from './mages';
+import { tidalLane } from './monsters';
+import { shieldLine } from '../toolkit';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -21,7 +23,8 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Tunnel Strike': (b, me) => foesWithin(b, me, 6) && foesOf(b, me).filter((f) => apart(f, me) === 1).length < 2,
   'Parry Stance': (b, me) => foesOf(b, me).some((f) => apart(f, me) === 1 && !UNITS[f.def].shot),
   'Smoke Bomb': (b, me) => foesOf(b, me).some((f) => Math.abs(f.u - me.u) <= 1 && Math.abs(f.v - me.v) <= 1),
-  'Turning Wind': (b, me) => foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8),
+  // (RPG-SPELLS batch 7: the Wind Wall took Turning Wind's place, the Tidal Wave the Flood's)
+  'Turning Wind': (b, me) => foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8) && !!shieldLine(b, me, 3),
   // (RPG-SPELLS batch 6: the Wall of Fire took Wildfire's place, Transposition Trade Places', Font of Magic Font of Wisdom's)
   Wildfire: (b, me) => !!fireLane(b, me),
   Overload: (b, me) => foesOf(b, me).some((f) => on(f.kx?.charged, b) && apart(me, f) <= 8),
@@ -39,7 +42,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   Devour: (b, me) => body(b, me, 2, 10000),
   'Mark for Coin': (b, me) => foesOf(b, me).some((f) => apart(f, me) <= 7 && !on(f.kx?.bounty?.until, b)),
   'Puppet Strings': (b, me) => foesOf(b, me).length > 1 && foesWithin(b, me, 4),
-  Flood: (b, me) => foesOf(b, me).some((f) => Math.abs(f.u - me.u) <= 1 && Math.abs(f.v - me.v) <= 1),
+  Flood: (b, me) => !!tidalLane(b, me),
   'Wheel About': (b, me) => foesWithin(b, me, 1),
   'Bound Soul': (b, me) => body(b, me, 4, 12000),
   Rewind: (b, me) => allies(b, me).some((a) => !!a.kx?.hist?.some((s) => b.t - s.t <= 4000 && (s.hp - a.hp) / a.maxHp >= 0.2)),
