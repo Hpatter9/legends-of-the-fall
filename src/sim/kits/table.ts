@@ -105,7 +105,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   gunslinger: 3.06,
   shambler: 0.11,
   rifleBot: 0.41,
-  mercenary: 3.06,
+  mercenary: 4.0, // (RPG-SPELLS batch 4: 3.06 before; Hunter's Mark was the weakest skill 2 at level 10)
   mummy: 0.25,
   buccaneer: 1.54,
   wolfBard: 0.12,
@@ -196,7 +196,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     dragoon: S('dragoon', 35, sk('Dragon Dive', 'She leaps out of the fight and lands on the thickest crowd: double on her mark, and the 3x3 struck, held and thrown a tile outward', 400, 'attack2', jump, 'Jump'), 45, 'A dragoon: breathes fire and jumps'),
     juggernaut: S('juggernaut', 30, sk('Tunnel Strike', 'Drills into the ground and comes up under the foe within 6 with most foes round it: it is struck hard and thrown 2 tiles, and the foes beside it are struck and shoved', 700, 'attack2', tunnelStrike), 45, 'A siege engine: slams foes into the air and tunnels under them', {}, { gap: 10000 }),
     sage: M('sage', 50, sk('Font of Wisdom', 'Every friend within 4 gains 25 mana or 15 stamina', 600, 'attack2', fontOfWisdom), 55, 'A mana battery: stars, and his friends\' pools filled', {}, { gap: 8000 }),
-    demonSwordsman: S('demonSwordsman', 30, sk('Blood Pact', 'Paid in blood: his next three blows deal 60% more and drink 30%', 400, 'attack2', bloodPrice, 'Blood Price'), 25, 'A blood pact: pays health for power', {}, { hpCost: 0.15, gap: 8000 }),
+    demonSwordsman: S('demonSwordsman', 30, sk('Blood Pact', 'Paid in blood: his next three blows deal 60% more and drink 30%', 400, 'attack2', bloodPrice, 'Blood Price'), 25, 'A blood pact: pays health for power', {}, { hpCost: 0.1, gap: 6000 }),
     tyrant: M('tyrant', 45, sk('Bane', 'Iron chains drag the toughest foe within 6 up to 3 tiles towards him and mark it for 6s: every hero goes for it and deals 20% more (if it falls, every hero gains pool); the two foes nearest it are weakened', 500, 'attack2', bane, 'Condemn'), 60, 'A condemner: names a foe for the whole party', {}, { gap: 10000 }),
   };
 }
