@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### QUESTS-SUMMONS — Design: quests, the tavern, quest battles and six great summons
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/quests-design`, `/home/user/lotf-quest-design` (from main 0.262.0).
+- **Goal:** the owner's asks: great summons (a gauge filled across fights by boss waves, called by hand, never by Auto), earned by multi-part quest chains bound by the Summoner; an RPG quest system with many givers; the tavern made the quests' hub again; quest battles with a required cast; summons 2 to 6 ending in a fight against the being, the six ordered by difficulty.
+- **Scope:** design only: `docs/notes/quests-summons-design.md`, concept mock-ups `docs/samples/quests-design-*.png` (`docs/samples/quests-design/mock.html`). No game code.
+- **Status:** ready for the owner's review; seven open questions at the end of the note, each with a recommended answer. [Note](notes/quests-summons-design.md).
+
 ### BATTLE-HUD — The fight's hero rows and spell orbs; ULT-CUTIN — an ultimate's moment
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/battle-hud-final`, `/home/user/lotf-hud` (from main 0.254.0).

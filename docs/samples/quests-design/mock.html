@@ -1,0 +1,91 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quests concept mock</title>
+<style>
+:root{--ink:#f3e6c4;--dim:#b8a57e;--gold:#e8b84a;--panel:#241a14;--edge:#7a5a2a;--bg:#120d0a}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:12px/1.35 Georgia,serif}
+.top{height:44px;display:flex;align-items:center;gap:8px;padding:0 10px;background:#1b130e;border-bottom:2px solid var(--edge)}
+.chip{background:#2e2218;border:1px solid var(--edge);border-radius:12px;padding:3px 8px;display:flex;gap:5px;align-items:center}
+.ring{width:18px;height:18px;border-radius:50%;background:conic-gradient(var(--gold) 0 64%,#3a2c1c 64% 100%);box-shadow:inset 0 0 0 4px #2e2218}
+.ring.full{background:conic-gradient(#ffd36a 0 100%);box-shadow:0 0 8px #ffd36a,inset 0 0 0 4px #5a3a10}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:56px;display:flex;background:#1b130e;border-top:2px solid var(--edge)}
+.tabs div{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dim)}.tabs .on{color:var(--gold)}
+.tabs .bang{position:relative}.tabs .bang:after{content:'!';position:absolute;top:8px;right:14px;background:var(--gold);color:#241a14;border-radius:8px;width:14px;height:14px;text-align:center;font-weight:bold;line-height:14px}
+.scene{position:absolute;top:44px;bottom:56px;left:0;right:0;overflow:hidden;background:#2a1d14}
+.room{position:absolute;left:-190px;top:60px;width:768px;height:592px;image-rendering:pixelated}
+.room .wall{position:absolute;left:0;top:0;width:768px;height:256px;background:url(../../../src/art/tavern/wall.png) 0 0/768px 256px}
+.room .floor{position:absolute;left:0;top:256px;width:768px;height:336px;background:url(../../../src/art/tavern/floor.png) 0 0/64px 64px}
+.room img{position:absolute;image-rendering:pixelated}
+.btns{position:absolute;top:8px;right:8px;display:flex;gap:6px}
+.btn{background:#3a2a1a;border:1px solid var(--gold);border-radius:6px;padding:6px 9px;color:var(--ink)}
+.btn.g{background:linear-gradient(#e8b84a,#b07a20);color:#241a14;border-color:#ffe08a}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-left:4px;vertical-align:middle}
+.bub{position:absolute;background:#fff6d0;color:#241a14;border-radius:9px;width:20px;height:20px;text-align:center;font-weight:bold;line-height:20px;border:2px solid #241a14}
+.keeper{position:absolute;width:30px;height:64px;border-radius:10px 10px 4px 4px;background:linear-gradient(#8a5a3a 0 30%,#5a3a2a 30% 60%,#c9a37a 60%)}
+.board{position:absolute;width:70px;height:56px;background:#6a4a2a;border:4px solid #3a2414}
+.board i{position:absolute;width:20px;height:24px;background:#efe2c0;transform:rotate(-4deg)}
+.card{position:absolute;left:10px;right:10px;bottom:66px;background:var(--panel);border:2px solid var(--gold);border-radius:10px;padding:10px;display:flex;gap:10px}
+.face{width:64px;height:64px;border-radius:8px;background:#5a3a2a center/cover;flex:none;border:1px solid var(--edge)}
+.card b{color:var(--gold);font-size:13px}.row{display:flex;gap:8px;margin-top:8px}
+.concept{position:absolute;left:8px;bottom:62px;color:#ff9a9a;font-size:12px;opacity:.85}
+.sheet{position:absolute;top:44px;bottom:56px;left:0;right:0;background:var(--panel);padding:10px;overflow:hidden}
+.pills{display:flex;gap:6px;margin-bottom:10px}.pills span{border:1px solid var(--edge);border-radius:12px;padding:4px 9px;color:var(--dim)}.pills .on{border-color:var(--gold);color:var(--gold)}
+.q{display:flex;gap:9px;align-items:center;border:1px solid var(--edge);border-radius:8px;padding:8px;margin-bottom:8px;background:#2e2218}
+.q .face{width:44px;height:44px}.bar{height:6px;background:#3a2c1c;border-radius:3px;margin-top:5px}.bar i{display:block;height:100%;background:var(--gold);border-radius:3px}
+.gs{border:1px solid #d0602a;background:linear-gradient(90deg,#3a1a10,#2e2218)}
+.slots{display:flex;gap:5px;margin-top:5px}.slots i{width:22px;height:22px;border-radius:5px;border:1px dashed #a07a4a;background:#1b130e}.slots i.got{border:1px solid #ffb060;background:radial-gradient(#ffb060,#a03a10)}
+.sil{width:56px;height:56px;border-radius:8px;flex:none;background:radial-gradient(circle at 50% 60%,#ff8a2a,#3a1008 70%)}
+.slot{width:62px;height:84px;border:2px solid var(--edge);border-radius:8px;background:#2e2218 center/cover;position:relative}
+.slot.req{border-color:var(--gold);box-shadow:0 0 0 2px #5a3a10}
+.slot.req:after{content:'Quest 🔒';position:absolute;bottom:-1px;left:-1px;right:-1px;background:var(--gold);color:#241a14;font-size:11px;text-align:center;border-radius:0 0 6px 6px}
+.board2{position:absolute;top:96px;left:0;right:0;height:430px;background:linear-gradient(#4a6a3a,#2a3a20)}
+.orbs{position:absolute;top:50px;left:0;right:0;height:44px;display:flex;align-items:center;gap:8px;padding:0 10px;background:rgba(20,14,10,.7)}
+.orb{width:36px;height:36px;border-radius:50%;background:radial-gradient(#6a8aff,#1a2a6a);border:2px solid #9ab0d0}
+.sig{width:44px;height:44px;border-radius:50%;background:radial-gradient(#fff0a0,#e09a20 60%,#6a3a08);border:3px solid #ffe08a;box-shadow:0 0 12px #ffd36a}
+.pick{position:absolute;left:0;right:0;bottom:56px;background:var(--panel);border-top:2px solid var(--gold);padding:12px}
+.unit{position:absolute;width:24px;height:34px;border-radius:6px}
+</style></head><body>
+<div class="top"><b style="color:var(--gold)">Legends</b><span style="flex:1"></span><span class="chip">♛ 4,210</span><span class="chip">◆ 37</span><span class="chip" id="sigil"><span class="ring"></span>640</span></div>
+<div id="app"></div>
+<div class="tabs"><div>Recruit</div><div class="on bang" id="tabHeroes">Heroes</div><div>Battle</div><div>Castle</div><div>Spells</div></div>
+<script>
+const s=new URLSearchParams(location.search).get('s')||'tavern';
+const app=document.getElementById('app');
+const P=k=>`url(../../../src/art/heroes/${k}-portrait.webp)`;
+const tabs=[...document.querySelectorAll('.tabs div')];
+if(s==='tavern'){app.innerHTML=`<div class="scene"><div class="room"><div class="wall"></div><div class="floor"></div>
+<img src="../../../src/art/tavern/bar.png" style="left:250px;top:200px;width:338px">
+<img src="../../../src/art/tavern/stool.png" style="left:280px;top:300px;width:32px"><img src="../../../src/art/tavern/stool.png" style="left:350px;top:300px;width:32px"><img src="../../../src/art/tavern/stool.png" style="left:420px;top:300px;width:32px">
+<img src="../../../src/art/tavern/barrels.png" style="left:600px;top:190px;width:110px">
+<img src="../../../src/art/tavern/table.png" style="left:220px;top:420px;width:120px">
+<div class="keeper" style="left:400px;top:150px"></div><div class="bub" style="left:405px;top:120px">!</div>
+<div class="board" style="left:200px;top:90px"><i style="left:6px;top:6px"></i><i style="left:30px;top:10px;background:#ffe08a"></i><i style="left:44px;top:24px"></i></div>
+<div class="face" style="position:absolute;left:345px;top:262px;width:34px;height:40px;background-image:${P('samurai')}"></div><div class="bub" style="left:352px;top:236px">!</div>
+</div>
+<div class="btns"><span class="btn">Quests<span class="dot"></span></span><span class="btn">Trophies</span><span class="btn">All heroes</span></div>
+<div class="card"><div class="face" style="background:linear-gradient(#8a5a3a,#c9a37a)"></div><div><b>Gwen Tallow</b><div>"Orc-blood on your boots and you still came in through the front door. Good. There's a carter on the north road, says his wagons keep losing their wheels..."</div><div class="row"><span class="btn g">Take it on</span><span class="btn">Not now</span></div></div></div>
+<div class="concept">Concept mock-up, not the game</div></div>`;}
+if(s==='log'){app.innerHTML=`<div class="sheet"><div style="font-size:15px;color:var(--gold);margin-bottom:8px">Quest log</div>
+<div class="pills"><span>Active</span><span>Board</span><span class="on">Great Summons</span><span>Done</span></div>
+<div class="q gs"><div class="sil"></div><div style="flex:1"><b style="color:#ffb060">Ossery, the Ember Matron</b> · fire<div>Part 2 of 3 · Fight: The Kiln Road (Ravi must fight)</div><div class="slots"><i class="got"></i><i></i><i></i></div></div><span class="btn g">Fight</span></div>
+<div class="q" style="opacity:.8"><div class="sil" style="background:radial-gradient(circle at 50% 60%,#7fd4ff,#0a1a2a 70%)"></div><div style="flex:1"><b style="color:#9ad8ff">Something sleeps here</b><div>Opens after the Beast Packs</div><div class="slots"><i></i><i></i><i></i><i></i></div></div></div>
+<div class="q" style="opacity:.6"><div class="sil" style="background:#1b130e"></div><div style="flex:1"><b>Something sleeps here</b><div>Opens after the Wildwood</div></div></div>
+<div style="color:var(--dim);margin:10px 0 6px">Active quests (2 of 3)</div>
+<div class="q"><div class="face" style="background:linear-gradient(#8a5a3a,#c9a37a)"></div><div style="flex:1"><b>The Carter's Wheels</b> · Gwen Tallow<div>Win 3 waves of the Orc Warband with Kwame on the field</div><div class="bar"><i style="width:66%"></i></div></div><span>2/3 📌</span></div>
+<div class="q"><div class="face" style="background-image:${P('wizard')}"></div><div style="flex:1"><b>Show Me Your Fire</b> · Ravi<div>Fire Ravi's ultimate 5 times</div><div class="bar"><i style="width:20%"></i></div></div><span>1/5</span></div>
+<div class="concept" style="bottom:8px">Concept mock-up, not the game</div></div>`;}
+if(s==='party'){tabs.forEach(t=>t.classList.remove('on'));tabs[2].classList.add('on');app.innerHTML=`<div class="sheet"><div style="font-size:15px;color:var(--gold)">The Kiln Road</div><div style="color:var(--dim);margin:4px 0 12px">A quest battle · Ravi must fight · 3 waves · the Ash Warden</div>
+<div style="display:flex;gap:8px;justify-content:center"><div class="slot req" style="background-image:${P('wizard')}"></div><div class="slot" style="background-image:${P('knight')}"></div><div class="slot" style="background-image:${P('archer')}"></div><div class="slot" style="background-image:${P('samurai')}"></div><div class="slot"></div></div>
+<div style="margin:14px 0 6px;color:var(--dim)">Choose the rest of the party</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">${['kunoichi','peasant','ninjaMonk','cleric','druid','paladin','ranger','gunslinger','barbarian','wanderer'].map(k=>`<div class="slot" style="height:62px;width:auto;background-image:${P(k)}"></div>`).join('')}</div>
+<div style="position:absolute;left:10px;right:10px;bottom:12px;display:flex;gap:8px"><span class="btn" style="flex:1;text-align:center">Back</span><span class="btn" style="flex:1;text-align:center">Story</span><span class="btn g" style="flex:2;text-align:center;opacity:.5">Start (pick 1 more)</span></div>
+<div class="concept" style="bottom:56px">Concept mock-up, not the game</div></div>`;}
+if(s==='fight'){tabs.forEach(t=>t.parentNode.style.display='none');document.getElementById('sigil').innerHTML='<span class="ring full"></span>Full';app.innerHTML=`<div class="board2"></div>
+<div class="orbs"><div class="sig"></div><span class="chip">MANA ▮▮▮▮▯ 6/10</span><div class="orb"></div><div class="orb" style="background:radial-gradient(#ff8a2a,#5a1a08)"></div><div class="orb" style="background:radial-gradient(#7be08a,#1a4a1a)"></div><span style="flex:1"></span><span class="chip">Auto ●</span></div>
+${[[60,300],[120,320],[180,300],[240,330],[300,310]].map(([x,y])=>`<div class="unit" style="left:${x}px;top:${y}px;background:#c9d4ff"></div>`).join('')}
+${[[80,150],[150,140],[220,160],[290,130],[180,110]].map(([x,y])=>`<div class="unit" style="left:${x}px;top:${y}px;background:#c05050"></div>`).join('')}
+<div class="pick" style="bottom:0"><b style="color:var(--gold);font-size:14px">The sigil is full</b><div style="color:var(--dim)">Fight paused · call a great summon</div>
+<div class="q gs" style="margin-top:8px"><div class="sil"></div><div style="flex:1"><b style="color:#ffb060">Ossery, the Ember Matron</b><div>Hearthbreak · the foes' side burns, heroes +15% attack</div></div></div>
+<div class="row"><span class="btn" style="flex:1;text-align:center">Not now</span><span class="btn g" style="flex:2;text-align:center">Call Ossery</span></div>
+<div class="concept" style="position:static;margin-top:6px">Concept mock-up, not the game</div></div>`;}
+</script></body></html>
