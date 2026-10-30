@@ -185,6 +185,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion criteria:** a locked hero's tile shows no "Lv 30", no ring and no dimming, with the portrait filling the ring's place (no gap); an unlocked one unchanged; ordinary fights, the daily, the Calamity and the Last Stand; typecheck, tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/herobar-lock.md).
 
+### OPTIONS-MENU — Settings in submenus; Updates and notes
+
+- **Goal:** the owner's asks: "Let's add an updates and notes section in the options. This will show what was changed in the last updates so I can look back at what's new and what version they came out. Keep it summarised." and "We should probably condense the options menu into more menus."
+- **Status:** done; ready for review.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/options-menu`, `/home/user/options-menu` (from main 0.233.0); PR none.
+- **Allowed files or systems:** `src/settings.ts` (the submenus, the updates page, the gears' dot), new `src/updates.ts`, new `src/settingsMenu.css` (and its line in `build.mjs`), one line in `src/main.ts`, new `test/updates.test.ts`, the ruler sheet's step in `tools/rulers/check.mjs`, `tools/settings-menus/shots.mjs`, `tools/stand/depth-shots.mjs`; `CLAUDE.md` (one line), `docs/notes/options-menu.md`, `docs/samples/options-menu-*.png`.
+- **Completion criteria:** eight submenus with a back button; every setting saved under the same keys; the releases newest first from 0.189.0 with the older ranges folded; a test that the newest entry is package.json's version; a "New" dot until the page is seen; typecheck, full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/options-menu.md).
+
 ### SETTINGS-MENUS — The ruler picker and stones in the developer row
 
 - **Goal:** the owner's asks: "The rulers in the settings menu should be a menu that opens up after clicking on it." and "I also want the developer menu to have stones as an option too."
