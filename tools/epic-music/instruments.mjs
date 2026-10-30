@@ -750,3 +750,227 @@ export function timpani(bus, t, dur, midi, vel, o = {}) {
   noiseBurst(len, 'bp', 2200, 1, 0.12 * vel, 0.004);
   emit(bus, t, len, (o.gain ?? 1) * 0.55 * (0.3 + vel * 0.9), o.pan ?? 0);
 }
+
+/* ------------------------------------------------------------------ the JRPG band (docs/notes/music-theme.md) */
+
+/** A bright synth lead: two saws a few cents apart (one each side) and a square an octave down, under a low-pass that opens on
+ *  the attack and settles, a touch of drive, and a vibrato that arrives late. `glide` slides up into the note from that many
+ *  semitones below; `square` swaps the saws for pulses (a chiptune-ish lead). */
+export function synthLead(bus, t, dur, midi, vel, o = {}) {
+  const r = o.r ?? 0.09;
+  const len = lenFor(dur, r);
+  fillEnv(len, dur, o.a ?? 0.008, o.dTau ?? 0.6, o.sus ?? 0.82, r);
+  const f = mtof(midi);
+  const glide = o.glide ?? 0;
+  const sq = o.square ?? false;
+  const det = cents(o.detune ?? 7);
+  const top = o.cut ?? 2600 + 4200 * vel;
+  const lpL = new Biquad();
+  const lpR = new Biquad();
+  let pa = rng.next();
+  let pb = rng.next();
+  let pc = rng.next();
+  const vph = rng.next() * TAU;
+  const vdep = (o.vib ?? 22) * 0.000578;
+  const g = (o.gain ?? 1) * 0.26;
+  for (let i = 0; i < len; i++) {
+    const tt = i / SR;
+    if ((i & 31) === 0) {
+      const fc = top * (0.45 + 0.55 * Math.exp(-tt / 0.25)) * (0.55 + 0.45 * Math.min(1, ENV[i] * 1.3));
+      lpL.set('lp', Math.min(fc, 11000), 0.9);
+      lpR.b0 = lpL.b0; lpR.b1 = lpL.b1; lpR.b2 = lpL.b2; lpR.a1 = lpL.a1; lpR.a2 = lpL.a2;
+    }
+    const vib = 1 + vdep * Math.min(1, Math.max(0, tt - 0.22) / 0.4) * Math.sin(TAU * 5.8 * tt + vph);
+    const sl = glide ? 2 ** (-(glide * Math.exp(-tt / 0.03)) / 12) : 1;
+    const fr = f * vib * sl;
+    const da = (fr / det) / SR;
+    const db = (fr * det) / SR;
+    const dc = (fr * 0.5) / SR;
+    pa += da; if (pa >= 1) pa -= 1;
+    pb += db; if (pb >= 1) pb -= 1;
+    pc += dc; if (pc >= 1) pc -= 1;
+    const a = sq ? pulse(pa, da, 0.5) * 0.6 : saw(pa, da);
+    const b = sq ? pulse(pb, db, 0.3) * 0.6 : saw(pb, db);
+    const c = pulse(pc, dc, 0.5) * 0.28;
+    const e = ENV[i] * g;
+    SL[i] = Math.tanh(lpL.proc(a * 0.7 + c) * 1.4) * e;
+    SRR[i] = Math.tanh(lpR.proc(b * 0.7 + c) * 1.4) * e;
+  }
+  bus.mix(t, len, 1, o.pan ?? 0);
+}
+
+/** A flute (or a shakuhachi, with `breathy`): a nearly pure tone with a little second and third harmonic, breath noise round the
+ *  pitch that is strongest on the attack, a soft "chiff", and a slow vibrato that blooms. */
+export function flute(bus, t, dur, midi, vel, o = {}) {
+  const r = o.r ?? 0.12;
+  const len = lenFor(dur, r);
+  fillEnv(len, dur, o.a ?? 0.045, 100, 1, r);
+  const f = mtof(midi);
+  const breathy = o.breathy ?? 0.12;
+  const bp = new Biquad().set('bp', Math.min(f * 2, 9000), 4);
+  const bp2 = new Biquad().set('bp', Math.min(f, 9000), 7);
+  let ph = rng.next();
+  const vph = rng.next() * TAU;
+  const vdep = (o.vib ?? 16) * 0.000578;
+  const bend = o.bend ?? 0;
+  const g = (o.gain ?? 1) * 0.42 * (0.5 + vel * 0.6);
+  for (let i = 0; i < len; i++) {
+    const tt = i / SR;
+    const vib = 1 + vdep * Math.min(1, Math.max(0, tt - 0.3) / 0.5) * Math.sin(TAU * 5.1 * tt + vph);
+    const b = bend ? 2 ** (-(bend * Math.exp(-tt / 0.08)) / 12) : 1;
+    ph += (f * vib * b) / SR;
+    if (ph >= 1) ph -= 1;
+    const s = Math.sin(TAU * ph) + 0.16 * Math.sin(2 * TAU * ph + 0.4) + 0.06 * Math.sin(3 * TAU * ph + 1.1);
+    const n = rng.noise();
+    const att = Math.exp(-tt / 0.07);
+    const air = (bp.proc(n) * (breathy + 0.4 * att) + bp2.proc(n) * breathy * 1.5) * 1.6;
+    const y = (s * (0.85 + 0.15 * Math.min(1, tt / 0.05)) + air) * ENV[i] * g;
+    SL[i] = y;
+    SRR[i] = y;
+  }
+  bus.mix(t, len, 1, o.pan ?? 0);
+}
+
+/** A plucked string by Karplus-Strong (a koto, with `bend`; a harp or a lute with other damping): a noise burst through a
+ *  fractional delay line tuned to the note, damped a little each pass; the pluck point combs the burst. `bend` presses the
+ *  string up from that many semitones below, as a koto player does. */
+export function pluck(bus, t, dur, midi, vel, o = {}) {
+  const f = mtof(midi);
+  const ring = o.ring ?? 1.6;
+  const len = Math.min(MAXV, Math.ceil((Math.max(dur, 0.1) + ring * 2.2) * SR));
+  const maxD = Math.ceil(SR / f) + 8;
+  const line = new Float32Array(maxD * 2);
+  const size = line.length;
+  // (the burst: bright noise for a hard pluck, softened for a soft one, combed at the pluck point)
+  const lp = new Biquad().set('lp', 1800 + vel * 6000, 0.7);
+  const d0 = SR / f;
+  const pos = Math.max(1, Math.round(d0 * (o.pos ?? 0.18)));
+  const burst = new Float32Array(Math.ceil(d0) + 2);
+  for (let i = 0; i < burst.length; i++) burst[i] = lp.proc(rng.noise());
+  for (let i = 0; i < burst.length; i++) line[i] = burst[i] - (i >= pos ? burst[i - pos] : 0) * 0.8;
+  // the per-pass loss: a ring of `ring` seconds at this pitch
+  const loss = Math.exp(-1 / (ring * f));
+  const bright = o.bright ?? 0.5;
+  const bend = o.bend ?? 0;
+  const durF = Math.round(Math.max(dur, 0.08) * SR);
+  const damp = Math.exp(-1 / ((o.damp ?? 0.12) * SR));
+  let w = Math.ceil(d0);
+  let prev = 0;
+  let gate = 1;
+  const g = (o.gain ?? 1) * 0.7 * (0.4 + vel * 0.7);
+  const body = new Biquad().set('peak', o.body ?? 380, 1.2, 4);
+  for (let i = 0; i < len; i++) {
+    const tt = i / SR;
+    const b = bend ? 2 ** (-(bend * Math.exp(-tt / 0.06)) / 12) : 1;
+    const d = SR / (f * b);
+    let rp = w - d;
+    while (rp < 0) rp += size;
+    const i0 = Math.floor(rp);
+    const fr = rp - i0;
+    const x = line[i0 % size] * (1 - fr) + line[(i0 + 1) % size] * fr;
+    // (the loss filter: a blend of the sample and its neighbour, darker for less `bright`)
+    const y = (x * (0.5 + bright * 0.5) + prev * (0.5 - bright * 0.5)) * loss;
+    prev = x;
+    if (i >= durF) gate *= damp;
+    line[w % size] = y * (i >= durF ? gate : 1);
+    w++;
+    SL[i] = body.proc(x) * g * gate;
+  }
+  for (let i = 0; i < len; i++) SRR[i] = SL[i];
+  bus.mix(t, len, 1, o.pan ?? 0);
+}
+
+/** A slap bass: a round bass note with a bright thumb "pop" (a fast-closing filter and a click) on each attack. */
+export function slapBass(bus, t, dur, midi, vel, o = {}) {
+  bassSynth(bus, t, dur, midi, vel, { cut: 2600 + vel * 2600, pluck: 0.045, low: 220, drive: 2.4, dTau: 0.28, sus: 0.55, ...o });
+  const len = Math.ceil(0.03 * SR);
+  TMP.fill(0, 0, len);
+  noiseBurst(len, 'bp', 2400, 1.2, 0.5 * vel, 0.005);
+  tone(len, mtof(midi) * 4, mtof(midi) * 2, 0.004, 0.25 * vel, 0.01);
+  emit(bus, t, len, (o.gain ?? 1) * 0.5, o.pan ?? 0);
+}
+
+/** A struck anvil (or a tuned metal bar): a bank of strongly inharmonic partials with long, different decays and a hard click. */
+export function anvil(bus, t, dur, midi, vel, o = {}) {
+  const f = mtof(midi);
+  const ring = o.ring ?? 0.9;
+  const len = Math.min(MAXV, Math.ceil(ring * 3 * SR));
+  const R = [[1, 1, 1], [2.76, 0.55, 0.55], [5.4, 0.36, 0.32], [8.93, 0.2, 0.2], [13.3, 0.1, 0.12], [1.006, 0.5, 0.9]];
+  bank(len, R.map(([r, a, d]) => ({ f: f * r, amp: a, tau: ring * d, ph: 0 })));
+  noiseBurst(len, 'hp', 4200, 0.8, 0.45 * vel, 0.004);
+  noiseBurst(len, 'bp', 1800, 1.4, 0.3 * vel, 0.01);
+  const g = (o.gain ?? 1) * 0.3 * (0.4 + vel * 0.8);
+  for (let i = 0; i < len; i++) {
+    SL[i] = TMP[i] * g;
+    SRR[i] = TMP[i] * g;
+  }
+  bus.mix(t, len, 1, o.pan ?? 0);
+}
+
+// (the band's extra drums, played through `drum()` like the kit's)
+Object.assign(KIT, {
+  // a kick with more click and sub, for the fast battles' double-kick
+  kick2: (len) => {
+    tone(len, 210, 52, 0.022, 1, 0.12, 0.5);
+    tone(len, 52, 44, 1, 0.45, 0.16);
+    noiseBurst(len, 'bp', 3800, 0.9, 0.5, 0.003);
+    for (let i = 0; i < len; i++) TMP[i] = Math.tanh(TMP[i] * 1.9) * 0.72;
+  },
+  // a big, cracking snare with a long body, for the backbeat of a fast battle
+  snare2: (len) => {
+    noiseBurst(len, 'bp', 2000, 0.5, 1, 0.16);
+    noiseBurst(len, 'hp', 6000, 0.7, 0.4, 0.26);
+    tone(len, 260, 185, 0.018, 0.75, 0.09);
+    tone(len, 180, 180, 1, 0.25, 0.06);
+    for (let i = 0; i < len; i++) TMP[i] = Math.tanh(TMP[i] * 1.5) * 0.8;
+  },
+  clap: (len) => {
+    for (const [d, a] of [[0, 0.6], [0.009, 0.7], [0.019, 0.8]]) noiseBurst(len, 'bp', 1300, 1.1, a, 0.006, Math.round(d * SR));
+    noiseBurst(len, 'bp', 1200, 0.9, 0.6, 0.09, Math.round(0.026 * SR));
+  },
+  shaker: (len) => {
+    noiseBurst(len, 'hp', 6500, 0.8, 0.5, 0.025);
+    noiseBurst(len, 'bp', 9000, 1, 0.2, 0.012, Math.round(0.008 * SR));
+  },
+  // the ogres' stomp: a huge, low thud with the floor's rattle
+  stomp: (len) => {
+    tone(len, 95, 34, 0.05, 1, 0.32, 0.3);
+    noiseBurst(len, 'lp', 220, 0.9, 0.8, 0.06);
+    noiseBurst(len, 'bp', 600, 0.8, 0.25, 0.08);
+    for (let i = 0; i < len; i++) TMP[i] = Math.tanh(TMP[i] * 1.5) * 0.8;
+  },
+  // a deep war drum: a big tom's pitch drop with a long skin
+  wardrum: (len) => {
+    tone(len, 120, 64, 0.08, 1, 0.48, 0.2);
+    tone(len, 180, 120, 0.04, 0.3, 0.2);
+    noiseBurst(len, 'bp', 800, 0.9, 0.45, 0.025);
+    noiseBurst(len, 'lp', 300, 0.8, 0.3, 0.08);
+  },
+  // a frame drum (a bodhrán, a tambour): dry and woody
+  frame: (len) => {
+    tone(len, 150, 96, 0.03, 0.9, 0.16);
+    noiseBurst(len, 'bp', 1100, 1, 0.35, 0.02);
+  },
+  // a hand drum's slap (a djembe), high and short
+  hand: (len) => {
+    tone(len, 330, 260, 0.01, 0.55, 0.07);
+    noiseBurst(len, 'bp', 2600, 1.2, 0.6, 0.015);
+  },
+  anvilHit: (len) => {
+    const R = [[1, 1, 0.9], [2.76, 0.5, 0.5], [5.4, 0.3, 0.3], [8.93, 0.18, 0.18], [1.005, 0.4, 0.8]];
+    const parts = R.map(([r, a, d]) => ({ f: 1240 * r, amp: a, tau: 0.6 * d, ph: 0 }));
+    const keep = new Float32Array(TMP.subarray(0, len));
+    bank(len, parts);
+    for (let i = 0; i < len; i++) TMP[i] += keep[i];
+    noiseBurst(len, 'hp', 4000, 0.8, 0.55, 0.004);
+  },
+  clank: (len) => {
+    metal(len, 2600, 0.09, 0.9, 0.55);
+    noiseBurst(len, 'bp', 3200, 1.5, 0.35, 0.02);
+  },
+  china: (len) => {
+    metal(len, 2400, 0.9, 0.9, 0.62);
+    noiseBurst(len, 'bp', 4500, 0.9, 0.35, 0.5);
+  },
+});
+Object.assign(KIT_LEN, { kick2: 0.4, snare2: 0.6, clap: 0.4, shaker: 0.12, stomp: 1.1, wardrum: 1.4, frame: 0.5, hand: 0.25, anvilHit: 2, clank: 0.6, china: 3.5 });
