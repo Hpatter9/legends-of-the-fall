@@ -4,6 +4,7 @@
 // through the toolkit (`window.__toolkit.raiseAura`), so the page draws them as it draws any aura. After `npm run web`:
 //   node tools/spell-fx/shots.mjs                 every shot at 393x852
 //   ONLY=hex,flood SIZES=393x852,360x780 node tools/spell-fx/shots.mjs
+//   PICK=auras,r PREFIX=spell-repaint-after node tools/spell-fx/shots.mjs    the auras and the repainted moves, named for before/after
 // Pictures: docs/samples/spell-art-bde-<shot>-<size>.png, and each group side by side in docs/samples/spell-art-bde-<group>.png
 // (python3 with Pillow joins them).
 import { createRequire } from 'node:module';
@@ -72,6 +73,22 @@ const MOVES = [
   { shot: 'war-banner', def: 'samuraiCommander', key: 'War Banner', hold: 700 },
   { shot: 'panacea', def: 'wanderer', key: 'Dawn Light', ult: true, hold: 600 },
   { shot: 'swoop', def: 'karasu', key: 'Dive', s1: true, hold: 220 },
+  // (the repainted sheets, docs/notes/spell-art-repaint.md: only with ONLY=..., or PICK=r; `group` names their contact sheet)
+  { shot: 'gore', def: 'minotaur', key: 'Gore Charge', hold: 300, group: 'r' },
+  { shot: 'iaido', def: 'samurai', key: 'Iaido', hold: 260, group: 'r' },
+  { shot: 'metamorphosis', def: 'demonSwordsman', key: 'Demon Form', ult: true, hold: 350, group: 'r' },
+  { shot: 'rapid-shot', def: 'rifleBot', key: 'Burst Fire', hold: 250, group: 'r' },
+  { shot: 'conjure-treant', def: 'druid', key: 'Call Treant', hold: 350, group: 'r' },
+  { shot: 'wild-shape', def: 'druid', key: 'Treeform', s1: true, hold: 350, group: 'r' },
+  { shot: 'summon-beast', def: 'beastmaster', key: 'Call of the Wild', hold: 350, group: 'r' },
+  { shot: 'mirror-image', def: 'illusionist', key: 'Mirror Image', hold: 300, group: 'r' },
+  { shot: 'plant-standard', def: 'samuraiCommander', key: 'Plant the Standard', s1: true, hold: 350, group: 'r' },
+  { shot: 'pilfer', def: 'karasu', key: 'Pilfer', s1: true, hold: 300, group: 'r' },
+  { shot: 'pipes', def: 'satyr', key: 'Pipes of Pan', hold: 700, group: 'r' },
+  { shot: 'irresistible-dance', def: 'satyr', key: 'Pied Piper', s1: true, hold: 700, group: 'r' },
+  { shot: 'battle-hymn', def: 'wolfBard', key: 'Battle Hymn', ult: true, hold: 700, group: 'r' },
+  { shot: 'stone-curse', def: 'gorgon', key: 'Stone Curse', ult: true, hold: 700, group: 'r' },
+  { shot: 'reign-of-terror', def: 'tyrant', key: 'Reign of Terror', ult: true, hold: 700, group: 'r' },
 ];
 /** The auras, raised through the toolkit on the paladin (`what` is the sim's name for each). */
 const AURAS = [
@@ -115,7 +132,12 @@ async function open(w, h, party) {
 const made = {};
 const keep = (group, path) => (made[group] ??= []).push(path);
 const ONLY = process.env.ONLY?.split(',');
-const want = (k) => !ONLY || ONLY.includes(k);
+const PICK = process.env.PICK?.split(',');
+// (a shot's group: a move's own `group` (the repaint's 'r'), 'auras', or 'old' for the rest; the 'r' moves are shot only when asked for)
+const groupOf = (k) => MOVES.find((m) => m.shot === k)?.group ?? (AURAS.some((a) => a[0] === k) ? 'auras' : 'old');
+const want = (k) => (ONLY ? ONLY.includes(k) : PICK ? PICK.includes(groupOf(k)) : groupOf(k) !== 'r');
+/** The pictures' name: docs/samples/<PREFIX>-<shot>-<size>.png (spell-art-bde unless PREFIX says otherwise, e.g. for before and after). */
+const PREFIX = process.env.PREFIX ?? 'spell-art-bde';
 
 for (const [w, h] of SIZES) {
   const size = `${w}x${h}`;
@@ -178,10 +200,10 @@ for (const [w, h] of SIZES) {
       return JSON.stringify({ ...window.__caught, painted: seen });
     });
     await page.waitForTimeout(400);
-    const path = `docs/samples/spell-art-bde-${m.shot}-${size}.png`;
+    const path = `docs/samples/${PREFIX}-${m.shot}-${size}.png`;
     await page.screenshot({ path });
     console.log(size, m.shot, got ? 'cast' : 'NOT CAST', note);
-    if (got) keep(`${MOVES.indexOf(m) < 10 ? 'd' : MOVES.indexOf(m) < 22 ? 'e' : MOVES.indexOf(m) < 30 ? 'f' : 'g'}-${size}`, path);
+    if (got) keep(`${m.group ? m.group : MOVES.indexOf(m) < 10 ? 'd' : MOVES.indexOf(m) < 22 ? 'e' : MOVES.indexOf(m) < 30 ? 'f' : 'g'}-${size}`, path);
     await ctx.close();
   }
   for (const [shot, what, reach] of AURAS) {
@@ -201,7 +223,7 @@ for (const [w, h] of SIZES) {
     await page.waitForTimeout(1400);
     await page.evaluate(() => { window.__game.sceneHold++; });
     await page.waitForTimeout(300);
-    const path = `docs/samples/spell-art-bde-aura-${shot}-${size}.png`;
+    const path = `docs/samples/${PREFIX}-aura-${shot}-${size}.png`;
     await page.screenshot({ path });
     console.log(size, 'aura', shot);
     keep(`auras-${size}`, path);
@@ -212,7 +234,7 @@ for (const [w, h] of SIZES) {
 for (const [group, paths] of process.env.NOJOIN ? [] : Object.entries(made)) {
   const script = `import sys\nfrom PIL import Image\nps=sys.argv[2:]\nims=[Image.open(p).convert('RGB') for p in ps]\nw,h=ims[0].size\nw2,h2=w//2,h//2\ncols=min(4,len(ims))\nrows=(len(ims)+cols-1)//cols\nout=Image.new('RGB',(cols*w2,rows*h2),(16,16,20))\nfor i,im in enumerate(ims): out.paste(im.resize((w2,h2)),((i%cols)*w2,(i//cols)*h2))\nout.save(sys.argv[1])\n`;
   writeFileSync('out/join.py', script);
-  execFileSync('python3', ['out/join.py', `docs/samples/spell-art-bde-${group}.png`, ...paths]);
+  execFileSync('python3', ['out/join.py', `docs/samples/${PREFIX}-${group}.png`, ...paths]);
   console.log('joined', group, paths.length);
 }
 console.log('page errors:', errors);
