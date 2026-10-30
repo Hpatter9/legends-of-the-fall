@@ -91,9 +91,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Cataclysm', 'The meteors hit far harder and the ground burns much longer, and the whole shower falls a second time', { extra: 2, dur: 0.35, pow: 0.15 }, [echo(1400, 0.55)]),
   ],
   peasant: [
-    t('Hold Harder', 'The line holds a little longer, and the allies near him are mended', { dur: 0.14 }, [mend(2, 0.3)]),
-    t('Rally the Village', 'The line holds much longer, a tile wider; his allies are mended well and hastened', { dur: 0.245, reach: 1 }, [mend(3, 0.6), haste(3, 700)]),
-    t('Uprising', 'The line holds much longer, a tile wider; his allies are mended well, hastened and warded', { dur: 0.25, reach: 1 }, [mend(3, 0.6), haste(3, 700), ward(2, 0.015)]),
+    t('Tight Phalanx', 'The phalanx holds a little longer, and the allies near him are mended', { dur: 0.14 }, [mend(2, 0.3)]),
+    t('Shield Phalanx', 'The phalanx holds much longer, a tile wider; his allies are mended well and hastened', { dur: 0.245, reach: 1 }, [mend(3, 0.6), haste(3, 700)]),
+    t('Uprising', 'The phalanx holds much longer, a tile wider; his allies are mended well, hastened and warded', { dur: 0.25, reach: 1 }, [mend(3, 0.6), haste(3, 700), ward(2, 0.015)]),
   ],
   ninjaMonk: [
     t('Fourth Fist', 'Thousand Fists lands a fourth strike', { extra: 1 }),
@@ -151,9 +151,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Shogun\'s Standard', 'The banner flies far longer, three tiles further; his allies are mended greatly and warded', { dur: 0.35, reach: 3 }, [mend(4, 0.6), ward(4, 0.03)]),
   ],
   paladin: [
-    t('Righteous Challenge', 'The challenge reaches a tile further and shields him', { reach: 1, castShield: 0.035 }),
-    t('Crusader\'s Oath', 'The challenge reaches two tiles further and lasts longer; he is shielded and his allies are mended well', { reach: 2, dur: 0.175, castShield: 0.035 }, [mend(3, 0.3)]),
-    t('Holy Vanguard', 'The challenge reaches three tiles further and lasts much longer; he and his allies near are mended well and warded', { reach: 3, dur: 0.22, castShield: 0.05 }, [mend(3, 0.4), ward(3, 0.025)]),
+    t('Searing Smite', 'The smite\'s challenge reaches a tile further and shields him', { reach: 1, castShield: 0.035 }),
+    t('Blinding Smite', 'The smite\'s challenge reaches two tiles further and lasts longer; he is shielded and his allies are mended well', { reach: 2, dur: 0.175, castShield: 0.035 }, [mend(3, 0.3)]),
+    t('Banishing Smite', 'The smite\'s challenge reaches three tiles further and lasts much longer; he and his allies near are mended well and warded', { reach: 3, dur: 0.22, castShield: 0.05 }, [mend(3, 0.4), ward(3, 0.025)]),
   ],
   cleric: [
     t('Greater Prayer', 'The prayer heals more, and for longer', { pow: 0.105, dur: 0.105 }),
@@ -216,9 +216,9 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Sack of the Coast', 'The hook reaches three tiles further and cuts far harder; he lands warded, with a great burst of force that holds the foes near, and hooks again as hard', { reach: 3, pow: 0.8 }, [nova(2.5, 0.6, 400), ward(0, 0.08), echo(1000, 0.8)]),
   ],
   wolfBard: [
-    t('Louder Dirge', 'The dirge reaches a tile further and lasts longer', { reach: 1, dur: 0.105 }),
-    t('Chorus', 'The dirge reaches two tiles further and lasts much longer; his friends\' skill meters jump by 15', { reach: 2, dur: 0.21 }, [charge(4, 15)]),
-    t('Moonlit Chorus', 'The dirge reaches two tiles further and lasts much longer; his friends\' skill meters jump by 18, and they are hastened', { reach: 2, dur: 0.24 }, [charge(4, 18), haste(3, 500)]),
+    t('Cutting Mockery', 'The mockery reaches a tile further and lasts longer', { reach: 1, dur: 0.105 }),
+    t('Chorus', 'The mockery reaches two tiles further and lasts much longer; his friends\' skill meters jump by 15', { reach: 2, dur: 0.21 }, [charge(4, 15)]),
+    t('Moonlit Chorus', 'The mockery reaches two tiles further and lasts much longer; his friends\' skill meters jump by 18, and they are hastened', { reach: 2, dur: 0.24 }, [charge(4, 18), haste(3, 500)]),
   ],
   beastmaster: [
     t('Pair of Wolves', 'Two wolves answer each call, and up to three can stand beside him', { extra: 1 }, [{ kind: 'summon', unit: 'wolf', n: 1 }]),
@@ -271,10 +271,10 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     t('Wyrmqueen\'s Breath', 'The breath carries three tiles further and hits far harder, and two more breaths follow', { reach: 3, pow: 0.5 }, [echo(900, 0.85), echo(1700, 0.6)]),
   ],
   juggernaut: [
-    t('Heavier Quake', 'The quake reaches a tile further and holds longer', { reach: 1, dur: 0.12 }),
-    t('Titan Quake', 'The quake reaches two tiles further and holds well longer; he is shielded', { reach: 2, dur: 0.23, castShield: 0.052 }),
+    t('Heavier Slam', 'The slam reaches a tile further and holds longer', { reach: 1, dur: 0.12 }),
+    t('Seismic Wave', 'The slam reaches two tiles further and holds well longer; he is shielded', { reach: 2, dur: 0.23, castShield: 0.052 }),
     // (LATE-RETUNE: the hold 0.42, the blow 0.15 and the split 0.3 until the grade-4 Juggernaut stood +7.6 points over the roster at level 30)
-    t('Earthshatter', 'The quake reaches three tiles further, hits harder and holds far longer; the ground splits round him, and he and the allies beside him are warded', { reach: 3, dur: 0.3, pow: 0.08, castShield: 0.07 }, [nova(2.5, 0.22, 200), ward(2, 0.03)]),
+    t('Earthshatter', 'The slam reaches three tiles further, hits harder and holds far longer; the ground splits round him, and he and the allies beside him are warded', { reach: 3, dur: 0.3, pow: 0.08, castShield: 0.07 }, [nova(2.5, 0.22, 200), ward(2, 0.03)]),
   ],
   sage: [
     t('Fourth Star', 'Starfall calls a fourth star', { extra: 1 }),

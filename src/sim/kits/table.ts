@@ -7,12 +7,13 @@
 import type { Battle, Unit } from '../battle';
 import { CHARGE_MAX, KITS, type Skill } from '../abilities';
 import type { HeroKit, Slot } from '../heroKits';
-import { bullRush, braceSpears, devour, flood, martyrsVow, parryStance, puppetStrings, raiseRampart, shieldBash, turningWind } from './front';
+import { bullRush, devour, flood, parryStance, puppetStrings, turningWind } from './front';
 import { bloodFury, bloodPrice, boundSoul, grounding, jump, markForCoin, pilfer, rollTheBones, shift, smokeBomb, smokeNeeded, stillnessPalm, wheelAbout } from './blades';
 import { fanTheHammer, pinningShot, powderKeg, siegeMode, spikeField, suppressingFire } from './shooters';
-import { changeTune, charge, condemn, flaskNeeded, flaskToss, fontOfWisdom, foxGuise, guardianAngel, overload, piedPiper, rewind, smite, soulSiphon, stoneGarden, tradePlaces, treeform, wildfire } from './casters';
+import { changeTune, charge, flaskNeeded, flaskToss, fontOfWisdom, foxGuise, guardianAngel, overload, piedPiper, rewind, smite, soulSiphon, stoneGarden, tradePlaces, treeform, wildfire } from './casters';
 import { plantStandard, sicEm } from './callers';
 import { REVIVE_FACES } from './revive';
+import { auraOfProtection, bane, shieldRush, spearWall, tunnelStrike } from './tanks';
 
 /** A new skill (its charge numbers are unused: a hero's skills cost its pool). */
 const sk = (name: string, text: string, castMs: number, anim: Skill['anim'], cast: Skill['cast'], key?: string): Skill => ({ name, ...(key ? { key } : {}), text, need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs, anim, cast });
@@ -142,12 +143,12 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     role,
   });
   return {
-    knight: S('knight', 30, sk('Shield Bash', 'The strongest foe beside him is struck, stunned for 1.5s and shoved back a tile', 500, 'attack', shieldBash), 40, 'A wall of a man: draws the foes and bashes them back', { emergency: selfUnder(0.3), gap: 11000 }),
+    knight: S('knight', 30, sk('Shield Rush', 'Charges up to 3 tiles in a line at a foe, bashes it (stunned 1s) and drives it 2 tiles back; a slam into a wall or a fighter hurts it again', 500, 'attack', shieldRush), 40, 'A wall of a man: draws the foes and drives them back', { emergency: selfUnder(0.3), gap: 11000 }, { gap: 8000 }),
     samurai: S('samurai', 30, sk('Parry Stance', 'For 2.5s every melee blow on him is parried and answered with a cut', 400, 'defend', parryStance), 40, 'A duellist: dashes through a line, parries and answers'),
     kunoichi: S('kunoichi', 25, sk('Smoke Bomb', 'She cannot be targeted for 2s; foes in the smoke miss half their blows for 3s, and her next blow crits', 400, 'attack2', smokeBomb), 40, 'Blinks behind the weak, vanishes in smoke', {}, { emergency: smokeNeeded }),
     archer: S('archer', 30, sk('Pinning Shot', 'The farthest foe in reach is pinned for 2s and takes a quarter more from shots for 4s', 600, 'attack', pinningShot), 40, 'A sniper: volleys from the heights, pins the far ones'),
     wizard: M('wizard', 50, sk('Wildfire', 'Every burning foe erupts: its 3x3 is hurt and set alight, so fire runs through a pack', 800, 'attack', wildfire), 55, 'A pyromancer: fire that runs from foe to foe', { gap: 7000 }),
-    peasant: S('peasant', 30, sk('Brace Spears', 'Pikes on the three tiles in front of him for 5s: a foe that steps on one is struck and stopped', 500, 'attack', braceSpears), 40, 'Formation militia: closes ranks and braces pikes'),
+    peasant: S('peasant', 30, sk('Spear Wall', 'A line of sharpened stakes, 3 tiles across his front, for 6s: foes cannot walk through it, and one beside a stake is pricked and bleeds', 500, 'attack', spearWall), 40, 'Formation militia: closes ranks behind a wall of stakes', {}, { gap: 9000 }),
     ninjaMonk: S('ninjaMonk', 25, sk('Stillness Palm', 'Spends his Flow (a stack a blow on the same foe, up to five) in one palm, and the foe loses skill charge', 500, 'attack2', stillnessPalm), 40, 'A combo striker: builds his flow on one foe, then spends it'),
     wanderer: {
       pool: 'mana',
@@ -164,7 +165,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     satyr: M('satyr', 40, sk('Pied Piper', 'The foes within 4 dance toward one spot ahead of him for 2s, bunched and not striking', 600, 'attack', piedPiper), 60, 'A lure: pipes that hasten friends and gather foes', { gap: 9000 }),
     gorgon: M('gorgon', 45, sk('Stone Garden', 'Every stunned or slowed foe within 5 turns to stone for 2s; one that dies as stone stays as a statue', 700, 'attack', stoneGarden), 60, 'A petrifier: stone foes that stay as statues'),
     samuraiCommander: S('samuraiCommander', 30, sk('Plant the Standard', 'Plants a standard for 10s: friends within 2 of it take a tenth less and hit a tenth harder while it stands', 600, 'attack2', plantStandard), 45, 'A banner-bearer: plants a standard that must be knocked down', { gap: 11000 }),
-    paladin: M('paladin', 40, sk("Martyr's Vow", 'For 5s half of what his friends within 3 would take is his instead', 600, 'defend', martyrsVow), 60, 'A martyr: takes his friends\' wounds on himself'),
+    paladin: M('paladin', 40, sk('Aura of Protection', 'For 8s the allies within 2 of him take 15% less, heal 1% of their health a second, and each shrugs off the next ailment', 600, 'defend', auraOfProtection), 60, 'A holy shield: smites the wicked and guards his friends', {}, { gap: 12000 }),
     cleric: {
       pool: 'mana',
       s1: { skill: sk('Guiding Bolt', 'A bolt of holy light at a foe in reach; her friends within 2 of it are healed by what it dealt', 500, 'attack', smite, 'Smite'), cost: 40, tune: TUNE1.cleric ?? MANA_TUNE },
@@ -182,7 +183,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     mercenary: S('mercenary', 30, sk('Mark for Coin', 'Throws a blade at the strongest foe and marks it for 10s: every hero deals a quarter more to it; if it dies marked he heals and his stamina fills', 400, 'attack2', markForCoin), 40, 'A bounty hunter: marks the strongest and is paid for it'),
     mummy: M('mummy', 40, sk('Puppet Strings', 'The hardest-hitting foe within 4 is bound for 3s: it walks to, and strikes, its own side', 600, 'attack2', puppetStrings), 60, 'A puppeteer: binds a foe and walks it into its friends'),
     buccaneer: S('buccaneer', 30, sk('Roll the Bones', 'Two dice: 2-4 a weak cut and he is slowed; 5-9 x1.6; 10-11 x2.2 and a bleed; doubles or 12 x3 and every friend hastened', 450, 'attack2', rollTheBones), 40, 'A gambler: hooks, and the dice', { gap: 10000 }),
-    wolfBard: M('wolfBard', 40, sk('Change the Tune', 'Switches his standing song (Dirge weakens foes near, Anthem lifts friends near) and doubles it for 6s', 600, 'attack2', changeTune), 55, 'A songweaver: a standing song he switches'),
+    wolfBard: M('wolfBard', 40, sk('Bardic Inspiration', 'Switches his standing song (Dirge weakens foes near, Anthem lifts friends near) and doubles it for 6s', 600, 'attack2', changeTune, 'Change the Tune'), 55, 'A songweaver: a standing song he switches'),
     beastmaster: S('beastmaster', 35, sk("Sic 'Em", 'Every wolf of his leaps at the foe he marks: struck and slowed, and the wolves hit a quarter harder for 4s; with none, one answers', 600, 'attack2', sicEm), 40, 'A summoner: calls the pack and sets it on a foe', { gap: 9000 }),
     kraken: S('kraken', 30, sk('Flood', 'The 3x3 round him turns to shallow water for 8s, and the foes in it are slowed', 600, 'attack2', flood), 45, 'A tide-caller: drags foes in and floods the ground'),
     lancer: S('lancer', 30, sk('Wheel About', 'Rides up to 3 tiles clear of the melee and gains full Momentum (his next blow +50%)', 400, 'attack', wheelAbout), 40, 'Momentum cavalry: hits harder the further he rides'),
@@ -193,9 +194,9 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     siegeBot: S('siegeBot', 35, sk('Siege Mode', 'Anchors for 8s: cannot walk, reaches two further, shells splash and come faster', 500, 'attack2', siegeMode), 40, 'A stance turret: anchors into siege mode'),
     priestess: M('priestess', 45, sk('Death Ward', 'The friend most at risk is warded for 4s: the first blow that would fell it leaves it at 1 health and heals it 30%', 600, 'attack2', guardianAngel, 'Guardian Angel'), 55, 'A resurrector: mends the worst hurt, wards the dying and raises the fallen', { heals: true, emergency: hurtUnder(0.35) }, { heals: true, gap: 12000, revive: REVIVE_FACES.priestess }),
     dragoon: S('dragoon', 35, sk('Jump', 'She leaps out of the fight and lands on the thickest crowd: double on her mark, and the 3x3 struck and held', 400, 'attack2', jump), 45, 'A dragoon: breathes fire and jumps'),
-    juggernaut: S('juggernaut', 30, sk('Raise Rampart', 'The three tiles in front of him rise into a wall for 10s that foes must walk round; the foes beside it are struck and held', 700, 'attack2', raiseRampart), 45, 'A terrain shaper: quakes, and walls out of the ground'),
+    juggernaut: S('juggernaut', 30, sk('Tunnel Strike', 'Drills into the ground and comes up under the foe within 6 with most foes round it: it is struck hard and thrown 2 tiles, and the foes beside it are struck and shoved', 700, 'attack2', tunnelStrike), 45, 'A siege engine: slams foes into the air and tunnels under them', {}, { gap: 10000 }),
     sage: M('sage', 50, sk('Font of Wisdom', 'Every friend within 4 gains 25 mana or 15 stamina', 600, 'attack2', fontOfWisdom), 55, 'A mana battery: stars, and his friends\' pools filled', {}, { gap: 8000 }),
     demonSwordsman: S('demonSwordsman', 30, sk('Blood Price', 'Paid in blood: his next three blows deal 60% more and drink 30%', 400, 'attack2', bloodPrice), 25, 'A blood pact: pays health for power', {}, { hpCost: 0.15, gap: 8000 }),
-    tyrant: M('tyrant', 45, sk('Condemn', 'Marks the toughest foe for 6s: every hero goes for it and deals 20% more; if it falls, every hero gains pool', 500, 'attack2', condemn), 60, 'A condemner: names a foe for the whole party', {}, { gap: 10000 }),
+    tyrant: M('tyrant', 45, sk('Bane', 'Iron chains drag the toughest foe within 6 up to 3 tiles towards him and mark it for 6s: every hero goes for it and deals 20% more (if it falls, every hero gains pool); the two foes nearest it are weakened', 500, 'attack2', bane, 'Condemn'), 60, 'A condemner: names a foe for the whole party', {}, { gap: 10000 }),
   };
 }

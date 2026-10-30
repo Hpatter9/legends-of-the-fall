@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { CHARGE_MAX, KITS, ULT_LEVEL, onStrike, tickStatus, ultimateOf } from '../src/sim/abilities';
+import { CHARGE_MAX, KITS, ULT_LEVEL, keyOf, onStrike, tickStatus, ultimateOf } from '../src/sim/abilities';
 import { HERO_KITS, RES, SKILL2_LEVEL, ULT_FILL, canPay, castHero, costOf, heroKitOf, poolOf, regenOf, resMax, resOf } from '../src/sim/heroKits';
 import { ORDER_WAIT_MS, canOrderUltimate, orderUltimate, replayLog, type LogEntry } from '../src/sim/orders';
 import { gradeBoost } from '../src/sim/run';
@@ -131,7 +131,7 @@ test('skill 2 opens at level 10, and goes before skill 1 when both can be paid',
   c.charge = CHARGE_MAX;
   const out2: BattleEvent[] = [];
   castHero(high, c, heroKitOf(c)!, out2);
-  assert.ok(out2.some((e) => e.kind === 'skill' && e.name === 'Shield Bash'), 'from 10, skill 2 first');
+  assert.ok(out2.some((e) => e.kind === 'skill' && e.name === 'Shield Rush'), 'from 10, skill 2 first');
   // (with skill 2 just cast and the pool too low for it, skill 1 still goes)
   high.t += RES.GAP_STAM_MS;
   c.charge = (costOf(c, heroKitOf(c)!.s1) / RES.STAM_MAX) * CHARGE_MAX + 1;
@@ -226,7 +226,7 @@ test('Auto off: a full ultimate waits for the tap; the tap is applied at the nex
   k.charge = 0;
   k.charge2 = CHARGE_MAX;
   const quiet = run(b, 500);
-  assert.ok(!quiet.some((e) => e.kind === 'skill' && e.name === ultimateOf(k)!.name), 'manual: it waits');
+  assert.ok(!quiet.some((e) => e.kind === 'skill' && e.name === keyOf(ultimateOf(k)!)), 'manual: it waits');
   assert.equal(k.charge2, CHARGE_MAX);
   assert.ok(orderUltimate(b, k.id));
   assert.ok(!orderUltimate(b, k.id), 'one order at a time');
@@ -235,7 +235,7 @@ test('Auto off: a full ultimate waits for the tap; the tap is applied at the nex
   assert.ok(ev.some((e) => e.kind === 'ultQueued' && e.by === k.id));
   // (the knight may be mid-swing: give it a moment)
   const more = [...ev, ...run(b, 2500)];
-  assert.ok(more.some((e) => e.kind === 'skill' && e.name === ultimateOf(k)!.name));
+  assert.ok(more.some((e) => e.kind === 'skill' && e.name === keyOf(ultimateOf(k)!)));
   assert.ok((k.charge2 ?? 0) < CHARGE_MAX);
   assert.ok(b.log?.some((e) => e.kind === 'ult' && e.unit === k.id));
 });
@@ -248,7 +248,7 @@ test('Auto on (or unset): a full ultimate fires on its own', () => {
     spawn(b, 'skeleton', 3, 3).busyUntil = 1e9;
     k.charge2 = CHARGE_MAX;
     const ev = run(b, 300);
-    assert.ok(ev.some((e) => e.kind === 'skill' && e.name === ultimateOf(k)!.name), String(auto));
+    assert.ok(ev.some((e) => e.kind === 'skill' && e.name === keyOf(ultimateOf(k)!)), String(auto));
   }
 });
 

@@ -13,7 +13,10 @@ const body = (b: Battle, me: Unit, within: number, ms: number) => b.units.some((
 
 /** Each skill 2 whose work comes and goes, by name. */
 export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boolean>> = {
-  'Shield Bash': (b, me) => foesWithin(b, me, 1),
+  // (RPG-SPELLS batch 3: Shield Rush, Spear Wall, Aura of Protection and Tunnel Strike took the old skill 2s' places)
+  'Shield Rush': (b, me) => foesWithin(b, me, 3),
+  'Spear Wall': (b, me) => foesWithin(b, me, 5),
+  'Tunnel Strike': (b, me) => foesWithin(b, me, 6) && foesOf(b, me).filter((f) => apart(f, me) === 1).length < 2,
   'Parry Stance': (b, me) => foesOf(b, me).some((f) => apart(f, me) === 1 && !UNITS[f.def].shot),
   'Smoke Bomb': (b, me) => foesOf(b, me).some((f) => Math.abs(f.u - me.u) <= 1 && Math.abs(f.v - me.v) <= 1),
   'Turning Wind': (b, me) => foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8),
@@ -25,7 +28,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Pied Piper': (b, me) => foesWithin(b, me, 4),
   'Stone Garden': (b, me) => foesWithin(b, me, 5),
   'Plant the Standard': (b, me) => !b.units.some((x) => x.alive && x.def === 'standard' && x.owner === me.id) && foesWithin(b, me, 6),
-  "Martyr's Vow": (b, me) => foesWithin(b, me, 4) && allies(b, me).some((a) => a !== me && apart(a, me) <= 3),
+  'Aura of Protection': (b, me) => foesWithin(b, me, 4) && allies(b, me).filter((a) => apart(a, me) <= 2).length >= 2,
   Treeform: (b, me) => !me.kx?.tree && foesWithin(b, me, 2),
   'Blood Fury': (b, me) => foesWithin(b, me, 2) && !on(me.kx?.fury, b) && me.hp > me.maxHp * 0.2,
   'Blood Price': (b, me) => foesWithin(b, me, 2) && !(me.kx?.blood ?? 0) && me.hp > me.maxHp * 0.3,
