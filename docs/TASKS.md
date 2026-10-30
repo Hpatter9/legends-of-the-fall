@@ -265,6 +265,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Validation:** see the handoff's "Checks run for phase B".
 - **Handoff:** [notes](notes/army-road.md), [phase B sheet](samples/army-road-after-sheet.png), [phase A mock-ups](samples/army-road-mock-sheet.png).
 
+### ARMY-DROPS — Rare hero shards and XP tomes from army waves
+
+- **Goal:** the owner's ask: "I want shards and tomes to be able to drop from armies too. It's just much much rarer."
+- **Status:** implemented; ready for review. No merge, deployment or version bump.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/army-drops`, `/home/user/army-drops`; PR none.
+- **Allowed files or systems:** new `src/sim/armyDrops.ts`, `test/army-drops.test.ts`, `tools/army-drops/shots.mjs`; small hooks in `src/main.ts` (the wave's settle, the card, the recap, the auto summary), `src/sim/waveCard.ts` (`drops`, the `drop` note), `src/waveCardView.ts`, `src/sim/autoReplay.ts` (`totals.drops`), `src/battleReports.css`; `tools/unlockPace.ts` (`--nodrops`, `--droprate`); `test/summon-stones.test.ts` (the giveShards callers, a rule the owner's ask changed); `docs/notes/army-drops.md`, `docs/samples/army-drops-*.png`.
+- **Completion criteria:** a side stream per run seed and wave (no fight draws, no rerolls by retrying), armies only, banked on the win, shown on the card and the recap's spoils and the auto summary; rates tested; the pace re-run; typecheck, full tests, web build, three portrait sizes.
+- **Handoff:** [notes](notes/army-drops.md).
+
 ### AWAKEN-MATS — Awakening materials from the armies and the Calamity
 
 - **Goal:** the owner's ask: a hero's awakening needs materials, one kind per class trait; the owner's answers: different armies drop different ores, the Calamity (by map) the richest source, 10 and 20 a step on top of the shards, difficult; small trickles from a first Mythic clear, Last Stand records and gold chests; old saves paid a Rift Cache a Calamity clear (up to five); the pouch on the Calamity's start and the awakening panel; ores on the army result screen and card.
