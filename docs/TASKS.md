@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS-ART — Painted movement effects
+
+- **Owner:** current Codex chat. **Branch/worktree:** `art/spell-fx`, `/workspace/legends-of-the-fall`.
+- **Scope:** Session A painted source sheets, asset credits and handoff; no runtime changes.
+- **Completion:** inspect generated art, check grid/transparency, open a PR; record any missing sheets and importer dependency honestly.
+- **Status:** Session A ready for source-art review: 15 sheets / 36 rows, retained originals, reproducible 256 px packing, credits and structural checks. All sheets pass the source checker; typecheck and web build pass. [Handoff](notes/spell-fx-art.md). Sessions B–G (116 sheets), importer/runtime integration and live checks remain; review beam seams and loops at integration. No merge or version bump.
+
 ### DARK-WAVE — Some waves, the screen darkens
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/dark-wave`, `/home/user/dark-wave`.

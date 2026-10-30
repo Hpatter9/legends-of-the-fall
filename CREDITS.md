@@ -439,3 +439,7 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Status effects (painted)
 
 - The 11 sheets in `art-source/status-fx/`: original artwork generated for this game with OpenAI image generation.
+
+## Spell and movement effects (painted)
+
+- Spell and movement effects (`src/art/fx/spells/`): original painted effects made with OpenAI image generation for this game. Session A sources are retained in `art-source/spell-fx/a-toolkit/`; runtime import is pending.
