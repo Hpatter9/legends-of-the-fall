@@ -184,7 +184,7 @@ try {
     // A genuinely fresh save must not decode the upgraded roster. Its first
     // awakening loads the one pair before drawing the before/after preview.
     const context=await browser.newContext({viewport:{width:393,height:852},serviceWorkers:'block'});
-    const meta=seed.startedMeta(19);meta.shards.knight=80;meta.ranked.knight=4;
+    const meta=seed.startedMeta(19);meta.shards.knight=80;meta.ranked={knight:4};
     meta.ores=Object.fromEntries(seed.ORE_TRAITS.map(k=>[k,100]));delete meta.awakened;
     await context.addInitScript(({meta,tipIds})=>{if(!localStorage.getItem('ascended-fresh-seeded')){localStorage.clear();localStorage.setItem('legends.meta',JSON.stringify(meta));localStorage.setItem('legends.tips',JSON.stringify(tipIds));localStorage.setItem('legends.settings',JSON.stringify({music:0,effects:0,cinematics:false,quips:false}));localStorage.setItem('ascended-fresh-seeded','1');}}, {meta,tipIds});
     const page=await context.newPage(),requests=[],errors=[];

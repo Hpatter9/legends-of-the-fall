@@ -142,3 +142,7 @@ its source), so `game.js` does not grow for them: the 23 re-toned PNGs are 9.05 
 
 - The tone, hair and name choices are a first cast; any of them is one line to change.
 - The painted art needs the ChatGPT pass before the menus match the sprites.
+
+## Integration with upgraded forms
+
+This note records the earlier base-sprite branch. ART-ASCEND now replaces the fifteen gallery scene/cutout pairs from the uploaded brief, including Karim, and carries those identities into the permanent upgraded equipment forms. The earlier painted-art mismatch is resolved; current validation is recorded in [the upgraded forms handoff](ascended-hero-forms.md).

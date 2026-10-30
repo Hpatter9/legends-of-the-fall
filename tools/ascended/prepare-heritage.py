@@ -18,9 +18,7 @@ provenance = {}
 for spec in briefs:
     hid = spec['id']
     scene = source / f'{hid}-anime.png'
-    # Kian retains the completed first cutout: same identity and equipment,
-    # with a more realistic finish than the other selected illustrated cuts.
-    cutout = source / (f'{hid}-selected-cutout.png' if hid == 'mercenary' else f'{hid}-anime-cutout.png')
+    cutout = source / f'{hid}-anime-cutout.png'
     if not scene.exists() or not cutout.exists():
         raise SystemExit(f'{hid}: selected scene/cutout pair is not ready')
     art = Image.open(scene)

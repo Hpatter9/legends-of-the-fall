@@ -1,1 +1,68 @@
-[]
+[
+  {
+    "width": 393,
+    "height": 852,
+    "portraits": 45,
+    "frameChecks": 1440,
+    "classAuraCombinations": 26,
+    "transformations": [
+      "werewolf_black",
+      "cls_treant",
+      "cls_treant_2",
+      "cls_treant_3"
+    ],
+    "firstAndSecondAwakening": true,
+    "promotion": true,
+    "baseAndAwakenedAuras": true,
+    "reducedMotion": true,
+    "lastStand": true,
+    "offline": true,
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "portraits": 5,
+    "frameChecks": 160,
+    "classAuraCombinations": 0,
+    "transformations": [
+      "werewolf_black",
+      "cls_treant",
+      "cls_treant_2",
+      "cls_treant_3"
+    ],
+    "firstAndSecondAwakening": true,
+    "promotion": true,
+    "baseAndAwakenedAuras": true,
+    "reducedMotion": true,
+    "lastStand": true,
+    "offline": false,
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "portraits": 5,
+    "frameChecks": 160,
+    "classAuraCombinations": 0,
+    "transformations": [
+      "werewolf_black",
+      "cls_treant",
+      "cls_treant_2",
+      "cls_treant_3"
+    ],
+    "firstAndSecondAwakening": true,
+    "promotion": true,
+    "baseAndAwakenedAuras": true,
+    "reducedMotion": true,
+    "lastStand": true,
+    "offline": false,
+    "errors": []
+  },
+  {
+    "freshSaveLazyLoading": true,
+    "requestedUpgradeSheets": 2,
+    "reloadedAwakening": true,
+    "errors": []
+  }
+]

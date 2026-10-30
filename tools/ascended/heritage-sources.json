@@ -268,8 +268,8 @@
   "mercenary": {
     "scene": "mercenary-anime.png",
     "sceneSha256": "68834b1aefcee003df8b5e73a20afb907356edfc695474752a5c97dd5a9ee4a1",
-    "cutout": "mercenary-selected-cutout.png",
-    "cutoutSha256": "7ae3561f245a92e582ffd4cc14c8592964b770c9894f9b7ef9f87cae19b4bf5f",
+    "cutout": "mercenary-anime-cutout.png",
+    "cutoutSha256": "974f474c4878fb9670bd1e6336a1ef556d6cf68dde8533e72129aceb384aceba",
     "sceneSize": [
       1024,
       1536
@@ -279,8 +279,8 @@
       1536
     ],
     "preparedCutoutSize": [
-      1094,
-      1641
+      1091,
+      1637
     ],
     "identity": "Kian, the Mercenary (Persian, Iranian)"
   }
