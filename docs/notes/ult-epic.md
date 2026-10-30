@@ -69,7 +69,7 @@ to the element) in place of the CSS lines.
 - *The speed lines*: seamless (within 1.4) and steady (no frame fades), but each cell has one big soft white blob in its middle, so tiled
   along the band it is a row of beads rather than one streak. In the band, scrolled and tinted behind the art, the beads blur into a bright
   central streak and it works; held still (reduced motion) the beads show. **Worth repainting**: the middle glow as one even horizontal
-  band running out of both edges (seamless like the lines), not a blob.
+  band running out of both edges (seamless like the lines), not a blob. (Repainted so in round 2: [spell-art-repaint.md](spell-art-repaint.md), "Round 2".)
 - **Poison** was not seen in a fight (the Gorgon's test fight ended before her ultimate); its sheet looks right on the contact sheet.
 
 **Fallbacks kept** for a missing atlas (an old build, or the session left out): the burst falls back to the strongest painted burst the game

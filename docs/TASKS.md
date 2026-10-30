@@ -84,6 +84,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** `src/sim/stand.ts` (`holdRelic`, `holdPurse`, `purseLine`, `takeRelic` shared with `buyRelic`, `heldRelics`, `standContinueLine`), `standView.ts` (choice card wording, the relic plate, the end card's Relics row), `stand.css`, one line in `main.ts` (`slotInfo`); `tools/stand/hold-relic-shots.mjs`; `test/stand-retreat.test.ts`.
 - **Status:** ready for review. Holding still costs mid parties about as much as before (within noise; see the note). Typecheck, full `npm test` (1680, 0 failures), `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/stand-hold-relic.md); screenshots `samples/stand-hold-relic-*.png`. No merge or version bump.
 
+### SPELL-ART-REPAINT-2 — The owner's 17 round-two spell repaints imported
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/spell-art-repaint-2`, `/home/user/lotf-repaint2`.
+- **Scope:** merges `art/spell-fx-repaint-2` (#234); the B, E, G and U atlases and `index.json`; `tools/spell-fx/spell-fixes.json` (the keg's fix dropped). No game code changed.
+- **Status:** ready for review. All 144 sheets pass; eight atlases 3.39 MB of the 5 MB cap at 96 px; the untouched rows checked identical. Typecheck, `npm test -- spell-fx ult`, full `npm test`, `npm run web`, before/after pictures at 393x852 with no page errors. [Note](notes/spell-art-repaint.md) ("Round 2", with what is still bad: the storm cloud, Call of the Wild's wolf, Reign of Terror's and Pipes' impacts); screenshots `samples/spell-repaint2-*.png`. No merge or version bump.
+
 ### SPELL-ART-REPAINT — The owner's 26 repainted spell sheets imported
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/spell-art-repaint`, `/home/user/lotf-repaint`.
