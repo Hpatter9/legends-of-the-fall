@@ -1,0 +1,13 @@
+{
+  "id": "satyr",
+  "inputSize": [
+    1536,
+    1024
+  ],
+  "cell": [
+    138,
+    102
+  ],
+  "scale": 0.64,
+  "warnings": []
+}

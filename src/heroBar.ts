@@ -12,8 +12,8 @@ import { heroClassLabel, heroName } from './sim/heroNames';
 import { ultimateOf } from './sim/abilities';
 import { costOf, heroKitOf, resOf, skill2Open, SKILL2_LEVEL, ultFull } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
-import { formOf, UNITS } from './sim/units';
 import { portrait } from './render/sheets';
+import { battleSheet } from './render/awakenLook';
 
 /** The ring's circumference (a circle of radius 21 in a 48 box). */
 const RING = 2 * Math.PI * 21;
@@ -32,6 +32,8 @@ interface Tile {
 }
 
 export interface HeroBarOpts {
+  /** Permanent equipment can stay awakened in modes with local combat stats. */
+  equipmentStep?: (kind: string) => number;
   /** The switch was flipped: the page keeps it (`Meta.ultAuto`) and tells the battle. */
   onAuto: (on: boolean) => void;
   /** A tap was refused (a locked or unfilled ultimate): the page may say why. */
@@ -101,12 +103,11 @@ export class HeroBar {
     // (a rank-4 hero's ring is ringed in violet: MERGE-TWO)
     el.className = (u.grade ?? 1) > 3 ? 'hb g4' : 'hb';
     el.dataset.unit = String(u.id);
-    const def = UNITS[u.def];
     el.innerHTML =
       '<span class="hbRing"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="trk" cx="24" cy="24" r="21"/><circle class="arc" cx="24" cy="24" r="21"/></svg></span>' +
       '<span class="hbPlate"></span><i class="hbHp"><span></span></i><i class="hbRes"><span></span></i><span class="hbPips"><b>1</b><b>2</b></span><span class="hbName"></span>';
     const ring = el.querySelector('.hbRing') as HTMLElement;
-    const pic = portrait(formOf(def, u.grade ?? 1), 40, u.grade ?? 1);
+    const pic = portrait(battleSheet(u.def, this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0, u.grade ?? 1), 40, u.grade ?? 1);
     pic.className = 'hbPic';
     ring.append(pic);
     // (the hero's own name; its class is in the tile's tooltip)

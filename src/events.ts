@@ -7,7 +7,8 @@ import { gearText, SLOTS, type Gear } from './sim/gear';
 import { RELICS } from './sim/relics';
 import { equip, unequip, type Run } from './sim/run';
 import { equipBestRun } from './sim/runGear';
-import { formOf, UNITS } from './sim/units';
+import { UNITS } from './sim/units';
+import { battleSheet } from './render/awakenLook';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
 import { twistIcon } from './twistView';
@@ -55,7 +56,7 @@ export class Events {
   private only?: readonly number[];
   private onChange: () => void = () => {};
 
-  constructor() {
+  constructor(private equipmentStep: (kind: string) => number = () => 0) {
     this.root.id = 'events';
     this.root.hidden = true;
     document.body.append(this.root);
@@ -99,7 +100,7 @@ export class Events {
     const fx = o.effect;
     const hire = fx.t === 'hire' ? fx.kind : fx.t === 'road' ? fx.act.hire : undefined;
     const icon = optionIcon(o);
-    if (hire && UNITS[hire]) b.append(portrait(formOf(UNITS[hire], 1), 32, 1));
+    if (hire && UNITS[hire]) b.append(portrait(battleSheet(hire, this.equipmentStep(hire), 1), 32, 1));
     else if (icon) b.append(iconImg(icon, o.label));
     const words = el('span');
     words.append(el('b', '', o.done ? `${o.label} · ${fx.t === 'reroll' ? 'done' : 'sold'}` : o.label), el('small', '', o.text));
@@ -193,7 +194,7 @@ export class Events {
     const heroes = el('div', 'heroes');
     for (const h of this.listed()) {
       const b = el('button', h.id === this.hero ? 'pick on' : 'pick');
-      b.append(portrait(formOf(UNITS[h.kind], h.grade), 48, h.grade));
+      b.append(portrait(battleSheet(h.kind, this.equipmentStep(h.kind), h.grade), 48, h.grade));
       b.addEventListener('click', () => {
         this.hero = h.id;
         this.drawPack();

@@ -186,7 +186,11 @@ test('a hero is posted where it was placed, within a leash of a few tiles', () =
   const homing = new Map<number, number>();
   for (let i = 0; i < 30000 && s.phase !== 'over' && s.run.wave < 18; i++) {
     stepStand(s);
+    // (STAND-RETREAT, the owner's ask: at each act's end the guard walks out by the door and is set out at new posts in the next room; the
+    // leash holds to those)
+    if (s.notes.some((n) => n.kind === 'room')) for (const u of s.b.units) if (u.tag !== undefined && posts.has(u.id)) posts.set(u.id, { ...s.run.heroes.find((h) => h.id === u.tag)!.post! }), homing.delete(u.id), out.delete(u.id);
     s.notes.length = 0;
+    if (s.phase === 'retreat' || s.phase === 'choice') continue;
     for (const u of s.b.units) {
       const post = posts.get(u.id);
       if (!post || !u.alive) continue;

@@ -1,13 +1,13 @@
 // The Last Stand's balance: a greedy player holds the keep (`playStand`) with parties at several hero levels, and the report says
 // how many waves each gets through. `npm run balance -- --no-tables --stand` runs it through tools/balance.mjs's bundle;
-// `npm run stand-balance` runs it alone. Options: `--levels 1,10,20` `--attempts 30` `--castle maxed` `` `--waves 150` `--smart` (the attentive buyer: tanks first, heals at 40%).
+// `npm run stand-balance` runs it alone. Options: `--levels 1,10,20` `--attempts 30` `--castle maxed` `` `--waves 150` `--smart` (the attentive buyer: tanks first, heals at 40%), `--hold` (hold the line at every act's end: STAND-RETREAT; without it the guard falls back at once).
 
 import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '../src/sim/castle';
 import { TICK_MS } from '../src/sim/battle';
 import { gradeBoost } from '../src/sim/run';
 import { mixSeed } from '../src/sim/rng';
 import { ARMIES } from '../src/sim/armies';
-import { buyLevel, buyRelic, healCost, healKing, levelBlock, levelCost, newStandRun, offerCost, startFirstWave, startStand, stepStand, type Stand, type StandSetup } from '../src/sim/stand';
+import { buyLevel, buyRelic, fallBack, healCost, healKing, holdTheLine, levelBlock, levelCost, newStandRun, offerCost, startFirstWave, startStand, stepStand, type Stand, type StandSetup } from '../src/sim/stand';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -39,6 +39,9 @@ export interface Played {
   msPerTick: number;
   ticks: number;
   reason: 'fell' | 'cap';
+  /** Bonus waves held and won (STAND-RETREAT), and whether the king fell in one. */
+  held: number;
+  fellHolding: boolean;
 }
 
 /** What a greedy player does with the break's gold: heal a hurt king, buy a relic when one is cheap, else level the weakest. */
@@ -69,7 +72,7 @@ export function spendSmart(s: Stand): void {
 }
 
 /** One run from a seed: the waves the party holds, until the king falls or `maxWave` is passed. */
-export function playStand(setup: StandSetup, seed: number, party: readonly string[] = PARTIES.eight, maxWave = 150, buyer: (s: Stand) => void = spend): Played {
+export function playStand(setup: StandSetup, seed: number, party: readonly string[] = PARTIES.eight, maxWave = 150, buyer: (s: Stand) => void = spend, hold = false): Played {
   const run = newStandRun(seed, party, ARMIES.map((a) => a.id));
   const s = startStand(run, setup);
   startFirstWave(s);
@@ -77,8 +80,16 @@ export function playStand(setup: StandSetup, seed: number, party: readonly strin
   let peak = 0;
   let was = s.phase;
   const t0 = performance.now();
+  let held = 0;
   while (s.phase !== 'over' && s.run.wave <= maxWave) {
+    // (an act's end: hold the line, or fall back at once)
+    if (s.phase === 'choice') {
+      if (hold) holdTheLine(s);
+      else fallBack(s);
+    }
+    const wasHolding = !!s.holding;
     stepStand(s);
+    if (wasHolding && s.phase === 'retreat') held++;
     ticks++;
     s.notes.length = 0;
     if (s.phase === 'break' && was !== 'break') buyer(s);
@@ -88,7 +99,7 @@ export function playStand(setup: StandSetup, seed: number, party: readonly strin
     if (ticks > 60 * 60 * 10) break;
   }
   const ms = performance.now() - t0;
-  return { wave: s.run.wave, kills: s.run.kills, peak, msPerTick: ms / Math.max(1, ticks), ticks, reason: s.phase === 'over' ? 'fell' : 'cap' };
+  return { wave: s.run.wave, kills: s.run.kills, peak, msPerTick: ms / Math.max(1, ticks), ticks, reason: s.phase === 'over' ? 'fell' : 'cap', held, fellHolding: s.phase === 'over' && !!s.run.retreat?.hold };
 }
 
 export function standTable(): void {
@@ -97,15 +108,20 @@ export function standTable(): void {
   const levels = process.argv.includes('--levels') ? process.argv[process.argv.indexOf('--levels') + 1].split(',').map(Number) : [1, 10, 20, 40, 60, 80, 100];
   const party = PARTIES.eight;
   const smart = process.argv.includes('--smart');
-  console.log(`\nThe Last Stand: ${attempts} ${smart ? 'attentive' : 'greedy'} runs a row (${party.join(', ')}, every hero at the level, nothing worn, ${process.argv.includes('--castle') ? `a castle at ${process.argv[process.argv.indexOf('--castle') + 1]}` : 'no castle'}); the wave the king fell in (a run past wave ${maxWave} is stopped there)`);
-  console.log('level  median  mean   min   max   kills(mean)  peak foes  ms/tick');
+  const hold = process.argv.includes('--hold');
+  console.log(`\nThe Last Stand: ${attempts} ${smart ? 'attentive' : 'greedy'} runs a row (${party.join(', ')}, every hero at the level, nothing worn, ${process.argv.includes('--castle') ? `a castle at ${process.argv[process.argv.indexOf('--castle') + 1]}` : 'no castle'}${hold ? ', holding the line at every act\'s end' : ''}); the wave the king fell in (a run past wave ${maxWave} is stopped there)`);
+  console.log(`level  median  mean   min   max   kills(mean)  peak foes  ms/tick${hold ? '  held(mean)  fell holding' : ''}`);
   for (const level of levels) {
     const waves: number[] = [];
     let kills = 0;
     let peak = 0;
     let ms = 0;
+    let held = 0;
+    let fellHolding = 0;
     for (let a = 0; a < attempts; a++) {
-      const r = playStand(setupAtLevel(level, castleFor()), mixSeed(a + 1, 0x57a0), party, maxWave, smart ? spendSmart : spend);
+      const r = playStand(setupAtLevel(level, castleFor()), mixSeed(a + 1, 0x57a0), party, maxWave, smart ? spendSmart : spend, hold);
+      held += r.held;
+      fellHolding += +r.fellHolding;
       waves.push(r.wave);
       kills += r.kills;
       peak = Math.max(peak, r.peak);
@@ -113,7 +129,7 @@ export function standTable(): void {
     }
     waves.sort((x, y) => x - y);
     const mean = waves.reduce((n, x) => n + x, 0) / waves.length;
-    console.log(`${String(level).padStart(5)}  ${String(waves[Math.floor(waves.length / 2)]).padStart(6)}  ${mean.toFixed(1).padStart(5)}  ${String(waves[0]).padStart(4)}  ${String(waves[waves.length - 1]).padStart(4)}  ${(kills / attempts).toFixed(0).padStart(11)}  ${String(peak).padStart(9)}  ${(ms / attempts).toFixed(2).padStart(7)}`);
+    console.log(`${String(level).padStart(5)}  ${String(waves[Math.floor(waves.length / 2)]).padStart(6)}  ${mean.toFixed(1).padStart(5)}  ${String(waves[0]).padStart(4)}  ${String(waves[waves.length - 1]).padStart(4)}  ${(kills / attempts).toFixed(0).padStart(11)}  ${String(peak).padStart(9)}  ${(ms / attempts).toFixed(2).padStart(7)}${hold ? `${(held / attempts).toFixed(1).padStart(12)}  ${String(fellHolding).padStart(12)}` : ''}`);
   }
   void TICK_MS;
   void levelCost;

@@ -1,5 +1,5 @@
 // The Rank up card: what a hero has earned, the stats before and after, the look before and after (when it changes: an awakening
-// lays on the class's aura), and the button that takes the step. A rank is the player's choice, never automatic (`sim/rankUp.ts`); the awakening
+// equips its legendary gear), and the button that takes the step. A rank is the player's choice, never automatic (`sim/rankUp.ts`); the awakening
 // steps above the top rank use the same card (`sim/awaken.ts`). `openRankUp` puts the card over the page and calls `done` with what
 // was taken (a rank, or an awakened step) when the button is tapped; Back (or a tap outside) closes it and changes nothing.
 
@@ -11,8 +11,7 @@ import { AWAKEN_COSTS, AWAKEN_SHARDS, PASSIVES, awaken, awakenPlan, awakenedOf }
 import { rankPlan, rankUp } from './sim/rankUp';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { lookSheet, stepOfRank } from './render/awakenLook';
-import { wearAura } from './render/auraCanvas';
-import { figureShare, sprite } from './render/sheets';
+import { loadAwakenedSheets, sprite } from './render/sheets';
 import { play } from './render/sound';
 
 export interface Taken {
@@ -29,7 +28,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const stars = (n: number): string => '★'.repeat(n) + '☆'.repeat(MAX_RANK - n);
 
-/** A hero's picture at a whole rank (its look: its form, and once awakened its class's aura); `tick` animates its idle. */
+/** A hero's picture at a whole rank (its permanent equipment form); `tick` animates its idle. */
 function pic(kind: string, full: number): { box: HTMLElement; tick: (n: number) => void } {
   const def = UNITS[kind];
   const step = stepOfRank(full);
@@ -38,7 +37,6 @@ function pic(kind: string, full: number): { box: HTMLElement; tick: (n: number) 
   spr.canvas.style.transform = spr.faceRight ? 'translateX(-50%)' : 'translateX(-50%) scaleX(-1)';
   const box = el('div', 'ruPic');
   box.append(spr.canvas);
-  wearAura(box, spr.canvas, kind, step, figureShare(sheet), spr.faceRight ? 1 : -1);
   return { box, tick: spr.tick };
 }
 
@@ -51,7 +49,16 @@ const statsAt = (meta: Meta, kind: string, full: number): { hp: number; atk: num
 };
 
 /** Open the card for a hero's next step: its rank when one is waiting, else its awakening. Does nothing when neither is. */
+let opening = false;
 export function openRankUp(meta: Meta, kind: string, done: (t: Taken) => void): void {
+  if (opening) return;
+  opening = true;
+  void loadAwakenedSheets([kind]).then(() => openReadyRankUp(meta, kind, done))
+    .catch(error => console.error('Could not load the awakening preview', error))
+    .finally(() => { opening = false; });
+}
+
+function openReadyRankUp(meta: Meta, kind: string, done: (t: Taken) => void): void {
   const rp = rankPlan(meta, kind);
   const ap = rp ? null : awakenPlan(meta, kind);
   if (!rp && !(ap && ap.can)) return;
@@ -66,7 +73,7 @@ export function openRankUp(meta: Meta, kind: string, done: (t: Taken) => void): 
   const looks = el('div', 'ruLooks');
   const before = pic(kind, now);
   const after = pic(kind, next);
-  const changes = stepOfRank(now) !== stepOfRank(next);
+  const changes = lookSheet(kind, now, 1) !== lookSheet(kind, next, 1);
   looks.append(before.box);
   if (changes) {
     const arrow = el('span', 'ruArrow', '→');

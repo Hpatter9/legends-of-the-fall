@@ -49,3 +49,7 @@ the compact review sheets. Set `PLAYWRIGHT_MODULE` and `CHROMIUM_PATH` for local
 
 The review browser uses controlled awakened saves and deploy-board fixtures; these are actual renderer captures,
 not campaign playthroughs. Physical-phone performance has not been measured.
+
+## Integration with upgraded hero forms
+
+ART-ASCEND reuses this approved atlas for combat tier-ups on either permanent form. The earlier validation above records the source branch, where it was still selected by awakening. Current validation is in [the upgraded forms handoff](ascended-hero-forms.md); its browser tool checks combat tiers, including reduced motion and offline play.

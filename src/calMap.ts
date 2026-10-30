@@ -5,7 +5,8 @@ import { choices, hereOf, routeTo, sideChoices, type NodeKind } from './sim/towe
 import { fogOf, openSet, sideSpots, START_ID } from './sim/calLand';
 import { dungeonDirection, dungeonHall, dungeonLayout, type DungeonDirection, type DungeonLayout, type DungeonPoint } from './sim/dungeonLayout';
 import { pendingAltar } from './sim/rift';
-import { formOf, UNITS } from './sim/units';
+import { awakenedOf } from './sim/awaken';
+import { battleSheet } from './render/awakenLook';
 import { sheetInfo } from './render/sheets';
 import { shrinkRig, type Small } from './render/smallRig';
 import { settings } from './settings';
@@ -273,7 +274,7 @@ export class CalMap {
     const run = this.run;
     const lead = run.roster.find((h) => h.id === run.rift?.starter) ?? run.squad.map((id) => run.roster.find((h) => h.id === id)).find(Boolean) ?? run.roster[0];
     if (!lead) { this.hero = null; return; }
-    const key = formOf(UNITS[lead.kind], lead.grade);
+    const key = battleSheet(lead.kind, awakenedOf(this.hooks.meta(), lead.kind), lead.grade);
     if (key === this.heroKey && this.hero) return;
     const rig = sheetInfo(key);
     this.hero = rig ? shrinkRig(rig, 44) : null;

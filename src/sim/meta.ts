@@ -89,6 +89,8 @@ export interface Meta {
   tower: number;
   /** The best wave reached in the Last Stand, the mode that took the tower's place at the camp (`stand.ts`). Missing in a save from before; 0. */
   stand?: number;
+  /** The furthest room of the Last Stand's retreat reached (0 the courtyard to 3 the throne room: `standActs.ts`). Missing before the retreat, or none reached yet. */
+  standAct?: number;
   /** A calamity's record: the most maps cleared in one run, and the runs cleared whole (none before the first calamity). */
   calamity?: { best: number; clears: number; /** The highest ascension level cleared whole (`ascension.ts`); none before the first clear after it came. */ asc?: number };
   /** The ascension levels a Calamity has been cleared at, each a title (`calReward.ts`); none before the first clear after it came. */
@@ -429,6 +431,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.bestStage = Math.max(1, m.bestStage | 0);
       m.tower = Math.max(0, m.tower | 0);
       m.stand = Math.max(0, (m.stand ?? 0) | 0);
+      if (m.standAct !== undefined) m.standAct = Math.max(0, Math.min(3, m.standAct | 0));
       m.daily = readDaily(m.daily);
       m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_IDS.includes(b)) : [];
       // (saves from before the armies have their furthest stage mapped onto them, and the armies it opens are not new)

@@ -3,7 +3,7 @@
 
 import { tok } from './render/tok';
 import type { Meta } from './sim/meta';
-import { awakenedStep, heroRig, lookKey } from './render/awakenRig';
+import { menuAuraStep, heroRig, lookKey } from './render/awakenRig';
 import { drawAura, drawAuraGlow } from './render/auraCanvas';
 import { auraParts, type AuraPart } from './render/auraStyles';
 import type { Army } from './sim/armies';
@@ -195,7 +195,7 @@ export class CampScene {
       const rig = heroRig(meta, kind);
       const spot = camp.heroes[i];
       if (!rig || !spot) return;
-      const step = awakenedStep(meta, kind);
+      const step = menuAuraStep(meta, kind);
       const aura = auraParts(kind, step, this.saver);
       const a = this.actors.get(kind);
       if (a) {

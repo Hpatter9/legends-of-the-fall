@@ -38,12 +38,14 @@ import cratesUrl from '../art/castle/crates.png';
 import barrelsUrl from '../art/castle/barrels.png';
 import potsUrl from '../art/castle/pots.png';
 import standardUrl from '../art/camp/standard.png';
+import doorUrl from '../art/stand/door.png';
+import { exitOf } from '../sim/standActs';
 import arcadeUrl from '../art/stand/ornate/arcade.png';
 import deskUrl from '../art/stand/ornate/desk.png';
 import medallionUrl from '../art/stand/ornate/medallion.png';
 import rosesUrl from '../art/stand/ornate/roses.png';
 import bushUrl from '../art/stand/ornate/ivy.png';
-import { rulerTextures, rulerThrone } from './rulerArt';
+import { rulerSeatTexture, rulerTextures, rulerThrone } from './rulerArt';
 import { rulerFrame, type RulerAction } from '../rulerRules';
 import { settings } from '../settings';
 
@@ -53,6 +55,7 @@ const URLS = {
   arcade: arcadeUrl, desk: deskUrl, medallion: medallionUrl, roses: rosesUrl, bush: bushUrl, floor1: floor1Url, floor2: floor2Url, rug: rugUrl, wallface: wallfaceUrl, walltop: walltopUrl, rubble1: rubble1Url, rubble2: rubble2Url, shelf1: shelf1Url, shelf2: shelf2Url,
   window: windowUrl, pilaster: pilasterUrl, smoke: smokeUrl, dust: dustUrl, landdust: landdustUrl, grass1: grass1Url, grass2: grass2Url, banner: bannerUrl, brazier: brazierUrl,
   lamp: lampUrl, fountain: fountainUrl, well: wellUrl, chests: chestsUrl, crates: cratesUrl, barrels: barrelsUrl, pots: potsUrl, standard: standardUrl,
+  door: doorUrl,
 };
 type Key = keyof typeof URLS;
 let images: Promise<Record<Key, HTMLImageElement>> | null = null;
@@ -71,6 +74,14 @@ const DUST_FRAMES = 10;
 const LAND_FRAMES = 14;
 const BURST_MS = 720;
 const GLASS = ['#6ab8ff', '#ffc04a', '#ff5a6a', '#8aff9a'];
+/** The door the guard falls back by (STAND-RETREAT): five frames of 32 px, closed to open; how long it takes to swing open (ms); its scale. */
+const DOOR_FRAMES = 5;
+const DOOR_MS = 500;
+const DOOR_SCALE = 2.6;
+/** The king's place in the drawing order at his place on the dais. */
+const KING_Z = (KING_AT.u + KING_AT.v) * 10 + 5;
+/** How long the rubble of a breach caving in takes to fall (ms). */
+const CAVE_MS = 700;
 const ATAN = Math.atan(0.5);
 
 interface Flame {
@@ -119,6 +130,16 @@ export class StandHall {
   private made: Texture[] = [];
   /** Where the king's head is (world px), for his speech. */
   kingTop = { x: 0, y: 0 };
+  /** The retreat (STAND-RETREAT): the door in the back wall and its frames, the rubble falling into a breach, and the king's walk to the door. */
+  private door: Sprite | null = null;
+  private doorFrames: Texture[] = [];
+  private doorT = -1;
+  private doorZ = 0;
+  private falling: { sp: Sprite; y: number; t: number }[] = [];
+  private kingHome = { x: 0, y: 0 };
+  private kingDoor = { x: 0, y: 0 };
+  /** How far along the walk to the door the king is (0 to 1), or null when he is at his place. */
+  private leave: number | null = null;
   reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   constructor() {
@@ -248,6 +269,28 @@ export class StandHall {
       const [x, y] = top(p.u, p.v, 1);
       add(tex('pilaster'), x, y + 8, { scale: 0.95, z: (p.u + p.v) * 10 + 5 });
     }
+    // The throne room (STAND-RETREAT, the great hall dressed for the last act): crimson banners hung between the windows down both back walls.
+    if (kind === 'hall') {
+      for (let i = 2; i <= FIELD - 3; i++)
+        for (const side of ['north', 'west'] as const) {
+          const [u, v] = side === 'north' ? [i, 0] : [0, i];
+          if (i % 4 !== 0 || gap.has(`${u},${v}`) || !at(u, v).wall) continue;
+          const [x, y] = top(u, v, at(u, v).h + 4);
+          add(tex('banner'), x + (side === 'north' ? -TW / 4 : TW / 4), y + 30, { ay: 0, scale: 0.55, skewY: side === 'north' ? ATAN : -ATAN, z: (u + v) * 10 + 6 });
+        }
+    }
+    // The door the guard falls back by: set in a back wall, clear of the breaches (`exitOf`); shut until the room is given up.
+    {
+      const ex = exitOf(seed, kind);
+      this.doorZ = (ex.front.u + ex.front.v) * 10 + 5;
+      const door = tex('door');
+      this.doorFrames = Array.from({ length: DOOR_FRAMES }, (_, i) => new Texture({ source: door.source, frame: new Rectangle(i * 32, 0, 32, 32) }));
+      const [x, y] = top(ex.at.u, ex.at.v, 1);
+      const north = ex.edge === 'north';
+      this.door = add(this.doorFrames[0], x + (north ? -TW / 4 : TW / 4), y + TH / 4, { ay: 1, scale: DOOR_SCALE, skewY: north ? ATAN : -ATAN, z: (ex.at.u + ex.at.v) * 10 + 6 });
+      this.doorT = -1;
+      this.kingDoor = (([fx, fy]) => ({ x: fx, y: fy + 8 }))(top(ex.front.u, ex.front.v));
+    }
     if (kind === 'courtyard') {
       // Planting crowns the boundary stone; it never suggests an obstacle on the field.
       for (let i = 1; i < FIELD - 1; i++) {
@@ -316,6 +359,8 @@ export class StandHall {
     this.king = add(this.kingFrames[0], kx, ky + 8, { scale: KING_SCALE, z: (KING_AT.u + KING_AT.v) * 10 + 5 });
     this.king.width = this.king.height = KING_H * KING_SCALE;
     this.kingTop = { x: kx, y: ky + 8 - KING_H * KING_SCALE };
+    this.kingHome = { x: kx, y: ky + 8 };
+    this.leave = null;
     this.kingBar.zIndex = 1e6;
     this.put(this.kingBar);
 
@@ -551,6 +596,31 @@ export class StandHall {
     this.decreeLeft = 1600;
   }
 
+  /** The room is given up (STAND-RETREAT): the breach on `edge` caves in (rubble drops into it with a burst of dust; with reduced motion it is
+   *  simply there), and the door swings open. */
+  giveUp(edge: Edge | null): void {
+    this.doorT = this.reduced ? DOOR_MS : 0;
+    const br = this.plan?.breaches.find((b) => b.edge === edge);
+    const rubble = this.tex.rubble1;
+    if (!br || !rubble) return;
+    if (!this.reduced) this.burst([br.edge]);
+    breachTiles(br).forEach((p, i) => {
+      const [x, y] = rawAt(p.u, p.v, 1);
+      const sp = new Sprite(rubble);
+      sp.anchor.set(0.5, 1);
+      sp.scale.set(i % 2 ? 0.95 : 0.8);
+      sp.position.set(x, y + 8 - (this.reduced ? 0 : 90 + i * 14));
+      sp.zIndex = (p.u + p.v) * 10 + 7;
+      this.put(sp);
+      this.falling.push({ sp, y: y + 8, t: this.reduced ? CAVE_MS : -i * 70 });
+    });
+  }
+
+  /** The king's walk to the door, `k` of the way there (0 to 1), or null to stand him at his place again. */
+  walk(k: number | null): void {
+    this.leave = k === null ? null : Math.max(0, Math.min(1, k));
+  }
+
   private rulerAction: RulerAction = 'idle';
   private rulerStarted = 0;
   react(action: 'hurt' | 'cast' | 'strike' | 'dead'): void {
@@ -583,6 +653,18 @@ export class StandHall {
       b.land.destroy();
     }
     this.bursts = this.bursts.filter((x) => x.t < BURST_MS);
+    if (this.door && this.doorT >= 0) {
+      this.doorT = Math.min(DOOR_MS, this.doorT + dt);
+      this.door.texture = this.doorFrames[Math.min(DOOR_FRAMES - 1, Math.floor((this.doorT / DOOR_MS) * DOOR_FRAMES))];
+    }
+    for (const f of this.falling) {
+      if (f.t >= CAVE_MS) continue;
+      f.t += dt;
+      const k = Math.max(0, Math.min(1, f.t / CAVE_MS));
+      // (it drops, eased in, and lands; nothing blinks)
+      f.sp.y = f.y - (f.y - f.sp.y) * (1 - k * k);
+      if (k >= 1) f.sp.y = f.y;
+    }
     if (this.king) {
       this.decreeLeft = Math.max(0, this.decreeLeft - dt);
       if (kingHp <= 0 && this.rulerAction !== 'dead') this.react('dead');
@@ -595,7 +677,23 @@ export class StandHall {
         this.emptyThrone.visible = true;
       }
       this.king.texture = rulerTextures(settings().ruler, action)[rulerFrame(action, this.rulerAction === 'idle' && this.decreeLeft > 0 ? 1600 - this.decreeLeft : action === 'idle' ? this.t : elapsed, still)];
+      // (in the throne room the ruler sits enthroned while nothing is happening, and rises to strike, cast or take a blow: STAND-RETREAT)
+      const enthroned = this.plan?.kind === 'hall' && this.rulerAction === 'idle' && this.leave === null && kingHp > 0;
+      if (enthroned) this.king.texture = rulerSeatTexture(settings().ruler, this.decreeLeft > 0 ? 'command' : 'seated', this.decreeLeft > 0 ? 1600 - this.decreeLeft : this.t, still);
+      if (this.emptyThrone) this.emptyThrone.visible = !enthroned;
+      // (the walk to the door: his walking frames, along the floor from his place to the door, facing the way he goes)
+      if (this.leave !== null) {
+        const k = this.leave;
+        this.king.texture = rulerTextures(settings().ruler, still ? 'idle' : 'walk')[still ? 0 : rulerFrame('walk', this.t, false)];
+        this.king.position.set(this.kingHome.x + (this.kingDoor.x - this.kingHome.x) * k, this.kingHome.y + (this.kingDoor.y - this.kingHome.y) * k);
+        this.king.zIndex = Math.round(KING_Z + (this.doorZ - KING_Z) * k);
+      } else {
+        this.king.position.set(this.kingHome.x, this.kingHome.y);
+        this.king.zIndex = KING_Z;
+      }
+      this.kingTop = { x: this.king.x, y: this.king.y - KING_H * KING_SCALE };
       this.king.width = this.king.height = KING_H * KING_SCALE;
+      if (this.leave !== null && this.kingDoor.x < this.kingHome.x) this.king.scale.x = -Math.abs(this.king.scale.x);
       // (his health over his head: green, low and red, on a dark gilt-edged plate)
       const g = this.kingBar;
       g.clear();
@@ -625,6 +723,10 @@ export class StandHall {
     this.bursts = [];
     this.king = null;
     this.emptyThrone = null;
+    this.door = null;
+    this.doorT = -1;
+    this.falling = [];
+    this.leave = null;
     this.rulerAction = 'idle';
     this.rulerStarted = 0;
     this.floor = null;

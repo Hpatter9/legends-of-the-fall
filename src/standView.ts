@@ -13,15 +13,19 @@ import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } fr
 import {
   autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
+  canSave, fallBack, finishRetreat, hallNow, holdTheLine,
 } from './sim/stand';
+import { ACT_NUMERALS, holdGold, RETREAT_MS, reachRoom, ROOM_NAMES } from './sim/standActs';
+import { lostLine, roomLine } from './standRetreatLines';
+import { standRoomTrack } from './render/standMusic';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
 import { heroSays, kingSays, newQuipScene, standFoeGrumbles } from './quips';
 import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
-import { saveMeta, type Meta } from './sim/meta';
+import { heroRank, saveMeta, type Meta } from './sim/meta';
 import { HeroBar } from './heroBar';
 import { portrait } from './render/sheets';
-import { formOf } from './sim/units';
+import { battleSheet, lookSheet } from './render/awakenLook';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { RELICS } from './sim/relics';
@@ -33,10 +37,9 @@ import { at, depth, setFrame, HH, TH, TW } from './render/iso';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS } from './render/cameraRules';
 import { bossHit, NUDGE_MS, nudgeOffset, wheelStep } from './render/standCam';
 import { StandHall, standHallArt, standBackwallUrl } from './render/standHall';
-import { hallOf, type HallKind } from './sim/standHalls';
+import type { HallKind } from './sim/standHalls';
 import { standSheet } from './sim/standSheet';
 import { endFight, endWave, play, playEvents, setAct, startFight } from './render/sound';
-import { standTrack } from './render/battleMusic';
 import { colLeft, viewH, viewW } from './viewport';
 import { spellIconHtml } from './spellIcons';
 import { clockSeed } from './modes';
@@ -54,8 +57,8 @@ export interface StandHost {
   moment(m: { kind: 'spire'; floor: number }): Promise<void>;
 }
 
-/** Where the room of the last run is kept, so the next is another (`hallOf`). */
-const HALL_KEY = 'legends.standHall';
+/** How long the title card of a new room stays (ms) unless it is tapped away (STAND-RETREAT). */
+const TITLE_MS = 3400;
 
 /** The heroes' colours (their rings, tray cards and portraits' rims), by their place in the party. */
 const HERO_COLOURS = [0xffd24a, 0x4ad2ff, 0xff6a4a, 0x8aff6a, 0xd06aff, 0xf2f2f2, 0xff9ad0, 0x6affd2];
@@ -278,9 +281,19 @@ export class StandView {
     pick.hidden = true;
     const sheet = el('div', 'stAsk stSheet');
     sheet.hidden = true;
-    root.append(this.input, vignette, top, centre, count, arrows, finds, info, banner, bottom, end, ask, pick, sheet);
+    // (the retreat, STAND-RETREAT: the choice at an act's end, a layer that takes a tap to skip the walk, and the new room's title card)
+    const choice = el('div', 'stAsk stChoice');
+    choice.hidden = true;
+    const skip = el('div', 'stSkip');
+    skip.append(el('span', '', 'Tap to skip'));
+    skip.hidden = true;
+    skip.addEventListener('click', () => this.skipRetreat());
+    const title = el('div', 'stTitle');
+    title.hidden = true;
+    title.addEventListener('click', () => this.endTitle());
+    root.append(this.input, vignette, top, centre, count, arrows, finds, info, banner, bottom, end, ask, pick, sheet, skip, title, choice);
     document.body.append(root);
-    this.parts = { tray, roster, finds, vignette, leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick };
+    this.parts = { tray, roster, finds, vignette, leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick, choice, skip, title };
     this.wireInput();
   }
 
@@ -366,20 +379,8 @@ export class StandView {
     });
     go.addEventListener('click', () => {
       box.hidden = true;
-      // (never the room of the run before: kept in `legends.standHall`)
-      let prev: string | null = null;
-      try {
-        prev = localStorage.getItem(HALL_KEY);
-      } catch {
-        /* (no storage: any room) */
-      }
-      const run = newStandRun(clockSeed(), chosen, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.stand ?? 0, prev);
-      try {
-        if (run.hall) localStorage.setItem(HALL_KEY, run.hall);
-      } catch {
-        /* (no storage) */
-      }
-      this.start(run);
+      // (every run begins in the courtyard and falls back room by room: STAND-RETREAT)
+      this.start(newStandRun(clockSeed(), chosen, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.stand ?? 0));
     });
     const row = el('div', 'stRow');
     row.append(home, auto, go);
@@ -410,6 +411,9 @@ export class StandView {
     this.root.hidden = false;
     this.parts.end.hidden = true;
     this.parts.ask.hidden = true;
+    this.endTitle();
+    this.parts.choice.hidden = true;
+    this.parts.skip.hidden = true;
     this.clearSprites();
     this.fx.clear();
     this.buildField();
@@ -420,6 +424,8 @@ export class StandView {
     setAct(null);
     this.save();
     this.refreshBar(true);
+    // (a run saved at an act's end asks its question again)
+    if (this.s.phase === 'choice' && this.s.run.retreat) this.drawChoice(this.s.run.wave - 1, this.s.run.retreat.to);
   }
 
   /** Go back to the home screen (the run, if still going, stays saved at its last break). */
@@ -481,7 +487,7 @@ export class StandView {
   /** The run's record, kept where a break or a deploy begins. */
   private save(): void {
     const s = this.s;
-    if (!s || s.phase === 'over' || s.phase === 'wave') return;
+    if (!s || !canSave(s)) return;
     saveStand(snapshot(s));
   }
 
@@ -496,7 +502,7 @@ export class StandView {
     this.hall.clear();
     void standHallArt().then((art) => {
       if (n !== this.hallFor || this.s !== s) return;
-      this.hall.build(this.holder, s.b.board, s.run.seed, s.run.hall ?? hallOf(s.run.seed), art);
+      this.hall.build(this.holder, s.b.board, s.run.seed, hallNow(s.run), art);
     });
     setBackdrop(s.b.board.area);
     this.showSky(true);
@@ -599,7 +605,7 @@ export class StandView {
       heroes.forEach((h) => {
         const card = el('button', 'stMan');
         card.dataset.id = String(h.id);
-        const pic = portrait(formOf(UNITS[h.kind], 1), 40, 1);
+        const pic = portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 40, 1);
         pic.className = 'stManPic';
         card.append(pic, el('span', '', UNITS[h.kind].name));
         card.style.setProperty('--hc', colourCss(this.colourOf(h.id)));
@@ -627,7 +633,7 @@ export class StandView {
         const pic = card.querySelector('canvas');
         drag.ghost = el('div', 'stGhost');
         if (pic) {
-          const c = portrait(formOf(UNITS[this.s!.run.heroes.find((h) => h.id === id)!.kind], 1), 48, 1);
+          const c = portrait(lookSheet(this.s!.run.heroes.find((h) => h.id === id)!.kind, heroRank(this.host.meta(), this.s!.run.heroes.find((h) => h.id === id)!.kind), 1), 48, 1);
           drag.ghost.append(c);
         }
         this.root.append(drag.ghost);
@@ -754,7 +760,7 @@ export class StandView {
         if (!a) {
           a = el('button', 'stFind');
           a.style.setProperty('--hc', colourCss(this.colourOf(u.tag)));
-          const pic = portrait(formOf(UNITS[u.def], u.grade ?? 1), 32, u.grade ?? 1);
+          const pic = portrait(battleSheet(u.def, u.awaken ?? 0, u.grade ?? 1), 32, u.grade ?? 1);
           a.append(el('i'), pic, el('b'));
           const id = u.id;
           a.addEventListener('click', () => this.panTo(id));
@@ -1035,9 +1041,10 @@ export class StandView {
     if (!s) return;
     this.frameN++;
     const t0 = performance.now();
-    const fighting = (s.phase === 'wave' || s.phase === 'break') && !this.hold && !this.paused;
+    const fighting = (s.phase === 'wave' || s.phase === 'break' || s.phase === 'retreat') && !this.hold && !this.paused;
     if (fighting) {
-      this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
+      // (the walk to the door goes at its own pace, whatever the speed: STAND-RETREAT)
+      this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : this.speed * this.fx.timeScale());
       let guard = 0;
       const ts = performance.now();
       // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
@@ -1060,6 +1067,13 @@ export class StandView {
         this.grumbleDue();
       }
       if (guard >= 4) this.acc = 0;
+      if (this.s !== s) return;
+      // (the king walks to the door with the heroes; the room fades as they reach it)
+      if (s.phase === 'retreat') {
+        const k = 1 - Math.max(0, s.retreatLeft ?? 0) / RETREAT_MS;
+        this.hall.walk(k);
+        this.parts.skip.classList.toggle('dusk', k > 0.8);
+      }
       this.perf.sim += performance.now() - ts;
       this.heroBar.build(s.b);
       this.heroBar.refresh(s.b);
@@ -1082,6 +1096,13 @@ export class StandView {
       if (off) sp.root.visible = false;
     }
     this.perf.sprites += performance.now() - tu;
+    if (this.titleLeft > 0) {
+      this.titleLeft -= dt;
+      if (this.titleLeft <= 0) {
+        this.titleLeft = 1;
+        this.endTitle();
+      }
+    }
     if (this.banner.left > 0) {
       this.banner.left -= dt;
       if (this.banner.left <= 0) this.parts.banner.hidden = true;
@@ -1156,6 +1177,25 @@ export class StandView {
         this.refreshBar(true);
       } else if (n.kind === 'hunt') {
         // (the last foes are being run down: nothing to show yet beyond the heroes leaving their posts)
+      } else if (n.kind === 'breakOff') {
+        this.showPlate('THE LAST OF THEM', 'BREAK AND RUN', 'retreat');
+      } else if (n.kind === 'choice') {
+        this.drawChoice(n.n, n.to);
+      } else if (n.kind === 'hold') {
+        this.showPlate('ONE MORE WAVE', 'HOLD THE LINE', 'boss');
+        newQuipScene();
+        kingSays('bossWave', () => this.anchorOf(s.king.id));
+        play('standBoss');
+        this.hall.burst(waveSpec(s.run.seed, s.run.armies, s.run.wave, s.run.hall).edges.concat(['north', 'east', 'south', 'west']));
+        this.refreshBar(true);
+      } else if (n.kind === 'held') {
+        play('coin');
+        this.showPlate(`+${n.gold} GOLD`, 'THE LINE HELD', '');
+        this.refreshBar(true);
+      } else if (n.kind === 'retreat') {
+        this.beginRetreat(n.from, n.to, n.cave, n.exit.front);
+      } else if (n.kind === 'room') {
+        this.enterRoom(n.hall, n.act);
       } else if (n.kind === 'over') {
         kingSays('fallen', () => this.anchorOf(s.king.id));
         this.finish();
@@ -1215,7 +1255,8 @@ export class StandView {
   private hold = false;
   private track = '';
   private music(seed: number): void {
-    const want = standTrack(seed);
+    // (one hook for the rooms of the retreat: `standMusic.ts`; today every room keeps the run's track)
+    const want = standRoomTrack(seed, this.s ? hallNow(this.s.run) : 'courtyard');
     if (want === this.track) return;
     this.track = want;
     startFight(want);
@@ -1223,6 +1264,133 @@ export class StandView {
 
   private vignetteLeft = 0;
   private hbKey = '';
+
+  /* -------------------------------------------------------------- the retreat (STAND-RETREAT) */
+
+  /** A plate over the field for a moment (the banner's look): a small line over a big one; `tone` is '' (gold), 'boss' (red) or 'retreat'. */
+  private showPlate(small: string, big: string, tone: '' | 'boss' | 'retreat'): void {
+    const b = this.parts.banner;
+    const plate = el('div', 'stPlate');
+    plate.append(el('small', '', small), el('b', '', big));
+    b.replaceChildren(el('i', 'stCrest'), plate);
+    b.classList.toggle('boss', tone === 'boss');
+    b.classList.toggle('retreat', tone === 'retreat');
+    b.hidden = false;
+    this.banner.left = BANNER_MS;
+    b.style.animation = 'none';
+    void b.offsetWidth;
+    b.style.animation = '';
+  }
+
+  /** An act's last wave is held: hold one more, harder wave here for a purse, or fall back to the next room. The run waits for the answer. */
+  private drawChoice(n: number, to: HallKind): void {
+    const s = this.s;
+    if (!s) return;
+    const box = this.parts.choice;
+    box.replaceChildren();
+    const here = ROOM_NAMES[hallNow(s.run)];
+    const card = el('div', 'stCard stChoiceCard');
+    card.append(el('i', 'stCrest'), el('h2', '', `${here.title} is falling`), el('p', 'stDim', `Wave ${n} is held, but the walls are breached. Your ruler awaits your word.`));
+    const back = el('button', 'primary stChoiceBack');
+    back.append(el('b', '', 'Fall back'), el('small', '', `To ${ROOM_NAMES[to].the}, with everyone still standing.`));
+    back.addEventListener('click', () => {
+      if (!this.s || !fallBack(this.s)) return;
+      play('tap');
+      box.hidden = true;
+      this.takeNotes([]);
+    });
+    const hold = el('button', 'stChoiceHold');
+    hold.append(el('b', '', 'Hold one more wave'), el('small', '', `A harder wave from every breach. Hold it for +${holdGold(n)} gold, then fall back. If your ruler falls, the run ends.`));
+    hold.addEventListener('click', () => {
+      if (!this.s || !holdTheLine(this.s)) return;
+      play('tap');
+      box.hidden = true;
+      this.music(this.s.run.seed);
+      this.takeNotes([]);
+    });
+    card.append(back, hold);
+    box.append(card);
+    box.hidden = false;
+  }
+
+  /** The room is given up: a breach caves in, the door opens, the banner says where to, and the king and the heroes walk out (a tap skips). */
+  private beginRetreat(from: HallKind, to: HallKind, cave: Edge | null, door: { u: number; v: number }): void {
+    const s = this.s;
+    if (!s) return;
+    // (the camera eases round to take in the king and the door he makes for)
+    const [kx, ky] = at(KING_AT.u, KING_AT.v, tileAt(s.b.board, KING_AT.u, KING_AT.v)!.h);
+    const [dx, dy] = at(door.u, door.v, tileAt(s.b.board, door.u, door.v)!.h);
+    this.tx = (kx + dx) / 2;
+    this.ty = (ky + dy) / 2 - 24;
+    this.clampCam();
+    this.parts.choice.hidden = true;
+    this.picked = null;
+    this.spell = null;
+    this.hall.giveUp(cave);
+    const words = lostLine(from, to);
+    this.showPlate(words.head.toUpperCase(), words.line.toUpperCase(), 'retreat');
+    this.banner.left = BANNER_MS * 1.6;
+    play('kingHit');
+    this.drawMarks();
+    // (with reduced motion there is no walk: the room fades, and the next is laid out at once)
+    if (this.hall.reduced) {
+      finishRetreat(s);
+      this.takeNotes([]);
+      return;
+    }
+    this.parts.skip.classList.remove('dusk');
+    this.parts.skip.hidden = false;
+  }
+
+  /** A tap during the walk: on to the next room at once. */
+  private skipRetreat(): void {
+    const s = this.s;
+    if (!s || s.phase !== 'retreat') return;
+    play('tap');
+    finishRetreat(s);
+    this.takeNotes([]);
+  }
+
+  /** The next room: laid out (its art, the heroes at their posts), the camera on the king, and its title card with a line from the ruler. */
+  private enterRoom(hall: HallKind, act: number): void {
+    const s = this.s;
+    if (!s) return;
+    this.parts.skip.hidden = true;
+    this.hall.walk(null);
+    this.buildField();
+    this.syncSprites();
+    this.snapCamera();
+    this.music(s.run.seed);
+    // (the furthest room reached is kept at once: the throne room is a badge on the Last Stand's record)
+    const m = this.host.meta();
+    if (reachRoom(m, act)) saveMeta(m);
+    this.save();
+    this.refreshBar(true);
+    const words = roomLine(s.run.seed, hall, s.run.heroes.filter(standing).map((h) => h.kind));
+    const t = this.parts.title;
+    const card = el('div', 'stTitleCard');
+    card.append(el('small', '', `Act ${ACT_NUMERALS[act]}`), el('b', '', ROOM_NAMES[hall].title));
+    if (words.line) card.append(el('p', 'stTitleLine', `“${words.line}”`), el('em', '', `— ${rulerOf(settings().ruler).name}`));
+    if (words.duchess) card.append(el('p', 'stTitleGoat', `Duchess: ${words.duchess}`));
+    if (act === 3) card.append(el('p', 'stThrone', '♛ The last room'));
+    card.append(el('small', 'stTitleTap', 'Tap to go on'));
+    t.replaceChildren(card);
+    t.hidden = false;
+    this.hold = true;
+    this.titleLeft = TITLE_MS;
+  }
+
+  /** The title card goes (tapped, or its time is up), and the break in the new room runs. */
+  private endTitle(): void {
+    const t = this.parts.title;
+    if (!t) return;
+    t.hidden = true;
+    if (this.titleLeft > 0) {
+      this.titleLeft = 0;
+      this.hold = false;
+    }
+  }
+  private titleLeft = 0;
 
   private showBanner(n: number, boss: boolean): void {
     const b = this.parts.banner;
@@ -1288,9 +1456,10 @@ export class StandView {
     const p = this.parts;
     this.text('rulername', p.king.querySelector('small'), rulerOf(settings().ruler).name);
     const wave = s.phase === 'deploy' ? run.wave : s.phase === 'break' ? run.wave : run.wave;
-    this.text('wave', p.wave.querySelector('span'), String(wave));
-    const boss = (s.phase === 'wave' || s.phase === 'deploy' || s.phase === 'break') && wave % 5 === 0;
-    this.text('boss', p.wave.querySelector('em'), boss ? 'Boss' : s.phase === 'wave' ? `${foesAlive(s) + s.queue.length} foes` : '');
+    // (the bonus wave of holding the line counts as the act's last wave held a while longer)
+    this.text('wave', p.wave.querySelector('span'), String(s.holding ? wave - 1 : wave));
+    const boss = !s.holding && (s.phase === 'wave' || s.phase === 'deploy' || s.phase === 'break') && wave % 5 === 0;
+    this.text('boss', p.wave.querySelector('em'), boss ? 'Boss' : s.phase === 'wave' ? `${s.holding ? 'Hold · ' : ''}${foesAlive(s) + s.queue.length} foes` : '');
     const k = s.king;
     (p.king.querySelector('i span') as HTMLElement).style.width = `${Math.max(0, (k.hp / k.maxHp) * 100)}%`;
     this.text('kinghp', p.king.querySelector('b'), `${Math.max(0, Math.ceil(k.hp))} / ${k.maxHp}`);
@@ -1320,7 +1489,7 @@ export class StandView {
     p.bar.hidden = s.phase === 'deploy';
     if (s.phase === 'deploy') this.drawTray();
     p.pause.hidden = s.phase !== 'wave' && s.phase !== 'break';
-    p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over';
+    p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
     p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';
     if (!p.heroes.hidden) {
       this.heroBar.setAuto(!!this.host.meta().ultAuto);
@@ -1436,7 +1605,7 @@ export class StandView {
     for (const h of sh.heroes) {
       const row = el('div', `stSheetRow${h.fallen ? ' fallen' : ''}`);
       const head = el('div', 'stSheetHead');
-      const pic = portrait(formOf(UNITS[h.kind], 1), 32, 1);
+      const pic = portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1);
       pic.className = 'stSheetPic';
       head.append(pic, el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
       row.append(head, this.barEl(h.maxHp ? h.hp / h.maxHp : 0, 'hp'));
@@ -1483,7 +1652,11 @@ export class StandView {
     end.replaceChildren();
     const card = el('div', 'stCard stEndCard');
     const sum = this.summary!;
-    card.append(el('i', 'stCrest'), el('h2', '', 'The king has fallen'), el('p', 'stBig', `Wave ${sum.best}`), el('p', 'stDim', sum.newBest ? 'A new best wave!' : `Best wave: ${m.stand ?? sum.best}`));
+    card.append(el('i', 'stCrest'), el('h2', '', 'The king has fallen'), el('p', 'stBig', `Wave ${sum.best}`));
+    // (where it ended, in the retreat's rooms: STAND-RETREAT)
+    if (sum.room) card.append(el('p', 'stFell', `Fell in ${ROOM_NAMES[sum.room].the}, wave ${sum.best}${sum.held ? ', holding the line' : ''}`));
+    if (sum.act === 3) card.append(el('p', 'stThrone', '♛ Reached the throne room'));
+    card.append(el('p', 'stDim', sum.newBest ? 'A new best wave!' : `Best wave: ${m.stand ?? sum.best}`));
     const rows = el('div', 'stFacts');
     const row = (a: string, b: string) => rows.append(Object.assign(el('div'), { innerHTML: `<span>${a}</span><b>${b}</b>` }));
     row('Waves cleared', String(sum.cleared));

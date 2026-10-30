@@ -1,0 +1,287 @@
+{
+  "knight": {
+    "scene": "knight-anime.png",
+    "sceneSha256": "4404d2dd628bed0d9b336a0daa53323674923f6cfa77bc2635fdf5d1ed6eef97",
+    "cutout": "knight-anime-cutout.png",
+    "cutoutSha256": "cb9bc22bf6a6a011be638ea6ff72cf96ac3a5feab4ea0aca598cc140c1df0601",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1096,
+      1644
+    ],
+    "identity": "Kwame, the Knight (Ghanaian, Akan)"
+  },
+  "wizard": {
+    "scene": "wizard-anime.png",
+    "sceneSha256": "3ce9b75eea27655abf6fa186d2f5f817639ba9240232e21d56e999626bad9324",
+    "cutout": "wizard-anime-cutout.png",
+    "cutoutSha256": "c2e39ef5545ef37bcab7eaa4ee88af3308eb7a7e7cf00518d5358b9d36126e13",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1087,
+      1631
+    ],
+    "identity": "Ravi, the Fire Wizard (Indian, Tamil)"
+  },
+  "peasant": {
+    "scene": "peasant-anime.png",
+    "sceneSha256": "5eff9ade1bcc8d3c5e4c05589eb0f49dd3ee6ba9d7494f9df99fc2a5db6c4ee5",
+    "cutout": "peasant-anime-cutout.png",
+    "cutoutSha256": "1055ae297a39ebc3952b15660ce4ecc6aee2393c3c5cc86f21ec4198da094859",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1088,
+      1632
+    ],
+    "identity": "Minh, the Peasant (Vietnamese)"
+  },
+  "paladin": {
+    "scene": "paladin-anime.png",
+    "sceneSha256": "c7653c1a811038dedab1bf2e83a74b5b0423b149b565289ee0d9627b2ecd782e",
+    "cutout": "paladin-anime-cutout.png",
+    "cutoutSha256": "f87cb54752d67a9587983aa31f831967f0e0e216e0d14ece294af43d91985b0b",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1097,
+      1646
+    ],
+    "identity": "Karim, the Paladin (Lebanese)"
+  },
+  "cleric": {
+    "scene": "cleric-anime.png",
+    "sceneSha256": "0fbcfd62dc2e9ef5e5cc8b89bccc049a78bb13dd653b42bfc7eeef447a67979b",
+    "cutout": "cleric-anime-cutout.png",
+    "cutoutSha256": "3b14ca75552d3a6439aca2f9fd5a65f5e351a20d451d2f69aaa84aa8a805759c",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1091,
+      1637
+    ],
+    "identity": "Selam, the Cleric (Ethiopian, Amhara)"
+  },
+  "ranger": {
+    "scene": "ranger-anime.png",
+    "sceneSha256": "4b8e5df219309fd581de704c322e69e5f6e141fc63ab5db3f818b773aa421736",
+    "cutout": "ranger-anime-cutout.png",
+    "cutoutSha256": "0e55c0be352da8b4f50f880cfd68643f1cdf5fcab94e6ce78d765bb45f7363ee",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1091,
+      1637
+    ],
+    "identity": "Inti, the Ranger (Quechua, Peruvian Andes)"
+  },
+  "illusionist": {
+    "scene": "illusionist-anime.png",
+    "sceneSha256": "9c6a7b836e9090f11dca5b329bc4f47454fbd29fef41df784d3322640080294e",
+    "cutout": "illusionist-anime-cutout.png",
+    "cutoutSha256": "5b5f1a7e687e009e40869b905d3c6f6222afe4c7ec97d8d29ecd9e65dd4773bd",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1091,
+      1637
+    ],
+    "identity": "Luana, the Illusionist (Afro-Brazilian)"
+  },
+  "buccaneer": {
+    "scene": "buccaneer-anime.png",
+    "sceneSha256": "c9b3e27ed4f93752b29be1051851644cc0e7711ef88fee74c84e1d29b26d40c9",
+    "cutout": "buccaneer-anime-cutout.png",
+    "cutoutSha256": "5278652b963ebc6a7681f66ff40a07a4ee7eba2a958ad9fb24f4223d13a00a4b",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1092,
+      1638
+    ],
+    "identity": "Tiago, the Buccaneer (Cape Verdean)"
+  },
+  "timeWitch": {
+    "scene": "timeWitch-anime.png",
+    "sceneSha256": "6f36a0b8c7922e93caba73073f1bde3e95fe6d9cba289b61a1debf31ab1982d7",
+    "cutout": "timeWitch-anime-cutout.png",
+    "cutoutSha256": "64c794c2f9322563b1bf4f3d306ae6f6384d353f8b8e4dbee3b23ec37bd302b1",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1100,
+      1650
+    ],
+    "identity": "Adaeze, the Time Witch (Nigerian, Igbo)"
+  },
+  "dragoon": {
+    "scene": "dragoon-anime.png",
+    "sceneSha256": "ef6e193edb2869b057c16b732a9aac533884a58bdcd44a253ce1e22b3a85358e",
+    "cutout": "dragoon-anime-cutout.png",
+    "cutoutSha256": "4ce69419759889696f901ab762e2b015290309070afbc72a349b6e1cccbae927",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1105,
+      1658
+    ],
+    "identity": "Tiziri, the Queen Dragoon (Amazigh, Moroccan)"
+  },
+  "sage": {
+    "scene": "sage-anime.png",
+    "sceneSha256": "d493128108d7a4350f74538a2f376675c5f8bf78de653e922e6d1360caf3695d",
+    "cutout": "sage-anime-cutout.png",
+    "cutoutSha256": "bb14e99706412d740fbfe470847dd7db899b108af6b3b141c97f938d1f040dfb",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1094,
+      1641
+    ],
+    "identity": "Seydou, the Great Sage (Malian)"
+  },
+  "lightningMage": {
+    "scene": "lightningMage-anime.png",
+    "sceneSha256": "612af6c189718dbf705031e4e4f77cfe8561aec4f84b6fe77d14ffaa8659bf0b",
+    "cutout": "lightningMage-anime-cutout.png",
+    "cutoutSha256": "b61e1f09a43ea374045832399a8355daee8f1e3634dfa4e515867d1a869426fb",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1091,
+      1637
+    ],
+    "identity": "Malia, the Lightning Mage (Samoan)"
+  },
+  "beastmaster": {
+    "scene": "beastmaster-anime.png",
+    "sceneSha256": "14f9b0e0b47424162b5fcadcb19d765ba53fc109809697f63fcd2322815e8f31",
+    "cutout": "beastmaster-anime-cutout.png",
+    "cutoutSha256": "084cde7b41ccfbbe8e6e1594af503cb7594e5a3c3586620f54409b7182882bdd",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1098,
+      1647
+    ],
+    "identity": "Itzel, the Beastmaster (Maya, Mexico)"
+  },
+  "lancer": {
+    "scene": "lancer-anime.png",
+    "sceneSha256": "d11c144ea561a9b6f91decac798abbcecbedf32fe24c1f468bad6dde6766ba5f",
+    "cutout": "lancer-anime-cutout.png",
+    "cutoutSha256": "21a938d770c8c241b4f5504eb7d9b9f74d5ae2275746a03bf5c5c929632b7e0f",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1105,
+      1658
+    ],
+    "identity": "Bataar, the Lancer (Mongolian)"
+  },
+  "mercenary": {
+    "scene": "mercenary-anime.png",
+    "sceneSha256": "68834b1aefcee003df8b5e73a20afb907356edfc695474752a5c97dd5a9ee4a1",
+    "cutout": "mercenary-anime-cutout.png",
+    "cutoutSha256": "974f474c4878fb9670bd1e6336a1ef556d6cf68dde8533e72129aceb384aceba",
+    "sceneSize": [
+      1024,
+      1536
+    ],
+    "originalCutoutSize": [
+      1024,
+      1536
+    ],
+    "preparedCutoutSize": [
+      1091,
+      1637
+    ],
+    "identity": "Kian, the Mercenary (Persian, Iranian)"
+  }
+}

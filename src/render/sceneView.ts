@@ -9,7 +9,8 @@
 import { Application, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { FEET, fillLine, STAGE_H, STAGE_W, SCENES, type Scene, type SceneCue, type Shot } from '../sim/sceneScripts';
 import { castOf, namesOf, type Cast, type Players } from '../sim/sceneRules';
-import { UNITS } from '../sim/units';
+import { ALL_HEROES, UNITS } from '../sim/units';
+import { battleSheet } from './awakenLook';
 import { backdropFiles } from './backdrop';
 import { loadImage } from './loadImage';
 import { facesRightOf, framesOf, figureOf, type Anim } from './sheets';
@@ -439,14 +440,17 @@ class Run {
         continue;
       }
       const anim: Anim = a.walking ? 'walk' : a.pose === 'strike' || a.pose === 'cast' ? 'attack' : a.pose === 'hurt' ? 'hurt' : a.pose === 'down' ? 'dead' : 'idle';
-      const list = framesOf(def.sheet, anim);
+      const hero = ALL_HEROES.includes(kind);
+      const sheet = hero ? battleSheet(kind, a.look ?? 0, 1) : def.sheet;
+      const list = framesOf(sheet, anim);
       const frame = anim === 'dead' ? list.length - 1 : anim === 'walk' ? Math.floor(a.walked * 9) : anim === 'attack' ? Math.floor(this.now / 120) : Math.floor(this.now / 170);
       f.body.texture = list[frame % list.length];
-      const dir = (a.facing === 'right' ? 1 : -1) * (facesRightOf(def.sheet) ? 1 : -1);
+      const dir = (a.facing === 'right' ? 1 : -1) * (facesRightOf(sheet) ? 1 : -1);
       const k = def.scale * (m.scale ?? 1);
       f.body.scale.set(k * dir, k);
       f.body.tint = m.shade ? 0x000000 : 0xffffff;
-      // (an awakened hero keeps its colours and wears its class's aura, `awakenAura.ts`)
+      // Heroes change equipment at the awakening beat. A foe's scripted aura
+      // (the Orc Warlord rising) remains a separate cinematic effect.
       if (f.look !== a.look) {
         f.look = a.look;
         if (f.aura) {
@@ -454,13 +458,13 @@ class Run {
           f.aura.front.destroy({ children: true });
           f.aura = undefined;
         }
-        if (a.look) {
+        if (a.look && !hero) {
           f.aura = new AwakenAura(kind, a.look, settings().saver);
           f.box.addChildAt(f.aura.back, 1);
           f.box.addChild(f.aura.front);
         }
       }
-      f.aura?.update(this.now, figureOf(def.sheet) * k, a.facing === 'right' ? 1 : -1, reduced());
+      f.aura?.update(this.now, figureOf(sheet) * k, a.facing === 'right' ? 1 : -1, reduced());
       const bob = speaking === id && a.pose !== 'down' && !reduced() ? Math.round(Math.sin(this.now / 160)) : 0;
       f.body.y = -bob;
       f.box.position.set(Math.round(a.x), FEET);

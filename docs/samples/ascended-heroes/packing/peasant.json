@@ -1,0 +1,36 @@
+{
+  "id": "peasant",
+  "inputSize": [
+    1499,
+    1049
+  ],
+  "cell": [
+    118,
+    104
+  ],
+  "scale": 0.5549132947976878,
+  "warnings": [
+    {
+      "row": 5,
+      "col": 6,
+      "box": [
+        1124,
+        827,
+        1455,
+        910
+      ],
+      "issue": "touching actors: inspect cell edges"
+    },
+    {
+      "row": 5,
+      "col": 3,
+      "box": [
+        399,
+        831,
+        721,
+        907
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
+}

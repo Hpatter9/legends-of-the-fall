@@ -1,6 +1,6 @@
 // The hero's picture for the scenes that draw sheets straight onto a canvas (the tavern, the camp, the summoning hall, the
-// Calamity map): its form at its rank. An awakened hero keeps its own colours (AWAKEN-002); those scenes lay its aura round
-// it with `auraCanvas.ts`, by `awakenedStep`. Reads the meta only.
+// Calamity map): its permanent upgraded equipment at its rank. Combat tier auras
+// belong to fights; home scenes show the new equipment clearly. Reads meta only.
 
 import { heroRank, type Meta } from '../sim/meta';
 import { sheetInfo } from './sheets';
@@ -21,5 +21,8 @@ export function heroRig(meta: Meta, kind: string): Rig | null {
   return sheetInfo(lookSheet(kind, full, gradeOfRank(full)));
 }
 
-/** The awakened step of a hero (0, 1 or 2): which aura it wears. */
+/** The permanent awakened step; used to choose equipment in the party tableau. */
 export const awakenedStep = (meta: Meta, kind: string): number => stepOfRank(heroRank(meta, kind));
+
+/** Home scenes have no combat tier, so do not wear a combat aura. */
+export const menuAuraStep = (_meta: Meta, _kind: string): number => 0;
