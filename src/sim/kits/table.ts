@@ -66,7 +66,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   siegeBot: 0.43,
   priestess: 1.05,
   dragoon: 0.63,
-  juggernaut: 0.52,
+  juggernaut: 0.65, // (RPG-SPELLS batch 3: Seismic Slam, 0.52 as Earthquake)
   sage: 0.65,
   demonSwordsman: 0.66,
   tyrant: 0.97,

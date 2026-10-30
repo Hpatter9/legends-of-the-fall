@@ -6,7 +6,7 @@
 
 import { DIRS, type At } from '../board';
 import { atkOf, defOf, hurt, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
-import { apart, foesOf, mendUnit, net } from '../abilities';
+import { apart, castPower, foesOf, mendUnit, net } from '../abilities';
 import { resistOf, weakFor } from '../ailments';
 import { kx } from './effects';
 import { foesNear, mark, ms, nearestFoe, strike, stun, toughest } from './common';
@@ -88,7 +88,9 @@ export function seismicSlam(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 export const TUNNEL = { reach: 6, mult: 1.6, launch: 2, splash: 0.6 } as const;
 export function tunnelStrike(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (foesNear(b, me, 1).length >= 2) return false;
-  return burrow(b, me, { ...TUNNEL }, out);
+  // (the eruption comes after the cast, so the cast's strength, its `tune`, is carried into it)
+  const k = castPower();
+  return burrow(b, me, { ...TUNNEL, mult: TUNNEL.mult * k, splash: TUNNEL.splash * k }, out);
 }
 
 /** Tyrant, Bane (it was Condemn): iron chains drag the toughest foe within 6 up to 3 tiles towards him and mark it for 6s (every hero goes for
