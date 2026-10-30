@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.258.0',
+    date: '2026-10-30',
+    title: 'Every spell painted',
+    notes: ['All 131 painted spell sheets are in: the auras, the casters\' spells, and the martial, ranged and monster moves.', 'Auras show painted rings and motes instead of plain rings. Fireballs, meteors and volleys fly painted shots.'],
+  },
+  {
     version: '0.257.0',
     date: '2026-10-30',
     title: 'Auto keeps ultimates short',

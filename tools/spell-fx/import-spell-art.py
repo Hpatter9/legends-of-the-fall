@@ -24,6 +24,12 @@ on the ground however the sheet placed it.
 A session with no passing sheet has no atlas (an old one is removed). It prints each atlas's size and the total, and stops,
 writing nothing, if the total is over 5 MB (run it again with cell=80).
 
+Small fixes to a painted sheet, made here rather than by repainting it, are listed in tools/spell-fx/spell-fixes.json:
+`"<key>.<part>": {"frames": [source frame numbers, from 0]}` packs the row's frames in that order (a loop that grows out of
+nothing and would pop each time round is played from its full frames, back and forth; a loop that swaps colour every frame keeps
+one colour); `"fade": n` adds n frames after the last, the last again thinner each time (a "once" row painted to end on its fullest
+frame would cut off hard). A fix is applied after the checks, and the packed row must still be in the brief's range.
+
 --check only checks the sheets and writes nothing (it exits 1 when a sheet has a fault). --contact <png> also draws every
 packed strip, labelled, on one picture for review. The painted sources are never changed. Re-run it whenever a session lands.
 """
@@ -36,6 +42,8 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = json.loads((ROOT / 'tools/spell-fx/spell-parts.json').read_text())
 SRC_CELL = MANIFEST['cell']
+FIXES = json.loads((ROOT / 'tools/spell-fx/spell-fixes.json').read_text()) if (ROOT / 'tools/spell-fx/spell-fixes.json').exists() else {}
+FIXES = {k: v for k, v in FIXES.items() if k != '_'}
 SESSIONS = {k: v for k, v in MANIFEST.items() if k not in ('_', 'cell')}
 OUT = ROOT / 'src/art/fx/spells'
 COLS = 16
@@ -116,7 +124,23 @@ for session, keys in SESSIONS.items():
                 print(f'  FAULT {session}/{key}.png: {f}')
             continue
         ok += 1
-        for (part, kind, _lo, _hi, size), fr in zip(rows, frames):
+        for (part, kind, lo, hi, size), fr in zip(rows, frames):
+            fix = FIXES.get(f'{key}.{part}')
+            if fix and 'frames' in fix:
+                order = fix['frames']
+                if any(i >= len(fr) for i in order) or not lo <= len(order) <= hi:
+                    raise SystemExit(f'spell-fixes.json: {key}.{part} names frames {order} (the sheet has {len(fr)}; {lo} to {hi} allowed)')
+                fr = [fr[i] for i in order]
+            if fix and fix.get('fade'):
+                # (a "once" row that ends on its fullest frame would cut off hard: that frame again, thinner each time, to nothing)
+                n = fix['fade']
+                last = fr[-1]
+                for i in range(n):
+                    f = last.copy()
+                    f.putalpha(last.getchannel('A').point(lambda a, k=(n - i) / (n + 1): int(a * k)))
+                    fr = fr + [f]
+                if len(fr) > hi:
+                    raise SystemExit(f'spell-fixes.json: {key}.{part} fades to {len(fr)} frames ({hi} allowed)')
             strips.append((f'{key}.{part}', fr, size, kind == 'loop'))
     bad = sum(1 for f in failed if f.startswith(session + '/'))
     print(f'{session}: {ok} of {len(keys)} sheets pass' + (f'; {bad} left out' if bad else ''))

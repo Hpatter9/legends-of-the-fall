@@ -49,7 +49,7 @@ export function spellScale(key: string, mult = 1): number {
 
 /** The parts painted standing on the cell's bottom edge (the brief: anything that grows from the feet), drawn from the ground up
  *  rather than centred. */
-const FOOTED = /^wall-[a-z]+\.(rise|stand|break)$|^(launch\.cast|launch\.impact|burrow\.cast|burrow\.impact|revivify\.cast|revivify\.impact|resurrection\.cast|resurrection\.impact|reincarnate\.cast|reincarnate\.impact|elixir\.impact|mass-resurrection\.impact|berserker-leap\.impact|seismic-slam\.impact|rage\.stand)$/;
+const FOOTED = /^wall-[a-z]+\.(rise|stand|break)$|^(launch\.cast|launch\.impact|burrow\.cast|burrow\.impact|revivify\.cast|revivify\.impact|resurrection\.cast|resurrection\.impact|reincarnate\.cast|reincarnate\.impact|elixir\.impact|mass-resurrection\.impact|berserker-leap\.impact|seismic-slam\.impact|rage\.stand|time-stop\.cast|dragon-dive\.cast|tentacles\.cast)$/;
 /** Whether a part stands on the ground: it is placed by its foot rather than its middle. */
 export const footed = (key: string): boolean => FOOTED.test(key);
 /** The anchor's height in the cell (0 top, 1 bottom) a part is placed by: its foot when it stands on the ground, else its middle. */
