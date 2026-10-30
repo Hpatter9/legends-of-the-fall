@@ -1,4 +1,4 @@
-// The aura round an awakened hero in the Pixi views (the fight board, the Last Stand, the Calamity, the cinematics): the
+// The class aura round a promoted combat hero in the Pixi views (the fight board, the Last Stand, the Calamity, the cinematics): the
 // parts `auraStyles.ts` gives its class, each drawn from the aura atlas (`auraArt.ts`) and placed by `auraPlace.ts`.
 // The sprites are made once, when the art is ready, and only moved and given the next frame after that, so a fight
 // allocates nothing for them. Reduced motion holds every part still on one frame (it never disappears); battery saver

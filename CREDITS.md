@@ -112,7 +112,7 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   moon slash, lightning burst and strike, and the pink heart. The pack's licence allows use in games, commercial ones
   included; credit appreciated (https://blueberry-assets.itch.io). Mapped to skills and spells in `src/render/skillFx.ts`.
 
-## Awakened auras (`src/art/fx/aura/`)
+## Class auras (`src/art/fx/aura/`)
 
 - `atlas.png`: original smooth painted effects generated with OpenAI image generation in October 2026 for the
   owner's approved ascension aura concept. Thirteen class sheets supply 80 separate component loops, six 96px
@@ -122,6 +122,8 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
   packing the shipped atlas. Original sources remain unchanged in the art workspace; filenames and hashes are in
   `tools/awaken/painted-sources.json`. These replace the aura atlas's former **5000 Pixel Effects** strips by blueberry;
   that pack's other uses and credits remain. See `docs/notes/painted-ascension-auras.md`.
+
+These owner-approved ascension effects are reused for combat tier-ups by ART-ASCEND, on either permanent hero form.
 
 ## Summon tarot cards (SUMMON-TAROT, phase A mock-up)
 
@@ -422,9 +424,11 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - `src/art/heroes/*.webp`: 45 original anime hero scenes and 45 transparent menu cutouts generated with OpenAI image generation in October 2026 for the owner's hero overview request. Each full illustration has an individual pose and situation. Kitsune, Gorgon, Illusionist and Time Witch follow the owner's supplied redesign concept; the other heroes draw on their established game identities and colours.
 - `tools/anime-heroes/catalogue.json` and `scenes.json` record the character directions and scene briefs. Generated production atlases are split into individual assets and transcoded for the offline gallery by `extract.cjs` and `pack.cjs`. Battle animation artwork and its existing credits remain separate.
 
+- Fifteen heroes repainted for a more varied cast (Knight, Fire Wizard, Peasant, Paladin, Cleric, Ranger, Illusionist, Buccaneer, Time Witch, Queen Dragoon, Great Sage, Lightning Mage, Beastmaster, Lancer, Mercenary): original artwork generated with OpenAI image generation for the owner's heritage request (docs/notes/heritage-art-prompt.md), replacing their earlier scenes and cutouts; same file names and sizes.
+
 ## Heritage looks
 
-- `src/art/units/*_{deep,brown,tan,olive}.png` (21 sheets, front and rear, for eleven human heroes; the Cleric's back shows no skin and is used as it is): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight, his hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
+- `src/art/units/*_{deep,brown,tan,olive}.png` (23 sheets, front and rear, for twelve human heroes; the Cleric's back shows no skin and is used as it is): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
 
 
 ## Last Stand ornate room artwork (`src/art/stand/ornate/`)
@@ -439,3 +443,8 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Status effects (painted)
 
 - The 11 sheets in `art-source/status-fx/`: original artwork generated for this game with OpenAI image generation.
+
+## Awakened hero equipment (`src/art/awakened/`)
+
+- Original pixel artwork generated with OpenAI image generation for the owner-approved legendary gear and compact hero form concepts. Forty-five collectible heroes and four supporting Werewolf/Druid forms have separately drawn front/rear animation views, mirrored for four facings. Mage eye glow is part of the artwork. The fifteen human identities follow the heritage brief and keep their people, palettes and class equipment in the upgraded forms.
+- `tools/ascended/roster.json`, `heritage.json` and `sources.json` record the character/equipment briefs and source provenance. The originals remain in the ignored art workspace. `pack.cjs` crops, selects intact poses, applies hard alpha and scales nearest-neighbour without repainting the artwork. The corresponding `src/art/heroes/awakened-*.webp` menu cutouts are extracted from the emitted idle poses. See `docs/notes/ascended-hero-forms.md`.

@@ -18,10 +18,10 @@ import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standFi
 import { heroSays, kingSays, newQuipScene, standFoeGrumbles } from './quips';
 import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
-import { saveMeta, type Meta } from './sim/meta';
+import { heroRank, saveMeta, type Meta } from './sim/meta';
 import { HeroBar } from './heroBar';
 import { portrait } from './render/sheets';
-import { formOf } from './sim/units';
+import { battleSheet, lookSheet } from './render/awakenLook';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { RELICS } from './sim/relics';
@@ -599,7 +599,7 @@ export class StandView {
       heroes.forEach((h) => {
         const card = el('button', 'stMan');
         card.dataset.id = String(h.id);
-        const pic = portrait(formOf(UNITS[h.kind], 1), 40, 1);
+        const pic = portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 40, 1);
         pic.className = 'stManPic';
         card.append(pic, el('span', '', UNITS[h.kind].name));
         card.style.setProperty('--hc', colourCss(this.colourOf(h.id)));
@@ -627,7 +627,7 @@ export class StandView {
         const pic = card.querySelector('canvas');
         drag.ghost = el('div', 'stGhost');
         if (pic) {
-          const c = portrait(formOf(UNITS[this.s!.run.heroes.find((h) => h.id === id)!.kind], 1), 48, 1);
+          const c = portrait(lookSheet(this.s!.run.heroes.find((h) => h.id === id)!.kind, heroRank(this.host.meta(), this.s!.run.heroes.find((h) => h.id === id)!.kind), 1), 48, 1);
           drag.ghost.append(c);
         }
         this.root.append(drag.ghost);
@@ -754,7 +754,7 @@ export class StandView {
         if (!a) {
           a = el('button', 'stFind');
           a.style.setProperty('--hc', colourCss(this.colourOf(u.tag)));
-          const pic = portrait(formOf(UNITS[u.def], u.grade ?? 1), 32, u.grade ?? 1);
+          const pic = portrait(battleSheet(u.def, u.awaken ?? 0, u.grade ?? 1), 32, u.grade ?? 1);
           a.append(el('i'), pic, el('b'));
           const id = u.id;
           a.addEventListener('click', () => this.panTo(id));
@@ -1436,7 +1436,7 @@ export class StandView {
     for (const h of sh.heroes) {
       const row = el('div', `stSheetRow${h.fallen ? ' fallen' : ''}`);
       const head = el('div', 'stSheetHead');
-      const pic = portrait(formOf(UNITS[h.kind], 1), 32, 1);
+      const pic = portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1);
       pic.className = 'stSheetPic';
       head.append(pic, el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
       row.append(head, this.barEl(h.maxHp ? h.hp / h.maxHp : 0, 'hp'));

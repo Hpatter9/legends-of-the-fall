@@ -6,6 +6,8 @@ import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
 import layout from '../art/units/sheets.json';
 import { RESONANCE_URLS } from './resonanceArt';
+import { AWAKENED_URLS } from './awakenedArt';
+import awakened from '../art/awakened/manifest.json';
 import { UNITS } from '../sim/units';
 import knight from '../art/units/knight_1.png';
 import samurai from '../art/units/samurai.png';
@@ -125,10 +127,13 @@ interface Layout {
   /** Drawn facing right unless the sheet says otherwise (the forest and boss sheets face left). */
   facesRight?: boolean;
   rear?: string;
+  /** Two named actions may share one physical row (the Knight's shield block). */
+  aliases?: Record<string, string>;
 }
 
 const URLS: Record<string, string> = {
   ...RESONANCE_URLS,
+  ...AWAKENED_URLS,
   knight_1: knight,
   knight_2: knight2,
   knight_3: knight3,
@@ -235,29 +240,59 @@ const URLS: Record<string, string> = {
   hero_shambler: heroShambler,
 };
 
-const LAYOUT = layout as Record<string, Layout>;
+const LAYOUT: Record<string, Layout> = { ...layout, ...awakened.layouts };
 const frames = new Map<string, Texture[]>();
 const images = new Map<string, HTMLImageElement>();
+const loading = new Map<string, Promise<void>>();
+
+/** Decode a sheet only when needed; repeated requests share one load. */
+function loadSheet(id: string): Promise<void> {
+  if (images.has(id)) return Promise.resolve();
+  const pending = loading.get(id);
+  if (pending) return pending;
+  const task = (async () => {
+    const img = await loadImage(URLS[id]);
+    const base = Texture.from(img);
+    const l = LAYOUT[id];
+    l.rows.forEach((row, r) => {
+      const list: Texture[] = [];
+      for (let i = 0; i < l.counts[row]; i++) list.push(new Texture({ source: base.source,
+        frame: new Rectangle((i % l.perRow) * l.w, (r + Math.floor(i / l.perRow)) * l.h, l.w, l.h) }));
+      frames.set(`${id}:${row}`, list);
+    });
+    for (const [alias, row] of Object.entries(l.aliases ?? {})) frames.set(`${id}:${alias}`, frames.get(`${id}:${row}`)!);
+    images.set(id, img);
+  })();
+  loading.set(id, task);
+  void task.finally(() => loading.delete(id)).catch(() => {});
+  return task;
+}
+
+/** Newly awakened equipment is decoded for owned awakened heroes and previews,
+ * not the whole extra roster at startup. The service worker caches their files. */
+export async function loadAwakenedSheets(kinds: readonly string[]): Promise<void> {
+  const extra: Record<string, string[]> = { druid: ['hero_res_treant', 'hero_res_treant2', 'hero_res_treant3'] };
+  const forms = awakened.forms as Record<string, string>;
+  const ids = new Set<string>();
+  for (const kind of kinds) {
+    const def = UNITS[kind];
+    if (!def) continue;
+    for (const base of [def.sheet, ...(def.forms ?? []), ...(extra[kind] ?? [])]) {
+      const id = forms[base];
+      if (!id) continue;
+      ids.add(id);
+      if (LAYOUT[id]?.rear) ids.add(LAYOUT[id].rear!);
+    }
+  }
+  await Promise.all([...ids].map(loadSheet));
+}
 
 /** Load the units' sheets and their rear views and transformation forms. Legacy hero imports
  * remain available as source art without allocating obsolete GPU textures. */
 export async function loadSheets(): Promise<void> {
   const required = new Set(Object.values(UNITS).flatMap(def => [def.sheet, ...(def.forms ?? [])]));
   for (const id of [...required]) if (LAYOUT[id]?.rear) required.add(LAYOUT[id].rear!);
-  await Promise.all(
-    [loadRulers(), ...Object.entries(URLS).filter(([id]) => required.has(id)).map(async ([id, url]) => {
-      const img = await loadImage(url);
-      images.set(id, img);
-      const base = Texture.from(img);
-      const l = LAYOUT[id];
-      l.rows.forEach((row, r) => {
-        const list: Texture[] = [];
-        for (let i = 0; i < l.counts[row]; i++) list.push(new Texture({ source: base.source,
-          frame: new Rectangle((i % l.perRow) * l.w, (r + Math.floor(i / l.perRow)) * l.h, l.w, l.h) }));
-        frames.set(`${id}:${row}`, list);
-      });
-    })],
-  );
+  await Promise.all([loadRulers(), ...[...required].filter(id => URLS[id] && LAYOUT[id]).map(loadSheet)]);
 }
 
 /** An animation's frames (idle when the sheet has no such row). */

@@ -7,6 +7,7 @@ import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
 import { AwakenAura } from './awakenAura';
 import { auraOf } from './auraStyles';
+import { awakenedSheet, battleSheet, combatAuraStep } from './awakenLook';
 import { loadImage } from './loadImage';
 import bannerUrl from '../art/castle/banner.png';
 import { facesRightOf, framesOf, figureOf, hasSheet, type Anim } from './sheets';
@@ -142,13 +143,13 @@ export class UnitSprite {
   /** How tall it's drawn. */
   tall = 40;
 
-  constructor(public unit: Unit) {
+  constructor(public unit: Unit, private readonly equipmentStep = unit.awaken ?? 0) {
     const def = defOf(unit);
     this.grade = unit.side === 'hero' ? (unit.grade ?? 1) : 1;
-    const awake = unit.side === 'hero' ? (unit.awaken ?? 0) : 0;
-    // (an awakened hero keeps its own colours and sheet: its class's aura is what marks it, `awakenAura.ts`)
-    this.sheet = formOf(def, this.grade);
-    this.awakenAura = awake ? new AwakenAura(unit.def, awake, settings().saver) : null;
+    const awake = unit.side === 'hero' ? this.equipmentStep : 0;
+    this.sheet = unit.side === 'hero' ? battleSheet(unit.def, awake, this.grade) : formOf(def, this.grade);
+    const auraStep = unit.side === 'hero' ? combatAuraStep(this.grade) : 0;
+    this.awakenAura = auraStep ? new AwakenAura(unit.def, auraStep, settings().saver) : null;
     const size = (unit.size ?? 1) * (this.grade > 3 ? GRADE4_SIZE : this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * def.scale * size;
     this.ownSheet = this.sheet;
@@ -156,18 +157,18 @@ export class UnitSprite {
     this.sizeNow = size;
     this.root.scale.set(size);
     this.baseSize = size;
-    if (this.grade > 1 || awake) {
+    if (this.grade > 1) {
       // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
-      const col = awake ? auraOf(unit.def).colour : this.grade > 3 ? GRADE4_HALO : this.grade > 2 ? 0xffc83a : 0x9cc8ff;
+      const col = this.grade > 3 ? GRADE4_HALO : auraOf(unit.def).colour;
       const h = this.tall * 0.62;
-      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: awake > 1 || this.grade > 3 ? 0.16 : awake || this.grade > 2 ? 0.12 : 0.1 });
+      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: this.grade > 3 ? 0.16 : this.grade > 2 ? 0.12 : 0.1 });
       for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
         const r = new Sprite();
         r.anchor.set(0.5, 1);
         r.position.set(dx, dy);
         this.rim.addChild(r);
       }
-      this.rim.filters = [flatFilter(awake ? auraOf(unit.def).colour : this.grade > 3 ? GRADE4_RIM : this.grade > 2 ? 0xffd24a : 0xa8d0ff)];
+      this.rim.filters = [flatFilter(this.grade > 3 ? GRADE4_RIM : col)];
       const tone = this.grade > 1 ? [gradeFilter(this.grade)] : [];
       if (tone.length) this.body.filters = tone;
     }
@@ -195,7 +196,7 @@ export class UnitSprite {
     const u = this.unit;
     const def = defOf(u);
     // (a kit lends it another look for a while: a werewolf's form, a treant, a foe's guise, a wraith's shape; drawn at that shape's own scale)
-    const borrowed = u.look ? heroLook(u.def, u.look) : undefined;
+    const borrowed = u.look ? awakenedSheet(heroLook(u.def, u.look), u.side === 'hero' ? this.equipmentStep : 0) : undefined;
     const base = borrowed && hasSheet(borrowed) ? borrowed : this.ownSheet;
     const facing = facesAway(u.facing) ? rearView(base) : base;
     const want = hasSheet(facing) ? facing : base;

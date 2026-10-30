@@ -9,6 +9,9 @@ tools/resonance/source/turning/
 tools/resonance/source/walk/
 tools/anime-heroes/source/
 tools/anime-heroes/scenes/
+tools/ascended/source/
 # The painted heroes' full-size originals (tools/heritage/import-art.py turns them into src/art/heroes/*.webp).
 art-source/heritage-heroes/
+
+# Painted aura generation intermediates.
 tools/awaken/painted/

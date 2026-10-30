@@ -25,6 +25,7 @@ export const HERO_LOOKS: Record<string, { tone: Tone; hair?: Hair }> = {
   knight: { tone: 'deep', hair: 'black' },
   wizard: { tone: 'brown' },
   peasant: { tone: 'tan' },
+  paladin: { tone: 'olive', hair: 'darkBrown' },
   cleric: { tone: 'deep' },
   ranger: { tone: 'brown' },
   illusionist: { tone: 'brown' },

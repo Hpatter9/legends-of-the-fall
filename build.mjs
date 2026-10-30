@@ -86,6 +86,14 @@ for (const f of readdirSync('src/sfx').filter((f) => f.endsWith('.opus'))) {
 }
 // Full art and smaller menu cutouts are separate files, all retained for offline play.
 const HERO_ART_FILES = [];
+// Awakened animation sheets stay outside the script: heroes and previews load
+// only the art they use, while the service worker keeps all forms for flights.
+const AWAKENED_ART_FILES = [];
+mkdirSync(`${out}/awakened`, { recursive: true });
+for (const f of readdirSync('src/art/awakened').filter(f => f.endsWith('.png'))) {
+  copyFileSync(`src/art/awakened/${f}`, `${out}/awakened/${f}`);
+  AWAKENED_ART_FILES.push(`awakened/${f}`);
+}
 mkdirSync(`${out}/heroes`, { recursive: true });
 for (const f of readdirSync('src/art/heroes').filter(f => f.endsWith('.webp'))) {
   copyFileSync(`src/art/heroes/${f}`, `${out}/heroes/${f}`);
@@ -155,7 +163,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;

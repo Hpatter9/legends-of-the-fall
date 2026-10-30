@@ -29,7 +29,7 @@ import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
 import { settleArmyDrop, type DropPaid } from './sim/armyDrops';
 import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
-import { formOf, UNITS } from './sim/units';
+import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
@@ -94,7 +94,8 @@ import { RISE_MS, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
-import { framesOf, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
+import { lookSheet } from './render/awakenLook';
+import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
 import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
@@ -187,7 +188,7 @@ class Game {
   private run!: Run;
   private meta!: Meta;
   private gacha!: Gacha;
-  private events = new Events();
+  private events = new Events((kind) => awakenedOf(this.meta, kind));
   private towerView!: TowerView;
   /** The Last Stand (`standView.ts`): while it is up the ordinary board is hidden and this page's own frame does nothing. */
   private stand!: StandView;
@@ -269,6 +270,7 @@ class Game {
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
+    await loadAwakenedSheets(Object.keys(this.meta.awakened ?? {}));
     saveMeta(this.meta);
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
@@ -1101,7 +1103,7 @@ class Game {
     if (old.shownGrade < grade) {
       u.grade = grade;
       old.root.destroy({ children: true });
-      const s = new UnitSprite(u);
+      const s = new UnitSprite(u, awakenedOf(this.meta, u.def));
       this.sprites.set(unitId, s);
       this.boardView.root.addChild(s.root);
       s.update(this.b.board, performance.now(), this.b.phase !== 'deploy');
@@ -1126,7 +1128,7 @@ class Game {
       }
     for (const u of this.b.units)
       if (!this.sprites.has(u.id)) {
-        const s = new UnitSprite(u);
+        const s = new UnitSprite(u, awakenedOf(this.meta, u.def));
         this.sprites.set(u.id, s);
         // (a merge's hero rises in light: the same promotion a sim `promote` event plays)
         if (u.tag !== undefined && this.evolved.has(u.tag)) {
@@ -1462,6 +1464,7 @@ class Game {
 
   private wire(): void {
     this.heroBar = new HeroBar($('heroBar'), {
+      equipmentStep: (kind) => awakenedOf(this.meta, kind),
       onAuto: (on) => {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
@@ -2016,7 +2019,7 @@ class Game {
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
     // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
     const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
-    showRecap($('recap'), recapOf(run), { ...head, joke }, () => void this.revealEarned().then(() => this.afterResult()), advice);
+    showRecap($('recap'), recapOf(run), { ...head, joke, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -2097,7 +2100,8 @@ class Game {
       $('bench').querySelector(`[data-id="${d.id}"]`)?.classList.add('dragging');
     }
     // (the hero is held a little over the finger, so it can be seen)
-    this.ghost.texture = framesOf(this.defOf(d.id).sheet, 'idle')[0];
+    const held = heroOf(this.run, Number(d.id))!;
+    this.ghost.texture = framesOf(lookSheet(held.kind, heroRank(this.meta, held.kind), held.grade), 'idle')[0];
     this.ghost.scale.set(this.scale * this.defOf(d.id).scale);
     this.ghost.position.set(e.clientX - colLeft(), e.clientY - 24);
     this.ghost.visible = true;
@@ -2363,7 +2367,7 @@ class Game {
       const pw = document.createElement('span');
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
-      card.append(portrait(formOf(def, h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id) card.append(sell);

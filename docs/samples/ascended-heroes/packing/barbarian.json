@@ -1,0 +1,25 @@
+{
+  "id": "barbarian",
+  "inputSize": [
+    1499,
+    1049
+  ],
+  "cell": [
+    152,
+    122
+  ],
+  "scale": 0.7007299270072993,
+  "warnings": [
+    {
+      "row": 3,
+      "col": 4,
+      "box": [
+        782,
+        308,
+        935,
+        612
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
+}

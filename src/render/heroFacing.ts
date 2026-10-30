@@ -1,6 +1,9 @@
 // Art-only aliases for the older sheet names used by hero transformation events.
 // The simulation keeps its existing look IDs and behaviour.
 import layout from '../art/units/sheets.json';
+import awakened from '../art/awakened/manifest.json';
+
+const views = { ...layout, ...awakened.layouts } as Record<string, { rear?: string }>;
 
 const FORMS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   werewolf: { werewolf_white: 'hero_res_werewolf', werewolf_black: 'hero_res_werewolf_brute', werewolf_red: 'hero_res_werewolf_awakened' },
@@ -12,8 +15,8 @@ export const heroLook = (kind: string, sheet: string): string => FORMS[kind]?.[s
 
 /** The separately drawn rear view, or the existing sheet for art without one. */
 export function rearView(sheet: string): string {
-  return (layout as Record<string, { rear?: string }>)[sheet]?.rear ?? sheet;
+  return views[sheet]?.rear ?? sheet;
 }
 
 /** The Brute's larger body belongs to that transformation, not to the stats. */
-export const formScale = (sheet: string): number | undefined => sheet === 'hero_res_werewolf_brute' ? 0.75 : undefined;
+export const formScale = (sheet: string): number | undefined => sheet === 'hero_res_werewolf_brute' || sheet === 'awakened_werewolfBrute' ? 0.75 : undefined;

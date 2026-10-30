@@ -1,0 +1,25 @@
+{
+  "id": "samuraiCommander",
+  "inputSize": [
+    1496,
+    1051
+  ],
+  "cell": [
+    136,
+    109
+  ],
+  "scale": 0.6274509803921569,
+  "warnings": [
+    {
+      "row": 6,
+      "col": 5,
+      "box": [
+        954,
+        782,
+        1113,
+        1036
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
+}
