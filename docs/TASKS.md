@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS B6 — The casters
+
+- **Owner:** Claude. **Branch/worktree:** `claude/spells-b6`, `/home/user/spells-b6`.
+- **Authorisation:** owner approved design v2; batch 6 as briefed.
+- **Scope:** Fire Wizard, Lightning Mage, Warlock, Great Sage, Time Witch and Illusionist kits on the toolkit (Wall of Fire, Meteor Swarm's throws, Storm Surge's blink, Call Lightning, Eldritch Blast's shove, Circle of Death, Font of Magic, Transposition), renames and tiers.
+- **Status:** ready for review. Parity: none beyond 6 at levels 1, 10 and 30 (none beyond 4 at 30); the Lightning Mage +5.5 → +3.5 at level 10; the daily as main, the Last Stand within about half a wave, the Calamity a little lower (1.41 maps, 1.47 on main). Full `npm test` passes; screenshots `docs/samples/spells-b6-*`. [Notes](notes/spells-b6.md). Next: batch 7, the monsters.
+
 ### RPG-SPELLS B5 — The ranged heroes and summoners
 
 - **Owner:** Claude. **Branch/worktree:** `claude/spells-b5`, `/home/user/spells-b5`.
