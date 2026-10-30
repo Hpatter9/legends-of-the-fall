@@ -105,7 +105,7 @@ import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, endFight, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
@@ -468,6 +468,9 @@ class Game {
 
   /** A fresh fight for the run's stage, with the squad back where it stood (or on the first free tiles). */
   private newBattle(): void {
+    // (a fight left running behind the home screen and never finished (a new run begun from the camp) is over: its battle music
+    // goes with it, so the new board has the deployment's music, not the old battle's)
+    if (this.b?.phase === 'fight') endFight();
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();

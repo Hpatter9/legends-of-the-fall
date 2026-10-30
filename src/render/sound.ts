@@ -18,7 +18,7 @@ import { BusMixer, CueSynth, MusicPlayer } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
 import { DuckCounter, panOfEvent, type PlannedCue, type Scene } from './audioRules';
 import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
-import { atPlace, musicOf, type BattleEnd, type MusicState } from './battleMusic';
+import { atPlace, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
 import { bakeTrack } from './musicBake';
 import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, cuesFor, type Cue } from './soundRules';
@@ -200,8 +200,10 @@ export function endFight(): void {
  *  come, a fall a heart revives), the battle's track playing straight on. */
 export function endWave(end: BattleEnd): void {
   if (end === 'none') return;
-  music = { ...music, battle: null, fighting: false, victory: end === 'victory' };
-  engine?.music.sting(end);
+  // (a fight that ended behind the home screen rings nothing there: `endAt`)
+  const next = endAt(music, end);
+  music = next.state;
+  if (next.sting) engine?.music.sting(next.sting);
   syncMusic();
 }
 

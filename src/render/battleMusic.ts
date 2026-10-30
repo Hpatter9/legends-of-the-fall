@@ -70,18 +70,32 @@ export interface MusicState {
   victory: boolean;
 }
 
-/** The track to play and its level (1 is a track's full level). A victory holds the triumph bed; a battle keeps its track while a
- *  fight runs and on the board between fights; otherwise the place's own. (A cinematic's score is above all this, in `sound.ts`.) */
+/** The track to play and its level (1 is a track's full level). Off the board (the camp, any of its tabs, a tower or Calamity
+ *  map) it is always the place's own: a fight still running behind the home screen keeps its battle (for the way back to the
+ *  board) but is not heard there, and nor is a victory (the owner: "Music sounds like it runs from the fights into the main
+ *  screen after"). On the board a victory holds the triumph bed, and a battle keeps its track while a fight runs and between
+ *  fights; otherwise the deployment's. (A cinematic's score is above all this, in `sound.ts`.) */
 export function musicOf(s: MusicState, placeTrack: (p: Place) => MusicId): { track: MusicId; level: number } {
+  if (s.place !== 'deploy') return { track: placeTrack(s.place), level: 1 };
   if (s.victory) return { track: VICTORY_LOOP, level: VICTORY_BED };
-  if (s.battle && (s.fighting || s.place === 'deploy')) return { track: s.battle, level: 1 };
+  if (s.battle) return { track: s.battle, level: 1 };
   return { track: placeTrack(s.place), level: 1 };
 }
 
-/** The player has moved to `place`. Off the board (home, or a tower or Calamity map) between fights, the battle has been left or
- *  is over: its track is let go, and so is a victory's music (its results were left), so the next battle's first deploy has the
- *  deployment's music again. */
+/** The player has moved to `place`. Off the board between fights, the battle has been left or is over: its track is let go, and
+ *  so is a victory's music (its results were left), so the next battle's first deploy has the deployment's music again. A fight
+ *  still running (the home screen opened mid-fight: the fight carries on behind it) keeps its battle, to play again once the
+ *  player is back on the board; `musicOf` keeps it silent until then. */
 export function atPlace(s: MusicState, place: Place): MusicState {
-  if (place === 'deploy' || s.fighting) return { ...s, place };
+  if (place === 'deploy') return { ...s, place };
+  if (s.fighting) return { ...s, place, victory: false };
   return { ...s, place, battle: null, victory: false };
+}
+
+/** A fight has ended and `end` says what the music does (`endOfFight`): the new state, and the sting to ring. Off the board (the
+ *  fight ended behind the home screen) no sting rings and no victory music is held: the battle is simply over. */
+export function endAt(s: MusicState, end: BattleEnd): { state: MusicState; sting: 'victory' | 'defeat' | null } {
+  if (end === 'none') return { state: s, sting: null };
+  const onBoard = s.place === 'deploy';
+  return { state: { ...s, battle: null, fighting: false, victory: onBoard && end === 'victory' }, sting: onBoard ? end : null };
 }
