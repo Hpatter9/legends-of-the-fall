@@ -9,7 +9,7 @@ import { FIELD_BANDS } from '../../src/sim/foes';
 import { gradeBoost, stageBoost } from '../../src/sim/run';
 import { mixSeed, Rng } from '../../src/sim/rng';
 import { ALL_HEROES } from '../../src/sim/units';
-import { deploySpots, pickTeam } from '../heroSweep';
+import { deploySpots, fieldBoost, pickTeam, play } from '../heroSweep';
 import { SCENARIOS } from '../status-fx/logs';
 
 let h = 0x811c9dc5;
@@ -32,11 +32,20 @@ function tap(b: Battle, events: BattleEvent[]): void {
   if (b.phase !== 'fight') feed(endState(b));
 }
 
-/** One fight with `kind` in a seeded team of five at `level`, against a field band. */
-function heroFight(kind: string, seed: number, level: number): void {
+/** The heroes a batch reworks (batch 2: the healers). The `...Others` scenarios leave them out of every team, so they prove that nothing
+ *  outside the batch's heroes changed: their hashes are the ones recorded before the batch. */
+export const REWORKED: readonly string[] = ['cleric', 'priestess', 'wanderer', 'druid'];
+const others = (team: string[], rng: Rng): string[] => {
+  const pool = ALL_HEROES.filter((k) => !REWORKED.includes(k) && !team.includes(k));
+  return team.map((k) => (REWORKED.includes(k) ? pool.splice(rng.int(0, pool.length - 1), 1)[0] : k));
+};
+
+/** One fight with `kind` in a seeded team of five at `level`, against a field band (with `clean`, no reworked hero in the team). */
+function heroFight(kind: string, seed: number, level: number, clean = false): void {
   const b = startBattle(seed, FIELD_BANDS[seed % FIELD_BANDS.length], stageBoost(level === 1 ? 5 : level === 10 ? 24 : 39));
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-  const team = [kind, ...pickTeam(new Rng(mixSeed(seed, 0x7ea4))).filter((k) => k !== kind)].slice(0, 5);
+  let team = [kind, ...pickTeam(new Rng(mixSeed(seed, 0x7ea4))).filter((k) => k !== kind)].slice(0, 5);
+  if (clean) team = others(team, new Rng(mixSeed(seed, 0xc1ea)));
   team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(1 + (seed % 3), 0, level)));
   fight(b);
   while (b.phase === 'fight') stepBattle(b);
@@ -47,6 +56,16 @@ const ALL: Record<string, () => void> = {
   heroes1: () => ALL_HEROES.forEach((k, i) => heroFight(k, 700 + i, 1)),
   heroes10: () => ALL_HEROES.forEach((k, i) => heroFight(k, 800 + i, 10)),
   heroes30: () => ALL_HEROES.forEach((k, i) => heroFight(k, 900 + i, 30)),
+  // (the same, with no reworked hero anywhere: these hashes must not move with the batch)
+  field1Others: () => {
+    for (let g = 0; g < 80; g++) play(g + 1, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(5), others(pickTeam(new Rng(mixSeed(g + 1, 0x7ea4))), new Rng(mixSeed(g + 1, 0xc1ea))), 1, 1);
+  },
+  field30Others: () => {
+    for (let g = 0; g < 80; g++) play(g + 101, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(78), others(pickTeam(new Rng(mixSeed(g + 101, 0x7ea4))), new Rng(mixSeed(g + 101, 0xc1ea))), 1, 30);
+  },
+  heroes1Others: () => ALL_HEROES.filter((k) => !REWORKED.includes(k)).forEach((k, i) => heroFight(k, 700 + i, 1, true)),
+  heroes10Others: () => ALL_HEROES.filter((k) => !REWORKED.includes(k)).forEach((k, i) => heroFight(k, 800 + i, 10, true)),
+  heroes30Others: () => ALL_HEROES.filter((k) => !REWORKED.includes(k)).forEach((k, i) => heroFight(k, 900 + i, 30, true)),
 };
 
 /** Play every scenario and give each one's hash. */
