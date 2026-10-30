@@ -1,5 +1,6 @@
-/* ===== Equipment: the hero sheet's panel and picker (`equipView.ts`). Inlined after pixel.css by build.mjs. Icons are 16px tiles
-   drawn at whole-number scales (4x on a slot, 3x in a list), never smoothed; rarity colours come from --rc (.r1 to .r5). ===== */
+/* ===== Equipment: the hero sheet's panel and picker (`equipView.ts`). Inlined after pixel.css by build.mjs. Icons are the painted
+   ones (`gearIcons.ts`, `.painted`); a base without a painting keeps its 16px tile, drawn at whole-number scales (4x on a slot,
+   3x in a list), never smoothed; rarity colours come from --rc (.r1 to .r5). ===== */
 .eqPanel { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s1); }
 .eqPanel h4 { margin: 0; font: 700 14px var(--display); color: var(--gold-hi); }
 .eqSlots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -10,6 +11,15 @@
 .eqIcon img { image-rendering: pixelated; display: block; }
 .eqIcon.big img { width: 48px; height: 48px; } .eqIcon.small img { width: 32px; height: 32px; }
 .eqIcon.empty { border-style: dashed; border-color: var(--s8); } .eqIcon.empty img { opacity: 0.25; filter: grayscale(1); }
+/* The painted icons (`gearIcons.ts`): the grade's glow, the painting and the grade's painted frame, stacked in the box and smoothed
+   (paintings, not pixel art). The box's own border and fill give way to the painted frame; the painting sits inside its band. */
+span.eqIcon.painted { position: relative; border: 0; background: radial-gradient(circle at 50% 42%, #2a2f38 0%, #14171c 75%); box-shadow: none; border-radius: 9%; image-rendering: auto; overflow: hidden; }
+.eqIcon.painted > i { position: absolute; background-repeat: no-repeat; pointer-events: none; }
+.eqIcon.painted .eqFrame { inset: 0; }
+.eqIcon.painted .eqGlow { inset: 4%; }
+.eqIcon.painted .eqArt { inset: 9%; }
+.eqIcon.painted.r5 .eqArt { inset: 7%; }
+span.eqIcon.painted.empty { border: 0; } .eqIcon.painted.empty .eqArt { opacity: 0.22; filter: grayscale(1); } .eqIcon.painted.empty .eqFrame { opacity: 0.55; }
 .eqSum { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
 .eqList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
 .eqRow { display: flex; flex-direction: column; gap: 4px; padding: 4px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--rc, var(--s8)); }

@@ -9,10 +9,7 @@ import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
-import { warmIcon } from './menuArt';
-
-// (the item pictures are decoded as the page loads, so a slot redrawn after an equip shows no empty frame)
-for (const u of Object.values(EQUIP_ICONS)) warmIcon(u);
+import { paintGearIcon } from './gearIcons';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -21,9 +18,12 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** An item's icon on a rarity-coloured frame. */
+/** An item's icon: its painting in its grade's frame and glow (`gearIcons.ts`), or the old pixel icon on a rarity-coloured
+ *  frame for a base the painted atlas does not hold. */
 export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big' | 'small' = 'big'): HTMLElement {
   const frame = el('span', `eqIcon ${size}${it ? ` r${it.rarity}` : ' empty'}`);
+  const base = it ? it.base : { weapon: 'ironSword', armour: 'plateCuirass', trinket: 'ironRing' }[slot];
+  if (paintGearIcon(frame, base, it ? it.rarity : 0, size === 'big' ? 64 : 44)) return frame;
   const img = el('img');
   img.alt = '';
   img.draggable = false;

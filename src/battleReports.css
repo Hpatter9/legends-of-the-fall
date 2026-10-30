@@ -148,6 +148,8 @@ body[data-move] #result #banner { background: #15251ac4; }
 #result #waveNotes .wgChip canvas.wgIco { border-radius: 3px; background: #0006; }
 #result #waveNotes .wgChip .eqIcon.wgIco { display: inline-grid; place-items: center; padding: 0; }
 #result #waveNotes .wgChip .eqIcon.wgIco img { width: 16px; height: 16px; image-rendering: pixelated; }
+/* (a painted icon this small shows only its painting: the chip's own border gives the grade) */
+#result #waveNotes .wgChip .eqIcon.painted.wgIco { background: none; } #result #waveNotes .wgChip .eqIcon.painted.wgIco :is(.eqFrame, .eqGlow) { display: none; } #result #waveNotes .wgChip .eqIcon.painted.wgIco .eqArt { inset: 0; }
 #result #waveNotes .wgChest { position: relative; overflow: hidden; }
 #result #waveNotes .wgChest > .chestPic { position: absolute; left: 0; top: 0; transform: scale(.476); transform-origin: 0 0; }
 #result #waveNotes .wgChip.r2 { border-color: #5aa0e0aa; }
