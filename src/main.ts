@@ -73,7 +73,8 @@ import { grantContent } from './sim/contentHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
-import { HeroBar } from './heroBar';
+import { FightHud } from './fightHud';
+import { heroArtUrl, UltMoments } from './ultMoment';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
@@ -133,6 +134,8 @@ const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
 /** How long the board stays on show after the last kill before the wave recap comes up (ms). */
 const END_WAIT_MS = 2000;
+/** The king's spell orbs' row under the top bar in a fight (40 px orbs and the gaps round them, BATTLE-HUD): what the boss's bar sits below. */
+const ORBS_ROW = 48;
 /** How long the short wave card stays once the march has arrived, how long with no march at all, and its fade (WAVE-RECAP). */
 const PASS_AFTER_MARCH_MS = 1400;
 const PASS_NO_MARCH_MS = 3200;
@@ -808,8 +811,10 @@ class Game {
     if (!fight(this.b)) return;
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.b.autoUlt = this.ultAutoOn();
-    this.heroBar.setAuto(this.ultAutoOn());
-    this.heroBar.build(this.b);
+    this.hud.setAuto(this.ultAutoOn());
+    this.hud.build(this.b);
+    this.ultm.clear();
+    this.ultm.warm(this.b);
     this.evolved = new Set();
     this.endIntro();
     newQuipScene();
@@ -902,16 +907,29 @@ class Game {
       return;
     }
     if (this.auto) this.autoTick(dt);
-    if (b.phase === 'fight' && (this.sceneHold > 0 || (this.revive && !this.revive.started))) {
-      // (a cinematic is up: the fight is held where it is)
+    // (an ultimate's moment (ULT-CUTIN) moves on in real time, whatever the fight's speed; it stands still while a scene or a sheet is up)
+    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding;
+    if (b.phase === 'fight') this.ultm.frame(b, dt, !!held);
+    else if (this.ultm.queue.current) this.ultm.clear();
+    if (b.phase === 'fight' && held) {
+      // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
+    } else if (b.phase === 'fight' && this.ultm.queue.holdsBattle) {
+      // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
+      this.acc = 0;
+      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
+      this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       b.autoUlt = this.ultAutoOn();
-      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0) {
+      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle) {
         this.acc -= TICK_MS;
+        const born = b.units.length;
         const events = stepBattle(b);
-        for (const e of events) if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
+        // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
+        if (settings().ultFull && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
+        for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
+        this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
@@ -948,8 +966,8 @@ class Game {
         if (events.some((e) => e.kind === 'hit' || e.kind === 'heal')) this.refreshBench();
         if (b.phase !== 'fight') this.refresh();
       }
-      if (b.units.length !== this.sprites.size) this.heroBar.build(b);
-      this.heroBar.refresh(b);
+      if (b.units.length !== this.sprites.size) this.hud.build(b);
+      this.hud.refresh(b);
       this.fx.step(Math.min(dt, 250) * this.speed);
       $('clock').textContent = clock(b.t);
       this.refreshSpells();
@@ -1200,9 +1218,15 @@ class Game {
     const twist = $('twistBanner');
     twist.style.top = `${top.bottom + 2}px`;
     const below = twist.hidden ? top.bottom : twist.getBoundingClientRect().bottom + 2;
-    bar.style.top = `${below + 4}px`;
+    // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky: the boss's bar and the combo bar go under
+    // them, while the board's own room (its fit) is reckoned as it was, from the top bar)
+    $('hudSpells').style.top = `${below + 6}px`;
+    const orbs = ORBS_ROW;
+    bar.style.top = `${below + orbs + 4}px`;
+    const barBottom = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
     // (the row of active synergies sits under the bars during a fight)
-    const head = placeSynergies(bar.hidden ? below : bar.getBoundingClientRect().bottom + 4);
+    placeSynergies(bar.hidden ? below + orbs : barBottom);
+    const head = bar.hidden ? below : barBottom - orbs;
     const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
@@ -1455,22 +1479,48 @@ class Game {
 
   /* -------------------------------------------------------------- input */
 
-  /** The fight's hero bar (`heroBar.ts`): a portrait each, tapped to fire an ultimate, and the Auto switch. */
-  private heroBar!: HeroBar;
+  /** The fight's hero rows (`fightHud.ts`, BATTLE-HUD): a row a hero, its skills and its ultimate's glow (a tap fires it), and the Auto switch,
+   *  which sits by the king's spell orbs under the top bar. */
+  private hud!: FightHud;
+  /** The ultimates' moments (`ultMoment.ts`, ULT-CUTIN): the slash, the name and the dim, the fight held while they play. */
+  private ultm!: UltMoments;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
   }
 
   private wire(): void {
-    this.heroBar = new HeroBar($('heroBar'), {
+    this.hud = new FightHud($('fightHud'), {
       equipmentStep: (kind) => awakenedOf(this.meta, kind),
       onAuto: (on) => {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
         this.b.autoUlt = this.ultAutoOn();
       },
+      autoOn: () => this.ultAutoOn(),
+      anchor: (id) => {
+        const box = this.spriteBox(id);
+        if (!box) return null;
+        const r = this.app.canvas.getBoundingClientRect();
+        const k = r.width / this.app.screen.width;
+        return { x: r.left + (box.x + box.w / 2) * k, y: r.top + (box.y + box.h / 2) * k };
+      },
+      dockTop: () => $('panel').getBoundingClientRect().top,
+      ultFull: () => settings().ultFull,
+      ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
     });
+    this.ultm = new UltMoments({
+      anchor: (id) => {
+        const box = this.spriteBox(id);
+        if (!box) return null;
+        const r = this.app.canvas.getBoundingClientRect();
+        const k = r.width / this.app.screen.width;
+        return { x: r.left + (box.x + box.w / 2) * k, y: r.top + (box.y + box.h * 0.55) * k };
+      },
+      art: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
+    });
+    // (the Auto switch stands at the right end of the spell orbs' row)
+    $('hudSpells').append(this.hud.autoEl);
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
       // (two fingers on the board pinch it: any drag the first began is let go where it was, FIGHT-FIXES)
@@ -2392,7 +2442,10 @@ class Game {
       const card = document.createElement('button');
       card.className = 'spell';
       card.dataset.id = id;
-      card.title = sp.text;
+      // (the orb shows its cost in a badge: BATTLE-HUD)
+      card.dataset.cost = String(sp.cost);
+      card.title = `${sp.name} (${sp.cost} mana): ${sp.text}`;
+      card.setAttribute('aria-label', `${sp.name}, ${sp.cost} mana`);
       card.innerHTML = `${spellIconHtml(id)}<b>${sp.name}</b><em>${sp.cost} mana</em><span class="cool"></span>`;
       // (press and drag onto the grid to cast: the tiles it would hit show as the finger moves; a tap arms it as before)
       card.addEventListener('pointerdown', (e) => {
@@ -2413,9 +2466,12 @@ class Game {
     }
   }
 
-  /** The tile a spell dragged to (x, y) would land on: the finger is over the grid (not the panel), the tile a little above it so it can be seen. */
+  /** The tile a spell dragged to (x, y) would land on: the finger is over the grid (not the panel, nor back on the orbs' row: a cancel), the tile
+   *  a little above it so it can be seen. */
   private spellTile(x: number, y: number): [number, number] | null {
     if (y >= $('panel').getBoundingClientRect().top) return null;
+    const orbs = $('spells').getBoundingClientRect();
+    if (x >= orbs.left - 6 && x <= orbs.right + 6 && y >= orbs.top - 6 && y <= orbs.bottom + 6) return null;
     return this.tileAtScreen(x, y - 24);
   }
 
@@ -2482,7 +2538,7 @@ class Game {
     if (b.spells.mana >= 3) tips.offer('mana', $('spells'));
     const caster = b.phase === 'fight' ? b.units.find((u) => u.side === 'hero' && u.alive && u.ks?.at1 !== undefined) : undefined;
     if (caster) tips.offer('skill', () => this.spriteBox(caster.id));
-    if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('heroBar'));
+    if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('fightHud'));
     $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].text}: let go over the grid to cast, or back on the cards to cancel` : `${SPELLS[this.spell].text}: tap a tile, or drag a card onto the grid (tap the card again to cancel)`) : '';
     if (dropped) this.markTiles();
   }

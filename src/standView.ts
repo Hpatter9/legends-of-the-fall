@@ -23,7 +23,8 @@ import { heroSays, kingSays, newQuipScene, standFoeGrumbles } from './quips';
 import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
-import { HeroBar } from './heroBar';
+import { FightHud } from './fightHud';
+import { heroArtUrl, UltMoments } from './ultMoment';
 import { portrait } from './render/sheets';
 import { battleSheet, lookSheet } from './render/awakenLook';
 import { UNITS } from './sim/units';
@@ -135,8 +136,11 @@ export class StandView {
   private gesture: { kind: 'pan' | 'hero' | 'pinch'; x: number; y: number; cx: number; cy: number; moved: boolean; hero?: number; d0?: number; s0?: number } | null = null;
   private banner = { left: 0 };
   private parts = {} as Record<string, HTMLElement>;
-  /** The eight heroes' bar (`heroBar.ts`): their pools and ultimates, tapped to fire, in two rows; and the Auto switch. */
-  private heroBar!: HeroBar;
+  /** The eight heroes' rows (`fightHud.ts`, BATTLE-HUD): two columns of compact rows, their pools, skills and ultimates (a tap fires one); its Auto
+   *  switch stands by the spell orbs under the top bar. */
+  private hud!: FightHud;
+  /** The ultimates' moments (`ultMoment.ts`, ULT-CUTIN). */
+  private ultm!: UltMoments;
   private shown = new Map<string, string>();
   private summary: StandSummary | null = null;
 
@@ -229,16 +233,38 @@ export class StandView {
     const cards = el('div', 'stCards');
     spells.append(mana, cards);
     const heroes = el('div', 'stHeroes');
-    this.heroBar = new HeroBar(heroes, {
+    this.hud = new FightHud(heroes, {
       onAuto: (on) => {
         const m = this.host.meta();
         m.ultAuto = on;
         saveMeta(m);
         if (this.s) this.s.b.autoUlt = on;
       },
-      // (a tap on a portrait also takes the camera to that hero)
+      autoOn: () => !!this.host.meta().ultAuto,
+      // (a tap on a row also takes the camera to that hero)
       onTap: (u) => this.panTo(u.id),
+      anchor: (id) => {
+        const sp = this.sprites.get(id);
+        if (!sp) return null;
+        const k = this.world.scale.x;
+        return { x: this.world.x + sp.x * k, y: this.world.y + (sp.y - sp.tall / 2) * k };
+      },
+      dockTop: () => this.parts.bottom.getBoundingClientRect().top,
+      ultFull: () => settings().ultFull,
+      ultArt: (u) => heroArtUrl(u.def, u.awaken ?? 0),
     });
+    this.ultm = new UltMoments({
+      anchor: (id) => {
+        const sp = this.sprites.get(id);
+        if (!sp) return null;
+        const k = this.world.scale.x;
+        return { x: this.world.x + sp.x * k, y: this.world.y + (sp.y - sp.tall / 2) * k };
+      },
+      art: (u) => heroArtUrl(u.def, u.awaken ?? 0),
+    });
+    // (the king's spells as orbs under the top bar, with the Auto switch at the row's end: BATTLE-HUD)
+    const orbs = el('div', 'stOrbs');
+    orbs.append(spells, this.hud.autoEl);
     const offer = el('div', 'stOffer');
     const bar = el('div', 'stBar');
     const btn = (id: string, label: string, run: () => void) => {
@@ -269,7 +295,7 @@ export class StandView {
     });
     trayRow.append(auto, start);
     tray.append(el('h3', '', 'Hold the throne'), el('p', 'stTip', 'Your eight stand at their posts. Tap two heroes to swap them, or drag one onto a glowing tile.'), roster, trayRow);
-    bottom.append(spells, heroes, offer, bar, tray);
+    bottom.append(heroes, offer, bar, tray);
     const finds = el('div', 'stFinds');
     const vignette = el('div', 'stVignette');
     vignette.hidden = true;
@@ -291,9 +317,9 @@ export class StandView {
     const title = el('div', 'stTitle');
     title.hidden = true;
     title.addEventListener('click', () => this.endTitle());
-    root.append(this.input, vignette, top, centre, count, arrows, finds, info, banner, bottom, end, ask, pick, sheet, skip, title, choice);
+    root.append(this.input, vignette, top, orbs, centre, count, arrows, finds, info, banner, bottom, end, ask, pick, sheet, skip, title, choice);
     document.body.append(root);
-    this.parts = { tray, roster, finds, vignette, leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, heroes, mana, cards, offer, bar, start, end, ask, pick, choice, skip, title };
+    this.parts = { tray, roster, finds, vignette, leave, speed, pause, centre, sheet, wave, king, gold, count, go, arrows, info, banner, bottom, spells, orbs, heroes, mana, cards, offer, bar, start, end, ask, pick, choice, skip, title };
     this.wireInput();
   }
 
@@ -321,6 +347,7 @@ export class StandView {
   private begin(): void {
     const s = this.s;
     if (!s || !startFirstWave(s)) return;
+    this.ultm.warm(s.b);
     this.music(s.run.seed);
     this.picked = null;
     this.drawMarks();
@@ -434,6 +461,8 @@ export class StandView {
     this.active = false;
     this.track = '';
     endFight();
+    this.ultm.clear();
+    this.hud.hideFloating();
     this.root.hidden = true;
     this.world.visible = false;
     this.parts.ask.hidden = true;
@@ -1041,19 +1070,32 @@ export class StandView {
     if (!s) return;
     this.frameN++;
     const t0 = performance.now();
-    const fighting = (s.phase === 'wave' || s.phase === 'break' || s.phase === 'retreat') && !this.hold && !this.paused;
-    if (fighting) {
+    // (a skill's sheet open on the hero rows holds the fight too: BATTLE-HUD)
+    const live = s.phase === 'wave' || s.phase === 'break' || s.phase === 'retreat';
+    const fighting = live && !this.hold && !this.paused && !this.hud.holding;
+    // (an ultimate's moment (ULT-CUTIN) moves on in real time; while it holds the fight only its effects move)
+    if (live) this.ultm.frame(s.b, dt, !fighting);
+    else if (this.ultm.queue.current) this.ultm.clear();
+    if (fighting && this.ultm.queue.holdsBattle) {
+      this.acc = 0;
+      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
+      this.hud.refresh(s.b);
+    } else if (fighting) {
       // (the walk to the door goes at its own pace, whatever the speed: STAND-RETREAT)
       this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : this.speed * this.fx.timeScale());
       let guard = 0;
       const ts = performance.now();
       // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
       s.b.autoUlt = !!this.host.meta().ultAuto;
-      while (this.acc >= TICK_MS && guard++ < 4) {
+      while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle) {
         this.acc -= TICK_MS;
+        const born = s.b.units.length;
         const events = stepStand(s);
+        // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
+        if (settings().ultFull && this.ultm.note(s.b, events, s.b.units.slice(born))) this.acc = 0;
+        this.hud.onEvents(s.b, events);
         for (const e of events) {
-          if (e.kind === 'ultLapse') this.heroBar.lapse(e.by);
+          if (e.kind === 'ultLapse') this.hud.lapse(e.by);
           else if (e.kind === 'swing' && e.by === s.king.id) this.hall.react('strike');
         }
         this.fx.show(s.b, events);
@@ -1075,8 +1117,8 @@ export class StandView {
         this.parts.skip.classList.toggle('dusk', k > 0.8);
       }
       this.perf.sim += performance.now() - ts;
-      this.heroBar.build(s.b);
-      this.heroBar.refresh(s.b);
+      if (this.hud.build(s.b)) this.hbKey = '';
+      this.hud.refresh(s.b);
       this.fx.step(Math.min(dt, 250));
     } else if (s.phase === 'over') {
       this.acc += dt;
@@ -1490,15 +1532,17 @@ export class StandView {
     if (s.phase === 'deploy') this.drawTray();
     p.pause.hidden = s.phase !== 'wave' && s.phase !== 'break';
     p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
+    // (the orbs' row also holds the Auto switch: it shows while the hero rows do)
+    p.orbs.hidden = s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
     p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';
     if (!p.heroes.hidden) {
-      this.heroBar.setAuto(!!this.host.meta().ultAuto);
-      this.heroBar.build(s.b);
-      // (each tile's rim in its hero's colour, as its ring on the field)
+      this.hud.setAuto(!!this.host.meta().ultAuto);
+      const rebuilt = this.hud.build(s.b);
+      // (each row's rim in its hero's colour, as its ring on the field)
       const hk = `${s.run.seed}:${p.heroes.children.length}`;
-      if (hk !== this.hbKey) {
+      if (rebuilt || hk !== this.hbKey) {
         this.hbKey = hk;
-        for (const t of p.heroes.querySelectorAll<HTMLElement>('.hb')) {
+        for (const t of p.heroes.querySelectorAll<HTMLElement>('.fhRow')) {
           const u = s.b.units.find((x) => x.id === Number(t.dataset.unit));
           if (u?.tag !== undefined) t.style.setProperty('--hc', colourCss(this.colourOf(u.tag)));
         }
