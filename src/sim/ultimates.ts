@@ -496,7 +496,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   samurai: { rate: 2.33, power: 3.07 },
   kunoichi: { rate: 1.65, power: 3.07 },
   archer: { rate: 0.65, power: 1.15 },
-  wizard: { rate: 0.51, power: 1.44 },
+  wizard: { rate: 0.51, power: 1.6 }, // (RPG-SPELLS batch 6: 1.44 before; it carries the Wall of Fire's lighter skill 2 at level 30)
   peasant: { rate: 1.11, power: 0.77 },
   ninjaMonk: { rate: 2.41, power: 3.07 },
   wanderer: { rate: 0.37, power: 0.96 },
@@ -514,7 +514,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   druid: { rate: 1.19, power: 0.4 },
   barbarian: { rate: 0.9, power: 2.14 },
   ranger: { rate: 0.84, power: 1.11 },
-  warlock: { rate: 0.5, power: 1.07 },
+  warlock: { rate: 0.5, power: 0.95 }, // (RPG-SPELLS batch 6: 1.07 before; the Circle of Death's ring made it +6.3 at level 30)
   illusionist: { rate: 1.08, power: 0.47 },
   gunslinger: { rate: 0.37, power: 1.7 },
   shambler: { rate: 1.04, power: 0.9 }, // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
