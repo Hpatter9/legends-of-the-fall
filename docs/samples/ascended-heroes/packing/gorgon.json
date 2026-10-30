@@ -1,0 +1,25 @@
+{
+  "id": "gorgon",
+  "inputSize": [
+    1536,
+    1024
+  ],
+  "cell": [
+    130,
+    104
+  ],
+  "scale": 0.6357615894039735,
+  "warnings": [
+    {
+      "row": 3,
+      "col": 5,
+      "box": [
+        984,
+        314,
+        1137,
+        594
+      ],
+      "issue": "touching actors: inspect cell edges"
+    }
+  ]
+}

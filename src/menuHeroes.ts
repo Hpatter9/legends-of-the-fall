@@ -130,7 +130,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       const button = el('button', other === kind ? 'selected' : '');
       button.type = 'button';
       button.setAttribute('aria-current', other === kind ? 'true' : 'false');
-      button.append(heroArtwork(other), el('small', '', heroName(other)));
+      button.append(heroArtwork(other, false, awakenedOf(meta, other)), el('small', '', heroName(other)));
       button.addEventListener('click', () => state.onPick?.(other, state.tab));
       strip.append(button);
     }
@@ -144,7 +144,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const head = el('div', 'hhead');
   const pic = el('div', 'hpic');
   const full = heroRank(meta, kind);
-  const artwork = heroArtwork(kind);
+  const artwork = heroArtwork(kind, false, awakenedOf(meta, kind));
   if (!open) artwork.style.filter = 'brightness(0.15) grayscale(1)';
   let closeArtwork: (() => void) | undefined;
   const view = el('button', 'heroArtOpen');
@@ -152,7 +152,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   view.setAttribute('aria-label', `View ${heroTitle(kind)} full artwork`);
   view.append(artwork, el('span', 'heroArtHint', 'View full artwork ⤢'));
   view.disabled = !open;
-  view.addEventListener('click', () => { closeArtwork = openHeroArtwork(kind, view); });
+  view.addEventListener('click', () => { closeArtwork = openHeroArtwork(kind, view, awakenedOf(meta, kind)); });
   const halo = el('span', 'heroCardHalo');
   halo.setAttribute('aria-hidden', 'true');
   const motes = el('span', 'heroCardMotes');
@@ -381,7 +381,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     banner.append(icon, el('span', '', cls.name));
     const scene = el('span', 'heroCardScene');
     scene.setAttribute('aria-hidden', 'true');
-    const figure = heroArtwork(kind);
+    const figure = heroArtwork(kind, false, awakenedOf(meta, kind));
     figure.alt = '';
     scene.append(el('span', 'heroCardHalo'), figure, el('span', 'heroCardMotes'));
     const level = progressOf(xpOf(meta, kind)).level;
@@ -419,7 +419,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       bar.append(fill);
       text.append(bar, el('span', 'lv', `${lock.now} / ${lock.need}`));
     }
-    const pic = heroArtwork(kind);
+    const pic = heroArtwork(kind, false, awakenedOf(meta, kind));
     pic.classList.add('dim');
     r.append(pic, text);
     r.addEventListener('click', () => pick(kind));

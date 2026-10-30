@@ -1,5 +1,5 @@
-// The aura an awakened hero wears (AWAKEN-002): a hero keeps its own colours, and its class trait (`traitsOf(kind)[1]`,
-// not its origin) picks the aura's style. The first awakened step (rank 5) wears a light aura; the second (rank 6) a
+// The aura a hero wears at combat tiers 2 and 3: a hero keeps its own colours, and its class trait (`traitsOf(kind)[1]`,
+// not its origin) picks the aura's style. Combat tier 2 wears a light aura; combat tier 3 a
 // bigger, brighter one with more parts.
 //
 // The art seam: this table names each step's parts (`ground`, `back`, `rise`, `halo`, `orbit`, `motes`, `trail`...)

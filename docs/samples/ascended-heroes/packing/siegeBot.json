@@ -1,0 +1,13 @@
+{
+  "id": "siegeBot",
+  "inputSize": [
+    1536,
+    1024
+  ],
+  "cell": [
+    160,
+    117
+  ],
+  "scale": 0.768,
+  "warnings": []
+}

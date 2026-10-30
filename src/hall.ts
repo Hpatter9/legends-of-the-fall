@@ -8,7 +8,7 @@ import { stoneCost, stonesOf, type Meta, type Pull } from './sim/meta';
 import { luckyLine, pityLine } from './gacha';
 import { closest, haveOf, needOf } from './sim/unlock';
 import { ICONS, icon } from './menuArt';
-import { awakenedStep, heroRig } from './render/awakenRig';
+import { menuAuraStep, heroRig } from './render/awakenRig';
 import { drawAura, drawAuraGlow } from './render/auraCanvas';
 import { auraParts, type AuraPart } from './render/auraStyles';
 import { loadImage } from './render/loadImage';
@@ -417,8 +417,8 @@ export class SummoningHall {
         x: spot.x,
         y: spot.y,
         face: spot.x < this.lay.circle.x ? 1 : -1,
-        step: awakenedStep(meta, p.kind),
-        aura: auraParts(p.kind, awakenedStep(meta, p.kind), this.saver),
+        step: menuAuraStep(meta, p.kind),
+        aura: auraParts(p.kind, menuAuraStep(meta, p.kind), this.saver),
       });
     });
     this.pull1.disabled = this.pull10.disabled = true;

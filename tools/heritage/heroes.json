@@ -110,6 +110,67 @@
    ]
   }
  },
+ "paladin": {
+  "sheets": [
+   "hero_res_paladin",
+   "hero_res_paladin_back"
+  ],
+  "skin": {
+   "boxes": [
+    [
+     "hero_res_paladin",
+     0,
+     77,
+     48,
+     90,
+     56
+    ],
+    [
+     "hero_res_paladin_back",
+     0,
+     91,
+     45,
+     94,
+     50
+    ]
+   ],
+   "negatives": [
+    [
+     "hero_res_paladin_back",
+     0
+    ]
+   ]
+  },
+  "hair": {
+   "window": [
+    12,
+    60,
+    0.12,
+    1,
+    0.2,
+    1
+   ],
+   "minArea": 40,
+   "boxes": [
+    [
+     "hero_res_paladin",
+     0,
+     65,
+     23,
+     100,
+     47
+    ],
+    [
+     "hero_res_paladin_back",
+     0,
+     70,
+     25,
+     103,
+     45
+    ]
+   ]
+  }
+ },
  "cleric": {
   "sheets": [
    "hero_res_cleric",

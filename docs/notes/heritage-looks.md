@@ -24,7 +24,7 @@ names. So they feel more unique and less generic".
 - **People only.** Spirits, beasts, the undead and machines (`NOT_HUMAN`: Kitsune, both Tengu, Werewolf, Minotaur, Satyr,
   Gorgon, Shambler, Rifle Bot, Mummy, Wolf Bard, Kraken Mate, Reaper, Dread Pirate, Siege Bot) keep their looks; their names
   fit their lore. Foes are out of scope.
-- **Spread over roles, not mapped to them.** Re-toned: a tank (the Knight), melee (Buccaneer, Queen Dragoon), a
+- **Spread over roles, not mapped to them.** Re-toned: two tanks (Knight, Paladin), melee (Buccaneer, Queen Dragoon), a
   ranged hunter (Ranger), casters (Fire Wizard, Illusionist, Time Witch, Great Sage, Lightning Mage), a healer (Cleric),
   militia (Peasant). The darker tones are on heroes, healers, sages and leaders, not on the brutes or the dark-magic
   roles; the Barbarian, Warlock and Tyrant keep their drawn looks.
@@ -33,7 +33,7 @@ names. So they feel more unique and less generic".
 - **Heroes whose gear is plainly Japanese** (Samurai, Kunoichi, Archer, Ninja Monk, Samurai Commander) stay Japanese; the
   Peasant's straw hat reads as a Vietnamese nón lá.
 - **Hair** is redrawn only where it would read wrongly and the tool can find it cleanly: the Knight's blond to black,
-  (the Paladin keeps his drawn look, the owner's call). Silver, white and teal hair (Time Witch, Lightning Mage, Great Sage, Queen Dragoon) is
+  the Paladin's blond to dark brown. Silver, white and teal hair (Time Witch, Lightning Mage, Great Sage, Queen Dragoon) is
   fantasy and suits any tone. The High Priestess (blond hair against a gold mitre, halo and staff) and the Gunslinger (red
   hair against a red coat) were left as drawn, because no clean hair mask exists for them.
 - **Names** are real, everyday names from each heritage, short (9 letters at most, most 4 to 6), easy to read, and all
@@ -58,7 +58,7 @@ names. So they feel more unique and less generic".
 | Satyr (`satyr`) | Dorion | Greek myth | not a person: as drawn |
 | Gorgon (`gorgon`) | Xanthe | Greek myth | not a person: as drawn |
 | Samurai Commander (`samuraiCommander`) | Hideo | Japanese | as drawn |
-| Paladin (`paladin`) | Karim | Lebanese | as drawn (the owner kept his look) |
+| Paladin (`paladin`) | Karim | Lebanese | **olive**, dark brown hair |
 | Cleric (`cleric`) | Selam | Ethiopian (Amhara) | **deep brown** |
 | Druid (`druid`) | Isla | Scottish | as drawn |
 | Barbarian (`barbarian`) | Eirik | Norwegian | as drawn |
@@ -142,3 +142,7 @@ its source), so `game.js` does not grow for them: the 23 re-toned PNGs are 9.05 
 
 - The tone, hair and name choices are a first cast; any of them is one line to change.
 - The painted art needs the ChatGPT pass before the menus match the sprites.
+
+## Integration with upgraded forms
+
+This note records the earlier base-sprite branch. ART-ASCEND now replaces the fifteen gallery scene/cutout pairs from the uploaded brief, including Karim, and carries those identities into the permanent upgraded equipment forms. The earlier painted-art mismatch is resolved; current validation is recorded in [the upgraded forms handoff](ascended-hero-forms.md).

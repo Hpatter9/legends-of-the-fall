@@ -207,6 +207,8 @@ export interface StandMode {
   hunt?: boolean;
   /** Idle heroes gone to help where the fighting is, once a wave's foes are all in (`standHelp.ts`): a helper's id to the foe it goes for. */
   help?: Record<number, number>;
+  /** An act's last foes have broken off and run for the breaches (`stand.ts`, STAND-RETREAT): they strike nobody and make for the edge. */
+  flee?: boolean;
 }
 
 export interface Pending {

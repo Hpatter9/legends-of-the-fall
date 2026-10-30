@@ -3,7 +3,7 @@
 // the same events, tick by tick, and the same health at the end (`tools/status-fx/logs.ts`; the fixture was recorded on main's code).
 // (TIER-PROMISES re-recorded three of its scenarios, `army`, `daily` and `tower`, whose merged heroes' tier skills now do what their words say: the
 // owner's ask, `docs/notes/tier-promises.md`. Only those three moved; the proof stands for every other mode.)
-// (RPG-SPELLS batch 2, docs/notes/spells-b2.md, re-recorded field30, bosses, armyFoes, spells, lands and army: each has the Cleric, High Priestess,
+// (RPG-SPELLS batch 2, docs/notes/spells-b2.md, re-recorded field30, bosses, armyFoes, spells, lands, army and stand: each has the Cleric, High Priestess,
 // Wanderer or Druid at level 10 or more, whose kits the owner approved reworking (the revive, Spirit Guardians, Healing Mist...). Only those moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,6 +19,8 @@ import { KITS } from '../src/sim/abilities';
 // by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
 // (MID-EVENTS, the owner's ask for more events between waves, re-recorded `daily`: its gaps can bring the road's cards, whose hazards the greedy
 // player must answer (a card with no way off); `army` and every other scenario keep their hashes)
+// (STAND-RETREAT, the owner's ask, re-recorded `stand`: a Last Stand run now begins in the courtyard and falls back to the library after wave 5,
+// where the room used to be drawn from the seed; every other scenario keeps its hash)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {

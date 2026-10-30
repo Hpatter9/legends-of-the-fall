@@ -90,11 +90,13 @@ Of the old scenarios, these changed. Each has a healer at level 10 or more in it
 - `field30` (random teams at level 30);
 - `bosses`, `armyFoes` and `spells` (random level-30 teams);
 - `lands` (random level-10 teams);
+- `stand` (the Last Stand's party of eight has the Cleric at level 30: her Spirit Guardians; no one is revived there). It moved only once
+  main's new Last Stand, which falls back to the library after wave 5, was merged in;
 - `army` (its parties hold the Cleric and the High Priestess);
 - `heroes10` and `heroes30` (random teams).
 
-These did not change, because they have no healer, or none at level 10 or more: `field1`, `daily`, `tower`, `stand`, `calamity`
-and `heroes1`. `test/fixtures/spells-identity.json` was re-recorded with only those eight changed hashes.
+These did not change, because they have no healer, or none at level 10 or more: `field1`, `daily`, `tower`, `calamity` and
+`heroes1`. `test/fixtures/spells-identity.json` was re-recorded with only those nine changed hashes.
 
 ## Tests
 

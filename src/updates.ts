@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.246.0',
+    date: '2026-10-30',
+    title: 'The Last Stand falls back to the throne',
+    notes: ['The Last Stand now retreats through four rooms: the courtyard, the library, the chapel, and from wave 16 the throne room.', 'After waves 5, 10 and 15, fall back or hold one more, harder wave for gold.', 'Your best room reached is recorded, and the throne room earns a badge.'],
+  },
+  {
+    version: '0.245.0',
+    date: '2026-10-30',
+    title: 'Heroes of many lands, and new awakened forms',
+    notes: ['Fourteen heroes have new paintings to match their looks, and Kwame the Knight and Karim the Paladin no longer look alike.', 'Awakening gives each hero an upgraded form with new gear, and combat tiers show painted class auras.'],
+  },
+  {
     version: '0.244.0',
     date: '2026-10-30',
     title: 'The late armies fight harder',
