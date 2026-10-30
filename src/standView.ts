@@ -25,6 +25,7 @@ import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
 import { FightHud } from './fightHud';
 import { heroArtUrl, UltMoments } from './ultMoment';
+import { fullScene } from './ultMomentRules';
 import { portrait } from './render/sheets';
 import { battleSheet, lookSheet } from './render/awakenLook';
 import { UNITS } from './sim/units';
@@ -253,7 +254,7 @@ export class StandView {
         return { x: this.world.x + sp.x * k, y: this.world.y + (sp.y - sp.tall / 2) * k };
       },
       dockTop: () => this.parts.bottom.getBoundingClientRect().top,
-      ultFull: () => settings().ultFull,
+      ultFull: () => fullScene(settings().ultFull, !!this.host.meta().ultAuto),
       ultArt: (u) => heroArtUrl(u.def, u.awaken ?? 0),
     });
     this.ultm = new UltMoments({
@@ -1099,7 +1100,7 @@ export class StandView {
         const born = s.b.units.length;
         const events = stepStand(s);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
-        if (settings().ultFull && this.ultm.note(s.b, events, s.b.units.slice(born))) this.acc = 0;
+        if (fullScene(settings().ultFull, !!this.host.meta().ultAuto) && this.ultm.note(s.b, events, s.b.units.slice(born))) this.acc = 0;
         this.hud.onEvents(s.b, events);
         for (const e of events) {
           if (e.kind === 'ultLapse') this.hud.lapse(e.by);
