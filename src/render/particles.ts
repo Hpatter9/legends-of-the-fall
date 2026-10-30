@@ -38,6 +38,8 @@ export interface Burst {
   add?: boolean;
   /** A big moment (a burst, a death): lets through a fuller cap than the small bits do. */
   prio?: boolean;
+  /** Its half-size on screen, for the FX-CLEAR cover (default: a 32px frame's at its scale; a painted 96px cell gives its own). */
+  half?: number;
 }
 
 interface Live {
@@ -82,7 +84,7 @@ export class Particles {
     sp.tint = b.tint ?? 0xffffff;
     sp.blendMode = b.add ? 'add' : 'normal';
     sp.visible = b.delay ? false : true;
-    const k = this.cover ? this.cover(b.x, b.y, 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1)) : 1;
+    const k = this.cover ? this.cover(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1)) : 1;
     sp.alpha = (b.alpha ?? 1) * k;
     sp.texture = b.frames[0];
     sp.scale.set(b.scale ?? 1);

@@ -445,7 +445,7 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Status effects (painted)
 
 - The 11 sheets in `art-source/status-fx/`: original artwork generated for this game with OpenAI image generation.
-- Healer and revive spell effects (`art-source/spell-fx/c-healers/`): ten original painted sheets made with OpenAI image generation for this game; unchanged generations are retained in `art-source/spell-fx/originals/c-healers/`. Runtime import is pending.
+- Healer and revive spell effects (`art-source/spell-fx/c-healers/`): ten original painted sheets made with OpenAI image generation for this game; unchanged generations are retained in `art-source/spell-fx/originals/c-healers/`. Packed into `src/art/fx/spells/c-healers.webp` by `tools/spell-fx/import-spell-art.py` (`docs/notes/spell-art.md`).
 
 ## Awakened hero equipment (`src/art/awakened/`)
 
@@ -453,4 +453,4 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - `tools/ascended/roster.json`, `heritage.json` and `sources.json` record the character/equipment briefs and source provenance. The originals remain in the ignored art workspace. `pack.cjs` crops, selects intact poses, applies hard alpha and scales nearest-neighbour without repainting the artwork. The corresponding `src/art/heroes/awakened-*.webp` menu cutouts are extracted from the emitted idle poses. See `docs/notes/ascended-hero-forms.md`.
 ## Spell and movement effects (painted)
 
-- Spell and movement effects (`src/art/fx/spells/`): original painted effects made with OpenAI image generation for this game. Session A sources are retained in `art-source/spell-fx/a-toolkit/`; runtime import is pending.
+- Spell and movement effects (`src/art/fx/spells/`): original painted effects made with OpenAI image generation for this game. Session A sources are retained in `art-source/spell-fx/a-toolkit/` (originals in `art-source/spell-fx/originals/a-toolkit/`), packed into `src/art/fx/spells/a-toolkit.webp` by `tools/spell-fx/import-spell-art.py` and drawn for the movement toolkit (`docs/notes/spell-art.md`).
