@@ -1,0 +1,52 @@
+{
+  "cure-wounds": {
+    "original": "originals/c-healers/cure-wounds.png",
+    "original_sha256": "11ce386e8d04da4c02a773cecd504315c98a24d6596f9c9f520cf4b515ba6755",
+    "packed_sha256": "80150431ceead0c42a84870b711986103d20523f1d794d0383b193cd9e7d029a"
+  },
+  "death-ward": {
+    "original": "originals/c-healers/death-ward.png",
+    "original_sha256": "3ababa8d397177516ce0229622cdc4ce4fdc063af0c18971ccd60f7907fe01f2",
+    "packed_sha256": "4ce4b92797a61347cf7027cc1ec6cf1df061483c1edb37e986a7c662ffd801f0"
+  },
+  "elixir": {
+    "original": "originals/c-healers/elixir.png",
+    "original_sha256": "796fafec77bc9a0a39c81ccef9775b37ae94b7b33eef689d1bc407ff05d7a2b4",
+    "packed_sha256": "5a787f87c22ef920791fc530303624db3b9fdb646f412fd3e95f16bf97e78ca3"
+  },
+  "guiding-bolt": {
+    "original": "originals/c-healers/guiding-bolt.png",
+    "original_sha256": "fc55187b3801c609b75e2167b271fe858747e951902679a801b17cfc348410a8",
+    "packed_sha256": "cafa903c09043577634ddb8c66af07e1807bcc6bef407e4e595bf61f503b50bb"
+  },
+  "healing-draught": {
+    "original": "originals/c-healers/healing-draught.png",
+    "original_sha256": "8611aa77e11eace650bdd7fc2cd41be5e558df03b7c6a004f755ba5fcbbef7f5",
+    "packed_sha256": "387d473c4275d8f37d564cd2fc97cb6c10b27bd6d5bf0546b245974aba50d5df"
+  },
+  "mass-resurrection": {
+    "original": "originals/c-healers/mass-resurrection.png",
+    "original_sha256": "def87d6a4817fbec179939ce606e489089430dd83a6f58e726153271541e12d0",
+    "packed_sha256": "0c46cb079322ad129eda2ed8601a4c8318aacf54aaeac007663f300a72673ec3"
+  },
+  "prayer": {
+    "original": "originals/c-healers/prayer.png",
+    "original_sha256": "497318ba1e6351f99910a1daa7cfb9ea0eef202e35a465cbb4b62e0ebea2cbaf",
+    "packed_sha256": "7999ed13ef4e4ae6aee7ae42a287ea15f53e25e748eb26d41755160850aa75c6"
+  },
+  "reincarnate": {
+    "original": "originals/c-healers/reincarnate.png",
+    "original_sha256": "e3a951405d861912f48baf113196c5da4940ab6692054a61139f8158f38d705a",
+    "packed_sha256": "a870c9e2e6ef3a4b8c98809d8d5cfd80bc7b483667b3722f44d6a5f6e60666cb"
+  },
+  "resurrection": {
+    "original": "originals/c-healers/resurrection.png",
+    "original_sha256": "d65141c9bc94070e7104c2256c7a4827e82ac2581f842fee68664cc7b56af9b3",
+    "packed_sha256": "b1818cd97d44e36aea4c569b8fa708215cf4404e812618114f34d88ffac31945"
+  },
+  "revivify": {
+    "original": "originals/c-healers/revivify.png",
+    "original_sha256": "21fe71a83e8f2ffabd55d2272a32a6fd7475833e18c113f26ead979bc5f00305",
+    "packed_sha256": "06c2395e757d773e390befaa3ad8b9169b987542cb81ab509f93a193c8be28d1"
+  }
+}

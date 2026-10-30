@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RPG-SPELLS-ART-C — Painted healers and revives
+
+- **Owner:** current Codex chat. **Branch/worktree:** `art/spell-fx-c`, `/workspace/legends-of-the-fall`.
+- **Scope:** Session C: ten healer/revive source sheets, packing/checks, credits and handoff; no runtime or Session A changes.
+- **Completion:** generate and inspect all ten sheets, verify 256 px cells/frame counts/transparency, open a separate PR.
+- **Status:** ready for source-art review: ten sheets / 19 rows / 128 frames, retained originals, crop layouts, reproducible packing/checks, preview and credits. Source checker, typecheck and web build pass. [Handoff](notes/spell-fx-art-c.md). Final fade-outs, loop continuity and live integration remain for review; no runtime changes, merge or version bump. Follows Session A PR #210.
+
 **ART-ASCEND / Upgraded hero forms and combat tier auras** — Owner: current Codex chat. Branch: `art/ascended-hero-forms`, worktree: `/workspace/legends-of-the-fall`. Goal: permanent upgraded hero artwork at Awakening (called ascension in the conversation), with existing class auras repurposed for combat grades on either form. Status: owner approved legendary upgraded gear and glowing mage eyes; requested compact silhouettes rather than broad bodies/capes. Owner authorised implementation. Implemented and validated; ready for owner review. All 49 hero/transformation forms, 98 sheets and 30 heritage gallery assets are imported; Knight and Paladin are distinct. Main 0.243.0 is integrated. Typecheck/build, 178 affected tests, all 2,744 animation cells, three phone sizes, first/second awakening, tier auras, transformations, Last Stand, reduced motion, fresh-save lazy loading/persistence and offline reload passed with no browser errors. No merge to main or deployment. Allowed scope: concept art and proposal notes initially; after visual approval, hero form assets, render mappings, combat aura selection, associated tests, offline packaging and credits. Preserve simulation values, hero identities, save keys and unrelated artwork. Completion: approved three-hero sample, then all 45 forms with required facings/actions, tier effects, typecheck/build and relevant portrait/offline checks. Combat mapping: grade 1 none, grade 2 existing light aura, grades 3–4 existing strong aura (tier 4 retains its other flourishes); independent of permanent awakening. Handoff: [proposal](notes/ascended-hero-forms.md). Draft PR: [#208](https://github.com/Hpatter9/legends-of-the-fall/pull/208).
 
 ### DARK-WAVE — Some waves, the screen darkens

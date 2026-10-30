@@ -1,0 +1,168 @@
+{
+  "revivify": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 8
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": []
+  },
+  "resurrection": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 8
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": []
+  },
+  "elixir": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": []
+  },
+  "reincarnate": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": []
+  },
+  "mass-resurrection": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "ground",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": []
+  },
+  "guiding-bolt": {
+    "size": [
+      1536,
+      512
+    ],
+    "rows": [
+      {
+        "part": "travel",
+        "frames": 4
+      },
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": []
+  },
+  "prayer": {
+    "size": [
+      1536,
+      512
+    ],
+    "rows": [
+      {
+        "part": "ground",
+        "frames": 6
+      },
+      {
+        "part": "motes",
+        "frames": 6
+      }
+    ],
+    "faults": []
+  },
+  "cure-wounds": {
+    "size": [
+      2048,
+      256
+    ],
+    "rows": [
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": []
+  },
+  "death-ward": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "stand",
+        "frames": 6
+      },
+      {
+        "part": "impact",
+        "frames": 8
+      }
+    ],
+    "faults": []
+  },
+  "healing-draught": {
+    "size": [
+      1536,
+      512
+    ],
+    "rows": [
+      {
+        "part": "travel",
+        "frames": 4
+      },
+      {
+        "part": "impact",
+        "frames": 6
+      }
+    ],
+    "faults": []
+  }
+}
