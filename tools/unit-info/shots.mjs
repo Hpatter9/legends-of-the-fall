@@ -93,7 +93,9 @@ for (const [w, h] of (process.env.ONE ? [[393, 852]] : [[393, 852], [360, 780], 
     await page.waitForTimeout(100);
     await page.screenshot({ path: out('ring') });
     await page.evaluate(() => window.__game.hold.cancel());
-    await hold(spots.knight, 'hero');
+    // (the deploy camera may still be easing: where the knight stands now)
+    spots = await find();
+    if (spots.knight) await hold(spots.knight, 'hero');
   }
   // (a press that moves is a drag as before: no card. The press and its move are sent together in the page, so a slow software renderer
   // cannot let the hold's time run out between them)
