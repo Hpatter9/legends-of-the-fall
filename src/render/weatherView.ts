@@ -7,7 +7,7 @@ import { Container, Sprite, Texture } from 'pixi.js';
 import type { Area } from '../sim/board';
 import type { Weather } from '../sim/weather';
 import { settings } from '../settings';
-import { ambientOf, countFor, fogFor, lookOf, tintAt, type WeatherLook } from './weatherRules';
+import { ambientOf, countFor, fogFor, lookOf, tintAt, vignetteAt, type WeatherLook } from './weatherRules';
 
 interface Mote {
   sp: Sprite;
@@ -40,12 +40,37 @@ function soft(w: number, h: number): Texture {
   return Texture.from(c);
 }
 
+/** DARK-WAVE: the darkened edges, drawn once: clear over the board (centred a little above the screen's middle, where the
+ *  board sits above the bench) and white, to be tinted, towards the corners. Stretched over the whole screen. */
+function edges(): Texture {
+  const [w, h] = [96, 192];
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d')!;
+  const [cx, cy] = [w / 2, h * 0.4];
+  const far = Math.hypot(w / 2, h * 0.6);
+  // (drawn round, then squashed to the screen's shape when stretched: an oval clear over the board)
+  g.translate(cx, cy);
+  g.scale(1, h / w);
+  const r = far * (w / h);
+  const grad = g.createRadialGradient(0, 0, r * 0.38, 0, 0, Math.max(r, w * 0.62));
+  grad.addColorStop(0, 'rgba(255,255,255,0)');
+  grad.addColorStop(0.55, 'rgba(255,255,255,0.45)');
+  grad.addColorStop(1, 'rgba(255,255,255,1)');
+  g.fillStyle = grad;
+  g.fillRect(-w, -h, w * 2, h * 2);
+  return Texture.from(c);
+}
+
 export class WeatherView {
   /** In screen px: the tint, the fog banks and the particles (above the world, under the flash). */
   readonly root = new Container();
   /** In the world: night's glows (a layer of the board's `keep`, so a rebuilt board does not destroy it). */
   readonly lights = new Container();
   private tint = new Sprite(Texture.WHITE);
+  /** The darkened edges of a dark weather (night, rain, ash), made when first wanted. */
+  private edges: Sprite | null = null;
   private motes: Mote[] = [];
   private banks: Bank[] = [];
   private look: WeatherLook = lookOf('clear', 'highlands');
@@ -77,6 +102,10 @@ export class WeatherView {
     this.h = Math.max(1, h);
     this.tint.width = this.w;
     this.tint.height = this.h;
+    if (this.edges) {
+      this.edges.width = this.w;
+      this.edges.height = this.h;
+    }
   }
 
   /** A new fight: show this weather. `spots` are the lit props' places in the world (night's glows go there). */
@@ -93,6 +122,15 @@ export class WeatherView {
     for (const c of this.lights.removeChildren()) c.destroy();
     this.tint.tint = look.tint;
     this.tint.alpha = 0;
+    if (look.vignette > 0 && !this.edges) {
+      this.edges = new Sprite(edges());
+      this.root.addChildAt(this.edges, 1);
+      this.resize(this.w, this.h);
+    }
+    if (this.edges) {
+      this.edges.tint = look.tint;
+      this.edges.alpha = 0;
+    }
     const saver = settings().saver;
     // (the particles: plain rectangles of one white texture)
     const n = countFor(look, saver, this.calm);
@@ -147,6 +185,7 @@ export class WeatherView {
   step(dt: number): void {
     this.age += dt;
     this.tint.alpha = tintAt(this.look, this.age);
+    if (this.edges) this.edges.alpha = vignetteAt(this.look, this.age);
     const s = dt / 1000;
     const look = this.look;
     for (const m of this.motes) {

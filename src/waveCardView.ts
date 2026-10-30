@@ -3,7 +3,7 @@
 
 import type { WaveNote } from './sim/waveCard';
 
-const MARKS: Record<WaveNote['kind'], string> = { level: '▲', ult: '✦', found: '◆', fell: '✝', heart: '♥' };
+const MARKS: Record<WaveNote['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥' };
 
 export function drawWaveNotes(root: HTMLElement, notes: readonly WaveNote[]): void {
   root.replaceChildren();

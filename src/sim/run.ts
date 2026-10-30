@@ -26,6 +26,8 @@ import type { EquipStats } from './equipment';
 import { relicEffects } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
+import type { RoadState } from './midEvents';
+import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
 
 /** The top grade (rank): 1+1 make 2, 2+2 make 3, 3+3 make 4 (MERGE-TWO; it was three of a kind up to 3). */
@@ -57,6 +59,11 @@ export const STAGE_GROWTH = 0.2;
 export const BOSS_EVERY = 5;
 /** Gear drops rise a tier every 8 stages; each army further on drops as if this many stages further. */
 const GEAR_STAGES = 6;
+/** The stage a run's gear is drawn for at stage n: an army further on drops as if further on (`GEAR_STAGES`), so its shops and finds keep pace. */
+export const gearStage = (run: Run, n: number): number => {
+  const army = waveArmyOf(run);
+  return n + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0);
+};
 /** A boss is drawn half as big again; its kind (`foes.ts`) carries its own stats and skill. */
 export const BOSS: Boost = { size: 1.5 };
 
@@ -95,6 +102,8 @@ export interface Buff {
   speed?: number;
   /** How many stages/floors this buff lasts (default 1). */
   duration?: number;
+  /** A twist (`twists.ts`, by id) the next fight is fought under: a storm, an ambush, a blessing from the road's events (`midEvents.ts`). One fight only. */
+  twist?: string;
 }
 
 export interface Run {
@@ -148,6 +157,8 @@ export interface Run {
   recap?: RunRecap;
   /** A themed daily's goal was met when the boss of the day fell (`dailyThemes.ts`). */
   themeMet?: boolean;
+  /** The road's memory for the events between waves (MID-EVENTS, `midEvents.ts`): the kinds seen this run, and debts and favours that come back later. Absent in an older save. */
+  road?: RoadState;
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
@@ -415,6 +426,8 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     move: moveRate(run.castle) * (run.buff?.speed ?? 1),
     relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
+    // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
+    ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
     duchess: duchessModeOk(run.mode) ? duchess : 'never',
   });
 }

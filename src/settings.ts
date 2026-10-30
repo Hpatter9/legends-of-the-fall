@@ -1,7 +1,7 @@
-// The settings page (#settings): the volumes, the fight speed, screen shake, damage numbers, battery saver, keeping the
-// screen awake, and the version. Opened from the home screen and the gear in the top bar. The choices are kept in
-// localStorage (legends.settings); `settings()` is what the rest of the page reads, and `onSettings` tells a module
-// when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
+// The settings page (#settings): a short list of submenus (Sound, Display and motion, Gameplay, Ruler and Duchess, Save
+// and data, Developer, Updates and notes, About), each opening on a tap with a back button. Opened from the home screen
+// and the gear in the top bar. The choices are kept in localStorage (legends.settings, the same keys as before the
+// submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
 import { tips } from './tips';
 import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
@@ -9,6 +9,7 @@ import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
 import type { DevGift } from './sim/devGrant';
+import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 
 const KEY = 'legends.settings';
 
@@ -107,12 +108,31 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 let wired = false;
 
-/** Opens the settings page over whatever is showing. */
+/** The submenus of the page (the owner's ask: the options condensed into a short list of menus that open on a tap). */
+type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'updates' | 'about';
+
+/** Each submenu's name and its one-line hint on the top list, in the order shown. */
+const PAGES: readonly { id: Page; title: string; hint: string }[] = [
+  { id: 'sound', title: 'Sound', hint: 'Music and effects volumes' },
+  { id: 'display', title: 'Display and motion', hint: 'Screen shake, damage numbers, battery saver, keep awake' },
+  { id: 'gameplay', title: 'Gameplay', hint: 'Fight speed, hero quips, cinematics, tips' },
+  { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
+  { id: 'data', title: 'Save and data', hint: 'Start over' },
+  { id: 'dev', title: 'Developer', hint: 'Crowns, shards and stones for testing' },
+  { id: 'updates', title: 'Updates and notes', hint: 'What changed in each version' },
+  { id: 'about', title: 'About', hint: 'Version and credits' },
+];
+
+/** The submenu showing, or null for the top list. */
+let page: Page | null = null;
+
+/** Opens the settings page over whatever is showing, at its top list. */
 export function openSettings(): void {
   if (!wired) {
     wired = true;
     $('settingsClose').addEventListener('click', closeSettings);
   }
+  page = null;
   draw();
   $('settings').hidden = false;
 }
@@ -122,30 +142,187 @@ export function closeSettings(): void {
   $('settings').hidden = true;
 }
 
-/** The rows, drawn from the settings as they are now. */
+/** Shows a submenu (or the top list, for null) and scrolls back to the top. */
+function go(to: Page | null): void {
+  closePicker();
+  page = to;
+  if (to === 'updates') markUpdatesSeen();
+  draw();
+  $('settings').scrollTop = 0;
+  // (focus the back button in a submenu, or the row that was open on the way back, for keyboards and screen readers)
+  const focus = to ? document.querySelector<HTMLElement>('#settingsBody .setBack') : null;
+  focus?.focus();
+}
+
+/** The rows of the page showing, drawn from the settings as they are now. */
 function draw(): void {
   const s = current;
   const body = $('settingsBody');
-  body.replaceChildren(
-    rulerRow(s.ruler),
-    volumeRow('Music', 'music', s.music, 'Off turns the music and the ambience off and keeps the effects'),
-    volumeRow('Effects', 'effects', s.effects),
-    speedRow(s.speed),
-    toggleRow('Screen shake', 'Shakes, and flashes white on a crit or a big kill', 'shake', s.shake),
-    toggleRow('Damage numbers', 'The numbers that pop up when a fighter is hit', 'numbers', s.numbers),
-    toggleRow('Battery saver', 'Caps the frame rate at 30', 'saver', s.saver),
-    toggleRow('Keep screen awake', 'The screen stays on while the game is open', 'awake', s.awake),
-    toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
-    toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
-    duchessHatRow(s.duchessHat),
-    resetTipsRow(),
-    devRow(),
-    startOverRow(),
+  const title = document.querySelector<HTMLElement>('#settings h2');
+  const at = PAGES.find((p) => p.id === page);
+  if (title) title.textContent = at ? at.title : 'Settings';
+  if (!at) {
+    body.replaceChildren(...PAGES.map(menuRow));
+    return;
+  }
+  body.replaceChildren(backRow(), ...pageRows(at.id, s));
+}
+
+function pageRows(id: Page, s: Settings): HTMLElement[] {
+  switch (id) {
+    case 'sound':
+      return [volumeRow('Music', 'music', s.music, 'Off turns the music and the ambience off and keeps the effects'), volumeRow('Effects', 'effects', s.effects)];
+    case 'display':
+      return [
+        toggleRow('Screen shake', 'Shakes, and flashes white on a crit or a big kill', 'shake', s.shake),
+        toggleRow('Damage numbers', 'The numbers that pop up when a fighter is hit', 'numbers', s.numbers),
+        toggleRow('Battery saver', 'Caps the frame rate at 30', 'saver', s.saver),
+        toggleRow('Keep screen awake', 'The screen stays on while the game is open', 'awake', s.awake),
+      ];
+    case 'gameplay':
+      return [
+        speedRow(s.speed),
+        toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
+        toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
+        resetTipsRow(),
+      ];
+    case 'ruler':
+      return [rulerRow(s.ruler), duchessHatRow(s.duchessHat)];
+    case 'data':
+      return [startOverRow()];
+    case 'dev':
+      return [devRow()];
+    case 'updates':
+      return updatesRows();
+    case 'about':
+      return aboutRows();
+  }
+}
+
+/** A row of the top list: the submenu's name and hint, and a chevron; the Updates row carries a "New" dot when the game's
+ *  version has changed since the page was last opened. */
+function menuRow(p: (typeof PAGES)[number]): HTMLElement {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'setting setMenu';
+  b.dataset.page = p.id;
+  const text = document.createElement('div');
+  const name = document.createElement('b');
+  name.textContent = p.title;
+  if (p.id === 'updates' && updatesNew()) {
+    const dot = document.createElement('span');
+    dot.className = 'newDot';
+    dot.textContent = 'New';
+    name.append(' ', dot);
+  }
+  const em = document.createElement('em');
+  em.textContent = p.id === 'about' ? `Version ${releaseOf(__GAME_VERSION__)}` : p.hint;
+  text.append(name, em);
+  const chevron = document.createElement('span');
+  chevron.className = 'setChevron';
+  chevron.setAttribute('aria-hidden', 'true');
+  chevron.textContent = '›';
+  b.append(text, chevron);
+  b.addEventListener('click', () => go(p.id));
+  return b;
+}
+
+/** The back button at the top of a submenu, back to the top list. */
+function backRow(): HTMLElement {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'setBack';
+  b.textContent = '‹ Back';
+  b.setAttribute('aria-label', 'Back to Settings');
+  b.addEventListener('click', () => {
+    const from = page;
+    go(null);
+    document.querySelector<HTMLElement>(`#settingsBody .setMenu[data-page="${from}"]`)?.focus();
+  });
+  return b;
+}
+
+/* ---------------------------------------------------- updates and notes */
+
+const SEEN_KEY = 'legends.updatesSeen';
+
+/** Whether the game's version is one the Updates page has not been opened on. */
+function updatesNew(): boolean {
+  let seen: string | null = null;
+  try {
+    seen = localStorage.getItem(SEEN_KEY);
+  } catch {
+    /* (storage blocked: shown as new) */
+  }
+  return updatesUnseen(seen, __GAME_VERSION__);
+}
+
+function markUpdatesSeen(): void {
+  try {
+    localStorage.setItem(SEEN_KEY, releaseOf(__GAME_VERSION__));
+  } catch {
+    /* (a private window: the dot shows again next visit) */
+  }
+  refreshUpdatesDot();
+}
+
+/** Puts the small "New" dot on the gear while the Updates page has news (called at start and when the page is opened). */
+export function refreshUpdatesDot(): void {
+  const news = updatesNew();
+  for (const id of ['gear', 'hmGear']) document.getElementById(id)?.classList.toggle('hasNews', news);
+}
+
+/** A day as "29 October 2026". */
+function dayOf(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return `${d} ${months[m - 1]} ${y}`;
+}
+
+/** The releases newest first, each a card with its lines; the older ranges fold into "Earlier updates". */
+function updatesRows(): HTMLElement[] {
+  const card = (version: string, when: string | undefined, title: string, lines: readonly string[]): HTMLElement => {
+    const c = document.createElement('article');
+    c.className = 'setting update';
+    const head = document.createElement('div');
+    const b = document.createElement('b');
+    b.textContent = title;
+    const em = document.createElement('em');
+    em.textContent = when ? `Version ${version} · ${when}` : `Version ${version}`;
+    head.append(b, em);
+    const ul = document.createElement('ul');
+    for (const line of lines) {
+      const li = document.createElement('li');
+      li.textContent = line;
+      ul.append(li);
+    }
+    c.append(head, ul);
+    return c;
+  };
+  const rows = UPDATES.map((u) => card(u.version, u.date && dayOf(u.date), u.title, u.notes));
+  const earlier = document.createElement('details');
+  earlier.className = 'setting earlier';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Earlier updates';
+  earlier.append(summary);
+  for (const e of EARLIER) {
+    const p = document.createElement('p');
+    const b = document.createElement('b');
+    b.textContent = `${e.from} to ${e.to}${e.when ? ` · ${e.when}` : ''}`;
+    p.append(b, document.createTextNode(e.summary));
+    earlier.append(p);
+  }
+  return [...rows, earlier];
+}
+
+/** About: the game's name, its version and where the art and sound come from. */
+function aboutRows(): HTMLElement[] {
+  const [name] = row('Legends of the Last Keep', `Version ${__GAME_VERSION__}`);
+  const [credits] = row(
+    'Credits',
+    'Art from free pixel-art packs (most from Craftpix, some from DawnLike and others) and some made for the game. Music from OpenGameArt composers and others. Most sound effects are made in the game, with a few recorded hits. Every source is named in the game’s credits list.',
   );
-  const version = document.createElement('p');
-  version.className = 'hint';
-  version.textContent = `Version ${__GAME_VERSION__}`;
-  body.append(version);
+  return [name, credits];
 }
 
 function row(title: string, hint: string): [HTMLElement, HTMLElement] {

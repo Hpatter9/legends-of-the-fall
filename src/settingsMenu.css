@@ -1,0 +1,21 @@
+/* ---- Settings in submenus (settings.ts): the top list's rows open a submenu, each with a back button; the Updates
+   and notes page lists the releases. Loaded last so it sits over the Keep and Kingdom look. ---- */
+#settingsBody button.setMenu { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; width: 100%; min-height: 56px; padding: 9px 12px; text-align: left; font: inherit;
+  border: 1px solid #696048; border-radius: 5px; background: linear-gradient(#303329f5, #20241cf5); color: var(--kk-text); box-shadow: none; }
+#settingsBody button.setMenu:active:not(:disabled) { padding: 9px 12px; background: #414333; }
+#settingsBody .setChevron { font-size: 22px; line-height: 1; color: var(--kk-gold); }
+#settingsBody .setBack { align-self: flex-start; min-width: 96px; }
+#settingsBody .newDot { display: inline-block; margin-left: 4px; padding: 1px 6px; border-radius: 9px; font-size: 10px; font-weight: 700; line-height: 15px; vertical-align: 2px;
+  color: #1c1a12; background: var(--kk-gold); }
+/* the gears carry a small dot while there are updates the player has not looked at */
+#gear.hasNews, #hmGear.hasNews { position: relative; }
+#gear.hasNews::after, #hmGear.hasNews::after { content: ''; position: absolute; top: 3px; right: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--kk-gold); box-shadow: 0 0 0 2px #1c1a12; pointer-events: none; }
+
+/* the releases: a card each, newest first; the older ranges fold under "Earlier updates" */
+#settingsBody .setting.update { display: block; }
+#settingsBody .update ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.4; }
+#settingsBody .update li + li { margin-top: 3px; }
+#settingsBody .setting.earlier { display: block; }
+#settingsBody .earlier summary { min-height: 32px; display: flex; align-items: center; font-weight: 700; color: var(--kk-gold); cursor: pointer; }
+#settingsBody .earlier p { margin: 8px 0 0; font-size: 12px; line-height: 1.4; }
+#settingsBody .earlier p b { display: block; margin-bottom: 2px; font-size: 11px; color: var(--dim); }
