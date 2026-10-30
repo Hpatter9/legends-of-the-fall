@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### SHOP-BOOKS-DESIGN — Skill books, Hester's stall, gear wear, selling, and the equipment art prompt
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/shop-books-design`, `/home/user/lotf-shop-design` (from main 0.262.0).
+- **Goal:** the owner's asks as a design to approve: skill books (study, the hero's skill book and two slots, mastery, four kinds, lost techniques through quests), the shop as a new stall at the camp with its own close-up menu (Hester Vane, daily stock, standing, the caravan master, the Gloaming Dealer, the chest shop moved in), gear durability and repair, selling gear and books with no crowns loop; and the Antigravity prompt for the painted equipment icons.
+- **Scope:** documents only: `docs/notes/books-shop-gear-design.md`, `docs/notes/gear-art-prompt.md`, this row. No game code.
+- **Status:** design ready for the owner's review (six open questions at its end, each with a recommendation). Art prompt ready to hand to Antigravity (149 images, branch `art/gear-icons`). Checks: diff, links and consistency only; no runtime checks (no code changed). No merge or version bump.
+
 ### BATTLE-HUD — The fight's hero rows and spell orbs; ULT-CUTIN — an ultimate's moment
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/battle-hud-final`, `/home/user/lotf-hud` (from main 0.254.0).
