@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.248.0',
+    date: '2026-10-30',
+    title: 'Painted spell effects, first wave',
+    notes: ['Launches, shoves, pulls, burrows, walls, blinks, dashes and teleport slashes now use hand-painted effects.', 'The healers\' new spell art is loaded and ready for their coming spells.'],
+  },
+  {
     version: '0.247.0',
     date: '2026-10-30',
     title: 'A main theme, and a battle song for every army',
