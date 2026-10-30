@@ -147,6 +147,10 @@ Army cells (`cell`, 24 saves, mean tries to clear Normal, a save that never clea
 | Golem Forge, level 70 | 2.9 (100%) | 5.3 (96%) | 6.0 (100%) | 12.0 (92%) |
 | Golem Forge, level 75 | - | 3.0 (100%) | - | - |
 
+Main 0.241.0, merged in afterwards, adds the road's events and the passing cart's market to an army's gaps (MID-EVENTS); a spot check
+there with hearts reads the Infernal Host 6.3 tries at 55 (96%), the Yokai 11.6 at 65 (88%) and the Golem Forge 10.0 at 65 (96%), within
+the cells' noise of the figures above (the Golems a little harder).
+
 The army gate (`gate 55,60,65,70`, 24 saves, from the Infernal Host with the armies before it beaten, XP carried; tries at each army of the
 saves that reached it, and the saves that beat it):
 
