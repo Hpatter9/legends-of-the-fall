@@ -12,7 +12,7 @@ import type { MapRecap, TowerSummary } from './sim/tower';
 import { ICONS, icon } from './menuArt';
 import { iconImg, relicIcon } from './render/items';
 import { play } from './render/sound';
-import { calamityLook } from './towerTheme';
+import { dungeonName } from './calMap';
 import { sumOres } from './sim/awakenMats';
 import { cacheChip, classWord, oreChip } from './oreView';
 
@@ -49,12 +49,12 @@ const chip = (pic: HTMLElement, name: string): HTMLElement => {
 };
 
 /** The sheet of a map's recap: how much of it was cleared, what it paid, and the events it held. */
-export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void): void {
+export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void, expedition = false): void {
   const next = r.map + 1;
   card.classList.add('ccCard');
-  card.append(el('p', 'ccLead', calamityLook(r.map).name));
+  card.append(el('p', 'ccLead', dungeonName(r.map)));
   const stats = el('div', 'ccStats');
-  stats.append(row('Spots cleared', `${r.spots} of ${r.total}`), row('Fights won', `${r.fights}${r.elites ? ` (${r.elites} mini-boss${r.elites === 1 ? '' : 'es'})` : ''}`), row('Gold won', String(r.gold)));
+  stats.append(row(expedition ? 'Crossings resolved' : 'Spots cleared', `${r.spots} of ${r.total}`), row('Fights won', `${r.fights}${r.elites ? ` (${r.elites} mini-boss${r.elites === 1 ? '' : 'es'})` : ''}`), row('Gold won', String(r.gold)));
   card.append(stats);
   const parts = [
     group('Rift ores', sumOres(r.ores ?? []).map((d) => oreChip(d, `for the ${classWord(d.trait)} heroes`))),
@@ -65,7 +65,7 @@ export function mapRecapCard(card: HTMLElement, r: MapRecap, onDone: () => void)
   ].filter((x): x is HTMLElement => !!x);
   card.append(...parts);
   if (!parts.length) card.append(el('p', 'ccLead', 'A quiet map: nothing found on it.'));
-  const go = el('button', 'primary', next <= CAL_MAPS ? `On to map ${next}` : 'Onward');
+  const go = el('button', 'primary', next <= CAL_MAPS ? `On to ${expedition ? 'region' : 'map'} ${next}` : 'Onward');
   go.addEventListener('click', () => {
     play('summon');
     onDone();
@@ -96,7 +96,7 @@ function countUp(target: HTMLElement, value: number): void {
 }
 
 /** The victory screen: the Calamity falls, and the finishing reward is laid out piece by piece. */
-export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => void): void {
+export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => void, expedition = false): void {
   const c = s.clear!;
   card.classList.add('ccCard', 'ccVictory');
   // (a one-shot burst of gold sparks over the title, and a faint one-shot light: neither loops)
@@ -107,7 +107,7 @@ export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => vo
     p.style.setProperty('--d', `${48 + (i % 3) * 22}px`);
     burst.append(p);
   }
-  card.append(burst, el('h2', 'ccTitle', 'The Calamity is ended!'), el('p', 'ccLead', `All ${CAL_MAPS} maps are cleared and the rift is sealed.${c.level ? ` Ascension ${c.level}.` : ''}`));
+  card.append(burst, el('h2', 'ccTitle', 'The Calamity is ended!'), el('p', 'ccLead', `All ${s.maps ?? CAL_MAPS} ${expedition ? 'regions' : 'maps'} are cleared and the rift is sealed.${c.level ? ` Ascension ${c.level}.` : ''}`));
   // the title: the badge of the level cleared
   const badge = el('div', 'ccBadge');
   badge.append(el('small', '', c.newTitle ? 'A new title' : 'Your title'), el('b', '', c.title));

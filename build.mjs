@@ -33,7 +33,8 @@ const options = {
   minify: !serve,
   sourcemap: true,
   logLevel: 'warning',
-  loader: { '.png': 'dataurl' },
+  // (the large paintings are WebP, data URLs as the PNGs are: bundled, so offline needs nothing in FILES)
+  loader: { '.png': 'dataurl', '.webp': 'dataurl' },
   define: { __GAME_VERSION__: JSON.stringify(version), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
@@ -120,6 +121,8 @@ const writeIndexHtml = () => {
             readFileSync('src/codex.css', 'utf8') +
             readFileSync('src/awaken.css', 'utf8') +
             readFileSync('src/calmap.css', 'utf8') +
+            readFileSync('src/dungeonMap.css', 'utf8') +
+            readFileSync('src/sanctuary.css', 'utf8') +
             readFileSync('src/campPlaces.css', 'utf8') +
             readFileSync('src/daily.css', 'utf8') +
             readFileSync('src/cinematics.css', 'utf8') +
@@ -130,7 +133,7 @@ const writeIndexHtml = () => {
             readFileSync('src/tomes.css', 'utf8') +
             readFileSync('src/ores.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );

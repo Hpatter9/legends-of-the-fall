@@ -8,14 +8,15 @@ import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
-import { kitOf } from '../sim/abilities';
+import { keyOfKit, ultKeyOf } from '../sim/abilities';
+import { skillShown } from '../sim/heroKits';
 import { abilityHeading } from './abilityLooks';
 import { abilityFrames, loadAbilityArt } from './abilityArt';
 import { SPELL_SIGNATURES } from './spellSignatures';
 import { SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
-import { at, facesRight, TH, TW } from './iso';
+import { at, depth, facesRight, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SKILL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -41,6 +42,8 @@ import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, im
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
+import { MOVE_LOOKS, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
+import type { WallKind } from '../sim/toolkit';
 import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
 import { coverAlpha, overFighter } from './overFighter';
 import type { Element, Family } from './fxRules';
@@ -107,6 +110,8 @@ interface Item {
 export class Fx {
   readonly root = new Container();
   private items: Item[] = [];
+  /** The auras drawn now (by caster and name), so a refreshed aura is not drawn twice (RPG-SPELLS). */
+  private auraShown = new Set<string>();
   private trauma = 0;
   shakeX = 0;
   shakeY = 0;
@@ -217,6 +222,13 @@ export class Fx {
     this.dimPeak = peak;
     this.dimMs = ms;
     this.dimLeft = ms;
+  }
+
+  /** DARK-WAVE: lift any dim at once (a wave starting again after a heart burns: the fight's clock, which fades a dim out, is
+   *  held through the burn, so an ultimate's dim from the fall would otherwise stay on over it). */
+  undim(): void {
+    this.dimLeft = 0;
+    this.dimLayer.visible = false;
   }
 
   /** Run `fn` after `ms` of the fight's own time. */
@@ -337,6 +349,8 @@ export class Fx {
         this.sparkles(wx, wy, 0x9be5ff);
       }
       else if (e.kind === 'terrain') this.kitTerrain(b, e);
+      // (the movement toolkit, RPG-SPELLS batch 1: placeholder looks from the pack until the painted effects arrive)
+      else if (e.kind === 'shove' || e.kind === 'launch' || e.kind === 'slam' || e.kind === 'fall' || e.kind === 'burrow' || e.kind === 'swap' || e.kind === 'aura' || e.kind === 'wallBreak') this.toolkit(b, e);
       else if (e.kind === 'mark') this.kitMark(e);
       else if (e.kind === 'hit') {
         const to = this.sprites.get(e.to);
@@ -364,7 +378,7 @@ export class Fx {
           continue;
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
-        const castName = e.src === 'skill' ? this.casting.get(e.by) ?? kitOf(by)?.skill.name ?? '' : '';
+        const castName = e.src === 'skill' ? this.casting.get(e.by) ?? keyOfKit(by) : '';
         const signature = kitSignature(castName)?.hit;
         const skillFx = e.src === 'skill' && !signature ? SKILL_FX[castName]?.hit : undefined;
         // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
@@ -379,11 +393,11 @@ export class Fx {
         if (signature) {
           // (a hero's skill has a look of its own: no shared burst on top)
           const spot = { x: hx, y: to.y, tall: to.tall };
-          playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0, size: kitOf(by)?.ultimate?.name === castName ? 1.25 : 1 });
+          playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0, size: ultKeyOf(by) === castName ? 1.25 : 1 });
         } else if (skillFx) {
           this.effect(skillFx, hx, hy);
           // (and a burst of the skill's own element on top)
-          impactBurst(this.particles, skillElement(kitOf(by)?.skill.name ?? ''), hx, hy, 0.8, e.splash);
+          impactBurst(this.particles, skillElement(keyOfKit(by)), hx, hy, 0.8, e.splash);
         } else if (defOf(by).shot) {
           // (a shot lands in its own element: fire bursts, frost shatters, lightning cracks, poison lingers, an arrow bites)
           const m = missileOf(defOf(by).shot!, defOf(by).name);
@@ -797,13 +811,13 @@ export class Fx {
   private skillName(byId: number, name: string, ms: number): void {
     const by = this.sprites.get(byId);
     if (!by) return;
-    const ultimate = kitOf(by.unit)?.ultimate?.name === name;
+    const ultimate = ultKeyOf(by.unit) === name;
     const boss = by.unit.side === 'foe' && isBoss(by.unit.def);
     const el = skillElement(name);
     // (three skill names at most: the oldest fades out early when a fourth comes)
     this.skillStack = this.skillStack.filter((l) => !l.txt.destroyed);
     while (this.skillStack.length >= 3) this.skillStack.shift()!.cut();
-    this.skillStack.push(this.label(name, by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
+    this.skillStack.push(this.label(skillShown(by.unit, name), by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
     this.casting.set(byId, name);
     const signature = kitSignature(name);
     if (signature) playSteps(signature.wind, this.sceneOf(by, ms, ultimate ? 1.45 : 1.15));
@@ -880,7 +894,7 @@ export class Fx {
     if (e.tone !== 'tier') return;
     const by = this.sprites.get(e.by);
     if (!by) return;
-    const skillName = kitOf(by.unit)?.skill.name ?? '';
+    const skillName = keyOfKit(by.unit);
     // (a hero's tier ring is its skill's own look again; a foe's is the element's wave)
     if (kitSignature(skillName)) playSteps(tierRing(skillName, e.reach * 64, (by.unit.grade ?? 1) > 2), this.sceneOf(by, 600, 1));
     else ringOut(this.particles, skillElement(skillName), by.x, by.y, e.reach);
@@ -979,6 +993,194 @@ export class Fx {
     play(this.particles, 'light-pillar', sp.x, sp.y - sp.tall * 0.6, { scale: sp.tall / 24, frameMs: 65, alpha: 0.4, add: false, tint: 0xffdc88 });
     play(this.particles, 'light-wave', sp.x, sp.y, { scale: 2.2, frameMs: 55, alpha: 0.65, tint: 0xffdc88, delay: 100 });
     this.label(`Lv ${level}`, sp.x, sp.y - sp.tall - 14, 0xfff2a0, 12, 1300, true);
+  }
+
+  // ---- the movement toolkit (RPG-SPELLS batch 1): placeholders from the pack (`toolkitLooks.ts`) until the painted effects arrive ----
+
+  /** A look's one-off strip at a point. */
+  private lookOnce(l: Look, x: number, y: number, scale: number): void {
+    const frames = l.once ? PACK[l.once] : undefined;
+    if (!frames?.length) return;
+    this.particles.spawn({ frames, x, y, scale, frameMs: 60, add: true, prio: true, ...(l.tint ? { tint: l.tint } : {}), ...(l.alpha ? { alpha: l.alpha } : {}) });
+  }
+
+  /** A look's strip looped at a point while `live` holds (it may move, `where`); it fades out when `live` stops holding. Reduced motion
+   *  holds its first frame. */
+  private lookLoop(l: Look, where: () => [number, number], scale: number, live: () => boolean, depthOf?: () => number): void {
+    const frames = l.loop ? PACK[l.loop] : undefined;
+    if (!frames?.length) return;
+    const sp = new Sprite(frames[0]);
+    sp.anchor.set(0.5, 0.6);
+    sp.scale.set(scale);
+    if (l.tint) sp.tint = l.tint;
+    sp.alpha = l.alpha ?? 0.9;
+    sp.blendMode = 'add';
+    this.root.addChild(sp);
+    let t = 0;
+    let gone = false;
+    this.items.push({
+      view: sp,
+      step: (dt) => {
+        t += dt;
+        const [x, y] = where();
+        sp.position.set(x, y);
+        if (depthOf) sp.zIndex = depthOf();
+        if (!this.reduced) sp.texture = frames[Math.floor(t / 90) % frames.length];
+        if (!gone && !live()) gone = true;
+        if (gone) {
+          sp.alpha = Math.max(0, sp.alpha - dt / 300);
+          return sp.alpha > 0;
+        }
+        return true;
+      },
+    });
+  }
+
+  /** A raised wall's tile: it rises (a burst), stands (the ruined-wall prop for a solid one, and its loop) and goes when the sim no longer has it. */
+  private wallTile(b: Battle, u: number, v: number, kind: WallKind): void {
+    const look = WALL_LOOKS[kind];
+    const [x, y] = this.tilePos(b, u, v);
+    const i = v * b.board.w + u;
+    const live = () => !!b.walls?.some((w) => w.i === i && w.kind === kind && w.until > b.t);
+    this.lookOnce(look, x, y - 8, 1.6);
+    if (look.prop && kitArt) {
+      const sp = new Sprite(kitArt.walls[(u + v) % 2]);
+      sp.anchor.set(0.5, 0.85);
+      sp.scale.set(TW / Math.max(1, sp.texture.width));
+      if (look.tint) sp.tint = look.tint;
+      sp.position.set(x, y);
+      sp.zIndex = 0;
+      this.root.addChild(sp);
+      let t = 0;
+      this.items.push({ view: sp, step: (dt) => ((t += dt), live() || t < 200 ? true : ((sp.alpha = Math.max(0, sp.alpha - dt / 300)), sp.alpha > 0)) });
+    }
+    this.lookLoop(look, () => [x, y - 10], kind === 'wind' ? 1.4 : 1.2, live);
+  }
+
+  private toolkit(b: Battle, e: Extract<BattleEvent, { kind: 'shove' | 'launch' | 'slam' | 'fall' | 'burrow' | 'swap' | 'aura' | 'wallBreak' }>): void {
+    const saver = settings().saver;
+    if (e.kind === 'shove') {
+      // (dust kicked up along the slide)
+      for (const at2 of saver ? e.path.slice(-1) : e.path) {
+        const [x, y] = this.tilePos(b, at2.u, at2.v);
+        this.particles.spawn({ frames: VFX.dustWhite, x: x + jitter(4), y: y - 4, scale: 1.1, life: 420, alpha: 0.75 });
+      }
+    } else if (e.kind === 'launch') {
+      const [x0, y0] = this.tilePos(b, e.from.u, e.from.v);
+      const [x1, y1] = this.tilePos(b, e.land.u, e.land.v);
+      this.lookOnce(MOVE_LOOKS.lift, x0, y0 - 6, 1.4);
+      this.later(e.ms, () => {
+        this.lookOnce(MOVE_LOOKS.land, x1, y1 - 4, 1.5);
+        this.trauma = Math.min(1, this.trauma + 0.15);
+      });
+    } else if (e.kind === 'slam') {
+      const to = this.sprites.get(e.to);
+      if (to) this.lookOnce(MOVE_LOOKS.slam, to.x, to.y - to.tall * 0.4, 1.3);
+      this.trauma = Math.min(1, this.trauma + 0.2);
+    } else if (e.kind === 'fall') {
+      const to = this.sprites.get(e.to);
+      if (to) this.label('Fall!', to.x, to.y - to.tall - 10, 0xffd0a0, 12, 900);
+    } else if (e.kind === 'burrow') {
+      const [x, y] = this.tilePos(b, e.u, e.v);
+      if (e.phase === 'up') {
+        this.lookOnce(MOVE_LOOKS.erupt, x, y - 8, 2.2);
+        this.trauma = Math.min(1, this.trauma + 0.3);
+        return;
+      }
+      this.lookOnce(MOVE_LOOKS.dig, x, y - 6, 1.6);
+      // (the mound runs along the tunnel under the ground for as long as the burrower is under)
+      const path = [{ u: e.u, v: e.v }, ...e.path];
+      const start = b.t;
+      let near = path[0];
+      const where = (): [number, number] => {
+        const f = Math.max(0, Math.min(1, (b.t - start) / Math.max(1, e.ms)));
+        const k = f * (path.length - 1);
+        near = path[Math.round(k)];
+        const a = path[Math.floor(k)];
+        const z = path[Math.min(path.length - 1, Math.floor(k) + 1)];
+        const [ax, ay] = this.tilePos(b, a.u, a.v);
+        const [zx, zy] = this.tilePos(b, z.u, z.v);
+        const r = k - Math.floor(k);
+        return [ax + (zx - ax) * r, ay + (zy - ay) * r - 2];
+      };
+      const me = b.units.find((x) => x.id === e.by);
+      const under = () => !!me?.under && me.alive;
+      // (a heaped ridge of earth over the tunnel, with the dust strip churning on it: drawn, until the painted burrow arrives)
+      const g = new Graphics();
+      g.ellipse(0, 0, 22, 9).fill({ color: 0x4a3426, alpha: 0.95 });
+      g.ellipse(0, -4, 16, 7).fill({ color: 0x7a5a40, alpha: 0.95 });
+      g.ellipse(-4, -7, 8, 3).fill({ color: 0xa88660, alpha: 0.9 });
+      for (const [x, y] of [[-14, 1], [12, -1], [3, 4]]) g.circle(x, y, 2.2).fill({ color: 0x8a8070 });
+      this.root.addChild(g);
+      let t = 0;
+      this.items.push({
+        view: g,
+        step: (dt) => {
+          t += dt;
+          const [x, y] = where();
+          g.position.set(x, y + 2);
+          g.zIndex = depth(near.u, near.v) + 4;
+          if (!this.reduced) g.scale.set(1 + 0.08 * Math.sin(t / 90), 1);
+          if (!under()) {
+            g.alpha = Math.max(0, g.alpha - dt / 200);
+            return g.alpha > 0;
+          }
+          return true;
+        },
+      });
+      this.lookLoop(MOVE_LOOKS.mound, where, 1.4, under, () => depth(near.u, near.v) + 5);
+    } else if (e.kind === 'swap') {
+      for (const id of [e.a, e.b]) {
+        const s = this.sprites.get(id);
+        if (s) this.lookOnce(MOVE_LOOKS.swap, s.x, s.y - s.tall * 0.45, 1.4);
+      }
+    } else if (e.kind === 'aura') {
+      this.aura(b, e);
+    } else {
+      const [x, y] = this.tilePos(b, e.u, e.v);
+      this.lookOnce(MOVE_LOOKS.shatter, x, y - 10, 1.6);
+    }
+  }
+
+  /** An aura: a ring over the ground of its reach (a diamond of tiles, as the grid counts reach), turning at its heart, round its caster
+   *  or on its tile, for as long as the sim keeps it. */
+  private aura(b: Battle, e: Extract<BattleEvent, { kind: 'aura' }>): void {
+    const look = auraLook(e.what);
+    const me = b.units.find((x) => x.id === e.by);
+    const live = () => !!b.auras?.some((a) => a.by === e.by && a.what === e.what && a.until > b.t);
+    if (b.auras?.some((a) => a.by === e.by && a.what === e.what) && this.auraShown.has(`${e.by}:${e.what}`)) return;
+    this.auraShown.add(`${e.by}:${e.what}`);
+    const centre = (): [number, number] => {
+      const c = e.at ?? me ?? { u: 0, v: 0 };
+      return this.tilePos(b, c.u, c.v);
+    };
+    const g = new Graphics();
+    const r = e.reach + 0.5;
+    g.poly([0, (-TH / 2) * r * 2, (TW / 2) * r * 2, 0, 0, (TH / 2) * r * 2, (-TW / 2) * r * 2, 0]).fill({ color: look.ring, alpha: 0.1 }).stroke({ color: look.ring, width: 2, alpha: 0.7 });
+    g.zIndex = -1;
+    this.root.addChild(g);
+    let t = 0;
+    let gone = false;
+    this.items.push({
+      view: g,
+      step: (dt) => {
+        t += dt;
+        const [x, y] = centre();
+        g.position.set(x, y);
+        if (!this.reduced) g.alpha = 0.8 + 0.2 * Math.sin(t / 350);
+        if (!gone && !live()) gone = true;
+        if (gone) {
+          g.alpha = Math.max(0, g.alpha - dt / 300);
+          if (g.alpha <= 0) this.auraShown.delete(`${e.by}:${e.what}`);
+          return g.alpha > 0;
+        }
+        return true;
+      },
+    });
+    this.lookLoop(look, () => {
+      const [x, y] = centre();
+      return [x, y - 4];
+    }, 1.3, live);
   }
 
   /** The world position of a tile's top. */
@@ -1348,6 +1550,7 @@ export class Fx {
   /** Timed terrain from a kit: a rampart's wall, a statue, a flood's water on a tile, until it goes back (a terrain event of 0 ms, or the battle no longer has it). */
   private kitTerrain(b: Battle, e: Extract<BattleEvent, { kind: 'terrain' }>): void {
     if (!e.ms) return;
+    if (e.what in WALL_LOOKS) return this.wallTile(b, e.u, e.v, e.what as WallKind);
     const [x, y] = this.tilePos(b, e.u, e.v);
     const i = e.v * b.board.w + e.u;
     let view: Container;

@@ -5,7 +5,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
-import { heroName, heroTitle } from './sim/heroNames';
+import { heroClassLabel, heroName } from './sim/heroNames';
 import { progressOf, xpOf } from './sim/levels';
 import { levelBadge } from './levelBadge';
 import { countTraits, traitsOf } from './sim/traits';
@@ -175,8 +175,8 @@ export class Party {
         continue;
       }
       const b = el('button', 'ptSlot');
-      b.setAttribute('aria-label', `Remove ${heroTitle(kind)} from party`);
-      b.title = `Remove ${heroTitle(kind)} · hold for details`;
+      b.setAttribute('aria-label', `Remove ${heroClassLabel(kind)} from party`);
+      b.title = `Remove ${heroClassLabel(kind)} · hold for details`;
       const remove = el('span', 'ptSlotRemove', '×');
       remove.setAttribute('aria-hidden', 'true');
       const number = el('span', 'ptSlotNumber', String(i + 1));

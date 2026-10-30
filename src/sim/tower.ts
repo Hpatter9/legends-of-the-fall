@@ -6,6 +6,8 @@
 // is the floor about to be climbed, and keeps counting through the acts. A lost fight ends the run; `settleTower` then pays
 // the run's chests and equipment into the meta, by the floors cleared. Pure rules: no Pixi, no DOM, no clock.
 
+import { destinationBoard, destinationWorld, expeditionOf, growExpeditionStarter, sanctuaryMap, type RiftWorld } from './sanctuary';
+import { growStarter, pendingAltar, RIFT_BOSSES } from './rift';
 import type { RunRecap } from './runRecap';
 import type { Battle, Boost, Stage } from './battle';
 import { CLASSIC_AREAS } from './board';
@@ -31,7 +33,7 @@ import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel,
 import { xpRate } from './castle';
 import { payClear, type ClearReward } from './calReward';
 import { bossOres, eliteOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
-import { type LevelUp } from './levels';
+import { xpFor } from './levels';
 
 /** Floors in an act: the path floors, then the boss on the last. */
 export const ACT_ROWS = 13;
@@ -107,6 +109,7 @@ export interface Treasure {
 
 /** The node being played: its fight, its stock, its chest or its campfire. */
 export interface Current {
+  world?: RiftWorld;
   id: number;
   kind: NodeKind;
   fight?: FightSpec;
@@ -155,6 +158,8 @@ export interface TowerSummary {
 
 /** What a calamity's map paid and showed, for the recap when it is cleared: the spots, the gold, the finds and the events met. */
 export interface MapRecap {
+  /** The legacy realm used for the region artwork. */
+  realm?: number;
   /** The map's number (1 to 6). */
   map: number;
   /** Spots cleared on it (the lair apart), and how many it has. */
@@ -428,12 +433,25 @@ function calamityOnce(seed: number, act: number, rows: number, asc: number, atte
 }
 
 /** The map of an act of this run: the tower's, or a calamity's (shorter, with recruit camps). */
-export const mapFor = (run: Run, act: number): MapNode[] => (run.tower?.maps ? calamityMap(run.seed, act, rowsIn(run.tower, act), ascOf(run)) : makeMap(run.seed, act, true, rowsIn(run.tower, act)));
+export function mapFor(run: Run, act: number): MapNode[] {
+  if (!expeditionOf(run)) return run.tower?.maps ? calamityMap(run.seed, act, rowsIn(run.tower, act), ascOf(run)) : makeMap(run.seed, act, true, rowsIn(run.tower, act));
+  const nodes = sanctuaryMap(run.seed, act, rowsIn(run.tower!, act));
+  const rules = ascRules(ascOf(run));
+  if (rules.elites > 1) for (const n of nodes) if (n.row > 1 && n.kind === 'fight') n.kind = 'elite';
+  addTwists(nodes, run.seed, act);
+  if (rules.chaosMutators) {
+    const rng = new Rng(mixSeed(run.seed, 0xc4a0, act));
+    for (const n of nodes) if ((n.kind === 'fight' || n.kind === 'elite') && !n.twist && rng.chance(0.35)) n.twist = rng.pick(CHAOS_TWISTS);
+  }
+  if (rules.bossCurse) for (const n of nodes) if (n.kind === 'boss') n.twist = new Rng(mixSeed(run.seed, 0xa5c8, act)).pick(CURSES);
+  return nodes;
+}
 
 /** The nodes the player may pick next: those the last one leads to (the whole first floor at the start of an act). Empty while a node is in play. */
 export function choices(run: Run): MapNode[] {
   const t = run.tower;
   if (!t || t.cur || run.over) return [];
+  if (expeditionOf(run)) return t.map.filter(n => n.row === t.row);
   // (a calamity's map is walked freely: any spot a bridge leads to from a cleared one, in either direction, and not cleared yet)
   if (t.maps) {
     const sides = sideSpots(run.seed, t.act, t.map);
@@ -497,7 +515,7 @@ export function setGoing(run: Run, id: number): boolean {
 /** The hidden side spots the party may take now: those hanging from the node it stands at, not yet taken (a calamity's; none while a node is in play). They are optional: the road's own choices stay as they are. */
 export function sideChoices(run: Run): SideSpot[] {
   const t = run.tower;
-  if (!t?.maps || t.cur || run.over) return [];
+  if (!t?.maps || t.cur || run.over || expeditionOf(run)) return [];
   // (shown once the node it hangs from is cleared, and taken whenever the party likes: it is optional, and never lost)
   return sideSpots(run.seed, t.act, t.map).filter((s) => t.path.includes(s.from) && !t.sideDone?.includes(s.id));
 }
@@ -534,7 +552,7 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   const spec = baseSpec(run, kind, floor, nodeId);
   if (run.mode?.kind !== 'calamity') return spec;
   // (a calamity's foes follow the party: fewer for a lone hero, stronger once it is more than five)
-  const more = squadFoeMult(run.roster.length);
+  const more = squadFoeMult(run.roster.length) * (run.rift ? [1, 1.35, 1.8][run.tower!.act - 1] : 1);
   const rules = ascRules(ascOf(run));
   spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
   // (and the fight is on a bigger board)
@@ -543,7 +561,7 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   const ease = kind === 'boss' ? 1 : CAL_OPENING[floor - 1] ?? 1;
   const bite = run.tower!.act > 1 ? 1 + CAL_SCALE.atkBias : 1;
   // (the last map's fights are harder still: `CAL_SCALE.final`)
-  const last = run.tower!.act >= CAL_MAPS && kind !== 'boss' ? 1 + CAL_SCALE.final : 1;
+  const last = run.tower!.act >= (run.tower!.maps ?? CAL_MAPS) && kind !== 'boss' ? 1 + CAL_SCALE.final : 1;
   spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease * last, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease * bite * last };
   if (rules.heal !== 1) spec.stage.heal = rules.heal;
   return spec;
@@ -555,7 +573,7 @@ function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fig
   const area = run.tower?.maps ? CLASSIC_AREAS[Math.floor((floor - 1) / 5) % CLASSIC_AREAS.length] : spireArea(run.seed, floor);
   if (kind === 'boss' && run.tower?.maps) {
     // (a calamity's bosses: one of its own per map, each bigger than the last; the map's twist adds a mechanic from the second on)
-    const map = run.tower.act;
+    const map = run.rift ? RIFT_BOSSES[run.tower.act - 1] : run.tower.act;
     return { band: calBossBand(map), stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map, ascRules(ascOf(run)).phaseAt, ascRules(ascOf(run)).bossShield), area } };
   }
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[((run.tower?.act ?? actOf(floor)) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
@@ -651,7 +669,7 @@ function stockChest(run: Run, floor: number): Treasure {
 export function recapOf(run: Run): MapRecap | undefined {
   const t = run.tower;
   if (!t?.maps) return undefined;
-  return (t.recap ??= { map: t.act, spots: 0, total: t.map.filter((n) => n.kind !== 'boss').length, fights: 0, elites: 0, gold: 0, relics: [], gear: [], heroes: [], events: [] });
+  return (t.recap ??= { map: t.act, ...(run.rift ? { realm: RIFT_BOSSES[t.act - 1] } : {}), spots: 0, total: expeditionOf(run) ? rowsIn(t, t.act) - 1 : t.map.filter((n) => n.kind !== 'boss').length, fights: 0, elites: 0, gold: 0, relics: [], gear: [], heroes: [], events: [] });
 }
 
 /** Leave a recruit spot with nobody taken: the spot stays open, and the party can come back (its offer is the same). */
@@ -667,10 +685,11 @@ export function leaveOpen(run: Run): boolean {
 
 /** Enter a node from the choices: a battle is made ready (the page starts it), the rest are laid out. False when it can't be picked now. */
 export function enterNode(run: Run, id: number): boolean {
+  if (pendingAltar(run)) return false;
   const t = run.tower;
   const side = id >= SIDE_BASE ? sideChoices(run).find((s) => s.id === id) : undefined;
   // (a cleared shop of a calamity can be entered again)
-  const again = t?.maps && !t.cur && !run.over && t.path.includes(id) && t.map[id]?.kind === 'shop' ? t.map[id] : undefined;
+  const again = t?.maps && !expeditionOf(run) && !t.cur && !run.over && t.path.includes(id) && t.map[id]?.kind === 'shop' ? t.map[id] : undefined;
   const node = side ? { id, kind: side.kind as NodeKind, twist: undefined } : again ?? choices(run).find((n) => n.id === id);
   if (!t || !node) return false;
   // (a calamity's spots are fought at their own floor, wherever the party has been: its row, running on through the maps)
@@ -678,9 +697,20 @@ export function enterNode(run: Run, id: number): boolean {
   const floor = run.stage;
   t.lastBoss = undefined;
   const cur: Current = { id, kind: node.kind };
+  if (expeditionOf(run)) cur.world = destinationWorld(run, id);
   if (side) cur.side = true;
   t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
+  if (cur.fight && cur.world) {
+    const board = destinationBoard(mixSeed(run.seed, t.act, id), cur.world);
+    if (node.kind === 'boss') board.arenaMid = { u: 7, v: 5 };
+    cur.fight.stage.board = board;
+    cur.fight.stage.area = board.area;
+  }
+  if (run.rift && node.kind === 'boss' && t.act === t.maps) {
+    const starter = run.roster.find((h) => h.id === run.rift!.starter);
+    if (starter) starter.xp = Math.max(starter.xp ?? 0, xpFor(30));
+  }
   if (t.maps && (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss')) levelTiers(run);
   if (node.kind === 'shop') cur.shop = t.shops?.[id] ?? stockShop(run, floor);
   if (node.kind === 'recruit') cur.hires = stockHires(run, floor);
@@ -716,6 +746,11 @@ export function clearNode(run: Run): void {
     return;
   }
   const first = !t.path.includes(cur.id);
+  const expedition = expeditionOf(run);
+  if (first && expedition && cur.world) {
+    growExpeditionStarter(run); levelTiers(run);
+    expedition.history.push({ region: t.act, node: cur.id, world: cur.world, kind: cur.kind });
+  }
   if (first) {
     t.path.push(cur.id);
     // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to a benched hero of the party's own)
@@ -773,7 +808,8 @@ export function clearNode(run: Run): void {
     if (t.maps) run.stage = floorOf(t.act, 0, t);
   } else {
     t.at = cur.id;
-    if (!t.maps) t.row++;
+    if (!t.maps || expedition && first) t.row++;
+    if (expedition) t.here = START_ID;
   }
 }
 
@@ -815,12 +851,15 @@ function teachFight(run: Run, b: Battle): void {
   const cal = run.mode?.kind === 'calamity';
   const gains = fightXpByHero(b, xpRate(run.castle) * (t.cur?.side ? 0.25 : 1) * (cal ? calXpShare(b.units.filter((u) => u.side === 'foe' && !u.owner).length) : 1), cal ? CALAMITY_XP : CLIMB_XP);
   const before = new Map(run.roster.map((h) => [h.id, heroLevel(h)] as const));
-  const ups = new Map(gainRunXp(run, gains).map((u: LevelUp & { id: number }) => [u.id, u] as const));
+  const xpBefore = new Map(run.roster.map((h) => [h.id, h.xp ?? 0] as const));
+  gainRunXp(run, gains);
   // (a calamity's heroes rise a tier at the levels set in `CAL_TIER`: the stand-in for a merge's promotion)
+  growStarter(run, !!t.cur?.side);
+  growExpeditionStarter(run);
   levelTiers(run);
   t.gains = Object.entries(gains).map(([id, xp]) => {
     const h = run.roster.find((x) => x.id === Number(id));
-    return { id: Number(id), kind: h?.kind ?? '', xp, from: before.get(Number(id)) ?? 1, to: ups.get(Number(id))?.to ?? before.get(Number(id)) ?? 1 };
+    return { id: Number(id), kind: h?.kind ?? '', xp: h ? (h.xp ?? 0) - (xpBefore.get(h.id) ?? 0) : xp, from: before.get(Number(id)) ?? 1, to: h ? heroLevel(h) : before.get(Number(id)) ?? 1 };
   }).filter((g) => g.kind);
 }
 
@@ -830,7 +869,7 @@ function teachFight(run: Run, b: Battle): void {
  */
 export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void {
   const t = run.tower;
-  if (!t) return;
+  if (!t || expeditionOf(run) && (!t.cur?.fight || run.over)) return;
   const kind = t.cur?.kind ?? 'fight';
   const floor = run.stage;
   t.gains = undefined;
@@ -849,7 +888,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   if (!t.cur?.side) healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
   const twist = t.cur?.fight?.stage.twist;
-  const paid = Math.round(reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
+  const paid = Math.round((1 + (run.rift?.corruption ?? 0) * 0.1) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
   run.gold += paid;
   const recap = recapOf(run);
   if (recap) {

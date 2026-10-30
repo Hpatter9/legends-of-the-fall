@@ -1,0 +1,98 @@
+/* The approved chamber floor replaces the floating-island view. All art is bundled by its TS imports. */
+#towerMap.dmMode { background: #0b1812; }
+.dmHead.rtHead { padding: calc(env(safe-area-inset-top) + 13px) 15px 10px; gap: 9px; background: linear-gradient(120deg,#24362b,#0e2019); border-bottom: 1px solid #ae9152; }
+.dmTop { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.dmTop > div { min-width:0; }
+.dmEyebrow { margin:0 0 5px; font-size:10px; letter-spacing:1.6px; color:#b8a775; text-transform:uppercase; }
+.dmHead h2 { font:700 20px/1.2 var(--display); color:#ffe0a1; margin:0; text-shadow:0 2px 2px #000; }
+.dmClose { min-width:44px; min-height:44px; border:1px solid #86734b; border-image:none; padding:0; border-radius:2px; background:#12241b; color:#dfc789; font-size:26px; }
+.dmStatus { display:flex; align-items:center; gap:7px; font-size:12px; color:#b5c4af; }
+.dmAvatar { width:36px; height:36px; border:1px solid #88734a; background:#091710; image-rendering:pixelated; }
+.dmStarter { display:flex; flex-direction:column; gap:2px; }
+.dmStarter b { color:#e7d5ab; }
+.dmStarter small { color:#b0bba4; font-size:11px; }
+.dmChip { padding:4px 6px; white-space:nowrap; background:#09150e77; border:1px solid #9d87553d; font-size:11px; }
+.dmStatus .rtGold { margin-left:auto; font:700 14px var(--body); }
+.dmStatus .rtGold .ico { width:16px; height:16px; }
+.dmScroll.rtScroll { width:100%; max-width:440px; margin:0 auto; background:#0b1710; scrollbar-width:thin; scrollbar-color:#776b49 #0a130f; }
+.dmWorld { position:relative; isolation:isolate; margin:0 auto; overflow:hidden; background:radial-gradient(ellipse at 50% 75%,#4b55362a,transparent 58%),linear-gradient(#09100d,#112117 70%,#0b1812); }
+.dmWorld::before { content:''; position:absolute; inset:0; z-index:-1; background:linear-gradient(#09130eaa,#07100cdd),var(--dmWall) repeat; background-size:auto,64px 64px; }
+.dmWorld::after { content:''; position:absolute; inset:0; box-shadow:inset 0 0 35px #0009; pointer-events:none; border-inline:1px solid #b28c4333; }
+.dmWorld[data-region='1'] { background:radial-gradient(ellipse at 35% 40%,#73518a25,transparent 65%),#131821; }
+.dmWorld[data-region='2'] { background:radial-gradient(ellipse at 50% 12%,#ae3a3033,transparent 65%),#1c1311; }
+.dmHalls { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+.dmHall path { fill:none; stroke-linejoin:round; stroke-linecap:round; }
+.dmHallWall { stroke:#020704; stroke-width:32px; }
+.dmHallEdge { stroke:#55543b; stroke-width:26px; }
+.dmHallFloor { stroke:url(#dm-floor); stroke-width:20px; }
+.dmHallLine { stroke:#ddc07d; stroke-width:2px; stroke-dasharray:3 8; opacity:0; }
+.dmHall.far { opacity:.34; }
+.dmHall.picked .dmHallLine { opacity:1; filter:drop-shadow(0 0 3px #ffce6d); }
+.dmMarks { position:absolute; inset:0; pointer-events:none; }
+.dmRoom { position:absolute; width:calc(64px * var(--dmUnit)); height:calc(54px * var(--dmUnit)); min-height:44px; min-width:44px; transform:translate(-50%,-50%); pointer-events:auto; border:3px solid #4c5142; border-top-color:#6b7056; border-bottom-color:#303a2b; border-image:none; border-radius:2px; background:linear-gradient(#1c2b20cc,#15241c99),var(--dmFloor) repeat; background-size:auto,48px 48px; box-shadow:0 0 0 2px #030a05,0 4px 0 2px #030a06,inset 0 0 20px #040a0799; padding:0; margin:0; display:flex; align-items:center; justify-content:center; overflow:visible; }
+.dmRoom::before,.dmRoom::after { content:'◆'; position:absolute; font-size:9px; color:#94956c; }
+.dmRoom::before { top:-8px; left:-7px; }.dmRoom::after { bottom:-8px; right:-7px; color:#696f51; }
+.dmRoom > svg { width:calc(35px * var(--dmUnit)); height:calc(35px * var(--dmUnit)); filter:drop-shadow(0 2px 3px #000b); pointer-events:none; image-rendering:auto; }
+.dmRoomLabel { position:absolute; left:50%; transform:translateX(-50%); top:calc(54px * var(--dmUnit)); white-space:nowrap; font-size:10px; line-height:1.15; font-weight:400; color:#aeb4a0; text-shadow:0 2px 3px #000; background:#08140cdb; padding:2px 4px; border-radius:2px; pointer-events:none; }
+.dmRoom:disabled { cursor:default; opacity:1; filter:none; }
+.dmRoom.unreached { border-color:#343e32; background:linear-gradient(#0a160fe6,#0c1a11e6),var(--dmFloor); background-size:auto,48px 48px; box-shadow:0 0 0 2px #020805,0 3px 0 2px #020805; }
+.dmRoom.unreached > svg { filter:saturate(.65) brightness(.65) drop-shadow(0 2px 3px #000); }
+.dmUnknown { font-size:22px; color:#5b715c; text-shadow:0 0 12px #a4c49c33; }
+.dmRoom.open { border-color:#9b905f; border-top-color:#c5ae6e; box-shadow:0 0 0 2px #141d10,0 4px 0 2px #050c05,inset 0 0 15px #c4b66622; }
+.dmRoom.picked { border-color:#efd08c; box-shadow:0 0 0 2px #725731,0 4px 0 2px #0a1008,0 0 22px #e9b65244,inset 0 0 22px #e9ba5a33; }
+.dmRoom.picked .dmRoomLabel { color:#ffe1a0; border:1px solid #b39c5966; background:#223222ef; }
+.dmRoom.current { border-color:#b1b891; box-shadow:0 0 0 2px #495c3c,0 4px 0 2px #09140a,inset 0 0 30px #92b66d22; }
+.dmRoom.current:not(.dmPortal) > svg { opacity:.25; }
+.dmRoom.boss { width:calc(80px * var(--dmUnit)); height:calc(62px * var(--dmUnit)); border-color:#775149; background:radial-gradient(#7a332433,#09140bc9),var(--dmFloor); background-size:auto,48px 48px; box-shadow:0 0 0 2px #100809,0 4px 0 2px #080805,0 0 20px #a0442922; }
+.dmRoom.boss > svg { width:45px; height:45px; filter:drop-shadow(0 0 6px #c03c2e66); }.dmRoom.boss .dmRoomLabel { top:calc(62px * var(--dmUnit)); color:#d7a18a; }
+.dmRoom.side { width:calc(48px * var(--dmUnit)); height:44px; }.dmRoom.side > svg { width:29px; height:29px; }.dmRoom.side .dmRoomLabel { top:44px; font-size:9px; }
+.dmRoom.dmPortal { width:calc(96px * var(--dmUnit)); height:calc(76px * var(--dmUnit)); border-color:#7d9970; background:radial-gradient(#3ed6b633,#12291e 70%),var(--dmFloor); background-size:auto,48px 48px; box-shadow:0 0 0 2px #173b2c,0 4px 0 2px #081810,0 0 22px #38c6aa22; }
+.dmPortalArt { width:calc(82px * var(--dmUnit)); height:calc(82px * var(--dmUnit)); object-fit:contain; image-rendering:auto; pointer-events:none; filter:drop-shadow(0 0 5px #51ddc255); animation:dmPortalGlow 3.5s ease-in-out infinite alternate; }
+.dmPortal .dmRoomLabel { top:calc(77px * var(--dmUnit)); color:#b9f0d9; border:1px solid #87b09a55; }.dmHere { position:absolute; bottom:-9px; left:50%; transform:translate(-50%,100%); margin-top:16px; padding:1px 5px; font-size:9px; line-height:1.2; font-weight:400; white-space:nowrap; color:#c9d6b8; text-shadow:0 1px 3px #000; background:#10251be6; z-index:2; }
+.dmClear { position:absolute; right:-7px; top:-8px; width:16px; height:16px; border:1px solid #9fba80; background:#1d3827; border-radius:50%; color:#c2d4a7; font-size:11px; z-index:2; }
+.dmWalker { position:absolute; width:auto; height:auto; transform:translate(-50%,-100%); pointer-events:none; image-rendering:pixelated; filter:drop-shadow(0 3px 3px #000b); z-index:3; }
+.dmWalker.dmArriving { animation:dmArrival .9s ease-out both; }
+.dmTorch { position:absolute; transform:translate(-50%,-50%); width:24px; height:24px; pointer-events:none; filter:drop-shadow(0 0 8px #f5aa40); z-index:2; }.dmTorch svg { width:24px; height:24px; }
+.dmFloorCaption { position:absolute; bottom:9px; left:0; right:0; text-align:center; color:#929d84; font-size:9px; letter-spacing:1.1px; text-transform:uppercase; }
+.dmFoot.rtFoot { display:flex; flex-direction:column; align-items:stretch; padding:10px 14px calc(env(safe-area-inset-bottom) + 10px); gap:9px; border-top:1px solid #a28c53; background:linear-gradient(120deg,#24362b,#0c2016); }
+.dmSelection { display:flex; align-items:center; gap:9px; min-height:42px; }.dmEncounterIcon { width:35px; height:35px; flex:none; }.dmEncounterIcon > svg,.dmEncounterIcon > img { width:35px; height:35px; object-fit:contain; image-rendering:auto; }
+.dmEncounterWords { min-width:0; }.dmSelectedName { margin:0 0 4px; font:700 15px/1.2 var(--display); color:#f4dba1; }
+.dmFoot .rtSay { font-size:11px; line-height:1.2; color:#bac5ad; min-height:0; display:block; }.dmFoot .elFace { width:32px; height:32px; }.dmFoot .elInfo { gap:6px; }.dmFoot .elWords small { font-size:10px; }
+.dmNav { display:flex; align-items:center; gap:13px; }.dmActions { flex:1; min-width:0; }.dmFoot .rtGo { width:100%; min-width:0; min-height:46px; font:700 13px/1.2 var(--display); border:1px solid #d5b96c; border-image:none; border-radius:2px; background:linear-gradient(#566a3e,#2b452d); color:#fff0bc; box-shadow:inset 0 0 0 2px #263a25,inset 0 0 0 3px #c6ae6755; padding:5px; }
+.dmHint { font-size:10px; line-height:1.15; color:#a5b29a; margin:5px 0 0; text-align:center; }
+.dmPad { width:138px; height:91px; display:grid; grid-template-columns:repeat(3,44px); grid-template-rows:repeat(2,44px); gap:3px; flex:none; }.dmPad button { width:44px; height:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:1px solid #9b8759; border-image:none; border-radius:2px; box-shadow:inset 0 0 0 2px #132619; background:linear-gradient(#364b34,#1c3225); color:#e4d09a; font-size:21px; line-height:1; }.dmPad button:disabled { opacity:.3; }.dmPad .up { grid-column:2; grid-row:1; }.dmPad .left { grid-column:1; grid-row:2; }.dmPad .down { grid-column:2; grid-row:2; }.dmPad .right { grid-column:3; grid-row:2; }
+.dmMenu { display:flex; gap:6px; border-top:1px solid #a1894b33; padding-top:8px; }.dmMenu button { flex:1; min-width:0; min-height:44px; padding:3px; border:1px solid #7e704953; border-image:none; border-radius:2px; background:#11271bcc; color:#d7d2b5; font-size:11px; font-weight:400; }
+.dmMode button:focus-visible { outline:2px solid #ffe7a7; outline-offset:3px; }
+/* (a steady glow; the portal breathes by its size, not its light: the no-flicker rule) */
+@keyframes dmPortalGlow { to { transform:scale(1.04); } }
+@keyframes dmArrival { from { opacity:0; transform:translate(-50%,-120%) scale(.4); filter:drop-shadow(0 0 10px #85ffe3); } to { opacity:1; transform:translate(-50%,-100%) scale(1); } }
+@media (max-height:800px) { .dmHead.rtHead { padding-top:calc(env(safe-area-inset-top) + 9px); padding-bottom:8px; gap:7px; }.dmHead h2 { font-size:18px; }.dmFoot.rtFoot { padding-top:8px; gap:7px; } }
+@media (prefers-reduced-motion:reduce) { .dmMode *,.dmMode *::before,.dmMode *::after { animation:none!important; transition:none!important; } }
+
+/* The already-approved new altar art shares the dungeon's emerald and gold language. */
+#towerMap .dmAltarVeil { padding:calc(env(safe-area-inset-top) + 8px) 9px calc(env(safe-area-inset-bottom) + 8px); background:#04100ae8; }
+#towerMap .dmAltarVeil .riftAltar { width:min(400px,100%); padding:36px 24px 22px; gap:8px; border:1px solid #a68b53; border-radius:3px; position:relative; isolation:isolate; background:#07180e; box-shadow:0 0 0 2px #07140d,0 0 34px #000b; image-rendering:auto; }
+.riftAltar .altarEyebrow { margin:0; text-align:center; text-transform:uppercase; letter-spacing:1.7px; font-size:9px; color:#c3b17e; }
+#towerMap .dmAltarVeil .riftAltar h2 { font-size:23px; line-height:1.2; color:#ffe0a0; text-shadow:0 2px 3px #000; }
+.altarSteps { display:flex; justify-content:center; gap:12px; font-size:10px; color:#849581; }.altarSteps .active { color:#ffe4a2; text-shadow:0 0 9px #ffce6d55; }.altarSteps .complete { color:#b5cf9e; }
+.altarScene { position:relative; display:flex; justify-content:center; align-items:center; height:140px; flex-shrink:0; isolation:isolate; }
+.altarScene::before { content:''; position:absolute; width:112px; height:112px; border:1px solid #dab36e66; border-radius:50%; box-shadow:0 0 0 7px #e9bc5222,0 0 0 20px #c4a15b0b,inset 0 0 30px #eda94b22,0 0 18px #e8a24822; }
+.altarScene > .altarArt { width:150px; height:140px; filter:drop-shadow(0 0 10px #f4b55d33); position:relative; image-rendering:auto; }
+#towerMap .dmAltarVeil .riftAltar .rtChoice { min-height:65px; padding:7px 9px; gap:9px; border:1px solid #8e7850; border-image:none; border-radius:2px; background:linear-gradient(110deg,#172b22f5,#0a1712f0); box-shadow:inset 0 0 0 2px #0a1714,inset 0 0 0 3px #ac8c4622; }
+.riftAltar .altarChoiceArt { width:37px; height:37px; flex-shrink:0; filter:drop-shadow(0 0 5px #e0b66b33); }
+#towerMap .dmAltarVeil .riftAltar .rtChoice[aria-pressed='true'] { border-color:#e9b970; background:linear-gradient(110deg,#5d381ccc,#17251bf5 80%); box-shadow:inset 0 0 0 2px #14241d,inset 0 0 0 3px #deb86866,0 0 14px #dc8f2322; }
+#towerMap .dmAltarVeil .riftAltar .rtChoice b { font:700 13px/1.2 var(--display); color:#f5d599; }#towerMap .dmAltarVeil .riftAltar .rtChoice small { font-size:12px; line-height:1.2; color:#bdc3ae; }
+#towerMap .dmAltarVeil .riftAltar .rtLead { font-size:11px; line-height:1.25; color:#b9c4ad; }#towerMap .dmAltarVeil .riftAltar .rtNote { font-size:12px; color:#ddcc9a; }
+#towerMap .dmAltarVeil .riftActions { position:sticky; bottom:-1px; padding-top:5px; background:linear-gradient(#09171000,#091710 25%); }
+#towerMap .dmAltarVeil .riftActions button { min-height:48px; padding:7px 4px; border:1px solid #d1b06b; border-image:none; border-radius:2px; box-shadow:inset 0 0 0 2px #172319,inset 0 0 0 3px #e7c37755; background:linear-gradient(#5b6840,#263e29); color:#fff0b4; font:700 13px var(--display); }
+#towerMap .dmAltarVeil .riftActions .danger { background:linear-gradient(#6d3234,#321b24); border-color:#bd7764; box-shadow:inset 0 0 0 2px #2c151e,inset 0 0 0 3px #b96a5d66; color:#ffd1b3; }
+.altarScene > .altarRitual { position:absolute; width:170px; height:170px; animation:altarRitual .65s ease-out both; z-index:2; }
+.altarConsecrating { animation:altarBless .65s ease-out both; }.altarCorrupting { animation:altarDoom .65s ease-out both; }
+@keyframes altarRitual { from { opacity:0; transform:scale(.4); } 35% { opacity:1; } to { opacity:0; transform:scale(1.45) rotate(25deg); } }
+@keyframes altarBless { 35% { box-shadow:0 0 0 2px #efd689,0 0 70px #e7b54b88; } }
+@keyframes altarDoom { 35% { box-shadow:0 0 0 2px #ef967b,0 0 70px #d83b5b88; } }
+@media(max-height:800px) { #towerMap .dmAltarVeil .riftAltar { padding-top:26px; }.altarScene { height:115px; }.altarScene > .altarArt { height:115px; width:125px; }.altarScene::before { width:96px; height:96px; } }
+
+#towerMap .riftAltar > .altarScenery { position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+#towerMap .altarScenery img { width:100%; height:100%; object-fit:fill; image-rendering:auto; }
+#towerMap .altarScenery::after { content:''; position:absolute; inset:0; background:linear-gradient(#06130d66,#06130dbb); }

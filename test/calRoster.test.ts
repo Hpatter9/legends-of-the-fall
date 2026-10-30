@@ -26,6 +26,7 @@ function visit(run: ReturnType<typeof calamityRun>, kind: MapNode['kind']): void
     t.path.push(step.id);
     t.at = step.id;
     t.here = step.id;
+    if (run.rift?.expedition) t.row = step.row + 1;
   }
   assert.fail(`no ${kind} node found`);
 }
@@ -159,7 +160,7 @@ test('a Calamity fight is on a bigger board with a band that fills it; the usual
   assert.equal(run.squad.length, 10);
   visit(run, 'fight');
   const b = startStage(run);
-  assert.equal(b.board.w, CAL_BOARD.w);
+  assert.equal(b.board.w, CAL_BOARD.w + 4);
   assert.equal(b.board.d, CAL_BOARD.d);
   // (twice the old 7 x 9 board, and bigger than the usual 8 x 11 one)
   assert.ok(CAL_BOARD.w * CAL_BOARD.d >= 1.8 * BASE_AREA && CAL_BOARD.w * CAL_BOARD.d <= 2.3 * BASE_AREA, 'about twice the old area');
@@ -167,7 +168,7 @@ test('a Calamity fight is on a bigger board with a band that fills it; the usual
   assert.equal(b.units.filter((u) => u.side === 'foe').length, 11, 'ten heroes meet eleven foes');
   assert.ok(b.units.every((u) => standable(tileAt(b.board, u.u, u.v))));
   // the heroes' rows are the last three of the deeper board
-  const lastRow = CAL_BOARD.d - 1;
+  const lastRow = b.board.d - 1;
   const free = Array.from({ length: b.board.w }, (_, u) => u).find((u) => standable(tileAt(b.board, u, lastRow)))!;
   assert.equal(canPlace(b, 'knight', free, lastRow), true);
   assert.equal(canPlace(b, 'knight', free, CAL_BOARD.d - DEPLOY_ROWS - 1), false);

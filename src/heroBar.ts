@@ -8,7 +8,7 @@
 // It only reads the battle and calls the sim's command; nothing here changes a fight by itself.
 
 import { type Battle, type Unit } from './sim/battle';
-import { heroName, heroTitle } from './sim/heroNames';
+import { heroClassLabel, heroName } from './sim/heroNames';
 import { ultimateOf } from './sim/abilities';
 import { costOf, heroKitOf, resOf, skill2Open, SKILL2_LEVEL, ultFull } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
@@ -184,8 +184,8 @@ export class HeroBar {
       // (a locked ultimate has no plate: the tile shows no hint of it until it unlocks)
       t.plate.textContent = ready && !queued ? 'TAP' : '';
       t.plate.hidden = !t.plate.textContent;
-      t.el.title = locked ? heroTitle(u.def) : `${heroTitle(u.def)}: tap the portrait when it glows to fire its ultimate`;
-      t.el.setAttribute('aria-label', `${heroTitle(u.def)}${locked ? '' : ready ? ', ultimate ready: tap to fire' : `, ultimate ${Math.round(meter * 100)}%`}`);
+      t.el.title = locked ? heroClassLabel(u.def) : `${heroClassLabel(u.def)}: tap the portrait when it glows to fire its ultimate`;
+      t.el.setAttribute('aria-label', `${heroClassLabel(u.def)}${locked ? '' : ready ? ', ultimate ready: tap to fire' : `, ultimate ${Math.round(meter * 100)}%`}`);
     }
   }
 }

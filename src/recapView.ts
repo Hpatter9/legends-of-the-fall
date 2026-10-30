@@ -6,7 +6,8 @@ import { heartsBurned, mvpKind, type RunRecap } from './sim/runRecap';
 import { MAX_STARS } from './sim/stars';
 import { UNITS } from './sim/units';
 import { battleSheet } from './render/awakenLook';
-import { heroName } from './sim/heroNames';
+import { heroName, heroTitle } from './sim/heroNames';
+import { titleLine } from './heroTitleView';
 import { portrait } from './render/sheets';
 import type { ComebackGo, ComebackTip } from './sim/comeback';
 
@@ -93,7 +94,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   if (hearts) grid.append(fig('Hearts burned', String(hearts)));
   sheet.append(grid);
 
-  // wave by wave, the company, XP and levels, and the spoils (`recapDetail`)
+  // wave by wave, the company, and the XP and levels (`recapDetail`)
   sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W', equipmentStep: head.equipmentStep }));
 
   const done = el('div', 'rcFoot');
@@ -113,13 +114,11 @@ export interface DetailOpts {
   equipmentStep?: (kind: string) => number;
   strip: string;
   prefix: string;
-  /** Leave out the spoils (a screen that lists its own finds). */
-  noSpoils?: boolean;
 }
 
 /** The detail of a recap, as a list of parts to lay out in order (WAVE-RECAP-2: the run's recap here, and the spire's and the
  *  Calamity's summaries and map recaps): each fight's stars, time and MVP; each hero's damage, healing and kills, with the MVP; the XP
- *  and levels gained; and the spoils found. A part with nothing to show is left out. */
+ *  and levels gained. A part with nothing to show is left out. */
 export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
   const out: HTMLElement[] = [];
   // wave by wave (WAVE-RECAP): each wave's stars, time and MVP, which the short card after each wave left for here
@@ -133,7 +132,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
       const mvpDef = w.mvp ? UNITS[w.mvp] : undefined;
       if (mvpDef) {
         const face = el('i', 'rcWaveMvp');
-        face.title = `MVP: ${heroName(w.mvp!)}`;
+        face.title = `MVP: ${heroTitle(w.mvp!)}`;
         face.append(portrait(battleSheet(w.mvp!, opts.equipmentStep?.(w.mvp!) ?? 0, 1), 64, 1));
         chip.append(face);
       }
@@ -159,7 +158,8 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
       const face = el('div', `rcFace g${t.grade}`);
       face.append(portrait(battleSheet(k, opts.equipmentStep?.(k) ?? 0, t.grade), 64, t.grade));
       if (k === mvp) face.append(el('em', 'rcCrown', '♛'));
-      const name = el('b', '', heroName(k));
+      // (the MVP is named with its title, BENCH-TITLES; the rest keep the short name)
+      const name = k === mvp ? titleLine(k, 'b', 'rcMvpName', true) : el('b', '', heroName(k));
       if (k === mvp) name.append(el('small', '', 'MVP'));
       const bars = el('div', 'rcBars');
       for (const [key, label] of [['dealt', 'Damage'], ['healed', 'Healing'], ['kills', 'Kills']] as const) {
@@ -191,12 +191,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
     out.push(list);
   }
 
-  // what the battle found (WAVE-RECAP: the gear and prizes each wave's card named, all together)
-  if (recap.found?.length && !opts.noSpoils) {
-    out.push(el('h3', '', 'Spoils found'));
-    const list = el('div', 'rcFound');
-    for (const f of recap.found) list.append(el('p', '', f));
-    out.push(list);
-  }
+  // (RECAP-REVEAL: no spoils list. The gear and relics a run finds leave with it, so the owner asked for them only on each wave's
+  // card; what is kept after the run, the crowns, chests, XP and levels, is above)
   return out;
 }

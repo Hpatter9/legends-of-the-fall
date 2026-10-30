@@ -11,6 +11,28 @@ import { UNITS } from './sim/units';
 import { battleSheet } from './render/awakenLook';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
+import { twistIcon } from './twistView';
+import ironDraught from './art/items/blood_vial.png';
+import fireTonic from './art/items/ember_ruby.png';
+import quicksilver from './art/items/cloud_treads.png';
+import coinHoard from './art/items/coin_hoard.png';
+import goldBand from './art/items/gold_band.png';
+
+/** An option's picture on the road's cards and the passing cart (MID-EVENTS): what it gives, from the item and twist icons. */
+function optionIcon(o: EventOption): string {
+  const fx = o.effect;
+  if (fx.t === 'relic') return relicIcon(fx.id);
+  if (fx.t === 'gear' || fx.t === 'curse') return gearIcon(fx.gear.slot, fx.gear.tier);
+  if (fx.t === 'buff') return fx.hp ? ironDraught : fx.atk ? fireTonic : fx.speed ? quicksilver : '';
+  if (fx.t === 'reroll') return goldBand;
+  if (fx.t !== 'road') return '';
+  const a = fx.act;
+  if (a.relic) return relicIcon(a.relic);
+  if (a.gear) return gearIcon(a.gear.slot, a.gear.tier);
+  if (a.buff?.twist) return twistIcon(a.buff.twist);
+  if (a.gold) return coinHoard;
+  return '';
+}
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -68,7 +90,7 @@ export class Events {
       card.append(go);
       return;
     }
-    card.append(el('h2', '', ev.title), el('p', '', ev.text), el('div', 'gold', `${run.gold} gold`));
+    card.append(el('h2', '', ev.title), el('p', '', ev.text), el('div', 'gold', ev.buys !== undefined ? `${run.gold} gold · ${ev.buys ? `${ev.buys} ${ev.buys === 1 ? 'buy' : 'buys'} left` : 'the pedlar is packing up'}` : `${run.gold} gold`));
     if (this.note) card.append(el('p', 'note', this.note));
     ev.options.forEach((o, i) => card.append(this.optionButton(o, i)));
   }
@@ -76,13 +98,17 @@ export class Events {
   private optionButton(o: EventOption, i: number): HTMLButtonElement {
     const b = el('button', `opt ${o.effect.t}`);
     const fx = o.effect;
-    const icon = fx.t === 'relic' ? relicIcon(fx.id) : fx.t === 'gear' ? gearIcon(fx.gear.slot, fx.gear.tier) : fx.t === 'curse' ? gearIcon(fx.gear.slot, fx.gear.tier) : '';
-    if (icon) b.append(iconImg(icon, o.label));
+    const hire = fx.t === 'hire' ? fx.kind : fx.t === 'road' ? fx.act.hire : undefined;
+    const icon = optionIcon(o);
+    if (hire && UNITS[hire]) b.append(portrait(formOf(UNITS[hire], 1), 32, 1));
+    else if (icon) b.append(iconImg(icon, o.label));
     const words = el('span');
-    words.append(el('b', '', o.done ? `${o.label} · sold` : o.label), el('small', '', o.text));
+    words.append(el('b', '', o.done ? `${o.label} · ${fx.t === 'reroll' ? 'done' : 'sold'}` : o.label), el('small', '', o.text));
     b.append(words);
     if (o.cost) b.append(el('em', '', `${o.cost}`));
-    b.disabled = !!o.done || this.run.gold < o.cost;
+    // (a market's buys run out: its wares close, the rummage and the way on stay)
+    const shut = this.run.event?.buys !== undefined && this.run.event.buys <= 0 && fx.t !== 'leave' && fx.t !== 'reroll';
+    b.disabled = !!o.done || this.run.gold < o.cost || shut;
     b.addEventListener('click', () => {
       const line = fx.t === 'leave' ? (leaveEvent(this.run), 'You move on.') : chooseOption(this.run, i);
       if (line === null) return;

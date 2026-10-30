@@ -34,7 +34,8 @@ export interface RunRecap {
   chests: number;
   /** Each wave fought, in order (WAVE-RECAP: the short card after a wave leaves its detail to the end; optional, older saves have none). */
   waves?: WaveRow[];
-  /** The gear and prizes the run picked up, by name (the wave's `run.found`, kept for the end; optional). */
+  /** The gear and prizes the run picked up, by name (the wave's `run.found`; optional). Still kept, but no longer shown: the owner
+   *  asked for a run's finds only on each wave's card, as they leave with the run (RECAP-REVEAL). */
   found?: string[];
 }
 

@@ -20,7 +20,8 @@ import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
 import { heroArtwork, openHeroArtwork } from './heroArtwork';
-import { heroName, heroTitle } from './sim/heroNames';
+import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
+import { titleLine } from './heroTitleView';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
 import swordIcon from './art/talent/sword.png';
@@ -162,7 +163,8 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   pic.append(banner);
   const title = el('div', 'dossierIdentity');
   const lock = lockInfo(meta, kind);
-  title.append(el('h3', '', open || lock?.named ? heroTitle(kind) : '???'), el('em', '', open ? `${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : lock?.named ? `${CLASS_NAMES[CLASS_OF[kind]]} · locked` : 'not yet recruited'));
+  // (the name with its title under it, BENCH-TITLES; the class, which the old "Name · Class" heading carried, leads the line below)
+  title.append(open || lock?.named ? titleLine(kind, 'h3', '', true) : el('h3', '', '???'), el('em', '', open ? `${def.name} · ${CLASS_NAMES[CLASS_OF[kind]]} · ${def.role}` : lock?.named ? `${def.name} · ${CLASS_NAMES[CLASS_OF[kind]]} · locked` : 'not yet recruited'));
   // (a hero not owned says how to get it: a milestone to reach, or shards to gather, with a bar where there is a count)
   if (lock) {
     title.append(el('span', 'lv', lock.line));
@@ -388,7 +390,10 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     // (the hero's own name, its class under it)
     const name = el('b', 'heroCardName');
     name.append(el('span', '', heroName(kind)), el('small', 'heroCardKind', UNITS[kind].name));
-    card.append(banner, scene, name, el('span', 'stars', starsOf(meta, kind)), ribbon);
+    // (its hero power, the dossier's one number, so heroes can be set side by side without opening each)
+    const power = el('span', 'heroCardPower');
+    power.append(el('small', '', 'Power'), el('b', '', powerText(kindPower(meta, kind))));
+    card.append(banner, scene, name, el('span', 'stars', starsOf(meta, kind)), power, ribbon);
     if (kind === lastViewed) {
       card.classList.add('lastViewed');
       const seal = el('span', 'heroCardSeal', '✓');
@@ -406,7 +411,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     const lock = lockInfo(meta, kind)!;
     const r = el('button', 'rosRow');
     const text = el('span', 'rosText');
-    text.append(el('b', '', lock.named ? heroTitle(kind) : '???'), el('span', 'lv', lock.line));
+    text.append(el('b', '', lock.named ? heroClassLabel(kind) : '???'), el('span', 'lv', lock.line));
     if (lock.need) {
       const bar = el('div', 'xpbar');
       const fill = el('span');

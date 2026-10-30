@@ -4,6 +4,7 @@
 
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
+import * as toolkit from './sim/toolkit';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
@@ -14,6 +15,7 @@ import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
 import { closeMapLeg, noteFightStats, notePayout, noteWave, recapOf } from './sim/runRecap';
 import { towerHeadline, waveHeadline, waveNotes, type WaveMoments } from './sim/waveCard';
+import { gainsSince, snapGains } from './sim/waveGains';
 import { drawWaveNotes } from './waveCardView';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
@@ -24,6 +26,7 @@ import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
 import { settleArmyOres, type ArmyOres } from './sim/awakenMats';
+import { settleArmyDrop, type DropPaid } from './sim/armyDrops';
 import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
@@ -45,7 +48,9 @@ import { benchXp, fightXp, gainXp, levelOfKind, type LevelUp } from './sim/level
 import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
+import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from './sim/featureUnlocks';
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
+import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
@@ -63,7 +68,7 @@ import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastJoined, toastSpells, toastStones } from './achievementsView';
+import { toastAchievements, toastJoined, toastLines, toastSpells, toastStones } from './achievementsView';
 import { grantContent } from './sim/contentHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
@@ -92,6 +97,7 @@ import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
 import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
+import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
@@ -100,7 +106,7 @@ import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
-import { onDevGrant, onSettings, openSettings, setSetting, settings } from './settings';
+import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
@@ -156,6 +162,8 @@ interface Drag {
   fromBoard: boolean;
   /** Dragging the board itself (it began on no hero), from this camera centre. */
   pan?: { cx: number; cy: number };
+  /** The finger's last moments, for the flick back to the bench (BENCH-TITLES). */
+  trail?: DragPoint[];
 }
 
 class Game {
@@ -344,7 +352,7 @@ class Game {
         }
         const r = loadSlot(kind);
         if (!r) return null;
-        return kind === 'calamity' ? `Map ${r.tower?.act ?? 1}/${CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
+        return kind === 'calamity' ? `${r.rift?.expedition ? 'Region' : 'Map'} ${r.tower?.act ?? 1}/${r.tower?.maps ?? CAL_MAPS} · continue` : `Floor ${r.stage} · continue`;
       },
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
@@ -418,6 +426,8 @@ class Game {
       this.goat.show(!this.homeUp);
       // (a board that is not in a fight stops its ticker under the home screen; coming back starts it again)
       if (!this.homeUp) this.app.ticker.start();
+      // (an earned deploy helper is told on the deploy screen the player comes back to: DEPLOY-ZOOM)
+      if (!this.homeUp && this.b.phase === 'deploy' && !this.auto) this.tellUnlocks();
       else if (this.b.phase !== 'fight') this.app.ticker.stop();
     };
     // (the tips on the home screen are still looked after, a few times a second)
@@ -430,6 +440,8 @@ class Game {
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
+    (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (a hero's first awakening has its cinematic)
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
@@ -457,15 +469,7 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
-    for (const id of [...this.run.squad]) {
-      const h = heroOf(this.run, id);
-      if (!h) continue;
-      // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
-      const was = this.placed.get(String(id));
-      const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
-      else setSquad(this.run, id, false);
-    }
+    this.placeSquad();
     this.acc = 0;
     this.chosen = null;
     this.spell = null;
@@ -478,14 +482,16 @@ class Game {
     this.fx.clear();
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.syncChain();
-    setBackdrop(this.b.board.area);
+    setBackdrop(this.b.board.area, this.b.board.riftWorld);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
     this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
-    showTwistBanner(this.run.tower?.cur?.fight?.twist);
+    showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
     this.showTheme();
     this.syncSprites(true);
-    // (a new wave's deploy: the camera frames the board afresh, whatever the player did with it last wave)
+    // (a new wave's deploy: the camera frames the board afresh, whatever the player did with it last wave; it starts at the usual view and
+    // eases in on the placement rows, DEPLOY-ZOOM)
     this.manualCam = false;
+    this.zoom = this.tzoom = 1;
     this.layout();
     this.revealDestination();
     this.refresh();
@@ -493,6 +499,34 @@ class Game {
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
     else this.startIntro();
+  }
+
+  /** The squad onto the deploy rows, each where it stood last when it still can. */
+  private placeSquad(): void {
+    for (const id of [...this.run.squad]) {
+      const h = heroOf(this.run, id);
+      if (!h) continue;
+      // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
+      const was = this.placed.get(String(id));
+      const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
+      if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
+      else setSquad(this.run, id, false);
+    }
+  }
+
+  /** An event's card has closed over a deploy (MID-EVENTS): when its choice changed the next fight (a boon, a curse on the foes, a twist), the fight
+   *  is made again with it and the squad put back, so the choice counts in this fight (the deploy was made before the card opened). The camera,
+   *  the intro and the cinematics are left alone. */
+  private afterEvent(buffWas: string): void {
+    if (JSON.stringify(this.run.buff ?? null) === buffWas || this.b.phase !== 'deploy') return;
+    this.b = startStage(this.run, this.duchessWish());
+    this.placeSquad();
+    const section = chainOf(this.run)?.[this.run.stage - 1];
+    this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.syncChain();
+    showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
+    this.syncSprites(true);
+    this.layout();
   }
 
   /** Whether this page's fights may bring Duchess: rolled on the seed, or always (never) on the test page's `?duchess=1` (`?duchess=0`). */
@@ -788,9 +822,16 @@ class Game {
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
-    // (the fight's opening framing; from here a drag or a pinch makes the camera the player's until the next wave)
+    // (the fight's opening framing; from here a drag or a pinch makes the camera the player's until the next wave. The follow eases out from
+    // the deploy's close view rather than jumping, unless motion is reduced: DEPLOY-ZOOM)
     this.manualCam = false;
+    const was = { cx: this.cx, cy: this.cy, zoom: this.zoom };
     this.layout();
+    if (!reducedMotion()) {
+      Object.assign(this, was);
+      this.clampCam();
+      this.place();
+    }
     this.refresh();
   }
 
@@ -948,6 +989,7 @@ class Game {
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
+    if (b.phase === 'deploy') this.deployEase(dt);
     if (b.phase === 'fight' && !this.intro && !this.destinationReveal) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
@@ -1179,7 +1221,7 @@ class Game {
       }
     const pad = 10;
     const fit = Math.min(3, (area.w - pad * 2) / (x1 - x0), (area.h - pad * 2) / (y1 - y0));
-    const k = Math.min(3, fit * ZOOM);
+    const k = Math.min(3, fit * (b.riftWorld ? 1 : ZOOM));
     this.scale = k;
     this.world.scale.set(k);
     this.ghost.scale.set(k);
@@ -1225,7 +1267,20 @@ class Game {
   private focus(snap = false): void {
     const { x0, x1, y0, y1 } = this.bbox;
     const b = this.b.board;
-    if (this.b.phase === 'deploy') {
+    const rows = this.b.phase === 'deploy' ? this.deployFrame() : null;
+    if (rows) {
+      // (deploying: the placement rows, framed close; the zoom is left where it is and eases in, `deployEase`, DEPLOY-ZOOM)
+      this.tx = rows.cx;
+      this.ty = rows.cy;
+      this.held = null;
+      if (snap) {
+        this.cx = this.tx;
+        this.cy = this.ty;
+      }
+      this.clampCam();
+      this.place();
+      return;
+    } else if (this.b.phase === 'deploy' && !b.riftWorld) {
       let sx = 0;
       let sy = 0;
       let n = 0;
@@ -1250,6 +1305,40 @@ class Game {
     }
     this.clampCam();
     this.place();
+  }
+
+  /** The deploy camera's view (DEPLOY-ZOOM, `deployCam.ts`): the tiles a hero may be placed on, framed as close as fits; null for none. */
+  private deployFrame(): View | null {
+    const b = this.b.board;
+    const tops: Top[] = [];
+    for (let v = 0; v < b.d; v++)
+      if (isDeployTile(v, b.d))
+        for (let u = 0; u < b.w; u++) {
+          const t = tileAt(b, u, v);
+          if (!standable(t)) continue;
+          const [x, y] = at(u, v, t.h);
+          tops.push({ x, y });
+        }
+    const box = deployBox(tops);
+    if (!box) return null;
+    const { lo, hi } = this.camLimits();
+    return deployView(box, this.area.w, this.area.h, this.scale, lo, hi);
+  }
+
+  /** Each frame of a deploy: the camera eases in on the placement rows (a cut with reduced motion), unless the player has taken it, or an
+   *  intro, the march, a reveal or the look along the road has it (DEPLOY-ZOOM). */
+  private deployEase(dt: number): void {
+    if (this.manualCam || this.intro || this.chain.active || this.destinationReveal || this.survey || this.drag?.pan) return;
+    const v = this.deployFrame();
+    if (!v) return;
+    this.tx = v.cx;
+    this.ty = v.cy;
+    this.tzoom = v.zoom;
+    if (reducedMotion()) {
+      this.zoom = v.zoom;
+      this.cx = v.cx;
+      this.cy = v.cy;
+    } else this.zoom = easeTo(this.zoom, v.zoom, dt, EASE_ZOOM_MS);
   }
 
   /** What the camera may reach: the fight's board, and any road behind it to look back along. */
@@ -1427,7 +1516,7 @@ class Game {
     $('fight').addEventListener('click', () => this.begin());
     // (MERGE-TWO: one tap merges every pair ready, then the pairs those make, up to rank 4, and stops)
     $('mergeAll').addEventListener('click', () => {
-      if (this.b.phase !== 'deploy') return;
+      if (this.b.phase !== 'deploy' || !autoMergeOpen(this.meta)) return;
       const done = autoMerge(this.run);
       if (done.length) this.showMerges(done);
     });
@@ -1477,12 +1566,13 @@ class Game {
       // (the last choice is remembered; ×3 is only for tiers already cleared, so the setting keeps ×2 at most)
       setSetting('speed', Math.min(this.speed, 2) as 1 | 2);
     });
-    $('auto').addEventListener('click', () => this.autoArrange(true));
+    $('auto').addEventListener('click', () => autoPlaceOpen(this.meta) && this.autoArrange(true));
     $('autoStop').addEventListener('click', () => this.endAuto('stopped'));
     $('asumOk').addEventListener('click', () => this.closeAutoSummary());
     // (a hidden tab draws no frames, so the replay and its fight stand still; the banner says so, and the screen lock is asked for again on return)
     document.addEventListener('visibilitychange', () => this.auto && this.refreshAuto());
     $('gear').addEventListener('click', () => openSettings());
+    refreshUpdatesDot(); // (the gears' dot while the Updates page has news: settings.ts)
   }
 
   /** The fastest speed this fight may run at: ×3 on an army tier already cleared, or during an auto-replay; ×2 otherwise. */
@@ -1511,6 +1601,15 @@ class Game {
     this.syncSprites();
     if (manual) play('summon');
     this.refresh();
+  }
+
+  /** The one-time notice of an earned deploy helper (Auto merge, Auto place), shown on the deploy screen after its army falls (DEPLOY-ZOOM). */
+  private tellUnlocks(): void {
+    const due = featuresToTell(this.meta);
+    if (!due.length) return;
+    markTold(this.meta, due);
+    saveMeta(this.meta);
+    toastLines(due.map((f) => FEATURES[f].line));
   }
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
@@ -1593,7 +1692,7 @@ class Game {
             : `You stopped it. ${a.totals.runs} of ${a.count} runs cleared`;
     const rows = card.querySelector('.asumRows')!;
     rows.replaceChildren();
-    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : [])] as const) {
+    for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : []), ...(a.totals.drops ? [['Rare drops', a.totals.drops] as const] : [])] as const) {
       rows.append(Object.assign(document.createElement('span'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: String(n) }));
     }
     $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
@@ -1616,6 +1715,8 @@ class Game {
   private runStars: StarResult | null = null;
   /** The rift ores the last army fight paid (`awakenMats.ts`), for the result screen. */
   private oreGain: ArmyOres | null = null;
+  /** ARMY-DROPS: the won army wave's rare drop (shards, a tome), or null. */
+  private dropGain: DropPaid | null = null;
 
   private startRun(run: Run): void {
     this.run = run;
@@ -1682,7 +1783,10 @@ class Game {
     this.syncPool();
     this.placed.clear();
     this.newBattle();
-    if (this.run.event) this.events.openEvent(this.run, () => saveRun(this.run));
+    if (this.run.event) {
+      const buffWas = JSON.stringify(this.run.buff ?? null);
+      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+    }
   }
 
   /** The draw pool is the party, except a daily challenge, which keeps its starting five. */
@@ -1764,7 +1868,7 @@ class Game {
       $('result').hidden = true;
       saveRun(this.run);
       if (this.run.over) {
-        const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in map ${Math.min(this.run.tower!.act, CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
+        const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in ${this.run.rift?.expedition ? 'region' : 'map'} ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
         // (a Calamity cleared whole has its ending cinematic first, then the victory card)
         if (this.run.cleared && this.run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' }).then(show);
         else show();
@@ -1777,7 +1881,10 @@ class Game {
     saveRun(this.run);
     this.newBattle();
     // (an event waits between two fights: its card opens over the new stage's board)
-    if (this.run.event) this.events.openEvent(this.run, () => (saveRun(this.run), this.refresh()));
+    if (this.run.event) {
+      const buffWas = JSON.stringify(this.run.buff ?? null);
+      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+    }
   }
 
   /** When the heart has burnt and the fight resumes, and when the whole moment ends (real ms; shorter with reduced motion). */
@@ -1821,6 +1928,8 @@ class Game {
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
+      // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
+      this.fx.undim();
       this.acc = 0;
       this.endWait = 0;
       for (const u of fallen) if (u.alive) this.sprites.get(u.id)?.getUp();
@@ -1969,7 +2078,8 @@ class Game {
       d.moved = true;
       // (a manual pan pauses the fight camera's follow for a few seconds; in a fight, the camera is the player's until the next wave)
       this.pausedUntil = performance.now() + PAUSE_MS;
-      if (this.b.phase === 'fight') this.takeCam();
+      // (in a deploy too, so the close view of the placement rows lets go of a player who pans away: DEPLOY-ZOOM)
+      if (this.b.phase === 'fight' || this.b.phase === 'deploy') this.takeCam();
       this.held = null;
       this.cx = d.pan.cx - (e.clientX - d.x) / this.world.scale.x;
       this.cy = d.pan.cy - (e.clientY - d.y) / this.world.scale.y;
@@ -2003,6 +2113,8 @@ class Game {
     }
     const sell = !d.fromBoard && onto === null && overRecycle(e.clientX, e.clientY);
     $('recycleZone').classList.toggle('hot', sell);
+    pushTrail((d.trail ??= []), { x: e.clientX, y: e.clientY, t: e.timeStamp });
+    this.markReturn(d.id, onto === null && !sell && overReturn(e.clientX, e.clientY));
     this.hover = sell ? null : this.tileAtScreen(e.clientX, e.clientY - 24);
     this.markTiles();
   }
@@ -2023,6 +2135,8 @@ class Game {
       const onto = this.mergeTargetAt(d.id, e.clientX, e.clientY);
       if (onto !== null) this.mergeHeroes(Number(d.id), onto);
       else if (!d.fromBoard && overRecycle(e.clientX, e.clientY)) this.recycleDropped(d.id);
+      // (BENCH-TITLES: a hero on the board let go anywhere over the bench's wide area, or flicked down toward it, goes back)
+      else if (this.onBoard(d.id) && (overReturn(e.clientX, e.clientY) || (d.fromBoard && flickToBench([...(d.trail ?? []), { x: e.clientX, y: e.clientY, t: e.timeStamp }], panelBox())))) this.takeBack(d.id);
       else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
@@ -2050,10 +2164,28 @@ class Game {
     $('recycleZone').hidden = true;
     $('recycleZone').classList.remove('hot');
     for (const c of $('bench').querySelectorAll('.dragging, .mergeCan, .mergeHot')) c.classList.remove('dragging', 'mergeCan', 'mergeHot');
+    this.markReturn(null, false);
     this.hover = null;
     this.ghost.visible = false;
     this.refresh();
     this.markTiles();
+  }
+
+  /** Whether roster hero `id` stands on the board now. */
+  private onBoard(id: string): boolean {
+    return this.b.units.some((u) => u.side === 'hero' && String(u.tag) === id);
+  }
+
+  /** BENCH-TITLES: while a hero standing on the board is dragged, the bench's panel is outlined as the place to send it back, and
+   *  lit with "Return to bench" while the finger is over it (`hot`). Nothing shows for a bench hero not on the board, or `id` null. */
+  private markReturn(id: string | null, hot: boolean): void {
+    const can = id !== null && this.onBoard(id);
+    const panel = $('panel');
+    panel.classList.toggle('returnCan', can && !hot);
+    panel.classList.toggle('returnHot', can && hot);
+    const tag = $('returnTag');
+    tag.hidden = !can;
+    if (can) tag.textContent = hot ? '↓ Return to bench' : '↓ Drag here for the bench';
   }
 
   /** The hero a dragged hero `id` would merge into if let go at (x, y): a matching card on the bench under the finger, or a matching hero on
@@ -2127,7 +2259,7 @@ class Game {
   private recycleDropped(id: string): void {
     const h = heroOf(this.run, Number(id));
     const card = $('bench').querySelector<HTMLElement>(`[data-id="${id}"]`);
-    if (!h || !card || this.run.roster.length <= 1) return;
+    if (!h || !card || this.run.roster.length <= 1 || this.run.rift?.starter === h.id) return;
     if (h.grade < 2) return this.recycleHero(h.id, card);
     const value = recycleValue(this.run);
     $('askText').textContent = `Recycle the ${'★'.repeat(h.grade)} ${UNITS[h.kind].name} for ${value} gold?`;
@@ -2208,6 +2340,7 @@ class Game {
         marks.append(m);
       }
       const lv = levelBadge(this.levelOf(h));
+      if (this.run.rift?.starter === h.id) lv.append(document.createTextNode(' · Starter'));
       const sell = document.createElement('button');
       sell.className = 'recycle';
       const value = recycleValue(this.run);
@@ -2237,7 +2370,7 @@ class Game {
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
-      if (this.run.roster.length > 1) card.append(sell);
+      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -2393,6 +2526,8 @@ class Game {
       const daily = run.mode?.kind === 'daily';
       const rating = ratingOf(b, isBossRun(run));
       const before = run.gold;
+      // (RECAP-REVEAL: what the save and run held before the wave is settled, so the card can list everything it brought in)
+      const held = snapGains(this.meta, run);
       noteFight(run, b);
       // (the heroes' skills keep their charge for the next wave)
       if (won) keepCharges(run, b);
@@ -2420,6 +2555,9 @@ class Game {
       this.runStars = settleArmyRun(this.meta, run);
       // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
       this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
+      // (ARMY-DROPS: a won army wave now and then drops shards or a tome, from a side stream of the run's seed and the wave; `window.__forceDrop` = 'shards' | 'tome' | 'both' forces one for screenshots)
+      this.dropGain = army ? settleArmyDrop(this.meta, won, army.waves[stage - 1]?.boss, tierOfRun(run), run.seed, stage, (window as unknown as { __forceDrop?: 'shards' | 'tome' | 'both' }).__forceDrop) : null;
+      if (this.dropGain?.joined && this.dropGain.drop.shards) toastJoined([this.dropGain.drop.shards.kind]);
       // (the stars this run won may have opened an army: its banner rises when the run's result is left)
       if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
       // (a milestone this fight reached may bring in a hero)
@@ -2441,14 +2579,14 @@ class Game {
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
-      noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, run.found ?? []);
+      noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
       const fell = won ? b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !u.alive && !UNITS[u.def].summon).map((u) => u.def) : [];
       // (a calamity's map just cleared takes its share of the recap for its map recap, and the next map counts from here)
       closeMapLeg(run);
       // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
       this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
-      const title = run.tower ? towerHeadline(run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
-      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [] };
+      const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
+      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -2468,6 +2606,7 @@ class Game {
           chests: run.cleared ? (this.runStars?.chests.length ?? 0) + (this.runStars?.firstClear ? 1 : 0) : 0,
           gear: over ? gearCount(run) : 0,
           ores: this.oreGain?.drops.reduce((n, d) => n + d.n, 0) ?? 0,
+          drops: this.dropGain?.words.length ?? 0,
         });
         this.autoWait = 900;
       } else {
@@ -2475,7 +2614,7 @@ class Game {
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         drawOreGain($('oreDrop'), this.oreGain);
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
-        drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : []);
+        drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : [], this.waveCard?.gains ?? []);
         for (const id of ['xp', 'fightStats']) $(id).hidden = true;
       }
       saveMeta(this.meta);
@@ -2487,7 +2626,7 @@ class Game {
     const army = armyOfRun(run);
     const fixed = waveArmyOf(run);
     const kind = run.tower?.cur?.kind;
-    const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
+    const stage = `${fixed ? `Wave ${run.stage}/${fixed.waves.length}` : run.rift?.expedition ? `Region ${run.tower!.act} · Crossing ${run.tower!.row + 1}/${run.tower!.rows![run.tower!.act - 1]}` : run.mode?.kind === 'calamity' ? `Map ${run.tower!.act} · ${mapProgress(run.tower!).done} of ${mapProgress(run.tower!).total} cleared` : run.tower ? `Floor ${run.stage}` : `Stage ${run.stage}`}${kind === 'elite' ? ' · Elite' : isBossRun(run) ? ' · Boss' : ''}`;
     // (the five of a combo placed: the deploy line says so, so a player finds the combos by trying)
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
@@ -2503,7 +2642,10 @@ class Game {
     buy.disabled = block !== null;
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
-    const pairs = b.phase === 'deploy' && run.mode?.kind !== 'calamity' ? mergeReady(run).length : 0;
+    // (DEPLOY-ZOOM: Auto merge is earned by beating the second army, Auto place the fourth, `featureUnlocks.ts`; each is told once)
+    const pairs = b.phase === 'deploy' && run.mode?.kind !== 'calamity' && autoMergeOpen(this.meta) ? mergeReady(run).length : 0;
+    $('auto').hidden = !autoPlaceOpen(this.meta);
+    if (b.phase === 'deploy' && !this.auto && !this.homeUp && $('home').hidden) this.tellUnlocks();
     const mergeAll = $('mergeAll') as HTMLButtonElement;
     mergeAll.hidden = pairs === 0;
     mergeAll.textContent = `Auto merge · ${pairs}`;
@@ -2545,7 +2687,7 @@ class Game {
       if (card) $('joke').hidden = true;
       else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
-      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());
@@ -2677,6 +2819,16 @@ function overRecycle(x: number, y: number): boolean {
   if (z.hidden) return false;
   const r = z.getBoundingClientRect();
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+/** The bottom panel's box (BENCH-TITLES: the bench's drop area is built on it, `benchDrop.ts`). */
+function panelBox(): DOMRect {
+  return $('panel').getBoundingClientRect();
+}
+
+/** Over the bench's wide drop area: the whole panel and a little of the board above it (BENCH-TITLES). */
+function overReturn(x: number, y: number): boolean {
+  return inReturnZone(x, y, panelBox());
 }
 
 function overBench(x: number, y: number): boolean {

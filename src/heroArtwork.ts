@@ -1,6 +1,7 @@
 // Menu illustrations are separate from the battle animation sheets.
-import { ALL_HEROES } from './sim/units';
+import { ALL_HEROES, UNITS } from './sim/units';
 import { heroTitle } from './sim/heroNames';
+import { titleLine } from './heroTitleView';
 
 export function heroArtwork(kind: string, full = false, awakened = 0): HTMLImageElement {
   if (!ALL_HEROES.includes(kind)) throw new Error(`Unknown hero artwork: ${kind}`);
@@ -25,7 +26,7 @@ export function openHeroArtwork(kind: string, trigger: HTMLElement, awakened = 0
   close.setAttribute('aria-label', 'Close full artwork');
   const title = document.createElement('h2');
   const illustration = heroArtwork(kind, true);
-  title.textContent = heroTitle(kind);
+  title.append(titleLine(kind, 'span', '', true), Object.assign(document.createElement('small'), { textContent: UNITS[kind]?.name ?? '' }));
   dialog.append(close, illustration, title);
   const controls: HTMLButtonElement[] = [close];
   if (awakened) {
@@ -43,7 +44,7 @@ export function openHeroArtwork(kind: string, trigger: HTMLElement, awakened = 0
       illustration.className = next.className;
       toggle.textContent = showingForm ? 'Show illustration' : 'Show awakened form';
       toggle.setAttribute('aria-pressed', String(showingForm));
-      title.textContent = `${heroTitle(kind)}${showingForm ? ' · Awakened' : ''}`;
+      title.replaceChildren(titleLine(kind, 'span', '', true), Object.assign(document.createElement('small'), { textContent: `${UNITS[kind]?.name ?? ''}${showingForm ? ' · Awakened' : ''}` }));
     });
     controls.push(toggle);
     dialog.append(toggle);

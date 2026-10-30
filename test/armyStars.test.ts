@@ -17,9 +17,10 @@ const store = () => {
 };
 
 /** An army run that has just been cleared, with a tally. */
-function cleared(army: string, tier: number, tally: { ms: number; lost: number; bossLost: number; bossFell?: number }): Run {
+function cleared(army: string, tier: number, tally: { ms: number; lost: number; bossLost: number; bossFell?: number }, hearts = 0): Run {
   const run = armyRun(1, army, undefined, undefined, tier);
   run.cleared = true;
+  run.retries = hearts;
   run.over = true;
   run.tally = tally;
   return run;
@@ -106,11 +107,13 @@ test('a run earns at most three stars, whatever the tier', () => {
   assert.equal(settleArmyRun(startedMeta(3), run), null);
 });
 
-test('the conditions: clear, no hero lost in the last boss fight, and a battle-time target', () => {
+test('the conditions: clear, no heart used, and a battle-time target', () => {
   const a = armyById('orcs')!;
-  const earned = (tally: { ms: number; lost: number; bossLost: number }) => armyRules(a, 0, cleared('orcs', 0, tally)).map((r) => r.earned);
+  const earned = (tally: { ms: number; lost: number; bossLost: number }, hearts = 0) => armyRules(a, 0, cleared('orcs', 0, tally, hearts)).map((r) => r.earned);
   assert.deepEqual(earned(perfect), [true, true, true]);
-  assert.deepEqual(earned({ ms: 1000, lost: 3, bossLost: 1 }), [true, false, true]);
+  // (heroes lost in the boss fight no longer cost a star; a heart burned does)
+  assert.deepEqual(earned({ ms: 1000, lost: 3, bossLost: 1 }), [true, true, true]);
+  assert.deepEqual(earned(perfect, 1), [true, false, true]);
   assert.deepEqual(earned({ ms: timeTarget(a, 0) + 1, lost: 0, bossLost: 0 }), [true, true, false]);
   assert.ok(timeTarget(a, 2) > timeTarget(a, 0));
   // (a run not yet cleared has none)
@@ -120,11 +123,11 @@ test('the conditions: clear, no hero lost in the last boss fight, and a battle-t
 
 test('stars are the best ever per tier: a replay adds only the new ones', () => {
   const m = startedMeta(1);
-  const first = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }))!;
+  const first = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }, 1))!;
   assert.equal(first.gained, 1);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 1);
   // a worse run adds nothing and takes nothing
-  const worse = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }))!;
+  const worse = settleArmyRun(m, cleared('orcs', 0, { ms: 1e9, lost: 5, bossLost: 2 }, 1))!;
   assert.equal(worse.gained, 0);
   assert.equal(tierStars(recordOf(m, 'orcs'), 0), 1);
   // a run that meets only the boss condition merges with the clear star
@@ -154,7 +157,7 @@ test('a milestone puts a chest in the stash once; opening removes it and pays it
   assert.deepEqual(settleArmyRun(m, cleared('orcs', 0, perfect))!.chests, []);
   assert.deepEqual(grantChests(m, a, m.armies.orcs), []);
   assert.equal(m.stash.length, 1);
-  const r2 = settleArmyRun(m, cleared('orcs', 1, { ms: 1e9, lost: 3, bossLost: 1 }))!;
+  const r2 = settleArmyRun(m, cleared('orcs', 1, { ms: 1e9, lost: 3, bossLost: 1 }, 1))!;
   assert.equal(r2.total, 4);
   assert.deepEqual(r2.chests, []);
   const r3 = settleArmyRun(m, cleared('orcs', 1, perfect))!;
@@ -502,7 +505,7 @@ test('the first clear of an army on each tier pays a chest, once: Normal bronze,
   const m = startedMeta(9);
   const sizes: string[] = [];
   TIERS.forEach((_, tier) => {
-    const res = settleArmyRun(m, cleared('orcs', tier, { ms: 1e9, lost: 3, bossLost: 3 }))!;
+    const res = settleArmyRun(m, cleared('orcs', tier, { ms: 1e9, lost: 3, bossLost: 3 }, 1))!;
     assert.equal(res.firstClear, FIRST_CLEAR_CHEST[tier]);
     sizes.push(chestKind(res.firstClear));
     // (clearing it again pays no second one)

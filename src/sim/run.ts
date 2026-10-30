@@ -6,6 +6,7 @@
 import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
+import type { Rift } from './rift';
 import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './scenario';
@@ -25,6 +26,8 @@ import type { EquipStats } from './equipment';
 import { relicEffects } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
+import type { RoadState } from './midEvents';
+import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
 
 /** The top grade (rank): 1+1 make 2, 2+2 make 3, 3+3 make 4 (MERGE-TWO; it was three of a kind up to 3). */
@@ -56,6 +59,11 @@ export const STAGE_GROWTH = 0.2;
 export const BOSS_EVERY = 5;
 /** Gear drops rise a tier every 8 stages; each army further on drops as if this many stages further. */
 const GEAR_STAGES = 6;
+/** The stage a run's gear is drawn for at stage n: an army further on drops as if further on (`GEAR_STAGES`), so its shops and finds keep pace. */
+export const gearStage = (run: Run, n: number): number => {
+  const army = waveArmyOf(run);
+  return n + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0);
+};
 /** A boss is drawn half as big again; its kind (`foes.ts`) carries its own stats and skill. */
 export const BOSS: Boost = { size: 1.5 };
 
@@ -94,9 +102,13 @@ export interface Buff {
   speed?: number;
   /** How many stages/floors this buff lasts (default 1). */
   duration?: number;
+  /** A twist (`twists.ts`, by id) the next fight is fought under: a storm, an ambush, a blessing from the road's events (`midEvents.ts`). One fight only. */
+  twist?: string;
 }
 
 export interface Run {
+  /** New Calamity runs only; old saves keep their original rules. */
+  rift?: Rift;
   seed: number;
   gold: number;
   stage: number;
@@ -145,6 +157,8 @@ export interface Run {
   recap?: RunRecap;
   /** A themed daily's goal was met when the boss of the day fell (`dailyThemes.ts`). */
   themeMet?: boolean;
+  /** The road's memory for the events between waves (MID-EVENTS, `midEvents.ts`): the kinds seen this run, and debts and favours that come back later. Absent in an older save. */
+  road?: RoadState;
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
@@ -271,7 +285,7 @@ export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonC
  *  change, so this is no way to reroll for free. Returns the gold paid, or null when the hero is unknown, the run is over, or it is the last hero. */
 export function recycle(run: Run, heroId: number): number | null {
   const h = heroOf(run, heroId);
-  if (!h || run.over || run.roster.length <= 1) return null;
+  if (!h || run.over || run.roster.length <= 1 || run.rift?.starter === heroId) return null;
   const gold = recycleValue(run);
   for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
   run.roster = run.roster.filter((x) => x.id !== heroId);
@@ -403,14 +417,17 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
+    ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
-    board: section?.board,
+    board: section?.board ?? base.board,
     foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle) * (run.buff?.speed ?? 1),
     relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
+    // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
+    ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
     duchess: duchessModeOk(run.mode) ? duchess : 'never',
   });
 }

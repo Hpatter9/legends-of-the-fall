@@ -50,6 +50,7 @@ dialog.heroArtViewer > h2 {
   position: absolute; bottom: 12px; left: 12px; right: 12px; margin: 0;
   text-align: center; color: #f3db9d; font: 700 24px/1.2 var(--display);
 }
+dialog.heroArtViewer > h2 > small { display: block; margin-top: 3px; font-size: .6em; letter-spacing: .04em; opacity: .8; }
 dialog.heroArtViewer > .heroArtClose {
   position: absolute; top: 8px; right: 8px; min-height: 44px; min-width: 88px;
   padding: 8px 12px; border: 1px solid #ac915c; border-radius: 4px;

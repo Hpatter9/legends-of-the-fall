@@ -9,7 +9,7 @@
 import { Rng, mixSeed } from '../sim/rng';
 import { BANTER, FOE_GRUMBLES, HERO_QUIPS, KING_LINES, STAND_FOE_LINES, type KingKind, type QuipKind, type StandFoeKind } from '../quipData';
 import { traitsOf } from '../sim/traits';
-import { ultimateOf } from '../sim/abilities';
+import { keyOf, ultimateOf } from '../sim/abilities';
 import type { Battle, BattleEvent, Unit } from '../sim/battle';
 
 /** The least time (ms) between two bubbles. */
@@ -185,7 +185,7 @@ export function ultimatesCast(b: Battle, events: readonly BattleEvent[]): string
   for (const e of events) {
     if (e.kind !== 'skill') continue;
     const u = b.units.find((x) => x.id === e.by);
-    if (u && u.side === 'hero' && u.owner === undefined && ultimateOf(u)?.name === e.name) out.push(u.def);
+    if (u && u.side === 'hero' && u.owner === undefined && (() => { const s = ultimateOf(u); return !!s && keyOf(s) === e.name; })()) out.push(u.def);
   }
   return out;
 }

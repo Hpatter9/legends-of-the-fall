@@ -117,6 +117,10 @@ export interface Tile {
   wall?: boolean;
   /** A powder barrel stands here: nobody can stand on it; a blow on a fighter beside it sets it off (it is gone after). */
   barrel?: boolean;
+  /** A raised wall of the movement toolkit stands here (`toolkit/walls.ts`): ice, thorns or light. Nobody walks through it (it does not
+   *  block shots or sight), except the side `barSide` names: a Wall of Light lets its caster's side through. */
+  bar?: 'ice' | 'thorns' | 'light';
+  barSide?: 'hero' | 'foe';
   /** Planks over a gap (looks only: the tile is plain ground to the rules). */
   bridge?: boolean;
   /** A bush grows here (only for looks). */
@@ -145,7 +149,7 @@ export interface Tile {
 /** The kinds of land beside an army's road (`armyRoad.ts`), and of an arena's ring. */
 export type Scenery = 'wood' | 'rocks' | 'ruin' | 'water' | 'lava' | 'bones' | 'fence' | 'stones' | 'grave' | 'crystal';
 /** A set piece of an arena drawn on its scenery (looks only): the war camp's gate, the mausoleum, the den... */
-export type PieceKind = 'warGate' | 'drum' | 'tent' | 'flag' | 'mausoleum' | 'den' | 'arch' | 'circle' | 'foundry' | 'shrine' | 'brazier' | 'lamp' | 'campfire' | 'skulls';
+export type PieceKind = 'riftPortal' | 'warGate' | 'drum' | 'tent' | 'flag' | 'mausoleum' | 'den' | 'arch' | 'circle' | 'foundry' | 'shrine' | 'brazier' | 'lamp' | 'campfire' | 'skulls';
 export interface Piece {
   u: number;
   v: number;
@@ -174,6 +178,7 @@ export interface Fall {
 }
 
 export interface Board {
+  riftWorld?: import('./sanctuary').RiftWorld;
   /** An arena's set pieces, on its scenery (looks only). */
   pieces?: Piece[];
   /** The land's hazards (an army's road: `hazards.ts`). */
@@ -248,8 +253,10 @@ export function easeRelief(b: Board, limit = CLIMB_MAX): void {
 /** How many times the usual board's area (`W` x `D`) a board covers. */
 export const areaScale = (b: Pick<Board, 'w' | 'd'>): number => (b.w * b.d) / BASE_AREA;
 
-/** Whether something solid stands on the tile (a boulder, a wall, a barrel): not even a flier passes it. */
-export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel;
+/** Whether something solid stands on the tile (a boulder, a wall, a barrel, a raised wall): not even a flier passes it. */
+export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || !!t.bar;
+/** The same, for a walker of `side`: a raised wall that lets its side through (`barSide`) is open to it. */
+export const solidFor = (t: Tile | null, side?: 'hero' | 'foe'): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || (!!t.bar && (side === undefined || t.barSide !== side));
 /** Whether a fighter on foot can stand on the tile at all (deep water is only for fliers, and so is the land beside an army's road, `Tile.scene`). */
 export const standable = (t: Tile | null): t is Tile => !solid(t) && t!.ground !== 'deep' && !t!.scene;
 
@@ -258,10 +265,11 @@ export const FLY_JUMP = 9;
 
 /** What a step from one tile to the next costs a fighter who can jump `jump`, or null if it's a cliff: more than `jump`
  *  to climb, or more than `jump + DROP_EXTRA` to drop. Each step climbed costs `CLIMB_COST` more. */
-export function canStep(from: Tile, to: Tile, jump: number): number | null {
+export function canStep(from: Tile, to: Tile, jump: number, side?: 'hero' | 'foe'): number | null {
   // (a flier, with a jump of FLY_JUMP, goes over any height, and over deep water, at the cost of a level step)
-  if (jump >= FLY_JUMP) return solid(to) ? null : 1;
-  if (!standable(to)) return null;
+  if (jump >= FLY_JUMP) return solidFor(to, side) ? null : 1;
+  // (`side` opens a raised wall that lets that side through, RPG-SPELLS; with none, it is `standable`)
+  if (solidFor(to, side) || to.ground === 'deep' || to.scene) return null;
   const rise = to.h - from.h;
   if (rise > jump || -rise > jump + DROP_EXTRA) return null;
   return 1 + (rise > 0 ? rise * CLIMB_COST : 0) + (to.ground ? GROUND_COST[to.ground] : 0);

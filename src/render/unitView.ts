@@ -212,13 +212,16 @@ export class UnitSprite {
     let row: Row | undefined;
     let frame = Math.floor(t / 110);
     const step = u.step;
+    let arcLift = 0;
     if (fighting && u.alive && step && t < step.at + step.ms) {
       const f = Math.max(0, (t - step.at) / step.ms);
       const [fx, fy] = at(step.u, step.v, step.h);
       const heightChange = Math.abs(tile.h - step.h);
-      const hop = Math.sin(Math.PI * f) * (heightChange ? 5 + heightChange * HH * 0.6 : 1.5);
+      // (a launch or a leap, RPG-SPELLS: the step carries its arc's peak in levels, and the fighter flies over it)
+      const hop = Math.sin(Math.PI * f) * (step.arc ? step.arc * HH * 2 : heightChange ? 5 + heightChange * HH * 0.6 : 1.5);
       x = fx + (x - fx) * f;
       y = fy + (y - fy) * f - hop;
+      if (step.arc) arcLift = hop;
       z = Math.max(depth(step.u, step.v), z - 5) + 5;
       anim = 'walk';
       // One complete alternating stride per tile. A slow fighter walks the same
@@ -344,6 +347,8 @@ export class UnitSprite {
     this.rim.rotation = rot;
     this.shadow.scale.set(def.flies ? 0.6 : 1);
     this.shadow.alpha = def.flies ? 0.5 : 1;
+    // (in a launch's arc the shadow stays on the ground)
+    this.shadow.y = arcLift;
     for (const r of this.rim.children as Sprite[]) {
       r.texture = this.body.texture;
       r.scale.copyFrom(this.body.scale);
@@ -376,6 +381,8 @@ export class UnitSprite {
     // Fallen heroes stay where they fell so a heart can raise them; foes fade away.
     const dead = u.alive || (u.side === 'hero' && !def.summon) ? 0 : t - (u.diedAt ?? 0);
     this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : u.def === 'wraith' ? 0.78 : 1;
+    // (a burrower underground is not seen: the page draws its mound instead, RPG-SPELLS)
+    if (u.under) this.root.alpha = 0;
     this.root.visible = this.root.alpha > 0;
     this.drawBar(u.alive, t);
     this.drawSparks(u.alive);

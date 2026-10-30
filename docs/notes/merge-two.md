@@ -32,7 +32,8 @@ worker's `claude/rank4-skills`: until that merges a rank-4 hero casts its tier-3
   merge (`mergeTargetAt`, `mergeHeroes`). Tap one, then tap its match, does the same. While dragging, the matching cards are outlined and
   the one under the finger lights up; a match on the board stands on a gold tile (the new `merge` tile mark in `boardView.ts`).
 - Heroes with a match ready: a gold ring and a bobbing ⇧ badge on the bench card, and a gold tile under a fielded one.
-- **Auto merge · N**: a gold pill on the bench's top-right edge, shown only while N pairs are ready.
+- **Auto merge · N**: a gold pill on the bench's top-right edge, shown only while N pairs are ready. (Since DEPLOY-ZOOM it is earned by
+  beating the second army, `featureUnlocks.ts`; before that merging is by hand: [deploy-zoom](deploy-zoom.md).)
 - A merge plays the old merge moment (`showMerges`): the merged-away hero leaves the board, the target is set down again where it stood at
   its new grade and rises in light (`fx.promote`), the card flashes, the merge chime (a sparkle too for rank 3 or 4).
 - Rank 4's look: four stars and a violet card (`.card.g4`), a violet halo, rim and more sparks on the board, drawn 1.14x (rank 3 is
