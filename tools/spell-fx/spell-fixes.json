@@ -1,0 +1,12 @@
+{
+  "_": "Small fixes to the painted sheets, applied by import-spell-art.py after its checks (docs/notes/spell-art-bde.md): `frames` packs a row's source frames (from 0) in this order.",
+  "healing-mist.ground": {"frames": [2, 3, 4, 5, 4, 3], "why": "the mist grows out of nothing over the first frames; looped as painted it would vanish and swell each time round"},
+  "healing-mist.motes": {"frames": [2, 3, 4, 3], "why": "the first frame is empty, the second faint and the last breaks into sparks: the leaf would blink"},
+  "mana-font.ground": {"frames": [2, 3, 4, 5, 4, 3], "why": "the circle lights up from faint lines over the first frames: it would pop dark each loop"},
+  "aura-rot.ground": {"frames": [2, 3, 4, 5, 4, 3], "why": "the stain spreads from almost nothing over the first frames: it would blink each loop"},
+  "storm-cloud.ground": {"frames": [3, 4, 5, 4, 3, 4], "why": "the first three frames are almost empty (the cloud gathers); looped as painted it would blink out each time round"},
+  "spirit-guardians.ground": {"frames": [1, 3, 5, 5, 3, 1], "why": "the ring swaps gold and pale blue every frame, a strobe at play speed: it keeps the blue frames"},
+  "keg-blast.travel": {"frames": [1, 3, 1, 3], "why": "the frames swap between two different drawings of the keg (side and end on): it keeps the one with the fuse"},
+  "quivering-palm.cast": {"fade": 2, "why": "the gathering light ends at its brightest: it fades out over two more frames"},
+  "tentacles.cast": {"fade": 2, "why": "the tentacle ends risen at full: it sinks away (fades) over two more frames"}
+}

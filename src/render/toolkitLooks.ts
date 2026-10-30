@@ -31,17 +31,19 @@ export const WALL_LOOKS: Readonly<Record<WallKind, Look>> = {
 };
 
 /** An aura's ring colour and the strip that turns at its heart, by the aura's name (a word in it); a gold ring when none matches. Its
- *  `paint` is the sheet of session B (auras and fields) for it, drawn once that session is painted. */
-export function auraLook(what: string): Look & { ring: number } {
+ *  `paint` is the painted sheet for it (session B's auras and fields; the Warlock's circle of death is session D's); `hang`: the
+ *  painting hangs over the caster at its own size (the storm cloud) rather than lying on the ground of its reach. */
+export function auraLook(what: string): Look & { ring: number; hang?: boolean } {
   const w = what.toLowerCase();
-  if (/rot|plague|contagion|poison/.test(w)) return { ring: 0x8aa83a, loop: 'poison-circle', paint: 'aura-rot' };
-  if (/storm|lightning/.test(w)) return { ring: 0x77cfff, loop: 'lightning-circle', paint: 'storm-cloud' };
+  // (whole words: "Protection" holds "rot")
+  if (/\b(rot|plague|contagion|poison)\b/.test(w)) return { ring: 0x8aa83a, loop: 'poison-circle', paint: 'aura-rot' };
+  if (/storm|lightning/.test(w)) return { ring: 0x77cfff, loop: 'lightning-circle', paint: 'storm-cloud', hang: true };
   if (/mana|font|arcane/.test(w)) return { ring: 0x9a6aff, loop: 'light-rune', tint: 0xc8a8ff, paint: 'mana-font' };
   if (/guardian|spirit/.test(w)) return { ring: 0xd8ecff, loop: 'light-circle', paint: 'spirit-guardians' };
   if (/mist|heal|life/.test(w)) return { ring: 0x7be08a, loop: 'forest-aura', paint: 'healing-mist' };
   if (/dagger|feather|blade/.test(w)) return { ring: 0x9a9aa8, loop: 'wind-vortex', tint: 0x504858, paint: 'cloud-of-daggers' };
   if (/slow|time/.test(w)) return { ring: 0xffe08a, loop: 'light-rune', paint: 'slow-field' };
-  if (/death|curse|dark/.test(w)) return { ring: 0x7a3aa0, loop: 'dark-circle' };
+  if (/death|curse|dark/.test(w)) return { ring: 0x7a3aa0, loop: 'dark-circle', paint: 'circle-of-death' };
   if (/spike|thorn/.test(w)) return { ring: 0x5aa83a, loop: 'forest-spikes', paint: 'spike-growth' };
   if (/anthem|dirge|song|hymn/.test(w)) return { ring: 0xffd36a, loop: 'light-circle', paint: 'bardic-notes' };
   return { ring: 0xffd36a, loop: 'light-circle', paint: 'aura-protection' };
