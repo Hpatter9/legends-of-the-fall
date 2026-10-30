@@ -62,6 +62,7 @@ try {
   await page.evaluate(() => { window.__standReviewSources = []; });
   for (let i = 0; i < 9; i++) {
     await page.evaluate(() => document.getElementById('hmGear').click());
+    await page.locator('.setMenu[data-page="ruler"]').click(); // (the ruler's own submenu)
     await page.locator('.rulerOpen').click();
     const selected = await page.locator('.rulerChoice').nth(i).getAttribute('aria-label');
     await page.locator('.rulerChoice').nth(i).click();

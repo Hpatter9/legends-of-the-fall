@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### DARK-WAVE — Some waves, the screen darkens
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/dark-wave`, `/home/user/dark-wave`.
+- **Cause:** the fight's weather is rolled per board, so about one wave in eight is night: a flat deep-blue tint at 0.36 over the whole screen took about 30% of the light off the board (rain, about one in eight too, took 15%). No dim was left on or stacking.
+- **Fix:** flat tints capped at 0.15 (night 0.14, rain 0.1, ash and embers 0.08); night's mood moves to darkened edges (a vignette clear over the board). A dim from a fall is lifted when a heart burns and the wave starts again.
+- **Status:** ready for review. Typecheck, full `npm test`, `npm run web`, browser checks at 393×852, 360×780 and 412×915 with no page errors. [Note](notes/dark-wave.md); [before](samples/dark-wave-before-393x852.png); [after](samples/dark-wave-after-393x852.png). No merge or version bump.
+
 ### CAL-SANCTUARY — Portal expeditions and destination arenas
 
 - **Owner:** current Codex chat. **Branch/worktree:** `feat/rift-sanctuary`, `/workspace/legends-of-the-fall`.
@@ -88,6 +95,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** new `src/render/overFighter.ts`; small hooks in `src/render/fx.ts` (`anim`, `overBody`, the particles' `cover`), `src/render/particles.ts` (`cover`), `src/render/statusStyles.ts` (`OVER_BODY`, `partAlpha`, two front parts' size), `src/render/ailmentLayer.ts`; `src/heroBar.ts`, `src/battleUi.css` (`.hbPips b.shut`); `test/fx-clear.test.ts`; new `tools/fx-clear/shots.mjs`; `docs/notes/fx-clear.md`, `docs/notes/hero-kits.md`, `docs/samples/fx-clear-*.png`.
 - **Completion criteria:** effects over a fighter thinned by named constants (`OVER_FIGHTER_ALPHA` 0.6, `OVER_FIGHTER_STATUS_ALPHA` 0.7) and still visible, ground and back layers unchanged, no blinking, reduced motion kept; pip 2 reads "2" and is greyed while locked; typecheck, affected and full tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/fx-clear.md).
+
+### MID-EVENTS — A market on the passing cart; twelve more events between waves
+
+- **Goal:** the owner's ask: "More mid battle events or more in depth ones. Like the passing cart only has two items? ... Let's add some more for a unique experience."
+- **Status:** done on the branch; not merged.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/mid-events`, `/home/user/mid-events` (from main 0.232.0); PR none.
+- **Allowed files or systems:** `src/sim/midEvents.ts`, `src/sim/market.ts` (new), `src/sim/events.ts` (road draw, market, new effects), `src/sim/run.ts` (optional `Buff.twist`, `Run.road`, `gearStage`, the twist in `startStage`), `src/sim/autoplay.ts` (no-leave cards), `src/events.ts` (icons, buys), small hooks in `src/main.ts` (`afterEvent`, `placeSquad`, the banner) and `src/twistView.ts` (`twistIcon`); `test/midEvents.test.ts`, the `daily` hash of `test/fixtures/ailment-logs.json`; `tools/mid-events/`; `docs/notes/mid-events.md`.
+- **Completion criteria:** the cart sells 5-6 wares with limited buys and a rummage; 12 road events and 2 follow-ups with real choices, weighted by army and land, no repeats; deterministic side streams; old saves load; daily and army pace unchanged; typecheck, full tests, web build; three portrait sizes.
+- **Validation and handoff:** [notes](notes/mid-events.md).
 
 ### WAVE-RECAP-2 — The short card for the spire and the Calamity; their detail in their summaries
 
@@ -184,6 +201,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Allowed files or systems:** `src/heroBar.ts`, `src/battleUi.css` (`.hb.locked`), `src/standView.ts` (the pause sheet's ultimate line), `tools/kits/shots.mjs` (its locked check now expects no plate and no ring), new `tools/herobar-lock/shots.mjs`; `docs/notes/herobar-lock.md`, `docs/samples/herobar-lock-*.png`. Not the sim or the ultimate's charge rate.
 - **Completion criteria:** a locked hero's tile shows no "Lv 30", no ring and no dimming, with the portrait filling the ring's place (no gap); an unlocked one unchanged; ordinary fights, the daily, the Calamity and the Last Stand; typecheck, tests, web build; 393x852, 360x780, 412x915.
 - **Validation and handoff:** [notes](notes/herobar-lock.md).
+
+### OPTIONS-MENU — Settings in submenus; Updates and notes
+
+- **Goal:** the owner's asks: "Let's add an updates and notes section in the options. This will show what was changed in the last updates so I can look back at what's new and what version they came out. Keep it summarised." and "We should probably condense the options menu into more menus."
+- **Status:** done; ready for review.
+- **Owner:** Claude
+- **Branch / worktree / PR:** `claude/options-menu`, `/home/user/options-menu` (from main 0.233.0); PR none.
+- **Allowed files or systems:** `src/settings.ts` (the submenus, the updates page, the gears' dot), new `src/updates.ts`, new `src/settingsMenu.css` (and its line in `build.mjs`), one line in `src/main.ts`, new `test/updates.test.ts`, the ruler sheet's step in `tools/rulers/check.mjs`, `tools/settings-menus/shots.mjs`, `tools/stand/depth-shots.mjs`; `CLAUDE.md` (one line), `docs/notes/options-menu.md`, `docs/samples/options-menu-*.png`.
+- **Completion criteria:** eight submenus with a back button; every setting saved under the same keys; the releases newest first from 0.189.0 with the older ranges folded; a test that the newest entry is package.json's version; a "New" dot until the page is seen; typecheck, full tests, web build; 393x852, 360x780, 412x915.
+- **Validation and handoff:** [notes](notes/options-menu.md).
 
 ### SETTINGS-MENUS — The ruler picker and stones in the developer row
 
@@ -407,6 +434,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| BENCH-TITLES | Pull a hero back to the bench more easily; every hero a longer title | Done on the branch, awaiting review: the whole bottom panel (and a little above it) is the drop area for a placed hero, outlined while it is dragged and lit with "Return to bench" over it; a quick flick down counts; drag-merge still wins over a matching card. Every hero (45) has a unique epithet (`HERO_NAMES[k].title`), "Name, Title" (`heroTitle`) in the dossier, the reveals, the codex, the artwork viewer and the recap's MVP; the short name stays in the small boxes; the old "Name · Class" label is `heroClassLabel`. Typecheck, affected tests, full suite 1493/1493, build, three phone sizes | [Note](notes/bench-titles.md), branch `claude/bench-titles` |
 | AUDIO-BATTLE | Battle music stays on and steady through a battle; victory music when it is won | Done, awaiting review: one track a battle (`trackOfRun`, kept wave to wave, boss waves included; no drop to the deploy track between waves, no sting between waves); the tension low-pass, swell, pace and rumble removed; a won battle ends on the victory fanfare leading into the triumph loop at a lower bed under the results until they are left; defeat sting as before. Typecheck, 37 affected tests, full suite 1415/1415, build, an army's last two waves played at x2 in Chromium at 393x852 | [Note](notes/battle-music.md), branch `claude/battle-music` |
 | AUDIO-MIX | Music and effects matched in volume (the owner's ask) | Done on the branch, not merged: the page's own output measured in Chromium (LUFS, BS.1770) and levelled: every music file trimmed to its place (menus -28, battle -30.5, scenes -27; the files spread over 10 LU before), battle music 7 LU under the fight's sounds (0 to 4 LU before), every cue and king's spell normalised in its family, the effects bus 0.35 to 0.49; the limiter reached in no measured fight. Typecheck, affected and full tests, build | [Note](notes/audio-mix.md), branch `claude/audio-mix` |
 | ULT-CHARGE | Ultimates used once or twice a battle | Released as 0.213.0 (owner: keep ultimates at full strength, answer with tougher foes): the meter starts each fight 60 full and fills about 2.5x as fast, ultimates at full strength (none weaker than main), parity by meter speed at stage 78 (spread 5.7); the extra power answered by tougher foes only where ultimates are open: the five late armies' Normal `start` and `tierLift`, Legendary x2.8 and Mythic x2.6 (`Tier.answer`, XP taken back out), the Last Stand's late climb, the Calamity's last map, the daily for levelled saves. Army pace, first-army stars, Stand, Calamity and daily back near main; full suite 1377/1377, build, three phone sizes | [Note](notes/ult-charge.md), branch `claude/ult-charge` |
