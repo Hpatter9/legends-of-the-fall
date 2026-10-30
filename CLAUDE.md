@@ -65,7 +65,7 @@ Chronos later, so keep its conventions.
 - `src/render/sound.ts`: the page's sound (the API: `play`, `playEvents`, `duck`, `setAct`); `audioProcessors.ts` (the audiorective
   processors: cue synth, music player, bus mixer), `audioRules.ts` (pure: pan, ducking, adaptive music), `soundRules.ts` (which cues
   an event calls for). See `docs/notes/audio-engine.md`.
-- `src/render/epicMusic.ts`: the music the page plays: 23 original gothic-symphonic tracks (`src/audio/*.opus`, rendered offline by `tools/epic-music/`; `npm run music` re-renders them; `docs/notes/epic-music.md`), which track each place takes (`placeOf`) and the loader; `src/render/battleMusic.ts` picks a battle's one track (`trackOfRun`, kept wave to wave) and its victory music (`docs/notes/battle-music.md`). `build.mjs` copies the files and lists them in the service worker.
+- `src/render/epicMusic.ts`: the music the page plays: original tracks built on one main theme (`tools/epic-music/theme.mjs`; each army fights to its own arrangement of it, `docs/notes/music-theme.md`) plus the gothic-symphonic place and scene tracks (`src/audio/*.opus`, rendered offline by `tools/epic-music/`; `npm run music` re-renders them; `docs/notes/epic-music.md`), which track each place takes (`placeOf`) and the loader; `src/render/battleMusic.ts` picks a battle's one track (`trackOfRun`, kept wave to wave) and its victory music (`docs/notes/battle-music.md`). `build.mjs` copies the files and lists them in the service worker.
 - `src/main.ts`: the page: input (drag or tap to place), camera fit, the bench and buttons. `window.__game` is the game.
 - `src/index.html`: the page and its CSS; `build.mjs` builds `out/web`.
 

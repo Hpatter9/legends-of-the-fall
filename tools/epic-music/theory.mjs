@@ -9,10 +9,13 @@ export function pcOf(name) {
 export const midiOf = (pc, oct) => 12 * (oct + 1) + pc;
 export const MINOR = [0, 2, 3, 5, 7, 8, 10];
 export const MAJOR = [0, 2, 4, 5, 7, 9, 11];
+/** Two more modes for the theme's army flavours: the Dorian (minor with a raised sixth) and the Phrygian (a flat second). */
+export const DORIAN = [0, 2, 3, 5, 7, 9, 10];
+export const PHRYGIAN = [0, 1, 3, 5, 7, 8, 10];
 
 /** Chord symbols, as [semitones above the tonic, tones above the root]. Case follows roman-numeral habit. */
 const CHORDS = {
-  i: [0, [0, 3, 7]], i7: [0, [0, 3, 7, 10]], I: [0, [0, 4, 7]], Imaj7: [0, [0, 4, 7, 11]], i9: [0, [0, 3, 7, 10, 14]],
+  i: [0, [0, 3, 7]], isus4: [0, [0, 5, 7]], i7: [0, [0, 3, 7, 10]], I: [0, [0, 4, 7]], Imaj7: [0, [0, 4, 7, 11]], i9: [0, [0, 3, 7, 10, 14]],
   N: [1, [0, 4, 7]], N7: [1, [0, 4, 7, 11]], bii: [1, [0, 3, 7]],
   ii: [2, [0, 3, 7]], II: [2, [0, 4, 7]], iio: [2, [0, 3, 6]], ii0: [2, [0, 3, 6, 10]], iio7: [2, [0, 3, 6, 9]],
   III: [3, [0, 4, 7]], III7: [3, [0, 4, 7, 10]], IIImaj7: [3, [0, 4, 7, 11]], iii: [4, [0, 3, 7]], IIIaug: [3, [0, 4, 8]],
@@ -24,10 +27,27 @@ const CHORDS = {
   V7_III: [10, [0, 4, 7, 10]], V7_iv: [0, [0, 4, 7, 10]], V_VI: [3, [0, 4, 7]], V7_VI: [3, [0, 4, 7, 10]], V7_V: [2, [0, 4, 7, 10]],
 };
 
-/** Parses 'VI', 'iv@1' (third in the bass), 'V7_III' into a chord of absolute pitch classes for a key. */
-export function chordOf(sym, tonicPc) {
+/** A chord built on a degree of the scale: `d6` is the triad on the sixth degree, `d5M` forces it major (the minor key's
+ *  dominant, with the raised seventh), `d5M7` a dominant seventh, `d2m` forces minor, `d4_7` adds the scale's own seventh. So the
+ *  theme's harmony follows whichever mode an arrangement puts it in. */
+function diatonic(name, scale) {
+  const m = name.match(/^d([1-7])(M7|M|m|_7)?$/);
+  if (!m) return null;
+  const k = Number(m[1]) - 1;
+  const at = (j) => (scale[(k + j) % 7] + (k + j >= 7 ? 12 : 0) - scale[k] + 24) % 12;
+  let iv = [0, at(2), at(4)];
+  if (m[2] === 'M' || m[2] === 'M7') iv = [0, 4, 7];
+  if (m[2] === 'm') iv = [0, 3, 7];
+  if (m[2] === 'M7') iv.push(10);
+  if (m[2] === '_7') iv.push(at(6));
+  return [scale[k], iv];
+}
+
+/** Parses 'VI', 'iv@1' (third in the bass), 'V7_III' or a degree chord ('d6', 'd5M7') into a chord of absolute pitch classes
+ *  for a key (`scale` is only needed for the degree chords). */
+export function chordOf(sym, tonicPc, scale = MINOR) {
   const [name, inv] = sym.split('@');
-  const c = CHORDS[name];
+  const c = CHORDS[name] ?? diatonic(name, scale);
   if (!c) throw new Error(`unknown chord ${sym}`);
   const root = (tonicPc + c[0]) % 12;
   const tones = c[1].map((iv) => (root + iv) % 12);

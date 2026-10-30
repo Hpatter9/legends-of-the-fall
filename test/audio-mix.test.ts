@@ -11,7 +11,6 @@ import { EPIC_INFO, type Baked } from '../src/render/musicBake';
 import { LOOP_START } from '../src/render/epicMusic';
 import { FakeContext, installFakeAudio } from './audioFake';
 
-const db = (g: number) => 20 * Math.log10(g);
 
 test('every music file has a trim, and the trims are sane (no file pushed or cut by more than about 8 dB)', () => {
   for (const id of Object.keys(EPIC_MANIFEST)) {
@@ -42,8 +41,11 @@ test('the buses sit inside the master, and the music under the effects', () => {
 test('the music under a fight is trimmed below the menus\' music (measured loudness: docs/notes/audio-mix.md)', () => {
   // (each battle track sits 7 LU under the fight; the menus' music 2.5 LU above the battle tracks. The trims are what gets there
   //  from each file's own loudness, so only their sanity is checked here: a battle track is never lifted above its file)
-  for (const id of ['battle', 'battle2', 'battle3', 'boss', 'calbattle'] as const) assert.ok(TRACK_GAIN[id] < 1, `${id} is brought down`);
-  assert.ok(db(TRACK_GAIN.calbattle) < db(TRACK_GAIN.battle3), 'the loudest-mastered file is cut the most');
+  // (the battle tracks are the main theme's arrangements since MUSIC-THEME: the general one, the boss, the Calamity's and each army's)
+  const battles = ['battle', 'boss', 'calbattle', 'orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'] as const;
+  for (const id of battles) assert.ok(TRACK_GAIN[id] < 1, `${id} is brought down`);
+  // (and each sits below every menu track, as the fight's music steps down from the camp's)
+  for (const id of battles) for (const menu of ['camp', 'tavern', 'deploy', 'calmap'] as const) assert.ok(TRACK_GAIN[id] < TRACK_GAIN[menu], `${id} under ${menu}`);
 });
 
 test('every king\'s spell has a trim, and the trim scales its cast and its effect alike', () => {

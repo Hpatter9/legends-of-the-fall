@@ -2,8 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES } from '../src/sim/armies';
 import { armyRun, newRun, waveArmyOf, type Run } from '../src/sim/run';
-import { BATTLE_TRACKS, VICTORY_BED, VICTORY_LOOP, atPlace, depthLevel, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
-import { TRACK_OF_PLACE } from '../src/render/epicMusic';
+import { GENERAL_TRACK, VICTORY_BED, VICTORY_LOOP, armyTrack, atPlace, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
+import { ARMY_TRACKS, TRACK_OF_PLACE } from '../src/render/epicMusic';
+import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { FakeContext, installFakeAudio } from './audioFake';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
 import { LOOP_START } from '../src/render/epicMusic';
@@ -36,27 +37,34 @@ test('a battle keeps one track from its first wave to its last: no switching by 
   assert.ok(waveArmyOf(d)!.waves.some((w) => w.boss), 'the daily has its boss wave, and it plays the battle\'s track');
 });
 
-test('battles differ from run to run: an army by its seed (the top tiers the hardest track), the daily by its day', () => {
-  const army = ARMIES[0].id;
-  const tracks = new Set([1, 2, 3, 4, 5, 6].map((seed) => trackOfRun(armyRun(seed, army))));
-  assert.deepEqual([...tracks].sort(), [...BATTLE_TRACKS].sort(), 'every battle track turns up');
-  assert.equal(trackOfRun(armyRun(9, army, undefined, undefined, 3)), 'battle3', 'Legendary');
-  assert.equal(trackOfRun(armyRun(10, army, undefined, undefined, 4)), 'battle3', 'Mythic');
-  assert.equal(trackOfRun(daily(20261029)), trackOfRun(daily(20261029)), 'the same all day');
-  assert.equal(new Set([0, 1, 2].map((d) => trackOfRun(daily(20261029 + d)))).size, 3, 'and another the next');
-  // (the Last Stand by its seed, so a run resumed keeps its track)
-  assert.equal(standTrack(77), standTrack(77));
-  assert.equal(new Set([0, 1, 2].map(standTrack)).size, 3);
-  assert.ok(BATTLE_TRACKS.includes(standTrack(-5) as (typeof BATTLE_TRACKS)[number]), 'a negative seed is a battle track too');
+test('each army plays its own track (the main theme in its dress) at every tier; the daily and the Last Stand the general one', () => {
+  const seen = new Set<string>();
+  for (const army of ARMIES) {
+    for (const tier of [0, 1, 2, 3, 4]) {
+      const want = army.waves.length === 1 && army.waves[0].boss ? 'boss' : armyTrack(army.id);
+      assert.equal(trackOfRun(armyRun(40 + tier, army.id, undefined, undefined, tier)), want, `${army.id} tier ${tier}`);
+    }
+    // (the seed no longer picks: every run of an army sounds like that army)
+    assert.equal(trackOfRun(armyRun(1, army.id)), trackOfRun(armyRun(2, army.id)), army.id);
+    seen.add(trackOfRun(armyRun(1, army.id)));
+  }
+  assert.equal(seen.size, ARMIES.length, 'no two armies share a track');
+  for (const id of ARMY_TRACKS) assert.ok(ARMIES.some((a) => a.id === id), `${id} is an army`);
+  for (const id of ARMY_TRACKS) assert.ok(EPIC_MANIFEST[id]?.loop, `${id} has its file`);
+  assert.equal(armyTrack('an army with no track yet'), GENERAL_TRACK);
+  assert.equal(trackOfRun(daily(20261029)), GENERAL_TRACK);
+  assert.equal(trackOfRun(daily(20261030)), GENERAL_TRACK, 'every day');
+  assert.equal(standTrack(77), GENERAL_TRACK);
+  assert.equal(standTrack(-5), GENERAL_TRACK);
 });
 
-test('a single fight takes its track by what it is: a boss, the Calamity, a spire floor by depth', () => {
+test('a single fight takes its track by what it is: a boss, the Calamity, a spire floor the general track', () => {
   assert.equal(trackOfRun(towerAt(4, 'boss', true)), 'boss');
   assert.equal(trackOfRun(towerAt(4, 'fight', true)), 'calbattle');
   assert.equal(trackOfRun(towerAt(30, 'boss')), 'boss');
-  assert.deepEqual([1, 9, 10, 24, 25].map((f) => trackOfRun(towerAt(f, 'fight'))), ['battle', 'battle', 'battle2', 'battle2', 'battle3']);
-  assert.equal(trackOfRun(towerAt(3, 'elite')), 'battle2', 'an elite a step harder');
-  assert.equal(depthLevel(30, true), 2, 'never past the top');
+  assert.deepEqual([1, 9, 10, 24, 25].map((f) => trackOfRun(towerAt(f, 'fight'))), Array(5).fill(GENERAL_TRACK));
+  assert.equal(trackOfRun(towerAt(3, 'elite')), GENERAL_TRACK);
+  assert.equal(trackOfRun(newRun(1)), GENERAL_TRACK, 'a field fight');
 });
 
 test('victory music only when the whole battle is won; the defeat sting only when it is lost for good', () => {
@@ -81,11 +89,11 @@ test('the battle track plays through the breaks between waves, a victory holds t
   const want = (s: MusicState) => musicOf(s, (p) => TRACK_OF_PLACE[p]);
   let s: MusicState = { place: 'deploy', battle: null, fighting: false, victory: false };
   assert.equal(want(s).track, 'deploy', 'the first deploy has its own music');
-  s = { ...s, battle: 'battle2', fighting: true };
-  assert.deepEqual(want(s), { track: 'battle2', level: 1 });
+  s = { ...s, battle: 'orcs', fighting: true };
+  assert.deepEqual(want(s), { track: 'orcs', level: 1 });
   // (a wave won: the fight is over, the result screen and the next deploy are on the board, and the battle plays on)
   s = { ...s, fighting: false };
-  assert.deepEqual(want(atPlace(s, 'deploy')), { track: 'battle2', level: 1 });
+  assert.deepEqual(want(atPlace(s, 'deploy')), { track: 'orcs', level: 1 });
   // (the battle won: the triumph bed, lower than a track's full level)
   const won: MusicState = { ...s, battle: null, victory: true };
   assert.deepEqual(want(won), { track: VICTORY_LOOP, level: VICTORY_BED });
@@ -94,7 +102,7 @@ test('the battle track plays through the breaks between waves, a victory holds t
   assert.deepEqual(atPlace(s, 'camp'), { place: 'camp', battle: null, fighting: false, victory: false });
   assert.equal(want(atPlace(won, 'tower')).track, 'tower');
   // (but a fight still being fought keeps its battle, wherever the page says the player is)
-  assert.equal(want(atPlace({ ...s, fighting: true }, 'camp')).track, 'battle2');
+  assert.equal(want(atPlace({ ...s, fighting: true }, 'camp')).track, 'orcs');
 });
 
 /** A baked track as an epic file would give it. */
