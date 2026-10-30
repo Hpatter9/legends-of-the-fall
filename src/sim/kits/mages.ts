@@ -3,6 +3,7 @@
 // the Warlock's Eldritch Blast that shoves and his Circle of Death, the Great Sage's Font of Magic and the Illusionist's Transposition. No
 // randomness: every choice is a fixed order.
 
+import type { At } from '../board';
 import { addUnit, atkOf, hurt, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, castPower, foesOf, net } from '../abilities';
 import { poolOf } from '../heroKits';
@@ -14,15 +15,24 @@ import { kx } from './effects';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 
-/** The Fire Wizard's Wall of Fire: 4 tiles across the lane the most foes are walking, for 6s, cast with a foe within 7. */
-export const FIRE_WALL = { LEN: 4, MS: 6000, REACH: 7 } as const;
-/** Fire Wizard, Wall of Fire: a wall of fire across the lane the most foes are walking (`laneLine`); a foe in it or crossing it burns.
- *  It burns as hard as the skill's strength when it was laid. */
-export function wallOfFire(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!foesOf(b, me).some((f) => apart(me, f) <= FIRE_WALL.REACH)) return false;
+/** The Fire Wizard's Wall of Fire: 4 tiles across the lane the most foes are walking, for 6s, cast with a foe within 7 and two or more foes within
+ *  2 tiles of the line. */
+export const FIRE_WALL = { LEN: 4, MS: 6000, REACH: 7, NEAR: 2, FOES: 2 } as const;
+/** Where the Wall of Fire would go, or undefined when it is not worth laying: the lane line (`laneLine`) is worth it when two or more foes
+ *  are within 2 tiles of it (the crowd that will walk through it), with a foe within 7 of the Wizard. */
+export function fireLane(b: Battle, me: Unit): At[] | undefined {
+  const foes = foesOf(b, me);
+  if (!foes.some((f) => apart(me, f) <= FIRE_WALL.REACH)) return undefined;
   const line = laneLine(b, me, FIRE_WALL.LEN);
+  if (!line || foes.filter((f) => line.some((t) => apart(f, t) <= FIRE_WALL.NEAR)).length < FIRE_WALL.FOES) return undefined;
+  return line;
+}
+/** Fire Wizard, Wall of Fire: a wall of fire across the lane the most foes are walking (`laneLine`), on its tiles with foes in them too; a foe
+ *  in it or crossing it burns. It burns as hard as the skill's strength when it was laid. */
+export function wallOfFire(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const line = fireLane(b, me);
   if (!line) return false;
-  return raiseWall(b, me, line, 'fire', ms(me, FIRE_WALL.MS), out, castPower()).length > 0;
+  return raiseWall(b, me, line, 'fire', ms(me, FIRE_WALL.MS), out, { pow: castPower(), onFighters: true }).length > 0;
 }
 
 /** Lightning Mage, Storm Surge: with a foe beside her she first blinks to the safest tile within 3; then every Charged foe discharges
@@ -72,8 +82,9 @@ export function blastShoves(b: Battle, me: Unit, out: BattleEvent[], first: numb
   }
 }
 
-/** The Warlock's Circle of Death: a ring round him for 6s; a foe within 2 takes 0.4 of his attack a second, and he drinks a third of it. */
-export const CIRCLE = { MS: 6000, REACH: 2, DMG: 0.4, DRINK: 1 / 3 } as const;
+/** The Warlock's Circle of Death: a ring round him for 6s; a foe within 2 takes 0.3 of his attack a second (the design's 0.4 made the level-100
+ *  party clear the Mythic Golem Forge at the first try), and he drinks a third of it. */
+export const CIRCLE = { MS: 6000, REACH: 2, DMG: 0.3, DRINK: 1 / 3 } as const;
 /** Raise the Circle of Death's ring (as hard as the ultimate's strength when it was cast). */
 export function circleOfDeath(b: Battle, me: Unit, out: BattleEvent[], msLong: number): void {
   raiseAura(b, me, { what: 'circle of death', reach: CIRCLE.REACH, ms: msLong, every: 1000, foe: { dmg: CIRCLE.DMG * castPower(), drink: CIRCLE.DRINK } }, out);

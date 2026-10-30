@@ -18,10 +18,10 @@
 // heroes30: each has one of the eight (field1 and heroes1 at level 1, where the Siege Bot's Bombard, which now throws, is skill 1). The
 // `...Others` scenarios now leave the eight out of every team (recorded on main's code before the batch) and did not move; nor did lands, army,
 // daily, tower, stand or calamity.
-// Batch 6 (the casters, docs/notes/spells-b6.md) re-recorded field1, field30, bosses, armyFoes, spells, lands, army, daily, tower, stand, heroes1,
-// heroes10 and heroes30: each has one of the six (the Fire Wizard, at level 1 in the daily, the spire and many a team, carries a stronger
-// Fireball; the Warlock's Eldritch Blast shoves). The `...Others` scenarios now leave the six out of every team (recorded on main's code before
-// the batch) and did not move; nor did calamity. (The Yokai Witch, which borrowed the Warlock's Hex, keeps the old Hex.)
+// Batch 6 (the casters, docs/notes/spells-b6.md) re-recorded field1, field30, bosses, armyFoes, spells, lands, army, stand, heroes1, heroes10 and
+// heroes30: each has one of the six (field1 and heroes1 at level 1, where the Warlock's Eldritch Blast, skill 1, now shoves). The `...Others`
+// scenarios now leave the six out of every team (recorded on main's code before the batch) and did not move; nor did daily, tower or calamity.
+// (The Yokai Witch, which borrowed the Warlock's Hex, keeps the old Hex.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

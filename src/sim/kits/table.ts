@@ -30,7 +30,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   samurai: 0.63,
   kunoichi: 0.37,
   archer: 0.69,
-  wizard: 0.47, // (RPG-SPELLS batch 6: 0.41 before; Fireball carries a little more, as the Wall of Fire bites less in the open than Wildfire did)
+  wizard: 0.41,
   peasant: 0.49,
   ninjaMonk: 0.5,
   wanderer: 1.5,
@@ -48,7 +48,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   druid: 0.77,
   barbarian: 0.65,
   ranger: 0.3,
-  warlock: 0.59,
+  warlock: 0.5, // (RPG-SPELLS batch 6: 0.59 before; Eldritch Blast's shove made him +3.3 at level 1)
   illusionist: 0.14,
   gunslinger: 0.47,
   shambler: 0.78,
@@ -83,7 +83,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   samurai: 2.16,
   kunoichi: 0.61,
   archer: 0.69,
-  wizard: 6, // (RPG-SPELLS batch 6: the Wall of Fire's burn; 2.26 was Wildfire's eruption)
+  wizard: 8, // (RPG-SPELLS batch 6: the Wall of Fire's burn; 2.26 was Wildfire's eruption)
   peasant: 0.52,
   ninjaMonk: 1.0,
   wanderer: 0.31,
@@ -121,7 +121,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   priestess: 0.12,
   dragoon: 1.84,
   juggernaut: 2.48,
-  sage: 1.13,
+  sage: 0.8, // (RPG-SPELLS batch 6: Font of Magic's flow; at 0.8 it gives about the 25 mana Font of Wisdom gave at once; 1.13 before)
   demonSwordsman: 3.06,
   tyrant: 2.13,
 };

@@ -91,12 +91,14 @@ function setTile(b: Battle, w: Wall, on: boolean): void {
 }
 
 /** Raise walls of `kind` on `tiles` for `ms`: only on free standable tiles with no wall, barrel or fighter, and never one that would
- *  seal anyone in. The tiles raised (none: nothing to do). */
-export function raiseWall(b: Battle, me: Unit, tiles: At[], kind: WallKind, ms: number, out: BattleEvent[], pow?: number): At[] {
+ *  seal anyone in. The tiles raised (none: nothing to do). `o.pow`: how hard a fire wall burns (1 when unset); `o.onFighters`: a wall that
+ *  blocks no one (fire) is laid on tiles with a fighter too, so the foes standing in it burn at once (RPG-SPELLS batch 6: the Wall of Fire). */
+export function raiseWall(b: Battle, me: Unit, tiles: At[], kind: WallKind, ms: number, out: BattleEvent[], o: { pow?: number; onFighters?: boolean } = {}): At[] {
+  const pow = o.pow;
   const laid: At[] = [];
   for (const at of tiles) {
     const t = tileAt(b.board, at.u, at.v);
-    if (!t || !standable(t) || unitAt(b, at.u, at.v) || wallAt(b, at.u, at.v)) continue;
+    if (!t || !standable(t) || (unitAt(b, at.u, at.v) && !(o.onFighters && !blocksWalk(kind))) || wallAt(b, at.u, at.v)) continue;
     if (b.stand && apart(at, b.stand.at) <= 1) continue;
     const w: Wall = { i: at.v * b.board.w + at.u, kind, side: me.side, by: me.id, until: b.t + ms, ...(pow !== undefined && pow !== 1 ? { pow } : {}) };
     if (blocksWalk(kind)) {

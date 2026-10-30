@@ -603,7 +603,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     // ---- the guile ----
     illusionist: ult('Hall of Mirrors', 'Four decoys appear round her and every foe within 6 tiles turns on them for 4.5s', 800, 'attack2', hallOfMirrors),
     // (RPG-SPELLS batch 6: a ring of death holds round him as well)
-    warlock: ult('Circle of Death', 'Every foe within 7 tiles is cursed and burns for 6s, and he drinks from each; a ring of death holds round him for 6s: a foe within 2 takes 0.4 of his attack a second, and he drinks a third of it', 800, 'attack2', (b, me, out) => {
+    warlock: ult('Circle of Death', 'Every foe within 7 tiles is cursed and burns for 6s, and he drinks from each; a ring of death holds round him for 6s: a foe within 2 takes 0.3 of his attack a second, and he drinks a third of it', 800, 'attack2', (b, me, out) => {
       if (!smite(b, me, out, { reach: 7, mult: 1.0, curse: { ms: 6000, dot: 0.45 }, drink: { each: 0.06, cap: 0.36 } })) return false;
       circleOfDeath(b, me, out, dur(me, CIRCLE.MS));
       return true;

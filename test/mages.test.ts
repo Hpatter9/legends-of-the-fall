@@ -60,7 +60,7 @@ test('the six casters carry their new names on their old keys', () => {
   assert.equal(keyOf(KITS.magmaGolem.skill), 'Magma Burst');
 });
 
-test('Wall of Fire: a line of fire across the lane the foes walk, and a foe that walks into it burns', () => {
+test('Wall of Fire: a line of fire across the lane the foes walk (two or more near it), and a foe that walks into it burns', () => {
   const was = AILMENT_SWITCH.on;
   AILMENT_SWITCH.on = true;
   try {
@@ -68,6 +68,9 @@ test('Wall of Fire: a line of fire across the lane the foes walk, and a foe that
     const me = spawn(b, 'wizard', 3, 9, 10);
     const f = tough(b, 'orcGrunt', 3, 3);
     f.busyUntil = 0;
+    // (one foe alone is not worth a wall)
+    assert.equal(heroKitOf(me)!.s2.skill.cast(b, me, []), false);
+    tough(b, 'orcGrunt', 4, 2);
     const out = cast(b, me, 2);
     const laid = out.filter((e) => e.kind === 'terrain' && e.what === 'fire');
     assert.ok(laid.length >= 3, 'three or four tiles of fire');

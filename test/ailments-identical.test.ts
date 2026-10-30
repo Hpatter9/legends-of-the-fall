@@ -12,8 +12,8 @@
 // (RPG-SPELLS batch 5, docs/notes/spells-b5.md, re-recorded field1, field30, bosses, armyFoes and spells: each has one of the ranged heroes or
 // summoners the owner approved reworking (Bombard's and the Orbital Strike's throws, the Powder Keg, the leaping wolves, the Reaper's drag...).
 // Only those moved.)
-// (RPG-SPELLS batch 6, docs/notes/spells-b6.md, re-recorded field1, field30, bosses, armyFoes, spells, lands, army, daily, tower and stand: each
-// has one of the casters the owner approved reworking (Fireball, the Wall of Fire, Eldritch Blast, Call Lightning...). Only those moved.)
+// (RPG-SPELLS batch 6, docs/notes/spells-b6.md, re-recorded field1, field30, bosses, armyFoes, spells, lands, army and stand: each has one of the
+// casters the owner approved reworking (the Wall of Fire, Eldritch Blast, Call Lightning, the Circle of Death...). Only those moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

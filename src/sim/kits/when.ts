@@ -6,7 +6,7 @@ import { atkOf, type Battle, type Unit } from '../battle';
 import { apart, foesOf } from '../abilities';
 import { harmed } from '../ailments';
 import { THUNDER_STORE } from './melee';
-import { FIRE_WALL, FONT, inTrouble } from './mages';
+import { FONT, fireLane, inTrouble } from './mages';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -23,7 +23,7 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Smoke Bomb': (b, me) => foesOf(b, me).some((f) => Math.abs(f.u - me.u) <= 1 && Math.abs(f.v - me.v) <= 1),
   'Turning Wind': (b, me) => foesOf(b, me).some((f) => UNITS[f.def].shot && apart(f, me) <= 8),
   // (RPG-SPELLS batch 6: the Wall of Fire took Wildfire's place, Transposition Trade Places', Font of Magic Font of Wisdom's)
-  Wildfire: (b, me) => foesWithin(b, me, FIRE_WALL.REACH),
+  Wildfire: (b, me) => !!fireLane(b, me),
   Overload: (b, me) => foesOf(b, me).some((f) => on(f.kx?.charged, b) && apart(me, f) <= 8),
   'Fox Guise': (b, me) => !on(me.kx?.guise?.until, b) && foesWithin(b, me, 7),
   Shift: (b, me) => foesWithin(b, me, 4) && (me.kx?.wolfAt === undefined || b.t - me.kx.wolfAt >= 4000) && me.kx?.wolf !== (me.hp < me.maxHp * 0.5 || foesOf(b, me).filter((f) => apart(f, me) === 1).length >= 3 ? 'brute' : 'hunter'),
