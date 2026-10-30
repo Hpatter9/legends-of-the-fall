@@ -9,9 +9,13 @@
 //              the battle resumes at once after the opening, so the lingering part runs live, and the dim fades.
 // Several ultimates queue, each its own moment. Times are real time (the page's frame time, not the battle's), so the fight's speed changes
 // nothing. A tap skips the moment that is playing. Short (the setting off): no hold and no dim, only a banner while the fight runs.
+// With Auto on (the ultimates fire on their own, or an auto-replay) the moments are always short, the owner's call (`fullScene`).
 
 import type { BattleEvent, Unit } from './sim/battle';
 import type { Skill } from './sim/abilities';
+
+/** Whether an ultimate gets the full moment (the hold and the dim): the setting on, and Auto off. With Auto the banner is short. */
+export const fullScene = (setting: boolean, auto: boolean): boolean => setting && !auto;
 
 export type UltShape = 'instant' | 'delayed' | 'lingering';
 
