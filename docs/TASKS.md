@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### STATS-1 — The six ability scores as data (D&D stats design, batch 1)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/stats-1`, `/home/user/lotf-stats1` (from main 0.289.0).
+- **Goal:** batch 1 of the owner-approved [D&D stats design](notes/rpg-stats-design.md): the six scores, modifiers, proficiency by level, the 45 heroes' profiles (each 17, 15, 13, 12, 10, 8), growth fixed by calling, rank, grade and awakening steps, the derived numbers (AC, to hit, DC, saves, crit), the foes' family blocks and the hashed d20s, as pure data. No fight changes.
+- **Scope:** new `src/sim/stats.ts`, `test/stats.test.ts`, `tools/stats/fit.mjs`/`fit.ts`, `docs/notes/stats-1.md`, `docs/notes/rpg-stats-design.md` (the design, copied).
+- **Status:** ready for review. [Note](notes/stats-1.md).
+
 ### GUEST-HERO — A guest hero from the passing cart, a sixth on the field for one run; talent points marked in the tavern
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/guest-hero`, `/home/user/lotf-guest` (from main 0.284.0).
