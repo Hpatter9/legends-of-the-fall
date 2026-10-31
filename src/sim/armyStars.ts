@@ -333,19 +333,22 @@ export interface LootSummary {
   stones: number;
   tomes: TomeCounts;
   spells: LootItem[];
+  /** Skill books found (SHOP-BOOKS-GEAR). */
+  books: LootItem[];
   gear: LootItem[];
   /** Rift ores, the same kinds added together. */
   ores: OreDrop[];
 }
 export function sumLoot(loots: readonly Loot[]): LootSummary {
-  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, spells: [], gear: [], ores: [] };
+  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, spells: [], books: [], gear: [], ores: [] };
   const ores: OreDrop[] = [];
   for (const l of loots)
     for (const it of l.items) {
       if (it.type === 'crowns') out.crowns += it.n ?? 0;
       else if (it.type === 'stones') out.stones += it.n ?? 0;
       else if (it.type === 'tomes' && it.size) out.tomes = addTomes(out.tomes, { [it.size]: it.n ?? 0 });
-      else if (it.type === 'spell' || it.type === 'book') out.spells.push(it);
+      else if (it.type === 'spell') out.spells.push(it);
+      else if (it.type === 'book') out.books.push(it);
       else if (it.type === 'gear') out.gear.push(it);
       else if (it.type === 'ores' && it.trait) ores.push({ trait: it.trait, n: it.n ?? 0 });
     }

@@ -209,9 +209,9 @@ export function showChestSummary(loots: readonly Loot[], then: () => void): void
   tile(ICONS.stones, sum.stones, sum.stones === 1 ? 'stone' : 'stones');
   for (const size of TOME_SIZES) if (sum.tomes[size]) tile(TOME_ICON[size], sum.tomes[size]!, `${size} tome${sum.tomes[size] === 1 ? '' : 's'}`);
   for (const d of sum.ores) tile(ORE_ICON[d.trait], d.n, ORES[d.trait].name);
-  const gearHead = el('div', 'allGearHead', `${sum.spells.some((x) => x.type === 'spell') ? `Spells learnt: ${sum.spells.filter((x) => x.type === 'spell').length} · ` : ''}${sum.spells.some((x) => x.type === 'book') ? `Books found: ${sum.spells.filter((x) => x.type === 'book').length} · ` : ''}${sum.gear.length ? `Gear won: ${sum.gear.length}, the best first` : 'No gear this time'}`);
+  const gearHead = el('div', 'allGearHead', `${sum.spells.length ? `Spells learnt: ${sum.spells.length} · ` : ''}${sum.books.length ? `Books found: ${sum.books.length} · ` : ''}${sum.gear.length ? `Gear won: ${sum.gear.length}, the best first` : 'No gear this time'}`);
   const list = el('div', 'chestLoot allGear');
-  for (const it of sum.spells) {
+  for (const it of [...sum.spells, ...sum.books]) {
     const card = el('div', 'lootCard spell prize');
     card.append(lootIcon(it), el('span', '', it.text));
     list.append(card);

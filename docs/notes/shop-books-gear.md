@@ -85,7 +85,7 @@ for later is at the end. Every new save field is optional; the save version is n
   are kept simple; `mastery-1..3` art is not imported.
 - **Found books:** a silver chest holds a Rare book one time in twenty, a gold or Mythic about one in seven, and an army's first
   clear on Hard or above always (`chestBook`, from `mixSeed(chestSeed, BOOK_SALT)`, so every chest's other contents roll as before);
-  the stall's silver and gold chests too. The chest reveal shows the cover; Open all counts "Books found".
+  the stall's silver and gold chests too. The chest reveal shows the cover; Open all counts "Books found" (`LootSummary.books`).
 - **On the page:** the hero sheet's Skills tab opens with the **Skill book** panel (`src/skillBookView.ts`, classes `kb*`): the two
   slots (a tap opens the picker of every known skill), the study with its bar and "Put it down", and **Read a book** (the unread books
   this hero could read, the Library's room for students). The skill cards below follow the chosen slots.
@@ -106,7 +106,7 @@ seal) and the wear and selling pieces of the painted gear set, only those used, 
 inequalities, saves), `test/wear.test.ts` (wear by wave, fall and auto, states, broken gives nothing, Equip best, repair prices,
 Repair all, old saves, combining), `test/books.test.ts` (who reads what, study, putting down, the library, slots, the book slot's
 cost and revive, the loadout on the boost, every book cast by its readers in either slot, saves, found books).
-`test/castleScene.test.ts`'s Armoury line was updated for the owner's decision (repairs 4% cheaper a level).
+The wave card's wear and study lines are in `test/wear.test.ts`. `test/castleScene.test.ts`'s Armoury line was updated for the owner's decision (repairs 4% cheaper a level).
 
 ## Left for later
 
@@ -121,3 +121,10 @@ cost and revive, the loadout on the boost, every book cast by its readers in eit
 - Smaller: the "learned" card's own art on the recap (the wave card has the line), `gear-balance --wear` (the modelled month's
   upkeep), the bulk **Sell all Rares**, and a run's snapshot of the loadout (a loadout changed between a run's waves applies from
   the next wave).
+
+## Checks
+
+`npm run typecheck`; `npm run web`; the full `npm test` on the branch before its last fix (1,845 tests, 1,844 passed: a gold chest's
+Rare book was counted with the spell scrolls in Open all's summary, which `spell-sources.test.ts` caught; books now have their own
+`LootSummary.books`), then `npm test -- spell-sources wear books armyStars chest summon-stones` (68 passed) after it. The page at
+393x852, 360x780 and 412x915 through `tools/shop/shots.mjs`, with no page errors.

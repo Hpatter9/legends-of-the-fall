@@ -5,7 +5,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bestFor, combineItems, equipItem, equipStats, grantEquipment, readEquipment } from '../src/sim/equipment';
 import { loadMeta, startedMeta, type Meta } from '../src/sim/meta';
-import { durabilityOf, maxDurability, needingRepair, partyWear, repairAll, repairAllCost, repairCost, repairItem, settleWear, wearState } from '../src/sim/wear';
+import { durabilityOf, maxDurability, needingRepair, partyWear, repairAll, repairAllCost, repairCost, repairItem, settleWear, wearState, wearWords } from '../src/sim/wear';
+import { waveNotes } from '../src/sim/waveCard';
 
 const kit = (): Meta => {
   const m = startedMeta(9);
@@ -105,4 +106,13 @@ test('an old save has full gear; combining makes a fresh piece', () => {
   });
   const made = combineItems(m, ids)!;
   assert.equal(made.wear, undefined);
+});
+
+test('the short wave card tells a piece that broke, and the study (a skill learned first, fights left last)', () => {
+  const m = kit();
+  worn(m, 'ironSword').wear = 30;
+  const words = wearWords(settleWear(m, [{ kind: 'knight', fell: false }]), (k) => k);
+  assert.deepEqual(words, ['knight’s Iron Sword broke']);
+  const notes = waveNotes({ ups: [], fell: [], hearts: 0, heartsLeft: 0, found: [], wear: words, study: [{ text: 'archer: Grappling Hook, 2 fights left', learned: false }, { text: 'knight learned Whirlwind', learned: true }] });
+  assert.deepEqual(notes.map((n) => n.kind), ['learned', 'wear', 'study']);
 });
