@@ -95,3 +95,8 @@
 @media (prefers-reduced-motion: reduce) {
   .hsSheet { animation: none; }
 }
+
+/* the party screen's worn-gear strip above the start button (src/party.ts) */
+#party .ptWear { width: 100%; min-height: 44px; margin: 0 0 6px; padding: 6px 10px; font: 400 14px var(--body); color: #2c1d08; background: linear-gradient(#f0c063, #c98f2c); border: 1px solid #8a5d17; border-radius: 3px; box-shadow: none; }
+#party .ptWear[hidden] { display: none; }
+#party .ptWear:disabled { filter: saturate(0.4); opacity: 0.75; }

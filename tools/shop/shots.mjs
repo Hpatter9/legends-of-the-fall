@@ -60,6 +60,12 @@ for (const [w, h] of SIZES) {
   await click(page, '.hsTab', 'Sell');
   await page.screenshot({ path: out('sell') });
   await click(page, '.hsBack');
+  if (w === 393) {
+    // (the party screen's strip: the knight wears worn and broken pieces)
+    await click(page, '#hmParty');
+    await page.screenshot({ path: out('party-wear') });
+    await click(page, '#ptBack');
+  }
   // (the knight's sheet, on its Skills tab: the Skill book panel)
   await click(page, '.hmTab', 'Heroes');
   await click(page, 'button', 'All heroes');

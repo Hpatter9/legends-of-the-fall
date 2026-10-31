@@ -8,6 +8,7 @@
 // levels by use. Pure rules: no Pixi, no DOM, no randomness.
 
 import { BOOKS, bookById, readsKind, STUDY, type BookDef } from './bookData';
+import { mixSeed, Rng } from './rng';
 import { HERO_KITS, resMax, type HeroKit, type Slot } from './heroKits';
 import type { Meta } from './meta';
 import { ALL_HEROES } from './units';
@@ -129,6 +130,22 @@ export function settleStudy(m: Meta, fought: readonly string[]): StudyNote[] {
   }
   if (m.study && !Object.keys(m.study).length) delete m.study;
   return out;
+}
+
+// ---- Rare books found ----
+
+const BOOK_SALT = 0xb00c5;
+/** The chance a chest holds a Rare book, by its kind: a silver one in twenty, a gold (or Mythic) about one in seven. */
+export const CHEST_BOOK_ODDS: Readonly<Record<string, number>> = { silver: 0.05, gold: 0.15, mythic: 0.15 };
+/** The Rare book a chest holds, if any: drawn from its own stream of the chest's seed (so its crowns, stones, gear and tomes roll
+ *  exactly as before). `sure` (an army's first clear on Hard or above) always holds one. */
+export function chestBook(seed: number, kind: string, sure = false): string | undefined {
+  const rng = new Rng(mixSeed(seed, BOOK_SALT));
+  const odds = CHEST_BOOK_ODDS[kind] ?? 0;
+  const hit = rng.chance(odds);
+  if (!sure && !hit) return undefined;
+  const rare = BOOKS.filter((b) => b.rarity === 'rare');
+  return rare[rng.int(0, rare.length - 1)].id;
 }
 
 // ---- the two slots ----

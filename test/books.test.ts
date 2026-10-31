@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, fight, place, startBattle, stepBattle, type Battle } from '../src/sim/battle';
 import { BOOKS, READS, bookById } from '../src/sim/bookData';
-import { canRead, fightLoadout, kitWithLoadout, loadoutOf, readBooks, setSlot, settleStudy, slotFor, startStudy, stopStudy, studentCap, studyLeft, studyLength, whyNotRead, grantBook, OWN1, OWN2 } from '../src/sim/books';
+import { canRead, chestBook, fightLoadout, kitWithLoadout, loadoutOf, readBooks, setSlot, settleStudy, slotFor, startStudy, stopStudy, studentCap, studyLeft, studyLength, whyNotRead, grantBook, OWN1, OWN2 } from '../src/sim/books';
 import { HERO_KITS, heroKitOf, resMax } from '../src/sim/heroKits';
 import { loadMeta, startedMeta, type Meta } from '../src/sim/meta';
 import { heroStats } from '../src/sim/talents';
@@ -166,4 +166,18 @@ test('saves: the books, learning, study and loadouts read back; nonsense is drop
   const store = new Map<string, string>([['legends.meta', JSON.stringify(startedMeta(3))]]);
   const old = loadMeta(1, { getItem: (k) => store.get(k) ?? null });
   for (const k of ['books', 'learned', 'study', 'studyKept', 'loadout', 'stall'] as const) assert.equal(old[k], undefined, k);
+});
+
+test('Rare books are found: now and then in silver and gold chests, always in a first clear on Hard or above, from their own stream', () => {
+  let silver = 0;
+  let gold = 0;
+  for (let s = 1; s <= 2000; s++) {
+    if (chestBook(s, 'silver')) silver++;
+    if (chestBook(s, 'gold')) gold++;
+    assert.equal(chestBook(s, 'bronze'), undefined);
+  }
+  assert.ok(silver > 60 && silver < 140, `silver ${silver}`);
+  assert.ok(gold > 230 && gold < 370, `gold ${gold}`);
+  assert.equal(chestBook(7, 'gold'), chestBook(7, 'gold'));
+  for (let s = 1; s <= 50; s++) assert.equal(bookById(chestBook(s, 'silver', true)!)?.rarity, 'rare');
 });

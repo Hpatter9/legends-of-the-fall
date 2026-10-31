@@ -6,6 +6,8 @@
 // be rerolled by reloading or by the order of opening, and they pay better the higher the milestone and the tier and the
 // later the army. Pure rules: no Pixi, no DOM.
 
+import { bookById } from './bookData';
+import { chestBook, grantBook } from './books';
 import { dailyStarsMax } from './dailyThemes';
 import { chestOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
 import { ARMIES, armyById, armyIndex, recordOf, type Army, type ArmyRecord } from './armies';
@@ -158,7 +160,7 @@ export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
 }
 
 export interface LootItem {
-  type: 'crowns' | 'stones' | 'gear' | 'tomes' | 'spell' | 'ores';
+  type: 'crowns' | 'stones' | 'gear' | 'tomes' | 'spell' | 'ores' | 'book';
   /** A line for the reveal: "320 crowns", "3 summoning stones". */
   text: string;
   /** The equipment's base it is about. */
@@ -169,6 +171,8 @@ export interface LootItem {
   size?: TomeSize;
   /** The class trait of the rift ores a line holds (`awakenMats.ts`). */
   trait?: string;
+  /** The skill book it is (`bookData.ts`). */
+  book?: string;
   /** The spell a scroll teaches (`spellSources.ts`). */
   spell?: SpellId;
   /** A piece of equipment this reward is (for its icon and frame). */
@@ -269,6 +273,9 @@ export function tomeItems(t: TomeCounts): LootItem[] {
   return TOME_SIZES.filter((size) => (t[size] ?? 0) > 0).map((size) => ({ type: 'tomes', text: tomeWords(size, t[size]!), n: t[size], size, ...(size === 'large' ? { prize: true } : {}) }));
 }
 
+/** The reveal line of a skill book a chest holds. */
+export const bookItem = (id: string): LootItem => ({ type: 'book', text: `A skill book: ${bookById(id)?.title ?? id}`, book: id, prize: true });
+
 /** The reveal line of a piece of gear a chest drops. */
 export const gearItem = (g: GearDrop): LootItem => ({ type: 'gear', text: `${itemName(g.item)} (${RARITY_NAMES[g.item.rarity]}, Lv ${g.item.level})`, ref: g.item.base, rarity: g.item.rarity, equip: g.item, prize: g.item.rarity >= 5 });
 
@@ -295,6 +302,13 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   if (ores) {
     if (apply) grantOres(m, [ores]);
     items.push({ type: 'ores', text: `${ores.n} ${ORES[ores.trait].name}`, n: ores.n, trait: ores.trait });
+  }
+  // (SHOP-BOOKS-GEAR: now and then a silver or gold chest holds a Rare skill book, and an army's first clear on Hard or above always
+  // does: from its own side stream of the chest's seed, so nothing else in it changes)
+  const book = daily ? undefined : chestBook(c.seed, chestKind(c.at), !!c.first && c.tier >= 1);
+  if (book) {
+    if (apply) grantBook(m, book);
+    items.push(bookItem(book));
   }
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {
@@ -331,7 +345,7 @@ export function sumLoot(loots: readonly Loot[]): LootSummary {
       if (it.type === 'crowns') out.crowns += it.n ?? 0;
       else if (it.type === 'stones') out.stones += it.n ?? 0;
       else if (it.type === 'tomes' && it.size) out.tomes = addTomes(out.tomes, { [it.size]: it.n ?? 0 });
-      else if (it.type === 'spell') out.spells.push(it);
+      else if (it.type === 'spell' || it.type === 'book') out.spells.push(it);
       else if (it.type === 'gear') out.gear.push(it);
       else if (it.type === 'ores' && it.trait) ores.push({ trait: it.trait, n: it.n ?? 0 });
     }
