@@ -20,7 +20,7 @@ const leaks = [];
 // (every name a secret hero goes by: its own, its title, its class; checked against each page's text and attributes)
 const SECRET = ['Vuk', 'Hunter of the Full Moon', 'Hideo', 'Holder of the Bridge', 'Vesper', 'Keeper of the Last Hour', 'Adaeze', 'Starlit Hourglass', 'Harrow', 'Twice-Drowned Captain', 'Tiziri', 'Crowned Wyvern Rider', 'Kerem', 'the Marching Wall', 'Seydou', 'Reader of the Stars', 'Aram', 'Host of the Hungry Steel', 'Edmund', 'the Unbending Verdict', 'Juggernaut', 'Dread Pirate', 'Time Witch', 'Queen Dragoon', 'Great Sage', 'Demon Swordsman', 'Samurai Commander', 'Tyrant', 'Reaper'];
 
-async function boot(w, h, quests) {
+async function boot(w, h, quests, tries) {
   // (a browser each, closed after: the page is large and the machine is shared)
   const browser = await launch();
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true, reducedMotion: 'reduce', serviceWorkers: 'block' });
@@ -28,8 +28,10 @@ async function boot(w, h, quests) {
   page.setDefaultNavigationTimeout(180000);
   page.setDefaultTimeout(120000);
   page.on('pageerror', (e) => errors.push(`${w}x${h}: ${e.message}`));
-  await page.goto(`http://localhost:${port}/?x=${Math.random()}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.evaluate(([heroes, armies, quests]) => {
+  // (the save is written before the page's own scripts run, so the page is loaded once)
+  await page.addInitScript(([heroes, armies, quests]) => {
+    if (sessionStorage.getItem('shot-seeded')) return;
+    sessionStorage.setItem('shot-seeded', '1');
     localStorage.clear();
     const d = new Date();
     const today = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
@@ -39,8 +41,15 @@ async function boot(w, h, quests) {
     localStorage.setItem('lotf-tips-off', '1');
     localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false }));
   }, [HEROES, ARMIES, quests]);
-  await page.goto(`http://localhost:${port}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.waitForFunction(() => document.getElementById('hmBattle'), {}, { timeout: 240000 });
+  // (a busy shared machine now and then crashes the tab as it loads: try again in a new browser)
+  try {
+    await page.goto(`http://localhost:${port}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.waitForFunction(() => document.getElementById('hmBattle') && window.__game?.home && window.__game?.party, {}, { timeout: 240000 });
+  } catch (e) {
+    await browser.close();
+    if ((tries ?? 0) >= 3) throw e;
+    return boot(w, h, quests, (tries ?? 0) + 1);
+  }
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   return { ctx: { close: () => browser.close() }, page };
@@ -89,6 +98,8 @@ for (const [w, h] of SIZES) {
     await page.waitForTimeout(300);
     await shot(page, 'secret-recruit', w);
     await noLeak(page, `${w} recruit`);
+    await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /Return to sanctum/.test(b.textContent))?.click());
+    await page.waitForTimeout(500);
     await page.evaluate(() => window.__game.home.show('battle'));
     await page.evaluate(() => window.__game.home.openCodex());
     await page.waitForTimeout(800);
@@ -116,7 +127,8 @@ for (const [w, h] of SIZES) {
     await heroesTab(page);
     await page.waitForTimeout(1500);
     await page.evaluate(() => window.__game.home.openQuests('board'));
-    await page.waitForTimeout(700);
+    await page.waitForSelector('#hmSheet:not([hidden])');
+    await page.waitForTimeout(1500);
     await shot(page, 'hero-quest-board', w);
     await page.evaluate(() => window.__game.home.closeSheet());
     await page.evaluate(() => window.__game.home.tavern.quests.onGiver('shepherd'));
@@ -130,16 +142,21 @@ for (const [w, h] of SIZES) {
     await heroesTab(page);
     await page.waitForTimeout(1500);
     await page.evaluate(() => window.__game.home.openQuests('active'));
-    await page.waitForTimeout(700);
+    await page.waitForSelector('#hmSheet:not([hidden])');
+    await page.waitForTimeout(1500);
     await shot(page, 'hero-quest-log', w);
     await page.evaluate(() => document.querySelector('.qlFight').click());
     await page.waitForTimeout(900);
     await shot(page, 'hero-quest-party', w);
     await page.evaluate(() => document.getElementById('ptGo').click());
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(7000);
     await shot(page, 'hero-quest-story', w);
     await noLeak(page, `${w} story`);
-    await page.waitForTimeout(4500);
+    // (on to the stranger among the sheep, and his words: Enter moves the story on, as a tap does)
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(1800);
+    }
     await shot(page, 'hero-quest-story-2', w);
     await noLeak(page, `${w} story 2`);
     await skipScenes(page);
