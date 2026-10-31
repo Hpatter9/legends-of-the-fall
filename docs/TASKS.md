@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### HUD-FACES — The heroes' painted faces in the fight's stat views
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/hud-faces`, `/home/user/lotf-hudfaces` (from main 0.287.0).
+- **Goal:** the owner's "use the character arts' faces in the battles for their images during a wave, when it shows all their stats": the fight HUD's hero rows (and so the Last Stand's eight and the Calamity's ten), the unit info card and the Last Stand's paused sheet show each hero's painted art cut to its face (the awakened art once awakened); summons, guests and foes keep their sprites.
+- **Scope:** new `src/heroFaceRules.ts` (the face boxes), `src/heroFace.ts` (the crop cache), `tools/hud-faces/`, `test/hud-faces.test.ts`; hooks in `src/fightHud.ts`, `src/fightHud.css`, `src/main.ts`, `src/standView.ts`. Looks only.
+- **Status:** ready for review. [Note](notes/hud-faces.md); contact sheet `samples/hud-faces-sheet.png`, screenshots `samples/hud-faces-*.png`.
+
 ### SUMMON-ART — The summons drawn in their own sprites
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/summon-art`, `/home/user/lotf-summonart` (from main 0.284.0).
