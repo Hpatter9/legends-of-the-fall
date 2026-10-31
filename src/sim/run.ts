@@ -3,6 +3,7 @@
 // merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { keepSummons, keptBoost, type KeptForm, type KeptSummon } from './carry';
 import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
@@ -96,6 +97,10 @@ export interface Owned {
   /** A guest hero (GUEST-HERO, `guest.ts`): hired at the passing cart for this run only, it fights as a sixth beside the five, never
    *  merges or is recycled, earns no lasting XP and leaves when the run ends. Absent in an older save. */
   guest?: boolean;
+  /** SUMMON-TIMERS (`carry.ts`): the summons this hero kept standing at the end of the last wave won (each with its share of health and the
+   *  ms of its timer left), and the shapes it wore. Put back as the next wave's fight begins if it is fielded; absent in an older save. */
+  summons?: KeptSummon[];
+  form?: KeptForm[];
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -207,6 +212,8 @@ export function keepCharges(run: Run, b: Battle): void {
     h.charge = alive && u.charge > 0 ? u.charge : undefined;
     h.charge2 = alive && (u.charge2 ?? 0) > 0 ? u.charge2 : undefined;
   }
+  // (and its summons and shapes, with what is left of their timers: SUMMON-TIMERS)
+  keepSummons(run, b);
 }
 
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
@@ -351,7 +358,7 @@ export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
 export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {
   const base = gradeBoost(h.grade, rank, level);
   const g = gearBoost(h.gear);
-  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}), ...keptBoost(h) };
 }
 
 /** Give a hero a piece of gear from the pack (the piece it replaces goes back). False when it isn't in the pack. */
