@@ -315,6 +315,9 @@ class Game {
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
     this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
+    // (FIXES-4: the effects lay their tile marks on the tiles' own ground, under the fighters)
+    this.fx.groundAt = (u, v) => this.boardView.groundAt(u, v);
+    this.fx.groundRow = (d) => this.boardView.groundRow(d);
     this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.boardView.renderer = this.app.renderer;
