@@ -14,6 +14,7 @@
 
 import { sightClear, standable, tileAt, type At } from './board';
 import { setLook } from './kits/effects';
+import { TIMER } from './carry';
 import { addUnit, atkOf, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import {
   BANNER_MULT,
@@ -251,7 +252,8 @@ function fortify(b: Battle, me: Unit, out: BattleEvent[], o: Fortify): boolean {
 function summon(b: Battle, me: Unit, kind: string, n: number): boolean {
   const total = n + tal(me, 'extra');
   let called = false;
-  for (let i = 0; i < total; i++) called = callSummon(b, me, kind, total - 1) || called;
+  // (each lasts 30s of fighting time and carries into the next wave: SUMMON-TIMERS, `carry.ts`)
+  for (let i = 0; i < total; i++) called = callSummon(b, me, kind, total - 1, TIMER.ultBeast) || called;
   return called;
 }
 
@@ -314,10 +316,13 @@ function fists(b: Battle, me: Unit, out: BattleEvent[], foesN: number, blows: nu
 function fullMoon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = kitOf(me)?.passive.frenzy;
   if (!f || !foesOf(b, me).some((x) => apart(me, x) <= 7)) return false;
-  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + dur(me, 7000) };
+  // (SUMMON-TIMERS: a hero's moon is up 15s of fighting time, where it was 7s, and carries into the next wave)
+  const time = dur(me, me.side === 'hero' ? TIMER.moon : 7000);
+  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + time };
   mendUnit(me, me.maxHp * share(0.25), out);
   // (both his forms at once while the moon is up: the Hunter's speed and bleed, the Brute's hide and splash)
-  (me.kx ??= {}).moon = b.t + dur(me, 7000);
+  (me.kx ??= {}).moon = b.t + time;
+  if (me.side === 'hero') me.kx.moonMs = time;
   setLook(me, 'werewolf_black', out);
   out.push({ kind: 'frenzy', by: me.id, n: me.frenzy.n });
   return true;

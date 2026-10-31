@@ -14,6 +14,7 @@ import { UNITS, type UnitDef } from '../units';
 import { AILMENT_SWITCH, ailmentsOf, dotOf, setDot } from '../ailments';
 import { stormBolt } from './mages';
 import { monsterTick } from './monsters';
+import { TIMER, timeSummon, WOLF_LOOK } from '../carry';
 
 /** The kits' marks and stances on a fighter (hero or foe): each a time it lasts until, or a small state. */
 export interface KitFx {
@@ -30,19 +31,23 @@ export interface KitFx {
   /** Ninja Monk: blows on the same foe in a row (his Flow). */
   flow?: { to: number; n: number };
   /** Kitsune: wears a foe's shape until then (its kind, and how much her attack was multiplied). */
-  guise?: { def: string; until: number; mult: number };
+  guise?: { def: string; until: number; mult: number; ms?: number; look?: string };
   /** Yamabushi: shots at his friends are blown back until then. */
   reflect?: number;
   /** Werewolf: his form, when he last changed, and until when the Full Moon gives him both. */
   wolf?: 'hunter' | 'brute';
   wolfAt?: number;
   moon?: number;
+  /** SUMMON-TIMERS (`carry.ts`): until when his form lasts, and its full length; the Full Moon's full length. */
+  wolfUntil?: number;
+  wolfMs?: number;
+  moonMs?: number;
   /** Turned to stone (the Gorgon's Stone Garden) until then. */
   stone?: number;
   /** Paladin: takes half his friends' wounds until then. */
   vow?: number;
   /** Druid: a treant until then (and the health she had added). */
-  tree?: { until: number; added: number };
+  tree?: { until: number; added: number; ms?: number };
   /** Barbarian: Blood Fury until then. */
   fury?: number;
   /** Warlock: draining a foe (Soul Siphon). */
@@ -380,9 +385,14 @@ export function kitTick(b: Battle, out: BattleEvent[]): void {
       mendUnit(u, u.maxHp * 0.15, out);
       setLook(u, undefined, out);
     }
+    // (SUMMON-TIMERS: the Werewolf's form runs out, and he is a man again until he changes)
+    if (x.wolf && x.wolfUntil !== undefined && b.t >= x.wolfUntil) {
+      x.wolf = x.wolfUntil = x.wolfMs = undefined;
+      if (!on(x.moon, b)) setLook(u, undefined, out);
+    }
     if (x.moon !== undefined && b.t >= x.moon) {
-      x.moon = undefined;
-      setLook(u, x.wolf === 'brute' ? 'werewolf_black' : undefined, out);
+      x.moon = x.moonMs = undefined;
+      setLook(u, x.wolf ? WOLF_LOOK[x.wolf] : undefined, out);
     }
     if (x.siphon) {
       const s = x.siphon;
@@ -439,7 +449,7 @@ export function kitTick(b: Battle, out: BattleEvent[]): void {
     for (const r of list) {
       const me = b.units.find((u) => u.id === r.by);
       const foe = b.units.find((u) => u.id === r.foe);
-      if (me && foe && me.alive) raiseWraith(b, me, foe, 5000, out);
+      if (me && foe && me.alive) raiseWraith(b, me, foe, TIMER.harvest, out);
     }
   }
 }
@@ -457,7 +467,7 @@ export function raiseWraith(b: Battle, me: Unit, foe: Unit, ms: number, out: Bat
   if (!spot) return false;
   kx(foe).spent = true;
   const w = addWraith(b, me, foe, spot, share);
-  w.expires = b.t + ms;
+  timeSummon(b, w, ms);
   out.push({ kind: 'look', by: w.id, sheet: w.look ?? null });
   out.push({ kind: 'heal', to: w.id, amount: 0, by: me.id });
   return true;

@@ -26,6 +26,7 @@ import { monsterKits } from './kits/monsters';
 import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
+import { renewable, timeSummon, TIMER } from './carry';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -801,9 +802,17 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const callTreant = (b: Battle, me: Unit) => callSummon(b, me, 'treant', tal(me, 'extra'));
 /** Beastmaster: wolves (two at a time) come at his call. */
 const callWolves = (b: Battle, me: Unit) => callSummon(b, me, 'wolf', 1 + tal(me, 'extra'));
-/** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already. */
-function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
-  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === kind).length > more) return false;
+/** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already.
+ *  A hero's summon lasts `ms` of fighting time (SUMMON-TIMERS, `carry.ts`: a minute, half that from an ultimate) and carries into the next
+ *  wave; with the summons at their cap, a call renews the one of the caster's nearest its end once it has a quarter of its time left. */
+function callSummon(b: Battle, me: Unit, kind: string, more: number, ms: number = TIMER.beast): boolean {
+  const time = me.side === 'hero' ? durOf(me, ms) : 0;
+  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === kind).length > more) {
+    const old = time ? renewable(b, me, [kind]) : undefined;
+    if (!old) return false;
+    timeSummon(b, old, time);
+    return true;
+  }
   const foes = foesOf(b, me);
   if (!foes.length) return false;
   const near = sorted([...foes]).sort((x, y) => apart(me, x) - apart(me, y))[0];
@@ -821,6 +830,7 @@ function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
   const t = addUnit(b, kind, to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp, grade: me.grade });
   t.owner = me.id;
   t.facing = wayTo(t, near);
+  if (time) timeSummon(b, t, time);
   return true;
 }
 
@@ -1240,12 +1250,15 @@ function hellbladeSweep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Demon Swordsman's ultimate, Demon Form: for a while he hits half as hard again, and a fifth of his health comes back. */
 export const FORM_MULT = 1.5;
 const FORM_MS = 7000;
+/** A hero's Demon Form lasts this long instead, and carries into the next wave (SUMMON-TIMERS, `carry.ts`). */
+const HERO_FORM_MS = TIMER.demon;
 const FORM_HEAL = 0.2;
 function demonForm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => apart(me, f) <= 7)) return false;
   if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
   // (its tuned strength lengthens the form and deepens the heal, as the other ultimates' stuns and heals scale: ULT-CHARGE)
-  me.form = { until: b.t + durOf(me, Math.round(FORM_MS * Math.sqrt(castPower()))) };
+  const time = durOf(me, Math.round((me.side === 'hero' ? HERO_FORM_MS : FORM_MS) * Math.sqrt(castPower())));
+  me.form = { until: b.t + time, ...(me.side === 'hero' ? { ms: time } : {}) };
   mendUnit(me, me.maxHp * FORM_HEAL * castPower(), out);
   out.push({ kind: 'frenzy', by: me.id, n: 3 });
   return true;
