@@ -234,16 +234,8 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
 
 /* ------------------------------------------------------------------ the Summoner's plaque in the Sanctum */
 
-/** What the Sanctum's plaque says: a chain to hear, a chain going, or one to bind (none: no plaque). */
-export function hallPlaque(m: Meta): { kind: 'offer' | 'going' | 'bind'; title: string; line: string } | null {
-  const offer = offeredChain(m);
-  if (offer) return { kind: 'offer', title: 'The Summoner looks up from the altar', line: 'Something old is stirring · tap to listen' };
-  const ready = readyToBind(m);
-  if (ready) return { kind: 'bind', title: `Bind ${fullName(eidolonOf(ready))}`, line: `Every piece is on the altar · ${ready.parts.length} of ${ready.parts.length}` };
-  const cur = currentPart(m);
-  if (cur) return { kind: 'going', title: `${fullName(eidolonOf(cur.chain))} · ${piecesOf(m, cur.chain).length} of ${cur.chain.parts.length} pieces`, line: `Part ${cur.index + 1}: ${cur.part.title}` };
-  return null;
-}
+// (SANCTUM-TIDY: the plaque's words are pure now, in `sim/eidolonChains.ts`, so a test can say what a bound save shows)
+export { hallPlaque } from './sim/eidolonChains';
 
 /* ------------------------------------------------------------------ the Pact Gallery */
 

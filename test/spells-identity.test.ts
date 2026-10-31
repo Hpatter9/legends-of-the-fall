@@ -45,6 +45,10 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
 // with them on, the scenarios with no boss (every field fight, every hero alone, the tower's and the Calamity's early floors) still do, so
 // the dodge changes nothing where no boss has marked the ground. Only bosses, armyFoes, army, daily and stand move.)
+// (XP-SPLIT, the owner's ask for a fight's kill XP to be shared, docs/notes/xp-split.md, re-recorded `daily`: its greedy player levels its
+// heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
+// keeps its hash, the fights themselves are unchanged; then `tower` too, when the spire and the Calamity took the same split: its heroes level
+// from their own run XP fight by fight. `calamity` did not move)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   try {

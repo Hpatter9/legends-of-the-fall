@@ -16,10 +16,30 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### RELICS-2 — The relics redone as the keep's lost artefacts (step 1: the six Chapters and the Storied relics)
 
-- **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.293.0 merged).
+- **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.296.0 merged).
 - **Goal:** the owner's approved redesign (`docs/notes/relics-redesign.md`), step 1: the keep's 24 relics in six Chapters and six Storied relics, each with lore and a rule with character (a price, a condition, growth, a tie to the keep's enemies); the relic card on the prep screen (lore always shown, prices in red); a relic's icon over the hero when it fires; old saves converted (merged relics paid back, one line on the next prep screen); Auto leaves prices it cannot pay well; `npm run relic-balance`; placeholder icons and the painted icons' prompts. Step 2 (the Eidolons' reliquaries in the Calamity) is not begun. Part 1 (the strip on the prep screen only, `claude/relics`) is included.
 - **Scope:** new `src/sim/relicFight.ts`, `src/relicCard.ts`, `src/relicCard.css`, `test/relics-2.test.ts`, `tools/relics/`; `src/sim/relics.ts`, `relicSets.ts`; hooks in `src/sim/battle.ts`, `abilities.ts`, `heroKits.ts`, `spells.ts`, `run.ts`, `stand.ts`, `tower.ts`, `events.ts`, `market.ts`, `midEvents.ts`, `mystery.ts`, `elites.ts`, `autoplay.ts`, `waveGains.ts`; `src/events.ts`, `src/towerElites.ts`, `src/standView.ts`, `src/render/fx.ts`, `src/render/items.ts`, `build.mjs`, `package.json`, `CREDITS.md`.
 - **Status:** ready for review. [Note](notes/relics-2.md); [art prompts](notes/relic-art-prompts.md); screenshots `samples/relics-2-*.png`, `samples/relics-prep-*.png`.
+### SECRET-HEROES — The heroes earned in play kept secret; three hero quests that bring one in
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/secret-heroes`, `/home/user/lotf-secret` (from main 0.289.0).
+- **Goal:** the owner's "Let's keep the heroes that are gained from specific unlock scenarios a secret. Also, let's add some quests in which a hero comes from": the ten heroes earned in play are a dark figure, "???" and a vague hint in every list until they join; three tales in the tavern (two or three parts, a quest battle each) bring in the Werewolf, the Dread Pirate and the Juggernaut, moved off their milestones.
+- **Scope:** new `src/sim/secretHeroes.ts`, `src/sim/rewardWords.ts`, `src/sim/questData/tales.ts`, `src/sim/taleBattleData.ts`, `src/secretView.ts`, `src/secret.css`, `src/art/quests/{shepherd,gaoler,smith}-face.png`, `tools/hero-quests/cut.py`, `tools/secret-heroes/shots.mjs`, `test/secret-heroes.test.ts`; hooks in `contentHeroes.ts`, `questData.ts`, `quests.ts`, `questBattles.ts`, `run.ts`, `guest.ts`, `climb.ts`, `sceneScripts.ts`, `questData/battles.ts` (one line), `menuHeroes.ts`, `party.ts`, `gacha.ts`, `codexView.ts`, `questCard.ts`, `questLog.ts`, `questArt.ts`, `home.ts`, `main.ts`, `build.mjs`, `tools/quest-battles/rate.ts`; tests moved to the rule (listed in the note).
+- **Status:** ready for review. [Note](notes/secret-heroes.md); screenshots `samples/secret-*.png`, `samples/hero-quest-*.png`.
+
+### SANCTUM-TIDY — The Summoner's plaque gone once Askel is bound; the shop and Pact Gallery as small corner buttons
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/sanctum-tidy`, `/home/user/lotf-sanctum` (from main 0.289.0).
+- **Goal:** the owner's "I already bound the Cinderhound but the message is still on the summon screen" (the plaque and the Pact Gallery's button had `display: flex` and no `[hidden]` rule, so the plaque stayed showing its last words after the binding and an empty bar after a reload) and "the shop and Pact Gallery should be small buttons at the top left" (a corner of two small labelled icon buttons, the plaque one short row, the shards' scroll folded to one row; the lower panel 153px tall at 393x852, about 310 before).
+- **Scope:** `src/hall.ts`, `src/eidolonChains.css`, `src/sim/eidolonChains.ts` (`hallPlaque`, moved from `src/eidolonChainView.ts`); `test/hall-plaque.test.ts`, `tools/sanctum-tidy/`.
+- **Status:** ready for review. [Note](notes/sanctum-tidy.md); screenshots `samples/sanctum-*.png`.
+
+### XP-SPLIT — Each kill's XP split: the killer keeps half, the rest shared by every hero that fought
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/xp-split`, `/home/user/lotf-xpsplit` (from main 0.289.0).
+- **Goal:** the owner's "The heroes in a fight should get more of an XP split, with the killing hero still getting more": `KILL_KEEP` (0.5) of a kill to the killer, the rest shared evenly by every fighter (fallen and guest too, not summons); a fight's total XP unchanged.
+- **Scope:** `src/sim/levels.ts` (`KILL_KEEP`, `killShares`, `fightXp`), `src/sim/climb.ts` (`fightXpByHero`: the spire and the Calamity, the owner's yes); new `test/xp-split.test.ts`, `tools/xp-split/`; `docs/notes/levels.md`.
+- **Status:** ready for review. [Note](notes/xp-split.md) (before/after and the pace).
 
 ### STATS-1 — The six ability scores as data (D&D stats design, batch 1)
 
