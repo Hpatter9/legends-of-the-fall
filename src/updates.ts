@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.291.0',
+    date: '2026-10-31',
+    title: 'Auto casts your spells too',
+    notes: ['The battle Auto switch now fires your spells as well as ultimates: heals when hurt, blasts on crowds and bosses, buffs early. The War Horn stays yours.'],
+  },
+  {
+    version: '0.290.0',
+    date: '2026-10-31',
+    title: 'Painted faces, and the spoils page',
+    notes: ['Battle rows and unit cards show each hero\'s painted face. A run\'s final recap adds a spoils page (crowns, gear, items) and drops the wave-by-wave strip.'],
+  },
+  {
     version: '0.289.0',
     date: '2026-10-31',
     title: 'Guest heroes, and talent arrows',
