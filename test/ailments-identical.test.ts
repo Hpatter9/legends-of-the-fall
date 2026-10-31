@@ -45,7 +45,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // main's for this proof)
 // (XP-SPLIT, the owner's ask for a fight's kill XP to be shared, docs/notes/xp-split.md, re-recorded `daily`: its greedy player levels its
 // heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
-// keeps its hash, the fights themselves are unchanged)
+// keeps its hash, the fights themselves are unchanged; then `tower` too, when the spire and the Calamity took the same split: its heroes level
+// from their own run XP fight by fight. `calamity` did not move)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

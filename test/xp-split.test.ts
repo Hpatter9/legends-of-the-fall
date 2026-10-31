@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, fight, playOut, startBattle } from '../src/sim/battle';
+import { CALAMITY_XP, CLIMB_XP, fightXpByHero } from '../src/sim/climb';
 import { fightXp, KILL_KEEP, killShares, killXp, XP_TAKE_PART } from '../src/sim/levels';
 import { readyBattle } from './helpers';
 
@@ -79,4 +80,21 @@ test('the split moves XP between the heroes but the fight pays about the same in
     playOut(again);
     assert.deepEqual(fightXp(again), split);
   }
+});
+
+test('the spire and the Calamity split their heroes\' kill XP the same way, hero by hero', () => {
+  const { b, killer, other, fallen } = threeHeroes();
+  const pool = 300 * (1 - KILL_KEEP);
+  for (const climb of [CLIMB_XP, CALAMITY_XP]) {
+    const got = fightXpByHero(b, 1, climb);
+    assert.equal(got[Number(killer.tag)], Math.round((XP_TAKE_PART + 300 * KILL_KEEP + pool / 3) * climb));
+    assert.equal(got[Number(other.tag)], Math.round((XP_TAKE_PART + pool / 3) * climb));
+    assert.equal(got[Number(fallen.tag)], got[Number(other.tag)], 'a fallen hero keeps its share');
+    assert.ok(got[Number(killer.tag)] > got[Number(other.tag)]);
+    // (keep 1 is the old rule: every kill to the killer)
+    assert.equal(fightXpByHero(b, 1, climb, 1)[Number(killer.tag)], Math.round((XP_TAKE_PART + 300) * climb));
+  }
+  // (the pay in all is the old pay, within each hero's rounding)
+  const sum = (g: Record<number, number>) => Object.values(g).reduce((n, x) => n + x, 0);
+  assert.ok(Math.abs(sum(fightXpByHero(b)) - sum(fightXpByHero(b, 1, CLIMB_XP, 1))) <= 3);
 });

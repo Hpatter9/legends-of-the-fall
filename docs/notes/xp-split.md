@@ -22,8 +22,9 @@ the old rule, for the tools). Deterministic: it only re-divides the counters the
 **The XP a fight pays in all does not move** (only who gets it): the shares add up to the kills exactly, and only each hero's rounding
 can differ (half an XP a hero at most). Every mode that pays lasting XP through `fightXp` gets it: the armies, auto-replays (the same
 path), the daily, the quests. The bench XP (`benchXp`, a tenth of the fighters' mean) is unchanged, as the mean is. The spire and the
-Calamity pay their own heroes through `fightXpByHero` (`climb.ts`), which this does not touch, and the Last Stand already shared its
-kills its own way (`stand.ts`).
+Calamity, which pay their own heroes their run XP hero by hero (`fightXpByHero` in `climb.ts`), split the kills the same way (the owner's
+answer: keep half, and share in the spire and the Calamity too); their `CLIMB_XP` / `CALAMITY_XP` rates and the Library apply on top as
+before. The Last Stand keeps its own sharing (`stand.ts`).
 
 ## Measured (`node tools/xp-split/split.mjs`)
 
@@ -82,11 +83,16 @@ anyone not the top killer level as fast or faster.
 
 ## Tests
 
-`test/xp-split.test.ts`: the killer gets more than any other fighter, and a fighter that made no kill (a fallen one too) gets the
+`test/xp-split.test.ts` (also for `fightXpByHero`, at the spire's and the Calamity's rates): the killer gets more than any other fighter, and a fighter that made no kill (a fallen one too) gets the
 pool's share; the old rule is `keep` 1; a lone hero gets all its kills; a hero's called-up fighters' kills count as its own and a
 summon takes no share; in real fights (three seeds) the totals are the old ones within the rounding, every fighter gets a share, the
 top killer gets the most kill XP, and a fight pays the same each time it is played. `test/levels.test.ts` is unchanged (its tests
 are of one hero, or of every hero's XP rising with a win). Re-recorded, as this means to move them: the `daily` scenario of
 `test/fixtures/spells-identity.json` (`732fc0e7` to `a0ef0c21`) and of `test/fixtures/ailment-logs.json` (`a9f7845a` to `a507c266`). That
 scenario's greedy player adds each fight's XP to its heroes as it goes, so the split changes which hero levels when and so its later
-fights; every other scenario (each fight on its own, army and tower included) kept its hash.
+fights. Then, with the spire and the Calamity on the split, the `tower` scenario of both (`37ff85dc` to `59e4b158`; `8461d5ef` to
+`e8d8ecb0`), whose run heroes level from their own XP fight by fight. Every other scenario kept its hash, `calamity` included (its
+recorded floors end before the split changes any hero's level). The spire's and the Calamity's own tests (`tower`, `calamity`, `calExplore`,
+`calRoster`, `calLand`, `calMapRewards`, `calamity-hub`, `calamity-zones`, `rift`) pass unchanged: none of them pins a level or an XP sum
+that the split moves (the Calamity's "pays more than the spire" test is a ratio, which holds). I did not re-run a spire or Calamity
+pace sweep: their totals per fight are the same, only the spread between the heroes narrows.
