@@ -86,7 +86,6 @@ import { HoldPress, UnitInfoCard } from './unitInfo';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
-import { heldCut } from './bossBigRules';
 import { fullScene } from './ultMomentRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
@@ -1025,11 +1024,11 @@ class Game {
     else this.bossm.clear();
     if (b.phase === 'fight' && held) {
       // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
-    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.bossm.holds || this.eid.holds)) {
+    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.eid.holds)) {
       // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
       this.acc = 0;
       // (a boss's cut-in holds the board still too, so its marks fill with the windup's own time)
-      if (this.ultm.queue.runsEffects && !this.bossm.holds) this.fx.step(Math.min(dt, 250));
+      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
@@ -1037,13 +1036,13 @@ class Game {
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       b.autoUlt = this.ultAutoOn();
-      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.bossm.holds && !this.eid.holds) {
+      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
         if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
-        if (this.bossm.note(b, events, heldCut(settings().ultFull, this.ultAutoOn()))) this.acc = 0;
+        this.bossm.note(b, events);
         if (this.eid.noteEvents(b, events)) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);

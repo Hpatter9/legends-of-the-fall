@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-rankup`, `/home/user/lotf-rankup` (from main 0.273.0).
+- **Goal:** the owner's "heroes on the tavern screen should show if they have an upgrade available", and a quick way to rank up without opening each hero: a gold chevron over each ready hero, an Upgrades list with one-tap rows and "Upgrade all", and "Next upgrade ›" on the hero sheet.
+- **Scope:** new `src/sim/upgradesReady.ts`, `src/rankUpList.ts`, `src/rankUps.css`, `test/upgrades-ready.test.ts`, `tools/tavern-rankup/`; hooks in `src/tavern.ts` (the chevron, the button), `src/home.ts`, `src/menuHeroes.ts` (the hop, strip, roster), `src/party.ts` (the card's chevron), `src/awakenView.ts` (`tellAwakened`), `build.mjs` (the CSS). No rule, save or version change.
+- **Status:** ready for review. [Note](notes/tavern-rankup.md); screenshots `samples/rankup-*.png`.
+
 ### CINE-001 — Movie-like cinematics: shot language, every story scene
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/cinematics`, `/home/user/lotf-cine` (from main 0.271.0).
