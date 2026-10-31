@@ -59,6 +59,9 @@ test('a wolf is carried into wave 2 with its health and the time left on its tim
   assert.equal(wolf.expires! - b.t, TIMER.beast);
   // (he and the wolf stand through the five seconds whatever the foes do)
   bm.hp = bm.maxHp = wolf.hp = wolf.maxHp = 1e6;
+  // (the call above stands for his cast, so his Summon Beast's cooldown runs from it: since the skills overhaul's batch 2 the call costs 28
+  // stamina, which he can pay within the five seconds, and he would otherwise call a second wolf)
+  bm.ks = { ...bm.ks, at1: b.t };
   steps(b, 50);
   wolf.maxHp = 200;
   wolf.hp = 80;
