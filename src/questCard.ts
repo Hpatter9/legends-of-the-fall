@@ -11,9 +11,8 @@ import { FACES } from './questArt';
 import { GIVERS, questById, type QuestDef, type Reward } from './sim/questData';
 import { GWEN_REMARKS } from './sim/questData/gwen';
 import { ACTIVE_MAX, cannotTake, handIn, isDone, takeQuest } from './sim/quests';
-import { ORES } from './sim/awakenMats';
 import { heroEpithet, heroName } from './sim/heroNames';
-import { tomeWords, type TomeSize } from './sim/tomes';
+import { rewardWords } from './sim/rewardWords';
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
 import { todayKey } from './modes';
@@ -29,18 +28,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** A reward in plain words: "120 crowns · 2 stones · a bronze chest · 3 of Selam's shards". */
-export function rewardText(r: Reward): string {
-  const parts: string[] = [];
-  if (r.crowns) parts.push(`${r.crowns} crowns`);
-  if (r.stones) parts.push(`${r.stones} stone${r.stones === 1 ? '' : 's'}`);
-  if (r.chest) parts.push(`a ${r.chest} chest`);
-  for (const o of r.ores ?? []) parts.push(`${o.n} ${ORES[o.trait]?.name ?? 'ore'}`);
-  for (const [size, n] of Object.entries(r.tomes ?? {})) if (n) parts.push(tomeWords(size as TomeSize, n));
-  if (r.shards) parts.push(`${r.shards.n} of ${heroName(r.shards.kind)}'s shards`);
-  if (r.keepsake) parts.push(`a keepsake`);
-  return parts.join(' · ');
-}
+/** A reward in plain words: "120 crowns · 2 stones · a bronze chest · 3 of Selam's shards" (given the save, a secret hero is never named:
+ *  `rewardWords`, SECRET-HEROES). */
+export const rewardText = (r: Reward, m?: Meta): string => rewardWords(r, m);
 
 /** A quest's giver, as a key: the giver's id, or `hero:<kind>` for a patron. */
 export const giverKeyOf = (q: QuestDef): string => (q.hero ? `hero:${q.hero}` : q.giver);
@@ -68,6 +58,7 @@ export function offerFrom(q: QuestDef): string {
   if (slot === 'royal') return `${name} · a Royal charge`;
   if (slot === 'spoils') return 'Spoils, found on a fallen boss';
   if (slot === 'rift') return 'A voice in the rift';
+  if (slot === 'tale') return `${name}, by the tavern's fire`;
   return name;
 }
 
@@ -106,6 +97,8 @@ export interface CardHooks {
   openLog(): void;
   /** Begin a quest battle (batch 2: a battle quest's card fights it). */
   fight?(battle: string): void;
+  /** The card was closed after a hand-in (SECRET-HEROES: a hero quest's hero has its reveal now). */
+  closed?(): void;
 }
 
 let wrap: HTMLElement | null = null;
@@ -186,20 +179,25 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
     });
     btn('Close', 'primary', closeGiverCard);
   } else if (t.kind === 'handIn') {
-    lines.append(el('h4', '', t.q.title), el('p', '', 'Done! Hand it in for your reward.'), el('p', 'qcPay', rewardText(t.q.reward)));
+    lines.append(el('h4', '', t.q.title), el('p', '', 'Done! Hand it in for your reward.'), el('p', 'qcPay', rewardText(t.q.reward, m)));
+    // (the words before the hand-in: a hero quest's hero is still the tease, SECRET-HEROES; its reveal plays as the card closes)
+    const paid = rewardText(t.q.reward, m);
     btn('Hand in', 'primary', () => {
       if (!handIn(m, t.q.id, todayKey())) return;
       play('coinClaim');
       hooks.changed();
       // (their thanks, then the card's done: a tap closes it)
       const keep = t.q.reward.keepsake ? [el('p', 'qcKeep', `Keepsake: ${t.q.reward.keepsake}`)] : [];
-      lines.replaceChildren(el('h4', '', t.q.title), ...t.q.done.map((l) => say(t.q, l)), ...keep, el('p', 'qcPay', `+ ${rewardText(t.q.reward)}`));
+      lines.replaceChildren(el('h4', '', t.q.title), ...t.q.done.map((l) => say(t.q, l)), ...keep, el('p', 'qcPay', `+ ${paid}`));
       row.replaceChildren();
-      btn('Close', 'primary', closeGiverCard);
+      btn('Close', 'primary', () => {
+        closeGiverCard();
+        hooks.closed?.();
+      });
     });
     btn('Not now', '', closeGiverCard);
   } else if (t.kind === 'offer') {
-    lines.append(el('h4', '', t.q.title), ...t.q.offer.map((l) => say(t.q, l)), el('p', 'qcGoal', t.q.text), el('p', 'qcPay', rewardText(t.q.reward)));
+    lines.append(el('h4', '', t.q.title), ...t.q.offer.map((l) => say(t.q, l)), el('p', 'qcGoal', t.q.text), el('p', 'qcPay', rewardText(t.q.reward, m)));
     const why = cannotTake(m, t.q.id);
     const take = btn('Take it on', 'primary', () => {
       if (!takeQuest(m, t.q.id, todayKey())) return;

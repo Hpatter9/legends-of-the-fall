@@ -21,6 +21,7 @@ import type { Meta } from './meta';
 import { blankQuests, goalGain, needMet, payReward, type QuestFight } from './quests';
 import { bindEidolon, boundOf, chooseEidolon } from './warHorn';
 import { castOf, questBattleById } from './questBattles';
+import { eidolonById } from './eidolons';
 import { CHAINS, chainById, type ChainDef, type ChainOpens, type ChainPart, type ChainState, type PieceDef } from './eidolonChainData';
 import { trialOfChainId, type TrialDef } from './eidolonTrials';
 
@@ -159,5 +160,20 @@ export const chainsShown = (m: Meta): boolean => !!offeredChain(m) || CHAINS.som
 
 /** Whether the Summoner has something waiting (the Recruit tab's badge): a chain to begin, or one to bind. */
 export const summonerWaiting = (m: Meta): boolean => !!offeredChain(m) || !!readyToBind(m);
+
+/** What the Summoner's plaque in the Sanctum says (SANCTUM-TIDY: one short row over the shards' scroll): a chain to hear, one to bind, or
+ *  the part going. Null once nothing waits there, as after a binding while the next chain is unwritten or not yet open: then no plaque. */
+export function hallPlaque(m: Meta): { kind: 'offer' | 'going' | 'bind'; title: string; line: string } | null {
+  const name = (c: ChainDef): string => eidolonById(c.eidolon)?.name ?? c.title;
+  if (offeredChain(m)) return { kind: 'offer', title: 'The Summoner beckons', line: 'tap to listen' };
+  const ready = readyToBind(m);
+  if (ready) return { kind: 'bind', title: `Bind ${name(ready)}`, line: 'every piece is on the altar' };
+  // (EIDOLON-TRIAL: every piece found, the Eidolon's own trial waits)
+  const due = trialDue(m);
+  if (due) return { kind: 'going', title: `${name(due.chain)} · ${due.chain.parts.length} of ${due.chain.parts.length} pieces`, line: `Part ${stepsOf(due.chain)}: ${due.trial.part.title}` };
+  const cur = currentPart(m);
+  if (cur) return { kind: 'going', title: `${name(cur.chain)} · ${piecesOf(m, cur.chain).length} of ${cur.chain.parts.length} pieces`, line: `Part ${cur.index + 1}: ${cur.part.title}` };
+  return null;
+}
 
 export { chainById, CHAINS };

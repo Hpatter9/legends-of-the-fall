@@ -8,9 +8,12 @@ next run.
 - **Rules**: `src/sim/levels.ts`. `fightXp(b)` gives each hero that fought (placed) its XP: 5 for taking part, +5 for a
   win, +1 per 40 damage dealt, +1 per 40 healing done (credited to the healer), and the XP its kills are worth. A fallen
   hero keeps all of it. The totals are summed by hero kind.
+- **The kill split** (`KILL_KEEP`, `killShares`; `xp-split.md`): the killer keeps half of each kill's XP, and the other half is shared
+  evenly by every hero that fought (the killer, the fallen and a guest too; not a summon). A weak hero beside a strong one levels faster,
+  and the fight pays the same in all.
 - **Kills**: `killXp(foe)` is a tenth of the foe's max hp, so a kill is worth more on a deeper stage (a stage's boost
   raises the hp). A boss kill is worth `BOSS_KILL` (three) times that. The killing blow's XP is added to the killer as it
-  lands (`hurt` in `battle.ts`, into `Unit.slain`).
+  lands (`hurt` in `battle.ts`, into `Unit.slain`); `fightXp` then splits it (above).
 - **Counters**: `Unit.dealt`, `Unit.healed`, `Unit.kills` and `Unit.slain` in `src/sim/battle.ts` (set in `hurt` and
   `mendUnit`). They only record; no rule reads them during a fight, so fights play out as before.
 - **Storage**: `Meta.xp` keeps the total XP per kind (missing is none). The level is read from it, so it can't drift.

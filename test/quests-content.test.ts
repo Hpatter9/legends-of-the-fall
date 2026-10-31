@@ -46,7 +46,8 @@ const DAY = 20261030;
 const clear = (m: Meta, ...ids: string[]) => ids.forEach((id) => (m.armies[id] = { ...recordOf(m, id), clears: 1 }));
 const clearAll = (m: Meta) => clear(m, ...ARMIES.map((a) => a.id));
 const plain: QuestFight = { won: true, waves: 1, boss: false, heroes: ['knight'], flawless: true, kills: [], dailyCleared: false };
-const uniques = QUESTS.filter((q) => !q.repeat);
+// (the hero quests, SECRET-HEROES, are a set of their own, tested in secret-heroes.test.ts)
+const uniques = QUESTS.filter((q) => !q.repeat && GIVERS[q.giver].slot !== 'tale');
 const repeats = QUESTS.filter((q) => q.repeat);
 /** A date `n` days after DAY (across months is fine: dates are counted by `dayNumber`). */
 const after = (n: number): number => {
@@ -67,7 +68,7 @@ test('a hundred unique quests and thirty repeatable ones, each with its own id, 
     assert.ok(q.offer.length <= 3 && q.offer.every((l) => l.length <= 320), `${q.id}: a card's lines stay short`);
     assert.ok(q.goal.n >= 1, q.id);
     const r = q.reward;
-    assert.ok(r.crowns || r.stones || r.chest || r.ores || r.tomes || r.shards, q.id);
+    assert.ok(r.crowns || r.stones || r.chest || r.ores || r.tomes || r.shards || r.hero, q.id);
     assert.ok(GIVERS[q.giver], q.id);
     if (q.repeat) assert.ok(q.repeat >= 1 && q.repeat <= 7 && !q.after, `${q.id}: a repeatable has a cooldown and no story before it`);
   }
@@ -140,7 +141,7 @@ test('the goals are spread: no goal kind with its riders unchanged is used by mo
 
 test('every giver has quests, the patrons are many heroes, and some quests are stories in parts', () => {
   const by = (g: string) => uniques.filter((q) => q.giver === g).length;
-  for (const g of Object.keys(GIVERS)) assert.ok(by(g) >= 4, `${g}: ${by(g)}`);
+  for (const g of Object.keys(GIVERS)) if (GIVERS[g as keyof typeof GIVERS].slot !== 'tale') assert.ok(by(g) >= 4, `${g}: ${by(g)}`);
   assert.ok(new Set(uniques.filter((q) => q.hero).map((q) => q.hero)).size >= 15);
   const chains = uniques.filter((q) => q.after);
   assert.ok(chains.length >= 10);

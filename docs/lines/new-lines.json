@@ -8494,7 +8494,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Beast Packs dispersed into the hills. One lingered behind to inspect who had achieved it."
+       "text": "Old Maud's fold is quiet again. Her lodger has come in from the dark at last."
       }
      ]
     },
@@ -8526,7 +8526,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Undead Legion marched for an age. Someone has to sign the receipts."
+       "text": "The thirteenth bell is quiet. The visitor at the chapel gate has closed the ledger."
       }
      ]
     },
@@ -8558,7 +8558,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Infernal Host boasted of its vanguard. It was one swordsman short."
+       "text": "The Host's collectors went home empty-handed. The customer from Lantern Row has redeemed his blade."
       }
      ]
     },
@@ -8590,7 +8590,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Night Parade departed into the mist. Its commander stayed to propose an alliance."
+       "text": "A hundred lanterns burned till dawn. The soldier under the banner is done holding."
       }
      ]
     },
@@ -8622,7 +8622,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Golem Forge went stone cold. One living rampart remained warm, largely out of stubborn habit."
+       "text": "The Foreman stopped counting. The walker from the Forge set down its door and came to the fire."
       }
      ]
     },
@@ -8643,7 +8643,7 @@
   },
   "earned:dreadPirate": {
    "title": "Dread Pirate Enlists",
-   "blurb": "A ghost ship runs aground at the breach and its crew offer to hold the walls.",
+   "blurb": "A captain fished out of the moat in chains signs on for a wage and a share.",
    "cast": {
     "figure": "unit:dreadPirate",
     "hero": "unit:dreadPirate"
@@ -8654,7 +8654,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Twenty waves held at the Last Stand. A corsair crew came ashore to see who was holding."
+       "text": "The spring tide went out of the moat. The prisoner in chains stayed behind, laughing."
       }
      ]
     },
@@ -8663,7 +8663,7 @@
      "lines": [
       {
        "who": "hero",
-       "text": "Do not ask how we sailed a brigantine through a hole in your wall."
+       "text": "Twice drowned. Third time, I fancy, it will be somebody else."
       },
       {
        "who": "narrator",
@@ -8686,7 +8686,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Forty waves round one throne. Then a second throne arrived, with a tyrant on it."
+       "text": "The appeal was dismissed. The one on the second throne has stood up at last."
       }
      ]
     },
@@ -8695,7 +8695,7 @@
      "lines": [
       {
        "who": "hero",
-       "text": "Forty waves round your throne. I respect the stamina. Now cease hovering and bow."
+       "text": "Court is adjourned. I shall sit with you now. Cease hovering, and bow."
       },
       {
        "who": "narrator",
@@ -8718,7 +8718,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Calamity was subdued. Somebody noted the disturbance and arrived slightly ahead of time."
+       "text": "Every clock struck the hour at once. Yesterday's visitor is back, as she said."
       }
      ]
     },
@@ -8750,7 +8750,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Calamity reached ascension three. Something with scales came to see."
+       "text": "The net-men are off the crags. The rider by the scorched nest has come down."
       }
      ]
     },
@@ -8782,7 +8782,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Half the monsters of the known world catalogued. An academic read the notes."
+       "text": "The fallen star is back in its gap. The star-counter has come down off the roof."
       }
      ]
     },
