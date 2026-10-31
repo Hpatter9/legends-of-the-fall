@@ -7,8 +7,7 @@ import type { Container } from 'pixi.js';
 import { DIRS, type Board } from '../sim/board';
 import type { Unit } from '../sim/battle';
 import { against, boardTileAt, frameOf, seam, walkAcross, type Section } from '../sim/chain';
-import { UNITS } from '../sim/units';
-import { dropDelay, dropEnd, dropPose, stepMs } from './dropRules';
+import { dropDelay, dropEnd, dropPose, WALK_STEP_MS } from './dropRules';
 import type { Fx } from './fx';
 import { FOOT, HH, inFrame, landmarkBounds, project, TH, TW, type Frame } from './iso';
 import type { BoardView, Look, Scene } from './boardView';
@@ -151,14 +150,14 @@ export class ChainView {
     const delay: number[] = [];
     for (let v = 0; v < next.board.d; v++) for (let u = 0; u < next.board.w; u++) delay.push(dropDelay(u, v, next.board.w, next.board.d));
     const moving: Moving[] = walkers.map((w, i) => {
-      const def = UNITS[w.unit.def];
-      // (the path is over world tiles; the walkers are drawn on the joined board, whose tile (0, 0) is `min`)
-      const path = walkAcross(old, next, w.unit, { u: w.goal[0], v: w.goal[1] }, def.jump).map((p) => ({ u: p.u - minU, v: p.v - minV }));
+      // (the path is over world tiles; the walkers are drawn on the joined board, whose tile (0, 0) is `min`. Between waves every hero walks
+      // the fewest tiles at the same pace: no hero's own jump or slowness, and a climb costs no more than a level step)
+      const path = walkAcross(old, next, w.unit, { u: w.goal[0], v: w.goal[1] }).map((p) => ({ u: p.u - minU, v: p.v - minV }));
       const unit: Unit = { ...w.unit, u: path[0].u, v: path[0].v, step: undefined, swing: undefined, cast: undefined, hurtAt: undefined, guardUntil: undefined, slowUntil: undefined, hasteUntil: undefined, charmUntil: undefined, dot: undefined, ail: undefined };
       const sprite = new UnitSprite(unit);
       this.layer.addChild(sprite.root);
       inFrame(walkFrame, () => sprite.update(comp, 0, true));
-      return { sprite, unit, path, i: 0, moveAt: null, freeAt: 0, startAt: WALK_AT_MS + i * WALK_GAP_MS, ms: stepMs(def.moveMs) };
+      return { sprite, unit, path, i: 0, moveAt: null, freeAt: 0, startAt: WALK_AT_MS + i * WALK_GAP_MS, ms: WALK_STEP_MS };
     });
     this.act = { old, next, t: 0, delay, landed: delay.map(() => false), comp, walkFrame, min: { u: minU, v: minV }, moving, end: dropEnd(next.board.w, next.board.d), lastThud: -1000, done };
     this.step(0);

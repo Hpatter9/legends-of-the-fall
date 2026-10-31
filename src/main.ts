@@ -474,6 +474,8 @@ class Game {
     const home = $('home');
     const sync = () => {
       this.homeUp = !home.hidden;
+      // (FIXES3: the home screen shown is the home screen seen: a Calamity map left up would cover it and every mode begun from it)
+      if (this.homeUp) this.towerView.dismiss();
       this.syncAct();
       this.syncScene();
       this.app.stage.renderable = !this.homeUp;
@@ -510,6 +512,8 @@ class Game {
     // (a fight left running behind the home screen and never finished (a new run begun from the camp) is over: its battle music
     // goes with it, so the new board has the deployment's music, not the old battle's)
     if (this.b?.phase === 'fight') endFight();
+    // (FIXES3: one screen at a time: a Calamity map still up is shut, so it never covers the new board)
+    this.towerView.dismiss();
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
@@ -984,6 +988,7 @@ class Game {
   /** The Last Stand takes the canvas (the board of the ordinary fights is hidden and not drawn) or gives it back. */
   private hideBoard(hidden: boolean): void {
     this.standOn = hidden;
+    if (hidden) this.towerView.dismiss();
     document.body.toggleAttribute('data-stand', hidden);
     this.world.visible = !hidden;
     this.weather.root.visible = !hidden;
