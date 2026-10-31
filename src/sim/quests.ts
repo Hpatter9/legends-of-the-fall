@@ -34,6 +34,7 @@ import { UNITS } from './units';
 import { grantOres } from './awakenMats';
 import { grantTomes } from './tomes';
 import { giveShards } from './unlock';
+import { isSecret } from './secretHeroes';
 import { COMBOS } from './combos';
 import { castOwned, questBattleById } from './questBattles';
 import { readChainState, type ChainState } from './eidolonChainData';
@@ -213,6 +214,8 @@ export function refreshOffers(m: Meta, date: number, pool: readonly QuestDef[] =
     return !!q && today - dayNumber(o.day) < SLOT_RULES[slotOf(q)].days && today >= dayNumber(o.day) && heroesOwnedFor(m, q);
   });
   let changed = s.offers.length !== before;
+  // (SECRET-HEROES: a hero quest's next part goes up whenever its story allows, not with the day's draw)
+  if (offerTales(m, date, pool)) changed = true;
   if (s.day === date) return changed;
   s.day = date;
   changed = true;
@@ -229,6 +232,22 @@ export function refreshOffers(m: Meta, date: number, pool: readonly QuestDef[] =
     if (rule.every) (s.drawn ??= {})[slot] = date;
   });
   return changed;
+}
+
+/**
+ * The tales (SECRET-HEROES: the hero quests): every tale part that may be offered now goes up on the board at once, dated `date`, and stays
+ * until it is taken (its slot's `days` are long). Its parts follow each other by `after`, so one part of a tale is up at a time. Nothing is
+ * drawn: no stream is used. Returns whether one went up.
+ */
+export function offerTales(m: Meta, date: number, pool: readonly QuestDef[] = QUESTS): boolean {
+  const s = stateOf(m);
+  let added = false;
+  for (const q of pool) {
+    if (slotOf(q) !== 'tale' || !canOffer(m, q, date)) continue;
+    s.offers.push({ id: q.id, giver: q.giver, day: date });
+    added = true;
+  }
+  return added;
 }
 
 /**
@@ -328,8 +347,20 @@ export function payReward(m: Meta, r: Reward, id: string, times = 0): void {
   }
   if (r.ores?.length) grantOres(m, r.ores);
   if (r.tomes) grantTomes(m, r.tomes);
-  // (QUESTS-1b, the owner's ask: some quests pay a fitting hero's shards: unlock shards if not owned, rank shards if owned)
-  if (r.shards) giveShards(m, r.shards.kind, r.shards.n);
+  // (QUESTS-1b, the owner's ask: some quests pay a fitting hero's shards: unlock shards if not owned, rank shards if owned; a secret
+  // hero's, SECRET-HEROES, are stones until it has joined, since its shards could not be held and its name is not to be shown)
+  if (r.shards) {
+    if (isSecret(m, r.shards.kind)) m.stones = (m.stones ?? 0) + r.shards.n;
+    else giveShards(m, r.shards.kind, r.shards.n);
+  }
+  // (SECRET-HEROES: a hero quest's end: its hero joins, at rank 0, once; a save that has it already is paid the other reward)
+  if (r.hero) {
+    if (m.unlocked.includes(r.hero.kind)) payReward(m, r.hero.instead, `${id}:instead`, times);
+    else {
+      m.unlocked.push(r.hero.kind);
+      delete m.unlock?.[r.hero.kind];
+    }
+  }
 }
 
 /** Hand in a done quest: its reward is paid and it moves to the done list (a repeatable's count goes up, and its cooldown starts on `date`). False (nothing changes) when it is not taken or not done. */

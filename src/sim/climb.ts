@@ -106,7 +106,8 @@ export const ownsKind = (run: Run, kind: string): boolean => run.roster.some((h)
 /** The hero kinds a Calamity can still hire: all of them (the player's own and the ones it has not unlocked), each only once a run, so not those already on the roster. A run that is not a Calamity hires from its pool as ever. */
 export function hireable(run: Run): string[] {
   if (run.mode?.kind !== 'calamity') return (run.pool?.length ? run.pool : ALL_HEROES).filter((k) => !!UNITS[k]);
-  return ALL_HEROES.filter((k) => !!UNITS[k] && !ownsKind(run, k));
+  // (SECRET-HEROES: never a hero still secret to the save)
+  return ALL_HEROES.filter((k) => !!UNITS[k] && !ownsKind(run, k) && !run.hide?.includes(k));
 }
 
 /** Hire a hero for `paid` gold: it joins at the run's catch-up XP (and the tier that level earns, in a calamity), and (in a calamity, unless told otherwise) takes a place in the squad if there is room. */

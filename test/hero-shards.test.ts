@@ -168,17 +168,15 @@ test('pulls never give a hero earned by content, whatever the seed (an owned one
 test('a content hero joins on its milestone, once, and stays', () => {
   const m = fresh(8);
   assert.deepEqual(grantContent(m), []);
-  // the tower
-  m.tower = 19;
-  assert.deepEqual(grantContent(m), []);
+  // the tower (SECRET-HEROES: wave 20 no longer brings the Dread Pirate: a hero quest does, `secret-heroes.test.ts`)
   m.tower = 20;
-  assert.deepEqual(grantContent(m), ['dreadPirate']);
-  assert.deepEqual(grantContent(m), [], 'once');
+  assert.deepEqual(grantContent(m), []);
   m.tower = 40;
   assert.deepEqual(grantContent(m), ['tyrant']);
-  // an army's tiers: Beast Packs on Normal, the Undead Legion on Hard (a Normal clear is not enough)
+  assert.deepEqual(grantContent(m), [], 'once');
+  // an army's tiers: the Undead Legion on Hard (a Normal clear is not enough); the Beast Packs no longer bring the Werewolf (a tale does)
   m.armies.beasts = { best: 15, won: 15, clears: 1, stars: {} };
-  assert.deepEqual(grantContent(m), ['werewolf']);
+  assert.deepEqual(grantContent(m), []);
   m.armies.undead = { best: 15, won: 15, clears: 3, stars: {} };
   assert.deepEqual(grantContent(m), []);
   m.armies.undead.hard = { 1: { won: 15, clears: 1 } };
@@ -225,16 +223,16 @@ test('chests give summoning stones, never a shard or a hero directly: nothing jo
 test('an old save keeps every hero it owns, and one that has met a milestone gets that hero', () => {
   const s = store();
   const old = startedMeta(21);
-  old.unlocked = [...HEROES, 'kitsune', 'werewolf', 'peasant', 'tyrant', 'gorgon'];
+  old.unlocked = [...HEROES, 'kitsune', 'werewolf', 'peasant', 'dreadPirate', 'gorgon'];
   old.party = [...HEROES];
   old.shards = { kitsune: 3, gorgon: 1 };
-  old.tower = 21;
+  old.tower = 41;
   delete old.unlock;
   delete old.unlockDry;
   saveMeta(old, s);
   const back = loadMeta(1, s);
   for (const k of old.unlocked) assert.ok(back.unlocked.includes(k), `${k} was kept`);
-  assert.ok(back.unlocked.includes('dreadPirate'), 'tower floor 20 reached before: the hero joins');
+  assert.ok(back.unlocked.includes('tyrant'), 'tower floor 40 reached before: the hero joins');
   assert.deepEqual(back.shards, old.shards);
   assert.deepEqual(back.unlock, {});
   // (and the rest carry on under the new rules: the next hero costs by the heroes owned)
@@ -261,18 +259,16 @@ test('stones and chests are deterministic', () => {
   assert.deepEqual(run(), run());
 });
 
-test('a hero not owned says how to get it: a milestone line and progress, or its shards', () => {
+test('a hero not owned says how to get it: a secret hint for one earned in play, or its shards', () => {
   const m = fresh(14);
   assert.equal(lockInfo(m, m.unlocked[0]), null);
+  // (SECRET-HEROES, the owner's ask: a hero earned in play is a secret, with a vague hint, no name and no bar, however far on the save is)
   const tyrant = lockInfo(m, 'tyrant')!;
-  // (the endless tower is the Last Stand now: its best wave counts, and an old save's floors still do)
-  assert.equal(tyrant.line, 'Joins when you reach wave 40 of the Last Stand');
-  assert.deepEqual([tyrant.now, tyrant.need, tyrant.named], [0, 40, true]);
-  m.tower = 14;
-  assert.equal(lockInfo(m, 'tyrant')!.now, 14);
+  assert.equal(tyrant.line, 'A hero waits for a deed of note');
+  assert.deepEqual([tyrant.now, tyrant.need, tyrant.named], [0, 0, false]);
   m.stand = 22;
-  assert.equal(lockInfo(m, 'tyrant')!.now, 22);
-  assert.equal(lockInfo(m, 'reaper')!.need, 0, 'a clear has no bar');
+  assert.equal(lockInfo(m, 'tyrant')!.need, 0, 'no bar to give it away');
+  assert.equal(lockInfo(m, 'werewolf')!.line, 'A hero waits for a tale to be told in the tavern');
   const kind = toCollect(m)[0];
   assert.equal(lockInfo(m, kind)!.named, false, 'a hero with no shards yet stays a shadow');
   giveShards(m, kind, 1);

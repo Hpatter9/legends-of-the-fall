@@ -10,6 +10,9 @@ import pilgrimFace from './art/quests/pilgrim-face.png';
 import messengerFace from './art/quests/messenger-face.png';
 import hunterFace from './art/quests/hunter-face.png';
 import duchessFace from './art/quests/duchess-face.png';
+import shepherdFace from './art/quests/shepherd-face.png';
+import gaolerFace from './art/quests/gaoler-face.png';
+import smithFace from './art/quests/smith-face.png';
 import spoilsFace from './art/items/star_chart.png';
 import riftFace from './art/items/rift_shard.png';
 import gwenSheet from './art/quests/gwen.png';
@@ -30,6 +33,10 @@ export const FACES: Record<GiverId, string> = {
   spoils: spoilsFace,
   rift: riftFace,
   duchess: duchessFace,
+  // (SECRET-HEROES: the hero quests' tellers, LPC layers composed by `tools/hero-quests/cut.py`)
+  shepherd: shepherdFace,
+  gaoler: gaolerFace,
+  smith: smithFace,
 };
 
 /** Gwen behind the bar: 64 px cells, facing left; row 0 her stand (1 frame), row 1 talking (5 frames). */

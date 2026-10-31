@@ -1,5 +1,7 @@
 // The heroes earned by content: ten heroes that never come from a pull or a chest and join on a milestone of the game
-// (an army's hard tier, the Last Stand, the calamity, the codex), each one a hero that suits the thing it is earned from.
+// (an army's hard tier, the Last Stand, the calamity, the codex), each one a hero that suits the thing it is earned from. Three of
+// them (SECRET-HEROES) join at the end of a hero quest instead, a tale told in the tavern (`questData/tales.ts`); every one of the ten
+// is a secret until it joins (`secretHeroes.ts`).
 // `grantContent` is called after a fight settles and when a save loads, and gives every hero whose milestone is met
 // (a save that has already met one gets the hero at once; one that already owns it keeps it). Pure rules: no Pixi, no DOM.
 
@@ -10,6 +12,7 @@ import { gotOf, totalOf } from './codex';
 import type { Meta } from './meta';
 import { CONTENT_KINDS } from './unlockRules';
 import { haveOf, needOf } from './unlock';
+import { secretHint } from './secretHeroes';
 
 export interface ContentHero {
   kind: string;
@@ -37,13 +40,21 @@ const floors = (n: number): Pick<ContentHero, 'line' | 'met' | 'meter'> => ({
 const SEEN_SHARE = 0.5;
 const seenNeed = (): number => Math.ceil(totalOf('bestiary') * SEEN_SHARE);
 
+/** A hero who joins at the end of a hero quest: when its last part is handed in (the hand-in brings it in at once; this is for a save
+ *  loaded after it). Their milestones were: the Werewolf the Beast Packs cleared, the Dread Pirate wave 20 of the Last Stand, the
+ *  Juggernaut the Golem Forge on Hard; each tale opens about there. */
+const tale = (title: string, last: string): Pick<ContentHero, 'line' | 'met'> => ({
+  line: `see ${title} to its end`,
+  met: (m) => !!m.quests?.done.includes(last),
+});
+
 export const CONTENT_HEROES: readonly ContentHero[] = [
-  { kind: 'werewolf', ...clearOn('beasts', 'Beast Packs', 0) },
+  { kind: 'werewolf', ...tale('The Thing at the Fold', 'taleFoldNight') },
   { kind: 'reaper', ...clearOn('undead', 'Undead Legion', 1) },
   { kind: 'demonSwordsman', ...clearOn('infernal', 'Infernal Host', 1) },
   { kind: 'samuraiCommander', ...clearOn('yokai', 'Yokai Night Parade', 2) },
-  { kind: 'juggernaut', ...clearOn('golems', 'Golem Forge', 1) },
-  { kind: 'dreadPirate', ...floors(20) },
+  { kind: 'juggernaut', ...tale('The Iron Pilgrim', 'taleIronMarch') },
+  { kind: 'dreadPirate', ...tale('A Sellsword in Chains', 'taleChainsTide') },
   { kind: 'tyrant', ...floors(40) },
   { kind: 'timeWitch', line: 'clear a Calamity whole', met: (m) => (m.calamity?.clears ?? 0) > 0 },
   { kind: 'dragoon', line: 'clear a Calamity at ascension 3', met: (m) => ascCleared(m) >= 3, meter: (m) => ({ now: Math.max(0, Math.min(3, ascCleared(m))), need: 3 }) },
@@ -66,7 +77,8 @@ export function grantContent(m: Meta): string[] {
 
 if (CONTENT_HEROES.map((c) => c.kind).join() !== CONTENT_KINDS.join()) throw new Error('CONTENT_HEROES and CONTENT_KINDS differ');
 
-/** What a hero not owned shows: a line, and a bar (`need` 0 for none). `named` is whether its name is shown (a content hero's is, to work towards; a hero to collect shows its name once its bar is begun). */
+/** What a hero not owned shows: a line, and a bar (`need` 0 for none). `named` is whether its name is shown (a hero to collect shows
+ *  its name once its bar is begun; a hero earned in play is a secret, SECRET-HEROES: no name, no bar, and only a vague hint). */
 export interface LockInfo {
   line: string;
   now: number;
@@ -78,10 +90,7 @@ export interface LockInfo {
 export function lockInfo(m: Meta, kind: string): LockInfo | null {
   if (m.unlocked.includes(kind)) return null;
   const c = contentOf(kind);
-  if (c) {
-    const meter = c.meter?.(m);
-    return { line: `Joins when you ${c.line}`, now: meter?.now ?? 0, need: meter?.need ?? 0, named: true, short: 'Earned in play' };
-  }
+  if (c) return { line: secretHint(kind), now: 0, need: 0, named: false, short: 'A secret' };
   const have = haveOf(m, kind);
   const need = needOf(m);
   return have

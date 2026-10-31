@@ -118,15 +118,14 @@ test('the Last Stand and the Calamity are told without towers: a breach, a thron
   assert.ok(linesOf('calamityEnds').some((t) => /portal/.test(t)));
 });
 
-test('the Dread Pirate and the Tyrant join at the Last Stand’s waves 20 and 40 (an old save’s tower floors still count)', () => {
+test('the Tyrant joins at the Last Stand’s wave 40 (an old save’s tower floors still count); the Dread Pirate comes by a tale now', () => {
   const m = picked(43);
-  m.stand = 19;
+  m.stand = 39;
   assert.deepEqual(grantContent(m), []);
-  m.stand = 20;
-  assert.deepEqual(grantContent(m), ['dreadPirate']);
+  // (SECRET-HEROES: wave 20 brought the Dread Pirate; the hero quest A Sellsword in Chains does now)
   m.stand = 40;
   assert.deepEqual(grantContent(m), ['tyrant']);
   const old = picked(44);
   old.tower = 40;
-  assert.deepEqual(grantContent(old), ['dreadPirate', 'tyrant']);
+  assert.deepEqual(grantContent(old), ['tyrant']);
 });

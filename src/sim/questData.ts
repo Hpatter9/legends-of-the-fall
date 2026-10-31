@@ -15,16 +15,18 @@ import { RIFT_QUESTS } from './questData/rift';
 import { DUCHESS_QUESTS } from './questData/duchess';
 import { REPEAT_QUESTS } from './questData/repeat';
 import { BATTLE_QUESTS } from './questData/battles';
+import { TALE_QUESTS } from './questData/tales';
 
 /** Who offers a quest and takes it back. A patron is one of the player's own heroes (the quest's `hero`). */
-export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess';
+export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith';
 
 /**
  * Where a giver's offers come from. Gwen's own; the notices pinned to the board by strangers; the passersby (one a day, whoever
  * passes); the patrons (the heroes in the tavern, now and then); the ruler's Royal charges (one a week); Duchess; and two that come
- * after a fight, not with the day: spoils found on an army's boss, and the rift's voice when a Calamity guardian falls.
+ * after a fight, not with the day: spoils found on an army's boss, and the rift's voice when a Calamity guardian falls. And the tales
+ * (SECRET-HEROES): the hero quests, each told by its own giver, on the board as soon as their story allows (`offerTales`).
  */
-export type GiverSlot = 'gwen' | 'passerby' | 'notice' | 'patron' | 'royal' | 'duchess' | 'spoils' | 'rift';
+export type GiverSlot = 'gwen' | 'passerby' | 'notice' | 'patron' | 'royal' | 'duchess' | 'spoils' | 'rift' | 'tale';
 
 export interface Giver {
   id: GiverId;
@@ -48,10 +50,14 @@ export const GIVERS: Record<GiverId, Giver> = {
   spoils: { id: 'spoils', name: 'Spoils of war', title: 'Found on a fallen boss', slot: 'spoils' },
   rift: { id: 'rift', name: 'A voice in the rift', title: 'Heard where a guardian fell', slot: 'rift' },
   duchess: { id: 'duchess', name: 'Duchess', title: 'A goat of consequence', slot: 'duchess' },
+  // (SECRET-HEROES: the tellers of the three hero quests, by the tavern's fire)
+  shepherd: { id: 'shepherd', name: 'Old Maud', title: 'A shepherd from the high fold', slot: 'tale' },
+  gaoler: { id: 'gaoler', name: 'Brannock', title: "Turnkey of the keep's cells", slot: 'tale' },
+  smith: { id: 'smith', name: 'Edda Coalbrook', title: 'A forge-hand from under the mountain', slot: 'tale' },
 };
 
 /** The draws, in order: each slot is drawn from its own side stream (its index here is its salt), so a slot added at the end leaves the others' draws as they were. */
-export const SLOTS: readonly GiverSlot[] = ['gwen', 'passerby', 'notice', 'patron', 'royal', 'duchess', 'spoils', 'rift'];
+export const SLOTS: readonly GiverSlot[] = ['gwen', 'passerby', 'notice', 'patron', 'royal', 'duchess', 'spoils', 'rift', 'tale'];
 
 /**
  * How many of a slot's offers the board holds at once, how many days each lasts before it is taken down, and how often a new one
@@ -74,6 +80,8 @@ export const SLOT_RULES: Record<GiverSlot, { cap: number; days: number; every?: 
   spoils: { cap: 1, days: 5, after: true },
   // (the design: about one guardian in two leaves a voice behind)
   rift: { cap: 1, days: 5, after: true },
+  // (SECRET-HEROES: a tale is never drawn with the day: its next part goes up as soon as the part before is handed in, and stays)
+  tale: { cap: 3, days: 100_000, after: true },
 };
 
 /** When a quest may be offered. */
@@ -200,6 +208,9 @@ export interface Reward {
   shards?: { kind: string; n: number };
   /** A keepsake hung behind the bar (shown in the Done tab and on the hand-in; words only). */
   keepsake?: string;
+  /** SECRET-HEROES: a hero who joins (a hero quest's last part), told as `tease` until it has ("the stranger joins your company"); a save
+   *  that already has the hero is paid `instead`. */
+  hero?: { kind: string; tease: string; instead: Reward };
 }
 
 /** A quest's mood, for the writers' spread (not shown). */
@@ -242,6 +253,8 @@ export const QUESTS: readonly QuestDef[] = [
   ...REPEAT_QUESTS,
   // (batch 2: the quests that open a quest battle, one a battle, from their fitting givers)
   ...BATTLE_QUESTS,
+  // (SECRET-HEROES: the three hero quests, each ending with a secret hero joining)
+  ...TALE_QUESTS,
 ];
 
 const BY_ID = new Map(QUESTS.map((q) => [q.id, q]));
