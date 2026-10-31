@@ -1,5 +1,5 @@
 // Secret heroes (SECRET-HEROES, the owner's ask: "Let's keep the heroes that are gained from specific unlock scenarios a secret"). The ten
-// heroes earned in play (`contentHeroes.ts`: seven by a milestone, three at the end of a hero quest, `questData/tales.ts`) are hidden until
+// heroes earned in play (`contentHeroes.ts`: each at the end of a hero quest, `questData/tales.ts`) are hidden until
 // they join: every list shows a dark figure, "???" and at most a vague hint, never the hero's name, title, class, art or kit. Once a hero
 // joins it is an ordinary hero, and its first reveal plays as before.
 //
@@ -10,8 +10,8 @@ import type { Meta } from './meta';
 import { CONTENT_KINDS, isContent } from './unlockRules';
 import { UNITS } from './units';
 
-/** The heroes who join at the end of a hero quest (the tavern's tales), not on a milestone. */
-export const TALE_HEROES: readonly string[] = ['werewolf', 'dreadPirate', 'juggernaut', 'reaper', 'demonSwordsman', 'samuraiCommander', 'tyrant'];
+/** The heroes who join at the end of a hero quest (the tavern's tales), not on a milestone: all ten since HERO-TALES-2. */
+export const TALE_HEROES: readonly string[] = ['werewolf', 'dreadPirate', 'juggernaut', 'reaper', 'demonSwordsman', 'samuraiCommander', 'tyrant', 'timeWitch', 'dragoon', 'sage'];
 
 /** What a screen shows in a secret hero's name's place. */
 export const SECRET_NAME = '???';
@@ -25,7 +25,8 @@ export const isSecret = (m: Pick<Meta, 'unlocked'>, kind: string): boolean => is
 /** The heroes secret to this save, in the roster's order of the earned ones. */
 export const secretsOf = (m: Pick<Meta, 'unlocked'>): string[] => CONTENT_KINDS.filter((k) => isSecret(m, k));
 
-/** The vague hint a secret hero's row may give: a deed of note for a milestone, a tale for a hero quest. Never which deed, or which tale. */
+/** The vague hint a secret hero's row may give: a tale for a hero quest (a deed of note for a milestone, while some came that way). Never
+ *  which tale. */
 export const secretHint = (kind: string): string => (TALE_HEROES.includes(kind) ? 'A hero waits for a tale to be told in the tavern' : 'A hero waits for a deed of note');
 
 /** A hero's name as a screen may show it to this save: its own (given by `name`), or "???" while it is secret. */

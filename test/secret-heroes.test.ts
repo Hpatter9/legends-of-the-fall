@@ -1,5 +1,6 @@
-// SECRET-HEROES: the heroes earned in play are secrets until they join (no screen's words name them), and three hero quests, each a
-// tale in two or three parts ending in a quest battle of its own, bring three of them in. See docs/notes/secret-heroes.md.
+// SECRET-HEROES: the heroes earned in play are secrets until they join (no screen's words name them), and the hero quests, each a
+// tale in two or three parts ending in a quest battle of its own, bring them in: three at first, all ten since HERO-TALES-2. See
+// docs/notes/secret-heroes.md.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { recordOf } from '../src/sim/armies';
@@ -21,6 +22,7 @@ import { hireable } from '../src/sim/climb';
 import { armyRun } from '../src/sim/run';
 import { calamityRun } from '../src/sim/modes';
 import type { Scene } from '../src/sim/sceneKit';
+import { FOE_ENTRIES } from '../src/sim/codex';
 
 const DAY = 20261101;
 const clear = (m: Meta, ...ids: string[]) => ids.forEach((id) => (m.armies[id] = { ...recordOf(m, id), clears: 1 }));
@@ -212,4 +214,92 @@ test('an old save loads: a tale already begun or done is kept, and the hero join
   m.quests = { active: [], offers: [], done: ['taleIronSlag', 'taleIronMarch'] };
   assert.deepEqual(grantContent(m), ['juggernaut']);
   assert.ok(TALE_BATTLES.every((qb) => questBattleById(qb.id) === qb));
+});
+
+/* ------------------------------------------------------------------ HERO-TALES-2: the other seven tales */
+
+/** The tales, giver by giver, each in its order. */
+const talesByGiver = (): QuestDef[][] => {
+  const by = new Map<string, QuestDef[]>();
+  for (const q of TALE_QUESTS) by.set(q.giver, [...(by.get(q.giver) ?? []), q]);
+  return [...by.values()];
+};
+/** A save far enough on for every tale to open: every army cleared, the Last Stand and the Calamity open and the Calamity cleared at
+ *  ascension 1, and every foe of the bestiary met. */
+const farOn = (seed: number): Meta => {
+  const m = startedMeta(seed);
+  clear(m, 'orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems');
+  m.opened = ['tower', 'calamity'];
+  m.calamity = { best: 6, clears: 2, asc: 1 };
+  m.codex = { ...(m.codex ?? { met: [], kills: {} }), met: FOE_ENTRIES.flatMap((e) => e.defs) };
+  return m;
+};
+
+test('all ten tales play through: closed on a new save, open far on, each part after the one before, and the hero joins at the end', () => {
+  const tales = talesByGiver();
+  assert.equal(tales.length, 10);
+  assert.deepEqual(tales.map((t) => t[t.length - 1].reward.hero!.kind).sort(), [...CONTENT_KINDS].sort(), 'one tale for each of the ten');
+  const fresh = startedMeta(61);
+  refreshOffers(fresh, DAY);
+  for (const parts of tales) assert.ok(!canOffer(fresh, parts[0]), `${parts[0].id}: not on a new save`);
+  for (const parts of tales) {
+    const m = farOn(62);
+    const kind = parts[parts.length - 1].reward.hero!.kind;
+    assert.ok(isSecret(m, kind));
+    for (const [i, q] of parts.entries()) {
+      offerTales(m, DAY);
+      const up = m.quests!.offers.filter((o) => parts.some((p) => p.id === o.id)).map((o) => o.id);
+      assert.deepEqual(up, [q.id], `${q.id}: the one part of its tale on the board`);
+      assert.ok(takeQuest(m, q.id, DAY));
+      m.quests!.active.find((a) => a.id === q.id)!.progress = q.goal.n;
+      assert.ok(handIn(m, q.id, DAY), q.id);
+      assert.equal(isSecret(m, kind), i < parts.length - 1, `${q.id}: the hero joins at the last part only`);
+    }
+    assert.deepEqual(grantContent(m), [], `${kind}: once`);
+  }
+});
+
+test('the new needs: a Calamity cleared at an ascension, and a share of the bestiary met', () => {
+  const m = startedMeta(63);
+  const eyrie = questById('taleEyrieAsh')!;
+  const star = questById('taleStarMargins')!;
+  assert.ok(!canOffer(m, eyrie) && !canOffer(m, star));
+  m.calamity = { best: 6, clears: 1 };
+  assert.ok(!canOffer(m, eyrie), 'a plain clear is ascension 0');
+  m.calamity.asc = 1;
+  assert.ok(canOffer(m, eyrie));
+  const need = Math.ceil(FOE_ENTRIES.length * 0.35);
+  m.codex = { ...(m.codex ?? { met: [], kills: {} }), met: FOE_ENTRIES.slice(0, need - 1).map((e) => e.defs[0]) };
+  m.bosses = [];
+  assert.ok(!canOffer(m, star), 'one short of a third');
+  m.codex.met.push(FOE_ENTRIES[need - 1].defs[0]);
+  assert.ok(canOffer(m, star));
+});
+
+test("the tales' goals count what they say: the Yokai on Elite, the Legion's foes, the crows, the Calamity's deep guardians", () => {
+  const m = farOn(64);
+  m.quests = { active: [], offers: [], done: [] };
+  offerTales(m, DAY);
+  for (const id of ['taleBannerLanterns', 'taleClockStopped']) assert.ok(takeQuest(m, id, DAY), id);
+  noteQuests(m, { ...won(''), army: 'yokai', mode: 'army', tier: 1, waves: 5 });
+  assert.equal(m.quests.active[0].progress, 0, 'Hard is not Elite');
+  noteQuests(m, { ...won(''), army: 'yokai', mode: 'army', tier: 2, waves: 5 });
+  assert.ok(handIn(m, 'taleBannerLanterns', DAY));
+  offerTales(m, DAY);
+  assert.ok(takeQuest(m, 'taleBannerCrows', DAY));
+  noteQuests(m, { ...won(''), kills: [...Array(20).fill('yokaiCrow'), ...Array(10).fill('yokaiSeer'), ...Array(9).fill('yokaiFox')] });
+  assert.ok(handIn(m, 'taleBannerCrows', DAY), 'thirty crows, the foxes not counted');
+  // (the Calamity's guardians count from the fourth map on)
+  noteQuests(m, { ...won(''), mode: 'calamity', map: 3 });
+  assert.equal(m.quests.active.find((a) => a.id === 'taleClockStopped')!.progress, 0, 'the third map is too shallow');
+  noteQuests(m, { ...won(''), mode: 'calamity', map: 4 });
+  noteQuests(m, { ...won(''), mode: 'calamity', map: 6 });
+  assert.ok(handIn(m, 'taleClockStopped', DAY));
+  // (the undead: any of the Legion's foes, won or lost)
+  const u = farOn(65);
+  u.quests = { active: [], offers: [], done: ['taleLedgerUncounted'] };
+  offerTales(u, DAY);
+  assert.ok(takeQuest(u, 'taleLedgerBell', DAY));
+  noteQuests(u, { ...won(''), won: false, kills: [...Array(30).fill('skeleton'), ...Array(29).fill('spearman'), 'orcGrunt'] });
+  assert.equal(u.quests!.active[0].progress, 59);
 });

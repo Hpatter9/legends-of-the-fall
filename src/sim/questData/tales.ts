@@ -1,6 +1,7 @@
-// The hero quests (SECRET-HEROES, the owner's ask: "let's add some quests in which a hero comes from"): three tales, each told by its
-// own giver by the tavern's fire, two or three parts long, ending in a quest battle of its own (`../taleBattleData.ts`) and a secret
-// hero joining at the hand-in. Until then the hero is only "the stranger": no part names them, and the reward reads as the tease.
+// The hero quests (SECRET-HEROES, the owner's ask: "let's add some quests in which a hero comes from"): ten tales, three and then seven
+// more (HERO-TALES-2), each told by its own giver by the tavern's fire, two or three parts long, ending in a quest battle of its own
+// (`../taleBattleData.ts`) and a secret hero joining at the hand-in. Until then the hero is only "the stranger": no part names them,
+// and the reward reads as the tease.
 //
 // - **The Thing at the Fold** (Old Maud, a shepherd): opens with the Beast Packs cleared, where the Werewolf used to be earned. Vuk.
 // - **A Sellsword in Chains** (Brannock, the turnkey): opens with the Last Stand open and three armies cleared; the Dread Pirate used to
@@ -15,6 +16,12 @@
 // - **The Banner in the Mist** (Kiku, a lantern-seller): opens with the Yokai Night Parade cleared, asks for its waves on Elite. Hideo.
 // - **The Second Throne** (Master Fenwick, the herald): opens with the Last Stand open and six armies cleared, asks for wave 30 of it
 //   and the line held three times (the Tyrant came at wave 40). Edmund.
+// - **Yesterday's Visitor** (Hesper Tock, a clockmaker): opens with the Calamity open, asks for two guardians felled on its fourth map or
+//   later (the Time Witch came with a Calamity cleared). Adaeze.
+// - **The Scorched Eyrie** (Wren Halloway, a falconer): opens with a Calamity cleared at ascension 1, asks for two more clears (the
+//   Queen Dragoon came at ascension 3). Tiziri.
+// - **The Fallen Star** (Ivy Penhallow, the bestiary's keeper): opens with a third of the bestiary met (the Great Sage came at half).
+//   Seydou.
 //
 // A tale's parts follow each other by `after` and go up on the board at once (`offerTales`, the `tale` slot). A save that has the hero
 // already (an old save that earned it by its milestone) is told the same tale and paid the `instead` reward. Pure data.
@@ -351,5 +358,153 @@ export const TALE_QUESTS: readonly QuestDef[] = [
     goal: { kind: 'battle', n: 1, battle: 'theAppeal' },
     reward: { hero: { kind: 'tyrant', tease: 'the one on the second throne joins your company', instead: { crowns: 1000, stones: 6 } }, keepsake: 'A gavel, very heavy' },
     mood: 'heroic',
+  },
+
+  /* ------------------------------------------------------------ Yesterday's Visitor: the Time Witch (HERO-TALES-2) */
+  {
+    id: 'taleClockStopped',
+    title: "Yesterday's Visitor, I: The Stopped Clocks",
+    giver: 'clock',
+    needs: { kind: 'mode', mode: 'calamity' },
+    text: 'Fell 2 Calamity guardians on the fourth map or a later one',
+    offer: [
+      'Every clock in my shop stopped at a quarter past three this morning. Then a lady came in, thanked me for mending her watch, and left. I have not mended her watch. I have never seen her watch.',
+      "She said she would be back yesterday. She also said the Calamity's guardians have been eating the hours, and could someone see to the deep ones, please.",
+    ],
+    going: 'The clocks have started again, but backwards, and only the cuckoo seems to mind.',
+    done: ['The guardians are down and the clocks run forwards, mostly. The lady came in this morning and paid for a repair I have not done yet. She says the thing that eats hours has noticed her, and is coming to the shop.'],
+    goal: { kind: 'calGuardian', n: 2, map: 4 },
+    reward: { crowns: 700, stones: 4 },
+    mood: 'mysterious',
+  },
+  {
+    id: 'taleClockHour',
+    title: "Yesterday's Visitor, II: The Hour Out of Place",
+    giver: 'clock',
+    needs: { kind: 'mode', mode: 'calamity' },
+    after: 'taleClockStopped',
+    text: 'Win the quest battle The Hour Out of Place (a hero of yours must fight)',
+    offer: [
+      'It comes tonight at a quarter past three, which in my shop is now every hour. The lady says she has fought it before, or will have, and lost, or will not have, depending on you.',
+      'I have stopped trying to follow it. Please just be there at a quarter past three.',
+    ],
+    going: 'She has set every clock in the shop to a different time. She says it confuses the thing. It certainly confuses me.',
+    done: [
+      'Every clock in the shop struck the right hour at once, and then politely carried on. The lady has mended my watch, which I did not know was broken.',
+      'She told me her name, and said she has very much enjoyed working for your keep, and will again. I said, you mean you will enjoy it. She said that too.',
+    ],
+    goal: { kind: 'battle', n: 1, battle: 'hourOutOfPlace' },
+    reward: { hero: { kind: 'timeWitch', tease: 'the visitor from yesterday joins your company', instead: { crowns: 1000, stones: 6 } }, keepsake: 'A pocket watch that runs a minute early, on purpose' },
+    mood: 'heroic',
+  },
+
+  /* ------------------------------------------------------------ The Scorched Eyrie: the Queen Dragoon (HERO-TALES-2) */
+  {
+    id: 'taleEyrieAsh',
+    title: 'The Scorched Eyrie, I: Feathers and Ash',
+    giver: 'falconer',
+    needs: { kind: 'ascension', n: 1 },
+    text: 'Clear a Calamity whole twice',
+    offer: [
+      'My hawks will not fly. There is smoke on the high crags above the keep, and every morning I find scales on the mews roof the size of my hand.',
+      "Something is nesting up there that the birds are afraid of, and the Calamity's rift keeps stirring it. Close the rift a couple of times and let the crags settle.",
+    ],
+    going: 'A shadow went over the mews at noon, very big and very low. The hawks bowed. I did not know hawks could bow.',
+    done: ['The rift is quiet and the smoke has thinned. There is a rider up on the crags with the thing in the nest. She waved to me, and I waved back. Then the ogres came up the mountain with nets.'],
+    goal: { kind: 'calClear', n: 2 },
+    reward: { crowns: 800, stones: 5 },
+    mood: 'mysterious',
+  },
+  {
+    id: 'taleEyrieNets',
+    title: 'The Scorched Eyrie, II: The Net-Men',
+    giver: 'falconer',
+    needs: { kind: 'ascension', n: 1 },
+    after: 'taleEyrieAsh',
+    text: "Fell 40 of the Ogre Clans' foes",
+    offer: [
+      'The Ogre Clans hunt anything with wings. They sell the scales and keep the claws, and they have heard there is a nest on my crags.',
+      'Fell forty of them, wherever they march, and the rest might think twice before they climb.',
+    ],
+    going: 'Nets on the lower crag. I cut three loose. The rider cut the rest, from the air, without once landing.',
+    done: ['The clans are thinner, but their chief is coming up himself, with the big nets and the bigger club. The rider says she will not leave the nest. I say she will not have to.'],
+    goal: { kind: 'kills', n: 40, ofArmy: 'ogres' },
+    reward: { crowns: 700, chest: 'gold' },
+    mood: 'heroic',
+  },
+  {
+    id: 'taleEyrieNest',
+    title: 'The Scorched Eyrie, III: The Nest',
+    giver: 'falconer',
+    needs: { kind: 'ascension', n: 1 },
+    after: 'taleEyrieNets',
+    text: 'Win the quest battle The Scorched Eyrie (a hero of yours must fight)',
+    offer: [
+      'The chief of the net-men climbs tonight. The rider and her beast will hold the nest, but there are two eggs in it and only one of her.',
+      'Go up the crags. Take a cloak: it is cold up there, until it very suddenly is not.',
+    ],
+    going: 'Fire on the crags all night, in short bursts, like a smith at the bellows. My hawks are back on their perches and very pleased with themselves.',
+    done: [
+      'The net-men are off the mountain and the nest is safe. The rider came down to the mews with soot on her circlet, which I had not noticed was gold.',
+      "She says two eggs make a family, and a family wants a keep. She told me her name, and her beast's, which I cannot pronounce.",
+    ],
+    goal: { kind: 'battle', n: 1, battle: 'scorchedEyrie' },
+    reward: { hero: { kind: 'dragoon', tease: 'the rider on the crags joins your company', instead: { crowns: 1200, stones: 7 } }, keepsake: 'A scale the size of a hand, still warm' },
+    mood: 'warm',
+  },
+
+  /* ------------------------------------------------------------ The Fallen Star: the Great Sage (HERO-TALES-2) */
+  {
+    id: 'taleStarMargins',
+    title: 'The Fallen Star, I: Notes in the Margin',
+    giver: 'archivist',
+    needs: { kind: 'bestiary', share: 0.35 },
+    text: "Fell 30 of the Labyrinth's foes",
+    offer: [
+      'Someone has been writing in the margins of my bestiary. Neat little notes, all correct, and one wrong number put right in every entry, in ink that glows faintly after dark.',
+      'The last note says a star fell into the Labyrinth and the gorgons are staring at it, which is bad for the gorgons and worse for the star. Clear a path through, would you?',
+    ],
+    going: "A new note this morning, on the Minotaur's page: 'Larger than described. Also sadder.' I have underlined it.",
+    done: ['There is a path, and the note-writer has stopped hiding: a quiet man who sits on the roof all night counting stars. He says the missing one did not stay in the Labyrinth. It rolled on into the crystal caves, and it has woken up.'],
+    goal: { kind: 'kills', n: 30, ofArmy: 'labyrinth' },
+    reward: { crowns: 500, stones: 3 },
+    mood: 'mysterious',
+  },
+  {
+    id: 'taleStarCaves',
+    title: 'The Fallen Star, II: The Crystal Moths',
+    giver: 'archivist',
+    needs: { kind: 'bestiary', share: 0.35 },
+    after: 'taleStarMargins',
+    text: 'Fell 20 crystal golems',
+    offer: [
+      'The crystal golems have been walking to the caves from all over the Forge, the way moths walk to a lamp. The star-counter says they are building something round it.',
+      'Fell twenty of them, so that whatever they are building stays small.',
+    ],
+    going: 'He has drawn me a map of the sky with a gap in it, and a map of the caves with a light in it. They are the same shape.',
+    done: ['The golems have stopped coming. What they built is already standing: a colossus of sapphire, with the star for a heart. The star-counter says it wants to go home, and will step on everything between here and the sky to get there.'],
+    goal: { kind: 'kills', n: 20, foes: ['crystalGolem'] },
+    reward: { crowns: 600, chest: 'silver' },
+    mood: 'eerie',
+  },
+  {
+    id: 'taleStarHome',
+    title: 'The Fallen Star, III: The Way Home',
+    giver: 'archivist',
+    needs: { kind: 'bestiary', share: 0.35 },
+    after: 'taleStarCaves',
+    text: 'Win the quest battle The Star-Hearted (a hero of yours must fight)',
+    offer: [
+      'Tonight the colossus starts to climb. The star-counter means to put the star back where it belongs, which means reaching its heart, which means getting past the rest of it.',
+      'He has done the sums. He says they work out, with you in them.',
+    ],
+    going: 'He has his chart, a ladder and a very long pole. I have not asked what the pole is for.',
+    done: [
+      'The colossus fell, and the star went up out of it like a spark from a fire and settled back into its gap. The star-counter wept a little, and then corrected my bestiary in four places.',
+      'He says the whole sky is a bestiary, if you look, and he would like to look from your keep. He told me his name, and I have written it in the front, with the other careful readers.',
+    ],
+    goal: { kind: 'battle', n: 1, battle: 'starHearted' },
+    reward: { hero: { kind: 'sage', tease: 'the star-counter joins your company', instead: { crowns: 900, stones: 6 } }, keepsake: 'A star chart with every gap filled in' },
+    mood: 'warm',
   },
 ];

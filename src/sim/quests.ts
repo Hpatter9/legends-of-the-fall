@@ -35,6 +35,8 @@ import { grantOres } from './awakenMats';
 import { grantTomes } from './tomes';
 import { giveShards } from './unlock';
 import { isSecret } from './secretHeroes';
+import { ascCleared } from './ascension';
+import { gotOf, totalOf } from './codex';
 import { COMBOS } from './combos';
 import { castOwned, questBattleById } from './questBattles';
 import { readChainState, type ChainState } from './eidolonChainData';
@@ -144,6 +146,10 @@ export function needMet(m: Meta, n: Need): boolean {
       return !!(m.duchessTaps || m.duchessLucky || m.duchessHay);
     case 'spell':
       return !!m.spellbook?.owned.includes(n.id as never);
+    case 'ascension':
+      return ascCleared(m) >= n.n;
+    case 'bestiary':
+      return gotOf(m, 'bestiary') >= Math.ceil(totalOf('bestiary') * n.share);
     case 'all':
       return n.of.every((x) => needMet(m, x));
     default:

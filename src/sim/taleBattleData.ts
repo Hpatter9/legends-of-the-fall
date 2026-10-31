@@ -220,16 +220,16 @@ export const TALE_BATTLES: readonly QuestBattle[] = [
     blurb: 'Everyone sentenced from the second throne comes back through the breach together, to appeal, with an army.',
     land: 'dungeon',
     like: { army: 'golems', wave: 15 },
-    ease: 0.48,
+    ease: 0.45,
     cast: [STARTER_SLOT(['knight', 'kunoichi'])],
     waves: [
       { foes: ['orcBrute', 'clanOgre', 'orcArcher', 'orcGrunt'] },
       { foes: ['shamanKing', 'clanBrute', 'mazeMino2', 'orcArcher'], boss: 'mid' },
-      { foes: ['hornedOgre', 'clanOgre', 'mazeGorgon2', 'orcArcher', 'orcBrute'], boss: 'final' },
+      { foes: ['orcWarlord', 'clanOgre', 'mazeGorgon2', 'orcArcher', 'orcBrute'], boss: 'final' },
     ],
     boss: { name: 'Gorm the Appellant', title: 'Who Will Not Be Sentenced' },
     before: (c) =>
-      story('theAppeal', 'The Appeal', 'dungeon', { fenwick: giver('herald', 'Master Fenwick'), a: hero(c[0] ?? 'knight', 220), who: stranger('tyrant', 340), gorm: foe('hornedOgre', 460, 1.2, { name: 'Gorm the Appellant', hidden: true }) }, [
+      story('theAppeal', 'The Appeal', 'dungeon', { fenwick: giver('herald', 'Master Fenwick'), a: hero(c[0] ?? 'knight', 220), who: stranger('tyrant', 340), gorm: foe('orcWarlord', 460, 1.2, { name: 'Gorm the Appellant', hidden: true }) }, [
         { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'dust', caption: 'The throne room, the court in session', lines: [say('fenwick', 'All rise. Or, in the case of the appellants, all come through the breach, I suppose.')] },
         { cam: wide(340, 205), ...shoot('medium', 'who', 'pushIn'), lines: [tell('On the second throne a figure sits in a heavy crown, quite still, chin on one fist, as if the whole keep were a matter to be decided.')] },
         { cam: wide(300, 205), ...shoot('two', 'a'), lines: [say('a', 'Are you going to fight, or just sit there?'), say('who', 'I am going to sit here. That is how a court is held. You are the evidence.')] },
@@ -240,6 +240,94 @@ export const TALE_BATTLES: readonly QuestBattle[] = [
       story('theAppealAfter', 'The Appeal', 'dungeon', { a: hero(c[0] ?? 'knight', 240), who: stranger('tyrant', 340) }, [
         { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), lines: [tell('The appellants lie where they fell. On the second throne, at long last, the figure in the crown stands up.')] },
         { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'Appeal dismissed. The keep has given its evidence well. Tell the herald he may announce me.')] },
+      ]),
+  },
+
+  {
+    // (Yesterday's Visitor, part 2: the thing that eats hours comes to the clockmaker's shop at a quarter past three, with foes of every age)
+    id: 'hourOutOfPlace',
+    title: 'The Hour Out of Place',
+    blurb: "At a quarter past three the thing that eats hours comes to Hesper Tock's shop, with foes from every age behind it.",
+    land: 'desert',
+    like: { army: 'golems', wave: 12 },
+    ease: 0.39,
+    cast: [STARTER_SLOT(['wizard', 'archer'])],
+    waves: [
+      { foes: ['orcGrunt', 'skeleton', 'groveSatyr1', 'orcArcher'] },
+      { foes: ['mazeMino1', 'clanBrute', 'hellImp', 'boneVolley'] },
+      { foes: ['demonLord', 'yokaiFox', 'ironGolem', 'spearman', 'mazeGorgon1'], boss: 'final' },
+    ],
+    boss: { name: "Never-o'-Clock", title: 'Who Eats the Hours' },
+    before: (c) =>
+      story('hourOutOfPlace', 'The Hour Out of Place', 'desert', { tock: giver('clock', 'Hesper Tock'), a: hero(c[0] ?? 'wizard', 220), who: stranger('timeWitch', 330), never: foe('demonLord', 460, 1.2, { name: "Never-o'-Clock", hidden: true }) }, [
+        { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'dust', caption: 'Outside the clockmaker’s shop, at a quarter past three', lines: [say('tock', 'A quarter past three. Again. I have heard it strike that eleven times tonight.')] },
+        { cam: wide(330, 205), ...shoot('medium', 'who', 'pushIn'), weather: 'dust', lines: [tell('A woman waits in the doorway with an hourglass in one hand, turning it over and over, as if she were keeping it company.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a'), lines: [say('a', 'Have we met?'), say('who', 'Tomorrow. You were very brave. Do it again now, please.')] },
+        { cam: wide(460, 205), ...shoot('low', 'never', 'pushIn', 'smash'), acts: [{ who: 'never', enter: 460, from: 'right' }], cue: 'eliteSting', fx: ['flash'], title: card("Never-o'-Clock", 'Who Eats the Hours'), lines: [say('never', 'Every minute you waste is mine. You have wasted so very many.', 'shout')] },
+        { cam: wide(260, 205), ...shoot('medium', 'a', 'snapZoom'), acts: [{ who: 'a', pose: 'strike' }], lines: [say('a', 'Then let us not waste this one.')] },
+      ]),
+    after: (c) =>
+      story('hourOutOfPlaceAfter', 'The Hour Out of Place', 'desert', { a: hero(c[0] ?? 'wizard', 240), who: stranger('timeWitch', 340) }, [
+        { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), lines: [tell('Inside the shop every clock strikes four at once, and then, very politely, carries on.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'There. That is how it went. Tell the clockmaker I start at your keep yesterday.')] },
+      ]),
+  },
+  {
+    // (The Scorched Eyrie, part 3: the Ogre Clans' net-men climb the crags for the nest, and the rider and her beast hold it)
+    id: 'scorchedEyrie',
+    title: 'The Scorched Eyrie',
+    blurb: 'The chief of the net-men leads the Ogre Clans up the high crags, to take a nest of two eggs and the rider who guards it.',
+    land: 'snow',
+    like: { army: 'golems', wave: 14 },
+    ease: 0.43,
+    cast: [STARTER_SLOT(['archer', 'kunoichi'])],
+    waves: [
+      { foes: ['clanOgre', 'clanBrute', 'orcArcher', 'orcArcher'] },
+      { foes: ['shamanKing', 'clanOgre', 'clanBrute', 'orcArcher'], boss: 'mid' },
+      { foes: ['hornedOgre', 'clanOgre', 'clanBrute', 'orcArcher', 'clanOgre'], boss: 'final' },
+    ],
+    boss: { name: 'Hrask the Wing-Breaker', title: 'Chief of the Net-Men' },
+    before: (c) =>
+      story('scorchedEyrie', 'The Scorched Eyrie', 'snow', { wren: giver('falconer', 'Wren Halloway'), a: hero(c[0] ?? 'archer', 220), who: stranger('dragoon', 330), hrask: foe('hornedOgre', 460, 1.2, { name: 'Hrask the Wing-Breaker', hidden: true }) }, [
+        { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'snow', caption: 'The high crags above the keep', lines: [say('wren', 'Cold, is it not? Give it a minute. It will not be.')] },
+        { cam: wide(330, 205), ...shoot('medium', 'who', 'pushIn'), weather: 'snow', lines: [tell('By a nest of scorched branches stands a rider with a lance, and behind her something enormous breathes out smoke, very slowly, round two eggs.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a'), weather: 'snow', lines: [say('a', 'We came to help.'), say('who', 'Then stand on the left. He breathes to the right, and he does not always look first.')] },
+        { cam: wide(460, 205), ...shoot('low', 'hrask', 'pushIn', 'smash'), weather: 'snow', acts: [{ who: 'hrask', enter: 460, from: 'right' }], cue: 'boom', fx: ['shake'], title: card('Hrask the Wing-Breaker', 'Chief of the Net-Men'), lines: [say('hrask', 'Scales for the market! Claws for the hall! Eggs for breakfast!', 'shout')] },
+        { cam: wide(260, 205), ...shoot('medium', 'a', 'snapZoom'), weather: 'snow', acts: [{ who: 'a', pose: 'strike' }], lines: [say('a', 'Breakfast is cancelled.')] },
+      ]),
+    after: (c) =>
+      story('scorchedEyrieAfter', 'The Scorched Eyrie', 'snow', { a: hero(c[0] ?? 'archer', 240), who: stranger('dragoon', 340) }, [
+        { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), weather: 'snow', lines: [tell('The net-men go back down the mountain a good deal faster than they came up. The snow hisses where it falls on the nest.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'Two eggs and a keep that keeps its word. Tell the falconer we shall come down when they hatch.')] },
+      ]),
+  },
+  {
+    // (The Fallen Star, part 3: the colossus the crystal golems built round a fallen star begins to climb, and the star-counter goes for its heart)
+    id: 'starHearted',
+    title: 'The Star-Hearted',
+    blurb: 'In the crystal caves stands a colossus of sapphire with a fallen star for a heart, and it means to climb back into the sky.',
+    land: 'crystal',
+    like: { army: 'infernal', wave: 12 },
+    ease: 0.48,
+    cast: [STARTER_SLOT(['peasant', 'samurai'])],
+    waves: [
+      { foes: ['crystalGolem', 'stoneGolem', 'crystalGolem'] },
+      { foes: ['crystalGolem', 'ironGolem', 'magmaGolem', 'crystalGolem'] },
+      { foes: ['sapphireColossus', 'crystalGolem', 'crystalGolem', 'ironGolem'], boss: 'final' },
+    ],
+    boss: { name: 'The Star-Hearted', title: 'Who Wants to Go Home' },
+    before: (c) =>
+      story('starHearted', 'The Star-Hearted', 'crystal', { ivy: giver('archivist', 'Ivy Penhallow'), a: hero(c[0] ?? 'peasant', 220), who: stranger('sage', 330), star: foe('sapphireColossus', 460, 1.2, { name: 'The Star-Hearted', hidden: true }) }, [
+        { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'motes', rays: true, caption: 'The crystal caves, lit from within', lines: [say('ivy', 'Write everything down. If we are flattened, the next reader will want to know how.')] },
+        { cam: wide(330, 205), ...shoot('medium', 'who', 'pushIn'), weather: 'motes', lines: [tell('A quiet man with a star chart stands looking up, counting under his breath, a ladder over one shoulder and a very long pole in his hand.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a'), lines: [say('a', 'What is the pole for?'), say('who', 'For the last part. The parts before it are for you, I am afraid.')] },
+        { cam: wide(460, 205), ...shoot('low', 'star', 'pushIn', 'smash'), acts: [{ who: 'star', enter: 460, from: 'right' }], cue: 'earthRumble', fx: ['rumble', 'glow'], title: card('The Star-Hearted', 'Who Wants to Go Home'), lines: [say('star', 'UP. UP. EVERYTHING IN THE WAY IS ALSO GOING UP.', 'shout')] },
+        { cam: wide(260, 205), ...shoot('medium', 'a', 'snapZoom'), acts: [{ who: 'a', pose: 'strike' }], lines: [say('a', 'You can go home. Just not through us.')] },
+      ]),
+    after: (c) =>
+      story('starHeartedAfter', 'The Star-Hearted', 'crystal', { a: hero(c[0] ?? 'peasant', 240), who: stranger('sage', 340) }, [
+        { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), weather: 'motes', lines: [tell('The colossus comes apart like a dropped chandelier, and the star at its heart goes up through the roof of the cave like a spark from a fire.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'Back in its place. The count is whole again. Tell Miss Penhallow I owe her four corrections and a cup of tea.')] },
       ]),
   },
 ];

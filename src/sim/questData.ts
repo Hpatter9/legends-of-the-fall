@@ -109,6 +109,10 @@ export type Need =
   | { kind: 'duchess' }
   /** One of the king's spells known. */
   | { kind: 'spell'; id: string }
+  /** HERO-TALES-2: a Calamity cleared at this ascension or a higher one (0 a plain clear). */
+  | { kind: 'ascension'; n: number }
+  /** HERO-TALES-2: this share (0 to 1) of the bestiary's foes met. */
+  | { kind: 'bestiary'; share: number }
   /** Every one of these. */
   | { kind: 'all'; of: readonly Need[] };
 

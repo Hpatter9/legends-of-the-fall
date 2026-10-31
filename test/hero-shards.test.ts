@@ -165,32 +165,26 @@ test('pulls never give a hero earned by content, whatever the seed (an owned one
   assert.ok(starterPacks().flat().every((k) => !isContent(k)));
 });
 
-test('a content hero joins on its milestone, once, and stays', () => {
+test('a content hero joins at its tale’s end, once, and stays; no old milestone brings one any more', () => {
   const m = fresh(8);
   assert.deepEqual(grantContent(m), []);
-  // the tower and the armies' tiers (SECRET-HEROES, HERO-TALES-2: wave 20 and 40, the Beast Packs, the Undead Legion on Hard and the Yokai
-  // on Elite no longer bring a hero: a hero quest does, `secret-heroes.test.ts`)
+  // (SECRET-HEROES, HERO-TALES-2: the Last Stand's waves 20 and 40, the Beast Packs, the Undead Legion and Infernal Host on Hard, the Yokai
+  // on Elite, the Golem Forge on Hard, a Calamity cleared, its ascension 3 and half the bestiary no longer bring a hero: a tale does,
+  // `secret-heroes.test.ts`)
   m.tower = 40;
   m.stand = 40;
   m.armies.beasts = { best: 15, won: 15, clears: 1, stars: {} };
-  m.armies.undead = { best: 15, won: 15, clears: 3, stars: {}, hard: { 1: { won: 15, clears: 1 } } };
+  for (const a of ['undead', 'infernal', 'golems']) m.armies[a] = { best: 15, won: 15, clears: 3, stars: {}, hard: { 1: { won: 15, clears: 1 } } };
   m.armies.yokai = { best: 15, won: 15, clears: 1, stars: {}, hard: { 1: { won: 15, clears: 1 }, 2: { won: 15, clears: 1 } } };
+  m.calamity = { best: 6, clears: 5, asc: 3 };
   assert.deepEqual(grantContent(m), []);
   // (a tale handed in brings its hero, once)
   m.quests = { active: [], offers: [], done: ['taleThroneAppeal'] };
   assert.deepEqual(grantContent(m), ['tyrant']);
   assert.deepEqual(grantContent(m), [], 'once');
-  // the calamity, and its ascension
-  m.calamity = { best: 6, clears: 1 };
-  assert.deepEqual(grantContent(m), ['timeWitch']);
-  m.calamity = { best: 6, clears: 5, asc: 2 };
-  assert.deepEqual(grantContent(m), []);
-  m.calamity.asc = 3;
-  assert.deepEqual(grantContent(m), ['dragoon']);
-  // the bestiary
-  const sage = contentOf('sage')!;
-  assert.equal(sage.met(m), false);
-  assert.ok(sage.meter!(m).need > 10);
+  m.quests.done.push('taleClockHour', 'taleEyrieNest', 'taleStarHome');
+  assert.deepEqual(grantContent(m), ['timeWitch', 'dragoon', 'sage']);
+  assert.equal(contentOf('sage')!.meter, undefined, 'no bar to count towards');
   assert.equal(new Set(m.unlocked).size, m.unlocked.length);
   // none of it spends or changes a shard bar
   assert.equal(m.unlock && Object.keys(m.unlock).length, undefined);
