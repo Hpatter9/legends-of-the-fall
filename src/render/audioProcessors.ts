@@ -1027,8 +1027,8 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     if (track) this.setTrack(track);
   }
 
-  /** Starts a track's stems together on a new loop, fading in from nothing (null if it is already sounding). */
-  private begin(track: MusicId, baked: Baked): void {
+  /** Starts a track's stems together on a new loop, fading in from nothing over `fadeS` (null if it is already sounding). */
+  private begin(track: MusicId, baked: Baked, fadeS = FADE_S): void {
     if (this.loops.has(track)) return;
     const ac = this.ac;
     const t = ac.currentTime + 0.05;
@@ -1036,7 +1036,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     const trim = info ? trackGain(track) : 1;
     const fade = new GainNode(ac, { gain: 0 });
     fade.gain.setValueAtTime(0, t);
-    fade.gain.setTargetAtTime(this.level * trim, t, FADE_S / 3);
+    fade.gain.setTargetAtTime(this.level * trim, t, fadeS / 3);
     fade.connect(this.lowpass);
     const loop: Loop = { fade, trim, stems: {} };
     const rules = info ? 'town' : SYNTH_OF[track];
@@ -1083,8 +1083,9 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
 
   /** Fades the old track out and the new one in, and starts the new one from the top (once it is baked: the first time a
    *  track is wanted it is a moment, and the old track plays on meanwhile). During a sting the new track waits for it.
-   *  `level` is how loud the track sits (1 is its full level); the same track at another level glides there and plays on. */
-  setTrack(track: MusicId, level = 1): void {
+   *  `level` is how loud the track sits (1 is its full level); the same track at another level glides there and plays on.
+   *  `fadeS` is the crossfade's length (the boss track's own: `crossfadeOf` in `battleMusic.ts`). */
+  setTrack(track: MusicId, level = 1, fadeS = FADE_S): void {
     if (track === this.current) {
       if (level !== this.level) {
         this.level = level;
@@ -1103,21 +1104,21 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     this.applyColour(true);
     this.startDrone();
     if (!this.enabled || this.holding) return;
-    this.play(track, prev);
+    this.play(track, prev, fadeS);
   }
 
-  private play(track: MusicId, prev: MusicId | null): void {
+  private play(track: MusicId, prev: MusicId | null, fadeS = FADE_S): void {
     void this.stems(track).then(
       (baked) => {
         // (the wanted track may have changed while it baked)
         if (this.current !== track || !this.enabled || this.holding) return;
         // (every other loop goes, not only `prev`: two changes asked for before the first track baked (the victory's results
         // left for the deploy, then the camp at once) would otherwise leave the first loop playing under the new one)
-        for (const t of [...this.loops.keys()]) if (t !== track) this.release(t);
+        for (const t of [...this.loops.keys()]) if (t !== track) this.release(t, fadeS);
         // (a scene's track is kept only while it plays: the many short scores would otherwise pile up in memory)
         for (const t of SCENE_TRACKS) if (t !== track && t !== prev) this.baked.delete(t);
         this.trimBaked();
-        this.begin(track, baked);
+        this.begin(track, baked, fadeS);
         this.applyColour(true);
         this.startDrone();
       },
