@@ -14,7 +14,7 @@ import { castOf, CHAIN_BATTLES, QUEST_BATTLES, questBattleById } from '../src/si
 import { canFightBattle, startQuestBattle } from '../src/sim/questRun';
 import { standFight, type QuestFight } from '../src/sim/quests';
 import { chainById, PIECES, readChainState } from '../src/sim/eidolonChainData';
-import { activeChain, beginChain, bindChain, chainDone, chainOfBattle, chainWantsBattle, currentPart, noteChains, offeredChain, partBlocked, piecesOf, readyToBind, summonerWaiting } from '../src/sim/eidolonChains';
+import { activeChain, beginChain, bindChain, chainDone, chainOfBattle, chainWantsBattle, currentPart, noteChains, offeredChain, partBlocked, piecesOf, readyToBind, summonerWaiting, trialDue } from '../src/sim/eidolonChains';
 import { lineLen, sceneSeconds } from '../src/sim/sceneKit';
 import { revealCard } from '../src/sim/sceneReveal';
 
@@ -180,8 +180,10 @@ test('the parts go in order, each finding its piece and paying a bronze chest; t
   assert.equal(currentPart(m)?.progress, 4);
   assert.equal(noteChains(m, win('wildwood'))[0].piece.id, 'heldBreath');
   assert.equal(m.stash.length, stash + 3);
-  assert.equal(readyToBind(m), nivra);
-  assert.ok(summonerWaiting(m));
+  // (EIDOLON-TRIAL, the owner's call: every piece in, Nivra's trial comes before the binding; `eidolon-trial.test.ts` plays it)
+  assert.equal(readyToBind(m), undefined);
+  assert.equal(trialDue(m)?.trial.id, 'nivraTrial');
+  assert.equal(summonerWaiting(m), false);
   assert.deepEqual(noteChains(m, bossWin('beasts', 'alphaWolf')), [], 'nothing more counts once every piece is in');
 });
 
@@ -195,6 +197,9 @@ test('binding: Nivra is bound and chosen over Askel, a gold chest is paid, the h
   assert.equal(bindChain(m, 'nivra'), false, 'not before every piece is in');
   m.quests!.chains!.nivra = { part: 3, progress: 0 };
   m.quests!.pieces!.push('rimeScale', 'merePearl', 'heldBreath');
+  // (EIDOLON-TRIAL: and not before her trial is won)
+  assert.equal(bindChain(m, 'nivra'), false, 'not before the trial is won');
+  m.quests!.chains!.nivra.trialWon = true;
   assert.ok(hornHeld(m));
   m.eidolons!.horn = 300; // (blown since Askel's binding, and part refilled)
   const stash = m.stash.length;

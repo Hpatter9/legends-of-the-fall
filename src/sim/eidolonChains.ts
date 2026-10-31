@@ -9,7 +9,11 @@
 //   next part begins. Losing never takes progress away.
 // - **The owner's rule on heroes:** a chain only asks for starter heroes (both packs, `chainBattleData.ts`), so it never waits on luck; a
 //   part whose battle's cast cannot be filled at all still says so (`partBlocked`) rather than vanish.
-// - **Bound** at the Summoner (`bindChain`) once every piece is in: the Eidolon is bound and becomes the one the War Horn calls.
+// - **The trial** (EIDOLON-TRIAL, the owner's call for chains 2 to 6): a chain whose trial is written (`eidolonTrials.ts`) has one more
+//   step once every piece is in: the fight against the Eidolon itself (`trialDue`). Won (`noteChains` sees its battle won), the chain is
+//   ready to bind; lost, it waits, as a quest battle does. It finds no piece and pays nothing: the binding is its reward.
+// - **Bound** at the Summoner (`bindChain`) once every piece is in (and its trial won): the Eidolon is bound and becomes the one the War
+//   Horn calls.
 //
 // Pure rules: no Pixi, no DOM, no randomness (nothing is drawn: a chain's offer follows its rules alone).
 
@@ -18,6 +22,7 @@ import { blankQuests, goalGain, needMet, payReward, type QuestFight } from './qu
 import { bindEidolon, boundOf, chooseEidolon } from './warHorn';
 import { castOf, questBattleById } from './questBattles';
 import { CHAINS, chainById, type ChainDef, type ChainOpens, type ChainPart, type ChainState, type PieceDef } from './eidolonChainData';
+import { trialOfChainId, type TrialDef } from './eidolonTrials';
 
 const stateOf = (m: Meta) => (m.quests ??= blankQuests());
 export const chainState = (m: Meta, id: string): ChainState | undefined => m.quests?.chains?.[id];
@@ -62,11 +67,25 @@ export function currentPart(m: Meta): { chain: ChainDef; part: ChainPart; index:
   return c && st && part ? { chain: c, part, index: st.part, progress: st.progress } : undefined;
 }
 
-/** The chain whose every piece is in, waiting for its binding at the Summoner. */
+/** A chain's trial (EIDOLON-TRIAL): written for it, and the chain one that ends in a trial. */
+export const trialOf = (c: ChainDef): TrialDef | undefined => (c.trial ? trialOfChainId(c.id) : undefined);
+
+/** The steps of a chain in the log: its parts, and its trial as the last part when it has one ("Part 4 of 4: The Trial"). */
+export const stepsOf = (c: ChainDef): number => c.parts.length + (trialOf(c) ? 1 : 0);
+
+/** The trial waiting in the chain going: every piece in, its trial written and not yet won. */
+export function trialDue(m: Meta): { chain: ChainDef; trial: TrialDef } | undefined {
+  const c = activeChain(m);
+  const st = c && chainState(m, c.id);
+  const trial = c && trialOf(c);
+  return c && st && trial && st.part >= c.parts.length && !st.trialWon ? { chain: c, trial } : undefined;
+}
+
+/** The chain whose every piece is in (and its trial won, if it has one), waiting for its binding at the Summoner. */
 export function readyToBind(m: Meta): ChainDef | undefined {
   const c = activeChain(m);
   const st = c && chainState(m, c.id);
-  return c && st && st.part >= c.parts.length ? c : undefined;
+  return c && st && st.part >= c.parts.length && (!trialOf(c) || !!st.trialWon) ? c : undefined;
 }
 
 /** The pieces of a chain found so far, in order. */
@@ -85,6 +104,9 @@ export interface PieceFound {
 /** Count a settled fight towards the part going. A part done finds its piece, pays its reward, and the next part begins (its count from
  *  nothing). Returns the pieces found. Pure but for the meta. */
 export function noteChains(m: Meta, f: QuestFight): PieceFound[] {
+  // (EIDOLON-TRIAL: the trial won, the chain is ready to bind; nothing is found)
+  const due = trialDue(m);
+  if (due && goalGain({ kind: 'battle', n: 1, battle: due.trial.id }, f)) chainState(m, due.chain.id)!.trialWon = true;
   const cur = currentPart(m);
   if (!cur) return [];
   const st = chainState(m, cur.chain.id)!;
@@ -114,12 +136,14 @@ export function bindChain(m: Meta, id: string): boolean {
 
 /** Whether the part going asks for this quest battle (it may then be fought from the chain's card, as a quest taken lets one be). */
 export function chainWantsBattle(m: Meta, battle: string): boolean {
+  if (trialDue(m)?.trial.id === battle) return true;
   const g = currentPart(m)?.part.goal;
   return g?.kind === 'battle' && g.battle === battle;
 }
 
-/** The chain whose part a battle is, if one is. */
-export const chainOfBattle = (battle: string): ChainDef | undefined => CHAINS.find((c) => c.parts.some((p) => p.goal.kind === 'battle' && p.goal.battle === battle));
+/** The chain whose part (or trial) a battle is, if one is. */
+export const chainOfBattle = (battle: string): ChainDef | undefined =>
+  CHAINS.find((c) => c.parts.some((p) => p.goal.kind === 'battle' && p.goal.battle === battle) || trialOf(c)?.id === battle);
 
 /** A part that cannot be done with the heroes owned (its battle's cast cannot be filled): the heroes it asks for, in words' order. With every
  *  slot listing both starter packs this should not happen; the page shows the part greyed with them rather than hide it. */

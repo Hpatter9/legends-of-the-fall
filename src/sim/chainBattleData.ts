@@ -4,12 +4,15 @@
 // the chains can grow without changing those. The owner's rule: a chain only ever asks for heroes of the two starter packs, so each slot
 // lists heroes of both packs (a slot's first owned hero takes the part) and its lines name whoever came (`{a}`).
 //
-// Askel's chain has The Kennel Fires, Nivra's The Glass Mere (`docs/notes/eidolon-chain-2.md`). Pure data: no Pixi, no DOM.
+// Askel's chain has The Kennel Fires, Nivra's The Glass Mere (`docs/notes/eidolon-chain-2.md`). EIDOLON-TRIAL: each chain's trial, the
+// fight against its Eidolon before the binding, is built here from its data in `eidolonTrials.ts` (`trialBattle`). Pure data: no Pixi, no
+// DOM.
 
 import { close, say, tell, wide, type CastMember, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
 import type { QuestBattle } from './questBattles';
 import { heroName } from './heroNames';
+import { TRIALS, type TrialDef } from './eidolonTrials';
 
 const hero = (kind: string, x: number, more: Partial<CastMember> = {}): CastMember => ({ role: `unit:${kind}`, x, facing: 'right', name: heroName(kind), ...more });
 const foe = (kind: string, x: number, scale = 1.2, more: Partial<CastMember> = {}): CastMember => ({ role: `unit:${kind}`, x, facing: 'left', scale, ...more });
@@ -24,6 +27,36 @@ const story = (id: string, title: string, look: Area, cast: Scene['cast'], shots
   cast,
   shots: shots.map((s, i) => (i === 0 ? { look, fx: ['fadeIn'], ...s } : s)),
 });
+
+/** EIDOLON-TRIAL: a trial as a quest battle: its arena, its waves (the Eidolon last, under its own name and title), and its two stories:
+ *  the place, the Eidolon rising out of it with its challenge and a hero's answer; after the win, its words and the hero's. */
+export function trialBattle(t: TrialDef): QuestBattle {
+  const boss = t.boss.id;
+  const lead = t.cast[0]?.heroes[0] ?? 'knight';
+  return {
+    id: t.id,
+    title: t.part.title,
+    blurb: t.blurb,
+    land: t.land,
+    like: t.like,
+    ease: t.ease,
+    bossLift: t.lift,
+    cast: t.cast,
+    waves: t.waves,
+    boss: { name: t.boss.name, title: t.boss.title },
+    before: (c) =>
+      story(t.id, t.part.title, t.land, { a: hero(c[0] ?? lead, 230), e: foe(boss, 430, 1.5, { name: t.boss.name, hidden: true }) }, [
+        { cam: wide(290, 200), fx: ['fadeIn'], caption: t.part.title, lines: [tell(t.lines.place)] },
+        { cam: wide(380, 205), acts: [{ who: 'e', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: t.lines.challenge.map((x) => say('e', x)) },
+        { cam: close('a'), lines: [say('a', t.lines.answer)] },
+      ]),
+    after: (c) =>
+      story(`${t.id}After`, t.part.title, t.land, { a: hero(c[0] ?? lead, 230), e: foe(boss, 370, 1.5, { name: t.boss.name }) }, [
+        { cam: wide(300, 205), lines: [say('e', t.lines.after)] },
+        { cam: close('a'), lines: [say('a', t.lines.afterHero)] },
+      ]),
+  };
+}
 
 export const CHAIN_BATTLES: readonly QuestBattle[] = [
   {
@@ -82,4 +115,6 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
         { cam: close('a'), lines: [tell("Where the Warden broke apart, a pearl of black ice lies on the mere. Under the glass, the long pale shape stirs, once."), say('a', 'Sorry. Go back to sleep. We will knock properly.')] },
       ]),
   },
+  // (EIDOLON-TRIAL: the trials, one a chain)
+  ...TRIALS.map(trialBattle),
 ];

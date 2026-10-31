@@ -11,8 +11,8 @@ import { eidolonById, type Eidolon } from './sim/eidolons';
 import { chooseEidolon, chosenOf } from './sim/warHorn';
 import type { Meta } from './sim/meta';
 import { CHAINS, chainById, type ChainDef, type PieceDef } from './sim/eidolonChainData';
-import { activeChain, chainDone, chainState, currentPart, offeredChain, partBlocked, piecesOf, readyToBind, type PieceFound } from './sim/eidolonChains';
-import { questBattleById } from './sim/questBattles';
+import { activeChain, chainDone, chainState, currentPart, offeredChain, partBlocked, piecesOf, readyToBind, stepsOf, trialDue, trialOf, type PieceFound } from './sim/eidolonChains';
+import { castOf, questBattleById } from './sim/questBattles';
 import { battleWon } from './sim/questRun';
 import { heroName } from './sim/heroNames';
 import { play } from './render/sound';
@@ -111,7 +111,10 @@ export function closePieceCard(): void {
 export function nextWords(m: Meta, found: PieceFound): string {
   const c = chainById(found.chain);
   const cur = currentPart(m);
-  if (c && cur?.chain.id === c.id) return `Part ${cur.index + 1} of ${c.parts.length} begins: ${cur.part.title}`;
+  if (c && cur?.chain.id === c.id) return `Part ${cur.index + 1} of ${stepsOf(c)} begins: ${cur.part.title}`;
+  // (EIDOLON-TRIAL: the last piece found, the Eidolon tests the keep first)
+  const due = trialDue(m);
+  if (c && due?.chain.id === c.id) return `Part ${stepsOf(c)} of ${stepsOf(c)} begins: ${due.trial.part.title}. ${eidolonOf(c).name} waits to test the keep.`;
   if (c && readyToBind(m)?.id === c.id) return `Every piece is found. Take them to the Summoner in the Sanctum to bind ${eidolonOf(c).name}.`;
   return '';
 }
@@ -188,11 +191,27 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         go.addEventListener('click', () => hooks.summoner!());
         body.append(go);
       }
+    } else if (st && trialDue(m)?.chain === c) {
+      // (EIDOLON-TRIAL: every piece found, and the Eidolon tests the keep before it is bound)
+      const t = trialDue(m)!.trial;
+      body.append(pieceRow(c, m, (pc, i) => showPieceCard({ chain: c.id, part: i, piece: pc })));
+      body.append(el('small', 'ecnPart', `Part ${stepsOf(c)} of ${stepsOf(c)}: ${t.part.title}`), el('small', 'ecnGoal', t.part.text));
+      body.append(el('small', 'ecnSaid', `${e.name}: “${t.part.begin}”`));
+      const qb = questBattleById(t.id);
+      if (qb && hooks.fight) {
+        const cast = castOf(m, qb);
+        if (!cast) body.append(el('small', 'ecnWarn', `Needs ${[...new Set(qb.cast.flatMap((sl) => [...sl.heroes, ...(sl.standIns ?? [])]))].map(heroName).join(' or ')}: recruit one to take this on`));
+        else {
+          const go = el('button', 'primary ecnGo', hooks.saved?.() === qb.id ? `Continue: ${qb.title}` : `Fight: ${qb.title}`);
+          go.addEventListener('click', () => hooks.fight!(qb.id));
+          body.append(go);
+        }
+      }
     } else if (st) {
       const cur = currentPart(m)!;
       const p = cur.part;
       body.append(pieceRow(c, m, (pc, i) => showPieceCard({ chain: c.id, part: i, piece: pc })));
-      body.append(el('small', 'ecnPart', `Part ${cur.index + 1} of ${c.parts.length}: ${p.title}`), el('small', 'ecnGoal', p.text));
+      body.append(el('small', 'ecnPart', `Part ${cur.index + 1} of ${stepsOf(c)}: ${p.title}`), el('small', 'ecnGoal', p.text));
       const bar = el('i', 'qlBar');
       const fill = el('span');
       fill.style.width = `${Math.round((cur.progress / p.goal.n) * 100)}%`;
@@ -225,6 +244,14 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         again.addEventListener('click', () => hooks.fight!(battle));
         more.append(again);
       }
+      // (EIDOLON-TRIAL: the trial too, once won, for practice)
+      const t = trialOf(c);
+      if (t && battleWon(m, t.id) && hooks.fight) {
+        const again = el('button', 'ecnLink', `Replay ${questBattleById(t.id)!.title}`);
+        again.title = 'Fight it again for practice: no reward';
+        again.addEventListener('click', () => hooks.fight!(t.id));
+        more.append(again);
+      }
       if (more.childElementCount) body.append(more);
     }
     card.append(eidolonFace(c, m, 'ecnFace'), body);
@@ -240,6 +267,8 @@ export function hallPlaque(m: Meta): { kind: 'offer' | 'going' | 'bind'; title: 
   if (offer) return { kind: 'offer', ...(offer.call ?? { title: 'The Summoner looks up from the altar', line: 'Something old is stirring · tap to listen' }) };
   const ready = readyToBind(m);
   if (ready) return { kind: 'bind', title: `Bind ${fullName(eidolonOf(ready))}`, line: `Every piece is on the altar · ${ready.parts.length} of ${ready.parts.length}` };
+  const due = trialDue(m);
+  if (due) return { kind: 'going', title: `${fullName(eidolonOf(due.chain))} · ${due.chain.parts.length} of ${due.chain.parts.length} pieces`, line: `Part ${stepsOf(due.chain)}: ${due.trial.part.title}` };
   const cur = currentPart(m);
   if (cur) return { kind: 'going', title: `${fullName(eidolonOf(cur.chain))} · ${piecesOf(m, cur.chain).length} of ${cur.chain.parts.length} pieces`, line: `Part ${cur.index + 1}: ${cur.part.title}` };
   return null;

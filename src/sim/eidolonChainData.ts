@@ -59,7 +59,8 @@ export interface ChainDef {
   opens: ChainOpens;
   /** What opens it, in words, for a card while it sleeps ("the Beast Packs cleared"). */
   opensWords: string;
-  /** Its last part is a trial, a fight against the Eidolon itself (chains 2 to 6; the trials are a later batch). */
+  /** It ends in a trial, a fight against the Eidolon itself, after its pieces and before the binding (chains 2 to 6, the owner's call).
+   *  The trial itself is data in `eidolonTrials.ts`; a chain with the flag and no trial written there ends at the binding. */
   trial: boolean;
   /** The parts in order (none: not written yet, and never offered). */
   parts: readonly ChainPart[];
@@ -243,7 +244,7 @@ export const CHAINS: readonly ChainDef[] = [
     giver: { name: 'A frost-bitten hunter', title: 'Passing the camp' },
     opens: { kind: 'army', army: 'beasts' },
     opensWords: 'the Beast Packs cleared',
-    // (a trial against Nivra herself is still to come, in the trials' batch; until then the chain ends at the binding, as Askel's does)
+    // (EIDOLON-TRIAL: after the three pieces, the trial against Nivra herself on the Glass Mere, `eidolonTrials.ts`; then the binding)
     trial: true,
     prologue: UNDER_THE_MERE,
     binding: NIVRA_BINDING,
@@ -294,10 +295,12 @@ export const PIECES: ReadonlyMap<string, PieceDef> = new Map(CHAINS.flatMap((c) 
 /* ------------------------------------------------------------------ the save */
 
 /** A chain's lasting state (`Meta.quests.chains[id]`): there once begun. `part` is the part going (the parts' count: every piece found,
- *  ready to bind), `progress` its count, `bound` once the binding is done. */
+ *  ready to bind, or to face its trial first), `progress` its count, `trialWon` once its trial is won, `bound` once the binding is done. */
 export interface ChainState {
   part: number;
   progress: number;
+  /** EIDOLON-TRIAL: the trial against the Eidolon won (only once every piece is in). */
+  trialWon?: boolean;
   bound?: boolean;
 }
 
@@ -313,7 +316,8 @@ export function readChainState(raw: { chains?: unknown; pieces?: unknown }): { c
       const r = v as Partial<ChainState>;
       const part = Math.max(0, Math.min(c.parts.length, Math.floor(Number(r.part) || 0)));
       const need = c.parts[part]?.goal.n ?? 0;
-      chains[id] = { part, progress: Math.max(0, Math.min(need, Math.floor(Number(r.progress) || 0))), ...(r.bound && part >= c.parts.length ? { bound: true } : {}) };
+      const all = part >= c.parts.length;
+      chains[id] = { part, progress: Math.max(0, Math.min(need, Math.floor(Number(r.progress) || 0))), ...(r.trialWon === true && all ? { trialWon: true } : {}), ...(r.bound && all ? { bound: true } : {}) };
     }
     if (Object.keys(chains).length) out.chains = chains;
   }

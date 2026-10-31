@@ -25,6 +25,14 @@ fight plays out the same; the chain draws nothing from any stream.
   said: win quiet."; it echoes Nivra's own "Hold your breath. I hold mine for centuries."). Piece: **the Held Breath** ("After the fifth
   quiet win, frost drew a serpent's eye on the library window, and a grey mist would not leave the glass." / "Caught in a phial, it frosts
   the glass from the inside. It is very patient.").
+- **Part 4, The Trial** (the owner's call: chains 2 to 6 end with a trial against the Eidolon before the binding): once the three pieces
+  are in, Nivra herself tests the keep on the Glass Mere. The log: "Nivra: “You have the pieces. Do you have the nerve? Come back to the
+  mere, little keep, and show me.”" Before the fight: "The Glass Mere again. The ice is broken open in the middle, and the water under it is
+  moving." She rises: "So. The little fires who knocked on my door." / "You have the pieces. Do you have the nerve?"; the hero: "We came
+  all this way. We are not going home cold." After the win: "Good. The pack ran from me. You stood. Take me to your Summoner, little keep:
+  I will answer your horn." / "She is laughing. I think. It sounds like a lake cracking." **Winning leads straight to the binding**;
+  losing costs nothing (Try again at once, or Leave and fight it later from the Eidolons tab). It finds no piece and pays no chest: the
+  binding is its reward.
 - **The binding**: "The scale, the pearl, the breath. Set them on the altar. And put your cloaks on." The Summoner unstops the phial; frost
   runs across the floor in a ring and every brazier gutters blue; Nivra rises: "Three hundred winters under the ice, and I dreamed of your
   horn in every one. The deep remembers it, little keep. So do I." Bound. "The Rime Wyrm wakes for the keep." **No horn beats**: the horn
@@ -36,7 +44,7 @@ fight plays out the same; the chain draws nothing from any stream.
 
 - `src/sim/eidolonChainData.ts`: Nivra's chain (three parts, three pieces, `UNDER_THE_MERE`, `NIVRA_BINDING`), and an optional
   `ChainDef.call`, the Sanctum plaque's words while a chain waits to be heard ("A frost-bitten hunter waits by the altar · Down from the
-  north, with snow on the boots · tap to listen"); Askel's keeps the Summoner's. `trial: true` is kept for the trials' batch.
+  north, with snow on the boots · tap to listen"); Askel's keeps the Summoner's. `trial: true`: her trial is written (see The trial).
 - `src/sim/chainBattleData.ts`: **The Glass Mere** (snow land; white wolves and crystal golems, the Sapphire Colossus as the Warden;
   `like` the Beast Packs' wave 11, `ease` 1.15).
 - `src/eidolonChainView.ts` (`hallPlaque` reads `call`), `src/home.ts` (`summonerTap`: a binding that gave no horn shows the Eidolon's
@@ -44,6 +52,68 @@ fight plays out the same; the chain draws nothing from any stream.
 - The ceremony takes its Eidolon's element (`eidolonBinding.ts`, `eidolonChains.css` `.ebLayer.el-ice`): the circle frost-blue, the
   Sanctum washed blue, snow drifting down in place of embers, the name and seal in rime, and frost's sounds (`frostCrack` as the circle
   forms, `frostShatter` as she rises). Reduced motion: the snow is hidden and nothing moves, as for Askel.
+
+## The trial (EIDOLON-TRIAL)
+
+**Reusable: one entry a chain.** A trial is plain data, `TrialDef` in `src/sim/eidolonTrials.ts`: the boss (the Eidolon as a fighter,
+its sheet its own art), its kit (a summoning skill and a passive), its great attacks (BOSS-BIG signatures), what it becomes at half health
+(a boss phase), the arena (land, waves, `like`, `ease`, and `lift` on the Eidolon alone), the cast, and the words (the part in the log, the
+story's lines). The tables take each trial in from `TRIALS`: `foes.ts` (`FOES`, and `isBoss`; kept out of `BOSS_IDS`, the meta's boss
+codex), `abilities.ts` (`KITS`, its summoning a generic `callPack`), `bossAttacks.ts` (`SIGNATURES`), `bossPhases.ts` (`PHASE2`),
+`chainBattleData.ts` (`trialBattle` makes the quest battle and its two stories), `sceneFamilies.ts` (the second form's cut-in) and
+`codex.ts` / `codexLore.ts` (the bestiary: met in "The Trial: the last part of Nivra's Eidolon chain"). **Chains 3 to 6 add one entry to
+`TRIALS`** (and a sheet and its lore); nothing else changes. A chain with `trial: true` and no entry ends at the binding, as before.
+
+**The rules** (`eidolonChains.ts`): `trialOf(chain)`, `trialDue(meta)` (every piece in, the trial written and not yet won), `stepsOf`
+(the parts plus the trial: "Part 4 of 4"). `readyToBind` now also waits for the trial; `chainWantsBattle` opens the trial's battle while it
+is due (so it is fought from the chain's card, as the Glass Mere is); `noteChains` marks `trialWon` when the trial's battle is won (its last
+wave; a loss or any other battle counts nothing). The save: `ChainState.trialWon` (optional; kept only once every piece is in, and only
+`true`). **Older saves**: a save part-way through the chain carries on where it was; one saved with every piece in (ready to bind under the
+old rule) now faces the trial first; one already bound stays bound. Practice: once won, the trial is replayed from the tab ("Replay The
+Trial", no reward).
+
+**Nivra's kit** (the boss `nivraWyrm`, drawn at 1.5x as a last boss is):
+
+- **Rime Breath** (signature, ice, a new shape `row`): she gathers and the whole width of the field is marked down the row where most heroes
+  stand, then frost pours along it and freezes whoever is still on it (rage: two rows deep, "The Long Winter"). Step off, or Shield it.
+- **Glass Tomb** (signature, ice): a ring of ice one and two tiles round her, chilling (rage: "The Mere Closes").
+- **Call of the Mere** (her skill): two frost wolves (the white werewolves) run out of the snow to her side; four at most standing, six a fight.
+- **Rime Scales** (passive): blows from the front lose a fifth, and her blows chill (slow).
+- **Ice armour at half health** (her second form, "THE ICE REMEMBERS. SO DO I. COME, MY WOLVES!", with its cut-in once a save): a shield of
+  18% of her health, blows from the front lose 35% and a fifth of a melee blow comes back, two more frost wolves, her attack up 15%.
+- The War Horn's Eidolon strikes her as "a great being in its own trial" (25%, `eidolons.ts`, armed by the page for a trial).
+
+**The arena**: snow, two waves (two white wolves and two crystal golems; then Nivra with two wolves), strength `like` the Beast Packs'
+wave 13, `ease` 0.97, her own `lift` 1 (the mid-boss's stats are her base; the tuning was by `ease`). The cast as at the Glass Mere (Ayame or
+Kenji; any starter hero stands in).
+
+**Her sprite** (`src/art/units/eidolon_nivra.png`): cut from the owner's Gemini sheet (`art-source/eidolons/gemini/nivra-sheet.jpg`, from
+`art/gemini-eidolons`; no other branch had cut her) by `tools/eidolon-trial/cut_nivra.py`, as `tools/eidolon-call-2/cut_askel.py` cuts
+Askel's: magenta keyed, down by 3 a block at a time, specks dropped, one baseline, centred on her coils, a palette of 256 (147 KB, bundled
+into game.js as the other sheets are, so it plays offline). Rows: the slither (walk), the breath (attack: her jaws opening, the mist
+leaving them; the sheet's fifth breath frame, whose cone runs out of its cell and whose pose does not meet the coils, is the fourth held a
+beat), idle, the rise's first frames (hurt), the rise backwards (dead: she sinks). The breath's great cone is the battle's own frost along
+the marked row.
+
+**The page**: the Eidolons tab shows "Part 4 of 4: The Trial", the goal, Nivra's words and **Fight: The Trial**; the Sanctum's plaque
+"Part 4: The Trial"; the third piece's card "Part 4 of 4 begins: The Trial. Nivra waits to test the keep." The trial's win plays its beat
+after, then the binding at once (`Home.bindAfterTrial`, the Sanctum's own binding moved into `Home.bind`), its Bound card and the Pact
+Gallery.
+
+### The trial's win rate
+
+`npm run quest-rate -- 80 +N --only=nivraTrial` (the rating tool's party of the cast and starter heroes, at the Beast Packs' level 15 plus
+N, with the two hearts):
+
+| level | won |
+| --- | --- |
+| 20 | 26/80, 33% |
+| 21 (where the trial opens: the Glass Mere's 20, and part 3's five waves after) | 36/80, 45% |
+| 23 | 43/80, 54% |
+| 25 | 57/80, 71% |
+| 30 | 80/80, 100% |
+
+Tuned by `ease` (1 won 17% at level 21, 0.95 51%, 0.92 63%, 0.85 73%, 0.75 97%: 0.97 taken, hard but fair as the owner keeps quest fights).
 
 ## The battle's win rate
 
@@ -95,7 +165,5 @@ shots, their face over the land. Screenshots `docs/samples/eidolon-chain2-*.png`
 
 ## Left open (questions for the owner)
 
-- **The trial**: the design ends chains 2 to 6 with a trial against the Eidolon itself; this batch (as asked) ends Nivra's at the binding
-  after three parts, with `trial: true` kept for the trials' batch. Should her trial become a fourth part before the binding, later?
 - **Where the hunter tells it**: the prologue plays from the Sanctum's plaque (as Askel's), with the hunter come to the Sanctum, rather
   than from the passersby' ledge on the Battle tab.
