@@ -31,6 +31,8 @@ import { applyMystery, drawMystery, type MysteryAct } from './mystery';
 import { applyRoad, drawRoad, faceOf, noteRoad, pickRoadKind, roadRun, type RoadAct, type RoadKind } from './midEvents';
 import { isWare, MARKET_BUYS, marketOptions, stockMarket } from './market';
 import { recruit, benchFull, type Run } from './run';
+import { guestBlock, takeGuest } from './guest';
+import { heroName } from './heroNames';
 
 export type EventKind =
   | 'shrine'
@@ -114,7 +116,9 @@ export type Effect =
   // (the passing cart's sellsword and rummage, and the road's events: MID-EVENTS)
   | { t: 'hire'; kind: string }
   | { t: 'reroll' }
-  | { t: 'road'; act: RoadAct };
+  | { t: 'road'; act: RoadAct }
+  // (the passing cart's guest hero, for this run only: GUEST-HERO, `guest.ts`)
+  | { t: 'guest'; kind: string };
 
 export interface EventOption {
   label: string;
@@ -334,11 +338,19 @@ export function chooseOption(run: Run, i: number): string | null {
       recruit(run, fx.kind, o.cost);
       line = `The ${UNITS[fx.kind]?.name ?? 'sellsword'} climbs down off the cart and joins the bench.`;
       break;
+    case 'guest':
+      if (guestBlock(run) || !takeGuest(run, fx.kind, o.cost)) {
+        run.gold += o.cost;
+        return 'The party has a guest already: one at a time.';
+      }
+      line = `${heroName(fx.kind)} climbs down off the cart and joins you as a guest: a sixth hero on the field, for this run only.`;
+      break;
     case 'reroll': {
       // (the unsold wares go back under the cloth and others come out; what was bought stays sold)
       const fresh = stockMarket(run, ev.stage, 1);
       let k = 0;
-      ev.options = ev.options.map((x) => (isWare(x) && !x.done && k < fresh.length ? fresh[k++] : x));
+      // (a guest on offer stays where it is: it is not the cart's stock, GUEST-HERO)
+      ev.options = ev.options.map((x) => (isWare(x) && !x.done && x.effect.t !== 'guest' && k < fresh.length ? fresh[k++] : x));
       for (; k < fresh.length; k++) ev.options.splice(ev.options.length - 2, 0, fresh[k]);
       line = 'The pedlar grumbles, and drags out another crate.';
       break;

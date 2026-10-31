@@ -8,7 +8,7 @@ import { heroName } from './sim/heroNames';
 import { MAX_RANK, saveMeta, takenRank, type Meta } from './sim/meta';
 import { awakenedOf } from './sim/awaken';
 import { ORES } from './sim/awakenMats';
-import { planUpgradeAll, takeUpgrade, upgradeAll, upgradeList, upgradeOf, type AllTaken, type Took } from './sim/upgradesReady';
+import { planUpgradeAll, takeUpgrade, talentList, talentPointsReady, upgradeAll, upgradeList, upgradeOf, type AllTaken, type Took } from './sim/upgradesReady';
 import { heroArtwork } from './heroArtwork';
 import { gems, playAwakenShow, tellAwakened } from './awakenView';
 import { oreIcon } from './oreView';
@@ -63,11 +63,14 @@ export function allWords(t: AllTaken): string {
 let openNow: (() => void) | null = null;
 
 /** Open the list over the page. `kinds` is the roster order (the order "Upgrade all" pays in); `changed` is told when it closes
- *  after anything was taken; `onHero` opens a hero's sheet (a tap on a row's picture or name). */
-export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () => void, onHero?: (kind: string) => void): void {
+ *  after anything was taken; `onHero` opens a hero's sheet (a tap on a row's picture or name); `onTalents` opens a hero's talent tree
+ *  (TALENT-ARROWS: a row "Talent points: 2 to spend" for each hero with points to spend, after the ranks and awakenings; "Upgrade all"
+ *  never spends them, as talents are choices). */
+export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () => void, onHero?: (kind: string) => void, onTalents?: (kind: string) => void): void {
   openNow?.();
   const order = kinds.filter((k) => meta.unlocked.includes(k));
   const listed = upgradeList(meta, order).map((u) => u.kind);
+  const talents = onTalents ? talentList(meta, order) : [];
   let took = false;
   // (first awakenings taken here: the page's cinematic for each waits until the list is closed, so it never plays behind it)
   const woke: [string, number][] = [];
@@ -105,6 +108,7 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
   // (each row is built once, its picture kept, so a flourish over it plays on while the words and the button change)
   interface Row { kind: string; box: HTMLElement; pic: HTMLElement; step: number; ranks: HTMLElement; what: HTMLElement; cost: HTMLElement; go: HTMLButtonElement }
   const made: Row[] = [];
+  const talentRows: (() => void)[] = [];
   const picOf = (kind: string): HTMLImageElement => {
     const img = heroArtwork(kind, false, awakenedOf(meta, kind));
     img.alt = '';
@@ -142,6 +146,35 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
         close();
         onHero(kind);
       });
+  }
+
+  // (TALENT-ARROWS: the talent rows, each with a button that opens the hero's tree; the list closes first, as a picture's tap does)
+  for (const t of talents) {
+    const box = el('div', 'ulRow ulTalent');
+    box.dataset.kind = t.kind;
+    const pic = el('button', 'ulPic');
+    pic.type = 'button';
+    pic.setAttribute('aria-label', `Open ${heroName(t.kind)}'s talents`);
+    pic.append(picOf(t.kind));
+    const text = el('div', 'ulText');
+    const what = el('span', 'ulWhat');
+    text.append(el('b', '', heroName(t.kind)), what, el('small', 'ulCost', 'A choice: pick the talents yourself'));
+    const go = el('button', 'ulGo', 'Spend');
+    go.type = 'button';
+    box.append(pic, text, go);
+    rows.append(box);
+    const paintTalent = () => {
+      const n = talentPointsReady(meta, t.kind);
+      what.textContent = n ? `Talent points: ${n} to spend` : 'Talent points: all spent';
+      box.classList.toggle('done', !n);
+    };
+    talentRows.push(paintTalent);
+    const open = () => {
+      close();
+      onTalents!(t.kind);
+    };
+    go.addEventListener('click', open);
+    pic.addEventListener('click', open);
   }
 
   /** The short flourish over each hero that rose (once a hero, its last step), a little apart so they do not all land at once. */
@@ -185,11 +218,13 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
       r.cost.replaceChildren(...(w.ore ? [oreIcon(w.ore, 'oreIco ulOre')] : []), w.cost);
       r.go.textContent = w.btn;
     }
-    count.textContent = ready ? `${ready} ready` : 'all taken';
+    for (const p of talentRows) p();
+    const spend = talents.filter((t) => talentPointsReady(meta, t.kind) > 0).length;
+    count.textContent = ready || spend ? [ready ? `${ready} ready` : '', spend ? `${spend} with talents` : ''].filter(Boolean).join(' · ') : 'all taken';
     const plan = planUpgradeAll(meta, order);
     all.disabled = !plan.steps.length;
     all.textContent = plan.steps.length ? `Upgrade all (${plan.steps.length})` : 'Nothing more to upgrade';
-    if (!made.length) rows.replaceChildren(el('p', 'ulNone', 'No hero has an upgrade ready. Shards earn ranks; at four stars, shards and rift ores awaken a hero.'));
+    if (!made.length && !talents.length) rows.replaceChildren(el('p', 'ulNone', 'No hero has an upgrade ready. Shards earn ranks; at four stars, shards and rift ores awaken a hero.'));
   };
 
   all.addEventListener('click', () => {

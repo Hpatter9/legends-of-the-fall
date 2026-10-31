@@ -11,13 +11,14 @@ import { heroRank, type Meta } from './meta';
 import { awakenStats } from './awaken';
 import { boostOf, equip, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
+import { guestBoost } from './guest';
 import { autoMerge } from './merge';
 import { UNITS } from './units';
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
 export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
   const def = UNITS[h.kind];
-  const boost = run?.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind));
+  const boost = h.guest && run && !run.local ? guestBoost(run, meta, h) : run?.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind));
   return def.hp * def.atk * (boost.hp ?? 1) * (boost.atk ?? 1);
 }
 
@@ -29,9 +30,12 @@ export const isBackline = (kind: string): boolean => !!UNITS[kind].shot || UNITS
  *  smaller roster of kinds fields fewer heroes. */
 export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): Owned[] {
   // (a hero a mirror's clone stands in for sits out: ONE-OF-EACH)
-  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id));
-  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id)).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
-  return oneOfEach([...kept, ...rest]).slice(0, squadLimit(run));
+  // (a guest is not one of the five: it takes its own sixth place after them, GUEST-HERO)
+  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
+  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+  const five = oneOfEach([...kept, ...rest]).slice(0, squadLimit(run));
+  const guest = run.roster.find((h) => h.guest);
+  return guest && !five.some((h) => h.kind === guest.kind) ? [...five, guest] : five;
 }
 
 /** The heroes in order with every later hero of a kind already listed left out (ONE-OF-EACH). */
@@ -167,7 +171,7 @@ export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned
   const spots = autoFormation(b.board, squad);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
-    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
+    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (h.guest && !run.local ? guestBoost(run, meta, h) : run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
   }
   return spots;
 }
