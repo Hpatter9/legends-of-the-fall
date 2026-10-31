@@ -4,6 +4,8 @@
 // name stamps in, it speaks its line, and the seal reads "Bound". A tap moves on to the next beat; the last waits for Continue.
 // HORN-GIFT: Askel's binding goes on past the seal: the Summoner hands over the War Horn of the first kings (its painting rises over the
 // altar, `horn`) and the hound breathes his fire into it (its full painting and glow, `hornFull`); the page's end card follows.
+// EIDOLON-CHAIN-2: the ceremony takes its Eidolon's element: Nivra's circle is frost-blue, the braziers gutter blue and snow drifts down
+// in place of embers (`eidolonChains.css`, `.ebLayer.el-ice`), with frost's sounds.
 // Reduced motion: no rises or drifts, everything fades in and out held still. It changes nothing in the save: the page binds the
 // chain (`bindChain`) once it has played (a replay from the Pact Gallery binds nothing).
 
@@ -12,7 +14,7 @@ import { figureUrl } from './eidolonCall';
 import { pieceSigil } from './eidolonChainView';
 import { eidolonById } from './sim/eidolons';
 import type { ChainDef } from './sim/eidolonChainData';
-import { duck, play } from './render/sound';
+import { duck, play, type Sfx } from './render/sound';
 import { settings } from './settings';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -22,8 +24,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: stri
   return e;
 };
 
-/** The sound of each beat as it begins. */
+/** The sound of each beat as it begins (fire's, the first binding's; an ice Eidolon's circle cracks and she bursts up through it). */
 const BEAT_SOUND = { pieces: 'holyChime', circle: 'riseSummon', rise: 'fireWhoosh', name: 'stingSummon', bound: 'setChime3', horn: 'horn', hornFull: 'fireWhoosh' } as const;
+const ELEMENT_SOUND: Partial<Record<string, Partial<Record<keyof typeof BEAT_SOUND, Sfx>>>> = { ice: { circle: 'frostCrack', rise: 'frostShatter' } };
 
 /** Play a chain's binding. Resolves when the player taps Continue on its last beat. */
 export function playBinding(chain: ChainDef, replay = false): Promise<void> {
@@ -106,7 +109,7 @@ export function playBinding(chain: ChainDef, replay = false): Promise<void> {
         void say.offsetWidth;
         say.classList.add('on');
       }
-      const cue = BEAT_SOUND[b.beat as keyof typeof BEAT_SOUND];
+      const cue = ELEMENT_SOUND[e.element]?.[b.beat as keyof typeof BEAT_SOUND] ?? BEAT_SOUND[b.beat as keyof typeof BEAT_SOUND];
       if (cue) play(cue);
       clearTimeout(timer);
       const next = beats[n + 1];

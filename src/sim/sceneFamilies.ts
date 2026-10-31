@@ -6,6 +6,7 @@
 import { say, shoot, tell, wide, close, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
 import { ALL_HEROES, UNITS } from './units';
+import { TRIALS } from './eidolonTrials';
 
 /* ------------------------------------------------------------ the first clear of each army */
 
@@ -519,6 +520,8 @@ const FORMS: Form[] = [
   { boss: 'calBoss4', area: 'snow', line: 'THE CRAG STRIDES FORWARD! BRACE FOR IMPACT!' },
   { boss: 'calBoss5', area: 'desert', line: 'FEAST UPON THE WRATH OF THE FINAL CINDER!' },
   { boss: 'calBoss6', area: 'volcano', line: 'THERE IS NO HORIZON BEYOND MY STRIDE!' },
+  // (EIDOLON-TRIAL: each Eidolon in its own trial, its words from its trial's data)
+  ...TRIALS.map((t) => ({ boss: t.boss.id, area: t.land, line: t.phase.line })),
 ];
 
 /** The beat before a boss's new form, slowed to half pace, then its words. About three seconds all told; the page holds the fight meanwhile. Once a save for each boss (the owner: "Boss cinematics only need to play once"). */

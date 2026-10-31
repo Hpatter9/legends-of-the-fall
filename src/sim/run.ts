@@ -137,6 +137,9 @@ export interface Run {
   /** The stage reached when it ended. */
   best: number;
   /** The hero kinds summons draw from (the party); the starting five when unset. */
+  /** SECRET-HEROES: the heroes secret to the save when the run was opened (earned in play, not joined yet); no guest or Calamity hire
+   *  is drawn from them. Set by the page; a run without it (an old save, the tools) draws from every hero as before. */
+  hide?: string[];
   pool?: string[];
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;

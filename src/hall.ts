@@ -18,8 +18,7 @@ import { cardAt, dimAt, shakeAt, showcaseAt, skipAction, summonPlan, type ShowPl
 import { duck, hushSummon, play as playSfx } from './render/sound';
 import sanctumUrl from './art/hall/sanctum.png';
 import { summoner } from './summoner';
-import { hallPlaque } from './eidolonChainView';
-import { chainsShown } from './sim/eidolonChains';
+import { chainsShown, hallPlaque } from './sim/eidolonChains';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
 
 const ART: Record<string, string> = { sanctum: sanctumUrl, lightPillar: lightPillarUrl };
@@ -31,6 +30,9 @@ async function loadArt(): Promise<Record<string, HTMLImageElement>> {
   return (art = got);
 }
 
+/** SANCTUM-TIDY: where the browser keeps whether the shards' scroll is opened. */
+const FOLD_KEY = 'lotf-hall-open';
+
 const CSS = `
 .hm-recruit, .hm-spells { padding: 0; overflow: hidden; }
 .hlWrap { position: absolute; inset: 0; overflow: hidden; background: #140c1c; }
@@ -40,21 +42,30 @@ const CSS = `
 .hlTitle::before, .hlTitle::after { content: '◆'; position: absolute; top: 50%; transform: translateY(-50%); color: #ffdb86; font-size: 18px; text-shadow: 0 0 8px #d9a745; }
 .hlTitle::before { left: -12px; } .hlTitle::after { right: -12px; }
 .hlHead::before { content: '◆'; display: block; position: absolute; left: calc(50% - 9px); top: -12px; z-index: 1; color: #b1efc6; font-size: 19px; text-shadow: -2px 0 #b28a45, 2px 0 #b28a45, 0 -2px #b28a45, 0 2px #b28a45; }
-.hlLedger { display: flex; align-items: center; justify-content: space-between; margin: 7px 16px 0; padding: 3px 8px; background: #0b1719eb; border: 1px solid #9a773d; box-shadow: 0 2px 5px #000a; }
+.hlLedger { display: flex; align-items: center; justify-content: space-between; margin: 7px 16px 0; padding: 0 8px; background: #0b1719eb; border: 1px solid #9a773d; box-shadow: 0 2px 5px #000a; }
 .hlCount { color: #f4d993; font: 700 12px var(--body); }
-.hlOdds { min-height: 32px; padding: 4px 6px; font: 700 12px var(--body); color: #e8e1cc; background: transparent; border: 0; box-shadow: none; }
+.hlOdds { min-height: 44px; padding: 4px 6px; font: 700 12px var(--body); color: #e8e1cc; background: transparent; border: 0; box-shadow: none; }
 .hlLow { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 0 14px 12px; background: linear-gradient(transparent, #080e10cc 40%); pointer-events: none; }
 .hlLow > * { pointer-events: auto; }
 .hlScroll { position: relative; width: 100%; max-width: 390px; padding: 10px 12px; text-align: center; color: #ece6d4; background: linear-gradient(110deg, #0c171c, #15292b, #0b161b); border: 2px solid #b28a45; box-shadow: inset 0 0 0 2px #3d3323, 0 0 0 2px #16150f, 0 4px 8px #0009; }
 .hlScroll::before { content: '◆'; position: absolute; top: -12px; left: calc(50% - 9px); color: #92edbd; text-shadow: -2px 0 #b28a45, 2px 0 #b28a45, 0 -2px #b28a45, 0 2px #b28a45; }
-.hlScroll b { display: block; font: 900 17px var(--display); letter-spacing: 2px; color: #f4d993; }
-.hlScroll .hlHint { display: block; margin: 3px 0 7px; font: 12px var(--body); color: #ccd6cf; }
-.hlProgressLabel { display: flex; justify-content: space-between; gap: 8px; font: 700 12px var(--body); }
+.hlScroll { padding: 2px 10px 6px; }
+.hlFold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 2px; font: 700 12px var(--body); color: #ece6d4; text-align: left; background: none; border: 0; box-shadow: none; }
+.hlFold b { flex: none; font: 900 15px var(--display); letter-spacing: 1px; color: #f4d993; }
+.hlFold .hlNear { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #ccd6cf; }
+.hlFold .hlHave { flex: none; }
+.hlFold .hlChev { flex: none; font-style: normal; color: #b1efc6; }
+.hlMore[hidden] { display: none; }
+.hlScroll .hlHint { display: block; margin: 4px 0 3px; font: 12px var(--body); color: #ccd6cf; }
 .hlProgress { height: 7px; margin: 5px 0; padding: 1px; background: #060e13; border: 1px solid #756a46; }
 .hlProgress i { display: block; height: 100%; background: linear-gradient(#c1f3b4, #409b6c); box-shadow: 0 0 6px #77c99566; }
 .hlScroll .odds { display: block; font: 10px/1.3 var(--body); color: #bfc9be; }
-.hlShop { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 390px; min-height: 40px; padding: 4px 8px; font: 400 12px var(--body); color: #ffe3a2; border: 1px solid #b28a45; border-radius: 3px; background: linear-gradient(#244e3a, #122b22); }
-.hlShop:disabled { opacity: .5; }
+/* SANCTUM-TIDY: the corner's small buttons (the chest shop, and the Pact Gallery in eidolonChains.css), and nothing hidden left showing */
+.hlWrap [hidden] { display: none !important; }
+.hlCorner { display: flex; gap: 8px; margin: 8px 16px 0; pointer-events: none; }
+.hlCorner > button { pointer-events: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 54px; min-height: 52px; padding: 3px 2px; font: 700 11px var(--body); color: #ffe3a2; border: 1px solid #b28a45; border-radius: 3px; box-shadow: inset 0 0 0 1px #2e251c, 0 2px 6px #000b; }
+.hlShop { background: linear-gradient(#244e3ae6, #122b22f2); }
+.hlCorner > button:disabled { opacity: .5; }
 .hlShopIco { width: 24px; height: 24px; image-rendering: pixelated; }
 .hlScroll .odds.lucky { margin-top: 2px; font-size: 12px; color: #ffe3a2; }
 .hlBar { display: flex; gap: 10px; width: 100%; max-width: 390px; }
@@ -65,7 +76,7 @@ const CSS = `
 .hlBar button small { display: block; margin-top: 3px; font: 700 12px var(--body); }
 .hlWrap button:focus-visible { outline: 3px solid #c2ffe0; outline-offset: 3px; }
 .hlWrap.isCasting .hlHead, .hlWrap.isCasting .hlLow { visibility: hidden; }
-@media (max-height: 800px) { .hlHead { top: 7px; } .hlTitle { padding: 6px 2px; } .hlLedger { margin-top: 5px; } .hlScroll { padding: 7px 10px; } .hlScroll .hlHint { margin: 2px 0 5px; } .hlLow { gap: 7px; padding-bottom: 8px; } .hlBar button { min-height: 54px; font-size: 15px; } }
+@media (max-height: 800px) { .hlHead { top: 7px; } .hlTitle { padding: 6px 2px; } .hlLedger { margin-top: 5px; } .hlScroll { padding: 1px 10px 5px; } .hlLow { gap: 7px; padding-bottom: 8px; } .hlBar button { min-height: 54px; font-size: 15px; } }
 .hlSkip { position: absolute; inset: 0; z-index: 6; display: none; touch-action: manipulation; }
 .hlSkip.on { display: block; }
 .hlOver { position: absolute; left: 14px; right: 14px; top: 26px; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; text-align: center; }
@@ -310,6 +321,14 @@ export class SummoningHall {
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   private saver = settings().saver;
   private watch: ResizeObserver;
+  /** SANCTUM-TIDY: whether the shards' scroll is opened past its one row (kept in the browser, folded at first). */
+  private open = (() => {
+    try {
+      return localStorage.getItem(FOLD_KEY) === '1';
+    } catch {
+      return false;
+    }
+  })();
 
   constructor(private hooks: HallHooks) {
     if (!document.getElementById('hallStyle')) {
@@ -323,7 +342,10 @@ export class SummoningHall {
     const ledger = el('div', 'hlLedger');
     const odds = el('button', 'small hlOdds', 'View heroes →');
     ledger.append(this.count, odds);
-    head.append(title, ledger);
+    // (SANCTUM-TIDY: the chest shop and the Pact Gallery are small buttons in the corner under the ledger, so the room shows)
+    const corner = el('div', 'hlCorner');
+    corner.append(this.shop, this.gallery);
+    head.append(title, ledger, corner);
     odds.addEventListener('click', () => this.hooks.onCollection());
     const bar = el('div', 'hlBar');
     bar.append(this.pull1, this.pull10);
@@ -332,9 +354,11 @@ export class SummoningHall {
     this.chain.addEventListener('click', () => this.hooks.onChain?.());
     this.gallery.addEventListener('click', () => this.hooks.onGallery?.());
     this.chain.hidden = this.gallery.hidden = true;
-    const row2 = el('div', 'hlRow2');
-    row2.append(this.shop, this.gallery);
-    low.append(this.chain, this.scroll, row2, bar);
+    this.shop.title = this.shop.ariaLabel = 'Chest shop: buy stones with crowns';
+    this.gallery.title = this.gallery.ariaLabel = 'Pact Gallery: the Eidolons bound';
+    this.shop.replaceChildren(icon(ICONS.stones, 'hlShopIco'), el('span', '', 'Shop'));
+    this.gallery.replaceChildren(el('i'), el('span', '', 'Pacts'));
+    low.append(this.chain, this.scroll, bar);
     this.root.append(this.canvas, this.actor, head, low, this.over, this.skipPad);
     // (a tap anywhere skips the show: a new hero's show jumps to the moment it stands revealed, and only a tap after that goes on to the
     //  result; taps in the first moments, a double tap on the summon button, are let go. SUMMON-TAROT: a double tap used to skip a join's whole show)
@@ -372,13 +396,24 @@ export class SummoningHall {
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k)).length;
     this.count.textContent = `${have} / ${ALL_HEROES.length} Heroes`;
     const busy = !!this.show;
-    this.shop.replaceChildren(icon(ICONS.stones, 'hlShopIco'), `Chest shop · buy stones with crowns`);
     this.shop.disabled = busy;
     for (const [b, n] of [[this.pull1, 1], [this.pull10, 10]] as const) {
       b.replaceChildren(`Use ${stoneCost(n)} stone${n === 1 ? '' : 's'}`, el('small', '', `◆ ${stonesOf(meta)} held`));
       b.disabled = busy || stonesOf(meta) < stoneCost(n);
     }
-    const line = el('b', '', 'Hero shards');
+    // (SANCTUM-TIDY: the shards' scroll folds to its one row and bar; a tap on the row opens the rest, and the choice is kept)
+    const fold = el('button', 'hlFold');
+    fold.type = 'button';
+    fold.ariaExpanded = String(this.open);
+    fold.addEventListener('click', () => {
+      this.open = !this.open;
+      try {
+        localStorage.setItem(FOLD_KEY, this.open ? '1' : '0');
+      } catch {
+        /* (private windows: the fold just isn't kept) */
+      }
+      if (this.meta) this.update(this.meta);
+    });
     const hint = el('span', 'hlHint', 'Each stone brings a hero closer');
     const near = closest(meta);
     const progress = el('div', 'hlProgress');
@@ -387,25 +422,26 @@ export class SummoningHall {
     const need = needOf(meta);
     fill.style.width = `${near ? Math.min(100, haveShards / need * 100) : 100}%`;
     progress.append(fill);
-    const label = el('div', 'hlProgressLabel');
-    label.append(el('span', '', near ? `Nearest: ${heroClassLabel(near)}` : 'All summon heroes recruited'), el('span', '', near ? `${haveShards} / ${need}` : 'Complete'));
+    fold.append(el('b', '', 'Hero shards'), el('span', 'hlNear', near ? heroClassLabel(near) : 'All recruited'), el('span', 'hlHave', near ? `${haveShards} / ${need}` : 'Complete'), el('i', 'hlChev', this.open ? '▴' : '▾'));
     progress.setAttribute('role', 'progressbar');
     progress.setAttribute('aria-label', near ? `${heroClassLabel(near)} recruitment` : 'Recruitment complete');
     progress.setAttribute('aria-valuemin', '0');
     progress.setAttribute('aria-valuemax', `${near ? need : 1}`);
     progress.setAttribute('aria-valuenow', `${near ? haveShards : 1}`);
-    this.scroll.replaceChildren(line, hint, label, progress, el('span', 'odds', pityLine(meta)), el('span', 'odds lucky', luckyLine()));
+    const more = el('div', 'hlMore');
+    more.hidden = !this.open;
+    more.append(hint, el('span', 'odds', pityLine(meta)), el('span', 'odds lucky', luckyLine()));
+    this.scroll.replaceChildren(fold, progress, more);
     // (EIDOLON-CHAINS: the Summoner's plaque while a chain is to be heard, going or ready to bind; the gallery once the chains have begun)
     const plaque = hallPlaque(meta);
     this.chain.hidden = !plaque;
     if (plaque) {
       this.chain.className = `hlChain ${plaque.kind}`;
       this.chain.replaceChildren(el('b', '', plaque.title), el('small', '', plaque.line));
+      this.chain.ariaLabel = `${plaque.title}: ${plaque.line}`;
       this.chain.disabled = busy;
     }
     this.gallery.hidden = !chainsShown(meta);
-    this.gallery.replaceChildren(el('i'), 'Pact Gallery');
-    this.shop.replaceChildren(icon(ICONS.stones, 'hlShopIco'), this.gallery.hidden ? `Chest shop · buy stones with crowns` : 'Chest shop');
 
   }
 
