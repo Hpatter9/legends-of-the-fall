@@ -20,6 +20,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "The hero summons should be on a timer so they last more than one round. Same with the shapeshift": section 6 of the skills design. Summons and shapes run on a timer of fighting time (wolves and treants 60s, 30s from ultimates; wraiths 20s, Harvest's 12s; the standard 30s; werewolf form 40s, Wild Shape 20s, Alter Self 15s, Full Moon and Metamorphosis 15s), carried with their health and time left into the next wave; dismissed when the caller is benched or fell; decoys unchanged; a ring by the health bar shows the time left.
 - **Scope:** new `src/sim/carry.ts`, `test/summon-timers.test.ts`, `tools/summon-timers/`; hooks in `src/sim/battle.ts` (`Unit.life`/`kept`, `Boost.kept`, `startKept` in `fight`, `endShapes` on a fall), `run.ts` (`Owned.summons`/`form`, `keepCharges`, `boostOf`), `climb.ts` (`localBoost`), `abilities.ts` (`callSummon`, Demon Form), `ultimates.ts`, `kits/blades.ts`, `kits/callers.ts`, `kits/casters.ts`, `kits/effects.ts`, `kits/when.ts`, `kits/table.ts` (words), `src/render/unitView.ts` (the ring), `src/unitInfoRules.ts`; identity fixture (scenarios named in the note).
 - **Status:** ready for review. [Note](notes/summon-timers.md); screenshots `samples/summon-timers-*.png`.
+### SUMMON-ART — The summons drawn in their own sprites
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/summon-art`, `/home/user/lotf-summonart` (from main 0.284.0).
+- **Goal:** the owner's "Redraw or use different sprites for the summon": the wolves, dire wolf, treant, wraith, standard and decoy each in a sheet of its own (walk, attack, idle, hurt, dead), reading as its caller's (a ring of the caller's colour under it), none a copy of a hero or a foe. Looks only.
+- **Scope:** new `src/render/summonArt.ts`, `src/art/units/summon_*.png` (+ `sheets.json` entries), `tools/summon-art/`, `test/summon-art.test.ts`; hooks in `src/render/sheets.ts`, `src/render/unitView.ts`; `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/summon-art.md); screenshots `samples/summon-art-*.png`.
 
 ### SHOP-BOOKS-GEAR — Hester's Stall, skill books, gear that wears
 
