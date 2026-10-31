@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.280.0',
+    date: '2026-10-31',
+    title: 'A JRPG results screen',
+    notes: ['Runs end on a results screen: XP bars filling, LEVEL UP with each stat\'s gain, spoils counted up and the MVP. Between waves stays a short card.'],
+  },
+  {
+    version: '0.279.0',
+    date: '2026-10-31',
+    title: 'Cinematics show what they unlocked',
+    notes: ['A cinematic that opens something now ends with a card: what was unlocked, built or awakened, and where to find it. Skipping still shows it.'],
+  },
+  {
+    version: '0.278.0',
+    date: '2026-10-31',
+    title: 'The Calamity\'s room comes alive',
+    notes: ['Rifts swirl in the Calamity\'s room. Pick one and the party walks in through a bright flash; after a win they walk back out as the rift cards rise.'],
+  },
+  {
+    version: '0.277.0',
+    date: '2026-10-31',
+    title: 'Eidolon quest: The Hound Comes Home',
+    notes: ['After the Orc Warband, the Summoner at the Sanctum asks you to call Askel home: three parts, three pieces, a binding, then he answers your War Horn.'],
+  },
+  {
     version: '0.276.0',
     date: '2026-10-31',
     title: 'Map, walk and Paladin fixes',

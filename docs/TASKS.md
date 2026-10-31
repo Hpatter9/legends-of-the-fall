@@ -21,6 +21,19 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/altarRules.ts`, `src/sim/altarWords.ts`, `src/altarHelp.ts`, `src/altarHud.ts`, `src/altarClear.css`, `test/altar-words.test.ts`, `tools/altar-clear/shots.mjs`; `src/sim/rift.ts`, `src/sim/riftBattle.ts`, `src/sim/tower.ts` (constants named, values unchanged; optional `Rift.corrupted`), `src/towerView.ts` (`altarCard`), `src/sanctuaryView.ts`, one hook in `src/main.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/altar-clear.md) (with suggested rule changes, not made); screenshots `samples/altar-clear-*.png`.
 
+### JRPG-RECAP — A JRPG results screen at a run's end; the simple card between waves
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/jrpg-recap`, `/home/user/lotf-recap` (from main 0.273.0).
+- **Goal:** the owner's ask: "A more typical JRPG end-of-fight recap. With a level up showing what stats went up and how much, and so on. Redo the recap entirely."
+- **Scope:** new `src/sim/jrpgRecap.ts`, `src/jrpgRecapView.ts`, `src/jrpgResults.ts`, `src/jrpgRecap.css`, `test/jrpg-recap.test.ts`, `tools/jrpg-recap/shots.mjs`; `src/sim/runRecap.ts` (optional `xpAt`, `noteXpStart`); hooks in `src/main.ts` (settle, refresh, the result's tap, `stepPassing`), `src/index.html` (`#jrHead`, `#jrBody`), `src/recapView.ts` (the run recap's top), `src/standView.ts` (the Last Stand's end card), `src/waveCardView.ts` (`gainIcon` exported), `build.mjs` (the stylesheet). No save version or version change.
+- **Status:** ready for review. [Note](notes/jrpg-recap.md); screenshots `samples/jrpg-recap-*.png`. The owner's answer: between waves stays the simple short card (now with quest lines), leaving by itself; the results screen is only at a run's end (the end recap, a spire/Calamity/quest run's last fight, the Last Stand's end card).
+
+### REVEAL-VAULT — A film's end card for what it revealed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematic-reveal-vault`, `/home/user/lotf-reveal` (from main 0.273.0).
+- **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
+- **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
 ### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).
@@ -68,6 +81,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "click and hold on a unit in between waves to get a run-down on skills and stats": a press-and-hold (400 ms, a ring under the finger; a move lets it go as a drag) on any unit on the board, a bench card or a Last Stand tray card, in a deploy or a Stand break, opens a read-only card of its stats, traits, equipment, skills (locked ones marked), a boss's second form and a foe's tips.
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
+
+### EIDOLON-CHAINS — Quests batch 5: Askel's chain, end to end
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-chain-1`, `/home/user/lotf-chain1` (from main 0.272.0).
+- **Goal:** batch 5 of the approved quests and Eidolons design, for Askel the Cinderhound (the easiest Eidolon now): the Summoner's prologue after the Orc Warband falls, three easy parts (levels 5 to 12; no trial) with their pieces and piece cards, the chain's own quest battle (The Kennel Fires), the quest log's Eidolons tab, the binding ceremony at the Summoner (Askel bound and chosen), the Pact Gallery (from the Sanctum and the camp's horn card); the rails for chains 2 to 6 (data shape, one chain at a time, what opens each).
+- **Scope:** new `src/sim/eidolonChains.ts`, `src/sim/eidolonChainData.ts`, `src/sim/chainBattleData.ts`, `src/eidolonChainView.ts`, `src/eidolonBinding.ts`, `src/eidolonChains.css`, `tools/eidolon-chains/`, `test/eidolon-chains.test.ts`; hooks in `src/sim/quests.ts` (the chain state in `readQuests`), `src/sim/questBattles.ts` (the chains' battles by id), `src/sim/questRun.ts` (`canFightBattle`), `src/sim/modes.ts` and `src/standView.ts` (`noteChains`), `src/sim/sceneKit.ts`/`sceneRules.ts` (the `eidolon` moment), `src/questLog.ts` (the tab), `src/hall.ts` (the plaque, the gallery button), `src/home.ts`, `src/main.ts` (the story, the piece card, a ticker fix), `src/eidolonCall.ts` (the gallery button), `build.mjs` (the CSS), `tools/quest-battles/rate.ts`; one test updated in `test/quests.test.ts`.
+- **Status:** ready for review. [Note](notes/eidolon-chains.md); screenshots `samples/eidolon-chain1-*.png`.
 
 ### EIDOLONS — Quests batches 3 and 4: the War Horn and the Eidolon's call
 

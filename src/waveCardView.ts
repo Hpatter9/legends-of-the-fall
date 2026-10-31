@@ -16,7 +16,7 @@ import { ICONS } from './menuArt';
 import { itemIcon } from './equipView';
 import { chestPicture } from './chestStash';
 
-const MARKS: Record<WaveNote['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪' };
+const MARKS: Record<WaveNote['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖' };
 
 const img = (src: string): HTMLElement => {
   const i = document.createElement('img');
@@ -27,7 +27,7 @@ const img = (src: string): HTMLElement => {
 };
 
 /** A gain's picture: the hero's face, the gear's or relic's icon, the chest, the tome, the stone or the ore. */
-function gainIcon(g: WaveGain): HTMLElement | null {
+export function gainIcon(g: WaveGain): HTMLElement | null {
   if (g.kind === 'joined' || g.kind === 'recruit' || g.kind === 'shard' || g.kind === 'unlockShard') return UNITS[g.id] ? portrait(UNITS[g.id].sheet, 40) : null;
   if (g.kind === 'gear') {
     const [slot, tier] = g.id.split(':');
