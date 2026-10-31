@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.294.0',
+    date: '2026-10-31',
+    title: 'Kill XP is shared with the party',
+    notes: ['The hero who lands a kill keeps half its XP; the rest is shared by everyone who fought, so weaker heroes level up faster beside a strong one.'],
+  },
+  {
+    version: '0.293.0',
+    date: '2026-10-31',
+    title: 'D&D ability scores, behind the scenes',
+    notes: ['Every hero now has D&D ability scores (STR, DEX, CON, INT, WIS, CHA) that grow by level, rank and awakening. They don\'t change fights yet.'],
+  },
+  {
+    version: '0.292.0',
+    date: '2026-10-31',
+    title: 'Relics stay on the prep screen',
+    notes: ['The run\'s relics now show only while you prepare a wave, not during the fight. Tap one to read it; set relics show their set count.'],
+  },
+  {
     version: '0.291.0',
     date: '2026-10-31',
     title: 'Auto casts your spells too',

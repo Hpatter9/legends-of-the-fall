@@ -143,6 +143,14 @@ Changed because the rule did:
 4. The full tables in `difficulty-tables.md` were measured spell-less and not re-run cell by cell (nine armies, seven levels, five tiers, with and
    without talents is days of the bot); the sampled cells above are back on them, and the tables stand as the target.
 
+## Merged with main 0.294.0
+
+Main moved on (0.292.0 relics on the prep screen, 0.293.0 the ability scores, 0.294.0 kill XP shared with the party, XP-SPLIT) and was merged in.
+A spot check on the merged code, the casting bot, the same seeds: the Orc Warband at level 1 2.0 tries, the Beast Packs at 15 3.5, the Labyrinth at
+35 2.3, the Infernal Host at 55 with hearts 4.4; the daily on a fresh save 71% with the hearts and 55% without (112 dates). All still in their bands.
+The identity fixtures' `daily` and `stand` were re-recorded again on the merged code (main had re-recorded `daily` and `tower` for XP-SPLIT; its
+`tower` hash stands); every other scenario keeps main's hash.
+
 ## Checks run
 
-`npm install`, `npm run typecheck`, the full `npm test`, `npm run web`. The measurements above. No page or renderer changed.
+`npm install`, `npm run typecheck`, the full `npm test` (1965 tests on the merged code, all pass), `npm run web`. The measurements above. No page or renderer changed.

@@ -49,6 +49,10 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
 // with them on, the scenarios with no boss (every field fight, every hero alone, the tower's and the Calamity's early floors) still do, so
 // the dodge changes nothing where no boss has marked the ground. Only bosses, armyFoes, army, daily and stand move.)
+// (XP-SPLIT, the owner's ask for a fight's kill XP to be shared, docs/notes/xp-split.md, re-recorded `daily`: its greedy player levels its
+// heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
+// keeps its hash, the fights themselves are unchanged; then `tower` too, when the spire and the Calamity took the same split: its heroes level
+// from their own run XP fight by fight. `calamity` did not move)
 // (SPELLS-RETUNE, the owner's call to tune the armies for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, raised the
 // armies' Normal `start`. The `army` scenario plays the Undead Legion, the Infernal Host, the Golem Forge and the Yokai Night Parade on Normal:
 // their recorded strengths are put back for this proof, as the ailments' proof does, and the Calamity's `CAL_SCALE.start` (0.435) with them. The greedy players cast no spells in
