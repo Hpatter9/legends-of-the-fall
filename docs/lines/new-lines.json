@@ -8471,7 +8471,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Beast Packs dispersed into the hills. One lingered behind to inspect who had achieved it."
+       "text": "Old Maud's fold is quiet again. Her lodger has come in from the dark at last."
       }
      ]
     },
@@ -8599,7 +8599,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Golem Forge went stone cold. One living rampart remained warm, largely out of stubborn habit."
+       "text": "The Foreman stopped counting. The walker from the Forge set down its door and came to the fire."
       }
      ]
     },
@@ -8620,7 +8620,7 @@
   },
   "earned:dreadPirate": {
    "title": "Dread Pirate Enlists",
-   "blurb": "A ghost ship runs aground at the breach and its crew offer to hold the walls.",
+   "blurb": "A captain fished out of the moat in chains signs on for a wage and a share.",
    "cast": {
     "figure": "unit:dreadPirate",
     "hero": "unit:dreadPirate"
@@ -8631,7 +8631,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Twenty waves held at the Last Stand. A corsair crew came ashore to see who was holding."
+       "text": "The spring tide went out of the moat. The prisoner in chains stayed behind, laughing."
       }
      ]
     },
@@ -8640,7 +8640,7 @@
      "lines": [
       {
        "who": "hero",
-       "text": "Do not ask how we sailed a brigantine through a hole in your wall."
+       "text": "Twice drowned. Third time, I fancy, it will be somebody else."
       },
       {
        "who": "narrator",
