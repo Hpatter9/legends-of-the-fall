@@ -760,3 +760,11 @@ script from the profiles in this note: every profile was checked to be the set 1
 to hit, DC, crit and the scores at 20 and 100 were worked out by the rules in sections 2, 3 and 5. The heroes' current numbers, pools and
 traits were read from `src/sim/units.ts`, `src/sim/kits/table.ts` and `src/sim/traits.ts` at 0.289.0; the level curve from
 `src/sim/levels.ts`.
+
+## The owner's answers (31 October 2026)
+
+1. Score improvements: fixed by calling (the player's choices come through talents).
+2. Ordinary blows roll a d20 to hit against AC, with glancing blows (as recommended).
+3. A successful save halves the effect; foes use the same rules (family stat blocks, Legendary Resistance for bosses).
+4. Ranks and grades also give +1 to the two best scores, on top of the bigger hp and attack step.
+5. Shown as "STR 18 +4", the plain effect a tap away (the recommendation stands).
