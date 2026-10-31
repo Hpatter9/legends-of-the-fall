@@ -24,11 +24,13 @@ export interface WaveMoments {
   drops?: readonly string[];
   /** The War Horn's line (EIDOLONS: "War Horn +100 · 740/1000", or "The War Horn is full"; missing is none). */
   horn?: string;
+  /** The quests the wave moved, in words (JRPG-RECAP: "Quest complete: ...", "Quest: Hunt the wolves 3/5"; missing is none). */
+  quests?: readonly string[];
 }
 
 /** One line on the card, with its kind (the line's mark and colour). */
 export interface WaveNote {
-  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn';
+  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest';
   text: string;
 }
 
@@ -58,6 +60,7 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   // (a rare drop comes first of the finds: it is the one worth the cheer)
   for (const d of m.drops ?? []) out.push({ kind: 'drop', text: `Found: ${d}` });
   if (m.horn) out.push({ kind: 'horn', text: m.horn });
+  for (const q of m.quests ?? []) out.push({ kind: 'quest', text: q });
   for (const f of m.gains ? otherFinds(m.found, m.gains) : m.found) out.push({ kind: 'found', text: `Found ${f}` });
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });

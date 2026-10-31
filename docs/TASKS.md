@@ -20,6 +20,39 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "The Eidolon horn should be given to the player after earning an Eidolon, as part of the story": no horn anywhere (and no fill) before an Eidolon is bound; Askel's binding hands it over full, with two story beats and a "Received: The War Horn" end card.
 - **Scope:** `src/sim/warHorn.ts` (`hornHeld`, `addHorn`, `bindEidolon`), `src/sim/eidolonChainData.ts` (the beats), `src/sim/sceneKit.ts` + `sceneReveal.ts` (the `horn` reveal), `src/eidolonBinding.ts`, `src/eidolonChains.css`, `src/eidolonCall.ts`, `src/eidolons.css`, `src/home.ts`, `src/revealCard.ts`, `src/reveal.css`; `test/horn-gift.test.ts`, `tools/horn-gift/shots.mjs`.
 - **Status:** ready for review. [Note](notes/horn-gift.md); screenshots `samples/horn-gift-*.png`.
+### GUARDIAN-PULSE — The corrupted guardian's pulse comes from the guardian itself
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/guardian-pulse`, `/home/user/lotf-guardpulse` (from `claude/altar-clear`, main 0.280.0 merged in).
+- **Goal:** the owner's pick from ALTAR-CLEAR's suggestions: the Calamity pulse comes from the guardian (centred on it, ending when it falls), not the first foe in the list. Numbers unchanged.
+- **Scope:** `src/sim/riftBattle.ts` (`riftGuardian`), `src/sim/battle.ts` (`riftGuardian?` field), `src/altarHud.ts`, `src/sim/altarWords.ts`, `test/rift.test.ts`, new `tools/guardian-pulse/shots.mjs`.
+- **Status:** ready for review. [Note](notes/altar-clear.md#guardian-pulse-the-guardians-pulse-comes-from-the-guardian-itself); screenshots `samples/guardian-pulse-*.png`.
+
+### ALTAR-CLEAR — The Calamity's altar made clear
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/altar-clear`, `/home/user/lotf-altar` (from `claude/calamity-hub`, main 0.276.0 merged in).
+- **Goal:** the owner's "The altar isn't clear enough in how it works in the game": each altar choice in numbers from the rules, consecrate against corrupt side by side, what comes next and why the rift waits; an ⓘ explainer (shown once by itself); a "Your altar" summary; "Altar 1 of 3" labels on the map; the pulse shown in a fight. No rule changed.
+- **Scope:** new `src/sim/altarRules.ts`, `src/sim/altarWords.ts`, `src/altarHelp.ts`, `src/altarHud.ts`, `src/altarClear.css`, `test/altar-words.test.ts`, `tools/altar-clear/shots.mjs`; `src/sim/rift.ts`, `src/sim/riftBattle.ts`, `src/sim/tower.ts` (constants named, values unchanged; optional `Rift.corrupted`), `src/towerView.ts` (`altarCard`), `src/sanctuaryView.ts`, one hook in `src/main.ts`, `build.mjs` (the CSS).
+- **Status:** ready for review. [Note](notes/altar-clear.md) (with suggested rule changes, not made); screenshots `samples/altar-clear-*.png`.
+
+### JRPG-RECAP — A JRPG results screen at a run's end; the simple card between waves
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/jrpg-recap`, `/home/user/lotf-recap` (from main 0.273.0).
+- **Goal:** the owner's ask: "A more typical JRPG end-of-fight recap. With a level up showing what stats went up and how much, and so on. Redo the recap entirely."
+- **Scope:** new `src/sim/jrpgRecap.ts`, `src/jrpgRecapView.ts`, `src/jrpgResults.ts`, `src/jrpgRecap.css`, `test/jrpg-recap.test.ts`, `tools/jrpg-recap/shots.mjs`; `src/sim/runRecap.ts` (optional `xpAt`, `noteXpStart`); hooks in `src/main.ts` (settle, refresh, the result's tap, `stepPassing`), `src/index.html` (`#jrHead`, `#jrBody`), `src/recapView.ts` (the run recap's top), `src/standView.ts` (the Last Stand's end card), `src/waveCardView.ts` (`gainIcon` exported), `build.mjs` (the stylesheet). No save version or version change.
+- **Status:** ready for review. [Note](notes/jrpg-recap.md); screenshots `samples/jrpg-recap-*.png`. The owner's answer: between waves stays the simple short card (now with quest lines), leaving by itself; the results screen is only at a run's end (the end recap, a spire/Calamity/quest run's last fight, the Last Stand's end card).
+
+### REVEAL-VAULT — A film's end card for what it revealed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematic-reveal-vault`, `/home/user/lotf-reveal` (from main 0.273.0).
+- **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
+- **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
+### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).
+- **Goal:** the owner's "make the main room in the Calamity more alive ... that rift is the middle one they walk into, in a bright flash that zooms in and fades back in to the next battleground", and the walk out of the portal after a win with the cards rising one by one.
+- **Scope:** new `src/hubMotion.ts`, `test/calamity-hub.test.ts`, `tools/calamity/hub-shots.mjs`; `src/sanctuaryView.ts`, `src/sanctuary.css`. No sim change.
+- **Status:** ready for review. [Note](notes/calamity-hub.md); screenshots `samples/calhub-*.png`.
 
 ### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
 
