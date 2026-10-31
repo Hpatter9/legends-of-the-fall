@@ -27,6 +27,36 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.295.0',
+    date: '2026-10-31',
+    title: 'A clearer summoning room',
+    notes: ['Shop and Pacts are small corner buttons, the Summoner\'s line is one short row and the shards panel folds, so the room shows. No leftover Askel message.'],
+  },
+  {
+    version: '0.294.0',
+    date: '2026-10-31',
+    title: 'Kill XP is shared with the party',
+    notes: ['The hero who lands a kill keeps half its XP; the rest is shared by everyone who fought, so weaker heroes level up faster beside a strong one.'],
+  },
+  {
+    version: '0.293.0',
+    date: '2026-10-31',
+    title: 'D&D ability scores, behind the scenes',
+    notes: ['Every hero now has D&D ability scores (STR, DEX, CON, INT, WIS, CHA) that grow by level, rank and awakening. They don\'t change fights yet.'],
+  },
+  {
+    version: '0.292.0',
+    date: '2026-10-31',
+    title: 'Relics stay on the prep screen',
+    notes: ['The run\'s relics now show only while you prepare a wave, not during the fight. Tap one to read it; set relics show their set count.'],
+  },
+  {
+    version: '0.291.0',
+    date: '2026-10-31',
+    title: 'Auto casts your spells too',
+    notes: ['The battle Auto switch now fires your spells as well as ultimates: heals when hurt, blasts on crowds and bosses, buffs early. The War Horn stays yours.'],
+  },
+  {
     version: '0.290.0',
     date: '2026-10-31',
     title: 'Painted faces, and the spoils page',

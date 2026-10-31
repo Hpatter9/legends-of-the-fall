@@ -105,6 +105,7 @@ import { fullScene } from './ultMomentRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { autoSpellsFor } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
@@ -975,7 +976,7 @@ class Game {
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite)
     this.eid.arm(this.b, midBossWave(this.run, this.run.stage));
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
-    this.b.autoUlt = this.ultAutoOn();
+    this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
     this.hud.build(this.b);
     this.ultm.clear();
@@ -1099,7 +1100,7 @@ class Game {
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
-      b.autoUlt = this.ultAutoOn();
+      this.setAutoOn(b);
       while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
@@ -1731,6 +1732,12 @@ class Game {
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
   }
+  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  private setAutoOn(b: Battle): void {
+    const on = this.ultAutoOn();
+    b.autoUlt = on;
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, this.meta.spellbook.equipped);
+  }
 
   private wire(): void {
     // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
@@ -1741,7 +1748,7 @@ class Game {
       onAuto: (on) => {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
-        this.b.autoUlt = this.ultAutoOn();
+        this.setAutoOn(this.b);
       },
       autoOn: () => this.ultAutoOn(),
       dockTop: () => $('panel').getBoundingClientRect().top,

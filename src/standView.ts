@@ -6,7 +6,8 @@
 
 import { Container, Graphics, Sprite, type Application } from 'pixi.js';
 import { tileAt } from './sim/board';
-import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
+import { TICK_MS, type Battle, type BattleEvent, type Unit } from './sim/battle';
+import { autoSpellsFor } from './sim/autoCast';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
 import {
@@ -270,7 +271,7 @@ export class StandView {
         const m = this.host.meta();
         m.ultAuto = on;
         saveMeta(m);
-        if (this.s) this.s.b.autoUlt = on;
+        if (this.s) this.setAutoOn(this.s.b);
       },
       autoOn: () => !!this.host.meta().ultAuto,
       // (a tap on a row also takes the camera to that hero)
@@ -1192,7 +1193,7 @@ export class StandView {
       let guard = 0;
       const ts = performance.now();
       // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
-      s.b.autoUlt = !!this.host.meta().ultAuto;
+      this.setAutoOn(s.b);
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
@@ -1616,6 +1617,13 @@ export class StandView {
       });
       cards.append(card);
     }
+  }
+
+  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  private setAutoOn(b: Battle): void {
+    const on = !!this.host.meta().ultAuto;
+    b.autoUlt = on;
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, this.host.meta().spellbook.equipped);
   }
 
   private refreshSpells(): void {
