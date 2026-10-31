@@ -356,6 +356,18 @@ The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon*
 right-facing row of three walking frames, scaled up 2x with nearest-neighbour. The script builds the game's rows from them (a step cycle, a lunge made of the stride shifted forward, an idle, a hurt
 frame brightened, and a dead frame rolled onto its side). The pack folder has no licence file: the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
 
+## The summons' own sheets (`src/art/units/summon_*.png`; `tools/summon-art/cut.py`, SUMMON-ART)
+
+- The wolves and the dire wolf (`summon_wolf.png`, `summon_wolf_white.png`, `summon_direwolf.png`): the grey, white and black wild dogs of
+  **whtdragon**'s RPG Maker MV animals pack (`animals/wilddogs.png`), the right-facing walking frames doubled by whole pixels, the bite,
+  idle, hurt and fall rows made by moving them by whole pixels. The same licence note as the wolves above.
+- The Reaper's wraith (`summon_wraith.png`) and the Illusionist's decoy (`summon_decoy.png`): figures 13 and 33 of the **Golems and
+  elementals** pack by batareya, moved by whole pixels as the Golem Forge's golems are, coming apart pixel by pixel as they fall (the same
+  licence note as the golems).
+- The Samurai Commander's standard (`summon_standard.png`): the war camp's standard (`src/art/camp/standard.png`, Chronos Settlement's
+  isometric kits, credited under the war camp) without its sand plot, its pennants stirring by whole pixels.
+- The Druid's treant is drawn in the older treant sheets already in the game (`cls_treant.png`, `cls_treant_2.png`, `cls_treant_3.png`, credited above).
+
 ## The combo and promotion effects (`src/render/spectacle.ts`)
 
 No new art: the five-hero combos' gathering and strike, a tier skill's ring and a promotion's pillar of light are the **5000 Pixel Effects** strips by blueberry already credited above

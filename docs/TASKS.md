@@ -21,6 +21,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/guest.ts`, `src/guest.css`, `test/guest-hero.test.ts`, `test/talent-arrows.test.ts`, `tools/guest-hero/`; `src/sim/run.ts`, `events.ts`, `market.ts`, `merge.ts`, `autoplay.ts`, `upgradesReady.ts`; hooks in `src/main.ts`, `src/events.ts`, `src/unitInfo.ts`, `src/home.ts`, `src/tavern.ts`, `src/party.ts`, `src/menuHeroes.ts`, `src/talentView.ts`, `src/rankUpList.ts`, `build.mjs`.
 - **Status:** ready for review. [Note](notes/guest-hero.md) (with the measured lift and owner questions); screenshots `samples/guest-*.png`, `samples/talent-arrow-*.png`.
 
+### SUMMON-ART — The summons drawn in their own sprites
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/summon-art`, `/home/user/lotf-summonart` (from main 0.284.0).
+- **Goal:** the owner's "Redraw or use different sprites for the summon": the wolves, dire wolf, treant, wraith, standard and decoy each in a sheet of its own (walk, attack, idle, hurt, dead), reading as its caller's (a ring of the caller's colour under it), none a copy of a hero or a foe. Looks only.
+- **Scope:** new `src/render/summonArt.ts`, `src/art/units/summon_*.png` (+ `sheets.json` entries), `tools/summon-art/`, `test/summon-art.test.ts`; hooks in `src/render/sheets.ts`, `src/render/unitView.ts`; `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/summon-art.md); screenshots `samples/summon-art-*.png`.
+
 ### SHOP-BOOKS-GEAR — Hester's Stall, skill books, gear that wears
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/shop-books-gear`, `/home/user/lotf-shop` (from main 0.277.0).
