@@ -116,7 +116,10 @@ resume, about four seconds; the skip goes to the strike; the first beat is on th
 
 ## Checked
 
-`tools/eidolon-call-2/shots.mjs` (port 9061, the clock stepped by hand, `DEBUG=1` lists what of the layer shows) and `strip.py` join the
+`npm run typecheck`; `npm test -- eidolon horn flicker` (34 pass); the full `npm test` after merging main 0.290.0 (1944 pass, 0 fail);
+`npm run web`. `tools/eidolon-call-2/shots.mjs` (port 9061, the clock stepped by hand: every animation seen is stepped, as a paused one still
+in its delay is not listed by the page, and a cancelled one is left alone; `DEBUG=1` lists what of the layer shows) and `strip.py` join the
 frames: `docs/samples/eidolon-call2-<id>-strip.png` for all six (horn, the pass at three points, the sprite coming on, the build-up, the
-impact, the aftermath, the fight running again), the key frames of Askel's at 393x852, Askel's strip at 360x780 and 412x915, the short one,
-reduced motion, and `eidolon-call2-askel-sheet.png` (the cut sheet and its flame). No page errors, no missing files, no sideways overflow.
+impact, the aftermath, the fight running again), the key frames of Askel's at 393x852 (`eidolon-call2-askel-{pass2,sprite,build,impact,after}.png`),
+Askel's strip at 360x780 and 412x915 (and Vaelkhar's at 412x915), the short one, reduced motion, battery saver, and
+`eidolon-call2-askel-sheet.png` (the cut sheet and its flame). No page errors, no missing files, no sideways overflow.
