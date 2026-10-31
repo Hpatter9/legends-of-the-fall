@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.274.0',
+    date: '2026-10-31',
+    title: 'Boss attacks without the pause',
+    notes: ['A boss\'s big attack now shows a slim banner over the running fight instead of stopping it.'],
+  },
+  {
     version: '0.273.0',
     date: '2026-10-31',
     title: 'Story scenes, filmed',
