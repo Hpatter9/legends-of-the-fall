@@ -2,19 +2,16 @@
 // the tests read it; `render/bossFx.ts` draws the marks and the blow on the board, `bossMoment.ts` the cut-in band.
 //
 // The windup (the sim's `bossSig` warn event): the tiles it will strike are marked in red, each mark filling in from its middle over the
-// windup's battle time (so it runs with the fight's speed), steady with reduced motion, and never blinking out. The cut-in: a red and black
-// band slashes in with the boss's figure and the attack's name; in full (the Full ultimate scenes setting on, Auto off) the fight is held
-// for it alone (`CUT_MS`, real time), not for the windup, which runs on after it; short (the setting off, or Auto) the band is shorter
-// and the fight runs on under it. The blow: the ultimate's look at its size (ULT-EPIC: the element's painted burst on a few spots across
+// windup's battle time (so it runs with the fight's speed), steady with reduced motion, and never blinking out. The cut-in: a slim red and black
+// band slashes in near the top with the boss's head and the attack's name, for `BAND_MS` of real time; the fight never stops for it (the
+// owner: "the boss specials don't need to pause the game; a little more minimal but still epic"). The blow: the ultimate's look at its size (ULT-EPIC: the element's painted burst on a few spots across
 // the marks, its nova and ring), a ring of the element's wave on every struck tile, a short hit-stop and a hard shake (none with the
 // screen kept still), and a deep sting.
 
 /** The shared timings and sizes. */
 export const BOSS_BIG_LOOK = {
-  /** The cut-in in full: the fight held this long (real ms). */
-  CUT_MS: 1000,
-  /** The short cut-in (no hold). */
-  SHORT_MS: 900,
+  /** How long the slim cut-in band stays up (real ms); the fight runs on under it. */
+  BAND_MS: 1100,
   /** The hit-stop on the blow (ms) and the shake (the fight's trauma, 0 to 1). */
   HIT_STOP_MS: 150,
   SHAKE: 0.8,
@@ -27,9 +24,6 @@ export const BOSS_BIG_LOOK = {
   FILL_FROM: 0.12,
   FILL_TO: 0.62,
 };
-
-/** Whether a signature gets the held cut-in: the same rule as an ultimate's full moment (`fullScene`). */
-export const heldCut = (ultFull: boolean, auto: boolean): boolean => ultFull && !auto;
 
 /** How far a mark has filled in, 0 to 1, `t` ms into a windup of `ms` (eased so the end comes on sure). */
 export function markFill(t: number, ms: number): number {
