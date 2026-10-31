@@ -3,6 +3,7 @@
 // in the run (`Owned.xp`), by the same curve as the lasting levels (`levels.ts`), and its gear is what the run finds.
 // Pure rules: no Pixi, no DOM.
 
+import { keptBoost } from './carry';
 import type { Battle, Boost, Unit } from './battle';
 import { ALL_HEROES, UNITS } from './units';
 import { CAL_TIER, tierOfLevel } from './calamity';
@@ -35,7 +36,7 @@ export function localBoost(h: Owned): Boost {
   const k = h.tiered ? CAL_TIER.mult ** (h.grade - 1) : gradeMult(h.grade);
   const lv = levelBoost(heroLevel(h));
   const g = gearBoost(h.gear);
-  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}), ...keptBoost(h) };
 }
 
 /** The XP each hero (by roster id) earned in a finished fight: the same pay as `fightXp`, but kept for the hero, not its kind. `rate` is the castle's Library. */

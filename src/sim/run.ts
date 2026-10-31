@@ -3,6 +3,7 @@
 // merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { keepSummons, keptBoost, type KeptForm, type KeptSummon } from './carry';
 import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
@@ -93,6 +94,13 @@ export interface Owned {
   /** A mirror's clone that stands in for its original on the field (ONE-OF-EACH, the owner's call): the original's roster id. The original
    *  sits out on the bench for the clone's floors and takes its place again when the clone goes (`sitsOut`). Absent in an older save. */
   standsFor?: number;
+  /** A guest hero (GUEST-HERO, `guest.ts`): hired at the passing cart for this run only, it fights as a sixth beside the five, never
+   *  merges or is recycled, earns no lasting XP and leaves when the run ends. Absent in an older save. */
+  guest?: boolean;
+  /** SUMMON-TIMERS (`carry.ts`): the summons this hero kept standing at the end of the last wave won (each with its share of health and the
+   *  ms of its timer left), and the shapes it wore. Put back as the next wave's fight begins if it is fielded; absent in an older save. */
+  summons?: KeptSummon[];
+  form?: KeptForm[];
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -204,6 +212,8 @@ export function keepCharges(run: Run, b: Battle): void {
     h.charge = alive && u.charge > 0 ? u.charge : undefined;
     h.charge2 = alive && (u.charge2 ?? 0) > 0 ? u.charge2 : undefined;
   }
+  // (and its summons and shapes, with what is left of their timers: SUMMON-TIMERS)
+  keepSummons(run, b);
 }
 
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
@@ -297,7 +307,8 @@ export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonC
  *  change, so this is no way to reroll for free. Returns the gold paid, or null when the hero is unknown, the run is over, or it is the last hero. */
 export function recycle(run: Run, heroId: number): number | null {
   const h = heroOf(run, heroId);
-  if (!h || run.over || run.roster.length <= 1 || run.rift?.starter === heroId) return null;
+  // (a guest is not the party's to sell: GUEST-HERO)
+  if (!h || h.guest || run.over || run.roster.length <= 1 || run.rift?.starter === heroId) return null;
   // (a quest battle's required hero is not recycled while it is the last of its kind: it must fight)
   if (isCastHero(run, h)) return null;
   const gold = recycleValue(run);
@@ -333,8 +344,8 @@ export function retryWave(run: Run): number | null {
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
 /** Whether a roster hero is a cursed mirror's clone: a guest for a few floors, never counted as one of the party's own (room, hires' catch-up XP). */
 export const isClone = (h: Owned): boolean => h.cloneFloors !== undefined;
-/** The party's own heroes: the roster without a mirror's clone. */
-export const ownHeroes = (run: Run): Owned[] => run.roster.filter((h) => !isClone(h));
+/** The party's own heroes: the roster without a mirror's clone or a guest (GUEST-HERO). */
+export const ownHeroes = (run: Run): Owned[] => run.roster.filter((h) => !isClone(h) && !h.guest);
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
 /** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). Every hero kind is alike here: what sets one apart is its own stats and skill. */
@@ -347,7 +358,7 @@ export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
 export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {
   const base = gradeBoost(h.grade, rank, level);
   const g = gearBoost(h.gear);
-  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}), ...keptBoost(h) };
 }
 
 /** Give a hero a piece of gear from the pack (the piece it replaces goes back). False when it isn't in the pack. */
@@ -504,10 +515,14 @@ export const squadTwin = (run: Run, kind: string, except?: number): Owned | unde
 /** Whether hero `id` sits out: a mirror's clone stands in for it on the field for the clone's floors (ONE-OF-EACH). */
 export const sitsOut = (run: Run, id: number): boolean => run.roster.some((x) => x.standsFor === id && x.cloneFloors !== undefined);
 
-/** Whether hero `id` may join the squad now: there is room, no other hero of its kind is in it, and no mirror's clone stands in for it (ONE-OF-EACH). */
+/** How many of the squad's places are taken: the guest has a sixth place of its own and is not counted (GUEST-HERO). */
+export const squadUsed = (run: Run): number => run.squad.filter((id) => !heroOf(run, id)?.guest).length;
+
+/** Whether hero `id` may join the squad now: there is room, no other hero of its kind is in it, and no mirror's clone stands in for it
+ *  (ONE-OF-EACH). A guest always has room: its place is an extra one beyond the five (GUEST-HERO). */
 export function canJoin(run: Run, id: number): boolean {
   const h = heroOf(run, id);
-  return !!h && !run.squad.includes(id) && run.squad.length < squadLimit(run) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
+  return !!h && !run.squad.includes(id) && (h.guest || squadUsed(run) < squadLimit(run)) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
 }
 
 /** Choose or release a hero for the fight. Returns whether the squad changed. A second hero of a kind already chosen is refused (ONE-OF-EACH). */

@@ -31,6 +31,8 @@ import { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS, PULL_HEROES, STONES_GI
 import { grantContent } from './contentHeroes';
 import { grantSpells } from './spellSources';
 import { readShop } from './chestShop';
+import { readStall } from './stall';
+import { readBooks } from './books';
 import { readCards, readScenes } from './sceneRules';
 import { readQuests, type QuestState } from './quests';
 import { readEidolons, type EidolonMeta } from './warHorn';
@@ -162,6 +164,16 @@ export interface Meta {
   quests?: QuestState;
   /** EIDOLONS: the War Horn's fill, the Eidolons bound and the one chosen to answer it (`warHorn.ts`). Saves from before have none: an empty horn. */
   eidolons?: EidolonMeta;
+  /** Hester's Stall (`stall.ts`): the day's sales by ware, the crowns ever spent there (standing), the day it was last looked at, and the
+   *  pieces sold today (to buy back). Saves from before have none: standing 1, nothing bought. */
+  stall?: { day: number; sold: Record<string, number>; spent: number; seen?: number; soldToday?: { item: Equipment; price: number }[] };
+  /** Skill books (`books.ts`): unread copies by book, the books each hero kind has learned, the book each is studying (fights done),
+   *  the progress of books put down, and the two skills each kind has chosen for its slots. Saves from before have none. */
+  books?: Record<string, number>;
+  learned?: Record<string, string[]>;
+  study?: Record<string, { book: string; done: number }>;
+  studyKept?: Record<string, Record<string, number>>;
+  loadout?: Record<string, [string, string]>;
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -503,6 +515,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the Eidolons have none: an empty horn, no Eidolon bound)
       m.eidolons = readEidolons(m.eidolons);
       if (!m.eidolons) delete m.eidolons;
+      // (saves from before Hester's Stall and the skill books have none: standing 1, nothing read)
+      m.stall = readStall(m.stall);
+      if (!m.stall) delete m.stall;
+      readBooks(m);
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)

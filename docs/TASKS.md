@@ -14,6 +14,52 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### AUTO-CAST — Auto fires the ultimates and casts the king's spells
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/auto-cast`, `/home/user/lotf-autocast` (from main 0.289.0).
+- **Goal:** the owner's "For Auto in battle, it should do auto spells and ultimates": the fight's one Auto switch (kept in `Meta.ultAuto`) fires the ultimates as before and casts the equipped spells on its own through `castSpell`, by a pure deterministic chooser (help, then harm, then buffs, with a mana reserve), in every mode and under auto-replay; the War Horn stays manual.
+- **Scope:** new `src/sim/autoCast.ts`, `test/auto-cast.test.ts`, `tools/auto-cast/`; hooks in `src/sim/battle.ts` (`Battle.autoSpells`, the call in `stepBattle`), `src/sim/spells.ts` (`SpellState.autoAt`), `src/main.ts`, `src/standView.ts`, `src/fightHud.ts` + `.css` (the switch's ULT+SPELL line), `src/tips.ts`, `tools/autoplay.ts` (`botSpells`, off by default).
+- **Status:** ready for review. [Note](notes/auto-cast.md) (win rates spells never vs Auto, and a question for the owner); screenshots `samples/auto-cast-*.png`.
+### HUD-FACES — The heroes' painted faces in the fight's stat views
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/hud-faces`, `/home/user/lotf-hudfaces` (from main 0.287.0).
+- **Goal:** the owner's "use the character arts' faces in the battles for their images during a wave, when it shows all their stats": the fight HUD's hero rows (and so the Last Stand's eight and the Calamity's ten), the unit info card and the Last Stand's paused sheet show each hero's painted art cut to its face (the awakened art once awakened); summons, guests and foes keep their sprites.
+- **Goal, part 2 (RECAP-SPOILS):** the owner's spoils screen on the final recap (money without run gold, gear, items), the heroes' painted art on the results screen (the MVP's bigger), no wave strip on the run's end recap, and no summons as heroes on any recap.
+- **Scope:** new `src/heroFaceRules.ts` (the face boxes), `src/heroFace.ts` (the crop cache), `src/sim/runSpoils.ts`, `tools/hud-faces/`, `tools/recap-spoils/`, `test/hud-faces.test.ts`, `test/recap-spoils.test.ts`; hooks in `src/fightHud.ts`, `src/fightHud.css`, `src/main.ts`, `src/standView.ts`, `src/jrpgRecapView.ts`, `src/jrpgResults.ts`, `src/jrpgRecap.css`, `src/recapView.ts`, `src/sim/fightStats.ts`, `src/sim/runRecap.ts` (optional `spoils`), `tools/jrpg-recap/shots.mjs` (the wave strip's assertion turned round). No version change.
+- **Status:** ready for review. [Note](notes/hud-faces.md); contact sheet `samples/hud-faces-sheet.png`, screenshots `samples/hud-faces-*.png`, `samples/recap-spoils-*.png`.
+
+### GUEST-HERO — A guest hero from the passing cart, a sixth on the field for one run; talent points marked in the tavern
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/guest-hero`, `/home/user/lotf-guest` (from main 0.284.0).
+- **Goal:** the owner's "Sometimes you can hire a new hero from the store you randomly come by ... allowed as the 6th on the field": the passing cart now and then offers a guest (a hero outside the party, 1.5 sellswords), who fights as a sixth beside the five for that run only (one at a time, one of each kept, no merge, no recycle, no lasting XP, a farewell at the run's end). And TALENT-ARROWS: the tavern's gold chevron, the Upgrades list ("Talent points: 2 to spend", Spend opens the tree) and Next upgrade › mark heroes with talent points to spend; Upgrade all leaves talents alone.
+- **Scope:** new `src/sim/guest.ts`, `src/guest.css`, `test/guest-hero.test.ts`, `test/talent-arrows.test.ts`, `tools/guest-hero/`; `src/sim/run.ts`, `events.ts`, `market.ts`, `merge.ts`, `autoplay.ts`, `upgradesReady.ts`; hooks in `src/main.ts`, `src/events.ts`, `src/unitInfo.ts`, `src/home.ts`, `src/tavern.ts`, `src/party.ts`, `src/menuHeroes.ts`, `src/talentView.ts`, `src/rankUpList.ts`, `build.mjs`.
+- **Status:** ready for review. [Note](notes/guest-hero.md) (with the measured lift and owner questions); screenshots `samples/guest-*.png`, `samples/talent-arrow-*.png`.
+
+### SUMMON-TIMERS — Summons and shapeshifts on a timer, kept from wave to wave (skills design batch 6)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/summon-timers`, `/home/user/lotf-summontime` (from main 0.284.0).
+- **Goal:** the owner's "The hero summons should be on a timer so they last more than one round. Same with the shapeshift": section 6 of the skills design. Summons and shapes run on a timer of fighting time (wolves and treants 60s, 30s from ultimates; wraiths 20s, Harvest's 12s; the standard 30s; werewolf form 40s, Wild Shape 20s, Alter Self 15s, Full Moon and Metamorphosis 15s), carried with their health and time left into the next wave; dismissed when the caller is benched or fell; decoys unchanged; a ring by the health bar shows the time left.
+- **Scope:** new `src/sim/carry.ts`, `test/summon-timers.test.ts`, `tools/summon-timers/`; hooks in `src/sim/battle.ts` (`Unit.life`/`kept`, `Boost.kept`, `startKept` in `fight`, `endShapes` on a fall), `run.ts` (`Owned.summons`/`form`, `keepCharges`, `boostOf`), `climb.ts` (`localBoost`), `abilities.ts` (`callSummon`, Demon Form), `ultimates.ts`, `kits/blades.ts`, `kits/callers.ts`, `kits/casters.ts`, `kits/effects.ts`, `kits/when.ts`, `kits/table.ts` (words), `src/render/unitView.ts` (the ring), `src/unitInfoRules.ts`; identity fixture (scenarios named in the note).
+- **Status:** ready for review. [Note](notes/summon-timers.md); screenshots `samples/summon-timers-*.png`.
+### SUMMON-ART — The summons drawn in their own sprites
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/summon-art`, `/home/user/lotf-summonart` (from main 0.284.0).
+- **Goal:** the owner's "Redraw or use different sprites for the summon": the wolves, dire wolf, treant, wraith, standard and decoy each in a sheet of its own (walk, attack, idle, hurt, dead), reading as its caller's (a ring of the caller's colour under it), none a copy of a hero or a foe. Looks only.
+- **Scope:** new `src/render/summonArt.ts`, `src/art/units/summon_*.png` (+ `sheets.json` entries), `tools/summon-art/`, `test/summon-art.test.ts`; hooks in `src/render/sheets.ts`, `src/render/unitView.ts`; `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/summon-art.md); screenshots `samples/summon-art-*.png`.
+
+### SHOP-BOOKS-GEAR — Hester's Stall, skill books, gear that wears
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/shop-books-gear`, `/home/user/lotf-shop` (from main 0.277.0).
+- **Goal:** build the owner-approved shop, books and gear design (`claude/shop-books-design`): the stall (keepers, daily stock, standing, prices), selling (in place of salvage), wear and repair, skill books (study, the two slots, found Rare books), with the books-and-shop art (PRs #240, #243).
+- **Scope:** new `src/sim/{stall,books,bookData,wear}.ts`, `src/{stallView,skillBookView,bookArt}.ts`, `src/stall.css`, `src/art/shop/`, `art-source/books-shop/`, `tools/shop/`, `test/{stall,books,wear}.test.ts`; hooks in `equipment.ts`, `meta.ts`, `talents.ts`, `battle.ts`, `heroKits.ts`, `armyStars.ts`, `chestShop.ts`, `castle.ts`, `waveCard.ts`, `main.ts`, `standView.ts`, `home.ts`, `camp.ts`, `overlookLayout.ts`, `campSpots.ts`, `equipView.ts`, `menuHeroes.ts`, `party.ts`, `shopView.ts`, `chestStash.ts`, `castleSpots.ts`, `gearIcons.ts`, `build.mjs`, `CREDITS.md`. Optional save fields; no version change.
+- **Status:** ready for review; real gear in runs, the caravan and the Gloaming Dealer, the lost techniques and the books' balance pass left for later. [Note](notes/shop-books-gear.md); screenshots `samples/shop-*.png`.
+### CAL-ZONES — The Calamity's battle zones: varied shapes, things on the board, moving parts
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-zones`, `/home/user/lotf-calzones` (from main 0.277.0; main 0.280.0 merged in).
+- **Goal:** the owner's "make the battle zones for Calamity much more interesting, more varied, with objects and moving parts. Make it feel alive and real."
+- **Scope:** new `src/sim/calZones.ts` (six zones: nave, crystal chasm, crypt rows, broken bridge, ritual circle, flooded vault), `src/sim/layoutKit.ts` (the template tools, moved out of `layouts.ts` unchanged), `src/render/zoneLife.ts`, `src/art/calzones/`, `test/calamity-zones.test.ts`, `tools/calamity/zone-shots.mjs`; hooks in `layouts.ts` (zone templates), `board.ts` (`Tile.chasm`, `Board.props`), `sanctuary.ts` (`destinationBoard` lays a zone), `tower.ts` (passes the act), `boardView.ts` (props, chasms, the air), `main.ts` (one line: fade tall things over fighters). No save or version change.
+- **Status:** ready for review. [Note](notes/calamity-zones.md); screenshots `samples/calzones-*.png`.
 ### SKILLS-1 — The skills overhaul, batches 0 to 2: the measure, the rules as data, cooldowns by class
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/skills-1`, `/home/user/lotf-skills1` (from main 0.284.0).
@@ -60,6 +106,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
 - **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
 - **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
+
 ### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).

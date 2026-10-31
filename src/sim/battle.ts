@@ -27,6 +27,7 @@ import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWar
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
+import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
@@ -39,6 +40,7 @@ import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './he
 import { applyOrders, type LogEntry, type Order } from './orders';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
+import { endShapes, shapesOf, startKept, type Kept } from './carry';
 import { settleKeg } from './kits/shooters';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
@@ -137,7 +139,7 @@ export interface Unit {
   /** The next time a bard's tune charges a friend. */
   tuneAt?: number;
   /** Its attack raised by a demon form until then (reverted when it fades). */
-  form?: { until: number };
+  form?: { until: number; ms?: number };
   /** Its once-a-fight rising from death has been spent. */
   undyingUsed?: boolean;
   diedAt?: number;
@@ -174,6 +176,8 @@ export interface Unit {
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
+  /** A hero's chosen skills for its two slots, when not its own two (`books.ts`; from `Boost.equip.book`). */
+  book?: [string, string];
   /** The player's tap on this hero's portrait has queued its ultimate (the time it was applied, `orders.ts`): it fires the first time the hero is free, or lapses after `ORDER_WAIT_MS`. */
   ultOrder?: number;
   /** A hero kit's pool bookkeeping (`heroKits.ts`): when each skill was last cast, focus, winded. */
@@ -184,6 +188,10 @@ export interface Unit {
   look?: string;
   /** A fighter a skill called up for a while: it fades at this time. */
   expires?: number;
+  /** The full length of a summon's timer (SUMMON-TIMERS, `carry.ts`): the page's ring shows `expires` against it. Absent for a decoy. */
+  life?: number;
+  /** The summons and shapes a run's hero brings from its last wave, put on the field as the fight begins (`startKept`, `carry.ts`). */
+  kept?: Kept;
   /** A hero of the Last Stand: the tile it guards, how far (in tiles) it may stray from it, and whether it is a tank that goes for the foes heading for the king (`standAi.ts`). */
   post?: { u: number; v: number; leash: number; tank: boolean };
   /** Electrified arrows active until then (Archer + Lightning Mage duo). */
@@ -385,6 +393,9 @@ export interface Battle {
   fog?: number;
   /** Whether the heroes' ultimates fire on their own (`heroKits.ts`): unset means yes, so every headless fight (tests, the balance tools, the bots) fires them; the page sets it from the player's Auto switch (and on for auto-replay). */
   autoUlt?: boolean;
+  /** AUTO-CAST (`autoCast.ts`): the king's spells to cast on their own, the player's equipped ones, set by the page while the fight's Auto
+   *  switch is on (and under auto-replay). Unset (every headless fight, Auto off) casts nothing. */
+  autoSpells?: SpellId[];
   /** The player's orders waiting for the next tick (`orders.ts`), and every order applied so far, with the king's spells: with the seed and the placing, a fight replays from it. */
   orders?: Order[];
   log?: LogEntry[];
@@ -437,6 +448,8 @@ export interface Boost {
   carry?: number;
   /** A boss that changes form at this share of its health (`bossPhases.ts`); none when unset. */
   phase?: number;
+  /** A run's hero's summons and shapes kept from the last wave (SUMMON-TIMERS, `carry.ts`). */
+  kept?: Kept;
   /** A boss's second form hits this much harder again (a harder army tier). */
   surge?: number;
   /** A boss starts the fight behind a shield of this share of its health. */
@@ -614,6 +627,8 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   const power = (boost.atk ?? 1) * (castle?.atk ?? 1) * (1 + (eq?.atk ?? 0));
   if (power !== 1) unit.power = power;
   if (eq) unit.eq = eq;
+  // (a hero that learned skills from books fights with the two it chose: `heroKitOf` builds its kit from them)
+  if (eq?.book && !def.summon) unit.book = eq.book;
   if (def.side === 'hero' && boost.carry !== undefined && boost.carry < 1) {
     unit.carry = Math.max(0.01, boost.carry);
     unit.hp = Math.max(1, Math.round(hp * unit.carry));
@@ -634,6 +649,8 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   // (a hero's skill keeps the charge it built up in the run's last wave)
   if (boost.charge) unit.charge = Math.min(CHARGE_MAX, boost.charge);
   if (boost.charge2) unit.charge2 = Math.min(CHARGE_MAX, boost.charge2);
+  // (and its summons and shapes kept from that wave, put back as the fight begins: SUMMON-TIMERS)
+  if (def.side === 'hero' && boost.kept) unit.kept = boost.kept;
   // (a hero with a kit starts with its pool: stamina full, mana a part, or what it carried from the run's last wave)
   if (def.side === 'hero' && !def.summon && heroKitOf(unit)) startPool(unit, boost.charge);
   b.units.push(unit);
@@ -700,6 +717,8 @@ export function fight(b: Battle): boolean {
   startDuoCombos(b);
   startKits(b);
   startRift(b);
+  // (a hero's summons and shapes kept from the last wave stand up again: SUMMON-TIMERS, `carry.ts`)
+  startKept(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
   return true;
@@ -781,6 +800,8 @@ export const battleTap: { fn?: (b: Battle, events: BattleEvent[]) => void } = {}
 
 export function stepBattle(b: Battle): BattleEvent[] {
   const out = stepOnce(b);
+  // (AUTO-CAST: with Auto on, a spell worth casting is cast now, between this tick and the next, where a tap would land)
+  if (b.autoSpells) autoCast(b);
   battleTap.fn?.(b, out);
   return out;
 }
@@ -1033,6 +1054,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.diedAt = b.t;
     to.step = undefined;
     to.swing = undefined;
+    // (a hero's shape ends as it falls, so a hero raised again rises in its own: SUMMON-TIMERS)
+    if (realHero(to) && shapesOf(to, b.t).length) endShapes(to);
   }
   // (a blow struck from higher ground than its target's is tagged, for the page to mark)
   const high = src === 'blow' && !splash && tileOf(b, by).h > tileOf(b, to).h;

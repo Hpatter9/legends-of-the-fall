@@ -27,6 +27,48 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.291.0',
+    date: '2026-10-31',
+    title: 'Auto casts your spells too',
+    notes: ['The battle Auto switch now fires your spells as well as ultimates: heals when hurt, blasts on crowds and bosses, buffs early. The War Horn stays yours.'],
+  },
+  {
+    version: '0.290.0',
+    date: '2026-10-31',
+    title: 'Painted faces, and the spoils page',
+    notes: ['Battle rows and unit cards show each hero\'s painted face. A run\'s final recap adds a spoils page (crowns, gear, items) and drops the wave-by-wave strip.'],
+  },
+  {
+    version: '0.289.0',
+    date: '2026-10-31',
+    title: 'Guest heroes, and talent arrows',
+    notes: ['The passing cart may offer a guest hero: a 6th fighter for that run only. Tavern arrows now also mark heroes with talent points to spend.'],
+  },
+  {
+    version: '0.288.0',
+    date: '2026-10-31',
+    title: 'Summons and shapes last across waves',
+    notes: ['Summons and shapeshifts now run on a timer that carries from wave to wave (wolves and treants 60 s, werewolf form 40 s); a ring shows the time left.'],
+  },
+  {
+    version: '0.287.0',
+    date: '2026-10-31',
+    title: 'New summon sprites',
+    notes: ['Summons have new sprites: leaner wolves, real treants, a blue spirit wraith, a war standard with pennants and a glass decoy, each ringed in its caller\'s colour.'],
+  },
+  {
+    version: '0.286.0',
+    date: '2026-10-31',
+    title: 'Hester\'s Stall: books, gear and repairs',
+    notes: ['Hester\'s Stall opens at the camp: skill books to study, gear, tomes and chests. Sell what you don\'t need; gear now wears in battle and is repaired here.'],
+  },
+  {
+    version: '0.285.0',
+    date: '2026-10-31',
+    title: 'The Calamity\'s battlefields come alive',
+    notes: ['Six new Calamity battlefields (a fallen nave, crystal chasm, crypt rows, void bridge, ritual circle, flooded vault) with braziers, fog, runes and bats.'],
+  },
+  {
     version: '0.284.0',
     date: '2026-10-31',
     title: 'One of each hero on the field',

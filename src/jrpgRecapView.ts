@@ -48,6 +48,26 @@ export interface JrItem {
   cls?: string;
 }
 
+/** A piece of gear on the spoils page: its icon, name, rarity (1 to 5, its colour) and where it went. */
+export interface JrGear {
+  icon: HTMLElement | null;
+  name: string;
+  rarity: number;
+  /** "Common", "Rare"... */
+  rarityName: string;
+  where: string;
+  n: number;
+}
+
+/** The final recap's spoils page (RECAP-SPOILS): the lasting money counted up, the gear, the items; or a short line when nothing came. */
+export interface JrSpoils {
+  money: readonly JrCount[];
+  gear: readonly JrGear[];
+  items: readonly JrItem[];
+  /** The line for a run that found nothing. */
+  none: string;
+}
+
 export interface JrData {
   won: boolean;
   /** "VICTORY", "DEFEAT", "RUN OVER"... */
@@ -60,6 +80,8 @@ export interface JrData {
   mvp?: { face: HTMLElement; name: string; line: string };
   counts: readonly JrCount[];
   items: readonly JrItem[];
+  /** The final recap's spoils page, in place of `counts` and `items` (RECAP-SPOILS). */
+  spoils?: JrSpoils;
   lines: readonly ResultLine[];
   /** Short cheers under the counts ("First clear!"). */
   notes?: readonly string[];
@@ -86,7 +108,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const num = (n: number) => Math.round(n).toLocaleString('en-GB');
 
-const MARKS: Record<ResultLine['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', bench: '▲' };
+const MARKS: Record<ResultLine['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', bench: '▲', learned: '✦', study: '✎', wear: '⚒', guest: '⚑' };
 
 /** The clock's beats, in ms. */
 const T = { ROWS: 450, FILL: 1300, COUNT: 900, ITEM: 70, LINE: 90, GAP: 150 };
@@ -197,7 +219,78 @@ export function playResults(parts: { head: HTMLElement; body: HTMLElement }, d: 
   }
   const countEls: { c: JrCount; b: HTMLElement }[] = [];
   const countAt0 = at;
-  if (d.counts.length || d.items.length || d.notes?.length) {
+  if (d.spoils) {
+    // (RECAP-SPOILS: the final recap's spoils page, its own step after the company: money, gear, items)
+    const sp = d.spoils;
+    const page = el('section', 'jrSpoils jrSpoilsPage jrIn');
+    page.append(el('h3', 'jrHeading', 'Spoils of the run'));
+    body.append(page);
+    arrivals.push({ at, node: page });
+    const group = (title: string, extra = ''): HTMLElement => {
+      const g = el('div', `jrGroup ${extra}`);
+      g.append(el('h4', 'jrGroupHead', title));
+      page.append(g);
+      return g;
+    };
+    if (sp.money.length) {
+      const counts = el('div', 'jrCounts');
+      for (const c of sp.money) {
+        const cell = el('div', 'jrCount');
+        if (c.icon) {
+          const img = el('img');
+          img.src = c.icon;
+          img.alt = '';
+          cell.append(img);
+        }
+        const b = el('b');
+        cell.append(el('small', '', c.label), b);
+        if (c.note) cell.append(el('em', '', c.note));
+        counts.append(cell);
+        countEls.push({ c, b });
+      }
+      group('Money', 'money').append(counts);
+    }
+    for (const t of d.notes ?? []) page.append(el('p', 'jrNote', t));
+    let k = 0;
+    // (a big haul arrives quicker: the whole page in at most two seconds)
+    const step = Math.min(T.ITEM, 1800 / Math.max(1, sp.gear.length + sp.items.length));
+    if (sp.gear.length) {
+      const list = el('div', `jrGearList${sp.gear.length > 6 ? ' many' : ''}`);
+      for (const g of sp.gear) {
+        const row = el('div', `jrGear jrIn r${g.rarity}`);
+        if (g.icon) {
+          g.icon.classList.add('jrIco');
+          g.icon.setAttribute('aria-hidden', 'true');
+          row.append(g.icon);
+        }
+        const words = el('div', 'jrGearWords');
+        words.append(el('b', '', `${g.name}${g.n > 1 ? ` ×${g.n}` : ''}`), el('small', '', `${g.rarityName} · ${g.where}`));
+        row.append(words);
+        list.append(row);
+        arrivals.push({ at: at + 200 + k++ * step, node: row });
+      }
+      group('Gear', 'gear').append(list);
+    }
+    if (sp.items.length) {
+      const items = el('div', 'jrItems');
+      for (const it of sp.items) {
+        const chip = el('span', `jrItem jrIn ${it.cls ?? ''}`);
+        if (it.icon) {
+          it.icon.classList.add('jrIco');
+          it.icon.setAttribute('aria-hidden', 'true');
+          chip.append(it.icon);
+        }
+        chip.append(el('span', '', it.text));
+        chip.title = it.text;
+        items.append(chip);
+        arrivals.push({ at: at + 200 + k++ * step, node: chip });
+      }
+      group('Items', 'items').append(items);
+    }
+    if (!sp.money.length && !sp.gear.length && !sp.items.length) page.append(el('p', 'jrNone', sp.none));
+    at += 200 + k * step;
+    at = Math.max(at, countAt0 + T.COUNT);
+  } else if (d.counts.length || d.items.length || d.notes?.length) {
     const spoils = el('section', 'jrSpoils jrIn');
     spoils.append(el('h3', 'jrHeading', 'Spoils'));
     body.append(spoils);

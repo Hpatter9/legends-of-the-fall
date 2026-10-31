@@ -16,11 +16,16 @@ import { portrait } from './render/sheets';
 import { lockInfo } from './sim/contentHeroes';
 import { drawHeroSheet, starsOf } from './menuHeroes';
 import { upMark } from './rankUpList';
-import { upgradeReady } from './sim/upgradesReady';
+import { markReady } from './sim/upgradesReady';
 import { kindPower, powerText } from './sim/power';
 import { partyTableau } from './partyScene';
 import { awakenedStep } from './render/awakenRig';
 import { ROLE_NAMES, roleOf, suggestParty, type PartyRole } from './sim/suggest';
+
+import { partyWear, repairAllCost } from './sim/wear';
+import { stallRepairAll } from './sim/stall';
+import { play } from './render/sound';
+import { todayKey } from './modes';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -201,6 +206,31 @@ export class Party {
     $('ptSheet').hidden = true;
   }
 
+  /** SHOP-BOOKS-GEAR: an amber strip above the start button while the company wears worn or broken gear, with one tap to mend it all
+   *  (at the stall's price, counting for standing). Start is never blocked. */
+  private drawWear(): void {
+    const go = $('ptGo');
+    let strip = document.getElementById('ptWear') as HTMLButtonElement | null;
+    if (!strip) {
+      strip = el('button', 'ptWear');
+      strip.id = 'ptWear';
+      go.before(strip);
+    }
+    const w = partyWear(this.meta, this.picked);
+    const { cost } = repairAllCost(this.meta, this.picked);
+    strip.hidden = !w.worn && !w.broken;
+    if (strip.hidden) return;
+    const parts = [w.worn ? `${w.worn} piece${w.worn === 1 ? '' : 's'} worn` : '', w.broken ? `${w.broken} broken` : ''].filter(Boolean).join(', ');
+    strip.textContent = `${parts} · Repair all · ${cost}`;
+    strip.disabled = this.meta.crowns < cost;
+    strip.onclick = () => {
+      if (!stallRepairAll(this.meta, todayKey(), this.picked)) return;
+      saveMeta(this.meta);
+      play('coin');
+      this.draw();
+    };
+  }
+
   private draw(): void {
     const m = this.meta;
     const slots = this.slots;
@@ -248,6 +278,7 @@ export class Party {
     $('ptSceneTitle').textContent = this.quest ? this.quest.title : full ? `${slots === 5 ? 'Five' : slots} heroes. One last stand.` : this.picked.length ? 'A company worth fighting for.' : 'Your legend begins here.';
     $('ptCount').textContent = `${this.picked.length} / ${slots} ready`;
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
+    this.drawWear();
     const key = this.picked.join('|');
     if (this.sceneKey !== key || !$('ptTableau').firstChild) {
       $('ptTableau').replaceChildren(partyTableau(this.picked, (k) => awakenedStep(this.meta, k)));
@@ -319,8 +350,8 @@ export class Party {
           card.append(bar);
         }
       }
-      // (TAVERN-RANKUP: a hero with a rank or an awakening ready wears the gold chevron by the "i" that opens its sheet)
-      if (open && upgradeReady(m, kind)) card.append(upMark('upCorner ptUp'));
+      // (TAVERN-RANKUP: a hero with a rank or an awakening ready, or talent points to spend (TALENT-ARROWS), wears the gold chevron by the "i" that opens its sheet)
+      if (open && markReady(m, kind)) card.append(upMark('upCorner ptUp'));
       const info = el('span', 'ptInfo', 'i');
       info.addEventListener('click', (e) => {
         e.stopPropagation();

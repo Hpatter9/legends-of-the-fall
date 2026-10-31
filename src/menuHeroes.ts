@@ -11,13 +11,15 @@ import { readyToRise } from './sim/rankUp';
 import { openRankUp, type Taken } from './rankUpView';
 // (TAVERN-RANKUP: the gold chevron on a hero with an upgrade ready, and the sheet's hop to the next such hero)
 import { upMark } from './rankUpList';
-import { nextUpgradeKind, upgradeReady } from './sim/upgradesReady';
+import { markReady, nextUpgradeKind, talentPointsReady } from './sim/upgradesReady';
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { compactXp, levelBadge } from './levelBadge';
 import { drawEquipment } from './equipView';
+import { drawSkillBook } from './skillBookView';
+import { fightLoadout, kitWithLoadout } from './sim/books';
 import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
@@ -107,8 +109,11 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
   // (TAVERN-RANKUP: "Next upgrade" goes through the page's own pick where there is one, so it remembers the hero; else this sheet
   // draws the next hero itself)
   let cur = kind;
+  // (TALENT-ARROWS: 'talents' opens the Progression tab with the hero's talent tree already open)
+  const talents = initialTab === 'talents';
   const state: SheetState = {
-    tab: initialTab,
+    talents,
+    tab: talents ? 'progression' : initialTab,
     onPick,
     hop: (next) => {
       if (onPick) return onPick(next, state.tab);
@@ -127,6 +132,8 @@ export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close:
 
 interface SheetState {
   tab: string;
+  /** (TALENT-ARROWS) open the talent tree at once, the first time the sheet is drawn. */
+  talents?: boolean;
   onPick?: (kind: string, tab: string) => void;
   /** (TAVERN-RANKUP) open another hero's sheet: the "Next upgrade" hop. */
   hop: (kind: string) => void;
@@ -137,7 +144,9 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
-  const hk = HERO_KITS()[kind];
+  // (SHOP-BOOKS-GEAR: the skill cards follow the two skills the hero has chosen, its own or learned from books)
+  const chosen = open ? fightLoadout(meta, kind) : undefined;
+  const hk = chosen ? kitWithLoadout(kind, chosen) : HERO_KITS()[kind];
   box.className = 'hsheet heroDetail';
   box.dataset.class = CLASS_OF[kind];
   box.replaceChildren();
@@ -166,7 +175,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       button.type = 'button';
       button.setAttribute('aria-current', other === kind ? 'true' : 'false');
       button.append(heroArtwork(other, false, awakenedOf(meta, other)), el('small', '', heroName(other)));
-      if (upgradeReady(meta, other)) button.append(upMark('upCorner'));
+      if (markReady(meta, other)) button.append(upMark('upCorner'));
       button.addEventListener('click', () => state.onPick?.(other, state.tab));
       strip.append(button);
     }
@@ -283,6 +292,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     progression.append(detailHeading('Path of ascension', 'From a new recruit to a legend of the Keep.'));
     equipment.append(detailHeading('The armoury', 'Steel, craft and a little good fortune.'));
     skills.append(detailHeading('Arts of war', 'Every hero has a way to turn the tide.'));
+    if (open) skills.append(drawSkillBook(meta, kind, () => redraw()));
     box.append(tabs, ...panels);
     const b = lastingBoost(x.level);
     const m = rankMult(full);
@@ -350,9 +360,14 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
         skills.append(card);
       }
     progression.append(drawAwaken(meta, kind, redraw));
-    if (TREES[kind]) progression.append(drawTalents(meta, kind, repower));
+    if (TREES[kind]) {
+      const tree = drawTalents(meta, kind, repower, !!state.talents);
+      progression.append(tree);
+      if (state.talents) requestAnimationFrame(() => tree.scrollIntoView({ block: 'start' }));
+      state.talents = false;
+    }
     equipment.append(drawEquipment(meta, kind, repower));
-    equipment.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
+    equipment.append(el('p', 'hint', 'Equipment is kept for good, and wears a little with each wave it is fought in: mend it here or at Hester’s Stall. Gear found in a run lasts that run only.'));
   }
   if (show && show.what !== 'cache') playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined, show.what === 'awaken' ? kind : undefined);
   const done = el('button', 'primary', 'Back');
@@ -439,6 +454,8 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       card.setAttribute('aria-description', 'Last viewed hero');
     }
     if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'), upMark('upCorner'));
+    // (TALENT-ARROWS: talent points to spend wear the chevron too)
+    else if (talentPointsReady(meta, kind)) card.append(el('small', 'rankTag', 'Talents'), upMark('upCorner'));
     card.addEventListener('click', () => pick(kind));
     remember(card, kind);
     grid.append(card);

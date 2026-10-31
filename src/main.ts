@@ -21,6 +21,7 @@ import { drawWaveNotes } from './waveCardView';
 import { playResults, type JrData, type JrPlayer } from './jrpgRecapView';
 import { questLines } from './sim/jrpgRecap';
 import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
+import { noteSpoils } from './sim/runSpoils';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
@@ -35,6 +36,8 @@ import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
+import { settleStudy, studyWords } from './sim/books';
+import { settleWear, wearWords } from './sim/wear';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
@@ -62,6 +65,7 @@ import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
+import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, splitGuestXp } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
@@ -92,6 +96,7 @@ import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
+import { heroFace } from './heroFace';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
@@ -99,6 +104,7 @@ import { fullScene } from './ultMomentRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { autoSpellsFor } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
@@ -601,6 +607,11 @@ class Game {
    *  is made again with it and the squad put back, so the choice counts in this fight (the deploy was made before the card opened). The camera,
    *  the intro and the cinematics are left alone. */
   private afterEvent(buffWas: string): void {
+    // (GUEST-HERO: a guest bought at the cart steps onto the board at once, beside the five)
+    if (this.b.phase === 'deploy' && this.run.squad.some((id) => !this.b.units.some((u) => u.side === 'hero' && u.tag === id))) {
+      this.placeSquad();
+      this.syncSprites();
+    }
     if (JSON.stringify(this.run.buff ?? null) === buffWas || this.b.phase !== 'deploy') return;
     this.b = startStage(this.run, this.duchessWish());
     this.placeSquad();
@@ -964,7 +975,7 @@ class Game {
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite)
     this.eid.arm(this.b, midBossWave(this.run, this.run.stage));
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
-    this.b.autoUlt = this.ultAutoOn();
+    this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
     this.hud.build(this.b);
     this.ultm.clear();
@@ -1088,7 +1099,7 @@ class Game {
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
-      b.autoUlt = this.ultAutoOn();
+      this.setAutoOn(b);
       while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
@@ -1175,6 +1186,8 @@ class Game {
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
     this.boardView.step(dt);
+    // (a Calamity zone's pillars and statues fade while a fighter stands behind them, `zoneLife.ts`)
+    this.boardView.fadeOver([...this.sprites.values()], dt);
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
@@ -1644,8 +1657,11 @@ class Game {
     }
     const h = u.side === 'hero' && u.tag !== undefined ? heroOf(this.run, u.tag) : undefined;
     const grade = u.grade ?? 1;
-    const pic = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
-    this.info.open(infoOf(this.b, u, { meta: this.run.local ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic);
+    const sprite = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
+    // (HUD-FACES: a hero of the party, or a guest, shows its painted face, its awakened form's once awakened)
+    const pic = h ? heroFace(h.kind, this.run.local ? (u.awaken ?? 0) : awakenedOf(this.meta, h.kind), 96, sprite) : sprite;
+    // (GUEST-HERO: a guest the player does not own reads none of its kind's lasting talents or gear; a guest wears a GUEST tag)
+    this.info.open(infoOf(this.b, u, { meta: this.run.local || (h?.guest && !guestOwned(this.meta, h)) ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic, !!h?.guest);
     play('tap');
   }
 
@@ -1715,6 +1731,12 @@ class Game {
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
   }
+  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  private setAutoOn(b: Battle): void {
+    const on = this.ultAutoOn();
+    b.autoUlt = on;
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, this.meta.spellbook.equipped);
+  }
 
   private wire(): void {
     // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
@@ -1725,7 +1747,7 @@ class Game {
       onAuto: (on) => {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
-        this.b.autoUlt = this.ultAutoOn();
+        this.setAutoOn(this.b);
       },
       autoOn: () => this.ultAutoOn(),
       dockTop: () => $('panel').getBoundingClientRect().top,
@@ -2133,10 +2155,19 @@ class Game {
     this.newBattle();
   }
 
+  /** The deploy line's count: "4 of 5 placed", and "+ guest" when the run's guest stands on the field too (GUEST-HERO). */
+  private placedWords(n: number): string {
+    const g = guestOf(this.run);
+    const gOn = !!g && this.b.units.some((u) => u.side === 'hero' && u.tag === g.id);
+    return `${n - (gOn ? 1 : 0)} of ${squadLimit(this.run)} placed${gOn ? ' + guest' : ''}`;
+  }
+
   /** A roster hero's boost for the fight: its grade, rank, level, gear and equipment, and the tower's wounds. */
   private boostFor(h: Owned): Boost {
     // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
     if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
+    // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
+    if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
   }
 
@@ -2441,7 +2472,7 @@ class Game {
     // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
     const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
     // (JRPG-RECAP: the run's results screen at the top: each hero's XP over the run, the MVP, the gold and crowns counted up)
-    const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) });
+    const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) }, run);
     showRecap($('recap'), recapOf(run), { ...head, joke, results, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
@@ -2781,7 +2812,7 @@ class Game {
 
   /** A hero's level: its own in a run that levels its heroes, else its kind's lasting level. */
   private levelOf(h: Owned): number {
-    return this.run.local ? heroLevel(h) : levelOfKind(this.meta, h.kind);
+    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta, h) : levelOfKind(this.meta, h.kind);
   }
 
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
@@ -2799,7 +2830,7 @@ class Game {
       // (a hero with a match ready to merge glows: MERGE-TWO)
       // (QUEST-BATTLES: a quest's required hero wears a gold frame and a padlock, and cannot be recycled)
       const castHero = this.run.mode?.kind === 'quest' && this.run.mode.cast.includes(h.kind);
-      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}`;
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}${h.guest ? ' guest' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);
@@ -2849,7 +2880,9 @@ class Game {
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
-      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h)) card.append(sell);
+      // (GUEST-HERO: a guest wears a GUEST badge, and is not the party's to recycle)
+      if (h.guest) card.append(Object.assign(document.createElement('span'), { className: 'guestMark', textContent: 'Guest', title: `${heroName(h.kind)} is a guest: a sixth hero for this run only` }));
+      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h) && !h.guest) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -3073,11 +3106,17 @@ class Game {
       // (a quest battle replayed for practice pays nothing, XP neither)
       const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
-      const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
+      const bench = own ? {} : benchXp(gains, run.roster.filter((h) => !h.guest).map((h) => h.kind));
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
       if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
-      const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
+      // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
+      const ups = own ? own.ups : gainXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench });
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
+      // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
+      // under auto-replay, except in the runs whose heroes start bare, where it does not count)
+      const placed = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def));
+      const studied = studyWords(settleStudy(this.meta, placed.map((u) => u.def)), heroName);
+      const wore = run.local ? [] : wearWords(settleWear(this.meta, placed.map((u) => ({ kind: u.def, fell: !u.alive })), !!this.auto), heroName);
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
       noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
@@ -3094,7 +3133,10 @@ class Game {
       const hornSaid = hornLine(horn);
       // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
       const questMoved = questsMoved(this.meta, questsBefore, questsDone, questsFound);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}) };
+      // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
+      const waveGains = gainsSince(held, this.meta, run);
+      noteSpoils(recapOf(run), waveGains);
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(wore.length ? { wear: wore } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -3156,7 +3198,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;

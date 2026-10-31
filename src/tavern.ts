@@ -39,7 +39,7 @@ import { BOARD, GWEN } from './questArt';
 import { giverMark } from './questCard';
 import { questsWaiting } from './sim/quests';
 // (TAVERN-RANKUP: the gold chevron over a hero with a rank or an awakening ready, and the quick Upgrades list's button)
-import { upgradeReady } from './sim/upgradesReady';
+import { markReady } from './sim/upgradesReady';
 import { upMark } from './rankUpList';
 // (TAVERN LIFE: what each hero does at their spot, `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`)
 import { LIFE } from './render/tavernLife';
@@ -312,10 +312,11 @@ export class Tavern {
     this.meta = meta;
     this.questBtn.classList.toggle('new', questsWaiting(meta));
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
-    this.rise = new Set(have.filter((k) => upgradeReady(meta, k)));
+    // (TALENT-ARROWS: talent points to spend mark a hero too)
+    this.rise = new Set(have.filter((k) => markReady(meta, k)));
     this.upBtn.hidden = !this.upgrades || !this.rise.size;
     this.upCount.textContent = String(this.rise.size);
-    this.upBtn.setAttribute('aria-label', `Upgrades: ${this.rise.size} ${this.rise.size === 1 ? 'hero has' : 'heroes have'} a rank or an awakening ready`);
+    this.upBtn.setAttribute('aria-label', `Upgrades: ${this.rise.size} ${this.rise.size === 1 ? 'hero has' : 'heroes have'} a rank, an awakening or talent points ready`);
     this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · swipe to look'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
     for (const kind of have) {

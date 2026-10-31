@@ -12,6 +12,7 @@
 import type { Battle, BattleEvent, Unit } from './battle';
 import { CHARGE_MAX, keyOf, kitOf, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
 import { UNITS } from './units';
+import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
@@ -139,6 +140,8 @@ export const HERO_KITS = (): Record<string, HeroKit> => (table ??= HERO_TABLE())
 export function heroKitOf(u: Unit): HeroKit | undefined {
   if (u.side !== 'hero' || u.owner !== undefined || u.kit) return undefined;
   if (UNITS[u.def]?.summon) return undefined;
+  // (a hero with skills from books in its slots: its kit with those two, `books.ts`)
+  if (u.book) return kitWithLoadout(u.def, u.book);
   return HERO_KITS()[u.def];
 }
 

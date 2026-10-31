@@ -17,8 +17,8 @@ export interface Merged {
 /** Whether heroes may merge in this run at all: not when it is over, nor in a Calamity. */
 const mergesHere = (run: Run): boolean => !run.over && run.mode?.kind !== 'calamity';
 
-/** Whether a hero can take part in a merge: below the top grade and not a mirror's clone. */
-const mergeable = (h: Owned): boolean => h.grade < MAX_GRADE && !isClone(h);
+/** Whether a hero can take part in a merge: below the top grade, not a mirror's clone and not a guest (GUEST-HERO). */
+const mergeable = (h: Owned): boolean => h.grade < MAX_GRADE && !isClone(h) && !h.guest;
 
 /** Whether hero `aId` may be merged into hero `bId`: both owned, different heroes, the same kind and grade, below the top grade, in a run that merges. */
 export function canMerge(run: Run, aId: number, bId: number): boolean {

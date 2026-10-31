@@ -25,9 +25,19 @@ export function overlookLayout(w: number, h: number): Camp {
       daily: place(10, h - 56, Math.floor((w - 28) / 2), 48),
       tower: place(Math.ceil((w + 8) / 2), h - 56, Math.floor((w - 28) / 2), 48),
       calamity: place(w - 116, 4, 108, Math.max(112, Math.round(h * 0.23))),
+      // (Hester's Stall, SHOP-BOOKS-GEAR: on the ledge at the left, above the fire and the chests; its picture over a short plate)
+      stall: stallPlace(h, heroY),
     },
     buttonTop: h - 60,
   };
+}
+
+/** Hester's Stall's place on the overlook: the stall's picture on the ledge at the left edge, its plate under it, the tap box over both. */
+export const STALL = { w: 108, pic: 100, plate: 34 };
+function stallPlace(h: number, heroY: number): Place {
+  const foot = Math.round(heroY - h * 0.075);
+  const x = 2;
+  return { x: x + STALL.w / 2, foot, box: { x, y: foot - STALL.pic, w: STALL.w, h: STALL.pic + STALL.plate }, plate: { x, y: foot, w: STALL.w, h: STALL.plate } };
 }
 
 /** The actual army's field troops, excluding its bosses, in first-seen order. */
