@@ -152,7 +152,8 @@ export class UnitSprite {
     this.sheet = summon ? summonSheet(unit.def, this.grade)! : unit.side === 'hero' ? battleSheet(unit.def, awake, this.grade) : formOf(def, this.grade);
     this.ownScale = summon?.scale ?? def.scale;
     this.solid = summon?.alpha ?? 1;
-    const auraStep = unit.side === 'hero' ? combatAuraStep(this.grade) : 0;
+    // (a summon wears no class aura: its caller's ring under it says whose it is)
+    const auraStep = unit.side === 'hero' && !summon ? combatAuraStep(this.grade) : 0;
     this.awakenAura = auraStep ? new AwakenAura(unit.def, auraStep, settings().saver) : null;
     const size = (unit.size ?? 1) * (this.grade > 3 ? GRADE4_SIZE : this.grade > 2 ? GRADE3_SIZE : 1);
     this.tall = figureOf(this.sheet) * this.ownScale * size;

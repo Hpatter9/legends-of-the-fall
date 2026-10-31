@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### SUMMON-ART — The summons drawn in their own sprites
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/summon-art`, `/home/user/lotf-summonart` (from main 0.284.0).
+- **Goal:** the owner's "Redraw or use different sprites for the summon": the wolves, dire wolf, treant, wraith, standard and decoy each in a sheet of its own (walk, attack, idle, hurt, dead), reading as its caller's (a ring of the caller's colour under it), none a copy of a hero or a foe. Looks only.
+- **Scope:** new `src/render/summonArt.ts`, `src/art/units/summon_*.png` (+ `sheets.json` entries), `tools/summon-art/`, `test/summon-art.test.ts`; hooks in `src/render/sheets.ts`, `src/render/unitView.ts`; `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/summon-art.md); screenshots `samples/summon-art-*.png`.
+
 ### ONE-OF-EACH — One unit of a hero on the battlefield at a time
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).
