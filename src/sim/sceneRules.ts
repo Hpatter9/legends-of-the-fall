@@ -85,7 +85,7 @@ export function castOf(scene: Scene, p: Players): Record<string, Cast> {
   const out: Record<string, Cast> = {};
   for (const [id, m] of Object.entries(scene.cast)) {
     const kind = kindOf(m.role, p);
-    out[id] = { kind, name: kind ? UNITS[kind].name : m.role === 'duchess' ? 'Duchess' : id };
+    out[id] = { kind, name: m.name ?? (kind ? UNITS[kind].name : m.role === 'duchess' ? 'Duchess' : id) };
   }
   return out;
 }
@@ -132,6 +132,8 @@ export function momentText(mo: Moment): string {
       return 'The first Ascension.';
     case 'dailyBoss':
       return "The first daily's boss.";
+    case 'questBattle':
+      return 'A quest battle, before it begins and after it is won.';
   }
 }
 

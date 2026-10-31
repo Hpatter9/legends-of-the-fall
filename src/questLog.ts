@@ -11,6 +11,7 @@ import { ACTIVE_MAX, cannotTake, dropQuest, handIn, isDone, progressOf, takeQues
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
 import { todayKey } from './modes';
+import { battleOfQuest, canFightBattle } from './sim/questRun';
 
 export type LogTab = 'active' | 'board' | 'eidolons' | 'done';
 
@@ -33,6 +34,10 @@ export interface LogHooks {
   /** The save changed: save it and redraw the home screen. */
   changed(): void;
   close(): void;
+  /** Begin (or carry on) a quest battle (batch 2): the page opens the party with its cast locked in. */
+  fight?(battle: string): void;
+  /** The quest battle saved part-way, if there is one (its Fight reads Continue). */
+  saved?(): string | null;
 }
 
 /** Draw the log on a tab into the sheet's box. */
@@ -65,7 +70,7 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
   const list = el('div', 'qlList');
   if (tab === 'active') drawActive(list, m, () => redraw(), hooks);
   else if (tab === 'board') drawBoard(list, m, () => redraw(), hooks);
-  else drawDone(list, m);
+  else drawDone(list, m, hooks);
   box.append(head, tabs, list);
 }
 
@@ -117,6 +122,20 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
         redraw();
       });
       side.append(give);
+    } else if (battleOfQuest(a.id) && hooks.fight) {
+      // (batch 2: a quest battle's row fights it; Drop is still there, Track is the chip's)
+      const qb = battleOfQuest(a.id)!;
+      const go = el('button', 'primary qlFight', hooks.saved?.() === qb.id ? 'Continue' : 'Fight');
+      go.setAttribute('aria-label', `Fight ${qb.title}`);
+      go.disabled = !canFightBattle(m, qb.id);
+      go.addEventListener('click', () => hooks.fight!(qb.id));
+      const drop = el('button', 'qlDrop', 'Drop');
+      drop.setAttribute('aria-label', `Drop ${q.title}`);
+      drop.addEventListener('click', () => {
+        dropping = a.id;
+        redraw();
+      });
+      side.append(go, drop);
     } else {
       const pin = el('button', `qlPin${pinned === a.id ? ' on' : ''}`, pinned === a.id ? 'Tracked' : 'Track');
       pin.setAttribute('aria-pressed', String(pinned === a.id));
@@ -165,7 +184,7 @@ function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHoo
   if ((m.quests?.active.length ?? 0) >= ACTIVE_MAX) list.append(el('p', 'qlEmpty', `Your log is full: ${ACTIVE_MAX} quests at a time. Hand one in to take another.`));
 }
 
-function drawDone(list: HTMLElement, m: Meta): void {
+function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
   const done = m.quests?.done ?? [];
   if (!done.length) return empty(list, 'No quests handed in yet.');
   for (const id of [...done].reverse()) {
@@ -179,6 +198,16 @@ function drawDone(list: HTMLElement, m: Meta): void {
     body.append(title, el('small', 'qlGiver', giverName(giverKeyOf(q)).name), el('small', 'qlWord', `“${giverWords(q, q.done[0])}”`));
     if (q.reward.keepsake) body.append(el('small', 'qlKeep', `Keepsake: ${q.reward.keepsake}`));
     row.append(questFace(q), body);
+    // (batch 2: a quest battle won can be fought again for practice; it pays nothing)
+    const qb = battleOfQuest(id);
+    if (qb && hooks.fight && canFightBattle(m, qb.id)) {
+      const side = el('div', 'qlSide');
+      const again = el('button', 'qlReplay', hooks.saved?.() === qb.id ? 'Continue' : 'Replay');
+      again.title = 'Fight it again for practice: no reward';
+      again.addEventListener('click', () => hooks.fight!(qb.id));
+      side.append(again);
+      row.append(side);
+    }
     list.append(row);
   }
 }

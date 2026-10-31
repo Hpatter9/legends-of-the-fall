@@ -35,6 +35,7 @@ import { grantOres } from './awakenMats';
 import { grantTomes } from './tomes';
 import { giveShards } from './unlock';
 import { COMBOS } from './combos';
+import { castOwned, questBattleById } from './questBattles';
 import {
   BEST_GOALS,
   GIVERS,
@@ -95,6 +96,11 @@ export interface QuestState {
   last?: Record<string, number>;
   /** The date each slot with an `every` last drew an offer. */
   drawn?: Partial<Record<GiverSlot, number>>;
+  /** Quest battles (batch 2): how many tries each has been begun (its next seed follows), the ones won (a replay of one is practice),
+   *  and the ones whose story has been told (it plays before the first deploy, once). */
+  tries?: Record<string, number>;
+  won?: string[];
+  told?: string[];
 }
 
 export const blankQuests = (): QuestState => ({ active: [], offers: [], done: [] });
@@ -154,6 +160,11 @@ export function heroesOwnedFor(m: Meta, q: QuestDef): boolean {
   if (g.by && !some(g.by)) return false;
   if (g.all && !g.all.every(own)) return false;
   if (g.kind === 'teamCombo' && g.combo && !(COMBOS.find((c) => c.id === g.combo)?.heroes ?? []).every(own)) return false;
+  // (a quest battle's required cast: every slot needs an owned hero, batch 2)
+  if (g.kind === 'battle') {
+    const qb = questBattleById(g.battle);
+    if (!qb || !castOwned(m, qb)) return false;
+  }
   return true;
 }
 
@@ -398,6 +409,8 @@ export interface QuestFight {
   map?: number;
   /** The Last Stand's end: the best wave, the act reached (0 to 3) and how many times the line was held. */
   stand?: { best: number; act: number; held: number };
+  /** The quest battle this fight won (its last wave), if it did. */
+  battle?: string;
 }
 
 /** The foes of a family (by their look's sheet: every skeleton's sheet is a skeleton's). */
@@ -476,6 +489,7 @@ export function questFightOf(c: AchievementCtx, extra: FightExtra = {}): QuestFi
     ...(mvp ? { mvp } : {}),
     cleared: c.won && !!run.cleared,
     ...(guardian ? { map: guardian } : {}),
+    ...(run.mode?.kind === 'quest' && c.won && run.cleared ? { battle: run.mode.quest } : {}),
   };
 }
 
@@ -553,6 +567,8 @@ export function goalGain(g: Goal, f: QuestFight): number {
       return f.stand && (!g.held || f.stand.held > 0) ? f.stand.act + 1 : 0;
     case 'holdLine':
       return f.stand?.held ?? 0;
+    case 'battle':
+      return f.won && f.battle === g.battle ? 1 : 0;
   }
 }
 
@@ -579,6 +595,14 @@ function readCounts(raw: unknown, ok: (v: number) => boolean): Record<string, nu
   if (!raw || typeof raw !== 'object') return undefined;
   const out: Record<string, number> = {};
   for (const [id, v] of Object.entries(raw as Record<string, unknown>)) if (questById(id) && typeof v === 'number' && ok(v)) out[id] = v;
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** A quest battle's tries, read safely (only battles still in the game, whole counts). */
+function readBattles(raw: unknown): Record<string, number> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const out: Record<string, number> = {};
+  for (const [id, v] of Object.entries(raw as Record<string, unknown>)) if (questBattleById(id) && typeof v === 'number' && Number.isInteger(v) && v > 0 && v < 1e6) out[id] = v;
   return Object.keys(out).length ? out : undefined;
 }
 
@@ -612,7 +636,14 @@ export function readQuests(raw: unknown): QuestState | undefined {
     for (const slot of SLOTS) if (isDate(r.drawn[slot])) drawn[slot] = r.drawn[slot];
     if (Object.keys(drawn).length) s.drawn = drawn;
   }
+  // (batch 2's quest battles: tries, those won, stories told; only battles still in the game)
+  const tries = readBattles(r.tries);
+  if (tries) s.tries = tries;
+  for (const k of ['won', 'told'] as const) {
+    const ids = [...new Set((Array.isArray(r[k]) ? r[k] : []).filter((id): id is string => typeof id === 'string' && !!questBattleById(id)))];
+    if (ids.length) s[k] = ids;
+  }
   // (a later batch's chain state, kept as it was so an older build does not wipe it)
-  for (const k of ['chains', 'pieces', 'tries'] as const) if (k in (raw as object)) (s as unknown as Record<string, unknown>)[k] = (raw as Record<string, unknown>)[k];
+  for (const k of ['chains', 'pieces'] as const) if (k in (raw as object)) (s as unknown as Record<string, unknown>)[k] = (raw as Record<string, unknown>)[k];
   return s;
 }

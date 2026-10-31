@@ -13,6 +13,7 @@ import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './sc
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
+import { questArmy, questBattleById } from './questBattles';
 import { SWARM_HP, themeById, themeFx, themeGoalMet, type DailyTheme } from './dailyThemes';
 import { kindsOf } from './traits';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
@@ -162,7 +163,10 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+/** A quest battle (`questBattles.ts`): the battle, the heroes of its required cast who came (slot by slot), and `practice` for a
+ *  replay of one already won (it pays nothing). */
+export type QuestMode = { kind: 'quest'; quest: string; cast: string[]; practice?: boolean };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
@@ -212,7 +216,8 @@ export function noteFight(run: Run, b: Battle): void {
 /** The army a run is fighting, if it is an army run. */
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
 /** The fixed run of waves a run is fighting: an army's, or a date's daily (`daily.ts`, an army in shape that is in no list and keeps no army record). */
-export const waveArmyOf = (run: Run): Army | undefined => (run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : armyOfRun(run));
+export const waveArmyOf = (run: Run): Army | undefined =>
+  run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : run.mode?.kind === 'quest' ? questArmy(run.mode.quest) : armyOfRun(run);
 /** A themed daily run's theme (DAILY-BUILDS: named in its mode when it began), or null for any other run, a daily before the themes among them. */
 export const runTheme = (run: Run): DailyTheme | null => (run.mode?.kind === 'daily' ? themeById(run.mode.theme) : null);
 /** Whether stage n of the run (its current one by default) has a boss. */
@@ -286,6 +291,8 @@ export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonC
 export function recycle(run: Run, heroId: number): number | null {
   const h = heroOf(run, heroId);
   if (!h || run.over || run.roster.length <= 1 || run.rift?.starter === heroId) return null;
+  // (a quest battle's required hero is not recycled while it is the last of its kind: it must fight)
+  if (isCastHero(run, h)) return null;
   const gold = recycleValue(run);
   for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
   run.roster = run.roster.filter((x) => x.id !== heroId);
@@ -294,6 +301,9 @@ export function recycle(run: Run, heroId: number): number | null {
   noteGold(run, 'earned', gold);
   return gold;
 }
+
+/** Whether a hero is the last of its kind among a quest battle's required cast (it cannot be recycled). */
+export const isCastHero = (run: Run, h: Owned): boolean => run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind) && run.roster.filter((x) => x.kind === h.kind).length <= 1;
 
 /** Retries left in the run. */
 export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - (run.retries ?? 0));
@@ -428,7 +438,8 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
     // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
     ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
-    duchess: duchessModeOk(run.mode) ? duchess : 'never',
+    // (a quest battle has Duchess every time its story has her, and never otherwise: no roll)
+    duchess: run.mode?.kind === 'quest' ? (questBattleById(run.mode.quest)?.duchess ? 'always' : 'never') : duchessModeOk(run.mode) ? duchess : 'never',
   });
 }
 
@@ -459,8 +470,8 @@ export function finish(run: Run, won: boolean, stars = 0): void {
       run.event = undefined;
     } else {
       run.stage++;
-      // (the endless tower has no events)
-      run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
+      // (the endless tower has no events, nor a quest battle: its story is its own)
+      run.event = run.mode?.kind !== 'tower' && run.mode?.kind !== 'quest' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
     }
   } else run.over = true;
   spendBuff(run);
@@ -490,11 +501,11 @@ export function setSquad(run: Run, id: number, on: boolean): boolean {
 }
 
 const KEY = 'legends.run';
-/** The tower and the calamity each keep their own save, so a climb survives the armies' runs and a reload (`saveSlot`). */
-export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity' } as const;
+/** The tower, the calamity and a quest battle each keep their own save, so a climb (or a quest battle) survives the armies' runs and a reload (`saveSlot`). */
+export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity', quest: 'legends.questRun' } as const;
 export type SlotKind = keyof typeof SLOT_KEYS;
 /** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
-export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
+export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
 /** The run saved in a mode's slot, if it is still going (a lost or cleared one is no run to carry on). */
 export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
@@ -518,6 +529,8 @@ export function adoptOldTower(store: Pick<Storage, 'getItem' | 'setItem' | 'remo
  *  wave. An endless daily saved by an older version could be on stage 14 of what is now ten waves, and starting it broke. */
 export const runFits = (r: Run): boolean => {
   if (r.mode?.kind === 'army' && r.mode.scenario !== undefined && r.mode.scenario !== 'classic' && !isScenario(r.mode.scenario)) return false;
+  // (a quest battle no longer in the game, or with no cast, is no run to carry on)
+  if (r.mode?.kind === 'quest' && (!questBattleById(r.mode.quest) || !Array.isArray(r.mode.cast))) return false;
   const army = waveArmyOf(r);
   return !army || (r.stage >= 1 && r.stage <= army.waves.length);
 };

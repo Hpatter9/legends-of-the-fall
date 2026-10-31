@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.271.0',
+    date: '2026-10-31',
+    title: 'Quest battles',
+    notes: ['Eleven story battles from quests: named heroes must fight, a scene before and after, and losing costs nothing. They appear once you own the heroes.'],
+  },
+  {
     version: '0.270.0',
     date: '2026-10-31',
     title: 'Bosses hit back',

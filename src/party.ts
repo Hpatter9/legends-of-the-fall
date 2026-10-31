@@ -31,6 +31,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 /** How long a press holds before it opens the hero's details instead of toggling it. */
 const LONG_PRESS_MS = 450;
 
+/** A small padlock for a quest's locked slot (drawn, so it is crisp at any size and needs no file). */
+const PADLOCK = '<svg viewBox="0 0 12 14" width="12" height="14" aria-hidden="true"><path d="M3 6V4a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="1.5" y="6" width="9" height="7" rx="1.2" fill="currentColor"/></svg>';
+
 export class Party {
   /** The draft: the kinds picked so far (saved only by Start or Done). */
   private picked: string[] = [];
@@ -43,6 +46,9 @@ export class Party {
   private focus?: string;
   private stopSheet: (() => void) | null = null;
   private onDone: () => void = () => {};
+  /** A quest battle's party (batch 2 of the quests): its required cast, locked in their slots, its title and rule, and where the
+   *  picks go (they are the battle's own: the saved party is not changed). Null for the ordinary party screen. */
+  private quest: { cast: readonly string[]; title: string; rule: string; fits: (kind: string) => boolean; then: (picked: string[]) => void } | null = null;
 
   constructor(
     private meta: Meta,
@@ -66,6 +72,8 @@ export class Party {
 
   /** Open the screen on the saved party. `then` runs once the party is saved: a new run starts, or the hub returns. */
   open(mode: 'start' | 'edit', then: () => void): void {
+    this.quest = null;
+    document.getElementById('party')?.classList.remove('questParty');
     this.picked = [...this.meta.party];
     this.note = '';
     this.focus = undefined;
@@ -79,11 +87,28 @@ export class Party {
     $('ptBody').scrollTop = 0;
   }
 
+  /** Open the screen for a quest battle: the required cast already in their slots, locked (a gold frame and a padlock), the other
+   *  slots filled from the saved party (no repeats, and only heroes who may fight in it). `then` gets the picks; nothing is saved. */
+  openQuest(cast: readonly string[], title: string, rule: string, fits: (kind: string) => boolean, then: (picked: string[]) => void): void {
+    this.open('start', () => {});
+    this.quest = { cast, title, rule, fits, then };
+    $('party').classList.add('questParty');
+    this.picked = [...cast, ...this.meta.party.filter((k) => !cast.includes(k) && fits(k))].slice(0, this.slots);
+    $('ptGo').textContent = '⚔  To the quest';
+    this.draw();
+  }
+
   private get slots(): number {
     return partySlots(this.meta);
   }
 
   private confirm(): void {
+    if (this.quest) {
+      const q = this.quest;
+      if (this.picked.length !== this.slots || !q.cast.every((k) => this.picked.includes(k))) return;
+      this.close();
+      return q.then([...this.picked]);
+    }
     if (!setParty(this.meta, this.picked)) return;
     saveMeta(this.meta);
     this.close();
@@ -98,7 +123,11 @@ export class Party {
 
   /** Fill the draft with the best party the unlocked heroes make (nothing is saved until Start or Done). */
   private suggest(): void {
-    this.picked = suggestParty(this.meta.unlocked, this.slots, (k) => kindPower(this.meta, k));
+    // (a quest's cast stays in; the rest are suggested from those who may fight in it)
+    const q = this.quest;
+    this.picked = q
+      ? [...q.cast, ...suggestParty(this.meta.unlocked.filter((k) => !q.cast.includes(k) && q.fits(k)), this.slots - q.cast.length, (k) => kindPower(this.meta, k))]
+      : suggestParty(this.meta.unlocked, this.slots, (k) => kindPower(this.meta, k));
     const traits = countTraits(this.picked).filter((c) => c.active).map((c) => c.trait.name);
     const roles = [...new Set(this.picked.map(roleOf))].map((r) => ROLE_NAMES[r]);
     this.note = '';
@@ -108,6 +137,20 @@ export class Party {
 
   /** Add a hero to the party, or take it out. A full party asks for one out first. */
   private toggle(kind: string): void {
+    // (a quest's required hero stays: a nudge and a word say why)
+    if (this.quest?.cast.includes(kind)) {
+      this.note = `${heroName(kind)} must fight in this one.`;
+      this.draw();
+      const slot = $('ptSlots').querySelector<HTMLElement>(`[data-kind="${kind}"]`);
+      slot?.classList.remove('nudge');
+      void slot?.offsetWidth;
+      slot?.classList.add('nudge');
+      return;
+    }
+    if (this.quest && !this.picked.includes(kind) && !this.quest.fits(kind)) {
+      this.note = `${heroName(kind)} may not fight in this one: ${this.quest.rule}.`;
+      return this.draw();
+    }
     if (this.picked.includes(kind)) {
       this.picked = this.picked.filter((k) => k !== kind);
       this.note = '';
@@ -174,14 +217,18 @@ export class Party {
         row.append(empty);
         continue;
       }
-      const b = el('button', 'ptSlot');
-      b.setAttribute('aria-label', `Remove ${heroClassLabel(kind)} from party`);
-      b.title = `Remove ${heroClassLabel(kind)} · hold for details`;
-      const remove = el('span', 'ptSlotRemove', '×');
+      const locked = !!this.quest?.cast.includes(kind);
+      const b = el('button', locked ? 'ptSlot quest' : 'ptSlot');
+      b.dataset.kind = kind;
+      b.setAttribute('aria-label', locked ? `${heroClassLabel(kind)} must fight in this quest` : `Remove ${heroClassLabel(kind)} from party`);
+      b.title = locked ? `${heroClassLabel(kind)} must fight · hold for details` : `Remove ${heroClassLabel(kind)} · hold for details`;
+      const remove = el('span', locked ? 'ptSlotLock' : 'ptSlotRemove', locked ? '' : '×');
       remove.setAttribute('aria-hidden', 'true');
+      if (locked) remove.innerHTML = PADLOCK;
       const number = el('span', 'ptSlotNumber', String(i + 1));
       number.dataset.number = String(i + 1);
       b.append(number, el('small', '', heroName(kind)), remove);
+      if (locked) b.append(el('span', 'ptQuestRibbon', 'Quest'));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
       row.append(b);
@@ -189,14 +236,14 @@ export class Party {
 
     // the hint, and the traits the party would wake (the same rule as a fight's team)
     const hint = $('ptHint');
-    hint.textContent = this.note || (full ? 'Tap a chosen hero to remove · hold for details' : 'Choose a reinforcement to fill your company');
+    hint.textContent = this.note || (this.quest ? `${this.quest.title} · ${this.quest.rule}` : full ? 'Tap a chosen hero to remove · hold for details' : 'Choose a reinforcement to fill your company');
     hint.classList.toggle('full', !!this.note);
     const counts = countTraits(this.picked);
     const active = counts.filter((c) => c.active);
     $('ptBondCount').textContent = `${active.length} active · ${counts.length - active.length} building`;
     $('ptBonds').hidden = !counts.length;
     $('ptStatus').textContent = full ? 'Ready · summons draw from this company' : `${slots - this.picked.length} more ${slots - this.picked.length === 1 ? 'hero' : 'heroes'} needed`;
-    $('ptSceneTitle').textContent = full ? `${slots === 5 ? 'Five' : slots} heroes. One last stand.` : this.picked.length ? 'A company worth fighting for.' : 'Your legend begins here.';
+    $('ptSceneTitle').textContent = this.quest ? this.quest.title : full ? `${slots === 5 ? 'Five' : slots} heroes. One last stand.` : this.picked.length ? 'A company worth fighting for.' : 'Your legend begins here.';
     $('ptCount').textContent = `${this.picked.length} / ${slots} ready`;
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     const key = this.picked.join('|');

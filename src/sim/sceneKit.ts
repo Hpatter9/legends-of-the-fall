@@ -41,6 +41,8 @@ export interface CastMember {
   shade?: boolean;
   /** Wears the awakened look from the start (1 or 2: the step; `awakenLook.ts`). An act can change it. */
   look?: 0 | 1 | 2;
+  /** The name the lines call them, where the fighter's own is not it (a quest battle's heroes by their own names, its boss by its title's name). */
+  name?: string;
 }
 
 /** Where the camera looks: at a stage point, or on an actor (their middle) or between a few. `zoom` is a multiple of
@@ -127,7 +129,9 @@ export type Moment =
   | { kind: 'mythic' }
   | { kind: 'elite' }
   | { kind: 'ascension' }
-  | { kind: 'dailyBoss' };
+  | { kind: 'dailyBoss' }
+  /** A quest battle's story, before it or after a win (`questBattleData.ts`; played by the page, not kept in the Scenes list). */
+  | { kind: 'questBattle'; battle: string };
 
 /** A moment's key: its kind and what it is about (the map, the army, the hero ...). */
 export const momentKey = (m: Moment): string => {

@@ -14,6 +14,7 @@ import { SPOILS_QUESTS } from './questData/spoils';
 import { RIFT_QUESTS } from './questData/rift';
 import { DUCHESS_QUESTS } from './questData/duchess';
 import { REPEAT_QUESTS } from './questData/repeat';
+import { BATTLE_QUESTS } from './questData/battles';
 
 /** Who offers a quest and takes it back. A patron is one of the player's own heroes (the quest's `hero`). */
 export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess';
@@ -177,7 +178,9 @@ export type Goal =
   /** Reach the Last Stand's act `n` (1 the courtyard, 2 the library, 3 the chapel, 4 the throne room) in one run, having held the line on the way if `held`. */
   | { kind: 'standRoom'; n: number; held?: boolean }
   /** Hold the line at an act's end `n` times (the bonus wave, won). */
-  | { kind: 'holdLine'; n: number };
+  | { kind: 'holdLine'; n: number }
+  /** Win a quest battle (`questBattles.ts`; batch 2): its last wave won, once. Offered only while its required cast is owned. */
+  | { kind: 'battle'; n: number; battle: string };
 
 export type GoalKind = Goal['kind'];
 
@@ -237,6 +240,8 @@ export const QUESTS: readonly QuestDef[] = [
   ...RIFT_QUESTS,
   ...DUCHESS_QUESTS,
   ...REPEAT_QUESTS,
+  // (batch 2: the quests that open a quest battle, one a battle, from their fitting givers)
+  ...BATTLE_QUESTS,
 ];
 
 const BY_ID = new Map(QUESTS.map((q) => [q.id, q]));

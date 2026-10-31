@@ -8,7 +8,7 @@ import * as toolkit from './sim/toolkit';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
+import { isCastHero, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -70,6 +70,8 @@ import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastJoined, toastLines, toastSpells, toastStones } from './achievementsView';
 import { readyQuests, ultsIn } from './sim/quests';
+import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
+import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
 import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
 import { grantSpells } from './sim/spellSources';
@@ -160,6 +162,9 @@ const HURTING = new Set<SpellId>(['meteor', 'smite', 'chain', 'poison', 'frost']
 // (the loading screen's tip: one of the jokes, while the page gets ready)
 const loadTip = document.querySelector('.ldTip');
 if (loadTip) loadTip.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+
+/** The padlock on a quest's required hero's bench card (QUEST-BATTLES), drawn so it needs no file. */
+const QUEST_LOCK = '<svg viewBox="0 0 12 14" width="12" height="14" aria-hidden="true"><path d="M3 6V4a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="1.5" y="6" width="9" height="7" rx="1.2" fill="currentColor"/></svg>';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -377,6 +382,12 @@ class Game {
       },
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
+      // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
+      onQuestBattle: (id) => this.openQuestBattle(id),
+      questSaved: () => {
+        const r = loadSlot('quest');
+        return r?.mode?.kind === 'quest' ? r.mode.quest : null;
+      },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)
         const learnt = grantSpells(this.meta);
@@ -737,7 +748,10 @@ class Game {
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
     // (a boss's card plays once a save, the first time that boss is met: not again on a new run, a retry or a new day)
-    const card0 = cardKey(boss.def, elite?.id);
+    // (QUEST-BATTLES: a quest battle's boss is a name and title of its own, on a boss's look; its card plays once, for that battle)
+    const qb = questBattleOfRun(this.run);
+    const named = qb?.boss && boss.def === questBossOf(qb) ? qb.boss : undefined;
+    const card0 = named ? `quest:${qb!.id}` : cardKey(boss.def, elite?.id);
     if (!cardDue(this.meta, card0)) return;
     markCard(this.meta, card0);
     saveMeta(this.meta);
@@ -746,7 +760,7 @@ class Game {
     const card = $('bossCard');
     const def = UNITS[boss.def];
     card.classList.toggle('elite', !!elite);
-    const name = (elite ? elite.name : def.name).toUpperCase();
+    const name = (named ? named.name : elite ? elite.name : def.name).toUpperCase();
     const nameEl = card.querySelector('b')!;
     nameEl.textContent = name;
     // (the name's size, a multiple of 12, the largest whose longest word fits the ribbon and that takes two lines at most (three at 24px); the
@@ -768,7 +782,7 @@ class Game {
     const px = [48, 36, 24].find(fits) ?? 12;
     nameEl.style.fontSize = `${px}px`;
     nameEl.style.letterSpacing = `${px >= 36 ? 4 : 2}px`;
-    card.querySelector('span')!.textContent = elite ? elite.epithet : titleOf(boss.def);
+    card.querySelector('span')!.textContent = named ? named.title : elite ? elite.epithet : titleOf(boss.def);
     // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
     const old = card.querySelector('canvas')!;
@@ -818,7 +832,7 @@ class Game {
     const show = this.b.phase === 'fight' && !!boss?.alive;
     if (bar.hidden === show) bar.hidden = !show;
     if (!boss || !show) return;
-    bar.querySelector('b')!.textContent = UNITS[boss.def].name;
+    bar.querySelector('b')!.textContent = this.questBossName(boss.def) ?? UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
   }
 
@@ -830,6 +844,8 @@ class Game {
   }
 
   private begin(): void {
+    // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
+    if (this.questBlock()) return void this.refresh();
     if (!fight(this.b)) return;
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.b.autoUlt = this.ultAutoOn();
@@ -1676,7 +1692,10 @@ class Game {
     $('result').addEventListener('click', (e) => {
       if (this.passing && !(e.target as HTMLElement).closest('button')) this.passOn();
     });
+    $('qbLeave').addEventListener('click', () => this.leaveQuest());
     $('next').addEventListener('click', () => {
+      // (QUEST-BATTLES: a quest battle's end has no run recap: a win has its beat and goes to the tavern; a loss tries again)
+      if (this.run.over && this.run.mode?.kind === 'quest') return this.questEnd();
       if (this.run.over && !this.run.tower && !this.auto) return this.showRunRecap();
       this.afterResult();
     });
@@ -1851,6 +1870,96 @@ class Game {
   /** ARMY-DROPS: the won army wave's rare drop (shards, a tome), or null. */
   private dropGain: DropPaid | null = null;
 
+  /* -------------------------------------------------------------- quest battles (QUEST-BATTLES, batch 2 of the quests) */
+
+  /** A quest battle's Fight: the one saved part-way carries on; else the party screen with its cast locked in, then a new try. */
+  private openQuestBattle(id: string): void {
+    const saved = loadSlot('quest');
+    if (saved?.mode?.kind === 'quest' && saved.mode.quest === id) {
+      this.run = saved;
+      this.syncPool();
+      this.placed.clear();
+      return this.newBattle();
+    }
+    const qb = questBattleById(id);
+    const cast = qb && castOf(this.meta, qb);
+    if (!qb || !cast || !canFightBattle(this.meta, id)) return this.home.open();
+    this.party.openQuest(cast, qb.title, castWords(qb, cast), (k) => mayFight(qb, k), (picked) => this.beginQuestTry(id, picked));
+  }
+
+  /** A new try of a quest battle with the party picked: its own seed and slot (an army run saved is not touched), then its story, the first time. */
+  private beginQuestTry(id: string, picked: readonly string[]): void {
+    const run = startQuestBattle(this.meta, id, picked);
+    if (!run) return this.home.open();
+    this.startRun(run);
+    void this.tellQuestStory(id);
+  }
+
+  /** The story before a quest battle, over its deploy, once a save (it is the quest's sense, so it plays whatever the cinematics setting). */
+  private async tellQuestStory(id: string): Promise<void> {
+    const qb = questBattleById(id);
+    if (!qb || !storyDue(this.meta, id) || this.run.mode?.kind !== 'quest') return;
+    markStoryTold(this.meta, id);
+    saveMeta(this.meta);
+    this.sceneHold++;
+    try {
+      await this.scenes.play(qb.before(this.run.mode.cast), this.players());
+    } finally {
+      this.sceneHold--;
+    }
+  }
+
+  /** Why a quest battle's fight cannot begin yet, in words ("Place Kenji to begin"), or null (any other run: null). */
+  private questBlock(): string | null {
+    const run = this.run;
+    const qb = questBattleOfRun(run);
+    if (!qb || run.mode?.kind !== 'quest' || this.b.phase !== 'deploy') return null;
+    const placed = this.b.units.filter((u) => u.side === 'hero' && u.def !== 'duchess' && !UNITS[u.def]?.summon).map((u) => u.def);
+    return notReadyWords(notReady(qb, run.mode.cast, placed), run.mode.cast);
+  }
+
+  /** A quest battle's boss's own name, for a boss of this kind in the run's quest battle (else undefined). */
+  private questBossName(def: string): string | undefined {
+    const qb = questBattleOfRun(this.run);
+    return qb?.boss && def === questBossOf(qb) ? qb.boss.name : undefined;
+  }
+
+  /** A quest battle has ended: a win plays its beat and goes to the tavern's quest log (the quest waits to be handed in); a loss
+   *  begins a new try at once, with the same party (losing costs nothing). */
+  private questEnd(): void {
+    const run = this.run;
+    const qb = questBattleOfRun(run);
+    if (run.mode?.kind !== 'quest' || !qb) return this.goHome();
+    $('result').hidden = true;
+    endVictory();
+    if (!run.cleared) {
+      const next = startQuestBattle(this.meta, qb.id, run.pool ?? run.mode.cast);
+      if (!next) return this.leaveQuest();
+      return this.startRun(next);
+    }
+    const practice = !!run.mode.practice;
+    this.sceneHold++;
+    void this.scenes
+      .play(qb.after(run.mode.cast), this.players())
+      .catch(() => undefined)
+      .then(() => {
+        this.sceneHold--;
+        void this.revealEarned().then(() => {
+          this.home.open(practice ? `${qb.title}: won again, for practice.` : `${qb.title} won! Hand the quest in at the tavern.`);
+          if (!practice) this.home.openQuests('active');
+        });
+      });
+  }
+
+  /** Leave a lost quest battle (the result card's Leave): back to the quest log, where its Fight waits. */
+  private leaveQuest(): void {
+    $('result').hidden = true;
+    endVictory();
+    const qb = questBattleOfRun(this.run);
+    this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
+    this.home.openQuests('active');
+  }
+
   private startRun(run: Run): void {
     this.run = run;
     this.syncPool();
@@ -1926,7 +2035,8 @@ class Game {
   private syncPool(): void {
     // (a calamity hires from every hero owned; a tower run's pool is the party)
     if (this.run.mode?.kind === 'calamity') this.run.pool = [...this.meta.unlocked];
-    else if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.party];
+    // (a quest battle keeps the party picked for it: QUEST-BATTLES)
+    else if (this.run.mode?.kind !== 'daily' && this.run.mode?.kind !== 'quest') this.run.pool = [...this.meta.party];
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
@@ -2448,7 +2558,7 @@ class Game {
   private buildBench(): void {
     const bench = $('bench');
     const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
-    const key = `${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -2457,7 +2567,9 @@ class Game {
       const id = String(h.id);
       const card = document.createElement('div');
       // (a hero with a match ready to merge glows: MERGE-TWO)
-      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}`;
+      // (QUEST-BATTLES: a quest's required hero wears a gold frame and a padlock, and cannot be recycled)
+      const castHero = this.run.mode?.kind === 'quest' && this.run.mode.cast.includes(h.kind);
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);
@@ -2504,7 +2616,8 @@ class Game {
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
-      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id) card.append(sell);
+      if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
+      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h)) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -2689,10 +2802,12 @@ class Game {
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
-      this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : earn(this.meta, stage, won, rating.stars);
+      // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)
+      const quest = run.mode?.kind === 'quest';
+      this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : quest ? 0 : earn(this.meta, stage, won, rating.stars);
       if (run.tower) run.tower.crowns += this.crownGain;
       if (run.tower && run.over) settleTower(this.meta, run);
-      if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
+      if (won && !army && !daily && !quest && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       // (QUESTS: the quests this fight completes are told after the achievements' toasts)
       const readyBefore = readyQuests(this.meta);
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
@@ -2720,7 +2835,8 @@ class Game {
       this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
-      const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
+      // (a quest battle replayed for practice pays nothing, XP neither)
+      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
       const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
@@ -2758,7 +2874,8 @@ class Game {
         });
         this.autoWait = 900;
       } else {
-        this.showStars(won ? rating : null);
+        // (a quest battle's stars pay nothing, so it shows none: QUEST-BATTLES)
+        this.showStars(won && !quest ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         drawOreGain($('oreDrop'), this.oreGain);
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
@@ -2781,7 +2898,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
@@ -2800,7 +2917,7 @@ class Game {
     mergeAll.hidden = pairs === 0;
     mergeAll.textContent = `Auto merge · ${pairs}`;
     mergeAll.title = pairs ? `Merge every pair ready (${pairs}), and the pairs those make, up to rank 4` : '';
-    ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
+    ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0 || !!this.questBlock();
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
     result.hidden = !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
@@ -2809,7 +2926,8 @@ class Game {
       const cal = run.mode?.kind === 'calamity';
       const daily = run.mode?.kind === 'daily';
       const practice = run.mode?.kind === 'daily' && run.mode.practice;
-      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
+      const qrun = run.mode?.kind === 'quest';
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
       // (WAVE-RECAP: a short card's heading names the wave and how it went, "Wave 4 of 15 won", bar the end of a cleared run)
@@ -2831,13 +2949,16 @@ class Game {
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
       // (a short card's pay line drops the finds, which have lines of their own, and the dry aside)
-      if (card && b.phase === 'won') $('summary').textContent = `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
+      if (card && b.phase === 'won') $('summary').textContent = qrun ? `+${this.gain} gold · ${clock(b.t)}` : `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
       result.classList.toggle('short', !!card);
       result.classList.toggle('passing', !!this.passing);
       if (card) $('joke').hidden = true;
       else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
-      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      // (QUEST-BATTLES: a quest battle's last wave won goes on to its beat; one lost for good is tried again, free, or left)
+      if (qrun && run.over && !run.cleared) $('summary').textContent = `${this.questBossName(questBossOf(questBattleOfRun(run)!) ?? '') ?? 'The foe'} holds. Losing costs nothing: try again with a new board, or come back to it from the quest log.`;
+      $('qbLeave').hidden = !(qrun && run.over && !run.cleared);
+      $('next').textContent = qrun && run.over ? (run.cleared ? 'Onward' : 'Try again') : run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());

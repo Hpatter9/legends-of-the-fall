@@ -20,6 +20,7 @@ import { todayKey } from './modes';
 import { settings } from './settings';
 import { rulerOf, rulerWords } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
+import { battleOfQuest, canFightBattle } from './sim/questRun';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -103,6 +104,8 @@ export interface CardHooks {
   changed(): void;
   /** Open the quest log (the card's "Quest log" link). */
   openLog(): void;
+  /** Begin a quest battle (batch 2: a battle quest's card fights it). */
+  fight?(battle: string): void;
 }
 
 let wrap: HTMLElement | null = null;
@@ -202,6 +205,8 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
       if (!takeQuest(m, t.q.id, todayKey())) return;
       play('tap');
       hooks.changed();
+      // (a quest battle taken: the card turns to its Fight at once)
+      if (battleOfQuest(t.q.id) && hooks.fight) return openGiverCard(m, key, hooks);
       closeGiverCard();
     });
     take.disabled = !!why;
@@ -214,7 +219,15 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
       closeGiverCard();
       hooks.openLog();
     });
-    btn('Close', 'primary', closeGiverCard);
+    const qb = battleOfQuest(t.q.id);
+    if (qb && hooks.fight) {
+      // (batch 2: a quest battle is fought from its giver's card)
+      const go = btn('Fight', 'primary', () => {
+        closeGiverCard();
+        hooks.fight!(qb.id);
+      });
+      go.disabled = !canFightBattle(m, qb.id);
+    } else btn('Close', 'primary', closeGiverCard);
   }
   card.append(lines, row);
   wrap.append(card);
