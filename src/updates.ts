@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.303.0',
+    date: '2026-10-31',
+    title: 'The Eidolons\' calls, redone',
+    notes: ['Each Eidolon crosses the screen its own way, then its sprite strikes with its own attack: wildfire, frost, falling light, chain lightning, a quake, shadow fire.'],
+  },
+  {
     version: '0.302.0',
     date: '2026-10-31',
     title: 'Relics become the keep\'s lost artefacts',

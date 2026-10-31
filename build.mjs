@@ -115,6 +115,12 @@ for (const f of readdirSync('src/art/eidolons').filter((f) => f.endsWith('.webp'
   copyFileSync(`src/art/eidolons/${f}`, `${out}/eidolons/${f}`);
   EIDOLON_ART_FILES.push(`eidolons/${f}`);
 }
+// (EIDOLON-FX: the strikes' effect strips, tools/eidolon-fx/cut_fx.py)
+mkdirSync(`${out}/eidolons/fx`, { recursive: true });
+for (const f of readdirSync('src/art/eidolons/fx').filter((f) => f.endsWith('.webp') || f.endsWith('.png'))) {
+  copyFileSync(`src/art/eidolons/fx/${f}`, `${out}/eidolons/fx/${f}`);
+  EIDOLON_ART_FILES.push(`eidolons/fx/${f}`);
+}
 // (GEAR-ICONS: the painted equipment icons' atlases (tools/gear/import-gear-icons.py) load by URL, so game.js stays small; the
 // service worker keeps them for offline play)
 const GEAR_ART_FILES = [];
