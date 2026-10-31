@@ -237,7 +237,7 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
 /** What the Sanctum's plaque says: a chain to hear, a chain going, or one to bind (none: no plaque). */
 export function hallPlaque(m: Meta): { kind: 'offer' | 'going' | 'bind'; title: string; line: string } | null {
   const offer = offeredChain(m);
-  if (offer) return { kind: 'offer', title: 'The Summoner looks up from the altar', line: 'Something old is stirring · tap to listen' };
+  if (offer) return { kind: 'offer', ...(offer.call ?? { title: 'The Summoner looks up from the altar', line: 'Something old is stirring · tap to listen' }) };
   const ready = readyToBind(m);
   if (ready) return { kind: 'bind', title: `Bind ${fullName(eidolonOf(ready))}`, line: `Every piece is on the altar · ${ready.parts.length} of ${ready.parts.length}` };
   const cur = currentPart(m);

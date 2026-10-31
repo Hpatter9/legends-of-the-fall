@@ -380,7 +380,8 @@ export class Home {
         const hadHorn = hornHeld(m);
         if (bindChain(m, ready.id)) saveMeta(m);
         this.refresh();
-        const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : null;
+        // (EIDOLON-CHAIN-2: a later binding, the horn already held, ends on the Eidolon's own "Bound" card)
+        const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : revealCard({ kind: 'eidolon', id: ready.eidolon }, m);
         if (gift) await showEndCard(gift);
         this.openGallery();
       } else this.openQuests('eidolons');

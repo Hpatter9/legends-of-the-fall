@@ -1,8 +1,8 @@
 // The Eidolon chains' data (EIDOLON-CHAINS, batch 5 of the quests and Eidolons design, `docs/notes/eidolon-chains.md`): the six chains,
 // one an Eidolon, easiest first, each with who gives it, what opens it, its parts (a goal, the giver's words as it begins, and the piece
-// it gives), the prologue told before it begins and the binding at the end. Only the first, Askel the Cinderhound's, is written; the other
-// five are the rails (their Eidolon, giver, what opens them, and that they end in a trial) for the batches that write them: a chain with
-// no parts is never offered.
+// it gives), the prologue told before it begins and the binding at the end. The first two are written (Askel the Cinderhound's, and
+// Nivra the Rime Wyrm's, `docs/notes/eidolon-chain-2.md`); the other four are the rails (their Eidolon, giver, what opens them, and that
+// they end in a trial) for the batches that write them: a chain with no parts is never offered.
 //
 // Every story here is plain data in the cinematics' shape (`sceneKit.ts`) or as lines, so the general shot layer can take them over.
 // The voice: wry and warm, in British spelling. Pure data: no Pixi, no DOM.
@@ -67,6 +67,8 @@ export interface ChainDef {
   prologue?: Scene;
   /** The binding's beats, and the line the Eidolon speaks as it is bound. */
   binding?: readonly BindingBeat[];
+  /** The Sanctum plaque's words while the chain waits to be heard (missing: the Summoner looks up from the altar). */
+  call?: { title: string; line: string };
 }
 
 const party = (i: number, x: number, more: Partial<CastMember> = {}): CastMember => ({ role: `party:${i}`, x, facing: 'right', ...more });
@@ -128,8 +130,65 @@ const ASKEL_BINDING: readonly BindingBeat[] = [
   { at: 22000, beat: 'hornFull', who: 'eidolon', text: 'There. I have breathed my fire into it. Blow it in your next fight, little keep, and I will come running.' },
 ];
 
-/** The six chains, easiest first. Only Askel's is written; the rest are the rails for their batches (the design's givers and openings,
- *  rewritten for the six chosen Eidolons when their chains are written). */
+/* ------------------------------------------------------------------ Nivra, the Rime Wyrm (chain 2, `docs/notes/eidolon-chain-2.md`) */
+
+/** Nivra's three pieces. */
+export const RIME_SCALE: PieceDef = {
+  id: 'rimeScale',
+  name: 'The Rime Scale',
+  lines: ["Caught in the coarse fur of a pack-lord's back: a scale of blue ice as broad as a shield.", 'It does not melt by the fire. Hold it to your ear and it hums, like a lake freezing.'],
+  art: 'relicShard',
+};
+export const MERE_PEARL: PieceDef = {
+  id: 'merePearl',
+  name: 'The Mere-Pearl',
+  lines: ["In the Warden's chest, where a heart would be: a pearl of black ice the size of a fist.", 'Something turns over inside it, slowly, the way a sleeper turns.'],
+  art: 'scryingOrb',
+};
+export const HELD_BREATH: PieceDef = {
+  id: 'heldBreath',
+  name: 'The Held Breath',
+  lines: ["After the fifth quiet win, frost drew a serpent's eye on the library window, and a grey mist would not leave the glass.", 'Caught in a phial, it frosts the glass from the inside. It is very patient.'],
+  art: 'vialOfVigor',
+};
+
+/** The hunter, heard over the prologue: their face fills the picture as they speak (the passerby's own portrait, `face:hunter`). */
+const HUNTER: CastMember = { role: 'face:hunter', x: 0, facing: 'right', hidden: true, name: 'The hunter' };
+
+/** The prologue of Nivra's chain: the frost-bitten hunter, come down from the north to the Sanctum once the Beast Packs have fallen,
+ *  tells why the pack ran south; the Summoner names what sleeps under the ice. The party's first two heroes answer. */
+const UNDER_THE_MERE: Scene = {
+  id: 'eid-nivra-prologue',
+  title: 'Under the Mere',
+  blurb: 'A frost-bitten hunter tells why the pack ran south.',
+  moment: { kind: 'eidolon', chain: 'nivra' },
+  music: 'solemn',
+  cast: { hunter: HUNTER, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  shots: [
+    { look: 'snow', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The northern meres', lines: [tell('Far to the north, a lake lies frozen like glass, a mile across. Under it, something has turned over in its sleep.')] },
+    { look: 'temple', cam: wide(260, 200), caption: 'The Summoning Sanctum', lines: [tell('Snow on the Sanctum steps, in spring. A hunter has walked down from the north, frost on the hood and two fingers short.')] },
+    { cam: close(['a', 'b']), lines: [say('hunter', 'You called the fire-dog home. Whole north heard it. Now call something else.'), say('a', 'Something bigger than a dog, I take it.')] },
+    { cam: close('a'), lines: [say('hunter', 'The pack ran south this winter. Not hunting. Running. From the lake. From under the ice.')] },
+    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'Nivra. The Rime Wyrm. She lay under the northern meres and kept the passes shut, winter after winter, for the first kings.'), say('summoner', 'When the pacts broke she went down into the cold to sleep it off. Three hundred years is a long nap, even for a wyrm.')] },
+    { cam: close('b'), lines: [say('b', 'And if she wakes up cross?'), say('hunter', 'Then be her friend first. Quickly.')] },
+    { cam: wide(260, 200), lines: [say('summoner', 'A scale she has shed, the pearl of her cold heart, and the breath she holds. Bring me those, and I will bind her.'), tell("Nivra's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+  ],
+};
+
+/** Nivra's binding: the pieces on the altar, the breath let out, frost running across the floor in a ring, the wyrm bursting up through
+ *  it. The horn is already the keep's (given at Askel's binding), so there are no horn beats. */
+const NIVRA_BINDING: readonly BindingBeat[] = [
+  { at: 0, beat: 'dark' },
+  { at: 500, beat: 'pieces', who: 'summoner', text: 'The scale, the pearl, the breath. Set them on the altar. And put your cloaks on.' },
+  { at: 3000, beat: 'circle', who: 'narrator', text: 'The Summoner unstops the phial. Frost runs out across the floor in a ring, and every brazier in the Sanctum gutters blue.' },
+  { at: 5400, beat: 'rise' },
+  { at: 6600, beat: 'name' },
+  { at: 8000, beat: 'line', who: 'eidolon', text: 'Three hundred winters under the ice, and I dreamed of your horn in every one. The deep remembers it, little keep. So do I.' },
+  { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Rime Wyrm wakes for the keep.' },
+];
+
+/** The six chains, easiest first. Askel's and Nivra's are written; the rest are the rails for their batches (the design's givers and
+ *  openings, rewritten for the six chosen Eidolons when their chains are written). */
 export const CHAINS: readonly ChainDef[] = [
   {
     id: 'askel',
@@ -173,7 +232,49 @@ export const CHAINS: readonly ChainDef[] = [
     ],
   },
   // (the rails: what opens each, who gives it, and its trial; their parts, pieces and stories come with their batches)
-  { id: 'nivra', eidolon: 'nivra', order: 2, title: "Nivra's chain", giver: { name: 'A frost-bitten hunter', title: 'Passing the camp' }, opens: { kind: 'army', army: 'beasts' }, opensWords: 'the Beast Packs cleared', trial: true, parts: [] },
+  {
+    id: 'nivra',
+    eidolon: 'nivra',
+    order: 2,
+    title: 'What Sleeps Under the Mere',
+    giver: { name: 'A frost-bitten hunter', title: 'Passing the camp' },
+    opens: { kind: 'army', army: 'beasts' },
+    opensWords: 'the Beast Packs cleared',
+    // (a trial against Nivra herself is still to come, in the trials' batch; until then the chain ends at the binding, as Askel's does)
+    trial: true,
+    prologue: UNDER_THE_MERE,
+    binding: NIVRA_BINDING,
+    call: { title: 'A frost-bitten hunter waits by the altar', line: 'Down from the north, with snow on the boots · tap to listen' },
+    parts: [
+      {
+        id: 'nivra1',
+        title: 'The Pack That Ran',
+        text: 'Beat a Beast Packs boss: the Alpha Werewolf (wave 8) or the Boar King (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'beasts', boss: ['alphaWolf', 'boarKing'] },
+        begin: 'The big ones ran first. Ran from something. Beat one again and look in its fur. Whatever it rolled in, it rolled in up north.',
+        piece: RIME_SCALE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'nivra2',
+        title: 'The Glass Mere',
+        text: 'Win the quest battle The Glass Mere (Ayame or Kenji fights; any starter hero may stand in)',
+        goal: { kind: 'battle', n: 1, battle: 'glassMere' },
+        begin: 'The mere where she sleeps. Frozen like glass, a mile across. Things walk on it now. Things made of the ice. They do not like visitors.',
+        piece: MERE_PEARL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'nivra3',
+        title: 'Hold Your Breath',
+        text: "Win 5 army waves without casting a king's spell",
+        goal: { kind: 'wavesWon', n: 5, mode: 'army', noSpells: true },
+        begin: "Last thing. She does not come to noise. My grandmother said: win quiet. No king's thunder, no king's fire. Five fights. Then breathe on a window.",
+        piece: HELD_BREATH,
+        reward: { chest: 'bronze' },
+      },
+    ],
+  },
   { id: 'aurelan', eidolon: 'aurelan', order: 3, title: "Aurelan's chain", giver: { name: 'Gwen Tallow', title: 'Keeper of the tavern' }, opens: { kind: 'army', army: 'wildwood' }, opensWords: 'the Wildwood cleared', trial: true, parts: [] },
   { id: 'voltara', eidolon: 'voltara', order: 4, title: "Voltara's chain", giver: { name: 'The Crown', title: 'A Royal charge' }, opens: { kind: 'army', army: 'labyrinth' }, opensWords: 'the Labyrinth cleared', trial: true, parts: [] },
   { id: 'gorm', eidolon: 'gorm', order: 5, title: "Gorm's chain", giver: { name: 'Duchess', title: 'A goat of consequence' }, opens: { kind: 'army', army: 'infernal' }, opensWords: 'the Infernal Host cleared', trial: true, parts: [] },
