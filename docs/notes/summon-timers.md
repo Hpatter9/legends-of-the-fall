@@ -69,13 +69,34 @@ from wave 1; a presentation fixture: the roster is set by hand): `docs/samples/s
 **Parity** (`node tools/kits/tune.mjs`, 12,000 single fights; "main" is 0.284.0 in a clean checkout). Each hero's lift over the roster
 average, in points:
 
-PARITY_TABLE
+| Level (stage) | The seven, main → this branch | Every hero |
+| --- | --- | --- |
+| 1 (5) | unchanged to the decimal: Druid +0.1, Beastmaster −0.9, Reaper −0.7, Commander +4.6, Werewolf −1.5, Kitsune −2.9, Demon Swordsman +1.7 (a single fight is shorter than a minute's treant or wolf) | as main: none beyond 6, three beyond 4 |
+| 10 (24) | Druid +3.9 → +2.5, Beastmaster +1.4 → +1.4, Reaper +0.8 → +0.7, Commander −2.3 → −2.0, Werewolf −2.8 → −2.8, Kitsune +1.6 → +2.9, Demon Swordsman −4.5 → −4.6 | none beyond 6, six beyond 4 (as main); spread 11.2 (11.4) |
+| 30 (78) | Druid +0.3 → −0.6, Beastmaster −3.1 → −3.1, Reaper +1.5 → +2.5, Commander +2.9 → +2.9, Werewolf +3.3 → +3.3, Kitsune +1.1 → +3.1, Demon Swordsman +0.6 → +0.5 | none beyond 4 but the Cleric (+4.2, as main); spread 7.7 (8.0) |
+
+Before the tuning (the timers alone) the Druid was +4.1 at 10 and the Kitsune +3.5 at 30.
 
 **Over an army's waves** (`node tools/summon-timers/waves.mjs <army> <level> 40`, new: the hero and the Knight, Paladin, Archer and Cleric
 at that level, no hires, merges or gear, charges kept between waves as the page keeps them; the mean waves won of 15 in 40 runs; the
 Mercenary is a control with no summon or shape):
 
-WAVES_TABLE
+| Hero | Orcs, level 1 | Beasts, level 15 | Labyrinth, level 35 |
+| --- | --- | --- | --- |
+| Druid | 8.75 → 8.63 | 11.28 → 12.40 | 10.22 → 10.88 |
+| Beastmaster | 8.10 → 7.85 | 7.75 → 7.88 | 10.60 → 10.97 |
+| Reaper | 7.53 → 7.53 | 8.30 → 8.22 | 10.68 → 10.65 |
+| Samurai Commander | 8.57 → 8.57 | 7.88 → 8.05 | 10.45 → 10.28 |
+| Werewolf | 7.50 → 7.50 | 7.00 → 8.03 | 9.75 → 9.65 |
+| Kitsune | 7.83 → 7.83 | 7.45 → 8.32 | 9.85 → 9.85 |
+| Demon Swordsman | 8.07 → 8.07 | 7.47 → 7.47 | 10.35 → 10.07 |
+| Mercenary (control) | 7.47 → 7.47 | 7.10 → 7.10 | 9.93 → 9.93 |
+
+The carry is worth about a wave in a run to the Druid (her treant kept wave to wave), the Werewolf (his form) and the Kitsune (the longer
+guise) at level 15, and less later, where the waves are fiercer and the summons fall sooner. `CARRY=0` measures the timers alone: the
+Druid's gain is all the carry (11.22 with the carry off, at Beasts level 15). At level 1 only skill 1 is open, and a wolf's minute now runs
+out in the longest waves, so the Beastmaster is a quarter of a wave down. No cell left the spread the roster has on main; the armies' own
+curve party (Knight, Paladin, Archer, Warlock, Cleric) holds none of the seven, so `tools/curve` and the daily's numbers are as main.
 
 **What was tuned** (the power of the longer timers, not the timers): Wild Shape adds a fifth of her health (`TREE_SHARE`, a third when it
 lasted 6s), and a hero Kitsune's guise lifts her attack by at most x1.3 (`GUISE_CAP`, x1.4 when it lasted 5s). Nothing else moved.
@@ -85,7 +106,9 @@ lasted 6s), and a hero Kitsune's guise lifts her attack by at most x1.3 (`GUISE_
 `REWORKED` in `tools/spells/identity.ts` now names the seven: the Druid, Beastmaster, Reaper, Samurai Commander, Werewolf, Kitsune and Demon
 Swordsman. The five `...Others` scenarios leave them out; they were recorded on main's code before this work and did not move.
 
-IDENTITY_MOVED
+These scenarios changed: `field30`, `bosses`, `spells`, `heroes10` and `heroes30` (each has one of the seven at level 10 or more).
+These did not move: `field1`, `armyFoes`, `lands`, `army`, `daily`, `tower`, `stand`, `calamity`, `heroes1` and the five `...Others`.
+`ailment-logs.json` (the ailments-off proof) moved for `field30`, `bosses`, `armyFoes` and `spells`; the rest kept their hashes.
 
 ## Tests
 

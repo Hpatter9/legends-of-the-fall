@@ -1250,14 +1250,13 @@ function hellbladeSweep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Demon Swordsman's ultimate, Demon Form: for a while he hits half as hard again, and a fifth of his health comes back. */
 export const FORM_MULT = 1.5;
 const FORM_MS = 7000;
-/** A hero's Demon Form lasts this long instead, and carries into the next wave (SUMMON-TIMERS, `carry.ts`). */
-const HERO_FORM_MS = TIMER.demon;
 const FORM_HEAL = 0.2;
 function demonForm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => apart(me, f) <= 7)) return false;
   if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
   // (its tuned strength lengthens the form and deepens the heal, as the other ultimates' stuns and heals scale: ULT-CHARGE)
-  const time = durOf(me, Math.round((me.side === 'hero' ? HERO_FORM_MS : FORM_MS) * Math.sqrt(castPower())));
+  // (a hero's lasts 15s instead, and carries into the next wave: SUMMON-TIMERS, `carry.ts`)
+  const time = durOf(me, Math.round((me.side === 'hero' ? TIMER.demon : FORM_MS) * Math.sqrt(castPower())));
   me.form = { until: b.t + time, ...(me.side === 'hero' ? { ms: time } : {}) };
   mendUnit(me, me.maxHp * FORM_HEAL * castPower(), out);
   out.push({ kind: 'frenzy', by: me.id, n: 3 });
