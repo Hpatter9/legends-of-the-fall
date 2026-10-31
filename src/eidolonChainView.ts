@@ -5,6 +5,7 @@
 // The pieces have no paintings of their own yet: a piece's sigil is the painted gear icon its data names (`PieceDef.art`, from
 // `src/art/gear/`), set in a ring of its Eidolon's colour. Unbound Eidolons show as their card's silhouette with a "?".
 
+import { showWhenPainted } from './paintReady';
 import gearIndex from './art/gear/index.json';
 import { cardUrl, figureUrl } from './eidolonCall';
 import { eidolonById, type Eidolon } from './sim/eidolons';
@@ -331,6 +332,8 @@ export function openPactGallery(m: Meta, hooks: GalleryHooks): void {
   layer.addEventListener('click', (ev) => ev.target === layer && closePactGallery());
   document.body.append(layer);
   gallery = layer;
+  // (MENU-GLITCH: the gallery shows once its Eidolons' pictures are decoded, not with empty alcoves that fill in)
+  void showWhenPainted(layer);
 }
 export function closePactGallery(): void {
   gallery?.remove();

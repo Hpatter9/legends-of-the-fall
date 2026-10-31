@@ -347,6 +347,11 @@
   /* the home screen: top bar, five sliding pages, a bottom tab bar */
   #home { position: fixed; inset: 0; z-index: 4; display: grid; grid-template-rows: auto 1fr auto; grid-template-areas: 'top' 'pages' 'tabs'; background: var(--s2); image-rendering: pixelated; overflow: hidden; }
   #home[hidden] { display: none; }
+  /* (MENU-GLITCH: closed, but still drawn under the screen opened from it until that screen covers it: home.ts handOff) */
+  #home[hidden].handoff { display: grid; }
+  #home.handoffQuiet { pointer-events: none; }
+  /* (MENU-GLITCH: a panel waiting for its pictures: laid out and painted, but not seen until they are ready; paintReady.ts) */
+  .paintWait { opacity: 0 !important; }
   #hmTop { grid-area: top; position: relative; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 6px) 10px 4px; background: linear-gradient(var(--s5), var(--s3)); border-bottom: 3px solid var(--gold); box-shadow: 0 3px 10px rgb(var(--black-rgb) / 0.6); }
   #hmTop .grow { flex: 1; }
   .chip { display: flex; align-items: center; gap: 5px; min-width: 70px; padding: 3px 10px 3px 5px; background: var(--s1); border: 2px solid var(--edge); border-radius: 14px; color: var(--gold); font-size: 15px; box-shadow: inset 0 2px 4px rgb(var(--black-rgb) / 0.6); }
@@ -359,8 +364,10 @@
   .hmTab:not(.new) i.badge { display: none; }
   #hmBest { flex: 1 1 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
   #hmPages { grid-area: pages; position: relative; overflow: hidden; }
-  .hmPage { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; padding: 12px 12px 16px; visibility: hidden; transition: transform 0.32s cubic-bezier(0.3, 0.8, 0.3, 1), visibility 0s 0.32s; background: radial-gradient(var(--s6), var(--s2)); }
-  .hmPage.on { visibility: visible; transition-delay: 0s; }
+  /* (MENU-GLITCH: the pages ride one strip, moved as one by home.ts; a page not on screen or sliding is hidden) */
+  .hmTrack { position: absolute; inset: 0; will-change: transform; }
+  .hmPage { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; padding: 12px 12px 16px; visibility: hidden; background: radial-gradient(var(--s6), var(--s2)); }
+  .hmPage.on { visibility: visible; }
   .hm-battle { padding: 0; overflow: hidden; background: var(--s2); }
   .hmPanel { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: linear-gradient(var(--s5), var(--s3)); border: 3px solid var(--gold); border-radius: 12px; outline: 2px solid var(--s1); box-shadow: 0 6px 18px rgb(var(--black-rgb) / 0.6), inset 0 0 0 2px var(--s8); text-align: center; }
   .hmPanel.wide { max-width: 560px; text-align: left; }

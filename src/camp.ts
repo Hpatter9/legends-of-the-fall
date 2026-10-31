@@ -129,6 +129,8 @@ export class CampScene {
   private camp: Camp | null = null;
   /** Css pixels per scene pixel: a whole number of device pixels each (`k`) over the device pixel ratio, so it stays crisp. */
   private unit = 1;
+  /** The page's width as `fit` last measured it (MENU-GLITCH: `at` reads this, not the layout, so a redraw forces no reflow). */
+  private boxW = 0;
   private back: HTMLCanvasElement | null = null;
   private glow: HTMLCanvasElement | null = null;
   private flame: { base: HTMLCanvasElement; layer: HTMLCanvasElement; w: number; h: number } | null = null;
@@ -184,7 +186,12 @@ export class CampScene {
     this.next = next;
     if (art && this.camp) {
       this.dress(meta);
-      if (changed || !this.bossRig) this.prepareArmy();
+      if (changed || !this.bossRig) {
+        this.prepareArmy();
+        // (MENU-GLITCH: the canvas keeps its last picture while the camp is stopped, so a new army is painted at once: the camp never
+        //  shows the old army's land for a frame as the home screen comes back)
+        this.draw();
+      }
       this.layPlate();
     }
   }
@@ -244,6 +251,16 @@ export class CampScene {
     });
   }
 
+  /** Paint one still picture without starting the loop (MENU-GLITCH: the page has its picture before it ever slides into view). */
+  paintOnce(): void {
+    if (this.raf || document.hidden) return;
+    void loadArt().then(() => {
+      if (this.raf) return;
+      this.fit();
+      this.draw();
+    });
+  }
+
   stop(): void {
     this.running = false;
     this.halt();
@@ -260,13 +277,19 @@ export class CampScene {
     const bw = this.root.clientWidth;
     const bh = this.root.clientHeight;
     if (!bw || !bh || !art) return;
+    const widthWas = this.boxW;
+    this.boxW = bw;
     // (a scene pixel is `k` device pixels, about a css pixel: the canvas holds the scene one to one and the page stretches it by whole device pixels)
     const dpr = window.devicePixelRatio || 1;
     const k = Math.max(1, Math.round(dpr));
     this.unit = k / dpr;
     const w = Math.ceil((bw * dpr) / k);
     const h = Math.ceil((bh * dpr) / k);
-    if (this.camp && this.camp.w === w && this.camp.h === h && this.back) return;
+    if (this.camp && this.camp.w === w && this.camp.h === h && this.back) {
+      // (the page's width can change by less than a scene pixel: the pieces over the canvas follow it)
+      if (bw !== widthWas) this.layOut();
+      return;
+    }
     const camp = overlookLayout(w, h);
     this.camp = camp;
     this.ranks = overlookRanks(w, h);
@@ -288,7 +311,7 @@ export class CampScene {
 
   /** Where a scene pixel is on the page. */
   private at(x: number, y: number): { left: string; top: string } {
-    const ox = (this.root.clientWidth - this.camp!.w * this.unit) / 2;
+    const ox = ((this.boxW || this.root.clientWidth) - this.camp!.w * this.unit) / 2;
     return { left: `${ox + x * this.unit}px`, top: `${y * this.unit}px` };
   }
 
@@ -313,7 +336,12 @@ export class CampScene {
     const n = this.next;
     this.plate.hidden = !n;
     if (!n) return;
-    this.plate.replaceChildren(el('span', 'cpEyebrow', 'THE ENEMY BELOW'), el('b', '', n.army.name), el('small', '', `${scoutCamp(n.army.id).name} · ${n.boss}`));
+    // (MENU-GLITCH: written only when it reads differently, so a home refresh leaves the plate as it is)
+    const line = `${scoutCamp(n.army.id).name} · ${n.boss}`;
+    if (this.plate.dataset.key !== `${n.army.name}|${line}`) {
+      this.plate.dataset.key = `${n.army.name}|${line}`;
+      this.plate.replaceChildren(el('span', 'cpEyebrow', 'THE ENEMY BELOW'), el('b', '', n.army.name), el('small', '', line));
+    }
     this.root.dataset.army = n.army.id;
     this.root.dataset.area = n.army.area;
     this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Calamity citadel looms on the horizon.`);
