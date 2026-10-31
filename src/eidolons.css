@@ -161,8 +161,10 @@
 .run-crack .ecStreak { height: 5px; top: -2px; border-radius: 1px; background: linear-gradient(90deg, #2a1608, #5a3412 50%, #ffb54a); filter: drop-shadow(0 0 4px #ffb54a); }
 .run-torrent .ecStreak { height: 26px; top: -13px; background: linear-gradient(90deg, transparent, #2a0a48 20%, #6c2fb8 70%, #d9b8ff); filter: blur(3px) drop-shadow(0 0 10px #b77bff); }
 
-/* what rises over each foe as the strike lands (a wall of fire, spears of ice, a pillar of light, a bolt, stone, a dark ring) */
-.ecRise { scale: var(--sc, 3.2); }
+/* what rises over each foe as the strike lands (a wall of fire, spears of ice, a pillar of light, a bolt, stone, a dark ring), and the
+   marks' flare at the build-up: played once, then gone */
+.ecRise, .ecFlare { scale: var(--sc, 2.4); animation: ecStrip var(--ms, 0.5s) steps(5) forwards, ecGone 0.35s ease-in calc(var(--ms, 0.5s) + 0.15s) forwards; }
+@keyframes ecGone { to { opacity: 0; } }
 /* the aftermath on the ground: scorch, frost, a warm glow, burns, rubble, blight; it fades as the fight runs again */
 .ecAfter { width: 16vw; height: 6vw; translate: -50% -50%; border-radius: 50%; opacity: 0; animation: ecAfter 2.6s ease-out forwards; }
 @keyframes ecAfter { 0% { opacity: 0; scale: 0.4; } 12% { opacity: 1; scale: 1; } 70% { opacity: 0.85; } 100% { opacity: 0; scale: 1.1; } }

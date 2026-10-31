@@ -395,7 +395,7 @@ export class EidolonCall {
       const pool = el('i', 'ecPool');
       pool.style.left = `${Math.round(x)}px`;
       pool.style.top = `${Math.round(y)}px`;
-      const sp = strip(src.mark, 'ecMark', x, y, { loop: true, foot: src.mark !== 'ring' && src.mark !== 'smoke', scale: spec.gait === 'swoop' ? 2.6 : 1.8 });
+      const sp = strip(src.mark, 'ecMark', x, y, { loop: true, foot: src.mark !== 'ring' && src.mark !== 'smoke', scale: spec.gait === 'swoop' ? 2.2 : 1.3 });
       this.board.append(pool, sp);
       return { mark, at: markTime(m, mark), els: [pool, sp], on: false };
     });
@@ -459,7 +459,8 @@ export class EidolonCall {
       if (ys.length) y = ys.reduce((a, c) => a + c, 0) / ys.length;
     }
     if (y === undefined && b) y = this.opts.tile(Math.floor(b.board.w / 2), Math.floor(b.board.d * 0.25))?.y;
-    return Math.max(0.24, Math.min(0.58, (y ?? innerHeight * 0.36) / innerHeight));
+    // (a little in front of them, towards the heroes, so what it leaves runs up the board to them)
+    return Math.max(0.26, Math.min(0.62, (y ?? innerHeight * 0.36) / innerHeight + 0.07));
   }
 
   /** Each frame: move the cinematic on by `dt` real ms (unless `paused`: a scene holds everything). */
@@ -559,7 +560,7 @@ export class EidolonCall {
     for (const k of p.marks) for (const x of k.els) x.classList.add('on', 'lit');
     this.board.querySelector('.ecGate')?.classList.add('on');
     // (the marks flare into the element's own fire, frost, light, sparks, stone or smoke)
-    for (const k of p.marks) this.board.append(strip(p.src.flare, 'ecFlare', k.mark.x * innerWidth, k.mark.y * innerHeight, { scale: 2.4, foot: p.src.flare === 'flame', ms: 450 }));
+    for (const k of p.marks) this.board.append(strip(p.src.flare, 'ecFlare', k.mark.x * innerWidth, k.mark.y * innerHeight, { scale: 2, foot: p.src.flare === 'flame', ms: 450 }));
     if (!b) return;
     const left = Math.max(120, p.m.STRIKE - p.t - 30);
     const aspect = innerWidth / innerHeight;
@@ -651,8 +652,8 @@ export class EidolonCall {
     spots.forEach((s, n) => {
       const rise = p.src.rise;
       const foot = rise === 'flame' || rise === 'pillar' || rise === 'bolt';
-      this.board.append(strip(rise, 'ecRise', s.x, s.y + (foot ? 4 : -14), { scale: rise === 'flame' ? 3.4 : rise === 'pillar' || rise === 'bolt' ? 3.6 : 3, foot, ms: 520 }));
-      if (rise === 'flame' && !saver) for (const dx of [-26, 26]) this.board.append(strip('flame', 'ecRise', s.x + dx, s.y + 2, { scale: 2.4, foot: true, ms: 560 }));
+      this.board.append(strip(rise, 'ecRise', s.x, s.y + (foot ? 4 : -14), { scale: rise === 'pillar' || rise === 'bolt' ? 2.8 : 2.2, foot, ms: 520 }));
+      if (rise === 'flame' && !saver) for (const dx of [-22, 22]) this.board.append(strip('flame', 'ecRise', s.x + dx, s.y + 2, { scale: 1.5, foot: true, ms: 560 }));
       const scar = el('i', `ecAfter after-${p.src.after}`);
       scar.style.left = `${Math.round(s.x)}px`;
       scar.style.top = `${Math.round(s.y)}px`;
