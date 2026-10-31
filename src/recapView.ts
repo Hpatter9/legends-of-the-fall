@@ -10,6 +10,7 @@ import { heroName, heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 import { portrait } from './render/sheets';
 import type { ComebackGo, ComebackTip } from './sim/comeback';
+import { playResults, type JrData } from './jrpgRecapView';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -34,6 +35,9 @@ export interface RecapHead {
   line: string;
   /** A dry aside under it (the facts stay in `line`). */
   joke?: string;
+  /** JRPG-RECAP: the results screen at the top (the banner, each hero's XP and levels over the run, the MVP, the gold and crowns);
+   *  it takes the place of the headline figures and the XP list. */
+  results?: JrData;
 }
 
 /** The "How to come back stronger" card on a lost run's recap (`sim/comeback.ts`): each pointer's button closes the recap and goes there. */
@@ -45,9 +49,16 @@ export interface RecapAdvice {
 export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, onClose: () => void, advice?: RecapAdvice): void {
   root.replaceChildren();
   const sheet = el('div', 'rcSheet');
-  sheet.append(el('div', 'rcEyebrow', 'After-action report'), el('div', `rcTitle ${head.tone}`, head.title), el('p', 'rcLine', head.line));
+  const jrHead = el('div');
+  const jrBody = el('div');
+  if (head.results) sheet.append(jrHead, el('p', 'rcLine', head.line));
+  else sheet.append(el('div', 'rcEyebrow', 'After-action report'), el('div', `rcTitle ${head.tone}`, head.title), el('p', 'rcLine', head.line));
   if (head.joke) sheet.append(el('p', 'rcJoke', head.joke));
+  const player = head.results ? playResults({ head: jrHead, body: jrBody }, head.results) : null;
+  // (a tap on the sheet hurries the count-ups to their end)
+  if (player) sheet.addEventListener('click', (e) => void (!(e.target as HTMLElement).closest('button') && player.finish()));
   const close = (): void => {
+    player?.stop();
     root.hidden = true;
     root.replaceChildren();
   };
@@ -74,7 +85,8 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
     sheet.append(box);
   }
 
-  // the headline figures
+  // the party, the MVP and the spoils (JRPG-RECAP), or the headline figures
+  if (player) sheet.append(jrBody);
   const grid = el('div', 'rcGrid');
   const fig = (label: string, value: string) => {
     const f = el('div', 'rcFig');
@@ -92,10 +104,10 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   // (WAVE-RECAP: the hearts the battle burned, when it burned any)
   const hearts = heartsBurned(recap);
   if (hearts) grid.append(fig('Hearts burned', String(hearts)));
-  sheet.append(grid);
+  if (!player) sheet.append(grid);
 
   // wave by wave, the company, and the XP and levels (`recapDetail`)
-  sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W', equipmentStep: head.equipmentStep }));
+  sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W', equipmentStep: head.equipmentStep, xp: !player }));
 
   const done = el('div', 'rcFoot');
   const ok = el('button', 'primary', 'Continue');
@@ -114,6 +126,8 @@ export interface DetailOpts {
   equipmentStep?: (kind: string) => number;
   strip: string;
   prefix: string;
+  /** List the XP and levels (the default); the run's end recap leaves them to its results screen's rows (JRPG-RECAP). */
+  xp?: boolean;
 }
 
 /** The detail of a recap, as a list of parts to lay out in order (WAVE-RECAP-2: the run's recap here, and the spire's and the
@@ -178,7 +192,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
   }
 
   // XP and levels
-  const xpKinds = Object.keys(recap.xp).filter((k) => UNITS[k] && recap.xp[k] > 0);
+  const xpKinds = opts.xp === false ? [] : Object.keys(recap.xp).filter((k) => UNITS[k] && recap.xp[k] > 0);
   if (xpKinds.length) {
     out.push(el('h3', '', 'Experience earned'));
     const list = el('div', 'rcXp');

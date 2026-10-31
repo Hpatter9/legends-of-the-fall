@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.280.0',
+    date: '2026-10-31',
+    title: 'A JRPG results screen',
+    notes: ['Runs end on a results screen: XP bars filling, LEVEL UP with each stat\'s gain, spoils counted up and the MVP. Between waves stays a short card.'],
+  },
+  {
+    version: '0.279.0',
+    date: '2026-10-31',
+    title: 'Cinematics show what they unlocked',
+    notes: ['A cinematic that opens something now ends with a card: what was unlocked, built or awakened, and where to find it. Skipping still shows it.'],
+  },
+  {
     version: '0.278.0',
     date: '2026-10-31',
     title: 'The Calamity\'s room comes alive',

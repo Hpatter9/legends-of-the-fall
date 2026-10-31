@@ -16,10 +16,24 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### CAL-ZONES — The Calamity's battle zones: varied shapes, things on the board, moving parts
 
-- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-zones`, `/home/user/lotf-calzones` (from main 0.277.0; main 0.278.0 merged in).
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-zones`, `/home/user/lotf-calzones` (from main 0.277.0; main 0.280.0 merged in).
 - **Goal:** the owner's "make the battle zones for Calamity much more interesting, more varied, with objects and moving parts. Make it feel alive and real."
 - **Scope:** new `src/sim/calZones.ts` (six zones: nave, crystal chasm, crypt rows, broken bridge, ritual circle, flooded vault), `src/sim/layoutKit.ts` (the template tools, moved out of `layouts.ts` unchanged), `src/render/zoneLife.ts`, `src/art/calzones/`, `test/calamity-zones.test.ts`, `tools/calamity/zone-shots.mjs`; hooks in `layouts.ts` (zone templates), `board.ts` (`Tile.chasm`, `Board.props`), `sanctuary.ts` (`destinationBoard` lays a zone), `tower.ts` (passes the act), `boardView.ts` (props, chasms, the air), `main.ts` (one line: fade tall things over fighters). No save or version change.
 - **Status:** ready for review. [Note](notes/calamity-zones.md); screenshots `samples/calzones-*.png`.
+
+### JRPG-RECAP — A JRPG results screen at a run's end; the simple card between waves
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/jrpg-recap`, `/home/user/lotf-recap` (from main 0.273.0).
+- **Goal:** the owner's ask: "A more typical JRPG end-of-fight recap. With a level up showing what stats went up and how much, and so on. Redo the recap entirely."
+- **Scope:** new `src/sim/jrpgRecap.ts`, `src/jrpgRecapView.ts`, `src/jrpgResults.ts`, `src/jrpgRecap.css`, `test/jrpg-recap.test.ts`, `tools/jrpg-recap/shots.mjs`; `src/sim/runRecap.ts` (optional `xpAt`, `noteXpStart`); hooks in `src/main.ts` (settle, refresh, the result's tap, `stepPassing`), `src/index.html` (`#jrHead`, `#jrBody`), `src/recapView.ts` (the run recap's top), `src/standView.ts` (the Last Stand's end card), `src/waveCardView.ts` (`gainIcon` exported), `build.mjs` (the stylesheet). No save version or version change.
+- **Status:** ready for review. [Note](notes/jrpg-recap.md); screenshots `samples/jrpg-recap-*.png`. The owner's answer: between waves stays the simple short card (now with quest lines), leaving by itself; the results screen is only at a run's end (the end recap, a spire/Calamity/quest run's last fight, the Last Stand's end card).
+
+### REVEAL-VAULT — A film's end card for what it revealed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematic-reveal-vault`, `/home/user/lotf-reveal` (from main 0.273.0).
+- **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
+- **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
 
 ### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
 
