@@ -66,3 +66,11 @@
 .ulPic .awakeShow b { bottom: 2px; font-size: 10px; animation-duration: 1.1s; }
 
 @media (prefers-reduced-motion: reduce) { .upMark { animation: none; } }
+/* TALENT-AUTO: "Auto all talents" under "Upgrade all", and its confirm's list of each hero's picks */
+.ulAuto { min-height: 44px; font-size: 12px; }
+.ulAuto[hidden], .ulAll[hidden] { display: none; }
+.ulPlans { display: flex; flex-direction: column; gap: 6px; max-height: 38vh; overflow-y: auto; overscroll-behavior: contain; }
+.ulPlans[hidden] { display: none; }
+.ulPlan { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: rgb(var(--black-rgb) / 0.3); border: 1px solid var(--s6); }
+.ulPlan b { font: 400 12px var(--body); color: var(--gold-hi); }
+.ulPlan span { font: 400 11px/1.4 var(--body); color: var(--white); }
