@@ -52,7 +52,7 @@ import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } fro
 import { hornHeld } from './sim/warHorn';
 import { revealCard } from './sim/sceneReveal';
 import { showEndCard } from './revealCard';
-import { chainById } from './sim/eidolonChainData';
+import { chainById, type ChainDef } from './sim/eidolonChainData';
 import { openPactGallery } from './eidolonChainView';
 import { playBinding } from './eidolonBinding';
 import type { Scene } from './sim/sceneKit';
@@ -393,20 +393,40 @@ export class Home {
         if (beginChain(m, offer.id)) saveMeta(m);
         this.refresh();
         this.openQuests('eidolons');
-      } else if (ready) {
-        this.hall.stop();
-        await playBinding(ready);
-        // (HORN-GIFT: the first binding hands over the War Horn, full; its end card says what it does and where it is)
-        const hadHorn = hornHeld(m);
-        if (bindChain(m, ready.id)) saveMeta(m);
-        this.refresh();
-        const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : null;
-        if (gift) await showEndCard(gift);
-        this.openGallery();
-      } else this.openQuests('eidolons');
+      } else if (ready) await this.bind(ready);
+      else this.openQuests('eidolons');
     } finally {
       this.busyChain = false;
     }
+  }
+
+  /** The binding of a chain whose pieces are all in: the ceremony plays, the Eidolon is bound and chosen, its card, then the Pact Gallery. */
+  private async bind(ready: ChainDef): Promise<void> {
+    const m = this.meta;
+    this.hall.stop();
+    await playBinding(ready);
+    // (HORN-GIFT: the first binding hands over the War Horn, full; its end card says what it does and where it is)
+    const hadHorn = hornHeld(m);
+    if (bindChain(m, ready.id)) saveMeta(m);
+    this.refresh();
+    // (EIDOLON-CHAIN-2: a later binding, the horn already held, ends on the Eidolon's own "Bound" card)
+    const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : revealCard({ kind: 'eidolon', id: ready.eidolon }, m);
+    if (gift) await showEndCard(gift);
+    this.openGallery();
+  }
+
+  /** EIDOLON-TRIAL: a trial won leads straight to the binding (the page calls this as the trial's beat after ends). False when no chain is
+   *  ready to bind. */
+  async bindAfterTrial(): Promise<boolean> {
+    const ready = readyToBind(this.meta);
+    if (!ready || this.busyChain) return false;
+    this.busyChain = true;
+    try {
+      await this.bind(ready);
+    } finally {
+      this.busyChain = false;
+    }
+    return true;
   }
 
   /** EIDOLON-CHAINS: the Pact Gallery (from the Sanctum, and the War Horn's card at the camp). */

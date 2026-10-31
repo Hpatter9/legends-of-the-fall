@@ -52,6 +52,8 @@ export interface QuestBattle {
   /** The foes' strength on top of `like` (missing is 1): each battle's own, set by `npm run quest-rate`, since a boss's kit (a lich's
    *  freezes, a demon lord's pull) weighs more in three waves with a small party than in an army's fifteen. */
   ease?: number;
+  /** EIDOLON-TRIAL: the last boss's health and attack on top of the army's mid-boss's (an Eidolon in its trial is more than a mid-boss). */
+  bossLift?: { hp: number; atk: number };
   /** The boss of the last wave's own name and title (it keeps its look, kit and signature attacks). */
   boss?: { name: string; title: string };
   /** The required cast, slot by slot. */
@@ -102,7 +104,7 @@ export function questArmy(id: string): Army | undefined {
     growth: like.growth,
     // (a quest's boss is no army's last: it takes the army's mid-boss stats, whichever wave it stands on)
     mid: like.mid,
-    last: like.mid,
+    last: qb.bossLift ? { ...like.mid, hp: like.mid.hp * qb.bossLift.hp, atk: like.mid.atk * qb.bossLift.atk } : like.mid,
     pay: 0,
     clear: 0,
   };

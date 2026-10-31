@@ -194,6 +194,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
 
+### EIDOLON-TRIAL — Nivra's trial, and the trials as data for chains 3 to 6
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-chain-2` (Nivra's chain, main 0.293.0 merged in).
+- **Goal:** the owner's call that chains 2 to 6 end with a trial against the Eidolon before the binding: after Nivra's three pieces, Part 4 "The Trial", Nivra herself the boss (her Gemini sheet cut into a fighter's), frost breath down a row, a ring of ice, frost wolves, ice armour at half health; lines before and after; a win leads straight to the binding, a loss waits in the log; about 40 to 50% where it opens; one `TrialDef` a chain so chains 3 to 6 add theirs as data.
+- **Scope:** new `src/sim/eidolonTrials.ts`, `src/art/units/eidolon_nivra.png`, `art-source/eidolons/gemini/nivra-sheet.jpg`, `tools/eidolon-trial/`, `test/eidolon-trial.test.ts`; hooks in `src/sim/eidolonChains.ts`, `eidolonChainData.ts`, `chainBattleData.ts`, `questBattles.ts` (`bossLift`), `foes.ts`, `abilities.ts`, `bossAttacks.ts` (the `row` shape), `bossPhases.ts`, `sceneFamilies.ts`, `codex.ts`, `codexLore.ts`; `src/eidolonChainView.ts`, `src/home.ts`, `src/main.ts`, `src/render/sheets.ts`, `src/art/units/sheets.json`, `CREDITS.md`; two checks in `test/eidolon-chain-2.test.ts` updated.
+- **Status:** ready for review. [Note](notes/eidolon-chain-2.md) ("The trial"); screenshots `samples/eidolon-trial-*.png`.
+
 ### EIDOLON-CHAINS — Quests batch 5: Askel's chain, end to end
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-chain-1`, `/home/user/lotf-chain1` (from main 0.272.0).
