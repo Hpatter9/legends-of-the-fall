@@ -166,7 +166,7 @@ rose from 0.22 to 0.251, +1.1 dB, to put the -18 LUFS files at -30).
 ## Checked
 
 `npm install`; `npm run typecheck`; `npm test -- battle-music epic-music audio-mix music-loudness music audio-engine
-battle-sound stand` (119 pass); the full `npm test` (see the reply / commit for the count); `npm run web` (20 audio files in
+battle-sound stand` (119 pass); the full `npm test` (1964 pass, 0 fail); `npm run web` (20 audio files in
 `out/web/audio/` and in the service worker's list). `tools/audio-mix/measure.mjs --only music,fights` (the tables above).
 `tools/battle-music-2/probe.mjs` in Chromium at 393x852, the Orc Warband (bosses on waves 8 and 15):
 
