@@ -49,7 +49,6 @@ try {
     });
     assert.ok(sw.on && sw.auto?.length, JSON.stringify(sw));
     assert.ok(sw.r[2] <= sw.vw, 'the switch is on screen');
-    await page.screenshot({ path: `docs/samples/auto-cast-toggle-${w}.png` });
     // (the first spell the chooser casts by itself)
     await page.waitForFunction(() => window.__game.b.log?.some((e) => e.kind === 'spell') || window.__game.b.phase !== 'fight', null, { timeout: 60000, polling: 50 });
     await page.waitForTimeout(250);
@@ -59,6 +58,9 @@ try {
       return { t: b.t, phase: b.phase, spells: (b.log ?? []).filter((e) => e.kind === 'spell').map((e) => `${e.id}@${e.u},${e.v} t${e.t}`) };
     });
     await page.screenshot({ path: `docs/samples/auto-cast-fight-${w}.png` });
+    // (the orbs' row and the switch, close: the foes' opening grumble has gone by now)
+    const row = await page.evaluate(() => { const r = document.getElementById('hudSpells').getBoundingClientRect(); return { x: 0, y: Math.max(0, r.top - 6), width: innerWidth, height: r.height + 12 }; });
+    await page.screenshot({ path: `docs/samples/auto-cast-toggle-${w}.png`, clip: row });
     await page.evaluate(() => { window.__game.sceneHold = 0; });
     // (the Last Stand: Auto on there too)
     await page.evaluate(() => { const g = window.__game; g.meta.opened = [...new Set([...(g.meta.opened ?? []), 'castle', 'tower'])]; g.home.go(() => g.openStand()); });

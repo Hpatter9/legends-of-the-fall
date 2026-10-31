@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### AUTO-CAST — Auto fires the ultimates and casts the king's spells
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/auto-cast`, `/home/user/lotf-autocast` (from main 0.289.0).
+- **Goal:** the owner's "For Auto in battle, it should do auto spells and ultimates": the fight's one Auto switch (kept in `Meta.ultAuto`) fires the ultimates as before and casts the equipped spells on its own through `castSpell`, by a pure deterministic chooser (help, then harm, then buffs, with a mana reserve), in every mode and under auto-replay; the War Horn stays manual.
+- **Scope:** new `src/sim/autoCast.ts`, `test/auto-cast.test.ts`, `tools/auto-cast/`; hooks in `src/sim/battle.ts` (`Battle.autoSpells`, the call in `stepBattle`), `src/sim/spells.ts` (`SpellState.autoAt`), `src/main.ts`, `src/standView.ts`, `src/fightHud.ts` + `.css` (the switch's ULT+SPELL line), `src/tips.ts`, `tools/autoplay.ts` (`botSpells`, off by default).
+- **Status:** ready for review. [Note](notes/auto-cast.md) (win rates spells never vs Auto, and a question for the owner); screenshots `samples/auto-cast-*.png`.
+
 ### GUEST-HERO — A guest hero from the passing cart, a sixth on the field for one run; talent points marked in the tavern
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/guest-hero`, `/home/user/lotf-guest` (from main 0.284.0).
