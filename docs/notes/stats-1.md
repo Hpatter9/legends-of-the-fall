@@ -64,3 +64,8 @@ scores at 20 and at 100, to hit and DC at 100) with `derivedOf` and `scoresAtLev
 - **The foes' blow and casting ability** are not in the design's family table: here a foe's blows use the better of STR and DEX, and its
   DC its best of INT, WIS and CHA.
 - **A boss's "+2 to two scores"** goes to its block's two best (ties in D&D order).
+
+## Checks
+
+`npm run typecheck` clean; `npm test -- stats.test` 12 of 12; the full `npm test` 1942 pass, 0 fail (the identity fixtures unmoved);
+`npm run web` built. No page changed, so no browser check.
