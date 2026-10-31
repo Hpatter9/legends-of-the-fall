@@ -57,7 +57,9 @@ const after = (n: number): number => {
 /* ------------------------------------------------------------------ the data */
 
 test('a hundred unique quests and thirty repeatable ones, each with its own id, words, goal and pay', () => {
-  assert.equal(uniques.length, 100);
+  // (batch 2 added eleven more uniques, one for each quest battle: the hundred of batch 1b are the rest)
+  assert.equal(uniques.filter((q) => q.goal.kind !== 'battle').length, 100);
+  assert.equal(uniques.filter((q) => q.goal.kind === 'battle').length, 11);
   assert.equal(repeats.length, 30);
   assert.equal(new Set(QUESTS.map((q) => q.id)).size, QUESTS.length);
   for (const q of QUESTS) {

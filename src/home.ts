@@ -77,6 +77,10 @@ export interface HomeHooks {
   onWatchScene?(id: string): void;
   /** A build was raised (the castle's cinematic): the building, or `chapel`. */
   onBuilt?(site: BuildSite): void;
+  /** Begin or carry on a quest battle (batch 2 of the quests: the log's Fight, a giver's card, the Done tab's Replay). */
+  onQuestBattle?(battle: string): void;
+  /** The quest battle saved part-way, if one is (its Fight reads Continue). */
+  questSaved?(): string | null;
 }
 
 type Tab = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells';
@@ -138,10 +142,10 @@ export class Home {
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
     // (QUESTS: Gwen behind the bar opens her card, the board opens the log's Board tab, the Quests button its Active tab)
     this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster(), {
-      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), openLog: () => this.openQuests('active') }),
+      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
       onBoard: () => this.openQuests('board'),
       onQuests: () => this.openQuests('active'),
-      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), openLog: () => this.openQuests('active') }),
+      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
     });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
@@ -305,8 +309,17 @@ export class Home {
           this.refresh();
         },
         close: () => this.closeSheet(),
+        fight: (id) => this.questBattle(id),
+        saved: () => this.hooks.questSaved?.() ?? null,
       });
     draw(tab);
+  }
+
+  /** A quest battle's Fight (batch 2): the sheet and the card close, and the page takes it from there (the party, the story, the deploy). */
+  private questBattle(id: string): void {
+    if (!this.hooks.onQuestBattle) return;
+    this.closeSheet();
+    this.go(() => this.hooks.onQuestBattle!(id));
   }
 
   /** Redraw the page that is showing (after crowns or unlocks change elsewhere). */

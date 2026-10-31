@@ -41,6 +41,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
 
+### QUEST-BATTLES — Quests batch 2: quest battles
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/quest-battles`, `/home/user/lotf-quests3` (from main 0.270.0).
+- **Goal:** batch 2 of the approved quests and Eidolons design: quest battles with a required cast (offered only once the cast is owned), RunMode `quest`, `questArmy`, its own run slot (`legends.questRun`), the locked party slots and deploy, the story before and the beat after, Try again, replays; eleven battles (the two patron battles, the design's worked examples and the batch 1b ideas), each opened by a quest from a fitting giver.
+- **Scope:** new `src/sim/questBattles.ts`, `src/sim/questBattleData.ts`, `src/sim/questRun.ts`, `src/sim/questData/battles.ts`, `src/questBattles.css`, `tools/quest-battles/`, `test/quest-battles.test.ts`; hooks in `src/sim/run.ts` (the mode, `waveArmyOf`, the slot, Duchess, recycle, no road events), `src/sim/quests.ts` (the `battle` goal, the owner's rule, `tries`/`won`/`told`), `src/sim/questData.ts`, `src/sim/modes.ts` (`settleRun`), `src/sim/sceneKit.ts` / `sceneRules.ts` (a `questBattle` moment, `CastMember.name`), `src/settings.ts` (Start over wipes the slot), `src/main.ts`, `src/party.ts`, `src/questLog.ts`, `src/questCard.ts`, `src/home.ts`, `src/index.html` (`#qbLeave`), `build.mjs` (the CSS), `package.json` (`quest-rate`); two tests updated for the new requirement (`quests-content`, `settings`).
+- **Status:** ready for review. [Note](notes/quest-battles.md); screenshots `samples/quest-battles-*.png`.
+
 ### QUESTS-1B — Quests batch 1b: repeats, drops, 100 unique and 30 repeatable quests
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/quests-content`, `/home/user/lotf-quests2` (from `claude/quests-1`, with main 0.263.0 merged).
