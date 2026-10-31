@@ -25,7 +25,7 @@ import atlas from './art/fx/pack/atlas.json';
 export interface FightHudOpts {
   /** Permanent equipment can stay awakened in modes with local combat stats. */
   equipmentStep?: (kind: string) => number;
-  /** The Auto switch was flipped: the page keeps it (`Meta.ultAuto`) and tells the battle. */
+  /** The Auto switch was flipped: the page keeps it (`Meta.ultAuto`, which now covers the spells too: AUTO-CAST) and tells the battle. */
   onAuto: (on: boolean) => void;
   /** Whether the ultimates fire on their own now (the ultimate's sheet says so). */
   autoOn?: () => boolean;
@@ -94,8 +94,10 @@ export class FightHud {
     this.autoEl = document.createElement('button');
     this.autoEl.type = 'button';
     this.autoEl.className = 'fhAuto';
-    this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i>';
-    this.autoEl.title = 'Auto: fire every ultimate the moment it is ready';
+    // (AUTO-CAST: one switch for both, the heroes' ultimates and the king's spells; its small line says so)
+    this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i><small>ULT+SPELL</small>';
+    this.autoEl.title = 'Auto: ultimates + spells. Every ultimate fires when it is ready, and your spells are cast where they are worth it';
+    this.autoEl.setAttribute('aria-label', 'Auto: ultimates + spells');
     this.autoEl.addEventListener('click', (e) => {
       e.stopPropagation();
       const on = !this.autoEl.classList.contains('on');
