@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.301.0',
+    date: '2026-10-31',
+    title: 'Armies retuned for Auto spells',
+    notes: ['Now that Auto casts your spells, the armies, the daily, the Last Stand and the Calamity are retuned to match. The late three armies are harder again.'],
+  },
+  {
     version: '0.300.0',
     date: '2026-10-31',
     title: 'Clearer marks, one unlock card, auto talents',
