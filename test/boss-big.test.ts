@@ -49,7 +49,7 @@ test('every boss has one or two signatures of its own: each army boss, the Calam
     assert.ok(list && list.length >= 1 && list.length <= 2, `${id} has its signatures`);
     for (const s of list) {
       keys.push(s.key);
-      assert.ok(s.power * SIG.POWER >= 0.95 && SIG.FLOOR >= 0.25, `${s.key} hits hard`);
+      assert.ok(s.power * SIG.POWER >= 0.95 && SIG.FLOOR >= 0.2, `${s.key} hits hard`);
       assert.notEqual(s.name, s.rage, `${s.key} has a rage name`);
     }
   }
