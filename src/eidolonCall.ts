@@ -29,10 +29,15 @@ import { beatTimes, buildAt, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWo
 import { breathReach, exitPoint, hitAt, markTime, marksOf, maxRuns, PASS, passPose, passShare, runFrom, SOURCES, spriteFrame, spritePlace, SPRITES as MONS, wakeRate, type AttackSource, type EidolonSprite, type Mark, type PassSpec, type Sprite } from './eidolonPass';
 import askelSprite from './art/eidolons/sprites/askel.png';
 import askelBreath from './art/eidolons/sprites/askel-breath.png';
-import golemStoneSheet from './art/units/golem_stone.png';
 import nivraSprite from './art/eidolons/sprites/nivra.png';
+import nivraBreath from './art/eidolons/sprites/nivra-breath.png';
 import aurelanSprite from './art/eidolons/sprites/aurelan.png';
+import aurelanBreath from './art/eidolons/sprites/aurelan-breath.png';
+import voltaraSprite from './art/eidolons/sprites/voltara.png';
+import voltaraBreath from './art/eidolons/sprites/voltara-breath.png';
+import gormSprite from './art/eidolons/sprites/gorm.png';
 import vaelkharSprite from './art/eidolons/sprites/vaelkhar.png';
+import vaelkharBreath from './art/eidolons/sprites/vaelkhar-breath.png';
 import flameFire from './art/fx/vfx/flame_fire.png';
 import sparkleFire from './art/fx/vfx/sparkle_fire.png';
 import puffFire from './art/fx/vfx/puff_fire.png';
@@ -129,7 +134,9 @@ function fxEl(st: FxStrip, x: number, y: number, o: { delay?: number; mul?: numb
 }
 
 /** The sprite Eidolons' sheets (the owner's addition: `eidolonPass.ts` `SPRITES`). */
-const MON_SHEETS: Readonly<Record<EidolonSprite['sheet'], string>> = { askel: askelSprite, golem_stone: golemStoneSheet, nivra: nivraSprite, aurelan: aurelanSprite, vaelkhar: vaelkharSprite };
+const MON_SHEETS: Readonly<Record<EidolonSprite['sheet'], string>> = { askel: askelSprite, nivra: nivraSprite, aurelan: aurelanSprite, voltara: voltaraSprite, gorm: gormSprite, vaelkhar: vaelkharSprite };
+/** Their breaths, beams and bolts (EIDOLON-FX: each its own strip, drawn from the mouth or hands across the foes). */
+const MON_BREATHS: Readonly<Partial<Record<EidolonSprite['sheet'], string>>> = { askel: askelBreath, nivra: nivraBreath, aurelan: aurelanBreath, voltara: voltaraBreath, vaelkhar: vaelkharBreath };
 
 /** The full call's strike to aftermath (ms): the aftershocks' delays in `eidolonFx.ts` are set to it, and the short call's are scaled. */
 const STRIKE_FX_SPAN = 730;
@@ -500,7 +507,7 @@ export class EidolonCall {
       let breathEl: HTMLElement | null = null;
       if (mon.breath) {
         breathEl = el('i', 'ecBreath');
-        breathEl.style.backgroundImage = `url(${askelBreath})`;
+        breathEl.style.backgroundImage = `url(${MON_BREATHS[mon.sheet] ?? askelBreath})`;
         breathEl.style.visibility = 'hidden';
         this.board.append(breathEl);
       }
@@ -661,8 +668,11 @@ export class EidolonCall {
         br.style.visibility = 'hidden';
         return;
       }
-      const dx = aim.x - mouth.x;
-      const dy = aim.y - mouth.y;
+      // (EIDOLON-FX: out the way it faces, tilted at most a little towards the foes' height: a sprite held inside the screen can stand
+      // close to the foes' middle, and its breath must still pour across them, never back over itself)
+      const face = p.monStand && aim.x < p.monStand.x ? -1 : 1;
+      const dx = face * Math.max(Math.abs(aim.x - mouth.x), innerWidth * 0.35);
+      const dy = Math.max(-0.3 * Math.abs(dx), Math.min(0.3 * Math.abs(dx), aim.y - mouth.y));
       // (long enough to sweep across the foes: past their middle, at least half the screen)
       const len = Math.max(innerWidth * 0.55, Math.hypot(dx, dy) * 1.6);
       const k = sp.px / sp.fh;
@@ -675,13 +685,14 @@ export class EidolonCall {
       br.style.backgroundSize = `${Math.round(w * sp.breath.n)}px ${Math.round(h)}px`;
       br.style.backgroundPosition = `${-Math.round(i * w)}px 0`;
       br.style.opacity = p.t >= p.m.AFTER ? reach.toFixed(2) : '1';
-      br.style.transform = `translate(${Math.round(mouth.x)}px, ${Math.round(mouth.y - h / 2)}px) rotate(${Math.atan2(dy, dx).toFixed(3)}rad)`;
+      // (pointing left it is mirrored, not turned upside down)
+      br.style.transform = `translate(${Math.round(mouth.x)}px, ${Math.round(mouth.y - h / 2)}px) rotate(${Math.atan2(dy, dx).toFixed(3)}rad)${dx < 0 ? ' scaleY(-1)' : ''}`;
     }
   }
 
   /** Which way the sprite faces: the way it is going as it comes on and leaves, at the foes as it attacks. */
   private monFlip(p: Playing, sp: EidolonSprite): boolean {
-    if (sp.comes !== 'run' || !p.monStand || !p.monFrom) return false;
+    if (!p.monStand || !p.monFrom) return false;
     const attacking = p.t >= p.m.BUILD && p.t < p.m.AFTER;
     const right = attacking && p.monAim ? p.monAim.x >= p.monStand.x : p.t >= p.m.AFTER ? p.monFrom.x >= p.monStand.x : p.monStand.x >= p.monFrom.x;
     return right !== sp.facesRight;
@@ -696,9 +707,10 @@ export class EidolonCall {
     const pts = (b?.units.filter((u) => u.side === 'foe' && u.alive) ?? []).map((u) => this.opts.tile(u.u, u.v)).filter((x): x is { x: number; y: number } => !!x);
     const mid = pts.length ? { x: pts.reduce((a, c) => a + c.x, 0) / pts.length, y: pts.reduce((a, c) => a + c.y, 0) / pts.length } : this.boardMid();
     const left = p.exit.x < W / 2;
-    // (a runner stands to the side of the foes it came from, so it breathes or strikes across them; a flier hangs in front of them)
-    const sx = sp.comes === 'run' ? mid.x + (left ? -1 : 1) * W * 0.3 : mid.x;
-    const stand = { x: Math.max(W * 0.2, Math.min(W * 0.8, sx)), y: Math.min(H * 0.7, mid.y + H * (sp.comes === 'run' ? 0.07 : 0.1)) };
+    // (it stands, or a flier hangs, to the side of the foes it came from, so it breathes or strikes across them (EIDOLON-FX: the fliers'
+    // own sheets are side-on too, so they no longer hang in front))
+    const sx = mid.x + (left ? -1 : 1) * W * 0.3;
+    const stand = { x: Math.max(W * 0.2, Math.min(W * 0.8, sx)), y: Math.min(H * 0.7, mid.y + H * (sp.comes === 'run' ? 0.07 : 0.03)) };
     p.monAim = mid;
     const half = (sp.fw * sp.px) / sp.fh / 2;
     const from = sp.comes === 'fly' ? { x: left ? W * 0.15 : W * 0.85, y: -20 } : { x: left ? -half - 10 : W + half + 10, y: stand.y };
@@ -711,7 +723,7 @@ export class EidolonCall {
     const sp = p.mon;
     if (!sp || !p.monStand || !p.monFrom) return null;
     const w = (sp.fw * sp.px) / sp.fh;
-    const flip = sp.comes === 'run' && (p.monAim ? p.monAim.x >= p.monStand.x : p.monStand.x >= p.monFrom.x) !== sp.facesRight;
+    const flip = (p.monAim ? p.monAim.x >= p.monStand.x : p.monStand.x >= p.monFrom.x) !== sp.facesRight;
     const mx = flip ? 1 - sp.mouth[0] : sp.mouth[0];
     return { x: p.monStand.x - w / 2 + mx * w, y: p.monStand.y - sp.px + sp.mouth[1] * sp.px };
   }
@@ -725,7 +737,7 @@ export class EidolonCall {
     for (const k of p.marks) for (const x of k.els) x.classList.add('on', 'lit');
     this.board.querySelector('.ecGate')?.classList.add('on');
     // (the marks flare into the element's own fire, frost, light, sparks, stone or smoke)
-    for (const k of p.marks) this.board.append(strip(p.src.flare, 'ecFlare', k.mark.x * innerWidth, k.mark.y * innerHeight, { scale: 2, foot: p.src.flare === 'flame', ms: 450 }));
+    for (const k of p.marks) this.board.append(strip(p.src.flare, 'ecFlare', k.mark.x * innerWidth, k.mark.y * innerHeight, { scale: 1.4, foot: p.src.flare === 'flame', ms: 450 }));
     if (!b) return;
     const left = Math.max(120, p.m.STRIKE - p.t - 30);
     // (EIDOLON-FX: the charge: the element gathers into a ring closing on the foes' middle, arriving as the strike lands)
@@ -738,7 +750,7 @@ export class EidolonCall {
     if (p.mon?.fromSprite) {
       if (!p.monStand) this.placeMon(p, p.mon);
       const mouth = this.monMouth(p);
-      if (mouth) this.board.append(strip(p.src.flare, 'ecFlare', mouth.x, mouth.y, { scale: 2.2, ms: 450 }));
+      if (mouth) this.board.append(strip(p.src.flare, 'ecFlare', mouth.x, mouth.y, { scale: 1.6, ms: 450 }));
     }
     const aspect = innerWidth / innerHeight;
     let at = p.t;

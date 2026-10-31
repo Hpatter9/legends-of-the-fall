@@ -153,7 +153,7 @@
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--glow) 80%, transparent) 30%, #fff); filter: blur(1.5px) drop-shadow(0 0 6px var(--glow));
   animation: ecDraw var(--ms) cubic-bezier(.5,0,.8,.6) forwards; }
 .ecHead { position: absolute; left: 0; top: 0; width: 0; height: 0; animation: ecHead var(--ms) cubic-bezier(.5,0,.8,.6) forwards; }
-.ecHead .ecSp { scale: 2.2; }
+.ecHead .ecSp { scale: 1.5; }
 @keyframes ecDraw { to { scale: 1 1; } }
 @keyframes ecHead { from { translate: 0 0; } to { translate: var(--len) 0; } }
 .ecRun.done .ecStreak { opacity: 0; transition: opacity 0.4s ease; }

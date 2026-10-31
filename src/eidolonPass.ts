@@ -224,10 +224,10 @@ export const maxRuns = (saver: boolean): number => (saver ? 5 : 10);
  *  by, stands before the foes, and its attack frame is the strike. A sheet: frames `fw` x `fh` in rows of `perRow`, `rows` rows; the walk
  *  and attack rows (a three-frame pack sprite uses its one row for both, its attack played faster with a lunge); `hit` is the attack frame
  *  the blow lands on. `px` is its drawn height. `fromSprite`: the element runs from its mouth or fists (else from the trail, sky or edge,
- *  the sprite calling it). Voltara has none (no pack has a copper goddess): her attack stays as it was, from her sparks. */
+ *  the sprite calling it). EIDOLON-FX: all six are the owner's Gemini sheets now (Voltara has hers). */
 export interface EidolonSprite {
   /** The sheet's key (`eidolonCall.ts` maps it to the picture). */
-  sheet: 'askel' | 'golem_stone' | 'nivra' | 'aurelan' | 'vaelkhar';
+  sheet: 'askel' | 'nivra' | 'aurelan' | 'voltara' | 'gorm' | 'vaelkhar';
   fw: number;
   fh: number;
   perRow: number;
@@ -256,11 +256,14 @@ export interface EidolonSprite {
 export const SPRITES: Readonly<Record<string, EidolonSprite | null>> = {
   // (the owner's own generated sheet: tools/eidolon-call-2/cut_askel.py; rows run, breath, idle, leap)
   askel: { sheet: 'askel', fw: 111, fh: 97, perRow: 6, rows: 4, walk: { row: 0, n: 6 }, attack: { row: 1, n: 6 }, hit: 3, facesRight: true, px: 112, comes: 'run', fromSprite: true, mouth: [0.96, 0.44], glow: 'drop-shadow(0 0 6px rgb(255 110 30 / 0.7))', leave: { row: 3, n: 6 }, lead: 0.5, breath: { fw: 55, fh: 120, n: 3 } },
-  nivra: { sheet: 'nivra', fw: 72, fh: 114, perRow: 3, rows: 1, walk: { row: 0, n: 3 }, attack: { row: 0, n: 3 }, hit: 2, facesRight: true, px: 132, comes: 'fly', fromSprite: true, mouth: [0.55, 0.22], glow: 'drop-shadow(0 0 5px #9be4ff) drop-shadow(0 0 12px #4ab8ff)' },
-  aurelan: { sheet: 'aurelan', fw: 48, fh: 48, perRow: 3, rows: 1, walk: { row: 0, n: 3 }, attack: { row: 0, n: 3 }, hit: 2, facesRight: true, px: 96, comes: 'run', fromSprite: false, mouth: [0.85, 0.35], glow: 'drop-shadow(0 0 5px #ffe28a) drop-shadow(0 0 12px #ffc040) saturate(1.15)' },
-  voltara: null,
-  gorm: { sheet: 'golem_stone', fw: 132, fh: 127, perRow: 8, rows: 5, walk: { row: 0, n: 8 }, attack: { row: 1, n: 5 }, hit: 3, facesRight: true, px: 132, comes: 'run', fromSprite: true, mouth: [0.72, 0.85], glow: 'drop-shadow(0 0 4px #ffb54a) saturate(0.85)' },
-  vaelkhar: { sheet: 'vaelkhar', fw: 120, fh: 120, perRow: 3, rows: 1, walk: { row: 0, n: 3 }, attack: { row: 0, n: 3 }, hit: 2, facesRight: true, px: 150, comes: 'fly', fromSprite: true, mouth: [0.5, 0.42], glow: 'drop-shadow(0 0 6px #b77bff) drop-shadow(0 0 14px #6a2bd0)' },
+  // (EIDOLON-FX: the other five from the owner's Gemini sheets too, tools/eidolon-fx/cut_gemini.py: rows walk, attack; the breath, beam or
+  // bolt its own strip. Nivra slithers on and breathes frost; Aurelan runs on and roars sunlight while the lances fall from the sky he
+  // leapt into; Voltara floats down and hurls her bolt; Gorm stomps on and slams his hammer; Vaelkhar flies down and pours his black fire)
+  nivra: { sheet: 'nivra', fw: 111, fh: 99, perRow: 6, rows: 2, walk: { row: 0, n: 6 }, attack: { row: 1, n: 5 }, hit: 3, facesRight: true, px: 124, comes: 'run', fromSprite: true, mouth: [0.98, 0.37], glow: 'drop-shadow(0 0 5px #9be4ff) drop-shadow(0 0 10px #4ab8ff)', lead: 0.5, breath: { fw: 75, fh: 126, n: 2 } },
+  aurelan: { sheet: 'aurelan', fw: 158, fh: 113, perRow: 4, rows: 2, walk: { row: 0, n: 4 }, attack: { row: 1, n: 4 }, hit: 2, facesRight: true, px: 112, comes: 'run', fromSprite: false, mouth: [0.88, 0.4], glow: 'drop-shadow(0 0 5px #ffe28a) drop-shadow(0 0 10px #ffc040)', lead: 0.5, breath: { fw: 87, fh: 162, n: 2 } },
+  voltara: { sheet: 'voltara', fw: 106, fh: 115, perRow: 5, rows: 2, walk: { row: 0, n: 5 }, attack: { row: 1, n: 5 }, hit: 2, facesRight: true, px: 132, comes: 'fly', fromSprite: true, mouth: [0.62, 0.38], glow: 'drop-shadow(0 0 5px #8fd2ff) drop-shadow(0 0 10px #c08040)', lead: 0.4, breath: { fw: 153, fh: 152, n: 1 } },
+  gorm: { sheet: 'gorm', fw: 114, fh: 153, perRow: 6, rows: 2, walk: { row: 0, n: 6 }, attack: { row: 1, n: 5 }, hit: 3, facesRight: true, px: 140, comes: 'run', fromSprite: true, mouth: [0.85, 0.92], glow: 'drop-shadow(0 0 4px #ffb54a)' },
+  vaelkhar: { sheet: 'vaelkhar', fw: 130, fh: 114, perRow: 6, rows: 2, walk: { row: 0, n: 6 }, attack: { row: 1, n: 5 }, hit: 2, facesRight: true, px: 150, comes: 'fly', fromSprite: true, mouth: [0.99, 0.54], glow: 'drop-shadow(0 0 6px #b77bff) drop-shadow(0 0 12px #6a2bd0)', lead: 0.5, breath: { fw: 180, fh: 124, n: 1 } },
 };
 
 /** The times the sprite keys on (from `MomentTimes`). */

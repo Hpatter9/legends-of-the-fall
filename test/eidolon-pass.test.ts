@@ -116,11 +116,11 @@ test('the sprite Eidolons come on only once the painting has gone, and their blo
       assert.equal(spriteFrame(sp, m, m.RESUME), null);
     }
   }
-  // (the four the packs have, and Voltara with none: her attack stays effect-only)
-  assert.equal(SPRITES.voltara, null);
-  assert.ok(SPRITES.askel && SPRITES.nivra && SPRITES.aurelan && SPRITES.gorm && SPRITES.vaelkhar);
+  // (EIDOLON-FX, the owner's sheets: all six have one now, Voltara too, and all but Gorm breathe, roar or hurl their element)
+  assert.ok(SPRITES.askel && SPRITES.nivra && SPRITES.aurelan && SPRITES.voltara && SPRITES.gorm && SPRITES.vaelkhar);
+  for (const id of ['askel', 'nivra', 'aurelan', 'voltara', 'vaelkhar']) assert.ok(SPRITES[id]!.breath, `${id}'s breath, beam or bolt`);
   // (each sheet named is in the game, and credited)
   const credits = readFileSync('CREDITS.md', 'utf8');
   assert.ok(SPRITES.askel!.breath && SPRITES.askel!.leave, 'Askel breathes his fire, and leaps away');
-  for (const id of ['askel', 'nivra', 'aurelan', 'vaelkhar']) assert.ok(credits.includes(`src/art/eidolons/sprites/${id}.png`), id);
+  for (const id of ['askel', 'nivra', 'aurelan', 'voltara', 'gorm', 'vaelkhar']) assert.ok(credits.includes(`src/art/eidolons/sprites/${id}.png`), id);
 });
