@@ -21,6 +21,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/guest.ts`, `src/guest.css`, `test/guest-hero.test.ts`, `test/talent-arrows.test.ts`, `tools/guest-hero/`; `src/sim/run.ts`, `events.ts`, `market.ts`, `merge.ts`, `autoplay.ts`, `upgradesReady.ts`; hooks in `src/main.ts`, `src/events.ts`, `src/unitInfo.ts`, `src/home.ts`, `src/tavern.ts`, `src/party.ts`, `src/menuHeroes.ts`, `src/talentView.ts`, `src/rankUpList.ts`, `build.mjs`.
 - **Status:** ready for review. [Note](notes/guest-hero.md) (with the measured lift and owner questions); screenshots `samples/guest-*.png`, `samples/talent-arrow-*.png`.
 
+### CAL-ZONES — The Calamity's battle zones: varied shapes, things on the board, moving parts
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-zones`, `/home/user/lotf-calzones` (from main 0.277.0; main 0.280.0 merged in).
+- **Goal:** the owner's "make the battle zones for Calamity much more interesting, more varied, with objects and moving parts. Make it feel alive and real."
+- **Scope:** new `src/sim/calZones.ts` (six zones: nave, crystal chasm, crypt rows, broken bridge, ritual circle, flooded vault), `src/sim/layoutKit.ts` (the template tools, moved out of `layouts.ts` unchanged), `src/render/zoneLife.ts`, `src/art/calzones/`, `test/calamity-zones.test.ts`, `tools/calamity/zone-shots.mjs`; hooks in `layouts.ts` (zone templates), `board.ts` (`Tile.chasm`, `Board.props`), `sanctuary.ts` (`destinationBoard` lays a zone), `tower.ts` (passes the act), `boardView.ts` (props, chasms, the air), `main.ts` (one line: fade tall things over fighters). No save or version change.
+- **Status:** ready for review. [Note](notes/calamity-zones.md); screenshots `samples/calzones-*.png`.
 ### ONE-OF-EACH — One unit of a hero on the battlefield at a time
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).
@@ -60,6 +66,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
 - **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
 - **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
+
 ### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).

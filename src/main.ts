@@ -1181,6 +1181,8 @@ class Game {
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
     this.boardView.step(dt);
+    // (a Calamity zone's pillars and statues fade while a fighter stands behind them, `zoneLife.ts`)
+    this.boardView.fadeOver([...this.sprites.values()], dt);
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
