@@ -73,3 +73,25 @@ export function paintGearIcon(box: HTMLElement, base: string, rarity: number, px
   }
   return true;
 }
+
+/** Only the grade's glow and frame (`paintGearIcon`'s outer layers) round another painting, for a skill book's cover (Common 1 grey,
+ *  Uncommon 2 blue, Rare 3 violet, Legendary 4 gold: books and gear share one colour language). `art` goes between the two. */
+export function paintGradeFrame(box: HTMLElement, rarity: number, px: number, art: HTMLElement): void {
+  const cell = atlasCell(px);
+  const g = GRADES[Math.max(1, Math.min(5, rarity))];
+  const gradeN = Object.keys(grade).length;
+  box.classList.add('painted');
+  const glowN = grade[`glow-${g}`];
+  if (rarity > 1 && glowN !== undefined) {
+    const glow = document.createElement('i');
+    glow.className = 'eqGlow';
+    cellBg(glow, `gear/grade-${cell}.webp`, glowN, gradeN, 1);
+    box.append(glow);
+  }
+  art.classList.add('eqArt');
+  box.append(art);
+  const frame = document.createElement('i');
+  frame.className = 'eqFrame';
+  cellBg(frame, `gear/grade-${cell}.webp`, grade[`frame-${g}`], gradeN, 1);
+  box.append(frame);
+}

@@ -1,15 +1,22 @@
 // The Equipment panel of the hero sheet: three slots (weapon, armour, trinket) showing the worn item's icon or an empty
 // frame. A tap on a slot opens a picker in its place: what is worn, then the spare items for that slot with what each
-// would change (green for better, red for worse) and the buttons Equip, Unequip and Salvage. Reads and changes the meta
+// would change (green for better, red for worse) and the buttons Equip, Unequip, Sell and Repair (SHOP-BOOKS-GEAR). Reads and changes the meta
 // only through `equipment.ts`.
 
-import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SALVAGE_CROWNS, SLOT_NAMES, callingOf, equipAll, equipBest, equipItem, equipStats, itemName, RARITY_NAMES, itemStats, salvageItem, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
+import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SLOT_NAMES, callingOf, equipAll, equipBest, equipItem, equipStats, itemName, RARITY_NAMES, itemStats, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
 import { combineAll, combineGroup, combineGroups, combinePreview, COMBINE_COUNT } from './sim/equipment';
 import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './sim/gearSets';
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
 import { paintGearIcon } from './gearIcons';
+import { shopArt } from './bookArt';
+import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
+import { sellAsks, sellPiece, stallRepair } from './sim/stall';
+import { sellPrice } from './sim/equipment';
+import { todayKey } from './modes';
+import { icon } from './menuArt';
+import { play } from './render/sound';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -23,13 +30,38 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big' | 'small' = 'big'): HTMLElement {
   const frame = el('span', `eqIcon ${size}${it ? ` r${it.rarity}` : ' empty'}`);
   const base = it ? it.base : { weapon: 'ironSword', armour: 'plateCuirass', trinket: 'ironRing' }[slot];
-  if (paintGearIcon(frame, base, it ? it.rarity : 0, size === 'big' ? 64 : 44)) return frame;
+  if (paintGearIcon(frame, base, it ? it.rarity : 0, size === 'big' ? 64 : 44)) return wearMarks(frame, it);
   const img = el('img');
   img.alt = '';
   img.draggable = false;
   img.decoding = 'sync';
   img.src = EQUIP_ICONS[it ? EQUIP_BASES[it.base].icon : { weapon: 'sword', armour: 'plate', trinket: 'ring' }[slot]];
   frame.append(img);
+  return wearMarks(frame, it);
+}
+
+/** A piece that has lost durability shows it (SHOP-BOOKS-GEAR, `wear.ts`): a slim bar along the foot (green, amber when worn, red
+ *  when broken), the worn or broken badge, and a broken piece greyed under its cracks. A full piece shows nothing new. */
+export function wearMarks(frame: HTMLElement, it: Equipment | undefined): HTMLElement {
+  if (!it || !(it.wear ?? 0)) return frame;
+  const state = wearState(it);
+  frame.classList.add(`wear-${state}`);
+  if (state === 'broken') {
+    const cracks = el('i', 'eqCracks');
+    cracks.style.backgroundImage = `url(${shopArt('wear-broken')})`;
+    frame.append(cracks);
+  }
+  if (state !== 'good') {
+    const badge = el('img', 'eqBadge');
+    badge.src = shopArt(state === 'broken' ? 'badge-broken' : 'badge-worn');
+    badge.alt = state === 'broken' ? 'Broken' : 'Worn';
+    frame.append(badge);
+  }
+  const bar = el('i', 'eqDur');
+  const fill = el('b');
+  fill.style.width = `${Math.round((durabilityOf(it) / maxDurability(it)) * 100)}%`;
+  bar.append(fill);
+  frame.append(bar);
   return frame;
 }
 
@@ -70,6 +102,9 @@ function itemCard(it: Equipment, kind: string, against?: Equipment): HTMLElement
   card.append(head);
   const stats = itemStats(it, kind);
   card.append(...compareRows(stats, against ? itemStats(against, kind) : undefined));
+  // (its durability: SHOP-BOOKS-GEAR, `wear.ts`)
+  const state = wearState(it);
+  card.append(el('small', `eqDurLine ${state}`, `Durability ${Math.ceil(durabilityOf(it))}/${maxDurability(it)}${state === 'broken' ? ' · Broken: gives nothing until mended' : state === 'worn' ? ' · Worn' : ''}`));
   const sig = stats.abilities[0];
   if (sig) card.append(el('p', 'eqAffix', `${sig.name}: ${describeAbility(base.ability, sig.s)}`));
   else if (!hasAbility(it.rarity)) card.append(el('small', 'eqDim', `Epic and up: ${base.ability.name}`));
@@ -228,6 +263,22 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     panel.append(btns);
   };
 
+  /** Mend a piece here, at the stall's price (it counts for standing as a repair at the stall does). */
+  const repairButton = (it: Equipment, then: () => void): HTMLButtonElement => {
+    const cost = repairCost(it, meta.castle.armoury);
+    const b = el('button', 'eqRepair');
+    b.type = 'button';
+    b.append(icon(shopArt('repair'), 'eqRepairIco'), `Repair · ${cost}`);
+    b.disabled = meta.crowns < cost;
+    b.addEventListener('click', () => {
+      if (!stallRepair(meta, it.id, todayKey())) return;
+      play('coin');
+      commit();
+      then();
+    });
+    return b;
+  };
+
   const picker = (slot: EquipSlot) => {
     const cur = wornIn(meta, kind, slot);
     panel.replaceChildren(el('h4', '', `${SLOT_NAMES[slot]} · ${UNITS[kind].name}`));
@@ -242,6 +293,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
         picker(slot);
       });
       worn.append(off);
+      if (cur.wear) worn.append(repairButton(cur, () => picker(slot)));
       panel.append(worn);
     }
     const spare = spareEquipment(meta, slot).sort((x, y) => y.rarity - x.rarity || y.level - x.level || x.id - y.id);
@@ -264,14 +316,25 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
         commit();
         overview();
       });
-      const sell = el('button', '', `Salvage +${SALVAGE_CROWNS[it.rarity] + it.level - 1}`);
+      // (Sell took Salvage's place: the same crowns for a full piece, less for a worn one; an Epic or the last of a base asks first, by a
+      // second tap; the piece waits on the stall's Sold today shelf until midnight)
+      const sell = el('button', '', `Sell +${sellPrice(it)}`);
       sell.type = 'button';
+      let sure = !sellAsks(meta, it);
       sell.addEventListener('click', () => {
-        salvageItem(meta, it.id);
+        if (!sure) {
+          sure = true;
+          sell.textContent = `Sell for ${sellPrice(it)}? Tap again`;
+          sell.classList.add('eqSure');
+          return;
+        }
+        sellPiece(meta, it.id, todayKey());
+        play('coin');
         commit();
         picker(slot);
       });
       btns.append(on, sell);
+      if (it.wear) btns.append(repairButton(it, () => picker(slot)));
       row.append(btns);
       list.append(row);
     }

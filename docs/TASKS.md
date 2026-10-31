@@ -21,6 +21,18 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/carry.ts`, `test/summon-timers.test.ts`, `tools/summon-timers/`; hooks in `src/sim/battle.ts` (`Unit.life`/`kept`, `Boost.kept`, `startKept` in `fight`, `endShapes` on a fall), `run.ts` (`Owned.summons`/`form`, `keepCharges`, `boostOf`), `climb.ts` (`localBoost`), `abilities.ts` (`callSummon`, Demon Form), `ultimates.ts`, `kits/blades.ts`, `kits/callers.ts`, `kits/casters.ts`, `kits/effects.ts`, `kits/when.ts`, `kits/table.ts` (words), `src/render/unitView.ts` (the ring), `src/unitInfoRules.ts`; identity fixture (scenarios named in the note).
 - **Status:** ready for review. [Note](notes/summon-timers.md); screenshots `samples/summon-timers-*.png`.
 
+### SHOP-BOOKS-GEAR — Hester's Stall, skill books, gear that wears
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/shop-books-gear`, `/home/user/lotf-shop` (from main 0.277.0).
+- **Goal:** build the owner-approved shop, books and gear design (`claude/shop-books-design`): the stall (keepers, daily stock, standing, prices), selling (in place of salvage), wear and repair, skill books (study, the two slots, found Rare books), with the books-and-shop art (PRs #240, #243).
+- **Scope:** new `src/sim/{stall,books,bookData,wear}.ts`, `src/{stallView,skillBookView,bookArt}.ts`, `src/stall.css`, `src/art/shop/`, `art-source/books-shop/`, `tools/shop/`, `test/{stall,books,wear}.test.ts`; hooks in `equipment.ts`, `meta.ts`, `talents.ts`, `battle.ts`, `heroKits.ts`, `armyStars.ts`, `chestShop.ts`, `castle.ts`, `waveCard.ts`, `main.ts`, `standView.ts`, `home.ts`, `camp.ts`, `overlookLayout.ts`, `campSpots.ts`, `equipView.ts`, `menuHeroes.ts`, `party.ts`, `shopView.ts`, `chestStash.ts`, `castleSpots.ts`, `gearIcons.ts`, `build.mjs`, `CREDITS.md`. Optional save fields; no version change.
+- **Status:** ready for review; real gear in runs, the caravan and the Gloaming Dealer, the lost techniques and the books' balance pass left for later. [Note](notes/shop-books-gear.md); screenshots `samples/shop-*.png`.
+### CAL-ZONES — The Calamity's battle zones: varied shapes, things on the board, moving parts
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-zones`, `/home/user/lotf-calzones` (from main 0.277.0; main 0.280.0 merged in).
+- **Goal:** the owner's "make the battle zones for Calamity much more interesting, more varied, with objects and moving parts. Make it feel alive and real."
+- **Scope:** new `src/sim/calZones.ts` (six zones: nave, crystal chasm, crypt rows, broken bridge, ritual circle, flooded vault), `src/sim/layoutKit.ts` (the template tools, moved out of `layouts.ts` unchanged), `src/render/zoneLife.ts`, `src/art/calzones/`, `test/calamity-zones.test.ts`, `tools/calamity/zone-shots.mjs`; hooks in `layouts.ts` (zone templates), `board.ts` (`Tile.chasm`, `Board.props`), `sanctuary.ts` (`destinationBoard` lays a zone), `tower.ts` (passes the act), `boardView.ts` (props, chasms, the air), `main.ts` (one line: fade tall things over fighters). No save or version change.
+- **Status:** ready for review. [Note](notes/calamity-zones.md); screenshots `samples/calzones-*.png`.
 ### ONE-OF-EACH — One unit of a hero on the battlefield at a time
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).
@@ -60,6 +72,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
 - **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
 - **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
+
 ### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).

@@ -4,6 +4,9 @@
 // own pixels (the art's own pixels: the scene is drawn whole-number times bigger); `y` is a building's foot line, which the scene sorts by.
 
 import { buildLand, type Land } from './castleLand';
+// (the Armoury's repair cut and the Library's study, docs/notes/shop-books-gear.md)
+import { ARMOURY_REPAIR_CUT } from '../sim/wear';
+import { STUDY_CUT, studentCap } from '../sim/books';
 import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, type BuildingId } from '../sim/castle';
 
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
@@ -605,11 +608,11 @@ export function effectText(id: BuildingId, level: number): string {
     case 'barracks':
       return `+${Math.round(HP_PER_LEVEL * level * 100)}% hp for every hero`;
     case 'armoury':
-      return `+${Math.round(ATK_PER_LEVEL * level * 100)}% attack for every hero`;
+      return `+${Math.round(ATK_PER_LEVEL * level * 100)}% attack for every hero${level > 0 ? `; repairs ${Math.round(ARMOURY_REPAIR_CUT * Math.min(7, level) * 100)}% cheaper` : ''}`;
     case 'stable':
       return `heroes walk ${Math.round(MOVE_PER_LEVEL * level * 100)}% faster`;
     case 'library':
-      return `heroes earn ${Math.round(XP_PER_LEVEL * level * 100)}% more XP from every fight`;
+      return `heroes earn ${Math.round(XP_PER_LEVEL * level * 100)}% more XP from every fight${level > 0 ? `; study ${Math.round(STUDY_CUT * level * 100)}% shorter, ${studentCap(level)} students at once` : ''}`;
     case 'mageTower':
       return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster, +${spellBudget({ ...newCastle(), mageTower: level }) - spellBudget()} spell power`;
   }

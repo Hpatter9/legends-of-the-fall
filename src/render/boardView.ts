@@ -16,6 +16,7 @@ import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
+import { fadeTall, loadZoneArt, noMotion, ZoneAir, zoneProps, type ZoneMotion } from './zoneLife';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
 
@@ -110,7 +111,7 @@ export async function loadBoardArt(): Promise<void> {
   const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
   const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
   const [gate, tower] = await all([gateUrl, towerUrl]);
-  await loadRoadArt();
+  await Promise.all([loadRoadArt(), loadZoneArt()]);
   artEpoch++;
   art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower) };
 }
@@ -125,6 +126,8 @@ interface Built {
   barrels: Map<number, Sprite>;
   /** What moves on its own (an army's road): swaying growth, flickering lights, running water, falls. */
   live: Live;
+  /** A Calamity zone's things that move (`zoneLife.ts`). */
+  zone: ZoneMotion;
 }
 /** The living land's moving parts on a section (looks only): each is a sprite made once and only moved or re-framed each frame. */
 interface Live {
@@ -226,6 +229,20 @@ export class BoardView {
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
     this.marks = this.built.marks;
     this.root.addChild(...this.built.tiles);
+    // (a Calamity zone: its air over and under the field, `zoneLife.ts`; it goes with the board's other children on the next build)
+    this.air = null;
+    if (b.props?.length || b.tiles.some((t) => t.chasm)) {
+      this.air = new ZoneAir(b, { rot, ou: 0, ov: 0, w: b.w, d: b.d }, this.built.zone, settings().saver);
+      this.root.addChild(this.air.over, this.air.under);
+    }
+  }
+
+  /** A Calamity zone's air (fog, motes, shafts, drips, bats), while its board is the one shown. */
+  private air: ZoneAir | null = null;
+
+  /** Each frame, with the fighters' places (world px): a zone's tall things fade while a fighter stands behind them. */
+  fadeOver(who: readonly { x: number; y: number; tall: number }[], dt: number): void {
+    if (this.built?.zone.tall.length) fadeTall(this.built.zone, who, dt);
   }
 
   /** A whole board baked into one sprite, for a big field (the Last Stand's 24 x 24 is 576 columns): drawn once, with the boulders and growth in it, and then it is a single quad each frame. The sprite is at the world's origin, behind everything (`zIndex`). */
@@ -313,6 +330,14 @@ export class BoardView {
       }
       for (const lp of live.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
     }
+    // (a Calamity zone: its runes, totems and candles loop, its glows breathe, its chains and banners swing, its air moves)
+    const zone = this.built?.zone;
+    if (zone) {
+      for (const lp of zone.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
+      for (const q of zone.pulses) q.sp.alpha = q.base + Math.sin(t * q.rate + q.ph) * q.amp;
+      for (const q of zone.swings) q.sp.rotation = Math.sin(t * 1.1 + q.ph) * q.amp + Math.sin(t * 2.7 + q.ph) * q.amp * 0.3;
+    }
+    this.air?.step(settings().saver ? dt * 2 : dt);
   }
 
   /** A tile of the host falls: `dy` px above where it lies (up is negative), `alpha` how much of it shows. */
@@ -426,6 +451,7 @@ export class BoardView {
     const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
     const live = noLive();
+    const zone = noMotion();
     // (an army's road: the land beside it sinks a little and its far edge is left ragged, so a section reads as a road through the land, not a slab)
     const depth = b.tiles.some((t) => t.scene) ? sceneDepth(b) : null;
     const held = new Set((b.pieces ?? []).map((p) => p.v * b.w + p.u));
@@ -448,11 +474,14 @@ export class BoardView {
         const sink = raw.scene ? Math.min(2, Math.max(0, far - 1)) : 0;
         const t: Tile = raw.scene === 'water' || raw.scene === 'lava' ? { ...raw, h: raw.h - sink, ground: raw.scene === 'water' ? 'deep' : 'lava' } : sink ? { ...raw, h: raw.h - sink } : raw;
         const [x, y] = project(f, u, v, t.h);
-        const ct = this.column(t, u, v, b.area, depth ? !!t.paved : !!look.boss, !!depth);
-        tex.push(ct);
-        const col = new Sprite(ct.value);
-        col.position.set(x - TW / 2, y - TH / 2);
-        tile.addChild(col);
+        // (a Calamity zone's chasm draws no column: the void shows through, `zoneLife.ts` lights it from below)
+        if (!t.chasm) {
+          const ct = this.column(t, u, v, b.area, depth ? !!t.paved : !!look.boss, !!depth);
+          tex.push(ct);
+          const col = new Sprite(ct.value);
+          col.position.set(x - TW / 2, y - TH / 2);
+          tile.addChild(col);
+        }
         const mark = new Graphics();
         mark.position.set(x, y);
         tile.addChild(mark);
@@ -550,6 +579,8 @@ export class BoardView {
       if (b.riftWorld && p.kind !== 'riftPortal') picture.scale *= p.v === 1 ? 1.8 : 1.25;
       addPic(tile, picture, x, y, live);
     }
+    // a Calamity zone's things on its tiles (`zoneLife.ts`)
+    zoneProps(b, f, tiles, zone);
     // a few small birds at the road's edge, pecking (on the land beside it, a tile off the road)
     if (depth) {
       let n = 0;
@@ -614,7 +645,7 @@ export class BoardView {
         landmark.addChild(sp);
       }
     }
-    return { tiles, marks, tex, barrels, landmark, live };
+    return { tiles, marks, tex, barrels, landmark, live, zone };
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
