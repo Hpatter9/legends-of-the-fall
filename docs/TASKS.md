@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### STATS-DESIGN — Six D&D ability scores for the heroes (design only)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/stats-design`, `/home/user/lotf-stats-design` (from main 0.289.0).
+- **Goal:** the owner's "I want the heroes to have more stats than just damage and health ... RPG stats that actually impact their strengths, weaknesses and play, and level up in a way that makes sense" and "Think D&D for stats": a design for STR, DEX, CON, INT, WIS and CHA with D&D modifiers, proficiency, AC and a d20 to hit, saving throws, all 45 heroes' profiles, levelling, and how ranks, talents, gear, skills, foes and the page use them.
+- **Scope:** `docs/notes/rpg-stats-design.md` and this row only. No game code.
+- **Status:** ready for the owner's answers (six open questions, each with a recommendation). Doc-only: links and tables checked; no tests or builds run.
+
 ### GUEST-HERO — A guest hero from the passing cart, a sixth on the field for one run; talent points marked in the tavern
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/guest-hero`, `/home/user/lotf-guest` (from main 0.284.0).
