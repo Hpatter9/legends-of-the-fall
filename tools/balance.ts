@@ -1,6 +1,8 @@
 // The balance report: plays many headless fights with the sim and prints how strong each hero, foe band and stage is,
 // and how a greedy player fares over whole runs. Run it with `npm run balance` (tools/balance.mjs bundles this file with
 // esbuild, as test.mjs does for the tests).
+// The greedy players cast the king's spells as the page's Auto does (SPELLS-RETUNE, `docs/notes/spells-retune.md`); `BOT_SPELLS=0 npm run balance ...`
+// plays the old spell-less bot, `BOT_LOADOUT=heal,meteor,haste` fixes the loadout.
 //
 //   npm run balance                    the default number of fights (4000 for the heroes; a quarter of that per cell)
 //   npm run balance -- --games 800     fewer fights, quicker and noisier

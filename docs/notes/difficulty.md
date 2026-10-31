@@ -1,5 +1,7 @@
 # Difficulty
 
+> **SPELLS-RETUNE (0.292):** the balance tools now cast the king's spells as Auto does (`botSpells`, on by default; `BOT_SPELLS=0` for the old spell-less bot), and the armies, the tiers (a x1.18 `answer` on each), the daily, the Last Stand and the Calamity were retuned so the targets here hold for that player. See `docs/notes/spells-retune.md` for the knobs and the before and after cells.
+
 The owner's ask: "make sure the difficulty scales properly, and is actually difficult." This branch writes the curve down, adds a fifth
 army tier (**Mythic**), retunes Hard, Elite and Legendary to it, and stops the castle trivialising the spire and the Calamity. The
 numbers are all from the same bot as `docs/notes/level-100.md` (`npm run balance -- --no-tables --deep ...`): the recruits' party (Knight,
