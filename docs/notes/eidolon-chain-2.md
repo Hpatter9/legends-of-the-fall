@@ -137,7 +137,7 @@ a serpent's eye drawn in the frost).
 
 ## Tests
 
-`test/eidolon-chain-2.test.ts` (6): the data (parts, pieces, goals' kinds, the binding's beats ending on `bound` with no horn beats, her
+**The chain (earlier)**: `test/eidolon-chain-2.test.ts` (6): the data (parts, pieces, goals' kinds, the binding's beats ending on `bound` with no horn beats, her
 line, the prologue's length and lines, the hunter in it, the plaque words); the Glass Mere its own battle, cast from both starter packs
 only, a stand-in, a blocked part named; offered only once Askel is bound and the Beast Packs cleared (not while Askel's chain goes, not
 before the Beast Packs, an older save through `saveMeta`/`loadMeta`, a dev-flag binding of Askel), begun once; the parts in order (later
@@ -149,7 +149,30 @@ Updated in `test/eidolon-chains.test.ts` for the new requirement (Nivra's chain 
 check skips Nivra, `PIECES` holds six, "Askel bound: nothing offered" now offers Nivra (and nothing once she is bound too), and the junk
 check uses Aurelan for "a rail with no parts is dropped".
 
+**EIDOLON-TRIAL**: `test/eidolon-trial.test.ts` (4): the data (one `TrialDef` taken into `FOES`, `KITS`, `SIGNATURES`, `PHASE2` and the
+chain battles; her lines; a starter-only cast from both packs; chains 3 to 6 flagged with no trial yet, Askel's none; "Part 4 of 4"); the
+trial only after the three pieces (not at parts 1 to 3, a win "before its time" counts nothing), a loss or another battle changing
+nothing, a win readying the binding (no piece, no chest), the binding after it, practice after; old saves through `saveMeta`/`loadMeta`
+(mid-chain carries on, every piece in faces the trial, bound stays bound, `trialWon` kept and junk dropped); the trial battle itself fought
+twice from one seed and the same (and a different seed different), with the Rime Breath striking one row, the Glass Tomb, her wolves and
+her ice armour all seen. Updated for the owner's new requirement in `test/eidolon-chain-2.test.ts`: every piece in now means the trial is
+due (not ready to bind), and the binding test wins the trial first. Coverage tables that list every boss and skill took her in: the codex
+(lore, where met), the second-form cut-in (`sceneFamilies.ts`) and `docs/lines/new-lines.json`; her summoning borrows the Beastmaster's
+"Call of the Wild" key (its painting, look and sound) rather than a new skill needing new art.
+
 ## Checked
+
+**EIDOLON-TRIAL**: `npm run typecheck`; the full `npm test` (1970: 1968 passed, and the two `new-lines` checks that failed, the writer's
+file missing her lore and cut-in, pass after adding them); `npm run web`; `npm run quest-rate` as in "The trial's win rate" (the Glass
+Mere still 59/80 at level 20). In the browser (`tools/eidolon-trial/shots.mjs`, a Sword and Shield save about level 21 with the three
+pieces found) at 393x852, 360x780 and 412x915, the whole way through: the Sanctum plaque, the tab, the party, the story, the deploy, her
+boss card, the Rime Breath's row marked, her second form, the after beat, the binding straight after, the Bound card. The save after each:
+both bound, Nivra chosen, `trialWon` set, the trial won. No page errors, no 404s. Fixed on the way: Nivra stood half off the right of the
+after beat (moved in). Note `eidolon-trial-armour-2` at each size caught a defeat screen (the tool fielded one hero in that try), which
+shows the loss card's words instead ("Nivra holds. Losing costs nothing: try again with a new board, or come back to it from the quest
+log."). Screenshots `docs/samples/eidolon-trial-*.png`.
+
+**The chain (earlier)**:
 
 `npm run typecheck`; `npm test -- eidolon-chain scene-reveal horn-gift no-flicker`; the full `npm test` (1945 pass); `npm run web`;
 `npm run quest-rate` as above. One fix on the way: the snow first faded in and out in a loop, which `no-flicker.test.ts` forbids (a
@@ -165,5 +188,8 @@ shots, their face over the land. Screenshots `docs/samples/eidolon-chain2-*.png`
 
 ## Left open (questions for the owner)
 
+- **Her sprite and the call's**: another session (`claude/eidolon-fx`) is cutting the six Gemini sheets into the War Horn call's
+  sprites (`src/art/eidolons/sprites/nivra.png`). The trial's cut is a fighter's sheet in the fighters' own layout and lives apart
+  (`src/art/units/eidolon_nivra.png`), so the two never clash; if the owner prefers, the trial can later read frames from that cut instead.
 - **Where the hunter tells it**: the prologue plays from the Sanctum's plaque (as Askel's), with the hunter come to the Sanctum, rather
   than from the passersby' ledge on the Battle tab.
