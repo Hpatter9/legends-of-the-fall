@@ -88,7 +88,7 @@ export function revealCard(r: Reveal, m: Meta): EndCard | null {
       const level = ascUnlocked(m);
       if (level < 1) return null;
       return {
-        key: 'ascension',
+        key: `ascension:${level}`,
         label: 'Unlocked',
         name: `Ascension ${level}`,
         line: `A harder Calamity that pays more (crowns x${ascCrowns(level).toFixed(1)}, more chests). Clear a level to open the next, up to ${ASC_MAX}.`,

@@ -27,7 +27,6 @@ import { chooseAltar, COMMANDMENTS, OFFERINGS, PATRONS, pendingAltar, reforgeAlt
 import { altarButtonLine, altarSummary, BLOCKED_LINE, commandmentLine, corruptionLines, evolutionLine, nextLine, offeringLine, patronGrowth, patronLine, sealChoices, STEP_INFO, stepLabel, STEPS } from './sim/altarWords';
 import { altarHelpButton, altarHelpSeen, sealTable, showAltarHelp, summaryBlock } from './altarHelp';
 import { CAL_MAPS } from './sim/calamity';
-import { ASC_MAX } from './sim/ascension';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { gearIcon, iconImg, relicIcon } from './render/items';
@@ -1265,7 +1264,6 @@ export class TowerView {
     card.append(rewards);
     const line = chestLine(s);
     card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? `Clear every ${unit} for a chest.` : 'No chests yet: climb further to earn them.'));
-    if (cal && s.cleared && (s.ascension ?? 0) < ASC_MAX) card.append(el('p', 'rtBest', `Ascension ${Math.max(s.ascension ?? 0, 0) + 1} is open.`));
     // (RECAP-REVEAL: no list of the gear found: it leaves with the run, and each fight's card named it)
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {
