@@ -5,6 +5,7 @@
 import type { Battle } from './sim/battle';
 import { apart } from './sim/battle';
 import { riftRank } from './sim/rift';
+import { riftGuardian } from './sim/riftBattle';
 import { COMMAND_MULT, CORRUPT, PULSE } from './sim/altarRules';
 import { commandmentLine, patronLine, pct, pulseAmount, untilPulse } from './sim/altarWords';
 import { altarPicture } from './altarArt';
@@ -70,7 +71,7 @@ export function updateAltarHud(b: Battle | undefined): void {
   }
   lastT = b.t;
   const boss = root.querySelector<HTMLElement>('.ahBoss')!;
-  const guardian = r.corruption > 0 && b.riftBoss && b.units.find((x) => x.side === 'foe');
+  const guardian = riftGuardian(b);
   boss.hidden = !guardian || !guardian.alive;
   if (!boss.hidden) {
     const until = untilPulse(b.t, CORRUPT.boss.everyMs);
