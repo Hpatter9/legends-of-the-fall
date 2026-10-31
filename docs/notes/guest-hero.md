@@ -63,15 +63,16 @@ or talents; the same seeds each way). "Met" is the clear rate over the runs that
 
 | Cell | No guest (the bot as ever) | Bot buys it when the gold allows | Guest taken whenever offered | A guest from wave 1, free |
 | --- | --- | --- | --- | --- |
-| Orcs at level 1 | 6% (met 15% of 13) | 6% (met 15%; 5 bought) | 10% (met 31%) | 15% |
-| Orcs at level 5 | 50% (met 46% of 13) | 56% (met 69%; 5 bought) | 60% (met 85%) | 75% |
-| Undead at 22 | 25% (met 15% of 13) | 25% (met 15%; 5 bought) | 35% (met 54%) | 38% |
-| Beasts at 20 | 19% (met 40% of 5) | 19% (met 40%; 2 bought) | 25% (met 100%) | 71% |
+| Orcs at level 1 | 6% (met 15% of 13) | 6% (met 15%; 0 bought) | 10% (met 31%) | 15% |
+| Orcs at level 5 | 50% (met 46% of 13) | 50% (met 46%; 0 bought) | 60% (met 85%) | 75% |
+| Undead at 22 | 25% (met 15% of 13) | 25% (met 15%; 0 bought) | 35% (met 54%) | 38% |
+| Beasts at 20 | 19% (met 40% of 5) | 19% (met 40%; 0 bought) | 25% (met 100%) | 71% |
 
 What it means: a guest is worth a lot. In the runs that meet one, taking it roughly doubles the clear rate (15% to 31%, 46% to 85%, 15% to
 54%, 40% to 100%), and a guest from the first wave lifts Beasts at 20 from 19% to 71%. Over all runs the lift is smaller (+4 to +10 points)
-because only about a quarter of runs meet the cart's guest. The bot, which spends every coin on hires, can afford the guest only about two
-times in five when it comes; a player who keeps some gold back will do better.
+because only about a quarter of runs meet the cart's guest. The table is at the owner's higher price (2.5 sellswords, at least 120): the
+"taken" and "free" columns do not depend on the price and are as they were; the bot, which spends every coin on hires, now never has the
+gold when the guest comes (at 1.5 sellswords it bought 17 of 44: Orcs at 5 then cleared 56%). A guest is a buy a player saves up for.
 
 ## Talent points marked in the tavern (TALENT-ARROWS)
 
