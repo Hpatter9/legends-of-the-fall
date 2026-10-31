@@ -206,7 +206,9 @@ const CASES: Record<string, Case> = {
     const ally = at(b, 'knight', 3, 5, 1);
     ally.hp = Math.round(ally.maxHp * 0.3);
     return () => {
-      for (const u of [me, ally]) assert.ok(u.shield && u.shield.hp >= Math.round(u.maxHp * 0.19) && u.shield.until > b.t, 'shielded');
+      // (a fifth of each one's health at its strength, `TUNE3`)
+      const k = HERO_KITS().rifleBot.s3!.tune;
+      for (const u of [me, ally]) assert.ok(u.shield && u.shield.hp >= Math.round(u.maxHp * 0.19 * k) && u.shield.until > b.t, 'shielded');
     };
   },
   siegeBot: (b, me) => {
@@ -296,7 +298,7 @@ const CASES: Record<string, Case> = {
     w.hp = Math.round(w.maxHp * 0.2);
     const was = w.hp;
     return () => {
-      assert.ok(w.hp >= was + w.maxHp * 0.3, 'the wolf heals a third');
+      assert.ok(w.hp >= was + w.maxHp * 0.32 * HERO_KITS().beastmaster.s3!.tune, 'the wolf heals a third (at its strength)');
       assert.ok(w.shield && w.shield.until > b.t, 'and is shielded');
     };
   },
