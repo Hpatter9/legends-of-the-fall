@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.278.0',
+    date: '2026-10-31',
+    title: 'The Calamity\'s room comes alive',
+    notes: ['Rifts swirl in the Calamity\'s room. Pick one and the party walks in through a bright flash; after a win they walk back out as the rift cards rise.'],
+  },
+  {
     version: '0.277.0',
     date: '2026-10-31',
     title: 'Eidolon quest: The Hound Comes Home',
