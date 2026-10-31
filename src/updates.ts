@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.289.0',
+    date: '2026-10-31',
+    title: 'Guest heroes, and talent arrows',
+    notes: ['The passing cart may offer a guest hero: a 6th fighter for that run only. Tavern arrows now also mark heroes with talent points to spend.'],
+  },
+  {
     version: '0.288.0',
     date: '2026-10-31',
     title: 'Summons and shapes last across waves',

@@ -34,6 +34,7 @@ import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
 import { openUpgrades } from './rankUpList';
+import { upgradeReady } from './sim/upgradesReady';
 import { openRankUp } from './rankUpView';
 import { tellAwakened } from './awakenView';
 import { SummoningHall } from './hall';
@@ -165,9 +166,10 @@ export class Home {
       onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
     }, {
       // (TAVERN-RANKUP: the Upgrades button's quick list, and a hero's gold chevron straight to their Rank up card)
-      onUpgrades: () => openUpgrades(this.meta, ALL_HEROES, () => this.refresh(), (kind) => this.openSheet(kind)),
+      // (TALENT-ARROWS: a talent row's Spend, and a chevron that marks only talent points, open that hero's talent tree)
+      onUpgrades: () => openUpgrades(this.meta, ALL_HEROES, () => this.refresh(), (kind) => this.openSheet(kind), (kind) => this.openSheet(kind, false, 'talents')),
       onRise: (kind) =>
-        openRankUp(this.meta, kind, (t) => {
+        !upgradeReady(this.meta, kind) ? this.openSheet(kind, false, 'talents') : openRankUp(this.meta, kind, (t) => {
           if (t.what === 'awaken') tellAwakened(kind, t.n);
           this.refresh();
         }),

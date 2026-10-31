@@ -98,13 +98,15 @@ export class Events {
   private optionButton(o: EventOption, i: number): HTMLButtonElement {
     const b = el('button', `opt ${o.effect.t}`);
     const fx = o.effect;
-    const hire = fx.t === 'hire' ? fx.kind : fx.t === 'road' ? fx.act.hire : undefined;
+    const hire = fx.t === 'hire' || fx.t === 'guest' ? fx.kind : fx.t === 'road' ? fx.act.hire : undefined;
     const icon = optionIcon(o);
     if (hire && UNITS[hire]) b.append(portrait(battleSheet(hire, this.equipmentStep(hire), 1), 32, 1));
     else if (icon) b.append(iconImg(icon, o.label));
     const words = el('span');
-    words.append(el('b', '', o.done ? `${o.label} · ${fx.t === 'reroll' ? 'done' : 'sold'}` : o.label), el('small', '', o.text));
+    words.append(el('b', '', o.done ? `${o.label} · ${fx.t === 'reroll' ? 'done' : fx.t === 'guest' ? 'joined' : 'sold'}` : o.label), el('small', '', o.text));
     b.append(words);
+    // (GUEST-HERO: the cart's guest wears its badge here too)
+    if (fx.t === 'guest') b.append(el('i', 'guestMark', 'Guest'));
     if (o.cost) b.append(el('em', '', `${o.cost}`));
     // (a market's buys run out: its wares close, the rummage and the way on stay)
     const shut = this.run.event?.buys !== undefined && this.run.event.buys <= 0 && fx.t !== 'leave' && fx.t !== 'reroll';
