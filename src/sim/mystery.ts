@@ -23,7 +23,7 @@ import { dropGear, gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear
 import { GREAT_RELIC_IDS, RELIC_IDS, RELICS } from './relics';
 import { hpShare, healParty, hurtParty } from './health';
 import { HEROES, UNITS } from './units';
-import { squadLimit, type Owned, type Run } from './run';
+import { canJoin, type Owned, type Run } from './run';
 import { gainKindXp, hireable, hireHero } from './climb';
 import type { EventCard, EventKind, EventOption } from './events';
 
@@ -396,7 +396,7 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       return 'Snake eyes. The imp pockets your stake and grins from ear to ear.';
     case 'free': {
       const got = hireHero(run, a.kind, 0, false);
-      if (run.squad.length < squadLimit(run) && !run.squad.includes(got.id)) run.squad.push(got.id);
+      if (canJoin(run, got.id)) run.squad.push(got.id);
       hurtParty(run, a.hurt);
       return `The ${UNITS[a.kind].name} is free and joins the party. The guards wake and give chase, and the party is hurt.`;
     }
@@ -534,7 +534,8 @@ export function applyMystery(run: Run, a: MysteryAct): string {
         cloneFloors: a.floors,
       };
       run.roster.push(clone);
-      if (run.squad.length < squadLimit(run)) run.squad.push(clone.id);
+      // (it fights only if its original is not on the field: one of each hero, ONE-OF-EACH; else it waits on the bench to be swapped in)
+      if (canJoin(run, clone.id)) run.squad.push(clone.id);
       return `The glass ripples! An inverted ${cloneName} steps out, sneering: "Move over, amateur. Let someone with real talent handle this." The inverted clone joins you for ${a.floors} floors!`;
     }
     case 'voidWell': {

@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ONE-OF-EACH — One unit of a hero on the battlefield at a time
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).
+- **Goal:** the owner's "we should only allow one unit of a hero on the battlefield at a time": a second hero of a kind is refused on the field and in the squad (copies wait on the bench to merge), a bench copy swaps in on its twin's tile, the bench marks a copy "On field", the greedy player and auto-place pick one of each, old saves send the extra copy back to the bench.
+- **Scope:** `placeBlock`/`twinOf` in `src/sim/battle.ts`; `squadTwin`/`canJoin` in `src/sim/run.ts` (and its callers in `climb.ts`, `mystery.ts`, `tower.ts`); `pickSquad`/`autoDeploy`/`oneOfEach` in `src/sim/autoplay.ts`; new `src/sim/oneEach.ts`, `src/oneEachNote.ts`, `src/oneEach.css`; hooks in `src/main.ts`, `src/render/boardView.ts`, `build.mjs`; new `tools/one-of-each/`, `test/one-of-each.test.ts`; fixtures moved to the rule (listed in the note).
+- **Status:** ready for review; three questions for the owner (new saves' three-hero field, the cursed mirror's clone, the easier daily and Mythic). [Note](notes/one-of-each.md); screenshots `samples/one-of-each-*.png`.
+
 ### BOSS-BIG — Bosses with huge attacks, and counterplay
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/boss-big-attacks`, `/home/user/lotf-boss-big` (from main 0.263.0; main 0.267.0 merged in).

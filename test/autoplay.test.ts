@@ -26,7 +26,8 @@ test('auto-deploy is legal on every board and the same each time', () => {
     const meta = startedMeta(seed);
     run.gold = 500;
     autoRound(run, meta);
-    assert.equal(run.squad.length, Math.min(SQUAD, run.roster.length));
+    // (one of each kind: ONE-OF-EACH)
+    assert.equal(run.squad.length, Math.min(SQUAD, new Set(run.roster.map((h) => h.kind)).size));
     const b = startStage(run);
     const spots = autoDeploy(b, run, meta);
     assert.equal(spots.length, run.squad.length);

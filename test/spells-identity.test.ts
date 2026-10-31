@@ -32,6 +32,8 @@ import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
 
+// (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
+// fields one of each kind, where it fielded two of a kind before; every other scenario keeps its hash)
 // (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks, and the heroes'
 // stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
 // with them on, the scenarios with no boss (every field fight, every hero alone, the tower's and the Calamity's early floors) still do, so

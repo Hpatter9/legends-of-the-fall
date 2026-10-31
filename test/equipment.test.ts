@@ -184,7 +184,8 @@ test('faster blows, crits and longer reach change the fight', () => {
   assert.ok(swings(stats({ atkSpeed: 0.5 })) > swings());
   const b = startBattle(3);
   place(b, 'archer', 3, D - 1, 1, { equip: stats({ range: 2 }) });
-  place(b, 'archer', 4, D - 1, 2);
+  // (another kind beside it: one of each hero on the field, ONE-OF-EACH)
+  place(b, 'ranger', 4, D - 1, 2);
   fight(b);
   const [x, y] = [b.units.find((u) => u.tag === 1)!, b.units.find((u) => u.tag === 2)!];
   assert.equal(x.eq!.range, 2);

@@ -24,7 +24,7 @@ import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, ty
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { addTwists, CHAOS_TWISTS, TWISTS } from './twists';
-import { BOSS, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
+import { BOSS, canJoin, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
@@ -762,8 +762,8 @@ export function clearNode(run: Run): void {
           run.roster = run.roster.filter((x) => x.id !== h.id);
           run.squad = run.squad.filter((x) => x !== h.id);
           delete t.hp[String(h.id)];
-          const bench = ownHeroes(run).find((x) => !run.squad.includes(x.id));
-          if (bench && (fought || !run.squad.length) && run.squad.length < squadLimit(run)) run.squad.push(bench.id);
+          const bench = ownHeroes(run).find((x) => canJoin(run, x.id));
+          if (bench && (fought || !run.squad.length)) run.squad.push(bench.id);
         }
       }
     }

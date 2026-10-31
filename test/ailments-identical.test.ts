@@ -33,6 +33,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // player must answer (a card with no way off); `army` and every other scenario keep their hashes)
 // (STAND-RETREAT, the owner's ask, re-recorded `stand`: a Last Stand run now begins in the courtyard and falls back to the library after wave 5,
 // where the room used to be drawn from the seed; every other scenario keeps its hash)
+// (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
+// fields one of each kind, where it fielded two of a kind before; every other scenario keeps its hash)
 // (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks are switched off for
 // this proof, as the ailments are; with them off every scenario plays as recorded)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to

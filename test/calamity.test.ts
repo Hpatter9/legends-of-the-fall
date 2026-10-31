@@ -250,7 +250,8 @@ test('a hired hero joins at part of the roster\'s XP, so it is not left behind',
 
 test('the squad takes ten and no more, and a full roster cannot hire', () => {
   const run = calamityRun(2, startedMeta(1), 'knight');
-  const kinds = [...HEROES, 'paladin', 'cleric', 'knight', 'archer'];
+  // (nine other kinds: one of each hero on the field, ONE-OF-EACH; this list had a second knight and archer)
+  const kinds = [...HEROES, 'paladin', 'cleric', 'druid', 'ranger', 'warlock'].filter((k) => k !== 'knight' && k !== 'wizard');
   for (let i = 0; i < 9; i++) hireHero(run, kinds[i], 10);
   assert.equal(run.roster.length, 10);
   assert.equal(run.squad.length, 10);
@@ -792,7 +793,8 @@ test('the cursed mirror: temporarily clones inverted hero for 2 floors, then clo
   const line = chooseOption(run, 0);
   assert.match(line!, /inverted/i);
   assert.equal(run.roster.length, 2, 'clone added to roster');
-  assert.equal(run.squad.length, 2, 'clone added to squad');
+  // (ONE-OF-EACH: its original fights, so the clone waits on the bench, to be swapped in by hand)
+  assert.equal(run.squad.length, 1, 'clone waits on the bench while its original fights');
   
   const clone = run.roster.find((h) => h.inverted);
   assert.ok(clone);
@@ -865,7 +867,8 @@ test('the cursed mirror\'s clone is a guest: it takes no real hero\'s id or room
   const clone = run.roster.find((h) => h.inverted)!;
   assert.equal(clone.id, ids, 'the clone takes the next id');
   // fill the party to its limit around the clone: the clone neither blocks a hire nor keeps a real hero on the bench
-  const kinds = [...HEROES, 'paladin', 'cleric', 'archer'].filter((k) => k !== 'knight');
+  // (other kinds, one each: ONE-OF-EACH; this list had a second archer)
+  const kinds = [...HEROES, 'paladin', 'cleric', 'druid', 'ranger', 'warlock'].filter((k) => k !== 'knight');
   for (let i = 0; i < squadLimit(run) - 1; i++) {
     assert.equal(hasRoom(run), true, `room for hire ${i + 1}`);
     const h = hireHero(run, kinds[i], 0);
