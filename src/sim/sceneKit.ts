@@ -175,6 +175,16 @@ export type Moment =
   /** An Eidolon chain's story (`eidolonChainData.ts`: the giver's prologue; played by the page, not kept in the Scenes list). */
   | { kind: 'eidolon'; chain: string };
 
+/** What a film can reveal at its end (REVEAL): a mode opening (the Calamity), the army after this one, the Calamity's Ascension levels, a
+ *  castle building (the chapel: the spellbook), a hero's awakening, an Eidolon bound (for the quest chains' films). */
+export type Reveal =
+  | { kind: 'mode'; mode: 'calamity' }
+  | { kind: 'nextArmy'; after: string }
+  | { kind: 'ascension' }
+  | { kind: 'building'; site: string }
+  | { kind: 'awaken'; hero: string }
+  | { kind: 'eidolon'; id: string };
+
 /** A moment's key: its kind and what it is about (the map, the army, the hero ...). */
 export const momentKey = (m: Moment): string => {
   const o = m as Record<string, unknown>;
@@ -203,6 +213,10 @@ export interface Scene {
   calamity?: boolean;
   /** How the scene goes out at its end (CINE-001): `smash` (a hard cut to black with a hit: into the fight), `fade` (to black), else it just ends. */
   out?: 'smash' | 'fade';
+  /** What the film reveals (REVEAL, docs/notes/cinematic-reveal-vault.md): an end card after its last shot, "Unlocked: <thing>", even when
+   *  it is skipped. Whether the card shows, and what it says, is read from the save by `sceneReveal.ts` `revealOf`. Left out, the film
+   *  ends as before. */
+  reveal?: Reveal;
   cast: Record<string, CastMember>;
   shots: Shot[];
 }

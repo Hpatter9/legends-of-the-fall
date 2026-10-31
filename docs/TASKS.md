@@ -21,6 +21,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/upgradesReady.ts`, `src/rankUpList.ts`, `src/rankUps.css`, `test/upgrades-ready.test.ts`, `tools/tavern-rankup/`; hooks in `src/tavern.ts` (the chevron, the button), `src/home.ts`, `src/menuHeroes.ts` (the hop, strip, roster), `src/party.ts` (the card's chevron), `src/awakenView.ts` (`tellAwakened`), `build.mjs` (the CSS). No rule, save or version change.
 - **Status:** ready for review. [Note](notes/tavern-rankup.md); screenshots `samples/rankup-*.png`.
 
+### REVEAL-VAULT — A film's end card for what it revealed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematic-reveal-vault`, `/home/user/lotf-reveal` (from main 0.273.0).
+- **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
+- **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
+
 ### CINE-001 — Movie-like cinematics: shot language, every story scene
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/cinematics`, `/home/user/lotf-cine` (from main 0.271.0).
