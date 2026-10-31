@@ -227,8 +227,9 @@ export function commandStrike(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   const ally = friends(b, me, 3).sort((x, y) => apart(x, me) - apart(y, me) || x.id - y.id).find((a) => !!before(b, a) && (a.busyUntil ?? 0) <= b.t);
   if (!mine && !ally) return false;
   if (mine) cut(b, me, mine, out);
-  if (ally) {
-    const f = before(b, ally)!;
+  // (his own cut may have felled the friend's foe: then the friend has nothing to strike)
+  const f = ally && before(b, ally);
+  if (ally && f) {
     ally.facing = wayTo(ally, f);
     out.push({ kind: 'swing', by: ally.id, to: f.id });
     hurt(b, ally, f, net(atkOf(ally) * castPower(), f), false, false, out, 'skill');
