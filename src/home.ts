@@ -8,7 +8,6 @@ import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
-import { vaultBox } from './vaultView';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openShop } from './shopView';
 import { dailyBossName } from './sim/daily';
@@ -625,23 +624,19 @@ export class Home {
     pic.alt = '';
     pic.draggable = false;
     const title = el('div');
-    title.append(el('h3', '', id === 'treasury' ? `${b.name} · the vault` : b.name), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`));
+    title.append(el('h3', '', b.name), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`));
     head.append(pic, title);
     box.append(head, el('p', 'hint', BLURB[id]));
+    const now = el('p');
+    now.append(el('i', '', 'Now: '), level === 0 ? 'nothing yet' : effectText(id, level));
+    box.append(now);
     const cost = nextCost(m.castle, id);
-    // (the vault: its numbers and "How the vault works", in place of the plain lines; the owner found it unclear)
-    if (id === 'treasury') box.append(vaultBox(m.castle));
-    else {
-      const now = el('p');
-      now.append(el('i', '', 'Now: '), level === 0 ? 'nothing yet' : effectText(id, level));
-      box.append(now);
-      if (cost !== null) {
-        const next = el('p');
-        next.append(el('i', '', `Level ${level + 1}: `), effectText(id, level + 1));
-        box.append(next);
-      } else box.append(el('p', 'hint', 'Fully built.'));
-      box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
-    }
+    if (cost !== null) {
+      const next = el('p');
+      next.append(el('i', '', `Level ${level + 1}: `), effectText(id, level + 1));
+      box.append(next);
+    } else box.append(el('p', 'hint', 'Fully built.'));
+    box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
     this.cardFor = id;
     const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
     const done = el('button', '', 'Close');

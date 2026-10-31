@@ -12,15 +12,3 @@
 .rvRow button { min-width: 140px; }
 @media (prefers-reduced-motion: reduce) { .rvPortal { animation: none; } }
 
-/* The vault (the castle's Treasury): its plain-words box on the Treasury's sheet and the line on its card. */
-.vtBox { margin: 6px 0; padding: 8px 10px; border: 2px solid var(--gold-hi); background: rgb(var(--s0-rgb) / 0.55); font-size: 12px; line-height: 1.4; }
-.vtBox summary { cursor: pointer; font-weight: bold; color: var(--gold-hi); list-style: none; min-height: 24px; display: flex; align-items: center; gap: 6px; }
-.vtBox summary::-webkit-details-marker { display: none; }
-.vtBox ul { margin: 6px 0 2px; padding-left: 18px; }
-.vtBox li { margin: 3px 0; }
-.vtBox .vtNew { font-size: 10px; padding: 0 4px; background: var(--gold-hi); color: var(--s0, #000); }
-.vtNums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 6px 0; text-align: center; }
-.vtNums div { padding: 4px 2px; border: 2px solid rgb(var(--s0-rgb) / 0.6); background: rgb(var(--s0-rgb) / 0.35); }
-.vtNums b { display: block; font-size: 15px; color: var(--gold-hi); }
-.vtNums small { display: block; font-size: 10px; color: var(--dim); }
-.ctVaultInfo { margin-left: 6px; min-width: 28px; min-height: 28px; padding: 0 6px; font-size: 13px; line-height: 1; }

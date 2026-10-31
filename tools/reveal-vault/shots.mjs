@@ -127,28 +127,6 @@ for (const [w, h] of SIZES.filter(([w]) => !WANT || WANT.includes(w))) {
     if (await page.evaluate(() => !!document.querySelector('.rvCard'))) issues.push(`firstLoss ${w}: a card came`);
     await ctx.close();
   });
-  // 4. the vault: the Castle tab's card, then its sheet (first visit: the explainer open), then again (folded)
-  await section('vault', async () => {
-    const { ctx, page } = await boot(w, h, { scenes: ['opening', 'calamityOpens', 'castle:treasury'] });
-    await page.evaluate(() => [...document.querySelectorAll('.hmTab')].find((b) => b.textContent.includes('Castle')).click());
-    await settle(page, 1500);
-    await page.evaluate(() => document.querySelector('.ctVaultInfo')?.scrollIntoView({ block: 'center' }));
-    await settle(page, 600);
-    await page.screenshot({ path: `docs/samples/vault-card${sfx}.png` });
-    await page.evaluate(() => document.querySelector('.ctVaultInfo').click());
-    await settle(page, 800);
-    await check(page, `vault ${w}`);
-    await page.screenshot({ path: `docs/samples/vault-first${sfx}.png` });
-    const open1 = await page.evaluate(() => document.querySelector('.vtBox')?.open);
-    await page.evaluate(() => [...document.querySelectorAll('#hmSheet button')].find((b) => b.textContent === 'Close').click());
-    await settle(page, 400);
-    await page.evaluate(() => document.querySelector('.ctVaultInfo').click());
-    await settle(page, 600);
-    const open2 = await page.evaluate(() => document.querySelector('.vtBox')?.open);
-    if (!open1 || open2) issues.push(`vault ${w}: first visit open=${open1}, again open=${open2}`);
-    await page.screenshot({ path: `docs/samples/vault-again${sfx}.png` });
-    await ctx.close();
-  });
 }
 await browser.close();
 server.close();
