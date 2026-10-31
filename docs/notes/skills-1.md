@@ -235,3 +235,25 @@ six hero scenarios (they place grades 1 to 3), and `ailment-logs.json`'s army, d
 **Checks (batch 3):** `npm run typecheck`; `grade-stats`, `fight-hud`, `signatures`, `merge`, `armies`, `army-pace` and the identity tests; the
 full `npm test` before and after merging main 0.298.0 (1,986 pass, 0 fail); `npm run web`; the skill sheet with its rank line at 393x852,
 360x780 and 412x915 (`PORT=8982 node tools/battle-hud/shots.mjs skills-1 sheet`: `docs/samples/skills-1-sheet-*.png`, no page errors).
+
+## On SPELLS-RETUNE (main 0.301.0 to 0.303.0)
+
+SPELLS-RETUNE re-tuned the armies, the daily, the Last Stand and the Calamity for a bot that casts the king's spells. Its values are the base;
+batches 2 and 3 re-apply only what they need on top, measured with the casting bot:
+
+| Knob | SPELLS-RETUNE | Now | Measure (target: SPELLS-RETUNE's figure) |
+| --- | --- | --- | --- |
+| `DAILY_START` | 0.76 | **0.74** | fresh save 65% at 0.76, **72%** at 0.74 (band 66 to 75%; SPELLS-RETUNE 72%) |
+| Undead Legion `start` | 1.7 | 1.7 (kept) | `armies.test.ts`'s level 22: 69% over 16 tries (needs 35%) |
+| Ogre Clans `start` | 12.2 | **11.4** | `ogres:45:0:tp` 4.5 tries at 12.2, **2.2** now (2.3) |
+| Infernal Host `start` | 16.2 | **15.4** | `infernal:55:0:tph` 11.7 (92% cleared), **4.8** now (4.4) |
+| Yokai Night Parade `start` | 18.3 | **15.45** | `yokai:65:0:tph` 14.4 (75%), **2.6** now (3.1); kept just over the Infernal Host's, so each army starts tougher |
+| Golem Forge `start` | 19.8 | **17.7** | `golems:74:0:tp` (24 saves) 8.5 (96%), **3.3** now (2.8) |
+| `CAL_TIER.mult` | 1.2 | **1.32** | 150 runs: a mean of 1.52 maps at 1.28, **1.65** at 1.32 (main 1.65); `calamity.test.ts`'s full clear holds |
+| `HALL_EASE`, `CAL_SCALE.start` | 1.2, 0.6 | kept | |
+
+(`node tools/spells-retune/run.mjs cell ...`, 12 saves unless named; the starts bisected with its `tune`. The tier lifts above Normal multiply
+the Normal start, so the harder tiers of these four eased with it; they were not re-measured here.) The grade table does not use the king's
+spells and is unchanged (above). Identity fixtures: every scenario differs from main's, from batch 2, and each test's own computation was
+written back. Checks: typecheck; the affected tests (armies, army-pace, calamity, daily, difficulty, stand-retreat, grade-stats, skill-rules,
+hero-kits, fight-hud, merge, relics, both identity tests: 237 pass); `npm run web`.
