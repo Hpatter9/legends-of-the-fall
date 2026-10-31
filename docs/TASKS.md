@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### XP-SPLIT — Each kill's XP split: the killer keeps half, the rest shared by every hero that fought
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/xp-split`, `/home/user/lotf-xpsplit` (from main 0.289.0).
+- **Goal:** the owner's "The heroes in a fight should get more of an XP split, with the killing hero still getting more": `KILL_KEEP` (0.5) of a kill to the killer, the rest shared evenly by every fighter (fallen and guest too, not summons); a fight's total XP unchanged.
+- **Scope:** `src/sim/levels.ts` (`KILL_KEEP`, `killShares`, `fightXp`), `src/sim/climb.ts` (`fightXpByHero`: the spire and the Calamity, the owner's yes); new `test/xp-split.test.ts`, `tools/xp-split/`; `docs/notes/levels.md`.
+- **Status:** ready for review. [Note](notes/xp-split.md) (before/after and the pace).
+
 ### STATS-1 — The six ability scores as data (D&D stats design, batch 1)
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/stats-1`, `/home/user/lotf-stats1` (from main 0.289.0).
