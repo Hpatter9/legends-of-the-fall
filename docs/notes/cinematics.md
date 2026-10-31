@@ -69,7 +69,10 @@ every scene as it plays it (`ScenePlayer.play`), and the preview frames (`__game
 how a move changes it over the shot, the tilt and the land's blur. `cutVeil(cut, t)` and `outVeil(out, left)` are the cuts and endings,
 `typeTimes`/`typedCount`/`emphasis` the words, `VOICE_CUE`/`blipsBetween` the voices, `pressOf` the hold to skip, `weightOf` what a
 battery saver and reduced motion leave out. **For the War Horn and Eidolon call** (`claude/war-horn`): a moment of its own can frame its
-shots with `frame()` and come in with `cutVeil()`, or be written as a `Scene` and played by `ScenePlayer`.
+shots with `frame()` and come in with `cutVeil()`, or be written as a `Scene` and played by `ScenePlayer`. The call as merged
+(`src/eidolonCall.ts`, `eidolonRules.ts` `shotAt`/`BOARD_ZOOM`) frames the live board and DOM layers with its own named shots; its
+easing, its reduced-motion and saver rules map onto `easeInOut`, `weightOf` and `cutVeil` one for one, but moving it over is a change of
+its own (left alone here).
 
 ### The player (`src/render/sceneView.ts`)
 
@@ -115,7 +118,8 @@ every scene (the table, the 22 quest stories, the arrivals, the act cards) has a
 close-ups, the boss from below with its card and the reaction; a framed shot kept; reduced motion (no moves, no tilt, cross-fades, no
 smash, a still camera); the camera's framings and moves; cuts and endings; the typing's pauses and emphasis; hold to skip; the battery
 saver; a directed scene played through by the clock and by taps; every army's intro due once; every arrival and act card short with a
-smash out; the quest stories' boss entrances. The existing cinematics, scene-fixes and quest-battles tests still pass unchanged.
+smash out; the quest stories' boss entrances. The existing cinematics, scene-fixes and quest-battles tests still pass unchanged; the writer's copy of the scenes,
+`docs/lines/new-lines.json`, is brought in step with the new and rewritten lines (`test/new-lines.test.ts`).
 
 Frame strips: `docs/samples/cine-*.png` (393x852; `-360` and `-412` at the other sizes; `-calm` with reduced motion), made by
 `node tools/cinematics/cine-strips.mjs out/web <raw> --sizes=393,360,412` and `python3 tools/cinematics/cine-strip.py <raw> <id> <out>`

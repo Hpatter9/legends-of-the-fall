@@ -216,7 +216,7 @@ class Hud {
     this.foot.style.top = `${bandTop + bandH}px`;
     this.foot.style.height = `${h - bandTop - bandH}px`;
     this.cap.style.top = `${Math.max(0, bandTop - 44)}px`;
-    this.title.style.top = `${bandTop + bandH * 0.78}px`;
+    this.title.style.top = `${bandTop + bandH * 0.2}px`;
   }
 
   /** The line as typed so far: `n` letters of it, the words said with weight drawn brighter. */
@@ -807,10 +807,11 @@ class Run {
   }
 
   /** The foreground rocks: just in at the edges of a wide view, out of focus, sliding faster than the land (they are near). Hidden in
-   *  the close framings. */
+   *  the closer framings. */
   private readonly foreBlur = new BlurFilter({ strength: 2, quality: 2 });
   private drawRocks(mid: { x: number; y: number }, angle: Angle, scale: number, soft: boolean): void {
-    const on = angle === 'wide' || angle === 'low' || angle === 'high';
+    // (the wide views only: closer in, a near rock would fill the picture)
+    const on = angle === 'wide' || angle === 'high';
     const cx = mid.x;
     const hw = this.w / 2 / scale;
     // (the picture's foot, in stage px: the rocks rise only a little way above it)
