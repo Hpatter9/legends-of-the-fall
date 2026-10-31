@@ -5,7 +5,7 @@
 #   python3 tools/eidolon-call-2/cut_sprites.py [../chronos-assets]
 import colorsys
 import sys
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ASSETS = sys.argv[1] if len(sys.argv) > 1 else '../chronos-assets'
 PACK = f'{ASSETS}/whtdragons_MVanimals_ALL_4-1-2025'
@@ -43,6 +43,19 @@ nivra.save(f'{OUT}/nivra.png', optimize=True)
 row(f'{PACK}/animals/lions.png', 48, 48, 0, 2).save(f'{OUT}/aurelan.png', optimize=True)
 # Vaelkhar the Dragon King: the black dragon with the burning wings (the big dragons' third colour), facing us; its fire turned violet
 vael = row(f'{PACK}/Mythological animals/$BigDragons_recolor.png', 120, 120, 0, 2)
+# (this sheet has a white ground, not transparency: flooded out from each frame's corners with its pale shadow, so the white inside the wings stays)
+for i in range(3):
+    fr = vael.crop((i * 120, 0, (i + 1) * 120, 120))
+    for c in ((0, 0), (119, 0), (0, 119), (119, 119)):
+        ImageDraw.floodfill(fr, c, (0, 0, 0, 0), thresh=110)
+    # (its pale ground shadow, a light grey ellipse at the feet, goes too)
+    px = fr.load()
+    for y in range(84, 120):
+        for x in range(120):
+            r, g, b, a = px[x, y]
+            if a and min(r, g, b) > 150 and max(r, g, b) - min(r, g, b) < 18:
+                px[x, y] = (0, 0, 0, 0)
+    vael.paste(fr, (i * 120, 0))
 shift(vael, lambda h, l, s: s > 0.25 and (h < 0.17 or h > 0.95), 0.78, 1.1)
 vael.save(f'{OUT}/vaelkhar.png', optimize=True)
 print('ok')

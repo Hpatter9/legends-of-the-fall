@@ -124,7 +124,7 @@
 .el-dark .ecShadow { width: 70vw; height: 16vw; background: radial-gradient(closest-side, rgb(20 0 40 / 0.7), transparent); }
 
 /* the owner's addition: the sprite Eidolon on the board, its frame set by the page (its sheet's pixels kept) */
-.ecBreath { left: 0; top: 0; image-rendering: pixelated; background-repeat: no-repeat; transform-origin: 0 50%; mix-blend-mode: screen; will-change: transform; }
+.ecBreath { left: 0; top: 0; image-rendering: pixelated; background-repeat: no-repeat; transform-origin: 0 50%; will-change: transform; filter: drop-shadow(0 0 6px rgb(255 120 30 / 0.8)); }
 .ecMon { left: 0; top: 0; image-rendering: pixelated; background-repeat: no-repeat; will-change: transform; transform-origin: 50% 100%; }
 
 /* a pack strip: six frames of 32 px */

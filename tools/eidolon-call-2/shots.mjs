@@ -73,7 +73,10 @@ async function open(eidolons, confirmed) {
     window.__step = (ms) => {
       for (let t = 0; t < ms; t += 16) {
         g.frame(16, 16);
-        for (const a of document.getAnimations()) {
+        // (every animation seen so far is stepped, not only those the page lists now: a paused one still in its delay is not listed, and
+        // would never start)
+        for (const a of new Set([...seen.keys(), ...document.getAnimations()])) {
+          if (!a.effect?.target?.isConnected) continue;
           const at = (seen.get(a) ?? 0) + 16;
           seen.set(a, at);
           if (a.playbackRate !== 0) a.playbackRate = 0;
@@ -127,7 +130,7 @@ for (const pick of PICKS) {
       await page.waitForTimeout(120);
       await shot(page, `${pick}-${name}`);
       // (what of the cinematic's own layer shows: the elements by class, solid enough to see)
-      if (process.env.DEBUG) console.log(name, await page.evaluate(() => { const n = {}; for (const e of document.querySelectorAll('.ecBoard > *')) { const cs = getComputedStyle(e); if (cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05) { const k = e.className.split(' ')[0]; n[k] = (n[k] ?? 0) + 1; } } const br = document.querySelector('.ecBreath'); return JSON.stringify({ n, breath: br && { w: br.style.width, h: br.style.height, t: br.style.transform, v: br.style.visibility } }); }));
+      if (process.env.DEBUG) console.log(name, await page.evaluate(() => { const n = {}; for (const e of document.querySelectorAll('.ecBoard > *')) { const cs = getComputedStyle(e); if (cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05 && e.getBoundingClientRect().width > 0) { const k = e.className.split(' ').filter((c) => c !== 'ecSp' && c !== 'once' && c !== 'loop' && c !== 'mid').join('.') || e.className; n[k] = (n[k] ?? 0) + 1; } } const br = document.querySelector('.ecBreath'); return JSON.stringify({ n, breath: br && { w: br.style.width, h: br.style.height, t: br.style.transform, v: br.style.visibility } }); }));
     }
     const left = await page.evaluate(() => ({ phase: window.__game.b.phase, called: window.__game.b.eidolon?.called, foes: window.__game.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => `${u.def} ${Math.round((u.hp / u.maxHp) * 100)}%`), overflow: document.documentElement.scrollWidth > innerWidth }));
     console.log('ok', pick, JSON.stringify(left));
