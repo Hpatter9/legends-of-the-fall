@@ -163,7 +163,8 @@ Calamity's, measured above.)
 - Updated to the owner's approved numbers (the redesign changes these rules): `test/relics.test.ts`, `test/elites.test.ts` (the sets'
   numbers and pools), `test/mystery.test.ts` (six Storied relics), `test/midEvents.test.ts` (a Rare's price at the cart),
   `test/recap-reveal.test.ts` (the Banner's new name in a found line).
-- `test/ailments-identical.test.ts` re-records `army`, `daily` and `stand` (the greedy player finds and buys the new relics).
+- `test/ailments-identical.test.ts` and `test/spells-identity.test.ts` re-record `army`, `daily` and `stand` (the greedy player finds and buys the new relics).
 - `tools/relics/card-shots.mjs [root] [port]`: the strip with the conversion line, four cards (a chapter, a growing relic, a price, a
   Storied relic) at 393x852, 360x780 and 412x915 (each card fits the screen, no sideways scroll), the line gone and the strip hidden once the
-  fight begins, and a relic's mark over a hero. Screenshots `docs/samples/relics-2-*.png`.
+  fight begins, and a relic's mark over a hero. Screenshots `docs/samples/relics-2-*.png`. `tools/relics/prep-shots.mjs` (part 1's check) now opens the card on a tap.
+- Run: `npm run typecheck` clean; the full `npm test` (1975 pass, 0 fail after the two fingerprint files were re-recorded); `npm run web`.
