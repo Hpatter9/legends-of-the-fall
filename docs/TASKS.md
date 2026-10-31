@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### SHOP-BOOKS-GEAR — Hester's Stall, skill books, gear that wears
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/shop-books-gear`, `/home/user/lotf-shop` (from main 0.277.0).
+- **Goal:** build the owner-approved shop, books and gear design (`claude/shop-books-design`): the stall (keepers, daily stock, standing, prices), selling (in place of salvage), wear and repair, skill books (study, the two slots, found Rare books), with the books-and-shop art (PRs #240, #243).
+- **Scope:** new `src/sim/{stall,books,bookData,wear}.ts`, `src/{stallView,skillBookView,bookArt}.ts`, `src/stall.css`, `src/art/shop/`, `art-source/books-shop/`, `tools/shop/`, `test/{stall,books,wear}.test.ts`; hooks in `equipment.ts`, `meta.ts`, `talents.ts`, `battle.ts`, `heroKits.ts`, `armyStars.ts`, `chestShop.ts`, `castle.ts`, `waveCard.ts`, `main.ts`, `standView.ts`, `home.ts`, `camp.ts`, `overlookLayout.ts`, `campSpots.ts`, `equipView.ts`, `menuHeroes.ts`, `party.ts`, `shopView.ts`, `chestStash.ts`, `castleSpots.ts`, `gearIcons.ts`, `build.mjs`, `CREDITS.md`. Optional save fields; no version change.
+- **Status:** ready for review; real gear in runs, the caravan and the Gloaming Dealer, the lost techniques and the books' balance pass left for later. [Note](notes/shop-books-gear.md); screenshots `samples/shop-*.png`.
+
 ### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-rankup`, `/home/user/lotf-rankup` (from main 0.273.0).
