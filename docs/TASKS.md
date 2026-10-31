@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### SKILLS-DESIGN — Three skills, skills that level by use, cooldowns by class (design only)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/skills-design`, `/home/user/lotf-skills-design` (from main 0.273.0).
+- **Goal:** the owner's three asks: every hero three skills and the ultimate; ranks (merge stars) no longer upgrade skills, skills level only by use (own and learned); cooldowns as a real rule beside cost; summons and shapeshifts on timers that outlast a wave.
+- **Scope:** documentation only: `docs/notes/skills-overhaul-design.md`, this row. No game code.
+- **Status:** design ready for the owner: a third skill for all 45 (level 20), five skill classes with cost, cooldown and cast ranges applied to all 135 skills, tier skills replaced by stats, five skill levels by use, summon and shape timers, the three-chip HUD, the balance plan, saves, a nine-batch build plan and six open questions. [Design](notes/skills-overhaul-design.md).
+
 ### CINE-001 — Movie-like cinematics: shot language, every story scene
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/cinematics`, `/home/user/lotf-cine` (from main 0.271.0).
