@@ -17,12 +17,12 @@ test('relic effects multiply, add and ignore unknown ids and repeats', () => {
   const fx = relicEffects(['whetstone', 'banner', 'whetstone', 'nope', 'ironShield', 'luckyCoin', 'phoenix', 'warDrum']);
   assert.ok(Math.abs(fx.atk! - 1.03) < 1e-9, 'the Whetstone starts at +3%');
   assert.ok(Math.abs(fx.hp! - 1.06) < 1e-9);
-  assert.equal(fx.guard, 0.1);
+  assert.equal(fx.guard, 0.12);
   assert.ok(Math.abs(fx.speed! - 0.96) < 1e-9, "the Gate Boss's price");
   assert.equal(fx.gold, 8);
   assert.equal(fx.revive, true);
   assert.equal(fx.first, 1000);
-  assert.equal(fx.hooks!.unbroken, 0.08);
+  assert.equal(fx.hooks!.unbroken, 0.1);
   assert.deepEqual(relicEffects(), {});
 });
 
@@ -54,8 +54,8 @@ test('team relics become the fight team bonus, beside the traits', () => {
   const b = startStage(run);
   place(b, 'knight', 3, 8, 1);
   fight(b);
-  assert.ok(b.traits!.guard! >= 0.1 && b.traits!.dodge! >= 0.05 && b.traits!.crit! >= 0.03);
-  assert.ok(b.traits!.speed! >= 1.08 * 0.96 - 1e-9 && b.traits!.charge! >= 1.05 && b.traits!.reach! >= 0.3);
+  assert.ok(b.traits!.guard! >= 0.12 && b.traits!.dodge! >= 0.05 && b.traits!.crit! >= 0.03);
+  assert.ok(b.traits!.speed! >= 1.11 * 0.96 - 1e-9 && b.traits!.charge! >= 1.05 && b.traits!.reach! >= 0.3);
 });
 
 test('the Siege Drum: the foes wait at the start, the heroes do not', () => {

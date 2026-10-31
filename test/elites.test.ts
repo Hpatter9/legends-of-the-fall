@@ -187,12 +187,12 @@ test('set bonuses switch on at two and three pieces', () => {
   }
   // the numbers, two sets at once
   const fx = relicEffects(['phoenix', 'warDrum', 'ironShield', 'hourglass']);
-  assert.ok(Math.abs(fx.crit! - 0.02) < 1e-9 && Math.abs(fx.guard! - (0.1 + 0.02)) < 1e-9);
+  assert.ok(Math.abs(fx.crit! - 0.02) < 1e-9 && Math.abs(fx.guard! - (0.12 + 0.02)) < 1e-9);
   assert.equal(relicEffects(['phoenix', 'warDrum', 'emberRuby']).set!.burn, 0.03);
   assert.equal(relicEffects(['ironShield', 'hourglass', 'frostSapphire']).set!.chill, 1000);
   assert.equal(relicEffects(['banner', 'scholarScroll', 'holyChalice']).set!.regen, 0.005);
   assert.ok(relicEffects(['featherCharm', 'hawkEye', 'shadowCloak']).set!.bleed! > 0);
-  assert.ok(Math.abs(relicEffects(['whetstone', 'swiftBoots', 'wolfFang']).atk! - 1.03 * 1.04 * 1.02) < 1e-9);
+  assert.ok(Math.abs(relicEffects(['whetstone', 'swiftBoots', 'wolfFang']).atk! - 1.03 * 1.05 * 1.02) < 1e-9);
 });
 
 const battleWith = (relics: string[]) => {

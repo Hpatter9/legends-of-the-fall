@@ -75,12 +75,16 @@ export function relicFoe(b: Battle, f: Unit, champion = false): void {
   if (atk !== 1) f.power = (f.power ?? 1) * atk;
 }
 
-/** How much more a hero's blow deals: the First Banner while none has fallen, beasts for the Necklace, a crit on the wounded, a shot from above. */
+/** How much more a hero's blow deals: the First Banner while none has fallen, the Sapphire at full health, the Drum's first seconds, beasts
+ *  for the Necklace, a crit on the wounded, a shooter (the more from above). */
 export function relicBlow(b: Battle, me: Unit, to: Unit, crit: number, highShot: boolean): number {
   const h = me.side === 'hero' ? b.relics?.hooks : undefined;
   if (!h) return 1;
   let m = 1;
   if (h.unbroken && !b.relicFell) m *= 1 + h.unbroken;
+  if (h.fullAtk && me.hp >= me.maxHp) m *= 1 + h.fullAtk;
+  if (h.earlyAtk && b.t - (b.relicT0 ?? 0) < h.earlyAtk.ms) m *= 1 + h.earlyAtk.v;
+  if (h.shotAtk && UNITS[me.def]?.shot) m *= 1 + h.shotAtk;
   if (h.beast && isBeast(to.def)) m *= 1 + h.beast;
   if (h.execCrit && crit > 1 && to.hp < to.maxHp / 2) m *= 1 + h.execCrit;
   if (h.highShot && highShot) m *= 1 + h.highShot;

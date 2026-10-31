@@ -10,6 +10,7 @@ import { finish, loadRun, newRun, noteFight, saveRun, startStage } from '../src/
 import { loadStand, newStandRun, saveStand } from '../src/sim/stand';
 import { stockMarket } from '../src/sim/market';
 import { relicSuits } from '../src/sim/autoplay';
+import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 
 /** A fight with these relics, its heroes placed, begun. */
@@ -38,10 +39,10 @@ test('growing relics grow with the run tally, to their most', () => {
   assert.ok(near(effectsOf('whetstone')!.atk!, 1.03));
   assert.ok(near(effectsOf('whetstone', { marks: { won: 5 } })!.atk!, 1.08));
   assert.ok(near(effectsOf('whetstone', { marks: { won: 99 } })!.atk!, 1.15));
-  assert.ok(near(effectsOf('scholarScroll', { marks: { won: 10 } })!.charge!, 1.15));
-  assert.ok(near(effectsOf('hawkEye', { marks: { elites: 4 } })!.crit!, 0.07));
-  assert.ok(near(effectsOf('bookOfNames', { marks: { fallen: 3 } })!.atk!, 1.06));
-  assert.ok(near(effectsOf('bookOfNames', { marks: { fallen: 40 } })!.atk!, 1.3));
+  assert.ok(near(effectsOf('scholarScroll', { marks: { won: 10 } })!.charge!, 1.4));
+  assert.ok(near(effectsOf('hawkEye', { marks: { elites: 4 } })!.crit!, 0.14));
+  assert.ok(near(effectsOf('bookOfNames', { marks: { fallen: 3 } })!.atk!, 1.09));
+  assert.ok(near(effectsOf('bookOfNames', { marks: { fallen: 40 } })!.atk!, 1.45));
 });
 
 test('a fight noted adds to the tally: a win, the heroes fallen, the elites felled, the Phoenix rises', () => {
@@ -153,7 +154,7 @@ test('old saves convert: merged relics kept once and paid back, a note once, ren
 test('fight start: the Ember wounds, the Ring strikes one hero (the same each time), the Cup gives mana, the Crown and the Eye raise the foes', () => {
   const plain = withRelics([]);
   const ember = withRelics(['emberRuby']);
-  heroes(ember).forEach((x, i) => assert.equal(x.hp, Math.max(1, Math.round(heroes(plain)[i].maxHp * 0.9))));
+  heroes(ember).forEach((x, i) => assert.equal(x.hp, Math.max(1, Math.round(heroes(plain)[i].maxHp * 0.92))));
   const ring = withRelics(['stormRing']);
   const hurtOnes = heroes(ring).filter((x) => x.hp < x.maxHp);
   assert.equal(hurtOnes.length, 1);
@@ -162,7 +163,7 @@ test('fight start: the Ember wounds, the Ring strikes one hero (the same each ti
   assert.equal(withRelics(['holyChalice']).spells.mana, plain.spells.mana + 2);
   const crown = withRelics(['sunCrown']);
   const top = (b: Battle) => Math.max(...foes(b).map((f) => f.maxHp));
-  assert.equal(top(crown), Math.round(top(plain) * 1.14));
+  assert.equal(top(crown), Math.round(top(plain) * 1.12));
   const eye = withRelics(['voidLens']);
   foes(eye).forEach((f, i) => assert.equal(f.maxHp, Math.round(foes(plain)[i].maxHp * 1.06)));
 });
@@ -179,19 +180,20 @@ test("the Sentry's Cloak gives the back row more hp", () => {
   const plain = make([]);
   const cloak = make(['winterCloak']);
   const [back, front] = heroes(cloak);
-  assert.equal(back.maxHp, Math.round(Math.round(heroes(plain)[0].maxHp * 1.04) * 1.077));
-  assert.equal(front.maxHp, Math.round(heroes(plain)[1].maxHp * 1.04));
+  assert.equal(back.maxHp, Math.round(Math.round(heroes(plain)[0].maxHp * 1.06) * 1.094));
+  assert.equal(front.maxHp, Math.round(heroes(plain)[1].maxHp * 1.06));
 });
 
 test('blows: the First Banner until a hero falls, beasts for the Necklace, a crit on the wounded for the Fang, a shot from above for the Glass', () => {
   const b = withRelics(['banner', 'wolfFang', 'viperFang', 'spyglass']);
   const [x, y] = heroes(b);
   const foe = foes(b)[0];
-  assert.ok(near(relicBlow(b, x, foe, 1, false), 1.08 * (isBeast(foe.def) ? 1.15 : 1)));
+  const shot = UNITS[x.def].shot ? 1.1 : 1;
+  assert.ok(near(relicBlow(b, x, foe, 1, false), 1.1 * (isBeast(foe.def) ? 1.15 : 1) * shot));
   foe.hp = Math.floor(foe.maxHp / 3);
-  assert.ok(near(relicBlow(b, x, foe, 1.5, true), 1.08 * (isBeast(foe.def) ? 1.15 : 1) * 1.25 * 1.06));
+  assert.ok(near(relicBlow(b, x, foe, 1.5, true), 1.1 * (isBeast(foe.def) ? 1.15 : 1) * 1.4 * shot * 1.09));
   hurt(b, foe, y, 99999, false, false, []);
-  assert.ok(near(relicBlow(b, x, foe, 1, false), isBeast(foe.def) ? 1.15 : 1), 'a hero has fallen: the Banner is down');
+  assert.ok(near(relicBlow(b, x, foe, 1, false), (isBeast(foe.def) ? 1.15 : 1) * shot), 'a hero has fallen: the Banner is down');
   assert.equal(relicBlow(b, foe, x, 1.5, true), 1, "a foe's blow is its own");
   assert.ok(isBeast('wolfBlack') && isBeast('packRed') && !isBeast('skeleton'));
 });
@@ -205,8 +207,8 @@ test("the Warden's Medal: the last hero standing heals and takes less", () => {
   const out: never[] = [];
   for (const x of hs.slice(0, -1)) hurt(b, foe, x, 99999, false, false, out);
   assert.equal(b.lastStood, last.id);
-  assert.equal(last.hp, Math.round(last.maxHp * 0.2) + Math.round(last.maxHp * 0.3));
-  assert.ok(near(relicTaken(b, last, foe), 0.7));
+  assert.equal(last.hp, Math.round(last.maxHp * 0.2) + Math.round(last.maxHp * 0.5));
+  assert.ok(near(relicTaken(b, last, foe), 0.6));
 });
 
 test('the Harness quickens the rest after a fall, three at most; the Charm and the Hourglass work early; the Sapphire at full health; the Scale against bosses', () => {
@@ -215,7 +217,7 @@ test('the Harness quickens the rest after a fall, three at most; the Charm and t
   const foe = foes(b)[0];
   assert.equal(relicSpeed(b, hs[0]), 1);
   for (const x of hs.slice(1, 5)) hurt(b, foe, x, 99999, false, false, []);
-  assert.ok(near(relicSpeed(b, hs[0]), 1 + 0.12 * 3));
+  assert.ok(near(relicSpeed(b, hs[0]), 1 + 0.2 * 3));
   assert.ok(near(relicDodge(b, hs[0]), 0.1));
   assert.equal(relicMana(b), 2);
   assert.ok(near(relicCharge(b, hs[0]), hs[0].hp >= hs[0].maxHp ? 1.2 : 1));
@@ -227,7 +229,7 @@ test('the Harness quickens the rest after a fall, three at most; the Charm and t
   assert.equal(relicMana(b), 1);
   assert.equal(relicSpeed(b, hs[0]), 1, 'the haste wears off');
   const boss = { ...foe, def: 'orcWarlord' };
-  assert.ok(near(relicTaken(b, hs[0], boss), 1 - 0.105));
+  assert.ok(near(relicTaken(b, hs[0], boss), 1 - 0.074));
   assert.equal(relicTaken(b, hs[0], foe), 1);
 });
 
