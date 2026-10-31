@@ -43,6 +43,8 @@ import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { direct } from './sim/cineDirector';
 import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
+import { revealOf, type RevealGo } from './sim/sceneReveal';
+import { showEndCard } from './revealCard';
 import { ACT_HALLS, ACT_NUMERALS, ROOM_NAMES } from './sim/standActs';
 import { roomLine } from './standRetreatLines';
 import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene } from './sim/sceneRules';
@@ -137,6 +139,8 @@ import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
+import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
+import { chainOfBattle, type PieceFound } from './sim/eidolonChains';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
@@ -405,6 +409,8 @@ class Game {
       onWatchScene: (id) => void this.playScene(id),
       // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
       onQuestBattle: (id) => this.openQuestBattle(id),
+      // (EIDOLON-CHAINS: a chain's prologue, played over the home screen whatever the Cinematics setting: it is the chain's sense)
+      onStory: (scene) => this.scenes.play(scene, this.players()),
       questSaved: () => {
         const r = loadSlot('quest');
         return r?.mode?.kind === 'quest' ? r.mode.quest : null;
@@ -491,7 +497,9 @@ class Game {
       if (!this.homeUp) this.app.ticker.start();
       // (an earned deploy helper is told on the deploy screen the player comes back to: DEPLOY-ZOOM)
       if (!this.homeUp && this.b.phase === 'deploy' && !this.auto) this.tellUnlocks();
-      else if (this.b.phase !== 'fight') this.app.ticker.stop();
+      // (only under the home screen: a quest battle begun from the home screen just after a run was won used to find its ticker stopped
+      //  here, the old fight's 'won' still on the board, and its fight never moved; EIDOLON-CHAINS)
+      else if (this.homeUp && this.b.phase !== 'fight') this.app.ticker.stop();
     };
     // (the tips on the home screen are still looked after, a few times a second)
     setInterval(() => this.homeUp && tips.update(), 250);
@@ -686,7 +694,32 @@ class Game {
     // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    if (settings().cinematics) await this.scenes.play(id, players);
+    if (!settings().cinematics) return;
+    await this.scenes.play(id, players);
+    // (REVEAL: a film that revealed something ends on its card, played through or skipped)
+    await this.endCard(id);
+  }
+
+  /** The end cards shown this session, by key (REVEAL): the older army banner stands aside for one already shown. */
+  private revealed = new Set<string>();
+
+  /** A film's end card, if it revealed something (REVEAL, `sim/sceneReveal.ts`): its button goes there only from the home screen (never
+   *  out of a fight or its result, nor out of the Scenes list's replay, `mayGo` false); elsewhere it says where, with Continue. */
+  private async endCard(id: string, mayGo = true): Promise<void> {
+    const card = revealOf(id, this.meta);
+    if (!card) return;
+    this.revealed.add(card.key);
+    const to = card.go?.to;
+    const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
+    await showEndCard(card, go);
+  }
+
+  /** Where an end card's button goes (REVEAL). */
+  private revealGo(to: RevealGo): void {
+    if (to.to === 'calamity') return this.home.enterCalamity();
+    if (to.to === 'armies') return this.home.openArmies(to.army);
+    if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
+    this.home.show(to.to);
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -743,7 +776,11 @@ class Game {
     const five = mo && (mo.kind === 'combo' || mo.kind === 'comboCut') ? comboById(mo.set)?.heroes : undefined;
     const film = SCENES[id] ? id : this.filmOf(id);
     if (!film) return Promise.resolve('skipped');
-    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players());
+    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players()).then(async (e) => {
+      // (REVEAL: a replay ends on its card too, with Continue only)
+      if (SCENES[id]) await this.endCard(id, false);
+      return e;
+    });
   }
 
   /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */
@@ -1662,6 +1699,8 @@ class Game {
   private ultm!: UltMoments;
   /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
   private bossm = new BossMoments();
+  /** EIDOLON-CHAINS: a piece a quest battle's win found, shown once its beat after has played. */
+  private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
@@ -1720,6 +1759,8 @@ class Game {
         if (at && settings().quips) showQuip(at, text, { who: heroName(hero.def), hold: 3200 });
       },
       stage: () => this.app.canvas,
+      // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
+      gallery: () => this.home.openGallery(),
     });
     $('hudSpells').prepend(this.eid.horn.root);
     const canvas = this.app.canvas;
@@ -2055,8 +2096,13 @@ class Game {
       .then(() => {
         this.sceneHold--;
         void this.revealEarned().then(() => {
-          this.home.open(practice ? `${qb.title}: won again, for practice.` : `${qb.title} won! Hand the quest in at the tavern.`);
-          if (!practice) this.home.openQuests('active');
+          // (EIDOLON-CHAINS: a chain's battle hands no quest in: its piece was found, and the log opens on the chain)
+          const chain = chainOfBattle(qb.id);
+          this.home.open(practice ? `${qb.title}: won again, for practice.` : chain ? `${qb.title} won! A piece of the pact is found.` : `${qb.title} won! Hand the quest in at the tavern.`);
+          if (!practice) this.home.openQuests(chain ? 'eidolons' : 'active');
+          const piece = this.pendingPiece;
+          this.pendingPiece = null;
+          if (piece) showPieceCard(piece, { next: nextWords(this.meta, piece), onClose: () => this.home.openQuests('eidolons') });
         });
       });
   }
@@ -2067,7 +2113,7 @@ class Game {
     endVictory();
     const qb = questBattleOfRun(this.run);
     this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
-    this.home.openQuests('active');
+    this.home.openQuests(qb && chainOfBattle(qb.id) ? 'eidolons' : 'active');
   }
 
   private startRun(run: Run): void {
@@ -2407,7 +2453,8 @@ class Game {
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
     const focus = this.runStars?.chests.length ? army.id : undefined;
-    if (next) showUnlock(next, army, () => this.home.openArmies(focus));
+    // (REVEAL: the army's last-stand film already ended on this army's card: straight to the armies)
+    if (next && !this.revealed.has(`army:${next.id}`)) showUnlock(next, army, () => this.home.openArmies(focus));
     else this.home.openArmies(focus);
   }
 
@@ -2936,7 +2983,12 @@ class Game {
       if (won && !army && !daily && !quest && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       // (QUESTS: the quests this fight completes are told after the achievements' toasts)
       const readyBefore = readyQuests(this.meta);
+<<<<<<< HEAD
       const questsBefore = questSnap(this.meta);
+=======
+      // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
+      const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
+>>>>>>> origin/main
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
@@ -3032,6 +3084,11 @@ class Game {
       toastAchievements(earned);
       if (questsDone.length) setTimeout(() => toastQuests(questsDone), earned.length * 2800);
       if (questsFound.length) setTimeout(() => toastFound(questsFound), (earned.length + (questsDone.length ? 1 : 0)) * 2800);
+      // (EIDOLON-CHAINS: a piece found: its card over the result, a moment after it shows; an auto-replay keeps going, and the log has it)
+      const pieces = (this.meta.quests?.pieces ?? []).filter((id) => !piecesBefore.includes(id)).map(pieceInfo).filter((p) => !!p);
+      // (a quest battle's piece waits for its beat after: the card shows over the quest log, `questEnd`)
+      if (pieces.length && quest) this.pendingPiece = pieces[0];
+      else if (pieces.length && !this.auto) setTimeout(() => showPieceCard(pieces[0], { next: nextWords(this.meta, pieces[0]) }), 900);
     }
     document.body.dataset.phase = b.phase;
     document.body.dataset.roster = run.roster.length ? 'some' : 'none';

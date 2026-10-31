@@ -1,0 +1,14 @@
+/* REVEAL (docs/notes/cinematic-reveal-vault.md): a film's end card, built on the army banner's .unlock, over the cinematic's overlay. */
+.rvCard { z-index: 46; overflow: hidden auto; overscroll-behavior: contain; }
+.rvArt { width: min(144px, calc(38 * var(--vw))); height: min(144px, calc(38 * var(--vw))); display: flex; align-items: center; justify-content: center; border: 4px solid var(--gold-hi); background: radial-gradient(var(--s6), var(--s1)); image-rendering: pixelated; overflow: hidden; flex: none; }
+.rvArt canvas, .rvArt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.rvArt.rv-hero img, .rvArt.rv-eidolon img { object-fit: cover; object-position: 50% 15%; image-rendering: auto; }
+.rvArt.rv-building img { object-fit: contain; padding: 6px; }
+.rvPortal { width: 100%; height: 100%; background-size: 1600% 100%; background-position: 0 0; background-repeat: no-repeat; animation: rvPortalTurn 1.5s steps(15) infinite; }
+@keyframes rvPortalTurn { to { background-position: 100% 0; } }
+.rvWhere { max-width: 320px; font-size: 12px; color: var(--dim); text-shadow: var(--outline); }
+.rvWhere i { font-style: normal; color: var(--gold-hi); }
+.rvRow { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; }
+.rvRow button { min-width: 140px; }
+@media (prefers-reduced-motion: reduce) { .rvPortal { animation: none; } }
+

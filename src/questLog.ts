@@ -3,7 +3,8 @@
 // Board: everything on offer from every giver, with Take. Done: the quests handed in, newest first, with their giver's last word,
 // a keepsake if one came with it, and how many times a repeatable has been done. Batch 1b: a quest taken can be dropped (Drop, then
 // a confirm on the row: its progress is lost).
-// The Eidolons tab (the six great summons' chains) comes with a later batch: its place is kept in `LOG_TABS`.
+// The Eidolons tab (EIDOLON-CHAINS): the six Eidolons' chains, their pieces and the part going (`eidolonChainView.ts`); it shows once
+// the first chain has been offered.
 
 import { giverKeyOf, giverName, giverWords, offerFrom, questFace, rewardText } from './questCard';
 import { questById } from './sim/questData';
@@ -12,10 +13,13 @@ import type { Meta } from './sim/meta';
 import { play } from './render/sound';
 import { todayKey } from './modes';
 import { battleOfQuest, canFightBattle } from './sim/questRun';
+import { chainsShown, summonerWaiting } from './sim/eidolonChains';
+import { drawEidolonsTab } from './eidolonChainView';
 
 export type LogTab = 'active' | 'board' | 'eidolons' | 'done';
 
-/** The log's tabs in order. The Eidolons tab (Askel, Nivra, Aurelan, Voltara, Gorm and Vaelkhar's chains) waits for its batch. */
+/** The log's tabs in order. The Eidolons tab (Askel, Nivra, Aurelan, Voltara, Gorm and Vaelkhar's chains) shows once a chain has been
+ *  offered (`chainsShown`): `shown` is for the tabs that always show. */
 export const LOG_TABS: readonly { id: LogTab; label: string; shown: boolean }[] = [
   { id: 'active', label: 'Active', shown: true },
   { id: 'board', label: 'Board', shown: true },
@@ -38,6 +42,9 @@ export interface LogHooks {
   fight?(battle: string): void;
   /** The quest battle saved part-way, if there is one (its Fight reads Continue). */
   saved?(): string | null;
+  /** EIDOLON-CHAINS: go to the Summoner in the Sanctum, and play a chain's prologue again. */
+  summoner?(): void;
+  story?(chain: string): void;
 }
 
 /** Draw the log on a tab into the sheet's box. */
@@ -55,12 +62,13 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
   tabs.setAttribute('role', 'tablist');
   const s = m.quests;
   const count: Partial<Record<LogTab, number>> = { active: s?.active.length ?? 0, board: s?.offers.length ?? 0 };
-  for (const t of LOG_TABS.filter((x) => x.shown)) {
+  for (const t of LOG_TABS.filter((x) => x.shown || (x.id === 'eidolons' && chainsShown(m)))) {
     const b = el('button', `qlTab${t.id === tab ? ' on' : ''}`, t.label);
     b.setAttribute('role', 'tab');
     b.setAttribute('aria-selected', String(t.id === tab));
     if (t.id === 'active') b.textContent = `Active ${count.active}/${ACTIVE_MAX}`;
     if (t.id === 'board' && count.board) b.append(el('i', 'qlDot', String(count.board)));
+    if (t.id === 'eidolons' && summonerWaiting(m)) b.append(el('i', 'qlDot', '!'));
     b.addEventListener('click', () => {
       dropping = null;
       redraw(t.id);
@@ -70,6 +78,7 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
   const list = el('div', 'qlList');
   if (tab === 'active') drawActive(list, m, () => redraw(), hooks);
   else if (tab === 'board') drawBoard(list, m, () => redraw(), hooks);
+  else if (tab === 'eidolons') drawEidolonsTab(list, m, hooks);
   else drawDone(list, m, hooks);
   box.append(head, tabs, list);
 }

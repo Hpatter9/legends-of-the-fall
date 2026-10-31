@@ -127,6 +127,8 @@ const clearScene = (c: ArmyClear): Scene => ({
   blurb: c.blurb,
   moment: { kind: 'armyClear', army: c.army },
   family: 'clear',
+  // (REVEAL: the army this clear opens, if the stars allow it)
+  reveal: { kind: 'nextArmy', after: c.army },
   cast: {
     boss: { role: `unit:${c.boss}`, x: 400, facing: 'left', scale: 1.5 },
     escort: { role: `unit:${c.escort}`, x: 480, facing: 'left', hidden: true },
@@ -286,6 +288,7 @@ const awakenScene = (kind: string, i: number): Scene => ({
   blurb: 'A hero awakens: radiant light, a heightened presence and a dry observation.',
   moment: { kind: 'awaken', hero: kind },
   family: 'awaken',
+  reveal: { kind: 'awaken', hero: kind },
   cast: {
     hero: { role: `unit:${kind}`, x: 285, facing: 'right', hidden: true },
     duchess: { role: 'duchess', x: 215, facing: 'right', hidden: true },
@@ -416,6 +419,7 @@ const buildScene = (b: Build): Scene => ({
   blurb: b.blurb,
   moment: { kind: 'castle', site: b.site },
   family: 'castle',
+  reveal: { kind: 'building', site: b.site },
   cast: {
     mason: { role: 'unit:peasant', x: 250, facing: 'right', hidden: true },
     sawyer: { role: 'unit:peasant', x: 310, facing: 'left', hidden: true },
