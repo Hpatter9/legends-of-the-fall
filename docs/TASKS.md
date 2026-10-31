@@ -16,11 +16,29 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### RELICS-2 — The relics redone as the keep's lost artefacts (step 1: the six Chapters and the Storied relics)
 
-- **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.290.0 merged).
+- **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.293.0 merged).
 - **Goal:** the owner's approved redesign (`docs/notes/relics-redesign.md`), step 1: the keep's 24 relics in six Chapters and six Storied relics, each with lore and a rule with character (a price, a condition, growth, a tie to the keep's enemies); the relic card on the prep screen (lore always shown, prices in red); a relic's icon over the hero when it fires; old saves converted (merged relics paid back, one line on the next prep screen); Auto leaves prices it cannot pay well; `npm run relic-balance`; placeholder icons and the painted icons' prompts. Step 2 (the Eidolons' reliquaries in the Calamity) is not begun. Part 1 (the strip on the prep screen only, `claude/relics`) is included.
 - **Scope:** new `src/sim/relicFight.ts`, `src/relicCard.ts`, `src/relicCard.css`, `test/relics-2.test.ts`, `tools/relics/`; `src/sim/relics.ts`, `relicSets.ts`; hooks in `src/sim/battle.ts`, `abilities.ts`, `heroKits.ts`, `spells.ts`, `run.ts`, `stand.ts`, `tower.ts`, `events.ts`, `market.ts`, `midEvents.ts`, `mystery.ts`, `elites.ts`, `autoplay.ts`, `waveGains.ts`; `src/events.ts`, `src/towerElites.ts`, `src/standView.ts`, `src/render/fx.ts`, `src/render/items.ts`, `build.mjs`, `package.json`, `CREDITS.md`.
 - **Status:** ready for review. [Note](notes/relics-2.md); [art prompts](notes/relic-art-prompts.md); screenshots `samples/relics-2-*.png`, `samples/relics-prep-*.png`.
 
+### STATS-1 — The six ability scores as data (D&D stats design, batch 1)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/stats-1`, `/home/user/lotf-stats1` (from main 0.289.0).
+- **Goal:** batch 1 of the owner-approved [D&D stats design](notes/rpg-stats-design.md): the six scores, modifiers, proficiency by level, the 45 heroes' profiles (each 17, 15, 13, 12, 10, 8), growth fixed by calling, rank, grade and awakening steps, the derived numbers (AC, to hit, DC, saves, crit), the foes' family blocks and the hashed d20s, as pure data. No fight changes.
+- **Scope:** new `src/sim/stats.ts`, `test/stats.test.ts`, `tools/stats/fit.mjs`/`fit.ts`, `docs/notes/stats-1.md`, `docs/notes/rpg-stats-design.md` (the design, copied).
+- **Status:** ready for review. [Note](notes/stats-1.md).
+### RELICS — Relics on the wave-prep screen only; a proposal to redo the relics as the keep's lost artefacts
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/relics`, `/home/user/lotf-relics` (from main 0.289.0).
+- **Goal:** the owner's "The party relic doesn't need to be in the battle screen during a wave, just the wave prep screen. Also we should redo these so they are more of a relic, rather than an individual piece of gear". Part 1 (built): the relic strip shows on the wave-prep screen only; a tap reads the relic and its set's count. Part 2 (a design for approval, no rules changed): the relics redone as the keep's lost artefacts, each with lore and a rule with character (a price, a condition, a growing power, a story tie), the sets as the keep's Chapters and the Eidolons' reliquaries, six Storied relics, save conversion, balance and art plans.
+- **Scope:** `src/index.html` (one rule), `src/events.ts` (`drawStrip`), new `tools/relics/prep-shots.mjs`; `docs/notes/relics-redesign.md`.
+- **Status:** part 1 ready for review ([note](notes/relics-prep.md), screenshots `samples/relics-prep-*.png`); part 2 awaits the owner's decisions ([proposal](notes/relics-redesign.md), open questions at its end).
+### AUTO-CAST — Auto fires the ultimates and casts the king's spells
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/auto-cast`, `/home/user/lotf-autocast` (from main 0.289.0).
+- **Goal:** the owner's "For Auto in battle, it should do auto spells and ultimates": the fight's one Auto switch (kept in `Meta.ultAuto`) fires the ultimates as before and casts the equipped spells on its own through `castSpell`, by a pure deterministic chooser (help, then harm, then buffs, with a mana reserve), in every mode and under auto-replay; the War Horn stays manual.
+- **Scope:** new `src/sim/autoCast.ts`, `test/auto-cast.test.ts`, `tools/auto-cast/`; hooks in `src/sim/battle.ts` (`Battle.autoSpells`, the call in `stepBattle`), `src/sim/spells.ts` (`SpellState.autoAt`), `src/main.ts`, `src/standView.ts`, `src/fightHud.ts` + `.css` (the switch's ULT+SPELL line), `src/tips.ts`, `tools/autoplay.ts` (`botSpells`, off by default).
+- **Status:** ready for review. [Note](notes/auto-cast.md) (win rates spells never vs Auto, and a question for the owner); screenshots `samples/auto-cast-*.png`.
 ### HUD-FACES — The heroes' painted faces in the fight's stat views
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/hud-faces`, `/home/user/lotf-hudfaces` (from main 0.287.0).

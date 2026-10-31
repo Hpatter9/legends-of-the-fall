@@ -27,6 +27,7 @@ import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWar
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
+import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
@@ -402,6 +403,9 @@ export interface Battle {
   fog?: number;
   /** Whether the heroes' ultimates fire on their own (`heroKits.ts`): unset means yes, so every headless fight (tests, the balance tools, the bots) fires them; the page sets it from the player's Auto switch (and on for auto-replay). */
   autoUlt?: boolean;
+  /** AUTO-CAST (`autoCast.ts`): the king's spells to cast on their own, the player's equipped ones, set by the page while the fight's Auto
+   *  switch is on (and under auto-replay). Unset (every headless fight, Auto off) casts nothing. */
+  autoSpells?: SpellId[];
   /** The player's orders waiting for the next tick (`orders.ts`), and every order applied so far, with the king's spells: with the seed and the placing, a fight replays from it. */
   orders?: Order[];
   log?: LogEntry[];
@@ -808,6 +812,8 @@ export const battleTap: { fn?: (b: Battle, events: BattleEvent[]) => void } = {}
 
 export function stepBattle(b: Battle): BattleEvent[] {
   const out = stepOnce(b);
+  // (AUTO-CAST: with Auto on, a spell worth casting is cast now, between this tick and the next, where a tap would land)
+  if (b.autoSpells) autoCast(b);
   battleTap.fn?.(b, out);
   return out;
 }
