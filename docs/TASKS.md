@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).
+- **Goal:** the owner's "make the main room in the Calamity more alive ... that rift is the middle one they walk into, in a bright flash that zooms in and fades back in to the next battleground", and the walk out of the portal after a win with the cards rising one by one.
+- **Scope:** new `src/hubMotion.ts`, `test/calamity-hub.test.ts`, `tools/calamity/hub-shots.mjs`; `src/sanctuaryView.ts`, `src/sanctuary.css`. No sim change.
+- **Status:** ready for review. [Note](notes/calamity-hub.md); screenshots `samples/calhub-*.png`.
+
 ### CINE-001 — Movie-like cinematics: shot language, every story scene
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/cinematics`, `/home/user/lotf-cine` (from main 0.271.0).
