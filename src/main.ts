@@ -13,10 +13,14 @@ import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
-import { closeMapLeg, noteFightStats, notePayout, noteWave, recapOf } from './sim/runRecap';
+import { closeMapLeg, heartsBurned, noteFightStats, notePayout, noteWave, noteXpStart, recapOf } from './sim/runRecap';
 import { towerHeadline, waveHeadline, waveNotes, type WaveMoments } from './sim/waveCard';
 import { gainsSince, snapGains } from './sim/waveGains';
 import { drawWaveNotes } from './waveCardView';
+// (JRPG-RECAP: the results screen after every fight and atop the run's end recap)
+import { playResults, type JrData, type JrPlayer } from './jrpgRecapView';
+import { questLines } from './sim/jrpgRecap';
+import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
@@ -39,6 +43,8 @@ import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { direct } from './sim/cineDirector';
 import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
+import { revealOf, type RevealGo } from './sim/sceneReveal';
+import { showEndCard } from './revealCard';
 import { ACT_HALLS, ACT_NUMERALS, ROOM_NAMES } from './sim/standActs';
 import { roomLine } from './standRetreatLines';
 import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene } from './sim/sceneRules';
@@ -62,6 +68,7 @@ import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
 import { Events } from './events';
 import { TowerView } from './towerView';
+import { updateAltarHud } from './altarHud';
 import { StandView } from './standView';
 import { loadStand, migrateOldClimb, standContinueLine } from './sim/stand';
 import { showTwistBanner } from './twistView';
@@ -135,6 +142,8 @@ import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
+import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
+import { chainOfBattle, type PieceFound } from './sim/eidolonChains';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
@@ -245,6 +254,9 @@ class Game {
   private passing: { wait: number; marched: boolean } | null = null;
   /** The settled wave's short card (WAVE-RECAP): its number, its count of waves, and the moments worth a line; null for a card that keeps the full report (the spire and the Calamity). */
   private waveCard: (WaveMoments & { wave: number; of: number | null; title?: string }) | null = null;
+  /** JRPG-RECAP: the results screen's data once a fight is settled, and its player once the card is up. */
+  private jrData: JrData | null = null;
+  private jr: JrPlayer | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -402,6 +414,8 @@ class Game {
       onWatchScene: (id) => void this.playScene(id),
       // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
       onQuestBattle: (id) => this.openQuestBattle(id),
+      // (EIDOLON-CHAINS: a chain's prologue, played over the home screen whatever the Cinematics setting: it is the chain's sense)
+      onStory: (scene) => this.scenes.play(scene, this.players()),
       questSaved: () => {
         const r = loadSlot('quest');
         return r?.mode?.kind === 'quest' ? r.mode.quest : null;
@@ -488,7 +502,9 @@ class Game {
       if (!this.homeUp) this.app.ticker.start();
       // (an earned deploy helper is told on the deploy screen the player comes back to: DEPLOY-ZOOM)
       if (!this.homeUp && this.b.phase === 'deploy' && !this.auto) this.tellUnlocks();
-      else if (this.b.phase !== 'fight') this.app.ticker.stop();
+      // (only under the home screen: a quest battle begun from the home screen just after a run was won used to find its ticker stopped
+      //  here, the old fight's 'won' still on the board, and its fight never moved; EIDOLON-CHAINS)
+      else if (this.homeUp && this.b.phase !== 'fight') this.app.ticker.stop();
     };
     // (the tips on the home screen are still looked after, a few times a second)
     setInterval(() => this.homeUp && tips.update(), 250);
@@ -534,6 +550,7 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
+    this.stopResults();
     this.placeSquad();
     this.acc = 0;
     this.chosen = null;
@@ -683,7 +700,32 @@ class Game {
     // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    if (settings().cinematics) await this.scenes.play(id, players);
+    if (!settings().cinematics) return;
+    await this.scenes.play(id, players);
+    // (REVEAL: a film that revealed something ends on its card, played through or skipped)
+    await this.endCard(id);
+  }
+
+  /** The end cards shown this session, by key (REVEAL): the older army banner stands aside for one already shown. */
+  private revealed = new Set<string>();
+
+  /** A film's end card, if it revealed something (REVEAL, `sim/sceneReveal.ts`): its button goes there only from the home screen (never
+   *  out of a fight or its result, nor out of the Scenes list's replay, `mayGo` false); elsewhere it says where, with Continue. */
+  private async endCard(id: string, mayGo = true): Promise<void> {
+    const card = revealOf(id, this.meta);
+    if (!card) return;
+    this.revealed.add(card.key);
+    const to = card.go?.to;
+    const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
+    await showEndCard(card, go);
+  }
+
+  /** Where an end card's button goes (REVEAL). */
+  private revealGo(to: RevealGo): void {
+    if (to.to === 'calamity') return this.home.enterCalamity();
+    if (to.to === 'armies') return this.home.openArmies(to.army);
+    if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
+    this.home.show(to.to);
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -740,7 +782,11 @@ class Game {
     const five = mo && (mo.kind === 'combo' || mo.kind === 'comboCut') ? comboById(mo.set)?.heroes : undefined;
     const film = SCENES[id] ? id : this.filmOf(id);
     if (!film) return Promise.resolve('skipped');
-    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players());
+    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players()).then(async (e) => {
+      // (REVEAL: a replay ends on its card too, with Continue only)
+      if (SCENES[id]) await this.endCard(id, false);
+      return e;
+    });
   }
 
   /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */
@@ -1011,6 +1057,8 @@ class Game {
   private frame(dt: number, elapsed = dt): void {
     const b = this.b;
     tips.update();
+    // (ALTAR-CLEAR: the altar's chip in a Calamity fight; it only reads the battle)
+    updateAltarHud(this.standOn || this.homeUp ? undefined : b);
     if (this.standOn) return;
     if (this.homeUp && b.phase !== 'fight') {
       this.app.ticker.stop();
@@ -1659,6 +1707,8 @@ class Game {
   private ultm!: UltMoments;
   /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
   private bossm = new BossMoments();
+  /** EIDOLON-CHAINS: a piece a quest battle's win found, shown once its beat after has played. */
+  private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
@@ -1717,6 +1767,8 @@ class Game {
         if (at && settings().quips) showQuip(at, text, { who: heroName(hero.def), hold: 3200 });
       },
       stage: () => this.app.canvas,
+      // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
+      gallery: () => this.home.openGallery(),
     });
     $('hudSpells').prepend(this.eid.horn.root);
     const canvas = this.app.canvas;
@@ -1791,8 +1843,13 @@ class Game {
     // (a tap anywhere hurries the heart-burn: the wave starts at once, and the line goes)
     document.addEventListener('pointerdown', () => this.skipRevive(), true);
     // (a tap on the short card over the march goes straight on to the next wave)
+    // (JRPG-RECAP: a first tap hurries the count-ups to their end; once they are done, a tap between waves goes on, and at a fight's end
+    // with one way on, it presses that way)
     $('result').addEventListener('click', (e) => {
-      if (this.passing && !(e.target as HTMLElement).closest('button')) this.passOn();
+      if ((e.target as HTMLElement).closest('button')) return;
+      if (this.jr && this.jr.finish()) return;
+      if (this.passing) this.passOn();
+      else if (this.jr?.done() && $('qbLeave').hidden && !$('result').hidden) ($('next') as HTMLButtonElement).click();
     });
     $('qbLeave').addEventListener('click', () => this.leaveQuest());
     $('next').addEventListener('click', () => {
@@ -2047,8 +2104,13 @@ class Game {
       .then(() => {
         this.sceneHold--;
         void this.revealEarned().then(() => {
-          this.home.open(practice ? `${qb.title}: won again, for practice.` : `${qb.title} won! Hand the quest in at the tavern.`);
-          if (!practice) this.home.openQuests('active');
+          // (EIDOLON-CHAINS: a chain's battle hands no quest in: its piece was found, and the log opens on the chain)
+          const chain = chainOfBattle(qb.id);
+          this.home.open(practice ? `${qb.title}: won again, for practice.` : chain ? `${qb.title} won! A piece of the pact is found.` : `${qb.title} won! Hand the quest in at the tavern.`);
+          if (!practice) this.home.openQuests(chain ? 'eidolons' : 'active');
+          const piece = this.pendingPiece;
+          this.pendingPiece = null;
+          if (piece) showPieceCard(piece, { next: nextWords(this.meta, piece), onClose: () => this.home.openQuests('eidolons') });
         });
       });
   }
@@ -2059,7 +2121,7 @@ class Game {
     endVictory();
     const qb = questBattleOfRun(this.run);
     this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
-    this.home.openQuests('active');
+    this.home.openQuests(qb && chainOfBattle(qb.id) ? 'eidolons' : 'active');
   }
 
   private startRun(run: Run): void {
@@ -2182,11 +2244,25 @@ class Game {
     const card = $('result');
     if (!p || card.hidden) return;
     if (document.body.dataset.move) p.marched = true;
+    // (JRPG-RECAP: the results screen waits for a tap, as a JRPG's does; the march goes on behind it)
+    if (this.jr) return;
     if (document.body.dataset.move || this.sceneHold || this.homeUp || this.destinationReveal) return;
     p.wait += dt;
     const stay = p.marched ? PASS_AFTER_MARCH_MS : PASS_NO_MARCH_MS;
     if (p.wait >= stay - PASS_FADE_MS) card.classList.add('leaving');
     if (p.wait >= stay) this.passOn();
+  }
+
+  /** JRPG-RECAP: the results screen is going (a new fight): its clock stops and its parts are emptied. */
+  private stopResults(): void {
+    this.jr?.stop();
+    this.jr = null;
+    this.jrData = null;
+    for (const id of ['jrHead', 'jrBody']) {
+      $(id).hidden = true;
+      $(id).replaceChildren();
+    }
+    $('result').classList.remove('jr');
   }
 
   /** The short card is done: the next wave. */
@@ -2364,7 +2440,9 @@ class Game {
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
     // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
     const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
-    showRecap($('recap'), recapOf(run), { ...head, joke, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
+    // (JRPG-RECAP: the run's results screen at the top: each hero's XP over the run, the MVP, the gold and crowns counted up)
+    const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) });
+    showRecap($('recap'), recapOf(run), { ...head, joke, results, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -2383,7 +2461,8 @@ class Game {
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
     const focus = this.runStars?.chests.length ? army.id : undefined;
-    if (next) showUnlock(next, army, () => this.home.openArmies(focus));
+    // (REVEAL: the army's last-stand film already ended on this army's card: straight to the armies)
+    if (next && !this.revealed.has(`army:${next.id}`)) showUnlock(next, army, () => this.home.openArmies(focus));
     else this.home.openArmies(focus);
   }
 
@@ -2963,6 +3042,9 @@ class Game {
       if (won && !army && !daily && !quest && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       // (QUESTS: the quests this fight completes are told after the achievements' toasts)
       const readyBefore = readyQuests(this.meta);
+      const questsBefore = questSnap(this.meta);
+      // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
+      const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
@@ -2992,6 +3074,8 @@ class Game {
       const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
+      // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
+      if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
       const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
@@ -3008,7 +3092,9 @@ class Game {
       const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)));
       if (horn.added > 0) this.eid.gained(horn.added);
       const hornSaid = hornLine(horn);
-      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}) };
+      // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
+      const questMoved = questsMoved(this.meta, questsBefore, questsDone, questsFound);
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -3039,12 +3125,26 @@ class Game {
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
         drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : [], this.waveCard?.gains ?? []);
         for (const id of ['xp', 'fightStats']) $(id).hidden = true;
+        // (JRPG-RECAP, the owner's call: between waves the short card above; the full results screen only where a run ends with no
+        // end recap after it (a spire's or Calamity's last fight, a quest battle's end). An army's, the daily's and an endless run's
+        // last card stays short too: their end recap, one tap on, is the results screen)
+        const share = this.pay?.replay ? 'a replay pays a share' : run.mode?.kind === 'daily' && run.mode.practice ? 'practice' : '';
+        if (run.over && (run.tower || quest)) this.jrData = fightResult(
+          { meta: this.meta, run, b, stats: this.stats, won, card: this.waveCard, gains, bench, own, gold: this.gain, crowns: quest ? null : this.crownGain, ...(share ? { crownNote: share } : {}), notes: this.pay?.firstClear ? ['First clear!'] : [], quests: questMoved },
+          '',
+          this.passing ? 'Tap to continue' : undefined,
+        );
       }
       saveMeta(this.meta);
       saveRun(run);
       toastAchievements(earned);
       if (questsDone.length) setTimeout(() => toastQuests(questsDone), earned.length * 2800);
       if (questsFound.length) setTimeout(() => toastFound(questsFound), (earned.length + (questsDone.length ? 1 : 0)) * 2800);
+      // (EIDOLON-CHAINS: a piece found: its card over the result, a moment after it shows; an auto-replay keeps going, and the log has it)
+      const pieces = (this.meta.quests?.pieces ?? []).filter((id) => !piecesBefore.includes(id)).map(pieceInfo).filter((p) => !!p);
+      // (a quest battle's piece waits for its beat after: the card shows over the quest log, `questEnd`)
+      if (pieces.length && quest) this.pendingPiece = pieces[0];
+      else if (pieces.length && !this.auto) setTimeout(() => showPieceCard(pieces[0], { next: nextWords(this.meta, pieces[0]) }), 900);
     }
     document.body.dataset.phase = b.phase;
     document.body.dataset.roster = run.roster.length ? 'some' : 'none';
@@ -3109,7 +3209,12 @@ class Game {
       // (a short card's pay line drops the finds, which have lines of their own, and the dry aside)
       if (card && b.phase === 'won') $('summary').textContent = qrun ? `+${this.gain} gold · ${clock(b.t)}` : `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
       result.classList.toggle('short', !!card);
-      result.classList.toggle('passing', !!this.passing);
+      // (JRPG-RECAP: the results screen, started the first time the card shows; it keeps the card's heading as its line)
+      if (this.jrData && !this.jr) this.jr = playResults({ head: $('jrHead'), body: $('jrBody') }, this.jrData);
+      this.jr?.setSub($('banner').textContent ?? '');
+      result.classList.toggle('jr', !!this.jr);
+      result.classList.toggle('jrWon', !!this.jr && b.phase === 'won');
+      result.classList.toggle('passing', !!this.passing && !this.jr);
       if (card) $('joke').hidden = true;
       else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);

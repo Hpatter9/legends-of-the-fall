@@ -31,6 +31,14 @@ import { infoOf } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { fullScene } from './ultMomentRules';
 import { portrait } from './render/sheets';
+// (JRPG-RECAP: the end card's results: each hero's run levels and the stats they added, the MVP, the crowns counted up)
+import { playResults, type JrHero, type JrPlayer } from './jrpgRecapView';
+import { standGrowth, statsAt } from './sim/jrpgRecap';
+import { facePortrait } from './jrpgResults';
+import { ICONS } from './menuArt';
+import { heroTitle } from './sim/heroNames';
+import { awakenedOf } from './sim/awaken';
+import { rankMult } from './sim/meta';
 import { battleSheet, lookSheet } from './render/awakenLook';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
@@ -53,6 +61,7 @@ import { clockSeed } from './modes';
 import { settings } from './settings';
 import { rulerOf, rulerWords } from './rulerRules';
 import { noteQuests, standFight } from './sim/quests';
+import { noteChains } from './sim/eidolonChains';
 import { EidolonCall } from './eidolonCall';
 import { addHorn, standHornGain } from './sim/warHorn';
 import { BOSS_EVERY } from './sim/stand';
@@ -1825,14 +1834,22 @@ export class StandView {
     // (the waves the run cleared count for the quests taken, once: QUESTS)
     // (EIDOLONS: the run fills the War Horn at the Stand's share, its boss waves and its foes, at most 300; none if it was blown in it)
     if (first && this.summary) addHorn(m, standHornGain(Math.floor(this.summary.cleared / BOSS_EVERY), Math.max(0, this.summary.kills - Math.floor(this.summary.cleared / BOSS_EVERY)), s.b.eidolon?.called !== undefined));
-    if (first && this.summary) this.host.questsDone?.(noteQuests(m, standFight(this.summary.cleared, { best: this.summary.best, act: this.summary.act, held: this.summary.holds })));
+    if (first && this.summary) {
+      const sf = standFight(this.summary.cleared, { best: this.summary.best, act: this.summary.act, held: this.summary.holds });
+      this.host.questsDone?.(noteQuests(m, sf));
+      // (EIDOLON-CHAINS: a chain's part may ask for the Last Stand too; its piece shows in the quest log)
+      noteChains(m, sf);
+    }
     saveMeta(m);
     dropStand();
     const end = this.parts.end;
     end.replaceChildren();
-    const card = el('div', 'stCard stEndCard');
+    const card = el('div', 'stCard stEndCard jrStand');
     const sum = this.summary!;
-    card.append(el('i', 'stCrest'), el('h2', '', 'The king has fallen'), el('p', 'stBig', `Wave ${sum.best}`));
+    // (JRPG-RECAP: the results screen's banner and party head the card; the run's facts follow as they were)
+    const jrHead = el('div');
+    const jrBody = el('div');
+    card.append(jrHead);
     // (where it ended, in the retreat's rooms: STAND-RETREAT)
     if (sum.room) card.append(el('p', 'stFell', `Fell in ${ROOM_NAMES[sum.room].the}, wave ${sum.best}${sum.held ? ', holding the line' : ''}`));
     if (sum.act === 3) card.append(el('p', 'stThrone', '♛ Reached the throne room'));
@@ -1841,7 +1858,6 @@ export class StandView {
     const row = (a: string, b: string) => rows.append(Object.assign(el('div'), { innerHTML: `<span>${a}</span><b>${b}</b>` }));
     row('Waves cleared', String(sum.cleared));
     row('Foes felled', String(sum.kills));
-    row('Crowns', `+${sum.crowns}`);
     const chests = [sum.bronze && `${sum.bronze} bronze`, sum.silver && `${sum.silver} silver`, sum.gold && `${sum.gold} gold`].filter(Boolean).join(', ');
     if (chests) row('Chests', chests);
     if (sum.gear.length) row('Equipment', sum.gear.join(', '));
@@ -1850,7 +1866,24 @@ export class StandView {
     row('Heroes held', String(sum.heroes));
     // (the relics the run gathered, those holding the line paid among them: STAND-HOLD-RELIC)
     if (sum.relics) row('Relics', `${sum.relics}${sum.heldRelics ? ` (${sum.heldRelics} for holding the line)` : ''}`);
-    card.append(rows);
+    card.append(jrBody, rows);
+    this.endResults?.stop();
+    this.endResults = playResults({ head: jrHead, body: jrBody }, {
+      won: false,
+      title: 'THE KING HAS FALLEN',
+      sub: `Wave ${sum.best}`,
+      facts: [
+        { label: 'Waves cleared', value: String(sum.cleared) },
+        { label: 'Foes felled', value: String(sum.kills) },
+        { label: 'Heroes held', value: String(sum.heroes) },
+      ],
+      heroes: this.endHeroes(m),
+      ...this.endMvp(m),
+      counts: [{ label: 'Crowns', n: sum.crowns, icon: ICONS.crowns }],
+      items: [],
+      lines: [],
+    });
+    card.addEventListener('click', (e) => void (!(e.target as HTMLElement).closest('button') && this.endResults?.finish()));
     const btns = el('div', 'stRow');
     const again = el('button', 'primary', 'Stand again');
     again.addEventListener('click', () => void this.open());
@@ -1863,6 +1896,29 @@ export class StandView {
       end.hidden = false;
     }, 900);
     play('defeat');
+  }
+
+  /** JRPG-RECAP: the end card's results screen, while it counts up. */
+  private endResults: JrPlayer | null = null;
+
+  /** The eight's rows for the end card: each one's run levels (from 0) and the hp and attack they added on its stats as it came in. */
+  private endHeroes(m: Meta): JrHero[] {
+    const best = this.endBest();
+    return (this.s?.run.heroes ?? []).map((h) => {
+      const k = rankMult(heroRank(m, h.kind));
+      const base = statsAt(h.kind, levelOfKind(m, h.kind), 'lasting', { hp: k, atk: k });
+      return { kind: h.kind, growth: standGrowth(h.kind, h.lv, h.xp, base), face: facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1)), fell: !!h.fallen, mvp: h.id === best?.id, note: `${h.kills ?? 0} felled` };
+    });
+  }
+  /** The hero that felled the most (none when nobody felled any). */
+  private endBest() {
+    const list = [...(this.s?.run.heroes ?? [])].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0) || b.lv - a.lv);
+    return list[0] && (list[0].kills ?? 0) > 0 ? list[0] : undefined;
+  }
+  private endMvp(m: Meta) {
+    const h = this.endBest();
+    if (!h) return {};
+    return { mvp: { face: facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1)), name: heroTitle(h.kind), line: `Felled the most foes · ${h.kills ?? 0} felled · run level ${h.lv}` } };
   }
 
   /** For tests and screenshots: the pause sheet of the run in play. */

@@ -15,7 +15,7 @@
 // - **Goals** are counted by `noteQuests`, called with `checkAchievements` (`settleRun`) and at the Last Stand's end; losing never
 //   takes progress away. A done quest waits for its hand-in, which pays.
 //
-// The Eidolon chains (a later batch) will keep their state beside this in `Meta.quests` (`chains`, `pieces`).
+// The Eidolon chains keep their state beside this in `Meta.quests` (`chains`, `pieces`; their rules are in `eidolonChains.ts`).
 
 import type { AchievementCtx } from './achievements';
 import { ARMIES, armyCleared, armyUnlocked, clearedCount, recordOf, waveFoes } from './armies';
@@ -36,6 +36,7 @@ import { grantTomes } from './tomes';
 import { giveShards } from './unlock';
 import { COMBOS } from './combos';
 import { castOwned, questBattleById } from './questBattles';
+import { readChainState, type ChainState } from './eidolonChainData';
 import {
   BEST_GOALS,
   GIVERS,
@@ -101,6 +102,9 @@ export interface QuestState {
   tries?: Record<string, number>;
   won?: string[];
   told?: string[];
+  /** The Eidolon chains (EIDOLON-CHAINS, `eidolonChains.ts`): each chain begun, its part and count, and the pieces found. */
+  chains?: Record<string, ChainState>;
+  pieces?: string[];
 }
 
 export const blankQuests = (): QuestState => ({ active: [], offers: [], done: [] });
@@ -643,7 +647,7 @@ export function readQuests(raw: unknown): QuestState | undefined {
     const ids = [...new Set((Array.isArray(r[k]) ? r[k] : []).filter((id): id is string => typeof id === 'string' && !!questBattleById(id)))];
     if (ids.length) s[k] = ids;
   }
-  // (a later batch's chain state, kept as it was so an older build does not wipe it)
-  for (const k of ['chains', 'pieces'] as const) if (k in (raw as object)) (s as unknown as Record<string, unknown>)[k] = (raw as Record<string, unknown>)[k];
+  // (EIDOLON-CHAINS: the chains begun and the pieces found, read safely)
+  Object.assign(s, readChainState(r));
   return s;
 }

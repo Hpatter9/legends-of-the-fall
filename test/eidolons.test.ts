@@ -244,7 +244,14 @@ test('the horn fills per mode: boss waves 100, ordinary foes 1, auto-replay half
 });
 
 test('the horn waits when full, empties when blown, needs an Eidolon bound, and keeps its fill when another is chosen', () => {
+  // (HORN-GIFT, the owner's new ask: the horn is given full at the first binding and fills nothing before it, so this test, which filled it
+  //  before any Eidolon was bound, now binds first; the gift itself is `horn-gift.test.ts`)
   const m = startedMeta(1);
+  assert.equal(hornReady(m), false, 'no Eidolon has answered yet');
+  assert.equal(blowHorn(m), false);
+  assert.equal(chooseEidolon(m, 'nivra'), false, 'only one bound may be chosen');
+  bindEidolon(m, 'askel');
+  assert.ok(blowHorn(m), 'given full at the first binding');
   assert.equal(addHorn(m, 640).fill, 640);
   const add = addHorn(m, 500);
   assert.equal(add.fill, HORN_FULL);
@@ -253,10 +260,6 @@ test('the horn waits when full, empties when blown, needs an Eidolon bound, and 
   const more = addHorn(m, 100);
   assert.equal(more.added, 0, 'full, it waits');
   assert.equal(more.wasFull, true);
-  assert.equal(hornReady(m), false, 'no Eidolon has answered yet');
-  assert.equal(blowHorn(m), false);
-  assert.equal(chooseEidolon(m, 'nivra'), false, 'only one bound may be chosen');
-  bindEidolon(m, 'askel');
   bindEidolon(m, 'nivra');
   assert.equal(chosenOf(m), 'askel', 'the first bound answers');
   assert.ok(chooseEidolon(m, 'nivra'));
@@ -264,7 +267,7 @@ test('the horn waits when full, empties when blown, needs an Eidolon bound, and 
   assert.ok(hornReady(m));
   assert.ok(blowHorn(m));
   assert.equal(m.eidolons!.horn, 0);
-  assert.equal(m.eidolons!.calls, 1);
+  assert.equal(m.eidolons!.calls, 2);
   assert.equal(blowHorn(m), false);
 });
 
@@ -275,11 +278,13 @@ test('saves: an older save has an empty horn; the field is read safely and kept 
   assert.deepEqual(readEidolons({ horn: 5000, bound: ['askel', 'nope', 'askel'], chosen: 'nope', seen: ['x'] }), { horn: HORN_FULL, bound: ['askel'], chosen: 'askel' });
   const store = new Map<string, string>();
   (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => store.set(k, v), removeItem: (k: string) => store.delete(k) };
-  addHorn(m, 250);
+  // (HORN-GIFT: bound first, the horn given full, blown, then filled to 250)
   bindEidolon(m, 'gorm');
+  blowHorn(m);
+  addHorn(m, 250);
   store.set('legends.meta', JSON.stringify(m));
   const back = loadMeta(2);
-  assert.deepEqual(back.eidolons, { horn: 250, bound: ['gorm'], chosen: 'gorm' });
+  assert.deepEqual(back.eidolons, { horn: 250, bound: ['gorm'], chosen: 'gorm', calls: 1 });
   delete (m as { eidolons?: unknown }).eidolons;
   store.set('legends.meta', JSON.stringify(m));
   assert.equal(loadMeta(2).eidolons, undefined);

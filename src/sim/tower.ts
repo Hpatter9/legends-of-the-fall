@@ -8,6 +8,7 @@
 
 import { destinationBoard, destinationWorld, expeditionOf, growExpeditionStarter, sanctuaryMap, type RiftWorld } from './sanctuary';
 import { growStarter, pendingAltar, RIFT_BOSSES } from './rift';
+import { CORRUPT } from './altarRules';
 import type { RunRecap } from './runRecap';
 import type { Battle, Boost, Stage } from './battle';
 import { CLASSIC_AREAS } from './board';
@@ -894,7 +895,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   if (!t.cur?.side) healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
   const twist = t.cur?.fight?.stage.twist;
-  const paid = Math.round((1 + (run.rift?.corruption ?? 0) * 0.1) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
+  const paid = Math.round((1 + (run.rift?.corruption ?? 0) * CORRUPT.gold) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
   run.gold += paid;
   const recap = recapOf(run);
   if (recap) {

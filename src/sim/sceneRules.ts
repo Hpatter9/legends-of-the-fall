@@ -136,6 +136,8 @@ export function momentText(mo: Moment): string {
       return 'The first time an army marches on the keep.';
     case 'questBattle':
       return 'A quest battle, before it begins and after it is won.';
+    case 'eidolon':
+      return "An Eidolon's chain, as its giver tells it.";
   }
 }
 

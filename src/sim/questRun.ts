@@ -15,6 +15,7 @@ import type { Meta } from './meta';
 import { castOf, questBattleById, questSeed, type QuestBattle } from './questBattles';
 import { questById } from './questData';
 import { blankQuests } from './quests';
+import { chainWantsBattle } from './eidolonChains';
 import { ARMY_START_GOLD, newRun, recruit, reward, SUMMON_BASE, type Run } from './run';
 
 /**
@@ -45,10 +46,11 @@ export function battleOfQuest(questId: string): QuestBattle | undefined {
 /** Whether a battle has been won before (a try now is practice). */
 export const battleWon = (m: Meta, id: string): boolean => !!m.quests?.won?.includes(id);
 
-/** Whether a battle may be fought now: a quest taken asks for it, or it was won before (a replay); and its cast is owned. */
+/** Whether a battle may be fought now: a quest taken asks for it, an Eidolon chain's part going does (EIDOLON-CHAINS), or it was won
+ *  before (a replay); and its cast is owned. */
 export function canFightBattle(m: Meta, id: string): boolean {
   const qb = questBattleById(id);
-  return !!qb && !!castOf(m, qb) && (!!questForBattle(m, id) || battleWon(m, id));
+  return !!qb && !!castOf(m, qb) && (!!questForBattle(m, id) || chainWantsBattle(m, id) || battleWon(m, id));
 }
 
 /** How many tries of a battle have been begun. */

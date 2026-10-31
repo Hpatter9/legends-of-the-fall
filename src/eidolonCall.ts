@@ -4,8 +4,8 @@
 // - **The War Horn**, in the fight beside the spell orbs and at the camp beside the stones: the horn's painting (`horn-empty`) with its lit
 //   painting (`horn-light`) revealed from the mouthpiece to the bell as it fills, and a glow along it that grows with it. A gain streams motes
 //   of light into it (a boss wave's is a rush). Full, it turns to its ready painting with a warm aura of drifting runes and a sheen crossing
-//   it, steady (nothing blinks). A tap when full blows it (a confirm the first time); before an Eidolon is bound it says "No Eidolon has
-//   answered you yet" and where to look.
+//   it, steady (nothing blinks). A tap when full blows it (a confirm the first time). Before the first Eidolon is bound the horn is not the
+//   player's yet (HORN-GIFT, `hornHeld`): both widgets are hidden, in the fight, the Last Stand and at the camp.
 // - **The call's cinematic**, built on the ultimate's moment (the dim, the hit-stop, the shake, the element's painted bursts, the flash) at
 //   a larger scale: the horn swings up and is blown, a summoning circle draws itself across the board, the sky tears open in the Eidolon's
 //   colour, its painted figure rises large between letterbox bars, breathing, with motes drifting off it, its name and title stamp in, then
@@ -24,7 +24,7 @@ import type { Battle, BattleEvent } from './sim/battle';
 import type { Meta } from './sim/meta';
 import { armEidolon, canCallEidolon, eidolonById, eidolonFullName, EIDOLONS, type Eidolon } from './sim/eidolons';
 import { orderEidolon } from './sim/orders';
-import { blowHorn, boundOf, chooseEidolon, chosenOf, HORN, hornOf, hornReady, noteSeen, seenCall } from './sim/warHorn';
+import { blowHorn, boundOf, chooseEidolon, chosenOf, HORN, hornHeld, hornOf, hornReady, noteSeen, seenCall } from './sim/warHorn';
 import { beatTimes, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
 import type { Fx } from './render/fx';
 import { play, duck } from './render/sound';
@@ -42,6 +42,8 @@ export interface EidolonCallOpts {
   cheer?: (b: Battle, text: string) => void;
   /** The board's picture (the page's canvas): the cinematic's camera frames it (a scale about a point), and puts it back after. */
   stage?: () => HTMLElement | null;
+  /** EIDOLON-CHAINS: open the Pact Gallery (from the horn's card at the camp). */
+  gallery?: () => void;
 }
 
 const URL_OF = (name: string) => `eidolons/${name}.webp`;
@@ -156,6 +158,8 @@ export class EidolonCall {
     document.body.append(this.layer, this.sheet);
     this.horn.root.addEventListener('click', () => this.tapFight());
     this.camp.root.addEventListener('click', () => this.openCamp());
+    // (HORN-GIFT: hidden from the start until the save holds the horn)
+    this.refresh(null);
     if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
   }
 
@@ -191,7 +195,8 @@ export class EidolonCall {
     const m = this.opts.meta();
     const spent = !!b?.eidolon && b.eidolon.called !== undefined;
     this.horn.set(hornOf(m), hornReady(m), spent);
-    this.camp.set(hornOf(m), hornReady(m));
+    this.horn.root.hidden = !hornHeld(m);
+    this.refreshCamp();
   }
 
   /** The fight's horn tapped. */
@@ -500,6 +505,8 @@ export class EidolonCall {
   refreshCamp(): void {
     const m = this.opts.meta();
     this.camp.set(hornOf(m), hornReady(m));
+    // (HORN-GIFT: no horn at the camp until the first binding gives it)
+    this.camp.root.hidden = !hornHeld(m);
   }
 
   /** The horn's card at the camp: its fill, how it fills, and the Eidolons bound (a tap chooses the one that answers). */
@@ -530,9 +537,20 @@ export class EidolonCall {
       }
       box.append(list);
     }
+    const row = el('div', 'ehRow');
+    // (EIDOLON-CHAINS: the Pact Gallery, the six alcoves, from the horn's card)
+    if (this.opts.gallery) {
+      const gal = el('button', '', 'Pact Gallery');
+      gal.addEventListener('click', () => {
+        this.closeSheet();
+        this.opts.gallery!();
+      });
+      row.append(gal);
+    }
     const close = el('button', 'primary', 'Close');
     close.addEventListener('click', () => this.closeSheet());
-    box.append(close);
+    row.append(close);
+    box.append(row);
     this.showSheet(box);
     this.sheetOpen = false;
   }
