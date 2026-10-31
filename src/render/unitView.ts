@@ -27,6 +27,7 @@ function lookScale(sheet: string, own: number): number {
 }
 import { CHARGE_MAX, kitOf, ultimateOf } from '../sim/abilities';
 import { poolOf } from '../sim/heroKits';
+import { RENEW_AT, timerOf } from '../sim/carry';
 import { at, depth, facesRight, facesAway, HH } from './iso';
 import { heroLook, rearView, formScale } from './heroFacing';
 import { VFX } from './vfxArt';
@@ -102,6 +103,9 @@ export class UnitSprite {
   private body = new Sprite();
   private shadow = new Graphics();
   private bar = new Graphics();
+  /** SUMMON-TIMERS: a small ring by the health bar of a summon or a shifted hero, emptying as its timer runs out (`timerOf`, carry.ts). */
+  private clock = new Graphics();
+  private clockKey = '';
   /** The shield's ring round a raised guard, the status icon over the head, and the light pillar of an evolve. */
   private shield = new Sprite();
   private badge = new Sprite();
@@ -188,7 +192,7 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.badge, this.ail.front);
+    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front);
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -385,6 +389,7 @@ export class UnitSprite {
     if (u.under) this.root.alpha = 0;
     this.root.visible = this.root.alpha > 0;
     this.drawBar(u.alive, t);
+    this.drawClock(fighting ? t : -1);
     this.drawSparks(u.alive);
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
@@ -400,6 +405,8 @@ export class UnitSprite {
     this.root.alpha = 1;
     this.root.visible = true;
     this.bar.clear();
+    this.clockKey = '';
+    this.clock.clear();
   }
 
   /** A blow pushes it a little way along (dx, dy), and it eases back. */
@@ -535,6 +542,30 @@ export class UnitSprite {
         g.star(Math.cos(a) * r, -this.tall * 0.4 + Math.sin(a) * r * 0.6, 4, 3, 1).fill({ color: 0xffe27a, alpha: 1 - burst });
       }
     }
+  }
+
+  /** The timer's ring (SUMMON-TIMERS): left of the health bar, a dark disc with an arc that empties clockwise from the top; teal on a summon,
+   *  gold on a shape, and ember once a quarter or less is left (the time at which a call may renew it). Redrawn only when its step changes. */
+  private drawClock(t: number): void {
+    const timer = t >= 0 ? timerOf(this.unit, t) : null;
+    const share = timer ? Math.max(0, Math.min(1, timer.left / timer.full)) : 0;
+    const low = share <= RENEW_AT;
+    const key = timer && share > 0 ? `${Math.ceil(share * 32)}${timer.shape ? 's' : 'c'}${low ? 'l' : ''}${Math.round(this.tall)}` : '';
+    if (key === this.clockKey) return;
+    this.clockKey = key;
+    const g = this.clock;
+    g.clear();
+    if (!key) return;
+    const r = 3.6;
+    const x = -BAR_W / 2 - r - 2.5;
+    const y = -this.tall - 8 + 1.5;
+    g.circle(x, y, r + 1.4).fill({ color: 0x1a1410, alpha: 0.85 });
+    g.circle(x, y, r).stroke({ color: 0xffffff, width: 1.6, alpha: 0.18 });
+    const from = -Math.PI / 2;
+    const to = from + Math.PI * 2 * share;
+    g.moveTo(x + Math.cos(from) * r, y + Math.sin(from) * r)
+      .arc(x, y, r, from, to)
+      .stroke({ color: low ? 0xff7a4a : timer!.shape ? 0xffc861 : 0x6fd8c8, width: 1.8, cap: 'round' });
   }
 
   /** What the health bar last showed (a fighter with no skill meter, which is most of a crowd's foes, redraws it only when this changes). */

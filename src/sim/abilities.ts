@@ -1368,7 +1368,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Grace', text: 'Allies within 2 tiles heal 1.5% of their health each second', aura: 0.015 },
   },
   druid: {
-    skill: { name: 'Conjure Treant', key: 'Call Treant', text: 'A treant rises beside her and fights for her (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
+    skill: { name: 'Conjure Treant', key: 'Call Treant', text: 'A treant rises beside her and fights for her for 60s of fighting, wave to wave (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
     passive: { name: 'Thorn Skin', text: 'A third of the damage of a melee blow she takes is sent back', thorns: 0.33 },
   },
   barbarian: {
@@ -1418,7 +1418,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
   },
   beastmaster: {
-    skill: { name: 'Summon Beast', key: 'Call of the Wild', text: 'A wolf answers his call and fights for him (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
+    skill: { name: 'Summon Beast', key: 'Call of the Wild', text: 'A wolf answers his call and fights for him for 60s of fighting, wave to wave (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
     passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
   },
   kraken: {
@@ -1468,7 +1468,7 @@ export const KITS: Record<string, Kit> = {
   },
   demonSwordsman: {
     skill: { name: 'Cleave', key: 'Hellblade Sweep', text: 'Cuts every foe within 2 tiles, and he drinks a third of what it deals', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 550, anim: 'attack2', cast: hellbladeSweep },
-    ultimate: { name: 'Demon Form', text: 'For 7s he hits half as hard again, and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
+    ultimate: { name: 'Demon Form', text: 'For 15s he hits half as hard again (it carries into the next wave), and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
     passive: { name: 'Soul Pact', text: 'Heals for 8% of the damage his blows deal, and hits up to 25% harder as his health falls', leech: 0.08, rage: 0.25 },
   },
   tyrant: {
