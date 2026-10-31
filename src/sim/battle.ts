@@ -174,6 +174,8 @@ export interface Unit {
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
+  /** A hero's chosen skills for its two slots, when not its own two (`books.ts`; from `Boost.equip.book`). */
+  book?: [string, string];
   /** The player's tap on this hero's portrait has queued its ultimate (the time it was applied, `orders.ts`): it fires the first time the hero is free, or lapses after `ORDER_WAIT_MS`. */
   ultOrder?: number;
   /** A hero kit's pool bookkeeping (`heroKits.ts`): when each skill was last cast, focus, winded. */
@@ -612,6 +614,8 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   const power = (boost.atk ?? 1) * (castle?.atk ?? 1) * (1 + (eq?.atk ?? 0));
   if (power !== 1) unit.power = power;
   if (eq) unit.eq = eq;
+  // (a hero that learned skills from books fights with the two it chose: `heroKitOf` builds its kit from them)
+  if (eq?.book && !def.summon) unit.book = eq.book;
   if (def.side === 'hero' && boost.carry !== undefined && boost.carry < 1) {
     unit.carry = Math.max(0.01, boost.carry);
     unit.hp = Math.max(1, Math.round(hp * unit.carry));

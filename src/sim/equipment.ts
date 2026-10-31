@@ -82,8 +82,11 @@ export interface EquipStats {
   abilities: ActiveAbility[];
   /** The skill and passive modifiers the hero's talents add (`talents.ts` lists the keys; the skills in `abilities.ts` read them). */
   tal?: Record<string, number>;
+  /** The two skills the hero kind has chosen for its slots, when not its own two in order (`books.ts`: 'own1', 'own2' or a learned
+   *  book's id); `heroKitOf` builds its kit from them. */
+  book?: [string, string];
 }
-export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal'>;
+export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal' | 'book'>;
 export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist'];
 export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [] });
 
@@ -149,8 +152,17 @@ export interface Equipment {
   rarity: Rarity;
   /** 1 to `MAX_ITEM_LEVEL`. */
   level: number;
+  /** Durability points lost to wear (`wear.ts`); missing is a full piece (and every piece from before wear). */
+  wear?: number;
 }
-export type NewEquipment = Omit<Equipment, 'id'>;
+export type NewEquipment = Omit<Equipment, 'id' | 'wear'>;
+
+/** Durability by grade before the item level is added (index 0 is unused): Common 30 to Mythic 90 (`wear.ts`). */
+export const DUR: readonly number[] = [0, 30, 40, 55, 70, 90];
+/** A piece's full durability: its grade's and its item level. */
+export const maxDurability = (it: Pick<Equipment, 'rarity' | 'level'>): number => DUR[it.rarity] + it.level;
+/** A piece worn to nothing is broken: it gives nothing (no stats, no ability, no set count) until it is mended (`wear.ts`). */
+export const brokenPiece = (it: Equipment): boolean => (it.wear ?? 0) >= maxDurability(it);
 
 /** The calling of a hero kind: shooters (arrows, bullets), casters (the other shots), else melee. */
 export function callingOf(kind: string): Calling {
@@ -192,7 +204,8 @@ export function wornIn(m: Meta, kind: string, slot: EquipSlot): Equipment | unde
 
 /** What a hero kind's equipment adds in a fight; undefined when it wears nothing (so the fight is exactly as before). */
 export function equipStats(m: Meta, kind: string): EquipStats | undefined {
-  const worn = EQUIP_SLOTS.map((slot) => wornIn(m, kind, slot)).filter((x): x is Equipment => !!x);
+  // (a broken piece gives nothing at all until mended: `wear.ts`)
+  const worn = EQUIP_SLOTS.map((slot) => wornIn(m, kind, slot)).filter((x): x is Equipment => !!x && !brokenPiece(x));
   if (!worn.length) return undefined;
   const total = emptyStats();
   for (const it of worn) addStats(total, itemStats(it, kind));
@@ -252,13 +265,22 @@ export function unequipItem(m: Meta, kind: string, slot: EquipSlot): boolean {
   return true;
 }
 
+/** What a piece sells for (the stall's Sell, which replaced Salvage): its grade's salvage crowns and its item level, times its condition
+ *  (0.8 broken to 1 full), rounded down, at least 1. A full piece sells for exactly what salvage paid. The condition's gap is kept small
+ *  on purpose: mending a piece only to sell it must never pay (`test/sell.test.ts`). */
+export function sellPrice(it: Equipment): number {
+  const max = maxDurability(it);
+  const condition = 0.8 + (0.2 * Math.max(0, max - (it.wear ?? 0))) / max;
+  return Math.max(1, Math.floor((SALVAGE_CROWNS[it.rarity] + it.level - 1) * condition + 1e-9));
+}
+
 /** Turn a spare item into crowns. Returns the crowns (0, and nothing changes, when it is worn or not owned). */
 export function salvageItem(m: Meta, id: number): number {
   const i = spareEquipment(m).findIndex((x) => x.id === id);
   if (i < 0) return 0;
   const it = spareEquipment(m)[i];
   m.equipment = m.equipment!.filter((x) => x.id !== id);
-  const n = SALVAGE_CROWNS[it.rarity] + (it.level - 1);
+  const n = sellPrice(it);
   m.crowns += n;
   return n;
 }
@@ -397,7 +419,11 @@ export function readEquipment(raw: unknown): Equipment[] {
       const rarity = Math.min(5, Math.max(1, Math.floor(Number(x.rarity)) || 1)) as Rarity;
       const level = Math.min(MAX_ITEM_LEVEL, Math.max(1, Math.floor(Number(x.level)) || 1));
       seen.add(x.id);
-      out.push({ id: x.id, base: x.base, rarity, level });
+      const made: Equipment = { id: x.id, base: x.base, rarity, level };
+      // (wear from `wear.ts`: points lost, in halves, never more than the piece's durability; missing is full)
+      const wear = Number(x.wear);
+      if (Number.isFinite(wear) && wear > 0) made.wear = Math.min(maxDurability(made), Math.round(wear * 2) / 2);
+      out.push(made);
     }
   return out;
 }
@@ -470,10 +496,11 @@ export function bestFor(m: Meta, kind: string, takeFromOthers = false, locked: R
   // (each slot's options: what is worn first, then the best item of each base by the older id, then an empty slot)
   const options = EQUIP_SLOTS.map((slot) => {
     const cur = wornIn(m, kind, slot);
-    const list: { it?: Equipment; score: number }[] = [{ it: cur, score: cur ? itemScore(cur, kind) : 0 }];
+    // (a broken piece worn scores nothing, so Equip best swaps it for a whole one)
+    const list: { it?: Equipment; score: number }[] = [{ it: cur, score: cur && !brokenPiece(cur) ? itemScore(cur, kind) : 0 }];
     const bestOfBase = new Map<string, { it: Equipment; score: number }>();
     for (const it of m.equipment ?? []) {
-      if (EQUIP_BASES[it.base]?.slot !== slot || it === cur || locked.has(it.id)) continue;
+      if (EQUIP_BASES[it.base]?.slot !== slot || it === cur || locked.has(it.id) || brokenPiece(it)) continue;
       const owner = wearerOf(m, it.id);
       if (owner !== undefined && owner !== kind && !takeFromOthers) continue;
       const score = itemScore(it, kind);

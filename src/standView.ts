@@ -25,6 +25,8 @@ import { heroSays, kingSays, newQuipScene, standFoeGrumbles } from './quips';
 import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
+import { settleStudy } from './sim/books';
+import { settleWear } from './sim/wear';
 import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
 import { infoOf } from './unitInfoRules';
@@ -1831,6 +1833,12 @@ export class StandView {
       this.host.questsDone?.(noteQuests(m, sf));
       // (EIDOLON-CHAINS: a chain's part may ask for the Last Stand too; its piece shows in the quest log)
       noteChains(m, sf);
+      // (SHOP-BOOKS-GEAR: every wave the guard fought is a fight of study, and a wave's wear on the gear they wear; told nowhere but the sheets)
+      const kinds = [...new Set(s.run.heroes.map((h) => h.kind))];
+      for (let w = 0; w < s.run.wave; w++) {
+        settleStudy(m, kinds);
+        settleWear(m, kinds.map((kind) => ({ kind, fell: false })));
+      }
     }
     saveMeta(m);
     dropStand();
