@@ -3,12 +3,14 @@
 // once, nothing loops. The numbers come from `run.recap` (`sim/runRecap.ts`).
 
 import { heartsBurned, mvpKind, type RunRecap } from './sim/runRecap';
+import { recapKind } from './sim/fightStats';
 import { MAX_STARS } from './sim/stars';
 import { UNITS } from './sim/units';
 import { battleSheet } from './render/awakenLook';
 import { heroName, heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 import { portrait } from './render/sheets';
+import { heroFace } from './heroFace';
 import type { ComebackGo, ComebackTip } from './sim/comeback';
 import { playResults, type JrData } from './jrpgRecapView';
 
@@ -106,8 +108,9 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   if (hearts) grid.append(fig('Hearts burned', String(hearts)));
   if (!player) sheet.append(grid);
 
-  // wave by wave, the company, and the XP and levels (`recapDetail`)
-  sheet.append(...recapDetail(recap, { strip: 'Wave by wave', prefix: 'W', equipmentStep: head.equipmentStep, xp: !player }));
+  // the company, and the XP and levels (`recapDetail`)
+  // (the owner: "No need for the final recap to have the individual wave best heroes and stars listed": no wave strip here, RECAP-SPOILS)
+  sheet.append(...recapDetail(recap, { prefix: 'W', equipmentStep: head.equipmentStep, xp: !player }));
 
   const done = el('div', 'rcFoot');
   const ok = el('button', 'primary', 'Continue');
@@ -124,7 +127,8 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
 /** How the detail's fight-by-fight strip is headed, and what marks each fight's number ("W4" a wave, "F12" a floor, "#7" a fight). */
 export interface DetailOpts {
   equipmentStep?: (kind: string) => number;
-  strip: string;
+  /** The fight-by-fight strip's heading; none leaves the strip out (the run's end recap, RECAP-SPOILS). */
+  strip?: string;
   prefix: string;
   /** List the XP and levels (the default); the run's end recap leaves them to its results screen's rows (JRPG-RECAP). */
   xp?: boolean;
@@ -136,8 +140,8 @@ export interface DetailOpts {
 export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
   const out: HTMLElement[] = [];
   // wave by wave (WAVE-RECAP): each wave's stars, time and MVP, which the short card after each wave left for here
-  const waves = recap.waves ?? [];
-  if (waves.length) {
+  const waves = opts.strip ? recap.waves ?? [] : [];
+  if (opts.strip && waves.length) {
     out.push(el('h3', '', opts.strip));
     const strip = el('div', 'rcWaves');
     for (const w of waves) {
@@ -157,7 +161,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
   }
 
   // the heroes: one row a kind, strongest first
-  const kinds = Object.keys(recap.heroes).filter((k) => UNITS[k]);
+  const kinds = Object.keys(recap.heroes).filter(recapKind);
   const mvp = mvpKind(recap);
   const work = (k: string) => recap.heroes[k].dealt + recap.heroes[k].healed + recap.heroes[k].taken / 2;
   kinds.sort((a, b) => work(b) - work(a));
@@ -170,7 +174,9 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
       const row = el('div', `rcHero${k === mvp ? ' mvp' : ''}`);
       row.style.setProperty('--i', String(Math.min(i, 8)));
       const face = el('div', `rcFace g${t.grade}`);
-      face.append(portrait(battleSheet(k, opts.equipmentStep?.(k) ?? 0, t.grade), 64, t.grade));
+      // (RECAP-SPOILS: the hero's painted face, the sprite until it loads)
+      const step = opts.equipmentStep?.(k) ?? 0;
+      face.append(heroFace(k, step, 96, portrait(battleSheet(k, step, t.grade), 64, t.grade)));
       if (k === mvp) face.append(el('em', 'rcCrown', '♛'));
       // (the MVP is named with its title, BENCH-TITLES; the rest keep the short name)
       const name = k === mvp ? titleLine(k, 'b', 'rcMvpName', true) : el('b', '', heroName(k));
@@ -192,7 +198,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
   }
 
   // XP and levels
-  const xpKinds = opts.xp === false ? [] : Object.keys(recap.xp).filter((k) => UNITS[k] && recap.xp[k] > 0);
+  const xpKinds = opts.xp === false ? [] : Object.keys(recap.xp).filter((k) => recapKind(k) && recap.xp[k] > 0);
   if (xpKinds.length) {
     out.push(el('h3', '', 'Experience earned'));
     const list = el('div', 'rcXp');
