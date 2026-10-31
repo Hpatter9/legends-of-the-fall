@@ -9,7 +9,9 @@ import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_M
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
-import { openShop } from './shopView';
+import { openStall } from './stallView';
+import { newStock } from './sim/stall';
+import { shopArt } from './bookArt';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
@@ -170,7 +172,8 @@ export class Home {
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
       onSummon: (n) => this.summon(n),
-      onShop: () => openShop(this.meta, () => this.refresh()),
+      // (the Chest shop button stays as a shortcut: it opens Hester's Stall on its Chests tab, SHOP-BOOKS-GEAR)
+      onShop: () => openStall(this.meta, () => this.refresh(), 'chests'),
       onCollection: () => {
         this.hall.stop();
         this.hooks.onRecruit();
@@ -560,6 +563,16 @@ export class Home {
     swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
     swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
     swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
+    // (Hester's Stall, SHOP-BOOKS-GEAR: the stall's picture over its plate; a gold dot while the day's stock is new and unseen)
+    const fresh = newStock(m, todayKey());
+    const stall = place('hmStall', 'stall', 'Hester’s Stall', fresh ? 'new stock' : 'books · gear', `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
+    const pic = el('img', 'cpStallPic');
+    pic.src = shopArt('stall');
+    pic.alt = '';
+    pic.draggable = false;
+    stall.prepend(pic);
+    if (fresh) stall.append(el('i', 'badge'));
+    swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     // Earned chests rest by the overlook's supplies.
     const stash = el('div', 'csStash');
