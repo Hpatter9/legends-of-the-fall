@@ -1,12 +1,29 @@
 // Altar effects use the ordinary combat events, shields and skill meters.
-import { apart, hurt, type Battle, type BattleEvent } from './battle';
+import { apart, hurt, type Battle, type BattleEvent, type Unit } from './battle';
 import { UNITS } from './units';
+import { isBoss } from './foes';
 import { riftRank } from './rift';
 import { COMMAND_MULT, CORRUPT, EVOLUTION, OFFERING_MULT, PATRON_PULSE, PULSE } from './altarRules';
+
+/** GUARDIAN-PULSE: the guardian of a guardian fight: the foe that is a boss (or drawn bigger), else the band's leader. */
+function pickGuardian(b: Battle): Unit | undefined {
+  const foes = b.units.filter((x) => x.side === 'foe' && x.owner === undefined);
+  return foes.find((x) => isBoss(x.def) || (x.size ?? 1) > 1) ?? foes[0];
+}
+
+/** The corrupted guardian whose Calamity pulse this fight carries (alive or fallen), or none: not a corrupted guardian fight. A battle
+ *  from before the guardian was recorded picks it the same way. Read by the fight's chip too (`altarHud.ts`). */
+export function riftGuardian(b: Battle): Unit | undefined {
+  if (!b.rift?.corruption || !b.riftBoss) return undefined;
+  if (b.riftGuardian !== undefined) return b.units.find((x) => x.id === b.riftGuardian);
+  return pickGuardian(b);
+}
 
 export function startRift(b: Battle): void {
   const r = b.rift;
   if (!r) return;
+  // (GUARDIAN-PULSE: the guardian is fixed as the fight starts, so its pulse never passes to an escort or a summoned foe)
+  if (r.corruption && b.riftBoss) { const g = pickGuardian(b); if (g) b.riftGuardian = g.id; }
   for (const u of b.units.filter((x) => x.side === 'foe')) {
     u.hp = Math.round(u.hp * (1 + r.corruption * CORRUPT.foeHp));
     u.maxHp = Math.round(u.maxHp * (1 + r.corruption * CORRUPT.foeHp));
@@ -26,7 +43,8 @@ export function tickRift(b: Battle, out: BattleEvent[]): void {
   if (!r) return;
   const starter = b.units.find((x) => x.side === 'hero' && x.tag === r.starter && x.owner === undefined && x.alive);
   if (r.corruption && b.riftBoss) {
-    const boss = b.units.find((x) => x.side === 'foe');
+    // (GUARDIAN-PULSE: the pulse comes from the guardian itself, centred on it, and stops when it falls)
+    const boss = riftGuardian(b);
     if (boss?.alive && b.t % CORRUPT.boss.everyMs === CORRUPT.boss.everyMs - CORRUPT.boss.warnMs) out.push({ kind: 'skill', by: boss.id, name: 'Calamity pulse', ms: CORRUPT.boss.warnMs });
     if (boss?.alive && b.t % CORRUPT.boss.everyMs === 0) {
       if (r.patron === 'bastion') boss.shield = { hp: Math.max(boss.shield && boss.shield.until > b.t ? boss.shield.hp : 0, Math.round(boss.maxHp * r.corruption * CORRUPT.bastionShield)), until: Math.max(boss.shield?.until ?? 0, b.t + CORRUPT.bastionShieldMs) };

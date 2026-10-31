@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.282.0',
+    date: '2026-10-31',
+    title: 'Guardians pulse from themselves',
+    notes: ['A corrupted Calamity guardian\'s pulse now comes from the guardian itself, and stops the moment it falls, even with its escort still standing.'],
+  },
+  {
     version: '0.281.0',
     date: '2026-10-31',
     title: 'The Calamity altar made clear',

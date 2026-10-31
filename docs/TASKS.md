@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### GUARDIAN-PULSE — The corrupted guardian's pulse comes from the guardian itself
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/guardian-pulse`, `/home/user/lotf-guardpulse` (from `claude/altar-clear`, main 0.280.0 merged in).
+- **Goal:** the owner's pick from ALTAR-CLEAR's suggestions: the Calamity pulse comes from the guardian (centred on it, ending when it falls), not the first foe in the list. Numbers unchanged.
+- **Scope:** `src/sim/riftBattle.ts` (`riftGuardian`), `src/sim/battle.ts` (`riftGuardian?` field), `src/altarHud.ts`, `src/sim/altarWords.ts`, `test/rift.test.ts`, new `tools/guardian-pulse/shots.mjs`.
+- **Status:** ready for review. [Note](notes/altar-clear.md#guardian-pulse-the-guardians-pulse-comes-from-the-guardian-itself); screenshots `samples/guardian-pulse-*.png`.
+
 ### ALTAR-CLEAR — The Calamity's altar made clear
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/altar-clear`, `/home/user/lotf-altar` (from `claude/calamity-hub`, main 0.276.0 merged in).

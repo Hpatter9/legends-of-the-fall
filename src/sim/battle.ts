@@ -323,6 +323,8 @@ export type BattleEvent =
 export interface Battle {
   rift?: Rift;
   riftBoss?: boolean;
+  /** GUARDIAN-PULSE: the corrupted guardian's own unit id, fixed as the fight starts; its Calamity pulse comes from it alone (`riftBattle.ts`). */
+  riftGuardian?: number;
   seed: number;
   board: Board;
   units: Unit[];

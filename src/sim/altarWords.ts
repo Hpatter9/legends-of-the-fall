@@ -73,12 +73,12 @@ export function evolutionLine(rank: number): string {
 /** What `n` points of corruption do, as a list (empty when there is none). */
 export function corruptionLines(n: number, patron?: Patron): string[] {
   if (!n) return [];
-  const boss = `Guardians send out a Calamity pulse every ${secs(CORRUPT.boss.everyMs)} s (warned ${secs(CORRUPT.boss.warnMs)} s before) that hits each hero for ${pct(n * CORRUPT.boss.hit)}% of their maximum health`;
+  const boss = `Each guardian sends out its own Calamity pulse, centred on it, every ${secs(CORRUPT.boss.everyMs)} s (warned ${secs(CORRUPT.boss.warnMs)} s before) that hits each hero for ${pct(n * CORRUPT.boss.hit)}% of their maximum health`;
   const extra = patron === 'bastion' ? `, and shields the guardian for ${pct(n * CORRUPT.bastionShield)}% of its maximum health` : patron === 'echo' ? `, and drains ${n * CORRUPT.echoDrain} skill charge from each hero` : '';
   return [
     `Your starter: +${pct(n * CORRUPT.starterAtk)}% attack. Won fights pay +${pct(n * CORRUPT.gold)}% gold.`,
     `Every foe: +${pct(n * CORRUPT.foeHp)}% health and +${pct(n * CORRUPT.foeAtk)}% attack.`,
-    `${boss}${extra}.`,
+    `${boss}${extra}. It stops when the guardian falls, even with its escort still standing.`,
   ];
 }
 
@@ -116,7 +116,7 @@ export const HOW_ALTAR_WORKS: readonly string[] = [
   `Your starter (the hero you began with) grows here. Each altar step evolves them: +${pct(EVOLUTION.hp)}% health and +${pct(EVOLUTION.atk)}% attack in fights, and a guaranteed level.`,
   `There are three altar steps: ${STEPS.map((s) => `${STEP_INFO[s].name} ${STEP_INFO[s].when}`).join(', ')}. You choose before travelling on.`,
   `The Patron sends out a pulse every ${secs(PULSE.everyMs)} s: Ember burns a foe, Bastion shields, Echo charges skills. The Offering trades health against damage. The Commandment makes the pulse stronger together or alone.`,
-  `Consecrate is safe. Corrupt adds +${pct(CORRUPT.starterAtk)}% starter attack and +${pct(CORRUPT.gold)}% gold, but foes get +${pct(CORRUPT.foeHp)}% health and +${pct(CORRUPT.foeAtk)}% attack and guardians hurt everyone with a pulse. It lasts the run.`,
+  `Consecrate is safe. Corrupt adds +${pct(CORRUPT.starterAtk)}% starter attack and +${pct(CORRUPT.gold)}% gold, but foes get +${pct(CORRUPT.foeHp)}% health and +${pct(CORRUPT.foeAtk)}% attack and each guardian hurts everyone with its own pulse until it falls. It lasts the run.`,
   'At a campfire you can reforge: swap your patron for another, instead of resting or training. Evolutions and corruption stay.',
 ];
 
