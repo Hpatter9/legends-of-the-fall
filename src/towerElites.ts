@@ -4,11 +4,12 @@
 // (`takeRelic`). No state of its own.
 
 import { OFFER_SIZE, takeRelic, type Elite } from './sim/elites';
-import { RELICS } from './sim/relics';
+import { RELICS, relicText } from './sim/relics';
 import { SETS, setCount, setOf, tiersOn, type RelicSet } from './sim/relicSets';
 import type { Run } from './sim/run';
 import { UNITS } from './sim/units';
 import { iconImg, relicIcon } from './render/items';
+import { openRelicCard } from './relicCard';
 import { portrait, sheetInfo } from './render/sheets';
 import { play } from './render/sound';
 import { setChime } from './render/audioRules';
@@ -69,8 +70,8 @@ export function relicButton(run: Run, id: string, onTap: () => void): HTMLButton
     b.classList.add('inSet');
     b.style.setProperty('--set', set.colour);
     b.dataset.on = String(n >= 3 ? 3 : n >= 2 ? 2 : 0);
-    b.title = `${RELICS[id].name}: ${RELICS[id].text} (${set.name} set ${n}/${set.relics.length})`;
-  } else b.title = `${RELICS[id].name}: ${RELICS[id].text}`;
+    b.title = `${RELICS[id].name}: ${relicText(id)} (${set.name} set ${n}/${set.relics.length})`;
+  } else b.title = `${RELICS[id].name}: ${relicText(id)}`;
   b.addEventListener('click', onTap);
   return b;
 }
@@ -98,21 +99,9 @@ function setLines(run: Run, set: RelicSet): HTMLElement {
   return box;
 }
 
-/** Tapping a relic in the header: what it is, and where its set stands. A tap anywhere closes it. */
-export function relicPopup(run: Run, id: string, root: HTMLElement): void {
-  root.querySelector('.elPop')?.remove();
-  const wrap = el('div', 'rtCardWrap elPop');
-  const card = el('div', 'rtCard');
-  const head = el('div', 'elRelic');
-  head.append(iconImg(relicIcon(id), RELICS[id].name), el('b', '', RELICS[id].name), el('small', '', RELICS[id].text));
-  card.append(head);
-  const set = setOf(id);
-  card.append(set ? setLines(run, set) : el('p', 'rtLead', 'This relic belongs to no set.'));
-  const close = el('button', '', 'Close');
-  card.append(close);
-  wrap.append(card);
-  wrap.addEventListener('click', () => wrap.remove());
-  root.append(wrap);
+/** Tapping a relic in the header: its card (RELICS-2, `relicCard.ts`: its story, rule, price, growth, and where its chapter or set stands). A tap anywhere closes it. */
+export function relicPopup(run: Run, id: string, _root: HTMLElement): void {
+  openRelicCard(run, id);
 }
 
 /**
@@ -136,7 +125,7 @@ export function relicChoice(run: Run, card: HTMLElement, elite: string | undefin
     pic.classList.add('rtShopPic');
     const words = el('span');
     const have = set ? setCount(set, run.relics) : 0;
-    words.append(el('b', '', RELICS[id].name), el('small', '', RELICS[id].text));
+    words.append(el('b', '', RELICS[id].name), el('small', '', relicText(id)));
     if (set) words.append(el('small', 'elTag', `${set.name} set: ${have}/${set.relics.length} → ${have + 1}/${set.relics.length}`));
     row.append(pic, words);
     row.addEventListener('click', () => {

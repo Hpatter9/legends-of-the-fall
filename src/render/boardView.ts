@@ -121,6 +121,9 @@ interface Built {
   landmark: Container | null;
   tiles: Container[];
   marks: Graphics[];
+  /** Each tile's ground (FIXES-4): an empty layer just over its top and its mark, under its props and every fighter, where the effects lay
+   *  their tile marks (a boss's windup, a hazard's tell, a burning ground), so a fighter standing in one shows over it. */
+  grounds: Container[];
   tex: ColumnLease<Texture>[];
   /** The powder barrels still standing (by tile index), so a blast can take one away. */
   barrels: Map<number, Sprite>;
@@ -223,6 +226,7 @@ export class BoardView {
     if (!keepOld) {
       for (const c of this.root.removeChildren()) if (!this.keep.includes(c)) c.destroy({ children: true });
       this.dropOld();
+      this.rows.clear();
       this.root.addChild(...this.keep);
     }
     this.freeBuilt();
@@ -448,6 +452,7 @@ export class BoardView {
   private section(b: Board, look: Look, f: Frame): Built {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
+    const grounds: Container[] = [];
     const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
     const live = noLive();
@@ -466,8 +471,10 @@ export class BoardView {
         if (depth && far >= 3 && !held.has(v * b.w + u) && raw.scene !== 'water' && raw.scene !== 'lava' && edge < 1 + ((mixSeed(b.seed, 0xed9e, u, v) >>> 0) % 3)) {
           // (trimmed: nothing drawn, the tile is still there to the rules as land nobody stands on)
           const mark = new Graphics();
-          tile.addChild(mark);
+          const ground = new Container();
+          tile.addChild(mark, ground);
           marks.push(mark);
+          grounds.push(ground);
           tiles.push(tile);
           continue;
         }
@@ -484,8 +491,11 @@ export class BoardView {
         }
         const mark = new Graphics();
         mark.position.set(x, y);
-        tile.addChild(mark);
+        // (the ground layer is at the world's origin, so an effect lays a mark at its tile's world point as it would anywhere)
+        const ground = new Container();
+        tile.addChild(mark, ground);
         marks.push(mark);
+        grounds.push(ground);
         const set = art?.areas[b.area];
         if (t.scene === 'grave') {
           addPic(tile, { name: 'gravestones', scale: 0.62, ay: 0.86, dx: 0, dy: 4 }, x, y, live);
@@ -645,7 +655,7 @@ export class BoardView {
         landmark.addChild(sp);
       }
     }
-    return { tiles, marks, tex, barrels, landmark, live, zone };
+    return { tiles, marks, grounds, tex, barrels, landmark, live, zone };
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
@@ -684,6 +694,29 @@ export class BoardView {
     this.built.barrels.delete(i);
     // (the tile's own column is the same without it)
   }
+
+  /** The ground layer of the host's tile (`Built.grounds`), or null off the board or with none built. */
+  groundAt(u: number, v: number): Container | null {
+    const b = this.board;
+    if (!b || !this.built || u < 0 || v < 0 || u >= b.w || v >= b.d) return null;
+    const g = this.built.grounds[v * b.w + u];
+    return g && !g.destroyed ? g : null;
+  }
+
+  /** FIXES-4: the layer just over one diagonal row of the host's tiles (`depthIn`), under the fighters on it and the nearer rows: where a
+   *  painted ground loop's piece for that row is laid (`GroundPaint`). Made when first asked for; a rebuild takes it with the board. */
+  groundRow(depth: number): Container | null {
+    if (!this.built) return null;
+    let c = this.rows.get(depth);
+    if (!c || c.destroyed || c.parent !== this.root) {
+      c = new Container();
+      c.zIndex = depth + 1;
+      this.root.addChild(c);
+      this.rows.set(depth, c);
+    }
+    return c;
+  }
+  private rows = new Map<number, Container>();
 
   clearMarks(): void {
     for (const g of this.marks) g.clear();

@@ -104,5 +104,5 @@ export function gainText(g: WaveGain): string {
  *  as gains, and the gold is in the pay line, so what is left is the rest (a choice of relics waiting on the map, say). */
 export function otherFinds(found: readonly string[], gains: readonly WaveGain[]): string[] {
   const names = gains.filter((g) => g.kind === 'gear' || g.kind === 'relic' || g.kind === 'ore').map((g) => g.name);
-  return found.filter((f) => !/\bgold from\b/.test(f) && !names.some((n) => f.startsWith(`${n} (`) || f.startsWith(`the ${n} (`) || (/^\d+ /.test(f) && f.replace(/^\d+ /, '') === n)));
+  return found.filter((f) => !/\bgold from\b/.test(f) && !names.some((n) => f.startsWith(`${n} (`) || f.startsWith(`the ${n} (`) || f.startsWith(`the ${n.replace(/^The /, '')} (`) || (/^\d+ /.test(f) && f.replace(/^\d+ /, '') === n)));
 }

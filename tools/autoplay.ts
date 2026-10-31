@@ -26,8 +26,32 @@ import { squadHealth } from '../src/sim/health';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
 import { armEidolon } from '../src/sim/eidolons';
 import { orderEidolon } from '../src/sim/orders';
+import { STARTER_SPELLS, type SpellId } from '../src/sim/spells';
 
 export { strengthOf };
+
+/** AUTO-CAST and SPELLS-RETUNE (`docs/notes/spells-retune.md`): the balance tools' switch for the king's spells cast on their own
+ *  (`src/sim/autoCast.ts`), as the page's Auto does. **On by default** since SPELLS-RETUNE (the owner's call: Auto stays as smart as it is and
+ *  the armies are tuned for a player who casts), so every table and difficulty test is measured with spells cast. `BOT_SPELLS=0` in the
+ *  environment turns it off (the spell-less bot every table before 0.292 was measured with); `BOT_LOADOUT=heal,meteor,haste` fixes the
+ *  loadout. Otherwise each fight casts the loadout a player owns at that stage of the game (`botLoadout`). */
+export const botSpells: { on: boolean; loadout?: SpellId[] } = {
+  on: typeof process === 'undefined' || process.env?.BOT_SPELLS !== '0',
+  loadout: typeof process !== 'undefined' && process.env?.BOT_LOADOUT ? (process.env.BOT_LOADOUT.split(',') as SpellId[]) : undefined,
+};
+/**
+ * The three spells the balance tools cast at a stage of the game (the castle stands for it: what a player owns and can afford then,
+ * `spell-sources.md`, `spellbook.md`). A fresh save owns only the starting three (Heal, Meteor, Haste: 8 of the 9 power), and they stay the
+ * bot's choice later too: with the Mage Tower at its top (11 power, Rally taught, Resurrect and Meteor Shower earned) Heal, Meteor and
+ * Resurrect, Rally or Meteor Shower measured no stronger (`docs/notes/spells-retune.md`), so a player who keeps the three is the measure.
+ */
+export function botLoadout(_castle: Castle = newCastle()): SpellId[] {
+  return [...(botSpells.loadout ?? STARTER_SPELLS)];
+}
+/** Set a fight just begun to cast the stage's spells on its own, when `botSpells` is on (the castle is the run's: it sets the stage). */
+export function maybeSpells(b: Battle, _meta: Meta, castle: Castle = newCastle()): void {
+  if (botSpells.on) b.autoSpells = botLoadout(castle);
+}
 
 /** EIDOLONS: the balance tool's `--eidolon <wave>[:<id>]` calls an Eidolon as the fight at that wave of every army attempt begins (0, the
  *  default, never: the greedy player, like Auto, never blows the horn, so every existing table stays as it is). */
@@ -60,6 +84,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     const b = startStage(run);
     autoDeploy(b, run, meta, boostFor);
     fight(b);
+    maybeSpells(b, meta, castle);
     maybeEidolon(b, run.stage, army.waves[run.stage - 1]?.boss === 'mid');
     playOut(b);
     const ok = b.phase === 'won';
@@ -85,6 +110,7 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
     const b = startStage(run);
     autoDeploy(b, run, meta);
     fight(b);
+    maybeSpells(b, meta);
     playOut(b);
     const ok = b.phase === 'won';
     if (!ok && hearts && canRetry(run)) {
@@ -110,6 +136,7 @@ export function playFinal(meta: Meta, armyId: string, seed: number, party: reado
     if (!last) for (const u of b.units) if (u.side === 'foe') u.hp = u.maxHp = 1;
     autoDeploy(b, run, meta);
     fight(b);
+    maybeSpells(b, meta, castle);
     playOut(b);
     if (last) return b.phase === 'won';
     noteFight(run, b);
@@ -149,6 +176,7 @@ function fightNode(meta: Meta, run: Run): Battle {
   const order = [...squad].sort((a, c) => Number(UNITS[a.kind].range > 1) - Number(UNITS[c.kind].range > 1));
   order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
   fight(b);
+  maybeSpells(b, meta, run.castle ?? newCastle());
   playOut(b);
   const ends = squad.map((h) => {
     const u = b.units.find((x) => x.side === 'hero' && x.tag === h.id);

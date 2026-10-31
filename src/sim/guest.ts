@@ -46,7 +46,8 @@ export const guestsHere = (run: Run): boolean => !run.tower && (run.mode?.kind =
 /** The kinds a guest may be: heroes outside the run's party (its pool) and not on its roster, so it is never a twin of one of the party's
  *  own. Most are heroes the player may not own: the guest is a chance to field one. */
 export function guestKinds(run: Run): string[] {
-  const party = new Set([...(run.pool ?? []), ...run.roster.map((h) => h.kind)]);
+  // (SECRET-HEROES: never a hero still secret to the save)
+  const party = new Set([...(run.pool ?? []), ...run.roster.map((h) => h.kind), ...(run.hide ?? [])]);
   return ALL_HEROES.filter((k) => !!UNITS[k] && !UNITS[k].summon && !party.has(k));
 }
 

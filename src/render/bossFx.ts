@@ -2,12 +2,14 @@
 // tiles are marked in red, each mark filling in from the middle over the windup (the fight's own time), with the attack's name over them;
 // as it lands the marks go and the blow plays at the ultimate's size (`Fx.ultImpact`: the element's painted burst on a few spots, its
 // nova and ring), with the element's wave on every struck tile, a short hit-stop and a hard shake. A boss that falls first takes its
-// marks with it. The renderer only: it never changes the battle.
+// marks with it. The renderer only: it never changes the battle. FIXES-4: the marks lie on each tile's ground (`groundMarks.ts`), under the
+// fighters, so whoever stands in the blow's way shows; a rim runs round the whole marked patch.
 
 import { Container, Graphics } from 'pixi.js';
 import { tileAt } from '../sim/board';
 import type { Battle, BattleEvent } from '../sim/battle';
 import { at, TH, TW } from './iso';
+import { GroundSet, patchRims, patchTile } from './groundMarks';
 import { bits, packKey, type Element } from './fxRules';
 import { play } from './combatFx';
 import type { Particles } from './particles';
@@ -19,6 +21,8 @@ type Sig = Extract<BattleEvent, { kind: 'bossSig' }>;
 /** What the board's effects lend the marks and the blow. */
 export interface BossFxHost {
   root: Container;
+  /** The ground layer a mark on tile (u, v) goes on (`Fx.groundOf`). */
+  groundOf(u: number, v: number): Container;
   particles: Particles;
   calm(): boolean;
   /** A line of words over the board (the fight's own labels). */
@@ -31,7 +35,7 @@ export interface BossFxHost {
 }
 
 interface Marks {
-  view: Container;
+  view: GroundSet;
   tiles: Graphics[];
   t: number;
   ms: number;
@@ -55,6 +59,7 @@ export class BossFx {
       m.t += dt;
       const look = markLook(m.t, m.ms, calm);
       for (const g of m.tiles) {
+        if (g.destroyed) continue;
         const inner = g.children[0] as Graphics;
         inner.scale.set(look.size);
         inner.alpha = look.fill / BOSS_BIG_LOOK.FILL_TO;
@@ -76,25 +81,24 @@ export class BossFx {
 
   private warn(b: Battle, e: Sig): void {
     this.drop(e.n);
-    const view = new Container();
-    this.host.root.addChildAt(view, 0);
+    const view = new GroundSet();
     const tiles: Graphics[] = [];
     const w = b.board.w;
     const spots: [number, number][] = [];
     const diamond = (g: Graphics, k: number) => g.poly([0, (-TH / 2 + 2) * k, (TW / 2 - 3) * k, 0, 0, (TH / 2 - 2) * k, (-TW / 2 + 3) * k, 0]);
-    for (const i of e.tiles) {
-      const u = i % w;
-      const v = Math.floor(i / w);
-      const [x, y] = at(u, v, tileAt(b.board, u, v)?.h ?? 0);
+    const patch = e.tiles.map((i) => ({ u: i % w, v: Math.floor(i / w), h: tileAt(b.board, i % w, Math.floor(i / w))?.h ?? 0 }));
+    const rimOf = patchRims(patch);
+    for (const { u, v, h } of patch) {
+      const [x, y] = at(u, v, h);
       spots.push([x, y]);
-      // (a dark red ground under a bright edge; the fill grows from the middle as the blow comes)
-      const g = new Graphics();
-      diamond(g, 1).fill({ color: BOSS_BIG_LOOK.DARK, alpha: 0.35 }).stroke({ color: BOSS_BIG_LOOK.RED, alpha: 1, width: 2.5 });
+      // (a dark red ground with a faint line round each tile and a bright rim round the patch; the fill grows from the middle as the blow
+      // comes; on the tile's ground, under whoever stands there)
+      const g = patchTile(new Graphics(), 0, 0, rimOf(u, v), { colour: BOSS_BIG_LOOK.DARK, fill: 0.35, rimColour: BOSS_BIG_LOOK.RED, width: 3 });
       const inner = new Graphics();
       diamond(inner, 1).fill({ color: BOSS_BIG_LOOK.RED, alpha: BOSS_BIG_LOOK.FILL_TO });
       g.addChild(inner);
       g.position.set(x, y);
-      view.addChild(g);
+      view.add(g, this.host.groundOf(u, v));
       tiles.push(g);
     }
     this.marks.set(e.n, { view, tiles, t: 0, ms: e.ms });

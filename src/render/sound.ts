@@ -18,13 +18,13 @@ import { BusMixer, CueSynth, MusicPlayer } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
 import { DuckCounter, panOfEvent, type PlannedCue, type Scene } from './audioRules';
 import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
-import { atPlace, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
+import { BOSS_TRACK, atPlace, crossfadeOf, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
 import { bakeTrack } from './musicBake';
 import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, cuesFor, type Cue } from './soundRules';
 import { SpellBank } from './spellBank';
 import { coveredBySpells, spellParts } from './spellSfx';
-import { MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
+import { AMBIENCE_LEVEL, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
 
 const SAVE_KEY = 'legends.sound';
 
@@ -142,7 +142,7 @@ function applyLevels(): void {
   m.setLevel('sfx', SFX_LEVEL * effectsLevel());
   m.setLevel('ui', UI_LEVEL * effectsLevel());
   m.setLevel('music', MUSIC_LEVEL * musicLevel());
-  m.setLevel('ambience', MUSIC_LEVEL * musicLevel());
+  m.setLevel('ambience', AMBIENCE_LEVEL * musicLevel());
   // (Music at Off: no track is baked or playing at all, the effects carry on)
   engine.music.setEnabled(musicLevel() > 0);
 }
@@ -173,20 +173,22 @@ export function bindMute(button: HTMLElement): void {
 function syncMusic(): void {
   if (sceneMusic) return;
   const want = musicOf(music, (p) => TRACK_OF_PLACE[p]);
-  engine?.music.setTrack(want.track, want.level);
+  // (the boss track comes in quickly and gives the battle track back gently: `crossfadeOf`)
+  if (engine) engine.music.setTrack(want.track, want.level, crossfadeOf(engine.music.current, want.track));
 }
 
-/** A fight has begun, with the battle's one track (`trackOfRun` or `standTrack` in `battleMusic.ts`). Every wave of a battle
- *  passes the same track, so the music plays on unbroken from wave to wave; a new battle's track crossfades in. A victory's
- *  music still up (an auto-replay going straight on) gives way. */
+/** A fight has begun, with its track (`trackOfRun` or `standTrack` in `battleMusic.ts`): the battle track, which every wave
+ *  passes again, so the music plays on unbroken from wave to wave; or the boss track for a boss's fight, which crossfades in
+ *  over the battle track. A victory's music still up (an auto-replay going straight on) gives way. */
 export function startFight(track: MusicId): void {
   mixer.reset();
   const was = music.battle;
   music = { ...music, battle: track, fighting: true, victory: false };
   if (was !== track) engine?.music.stopSting();
   syncMusic();
-  // (the fanfare is decoded while the battle plays, so it rings the moment the battle is won)
+  // (the fanfare and the boss track are decoded while the battle plays, so either comes in the moment it is wanted)
   engine?.music.warmSting('victory');
+  if (track !== BOSS_TRACK) engine?.music.warm(BOSS_TRACK);
 }
 
 /** A battle is left without an end (the Last Stand is left mid-wave): the place's music comes back. */
@@ -196,8 +198,8 @@ export function endFight(): void {
 }
 
 /** A fight has ended and `end` (`endOfFight`) says what the music does: a won battle's victory fanfare, leading into the
- *  triumph loop under the results; a lost one's defeat sting, the place's music after it; or nothing (a wave won with more to
- *  come, a fall a heart revives), the battle's track playing straight on. */
+ *  triumph loop under the results; a lost one's defeat sting, the place's music after it; a wave won with more to come, the
+ *  battle track playing on (back from the boss track after a boss's wave); or nothing (a fall a heart revives). */
 export function endWave(end: BattleEnd): void {
   if (end === 'none') return;
   // (a fight that ended behind the home screen rings nothing there: `endAt`)

@@ -25,7 +25,7 @@ import { mixSeed, Rng } from './rng';
 import { drawEvent, eventAfter, type EventCard } from './events';
 import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
 import type { EquipStats } from './equipment';
-import { relicEffects } from './relics';
+import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
 import type { RoadState } from './midEvents';
@@ -134,11 +134,20 @@ export interface Run {
   /** The stage reached when it ended. */
   best: number;
   /** The hero kinds summons draw from (the party); the starting five when unset. */
+  /** SECRET-HEROES: the heroes secret to the save when the run was opened (earned in play, not joined yet); no guest or Calamity hire
+   *  is drawn from them. Set by the page; a run without it (an old save, the tools) draws from every hero as before. */
+  hide?: string[];
   pool?: string[];
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;
   /** Relic ids held (`relics.ts`). */
   relics?: string[];
+  /** RELICS-2: the run's tally the growing relics read (waves won, elites felled, heroes fallen, the Phoenix's rises); absent until a fight is noted. */
+  relicMarks?: RelicMarks;
+  /** The relics' catalogue the run was saved with (`RELIC_BOOK`); absent in a save from before RELICS-2, which is converted as it loads. */
+  relicBook?: number;
+  /** A line for the next prep screen, once (the relics converted); cleared when shown. */
+  relicNote?: string;
   /** Gear in the pack, not worn by anyone. */
   items?: Gear[];
   /** The next gear id. */
@@ -218,6 +227,7 @@ export function keepCharges(run: Run, b: Battle): void {
 
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
 export function noteFight(run: Run, b: Battle): void {
+  addRelicMarks(run, b);
   const army = waveArmyOf(run);
   if (!army) return;
   const fell = b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon).length;
@@ -230,6 +240,17 @@ export function noteFight(run: Run, b: Battle): void {
   const theme = runTheme(run);
   if (theme && run.stage >= army.waves.length && b.phase === 'won') run.themeMet = themeGoalMet(theme, kindsOf(b.units));
 }
+/** RELICS-2: a fight's tally added to the run's, for the relics that grow (a win counts as a wave won). Every run keeps it, relics or none. */
+export function addRelicMarks(run: { relicMarks?: RelicMarks }, b: Battle): void {
+  const t = b.relicTally ?? {};
+  const m = (run.relicMarks ??= {});
+  if (b.phase === 'won') m.won = (m.won ?? 0) + 1;
+  if (t.elites) m.elites = (m.elites ?? 0) + t.elites;
+  if (t.fell) m.fallen = (m.fallen ?? 0) + t.fell;
+  if (t.rises) m.rises = (m.rises ?? 0) + t.rises;
+}
+/** What a run's relics read beside their ids: its tally and its purse. */
+export const relicCtx = (run: { relicMarks?: RelicMarks; gold?: number }): RelicCtx => ({ marks: run.relicMarks, gold: run.gold });
 /** The army a run is fighting, if it is an army run. */
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
 /** The fixed run of waves a run is fighting: an army's, or a date's daily (`daily.ts`, an army in shape that is in no list and keeps no army record). */
@@ -428,7 +449,7 @@ export function chainOf(run: Run): Section[] | null {
 /** Make the fight for the run's stage. `duchess`: whether Duchess the goat may join (`duchessFight.ts`); the page passes 'roll', and every headless
  *  caller (the tests, the balance tools) leaves it 'never', so their fights are as they were. A mode she stays out of never has her. */
 export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
-  const rl = relicEffects(run.relics);
+  const rl = relicEffects(run.relics, relicCtx(run));
   const army = waveArmyOf(run);
   // (a floor of the tower brings its own band and strength, fixed when the node was entered)
   const node = run.tower?.cur?.fight;
@@ -438,7 +459,7 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs; the daily's answer the squad's lasting power, `dailyScale`)
   const calAns = run.mode?.kind === 'calamity' ? heroBoost(run.castle) : undefined;
   const ans = run.local ? (calAns ? { hp: foeAnswer(run.castle).hp! * calAns.hp! ** CAL_CASTLE_EXTRA, atk: foeAnswer(run.castle).atk! * calAns.atk! ** CAL_CASTLE_EXTRA } : foeAnswer(run.castle)) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
-  const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
+  const { atk, hp, mana, relics } = fightRelics(rl);
   const section = chainOf(run)?.[run.stage - 1];
   // (a themed daily: its twist on every wave, its featured trait, and a swarm's thin foes)
   const theme = runTheme(run);
@@ -452,7 +473,7 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle) * (run.buff?.speed ?? 1),
-    relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
+    relics,
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
     // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
     ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
@@ -469,8 +490,9 @@ export function finish(run: Run, won: boolean, stars = 0): void {
   if (won) {
     const boss = isBossRun(run);
     const army = waveArmyOf(run);
-    const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
-    const pay = reward(run.stage) + starGold(stars) + bonus;
+    const bonus = (relicEffects(run.relics, relicCtx(run)).gold ?? 0) + (run.buff?.gold ?? 0);
+    // (a price relic's gold, the Pawned Crown's, may take more than a win pays: never below nothing)
+    const pay = Math.max(0, reward(run.stage) + starGold(stars) + bonus);
     run.gold += pay;
     noteGold(run, 'earned', pay);
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
@@ -541,15 +563,34 @@ const KEY = 'legends.run';
 export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity', quest: 'legends.questRun' } as const;
 export type SlotKind = keyof typeof SLOT_KEYS;
 /** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
-export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
+export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => (run.relicBook = RELIC_BOOK) && store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
 /** The run saved in a mode's slot, if it is still going (a lost or cleared one is no run to carry on). */
 export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(SLOT_KEYS[kind]) ?? 'null') as Run | null;
-    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over && runFits(r) ? r : null;
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over && runFits(r) ? catalogueRun(r) : null;
   } catch {
     return null;
   }
+}
+/**
+ * RELICS-2: a run saved before the relics were catalogued anew is converted as it loads. Merged relics are renamed (a pair that is now one is
+ * kept once, and the other's price paid back in gold), as are the relics waiting on an elite's offer and the Pale Lady's due; a run that held
+ * any relic gets one line on its next prep screen. A run already in the new catalogue is left as it is.
+ */
+export function catalogueRun(r: Run): Run {
+  if (r.relicBook === RELIC_BOOK) return r;
+  r.relicBook = RELIC_BOOK;
+  const had = (r.relics?.length ?? 0) > 0;
+  if (Array.isArray(r.relics)) {
+    const { ids, refund } = convertRelics(r.relics);
+    r.relics = ids;
+    r.gold += refund;
+  }
+  if (Array.isArray(r.tower?.offer)) r.tower!.offer = convertRelics(r.tower!.offer.filter((id) => !r.relics?.includes(RELIC_RENAMES[id] ?? id))).ids;
+  for (const o of r.road?.owed ?? []) if (o.relic) o.relic = RELIC_RENAMES[o.relic] ?? o.relic;
+  if (had) r.relicNote = RELIC_NOTE;
+  return r;
 }
 /** Empty a mode's slot (the run was abandoned or ended). */
 export const dropSlot = (kind: SlotKind, store: Pick<Storage, 'removeItem'> = localStorage) => store.removeItem(SLOT_KEYS[kind]);
@@ -570,11 +611,11 @@ export const runFits = (r: Run): boolean => {
   const army = waveArmyOf(r);
   return !army || (r.stage >= 1 && r.stage <= army.waves.length);
 };
-export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(run));
+export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
 export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(KEY) ?? 'null') as Run | null;
-    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? r : null;
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? catalogueRun(r) : null;
   } catch {
     return null;
   }

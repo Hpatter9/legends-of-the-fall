@@ -27,6 +27,78 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.302.0',
+    date: '2026-10-31',
+    title: 'Relics become the keep\'s lost artefacts',
+    notes: ['30 relics in six Chapters of the keep\'s history plus six Storied ones, each with lore and its own rule: prices, conditions, powers that grow. Old runs convert.'],
+  },
+  {
+    version: '0.301.0',
+    date: '2026-10-31',
+    title: 'Armies retuned for Auto spells',
+    notes: ['Now that Auto casts your spells, the armies, the daily, the Last Stand and the Calamity are retuned to match. The late three armies are harder again.'],
+  },
+  {
+    version: '0.300.0',
+    date: '2026-10-31',
+    title: 'Clearer marks, one unlock card, auto talents',
+    notes: ['Skill and boss marks sit under the heroes. Each unlock is told once. Auto spends a hero\'s talent points, or everyone\'s from the Upgrades list.'],
+  },
+  {
+    version: '0.299.0',
+    date: '2026-10-31',
+    title: 'One battle theme, and a boss theme',
+    notes: ['Every fight now plays one strong battle track, and a heavier boss track takes over when a boss arrives. All music is levelled to the same loudness.'],
+  },
+  {
+    version: '0.298.0',
+    date: '2026-10-31',
+    title: 'Eidolon quest: What Sleeps Under the Mere',
+    notes: ['Once Askel is bound and the Beast Packs fall, a frost-bitten hunter brings Nivra\'s tale: three pieces, then a trial against Nivra herself.'],
+  },
+  {
+    version: '0.297.0',
+    date: '2026-10-31',
+    title: 'The Last Stand\'s tower',
+    notes: ['The Last Stand now opens from the tower on the overlook\'s left, with its record and a short entry. A lost run\'s message no longer covers the Daily.'],
+  },
+  {
+    version: '0.296.0',
+    date: '2026-10-31',
+    title: 'Secret heroes and ten tavern tales',
+    notes: ['The ten heroes earned in play are secret until they join. Each now comes from its own tale in the tavern, told by a giver and ending in a hard battle.'],
+  },
+  {
+    version: '0.295.0',
+    date: '2026-10-31',
+    title: 'A clearer summoning room',
+    notes: ['Shop and Pacts are small corner buttons, the Summoner\'s line is one short row and the shards panel folds, so the room shows. No leftover Askel message.'],
+  },
+  {
+    version: '0.294.0',
+    date: '2026-10-31',
+    title: 'Kill XP is shared with the party',
+    notes: ['The hero who lands a kill keeps half its XP; the rest is shared by everyone who fought, so weaker heroes level up faster beside a strong one.'],
+  },
+  {
+    version: '0.293.0',
+    date: '2026-10-31',
+    title: 'D&D ability scores, behind the scenes',
+    notes: ['Every hero now has D&D ability scores (STR, DEX, CON, INT, WIS, CHA) that grow by level, rank and awakening. They don\'t change fights yet.'],
+  },
+  {
+    version: '0.292.0',
+    date: '2026-10-31',
+    title: 'Relics stay on the prep screen',
+    notes: ['The run\'s relics now show only while you prepare a wave, not during the fight. Tap one to read it; set relics show their set count.'],
+  },
+  {
+    version: '0.291.0',
+    date: '2026-10-31',
+    title: 'Auto casts your spells too',
+    notes: ['The battle Auto switch now fires your spells as well as ultimates: heals when hurt, blasts on crowds and bosses, buffs early. The War Horn stays yours.'],
+  },
+  {
     version: '0.290.0',
     date: '2026-10-31',
     title: 'Painted faces, and the spoils page',

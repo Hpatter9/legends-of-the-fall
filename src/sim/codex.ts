@@ -11,7 +11,8 @@ import { ARMIES } from './armies';
 import { calBossBand, CAL_BOSSES, CAL_BOSS_FOES } from './calamityBosses';
 import { ELITES } from './elites';
 import { ELITE_FOES } from './eliteFoes';
-import { BOSS_BANDS, BOSS_IDS, FIELD_BANDS, FOE_BANDS } from './foes';
+import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
+import { TRIALS } from './eidolonTrials';
 import type { Meta } from './meta';
 import { ALL_HEROES, UNITS, type UnitDef } from './units';
 
@@ -52,7 +53,7 @@ function buildEntries(): FoeEntry[] {
       have.defs.push(d.id);
       continue;
     }
-    const e: FoeEntry = { id: d.id, name: d.name, defs: [d.id], class: BOSS_IDS.includes(d.id) ? 'boss' : 'common' };
+    const e: FoeEntry = { id: d.id, name: d.name, defs: [d.id], class: isBoss(d.id) ? 'boss' : 'common' };
     byName.set(d.name, e);
     out.push(e);
   }
@@ -220,6 +221,8 @@ export function whereMet(e: FoeEntry): string[] {
     }
     if ([1, 2, 3, 4, 5, 6].some((map) => calBossBand(map).some((d) => e.defs.includes(d)))) out.push('Calamity maps');
     if (ELITES.some((x) => x.escort.some((d) => e.defs.includes(d)))) out.push('Escort of tower elites');
+    // (EIDOLON-TRIAL: an Eidolon met in its own trial)
+    for (const t of TRIALS) if (e.defs.includes(t.boss.id)) out.push(`${t.part.title}: the last part of ${t.boss.name}'s Eidolon chain`);
   }
   return out;
 }

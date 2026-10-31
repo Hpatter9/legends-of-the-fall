@@ -1,5 +1,7 @@
 # Battle music: one track a battle, victory music at the end
 
+**Changed by [battle-music-2.md](battle-music-2.md):** every battle now plays the one `battle` track, and the `boss` track takes over for a boss's own wave or fight (back to the battle track after it); the army tracks and `calbattle` are gone, and every music file is levelled to -18 LUFS. The rest below still holds.
+
 **Changed by [music-theme.md](music-theme.md):** the tracks are now the main theme in each army's dress; an army run takes its army's own track at every tier, and the daily, the Last Stand, spire floors and field fights the general `battle` (the seed and the depth no longer pick; `battle2` and `battle3` are gone). The rest below still holds.
 
 **Changed by the camp fix below ([Off the board: no battle music at the camp](#off-the-board-no-battle-music-at-the-camp)):** the
