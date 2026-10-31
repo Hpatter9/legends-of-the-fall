@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.288.0',
+    date: '2026-10-31',
+    title: 'Summons and shapes last across waves',
+    notes: ['Summons and shapeshifts now run on a timer that carries from wave to wave (wolves and treants 60 s, werewolf form 40 s); a ring shows the time left.'],
+  },
+  {
     version: '0.287.0',
     date: '2026-10-31',
     title: 'New summon sprites',

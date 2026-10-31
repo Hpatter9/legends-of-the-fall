@@ -26,6 +26,10 @@
 // heroes30: each has one of the ten. The `...Others` scenarios now leave the ten out of every team (recorded on main's code before the batch)
 // and did not move; nor did daily, tower, stand or calamity. (The foes that borrow their moves, the wolf packs, the maze minotaurs and gorgons,
 // the grove satyrs, the yokai and the Nine-Tailed Fox, keep the old ones: `monsterKits` puts the new ones on the heroes' own kits only.)
+// SUMMON-TIMERS (the owner's ask: summons and shapeshifts on a timer, kept from wave to wave; docs/notes/summon-timers.md) re-recorded field30,
+// bosses, spells, heroes10 and heroes30: each has the Druid, Beastmaster, Reaper, Samurai Commander, Werewolf, Kitsune or Demon Swordsman at
+// level 10 or more, whose wraith, standard and shapes now last longer. The `...Others` scenarios now leave those seven out of every team
+// (recorded on main's code before this work) and did not move; nor did field1, armyFoes, lands, army, daily, tower, stand, calamity or heroes1.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

@@ -4,11 +4,19 @@ import { wolfLeap } from './ranged';
 import { addUnit, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, BANNER_MULT, callSummon, foesOf, slowFor, tal } from '../abilities';
 import { alliesOf, blinkTo, foesNear, freeNear, mark, ms, strike } from './common';
+import { renewable, timeSummon, TIMER } from '../carry';
 
-/** Samurai Commander, Plant the Standard: a standard (a quarter of his health; it stands where it is planted) for 10s: his friends within 2 of it take a tenth less and hit a tenth harder
- *  while it stands. One at a time. */
+/** Samurai Commander, Plant the Standard: a standard (a quarter of his health; it stands where it is planted) for 30s of fighting time (10s
+ *  before SUMMON-TIMERS; it is planted again beside him in the next wave): his friends within 2 of it take a tenth less and hit a tenth harder
+ *  while it stands. One at a time: with a quarter of its time left, the call renews it instead. */
 export function plantStandard(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (b.units.some((x) => x.alive && x.def === 'standard' && x.owner === me.id)) return false;
+  const old = b.units.find((x) => x.alive && x.def === 'standard' && x.owner === me.id);
+  if (old) {
+    if (!renewable(b, me, ['standard']) || !foesNear(b, me, 6).length) return false;
+    timeSummon(b, old, ms(me, TIMER.standard));
+    out.push({ kind: 'banner', by: me.id, ms: ms(me, TIMER.standard) });
+    return true;
+  }
   const foes = foesNear(b, me, 6);
   if (!foes.length || !alliesOf(b, me).some((a) => a !== me && apart(a, me) <= 3)) return false;
   const near = foes.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)[0];
@@ -17,10 +25,10 @@ export function plantStandard(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   const s = addUnit(b, 'standard', at.u, at.v);
   s.owner = me.id;
   s.hp = s.maxHp = Math.max(1, Math.round(me.maxHp / 4));
-  s.expires = b.t + ms(me, 10000);
+  timeSummon(b, s, ms(me, TIMER.standard));
   s.facing = me.facing;
   b.kits = { ...b.kits, standards: true };
-  out.push({ kind: 'banner', by: me.id, ms: ms(me, 10000) });
+  out.push({ kind: 'banner', by: me.id, ms: ms(me, TIMER.standard) });
   return true;
 }
 

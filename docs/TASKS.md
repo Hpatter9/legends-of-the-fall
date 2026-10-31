@@ -21,6 +21,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/heroFaceRules.ts` (the face boxes), `src/heroFace.ts` (the crop cache), `tools/hud-faces/`, `test/hud-faces.test.ts`; hooks in `src/fightHud.ts`, `src/fightHud.css`, `src/main.ts`, `src/standView.ts`. Looks only.
 - **Status:** ready for review. [Note](notes/hud-faces.md); contact sheet `samples/hud-faces-sheet.png`, screenshots `samples/hud-faces-*.png`.
 
+### SUMMON-TIMERS — Summons and shapeshifts on a timer, kept from wave to wave (skills design batch 6)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/summon-timers`, `/home/user/lotf-summontime` (from main 0.284.0).
+- **Goal:** the owner's "The hero summons should be on a timer so they last more than one round. Same with the shapeshift": section 6 of the skills design. Summons and shapes run on a timer of fighting time (wolves and treants 60s, 30s from ultimates; wraiths 20s, Harvest's 12s; the standard 30s; werewolf form 40s, Wild Shape 20s, Alter Self 15s, Full Moon and Metamorphosis 15s), carried with their health and time left into the next wave; dismissed when the caller is benched or fell; decoys unchanged; a ring by the health bar shows the time left.
+- **Scope:** new `src/sim/carry.ts`, `test/summon-timers.test.ts`, `tools/summon-timers/`; hooks in `src/sim/battle.ts` (`Unit.life`/`kept`, `Boost.kept`, `startKept` in `fight`, `endShapes` on a fall), `run.ts` (`Owned.summons`/`form`, `keepCharges`, `boostOf`), `climb.ts` (`localBoost`), `abilities.ts` (`callSummon`, Demon Form), `ultimates.ts`, `kits/blades.ts`, `kits/callers.ts`, `kits/casters.ts`, `kits/effects.ts`, `kits/when.ts`, `kits/table.ts` (words), `src/render/unitView.ts` (the ring), `src/unitInfoRules.ts`; identity fixture (scenarios named in the note).
+- **Status:** ready for review. [Note](notes/summon-timers.md); screenshots `samples/summon-timers-*.png`.
 ### SUMMON-ART — The summons drawn in their own sprites
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/summon-art`, `/home/user/lotf-summonart` (from main 0.284.0).

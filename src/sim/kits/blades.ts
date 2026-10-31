@@ -7,6 +7,7 @@ import { apart, crowd, foesOf, mendUnit, net, near3x3, roll } from '../abilities
 import { hurt } from '../battle';
 import { addRes } from '../heroKits';
 import { kx, raiseWraith, setLook } from './effects';
+import { shapeRenewable, TIMER } from '../carry';
 import { alliesOf, blinkTo, foesNear, freeNear, mark, ms, strike, strongest, stun } from './common';
 import { chillFor, setDot, silenceFor } from '../ailments';
 import { diveLaunch, smokeBlink, stepOfTheWind, THUNDER_STORE, thunderShove } from './melee';
@@ -71,15 +72,18 @@ export function pilfer(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 }
 
 /** Werewolf, Shift: changes between the Hunter (the white wolf: quicker, bites that bleed) and the Brute (the black wolf: takes a quarter less, blows that splash).
- *  He goes Brute under half health or with three foes beside him, else Hunter; at most once in 4s. */
+ *  He goes Brute under half health or with three foes beside him, else Hunter; at most once in 4s. The form lasts 40s of fighting time and
+ *  carries into the next wave (SUMMON-TIMERS, `carry.ts`); the same form is taken again (its timer renewed) only with a quarter of it left. */
 export function shift(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesNear(b, me, 4).length) return false;
   const k = kx(me);
   if (k.wolfAt !== undefined && b.t - k.wolfAt < 4000) return false;
   const want = me.hp < me.maxHp * 0.5 || foesNear(b, me, 1).length >= 3 ? 'brute' : 'hunter';
-  if (k.wolf === want) return false;
+  if (k.wolf === want && !(k.wolfUntil !== undefined && shapeRenewable(b, k.wolfUntil, k.wolfMs))) return false;
   k.wolf = want;
   k.wolfAt = b.t;
+  k.wolfMs = ms(me, TIMER.wolfForm);
+  k.wolfUntil = b.t + k.wolfMs;
   if (!(k.moon !== undefined && k.moon > b.t)) setLook(me, want === 'brute' ? 'werewolf_black' : 'werewolf_white', out);
   mark(out, me, me, want, 4000);
   return true;
@@ -155,13 +159,13 @@ export function wheelAbout(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Reaper, Bound Soul: the last foe that fell within 4 rises as a wraith on his side for 8s, at half its health and attack (a boss gives only a wisp). */
+/** Reaper, Bound Soul: the last foe that fell within 4 rises as a wraith on his side for 20s (8s before SUMMON-TIMERS; it carries into the next wave), at half its health and attack (a boss gives only a wisp). */
 export function boundSoul(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const body = b.units
     .filter((x) => !x.alive && x.side !== me.side && x.diedAt !== undefined && b.t - x.diedAt <= 12000 && apart(x, me) <= 4 && !x.kx?.spent && x.owner === undefined)
     .sort((x, y) => (y.diedAt ?? 0) - (x.diedAt ?? 0) || x.id - y.id)[0];
   if (!body) return false;
-  return raiseWraith(b, me, body, ms(me, 8000), out);
+  return raiseWraith(b, me, body, ms(me, TIMER.wraith), out);
 }
 
 /** Arc Blade, Grounding: lets go what his passive stored (30% of the damage he takes, up to four times his attack) as a nova on every foe within 2, and heals a tenth. */
