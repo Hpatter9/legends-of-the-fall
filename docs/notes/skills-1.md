@@ -231,3 +231,7 @@ changes health and attack by its step and nothing else (the same kit, costs and 
 `fight-hud.test.ts`'s tier-lines test became the rank line; `signatures.test.ts` runs the ring check over every hero. `merge.test.ts`'s
 "each grade stronger, rank 4 the biggest step" holds (1.38, x1.34, x1.62). Re-recorded: `spells-identity.json`'s army, daily, tower and the
 six hero scenarios (they place grades 1 to 3), and `ailment-logs.json`'s army, daily and tower; every grade-1 scenario kept its hash.
+
+**Checks (batch 3):** `npm run typecheck`; `grade-stats`, `fight-hud`, `signatures`, `merge`, `armies`, `army-pace` and the identity tests; the
+full `npm test` before and after merging main 0.298.0 (1,986 pass, 0 fail); `npm run web`; the skill sheet with its rank line at 393x852,
+360x780 and 412x915 (`PORT=8982 node tools/battle-hud/shots.mjs skills-1 sheet`: `docs/samples/skills-1-sheet-*.png`, no page errors).
