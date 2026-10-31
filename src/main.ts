@@ -150,7 +150,8 @@ import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
 import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
-import { chainOfBattle, type PieceFound } from './sim/eidolonChains';
+import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
+import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
@@ -973,8 +974,10 @@ class Game {
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
     if (!fight(this.b)) return;
-    // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite)
-    this.eid.arm(this.b, midBossWave(this.run, this.run.stage));
+    // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
+    // in its own trial as a great being, EIDOLON-TRIAL)
+    const qbNow = questBattleOfRun(this.run);
+    this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
@@ -2127,6 +2130,12 @@ class Game {
       .then(() => {
         this.sceneHold--;
         void this.revealEarned().then(() => {
+          // (EIDOLON-TRIAL: the trial won, the binding plays at once)
+          if (!practice && trialOfBattle(qb.id) && readyToBind(this.meta)?.id === trialOfBattle(qb.id)!.chain) {
+            this.home.open(`${qb.title} won! The Summoner is waiting at the altar.`);
+            void this.home.bindAfterTrial();
+            return;
+          }
           // (EIDOLON-CHAINS: a chain's battle hands no quest in: its piece was found, and the log opens on the chain)
           const chain = chainOfBattle(qb.id);
           this.home.open(practice ? `${qb.title}: won again, for practice.` : chain ? `${qb.title} won! A piece of the pact is found.` : `${qb.title} won! Hand the quest in at the tavern.`);

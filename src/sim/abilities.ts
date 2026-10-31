@@ -28,6 +28,7 @@ import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
 import { relicCharge, relicDodge, relicTaken } from './relicFight';
+import { TRIALS, type TrialSummon } from './eidolonTrials';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -735,6 +736,32 @@ function raiseDead(b: Battle, me: Unit): boolean {
     me.raised = (me.raised ?? 0) + 1;
   }
   return true;
+}
+
+/** EIDOLON-TRIAL: an Eidolon in its trial calls fighters of a kind to its side (`eidolonTrials.ts` `TrialSummon`): `n` a cast on the free
+ *  tiles nearest it (a fixed order), while fewer than `most` of them stand and until it has called `limit` in the fight. */
+function callPack(spec: TrialSummon): Skill['cast'] {
+  return (b, me) => {
+    const standing = b.units.filter((x) => x.alive && x.side === me.side && x.def === spec.kind && x.owner === me.id).length;
+    const room = Math.min(spec.n, spec.most - standing, spec.limit - (me.raised ?? 0));
+    if (room <= 0) return false;
+    const jump = defOf(me).jump;
+    const h = tileOf(b, me).h;
+    const spots: At[] = [];
+    for (let dv = -2; dv <= 2; dv++)
+      for (let du = -2; du <= 2; du++) {
+        const at = { u: me.u + du, v: me.v + dv };
+        const t = tileAt(b.board, at.u, at.v);
+        if (apart(me, at) >= 1 && t && standable(t) && !unitAt(b, at.u, at.v) && Math.abs(t.h - h) <= jump) spots.push(at);
+      }
+    if (!spots.length) return false;
+    spots.sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
+    for (const at of spots.slice(0, room)) {
+      addUnit(b, spec.kind, at.u, at.v, { hp: b.foeBoost?.hp, atk: b.foeBoost?.atk }).owner = me.id;
+      me.raised = (me.raised ?? 0) + 1;
+    }
+    return true;
+  };
 }
 
 /** Lich King's ultimate, Soul Nova: a ring of cold soul fire hurts every foe within four tiles and freezes it where it stands. */
@@ -1591,6 +1618,12 @@ for (const [kind, ult] of Object.entries(heroUltimates((kind) => KITS[kind].ulti
 
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
 Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
+// (EIDOLON-TRIAL: each Eidolon in its trial: its summoning and its passive, `eidolonTrials.ts`. Its summoning wears the Beastmaster's
+// Call of the Wild (its key: its painting, look and sound), under its own name)
+for (const t of TRIALS) {
+  const k = t.kit.skill;
+  KITS[t.boss.id] = { skill: { name: k.name, key: 'Call of the Wild', text: k.text, need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: callPack(k) }, passive: t.kit.passive };
+}
 // (a foe that shares one of the first eight's kits, such as the elites Sethra and Kuro, keeps the ultimate as it was: only the hero's copy waits for its level)
 for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ultimate) && OWN_ULTIMATES.get(name) !== GATED.get(k.ultimate)) KITS[name] = { ...k, ultimate: GATED.get(k.ultimate) };
 

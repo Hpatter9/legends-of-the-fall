@@ -20,6 +20,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's approved redesign (`docs/notes/relics-redesign.md`), step 1: the keep's 24 relics in six Chapters and six Storied relics, each with lore and a rule with character (a price, a condition, growth, a tie to the keep's enemies); the relic card on the prep screen (lore always shown, prices in red); a relic's icon over the hero when it fires; old saves converted (merged relics paid back, one line on the next prep screen); Auto leaves prices it cannot pay well; `npm run relic-balance`; placeholder icons and the painted icons' prompts. Step 2 (the Eidolons' reliquaries in the Calamity) is not begun. Part 1 (the strip on the prep screen only, `claude/relics`) is included.
 - **Scope:** new `src/sim/relicFight.ts`, `src/relicCard.ts`, `src/relicCard.css`, `test/relics-2.test.ts`, `tools/relics/`; `src/sim/relics.ts`, `relicSets.ts`; hooks in `src/sim/battle.ts`, `abilities.ts`, `heroKits.ts`, `spells.ts`, `run.ts`, `stand.ts`, `tower.ts`, `events.ts`, `market.ts`, `midEvents.ts`, `mystery.ts`, `elites.ts`, `autoplay.ts`, `waveGains.ts`; `src/events.ts`, `src/towerElites.ts`, `src/standView.ts`, `src/render/fx.ts`, `src/render/items.ts`, `build.mjs`, `package.json`, `CREDITS.md`.
 - **Status:** ready for review. [Note](notes/relics-2.md); [art prompts](notes/relic-art-prompts.md); screenshots `samples/relics-2-*.png`, `samples/relics-prep-*.png`.
+### OVERLOOK-STAND — The loss's word off the plates; the Last Stand in the overlook's watchtower
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/overlook-stand`, `/home/user/lotf-overlook` (from main 0.289.0).
+- **Goal:** the owner's "Losing to a wave leaves a message up on the overlook. That covers daily and Last Stand", and "a new place for Last Stand ... like the Calamity one" ("the tower off to the left in the overlook screen for its access point"): the run's last word moved off the plates and fading by itself; the Last Stand's place on the painted watchtower, lit and alive, with its plate and record, and its own way in.
+- **Scope:** new `src/standGate.ts`, `src/render/standTowerLife.ts`, `tools/overlook-stand/`; `src/render/overlookLayout.ts` (the tower's place, the Daily board alone in the row), hooks in `src/camp.ts`, `src/home.ts`, `src/campPlaces.css`; `test/overlook.test.ts` (one rule changed with the owner's ask, one test added). No sim, save or version change.
+- **Status:** ready for review. [Note](notes/overlook-stand.md); screenshots `samples/overlook-*.png`.
 ### SECRET-HEROES — The heroes earned in play kept secret; three hero quests that bring one in
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/secret-heroes`, `/home/user/lotf-secret` (from main 0.289.0).
@@ -193,6 +199,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "click and hold on a unit in between waves to get a run-down on skills and stats": a press-and-hold (400 ms, a ring under the finger; a move lets it go as a drag) on any unit on the board, a bench card or a Last Stand tray card, in a deploy or a Stand break, opens a read-only card of its stats, traits, equipment, skills (locked ones marked), a boss's second form and a foe's tips.
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
+
+### EIDOLON-TRIAL — Nivra's trial, and the trials as data for chains 3 to 6
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-chain-2` (Nivra's chain, main 0.293.0 merged in).
+- **Goal:** the owner's call that chains 2 to 6 end with a trial against the Eidolon before the binding: after Nivra's three pieces, Part 4 "The Trial", Nivra herself the boss (her Gemini sheet cut into a fighter's), frost breath down a row, a ring of ice, frost wolves, ice armour at half health; lines before and after; a win leads straight to the binding, a loss waits in the log; about 40 to 50% where it opens; one `TrialDef` a chain so chains 3 to 6 add theirs as data.
+- **Scope:** new `src/sim/eidolonTrials.ts`, `src/art/units/eidolon_nivra.png`, `art-source/eidolons/gemini/nivra-sheet.jpg`, `tools/eidolon-trial/`, `test/eidolon-trial.test.ts`; hooks in `src/sim/eidolonChains.ts`, `eidolonChainData.ts`, `chainBattleData.ts`, `questBattles.ts` (`bossLift`), `foes.ts`, `abilities.ts`, `bossAttacks.ts` (the `row` shape), `bossPhases.ts`, `sceneFamilies.ts`, `codex.ts`, `codexLore.ts`; `src/eidolonChainView.ts`, `src/home.ts`, `src/main.ts`, `src/render/sheets.ts`, `src/art/units/sheets.json`, `CREDITS.md`; two checks in `test/eidolon-chain-2.test.ts` updated.
+- **Status:** ready for review. [Note](notes/eidolon-chain-2.md) ("The trial"); screenshots `samples/eidolon-trial-*.png`.
 
 ### EIDOLON-CHAINS — Quests batch 5: Askel's chain, end to end
 

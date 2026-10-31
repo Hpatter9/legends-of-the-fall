@@ -19,6 +19,7 @@ import { mixSeed } from './rng';
 import { hidden } from './equipFx';
 import { burnFor, chillFor, curseFor, isSilenced, poisonFor, stunFor, bleedFor } from './ailments';
 import { airborne, moveMany, shove } from './toolkit/move';
+import { TRIALS } from './eidolonTrials';
 
 /** The switch (tools and tests turn it off to measure the fights without it, or the dodge alone). */
 export const BOSS_BIG = { on: true, dodge: true };
@@ -29,14 +30,16 @@ export type SigElement = 'fire' | 'ice' | 'lightning' | 'light' | 'dark' | 'fore
 /** The shapes. `slam`: a square `r` round a spot (the boss itself, or the heroes' thickest crowd in `reach`). `ring`: the tiles `r0` to
  *  `r` round the boss (its feet are safe when `r0` is 2). `line`: from the boss towards the hero it faces, `len` long and `w` wide (a
  *  breath, a charge). `cross`: beams down the boss's row and column, `len` each way, `w` wide. `rain`: a 3x3 blast on up to `n` heroes
- *  (spread). `pull`: heroes within `reach` are dragged `drag` tiles in as it gathers, then a square `r` round it is struck. */
+ *  (spread). `pull`: heroes within `reach` are dragged `drag` tiles in as it gathers, then a square `r` round it is struck. `row`: a breath
+ *  across the whole width of the field, down the row (`w` deep) where most of its foes stand (EIDOLON-TRIAL: Nivra's Rime Breath). */
 export type SigShape =
   | { kind: 'slam'; r: number; on: 'self' | 'crowd'; reach?: number }
   | { kind: 'ring'; r0: number; r: number }
   | { kind: 'line'; len: number; w: number }
   | { kind: 'cross'; len: number; w: number }
   | { kind: 'rain'; n: number }
-  | { kind: 'pull'; reach: number; drag: number; r: number };
+  | { kind: 'pull'; reach: number; drag: number; r: number }
+  | { kind: 'row'; w: number };
 
 /** What a struck hero is left with besides the damage. */
 export type SigRider = 'burn' | 'poison' | 'bleed' | 'curse' | 'stun' | 'freeze' | 'chill' | 'shove';
@@ -141,6 +144,8 @@ export const SIGNATURES: Record<string, readonly Signature[]> = {
   calBoss4: [sig('avalanche', 'Avalanche', 'The Mountain Walks', 'earth', line(7, 3), 2.2, 'shove'), sig('mountainsFall', 'Mountain’s Fall', 'The Wall Comes Down', 'earth', slam(2), 2.1, 'stun')],
   calBoss5: [sig('lastFlame', 'Rain of the Last Flame', 'The Last Flame Falls', 'fire', rain(3), 1.45, 'poison'), sig('hellbringerCross', 'Hellbringer’s Cross', 'Cross of the Hellbringer', 'fire', cross(5, 1), 2.0, 'burn')],
   calBoss6: [sig('calamityCharge', 'Calamity Charge', 'No Horizon Beyond', 'fire', line(8, 3), 2.3, 'shove'), sig('endOfRoads', 'The End of All Roads', 'The End of Everything', 'dark', pull(5, 2, 2), 2.0, 'curse')],
+  // (EIDOLON-TRIAL: each Eidolon in its own trial, `eidolonTrials.ts`)
+  ...Object.fromEntries(TRIALS.map((t) => [t.boss.id, t.signatures])),
 };
 
 /** A signature a boss has begun: the tiles it will strike, and when. */
@@ -231,6 +236,13 @@ export function sigTiles(b: Battle, me: Unit, s: Signature, rage: boolean): numb
           if (onBoard(b, u, v)) out.add(idx(b, { u, v }));
         }
     }
+  } else if (sh.kind === 'row') {
+    // (the row with the most of its foes on it, the rage version a row deeper; the nearer row wins a tie, then the lower)
+    const w = sh.w + extra;
+    const rows = new Map<number, number>();
+    for (const h of heroes) for (let k = 0; k < w; k++) rows.set(h.v - k, (rows.get(h.v - k) ?? 0) + 1);
+    const best = [...rows.entries()].sort((x, y) => y[1] - x[1] || Math.abs(x[0] - me.v) - Math.abs(y[0] - me.v) || x[0] - y[0])[0];
+    if (best) for (let k = 0; k < w; k++) for (let u = 0; u < b.board.w; u++) if (onBoard(b, u, best[0] + k)) out.add(idx(b, { u, v: best[0] + k }));
   } else if (sh.kind === 'rain') {
     // (a blast on each of up to `n` heroes, the nearest first, each a little off its mark by a hash of the moment, and none on a hero
     // another blast already covers)
