@@ -4,7 +4,7 @@
 // no relic) brought to one army wave where they win about half the time, FIGHTS runs (default 300), then that wave's fight from each
 // run's state with no relic, with the old Whetstone (a flat +8% attack: the yardstick of a Common, the
 // size of most old relics), and with each relic alone. A growing relic is at its size half way through a 15-wave run (7 waves won, 2
-// elites felled, 3 heroes fallen). It prints the win rate and its lift over no relic, in points, beside the old Whetstone's. Single fights
+// elites felled, 3 heroes fallen). Auto casts the king's spells (AUTO-CAST), so the mana relics count. It prints the win rate and its lift over no relic, in points, beside the old Whetstone's. Single fights
 // are far less noisy than whole runs for the same time. Gold relics (the Crown-Piece, the Tax Ingot) change no fight; their worth is
 // their gold.
 //
@@ -25,6 +25,11 @@ import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { GREAT_RELIC_IDS, RELIC_IDS, RELICS, type RelicMarks } from '../../src/sim/relics';
 import { HEROES } from '../../src/sim/units';
+import { STARTER_SPELLS } from '../../src/sim/spells';
+import { autoSpellsFor } from '../../src/sim/autoCast';
+
+/** The king's spells cast by Auto (AUTO-CAST), as the page's Auto does: the equipped ones, or the starter's (so the mana relics count). */
+const castFor = (meta: Meta) => autoSpellsFor(true, meta.spellbook.equipped.length ? meta.spellbook.equipped : STARTER_SPELLS);
 
 const ONLY = process.env.ONLY?.split(',');
 const RUNS = process.argv.includes('--runs');
@@ -51,6 +56,7 @@ function warm(meta: Meta, armyId: string, wave: number, seed: number): ReturnTyp
     run.event = undefined;
     const b = startStage(run);
     autoDeploy(b, run, meta);
+    b.autoSpells = castFor(meta);
     fight(b);
     playOut(b);
     finish(run, b.phase === 'won', ratingOf(b, isBossRun(run)).stars);
@@ -72,6 +78,7 @@ function oneFight(meta: Meta, warmed: ReturnType<typeof armyRun>, relic: string)
   if (relic === 'old') run.buff = { ...OLD };
   const b = startStage(run);
   autoDeploy(b, run, meta);
+  b.autoSpells = castFor(meta);
   fight(b);
   playOut(b);
   return b.phase === 'won';
