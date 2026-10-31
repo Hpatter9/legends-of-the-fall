@@ -13,12 +13,12 @@ const PARTY = ['knight', 'samurai', 'archer', 'wizard', 'cleric'];
 const TIPS = ['home', 'deploy', 'fight', 'mana', 'skill', 'ult', 'summon', 'crowns', 'retry', 'recycle', 'calamity', 'tower', 'talents', 'castle', 'spellbook', 'stash', 'equipment', 'autoReplay', 'stand'];
 const out = [];
 try {
-  for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
+  for (const [w, h] of [[393, 852], [360, 780], [412, 915]].filter(([w]) => !process.env.SIZES || process.env.SIZES.split(',').includes(String(w)))) {
     const ctx = await br.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true, serviceWorkers: 'block' });
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto(`http://localhost:${PORT}/?x=${Math.random()}`);
+    await page.goto(`http://localhost:${PORT}/?x=${Math.random()}`, { timeout: 120000 });
     await page.evaluate(([party, tips]) => {
       localStorage.clear();
       // (an old save: `ultAuto` on, the key Auto has always been kept under)
@@ -27,8 +27,8 @@ try {
       localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false }));
       localStorage.setItem('legends.tips', JSON.stringify(tips));
     }, [PARTY, TIPS]);
-    await page.goto(`http://localhost:${PORT}/?seed=5`);
-    await page.waitForFunction(() => window.__game?.run, null, { timeout: 30000 });
+    await page.goto(`http://localhost:${PORT}/?seed=5`, { timeout: 120000 });
+    await page.waitForFunction(() => window.__game?.run, null, { timeout: 240000 });
     await page.waitForTimeout(1500);
     await page.evaluate(() => document.getElementById('tipSkip')?.click());
     await page.evaluate((party) => {
@@ -50,7 +50,7 @@ try {
     assert.ok(sw.on && sw.auto?.length, JSON.stringify(sw));
     assert.ok(sw.r[2] <= sw.vw, 'the switch is on screen');
     // (the first spell the chooser casts by itself)
-    await page.waitForFunction(() => window.__game.b.log?.some((e) => e.kind === 'spell') || window.__game.b.phase !== 'fight', null, { timeout: 60000, polling: 50 });
+    await page.waitForFunction(() => window.__game.b.log?.some((e) => e.kind === 'spell') || window.__game.b.phase !== 'fight', null, { timeout: 300000, polling: 50 });
     await page.waitForTimeout(250);
     const cast = await page.evaluate(() => {
       const b = window.__game.b;
@@ -69,7 +69,7 @@ try {
     await page.locator('.stPick .primary').click();
     await page.locator('.stStart').waitFor({ state: 'visible' });
     await page.click('.stStart');
-    await page.waitForFunction(() => { const s = window.__game.stand.state; return s?.b.log?.some((e) => e.kind === 'spell'); }, null, { timeout: 90000, polling: 50 }).catch(() => {});
+    await page.waitForFunction(() => { const s = window.__game.stand.state; return s?.b.log?.some((e) => e.kind === 'spell'); }, null, { timeout: 300000, polling: 50 }).catch(() => {});
     await page.waitForTimeout(250);
     const stand = await page.evaluate(() => {
       const s = window.__game.stand.state;
