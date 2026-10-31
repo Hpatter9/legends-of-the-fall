@@ -74,9 +74,9 @@ async function open(eidolons, confirmed) {
       for (let t = 0; t < ms; t += 16) {
         g.frame(16, 16);
         // (every animation seen so far is stepped, not only those the page lists now: a paused one still in its delay is not listed, and
-        // would never start)
+        // would never start; one the page has cancelled (idle) is left alone)
         for (const a of new Set([...seen.keys(), ...document.getAnimations()])) {
-          if (!a.effect?.target?.isConnected) continue;
+          if (!a.effect?.target?.isConnected || a.playState === "idle") continue;
           const at = (seen.get(a) ?? 0) + 16;
           seen.set(a, at);
           if (a.playbackRate !== 0) a.playbackRate = 0;
