@@ -167,4 +167,4 @@ Calamity's, measured above.)
 - `tools/relics/card-shots.mjs [root] [port]`: the strip with the conversion line, four cards (a chapter, a growing relic, a price, a
   Storied relic) at 393x852, 360x780 and 412x915 (each card fits the screen, no sideways scroll), the line gone and the strip hidden once the
   fight begins, and a relic's mark over a hero. Screenshots `docs/samples/relics-2-*.png`. `tools/relics/prep-shots.mjs` (part 1's check) now opens the card on a tap.
-- Run: `npm run typecheck` clean; the full `npm test` (1975 pass, 0 fail after the two fingerprint files were re-recorded); `npm run web`.
+- Run: `npm run typecheck` clean; the full `npm test` (1997 pass, 0 fail, after main 0.296.0 was merged and the two fingerprint files re-recorded); `npm run web`.
