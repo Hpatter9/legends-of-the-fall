@@ -13,10 +13,13 @@ import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
-import { closeMapLeg, noteFightStats, notePayout, noteWave, recapOf } from './sim/runRecap';
+import { closeMapLeg, heartsBurned, noteFightStats, notePayout, noteWave, noteXpStart, recapOf } from './sim/runRecap';
 import { towerHeadline, waveHeadline, waveNotes, type WaveMoments } from './sim/waveCard';
 import { gainsSince, snapGains } from './sim/waveGains';
 import { drawWaveNotes } from './waveCardView';
+// (JRPG-RECAP: the results screen after every fight and atop the run's end recap)
+import { playResults, type JrData, type JrPlayer } from './jrpgRecapView';
+import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
@@ -243,6 +246,9 @@ class Game {
   private passing: { wait: number; marched: boolean } | null = null;
   /** The settled wave's short card (WAVE-RECAP): its number, its count of waves, and the moments worth a line; null for a card that keeps the full report (the spire and the Calamity). */
   private waveCard: (WaveMoments & { wave: number; of: number | null; title?: string }) | null = null;
+  /** JRPG-RECAP: the results screen's data once a fight is settled, and its player once the card is up. */
+  private jrData: JrData | null = null;
+  private jr: JrPlayer | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -530,6 +536,7 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
+    this.stopResults();
     this.placeSquad();
     this.acc = 0;
     this.chosen = null;
@@ -1786,8 +1793,13 @@ class Game {
     // (a tap anywhere hurries the heart-burn: the wave starts at once, and the line goes)
     document.addEventListener('pointerdown', () => this.skipRevive(), true);
     // (a tap on the short card over the march goes straight on to the next wave)
+    // (JRPG-RECAP: a first tap hurries the count-ups to their end; once they are done, a tap between waves goes on, and at a fight's end
+    // with one way on, it presses that way)
     $('result').addEventListener('click', (e) => {
-      if (this.passing && !(e.target as HTMLElement).closest('button')) this.passOn();
+      if ((e.target as HTMLElement).closest('button')) return;
+      if (this.jr && this.jr.finish()) return;
+      if (this.passing) this.passOn();
+      else if (this.jr?.done() && $('qbLeave').hidden && !$('result').hidden) ($('next') as HTMLButtonElement).click();
     });
     $('qbLeave').addEventListener('click', () => this.leaveQuest());
     $('next').addEventListener('click', () => {
@@ -2177,11 +2189,25 @@ class Game {
     const card = $('result');
     if (!p || card.hidden) return;
     if (document.body.dataset.move) p.marched = true;
+    // (JRPG-RECAP: the results screen waits for a tap, as a JRPG's does; the march goes on behind it)
+    if (this.jr) return;
     if (document.body.dataset.move || this.sceneHold || this.homeUp || this.destinationReveal) return;
     p.wait += dt;
     const stay = p.marched ? PASS_AFTER_MARCH_MS : PASS_NO_MARCH_MS;
     if (p.wait >= stay - PASS_FADE_MS) card.classList.add('leaving');
     if (p.wait >= stay) this.passOn();
+  }
+
+  /** JRPG-RECAP: the results screen is going (a new fight): its clock stops and its parts are emptied. */
+  private stopResults(): void {
+    this.jr?.stop();
+    this.jr = null;
+    this.jrData = null;
+    for (const id of ['jrHead', 'jrBody']) {
+      $(id).hidden = true;
+      $(id).replaceChildren();
+    }
+    $('result').classList.remove('jr');
   }
 
   /** The short card is done: the next wave. */
@@ -2359,7 +2385,9 @@ class Game {
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
     // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
     const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
-    showRecap($('recap'), recapOf(run), { ...head, joke, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
+    // (JRPG-RECAP: the run's results screen at the top: each hero's XP over the run, the MVP, the gold and crowns counted up)
+    const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) });
+    showRecap($('recap'), recapOf(run), { ...head, joke, results, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -2907,6 +2935,7 @@ class Game {
       if (won && !army && !daily && !quest && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       // (QUESTS: the quests this fight completes are told after the achievements' toasts)
       const readyBefore = readyQuests(this.meta);
+      const questsBefore = questSnap(this.meta);
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
@@ -2936,6 +2965,8 @@ class Game {
       const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
+      // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
+      if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
       const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
@@ -2983,6 +3014,13 @@ class Game {
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
         drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : [], this.waveCard?.gains ?? []);
         for (const id of ['xp', 'fightStats']) $(id).hidden = true;
+        // (JRPG-RECAP: the results screen's data; it plays once the card is up, in `refresh`)
+        const share = this.pay?.replay ? 'a replay pays a share' : run.mode?.kind === 'daily' && run.mode.practice ? 'practice' : '';
+        this.jrData = fightResult(
+          { meta: this.meta, run, b, stats: this.stats, won, card: this.waveCard, gains, bench, own, gold: this.gain, crowns: quest ? null : this.crownGain, ...(share ? { crownNote: share } : {}), notes: this.pay?.firstClear ? ['First clear!'] : [], quests: questsMoved(this.meta, questsBefore, questsDone, questsFound) },
+          '',
+          this.passing ? 'Tap to continue' : undefined,
+        );
       }
       saveMeta(this.meta);
       saveRun(run);
@@ -3053,7 +3091,12 @@ class Game {
       // (a short card's pay line drops the finds, which have lines of their own, and the dry aside)
       if (card && b.phase === 'won') $('summary').textContent = qrun ? `+${this.gain} gold · ${clock(b.t)}` : `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
       result.classList.toggle('short', !!card);
-      result.classList.toggle('passing', !!this.passing);
+      // (JRPG-RECAP: the results screen, started the first time the card shows; it keeps the card's heading as its line)
+      if (this.jrData && !this.jr) this.jr = playResults({ head: $('jrHead'), body: $('jrBody') }, this.jrData);
+      this.jr?.setSub($('banner').textContent ?? '');
+      result.classList.toggle('jr', !!this.jr);
+      result.classList.toggle('jrWon', !!this.jr && b.phase === 'won');
+      result.classList.toggle('passing', !!this.passing && !this.jr);
       if (card) $('joke').hidden = true;
       else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);

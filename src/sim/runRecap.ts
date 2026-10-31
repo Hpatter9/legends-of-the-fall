@@ -37,6 +37,9 @@ export interface RunRecap {
   /** The gear and prizes the run picked up, by name (the wave's `run.found`; optional). Still kept, but no longer shown: the owner
    *  asked for a run's finds only on each wave's card, as they leave with the run (RECAP-REVEAL). */
   found?: string[];
+  /** Each kind's lasting XP when it first earned any in the run (JRPG-RECAP: the end screen fills each hero's bar from here; optional,
+   *  an older save reads it from the XP the run noted). */
+  xpAt?: Record<string, number>;
 }
 
 /** One wave's line in the end recap's wave-by-wave strip. */
@@ -92,6 +95,12 @@ export function notePayout(run: Run, xp: Record<string, number>, ups: readonly {
   }
   r.crowns += crowns;
   r.chests += chests;
+}
+
+/** Note each kind's lasting XP before a fight paid it (`before`, by kind), for the kinds the run has not yet noted (JRPG-RECAP). */
+export function noteXpStart(run: Run, before: Readonly<Record<string, number>>): void {
+  const r = recapOf(run);
+  for (const [k, xp] of Object.entries(before)) if (!(k in (r.xpAt ??= {}))) r.xpAt[k] = xp;
 }
 
 /** Add a finished wave's line (its stars, time, MVP, hearts) and anything it found, for the end recap. */
