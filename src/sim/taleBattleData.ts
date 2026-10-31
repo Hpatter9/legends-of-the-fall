@@ -124,4 +124,122 @@ export const TALE_BATTLES: readonly QuestBattle[] = [
         { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'Free. Good. Tell the small smith: I come to her fire. I carry my own door.')] },
       ]),
   },
+
+  /* ------------------------------------------------------------ HERO-TALES-2: the other seven tales' battles */
+  {
+    // (The Ledger of the Unburied, part 3: the Legion comes to the chapel yard for the sexton's ledger, and the visitor stands at the gate)
+    id: 'thirteenthBell',
+    title: 'The Thirteenth Bell',
+    blurb: "The chapel bell rings thirteen, and the Undead Legion climbs the yard wall for Sexton Pell's ledger of names.",
+    land: 'graveyard',
+    like: { army: 'labyrinth', wave: 12 },
+    ease: 0.95,
+    cast: [STARTER_SLOT(['archer', 'wizard'])],
+    waves: [
+      { foes: ['skeleton', 'spearman', 'boneVolley', 'skeleton'] },
+      { foes: ['boneCaptain', 'spearman', 'boneVolley', 'skeleton'], boss: 'mid' },
+      { foes: ['lichKing', 'spearman', 'boneVolley', 'skeleton', 'skeleton'], boss: 'final' },
+    ],
+    boss: { name: 'The Roll-Caller', title: 'Who Reads the Names of the Dead' },
+    before: (c) =>
+      story('thirteenthBell', 'The Thirteenth Bell', 'graveyard', { pell: giver('sexton', 'Sexton Pell'), a: hero(c[0] ?? 'archer', 220), who: stranger('reaper', 330), caller: foe('lichKing', 460, 1.3, { name: 'The Roll-Caller', hidden: true }) }, [
+        { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'motes', caption: 'The chapel yard, at the thirteenth bell', lines: [say('pell', 'Twelve, and then thirteen. There is no thirteen. The bell does not go that high.')] },
+        { cam: wide(330, 205), ...shoot('medium', 'who', 'pushIn'), weather: 'motes', lines: [tell('At the lychgate a thin figure waits with a ledger under one arm and something long and curved over its shoulder.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a'), lines: [say('a', 'Is that what I think it is?'), say('who', 'It is for the long grass. Mostly.', 'whisper')] },
+        { cam: wide(460, 205), ...shoot('low', 'caller', 'pushIn', 'smash'), acts: [{ who: 'caller', enter: 460, from: 'right' }], cue: 'boom', fx: ['shake'], title: card('The Roll-Caller', 'Who Reads the Names of the Dead'), lines: [say('caller', 'Give me the book. Every name in it is one of mine.', 'shout')] },
+        { cam: wide(260, 205), ...shoot('medium', 'a', 'snapZoom'), acts: [{ who: 'a', pose: 'strike' }], lines: [say('a', 'Then come and read them off the gate.')] },
+      ]),
+    after: (c) =>
+      story('thirteenthBellAfter', 'The Thirteenth Bell', 'graveyard', { a: hero(c[0] ?? 'archer', 240), who: stranger('reaper', 340) }, [
+        { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), lines: [tell('The bell stops. The Legion lies down where it fell, and for once it stays down.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'Every name accounted for. Tell the sexton I shall come in for that cup of tea.', 'whisper')] },
+      ]),
+  },
+  {
+    // (The Pawned Blade, part 2: the Infernal Host's collectors come up Lantern Row for the sword and the man who owns it)
+    id: 'debtCollectors',
+    title: 'The Debt Collectors',
+    blurb: "The Infernal Host sends its collectors up Lantern Row with a cart and a ledger, to take back a sword, and the man who carries it.",
+    land: 'desert',
+    like: { army: 'golems', wave: 9 },
+    ease: 0.48,
+    cast: [STARTER_SLOT(['samurai', 'peasant'])],
+    waves: [
+      { foes: ['hellImp', 'hellImp', 'hellDemon'] },
+      { foes: ['hellDemon', 'hellImp', 'hellDemon', 'hellImp'] },
+      { foes: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], boss: 'final' },
+    ],
+    boss: { name: 'Paymaster Grisk', title: 'Who Docks Every Wage' },
+    before: (c) =>
+      story('debtCollectors', 'The Debt Collectors', 'desert', { ottilie: giver('pawnbroker', 'Ottilie Marsh'), a: hero(c[0] ?? 'samurai', 220), who: stranger('demonSwordsman', 330), grisk: foe('devilLeader', 460, 1.2, { name: 'Paymaster Grisk', hidden: true }) }, [
+        { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'embers', caption: 'Lantern Row, where the town meets the ash road', lines: [say('ottilie', 'Shutters up, cat in the back. If anyone breaks my window, they are buying it.')] },
+        { cam: wide(330, 205), ...shoot('medium', 'who', 'pushIn'), weather: 'embers', lines: [tell('Her customer waits in the middle of the street, the black sword on his shoulder, very calm for a man who owes Hell money.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a'), lines: [say('a', 'How much do you owe them?'), say('who', 'Nothing. That is what they cannot forgive.')] },
+        { cam: wide(460, 205), ...shoot('low', 'grisk', 'pushIn', 'smash'), acts: [{ who: 'grisk', enter: 460, from: 'right' }], cue: 'slam', fx: ['shake'], title: card('Paymaster Grisk', 'Who Docks Every Wage'), lines: [say('grisk', 'One sword, Host property. One swordsman, Host property. Plus interest. Plus the cart.', 'shout')] },
+        { cam: wide(260, 205), ...shoot('medium', 'a', 'snapZoom'), acts: [{ who: 'a', pose: 'strike' }], lines: [say('a', 'Take it up with the keep. We pay on time.')] },
+      ]),
+    after: (c) =>
+      story('debtCollectorsAfter', 'The Debt Collectors', 'desert', { a: hero(c[0] ?? 'samurai', 240), who: stranger('demonSwordsman', 340) }, [
+        { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), lines: [tell('The cart burns out in the road. The collectors are gone, and so, at last, is the debt.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'A master who pays on time. I had heard of such things. Tell the pawnbroker to keep the ticket.')] },
+      ]),
+  },
+  {
+    // (The Banner in the Mist, part 3: the Night Parade comes up the shrine road to put out a hundred lanterns, and the soldier holds it)
+    id: 'hundredLanterns',
+    title: 'A Hundred Lanterns',
+    blurb: 'A hundred lanterns burn up the shrine road to a banner in the mist, and the whole Night Parade comes to put them out.',
+    land: 'shrine',
+    like: { army: 'golems', wave: 13 },
+    ease: 0.47,
+    cast: [STARTER_SLOT(['kunoichi', 'knight'])],
+    waves: [
+      { foes: ['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiCrow'] },
+      { foes: ['yokaiWitch', 'yokaiSeer', 'yokaiMonk', 'yokaiFox'] },
+      { foes: ['nineTails', 'yokaiCrow', 'yokaiWitch', 'yokaiSeer', 'yokaiMonk'], boss: 'final' },
+    ],
+    boss: { name: 'Kagari of the Nine Tails', title: 'Who Leads the Parade Astray' },
+    before: (c) =>
+      story('hundredLanterns', 'A Hundred Lanterns', 'shrine', { kiku: giver('lantern', 'Kiku'), a: hero(c[0] ?? 'kunoichi', 220), who: stranger('samuraiCommander', 330), kagari: foe('nineTails', 460, 1.2, { name: 'Kagari of the Nine Tails', hidden: true }) }, [
+        { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'motes', caption: 'The shrine road, under a hundred lanterns', lines: [say('kiku', 'Ninety-eight, ninety-nine, a hundred. Every one of them lit. Now nobody touch anything.')] },
+        { cam: wide(330, 205), ...shoot('medium', 'who', 'pushIn'), weather: 'motes', lines: [tell('At the top of the road, under a banner gone grey with mist, a soldier in old armour stands exactly where it has stood every night.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a'), lines: [say('a', 'How long have you held this road?'), say('who', 'Since the night it needed holding. Stand at my left. The left is always weaker.')] },
+        { cam: wide(460, 205), ...shoot('low', 'kagari', 'pushIn', 'smash'), acts: [{ who: 'kagari', enter: 460, from: 'right' }], cue: 'eliteSting', fx: ['glow'], title: card('Kagari of the Nine Tails', 'Who Leads the Parade Astray'), lines: [say('kagari', 'So many little lights. Shall I blow them out one at a time, soldier, or all at once?', 'shout')] },
+        { cam: wide(260, 205), ...shoot('medium', 'a', 'snapZoom'), acts: [{ who: 'a', pose: 'strike' }], lines: [say('a', 'Neither. Kiku sells them. You are paying for every one.')] },
+      ]),
+    after: (c) =>
+      story('hundredLanternsAfter', 'A Hundred Lanterns', 'shrine', { a: hero(c[0] ?? 'kunoichi', 240), who: stranger('samuraiCommander', 340) }, [
+        { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), lines: [tell('Dawn comes up the shrine road. The Parade is gone, and a hundred lanterns are still burning.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'The road is held. My watch is ended. Tell the lantern-seller I would see your keep, and whatever gate it needs holding.')] },
+      ]),
+  },
+  {
+    // (The Second Throne, part 3: everyone the second throne sentenced at the Last Stand comes back at once to appeal)
+    id: 'theAppeal',
+    title: 'The Appeal',
+    blurb: 'Everyone sentenced from the second throne comes back through the breach together, to appeal, with an army.',
+    land: 'dungeon',
+    like: { army: 'golems', wave: 15 },
+    ease: 0.48,
+    cast: [STARTER_SLOT(['knight', 'kunoichi'])],
+    waves: [
+      { foes: ['orcBrute', 'clanOgre', 'orcArcher', 'orcGrunt'] },
+      { foes: ['shamanKing', 'clanBrute', 'mazeMino2', 'orcArcher'], boss: 'mid' },
+      { foes: ['hornedOgre', 'clanOgre', 'mazeGorgon2', 'orcArcher', 'orcBrute'], boss: 'final' },
+    ],
+    boss: { name: 'Gorm the Appellant', title: 'Who Will Not Be Sentenced' },
+    before: (c) =>
+      story('theAppeal', 'The Appeal', 'dungeon', { fenwick: giver('herald', 'Master Fenwick'), a: hero(c[0] ?? 'knight', 220), who: stranger('tyrant', 340), gorm: foe('hornedOgre', 460, 1.2, { name: 'Gorm the Appellant', hidden: true }) }, [
+        { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'dust', caption: 'The throne room, the court in session', lines: [say('fenwick', 'All rise. Or, in the case of the appellants, all come through the breach, I suppose.')] },
+        { cam: wide(340, 205), ...shoot('medium', 'who', 'pushIn'), lines: [tell('On the second throne a figure sits in a heavy crown, quite still, chin on one fist, as if the whole keep were a matter to be decided.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a'), lines: [say('a', 'Are you going to fight, or just sit there?'), say('who', 'I am going to sit here. That is how a court is held. You are the evidence.')] },
+        { cam: wide(460, 205), ...shoot('low', 'gorm', 'pushIn', 'smash'), acts: [{ who: 'gorm', enter: 460, from: 'right' }], cue: 'boom', fx: ['shake'], title: card('Gorm the Appellant', 'Who Will Not Be Sentenced'), lines: [say('gorm', 'We appeal! All of us! Mostly with clubs!', 'shout')] },
+        { cam: wide(260, 205), ...shoot('medium', 'a', 'snapZoom'), acts: [{ who: 'a', pose: 'strike' }], lines: [say('a', 'Objection noted.')] },
+      ]),
+    after: (c) =>
+      story('theAppealAfter', 'The Appeal', 'dungeon', { a: hero(c[0] ?? 'knight', 240), who: stranger('tyrant', 340) }, [
+        { cam: wide(290, 205), ...shoot('wide', undefined, 'pullOut'), lines: [tell('The appellants lie where they fell. On the second throne, at long last, the figure in the crown stands up.')] },
+        { cam: wide(300, 205), ...shoot('two', 'a', 'still', 'dissolve'), hold: 1.2, lines: [say('who', 'Appeal dismissed. The keep has given its evidence well. Tell the herald he may announce me.')] },
+      ]),
+  },
 ];

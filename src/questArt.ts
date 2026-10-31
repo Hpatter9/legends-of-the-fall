@@ -13,6 +13,13 @@ import duchessFace from './art/quests/duchess-face.png';
 import shepherdFace from './art/quests/shepherd-face.png';
 import gaolerFace from './art/quests/gaoler-face.png';
 import smithFace from './art/quests/smith-face.png';
+import sextonFace from './art/quests/sexton-face.png';
+import pawnbrokerFace from './art/quests/pawnbroker-face.png';
+import lanternFace from './art/quests/lantern-face.png';
+import heraldFace from './art/quests/herald-face.png';
+import clockFace from './art/quests/clock-face.png';
+import falconerFace from './art/quests/falconer-face.png';
+import archivistFace from './art/quests/archivist-face.png';
 import spoilsFace from './art/items/star_chart.png';
 import riftFace from './art/items/rift_shard.png';
 import gwenSheet from './art/quests/gwen.png';
@@ -37,6 +44,14 @@ export const FACES: Record<GiverId, string> = {
   shepherd: shepherdFace,
   gaoler: gaolerFace,
   smith: smithFace,
+  // (HERO-TALES-2: the other seven tellers, by the same tool)
+  sexton: sextonFace,
+  pawnbroker: pawnbrokerFace,
+  lantern: lanternFace,
+  herald: heraldFace,
+  clock: clockFace,
+  falconer: falconerFace,
+  archivist: archivistFace,
 };
 
 /** Gwen behind the bar: 64 px cells, facing left; row 0 her stand (1 frame), row 1 talking (5 frames). */

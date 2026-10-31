@@ -168,23 +168,18 @@ test('pulls never give a hero earned by content, whatever the seed (an owned one
 test('a content hero joins on its milestone, once, and stays', () => {
   const m = fresh(8);
   assert.deepEqual(grantContent(m), []);
-  // the tower (SECRET-HEROES: wave 20 no longer brings the Dread Pirate: a hero quest does, `secret-heroes.test.ts`)
-  m.tower = 20;
-  assert.deepEqual(grantContent(m), []);
+  // the tower and the armies' tiers (SECRET-HEROES, HERO-TALES-2: wave 20 and 40, the Beast Packs, the Undead Legion on Hard and the Yokai
+  // on Elite no longer bring a hero: a hero quest does, `secret-heroes.test.ts`)
   m.tower = 40;
+  m.stand = 40;
+  m.armies.beasts = { best: 15, won: 15, clears: 1, stars: {} };
+  m.armies.undead = { best: 15, won: 15, clears: 3, stars: {}, hard: { 1: { won: 15, clears: 1 } } };
+  m.armies.yokai = { best: 15, won: 15, clears: 1, stars: {}, hard: { 1: { won: 15, clears: 1 }, 2: { won: 15, clears: 1 } } };
+  assert.deepEqual(grantContent(m), []);
+  // (a tale handed in brings its hero, once)
+  m.quests = { active: [], offers: [], done: ['taleThroneAppeal'] };
   assert.deepEqual(grantContent(m), ['tyrant']);
   assert.deepEqual(grantContent(m), [], 'once');
-  // an army's tiers: the Undead Legion on Hard (a Normal clear is not enough); the Beast Packs no longer bring the Werewolf (a tale does)
-  m.armies.beasts = { best: 15, won: 15, clears: 1, stars: {} };
-  assert.deepEqual(grantContent(m), []);
-  m.armies.undead = { best: 15, won: 15, clears: 3, stars: {} };
-  assert.deepEqual(grantContent(m), []);
-  m.armies.undead.hard = { 1: { won: 15, clears: 1 } };
-  assert.deepEqual(grantContent(m), ['reaper']);
-  m.armies.yokai = { best: 15, won: 15, clears: 1, stars: {}, hard: { 1: { won: 15, clears: 1 } } };
-  assert.deepEqual(grantContent(m), [], 'Yokai asks for Elite');
-  m.armies.yokai.hard![2] = { won: 15, clears: 1 };
-  assert.deepEqual(grantContent(m), ['samuraiCommander']);
   // the calamity, and its ascension
   m.calamity = { best: 6, clears: 1 };
   assert.deepEqual(grantContent(m), ['timeWitch']);
@@ -226,13 +221,13 @@ test('an old save keeps every hero it owns, and one that has met a milestone get
   old.unlocked = [...HEROES, 'kitsune', 'werewolf', 'peasant', 'dreadPirate', 'gorgon'];
   old.party = [...HEROES];
   old.shards = { kitsune: 3, gorgon: 1 };
-  old.tower = 41;
+  old.quests = { active: [], offers: [], done: ['taleThroneAppeal'] };
   delete old.unlock;
   delete old.unlockDry;
   saveMeta(old, s);
   const back = loadMeta(1, s);
   for (const k of old.unlocked) assert.ok(back.unlocked.includes(k), `${k} was kept`);
-  assert.ok(back.unlocked.includes('tyrant'), 'tower floor 40 reached before: the hero joins');
+  assert.ok(back.unlocked.includes('tyrant'), 'a tale handed in before: the hero joins');
   assert.deepEqual(back.shards, old.shards);
   assert.deepEqual(back.unlock, {});
   // (and the rest carry on under the new rules: the next hero costs by the heroes owned)
@@ -264,7 +259,8 @@ test('a hero not owned says how to get it: a secret hint for one earned in play,
   assert.equal(lockInfo(m, m.unlocked[0]), null);
   // (SECRET-HEROES, the owner's ask: a hero earned in play is a secret, with a vague hint, no name and no bar, however far on the save is)
   const tyrant = lockInfo(m, 'tyrant')!;
-  assert.equal(tyrant.line, 'A hero waits for a deed of note');
+  // (HERO-TALES-2: every one of them comes by a tale now, so every hint is the tavern's)
+  assert.equal(tyrant.line, 'A hero waits for a tale to be told in the tavern');
   assert.deepEqual([tyrant.now, tyrant.need, tyrant.named], [0, 0, false]);
   m.stand = 22;
   assert.equal(lockInfo(m, 'tyrant')!.need, 0, 'no bar to give it away');

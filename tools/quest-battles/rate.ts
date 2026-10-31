@@ -3,6 +3,7 @@
 //
 //   npm run quest-rate            30 tries a battle, at the army's level
 //   npm run quest-rate -- 40 +5   40 tries, five levels above it
+//   npm run quest-rate -- 20 +5 --only=<id> [--ease=<x>]   one battle (at a trial ease)
 
 import { fight, playOut } from '../../src/sim/battle';
 import { armyById, ARMIES } from '../../src/sim/armies';
@@ -19,6 +20,8 @@ const lift = Number(process.argv[3]) || 0;
 /** `--search`: for each battle, the largest `ease` on a ladder that a party at the level wins at least half the time. */
 const search = process.argv.includes('--search');
 const only = process.argv.find((a) => a.startsWith('--only='))?.slice(7);
+/** `--ease=<x>` (with `--only`): rate the battle at this ease instead of its own, to try a value before writing it in. */
+const easeArg = Number(process.argv.find((a) => a.startsWith('--ease='))?.slice(7)) || 0;
 const FILL = ['knight', 'samurai', 'archer', 'peasant', 'kunoichi', 'wizard', 'cleric', 'warlock', 'lightningMage', 'sage'];
 
 function rate(qb: QuestBattle): number {
@@ -62,6 +65,10 @@ function rate(qb: QuestBattle): number {
 
 for (const qb of [...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES]) {
   if (only && qb.id !== only) continue;
+  if (only && easeArg) {
+    (qb as { ease?: number }).ease = easeArg;
+    forgetQuestArmies();
+  }
   const level = armyById(qb.like.army)!.level + lift;
   let wins = 0;
   if (search) {

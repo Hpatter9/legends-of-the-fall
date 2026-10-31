@@ -18,7 +18,7 @@ import { BATTLE_QUESTS } from './questData/battles';
 import { TALE_QUESTS } from './questData/tales';
 
 /** Who offers a quest and takes it back. A patron is one of the player's own heroes (the quest's `hero`). */
-export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith';
+export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith' | 'sexton' | 'pawnbroker' | 'lantern' | 'herald' | 'clock' | 'falconer' | 'archivist';
 
 /**
  * Where a giver's offers come from. Gwen's own; the notices pinned to the board by strangers; the passersby (one a day, whoever
@@ -54,6 +54,14 @@ export const GIVERS: Record<GiverId, Giver> = {
   shepherd: { id: 'shepherd', name: 'Old Maud', title: 'A shepherd from the high fold', slot: 'tale' },
   gaoler: { id: 'gaoler', name: 'Brannock', title: "Turnkey of the keep's cells", slot: 'tale' },
   smith: { id: 'smith', name: 'Edda Coalbrook', title: 'A forge-hand from under the mountain', slot: 'tale' },
+  // (HERO-TALES-2: the tellers of the other seven, one a tale)
+  sexton: { id: 'sexton', name: 'Sexton Pell', title: "Keeper of the chapel yard's ledger", slot: 'tale' },
+  pawnbroker: { id: 'pawnbroker', name: 'Ottilie Marsh', title: 'Pawnbroker of Lantern Row', slot: 'tale' },
+  lantern: { id: 'lantern', name: 'Kiku', title: 'A lantern-seller from the shrine road', slot: 'tale' },
+  herald: { id: 'herald', name: 'Master Fenwick', title: "Herald of the keep's hall", slot: 'tale' },
+  clock: { id: 'clock', name: 'Hesper Tock', title: 'A clockmaker, usually on time', slot: 'tale' },
+  falconer: { id: 'falconer', name: 'Wren Halloway', title: 'Falconer of the high crags', slot: 'tale' },
+  archivist: { id: 'archivist', name: 'Ivy Penhallow', title: "Keeper of the keep's bestiary", slot: 'tale' },
 };
 
 /** The draws, in order: each slot is drawn from its own side stream (its index here is its salt), so a slot added at the end leaves the others' draws as they were. */
@@ -81,7 +89,7 @@ export const SLOT_RULES: Record<GiverSlot, { cap: number; days: number; every?: 
   // (the design: about one guardian in two leaves a voice behind)
   rift: { cap: 1, days: 5, after: true },
   // (SECRET-HEROES: a tale is never drawn with the day: its next part goes up as soon as the part before is handed in, and stays)
-  tale: { cap: 3, days: 100_000, after: true },
+  tale: { cap: 10, days: 100_000, after: true },
 };
 
 /** When a quest may be offered. */
@@ -253,7 +261,7 @@ export const QUESTS: readonly QuestDef[] = [
   ...REPEAT_QUESTS,
   // (batch 2: the quests that open a quest battle, one a battle, from their fitting givers)
   ...BATTLE_QUESTS,
-  // (SECRET-HEROES: the three hero quests, each ending with a secret hero joining)
+  // (SECRET-HEROES: the hero quests, each ending with a secret hero joining; ten since HERO-TALES-2)
   ...TALE_QUESTS,
 ];
 

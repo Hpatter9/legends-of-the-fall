@@ -11,7 +11,7 @@ import { CONTENT_KINDS, isContent } from './unlockRules';
 import { UNITS } from './units';
 
 /** The heroes who join at the end of a hero quest (the tavern's tales), not on a milestone. */
-export const TALE_HEROES: readonly string[] = ['werewolf', 'dreadPirate', 'juggernaut'];
+export const TALE_HEROES: readonly string[] = ['werewolf', 'dreadPirate', 'juggernaut', 'reaper', 'demonSwordsman', 'samuraiCommander', 'tyrant'];
 
 /** What a screen shows in a secret hero's name's place. */
 export const SECRET_NAME = '???';

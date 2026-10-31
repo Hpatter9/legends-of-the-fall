@@ -32,7 +32,7 @@ const words = (q: QuestDef): string[] => [q.title, q.text, ...q.offer, q.going];
 const sceneWords = (s: Scene): string[] => [s.title, s.blurb, ...s.shots.flatMap((sh) => [sh.caption ?? '', ...(sh.lines ?? []).map((l) => l.text)]), ...Object.values(s.cast).map((c) => c.name ?? '')];
 const won = (battle: string): QuestFight => ({ won: true, waves: 1, boss: true, heroes: ['knight'], flawless: false, kills: [], dailyCleared: false, battle });
 
-test('the secret heroes are the ten earned in play, three of them by a tale', () => {
+test('the secret heroes are the ten earned in play, each by a tale', () => {
   assert.deepEqual([...CONTENT_KINDS].sort(), CONTENT_HEROES.map((c) => c.kind).sort());
   const m = startedMeta(3);
   assert.deepEqual(secretsOf(m), [...CONTENT_KINDS]);
@@ -90,13 +90,13 @@ test('a secret hero is never a guest or a Calamity hire while it is hidden', () 
   assert.ok(guestKinds(run).some((k) => isSecret(m, k)));
 });
 
-test('the three tales: givers by the fire, two or three parts each in order, one battle of their own, a hero at the end', () => {
+test('the tales: givers by the fire, two or three parts each in order, one battle of their own, a hero at the end', () => {
   const tales = new Map<string, QuestDef[]>();
   for (const q of TALE_QUESTS) {
     assert.equal(GIVERS[q.giver].slot, 'tale', q.id);
     tales.set(q.giver, [...(tales.get(q.giver) ?? []), q]);
   }
-  assert.equal(tales.size, 3);
+  assert.equal(tales.size, TALE_HEROES.length, 'one tale a hero');
   for (const [giver, parts] of tales) {
     assert.ok(parts.length >= 2 && parts.length <= 3, giver);
     parts.forEach((q, i) => assert.equal(q.after, i ? parts[i - 1].id : undefined, `${q.id} follows the part before`));
@@ -108,7 +108,7 @@ test('the three tales: givers by the fire, two or three parts each in order, one
     const re = namesOf(last.reward.hero!.kind);
     for (const q of parts) for (const s of [...words(q), q.reward.hero?.tease ?? '']) assert.doesNotMatch(s, re, `${q.id}: ${s}`);
   }
-  assert.equal(TALE_BATTLES.length, 3);
+  assert.equal(TALE_BATTLES.length, TALE_HEROES.length, 'one battle a tale');
   for (const qb of TALE_BATTLES) {
     assert.ok(TALE_QUESTS.some((q) => q.goal.kind === 'battle' && q.goal.battle === qb.id), qb.id);
     // (the chains' cast rule: any starter pack fields it)

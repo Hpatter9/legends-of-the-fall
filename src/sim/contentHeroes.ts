@@ -5,8 +5,6 @@
 // `grantContent` is called after a fight settles and when a save loads, and gives every hero whose milestone is met
 // (a save that has already met one gets the hero at once; one that already owns it keeps it). Pure rules: no Pixi, no DOM.
 
-import { armyCleared } from './armies';
-import { tierCleared } from './autoReplay';
 import { ascCleared } from './ascension';
 import { gotOf, totalOf } from './codex';
 import type { Meta } from './meta';
@@ -23,26 +21,14 @@ export interface ContentHero {
   meter?(m: Meta): { now: number; need: number };
 }
 
-// (the names are written out: this module is read while `meta.ts` loads, before the armies are)
-const clearOn = (army: string, name: string, tier: number): Pick<ContentHero, 'line' | 'met'> => ({
-  line: `clear the ${name}${tier ? ` on ${TIER_NAMES[tier]}` : ''}`,
-  met: (m) => (tier ? tierCleared(m, army, tier) : armyCleared(m, army)),
-});
-const TIER_NAMES = ['Normal', 'Hard', 'Elite', 'Legendary'];
-// (the endless tower is the Last Stand now: its best wave counts, and floors an old save climbed still do, as the achievements count them)
-const standOrFloors = (m: Meta): number => Math.max(m.tower, m.stand ?? 0);
-const floors = (n: number): Pick<ContentHero, 'line' | 'met' | 'meter'> => ({
-  line: `reach wave ${n} of the Last Stand`,
-  met: (m) => standOrFloors(m) >= n,
-  meter: (m) => ({ now: Math.min(n, standOrFloors(m)), need: n }),
-});
 /** The foes met in the bestiary that earn the Sage: half of them. */
 const SEEN_SHARE = 0.5;
 const seenNeed = (): number => Math.ceil(totalOf('bestiary') * SEEN_SHARE);
 
 /** A hero who joins at the end of a hero quest: when its last part is handed in (the hand-in brings it in at once; this is for a save
  *  loaded after it). Their milestones were: the Werewolf the Beast Packs cleared, the Dread Pirate wave 20 of the Last Stand, the
- *  Juggernaut the Golem Forge on Hard; each tale opens about there. */
+ *  Juggernaut the Golem Forge on Hard; HERO-TALES-2: the Reaper the Undead Legion on Hard, the Demon Swordsman the Infernal Host on
+ *  Hard, the Samurai Commander the Yokai Night Parade on Elite, the Tyrant wave 40 of the Last Stand. Each tale opens about there. */
 const tale = (title: string, last: string): Pick<ContentHero, 'line' | 'met'> => ({
   line: `see ${title} to its end`,
   met: (m) => !!m.quests?.done.includes(last),
@@ -50,12 +36,12 @@ const tale = (title: string, last: string): Pick<ContentHero, 'line' | 'met'> =>
 
 export const CONTENT_HEROES: readonly ContentHero[] = [
   { kind: 'werewolf', ...tale('The Thing at the Fold', 'taleFoldNight') },
-  { kind: 'reaper', ...clearOn('undead', 'Undead Legion', 1) },
-  { kind: 'demonSwordsman', ...clearOn('infernal', 'Infernal Host', 1) },
-  { kind: 'samuraiCommander', ...clearOn('yokai', 'Yokai Night Parade', 2) },
+  { kind: 'reaper', ...tale('The Ledger of the Unburied', 'taleLedgerThirteen') },
+  { kind: 'demonSwordsman', ...tale('The Pawned Blade', 'talePawnCollectors') },
+  { kind: 'samuraiCommander', ...tale('The Banner in the Mist', 'taleBannerNight') },
   { kind: 'juggernaut', ...tale('The Iron Pilgrim', 'taleIronMarch') },
   { kind: 'dreadPirate', ...tale('A Sellsword in Chains', 'taleChainsTide') },
-  { kind: 'tyrant', ...floors(40) },
+  { kind: 'tyrant', ...tale('The Second Throne', 'taleThroneAppeal') },
   { kind: 'timeWitch', line: 'clear a Calamity whole', met: (m) => (m.calamity?.clears ?? 0) > 0 },
   { kind: 'dragoon', line: 'clear a Calamity at ascension 3', met: (m) => ascCleared(m) >= 3, meter: (m) => ({ now: Math.max(0, Math.min(3, ascCleared(m))), need: 3 }) },
   { kind: 'sage', line: 'meet half the foes of the bestiary', met: (m) => gotOf(m, 'bestiary') >= seenNeed(), meter: (m) => ({ now: Math.min(seenNeed(), gotOf(m, 'bestiary')), need: seenNeed() }) },
