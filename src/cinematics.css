@@ -16,6 +16,14 @@
 .csText[data-tone="whisper"] { color: var(--text-faint); }
 .csMore { align-self: flex-end; font: 400 12px var(--display); color: var(--accent); }
 .csMore[hidden] { display: none; }
+/* CINE-001: a title card over the picture (a small line over a big name), a word said with weight, the ring of a finger held to skip */
+.csTitle { position: absolute; left: 0; right: 0; padding: 0 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; pointer-events: none; opacity: 0; text-shadow: 0 2px 0 var(--black), 0 0 12px rgba(0, 0, 0, 0.9); }
+.csTitle small { font: 400 12px/1.4 var(--display); letter-spacing: 3px; color: var(--accent-hi); text-transform: uppercase; }
+.csTitle b { font: 400 24px/1.2 var(--display); letter-spacing: 2px; color: var(--gold-hi, #ffe7a3); overflow-wrap: anywhere; }
+.csEm { font-style: normal; color: var(--accent-hi); }
+.csText[data-tone="shout"] .csEm { color: var(--gold-hi, #ffe7a3); }
+.csRing { position: absolute; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 16px); width: 28px; height: 28px; border-radius: 50%; pointer-events: none; background: conic-gradient(var(--accent-hi) var(--p, 0deg), rgba(255, 255, 255, 0.15) 0); -webkit-mask: radial-gradient(circle, transparent 9px, #000 10px); mask: radial-gradient(circle, transparent 9px, #000 10px); }
+.csRing[hidden] { display: none; }
 /* the Scenes list in the codex: a row a scene, its blurb, and Watch once it has been seen */
 .scList { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; }
 .scRow { display: flex; align-items: center; gap: 8px; padding: 8px; background: linear-gradient(var(--s5), var(--s3)); border: 2px solid var(--edge); border-radius: 8px; }

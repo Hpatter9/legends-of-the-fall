@@ -3,7 +3,7 @@
 // `SCENES` (the Calamity's reveal, the heralds, the endings and firsts in `sceneEvents.ts`; the scenes made once for many heroes, armies and
 // buildings in `sceneFamilies.ts`). Pure data: no Pixi, no DOM, no randomness.
 
-import { close, say, tell, wide, type Scene } from './sceneKit';
+import { close, say, shoot, tell, wide, type Scene } from './sceneKit';
 import type { Area } from './board';
 import { EVENT_SCENES } from './sceneEvents';
 import { FAMILY_SCENES } from './sceneFamilies';
@@ -39,7 +39,9 @@ const PILOTS: Record<string, Scene> = {
         fx: ['fadeIn', 'darken', 'rumble'],
         cue: 'earthRumble',
         caption: 'A rather bleak dawn',
-        lines: [tell('Every army in the land is marching on the Last Keep. Some brought packed lunches.')],
+        ...shoot('wide', undefined, 'pan'),
+        title: { over: 'Legends of', name: 'The Last Keep' },
+        lines: [tell('Every army in the land is marching on the Last Keep. Some brought *packed lunches*.')],
       },
       {
         look: 'highlands',
@@ -66,10 +68,13 @@ const PILOTS: Record<string, Scene> = {
         look: 'warcamp',
         cam: wide(290, 215),
         acts: [{ who: 'warlord', enter: 380, from: 540 }, { who: 'back', face: 'right' }],
+        ...shoot('low', 'warlord', 'pushIn', 'smash'),
         fx: ['shake', 'darken'],
         cue: 'boom',
-        lines: [say('back', 'I should like to stand three miles further back.'), tell('The first army was on the road.')],
+        hold: 0.4,
       },
+      { cam: close('back'), ...shoot('close', 'back', 'snapZoom'), lines: [say('back', 'I should like to stand *three miles* further back.')] },
+      { cam: wide(300, 205), ...shoot('high', undefined, 'pullOut', 'dissolve'), fx: ['darken'], lines: [tell('The first army was on the road.')] },
     ],
   },
 
@@ -94,6 +99,7 @@ const PILOTS: Record<string, Scene> = {
         to: wide(325, 205),
         fx: ['fadeIn', 'darken'],
         caption: 'The first herald',
+        ...shoot('wide', undefined, 'track'),
         acts: [{ who: 'hero', enter: 285, from: 185 }],
         lines: [tell('Past the portal lies the void, with a road of soot and something on it.')],
       },
@@ -118,6 +124,7 @@ const PILOTS: Record<string, Scene> = {
       },
       {
         cam: close('gorvak', 1.5),
+        ...shoot('low', 'gorvak', 'snapZoom', 'flash'),
         acts: [{ who: 'gorvak', pose: 'strike' }],
         fx: ['flash', 'shake'],
         cue: 'slam',

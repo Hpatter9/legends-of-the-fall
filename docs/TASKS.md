@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CINE-001 — Movie-like cinematics: shot language, every story scene
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematics`, `/home/user/lotf-cine` (from main 0.271.0).
+- **Goal:** the owner's "make the cinematics more epic, and movie-like. Different camera angles, close-ups, lines", for all story scenes.
+- **Scope:** new `src/sim/cineDirector.ts`, `src/sim/cineMoments.ts`, `src/render/cineShots.ts`, `test/cine-shots.test.ts`, `tools/cinematics/cine-strips.mjs`, `cine-strip.py`; the player `src/render/sceneView.ts`, the clock's previews `sceneClock.ts`, `src/cinematics.css`; the kit and scene data (`sceneKit.ts`, `sceneScripts.ts`, `sceneEvents.ts`, `sceneFamilies.ts`, `sceneRules.ts`, `questBattleData.ts`); nine cinematic cues in `soundRules.ts`/`audioProcessors.ts`; hooks in `src/main.ts` (army intros, boss arrivals, previews) and `src/standView.ts` (act cards). Not the War Horn files (`ultMoment.ts`, `ultEpicRules.ts`, `bossMoment.ts`, the fight HUD). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematics.md) (CINE-001 section); strips `samples/cine-*.png`.
+
 ### BOSS-BIG — Bosses with huge attacks, and counterplay
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/boss-big-attacks`, `/home/user/lotf-boss-big` (from main 0.263.0; main 0.267.0 merged in).

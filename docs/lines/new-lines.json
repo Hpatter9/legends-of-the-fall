@@ -2811,7 +2811,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Every army in the land is marching on the Last Keep. Some brought packed lunches."
+       "text": "Every army in the land is marching on the Last Keep. Some brought *packed lunches*."
       }
      ]
     },
@@ -2860,11 +2860,20 @@
     },
     {
      "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
      "lines": [
       {
        "who": "back",
-       "text": "I should like to stand three miles further back."
-      },
+       "text": "I should like to stand *three miles* further back."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "narrator",
        "text": "The first army was on the road."
@@ -3851,6 +3860,627 @@
     }
    ]
   },
+  "intro:orcs": {
+   "title": "The Red Tusk Rides",
+   "blurb": "Orc Warband marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:orcWarlord",
+    "escort": "unit:orcGrunt",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Orc Warband",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Smoke on the horizon. Drums. A great many boots, most of them on the wrong feet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "I HAVE BURNED NINE KEEPS! YOURS WILL BE A *ROUND TEN*!"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "It was eight, boss. One was a barn."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Then we shall be the one that does not burn."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Orc Warband was on the road. It had brought its own kindling."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:undead": {
+   "title": "The Frozen Crown",
+   "blurb": "Undead Legion marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:lichKing",
+    "escort": "unit:skeleton",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Undead Legion",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The graves along the old road have been opened from the inside. Tidily, at least."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "THE LIVING ARE A *PASSING PHASE*. I HAVE COME TO PASS THEM."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "Rattle. (The skeleton agrees. It always agrees.)"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "He is very cold for someone so keen on fire."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Undead Legion marched. It was in no hurry. It never is."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:beasts": {
+   "title": "The Thundering Herd",
+   "blurb": "Beast Packs marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:boarKing",
+    "escort": "unit:wolfWhite",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Beast Packs",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Out on the plains, the grass has been flattened in a line that points at the keep."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "THE HERD DOES NOT STOP. THE HERD DOES NOT *TURN*. THE HERD..."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "Has stopped for clover again, sire."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "A very large pig with a very large grudge."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Beast Packs came on at a gallop, with stops for clover."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:wildwood": {
+   "title": "The Wood Remembers",
+   "blurb": "The Wildwood marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:forestBoss3",
+    "escort": "unit:groveSatyr1",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "The Wildwood",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The forest has moved closer in the night. The rangers have measured it twice."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "EVERY AXE YOU EVER SWUNG, THE GROVE HAS *COUNTED*."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "He keeps a ledger on birch bark. It is very long."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "I have only ever chopped kindling. Mostly."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Wildwood advanced, one root at a time, holding every grudge."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:labyrinth": {
+   "title": "The Maze Comes Calling",
+   "blurb": "The Labyrinth marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:minotaurChampion",
+    "escort": "unit:mazeMino1",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "The Labyrinth",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "A labyrinth has unfolded across the valley overnight. It has a gift shop."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "NONE WHO ENTER MY MAZE HAVE *EVER* FOUND THE WAY OUT!"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "Because you keep moving the walls, boss."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Then we shall walk straight through them."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Labyrinth marched on the keep. It took the scenic route."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:ogres": {
+   "title": "The Clans Come Down",
+   "blurb": "Ogre Clans marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:hornedOgre",
+    "escort": "unit:clanOgre",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Ogre Clans",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The mountain clans have come down from the crags. The crags are relieved."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "OGRE CLANS CRUSH! OGRE CLANS SMASH! OGRE CLANS... WHAT IS FOR *LUNCH*?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "Broth, chief. Again."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "If we hold until noon, they will stop to eat."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Ogre Clans came down the pass, arguing about mutton."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:infernal": {
+   "title": "Terms and Conditions",
+   "blurb": "Infernal Host marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:demonLord",
+    "escort": "unit:hellImp",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Infernal Host",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The sky over the volcano has turned the colour of an unpaid bill."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "SIGN OVER THE KEEP, AND I SHALL MAKE IT *QUICK*."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "There is a cooling-off period of six hundred years, sire."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "We do not sign. We read the small print and then we hit you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Infernal Host advanced, in triplicate."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:yokai": {
+   "title": "The Night Parade",
+   "blurb": "Yokai Night Parade marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:oniKing",
+    "escort": "unit:yokaiFox",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Yokai Night Parade",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Paper lanterns on the mountain path, a hundred of them, and none of them carried by hands."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "WHERE THE PARADE PASSES, NOTHING IS *EVER* THE SAME AGAIN."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "The last village did get very good at lantern-making."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Then let it pass round us. We are staying the same."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Yokai Night Parade wound down the mountain, drums and all."
+      }
+     ]
+    }
+   ]
+  },
+  "intro:golems": {
+   "title": "The Forge Wakes",
+   "blurb": "Golem Forge marches on the keep for the first time.",
+   "cast": {
+    "boss": "unit:forgeTitan",
+    "escort": "unit:stoneGolem",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Golem Forge",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The old forge in the hills has been lit again. Something in it is hammering itself."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "FORGE. HOT. KEEP. *FLAT*."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "escort",
+       "text": "He means it in the nicest way. He means it literally."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "I have never been hammered by a building before."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The Golem Forge marched, glowing, and every step rang like an anvil."
+      }
+     ]
+    }
+   ]
+  },
   "clear:orcs": {
    "title": "Orc Warband: Routed",
    "blurb": "The Orc Warlord takes a knee to catch his breath and lodge an administrative complaint.",
@@ -3868,7 +4498,12 @@
       {
        "who": "narrator",
        "text": "The Orc Warlord dropped onto one knee, the traditional tribal gesture meaning 'mild setback'."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "THIS ENGAGEMENT IS VOID! TAKE DOWN THAT STATEMENT IN THE CHRONICLES!"
@@ -3929,7 +4564,12 @@
       {
        "who": "narrator",
        "text": "The Lich King collapsed into a tidy pile of bleached calcium with immense theatrical dignity."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "DEATH IS MERELY A PAUSE! ...HOLD ON, I AM FOURTH IN THE QUEUE FOR REINCARNATION."
@@ -3990,7 +4630,12 @@
       {
        "who": "narrator",
        "text": "The Boar King does not fall. He merely undertook an urgent, horizontal inspection of the moss."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "A MONARCH OF THE TUSK NEVER FALLS! HE MERELY... INSPECTS THE SOIL!"
@@ -4051,7 +4696,12 @@
       {
        "who": "narrator",
        "text": "The Grove Spearlord leaned heavily upon his ash lance, bending it in an undignified arch."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "THE SACRED TIMBER WILL HEAR OF THIS INDIGNITY!"
@@ -4112,7 +4762,12 @@
       {
        "who": "narrator",
        "text": "The Minotaur Champion sat heavily upon the flagstones of his puzzle, puffing through his nose."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "THE LABYRINTH... YOU SIMPLY WALKED STRAIGHT DOWN THE CORRIDOR!"
@@ -4173,7 +4828,12 @@
       {
        "who": "narrator",
        "text": "The Horned Ogre wobbled twice, pondered the merits of standing, and chose to sit with a thud."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "THE CRAG DOES NOT CRUMBLE... WAIT, WHO BROUGHT THE COLD PIES?"
@@ -4234,7 +4894,12 @@
       {
        "who": "narrator",
        "text": "The Demon Lord was soundly thrashed, but the sort of thrashed that arrives with a receipt."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "THIS SETBACK IS TEMPORARY! MY CONTRACT COVERS THREE SEPARATE RESURRECTIONS!"
@@ -4295,7 +4960,12 @@
       {
        "who": "narrator",
        "text": "The Oni King hoisted his great thunder drum, struck it with flourish, and produced only a squeak."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "THE CELESTIAL DRUM... HAS BEEN DEPRIVED OF ITS SACRED MALLETS!"
@@ -4356,7 +5026,12 @@
       {
        "who": "narrator",
        "text": "The Forge Titan seized up with a grinding screech, then came to a gentle halt like an iron stove."
-      },
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
       {
        "who": "boss",
        "text": "FORGE... COOLING. PLEASE DO NOT TOUCH. STILL HOT."

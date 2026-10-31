@@ -575,7 +575,7 @@ export const EVENT_SCENES: Scene[] = [
       },
       {
         cam: close(['foe', 'duchess'], 1.5),
-        acts: [{ who: 'foe', pose: 'hurt', line: 1 }],
+        acts: [{ who: 'foe', pose: 'hurt' }],
         fx: ['shake'],
         cue: 'slam',
         lines: [tell('She fights exclusively for herself. Today her interests aligned with the winners.')],

@@ -4,6 +4,7 @@
 // toward its `to` over the shot, eased) and every actor: where they stand, which way they face, their pose, whether they
 // are walking, replaying the acts of every shot so far (a walk takes its time, and is cut short if the shot ends first).
 
+import { typeLength } from './cineShots';
 import { FEET, holdOf, lineLen, STAGE_H, STAGE_W, type Act, type Cam, type Facing, type Pose, type Scene, type Shot } from '../sim/sceneScripts';
 
 export interface Cursor {
@@ -186,7 +187,7 @@ export function previewFrames(script: Scene): [number, number, number][] {
     const b = beats(s);
     const lines = s.lines ?? [];
     const at = (beat: number): [number, number, number] => {
-      const typed = lines[beat] ? lines[beat].text.length / TYPE_RATE + 0.5 : 0.8;
+      const typed = lines[beat] ? typeLength(lines[beat].text) + 0.5 : 0.8;
       return [i, beat, Math.min(typed, b[beat] * 0.95)];
     };
     out.push(at(0));

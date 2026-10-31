@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.273.0',
+    date: '2026-10-31',
+    title: 'Story scenes, filmed',
+    notes: ['Every story scene is now cut like a film: wide shots, close-ups on whoever speaks, bosses seen from below, camera moves and spoken-feeling lines.', 'New army intros and boss entrances, and each Last Stand room opens with its own short film.'],
+  },
+  {
     version: '0.272.0',
     date: '2026-10-31',
     title: 'The War Horn and the Eidolons',
