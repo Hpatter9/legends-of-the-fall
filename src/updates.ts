@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.281.0',
+    date: '2026-10-31',
+    title: 'The Calamity altar made clear',
+    notes: ['Each altar choice now shows what it does in numbers, consecrate and corrupt side by side. A How it works box, a Your altar summary and an altar chip in battle.'],
+  },
+  {
     version: '0.280.0',
     date: '2026-10-31',
     title: 'A JRPG results screen',
