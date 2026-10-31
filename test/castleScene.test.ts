@@ -414,7 +414,8 @@ test('vents and lights sit on the look they belong to', () => {
 test('the upgrade card words grow with the level', () => {
   assert.equal(effectText('treasury', 3), '+30 starting gold');
   assert.equal(effectText('barracks', 2), '+12% hp for every hero');
-  assert.equal(effectText('armoury', 1), '+5% attack for every hero');
+  // (the owner's decision: the Armoury also makes repairs 4% cheaper a level, docs/notes/shop-books-gear.md)
+  assert.equal(effectText('armoury', 1), '+5% attack for every hero; repairs 4% cheaper');
   assert.match(effectText('mageTower', 4), /48% faster, \+2 spell power/);
   assert.match(effectText('mageTower', 0), /0% faster, \+0 spell power/);
 });

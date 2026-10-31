@@ -703,7 +703,7 @@ export function enterNode(run: Run, id: number): boolean {
   t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
   if (cur.fight && cur.world) {
-    const board = destinationBoard(mixSeed(run.seed, t.act, id), cur.world);
+    const board = destinationBoard(mixSeed(run.seed, t.act, id), cur.world, t.act);
     if (node.kind === 'boss') board.arenaMid = { u: 7, v: 5 };
     cur.fight.stage.board = board;
     cur.fight.stage.area = board.area;

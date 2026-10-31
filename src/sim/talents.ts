@@ -12,6 +12,7 @@
 // piece of equipment's (`equipFx.ts`). A hero with no talents taken has none of it, so every fight plays out as before.
 // Pure rules: no Pixi, no DOM, no randomness of its own.
 
+import { fightLoadout } from './books';
 import type { Ability, Kind, Trig } from './equipBases';
 import { addStats, capStats, emptyStats, equipStats, STAT_KEYS, type EquipStats, type StatKey } from './equipment';
 import { levelOfKind, milestonePoints } from './levels';
@@ -774,9 +775,13 @@ export function heroStats(m: Meta, kind: string): EquipStats | undefined {
     total = capStats(total);
   }
   // (an awakened hero's passive; a piece or set that already runs the same ability keeps its own)
-  if (!awake) return total;
-  if (!total) return awake;
-  for (const a of awake.abilities) if (!total.abilities.some((x) => x.id === a.id)) total.abilities.push(a);
+  if (awake) {
+    if (!total) total = awake;
+    else for (const a of awake.abilities) if (!total.abilities.some((x) => x.id === a.id)) total.abilities.push(a);
+  }
+  // (the two skills the kind has chosen for its slots, when not its own two: `books.ts`; nothing else changes)
+  const book = fightLoadout(m, kind);
+  if (book) (total ??= emptyStats()).book = book;
   return total;
 }
 

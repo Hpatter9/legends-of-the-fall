@@ -48,3 +48,43 @@ span.eqIcon.painted.empty { border: 0; } .eqIcon.painted.empty .eqArt { opacity:
 .eqSetPieces { display: flex; flex-wrap: wrap; gap: 3px 8px; font-size: 10px; color: var(--s10); } .eqSetPieces .got { color: var(--white); }
 .eqTier { font-size: 10px; color: var(--s10); } .eqTier.on { color: var(--g4); }
 .eqSetHint { font-size: 10px; color: var(--dim); } .eqSetHint.up { color: var(--g4); } .eqSetHint.down { color: var(--r6); }
+
+/* SHOP-BOOKS-GEAR: wear on a piece (`wear.ts`): a slim durability bar along the foot, the worn or broken badge, a broken piece greyed
+   under its cracks; the durability line, the Repair button and a sale's second tap in the picker */
+.eqIcon { position: relative; }
+.eqIcon > i.eqDur { position: absolute; left: 8%; right: 8%; bottom: 5%; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; z-index: 3; pointer-events: none; }
+.eqIcon > i.eqDur b { display: block; height: 100%; background: #6fc46a; }
+.eqIcon.wear-worn > i.eqDur b { background: #e3a43c; }
+.eqIcon.wear-broken > i.eqDur b { background: #d0473a; }
+.eqIcon.wear-broken .eqArt, .eqIcon.wear-broken > img:not(.eqBadge) { filter: grayscale(0.85) brightness(0.7); }
+.eqIcon > i.eqCracks { position: absolute; inset: 6%; background: center / contain no-repeat; z-index: 2; pointer-events: none; opacity: 0.9; }
+.eqIcon > img.eqBadge { position: absolute; right: -2px; top: -2px; width: 40%; height: 40%; z-index: 4; image-rendering: auto; pointer-events: none; }
+.eqDurLine { display: block; font: 400 12px var(--body); color: var(--dim); }
+.eqDurLine.worn { color: #e8b55a; }
+.eqDurLine.broken { color: #ec7b6c; }
+button.eqRepair { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+button.eqRepair img.eqRepairIco { width: 22px; height: 22px; image-rendering: auto; }
+button.eqSure { border-color: #e3a43c; color: #ffd98a; }
+
+/* SHOP-BOOKS-GEAR: the hero sheet's Skill book panel (src/skillBookView.ts) */
+.kbPanel { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 12px; padding: 10px; border: 1px solid #7d6538; border-radius: 4px; background: linear-gradient(#1d1810e6, #120e09e6); }
+.kbPanel h4 { margin: 0; font: 400 16px var(--display); color: #ffe0a1; }
+.kbSlots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kbSlot { min-height: 64px; display: flex; align-items: center; gap: 8px; padding: 6px; text-align: left; background: #241c13; border: 1px solid #8e733e; border-radius: 4px; color: #f2e6c8; }
+.kbOwn { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font: 400 20px var(--display); color: #ffe0a1; border: 1px solid #8e733e; border-radius: 50%; background: #3a2c18; }
+.kbWords { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kbWords b { font: 400 14px/1.2 var(--body); color: #f2e6c8; }
+.kbWords small { font: 400 12px/1.25 var(--body); color: #bfb294; }
+.kbWords p { margin: 0; font: 400 12px/1.35 var(--body); color: #d8d0bb; }
+.kbWords .kbIn { color: #9fe39a; }
+.kbWords .kbWarn { color: #e8b55a; }
+.kbWords .kbHistory { font-style: italic; color: #cbbf9f; }
+.kbStudy { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid #5f4d2c; border-radius: 4px; background: #1a1610; }
+.kbStudyIco { width: 40px; height: 40px; flex: none; image-rendering: auto; }
+.kbBar { display: block; height: 5px; margin-top: 3px; border-radius: 3px; background: #0008; overflow: hidden; }
+.kbBar b { display: block; height: 100%; background: linear-gradient(90deg, #c99a43, #ffe0a1); }
+.kbRead { min-height: 44px; }
+.kbList { display: flex; flex-direction: column; gap: 6px; }
+.kbRow { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid #4c3d28; border-radius: 4px; background: #1e1711; }
+.kbRow.on { border-color: #c49a4f; }
+.kbRow > button { flex: none; min-height: 44px; }
