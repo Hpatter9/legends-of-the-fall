@@ -90,6 +90,9 @@ export interface Owned {
   cloneFloors?: number;
   /** Whether this hero is an inverted mirror clone (with snarky quips). */
   inverted?: boolean;
+  /** A mirror's clone that stands in for its original on the field (ONE-OF-EACH, the owner's call): the original's roster id. The original
+   *  sits out on the bench for the clone's floors and takes its place again when the clone goes (`sitsOut`). Absent in an older save. */
+  standsFor?: number;
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -172,7 +175,11 @@ export type QuestMode = { kind: 'quest'; quest: string; cast: string[]; practice
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
   const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle } };
   // (an ordinary run gets) two grade-1 heroes, drawn from the same stream as every summon but free
-  for (let i = 0; i < free; i++) run.squad.push(add(run, draw(run), SUMMON_BASE).id);
+  // (a second of a kind waits on the bench: one of each hero on the field, ONE-OF-EACH)
+  for (let i = 0; i < free; i++) {
+    const h = add(run, draw(run), SUMMON_BASE);
+    if (canJoin(run, h.id)) run.squad.push(h.id);
+  }
   return run;
 }
 
@@ -489,12 +496,26 @@ export function spendBuff(run: Run): void {
   run.buff = { ...(b.hp ? { hp: b.hp } : {}), ...(b.atk ? { atk: b.atk } : {}), ...(b.speed ? { speed: b.speed } : {}), duration: left };
 }
 
-/** Choose or release a hero for the fight. Returns whether the squad changed. */
+/** ONE-OF-EACH (`docs/notes/one-of-each.md`): the hero of kind `kind` in the squad, other than hero `except`, if there is one. The squad is
+ *  the heroes on the field, so it holds one hero of each kind at most; copies wait on the bench to be merged. */
+export const squadTwin = (run: Run, kind: string, except?: number): Owned | undefined =>
+  run.squad.map((id) => heroOf(run, id)).find((h): h is Owned => !!h && h.kind === kind && h.id !== except);
+
+/** Whether hero `id` sits out: a mirror's clone stands in for it on the field for the clone's floors (ONE-OF-EACH). */
+export const sitsOut = (run: Run, id: number): boolean => run.roster.some((x) => x.standsFor === id && x.cloneFloors !== undefined);
+
+/** Whether hero `id` may join the squad now: there is room, no other hero of its kind is in it, and no mirror's clone stands in for it (ONE-OF-EACH). */
+export function canJoin(run: Run, id: number): boolean {
+  const h = heroOf(run, id);
+  return !!h && !run.squad.includes(id) && run.squad.length < squadLimit(run) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
+}
+
+/** Choose or release a hero for the fight. Returns whether the squad changed. A second hero of a kind already chosen is refused (ONE-OF-EACH). */
 export function setSquad(run: Run, id: number, on: boolean): boolean {
   const has = run.squad.includes(id);
   if (on === has || !heroOf(run, id)) return false;
   if (on) {
-    if (run.squad.length >= squadLimit(run)) return false;
+    if (!canJoin(run, id)) return false;
     run.squad.push(id);
   } else run.squad = run.squad.filter((x) => x !== id);
   return true;

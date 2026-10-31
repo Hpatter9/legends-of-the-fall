@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { autoMerge, canMerge, mergeReady } from '../src/sim/merge';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, type Battle } from '../src/sim/battle';
-import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, spendBuff, squadLimit, startStage, summon, type Run } from '../src/sim/run';
+import { canJoin, sitsOut, CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, spendBuff, squadLimit, startStage, summon, type Run } from '../src/sim/run';
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { calamityRun, towerRun } from '../src/sim/modes';
 import { CAL_BOSSES, CAL_BOSS_TITLES } from '../src/sim/calamityBosses';
@@ -17,6 +17,7 @@ import { addUnit } from '../src/sim/battle';
 import { abandonTower, buy, calamityMap, choices, clearNode, enterNode, finishTower, fightSpec, foeScale, floorOf, hasRoom, hire, HIRE_OFFERS, hireCost, mapFor, MAP_CROWNS, rowsIn, settleTower, train, type MapNode } from '../src/sim/tower';
 import { hpShare } from '../src/sim/health';
 import { frontSpots, playCalamity, playTower, starterEnd } from '../tools/autoplay';
+import { pickSquad } from '../src/sim/autoplay';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
 import { HEROES, UNITS } from '../src/sim/units';
 import { RIFT_ROWS, RIFT_BOSSES, chooseAltar, pendingAltar } from '../src/sim/rift';
@@ -250,7 +251,8 @@ test('a hired hero joins at part of the roster\'s XP, so it is not left behind',
 
 test('the squad takes ten and no more, and a full roster cannot hire', () => {
   const run = calamityRun(2, startedMeta(1), 'knight');
-  const kinds = [...HEROES, 'paladin', 'cleric', 'knight', 'archer'];
+  // (nine other kinds: one of each hero on the field, ONE-OF-EACH; this list had a second knight and archer)
+  const kinds = [...HEROES, 'paladin', 'cleric', 'druid', 'ranger', 'warlock'].filter((k) => k !== 'knight' && k !== 'wizard');
   for (let i = 0; i < 9; i++) hireHero(run, kinds[i], 10);
   assert.equal(run.roster.length, 10);
   assert.equal(run.squad.length, 10);
@@ -792,10 +794,15 @@ test('the cursed mirror: temporarily clones inverted hero for 2 floors, then clo
   const line = chooseOption(run, 0);
   assert.match(line!, /inverted/i);
   assert.equal(run.roster.length, 2, 'clone added to roster');
-  assert.equal(run.squad.length, 2, 'clone added to squad');
-  
+  const original = run.roster[0];
   const clone = run.roster.find((h) => h.inverted);
   assert.ok(clone);
+  // (ONE-OF-EACH, the owner's call: the clone takes its original's place on the field for its floors; the original sits out on the bench)
+  assert.deepEqual(run.squad, [clone.id], 'the clone stands in for its original');
+  assert.equal(clone.standsFor, original.id);
+  assert.equal(sitsOut(run, original.id), true);
+  assert.equal(canJoin(run, original.id), false, 'the original cannot be brought back while the clone stands in');
+  assert.ok(!pickSquad(run, startedMeta(1)).some((h) => h.id === original.id), 'nor does the greedy player field it');
   assert.equal(clone.cloneFloors, 2);
   assert.equal(clone.kind, 'knight');
 
@@ -809,7 +816,8 @@ test('the cursed mirror: temporarily clones inverted hero for 2 floors, then clo
   run.tower!.cur = { id: 11, kind: 'fight' };
   clearNode(run);
   assert.equal(run.roster.length, 1, 'clone removed after 2 floors');
-  assert.equal(run.squad.length, 1);
+  assert.deepEqual(run.squad, [original.id], 'the original takes its place again');
+  assert.equal(sitsOut(run, original.id), false);
 
   // Test smash option
   const runSmash = calamityRun(21, startedMeta(1), 'knight');
@@ -865,7 +873,8 @@ test('the cursed mirror\'s clone is a guest: it takes no real hero\'s id or room
   const clone = run.roster.find((h) => h.inverted)!;
   assert.equal(clone.id, ids, 'the clone takes the next id');
   // fill the party to its limit around the clone: the clone neither blocks a hire nor keeps a real hero on the bench
-  const kinds = [...HEROES, 'paladin', 'cleric', 'archer'].filter((k) => k !== 'knight');
+  // (other kinds, one each: ONE-OF-EACH; this list had a second archer)
+  const kinds = [...HEROES, 'paladin', 'cleric', 'druid', 'ranger', 'warlock'].filter((k) => k !== 'knight');
   for (let i = 0; i < squadLimit(run) - 1; i++) {
     assert.equal(hasRoom(run), true, `room for hire ${i + 1}`);
     const h = hireHero(run, kinds[i], 0);

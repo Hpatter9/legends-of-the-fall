@@ -211,7 +211,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
-    tierLift: [1, 3.27, 2.51, 0.76, 0.87], // (LATE-RETUNE, hearts: Hard 2.97 and Elite 2.38, raised so each tier stays over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 3.27, 2.51, 0.76, 0.95], // (ONE-OF-EACH: Mythic 0.87 to 0.95, so a level-100 squad of one of each takes about four tries again, `docs/notes/one-of-each.md`; LATE-RETUNE, hearts: Hard 2.97 and Elite 2.38, raised so each tier stays over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2000, atk: 50 },
     last: { hp: 1840, atk: 41 },
     pay: 4.1,
@@ -230,7 +230,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
-    tierLift: [1, 3.99, 3.06, 0.88, 0.72], // (LATE-RETUNE, hearts: 3.57, 2.81, 0.81, 0.68, raised so each tier stays over the tougher Normal; before that 3.45, 2.76, 0.79, 0.67, raised a little with Normal's `start` so the harder tiers keep their step over it; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 3.99, 3.06, 0.88, 0.78], // (ONE-OF-EACH: Mythic 0.72 to 0.78, so a level-100 squad of one of each takes about four tries again, `docs/notes/one-of-each.md`; LATE-RETUNE, hearts: 3.57, 2.81, 0.81, 0.68, raised so each tier stays over the tougher Normal; before that 3.45, 2.76, 0.79, 0.67, raised a little with Normal's `start` so the harder tiers keep their step over it; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2600, atk: 58 }, // (LATE-RETUNE: 2200 and 52, `docs/notes/late-retune.md`)
     last: { hp: 3000, atk: 57 }, // (LATE-RETUNE: 2500 and 50)
     pay: 5.11,

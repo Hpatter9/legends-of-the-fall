@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.284.0',
+    date: '2026-10-31',
+    title: 'One of each hero on the field',
+    notes: ['Only one of each hero fights at a time; a bench copy swaps in for its twin, or merges. The cursed mirror\'s clone fights in its original\'s place.'],
+  },
+  {
     version: '0.283.0',
     date: '2026-10-31',
     title: 'The War Horn, given at the binding',
