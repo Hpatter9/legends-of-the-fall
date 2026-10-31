@@ -383,8 +383,12 @@ export function newStandRun(seed: number, party: readonly string[], armies: read
 function boostFor(s: Stand, h: StandHero): Boost {
   const base = s.setup.boost(h.kind);
   const lv = lvMult(h.lv);
-  return { ...base, hp: (base.hp ?? 1) * lv.hp, atk: (base.atk ?? 1) * lv.atk };
+  return { ...base, hp: (base.hp ?? 1) * lv.hp * backOf(s.b, h.kind), atk: (base.atk ?? 1) * lv.atk };
 }
+
+/** RELICS-2: the Sentry's Cloak's back row in the Last Stand is its inner ring (the shooters and healers by the king, farthest from the
+ *  foes; `roleOfKind`): their health is this much more. */
+const backOf = (b: Battle, kind: string): number => (b.relics?.hooks?.backHp && roleOfKind(kind) === 'inner' ? 1 + b.relics.hooks.backHp : 1);
 
 /** Whether a hero of the run is on the field: posted, and not fallen. */
 export const standing = (h: StandHero): boolean => !!h.post && !h.fallen;
@@ -1054,7 +1058,16 @@ function refreshRelics(s: Stand): void {
   const b = s.b;
   const { atk, hp, relics } = fightRelics(rl);
   const mana = rl.mana;
+  // (the Sentry's Cloak taken now: the inner ring's health rises by it at once, as `boostFor` gives it to heroes placed later)
+  const back = new Map(heroUnits(s).map((u) => [u.id, backOf(b, u.def)]));
   b.relics = relics ?? { team: {} };
+  for (const u of heroUnits(s)) {
+    const r = backOf(b, u.def) / back.get(u.id)!;
+    if (r === 1) continue;
+    const was = u.maxHp;
+    u.maxHp = Math.round(u.maxHp * r);
+    u.hp = Math.min(u.maxHp, u.hp + (u.maxHp - was));
+  }
   // (hp and attack rise at once, by the difference from what the relics gave before)
   const rh = (hp ?? 1) / s.relicHp;
   const ra = (atk ?? 1) / s.relicAtk;

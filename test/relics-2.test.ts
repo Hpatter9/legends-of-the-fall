@@ -7,7 +7,9 @@ import { convertRelics, effectsOf, fightRelics, GREAT_RELIC_IDS, pickRelic, pric
 import { relicBlow, relicCharge, relicDodge, relicMana, relicSpeed, relicTaken, isBeast } from '../src/sim/relicFight';
 import { CHAPTER_IDS, setBonus, setCount, SETS } from '../src/sim/relicSets';
 import { finish, loadRun, newRun, noteFight, saveRun, startStage } from '../src/sim/run';
-import { loadStand, newStandRun, saveStand } from '../src/sim/stand';
+import { loadStand, newStandRun, roleOfKind, saveStand, startStand, type Stand, type StandSetup } from '../src/sim/stand';
+import { gradeBoost } from '../src/sim/run';
+import { newCastle } from '../src/sim/castle';
 import { stockMarket } from '../src/sim/market';
 import { relicSuits } from '../src/sim/autoplay';
 import { UNITS } from '../src/sim/units';
@@ -38,7 +40,7 @@ test('every relic of the keep and every Storied relic has a story; six Chapters 
 test('growing relics grow with the run tally, to their most', () => {
   assert.ok(near(effectsOf('whetstone')!.atk!, 1.03));
   assert.ok(near(effectsOf('whetstone', { marks: { won: 5 } })!.atk!, 1.08));
-  assert.ok(near(effectsOf('whetstone', { marks: { won: 99 } })!.atk!, 1.15));
+  assert.ok(near(effectsOf('whetstone', { marks: { won: 99 } })!.atk!, 1.12));
   assert.ok(near(effectsOf('scholarScroll', { marks: { won: 10 } })!.charge!, 1.4));
   assert.ok(near(effectsOf('hawkEye', { marks: { elites: 4 } })!.crit!, 0.14));
   assert.ok(near(effectsOf('bookOfNames', { marks: { fallen: 3 } })!.atk!, 1.12));
@@ -180,8 +182,8 @@ test("the Sentry's Cloak gives the back row more hp", () => {
   const plain = make([]);
   const cloak = make(['winterCloak']);
   const [back, front] = heroes(cloak);
-  assert.equal(back.maxHp, Math.round(Math.round(heroes(plain)[0].maxHp * 1.06) * 1.094));
-  assert.equal(front.maxHp, Math.round(heroes(plain)[1].maxHp * 1.06));
+  assert.equal(back.maxHp, Math.round(Math.round(heroes(plain)[0].maxHp * 1.05) * 1.067));
+  assert.equal(front.maxHp, Math.round(heroes(plain)[1].maxHp * 1.05));
 });
 
 test('blows: the First Banner until a hero falls, beasts for the Necklace, a crit on the wounded for the Fang, a shot from above for the Glass', () => {
@@ -220,8 +222,8 @@ test('the Harness quickens the rest after a fall, three at most; the Charm and t
   assert.ok(near(relicSpeed(b, hs[0]), 1 + 0.25 * 3));
   assert.ok(near(relicDodge(b, hs[0]), 0.15));
   assert.equal(relicMana(b), 2);
-  assert.ok(near(relicCharge(b, hs[0]), hs[0].hp >= hs[0].maxHp * 0.75 ? 1.2 : 1));
-  hs[0].hp = Math.floor(hs[0].maxHp * 0.7);
+  assert.ok(near(relicCharge(b, hs[0]), hs[0].hp > hs[0].maxHp * 0.5 ? 1.2 : 1));
+  hs[0].hp = Math.floor(hs[0].maxHp * 0.5);
   assert.equal(relicCharge(b, hs[0]), 1);
   // (eleven seconds on: past the Charm's eight, the Hourglass's ten and the Harness's eight)
   b.t += 11000;
@@ -229,7 +231,7 @@ test('the Harness quickens the rest after a fall, three at most; the Charm and t
   assert.equal(relicMana(b), 1);
   assert.equal(relicSpeed(b, hs[0]), 1, 'the haste wears off');
   const boss = { ...foe, def: 'orcWarlord' };
-  assert.ok(near(relicTaken(b, hs[0], boss), 1 - 0.053));
+  assert.ok(near(relicTaken(b, hs[0], boss), 1 - 0.031));
   assert.equal(relicTaken(b, hs[0], foe), 1);
 });
 
@@ -252,4 +254,18 @@ test('Auto leaves a price it cannot pay well', () => {
   run.gold = 100;
   assert.equal(relicSuits(run, 'jewelCrown'), true);
   assert.equal(relicSuits(run, 'whetstone'), true);
+});
+
+test("the Sentry's Cloak in the Last Stand: the inner ring by the king (shooters and healers) counts as the back row, bought or loaded", () => {
+  const EIGHT = ['knight', 'paladin', 'samurai', 'kunoichi', 'archer', 'ranger', 'wizard', 'cleric'];
+  const setup: StandSetup = { boost: () => gradeBoost(1, 0, 20), castle: newCastle() };
+  const hpOf = (s: Stand, kind: string) => s.b.units.find((u) => u.side === 'hero' && u.def === kind)!.maxHp;
+  const plain = startStand(newStandRun(5, EIGHT), setup);
+  const run = newStandRun(5, EIGHT);
+  run.relics = ['winterCloak'];
+  const cloak = startStand(run, setup);
+  assert.equal(roleOfKind('archer'), 'inner');
+  assert.equal(roleOfKind('knight'), 'tank');
+  assert.ok(Math.abs(hpOf(cloak, 'archer') / hpOf(plain, 'archer') - 1.05 * 1.067) < 0.01, 'the inner ring: +12%');
+  assert.ok(Math.abs(hpOf(cloak, 'knight') / hpOf(plain, 'knight') - 1.05) < 0.01, 'the rest: +5%');
 });

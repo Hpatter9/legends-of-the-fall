@@ -1045,11 +1045,11 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   // (a kit holds it up: Blood Fury, a guardian angel)
   if (killed && to.kx && kitSpare(b, to, out)) killed = false;
-  // (a phoenix feather: the first hero to fall rises at half health)
+  // (a phoenix feather: the first hero to fall rises at a third of its health, RELICS-2)
   if (killed && to.side === 'hero' && b.relics?.revive && !b.revived) {
     b.revived = true;
     killed = false;
-    to.hp = Math.max(1, Math.round(to.maxHp / 2));
+    to.hp = Math.max(1, Math.round(to.maxHp / 3));
     out.push({ kind: 'heal', to: to.id, amount: to.hp });
     relicRose(b, to, out);
   }
