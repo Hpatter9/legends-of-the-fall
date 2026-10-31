@@ -60,6 +60,7 @@ import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
 import { Events } from './events';
 import { TowerView } from './towerView';
+import { updateAltarHud } from './altarHud';
 import { StandView } from './standView';
 import { loadStand, migrateOldClimb, standContinueLine } from './sim/stand';
 import { showTwistBanner } from './twistView';
@@ -1006,6 +1007,8 @@ class Game {
   private frame(dt: number, elapsed = dt): void {
     const b = this.b;
     tips.update();
+    // (ALTAR-CLEAR: the altar's chip in a Calamity fight; it only reads the battle)
+    updateAltarHud(this.standOn || this.homeUp ? undefined : b);
     if (this.standOn) return;
     if (this.homeUp && b.phase !== 'fight') {
       this.app.ticker.stop();

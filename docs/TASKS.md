@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ALTAR-CLEAR — The Calamity's altar made clear
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/altar-clear`, `/home/user/lotf-altar` (from `claude/calamity-hub`, main 0.276.0 merged in).
+- **Goal:** the owner's "The altar isn't clear enough in how it works in the game": each altar choice in numbers from the rules, consecrate against corrupt side by side, what comes next and why the rift waits; an ⓘ explainer (shown once by itself); a "Your altar" summary; "Altar 1 of 3" labels on the map; the pulse shown in a fight. No rule changed.
+- **Scope:** new `src/sim/altarRules.ts`, `src/sim/altarWords.ts`, `src/altarHelp.ts`, `src/altarHud.ts`, `src/altarClear.css`, `test/altar-words.test.ts`, `tools/altar-clear/shots.mjs`; `src/sim/rift.ts`, `src/sim/riftBattle.ts`, `src/sim/tower.ts` (constants named, values unchanged; optional `Rift.corrupted`), `src/towerView.ts` (`altarCard`), `src/sanctuaryView.ts`, one hook in `src/main.ts`, `build.mjs` (the CSS).
+- **Status:** ready for review. [Note](notes/altar-clear.md) (with suggested rule changes, not made); screenshots `samples/altar-clear-*.png`.
+
 ### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).
