@@ -37,9 +37,13 @@ import { awakenedOf } from './sim/awaken';
 import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
-import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen } from './sim/sceneRules';
+import { direct } from './sim/cineDirector';
+import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
+import { ACT_HALLS, ACT_NUMERALS, ROOM_NAMES } from './sim/standActs';
+import { roomLine } from './standRetreatLines';
+import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene } from './sim/sceneRules';
 import { onAwakened } from './awakenView';
-import { SCENES, SCENE_ORDER, type Moment } from './sim/sceneScripts';
+import { SCENES, SCENE_ORDER, type Moment, type Scene } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
@@ -82,7 +86,6 @@ import { HoldPress, UnitInfoCard } from './unitInfo';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
-import { heldCut } from './bossBigRules';
 import { fullScene } from './ultMomentRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
@@ -436,6 +439,7 @@ class Game {
       hideBoard: (hidden) => this.hideBoard(hidden),
       onHome: () => this.home.open(),
       moment: (m) => this.playDue(m),
+      film: (scene, party) => (this.scenesOn() ? this.scenes.play(scene, { party: [...party] }).then(() => true) : Promise.resolve(false)),
       questsDone: (ids) => toastQuests(ids),
     });
     // (the map opening or closing changes the music)
@@ -474,6 +478,8 @@ class Game {
     const home = $('home');
     const sync = () => {
       this.homeUp = !home.hidden;
+      // (FIXES3: the home screen shown is the home screen seen: a Calamity map left up would cover it and every mode begun from it)
+      if (this.homeUp) this.towerView.dismiss();
       this.syncAct();
       this.syncScene();
       this.app.stage.renderable = !this.homeUp;
@@ -512,6 +518,8 @@ class Game {
     // (a fight left running behind the home screen and never finished (a new run begun from the camp) is over: its battle music
     // goes with it, so the new board has the deployment's music, not the old battle's)
     if (this.b?.phase === 'fight') endFight();
+    // (FIXES3: one screen at a time: a Calamity map still up is shut, so it never covers the new board)
+    this.towerView.dismiss();
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
@@ -556,7 +564,7 @@ class Game {
     this.refresh();
     // (a fight's cinematics come before the boss's own card: a Calamity's herald, a first elite, the tower's milestones ...)
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
-    if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
+    if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro(true));
     else this.startIntro();
   }
 
@@ -604,6 +612,8 @@ class Game {
       if ((run.mode as { ascension?: number }).ascension === 1) out.push({ kind: 'ascension' });
     }
     if (mode === 'tower' && [10, 25, 50].includes(run.stage)) out.push({ kind: 'spire', floor: run.stage });
+    // (an army's first march on the keep, CINE-001: on its first wave, once a save; an army already cleared before this scene existed is not introduced)
+    if (run.mode?.kind === 'army' && run.stage === 1 && !seenScene(this.meta, `clear:${run.mode.army}`)) out.push({ kind: 'armyIntro', army: run.mode.army });
     if (mode === 'army' && tierOfRun(run) >= TIERS.length - 1) out.push({ kind: 'mythic' });
     if (mode === 'daily' && isBossRun(run)) out.push({ kind: 'dailyBoss' });
     if (run.tower?.cur?.fight?.elite) out.push({ kind: 'elite' });
@@ -683,7 +693,30 @@ class Game {
   }
 
   sceneFrames(id: string): [number, number, number][] {
-    return previewFrames(SCENES[id]);
+    // (the frames of the scene as it is played: cut into shots by the director, CINE-001)
+    const sc = SCENES[id] ?? this.filmOf(id);
+    return sc ? previewFrames(direct(sc, { calm: matchMedia('(prefers-reduced-motion: reduce)').matches })) : [];
+  }
+
+  /** A film made on the spot, by a preview key (CINE-001; for the Scenes previews and the screenshots): `quest:<battle>` and
+   *  `questAfter:<battle>` (its story before and after, with its first cast), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
+   *  Last Stand's act card of act n, 1 to 3, with a line of the ruler's). */
+  private filmOf(key: string): Scene | null {
+    const [kind, arg = ''] = key.split(':');
+    if (kind === 'quest' || kind === 'questAfter') {
+      const qb = questBattleById(arg);
+      if (!qb) return null;
+      const cast = qb.cast.map((x) => x.heroes[0]);
+      return kind === 'quest' ? qb.before(cast) : qb.after(cast);
+    }
+    if (kind === 'arrive' && UNITS[arg]) return arrivalScene(arg, UNITS[arg].name, titleOf(arg), 'volcano');
+    if (kind === 'act') {
+      const act = Math.max(1, Math.min(3, Number(arg) || 1));
+      const hall = ACT_HALLS[act];
+      const words = roomLine(7, hall, this.meta.party);
+      return actScene(ACT_NUMERALS[act], ROOM_NAMES[hall].title, ACT_LOOKS[hall], words.line, words.duchess, Math.min(2, this.meta.party.length), act === 3);
+    }
+    return null;
   }
 
   /** The heroes earned in play since the last result was closed: each has its reveal, once, before the game goes on. */
@@ -706,7 +739,9 @@ class Game {
     // (a Last Oath is played by its set's five, however it is started)
     const mo = SCENES[id]?.moment;
     const five = mo && (mo.kind === 'combo' || mo.kind === 'comboCut') ? comboById(mo.set)?.heroes : undefined;
-    return this.scenes.play(id, five ? { ...this.players(), party: [...five] } : this.players());
+    const film = SCENES[id] ? id : this.filmOf(id);
+    if (!film) return Promise.resolve('skipped');
+    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players());
   }
 
   /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */
@@ -763,7 +798,7 @@ class Game {
   }
 
   /** A boss's first meeting: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once a save for each boss (`cardDue`): a new run, a restart or a new day does not replay it. */
-  private startIntro(): void {
+  private startIntro(sceneJustPlayed = false): void {
     const key = `${this.run.seed}:${this.run.stage}`;
     // (a boss, or the named elite of an elite node, gets the card)
     const elite = this.run.tower?.cur?.fight?.elite ? ELITE_BY_ID[this.run.tower.cur.fight.elite] : undefined;
@@ -779,6 +814,17 @@ class Game {
     markCard(this.meta, card0);
     saveMeta(this.meta);
     this.goat.react('boss');
+    // (CINE-001: with cinematics on, the boss makes a film villain's entrance instead of the card, unless a scene has just introduced it)
+    if (!sceneJustPlayed && this.scenesOn()) {
+      const def0 = UNITS[boss.def];
+      const film = arrivalScene(boss.def, named ? named.name : elite ? elite.name : def0.name, named ? named.title : elite ? elite.epithet : titleOf(boss.def), this.b.board.area);
+      this.sceneHold++;
+      this.sceneChain = this.sceneChain
+        .then(() => this.scenes.play(film, this.players()))
+        .catch(() => undefined)
+        .then(() => void this.sceneHold--);
+      return;
+    }
     this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
     const def = UNITS[boss.def];
@@ -948,6 +994,7 @@ class Game {
   /** The Last Stand takes the canvas (the board of the ordinary fights is hidden and not drawn) or gives it back. */
   private hideBoard(hidden: boolean): void {
     this.standOn = hidden;
+    if (hidden) this.towerView.dismiss();
     document.body.toggleAttribute('data-stand', hidden);
     this.world.visible = !hidden;
     this.weather.root.visible = !hidden;
@@ -983,11 +1030,11 @@ class Game {
     else this.bossm.clear();
     if (b.phase === 'fight' && held) {
       // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
-    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.bossm.holds || this.eid.holds)) {
+    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.eid.holds)) {
       // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
       this.acc = 0;
       // (a boss's cut-in holds the board still too, so its marks fill with the windup's own time)
-      if (this.ultm.queue.runsEffects && !this.bossm.holds) this.fx.step(Math.min(dt, 250));
+      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
@@ -995,13 +1042,13 @@ class Game {
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       b.autoUlt = this.ultAutoOn();
-      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.bossm.holds && !this.eid.holds) {
+      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
         if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
-        if (this.bossm.note(b, events, heldCut(settings().ultFull, this.ultAutoOn()))) this.acc = 0;
+        this.bossm.note(b, events);
         if (this.eid.noteEvents(b, events)) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);

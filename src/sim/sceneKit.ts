@@ -26,8 +26,9 @@ export type Pose = 'idle' | 'strike' | 'cast' | 'hurt' | 'down';
 /** Who an actor is, filled in when the scene is played: `party:<i>`, the i-th hero of the player's party; `hero`, the hero
  *  the run began with (the party's first when there is no run); `unit:<id>`, a fighter by its id in `UNITS` (a foe, or a
  *  hero kind); `duchess`, the goat (drawn from her own sheet, `art/duchess/goat.png`, standing or
- *  walking: she has no fighter, so `castOf` gives her none). */
-export type Role = `party:${number}` | 'hero' | `unit:${string}` | 'duchess';
+ *  walking: she has no fighter, so `castOf` gives her none); `face:<giver>`, a quest's giver (Gwen, the pedlar, the hunter ...),
+ *  not on the stage: when they speak, their face fills the picture (CINE-001; the art is `questArt.ts` `FACES`). */
+export type Role = `party:${number}` | 'hero' | `unit:${string}` | 'duchess' | `face:${string}`;
 
 export interface CastMember {
   role: Role;
@@ -78,15 +79,52 @@ export type SceneCue = 'boom' | 'slam' | 'eliteSting' | 'earthRumble' | 'steps';
 export interface Line {
   /** An actor's id in the cast, or `narrator`. */
   who: string;
-  /** May hold `{actor id}`: that actor's name. */
+  /** May hold `{actor id}`: that actor's name, and `*a word*`: said with weight (drawn brighter, typed a touch slower). */
   text: string;
+  /** Seconds of silence after the line, before the next beat (a held breath; CINE-001). */
+  beat?: number;
   /** Shouted (the box is brighter) or whispered (dimmer). */
   tone?: 'shout' | 'whisper';
   /** Seconds it stays up, where the usual beat to read it (`lineSeconds`) is too long (an oath in a quick cut-in). */
   secs?: number;
 }
 
+/* ------------------------------------------------------------ the shot language (CINE-001, docs/notes/cinematics.md) */
+
+/** How the camera frames a shot. `wide`: the establishing view; `medium`: a figure or a pair from the knees up; `two`: two
+ *  figures together; `close`: one face (a hero's painted portrait, any other figure's head drawn large); `extreme`: the eyes, or
+ *  a weapon; `ots`: over the shoulder of the one listening, on the one speaking; `low`: from the ground, looking up (a boss's
+ *  arrival); `high`: from above, looking down (the small and the beaten); `dutch`: tilted, for menace. */
+export type Angle = 'wide' | 'medium' | 'two' | 'close' | 'extreme' | 'ots' | 'low' | 'high' | 'dutch';
+/** How the camera moves over a shot: `still`; `pushIn` / `pullOut` (slowly closer, further); `pan` (sideways across the stage);
+ *  `track` (with the subject as it walks); `rack` (the focus pulled from the land onto the subject, the back blurring); `snapZoom`
+ *  (a sudden lunge in); `drift` (a small, slow sway); `shake` (a hand-held judder). Reduced motion holds every one still. */
+export type Move = 'still' | 'pushIn' | 'pullOut' | 'pan' | 'track' | 'rack' | 'snapZoom' | 'drift' | 'shake';
+/** How a shot comes in from the one before: `cut`; `match` (a cut that keeps the framing's place); `fade` (up from black);
+ *  `smash` (a hard cut through black, with a hit); `flash` (through white); `dissolve` (a cross-fade; what every cut becomes
+ *  with reduced motion). */
+export type Cut = 'cut' | 'match' | 'fade' | 'smash' | 'flash' | 'dissolve';
+/** What drifts through the air of a shot (a battery saver draws fewer, reduced motion holds them still). */
+export type Weather = 'embers' | 'snow' | 'rain' | 'dust' | 'motes' | 'ash' | 'leaves' | 'none';
+
 export interface Shot {
+  /** The framing (CINE-001): left out, the director (`cineDirector.ts`) picks one from what the shot does. */
+  angle?: Angle;
+  /** Who the framing is on (an actor id); left out, the speaker, else the camera's `on`. */
+  subject?: string;
+  /** The camera's move over the shot; left out, the angle's own. */
+  move?: Move;
+  /** How the shot comes in; left out, a cut (a fade for the first, a dissolve when the land changes). */
+  cut?: Cut;
+  /** What drifts in the air; left out, the land's own (embers on a volcano, snow on the snow ...). */
+  weather?: Weather;
+  /** Shafts of light slanting down through the picture. */
+  rays?: boolean;
+  /** A reaction: a held look at someone, no words (the director's, between lines). */
+  react?: boolean;
+  /** A title card over the picture, like a film's: a small line over a big name ("ACT II" over "The Library"; a boss's title over
+   *  its name). It comes up after the shot's first moment and stays the shot. */
+  title?: { over: string; name: string };
   /** The backdrop: an area's painted layers; kept from the shot before if left out. */
   look?: Area;
   cam: Cam;
@@ -130,6 +168,8 @@ export type Moment =
   | { kind: 'elite' }
   | { kind: 'ascension' }
   | { kind: 'dailyBoss' }
+  /** An army's first march on the keep (CINE-001): its warlord's entrance, the first time a run of that army is set up. */
+  | { kind: 'armyIntro'; army: string }
   /** A quest battle's story, before it or after a win (`questBattleData.ts`; played by the page, not kept in the Scenes list). */
   | { kind: 'questBattle'; battle: string }
   /** An Eidolon chain's story (`eidolonChainData.ts`: the giver's prologue; played by the page, not kept in the Scenes list). */
@@ -161,15 +201,19 @@ export interface Scene {
   again?: boolean;
   /** A scene of the Calamity's story: due only once the Calamity has opened (`modeOpen(m, 'calamity')`). */
   calamity?: boolean;
+  /** How the scene goes out at its end (CINE-001): `smash` (a hard cut to black with a hit: into the fight), `fade` (to black), else it just ends. */
+  out?: 'smash' | 'fade';
   cast: Record<string, CastMember>;
   shots: Shot[];
 }
 
 /** How long a line stays up: a beat to read it (seconds), so a scene plays through on its own; a tap moves on sooner. */
-export const lineSeconds = (text: string): number => Math.min(9, 1.6 + text.length * 0.05);
+export const lineSeconds = (text: string): number => Math.min(9, 1.6 + plainText(text).length * 0.05);
+/** A line's words without the emphasis marks (`*so*` is said "so", with weight). */
+export const plainText = (text: string): string => text.replace(/\*/g, '');
 /** A shot's hold (seconds after its lines; a shot with no lines holds 2.5 s at least). */
 /** How long a line stays up: its own `secs`, else the beat to read it. */
-export const lineLen = (l: Line): number => l.secs ?? lineSeconds(l.text);
+export const lineLen = (l: Line): number => (l.secs ?? lineSeconds(l.text)) + (l.beat ?? 0);
 export const holdOf = (s: Shot): number => s.hold ?? (s.lines?.length ? 0 : 2.5);
 /** A whole scene's length (seconds), as played untouched (the lines are filled with names that are not counted). */
 export const sceneSeconds = (c: Scene): number => c.shots.reduce((n, s) => n + (s.lines?.reduce((m, l) => m + lineLen(l), 0) ?? 0) + holdOf(s), 0);
@@ -179,9 +223,12 @@ export const fillLine = (text: string, names: Readonly<Record<string, string>>):
 
 /* ------------------------------------------------------------ shorthands */
 
-export const say = (who: string, text: string, tone?: Line['tone']): Line => ({ who, text, ...(tone ? { tone } : {}) });
+/** A line, and (CINE-001) a beat of silence after it, in seconds. */
+export const say = (who: string, text: string, tone?: Line['tone'], beat?: number): Line => ({ who, text, ...(tone ? { tone } : {}), ...(beat ? { beat } : {}) });
 export const tell = (text: string): Line => ({ who: 'narrator', text });
 /** A wide shot round x, and a close one on someone or a pair. */
 export const wide = (x: number, y = 200, zoom = 1): Cam => ({ x, y, zoom });
 export const close = (on: string | string[], zoom = 1.5): Cam => ({ on, zoom });
+/** A shot's framing in one go (CINE-001): `shoot('low', 'boss', 'pushIn')`. */
+export const shoot = (angle: Angle, subject?: string, move?: Move, cut?: Cut): Pick<Shot, 'angle' | 'subject' | 'move' | 'cut'> => ({ angle, ...(subject ? { subject } : {}), ...(move ? { move } : {}), ...(cut ? { cut } : {}) });
 

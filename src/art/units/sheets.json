@@ -2325,8 +2325,8 @@
   "rear": "hero_res_wizard_back"
  },
  "hero_res_paladin": {
-  "w": 162,
-  "h": 120,
+  "w": 138,
+  "h": 127,
   "perRow": 4,
   "rows": [
    "idle",
@@ -3702,8 +3702,8 @@
   "front": "hero_res_wizard"
  },
  "hero_res_paladin_back": {
-  "w": 162,
-  "h": 120,
+  "w": 138,
+  "h": 127,
   "perRow": 4,
   "rows": [
    "idle",

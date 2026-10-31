@@ -15,6 +15,8 @@ import { lookSheet } from './render/awakenLook';
 import { portrait } from './render/sheets';
 import { lockInfo } from './sim/contentHeroes';
 import { drawHeroSheet, starsOf } from './menuHeroes';
+import { upMark } from './rankUpList';
+import { upgradeReady } from './sim/upgradesReady';
 import { kindPower, powerText } from './sim/power';
 import { partyTableau } from './partyScene';
 import { awakenedStep } from './render/awakenRig';
@@ -317,6 +319,8 @@ export class Party {
           card.append(bar);
         }
       }
+      // (TAVERN-RANKUP: a hero with a rank or an awakening ready wears the gold chevron by the "i" that opens its sheet)
+      if (open && upgradeReady(m, kind)) card.append(upMark('upCorner ptUp'));
       const info = el('span', 'ptInfo', 'i');
       info.addEventListener('click', (e) => {
         e.stopPropagation();

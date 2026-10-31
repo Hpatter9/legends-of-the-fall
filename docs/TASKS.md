@@ -14,6 +14,20 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-rankup`, `/home/user/lotf-rankup` (from main 0.273.0).
+- **Goal:** the owner's "heroes on the tavern screen should show if they have an upgrade available", and a quick way to rank up without opening each hero: a gold chevron over each ready hero, an Upgrades list with one-tap rows and "Upgrade all", and "Next upgrade ›" on the hero sheet.
+- **Scope:** new `src/sim/upgradesReady.ts`, `src/rankUpList.ts`, `src/rankUps.css`, `test/upgrades-ready.test.ts`, `tools/tavern-rankup/`; hooks in `src/tavern.ts` (the chevron, the button), `src/home.ts`, `src/menuHeroes.ts` (the hop, strip, roster), `src/party.ts` (the card's chevron), `src/awakenView.ts` (`tellAwakened`), `build.mjs` (the CSS). No rule, save or version change.
+- **Status:** ready for review. [Note](notes/tavern-rankup.md); screenshots `samples/rankup-*.png`.
+
+### CINE-001 — Movie-like cinematics: shot language, every story scene
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematics`, `/home/user/lotf-cine` (from main 0.271.0).
+- **Goal:** the owner's "make the cinematics more epic, and movie-like. Different camera angles, close-ups, lines", for all story scenes.
+- **Scope:** new `src/sim/cineDirector.ts`, `src/sim/cineMoments.ts`, `src/render/cineShots.ts`, `test/cine-shots.test.ts`, `tools/cinematics/cine-strips.mjs`, `cine-strip.py`; the player `src/render/sceneView.ts`, the clock's previews `sceneClock.ts`, `src/cinematics.css`; the kit and scene data (`sceneKit.ts`, `sceneScripts.ts`, `sceneEvents.ts`, `sceneFamilies.ts`, `sceneRules.ts`, `questBattleData.ts`); nine cinematic cues in `soundRules.ts`/`audioProcessors.ts`; hooks in `src/main.ts` (army intros, boss arrivals, previews) and `src/standView.ts` (act cards). Not the War Horn files (`ultMoment.ts`, `ultEpicRules.ts`, `bossMoment.ts`, the fight HUD). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematics.md) (CINE-001 section); strips `samples/cine-*.png`.
+
 ### BOSS-BIG — Bosses with huge attacks, and counterplay
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/boss-big-attacks`, `/home/user/lotf-boss-big` (from main 0.263.0; main 0.267.0 merged in).
@@ -656,6 +670,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| FIXES3 | The old map over the new one; a brisk, even walk between waves; the Paladin's colours | Done, awaiting review: the Calamity's map (z-index 5) was left open under any home-screen opening but its own buttons, so every mode begun after drew under it; `TowerView.dismiss()` shuts it when a fight is made, the Last Stand opens or the home screen shows (`tools/fixes3/maps.mjs` checks the switches). Every hero walks to the next section at 230 ms a tile over the fewest tiles, climbs free (`WALK_STEP_MS`, `walkAcross`). The Paladin's plain sheets are made from his awakened ones, gold to steel, his head and the shield's gold sign kept (`tools/paladin/plain.py`). Typecheck, full suite, build, browser checks | [Note](notes/fixes3.md), branch `claude/fixes-map-walk-paladin` |
 | KNIGHT-SPRITE | Kwame's plain battle sprite to look like his awakened form, the same man in plainer gear | Done, awaiting review: the plain front and back sheets are the awakened sheets frame for frame, gold to steel, the red cape and green inlays to dark blue cloth, the blade's blue core to steel, the shield's lion to a plain steel cross (`tools/knight/plain.py`); the soldier sheets take the awakened 152 x 116 grid with the same figure height; the `_deep` copies match, and the heritage tool skips him. Typecheck, affected tests, full suite, build, in-game shots at 393x852 | [Note](notes/knight-sprite.md), branch `claude/knight-sprite` |
 | AUDIO-THEME | Battle music that is unique, catchy, ours: one main theme, the same tune in each army's own dress | Done, awaiting review: an original JRPG-style main theme (`tools/epic-music/theme.mjs`) and an arranger; 12 battle tracks on it (general `battle` for the daily, Last Stand, spire and field fights; nine army tracks; `boss` in fragments; `calbattle`), each a 4-bar intro then a 40-bar seamless loop; the victory fanfare, the triumph bed and the camp re-arranged on the theme; `trackOfRun` gives each army its own track at every tier; `battle2`/`battle3` removed. Audio 5.87 → 7.66 MB. Typecheck, affected tests, full suite, build, every new file decoded in Chromium; examples for the owner to listen to before merging | [Note](notes/music-theme.md), branch `claude/music-theme` |
 | BENCH-TITLES | Pull a hero back to the bench more easily; every hero a longer title | Done on the branch, awaiting review: the whole bottom panel (and a little above it) is the drop area for a placed hero, outlined while it is dragged and lit with "Return to bench" over it; a quick flick down counts; drag-merge still wins over a matching card. Every hero (45) has a unique epithet (`HERO_NAMES[k].title`), "Name, Title" (`heroTitle`) in the dossier, the reveals, the codex, the artwork viewer and the recap's MVP; the short name stays in the small boxes; the old "Name · Class" label is `heroClassLabel`. Typecheck, affected tests, full suite 1493/1493, build, three phone sizes | [Note](notes/bench-titles.md), branch `claude/bench-titles` |

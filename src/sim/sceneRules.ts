@@ -73,7 +73,7 @@ export interface Cast {
 
 /** The kind of fighter a cast member is, or null when there is none to draw. */
 export function kindOf(role: CastMember['role'], p: Players): string | null {
-  if (role === 'duchess') return null;
+  if (role === 'duchess' || role.startsWith('face:')) return null;
   if (role === 'hero') return p.lead ?? p.party[0] ?? null;
   if (role.startsWith('unit:')) return UNITS[role.slice(5)] ? role.slice(5) : null;
   const i = Number(role.slice(6));
@@ -132,6 +132,8 @@ export function momentText(mo: Moment): string {
       return 'The first Ascension.';
     case 'dailyBoss':
       return "The first daily's boss.";
+    case 'armyIntro':
+      return 'The first time an army marches on the keep.';
     case 'questBattle':
       return 'A quest battle, before it begins and after it is won.';
     case 'eidolon':

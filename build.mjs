@@ -155,6 +155,7 @@ const writeIndexHtml = () => {
             readFileSync('src/battleUi.css', 'utf8') +
             readFileSync('src/stand.css', 'utf8') +
             readFileSync('src/tomes.css', 'utf8') +
+            readFileSync('src/rankUps.css', 'utf8') +
             readFileSync('src/ores.css', 'utf8') +
             readFileSync('src/quests.css', 'utf8') +
             readFileSync('src/eidolons.css', 'utf8') +
