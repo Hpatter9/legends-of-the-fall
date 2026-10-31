@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.295.0',
+    date: '2026-10-31',
+    title: 'A clearer summoning room',
+    notes: ['Shop and Pacts are small corner buttons, the Summoner\'s line is one short row and the shards panel folds, so the room shows. No leftover Askel message.'],
+  },
+  {
     version: '0.294.0',
     date: '2026-10-31',
     title: 'Kill XP is shared with the party',
