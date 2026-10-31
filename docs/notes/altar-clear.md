@@ -18,7 +18,7 @@ The owner: "The altar isn't clear enough in how it works in the game." Branch `c
 - **Each altar choice** (`TowerView.altarCard`): the eyebrow names the step ("Altar 1 of 3 · Patron"); a line says what the step decides and what the evolution gives (+15% health, +20% attack each, and the guaranteed level); each option gives its pulse in numbers at the evolution it will have and how it grows; Consecrate and Corrupt sit side by side with gains (+) and costs (−) for this one choice; corruption so far is shown only when there is some; then what comes next and why the rift stays shut. Reforging says it spends the campfire and keeps evolutions and corruption.
 - **ⓘ How the altar works**: five lines, on every altar card; shown by itself the first time the altar is met (`legends.altarHelp` in localStorage). `src/altarHelp.ts`.
 - **Your altar** (the room's altar button, the Altar menu button, the old map's header): the starter's level, tier and evolution; each step chosen, with its words and a consecrated / corrupted badge, or when it comes; what the corruption does in total.
-- **On the map**: the altar button says "Altar · wakes after your first victory", "Altar 1 of 3 · choose now" (glowing) or "Ember · 2 of 3 altar steps"; the line beside it is "Starter Lv 6 · Tier 1 · Evolution 1 of 3"; a crossing that would wake a step says so ("A win here wakes Altar 1 of 3 · Patron", "Beating the guardian wakes Altar 2 of 3 · Offering"); the enter button reads "Choose at the altar first" while one is due.
+- **On the map**: the altar button says "Altar · wakes after your first victory", "Altar 1 of 3 · choose now" (glowing) or "Ember · 2 of 3 altar steps"; the line beside it is "Starter Lv 6 · Tier 1 · Evolution 1 of 3"; a crossing that would wake a step says so ("A win here wakes Altar 1 of 3 · Patron", "Beating the guardian wakes Altar 2 of 3 · Offering"); the enter button reads "Choose at the altar first" while one is due, and the altar button glows (steadily: the no-flicker test forbids a looping glow).
 - **In a fight** (`src/altarHud.ts`, one call in `main.ts`'s frame): a chip under the spell bar names the pulse and its size now ("Ember altar · 45% atk burn", ✓ when the commandment's formation holds), fills to the next pulse and glows as it fires; a corrupted guardian's pulse has its own red countdown and size. It moves below the guardian's health bar when that shows. Tap it for the full words. It only reads the battle.
 - **Kept per step**: `Rift.corrupted?: AltarStep[]` (optional) records which steps were corrupted, so the summary can say so. Older saves have only the count: the badge reads "sealed" when it cannot be told.
 
@@ -33,3 +33,10 @@ Styles: `src/altarClear.css` (added to `build.mjs`). Tests: `test/altar-words.te
 5. **The guardian's Calamity pulse uses the first foe in the list** as the "boss"; in a guardian fight with escorts it is the guardian in practice, but a rule tied to the guardian's identity would be safer and clearer.
 6. **The guardian room's "Region unlocked · evolution"** line is shown for the final guardian too, where no altar step follows.
 7. **Consecrate gives nothing extra.** A small consecration reward (or calling it "Accept") would make the choice read less like "safe or nothing".
+
+## Checks
+
+- `npm run typecheck`: passed. `npm run web`: built.
+- Affected tests (`npm test -- calamity rift tower sanctuary altar`): 110 of 110 passed, the 13 existing rift tests unchanged.
+- Full suite: 1823 of 1824 passed on the first run; the one failure was this branch's looping glow on the altar button (`no-flicker`), now a steady glow, and `npm test -- no-flicker altar` passes.
+- Browser: `node tools/altar-clear/shots.mjs` passed at 393x852, 360x780 and 412x915: no horizontal overflow, the Consecrate and Corrupt buttons on screen, no page errors, the explainer shown once only.

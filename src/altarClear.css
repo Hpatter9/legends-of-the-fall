@@ -48,8 +48,7 @@
 .altarBadge.due { border-color:#e9b970; color:#ffe4a2; }
 
 /* the map */
-.rsAltar.due { color:#fff0b4; border-color:#f0c879; box-shadow:0 0 14px #f0c87966; animation:rsAltarDue 1.6s ease-in-out infinite; }
-@keyframes rsAltarDue { 50% { box-shadow:0 0 22px #f0c879aa; } }
+.rsAltar.due { color:#fff0b4; border-color:#f0c879; box-shadow:0 0 16px #f0c87988; }
 .rsDetails .rsAltarNext { color:#f5d599; }
 
 /* in a fight */
@@ -76,6 +75,6 @@ body.towerUp #altarHud { display:none; }
 #altarHud.open .ahMore { display:block; }
 #altarHud.fired { animation:altarHudFired .55s ease-out; }
 @keyframes altarHudFired { 0% { box-shadow:0 0 0 #ffd06a00; } 30% { box-shadow:0 0 18px #ffd06acc; border-color:#ffe0a0; } 100% { box-shadow:0 0 10px #0009; } }
-@media (prefers-reduced-motion: reduce) { #altarHud.fired, .rsAltar.due { animation:none; } }
+@media (prefers-reduced-motion: reduce) { #altarHud.fired { animation:none; } }
 /* (a long altar line wraps beside the starter rather than running under their label) */
 .rsAltar { max-width:38%; text-align:left; line-height:1.25; }
