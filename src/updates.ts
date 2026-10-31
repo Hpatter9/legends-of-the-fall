@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.287.0',
+    date: '2026-10-31',
+    title: 'New summon sprites',
+    notes: ['Summons have new sprites: leaner wolves, real treants, a blue spirit wraith, a war standard with pennants and a glass decoy, each ringed in its caller\'s colour.'],
+  },
+  {
     version: '0.286.0',
     date: '2026-10-31',
     title: 'Hester\'s Stall: books, gear and repairs',
