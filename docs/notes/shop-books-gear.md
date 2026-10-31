@@ -124,7 +124,6 @@ The wave card's wear and study lines are in `test/wear.test.ts`. `test/castleSce
 
 ## Checks
 
-`npm run typecheck`; `npm run web`; the full `npm test` on the branch before its last fix (1,845 tests, 1,844 passed: a gold chest's
-Rare book was counted with the spell scrolls in Open all's summary, which `spell-sources.test.ts` caught; books now have their own
-`LootSummary.books`), then `npm test -- spell-sources wear books armyStars chest summon-stones` (68 passed) after it. The page at
-393x852, 360x780 and 412x915 through `tools/shop/shots.mjs`, with no page errors.
+After merging main (0.280.0; the wave card's quest lines sit beside the study and wear lines, and the run's results screen marks them
+too, `jrpgRecapView.ts` `MARKS`): `npm run typecheck`; the full `npm test` (1,871 tests, all passed); `npm run web`; the page at
+393x852, 360x780 and 412x915 through `tools/shop/shots.mjs`, with no page errors (the screenshots retaken).
