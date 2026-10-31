@@ -1,5 +1,7 @@
 # Prompts for the painted relic icons (RELICS-2)
 
+(The relic icon prompts and generation scripts are also on the branch `art/gemini-relics`; this file is the step-1 brief. The icons stay placeholders for now.)
+
 The owner's call: the 48 relics get painted icons, in the painted equipment icons' style (`art-source/gear/`, `docs/notes/gear-icons.md`).
 The image tool is not connected yet, so until the paintings come the game uses the DawnLike tiles (`src/art/items/`, every relic its own
 tile; `tools/relics/relic-icons-2.py` cut the three new ones). These are the prompts to paint them with.

@@ -69,9 +69,9 @@ export interface RelicHooks {
   backHp?: number;
   /** The king's mana fills twice as fast for this many ms at a fight's start. */
   earlyMana?: number;
-  /** A hero at full health charges its skills this much faster. */
+  /** A hero at three-quarters health or more charges its skills this much faster. */
   fullCharge?: number;
-  /** A hero at full health deals this much more. */
+  /** A hero at three-quarters health or more deals this much more. */
   fullAtk?: number;
   /** Heroes deal `v` more for the first `ms` of a fight. */
   earlyAtk?: { ms: number; v: number };
@@ -129,29 +129,29 @@ const c = (id: string, name: string, lore: string, text: string, effects: RelicE
 export const RELICS: Record<string, Relic> = {
   // ---- Chapter I: The Founding
   banner: c('banner', 'The First Banner', "Sewn from the founders' cloaks. It has never been washed and never been taken.", '+6% hp; +10% attack as well while no hero has fallen this fight', { hp: 1.06, hooks: { unbroken: 0.1 } }),
-  scholarScroll: c('scholarScroll', "The Founder's Ledger", 'Every stone of the keep, counted twice, in a hand that never shook.', 'skills charge 10% faster, and 3% more for each wave won this run (to 50%)', {}, { rarity: 'rare', grow: { stat: 'charge', base: 0.1, per: 0.03, mark: 'won', max: 0.5 } }),
-  holyChalice: c('holyChalice', "St Oswin's Cup", 'The saint drank from it once and declared it too big.', "the king starts each fight with 2 mana, and it fills 10% faster", { mana: 1.1, hooks: { startMana: 2 } }),
-  saintMedal: c('saintMedal', "The Warden's Medal", 'Given to whoever held the gate last. Most of the names on it are scratched out.', 'when one hero is left standing, it heals 50% and takes 40% less damage', { hooks: { lastStand: { heal: 0.5, guard: 0.4 } } }),
+  scholarScroll: c('scholarScroll', "The Founder's Ledger", 'Every stone of the keep, counted twice, in a hand that never shook.', '+5% attack; skills charge 10% faster, and 3% more for each wave won this run (to 50%)', { atk: 1.05 }, { rarity: 'rare', grow: { stat: 'charge', base: 0.1, per: 0.03, mark: 'won', max: 0.5 } }),
+  holyChalice: c('holyChalice', "St Oswin's Cup", 'The saint drank from it once and declared it too big.', "+5% hp; the king starts each fight with 2 mana, and it fills 10% faster", { hp: 1.05, mana: 1.1, hooks: { startMana: 2 } }),
+  saintMedal: c('saintMedal', "The Warden's Medal", 'Given to whoever held the gate last. Most of the names on it are scratched out.', 'when one hero is left standing, it heals 60% and takes 40% less damage', { hooks: { lastStand: { heal: 0.6, guard: 0.4 } } }),
   // ---- Chapter II: The Long Winter
   ironShield: c('ironShield', 'The Gate Boss', 'The iron boss of the old gate, prised off when the gate went.', 'heroes take 12% less damage', { guard: 0.12, speed: 0.96 }, { price: 'they act and walk 4% slower' }),
-  hourglass: c('hourglass', 'The Stopped Hourglass', 'Its sand stopped in the Long Winter and has not moved since.', "the king's mana fills 15% faster, and twice as fast in each fight's first 10 seconds", { mana: 1.15, hooks: { earlyMana: 10000 } }, { rarity: 'rare' }),
-  frostSapphire: c('frostSapphire', 'Rime Sapphire', 'Nobody knows who froze it. Everybody knows not to lick it.', 'a hero at full health deals 10% more and charges its skills 20% faster', { hooks: { fullCharge: 0.2, fullAtk: 0.1 } }),
+  hourglass: c('hourglass', 'The Stopped Hourglass', 'Its sand stopped in the Long Winter and has not moved since.', "heroes act and walk 5% faster, and the king's mana fills 20% faster, twice as fast in each fight's first 10 seconds", { speed: 1.05, mana: 1.2, hooks: { earlyMana: 10000 } }, { rarity: 'rare' }),
+  frostSapphire: c('frostSapphire', 'Rime Sapphire', 'Nobody knows who froze it. Everybody knows not to lick it.', 'a hero at three-quarters health or more deals 10% more and charges its skills 20% faster', { hooks: { fullCharge: 0.2, fullAtk: 0.1 } }),
   winterCloak: c('winterCloak', "The Sentry's Cloak", 'Worn by eleven sentries over one winter. Only the cloak came back warm.', '+6% hp; +16% for heroes placed on the back row', { hp: 1.06, hooks: { backHp: 0.094 } }),
   // ---- Chapter III: The Burning
   phoenix: c('phoenix', 'Phoenix Feather', 'From the bird that nested in the chimney during the Burning, and refused to leave after.', `once a fight, the first hero to fall rises at half health; after ${PHOENIX_RISES} rises it burns out to Phoenix Ash (+5% attack)`, { revive: true }, { rarity: 'rare' }),
-  warDrum: c('warDrum', 'The Siege Drum', 'Beaten on the walls all night, so the town would know the keep still stood.', 'the foes wait 1 second at the start of a fight, and the heroes deal 10% more in its first 10 seconds', { first: 1000, hooks: { earlyAtk: { ms: 10000, v: 0.1 } } }),
+  warDrum: c('warDrum', 'The Siege Drum', 'Beaten on the walls all night, so the town would know the keep still stood.', 'the foes wait half a second at the start of a fight, and the heroes deal 15% more in its first 10 seconds', { first: 500, hooks: { earlyAtk: { ms: 10000, v: 0.15 } } }),
   emberRuby: c('emberRuby', 'Ember of the Great Hall', 'The last coal of the hall\'s hearth. It has not gone out, and it is not polite.', '+16% attack for every hero', { atk: 1.16, hooks: { startHp: 0.08 } }, { price: 'heroes start each fight 8% of their health down' }),
-  dragonScale: c('dragonScale', 'Scorched Scale', 'Shed by Vaelkhar on the one night he came to the keep as a guest.', 'heroes take 5% less damage, and 12% less from bosses', { guard: 0.05, hooks: { bossGuard: 0.074 } }),
+  dragonScale: c('dragonScale', 'Scorched Scale', 'Shed by Vaelkhar on the one night he came to the keep as a guest.', 'heroes take 5% less damage, and 10% less from bosses', { guard: 0.05, hooks: { bossGuard: 0.053 } }),
   // ---- Chapter IV: The Night Watch
-  featherCharm: c('featherCharm', "The Watchman's Charm", 'Every watchman wore one. The ones who forgot are in the annals.', "heroes slip 5% of blows, and 15% in each fight's first 8 seconds", { dodge: 0.05, hooks: { earlyDodge: { ms: 8000, v: 0.1 } } }),
-  hawkEye: c('hawkEye', "The Hawk's Eye", "The glass eye of the keep's last falconer, who said it saw better than the other.", '+6% crit chance, and 2% more for each elite or boss felled this run (to 24%)', {}, { rarity: 'rare', grow: { stat: 'crit', base: 0.06, per: 0.02, mark: 'elites', max: 0.24 } }),
+  featherCharm: c('featherCharm', "The Watchman's Charm", 'Every watchman wore one. The ones who forgot are in the annals.', "heroes slip 6% of blows, and 21% in each fight's first 8 seconds", { dodge: 0.06, hooks: { earlyDodge: { ms: 8000, v: 0.15 } } }),
+  hawkEye: c('hawkEye', "The Hawk's Eye", "The glass eye of the keep's last falconer, who said it saw better than the other.", '+4% attack; +6% crit chance, and 2% more for each elite or boss felled this run (to 24%)', { atk: 1.04 }, { rarity: 'rare', grow: { stat: 'crit', base: 0.06, per: 0.02, mark: 'elites', max: 0.24 } }),
   shadowCloak: c('shadowCloak', "The Cutpurse's Cloak", 'Taken off a thief the watch caught. The watch kept it; the thief kept running.', 'heroes slip 14% of blows', { dodge: 0.14, guard: -0.05 }, { price: 'they take 5% more from those that land' }),
-  viperFang: c('viperFang', "The Poisoner's Fang", 'Found in the well. The well was not used again.', '+6% crit chance; crits on a foe under half health deal 40% more', { crit: 0.06, hooks: { execCrit: 0.4 } }),
+  viperFang: c('viperFang', "The Poisoner's Fang", 'Found in the well. The well was not used again.', '+6% crit chance; crits on a foe under half health deal 60% more', { crit: 0.06, hooks: { execCrit: 0.6 } }),
   // ---- Chapter V: The Hunt
   whetstone: c('whetstone', 'The Old Whetstone', "Worn to a sliver by forty generations of the keep's blades.", '+3% attack, and 1% more for each wave won this run (to 15%)', {}, { grow: { stat: 'atk', base: 0.03, per: 0.01, mark: 'won', max: 0.15 } }),
-  swiftBoots: c('swiftBoots', "The Courier's Boots", "They ran the keep's last letter out. They came back without the courier.", 'heroes act and walk 11% faster', { speed: 1.11, hp: 0.97 }, { price: 'they have 3% less hp' }),
+  swiftBoots: c('swiftBoots', "The Courier's Boots", "They ran the keep's last letter out. They came back without the courier.", 'heroes act and walk 13% faster', { speed: 1.13, hp: 0.97 }, { price: 'they have 3% less hp' }),
   wolfFang: c('wolfFang', 'The Wolf-Tooth Necklace', 'One tooth from every wolf the huntmaster killed. It is a long necklace.', '+5% attack; 15% more against beasts', { atk: 1.05, hooks: { beast: 0.15 } }),
-  beastHarness: c('beastHarness', "The Huntmaster's Harness", 'The huntmaster\'s own, from the year the pack came back for him.', 'when a hero falls, the rest act 20% faster for 10 seconds (up to three at once)', { hooks: { grief: { speed: 0.2, ms: 10000, max: 3 } } }, { rarity: 'rare' }),
+  beastHarness: c('beastHarness', "The Huntmaster's Harness", 'The huntmaster\'s own, from the year the pack came back for him.', 'when a hero falls, the rest act 25% faster for 10 seconds (up to three at once)', { hooks: { grief: { speed: 0.25, ms: 10000, max: 3 } } }, { rarity: 'rare' }),
   // ---- Chapter VI: The Treasury
   luckyCoin: c('luckyCoin', 'The Coronation Crown-Piece', 'Minted for a coronation that was called off at the last minute.', '+8 gold for each win, and 1 more for every 50 gold you hold (to +16)', { gold: 8 }),
   gildedIngot: c('gildedIngot', 'The Tax Ingot', "The whole of one year's tax, melted down so nobody could spend it.", '+20 gold for each win', { gold: 20, price: 1.1 }, { price: 'every shop and merchant price is 10% higher' }),
@@ -159,10 +159,10 @@ export const RELICS: Record<string, Relic> = {
   spyglass: c('spyglass', 'The Watchtower Glass', 'From the highest window, where you could see them coming a day off.', 'shooters reach further from high ground and deal 10% more, 20% from above', { reach: 0.3, hooks: { shotAtk: 0.1, highShot: 0.09 } }),
   // ---- the Storied relics (the tower's black altar and the cursed crown only)
   sunCrown: c('sunCrown', 'The Crown of the First King', 'The keep\'s first crown. Every king since has found it too heavy.', '+18% attack and +18% hp for every hero', { atk: 1.18, hp: 1.18, hooks: { champion: 0.12 } }, { rarity: 'storied', great: true, price: 'the strongest foe of every fight has 12% more hp and attack' }),
-  dragonHeart: c('dragonHeart', "Vaelkhar's Heart", "He gave it to the keep's first queen. He would like it back.", '+15% hp, and heroes take 15% less damage', { hp: 1.15, guard: 0.15, hooks: { bossAtk: 0.1 } }, { rarity: 'storied', great: true, price: 'bosses have 10% more attack (they can smell it)' }),
+  dragonHeart: c('dragonHeart', "Vaelkhar's Heart", "He gave it to the keep's first queen. He would like it back.", '+12% hp, and heroes take 12% less damage', { hp: 1.12, guard: 0.12, hooks: { bossAtk: 0.1 } }, { rarity: 'storied', great: true, price: 'bosses have 10% more attack (they can smell it)' }),
   stormRing: c('stormRing', "Voltara's Wedding Ring", 'She married the storm. The storm kept the house.', 'heroes act and walk 18% faster, and +12% crit chance', { speed: 1.18, crit: 0.12, hooks: { struck: 0.15 } }, { rarity: 'storied', great: true, price: 'one hero starts each fight struck, 15% of its health down' }),
   voidLens: c('voidLens', "The Calamity's Eye", 'A splinter of the tear the Calamity came through. Look into it, and it looks back.', "+12% attack, and skills charge and the king's mana fill 40% faster", { atk: 1.12, charge: 1.4, mana: 1.4, hooks: { foeHp: 0.06 } }, { rarity: 'storied', great: true, price: 'every foe has 6% more hp' }),
-  bookOfNames: c('bookOfNames', 'The Book of Names', 'Every defender who fell for the keep, in order. There is room at the end.', '+3% attack for every hero who has fallen this run (to 45%)', {}, { rarity: 'storied', great: true, grow: { stat: 'atk', base: 0, per: 0.03, mark: 'fallen', max: 0.45 } }),
+  bookOfNames: c('bookOfNames', 'The Book of Names', 'Every defender who fell for the keep, in order. There is room at the end.', '+4% attack for every hero who has fallen this run (to 60%)', {}, { rarity: 'storied', great: true, grow: { stat: 'atk', base: 0, per: 0.04, mark: 'fallen', max: 0.6 } }),
   unfinishedChronicle: c('unfinishedChronicle', 'The Unfinished Chronicle', "The keep's history, the last chapter left blank.", 'every chapter and set counts one more relic than you hold, once you hold one of it', {}, { rarity: 'storied', great: true }),
 };
 /** The keep's own relics (the six Chapters): what events, the merchant, the market and the Pale Lady draw from. */

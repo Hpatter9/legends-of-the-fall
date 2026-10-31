@@ -18,6 +18,8 @@ import { mixSeed, Rng } from './rng';
 const STRUCK_SALT = 0x5e1c;
 /** The king's mana at most (as `MANA_MAX` in `spells.ts`; kept here so this file does not import the spells). */
 const MANA_CAP = 10;
+/** The Rime Sapphire's health share: a hero at this much of its health or more counts as hale. */
+const FULL = 0.75;
 
 /** A hero of the party (not a summon, nor a decoy a skill called up). */
 const partyHero = (u: Unit): boolean => u.side === 'hero' && !UNITS[u.def]?.summon && u.owner === undefined;
@@ -82,7 +84,7 @@ export function relicBlow(b: Battle, me: Unit, to: Unit, crit: number, highShot:
   if (!h) return 1;
   let m = 1;
   if (h.unbroken && !b.relicFell) m *= 1 + h.unbroken;
-  if (h.fullAtk && me.hp >= me.maxHp) m *= 1 + h.fullAtk;
+  if (h.fullAtk && me.hp >= me.maxHp * FULL) m *= 1 + h.fullAtk;
   if (h.earlyAtk && b.t - (b.relicT0 ?? 0) < h.earlyAtk.ms) m *= 1 + h.earlyAtk.v;
   if (h.shotAtk && UNITS[me.def]?.shot) m *= 1 + h.shotAtk;
   if (h.beast && isBeast(to.def)) m *= 1 + h.beast;
@@ -107,10 +109,10 @@ export function relicDodge(b: Battle, to: Unit): number {
   return e && b.t - (b.relicT0 ?? 0) < e.ms ? e.v : 0;
 }
 
-/** How much faster a hero's skills charge: the Rime Sapphire at full health. */
+/** How much faster a hero's skills charge: the Rime Sapphire at three-quarters health or more. */
 export function relicCharge(b: Battle, u: Unit): number {
   const v = u.side === 'hero' ? b.relics?.hooks?.fullCharge : undefined;
-  return v && u.hp >= u.maxHp ? 1 + v : 1;
+  return v && u.hp >= u.maxHp * FULL ? 1 + v : 1;
 }
 
 /** How much faster a hero acts and walks: the Huntmaster's Harness after a fall. */

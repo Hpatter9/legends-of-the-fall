@@ -21,7 +21,7 @@ test('relic effects multiply, add and ignore unknown ids and repeats', () => {
   assert.ok(Math.abs(fx.speed! - 0.96) < 1e-9, "the Gate Boss's price");
   assert.equal(fx.gold, 8);
   assert.equal(fx.revive, true);
-  assert.equal(fx.first, 1000);
+  assert.equal(fx.first, 500);
   assert.equal(fx.hooks!.unbroken, 0.1);
   assert.deepEqual(relicEffects(), {});
 });
@@ -45,7 +45,7 @@ test('the Stopped Hourglass fills the mana faster', () => {
   const run = newRun(5);
   const a = startStage(run).spells.rate;
   run.relics = ['hourglass'];
-  assert.ok(Math.abs(startStage(run).spells.rate / a - 1.15) < 1e-9);
+  assert.ok(Math.abs(startStage(run).spells.rate / a - 1.2) < 1e-9);
 });
 
 test('team relics become the fight team bonus, beside the traits', () => {
@@ -64,7 +64,7 @@ test('the Siege Drum: the foes wait at the start, the heroes do not', () => {
   const b = startStage(run);
   place(b, 'knight', 3, 8, 1);
   fight(b);
-  assert.ok(b.units.filter((u) => u.side === 'foe').every((u) => u.busyUntil === 1000));
+  assert.ok(b.units.filter((u) => u.side === 'foe').every((u) => u.busyUntil === 500));
   assert.equal(b.units.find((u) => u.side === 'hero')!.busyUntil, 0);
 });
 

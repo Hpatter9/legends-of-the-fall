@@ -39,6 +39,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
 // scenario keeps its hash)
+// (RELICS-2, the owner's approved relic redesign, docs/notes/relics-2.md, re-recorded `army`, `daily` and `stand`: the greedy player finds and
+// buys relics on the way, and the relics' rules and draws are new; every other scenario keeps its hash)
 // (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks are switched off for
 // this proof, as the ailments are; with them off every scenario plays as recorded)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to

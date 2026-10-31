@@ -8,7 +8,7 @@
 // are far less noisy than whole runs for the same time. Gold relics (the Crown-Piece, the Tax Ingot) change no fight; their worth is
 // their gold.
 //
-//   npm run relic-balance                                 the default cells (orcs:1:8 beasts:20:15 wildwood:22:10: army, hero level, wave; boss waves the greedy player wins about half the time)
+//   npm run relic-balance                                 the default cells (undead:18:15 beasts:10:15 orcs:4:15: army, hero level, wave; last boss waves the greedy player, casting the king's spells, wins about half the time)
 //   npm run relic-balance -- beasts:20:9                  other cells
 //   FIGHTS=600 ONLY=whetstone,banner npm run relic-balance
 //   npm run relic-balance -- --runs orcs:1 beasts:20      whole army runs instead (SAVES a cell, default 16; much noisier)
@@ -157,4 +157,4 @@ function runTable(cells: string[]): void {
 }
 
 if (RUNS) runTable(args.length ? args : ['orcs:1', 'undead:22', 'beasts:20']);
-else fightTable(args.length ? args : ['orcs:1:8', 'beasts:20:15', 'wildwood:22:10']);
+else fightTable(args.length ? args : ['undead:18:15', 'beasts:10:15', 'orcs:4:15']);
