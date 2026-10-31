@@ -51,8 +51,8 @@ curses (range 3), has the title "The Frozen Crown" (`bossTitles.ts`, so the boss
   the next time (a new run: starting gold, two heroes). No checkpoints. The meta keeps the heroes' XP and levels (and the
   furthest wave as a record). A run still in progress (the app closed mid-army) can be continued from its card.
 - **Unlocking**: an army is open when it is the first or the one before it has been beaten (`armyUnlocked`). When a last boss falls
-  for the first time the page plays "A new army marches" (a ribbon slams down over the next army's boss portrait, name and
-  blurb; `showUnlock` in `armiesView.ts`), and the next visit to the Armies screen shows that card with a glow and a NEW tag
+  for the first time its last-stand film ends on the next army's end card ("Unlocked", its boss portrait, name and blurb;
+  `revealCard.ts`; the card alone when the film does not play: `docs/notes/unlock-once.md`), and the next visit to the Armies screen shows that card with a glow and a NEW tag
   (`armyIsNew`, `markSeen`; the Battle tab's badge lights too).
 - **Rewards** (crowns; the gold of a run is for its summons as before):
   - a first win of wave n pays `(10 + 2n) x pay`, a boss wave half as much again; the army's `pay` is 1, 1.5, 2.1, 2.8, 3.6,

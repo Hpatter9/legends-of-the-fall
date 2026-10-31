@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.300.0',
+    date: '2026-10-31',
+    title: 'Clearer marks, one unlock card, auto talents',
+    notes: ['Skill and boss marks sit under the heroes. Each unlock is told once. Auto spends a hero\'s talent points, or everyone\'s from the Upgrades list.'],
+  },
+  {
     version: '0.299.0',
     date: '2026-10-31',
     title: 'One battle theme, and a boss theme',

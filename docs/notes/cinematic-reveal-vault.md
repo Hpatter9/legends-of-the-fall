@@ -34,8 +34,9 @@ quest stories, the Last Oaths) end as before. **A hero earned** (`earned:<hero>`
 (`earnedArrival`, `summonTarot.ts` `queueReveal`) follows it at once and is that hero's end card. **Duchess joining a fight** likewise
 keeps its own card (`showDuchessCard`).
 
-The army's older banner ("A new army marches", `showUnlock`) stands aside when the last-stand film's card already showed that army
-this session (`Game.revealed`), so it is not told twice; with cinematics off the banner shows as before.
+The army's older banner ("A new army marches", `showUnlock`) is gone (UNLOCK-ONCE, `docs/notes/unlock-once.md`): the card is the one
+thing that tells an unlock a film reveals, and it comes up alone when the film does not play (cinematics off, or an army opened by
+stars after its film was seen).
 
 ### How it is built
 

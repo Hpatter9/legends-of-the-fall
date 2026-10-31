@@ -3,7 +3,8 @@
 // locked, available, learned or ruled out (the other of its pair was chosen). A tap on a tile opens a box over the page with what
 // it does, what it costs, and Learn (spend the point) or Back; the bar below has the shard exchange and the Respec (which asks for a
 // second tap). Reads and changes the meta only through `talents.ts`; the icons are the talent glyphs (`talentArt.ts`: 32px, drawn
-// at 2x, never smoothed), one for each kind of effect (`sim/talentGlyph.ts`).
+// at 2x, never smoothed), one for each kind of effect (`sim/talentGlyph.ts`). Over the tree, "Auto" (TALENT-AUTO) shows the nodes
+// `sim/talentAuto.ts` would learn for the free points, in order, in the same box, and learns them on Confirm.
 
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
@@ -18,6 +19,7 @@ import { warmIcon } from './menuArt';
 // (the talent pictures are decoded as the page loads, so a tree redrawn after a pick shows no empty frame)
 for (const u of Object.values(TALENT_ICONS)) warmIcon(u);
 import { glyphOf } from './sim/talentGlyph';
+import { autoPlan, planCost } from './sim/talentAuto';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -57,6 +59,25 @@ export function nodeTile(n: TalentNode, state: NodeState): HTMLButtonElement {
   tile.title = n.name;
   tile.setAttribute('aria-label', `${n.name}, ${state}`);
   return tile;
+}
+
+/** TALENT-AUTO's list of nodes, in the order they would be learned: each one's picture, name, row and cost. */
+export function planList(kind: string, ids: readonly string[]): HTMLElement {
+  const list = el('ol', 'tPlan');
+  for (const id of ids) {
+    const n = nodeOf(kind, id);
+    if (!n) continue;
+    const li = el('li');
+    const pic = el('img');
+    pic.alt = '';
+    pic.draggable = false;
+    pic.decoding = 'sync';
+    pic.src = TALENT_ICONS[glyphOf(n)];
+    li.append(pic, el('b', '', n.name), el('small', '', `Tier ${n.tier} · ${costOf(n)} pt`));
+    li.title = n.text;
+    list.append(li);
+  }
+  return list;
 }
 
 /** The panel for a hero kind. `changed` is told after anything is learned, bought or respecced; `open` shows the tree at once. */
@@ -138,12 +159,59 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     document.body.append(back);
   };
 
+  /** TALENT-AUTO: the box over the page with what Auto would learn, in order, and Confirm (learn them, as a tap on each would) or Cancel. */
+  const autoAsk = (plan: string[]) => {
+    const back = el('div', 'tModal');
+    const box = el('div', 'tBox');
+    const close = () => back.remove();
+    const free = pointsFree(meta, kind);
+    const cost = planCost(kind, plan);
+    box.append(
+      el('b', 'tAutoHead', `Auto-spend · ${UNITS[kind].name}`),
+      el('p', '', `Learns ${plan.length} talent${plan.length === 1 ? '' : 's'} for ${cost} of your ${free} point${free === 1 ? '' : 's'}, chosen to suit the hero and taken down the tree, in this order:`),
+      planList(kind, plan),
+    );
+    if (free > cost) box.append(el('small', 'dim', `${free - cost} point${free - cost === 1 ? '' : 's'} kept for the next row.`));
+    const row = el('div', 'tBtns');
+    const go = button('Confirm', 'primary');
+    go.addEventListener('click', () => {
+      for (const id of plan) {
+        if (!learn(meta, kind, id)) break;
+        popped = id;
+      }
+      close();
+      sel = undefined;
+      commit();
+      view();
+    });
+    const no = button('Cancel');
+    no.addEventListener('click', close);
+    row.append(go, no);
+    box.append(row);
+    back.append(box);
+    back.addEventListener('click', (e) => {
+      if (e.target === back) close();
+    });
+    document.body.append(back);
+    go.focus();
+  };
+
   const view = () => {
     panel.replaceChildren();
     const free = pointsFree(meta, kind);
     const head = el('div', 'tHead');
     head.append(el('h4', '', `${UNITS[kind].name} · Talents`), el('b', 'tPoints', `${free} / ${pointsEarned(meta, kind)}`));
     panel.append(head, el('small', 'tSub', 'Points free of points earned. Learn two of the first row to open the second, and one of a row to open the next. The last four rows open at levels 40, 60, 80 and 100.'));
+    // (TALENT-AUTO: only when there is something the free points can learn now)
+    const plan = autoPlan(meta, kind);
+    if (plan.length) {
+      const auto = button(`Auto: spend ${planCost(kind, plan)} point${planCost(kind, plan) === 1 ? '' : 's'}`, 'primary tAuto');
+      auto.addEventListener('click', () => {
+        confirming = false;
+        autoAsk(plan);
+      });
+      panel.append(auto);
+    }
 
     // the tree: lines under the tiles
     const box = el('div', 'tTree');

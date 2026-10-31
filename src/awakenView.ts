@@ -11,6 +11,7 @@ import { auraOf } from './render/auraStyles';
 import { play } from './render/sound';
 import { AWAKEN_ORES, CACHE_ORES, ORES, cachesOf, openCache } from './sim/awakenMats';
 import { cacheIcon, oreHex, oreIcon, orePouch } from './oreView';
+import { tellsByCard } from './sim/unlockTell';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -23,12 +24,16 @@ const ROMAN = ['', 'I', 'II'];
 /** The gems after a hero's stars: a lit one for each step taken, a dark one for each still to take. */
 export const gems = (steps: number): string => '◆'.repeat(steps) + '◇'.repeat(MAX_AWAKEN - steps);
 
-/** A one-shot burst on a picture: a ring, a flash and the word "Awakened" (in the class's aura colour when `kind` is given), gone when it ends (still, with reduced motion). */
+/** A one-shot burst on a picture: a ring, a flash and a word ("Rank 3", "Fully awakened"; in the class's aura colour when `kind` is
+ *  given), gone when it ends (still, with reduced motion). A first awakening has no word: its film's end card says "Awakened"
+ *  (UNLOCK-ONCE, `sim/unlockTell.ts`). */
 export function playAwakenShow(pic: HTMLElement, step: number, label?: string, kind?: string): void {
   const show = el('div', `awakeShow s${step}`);
   // (an awakening's rings and word glow in the hero's aura colour)
   if (kind) show.style.setProperty('--aw', `#${auraOf(kind).colour.toString(16).padStart(6, '0')}`);
-  show.append(el('i', 'ring'), el('i', 'ring r2'), el('b', '', label ?? (step >= MAX_AWAKEN ? 'Fully awakened' : 'Awakened')));
+  const word = label ?? (step >= MAX_AWAKEN ? 'Fully awakened' : tellsByCard('awaken') ? '' : 'Awakened');
+  show.append(el('i', 'ring'), el('i', 'ring r2'));
+  if (word) show.append(el('b', '', word));
   pic.append(show);
   show.addEventListener('animationend', (e) => {
     if ((e.target as HTMLElement).tagName === 'B') show.remove();
