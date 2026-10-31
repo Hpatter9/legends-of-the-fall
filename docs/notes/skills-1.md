@@ -169,12 +169,65 @@ within the test's five seconds, calling a second wolf).
 `new-heroes`, `summon-timers`, `stand-regression`, `spells-identity`, `ailments-identical`, `hero-balance`, `hero-balance-ultimates`); the full
 `npm test` after each batch and after each merge; `npm run web`. No page changed, so no screenshots.
 
-## For the owner
+## The answers (after batch 2)
 
-1. **The merged grades grew stronger** (a grade-4 party at level 1 wins 62% where it won 46%; the spire with a full castle goes much
-   further). It comes from the tier skills, which batch 3 removes; batch 3 then sets `GRADE_BOOST` against main's grade numbers above. Fine
-   to leave it to batch 3?
-2. **The level-10 refill was slowed** (`SKILL2_PACE_*`, 1.6 and 1.15 to 1.45 and 1.05), with skill 2 cheaper and saved for. The design's
-   reference income (3.5 SP, 4.5 MP) measured 3.0 and 4.2 on main and is 2.8 and 3.8 now; the jabs of batch 4 are set against the measured
-   numbers.
-3. **Sixteen heroes' costs or cooldowns moved from the design's starting table** (listed above), each inside its class.
+The slower level-10 refill and the sixteen in-class cost and cooldown moves were accepted, and batch 4's jabs are to be set against the
+measured income (2.8 SP, 3.8 MP). The merged grades' growth was answered by shipping batch 3 with batch 2 (below).
+
+## Batch 3: ranks stop upgrading skills
+
+The owner's rule (the design's section 4): a rank, the stars from merging in a run, gives more health and attack and nothing else. Batches
+2 and 3 ship together (the coordinator's call: batch 2 alone left merged heroes far too strong).
+
+**What went:**
+
+- `src/sim/tierSkills.ts` (the 135 tier skills, their modifiers, riders and echoes, `promoteUnit`) is deleted. `battle.ts` no longer merges a
+  grade's modifiers into a hero's talents (`applyTierMods`), `abilities.ts`'s `began` no longer runs riders, and `costOf` has no tier 3
+  discount (`TIER3_DISCOUNT` is gone). `echoSkill` and the `echo` pending stay, unused, for a battle saved with one pending.
+- The words: a skill's sheet (`fightHudRules.ts`, also read by the unit card) shows one rank line, "Every rank: the same at every rank: a rank
+  gives more health and attack, never a better skill" (`EVERY_RANK`), for each skill and the ultimate. The hero sheet's Skills tab
+  (`menuHeroes.ts`) and the codex (`codexView.ts`) no longer list Tier 2, 3 and 4. The promotion banner (`fx.ts`) reads "Rank N" over "<name> ·
+  more health and attack".
+- Tools: `tools/rank4/` and `--tier-cap` are gone; `tools/fxlab/audit.ts` no longer writes the tier table. `tools/balance.ts` gains two tuning
+  knobs, `GB=1,1.38,1.85,3.0` (the grade steps) and `CALTIER=1.28` (the Calamity's tier step).
+
+**What replaced their power** (stats only, set against main's grade numbers from batch 0):
+
+- `GRADE_BOOST` **[1, 1.38, 1.85, 3.0]** (was [1, 1.3, 1.6, 2.4]). The tier skills were worth far more than the design's estimate of about 5%
+  of hp and attack: with them gone at the old steps, a grade-4 party at level 1 won 7.8% (main 45.9%), grade 3 26.3% (62.5%). One step a grade
+  cannot meet level 1 and level 30 at once (the tier skills were worth relatively more at 30), so the steps sit between:
+
+| Grade, level, stage | Main | Batch 2 | Batch 3, old steps | **Batch 3** |
+| --- | --- | --- | --- | --- |
+| 2, 1, 9 | 36.3% | 38.8% | 24.9% | **42.1%** |
+| 3, 1, 12 | 62.5% | 68.8% | 26.3% | **71.0%** |
+| 4, 1, 24 | 45.9% | 61.7% | 7.8% | **48.5%** |
+| 2, 30, 140 | 19.3% | 21.3% | 12.4% | **18.2%** |
+| 3, 30, 173 | 35.9% | 39.0% | 12.9% | **30.8%** |
+| 4, 30, 260 | 50.8% | 56.0% | 13.9% | **45.7%** |
+
+  The spread of the lifts narrowed with the tier skills gone: grade 4 at level 1 had ten heroes beyond 6 points on main and 13 after batch 2;
+  now three (Samurai -6.6, Fire Wizard -7.1, Yamabushi -6.4). At grade 4, level 30, three (Samurai Commander +8.2, Cleric +7.4, Great Sage
+  -6.5).
+- `CAL_TIER.mult` **1.28** (was 1.2): the Calamity's tiers by level are stats only too. 150 runs: a mean of 1.38 maps, map 2 39% (main 1.37,
+  37%; 1.24 and 26% at the old step).
+- `SPIRE_ACT_STEP` **0.04** (new, `tower.ts`: the spire's foes grow this much more each act after the first; a Calamity keeps its own step).
+  96 climbs of `tools/merge-two/run.mjs`: with a full castle, a mean of 36.0 floors (main 35.8; 43.6 without the step), first act boss 68%
+  (main 56%); with no castle, 18.7 floors (main 21.1), first boss 26% (main 29%). (The batch 0 figures were 48 climbs; these are 96, on main
+  0.293.0 and this branch.)
+- `DAILY_START` **0.53** (was 0.565): a fresh save cleared the daily 55% of the time; now 73% (main 70%, band 66 to 75%). With 60 dates the
+  rate moves a few points from one start to the next (0.535 gave 65%).
+
+**Left for batch 8** (the full rebalance, as the design plans): the armies. 48 single tries a cell, main 0.293.0 against this branch: starting
+five Orcs 1 17% / 17%, Undead 20 8% / 15%; Orcs Legendary 55 8% / 10%; Ogres 45 48% / 40%; Infernal 55 15% / 2%; Yokai 64 4% / 10%; Golems 74
+63% / 48%. The Infernal Host and the Golem Forge are harder at their single-try levels; their `start` is the knob. One army was answered now, because a test holds it: the
+Undead Legion's `start` 1.48 to **1.34** (`armies.test.ts` wants the starting five, merged in the run, to clear it at least 35% of the time at
+level 22; without the tier skills it was 19% over 48 tries, and 35% at 1.34; `army-pace.test.ts`'s pinned value moved with it, and the
+identity's `army` scenario was recorded again). The Last Stand (no merging)
+is as after batch 2.
+
+**Tests:** `test/tier-skills.test.ts` is retired (the owner's rule removes what it held) and replaced by `test/grade-stats.test.ts`: a grade
+changes health and attack by its step and nothing else (the same kit, costs and talents), and a grade-4 party casts no tier rings or echoes.
+`fight-hud.test.ts`'s tier-lines test became the rank line; `signatures.test.ts` runs the ring check over every hero. `merge.test.ts`'s
+"each grade stronger, rank 4 the biggest step" holds (1.38, x1.34, x1.62). Re-recorded: `spells-identity.json`'s army, daily, tower and the
+six hero scenarios (they place grades 1 to 3), and `ailment-logs.json`'s army, daily and tower; every grade-1 scenario kept its hash.

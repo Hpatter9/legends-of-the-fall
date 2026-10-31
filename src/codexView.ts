@@ -18,7 +18,6 @@ import { settings } from './settings';
 import { rulerWords } from './rulerRules';
 import { LAYOUT_LIST, TERRAIN_INFO } from './sim/terrainInfo';
 import { portrait, sprite, figureOf } from './render/sheets';
-import { TIER_SKILLS } from './sim/tierSkills';
 import { COMBOS, COMBO_NAME } from './sim/combos';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -70,7 +69,7 @@ function stat(box: HTMLElement, rows: readonly (readonly [string, string])[]): v
   box.append(g);
 }
 
-/** A kit's lines (a hero's too lists its tier 2, tier 3 and tier 4 skills, and the level its ultimate unlocks at). */
+/** A kit's lines (a hero's too lists the level its ultimate unlocks at; since the skills overhaul's batch 3 a rank no longer changes a skill). */
 function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   if (!kit) return;
   // (a hero: its two skills and what they cost from its pool, COMBAT-002; a foe: its one skill)
@@ -78,8 +77,6 @@ function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   const rows: [string, { name: string; text: string }, number?][] = hk
     ? [[`Skill 1 (${hk.s1.cost} ${hk.pool})`, hk.s1.skill], [`Skill 2 (${hk.s2.cost} ${hk.pool})`, hk.s2.skill, SKILL2_LEVEL]]
     : [['Skill', kit.skill]];
-  const tiers = hero ? TIER_SKILLS[hero] : undefined;
-  if (tiers) rows.push(['Tier 2', tiers[0]], ['Tier 3', tiers[1]], ['Tier 4', tiers[2]]);
   if (kit.ultimate) rows.push(['Ultimate', kit.ultimate, hero ? kit.ultimate.unlock : undefined]);
   rows.push(['Passive', kit.passive]);
   for (const [label, a, unlock] of rows) {

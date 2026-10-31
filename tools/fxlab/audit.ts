@@ -4,7 +4,6 @@
 import { writeFileSync } from 'node:fs';
 import { KITS } from '../../src/sim/abilities';
 import { UNITS } from '../../src/sim/units';
-import { TIER_SKILLS } from '../../src/sim/tierSkills';
 import { SKILL_FX } from '../../src/render/skillFx';
 import { SIGNATURES, type Step } from '../../src/render/signatures';
 
@@ -52,10 +51,6 @@ for (const [id, k] of heroes) {
     rows.push(`| ${UNITS[id].name} | ${kind}: ${name} | ${before(name)} | ${s} | ${after(name)} |`);
   }
 }
-const tiers = ['| Hero | Tier 2 | Tier 3 | Tier 4 | Ring (the hero skill\'s lead, again) |', '|---|---|---|---|---|'];
-for (const [id, k] of heroes) {
-  const t = TIER_SKILLS[id];
-  if (t) tiers.push(`| ${UNITS[id].name} | ${t[0].name} | ${t[1].name} | ${t[2].name} | ${layer(SIGNATURES[k.skill.name].cast[0])} |`);
-}
-writeFileSync('docs/notes/unique-spells-table.md', `${rows.join('\n')}\n\n${nShared} of ${nTotal} hero skills and ultimates shared a look before (the same cast sheet, or the same sheet with another tint). After: 0 share a lead strip.\n\n### Tier skills\n\n${tiers.join('\n')}\n`);
+// (the tier skills' table went with the tier skills themselves, the skills overhaul's batch 3)
+writeFileSync('docs/notes/unique-spells-table.md', `${rows.join('\n')}\n\n${nShared} of ${nTotal} hero skills and ultimates shared a look before (the same cast sheet, or the same sheet with another tint). After: 0 share a lead strip.\n`);
 console.log(nShared, 'of', nTotal);

@@ -58,7 +58,9 @@ test('a tier lift multiplies that tier’s foes, hp and attack, and never Normal
 test('the early armies are as they were: the first four keep their Normal strength and levels', () => {
   assert.deepEqual(ARMIES.slice(0, 4).map((a) => [a.id, a.level, a.start, a.growth]), [
     ['orcs', 1, 0.39, 0.176],
-    ['undead', 8, 1.48, 0.05],
+    // (the Undead Legion's start went 1.48 to 1.34 with the skills overhaul's batch 3, the owner's rule that a rank gives health and attack only:
+    // the starting five's merged run lost its tier skills, docs/notes/skills-1.md)
+    ['undead', 8, 1.34, 0.05],
     ['beasts', 15, 1.66, 0.05],
     ['wildwood', 22, 2.01, 0.05],
   ]);

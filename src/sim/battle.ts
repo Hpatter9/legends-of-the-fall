@@ -32,7 +32,6 @@ import type { SetHooks } from './relicSets';
 import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { mergeEffects } from './relics';
-import { applyTierMods } from './tierSkills';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
 import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
@@ -640,8 +639,6 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   if (boost.size && boost.size !== 1) unit.size = boost.size;
   if (boost.grade && boost.grade > 1) {
     unit.grade = boost.grade;
-    // (a hero merged up casts its tier skill: `tierSkills.ts`)
-    if (def.side === 'hero') applyTierMods(unit, boost.grade);
   }
   if (boost.level && boost.level > 1) unit.level = boost.level;
   if (boost.awaken) unit.awaken = boost.awaken;

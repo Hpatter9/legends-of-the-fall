@@ -62,8 +62,6 @@ export const SKILL2_LEVEL = 10;
 /** What the old charge gifts (a tier skill's charge rider, a combo's beat, a gear ability, a bard's tune, a kill's charge back) are worth to a hero's pool:
  *  this share of the pool for each point of charge. A cast used to take 100 charge, and a skill now costs about half a pool, so a cast's worth is a cast's worth. */
 export const CHARGE_TO_POOL = 0.5;
-/** A tier 3 hero's other skill (the one its tier skill does not improve) costs this much less. */
-export const TIER3_DISCOUNT = 0.85;
 
 /** The ultimate's meter, from level 30: what fills it. Per the hero's own max health dealt (or healed) and taken, and per second; times the ultimate's
  *  `tuned.rate` and the hero's `ultRate` talent. A blow turned aside by a guard counts at half (the guard halves the damage that reaches here).
@@ -213,11 +211,9 @@ export function ultOnDamage(u: Unit, amount: number, taken: boolean): void {
 /** Whether a hero's skill 2 is open at the level it fights at. */
 export const skill2Open = (u: Unit): boolean => (u.level ?? 1) >= SKILL2_LEVEL;
 
-/** What a skill costs this hero: its slot's cost, less for the skill a tier 3 hero's tier skill does not improve. */
-export function costOf(u: Unit, slot: Slot): number {
-  const tierSkill = kitOf(u)?.skill;
-  return (u.grade ?? 1) >= 3 && slot.skill !== tierSkill ? slot.cost * TIER3_DISCOUNT : slot.cost;
-}
+/** What a skill costs this hero: its slot's cost (the same at every rank since the skills overhaul's batch 3: the tier 3 discount went with the
+ *  tier skills). */
+export const costOf = (_u: Unit, slot: Slot): number => slot.cost;
 
 /** The level each slot opens at (slot 1, 2, ...). */
 export const SLOT_LEVELS: readonly number[] = [1, SKILL2_LEVEL];

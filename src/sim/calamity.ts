@@ -38,8 +38,10 @@ export function fitBand(band: readonly string[], heroes: number, boss: boolean):
 }
 
 /** A hero's tier (its grade, shown as stars) follows its level in the run: a Calamity has no merging. `levels` are the run levels that give tier 2 and tier 3; tier 3 is meant for late in the run (maps 5 and 6), the starting hero
- *  reaching it around the end of map 4 and the heroes hired later after it (`docs/notes/cal-roster.md`). `mult` is what each tier above the first multiplies a hero's hp and attack by (a merge's `GRADE_MULT` is far bigger: a tier here comes on top of the levels that earned it). */
-export const CAL_TIER = { levels: [12, 22] as number[], mult: 1.2 };
+ *  reaching it around the end of map 4 and the heroes hired later after it (`docs/notes/cal-roster.md`). `mult` is what each tier above the first multiplies a hero's hp and attack by (a merge's `GRADE_MULT` is far bigger: a tier here comes on top of the levels that earned it). It was 1.2
+ *  while a tier also gave a tier skill; since the skills overhaul's batch 3 a tier is health and attack only, and 1.28 keeps the Calamity's maps
+ *  where they were (`node tools/balance.mjs --no-tables --calamity --attempts 150`: a mean of 1.38 maps, 1.37 before). */
+export const CAL_TIER = { levels: [12, 22] as number[], mult: 1.28 };
 /** The tier a run level earns. */
 export const tierOfLevel = (level: number): number => 1 + CAL_TIER.levels.filter((l) => level >= l).length;
 

@@ -34,6 +34,10 @@
 // spells, lands, army, daily, tower, stand, calamity, heroes1, heroes10, heroes30 and the five `...Others`. Every hero's skills now cost and cool by
 // their class, a breath follows each cast and the AI saves for its heavier skill, so every fight with a hero in it moves; batch 1, the rules as
 // data, moved none of them.)
+// (SKILLS-1 batch 3, the owner's rule that a rank gives health and attack only, docs/notes/skills-1.md, re-recorded army (also for the Undead
+// Legion's new start), daily, tower, heroes1,
+// heroes10, heroes30 and the three `heroes...Others`: each fields merged heroes (the hero scenarios place grades 1 to 3), whose tier skills went;
+// every scenario of grade-1 heroes kept its hash)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

@@ -37,7 +37,6 @@ import { comboById, COMBO_NAME } from '../sim/combos';
 import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
@@ -1098,18 +1097,18 @@ export class Fx {
     showDuoToast(e.banner, e.harmonic);
   }
 
-  /** A hero is promoted to `grade` (2 to 4; rank 4 is violet, MERGE-TWO): the one call both ways in take, the page's merge after a hire and a sim `promote` event (the Calamity's tier by level). The hero rises in light and scales up a beat; tier 3 adds a pillar of light, a nova, a flash, a short slow-motion, a camera push and a banner with its name and its new skill's. */
+  /** A hero is promoted to `grade` (2 to 4; rank 4 is violet, MERGE-TWO): the one call both ways in take, the page's merge after a hire and a sim `promote` event (the Calamity's tier by level). The hero rises in light and scales up a beat; tier 3 adds a pillar of light, a nova, a flash, a short slow-motion, a camera push and a banner with its name and the step the rank brings. */
   promote(unitId: number, grade: number, quiet = false): void {
     const sp = this.sprites.get(unitId);
     if (!sp || grade < 2) return;
     sp.promote(grade);
     promoteBurst(this.particles, grade, sp.x, sp.y, sp.tall);
     const def = defOf(sp.unit);
-    const skill = tierSkillOf(sp.unit.def, grade);
-    // (the banner: the name and the tier's skill small, the tier big over them)
+    // (the banner: the name and the step the rank brings small, the rank big over them; since the skills overhaul's batch 3 a rank gives
+    // health and attack only, so the banner names that, not a skill)
     const life = grade > 2 ? 2200 : 1500;
-    this.label(skill ? `${def.name} · ${skill.name}` : def.name, sp.x, sp.y - sp.tall - 8, 0xfff2a0, 12, life, true);
-    this.label(`Tier ${grade}`, sp.x, sp.y - sp.tall - 22, grade > 3 ? 0xd49aff : grade > 2 ? 0xffe27a : 0xdce8ff, grade > 3 ? 28 : grade > 2 ? 24 : 12, life, true);
+    this.label(`${def.name} · more health and attack`, sp.x, sp.y - sp.tall - 8, 0xfff2a0, 12, life, true);
+    this.label(`Rank ${grade}`, sp.x, sp.y - sp.tall - 22, grade > 3 ? 0xd49aff : grade > 2 ? 0xffe27a : 0xdce8ff, grade > 3 ? 28 : grade > 2 ? 24 : 12, life, true);
     this.trauma = Math.max(this.trauma, grade > 2 ? 0.35 : 0.12);
     if (grade < 3) return;
     this.flash(0.35, 110);

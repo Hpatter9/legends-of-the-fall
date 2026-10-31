@@ -113,7 +113,8 @@ export const ARMIES: readonly Army[] = [
     area: 'graveyard',
     lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
-    start: 1.48, // (was 1.52: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 1.34, // (1.48 until the skills overhaul's batch 3, docs/notes/skills-1.md: with the tier skills gone the starting five, merged in the run, fell
+    // to 19% at level 22 over 48 tries; 35% at 1.34, as MERGE-TWO measured; was 1.52: retuned on the army road, WORLD-ROAD, to take as many tries as before)
     tierStart: 0.7,
     growth: 0.05,
     tierGrowth: 0.17,

@@ -4,7 +4,6 @@
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
-import { TIER_SKILLS } from './sim/tierSkills';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
 import { readyToRise } from './sim/rankUp';
@@ -340,11 +339,10 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     }
     progression.append(path);
     if (kit)
-      // (COMBAT-002: two skills paid from the hero's pool, skill 2 from level 10; the tier skills improve the hero's first skill as before)
+      // (COMBAT-002: two skills paid from the hero's pool, skill 2 from level 10; since the skills overhaul's batch 3 a rank no longer changes them)
       for (const [label, a, cost, opens] of [
         ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
         ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
-        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1], ['Tier 4', TIER_SKILLS[kind][2], '', 1]] as const) : []),
         ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
         ['Passive', kit.passive, '', 1],
       ] as const) {

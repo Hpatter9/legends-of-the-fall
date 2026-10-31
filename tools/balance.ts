@@ -6,8 +6,7 @@
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --heroes-only --hero-level 100 --hero-stage 60   the same with every hero at a level (pick a stage where the average team wins about half)
-//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2, 3 or 4: the tier skills, `tierSkills.ts`)
-//   npm run balance -- --heroes-only --hero-grade 4 --tier-cap 3 ...   the same, every hero casting no higher than its tier 3 skill (to set tier 4 against it; `tools/rank4/` measures each hero's step)
+//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2, 3 or 4: more health and attack, `GRADE_BOOST`)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
 //   npm run balance -- --heroes-only  only the hero value table (table 1); --json file.json also writes each hero's win rate and lift; --seed-offset n plays other fights
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
@@ -31,7 +30,12 @@ import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
 import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
-import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { CAL_TIER } from '../src/sim/calamity';
+import { boostOf, GRADE_BOOST, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+// (GB=1,1.35,1.75,2.65 tries other grade steps for the run: a tuning knob, nothing is written)
+if (process.env.GB) (GRADE_BOOST as number[]).splice(0, 4, ...process.env.GB.split(',').map(Number));
+// (CALTIER=1.28 tries another Calamity tier step, `CAL_TIER.mult`)
+if (process.env.CALTIER) CAL_TIER.mult = Number(process.env.CALTIER);
 import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
@@ -46,7 +50,6 @@ import { deploySpots, fieldBoost, pickTeam, play } from './heroSweep';
 import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
 import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { writeFileSync } from 'node:fs';
-import { capTiers } from './rank4/cap';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -63,7 +66,6 @@ const HERO_STAGE = arg('--hero-stage', 5);
 const HERO_LEVEL = arg('--hero-level', 1);
 const HERO_GRADE = arg('--hero-grade', 1);
 // (`--tier-cap 3`: every hero casts its tier 3 skill at grade 4, as it did before tier 4 was added)
-if (process.argv.includes('--tier-cap')) capTiers(ALL_HEROES, arg('--tier-cap', 4));
 // (EIDOLONS: `--eidolon <wave>[:<id>]` calls an Eidolon at that wave of every army attempt, to see the walls with and without one)
 if (process.argv.includes('--eidolon')) {
   const [w, id] = (process.argv[process.argv.indexOf('--eidolon') + 1] ?? '').split(':');
