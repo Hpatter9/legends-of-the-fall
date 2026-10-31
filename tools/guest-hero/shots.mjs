@@ -125,7 +125,7 @@ for (const [w, h] of SIZES) {
     await page.waitForTimeout(800);
   }
   await page.waitForTimeout(800);
-  const bye = await page.evaluate(() => (window.__game.run.found ?? []).some((l) => l.includes('the guest')) && document.body.innerText.includes('the guest'));
+  const bye = await page.evaluate(() => [...document.querySelectorAll('#result, #waveNotes')].some((e) => e.offsetParent && e.textContent.includes('the guest')));
   await shot(page, `guest-farewell-${size}`);
   console.log(size, JSON.stringify({ line, field, tag, bye }));
   if (!(line.includes('guest') && field.heroes === 6 && field.status.includes('5 of 5 placed + guest') && field.badge && !field.recycle && tag.includes('Guest') && bye)) bad++;

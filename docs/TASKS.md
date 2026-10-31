@@ -21,6 +21,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/guest.ts`, `src/guest.css`, `test/guest-hero.test.ts`, `test/talent-arrows.test.ts`, `tools/guest-hero/`; `src/sim/run.ts`, `events.ts`, `market.ts`, `merge.ts`, `autoplay.ts`, `upgradesReady.ts`; hooks in `src/main.ts`, `src/events.ts`, `src/unitInfo.ts`, `src/home.ts`, `src/tavern.ts`, `src/party.ts`, `src/menuHeroes.ts`, `src/talentView.ts`, `src/rankUpList.ts`, `build.mjs`.
 - **Status:** ready for review. [Note](notes/guest-hero.md) (with the measured lift and owner questions); screenshots `samples/guest-*.png`, `samples/talent-arrow-*.png`.
 
+### SHOP-BOOKS-GEAR — Hester's Stall, skill books, gear that wears
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/shop-books-gear`, `/home/user/lotf-shop` (from main 0.277.0).
+- **Goal:** build the owner-approved shop, books and gear design (`claude/shop-books-design`): the stall (keepers, daily stock, standing, prices), selling (in place of salvage), wear and repair, skill books (study, the two slots, found Rare books), with the books-and-shop art (PRs #240, #243).
+- **Scope:** new `src/sim/{stall,books,bookData,wear}.ts`, `src/{stallView,skillBookView,bookArt}.ts`, `src/stall.css`, `src/art/shop/`, `art-source/books-shop/`, `tools/shop/`, `test/{stall,books,wear}.test.ts`; hooks in `equipment.ts`, `meta.ts`, `talents.ts`, `battle.ts`, `heroKits.ts`, `armyStars.ts`, `chestShop.ts`, `castle.ts`, `waveCard.ts`, `main.ts`, `standView.ts`, `home.ts`, `camp.ts`, `overlookLayout.ts`, `campSpots.ts`, `equipView.ts`, `menuHeroes.ts`, `party.ts`, `shopView.ts`, `chestStash.ts`, `castleSpots.ts`, `gearIcons.ts`, `build.mjs`, `CREDITS.md`. Optional save fields; no version change.
+- **Status:** ready for review; real gear in runs, the caravan and the Gloaming Dealer, the lost techniques and the books' balance pass left for later. [Note](notes/shop-books-gear.md); screenshots `samples/shop-*.png`.
 ### CAL-ZONES — The Calamity's battle zones: varied shapes, things on the board, moving parts
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-zones`, `/home/user/lotf-calzones` (from main 0.277.0; main 0.280.0 merged in).

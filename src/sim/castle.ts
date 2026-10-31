@@ -18,9 +18,9 @@ export interface Building {
 export const BUILDINGS: Record<BuildingId, Building> = {
   treasury: { id: 'treasury', name: 'Treasury', perLevel: '+10 starting gold', costs: [50, 100, 180, 300, 500] },
   barracks: { id: 'barracks', name: 'Barracks', perLevel: '+6% hp for every hero', costs: [60, 120, 200, 320, 520, 850, 1400] },
-  armoury: { id: 'armoury', name: 'Armoury', perLevel: '+5% attack for every hero', costs: [60, 120, 200, 320, 520, 850, 1400] },
+  armoury: { id: 'armoury', name: 'Armoury', perLevel: '+5% attack for every hero; repairs 4% cheaper', costs: [60, 120, 200, 320, 520, 850, 1400] },
   stable: { id: 'stable', name: 'Stable', perLevel: '+4% move speed for every hero', costs: [60, 120, 200, 320, 520] },
-  library: { id: 'library', name: 'Library', perLevel: '+6% XP from every fight', costs: [60, 120, 200, 320, 520] },
+  library: { id: 'library', name: 'Library', perLevel: '+6% XP from every fight; study goes faster, and more heroes can study at once', costs: [60, 120, 200, 320, 520] },
   mageTower: { id: 'mageTower', name: 'Mage Tower', perLevel: 'the king\'s mana fills 12% faster and three new spells are taught (and +1 spell power at levels 2 and 4)', costs: [80, 160, 280, 450] },
 };
 export const BUILDING_IDS: BuildingId[] = ['treasury', 'barracks', 'armoury', 'mageTower', 'stable', 'library'];

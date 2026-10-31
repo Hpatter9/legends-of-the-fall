@@ -18,6 +18,8 @@ import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { lastingBoost, progressOf, xpOf } from './sim/levels';
 import { compactXp, levelBadge } from './levelBadge';
 import { drawEquipment } from './equipView';
+import { drawSkillBook } from './skillBookView';
+import { fightLoadout, kitWithLoadout } from './sim/books';
 import { drawTalents } from './talentView';
 import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
@@ -142,7 +144,9 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
-  const hk = HERO_KITS()[kind];
+  // (SHOP-BOOKS-GEAR: the skill cards follow the two skills the hero has chosen, its own or learned from books)
+  const chosen = open ? fightLoadout(meta, kind) : undefined;
+  const hk = chosen ? kitWithLoadout(kind, chosen) : HERO_KITS()[kind];
   box.className = 'hsheet heroDetail';
   box.dataset.class = CLASS_OF[kind];
   box.replaceChildren();
@@ -288,6 +292,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     progression.append(detailHeading('Path of ascension', 'From a new recruit to a legend of the Keep.'));
     equipment.append(detailHeading('The armoury', 'Steel, craft and a little good fortune.'));
     skills.append(detailHeading('Arts of war', 'Every hero has a way to turn the tide.'));
+    if (open) skills.append(drawSkillBook(meta, kind, () => redraw()));
     box.append(tabs, ...panels);
     const b = lastingBoost(x.level);
     const m = rankMult(full);
@@ -362,7 +367,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       state.talents = false;
     }
     equipment.append(drawEquipment(meta, kind, repower));
-    equipment.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
+    equipment.append(el('p', 'hint', 'Equipment is kept for good, and wears a little with each wave it is fought in: mend it here or at Hester’s Stall. Gear found in a run lasts that run only.'));
   }
   if (show && show.what !== 'cache') playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined, show.what === 'awaken' ? kind : undefined);
   const done = el('button', 'primary', 'Back');
