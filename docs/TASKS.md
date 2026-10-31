@@ -41,6 +41,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
 
+### EIDOLONS — Quests batches 3 and 4: the War Horn and the Eidolon's call
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/war-horn`, `/home/user/lotf-horn` (from main 0.271.0; `art/eidolons-dreamina` and `art/eidolons-1` merged in).
+- **Goal:** batches 3 and 4 of the approved quests and Eidolons design: the War Horn (fills to 1000 across fights, saved, waits when full, empties when blown), one Eidolon chosen, `callEidolon` through the sim's orders (the strike's shares and each Eidolon's rider; once a fight; never by Auto), the horn in the fight and at the camp, and the call's cinematic (the director's later ask: shots, close-ups and lines); the six painted figures and cards imported.
+- **Scope:** new `src/sim/eidolons.ts`, `src/sim/warHorn.ts`, `src/sim/hornFill.ts`, `src/eidolonRules.ts`, `src/eidolonCall.ts`, `src/eidolons.css`, `src/art/eidolons/`, `tools/eidolons/import.py`, `tools/eidolons/shots.mjs`, `test/eidolons.test.ts`, `test/eidolon-moment.test.ts`; hooks in `src/sim/battle.ts` (the event, `b.eidolon`, the riders' tick), `src/sim/orders.ts` (the order), `src/sim/meta.ts` (`eidolons?`), `src/sim/waveCard.ts` / `src/waveCardView.ts` (the horn's line), `src/fightHudRules.ts`, `src/render/fx.ts` (`hitStop`), `src/main.ts`, `src/standView.ts`, `src/home.ts` (`onTopBar`), `src/settings.ts` (`eidolonFull`), `tools/autoplay.ts` / `tools/balance.ts` (`--eidolon`), `build.mjs`, `CREDITS.md`.
+- **Status:** ready for review. No Eidolon is bound in normal play until the chains (batch 5+); `?eidolons=all` is a hidden dev flag. [Note](notes/eidolons.md); screenshots `samples/eidolon-*.png`.
+
 ### QUEST-BATTLES — Quests batch 2: quest battles
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/quest-battles`, `/home/user/lotf-quests3` (from main 0.270.0).

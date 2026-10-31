@@ -77,6 +77,8 @@ export interface HomeHooks {
   onWatchScene?(id: string): void;
   /** A build was raised (the castle's cinematic): the building, or `chapel`. */
   onBuilt?(site: BuildSite): void;
+  /** The top bar was drawn (EIDOLONS: the War Horn's chip beside the stones follows the save). */
+  onTopBar?(): void;
   /** Begin or carry on a quest battle (batch 2 of the quests: the log's Fight, a giver's card, the Done tab's Replay). */
   onQuestBattle?(battle: string): void;
   /** The quest battle saved part-way, if one is (its Fight reads Continue). */
@@ -344,6 +346,7 @@ export class Home {
     if (refreshOffers(m, todayKey())) saveMeta(m);
     chipCount('hmCrowns', ICONS.crowns, m.crowns);
     chipCount('hmStones', ICONS.stones, stonesOf(m));
+    this.hooks.onTopBar?.();
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;

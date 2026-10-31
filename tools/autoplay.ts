@@ -24,8 +24,20 @@ import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
 import { chooseAltar, pendingAltar } from '../src/sim/rift';
 import { squadHealth } from '../src/sim/health';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
+import { armEidolon } from '../src/sim/eidolons';
+import { orderEidolon } from '../src/sim/orders';
 
 export { strengthOf };
+
+/** EIDOLONS: the balance tool's `--eidolon <wave>[:<id>]` calls an Eidolon as the fight at that wave of every army attempt begins (0, the
+ *  default, never: the greedy player, like Auto, never blows the horn, so every existing table stays as it is). */
+export const eidolonAt: { wave: number; id: string } = { wave: 0, id: 'askel' };
+/** Call the Eidolon in a fight just begun, when `eidolonAt` asks for this wave (a mid-boss wave counts its boss as a mid-boss). */
+export function maybeEidolon(b: Battle, wave: number, mid = false): void {
+  if (!eidolonAt.wave || wave !== eidolonAt.wave) return;
+  armEidolon(b, eidolonAt.id, { mid });
+  orderEidolon(b, eidolonAt.id);
+}
 
 /** The deploy tiles front row first, the middle of a row first: where the tower climb's greedy player puts the heroes that hold the line. */
 export function frontSpots(b: Battle): [number, number][] {
@@ -48,6 +60,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     const b = startStage(run);
     autoDeploy(b, run, meta, boostFor);
     fight(b);
+    maybeEidolon(b, run.stage, army.waves[run.stage - 1]?.boss === 'mid');
     playOut(b);
     const ok = b.phase === 'won';
     if (ok) won = run.stage;

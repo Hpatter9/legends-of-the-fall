@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.272.0',
+    date: '2026-10-31',
+    title: 'The War Horn and the Eidolons',
+    notes: ['The War Horn fills as you fight: boss waves and fallen foes. Blow it once a fight to call your Eidolon.', 'Each Eidolon arrives in a full scene: the circle, the tear in the sky, its face, its line, then one great attack.'],
+  },
+  {
     version: '0.271.0',
     date: '2026-10-31',
     title: 'Quest battles',

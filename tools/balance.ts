@@ -17,6 +17,7 @@
 //   npm run balance -- --no-tables --tiers --levels 8,14,20   table 5e: each army on each difficulty tier (recruits, maxed castle, gear)
 //   npm run balance -- --no-tables --deep --levels 30,40,60,100 --attempts 10 [--talents] [--tiers-at 2,3]   table 5f: mean tries to clear each army on the top tiers at deep hero levels
 //   npm run balance -- --no-tables --stand --levels 1,10,20 --attempts 30   the Last Stand held by a greedy player (`tools/stand-balance.ts`; `--tower` is the same, the Tower's old name)
+//   npm run balance -- --eidolon 15[:nivra] ...   any of the above with an Eidolon called at that wave of every army attempt (EIDOLONS)
 //   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
@@ -35,7 +36,7 @@ import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
-import { playArmy, savedAt } from './autoplay';
+import { eidolonAt, playArmy, savedAt } from './autoplay';
 import { calamityTable } from './tower-balance';
 import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
@@ -63,6 +64,12 @@ const HERO_LEVEL = arg('--hero-level', 1);
 const HERO_GRADE = arg('--hero-grade', 1);
 // (`--tier-cap 3`: every hero casts its tier 3 skill at grade 4, as it did before tier 4 was added)
 if (process.argv.includes('--tier-cap')) capTiers(ALL_HEROES, arg('--tier-cap', 4));
+// (EIDOLONS: `--eidolon <wave>[:<id>]` calls an Eidolon at that wave of every army attempt, to see the walls with and without one)
+if (process.argv.includes('--eidolon')) {
+  const [w, id] = (process.argv[process.argv.indexOf('--eidolon') + 1] ?? '').split(':');
+  eidolonAt.wave = Number(w) | 0;
+  if (id) eidolonAt.id = id;
+}
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');
