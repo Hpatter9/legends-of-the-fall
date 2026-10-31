@@ -2,7 +2,7 @@
 // a tap may skip it, its beats, each Eidolon's looks and choreography, and how the War Horn shows its fill.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { beatTimes, BOARD_ZOOM, canSkip, CHOREO, EYES, FULL, hornLine, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, reactionOf, REACTIONS, SHORT, shotAt, SHOTS, SKIP_AFTER_MS, SNAP_ZOOM } from '../src/eidolonRules';
+import { beatTimes, canSkip, CHOREO, EYES, FULL, hornLine, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, reactionOf, REACTIONS, SHORT, shotAt, SHOTS, SKIP_AFTER_MS, skipTarget, SNAP_ZOOM } from '../src/eidolonRules';
 import { EIDOLONS } from '../src/sim/eidolons';
 import { HORN_FULL } from '../src/sim/warHorn';
 import { parseSettings } from '../src/settings';
@@ -19,36 +19,43 @@ test('the first call of each Eidolon plays in full and cannot be skipped; after 
   assert.equal(parseSettings(JSON.stringify({ eidolonFull: false })).eidolonFull, false);
 });
 
-test('the beats run in order: the horn, the circle, the arrival, the name, the strike in beats, the aftermath, the resume', () => {
+// (EIDOLON-CALL-2 changed the owner's requirement: the arrival from a rift and the close-up became a pass across the screen, the strike waits
+// for the figure to have gone, and the whole call is about three to four seconds; a tap skips to the strike)
+test('the beats run in order: the horn, the pass, the build-up, the strike in beats, the aftermath, the resume', () => {
   for (const m of [FULL, SHORT]) {
-    const order = [m.HORN, m.CIRCLE, m.ARRIVE, m.NAME, m.CLOSE, m.STRIKE, m.AFTER, m.RESUME];
+    const order = [m.HORN, m.PASS, m.EXIT, m.BUILD, m.STRIKE, m.AFTER, m.RESUME];
     for (let i = 1; i < order.length; i++) assert.ok(order[i] >= order[i - 1], `${i}`);
+    assert.ok(m.STRIKE >= m.EXIT && m.STRIKE > m.BUILD, 'the strike lands only once the Eidolon has gone, after a build-up');
     const beats = beatTimes(m, 4);
     assert.ok(beats[0] === m.STRIKE && beats[beats.length - 1] < m.AFTER);
   }
-  assert.ok(FULL.RESUME >= 4300 && FULL.RESUME <= 5200, 'about four and a half seconds in full');
-  // (the shots cut in order, the close-up only in full)
-  assert.deepEqual([0, FULL.CIRCLE, FULL.ARRIVE, FULL.NAME, FULL.CLOSE, FULL.STRIKE, FULL.AFTER, FULL.RESUME].map((t) => shotAt(FULL, t)), ['horn', 'circle', 'arrive', 'name', 'close', 'strike', 'after', 'resume']);
+  assert.ok(FULL.RESUME >= 3000 && FULL.RESUME <= 4000, 'about three to four seconds in full');
+  assert.deepEqual([0, FULL.PASS, FULL.BUILD, FULL.STRIKE, FULL.AFTER, FULL.RESUME].map((t) => shotAt(FULL, t)), ['horn', 'pass', 'build', 'strike', 'after', 'resume']);
   assert.ok(!SHOTS.map((x) => x).some((x, i) => SHOTS.indexOf(x) !== i));
-  assert.equal(SHORT.CLOSE, SHORT.STRIKE, 'no close-up in the short one');
-  assert.ok(BOARD_ZOOM.strike < 1 && SNAP_ZOOM > 1, 'a wide shot, and a snap zoom on a blow');
+  assert.ok(SNAP_ZOOM > 1, 'a snap zoom on the blow');
   assert.ok(SHORT.RESUME <= 2200, 'about two seconds short');
   assert.equal(beatTimes(SHORT, 4).length, 2);
   assert.ok(FULL.HIT_STOP > SHORT.HIT_STOP && FULL.HIT_STOP >= 150, 'a heavier freeze than an ultimate');
   assert.ok(FULL.BARS && !SHORT.BARS);
+  // (a tap skips to the strike: never back in time, never before the figure has gone, never past the strike)
+  for (const m of [FULL, SHORT])
+    for (const t of [0, 300, m.PASS + 200, m.EXIT, m.STRIKE - 10]) {
+      const to = skipTarget(m, t);
+      assert.ok(to >= t && to >= m.EXIT && to <= Math.max(t, m.STRIKE));
+    }
 });
 
 test('every Eidolon has its look and its own three or four beats', () => {
   for (const e of EIDOLONS) {
     assert.ok(LOOKS[e.element], e.id);
-    // (its close-up's eyes, its lines as it arrives (the first time its first words), and the heroes' answers)
+    // (its portrait's eyes, its lines as it passes (the first time its first words), and the heroes' answers)
     assert.ok(EYES[e.id], e.id);
     assert.equal(lineOf(e, true, 4), e.line);
     assert.ok(e.lines.length >= 2 && e.lines.includes(lineOf(e, false, 1)));
     assert.ok(REACTIONS[e.element].length >= 2 && reactionOf(e.element, 7));
     const c = CHOREO[e.id];
     assert.ok(c && c.length >= 3 && c.length <= 4, e.id);
-    assert.ok(c.includes('foes'), `${e.id} strikes the foes in one beat`);
+    assert.equal(c[0], 'foes', `${e.id} strikes the foes on its first beat, where its attack has run to`);
     for (const b of c) if (b !== 'foes') for (const [x, y] of b) assert.ok(x >= 0 && x <= 1 && y >= 0 && y <= 1);
   }
 });

@@ -25,7 +25,24 @@ import type { Meta } from './sim/meta';
 import { armEidolon, canCallEidolon, eidolonById, eidolonFullName, EIDOLONS, type Eidolon } from './sim/eidolons';
 import { orderEidolon } from './sim/orders';
 import { blowHorn, boundOf, chooseEidolon, chosenOf, HORN, hornHeld, hornOf, hornReady, noteSeen, seenCall } from './sim/warHorn';
-import { beatTimes, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
+import { beatTimes, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, skipTarget, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
+import { exitPoint, markTime, marksOf, maxRuns, PASS, passPose, passShare, runFrom, SOURCES, wakeRate, type AttackSource, type Mark, type PassSpec, type Sprite } from './eidolonPass';
+import flameFire from './art/fx/vfx/flame_fire.png';
+import sparkleFire from './art/fx/vfx/sparkle_fire.png';
+import puffFire from './art/fx/vfx/puff_fire.png';
+import fireExplosion from './art/fx/magic/fire_explosion.png';
+import puffIce from './art/fx/vfx/puff_ice.png';
+import statusIce from './art/fx/vfx/status_ice.png';
+import pillarLight from './art/fx/vfx/pillar_light.png';
+import sparkleLight from './art/fx/vfx/sparkle_light.png';
+import lightNova from './art/fx/magic/light_nova.png';
+import lightningStrike from './art/fx/magic/lightning_strike.png';
+import lightningBurst from './art/fx/magic/lightning_burst.png';
+import puffSand from './art/fx/vfx/puff_sand.png';
+import earthBurst from './art/fx/magic/earth_burst.png';
+import dustWhite from './art/fx/vfx/dust_white.png';
+import smokeDark from './art/fx/vfx/smoke_dark.png';
+import darkCircle from './art/fx/magic/dark_circle.png';
 import type { Fx } from './render/fx';
 import { play, duck } from './render/sound';
 import { settings } from './settings';
@@ -64,6 +81,23 @@ const img = (src: string, cls: string): HTMLImageElement => {
   i.src = src;
   return i;
 };
+/** EIDOLON-CALL-2: the pack strips (six frames of 32 px, already in the game and credited) the pass, the trail and the attack are drawn with. */
+const SPRITES: Readonly<Record<Sprite, string>> = {
+  flame: flameFire, embers: sparkleFire, firePuff: puffFire, fireBurst: fireExplosion, icePuff: puffIce, iceGlint: statusIce, pillar: pillarLight,
+  sparkLight: sparkleLight, nova: lightNova, bolt: lightningStrike, ring: lightningBurst, sand: puffSand, earth: earthBurst, dust: dustWhite,
+  smoke: smokeDark, darkCircle: darkCircle,
+};
+/** A pack strip at a point (client px): `foot` stands it on the point, else it is centred there; `loop` plays its frames on, else once. */
+const strip = (kind: Sprite, cls: string, x: number, y: number, o: { scale?: number; loop?: boolean; foot?: boolean; ms?: number } = {}): HTMLElement => {
+  const d = el('i', `ecSp ${cls}${o.loop ? ' loop' : ' once'}${o.foot ? '' : ' mid'}`);
+  d.style.backgroundImage = `url(${SPRITES[kind]})`;
+  d.style.left = `${Math.round(x)}px`;
+  d.style.top = `${Math.round(y)}px`;
+  if (o.scale) d.style.setProperty('--sc', String(o.scale));
+  if (o.ms) d.style.setProperty('--ms', `${o.ms}ms`);
+  return d;
+};
+
 const reducedNow = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** A War Horn widget: the three paintings stacked, the glow, the sheen and the aura, and its words. */
@@ -127,6 +161,23 @@ interface Playing {
   /** A snap zoom on a blow: how long it has left, and where. */
   snapLeft: number;
   calls: number;
+  /** EIDOLON-CALL-2: its pass across the screen and its attack's source. */
+  spec: PassSpec;
+  src: AttackSource;
+  /** The ground line the pass runs along (a share of the screen's height: the foes' rows). */
+  ground: number;
+  /** The trail it leaves, each mark's time and its elements (laid down as it passes). */
+  marks: { mark: Mark; at: number; els: HTMLElement[]; on: boolean }[];
+  /** The point at the edge or in the sky it left by (client px). */
+  exit: { x: number; y: number };
+  fig: HTMLElement;
+  shadow: HTMLElement;
+  /** The wake's motes owed (fractions carried frame to frame). */
+  wakeOwed: number;
+  /** The source has flared and the runs are laid out. */
+  built: boolean;
+  /** The runs to come: from, to (client px), when they start, how long they take; and those drawn. */
+  runs: { from: { x: number; y: number }; to: { x: number; y: number }; at: number; ms: number; el?: HTMLElement }[];
 }
 
 export class EidolonCall {
@@ -315,10 +366,14 @@ export class EidolonCall {
 
   /* ------------------------------------------------------------------ the cinematic */
 
+  /** The board's layer (the trail, the runs, the walls, the aftermath): framed with the board's picture. */
+  private board: HTMLElement = el('div', 'ecBoard');
+
   private start(e: Eidolon, first: boolean): void {
     const m = momentOf(first, settings().eidolonFull);
     const calls = this.opts.meta().eidolons?.calls ?? 0;
-    this.p = { e, m, first, t: 0, beats: beatTimes(m, CHOREO[e.id]?.length ?? 3), beatsDone: 0, struck: [], releasing: false, struckDone: false, stopLeft: 0, shot: '', snapLeft: 0, calls };
+    const spec = PASS[e.id] ?? PASS.askel;
+    const src = SOURCES[e.id] ?? SOURCES.askel;
     const look = LOOKS[e.element];
     const L = this.layer;
     L.replaceChildren();
@@ -328,46 +383,62 @@ export class EidolonCall {
     L.style.setProperty('--wash', look.wash);
     L.style.setProperty('--dim', String(m.DIM));
     L.hidden = false;
+    const W = innerWidth;
+    const H = innerHeight;
+    // (the ground line it runs along: the foes' rows on the board, so its prints fall among them)
+    const ground = this.foeGround();
+    this.board = el('div', 'ecBoard');
+    // (the trail, laid down as it passes: a pool of the element's light and the mark's strip at each)
+    const marks = marksOf(spec, ground).map((mark) => {
+      const x = mark.x * W;
+      const y = mark.y * H;
+      const pool = el('i', 'ecPool');
+      pool.style.left = `${Math.round(x)}px`;
+      pool.style.top = `${Math.round(y)}px`;
+      const sp = strip(src.mark, 'ecMark', x, y, { loop: true, foot: src.mark !== 'ring' && src.mark !== 'smoke', scale: spec.gait === 'swoop' ? 2.6 : 1.8 });
+      this.board.append(pool, sp);
+      return { mark, at: markTime(m, mark), els: [pool, sp], on: false };
+    });
+    const ex = exitPoint(spec, ground);
+    const exit = { x: ex.x * W, y: ex.y * H };
+    if (src.from !== 'trail') {
+      const gate = el('i', 'ecGate');
+      gate.style.left = `${Math.round(exit.x)}px`;
+      gate.style.top = `${Math.round(exit.y)}px`;
+      this.board.append(gate);
+    }
+    // (the figure, its feet placed each frame; a soft shadow on the ground under it)
+    const fig = el('div', `ecFig${spec.flip ? ' flip' : ''}`);
+    fig.style.height = fig.style.width = `${Math.round(spec.size * H)}px`;
+    fig.style.visibility = 'hidden';
+    fig.append(img(figureUrl(e.id), ''));
+    const shadow = el('i', 'ecShadow');
+    shadow.style.visibility = 'hidden';
     const dim = el('i', 'ecDim');
     const wash = el('i', 'ecWash');
-    // (the summoning circle over the board's middle, a ground loop 2:1)
-    const circle = el('i', 'ecCircle');
-    const mid = this.boardMid();
-    circle.style.left = `${mid.x}px`;
-    circle.style.top = `${mid.y}px`;
-    const rift = el('i', 'ecRift');
-    const glow = el('i', 'ecAura');
-    const fig = el('div', 'ecFig');
-    fig.append(img(figureUrl(e.id), 'ecFigArt'));
-    const motes = el('div', 'ecMotes');
-    const n = this.reduced ? 0 : settings().saver ? 10 : 26;
-    for (let i = 0; i < n; i++) {
-      const s = el('i');
-      s.style.setProperty('--x', `${(i * 37) % 100}%`);
-      s.style.setProperty('--d', `${-((i * 530) % 4000)}ms`);
-      s.style.setProperty('--s', `${3 + (i % 4) * 2}px`);
-      motes.append(s);
-    }
     const bars = el('div', 'ecBars');
     bars.append(el('i', 'top'), el('i', 'bot'));
     const name = el('div', 'ecName');
     name.append(el('small', '', e.title.replace(/^the /, 'The ')), el('b', '', e.name), el('em', '', e.attack));
-    // (the close-up: a cut to its face, its painted card, pushing in on its eyes as it speaks its line)
-    const close = el('div', 'ecClose');
-    const face = img(cardUrl(e.id), 'ecFace');
-    const [ex, ey] = EYES[e.id] ?? [0.5, 0.4];
-    face.style.transformOrigin = `${ex * 100}% ${ey * 100}%`;
-    const said = el('p', 'ecLine');
-    said.append(el('b', '', e.name), document.createTextNode(` “${lineOf(e, first, calls)}”`));
-    close.append(face, said);
-    new Image().src = cardUrl(e.id);
+    // (its line as it passes, beside its face: its first words the first time)
+    const say = el('div', 'ecSay');
+    const face = img(cardUrl(e.id), '');
+    const [fx, fy] = EYES[e.id] ?? [0.5, 0.4];
+    face.style.objectPosition = `${fx * 100}% ${fy * 100}%`;
+    const said = el('p');
+    said.append(el('b', '', e.name), document.createTextNode(`“${lineOf(e, first, calls)}”`));
+    say.append(face, said);
     const hornBlast = el('div', 'ecHorn');
     hornBlast.append(el('i', 'ecCone'), img(URL_OF('horn-blast'), 'ecHornArt'), el('i', 'ecRing'));
     const flash = el('i', 'ecFlash');
     const skip = el('small', 'ecSkip', first ? '' : 'Tap to skip');
-    L.append(dim, wash, circle, rift, glow, fig, motes, hornBlast, close, bars, name, flash, skip);
+    L.append(dim, wash, this.board, shadow, fig, hornBlast, bars, name, say, flash, skip);
+    this.p = {
+      e, m, first, t: 0, beats: beatTimes(m, CHOREO[e.id]?.length ?? 3), beatsDone: 0, struck: [], releasing: false, struckDone: false, stopLeft: 0, shot: '', snapLeft: 0, calls,
+      spec, src, ground, marks, exit, fig, shadow, wakeOwed: 0, built: false, runs: [],
+    };
     duck(true, 'eidolon');
-    play('horn');
+    if (m.HORN < m.PASS) play('horn');
     play('riseSummon');
   }
 
@@ -376,6 +447,19 @@ export class EidolonCall {
     const b = this.b;
     const p = b ? this.opts.tile(Math.floor(b.board.w / 2), Math.floor(b.board.d * 0.4)) : null;
     return p ?? { x: innerWidth / 2, y: innerHeight * 0.42 };
+  }
+
+  /** The foes' rows on the page, as a share of its height (where the pass runs). */
+  private foeGround(): number {
+    const b = this.b;
+    const foes = b?.units.filter((u) => u.side === 'foe' && u.alive) ?? [];
+    let y: number | undefined;
+    if (b && foes.length) {
+      const ys = foes.map((u) => this.opts.tile(u.u, u.v)?.y).filter((v): v is number => v !== undefined);
+      if (ys.length) y = ys.reduce((a, c) => a + c, 0) / ys.length;
+    }
+    if (y === undefined && b) y = this.opts.tile(Math.floor(b.board.w / 2), Math.floor(b.board.d * 0.25))?.y;
+    return Math.max(0.24, Math.min(0.58, (y ?? innerHeight * 0.36) / innerHeight));
   }
 
   /** Each frame: move the cinematic on by `dt` real ms (unless `paused`: a scene holds everything). */
@@ -395,14 +479,19 @@ export class EidolonCall {
       step = Math.max(0, firstBeat - p.t);
       if (!p.releasing && p.t + step >= firstBeat) p.releasing = true;
     }
+    const was = p.t;
     p.t += step;
     const shot = shotAt(p.m, p.t);
     if (shot !== p.shot) {
       p.shot = shot;
       this.layer.dataset.stage = shot;
-      if (shot === 'arrive') play('stingSummon');
-      this.frameBoard(BOARD_ZOOM[shot], null, shot === 'strike' || shot === 'close' ? 0 : 450);
+      if (shot === 'pass') play(p.src.passSound);
+      this.frameBoard(BOARD_ZOOM[shot], null, shot === 'build' ? Math.max(200, p.m.STRIKE - p.m.BUILD) : 400);
     }
+    this.pass(p, was, step);
+    if (!p.built && p.t >= p.m.BUILD) this.build(p);
+    // (the runs due start now)
+    for (const r of p.runs) if (!r.el && p.t >= r.at) r.el = this.run(p, r.from, r.to, r.ms);
     // (the snap zoom on a blow eases back to the wide shot)
     if (p.snapLeft > 0) {
       p.snapLeft -= step;
@@ -412,7 +501,109 @@ export class EidolonCall {
     if (p.t >= p.m.RESUME) this.end();
   }
 
-  /** One beat of the attack: its bursts across the board, a flash, its sound; the first with the hit-stop and the full shake. */
+  /** The pass: the figure placed on its path (feet at its point, leaning, facing its way), its shadow under it, the trail's marks laid down
+   *  as it reaches them, the wake falling behind. Reduced motion: it fades in where it would be mid-way and out again, held still. */
+  private pass(p: Playing, was: number, step: number): void {
+    const { m, spec } = p;
+    const W = innerWidth;
+    const H = innerHeight;
+    const on = p.t >= m.PASS && p.t < m.EXIT;
+    const u = this.reduced ? 0.5 : passShare(m, p.t);
+    const pose = passPose(spec, u, p.ground);
+    const size = spec.size * H;
+    p.fig.style.visibility = p.shadow.style.visibility = on ? 'visible' : 'hidden';
+    if (on) {
+      p.fig.style.transform = `translate(${Math.round(pose.x * W - size / 2)}px, ${Math.round(pose.y * H - size)}px) rotate(${pose.rot.toFixed(1)}deg)`;
+      if (this.reduced) {
+        const k = passShare(m, p.t);
+        p.fig.style.opacity = String(Math.min(1, k * 5, (1 - k) * 5));
+      }
+      const gy = spec.gait === 'swoop' || spec.gait === 'float' ? (p.ground + 0.03) * H : pose.y * H;
+      // (the shadow shrinks as a leap lifts it off the ground)
+      const lift = Math.max(0, Math.min(1, (gy - pose.y * H) / (H * 0.25)));
+      p.shadow.style.transform = `translate(${Math.round(pose.x * W)}px, ${Math.round(gy)}px) scale(${(1 - lift * 0.5).toFixed(2)})`;
+      p.shadow.style.opacity = String(1 - lift * 0.6);
+      // (the wake: a mote of its element every so often, falling behind its feet)
+      p.wakeOwed += (wakeRate(settings().saver, this.reduced) * step) / 1000;
+      const dir = spec.path[spec.path.length - 1][0] >= spec.path[0][0] ? 1 : -1;
+      while (p.wakeOwed >= 1) {
+        p.wakeOwed -= 1;
+        const fx = pose.x * W - dir * size * (0.15 + ((p.t * 7) % 13) / 60);
+        const fy = (spec.gait === 'float' || spec.gait === 'swoop' ? pose.y * H - size * 0.35 : pose.y * H - size * 0.12) + (((p.t * 13) % 17) - 8);
+        if (fx < -20 || fx > W + 20) continue;
+        const w = strip(p.src.wake, 'ecWake', fx, fy, { scale: 1.2 + ((p.t * 3) % 7) / 10 });
+        w.style.setProperty('--dx', `${-dir * 14}px`);
+        w.style.setProperty('--dy', `${p.src.wake === 'smoke' || p.src.wake === 'sand' ? -10 : -30}px`);
+        w.addEventListener('animationend', (ev) => ev.animationName === 'ecWake' && w.remove());
+        this.board.append(w);
+      }
+    }
+    // (the marks it has reached: laid down, with a footfall's sound and, for the titan, a thud)
+    for (const k of p.marks) {
+      if (k.on || p.t < k.at) continue;
+      k.on = true;
+      for (const x of k.els) x.classList.add('on');
+      if (was < k.at && k.at <= p.t && p.t < p.m.EXIT) {
+        if (p.src.stepSound) play(p.src.stepSound);
+        if (spec.gait === 'stomp' && !this.reduced && settings().shake) this.opts.fx?.rumble(0.22);
+      }
+    }
+  }
+
+  /** The figure has gone: the source flares (the trail's marks, the sky or the edge it left by), and the element is sent from there to each
+   *  foe standing, arriving as the strike lands. Lightning first leaps from spark to spark along the trail. */
+  private build(p: Playing): void {
+    p.built = true;
+    const b = this.b;
+    play(p.src.buildSound);
+    for (const k of p.marks) for (const x of k.els) x.classList.add('on', 'lit');
+    this.board.querySelector('.ecGate')?.classList.add('on');
+    // (the marks flare into the element's own fire, frost, light, sparks, stone or smoke)
+    for (const k of p.marks) this.board.append(strip(p.src.flare, 'ecFlare', k.mark.x * innerWidth, k.mark.y * innerHeight, { scale: 2.4, foot: p.src.flare === 'flame', ms: 450 }));
+    if (!b) return;
+    const left = Math.max(120, p.m.STRIKE - p.t - 30);
+    const aspect = innerWidth / innerHeight;
+    let at = p.t;
+    let ms = left;
+    if (p.src.run === 'arc' && p.marks.length > 1) {
+      // (lightning leaps along the hanging sparks first, then down onto the foes)
+      const hop = Math.round(left * 0.4 / (p.marks.length - 1));
+      p.marks.slice(1).forEach((k, i) => {
+        const a = p.marks[i].mark;
+        p.runs.push({ from: { x: a.x * innerWidth, y: a.y * innerHeight }, to: { x: k.mark.x * innerWidth, y: k.mark.y * innerHeight }, at: p.t + i * hop, ms: hop + 60 });
+      });
+      at = p.t + left * 0.4;
+      ms = left * 0.6;
+    }
+    const foes = b.units.filter((u) => u.side === 'foe' && u.alive).slice(0, maxRuns(settings().saver));
+    for (const f of foes) {
+      const to = this.opts.tile(f.u, f.v);
+      if (!to) continue;
+      const share = runFrom(p.src, p.marks.map((k) => k.mark), { x: p.exit.x / innerWidth, y: p.exit.y / innerHeight }, { x: to.x / innerWidth, y: to.y / innerHeight }, aspect);
+      p.runs.push({ from: { x: share.x * innerWidth, y: share.y * innerHeight }, to, at, ms });
+    }
+  }
+
+  /** One run: a streak drawn out from `from` to `to` behind a racing head of the element. */
+  private run(p: Playing, from: { x: number; y: number }, to: { x: number; y: number }, ms: number): HTMLElement {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.max(4, Math.hypot(dx, dy));
+    const r = el('div', `ecRun run-${p.src.run} go`);
+    r.style.left = `${Math.round(from.x)}px`;
+    r.style.top = `${Math.round(from.y)}px`;
+    r.style.rotate = `${Math.atan2(dy, dx)}rad`;
+    r.style.setProperty('--len', `${Math.round(len)}px`);
+    r.style.setProperty('--ms', `${Math.round(ms)}ms`);
+    const head = el('i', 'ecHead');
+    head.append(strip(p.src.head, '', 0, 0, { loop: true }));
+    r.append(el('i', 'ecStreak'), head);
+    this.board.append(r);
+    return r;
+  }
+
+  /** One beat of the attack: its bursts across the board, a flash, its sound; the first (the strike) with the hit-stop and the full shake,
+   *  the element rising over each foe struck where its run arrived, and the aftermath left on their ground. */
   private beat(p: Playing, i: number): void {
     const b = this.b;
     const fx = this.opts.fx;
@@ -426,13 +617,14 @@ export class EidolonCall {
       fx.ultImpact(b, p.e.element, spots.slice(0, saver ? 2 : 5));
       if (i === 0) {
         fx.hitStop(p.m.HIT_STOP);
-        fx.rumble(this.reduced ? 0 : p.m.SHAKE);
+        fx.rumble(this.reduced || !settings().shake ? 0 : p.m.SHAKE);
       }
     }
+    if (i === 0) this.landed(p);
     if (i === 0 && !this.reduced && settings().shake) p.stopLeft = p.m.HIT_STOP;
-    // (a snap zoom on the blow: the first beat's on the foes struck, the others' where they land)
-    const at = b && (plan === 'foes' ? (p.struck.length ? this.opts.anchor(p.struck[0]) : null) : this.opts.tile(Math.round(plan[0][0] * (b.board.w - 1)), Math.round(plan[0][1] * (b.board.d - 1))));
-    if (i === 0 || p.m.BARS) {
+    // (a snap zoom on the first blow, on the foes struck)
+    const at = i === 0 && b && p.struck.length ? this.opts.anchor(p.struck[0]) : null;
+    if (i === 0) {
       this.frameBoard(SNAP_ZOOM, at ?? null, SNAP_MS);
       p.snapLeft = SNAP_MS + 60;
     }
@@ -445,13 +637,47 @@ export class EidolonCall {
     }
   }
 
-  /** A tap skips: the strike (if it has not come) is let through, the rest is cut. */
+  /** The strike lands: the runs end, the element rises over each foe struck (a wall of fire, spears of ice, a pillar of light...), and the
+   *  ground is left scorched, frosted or broken, with embers, steam, sparks, dust or smoke drifting up off it. */
+  private landed(p: Playing): void {
+    const b = this.b;
+    for (const r of p.runs) r.el?.classList.add('done');
+    this.board.querySelector('.ecGate')?.classList.remove('on');
+    for (const k of p.marks) for (const x of k.els) x.classList.remove('on', 'lit');
+    if (!b) return;
+    const saver = settings().saver;
+    const ids = p.struck.length ? p.struck : b.units.filter((u) => u.side === 'foe').map((u) => u.id);
+    const spots = ids.map((id) => b.units.find((u) => u.id === id)).flatMap((u) => (u ? [this.opts.tile(u.u, u.v)] : [])).filter((x): x is { x: number; y: number } => !!x).slice(0, maxRuns(saver));
+    spots.forEach((s, n) => {
+      const rise = p.src.rise;
+      const foot = rise === 'flame' || rise === 'pillar' || rise === 'bolt';
+      this.board.append(strip(rise, 'ecRise', s.x, s.y + (foot ? 4 : -14), { scale: rise === 'flame' ? 3.4 : rise === 'pillar' || rise === 'bolt' ? 3.6 : 3, foot, ms: 520 }));
+      if (rise === 'flame' && !saver) for (const dx of [-26, 26]) this.board.append(strip('flame', 'ecRise', s.x + dx, s.y + 2, { scale: 2.4, foot: true, ms: 560 }));
+      const scar = el('i', `ecAfter after-${p.src.after}`);
+      scar.style.left = `${Math.round(s.x)}px`;
+      scar.style.top = `${Math.round(s.y)}px`;
+      this.board.prepend(scar);
+      const drifts = saver ? 1 : 3;
+      for (let k = 0; k < drifts; k++) {
+        const d = el('i', 'ecDrift');
+        d.style.left = `${Math.round(s.x + (k - 1) * 14)}px`;
+        d.style.top = `${Math.round(s.y - 6)}px`;
+        d.style.setProperty('--dx', `${(k - 1) * 10}px`);
+        d.style.setProperty('--delay', `${300 + k * 260 + n * 40}ms`);
+        d.style.setProperty('--ms', `${1500 + k * 200}ms`);
+        d.append(strip(p.src.drift, '', 0, 0, { loop: true, scale: 1.3 }));
+        this.board.append(d);
+      }
+    });
+  }
+
+  /** A tap skips to the strike: the pass is cut, the source flares a moment and the strike lands; once it has, the rest is cut. */
   private skip(): void {
     const p = this.p;
     if (!p) return;
     if (!p.struckDone) {
-      p.t = p.beats[0];
-      p.releasing = true;
+      p.t = skipTarget(p.m, p.t);
+      this.frame(0);
       return;
     }
     p.t = p.m.RESUME;
@@ -463,16 +689,23 @@ export class EidolonCall {
   private frameBoard(zoom: number, at: { x: number; y: number } | null, ms: number): void {
     const c = this.opts.stage?.();
     if (!c) return;
+    // (EIDOLON-CALL-2: the board's layer of the cinematic is framed the same way, so the trail and the runs stay on their tiles)
+    const d = this.board;
     if (this.reduced || zoom === 1) {
-      c.style.transition = this.reduced ? '' : `transform ${ms}ms ease-out`;
-      c.style.transform = '';
+      for (const x of [c, d]) {
+        x.style.transition = this.reduced ? '' : `transform ${ms}ms ease-out`;
+        x.style.transform = '';
+      }
       return;
     }
     const r = c.getBoundingClientRect();
     const o = at ?? this.boardMid();
     c.style.transformOrigin = `${Math.round(o.x - r.left)}px ${Math.round(o.y - r.top)}px`;
-    c.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.8,.3,1)` : 'none';
-    c.style.transform = `scale(${zoom})`;
+    d.style.transformOrigin = `${Math.round(o.x)}px ${Math.round(o.y)}px`;
+    for (const x of [c, d]) {
+      x.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.8,.3,1)` : 'none';
+      x.style.transform = `scale(${zoom})`;
+    }
   }
 
   private end(): void {
@@ -481,13 +714,15 @@ export class EidolonCall {
     duck(false, 'eidolon');
     const c = this.opts.stage?.();
     if (c) {
-      c.style.transition = this.reduced ? '' : 'transform 600ms ease-out';
-      c.style.transform = '';
+      for (const x of [c, this.board]) {
+        x.style.transition = this.reduced ? '' : 'transform 600ms ease-out';
+        x.style.transform = '';
+      }
       setTimeout(() => {
         if (!this.p) c.style.transition = c.style.transformOrigin = '';
       }, 700);
     }
-    // (the wash and the figure fade out over the board running again)
+    // (the wash and the aftermath fade out over the board running again)
     this.layer.dataset.stage = 'out';
     const L = this.layer;
     setTimeout(() => {
@@ -495,7 +730,7 @@ export class EidolonCall {
         L.hidden = true;
         L.replaceChildren();
       }
-    }, this.reduced ? 300 : 1400);
+    }, this.reduced ? 1100 : 1400);
     if (p && this.b) this.opts.cheer?.(this.b, reactionOf(p.e.element, p.calls));
   }
 
