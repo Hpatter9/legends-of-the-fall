@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.292.0',
+    date: '2026-10-31',
+    title: 'Relics stay on the prep screen',
+    notes: ['The run\'s relics now show only while you prepare a wave, not during the fight. Tap one to read it; set relics show their set count.'],
+  },
+  {
     version: '0.291.0',
     date: '2026-10-31',
     title: 'Auto casts your spells too',
