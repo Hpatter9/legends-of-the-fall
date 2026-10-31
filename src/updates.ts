@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.298.0',
+    date: '2026-10-31',
+    title: 'Eidolon quest: What Sleeps Under the Mere',
+    notes: ['Once Askel is bound and the Beast Packs fall, a frost-bitten hunter brings Nivra\'s tale: three pieces, then a trial against Nivra herself.'],
+  },
+  {
     version: '0.297.0',
     date: '2026-10-31',
     title: 'The Last Stand\'s tower',
