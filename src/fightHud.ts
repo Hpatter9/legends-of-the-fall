@@ -16,6 +16,7 @@ import { keyOf, type Skill } from './sim/abilities';
 import { heroKitOf } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
 import { portrait } from './render/sheets';
+import { heroFace } from './heroFace';
 import { battleSheet } from './render/awakenLook';
 import { GLOW, skillElement, type Element } from './render/fxRules';
 import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type Which } from './fightHudRules';
@@ -25,7 +26,7 @@ import atlas from './art/fx/pack/atlas.json';
 export interface FightHudOpts {
   /** Permanent equipment can stay awakened in modes with local combat stats. */
   equipmentStep?: (kind: string) => number;
-  /** The Auto switch was flipped: the page keeps it (`Meta.ultAuto`) and tells the battle. */
+  /** The Auto switch was flipped: the page keeps it (`Meta.ultAuto`, which now covers the spells too: AUTO-CAST) and tells the battle. */
   onAuto: (on: boolean) => void;
   /** Whether the ultimates fire on their own now (the ultimate's sheet says so). */
   autoOn?: () => boolean;
@@ -94,8 +95,10 @@ export class FightHud {
     this.autoEl = document.createElement('button');
     this.autoEl.type = 'button';
     this.autoEl.className = 'fhAuto';
-    this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i>';
-    this.autoEl.title = 'Auto: fire every ultimate the moment it is ready';
+    // (AUTO-CAST: one switch for both, the heroes' ultimates and the king's spells; its small line says so)
+    this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i><small>ULT+SPELL</small>';
+    this.autoEl.title = 'Auto: ultimates + spells. Every ultimate fires when it is ready, and your spells are cast where they are worth it';
+    this.autoEl.setAttribute('aria-label', 'Auto: ultimates + spells');
     this.autoEl.addEventListener('click', (e) => {
       e.stopPropagation();
       const on = !this.autoEl.classList.contains('on');
@@ -165,8 +168,10 @@ export class FightHud {
       `<span class="fhBar hp"><i></i><b></b></span><span class="fhBar res ${hk.pool}"><i></i><b></b></span>` +
       `<span class="fhChips">${chip(1, hk.s1.skill, hk.s1.heals)}${chip(2, hk.s2.skill, hk.s2.heals)}</span>` +
       '<span class="fhCast"></span>';
-    const pic = portrait(battleSheet(u.def, this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0, u.grade ?? 1), 40, u.grade ?? 1);
-    pic.className = 'fhPortrait';
+    const step = this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0;
+    // (HUD-FACES: the hero's painted face, cut to its face box; the pixel portrait until the painting loads, and for any without one)
+    const pic = heroFace(u.def, step, 72, portrait(battleSheet(u.def, step, u.grade ?? 1), 40, u.grade ?? 1));
+    pic.classList.add('fhPortrait');
     el.querySelector('.fhPic')!.prepend(pic);
     el.querySelector('.fhName')!.textContent = heroName(u.def);
     for (const c of el.querySelectorAll<HTMLElement>('.fhChip')) {

@@ -21,6 +21,7 @@ import { drawWaveNotes } from './waveCardView';
 import { playResults, type JrData, type JrPlayer } from './jrpgRecapView';
 import { questLines } from './sim/jrpgRecap';
 import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
+import { noteSpoils } from './sim/runSpoils';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
@@ -95,6 +96,7 @@ import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
+import { heroFace } from './heroFace';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
@@ -102,6 +104,7 @@ import { fullScene } from './ultMomentRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { autoSpellsFor } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
@@ -972,7 +975,7 @@ class Game {
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite)
     this.eid.arm(this.b, midBossWave(this.run, this.run.stage));
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
-    this.b.autoUlt = this.ultAutoOn();
+    this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
     this.hud.build(this.b);
     this.ultm.clear();
@@ -1096,7 +1099,7 @@ class Game {
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
-      b.autoUlt = this.ultAutoOn();
+      this.setAutoOn(b);
       while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
@@ -1654,7 +1657,9 @@ class Game {
     }
     const h = u.side === 'hero' && u.tag !== undefined ? heroOf(this.run, u.tag) : undefined;
     const grade = u.grade ?? 1;
-    const pic = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
+    const sprite = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
+    // (HUD-FACES: a hero of the party, or a guest, shows its painted face, its awakened form's once awakened)
+    const pic = h ? heroFace(h.kind, this.run.local ? (u.awaken ?? 0) : awakenedOf(this.meta, h.kind), 96, sprite) : sprite;
     // (GUEST-HERO: a guest the player does not own reads none of its kind's lasting talents or gear; a guest wears a GUEST tag)
     this.info.open(infoOf(this.b, u, { meta: this.run.local || (h?.guest && !guestOwned(this.meta, h)) ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic, !!h?.guest);
     play('tap');
@@ -1726,6 +1731,12 @@ class Game {
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
   }
+  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  private setAutoOn(b: Battle): void {
+    const on = this.ultAutoOn();
+    b.autoUlt = on;
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, this.meta.spellbook.equipped);
+  }
 
   private wire(): void {
     // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
@@ -1736,7 +1747,7 @@ class Game {
       onAuto: (on) => {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
-        this.b.autoUlt = this.ultAutoOn();
+        this.setAutoOn(this.b);
       },
       autoOn: () => this.ultAutoOn(),
       dockTop: () => $('panel').getBoundingClientRect().top,
@@ -2461,7 +2472,7 @@ class Game {
     // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
     const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
     // (JRPG-RECAP: the run's results screen at the top: each hero's XP over the run, the MVP, the gold and crowns counted up)
-    const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) });
+    const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) }, run);
     showRecap($('recap'), recapOf(run), { ...head, joke, results, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
@@ -3122,7 +3133,10 @@ class Game {
       const hornSaid = hornLine(horn);
       // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
       const questMoved = questsMoved(this.meta, questsBefore, questsDone, questsFound);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(wore.length ? { wear: wore } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
+      // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
+      const waveGains = gainsSince(held, this.meta, run);
+      noteSpoils(recapOf(run), waveGains);
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(wore.length ? { wear: wore } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
