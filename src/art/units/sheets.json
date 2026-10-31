@@ -5069,5 +5069,26 @@
   "figure": 111,
   "facesRight": true,
   "lies": true
+ },
+ "eidolon_nivra": {
+  "w": 270,
+  "h": 137,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 6,
+   "attack": 6,
+   "idle": 6,
+   "hurt": 3,
+   "dead": 6
+  },
+  "figure": 135,
+  "facesRight": true
  }
 }

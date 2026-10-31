@@ -98,6 +98,8 @@ import robotDestroyer from '../art/units/robot_destroyer.png';
 import robotInfantry from '../art/units/robot_infantry.png';
 import robotSwordsman from '../art/units/robot_swordsman.png';
 import hkGhost from '../art/units/hk_ghost.png';
+// (EIDOLON-TRIAL: Nivra as the boss of her trial, cut from the owner's generated sheet by tools/eidolon-trial/cut_nivra.py)
+import eidolonNivra from '../art/units/eidolon_nivra.png';
 // (SUMMON-ART: the summons' own sheets, cut by tools/summon-art/cut.py; which summon wears which is in summonArt.ts)
 import summonWolf from '../art/units/summon_wolf.png';
 import summonWolfWhite from '../art/units/summon_wolf_white.png';
@@ -230,6 +232,7 @@ const URLS: Record<string, string> = {
   robot_infantry: robotInfantry,
   robot_swordsman: robotSwordsman,
   hk_ghost: hkGhost,
+  eidolon_nivra: eidolonNivra,
   summon_wolf: summonWolf,
   summon_wolf_white: summonWolfWhite,
   summon_direwolf: summonDirewolf,

@@ -144,7 +144,8 @@ export function revealCard(r: Reveal, m: Meta): EndCard | null {
         label: 'Bound',
         name: `${e.name}, ${e.title}`,
         line: `An Eidolon answers the War Horn: ${e.rider}.`,
-        where: 'Fill the War Horn in fights, then tap it to call.',
+        // (EIDOLON-CHAIN-2: with more than one bound, the newest answers, and the Pact Gallery chooses)
+        where: boundOf(m).length > 1 ? `${e.name} answers the War Horn now. Choose who answers in the Pact Gallery.` : 'Fill the War Horn in fights, then tap it to call.',
         art: { kind: 'eidolon', id: r.id },
       };
     }

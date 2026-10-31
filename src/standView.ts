@@ -1293,7 +1293,7 @@ export class StandView {
         kingSays(n.boss ? 'bossWave' : 'waveStart', () => this.anchorOf(s.king.id));
         this.grumbleAt = s.b.t + GRUMBLE_AFTER_MS;
         this.grumbleBoss = n.boss;
-        this.music(s.run.seed);
+        this.music(s.run.seed, n.boss);
         if (n.boss) play('standBoss');
         this.hall.burst(waveSpec(s.run.seed, s.run.armies, n.n, s.run.hall).edges);
         this.picked = null;
@@ -1336,6 +1336,7 @@ export class StandView {
         this.drawChoice(n.n, n.to);
       } else if (n.kind === 'hold') {
         this.showPlate('ONE MORE WAVE', 'HOLD THE LINE', 'boss');
+        this.music(s.run.seed, n.boss);
         newQuipScene();
         kingSays('bossWave', () => this.anchorOf(s.king.id));
         play('standBoss');
@@ -1404,13 +1405,13 @@ export class StandView {
     });
   }
 
-  /** The battle music: one track for the whole run (`standTrack`: the general battle track), started with its first wave and kept, boss waves
-   *  and breaks included, until the king falls or the run is left (`battleMusic.ts`). */
+  /** The battle music: the battle track for the whole run (`standTrack`), started with its first wave and kept, breaks included, until
+   *  the king falls or the run is left; the boss track takes over for a boss wave, and the battle track comes back after it (`battleMusic.ts`). */
   private hold = false;
   private track = '';
-  private music(seed: number): void {
+  private music(seed: number, boss = false): void {
     // (one hook for the rooms of the retreat: `standMusic.ts`; today every room keeps the run's track)
-    const want = standRoomTrack(seed, this.s ? hallNow(this.s.run) : 'courtyard');
+    const want = standRoomTrack(seed, this.s ? hallNow(this.s.run) : 'courtyard', boss);
     if (want === this.track) return;
     this.track = want;
     startFight(want);

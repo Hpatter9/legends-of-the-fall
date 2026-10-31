@@ -29,6 +29,8 @@ import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
+import { isSecret, secretsOf, SECRET_NAME } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import swordIcon from './art/talent/sword.png';
 import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
@@ -139,7 +141,30 @@ interface SheetState {
   hop: (kind: string) => void;
 }
 
+/** SECRET-HEROES: a secret hero's sheet: the dark figure, "???" and its vague hint; nothing of its name, art, class or kit. */
+function paintSecret(box: HTMLElement, close: () => void, line: string): () => void {
+  box.className = 'hsheet heroDetail secretSheet';
+  delete box.dataset.class;
+  box.replaceChildren();
+  const bar = el('div', 'heroToolbar');
+  const back = el('button', 'heroBack', '‹ Back');
+  back.type = 'button';
+  back.addEventListener('click', close);
+  bar.append(back, el('span', '', 'YOUR COMPANY'));
+  const head = el('div', 'hhead');
+  const pic = el('div', 'hpic');
+  pic.append(secretFigure());
+  const title = el('div', 'dossierIdentity');
+  title.append(el('h3', '', SECRET_NAME), el('em', '', 'a secret, for now'), el('span', 'lv', line));
+  head.append(pic, title);
+  const done = el('button', 'primary', 'Back');
+  done.addEventListener('click', close);
+  box.append(bar, head, done);
+  return () => undefined;
+}
+
 function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, state: SheetState, show?: Taken): () => void {
+  if (isSecret(meta, kind)) return paintSecret(box, close, lockInfo(meta, kind)!.line);
   const def = UNITS[kind];
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
@@ -376,12 +401,13 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   return () => closeArtwork?.();
 }
 
-/** The roster page of the Heroes tab: the heroes owned in a grid, then the ones earned in play with the line "Joins when you …" and their progress, then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
+/** The roster page of the Heroes tab: the heroes owned in a grid, then the secret heroes (SECRET-HEROES: earned in play, each a dark figure, "???" and a vague hint), then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
 export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void, lastViewed?: string): void {
   box.className = 'hsheet heroRoster';
   box.replaceChildren();
   const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
   const earned = CONTENT_HEROES.filter((c) => meta.unlocked.includes(c.kind)).length;
+  // (SECRET-HEROES: the heroes earned in play are secrets until they join, counted but not named)
   const head = el('div');
   head.className = 'rosterHeading';
   head.append(el('small', 'rosterEyebrow', 'THE LAST KEEP'), el('h3', '', 'Your company'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
@@ -473,8 +499,15 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       bar.append(fill);
       text.append(bar, el('span', 'lv', `${lock.now} / ${lock.need}`));
     }
-    const pic = heroArtwork(kind, false, awakenedOf(meta, kind));
-    pic.classList.add('dim');
+    // (SECRET-HEROES: a secret hero shows the dark figure, not its own picture, even darkened)
+    let pic: HTMLElement;
+    if (isSecret(meta, kind)) {
+      pic = secretFigure();
+      r.classList.add('secret');
+    } else {
+      pic = heroArtwork(kind, false, awakenedOf(meta, kind));
+      pic.classList.add('dim');
+    }
     r.append(pic, text);
     r.addEventListener('click', () => pick(kind));
     remember(r, kind, lock.named);
@@ -486,7 +519,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     for (const k of kinds) box.append(row(k));
     if (note) box.append(el('p', 'hint', note));
   };
-  section('Earned in play', CONTENT_HEROES.filter((c) => !meta.unlocked.includes(c.kind)).map((c) => c.kind));
+  section('Secret heroes', secretsOf(meta));
   const begun = toCollect(meta).filter((k) => haveOf(meta, k) > 0).sort((a, b) => haveOf(meta, b) - haveOf(meta, a));
   const rest = toCollect(meta).length - begun.length;
   section('Gathering shards', begun, rest ? `${rest} more to find: summoning stones give their shards.` : '');

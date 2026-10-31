@@ -6,7 +6,9 @@ import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
 import { LUCKY_ODDS, MAX_RANK, RANK_MULT, RANK_SHARDS, rankOf, saveMeta, stoneCost, stonesOf, takenRank, useStones, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
-import { isContent, pityAt } from './sim/unlockRules';
+import { pityAt } from './sim/unlockRules';
+import { isSecret } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import { portrait } from './render/sheets';
 import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } from './summonTarot';
 
@@ -77,10 +79,12 @@ export class Gacha {
       cell.className = `hero${owned ? '' : ' locked'}`;
       const name = document.createElement('b');
       name.textContent = owned || begun ? heroName(kind) : '???';
-      cell.append(portrait(def.sheet, 72), name);
+      // (SECRET-HEROES: a hero earned in play is a dark figure until it joins)
+      const secret = isSecret(m, kind);
+      cell.append(secret ? secretFigure(72) : portrait(def.sheet, 72), name);
       if (owned) cell.append(this.rankLine(kind));
       else if (begun) cell.append(unlockBar(m, kind));
-      else if (isContent(kind)) cell.append(small('Earned in play'));
+      else if (secret) cell.append(small('A secret'));
       list.append(cell);
     }
   }
