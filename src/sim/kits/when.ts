@@ -1,6 +1,7 @@
 // When a hero's skill 2 has something to do (COMBAT-002): a cheap look, without casting, that the AI takes before it holds skill 1 back for skill 2's
 // turn. It mirrors each cast's own first check (the cast still makes the final call); a skill 2 not named here is taken to have work most of the time.
 
+import { renewable, shapeRenewable } from '../carry';
 import { UNITS } from '../units';
 import { atkOf, type Battle, type Unit } from '../battle';
 import { apart, foesOf } from '../abilities';
@@ -28,14 +29,15 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   // (RPG-SPELLS batch 6: the Wall of Fire took Wildfire's place, Transposition Trade Places', Font of Magic Font of Wisdom's)
   Wildfire: (b, me) => !!fireLane(b, me),
   Overload: (b, me) => foesOf(b, me).some((f) => on(f.kx?.charged, b) && apart(me, f) <= 8),
-  'Fox Guise': (b, me) => !on(me.kx?.guise?.until, b) && foesWithin(b, me, 7),
+  'Fox Guise': (b, me) => shapeRenewable(b, me.kx?.guise?.until, me.kx?.guise?.ms) && foesWithin(b, me, 7),
   Shift: (b, me) => foesWithin(b, me, 4) && (me.kx?.wolfAt === undefined || b.t - me.kx.wolfAt >= 4000) && me.kx?.wolf !== (me.hp < me.maxHp * 0.5 || foesOf(b, me).filter((f) => apart(f, me) === 1).length >= 3 ? 'brute' : 'hunter'),
   'Bull Rush': (b, me) => foesWithin(b, me, 1),
   'Pied Piper': (b, me) => foesWithin(b, me, 4),
   'Stone Garden': (b, me) => foesWithin(b, me, 5),
-  'Plant the Standard': (b, me) => !b.units.some((x) => x.alive && x.def === 'standard' && x.owner === me.id) && foesWithin(b, me, 6),
+  // (SUMMON-TIMERS: or to renew his standing one, with a quarter of its time left)
+  'Plant the Standard': (b, me) => (!b.units.some((x) => x.alive && x.def === 'standard' && x.owner === me.id) || !!renewable(b, me, ['standard'])) && foesWithin(b, me, 6),
   'Aura of Protection': (b, me) => foesWithin(b, me, 4) && allies(b, me).filter((a) => apart(a, me) <= 3).length >= 2,
-  Treeform: (b, me) => !me.kx?.tree && foesWithin(b, me, 2),
+  Treeform: (b, me) => shapeRenewable(b, me.kx?.tree?.until, me.kx?.tree?.ms) && foesWithin(b, me, 2),
   'Blood Fury': (b, me) => foesWithin(b, me, 2) && !on(me.kx?.fury, b) && me.hp > me.maxHp * 0.2,
   'Blood Price': (b, me) => foesWithin(b, me, 2) && !(me.kx?.blood ?? 0) && me.hp > me.maxHp * 0.3,
   'Trade Places': (b, me) => allies(b, me).some((a) => inTrouble(b, me, a)),

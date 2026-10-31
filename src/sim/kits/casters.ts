@@ -3,6 +3,7 @@
 // Wanderer's flasks, the High Priestess's angel and the Druid's treeform. (RPG-SPELLS batch 6 put the Fire Wizard's Wall of Fire, the
 // Illusionist's Transposition and the Great Sage's Font of Magic in place of Wildfire, Trade Places and Font of Wisdom: `mages.ts`.)
 
+import { GUISE_CAP, shapeRenewable, timerFor, TIMER, TREE_SHARE } from '../carry';
 import { sightClear } from '../board';
 import { atkOf, canStrike, strikeDef, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, castPower, crowd, drag, foesOf, mendUnit, net } from '../abilities';
@@ -40,13 +41,22 @@ export function overload(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Kitsune, Fox Guise: for 5s she takes the shape of the strongest foe within 7: its looks, its reach and shot, and its attack (up to 1.4 times hers); foes pick her last. */
 export function foxGuise(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (me.kx?.guise && me.kx.guise.until > b.t) return false;
+  const old = me.kx?.guise;
+  if (old && !shapeRenewable(b, old.until, old.ms)) return false;
   const f = foesNear(b, me, 7).filter((x) => UNITS[x.def].side === 'foe').sort(strongest)[0];
   if (!f) return false;
-  const mult = Math.max(1, Math.min(1.4, atkOf(f) / atkOf(me)));
+  // (SUMMON-TIMERS: a hero's guise lasts 15s of fighting time and carries into the next wave; with a quarter of it left she takes the
+  // strongest foe's shape afresh, the old one put off first)
+  if (old) {
+    me.power = (me.power ?? 1) / old.mult;
+    me.kx!.guise = undefined;
+  }
+  const mult = Math.max(1, Math.min(me.side === 'hero' ? GUISE_CAP : 1.4, atkOf(f) / atkOf(me)));
   me.power = (me.power ?? 1) * mult;
-  kx(me).guise = { def: f.def, until: b.t + ms(me, 5000), mult };
-  setLook(me, f.look ?? UNITS[f.def].sheet, out);
+  const time = timerFor(me, TIMER.alterSelf, 5000, ms);
+  const look = f.look ?? UNITS[f.def].sheet;
+  kx(me).guise = { def: f.def, until: b.t + time, mult, ...(me.side === 'hero' ? { ms: time, look } : {}) };
+  setLook(me, look, out);
   return true;
 }
 
@@ -186,15 +196,24 @@ export function guardianAngel(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   return true;
 }
 
-/** Druid, Treeform: for 6s she becomes a treant: a third more health, more defence, and the foes beside her must strike her; she heals 15% when she turns back. */
+/** Druid, Treeform: for 20s of fighting time (6s before SUMMON-TIMERS; it carries into the next wave) she becomes a treant: more health,
+ *  more defence, and the foes beside her must strike her; she heals 15% when she turns back. With a quarter of it left, she renews it. */
 export function treeform(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (me.kx?.tree) return false;
+  const old = me.kx?.tree;
+  if (old && !shapeRenewable(b, old.until, old.ms)) return false;
   const near = foesNear(b, me, 2);
   if (!near.length) return false;
-  const added = Math.round(me.maxHp / 3);
+  const time = timerFor(me, TIMER.wildShape, 6000, ms);
+  if (old) {
+    old.until = b.t + time;
+    old.ms = time;
+    for (const f of near) f.taunt = { to: me.id, until: b.t + ms(me, 3000) };
+    return true;
+  }
+  const added = Math.round(me.maxHp * (me.side === 'hero' ? TREE_SHARE : 1 / 3));
   me.maxHp += added;
   me.hp += added;
-  kx(me).tree = { until: b.t + ms(me, 6000), added };
+  kx(me).tree = { until: b.t + time, added, ...(me.side === 'hero' ? { ms: time } : {}) };
   for (const f of near) f.taunt = { to: me.id, until: b.t + ms(me, 3000) };
   setLook(me, formOf(UNITS.treant, me.grade ?? 1), out);
   return true;

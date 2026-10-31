@@ -6,6 +6,7 @@
 // the unit and the data tables, and never changes either (a bench hero not on the board is read from a unit made on a scratch copy of
 // the battle, `previewUnit`); no DOM, no Pixi, so the tests read it.
 
+import { timerOf } from './sim/carry';
 import { addUnit, atkOf, defenceOf, type Battle, type Boost, type Unit } from './sim/battle';
 import { kitOf, KITS, type Kit, type Passive, type Skill } from './sim/abilities';
 import { heroKitOf, resMax, resOf, ULT_FILL } from './sim/heroKits';
@@ -226,6 +227,13 @@ function heroMoves(b: Battle, u: Unit, auto: boolean): MoveInfo[] {
   return out;
 }
 
+/** SUMMON-TIMERS: how long a summon has left, in the words of its card (it is kept into the next wave while its caller stands). */
+function summonTime(b: Battle, u: Unit): string {
+  const t = timerOf(u, b.t);
+  if (!t || t.shape) return u.expires !== undefined ? ', for a while' : '';
+  return `: ${Math.ceil(t.left / 1000)}s of fighting left, kept into the next wave while its caller stands`;
+}
+
 /** The card for any unit on the board (or a bench hero made with `previewUnit`). */
 export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
   const def = UNITS[u.def];
@@ -239,6 +247,9 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
     const stats = base.stats;
     const max = resMax(hk.pool);
     stats.unshift(['Pool', `${hk.pool === 'mana' ? 'Mana' : 'Stamina'}: ${Math.floor(resOf(u, hk.pool))}/${max} ${poolTag(hk)}`]);
+    // (SUMMON-TIMERS: a shape's time left, which carries into the next wave)
+    const shape = timerOf(u, b.t);
+    if (shape?.shape) stats.push(['Shape', `${Math.ceil(shape.left / 1000)}s of fighting left; kept into the next wave`]);
     return {
       ...base,
       kind: 'hero',
@@ -266,7 +277,7 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
       name: def.name,
       sub: def.role,
       moves: kitMoves(kit),
-      note: caller ? `Called up by ${heroName(caller.def)}${u.expires !== undefined ? ', for a while' : ''}.` : 'Called up by a skill.',
+      note: caller ? `Called up by ${heroName(caller.def)}${summonTime(b, u)}.` : 'Called up by a skill.',
     };
   }
   // (a foe: a boss if it is drawn larger or is one of the bosses, an elite or a herald by its codex entry)

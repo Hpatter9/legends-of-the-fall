@@ -26,6 +26,7 @@ import { monsterKits } from './kits/monsters';
 import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
+import { renewable, timeSummon, TIMER } from './carry';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -801,9 +802,17 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const callTreant = (b: Battle, me: Unit) => callSummon(b, me, 'treant', tal(me, 'extra'));
 /** Beastmaster: wolves (two at a time) come at his call. */
 const callWolves = (b: Battle, me: Unit) => callSummon(b, me, 'wolf', 1 + tal(me, 'extra'));
-/** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already. */
-function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
-  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === kind).length > more) return false;
+/** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already.
+ *  A hero's summon lasts `ms` of fighting time (SUMMON-TIMERS, `carry.ts`: a minute, half that from an ultimate) and carries into the next
+ *  wave; with the summons at their cap, a call renews the one of the caster's nearest its end once it has a quarter of its time left. */
+function callSummon(b: Battle, me: Unit, kind: string, more: number, ms: number = TIMER.beast): boolean {
+  const time = me.side === 'hero' ? durOf(me, ms) : 0;
+  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === kind).length > more) {
+    const old = time ? renewable(b, me, [kind]) : undefined;
+    if (!old) return false;
+    timeSummon(b, old, time);
+    return true;
+  }
   const foes = foesOf(b, me);
   if (!foes.length) return false;
   const near = sorted([...foes]).sort((x, y) => apart(me, x) - apart(me, y))[0];
@@ -821,6 +830,7 @@ function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
   const t = addUnit(b, kind, to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp, grade: me.grade });
   t.owner = me.id;
   t.facing = wayTo(t, near);
+  if (time) timeSummon(b, t, time);
   return true;
 }
 
@@ -1245,7 +1255,9 @@ function demonForm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => apart(me, f) <= 7)) return false;
   if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
   // (its tuned strength lengthens the form and deepens the heal, as the other ultimates' stuns and heals scale: ULT-CHARGE)
-  me.form = { until: b.t + durOf(me, Math.round(FORM_MS * Math.sqrt(castPower()))) };
+  // (a hero's lasts 15s instead, and carries into the next wave: SUMMON-TIMERS, `carry.ts`)
+  const time = durOf(me, Math.round((me.side === 'hero' ? TIMER.demon : FORM_MS) * Math.sqrt(castPower())));
+  me.form = { until: b.t + time, ...(me.side === 'hero' ? { ms: time } : {}) };
   mendUnit(me, me.maxHp * FORM_HEAL * castPower(), out);
   out.push({ kind: 'frenzy', by: me.id, n: 3 });
   return true;
@@ -1355,7 +1367,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Grace', text: 'Allies within 2 tiles heal 1.5% of their health each second', aura: 0.015 },
   },
   druid: {
-    skill: { name: 'Conjure Treant', key: 'Call Treant', text: 'A treant rises beside her and fights for her (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
+    skill: { name: 'Conjure Treant', key: 'Call Treant', text: 'A treant rises beside her and fights for her for 60s of fighting, wave to wave (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
     passive: { name: 'Thorn Skin', text: 'A third of the damage of a melee blow she takes is sent back', thorns: 0.33 },
   },
   barbarian: {
@@ -1405,7 +1417,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
   },
   beastmaster: {
-    skill: { name: 'Summon Beast', key: 'Call of the Wild', text: 'A wolf answers his call and fights for him (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
+    skill: { name: 'Summon Beast', key: 'Call of the Wild', text: 'A wolf answers his call and fights for him for 60s of fighting, wave to wave (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
     passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
   },
   kraken: {
@@ -1455,7 +1467,7 @@ export const KITS: Record<string, Kit> = {
   },
   demonSwordsman: {
     skill: { name: 'Cleave', key: 'Hellblade Sweep', text: 'Cuts every foe within 2 tiles, and he drinks a third of what it deals', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 550, anim: 'attack2', cast: hellbladeSweep },
-    ultimate: { name: 'Demon Form', text: 'For 7s he hits half as hard again, and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
+    ultimate: { name: 'Demon Form', text: 'For 15s he hits half as hard again (it carries into the next wave), and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
     passive: { name: 'Soul Pact', text: 'Heals for 8% of the damage his blows deal, and hits up to 25% harder as his health falls', leech: 0.08, rage: 0.25 },
   },
   tyrant: {

@@ -14,6 +14,7 @@
 
 import { sightClear, standable, tileAt, type At } from './board';
 import { setLook } from './kits/effects';
+import { TIMER } from './carry';
 import { addUnit, atkOf, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import {
   BANNER_MULT,
@@ -251,7 +252,8 @@ function fortify(b: Battle, me: Unit, out: BattleEvent[], o: Fortify): boolean {
 function summon(b: Battle, me: Unit, kind: string, n: number): boolean {
   const total = n + tal(me, 'extra');
   let called = false;
-  for (let i = 0; i < total; i++) called = callSummon(b, me, kind, total - 1) || called;
+  // (each lasts 30s of fighting time and carries into the next wave: SUMMON-TIMERS, `carry.ts`)
+  for (let i = 0; i < total; i++) called = callSummon(b, me, kind, total - 1, TIMER.ultBeast) || called;
   return called;
 }
 
@@ -314,10 +316,13 @@ function fists(b: Battle, me: Unit, out: BattleEvent[], foesN: number, blows: nu
 function fullMoon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = kitOf(me)?.passive.frenzy;
   if (!f || !foesOf(b, me).some((x) => apart(me, x) <= 7)) return false;
-  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + dur(me, 7000) };
+  // (SUMMON-TIMERS: a hero's moon is up 15s of fighting time, where it was 7s, and carries into the next wave)
+  const time = dur(me, me.side === 'hero' ? TIMER.moon : 7000);
+  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + time };
   mendUnit(me, me.maxHp * share(0.25), out);
   // (both his forms at once while the moon is up: the Hunter's speed and bleed, the Brute's hide and splash)
-  (me.kx ??= {}).moon = b.t + dur(me, 7000);
+  (me.kx ??= {}).moon = b.t + time;
+  if (me.side === 'hero') me.kx.moonMs = time;
   setLook(me, 'werewolf_black', out);
   out.push({ kind: 'frenzy', by: me.id, n: me.frenzy.n });
   return true;
@@ -588,9 +593,9 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     mercenary: ult('Killing Spree', 'Slips beside the three hardest-hitting foes in turn and cuts each hard', 600, 'attack2', (b, me, out) => blinks(b, me, out, 3, 2.1, strongest), 'Contract Killer'),
     ninjaMonk: ult('Hundred-Hand Strike', 'Five blows on each of the three nearest foes, each stunned for 1.2s; the last blow throws each 2 tiles', 700, 'attack2', (b, me, out) => fists(b, me, out, 3, 5, 0.65, 1200, true), 'Hundred Fists'),
     barbarian: ult('Berserker Leap', 'He leaps up to 4 tiles onto the thickest crowd: the 3x3 round him is struck and shoved a tile out; he drinks a third of what it deals and runs fast for 5s', 700, 'attack2', (b, me, out) => berserkerLeap(b, me, out, 3.0, dur(me, 5000), (n) => mendUnit(me, n, out)), 'Bloodlust'),
-    werewolf: ult('Full Moon', 'His frenzy fills to the brim and he is both his forms at once for 7s, and a quarter of his health comes back', 700, 'attack2', fullMoon),
+    werewolf: ult('Full Moon', 'His frenzy fills to the brim and he is both his forms at once for 15s (it carries into the next wave), and a quarter of his health comes back', 700, 'attack2', fullMoon),
     lancer: ult('Cavalry Charge', 'He rides up to 7 tiles in a line through every foe on it, each struck and thrown a tile aside, and the riders near him gallop faster for 4s', 700, 'attack2', cavalry, 'Charge of the Knights'),
-    reaper: ult('Harvest of Souls', 'The scythe\'s sweep drags every foe within 5 tiles a tile towards him, then cuts them all; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 5s', 800, 'attack2', (b, me, out) => {
+    reaper: ult('Harvest of Souls', 'The scythe\'s sweep drags every foe within 5 tiles a tile towards him, then cuts them all; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 12s', 800, 'attack2', (b, me, out) => {
       // (RPG-SPELLS batch 5: the sweep drags them in first)
       if (!foesOf(b, me).some((f) => apart(me, f) <= reachOf(me, 5))) return false;
       reaperDrag(b, me, reachOf(me, 5), out);
@@ -656,8 +661,8 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       bless(b, me, out, { haste: 6000, hot: { amount: 1.0, ms: 6000 }, charge: 30, song: 6000 });
       return true;
     }),
-    beastmaster: ult('Conjure Animals', 'Four wolves answer his call at once', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4), 'Hunt of the Pack'),
-    druid: ult('Wall of Thorns', 'A hedge of thorns rises across the foes\' way for 8s, two treants rise at her side, and every ally is healed', 900, 'attack2', (b, me, out) => {
+    beastmaster: ult('Conjure Animals', 'Four wolves answer his call at once, for 30s of fighting, wave to wave', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4), 'Hunt of the Pack'),
+    druid: ult('Wall of Thorns', 'A hedge of thorns rises across the foes\' way for 8s, two treants rise at her side for 30s, and every ally is healed', 900, 'attack2', (b, me, out) => {
       if (!summon(b, me, 'treant', 2)) return false;
       bless(b, me, out, { heal: 4 });
       const line = chokeLine(b, me, THORN_WALL);
@@ -674,7 +679,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     ...form,
     name: 'Metamorphosis',
     key: 'Demon Form',
-    text: 'Chains of hellfire drag the three nearest foes within 4 tiles to him; for 7s he hits half as hard again, and a fifth of his health comes back',
+    text: 'Chains of hellfire drag the three nearest foes within 4 tiles to him; for 15s (it carries into the next wave) he hits half as hard again, and a fifth of his health comes back',
     cast: (b, me, out) => {
       hellChains(b, me, out);
       return form.cast(b, me, out);

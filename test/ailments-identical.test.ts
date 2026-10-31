@@ -16,6 +16,9 @@
 // casters the owner approved reworking (the Wall of Fire, Eldritch Blast, Call Lightning, the Circle of Death...). Only those moved.)
 // (RPG-SPELLS batch 7, docs/notes/spells-b7.md, re-recorded field1, field30, bosses, armyFoes, spells, lands and army: each has one of the
 // monster heroes the owner approved reworking (Mass Polymorph, Swoop, Gust of Wind, Pounce, Contagion, Tidal Wave...). Only those moved.)
+// (SUMMON-TIMERS, the owner's ask for summons and shapeshifts on a timer, docs/notes/summon-timers.md, re-recorded field30, bosses, armyFoes and
+// spells: each has the Druid, Beastmaster, Reaper, Samurai Commander, Werewolf, Kitsune or Demon Swordsman at level 10 or more, whose wraith,
+// standard and shapes now last longer. Only those moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';
