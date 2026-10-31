@@ -114,7 +114,8 @@ export const ARMIES: readonly Army[] = [
     area: 'graveyard',
     lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
-    start: 1.48, // (was 1.52: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 1.7, // (SPELLS-RETUNE: 1.48 measured by a bot that never cast the king's spells; raised so a level-1 party whose Auto casts them still cannot grind through it, `docs/notes/spells-retune.md`; was 1.52 until WORLD-ROAD retuned it on the army road)
+    xpStart: 1.48,
     tierStart: 0.7,
     growth: 0.05,
     tierGrowth: 0.17,
@@ -176,7 +177,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
-    tierLift: [1, 1.6, 2.34, 0.83, 0.98], // (ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 1.86, 2.34, 0.83, 0.98], // (SPELLS-RETUNE: Hard 1.6 to 1.86, so it stays over the tougher Normal, `docs/notes/spells-retune.md`; ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 1700, atk: 46 },
     last: { hp: 2420, atk: 61 },
     pay: 2.21,

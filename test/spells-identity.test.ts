@@ -36,9 +36,14 @@ import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
 import { armyById } from '../src/sim/armies';
+import { CAL_SCALE } from '../src/sim/calamity';
 
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
+// scenario keeps its hash)
+// (SPELLS-RETUNE, the owner's call to tune the game for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, re-recorded
+// `daily` and `stand` alone: the daily's foes start stronger (`DAILY_START` 0.565 to 0.76) and the Last Stand's waves are eased less (`HALL_EASE`
+// 0.88 to 1.2). The armies' and the Calamity's raised strengths are put back for this proof, and its greedy players cast no spells; every other
 // scenario keeps its hash)
 // (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks, and the heroes'
 // stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
@@ -46,16 +51,19 @@ import { armyById } from '../src/sim/armies';
 // the dodge changes nothing where no boss has marked the ground. Only bosses, armyFoes, army, daily and stand move.)
 // (SPELLS-RETUNE, the owner's call to tune the armies for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, raised the
 // armies' Normal `start`. The `army` scenario plays the Undead Legion, the Infernal Host, the Golem Forge and the Yokai Night Parade on Normal:
-// their recorded strengths are put back for this proof, as the ailments' proof does, so no fixture moved. The greedy players cast no spells in
+// their recorded strengths are put back for this proof, as the ailments' proof does, and the Calamity's `CAL_SCALE.start` (0.435) with them. The greedy players cast no spells in
 // either proof, `identityHashes`.)
-const RECORDED_START: Record<string, number> = { infernal: 12.5, yokai: 14.2, golems: 14.6 };
+const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
+  const calStart = CAL_SCALE.start;
   for (const [id, v] of Object.entries(RECORDED_START)) (armyById(id) as unknown as { start: number }).start = v;
+  CAL_SCALE.start = 0.435;
   try {
     return fn();
   } finally {
     for (const [id, v] of Object.entries(was)) (armyById(id) as unknown as { start: number }).start = v;
+    CAL_SCALE.start = calStart;
   }
 }
 
