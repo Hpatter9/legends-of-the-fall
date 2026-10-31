@@ -11,6 +11,7 @@
     "dev": "node build.mjs --serve",
     "balance": "node tools/balance.mjs",
     "stand-balance": "node tools/stand-balance.mjs",
+    "relic-balance": "node tools/relics/run.mjs",
     "gear-balance": "node tools/gear-balance.mjs",
     "talent-balance": "node tools/talent-balance.mjs",
     "unlock-pace": "node tools/unlockPace.mjs",
