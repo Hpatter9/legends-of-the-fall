@@ -60,8 +60,9 @@ export const WAVE_GROWTH = 0.4;
 export const WAVE_KNEE = 10;
 export const WAVE_GROWTH_LATE = 0.26;
 /** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace
- *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: now 0.88, with a steeper late and deep climb). */
-export const HALL_EASE = 0.88;
+ *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: 0.88, with a steeper late and deep climb; SPELLS-RETUNE 1.2, so a
+ *  stand whose Auto casts the king's spells holds the waves it did for a bot that never cast, `docs/notes/spells-retune.md`). */
+export const HALL_EASE = 1.2;
 /** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100;
  *  STAND-004 moved it from wave 22 at 0.6 to wave 18 at 0.35, and the late climb from 0.1 to 0.14, for the heroes who go to help; ULT-CHARGE, for the
  *  ultimates that now come round about once a wave, the late climb to 0.2 and the deep one to 0.29, so the climb past wave 18 is as steep as it was;

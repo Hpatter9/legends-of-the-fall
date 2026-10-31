@@ -4,13 +4,13 @@
 // docs/samples/sanctum-<tag>-<state>[-360|-412].png.
 import { createRequire } from 'node:module';
 import { serve } from '../battle-ui/lib.mjs';
-const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
+const { chromium } = createRequire(import.meta.url)('playwright');
 
 const port = Number(process.argv[2] ?? 9080);
 const tag = process.argv[3] ?? 'after';
 const only = process.argv[4];
 const server = serve('out/web', port);
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const HEROES = ['peasant', 'kunoichi', 'wizard'];
 const SIZES = only ? [only.split('x').map(Number)] : [[393, 852], [360, 780], [412, 915]];
 const errors = [];

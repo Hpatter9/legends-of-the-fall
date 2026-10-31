@@ -13,7 +13,7 @@ The stars counted are every star won over every army and tier (`totalStars` in `
 
 - Rules: `src/sim/modeUnlock.ts` (`MODE_NEED`, `modeOpen`) and `ARMY_NEED` / `armyUnlocked` in `armies.ts`.
 - Army curve: today's pace on Normal is a clear star plus about one more per army, so two stars an army never holds that player back. The harder tiers' stars count as well.
-- Clearing an army no longer opens the next by itself; its stars do. The banner "A new army marches" still rises when the clearing run's stars open one (`main.ts` compares the open armies before and after the run's stars settle).
+- Clearing an army no longer opens the next by itself; its stars do. The next army's end card ("Unlocked", `docs/notes/unlock-once.md`; once the banner "A new army marches") rises when the clearing run's stars open one (`main.ts` compares the open armies before and after the run's stars settle).
 - Old saves: `Meta.opened` is read once from what the save had (`grandfather`): each army whose predecessor was cleared, the castle if any building or the chapel was begun, the tower if it was climbed (or a best stage of 10), the Calamity if it was tried. These stay open whatever the stars.
 - Camp: the Tower and Calamity plates read "Opens at N stars" (the full label adds "x/N stars"); the Tower keeps its chained picture, the Calamity portal goes grey and still. The Castle tab shows a shut page with the same words and progress; the Achievements and Codex chips stay.
 - Locked army cards read "Opens at N stars" with "x/N stars".

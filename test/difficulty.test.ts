@@ -1,6 +1,9 @@
 // The difficulty curve (`docs/notes/difficulty.md`): which hero level each army tier is for, pinned loosely (a tier is hard at the level it opens
 // for and a first-try clear only well above it), the escorts and boss form a high tier brings, and the foes of the spire and the Calamity answering
 // the castle. The tries are measured with the greedy player of `tools/autoplay.ts`, as `npm run balance -- --deep` does.
+// (SPELLS-RETUNE, an owner-approved change of requirement, docs/notes/spells-retune.md: the greedy player of `tools/autoplay.ts` now casts the
+// king's spells as the page's Auto does, `botSpells`, and the armies, the daily, the Last Stand and the Calamity were retuned so the bars below
+// hold for that player; no bar was moved.)
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

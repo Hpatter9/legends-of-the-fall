@@ -90,6 +90,8 @@ points** too.
   "A choice: pick the talents yourself", and a **Spend** button (a tap on the picture too) that closes the list and opens the hero's sheet on
   the Progression tab with the talent tree already open (`drawTalents(..., open)` in `src/talentView.ts`). The header counts "1 ready · 1
   with talents". **Upgrade all** does not spend talents (they are choices); a test checks it leaves them alone.
+  (TALENT-AUTO since: "Auto all talents" below it spends them after its own confirm, and the tree has an Auto button;
+  [talent-auto.md](talent-auto.md).)
 
 ## Files
 

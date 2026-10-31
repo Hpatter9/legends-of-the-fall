@@ -1,5 +1,4 @@
-// The Armies screen (opened by the Battle tab's big button) and the "A new army marches" moment. The screen is a swipeable
-// carousel, one army a card, each card filling the page between the top bar and the tab bar: a cinematic scene of the army
+// The Armies screen (opened by the Battle tab's big button). The screen is a swipeable carousel, one army a card, each card filling the page between the top bar and the tab bar: a cinematic scene of the army
 // (its land's backdrop, its troops in ranks and its boss large at the back, with a lighting mood and a slow parallax),
 // and below it the army's 11-star track with its chests, the difficulty picks, the conditions, the rewards and the Fight!
 // button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
@@ -15,7 +14,7 @@ import { ARMY_STARS, MILESTONES, TIERS, tierRange } from './sim/tiers';
 import { UNITS } from './sim/units';
 import type { Meta } from './sim/meta';
 import { backdropFiles } from './render/backdrop';
-import { figureOf, portrait, sprite } from './render/sheets';
+import { figureOf, sprite } from './render/sheets';
 import { AREA_NAMES, ICONS, icon } from './menuArt';
 import { CHEST_NAME, chestPicture } from './chestStash';
 
@@ -483,25 +482,4 @@ export function drawRunStars(root: HTMLElement, res: StarResult | null, tierName
   });
   if (res.firstClear) root.append(el('div', 'armyChestNote', `First ${tierName} clear! A ${CHEST_NAME[chestKind(res.firstClear)].toLowerCase()} was added to your stash on the Battle tab!`));
   for (const at of res.chests) root.append(el('div', 'armyChestNote', `A ${CHEST_NAME[chestKind(at)].toLowerCase()} was added to your stash on the Battle tab!`));
-}
-
-/** The unlock moment after an army's last boss falls: its next army's banner rises over the board. `then` runs when it is dismissed. */
-export function showUnlock(next: Army, beaten: Army, then: () => void): void {
-  const boss = UNITS[bossOf(next)];
-  const root = el('div', 'unlock');
-  root.setAttribute('role', 'dialog');
-  const down = el('div', 'unlockDown', `${UNITS[bossOf(beaten)].name} has fallen`);
-  const rib = el('div', 'unlockRib');
-  rib.append(el('b', '', 'A new army marches'));
-  const face = portrait(boss.sheet, 144);
-  face.className = 'unlockFace';
-  const name = el('div', 'unlockName', next.name);
-  const line = el('div', 'unlockLine', `${next.blurb} Led by the ${boss.name}.`);
-  const go = el('button', 'primary', 'To the armies');
-  go.addEventListener('click', () => {
-    root.remove();
-    then();
-  });
-  root.append(down, rib, face, name, line, go);
-  document.body.append(root);
 }

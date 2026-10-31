@@ -26,7 +26,7 @@ import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
 import { TIERS } from '../../src/sim/tiers';
-import { savedAt } from '../autoplay';
+import { maybeSpells, savedAt } from '../autoplay';
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 const SAVES = Number(process.env.SAVES ?? 12);
@@ -97,6 +97,7 @@ function attempt(meta: Meta, id: string, seed: number, castle: Castle, tier: num
     const b = startStage(run);
     autoDeploy(b, run, meta, bf);
     fight(b);
+    maybeSpells(b, meta, castle);
     playOut(b);
     const ok = b.phase === 'won';
     if (!ok && HEARTS && canRetry(run)) {
