@@ -1,34 +1,32 @@
-/* BOSS-BIG (docs/notes/boss-big-attacks.md, `bossMoment.ts`): a boss's signature attack's cut-in. A red and black band slashing in the
-   other way from a hero's ultimate (`.umBand`), the boss's figure on its right facing in, the attack's name stamped in on its left. Its
-   lines move their position only (no loop changes brightness); reduced motion fades it in and out, held still. */
+/* BOSS-BIG (docs/notes/boss-big-attacks.md, `bossMoment.ts`): a boss's signature attack's cut-in. A slim red and black band slashing in
+   near the top of the board, the other way from a hero's ultimate (`.umBand`), the boss's head and shoulders on its right facing in, the
+   attack's name stamped in on its left. It never stops the fight and takes no taps. Its lines move their position only (no loop changes
+   brightness); reduced motion fades it in and out, held still. */
 .bmLayer { position: fixed; inset: 0; z-index: 26; pointer-events: none; overflow: hidden; }
 .bmLayer[hidden] { display: none; }
-.bmLayer.live { pointer-events: auto; cursor: pointer; }
-.bmCut { position: absolute; left: 0; right: 0; top: 30%; height: 180px; pointer-events: none; }
-.bmCut.short { top: 34%; transform: scale(0.86); transform-origin: 50% 50%; }
-.bmBand { position: absolute; left: -12%; width: 124%; top: 0; height: 160px; overflow: hidden; transform: rotate(8deg);
+.bmCut { position: absolute; left: 0; right: 0; top: 19%; height: 84px; pointer-events: none; }
+.bmBand { position: absolute; left: -12%; width: 124%; top: 0; height: 72px; overflow: hidden; transform: rotate(5deg);
   background: linear-gradient(90deg, rgb(8 2 2 / 0.95), color-mix(in srgb, var(--el) 22%, #3a0505) 42%, #5a0808 58%, rgb(8 2 2 / 0.94));
   border-top: 3px solid #ff3a22; border-bottom: 3px solid #1a0000;
-  box-shadow: 0 0 26px rgb(255 30 10 / 0.55), inset 0 0 40px rgb(0 0 0 / 0.6);
+  box-shadow: 0 0 18px rgb(255 30 10 / 0.5), inset 0 0 24px rgb(0 0 0 / 0.6);
   animation: bmIn 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both, bmSlide var(--open, 1000ms) cubic-bezier(0.15, 0.7, 0.35, 1) both; }
 .bmCut.rage .bmBand { background: linear-gradient(90deg, rgb(8 0 0 / 0.96), #6a0606 40%, color-mix(in srgb, var(--el) 30%, #8a0a0a) 60%, rgb(8 0 0 / 0.95)); }
 /* (dark claw streaks rushing left through the band) */
 .bmLines { position: absolute; inset: -10px 0; pointer-events: none; opacity: 0.7; mix-blend-mode: screen;
   background:
-    repeating-linear-gradient(90deg, transparent 0 60px, rgb(255 90 60 / 0.8) 60px 150px, transparent 150px 220px, rgb(255 200 160 / 0.6) 220px 260px, transparent 260px 320px) 0 22px / 320px 2px repeat-x,
-    repeating-linear-gradient(90deg, transparent 0 110px, rgb(255 60 40 / 0.7) 110px 250px, transparent 250px 300px) 0 58px / 300px 3px repeat-x,
-    repeating-linear-gradient(90deg, transparent 0 40px, rgb(255 120 80 / 0.6) 40px 120px, transparent 120px 170px) 0 96px / 170px 4px repeat-x,
-    repeating-linear-gradient(90deg, transparent 0 80px, rgb(255 70 50 / 0.7) 80px 200px, transparent 200px 280px) 0 128px / 280px 2px repeat-x;
+    repeating-linear-gradient(90deg, transparent 0 60px, rgb(255 90 60 / 0.8) 60px 150px, transparent 150px 220px, rgb(255 200 160 / 0.6) 220px 260px, transparent 260px 320px) 0 20px / 320px 2px repeat-x,
+    repeating-linear-gradient(90deg, transparent 0 110px, rgb(255 60 40 / 0.7) 110px 250px, transparent 250px 300px) 0 44px / 300px 2px repeat-x,
+    repeating-linear-gradient(90deg, transparent 0 40px, rgb(255 120 80 / 0.6) 40px 120px, transparent 120px 170px) 0 66px / 170px 3px repeat-x;
   animation: bmLines 0.5s linear infinite; }
-.bmArt { position: absolute; right: 13%; bottom: -6px; max-height: 196px; image-rendering: pixelated; transform: rotate(-8deg);
+.bmArt { position: absolute; right: 12%; top: 2px; max-height: 120px; image-rendering: pixelated; transform: rotate(-5deg);
   filter: drop-shadow(0 0 10px rgb(255 40 20 / 0.8)) drop-shadow(0 4px 0 #000);
   animation: bmArt var(--open, 1000ms) cubic-bezier(0.2, 0.6, 0.4, 1) both; }
-.bmWords { position: absolute; left: 13%; top: 50%; max-width: 50%; transform: translateY(-50%) rotate(-8deg); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; }
-.bmWords small { font: 400 14px/14px var(--body); color: #ffc8b8; text-shadow: var(--outline); letter-spacing: 1px; animation: bmWho 0.36s ease-out 0.1s both; }
+.bmWords { position: absolute; left: 13%; top: 50%; max-width: 50%; transform: translateY(-50%) rotate(-5deg); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; }
+.bmWords small { font: 400 12px/12px var(--body); color: #ffc8b8; text-shadow: var(--outline); letter-spacing: 1px; animation: bmWho 0.36s ease-out 0.1s both; }
 .bmCut.rage .bmWords small { color: #ff7a5a; }
-.bmWords b { font: 400 clamp(24px, 7.6vw, 34px)/1.05 var(--display, var(--body)); color: #fff0e0; letter-spacing: 1px;
+.bmWords b { font: 400 clamp(19px, 5.6vw, 25px)/1.05 var(--display, var(--body)); color: #fff0e0; letter-spacing: 1px;
   text-shadow: 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000, 0 0 16px #ff2a10, 0 0 6px var(--el); animation: bmName 0.5s cubic-bezier(0.2, 0.9, 0.35, 1) 0.14s both; }
-.bmEdges { position: absolute; left: -12%; width: 124%; top: 0; height: 160px; transform: rotate(8deg); pointer-events: none;
+.bmEdges { position: absolute; left: -12%; width: 124%; top: 0; height: 72px; transform: rotate(5deg); pointer-events: none;
   animation: bmIn 0.26s cubic-bezier(0.2, 0.9, 0.3, 1) both, bmSlide var(--open, 1000ms) cubic-bezier(0.15, 0.7, 0.35, 1) both; }
 .bmEdges::before, .bmEdges::after { content: ''; position: absolute; left: 0; right: 0; height: 4px;
   background: repeating-linear-gradient(90deg, transparent 0 30px, #ff5a3a 30px 140px, #ffd0b0 140px 180px, transparent 180px 260px) 0 0 / 260px 100% repeat-x;
@@ -37,9 +35,9 @@
 .bmEdges::after { bottom: -3px; }
 .bmCut.out .bmBand, .bmCut.out .bmEdges { animation: bmOut 0.22s ease-in both; }
 @keyframes bmIn { 0% { clip-path: inset(0 0 0 100%); } 100% { clip-path: inset(0 0 0 0); } }
-@keyframes bmSlide { 0% { transform: rotate(8deg) translateX(-70px); } 100% { transform: rotate(8deg) translateX(24px); } }
-@keyframes bmOut { 0% { clip-path: inset(0 0 0 0); transform: rotate(8deg) translateX(24px); } 100% { clip-path: inset(0 100% 0 0); transform: rotate(8deg) translateX(-40px); } }
-@keyframes bmArt { 0% { transform: rotate(-8deg) translateX(60px) scale(1.06); } 100% { transform: rotate(-8deg) translateX(-30px) scale(1); } }
+@keyframes bmSlide { 0% { transform: rotate(5deg) translateX(-60px); } 100% { transform: rotate(5deg) translateX(20px); } }
+@keyframes bmOut { 0% { clip-path: inset(0 0 0 0); transform: rotate(5deg) translateX(20px); } 100% { clip-path: inset(0 100% 0 0); transform: rotate(5deg) translateX(-40px); } }
+@keyframes bmArt { 0% { transform: rotate(-5deg) translateX(50px) scale(1.06); } 100% { transform: rotate(-5deg) translateX(-24px) scale(1); } }
 @keyframes bmWho { 0% { opacity: 0; transform: translateX(-30px); } 100% { opacity: 1; transform: translateX(0); } }
 @keyframes bmName { 0% { opacity: 0; transform: scale(2.2); } 40% { opacity: 1; transform: scale(0.92); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes bmLines { 0% { background-position-x: 0; } 100% { background-position-x: -320px; } }

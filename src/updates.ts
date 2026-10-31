@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.276.0',
+    date: '2026-10-31',
+    title: 'Map, walk and Paladin fixes',
+    notes: ['The Calamity map no longer stays over a new fight. Heroes all walk briskly to the next section, uphill too. The Paladin\'s sprite now matches his awakened form.'],
+  },
+  {
+    version: '0.275.0',
+    date: '2026-10-31',
+    title: 'Upgrades at a glance',
+    notes: ['Tavern heroes ready to rank up or awaken show a gold arrow. A new Upgrades list upgrades each in one tap, or all at once; the hero sheet hops to the next.'],
+  },
+  {
+    version: '0.274.0',
+    date: '2026-10-31',
+    title: 'Boss attacks without the pause',
+    notes: ['A boss\'s big attack now shows a slim banner over the running fight instead of stopping it.'],
+  },
+  {
+    version: '0.273.0',
+    date: '2026-10-31',
+    title: 'Story scenes, filmed',
+    notes: ['Every story scene is now cut like a film: wide shots, close-ups on whoever speaks, bosses seen from below, camera moves and spoken-feeling lines.', 'New army intros and boss entrances, and each Last Stand room opens with its own short film.'],
+  },
+  {
     version: '0.272.0',
     date: '2026-10-31',
     title: 'The War Horn and the Eidolons',
