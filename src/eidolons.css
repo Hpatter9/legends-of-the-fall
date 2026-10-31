@@ -93,6 +93,8 @@
 .ecLayer[data-stage='horn'] .ecDim { opacity: var(--dim); }
 .ecLayer[data-stage='pass'] .ecDim { opacity: calc(var(--dim) * 0.55); transition-duration: 0.5s; }
 .ecLayer:is([data-stage='sprite'], [data-stage='build']) .ecDim { opacity: calc(var(--dim) * 0.6); }
+/* EIDOLON-FX: the anticipation: the field darkens round the charge as the blow gathers */
+.ecLayer[data-stage='build'] .ecDim { opacity: calc(var(--dim) * 0.82); transition-duration: 0.45s; }
 .ecLayer[data-stage='strike'] .ecDim { opacity: calc(var(--dim) * 0.3); transition-duration: 0.25s; }
 .ecLayer:is([data-stage='after'], [data-stage='resume'], [data-stage='out']) .ecDim { opacity: 0; transition-duration: 0.9s; }
 .ecWash { inset: 0; background: radial-gradient(ellipse at 50% 35%, var(--wash), transparent 75%); mix-blend-mode: screen; opacity: 0; transition: opacity 0.6s ease; }
@@ -220,6 +222,55 @@
 .ecSkip { right: 12px; top: calc(9vh + 8px); font: 600 12px var(--body); color: #f3e7c9cc; opacity: 0; transition: opacity 0.4s ease 0.6s; }
 .ecLayer[data-stage='pass'] .ecSkip { opacity: 1; }
 
+/* EIDOLON-FX (docs/notes/eidolon-fx.md, `eidolonFx.ts`): the strike, layered from the painted strips (`src/art/eidolons/fx/`): a strip's
+   frames are stepped along its row (its animation set inline: its frame count, length and delay), then it fades. The charge, the bloom
+   and the blow's white flash are one-shots; the aftermath's loops only step their frames (nothing loops a brightness). */
+/* (a strip inside a mover (a drift, a debris chip, a lingering patch, a run's head) is placed by its own box, so it needs one) */
+.ecLayer :is(.ecSp, .ecFx) { position: absolute; display: block; }
+.ecFx { translate: -50% -50%; background-repeat: no-repeat; background-position: 0 0; will-change: background-position; }
+.ecFx.foot { translate: -50% -100%; }
+.ecRingFx { translate: -50% var(--ry, -28%); image-rendering: pixelated; mix-blend-mode: screen; }
+.ecBurst, .ecExtra, .ecShaft, .ecBloom { mix-blend-mode: screen; }
+.ecPillar { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--glow) 70%, transparent)); }
+.el-dark .ecPillar { filter: drop-shadow(0 0 8px rgb(150 70 255 / 0.8)); }
+@keyframes ecFxPlay { from { background-position-x: 0%; } to { background-position-x: 100%; } }
+@keyframes ecFxEnd { to { opacity: 0; } }
+/* the charge: the element's ring closing on the foes' middle, brightening, through the build-up */
+.ecCharge { width: 88vw; height: 34vw; translate: -50% -50%; border-radius: 50%; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(closest-side, transparent 58%, color-mix(in srgb, var(--glow) 80%, transparent) 72%, #fff 78%, color-mix(in srgb, var(--glow) 60%, transparent) 84%, transparent);
+  animation: ecCharge var(--ms, 450ms) cubic-bezier(.55,0,.9,.5) forwards; }
+@keyframes ecCharge { from { opacity: 0; scale: 1.5; } 25% { opacity: 0.7; } 92% { opacity: 1; scale: 0.22; } to { opacity: 0; scale: 0.12; } }
+/* the bloom: the element's light swelling off the blow over the whole foes' half */
+.ecBloom { width: 150vw; height: 90vw; translate: -50% -50%; border-radius: 50%; opacity: 0;
+  background: radial-gradient(closest-side, #fff 0%, var(--bloom, var(--glow)) 22%, color-mix(in srgb, var(--bloom, var(--glow)) 40%, transparent) 55%, transparent);
+  animation: ecBloom 900ms ease-out -40ms forwards; }
+@keyframes ecBloom { from { opacity: var(--bloomA, 0.85); scale: 0.35; } 30% { opacity: calc(var(--bloomA, 0.85) * 0.75); scale: 0.9; } to { opacity: 0; scale: 1.15; } }
+/* (the light and the bolt are white at heart already: their bloom and flash are lighter, so the foes stay seen through the blow) */
+.ecLayer:is(.el-light, .el-lightning) { --bloomA: 0.5; --flashA: 0.6; }
+/* a shaft out of the sky onto a foe (Aurelan's light, Voltara's bolt): it slams down and thins away */
+.ecShaft { width: 40px; translate: -50% -100%; transform-origin: 50% 100%; opacity: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--glow) 80%, transparent) 28%, #fff 46%, #fff 54%, color-mix(in srgb, var(--glow) 80%, transparent) 72%, transparent);
+  animation: ecShaft 520ms ease-out both; }
+.ecShaft.bolt { width: 18px; animation-duration: 300ms; }
+@keyframes ecShaft { from { opacity: 1; scale: 0.3 0.2; } 12% { opacity: 1; scale: 1.5 1; } 45% { opacity: 0.9; scale: 0.8 1; } to { opacity: 0; scale: 0.1 1; } }
+/* debris flung out of a blow, arcing up and falling */
+.ecChip { width: 0; height: 0; opacity: 0; animation: ecChip 760ms cubic-bezier(.2,.7,.5,1) both; }
+.ecChip .ecSp { scale: var(--sc, 1.4); }
+/* (Vaelkhar's embers burn violet) */
+.el-dark .ecChip { filter: hue-rotate(235deg) saturate(1.4); }
+@keyframes ecChip { from { opacity: 1; translate: 0 0; } 45% { opacity: 1; translate: calc(var(--dx) * 0.6) var(--up); } to { opacity: 0; translate: var(--dx) var(--dn); } }
+/* what lingers on their ground: fades in with the aftermath, holds, and goes as the fight runs again */
+.ecLinger { width: 0; height: 0; opacity: 0; animation: ecLinger 2400ms ease-out both; }
+@keyframes ecLinger { from { opacity: 0; } 12% { opacity: 0.95; } 60% { opacity: 0.85; } to { opacity: 0; } }
+/* the blow's flash: hard and white, then gone (the aftershocks' stay soft) */
+.ecLayer:is([data-stage='strike'], [data-stage='after']) .ecFlash.big { background: radial-gradient(ellipse at 50% 38%, #fff, #fff 35%, color-mix(in srgb, var(--glow) 70%, #fff) 60%, var(--glow)); animation: ecFlashBig 0.5s ease-out both; }
+@keyframes ecFlashBig { from { opacity: var(--flashA, 0.8); } 35% { opacity: 0.35; } to { opacity: 0; } }
+/* the shake as the freeze lets go (the board's own picture is shaken by the fight's camera, this layer with it) */
+.ecBoard.shake { animation: ecShake 520ms linear; }
+@keyframes ecShake {
+  0% { translate: 0 0; } 8% { translate: -11px 7px; } 16% { translate: 10px -8px; } 26% { translate: -8px -5px; } 36% { translate: 7px 6px; }
+  48% { translate: -5px 3px; } 60% { translate: 4px -3px; } 74% { translate: -2px 2px; } 88% { translate: 1px -1px; } 100% { translate: 0 0; } }
+
 /* the hit-stop: the cinematic's own motion holds still */
 .ecLayer.stop *, .ecLayer.stop { animation-play-state: paused !important; }
 /* reduced motion: the calm version. The figure fades in where it would cross mid-screen and fades out, held still; the trail is laid
@@ -238,3 +289,11 @@
 .ecLayer.still .ecFig { transition: opacity 0.35s ease; }
 .ecLayer.still:is([data-stage='strike']) .ecFlash { animation: none; opacity: 0.25; transition: opacity 0.4s ease; }
 .ecLayer.still .ecSp { animation: none !important; }
+/* EIDOLON-FX, reduced motion: each strip holds its brightest frame and fades in and out; no charge closing, no debris, no shafts slamming */
+.ecLayer.still .ecFx { animation: ecFxStill var(--life, 900ms) ease-out var(--delay, 0ms) both !important; background-position-x: var(--hold); }
+.ecLayer.still .ecLinger .ecFx { animation: none !important; }
+.ecLayer.still :is(.ecChip, .ecShaft) { display: none; }
+.ecLayer.still .ecCharge { animation: ecFxStill var(--ms, 450ms) ease-out both; scale: 0.5; }
+.ecLayer.still .ecBloom { animation: ecFxStill 900ms ease-out both; scale: 0.9; }
+.ecLayer.still .ecFlash.big { animation: none; opacity: 0.25; }
+@keyframes ecFxStill { from { opacity: 0; } 20% { opacity: 0.9; } 70% { opacity: 0.8; } to { opacity: 0; } }

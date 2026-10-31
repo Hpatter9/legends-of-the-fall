@@ -49,6 +49,7 @@ import earthBurst from './art/fx/magic/earth_burst.png';
 import dustWhite from './art/fx/vfx/dust_white.png';
 import smokeDark from './art/fx/vfx/smoke_dark.png';
 import darkCircle from './art/fx/magic/dark_circle.png';
+import { extraSpots, fxBudget, FX_CELL, PILLAR_STAGGER, RING, STRIKE_FX, type FxStrip, type StrikeLook } from './eidolonFx';
 import type { Fx } from './render/fx';
 import { play, duck } from './render/sound';
 import { settings } from './settings';
@@ -104,8 +105,34 @@ const strip = (kind: Sprite, cls: string, x: number, y: number, o: { scale?: num
   return d;
 };
 
+/** EIDOLON-FX: an effect strip of the strike (`eidolonFx.ts`), loaded by URL (the service worker keeps them), at a point (client px): it
+ *  plays its frames once (or on, `loop`) after `delay` ms, so a whole strike is laid out at the blow and rolls on by itself, frozen with
+ *  the rest in the hit-stop. A negative delay starts it part-way, so the frozen frame is already the bright one. */
+const FX_URL = (sheet: string) => (sheet === RING.sheet ? `eidolons/fx/${sheet}.png` : `eidolons/fx/${sheet}.webp`);
+function fxEl(st: FxStrip, x: number, y: number, o: { delay?: number; mul?: number; cls?: string; filter?: string } = {}): HTMLElement {
+  const d = el('i', `ecFx${st.foot ? ' foot' : ''}${o.cls ? ` ${o.cls}` : ''}`);
+  const size = Math.round(FX_CELL * st.scale * (o.mul ?? 1));
+  d.style.width = d.style.height = `${size}px`;
+  d.style.left = `${Math.round(x)}px`;
+  d.style.top = `${Math.round(y)}px`;
+  d.style.backgroundImage = `url(${FX_URL(st.sheet)})`;
+  d.style.backgroundSize = `${st.n * 100}% 100%`;
+  d.style.setProperty('--hold', `${st.n > 1 ? (st.hold / (st.n - 1)) * 100 : 0}%`);
+  if (o.filter) d.style.filter = o.filter;
+  const delay = Math.round(o.delay ?? 0);
+  d.style.setProperty('--life', `${st.ms + 300}ms`);
+  d.style.setProperty('--delay', `${Math.max(0, delay)}ms`);
+  d.style.animation = st.loop
+    ? `ecFxPlay ${st.ms}ms steps(${st.n}, jump-none) ${delay}ms infinite`
+    : `ecFxPlay ${st.ms}ms steps(${st.n}, jump-none) ${delay}ms both, ecFxEnd 240ms ease-in ${delay + st.ms - 120}ms forwards`;
+  return d;
+}
+
 /** The sprite Eidolons' sheets (the owner's addition: `eidolonPass.ts` `SPRITES`). */
 const MON_SHEETS: Readonly<Record<EidolonSprite['sheet'], string>> = { askel: askelSprite, golem_stone: golemStoneSheet, nivra: nivraSprite, aurelan: aurelanSprite, vaelkhar: vaelkharSprite };
+
+/** The full call's strike to aftermath (ms): the aftershocks' delays in `eidolonFx.ts` are set to it, and the short call's are scaled. */
+const STRIKE_FX_SPAN = 730;
 
 const reducedNow = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -491,6 +518,15 @@ export class EidolonCall {
     return p ?? { x: innerWidth / 2, y: innerHeight * 0.42 };
   }
 
+  /** The foes' middle on the page (client px): where the strike's great burst lands. */
+  private foeMid(ids?: readonly number[]): { x: number; y: number } {
+    const b = this.b;
+    const foes = (b?.units ?? []).filter((u) => (ids ? ids.includes(u.id) : u.side === 'foe' && u.alive));
+    const pts = foes.map((u) => this.opts.tile(u.u, u.v)).filter((x): x is { x: number; y: number } => !!x);
+    if (!pts.length) return this.boardMid();
+    return { x: pts.reduce((a, c) => a + c.x, 0) / pts.length, y: pts.reduce((a, c) => a + c.y, 0) / pts.length };
+  }
+
   /** The foes' rows on the page, as a share of its height (where the pass runs). */
   private foeGround(): number {
     const b = this.b;
@@ -692,6 +728,13 @@ export class EidolonCall {
     for (const k of p.marks) this.board.append(strip(p.src.flare, 'ecFlare', k.mark.x * innerWidth, k.mark.y * innerHeight, { scale: 2, foot: p.src.flare === 'flame', ms: 450 }));
     if (!b) return;
     const left = Math.max(120, p.m.STRIKE - p.t - 30);
+    // (EIDOLON-FX: the charge: the element gathers into a ring closing on the foes' middle, arriving as the strike lands)
+    const mid = this.foeMid();
+    const charge = el('i', 'ecCharge');
+    charge.style.left = `${Math.round(mid.x)}px`;
+    charge.style.top = `${Math.round(mid.y)}px`;
+    charge.style.setProperty('--ms', `${Math.round(left)}ms`);
+    this.board.append(charge);
     if (p.mon?.fromSprite) {
       if (!p.monStand) this.placeMon(p, p.mon);
       const mouth = this.monMouth(p);
@@ -777,6 +820,8 @@ export class EidolonCall {
     const f = this.layer.querySelector('.ecFlash');
     if (f) {
       const g = f.cloneNode() as HTMLElement;
+      // (EIDOLON-FX: the blow's flash is a hard white one; the aftershocks' the soft one of the element)
+      g.classList.toggle('big', i === 0);
       f.replaceWith(g);
     }
   }
@@ -792,10 +837,8 @@ export class EidolonCall {
     const saver = settings().saver;
     const ids = p.struck.length ? p.struck : b.units.filter((u) => u.side === 'foe').map((u) => u.id);
     const spots = ids.map((id) => b.units.find((u) => u.id === id)).flatMap((u) => (u ? [this.opts.tile(u.u, u.v)] : [])).filter((x): x is { x: number; y: number } => !!x).slice(0, maxRuns(saver));
+    this.strikeFx(p, spots);
     spots.forEach((s, n) => {
-      const rise = p.src.rise;
-      const foot = rise === 'flame' || rise === 'pillar' || rise === 'bolt';
-      this.board.append(strip(rise, 'ecRise', s.x, s.y + (foot ? 4 : -14), { scale: rise === 'pillar' || rise === 'bolt' ? 2.6 : 1.9, foot, ms: 520 }));
       const scar = el('i', `ecAfter after-${p.src.after}`);
       scar.style.left = `${Math.round(s.x)}px`;
       scar.style.top = `${Math.round(s.y)}px`;
@@ -812,6 +855,90 @@ export class EidolonCall {
         this.board.append(d);
       }
     });
+  }
+
+  /** EIDOLON-FX: the blow, laid out at once and rolling on by the strips' own delays (`eidolonFx.ts`): the bloom, the shockwave ring and
+   *  the huge burst on the foes' middle, the Eidolon's pillar over each foe a beat after the last (with a shaft out of the sky for the
+   *  light and the bolt), debris flung out of each, the aftershocks' bursts across the foes' half, the board shaken as the freeze lets go,
+   *  and what lingers on their ground from the aftermath on. */
+  private strikeFx(p: Playing, spots: readonly { x: number; y: number }[]): void {
+    const look: StrikeLook = STRIKE_FX[p.e.id] ?? STRIKE_FX.askel;
+    const saver = settings().saver;
+    const budget = fxBudget(saver, this.reduced);
+    const W = innerWidth;
+    const H = innerHeight;
+    const mid = this.foeMid(p.struck.length ? p.struck : undefined);
+    // (the short call's aftershocks and aftermath come sooner)
+    const span = p.m.AFTER - p.m.STRIKE;
+    const k = span / (STRIKE_FX_SPAN);
+    const L = this.board;
+    // (the bloom of the element's light, and the shockwave ring along the ground, as wide as the screen)
+    const bloom = el('i', 'ecBloom');
+    bloom.style.left = `${Math.round(mid.x)}px`;
+    bloom.style.top = `${Math.round(mid.y)}px`;
+    bloom.style.setProperty('--bloom', look.bloom);
+    L.append(bloom);
+    const ringW = Math.round(W * 1.1);
+    const ring = el('i', 'ecFx ecRingFx');
+    ring.style.width = `${ringW}px`;
+    ring.style.height = `${Math.round((ringW * RING.fh) / RING.fw)}px`;
+    ring.style.left = `${Math.round(mid.x)}px`;
+    ring.style.top = `${Math.round(mid.y)}px`;
+    ring.style.setProperty('--ry', `${-((RING.mid / RING.fh) * 100).toFixed(1)}%`);
+    ring.style.backgroundImage = `url(${FX_URL(RING.sheet)})`;
+    ring.style.backgroundSize = `${RING.n * 100}% 100%`;
+    ring.style.setProperty('--hold', `${(RING.hold / (RING.n - 1)) * 100}%`);
+    ring.style.setProperty('--life', `${RING.ms + 300}ms`);
+    ring.style.filter = look.ring;
+    ring.style.animation = `ecFxPlay ${RING.ms}ms steps(${RING.n}, jump-none) -60ms both, ecFxEnd 300ms ease-in ${RING.ms - 200}ms forwards`;
+    L.append(ring);
+    // (the one huge burst on their middle, already blazing in the frozen frame)
+    L.append(fxEl(look.burst, mid.x, mid.y - 18, { delay: -110, cls: 'ecBurst' }));
+    // (the pillar over each foe, rolling across them; a shaft out of the sky onto each for the light and the bolt)
+    const order = spots.map((s, i) => ({ s, i })).sort((a, b) => a.s.x - b.s.x);
+    order.forEach(({ s }, n) => {
+      const delay = n * PILLAR_STAGGER * Math.min(1, k + 0.3) - 40;
+      if (look.sky) {
+        const sh = el('i', `ecShaft ${look.sky}`);
+        sh.style.left = `${Math.round(s.x)}px`;
+        sh.style.top = `${Math.round(s.y + 4)}px`;
+        sh.style.height = `${Math.round(s.y + 40)}px`;
+        sh.style.animationDelay = `${Math.round(delay)}ms`;
+        L.append(sh);
+      }
+      L.append(fxEl(look.pillar, s.x, s.y + 6, { delay, cls: 'ecPillar', mul: 1 - Math.min(0.25, n * 0.02) }));
+      for (let c = 0; c < budget.debris; c++) {
+        const chip = el('i', 'ecChip');
+        chip.style.left = `${Math.round(s.x)}px`;
+        chip.style.top = `${Math.round(s.y - 20)}px`;
+        const side = c % 2 ? 1 : -1;
+        chip.style.setProperty('--dx', `${side * (36 + ((c * 37 + n * 23) % 70))}px`);
+        chip.style.setProperty('--up', `${-(70 + ((c * 53 + n * 19) % 80))}px`);
+        chip.style.setProperty('--dn', `${10 + ((c * 29) % 24)}px`);
+        chip.style.animationDelay = `${Math.round(Math.max(0, delay) + 40 + c * 25)}ms`;
+        chip.append(strip(look.debris, '', 0, 0, { loop: true, scale: 1.4 + (c % 3) * 0.3 }));
+        L.append(chip);
+      }
+    });
+    // (the aftershocks across the foes' half)
+    for (const e of extraSpots(spots.map((s) => ({ x: s.x / W, y: s.y / H })), budget.extras)) {
+      L.append(fxEl(look.extra, e.x * W, e.y * H, { delay: e.delay * k, cls: 'ecExtra', mul: 0.85 + ((e.delay / 95) % 3) * 0.12 }));
+    }
+    // (what lingers on their ground, from the aftermath on)
+    spots.slice(0, budget.linger).forEach((s, n) => {
+      const w = el('i', 'ecLinger');
+      w.style.left = `${Math.round(s.x)}px`;
+      w.style.top = `${Math.round(s.y + 6)}px`;
+      w.style.animationDelay = `${Math.round(span * 0.75 + n * 40)}ms`;
+      w.append(fxEl(look.after, 0, 0, { delay: -n * 90 }));
+      L.prepend(w);
+    });
+    // (the board shaken as the freeze lets go: the cinematic's layer with the board's picture, which the fight's own shake moves)
+    if (!this.reduced && settings().shake) {
+      L.classList.remove('shake');
+      void L.offsetWidth;
+      L.classList.add('shake');
+    }
   }
 
   /** A tap skips to the strike: the pass is cut, the source flares a moment and the strike lands; once it has, the rest is cut. */
