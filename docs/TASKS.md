@@ -55,6 +55,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
 
+### EIDOLON-CHAINS — Quests batch 5: Askel's chain, end to end
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-chain-1`, `/home/user/lotf-chain1` (from main 0.272.0).
+- **Goal:** batch 5 of the approved quests and Eidolons design, for Askel the Cinderhound (the easiest Eidolon now): the Summoner's prologue after the Orc Warband falls, three easy parts (levels 5 to 12; no trial) with their pieces and piece cards, the chain's own quest battle (The Kennel Fires), the quest log's Eidolons tab, the binding ceremony at the Summoner (Askel bound and chosen), the Pact Gallery (from the Sanctum and the camp's horn card); the rails for chains 2 to 6 (data shape, one chain at a time, what opens each).
+- **Scope:** new `src/sim/eidolonChains.ts`, `src/sim/eidolonChainData.ts`, `src/sim/chainBattleData.ts`, `src/eidolonChainView.ts`, `src/eidolonBinding.ts`, `src/eidolonChains.css`, `tools/eidolon-chains/`, `test/eidolon-chains.test.ts`; hooks in `src/sim/quests.ts` (the chain state in `readQuests`), `src/sim/questBattles.ts` (the chains' battles by id), `src/sim/questRun.ts` (`canFightBattle`), `src/sim/modes.ts` and `src/standView.ts` (`noteChains`), `src/sim/sceneKit.ts`/`sceneRules.ts` (the `eidolon` moment), `src/questLog.ts` (the tab), `src/hall.ts` (the plaque, the gallery button), `src/home.ts`, `src/main.ts` (the story, the piece card, a ticker fix), `src/eidolonCall.ts` (the gallery button), `build.mjs` (the CSS), `tools/quest-battles/rate.ts`; one test updated in `test/quests.test.ts`.
+- **Status:** ready for review. [Note](notes/eidolon-chains.md); screenshots `samples/eidolon-chain1-*.png`.
+
 ### EIDOLONS — Quests batches 3 and 4: the War Horn and the Eidolon's call
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/war-horn`, `/home/user/lotf-horn` (from main 0.271.0; `art/eidolons-dreamina` and `art/eidolons-1` merged in).

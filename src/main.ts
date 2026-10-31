@@ -133,6 +133,8 @@ import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
+import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
+import { chainOfBattle, type PieceFound } from './sim/eidolonChains';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
@@ -398,6 +400,8 @@ class Game {
       onWatchScene: (id) => void this.playScene(id),
       // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
       onQuestBattle: (id) => this.openQuestBattle(id),
+      // (EIDOLON-CHAINS: a chain's prologue, played over the home screen whatever the Cinematics setting: it is the chain's sense)
+      onStory: (scene) => this.scenes.play(scene, this.players()),
       questSaved: () => {
         const r = loadSlot('quest');
         return r?.mode?.kind === 'quest' ? r.mode.quest : null;
@@ -484,7 +488,9 @@ class Game {
       if (!this.homeUp) this.app.ticker.start();
       // (an earned deploy helper is told on the deploy screen the player comes back to: DEPLOY-ZOOM)
       if (!this.homeUp && this.b.phase === 'deploy' && !this.auto) this.tellUnlocks();
-      else if (this.b.phase !== 'fight') this.app.ticker.stop();
+      // (only under the home screen: a quest battle begun from the home screen just after a run was won used to find its ticker stopped
+      //  here, the old fight's 'won' still on the board, and its fight never moved; EIDOLON-CHAINS)
+      else if (this.homeUp && this.b.phase !== 'fight') this.app.ticker.stop();
     };
     // (the tips on the home screen are still looked after, a few times a second)
     setInterval(() => this.homeUp && tips.update(), 250);
@@ -1654,6 +1660,8 @@ class Game {
   private ultm!: UltMoments;
   /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
   private bossm = new BossMoments();
+  /** EIDOLON-CHAINS: a piece a quest battle's win found, shown once its beat after has played. */
+  private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
@@ -1712,6 +1720,8 @@ class Game {
         if (at && settings().quips) showQuip(at, text, { who: heroName(hero.def), hold: 3200 });
       },
       stage: () => this.app.canvas,
+      // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
+      gallery: () => this.home.openGallery(),
     });
     $('hudSpells').prepend(this.eid.horn.root);
     const canvas = this.app.canvas;
@@ -2042,8 +2052,13 @@ class Game {
       .then(() => {
         this.sceneHold--;
         void this.revealEarned().then(() => {
-          this.home.open(practice ? `${qb.title}: won again, for practice.` : `${qb.title} won! Hand the quest in at the tavern.`);
-          if (!practice) this.home.openQuests('active');
+          // (EIDOLON-CHAINS: a chain's battle hands no quest in: its piece was found, and the log opens on the chain)
+          const chain = chainOfBattle(qb.id);
+          this.home.open(practice ? `${qb.title}: won again, for practice.` : chain ? `${qb.title} won! A piece of the pact is found.` : `${qb.title} won! Hand the quest in at the tavern.`);
+          if (!practice) this.home.openQuests(chain ? 'eidolons' : 'active');
+          const piece = this.pendingPiece;
+          this.pendingPiece = null;
+          if (piece) showPieceCard(piece, { next: nextWords(this.meta, piece), onClose: () => this.home.openQuests('eidolons') });
         });
       });
   }
@@ -2054,7 +2069,7 @@ class Game {
     endVictory();
     const qb = questBattleOfRun(this.run);
     this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
-    this.home.openQuests('active');
+    this.home.openQuests(qb && chainOfBattle(qb.id) ? 'eidolons' : 'active');
   }
 
   private startRun(run: Run): void {
@@ -2907,6 +2922,8 @@ class Game {
       if (won && !army && !daily && !quest && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       // (QUESTS: the quests this fight completes are told after the achievements' toasts)
       const readyBefore = readyQuests(this.meta);
+      // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
+      const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
       const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
@@ -2989,6 +3006,11 @@ class Game {
       toastAchievements(earned);
       if (questsDone.length) setTimeout(() => toastQuests(questsDone), earned.length * 2800);
       if (questsFound.length) setTimeout(() => toastFound(questsFound), (earned.length + (questsDone.length ? 1 : 0)) * 2800);
+      // (EIDOLON-CHAINS: a piece found: its card over the result, a moment after it shows; an auto-replay keeps going, and the log has it)
+      const pieces = (this.meta.quests?.pieces ?? []).filter((id) => !piecesBefore.includes(id)).map(pieceInfo).filter((p) => !!p);
+      // (a quest battle's piece waits for its beat after: the card shows over the quest log, `questEnd`)
+      if (pieces.length && quest) this.pendingPiece = pieces[0];
+      else if (pieces.length && !this.auto) setTimeout(() => showPieceCard(pieces[0], { next: nextWords(this.meta, pieces[0]) }), 900);
     }
     document.body.dataset.phase = b.phase;
     document.body.dataset.roster = run.roster.length ? 'some' : 'none';

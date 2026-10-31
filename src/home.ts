@@ -44,6 +44,11 @@ import { announceArmy } from './armyShown';
 import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
 import { questById } from './sim/questData';
 import { drawQuestLog, type LogTab } from './questLog';
+import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } from './sim/eidolonChains';
+import { chainById } from './sim/eidolonChainData';
+import { openPactGallery } from './eidolonChainView';
+import { playBinding } from './eidolonBinding';
+import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -86,6 +91,8 @@ export interface HomeHooks {
   onQuestBattle?(battle: string): void;
   /** The quest battle saved part-way, if one is (its Fight reads Continue). */
   questSaved?(): string | null;
+  /** EIDOLON-CHAINS: play a chain's story (its giver's prologue) over the home screen; resolves when it ends. */
+  onStory?(scene: Scene): Promise<unknown>;
 }
 
 type Tab = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells';
@@ -168,6 +175,9 @@ export class Home {
         this.hall.stop();
         this.hooks.onRecruit();
       },
+      // (EIDOLON-CHAINS: the Summoner's plaque and the Pact Gallery)
+      onChain: () => void this.summonerTap(),
+      onGallery: () => this.openGallery(),
     });
     this.castle = new CastleScene(
       (id) =>
@@ -324,8 +334,56 @@ export class Home {
         close: () => this.closeSheet(),
         fight: (id) => this.questBattle(id),
         saved: () => this.hooks.questSaved?.() ?? null,
+        summoner: () => this.show('recruit'),
+        story: (id) => {
+          const scene = chainById(id)?.prologue;
+          if (scene) void this.hooks.onStory?.(scene);
+        },
       });
     draw(tab);
+  }
+
+  /** EIDOLON-CHAINS: the Summoner's plaque in the Sanctum. A chain on offer: its prologue plays and the chain begins (the log's Eidolons
+   *  tab opens on it). A chain ready: the binding plays, the Eidolon is bound and chosen, and the Pact Gallery opens on it. A chain going:
+   *  the log's Eidolons tab. */
+  private busyChain = false;
+  private async summonerTap(): Promise<void> {
+    if (this.busyChain) return;
+    const m = this.meta;
+    const offer = offeredChain(m);
+    const ready = readyToBind(m);
+    this.busyChain = true;
+    try {
+      if (offer) {
+        this.hall.stop();
+        if (offer.prologue) await this.hooks.onStory?.(offer.prologue);
+        if (beginChain(m, offer.id)) saveMeta(m);
+        this.refresh();
+        this.openQuests('eidolons');
+      } else if (ready) {
+        this.hall.stop();
+        await playBinding(ready);
+        if (bindChain(m, ready.id)) saveMeta(m);
+        this.refresh();
+        this.openGallery();
+      } else this.openQuests('eidolons');
+    } finally {
+      this.busyChain = false;
+    }
+  }
+
+  /** EIDOLON-CHAINS: the Pact Gallery (from the Sanctum, and the War Horn's card at the camp). */
+  openGallery(): void {
+    openPactGallery(this.meta, {
+      save: () => {
+        saveMeta(this.meta);
+        this.refresh();
+      },
+      watch: (id) => {
+        const c = chainById(id);
+        if (c) void playBinding(c, true);
+      },
+    });
   }
 
   /** A quest battle's Fight (batch 2): the sheet and the card close, and the page takes it from there (the party, the story, the deploy). */
@@ -376,7 +434,8 @@ export class Home {
       return c !== null && m.crowns >= c;
     });
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
-    this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0);
+    // (EIDOLON-CHAINS: the Summoner has a chain to tell, or one to bind)
+    this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0 || summonerWaiting(m));
     // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
     this.tabBtns.get('heroes')!.classList.toggle('new', readyKinds(m, m.unlocked).length > 0);
     this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.277.0',
+    date: '2026-10-31',
+    title: 'Eidolon quest: The Hound Comes Home',
+    notes: ['After the Orc Warband, the Summoner at the Sanctum asks you to call Askel home: three parts, three pieces, a binding, then he answers your War Horn.'],
+  },
+  {
     version: '0.276.0',
     date: '2026-10-31',
     title: 'Map, walk and Paladin fixes',

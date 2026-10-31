@@ -171,7 +171,9 @@ export type Moment =
   /** An army's first march on the keep (CINE-001): its warlord's entrance, the first time a run of that army is set up. */
   | { kind: 'armyIntro'; army: string }
   /** A quest battle's story, before it or after a win (`questBattleData.ts`; played by the page, not kept in the Scenes list). */
-  | { kind: 'questBattle'; battle: string };
+  | { kind: 'questBattle'; battle: string }
+  /** An Eidolon chain's story (`eidolonChainData.ts`: the giver's prologue; played by the page, not kept in the Scenes list). */
+  | { kind: 'eidolon'; chain: string };
 
 /** A moment's key: its kind and what it is about (the map, the army, the hero ...). */
 export const momentKey = (m: Moment): string => {

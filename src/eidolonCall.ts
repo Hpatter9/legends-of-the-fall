@@ -42,6 +42,8 @@ export interface EidolonCallOpts {
   cheer?: (b: Battle, text: string) => void;
   /** The board's picture (the page's canvas): the cinematic's camera frames it (a scale about a point), and puts it back after. */
   stage?: () => HTMLElement | null;
+  /** EIDOLON-CHAINS: open the Pact Gallery (from the horn's card at the camp). */
+  gallery?: () => void;
 }
 
 const URL_OF = (name: string) => `eidolons/${name}.webp`;
@@ -530,9 +532,20 @@ export class EidolonCall {
       }
       box.append(list);
     }
+    const row = el('div', 'ehRow');
+    // (EIDOLON-CHAINS: the Pact Gallery, the six alcoves, from the horn's card)
+    if (this.opts.gallery) {
+      const gal = el('button', '', 'Pact Gallery');
+      gal.addEventListener('click', () => {
+        this.closeSheet();
+        this.opts.gallery!();
+      });
+      row.append(gal);
+    }
     const close = el('button', 'primary', 'Close');
     close.addEventListener('click', () => this.closeSheet());
-    box.append(close);
+    row.append(close);
+    box.append(row);
     this.showSheet(box);
     this.sheetOpen = false;
   }
