@@ -94,6 +94,7 @@ import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
+import { heroFace } from './heroFace';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
@@ -1648,7 +1649,9 @@ class Game {
     }
     const h = u.side === 'hero' && u.tag !== undefined ? heroOf(this.run, u.tag) : undefined;
     const grade = u.grade ?? 1;
-    const pic = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
+    const sprite = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
+    // (HUD-FACES: a hero of the party shows its painted face, its awakened form's once awakened)
+    const pic = h ? heroFace(h.kind, this.run.local ? (u.awaken ?? 0) : awakenedOf(this.meta, h.kind), 96, sprite) : sprite;
     this.info.open(infoOf(this.b, u, { meta: this.run.local ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic);
     play('tap');
   }

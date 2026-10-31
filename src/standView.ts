@@ -33,6 +33,7 @@ import { infoOf } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { fullScene } from './ultMomentRules';
 import { portrait } from './render/sheets';
+import { heroFace } from './heroFace';
 // (JRPG-RECAP: the end card's results: each hero's run levels and the stats they added, the MVP, the crowns counted up)
 import { playResults, type JrHero, type JrPlayer } from './jrpgRecapView';
 import { standGrowth, statsAt } from './sim/jrpgRecap';
@@ -1028,7 +1029,8 @@ export class StandView {
   /** UNIT-INFO: the card of unit `u` (a pure read of it). */
   private openInfo(u: Unit): void {
     const m = this.host.meta();
-    const pic = u.side === 'hero' && u.tag !== undefined ? portrait(lookSheet(u.def, heroRank(m, u.def), 1), 48, 1) : portrait(u.look ?? UNITS[u.def].sheet, 48, 1);
+    // (HUD-FACES: a standing hero shows its painted face; summons and foes keep their sprite)
+    const pic = u.side === 'hero' && u.tag !== undefined ? heroFace(u.def, u.awaken ?? 0, 96, portrait(lookSheet(u.def, heroRank(m, u.def), 1), 48, 1)) : portrait(u.look ?? UNITS[u.def].sheet, 48, 1);
     this.info.open(infoOf(this.s!.b, u, { meta: m, autoUlt: !!m.ultAuto }), pic);
     play('tap');
   }
@@ -1791,8 +1793,9 @@ export class StandView {
     for (const h of sh.heroes) {
       const row = el('div', `stSheetRow${h.fallen ? ' fallen' : ''}`);
       const head = el('div', 'stSheetHead');
-      const pic = portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1);
-      pic.className = 'stSheetPic';
+      // (HUD-FACES: the painted face, as in the fight's rows)
+      const pic = heroFace(h.kind, this.s?.b.units.find((x) => x.side === 'hero' && x.tag === h.id)?.awaken ?? 0, 64, portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1));
+      pic.classList.add('stSheetPic');
       head.append(pic, el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
       row.append(head, this.barEl(h.maxHp ? h.hp / h.maxHp : 0, 'hp'));
       if (h.pool) row.append(this.barEl(h.pool.now / h.pool.max, h.pool.kind));
