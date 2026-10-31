@@ -1,5 +1,6 @@
 /* EIDOLONS (docs/notes/eidolons.md, src/eidolonCall.ts): the War Horn in the fight and at the camp, its sheets, and the Eidolon's call.
-   Nothing blinks: glows ease in and out and drift; with reduced motion everything is held still. */
+   Nothing blinks: no looping animation changes a brightness (the glows breathe in size, turn and drift); with reduced motion everything
+   is held still. */
 
 /* ---- the horn */
 .ehHorn { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0; padding: 0;
@@ -30,7 +31,7 @@
 .ehHorn[data-state='ready'] .ehSheen { opacity: 1; animation: ehSheen 3.4s ease-in-out infinite; }
 .ehHorn[data-state='none'] .ehAura { opacity: 0.4; }
 .ehHorn[data-state='spent'] .ehArt { filter: saturate(0.5) brightness(0.8); }
-@keyframes ehBreathe { 0%, 100% { scale: 0.94; filter: brightness(0.9); } 50% { scale: 1.04; filter: brightness(1.15); } }
+@keyframes ehBreathe { 0%, 100% { scale: 0.94; } 50% { scale: 1.06; } }
 @keyframes ehTurn { to { rotate: 360deg; } }
 @keyframes ehSheen { 0% { background-position: 120% 0; } 60%, 100% { background-position: -60% 0; } }
 .ehWords { font: 700 11px/1 var(--body); color: #f3e2b4; text-shadow: 0 1px 2px #000, 0 0 4px #000; white-space: nowrap; }
@@ -126,13 +127,13 @@
 .ecLayer[data-stage='after'] .ecFig, .ecLayer[data-stage='resume'] .ecFig, .ecLayer[data-stage='out'] .ecFig { opacity: 0; translate: -50% -14vh; scale: 1.08; transition: opacity 0.9s ease, translate 1s ease, scale 1s ease; }
 @keyframes ecRise { from { opacity: 0; translate: -50% 26vh; scale: 0.82; filter: brightness(2.2); } 60% { opacity: 1; } to { opacity: 1; translate: -50% 0; scale: 1; filter: brightness(1); } }
 @keyframes ecBreath { 0%, 100% { scale: 1; translate: 0 0; } 50% { scale: 1.025; translate: -1.2vw -0.6vh; } }
-@keyframes ecAuraBreath { 0%, 100% { opacity: 0.75; scale: 0.96; } 50% { opacity: 1; scale: 1.04; } }
+@keyframes ecAuraBreath { 0%, 100% { scale: 0.96; } 50% { scale: 1.05; } }
 @keyframes ecLunge { 0% { scale: 1; opacity: 1; translate: -50% 0; } 25% { scale: 1.09; opacity: 1; translate: -50% 2vh; filter: brightness(1.6); }
   100% { scale: 0.92; opacity: 0.5; translate: -50% -16vh; filter: brightness(1.1); } }
 .ecMotes { inset: 0; opacity: 0; transition: opacity 0.6s ease; }
 .ecMotes i { position: absolute; left: var(--x); bottom: -10px; width: var(--s); height: var(--s); border-radius: 50%; background: color-mix(in srgb, var(--glow) 60%, #fff);
   box-shadow: 0 0 8px 2px var(--glow); animation: ecMote 4s linear infinite; animation-delay: var(--d); }
-@keyframes ecMote { from { translate: 0 0; opacity: 0; } 15% { opacity: 1; } to { translate: 6vw -95vh; opacity: 0; } }
+@keyframes ecMote { from { translate: 0 0; scale: 0; } 15% { scale: 1; } 80% { scale: 1; } to { translate: 6vw -95vh; scale: 0; } }
 .ecLayer[data-stage='arrive'] .ecMotes, .ecLayer[data-stage='name'] .ecMotes, .ecLayer[data-stage='strike'] .ecMotes, .ecLayer[data-stage='after'] .ecMotes { opacity: 1; }
 
 /* the horn blown: it swings up, a cone of gold sound-light and a ring of force across the field */

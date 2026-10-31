@@ -108,7 +108,7 @@ From `art-source/eidolons/dreamina-clean/` (merged from `art/eidolons-dreamina`)
 `npm run typecheck`; `npm test -- eidolon` (`test/eidolons.test.ts`: the shares per foe kind, shields ignored, once a fight, Auto never
 calls, determinism and replay, the six riders, the horn's fill per mode, the wait, the blow, the choice keeping the fill, saves;
 `test/eidolon-moment.test.ts`: which cinematic, skipping, the beats and shots, the looks, lines and choreography, the horn's look); the full
-`npm test`; `npm run web`. In the browser (`tools/eidolons/shots.mjs`) at 393x852, 360x780 and 412x915: the horn filling and full, the
+`npm test`; `npm run web`. (A first full run caught three looping glows that breathed in brightness, against `test/no-flicker.test.ts`; they now breathe in size, and the full suite passes: 1787 tests.) In the browser (`tools/eidolons/shots.mjs`) at 393x852, 360x780 and 412x915: the horn filling and full, the
 camp's chip and card (none bound and all bound), the note, the confirm, and the cinematic shot by shot for all six Eidolons, the short
 version and reduced motion; and the Last Stand's horn and call. No page errors, no missing files.
 
