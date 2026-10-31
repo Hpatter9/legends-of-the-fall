@@ -156,3 +156,25 @@ fought by merged parties) goes much further. The tier skills (still in play unti
 less: a grade-3 or grade-4 hero casts its tier skill more often. Batch 3 removes the tier skills and sets `GRADE_BOOST` against these grade
 targets, so it is left for that batch rather than answered here. The Last Stand's later levels are a wave or so shorter (its eight heroes
 cast more, each weaker), the Calamity and the daily are where they were.
+
+**After merging main** (0.291.0 with the summon timers and the skill books, then 0.293.0): parity at level 1 54.4% (spread 7.7, none beyond
+4), level 10 37.0% (10.6, none beyond 6), level 30 57.6% (10.0, none beyond 6). The identity fixtures were re-recorded on the merged code;
+0.293.0 moved none of them. Two merge fixes: a skill-book loadout's kit (`kitWithLoadout`, `books.ts`) now carries its `slots`, which the AI
+reads; `summon-timers.test.ts`'s carried wolf keeps the Beastmaster's call on its cooldown (Summon Beast's 28 stamina could otherwise be paid
+within the test's five seconds, calling a second wolf).
+
+## Checks
+
+`npm run typecheck`; the affected tests (`skill-rules`, `hero-kits`, `hero-kits-all`, `fight-hud`, `revive`, `more-heroes`, `class-heroes`,
+`new-heroes`, `summon-timers`, `stand-regression`, `spells-identity`, `ailments-identical`, `hero-balance`, `hero-balance-ultimates`); the full
+`npm test` after each batch and after each merge; `npm run web`. No page changed, so no screenshots.
+
+## For the owner
+
+1. **The merged grades grew stronger** (a grade-4 party at level 1 wins 62% where it won 46%; the spire with a full castle goes much
+   further). It comes from the tier skills, which batch 3 removes; batch 3 then sets `GRADE_BOOST` against main's grade numbers above. Fine
+   to leave it to batch 3?
+2. **The level-10 refill was slowed** (`SKILL2_PACE_*`, 1.6 and 1.15 to 1.45 and 1.05), with skill 2 cheaper and saved for. The design's
+   reference income (3.5 SP, 4.5 MP) measured 3.0 and 4.2 on main and is 2.8 and 3.8 now; the jabs of batch 4 are set against the measured
+   numbers.
+3. **Sixteen heroes' costs or cooldowns moved from the design's starting table** (listed above), each inside its class.
