@@ -313,8 +313,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
         const known = heroKnown(m, k);
         const def = UNITS[k];
         if (isSecret(m, k)) {
-          const c = el('button', 'cxCard dark secret');
-          c.append(secretFigure(52, 'cxPort'), el('b', '', SECRET_NAME), el('small', '', 'a secret'));
+          const c = el('button', 'cxCard secret');
+          c.append(secretFigure(52), el('b', '', SECRET_NAME), el('small', '', 'a secret'));
           c.addEventListener('click', () => openHero(root, m, k));
           grid.append(c);
           continue;
