@@ -18,7 +18,8 @@ import { QUESTS, questById } from '../src/sim/questData';
 
 const DAY = 20261030;
 const clear = (m: Meta, ...ids: string[]) => ids.forEach((id) => (m.armies[id] = { ...recordOf(m, id), clears: 1 }));
-const battleQuests = QUESTS.filter((q) => q.goal.kind === 'battle');
+// (the eleven battles' quests; the hero quests' battles, SECRET-HEROES, are tested in secret-heroes.test.ts)
+const battleQuests = QUESTS.filter((q) => q.goal.kind === 'battle' && QUEST_BATTLES.some((b) => b.id === (q.goal as { battle: string }).battle));
 /** A save that owns these heroes (and the starters it began with). */
 const owning = (seed: number, ...kinds: string[]): Meta => {
   const m = startedMeta(seed);

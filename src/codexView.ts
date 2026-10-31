@@ -10,6 +10,8 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 import { lockInfo } from './sim/contentHeroes';
+import { comboHint, isSecret, SECRET_NAME } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
 import type { Meta } from './sim/meta';
@@ -127,6 +129,18 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
 }
 
 function openHero(root: HTMLElement, m: Meta, kind: string): void {
+  // (SECRET-HEROES: a secret hero's page is the dark figure, "???" and its vague hint, nothing more)
+  if (isSecret(m, kind)) {
+    const { box, close } = sheet(root);
+    const head = el('div', 'hhead');
+    const pic = el('div', 'cxPic');
+    pic.append(secretFigure(96));
+    const title = el('div');
+    title.append(el('h3', '', SECRET_NAME), el('em', '', 'a secret, for now'));
+    head.append(pic, title);
+    box.append(head, el('p', 'cxLore locked', `🔒 ${lockInfo(m, kind)!.line}.`), closeButton(close));
+    return;
+  }
   const def = UNITS[kind];
   const known = heroKnown(m, kind);
   const { box, close } = sheet(root);
@@ -267,7 +281,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
         const row = el('div', `scRow${seen ? '' : ' locked'}`);
         const text = el('div');
         if (seen) text.append(el('b', '', `${c.name}: ${c.move}`), el('small', '', `${c.heroes.map((k) => UNITS[k].name).join(', ')}. ${c.text}.`));
-        else text.append(el('b', '', '???'), el('small', '', `Five heroes who belong together, one of them the ${UNITS[c.heroes[0]].name}. Fight with all five to see what they do.`));
+        // (SECRET-HEROES: the hint names its first hero only when that hero is no secret)
+        else text.append(el('b', '', '???'), el('small', '', comboHint(m, c.heroes)));
         row.append(text);
         grid.append(row);
       }
@@ -297,6 +312,13 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       for (const k of ALL_HEROES) {
         const known = heroKnown(m, k);
         const def = UNITS[k];
+        if (isSecret(m, k)) {
+          const c = el('button', 'cxCard secret');
+          c.append(secretFigure(52), el('b', '', SECRET_NAME), el('small', '', 'a secret'));
+          c.addEventListener('click', () => openHero(root, m, k));
+          grid.append(c);
+          continue;
+        }
         // (a hero met goes by its own name, its class under it)
         const c = card(def.sheet, 1, known ? heroName(k) : def.name, known ? def.name : 'locked', true);
         if (!known) c.classList.add('dark');

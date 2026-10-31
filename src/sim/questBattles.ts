@@ -24,6 +24,7 @@ import { heroName } from './heroNames';
 import type { With } from './questData';
 import { QUEST_BATTLES } from './questBattleData';
 import { CHAIN_BATTLES } from './chainBattleData';
+import { TALE_BATTLES } from './taleBattleData';
 
 /** The side stream a quest battle's seed is drawn from. */
 export const QB_SALT = 0x9b47;
@@ -51,6 +52,8 @@ export interface QuestBattle {
   /** The foes' strength on top of `like` (missing is 1): each battle's own, set by `npm run quest-rate`, since a boss's kit (a lich's
    *  freezes, a demon lord's pull) weighs more in three waves with a small party than in an army's fifteen. */
   ease?: number;
+  /** EIDOLON-TRIAL: the last boss's health and attack on top of the army's mid-boss's (an Eidolon in its trial is more than a mid-boss). */
+  bossLift?: { hp: number; atk: number };
   /** The boss of the last wave's own name and title (it keeps its look, kit and signature attacks). */
   boss?: { name: string; title: string };
   /** The required cast, slot by slot. */
@@ -66,10 +69,11 @@ export interface QuestBattle {
   after: (c: readonly string[]) => Scene;
 }
 
-// (EIDOLON-CHAINS: the chains' own battles are found by id too; no quest in the log opens them, a chain's part does)
-const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES].map((q) => [q.id, q]));
+// (EIDOLON-CHAINS: the chains' own battles are found by id too; no quest in the log opens them, a chain's part does. SECRET-HEROES: the
+// hero quests' battles, each opened by its tale's last part as any battle quest is)
+const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES].map((q) => [q.id, q]));
 export const questBattleById = (id: string): QuestBattle | undefined => BY_ID.get(id);
-export { QUEST_BATTLES, CHAIN_BATTLES };
+export { QUEST_BATTLES, CHAIN_BATTLES, TALE_BATTLES };
 
 /* ------------------------------------------------------------------ the army it is */
 
@@ -100,7 +104,7 @@ export function questArmy(id: string): Army | undefined {
     growth: like.growth,
     // (a quest's boss is no army's last: it takes the army's mid-boss stats, whichever wave it stands on)
     mid: like.mid,
-    last: like.mid,
+    last: qb.bossLift ? { ...like.mid, hp: like.mid.hp * qb.bossLift.hp, atk: like.mid.atk * qb.bossLift.atk } : like.mid,
     pay: 0,
     clear: 0,
   };

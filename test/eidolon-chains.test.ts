@@ -61,21 +61,22 @@ function winKennel(m: Meta): void {
 
 /* ------------------------------------------------------------------ the data and the rails */
 
-test('six chains, easiest first, one an Eidolon; only Askel\'s is written, the rest are rails that end in a trial', () => {
+test('six chains, easiest first, one an Eidolon; Askel\'s is written (and Nivra\'s, chain 2), the rest are rails that end in a trial', () => {
   assert.deepEqual(CHAINS.map((c) => c.eidolon), [...EIDOLON_IDS]);
   assert.deepEqual(CHAINS.map((c) => c.order), [1, 2, 3, 4, 5, 6]);
   assert.equal(askel.parts.length, 3);
   assert.equal(askel.trial, false, 'the first is the gentle one: no trial');
   assert.deepEqual(askel.opens, { kind: 'army', army: 'orcs' });
   assert.ok(askel.prologue && askel.binding);
+  // (EIDOLON-CHAIN-2: Nivra's chain is now written, `eidolon-chain-2.test.ts`; the four after it are still rails)
   for (const c of CHAINS.slice(1)) {
     assert.equal(c.trial, true, c.id);
-    assert.equal(c.parts.length, 0, `${c.id}: written in its own batch`);
+    if (c.id !== 'nivra') assert.equal(c.parts.length, 0, `${c.id}: written in its own batch`);
     assert.ok(c.giver.name && c.opensWords, c.id);
   }
   // (each part has its words, a goal, a piece and a little pay; the pieces are all different)
   for (const p of askel.parts) assert.ok(p.title && p.text && p.begin && p.goal.n >= 1 && p.piece.lines.length === 2 && p.reward.chest, p.id);
-  assert.equal(PIECES.size, 3);
+  assert.equal(PIECES.size, 6, "Askel's three and Nivra's three");
   assert.deepEqual(askel.parts.map((p) => p.piece.name), ['The Ember Heart', 'The Kennel Collar', 'The Kennel Bell']);
   // (the binding's beats run in order, reach bound, then hand over the War Horn and fill it (HORN-GIFT, the owner's new ask: this test
   //  said the beats ended on bound before the horn became the binding's gift); the Eidolon speaks a line)
@@ -139,10 +140,13 @@ test('one chain at a time: none is offered while one is going, nor before the on
   assert.equal(offeredChain(m), askel, 'the first comes first, however far the save has got');
   beginChain(m, 'askel');
   assert.equal(offeredChain(m), undefined, 'none while Askel\'s goes');
-  // (Askel bound: the next chain is a rail, not written yet, so nothing is offered)
+  // (Askel bound: the next chain, Nivra's, is offered (EIDOLON-CHAIN-2: it was a rail); once it is bound too, the chain after it is a
+  //  rail, not written yet, so nothing is offered)
   bindEidolon(m, 'askel');
   assert.ok(chainDone(m, askel));
   assert.equal(activeChain(m), undefined);
+  assert.equal(offeredChain(m)?.id, 'nivra');
+  bindEidolon(m, 'nivra');
   assert.equal(offeredChain(m), undefined, 'the rails are never offered until written');
   // (the dev flag binds every Eidolon: no chain is offered)
   const dev = packSave(4, 1);
@@ -247,7 +251,7 @@ test('the same fights give the same chain, and the save keeps it (junk dropped; 
   assert.deepEqual(back.quests!.pieces, ['emberHeart']);
   assert.equal(currentPart(back)?.index, 1);
   // (junk: chains not in the game, rails with no parts, parts out of range, a "bound" before the pieces are in, unknown pieces)
-  const r = readChainState({ chains: { gone: { part: 1 }, nivra: { part: 0 }, askel: { part: 9, progress: -4, bound: true } }, pieces: ['emberHeart', 'nope', 'emberHeart', 7] });
+  const r = readChainState({ chains: { gone: { part: 1 }, aurelan: { part: 0 }, askel: { part: 9, progress: -4, bound: true } }, pieces: ['emberHeart', 'nope', 'emberHeart', 7] });
   assert.deepEqual(r, { chains: { askel: { part: 3, progress: 0, bound: true } }, pieces: ['emberHeart'] });
   assert.deepEqual(readChainState({ chains: { askel: { part: 1, progress: 5, bound: true } } }), { chains: { askel: { part: 1, progress: 1 } } });
   // (an older save, with quest state but no chains, loads as it was)
