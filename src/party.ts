@@ -14,6 +14,8 @@ import { pipsOf, raisedBy } from './traitHelp';
 import { lookSheet } from './render/awakenLook';
 import { portrait } from './render/sheets';
 import { lockInfo } from './sim/contentHeroes';
+import { isSecret } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import { drawHeroSheet, starsOf } from './menuHeroes';
 import { upMark } from './rankUpList';
 import { markReady } from './sim/upgradesReady';
@@ -320,7 +322,9 @@ export class Party {
     const order = [...ALL_HEROES].sort((a, b) => Number(m.unlocked.includes(b)) - Number(m.unlocked.includes(a)));
     for (const kind of order) {
       const def = UNITS[kind];
-      if (this.filter !== 'all' && roleOf(kind) !== this.filter) continue;
+      // (SECRET-HEROES: a secret hero is under no role, so a filter cannot tell what it is)
+      const secret = isSecret(m, kind);
+      if (this.filter !== 'all' && (secret || roleOf(kind) !== this.filter)) continue;
       // Unknown locked names stay unknown, including through search.
       const known = m.unlocked.includes(kind) || lockInfo(m, kind)?.named;
       if (this.search.trim() && (!known || !`${heroName(kind)} ${def.name}`.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
@@ -329,7 +333,7 @@ export class Party {
       const hit = !!this.focus && traitsOf(kind).includes(this.focus);
       const card = el('button', `hcard ptCard${open ? '' : ' locked'}${on ? ' picked' : ''}${hit ? ' hit' : ''}${this.focus && !hit ? ' faded' : ''}`);
       card.setAttribute('aria-pressed', String(on));
-      card.append(portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 56));
+      card.append(secret ? secretFigure(56) : portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 56));
       if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);
