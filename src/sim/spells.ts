@@ -158,6 +158,8 @@ export interface SpellState {
   rate: number;
   /** Events recorded between ticks, handed out by the next one. */
   events: BattleEvent[];
+  /** When a spell was last cast on its own (AUTO-CAST, `autoCast.ts`); unset until one is. */
+  autoAt?: number;
 }
 
 export const freshSpells = (rate = 1): SpellState => ({ mana: MANA_START, ready: Object.fromEntries(SPELL_IDS.map((id) => [id, 0])) as Record<SpellId, number>, falls: [], clouds: [], rate, events: [] });
