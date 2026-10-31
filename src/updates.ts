@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.269.0',
+    date: '2026-10-31',
+    title: 'Painted equipment',
+    notes: ['Every weapon, armour and trinket now has a painted icon, with a frame and glow for its grade and its own look at Mythic.'],
+  },
+  {
     version: '0.268.0',
     date: '2026-10-30',
     title: 'Life in the tavern',
