@@ -40,17 +40,14 @@ export const botSpells: { on: boolean; loadout?: SpellId[] } = {
   loadout: typeof process !== 'undefined' && process.env?.BOT_LOADOUT ? (process.env.BOT_LOADOUT.split(',') as SpellId[]) : undefined,
 };
 /**
- * The three spells the balance tools cast, by the stage of the game the castle stands for (what a player owns and can afford then:
- * `spell-sources.md`, `spellbook.md`). The starting three (Heal, Meteor, Haste: 8 of the 9 power) until the Mage Tower's fourth level;
- * there the budget is 11, Rally is taught and Resurrect (the Undead Legion's clear) is long known, and Heal, Meteor and Resurrect is the
- * strongest set measured (see the note).
+ * The three spells the balance tools cast at a stage of the game (the castle stands for it: what a player owns and can afford then,
+ * `spell-sources.md`, `spellbook.md`). A fresh save owns only the starting three (Heal, Meteor, Haste: 8 of the 9 power), and they stay the
+ * bot's choice later too: with the Mage Tower at its top (11 power, Rally taught, Resurrect and Meteor Shower earned) Heal, Meteor and
+ * Resurrect, Rally or Meteor Shower measured no stronger (`docs/notes/spells-retune.md`), so a player who keeps the three is the measure.
  */
-export function botLoadout(castle: Castle = newCastle()): SpellId[] {
-  if (botSpells.loadout) return [...botSpells.loadout];
-  return castle.mageTower >= 4 ? [...LATE_LOADOUT] : [...STARTER_SPELLS];
+export function botLoadout(_castle: Castle = newCastle()): SpellId[] {
+  return [...(botSpells.loadout ?? STARTER_SPELLS)];
 }
-/** The late loadout (a Mage Tower at its top): see `botLoadout`. */
-export const LATE_LOADOUT: readonly SpellId[] = ['heal', 'meteor', 'resurrect'];
 /** Set a fight just begun to cast the stage's spells on its own, when `botSpells` is on (the castle is the run's: it sets the stage). */
 export function maybeSpells(b: Battle, _meta: Meta, castle: Castle = newCastle()): void {
   if (botSpells.on) b.autoSpells = botLoadout(castle);

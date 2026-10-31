@@ -97,7 +97,8 @@ export const ARMIES: readonly Army[] = [
     area: 'warcamp',
     lands: ['warcamp', 'highlands'],
     waves: waves(ramp(['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'], 13), { 8: ['orcChieftain', 'orcGrunt', 'orcGrunt', 'orcArcher'], 15: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute', 'orcBrute'] }),
-    start: 0.39, // (was 0.5: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 0.58, // (SPELLS-RETUNE: 0.39 measured by a bot that never cast the king's spells, raised so a player whose Auto casts them takes as many tries, `docs/notes/spells-retune.md`; was 0.5 until WORLD-ROAD retuned it on the army road)
+    xpStart: 0.39,
     tierStart: 0.5,
     growth: 0.176,
     mid: { hp: 1500, atk: 50 },
@@ -130,7 +131,8 @@ export const ARMIES: readonly Army[] = [
     area: 'plains',
     lands: ['plains', 'autumn'],
     waves: waves(ramp(['packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'], 13), { 8: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 15: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack', 'packWhite'] }),
-    start: 1.66,
+    start: 2.17, // (SPELLS-RETUNE: 1.66 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`)
+    xpStart: 1.66,
     tierStart: 0.85,
     growth: 0.05,
     tierGrowth: 0.15,
@@ -151,7 +153,8 @@ export const ARMIES: readonly Army[] = [
         10: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
         15: ['forestBoss3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'],
       }),
-    start: 2.01, // (was 1.86: retuned on the army road, WORLD-ROAD, to take as many tries as before)
+    start: 2.52, // (SPELLS-RETUNE: 2.01 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`; was 1.86 until WORLD-ROAD retuned it on the army road)
+    xpStart: 2.01,
     tierStart: 1.15,
     growth: 0.05,
     tierGrowth: 0.136,
@@ -168,8 +171,8 @@ export const ARMIES: readonly Army[] = [
     area: 'temple',
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
-    start: 4.85, // (was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 3.05 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
-    xpStart: 2.25,
+    start: 7, // (SPELLS-RETUNE: 4.85 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.25 raised with it so a run pays what it did; was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 3.05 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    xpStart: 3.25,
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
@@ -187,8 +190,8 @@ export const ARMIES: readonly Army[] = [
     area: 'highlands',
     lands: ['highlands', 'snow'],
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
-    start: 9.3, // (was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 4.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
-    xpStart: 2.8,
+    start: 12.2, // (SPELLS-RETUNE: 9.3 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.8 raised with it so a run pays what it did; was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 4.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    xpStart: 3.67,
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.124,
@@ -206,8 +209,8 @@ export const ARMIES: readonly Army[] = [
     area: 'volcano',
     lands: ['volcano', 'desert'],
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
-    start: 12.5, // (LATE-RETUNE, hearts: 10.2 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts, `docs/notes/late-retune.md`; 9.4 until two of a kind merged, MERGE-TWO, and made the late game easy, `docs/notes/late-retune.md`; was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
-    xpStart: 3.01,
+    start: 14.9, // (SPELLS-RETUNE: 12.5 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.01 raised with it so a run pays what it did; LATE-RETUNE, hearts: 10.2 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts, `docs/notes/late-retune.md`; 9.4 until two of a kind merged, MERGE-TWO, and made the late game easy, `docs/notes/late-retune.md`; was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
+    xpStart: 3.59,
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
@@ -225,8 +228,8 @@ export const ARMIES: readonly Army[] = [
     area: 'shrine',
     lands: ['shrine', 'forest'],
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
-    start: 14.2, // (LATE-RETUNE, hearts: 12.8 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.5 until two of a kind merged, MERGE-TWO, and its bosses stronger, `docs/notes/late-retune.md`; it stays under the Golem Forge's; was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
-    xpStart: 3.38,
+    start: 15, // (SPELLS-RETUNE: 14.2 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.38 raised with it so a run pays what it did; LATE-RETUNE, hearts: 12.8 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.5 until two of a kind merged, MERGE-TWO, and its bosses stronger, `docs/notes/late-retune.md`; it stays under the Golem Forge's; was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    xpStart: 3.57,
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
@@ -244,8 +247,8 @@ export const ARMIES: readonly Army[] = [
     area: 'forge',
     lands: ['forge', 'crystal'],
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
-    start: 14.6, // (LATE-RETUNE, hearts: 13.7 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.7 until two of a kind merged, MERGE-TWO, `docs/notes/late-retune.md`; was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
-    xpStart: 3.63,
+    start: 16.8, // (SPELLS-RETUNE: 14.6 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.63 raised with it so a run pays what it did; its bosses' fixed strength makes it move less with `start` than the others; LATE-RETUNE, hearts: 13.7 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.7 until two of a kind merged, MERGE-TWO, `docs/notes/late-retune.md`; was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    xpStart: 4.18,
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,

@@ -11,6 +11,7 @@ import { mixSeed, Rng } from '../../src/sim/rng';
 import { ALL_HEROES } from '../../src/sim/units';
 import { deploySpots, fieldBoost, pickTeam, play } from '../heroSweep';
 import { SCENARIOS } from '../status-fx/logs';
+import { botSpells } from '../autoplay';
 
 let h = 0x811c9dc5;
 const feed = (s: string) => {
@@ -69,11 +70,14 @@ const ALL: Record<string, () => void> = {
   heroes30Others: () => ALL_HEROES.filter((k) => !REWORKED.includes(k)).forEach((k, i) => heroFight(k, 900 + i, 30, true)),
 };
 
-/** Play every scenario and give each one's hash. */
+/** Play every scenario and give each one's hash. The greedy players cast no spells here (SPELLS-RETUNE turned the balance tools' spells on
+ *  by default; the fixture was recorded by a player that never cast, and this proof is about the fights, not the bot). */
 export function identityHashes(only?: readonly string[]): Record<string, string> {
   const out: Record<string, string> = {};
   const was = battleTap.fn;
+  const spells = botSpells.on;
   battleTap.fn = tap;
+  botSpells.on = false;
   try {
     for (const [name, run] of Object.entries(ALL)) {
       if (only && !only.includes(name)) continue;
@@ -83,6 +87,7 @@ export function identityHashes(only?: readonly string[]): Record<string, string>
     }
   } finally {
     battleTap.fn = was;
+    botSpells.on = spells;
   }
   return out;
 }

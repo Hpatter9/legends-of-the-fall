@@ -35,6 +35,7 @@ import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
+import { armyById } from '../src/sim/armies';
 
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
@@ -43,10 +44,25 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
 // with them on, the scenarios with no boss (every field fight, every hero alone, the tower's and the Calamity's early floors) still do, so
 // the dodge changes nothing where no boss has marked the ground. Only bosses, armyFoes, army, daily and stand move.)
+// (SPELLS-RETUNE, the owner's call to tune the armies for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, raised the
+// armies' Normal `start`. The `army` scenario plays the Undead Legion, the Infernal Host, the Golem Forge and the Yokai Night Parade on Normal:
+// their recorded strengths are put back for this proof, as the ailments' proof does, so no fixture moved. The greedy players cast no spells in
+// either proof, `identityHashes`.)
+const RECORDED_START: Record<string, number> = { infernal: 12.5, yokai: 14.2, golems: 14.6 };
+function recordedStrengths<T>(fn: () => T): T {
+  const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
+  for (const [id, v] of Object.entries(RECORDED_START)) (armyById(id) as unknown as { start: number }).start = v;
+  try {
+    return fn();
+  } finally {
+    for (const [id, v] of Object.entries(was)) (armyById(id) as unknown as { start: number }).start = v;
+  }
+}
+
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   try {
-    assert.deepEqual(identityHashes(), recorded);
+    assert.deepEqual(recordedStrengths(() => identityHashes()), recorded);
   } finally {
     BOSS_BIG.on = true;
   }
@@ -55,7 +71,7 @@ test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and w
 test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
   const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
   const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
-  assert.deepEqual(identityHashes(rest), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
-  const now = identityHashes(moved);
+  assert.deepEqual(recordedStrengths(() => identityHashes(rest)), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
+  const now = recordedStrengths(() => identityHashes(moved));
   for (const k of moved) assert.notEqual(now[k], (recorded as Record<string, string>)[k], `${k} has a boss whose signatures move it`);
 });
