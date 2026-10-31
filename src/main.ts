@@ -62,6 +62,7 @@ import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
+import { guestBoost, guestLevel, guestOf, splitGuestXp } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
@@ -601,6 +602,11 @@ class Game {
    *  is made again with it and the squad put back, so the choice counts in this fight (the deploy was made before the card opened). The camera,
    *  the intro and the cinematics are left alone. */
   private afterEvent(buffWas: string): void {
+    // (GUEST-HERO: a guest bought at the cart steps onto the board at once, beside the five)
+    if (this.b.phase === 'deploy' && this.run.squad.some((id) => !this.b.units.some((u) => u.side === 'hero' && u.tag === id))) {
+      this.placeSquad();
+      this.syncSprites();
+    }
     if (JSON.stringify(this.run.buff ?? null) === buffWas || this.b.phase !== 'deploy') return;
     this.b = startStage(this.run, this.duchessWish());
     this.placeSquad();
@@ -1645,7 +1651,8 @@ class Game {
     const h = u.side === 'hero' && u.tag !== undefined ? heroOf(this.run, u.tag) : undefined;
     const grade = u.grade ?? 1;
     const pic = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
-    this.info.open(infoOf(this.b, u, { meta: this.run.local ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic);
+    // (GUEST-HERO: a guest's card reads none of its kind's lasting talents or gear, and wears a GUEST tag)
+    this.info.open(infoOf(this.b, u, { meta: this.run.local || h?.guest ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic, !!h?.guest);
     play('tap');
   }
 
@@ -2133,10 +2140,19 @@ class Game {
     this.newBattle();
   }
 
+  /** The deploy line's count: "4 of 5 placed", and "+ guest" when the run's guest stands on the field too (GUEST-HERO). */
+  private placedWords(n: number): string {
+    const g = guestOf(this.run);
+    const gOn = !!g && this.b.units.some((u) => u.side === 'hero' && u.tag === g.id);
+    return `${n - (gOn ? 1 : 0)} of ${squadLimit(this.run)} placed${gOn ? ' + guest' : ''}`;
+  }
+
   /** A roster hero's boost for the fight: its grade, rank, level, gear and equipment, and the tower's wounds. */
   private boostFor(h: Owned): Boost {
     // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
     if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
+    // (GUEST-HERO: a guest fights at the party's level and rank, with none of its kind's lasting gear, talents or awakening)
+    if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
   }
 
@@ -2781,7 +2797,7 @@ class Game {
 
   /** A hero's level: its own in a run that levels its heroes, else its kind's lasting level. */
   private levelOf(h: Owned): number {
-    return this.run.local ? heroLevel(h) : levelOfKind(this.meta, h.kind);
+    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta) : levelOfKind(this.meta, h.kind);
   }
 
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
@@ -2799,7 +2815,7 @@ class Game {
       // (a hero with a match ready to merge glows: MERGE-TWO)
       // (QUEST-BATTLES: a quest's required hero wears a gold frame and a padlock, and cannot be recycled)
       const castHero = this.run.mode?.kind === 'quest' && this.run.mode.cast.includes(h.kind);
-      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}`;
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}${h.guest ? ' guest' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.textContent = '★'.repeat(h.grade);
@@ -2849,7 +2865,9 @@ class Game {
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
-      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h)) card.append(sell);
+      // (GUEST-HERO: a guest wears a GUEST badge, and is not the party's to recycle)
+      if (h.guest) card.append(Object.assign(document.createElement('span'), { className: 'guestMark', textContent: 'Guest', title: `${heroName(h.kind)} is a guest: a sixth hero for this run only` }));
+      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h) && !h.guest) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
@@ -3073,10 +3091,11 @@ class Game {
       // (a quest battle replayed for practice pays nothing, XP neither)
       const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
-      const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
+      const bench = own ? {} : benchXp(gains, run.roster.filter((h) => !h.guest).map((h) => h.kind));
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
       if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
-      const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
+      // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
+      const ups = own ? own.ups : gainXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench });
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
@@ -3156,7 +3175,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;

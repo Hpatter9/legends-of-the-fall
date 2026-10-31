@@ -25,10 +25,9 @@ import { canJoin, gradeBoost, heroOf, MAX_GRADE, summonCost, type Owned, type Ru
 const GUEST_SALT = 0x6e5e7;
 /** The share of the cart's visits that bring a guest (while the run has none). The cart comes at most once a run, so a guest is a find. */
 export const GUEST_CHANCE = 0.6;
-/** A guest costs this many sellswords (the next Hire's price and `HIRE_EXTRA`) ... */
-export const GUEST_HIRES = 2;
-/** ... and this much more a wave won, so a later guest, who fights the harder waves, is dearer. */
-export const GUEST_STAGE = 4;
+/** A guest costs this many sellswords (the next Hire's price and `HIRE_EXTRA`, which rises with the run's hires): dear, about a wave's
+ *  pay and a sellsword besides, but within reach of a party that kept a little gold back (`docs/notes/guest-hero.md` has the numbers). */
+export const GUEST_HIRES = 1.5;
 /** The sellsword's extra over the next Hire (as `market.ts`'s `HIRE_EXTRA`; kept here so this file stands alone). */
 const HIRE_EXTRA = 10;
 
@@ -47,8 +46,8 @@ export function guestKinds(run: Run): string[] {
   return ALL_HEROES.filter((k) => !!UNITS[k] && !UNITS[k].summon && !party.has(k));
 }
 
-/** A guest's price at the cart after wave `stage`: `GUEST_HIRES` sellswords and `GUEST_STAGE` a wave, to the nearest 5. */
-export const guestPrice = (run: Run, stage: number): number => Math.round((GUEST_HIRES * (summonCost(run) + HIRE_EXTRA) + GUEST_STAGE * stage) / 5) * 5;
+/** A guest's price at the cart: `GUEST_HIRES` sellswords, to the nearest 5 (`_stage` kept for the cart's other prices' shape). */
+export const guestPrice = (run: Run, _stage: number): number => Math.round((GUEST_HIRES * (summonCost(run) + HIRE_EXTRA)) / 5) * 5;
 
 /** The guest the cart offers after wave `stage`, or null: none when the run has one already, cannot meet one, or the roll says no. Its own
  *  side stream of the run's seed and the stage, so the cart's wares are the same with or without it. */

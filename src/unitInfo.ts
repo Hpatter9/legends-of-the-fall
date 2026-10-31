@@ -100,8 +100,8 @@ export class UnitInfoCard {
     return !this.sheet.hidden;
   }
 
-  /** Open the card for `v`, with `pic` (the unit's portrait canvas) at its head. */
-  open(v: UnitInfo, pic: HTMLElement): void {
+  /** Open the card for `v`, with `pic` (the unit's portrait canvas) at its head; `guest` marks the run's guest hero (GUEST-HERO). */
+  open(v: UnitInfo, pic: HTMLElement, guest = false): void {
     const card = el('div', `fsCard uiCard ${v.kind}`);
     card.setAttribute('role', 'dialog');
     card.setAttribute('aria-label', `${v.name}: info`);
@@ -119,6 +119,8 @@ export class UnitInfoCard {
     card.append(head);
     // (the badges: level, grade, awakening; then the health bar)
     const tags = el('div', 'uiTags');
+    // (GUEST-HERO: the cart's guest, a sixth hero for this run only)
+    if (guest) tags.append(el('span', 'guestTag', 'Guest · this run only'));
     if (v.level !== undefined) tags.append(el('span', '', `Lv ${v.level}`));
     if (v.grade !== undefined) tags.append(el('span', 'star', '★'.repeat(v.grade)));
     if (v.awaken) tags.append(el('span', 'awake', `Awakened ${v.awaken}`));

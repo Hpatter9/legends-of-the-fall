@@ -6,6 +6,7 @@
 import type { Meta } from './meta';
 import { awaken, awakenPlan } from './awaken';
 import { nextRank, rankUp } from './rankUp';
+import { canLearn, pointsFree, TREES } from './talents';
 
 export interface Upgrade {
   kind: string;
@@ -37,19 +38,35 @@ export function upgradeOf(m: Meta, kind: string): Upgrade | null {
 /** Whether a hero kind has a step it can take right now (the tavern's gold chevron). */
 export const upgradeReady = (m: Meta, kind: string): boolean => upgradeOf(m, kind)?.can === true;
 
+/** TALENT-ARROWS (`docs/notes/guest-hero.md`): the talent points a hero has to spend now: its free points, when they can learn a node
+ *  of its tree (a point that buys nothing yet, say one short of the next row's cost, is not marked); else 0. Talents are choices, so
+ *  "Upgrade all" never spends them: the mark leads to the hero's tree. */
+export function talentPointsReady(m: Meta, kind: string): number {
+  if (!m.unlocked.includes(kind) || !TREES[kind]) return 0;
+  const free = pointsFree(m, kind);
+  return free > 0 && TREES[kind].nodes.some((n) => canLearn(m, kind, n.id)) ? free : 0;
+}
+
+/** Whether a hero wears the gold chevron: a rank or an awakening it can take now, or talent points to spend. */
+export const markReady = (m: Meta, kind: string): boolean => upgradeReady(m, kind) || talentPointsReady(m, kind) > 0;
+
+/** The owned heroes with talent points to spend, in the order of `kinds` (the Upgrades list's talent rows). */
+export const talentList = (m: Meta, kinds: readonly string[]): { kind: string; points: number }[] =>
+  kinds.map((kind) => ({ kind, points: talentPointsReady(m, kind) })).filter((t) => t.points > 0);
+
 /** The owned heroes with a step near, in the order of `kinds`, the ones that can be taken now first. */
 export function upgradeList(m: Meta, kinds: readonly string[]): Upgrade[] {
   const all = kinds.map((k) => upgradeOf(m, k)).filter((u): u is Upgrade => !!u);
   return [...all.filter((u) => u.can), ...all.filter((u) => !u.can)];
 }
 
-/** The next hero after `current` (in the order of `kinds`, round from the end to the start) with a step ready; null when no
- *  other hero has one. The hero sheet's "Next hero with an upgrade" hop. */
+/** The next hero after `current` (in the order of `kinds`, round from the end to the start) with a step ready or talent points to spend
+ *  (`markReady`); null when no other hero has one. The hero sheet's "Next upgrade" hop. */
 export function nextUpgradeKind(m: Meta, kinds: readonly string[], current: string): string | null {
   const at = kinds.indexOf(current);
   for (let i = 1; i <= kinds.length; i++) {
     const k = kinds[(at + i + kinds.length) % kinds.length];
-    if (k !== current && upgradeReady(m, k)) return k;
+    if (k !== current && markReady(m, k)) return k;
   }
   return null;
 }

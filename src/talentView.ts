@@ -59,8 +59,8 @@ export function nodeTile(n: TalentNode, state: NodeState): HTMLButtonElement {
   return tile;
 }
 
-/** The panel for a hero kind. `changed` is told after anything is learned, bought or respecced. */
-export function drawTalents(meta: Meta, kind: string, changed: () => void = () => {}): HTMLElement {
+/** The panel for a hero kind. `changed` is told after anything is learned, bought or respecced; `open` shows the tree at once. */
+export function drawTalents(meta: Meta, kind: string, changed: () => void = () => {}, open = false): HTMLElement {
   const panel = el('div', 'tPanel');
   const tree = TREES[kind];
   const commit = () => {
@@ -226,6 +226,8 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     panel.append(back);
   };
 
-  overview();
+  // (TALENT-ARROWS: the Upgrades list's "Spend" opens the tree itself)
+  if (open) view();
+  else overview();
   return panel;
 }
