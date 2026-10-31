@@ -156,6 +156,7 @@ const writeIndexHtml = () => {
             readFileSync('src/campPlaces.css', 'utf8') +
             readFileSync('src/daily.css', 'utf8') +
             readFileSync('src/cinematics.css', 'utf8') +
+            readFileSync('src/reveal.css', 'utf8') +
             readFileSync('src/stone.css', 'utf8') +
             readFileSync('src/levels.css', 'utf8') +
             readFileSync('src/battleUi.css', 'utf8') +
@@ -168,7 +169,7 @@ const writeIndexHtml = () => {
             readFileSync('src/eidolonChains.css', 'utf8') +
             readFileSync('src/stall.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );

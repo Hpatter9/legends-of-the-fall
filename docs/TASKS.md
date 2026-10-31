@@ -21,6 +21,25 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/{stall,books,bookData,wear}.ts`, `src/{stallView,skillBookView,bookArt}.ts`, `src/stall.css`, `src/art/shop/`, `art-source/books-shop/`, `tools/shop/`, `test/{stall,books,wear}.test.ts`; hooks in `equipment.ts`, `meta.ts`, `talents.ts`, `battle.ts`, `heroKits.ts`, `armyStars.ts`, `chestShop.ts`, `castle.ts`, `waveCard.ts`, `main.ts`, `standView.ts`, `home.ts`, `camp.ts`, `overlookLayout.ts`, `campSpots.ts`, `equipView.ts`, `menuHeroes.ts`, `party.ts`, `shopView.ts`, `chestStash.ts`, `castleSpots.ts`, `gearIcons.ts`, `build.mjs`, `CREDITS.md`. Optional save fields; no version change.
 - **Status:** ready for review; real gear in runs, the caravan and the Gloaming Dealer, the lost techniques and the books' balance pass left for later. [Note](notes/shop-books-gear.md); screenshots `samples/shop-*.png`.
 
+### JRPG-RECAP — A JRPG results screen at a run's end; the simple card between waves
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/jrpg-recap`, `/home/user/lotf-recap` (from main 0.273.0).
+- **Goal:** the owner's ask: "A more typical JRPG end-of-fight recap. With a level up showing what stats went up and how much, and so on. Redo the recap entirely."
+- **Scope:** new `src/sim/jrpgRecap.ts`, `src/jrpgRecapView.ts`, `src/jrpgResults.ts`, `src/jrpgRecap.css`, `test/jrpg-recap.test.ts`, `tools/jrpg-recap/shots.mjs`; `src/sim/runRecap.ts` (optional `xpAt`, `noteXpStart`); hooks in `src/main.ts` (settle, refresh, the result's tap, `stepPassing`), `src/index.html` (`#jrHead`, `#jrBody`), `src/recapView.ts` (the run recap's top), `src/standView.ts` (the Last Stand's end card), `src/waveCardView.ts` (`gainIcon` exported), `build.mjs` (the stylesheet). No save version or version change.
+- **Status:** ready for review. [Note](notes/jrpg-recap.md); screenshots `samples/jrpg-recap-*.png`. The owner's answer: between waves stays the simple short card (now with quest lines), leaving by itself; the results screen is only at a run's end (the end recap, a spire/Calamity/quest run's last fight, the Last Stand's end card).
+
+### REVEAL-VAULT — A film's end card for what it revealed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematic-reveal-vault`, `/home/user/lotf-reveal` (from main 0.273.0).
+- **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
+- **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
+### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).
+- **Goal:** the owner's "make the main room in the Calamity more alive ... that rift is the middle one they walk into, in a bright flash that zooms in and fades back in to the next battleground", and the walk out of the portal after a win with the cards rising one by one.
+- **Scope:** new `src/hubMotion.ts`, `test/calamity-hub.test.ts`, `tools/calamity/hub-shots.mjs`; `src/sanctuaryView.ts`, `src/sanctuary.css`. No sim change.
+- **Status:** ready for review. [Note](notes/calamity-hub.md); screenshots `samples/calhub-*.png`.
 ### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-rankup`, `/home/user/lotf-rankup` (from main 0.273.0).
