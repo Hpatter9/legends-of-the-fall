@@ -42,6 +42,8 @@ let awakened: ((kind: string, step: number) => void) | null = null;
 export const onAwakened = (f: (kind: string, step: number) => void): void => {
   awakened = f;
 };
+/** (TAVERN-RANKUP) an awakening taken elsewhere (the tavern's quick Upgrades list) tells the page the same way. */
+export const tellAwakened = (kind: string, step: number): void => awakened?.(kind, step);
 
 /** The panel for a hero kind. `changed` is told after a step is taken (so the sheet can draw again, with the show). */
 export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => void): HTMLElement {

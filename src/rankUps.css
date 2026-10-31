@@ -1,0 +1,68 @@
+/* TAVERN-RANKUP: the gold chevron on a hero with an upgrade ready, the tavern's Upgrades button, the quick Upgrades list
+   (`rankUpList.ts`) and the hero sheet's "Next upgrade" hop. The chevron bobs gently and never blinks; reduced motion holds it still. */
+
+.upMark { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 18px; height: 18px; box-sizing: border-box; background: linear-gradient(#f6d167 0 48%, #c08a10 52%); border: 2px solid #2a1806; border-radius: 6px; box-shadow: 0 0 6px rgb(246 209 103 / 0.55); animation: upBob 1.8s ease-in-out infinite; }
+.upMark svg { width: 12px; height: 12px; overflow: visible; }
+.upMark path { fill: none; stroke: #2a1806; stroke-width: 2.2; stroke-linecap: square; stroke-linejoin: miter; }
+@keyframes upBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.upCorner { position: absolute; z-index: 4; top: 4px; left: 4px; pointer-events: none; }
+.upInline { margin-right: 6px; vertical-align: middle; }
+.rankBadge { display: inline-flex; align-items: center; }
+/* (the roster's cards: by the picture's top left, across from the last-viewed seal) */
+.heroRoster .hcard .upCorner { top: 45px; left: 8px; }
+/* (the party's cards: top left, the "i" being top right; a chosen card's flag moves along for it) */
+#party .ptCard .ptUp { top: 5px; left: 6px; }
+#party .ptCard:has(.ptUp) .ptPickedFlag { left: 28px; }
+/* (the sheet's strip: the corner of each little portrait) */
+.heroStrip button { position: relative; }
+.heroStrip .upCorner { top: 2px; left: 2px; width: 16px; height: 16px; }
+.heroStrip .upCorner svg { width: 10px; height: 10px; }
+
+/* The tavern's Upgrades button: in the column with Quests, Trophies and All heroes, with its count */
+.tvUpgrades { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 3px 10px 4px 8px; font: 400 12px var(--body); color: var(--gold-hi); background: rgb(var(--s1-rgb) / 0.88); border: 2px solid var(--gold-hi); border-radius: 8px; box-shadow: 0 2px 4px rgb(var(--black-rgb) / 0.4); }
+.tvUpgrades[hidden] { display: none; }
+.tvUpgrades .tvUpMark { width: 18px; height: 18px; }
+.tvUpN { min-width: 18px; padding: 0 4px; font: 700 12px/18px var(--body); color: #2a1806; background: var(--gold-hi); border-radius: 9px; text-align: center; }
+
+/* The hero sheet's hop to the next hero with an upgrade */
+.heroNextUp { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin-left: auto; padding: 0 10px 0 6px; font: 400 12px var(--body); color: var(--gold-hi); background: rgb(var(--s1-rgb) / 0.9); border: 2px solid var(--gold-hi); border-radius: 8px; white-space: nowrap; }
+.heroNextUp b { font-size: 16px; line-height: 1; }
+.heroToolbar:has(.heroNextUp) > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 370px) { .heroToolbar:has(.heroNextUp) > span { display: none; } }
+
+/* The quick Upgrades list */
+.ulBack { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px); background: rgb(var(--s0-rgb) / 0.8); animation: fade 0.15s ease-out; }
+.ulCard { display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; width: min(100%, 400px); max-height: 100%; padding: 12px; background: var(--s3); border: 2px solid var(--gold-hi); box-shadow: inset 0 0 0 2px var(--s0), 0 0 0 2px var(--s0); }
+.ulHead { display: flex; align-items: center; gap: 10px; }
+.ulHead h3 { margin: 0; font: 400 13px var(--display); color: var(--gold-hi); }
+.ulCount { flex: 1; font: 400 12px var(--body); color: var(--dim); }
+.ulClose { width: 40px; min-height: 40px; padding: 0; font: 400 22px/1 var(--body); }
+.ulRows { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.ulRow { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 10px; padding: 6px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s5); }
+.ulRow.done { opacity: 0.72; border-color: var(--s4, #3a3a3a); }
+.ulRow.short .ulCost { color: var(--dim); }
+.ulPic { position: relative; width: 56px; height: 56px; min-height: 0; padding: 0; overflow: hidden; background: radial-gradient(var(--s5), var(--s2)); border: 2px solid var(--gold-lo, #9e7938); }
+.ulPic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+.ulText { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ulText b { font: 400 13px var(--body); color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ulStars { font: 400 11px var(--body); color: var(--gold-hi); letter-spacing: 0.04em; }
+.ulWhat { font: 400 12px var(--body); color: var(--g4); }
+.ulCost { display: flex; align-items: center; gap: 4px; font: 400 11px/1.3 var(--body); color: var(--dim); }
+.ulOre { width: 14px; height: 14px; image-rendering: pixelated; }
+.ulGo { min-width: 84px; min-height: 44px; padding: 0 10px; font-size: 12px; }
+.ulGo:not(:disabled) { color: var(--btn-ink); background: linear-gradient(var(--e9), var(--e6)); border: 2px solid var(--gold-hi); }
+.ulFoot { display: flex; flex-direction: column; gap: 8px; }
+.ulAll { min-height: 48px; font-size: 12px; }
+.ulAsk { display: flex; flex-direction: column; gap: 8px; padding: 10px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--gold-hi); }
+.ulAsk[hidden] { display: none; }
+.ulAsk p { margin: 0; font: 400 12px/1.5 var(--body); color: var(--white); text-align: center; }
+.ulAskBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ulAskBtns button { min-height: 44px; font-size: 12px; }
+.ulNone { margin: 0; font: 400 12px/1.6 var(--body); color: var(--dim); text-align: center; }
+/* (the sheet's flourish played short over a row's picture: the same rings and word, quicker) */
+.ulPic .awakeShow { animation-duration: 0.5s; }
+.ulPic .awakeShow .ring { animation-duration: 0.7s; }
+.ulPic .awakeShow .ring.r2 { animation-delay: 0.12s; }
+.ulPic .awakeShow b { bottom: 2px; font-size: 10px; animation-duration: 1.1s; }
+
+@media (prefers-reduced-motion: reduce) { .upMark { animation: none; } }
