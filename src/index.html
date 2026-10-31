@@ -556,6 +556,8 @@
   /* events, relics and gear */
   #relics { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
   #relics[hidden] { display: none; }
+  /* (RELICS-PREP: the run's relics are read on the wave-prep screen only; the fight and its result card leave them out) */
+  body:not([data-phase='deploy']) #relics { display: none; }
   #relics .relic { padding: 2px; border-radius: 6px; line-height: 0; }
   #relics .relic.picked { border-color: var(--gold); box-shadow: 0 0 8px var(--gold); }
   #relics .hint { flex: 1 1 100%; font-size: 11px; color: var(--dim); }
