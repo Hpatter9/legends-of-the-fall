@@ -157,7 +157,7 @@
 .ebLayer.el-ice.b-circle .ebRoom { filter: brightness(0.5) saturate(0.5) sepia(0.35) hue-rotate(170deg); }
 .ebLayer.el-ice .ebEmbers { inset: 8vh 0 20%; }
 .ebLayer.el-ice .ebEmbers i { top: 0; bottom: auto; width: 5px; height: 5px; background: #f2fbff; box-shadow: 0 0 6px var(--glow); animation: ebSnow 3.6s linear var(--d) infinite; }
-@keyframes ebSnow { from { translate: 0 0; opacity: 0; } 15% { opacity: 0.95; } to { translate: -18px 52vh; opacity: 0; } }
+@keyframes ebSnow { from { translate: 0 0; scale: 0.3; } 15% { scale: 1; } to { translate: -18px 52vh; scale: 0; } }
 .ebLayer.el-ice .ebName b { color: #eaf9ff; text-shadow: 0 0 18px var(--glow), 0 3px 0 #06202a; }
 .ebLayer.el-ice .ebSeal b { color: #06202a; background: linear-gradient(#f2fbff, #8fcfe8); border-color: #06202a; box-shadow: 0 0 0 2px #cdeeff, 0 0 24px var(--glow); }
 .ebLayer.el-ice .ebSeal small { color: #d8f3ff; }

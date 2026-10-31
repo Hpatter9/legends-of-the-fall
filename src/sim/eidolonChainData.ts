@@ -167,10 +167,13 @@ const UNDER_THE_MERE: Scene = {
   shots: [
     { look: 'snow', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The northern meres', lines: [tell('Far to the north, a lake lies frozen like glass, a mile across. Under it, something has turned over in its sleep.')] },
     { look: 'temple', cam: wide(260, 200), caption: 'The Summoning Sanctum', lines: [tell('Snow on the Sanctum steps, in spring. A hunter has walked down from the north, frost on the hood and two fingers short.')] },
-    { cam: close(['a', 'b']), lines: [say('hunter', 'You called the fire-dog home. Whole north heard it. Now call something else.'), say('a', 'Something bigger than a dog, I take it.')] },
-    { cam: close('a'), lines: [say('hunter', 'The pack ran south this winter. Not hunting. Running. From the lake. From under the ice.')] },
+    // (the hunter speaks over wide shots: their face fills the picture, so it never sits over a hero's close-up)
+    { cam: wide(250, 200), lines: [say('hunter', 'You called the fire-dog home. Whole north heard it. Now call something else.')] },
+    { cam: close(['a', 'b']), lines: [say('a', 'Something bigger than a dog, I take it.')] },
+    { cam: wide(250, 200), lines: [say('hunter', 'The pack ran south this winter. Not hunting. Running. From the lake. From under the ice.')] },
     { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'Nivra. The Rime Wyrm. She lay under the northern meres and kept the passes shut, winter after winter, for the first kings.'), say('summoner', 'When the pacts broke she went down into the cold to sleep it off. Three hundred years is a long nap, even for a wyrm.')] },
-    { cam: close('b'), lines: [say('b', 'And if she wakes up cross?'), say('hunter', 'Then be her friend first. Quickly.')] },
+    { cam: close('b'), lines: [say('b', 'And if she wakes up cross?')] },
+    { cam: wide(250, 200), lines: [say('hunter', 'Then be her friend first. Quickly.')] },
     { cam: wide(260, 200), lines: [say('summoner', 'A scale she has shed, the pearl of her cold heart, and the breath she holds. Bring me those, and I will bind her.'), tell("Nivra's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
   ],
 };
