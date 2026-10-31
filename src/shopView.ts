@@ -51,21 +51,59 @@ const TOME_LINE: Record<ShopChest['kind'], string> = {
   gold: 'A medium and two small XP tomes, and perhaps a large',
 };
 
+/** Put the chest shop's style on the page once (the stall's Chests tab uses its cards too). */
+export function chestShopStyle(): void {
+  if (document.getElementById('shopStyle')) return;
+  const st = el('style');
+  st.id = 'shopStyle';
+  st.textContent = CSS;
+  document.head.append(st);
+}
+
+/** The chest shop's note and its cards (SHOP-BOOKS-GEAR: Hester's Stall shows them on its Chests tab). `changed` runs after a sale,
+ *  before the chest opens; `redraw` draws the cards again. */
+export function chestShopCards(m: Meta, changed: () => void, redraw: () => void): HTMLElement[] {
+  chestShopStyle();
+  const day = todayKey();
+  const note = el('p', 'shopNote', `Chests hold summoning stones, gear and XP tomes. Using a stone gives one hero shard, and 1 in ${LUCKY_ODDS} brings a whole new hero. The shop restocks each day, and prices rise with the heroes you own.`);
+  const list = el('div', 'shopList');
+  for (const c of SHOP) {
+    const left = stockLeft(m, c.kind, day);
+    const price = shopPrice(m, c.kind);
+    const card = el('div', `shopCard ${c.kind}`);
+    card.append(chestPicture(c.kind, 2).root);
+    const text = el('div');
+    text.append(el('h3', '', c.name), el('p', '', `${c.stones} summoning stones`), el('p', '', GEAR_LINE[c.kind]), el('p', '', TOME_LINE[c.kind]), el('p', 'shopLeft', `${left} of ${c.stock} left today`));
+    card.append(text);
+    const buy = el('button', 'shopBuy');
+    buy.append(icon(ICONS.crowns, ''), `${price}`);
+    if (left === 0) buy.append(el('small', '', ' · sold out today'));
+    else if (m.crowns < price) buy.append(el('small', '', ` · need ${price - m.crowns} more`));
+    buy.disabled = !canBuy(m, c.kind, day);
+    buy.addEventListener('click', () => {
+      const loot = buyChest(m, c.kind, day);
+      if (!loot) return;
+      saveMeta(m);
+      play('summon');
+      changed();
+      redraw();
+      showChest(loot, () => changed());
+    });
+    card.append(buy);
+    list.append(card);
+  }
+  return [note, list];
+}
+
 /** Open the chest shop over the page. `onChange` runs after every sale (and when the shop is closed), so the page behind can redraw its crowns and stones. */
 export function openShop(m: Meta, onChange: () => void): void {
-  if (!document.getElementById('shopStyle')) {
-    const st = el('style');
-    st.id = 'shopStyle';
-    st.textContent = CSS;
-    document.head.append(st);
-  }
+  chestShopStyle();
   document.getElementById('shop')?.remove();
   const root = el('div', 'shopView');
   root.id = 'shop';
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-label', 'Chest shop');
   const draw = (): void => {
-    const day = todayKey();
     const head = el('div', 'shopHead');
     head.append(el('h2', '', 'Chest Shop'));
     const purse = el('div', 'shopPurse');
@@ -75,39 +113,12 @@ export function openShop(m: Meta, onChange: () => void): void {
     stones.append(icon(ICONS.stones, ''), `${stonesOf(m)} stones`);
     purse.append(crowns, stones);
     head.append(purse);
-    const note = el('p', 'shopNote', `Chests hold summoning stones, gear and XP tomes. Using a stone gives one hero shard, and 1 in ${LUCKY_ODDS} brings a whole new hero. The shop restocks each day, and prices rise with the heroes you own.`);
-    const list = el('div', 'shopList');
-    for (const c of SHOP) {
-      const left = stockLeft(m, c.kind, day);
-      const price = shopPrice(m, c.kind);
-      const card = el('div', `shopCard ${c.kind}`);
-      card.append(chestPicture(c.kind, 2).root);
-      const text = el('div');
-      text.append(el('h3', '', c.name), el('p', '', `${c.stones} summoning stones`), el('p', '', GEAR_LINE[c.kind]), el('p', '', TOME_LINE[c.kind]), el('p', 'shopLeft', `${left} of ${c.stock} left today`));
-      card.append(text);
-      const buy = el('button', 'shopBuy');
-      buy.append(icon(ICONS.crowns, ''), `${price}`);
-      if (left === 0) buy.append(el('small', '', ' · sold out today'));
-      else if (m.crowns < price) buy.append(el('small', '', ` · need ${price - m.crowns} more`));
-      buy.disabled = !canBuy(m, c.kind, day);
-      buy.addEventListener('click', () => {
-        const loot = buyChest(m, c.kind, day);
-        if (!loot) return;
-        saveMeta(m);
-        play('summon');
-        onChange();
-        draw();
-        showChest(loot, () => onChange());
-      });
-      card.append(buy);
-      list.append(card);
-    }
     const close = el('button', 'shopClose', 'Back');
     close.addEventListener('click', () => {
       root.remove();
       onChange();
     });
-    root.replaceChildren(head, note, list, close);
+    root.replaceChildren(head, ...chestShopCards(m, onChange, draw), close);
   };
   draw();
   document.body.append(root);

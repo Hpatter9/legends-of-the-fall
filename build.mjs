@@ -123,6 +123,12 @@ for (const f of readdirSync('src/art/gear').filter((f) => f.endsWith('.webp'))) 
   copyFileSync(`src/art/gear/${f}`, `${out}/gear/${f}`);
   GEAR_ART_FILES.push(`gear/${f}`);
 }
+// (SHOP-BOOKS-GEAR: Hester's Stall and the skill books' paintings (tools/shop/import-shop-art.py), by URL and kept for offline play)
+mkdirSync(`${out}/shop`, { recursive: true });
+for (const f of readdirSync('src/art/shop').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/shop/${f}`, `${out}/shop/${f}`);
+  GEAR_ART_FILES.push(`shop/${f}`);
+}
 // (the loading illustration is embedded in the cached page, so it appears before game.js and works offline)
 const dataUrl = (f) => `data:image/${f.endsWith('.webp') ? 'webp' : 'png'};base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KEEP__: 'src/art/loading/last-keep.webp' };
@@ -161,7 +167,8 @@ const writeIndexHtml = () => {
             readFileSync('src/ores.css', 'utf8') +
             readFileSync('src/quests.css', 'utf8') +
             readFileSync('src/eidolons.css', 'utf8') +
-            readFileSync('src/eidolonChains.css', 'utf8'),
+            readFileSync('src/eidolonChains.css', 'utf8') +
+            readFileSync('src/stall.css', 'utf8'),
         )
         .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8'))
         .replace('__VERSION__', version),

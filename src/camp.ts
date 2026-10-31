@@ -115,6 +115,8 @@ export class CampScene {
   readonly dailySlot = el('div', 'cpSlot');
   readonly towerSlot = el('div', 'cpSlot');
   readonly calamitySlot = el('div', 'cpSlot cpPortalSlot');
+  /** Hester's Stall on the ledge (SHOP-BOOKS-GEAR): its picture and plate, filled by the home page. */
+  readonly stallSlot = el('div', 'cpSlot cpStallSlot');
   private heading = el('div', 'cpHeading');
   private armyRigs = new Map<string, Small>();
   private bossRig: Small | null = null;
@@ -157,7 +159,7 @@ export class CampScene {
     this.heading.append(el('span', 'cpEyebrow', 'THE WAR COUNCIL'), el('h2', '', 'Battle Overlook'), el('p', '', 'Scout the approaching army'));
     this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Calamity citadel on the horizon.');
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
+    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.stallSlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -299,6 +301,8 @@ export class CampScene {
     box(this.dailySlot, camp.places.daily.box);
     box(this.towerSlot, camp.places.tower.box);
     box(this.calamitySlot, camp.places.calamity.box);
+    if (camp.places.stall) box(this.stallSlot, camp.places.stall.box);
+    this.stallSlot.hidden = !camp.places.stall;
     for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', '44px');
     this.layPlate();
   }
