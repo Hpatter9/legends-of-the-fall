@@ -775,6 +775,28 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.clang(t + 0.7, 2093, 1.8, 0.1);
     s.hiss(t + 0.7, 0.9, 6500, 'highpass', 0.06);
   },
+  // the cinematics (CINE-001): a voice's blip is one soft tick in its register, a smash cut lands as a low hit, a whoosh sweeps
+  // through a flash, and a swell rises under a reveal
+  blipQuill: (s, t) => s.click(t, 0.05, 2400),
+  blipHero: (s, t) => s.note(t, 520, 0.045, 0.05, 'triangle', 500),
+  blipBoss: (s, t) => {
+    s.note(t, 92, 0.09, 0.09, 'sawtooth', 80);
+    s.hiss(t, 0.06, 260, 'lowpass', 0.04);
+  },
+  blipBeast: (s, t) => s.note(t, 160, 0.08, 0.07, 'square', 120),
+  blipKing: (s, t) => s.note(t, 330, 0.06, 0.05, 'triangle', 320),
+  blipGoat: (s, t) => s.note(t, 700, 0.1, 0.04, 'triangle', 620),
+  cineHit: (s, t) => {
+    s.thump(t, 70, 0.7, 0.5, 26);
+    s.hiss(t, 0.35, 420, 'lowpass', 0.25, 90);
+    s.clang(t + 0.01, 196, 0.8, 0.06);
+  },
+  cineWhoosh: (s, t) => s.hiss(t, 0.4, 600, 'bandpass', 0.18, 4200, 2),
+  cineSwell: (s, t) => {
+    s.pad(t, 147, 2.4, 0.12, 'sawtooth', 900, 220);
+    s.pad(t, 220, 2.4, 0.08, 'triangle', 1400, 330);
+    s.hiss(t + 0.6, 1.8, 900, 'bandpass', 0.06, 5200);
+  },
   eliteSting: (s, t) => {
     s.thump(t, 55, 0.95, 0.45, 24);
     s.note(t, 82, 1, 0.28, 'sawtooth', 60);
