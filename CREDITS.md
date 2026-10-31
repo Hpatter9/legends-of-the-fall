@@ -36,6 +36,7 @@ the raw files), copied one sprite at a time from the private assets repository (
 - **Floor twist icons** (`src/art/twists/`) and the four legendary relics' icons (`src/art/items/sun_crown.png`, `dragon_heart.png`, `storm_ring.png`, `void_lens.png`): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Effect0, Potion, Rock, Money, Boot, ShortWep, Hat, Shield, Amulet, Ring), by `tools/twist-icons.py` (CC-BY 4.0).
 - **The Calamity relic sets' icons** (`src/art/items/`: Thunder Horn, Cloud Treads, Thunder Pendant, Tempest Ring, Granite Heart, Moss Amulet, Stone Gauntlet, Earthen Bell, Blood Vial, Bloodstone Ring, Reaver Helm, Ruby Locket, Star Chart, Comet Shard, Moon Lantern, Astral Circlet, Coin Hoard, Gilded Ingot, Jewelled Crown, Gold Band, Rift Shard, Void Sigil, Doom Helm, Last Light): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Items: Music, Boot, Amulet, Ring, Glove, Potion, Hat, Book, Money), by `tools/relic-icons.py` (CC-BY 4.0).
 - **Equipment icons** (`src/art/equip/`): 16x16 tiles cut one tile each from the same **DawnLike** tileset by DragonDePlatino (Items: LongWep, ShortWep, Ammo, Wand, Book, Scroll, Armor, Amulet, Ring, Boot, Glove, Hat, Music, Potion, Rock, Tool), by `tools/equip-icons.py`, for the hero equipment (CC-BY 4.0).
+- **Painted equipment icons** (`src/art/gear/`, from `art-source/gear/`): original art made for this game with AI image generation: a standard and a Mythic painting of each of the 60 equipment bases, the four grade glows and the wear and selling pieces (the second painted set), plus the five grade frames and five wear pieces kept from the first set. Cleaned of stray edge bits and packed into atlases by `tools/gear/import-gear-icons.py` (`docs/notes/gear-icons.md`). The DawnLike tiles above are kept as the fallback for a base with no painting, and for the talent icons.
 - **XP tome icons** (`src/art/ui/tome-small.png`, `tome-medium.png`, `tome-large.png`): three 16x16 tiles cut one each from the same **DawnLike** tileset by DragonDePlatino (Items: Book), by `tools/tome-icons.py` (CC-BY 4.0).
 - **Army chests** (`src/art/ui/chest-bronze.png`, `chest-silver.png`, `chest-gold.png`): the chest (closed and open frames) from the Craftpix **Free Platformer Game Tileset Pixel Art** pack (`chest.png`), cropped, with its iron bands tinted bronze, silver and gold by a script (hue shifts only). The **daily chest** (`src/art/ui/chest-daily.png`) is the silver chest with its wood hue-shifted to violet. The army scenes on the Armies screen use the foes' existing sprite sheets and the land backdrops, with no new art.
 
@@ -206,6 +207,18 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   (`src/art/items/star_chart.png`, `rift_shard.png`); the heroes and the ruler show their own painted portraits.
 - **The quest board** (`board.png`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer** ("Quest Board", craftpix.net free
   licence), trimmed and scaled to 64 px across with hard alpha.
+
+## The tavern life's placeholder props (`src/art/tavern/life/pack-*.png`, copied by `tools/tavern-life/cut.py`; TAVERN-LIFE)
+
+- **Notes, z's, steam, embers, sparks, a "!" and a bead of sweat** over the heroes at their activities (`pack-note-gold`, `pack-note-pink`,
+  `pack-zzz`, `pack-steam`, `pack-ember`, `pack-spark`, `pack-zap`, `pack-star`, `pack-bang`, `pack-sweat`): ten 16px `sheet-16.png` strips
+  (six frames each), copied unchanged from the **5000 Pixel Effects** pack by blueberry (`pixel-effects/sprites/<effect>/`: gold-note,
+  pink-note, white-zzz, white-smoke-x, fire-sparkle-x, gold-sparkle-x, lightning-sparkle-x, star-sparkle-x, white-exclaim, white-sweat).
+  The pack's licence allows use in games; credit appreciated (https://blueberry-assets.itch.io).
+- **A book, shepherd's pipes and a joint of meat** in the heroes' hands (`pack-book`, `pack-pipes`, `pack-meat`): single
+  16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Book, Music, Flesh; CC-BY 4.0).
+- The tankard, cup, cards, dice, coin, dart, clasped hands and Gwen's cloth are a few code-drawn pixels each (no pack has them at this
+  size) until the painted props of `docs/notes/tavern-art-prompt.md` land.
 
 ## Art generated with PixelLab
 
