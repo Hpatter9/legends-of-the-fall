@@ -11,6 +11,7 @@ import { CHARGE_MAX, mendUnit } from './abilities';
 import { addUnit, apart, defOf, hurt, TICK_MS, unitAt, type Battle, type BattleEvent, type Unit } from './battle';
 import { spellBudget, type Castle } from './castle';
 import { AILMENT_SWITCH, burnFor, chillFor, cleanse, curseFor, freezeFor, poisonFor, shockFor, tagged, unfear, ward } from './ailments';
+import { relicMana, relicSpeed } from './relicFight';
 
 export type SpellId =
   | 'heal' | 'meteor' | 'haste' | 'shield' | 'chain' | 'frost' | 'rally' | 'quake' | 'smite' | 'resurrect' | 'poison'
@@ -172,11 +173,11 @@ export const isHasted = (b: Battle, x: Unit) => x.hasteUntil !== undefined && x.
 /** Whether a fighter is slowed (Frost Nova) now. */
 export const isSlowed = (b: Battle, x: Unit) => x.slowUntil !== undefined && x.slowUntil > b.t;
 /** How much faster a fighter acts now (1 when neither hasted nor slowed): it moves and swings at this speed. */
-export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? b.traits?.speed ?? 1 : b.foeSpeed ?? 1) * (b.twist?.pace ?? 1);
+export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? (b.traits?.speed ?? 1) * relicSpeed(b, x) : b.foeSpeed ?? 1) * (b.twist?.pace ?? 1);
 
 /** Mana gain for one tick. */
 export function fillMana(b: Battle): void {
-  b.spells.mana = Math.min(MANA_MAX, Math.round((b.spells.mana + (TICK_MS * MANA_PER_SEC * b.spells.rate) / 1000) * 1000) / 1000);
+  b.spells.mana = Math.min(MANA_MAX, Math.round((b.spells.mana + (TICK_MS * MANA_PER_SEC * b.spells.rate * relicMana(b)) / 1000) * 1000) / 1000);
 }
 
 /** Milliseconds until a spell may be cast again (0 when ready). */

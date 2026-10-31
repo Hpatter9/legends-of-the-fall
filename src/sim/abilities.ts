@@ -27,6 +27,7 @@ import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
+import { relicCharge, relicDodge, relicTaken } from './relicFight';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -1750,7 +1751,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const blow = src === 'blow';
   const kit = kitOf(to);
   const team = to.side === 'hero' ? b.traits : undefined;
-  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0);
+  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0) + relicDodge(b, to);
   if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
     if (b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) {
@@ -1783,6 +1784,8 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (to.brittleUntil !== undefined && to.brittleUntil > b.t) dmg *= BRITTLE_MULT;
   if (team?.guard) dmg *= 1 - team.guard;
+  // (RELICS-2: the Scorched Scale against a boss, the Warden's Medal on the last one standing)
+  if (team && b.relics?.hooks) dmg *= relicTaken(b, to, by);
   if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {
     if (blow && !splash) {
@@ -1886,7 +1889,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     if (!u.alive) continue;
     const k = kitOf(u);
     if (poolOf(u)) tickPool(b, u, 100);
-    else if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
+    else if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) * relicCharge(b, u) : 1));
     if (u.form && b.t >= u.form.until) {
       u.power = (u.power ?? 1) / FORM_MULT;
       u.form = undefined;

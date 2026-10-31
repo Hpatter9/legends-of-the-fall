@@ -6,7 +6,7 @@
 // Beating an elite pays a choice of three relics (`offerRelics`, `takeRelic`), at least one from a set. Pure rules.
 
 import type { Boost, Stage } from './battle';
-import { ALL_RELIC_IDS, RELICS } from './relics';
+import { ALL_RELIC_IDS, pickRelic, theRelic } from './relics';
 import { setCount, setOf, SETS } from './relicSets';
 import { mixSeed, Rng } from './rng';
 import type { Area } from './board';
@@ -109,9 +109,12 @@ export function drawOffer(run: Run, floor: number): string[] {
   const begun = inSet.filter((id) => setCount(setOf(id)!, run.relics) > 0);
   const out: string[] = [];
   const firsts = begun.length ? begun : inSet;
-  if (firsts.length) out.push(rng.pick(firsts));
+  if (firsts.length) out.push(pickRelic(() => rng.next(), firsts));
   const rest = left.filter((id) => !out.includes(id));
-  while (out.length < OFFER_SIZE && rest.length) out.push(rest.splice(rng.int(0, rest.length - 1), 1)[0]);
+  while (out.length < OFFER_SIZE && rest.length) {
+    const id = pickRelic(() => rng.next(), rest);
+    out.push(rest.splice(rest.indexOf(id), 1)[0]);
+  }
   return out;
 }
 
@@ -123,5 +126,5 @@ export function takeRelic(run: Run, id: string): string | null {
   t.recap?.relics.push(id);
   t.offer = undefined;
   const set = setOf(id);
-  return `the ${RELICS[id].name}${set ? ` (${SETS[set.id].name} ${setCount(set, run.relics)}/${set.relics.length})` : ''}`;
+  return `${theRelic(id)}${set ? ` (${SETS[set.id].name} ${setCount(set, run.relics)}/${set.relics.length})` : ''}`;
 }

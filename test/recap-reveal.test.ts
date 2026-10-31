@@ -58,7 +58,7 @@ test('the card drops the found lines the gains cover, and keeps the rest', () =>
   const was = snapGains(m, run);
   run.items = [makeGear(7, 'charm', 1)];
   run.relics = ['banner'];
-  run.found = ['Jade Charm (charm, +3% attack, +3% hp)', 'the Banner (+10% hp for every hero)', '20 gold from the cursed path', '4 Hexquartz', 'a choice of three relics, on the map'];
+  run.found = ['Jade Charm (charm, +3% attack, +3% hp)', 'the First Banner (+6% hp; +8% attack as well while no hero has fallen this fight)', '20 gold from the cursed path', '4 Hexquartz', 'a choice of three relics, on the map'];
   const gains = gainsSince(was, m, run);
   assert.deepEqual(otherFinds(run.found, gains), ['4 Hexquartz', 'a choice of three relics, on the map']);
   const notes = waveNotes({ ups: [], fell: [], hearts: 0, heartsLeft: 3, found: run.found, gains });

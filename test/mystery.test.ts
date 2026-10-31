@@ -71,13 +71,14 @@ test('the events join the draw: a long climb meets them all, and the old kinds a
 });
 
 test('legendary relics are kept out of the ordinary draws and each does something', () => {
-  assert.equal(GREAT_RELIC_IDS.length, 4);
+  // (RELICS-2, the owner's approved redesign: six Storied relics, each with a price or a rule of its own; the keep's own relics are 24)
+  assert.equal(GREAT_RELIC_IDS.length, 6);
   for (const id of GREAT_RELIC_IDS) {
     assert.ok(!RELIC_IDS.includes(id));
-    assert.ok(RELICS[id].text.startsWith('LEGENDARY'));
-    assert.ok(Object.keys(relicEffects([id])).length > 0);
+    assert.equal(RELICS[id].rarity, 'storied');
+    assert.ok(Object.keys(relicEffects([id], { marks: { fallen: 3 } })).length > 0 || id === 'unfinishedChronicle');
   }
-  assert.equal(RELIC_IDS.length, 12);
+  assert.equal(RELIC_IDS.length, 24);
 });
 
 test('black altar: a hero is lost for good and a legendary relic is gained', () => {
@@ -91,7 +92,7 @@ test('black altar: a hero is lost for good and a legendary relic is gained', () 
   assert.equal(run.roster.length, heroes - 1);
   assert.ok(run.squad.length >= 1 && run.squad.every((id) => run.roster.some((h) => h.id === id)));
   assert.ok(run.relics!.some((id) => GREAT_RELIC_IDS.includes(id)));
-  assert.ok(line.includes('Sun Crown') || line.includes('Dragon Heart') || line.includes('Storm Ring') || line.includes('Void Lens'));
+  assert.ok(GREAT_RELIC_IDS.some((id) => line.includes(RELICS[id].name.replace(/^The /, ''))));
   assert.equal(run.event, undefined);
 });
 

@@ -149,8 +149,9 @@ test('the offer is the same from the same run, and leans to a set already begun'
   assert.deepEqual(drawOffer(all, 3), [], 'nothing left, nothing offered');
 });
 
+// (RELICS-2, the owner's approved redesign: the keep's six Chapters and the Calamity's five sets; the tests follow the new pieces)
 test('the sets: eleven of three or four relics each, every relic in one set at most', () => {
-  assert.equal(SET_IDS.length, 11, 'the five tower sets and the six Calamity sets');
+  assert.equal(SET_IDS.length, 11, "the keep's six Chapters and the Calamity's five sets");
   const seen = new Set<string>();
   for (const id of SET_IDS) {
     const s = SETS[id];
@@ -161,8 +162,8 @@ test('the sets: eleven of three or four relics each, every relic in one set at m
       seen.add(r);
     }
   }
-  assert.equal(RELIC_IDS.length, 12, 'the older relics are the old pool');
-  assert.ok(ALL_RELIC_IDS.length > 12);
+  assert.equal(RELIC_IDS.length, 24, "the keep's relics are the events' pool");
+  assert.ok(ALL_RELIC_IDS.length > 24);
 });
 
 test('set bonuses switch on at two and three pieces', () => {
@@ -186,12 +187,12 @@ test('set bonuses switch on at two and three pieces', () => {
   }
   // the numbers, two sets at once
   const fx = relicEffects(['phoenix', 'warDrum', 'ironShield', 'hourglass']);
-  assert.ok(Math.abs(fx.crit! - 0.02) < 1e-9 && Math.abs(fx.guard! - (0.06 + 0.02)) < 1e-9);
+  assert.ok(Math.abs(fx.crit! - 0.02) < 1e-9 && Math.abs(fx.guard! - (0.1 + 0.02)) < 1e-9);
   assert.equal(relicEffects(['phoenix', 'warDrum', 'emberRuby']).set!.burn, 0.03);
   assert.equal(relicEffects(['ironShield', 'hourglass', 'frostSapphire']).set!.chill, 1000);
   assert.equal(relicEffects(['banner', 'scholarScroll', 'holyChalice']).set!.regen, 0.005);
   assert.ok(relicEffects(['featherCharm', 'hawkEye', 'shadowCloak']).set!.bleed! > 0);
-  assert.ok(Math.abs(relicEffects(['whetstone', 'swiftBoots', 'wolfFang']).atk! - 1.08 * 1.05 * 1.02) < 1e-9);
+  assert.ok(Math.abs(relicEffects(['whetstone', 'swiftBoots', 'wolfFang']).atk! - 1.03 * 1.04 * 1.02) < 1e-9);
 });
 
 const battleWith = (relics: string[]) => {
@@ -266,7 +267,7 @@ test('fifty relics in all, each with an effect, a name and an icon, and every se
   const snake = (id: string) => id.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
   for (const id of all) {
     const r = RELICS[id];
-    assert.ok(r.name && r.text && Object.keys(r.effects).length, `${id}: a name, a line and an effect`);
+    assert.ok(r.name && r.text && (Object.keys(r.effects).length || r.grow || id === 'unfinishedChronicle'), `${id}: a name, a line and an effect`);
     assert.ok(art.has(snake(id)), `${id}: an icon (${snake(id)}.png)`);
   }
   for (const id of SET_IDS) {
@@ -274,7 +275,7 @@ test('fifty relics in all, each with an effect, a name and an icon, and every se
     assert.equal(SETS[id].relics.length, 4);
   }
   // (the new pieces' numbers reach the fight: gold, the foes' wait and reach are folded in with the set)
-  assert.equal(relicEffects(['coinHoard', 'gildedIngot']).gold, 8 + 10 + 6);
+  assert.equal(relicEffects(['luckyCoin', 'gildedIngot']).gold, 8 + 20 + 6);
   assert.equal(relicEffects(['riftShard', 'voidSigil']).first, 300);
   assert.equal(relicEffects(['riftShard', 'voidSigil', 'doomHelm']).first, 500 + 300 + 500);
 });

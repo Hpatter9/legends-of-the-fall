@@ -30,7 +30,8 @@ import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellSt
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
-import { mergeEffects } from './relics';
+import { mergeEffects, type RelicHooks } from './relics';
+import { relicBlow, relicFall, relicRose, relicStart } from './relicFight';
 import { applyTierMods } from './tierSkills';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
 import { startDuoCombos, type DuoState } from './duoCombos';
@@ -290,6 +291,8 @@ export type BattleEvent =
   | { kind: 'decoyLog'; by: number; from: At; to: At }
   /** Yokai spirit wisp trap placed upon dodging. */
   | { kind: 'wisp'; by: number; u: number; v: number; ms: number }
+  /** A relic's rule has fired on this hero (RELICS-2: the Phoenix's rise, the Warden's Medal, the Harness): the page shows its icon over it. */
+  | { kind: 'relic'; to: number; id: string }
   /** A hero is promoted (merged up to `grade`): the page plays it (`promote` in the page's fx). */
   | { kind: 'promote'; to: number; grade: number }
   /** A boss changes form (`bossPhases.ts`): the fight is held for `ms` while the page plays it. */
@@ -364,10 +367,17 @@ export interface Battle {
   foeSpeed?: number;
   /** The team bonus of the placed heroes' traits, fixed when the fight starts. */
   traits?: TraitEffects;
-  /** The run's relics, beyond hp and attack (in the heroes' boost): a team bonus, how long the foes wait, a revive. */
-  relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks };
+  /** The run's relics, beyond hp and attack (in the heroes' boost): a team bonus, how long the foes wait, a revive, the relics' own rules. */
+  relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks; hooks?: RelicHooks };
   /** Whether the relic's revive has been spent this fight. */
   revived?: boolean;
+  /** RELICS-2 (`relicFight.ts`): when this fight (or the Last Stand's wave) began, whether a hero has fallen in it, the Warden's Medal's last
+   *  hero standing, the Harness's haste (until when, one a fall), and the tally the run adds to its own (rises, heroes fallen, elites felled). */
+  relicT0?: number;
+  relicFell?: boolean;
+  lastStood?: number;
+  grief?: number[];
+  relicTally?: { rises?: number; fell?: number; elites?: number };
   /** The floor's twist (`twists.ts`), when it has one. */
   twist?: TwistFx;
   /** A themed daily's featured trait (`Stage.featured`). */
@@ -463,7 +473,7 @@ export interface Stage {
   /** How much faster every hero walks (the castle's Stable); steps only, not swings. */
   move?: number;
   /** The relics' hooks (`relics.ts`), read when the fight starts. */
-  relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks };
+  relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks; hooks?: RelicHooks };
   /** The land the fight is on (`areaFor` in run.ts); the highlands when unset. */
   area?: Area;
   /** The board's size in tiles, for a board made from the seed (a calamity's fights are on a bigger one); the usual `W` x `D` when unset. */
@@ -776,6 +786,8 @@ function applyTraits(b: Battle): void {
     // (a cursed floor: the heroes start the fight wounded)
     if (b.twist?.wound) x.hp = Math.max(1, Math.round(x.hp * (1 - b.twist.wound)));
   }
+  // (RELICS-2: the relics' start-of-fight rules: the king's first mana, the prices on the heroes and foes, the back row's cloak)
+  relicStart(b);
 }
 
 /** The kind's stats as this fighter uses them: a team's reach bonus lengthens its shots from height. */
@@ -1033,6 +1045,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     killed = false;
     to.hp = Math.max(1, Math.round(to.maxHp / 2));
     out.push({ kind: 'heal', to: to.id, amount: to.hp });
+    relicRose(b, to, out);
   }
   // (a rising feather: the wearer comes back once a fight)
   if (killed && to.eq && fxRevive(to, out)) killed = false;
@@ -1048,6 +1061,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.diedAt = b.t;
     to.step = undefined;
     to.swing = undefined;
+    // (RELICS-2: the run's tally, the Harness's haste and the Warden's Medal)
+    relicFall(b, to, out);
     // (a hero's shape ends as it falls, so a hero raised again rises in its own: SUMMON-TIMERS)
     if (realHero(to) && shapesOf(to, b.t).length) endShapes(to);
   }
@@ -1257,7 +1272,7 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   me.facing = way;
   const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing) * guardMult(tileOf(b, me).h, tileOf(b, to).h);
   const crit = rollCrit(b, me);
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * rng.range(0.9, 1.1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && tileOf(b, me).h > tileOf(b, to).h) * rng.range(0.9, 1.1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1);
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
