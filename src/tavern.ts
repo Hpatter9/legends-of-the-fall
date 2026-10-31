@@ -38,6 +38,9 @@ import stageUrl from './art/tavern/stage.png';
 import { BOARD, GWEN } from './questArt';
 import { giverMark } from './questCard';
 import { questsWaiting } from './sim/quests';
+// (TAVERN-RANKUP: the gold chevron over a hero with a rank or an awakening ready, and the quick Upgrades list's button)
+import { upgradeReady } from './sim/upgradesReady';
+import { upMark } from './rankUpList';
 // (TAVERN LIFE: what each hero does at their spot, `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`)
 import { LIFE } from './render/tavernLife';
 import { drawGwenPainted, drawGwenWipe, drawLifeFront, drawPainted, hasPainted, hipsAt, HIP, lifePose, loadLife, seatInFront, sitDrop, sits, type Body, type LifeCtx } from './tavernLifeDraw';
@@ -107,6 +110,14 @@ export interface TavernQuests {
   onQuests(): void;
   /** A giver in the tavern tapped (QUESTS-1b: a hero with a quest of their own, `hero:<kind>`, or Duchess with one). */
   onGiver?(key: string): void;
+}
+
+/** What the tavern's upgrade pieces open (TAVERN-RANKUP). */
+export interface TavernUpgrades {
+  /** The Upgrades button: the quick list of every hero with a step ready. */
+  onUpgrades(): void;
+  /** A hero's gold chevron tapped: their Rank up card straight away. */
+  onRise(kind: string): void;
 }
 
 interface Rig {
@@ -190,11 +201,18 @@ export class Tavern {
   /** The Quests button (it wears a gold dot while something waits), and when Gwen last began to talk (a tap on her). */
   private questBtn = el('button', 'tvQuests', 'Quests');
   private gwenTalk = -1e9;
+  /** (TAVERN-RANKUP) the heroes with a step ready (worked out on each update), the Upgrades button and its count, and where each
+   *  chevron was drawn this frame (room pixels), so a tap on one opens that hero's card. */
+  private rise = new Set<string>();
+  private upBtn = el('button', 'tvUpgrades');
+  private upCount = el('b', 'tvUpN');
+  private riseHits = new Map<string, { x: number; y: number }>();
 
   constructor(
     private onPick: (kind: string) => void,
     onRoster: () => void,
     private quests?: TavernQuests,
+    private upgrades?: TavernUpgrades,
   ) {
     const roster = el('button', 'tvRoster', 'All heroes');
     roster.addEventListener('click', onRoster);
@@ -214,7 +232,11 @@ export class Tavern {
     });
     // (the three buttons top right, in a column so they fit beside the count on the narrowest phone)
     const btns = el('div', 'tvBtns');
-    btns.append(this.questBtn, trophies, roster);
+    // (TAVERN-RANKUP: the Upgrades button shows only while a hero has a step ready, with how many)
+    this.upBtn.append(upMark('tvUpMark'), 'Upgrades', this.upCount);
+    this.upBtn.hidden = true;
+    this.upBtn.addEventListener('click', () => this.upgrades?.onUpgrades());
+    btns.append(this.questBtn, this.upBtn, trophies, roster);
     if (!this.quests) this.questBtn.hidden = true;
     this.root.append(this.canvas, this.count, btns, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
     this.ctx.imageSmoothingEnabled = false;
@@ -290,6 +312,10 @@ export class Tavern {
     this.meta = meta;
     this.questBtn.classList.toggle('new', questsWaiting(meta));
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
+    this.rise = new Set(have.filter((k) => upgradeReady(meta, k)));
+    this.upBtn.hidden = !this.upgrades || !this.rise.size;
+    this.upCount.textContent = String(this.rise.size);
+    this.upBtn.setAttribute('aria-label', `Upgrades: ${this.rise.size} ${this.rise.size === 1 ? 'hero has' : 'heroes have'} a rank or an awakening ready`);
     this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · swipe to look'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
     for (const kind of have) {
@@ -649,6 +675,7 @@ export class Tavern {
     const a = art;
     if (!a || !this.still) return;
     g.globalAlpha = 1;
+    this.riseHits.clear();
     // (the view is a whole number of screen pixels from the baked picture, so the pixels stay crisp)
     const px = Math.round(this.camX * s);
     const py = Math.round(this.camY * s);
@@ -819,16 +846,57 @@ export class Tavern {
       legsAt(fx - dw / 2);
     }
     if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', face, this.reduced);
-    if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
+    // (TAVERN-RANKUP: a hero with an upgrade ready wears its chevron, not a passing emote)
+    if (a.emote && !this.rise.has(a.kind)) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
     // (TAVERN LIFE: a hero with an activity wears its mark after its props, `lifeFront`, so nothing it gives off covers it)
     else if (!life) this.patronMark(a, fx, fy - Math.round(rig.figure * k) - 15);
   }
 
-  /** (QUESTS-1b) a patron with a quest of their own wears the gold "!", or the tick while theirs waits to be handed in. */
+  /** (QUESTS-1b) a patron with a quest of their own wears the gold "!", or the tick while theirs waits to be handed in; (TAVERN-RANKUP)
+   *  one with an upgrade ready wears the gold chevron, beside the "!" when there is one (the "!" on the left, the chevron on the right). */
   private patronMark(a: Actor, cx: number, top: number): boolean {
     const mark = this.quests && this.meta ? giverMark(this.meta, `hero:${a.kind}`) : null;
-    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', cx, top);
-    return !!mark;
+    const up = this.rise.has(a.kind);
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', up ? cx - 7 : cx, top);
+    if (up) this.chevron(a.kind, mark ? cx + 8 : cx, top + 2);
+    return !!mark || up;
+  }
+
+  /** (TAVERN-RANKUP) the gold chevron badge, its middle at `cx`, its top near `top`: it bobs a pixel up and down, slowly and smoothly
+   *  (held still when motion is reduced), and never blinks. */
+  private chevron(kind: string, cx: number, top: number): void {
+    const y = top + (this.reduced ? 0 : Math.round(Math.sin(this.now / 480) * 1.2));
+    this.ctx.drawImage(this.chevronArt(), Math.round(cx) - 6, y, 13, 13);
+    this.riseHits.set(kind, { x: cx, y: y + 6 });
+  }
+
+  /** The chevron badge drawn once a scale: a gold disc with a dark rim and a dark up-chevron (13 room pixels square). */
+  private chevronArt(): HTMLCanvasElement {
+    const key = `rise@${this.scale}`;
+    let c = this.bubbles.get(key);
+    if (c) return c;
+    const s = this.scale;
+    c = document.createElement('canvas');
+    c.width = c.height = 13 * s;
+    const g = c.getContext('2d')!;
+    // (the rim, a round-cornered square of pixels, then the gold face with a lighter top half)
+    const disc = (inset: number, colour: string): void => {
+      g.fillStyle = colour;
+      g.fillRect((inset + 2) * s, inset * s, (9 - inset * 2) * s, (13 - inset * 2) * s);
+      g.fillRect(inset * s, (inset + 2) * s, (13 - inset * 2) * s, (9 - inset * 2) * s);
+      g.fillRect((inset + 1) * s, (inset + 1) * s, (11 - inset * 2) * s, (11 - inset * 2) * s);
+    };
+    disc(0, '#2a1806');
+    disc(1, '#c08a10');
+    g.fillStyle = '#f6d167';
+    g.fillRect(3 * s, 2 * s, 7 * s, 4 * s);
+    g.fillRect(2 * s, 3 * s, 9 * s, 3 * s);
+    // (the chevron: two strokes two pixels thick, its point at the top)
+    g.fillStyle = '#2a1806';
+    const rows: [number, number[]][] = [[4, [6]], [5, [5, 6, 7]], [6, [4, 5, 7, 8]], [7, [3, 4, 8, 9]], [8, [3, 9]]];
+    for (const [y, xs] of rows) for (const x of xs) g.fillRect(x * s, y * s, s, s);
+    this.bubbles.set(key, c);
+    return c;
   }
 
   /** (TAVERN LIFE) the props in front of a hero at their activity, then their quest mark over their head (over a sitter's lower head
@@ -836,7 +904,7 @@ export class Tavern {
   private lifeFront(a: Actor): void {
     const b = a.body;
     if (!b) return;
-    const marked = !!(this.quests && this.meta && giverMark(this.meta, `hero:${a.kind}`));
+    const marked = !!(this.quests && this.meta && giverMark(this.meta, `hero:${a.kind}`)) || this.rise.has(a.kind);
     drawLifeFront(this.lifeCtx(), { ...b, marked }, SPOTS);
     if (marked) this.patronMark(a, b.fx, b.fy + b.drop - Math.round(b.tall) - 15);
   }
@@ -907,6 +975,13 @@ export class Tavern {
       }
       return;
     }
+    // (TAVERN-RANKUP: a hero's gold chevron opens their Rank up card; a reach a little wider than it, short of a "!" beside it)
+    if (this.upgrades)
+      for (const [kind, h] of this.riseHits)
+        if (Math.abs(rx - h.x) < 9 && Math.abs(ry - h.y) < 11) {
+          this.upgrades.onRise(kind);
+          return;
+        }
     // (QUESTS: Gwen behind the bar, then the board on the wall)
     if (this.quests && Math.abs(rx - GWEN_SPOT.x) < 16 && ry > GWEN_SPOT.foot - 58 && ry < GWEN_SPOT.foot - 12) {
       this.gwenTalk = this.now;

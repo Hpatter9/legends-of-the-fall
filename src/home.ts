@@ -18,7 +18,7 @@ import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, boss
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
 import type { HomeSpot } from './render/audioRules';
-import { UNITS } from './sim/units';
+import { ALL_HEROES, UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
@@ -31,6 +31,9 @@ import { resetTipsButton, tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
+import { openUpgrades } from './rankUpList';
+import { openRankUp } from './rankUpView';
+import { tellAwakened } from './awakenView';
 import { SummoningHall } from './hall';
 import { revealUnseen } from './summonTarot';
 import { Library } from './library';
@@ -148,6 +151,14 @@ export class Home {
       onBoard: () => this.openQuests('board'),
       onQuests: () => this.openQuests('active'),
       onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
+    }, {
+      // (TAVERN-RANKUP: the Upgrades button's quick list, and a hero's gold chevron straight to their Rank up card)
+      onUpgrades: () => openUpgrades(this.meta, ALL_HEROES, () => this.refresh(), (kind) => this.openSheet(kind)),
+      onRise: (kind) =>
+        openRankUp(this.meta, kind, (t) => {
+          if (t.what === 'awaken') tellAwakened(kind, t.n);
+          this.refresh();
+        }),
     });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
