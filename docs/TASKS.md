@@ -14,6 +14,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### OVERLOOK-STAND — The loss's word off the plates; the Last Stand in the overlook's watchtower
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/overlook-stand`, `/home/user/lotf-overlook` (from main 0.289.0).
+- **Goal:** the owner's "Losing to a wave leaves a message up on the overlook. That covers daily and Last Stand", and "a new place for Last Stand ... like the Calamity one" ("the tower off to the left in the overlook screen for its access point"): the run's last word moved off the plates and fading by itself; the Last Stand's place on the painted watchtower, lit and alive, with its plate and record, and its own way in.
+- **Scope:** new `src/standGate.ts`, `src/render/standTowerLife.ts`, `tools/overlook-stand/`; `src/render/overlookLayout.ts` (the tower's place, the Daily board alone in the row), hooks in `src/camp.ts`, `src/home.ts`, `src/campPlaces.css`; `test/overlook.test.ts` (one rule changed with the owner's ask, one test added). No sim, save or version change.
+- **Status:** ready for review. [Note](notes/overlook-stand.md); screenshots `samples/overlook-*.png`.
 ### SECRET-HEROES — The heroes earned in play kept secret; three hero quests that bring one in
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/secret-heroes`, `/home/user/lotf-secret` (from main 0.289.0).
