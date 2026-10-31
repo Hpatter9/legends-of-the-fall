@@ -49,7 +49,7 @@ const CSS = `
 .hlLow > * { pointer-events: auto; }
 .hlScroll { position: relative; width: 100%; max-width: 390px; padding: 10px 12px; text-align: center; color: #ece6d4; background: linear-gradient(110deg, #0c171c, #15292b, #0b161b); border: 2px solid #b28a45; box-shadow: inset 0 0 0 2px #3d3323, 0 0 0 2px #16150f, 0 4px 8px #0009; }
 .hlScroll::before { content: '◆'; position: absolute; top: -12px; left: calc(50% - 9px); color: #92edbd; text-shadow: -2px 0 #b28a45, 2px 0 #b28a45, 0 -2px #b28a45, 0 2px #b28a45; }
-.hlScroll { padding: 2px 10px 6px; }
+.hlScroll { padding: 2px 10px 2px; }
 .hlFold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 2px; font: 700 12px var(--body); color: #ece6d4; text-align: left; background: none; border: 0; box-shadow: none; }
 .hlFold b { flex: none; font: 900 15px var(--display); letter-spacing: 1px; color: #f4d993; }
 .hlFold .hlNear { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #ccd6cf; }
@@ -430,8 +430,10 @@ export class SummoningHall {
     progress.setAttribute('aria-valuenow', `${near ? haveShards : 1}`);
     const more = el('div', 'hlMore');
     more.hidden = !this.open;
-    more.append(hint, el('span', 'odds', pityLine(meta)), el('span', 'odds lucky', luckyLine()));
-    this.scroll.replaceChildren(fold, progress, more);
+    // (FIXES-4: the bar is in the opened part only: folded, the row's count says the same, and the bar's empty box is gone, the owner's
+    // "remove the text box that's now empty on the summoning tab")
+    more.append(progress, hint, el('span', 'odds', pityLine(meta)), el('span', 'odds lucky', luckyLine()));
+    this.scroll.replaceChildren(fold, more);
     // (EIDOLON-CHAINS: the Summoner's plaque while a chain is to be heard, going or ready to bind; the gallery once the chains have begun)
     const plaque = hallPlaque(meta);
     this.chain.hidden = !plaque;
