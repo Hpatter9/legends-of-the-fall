@@ -17,6 +17,7 @@ import { HERO_TABLE } from './kits/table';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
 import { CLASS_WEIGHT, INCOME, slotDemand, type SkillClass } from './skillRules';
+import { relicCharge } from './relicFight';
 
 export type Pool = 'mana' | 'stamina';
 
@@ -182,7 +183,7 @@ const skill2Pace = (u: Unit, pool: Pool): number => (skill2Open(u) ? (pool === '
 export function regenOf(b: Battle, u: Unit): number {
   const pool = poolOf(u);
   if (!pool) return 0;
-  const k = RES.PACE * skill2Pace(u, pool) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0));
+  const k = RES.PACE * skill2Pace(u, pool) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) * relicCharge(b, u);
   const s = u.ks;
   if (pool === 'stamina') return s?.winded !== undefined && s.winded > b.t ? 0 : RES.STAM_REGEN * k;
   const focus = s?.hitAt === undefined || b.t - s.hitAt >= RES.FOCUS_MS ? RES.FOCUS_MULT : 1;

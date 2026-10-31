@@ -39,6 +39,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
 // scenario keeps its hash)
+// (RELICS-2, the owner's approved relic redesign, docs/notes/relics-2.md, re-recorded `army`, `daily` and `stand`: the greedy player finds and
+// buys relics on the way, and the relics' rules and draws are new; every other scenario keeps its hash)
 // (SPELLS-RETUNE, the owner's call to tune the game for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, re-recorded
 // `daily` and `stand` alone: the daily's foes start stronger (`DAILY_START` 0.565 to 0.76) and the Last Stand's waves are eased less (`HALL_EASE`
 // 0.88 to 1.2). The armies' and the Calamity's raised strengths are put back for this proof, and its greedy players cast no spells; every other

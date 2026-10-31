@@ -4,8 +4,9 @@
 
 import { chooseOption, leaveEvent, type EventOption } from './sim/events';
 import { gearText, SLOTS, type Gear } from './sim/gear';
-import { RELICS } from './sim/relics';
-import { setCount, setOf } from './sim/relicSets';
+import { relicName, RELICS } from './sim/relics';
+import { setOf } from './sim/relicSets';
+import { openRelicCard } from './relicCard';
 import { equip, unequip, type Run } from './sim/run';
 import { equipBestRun } from './sim/runGear';
 import { UNITS } from './sim/units';
@@ -50,7 +51,6 @@ export class Events {
   /** The note after a choice (what it gave). */
   private note = '';
   private hero = 0;
-  private pick?: string;
   /** Whether gear may be changed now (before a fight), and what runs after it is. */
   private canEquip = true;
   /** The heroes the pack lists (those on the field); all of the roster when unset. */
@@ -129,30 +129,28 @@ export class Events {
 
   /* ------------------------------------------------------------ the relics strip */
 
-  /** The relics held as small icons into `#relics` (shown on the wave-prep screen only, by the stylesheet); tap one for what it does. */
+  /** The relics held as small icons into `#relics` (shown on the wave-prep screen only, by the stylesheet); tap one for its card
+   *  (`relicCard.ts`: its story, its rule and price, how it has grown, and its chapter). A run whose relics were just converted shows one
+   *  line here, once: it is gone when the fight begins. */
   drawStrip(run: Run): void {
     const box = $('relics');
     const ids = run.relics ?? [];
-    const key = ids.join() + this.pick;
+    if (run.relicNote && document.body.dataset.phase && document.body.dataset.phase !== 'deploy') run.relicNote = undefined;
+    const key = ids.join() + (run.relicNote ? '!' : '');
     if (box.dataset.key === key) return;
     box.dataset.key = key;
     box.replaceChildren();
     box.hidden = !ids.length;
     for (const id of ids) {
-      const b = el('button', this.pick === id ? 'relic picked' : 'relic');
-      b.append(iconImg(relicIcon(id), RELICS[id].name));
+      const b = el('button', 'relic');
+      b.append(iconImg(relicIcon(id), RELICS[id]?.name ?? id));
       b.addEventListener('click', () => {
-        this.pick = this.pick === id ? undefined : id;
-        this.drawStrip(run);
+        b.classList.add('picked');
+        openRelicCard(run, id, document.body, () => b.classList.remove('picked'));
       });
       box.append(b);
     }
-    // (RELICS-PREP: the strip shows on the wave-prep screen only, so a tap reads the relic there: what it does, and its set's count)
-    if (this.pick && ids.includes(this.pick)) {
-      const set = setOf(this.pick);
-      const of = set ? ` (${set.name} set ${setCount(set, ids)}/${set.relics.length})` : '';
-      box.append(el('span', 'hint', `${RELICS[this.pick].name}: ${RELICS[this.pick].text}${of}`));
-    }
+    if (run.relicNote) box.append(el('span', 'relicNote', run.relicNote));
   }
 
   /* ------------------------------------------------------------ the pack */
@@ -189,11 +187,15 @@ export class Events {
     card.append(head);
     // relics
     const relics = el('div', 'list');
-    for (const id of run.relics ?? []) {
+    // (by chapter, in the keep's order; tap a row for the relic's card)
+    const order = (id: string) => setOf(id)?.chapter ?? 9;
+    for (const id of [...(run.relics ?? [])].sort((x, y) => order(x) - order(y))) {
       const row = el('div', 'row');
       const words = el('span');
-      words.append(el('b', '', RELICS[id].name), el('small', '', RELICS[id].text));
+      words.append(el('b', '', relicName(id, { marks: run.relicMarks, gold: run.gold })), el('small', '', RELICS[id].text));
+      if (RELICS[id].price) words.append(el('small', 'rlPrice', RELICS[id].price!));
       row.append(iconImg(relicIcon(id), RELICS[id].name), words);
+      row.addEventListener('click', () => openRelicCard(run, id));
       relics.append(row);
     }
     if (!relics.children.length) relics.append(el('p', 'note', 'No relics yet: events, chests and merchants have them.'));

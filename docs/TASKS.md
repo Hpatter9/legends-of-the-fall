@@ -14,6 +14,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RELICS-2 — The relics redone as the keep's lost artefacts (step 1: the six Chapters and the Storied relics)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.296.0 merged).
+- **Goal:** the owner's approved redesign (`docs/notes/relics-redesign.md`), step 1: the keep's 24 relics in six Chapters and six Storied relics, each with lore and a rule with character (a price, a condition, growth, a tie to the keep's enemies); the relic card on the prep screen (lore always shown, prices in red); a relic's icon over the hero when it fires; old saves converted (merged relics paid back, one line on the next prep screen); Auto leaves prices it cannot pay well; `npm run relic-balance`; placeholder icons and the painted icons' prompts. Step 2 (the Eidolons' reliquaries in the Calamity) is not begun. Part 1 (the strip on the prep screen only, `claude/relics`) is included.
+- **Scope:** new `src/sim/relicFight.ts`, `src/relicCard.ts`, `src/relicCard.css`, `test/relics-2.test.ts`, `tools/relics/`; `src/sim/relics.ts`, `relicSets.ts`; hooks in `src/sim/battle.ts`, `abilities.ts`, `heroKits.ts`, `spells.ts`, `run.ts`, `stand.ts`, `tower.ts`, `events.ts`, `market.ts`, `midEvents.ts`, `mystery.ts`, `elites.ts`, `autoplay.ts`, `waveGains.ts`; `src/events.ts`, `src/towerElites.ts`, `src/standView.ts`, `src/render/fx.ts`, `src/render/items.ts`, `build.mjs`, `package.json`, `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/relics-2.md); [art prompts](notes/relic-art-prompts.md); screenshots `samples/relics-2-*.png`, `samples/relics-prep-*.png`.
 ### OVERLOOK-STAND — The loss's word off the plates; the Last Stand in the overlook's watchtower
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/overlook-stand`, `/home/user/lotf-overlook` (from main 0.289.0).
@@ -112,6 +118,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "we should only allow one unit of a hero on the battlefield at a time": a second hero of a kind is refused on the field and in the squad (copies wait on the bench to merge), a bench copy swaps in on its twin's tile, the bench marks a copy "On field", the greedy player and auto-place pick one of each, old saves send the extra copy back to the bench.
 - **Scope:** `placeBlock`/`twinOf` in `src/sim/battle.ts`; `squadTwin`/`canJoin` in `src/sim/run.ts` (and its callers in `climb.ts`, `mystery.ts`, `tower.ts`); `pickSquad`/`autoDeploy`/`oneOfEach` in `src/sim/autoplay.ts`; new `src/sim/oneEach.ts`, `src/oneEachNote.ts`, `src/oneEach.css`; hooks in `src/main.ts`, `src/render/boardView.ts`, `build.mjs`; new `tools/one-of-each/`, `test/one-of-each.test.ts`; fixtures moved to the rule (listed in the note).
 - **Status:** ready for review; the owner's three answers done (new saves left hard; the daily and Mythic retuned; the mirror's clone stands in for its original). [Note](notes/one-of-each.md); screenshots `samples/one-of-each-*.png`.
+### EIDOLON-CALL-2 — The Eidolon crosses the screen, then its sprite performs the attack from a source you saw
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-call-2`, `/home/user/lotf-eidcall` (from main 0.289.0).
+- **Goal:** the owner's "have the summon's image come on screen and move across in a way that represents who they are. Then it moves off screen and its attack happens, so the attack isn't blocked ... where does the fire come from?", and "a sprite version of the summons that actually perform the attack": each Eidolon's painting crosses in its own way and leaves, then its sprite comes onto the board and its attack runs from its breath, its trail, the sky or the edge, landing with the sim's strike. Page only; the strike's rules unchanged.
+- **Scope:** `src/eidolonPass.ts` (new), `src/eidolonRules.ts`, `src/eidolonCall.ts`, `src/eidolons.css`, `src/art/eidolons/sprites/`, `art-source/eidolons/gemini/`, `CREDITS.md`; `test/eidolon-pass.test.ts` (new), `test/eidolon-moment.test.ts`; `tools/eidolon-call-2/`.
+- **Status:** ready for review. [Note](notes/eidolon-call-2.md); screenshots `samples/eidolon-call2-*.png`. Voltara has no sprite (effect-only): prompts for generated art in the note.
 ### HORN-GIFT — The War Horn given at the first binding
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/horn-gift`, `/home/user/lotf-horngift` (from main 0.277.0, with `claude/cinematic-reveal-vault` merged).

@@ -22,10 +22,10 @@ import { drawEvent, TOWER_EVENT_KINDS } from './events';
 import type { Meta } from './meta';
 import { drawOffer, eliteAt, eliteFight, OFFER_SIZE, sideEliteAt } from './elites';
 import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, type SideSpot } from './calLand';
-import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
+import { ALL_RELIC_IDS, pickRelic, pricedFor, relicPriceOf, RELICS, relicText, theRelic, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { addTwists, CHAOS_TWISTS, TWISTS } from './twists';
-import { BOSS, canJoin, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
+import { BOSS, canJoin, FOE_START, ownHeroes, relicCtx, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
@@ -601,8 +601,9 @@ function stockShop(run: Run, floor: number): ShopItem[] {
   const items: ShopItem[] = [];
   const relics = unownedRelics(run);
   for (let i = 0; i < 2 && relics.length; i++) {
-    const id = relics.splice(rng.int(0, relics.length - 1), 1)[0];
-    items.push({ kind: 'relic', label: RELICS[id].name, text: RELICS[id].text, cost: 55 + 3 * floor + rng.int(0, 15), ref: id });
+    const id = pickRelic(() => rng.next(), relics);
+    relics.splice(relics.indexOf(id), 1);
+    items.push({ kind: 'relic', label: RELICS[id].name, text: relicText(id), cost: relicPriceOf(id, 55 + 3 * floor + rng.int(0, 15)), ref: id });
   }
   const g = dropGear(rng, gearId(run), floor);
   items.push({ kind: 'gear', label: g.name, text: `${g.slot}: ${gearText(g)}`, cost: 24 * g.tier + 2 * floor, gear: g });
@@ -616,6 +617,8 @@ function stockShop(run: Run, floor: number): ShopItem[] {
   const rules = ascRules(ascOf(run));
   if (rules.shops !== 1) for (const it of items) it.cost = Math.round(it.cost * rules.shops);
   if (rules.hires !== 1) for (const it of items) if (it.kind === 'hero') it.cost = Math.round(it.cost * rules.hires);
+  // (RELICS-2: the Tax Ingot's dearer prices)
+  for (const it of items) it.cost = pricedFor(run.relics, it.cost);
   if (rules.heal !== 1) for (const it of items) if (it.kind === 'heal') it.text = `heals every hero ${Math.round(DRAUGHT_HEAL * rules.heal * 100)}% of its hp`;
   return items;
 }
@@ -665,7 +668,7 @@ function stockChest(run: Run, floor: number): Treasure {
   const rng = new Rng(mixSeed(run.seed, 0x7ea5, floor));
   const relics = unownedRelics(run);
   const chest: Treasure = { gold: 30 + 6 * floor };
-  if (relics.length && rng.chance(0.45)) chest.relic = rng.pick(relics);
+  if (relics.length && rng.chance(0.45)) chest.relic = pickRelic(() => rng.next(), relics);
   else chest.gear = dropGear(rng, gearId(run), floor, rng.chance(0.3) ? 1 : 0);
   return chest;
 }
@@ -897,10 +900,10 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   if (run.local) teachFight(run, b);
   // (a hidden spot's win does not heal: the party goes back to the road as hurt as the fight left it)
   if (!t.cur?.side) healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
-  const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
+  const bonus = (relicEffects(run.relics, relicCtx(run)).gold ?? 0) + (run.buff?.gold ?? 0);
   const twist = t.cur?.fight?.stage.twist;
   const paid = Math.round((1 + (run.rift?.corruption ?? 0) * CORRUPT.gold) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
-  run.gold += paid;
+  run.gold = Math.max(0, run.gold + paid);
   const recap = recapOf(run);
   if (recap) {
     recap.gold += paid;
@@ -921,7 +924,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   const relics = unownedRelics(run);
   const relicOf = (id: string) => {
     (run.relics ??= []).push(id);
-    run.found!.push(`the ${RELICS[id].name} (${RELICS[id].text})`);
+    run.found!.push(`${theRelic(id)} (${relicText(id)})`);
     recap?.relics.push(id);
   };
   if (kind === 'elite' && t.cur?.side) {
@@ -938,7 +941,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   } else if (kind === 'boss') {
     // (a boss drops gear, and a relic if one is left)
     prizes.push(dropGear(rng, gearId(run), floor, 1));
-    if (relics.length) relicOf(rng.pick(relics));
+    if (relics.length) relicOf(pickRelic(() => rng.next(), relics));
     // (a calamity's bosses are its own: not for the meta's list of bosses beaten)
     if (!t.maps) t.lastBoss = t.cur?.fight?.band[0];
   }
@@ -948,7 +951,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     run.gold += gold;
     if (recap) recap.gold += gold;
     run.found.push(`${gold} gold from the mimic's chest`);
-    if (relics.length) relicOf(rng.pick(relics));
+    if (relics.length) relicOf(pickRelic(() => rng.next(), relics));
     prizes.push(dropGear(rng, gearId(run), floor, 1));
   }
   for (const g of prizes) {
@@ -1033,7 +1036,7 @@ export function openTreasure(run: Run): string[] | null {
   if (ch.relic) {
     (run.relics ??= []).push(ch.relic);
     recap?.relics.push(ch.relic);
-    lines.push(`the ${RELICS[ch.relic].name}: ${RELICS[ch.relic].text}`);
+    lines.push(`${theRelic(ch.relic)}: ${relicText(ch.relic)}`);
   }
   if (ch.gear) {
     (run.items ??= []).push(ch.gear);

@@ -20,7 +20,7 @@
 
 import type { Rng } from './rng';
 import { dropGear, gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear';
-import { GREAT_RELIC_IDS, RELIC_IDS, RELICS } from './relics';
+import { GREAT_RELIC_IDS, RELIC_IDS, relicText, theRelic, TheRelic } from './relics';
 import { hpShare, healParty, hurtParty } from './health';
 import { HEROES, UNITS } from './units';
 import { canJoin, type Owned, type Run } from './run';
@@ -98,7 +98,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
     case 'blackAltar': {
       const relic = greatRelic(run, rng);
       const hero = pick(rng, ids);
-      const gift = relic ? `the ${RELICS[relic].name} (${RELICS[relic].text})` : '';
+      const gift = relic ? `${theRelic(relic)} (${relicText(relic)})` : '';
       return card('A black altar', 'A slab of black glass drinks the torchlight. Something under it is hungry, and generous.', [
         relic && ids.length > 1
           ? act(`Offer the ${nameOf(run, hero)}`, `the hero is lost for good; you gain ${gift}`, 0, { k: 'sacrifice', hero, relic })
@@ -386,7 +386,7 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       const name = nameOf(run, a.hero);
       loseHero(run, a.hero);
       takeRelic(run, a.relic);
-      return `The ${name} steps onto the altar and is gone. The ${RELICS[a.relic].name} is yours: ${RELICS[a.relic].text}.`;
+      return `The ${name} steps onto the altar and is gone. ${TheRelic(a.relic)} is yours: ${relicText(a.relic)}.`;
     }
     case 'bet':
       if (a.win) {

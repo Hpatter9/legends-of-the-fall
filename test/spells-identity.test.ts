@@ -30,6 +30,8 @@
 // bosses, spells, heroes10 and heroes30: each has the Druid, Beastmaster, Reaper, Samurai Commander, Werewolf, Kitsune or Demon Swordsman at
 // level 10 or more, whose wraith, standard and shapes now last longer. The `...Others` scenarios now leave those seven out of every team
 // (recorded on main's code before this work) and did not move; nor did field1, armyFoes, lands, army, daily, tower, stand, calamity or heroes1.
+// RELICS-2 (the owner's approved relic redesign, docs/notes/relics-2.md) re-recorded army, daily and stand: the greedy player finds and buys the
+// new relics on the way. Only those moved.
 // (SKILLS-1, the owner-approved skills overhaul's batch 2, docs/notes/skills-1.md, re-recorded every scenario: field1, field30, bosses, armyFoes,
 // spells, lands, army, daily, tower, stand, calamity, heroes1, heroes10, heroes30 and the five `...Others`. Every hero's skills now cost and cool by
 // their class, a breath follows each cast and the AI saves for its heavier skill, so every fight with a hero in it moves; batch 1, the rules as
