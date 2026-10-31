@@ -7,6 +7,7 @@ import { TICK_MS } from '../src/sim/battle';
 import { gradeBoost } from '../src/sim/run';
 import { mixSeed } from '../src/sim/rng';
 import { ARMIES } from '../src/sim/armies';
+import { botLoadout, botSpells } from './autoplay';
 import { buyLevel, buyRelic, fallBack, healCost, healKing, holdTheLine, levelBlock, levelCost, newStandRun, offerCost, startFirstWave, startStand, stepStand, type Stand, type StandSetup } from '../src/sim/stand';
 
 const arg = (name: string, fallback: number): number => {
@@ -88,6 +89,8 @@ export function playStand(setup: StandSetup, seed: number, party: readonly strin
       else fallBack(s);
     }
     const wasHolding = !!s.holding;
+    // (SPELLS-RETUNE: the king's spells cast on their own, as the page's Auto does, unless `BOT_SPELLS=0`)
+    if (botSpells.on && !s.b.autoSpells) s.b.autoSpells = botLoadout(setup.castle);
     stepStand(s);
     if (wasHolding && s.phase === 'retreat') held++;
     ticks++;

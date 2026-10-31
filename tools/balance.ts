@@ -36,7 +36,7 @@ import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
-import { eidolonAt, playArmy, savedAt } from './autoplay';
+import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
 import { calamityTable } from './tower-balance';
 import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
@@ -234,6 +234,7 @@ function playRun(meta: Meta, seed: number): number {
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a, run.stage)));
     squad.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
     fight(b);
+    maybeSpells(b, meta, CASTLE);
     playOut(b);
     finish(run, b.phase === 'won', ratingOf(b, isBossStage(run.stage)).stars);
     gainXp(meta, fightXp(b, xpRate(CASTLE)));
