@@ -1,3 +1,6 @@
+// (SPELLS-RETUNE, an owner-approved change of requirement, docs/notes/spells-retune.md: the greedy player of `tools/autoplay.ts` now casts the
+// king's spells as the page's Auto does, `botSpells`, and the armies, the daily, the Last Stand and the Calamity were retuned so the bars below
+// hold for that player; no bar was moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {

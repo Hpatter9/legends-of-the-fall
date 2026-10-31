@@ -35,7 +35,7 @@ and about six months or more for a daily player to own all 45.
 ## Heroes earned by content (`contentHeroes.ts`)
 
 They never come from pulls or chests (an owned one takes rank shards from them). `grantContent` runs after each fight
-settles and when a save loads; a toast says "<Hero> joins you".
+settles and when a save loads; the hero's own arrival (its reveal) tells it, with no toast (`docs/notes/unlock-once.md`).
 
 | Hero | Joins when you … | Why |
 | --- | --- | --- |

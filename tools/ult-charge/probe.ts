@@ -17,7 +17,7 @@ import { heroStats, learn, tierNodes } from '../../src/sim/talents';
 import { buyLevel, healCost, healKing, levelBlock, newStandRun, startFirstWave, startStand, stepStand, type Stand } from '../../src/sim/stand';
 import { gradeBoost } from '../../src/sim/run';
 import { xpFor } from '../../src/sim/levels';
-import { playArmy, playCalamity, savedAt } from '../autoplay';
+import { botLoadout, botSpells, maybeSpells, playArmy, playCalamity, savedAt } from '../autoplay';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { canRetry, finish, isBossRun, retryWave, startStage } from '../../src/sim/run';
 import { fight, playOut } from '../../src/sim/battle';
@@ -158,6 +158,7 @@ if (want('daily')) {
         const b = startStage(run);
         autoDeploy(b, run, meta);
         fight(b);
+        maybeSpells(b, meta);
         playOut(b);
         const ok = b.phase === 'won';
         if (!ok && canRetry(run)) {
@@ -187,6 +188,7 @@ if (want('stand')) {
       let at = s.b.t;
       let was = s.phase;
       for (let ticks = 0; s.phase !== 'over' && s.run.wave <= 60 && ticks < 36000; ticks++) {
+        if (botSpells.on && !s.b.autoSpells) s.b.autoSpells = botLoadout();
         stepStand(s);
         s.notes.length = 0;
         const log = standLog as FightLog | undefined;

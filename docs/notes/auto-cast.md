@@ -42,7 +42,7 @@ full suite and by `auto-cast.test.ts`).
 ## What it is worth (win rate, spells never vs Auto)
 
 `node tools/auto-cast/run.mjs 30` (the greedy player of `tools/autoplay.ts`, whose new `botSpells` switch sets `autoSpells` on every fight it
-starts; off by default; the recruits' party, no castle, gear dressed, 30 seeds, the same seeds both ways). Cleared share and mean waves won:
+starts; off by default then, on since SPELLS-RETUNE; the recruits' party, no castle, gear dressed, 30 seeds, the same seeds both ways). Cleared share and mean waves won:
 
 | Cell | Never: cleared, waves | Auto, Heal/Meteor/Haste: cleared, waves, casts a fight | Auto, Shield/Frost/Chain |
 | --- | --- | --- | --- |
@@ -60,6 +60,9 @@ matched): the early armies go from a coin toss to a likely clear, and a fresh sa
 the content was tuned against the spell-less bot, so Auto makes the game easier than those tables say (about as a player who casts well). Keep
 it so (Auto plays as a good player would), or should Auto's spells be held back (fewer casts, or only help spells), or the tables re-measured
 with spells cast?
+
+**The owner's answer (SPELLS-RETUNE, 0.292):** keep Auto as smart as it is and retune the game for a player who casts. `botSpells` is now on by
+default and the armies, tiers, daily, Last Stand and Calamity were retuned: `docs/notes/spells-retune.md`.
 
 ## Checks
 

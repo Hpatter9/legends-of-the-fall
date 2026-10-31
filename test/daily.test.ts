@@ -1,3 +1,6 @@
+// (SPELLS-RETUNE, an owner-approved change of requirement, docs/notes/spells-retune.md: the greedy player of `tools/autoplay.ts` now casts the
+// king's spells as the page's Auto does, `botSpells`, and the armies, the daily, the Last Stand and the Calamity were retuned so the bars below
+// hold for that player; no bar was moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dailyArmy, dailyBoss, dailyBossName, dailyChestSeed, dailyCrowns, dailyHost, dailyWaveCrowns, DAILY_ARMIES, DAILY_MID, DAILY_WAVES } from '../src/sim/daily';
@@ -229,7 +232,7 @@ test('the daily plays out the same every time: a date, a save and a greedy playe
   }
 });
 
-test('a greedy player with a fresh save clears the daily most days but not all (about 60 to 75% with the hearts)', () => {
+test('a greedy player with a fresh save, casting its spells, clears the daily most days but not all (about 60 to 75% with the hearts)', () => {
   let cleared = 0;
   const dates = days(56);
   for (const [i, date] of dates.entries()) if (playDaily(startedMeta(i + 1), date, true).cleared) cleared++;

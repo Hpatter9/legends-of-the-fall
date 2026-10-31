@@ -186,10 +186,12 @@ export class StandView {
     if (this.ready) return;
     this.ready = true;
     this.holder.sortableChildren = true;
-    this.holder.addChild(this.marks, this.rings, this.foeBars, this.fx.dimLayer, this.fx.root);
+    this.holder.addChild(this.marks, this.fx.ground, this.rings, this.foeBars, this.fx.dimLayer, this.fx.root);
     // (the post marks and the heroes' rings lie on the floor, under everyone; the foes' bars over everyone)
     this.marks.zIndex = -5e5;
     this.rings.zIndex = -4e5;
+    // (FIXES-4: the effects' tile marks over the hall's floor and the posts' marks, under the fighters)
+    this.fx.ground.zIndex = -4.5e5;
     this.foeBars.zIndex = 9e5;
     this.world.addChild(this.holder);
     this.board.renderer = this.host.app.renderer;

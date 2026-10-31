@@ -3,6 +3,7 @@
 // so a faster fight is faster here too.
 
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
@@ -122,11 +123,19 @@ const jitter = (n: number) => (Math.random() * 2 - 1) * n;
 interface Item {
   /** Advance by `dt` ms; false when done. */
   step(dt: number): boolean;
-  view: Container;
+  /** What it shows: a view on the effects' layer, or pieces on the tiles' ground (`groundMarks.ts`). */
+  view: { destroyed: boolean; destroy(o?: { children: boolean }): void };
 }
 
 export class Fx {
   readonly root = new Container();
+  /** FIXES-4: a tile's ground layer (over its top, under its props and every fighter: `BoardView.groundAt`), where the tile marks are laid
+   *  so the fighters standing in them show; null off the board. Unset (the Last Stand's baked hall), marks go on `ground`. */
+  groundAt: (u: number, v: number) => Container | null = () => null;
+  /** The layer just over a diagonal row of tiles (`BoardView.groundRow`), for the painted ground loops; null where there are no rows. */
+  groundRow: (depth: number) => Container | null = () => null;
+  /** The marks' layer where there are no tile layers: the page that owns this Fx puts it under its fighters (the Last Stand does). */
+  readonly ground = new Container();
   private items: Item[] = [];
   /** The auras drawn now (by caster and name), so a refreshed aura is not drawn twice (RPG-SPELLS). */
   private auraShown = new Set<string>();
@@ -195,6 +204,7 @@ export class Fx {
   constructor(private sprites: Map<number, UnitSprite>) {
     this.bossFx = new BossFx({
       root: this.root,
+      groundOf: (u, v) => this.groundOf(u, v),
       particles: this.particles,
       calm: () => this.calm(),
       label: (text, x, y, fill, size, life) => void this.label(text, x, y, fill, size, life),
@@ -820,6 +830,8 @@ export class Fx {
     const was = this.items;
     this.items = [];
     for (const it of was) {
+      // (a mark on a board rebuilt under it went with its tiles)
+      if (it.view.destroyed) continue;
       if (it.step(dt)) this.items.push(it);
       else it.view.destroy({ children: true });
     }
@@ -1177,9 +1189,10 @@ export class Fx {
   }
 
   /** A painted loop following `where` while `live` holds, then fading out. */
-  private paintLoop(key: string, where: () => [number, number], live: () => boolean, o: { mult?: number; depthOf?: () => number; alpha?: number; onGone?: () => void; tint?: number } = {}): boolean {
+  private paintLoop(key: string, where: () => [number, number], live: () => boolean, o: { mult?: number; depthOf?: () => number; alpha?: number; onGone?: () => void; tint?: number; ground?: { b: Battle; tile: () => { u: number; v: number } | null } } = {}): boolean {
     const frames = spellFrames(key);
     if (!frames.length) return false;
+    if (o.ground && this.paintGround(key, frames, where, live, o, o.ground)) return true;
     const sp = new Sprite(frames[0]);
     if (o.tint !== undefined) sp.tint = o.tint;
     sp.anchor.set(0.5, spellAnchorY(key));
@@ -1205,6 +1218,42 @@ export class Fx {
         }
         // (in over 150 ms, so it does not pop)
         sp.alpha = Math.min(full, sp.alpha + (full * dt) / 150);
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** FIXES-4: `paintLoop` lying on the ground (`GroundPaint`): a copy on each tile it covers, under the fighters standing in it. */
+  private paintGround(key: string, frames: Texture[], where: () => [number, number], live: () => boolean, o: { mult?: number; alpha?: number; onGone?: () => void; tint?: number }, g: { b: Battle; tile: () => { u: number; v: number } | null }): boolean {
+    const scale = spellScale(key, o.mult);
+    const p = spellPart(key);
+    const look = (sp: Sprite) => {
+      sp.anchor.set(0.5, spellAnchorY(key));
+      sp.scale.set(scale);
+      if (o.tint !== undefined) sp.tint = o.tint;
+    };
+    const paint = this.groundPaint(g.b, look);
+    if (!paint || !p) return false;
+    const reach = reachOfWidth(p.cell * scale);
+    const full = o.alpha ?? 1;
+    let t = 0;
+    let gone = false;
+    let tile = g.tile();
+    this.items.push({
+      view: paint,
+      step: (dt) => {
+        t += dt;
+        tile = g.tile() ?? tile;
+        const [x, y] = where();
+        if (tile) paint.place(tile.u, tile.v, reach, x, y, this.reduced ? frames[0] : frames[Math.floor(t / 90) % frames.length]);
+        if (!gone && !live()) gone = true;
+        if (gone) {
+          paint.alpha = Math.max(0, paint.alpha - dt / 300);
+          if (paint.alpha <= 0) o.onGone?.();
+          return paint.alpha > 0;
+        }
+        paint.alpha = Math.min(full, paint.alpha + (full * dt) / 150);
         return true;
       },
     });
@@ -1330,14 +1379,14 @@ export class Fx {
   /** A painted aura (session B): its ground loop, sized to the reach's diamond, and a few motes circling it; a sheet with a strike in
    *  place of motes (the storm cloud's bolt, the spikes' jab, the circle of death's flare) strikes a spot in its reach now and then.
    *  `hang`: the painting hangs over the centre at its own size (the storm cloud) and its bolts fall from it. `tint`: the Dirge's notes. */
-  private paintAura(sheet: string, reach: number, centre: () => [number, number], live: () => boolean, onGone: () => void, o: { hang?: boolean; tint?: number } = {}): boolean {
+  private paintAura(sheet: string, reach: number, centre: () => [number, number], live: () => boolean, onGone: () => void, o: { hang?: boolean; tint?: number; ground?: { b: Battle; tile: () => { u: number; v: number } | null } } = {}): boolean {
     const ground = spellPart(`${sheet}.ground`);
     if (!ground || !spellFrames(`${sheet}.ground`).length) return false;
     const lift = o.hang ? TW * 1.6 : 0;
     const shown = this.paintLoop(`${sheet}.ground`, () => {
       const [x, y] = centre();
       return [x, y - lift];
-    }, live, { mult: o.hang ? HANG_MULT : ((reach + 0.5) * 2) / ground.size, depthOf: () => (o.hang ? 9999 : -1), alpha: AURA_ALPHA_OF[sheet] ?? AURA_ALPHA, onGone, tint: o.tint });
+    }, live, { mult: o.hang ? HANG_MULT : ((reach + 0.5) * 2) / ground.size, depthOf: () => (o.hang ? 9999 : -1), alpha: AURA_ALPHA_OF[sheet] ?? AURA_ALPHA, onGone, tint: o.tint, ground: o.hang ? undefined : o.ground });
     if (!shown) return false;
     if (spellFrames(`${sheet}.impact`).length && !this.reduced) {
       // (a strike in the reach every so often while it lasts: from the cloud's belly when it hangs, else on the ground)
@@ -1427,8 +1476,8 @@ export class Fx {
       sp.scale.set(TW / Math.max(1, sp.texture.width));
       if (look.tint) sp.tint = look.tint;
       sp.position.set(x, y);
-      sp.zIndex = 0;
-      this.root.addChild(sp);
+      // (standing on its tile's ground, so it sorts with the fighters by depth)
+      this.groundOf(u, v).addChild(sp);
       let t = 0;
       this.items.push({ view: sp, step: (dt) => ((t += dt), live() || t < 200 ? true : ((sp.alpha = Math.max(0, sp.alpha - dt / 300)), sp.alpha > 0)) });
     }
@@ -1549,28 +1598,48 @@ export class Fx {
       const c = e.at ?? me ?? { u: 0, v: 0 };
       return this.tilePos(b, c.u, c.v);
     };
-    if (look.paint && this.paintAura(look.paint, e.reach, centre, live, () => this.auraShown.delete(`${e.by}:${e.what}`), { hang: look.hang })) return;
-    const g = new Graphics();
-    const r = e.reach + 0.5;
-    g.poly([0, (-TH / 2) * r * 2, (TW / 2) * r * 2, 0, 0, (TH / 2) * r * 2, (-TW / 2) * r * 2, 0]).fill({ color: look.ring, alpha: 0.1 }).stroke({ color: look.ring, width: 2, alpha: 0.7 });
-    g.zIndex = -1;
-    this.root.addChild(g);
+    const tile = () => e.at ?? (me ? { u: me.u, v: me.v } : null);
+    if (look.paint && this.paintAura(look.paint, e.reach, centre, live, () => this.auraShown.delete(`${e.by}:${e.what}`), { hang: look.hang, ground: { b, tile } })) return;
+    // (FIXES-4: the reach's tiles tinted, a rim round them, each on its tile's ground under whoever stands in it; laid again as it moves)
+    let g = new GroundSet();
+    let at = '';
+    const lay = (c: { u: number; v: number }) => {
+      g.destroy();
+      g = new GroundSet();
+      const tiles: { u: number; v: number; h: number }[] = [];
+      for (let du = -e.reach; du <= e.reach; du++)
+        for (let dv = -e.reach; dv <= e.reach; dv++) {
+          const tl = tileAt(b.board, c.u + du, c.v + dv);
+          if (tl) tiles.push({ u: c.u + du, v: c.v + dv, h: tl.h });
+        }
+      const rimOf = patchRims(tiles);
+      for (const tl of tiles) {
+        const [x, y] = this.tilePos(b, tl.u, tl.v);
+        g.add(patchTile(new Graphics(), x, y, rimOf(tl.u, tl.v), { colour: look.ring, fill: 0.14, edge: 0.75, width: 2, inset: 0 }), this.groundOf(tl.u, tl.v));
+      }
+    };
+    const view = { get destroyed() { return g.destroyed; }, destroy: () => g.destroy() };
     let t = 0;
     let gone = false;
+    let alpha = 1;
     this.items.push({
-      view: g,
+      view,
       step: (dt) => {
         t += dt;
-        const [x, y] = centre();
-        g.position.set(x, y);
-        if (!this.reduced) g.alpha = 0.8 + 0.2 * Math.sin(t / 350);
-        if (!gone && !live()) gone = true;
-        if (gone) {
-          g.alpha = Math.max(0, g.alpha - dt / 300);
-          if (g.alpha <= 0) this.auraShown.delete(`${e.by}:${e.what}`);
-          return g.alpha > 0;
+        const c = tile() ?? { u: 0, v: 0 };
+        if (`${c.u},${c.v}` !== at) {
+          at = `${c.u},${c.v}`;
+          lay(c);
         }
-        return true;
+        if (!gone && !live()) gone = true;
+        // (it breathes while it lasts, then fades out)
+        if (!gone && !this.reduced) alpha = 0.8 + 0.2 * Math.sin(t / 350);
+        if (gone) {
+          alpha = Math.max(0, alpha - dt / 300);
+          if (alpha <= 0) this.auraShown.delete(`${e.by}:${e.what}`);
+        }
+        g.alpha = alpha;
+        return alpha > 0;
       },
     });
     this.lookLoop(look, () => {
@@ -1624,7 +1693,7 @@ export class Fx {
         const key = `song:${e.by}`;
         if (by && !this.standShown.has(key)) {
           this.standShown.add(key);
-          this.paintAura(SONG_SHEET, SONG_REACH, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key), { tint: e.what === 'dirge' ? DIRGE_TINT : undefined });
+          this.paintAura(SONG_SHEET, SONG_REACH, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key), { tint: e.what === 'dirge' ? DIRGE_TINT : undefined, ground: { b, tile: () => by.unit } });
         }
         continue;
       }
@@ -1664,7 +1733,7 @@ export class Fx {
         const key = `field:${e.by}`;
         if (!this.standShown.has(key)) {
           this.standShown.add(key);
-          this.paintAura(f.sheet, f.reach, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key));
+          this.paintAura(f.sheet, f.reach, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key), { ground: { b, tile: () => by.unit } });
         }
       }
       const targets = struck.map((id) => this.sprites.get(id)).filter((s): s is UnitSprite => !!s);
@@ -1673,7 +1742,7 @@ export class Fx {
         const gr = m.ground;
         const until = b.t + gr.ms;
         const on = gr.at === 'self' ? [by] : gr.at === 'first' ? targets.slice(0, 1) : targets.slice(0, 4);
-        for (const s of on) this.paintLoop(gr.part, () => [s.x, s.y], () => b.t < until, { depthOf: () => -1, alpha: AURA_ALPHA });
+        for (const s of on) this.paintLoop(gr.part, () => [s.x, s.y], () => b.t < until, { depthOf: () => -1, alpha: AURA_ALPHA, ground: { b, tile: () => s.unit } });
       }
       if (m.streak) for (const to of targets) this.paintAlong(m.streak, by.x, by.y - by.tall * 0.45, to.x, to.y - to.tall * 0.45, { delay: 40 });
       if (m.chain && m.beam) {
@@ -1820,6 +1889,21 @@ export class Fx {
   /** The world position of a tile's top. */
   private tilePos(b: Battle, u: number, v: number): [number, number] {
     return at(u, v, tileAt(b.board, u, v)?.h ?? 0);
+  }
+
+  /** FIXES-4: the layer a mark on tile (u, v) goes on: the tile's own ground, else `ground` when its page shows it, else the effects' own. */
+  groundOf(u: number, v: number): Container {
+    return this.groundAt(u, v) ?? (this.ground.parent ? this.ground : this.root);
+  }
+
+  /** A painted ground loop lying on the tiles round (u, v) (`GroundPaint`), when the board gives rows to lay it on; null where it has none. */
+  private groundPaint(b: Battle, look: (sp: Sprite) => void): GroundPaint | null {
+    if (!this.groundAt(0, 0)) return null;
+    return new GroundPaint((u, v) => {
+      if (!tileAt(b.board, u, v)) return null;
+      const [x, y] = this.tilePos(b, u, v);
+      return { depth: depth(u, v), x, y };
+    }, (d) => this.groundRow(d), look);
   }
 
   /** A dash leaves a streak between the tiles; a blink a puff of smoke at each end. */
@@ -2007,16 +2091,14 @@ export class Fx {
     const spots = e.tiles.map((i) => this.tilePos(b, i % w, Math.floor(i / w)));
     if (!spots.length) return;
     if (e.phase === 'tell') {
-      const view = new Container();
-      this.root.addChildAt(view, 0);
-      for (const [x, y] of spots) {
-        const g = new Graphics();
-        g.poly([0, -TH / 2 + 3, TW / 2 - 5, 0, 0, TH / 2 - 3, -TW / 2 + 5, 0])
-          .fill({ color: look.colour, alpha: 0.45 })
-          .stroke({ color: look.colour, alpha: 1, width: 2.5 });
-        g.position.set(x, y);
-        view.addChild(g);
-      }
+      // (FIXES-4: tinted tiles with a rim round the patch, each on its tile's ground, so those standing in it show over it)
+      const view = new GroundSet();
+      const tiles = e.tiles.map((i) => ({ u: i % w, v: Math.floor(i / w), h: tileAt(b.board, i % w, Math.floor(i / w))?.h ?? 0 }));
+      const rimOf = patchRims(tiles);
+      tiles.forEach((t, k) => {
+        const [x, y] = spots[k];
+        view.add(patchTile(new Graphics(), x, y, rimOf(t.u, t.v), { colour: look.colour, fill: 0.45, width: 3 }), this.groundOf(t.u, t.v));
+      });
       if (look.word) {
         const mx = spots.reduce((a, s) => a + s[0], 0) / spots.length;
         const my = Math.min(...spots.map((s) => s[1]));
@@ -2167,8 +2249,8 @@ export class Fx {
 
   /** Burning ground: flames over a 3x3 of tiles for `ms`. */
   private zone(b: Battle, u: number, v: number, ms: number): void {
-    const view = new Container();
-    this.root.addChild(view);
+    // (each flame stands on its own tile's ground: under whoever stands in the fire, behind whoever stands in front of it)
+    const view = new GroundSet();
     const flames: Sprite[] = [];
     for (let du = -1; du <= 1; du++)
       for (let dv = -1; dv <= 1; dv++) {
@@ -2179,7 +2261,7 @@ export class Fx {
         sp.scale.set(1.1);
         sp.blendMode = 'add';
         sp.position.set(x, y);
-        view.addChild(sp);
+        view.add(sp, this.groundOf(u + du, v + dv));
         flames.push(sp);
       }
     let t = 0;
@@ -2187,7 +2269,7 @@ export class Fx {
       view,
       step: (dt) => {
         t += dt;
-        flames.forEach((sp, i) => (sp.texture = fire.frames[(Math.floor(t / 90) + i) % fire.frames.length]));
+        flames.forEach((sp, i) => !sp.destroyed && (sp.texture = fire.frames[(Math.floor(t / 90) + i) % fire.frames.length]));
         view.alpha = t > ms - 600 ? Math.max(0, (ms - t) / 600) : 1;
         return t < ms;
       },
@@ -2199,9 +2281,9 @@ export class Fx {
     // (painted, session B: the bristling patch over the 3x3, thorns jabbing up in it now and then)
     const [px, py] = this.tilePos(b, u, v);
     const until = b.t + ms;
-    if (this.paintAura(SPIKES_SHEET, 1, () => [px, py], () => b.t < until, () => undefined)) return;
-    const view = new Container();
-    this.root.addChild(view);
+    if (this.paintAura(SPIKES_SHEET, 1, () => [px, py], () => b.t < until, () => undefined, { ground: { b, tile: () => ({ u, v }) } })) return;
+    // (each rune on its own tile's ground, under whoever stands on it)
+    const view = new GroundSet();
     const rune = paintedStrip('earth', 'rune', 'snare')[0];
     for (let du = -1; du <= 1; du++)
       for (let dv = -1; dv <= 1; dv++) {
@@ -2213,7 +2295,7 @@ export class Fx {
         sp.tint = 0xd0b890;
         sp.alpha = 0.7;
         sp.position.set(x, y);
-        view.addChild(sp);
+        view.add(sp, this.groundOf(u + du, v + dv));
       }
     let t = 0;
     this.items.push({ view, step: (dt) => ((t += dt), (view.alpha = t > ms - 500 ? Math.max(0, (ms - t) / 500) : 1), t < ms) });
@@ -2243,9 +2325,8 @@ export class Fx {
       view = sp;
       this.anim(magic.earthBurst, x, y - 6, 1.1, 60);
     }
-    // (the walls and statues stand among the fighters: sorted by depth with them)
-    view.zIndex = 0;
-    this.root.addChild(view);
+    // (the flood lies on the tile's top, the walls and statues stand on it: on its ground, so they sort with the fighters by depth)
+    this.groundOf(e.u, e.v).addChild(view);
     let t = 0;
     this.items.push({
       view,
@@ -2281,7 +2362,7 @@ export class Fx {
       const [x, y] = this.tilePos(b, u, v);
       const born = b.t;
       const live = () => b.t - born < ms && (b.t - born < 200 || !!b.traps?.some((tr) => tr.u === u && tr.v === v));
-      this.paintLoop(SNARE.ground, () => [x, y], live, { depthOf: () => -1, alpha: 0.9, onGone: () => b.t - born < ms - 150 && this.paintOnce(SNARE.impact, x, y - 8) });
+      this.paintLoop(SNARE.ground, () => [x, y], live, { depthOf: () => -1, alpha: 0.9, onGone: () => b.t - born < ms - 150 && this.paintOnce(SNARE.impact, x, y - 8), ground: { b, tile: () => ({ u, v }) } });
       return;
     }
     const view = new Sprite(paintedStrip('earth', 'rune', 'snare')[0]);
@@ -2289,7 +2370,7 @@ export class Fx {
     view.scale.set(TW * 0.6 / 32);
     const [x, y] = this.tilePos(b, u, v);
     view.position.set(x, y);
-    this.root.addChild(view);
+    this.groundOf(u, v).addChild(view);
     this.anim(magic.earthBurst, x, y - 6, 0.9, 60);
     let t = 0;
     this.items.push({

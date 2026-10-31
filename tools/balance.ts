@@ -1,6 +1,8 @@
 // The balance report: plays many headless fights with the sim and prints how strong each hero, foe band and stage is,
 // and how a greedy player fares over whole runs. Run it with `npm run balance` (tools/balance.mjs bundles this file with
 // esbuild, as test.mjs does for the tests).
+// The greedy players cast the king's spells as the page's Auto does (SPELLS-RETUNE, `docs/notes/spells-retune.md`); `BOT_SPELLS=0 npm run balance ...`
+// plays the old spell-less bot, `BOT_LOADOUT=heal,meteor,haste` fixes the loadout.
 //
 //   npm run balance                    the default number of fights (4000 for the heroes; a quarter of that per cell)
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
@@ -40,7 +42,7 @@ import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
-import { eidolonAt, playArmy, savedAt } from './autoplay';
+import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
 import { calamityTable } from './tower-balance';
 import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
@@ -236,6 +238,7 @@ function playRun(meta: Meta, seed: number): number {
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a, run.stage)));
     squad.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
     fight(b);
+    maybeSpells(b, meta, CASTLE);
     playOut(b);
     finish(run, b.phase === 'won', ratingOf(b, isBossStage(run.stage)).stars);
     gainXp(meta, fightXp(b, xpRate(CASTLE)));
