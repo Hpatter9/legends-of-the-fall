@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### GUEST-HERO — A guest hero from the passing cart, a sixth on the field for one run; talent points marked in the tavern
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/guest-hero`, `/home/user/lotf-guest` (from main 0.284.0).
+- **Goal:** the owner's "Sometimes you can hire a new hero from the store you randomly come by ... allowed as the 6th on the field": the passing cart now and then offers a guest (a hero outside the party, 1.5 sellswords), who fights as a sixth beside the five for that run only (one at a time, one of each kept, no merge, no recycle, no lasting XP, a farewell at the run's end). And TALENT-ARROWS: the tavern's gold chevron, the Upgrades list ("Talent points: 2 to spend", Spend opens the tree) and Next upgrade › mark heroes with talent points to spend; Upgrade all leaves talents alone.
+- **Scope:** new `src/sim/guest.ts`, `src/guest.css`, `test/guest-hero.test.ts`, `test/talent-arrows.test.ts`, `tools/guest-hero/`; `src/sim/run.ts`, `events.ts`, `market.ts`, `merge.ts`, `autoplay.ts`, `upgradesReady.ts`; hooks in `src/main.ts`, `src/events.ts`, `src/unitInfo.ts`, `src/home.ts`, `src/tavern.ts`, `src/party.ts`, `src/menuHeroes.ts`, `src/talentView.ts`, `src/rankUpList.ts`, `build.mjs`.
+- **Status:** ready for review. [Note](notes/guest-hero.md) (with the measured lift and owner questions); screenshots `samples/guest-*.png`, `samples/talent-arrow-*.png`.
+
 ### ONE-OF-EACH — One unit of a hero on the battlefield at a time
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).
