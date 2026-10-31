@@ -1,8 +1,10 @@
-// The battle music's rules (the owner's ask: "The battle music should stay on and consistent through battle. Then at the end
-// we need victory music if we win."). One track is chosen when a battle begins and kept, unbroken, through every wave, the
-// breaks between them and any deploy in the middle, until the battle is won, lost or left; a won battle ends on a victory
-// fanfare leading into the triumph loop, held under the results until they are left. Pure: no Web Audio and no DOM, so the
-// tests can check it; `sound.ts` plays what it says. See docs/notes/battle-music.md.
+// The battle music's rules (the owner's asks: "The battle music should stay on and consistent through battle. Then at the end
+// we need victory music if we win." and "One good battle music for all the battles, with a more intense one for bosses").
+// Every battle plays the one battle track, unbroken through every wave, the breaks between them and any deploy in the middle,
+// until the battle is won, lost or left; while a boss is fought the one boss track takes over (a crossfade in, and back to the
+// battle track after the boss's wave, or the victory music if that was the last); a won battle ends on a victory fanfare leading
+// into the triumph loop, held under the results until they are left. Pure: no Web Audio and no DOM, so the tests can check it;
+// `sound.ts` plays what it says. See docs/notes/battle-music.md and docs/notes/battle-music-2.md.
 //
 // "A battle" is what the player fights through before a results screen sends them somewhere else:
 // - an army run or the daily: all its waves (the result screen between waves shows the battle carrying on);
@@ -11,11 +13,14 @@
 // - a plain stage run (a field fight, from an old save): each stage.
 
 import { fallOutcome, isBossRun, waveArmyOf, type Run } from '../sim/run';
-import { ARMY_TRACKS, type ArmyTrack, type MusicId, type Place } from './epicMusic';
+import type { MusicId, Place } from './epicMusic';
 
-/** The general battle track: the main theme in its plainest dress, for the battles that are no army's own (the daily, the
- *  Last Stand, a spire floor, a field fight). */
-export const GENERAL_TRACK: MusicId = 'battle';
+/** The one battle track, played in every battle (every army at every tier, the daily, a spire floor, a Calamity spot, the Last
+ *  Stand, a quest, a field fight): the main theme in its heroic dress (the owner: "One good battle music for all the battles,
+ *  with a more intense one for bosses"; docs/notes/battle-music-2.md). */
+export const BATTLE_TRACK: MusicId = 'battle';
+/** The one boss track: the same theme, heavier and faster. It takes over while a boss is being fought. */
+export const BOSS_TRACK: MusicId = 'boss';
 
 /** How loud the triumph loop sits under the results, against a track's full level (about -4.4 dB): a bed, not a fanfare. */
 export const VICTORY_BED = 0.6;
@@ -23,42 +28,41 @@ export const VICTORY_BED = 0.6;
 /** The track the victory fanfare leads into, and the fanfare itself (a sting). */
 export const VICTORY_LOOP: MusicId = 'triumph';
 
-/** An army's own battle track (the main theme in its dress: docs/notes/music-theme.md), or the general one for an army with none. */
-export function armyTrack(id: string): MusicId {
-  return (ARMY_TRACKS as readonly string[]).includes(id) ? (id as ArmyTrack) : GENERAL_TRACK;
-}
-
-/** The one track a battle plays from its first wave to its end. It reads only what holds for the whole battle (the mode, the
- *  army, whether a single fight is a boss), so asking again at a later wave gives the same track, and a boss wave inside an
- *  army or a daily does not change it:
- *  - the Calamity: a boss spot `boss`, any other `calbattle`;
- *  - an army run: `boss` for an army that is one boss wave and nothing else, otherwise the army's own track, at every tier;
- *  - the daily: the general track (whichever army's foes the day brings);
- *  - a spire floor or a field fight (one fight each): a boss `boss`, else the general track. */
+/** The track of the fight about to be fought: the boss track while a boss is fought (a boss wave of an army, the daily or a
+ *  quest; a spire boss floor; a Calamity boss spot; a one-wave boss army; a field fight's boss stage), otherwise the battle
+ *  track. Asked at every wave (`run.stage` the wave about to be fought), so the battle track plays on unbroken from wave to wave
+ *  and the boss track takes over only for the boss's own wave. */
 export function trackOfRun(run: Run): MusicId {
-  const mode = run.mode?.kind;
-  if (mode === 'calamity') return isBossRun(run) ? 'boss' : 'calbattle';
-  const army = waveArmyOf(run);
-  if (army) {
-    if (army.waves.length === 1 && army.waves[0].boss) return 'boss';
-    return run.mode?.kind === 'army' ? armyTrack(run.mode.army) : GENERAL_TRACK;
-  }
-  return isBossRun(run) ? 'boss' : GENERAL_TRACK;
+  return isBossRun(run) ? BOSS_TRACK : BATTLE_TRACK;
 }
 
-/** The Last Stand's track: the general one (the run's seed is kept for the call, so a resumed run asks the same way). */
-export const standTrack = (_seed: number): MusicId => GENERAL_TRACK;
+/** The Last Stand's track: the battle track, the boss track for a boss wave (the run's seed is kept for the call, so a resumed
+ *  run asks the same way). */
+export const standTrack = (_seed: number, boss = false): MusicId => (boss ? BOSS_TRACK : BATTLE_TRACK);
+
+/** How long one track takes to give way to the next (seconds, the crossfade): the boss track comes in quickly, as the boss
+ *  arrives; the battle track comes back from it more gently, so the lift down is not a jolt; any other change (a place's music,
+ *  the battle starting from the deploy) at the player's usual crossfade. */
+export const BOSS_IN_S = 1.5;
+export const BOSS_OUT_S = 3;
+export const CROSSFADE_S = 1.2;
+export function crossfadeOf(from: MusicId | null, to: MusicId): number {
+  if (to === BOSS_TRACK && from !== BOSS_TRACK) return BOSS_IN_S;
+  if (from === BOSS_TRACK && to === BATTLE_TRACK) return BOSS_OUT_S;
+  return CROSSFADE_S;
+}
 
 /** What the music does as a fight ends: `victory` when the battle is won (the fanfare, then the triumph loop under the results),
- *  `defeat` when it is lost for good (the defeat sting, as before), `none` when it carries on (a wave won with more to come, or a
- *  fall a heart revives: the battle track plays straight through). Asked at the fight's `end` event, before the run is settled
+ *  `defeat` when it is lost for good (the defeat sting, as before), `next` when a wave is won with more to come (the battle track
+ *  plays on; after a boss wave it comes back from the boss track), `none` when a fall is revived by a heart (whatever was playing
+ *  plays on, the boss track through a boss wave fought again). Asked at the fight's `end` event, before the run is settled
  *  (`run.stage` is still the wave just fought). */
-export type BattleEnd = 'victory' | 'defeat' | 'none';
+export type BattleEnd = 'victory' | 'defeat' | 'next' | 'none';
 export function endOfFight(run: Run, won: boolean): BattleEnd {
   if (!won) return fallOutcome(run) === 'heart' ? 'none' : 'defeat';
   if (run.tower) return 'victory';
   const army = waveArmyOf(run);
-  return !army || run.stage >= army.waves.length ? 'victory' : 'none';
+  return !army || run.stage >= army.waves.length ? 'victory' : 'next';
 }
 
 /** Where the music stands: the place the player is in (`placeOf`), the battle's track while a battle is on (null when none),
@@ -96,6 +100,8 @@ export function atPlace(s: MusicState, place: Place): MusicState {
  *  fight ended behind the home screen) no sting rings and no victory music is held: the battle is simply over. */
 export function endAt(s: MusicState, end: BattleEnd): { state: MusicState; sting: 'victory' | 'defeat' | null } {
   if (end === 'none') return { state: s, sting: null };
+  // (a wave won with more to come: the battle plays on, on the battle track, the boss track's wave over)
+  if (end === 'next') return { state: s.battle ? { ...s, battle: BATTLE_TRACK } : s, sting: null };
   const onBoard = s.place === 'deploy';
   return { state: { ...s, battle: null, fighting: false, victory: onBoard && end === 'victory' }, sting: onBoard ? end : null };
 }

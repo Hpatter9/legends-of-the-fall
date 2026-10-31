@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.299.0',
+    date: '2026-10-31',
+    title: 'One battle theme, and a boss theme',
+    notes: ['Every fight now plays one strong battle track, and a heavier boss track takes over when a boss arrives. All music is levelled to the same loudness.'],
+  },
+  {
     version: '0.298.0',
     date: '2026-10-31',
     title: 'Eidolon quest: What Sleeps Under the Mere',
