@@ -246,13 +246,13 @@ batches 2 and 3 re-apply only what they need on top, measured with the casting b
 | `DAILY_START` | 0.76 | **0.74** | fresh save 65% at 0.76, **72%** at 0.74 (band 66 to 75%; SPELLS-RETUNE 72%) |
 | Undead Legion `start` | 1.7 | 1.7 (kept) | `armies.test.ts`'s level 22: 69% over 16 tries (needs 35%) |
 | Ogre Clans `start` | 12.2 | **11.4** | `ogres:45:0:tp` 4.5 tries at 12.2, **2.2** now (2.3) |
-| Infernal Host `start` | 16.2 | **15.4** | `infernal:55:0:tph` 11.7 (92% cleared), **4.8** now (4.4) |
-| Yokai Night Parade `start` | 18.3 | **15.45** | `yokai:65:0:tph` 14.4 (75%), **2.6** now (3.1); kept just over the Infernal Host's, so each army starts tougher |
-| Golem Forge `start` | 19.8 | **17.7** | `golems:74:0:tp` (24 saves) 8.5 (96%), **3.3** now (2.8) |
+| Infernal Host `start` | 16.2 | **15.65** | `infernal:55:0:tph`, 24 saves: **4.4** (the owner's answer, 4.3); 3.7 at 15.4, 5.5 at 15.7 |
+| Yokai Night Parade `start` | 18.3 | **18** | `yokai:65:0:tph`, 24 saves: **11.5 (88%)** (the owner's answer, 11.7, 83%) |
+| Golem Forge `start` | 19.8 | **19.1** | `golems:65:0:tph`, 24 saves: **8.0 (96%)** (the owner's answer, 6.6; 6.0 at 19.03, 11.3 at 19.8) |
 | `CAL_TIER.mult` | 1.2 | **1.32** | 150 runs: a mean of 1.52 maps at 1.28, **1.65** at 1.32 (main 1.65); `calamity.test.ts`'s full clear holds |
 | `HALL_EASE`, `CAL_SCALE.start` | 1.2, 0.6 | kept | |
 
-(`node tools/spells-retune/run.mjs cell ...`, 12 saves unless named; the starts bisected with its `tune`. The tier lifts above Normal multiply
+(`node tools/spells-retune/run.mjs cell ...`; the late three as SPELLS-RETUNE's "The owner's answers" measured them, hearts on 24 saves at levels 55, 65 and 65, kept hard as the owner asked; the Ogres on 12 saves; the starts bisected with its `tune`. The tier lifts above Normal multiply
 the Normal start, so the harder tiers of these four eased with it; they were not re-measured here.) The grade table does not use the king's
 spells and is unchanged (above). Identity fixtures: every scenario differs from main's, from batch 2, and each test's own computation was
 written back. Checks: typecheck; the affected tests (armies, army-pace, calamity, daily, difficulty, stand-retreat, grade-stats, skill-rules,
