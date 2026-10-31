@@ -31,22 +31,22 @@ from the proposal. As built (`RELICS` holds the exact numbers and words):
 | Relic | Rule (price in brackets) |
 |---|---|
 | The First Banner | +6% hp; +10% attack while no hero has fallen this fight |
-| The Founder's Ledger (Rare) | +5% attack; skills charge 10% faster, +3% a wave won (to 50%) |
+| The Founder's Ledger (Rare) | +5% attack; skills charge 10% faster, +3% a wave won (to 40%) |
 | St Oswin's Cup | +5% hp; the king starts each fight with 2 mana, and it fills 10% faster |
 | The Warden's Medal | the last hero standing heals 60% and takes 40% less |
-| The Gate Boss | 12% less damage (4% slower) |
-| The Stopped Hourglass (Rare) | 5% faster; the king's mana 20% faster, twice as fast in the first 10 s |
-| Rime Sapphire | a hero at 75% health or more deals 10% more and charges 20% faster |
-| The Sentry's Cloak | +6% hp; +16% for the back row (the last deploy row, `v = d - 1`; not in the Last Stand, which has no rows) |
-| Phoenix Feather (Rare) | once a fight the first to fall rises at half health; after 5 rises, Phoenix Ash (+5% attack) |
-| The Siege Drum | the foes wait half a second; +15% damage in the first 10 s |
+| The Gate Boss | 10% less damage (4% slower) |
+| The Stopped Hourglass (Rare) | 11% faster; the king's mana 20% faster, twice as fast in the first 10 s |
+| Rime Sapphire | a hero above half health deals 15% more and charges 20% faster |
+| The Sentry's Cloak | +5% hp; +12% for the back row (the last deploy row, `v = d - 1`; in the Last Stand, the inner ring by the king: the shooters and healers, `roleOfKind` 'inner', farthest from the foes, given in `boostFor`) |
+| Phoenix Feather (Rare) | once a fight the first to fall rises at a third of its health; after 5 rises, Phoenix Ash (+5% attack) |
+| The Siege Drum | the foes wait a third of a second; +35% damage in the first 15 s |
 | Ember of the Great Hall | +16% attack (heroes start each fight 8% of their health down) |
-| Scorched Scale | 5% less damage, 10% less from bosses |
+| Scorched Scale | 4% less damage, 7% less from bosses |
 | The Watchman's Charm | slip 6% of blows, 21% in the first 8 s |
-| The Hawk's Eye (Rare) | +4% attack; +6% crit, +2% an elite or boss felled (to 24%) |
+| The Hawk's Eye (Rare) | +7% attack; +6% crit, +2% an elite or boss felled (to 20%) |
 | The Cutpurse's Cloak | slip 14% of blows (5% more from those that land) |
-| The Poisoner's Fang | +6% crit; crits on a foe under half health deal 60% more |
-| The Old Whetstone | +3% attack, +1% a wave won (to 15%) |
+| The Poisoner's Fang | +5% attack, +6% crit; crits on a foe under half health deal 60% more |
+| The Old Whetstone | +3% attack, +1% a wave won (to 12%) |
 | The Courier's Boots | 13% faster (3% less hp) |
 | The Wolf-Tooth Necklace | +5% attack; 15% more against beasts |
 | The Huntmaster's Harness (Rare) | when a hero falls, the rest act 25% faster for 10 s (three at once at most) |
@@ -55,7 +55,7 @@ from the proposal. As built (`RELICS` holds the exact numbers and words):
 | The Pawned Crown (Rare) | +6% hp and attack (each win pays 10 gold less, never below nothing) |
 | The Watchtower Glass | shooters reach further from high ground, deal 10% more, 20% from above |
 | The Crown of the First King | +18% attack and hp (the strongest foe of every fight +12% hp and attack) |
-| Vaelkhar's Heart | +12% hp, 12% less damage (bosses +10% attack) |
+| Vaelkhar's Heart | +10% hp, 10% less damage (bosses +10% attack) |
 | Voltara's Wedding Ring | 18% faster, +12% crit (one hero, drawn on its own side stream, starts each fight 15% down) |
 | The Calamity's Eye | +12% attack; skills and the king's mana 40% faster (every foe +6% hp) |
 | The Book of Names | +4% attack for every hero fallen this run (to 60%) |
@@ -137,23 +137,24 @@ instead (far noisier). The final pass, each relic's lift as a multiple of the ol
 | Scorched Scale | 2.22 | 1.58 | 1.54 | 1.78 | | Calamity's Eye (S) | 2.33 | 1.42 | 1.92 | 1.89 |
 | Watchman's Charm | 1.44 | 1.19 | 1.08 | 1.24 | | Book of Names (S) | 2.00 | 1.15 | 1.25 | 1.47 |
 
-The targets: a Common about 1 (most land between 0.6 and 1.4), a Rare about 1.5, a Storied about 2. Read with care: each point is about
-3.5 points of noise at 200 fights, and these are boss waves, which flatter Scorched Scale's boss guard. Still outside the targets after two
-passes: **the Siege Drum** (about nothing: the foes' wait helps little and can hurt), **Rime Sapphire** (0.24) and **the Poisoner's Fang**
-(0.54) are weak; **Scorched Scale** (1.78, in boss waves) and **Vaelkhar's Heart** (2.84) are strong; the Stopped Hourglass and the Hawk's
-Eye are Rares at about a Common's worth. A third pass could lift the three weak ones and trim the two strong; it is left for the owner's
-review rather than guessed. The Crown-Piece and the Tax Ingot change no fight (their worth is their gold); the Unfinished Chronicle is worth
-nothing alone and a set bonus with any chapter begun.
+The targets: a Common about 1, a Rare about 1.5, a Storied about 2 (each point about 3.5 points of noise at 200 fights). The owner then asked
+for a third pass (lift the Siege Drum, Rime Sapphire, Poisoner's Fang, Hourglass and Hawk's Eye; trim Scorched Scale and Vaelkhar's Heart;
+bring the level-60 Last Stand back towards main), measured on the relics it touched (mean of the three cells): the Siege Drum 0.05 → 0.88,
+Rime Sapphire 0.24 → 1.02, the Poisoner's Fang 0.54 → 1.09, the Stopped Hourglass 0.94 → 1.50, the Hawk's Eye 0.94 → 1.28, Scorched Scale
+1.78 → 1.06, Vaelkhar's Heart 2.84 → 2.30, the Phoenix Feather 2.27 → 1.67, the Gate Boss 1.37 → 1.04, the Sentry's Cloak 1.38 → 1.24.
+The growing relics' tops were trimmed for long runs (the Whetstone to 12%, the Ledger to 40%, the Hawk's Eye to 20%; their mid-run size, which
+the table measures, is as it was).
 
 Before and after (current main against this branch, the same commands):
 
 | Sweep | Before | After |
 |---|---|---|
-| Last Stand, `npm run stand-balance -- --levels 10,30,60 --attempts 20` (median / mean wave) | L10 9 / 9.0, L30 14 / 14.9, L60 19 / 17.9 | L10 9 / 9.0, L30 15 / 15.2, L60 20 / 20.0 |
+| Last Stand, `npm run stand-balance -- --levels 10,30,60 --attempts 20` (median / mean wave), after the second pass | L10 9 / 9.0, L30 14 / 14.9, L60 19 / 17.9 | L10 9 / 9.0, L30 15 / 15.2, L60 20 / 20.0 |
+| Last Stand at level 60, `--levels 60 --attempts 40`, after the third pass | 19 / 17.9 | 19 / 18.3 |
 | Calamity, `npm run balance -- --no-tables --calamity --attempts 36` (mean maps; map 1/2/3 cleared) | 1.47; 94% / 50% / 3% | 1.44; 94% / 44% / 6% |
 
-The Calamity is as it was. The Last Stand's strong parties (level 60) hold about two waves longer: its greedy buyer takes a relic every break,
-and the relics it meets are a little stronger on the whole than the old flat ones. (The old spire climb is gone; the tower's machinery is the
+The Calamity is as it was (measured after the second pass; the third only trimmed and lifted single relics). After the second pass the Last
+Stand's level-60 parties held about two waves longer; the third pass brought them back to within half a wave of main. (The old spire climb is gone; the tower's machinery is the
 Calamity's, measured above.)
 
 ## Checks
@@ -167,4 +168,4 @@ Calamity's, measured above.)
 - `tools/relics/card-shots.mjs [root] [port]`: the strip with the conversion line, four cards (a chapter, a growing relic, a price, a
   Storied relic) at 393x852, 360x780 and 412x915 (each card fits the screen, no sideways scroll), the line gone and the strip hidden once the
   fight begins, and a relic's mark over a hero. Screenshots `docs/samples/relics-2-*.png`. `tools/relics/prep-shots.mjs` (part 1's check) now opens the card on a tap.
-- Run: `npm run typecheck` clean; the full `npm test` (1997 pass, 0 fail, after main 0.296.0 was merged and the two fingerprint files re-recorded); `npm run web`.
+- Run: `npm run typecheck` clean; the full `npm test` (1997 pass, 0 fail, at main 0.296.0); after the third pass and main 0.298.0, the affected tests (relics, elites, events, midEvents, mystery, stand, tower, recap, autoplay and the two fingerprint files, re-recorded again) pass; `npm run web`.
