@@ -44,7 +44,7 @@ export const TALE_BATTLES: readonly QuestBattle[] = [
     blurb: "Old Maud's fold under a full moon: a white-eyed pack comes for the sheep, and for something hiding among them.",
     land: 'plains',
     like: { army: 'beasts', wave: 12 },
-    ease: 1.1,
+    ease: 1,
     cast: [STARTER_SLOT(['knight', 'peasant'])],
     waves: [
       { foes: ['packBlack', 'packBlack', 'packRed'] },
@@ -73,7 +73,7 @@ export const TALE_BATTLES: readonly QuestBattle[] = [
     blurb: "A drowned crew wades up the keep's moat at the spring tide, to take their chained captain back down with them.",
     land: 'swamp',
     like: { army: 'wildwood', wave: 11 },
-    ease: 1,
+    ease: 1.2,
     cast: [STARTER_SLOT(['samurai', 'kunoichi'])],
     waves: [
       { foes: ['skeleton', 'boneVolley', 'skeleton'] },
@@ -102,7 +102,7 @@ export const TALE_BATTLES: readonly QuestBattle[] = [
     blurb: 'Something huge in iron has walked out of the Golem Forge towards the keep, and the Forge wants it back.',
     land: 'forge',
     like: { army: 'golems', wave: 12 },
-    ease: 1,
+    ease: 0.33,
     cast: [STARTER_SLOT(['knight', 'wizard'])],
     waves: [
       { foes: ['stoneGolem', 'ironGolem', 'stoneGolem'] },

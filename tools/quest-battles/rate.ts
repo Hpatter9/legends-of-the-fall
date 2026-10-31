@@ -9,7 +9,7 @@ import { armyById, ARMIES } from '../../src/sim/armies';
 import { autoDeploy, autoEvent, pickSquad } from '../../src/sim/autoplay';
 import { autoMerge } from '../../src/sim/merge';
 import { canRetry, finish, retryWave, summon, startStage } from '../../src/sim/run';
-import { CHAIN_BATTLES, QUEST_BATTLES, castOf, forgetQuestArmies, notReady, type QuestBattle } from '../../src/sim/questBattles';
+import { CHAIN_BATTLES, QUEST_BATTLES, TALE_BATTLES, castOf, forgetQuestArmies, notReady, type QuestBattle } from '../../src/sim/questBattles';
 import { startQuestBattle } from '../../src/sim/questRun';
 import { traitsOf } from '../../src/sim/traits';
 import { savedAt } from '../autoplay';
@@ -60,7 +60,7 @@ function rate(qb: QuestBattle): number {
   return wins;
 }
 
-for (const qb of [...QUEST_BATTLES, ...CHAIN_BATTLES]) {
+for (const qb of [...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES]) {
   if (only && qb.id !== only) continue;
   const level = armyById(qb.like.army)!.level + lift;
   let wins = 0;
