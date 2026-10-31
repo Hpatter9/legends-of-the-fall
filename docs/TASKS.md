@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ALTAR-CLEAR — The Calamity's altar made clear
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/altar-clear`, `/home/user/lotf-altar` (from `claude/calamity-hub`, main 0.276.0 merged in).
+- **Goal:** the owner's "The altar isn't clear enough in how it works in the game": each altar choice in numbers from the rules, consecrate against corrupt side by side, what comes next and why the rift waits; an ⓘ explainer (shown once by itself); a "Your altar" summary; "Altar 1 of 3" labels on the map; the pulse shown in a fight. No rule changed.
+- **Scope:** new `src/sim/altarRules.ts`, `src/sim/altarWords.ts`, `src/altarHelp.ts`, `src/altarHud.ts`, `src/altarClear.css`, `test/altar-words.test.ts`, `tools/altar-clear/shots.mjs`; `src/sim/rift.ts`, `src/sim/riftBattle.ts`, `src/sim/tower.ts` (constants named, values unchanged; optional `Rift.corrupted`), `src/towerView.ts` (`altarCard`), `src/sanctuaryView.ts`, one hook in `src/main.ts`, `build.mjs` (the CSS).
+- **Status:** ready for review. [Note](notes/altar-clear.md) (with suggested rule changes, not made); screenshots `samples/altar-clear-*.png`.
+
 ### JRPG-RECAP — A JRPG results screen at a run's end; the simple card between waves
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/jrpg-recap`, `/home/user/lotf-recap` (from main 0.273.0).
@@ -33,6 +40,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "make the main room in the Calamity more alive ... that rift is the middle one they walk into, in a bright flash that zooms in and fades back in to the next battleground", and the walk out of the portal after a win with the cards rising one by one.
 - **Scope:** new `src/hubMotion.ts`, `test/calamity-hub.test.ts`, `tools/calamity/hub-shots.mjs`; `src/sanctuaryView.ts`, `src/sanctuary.css`. No sim change.
 - **Status:** ready for review. [Note](notes/calamity-hub.md); screenshots `samples/calhub-*.png`.
+
 ### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-rankup`, `/home/user/lotf-rankup` (from main 0.273.0).
