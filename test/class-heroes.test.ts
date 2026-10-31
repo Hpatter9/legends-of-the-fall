@@ -98,8 +98,12 @@ test('Benediction cleanses every ally and heals them over time; Grace heals thos
   assert.equal(dotOf(a), undefined);
   assert.ok(a.hot);
   const before = a.hp;
+  // (each mend is the Cleric's attack x1.2 while she casts, so it follows Benediction's strength, `TUNE2.cleric`: the skills overhaul's batch 2
+  // lowered it, 0.94 to 0.59, as the prayer grew cheaper; the rule held here is two mends in two seconds)
+  const mend = a.hot!.amount;
+  assert.ok(mend > 0);
   run(b, 2100);
-  assert.ok(a.hp >= before + 2 * Math.round(UNITS.cleric.atk * 1.2) - 1, `${a.hp} ${before}`);
+  assert.ok(a.hp >= before + 2 * Math.round(mend) - 1, `${a.hp} ${before} ${mend}`);
   assert.ok(c.healed! > 0);
   // Grace: an ally beside her heals 1.5% a second with no skill at all
   const b2 = arena();
