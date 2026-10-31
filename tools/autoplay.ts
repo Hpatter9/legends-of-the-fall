@@ -29,6 +29,14 @@ import { orderEidolon } from '../src/sim/orders';
 
 export { strengthOf };
 
+/** AUTO-CAST: the balance tools' switch for the king's spells cast on their own (`src/sim/autoCast.ts`), as the page's Auto does. Off by
+ *  default, so every existing table stays as it is; on, every fight the greedy players start casts the save's equipped spells. */
+export const botSpells = { on: false };
+/** Set a fight just begun to cast the save's spells on its own, when `botSpells` is on. */
+export function maybeSpells(b: Battle, meta: Meta): void {
+  if (botSpells.on) b.autoSpells = [...meta.spellbook.equipped];
+}
+
 /** EIDOLONS: the balance tool's `--eidolon <wave>[:<id>]` calls an Eidolon as the fight at that wave of every army attempt begins (0, the
  *  default, never: the greedy player, like Auto, never blows the horn, so every existing table stays as it is). */
 export const eidolonAt: { wave: number; id: string } = { wave: 0, id: 'askel' };
@@ -60,6 +68,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     const b = startStage(run);
     autoDeploy(b, run, meta, boostFor);
     fight(b);
+    maybeSpells(b, meta);
     maybeEidolon(b, run.stage, army.waves[run.stage - 1]?.boss === 'mid');
     playOut(b);
     const ok = b.phase === 'won';
@@ -85,6 +94,7 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
     const b = startStage(run);
     autoDeploy(b, run, meta);
     fight(b);
+    maybeSpells(b, meta);
     playOut(b);
     const ok = b.phase === 'won';
     if (!ok && hearts && canRetry(run)) {
@@ -110,6 +120,7 @@ export function playFinal(meta: Meta, armyId: string, seed: number, party: reado
     if (!last) for (const u of b.units) if (u.side === 'foe') u.hp = u.maxHp = 1;
     autoDeploy(b, run, meta);
     fight(b);
+    maybeSpells(b, meta);
     playOut(b);
     if (last) return b.phase === 'won';
     noteFight(run, b);
@@ -149,6 +160,7 @@ function fightNode(meta: Meta, run: Run): Battle {
   const order = [...squad].sort((a, c) => Number(UNITS[a.kind].range > 1) - Number(UNITS[c.kind].range > 1));
   order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
   fight(b);
+  maybeSpells(b, meta);
   playOut(b);
   const ends = squad.map((h) => {
     const u = b.units.find((x) => x.side === 'hero' && x.tag === h.id);
