@@ -46,7 +46,7 @@ export const STAND_TOWER = {
   lamp: [0.143, 0.176] as const,
 };
 /** The Last Stand's place: the tap box over the painted tower, its plate under the tower's foot (the Calamity's plate hangs under its citadel the same way). */
-export const STAND = { w: 108, plate: 40 };
+export const STAND = { w: 132, plate: 40 };
 function standPlace(h: number): Place {
   const x = 4;
   const top = Math.round(h * (STAND_TOWER.top - 0.02));

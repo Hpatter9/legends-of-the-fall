@@ -106,7 +106,8 @@
 @keyframes hmDispatchStill { 0%, 82% { opacity: 1; } 100% { opacity: 0; } }
 
 /* the way in (`standGate.ts`): the scene leans in to the tower as the dusk closes round it, the Stand's name rises, then dark */
-.cpWrap.sgGo .cpRoom { transform-origin: var(--sgX) var(--sgY); transform: scale(2.8); transition: transform 1s cubic-bezier(0.5, 0, 0.75, 0.2); }
+/* (scaled about the tower, then carried towards the middle of the scene, so the camera flies to it; never so far an edge of the painting shows) */
+.cpWrap.sgGo .cpRoom { transform-origin: var(--sgX) var(--sgY); transform: translate(min(calc(var(--sgW) / 2 - var(--sgX)), calc(var(--sgX) * 1.8)), min(calc(var(--sgH) * 0.4 - var(--sgY)), calc(var(--sgY) * 1.8))) scale(2.8); transition: transform 1s cubic-bezier(0.5, 0, 0.75, 0.2); }
 .cpWrap.sgGo .cpSlot, .cpWrap.sgGo .cpPlate, .cpWrap.sgGo .cpHeading, .cpWrap.sgGo .cpStash { opacity: 0; transition: opacity 0.2s; pointer-events: none; }
 .sgVeil { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at var(--sgX) var(--sgY), #ffb45a2e 0, #3a140a55 18%, #0b0605f2 62%); animation: sgVeil 1s ease-in forwards; }
 .sgVeil::after { content: ''; position: absolute; inset: 0; background: #070404; opacity: 0; animation: sgDark 1s ease-in forwards; }

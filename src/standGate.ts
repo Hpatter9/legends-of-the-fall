@@ -1,5 +1,5 @@
 // OVERLOOK-STAND: the way into the Last Stand from the overlook, as the Calamity has its own moment. A tap on the watchtower
-// sounds the horn, the scene leans in towards the tower as the dusk closes round it, the Stand's name rises with its record,
+// sounds the horn, the camera flies in to the tower as the dusk closes round it, the Stand's name rises with its record,
 // and the screen goes dark into the Stand. About a second; a tap skips it; reduced motion keeps a short fade without the zoom.
 import { play } from './render/sound';
 
@@ -13,6 +13,8 @@ export function playStandGate(root: HTMLElement, focus: { x: number; y: number }
   const f = focus ?? { x: root.clientWidth * 0.1, y: root.clientHeight * 0.13 };
   root.style.setProperty('--sgX', `${Math.round(f.x)}px`);
   root.style.setProperty('--sgY', `${Math.round(f.y)}px`);
+  root.style.setProperty('--sgW', `${root.clientWidth}px`);
+  root.style.setProperty('--sgH', `${root.clientHeight}px`);
   const veil = document.createElement('div');
   veil.className = 'sgVeil';
   veil.setAttribute('role', 'status');

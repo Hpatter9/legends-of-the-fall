@@ -109,14 +109,32 @@ try {
       await page.locator('#hmTower').tap();
       await page.waitForTimeout(420);
       check(await page.evaluate(() => !!document.querySelector('.cpWrap.sgGo .sgVeil')), `${tag}: the tower's moment plays`);
-      if (w === 393) await page.screenshot({ path: `${OUT}-entry-1.png` });
       await page.waitForTimeout(350);
-      if (w === 393) await page.screenshot({ path: `${OUT}-entry-2.png` });
       await page.waitForTimeout(1600);
       const inStand = await page.evaluate(() => document.getElementById('home').hidden && !document.querySelector('.sgVeil'));
       check(inStand, `${tag}: then the Last Stand opens and the moment is gone`);
-      if (w === 393) await page.screenshot({ path: `${OUT}-entry-3.png` });
       check(errors.length === 0, `${tag}: no page errors (${errors.join('; ')})`);
+      await ctx.close();
+    }
+    // ---- the way in, slowed eight times for the camera (a software-drawn screenshot takes longer than the moment itself)
+    if (w === 393) {
+      const { ctx, page } = await boot(browser, w, h, port, { stand: 14, standAct: 2 });
+      await page.waitForTimeout(1200);
+      await page.evaluate(() => {
+        const st = document.createElement('style');
+        st.textContent = '.sgVeil, .sgVeil::after, .sgCard { animation-duration: 8s !important; } .cpWrap.sgGo .cpRoom { transition-duration: 8s !important; }';
+        document.head.append(st);
+        const later = window.setTimeout;
+        window.setTimeout = (fn, ms, ...rest) => later(fn, ms === 1000 ? 8000 : ms, ...rest);
+      });
+      await page.locator('#hmTower').tap();
+      await page.waitForTimeout(2600);
+      await page.screenshot({ path: `${OUT}-entry-1.png` });
+      await page.waitForTimeout(2600);
+      await page.screenshot({ path: `${OUT}-entry-2.png` });
+      await page.waitForFunction(() => document.getElementById('home').hidden && !document.querySelector('.sgVeil'), {}, { timeout: 30000 });
+      await page.waitForTimeout(800);
+      await page.screenshot({ path: `${OUT}-entry-3.png` });
       await ctx.close();
     }
     // ---- shut: greyed, its plate saying what opens it, no tap
