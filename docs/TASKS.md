@@ -14,6 +14,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RELICS — Relics on the wave-prep screen only; a proposal to redo the relics as the keep's lost artefacts
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/relics`, `/home/user/lotf-relics` (from main 0.289.0).
+- **Goal:** the owner's "The party relic doesn't need to be in the battle screen during a wave, just the wave prep screen. Also we should redo these so they are more of a relic, rather than an individual piece of gear". Part 1 (built): the relic strip shows on the wave-prep screen only; a tap reads the relic and its set's count. Part 2 (a design for approval, no rules changed): the relics redone as the keep's lost artefacts, each with lore and a rule with character (a price, a condition, a growing power, a story tie), the sets as the keep's Chapters and the Eidolons' reliquaries, six Storied relics, save conversion, balance and art plans.
+- **Scope:** `src/index.html` (one rule), `src/events.ts` (`drawStrip`), new `tools/relics/prep-shots.mjs`; `docs/notes/relics-redesign.md`.
+- **Status:** part 1 ready for review ([note](notes/relics-prep.md), screenshots `samples/relics-prep-*.png`); part 2 awaits the owner's decisions ([proposal](notes/relics-redesign.md), open questions at its end).
 ### AUTO-CAST — Auto fires the ultimates and casts the king's spells
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/auto-cast`, `/home/user/lotf-autocast` (from main 0.289.0).
