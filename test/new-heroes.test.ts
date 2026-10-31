@@ -133,14 +133,17 @@ test('Mending Light heals the most hurt ally, never past full', () => {
 test('Sanctuary heals and shields everyone, only when someone is hurt', () => {
   const b = arena();
   // (Sanctuary is the Wanderer's skill 2 since the hero kits: it opens at level 10)
-  spawn(b, 'wanderer', 3, 8, CHARGE_MAX).level = SKILL2_LEVEL;
+  const w = spawn(b, 'wanderer', 3, 8, CHARGE_MAX);
+  w.level = SKILL2_LEVEL;
   const k = spawn(b, 'knight', 3, 6);
   spawn(b, 'skeleton', 3, 1);
   run(b, 100);
   assert.equal(k.guardUntil, undefined);
   k.hp = 50;
   run(b, 2000);
-  assert.ok(k.hp > 50 && (k.guardUntil ?? 0) > b.t);
+  // (the mist's healing is the Wanderer's attack times its strength, `TUNE2.wanderer`, which the skills overhaul's batch 2 lowered as the mist
+  // grew cheaper: the skeleton's blows can now outpace it, so the rule is held by what she healed, not by the knight's health)
+  assert.ok((w.healed ?? 0) > 0 && (k.guardUntil ?? 0) > b.t);
 });
 
 test('Fox Charm turns a foe on its own side', () => {

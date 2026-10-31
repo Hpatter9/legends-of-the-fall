@@ -53,6 +53,10 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
 // keeps its hash, the fights themselves are unchanged; then `tower` too, when the spire and the Calamity took the same split: its heroes level
 // from their own run XP fight by fight. `calamity` did not move)
+// (SKILLS-1, the skills overhaul's batch 2, docs/notes/skills-1.md, re-recorded every scenario: field1, field30, bosses, armyFoes, spells, lands,
+// army, daily, tower, stand and calamity. Every hero's skills now cost and cool by their class, so every fight with a hero moves; batch 1 moved none.)
+// (SKILLS-1 batch 3, docs/notes/skills-1.md, re-recorded army, daily and tower, the scenarios with merged heroes, whose tier skills went; the rest kept
+// their hashes)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

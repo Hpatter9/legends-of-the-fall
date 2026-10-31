@@ -4,9 +4,8 @@
 
 import { type Battle, type Unit } from './sim/battle';
 import { keyOf, kitOf, ultimateOf, ULT_LEVEL, type Skill } from './sim/abilities';
-import { costOf, heroKitOf, RES, resMax, resOf, reviveCost, reviveReady, skill2Open, SKILL2_LEVEL, TIER3_DISCOUNT, ultFull, type HeroKit, type Slot } from './sim/heroKits';
+import { costOf, heroKitOf, resMax, resOf, reviveCost, reviveReady, skill2Open, SKILL2_LEVEL, ultFull, type HeroKit, type Slot } from './sim/heroKits';
 import { REVIVE } from './sim/kits/revive';
-import { TIER_SKILLS, TOP_TIER } from './sim/tierSkills';
 
 /** Which of a hero's moves a chip or a sheet shows: skill 1, skill 2 or the ultimate. */
 export type Which = 1 | 2 | 'ult';
@@ -14,8 +13,11 @@ export type Which = 1 | 2 | 'ult';
 /** The pool's short tag, as the bars and chips show it. */
 export const poolTag = (hk: HeroKit): 'MP' | 'SP' => (hk.pool === 'mana' ? 'MP' : 'SP');
 
-/** The shortest time between two casts of a slot (its own gap, else its pool's). */
-export const gapOf = (hk: HeroKit, slot: Slot): number => slot.gap ?? (hk.pool === 'mana' ? RES.GAP_MANA_MS : RES.GAP_STAM_MS);
+/** The shortest time between two casts of a slot: its cooldown. */
+export const gapOf = (_hk: HeroKit, slot: Slot): number => slot.cd;
+
+/** The one rank line a skill's sheet shows (the skills overhaul's batch 3): merging no longer changes a skill. */
+export const EVERY_RANK = { title: 'Every rank', text: 'The same at every rank: a rank gives more health and attack, never a better skill.', on: true, now: false };
 
 /** What a skill chip shows. */
 export interface ChipView {
@@ -133,7 +135,6 @@ const secs = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
 export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetView | undefined {
   const hk = heroKitOf(u);
   if (!hk) return undefined;
-  const grade = Math.min(u.grade ?? 1, TOP_TIER);
   if (which === 'ult') {
     const ult = kitOf(u)?.ultimate;
     if (!ult) return undefined;
@@ -145,7 +146,7 @@ export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetVi
       rows.push(['To fire', auto ? 'Auto is on: it goes off by itself when full' : 'Tap the hero’s row when it shows TAP']);
     }
     rows.push(['Cast time', secs(ult.castMs)]);
-    return { name: ult.name, label: 'Ultimate', skill: ult, text: ult.text, rows, tiers: [{ title: 'Every tier', text: 'The ultimate is the same at every tier.', on: true, now: false }] };
+    return { name: ult.name, label: 'Ultimate', skill: ult, text: ult.text, rows, tiers: [EVERY_RANK] };
   }
   const slot = which === 1 ? hk.s1 : hk.s2;
   const s = slot.skill;
@@ -157,12 +158,8 @@ export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetVi
   rows.push(['Strength', `${Math.round(slot.tune * 100)}% of attack`]);
   rows.push(['Cast time', secs(s.castMs)]);
   if (slot.revive) rows.push(['Revive', `${slot.revive.skill.name}: with a friend fallen, it raises them instead (${reviveCost(hk)} ${hk.pool}, once every ${REVIVE.GAP_MS / 1000}s)`]);
-  // (the skill a hero's tier improves is its kit's own skill; the other gets cheaper from tier 3)
-  const own = TIER_SKILLS[u.def];
-  const tiers =
-    s === kitOf(u)?.skill && own
-      ? own.map((t, i) => ({ title: `Tier ${i + 2}: ${t.name}`, text: t.text, on: grade >= i + 2, now: grade === i + 2 }))
-      : [{ title: 'Tier 3 and up', text: `Costs ${Math.round((1 - TIER3_DISCOUNT) * 100)}% less.`, on: grade >= 3, now: grade >= 3 }];
+  // (the skills overhaul's batch 3, the owner's rule: a rank gives health and attack only, never a better skill)
+  const tiers = [EVERY_RANK];
   return { name: s.name, label: `Skill ${which}`, skill: s, text: s.text, rows, tiers };
 }
 

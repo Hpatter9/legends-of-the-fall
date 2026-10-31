@@ -13,7 +13,6 @@ import { Rng } from './rng';
 import { ALL_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { heroUltimates } from './ultimates';
-import { runRiders } from './tierSkills';
 import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
@@ -1721,13 +1720,11 @@ export function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[], slot: '
   me.busyUntil = b.t + s.castMs;
   out.push({ kind: 'skill', by: me.id, name: keyOf(s), ms: s.castMs });
   if (slot === 'ult') triggerDuoComboOnUlt(b, me, out);
-  // (a hero merged up adds its tier skill's riders to the ordinary skill; the ultimate is the same at every grade)
-  if (me.grade && s === kitOf(me)?.skill)
-    runRiders(b, me, out, (ms, share) => b.pending.push({ at: b.t + ms, kind: 'echo', by: me.id, to: me.id, dmg: share, heavy: false }));
   return true;
 }
 
-/** A tier skill's echo: the hero's skill goes off again at `share` of its strength (nothing happens if it has nothing to hit, or the hero has fallen). It is not a cast: no charge, no busy time, and no riders of its own. */
+/** A tier skill's echo: the hero's skill goes off again at `share` of its strength (nothing happens if it has nothing to hit, or the hero has fallen). It is not a cast: no charge, no busy time, and no riders of its own.
+ *  (The tier skills went with the skills overhaul's batch 3, so nothing schedules an echo now; it stays for a battle saved with one pending.) */
 export function echoSkill(b: Battle, me: Unit, share: number, out: BattleEvent[]): void {
   const s = kitOf(me)?.skill;
   if (!s || !me.alive) return;

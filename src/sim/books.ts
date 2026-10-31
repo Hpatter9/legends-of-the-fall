@@ -204,7 +204,8 @@ export function kitWithLoadout(kind: string, l: Loadout): HeroKit | undefined {
   if (!k) {
     const s1 = slotFor(kind, l[0]);
     const s2 = slotFor(kind, l[1]);
-    k = s1 && s2 ? { ...own, s1, s2 } : own;
+    // (the skills overhaul: the kit's slots are the ones the AI weighs, so they carry the chosen two as well)
+    k = s1 && s2 ? { ...own, s1, s2, slots: [s1, s2, ...own.slots.slice(2)] } : own;
     built.set(key, k);
   }
   return k;
