@@ -5090,5 +5090,26 @@
   },
   "figure": 135,
   "facesRight": true
+ },
+ "eidolon_aurelan": {
+  "w": 148,
+  "h": 154,
+  "perRow": 6,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 4,
+   "attack": 5,
+   "idle": 6,
+   "hurt": 3,
+   "dead": 6
+  },
+  "figure": 152,
+  "facesRight": true
  }
 }
