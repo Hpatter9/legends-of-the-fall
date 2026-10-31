@@ -23,7 +23,7 @@ import { heroName } from './heroNames';
 /** The cart's guest hero as a ware (GUEST-HERO): dear, and a sixth hero on the field for this run. */
 export const guestOption = (run: Run, stage: number, kind: string): EventOption => ({
   label: `Guest: ${heroName(kind)} the ${UNITS[kind].name}`,
-  text: 'fights as a sixth hero beside your five, at your party\'s level, for this run only',
+  text: 'fights as a sixth hero beside your five, for this run only',
   cost: guestPrice(run, stage),
   effect: { t: 'guest', kind },
 });

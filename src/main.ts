@@ -64,7 +64,7 @@ import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
-import { farewellOf, guestBoost, guestLevel, guestOf, splitGuestXp } from './sim/guest';
+import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, splitGuestXp } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
@@ -1655,8 +1655,8 @@ class Game {
     const h = u.side === 'hero' && u.tag !== undefined ? heroOf(this.run, u.tag) : undefined;
     const grade = u.grade ?? 1;
     const pic = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
-    // (GUEST-HERO: a guest's card reads none of its kind's lasting talents or gear, and wears a GUEST tag)
-    this.info.open(infoOf(this.b, u, { meta: this.run.local || h?.guest ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic, !!h?.guest);
+    // (GUEST-HERO: a guest the player does not own reads none of its kind's lasting talents or gear; a guest wears a GUEST tag)
+    this.info.open(infoOf(this.b, u, { meta: this.run.local || (h?.guest && !guestOwned(this.meta, h)) ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic, !!h?.guest);
     play('tap');
   }
 
@@ -2155,7 +2155,7 @@ class Game {
   private boostFor(h: Owned): Boost {
     // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
     if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
-    // (GUEST-HERO: a guest fights at the party's level and rank, with none of its kind's lasting gear, talents or awakening)
+    // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
   }
@@ -2801,7 +2801,7 @@ class Game {
 
   /** A hero's level: its own in a run that levels its heroes, else its kind's lasting level. */
   private levelOf(h: Owned): number {
-    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta) : levelOfKind(this.meta, h.kind);
+    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta, h) : levelOfKind(this.meta, h.kind);
   }
 
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */

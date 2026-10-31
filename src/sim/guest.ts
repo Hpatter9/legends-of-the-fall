@@ -9,14 +9,17 @@
 //   - it earns XP in the run (kept on the guest itself, `Owned.xp`) but nothing lasting: no XP to the kind's level, no shards, no rank;
 //   - it never merges and is never recycled, and it leaves when the run ends, with a short farewell line on the last card (`farewellOf`).
 //
-// Its strength is the party's: the grade of the fielded heroes when it joined, and their level and rank as they stand (live), with none of
-// the kind's own lasting equipment, talents or awakening. The offer is drawn on its own side stream (`GUEST_SALT`), so the cart's other
+// Its grade is the fielded heroes' when it joined. A guest the player owns brings its own lasting level, rank, talents, equipment and
+// awakening (the owner's call); one the player does not own fights at the party's mean level and rank (live), with none of those. Either way
+// its XP never reaches the kind's lasting level: it is a visitor this run. The offer is drawn on its own side stream (`GUEST_SALT`), so the cart's other
 // wares, and every other draw of the run, are as they were. Pure rules: no Pixi, no DOM.
 
 import { mixSeed, Rng } from './rng';
 import { ALL_HEROES, UNITS } from './units';
 import { heroName } from './heroNames';
 import { heroRank, type Meta } from './meta';
+import { heroStats } from './talents';
+import { awakenedOf } from './awaken';
 import { levelOfKind } from './levels';
 import { gearBoost } from './gear';
 import type { Boost } from './battle';
@@ -25,9 +28,10 @@ import { canJoin, gradeBoost, heroOf, MAX_GRADE, summonCost, type Owned, type Ru
 const GUEST_SALT = 0x6e5e7;
 /** The share of the cart's visits that bring a guest (while the run has none). The cart comes at most once a run, so a guest is a find. */
 export const GUEST_CHANCE = 0.6;
-/** A guest costs this many sellswords (the next Hire's price and `HIRE_EXTRA`, which rises with the run's hires): dear, about a wave's
- *  pay and a sellsword besides, but within reach of a party that kept a little gold back (`docs/notes/guest-hero.md` has the numbers). */
-export const GUEST_HIRES = 1.5;
+/** A guest costs this many sellswords (the next Hire's price and `HIRE_EXTRA`, which rises with the run's hires), and never less than
+ *  `GUEST_FLOOR`: the owner's "higher end", a buy saved up for (`docs/notes/guest-hero.md` has the numbers). */
+export const GUEST_HIRES = 2.5;
+export const GUEST_FLOOR = 120;
 /** The sellsword's extra over the next Hire (as `market.ts`'s `HIRE_EXTRA`; kept here so this file stands alone). */
 const HIRE_EXTRA = 10;
 
@@ -46,8 +50,9 @@ export function guestKinds(run: Run): string[] {
   return ALL_HEROES.filter((k) => !!UNITS[k] && !UNITS[k].summon && !party.has(k));
 }
 
-/** A guest's price at the cart: `GUEST_HIRES` sellswords, to the nearest 5 (`_stage` kept for the cart's other prices' shape). */
-export const guestPrice = (run: Run, _stage: number): number => Math.round((GUEST_HIRES * (summonCost(run) + HIRE_EXTRA)) / 5) * 5;
+/** A guest's price at the cart: `GUEST_HIRES` sellswords to the nearest 5, at least `GUEST_FLOOR` (`_stage` kept for the cart's other
+ *  prices' shape). */
+export const guestPrice = (run: Run, _stage: number): number => Math.max(GUEST_FLOOR, Math.round((GUEST_HIRES * (summonCost(run) + HIRE_EXTRA)) / 5) * 5);
 
 /** The guest the cart offers after wave `stage`, or null: none when the run has one already, cannot meet one, or the roll says no. Its own
  *  side stream of the run's seed and the stage, so the cart's wares are the same with or without it. */
@@ -91,17 +96,24 @@ export function guestStanding(run: Run, meta: Meta): { level: number; rank: numb
   return { level: Math.max(1, mean((k) => levelOfKind(meta, k))), rank: mean((k) => heroRank(meta, k)) };
 }
 
-/** A guest's whole boost in a fight: its grade, the party's level and rank (`guestStanding`), the run's gear it wears and its training
- *  bumps, and the skill charge it keeps; none of its kind's lasting equipment, talents or awakening (those are the player's own heroes'). */
+/** Whether the player owns the guest's kind: then it brings its own lasting level, rank, talents, equipment and awakening (`guestBoost`). */
+export const guestOwned = (meta: Meta, h: Owned): boolean => meta.unlocked.includes(h.kind);
+
+/** A guest's whole boost in a fight: its grade, the run's gear it wears and its training bumps, and the skill charge it keeps; with its own
+ *  lasting level, rank, talents, equipment and awakening when the player owns its kind (as an own hero's), else the party's level and rank
+ *  (`guestStanding`) and none of those. */
 export function guestBoost(run: Run, meta: Meta, h: Owned): Boost {
-  const { level, rank } = guestStanding(run, meta);
+  const own = guestOwned(meta, h);
+  const { level, rank } = own ? { level: levelOfKind(meta, h.kind), rank: heroRank(meta, h.kind) } : guestStanding(run, meta);
   const base = gradeBoost(h.grade, rank, level);
   const g = gearBoost(h.gear);
-  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+  const equip = own ? heroStats(meta, h.kind) : undefined;
+  const awaken = own ? awakenedOf(meta, h.kind) : 0;
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(awaken ? { awaken } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
 }
 
-/** The level a guest shows: the party's (`guestStanding`). */
-export const guestLevel = (run: Run, meta: Meta): number => guestStanding(run, meta).level;
+/** The level a guest shows: its own lasting level when the player owns it, else the party's (`guestStanding`). */
+export const guestLevel = (run: Run, meta: Meta, h?: Owned): number => (h && guestOwned(meta, h) ? levelOfKind(meta, h.kind) : guestStanding(run, meta).level);
 
 /** A fight's XP by kind (`fightXp`), with the guest's share taken out and kept on the guest itself (its run XP): what is left goes to the
  *  lasting levels. The guest's kind earns nothing lasting. Returns the gains to keep, and the guest's share. */

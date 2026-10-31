@@ -15,9 +15,9 @@ while the run has no guest, it also has a **guest** (`src/sim/guest.ts`, `drawGu
 - a hero from outside the run's party and roster (`guestKinds`): most are heroes the player does not own, so it is a chance to field one;
 - drawn on its own side stream (`mixSeed(seed, 0x6e5e7, stage)`), so the cart's other wares, and every other draw of the run, are as they
   were (a test checks the wares come out the same);
-- priced at one and a half sellswords (`GUEST_HIRES` x (the next Hire + 10), to the nearest 5): 60 gold at a run's start, 105 after six hires,
-  150 after twelve; dear (the cart's dearest ware but for a relic), but within reach of a party that kept a wave's pay back. It counts as one of the cart's
-  three buys, and a rummage leaves it where it is.
+- priced at the owner's "higher end": two and a half sellswords (`GUEST_HIRES` x (the next Hire + 10), to the nearest 5), never under
+  120 gold (`GUEST_FLOOR`): 120 at a run's start (the floor; 2.5 sellswords would be 100), 175 after six hires, 250 after twelve. The cart's
+  dearest ware, a buy saved up for. It counts as one of the cart's three buys, and a rummage leaves it where it is.
 
 The cart comes at most once a run (the road never repeats a kind), so in the measured saves a run met a guest about one time in four (10% to
 27% by army). Not offered: the Calamity (it hires from all 45 already and fields ten), quest battles, and an ordinary endless run (it has no
@@ -29,11 +29,14 @@ cart). The spire is gone, so its shop is not a place for it.
   own plus the guest stand on the field. A sixth hero of the party's own is still refused. `takeGuest` refuses a second guest.
 - **One of each still holds.** A guest is drawn from kinds the run does not have, and `canJoin` and `placeBlock` refuse a twin as for any
   hero (a test builds a guest of a fielded kind by hand and checks both refuse it).
-- **Its strength is the party's.** It joins at the fielded heroes' mean grade (rounded down; `guestGrade`) and fights at their mean lasting
-  level and rank, read live (`guestStanding`, `guestBoost`), so it keeps pace as they level. None of its kind's lasting equipment, talents or
-  awakening count (those are the player's own heroes'). It may wear the run's gear like anyone.
+- **Its strength.** It joins at the fielded heroes' mean grade (rounded down; `guestGrade`) and keeps it. Then (the owner's call):
+  - a guest the player **owns** (`guestOwned`) brings its own lasting level, rank, talents, equipment and awakening, exactly as one of the
+    player's own heroes of that kind would (`guestBoost`; its info card reads them too);
+  - a guest the player does **not** own fights at the party's mean lasting level and rank, read live (`guestStanding`), so it keeps pace as
+    they level, with no talents, equipment or awakening.
+  Either way it may wear the run's gear like anyone.
 - **Nothing lasting.** Its share of a fight's XP is taken out before the lasting XP is paid and kept on the guest itself (`splitGuestXp`,
-  `Owned.xp`): the kind's level does not move. It earns no bench XP. It never merges (`mergeable` in `merge.ts`) and is never recycled
+  `Owned.xp`): the kind's level does not move, even for a guest the player owns (it is a visitor this run). It does not level in the run. It earns no bench XP. It never merges (`mergeable` in `merge.ts`) and is never recycled
   (`recycle` in `run.ts`).
 - **It leaves.** When the run ends, won or lost, the last card says its farewell as a line of its own (`farewellOf`, `guestFarewell`: one
   of three by its kind, "Kerem the guest bows and leaves the party: ..."; the card's new `guest` line in `waveCard.ts`, marked ⚑). The run,
@@ -45,8 +48,8 @@ Save: one optional field, `Owned.guest`. The `'guest'` event effect is new; an o
 
 ### The page
 
-- The cart's option shows the hero's portrait, "Guest: Kerem the Juggernaut", "fights as a sixth hero beside your five, at your party's
-  level, for this run only", a teal **GUEST** badge and its price (`src/events.ts`). Bought, the line says "... joins you as a guest: a sixth
+- The cart's option shows the hero's portrait, "Guest: Kerem the Juggernaut", "fights as a sixth hero beside your five, for
+  this run only", a teal **GUEST** badge and its price (`src/events.ts`). Bought, the line says "... joins you as a guest: a sixth
   hero on the field, for this run only."
 - Closing the card puts the guest straight on the board beside the five (`afterEvent` in `src/main.ts`). The deploy line says "5 of 5 placed
   + guest" (`placedWords`).
@@ -98,13 +101,11 @@ New: `src/sim/guest.ts`, `src/guest.css`, `test/guest-hero.test.ts`, `test/talen
 Screenshots: `docs/samples/guest-*.png` (the cart, the line after buying, the field of six, the info card, the bench after a loss with its GUEST badge, the farewell on the last card) and
 `docs/samples/talent-arrow-*.png` (the tavern, the list, the tree), at 393x852, 360x780 and 412x915.
 
-## Questions for the owner
+## The owner's answers (applied)
 
-1. Price: one and a half sellswords (60 to 150 gold). Dearer, or a fixed price?
-2. Should the Calamity's shop (or its recruit spots) offer guests too? The Calamity fields ten and hires from all 45 already, so it was left
-   out.
-3. The guest fights at the party's mean level and rank, without its kind's own talents or equipment. Should a guest the player owns bring its
-   own level, talents and gear instead?
-4. Should the greedy player (Auto, auto-replay) buy a guest when it can? It does not now, so the balance tables are unchanged.
-5. The guest's run XP is kept on the guest, but it changes nothing (its level is the party's). Should it level within the run instead, and
-   should the run's end results list it?
+1. Price: "higher end": 2.5 sellswords with a floor of 120 (above).
+2. The Calamity: no guests there (as built).
+3. A guest the player owns brings its own lasting level, talents, gear and awakening; one not owned keeps the party's level and rank. Its XP
+   never reaches its lasting level.
+4. Auto and auto-replay never buy a guest (as built).
+5. No levelling within the run (as built).

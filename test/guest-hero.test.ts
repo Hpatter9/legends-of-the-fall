@@ -10,7 +10,11 @@ import { armyRun, canJoin, finish, heroOf, newRun, recycle, squadUsed, startStag
 import { chooseOption } from '../src/sim/events';
 import { marketOptions, stockMarket } from '../src/sim/market';
 import { waveNotes } from '../src/sim/waveCard';
-import { drawGuest, farewellOf, guestBoost, guestFarewell, guestKinds, guestOf, guestPrice, guestStanding, splitGuestXp, takeGuest } from '../src/sim/guest';
+import { drawGuest, farewellOf, guestBoost, guestFarewell, guestKinds, guestLevel, guestOf, guestOwned, guestPrice, guestStanding, splitGuestXp, takeGuest } from '../src/sim/guest';
+import { boostOf } from '../src/sim/run';
+import { heroRank } from '../src/sim/meta';
+import { heroStats } from '../src/sim/talents';
+import { awakenedOf } from '../src/sim/awaken';
 import { startedMeta } from '../src/sim/meta';
 import { xpFor } from '../src/sim/levels';
 import { HEROES } from '../src/sim/units';
@@ -46,9 +50,13 @@ test('the guest offer is drawn on its own stream: the same each time, outside th
   const g = withGuest[wares.length];
   assert.equal(g.effect.t, 'guest');
   assert.equal(g.cost, guestPrice(r, s));
-  // (one and a half of the cart's sellswords, to the nearest 5: its dearest ware but for a relic)
+  // (the owner's "higher end": two and a half of the cart's sellswords, to the nearest 5, and never under 120)
   const sell = wares.find((o) => o.effect.t === 'hire')!;
-  assert.equal(g.cost, Math.round((1.5 * sell.cost) / 5) * 5);
+  assert.equal(g.cost, Math.max(120, Math.round((2.5 * sell.cost) / 5) * 5));
+  assert.ok(g.cost >= 120);
+  const later = copy(r);
+  later.summons = 6;
+  assert.equal(guestPrice(later, s), 175);
   // (some carts have none)
   assert.ok(Array.from({ length: 40 }, (_, i) => drawGuest(r, i + 1)).some((x) => x === null));
 });
@@ -139,11 +147,14 @@ test('buying the guest at the cart pays its price and fields it; a rummage keeps
   assert.ok(r.squad.includes(g.id));
 });
 
-test('a guest fights at the party\'s level and rank, and its XP stays in the run', () => {
+test('a guest the player does not own fights at the party\'s level and rank, and its XP stays in the run', () => {
   const r = armyWithFive();
   const meta = startedMeta(1);
+  meta.unlocked = meta.unlocked.filter((k) => k !== 'cleric');
   for (const k of PARTY) meta.xp[k] = xpFor(20);
   const g = takeGuest(r, 'cleric', 0)!;
+  assert.equal(guestOwned(meta, g), false);
+  assert.equal(guestLevel(r, meta, g), 20);
   assert.equal(guestStanding(r, meta).level, 20);
   assert.equal(guestBoost(r, meta, g).level, 20);
   const before = meta.xp.cleric ?? 0;
@@ -152,6 +163,28 @@ test('a guest fights at the party\'s level and rank, and its XP stays in the run
   assert.equal(guest, 40);
   assert.equal(g.xp, 40);
   assert.equal(meta.xp.cleric ?? 0, before);
+});
+
+test('a guest the player owns brings its own lasting level, rank, talents and gear; its XP still stays in the run', () => {
+  const r = armyWithFive();
+  const meta = startedMeta(1);
+  for (const k of PARTY) meta.xp[k] = xpFor(20);
+  if (!meta.unlocked.includes('cleric')) meta.unlocked.push('cleric');
+  meta.xp.cleric = xpFor(35);
+  meta.ranked = { ...meta.ranked, cleric: 2 };
+  meta.shards.cleric = Math.max(meta.shards.cleric ?? 0, 99);
+  const g = takeGuest(r, 'cleric', 0)!;
+  assert.ok(guestOwned(meta, g));
+  const b = guestBoost(r, meta, g);
+  assert.equal(b.level, 35);
+  assert.equal(guestLevel(r, meta, g), 35);
+  // (its own rank and lasting stats, as one of the player's own heroes of that kind would have)
+  assert.deepEqual(b, { ...boostOf(g, heroRank(meta, 'cleric'), 35, heroStats(meta, 'cleric')), ...(awakenedOf(meta, 'cleric') ? { awaken: awakenedOf(meta, 'cleric') } : {}) });
+  const before = meta.xp.cleric;
+  const { lasting } = splitGuestXp(r, { cleric: 50 });
+  assert.deepEqual(lasting, {});
+  assert.equal(meta.xp.cleric, before);
+  assert.equal(g.xp, 50);
 });
 
 test('the guest says farewell when the run ends, and not before', () => {
