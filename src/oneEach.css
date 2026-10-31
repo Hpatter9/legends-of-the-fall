@@ -1,0 +1,14 @@
+/* ONE-OF-EACH (docs/notes/one-of-each.md): one hero of a kind on the field. A bench copy of a kind already fielded is dimmed and marked
+   "On field" (unless it can merge with the one fielded); a refused drop shows a short note by the finger. */
+#bench .card.twinOn:not(.placed) > canvas, #bench .card.twinOn:not(.placed) > img { filter: grayscale(0.7) brightness(0.7); }
+#bench .card.twinOn:not(.placed) { opacity: 0.82; }
+#bench .card .twinMark { display: none; position: absolute; left: 50%; top: 18px; transform: translateX(-50%); z-index: 2; padding: 1px 5px; white-space: nowrap;
+  font: 700 9px/13px var(--body, sans-serif); letter-spacing: 0.02em; color: #f3e6c4; background: rgb(20 16 12 / 0.86); border: 1px solid #b89a5a; border-radius: 3px; pointer-events: none; }
+#bench .card.twinOn:not(.placed) .twinMark { display: block; }
+#twinNote { position: fixed; z-index: 60; transform: translate(-50%, 0); padding: 6px 10px; text-align: center; pointer-events: none;
+  font: 700 13px/1.3 var(--body, sans-serif); color: #fff3d6; background: rgb(28 18 12 / 0.94); border: 1px solid #e1c582; border-radius: 6px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.5); }
+#twinNote[hidden] { display: none; }
+#twinNote.show { animation: twinNoteIn 0.18s ease-out; }
+@keyframes twinNoteIn { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { #twinNote.show { animation: none; } }

@@ -5,6 +5,8 @@ import type { Area, Board, PieceKind, Scenery } from './board';
 import { xpFor } from './levels';
 import { pendingAltar } from './rift';
 import { mixSeed, Rng } from './rng';
+import { makeBoard } from './board';
+import { zoneFor } from './calZones';
 
 export type RiftWorld = 'ashen' | 'rootbound' | 'caravan' | 'prism' | 'hollow' | 'frost';
 export interface Expedition {
@@ -61,34 +63,29 @@ export function shiftDestinations(run: Run): boolean {
   return true;
 }
 
-/** Complete, connected courts with blocked scenic margins, authored landmarks and a safe arrival edge. */
-export function destinationBoard(seed: number, world: RiftWorld): Board {
-  const spec = WORLDS[world], w = 14, d = 13;
+/** Complete, connected courts with blocked scenic margins, authored landmarks and a safe arrival edge. The court's inner field (ten
+ *  across, the Calamity's own board) is laid in one of the Calamity's zones (`calZones.ts`: a fallen nave, a crystal chasm, the crypt
+ *  rows, a broken bridge over the void, a ritual circle, a flooded vault, or now and then one of the plain shapes), picked by the seed,
+ *  the world and the land (`act`), with its things on its tiles; the margins are the world's scenery at the field's edge heights. */
+export function destinationBoard(seed: number, world: RiftWorld, act = 1): Board {
+  const spec = WORLDS[world], w = 14, d = 13, iw = w - 4;
   const rng = new Rng(mixSeed(seed, 0xa2e4));
-  const board: Board = { seed, area: spec.area, w, d, tiles: [], pieces: [], riftWorld: world };
+  const field = makeBoard(seed, spec.area, iw, d, zoneFor(seed, world, act));
+  const board: Board = { seed, area: spec.area, w, d, tiles: [], pieces: [], riftWorld: world, layout: field.layout };
   for (let v = 0; v < d; v++) for (let u = 0; u < w; u++) {
-    const margin = u < 2 || u >= w - 2;
-    const t: Board['tiles'][number] = { h: v <= 4 ? 1 : 0, deco: rng.int(0, 999) };
-    if (margin) {
-      t.scene = world === 'ashen' && (u === 0 || u === w - 1) ? 'lava' : world === 'rootbound' && u === 0 ? 'water' : spec.ring;
-      t.ring = u === 1 || u === w - 2;
-    } else {
-      t.paved = world !== 'caravan' && world !== 'rootbound';
-      if (world === 'ashen' && v === 5) { if (u <= 4 || u >= 9) t.scene='lava'; else t.bridge=true; }
-      if (world === 'hollow') t.paved=u>=5&&u<=8;
-      if (world === 'frost') {t.paved=u>=4&&u<=9;if(v>=5&&v<=7&&(u===2||u===11))t.scene='rocks';}
-      if (world === 'prism' && v >= 6 && v <= 8 && u >= 5 && u <= 8) t.h=1;
-      if (world === 'frost' && v >= 6 && v <= 9) t.ground = 'ice';
-      if (world === 'rootbound') {
-        if (v >= 6 && v <= 8 && (u >= 3 && u <= 4 || u >= 9 && u <= 10)) t.ground = 'water';
-        if (u === 6 && v === 7) t.ground = 'shrine';
-      }
-      if (world === 'hollow' && v >= 6 && v <= 9 && (u <= 3 || u >= 10)) {t.scene = 'grave';t.ring = true;}
-      if (world === 'prism' && v >= 6 && v <= 9 && (u === 2 || u === 11)) t.scene = 'crystal';
-      if (world === 'caravan' && v >= 5 && v <= 8 && (u === 2 || u === 11)) t.scene = 'rocks';
+    const deco = rng.int(0, 999);
+    if (u >= 2 && u < w - 2) {
+      board.tiles.push({ ...field.tiles[v * iw + u - 2] });
+      continue;
     }
+    // (the margin stands at the height of the field's edge beside it, so the court reads as one floor)
+    const edge = field.tiles[v * iw + (u < 2 ? 0 : iw - 1)];
+    const t: Board['tiles'][number] = { h: edge.ground === 'deep' ? 0 : edge.h, deco };
+    t.scene = world === 'ashen' && (u === 0 || u === w - 1) ? 'lava' : world === 'rootbound' && u === 0 ? 'water' : spec.ring;
+    t.ring = u === 1 || u === w - 2;
     board.tiles.push(t);
   }
+  if (field.props?.length) board.props = field.props.map((x) => ({ ...x, u: x.u + 2 }));
   board.pieces!.push({u:1,v:1,kind:spec.piece}, {u:12,v:1,kind:world==='caravan'?'tent':world==='ashen'?'foundry':world==='hollow'?'mausoleum':'shrine'}, {u:1,v:5,kind:'lamp'}, {u:12,v:5,kind:'lamp'}, {u:1,v:11,kind:world === 'caravan' ? 'tent' : 'brazier'}, {u:12,v:11,kind:world === 'caravan' ? 'campfire' : 'lamp'}, {u:0,v:11,kind:'riftPortal'});
   return board;
 }

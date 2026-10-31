@@ -138,11 +138,24 @@
 .ebSeal small { margin-top: 6px; font: 700 13px var(--body); color: #ffe3a0; text-shadow: 0 2px 3px #000; }
 .ebLayer.b-bound .ebSeal { opacity: 1; scale: 1; }
 .ebLayer button.ebGo { position: absolute; z-index: 2; left: 50%; bottom: calc(8vh + 14px); translate: -50% 0; width: min(80vw, 320px); min-height: 46px; font: 700 15px var(--body); opacity: 0; pointer-events: none; transition: opacity 0.4s ease 0.4s; }
-.ebLayer.b-bound button.ebGo { opacity: 1; pointer-events: auto; }
+.ebLayer.end button.ebGo { opacity: 1; pointer-events: auto; }
+/* HORN-GIFT: the War Horn handed over after the seal (the horn rises over the altar; full, it glows with the hound's fire) */
+.ebHorn { position: absolute; left: 50%; top: 31%; width: min(64vw, 260px); aspect-ratio: 1; translate: -50% 30%; opacity: 0; pointer-events: none;
+  transition: opacity 0.8s ease, translate 1.2s cubic-bezier(.15,.8,.25,1); }
+.ebHorn[hidden] { display: none; }
+.ebHorn img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.ebHornEmpty { filter: drop-shadow(0 0 10px rgba(255, 220, 160, 0.45)); }
+.ebHornReady { opacity: 0; transition: opacity 1.4s ease; filter: drop-shadow(0 0 18px var(--glow)) drop-shadow(0 0 6px #ffd88a); }
+.ebLayer.b-horn .ebHorn { opacity: 1; translate: -50% 0; }
+.ebLayer.b-horn .ebSeal, .ebLayer.b-horn .ebName { opacity: 0; }
+.ebLayer.b-horn .ebFig { opacity: 0.45; }
+.ebLayer.b-hornFull .ebHornReady { opacity: 1; }
+.ebLayer.b-hornFull .ebFig { opacity: 0.75; }
 .ebLayer.out { opacity: 0; transition: opacity 0.4s ease; }
 .ebLayer.saver .ebEmbers i:nth-child(n+7) { display: none; }
 /* (reduced motion: nothing rises, drifts or turns; every beat fades in and out held still) */
-.ebLayer.still .ebPiece, .ebLayer.still .ebFig { translate: none !important; transition: opacity 0.5s ease !important; }
+.ebLayer.still .ebPiece, .ebLayer.still .ebFig, .ebLayer.still .ebHorn { translate: none !important; transition: opacity 0.5s ease !important; }
+.ebLayer.still .ebHorn { translate: -50% 0 !important; }
 .ebLayer.still .ebFig { translate: -50% 0 !important; }
 .ebLayer.still .ebCircle, .ebLayer.still .ebName, .ebLayer.still .ebSeal { scale: 1 !important; animation: none; }
 .ebLayer.still .ebFigArt, .ebLayer.still .ebEmbers i { animation: none; }

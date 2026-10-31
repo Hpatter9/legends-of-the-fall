@@ -8,6 +8,7 @@
 
 import { destinationBoard, destinationWorld, expeditionOf, growExpeditionStarter, sanctuaryMap, type RiftWorld } from './sanctuary';
 import { growStarter, pendingAltar, RIFT_BOSSES } from './rift';
+import { CORRUPT } from './altarRules';
 import type { RunRecap } from './runRecap';
 import type { Battle, Boost, Stage } from './battle';
 import { CLASSIC_AREAS } from './board';
@@ -24,7 +25,7 @@ import { neighboursOf, openSet, routeBetween, SIDE_BASE, sideSpots, START_ID, ty
 import { ALL_RELIC_IDS, RELICS, relicEffects } from './relics';
 import { mixSeed, Rng } from './rng';
 import { addTwists, CHAOS_TWISTS, TWISTS } from './twists';
-import { BOSS, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
+import { BOSS, canJoin, FOE_START, ownHeroes, reward, spendBuff, squadLimit, summonCost, type Run } from './run';
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
@@ -702,7 +703,7 @@ export function enterNode(run: Run, id: number): boolean {
   t.going = undefined;
   if (node.kind === 'fight' || node.kind === 'elite' || node.kind === 'boss') cur.fight = fightSpec(run, node.kind, floor, node.twist, id);
   if (cur.fight && cur.world) {
-    const board = destinationBoard(mixSeed(run.seed, t.act, id), cur.world);
+    const board = destinationBoard(mixSeed(run.seed, t.act, id), cur.world, t.act);
     if (node.kind === 'boss') board.arenaMid = { u: 7, v: 5 };
     cur.fight.stage.board = board;
     cur.fight.stage.area = board.area;
@@ -753,7 +754,8 @@ export function clearNode(run: Run): void {
   }
   if (first) {
     t.path.push(cur.id);
-    // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to a benched hero of the party's own)
+    // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to the original it stood in for (ONE-OF-EACH), or
+    // else to a benched hero of the party's own)
     for (const h of [...run.roster]) {
       if (h.cloneFloors !== undefined) {
         h.cloneFloors--;
@@ -762,8 +764,13 @@ export function clearNode(run: Run): void {
           run.roster = run.roster.filter((x) => x.id !== h.id);
           run.squad = run.squad.filter((x) => x !== h.id);
           delete t.hp[String(h.id)];
-          const bench = ownHeroes(run).find((x) => !run.squad.includes(x.id));
-          if (bench && (fought || !run.squad.length) && run.squad.length < squadLimit(run)) run.squad.push(bench.id);
+          const back = h.standsFor !== undefined && canJoin(run, h.standsFor) ? h.standsFor : undefined;
+          if (back !== undefined && fought) {
+            run.squad.push(back);
+            continue;
+          }
+          const bench = ownHeroes(run).find((x) => canJoin(run, x.id));
+          if (bench && (fought || !run.squad.length)) run.squad.push(bench.id);
         }
       }
     }
@@ -888,7 +895,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   if (!t.cur?.side) healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
   const twist = t.cur?.fight?.stage.twist;
-  const paid = Math.round((1 + (run.rift?.corruption ?? 0) * 0.1) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
+  const paid = Math.round((1 + (run.rift?.corruption ?? 0) * CORRUPT.gold) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
   run.gold += paid;
   const recap = recapOf(run);
   if (recap) {

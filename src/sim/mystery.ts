@@ -23,7 +23,7 @@ import { dropGear, gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear
 import { GREAT_RELIC_IDS, RELIC_IDS, RELICS } from './relics';
 import { hpShare, healParty, hurtParty } from './health';
 import { HEROES, UNITS } from './units';
-import { squadLimit, type Owned, type Run } from './run';
+import { canJoin, type Owned, type Run } from './run';
 import { gainKindXp, hireable, hireHero } from './climb';
 import type { EventCard, EventKind, EventOption } from './events';
 
@@ -284,7 +284,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
         [
           act(
             `Summon inverted ${heroName}`,
-            `the inverted clone steps through to fight alongside your squad for 2 floors with snarky quips`,
+            `the inverted clone steps through and takes ${heroName}'s place in your squad for 2 floors, with snarky quips`,
             0,
             { k: 'cursedMirror', hero, floors: 2 },
           ),
@@ -396,7 +396,7 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       return 'Snake eyes. The imp pockets your stake and grins from ear to ear.';
     case 'free': {
       const got = hireHero(run, a.kind, 0, false);
-      if (run.squad.length < squadLimit(run) && !run.squad.includes(got.id)) run.squad.push(got.id);
+      if (canJoin(run, got.id)) run.squad.push(got.id);
       hurtParty(run, a.hurt);
       return `The ${UNITS[a.kind].name} is free and joins the party. The guards wake and give chase, and the party is hurt.`;
     }
@@ -534,7 +534,12 @@ export function applyMystery(run: Run, a: MysteryAct): string {
         cloneFloors: a.floors,
       };
       run.roster.push(clone);
-      if (run.squad.length < squadLimit(run)) run.squad.push(clone.id);
+      // (one of each hero on the field, ONE-OF-EACH, so the clone takes its original's place for its floors, and the original sits out on the
+      // bench and comes back when the clone goes (`tower.ts`); an original that was not fighting stays out while the clone fights in a free place)
+      const at = run.squad.indexOf(orig.id);
+      if (at >= 0) run.squad[at] = clone.id;
+      else if (canJoin(run, clone.id)) run.squad.push(clone.id);
+      if (run.squad.includes(clone.id)) clone.standsFor = orig.id;
       return `The glass ripples! An inverted ${cloneName} steps out, sneering: "Move over, amateur. Let someone with real talent handle this." The inverted clone joins you for ${a.floors} floors!`;
     }
     case 'voidWell': {

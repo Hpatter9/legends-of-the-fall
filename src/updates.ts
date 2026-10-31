@@ -27,6 +27,36 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.285.0',
+    date: '2026-10-31',
+    title: 'The Calamity\'s battlefields come alive',
+    notes: ['Six new Calamity battlefields (a fallen nave, crystal chasm, crypt rows, void bridge, ritual circle, flooded vault) with braziers, fog, runes and bats.'],
+  },
+  {
+    version: '0.284.0',
+    date: '2026-10-31',
+    title: 'One of each hero on the field',
+    notes: ['Only one of each hero fights at a time; a bench copy swaps in for its twin, or merges. The cursed mirror\'s clone fights in its original\'s place.'],
+  },
+  {
+    version: '0.283.0',
+    date: '2026-10-31',
+    title: 'The War Horn, given at the binding',
+    notes: ['The War Horn now comes in the story: when Askel is bound, the Summoner hands you the first kings\' horn, full, to blow in your next fight.'],
+  },
+  {
+    version: '0.282.0',
+    date: '2026-10-31',
+    title: 'Guardians pulse from themselves',
+    notes: ['A corrupted Calamity guardian\'s pulse now comes from the guardian itself, and stops the moment it falls, even with its escort still standing.'],
+  },
+  {
+    version: '0.281.0',
+    date: '2026-10-31',
+    title: 'The Calamity altar made clear',
+    notes: ['Each altar choice now shows what it does in numbers, consecrate and corrupt side by side. A How it works box, a Your altar summary and an altar chip in battle.'],
+  },
+  {
     version: '0.280.0',
     date: '2026-10-31',
     title: 'A JRPG results screen',

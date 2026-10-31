@@ -57,10 +57,11 @@ test('a merge keeps the squad place', () => {
 });
 
 test('grade raises hp and attack in the fight', () => {
-  const b = startBattle(5);
+  // (each knight on a board of its own: one of each hero on the field, ONE-OF-EACH)
+  const [b, b2] = [startBattle(5), startBattle(5)];
   place(b, 'knight', 0, 8, 1, gradeBoost(1));
-  place(b, 'knight', 1, 8, 2, gradeBoost(3));
-  const [lo, hi] = b.units.filter((u) => u.side === 'hero');
+  place(b2, 'knight', 1, 8, 2, gradeBoost(3));
+  const [lo, hi] = [...b.units, ...b2.units].filter((u) => u.side === 'hero');
   assert.equal(lo.tag, 1);
   assert.equal(hi.maxHp, Math.round(UNITS.knight.hp * GRADE_BOOST[2]));
   assert.ok(Math.abs((hi.power ?? 0) - GRADE_BOOST[2]) < 1e-9);
@@ -98,7 +99,9 @@ test('a win pays and moves on; a lost fight ends the run', () => {
 
 test('squad is capped at five and saves and loads', () => {
   const r = newRun(9);
-  r.roster = Array.from({ length: 7 }, (_, i) => ({ id: i + 1, kind: 'knight', grade: 1 }));
+  // (seven kinds: one of each hero in the squad, ONE-OF-EACH; this roster was seven knights)
+  const kinds = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'paladin', 'cleric'];
+  r.roster = Array.from({ length: 7 }, (_, i) => ({ id: i + 1, kind: kinds[i], grade: 1 }));
   for (let i = 1; i <= 7; i++) setSquad(r, i, true);
   assert.equal(r.squad.length, SQUAD);
   let saved = '';

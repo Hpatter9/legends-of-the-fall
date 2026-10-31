@@ -9,7 +9,7 @@ import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
 import { heroRank, type Meta } from './meta';
 import { awakenStats } from './awaken';
-import { boostOf, equip, squadLimit, summon, type Owned, type Run } from './run';
+import { boostOf, equip, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
 import { autoMerge } from './merge';
 import { UNITS } from './units';
@@ -24,12 +24,18 @@ export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
 /** Whether a kind fights from behind: it shoots, or reaches past the next tile. */
 export const isBackline = (kind: string): boolean => !!UNITS[kind].shot || UNITS[kind].range > 1;
 
-/** The squad for the next fight: the heroes in `keep` (that are still owned) first, then the strongest of the rest, up to `SQUAD`. */
+/** The squad for the next fight: the heroes in `keep` (that are still owned) first, then the strongest of the rest, up to `SQUAD`. One of
+ *  each kind (ONE-OF-EACH, `docs/notes/one-of-each.md`): a second of a kind is passed over (the strongest copy is the one taken), so a
+ *  smaller roster of kinds fields fewer heroes. */
 export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): Owned[] {
-  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h).slice(0, squadLimit(run));
-  const rest = run.roster.filter((h) => !kept.includes(h)).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
-  return [...kept, ...rest].slice(0, squadLimit(run));
+  // (a hero a mirror's clone stands in for sits out: ONE-OF-EACH)
+  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id));
+  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id)).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+  return oneOfEach([...kept, ...rest]).slice(0, squadLimit(run));
 }
+
+/** The heroes in order with every later hero of a kind already listed left out (ONE-OF-EACH). */
+export const oneOfEach = <T extends { kind: string }>(heroes: readonly T[]): T[] => heroes.filter((h, i) => heroes.findIndex((x) => x.kind === h.kind) === i);
 
 /** The best way to spend an event: the free relic, then gear, then a blessing, then coin. A cursed path and anything dear is left alone. */
 export function eventPick(options: readonly EventOption[], gold: number): number {
@@ -155,7 +161,9 @@ export function autoFormation(board: Board, heroes: readonly { id: number; kind:
 /** Arranges the run's squad (`boostFor` gives a hero's whole boost, as the page places it; the plain grade, rank and level when unset) on the battle's deploy rows by `autoFormation` (taking back any hero already placed first). Returns the spots. */
 export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned) => Boost): Spot[] {
   for (const u of [...b.units]) if (u.side === 'hero') unplace(b, u.def, u.tag);
-  const squad = run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h);
+  // (one of each kind on the field: a squad from an older save with two of a kind sends the later one back to the bench, ONE-OF-EACH)
+  const squad = oneOfEach(run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h));
+  run.squad = squad.map((h) => h.id);
   const spots = autoFormation(b.board, squad);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
