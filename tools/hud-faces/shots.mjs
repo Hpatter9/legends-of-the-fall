@@ -38,6 +38,9 @@ async function open(w, h, extra = {}) {
   if (extra === 'awake') extra = { awakened: { cleric: 1, archer: 1 }, shards: { cleric: 9999, archer: 9999 } };
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true });
   const page = await ctx.newPage();
+  // (a busy machine loads the page slowly: wait longer than Playwright's 30 seconds)
+  page.setDefaultNavigationTimeout(180000);
+  page.setDefaultTimeout(120000);
   page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message); });
   await page.addInitScript(([owned, party, xp, extra]) => {
     let z = 0x2545f491;
@@ -50,7 +53,7 @@ async function open(w, h, extra = {}) {
     localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed: 1 }));
   }, [ALL, PARTY, xpAt(32), extra]);
   await page.goto(`http://localhost:${PORT}/`);
-  await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
+  await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 240000 });
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
@@ -115,7 +118,7 @@ async function calamitySave(page) {
   const S = await import('../../out/shots/bu-saves.mjs');
   await page.evaluate((json) => localStorage.setItem('legends.calamity', json), JSON.stringify(S.big(11)));
   await page.reload();
-  await page.waitForFunction(() => document.getElementById('hmCalamity'), {}, { timeout: 60000 });
+  await page.waitForFunction(() => document.getElementById('hmCalamity'), {}, { timeout: 240000 });
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
 }
@@ -165,7 +168,7 @@ for (const [w, h] of SIZES) {
         }
       } else if (ULT_SCENES.includes(scene)) {
         if (scene === 'short') await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('legends.settings')); s.ultFull = false; localStorage.setItem('legends.settings', JSON.stringify(s)); });
-        if (scene === 'short') { await page.reload(); await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 }); await page.waitForTimeout(1200); await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, #quip { display: none !important; }' }); }
+        if (scene === 'short') { await page.reload(); await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 240000 }); await page.waitForTimeout(1200); await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, #quip { display: none !important; }' }); }
         await army(page, PARTY);
         // (the hero who fires: the samurai (an instant blow) for the slash, the name and the held board; the knight (a lasting aura) for the resume)
         const pick = scene === 'linger' ? 'cleric' : 'samurai';
@@ -230,7 +233,7 @@ for (const [w, h] of SIZES) {
           localStorage.removeItem('legends.stand');
         }, STAND);
         await page.reload();
-        await page.waitForFunction(() => document.getElementById('hmTower'), {}, { timeout: 60000 });
+        await page.waitForFunction(() => document.getElementById('hmTower'), {}, { timeout: 240000 });
         await page.waitForTimeout(1200);
         await page.evaluate(() => document.getElementById('tipSkip')?.click());
         await page.evaluate(() => document.getElementById('hmTower').click());

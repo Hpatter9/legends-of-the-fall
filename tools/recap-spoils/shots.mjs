@@ -98,7 +98,7 @@ try {
     // (the card between waves leaves by itself: no tap)
     const leaves = async () => {
       const t0 = Date.now();
-      await page.waitForFunction(() => document.getElementById('result').hidden && document.body.dataset.phase === 'deploy', null, { timeout: 30000 });
+      await page.waitForFunction(() => document.getElementById('result').hidden && document.body.dataset.phase === 'deploy', null, { timeout: 120000 });
       return Date.now() - t0;
     };
     // ---- wave 1 won, three heroes rising a level: the simple card between waves
@@ -150,7 +150,7 @@ try {
     await page.locator('#fight').waitFor({ state: 'visible' });
     await page.click('#fight'); await page.waitForTimeout(600);
     await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
-    await page.locator('#next').waitFor({ state: 'visible', timeout: 30000 });
+    await page.locator('#next').waitFor({ state: 'visible', timeout: 120000 });
     await page.waitForTimeout(800);
     await shot(page, w, checks, 'loss-card', '#result');
     const c3 = await simple();
@@ -194,11 +194,11 @@ try {
       await p.page.evaluate((json) => { const g = window.__game; g.home.go(() => g.resumeSlot(JSON.parse(json))); }, SPIRE(PARTY));
       await p.page.locator('#towerMap').waitFor({ state: 'visible', timeout: 60000 });
       await p.page.evaluate(() => { const g = window.__game; const t = g.run.tower; const n = t.map.find((x) => x.row === t.row && x.kind === 'fight') ?? t.map.find((x) => x.row === t.row); g.towerView.goTo(n.id); });
-      await p.page.locator('#fight').waitFor({ state: 'visible', timeout: 30000 });
+      await p.page.locator('#fight').waitFor({ state: 'visible', timeout: 120000 });
       await p.page.click('#fight'); await p.page.waitForTimeout(1500);
       await p.page.evaluate(() => { const g = window.__game; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
       await p.page.waitForFunction(() => document.getElementById('result').classList.contains('jr') && !document.getElementById('result').hidden, null, { timeout: 60000 });
-      await p.page.waitForFunction(() => document.querySelector('#jrBody').classList.contains('done'), null, { timeout: 30000 });
+      await p.page.waitForFunction(() => document.querySelector('#jrBody').classList.contains('done'), null, { timeout: 120000 });
       await p.page.waitForTimeout(300);
       await shot(p.page, w, checks, 'spire-end', '#result');
       const sp = await p.page.evaluate(() => ({ title: document.querySelector('#jrHead .jrTitle')?.textContent, sub: document.querySelector('#jrHead .jrSub')?.textContent, rows: document.querySelectorAll('#jrBody .jrRow').length, next: document.getElementById('next').textContent }));
@@ -220,7 +220,7 @@ try {
       await s.page.evaluate(() => document.querySelector('.stPick .primary').click());
       await s.page.waitForTimeout(800);
     }
-    await s.page.waitForFunction(() => window.__game.stand?.state, null, { timeout: 30000 });
+    await s.page.waitForFunction(() => window.__game.stand?.state, null, { timeout: 120000 });
     await s.page.evaluate(() => { const st = window.__game.stand; st.debugJump(6, 3); document.querySelector('.stStart').click(); });
     await s.page.waitForTimeout(1500);
     await s.page.evaluate(() => {
