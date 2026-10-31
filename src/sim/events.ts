@@ -24,7 +24,7 @@
 
 import { mixSeed, Rng } from './rng';
 import { dropGear, gearText, type Gear } from './gear';
-import { RELIC_IDS, RELICS } from './relics';
+import { pickRelic, pricedFor, RELIC_IDS, relicPriceOf, RELICS, relicText, theRelic } from './relics';
 import { healParty, hurtParty } from './health';
 import { UNITS } from './units';
 import { applyMystery, drawMystery, type MysteryAct } from './mystery';
@@ -155,7 +155,7 @@ const gearId = (run: Run) => (run.nextGear = (run.nextGear ?? 1) + 1) - 1;
 const unownedRelics = (run: Run) => RELIC_IDS.filter((id) => !run.relics?.includes(id));
 const pick = <T>(rng: Rng, xs: readonly T[]): T => xs[rng.int(0, xs.length - 1)];
 const leave = (): EventOption => ({ label: 'Leave', text: 'Move on.', cost: 0, effect: { t: 'leave' } });
-const relicOption = (id: string, cost: number): EventOption => ({ label: RELICS[id].name, text: RELICS[id].text, cost, effect: { t: 'relic', id } });
+const relicOption = (id: string, cost: number): EventOption => ({ label: RELICS[id].name, text: relicText(id), cost, effect: { t: 'relic', id } });
 const gearOption = (g: Gear, cost: number): EventOption => ({ label: g.name, text: `${g.slot}: ${gearText(g)}`, cost, effect: { t: 'gear', gear: g } });
 
 /** The event card of a stage, made from the run's seed (it draws gear ids from the run); `kinds` is what it may be. */
@@ -166,11 +166,18 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
     // (the old draw first, from the card's stream as ever, so a shrine or a chest falls where it always did)
     const card = drawRoadCard(run, stage, pickRoadKind(run, stage, pick(rng, EVENT_KINDS)), rng);
     noteRoad(run, card);
-    return card;
+    return priced(run, card);
   }
   const kind = kindOf(run, stage, kinds, rng);
-  if (MYSTERY_KINDS.includes(kind)) return drawMystery(run, stage, kind, rng);
-  return drawPlain(run, stage, kind, rng);
+  if (MYSTERY_KINDS.includes(kind)) return priced(run, drawMystery(run, stage, kind, rng));
+  return priced(run, drawPlain(run, stage, kind, rng));
+}
+
+/** RELICS-2: a card's prices as the run's relics have them (the Tax Ingot's 10% more). The cart's wares are priced as they are stocked. */
+function priced(run: Run, card: EventCard): EventCard {
+  if (card.buys !== undefined) return card;
+  for (const o of card.options) if (o.cost > 0) o.cost = pricedFor(run.relics, o.cost);
+  return card;
 }
 
 /** A road run's card: the passing cart is a market, a road kind is `midEvents.ts`'s, the other old kinds are drawn as ever. */
@@ -198,12 +205,12 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
         ],
       };
     case 'merchant': {
-      const second = relics.length ? pick(rng, relics) : '';
+      const second = relics.length ? pickRelic(() => rng.next(), relics) : '';
       const g = dropGear(rng, gearId(run), stage);
       return {
         kind, stage, title: 'A travelling merchant', text: 'A cart creaks out of the mist, hung with trinkets. The merchant says everything is a bargain. He says it to the goat, too.',
         options: [
-          second ? relicOption(second, 70 + 4 * stage) : { label: 'A sack of coin', text: 'Nothing else to sell.', cost: 0, effect: { t: 'gold', n: 20 } },
+          second ? relicOption(second, relicPriceOf(second, 70 + 4 * stage)) : { label: 'A sack of coin', text: 'Nothing else to sell.', cost: 0, effect: { t: 'gold', n: 20 } },
           gearOption(g, 28 * g.tier + 2 * stage),
           leave(),
         ],
@@ -211,7 +218,7 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
     }
     case 'chest': {
       const roll = rng.int(0, 2);
-      const id = relics.length ? pick(rng, relics) : '';
+      const id = relics.length ? pickRelic(() => rng.next(), relics) : '';
       const effect: Effect = roll === 0 && id ? { t: 'relic', id } : roll === 1 ? { t: 'gear', gear: dropGear(rng, gearId(run), stage) } : { t: 'gold', n: 50 + 8 * stage };
       return {
         kind, stage, title: 'A mystery chest', text: 'It sits in the road, locked by nothing but luck. Someone has already licked it.',
@@ -243,10 +250,10 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
       };
     }
     case 'altar': {
-      const id = relics.length ? pick(rng, relics) : '';
+      const id = relics.length ? pickRelic(() => rng.next(), relics) : '';
       return {
         kind, stage, title: 'A blood altar', text: 'A cracked altar hums. It wants something of the heroes, and offers something back. Please read the small print on the side.',
-        options: [id ? { label: `Give blood for the ${RELICS[id].name}`, text: `every hero loses ${ALTAR_COST * 100}% of its hp; ${RELICS[id].text}`, cost: 0, effect: { t: 'altar', frac: ALTAR_COST, id } } : { label: 'A sack of coin', text: 'The altar has nothing else to give.', cost: 0, effect: { t: 'gold', n: 25 } }, leave()],
+        options: [id ? { label: `Give blood for ${theRelic(id)}`, text: `every hero loses ${ALTAR_COST * 100}% of its hp; ${relicText(id)}`, cost: 0, effect: { t: 'altar', frac: ALTAR_COST, id } } : { label: 'A sack of coin', text: 'The altar has nothing else to give.', cost: 0, effect: { t: 'gold', n: 25 } }, leave()],
       };
     }
     default: {
@@ -287,7 +294,7 @@ export function chooseOption(run: Run, i: number): string | null {
       if (!run.relics) run.relics = [];
       if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
       run.tower?.recap?.relics.push(fx.id);
-      line = `Found the ${RELICS[fx.id].name}: ${RELICS[fx.id].text}.`;
+      line = `Found ${theRelic(fx.id)}: ${relicText(fx.id)}.`;
       break;
     case 'gear':
       (run.items ??= []).push(fx.gear);
@@ -325,7 +332,7 @@ export function chooseOption(run: Run, i: number): string | null {
       if (!run.relics) run.relics = [];
       if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
       run.tower?.recap?.relics.push(fx.id);
-      line = `The altar drinks deep and gives the ${RELICS[fx.id].name}.`;
+      line = `The altar drinks deep and gives ${theRelic(fx.id)}.`;
       break;
     case 'mystery':
       line = applyMystery(run, fx.act);

@@ -3,6 +3,7 @@
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
 // same run and the same board always give the same formation.
 
+import { CLASS_OF } from './starter';
 import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
 import { chooseOption, leaveEvent, type EventOption } from './events';
@@ -42,10 +43,11 @@ export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): O
 export const oneOfEach = <T extends { kind: string }>(heroes: readonly T[]): T[] => heroes.filter((h, i) => heroes.findIndex((x) => x.kind === h.kind) === i);
 
 /** The best way to spend an event: the free relic, then gear, then a blessing, then coin. A cursed path and anything dear is left alone. */
-export function eventPick(options: readonly EventOption[], gold: number): number {
+export function eventPick(options: readonly EventOption[], gold: number, run?: Run): number {
   let best = -1;
   options.forEach((o, i) => {
-    const r = pickRank(o);
+    // (RELICS-2: a relic whose price this party cannot pay well is left alone, as a cursed path is)
+    const r = o.effect.t === 'relic' && run && !relicSuits(run, o.effect.id) ? 0 : pickRank(o);
     if (!o.done && o.cost === 0 && o.cost <= gold && r > 0 && (best < 0 || r > pickRank(options[best]))) best = i;
   });
   return best;
@@ -58,10 +60,20 @@ function pickRank(o: EventOption): number {
   return rank[o.effect.t as keyof typeof rank] ?? 0;
 }
 
+/**
+ * RELICS-2: whether Auto takes a relic with a price. The Ember of the Great Hall's wound each fight wants a healer in the party to mend it;
+ * the Pawned Crown's 10 gold a win wants a purse to spare (40 gold). Every other relic, and every relic with no price, suits.
+ */
+export function relicSuits(run: Run, id: string): boolean {
+  if (id === 'emberRuby') return run.roster.some((h) => run.squad.includes(h.id) && CLASS_OF[h.kind] === 'support');
+  if (id === 'jewelCrown') return run.gold >= 40;
+  return true;
+}
+
 /** Settles the event waiting between two fights: the best free pick, then on. */
 export function autoEvent(run: Run): void {
   while (run.event) {
-    let i = eventPick(run.event.options, run.gold);
+    let i = eventPick(run.event.options, run.gold, run);
     // (a card with no way to walk off, a road event's hazard or debt, MID-EVENTS: the page offers no Leave, so neither may the greedy player; it takes the first free choice)
     if (i < 0 && !run.event.options.some((o) => o.effect.t === 'leave')) i = run.event.options.findIndex((o) => o.cost === 0 && !o.done);
     if (i < 0 || chooseOption(run, i) === null) leaveEvent(run);

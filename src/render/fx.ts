@@ -9,6 +9,22 @@ import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
+import { RELICS } from '../sim/relics';
+import { relicIcon } from './items';
+/** The relics' icons as textures, kept once loaded (crisp: the 16x16 tiles are scaled up with nearest-neighbour). */
+const relicTextures = new Map<string, Promise<Texture>>();
+const relicTexture = (src: string): Promise<Texture> => {
+  let p = relicTextures.get(src);
+  if (!p) {
+    p = loadImage(src).then((img) => {
+      const t = Texture.from(img);
+      t.source.scaleMode = 'nearest';
+      return t;
+    });
+    relicTextures.set(src, p);
+  }
+  return p;
+};
 import { keyOfKit, ultKeyOf } from '../sim/abilities';
 import { skillShown } from '../sim/heroKits';
 import { abilityHeading } from './abilityLooks';
@@ -349,7 +365,8 @@ export class Fx {
           // (a whoosh of wind across the one that dodged)
           this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true, stretchX: facesRight(to.unit.facing) ? 1 : -1 });
         }
-      } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
+      } else if (e.kind === 'relic') this.relicMark(e.to, e.id);
+      else if (e.kind === 'boom') this.boom(b, e.u, e.v);
       else if (e.kind === 'hazard') this.hazard(b, e);
       else if (e.kind === 'bossSig') this.bossFx.show(b, e);
       else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e, slashes.get(e));
@@ -1130,6 +1147,36 @@ export class Fx {
     if (quiet) return;
     this.slowMo(500);
     this.push(sp.x, sp.y - sp.tall * 0.5, 1.3, 1100);
+  }
+
+  /** A relic's rule has fired on a hero (RELICS-2: the Phoenix's rise, the Warden's Medal, the Harness): its icon rises over the hero for a
+   *  moment, with its name, then fades. The relics are not on the fight's screen otherwise (the owner's ask). */
+  relicMark(unitId: number, id: string): void {
+    const sp = this.sprites.get(unitId);
+    const src = relicIcon(id);
+    if (!sp) return;
+    this.label(RELICS[id]?.name ?? '', sp.x, sp.y - sp.tall - 8, 0xffe9b0, 11, 1400, true);
+    if (!src) return;
+    const icon = new Sprite();
+    // (the icon's image is loaded once and kept; it is a small data URL, so it is there at once after the first time)
+    void relicTexture(src).then((tex) => {
+      if (!icon.destroyed) icon.texture = tex;
+    });
+    icon.anchor.set(0.5, 1);
+    icon.scale.set(1.5);
+    icon.position.set(sp.x, sp.y - sp.tall - 24);
+    this.root.addChild(icon);
+    let t = 0;
+    const life = 1400;
+    this.items.push({
+      view: icon,
+      step: (dt) => {
+        t += dt;
+        if (!this.calm()) icon.y -= dt * 0.015;
+        icon.alpha = t > life * 0.6 ? 1 - (t - life * 0.6) / (life * 0.4) : 1;
+        return t < life;
+      },
+    });
   }
 
   /** A hero gains a level in the middle of a fight (the Last Stand): a one-shot burst of light round it, a small pop, and "Lv N" over its head. */

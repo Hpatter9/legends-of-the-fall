@@ -24,7 +24,7 @@
 
 import { mixSeed, Rng } from './rng';
 import { gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear';
-import { GREAT_RELIC_IDS, RELIC_IDS, RELICS } from './relics';
+import { GREAT_RELIC_IDS, pickRelic, RELIC_IDS, relicText, theRelic, TheRelic } from './relics';
 import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
 import { HERO_NAMES, heroName } from './heroNames';
@@ -243,10 +243,10 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
     }
     case 'pact': {
       const ids = unowned(run, RELIC_IDS);
-      const id = ids.length ? pick(rng, ids) : '';
+      const id = ids.length ? pickRelic(() => rng.next(), ids) : '';
       return card("The Pale Lady's shrine", "A shrine of white stone in the mist, and a lady of white stone upon it. Her hand is open. 'Take what you need,' she says. 'I will come for my due.'", [
         id
-          ? road(`Take the ${RELICS[id].name}`, `${RELICS[id].text}, free; in two stops she comes to collect`, 0, { line: `The ${RELICS[id].name} is cold in your hand. Somewhere behind you, stone feet begin to walk.`, relic: id, owe: owed('ladyDue', { relic: id }) })
+          ? road(`Take ${theRelic(id)}`, `${relicText(id)}, free; in two stops she comes to collect`, 0, { line: `${TheRelic(id)} is cold in your hand. Somewhere behind you, stone feet begin to walk.`, relic: id, owe: owed('ladyDue', { relic: id }) })
           : road('Take her coin', '+40 gold, free; in two stops she comes to collect', 0, { line: 'The coins are cold. Somewhere behind you, stone feet begin to walk.', gold: 40, owe: owed('ladyDue') }),
         road('Ask only a blessing', `next fight: ${twistText('holy')}, and +10% hp`, 0, { line: 'She touches each brow. The cold passes, and something holy stays.', buff: { twist: 'holy', hp: 1.1 } }),
         leave(),
@@ -258,7 +258,7 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
       const price = 40 + 5 * s;
       return card('The Pale Lady collects', "Frost creeps along the road, and a white hand falls on your shoulder. 'My due,' says the Pale Lady. She does not say please.", [
         road('Pay her in gold', 'she takes the coin and is gone', price, { line: 'She counts every coin twice, and the frost goes with her.' }),
-        ...(relic ? [road(`Give back the ${RELICS[relic].name}`, 'it was only lent', 0, { line: `She takes back the ${RELICS[relic].name} without a word.`, drop: relic })] : []),
+        ...(relic ? [road(`Give back ${theRelic(relic)}`, 'it was only lent', 0, { line: `She takes back ${theRelic(relic)} without a word.`, drop: relic })] : []),
         road('Refuse her', `next fight: ${twistText('cursed')}, and the foes +20% hp and attack`, 0, { line: 'She smiles, which is worse. A chill sinks into the bones of everyone.', buff: { twist: 'cursed', foes: 1.2 } }),
       ]);
     }
@@ -335,8 +335,8 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
       const wear: EventOption[] = !id
         ? []
         : left > 0
-          ? [road('Wear the crown', `the ${RELICS[id].name} (${RELICS[id].text}); the crown drinks one of your hearts`, 0, { line: `The crown bites. A heart goes out like a candle, and the ${RELICS[id].name} is yours.`, relic: id, heart: -1 })]
-          : [road('Wear the crown', `the ${RELICS[id].name} (${RELICS[id].text}); with no heart to drink, the next foes +30% hp and attack, and ${TWISTS.cursed.name}`, 0, { line: `The crown finds no heart to drink, and curses the road instead. The ${RELICS[id].name} is yours.`, relic: id, buff: { foes: 1.3, twist: 'cursed' } })];
+          ? [road('Wear the crown', `${theRelic(id)} (${relicText(id)}); the crown drinks one of your hearts`, 0, { line: `The crown bites. A heart goes out like a candle, and ${theRelic(id)} is yours.`, relic: id, heart: -1 })]
+          : [road('Wear the crown', `${theRelic(id)} (${relicText(id)}); with no heart to drink, the next foes +30% hp and attack, and ${TWISTS.cursed.name}`, 0, { line: `The crown finds no heart to drink, and curses the road instead. ${TheRelic(id)} is yours.`, relic: id, buff: { foes: 1.3, twist: 'cursed' } })];
       return card('A crown in the reeds', 'It lies in black water, its gold gone green, and it is very cold. Something wants it worn. Something always does.', [
         ...wear,
         road('Sell it to a fence', `+${fence} gold, and somebody else's problem`, 0, { line: `The fence does not touch it with bare hands, but pays ${fence} gold.`, gold: fence }),
@@ -355,16 +355,16 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
       const big = !!due?.big;
       const burned = (run.retries ?? 0) > 0;
       const ids = unowned(run, RELIC_IDS);
-      const relic = ids.length ? pick(rng, ids) : '';
+      const relic = ids.length ? pickRelic(() => rng.next(), ids) : '';
       const gold = 30 + 4 * s;
       const gift: RoadAct = big
         ? burned
           ? { line: 'Their healer has walked all night to find you. A burned heart kindles again.', heart: 1, gold }
           : relic
-            ? { line: `They have found something in the ruins of their home: the ${RELICS[relic].name}.`, relic }
+            ? { line: `They have found something in the ruins of their home: ${theRelic(relic)}.`, relic }
             : { line: `They have pooled what they could: ${gold * 2} gold.`, gold: gold * 2 }
         : { line: `A purse of ${gold} gold, and an old banner to march under.`, gold, buff: { twist: 'glory' } };
-      const what = big ? (burned ? 'a burned heart restored' : relic ? `the ${RELICS[relic].name} (${RELICS[relic].text})` : `${gold * 2} gold`) : `+${gold} gold, and next fight: ${twistText('glory')}`;
+      const what = big ? (burned ? 'a burned heart restored' : relic ? `${theRelic(relic)} (${relicText(relic)})` : `${gold * 2} gold`) : `+${gold} gold, and next fight: ${twistText('glory')}`;
       return card('The refugees remember', "A rider in a patched cloak catches you up on the road. 'From the caravan,' she says. 'We said we would not forget.'", [
         road('Accept their thanks', what, 0, gift),
         leave('Tell them to keep it', 'Move on.'),

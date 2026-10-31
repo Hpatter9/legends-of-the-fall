@@ -13,7 +13,7 @@
 
 import { mixSeed, Rng } from './rng';
 import { gearText, makeGear, SLOTS, type Gear } from './gear';
-import { RELIC_IDS, RELICS } from './relics';
+import { pickRelic, pricedFor, RELIC_IDS, relicPriceOf, RELICS, relicText } from './relics';
 import { HEROES, UNITS } from './units';
 import { gearStage, summonCost, type Run } from './run';
 import type { EventOption } from './events';
@@ -78,9 +78,11 @@ export function stockMarket(run: Run, stage: number, roll = 0): EventOption[] {
   wares.push({ label: `A sellsword ${UNITS[kind].name}`, text: 'joins the bench, grade 1', cost: summonCost(run) + HIRE_EXTRA, effect: { t: 'hire', kind } });
   const relics = RELIC_IDS.filter((id) => !run.relics?.includes(id));
   if (relics.length && rng.chance(MARKET_RELIC)) {
-    const id = rng.pick(relics);
-    wares.push({ label: RELICS[id].name, text: RELICS[id].text, cost: relicPrice(stage), effect: { t: 'relic', id } });
+    const id = pickRelic(() => rng.next(), relics);
+    wares.push({ label: RELICS[id].name, text: relicText(id), cost: relicPriceOf(id, relicPrice(stage)), effect: { t: 'relic', id } });
   }
+  // (RELICS-2: the Tax Ingot's dearer prices)
+  for (const w of wares) w.cost = pricedFor(run.relics, w.cost);
   return wares;
 }
 

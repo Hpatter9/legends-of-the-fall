@@ -1753,11 +1753,14 @@ export class StandView {
     const offer = this.parts.offer;
     offer.replaceChildren();
     offer.hidden = !run.offer.length || over || s.phase === 'deploy';
-    const price = offerCost(s);
+    // (RELICS-2: a run whose relics were just converted says so once, until its next wave begins; a Rare costs more, so each has its price)
+    if (run.relicNote && s.phase === 'wave') run.relicNote = undefined;
+    if (run.relicNote && !offer.hidden) offer.append(el('small', 'relicNote', run.relicNote));
     run.offer.forEach((id, i) => {
+      const price = offerCost(s, i);
       const b = el('button', 'stRelic');
       b.title = relicLine(id);
-      b.append(el('span', '', RELICS[id].name), el('small', '', RELICS[id].text), el('em', '', `${price} gold`));
+      b.append(el('span', '', RELICS[id].name), el('small', '', RELICS[id].text + (RELICS[id].price ? `; ${RELICS[id].price}` : '')), el('em', '', `${price} gold`));
       b.disabled = run.gold < price;
       b.addEventListener('click', () => this.buy(() => buyRelic(s, i) !== null));
       offer.append(b);

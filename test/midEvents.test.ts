@@ -1,4 +1,5 @@
 // The road's events and the passing cart (MID-EVENTS, `docs/notes/mid-events.md`): the cards between an army's or the daily's waves.
+import { relicPriceOf } from '../src/sim/relics';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chooseOption, drawEvent, EVENT_KINDS, type EventCard } from '../src/sim/events';
@@ -206,13 +207,14 @@ test('the passing cart: four to six wares within their prices, a sellsword of th
       for (const w of wares) {
         const fx = w.effect;
         if (fx.t === 'gear') assert.equal(w.cost, gearPrice(fx.gear, stage));
-        else if (fx.t === 'relic') assert.equal(w.cost, relicPrice(stage));
+        // (RELICS-2: a Rare costs half as much again)
+        else if (fx.t === 'relic') assert.equal(w.cost, relicPriceOf(fx.id, relicPrice(stage)));
         else if (fx.t === 'hire') {
           assert.equal(w.cost, summonCost(run) + HIRE_EXTRA);
           assert.ok(run.pool!.includes(fx.kind));
         } else if (fx.t === 'buff') assert.ok(POTIONS.some((p) => p.cost(stage) === w.cost));
         else assert.fail(fx.t);
-        assert.ok(w.cost > 0 && w.cost <= 150, `${w.label} ${w.cost}`);
+        assert.ok(w.cost > 0 && w.cost <= (fx.t === 'relic' ? 225 : 150), `${w.label} ${w.cost}`);
       }
       assert.equal(new Set(wares.filter((w) => w.effect.t === 'gear').map((w) => (w.effect as { gear: { slot: string } }).gear.slot)).size, 2);
     }

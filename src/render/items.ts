@@ -10,7 +10,9 @@ import iron_shield from '../art/items/iron_shield.png';
 import feather_charm from '../art/items/feather_charm.png';
 import hawk_eye from '../art/items/hawk_eye.png';
 import swift_boots from '../art/items/swift_boots.png';
-import scholar_scroll from '../art/items/scholar_scroll.png';
+import founders_ledger from '../art/items/founders_ledger.png';
+import book_of_names from '../art/items/book_of_names.png';
+import unfinished_chronicle from '../art/items/unfinished_chronicle.png';
 import spyglass from '../art/items/spyglass.png';
 import ember_ruby from '../art/items/ember_ruby.png';
 import dragon_scale from '../art/items/dragon_scale.png';
@@ -71,7 +73,10 @@ const RELIC_ICONS: Record<string, string> = {
   featherCharm: feather_charm,
   hawkEye: hawk_eye,
   swiftBoots: swift_boots,
-  scholarScroll: scholar_scroll,
+  // (RELICS-2: placeholders cut by tools/relics/relic-icons-2.py until the painted icons come)
+  scholarScroll: founders_ledger,
+  bookOfNames: book_of_names,
+  unfinishedChronicle: unfinished_chronicle,
   spyglass: spyglass,
   emberRuby: ember_ruby,
   dragonScale: dragon_scale,
