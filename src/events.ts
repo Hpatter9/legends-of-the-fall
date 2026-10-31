@@ -103,7 +103,7 @@ export class Events {
     if (hire && UNITS[hire]) b.append(portrait(battleSheet(hire, this.equipmentStep(hire), 1), 32, 1));
     else if (icon) b.append(iconImg(icon, o.label));
     const words = el('span');
-    words.append(el('b', '', o.done ? `${o.label} · ${fx.t === 'reroll' ? 'done' : 'sold'}` : o.label), el('small', '', o.text));
+    words.append(el('b', '', o.done ? `${o.label} · ${fx.t === 'reroll' ? 'done' : fx.t === 'guest' ? 'joined' : 'sold'}` : o.label), el('small', '', o.text));
     b.append(words);
     // (GUEST-HERO: the cart's guest wears its badge here too)
     if (fx.t === 'guest') b.append(el('i', 'guestMark', 'Guest'));
