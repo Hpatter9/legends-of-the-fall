@@ -16,6 +16,8 @@ import {
   canSave, fallBack, finishRetreat, hallNow, holdTheLine,
 } from './sim/stand';
 import { ACT_NUMERALS, RETREAT_MS, reachRoom, ROOM_NAMES } from './sim/standActs';
+import { actScene, ACT_LOOKS } from './sim/cineMoments';
+import type { Scene } from './sim/sceneKit';
 import { lostLine, roomLine } from './standRetreatLines';
 import { standRoomTrack } from './render/standMusic';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
@@ -61,6 +63,8 @@ export interface StandHost {
   onHome(): void;
   /** Play a cinematic due at a moment (the run waits while it plays). */
   moment(m: { kind: 'spire'; floor: number }): Promise<void>;
+  /** Play a cinematic made on the spot with these heroes (CINE-001: an act card); true if it played, false with cinematics off. */
+  film?(scene: Scene, party: readonly string[]): Promise<boolean>;
   /** Quests the run's end completed (QUESTS: the page toasts them). */
   questsDone?(ids: string[]): void;
 }
@@ -1487,6 +1491,22 @@ export class StandView {
     this.save();
     this.refreshBar(true);
     const words = roomLine(s.run.seed, hall, s.run.heroes.filter(standing).map((h) => h.kind));
+    // (CINE-001: with cinematics on, the act's card is a short film of the room, the ruler's line and the heroes; the run waits for it)
+    if (this.host.film) {
+      const up = s.run.heroes.filter(standing).map((h) => h.kind);
+      const film = actScene(ACT_NUMERALS[act], ROOM_NAMES[hall].title, ACT_LOOKS[hall], words.line, words.duchess, up.length, act === 3);
+      this.hold = true;
+      void this.host.film(film, up).then((played) => {
+        if (played) this.hold = false;
+        else this.titleCard(hall, act, words);
+      });
+      return;
+    }
+    this.titleCard(hall, act, words);
+  }
+
+  /** The room's title card: the act, the room, the ruler's line (and Duchess's), held until tapped or its time is up. */
+  private titleCard(hall: HallKind, act: number, words: { line: string; duchess: string | null }): void {
     const t = this.parts.title;
     const card = el('div', 'stTitleCard');
     card.append(el('small', '', `Act ${ACT_NUMERALS[act]}`), el('b', '', ROOM_NAMES[hall].title));
