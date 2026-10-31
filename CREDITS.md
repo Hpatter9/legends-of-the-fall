@@ -208,6 +208,18 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 - **The quest board** (`board.png`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer** ("Quest Board", craftpix.net free
   licence), trimmed and scaled to 64 px across with hard alpha.
 
+## The tavern life's placeholder props (`src/art/tavern/life/pack-*.png`, copied by `tools/tavern-life/cut.py`; TAVERN-LIFE)
+
+- **Notes, z's, steam, embers, sparks, a "!" and a bead of sweat** over the heroes at their activities (`pack-note-gold`, `pack-note-pink`,
+  `pack-zzz`, `pack-steam`, `pack-ember`, `pack-spark`, `pack-zap`, `pack-star`, `pack-bang`, `pack-sweat`): ten 16px `sheet-16.png` strips
+  (six frames each), copied unchanged from the **5000 Pixel Effects** pack by blueberry (`pixel-effects/sprites/<effect>/`: gold-note,
+  pink-note, white-zzz, white-smoke-x, fire-sparkle-x, gold-sparkle-x, lightning-sparkle-x, star-sparkle-x, white-exclaim, white-sweat).
+  The pack's licence allows use in games; credit appreciated (https://blueberry-assets.itch.io).
+- **A book, shepherd's pipes and a joint of meat** in the heroes' hands (`pack-book`, `pack-pipes`, `pack-meat`): single
+  16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Book, Music, Flesh; CC-BY 4.0).
+- The tankard, cup, cards, dice, coin, dart, clasped hands and Gwen's cloth are a few code-drawn pixels each (no pack has them at this
+  size) until the painted props of `docs/notes/tavern-art-prompt.md` land.
+
 ## Art generated with PixelLab
 
 - **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.

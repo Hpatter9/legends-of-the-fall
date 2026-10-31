@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.268.0',
+    date: '2026-10-30',
+    title: 'Life in the tavern',
+    notes: ['Every hero now has a fixed spot and pastime in the tavern: darts, cards, singing on the stage, dancing, arm-wrestling, a pint at the bar.'],
+  },
+  {
     version: '0.267.0',
     date: '2026-10-30',
     title: 'Hold a unit to see its card',
