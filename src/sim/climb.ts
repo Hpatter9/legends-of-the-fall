@@ -6,7 +6,7 @@
 import type { Battle, Boost, Unit } from './battle';
 import { ALL_HEROES, UNITS } from './units';
 import { CAL_TIER, tierOfLevel } from './calamity';
-import { gradeMult, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
+import { canJoin, gradeMult, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
 import { gearBoost } from './gear';
 import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
@@ -117,7 +117,7 @@ export function hireHero(run: Run, kind: string, paid: number, toSquad = run.mod
   // (a mirror's clone gives up its place in a full squad to a hero who stays)
   const guest = run.squad.find((id) => run.roster.some((x) => x.id === id && isClone(x)));
   if (toSquad && run.squad.length >= squadLimit(run) && guest !== undefined) run.squad = run.squad.filter((id) => id !== guest);
-  if (toSquad && run.squad.length < squadLimit(run) && !run.squad.includes(h.id)) run.squad.push(h.id);
+  if (toSquad && canJoin(run, h.id)) run.squad.push(h.id);
   return h;
 }
 

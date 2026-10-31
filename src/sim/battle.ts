@@ -323,6 +323,8 @@ export type BattleEvent =
 export interface Battle {
   rift?: Rift;
   riftBoss?: boolean;
+  /** GUARDIAN-PULSE: the corrupted guardian's own unit id, fixed as the fight starts; its Calamity pulse comes from it alone (`riftBattle.ts`). */
+  riftGuardian?: number;
   seed: number;
   board: Board;
   units: Unit[];
@@ -638,12 +640,31 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   return unit;
 }
 
-/** Whether a hero may be put on a tile: the fight hasn't begun, it's on the heroes' rows, and it's free ground. */
-export function canPlace(b: Battle, defId: string, u: number, v: number, tag?: number): boolean {
-  if (b.phase !== 'deploy' || UNITS[defId]?.side !== 'hero') return false;
-  if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) return false;
+/** Why a hero may not be put on a tile, or null when it may: the fight has begun (`phase`), it is not a hero (`side`), the tile is off
+ *  the heroes' rows or not ground (`tile`), another stands there (`taken`), or another of its kind is on the field already (`twin`:
+ *  ONE-OF-EACH, `docs/notes/one-of-each.md`). */
+export type PlaceBlock = 'phase' | 'side' | 'tile' | 'taken' | 'twin';
+export function placeBlock(b: Battle, defId: string, u: number, v: number, tag?: number): PlaceBlock | null {
+  if (b.phase !== 'deploy') return 'phase';
+  if (UNITS[defId]?.side !== 'hero') return 'side';
+  if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) return 'tile';
   const there = unitAt(b, u, v);
-  return !there || (tag === undefined ? there.def === defId : there.tag === tag);
+  if (there && !(tag === undefined ? there.def === defId : there.tag === tag)) return 'taken';
+  return twinOf(b, defId, tag) ? 'twin' : null;
+}
+
+/** Whether a hero may be put on a tile: the fight hasn't begun, it's on the heroes' rows, it's free ground, and no other of its kind is on the field. */
+export function canPlace(b: Battle, defId: string, u: number, v: number, tag?: number): boolean {
+  return placeBlock(b, defId, u, v, tag) === null;
+}
+
+/** ONE-OF-EACH (the owner's rule: one unit of a hero on the battlefield at a time): another hero of kind `defId` on the field, placed or
+ *  standing, that is not the one tagged `tag` (a run's hero moved to another tile is not its own twin). The same kind is the same hero
+ *  whatever its grade, rank or awakened form (they all fight as `def`). A unit a skill called up (`owner`) and a summon kind (a wolf, a
+ *  treant) are not heroes for the rule, and neither are the fallen. An untagged hero has no twin: `place` moves the one there is. */
+export function twinOf(b: Battle, defId: string, tag?: number): Unit | undefined {
+  if (tag === undefined || UNITS[defId]?.summon) return undefined;
+  return b.units.find((x) => x.side === 'hero' && x.def === defId && x.tag !== tag && x.owner === undefined && x.alive);
 }
 
 /** Put a hero on a tile (or move it there, if it's already placed). A run's hero has a `tag` and a `boost` (its grade). */

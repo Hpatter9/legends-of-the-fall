@@ -45,6 +45,9 @@ import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from '
 import { questById } from './sim/questData';
 import { drawQuestLog, type LogTab } from './questLog';
 import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } from './sim/eidolonChains';
+import { hornHeld } from './sim/warHorn';
+import { revealCard } from './sim/sceneReveal';
+import { showEndCard } from './revealCard';
 import { chainById } from './sim/eidolonChainData';
 import { openPactGallery } from './eidolonChainView';
 import { playBinding } from './eidolonBinding';
@@ -368,8 +371,12 @@ export class Home {
       } else if (ready) {
         this.hall.stop();
         await playBinding(ready);
+        // (HORN-GIFT: the first binding hands over the War Horn, full; its end card says what it does and where it is)
+        const hadHorn = hornHeld(m);
         if (bindChain(m, ready.id)) saveMeta(m);
         this.refresh();
+        const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : null;
+        if (gift) await showEndCard(gift);
         this.openGallery();
       } else this.openQuests('eidolons');
     } finally {

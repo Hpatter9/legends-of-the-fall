@@ -8,7 +8,8 @@ import type { Run } from './sim/run';
 import { choices, fightSpec, spotFloor, NODE_NAMES, rowsIn, type MapNode } from './sim/tower';
 import { destinationWorld, expeditionOf, SHIFT_COST, WORLDS, type RiftWorld } from './sim/sanctuary';
 import { TWISTS } from './sim/twists';
-import { PATRONS, pendingAltar, riftRank } from './sim/rift';
+import { pendingAltar } from './sim/rift';
+import { altarButtonLine, altarSummary, starterLine, stepLabel, STEPS } from './sim/altarWords';
 import { heroLevel } from './sim/climb';
 import { formOf, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
@@ -158,8 +159,9 @@ export class SanctuaryView {
       slot.append(canvas);if(hero.id===r.starter)slot.append(el('span','',`Lv ${heroLevel(hero)} · ${Math.round(hpShare(run,hero.id)*100)}% HP`));party.append(slot);
     });
     this.stage.append(this.room,this.mist,el('div','rsShade'),this.ring,this.bloom,this.party,this.motes);
-    const altar=el('button','rsAltar',pendingAltar(run)?'✦ Awaken altar':`✦ ${r.patron?PATRONS[r.patron].name:'Dormant altar'}`);altar.onclick=()=>this.hooks.altar();
-    const growth=el('p','rsGrowth',`Starter evolution ${riftRank(r)} / 3 · Company ${run.roster.length}`);
+    // (ALTAR-CLEAR: the altar's button says which step is due, or what is set; the line by it is the starter's level, tier and evolution)
+    const altar=el('button',`rsAltar${pendingAltar(run)?' due':''}`,`✦ ${altarButtonLine(r,pendingAltar(run))}`);altar.onclick=()=>this.hooks.altar();
+    const growth=el('p','rsGrowth',`Starter ${starterLine(altarSummary(run)!)} · Company ${run.roster.length}`);
     scene.append(this.stage,caption,altar,growth);
     const fragments=el('div','rsFragments');
     e.history.slice(-5).forEach(h=>{const frag=el('span','rsFragment');frag.title=`${WORLDS[h.world].name} · completed`;frag.append(worldPicture(h.world));fragments.append(frag);});scene.append(fragments);
@@ -186,7 +188,17 @@ export class SanctuaryView {
     this.details.replaceChildren(el('b','',spec.description),el('p','',node.kind==='fight'||node.kind==='elite'||node.kind==='boss'?spec.footing:REWARDS[node.kind]),el('small','',`${REWARDS[node.kind]} · Starter grows · One crossing`));
     if (['fight','elite','boss'].includes(node.kind)) { const band=fightSpec(this.run,node.kind,spotFloor(this.run,node.id),node.twist,node.id).band;const names=[...new Set(band.map(id=>UNITS[id]?.name??id))];this.details.append(el('small','rsEnemies',`${band.length} foes · ${names.slice(0,2).join(', ')}${names.length>2?'…':''}`)); }
     if(node.twist && TWISTS[node.twist]) this.details.append(el('small','rsTwist',`${TWISTS[node.twist].name} · ${TWISTS[node.twist].text}`));
-    this.enter.textContent=node.kind==='boss'?'Enter the Guardian’s Rift':'Enter the Rift';
+    this.enter.textContent=pendingAltar(this.run)?'Choose at the altar first':node.kind==='boss'?'Enter the Guardian’s Rift':'Enter the Rift';
+    // (ALTAR-CLEAR: which altar step this crossing wakes)
+    const wakes=this.altarWakes(node);if(wakes)this.details.append(el('small','rsAltarNext',`✦ ${wakes}`));
+  }
+  /** The altar step a won crossing would wake: the first win wakes the patron; each guardian the next step. */
+  private altarWakes(node: MapNode): string | undefined {
+    const r=this.run.rift!, bosses=this.run.tower?.bosses??0;
+    const fights=node.kind==='fight'||node.kind==='elite'||node.kind==='boss';
+    if(!r.patron&&r.wins<1&&fights)return `A win here wakes ${stepLabel('patron')}`;
+    if(node.kind==='boss'){const step=STEPS[bosses+1];if(step&&!r[step])return `Beating the guardian wakes ${stepLabel(step)}`;}
+    return undefined;
   }
   /** Pick rift `i`: the ring turns it to the middle and the room slides behind it. */
   private choose(i: number): void {

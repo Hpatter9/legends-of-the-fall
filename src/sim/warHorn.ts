@@ -2,8 +2,13 @@
 // fills with light across fights and is kept in the save (`Meta.eidolons`, an optional field: an older save has an empty horn). It fills to
 // `HORN_FULL` (1000): a boss wave won adds 100 (about ten boss waves fill it) and each ordinary foe slain adds 1 (a hundred add a tenth); an
 // auto-replay adds half. Full, it waits for as long as the player likes (gains meanwhile are lost); blown, it empties. One Eidolon is chosen
-// to answer it (`chooseEidolon`); choosing another keeps the fill (one shared horn). The call needs an Eidolon bound: until the quest chains
-// bind one (a later batch), the horn fills and waits, and the page says "No Eidolon has answered you yet".
+// to answer it (`chooseEidolon`); choosing another keeps the fill (one shared horn).
+//
+// HORN-GIFT (the owner: "The Eidolon horn should be given to the player after earning an Eidolon, as part of the story";
+// docs/notes/horn-gift.md): the horn is the player's only once an Eidolon is bound (`hornHeld`). Before that it does not exist on the page
+// and nothing fills it (`addHorn` adds nothing; an older save's stored fill is kept, untouched). The first binding (Askel's, at the
+// Summoner) hands it over full (`bindEidolon`), so it can be blown in the very next fight. Nothing new is saved: a save holds the horn
+// exactly when it has an Eidolon bound.
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
@@ -70,6 +75,8 @@ export const chosenOf = (m: HornMeta): string | undefined => {
   const c = m.eidolons?.chosen;
   return c && boundOf(m).includes(c) ? c : undefined;
 };
+/** Whether the player holds the War Horn: given at the first binding, so held exactly while an Eidolon is bound (HORN-GIFT). */
+export const hornHeld = (m: HornMeta): boolean => boundOf(m).length > 0;
 /** Whether the horn can be blown in a fight: full, and an Eidolon chosen to answer. */
 export const hornReady = (m: HornMeta): boolean => hornFull(m) && !!chosenOf(m);
 
@@ -110,10 +117,11 @@ export interface HornAdd {
   wasFull: boolean;
 }
 
-/** Add a gain to the horn: up to full, then it waits (the rest is lost). */
+/** Add a gain to the horn: up to full, then it waits (the rest is lost). Before the horn is given (no Eidolon bound) nothing goes in, and a
+ *  fill an older save stored is kept as it was (HORN-GIFT). */
 export function addHorn(m: HornMeta, gain: number): HornAdd {
   const before = hornOf(m);
-  if (gain <= 0) return { added: 0, fill: before, filled: false, wasFull: before >= HORN_FULL };
+  if (gain <= 0 || !hornHeld(m)) return { added: 0, fill: before, filled: false, wasFull: before >= HORN_FULL };
   const fill = Math.min(HORN_FULL, before + gain);
   (m.eidolons ??= { horn: 0 }).horn = fill;
   return { added: fill - before, fill, filled: before < HORN_FULL && fill >= HORN_FULL, wasFull: before >= HORN_FULL };
@@ -136,12 +144,16 @@ export function chooseEidolon(m: HornMeta, id: string): boolean {
   return true;
 }
 
-/** Bind an Eidolon (the Summoner's binding, a later batch; the page's dev flag `?eidolons=all` binds all six): the first bound is chosen. */
+/** Bind an Eidolon (the Summoner's binding, `eidolonChains.ts` `bindChain`; the page's dev flag `?eidolons=all` binds all six): the first
+ *  bound is chosen. The first binding of all also gives the War Horn, full (HORN-GIFT): the page tells it by `hornHeld` before and after. */
 export function bindEidolon(m: HornMeta, id: string): boolean {
   if (!EIDOLON_IDS.includes(id)) return false;
+  const given = !hornHeld(m);
   const e = (m.eidolons ??= { horn: 0 });
   const bound = (e.bound ??= []);
   if (!bound.includes(id)) bound.push(id);
+  // (the horn is handed over full, whatever an older save had stored in it)
+  if (given) e.horn = HORN_FULL;
   e.chosen ??= id;
   return true;
 }

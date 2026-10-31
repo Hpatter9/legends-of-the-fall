@@ -8,7 +8,7 @@ import * as toolkit from './sim/toolkit';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { isCastHero, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
+import { isCastHero, canJoin, sitsOut, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -61,11 +61,14 @@ import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
 import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from './sim/featureUnlocks';
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
+import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
+import { sitOutWords, twinNote, twinWords } from './oneEachNote';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
 import { Events } from './events';
 import { TowerView } from './towerView';
+import { updateAltarHud } from './altarHud';
 import { StandView } from './standView';
 import { loadStand, migrateOldClimb, standContinueLine } from './sim/stand';
 import { showTwistBanner } from './twistView';
@@ -263,6 +266,8 @@ class Game {
   /** Where each hero (by roster id) was placed, so the next stage puts them back. */
   private placed = new Map<string, [number, number]>();
   private chosen: string | null = null;
+  /** ONE-OF-EACH: the fielded hero whose tile is lit after a copy of it was refused, and until when. */
+  private twinLit: { tag: number; until: number } | null = null;
   private drag: Drag | null = null;
   /** UNIT-INFO (docs/notes/unit-info.md): a press-and-hold on a unit in a deploy opens its info card; a move first lets it go as a drag. */
   private hold!: HoldPress;
@@ -584,7 +589,8 @@ class Game {
       const h = heroOf(this.run, id);
       if (!h) continue;
       // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
-      const was = this.placed.get(String(id));
+      // (a mirror's clone standing in for its original takes the original's spot: ONE-OF-EACH)
+      const was = this.placed.get(String(id)) ?? (h.standsFor !== undefined ? this.placed.get(String(h.standsFor)) : undefined);
       const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
       if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
@@ -1051,6 +1057,8 @@ class Game {
   private frame(dt: number, elapsed = dt): void {
     const b = this.b;
     tips.update();
+    // (ALTAR-CLEAR: the altar's chip in a Calamity fight; it only reads the battle)
+    updateAltarHud(this.standOn || this.homeUp ? undefined : b);
     if (this.standOn) return;
     if (this.homeUp && b.phase !== 'fight') {
       this.app.ticker.stop();
@@ -2510,8 +2518,15 @@ class Game {
     }
     if (!d.id) return;
     if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
+    const first = !d.moved;
     d.moved = true;
     this.chosen = d.id;
+    // (ONE-OF-EACH: a bench copy of a kind already on the field says so as it is picked up; it can still merge into it or swap in on its tile)
+    if (first && !d.fromBoard && !this.onBoard(d.id)) {
+      const twin = fieldTwin(this.b, this.run, Number(d.id));
+      const h = heroOf(this.run, Number(d.id));
+      if (twin?.tag !== undefined && h && !canMerge(this.run, h.id, twin.tag)) twinNote(sitsOut(this.run, h.id) ? sitOutWords(heroName(h.kind)) : twinWords(heroName(h.kind), false), e.clientX, e.clientY - 40);
+    }
     // (a card dragged off the bench in the deploy phase shows the recycle area; over it the card is let go to sell it)
     if (!d.fromBoard && this.b.phase === 'deploy') {
       $('recycleGold').textContent = `+${recycleValue(this.run)}`;
@@ -2556,7 +2571,9 @@ class Game {
       else if (!d.fromBoard && overRecycle(e.clientX, e.clientY)) this.recycleDropped(d.id);
       // (BENCH-TITLES: a hero on the board let go anywhere over the bench's wide area, or flicked down toward it, goes back)
       else if (this.onBoard(d.id) && (overReturn(e.clientX, e.clientY) || (d.fromBoard && flickToBench([...(d.trail ?? []), { x: e.clientX, y: e.clientY, t: e.timeStamp }], panelBox())))) this.takeBack(d.id);
-      else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
+      else if (tile && this.twinDrop(d.id, tile, e.clientX, e.clientY)) {
+        /* (ONE-OF-EACH: swapped in for its twin, or refused with a note) */
+      } else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
     } else if (d.fromBoard && (e.target as HTMLElement) === this.app.canvas) {
@@ -2569,6 +2586,8 @@ class Game {
       } else if (this.chosen && there?.tag !== undefined && canMerge(this.run, Number(this.chosen), there.tag)) {
         // (a chosen hero tapped onto its match on the board merges into it)
         this.mergeHeroes(Number(this.chosen), there.tag);
+      } else if (this.chosen && tile && this.twinDrop(this.chosen, tile, e.clientX, e.clientY)) {
+        this.chosen = null;
       } else if (this.chosen && tile && this.canPut(this.chosen, tile)) {
         this.put(this.chosen, tile);
         this.chosen = null;
@@ -2657,11 +2676,49 @@ class Game {
     return UNITS[heroOf(this.run, Number(id))!.kind];
   }
 
+  /** ONE-OF-EACH: hero `id` let go (or tapped down) on a deploy tile while another of its kind stands on the field. On the twin's own tile it
+   *  swaps in (the twin goes back to the bench: `swapTwin`); anywhere else on the rows it is refused, with a note by the finger and the twin's
+   *  tile lit. Returns false when there is no twin (an ordinary drop), so the caller places it as before. */
+  private twinDrop(id: string, tile: [number, number], x: number, y: number): boolean {
+    const h = heroOf(this.run, Number(id));
+    const twin = h && !this.onBoard(id) ? fieldTwin(this.b, this.run, h.id) : undefined;
+    if (!h || !twin || twin.tag === undefined || !isDeployTile(tile[1], this.b.board.d)) return false;
+    if (twin.u === tile[0] && twin.v === tile[1] && canSwapTwin(this.b, this.run, h.id)) {
+      const was = String(twin.tag);
+      const out = swapTwin(this.b, this.run, h.id, this.boostFor(h));
+      if (out === null) return false;
+      this.placed.delete(was);
+      this.placed.set(id, tile);
+      saveRun(this.run);
+      this.syncSprites();
+      play('summon');
+      heroSays(h.kind, 'placed', () => this.anchorOfKind(h.kind));
+      return true;
+    }
+    twinNote(sitsOut(this.run, h.id) ? sitOutWords(heroName(h.kind)) : twinWords(heroName(h.kind), canMerge(this.run, h.id, twin.tag)), x, y);
+    play('block');
+    this.flashTwin(twin.tag);
+    return true;
+  }
+
+  /** Light the tile of the hero `tag` on the field for a moment (the one a refused copy met: ONE-OF-EACH). */
+  private flashTwin(tag: number): void {
+    this.twinLit = { tag, until: performance.now() + 2400 };
+    this.markTiles();
+    setTimeout(() => {
+      if (this.twinLit?.tag === tag && performance.now() >= this.twinLit.until - 20) {
+        this.twinLit = null;
+        this.markTiles();
+      }
+    }, 2400);
+  }
+
   /** Whether a hero may go on a tile: free ground on the heroes' rows, and room in the squad if it isn't in it. */
   private canPut(id: string, [u, v]: [number, number]): boolean {
     const h = heroOf(this.run, Number(id));
     if (!h || !canPlace(this.b, h.kind, u, v, h.id)) return false;
-    return this.run.squad.includes(h.id) || this.run.squad.length < squadLimit(this.run);
+    // (room in the squad, no twin in it and not sitting out for a mirror's clone: ONE-OF-EACH)
+    return this.run.squad.includes(h.id) || canJoin(this.run, h.id);
   }
 
   private put(id: string, tile: [number, number]): void {
@@ -2789,6 +2846,8 @@ class Game {
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
+      card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
@@ -3253,6 +3312,11 @@ class Game {
       card.classList.toggle('placed', !!u);
       card.classList.toggle('chosen', this.chosen === id);
       card.classList.toggle('fallen', !!u && !u.alive);
+      // (ONE-OF-EACH: another of its kind stands on the field and this one cannot merge into it)
+      const twin = !u && this.b.phase === 'deploy' ? fieldTwin(this.b, this.run, Number(id)) : undefined;
+      card.classList.toggle('twinOn', !!twin && !(twin.tag !== undefined && canMerge(this.run, Number(id), twin.tag)));
+      const mark = card.querySelector<HTMLElement>('.twinMark');
+      if (mark) mark.textContent = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
       const share = u ? u.hp / u.maxHp : 1;
       (card.querySelector('i span') as HTMLElement).style.width = `${Math.round(share * 100)}%`;
     }
@@ -3277,7 +3341,10 @@ class Game {
         const tag = here?.side === 'hero' ? here.tag : undefined;
         const mergeHere = tag !== undefined && (who ? canMerge(this.run, Number(who), tag) : matches.has(tag));
         const ok = who ? this.canPut(who, [u, v]) : !here;
-        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && (ok || mergeHere) ? 'hover' : 'bad');
+        // (ONE-OF-EACH: the twin of the hero held stands on a lit tile (drop there to swap), as does one a refused copy just met)
+        const twinHere = tag !== undefined && ((!!who && !mergeHere && fieldTwin(b, this.run, Number(who))?.tag === tag && !this.onBoard(who)) || this.twinLit?.tag === tag);
+        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && (ok || mergeHere || twinHere) ? 'hover' : 'bad');
+        else if (twinHere) this.boardView.mark(u, v, 'twin');
         else if (here && who && String(here.tag) === who) this.boardView.mark(u, v, 'chosen');
         else if (mergeHere) this.boardView.mark(u, v, 'merge');
         else if (ok) this.boardView.mark(u, v, 'deploy');

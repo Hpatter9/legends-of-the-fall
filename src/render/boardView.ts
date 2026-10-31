@@ -26,13 +26,15 @@ const STONY = 3;
 const ROAD_SKIRT = 5;
 
 /** A tile's mark; `merge` is a hero on the field with a match ready to merge (MERGE-TWO). */
-type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | 'merge' | null;
+type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | 'merge' | 'twin' | null;
 const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
   deploy: [0x4a9cff, 0.28],
   hover: [0xffe066, 0.5],
   bad: [0xff4a4a, 0.4],
   chosen: [0x6dff8a, 0.45],
   merge: [0xffb43a, 0.6],
+  // (ONE-OF-EACH: the hero of a kind already on the field, where a copy held may swap in)
+  twin: [0xff8ad8, 0.55],
 };
 
 /** The colour of the lip at the edge of a tile's top: grass-like, then stony. */

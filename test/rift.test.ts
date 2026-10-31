@@ -6,7 +6,8 @@ import { startedMeta } from '../src/sim/meta';
 import { calamityRun, towerRun } from '../src/sim/modes';
 import { loadSlot, recycle, saveSlot, startStage } from '../src/sim/run';
 import { chooseAltar, growStarter, pendingAltar, reforgeAltar, RIFT_BOSSES } from '../src/sim/rift';
-import { tickRift } from '../src/sim/riftBattle';
+import { riftGuardian, tickRift } from '../src/sim/riftBattle';
+import { CORRUPT } from '../src/sim/altarRules';
 import { choices, enterNode, fightSpec, mapFor } from '../src/sim/tower';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
 import { CAL_BOSSES } from '../src/sim/calamityBosses';
@@ -226,4 +227,55 @@ test('a fallen boss stops pulsing even while its escort is alive', () => {
   b.t = 8000;
   tickRift(b, []);
   assert.equal(starter.hp, hp);
+});
+
+// GUARDIAN-PULSE: the corrupted guardian's pulse comes from the guardian itself, not from whichever foe stands first in the list.
+test('a corrupted guardian pulses from itself, wherever it stands in the list', () => {
+  const { b, starter } = field('ember', false, true);
+  const guardian = b.units.find((x) => x.side === 'foe')!;
+  assert.equal(b.riftGuardian, guardian.id);
+  assert.equal(riftGuardian(b), guardian);
+  // (an escort moved to the front of the list, as a summoned or reordered foe could be: the pulse stays the guardian's)
+  const escort = { ...guardian, id: b.nextId++, def: 'orcGrunt', size: undefined };
+  b.units.unshift(escort);
+  starter.shield = undefined;
+  const warn: BattleEvent[] = [];
+  b.t = CORRUPT.boss.everyMs - CORRUPT.boss.warnMs;
+  tickRift(b, warn);
+  const call = warn.find((e) => e.kind === 'skill' && e.name === 'Calamity pulse');
+  assert.ok(call && call.kind === 'skill' && call.by === guardian.id);
+  const hits: BattleEvent[] = [];
+  const hp = starter.hp;
+  b.t = CORRUPT.boss.everyMs;
+  tickRift(b, hits);
+  const pulse = hits.filter((e) => e.kind === 'hit' && e.src === 'skill' && e.to === starter.id);
+  assert.equal(pulse.length, 1);
+  assert.equal(pulse[0].kind === 'hit' && pulse[0].by, guardian.id);
+  assert.equal(hp - starter.hp, Math.max(1, Math.round(starter.maxHp * CORRUPT.boss.hit)));
+});
+
+test('the guardian falling ends its pulse, though an escort first in the list still stands', () => {
+  const { b, starter } = field('bastion', false, true);
+  const guardian = riftGuardian(b)!;
+  const escort = { ...guardian, id: b.nextId++, def: 'orcGrunt', size: undefined, shield: undefined };
+  b.units.unshift(escort);
+  guardian.alive = false;
+  starter.shield = undefined;
+  const hp = starter.hp, out: BattleEvent[] = [];
+  b.t = CORRUPT.boss.everyMs - CORRUPT.boss.warnMs;
+  tickRift(b, out);
+  b.t = CORRUPT.boss.everyMs;
+  tickRift(b, out);
+  assert.equal(starter.hp, hp);
+  assert.ok(!out.some((e) => e.kind === 'skill' && e.name === 'Calamity pulse'));
+  assert.equal(escort.shield, undefined);
+});
+
+test('only a corrupted guardian fight has a guardian, and it is the same each replay', () => {
+  assert.equal(field('ember').b.riftGuardian, undefined);
+  const a = field('echo', true, true).b, c = field('echo', true, true).b;
+  assert.equal(a.riftGuardian, c.riftGuardian);
+  playOut(a);
+  playOut(c);
+  assert.deepEqual(a, c);
 });
