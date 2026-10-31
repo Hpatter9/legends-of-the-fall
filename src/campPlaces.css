@@ -88,3 +88,36 @@
 .hm-battle .cpStallSlot .cpTag b { font-size: 12px; line-height: 1.1; white-space: nowrap; }
 .hm-battle .cpStallSlot .cpTag small { font-size: 12px; line-height: 1.1; white-space: nowrap; color: #e9d48f; }
 .hm-battle .cpStallSlot .cpPlace i.badge { top: 2px; right: 2px; }
+/* OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left (its lights, embers and crows are drawn on the
+   canvas, `render/standTowerLife.ts`); its plate hangs under the tower's foot, an ember-warm ribbon as the Calamity's is a violet one. */
+.hm-battle .cpSlot.cpTowerSlot .cpTag { height: var(--plateH, 40px); border: 0; border-image: none; border-radius: 3px; background: linear-gradient(90deg, #1d0f0a00, #22120ce8 12%, #22120ce8 88%, #1d0f0a00); box-shadow: none; padding: 3px; }
+.hm-battle .cpSlot.cpTowerSlot .cpTag b { color: #f6d39a; font-size: 12px; }
+.hm-battle .cpSlot.cpTowerSlot .cpTag small { color: #dcc3a4; }
+.hm-battle .cpTowerSlot .cpPlace:hover:not(:disabled) .cpTag b { color: #ffe6b8; }
+/* shut: the tower greys and darkens, as the Calamity's citadel does */
+.hm-battle .cpTowerSlot.shut::before { content: ''; position: absolute; inset: 0 0 var(--plateH, 40px); backdrop-filter: grayscale(1) brightness(0.5); mask-image: radial-gradient(ellipse 45% 60% at 30% 55%, #000 40%, transparent 75%); pointer-events: none; }
+.hm-battle .cpTowerSlot.shut .cpTag b { color: #b9b1a6; }
+.hm-battle .cpTowerSlot .cpPlace i.badge { top: 2px; right: 2px; }
+
+/* a run's last word: a dispatch over the enemy's camp, below the heading and clear of every place; it never takes a tap and fades away */
+.hm-battle > .hmDispatch { position: absolute; left: 16px; right: 16px; top: 30%; z-index: 3; margin: 0 auto; max-width: 340px; box-sizing: border-box; padding: 6px 10px; text-align: center; font: 400 12px/1.25 var(--body); pointer-events: none; animation: hmDispatch 7s ease forwards; }
+@keyframes hmDispatch { 0% { opacity: 0; transform: translateY(6px); } 6% { opacity: 1; transform: none; } 82% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hm-battle > .hmDispatch { animation-name: hmDispatchStill; } }
+@keyframes hmDispatchStill { 0%, 82% { opacity: 1; } 100% { opacity: 0; } }
+
+/* the way in (`standGate.ts`): the scene leans in to the tower as the dusk closes round it, the Stand's name rises, then dark */
+.cpWrap.sgGo .cpRoom { transform-origin: var(--sgX) var(--sgY); transform: scale(2.8); transition: transform 1s cubic-bezier(0.5, 0, 0.75, 0.2); }
+.cpWrap.sgGo .cpSlot, .cpWrap.sgGo .cpPlate, .cpWrap.sgGo .cpHeading, .cpWrap.sgGo .cpStash { opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.sgVeil { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at var(--sgX) var(--sgY), #ffb45a2e 0, #3a140a55 18%, #0b0605f2 62%); animation: sgVeil 1s ease-in forwards; }
+.sgVeil::after { content: ''; position: absolute; inset: 0; background: #070404; opacity: 0; animation: sgDark 1s ease-in forwards; }
+.sgCard { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; color: #f6d39a; text-shadow: 0 2px 3px #000, 0 0 14px #000; opacity: 0; animation: sgCard 1s ease-out forwards; }
+.sgCard span { font: 400 9px/1.4 var(--body); letter-spacing: 3px; color: #d9a866; }
+.sgCard b { font: 700 26px/1.2 var(--display); color: #ffe2a8; }
+.sgCard small { font: 400 12px/1.2 var(--body); color: #e4cfae; }
+@keyframes sgVeil { 0% { opacity: 0; } 45% { opacity: 1; } 100% { opacity: 1; } }
+@keyframes sgDark { 0%, 70% { opacity: 0; } 100% { opacity: 0.9; } }
+@keyframes sgCard { 0%, 18% { opacity: 0; transform: translateY(8px) scale(0.96); } 45%, 85% { opacity: 1; transform: none; } 100% { opacity: 0.85; transform: scale(1.04); } }
+.cpWrap.sgStill .cpRoom { transform: none; transition: none; }
+.cpWrap.sgStill .sgVeil, .cpWrap.sgStill .sgVeil::after, .cpWrap.sgStill .sgCard { animation-duration: 0.35s; }
+.cpWrap.sgStill .sgCard { animation-name: sgCardStill; }
+@keyframes sgCardStill { from { opacity: 1; } to { opacity: 1; } }

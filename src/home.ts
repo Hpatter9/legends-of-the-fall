@@ -19,6 +19,7 @@ import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
+import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
@@ -309,6 +310,18 @@ export class Home {
     then();
   }
 
+  private gating = false;
+  /** Into the Last Stand from its watchtower: the tower's moment (`standGate.ts`), then the Stand as before (OVERLOOK-STAND). */
+  private async enterStand(line: string): Promise<void> {
+    if (this.gating) return;
+    this.gating = true;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const done = await playStandGate(this.camp.root, this.camp.standFocus(), { line }, still);
+    this.gating = false;
+    this.go(this.hooks.onTower);
+    done();
+  }
+
   /** Into the Calamity from the home screen, as its place on the Battle tab does (REVEAL: the end card's button). */
   enterCalamity(): void {
     this.go(this.hooks.onCalamity);
@@ -494,7 +507,12 @@ export class Home {
     const boss = UNITS[bossOf(next)];
     // (the bottom bar, below the camp's picture so it covers none of it: what the next fight is, then Party, Battle! and Continue)
     const fr = el('div', 'hmFront');
-    if (this.note) fr.append(el('div', 'hmNote', this.note));
+    // (the last run's end: a dispatch over the enemy's camp, clear of every place, that fades by itself and lets taps through. It once sat
+    //  on the bar's top edge, over the Daily and Last Stand plates, until the next mode was entered: OVERLOOK-STAND)
+    if (this.note) {
+      showDispatch(page, this.note);
+      this.note = '';
+    }
     // Keep the new-army announcement quiet on later launches; Continue still shows the wave.
     const progress = armyStars(m, next);
     if (announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', info ? (army ? `Wave ${info.stage}/${army.waves.length} · ★ ${progress.got}/${progress.max}` : info.label) : `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
@@ -564,8 +582,10 @@ export class Home {
     // (with the furthest room of the retreat reached: the throne room is the Last Stand's badge, STAND-RETREAT)
     const room = m.standAct !== undefined ? ` · ${m.standAct >= 3 ? '♛ ' : ''}${ROOM_NAMES[ACT_HALLS[m.standAct]].short}` : '';
     const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}${room}` : 'not tried yet') : opensAt(MODE_NEED.tower));
-    const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
+    // (OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left, entered with its own moment)
+    const tower = place('hmTower', towerUp ? 'stand' : 'stand locked', 'Last Stand', towerLine2, `The Last Stand's watchtower: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => void this.enterStand(towerLine2));
     tower.disabled = !towerUp;
+    this.camp.towerSlot.classList.toggle('shut', !towerUp);
     // The distant Calamity citadel carries the saved map or the unlock requirement.
     const going = this.hooks.slotInfo?.('calamity');
     const calUp = modeOpen(m, 'calamity') || !!going;
@@ -896,4 +916,17 @@ export class Home {
     $('hmSub').hidden = true;
     this.hooks.onScene?.();
   }
+}
+
+/** OVERLOOK-STAND: a run's last word on the overlook, over the enemy's camp below the heading (clear of the watchtower, the Calamity, the
+ *  stall, the party and the plates). It never takes a tap, and fades by itself; a new one replaces the one showing. */
+function showDispatch(page: HTMLElement, text: string): void {
+  page.querySelector(':scope > .hmDispatch')?.remove();
+  const d = el('div', 'hmNote hmDispatch', text);
+  d.setAttribute('role', 'status');
+  const gone = () => d.remove();
+  d.addEventListener('animationend', gone);
+  // (the fade's end, or a few seconds when animations do not run)
+  setTimeout(gone, 8000);
+  page.append(d);
 }

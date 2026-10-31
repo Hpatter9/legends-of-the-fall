@@ -22,14 +22,36 @@ export function overlookLayout(w: number, h: number): Camp {
     cart: { x: Math.round(w * 0.17), y: h - 65 },
     stash: { x: 8, y: h - 114, w: 58, h: 54 },
     places: {
-      daily: place(10, h - 56, Math.floor((w - 28) / 2), 48),
-      tower: place(Math.ceil((w + 8) / 2), h - 56, Math.floor((w - 28) / 2), 48),
+      // (the Daily board alone on the plaque row: the Last Stand moved up to the painted tower, OVERLOOK-STAND)
+      daily: place(Math.round((w - dailyW(w)) / 2), h - 56, dailyW(w), 48),
+      // (the Last Stand's place is the watchtower painted on the left of the overlook, as the Calamity's is the citadel on the right)
+      tower: standPlace(h),
       calamity: place(w - 116, 4, 108, Math.max(112, Math.round(h * 0.23))),
       // (Hester's Stall, SHOP-BOOKS-GEAR: on the ledge at the left, above the fire and the chests; its picture over a short plate)
       stall: stallPlace(h, heroY),
     },
     buttonTop: h - 60,
   };
+}
+
+/** The Daily board's plaque: one plaque in the middle of the row, as wide as a thumb needs and no wider. */
+const dailyW = (w: number): number => Math.min(w - 20, 240);
+
+/** The watchtower in the overlook painting (`art/camp/overlook.png`, drawn over the whole scene), as fractions of the scene: its body,
+ *  its lit window, its doorway and the lamp at its foot. The Last Stand's place sits over it; its life is drawn at these points. */
+export const STAND_TOWER = {
+  left: 0.07, right: 0.135, top: 0.088, base: 0.182,
+  window: [0.111, 0.117] as const,
+  door: [0.115, 0.155] as const,
+  lamp: [0.143, 0.176] as const,
+};
+/** The Last Stand's place: the tap box over the painted tower, its plate under the tower's foot (the Calamity's plate hangs under its citadel the same way). */
+export const STAND = { w: 108, plate: 40 };
+function standPlace(h: number): Place {
+  const x = 4;
+  const top = Math.round(h * (STAND_TOWER.top - 0.02));
+  const foot = Math.round(h * STAND_TOWER.base) + 2;
+  return { x: x + STAND.w / 2, foot, box: { x, y: top, w: STAND.w, h: foot + STAND.plate - top }, plate: { x, y: foot, w: STAND.w, h: STAND.plate } };
 }
 
 /** Hester's Stall's place on the overlook: the stall's picture on the ledge at the left edge, its plate under it, the tap box over both. */
