@@ -27,6 +27,42 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.300.0',
+    date: '2026-10-31',
+    title: 'Clearer marks, one unlock card, auto talents',
+    notes: ['Skill and boss marks sit under the heroes. Each unlock is told once. Auto spends a hero\'s talent points, or everyone\'s from the Upgrades list.'],
+  },
+  {
+    version: '0.299.0',
+    date: '2026-10-31',
+    title: 'One battle theme, and a boss theme',
+    notes: ['Every fight now plays one strong battle track, and a heavier boss track takes over when a boss arrives. All music is levelled to the same loudness.'],
+  },
+  {
+    version: '0.298.0',
+    date: '2026-10-31',
+    title: 'Eidolon quest: What Sleeps Under the Mere',
+    notes: ['Once Askel is bound and the Beast Packs fall, a frost-bitten hunter brings Nivra\'s tale: three pieces, then a trial against Nivra herself.'],
+  },
+  {
+    version: '0.297.0',
+    date: '2026-10-31',
+    title: 'The Last Stand\'s tower',
+    notes: ['The Last Stand now opens from the tower on the overlook\'s left, with its record and a short entry. A lost run\'s message no longer covers the Daily.'],
+  },
+  {
+    version: '0.296.0',
+    date: '2026-10-31',
+    title: 'Secret heroes and ten tavern tales',
+    notes: ['The ten heroes earned in play are secret until they join. Each now comes from its own tale in the tavern, told by a giver and ending in a hard battle.'],
+  },
+  {
+    version: '0.295.0',
+    date: '2026-10-31',
+    title: 'A clearer summoning room',
+    notes: ['Shop and Pacts are small corner buttons, the Summoner\'s line is one short row and the shards panel folds, so the room shows. No leftover Askel message.'],
+  },
+  {
     version: '0.294.0',
     date: '2026-10-31',
     title: 'Kill XP is shared with the party',

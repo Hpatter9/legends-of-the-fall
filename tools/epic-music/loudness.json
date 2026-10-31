@@ -1,0 +1,167 @@
+{
+ "target": -18,
+ "tolerance": 1,
+ "peakMax": -1,
+ "files": {
+  "battle": {
+   "lufs": -18,
+   "tp": -6.9,
+   "before": {
+    "lufs": -12.5,
+    "tp": -1.2
+   }
+  },
+  "boss": {
+   "lufs": -18,
+   "tp": -6.8,
+   "before": {
+    "lufs": -12.3,
+    "tp": -1
+   }
+  },
+  "calmap": {
+   "lufs": -18,
+   "tp": -2.5,
+   "before": {
+    "lufs": -16.1,
+    "tp": -0.8
+   }
+  },
+  "camp": {
+   "lufs": -18.1,
+   "tp": -6.5,
+   "before": {
+    "lufs": -16.3,
+    "tp": -4.8
+   }
+  },
+  "comic": {
+   "lufs": -18,
+   "tp": -5.2,
+   "before": {
+    "lufs": -12.3,
+    "tp": -0.1
+   }
+  },
+  "defeat": {
+   "lufs": -18,
+   "tp": -3.2,
+   "before": {
+    "lufs": -16.2,
+    "tp": -1.2
+   }
+  },
+  "deploy": {
+   "lufs": -18.1,
+   "tp": -4.6,
+   "before": {
+    "lufs": -15.3,
+    "tp": -1.8
+   }
+  },
+  "gorvak": {
+   "lufs": -18.1,
+   "tp": -4.4,
+   "before": {
+    "lufs": -12.8,
+    "tp": 0.1
+   }
+  },
+  "herald2": {
+   "lufs": -18.1,
+   "tp": -3.5,
+   "before": {
+    "lufs": -12.1,
+    "tp": 0.8
+   }
+  },
+  "herald3": {
+   "lufs": -18,
+   "tp": -5.3,
+   "before": {
+    "lufs": -12.4,
+    "tp": 0.9
+   }
+  },
+  "herald4": {
+   "lufs": -18,
+   "tp": -5.7,
+   "before": {
+    "lufs": -10.5,
+    "tp": 1.1
+   }
+  },
+  "herald5": {
+   "lufs": -18,
+   "tp": -2.1,
+   "before": {
+    "lufs": -16.3,
+    "tp": 0.5
+   }
+  },
+  "herald6": {
+   "lufs": -18,
+   "tp": -3.1,
+   "before": {
+    "lufs": -13.1,
+    "tp": 0.6
+   }
+  },
+  "opening": {
+   "lufs": -18,
+   "tp": -2,
+   "before": {
+    "lufs": -19,
+    "tp": -1.1
+   }
+  },
+  "solemn": {
+   "lufs": -18,
+   "tp": -5,
+   "before": {
+    "lufs": -13.7,
+    "tp": -0.7
+   }
+  },
+  "spire": {
+   "lufs": -18,
+   "tp": -3,
+   "before": {
+    "lufs": -16,
+    "tp": -0.5
+   }
+  },
+  "tavern": {
+   "lufs": -18.1,
+   "tp": -2.8,
+   "before": {
+    "lufs": -15.8,
+    "tp": -0.4
+   }
+  },
+  "tower": {
+   "lufs": -18,
+   "tp": -4,
+   "before": {
+    "lufs": -14.9,
+    "tp": -0.8
+   }
+  },
+  "triumph": {
+   "lufs": -17.9,
+   "tp": -6.4,
+   "before": {
+    "lufs": -13.9,
+    "tp": -2.4
+   }
+  },
+  "victory": {
+   "lufs": -17.9,
+   "tp": -6.6,
+   "before": {
+    "lufs": -14.2,
+    "tp": -3.2
+   }
+  }
+ }
+}

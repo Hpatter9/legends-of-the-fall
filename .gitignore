@@ -15,3 +15,4 @@ art-source/heritage-heroes/
 
 # Painted aura generation intermediates.
 tools/awaken/painted/
+.claude/worktrees/

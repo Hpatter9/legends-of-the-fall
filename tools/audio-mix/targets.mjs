@@ -4,8 +4,7 @@
 // `spellSfx.ts` (`SPELL_TRIM`). A loop is aimed by its integrated loudness, a short sound by its loudest 400 ms (momentary max).
 //
 // The relationships (docs/notes/audio-mix.md):
-// - a fight's sounds together sit about -23.5 LUFS; the battle music 7 LU under them (-30.5), the boss's and the Calamity's too;
-// - the menus' and maps' music a little louder (-28), the cinematics' scores louder again (-27): nothing is fighting them;
+// - a fight's sounds together sit about -23.5 LUFS; every music loop (battle, boss, menus, maps, scenes) 6.5 LU under them (-30);
 // - a plain blow about -26 momentary, a crit or a heavy blow a few LU over, a death -23, the shots and skills' voices -27 to -29;
 // - the big moments (an ultimate, a king's spell) just above the fight's loudest moments: -16 to -15 momentary; the victory
 //   fanfare a touch over the fight's own loudness;
@@ -13,11 +12,10 @@
 import { readFileSync } from 'node:fs';
 
 export const MUSIC_TARGET = {
-  battle: -30.5, boss: -30, calbattle: -30,
-  // (the armies' own battle tracks: the main theme in each army's dress)
-  orcs: -30.5, undead: -30.5, beasts: -30.5, wildwood: -30.5, labyrinth: -30.5, ogres: -30.5, infernal: -30.5, yokai: -30.5, golems: -30.5,
-  camp: -28, tavern: -28, deploy: -28, tower: -28, calmap: -28, triumph: -28,
-  opening: -27, gorvak: -27, herald2: -27, herald3: -27, herald4: -27, herald5: -27, herald6: -27, comic: -27, solemn: -27, spire: -27,
+  // (every loop at the one level since BATTLE-MUSIC-2: the files are mastered to -18 LUFS and play at -30, 6.5 LU under the fight)
+  battle: -30, boss: -30,
+  camp: -30, tavern: -30, deploy: -30, tower: -30, calmap: -30, triumph: -30,
+  opening: -30, gorvak: -30, herald2: -30, herald3: -30, herald4: -30, herald5: -30, herald6: -30, comic: -30, solemn: -30, spire: -30,
   // (the stings, by integrated loudness: the fanfare a touch over the fight, the fall's sting a little under it)
   victory: -23.5, defeat: -25.5,
 };

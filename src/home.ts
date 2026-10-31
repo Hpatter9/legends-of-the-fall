@@ -19,6 +19,7 @@ import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
+import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
@@ -51,7 +52,7 @@ import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } fro
 import { hornHeld } from './sim/warHorn';
 import { revealCard } from './sim/sceneReveal';
 import { showEndCard } from './revealCard';
-import { chainById } from './sim/eidolonChainData';
+import { chainById, type ChainDef } from './sim/eidolonChainData';
 import { openPactGallery } from './eidolonChainView';
 import { playBinding } from './eidolonBinding';
 import type { Scene } from './sim/sceneKit';
@@ -160,10 +161,10 @@ export class Home {
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
     // (QUESTS: Gwen behind the bar opens her card, the board opens the log's Board tab, the Quests button its Active tab)
     this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster(), {
-      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
+      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
       onBoard: () => this.openQuests('board'),
       onQuests: () => this.openQuests('active'),
-      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
+      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
     }, {
       // (TAVERN-RANKUP: the Upgrades button's quick list, and a hero's gold chevron straight to their Rank up card)
       // (TALENT-ARROWS: a talent row's Spend, and a chevron that marks only talent points, open that hero's talent tree)
@@ -309,6 +310,18 @@ export class Home {
     then();
   }
 
+  private gating = false;
+  /** Into the Last Stand from its watchtower: the tower's moment (`standGate.ts`), then the Stand as before (OVERLOOK-STAND). */
+  private async enterStand(line: string): Promise<void> {
+    if (this.gating) return;
+    this.gating = true;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const done = await playStandGate(this.camp.root, this.camp.standFocus(), { line }, still);
+    this.gating = false;
+    this.go(this.hooks.onTower);
+    done();
+  }
+
   /** Into the Calamity from the home screen, as its place on the Battle tab does (REVEAL: the end card's button). */
   enterCalamity(): void {
     this.go(this.hooks.onCalamity);
@@ -330,6 +343,11 @@ export class Home {
     this.refresh();
   }
 
+  /** SECRET-HEROES: a hero quest handed in has brought its hero: its first reveal plays now (after the giver's last words). */
+  private revealJoined(): void {
+    void revealUnseen(this.meta).then(() => this.refresh());
+  }
+
   /** The quest log, over the home screen (the hero sheet's place). */
   openQuests(tab: LogTab = 'active'): void {
     closeGiverCard();
@@ -343,6 +361,8 @@ export class Home {
         changed: () => {
           saveMeta(this.meta);
           this.refresh();
+          // (SECRET-HEROES: a hero quest handed in from the log brings its hero in: its reveal plays over the log)
+          this.revealJoined();
         },
         close: () => this.closeSheet(),
         fight: (id) => this.questBattle(id),
@@ -373,20 +393,40 @@ export class Home {
         if (beginChain(m, offer.id)) saveMeta(m);
         this.refresh();
         this.openQuests('eidolons');
-      } else if (ready) {
-        this.hall.stop();
-        await playBinding(ready);
-        // (HORN-GIFT: the first binding hands over the War Horn, full; its end card says what it does and where it is)
-        const hadHorn = hornHeld(m);
-        if (bindChain(m, ready.id)) saveMeta(m);
-        this.refresh();
-        const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : null;
-        if (gift) await showEndCard(gift);
-        this.openGallery();
-      } else this.openQuests('eidolons');
+      } else if (ready) await this.bind(ready);
+      else this.openQuests('eidolons');
     } finally {
       this.busyChain = false;
     }
+  }
+
+  /** The binding of a chain whose pieces are all in: the ceremony plays, the Eidolon is bound and chosen, its card, then the Pact Gallery. */
+  private async bind(ready: ChainDef): Promise<void> {
+    const m = this.meta;
+    this.hall.stop();
+    await playBinding(ready);
+    // (HORN-GIFT: the first binding hands over the War Horn, full; its end card says what it does and where it is)
+    const hadHorn = hornHeld(m);
+    if (bindChain(m, ready.id)) saveMeta(m);
+    this.refresh();
+    // (EIDOLON-CHAIN-2: a later binding, the horn already held, ends on the Eidolon's own "Bound" card)
+    const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : revealCard({ kind: 'eidolon', id: ready.eidolon }, m);
+    if (gift) await showEndCard(gift);
+    this.openGallery();
+  }
+
+  /** EIDOLON-TRIAL: a trial won leads straight to the binding (the page calls this as the trial's beat after ends). False when no chain is
+   *  ready to bind. */
+  async bindAfterTrial(): Promise<boolean> {
+    const ready = readyToBind(this.meta);
+    if (!ready || this.busyChain) return false;
+    this.busyChain = true;
+    try {
+      await this.bind(ready);
+    } finally {
+      this.busyChain = false;
+    }
+    return true;
   }
 
   /** EIDOLON-CHAINS: the Pact Gallery (from the Sanctum, and the War Horn's card at the camp). */
@@ -494,7 +534,12 @@ export class Home {
     const boss = UNITS[bossOf(next)];
     // (the bottom bar, below the camp's picture so it covers none of it: what the next fight is, then Party, Battle! and Continue)
     const fr = el('div', 'hmFront');
-    if (this.note) fr.append(el('div', 'hmNote', this.note));
+    // (the last run's end: a dispatch over the enemy's camp, clear of every place, that fades by itself and lets taps through. It once sat
+    //  on the bar's top edge, over the Daily and Last Stand plates, until the next mode was entered: OVERLOOK-STAND)
+    if (this.note) {
+      showDispatch(page, this.note);
+      this.note = '';
+    }
     // Keep the new-army announcement quiet on later launches; Continue still shows the wave.
     const progress = armyStars(m, next);
     if (announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', info ? (army ? `Wave ${info.stage}/${army.waves.length} · ★ ${progress.got}/${progress.max}` : info.label) : `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
@@ -564,8 +609,10 @@ export class Home {
     // (with the furthest room of the retreat reached: the throne room is the Last Stand's badge, STAND-RETREAT)
     const room = m.standAct !== undefined ? ` · ${m.standAct >= 3 ? '♛ ' : ''}${ROOM_NAMES[ACT_HALLS[m.standAct]].short}` : '';
     const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}${room}` : 'not tried yet') : opensAt(MODE_NEED.tower));
-    const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
+    // (OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left, entered with its own moment)
+    const tower = place('hmTower', towerUp ? 'stand' : 'stand locked', 'Last Stand', towerLine2, `The Last Stand's watchtower: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => void this.enterStand(towerLine2));
     tower.disabled = !towerUp;
+    this.camp.towerSlot.classList.toggle('shut', !towerUp);
     // The distant Calamity citadel carries the saved map or the unlock requirement.
     const going = this.hooks.slotInfo?.('calamity');
     const calUp = modeOpen(m, 'calamity') || !!going;
@@ -896,4 +943,17 @@ export class Home {
     $('hmSub').hidden = true;
     this.hooks.onScene?.();
   }
+}
+
+/** OVERLOOK-STAND: a run's last word on the overlook, over the enemy's camp below the heading (clear of the watchtower, the Calamity, the
+ *  stall, the party and the plates). It never takes a tap, and fades by itself; a new one replaces the one showing. */
+function showDispatch(page: HTMLElement, text: string): void {
+  page.querySelector(':scope > .hmDispatch')?.remove();
+  const d = el('div', 'hmNote hmDispatch', text);
+  d.setAttribute('role', 'status');
+  const gone = () => d.remove();
+  d.addEventListener('animationend', gone);
+  // (the fade's end, or a few seconds when animations do not run)
+  setTimeout(gone, 8000);
+  page.append(d);
 }

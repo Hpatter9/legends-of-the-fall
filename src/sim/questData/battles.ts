@@ -76,7 +76,7 @@ export const BATTLE_QUESTS: readonly QuestDef[] = [
     title: 'A Large Hole',
     giver: 'duchess',
     needs: { kind: 'all', of: [{ kind: 'duchess' }, { kind: 'army', army: 'labyrinth' }] },
-    text: 'Win the quest battle Under the Courtyard (Kwame or Minh, and Asterion or Kerem, must fight; Duchess fights too)',
+    text: 'Win the quest battle Under the Courtyard (Kwame or Minh, and Asterion or another strong back, must fight; Duchess fights too)',
     offer: ['Mehh. (She has dug a hole in the courtyard. It goes down a long way.)', 'MEHH. (Something down there tastes of old stone. She would like it fetched. She is coming.)'],
     going: 'Mehh. (She is guarding the hole. From whom is unclear.)',
     done: ['Mehh! (She has found a stone fist and is very pleased.)', 'Mehh. (She has eaten the treasure map she drew of it. The crowns were in a sack she could not open.)'],

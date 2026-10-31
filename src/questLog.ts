@@ -102,7 +102,7 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
     const fill = el('span');
     fill.style.width = `${Math.round((p.now / p.need) * 100)}%`;
     bar.append(fill);
-    body.append(el('b', '', q.title), el('small', '', q.text), bar, el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(q.reward)}`));
+    body.append(el('b', '', q.title), el('small', '', q.text), bar, el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(q.reward, m)}`));
     const side = el('div', 'qlSide');
     if (dropping === a.id) {
       // (the confirm: the row says what dropping costs, with Drop it and Keep)
@@ -174,7 +174,7 @@ function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHoo
     const row = el('div', `qlRow${q.repeat ? ' rep' : ''}`);
     const body = el('div', 'qlBody');
     const n = timesDone(m, q.id);
-    body.append(el('b', '', q.title), el('small', 'qlGiver', offerFrom(q) + (q.repeat ? ` · repeatable${n ? `, done ${n}×` : ''}` : '')), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward)));
+    body.append(el('b', '', q.title), el('small', 'qlGiver', offerFrom(q) + (q.repeat ? ` · repeatable${n ? `, done ${n}×` : ''}` : '')), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward, m)));
     const side = el('div', 'qlSide');
     const take = el('button', 'primary', 'Take');
     const why = cannotTake(m, q.id);

@@ -5,7 +5,6 @@ import { AWARD_JOKES } from './quipData';
 import { ACHIEVEMENTS, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
 import { SPELLS, type SpellId } from './sim/spells';
-import { UNITS } from './sim/units';
 
 /** The Achievements page: every achievement, the earned ones marked, the counting ones with a bar. One earned and not yet
  *  claimed has a Claim button (they come first), and `claim` takes its crowns and stones (or every waiting one's, for Claim all). */
@@ -68,11 +67,6 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
 /** Pop up a toast for each achievement just earned, one after another. */
 export function toastAchievements(list: readonly Achievement[]): void {
   list.forEach((a, i) => setTimeout(() => toast(`Achievement: ${a.name} · claim ${a.crowns} crowns and ${stoneWord(stonesOfAchievement(a))}`), i * 2800));
-}
-
-/** A toast for each hero a milestone has just brought in (`grantContent`). */
-export function toastJoined(kinds: readonly string[]): void {
-  kinds.forEach((k, i) => setTimeout(() => toast(`${UNITS[k].name} joins you`), i * 2800));
 }
 
 /** A toast for each spell a milestone or the Mage Tower has just taught (`grantSpells`), after `after` toasts already queued. */

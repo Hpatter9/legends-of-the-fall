@@ -14,6 +14,26 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### OVERLOOK-STAND — The loss's word off the plates; the Last Stand in the overlook's watchtower
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/overlook-stand`, `/home/user/lotf-overlook` (from main 0.289.0).
+- **Goal:** the owner's "Losing to a wave leaves a message up on the overlook. That covers daily and Last Stand", and "a new place for Last Stand ... like the Calamity one" ("the tower off to the left in the overlook screen for its access point"): the run's last word moved off the plates and fading by itself; the Last Stand's place on the painted watchtower, lit and alive, with its plate and record, and its own way in.
+- **Scope:** new `src/standGate.ts`, `src/render/standTowerLife.ts`, `tools/overlook-stand/`; `src/render/overlookLayout.ts` (the tower's place, the Daily board alone in the row), hooks in `src/camp.ts`, `src/home.ts`, `src/campPlaces.css`; `test/overlook.test.ts` (one rule changed with the owner's ask, one test added). No sim, save or version change.
+- **Status:** ready for review. [Note](notes/overlook-stand.md); screenshots `samples/overlook-*.png`.
+### SECRET-HEROES — The heroes earned in play kept secret; three hero quests that bring one in
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/secret-heroes`, `/home/user/lotf-secret` (from main 0.289.0).
+- **Goal:** the owner's "Let's keep the heroes that are gained from specific unlock scenarios a secret. Also, let's add some quests in which a hero comes from": the ten heroes earned in play are a dark figure, "???" and a vague hint in every list until they join; three tales in the tavern (two or three parts, a quest battle each) bring in the Werewolf, the Dread Pirate and the Juggernaut, moved off their milestones.
+- **Scope:** new `src/sim/secretHeroes.ts`, `src/sim/rewardWords.ts`, `src/sim/questData/tales.ts`, `src/sim/taleBattleData.ts`, `src/secretView.ts`, `src/secret.css`, `src/art/quests/{shepherd,gaoler,smith}-face.png`, `tools/hero-quests/cut.py`, `tools/secret-heroes/shots.mjs`, `test/secret-heroes.test.ts`; hooks in `contentHeroes.ts`, `questData.ts`, `quests.ts`, `questBattles.ts`, `run.ts`, `guest.ts`, `climb.ts`, `sceneScripts.ts`, `questData/battles.ts` (one line), `menuHeroes.ts`, `party.ts`, `gacha.ts`, `codexView.ts`, `questCard.ts`, `questLog.ts`, `questArt.ts`, `home.ts`, `main.ts`, `build.mjs`, `tools/quest-battles/rate.ts`; tests moved to the rule (listed in the note).
+- **Status:** ready for review. [Note](notes/secret-heroes.md); screenshots `samples/secret-*.png`, `samples/hero-quest-*.png`.
+
+### SANCTUM-TIDY — The Summoner's plaque gone once Askel is bound; the shop and Pact Gallery as small corner buttons
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/sanctum-tidy`, `/home/user/lotf-sanctum` (from main 0.289.0).
+- **Goal:** the owner's "I already bound the Cinderhound but the message is still on the summon screen" (the plaque and the Pact Gallery's button had `display: flex` and no `[hidden]` rule, so the plaque stayed showing its last words after the binding and an empty bar after a reload) and "the shop and Pact Gallery should be small buttons at the top left" (a corner of two small labelled icon buttons, the plaque one short row, the shards' scroll folded to one row; the lower panel 153px tall at 393x852, about 310 before).
+- **Scope:** `src/hall.ts`, `src/eidolonChains.css`, `src/sim/eidolonChains.ts` (`hallPlaque`, moved from `src/eidolonChainView.ts`); `test/hall-plaque.test.ts`, `tools/sanctum-tidy/`.
+- **Status:** ready for review. [Note](notes/sanctum-tidy.md); screenshots `samples/sanctum-*.png`.
+
 ### XP-SPLIT — Each kill's XP split: the killer keeps half, the rest shared by every hero that fought
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/xp-split`, `/home/user/lotf-xpsplit` (from main 0.289.0).
@@ -173,6 +193,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "click and hold on a unit in between waves to get a run-down on skills and stats": a press-and-hold (400 ms, a ring under the finger; a move lets it go as a drag) on any unit on the board, a bench card or a Last Stand tray card, in a deploy or a Stand break, opens a read-only card of its stats, traits, equipment, skills (locked ones marked), a boss's second form and a foe's tips.
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
+
+### EIDOLON-TRIAL — Nivra's trial, and the trials as data for chains 3 to 6
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-chain-2` (Nivra's chain, main 0.293.0 merged in).
+- **Goal:** the owner's call that chains 2 to 6 end with a trial against the Eidolon before the binding: after Nivra's three pieces, Part 4 "The Trial", Nivra herself the boss (her Gemini sheet cut into a fighter's), frost breath down a row, a ring of ice, frost wolves, ice armour at half health; lines before and after; a win leads straight to the binding, a loss waits in the log; about 40 to 50% where it opens; one `TrialDef` a chain so chains 3 to 6 add theirs as data.
+- **Scope:** new `src/sim/eidolonTrials.ts`, `src/art/units/eidolon_nivra.png`, `art-source/eidolons/gemini/nivra-sheet.jpg`, `tools/eidolon-trial/`, `test/eidolon-trial.test.ts`; hooks in `src/sim/eidolonChains.ts`, `eidolonChainData.ts`, `chainBattleData.ts`, `questBattles.ts` (`bossLift`), `foes.ts`, `abilities.ts`, `bossAttacks.ts` (the `row` shape), `bossPhases.ts`, `sceneFamilies.ts`, `codex.ts`, `codexLore.ts`; `src/eidolonChainView.ts`, `src/home.ts`, `src/main.ts`, `src/render/sheets.ts`, `src/art/units/sheets.json`, `CREDITS.md`; two checks in `test/eidolon-chain-2.test.ts` updated.
+- **Status:** ready for review. [Note](notes/eidolon-chain-2.md) ("The trial"); screenshots `samples/eidolon-trial-*.png`.
 
 ### EIDOLON-CHAINS — Quests batch 5: Askel's chain, end to end
 
