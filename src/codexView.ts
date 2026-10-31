@@ -3,7 +3,7 @@
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
 
 import { KITS, type Kit } from './sim/abilities';
-import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
+import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, ENTRY_STONES, entriesWaiting, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -77,7 +77,11 @@ function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   // (a hero: its two skills and what they cost from its pool, COMBAT-002; a foe: its one skill)
   const hk = hero ? HERO_KITS()[hero] : undefined;
   const rows: [string, { name: string; text: string }, number?][] = hk
-    ? [[`Skill 1 (${hk.s1.cost} ${hk.pool})`, hk.s1.skill], [`Skill 2 (${hk.s2.cost} ${hk.pool})`, hk.s2.skill, SKILL2_LEVEL]]
+    ? [
+        [`Skill 1 (${hk.s1.cost} ${hk.pool})`, hk.s1.skill],
+        [`Skill 2 (${hk.s2.cost} ${hk.pool})`, hk.s2.skill, SKILL2_LEVEL],
+        ...(hk.s3 ? ([[`Skill 3 (${hk.s3.cost} ${hk.pool})`, hk.s3.skill, SKILL3_LEVEL]] as [string, { name: string; text: string }, number][]) : []),
+      ]
     : [['Skill', kit.skill]];
   if (kit.ultimate) rows.push(['Ultimate', kit.ultimate, hero ? kit.ultimate.unlock : undefined]);
   rows.push(['Passive', kit.passive]);

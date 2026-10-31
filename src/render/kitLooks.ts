@@ -57,6 +57,24 @@ export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el:
   'Revive: Resurrection': { as: 'Resurrection', tint: 0xfffaf0, el: 'light' },
   'Revive: Elixir of Life': { as: 'Resurrection', tint: 0xa8ffc0, el: 'light' },
   'Revive: Reincarnate': { as: 'Heart of the Grove', tint: 0xb8f090, el: 'forest' },
+  // (the skills overhaul's batch 4: the third skills, until their painted effects arrive: docs/notes/skills-4.md lists the ones that want their own)
+  'Hold Fast': { as: 'Shield Wall', tint: 0xffe0a0, el: 'earth' },
+  'Warding Bond': { as: 'Holy Challenge', tint: 0xfff0c0, el: 'light' },
+  'Pitchfork Jab': { as: 'Hold the Line', tint: 0xd8c08a, el: 'earth' },
+  'Wall of Stone': { as: 'Earthquake', tint: 0xb0a080, el: 'earth' },
+  'Kesa Cut': { as: 'Iaido', tint: 0xffa0a0, el: 'blood' },
+  'Shuriken Fan': { as: 'Shadow Step', tint: 0xc0c0d0, el: 'dark' },
+  'Step of the Wind': { as: 'Thousand Fists', tint: 0xd0f0ff, el: 'wind' },
+  'Reckless Swing': { as: 'Whirlwind', tint: 0xff8060, el: 'blood' },
+  'Dirty Trick': { as: 'Bounty Hunt', tint: 0xe0c890, el: 'dark' },
+  'Lance Sweep': { as: 'Lance Charge', tint: 0xd0d8ff, el: 'wind' },
+  'Static Edge': { as: 'Voltage Blink', tint: 0xa0e0ff, el: 'lightning' },
+  'Infernal Brand': { as: 'Hellblade Sweep', tint: 0xff6030, el: 'fire' },
+  'Pistol Shot': { as: 'Grappling Hook', tint: 0xffe0b0, el: 'fire' },
+  'Scale Ward': { as: 'Dragon Breath', tint: 0xffb060, el: 'fire' },
+  'Command Strike': { as: 'Lance Charge', tint: 0xff8a6a, el: 'fire' },
+  Countercharm: { as: 'Dirge', tint: 0xc0ffd0, el: 'wind' },
+  Scourge: { as: 'Judgement', tint: 0xd06040, el: 'dark' },
 };
 
 const tinted = (steps: Step[], tint: number | undefined): Step[] => (tint === undefined ? steps : steps.map((x) => ({ ...x, t: tint })));

@@ -3,7 +3,7 @@
 
 import { ALL_HEROES, UNITS } from './sim/units';
 import { KITS } from './sim/abilities';
-import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
+import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
 import { readyToRise } from './sim/rankUp';
@@ -368,6 +368,8 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       for (const [label, a, cost, opens] of [
         ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
         ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
+        // (the skills overhaul's batch 4: skill 3, from level 20)
+        ...(hk?.s3 ? ([['Skill 3', hk.s3.skill, `${hk.s3.cost} ${hk.pool}`, SKILL3_LEVEL]] as const) : []),
         ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
         ['Passive', kit.passive, '', 1],
       ] as const) {
