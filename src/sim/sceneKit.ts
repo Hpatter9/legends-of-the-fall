@@ -183,7 +183,9 @@ export type Reveal =
   | { kind: 'ascension' }
   | { kind: 'building'; site: string }
   | { kind: 'awaken'; hero: string }
-  | { kind: 'eidolon'; id: string };
+  | { kind: 'eidolon'; id: string }
+  /** HORN-GIFT: the War Horn, handed over at the first binding (its card follows the binding ceremony). */
+  | { kind: 'horn' };
 
 /** A moment's key: its kind and what it is about (the map, the army, the hero ...). */
 export const momentKey = (m: Moment): string => {

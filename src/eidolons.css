@@ -6,6 +6,8 @@
 .ehHorn { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0; padding: 0;
   background: none; border: 0; box-shadow: none; min-height: 0; cursor: pointer; --fill: 0; --glow: 0.15; }
 .ehHorn::before, .ehHorn::after { content: none; }
+/* HORN-GIFT: hidden until the first binding gives it */
+.ehHorn[hidden] { display: none !important; }
 .ehArt { position: relative; display: block; width: 100%; aspect-ratio: 256 / 251; }
 .ehArt img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 /* the lit painting revealed from the mouthpiece (bottom left) to the bell (top right), with a glow along it that grows with the fill */

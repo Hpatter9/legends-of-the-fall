@@ -13,18 +13,19 @@ import { ARMIES, armyIndex, armyUnlocked, bossOf } from './armies';
 import { ascCrowns, ascUnlocked, ASC_MAX } from './ascension';
 import { BUILDINGS, chapelBuilt, GOLD_PER_LEVEL, maxLevel, type BuildingId } from './castle';
 import { awakenedOf, PASSIVES } from './awaken';
-import { boundOf } from './warHorn';
+import { boundOf, hornFull, hornHeld } from './warHorn';
 import { eidolonById } from './eidolons';
 import { UNITS } from './units';
 
 /** What the card draws: the Calamity's portal, a fighter's portrait (an army's warlord), a hero's painted portrait (awakened), a castle
- *  building, an Eidolon's card. */
+ *  building, an Eidolon's card, the War Horn's painting (full). */
 export type RevealArt =
   | { kind: 'portal' }
   | { kind: 'unit'; unit: string }
   | { kind: 'hero'; hero: string; step: number }
   | { kind: 'building'; site: string }
-  | { kind: 'eidolon'; id: string };
+  | { kind: 'eidolon'; id: string }
+  | { kind: 'horn' };
 
 /** Where the card's button can take the player (the page offers it only where leaving is safe: on the home screen). */
 export type RevealGo = { to: 'calamity' } | { to: 'armies'; army: string } | { to: 'castle' } | { to: 'spells' } | { to: 'heroes'; hero: string };
@@ -33,7 +34,7 @@ export interface EndCard {
   /** The same thing revealed twice is one key (`army:undead`): the page shows each once a session, and the older banner stands aside for it. */
   key: string;
   /** The ribbon's word. */
-  label: 'Unlocked' | 'Built' | 'Awakened' | 'Bound';
+  label: 'Unlocked' | 'Built' | 'Awakened' | 'Bound' | 'Received';
   name: string;
   /** What it is, in one line. */
   line: string;
@@ -147,6 +148,19 @@ export function revealCard(r: Reveal, m: Meta): EndCard | null {
         art: { kind: 'eidolon', id: r.id },
       };
     }
+    case 'horn':
+      // (HORN-GIFT: the horn handed over at the first binding; none before an Eidolon is bound)
+      if (!hornHeld(m)) return null;
+      return {
+        key: 'horn',
+        label: 'Received',
+        name: 'The War Horn',
+        line: `It fills as you fight: every boss wave won, every foe slain. Blow it when it is full and your Eidolon answers, once a fight.${
+          hornFull(m) ? ' It is full now: blow it in your next fight.' : ''
+        }`,
+        where: 'In battle, at the left of the spell orbs; at the camp, beside the stones.',
+        art: { kind: 'horn' },
+      };
   }
 }
 

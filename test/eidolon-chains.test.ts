@@ -77,10 +77,12 @@ test('six chains, easiest first, one an Eidolon; only Askel\'s is written, the r
   for (const p of askel.parts) assert.ok(p.title && p.text && p.begin && p.goal.n >= 1 && p.piece.lines.length === 2 && p.reward.chest, p.id);
   assert.equal(PIECES.size, 3);
   assert.deepEqual(askel.parts.map((p) => p.piece.name), ['The Ember Heart', 'The Kennel Collar', 'The Kennel Bell']);
-  // (the binding's beats run in order and end bound; the Eidolon speaks a line)
+  // (the binding's beats run in order, reach bound, then hand over the War Horn and fill it (HORN-GIFT, the owner's new ask: this test
+  //  said the beats ended on bound before the horn became the binding's gift); the Eidolon speaks a line)
   const at = askel.binding!.map((b) => b.at);
   assert.deepEqual(at, [...at].sort((a, b) => a - b));
-  assert.equal(askel.binding![askel.binding!.length - 1].beat, 'bound');
+  assert.deepEqual(askel.binding!.slice(-3).map((b) => b.beat), ['bound', 'horn', 'hornFull']);
+  assert.ok(askel.binding!.slice(-2).every((b) => b.text && /horn|fire/i.test(b.text)));
   assert.ok(askel.binding!.some((b) => b.who === 'eidolon' && b.text));
   // (the prologue is a short scene in the cinematics' shape, its lines readable)
   assert.ok(sceneSeconds(askel.prologue!) >= 15 && sceneSeconds(askel.prologue!) <= 60);

@@ -33,7 +33,7 @@ function artOf(card: EndCard): HTMLElement {
     const img = el('img');
     img.alt = '';
     img.draggable = false;
-    img.src = a.kind === 'hero' ? heroArtUrl(a.hero, a.step) : a.kind === 'eidolon' ? `eidolons/${a.id}-card.webp` : CHAMBERS.find((c) => c.id === a.site)?.edificeUrl ?? '';
+    img.src = a.kind === 'hero' ? heroArtUrl(a.hero, a.step) : a.kind === 'eidolon' ? `eidolons/${a.id}-card.webp` : a.kind === 'horn' ? 'eidolons/horn-ready.webp' : CHAMBERS.find((c) => c.id === a.site)?.edificeUrl ?? '';
     frame.append(img);
   }
   return frame;

@@ -14,6 +14,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### HORN-GIFT — The War Horn given at the first binding
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/horn-gift`, `/home/user/lotf-horngift` (from main 0.277.0, with `claude/cinematic-reveal-vault` merged).
+- **Goal:** the owner's "The Eidolon horn should be given to the player after earning an Eidolon, as part of the story": no horn anywhere (and no fill) before an Eidolon is bound; Askel's binding hands it over full, with two story beats and a "Received: The War Horn" end card.
+- **Scope:** `src/sim/warHorn.ts` (`hornHeld`, `addHorn`, `bindEidolon`), `src/sim/eidolonChainData.ts` (the beats), `src/sim/sceneKit.ts` + `sceneReveal.ts` (the `horn` reveal), `src/eidolonBinding.ts`, `src/eidolonChains.css`, `src/eidolonCall.ts`, `src/eidolons.css`, `src/home.ts`, `src/revealCard.ts`, `src/reveal.css`; `test/horn-gift.test.ts`, `tools/horn-gift/shots.mjs`.
+- **Status:** ready for review. [Note](notes/horn-gift.md); screenshots `samples/horn-gift-*.png`.
 ### GUARDIAN-PULSE — The corrupted guardian's pulse comes from the guardian itself
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/guardian-pulse`, `/home/user/lotf-guardpulse` (from `claude/altar-clear`, main 0.280.0 merged in).
@@ -54,6 +60,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "heroes on the tavern screen should show if they have an upgrade available", and a quick way to rank up without opening each hero: a gold chevron over each ready hero, an Upgrades list with one-tap rows and "Upgrade all", and "Next upgrade ›" on the hero sheet.
 - **Scope:** new `src/sim/upgradesReady.ts`, `src/rankUpList.ts`, `src/rankUps.css`, `test/upgrades-ready.test.ts`, `tools/tavern-rankup/`; hooks in `src/tavern.ts` (the chevron, the button), `src/home.ts`, `src/menuHeroes.ts` (the hop, strip, roster), `src/party.ts` (the card's chevron), `src/awakenView.ts` (`tellAwakened`), `build.mjs` (the CSS). No rule, save or version change.
 - **Status:** ready for review. [Note](notes/tavern-rankup.md); screenshots `samples/rankup-*.png`.
+
+### REVEAL-VAULT — A film's end card for what it revealed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematic-reveal-vault`, `/home/user/lotf-reveal` (from main 0.273.0).
+- **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
+- **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
 
 ### CINE-001 — Movie-like cinematics: shot language, every story scene
 

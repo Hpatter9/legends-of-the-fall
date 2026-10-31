@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.283.0',
+    date: '2026-10-31',
+    title: 'The War Horn, given at the binding',
+    notes: ['The War Horn now comes in the story: when Askel is bound, the Summoner hands you the first kings\' horn, full, to blow in your next fight.'],
+  },
+  {
     version: '0.282.0',
     date: '2026-10-31',
     title: 'Guardians pulse from themselves',
