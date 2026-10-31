@@ -122,7 +122,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: "The shrine where the Lion's crown was put away is shuttered against the sun, and gorgons keep its hall.",
     land: 'shrine',
     like: { army: 'wildwood', wave: 11 },
-    ease: 1.2,
+    ease: 0.78,
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [

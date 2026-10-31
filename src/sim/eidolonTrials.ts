@@ -162,7 +162,7 @@ const AURELAN_TRIAL: TrialDef = {
     { foes: ['aurelanLion', 'groveSatyr2', 'groveSatyr3'], boss: 'final' },
   ],
   like: { army: 'wildwood', wave: 13 },
-  ease: 1,
+  ease: 0.68,
   lift: { hp: 1, atk: 1 },
   // (Kwame or Minh, one from each starter pack; any starter hero stands in)
   cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
