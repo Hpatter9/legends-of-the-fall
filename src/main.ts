@@ -133,6 +133,11 @@ import { hideQuip, showQuip, type Anchor } from './quipView';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
+import { EidolonCall } from './eidolonCall';
+import { hornLine } from './eidolonRules';
+import { hornFightOf, midBossWave } from './sim/hornFill';
+import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
+import { EIDOLON_IDS } from './sim/eidolons';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -300,6 +305,12 @@ class Game {
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
+    // (EIDOLONS: a hidden dev flag, `?eidolons=all`, binds all six Eidolons and fills the War Horn, to try the call before the quest chains
+    // bind them; in normal play the horn fills but no Eidolon answers it yet)
+    if (query.get('eidolons') === 'all') {
+      for (const id of EIDOLON_IDS) bindEidolon(this.meta, id);
+      addHorn(this.meta, HORN_FULL);
+    }
     await loadAwakenedSheets(Object.keys(this.meta.awakened ?? {}));
     saveMeta(this.meta);
     initQuips(this.meta.seed);
@@ -391,6 +402,12 @@ class Game {
       questSaved: () => {
         const r = loadSlot('quest');
         return r?.mode?.kind === 'quest' ? r.mode.quest : null;
+      },
+      // (EIDOLONS: the War Horn's chip beside the stones, put in once and kept to the save)
+      onTopBar: () => {
+        if (!this.eid) return;
+        if (!this.eid.camp.root.isConnected) $('hmStones').after(this.eid.camp.root);
+        this.eid.refreshCamp();
       },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)
@@ -890,6 +907,8 @@ class Game {
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
     if (!fight(this.b)) return;
+    // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite)
+    this.eid.arm(this.b, midBossWave(this.run, this.run.stage));
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.b.autoUlt = this.ultAutoOn();
     this.hud.setAuto(this.ultAutoOn());
@@ -990,7 +1009,10 @@ class Game {
     }
     if (this.auto) this.autoTick(dt);
     // (an ultimate's moment (ULT-CUTIN) moves on in real time, whatever the fight's speed; it stands still while a scene or a sheet is up)
-    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding;
+    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding || this.eid.sheetOpen;
+    // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
+    this.eid.see(b);
+    this.eid.frame(dt, this.sceneHold > 0);
     if (b.phase === 'fight') this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
     // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
@@ -998,7 +1020,7 @@ class Game {
     else this.bossm.clear();
     if (b.phase === 'fight' && held) {
       // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
-    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.bossm.holds)) {
+    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.bossm.holds || this.eid.holds)) {
       // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
       this.acc = 0;
       // (a boss's cut-in holds the board still too, so its marks fill with the windup's own time)
@@ -1007,14 +1029,17 @@ class Game {
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
+      // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
+      if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       b.autoUlt = this.ultAutoOn();
-      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.bossm.holds) {
+      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.bossm.holds && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
         if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
         if (this.bossm.note(b, events, heldCut(settings().ultFull, this.ultAutoOn()))) this.acc = 0;
+        if (this.eid.noteEvents(b, events)) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
@@ -1063,7 +1088,8 @@ class Game {
       // (the fallen finish falling after the end; the recap comes up once the wait is over)
       this.acc += dt;
       this.fx.step(dt);
-      if (this.endWait < END_WAIT_MS) {
+      // (EIDOLONS: a strike that ended the fight plays out before the result comes up)
+      if (this.endWait < END_WAIT_MS && !this.eid.playing) {
         this.endWait += dt;
         if (this.endWait >= END_WAIT_MS) this.refresh();
       }
@@ -1624,6 +1650,8 @@ class Game {
   private ultm!: UltMoments;
   /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
   private bossm = new BossMoments();
+  /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
+  private eid!: EidolonCall;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
@@ -1660,6 +1688,28 @@ class Game {
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
+    // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
+    this.eid = new EidolonCall({
+      meta: () => this.meta,
+      save: () => saveMeta(this.meta),
+      fx: this.fx,
+      anchor: (id) => {
+        const s = this.sprites.get(id);
+        return s && s.root.visible ? this.toClient(s.x, s.y - s.tall * 0.45) : null;
+      },
+      tile: (u, v) => {
+        const t = tileAt(this.b.board, u, v);
+        return t ? this.toClient(...at(u, v, t.h)) : null;
+      },
+      // (a hero standing answers the strike with a line of its own: the owner's "lines")
+      cheer: (b, text) => {
+        const hero = b.units.find((u) => u.side === 'hero' && u.alive && !UNITS[u.def].summon);
+        const at = hero && this.anchorOfKind(hero.def);
+        if (at && settings().quips) showQuip(at, text, { who: heroName(hero.def), hold: 3200 });
+      },
+      stage: () => this.app.canvas,
+    });
+    $('hudSpells').prepend(this.eid.horn.root);
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
       // (two fingers on the board pinch it: any drag the first began is let go where it was, FIGHT-FIXES)
@@ -2893,7 +2943,12 @@ class Game {
       // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
       this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
       const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
-      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}) };
+      // (EIDOLONS: the War Horn takes the fight's share: a boss wave 100, each foe slain 1, an auto-replay half; nothing in a fight lost,
+      // practised, or one in which it was blown)
+      const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)));
+      if (horn.added > 0) this.eid.gained(horn.added);
+      const hornSaid = hornLine(horn);
+      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));

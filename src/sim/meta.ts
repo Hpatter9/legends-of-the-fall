@@ -33,6 +33,7 @@ import { grantSpells } from './spellSources';
 import { readShop } from './chestShop';
 import { readCards, readScenes } from './sceneRules';
 import { readQuests, type QuestState } from './quests';
+import { readEidolons, type EidolonMeta } from './warHorn';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -159,6 +160,8 @@ export interface Meta {
   featuresTold?: string[];
   /** The quests: the offers on the board, the ones taken and their counts, the ones handed in (`quests.ts`). Saves from before have none: nothing begun. */
   quests?: QuestState;
+  /** EIDOLONS: the War Horn's fill, the Eidolons bound and the one chosen to answer it (`warHorn.ts`). Saves from before have none: an empty horn. */
+  eidolons?: EidolonMeta;
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -497,6 +500,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the quests have none: nothing begun, and the day's offers are drawn when the page next looks)
       m.quests = readQuests(m.quests);
       if (!m.quests) delete m.quests;
+      // (saves from before the Eidolons have none: an empty horn, no Eidolon bound)
+      m.eidolons = readEidolons(m.eidolons);
+      if (!m.eidolons) delete m.eidolons;
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)

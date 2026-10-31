@@ -107,6 +107,14 @@ for (const f of readdirSync('src/art/fx/spells').filter((f) => f.endsWith('.webp
   copyFileSync(`src/art/fx/spells/${f}`, `${out}/fx/spells/${f}`);
   SPELL_ART_FILES.push(`fx/spells/${f}`);
 }
+// (EIDOLONS: the six Eidolons' figures and cards, the War Horn and the calling's sheets (tools/eidolons/import.py) load by URL, so game.js
+// stays small; the service worker keeps them for offline play)
+const EIDOLON_ART_FILES = [];
+mkdirSync(`${out}/eidolons`, { recursive: true });
+for (const f of readdirSync('src/art/eidolons').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/eidolons/${f}`, `${out}/eidolons/${f}`);
+  EIDOLON_ART_FILES.push(`eidolons/${f}`);
+}
 // (GEAR-ICONS: the painted equipment icons' atlases (tools/gear/import-gear-icons.py) load by URL, so game.js stays small; the
 // service worker keeps them for offline play)
 const GEAR_ART_FILES = [];
@@ -148,7 +156,8 @@ const writeIndexHtml = () => {
             readFileSync('src/stand.css', 'utf8') +
             readFileSync('src/tomes.css', 'utf8') +
             readFileSync('src/ores.css', 'utf8') +
-            readFileSync('src/quests.css', 'utf8'),
+            readFileSync('src/quests.css', 'utf8') +
+            readFileSync('src/eidolons.css', 'utf8'),
         )
         .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8'))
         .replace('__VERSION__', version),
@@ -180,7 +189,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;

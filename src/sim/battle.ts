@@ -37,6 +37,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
+import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { settleKeg } from './kits/shooters';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
@@ -239,7 +240,9 @@ export type HitSrc = 'blow' | 'skill' | 'dot';
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
-  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; ail?: AilmentKey | 'shatter' }
+  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true }
+  /** An Eidolon answers the War Horn (`eidolons.ts`): its strike begins (`call`) and has struck, the rider laid (`done`). */
+  | { kind: 'eidolon'; id: string; phase: 'call' | 'done' }
   /** An ailment shrugged off (resisted, a boss's ladder, a ward): the page shows "Immune". */
   | { kind: 'immune'; to: number; what: AilmentKey }
   /** A frozen fighter's ice shattered under a heavy blow (the extra hit follows, tagged `shatter`). */
@@ -401,6 +404,8 @@ export interface Battle {
   warnings?: BossWarning[];
   sigs?: Record<number, SigState>;
   sigN?: number;
+  /** EIDOLONS: the Eidolon this fight may call when the War Horn is full, and its call once made (`eidolons.ts`). Unset in almost every fight. */
+  eidolon?: EidolonFight;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -773,6 +778,8 @@ function stepOnce(b: Battle): BattleEvent[] {
   out.push(...b.spells.events.splice(0));
   // (the player's taps since the last tick are applied now, so each is tied to a tick and the fight replays)
   if (b.orders?.length || b.units.some((x) => x.ultOrder !== undefined)) applyOrders(b, out);
+  // (an Eidolon's riders run on after its call: the warmth wears off, the drain heals; EIDOLONS)
+  if (b.eidolon?.called !== undefined) tickEidolon(b, out);
   fillMana(b);
   settleFalls(b, out);
   // blows and shots that land now

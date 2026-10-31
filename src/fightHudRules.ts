@@ -89,7 +89,7 @@ export interface UltView {
 
 export function ultOf(b: Battle, u: Unit): UltView {
   const ult = ultimateOf(u);
-  const queued = u.ultOrder !== undefined || !!b.orders?.some((o) => o.unit === u.id);
+  const queued = u.ultOrder !== undefined || !!b.orders?.some((o) => o.kind === 'ult' && o.unit === u.id);
   return { skill: ult, meter: ult ? Math.min(1, (u.charge2 ?? 0) / ult.need) : 0, ready: !!ult && ultFull(u) && u.alive, queued: queued && u.alive, locked: !ult };
 }
 
