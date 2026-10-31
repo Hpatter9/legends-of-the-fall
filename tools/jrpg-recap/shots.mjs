@@ -1,11 +1,19 @@
-// JRPG-RECAP review in the built game, at the three upright sizes: a won wave with level-ups (mid-count and finished), a won wave
-// with a big haul, a lost wave and the run's end recap, the Last Stand's end card with its eight, and the reduced-motion end state.
+// JRPG-RECAP review in the built game, at the three upright sizes: the simple card between waves (level-ups, a big haul; it leaves by
+// itself), an army run's last card and its end recap as the results screen, a spire climb's last fight as the results screen, the Last
+// Stand's end card with its eight, and the reduced-motion end state.
 // Usage: node tools/jrpg-recap/shots.mjs [width|all] [port]  (serves out/web; screenshots to docs/samples/jrpg-recap-*.png)
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import { mkdirSync } from 'node:fs';
+import * as esbuild from 'esbuild';
 const { chromium } = createRequire(import.meta.url)('playwright');
+// (a fresh spire climb, made with the sim's own functions: `tools/wave-recap/saves.ts`)
+mkdirSync('out/shots', { recursive: true });
+await esbuild.build({ entryPoints: ['tools/wave-recap/saves.ts'], bundle: true, platform: 'node', format: 'esm', outfile: 'out/shots/jr-saves.mjs', logLevel: 'error' });
+const S = await import('../../out/shots/jr-saves.mjs');
+const SPIRE = (party) => JSON.stringify(S.spire(21, party));
 const only = process.argv[2] && process.argv[2] !== 'all' ? process.argv[2] : '';
 const PORT = Number(process.argv[3] ?? 8890);
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', opus: 'audio/ogg', ogg: 'audio/ogg', css: 'text/css' };
@@ -84,27 +92,26 @@ try {
     const win = async () => {
       await page.click('#fight'); await page.waitForTimeout(600);
       await page.evaluate(() => { const g = window.__game; for (const u of g.b.units) if (u.side === 'foe') u.hp = 0; });
-      await page.waitForFunction(() => !document.getElementById('result').hidden && document.getElementById('result').classList.contains('jr'), null, { timeout: 120000 });
+      await page.waitForFunction(() => !document.getElementById('result').hidden, null, { timeout: 120000 });
     };
-    // ---- wave 1 won, three heroes rising a level (the knight to 10, the samurai to 30)
+    const simple = () => page.evaluate(() => ({ jr: document.getElementById('result').classList.contains('jr'), passing: document.getElementById('result').classList.contains('passing'), banner: document.getElementById('banner').textContent, summary: document.getElementById('summary').textContent, notes: [...document.querySelectorAll('#waveNotes .wn')].map((e) => e.textContent), chips: [...document.querySelectorAll('#waveNotes .wgChip')].map((e) => e.textContent), bars: document.querySelectorAll('#result .jrBar').length }));
+    // (the card between waves leaves by itself: no tap)
+    const leaves = async () => {
+      const t0 = Date.now();
+      await page.waitForFunction(() => document.getElementById('result').hidden && document.body.dataset.phase === 'deploy', null, { timeout: 30000 });
+      return Date.now() - t0;
+    };
+    // ---- wave 1 won, three heroes rising a level: the simple card between waves
     await win();
-    await page.waitForTimeout(1500);
-    await shot(page, w, checks, 'win-mid', '#result');
-    await page.waitForFunction(() => document.querySelector('#jrBody').classList.contains('done'), null, { timeout: 20000 });
-    await page.waitForTimeout(400);
-    await shot(page, w, checks, 'win', '#result');
-    const rows = await rowsOf(page);
-    checks.push({ name: 'win-rows', rows });
-    assert.equal(rows.length, 5);
-    const knight = rows.find((r) => r.lv === 'Lv 10');
-    assert.ok(knight && knight.up && knight.stats.length === 2 && knight.learnt.some((l) => l.startsWith('New skill:')), 'the knight reaches 10, with stats and its new skill');
-    assert.ok(rows.some((r) => r.learnt.some((l) => l.startsWith('Ultimate unlocked:'))), 'the samurai unlocks its ultimate');
-    assert.ok(rows.some((r) => !r.up), 'a hero that did not level shows no burst');
-    assert.ok(await page.locator('#jrHead .jrTitle').textContent() === 'VICTORY');
-    // (a tap between waves goes on)
+    await page.waitForTimeout(900);
+    await shot(page, w, checks, 'between', '#result');
+    const c1 = await simple();
+    checks.push({ name: 'between', ...c1 });
+    assert.ok(!c1.jr && c1.passing && c1.bars === 0, 'between waves: the simple card, no results screen');
+    assert.ok(c1.notes.some((n) => n.startsWith('▲Level up:')), 'its level-up line');
+    assert.ok(/\+\d+ gold/.test(c1.summary), 'its gold');
     await page.evaluate(() => { window.__game.earned = []; });
-    await page.click('#jrHead .jrTitle');
-    await page.waitForFunction(() => document.getElementById('result').hidden && document.body.dataset.phase === 'deploy', null, { timeout: 20000 });
+    checks.push({ name: 'between-left-by-itself', ms: await leaves() });
     if (await page.locator('#events').isVisible()) await page.evaluate(() => { const g = window.__game; g.run.event = undefined; document.getElementById('events').hidden = true; g.refresh(); });
     // ---- wave 2 won with a big haul: gear, chests, shards, tomes, a stone, a hero joining, the army's rare drop
     await page.evaluate(() => {
@@ -127,35 +134,28 @@ try {
     });
     await page.locator('#fight').waitFor({ state: 'visible' });
     await win();
-    // (the first tap hurries the count-ups: tapped here only while they still run, as a slow machine may have finished them)
-    await page.evaluate(() => { if (!window.__game.jr.done()) document.querySelector('#jrHead .jrTitle').click(); });
-    await page.waitForTimeout(500);
-    const items = await page.evaluate(() => [...document.querySelectorAll('#jrBody .jrItem')].map((e) => ({ text: e.textContent, icon: !!e.querySelector('.jrIco') })));
-    const lines = await page.evaluate(() => [...document.querySelectorAll('#jrBody .jrLine')].map((e) => e.textContent));
-    const counts = await page.evaluate(() => [...document.querySelectorAll('#jrBody .jrCount')].map((e) => e.textContent));
-    checks.push({ name: 'haul', items, lines, counts, gains: await page.evaluate(() => JSON.stringify(window.__game.waveCard?.gains)), data: await page.evaluate(() => window.__game.jrData?.items.length) });
-    if (!items.length) console.log(JSON.stringify(checks.at(-1)));
-    assert.ok(items.length >= 6 && items.every((i) => i.icon), `items with icons: ${items.length}`);
-    assert.ok(lines.some((l) => l.startsWith('✧Found:')), 'the rare drop is listed');
-    assert.ok(await page.evaluate(() => document.querySelector('#jrBody').classList.contains('done')), 'one tap finished the count');
-    await shot(page, w, checks, 'haul', '#result');
-    await page.evaluate(() => { document.getElementById('result').scrollTop = 99999; });
-    await page.waitForTimeout(300);
-    await shot(page, w, checks, 'haul-end', '#result');
+    await page.waitForTimeout(900);
+    await shot(page, w, checks, 'between-haul', '#result');
+    const c2 = await simple();
+    checks.push({ name: 'between-haul', ...c2 });
+    assert.ok(!c2.jr && c2.chips.length >= 6, `the haul as chips: ${c2.chips.length}`);
+    assert.ok(c2.notes.some((n) => n.startsWith('✧Found:')), 'the rare drop is a line');
     await page.evaluate(() => { window.__game.earned = []; window.__forceDrop = undefined; });
-    await page.click('#jrHead .jrTitle').catch(() => page.evaluate(() => document.getElementById('result').click()));
-    await page.waitForFunction(() => document.getElementById('result').hidden && document.body.dataset.phase === 'deploy', null, { timeout: 20000 });
+    // (a tap speeds it on)
+    await page.evaluate(() => document.getElementById('result').click());
+    checks.push({ name: 'between-tapped', ms: await leaves() });
     for (let i = 0; i < 6 && await page.locator('.earnedArrival, .tarotReveal').count(); i++) { await page.waitForTimeout(700); await page.locator('.earnedArrival, .tarotReveal').first().dispatchEvent('pointerdown'); }
     if (await page.locator('#events').isVisible()) await page.evaluate(() => { const g = window.__game; g.run.event = undefined; document.getElementById('events').hidden = true; g.refresh(); });
-    // ---- wave 3 lost with no hearts left: DEFEAT, then the run's end recap
+    // ---- wave 3 lost with no hearts left: the simple last card, then the run's end recap as the results screen
     await page.locator('#fight').waitFor({ state: 'visible' });
     await page.click('#fight'); await page.waitForTimeout(600);
     await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
     await page.locator('#next').waitFor({ state: 'visible', timeout: 30000 });
-    await page.waitForFunction(() => document.querySelector('#jrBody')?.classList.contains('done'), null, { timeout: 20000 });
-    await shot(page, w, checks, 'loss', '#result');
-    assert.equal(await page.locator('#jrHead .jrTitle').textContent(), 'DEFEAT');
-    assert.ok(await page.locator('#summary').isVisible(), 'a loss keeps its line');
+    await page.waitForTimeout(800);
+    await shot(page, w, checks, 'loss-card', '#result');
+    const c3 = await simple();
+    checks.push({ name: 'loss-card', ...c3 });
+    assert.ok(!c3.jr, 'an army run\'s last card stays short: its end recap is the results screen');
     await page.click('#next');
     await page.locator('.rcSheet').waitFor({ state: 'visible' });
     await page.waitForTimeout(1200);
@@ -167,6 +167,9 @@ try {
     const heads = await page.evaluate(() => [...document.querySelectorAll('#recap h3')].map((e) => e.textContent));
     checks.push({ name: 'recap', recapRows, heads });
     assert.ok(recapRows.length >= 5 && recapRows.some((r) => r.up), 'the run recap fills each hero over the run');
+    const knight = recapRows.find((r) => r.lv === 'Lv 10');
+    assert.ok(knight && knight.stats.length === 2 && knight.learnt.some((l) => l.startsWith('New skill:')), 'the knight reached 10 over the run, with its stats and new skill');
+    assert.ok(recapRows.some((r) => r.learnt.some((l) => l.startsWith('Ultimate unlocked:'))), 'the samurai unlocked its ultimate');
     assert.ok(heads.includes('Wave by wave') && heads.includes('Company performance') && !heads.includes('Experience earned'));
     await page.evaluate(() => { const r = document.querySelector('#recap'); r.scrollTop = 99999; document.querySelector('.rcSheet').scrollTop = 99999; });
     await page.waitForTimeout(300);
@@ -175,6 +178,28 @@ try {
     await page.waitForTimeout(500);
     assert.deepEqual(errors, []);
     await ctx.close();
+
+    // ---- a spire climb that ends on its floor: the fight's own card is the results screen (no end recap follows it)
+    {
+      const p = await newPage(w, h, baseMeta(PARTY, xp));
+      results.push({ w, h, spire: true, checks, errors: p.errors });
+      await p.page.evaluate((json) => { const g = window.__game; g.home.go(() => g.resumeSlot(JSON.parse(json))); }, SPIRE(PARTY));
+      await p.page.locator('#towerMap').waitFor({ state: 'visible', timeout: 60000 });
+      await p.page.evaluate(() => { const g = window.__game; const t = g.run.tower; const n = t.map.find((x) => x.row === t.row && x.kind === 'fight') ?? t.map.find((x) => x.row === t.row); g.towerView.goTo(n.id); });
+      await p.page.locator('#fight').waitFor({ state: 'visible', timeout: 30000 });
+      await p.page.click('#fight'); await p.page.waitForTimeout(1500);
+      await p.page.evaluate(() => { const g = window.__game; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+      await p.page.waitForFunction(() => document.getElementById('result').classList.contains('jr') && !document.getElementById('result').hidden, null, { timeout: 60000 });
+      await p.page.waitForFunction(() => document.querySelector('#jrBody').classList.contains('done'), null, { timeout: 30000 });
+      await p.page.waitForTimeout(300);
+      await shot(p.page, w, checks, 'spire-end', '#result');
+      const sp = await p.page.evaluate(() => ({ title: document.querySelector('#jrHead .jrTitle')?.textContent, sub: document.querySelector('#jrHead .jrSub')?.textContent, rows: document.querySelectorAll('#jrBody .jrRow').length, next: document.getElementById('next').textContent }));
+      checks.push({ name: 'spire-end', ...sp });
+      assert.equal(sp.title, 'DEFEAT');
+      assert.ok(sp.rows >= 1);
+      assert.deepEqual(p.errors, []);
+      await p.ctx.close();
+    }
 
     // ---- the Last Stand's end: eight heroes
     const s = await newPage(w, h, baseMeta(EIGHT, Object.fromEntries(EIGHT.map((k) => [k, xpFor(20)]))));
@@ -210,7 +235,7 @@ try {
     assert.deepEqual(s.errors, []);
     await s.ctx.close();
   }
-  // ---- reduced motion at 393: the end values at once, no count
+  // ---- reduced motion at 393: the run's end recap shows its end values at once, no count
   if (!only || only === '393') {
     const checks = [];
     const { ctx, page, errors } = await newPage(393, 852, baseMeta(PARTY, { knight: xpFor(10) - 4, samurai: xpFor(6) - 2, wizard: 100, archer: 0, cleric: 0 }));
@@ -222,13 +247,15 @@ try {
     await page.waitForTimeout(900);
     await page.evaluate((party) => { const g = window.__game; g.run.roster = party.map((kind, i) => ({ id: i + 1, kind, grade: 1, paid: 5 })); g.run.squad = party.map((_, i) => i + 1); g.run.nextId = 6; g.newBattle(); g.refresh(); }, PARTY);
     await page.click('#fight'); await page.waitForTimeout(600);
-    await page.evaluate(() => { const g = window.__game; for (const u of g.b.units) if (u.side === 'foe') u.hp = 0; });
-    await page.waitForFunction(() => document.getElementById('result').classList.contains('jr'), null, { timeout: 120000 });
+    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+    await page.locator('#next').waitFor({ state: 'visible', timeout: 60000 });
+    await page.click('#next');
+    await page.locator('.rcSheet').waitFor({ state: 'visible' });
     await page.waitForTimeout(150);
-    const calm = await page.evaluate(() => ({ done: document.querySelector('#jrBody').classList.contains('done'), calm: document.querySelector('#jrBody').classList.contains('calm') }));
+    const calm = await page.evaluate(() => ({ done: document.querySelector('.rcSheet .jrBody').classList.contains('done'), calm: document.querySelector('.rcSheet .jrBody').classList.contains('calm') }));
     checks.push({ name: 'calm', ...calm });
     assert.ok(calm.done && calm.calm, 'reduced motion shows the end at once');
-    await shot(page, 393, checks, 'calm', '#result');
+    await shot(page, 393, checks, 'calm', '#recap');
     assert.deepEqual(errors, []);
     await ctx.close();
   }

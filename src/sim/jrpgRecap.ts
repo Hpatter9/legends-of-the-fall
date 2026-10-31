@@ -188,7 +188,7 @@ export interface QuestMove {
 
 /** One line under the party. */
 export interface ResultLine {
-  kind: WaveNote['kind'] | 'quest' | 'bench';
+  kind: WaveNote['kind'] | 'bench';
   text: string;
 }
 
@@ -225,7 +225,8 @@ export function questMoves(before: Readonly<Record<string, number>>, after: Read
 /** Everything the screen lists under the party for a wave: the short card's lines (the finds, the War Horn, the fallen, the hearts),
  *  without its level and ultimate lines (each hero's row shows those now, the bench's levels too), then the bench's XP and the quests. */
 export function resultLines(m: WaveMoments, opts: { bench?: { n: number; each: number }; quests?: readonly QuestMove[] } = {}): ResultLine[] {
-  const out: ResultLine[] = waveNotes(m).filter((n) => n.kind !== 'level' && n.kind !== 'ult');
+  // (the card's own quest lines are left out: the screen words them from `opts.quests`)
+  const out: ResultLine[] = waveNotes({ ...m, quests: [] }).filter((n) => n.kind !== 'level' && n.kind !== 'ult');
   if (opts.bench && opts.bench.n > 0 && opts.bench.each > 0) out.push({ kind: 'bench', text: `The bench trained: +${num(opts.bench.each)} XP each (${opts.bench.n} ${opts.bench.n === 1 ? 'hero' : 'heroes'})` });
   out.push(...questLines(opts.quests ?? []));
   return out;

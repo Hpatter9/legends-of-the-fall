@@ -19,6 +19,7 @@ import { gainsSince, snapGains } from './sim/waveGains';
 import { drawWaveNotes } from './waveCardView';
 // (JRPG-RECAP: the results screen after every fight and atop the run's end recap)
 import { playResults, type JrData, type JrPlayer } from './jrpgRecapView';
+import { questLines } from './sim/jrpgRecap';
 import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
@@ -2983,7 +2984,9 @@ class Game {
       const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)));
       if (horn.added > 0) this.eid.gained(horn.added);
       const hornSaid = hornLine(horn);
-      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}) };
+      // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
+      const questMoved = questsMoved(this.meta, questsBefore, questsDone, questsFound);
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -3014,10 +3017,12 @@ class Game {
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
         drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : [], this.waveCard?.gains ?? []);
         for (const id of ['xp', 'fightStats']) $(id).hidden = true;
-        // (JRPG-RECAP: the results screen's data; it plays once the card is up, in `refresh`)
+        // (JRPG-RECAP, the owner's call: between waves the short card above; the full results screen only where a run ends with no
+        // end recap after it (a spire's or Calamity's last fight, a quest battle's end). An army's, the daily's and an endless run's
+        // last card stays short too: their end recap, one tap on, is the results screen)
         const share = this.pay?.replay ? 'a replay pays a share' : run.mode?.kind === 'daily' && run.mode.practice ? 'practice' : '';
-        this.jrData = fightResult(
-          { meta: this.meta, run, b, stats: this.stats, won, card: this.waveCard, gains, bench, own, gold: this.gain, crowns: quest ? null : this.crownGain, ...(share ? { crownNote: share } : {}), notes: this.pay?.firstClear ? ['First clear!'] : [], quests: questsMoved(this.meta, questsBefore, questsDone, questsFound) },
+        if (run.over && (run.tower || quest)) this.jrData = fightResult(
+          { meta: this.meta, run, b, stats: this.stats, won, card: this.waveCard, gains, bench, own, gold: this.gain, crowns: quest ? null : this.crownGain, ...(share ? { crownNote: share } : {}), notes: this.pay?.firstClear ? ['First clear!'] : [], quests: questMoved },
           '',
           this.passing ? 'Tap to continue' : undefined,
         );

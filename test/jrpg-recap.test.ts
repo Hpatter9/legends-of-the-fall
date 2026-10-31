@@ -5,6 +5,7 @@ import { KITS, ULT_LEVEL } from '../src/sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL } from '../src/sim/heroKits';
 import { lastingBoost, levelBoost, levelOf, RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
 import { UNITS } from '../src/sim/units';
+import { waveNotes } from '../src/sim/waveCard';
 import { newRun } from '../src/sim/run';
 import { noteXpStart, recapOf } from '../src/sim/runRecap';
 
@@ -129,4 +130,13 @@ test('a run notes each kind\'s XP the first time it is paid, so the end screen f
   noteXpStart(r, { knight: 100, archer: 40 });
   noteXpStart(r, { knight: 900, cleric: 7 });
   assert.deepEqual(recapOf(r).xpAt, { knight: 100, archer: 40, cleric: 7 });
+});
+
+test('between waves the short card says each quest the wave moved in a line of its own; the results screen words them once', () => {
+  const m = { ups: [{ kind: 'knight', from: 4, to: 5 }], fell: [], hearts: 0, heartsLeft: 3, found: [], quests: questLines([{ title: 'Slay the lich', kind: 'done' }, { title: 'Hunt the wolves', kind: 'advanced', now: 3, need: 5 }]).map((l) => l.text) };
+  const notes = waveNotes(m);
+  assert.deepEqual(notes.map((n) => n.kind), ['level', 'quest', 'quest']);
+  assert.equal(notes[1].text, 'Quest complete: Slay the lich · return to the tavern');
+  const lines = resultLines(m, { quests: [{ title: 'Slay the lich', kind: 'done' }] });
+  assert.deepEqual(lines.map((l) => l.text), ['Quest complete: Slay the lich · return to the tavern']);
 });

@@ -101,7 +101,10 @@ export function fightResult(i: FightResultIn, sub: string, hint?: string): JrDat
   const rows: JrHero[] = [];
   if (i.own) {
     // (a run's own heroes: their XP and levels are the run's, to 30)
-    for (const g of run.tower?.gains ?? []) {
+    // (every hero that fought, with what this fight paid it: a lost climb's last fight may have paid nothing)
+    const paid = run.tower?.gains ?? [];
+    const fought = fighters.filter((u) => u.tag !== undefined).map((u) => paid.find((g) => g.id === Number(u.tag)) ?? { id: Number(u.tag), kind: u.def, xp: 0 });
+    for (const g of [...paid, ...fought]) {
       if (rows.some((r) => r.kind === g.kind)) continue;
       const h = run.roster.find((x) => x.id === g.id);
       const xpTo = h?.xp ?? (i.own.from[g.kind] ?? 0) + g.xp;

@@ -1,11 +1,25 @@
-## JRPG-RECAP: a JRPG results screen after every fight and at a run's end
+## JRPG-RECAP: a JRPG results screen at a run's end; a simple card between waves
 
 The owner's ask: "A more typical JRPG end-of-fight recap. With a level up showing what stats went up and how much, and so on. Redo the
 recap entirely."
 
-### What the player sees
+### Where it shows (the owner's call)
 
-After every fight (army waves, the daily, the endless stages, spire floors, Calamity fights, quest battles), on the result card:
+"I want the between waves to be simple, but the last recap one to be the JRPG results screen."
+
+- **Between waves** (an army's, the daily's or an endless run's next wave, a spire floor or Calamity fight with more to come): the
+  simple short card, as before (WAVE-RECAP): the wave won, the gold and crowns, the items as chips, and one short line each for a
+  level-up, an ultimate unlocked, a rare drop, the War Horn, a find, the fallen, a heart burned and, new, each quest the wave moved
+  ("Quest complete: ...", "Quest: Hunt the wolves 3/5"). It rides over the march and leaves by itself; a tap speeds it on. No XP bars,
+  no stat panels.
+- **An army's, the daily's or an endless run's last fight**: the same short card, then "Run recap", which is the results screen.
+- **A run with no end recap** (a spire climb's or Calamity's last fight, a quest battle's end): the fight's own card is the results
+  screen.
+- **The Last Stand's end card** is the results screen.
+
+### The results screen
+
+On the run's end recap, a run-ending fight's card and the Last Stand's end card:
 
 - a gold **VICTORY** (or a cold **DEFEAT**) stamped in once, with a soft glow behind it; under it the card's heading as before ("Wave 4 of
   15 won", "Floor 12 cleared", "Army defeated!") and the fight's facts: time, foes felled, heroes standing;
@@ -25,10 +39,8 @@ After every fight (army waves, the daily, the endless stages, spire floors, Cala
   now the quests: finished, found on a boss, a voice in the rift, and quests that moved on ("Quest: Hunt the wolves 3/5");
 - then, as before, the army's run stars, the boss's rift ores, the daily chest, and the button.
 
-A first tap anywhere (or **Skip ▸▸**) runs every count-up to its end; between waves a second tap goes on to the next wave ("Tap to
-continue"); at a fight's end with one way on, a second tap presses that button. The between-wave card no longer leaves by itself: it
-waits for the tap like a JRPG's results do, and the march to the next wave goes on behind it (the backdrop is see-through while the
-party walks). Reduced motion shows the end state at once (`.calm`), with no count, burst or stamp.
+A first tap anywhere (or **Skip ▸▸**) runs every count-up to its end; at a fight's end with one way on, a second tap presses that
+button. Reduced motion shows the end state at once (`.calm`), with no count, burst or stamp.
 
 The **run's end recap** (army runs, the daily, endless) opens with the same screen over the whole run: each hero's bar fills from where
 it began the run (`RunRecap.xpAt`) to now, with the stats risen and skills opened over the run, the run's MVP, and gold earned, crowns
@@ -53,14 +65,15 @@ A long party (more than five rows: the Stand's eight, a Calamity's ten) uses com
 - `src/jrpgRecapView.ts`: `playResults({head, body}, data)` builds the screen and runs one clock (`render(t)`; `finish` renders the end).
 - `src/jrpgResults.ts`: `fightResult` and `runResult` gather the data (faces, icons, quests' progress before and after).
 - `src/jrpgRecap.css` (added to the build after `battleReports.css`).
-- Hooks: `main.ts` (settle builds the data, `refresh` starts it, the tap, `stepPassing` waits, `stopResults` on a new fight),
+- `src/sim/waveCard.ts`: optional `quests` lines on the short card (`WaveNote` kind `quest`).
+- Hooks: `main.ts` (settle builds the data for a run-ending fight with no end recap, `refresh` starts it, the tap, `stopResults` on a
+  new fight),
   `index.html` (`#jrHead`, `#jrBody` in `#result`), `recapView.ts` (`RecapHead.results`, `DetailOpts.xp`), `standView.ts` (the end card),
   `waveCardView.ts` (`gainIcon` exported).
-- Screenshots: `tools/jrpg-recap/shots.mjs` → `docs/samples/jrpg-recap-*.png` (win with level-ups mid-count and finished, a big haul,
-  a loss, the run recap, the Stand's eight, reduced motion).
+- Screenshots: `tools/jrpg-recap/shots.mjs` → `docs/samples/jrpg-recap-*.png`: the card between waves (`between`, `between-haul`; it
+  is checked to leave by itself), an army run's last card (`loss-card`) and its end recap (`recap-mid`, `recap`, `recap-end`), a spire
+  climb's last fight (`spire-end`), the Stand's eight (`stand8-*`), reduced motion (`calm`).
 
 ### For the owner
 
-- The between-wave card now waits for a tap (it left by itself before, the WAVE-RECAP ask). Say if it should leave by itself again once
-  the count has finished.
 - Only hp and attack rise with a level in this game (defence and range never do), so those are the stats shown.
