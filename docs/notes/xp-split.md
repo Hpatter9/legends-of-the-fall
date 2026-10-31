@@ -86,4 +86,7 @@ anyone not the top killer level as fast or faster.
 pool's share; the old rule is `keep` 1; a lone hero gets all its kills; a hero's called-up fighters' kills count as its own and a
 summon takes no share; in real fights (three seeds) the totals are the old ones within the rounding, every fighter gets a share, the
 top killer gets the most kill XP, and a fight pays the same each time it is played. `test/levels.test.ts` is unchanged (its tests
-are of one hero, or of every hero's XP rising with a win). No identity fixture records XP totals, so none was re-recorded.
+are of one hero, or of every hero's XP rising with a win). Re-recorded, as this means to move them: the `daily` scenario of
+`test/fixtures/spells-identity.json` (`732fc0e7` to `a0ef0c21`) and of `test/fixtures/ailment-logs.json` (`a9f7845a` to `a507c266`). That
+scenario's greedy player adds each fight's XP to its heroes as it goes, so the split changes which hero levels when and so its later
+fights; every other scenario (each fight on its own, army and tower included) kept its hash.

@@ -43,6 +43,9 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // this proof, as the ailments are; with them off every scenario plays as recorded)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
+// (XP-SPLIT, the owner's ask for a fight's kill XP to be shared, docs/notes/xp-split.md, re-recorded `daily`: its greedy player levels its
+// heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
+// keeps its hash, the fights themselves are unchanged)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
