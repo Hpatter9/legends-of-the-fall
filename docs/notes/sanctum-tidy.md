@@ -41,7 +41,9 @@ was an empty bar after the reload (`samples/sanctum-before-bound-flow.png`). Aft
 - **Tap targets:** "View heroes →" is 44px tall now (it was 32), with the ledger's padding taken in to match. Every button on the page is at
   least 44 x 44.
 
-**What covers the room** (the lower panel's height, from the bottom of the Sanctum, at 393x852): MEASURE.
+**What covers the room** (the lower panel's height, measured up from the bottom of the Sanctum by `shots.mjs`): at 393x852, **153px**
+with no chain going (206px with the plaque), against about 310px before (the plaque, the full scroll and the shop row, estimated from
+`sanctum-before-going.png`). At 360x780 it is 140px (191px); at 412x915, 153px (206px). The altar, the rings, the stained glass and the Summoner are now in view.
 
 ## Files
 
