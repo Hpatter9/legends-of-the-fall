@@ -37,8 +37,9 @@ export interface Eidolon {
   beats: readonly string[];
   /** Its rider in one line, for the picker and the cards. */
   rider: string;
-  /** The line it says the first time it answers. */
+  /** The line it says the first time it answers, and the ones it says after (in turn), as it arrives. */
   line: string;
+  lines: readonly string[];
 }
 
 /** The six, easiest to win first (the owner's picks). */
@@ -52,6 +53,7 @@ export const EIDOLONS: readonly Eidolon[] = [
     beats: ['A howl', 'A ring of fire run round the field', 'The ring erupts inward', 'Embers rain'],
     rider: "The foes' half of the field burns for 6s; your heroes are warmed, +15% attack for 10s",
     line: 'Little keep. You blew, and I ran. Point me at them.',
+    lines: ['Point. I run. They burn.', 'The horn again? Good. I was getting cold.', 'Stay behind me, little ones.'],
   },
   {
     id: 'nivra',
@@ -62,6 +64,7 @@ export const EIDOLONS: readonly Eidolon[] = [
     beats: ['Frost cracks the ground', 'She bursts up mid-field', 'A ring of frost breath', 'The ice shatters'],
     rider: 'Every foe left is frozen for 5s; a boss is slowed by half for 6s',
     line: 'The deep remembers your horn. So do I.',
+    lines: ['Hold your breath. I hold mine for centuries.', 'Everything ends. Today, it ends cold.', 'The ice is listening. So am I.'],
   },
   {
     id: 'aurelan',
@@ -72,6 +75,7 @@ export const EIDOLONS: readonly Eidolon[] = [
     beats: ['A pillar of sunlight', 'He leaps down', 'A crescent of light rolls across', 'Sunrise'],
     rider: 'The fallen rise at 60%; every hero is healed, cleansed and shielded for 3s',
     line: 'Night is long. It always ends.',
+    lines: ['Look up. The sun is late, but it comes.', 'Stand in my light, and do not fall.', 'Every night I have outlasted. This one too.'],
   },
   {
     id: 'voltara',
@@ -82,6 +86,7 @@ export const EIDOLONS: readonly Eidolon[] = [
     beats: ['Her coils spin up', 'A lattice of lightning', 'One colossal bolt', 'Static'],
     rider: "Every hero's ultimate gains half its fill (skill charge below level 30); +5 mana",
     line: 'Wound, sprung and ready. Shall we?',
+    lines: ['Tick. Tock. Strike.', 'Charged, calibrated, and very cross.', 'Stand clear of the coils, darlings.'],
   },
   {
     id: 'gorm',
@@ -92,6 +97,7 @@ export const EIDOLONS: readonly Eidolon[] = [
     beats: ['He builds himself from stone', 'The hammer slams', 'Pillars burst up', 'Rubble rains'],
     rider: 'Your heroes take half damage for 10s; a boss is stunned for 2s',
     line: 'I was the hill under your walls. I am still.',
+    lines: ['You stand on me. You always have.', 'Slow to wake. Hard to stop.', 'Mind your feet. The hill is moving.'],
   },
   {
     id: 'vaelkhar',
@@ -102,6 +108,7 @@ export const EIDOLONS: readonly Eidolon[] = [
     beats: ['The sun goes dark', 'He descends', 'A torrent of black fire', 'The void collapses'],
     rider: 'Bosses and elites lose their shields and boons; your heroes drain 25% of the damage they deal for 10s',
     line: 'Kneel, little king. Then stand, and watch.',
+    lines: ['The sun bows. So will they.', 'You call a king to swat flies? Very well.', 'Darkness is only a crown I wear.'],
   },
 ];
 

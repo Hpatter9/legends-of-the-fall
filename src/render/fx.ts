@@ -780,6 +780,11 @@ export class Fx {
     this.flash(0.35, 110);
   }
 
+  /** EIDOLONS: a freeze on a blow (real ms) for a moment the page plays (an Eidolon's strike); none with the screen kept still. */
+  hitStop(ms: number): void {
+    if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, ms);
+  }
+
   /** Shake at least this hard for now (a boss walking in); it fades as usual once the rumble stops. */
   rumble(level: number): void {
     this.trauma = Math.max(this.trauma, level);

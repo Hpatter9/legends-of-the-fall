@@ -1,0 +1,213 @@
+/* EIDOLONS (docs/notes/eidolons.md, src/eidolonCall.ts): the War Horn in the fight and at the camp, its sheets, and the Eidolon's call.
+   Nothing blinks: glows ease in and out and drift; with reduced motion everything is held still. */
+
+/* ---- the horn */
+.ehHorn { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0; padding: 0;
+  background: none; border: 0; box-shadow: none; min-height: 0; cursor: pointer; --fill: 0; --glow: 0.15; }
+.ehHorn::before, .ehHorn::after { content: none; }
+.ehArt { position: relative; display: block; width: 100%; aspect-ratio: 256 / 251; }
+.ehArt img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+/* the lit painting revealed from the mouthpiece (bottom left) to the bell (top right), with a glow along it that grows with the fill */
+.ehLight { -webkit-mask-image: linear-gradient(to top right, #000 calc(var(--fill) * 100% - 3%), transparent calc(var(--fill) * 100% + 5%));
+  mask-image: linear-gradient(to top right, #000 calc(var(--fill) * 100% - 3%), transparent calc(var(--fill) * 100% + 5%));
+  filter: drop-shadow(0 0 calc(var(--glow) * 6px) rgb(255 214 120 / calc(var(--glow) * 0.95))); }
+/* the light poured into it: the horn's own shape filled with gold, up to the fill, so the fill reads at a glance */
+.ehEmpty { filter: brightness(0.62) saturate(0.7); }
+.ehFill { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: 0.85;
+  background: linear-gradient(to top right, #ffb640, #ffd987 calc(var(--fill) * 100% - 2%), transparent calc(var(--fill) * 100% + 4%));
+  -webkit-mask: url(eidolons/horn-empty.webp) center / contain no-repeat; mask: url(eidolons/horn-empty.webp) center / contain no-repeat; }
+.ehHorn[data-state='ready'] .ehFill, .ehHorn[data-state='none'] .ehFill { opacity: 0; }
+.ehReady { opacity: 0; transition: opacity 0.6s ease; filter: drop-shadow(0 0 6px rgb(255 214 120 / 0.85)); }
+.ehAura { position: absolute; inset: -18%; border-radius: 50%; opacity: 0; transition: opacity 0.8s ease;
+  background: radial-gradient(closest-side, rgb(255 210 110 / 0.55), rgb(255 180 60 / 0.18) 55%, transparent 72%),
+    repeating-conic-gradient(from 0deg, rgb(255 230 160 / 0.5) 0 2deg, transparent 2deg 22deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%); mask-image: radial-gradient(closest-side, #000 55%, transparent 100%); }
+.ehSheen { position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 240 / 0.75) 48%, transparent 60%) 0 0 / 300% 100% no-repeat;
+  -webkit-mask: url(eidolons/horn-ready.webp) center / contain no-repeat; mask: url(eidolons/horn-ready.webp) center / contain no-repeat; }
+.ehHorn[data-state='ready'] .ehReady, .ehHorn[data-state='none'] .ehReady { opacity: 1; }
+.ehHorn[data-state='ready'] .ehAura { opacity: 1; animation: ehBreathe 3.2s ease-in-out infinite, ehTurn 24s linear infinite; }
+.ehHorn[data-state='ready'] .ehSheen { opacity: 1; animation: ehSheen 3.4s ease-in-out infinite; }
+.ehHorn[data-state='none'] .ehAura { opacity: 0.4; }
+.ehHorn[data-state='spent'] .ehArt { filter: saturate(0.5) brightness(0.8); }
+@keyframes ehBreathe { 0%, 100% { scale: 0.94; filter: brightness(0.9); } 50% { scale: 1.04; filter: brightness(1.15); } }
+@keyframes ehTurn { to { rotate: 360deg; } }
+@keyframes ehSheen { 0% { background-position: 120% 0; } 60%, 100% { background-position: -60% 0; } }
+.ehWords { font: 700 11px/1 var(--body); color: #f3e2b4; text-shadow: 0 1px 2px #000, 0 0 4px #000; white-space: nowrap; }
+.ehHorn[data-state='ready'] .ehWords { color: #ffd66e; }
+/* motes streaming in on a gain, swelling where they land */
+.ehMotes { position: absolute; left: 30%; top: 62%; width: 0; height: 0; pointer-events: none; }
+.ehMotes i { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff6d0;
+  box-shadow: 0 0 6px 2px rgb(255 210 110 / 0.9); opacity: 0; animation: ehMote 0.9s ease-in both; }
+@keyframes ehMote { 0% { opacity: 0; translate: var(--dx) var(--dy); scale: 0.6; } 20% { opacity: 1; } 85% { opacity: 1; translate: 0 0; scale: 1; } 100% { opacity: 0; translate: 0 0; scale: 2.4; } }
+
+/* in the fight: at the left end of the spell orbs row, its words a small pill on its foot */
+.ehFight { width: 46px; height: 46px; margin-right: 2px; align-self: center; justify-content: center; }
+.ehFight .ehArt { width: 44px; }
+.ehFight .ehWords, .ehCamp .ehWords { position: absolute; right: -3px; bottom: -2px; padding: 1px 3px; border-radius: 4px; background: #0d0b08d9; font-size: 10px; }
+/* at the camp: beside the stones */
+.ehCamp { width: 46px; height: 36px; justify-content: center; flex-direction: row; }
+.ehCamp .ehArt { width: 34px; }
+.ehBig { width: 76px; pointer-events: none; }
+
+.ehNote { position: fixed; z-index: 60; max-width: 240px; padding: 7px 10px; border-radius: 6px; background: #14110cf2; border: 1px solid #b08f4f;
+  color: #f3e7c9; font: 600 12px/1.35 var(--body); pointer-events: none; animation: ehNote 3s ease both; }
+@keyframes ehNote { 0% { opacity: 0; translate: 0 -4px; } 10%, 80% { opacity: 1; translate: 0 0; } 100% { opacity: 0; } }
+
+/* ---- the sheets: the first blow's confirm, and the horn's card at the camp */
+.ehSheet { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgb(4 6 10 / 0.55); }
+.ehSheet[hidden] { display: none; }
+.ehBox { width: min(100%, 440px); max-height: 86vh; overflow: auto; box-sizing: border-box; padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 10px; background: linear-gradient(#1e1a14, #120f0b); border-top: 2px solid #b08f4f; border-radius: 12px 12px 0 0;
+  color: #f3e7c9; font: 500 13px/1.4 var(--body); }
+.ehBox .ehRow { display: flex; gap: 10px; }
+.ehBox .ehRow button, .ehBox > button { flex: 1; min-height: 44px; font: 700 14px var(--body); }
+.ehAsk { margin: 0; color: #d9cba8; font-size: 13px; }
+.ehNone { margin: 0; color: #ffd66e; font: 700 15px var(--body); text-align: center; }
+.ehHead { display: flex; align-items: center; gap: 12px; }
+.ehHeadWords { display: flex; flex-direction: column; }
+.ehHeadWords b { font: 700 18px var(--display, var(--body)); color: #ffe3a0; }
+.ehHeadWords span { font: 700 13px var(--body); color: #d9cba8; }
+.ehList { display: flex; flex-direction: column; gap: 8px; }
+.ehCard { display: flex; gap: 10px; align-items: center; padding: 6px; border-radius: 8px; border: 1px solid #5a4a2e; background: #1a1610; --c: #ffd66e; }
+.ehCard.on { border-color: var(--c); box-shadow: 0 0 0 1px var(--c), 0 0 14px color-mix(in srgb, var(--c) 45%, transparent); }
+.ehCardArt { width: 72px; height: 72px; flex: none; border-radius: 6px; object-fit: cover; border: 1px solid #000; }
+.ehCardWords { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ehCardWords b { font: 700 16px var(--body); color: var(--c); }
+.ehCardWords small { font: 600 12px var(--body); color: #e6d6b0; }
+.ehCardWords em { font: 600 12px var(--body); color: #bfae88; font-style: normal; text-transform: none; }
+.ehCardWords span { font: 500 12px/1.3 var(--body); color: #d9cba8; }
+.el-fire { --c: #ff9a4a; } .el-ice { --c: #a6e6ff; } .el-light { --c: #ffe08a; } .el-lightning { --c: #9fd6ff; } .el-earth { --c: #f0b45a; } .el-dark { --c: #c79bff; }
+
+/* ---- the call's cinematic */
+.ecLayer { position: fixed; inset: 0; z-index: 55; overflow: hidden; pointer-events: auto; --glow: #ffd66e; --deep: #120c04; --dim: 0.9; }
+.ecLayer[hidden] { display: none; }
+.ecLayer > * { position: absolute; pointer-events: none; }
+.ecDim { inset: 0; background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--deep) 70%, transparent), var(--deep)); opacity: 0; transition: opacity 0.35s ease; }
+.ecLayer:not([data-stage='horn']) .ecDim, .ecLayer[data-stage='horn'] .ecDim { opacity: var(--dim); }
+.ecLayer[data-stage='strike'] .ecDim { opacity: calc(var(--dim) * 0.4); transition-duration: 0.25s; }
+.ecLayer[data-stage='after'] .ecDim { opacity: calc(var(--dim) * 0.3); transition-duration: 0.9s; }
+.ecLayer[data-stage='out'] .ecDim, .ecLayer[data-stage='resume'] .ecDim { opacity: 0; transition-duration: 0.9s; }
+.ecWash { inset: 0; background: radial-gradient(ellipse at 50% 35%, var(--wash), transparent 75%), var(--wash); mix-blend-mode: screen; opacity: 0; transition: opacity 0.8s ease; }
+.ecLayer[data-stage='strike'] .ecWash, .ecLayer[data-stage='after'] .ecWash, .ecLayer[data-stage='resume'] .ecWash { opacity: 1; }
+.ecLayer[data-stage='out'] .ecWash { opacity: 0; transition-duration: 1.3s; }
+
+/* the summoning circle: the painted turning frames, drawn across the board, tinted to the element */
+.ecCircle { width: 130vw; height: 65vw; translate: -50% -50%; background: url(eidolons/eid-circle.webp) 0 0 / 600% 100% no-repeat; opacity: 0; scale: 0.2;
+  transition: opacity 0.5s ease, scale 0.6s cubic-bezier(.2,.9,.3,1.2); filter: drop-shadow(0 0 10px var(--glow)); animation: ecCircleTurn 0.6s steps(5) infinite; }
+@keyframes ecCircleTurn { to { background-position: 100% 0; } }
+.ecLayer:not([data-stage='horn']) .ecCircle { opacity: 0.95; scale: 1; }
+.ecLayer[data-stage='after'] .ecCircle, .ecLayer[data-stage='resume'] .ecCircle, .ecLayer[data-stage='out'] .ecCircle { opacity: 0; transition-duration: 0.8s; }
+.el-ice .ecCircle, .el-lightning .ecCircle { filter: hue-rotate(160deg) saturate(1.3) brightness(1.2) drop-shadow(0 0 10px var(--glow)); }
+.el-dark .ecCircle { filter: hue-rotate(225deg) saturate(1.4) drop-shadow(0 0 10px var(--glow)); }
+.el-fire .ecCircle { filter: hue-rotate(-20deg) saturate(1.6) drop-shadow(0 0 10px var(--glow)); }
+
+/* the sky torn open: the rift's frames, huge, at the top, with the element's light pouring from it */
+.ecRift { left: 50%; top: -6vh; width: 120vw; height: 60vh; translate: -50% 0; opacity: 0;
+  background: url(eidolons/eid-rift.webp) 0 0 / 800% 100% no-repeat; filter: drop-shadow(0 0 18px var(--glow)); transition: opacity 0.4s ease; }
+.ecRift::after { content: ''; position: absolute; inset: 20% 30%; background: radial-gradient(closest-side, var(--glow), transparent); opacity: 0.6; mix-blend-mode: screen; }
+.ecLayer[data-stage='arrive'] .ecRift, .ecLayer[data-stage='name'] .ecRift, .ecLayer[data-stage='strike'] .ecRift { opacity: 0.9; animation: ecRiftOpen 0.7s steps(7) forwards; }
+@keyframes ecRiftOpen { from { background-position: 0 0; } to { background-position: 100% 0; } }
+.el-fire .ecRift { filter: grayscale(1) brightness(1.3) sepia(1) saturate(5) hue-rotate(-18deg) drop-shadow(0 0 18px var(--glow)); }
+.el-light .ecRift { filter: grayscale(1) brightness(1.6) sepia(1) saturate(3) hue-rotate(5deg) drop-shadow(0 0 18px var(--glow)); }
+.el-earth .ecRift { filter: grayscale(1) brightness(1.3) sepia(1) saturate(3) hue-rotate(-5deg) drop-shadow(0 0 18px var(--glow)); }
+.el-ice .ecRift { filter: grayscale(1) brightness(1.5) sepia(1) saturate(3) hue-rotate(160deg) drop-shadow(0 0 18px var(--glow)); }
+.el-lightning .ecRift { filter: grayscale(1) brightness(1.5) sepia(1) saturate(4) hue-rotate(175deg) drop-shadow(0 0 18px var(--glow)); }
+
+/* the figure, large, breathing, with its aura and motes; parallax against the effects (it drifts one way, the motes the other) */
+.ecAura { left: 50%; bottom: 8vh; width: 130vw; height: 90vh; translate: -50% 0; border-radius: 50%; opacity: 0;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--glow) 55%, transparent), transparent 75%); transition: opacity 0.6s ease; }
+.ecFig { left: 50%; bottom: 7vh; height: 78vh; width: 108vw; translate: -50% 0; display: flex; align-items: flex-end; justify-content: center; opacity: 0; }
+.ecFigArt { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--glow) 70%, transparent)); }
+.ecLayer[data-stage='arrive'] .ecFig, .ecLayer[data-stage='name'] .ecFig, .ecLayer[data-stage='strike'] .ecFig { opacity: 1; animation: ecRise 0.9s cubic-bezier(.15,.8,.25,1) both; }
+.ecLayer[data-stage='name'] .ecFigArt, .ecLayer[data-stage='strike'] .ecFigArt { animation: ecBreath 3s ease-in-out infinite; }
+.ecLayer[data-stage='arrive'] .ecAura, .ecLayer[data-stage='name'] .ecAura, .ecLayer[data-stage='strike'] .ecAura { opacity: 1; animation: ecAuraBreath 2.6s ease-in-out infinite; }
+.ecLayer[data-stage='strike'] .ecFig { animation: ecLunge 0.9s ease-out both; }
+.ecLayer[data-stage='after'] .ecFig, .ecLayer[data-stage='resume'] .ecFig, .ecLayer[data-stage='out'] .ecFig { opacity: 0; translate: -50% -14vh; scale: 1.08; transition: opacity 0.9s ease, translate 1s ease, scale 1s ease; }
+@keyframes ecRise { from { opacity: 0; translate: -50% 26vh; scale: 0.82; filter: brightness(2.2); } 60% { opacity: 1; } to { opacity: 1; translate: -50% 0; scale: 1; filter: brightness(1); } }
+@keyframes ecBreath { 0%, 100% { scale: 1; translate: 0 0; } 50% { scale: 1.025; translate: -1.2vw -0.6vh; } }
+@keyframes ecAuraBreath { 0%, 100% { opacity: 0.75; scale: 0.96; } 50% { opacity: 1; scale: 1.04; } }
+@keyframes ecLunge { 0% { scale: 1; opacity: 1; translate: -50% 0; } 25% { scale: 1.09; opacity: 1; translate: -50% 2vh; filter: brightness(1.6); }
+  100% { scale: 0.92; opacity: 0.5; translate: -50% -16vh; filter: brightness(1.1); } }
+.ecMotes { inset: 0; opacity: 0; transition: opacity 0.6s ease; }
+.ecMotes i { position: absolute; left: var(--x); bottom: -10px; width: var(--s); height: var(--s); border-radius: 50%; background: color-mix(in srgb, var(--glow) 60%, #fff);
+  box-shadow: 0 0 8px 2px var(--glow); animation: ecMote 4s linear infinite; animation-delay: var(--d); }
+@keyframes ecMote { from { translate: 0 0; opacity: 0; } 15% { opacity: 1; } to { translate: 6vw -95vh; opacity: 0; } }
+.ecLayer[data-stage='arrive'] .ecMotes, .ecLayer[data-stage='name'] .ecMotes, .ecLayer[data-stage='strike'] .ecMotes, .ecLayer[data-stage='after'] .ecMotes { opacity: 1; }
+
+/* the horn blown: it swings up, a cone of gold sound-light and a ring of force across the field */
+.ecHorn { left: 4vw; bottom: 22vh; width: 44vw; aspect-ratio: 1; opacity: 0; rotate: -30deg; translate: -20vw 10vh; transition: opacity 0.25s ease, rotate 0.45s cubic-bezier(.2,.9,.3,1.3), translate 0.45s cubic-bezier(.2,.9,.3,1.3); }
+.ecHornArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 12px rgb(255 214 120 / 0.9)); }
+.ecCone { position: absolute; left: 70%; top: -40%; width: 120%; height: 120%; transform-origin: 0 100%; rotate: -10deg; opacity: 0;
+  background: conic-gradient(from 25deg at 0 100%, transparent 0deg, rgb(255 226 150 / 0.7) 15deg, rgb(255 240 200 / 0.9) 25deg, rgb(255 226 150 / 0.7) 35deg, transparent 50deg); filter: blur(4px); }
+.ecRing { position: absolute; left: 85%; top: 5%; width: 20px; height: 10px; translate: -50% -50%; border-radius: 50%; border: 3px solid rgb(255 226 150 / 0.9); opacity: 0; }
+.ecLayer[data-stage='horn'] .ecHorn, .ecLayer[data-stage='circle'] .ecHorn { opacity: 1; rotate: -8deg; translate: 0 0; }
+.ecLayer[data-stage='circle'] .ecCone { animation: ecCone 0.6s ease-out both; }
+.ecLayer[data-stage='circle'] .ecRing { animation: ecRing 0.7s ease-out both; }
+.ecLayer[data-stage='arrive'] .ecHorn { opacity: 0; transition-duration: 0.4s; }
+@keyframes ecCone { from { opacity: 0; scale: 0.4; } 40% { opacity: 1; } to { opacity: 0.2; scale: 1.2; } }
+@keyframes ecRing { from { opacity: 1; width: 20px; height: 10px; } to { opacity: 0; width: 220vw; height: 110vw; } }
+
+/* the letterbox bars and the name, in the largest type in the game */
+.ecBars i { position: absolute; left: 0; right: 0; height: 11vh; background: #000; transition: translate 0.45s cubic-bezier(.2,.9,.3,1); box-shadow: 0 0 0 1px color-mix(in srgb, var(--glow) 50%, transparent); }
+.ecBars { inset: 0; }
+.ecBars .top { top: 0; translate: 0 -100%; }
+.ecBars .bot { bottom: 0; translate: 0 100%; }
+.ecLayer.full:is([data-stage='arrive'], [data-stage='name'], [data-stage='strike'], [data-stage='after']) .ecBars i { translate: 0 0; }
+.ecName { left: 0; right: 0; top: 12vh; display: flex; flex-direction: column; align-items: center; text-align: center; opacity: 0; padding: 0 12px; }
+.ecName small { font: 700 15px var(--body); letter-spacing: 0.2em; text-transform: uppercase; color: #fff3d6; text-shadow: 0 0 8px var(--glow), 0 2px 3px #000; }
+.ecName b { font: 400 clamp(52px, 17vw, 76px)/0.95 var(--display, var(--body)); color: #fff; letter-spacing: 0.04em;
+  text-shadow: 0 0 18px var(--glow), 0 0 40px var(--glow), 0 3px 4px #000; }
+.ecName em { margin-top: 6px; font: 700 20px var(--body); font-style: normal; letter-spacing: 0.12em; text-transform: uppercase; color: var(--glow); text-shadow: 0 2px 3px #000, 0 0 10px #000; opacity: 0; }
+.ecName q { margin-top: 6px; max-width: 320px; font: italic 500 14px/1.35 var(--body); color: #f3e7c9; text-shadow: 0 1px 3px #000; }
+.ecLayer[data-stage='name'] .ecName, .ecLayer[data-stage='strike'] .ecName { opacity: 1; animation: ecStamp 0.45s cubic-bezier(.2,1.4,.4,1) both; }
+.ecLayer[data-stage='strike'] .ecName em { opacity: 1; animation: ecStamp 0.35s cubic-bezier(.2,1.4,.4,1) both; }
+.ecLayer[data-stage='name'] .ecName em { opacity: 1; transition: opacity 0.4s ease 0.45s; }
+.ecLayer[data-stage='after'] .ecName, .ecLayer[data-stage='resume'] .ecName, .ecLayer[data-stage='out'] .ecName { opacity: 0; transition: opacity 0.6s ease; }
+@keyframes ecStamp { from { opacity: 0; scale: 1.8; filter: blur(4px); } to { opacity: 1; scale: 1; filter: blur(0); } }
+.ecLayer.short .ecName { top: 16vh; }
+.ecLayer.short .ecName b { font-size: clamp(40px, 12vw, 56px); }
+
+/* each beat's flash of the element (the element is placed new each beat, so its animation runs again) */
+.ecFlash { inset: 0; opacity: 0; background: radial-gradient(ellipse at 50% 38%, #fff, var(--glow) 30%, transparent 70%); mix-blend-mode: screen; }
+.ecLayer:is([data-stage='strike'], [data-stage='after']) .ecFlash { animation: ecFlash 0.42s ease-out both; }
+@keyframes ecFlash { from { opacity: 0.9; } to { opacity: 0; } }
+.ecSkip { right: 12px; bottom: calc(12vh + 8px); font: 600 12px var(--body); color: #f3e7c9cc; opacity: 0; transition: opacity 0.4s ease 1s; }
+.ecLayer:is([data-stage='name'], [data-stage='strike']) .ecSkip { opacity: 1; }
+
+/* the hit-stop: the cinematic's own motion holds still */
+.ecLayer.stop *, .ecLayer.stop { animation-play-state: paused !important; }
+/* reduced motion: nothing sweeps, swings or shakes; the figure and the words fade in and out, held still */
+.ecLayer.still *, .ecLayer.still { animation: none !important; }
+.ecLayer.still .ecFig, .ecLayer.still .ecHorn, .ecLayer.still .ecCircle, .ecLayer.still .ecBars i { transition: opacity 0.4s ease !important; translate: none; rotate: none; scale: none; }
+.ecLayer.still .ecFig { translate: -50% 0; }
+.ecLayer.still .ecCircle { translate: -50% -50%; }
+.ecLayer.still .ecBars i { display: none; }
+.ecLayer.still .ecRift { background-position: 100% 0; }
+.ecLayer.still:is([data-stage='strike']) .ecFlash { opacity: 0.35; transition: opacity 0.4s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .ehHorn .ehAura, .ehHorn .ehSheen, .ehMotes i { animation: none !important; }
+}
+
+/* ---- the shots (the owner's "more epic and movie-like": camera angles, close-ups, lines). The board's picture is framed by the page
+   (a scale about a point on its canvas); here, the figure's low angle as it rises, and the close-up on its face as it speaks. */
+/* a low angle: the figure towers, leaning over the camera, as it rises; then framed whole for its name */
+.ecFigArt { transform-origin: 50% 100%; transition: transform 0.5s cubic-bezier(.2,.8,.3,1); }
+.ecLayer[data-stage='arrive'] .ecFigArt { transform: perspective(700px) rotateX(-9deg) scale(1.2); transition: none; }
+.ecLayer[data-stage='arrive'] .ecFig { bottom: 2vh; }
+/* the close-up: a cut to its face (its painted card), pushing in on its eyes, its line under it like a film's subtitle */
+.ecClose { inset: 0; opacity: 0; overflow: hidden; background: #000; }
+.ecFace { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; scale: 1.25; }
+.ecLine { position: absolute; left: 0; right: 0; bottom: calc(11vh + 14px); margin: 0; padding: 0 18px; text-align: center;
+  font: italic 500 17px/1.35 var(--body); color: #fff6e0; text-shadow: 0 2px 4px #000, 0 0 12px #000; }
+.ecLine b { display: block; font: 700 12px var(--body); font-style: normal; letter-spacing: 0.2em; text-transform: uppercase; color: var(--glow); }
+.ecLayer[data-stage='close'] .ecClose { opacity: 1; }
+.ecLayer[data-stage='close'] .ecFace { animation: ecPush 0.8s cubic-bezier(.2,.7,.3,1) both; }
+.ecLayer[data-stage='close'] .ecLine { animation: ecSay 0.35s ease-out both; }
+@keyframes ecPush { from { scale: 1.25; filter: brightness(0.7); } to { scale: 1.55; filter: brightness(1.05); } }
+@keyframes ecSay { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+.ecLayer[data-stage='close'] .ecName { opacity: 0; transition: none; animation: none; }
+/* the wide shot as it strikes: only the attack's name, large */
+.ecLayer[data-stage='strike'] .ecName small, .ecLayer[data-stage='strike'] .ecName b { display: none; }
+.ecLayer[data-stage='strike'] .ecName em { font-size: 26px; }
+.ecLayer.short .ecClose { display: none; }

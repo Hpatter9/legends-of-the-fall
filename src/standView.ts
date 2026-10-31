@@ -51,6 +51,9 @@ import { clockSeed } from './modes';
 import { settings } from './settings';
 import { rulerOf, rulerWords } from './rulerRules';
 import { noteQuests, standFight } from './sim/quests';
+import { EidolonCall } from './eidolonCall';
+import { addHorn, standHornGain } from './sim/warHorn';
+import { BOSS_EVERY } from './sim/stand';
 
 /** What the page lends the Last Stand: the canvas, the save, the way home. */
 export interface StandHost {
@@ -155,6 +158,8 @@ export class StandView {
   private ultm!: UltMoments;
   private shown = new Map<string, string>();
   private summary: StandSummary | null = null;
+  /** EIDOLONS: the War Horn and the Eidolon's call (`eidolonCall.ts`). */
+  private eid!: EidolonCall;
 
   constructor(host: StandHost) {
     this.host = host;
@@ -281,6 +286,28 @@ export class StandView {
     // (the king's spells as orbs under the top bar, with the Auto switch at the row's end: BATTLE-HUD)
     const orbs = el('div', 'stOrbs');
     orbs.append(spells, this.hud.autoEl);
+    // (EIDOLONS: the War Horn at the row's left end; the Last Stand is one long fight, so it is blown once a run)
+    this.eid = new EidolonCall({
+      meta: () => this.host.meta(),
+      save: () => saveMeta(this.host.meta()),
+      fx: this.fx,
+      anchor: (id) => {
+        const sp = this.sprites.get(id);
+        if (!sp) return null;
+        const k = this.world.scale.x;
+        return { x: this.world.x + sp.x * k, y: this.world.y + (sp.y - sp.tall / 2) * k };
+      },
+      tile: (u, v) => {
+        const b = this.state?.b;
+        const t = b ? tileAt(b.board, u, v) : undefined;
+        if (!t) return null;
+        const [wx, wy] = at(u, v, t.h);
+        const k = this.world.scale.x;
+        return { x: this.world.x + wx * k, y: this.world.y + wy * k };
+      },
+      stage: () => this.host.app.canvas,
+    });
+    orbs.prepend(this.eid.horn.root);
     const offer = el('div', 'stOffer');
     const bar = el('div', 'stBar');
     const btn = (id: string, label: string, run: () => void) => {
@@ -367,6 +394,7 @@ export class StandView {
     const s = this.s;
     if (!s || !startFirstWave(s)) return;
     this.ultm.warm(s.b);
+    this.eid.arm(s.b);
     this.music(s.run.seed);
     this.picked = null;
     this.drawMarks();
@@ -1131,11 +1159,14 @@ export class StandView {
     const t0 = performance.now();
     // (a skill's sheet open on the hero rows holds the fight too: BATTLE-HUD)
     const live = s.phase === 'wave' || s.phase === 'break' || s.phase === 'retreat';
-    const fighting = live && !this.hold && !this.paused && !this.hud.holding && !this.info.isOpen;
+    const fighting = live && !this.hold && !this.paused && !this.hud.holding && !this.info.isOpen && !this.eid.sheetOpen;
+    // (EIDOLONS: the call's cinematic moves on in real time, the fight held under it but for the strike's one tick)
+    this.eid.see(s.b);
+    this.eid.frame(dt, !live);
     // (an ultimate's moment (ULT-CUTIN) moves on in real time; while it holds the fight only its effects move)
     if (live) this.ultm.frame(s.b, dt, !fighting);
     else if (this.ultm.queue.current) this.ultm.clear();
-    if (fighting && this.ultm.queue.holdsBattle) {
+    if (fighting && (this.ultm.queue.holdsBattle || this.eid.holds)) {
       this.acc = 0;
       if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
       this.hud.refresh(s.b);
@@ -1146,12 +1177,14 @@ export class StandView {
       const ts = performance.now();
       // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
       s.b.autoUlt = !!this.host.meta().ultAuto;
-      while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle) {
+      if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
+      while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = s.b.units.length;
         const events = stepStand(s);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
         if (fullScene(settings().ultFull, !!this.host.meta().ultAuto) && this.ultm.note(s.b, events, s.b.units.slice(born))) this.acc = 0;
+        if (this.eid.noteEvents(s.b, events)) this.acc = 0;
         this.hud.onEvents(s.b, events);
         for (const e of events) {
           if (e.kind === 'ultLapse') this.hud.lapse(e.by);
@@ -1770,6 +1803,8 @@ export class StandView {
     const first = !s.run.summary;
     this.summary = settleStand(m, s.run, s.run.armies);
     // (the waves the run cleared count for the quests taken, once: QUESTS)
+    // (EIDOLONS: the run fills the War Horn at the Stand's share, its boss waves and its foes, at most 300; none if it was blown in it)
+    if (first && this.summary) addHorn(m, standHornGain(Math.floor(this.summary.cleared / BOSS_EVERY), Math.max(0, this.summary.kills - Math.floor(this.summary.cleared / BOSS_EVERY)), s.b.eidolon?.called !== undefined));
     if (first && this.summary) this.host.questsDone?.(noteQuests(m, standFight(this.summary.cleared, { best: this.summary.best, act: this.summary.act, held: this.summary.holds })));
     saveMeta(m);
     dropStand();

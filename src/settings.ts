@@ -40,11 +40,14 @@ export interface Settings {
   /** Whether a hero's ultimate plays its full moment (ULT-CUTIN, docs/notes/battle-hud.md): the fight pauses, a slash of the hero's art crosses
    *  the screen with the ultimate's name and the board dims round the caster. Off, the short one: a quick banner while the fight runs on. */
   ultFull: boolean;
+  /** Whether an Eidolon's call plays its full cinematic (EIDOLONS, `eidolonCall.ts`): the horn, the circle, the sky torn open, the figure, the
+   *  name and the attack in beats. Off, the short one (about two seconds). An Eidolon's first call always plays in full. */
+  eidolonFull: boolean;
   /** Duchess's equipped unlockable cosmetic accessory. */
   duchessHat: DuchessCosmeticId;
 }
 
-export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, duchessHat: 'none' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, eidolonFull: true, duchessHat: 'none' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -71,6 +74,7 @@ export function parseSettings(raw: string | null): Settings {
     quips: flag(saved.quips, DEFAULTS.quips),
     cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
     ultFull: flag(saved.ultFull, DEFAULTS.ultFull),
+    eidolonFull: flag(saved.eidolonFull, DEFAULTS.eidolonFull),
     duchessHat: validHat(saved.duchessHat),
   };
 }
@@ -189,6 +193,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
         toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
         toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
         toggleRow('Full ultimate scenes', 'On, the fight pauses as an ultimate fires: the hero slashes across the screen, its name shows and the board dims round the caster. Off, a quick banner while the fight runs on. With Auto on, always the quick banner', 'ultFull', s.ultFull),
+        toggleRow('Full Eidolon calls', 'On, an Eidolon called by the War Horn plays its whole scene: the horn, the summoning circle, the sky torn open and its attack in beats. Off, a short version of about two seconds. The first call of each Eidolon always plays in full', 'eidolonFull', s.eidolonFull),
         resetTipsRow(),
       ];
     case 'ruler':
@@ -442,7 +447,7 @@ function speedRow(value: 1 | 2): HTMLElement {
   return r;
 }
 
-function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics' | 'ultFull', value: boolean): HTMLElement {
+function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics' | 'ultFull' | 'eidolonFull', value: boolean): HTMLElement {
   const [r] = row(title, hint);
   const b = document.createElement('button');
   b.className = value ? 'toggle on' : 'toggle';
