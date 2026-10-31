@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.286.0',
+    date: '2026-10-31',
+    title: 'Hester\'s Stall: books, gear and repairs',
+    notes: ['Hester\'s Stall opens at the camp: skill books to study, gear, tomes and chests. Sell what you don\'t need; gear now wears in battle and is repaired here.'],
+  },
+  {
     version: '0.285.0',
     date: '2026-10-31',
     title: 'The Calamity\'s battlefields come alive',
