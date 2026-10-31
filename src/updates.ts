@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.276.0',
+    date: '2026-10-31',
+    title: 'Map, walk and Paladin fixes',
+    notes: ['The Calamity map no longer stays over a new fight. Heroes all walk briskly to the next section, uphill too. The Paladin\'s sprite now matches his awakened form.'],
+  },
+  {
     version: '0.275.0',
     date: '2026-10-31',
     title: 'Upgrades at a glance',

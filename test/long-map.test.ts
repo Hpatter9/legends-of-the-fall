@@ -6,7 +6,7 @@ import { footDims, liesBehind, turnDir, turnTile, unturnTile, type Rot } from '.
 import { armyRun, chainOf, newRun, startStage } from '../src/sim/run';
 import { ARMIES } from '../src/sim/armies';
 import { mixSeed } from '../src/sim/rng';
-import { dropDelay, dropEnd, dropPose, FALL_MS, FALL_PX, stepMs } from '../src/render/dropRules';
+import { dropDelay, dropEnd, dropPose, FALL_MS, FALL_PX, WALK_STEP_MS } from '../src/render/dropRules';
 import { depthIn, facesRight, inFrame, project, rawAt } from '../src/render/iso';
 
 const road = (seed: number, n = 15) => buildChain(seed, n, 'highlands', (w) => mixSeed(seed, 0x57a6e, w), (w) => w % 5 === 0);
@@ -287,10 +287,38 @@ test('columns fall one row after another from the joined edge, each lands once a
   assert.ok(dropEnd() < 2000, 'the whole section is down in under two seconds');
 });
 
-test('a walk step lasts a hero\'s own pace, within bounds', () => {
-  assert.equal(stepMs(100), 230);
-  assert.equal(stepMs(10000), 420);
-  assert.ok(stepMs(700) > 230 && stepMs(700) < 420);
+// (the owner's ask changed this rule: a step between waves once lasted a hero's own pace (230 to 420 ms); now every hero walks at
+// the same brisk pace, and a climb costs no more than a level step)
+test('every hero walks between waves at the same brisk pace', () => {
+  assert.ok(WALK_STEP_MS > 0 && WALK_STEP_MS <= 230);
+});
+
+test('the walk between waves takes the fewest tiles: a hill in the way is walked over, not round', () => {
+  let climbs = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const c = road(seed, 6);
+    for (let k = 1; k < c.length; k++) {
+      const { board, minU, minV } = seam(c[k - 1], c[k]);
+      const from = { u: 3, v: 8 };
+      if (!standable(tileAt(c[k - 1].board, from.u, from.v))) continue;
+      for (let v = D - DEPLOY_ROWS; v < D; v++)
+        for (let u = 0; u < W; u++) {
+          if (!standable(tileAt(c[k].board, u, v))) continue;
+          const p = walkAcross(c[k - 1], c[k], from, { u, v });
+          const old = walkAcross(c[k - 1], c[k], from, { u, v }, 2);
+          // (never longer than a walker who must go round the hills, and always a tile at a time)
+          assert.ok(p.length <= old.length, `seed ${seed}: ${p.length} > ${old.length}`);
+          for (let i = 1; i < p.length; i++) {
+            assert.equal(Math.abs(p[i].u - p[i - 1].u) + Math.abs(p[i].v - p[i - 1].v), 1);
+            const a = board.tiles[(p[i - 1].v - minV) * board.w + p[i - 1].u - minU];
+            const b = board.tiles[(p[i].v - minV) * board.w + p[i].u - minU];
+            assert.ok(b.ground !== 'deep' && !b.scene, 'the walk never crosses deep water or scenery');
+            if (b.h - a.h > 2) climbs++;
+          }
+        }
+    }
+  }
+  assert.ok(climbs > 0, 'some walk climbs a step a slow climber could not');
 });
 
 test('a finished section further from the screen than the host is drawn behind it, a nearer one in front', () => {
