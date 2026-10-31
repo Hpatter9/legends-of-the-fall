@@ -658,6 +658,23 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.scatter(t + 0.05, 0.6, 9, 0.1, 2400);
     s.clang(t + 0.04, 880, 1.2, 0.08);
   },
+  // (BOSS-BIG: a boss's signature. The windup, a low growl that swells under a dark scrape (the ultimate's slash an octave and more down);
+  // the blow, a sub-deep boom with a grinding crack and a long dark tail, heavier than the ultimate's)
+  bossSlash: (s, t) => {
+    s.note(t, 55, 0.85, 0.3, 'sawtooth', 82);
+    s.note(t, 58, 0.85, 0.22, 'square', 87);
+    s.hiss(t, 0.6, 320, 'bandpass', 0.38, 1400, 3);
+    s.thump(t + 0.05, 70, 0.5, 0.35, 30);
+    s.ring(t + 0.2, 392, 0.6, 0.05);
+  },
+  bossImpact: (s, t) => {
+    s.thump(t, 42, 1.5, 0.95, 12);
+    s.thump(t + 0.03, 85, 0.6, 0.5, 30);
+    s.snap(t, 0.55, 1200);
+    s.hiss(t, 1.1, 300, 'lowpass', 0.5, 60);
+    s.scatter(t + 0.06, 0.7, 10, 0.12, 1600);
+    s.note(t + 0.05, 49, 1.2, 0.18, 'sawtooth', 36);
+  },
   riseSummon: (s, t) => {
     [220, 277, 330, 440].forEach((f, i) => s.pad(t + i * 0.12, f, 2.2, 0.07, 'triangle', 1600, f * 1.5));
     s.hiss(t, 2.2, 550, 'bandpass', 0.08, 3800, 4);

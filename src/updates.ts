@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.270.0',
+    date: '2026-10-31',
+    title: 'Bosses hit back',
+    notes: ['Bosses now unleash huge named attacks: red marks warn where they\'ll land, your heroes try to step out, and Shield, Blink and Heal can answer.', 'Bosses enrage if a fight drags on: faster, harder, wider.'],
+  },
+  {
     version: '0.269.0',
     date: '2026-10-31',
     title: 'Painted equipment',

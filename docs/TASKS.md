@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### BOSS-BIG — Bosses with huge attacks, and counterplay
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/boss-big-attacks`, `/home/user/lotf-boss-big` (from main 0.263.0; main 0.267.0 merged in).
+- **Goal:** the owner's ask ("bosses need bigger attacks and to feel more powerful"), decided as harder with counterplay: every boss's one or two telegraphed signature attacks, the heroes stepping off the marks, the king's spells answering, a red and black cut-in, the ultimate-epic blow; then re-tuned so the armies stay winnable.
+- **Scope:** new `src/sim/bossAttacks.ts`, `src/bossBigRules.ts`, `src/bossMoment.ts`, `src/bossBig.css`, `src/render/bossFx.ts`, `tools/boss-big/`, `test/boss-big*.test.ts`; hooks in `src/sim/battle.ts`, `src/render/fx.ts`, `src/main.ts`, `build.mjs`, `src/render/soundRules.ts`, `src/render/audioProcessors.ts`, `tools/audio-mix/targets.mjs`; the identity tests switch it off; a crash guard in `src/sim/toolkit/auras.ts`.
+- **Status:** ready for review. [Note](notes/boss-big-attacks.md); screenshots `samples/boss-big-*.png`.
+
 ### GEAR-ICONS — The painted equipment icons in the game
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/gear-icons-painted`, `/home/user/lotf-gear-icons` (from main 0.263.0, main 0.267.0 merged).

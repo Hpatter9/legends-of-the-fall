@@ -79,6 +79,8 @@ import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
+import { BossMoments } from './bossMoment';
+import { heldCut } from './bossBigRules';
 import { fullScene } from './ultMomentRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
@@ -932,23 +934,28 @@ class Game {
     const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding;
     if (b.phase === 'fight') this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
+    // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
+    if (b.phase === 'fight') this.bossm.frame(dt, !!held);
+    else this.bossm.clear();
     if (b.phase === 'fight' && held) {
       // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
-    } else if (b.phase === 'fight' && this.ultm.queue.holdsBattle) {
+    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.bossm.holds)) {
       // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
       this.acc = 0;
-      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
+      // (a boss's cut-in holds the board still too, so its marks fill with the windup's own time)
+      if (this.ultm.queue.runsEffects && !this.bossm.holds) this.fx.step(Math.min(dt, 250));
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
       b.autoUlt = this.ultAutoOn();
-      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle) {
+      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.bossm.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
         if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
+        if (this.bossm.note(b, events, heldCut(settings().ultFull, this.ultAutoOn()))) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
@@ -1556,6 +1563,8 @@ class Game {
   private hud!: FightHud;
   /** The ultimates' moments (`ultMoment.ts`, ULT-CUTIN): the slash, the name and the dim, the fight held while they play. */
   private ultm!: UltMoments;
+  /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
+  private bossm = new BossMoments();
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
