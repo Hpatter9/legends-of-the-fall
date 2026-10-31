@@ -46,9 +46,9 @@ wins. The cells are the earlier notes' own:
 | The Wildwood `start` | 2.01 | **2.52** | |
 | The Labyrinth `start` | 4.85 | **7** | its Hard lift 1.6 to **1.86**, so Hard stays over the tougher Normal |
 | Ogre Clans `start` | 9.3 | **12.2** | |
-| Infernal Host `start` | 12.5 | **14.9** | |
-| Yokai Night Parade `start` | 14.2 | **15** | |
-| Golem Forge `start` | 14.6 | **16.8** | its bosses' fixed strength makes it move less with `start` (16 still read 1.7 tries), and it must stay over the Yokai |
+| Infernal Host `start` | 12.5 | **16.2** (14.9 first, then the owner's answer below) | Hard to Legendary lifts 3.27, 2.51, 0.76 to **3.59, 2.75, 0.8** |
+| Yokai Night Parade `start` | 14.2 | **18.3** (15 first) | lifts 3.99, 3.06, 0.88, 0.78 to **4.35, 3.34, 0.96, 0.79** |
+| Golem Forge `start` | 14.6 | **19.8** (16.8 first) | lifts 3.8, 2.92, 0.84, 0.73 to **4.36, 3.34, 0.96, 0.79**; not above 19.8, where the strong party of `test/army-pace.test.ts` (level 80, every castle level) stops clearing it in three tries |
 | `xpStart` of every army | | raised with `start` (first four: the old `start`) | a run pays the XP it did, so the level pace is as it was (`armyXpShare`) |
 | A tier's `answer` (Hard, Elite, Legendary, Mythic) | none, none, 2.8, 2.76 | **1.18, 1.18, 3.3, 3.26** | one x1.18 on every tier above Normal; XP is taken back out as before. Elite at x1.12 put its attack under Hard's on the last three armies, so one factor for all four keeps their order as it was |
 | `DAILY_START` | 0.565 | **0.76** | the daily's foes, the bosses with them |
@@ -129,7 +129,28 @@ Changed because the rule did:
   `DAILY_START` and `HALL_EASE`, which are constants. Every other scenario keeps its hash: the proofs put the raised army strengths and
   `CAL_SCALE.start` back by value, as they already did for LATE-RETUNE, and their bots cast nothing.
 
-## For the owner
+## The owner's answers: the late three harder again
+
+The owner kept the level-1 rule (the Undead Legion stays at about 4.1 tries at level 8) and the harder levelled daily, and asked for the last
+three armies to be **harder again, back to LATE-RETUNE's figures with hearts** (the Infernal Host about 5 tries at 55, the Yokai about 10 at 65,
+the Golem Forge about 8 at 65), measured with the casting bot. Their Normal `start` was bisected (`tune`, 12 saves) and checked on 24 saves; each
+`xpStart` rose with it (a run pays its old XP), and their tier lifts were raised only as far as keeping every tier 3% over the one below in hp and
+attack needs (the step LATE-RETUNE used), from Hard up.
+
+| Cell (casting bot, hearts, 24 saves) | Main, spell-less | First retune | LATE-RETUNE's figure | Now |
+| --- | --- | --- | --- | --- |
+| Infernal Host, level 55 | 3.8 | 4.4 | 4.8 | 4.3 (16.4 read 5.9) |
+| Yokai Night Parade, level 65 | 3.6 | 3.1 | 11.9 (83%) | 11.7 (83%) |
+| Golem Forge, level 65 | 2.3 | 2.0 | 7.6 | 6.6 (96%) (8.8 on 12 saves) |
+| Infernal Host, level 58, no hearts (12 saves) | 9.7 | 8.3 | | 12.4 (83%) at 15.6 |
+| Golem Forge, level 74, no hearts (12 saves) | 2.5 | 2.8 | | 6.3 |
+
+Their harder tiers are tougher with the lifts (every talent, a maxed castle, 8 saves): the Infernal Host's Elite at 45 18.4 tries (50%; it was
+10.3), Legendary at 65 5.0 (2.5), Mythic at 100 3.0 (3.0); the Yokai's Mythic at 100 10.6 (5.9); the Golem Forge's Hard at 45 26 (0%), Legendary
+at 65 14.9 (50%; 11.8), Mythic at 100 4.1 (2.1). The owner's call that Legendary and Mythic stay hard holds; the Yokai's Mythic is now a wall at
+level 100 for this bot. No other army moved, so the Ogres and the first army's stars are as in the tables above.
+
+## For the owner (asked before the answers above)
 
 1. **The Undead Legion** is a little over its band at its own level (4.1 tries at level 8, where the band is 2 to 3.5), because your rule that a
    level-1 party cannot grind through any army but the first needs `start` 1.7 once Auto casts (1.65 is ground through on one save). It is still
