@@ -10,15 +10,12 @@ import { ultimateOf } from './abilities';
 import { heroKitOf, ultFull } from './heroKits';
 import { castSpell, type SpellId } from './spells';
 import { isSilenced } from './ailments';
+import { canCallEidolon, strikeEidolon } from './eidolons';
 
 /** A tap waiting for the next tick. */
-export interface Order {
-  t: number;
-  kind: 'ult';
-  unit: number;
-}
-/** What a fight's log keeps: each ultimate ordered, and each king's spell cast, at the battle time it was asked for. */
-export type LogEntry = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'spell'; id: SpellId; u: number; v: number };
+export type Order = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'eidolon'; id: string };
+/** What a fight's log keeps: each ultimate ordered, each king's spell cast, and the War Horn blown (EIDOLONS), at the battle time it was asked for. */
+export type LogEntry = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'spell'; id: SpellId; u: number; v: number } | { t: number; kind: 'eidolon'; id: string };
 
 /** How long a queued ultimate waits for its hero to be free and to have something to hit, before the order lapses (the meter stays full). */
 export const ORDER_WAIT_MS = 3000;
@@ -29,7 +26,7 @@ export function canOrderUltimate(b: Battle, unit: number): boolean {
   if (b.phase !== 'fight') return false;
   const u = b.units.find((x) => x.id === unit);
   if (!u || !u.alive || !heroKitOf(u) || !ultimateOf(u) || !ultFull(u)) return false;
-  return u.ultOrder === undefined && !b.orders?.some((o) => o.unit === unit);
+  return u.ultOrder === undefined && !b.orders?.some((o) => o.kind === 'ult' && o.unit === unit);
 }
 
 /** The tap on a hero's portrait: queue its ultimate for the next tick. Refuses (false, nothing changes) unless `canOrderUltimate`. */
@@ -40,11 +37,24 @@ export function orderUltimate(b: Battle, unit: number): boolean {
   return true;
 }
 
+/** The War Horn blown in a fight (EIDOLONS, `eidolons.ts`): queue the Eidolon's call for the next tick. Refuses (false, nothing changes)
+ *  unless `canCallEidolon` and `id` is the Eidolon the fight was armed with. Only the player's tap calls it: no bot ever does. */
+export function orderEidolon(b: Battle, id: string): boolean {
+  if (!canCallEidolon(b) || b.eidolon!.id !== id) return false;
+  (b.orders ??= []).push({ t: b.t, kind: 'eidolon', id });
+  return true;
+}
+
 /** At the start of a tick: the orders waiting are put on their heroes (and logged); an order that has waited too long, or whose hero fell, lapses. */
 export function applyOrders(b: Battle, out: BattleEvent[]): void {
   const due = b.orders ?? [];
   b.orders = undefined;
   for (const o of due) {
+    // (the War Horn blown: the Eidolon strikes now, at the start of this tick, before anyone acts; EIDOLONS)
+    if (o.kind === 'eidolon') {
+      if (strikeEidolon(b, out)) (b.log ??= []).push({ t: o.t, kind: 'eidolon', id: o.id });
+      continue;
+    }
     const u = b.units.find((x) => x.id === o.unit);
     (b.log ??= []).push({ t: o.t, kind: 'ult', unit: o.unit });
     if (u && u.alive && ultFull(u)) u.ultOrder = b.t;
@@ -65,6 +75,7 @@ export function replayLog(b: Battle, log: readonly LogEntry[]): void {
   for (const e of log) {
     if (e.t !== b.t) continue;
     if (e.kind === 'ult') orderUltimate(b, e.unit);
+    else if (e.kind === 'eidolon') orderEidolon(b, e.id);
     else castSpell(b, e.id, e.u, e.v);
   }
 }
