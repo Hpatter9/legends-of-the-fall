@@ -51,6 +51,7 @@ import { clockSeed } from './modes';
 import { settings } from './settings';
 import { rulerOf, rulerWords } from './rulerRules';
 import { noteQuests, standFight } from './sim/quests';
+import { noteChains } from './sim/eidolonChains';
 import { EidolonCall } from './eidolonCall';
 import { addHorn, standHornGain } from './sim/warHorn';
 import { BOSS_EVERY } from './sim/stand';
@@ -1805,7 +1806,12 @@ export class StandView {
     // (the waves the run cleared count for the quests taken, once: QUESTS)
     // (EIDOLONS: the run fills the War Horn at the Stand's share, its boss waves and its foes, at most 300; none if it was blown in it)
     if (first && this.summary) addHorn(m, standHornGain(Math.floor(this.summary.cleared / BOSS_EVERY), Math.max(0, this.summary.kills - Math.floor(this.summary.cleared / BOSS_EVERY)), s.b.eidolon?.called !== undefined));
-    if (first && this.summary) this.host.questsDone?.(noteQuests(m, standFight(this.summary.cleared, { best: this.summary.best, act: this.summary.act, held: this.summary.holds })));
+    if (first && this.summary) {
+      const sf = standFight(this.summary.cleared, { best: this.summary.best, act: this.summary.act, held: this.summary.holds });
+      this.host.questsDone?.(noteQuests(m, sf));
+      // (EIDOLON-CHAINS: a chain's part may ask for the Last Stand too; its piece shows in the quest log)
+      noteChains(m, sf);
+    }
     saveMeta(m);
     dropStand();
     const end = this.parts.end;

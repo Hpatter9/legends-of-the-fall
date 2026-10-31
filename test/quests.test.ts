@@ -257,7 +257,8 @@ test('the save: quests survive a save and load; an old save loads with nothing b
   assert.deepEqual(s.offers, []);
   assert.deepEqual(s.done, ['cartersWheels']);
   assert.equal(s.tracked, undefined);
-  assert.deepEqual((s as unknown as { chains: unknown }).chains, { a: 1 }, "a later batch's state is kept");
+  // (EIDOLON-CHAINS: the chains' state is now read by its own rules: a chain not in the game is dropped; it was kept raw until it came)
+  assert.equal(s.chains, undefined, 'a chain not in the game is dropped');
   assert.equal(readQuests(null), undefined);
   assert.equal(newMeta(1).quests, undefined);
 });
