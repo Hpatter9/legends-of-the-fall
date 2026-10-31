@@ -371,6 +371,19 @@ After an Eidolon's painting crosses the screen, its sprite comes onto the board 
 
 The whtdragon sprites carry the same licence note as the wolves above: check whtdragon's posted terms of use before any public release.
 
+## The Eidolons' strike effects (`src/art/eidolons/fx/`; `tools/eidolon-fx/cut_fx.py`, EIDOLON-FX)
+
+- The pillars, bursts, aftershocks and aftermaths (`askel-pillar`, `fire-burst`, `nivra-pillar`, `ice-burst`, `aurelan-pillar`,
+  `light-burst`, `voltara-pillar`, `lightning-burst`, `gorm-pillar`, `gorm-ring`, `earth-burst`, `vaelkhar-pillar`, `dark-burst` and the
+  rest, `.webp`): cut from the game's own painted spell sheets (`art-source/spell-fx/`, credited above under spell and movement effects:
+  the fire, ice, light and stone walls, the ultimate's element bursts, the orbital strike, the storm cloud's bolt, the divine smite, the
+  lightning storm, the launch ring, the fissure and the reign of terror), resized to 160 px frames; Aurelan's beam recoloured gold and
+  Vaelkhar's fire black and violet. Original art for this game.
+- The shared impact flash and shockwave ring (`impact-ring.png`): generated for this project with PixelLab's VFX artist
+  (`art-source/eidolons/fx/raw/impact-ring.png`, its job in `impact-ring-result.json`), its eight frames doubled by whole pixels. Original
+  art for this game.
+- Prompts for Gemini-generated replacements, not yet made (the key's image quota was 0): `art-source/eidolons/fx/PROMPTS.md`.
+
 ## The summons' own sheets (`src/art/units/summon_*.png`; `tools/summon-art/cut.py`, SUMMON-ART)
 
 - The wolves and the dire wolf (`summon_wolf.png`, `summon_wolf_white.png`, `summon_direwolf.png`): the grey, white and black wild dogs of

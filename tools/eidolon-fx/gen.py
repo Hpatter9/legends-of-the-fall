@@ -1,4 +1,4 @@
-# EIDOLON-FX: generates the strike effects' sheets with the Gemini image API (docs/notes/eidolon-fx.md; the prompts are in
+# EIDOLON-FX: generates the strike effects' sheets with the Gemini image API, once its key has an image quota (docs/notes/eidolon-fx.md; the prompts are in
 # art-source/eidolons/fx/PROMPTS.md). The network proxy adds the key. Writes art-source/eidolons/fx/raw/<name>.png.
 #   python3 tools/eidolon-fx/gen.py [<name>...]
 import base64, json, sys, os, urllib.request
