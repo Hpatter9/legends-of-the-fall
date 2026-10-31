@@ -634,3 +634,12 @@ Each batch is a branch of its own, measured and noted before the next; each runs
 Documentation only: no game code changed, so no tests or builds were run. The links were checked, the 135 skills' starting numbers were
 checked against section 3's rules by a script (each in its class's ranges, every jab under its pool's income, every kit's demand between
 1.4 and 3.5), and the third skills' names against the skill keys, talents, gear abilities and foes in the code.
+
+## The owner's answers (31 October 2026)
+
+1. Skill 3 opens at level 20: yes.
+2. The ultimate does **not** level by use: it stays fixed; only the three skills level.
+3. A rank gives hp and attack only, with the larger step: yes.
+4. **No** head start for existing saves: every skill starts at Level 1 and grows from use.
+5. The Illusionist's decoys stay short and end with the wave: yes.
+6. Skill levels earned by use do **not** apply in the spire and the Calamity: those modes use base skills (Level 1), so everyone starts even.
