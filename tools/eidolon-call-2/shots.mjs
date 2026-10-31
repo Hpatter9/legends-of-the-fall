@@ -108,10 +108,10 @@ async function intoFight(page, party) {
 
 const shot = (page, name) => page.screenshot({ path: `${OUT}/eidolon-call2-${name}${TAG}.png`, timeout: 180000 });
 
-// (the frames: the horn, the pass at three points, the build-up, the impact, the aftermath, and the fight running again)
+// (the frames: the horn, the pass at three points, the sprite coming on, the build-up, the impact, the aftermath, and the fight running again)
 const FRAMES = SHORT
-  ? [['horn', 60], ['pass1', 260], ['pass2', 480], ['pass3', 720], ['build', 1150], ['impact', 1420], ['after', 1850], ['resumed', 2600]]
-  : [['horn', 260], ['pass1', 820], ['pass2', 1180], ['pass3', 1560], ['build', 2300], ['impact', 2620], ['after', 3350], ['resumed', 4300]];
+  ? [['horn', 60], ['pass1', 250], ['pass2', 450], ['pass3', 680], ['sprite', 1000], ['build', 1300], ['impact', 1520], ['after', 1900], ['resumed', 2700]]
+  : [['horn', 260], ['pass1', 700], ['pass2', 1050], ['pass3', 1400], ['sprite', 2000], ['build', 2450], ['impact', 2800], ['after', 3500], ['resumed', 4400]];
 for (const pick of PICKS) {
   try {
     const { ctx, page } = await open({ horn: 1000, bound: [pick], chosen: pick, confirmed: true, ...(SHORT ? { seen: [pick] } : {}) }, true);
@@ -126,6 +126,8 @@ for (const pick of PICKS) {
       at = t;
       await page.waitForTimeout(120);
       await shot(page, `${pick}-${name}`);
+      // (what of the cinematic's own layer shows: the elements by class, solid enough to see)
+      if (process.env.DEBUG) console.log(name, await page.evaluate(() => { const n = {}; for (const e of document.querySelectorAll('.ecBoard > *')) { const cs = getComputedStyle(e); if (cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05) { const k = e.className.split(' ')[0]; n[k] = (n[k] ?? 0) + 1; } } const br = document.querySelector('.ecBreath'); return JSON.stringify({ n, breath: br && { w: br.style.width, h: br.style.height, t: br.style.transform, v: br.style.visibility } }); }));
     }
     const left = await page.evaluate(() => ({ phase: window.__game.b.phase, called: window.__game.b.eidolon?.called, foes: window.__game.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => `${u.def} ${Math.round((u.hp / u.maxHp) * 100)}%`), overflow: document.documentElement.scrollWidth > innerWidth }));
     console.log('ok', pick, JSON.stringify(left));

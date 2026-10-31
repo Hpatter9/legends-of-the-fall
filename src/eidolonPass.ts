@@ -216,3 +216,111 @@ export function runFrom(src: AttackSource, marks: readonly Mark[], exit: { x: nu
 /** How many motes of the wake fall behind it per second as it passes, and the most foes a run goes to (battery saver: fewer). */
 export const wakeRate = (saver: boolean, reduced: boolean): number => (reduced ? 0 : saver ? 7 : 18);
 export const maxRuns = (saver: boolean): number => (saver ? 5 : 10);
+
+/* ------------------------------------------------------------------ the sprite on the board (the owner's addition) */
+
+/** "If there are any sprites we can draw from one of our sources, we should make a sprite version of the summons that actually perform the
+ *  attack after the opening scene." After the painting has crossed and gone, the Eidolon's sprite comes onto the board from the side it left
+ *  by, stands before the foes, and its attack frame is the strike. A sheet: frames `fw` x `fh` in rows of `perRow`, `rows` rows; the walk
+ *  and attack rows (a three-frame pack sprite uses its one row for both, its attack played faster with a lunge); `hit` is the attack frame
+ *  the blow lands on. `px` is its drawn height. `fromSprite`: the element runs from its mouth or fists (else from the trail, sky or edge,
+ *  the sprite calling it). Voltara has none (no pack has a copper goddess): her attack stays as it was, from her sparks. */
+export interface EidolonSprite {
+  /** The sheet's key (`eidolonCall.ts` maps it to the picture). */
+  sheet: 'askel' | 'golem_stone' | 'nivra' | 'aurelan' | 'vaelkhar';
+  fw: number;
+  fh: number;
+  perRow: number;
+  rows: number;
+  walk: { row: number; n: number };
+  attack: { row: number; n: number };
+  hit: number;
+  facesRight: boolean;
+  px: number;
+  /** How it comes on: running along the ground, or flying down from the top. */
+  comes: 'run' | 'fly';
+  fromSprite: boolean;
+  /** Where the element leaves it, as shares of its drawn box from its top left (the mouth, the fists). */
+  mouth: readonly [number, number];
+  /** Its glow in the element's colour (a CSS filter). */
+  glow: string;
+  /** A row it leaves by (Askel's leap), else it walks back out. */
+  leave?: { row: number; n: number };
+  /** A breath that starts before the strike, so its flame has reached the foes as the blow lands: the share of the build-up before the
+   *  strike its attack frame begins, and the flame's own strip (frames `fw` x `fh`, its root at the left middle; drawn from the mouth across
+   *  the foes). The breathing frames (from `hit`) loop while it breathes. */
+  lead?: number;
+  breath?: { fw: number; fh: number; n: number };
+}
+
+export const SPRITES: Readonly<Record<string, EidolonSprite | null>> = {
+  // (the owner's own generated sheet: tools/eidolon-call-2/cut_askel.py; rows run, breath, idle, leap)
+  askel: { sheet: 'askel', fw: 111, fh: 97, perRow: 6, rows: 4, walk: { row: 0, n: 6 }, attack: { row: 1, n: 6 }, hit: 3, facesRight: true, px: 112, comes: 'run', fromSprite: true, mouth: [0.96, 0.44], glow: 'drop-shadow(0 0 6px rgb(255 110 30 / 0.7))', leave: { row: 3, n: 6 }, lead: 0.5, breath: { fw: 55, fh: 120, n: 3 } },
+  nivra: { sheet: 'nivra', fw: 72, fh: 114, perRow: 3, rows: 1, walk: { row: 0, n: 3 }, attack: { row: 0, n: 3 }, hit: 2, facesRight: true, px: 132, comes: 'fly', fromSprite: true, mouth: [0.55, 0.22], glow: 'drop-shadow(0 0 5px #9be4ff) drop-shadow(0 0 12px #4ab8ff)' },
+  aurelan: { sheet: 'aurelan', fw: 48, fh: 48, perRow: 3, rows: 1, walk: { row: 0, n: 3 }, attack: { row: 0, n: 3 }, hit: 2, facesRight: true, px: 96, comes: 'run', fromSprite: false, mouth: [0.85, 0.35], glow: 'drop-shadow(0 0 5px #ffe28a) drop-shadow(0 0 12px #ffc040) saturate(1.15)' },
+  voltara: null,
+  gorm: { sheet: 'golem_stone', fw: 132, fh: 127, perRow: 8, rows: 5, walk: { row: 0, n: 8 }, attack: { row: 1, n: 5 }, hit: 3, facesRight: true, px: 132, comes: 'run', fromSprite: true, mouth: [0.72, 0.85], glow: 'drop-shadow(0 0 4px #ffb54a) saturate(0.85)' },
+  vaelkhar: { sheet: 'vaelkhar', fw: 120, fh: 120, perRow: 3, rows: 1, walk: { row: 0, n: 3 }, attack: { row: 0, n: 3 }, hit: 2, facesRight: true, px: 150, comes: 'fly', fromSprite: true, mouth: [0.5, 0.42], glow: 'drop-shadow(0 0 6px #b77bff) drop-shadow(0 0 14px #6a2bd0)' },
+};
+
+/** The times the sprite keys on (from `MomentTimes`). */
+export interface SpriteTimes {
+  SPRITE: number;
+  BUILD: number;
+  STRIKE: number;
+  AFTER: number;
+  RESUME: number;
+}
+
+/** The sprite's frame at `ms`: walking in, then its attack timed so that its `hit` frame shows from the strike, then the rest of the attack,
+ *  then walking out; none before it comes on (the painting is still crossing) or once it has gone. */
+export function spriteFrame(sp: EidolonSprite, m: SpriteTimes, ms: number): { row: number; i: number } | null {
+  if (ms < m.SPRITE || ms >= m.RESUME) return null;
+  const WALK_MS = sp.comes === 'fly' ? 180 : 110;
+  if (ms < m.BUILD) return { row: sp.walk.row, i: Math.floor((ms - m.SPRITE) / WALK_MS) % sp.walk.n };
+  if (ms >= m.AFTER) {
+    const out = sp.leave ?? sp.walk;
+    const i = Math.floor((ms - m.AFTER) / WALK_MS);
+    return { row: out.row, i: sp.leave ? Math.min(out.n - 1, i) : i % out.n };
+  }
+  const at = hitAt(sp, m);
+  if (ms < at) {
+    // (the wind-up: the frames before the blow spread over the build-up)
+    const k = (ms - m.BUILD) / Math.max(1, at - m.BUILD);
+    return { row: sp.attack.row, i: Math.min(sp.hit - 1, Math.floor(k * sp.hit)) };
+  }
+  // (a breath loops its breathing frames; a blow plays its follow-through and holds its last frame)
+  const after = Math.floor((ms - at) / (sp.breath ? 90 : 120));
+  return { row: sp.attack.row, i: sp.breath ? sp.hit + (after % (sp.attack.n - sp.hit)) : Math.min(sp.attack.n - 1, sp.hit + after) };
+}
+
+/** When its attack frame begins: at the strike, or for a breath a share of the build-up before it. */
+export const hitAt = (sp: EidolonSprite, m: SpriteTimes): number => m.STRIKE - (sp.lead ?? 0) * (m.STRIKE - m.BUILD);
+
+/** How far a breath's flame has reached at `ms` (0 to 1): out from the mouth between its attack frame and the strike, full through the
+ *  blow, gone by the aftermath; none for a sprite without one. */
+export function breathReach(sp: EidolonSprite, m: SpriteTimes, ms: number): number {
+  if (!sp.breath) return 0;
+  const at = hitAt(sp, m);
+  if (ms < at || ms >= m.AFTER + 200) return 0;
+  if (ms < m.STRIKE) return Math.max(0.05, (ms - at) / Math.max(1, m.STRIKE - at));
+  return ms < m.AFTER ? 1 : 1 - (ms - m.AFTER) / 200;
+}
+
+/** Where the sprite is at `ms` (its feet, client px), and how solid: it comes on from `from` (the edge it left by) to `stand` (before the
+ *  foes) between `SPRITE` and `BUILD`, lunges a little on the strike, and goes back the way it came, fading, from `AFTER`. */
+export function spritePlace(m: SpriteTimes, ms: number, from: { x: number; y: number }, stand: { x: number; y: number }): { x: number; y: number; alpha: number } {
+  const ease = (t: number) => 1 - (1 - t) * (1 - t);
+  if (ms < m.SPRITE) return { ...from, alpha: 0 };
+  if (ms < m.BUILD) {
+    const t = ease(Math.min(1, (ms - m.SPRITE) / Math.max(1, m.BUILD - m.SPRITE)));
+    return { x: from.x + (stand.x - from.x) * t, y: from.y + (stand.y - from.y) * t, alpha: Math.min(1, t * 4) };
+  }
+  if (ms < m.AFTER) {
+    // (a short lunge towards the foes on the blow)
+    const k = ms >= m.STRIKE ? Math.max(0, 1 - (ms - m.STRIKE) / 300) : Math.max(0, (ms - (m.STRIKE - 150)) / 150);
+    return { x: stand.x, y: stand.y - 10 * Math.max(0, k), alpha: 1 };
+  }
+  const t = Math.min(1, (ms - m.AFTER) / Math.max(1, m.RESUME - m.AFTER));
+  return { x: stand.x + (from.x - stand.x) * t * t, y: stand.y + (from.y - stand.y) * t * t, alpha: 1 - t };
+}

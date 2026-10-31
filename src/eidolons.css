@@ -92,7 +92,7 @@
 .ecDim { inset: 0; background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--deep) 60%, transparent), var(--deep)); opacity: 0; transition: opacity 0.35s ease; }
 .ecLayer[data-stage='horn'] .ecDim { opacity: var(--dim); }
 .ecLayer[data-stage='pass'] .ecDim { opacity: calc(var(--dim) * 0.55); transition-duration: 0.5s; }
-.ecLayer[data-stage='build'] .ecDim { opacity: calc(var(--dim) * 0.6); }
+.ecLayer:is([data-stage='sprite'], [data-stage='build']) .ecDim { opacity: calc(var(--dim) * 0.6); }
 .ecLayer[data-stage='strike'] .ecDim { opacity: calc(var(--dim) * 0.3); transition-duration: 0.25s; }
 .ecLayer:is([data-stage='after'], [data-stage='resume'], [data-stage='out']) .ecDim { opacity: 0; transition-duration: 0.9s; }
 .ecWash { inset: 0; background: radial-gradient(ellipse at 50% 35%, var(--wash), transparent 75%); mix-blend-mode: screen; opacity: 0; transition: opacity 0.6s ease; }
@@ -123,6 +123,10 @@
 .ecShadow { left: 0; top: 0; width: 34vw; height: 6vw; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, rgb(0 0 0 / 0.55), transparent); will-change: transform; }
 .el-dark .ecShadow { width: 70vw; height: 16vw; background: radial-gradient(closest-side, rgb(20 0 40 / 0.7), transparent); }
 
+/* the owner's addition: the sprite Eidolon on the board, its frame set by the page (its sheet's pixels kept) */
+.ecBreath { left: 0; top: 0; image-rendering: pixelated; background-repeat: no-repeat; transform-origin: 0 50%; mix-blend-mode: screen; will-change: transform; }
+.ecMon { left: 0; top: 0; image-rendering: pixelated; background-repeat: no-repeat; will-change: transform; transform-origin: 50% 100%; }
+
 /* a pack strip: six frames of 32 px */
 .ecSp { width: 32px; height: 32px; translate: -50% -100%; image-rendering: pixelated; background-size: 600% 100%; background-repeat: no-repeat; transform-origin: 50% 100%; }
 .ecSp.mid { translate: -50% -50%; transform-origin: 50% 50%; }
@@ -133,12 +137,12 @@
 /* the trail: the marks it leaves (a paw-print of fire, frost, a spark, a crack, its shadow), a glow pooled under each */
 .ecMark { opacity: 0; transition: opacity 0.18s ease, scale 0.25s ease; scale: var(--sc, 2); }
 .ecMark.on { opacity: 1; }
-.ecMark.lit { scale: calc(var(--sc, 2) * 1.6); }
+.ecMark.lit { scale: calc(var(--sc, 2) * 1.25); }
 .ecPool { width: 18vw; height: 6vw; translate: -50% -50%; border-radius: 50%; opacity: 0; background: radial-gradient(closest-side, color-mix(in srgb, var(--glow) 70%, transparent), transparent); mix-blend-mode: screen; transition: opacity 0.3s ease, scale 0.35s ease; }
 .ecPool.on { opacity: 0.7; }
 .ecPool.lit { opacity: 1; scale: 1.8; }
 /* the wake falling behind it as it passes (one strip each, drifting and fading once) */
-.ecWake { animation: ecStrip 0.5s steps(5) forwards, ecWake 0.9s ease-out forwards; scale: var(--sc, 1.4); }
+.ecSp.ecWake { animation: ecStrip 0.5s steps(5) forwards, ecWake 0.9s ease-out forwards; scale: var(--sc, 1.4); }
 @keyframes ecWake { from { opacity: 1; translate: -50% -50%; } to { opacity: 0; translate: calc(-50% + var(--dx, 0px)) calc(-50% + var(--dy, -24px)); } }
 
 /* the runs: the element racing from its source to each foe, a streak drawn out behind its head */
@@ -163,7 +167,7 @@
 
 /* what rises over each foe as the strike lands (a wall of fire, spears of ice, a pillar of light, a bolt, stone, a dark ring), and the
    marks' flare at the build-up: played once, then gone */
-.ecRise, .ecFlare { scale: var(--sc, 2.4); animation: ecStrip var(--ms, 0.5s) steps(5) forwards, ecGone 0.35s ease-in calc(var(--ms, 0.5s) + 0.15s) forwards; }
+.ecSp.ecRise, .ecSp.ecFlare { scale: var(--sc, 2.4); animation: ecStrip var(--ms, 0.5s) steps(5) forwards, ecGone 0.35s ease-in calc(var(--ms, 0.5s) + 0.15s) forwards; }
 @keyframes ecGone { to { opacity: 0; } }
 /* the aftermath on the ground: scorch, frost, a warm glow, burns, rubble, blight; it fades as the fight runs again */
 .ecAfter { width: 16vw; height: 6vw; translate: -50% -50%; border-radius: 50%; opacity: 0; animation: ecAfter 2.6s ease-out forwards; }
@@ -189,15 +193,15 @@
 .ecBars { inset: 0; }
 .ecBars .top { top: 0; translate: 0 -100%; }
 .ecBars .bot { bottom: 0; translate: 0 100%; }
-.ecLayer.full:is([data-stage='pass'], [data-stage='build'], [data-stage='strike']) .ecBars i { translate: 0 0; }
+.ecLayer.full:is([data-stage='pass'], [data-stage='sprite'], [data-stage='build'], [data-stage='strike']) .ecBars i { translate: 0 0; }
 .ecName { left: 0; right: 0; bottom: calc(9vh + 92px); display: flex; flex-direction: column; align-items: center; text-align: center; opacity: 0; padding: 0 12px; }
 .ecName small { font: 700 14px var(--body); letter-spacing: 0.2em; text-transform: uppercase; color: #fff3d6; text-shadow: 0 0 8px var(--glow), 0 2px 3px #000; }
 .ecName b { font: 400 clamp(46px, 14vw, 64px)/0.95 var(--display, var(--body)); color: #fff; letter-spacing: 0.04em;
   text-shadow: 0 0 18px var(--glow), 0 0 40px var(--glow), 0 3px 4px #000; }
 .ecName em { margin-top: 4px; font: 700 18px var(--body); font-style: normal; letter-spacing: 0.12em; text-transform: uppercase; color: var(--glow); text-shadow: 0 2px 3px #000, 0 0 10px #000; }
 .ecLayer[data-stage='pass'] .ecName { opacity: 1; animation: ecStamp 0.45s cubic-bezier(.2,1.4,.4,1) 0.25s both; }
-.ecLayer[data-stage='build'] .ecName { opacity: 1; }
-.ecLayer[data-stage='build'] .ecName :is(small, b) { opacity: 0; transition: opacity 0.3s ease; }
+.ecLayer:is([data-stage='sprite'], [data-stage='build']) .ecName { opacity: 1; }
+.ecLayer:is([data-stage='sprite'], [data-stage='build']) .ecName :is(small, b) { opacity: 0; transition: opacity 0.3s ease; }
 .ecLayer:is([data-stage='strike'], [data-stage='after'], [data-stage='resume'], [data-stage='out']) .ecName { opacity: 0; transition: opacity 0.4s ease; }
 @keyframes ecStamp { from { opacity: 0; scale: 1.8; filter: blur(4px); } to { opacity: 1; scale: 1; filter: blur(0); } }
 .ecLayer.short .ecName b { font-size: clamp(38px, 11vw, 52px); }

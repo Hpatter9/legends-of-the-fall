@@ -16,7 +16,10 @@ export interface MomentTimes {
   PASS: number;
   /** It has left the screen: nothing covers the board from here. */
   EXIT: number;
-  /** The source of its attack flares (the trail it left, the sky, the edge) and the element runs from there to each foe. */
+  /** The owner's addition: its sprite comes onto the board from where it left (walking, running or flying in) to stand before the foes. */
+  SPRITE: number;
+  /** The sprite begins its attack, the source of its attack flares (the sprite's breath or blow, the trail it left, the sky, the edge)
+   *  and the element runs from there to each foe; the sprite's blow lands on the strike. With no sprite the build-up begins at `SPRITE`. */
   BUILD: number;
   /** The attack's beats begin (one every `BEAT`); the first lets the strike through. */
   STRIKE: number;
@@ -34,30 +37,34 @@ export interface MomentTimes {
   BARS: boolean;
 }
 
-/** In full: about three and three quarter seconds. */
-export const FULL: MomentTimes = { HORN: 0, PASS: 420, EXIT: 1950, BUILD: 1950, STRIKE: 2500, BEAT: 260, AFTER: 3300, RESUME: 3800, HIT_STOP: 250, SHAKE: 1, DIM: 0.8, BARS: true };
+/** In full: about four seconds. */
+export const FULL: MomentTimes = { HORN: 0, PASS: 380, EXIT: 1720, SPRITE: 1720, BUILD: 2250, STRIKE: 2720, BEAT: 240, AFTER: 3450, RESUME: 3950, HIT_STOP: 250, SHAKE: 1, DIM: 0.8, BARS: true };
 /** The short one (the setting off, after the first call): a quicker pass, no horn shot or letterbox; about two seconds. */
-export const SHORT: MomentTimes = { HORN: 0, PASS: 0, EXIT: 950, BUILD: 950, STRIKE: 1300, BEAT: 220, AFTER: 1750, RESUME: 2150, HIT_STOP: 160, SHAKE: 0.75, DIM: 0.65, BARS: false };
+export const SHORT: MomentTimes = { HORN: 0, PASS: 0, EXIT: 850, SPRITE: 850, BUILD: 1150, STRIKE: 1450, BEAT: 220, AFTER: 1800, RESUME: 2200, HIT_STOP: 160, SHAKE: 0.75, DIM: 0.65, BARS: false };
+/** When the build-up begins: with a sprite, as it attacks; without one, as soon as the painting has gone. */
+export const buildAt = (m: MomentTimes, sprite: boolean): number => (sprite ? m.BUILD : m.SPRITE);
 
 /**
- * The shots: horn (the horn blown, as the fight was) · pass (the figure crossing, the board under it) · build (it has gone; the source flares
+ * The shots: horn (the horn blown, as the fight was) · pass (the figure crossing, the board under it) · sprite (its sprite comes onto the
+ * board, a slow push in) · build (it has gone; the source flares
  * and the element runs to the foes, a slow push in) · strike (the blows, a snap zoom on the first) · after (easing back over the aftermath).
  * Kept as plain data so a general shot layer can take them over later.
  */
-export type Shot = 'horn' | 'pass' | 'build' | 'strike' | 'after' | 'resume';
-export const SHOTS: readonly Shot[] = ['horn', 'pass', 'build', 'strike', 'after', 'resume'];
+export type Shot = 'horn' | 'pass' | 'sprite' | 'build' | 'strike' | 'after' | 'resume';
+export const SHOTS: readonly Shot[] = ['horn', 'pass', 'sprite', 'build', 'strike', 'after', 'resume'];
 /** The shot playing `ms` into a cinematic. */
 export function shotAt(m: MomentTimes, ms: number): Shot {
   if (ms >= m.RESUME) return 'resume';
   if (ms >= m.AFTER) return 'after';
   if (ms >= m.STRIKE) return 'strike';
   if (ms >= m.BUILD) return 'build';
+  if (ms >= m.SPRITE) return 'sprite';
   if (ms >= m.PASS) return 'pass';
   return 'horn';
 }
 /** The board's framing in each shot (a scale of the board's picture), and a snap zoom's on a blow. The trail and the runs are drawn on a
  *  layer framed the same way, so they stay on their tiles. */
-export const BOARD_ZOOM: Readonly<Record<Shot, number>> = { horn: 1, pass: 1, build: 1.06, strike: 1, after: 1, resume: 1 };
+export const BOARD_ZOOM: Readonly<Record<Shot, number>> = { horn: 1, pass: 1, sprite: 1.04, build: 1.07, strike: 1, after: 1, resume: 1 };
 export const SNAP_ZOOM = 1.22;
 export const SNAP_MS = 110;
 /** Where each Eidolon's eyes are in its card (shares of its width and height): its portrait beside its line is centred there. */
@@ -99,6 +106,7 @@ export const canSkip = (ms: number, firstCall: boolean): boolean => !firstCall &
 /** A tap skips to the strike: the pass is cut, the source flares for a moment and the strike lands (never later than it would have). */
 export const SKIP_BUILD_MS = 250;
 export const skipTarget = (m: MomentTimes, ms: number): number => Math.max(ms, m.EXIT, m.STRIKE - SKIP_BUILD_MS);
+// (with a sprite, a skip lands it already standing, mid-attack: the page places it by the clock, so nothing more is needed)
 
 /** How many of the attack's beats play (the short one plays two), and their times. */
 export function beatTimes(m: MomentTimes, beats: number): number[] {

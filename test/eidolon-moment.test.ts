@@ -2,7 +2,7 @@
 // a tap may skip it, its beats, each Eidolon's looks and choreography, and how the War Horn shows its fill.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { beatTimes, canSkip, CHOREO, EYES, FULL, hornLine, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, reactionOf, REACTIONS, SHORT, shotAt, SHOTS, SKIP_AFTER_MS, skipTarget, SNAP_ZOOM } from '../src/eidolonRules';
+import { beatTimes, buildAt, canSkip, CHOREO, EYES, FULL, hornLine, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, reactionOf, REACTIONS, SHORT, shotAt, SHOTS, SKIP_AFTER_MS, skipTarget, SNAP_ZOOM } from '../src/eidolonRules';
 import { EIDOLONS } from '../src/sim/eidolons';
 import { HORN_FULL } from '../src/sim/warHorn';
 import { parseSettings } from '../src/settings';
@@ -23,14 +23,15 @@ test('the first call of each Eidolon plays in full and cannot be skipped; after 
 // for the figure to have gone, and the whole call is about three to four seconds; a tap skips to the strike)
 test('the beats run in order: the horn, the pass, the build-up, the strike in beats, the aftermath, the resume', () => {
   for (const m of [FULL, SHORT]) {
-    const order = [m.HORN, m.PASS, m.EXIT, m.BUILD, m.STRIKE, m.AFTER, m.RESUME];
+    const order = [m.HORN, m.PASS, m.EXIT, m.SPRITE, m.BUILD, m.STRIKE, m.AFTER, m.RESUME];
     for (let i = 1; i < order.length; i++) assert.ok(order[i] >= order[i - 1], `${i}`);
     assert.ok(m.STRIKE >= m.EXIT && m.STRIKE > m.BUILD, 'the strike lands only once the Eidolon has gone, after a build-up');
     const beats = beatTimes(m, 4);
     assert.ok(beats[0] === m.STRIKE && beats[beats.length - 1] < m.AFTER);
   }
   assert.ok(FULL.RESUME >= 3000 && FULL.RESUME <= 4000, 'about three to four seconds in full');
-  assert.deepEqual([0, FULL.PASS, FULL.BUILD, FULL.STRIKE, FULL.AFTER, FULL.RESUME].map((t) => shotAt(FULL, t)), ['horn', 'pass', 'build', 'strike', 'after', 'resume']);
+  assert.ok(buildAt(FULL, true) === FULL.BUILD && buildAt(FULL, false) === FULL.SPRITE, 'with no sprite the build-up begins as the painting goes');
+  assert.deepEqual([0, FULL.PASS, FULL.SPRITE, FULL.BUILD, FULL.STRIKE, FULL.AFTER, FULL.RESUME].map((t) => shotAt(FULL, t)), ['horn', 'pass', 'sprite', 'build', 'strike', 'after', 'resume']);
   assert.ok(!SHOTS.map((x) => x).some((x, i) => SHOTS.indexOf(x) !== i));
   assert.ok(SNAP_ZOOM > 1, 'a snap zoom on the blow');
   assert.ok(SHORT.RESUME <= 2200, 'about two seconds short');
