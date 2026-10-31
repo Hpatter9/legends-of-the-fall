@@ -1,3 +1,5 @@
+# SUPERSEDED (EIDOLON-FX): the call now uses the owner's Gemini sheets for all six, cut by tools/eidolon-fx/cut_gemini.py, which writes
+# the same files; running this would put the old pack sprites back over them. Kept for the record.
 # EIDOLON-CALL-2: cuts the sprite Eidolons that perform the attack on the board (the owner: "a sprite version of the summons that actually
 # perform the attack after the opening scene"), from whtdragon's RPG Maker MV animals pack in the private assets repository. Each is one row of
 # frames (left to right), the pack's pixels kept, written to src/art/eidolons/sprites/<id>.png. Askel (the black dire wolf) and Gorm (the
