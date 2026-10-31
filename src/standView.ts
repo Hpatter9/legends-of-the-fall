@@ -4,7 +4,6 @@
 // wave comes in by, the spell cards, and the bottom shop bar. The rules are `sim/stand.ts`; this file only shows them and passes
 // the player's taps on. It draws into the page's own Pixi canvas, with the board of the ordinary fights hidden meanwhile.
 
-import { ORES } from './sim/awakenMats';
 import { Container, Graphics, Sprite, type Application } from 'pixi.js';
 import { tileAt } from './sim/board';
 import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
@@ -33,11 +32,12 @@ import { infoOf } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { fullScene } from './ultMomentRules';
 import { portrait } from './render/sheets';
+import { heroFace } from './heroFace';
 // (JRPG-RECAP: the end card's results: each hero's run levels and the stats they added, the MVP, the crowns counted up)
 import { playResults, type JrHero, type JrPlayer } from './jrpgRecapView';
 import { standGrowth, statsAt } from './sim/jrpgRecap';
-import { facePortrait } from './jrpgResults';
-import { ICONS } from './menuArt';
+import { facePortrait, mvpArt, spoilsPage } from './jrpgResults';
+import { standSpoilGains } from './sim/runSpoils';
 import { heroTitle } from './sim/heroNames';
 import { awakenedOf } from './sim/awaken';
 import { rankMult } from './sim/meta';
@@ -1028,7 +1028,8 @@ export class StandView {
   /** UNIT-INFO: the card of unit `u` (a pure read of it). */
   private openInfo(u: Unit): void {
     const m = this.host.meta();
-    const pic = u.side === 'hero' && u.tag !== undefined ? portrait(lookSheet(u.def, heroRank(m, u.def), 1), 48, 1) : portrait(u.look ?? UNITS[u.def].sheet, 48, 1);
+    // (HUD-FACES: a standing hero shows its painted face; summons and foes keep their sprite)
+    const pic = u.side === 'hero' && u.tag !== undefined ? heroFace(u.def, u.awaken ?? 0, 96, portrait(lookSheet(u.def, heroRank(m, u.def), 1), 48, 1)) : portrait(u.look ?? UNITS[u.def].sheet, 48, 1);
     this.info.open(infoOf(this.s!.b, u, { meta: m, autoUlt: !!m.ultAuto }), pic);
     play('tap');
   }
@@ -1794,8 +1795,9 @@ export class StandView {
     for (const h of sh.heroes) {
       const row = el('div', `stSheetRow${h.fallen ? ' fallen' : ''}`);
       const head = el('div', 'stSheetHead');
-      const pic = portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1);
-      pic.className = 'stSheetPic';
+      // (HUD-FACES: the painted face, as in the fight's rows)
+      const pic = heroFace(h.kind, this.s?.b.units.find((x) => x.side === 'hero' && x.tag === h.id)?.awaken ?? 0, 64, portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1));
+      pic.classList.add('stSheetPic');
       head.append(pic, el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
       row.append(head, this.barEl(h.maxHp ? h.hp / h.maxHp : 0, 'hp'));
       if (h.pool) row.append(this.barEl(h.pool.now / h.pool.max, h.pool.kind));
@@ -1869,14 +1871,9 @@ export class StandView {
     const row = (a: string, b: string) => rows.append(Object.assign(el('div'), { innerHTML: `<span>${a}</span><b>${b}</b>` }));
     row('Waves cleared', String(sum.cleared));
     row('Foes felled', String(sum.kills));
-    const chests = [sum.bronze && `${sum.bronze} bronze`, sum.silver && `${sum.silver} silver`, sum.gold && `${sum.gold} gold`].filter(Boolean).join(', ');
-    if (chests) row('Chests', chests);
-    if (sum.gear.length) row('Equipment', sum.gear.join(', '));
-    // (a record past a tenth wave pays a couple of rift ores: AWAKEN-MATS)
-    if (sum.ores?.length) row('Rift ores', sum.ores.map((d) => `${d.n} ${ORES[d.trait]?.name ?? d.trait}`).join(', '));
+    // (RECAP-SPOILS: the chests, equipment, rift ores (a record past a tenth wave, AWAKEN-MATS) and relics (those holding the line
+    // paid among them, STAND-HOLD-RELIC) moved to the results screen's spoils page)
     row('Heroes held', String(sum.heroes));
-    // (the relics the run gathered, those holding the line paid among them: STAND-HOLD-RELIC)
-    if (sum.relics) row('Relics', `${sum.relics}${sum.heldRelics ? ` (${sum.heldRelics} for holding the line)` : ''}`);
     card.append(jrBody, rows);
     this.endResults?.stop();
     this.endResults = playResults({ head: jrHead, body: jrBody }, {
@@ -1890,8 +1887,9 @@ export class StandView {
       ],
       heroes: this.endHeroes(m),
       ...this.endMvp(m),
-      counts: [{ label: 'Crowns', n: sum.crowns, icon: ICONS.crowns }],
+      counts: [],
       items: [],
+      spoils: spoilsPage(standSpoilGains(sum, m.equipment ?? []), sum.crowns),
       lines: [],
     });
     card.addEventListener('click', (e) => void (!(e.target as HTMLElement).closest('button') && this.endResults?.finish()));
@@ -1918,7 +1916,7 @@ export class StandView {
     return (this.s?.run.heroes ?? []).map((h) => {
       const k = rankMult(heroRank(m, h.kind));
       const base = statsAt(h.kind, levelOfKind(m, h.kind), 'lasting', { hp: k, atk: k });
-      return { kind: h.kind, growth: standGrowth(h.kind, h.lv, h.xp, base), face: facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1)), fell: !!h.fallen, mvp: h.id === best?.id, note: `${h.kills ?? 0} felled` };
+      return { kind: h.kind, growth: standGrowth(h.kind, h.lv, h.xp, base), face: heroFace(h.kind, awakenedOf(m, h.kind), 112, facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1))), fell: !!h.fallen, mvp: h.id === best?.id, note: `${h.kills ?? 0} felled` };
     });
   }
   /** The hero that felled the most (none when nobody felled any). */
@@ -1929,7 +1927,7 @@ export class StandView {
   private endMvp(m: Meta) {
     const h = this.endBest();
     if (!h) return {};
-    return { mvp: { face: facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1)), name: heroTitle(h.kind), line: `Felled the most foes · ${h.kills ?? 0} felled · run level ${h.lv}` } };
+    return { mvp: { face: mvpArt(h.kind, awakenedOf(m, h.kind), facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1))), name: heroTitle(h.kind), line: `Felled the most foes · ${h.kills ?? 0} felled · run level ${h.lv}` } };
   }
 
   /** For tests and screenshots: the pause sheet of the run in play. */

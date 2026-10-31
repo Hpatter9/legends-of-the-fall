@@ -14,12 +14,20 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-### RELICS — Relics on the wave-prep screen only; a proposal to redo the relics as the keep's lost artefacts
+### RELICS-2 — The relics redone as the keep's lost artefacts (step 1: the six Chapters and the Storied relics)
 
-- **Owner:** Claude worker. **Branch/worktree:** `claude/relics`, `/home/user/lotf-relics` (from main 0.289.0).
-- **Goal:** the owner's "The party relic doesn't need to be in the battle screen during a wave, just the wave prep screen. Also we should redo these so they are more of a relic, rather than an individual piece of gear". Part 1 (built): the relic strip shows on the wave-prep screen only; a tap reads the relic and its set's count. Part 2 (a design for approval, no rules changed): the relics redone as the keep's lost artefacts, each with lore and a rule with character (a price, a condition, a growing power, a story tie), the sets as the keep's Chapters and the Eidolons' reliquaries, six Storied relics, save conversion, balance and art plans.
-- **Scope:** `src/index.html` (one rule), `src/events.ts` (`drawStrip`), new `tools/relics/prep-shots.mjs`; `docs/notes/relics-redesign.md`.
-- **Status:** part 1 ready for review ([note](notes/relics-prep.md), screenshots `samples/relics-prep-*.png`); part 2 awaits the owner's decisions ([proposal](notes/relics-redesign.md), open questions at its end).
+- **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.290.0 merged).
+- **Goal:** the owner's approved redesign (`docs/notes/relics-redesign.md`), step 1: the keep's 24 relics in six Chapters and six Storied relics, each with lore and a rule with character (a price, a condition, growth, a tie to the keep's enemies); the relic card on the prep screen (lore always shown, prices in red); a relic's icon over the hero when it fires; old saves converted (merged relics paid back, one line on the next prep screen); Auto leaves prices it cannot pay well; `npm run relic-balance`; placeholder icons and the painted icons' prompts. Step 2 (the Eidolons' reliquaries in the Calamity) is not begun. Part 1 (the strip on the prep screen only, `claude/relics`) is included.
+- **Scope:** new `src/sim/relicFight.ts`, `src/relicCard.ts`, `src/relicCard.css`, `test/relics-2.test.ts`, `tools/relics/`; `src/sim/relics.ts`, `relicSets.ts`; hooks in `src/sim/battle.ts`, `abilities.ts`, `heroKits.ts`, `spells.ts`, `run.ts`, `stand.ts`, `tower.ts`, `events.ts`, `market.ts`, `midEvents.ts`, `mystery.ts`, `elites.ts`, `autoplay.ts`, `waveGains.ts`; `src/events.ts`, `src/towerElites.ts`, `src/standView.ts`, `src/render/fx.ts`, `src/render/items.ts`, `build.mjs`, `package.json`, `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/relics-2.md); [art prompts](notes/relic-art-prompts.md); screenshots `samples/relics-2-*.png`, `samples/relics-prep-*.png`.
+
+### HUD-FACES — The heroes' painted faces in the fight's stat views
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/hud-faces`, `/home/user/lotf-hudfaces` (from main 0.287.0).
+- **Goal:** the owner's "use the character arts' faces in the battles for their images during a wave, when it shows all their stats": the fight HUD's hero rows (and so the Last Stand's eight and the Calamity's ten), the unit info card and the Last Stand's paused sheet show each hero's painted art cut to its face (the awakened art once awakened); summons, guests and foes keep their sprites.
+- **Goal, part 2 (RECAP-SPOILS):** the owner's spoils screen on the final recap (money without run gold, gear, items), the heroes' painted art on the results screen (the MVP's bigger), no wave strip on the run's end recap, and no summons as heroes on any recap.
+- **Scope:** new `src/heroFaceRules.ts` (the face boxes), `src/heroFace.ts` (the crop cache), `src/sim/runSpoils.ts`, `tools/hud-faces/`, `tools/recap-spoils/`, `test/hud-faces.test.ts`, `test/recap-spoils.test.ts`; hooks in `src/fightHud.ts`, `src/fightHud.css`, `src/main.ts`, `src/standView.ts`, `src/jrpgRecapView.ts`, `src/jrpgResults.ts`, `src/jrpgRecap.css`, `src/recapView.ts`, `src/sim/fightStats.ts`, `src/sim/runRecap.ts` (optional `spoils`), `tools/jrpg-recap/shots.mjs` (the wave strip's assertion turned round). No version change.
+- **Status:** ready for review. [Note](notes/hud-faces.md); contact sheet `samples/hud-faces-sheet.png`, screenshots `samples/hud-faces-*.png`, `samples/recap-spoils-*.png`.
 
 ### GUEST-HERO — A guest hero from the passing cart, a sixth on the field for one run; talent points marked in the tavern
 
