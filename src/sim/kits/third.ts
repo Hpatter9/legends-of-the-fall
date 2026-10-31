@@ -9,13 +9,13 @@
 // every choice is a fixed order (then by id).
 
 import { atkOf, canStrike, hurt, strikeDef, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
-import { apart, castPower, foesOf, mendUnit, net } from '../abilities';
-import { bleedFor, burnFor, charmFor, chillFor, cleanse, harmed, hasAil, shockFor, stunFor, ward, weakFor } from '../ailments';
+import { apart, castPower, foesOf, HEX_EVERY, mendUnit, net } from '../abilities';
+import { bleedFor, burnFor, charmFor, chillFor, cleanse, curseFor, fearFor, harmed, hasAil, poisonFor, setDot, shockFor, stunFor, ward, weakFor } from '../ailments';
 import { smiteBane } from './tanks';
 import { UNITS } from '../units';
 import { kx, KIT } from './effects';
 import { foesNear, mark, ms, strike } from './common';
-import { blinkTo, chokeLine, moveMany, raiseWall, safeTile, shove } from '../toolkit';
+import { blinkTo, chokeLine, displace, moveMany, pull, raiseWall, safeTile, shove } from '../toolkit';
 
 // ---- the helpers every third skill shares ----
 
@@ -446,5 +446,162 @@ export function acidFlask(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!f.alive) return true;
   kx(f).exposed = { until: b.t + ms(me, ACID.MS), mult: ACID.MORE };
   mark(out, me, f, 'acid', ms(me, ACID.MS));
+  return true;
+}
+
+// ---- group 3: the summoners and the monsters ----
+
+/** A hero's own living summons of these kinds. */
+const ownSummons = (b: Battle, me: Unit, kinds: readonly string[]) => b.units.filter((x) => x.alive && x.owner === me.id && kinds.includes(x.def));
+const WOLVES = ['wolf', 'direWolf'] as const;
+
+/** Druid, Thorn Whip: a whip of thorns at the nearest foe within 4 drags it a tile towards her treant (towards her, with none). */
+export function thornWhip(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearest(b, me, 4)[0];
+  if (!f) return false;
+  bolt(b, me, f, out);
+  if (!f.alive) return true;
+  const tree = ownSummons(b, me, ['treant']).sort((x, y) => apart(x, f) - apart(y, f) || x.id - y.id)[0];
+  const to = tree ?? me;
+  // (a drag heads for the dragger, so a pull towards the treant is a one-tile push its way)
+  if (apart(f, to) > 1) displace(b, me, f, wayTo(f, to), 1, to === me ? 'drag' : 'shove', out);
+  return true;
+}
+
+/** Beastmaster, Mend the Pack: every wolf of hers heals a third and is shielded 3s (a fifth of its health); with none, she heals a tenth. At
+ *  once when a wolf falls under 30% (or, with none, when she falls under 40% with a foe near). */
+export const PACK_MEND = { HEAL: 1 / 3, SHIELD: 0.2, MS: 3000, SELF: 0.1 } as const;
+export const packNeeded = (b: Battle, me: Unit): boolean => {
+  const wolves = ownSummons(b, me, WOLVES);
+  if (wolves.length) return wolves.some((w) => w.hp < w.maxHp * 0.3);
+  return me.hp < me.maxHp * 0.4 && foesNear(b, me, 2).length > 0;
+};
+export function mendThePack(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  if (!packNeeded(b, me)) return false;
+  const wolves = ownSummons(b, me, WOLVES);
+  for (const w of wolves) {
+    mendUnit(w, w.maxHp * PACK_MEND.HEAL * castPower(), out, me);
+    shieldOf(b, w, PACK_MEND.SHIELD, ms(me, PACK_MEND.MS));
+  }
+  if (!wolves.length) mendUnit(me, me.maxHp * PACK_MEND.SELF * castPower(), out, me);
+  return true;
+}
+
+/** Reaper, Soul Snare: a spectral hook drags the weakest foe within 4 a tile towards him and cuts it; a foe under 30% is dragged into his reach. */
+export function soulSnare(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = foesNear(b, me, 4).sort((x, y) => x.hp - y.hp || x.id - y.id)[0];
+  if (!f) return false;
+  const d = apart(me, f);
+  if (d > 1) pull(b, me, f, f.hp < f.maxHp * 0.3 ? d - 1 : 1, out);
+  if (f.alive) bolt(b, me, f, out);
+  return true;
+}
+
+/** Kitsune, Fox Wisps: three wisps of fox fire at the three nearest foes within 4, each burning 2s. */
+export function foxWisps(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const fs = nearest(b, me, 4).slice(0, 3);
+  if (!fs.length) return false;
+  for (const f of fs) {
+    bolt(b, me, f, out);
+    burnFor(b, me, f, ms(me, 2000));
+  }
+  return true;
+}
+
+/** Karasu Tengu, Feather Darts: razor feathers at the two nearest foes within 4; each bleeds 2s. */
+export function featherDarts(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const fs = nearest(b, me, 4).slice(0, 2);
+  if (!fs.length) return false;
+  for (const f of fs) {
+    bolt(b, me, f, out);
+    bleedFor(b, me, f, 0.1, ms(me, 2000));
+  }
+  return true;
+}
+
+/** Yamabushi Tengu, Ringing Staff: a blow of his ringed staff on the foe before him; it is stunned 0.5s. */
+export function ringingStaff(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = before(b, me);
+  if (!f) return false;
+  cut(b, me, f, out);
+  if (f.alive) stunFor(b, f, ms(me, 500), false, 'stun', me);
+  return true;
+}
+
+/** Werewolf, Rend (v1's): claws rake the foe before him and it bleeds 4s; in the Hunter form he rakes twice. */
+export function rend(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = before(b, me);
+  if (!f) return false;
+  cut(b, me, f, out);
+  if (f.alive && (me.kx?.wolf === 'hunter' || on(me.kx?.moon, b))) cut(b, me, f, out);
+  bleedFor(b, me, f, 0.1, ms(me, 4000));
+  return true;
+}
+
+/** Minotaur, Bellow: every foe within 3 is frightened for 2s (it runs from him) and takes 15% more from him for 5s. */
+export const BELLOW = { REACH: 3, FEAR_MS: 2000, MORE: 0.15, MS: 5000 } as const;
+export const bellowWork = (b: Battle, me: Unit): boolean => foesNear(b, me, BELLOW.REACH).length > 0;
+export function bellow(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const fs = foesNear(b, me, BELLOW.REACH);
+  if (!fs.length) return false;
+  for (const f of fs) {
+    fearFor(b, f, ms(me, BELLOW.FEAR_MS), me);
+    kx(f).exposed = { until: b.t + ms(me, BELLOW.MS), mult: BELLOW.MORE, by: me.id };
+    mark(out, me, f, 'fear', ms(me, BELLOW.FEAR_MS));
+  }
+  return true;
+}
+
+/** Satyr, Butting Horns: butts the foe before him and shoves it a tile. */
+export function buttingHorns(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = before(b, me);
+  if (!f) return false;
+  cut(b, me, f, out);
+  if (f.alive) shove(b, me, f, 1, out);
+  return true;
+}
+
+/** Gorgon, Serpent Bite: her serpent hair bites the nearest foe within 2: poisoned 3s and slowed 1s (so Flesh to Stone can take it). */
+export function serpentBite(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearest(b, me, 2)[0];
+  if (!f) return false;
+  bolt(b, me, f, out);
+  if (!f.alive) return true;
+  poisonFor(b, me, f, undefined, ms(me, 3000));
+  chillFor(b, f, ms(me, 1000), false, false, me);
+  return true;
+}
+
+/** Shambler, Bile Spit: spits bile at the nearest foe within 3; it rots 3s (his rot, a curse that ticks). */
+export function bileSpit(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearest(b, me, 3)[0];
+  if (!f) return false;
+  bolt(b, me, f, out);
+  if (!f.alive) return true;
+  const t = ms(me, 3000);
+  setDot(b, f, { kind: 'curse', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: HEX_EVERY, ms: t, by: me.id, next: b.t + HEX_EVERY, until: b.t + t });
+  return true;
+}
+
+/** Mummy, Tomb Rot: a touch of grave-rot on the foe before him; it is cursed 3s (it heals less). */
+export function tombRot(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = before(b, me);
+  if (!f) return false;
+  cut(b, me, f, out);
+  if (f.alive) curseFor(b, me, f, ms(me, 3000));
+  return true;
+}
+
+/** Kraken Mate, Ink Cloud: when two or more foes crowd him, a cloud of ink: the foes within 2 miss half their blows for 3s, and he slips a
+ *  tile back. */
+export const inkNeeded = (b: Battle, me: Unit): boolean => foesNear(b, me, 1).length >= 2;
+export function inkCloud(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  if (!inkNeeded(b, me)) return false;
+  for (const f of foesNear(b, me, 2)) {
+    kx(f).smoke = Math.max(f.kx?.smoke ?? 0, b.t + ms(me, 3000));
+    mark(out, me, f, 'smoke', ms(me, 3000));
+  }
+  const to = safeTile(b, me, 1);
+  if (to) blinkTo(b, me, to, out);
   return true;
 }

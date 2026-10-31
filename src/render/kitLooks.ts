@@ -90,6 +90,19 @@ export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el:
   'Healing Word': { as: 'Benediction', tint: 0xfff4c0, el: 'light' },
   'Sacred Flame': { as: 'Holy Light', tint: 0xffe070, el: 'light' },
   'Acid Flask': { as: 'Sanctuary', tint: 0xb0ff60, el: 'poison' },
+  'Thorn Whip': { as: 'Call Treant', tint: 0x90d060, el: 'forest' },
+  'Mend the Pack': { as: 'Call of the Wild', tint: 0xa0f0b0, el: 'forest' },
+  'Soul Snare': { as: 'Reap', tint: 0xa0c0ff, el: 'dark' },
+  'Fox Wisps': { as: 'Fox Charm', tint: 0xffa050, el: 'fire' },
+  'Feather Darts': { as: 'Dive', tint: 0x404060, el: 'wind' },
+  'Ringing Staff': { as: 'Wind Gust', tint: 0xe0d0a0, el: 'wind' },
+  Rend: { as: 'Ravage', tint: 0xff7070, el: 'blood' },
+  Bellow: { as: 'Gore Charge', tint: 0xffc090, el: 'earth' },
+  'Butting Horns': { as: 'Gore Charge', tint: 0xffa0d8, el: 'earth' },
+  'Serpent Bite': { as: 'Stone Curse', tint: 0x90e070, el: 'poison' },
+  'Bile Spit': { as: 'Rotting Touch', tint: 0xc0e060, el: 'poison' },
+  'Tomb Rot': { as: 'Binding Wraps', tint: 0x90b070, el: 'dark' },
+  'Ink Cloud': { as: 'Undertow', tint: 0x302848, el: 'dark' },
 };
 
 const tinted = (steps: Step[], tint: number | undefined): Step[] => (tint === undefined ? steps : steps.map((x) => ({ ...x, t: tint })));

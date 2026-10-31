@@ -282,10 +282,99 @@ const CASES: Record<string, Case> = {
     const f = foe(b, 3, 4);
     return () => assert.ok(f.kx?.exposed && f.kx.exposed.mult === 0.2 && f.kx.exposed.until > b.t, 'it takes more');
   },
+  // ---- group 3: the summoners and the monsters
+  druid: (b, me) => {
+    const tree = addUnit(b, 'treant', 0, 3);
+    tree.owner = me.id;
+    const f = foe(b, 3, 3);
+    return () => assert.equal(f.u, 2, 'dragged a tile towards her treant');
+  },
+  beastmaster: (b, me) => {
+    foe(b, 3, 3);
+    const w = addUnit(b, 'wolf', 3, 5);
+    w.owner = me.id;
+    w.hp = Math.round(w.maxHp * 0.2);
+    const was = w.hp;
+    return () => {
+      assert.ok(w.hp >= was + w.maxHp * 0.3, 'the wolf heals a third');
+      assert.ok(w.shield && w.shield.until > b.t, 'and is shielded');
+    };
+  },
+  reaper: (b, me) => {
+    const weak = foe(b, 3, 3);
+    weak.hp = 10000;
+    const f = foe(b, 4, 6);
+    return (out) => {
+      assert.equal(hitsOn(out, f, me), 0, 'the weakest, not the nearest');
+      assert.ok(hitsOn(out, weak, me) > 0 && weak.hp < 10000, 'cut');
+      assert.equal(weak.v, 5, 'dragged into his reach (it was under 30%)');
+    };
+  },
+  kitsune: (b) => {
+    const fs = [foe(b, 3, 5), foe(b, 3, 4), foe(b, 4, 4)];
+    return () => {
+      for (const f of fs) assert.ok(hasAil(f, 'burn'), 'each wisp burns');
+    };
+  },
+  karasu: (b, me) => {
+    const fs = [foe(b, 3, 5), foe(b, 3, 3), foe(b, 0, 2)];
+    return (out) => {
+      assert.ok(hasAil(fs[0], 'bleed') && hasAil(fs[1], 'bleed'), 'the two nearest bleed');
+      assert.equal(hitsOn(out, fs[2], me), 0, 'only two');
+    };
+  },
+  yamabushi: (b) => {
+    const f = foe(b, 3, 5);
+    return () => assert.ok(hasAil(f, 'stun') || (f.stunUntil ?? 0) > b.t, 'stunned');
+  },
+  werewolf: (b, me) => {
+    const f = foe(b, 3, 5);
+    me.kx = { wolf: 'hunter' };
+    return (out) => {
+      assert.ok(hasAil(f, 'bleed'), 'it bleeds');
+      assert.equal(hitsOn(out, f, me), 2, 'the Hunter rakes twice');
+    };
+  },
+  minotaur: (b, me) => {
+    const fs = [foe(b, 3, 5), foe(b, 3, 3)];
+    const far = foe(b, 0, 0);
+    return () => {
+      for (const f of fs) {
+        assert.ok(hasAil(f, 'fear'), 'frightened');
+        assert.ok(f.kx?.exposed?.by === me.id && f.kx.exposed.mult === 0.15, 'takes more from him');
+      }
+      assert.ok(!hasAil(far, 'fear'));
+    };
+  },
+  satyr: (b) => {
+    const f = foe(b, 3, 5);
+    return () => assert.equal(f.v, 4, 'shoved a tile');
+  },
+  gorgon: (b) => {
+    const f = foe(b, 3, 4);
+    return () => assert.ok(hasAil(f, 'poison') && hasAil(f, 'chill'), 'poisoned and slowed');
+  },
+  shambler: (b) => {
+    const f = foe(b, 3, 4);
+    return () => assert.ok(hasAil(f, 'curse'), 'it rots');
+  },
+  mummy: (b) => {
+    const f = foe(b, 3, 5);
+    return () => assert.ok(hasAil(f, 'curse'), 'cursed');
+  },
+  kraken: (b, me) => {
+    const fs = [foe(b, 3, 5), foe(b, 2, 6)];
+    return () => {
+      for (const f of fs) assert.ok((f.kx?.smoke ?? 0) > b.t, 'they miss half their blows');
+      assert.ok(me.u !== 3 || me.v !== 6, 'he slipped a tile back');
+    };
+  },
 };
 
 test('every hero has a skill 3 from level 20, with a key of its own and a look', () => {
   assert.equal(SKILL3_LEVEL, 20);
+  assert.deepEqual([...THIRD_KINDS].sort(), [...ALL_HEROES].sort(), 'all 45');
+  assert.deepEqual(Object.keys(CASES).sort(), [...ALL_HEROES].sort(), 'each has its case here');
   const keys = new Set<string>();
   for (const h of THIRD_KINDS) {
     const s3 = HERO_KITS()[h].s3!;
@@ -329,4 +418,21 @@ test('the AI casts skill 3 in its case: open, paid, its cooldown run (skills 1 a
     castHero(b2, low, hk, out2);
     assert.ok(!out2.some((e) => e.kind === 'skill' && e.by === low.id && e.name === keyOf(hk.s3!.skill)), `${h} is shut below 20`);
   }
+});
+
+test('a jab is held for a heavier skill coming round when paying would leave it short, and jabs freely otherwise (batch 4\'s hold rule)', () => {
+  // (the Archer: Aimed Shot, a heavy of 34 stamina; Double Shot, a jab of 8; Volley cooling)
+  const setup = (heavyAgo: number, sp: number) => {
+    const b = arena();
+    const me = at(b, 'archer', 3, 6);
+    foe(b, 3, 3);
+    me.charge = (sp / 60) * CHARGE_MAX;
+    me.ks = { at1: b.t, at2: b.t - heavyAgo };
+    const out: BattleEvent[] = [];
+    castHero(b, me, HERO_KITS().archer, out);
+    return out.find((e) => e.kind === 'skill')?.name;
+  };
+  assert.equal(setup(12000, 30), undefined, 'Aimed Shot is ready but unpaid: the jab waits');
+  assert.equal(setup(12000, 40), 'Pinning Shot', 'paid: the heavy goes first');
+  assert.equal(setup(2000, 30), 'Double Shot', 'the heavy is far off: she jabs');
 });
