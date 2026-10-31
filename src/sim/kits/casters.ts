@@ -3,7 +3,7 @@
 // Wanderer's flasks, the High Priestess's angel and the Druid's treeform. (RPG-SPELLS batch 6 put the Fire Wizard's Wall of Fire, the
 // Illusionist's Transposition and the Great Sage's Font of Magic in place of Wildfire, Trade Places and Font of Wisdom: `mages.ts`.)
 
-import { shapeRenewable, timerFor, TIMER, TREE_SHARE } from '../carry';
+import { GUISE_CAP, shapeRenewable, timerFor, TIMER, TREE_SHARE } from '../carry';
 import { sightClear } from '../board';
 import { atkOf, canStrike, strikeDef, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, castPower, crowd, drag, foesOf, mendUnit, net } from '../abilities';
@@ -51,7 +51,7 @@ export function foxGuise(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     me.power = (me.power ?? 1) / old.mult;
     me.kx!.guise = undefined;
   }
-  const mult = Math.max(1, Math.min(1.4, atkOf(f) / atkOf(me)));
+  const mult = Math.max(1, Math.min(me.side === 'hero' ? GUISE_CAP : 1.4, atkOf(f) / atkOf(me)));
   me.power = (me.power ?? 1) * mult;
   const time = timerFor(me, TIMER.alterSelf, 5000, ms);
   const look = f.look ?? UNITS[f.def].sheet;

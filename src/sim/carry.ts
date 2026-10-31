@@ -271,8 +271,10 @@ function keepForm(b: Battle, me: Unit, f: KeptForm): void {
   }
 }
 
+/** The most the Kitsune's guise lifts her attack by (x1.4 before the timers, when it lasted 5s; tuned with them: docs/notes/summon-timers.md). */
+export const GUISE_CAP = 1.3;
 /** The share of her health the Druid's Wild Shape adds (a third before the timers; tuned with them: docs/notes/summon-timers.md). */
-export const TREE_SHARE = 1 / 3;
+export const TREE_SHARE = 0.2;
 
 /** A hero falls: its shapes end at once (its attack and health as they were, its own looks), so a hero raised again rises in its own shape. */
 export function endShapes(u: Unit): void {

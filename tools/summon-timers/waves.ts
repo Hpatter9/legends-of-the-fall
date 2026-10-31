@@ -2,7 +2,7 @@
 // carries from wave to wave. A fixed party (the hero and four others), every hero at `level`, plays an army from wave 1 until a wave is lost
 // or the army falls, keeping its charges (and, with this branch, its summons and shapes) between waves as the page does (`keepCharges`).
 // No hires, merges or gear, so each run is the five alone and the numbers are the kits'.
-//   node tools/summon-timers/waves.mjs <army> <level> [saves] [heroes,...]
+//   [CARRY=0] node tools/summon-timers/waves.mjs <army> <level> [saves] [heroes,...]
 // Prints each hero's mean waves won and the share of runs that cleared the army.
 
 import { fight, playOut } from '../../src/sim/battle';
@@ -11,6 +11,10 @@ import { armyRun, finish, isBossRun, keepCharges, noteFight, recruit, startStage
 import { autoDeploy } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { savedAt } from '../autoplay';
+import { CARRY } from '../../src/sim/carry';
+
+// (CARRY=0: the timers alone, nothing kept between waves)
+if (process.env.CARRY === '0') CARRY.on = false;
 
 export const SEVEN = ['druid', 'beastmaster', 'reaper', 'samuraiCommander', 'werewolf', 'kitsune', 'demonSwordsman'];
 const REST = ['knight', 'paladin', 'archer', 'cleric'];
