@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### GEAR-ICONS — The painted equipment icons in the game
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/gear-icons-painted`, `/home/user/lotf-gear-icons` (from main 0.263.0, main 0.267.0 merged).
+- **Goal:** the owner's painted equipment icons (PR #242's `art-source/gear/`, with the five frames and five wear pieces from PR #241) shown wherever equipment is drawn today, in place of the 16px DawnLike tiles: the grade's frame and glow round the standard painting for Common to Legendary, the Mythic painting for Mythic.
+- **Allowed files or systems:** `art-source/gear/`, new `src/art/gear/`, new `src/gearIcons.ts`, `itemIcon` in `src/equipView.ts`, `src/equip.css`, one rule in `src/battleReports.css`, the atlas copy in `build.mjs`, new `tools/gear/`, `CREDITS.md`, `docs/notes/gear-icons.md`, `docs/samples/gear-icons-*.png`. No sim, save or version change.
+- **Status:** done, ready for review. Handoff: [note](notes/gear-icons.md).
+
 ### TAVERN-LIFE — Every hero's own place and activity in the tavern
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-life`, `/home/user/lotf-tavern-life` (from main 0.263.0).
@@ -22,7 +29,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Status:** ready for review. [Note](notes/tavern-life.md); [art prompt](notes/tavern-art-prompt.md) (52 images); screenshots `samples/tavern-life-*.png`.
 ### UNIT-INFO — Hold a unit between waves for its skills and stats
 
-- **Owner:** Claude worker. **Branch/worktree:** `claude/unit-info`, `/home/user/lotf-unit-info` (from main 0.263.0, main 0.264.0 merged).
+- **Owner:** Claude worker. **Branch/worktree:** `claude/unit-info`, `/home/user/lotf-unit-info` (from main 0.263.0, main 0.267.0 merged).
 - **Goal:** the owner's "click and hold on a unit in between waves to get a run-down on skills and stats": a press-and-hold (400 ms, a ring under the finger; a move lets it go as a drag) on any unit on the board, a bench card or a Last Stand tray card, in a deploy or a Stand break, opens a read-only card of its stats, traits, equipment, skills (locked ones marked), a boss's second form and a foe's tips.
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
