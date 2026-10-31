@@ -20,6 +20,7 @@ import { VFX, type VfxKey } from './render/vfxArt';
 import { UNITS } from './sim/units';
 import { play } from './render/sound';
 import { effectText, type PlotId } from './render/castleSpots';
+import { vaultInfo, vaultLine } from './vaultRules';
 import { goatSheet } from './duchess';
 import { goatSays } from './quips';
 import { showQuip } from './quipView';
@@ -571,13 +572,25 @@ export class CastleScene {
     const relic = el('small', 'ctRelicSub', `◆ ${c.relicName}`);
     titleBox.append(title, relic);
     head.append(titleBox);
+    // (the vault: an ⓘ that opens its sheet, where "How the vault works" is; docs/notes/cinematic-reveal-vault.md)
+    if (id === 'treasury') {
+      const info = el('button', 'ctVaultInfo', 'ⓘ');
+      info.type = 'button';
+      info.setAttribute('aria-label', 'How the vault works');
+      info.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.onPick(id);
+      });
+      head.append(info);
+    }
 
     // Stat & Progress Pips
     const body = el('div', 'ctCardBody');
+    const vault = id === 'treasury' ? vaultInfo(meta.castle) : null;
     const stat = el(
       'div',
       'ctStatLine',
-      level > 0 ? effectText(id, level) : `Unbuilt · Next: ${c.perLevelShort}`,
+      vault ? vaultLine(vault) : level > 0 ? effectText(id, level) : `Unbuilt · Next: ${c.perLevelShort}`,
     );
     const pips = el('div', 'ctPips');
     for (let i = 1; i <= max; i++) {

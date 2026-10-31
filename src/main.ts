@@ -39,6 +39,8 @@ import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { direct } from './sim/cineDirector';
 import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
+import { revealOf, type RevealGo } from './sim/sceneReveal';
+import { showEndCard } from './revealCard';
 import { ACT_HALLS, ACT_NUMERALS, ROOM_NAMES } from './sim/standActs';
 import { roomLine } from './standRetreatLines';
 import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene } from './sim/sceneRules';
@@ -675,7 +677,32 @@ class Game {
     // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    if (settings().cinematics) await this.scenes.play(id, players);
+    if (!settings().cinematics) return;
+    await this.scenes.play(id, players);
+    // (REVEAL: a film that revealed something ends on its card, played through or skipped)
+    await this.endCard(id);
+  }
+
+  /** The end cards shown this session, by key (REVEAL): the older army banner stands aside for one already shown. */
+  private revealed = new Set<string>();
+
+  /** A film's end card, if it revealed something (REVEAL, `sim/sceneReveal.ts`): its button goes there only from the home screen (never
+   *  out of a fight or its result, nor out of the Scenes list's replay, `mayGo` false); elsewhere it says where, with Continue. */
+  private async endCard(id: string, mayGo = true): Promise<void> {
+    const card = revealOf(id, this.meta);
+    if (!card) return;
+    this.revealed.add(card.key);
+    const to = card.go?.to;
+    const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
+    await showEndCard(card, go);
+  }
+
+  /** Where an end card's button goes (REVEAL). */
+  private revealGo(to: RevealGo): void {
+    if (to.to === 'calamity') return this.home.enterCalamity();
+    if (to.to === 'armies') return this.home.openArmies(to.army);
+    if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
+    this.home.show(to.to);
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -732,7 +759,11 @@ class Game {
     const five = mo && (mo.kind === 'combo' || mo.kind === 'comboCut') ? comboById(mo.set)?.heroes : undefined;
     const film = SCENES[id] ? id : this.filmOf(id);
     if (!film) return Promise.resolve('skipped');
-    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players());
+    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players()).then(async (e) => {
+      // (REVEAL: a replay ends on its card too, with Continue only)
+      if (SCENES[id]) await this.endCard(id, false);
+      return e;
+    });
   }
 
   /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */
@@ -2374,7 +2405,8 @@ class Game {
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
     const focus = this.runStars?.chests.length ? army.id : undefined;
-    if (next) showUnlock(next, army, () => this.home.openArmies(focus));
+    // (REVEAL: the army's last-stand film already ended on this army's card: straight to the armies)
+    if (next && !this.revealed.has(`army:${next.id}`)) showUnlock(next, army, () => this.home.openArmies(focus));
     else this.home.openArmies(focus);
   }
 
