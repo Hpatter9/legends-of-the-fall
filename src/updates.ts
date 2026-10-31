@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.304.0',
+    date: '2026-10-31',
+    title: 'Skills with cooldowns; ranks give stats',
+    notes: ['Every skill now has a cost and a cooldown by its type, so heroes cast more often. Ranking up gives more health and attack instead of upgraded skills.'],
+  },
+  {
     version: '0.303.0',
     date: '2026-10-31',
     title: 'The Eidolons\' calls, redone',
