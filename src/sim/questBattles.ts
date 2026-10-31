@@ -23,6 +23,7 @@ import { traitsOf, TRAITS } from './traits';
 import { heroName } from './heroNames';
 import type { With } from './questData';
 import { QUEST_BATTLES } from './questBattleData';
+import { CHAIN_BATTLES } from './chainBattleData';
 
 /** The side stream a quest battle's seed is drawn from. */
 export const QB_SALT = 0x9b47;
@@ -32,7 +33,7 @@ export const QB_WAVES = { min: 1, max: 5 } as const;
 /** A slot of the required cast: one of these heroes must fight (the first one owned is the one asked for). */
 export interface CastSlot {
   heroes: readonly string[];
-  /** Heroes who may take the part when none of `heroes` is owned: the Eidolon chains' battles only (a later batch). */
+  /** Heroes who may take the part when none of `heroes` is owned: the Eidolon chains' battles only (`chainBattleData.ts`). */
   standIns?: readonly string[];
 }
 
@@ -65,9 +66,10 @@ export interface QuestBattle {
   after: (c: readonly string[]) => Scene;
 }
 
-const BY_ID = new Map(QUEST_BATTLES.map((q) => [q.id, q]));
+// (EIDOLON-CHAINS: the chains' own battles are found by id too; no quest in the log opens them, a chain's part does)
+const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES].map((q) => [q.id, q]));
 export const questBattleById = (id: string): QuestBattle | undefined => BY_ID.get(id);
-export { QUEST_BATTLES };
+export { QUEST_BATTLES, CHAIN_BATTLES };
 
 /* ------------------------------------------------------------------ the army it is */
 

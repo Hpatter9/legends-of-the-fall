@@ -1,0 +1,2722 @@
+[
+  {
+    "w": 393,
+    "h": 852,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 298,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+41 gold · +18 crowns · 0:11",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 18696
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 388,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:07",
+        "notes": [
+          "✧Found: 3 shards of Hobb, the Unburied",
+          "✧Found: a medium XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 7
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+58 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+154 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+115 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+25 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 393,
+    "h": 852,
+    "spire": true,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 298,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+41 gold · +18 crowns · 0:11",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 18696
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 388,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:07",
+        "notes": [
+          "✧Found: 3 shards of Hobb, the Unburied",
+          "✧Found: a medium XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 7
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+58 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+154 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+115 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+25 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 393,
+    "h": 852,
+    "stand": true,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 298,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+41 gold · +18 crowns · 0:11",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 18696
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 388,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:07",
+        "notes": [
+          "✧Found: 3 shards of Hobb, the Unburied",
+          "✧Found: a medium XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 7
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+58 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+154 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+115 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+25 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 327,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+36 gold · +15 crowns · 0:14",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000",
+          "✝Fell: Selam"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 5591
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 386,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:05",
+        "notes": [
+          "✧Found: 2 shards of Bastion, Clocktower Cannon",
+          "✧Found: a small XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 5
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+121 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+56 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+58 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+117 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "spire": true,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 327,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+36 gold · +15 crowns · 0:14",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000",
+          "✝Fell: Selam"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 5591
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 386,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:05",
+        "notes": [
+          "✧Found: 2 shards of Bastion, Clocktower Cannon",
+          "✧Found: a small XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 5
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+121 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+56 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+58 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+117 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 360,
+    "h": 780,
+    "stand": true,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 327,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+36 gold · +15 crowns · 0:14",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000",
+          "✝Fell: Selam"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 5591
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 386,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:05",
+        "notes": [
+          "✧Found: 2 shards of Bastion, Clocktower Cannon",
+          "✧Found: a small XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 5
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+121 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+56 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+58 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+117 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 780,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 298,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+41 gold · +18 crowns · 0:14",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 8090
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 388,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:07",
+        "notes": [
+          "✧Found: 2 shards of Eirik, Red Axe of the North",
+          "✧Found: a medium XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 3
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+119 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+153 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+56 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+25 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "spire": true,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 298,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+41 gold · +18 crowns · 0:14",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 8090
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 388,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:07",
+        "notes": [
+          "✧Found: 2 shards of Eirik, Red Axe of the North",
+          "✧Found: a medium XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 3
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+119 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+153 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+56 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+25 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 412,
+    "h": 915,
+    "stand": true,
+    "checks": [
+      {
+        "name": "between",
+        "top": 84,
+        "bottom": 298,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 1 of 15 won",
+        "summary": "+41 gold · +18 crowns · 0:14",
+        "notes": [
+          "▲Level up: Kwame Lv 10, Kenji Lv 30, Ravi Lv 5, Selam Lv 3",
+          "✦Ultimate unlocked: Kenji",
+          "♪War Horn +3 · 3/1000"
+        ],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "between-left-by-itself",
+        "ms": 8090
+      },
+      {
+        "name": "between-haul",
+        "top": 84,
+        "bottom": 388,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "between-haul",
+        "jr": false,
+        "passing": true,
+        "banner": "Wave 2 of 15 won",
+        "summary": "+59 gold · +20 crowns · 0:07",
+        "notes": [
+          "✧Found: 2 shards of Eirik, Red Axe of the North",
+          "✧Found: a medium XP tome",
+          "♪War Horn +3 · 6/1000"
+        ],
+        "chips": [
+          "Vesper joins",
+          "Silver chest",
+          "Bronze chest",
+          "Steel Blade (Rare)",
+          "Jade Charm (Common)",
+          "Ember Charm (Epic)",
+          "Summoning stone"
+        ],
+        "bars": 0
+      },
+      {
+        "name": "between-tapped",
+        "ms": 3
+      },
+      {
+        "name": "loss-card",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "loss-card",
+        "jr": false,
+        "passing": false,
+        "banner": "Wave 3 of 15 lost",
+        "summary": "The Undead Legion holds at wave 3 of 15. It starts again from wave 1; your heroes keep their levels.",
+        "notes": [],
+        "chips": [],
+        "bars": 0
+      },
+      {
+        "name": "recap-mid",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "recap",
+        "recapRows": [
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 3",
+            "xp": "+119 XP",
+            "stats": [
+              "HP268→317+49",
+              "ATK15→18+3"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": false,
+            "lv": "Lv 7",
+            "xp": "+153 XP",
+            "stats": [],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 30",
+            "xp": "+56 XP",
+            "stats": [
+              "HP967→1,033+66",
+              "ATK110→118+8"
+            ],
+            "learnt": [
+              "Ultimate unlocked: Issen!"
+            ]
+          },
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 10",
+            "xp": "+25 XP",
+            "stats": [
+              "HP828→894+66",
+              "ATK27→29+2"
+            ],
+            "learnt": [
+              "New skill: Shield Rush!"
+            ]
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "+25 XP",
+            "stats": [
+              "HP247→280+33",
+              "ATK51→57+6"
+            ],
+            "learnt": []
+          }
+        ],
+        "heads": [
+          "How to come back stronger",
+          "The company",
+          "Spoils",
+          "Wave by wave",
+          "Company performance"
+        ]
+      },
+      {
+        "name": "recap-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "spire-end",
+        "title": "DEFEAT",
+        "sub": "Fell on floor 1",
+        "rows": 5,
+        "next": "See the summary"
+      },
+      {
+        "name": "stand8-mid",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      },
+      {
+        "name": "stand8-rows",
+        "standRows": [
+          {
+            "name": "Kwame",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "3 felled",
+            "stats": [
+              "HP1,158→1,320+162",
+              "ATK37→41+4"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Kenji",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "10 felled",
+            "stats": [
+              "HP811→1,095+284",
+              "ATK94→122+28"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ayame",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "6 felled",
+            "stats": [
+              "HP710→1,108+398",
+              "ATK63→93+30"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Natsu",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "13 felled",
+            "stats": [
+              "HP695→792+97",
+              "ATK97→109+12"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Ravi",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "9 felled",
+            "stats": [
+              "HP575→776+201",
+              "ATK110→143+33"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Karim",
+            "up": true,
+            "lv": "Lv 8",
+            "xp": "5 felled",
+            "stats": [
+              "HP1,054→1,644+590",
+              "ATK43→64+21"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Selam",
+            "up": true,
+            "lv": "Lv 2",
+            "xp": "12 felled",
+            "stats": [
+              "HP849→968+119",
+              "ATK43→48+5"
+            ],
+            "learnt": []
+          },
+          {
+            "name": "Inti",
+            "up": true,
+            "lv": "Lv 5",
+            "xp": "8 felled",
+            "stats": [
+              "HP637→860+223",
+              "ATK90→117+27"
+            ],
+            "learnt": []
+          }
+        ]
+      },
+      {
+        "name": "stand8-end",
+        "top": 0,
+        "bottom": 915,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  },
+  {
+    "w": 393,
+    "h": 852,
+    "calm": true,
+    "checks": [
+      {
+        "name": "calm",
+        "done": true,
+        "calm": true
+      },
+      {
+        "name": "calm",
+        "top": 0,
+        "bottom": 852,
+        "pageOverflow": false,
+        "sideScroll": false
+      }
+    ],
+    "errors": []
+  }
+]
