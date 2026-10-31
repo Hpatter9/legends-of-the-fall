@@ -284,7 +284,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
         [
           act(
             `Summon inverted ${heroName}`,
-            `the inverted clone steps through to fight alongside your squad for 2 floors with snarky quips`,
+            `the inverted clone steps through and takes ${heroName}'s place in your squad for 2 floors, with snarky quips`,
             0,
             { k: 'cursedMirror', hero, floors: 2 },
           ),
@@ -534,8 +534,12 @@ export function applyMystery(run: Run, a: MysteryAct): string {
         cloneFloors: a.floors,
       };
       run.roster.push(clone);
-      // (it fights only if its original is not on the field: one of each hero, ONE-OF-EACH; else it waits on the bench to be swapped in)
-      if (canJoin(run, clone.id)) run.squad.push(clone.id);
+      // (one of each hero on the field, ONE-OF-EACH, so the clone takes its original's place for its floors, and the original sits out on the
+      // bench and comes back when the clone goes (`tower.ts`); an original that was not fighting stays out while the clone fights in a free place)
+      const at = run.squad.indexOf(orig.id);
+      if (at >= 0) run.squad[at] = clone.id;
+      else if (canJoin(run, clone.id)) run.squad.push(clone.id);
+      if (run.squad.includes(clone.id)) clone.standsFor = orig.id;
       return `The glass ripples! An inverted ${cloneName} steps out, sneering: "Move over, amateur. Let someone with real talent handle this." The inverted clone joins you for ${a.floors} floors!`;
     }
     case 'voidWell': {

@@ -19,6 +19,10 @@ an `owner`: the Beastmaster's pack, the Druid's treant, the imps), a summon kind
 - `squadTwin(run, kind, except)` and `canJoin(run, id)` (room in the squad and no twin in it): `setSquad` refuses a second of a kind, and
   every place that pushed a hero into the squad now asks `canJoin` (`newRun`'s two free heroes, the Calamity's hires `hireHero`, the free
   prisoner and the mirror's clone in `mystery.ts`, the hero who fills a gone clone's place in `tower.ts`).
+- **The cursed mirror (the owner's call):** the clone *replaces* its original on the field for its two floors. `mystery.ts` puts the clone in
+  the original's squad place and sets `standsFor` (a new optional `Owned` field) to the original's id; `sitsOut(run, id)` is then true for the
+  original, which `canJoin`, `canSwapTwin` and `pickSquad` respect, so it sits out on the bench. When the clone goes (`tower.ts`), the
+  original takes its place again. An original that was not fighting stays out, and the clone fights in a free place if there is one.
 - `swapTwin(b, run, id, boost)`: a bench copy put on its twin's tile takes the tile and the twin's place in the squad, and the twin goes back
   to the bench (`canSwapTwin` says when). The page uses it for a drop or a tap on the twin.
 - Merging is untouched: a copy dragged onto its twin of the same grade merges into it, as before (the merge gesture comes first).
@@ -40,7 +44,7 @@ an `owner`: the Beastmaster's pack, the Druid's treant, the imps), a summon kind
 - The note is a small fixed box (`#twinNote`, `role=status`), 2.4 s; reduced motion drops its slide-in. The heroes are named (`heroName`),
   so the note names the hero ("Kwame"), not the calling.
 
-## Balance (measured, not retuned)
+## Balance (measured; then the daily and Mythic retuned, below)
 
 Before is main 0.272.0 (94c27f7), after is this branch, on the same seeds. The bot used to field two of a kind when they were its strongest
 heroes; it now fields one of each, which also fills more trait tiers (a trait counts different heroes).
@@ -74,6 +78,19 @@ What it means:
   try or so later at 65. The daily is easier (79% against the 66-75% band) and Mythic at level 100 takes about half the tries on the Infernal Host and the Yokai:
   a squad of five different heroes fills more trait tiers than one with two of a kind.
 
+## The retune (the owner's answers)
+
+- **New saves stay hard** (the owner's call): the three-hero start is left as it is.
+- **The daily**: `DAILY_START` (`src/sim/daily.ts`) 0.55 to **0.565**, the smallest knob, a fresh save's daily foes only. `npm run daily-rate
+  -- --days 112`, with hearts / no hearts: 0.55 79% / 61%; 0.56 76% / 58%; **0.565 71% / 50%**; 0.57 67% / 52%; 0.58 62% / 46%; 0.6 55% / 33%.
+  Before the rule it was 72% / 49%, so 0.565 puts both back (with hearts in the 66-75% band; no hearts where it was).
+- **Mythic at level 100**: the Mythic `tierLift` of the two armies that got easier, the Infernal Host **0.87 to 0.95** and the Yokai Night
+  Parade **0.72 to 0.78** (`src/sim/armies.ts`; only their Mythic tier moves, and `armyXpShare` keeps their XP as it was). Mean tries, 8 saves,
+  every talent, maxed castle (`tools/one-of-each/run.mjs --mythic`, `LIFT=` to try values): Infernal 2.13 at 0.87, **3.88 at 0.95**, 5.38 at
+  1.02; Yokai 2.38 at 0.72, 4.63 at 0.80, **4.75 at 0.78** (the Yokai's tries are noisy: 13 and 11 tries in two saves; its median is 2.5). Before
+  the rule: 4.25 and 4.13. The Golem Forge (2.63 against 2.25 before) is left alone. The 1.5-try bar holds (`test/difficulty.test.ts`).
+- Measured on main 0.276.0 merged in; the Mythic numbers at the old lifts were the same as on 0.272.0.
+
 ## Tests
 
 - New `test/one-of-each.test.ts`: a twin is refused with the reason `twin` and another kind is not; a placed hero moves; summons, a skill's
@@ -88,23 +105,20 @@ What it means:
   - `test/autoplay.test.ts`: "auto-deploy is legal on every board" expects the squad to be the smaller of five and the roster's kinds.
   - `test/starter.test.ts`: "the first run works with any pack" expects a second hire of the same kind to be refused on the field.
   - `test/calamity.test.ts`: "the squad takes ten" and "the cursed mirror's clone is a guest" hire distinct kinds (their lists had a second
-    knight or archer); "the cursed mirror" expects the clone to wait on the bench while its original fights.
+    knight or archer); "the cursed mirror" expects the clone to take its original's place in the squad, the original to sit out (`canJoin`,
+    the greedy player) and to come back when the clone goes.
   - `test/difficulty.test.ts`: "Mythic is still not a first-try clear at level 100" takes six saves, not three (the bar, 1.5 tries, is as it
     was): the Golem Forge's first three saves took 2, 1 and 1 tries (1.33), over eight saves 2.63 (2.25 before).
   - `test/fixtures/ailment-logs.json` and `test/fixtures/spells-identity.json`: the `army` and `daily` scenario hashes re-recorded (the greedy
-    player fields one of each); every other scenario, the Last Stand's included, keeps its hash.
+    player fields one of each), and `daily` again for `DAILY_START` 0.565; every other scenario, the Last Stand's included, keeps its hash.
 
 ## Tools and pictures
 
 `tools/one-of-each/` (`run.mjs`, `pace.ts`: the starter packs' cells; `mythic.ts`: the Mythic check over more saves; `shots.mjs`: the browser
-check). Pictures `docs/samples/one-of-each-{bench,refused,swap,merge}-{393x852,360x780,412x915}.png` and `one-of-each-held-393x852.png`.
+check). Pictures `docs/samples/one-of-each-{bench,refused,swap,merge,mirror}-{393x852,360x780,412x915}.png` and `one-of-each-held-393x852.png`.
 
-## For the owner
+## The owner's answers
 
-1. **New saves**: with a starter pack of three, only three heroes fight until more are unlocked, and the first army is much harder
-   (29% and 13% single-try clears at level 1, from 75% and 46%). Should a new save start with more heroes (a fourth and fifth early), the
-   first army be eased, or is a three-hero start fine as it is?
-2. **The cursed mirror** (the spire's event): its inverted clone is the same hero, so it waits on the bench while its original fights and
-   can only be swapped in for it. Keep that, or let the clone take its original's place on the field for its two floors?
-3. The daily is now a little easy for a fresh save (79% with hearts) and Mythic at level 100 takes fewer tries on the Infernal Host and the
-   Yokai. Retune those, or leave them?
+1. New saves: leave them hard (no easing). 2. The daily and Mythic: retuned back into their targets (above). 3. The cursed mirror: the clone
+replaces its original for its two floors (above); the original's bench card says **Sits out**, and dropping it on the clone says "Kwame sits
+out while the mirror's clone stands in" (`sitOutWords`). The event's text says the clone takes the hero's place.

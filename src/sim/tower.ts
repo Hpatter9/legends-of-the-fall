@@ -753,7 +753,8 @@ export function clearNode(run: Run): void {
   }
   if (first) {
     t.path.push(cur.id);
-    // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to a benched hero of the party's own)
+    // (a mirror's clone stays for its floors, then goes: its place in the squad goes back to the original it stood in for (ONE-OF-EACH), or
+    // else to a benched hero of the party's own)
     for (const h of [...run.roster]) {
       if (h.cloneFloors !== undefined) {
         h.cloneFloors--;
@@ -762,6 +763,11 @@ export function clearNode(run: Run): void {
           run.roster = run.roster.filter((x) => x.id !== h.id);
           run.squad = run.squad.filter((x) => x !== h.id);
           delete t.hp[String(h.id)];
+          const back = h.standsFor !== undefined && canJoin(run, h.standsFor) ? h.standsFor : undefined;
+          if (back !== undefined && fought) {
+            run.squad.push(back);
+            continue;
+          }
           const bench = ownHeroes(run).find((x) => canJoin(run, x.id));
           if (bench && (fought || !run.squad.length)) run.squad.push(bench.id);
         }

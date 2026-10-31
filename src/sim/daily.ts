@@ -16,7 +16,8 @@ export const DAILY_WAVES = 10;
 export const DAILY_MID = 5;
 
 /** The foes' hp and attack at wave 1, as a share of their stats in `foes.ts`, and the share they gain each wave after (the same for every day). */
-export const DAILY_START = 0.55;
+// (0.565 since ONE-OF-EACH: a squad of five different heroes cleared a fresh save's daily 79% of the time at 0.55; 71% now, `docs/notes/one-of-each.md`)
+export const DAILY_START = 0.565;
 export const DAILY_GROWTH = 0.155;
 /** The hp and attack a mid-boss and the boss of the day have at wave 1's strength (the wave's multiplier then applies). */
 export const DAILY_MID_STATS = { hp: 1500, atk: 46 };

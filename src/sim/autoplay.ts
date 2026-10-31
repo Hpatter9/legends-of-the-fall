@@ -9,7 +9,7 @@ import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
 import { heroRank, type Meta } from './meta';
 import { awakenStats } from './awaken';
-import { boostOf, equip, squadLimit, summon, type Owned, type Run } from './run';
+import { boostOf, equip, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
 import { autoMerge } from './merge';
 import { UNITS } from './units';
@@ -28,8 +28,9 @@ export const isBackline = (kind: string): boolean => !!UNITS[kind].shot || UNITS
  *  each kind (ONE-OF-EACH, `docs/notes/one-of-each.md`): a second of a kind is passed over (the strongest copy is the one taken), so a
  *  smaller roster of kinds fields fewer heroes. */
 export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): Owned[] {
-  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h);
-  const rest = run.roster.filter((h) => !kept.includes(h)).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+  // (a hero a mirror's clone stands in for sits out: ONE-OF-EACH)
+  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id));
+  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id)).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
   return oneOfEach([...kept, ...rest]).slice(0, squadLimit(run));
 }
 

@@ -5,7 +5,7 @@
 // place, and the twin goes back to the bench. Pure rules: no Pixi, no DOM, no randomness.
 
 import { place, twinOf, unplace, type Battle, type Boost, type Unit } from './battle';
-import { heroOf, type Run } from './run';
+import { heroOf, sitsOut, type Run } from './run';
 
 /** The hero of the run's kind `kind` on the field in battle `b` other than hero `id` (the twin a new copy would meet), if any. */
 export const fieldTwin = (b: Battle, run: Run, id: number): Unit | undefined => {
@@ -13,9 +13,10 @@ export const fieldTwin = (b: Battle, run: Run, id: number): Unit | undefined => 
   return h ? twinOf(b, h.kind, id) : undefined;
 };
 
-/** Whether bench hero `id` may swap with its twin on the field: a deploy, the hero owned and not on the field, and a twin of its kind standing. */
+/** Whether bench hero `id` may swap with its twin on the field: a deploy, the hero owned and not on the field, not sitting out for a mirror's
+ *  clone, and a twin of its kind standing. */
 export function canSwapTwin(b: Battle, run: Run, id: number): boolean {
-  if (b.phase !== 'deploy' || run.over) return false;
+  if (b.phase !== 'deploy' || run.over || sitsOut(run, id)) return false;
   const h = heroOf(run, id);
   if (!h || b.units.some((u) => u.side === 'hero' && u.tag === id)) return false;
   const twin = twinOf(b, h.kind, id);

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { autoMerge, canMerge, mergeReady } from '../src/sim/merge';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, type Battle } from '../src/sim/battle';
-import { CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, spendBuff, squadLimit, startStage, summon, type Run } from '../src/sim/run';
+import { canJoin, sitsOut, CALAMITY_SQUAD, dropSlot, adoptOldTower, heroOf, loadRun, loadSlot, saveRun, saveSlot, setSquad, spendBuff, squadLimit, startStage, summon, type Run } from '../src/sim/run';
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { calamityRun, towerRun } from '../src/sim/modes';
 import { CAL_BOSSES, CAL_BOSS_TITLES } from '../src/sim/calamityBosses';
@@ -17,6 +17,7 @@ import { addUnit } from '../src/sim/battle';
 import { abandonTower, buy, calamityMap, choices, clearNode, enterNode, finishTower, fightSpec, foeScale, floorOf, hasRoom, hire, HIRE_OFFERS, hireCost, mapFor, MAP_CROWNS, rowsIn, settleTower, train, type MapNode } from '../src/sim/tower';
 import { hpShare } from '../src/sim/health';
 import { frontSpots, playCalamity, playTower, starterEnd } from '../tools/autoplay';
+import { pickSquad } from '../src/sim/autoplay';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
 import { HEROES, UNITS } from '../src/sim/units';
 import { RIFT_ROWS, RIFT_BOSSES, chooseAltar, pendingAltar } from '../src/sim/rift';
@@ -793,11 +794,15 @@ test('the cursed mirror: temporarily clones inverted hero for 2 floors, then clo
   const line = chooseOption(run, 0);
   assert.match(line!, /inverted/i);
   assert.equal(run.roster.length, 2, 'clone added to roster');
-  // (ONE-OF-EACH: its original fights, so the clone waits on the bench, to be swapped in by hand)
-  assert.equal(run.squad.length, 1, 'clone waits on the bench while its original fights');
-  
+  const original = run.roster[0];
   const clone = run.roster.find((h) => h.inverted);
   assert.ok(clone);
+  // (ONE-OF-EACH, the owner's call: the clone takes its original's place on the field for its floors; the original sits out on the bench)
+  assert.deepEqual(run.squad, [clone.id], 'the clone stands in for its original');
+  assert.equal(clone.standsFor, original.id);
+  assert.equal(sitsOut(run, original.id), true);
+  assert.equal(canJoin(run, original.id), false, 'the original cannot be brought back while the clone stands in');
+  assert.ok(!pickSquad(run, startedMeta(1)).some((h) => h.id === original.id), 'nor does the greedy player field it');
   assert.equal(clone.cloneFloors, 2);
   assert.equal(clone.kind, 'knight');
 
@@ -811,7 +816,8 @@ test('the cursed mirror: temporarily clones inverted hero for 2 floors, then clo
   run.tower!.cur = { id: 11, kind: 'fight' };
   clearNode(run);
   assert.equal(run.roster.length, 1, 'clone removed after 2 floors');
-  assert.equal(run.squad.length, 1);
+  assert.deepEqual(run.squad, [original.id], 'the original takes its place again');
+  assert.equal(sitsOut(run, original.id), false);
 
   // Test smash option
   const runSmash = calamityRun(21, startedMeta(1), 'knight');

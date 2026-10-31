@@ -90,6 +90,9 @@ export interface Owned {
   cloneFloors?: number;
   /** Whether this hero is an inverted mirror clone (with snarky quips). */
   inverted?: boolean;
+  /** A mirror's clone that stands in for its original on the field (ONE-OF-EACH, the owner's call): the original's roster id. The original
+   *  sits out on the bench for the clone's floors and takes its place again when the clone goes (`sitsOut`). Absent in an older save. */
+  standsFor?: number;
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -498,10 +501,13 @@ export function spendBuff(run: Run): void {
 export const squadTwin = (run: Run, kind: string, except?: number): Owned | undefined =>
   run.squad.map((id) => heroOf(run, id)).find((h): h is Owned => !!h && h.kind === kind && h.id !== except);
 
-/** Whether hero `id` may join the squad now: there is room, and no other hero of its kind is in it (ONE-OF-EACH). */
+/** Whether hero `id` sits out: a mirror's clone stands in for it on the field for the clone's floors (ONE-OF-EACH). */
+export const sitsOut = (run: Run, id: number): boolean => run.roster.some((x) => x.standsFor === id && x.cloneFloors !== undefined);
+
+/** Whether hero `id` may join the squad now: there is room, no other hero of its kind is in it, and no mirror's clone stands in for it (ONE-OF-EACH). */
 export function canJoin(run: Run, id: number): boolean {
   const h = heroOf(run, id);
-  return !!h && !run.squad.includes(id) && run.squad.length < squadLimit(run) && !squadTwin(run, h.kind, id);
+  return !!h && !run.squad.includes(id) && run.squad.length < squadLimit(run) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
 }
 
 /** Choose or release a hero for the fight. Returns whether the squad changed. A second hero of a kind already chosen is refused (ONE-OF-EACH). */

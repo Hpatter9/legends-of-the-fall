@@ -26,5 +26,8 @@ export function twinNote(text: string, x: number, y: number, ms = 2400): void {
   }, ms);
 }
 
+/** The note's words for an original refused while a mirror's clone stands in for it (the owner's call: it sits out for the clone's floors). */
+export const sitOutWords = (name: string): string => `${name} sits out while the mirror's clone stands in`;
+
 /** The note's words for a hero of `name` refused because its twin is on the field: dropped on the twin, the two merge (a match) or swap. */
 export const twinWords = (name: string, merges: boolean): string => `${name} is already on the field · drop on them to ${merges ? 'merge' : 'swap'}`;

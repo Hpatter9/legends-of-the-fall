@@ -47,6 +47,12 @@ async function setUp(page, heroes) {
   await wait(page, 1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   await page.evaluate(() => document.querySelectorAll('.cutscene, #scene').forEach((e) => e.remove?.()));
+  // (a cutscene playing over the deploy (the cinematics) is skipped until none is left)
+  for (let i = 0; i < 20; i++) {
+    const on = await page.evaluate(() => { const c = document.getElementById('cutscene'); if (c && !c.hidden) { c.querySelector('.csSkip')?.click(); return true; } return false; });
+    if (!on) break;
+    await wait(page, 700);
+  }
   // (UNIT-INFO's press-and-hold is turned off for the check: on a busy machine the scripted drag's first move can come after its 400 ms)
   await page.evaluate(() => { window.__game.hold.start = () => {}; });
 }
@@ -59,11 +65,14 @@ const tilePoint = (page, spec) => page.evaluate((spec) => {
     const p = g.sprites.get(g.b.units.find((u) => u.tag === spec.tag).id).root.getGlobalPosition();
     return [c.left + p.x, c.top + p.y - 6 + 24];
   }
-  for (let y = c.top; y < c.bottom; y += 3) for (let x = c.left; x < c.right; x += 3) {
+  // (the middle of the points that read as the tile, 24px lower: a drop reads the tile 24px above the finger)
+  const hits = [];
+  for (let y = c.top; y < c.bottom; y += 2) for (let x = c.left; x < c.right; x += 2) {
     const t = g.tileAtScreen(x, y);
-    if (t && t[0] === spec.u && t[1] === spec.v) return [x + 4, y + 10 + 24];
+    if (t && t[0] === spec.u && t[1] === spec.v) hits.push([x, y]);
   }
-  return null;
+  const mid = hits[Math.floor(hits.length / 2)];
+  return mid ? [mid[0], mid[1] + 24] : null;
 }, spec);
 
 async function drag(page, from, to, shot, after) {
@@ -79,6 +88,8 @@ async function drag(page, from, to, shot, after) {
   await page.mouse.up();
   if (after) {
     await page.waitForFunction(() => document.getElementById('twinNote')?.hidden === false, null, { timeout: 5000 }).catch(() => {});
+    // (after the note's slide-in)
+    await wait(page, 300);
     await page.screenshot({ path: after });
   }
   await wait(page, 400);
@@ -107,7 +118,9 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     for (let v = g.b.board.d - 3; v < g.b.board.d; v++) for (let u = 1; u < g.b.board.w - 1; u++) if (g.canPut('5', [u, v])) free.push([u, v]);
     g.refresh();
     g.markTiles();
-    return { ...out, free: free[Math.floor(free.length / 2)] };
+    // (a free tile of the front deploy row (highest on the screen, clear of the bench's drop area), the nearest the fielded knight)
+    const near = (t) => Math.abs(t[0] - out['1'][0]) + Math.abs(t[1] - out['1'][1]);
+    return { ...out, free: free.filter((t) => near(t) >= 2).sort((a, b) => a[1] - b[1] || near(a) - near(b))[0] };
   });
   await wait(page, 900);
   const s0 = await state(page);
@@ -127,6 +140,22 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await wait(page, 1500);
   const s3 = await state(page);
   await page.screenshot({ path: `docs/samples/one-of-each-merge-${w}x${h}.png` });
+  // (the cursed mirror's clone stands in for its original, the owner's call: the original's card says Sits out, and dropping it on the clone is refused)
+  await setUp(page, [['knight', 1], ['knight', 1], ['cleric', 1]]);
+  await page.evaluate(() => {
+    const g = window.__game;
+    Object.assign(g.run.roster[1], { cloneFloors: 2, inverted: true, standsFor: 1 });
+    const s = [];
+    for (let v = g.b.board.d - 3; v < g.b.board.d; v++) for (let u = 1; u < g.b.board.w - 1; u++) if (g.canPut('2', [u, v])) s.push([u, v]);
+    g.put('2', s[Math.floor(s.length / 2)]);
+    g.refresh();
+  });
+  await wait(page, 600);
+  await drag(page, 1, await tilePoint(page, { tag: 2 }), null, `docs/samples/one-of-each-mirror-${w}x${h}.png`);
+  const s4 = await state(page);
+  const sitMark = await page.evaluate(() => document.querySelector('#bench .card[data-id="1"] .twinMark')?.textContent);
+  console.log('mirror', JSON.stringify({ s4, sitMark }));
+  if (!(s4.field === '2:knight' && s4.note.includes('sits out') && sitMark === 'Sits out')) bad++;
   const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   console.log(`${w}x${h}`, JSON.stringify({ s0, s1, s2, s3, wide, errors: errors.length }));
   const ok = s0.twinOn === '2' && s1.field === '1:knight 3:archer' && s1.note.includes('already on the field') && s2.field === '2:knight 3:archer' && s2.twinOn === '1' && !s3.roster.includes('4:archer') && s3.roster.includes('3:archer2') && !wide && !errors.length;

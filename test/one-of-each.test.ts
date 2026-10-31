@@ -172,3 +172,15 @@ test('the Last Stand\'s eight are one of each', () => {
   const eight = pickEight(m, ['knight', 'knight', ...m.unlocked]);
   assert.equal(new Set(eight).size, eight.length);
 });
+
+test('a mirror\'s clone standing in for its original: the original sits out and cannot be swapped back in', () => {
+  const r = rosterOf([['knight', 1], ['knight', 1]]);
+  r.roster[1] = { ...r.roster[1], cloneFloors: 2, inverted: true, standsFor: 1 };
+  r.squad = [2];
+  const { b, t } = deploy(r);
+  place(b, 'knight', ...t[0], 2);
+  assert.equal(canJoin(r, 1), false);
+  assert.equal(canSwapTwin(b, r, 1), false);
+  assert.equal(swapTwin(b, r, 1), null);
+  assert.ok(!pickSquad(r, startedMeta(1)).some((h) => h.id === 1));
+});
