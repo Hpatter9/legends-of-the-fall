@@ -142,8 +142,19 @@ export interface Tile {
   ring?: boolean;
   /** Part of a section's river (looks only: drawn running the board's `flow` way). */
   stream?: boolean;
+  /** Deep ground drawn as a drop into the void, not water (a Calamity zone's chasm, `calZones.ts`; looks only: to the rules it is deep). */
+  chasm?: boolean;
   /** A small number for picking the tile's tufts and flowers. */
   deco: number;
+}
+
+/** The things a Calamity zone stands on its tiles (`calZones.ts`; looks only). A tall one (a pillar, a statue) stands on a tile nobody stands on
+ *  (a wall or a boulder to the rules); a low one (bones, candles, a rune) lies on open ground and never hides a fighter. */
+export type PropKind = 'pillar' | 'brokenPillar' | 'statue' | 'brazier' | 'coffin' | 'crystal' | 'shards' | 'chain' | 'banner' | 'rubble' | 'bones' | 'skeleton' | 'candles' | 'rune' | 'totem' | 'drip';
+export interface Prop {
+  u: number;
+  v: number;
+  kind: PropKind;
 }
 
 /** The kinds of land beside an army's road (`armyRoad.ts`), and of an arena's ring. */
@@ -197,6 +208,8 @@ export interface Board {
   w: number;
   d: number;
   tiles: Tile[];
+  /** A Calamity zone's things on its tiles (`calZones.ts`; looks only). */
+  props?: Prop[];
   /** The shape the land was laid in (`layouts.ts`); absent on a board made by hand. */
   layout?: LayoutId;
 }
