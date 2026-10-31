@@ -120,9 +120,9 @@ at the expected level); the probe's party has no talents, so the later armies' p
 `npm run typecheck`; `npm test -- quest-battles quests settings` (`test/quest-battles.test.ts`: 16 tests: the data, one quest each, the
 stories, the cast rule, hidden until owned (and never drawn), the fight's readiness, the army in shape and its strength, a try (its
 seed, the cast on the bench, the saved party untouched, the same try the same fight), the recycle guard, Duchess, the run slot (an
-army run untouched), winning and practice, losing and Try again, the save, the words, no road events). Two existing tests updated for
-the new requirement: `quests-content.test.ts` counts the hundred uniques of batch 1b apart from the eleven battle quests, and
-`settings.test.ts`'s Start over (it caught that `legends.questRun` must be wiped too). The full `npm test`; `npm run web`.
+army run untouched), winning and practice, losing and Try again, the save, the words, no road events). One existing test updated for
+the new requirement: `quests-content.test.ts` counts the hundred uniques of batch 1b apart from the eleven battle quests. The existing
+`settings.test.ts` (unchanged) caught that Start over must wipe `legends.questRun` too; fixed in `SAVE_KEYS`. The full `npm test`; `npm run web`.
 Screenshots by `tools/quest-battles/shots.mjs` at 393x852, 360x780 and 412x915 (reduced motion; the game's other cinematics off so the
 quest's own play; the fights hurried by thinning foes, a tool's shortcut):
 `docs/samples/quest-battles-{offer,card-fight,log,party,party-locked,story,story-2,deploy,deploy-ready,fight,won,beat,handin,replay,lost,try-again}-<width>.png`.
