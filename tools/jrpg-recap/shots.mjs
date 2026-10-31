@@ -170,7 +170,7 @@ try {
     const knight = recapRows.find((r) => r.lv === 'Lv 10');
     assert.ok(knight && knight.stats.length === 2 && knight.learnt.some((l) => l.startsWith('New skill:')), 'the knight reached 10 over the run, with its stats and new skill');
     assert.ok(recapRows.some((r) => r.learnt.some((l) => l.startsWith('Ultimate unlocked:'))), 'the samurai unlocked its ultimate');
-    assert.ok(heads.includes('Wave by wave') && heads.includes('Company performance') && !heads.includes('Experience earned'));
+    assert.ok(!heads.includes('Wave by wave') && heads.includes('Company performance') && !heads.includes('Experience earned'), 'no wave strip on the run recap (the owner, RECAP-SPOILS)');
     await page.evaluate(() => { const r = document.querySelector('#recap'); r.scrollTop = 99999; document.querySelector('.rcSheet').scrollTop = 99999; });
     await page.waitForTimeout(300);
     await shot(page, w, checks, 'recap-end', '#recap');

@@ -21,6 +21,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** `src/sim/levels.ts` (`KILL_KEEP`, `killShares`, `fightXp`), `src/sim/climb.ts` (`fightXpByHero`: the spire and the Calamity, the owner's yes); new `test/xp-split.test.ts`, `tools/xp-split/`; `docs/notes/levels.md`.
 - **Status:** ready for review. [Note](notes/xp-split.md) (before/after and the pace).
 
+### HUD-FACES — The heroes' painted faces in the fight's stat views
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/hud-faces`, `/home/user/lotf-hudfaces` (from main 0.287.0).
+- **Goal:** the owner's "use the character arts' faces in the battles for their images during a wave, when it shows all their stats": the fight HUD's hero rows (and so the Last Stand's eight and the Calamity's ten), the unit info card and the Last Stand's paused sheet show each hero's painted art cut to its face (the awakened art once awakened); summons, guests and foes keep their sprites.
+- **Goal, part 2 (RECAP-SPOILS):** the owner's spoils screen on the final recap (money without run gold, gear, items), the heroes' painted art on the results screen (the MVP's bigger), no wave strip on the run's end recap, and no summons as heroes on any recap.
+- **Scope:** new `src/heroFaceRules.ts` (the face boxes), `src/heroFace.ts` (the crop cache), `src/sim/runSpoils.ts`, `tools/hud-faces/`, `tools/recap-spoils/`, `test/hud-faces.test.ts`, `test/recap-spoils.test.ts`; hooks in `src/fightHud.ts`, `src/fightHud.css`, `src/main.ts`, `src/standView.ts`, `src/jrpgRecapView.ts`, `src/jrpgResults.ts`, `src/jrpgRecap.css`, `src/recapView.ts`, `src/sim/fightStats.ts`, `src/sim/runRecap.ts` (optional `spoils`), `tools/jrpg-recap/shots.mjs` (the wave strip's assertion turned round). No version change.
+- **Status:** ready for review. [Note](notes/hud-faces.md); contact sheet `samples/hud-faces-sheet.png`, screenshots `samples/hud-faces-*.png`, `samples/recap-spoils-*.png`.
+
 ### GUEST-HERO — A guest hero from the passing cart, a sixth on the field for one run; talent points marked in the tavern
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/guest-hero`, `/home/user/lotf-guest` (from main 0.284.0).
