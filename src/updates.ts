@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.296.0',
+    date: '2026-10-31',
+    title: 'Secret heroes and ten tavern tales',
+    notes: ['The ten heroes earned in play are secret until they join. Each now comes from its own tale in the tavern, told by a giver and ending in a hard battle.'],
+  },
+  {
     version: '0.295.0',
     date: '2026-10-31',
     title: 'A clearer summoning room',

@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### SECRET-HEROES — The heroes earned in play kept secret; three hero quests that bring one in
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/secret-heroes`, `/home/user/lotf-secret` (from main 0.289.0).
+- **Goal:** the owner's "Let's keep the heroes that are gained from specific unlock scenarios a secret. Also, let's add some quests in which a hero comes from": the ten heroes earned in play are a dark figure, "???" and a vague hint in every list until they join; three tales in the tavern (two or three parts, a quest battle each) bring in the Werewolf, the Dread Pirate and the Juggernaut, moved off their milestones.
+- **Scope:** new `src/sim/secretHeroes.ts`, `src/sim/rewardWords.ts`, `src/sim/questData/tales.ts`, `src/sim/taleBattleData.ts`, `src/secretView.ts`, `src/secret.css`, `src/art/quests/{shepherd,gaoler,smith}-face.png`, `tools/hero-quests/cut.py`, `tools/secret-heroes/shots.mjs`, `test/secret-heroes.test.ts`; hooks in `contentHeroes.ts`, `questData.ts`, `quests.ts`, `questBattles.ts`, `run.ts`, `guest.ts`, `climb.ts`, `sceneScripts.ts`, `questData/battles.ts` (one line), `menuHeroes.ts`, `party.ts`, `gacha.ts`, `codexView.ts`, `questCard.ts`, `questLog.ts`, `questArt.ts`, `home.ts`, `main.ts`, `build.mjs`, `tools/quest-battles/rate.ts`; tests moved to the rule (listed in the note).
+- **Status:** ready for review. [Note](notes/secret-heroes.md); screenshots `samples/secret-*.png`, `samples/hero-quest-*.png`.
+
 ### SANCTUM-TIDY — The Summoner's plaque gone once Askel is bound; the shop and Pact Gallery as small corner buttons
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/sanctum-tidy`, `/home/user/lotf-sanctum` (from main 0.289.0).

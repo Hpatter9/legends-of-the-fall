@@ -91,6 +91,7 @@ import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, 
 import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
 import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
+import { secretsOf } from './sim/secretHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
@@ -2232,6 +2233,10 @@ class Game {
     if (this.run.mode?.kind === 'calamity') this.run.pool = [...this.meta.unlocked];
     // (a quest battle keeps the party picked for it: QUEST-BATTLES)
     else if (this.run.mode?.kind !== 'daily' && this.run.mode?.kind !== 'quest') this.run.pool = [...this.meta.party];
+    // (SECRET-HEROES: the heroes still secret are never offered as a guest or a Calamity hire)
+    const hide = secretsOf(this.meta);
+    if (hide.length) this.run.hide = hide;
+    else delete this.run.hide;
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */

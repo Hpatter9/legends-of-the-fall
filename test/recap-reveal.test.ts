@@ -86,7 +86,7 @@ test('a hero earned by a deed arrives on its own, naming the deed; a summoned on
     assert.match(deedLine(k)!, /^Earned: /);
     assert.equal(arrivalOf(k, true), 'summoned', `${k} out of a pull`);
   }
-  assert.equal(deedLine('reaper'), 'Earned: clear the Undead Legion on Hard');
+  assert.equal(deedLine('reaper'), 'Earned: see The Ledger of the Unburied to its end');
   assert.equal(arrivalOf('knight'), 'summoned');
   assert.equal(deedLine('knight'), null);
 });

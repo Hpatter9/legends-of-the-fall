@@ -52,7 +52,8 @@ test('the quests: unique ids, each with a giver, words, a goal of at least one a
   for (const q of QUESTS) {
     assert.ok(q.title && q.text && q.offer.length && q.done.length && q.going, q.id);
     assert.ok(q.goal.n >= 1, q.id);
-    assert.ok(q.reward.crowns || q.reward.stones || q.reward.chest || q.reward.ores, q.id);
+    // (SECRET-HEROES: a hero quest's last part pays a hero)
+    assert.ok(q.reward.crowns || q.reward.stones || q.reward.chest || q.reward.ores || q.reward.hero, q.id);
   }
 });
 
