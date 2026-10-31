@@ -103,7 +103,7 @@ test('a skill costs its pool, keeps a gap before it goes again, and waits until 
   assert.ok(out.some((e) => e.kind === 'skill' && e.name === 'Shield Wall'));
   assert.ok(Math.abs(resOf(k) - (RES.STAM_MAX - costOf(k, hk.s1))) < 1e-9, 'paid');
   assert.ok(!canPay(b, k, hk, 1), 'the gap holds it back');
-  const gap = hk.s1.gap ?? RES.GAP_STAM_MS;
+  const gap = hk.s1.cd;
   b.t += gap - 100;
   assert.ok(!canPay(b, k, hk, 1), 'still within the gap');
   b.t += 100;

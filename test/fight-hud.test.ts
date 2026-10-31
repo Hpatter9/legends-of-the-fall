@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, keyOf, ULT_LEVEL } from '../src/sim/abilities';
-import { HERO_KITS, costOf, heroKitOf, RES, SKILL2_LEVEL } from '../src/sim/heroKits';
+import { HERO_KITS, costOf, heroKitOf, SKILL2_LEVEL } from '../src/sim/heroKits';
 import { REVIVE } from '../src/sim/kits/revive';
 import { TIER_SKILLS } from '../src/sim/tierSkills';
 import { ALL_HEROES } from '../src/sim/units';
@@ -33,7 +33,7 @@ test('every hero chip shows its own kit: the skill names, the cost this hero pay
       assert.equal(c.name, slot.skill.name, `${h} skill ${n}`);
       assert.equal(c.cost, Math.round(costOf(u, slot)), `${h} skill ${n}`);
       assert.equal(c.tag, hk.pool === 'mana' ? 'MP' : 'SP', h);
-      assert.equal(c.gap, slot.gap ?? (hk.pool === 'mana' ? RES.GAP_MANA_MS : RES.GAP_STAM_MS), h);
+      assert.equal(c.gap, slot.cd, h);
       assert.ok(c.open, `${h} skill ${n} is open at level ${ULT_LEVEL}`);
     }
     const v = ultOf(b, u);

@@ -4,7 +4,7 @@
 
 import { type Battle, type Unit } from './sim/battle';
 import { keyOf, kitOf, ultimateOf, ULT_LEVEL, type Skill } from './sim/abilities';
-import { costOf, heroKitOf, RES, resMax, resOf, reviveCost, reviveReady, skill2Open, SKILL2_LEVEL, TIER3_DISCOUNT, ultFull, type HeroKit, type Slot } from './sim/heroKits';
+import { costOf, heroKitOf, resMax, resOf, reviveCost, reviveReady, skill2Open, SKILL2_LEVEL, TIER3_DISCOUNT, ultFull, type HeroKit, type Slot } from './sim/heroKits';
 import { REVIVE } from './sim/kits/revive';
 import { TIER_SKILLS, TOP_TIER } from './sim/tierSkills';
 
@@ -14,8 +14,8 @@ export type Which = 1 | 2 | 'ult';
 /** The pool's short tag, as the bars and chips show it. */
 export const poolTag = (hk: HeroKit): 'MP' | 'SP' => (hk.pool === 'mana' ? 'MP' : 'SP');
 
-/** The shortest time between two casts of a slot (its own gap, else its pool's). */
-export const gapOf = (hk: HeroKit, slot: Slot): number => slot.gap ?? (hk.pool === 'mana' ? RES.GAP_MANA_MS : RES.GAP_STAM_MS);
+/** The shortest time between two casts of a slot: its cooldown. */
+export const gapOf = (_hk: HeroKit, slot: Slot): number => slot.cd;
 
 /** What a skill chip shows. */
 export interface ChipView {
