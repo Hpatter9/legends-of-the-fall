@@ -195,6 +195,14 @@ export class TowerView {
     else if (this.calamity && run.tower?.mapDone && !run.over) this.recapCard();
   }
 
+  /** The map gives way to another screen (the home screen, a fight, the Last Stand): saved as its own Home button saves it, and shut.
+   *  Left open it stayed over everything after it (z-index 5, over the home screen and the board), so the old map covered the new one. */
+  dismiss(): void {
+    if (this.root.hidden) return;
+    if (this.run) saveSlot(this.run);
+    this.close();
+  }
+
   close(): void {
     this.sanctuary?.release();
     this.cal?.release();
