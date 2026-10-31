@@ -16,7 +16,7 @@ import { ICONS } from './menuArt';
 import { itemIcon } from './equipView';
 import { chestPicture } from './chestStash';
 
-const MARKS: Record<WaveNote['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖' };
+const MARKS: Record<WaveNote['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', guest: '⚑' };
 
 const img = (src: string): HTMLElement => {
   const i = document.createElement('img');

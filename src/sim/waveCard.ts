@@ -15,6 +15,8 @@ export interface WaveMoments {
   /** Hearts burned in the wave, and how many are left after. */
   hearts: number;
   heartsLeft: number;
+  /** A guest hero's farewell as the run ends (GUEST-HERO, `guest.ts`); none for any other card. */
+  farewell?: string;
   /** Gear and prizes picked up (the run's `found`). */
   found: readonly string[];
   /** Everything the wave brought in, grouped (RECAP-REVEAL, `waveGains.ts`): the card lists them as chips, and a `found` line they
@@ -30,7 +32,7 @@ export interface WaveMoments {
 
 /** One line on the card, with its kind (the line's mark and colour). */
 export interface WaveNote {
-  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest';
+  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest' | 'guest';
   text: string;
 }
 
@@ -62,6 +64,7 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (m.horn) out.push({ kind: 'horn', text: m.horn });
   for (const q of m.quests ?? []) out.push({ kind: 'quest', text: q });
   for (const f of m.gains ? otherFinds(m.found, m.gains) : m.found) out.push({ kind: 'found', text: `Found ${f}` });
+  if (m.farewell) out.push({ kind: 'guest', text: m.farewell });
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
   return out;

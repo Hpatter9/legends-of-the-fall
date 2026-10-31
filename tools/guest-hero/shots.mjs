@@ -60,7 +60,8 @@ async function skipAll(page) {
 }
 const shot = (page, name) => page.screenshot({ path: `docs/samples/${name}.png` });
 
-for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
+const SIZES = process.argv[3] ? [process.argv[3].split('x').map(Number)] : [[393, 852], [360, 780], [412, 915]];
+for (const [w, h] of SIZES) {
   const size = `${w}x${h}`;
   // ---- the guest hero
   let { ctx, page } = await boot(w, h, { xp: { knight: 30000, samurai: 30000, kunoichi: 30000, archer: 30000, wizard: 30000 } });
@@ -104,15 +105,27 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     g.run.retries = 2;
     g.setSpeed(3);
     g.begin();
-    // (the heroes are kept at 1 hp through the fight, so it is lost)
+    // (the heroes all fall as the fight begins, so it is lost)
     const keep = setInterval(() => {
-      for (const u of window.__game.b.units) if (u.side === 'hero' && u.alive) u.hp = Math.min(u.hp, 1);
+      for (const u of window.__game.b.units) if (u.side === 'hero' && u.alive) Object.assign(u, { hp: 0, alive: false });
       if (window.__game.b.phase !== 'fight') clearInterval(keep);
     }, 30);
   });
   await page.waitForFunction(() => window.__game.b.phase === 'lost', null, { timeout: 120000 }).catch(() => {});
-  await page.waitForTimeout(4500);
-  const bye = await page.evaluate(() => document.body.innerText.includes('the guest'));
+  // (the bench after the loss shows the GUEST badge; then the last card, with the farewell among its lines)
+  await page.waitForTimeout(1500);
+  await shot(page, `guest-bench-${size}`);
+  // (the first defeat's cinematic is skipped as it comes)
+  for (let i = 0; i < 40; i++) {
+    const seen = await page.evaluate(() => {
+      [...document.querySelectorAll('.csSkip')].find((x) => x.offsetParent)?.click();
+      return [...document.querySelectorAll('#result, #waveNotes, .jrCard, #jrBody')].some((e) => e.offsetParent && e.textContent.includes('the guest'));
+    });
+    if (seen) break;
+    await page.waitForTimeout(800);
+  }
+  await page.waitForTimeout(800);
+  const bye = await page.evaluate(() => (window.__game.run.found ?? []).some((l) => l.includes('the guest')) && document.body.innerText.includes('the guest'));
   await shot(page, `guest-farewell-${size}`);
   console.log(size, JSON.stringify({ line, field, tag, bye }));
   if (!(line.includes('guest') && field.heroes === 6 && field.status.includes('5 of 5 placed + guest') && field.badge && !field.recycle && tag.includes('Guest') && bye)) bad++;

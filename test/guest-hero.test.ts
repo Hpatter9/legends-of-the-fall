@@ -9,7 +9,8 @@ import { canMerge } from '../src/sim/merge';
 import { armyRun, canJoin, finish, heroOf, newRun, recycle, squadUsed, startStage, type Owned, type Run } from '../src/sim/run';
 import { chooseOption } from '../src/sim/events';
 import { marketOptions, stockMarket } from '../src/sim/market';
-import { drawGuest, guestBoost, guestFarewell, guestKinds, guestOf, guestPrice, guestStanding, splitGuestXp, takeGuest } from '../src/sim/guest';
+import { waveNotes } from '../src/sim/waveCard';
+import { drawGuest, farewellOf, guestBoost, guestFarewell, guestKinds, guestOf, guestPrice, guestStanding, splitGuestXp, takeGuest } from '../src/sim/guest';
 import { startedMeta } from '../src/sim/meta';
 import { xpFor } from '../src/sim/levels';
 import { HEROES } from '../src/sim/units';
@@ -45,9 +46,9 @@ test('the guest offer is drawn on its own stream: the same each time, outside th
   const g = withGuest[wares.length];
   assert.equal(g.effect.t, 'guest');
   assert.equal(g.cost, guestPrice(r, s));
-  // (dearer than the cart's sellsword)
+  // (one and a half of the cart's sellswords, to the nearest 5: its dearest ware but for a relic)
   const sell = wares.find((o) => o.effect.t === 'hire')!;
-  assert.ok(g.cost > sell.cost * 1.5);
+  assert.equal(g.cost, Math.round((1.5 * sell.cost) / 5) * 5);
   // (some carts have none)
   assert.ok(Array.from({ length: 40 }, (_, i) => drawGuest(r, i + 1)).some((x) => x === null));
 });
@@ -157,8 +158,12 @@ test('the guest says farewell when the run ends, and not before', () => {
   const r = armyWithFive();
   const g = takeGuest(r, 'cleric', 0)!;
   finish(r, true);
-  assert.ok(!(r.found ?? []).includes(guestFarewell(g)));
+  assert.equal(farewellOf(r), null);
   finish(r, false);
   assert.ok(r.over);
-  assert.ok((r.found ?? []).includes(guestFarewell(g)));
+  assert.equal(farewellOf(r), guestFarewell(g));
+  assert.match(guestFarewell(g), /the guest/);
+  // (the last card says it as a line of its own, not as a find)
+  const notes = waveNotes({ ups: [], fell: [], found: [], hearts: 0, heartsLeft: 0, farewell: farewellOf(r)! });
+  assert.deepEqual(notes, [{ kind: 'guest', text: guestFarewell(g) }]);
 });

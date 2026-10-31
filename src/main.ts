@@ -62,7 +62,7 @@ import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
-import { guestBoost, guestLevel, guestOf, splitGuestXp } from './sim/guest';
+import { farewellOf, guestBoost, guestLevel, guestOf, splitGuestXp } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
 import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
@@ -3115,7 +3115,7 @@ class Game {
       const hornSaid = hornLine(horn);
       // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
       const questMoved = questsMoved(this.meta, questsBefore, questsDone, questsFound);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));

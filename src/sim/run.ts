@@ -28,7 +28,6 @@ import { relicEffects } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
 import type { RoadState } from './midEvents';
-import { farewellOf } from './guest';
 import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
 
@@ -486,9 +485,6 @@ export function finish(run: Run, won: boolean, stars = 0): void {
       run.event = run.mode?.kind !== 'tower' && run.mode?.kind !== 'quest' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
     }
   } else run.over = true;
-  // (GUEST-HERO: a guest leaves when the run ends, with a short farewell on the last card)
-  const bye = farewellOf(run);
-  if (bye) run.found.push(bye);
   spendBuff(run);
 }
 

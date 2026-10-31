@@ -16,7 +16,7 @@ while the run has no guest, it also has a **guest** (`src/sim/guest.ts`, `drawGu
 - drawn on its own side stream (`mixSeed(seed, 0x6e5e7, stage)`), so the cart's other wares, and every other draw of the run, are as they
   were (a test checks the wares come out the same);
 - priced at one and a half sellswords (`GUEST_HIRES` x (the next Hire + 10), to the nearest 5): 60 gold at a run's start, 105 after six hires,
-  150 after twelve; dear (the cart's dearest ware), but within reach of a party that kept a wave's pay back. It counts as one of the cart's
+  150 after twelve; dear (the cart's dearest ware but for a relic), but within reach of a party that kept a wave's pay back. It counts as one of the cart's
   three buys, and a rummage leaves it where it is.
 
 The cart comes at most once a run (the road never repeats a kind), so in the measured saves a run met a guest about one time in four (10% to
@@ -35,8 +35,9 @@ cart). The spire is gone, so its shop is not a place for it.
 - **Nothing lasting.** Its share of a fight's XP is taken out before the lasting XP is paid and kept on the guest itself (`splitGuestXp`,
   `Owned.xp`): the kind's level does not move. It earns no bench XP. It never merges (`mergeable` in `merge.ts`) and is never recycled
   (`recycle` in `run.ts`).
-- **It leaves.** When the run ends, won or lost, `finish` puts its farewell on the last card's lines (`guestFarewell`, one of three by its
-  kind: "Kerem the guest takes the road home: ..."). The run, and the guest with it, is then gone as every run's roster is.
+- **It leaves.** When the run ends, won or lost, the last card says its farewell as a line of its own (`farewellOf`, `guestFarewell`: one
+  of three by its kind, "Kerem the guest bows and leaves the party: ..."; the card's new `guest` line in `waveCard.ts`, marked ⚑). The run,
+  and the guest with it, is then gone as every run's roster is.
 - The greedy player (`pickSquad`) fields its five strongest and the guest besides; it never buys one (its event pick takes only free things),
   so every balance table is as it was.
 
@@ -90,11 +91,11 @@ points** too.
 
 New: `src/sim/guest.ts`, `src/guest.css`, `test/guest-hero.test.ts`, `test/talent-arrows.test.ts`, `tools/guest-hero/` (`pace.ts` and
 `run.mjs` for the numbers, `card.ts` and `shots.mjs` for the screenshots). Changed: `src/sim/run.ts` (`Owned.guest`, `squadUsed`, `canJoin`,
-`ownHeroes`, `recycle`, `finish`), `src/sim/events.ts` (the `guest` effect, the rummage), `src/sim/market.ts` (`guestOption`),
-`src/sim/merge.ts`, `src/sim/autoplay.ts`, `src/sim/upgradesReady.ts`, `src/main.ts`, `src/events.ts`, `src/unitInfo.ts`, `src/home.ts`,
+`ownHeroes`, `recycle`), `src/sim/events.ts` (the `guest` effect, the rummage), `src/sim/market.ts` (`guestOption`),
+`src/sim/merge.ts`, `src/sim/autoplay.ts`, `src/sim/upgradesReady.ts`, `src/sim/waveCard.ts` (the farewell line), `src/waveCardView.ts`, `src/jrpgRecapView.ts`, `src/main.ts`, `src/events.ts`, `src/unitInfo.ts`, `src/home.ts`,
 `src/tavern.ts`, `src/party.ts`, `src/menuHeroes.ts`, `src/talentView.ts`, `src/rankUpList.ts`, `build.mjs` (the CSS).
 
-Screenshots: `docs/samples/guest-*.png` (the cart, the line after buying, the field of six, the info card, the farewell) and
+Screenshots: `docs/samples/guest-*.png` (the cart, the line after buying, the field of six, the info card, the bench after a loss with its GUEST badge, the farewell on the last card) and
 `docs/samples/talent-arrow-*.png` (the tavern, the list, the tree), at 393x852, 360x780 and 412x915.
 
 ## Questions for the owner

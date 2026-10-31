@@ -7,7 +7,7 @@
 //   - one of each hero still holds: a guest is never a twin of a fielded hero (it is drawn from kinds the run does not have, and `canJoin`
 //     and `placeBlock` refuse a twin as for any hero);
 //   - it earns XP in the run (kept on the guest itself, `Owned.xp`) but nothing lasting: no XP to the kind's level, no shards, no rank;
-//   - it never merges and is never recycled, and it leaves when the run ends, with a short farewell line on the last card.
+//   - it never merges and is never recycled, and it leaves when the run ends, with a short farewell line on the last card (`farewellOf`).
 //
 // Its strength is the party's: the grade of the fielded heroes when it joined, and their level and rank as they stand (live), with none of
 // the kind's own lasting equipment, talents or awakening. The offer is drawn on its own side stream (`GUEST_SALT`), so the cart's other
@@ -126,7 +126,7 @@ export function guestFarewell(h: Owned): string {
   return lines[[...h.kind].reduce((n, c) => n + c.charCodeAt(0), 0) % lines.length];
 }
 
-/** The guest's farewell, if the run has ended with one (`finish` adds it to the last card's lines). */
+/** The guest's farewell, if the run has ended with one (the page puts it on the run's last card, `waveNotes`' 'guest' line). */
 export const farewellOf = (run: Run): string | null => {
   const g = guestOf(run);
   return run.over && g ? guestFarewell(g) : null;
