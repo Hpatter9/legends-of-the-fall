@@ -8,8 +8,10 @@ function pending(root: HTMLElement): Promise<unknown>[] {
   const jobs: Promise<unknown>[] = [];
   for (const im of root.querySelectorAll('img')) if (im.getAttribute('src')) jobs.push(im.decode().catch(() => undefined));
   const urls = new Set<string>();
-  for (const e of [root, ...root.querySelectorAll<HTMLElement>('[style*="url("]')])
-    for (const m of e.style.backgroundImage.matchAll(/url\(["']?([^"')]+)["']?\)/g)) urls.add(m[1]);
+  // (the pictures set on elements' own styles, and those the stylesheet gives the panel and its first two levels: its frame, its box)
+  const near = [root, ...root.children, ...[...root.children].flatMap((c) => [...c.children])] as HTMLElement[];
+  for (const e of [...near.map((n) => getComputedStyle(n).backgroundImage), ...[...root.querySelectorAll<HTMLElement>('[style*="url("]')].map((n) => n.style.backgroundImage)])
+    for (const m of e.matchAll(/url\(["']?([^"')]+)["']?\)/g)) urls.add(m[1]);
   for (const url of urls) {
     const im = new Image();
     im.src = url;

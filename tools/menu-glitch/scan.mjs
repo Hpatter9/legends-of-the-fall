@@ -4,13 +4,19 @@
 //   blank  a frame that is mostly one flat colour (an empty or black page) where neither the screen before nor the one after is;
 //   bounce a frame that differs a lot from the one before it, then the picture goes back to how it was within three frames (a panel
 //          drawn and redrawn, old content flashing, a picture blinking out and back);
-//   late   a picture (img) still decoding, or not yet loaded, while the screen shows it (it pops in after the change);
-//   shift  a layout shift (the browser's own layout-shift entries) inside the change;
-//   ghost  a click that reached a button of the screen being left or under the new one (counted by a capture-phase listener).
+//   pop    after the change has begun, pieces that were flat (an empty box, an unpainted canvas, a picture not decoded) fill in;
+//   stale  a frame showing what is neither the screen before, nor the one after, nor a blend of the two (an old screen showing through);
+//   torn   (tab slides) a frame whose page area is not the old page and the new one edge to edge at some point of the move;
+// and, beside the frames:
+//   late   pictures (img) on view but not yet loaded or decoded while the change runs (frames x pictures);
+//   shift  the change's layout shift (the browser's own layout-shift entries);
+//   ghost  a click that landed on something other than what the finger went down on (a panel the tap itself opened);
+//   churn  pictures and canvases taken out of the page (rebuilt rather than kept); busy: main-thread long tasks.
+// The CPU is slowed `--rate` times (CDP Emulation.setCPUThrottlingRate) to stand in for a phone.
 // Serve a build (npm run web, then any static server on out/web), then:
 //   node tools/menu-glitch/scan.mjs <port> [label] [--size 393x852] [--rate 4] [--only name,name] [--keep dir]
-// It prints one line per change and the totals, and writes <keep>/<label>-<size>.json with the frame numbers (and, with --keep,
-// the frames of each change as PNGs under <keep>/<label>-<size>/<change>/ for frame strips).
+// It prints one line per change and the totals, and writes docs/samples/menu-glitch-<label>-<size>.json with the frame numbers
+// (and, with --keep <dir>, the frames of each change as PNGs under <dir>/<label>-<size>/<change>/ for frame strips).
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
@@ -26,7 +32,7 @@ const [W, H] = flag('size', '393x852').split('x').map(Number);
 const rate = Number(flag('rate', '4'));
 const only = flag('only', '');
 const keep = flag('keep', '');
-const outDir = keep || 'docs/samples';
+const outDir = 'docs/samples';
 const url = `http://127.0.0.1:${port}`;
 const TIPS = 'home,deploy,fight,mana,skill,summon,crowns,calamity,tower,talents,castle,spellbook,stash,equipment,recycle,retry,autoReplay,party'.split(',');
 
@@ -34,6 +40,8 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 // (the frames are read in a second, unthrottled page: each decoded to a small grey picture of 8x8 blocks)
 const lab = await (await browser.newContext()).newPage();
 await lab.setContent('<canvas id=c></canvas>');
+// (moving: 'slide' for a tab's slide (checked for torn frames), 'camera' for the fight's opening camera and 'reveal' for the recap's
+//  staged reveal (both meant to move: checked only for blank and bounce frames))
 const measure = (frames, moving, area) =>
   lab.evaluate(async ([frames, moving, area]) => {
     const B = 6;
@@ -319,7 +327,7 @@ const record = async (name, act, ms = 1400) => {
     const r = document.getElementById('hmPages').getBoundingClientRect();
     return [r.top, r.bottom];
   });
-  const m = await measure(frames.map((f) => f.data), name.startsWith('tab-') ? 'slide' : name === 'fight-enter' ? 'camera' : '', area);
+  const m = await measure(frames.map((f) => f.data), name.startsWith('tab-') ? 'slide' : name === 'fight-enter' ? 'camera' : name === 'result-recap' ? 'reveal' : '', area);
   if (keep) {
     const dir = `${keep}/${label}-${W}x${H}/${name}`;
     mkdirSync(dir, { recursive: true });
@@ -475,5 +483,5 @@ const totals = { changes: Object.keys(results).length, blank: sum('blank'), boun
 totals.glitchFrames = totals.blank + totals.bounce + totals.pop + totals.stale + totals.torn;
 console.log(`\n${label} ${W}x${H} at ${rate}x slower: ${JSON.stringify(totals)}${errors.length ? `\npage errors: ${[...new Set(errors)].join(' | ')}` : ''}`);
 mkdirSync(outDir, { recursive: true });
-writeFileSync(`${outDir}/${label}-${W}x${H}.json`, JSON.stringify({ size: `${W}x${H}`, rate, totals, results, errors: [...new Set(errors)] }, null, 1));
+writeFileSync(`${outDir}/menu-glitch-${label}-${W}x${H}.json`, JSON.stringify({ size: `${W}x${H}`, rate, totals, results, errors: [...new Set(errors)] }, null, 1));
 await browser.close();

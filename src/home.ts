@@ -394,7 +394,7 @@ export class Home {
   openQuests(tab: LogTab = 'active'): void {
     closeGiverCard();
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     this.tavern.paintOnce();
     this.camp.stop();
@@ -699,15 +699,19 @@ export class Home {
     swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
     swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
     // (Hester's Stall, SHOP-BOOKS-GEAR: the stall's picture over its plate; a gold dot while the day's stock is new and unseen)
+    // (MENU-GLITCH: built only when its state changes: a new picture made on every refresh only to be thrown away still had to be decoded)
     const fresh = newStock(m, todayKey());
-    const stall = place('hmStall', 'stall', 'Hester’s Stall', fresh ? 'new stock' : 'books · gear', `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
-    const pic = el('img', 'cpStallPic');
-    pic.src = shopArt('stall');
-    pic.alt = '';
-    pic.draggable = false;
-    stall.prepend(pic);
-    if (fresh) stall.append(el('i', 'badge'));
-    swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
+    if (this.camp.stallSlot.dataset.key !== String(fresh) || !this.camp.stallSlot.querySelector('.cpPlace')) {
+      this.camp.stallSlot.dataset.key = String(fresh);
+      const stall = place('hmStall', 'stall', 'Hester’s Stall', fresh ? 'new stock' : 'books · gear', `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
+      const pic = el('img', 'cpStallPic');
+      pic.src = shopArt('stall');
+      pic.alt = '';
+      pic.draggable = false;
+      stall.prepend(pic);
+      if (fresh) stall.append(el('i', 'badge'));
+      swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
+    }
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     // Earned chests rest by the overlook's supplies.
     const stash = el('div', 'csStash');
@@ -795,7 +799,7 @@ export class Home {
     this.closeSheet();
     this.cardOpen = true;
     this.castle.stop();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     const box = $('hmSheetBox');
     box.className = 'hsheet bcard';
     this.drawBuildingCard(box, id);
@@ -806,7 +810,7 @@ export class Home {
     this.closeSheet();
     this.cardOpen = true;
     this.castle.stop();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     const box = $('hmSheetBox');
     box.className = 'hsheet bcard';
     const m = this.meta;
@@ -900,7 +904,7 @@ export class Home {
   /** The roster page: every hero, the locked ones with how to get them. */
   private openRoster(): void {
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     // (the tavern holds a picture under the roster, so its page never slides past empty as the tab changes)
     this.tavern.paintOnce();
@@ -911,7 +915,7 @@ export class Home {
   private openSheet(kind: string, fromRoster = false, tab = 'overview'): void {
     if (this.meta.unlocked.includes(kind)) this.lastViewedHero = kind;
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     this.camp.stop();
     this.stopSheet = drawHeroSheet(
@@ -921,9 +925,25 @@ export class Home {
     );
   }
 
+  /** Put the sheet layer up (its content is drawn straight after). MENU-GLITCH: a sheet coming up fresh shows once its pictures
+   *  are decoded; one already up and drawn again (a tab, the next hero) stays in view as it is redrawn. */
+  private sheetUp(): void {
+    const sheet = $('hmSheet');
+    const fresh = sheet.hidden && !this.sheetWasUp;
+    sheet.hidden = false;
+    if (fresh) queueMicrotask(() => void showWhenPainted(sheet));
+  }
+  /** Whether the sheet was up a moment ago (a redraw closes it and puts it up again in the one step). */
+  private sheetWasUp = false;
+
   private closeSheet(): void {
     this.stopSheet?.();
     this.stopSheet = null;
+    // (a redraw shuts the sheet and puts it straight back: remembered until the page next draws, so it is not taken for a fresh one)
+    if (!$('hmSheet').hidden) {
+      this.sheetWasUp = true;
+      queueMicrotask(() => (this.sheetWasUp = false));
+    }
     $('hmSheet').hidden = true;
     this.cardOpen = false;
     this.cardFor = null;

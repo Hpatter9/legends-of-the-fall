@@ -352,6 +352,7 @@
   #home.handoffQuiet { pointer-events: none; }
   /* (MENU-GLITCH: a panel waiting for its pictures: laid out and painted, but not seen until they are ready; paintReady.ts) */
   .paintWait { opacity: 0 !important; }
+  .paintWait, .paintWait * { animation-play-state: paused !important; }
   #hmTop { grid-area: top; position: relative; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 6px) 10px 4px; background: linear-gradient(var(--s5), var(--s3)); border-bottom: 3px solid var(--gold); box-shadow: 0 3px 10px rgb(var(--black-rgb) / 0.6); }
   #hmTop .grow { flex: 1; }
   .chip { display: flex; align-items: center; gap: 5px; min-width: 70px; padding: 3px 10px 3px 5px; background: var(--s1); border: 2px solid var(--edge); border-radius: 14px; color: var(--gold); font-size: 15px; box-shadow: inset 0 2px 4px rgb(var(--black-rgb) / 0.6); }
