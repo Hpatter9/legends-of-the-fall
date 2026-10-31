@@ -69,3 +69,34 @@ test('battery saver draws less, and reduced motion flings no debris', () => {
   assert.ok(saver.extras < full.extras && saver.debris < full.debris && saver.linger < full.linger);
   assert.equal(fxBudget(false, true).debris, 0);
 });
+
+test('each Eidolon strikes in its own way (EIDOLON-FX unique pass): different rhythm, order, spread and layers', async () => {
+  const { pillarOrder, spreadShocks, faultLine } = await import('../src/eidolonFx');
+  const sigs = EIDOLONS.map((e) => STRIKE_FX[e.id].sig);
+  for (const key of ['special', 'order', 'spread'] as const) assert.equal(new Set(sigs.map((g) => g[key])).size, sigs.length, `${key} differs per Eidolon`);
+  assert.equal(new Set(sigs.map((g) => `${g.stagger}/${g.burstAt}`)).size, sigs.length, 'no two share a rhythm');
+  // the cold and the heavy have no hot white flash; the earth no bloom; shadow dims the screen; fire and light flash warm
+  assert.equal(STRIKE_FX.nivra.sig.flash, 0);
+  assert.equal(STRIKE_FX.gorm.sig.flash, 0);
+  assert.equal(STRIKE_FX.gorm.sig.bloom, 0);
+  assert.ok(STRIKE_FX.vaelkhar.sig.dim > 0.3 && STRIKE_FX.vaelkhar.sig.flash === 0);
+  assert.ok(STRIKE_FX.gorm.sig.shake.amp > STRIKE_FX.voltara.sig.shake.amp && STRIKE_FX.gorm.sig.shake.ms > STRIKE_FX.voltara.sig.shake.ms);
+  // the orders
+  const foes = [{ x: 300, y: 200 }, { x: 100, y: 220 }, { x: 200, y: 180 }];
+  const mid = { x: 200, y: 200 };
+  assert.deepEqual(pillarOrder('ltr', foes, mid, null), [1, 2, 0]);
+  assert.deepEqual(pillarOrder('together', foes, mid, null), [0, 1, 2]);
+  assert.deepEqual(pillarOrder('mouth', foes, mid, { x: 0, y: 200 }), [1, 2, 0]);
+  assert.deepEqual(pillarOrder('mouth', foes, mid, { x: 400, y: 200 }), [0, 2, 1]);
+  assert.equal(pillarOrder('chain', foes, mid, null).length, 3);
+  assert.deepEqual([...pillarOrder('inward', foes, mid, null)].sort(), [0, 1, 2]);
+  // the aftershocks stay on the screen, come one after another and differ by spread
+  const seen = new Set<string>();
+  for (const kind of ['wave', 'radial', 'rain', 'jump', 'fault', 'implode'] as const) {
+    const sh = spreadShocks(kind, 6, mid, 393, 852, { extraAt: 100, extraGap: 60 }, null, faultLine(mid, 393));
+    assert.equal(sh.length, 6, kind);
+    for (const s of sh) assert.ok(s.x >= 0 && s.x <= 393 && s.delay >= 100, kind);
+    seen.add(sh.map((s) => `${Math.round(s.x)},${Math.round(s.y)}`).join('|'));
+  }
+  assert.equal(seen.size, 6, 'six different spreads');
+});

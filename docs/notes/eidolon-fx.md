@@ -112,3 +112,30 @@ all six credited).
 the aftermath) and `strip.py`: `docs/samples/eidolon-fx-<id>-before.png` and `-after.png` for all six at 393x852, the impact frame of each
 (`eidolon-fx-<id>-impact.png`), and after strips at 360x780 (Askel, Voltara), 412x915 (Nivra, Vaelkhar), reduced motion (Askel, Gorm),
 battery saver (Askel) and the short call (Aurelan). No page errors, no missing files, no sideways overflow.
+
+## Each one's signature (the unique pass)
+
+The owner: "I like the power of these effects. I'd like them to look unique from each other as well." The shared skeleton (the white flash,
+the pillar, the ring, the identical aftershocks) is now data per Eidolon: `StrikeLook.sig` (`src/eidolonFx.ts`: the special layer, the
+order and rhythm of the pillars, when the great burst comes, where the aftershocks fall, the flash, the bloom, the shockwave, the charge,
+the dim and the shake). `eidolonCall.ts` `strikeFx` and `signature` read it; the CSS is at the end of `eidolons.css`. Page only: the
+strike's rules and numbers and the call's beats and times are untouched; the strike still lands on the sprite's attack frame, about 4 s
+in all. Reduced motion shows each extra still (no boulders, pour, embers, shake); battery saver halves the cells, spikes, blobs and flames.
+
+| Eidolon | Shape and path | Rhythm | Colour and blend | Flash / bloom / shake |
+|---|---|---|---|---|
+| Askel | a wave of flame racing the foes' rows from his breath (pillars from his side, a flame every 55 ms, aftershocks as a line), then a tall firestorm column on their middle (~0.5 s later), smouldering ground | fast sweep, then one late roar | orange, additive | warm orange flash, strong bloom, medium shake |
+| Nivra | frost creeping tile by tile outward from the middle, foes encased (pillars outward, 150 ms apart), then the great burst late (~0.65 s) and shards flung outward in rings; cold mist rising | slow build, then the shatter | blue-white, no warm flash | no flash, faint soft bloom, light shake |
+| Aurelan | a lance of light on each foe, one by one left to right (170 ms), then a single radiant dome with turning rays and a sunburst (~0.75 s), smites raining after | measured, a held breath, then the dome | gold and rose, soft | pale-gold flash, soft slow bloom, light shake |
+| Voltara | a jagged chain arc from the sky leaping foe to foe (48 ms a hop, drawn in steps and flickering once per hop), the burst at once, then jumping strikes | staccato, 60 ms apart | blue-white core, copper sparks | pale blue flash, flickering stepped bloom, short shake |
+| Gorm | a fault line cracking across the ground from the hammer, rock spikes erupting along it, boulders falling, a big dust cloud; all the pillars slam at once | heavy and slow: the burst and rock after ~0.5 s | earth brown, plain (not additive) | no flash, no bloom, deep long shake (1.6 x, 0.9 s) |
+| Vaelkhar | the screen dims, violet-black fire pours in from the sides and a maw swallows the foes' half, imploding; pillars drawn in from the far foes, aftershocks hopping inward; violet embers rise | slow implosion (~0.55 s), then embers | violet-black, plain (solid), glow only on the fire | no flash, faint bloom, dimmed screen, medium shake |
+
+Details: a delayed strip now stays unseen until its time (`ecFxIn`, so its first frame never shows early); the flash colour, strength and
+presence come from `sig` (gone for Nivra, Gorm and Vaelkhar); the fight's own shake is scaled by `sig.shake.amp`; "solid" pillars, bursts
+and aftershocks (Gorm, Vaelkhar) use the normal blend so dark and brown read as dark and brown. Voltara's flickers are a deliberate
+one-shot stepped fade (never looped), so `test/no-flicker.test.ts` passes. The helpers `pillarOrder`, `jagged`, `faultLine` and
+`spreadShocks` are pure and tested (`test/eidolon-fx.test.ts`: every Eidolon differs in special, order, spread and rhythm; Nivra and Gorm
+have no flash, Gorm no bloom, Vaelkhar dims; the six spreads differ and stay on the screen).
+
+Frames: `docs/samples/eidolon-fx-<id>-unique.png` (393x852; the old strike's impact, the new impact, the new late frame).

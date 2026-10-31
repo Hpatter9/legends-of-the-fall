@@ -54,7 +54,7 @@ import earthBurst from './art/fx/magic/earth_burst.png';
 import dustWhite from './art/fx/vfx/dust_white.png';
 import smokeDark from './art/fx/vfx/smoke_dark.png';
 import darkCircle from './art/fx/magic/dark_circle.png';
-import { extraSpots, fxBudget, FX_CELL, PILLAR_STAGGER, RING, STRIKE_FX, type FxStrip, type StrikeLook } from './eidolonFx';
+import { faultLine, fxBudget, FX_CELL, jagged, pillarOrder, RING, spreadShocks, STRIKE_FX, type FxStrip, type StrikeLook } from './eidolonFx';
 import type { Fx } from './render/fx';
 import { play, duck } from './render/sound';
 import { settings } from './settings';
@@ -127,9 +127,11 @@ function fxEl(st: FxStrip, x: number, y: number, o: { delay?: number; mul?: numb
   const delay = Math.round(o.delay ?? 0);
   d.style.setProperty('--life', `${st.ms + 300}ms`);
   d.style.setProperty('--delay', `${Math.max(0, delay)}ms`);
+  // (a strip with a delay stays unseen until its time, then plays: `ecFxIn` holds it hidden, so frame one never shows early)
+  const wait = delay > 0 ? `, ecFxIn 1ms linear ${delay}ms both` : '';
   d.style.animation = st.loop
-    ? `ecFxPlay ${st.ms}ms steps(${st.n}, jump-none) ${delay}ms infinite`
-    : `ecFxPlay ${st.ms}ms steps(${st.n}, jump-none) ${delay}ms both, ecFxEnd 240ms ease-in ${delay + st.ms - 120}ms forwards`;
+    ? `ecFxPlay ${st.ms}ms steps(${st.n}, jump-none) ${delay}ms infinite${wait}`
+    : `ecFxPlay ${st.ms}ms steps(${st.n}, jump-none) ${delay}ms both${wait}, ecFxEnd 240ms ease-in ${delay + st.ms - 120}ms forwards`;
   return d;
 }
 
@@ -742,7 +744,9 @@ export class EidolonCall {
     const left = Math.max(120, p.m.STRIKE - p.t - 30);
     // (EIDOLON-FX: the charge: the element gathers into a ring closing on the foes' middle, arriving as the strike lands)
     const mid = this.foeMid();
-    const charge = el('i', 'ecCharge');
+    const kind = STRIKE_FX[p.e.id]?.sig.charge ?? 'ring';
+    const charge = el('i', `ecCharge ${kind}`);
+    if (kind === 'none') charge.style.display = 'none';
     charge.style.left = `${Math.round(mid.x)}px`;
     charge.style.top = `${Math.round(mid.y)}px`;
     charge.style.setProperty('--ms', `${Math.round(left)}ms`);
@@ -816,7 +820,7 @@ export class EidolonCall {
       fx.ultImpact(b, p.e.element, spots.slice(0, saver ? 2 : 5));
       if (i === 0) {
         fx.hitStop(p.m.HIT_STOP);
-        fx.rumble(this.reduced || !settings().shake ? 0 : p.m.SHAKE);
+        fx.rumble(this.reduced || !settings().shake ? 0 : p.m.SHAKE * (STRIKE_FX[p.e.id]?.sig.shake.amp ?? 1));
       }
     }
     if (i === 0) this.landed(p);
@@ -834,6 +838,13 @@ export class EidolonCall {
       const g = f.cloneNode() as HTMLElement;
       // (EIDOLON-FX: the blow's flash is a hard white one; the aftershocks' the soft one of the element)
       g.classList.toggle('big', i === 0);
+      // (each Eidolon's own flash: none at all for Gorm, Nivra and Vaelkhar, a gold or copper-blue one for the rest)
+      const sg = STRIKE_FX[p.e.id]?.sig;
+      if (sg) {
+        if (sg.flash <= 0) g.style.display = 'none';
+        g.style.setProperty('--flashA', String(sg.flash));
+        if (sg.flashTint) g.style.setProperty('--flashC', sg.flashTint);
+      }
       f.replaceWith(g);
     }
   }
@@ -875,54 +886,71 @@ export class EidolonCall {
    *  and what lingers on their ground from the aftermath on. */
   private strikeFx(p: Playing, spots: readonly { x: number; y: number }[]): void {
     const look: StrikeLook = STRIKE_FX[p.e.id] ?? STRIKE_FX.askel;
+    const sig = look.sig;
     const saver = settings().saver;
     const budget = fxBudget(saver, this.reduced);
     const W = innerWidth;
     const H = innerHeight;
     const mid = this.foeMid(p.struck.length ? p.struck : undefined);
+    const mouth = p.mon?.fromSprite ? this.monMouth(p) : null;
     // (the short call's aftershocks and aftermath come sooner)
     const span = p.m.AFTER - p.m.STRIKE;
     const k = span / (STRIKE_FX_SPAN);
     const L = this.board;
-    // (the bloom of the element's light, and the shockwave ring along the ground, as wide as the screen)
-    const bloom = el('i', 'ecBloom');
-    bloom.style.left = `${Math.round(mid.x)}px`;
-    bloom.style.top = `${Math.round(mid.y)}px`;
-    bloom.style.setProperty('--bloom', look.bloom);
-    L.append(bloom);
-    const ringW = Math.round(W * 1.1);
-    const ring = el('i', 'ecFx ecRingFx');
-    ring.style.width = `${ringW}px`;
-    ring.style.height = `${Math.round((ringW * RING.fh) / RING.fw)}px`;
-    ring.style.left = `${Math.round(mid.x)}px`;
-    ring.style.top = `${Math.round(mid.y)}px`;
-    ring.style.setProperty('--ry', `${-((RING.mid / RING.fh) * 100).toFixed(1)}%`);
-    ring.style.backgroundImage = `url(${FX_URL(RING.sheet)})`;
-    ring.style.backgroundSize = `${RING.n * 100}% 100%`;
-    ring.style.setProperty('--hold', `${(RING.hold / (RING.n - 1)) * 100}%`);
-    ring.style.setProperty('--life', `${RING.ms + 300}ms`);
-    ring.style.filter = look.ring;
-    ring.style.animation = `ecFxPlay ${RING.ms}ms steps(${RING.n}, jump-none) -60ms both, ecFxEnd 300ms ease-in ${RING.ms - 200}ms forwards`;
-    L.append(ring);
-    // (the one huge burst on their middle, already blazing in the frozen frame)
-    L.append(fxEl(look.burst, mid.x, mid.y - 18, { delay: -110, cls: 'ecBurst' }));
-    // (the pillar over each foe, rolling across them; a shaft out of the sky onto each for the light and the bolt)
-    const order = spots.map((s, i) => ({ s, i })).sort((a, b) => a.s.x - b.s.x);
-    order.forEach(({ s }, n) => {
-      const delay = n * PILLAR_STAGGER * Math.min(1, k + 0.3) - 40;
-      if (look.sky) {
-        const sh = el('i', `ecShaft ${look.sky}`);
-        sh.style.left = `${Math.round(s.x)}px`;
-        sh.style.top = `${Math.round(s.y + 4)}px`;
-        sh.style.height = `${Math.round(s.y + 40)}px`;
+    const put = <T extends HTMLElement>(d: T, x: number, y: number, w?: number, h?: number): T => {
+      d.style.left = `${Math.round(x)}px`;
+      d.style.top = `${Math.round(y)}px`;
+      if (w) d.style.width = `${Math.round(w)}px`;
+      if (h) d.style.height = `${Math.round(h)}px`;
+      return d;
+    };
+    const timed = <T extends HTMLElement>(d: T, delay: number, ms?: number): T => {
+      d.style.animationDelay = `${Math.round(delay * k)}ms`;
+      if (ms) d.style.animationDuration = `${Math.round(ms)}ms`;
+      return d;
+    };
+    const solid = sig.solid ? ' solid' : '';
+    // (the bloom of the element's light: stronger or softer, or none at all, by Eidolon)
+    if (sig.bloom > 0) {
+      const bloom = put(el('i', 'ecBloom'), mid.x, mid.y);
+      bloom.style.setProperty('--bloom', look.bloom);
+      bloom.style.setProperty('--bloomA', String(sig.bloom));
+      if (sig.bloomSoft) bloom.style.animationDuration = '1500ms';
+      L.append(bloom);
+    }
+    // (the shockwave ring along the ground, as wide as the screen)
+    if (sig.shock > 0) {
+      const ringW = Math.round(W * 1.1);
+      const ring = put(el('i', 'ecFx ecRingFx'), mid.x, mid.y, ringW, (ringW * RING.fh) / RING.fw);
+      ring.style.setProperty('--ry', `${-((RING.mid / RING.fh) * 100).toFixed(1)}%`);
+      ring.style.backgroundImage = `url(${FX_URL(RING.sheet)})`;
+      ring.style.backgroundSize = `${RING.n * 100}% 100%`;
+      ring.style.setProperty('--hold', `${(RING.hold / (RING.n - 1)) * 100}%`);
+      ring.style.setProperty('--life', `${RING.ms + 300}ms`);
+      ring.style.filter = look.ring;
+      ring.style.opacity = String(sig.shock);
+      ring.style.animation = `ecFxPlay ${RING.ms}ms steps(${RING.n}, jump-none) -60ms both, ecFxEnd 300ms ease-in ${RING.ms - 200}ms forwards`;
+      L.append(ring);
+    }
+    // (the Eidolon's own extra layers: each is one-shot, and held still with reduced motion)
+    this.signature(p, look, mid, mouth, spots, { W, H, k, put, timed, saver });
+    // (the one huge burst on their middle: already blazing in the frozen frame, or late, where the blow is something else coming first)
+    L.append(fxEl(look.burst, mid.x, mid.y - 18, { delay: sig.burstAt * k, cls: `ecBurst${solid}` }));
+    // (the pillar over each foe, rolling across them in the Eidolon's own order and rhythm; a shaft out of the sky onto each for the light)
+    const foes = spots.map((s) => ({ x: s.x, y: s.y }));
+    const rank = pillarOrder(sig.order, foes, mid, mouth);
+    rank.forEach((fi, n) => {
+      const s = foes[fi];
+      const delay = n * sig.stagger * Math.min(1, k + 0.3) - (sig.stagger < 100 && n === 0 ? 40 : 0);
+      if (look.sky === 'beam') {
+        const sh = el('i', 'ecShaft beam');
+        put(sh, s.x, s.y + 4, undefined, s.y + 40);
         sh.style.animationDelay = `${Math.round(delay)}ms`;
         L.append(sh);
       }
-      L.append(fxEl(look.pillar, s.x, s.y + 6, { delay, cls: 'ecPillar', mul: 1 - Math.min(0.25, n * 0.02) }));
+      L.append(fxEl(look.pillar, s.x, s.y + 6, { delay, cls: `ecPillar${solid}`, mul: 1 - Math.min(0.25, n * 0.02) }));
       for (let c = 0; c < budget.debris; c++) {
-        const chip = el('i', 'ecChip');
-        chip.style.left = `${Math.round(s.x)}px`;
-        chip.style.top = `${Math.round(s.y - 20)}px`;
+        const chip = put(el('i', 'ecChip'), s.x, s.y - 20);
         const side = c % 2 ? 1 : -1;
         chip.style.setProperty('--dx', `${side * (36 + ((c * 37 + n * 23) % 70))}px`);
         chip.style.setProperty('--up', `${-(70 + ((c * 53 + n * 19) % 80))}px`);
@@ -932,24 +960,174 @@ export class EidolonCall {
         L.append(chip);
       }
     });
-    // (the aftershocks across the foes' half)
-    for (const e of extraSpots(spots.map((s) => ({ x: s.x / W, y: s.y / H })), budget.extras)) {
-      L.append(fxEl(look.extra, e.x * W, e.y * H, { delay: e.delay * k, cls: 'ecExtra', mul: 0.85 + ((e.delay / 95) % 3) * 0.12 }));
+    // (the aftershocks, by the Eidolon's own spread)
+    const fault = p.e.id === 'gorm' ? faultLine(mid, W, (mouth?.x ?? 0) < W / 2 ? 'left' : 'right') : undefined;
+    for (const e of spreadShocks(sig.spread, budget.extras + (sig.spread === 'wave' ? 2 : 0), mid, W, H, sig, mouth, fault)) {
+      L.append(fxEl(look.extra, e.x, e.y, { delay: e.delay * k, cls: `ecExtra${solid}`, mul: e.mul }));
     }
     // (what lingers on their ground, from the aftermath on)
     spots.slice(0, budget.linger).forEach((s, n) => {
-      const w = el('i', 'ecLinger');
-      w.style.left = `${Math.round(s.x)}px`;
-      w.style.top = `${Math.round(s.y + 6)}px`;
+      const w = put(el('i', 'ecLinger'), s.x, s.y + 6);
       w.style.animationDelay = `${Math.round(span * 0.75 + n * 40)}ms`;
       w.append(fxEl(look.after, 0, 0, { delay: -n * 90 }));
       L.prepend(w);
     });
-    // (the board shaken as the freeze lets go: the cinematic's layer with the board's picture, which the fight's own shake moves)
+    // (the board shaken as the freeze lets go: the cinematic's layer with the board's picture, which the fight's own shake moves; Gorm's
+    // is deep and long, Nivra's light)
     if (!this.reduced && settings().shake) {
+      L.style.setProperty('--shk', String(sig.shake.amp));
+      L.style.setProperty('--shkMs', `${sig.shake.ms}ms`);
       L.classList.remove('shake');
       void L.offsetWidth;
       L.classList.add('shake');
+    }
+  }
+
+  /** EIDOLON-FX, each one's own layers (`docs/notes/eidolon-fx.md`, "each one's signature"): Askel's wave of fire along the rows and the
+   *  firestorm column; Nivra's frost creeping tile by tile and the mist; Aurelan's dome and rays; Voltara's chain arc; Gorm's fault line,
+   *  falling boulders and dust; Vaelkhar's dimmed screen and the maw that swallows the foes' half. */
+  private signature(
+    _p: Playing,
+    look: StrikeLook,
+    mid: { x: number; y: number },
+    mouth: { x: number; y: number } | null,
+    spots: readonly { x: number; y: number }[],
+    c: { W: number; H: number; k: number; put: <T extends HTMLElement>(d: T, x: number, y: number, w?: number, h?: number) => T; timed: <T extends HTMLElement>(d: T, delay: number, ms?: number) => T; saver: boolean },
+  ): void {
+    const L = this.board;
+    const { W, H, k, put, timed, saver } = c;
+    const sig = look.sig;
+    switch (sig.special) {
+      case 'wave': {
+        // the firestorm column, rising on their middle after the wave has passed, then the smoulder (the aftermath)
+        L.append(fxEl({ ...look.pillar, scale: 3.6, ms: 1300 }, mid.x, mid.y + 24, { delay: 520 * k, cls: 'ecPillar ecStorm' }));
+        const fromRight = (mouth?.x ?? 0) >= W / 2;
+        for (let i = 0; i < (saver ? 4 : 7); i++) {
+          const t = i / (saver ? 3 : 6);
+          const x = W * (fromRight ? 0.95 - 0.9 * t : 0.05 + 0.9 * t);
+          L.append(fxEl({ ...look.pillar, scale: 1.25, ms: 900 }, x, mid.y + 14 + (i % 2) * 12, { delay: (30 + i * 55) * k, cls: 'ecPillar ecWaveFlame' }));
+        }
+        break;
+      }
+      case 'frost': {
+        // frost spreading over the ground tile by tile from the foes' middle outward, the mist rising off it
+        const cells = saver ? 6 : 14;
+        for (let i = 0; i < cells; i++) {
+          const ring = 1 + Math.floor(i / 5);
+          const a = i * 2.39996;
+          const hold = put(el('i', 'ecFrostHold'), mid.x + Math.cos(a) * W * 0.11 * ring, mid.y + 12 + Math.sin(a) * H * 0.045 * ring);
+          timed(hold, 40 + i * 42, 1500 + (sig.burstAt - 40 - i * 42));
+          hold.append(fxEl({ ...look.after, ms: 620 }, 0, 0, { delay: -i * 70 }));
+          L.prepend(hold);
+        }
+        for (let i = 0; i < (saver ? 2 : 5); i++) {
+          const mist = put(el('i', 'ecMist'), mid.x + (i - 2) * W * 0.2, mid.y + 20 - (i % 2) * H * 0.04, W * 0.55, W * 0.28);
+          timed(mist, 500 + i * 160, 2600);
+          L.append(mist);
+        }
+        break;
+      }
+      case 'dome': {
+        // a single dome of radiant light swelling over their half, its rays turning, once the lances have fallen
+        const rays = put(el('i', 'ecRays'), mid.x, mid.y, W * 1.6, W * 1.6);
+        timed(rays, sig.burstAt - 60);
+        L.append(rays);
+        const dome = put(el('i', 'ecDome'), mid.x, mid.y + 10, W * 1.25, W * 0.7);
+        timed(dome, sig.burstAt - 60);
+        L.append(dome);
+        break;
+      }
+      case 'arc': {
+        // the chain arc leaping foe to foe from the sky, jagged, drawn in quick steps, each hop flickering once
+        const foes = spots.map((s) => ({ x: s.x, y: s.y }));
+        const rank = pillarOrder('chain', foes, mid, mouth);
+        const path: { x: number; y: number }[] = [{ x: foes[rank[0]]?.x ?? mid.x, y: -10 }, ...rank.map((i) => foes[i])];
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'ecArc');
+        svg.setAttribute('width', String(W));
+        svg.setAttribute('height', String(H));
+        for (let i = 1; i < path.length; i++) {
+          const pts = jagged(path[i - 1], { x: path[i].x, y: path[i].y - 18 }, i === 1 ? 7 : 4, i === 1 ? 26 : 18, i);
+          const d = pts.map((q, j) => `${j ? 'L' : 'M'}${Math.round(q.x)} ${Math.round(q.y)}`).join('');
+          for (const [cls, w] of [['glow', 9], ['core', 3]] as const) {
+            const pa = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pa.setAttribute('d', d);
+            pa.setAttribute('class', `arc-${cls}`);
+            pa.setAttribute('stroke-width', String(w));
+            pa.setAttribute('pathLength', '1');
+            pa.style.animationDelay = `${Math.round((i - 1) * sig.stagger * 1.4 * k)}ms`;
+            svg.append(pa);
+          }
+        }
+        L.append(svg);
+        break;
+      }
+      case 'fault': {
+        // the crack racing across the ground from the hammer, spikes of rock along it, boulders dropping, the dust cloud swelling
+        const from = (mouth?.x ?? 0) < W / 2 ? 'left' : 'right';
+        const line = faultLine(mid, W, from);
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'ecCrack');
+        svg.setAttribute('width', String(W));
+        svg.setAttribute('height', String(H));
+        const d = line.map((q, j) => `${j ? 'L' : 'M'}${Math.round(q.x)} ${Math.round(q.y)}`).join('');
+        for (const [cls, w] of [['edge', 16], ['dark', 8]] as const) {
+          const pa = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          pa.setAttribute('d', d);
+          pa.setAttribute('class', `crack-${cls}`);
+          pa.setAttribute('stroke-width', String(w));
+          pa.setAttribute('pathLength', '1');
+          pa.style.animationDelay = `${Math.round(-30 * k)}ms`;
+          svg.append(pa);
+        }
+        L.prepend(svg);
+        const spikes = saver ? 4 : 8;
+        for (let i = 0; i < spikes; i++) {
+          const q = line[Math.min(line.length - 1, Math.round(((i + 0.5) / spikes) * (line.length - 1)))];
+          const x = Math.max(W * 0.05, Math.min(W * 0.95, q.x));
+          L.append(fxEl({ ...look.pillar, scale: 1.3, ms: 1000 }, x, q.y + 12, { delay: (90 + i * 105) * k, cls: 'ecPillar solid', mul: 0.8 + (i % 3) * 0.2 }));
+        }
+        const rocks = saver ? 3 : 7;
+        for (let i = 0; i < rocks; i++) {
+          const b = put(el('i', 'ecBoulder'), W * (0.12 + 0.76 * ((i * 0.618) % 1)), mid.y + (((i * 41) % 7) - 3) * H * 0.03);
+          b.style.setProperty('--fall', `${Math.round(H * 0.45)}px`);
+          b.style.animationDelay = `${Math.round((330 + i * 120) * k)}ms`;
+          b.append(strip('sand', '', 0, 0, { loop: true, scale: 1.7 + (i % 3) * 0.4 }));
+          L.append(b);
+        }
+        for (let i = 0; i < (saver ? 3 : 6); i++) {
+          const dust = put(el('i', 'ecDust'), mid.x + (i - 2.5) * W * 0.17, mid.y + 22 - (i % 3) * H * 0.03, W * 0.5, W * 0.34);
+          timed(dust, 380 + i * 110, 2200);
+          L.append(dust);
+        }
+        break;
+      }
+      case 'void': {
+        // the screen dims, violet-black fire pours in and a maw swallows the foes' half, imploding; embers of violet after
+        const wash = el('i', 'ecVoidWash');
+        wash.style.setProperty('--dimA', String(sig.dim));
+        L.prepend(wash);
+        const maw = put(el('i', 'ecMaw'), mid.x, mid.y, W * 1.5, W * 0.8);
+        timed(maw, 0, 1300);
+        L.append(maw);
+        for (let i = 0; i < (saver ? 2 : 5); i++) {
+          const a = i * 1.7 + 0.4;
+          const stream = put(el('i', 'ecPour'), mid.x + Math.cos(a) * W * 0.5, mid.y + Math.sin(a) * H * 0.2, W * 0.5, W * 0.14);
+          stream.style.setProperty('--tx', `${Math.round(-Math.cos(a) * W * 0.5)}px`);
+          stream.style.setProperty('--ty', `${Math.round(-Math.sin(a) * H * 0.2)}px`);
+          stream.style.rotate = `${Math.atan2(-Math.sin(a) * H * 0.2, -Math.cos(a) * W * 0.5)}rad`;
+          timed(stream, 40 + i * 80, 760);
+          L.append(stream);
+        }
+        for (let i = 0; i < (saver ? 3 : 8); i++) {
+          const chip = put(el('i', 'ecEmber'), mid.x + (((i * 61) % 9) - 4) * W * 0.09, mid.y + 10 + (i % 3) * 10);
+          chip.style.setProperty('--rise', `${-Math.round(H * (0.1 + (i % 4) * 0.04))}px`);
+          timed(chip, 900 + i * 90, 1800);
+          chip.append(strip('embers', '', 0, 0, { loop: true, scale: 1.6 + (i % 3) * 0.3 }));
+          L.append(chip);
+        }
+        break;
+      }
     }
   }
 
