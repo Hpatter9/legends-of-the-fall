@@ -27,6 +27,7 @@ import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
 import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
 import { noteBattleWon } from './questRun';
+import { noteChains } from './eidolonChains';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -223,7 +224,11 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   // `readyQuests`; a boss won may turn up spoils, or the rift's voice, on the quest board)
   const qf = questFightOf(ctx, { stats: fight.stats, ults: fight.ults });
   // (a replay of a quest battle already won is practice: it counts for nothing)
-  if (!(run.mode?.kind === 'quest' && run.mode.practice)) noteQuests(m, qf);
+  if (!(run.mode?.kind === 'quest' && run.mode.practice)) {
+    noteQuests(m, qf);
+    // (EIDOLON-CHAINS: and the Eidolon chain's part going; the page sees a piece found in `Meta.quests.pieces`)
+    noteChains(m, qf);
+  }
   // (a quest battle's last wave won: remembered, so a replay after is practice)
   if (fight.won && fight.battle) noteBattleWon(m, run);
   if (fight.battle) offerAfterFight(m, qf, run.seed, fight.stage);

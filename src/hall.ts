@@ -18,6 +18,8 @@ import { cardAt, dimAt, shakeAt, showcaseAt, skipAction, summonPlan, type ShowPl
 import { duck, hushSummon, play as playSfx } from './render/sound';
 import sanctumUrl from './art/hall/sanctum.png';
 import { summoner } from './summoner';
+import { hallPlaque } from './eidolonChainView';
+import { chainsShown } from './sim/eidolonChains';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
 
 const ART: Record<string, string> = { sanctum: sanctumUrl, lightPillar: lightPillarUrl };
@@ -270,6 +272,9 @@ export interface HallHooks {
   onCollection(): void;
   /** The chest shop button: crowns buy chests, and chests hold stones. */
   onShop(): void;
+  /** EIDOLON-CHAINS: the Summoner's plaque (a chain to hear, one going, one to bind), and the Pact Gallery's button. */
+  onChain?(): void;
+  onGallery?(): void;
 }
 
 export class SummoningHall {
@@ -280,6 +285,9 @@ export class SummoningHall {
   private count = el('div', 'hlCount');
   private scroll = el('div', 'hlScroll');
   private shop = el('button', 'hlShop');
+  /** EIDOLON-CHAINS: the Summoner's plaque over the shards' scroll, and the Pact Gallery beside the chest shop. */
+  private chain = el('button', 'hlChain');
+  private gallery = el('button', 'hlGallery');
   private pull1 = el('button', '');
   private pull10 = el('button', 'primary');
   private still: HTMLCanvasElement | null = null;
@@ -321,7 +329,12 @@ export class SummoningHall {
     bar.append(this.pull1, this.pull10);
     const low = el('div', 'hlLow');
     this.shop.addEventListener('click', () => this.hooks.onShop());
-    low.append(this.scroll, this.shop, bar);
+    this.chain.addEventListener('click', () => this.hooks.onChain?.());
+    this.gallery.addEventListener('click', () => this.hooks.onGallery?.());
+    this.chain.hidden = this.gallery.hidden = true;
+    const row2 = el('div', 'hlRow2');
+    row2.append(this.shop, this.gallery);
+    low.append(this.chain, this.scroll, row2, bar);
     this.root.append(this.canvas, this.actor, head, low, this.over, this.skipPad);
     // (a tap anywhere skips the show: a new hero's show jumps to the moment it stands revealed, and only a tap after that goes on to the
     //  result; taps in the first moments, a double tap on the summon button, are let go. SUMMON-TAROT: a double tap used to skip a join's whole show)
@@ -382,6 +395,17 @@ export class SummoningHall {
     progress.setAttribute('aria-valuemax', `${near ? need : 1}`);
     progress.setAttribute('aria-valuenow', `${near ? haveShards : 1}`);
     this.scroll.replaceChildren(line, hint, label, progress, el('span', 'odds', pityLine(meta)), el('span', 'odds lucky', luckyLine()));
+    // (EIDOLON-CHAINS: the Summoner's plaque while a chain is to be heard, going or ready to bind; the gallery once the chains have begun)
+    const plaque = hallPlaque(meta);
+    this.chain.hidden = !plaque;
+    if (plaque) {
+      this.chain.className = `hlChain ${plaque.kind}`;
+      this.chain.replaceChildren(el('b', '', plaque.title), el('small', '', plaque.line));
+      this.chain.disabled = busy;
+    }
+    this.gallery.hidden = !chainsShown(meta);
+    this.gallery.replaceChildren(el('i'), 'Pact Gallery');
+    this.shop.replaceChildren(icon(ICONS.stones, 'hlShopIco'), this.gallery.hidden ? `Chest shop · buy stones with crowns` : 'Chest shop');
 
   }
 

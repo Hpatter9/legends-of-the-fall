@@ -1,16 +1,15 @@
-// BOSS-BIG on the page (`bossBigRules.ts`): the cut-in holds the fight only in full; the marks fill in and never blink out; the bursts
+// BOSS-BIG on the page (`bossBigRules.ts`): the cut-in never holds the fight (the owner's later rule); the marks fill in and never blink out; the bursts
 // spread over the marks; every signature has a sound.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOSS_BIG_LOOK, burstTiles, heldCut, markFill, markLook } from '../src/bossBigRules';
+import { BOSS_BIG_LOOK, burstTiles, markFill, markLook } from '../src/bossBigRules';
 import { cuesFor } from '../src/render/soundRules';
 import type { Battle, BattleEvent } from '../src/sim/battle';
 
-test('the cut-in holds the fight only with full scenes on and Auto off, and only for about a second', () => {
-  assert.equal(heldCut(true, false), true);
-  assert.equal(heldCut(false, false), false);
-  assert.equal(heldCut(true, true), false);
-  assert.ok(BOSS_BIG_LOOK.CUT_MS >= 800 && BOSS_BIG_LOOK.CUT_MS <= 1200);
+test('the cut-in is a short band over a running fight: about a second, and nothing in the rules holds the fight for it', async () => {
+  assert.ok(BOSS_BIG_LOOK.BAND_MS >= 800 && BOSS_BIG_LOOK.BAND_MS <= 1400);
+  const rules = await import('../src/bossBigRules');
+  assert.equal('heldCut' in rules, false);
 });
 
 test('a mark fills in over the windup, always surer, and never fades below its floor', () => {

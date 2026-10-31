@@ -9,6 +9,9 @@ import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
 import { readyToRise } from './sim/rankUp';
 import { openRankUp, type Taken } from './rankUpView';
+// (TAVERN-RANKUP: the gold chevron on a hero with an upgrade ready, and the sheet's hop to the next such hero)
+import { upMark } from './rankUpList';
+import { nextUpgradeKind, upgradeReady } from './sim/upgradesReady';
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
@@ -90,6 +93,9 @@ function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; tex
   return { level: p.level, bar, text: p.need ? `${compactXp(p.into)} / ${compactXp(p.need)} XP` : 'max level' };
 }
 
+/** (TAVERN-RANKUP) the sheet's badge says which step waits. */
+const canRankUpWord = (meta: Meta, kind: string): string => (takenRank(meta, kind) < rankOf(meta, kind) ? 'Rank up' : 'Awaken');
+
 /** The strongest unlocked heroes (level, then rank), best first. */
 export function strongest(meta: Meta, n: number): string[] {
   const score = (k: string) => progressOf(xpOf(meta, k)).level * 100 + takenRank(meta, k) * 10;
@@ -98,17 +104,35 @@ export function strongest(meta: Meta, n: number): string[] {
 
 /** Fill the detail sheet for a hero; returns a function that stops its idle animation. */
 export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, onPick?: (kind: string, tab: string) => void, initialTab = 'overview'): () => void {
-  const state = { tab: initialTab, onPick };
-  let stop = paintSheet(box, meta, kind, close, again, state);
+  // (TAVERN-RANKUP: "Next upgrade" goes through the page's own pick where there is one, so it remembers the hero; else this sheet
+  // draws the next hero itself)
+  let cur = kind;
+  const state: SheetState = {
+    tab: initialTab,
+    onPick,
+    hop: (next) => {
+      if (onPick) return onPick(next, state.tab);
+      cur = next;
+      again();
+    },
+  };
+  let stop = paintSheet(box, meta, cur, close, again, state);
   // (an awakening draws the sheet again, with the show on the new look)
   function again(taken?: Taken): void {
     stop();
-    stop = paintSheet(box, meta, kind, close, again, state, taken);
+    stop = paintSheet(box, meta, cur, close, again, state, taken);
   }
   return () => stop();
 }
 
-function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, state: { tab: string; onPick?: (kind: string, tab: string) => void }, show?: Taken): () => void {
+interface SheetState {
+  tab: string;
+  onPick?: (kind: string, tab: string) => void;
+  /** (TAVERN-RANKUP) open another hero's sheet: the "Next upgrade" hop. */
+  hop: (kind: string) => void;
+}
+
+function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, state: SheetState, show?: Taken): () => void {
   const def = UNITS[kind];
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
@@ -122,6 +146,17 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   back.type = 'button';
   back.addEventListener('click', close);
   bar.append(back, el('span', '', 'YOUR COMPANY'));
+  // (TAVERN-RANKUP: straight to the next hero with a rank or an awakening ready, round the roster; none when no other has one)
+  const owned = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
+  const nextUp = nextUpgradeKind(meta, owned, kind);
+  if (nextUp) {
+    const hop = el('button', 'heroNextUp');
+    hop.type = 'button';
+    hop.setAttribute('aria-label', `Next hero with an upgrade: ${heroName(nextUp)}`);
+    hop.append(upMark(), el('span', '', 'Next upgrade'), el('b', '', '›'));
+    hop.addEventListener('click', () => state.hop(nextUp));
+    bar.append(hop);
+  }
   box.append(bar);
   if (state.onPick) {
     const strip = el('nav', 'heroStrip');
@@ -131,6 +166,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       button.type = 'button';
       button.setAttribute('aria-current', other === kind ? 'true' : 'false');
       button.append(heroArtwork(other, false, awakenedOf(meta, other)), el('small', '', heroName(other)));
+      if (upgradeReady(meta, other)) button.append(upMark('upCorner'));
       button.addEventListener('click', () => state.onPick?.(other, state.tab));
       strip.append(button);
     }
@@ -188,8 +224,9 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     if (tomes) title.append(tomes);
     // (a rank earned, or an awakening paid for, waits for the player's tap)
     if (readyToRise(meta, kind)) {
-      const badge = el('button', 'rankBadge', 'Rank up');
+      const badge = el('button', 'rankBadge');
       badge.type = 'button';
+      badge.append(upMark('upInline'), canRankUpWord(meta, kind));
       badge.addEventListener('click', () => openRankUp(meta, kind, redraw));
       title.append(badge);
     }
@@ -401,7 +438,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       card.append(seal);
       card.setAttribute('aria-description', 'Last viewed hero');
     }
-    if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'));
+    if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'), upMark('upCorner'));
     card.addEventListener('click', () => pick(kind));
     remember(card, kind);
     grid.append(card);

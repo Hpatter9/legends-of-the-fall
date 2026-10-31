@@ -171,7 +171,9 @@ export type Moment =
   /** An army's first march on the keep (CINE-001): its warlord's entrance, the first time a run of that army is set up. */
   | { kind: 'armyIntro'; army: string }
   /** A quest battle's story, before it or after a win (`questBattleData.ts`; played by the page, not kept in the Scenes list). */
-  | { kind: 'questBattle'; battle: string };
+  | { kind: 'questBattle'; battle: string }
+  /** An Eidolon chain's story (`eidolonChainData.ts`: the giver's prologue; played by the page, not kept in the Scenes list). */
+  | { kind: 'eidolon'; chain: string };
 
 /** What a film can reveal at its end (REVEAL): a mode opening (the Calamity), the army after this one, the Calamity's Ascension levels, a
  *  castle building (the chapel: the spellbook), a hero's awakening, an Eidolon bound (for the quest chains' films). */

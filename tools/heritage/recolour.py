@@ -27,7 +27,7 @@ UNITS = os.path.join(ROOT, 'src', 'art', 'units')
 LAYOUT = json.load(open(os.path.join(UNITS, 'sheets.json')))
 CONFIG = json.load(open(os.path.join(os.path.dirname(__file__), 'heroes.json')))
 # Heroes whose sheets are made already in their tone, by another tool, and must not be re-toned here.
-DRAWN_IN_TONE = {'knight': 'tools/knight/plain.py'}
+DRAWN_IN_TONE = {'knight': 'tools/knight/plain.py', 'paladin': 'tools/paladin/plain.py'}
 
 
 def read_table():
