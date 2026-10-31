@@ -179,3 +179,12 @@ The daily (`node tools/boss-big/run.mjs daily [--off]`, 60 dates, a fresh save's
 
 - `src/sim/toolkit/auras.ts`: an aura whose caster fell earlier in the same tick (to another aura's blow) crashed `tickAuras` (its centre was
   undefined); it now skips that aura, as the next tick would. Met on a Legendary run in the measuring; not caused by this change.
+
+## The cut-in slimmed, and no pause (BOSS-CUT-SLIM)
+
+The owner: "The boss specials don't need to pause the game. Let's make it a little more minimal but still epic." The cut-in no longer
+holds the fight in any setting (`heldCut` and the hold are gone; `BossMoments.note` returns nothing and the fight loop never waits on
+it). It is now a slim band (72 px, tilted 5°) near the top of the board, up for `BAND_MS` (1.1 s) over the running fight, with the boss's
+head and shoulders and the attack's name (ENRAGED in rage); it takes no taps. The marks, the painted burst, the 150 ms hit-stop on the
+blow, the shake and the stings are unchanged. `test/boss-big-look.test.ts`: the "holds only in full" check became "never holds, about a
+second" for the owner's new rule.
