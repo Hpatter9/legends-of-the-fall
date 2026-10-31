@@ -10,6 +10,7 @@ import { THUNDER_STORE } from './melee';
 import { FONT, fireLane, inTrouble } from './mages';
 import { tidalLane } from './monsters';
 import { chokeLine, shieldLine } from '../toolkit';
+import { curseWork } from './third';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -60,4 +61,5 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   Sanctuary: (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.75 && apart(a, me) <= 2),
   // (the skills overhaul's batch 4: the third skills' utilities, which a jab may be held back for; the guards answer their own triggers)
   'Wall of Stone': (b, me) => !!chokeLine(b, me, 3),
+  'Curse of Weakness': curseWork,
 };

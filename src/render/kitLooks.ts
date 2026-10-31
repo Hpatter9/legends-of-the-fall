@@ -75,6 +75,21 @@ export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el:
   'Command Strike': { as: 'Lance Charge', tint: 0xff8a6a, el: 'fire' },
   Countercharm: { as: 'Dirge', tint: 0xc0ffd0, el: 'wind' },
   Scourge: { as: 'Judgement', tint: 0xd06040, el: 'dark' },
+  'Double Shot': { as: 'Volley', tint: 0xfff0b0, el: 'wind' },
+  'Barbed Arrow': { as: 'Snare Trap', tint: 0xff9a9a, el: 'blood' },
+  'Skip Shot': { as: 'Dead Eye', tint: 0xffd890, el: 'fire' },
+  'Barrier Drone': { as: 'Overclock', tint: 0x90e0ff, el: 'lightning' },
+  'Flak Burst': { as: 'Shell Barrage', tint: 0xffb070, el: 'fire' },
+  Grapeshot: { as: 'Broadside', tint: 0xd0c0a0, el: 'fire' },
+  'Fire Bolt': { as: 'Meteor', tint: 0xffa040, el: 'fire' },
+  Spark: { as: 'Chain Lightning', tint: 0xe0d0ff, el: 'lightning' },
+  'Curse of Weakness': { as: 'Hex', tint: 0xa070ff, el: 'dark' },
+  'Arcane Ward': { as: 'Starfall', tint: 0xb0d0ff, el: 'light' },
+  'Hourglass Bolt': { as: 'Temporal Surge', tint: 0xf0d890, el: 'lightning' },
+  'Phantasmal Blade': { as: 'Mirror Image', tint: 0xd0a0ff, el: 'dark' },
+  'Healing Word': { as: 'Benediction', tint: 0xfff4c0, el: 'light' },
+  'Sacred Flame': { as: 'Holy Light', tint: 0xffe070, el: 'light' },
+  'Acid Flask': { as: 'Sanctuary', tint: 0xb0ff60, el: 'poison' },
 };
 
 const tinted = (steps: Step[], tint: number | undefined): Step[] => (tint === undefined ? steps : steps.map((x) => ({ ...x, t: tint })));

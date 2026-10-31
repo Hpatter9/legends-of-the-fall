@@ -16,7 +16,7 @@ import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
-import { CLASS_WEIGHT, INCOME, slotDemand, type SkillClass } from './skillRules';
+import { CLASS_WEIGHT, type SkillClass } from './skillRules';
 import { relicCharge } from './relicFight';
 
 export type Pool = 'mana' | 'stamina';
@@ -293,13 +293,13 @@ function hasWork(b: Battle, me: Unit, hk: HeroKit, m: number): boolean {
 
 /** Whether the hero should pass over slot `n` to save for slot `m` (the design's step 5, the old holding rule made general): `m` is of a heavier
  *  class and has something to do, its cooldown ends within the hold, and paying for `n` now would leave it short when its cooldown ends. So a
- *  heavy skill is saved for (its cost is what holds it back), and a lighter one waits only while the heavier one is coming round. A jab is never
- *  held while its own demand is under the pool's income. */
+ *  heavy skill is saved for (its cost is what holds it back), and a lighter one waits only while the heavier one is coming round. A jab is held
+ *  the same way (the skills overhaul's batch 4: at the measured income a jab cast whenever it is ready drinks nearly the whole refill, so the
+ *  design's "a jab is never held" starved the heavies); with nothing heavier coming round it jabs whenever its cooldown allows. */
 function holdsFor(b: Battle, me: Unit, hk: HeroKit, n: number, m: number): boolean {
   const light = hk.slots[n - 1];
   const heavy = hk.slots[m - 1];
   if (CLASS_WEIGHT[heavy.cls] <= CLASS_WEIGHT[light.cls]) return false;
-  if (light.cls === 'jab' && slotDemand(light) < INCOME[hk.pool]) return false;
   if (!hasWork(b, me, hk, m)) return false;
   const hold = hk.pool === 'mana' ? RES.HOLD_MANA_MS : RES.HOLD_STAM_MS;
   const at = lastAt(me, m);

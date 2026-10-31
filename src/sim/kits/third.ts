@@ -10,7 +10,8 @@
 
 import { atkOf, canStrike, hurt, strikeDef, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, castPower, foesOf, mendUnit, net } from '../abilities';
-import { bleedFor, burnFor, chillFor, cleanse, harmed, shockFor, stunFor, ward, weakFor } from '../ailments';
+import { bleedFor, burnFor, charmFor, chillFor, cleanse, harmed, hasAil, shockFor, stunFor, ward, weakFor } from '../ailments';
+import { smiteBane } from './tanks';
 import { UNITS } from '../units';
 import { kx, KIT } from './effects';
 import { foesNear, mark, ms, strike } from './common';
@@ -253,5 +254,197 @@ export function scourge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!f) return false;
   bolt(b, me, f, out);
   if (f.alive) weakFor(b, f, ms(me, 2000), me);
+  return true;
+}
+
+// ---- group 2: the ranged, the casters and the healers ----
+
+/** A caster's "nearest foe": within a tile past its reach (its spells carry a little further than its blows). */
+const nearestCast = (b: Battle, me: Unit): Unit | undefined => nearest(b, me, UNITS[me.def].range + 1)[0];
+/** The nearest foe it could shoot or strike from where it stands. */
+const nearestIn = (b: Battle, me: Unit): Unit | undefined => inReach(b, me).sort((x, y) => apart(me, x) - apart(me, y) || x.hp - y.hp || x.id - y.id)[0];
+/** Held: slowed or stunned (the Ranger's snare and caltrops hold and slow). */
+const held = (b: Battle, f: Unit) => hasAil(f, 'chill', b.t) || hasAil(f, 'stun', b.t) || (f.stunUntil ?? 0) > b.t;
+
+/** Archer, Double Shot: two fast arrows at the nearest foe in reach. */
+export function doubleShot(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestIn(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out);
+  if (f.alive) bolt(b, me, f, out);
+  return true;
+}
+
+/** Ranger, Barbed Arrow: an arrow at the nearest foe in reach that bleeds 3s; a held foe (snared, slowed, in caltrops) takes double. */
+export function barbedArrow(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestIn(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out, held(b, f) ? 2 : 1);
+  bleedFor(b, me, f, 0.1, ms(me, 3000));
+  return true;
+}
+
+/** Gunslinger, Skip Shot: a shot that skips off the nearest foe in reach to a second within 2 of it. */
+export function skipShot(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestIn(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out);
+  const g = foesOf(b, me)
+    .filter((x) => x !== f && apart(x, f) <= 2)
+    .sort((x, y) => apart(x, f) - apart(y, f) || x.hp - y.hp || x.id - y.id)[0];
+  if (g) {
+    out.push({ kind: 'arc', from: f.id, to: g.id });
+    strike(b, me, g, 1, out);
+  }
+  return true;
+}
+
+/** Rifle Bot, Barrier Drone: a drone shields it and the friend nearest it for 5s (a fifth of each one's health), when either falls under 40%. */
+export const DRONE = { SHARE: 0.2, MS: 5000, UNDER: 0.4, REACH: 4 } as const;
+const droneFriend = (b: Battle, me: Unit) => friends(b, me, DRONE.REACH).sort((x, y) => apart(x, me) - apart(y, me) || x.id - y.id)[0];
+export const droneNeeded = (b: Battle, me: Unit): boolean => {
+  const a = droneFriend(b, me);
+  return foesOf(b, me).length > 0 && (me.hp < me.maxHp * DRONE.UNDER || (!!a && a.hp < a.maxHp * DRONE.UNDER));
+};
+export function barrierDrone(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  if (!droneNeeded(b, me)) return false;
+  for (const u of [me, droneFriend(b, me)]) {
+    if (!u) continue;
+    shieldOf(b, u, DRONE.SHARE * castPower(), ms(me, DRONE.MS));
+    mark(out, me, u, 'shield', ms(me, DRONE.MS));
+  }
+  return true;
+}
+
+/** Siege Bot, Flak Burst: with a foe beside it, a point-blank charge hurts the foes within 1 and shoves them 2 tiles back. */
+export const flakNeeded = (b: Battle, me: Unit): boolean => foesNear(b, me, 1).length > 0;
+export function flakBurst(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const fs = foesNear(b, me, 1).sort((x, y) => x.id - y.id);
+  if (!fs.length) return false;
+  for (const f of fs) strike(b, me, f, 1, out);
+  moveMany(b, me, fs.filter((f) => f.alive), 2, 'shove', out);
+  return true;
+}
+
+/** Dread Pirate, Grapeshot: a blast over the three tiles before him (the foe before him and the tiles either side of it, across his aim): each
+ *  foe hit is slowed 1s. */
+export function grapeshot(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = before(b, me) ?? nearest(b, me, 2)[0];
+  if (!f) return false;
+  const way = wayTo(me, f);
+  const across = way % 2 === 0 ? [[0, 1], [0, -1]] : [[1, 0], [-1, 0]];
+  const hit = [f, ...foesOf(b, me).filter((x) => across.some(([du, dv]) => x.u === f.u + du && x.v === f.v + dv))];
+  me.facing = way;
+  for (const x of hit) {
+    out.push({ kind: 'arc', from: me.id, to: x.id });
+    strike(b, me, x, 1, out);
+    if (x.alive) chillFor(b, x, ms(me, 1000), false, false, me);
+  }
+  return true;
+}
+
+/** Fire Wizard, Fire Bolt: a quick bolt at the nearest foe; a burning foe takes half as much again. */
+export function fireBolt(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestCast(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out, hasAil(f, 'burn', b.t) ? 1.5 : 1);
+  return true;
+}
+
+/** Lightning Mage, Spark: a spark at the nearest foe, which is Charged (so Storm Surge can set it off). */
+export function spark(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestCast(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out);
+  if (f.alive) {
+    kx(f).charged = b.t + ms(me, 10000);
+    mark(out, me, f, 'charged', ms(me, 10000));
+  }
+  return true;
+}
+
+/** Warlock, Curse of Weakness: the three strongest foes within 6 not yet cursed are weakened for 6s (the weaken ailment: they deal 30% less),
+ *  and take a fifth more from him while it lasts. */
+export const CURSE_WEAK = { REACH: 6, N: 3, MS: 6000, MORE: 0.2 } as const;
+const curseable = (b: Battle, me: Unit) =>
+  foesNear(b, me, CURSE_WEAK.REACH)
+    .filter((f) => !(f.kx?.exposed && f.kx.exposed.by === me.id && on(f.kx.exposed.until, b)))
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id);
+export const curseWork = (b: Battle, me: Unit): boolean => curseable(b, me).length > 0;
+export function curseOfWeakness(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const fs = curseable(b, me).slice(0, CURSE_WEAK.N);
+  if (!fs.length) return false;
+  const t = ms(me, CURSE_WEAK.MS);
+  for (const f of fs) {
+    weakFor(b, f, t, me);
+    kx(f).exposed = { until: b.t + t, mult: CURSE_WEAK.MORE, by: me.id };
+    out.push({ kind: 'arc', from: me.id, to: f.id });
+    mark(out, me, f, 'weak', t);
+  }
+  return true;
+}
+
+/** Great Sage, Arcane Ward: the friend in most trouble within 5 (or he) is warded for 5s (a fifth of its health), when one falls under 35%. */
+export const ARCANE = { REACH: 5, SHARE: 0.2, MS: 5000, UNDER: 0.35 } as const;
+const wardFor = (b: Battle, me: Unit) =>
+  [me, ...friends(b, me, ARCANE.REACH)].filter((a) => a.hp < a.maxHp * ARCANE.UNDER && !(a.shield && a.shield.until > b.t)).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
+export const wardNeeded = (b: Battle, me: Unit): boolean => foesOf(b, me).length > 0 && !!wardFor(b, me);
+export function arcaneWard(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const a = foesOf(b, me).length ? wardFor(b, me) : undefined;
+  if (!a) return false;
+  shieldOf(b, a, ARCANE.SHARE * castPower(), ms(me, ARCANE.MS));
+  mark(out, me, a, 'shield', ms(me, ARCANE.MS));
+  return true;
+}
+
+/** Time Witch, Hourglass Bolt: a bolt of sand at the nearest foe: slowed 1.5s, and its skill meter loses a tenth. */
+export function hourglassBolt(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestCast(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out);
+  if (!f.alive) return true;
+  chillFor(b, f, ms(me, 1500), false, false, me);
+  f.charge = Math.max(0, f.charge - 10);
+  return true;
+}
+
+/** Illusionist, Phantasmal Blade: a blade of illusion at the nearest foe within 3, past its defence; for 1s it strikes at random (charmed). */
+export function phantasmalBlade(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearest(b, me, 3)[0];
+  if (!f) return false;
+  me.facing = wayTo(me, f);
+  out.push({ kind: 'arc', from: me.id, to: f.id });
+  hurt(b, me, f, Math.max(1, Math.round(atkOf(me))), false, false, out, 'skill');
+  if (f.alive) charmFor(b, f, ms(me, 1000));
+  return true;
+}
+
+/** Cleric, Healing Word: a quick word of healing: the most hurt friend within 6 (or she) heals 8% of its health. */
+export const WORD = { REACH: 6, SHARE: 0.08, UNDER: 0.9 } as const;
+export function healingWord(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const a = [me, ...friends(b, me, WORD.REACH)].filter((x) => x.hp < x.maxHp * WORD.UNDER).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
+  if (!a) return false;
+  mendUnit(a, a.maxHp * WORD.SHARE * castPower(), out, me);
+  return true;
+}
+
+/** High Priestess, Sacred Flame: a pillar of light on the nearest foe (the undead and the fiends take half again); its next blow misses. */
+export function sacredFlame(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestCast(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out, smiteBane(f) ? 1.5 : 1);
+  if (f.alive) kx(f).missNext = true;
+  return true;
+}
+
+/** Wanderer, Acid Flask: a flask of acid at the nearest foe; its armour eaten, it takes a fifth more for 4s. */
+export const ACID = { MORE: 0.2, MS: 4000 } as const;
+export function acidFlask(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearestCast(b, me);
+  if (!f) return false;
+  bolt(b, me, f, out);
+  if (!f.alive) return true;
+  kx(f).exposed = { until: b.t + ms(me, ACID.MS), mult: ACID.MORE };
+  mark(out, me, f, 'acid', ms(me, ACID.MS));
   return true;
 }

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, hurt, startBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, keyOf, powered } from '../src/sim/abilities';
-import { bleedFor, hasAil } from '../src/sim/ailments';
+import { bleedFor, chillFor, hasAil } from '../src/sim/ailments';
 import { HERO_KITS, SKILL3_LEVEL, castHero, type HeroKit } from '../src/sim/heroKits';
 import { THIRD_KINDS } from '../src/sim/kits/table';
 import { ALL_HEROES } from '../src/sim/units';
@@ -169,6 +169,118 @@ const CASES: Record<string, Case> = {
   tyrant: (b) => {
     const f = foe(b, 3, 4);
     return () => assert.ok((f.weakUntil ?? 0) > b.t, 'weakened');
+  },
+  // ---- group 2: the ranged, the casters and the healers
+  archer: (b, me) => {
+    const f = foe(b, 3, 3);
+    return (out) => assert.equal(hitsOn(out, f, me), 2, 'two arrows');
+  },
+  ranger: (b, me) => {
+    const f = foe(b, 3, 3);
+    const g = foe(b, 5, 4);
+    chillFor(b, g, 5000);
+    return (out) => {
+      assert.ok(hasAil(f, 'bleed'), 'the nearest bleeds');
+      assert.equal(hitsOn(out, g, me), 0, 'only the nearest');
+      // (a held foe takes double: the same arrow on the slowed one)
+      const plain = 50000 - f.hp;
+      const b2 = arena();
+      const me2 = at(b2, 'ranger', 3, 6);
+      const h = foe(b2, 3, 3);
+      chillFor(b2, h, 5000);
+      cast3(b2, me2);
+      assert.ok(50000 - h.hp >= plain * 1.8, `double on a held foe (${50000 - h.hp} against ${plain})`);
+    };
+  },
+  gunslinger: (b, me) => {
+    const f = foe(b, 3, 3);
+    const g = foe(b, 4, 2);
+    const far = foe(b, 0, 0);
+    return (out) => {
+      assert.ok(hitsOn(out, f, me) && hitsOn(out, g, me), 'it skipped to a second');
+      assert.equal(hitsOn(out, far), 0);
+    };
+  },
+  rifleBot: (b, me) => {
+    foe(b, 3, 3);
+    const ally = at(b, 'knight', 3, 5, 1);
+    ally.hp = Math.round(ally.maxHp * 0.3);
+    return () => {
+      for (const u of [me, ally]) assert.ok(u.shield && u.shield.hp >= Math.round(u.maxHp * 0.19) && u.shield.until > b.t, 'shielded');
+    };
+  },
+  siegeBot: (b, me) => {
+    const f = foe(b, 3, 5);
+    return (out) => {
+      assert.ok(hitsOn(out, f, me) > 0, 'struck');
+      assert.equal(f.v, 3, 'shoved 2 tiles');
+    };
+  },
+  dreadPirate: (b, me) => {
+    const fs = [foe(b, 3, 5), foe(b, 2, 5), foe(b, 4, 5)];
+    const back = foe(b, 3, 4);
+    return (out) => {
+      for (const f of fs) {
+        assert.ok(hitsOn(out, f, me) > 0, 'each of the three tiles');
+        assert.ok(hasAil(f, 'chill'), 'slowed');
+      }
+      assert.equal(hitsOn(out, back), 0, 'not the one behind');
+    };
+  },
+  wizard: (b, me) => {
+    const f = foe(b, 3, 4);
+    return (out) => assert.ok(hitsOn(out, f, me) > 0);
+  },
+  lightningMage: (b) => {
+    const f = foe(b, 3, 4);
+    return () => assert.ok((f.kx?.charged ?? 0) > b.t, 'Charged');
+  },
+  warlock: (b, me) => {
+    const fs = [foe(b, 3, 4), foe(b, 2, 3), foe(b, 4, 3), foe(b, 5, 3)];
+    fs[3].power = 2;
+    return () => {
+      const cursed = fs.filter((f) => (f.weakUntil ?? 0) > b.t && f.kx?.exposed?.by === me.id);
+      assert.equal(cursed.length, 3, 'three cursed');
+      assert.ok(cursed.includes(fs[3]), 'the strongest among them');
+    };
+  },
+  sage: (b) => {
+    foe(b, 3, 3);
+    const ally = at(b, 'archer', 3, 7, 1);
+    ally.hp = Math.round(ally.maxHp * 0.2);
+    return () => assert.ok(ally.shield && ally.shield.until > b.t, 'warded');
+  },
+  timeWitch: (b) => {
+    const f = foe(b, 3, 4);
+    f.charge = 50;
+    return () => {
+      assert.ok(hasAil(f, 'chill'), 'slowed');
+      assert.equal(f.charge, 40, 'its meter loses a tenth');
+    };
+  },
+  illusionist: (b) => {
+    const f = foe(b, 3, 4);
+    return () => assert.ok((f.charmUntil ?? 0) > b.t, 'it strikes at random');
+  },
+  cleric: (b) => {
+    foe(b, 3, 2);
+    const ally = at(b, 'knight', 3, 5, 1);
+    ally.hp = Math.round(ally.maxHp * 0.5);
+    const was = ally.hp;
+    return () => assert.ok(ally.hp >= was + ally.maxHp * 0.07, 'about 8% back');
+  },
+  priestess: (b, me) => {
+    const f = foe(b, 3, 4);
+    return () => {
+      assert.ok(f.kx?.missNext, 'its next blow misses');
+      const hp = me.hp;
+      hurt(b, f, me, 100, false, false, [], 'blow');
+      assert.equal(me.hp, hp, 'and it did');
+    };
+  },
+  wanderer: (b) => {
+    const f = foe(b, 3, 4);
+    return () => assert.ok(f.kx?.exposed && f.kx.exposed.mult === 0.2 && f.kx.exposed.until > b.t, 'it takes more');
   },
 };
 
