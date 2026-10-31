@@ -1,4 +1,4 @@
-// Every hero's kit is whole (COMBAT-002): a pool, skill 1, skill 2 and an ultimate, with costs inside the design's bands, and each of the three can be
+// Every hero's kit is whole (COMBAT-002): a pool, skill 1, skill 2 and an ultimate, with costs inside their classes' bands, and each of the three can be
 // cast, in a short fight, without errors. And a fight of every hero, all three open, plays out the same twice.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,6 +6,7 @@ import { bareBoard } from './bare';
 import { addUnit, fight, hurt, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, ULT_LEVEL, ultimateOf, keyOf } from '../src/sim/abilities';
 import { HERO_KITS, heroKitOf, SKILL2_LEVEL } from '../src/sim/heroKits';
+import { CLASS_RANGE } from '../src/sim/skillRules';
 import { gradeBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES } from '../src/sim/units';
@@ -16,10 +17,12 @@ test('every hero has a pool, two skills and an ultimate, with costs inside the b
     const k = HERO_KITS()[h];
     assert.ok(keyOf(k.s1.skill) && keyOf(k.s2.skill) && k.s1.skill !== k.s2.skill, h);
     assert.ok(k.role, h);
-    const [lo1, hi1, lo2, hi2] = k.pool === 'mana' ? [40, 50, 55, 75] : [25, 35, 40, 50];
-    assert.ok(k.s1.cost >= lo1 && k.s1.cost <= hi1, `${h} skill 1 costs ${k.s1.cost}`);
-    // (the blood skills pay part in health: 25 and a share of it)
-    assert.ok((k.s2.cost >= lo2 && k.s2.cost <= hi2) || (k.s2.hpCost && k.s2.cost === 25), `${h} skill 2 costs ${k.s2.cost}`);
+    // (the bands are each skill's class's since the skills overhaul's batch 2: skill 1 was 25 to 35 stamina or 40 to 50 mana, skill 2 40 to 50
+    // or 55 to 75; `test/skill-rules.test.ts` holds the rest of the class rules)
+    for (const [n, s] of [[1, k.s1], [2, k.s2]] as const) {
+      const [lo, hi] = CLASS_RANGE[s.cls][k.pool];
+      assert.ok(s.cost >= lo && s.cost <= hi, `${h} skill ${n} (${s.cls}) costs ${s.cost}`);
+    }
     assert.ok(k.s1.tune > 0 && k.s2.tune > 0);
   }
   // (every skill name is its own: the page and the effects find a skill by it)

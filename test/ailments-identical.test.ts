@@ -40,6 +40,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // this proof, as the ailments are; with them off every scenario plays as recorded)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
+// (SKILLS-1, the skills overhaul's batch 2, docs/notes/skills-1.md, re-recorded every scenario: field1, field30, bosses, armyFoes, spells, lands,
+// army, daily, tower, stand and calamity. Every hero's skills now cost and cool by their class, so every fight with a hero moves; batch 1 moved none.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

@@ -57,12 +57,13 @@ test('an MP caster, a blood-cost hero, a monster hero and a summoner read right'
   assert.equal(chipLine(b2), `${b2.cost} SP +10%HP`);
   const sheet = sheetOf(b, barb, 2)!;
   assert.match(sheet.rows.find(([k]) => k === 'Cost')![1], /and 10% of max health/);
-  // (the monster hero's chips are its reworked moves, by name; the summoner's call keeps its own long gap, and its skill 2 is the pack's order)
+  // (the monster hero's chips are its reworked moves, by name; the summoner's call keeps its own long cooldown, a utility's 18 s since the skills
+  // overhaul's batch 2, 9 s before, and its skill 2 is the pack's order)
   assert.equal(chipOf(b, wolf, 1)!.name, heroKitOf(wolf)!.s1.skill.name);
   const s1 = chipOf(b, beast, 1)!;
   assert.equal(s1.name, heroKitOf(beast)!.s1.skill.name);
-  assert.equal(s1.gap, 9000);
-  assert.match(sheetOf(b, beast, 1)!.rows.find(([k]) => k === 'Cooldown')![1], /^9\.0s/);
+  assert.equal(s1.gap, 18000);
+  assert.match(sheetOf(b, beast, 1)!.rows.find(([k]) => k === 'Cooldown')![1], /^18\.0s/);
   assert.equal(chipOf(b, beast, 2)!.name, 'Pack Tactics');
 });
 

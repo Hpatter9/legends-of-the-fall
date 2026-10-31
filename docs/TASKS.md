@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### SKILLS-1 — The skills overhaul, batches 0 to 2: the measure, the rules as data, cooldowns by class
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/skills-1`, `/home/user/lotf-skills1` (from main 0.284.0).
+- **Goal:** the owner-approved skills overhaul ([design](notes/skills-overhaul-design.md)), its build plan's batches 0, 1 and 2: main measured; every skill given a class and a cooldown of its own, kits in slots, the AI for any number of slots (no fight changed); then skills 1 and 2 costed and cooled by class, the breath between casts, the general saving rule, and the roster re-tuned into the band at levels 1, 10 and 30.
+- **Scope:** new `src/sim/skillRules.ts`, `test/skill-rules.test.ts`, `tools/skills/measure.ts` (+ `.mjs`); `src/sim/heroKits.ts` (`Slot.cls`, `Slot.cd`, `HeroKit.slots`, `castHero`, `RES`), `src/sim/kits/table.ts` (`CLASSES`, `COSTS`, `TUNE1`, `TUNE2`), `src/sim/ultimates.ts` (`TUNE` powers at level 30), `src/fightHudRules.ts` (`gapOf`), `tools/kits/` (table, tune's cap); tests moved to the new rules and the two identity fixtures re-recorded (listed in the note).
+- **Status:** ready for review; batches 3 on not started. [Note](notes/skills-1.md).
+
 ### ONE-OF-EACH — One unit of a hero on the battlefield at a time
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).

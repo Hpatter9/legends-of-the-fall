@@ -26,6 +26,10 @@
 // heroes30: each has one of the ten. The `...Others` scenarios now leave the ten out of every team (recorded on main's code before the batch)
 // and did not move; nor did daily, tower, stand or calamity. (The foes that borrow their moves, the wolf packs, the maze minotaurs and gorgons,
 // the grove satyrs, the yokai and the Nine-Tailed Fox, keep the old ones: `monsterKits` puts the new ones on the heroes' own kits only.)
+// (SKILLS-1, the owner-approved skills overhaul's batch 2, docs/notes/skills-1.md, re-recorded every scenario: field1, field30, bosses, armyFoes,
+// spells, lands, army, daily, tower, stand, calamity, heroes1, heroes10, heroes30 and the five `...Others`. Every hero's skills now cost and cool by
+// their class, a breath follows each cast and the AI saves for its heavier skill, so every fight with a hero in it moves; batch 1, the rules as
+// data, moved none of them.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

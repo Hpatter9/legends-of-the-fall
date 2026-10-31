@@ -133,7 +133,7 @@ test('skill 2 opens at level 10, and goes before skill 1 when both can be paid',
   castHero(high, c, heroKitOf(c)!, out2);
   assert.ok(out2.some((e) => e.kind === 'skill' && e.name === 'Shield Rush'), 'from 10, skill 2 first');
   // (with skill 2 just cast and the pool too low for it, skill 1 still goes)
-  high.t += RES.GAP_STAM_MS;
+  high.t += 2000; // (past Shield Rush's cast and the breath after it)
   c.charge = (costOf(c, heroKitOf(c)!.s1) / RES.STAM_MAX) * CHARGE_MAX + 1;
   const out3: BattleEvent[] = [];
   castHero(high, c, heroKitOf(c)!, out3);

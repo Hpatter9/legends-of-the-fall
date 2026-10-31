@@ -25,9 +25,10 @@ export const CLASS_WEIGHT: Readonly<Record<SkillClass, number>> = { heavy: 4, ut
  *  cast, three slow guards and three quick heavies (the design's list). */
 export const CAST_EXEMPT: ReadonlySet<string> = new Set(['Soul Siphon', 'Fan the Hammer', 'Rewind', 'Guardian Angel', 'Devour', 'Jump', 'Roll the Bones', 'Grounding']);
 
-/** The pool's reference income at level 20 (points a second), from `tools/skills/measure.mjs` on the hero sweep (docs/notes/skills-1.md):
- *  rule 2 (a jab never empties the pool) and rule 3 (a kit's demand) are read against it. */
-export const INCOME: Readonly<Record<Pool, number>> = { stamina: 3.0, mana: 4.2 };
+/** The pool's reference income at level 20 (points a second), from `tools/skills/measure.mjs 20:30` on the hero sweep (docs/notes/skills-1.md:
+ *  3.0 and 4.2 on main before the overhaul, 2.8 and 3.8 once batch 2 slowed the level-10 refill, `RES.SKILL2_PACE_*`): rule 2 (a jab never
+ *  empties the pool) and rule 3 (a kit's demand) are read against it. */
+export const INCOME: Readonly<Record<Pool, number>> = { stamina: 2.8, mana: 3.8 };
 
 /** A slot's demand: what it would drink a second if cast every time its cooldown came round (its blood is not counted). */
 export const slotDemand = (s: Slot): number => s.cost / (s.cd / 1000);
