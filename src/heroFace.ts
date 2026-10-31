@@ -2,24 +2,34 @@
 // service worker's list) is loaded once a picture, each face is cut and scaled down once a size into a small canvas, and every row after
 // that copies the cached crop. Until the painting has come (or if it never does) the canvas shows the pixel sprite portrait it was given.
 
-import { faceBox, faceRect, faceUrl, hasFace } from './heroFaceRules';
+import { bustRect, faceBox, faceRect, faceUrl, hasFace } from './heroFaceRules';
 
 /** The paintings, one image each, shared by every face cut from them. */
 const pictures = new Map<string, HTMLImageElement>();
 /** The finished crops, by painting and size. */
 const crops = new Map<string, HTMLCanvasElement>();
 /** Faces waiting on their painting. */
-const waiting = new Map<string, Array<{ canvas: HTMLCanvasElement; key: string }>>();
+const waiting = new Map<string, Array<{ canvas: HTMLCanvasElement; key: string; shape: Shape }>>();
 
-function crop(img: HTMLImageElement, kind: string, awakened: number, px: number): HTMLCanvasElement {
+/** A canvas's shape: `w` x `h` pixels; a bust (`bust`) takes a wider cut round the face, from just above it down to the chest. */
+interface Shape {
+  w: number;
+  h: number;
+  bust: boolean;
+}
+
+function crop(img: HTMLImageElement, kind: string, awakened: number, shape: Shape): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = c.height = px;
-  const r = faceRect(faceBox(kind, awakened)!, img.naturalWidth, img.naturalHeight);
+  c.width = shape.w;
+  c.height = shape.h;
+  const W = img.naturalWidth;
+  const H = img.naturalHeight;
+  const r = shape.bust ? bustRect(faceBox(kind, awakened)!, W, H, shape.w / shape.h) : (({ x, y, side }) => ({ x, y, w: side, h: side }))(faceRect(faceBox(kind, awakened)!, W, H));
   const g = c.getContext('2d');
   if (g) {
     g.imageSmoothingEnabled = true;
     g.imageSmoothingQuality = 'high';
-    g.drawImage(img, r.x, r.y, r.side, r.side, 0, 0, px, px);
+    g.drawImage(img, r.x, r.y, r.w, r.h, 0, 0, shape.w, shape.h);
   }
   return c;
 }
@@ -29,7 +39,10 @@ function paint(canvas: HTMLCanvasElement, from: CanvasImageSource, smooth: boole
   if (!g) return;
   g.clearRect(0, 0, canvas.width, canvas.height);
   g.imageSmoothingEnabled = smooth;
-  g.drawImage(from, 0, 0, canvas.width, canvas.height);
+  if (smooth) return void g.drawImage(from, 0, 0, canvas.width, canvas.height);
+  // (the square sprite portrait, centred and unstretched in a bust's taller canvas)
+  const side = Math.min(canvas.width, canvas.height);
+  g.drawImage(from, (canvas.width - side) / 2, (canvas.height - side) / 2, side, side);
 }
 
 /**
@@ -37,11 +50,21 @@ function paint(canvas: HTMLCanvasElement, from: CanvasImageSource, smooth: boole
  * size, for sharp edges on a phone). Not a hero with a painting (a summon, a guest, a foe): the sprite portrait `fallback` itself.
  */
 export function heroFace(kind: string, awakened: number, px: number, fallback: HTMLCanvasElement): HTMLCanvasElement {
+  return cut(kind, awakened, { w: px, h: px, bust: false }, fallback);
+}
+
+/** The bigger piece of a hero's art (the results screen's MVP, RECAP-SPOILS): head and shoulders, `w` x `h` pixels. */
+export function heroBust(kind: string, awakened: number, w: number, h: number, fallback: HTMLCanvasElement): HTMLCanvasElement {
+  return cut(kind, awakened, { w, h, bust: true }, fallback);
+}
+
+function cut(kind: string, awakened: number, shape: Shape, fallback: HTMLCanvasElement): HTMLCanvasElement {
   if (!hasFace(kind)) return fallback;
   const url = faceUrl(kind, awakened);
-  const key = `${url}@${px}`;
+  const key = `${url}@${shape.w}x${shape.h}${shape.bust ? 'b' : ''}`;
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = px;
+  canvas.width = shape.w;
+  canvas.height = shape.h;
   canvas.className = 'heroFace';
   canvas.dataset.face = kind;
   const done = crops.get(key);
@@ -58,12 +81,12 @@ export function heroFace(kind: string, awakened: number, px: number, fallback: H
     if (!img!.naturalWidth) return;
     for (const w of list) {
       let c = crops.get(w.key);
-      if (!c) crops.set(w.key, (c = crop(img!, kind, awakened, Number(w.key.split('@')[1]))));
+      if (!c) crops.set(w.key, (c = crop(img!, kind, awakened, w.shape)));
       paint(w.canvas, c, true);
     }
   };
   if (!waiting.has(url)) waiting.set(url, []);
-  waiting.get(url)!.push({ canvas, key });
+  waiting.get(url)!.push({ canvas, key, shape });
   if (!img) {
     img = new Image();
     img.decoding = 'async';

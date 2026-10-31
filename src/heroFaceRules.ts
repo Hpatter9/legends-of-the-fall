@@ -75,3 +75,18 @@ export function faceRect(box: FaceBox, w: number, h: number): { x: number; y: nu
   const y = Math.min(Math.max(0, box[1] * h - side / 2), h - side);
   return { x: Math.round(x), y: Math.round(y), side: Math.round(side) };
 }
+
+/** A bust's cut (RECAP-SPOILS: the MVP's bigger piece of art): `aspect` (width over height) wide, about twice the face's square across,
+ *  its top a little above the face so the face sits in its upper third; kept inside the picture. */
+export function bustRect(box: FaceBox, w: number, h: number, aspect: number): { x: number; y: number; w: number; h: number } {
+  let bw = Math.min(box[2] * w * 2, w, h * aspect);
+  let bh = bw / aspect;
+  if (bh > h) {
+    bh = h;
+    bw = bh * aspect;
+  }
+  const side = box[2] * w;
+  const x = Math.min(Math.max(0, box[0] * w - bw / 2), w - bw);
+  const y = Math.min(Math.max(0, box[1] * h - side * 0.85), h - bh);
+  return { x: Math.round(x), y: Math.round(y), w: Math.round(bw), h: Math.round(bh) };
+}

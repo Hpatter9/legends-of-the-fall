@@ -3,6 +3,14 @@
 // The MVP is the hero who did the most (`mvpOf`). Pure: no Pixi, no DOM.
 
 import type { BattleEvent, Unit } from './battle';
+import { UNITS } from './units';
+
+/** A hero fielded by the player (a guest too), not a fighter a skill or a fight called up (the wolves, treants, wraiths, standard, decoys,
+ *  the Duchess, the king): the owner, "Summons don't need to show on the battle recap as heroes" (RECAP-SPOILS). What a summon does is
+ *  credited to its caller (`tally`). */
+export const fieldedHero = (u: Pick<Unit, 'side' | 'def' | 'owner'>): boolean => u.side === 'hero' && u.owner === undefined && !UNITS[u.def]?.summon;
+/** A kind that may have a row in a recap: a hero's, not a summon's. */
+export const recapKind = (kind: string): boolean => !!UNITS[kind] && !UNITS[kind].summon;
 
 export interface HeroStat {
   /** The hero's unit id in the fight. */
@@ -22,7 +30,7 @@ export type FightStats = HeroStat[];
 export const STAT_KEYS = ['dealt', 'taken', 'healed', 'kills'] as const;
 
 export function startStats(units: Unit[]): FightStats {
-  return units.filter((u) => u.side === 'hero').map((u) => ({ id: u.id, kind: u.def, dealt: 0, taken: 0, healed: 0, kills: 0 }));
+  return units.filter(fieldedHero).map((u) => ({ id: u.id, kind: u.def, dealt: 0, taken: 0, healed: 0, kills: 0 }));
 }
 
 /** Add one tick's events to the tally (`units` are the fight's, to find who called up a decoy or treant). Foes and the king's own spells have no row, so they count for no one. */

@@ -10,26 +10,54 @@ import { heroRank, rankMult, type Meta } from './sim/meta';
 import { heroLevel, localBoost } from './sim/climb';
 import type { Run } from './sim/run';
 import type { FightStats } from './sim/fightStats';
-import { mvpOf } from './sim/fightStats';
+import { fieldedHero, mvpOf, recapKind } from './sim/fightStats';
 import { heroTitle } from './sim/heroNames';
 import { mvpKind, type RunRecap } from './sim/runRecap';
 import type { WaveMoments } from './sim/waveCard';
 import { gainText, type WaveGain } from './sim/waveGains';
 import { progressOf } from './sim/quests';
 import { questById } from './sim/questData';
-import { UNITS } from './sim/units';
 import { battleSheet } from './render/awakenLook';
 import { portrait, sheetInfo } from './render/sheets';
 import { gainIcon } from './waveCardView';
 import { ICONS } from './menuArt';
-import type { JrCount, JrData, JrHero, JrItem } from './jrpgRecapView';
+import type { JrCount, JrData, JrHero, JrItem, JrSpoils } from './jrpgRecapView';
+import { heroBust, heroFace } from './heroFace';
+import { spoilsOf } from './sim/runSpoils';
+import { RARITY_NAMES } from './sim/equipment';
+import { heroName } from './sim/heroNames';
 
 const clock = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-const face = (meta: Meta, kind: string, grade = 1): HTMLElement => facePortrait(battleSheet(kind, awakenedOf(meta, kind), grade), grade);
+/** A hero's face on the results screen (RECAP-SPOILS): its painted art cut to the face (`heroFace.ts`, the awakened form's once
+ *  awakened), over its sprite portrait until the painting loads. */
+const face = (meta: Meta, kind: string, grade = 1): HTMLElement => heroFace(kind, awakenedOf(meta, kind), 112, facePortrait(battleSheet(kind, awakenedOf(meta, kind), grade), grade));
+
+/** The MVP's bigger piece of art: head and shoulders from the painting (`heroBust`), the sprite portrait for one with no painting. */
+export function mvpArt(kind: string, awakened: number, fallback: HTMLCanvasElement): HTMLElement {
+  const c = heroBust(kind, awakened, 136, 176, fallback);
+  if (c !== fallback) c.classList.add('jrMvpArt');
+  return c;
+}
+const mvpFace = (meta: Meta, kind: string, grade = 1): HTMLElement => mvpArt(kind, awakenedOf(meta, kind), facePortrait(battleSheet(kind, awakenedOf(meta, kind), grade), grade));
+
+/** The final recap's spoils page (RECAP-SPOILS): a run's gains and the crowns it paid, with icons, and where each piece of gear went. */
+export function spoilsPage(gains: readonly WaveGain[], crowns: number, run?: Run, crownNote?: string): JrSpoils {
+  // (run gear worn by a hero of the company: gear name to the hero's name)
+  const wornBy: Record<string, string> = {};
+  for (const h of run?.roster ?? []) for (const g of Object.values(h.gear ?? {})) if (g) wornBy[g.name] ??= heroName(h.kind);
+  const sp = spoilsOf(gains, crowns, wornBy);
+  const icon = { crowns: ICONS.crowns, stones: ICONS.stones } as const;
+  return {
+    money: sp.money.map((m): JrCount => ({ label: m.label, n: m.n, icon: icon[m.id], ...(m.id === 'crowns' && crownNote ? { note: crownNote } : {}) })),
+    gear: sp.gear.map((g) => ({ icon: gainIcon(g.gain), name: g.gain.name, rarity: g.gain.rarity ?? 1, rarityName: RARITY_NAMES[g.gain.rarity ?? 1] ?? '', where: g.where, n: g.gain.n })),
+    items: gainItems(sp.items),
+    none: 'Nothing found this time.',
+  };
+}
 
 /** A portrait that draws itself again once its sheet has loaded (a sheet still decoding as the card opens would leave it blank). */
 export function facePortrait(sheet: string, grade = 1): HTMLCanvasElement {
@@ -93,7 +121,7 @@ export interface FightResultIn {
 /** The screen after a fight. `sub` is the card's heading; the page keeps it up to date (`setSub`). */
 export function fightResult(i: FightResultIn, sub: string, hint?: string): JrData {
   const { meta, run, b, won } = i;
-  const fighters = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def]?.summon);
+  const fighters = b.units.filter(fieldedHero);
   const kinds = [...new Set(fighters.map((u) => u.def))];
   const grade = (k: string) => Math.max(1, ...fighters.filter((u) => u.def === k).map((u) => u.grade ?? 1));
   const fell = new Set(won ? i.card.fell : fighters.filter((u) => !u.alive).map((u) => u.def));
@@ -129,9 +157,10 @@ export function fightResult(i: FightResultIn, sub: string, hint?: string): JrDat
   const benchKinds = Object.keys(i.bench).filter((k) => !heroes.some((h) => h.kind === k));
   const benchEach = benchKinds.length ? i.bench[benchKinds[0]] : 0;
   const standing = fighters.filter((u) => u.alive).length;
-  const counts: JrCount[] = [];
-  if (i.gold > 0 || won) counts.push({ label: 'Gold', n: i.gold, icon: ICONS.gold });
-  if (i.crowns !== null && (i.crowns > 0 || won)) counts.push({ label: 'Crowns', n: i.crowns, icon: ICONS.crowns, ...(i.crownNote ? { note: i.crownNote } : {}) });
+  // (RECAP-SPOILS: this screen ends a run, so its spoils are the run's, from every wave (a quest battle's, the fight's own); no gold,
+  // the owner: "Gold doesn't matter at the end since it is only for the waves")
+  const whole = run.recap?.spoils;
+  const spoils = spoilsPage(whole ?? i.card.gains ?? [], i.crowns === null ? 0 : run.tower && run.recap ? run.recap.crowns : i.crowns, run, i.crownNote);
   const ms = i.stats.find((s) => s.kind === mvp?.kind);
   return {
     won,
@@ -143,9 +172,10 @@ export function fightResult(i: FightResultIn, sub: string, hint?: string): JrDat
       { label: 'Standing', value: `${standing}/${fighters.length}` },
     ],
     heroes,
-    ...(mvp && ms ? { mvp: { face: face(meta, mvp.kind, grade(mvp.kind)), name: heroTitle(mvp.kind), line: mvpLine(ms) } } : {}),
-    counts,
-    items: gainItems(i.card.gains ?? []),
+    ...(mvp && ms ? { mvp: { face: mvpFace(meta, mvp.kind, grade(mvp.kind)), name: heroTitle(mvp.kind), line: mvpLine(ms) } } : {}),
+    counts: [],
+    items: [],
+    spoils,
     lines: resultLines(i.card, { bench: { n: benchKinds.length, each: benchEach }, quests: i.quests }),
     notes: i.notes,
     ...(hint ? { hint } : {}),
@@ -154,8 +184,8 @@ export function fightResult(i: FightResultIn, sub: string, hint?: string): JrDat
 
 /** The top of a run's end recap: the run's XP for each hero that fought in it (from where it began the run), its MVP, and the
  *  run's gold, crowns and chests counted up. The rest of the recap (the wave strip, the company's figures) follows it. */
-export function runResult(meta: Meta, recap: RunRecap, head: { title: string; tone: 'won' | 'lost'; line: string }, figures: { cleared: number; hearts: number }): JrData {
-  const kinds = Object.keys(recap.heroes).filter((k) => UNITS[k]);
+export function runResult(meta: Meta, recap: RunRecap, head: { title: string; tone: 'won' | 'lost'; line: string }, figures: { cleared: number; hearts: number }, run?: Run): JrData {
+  const kinds = Object.keys(recap.heroes).filter(recapKind);
   const work = (k: string) => recap.heroes[k].dealt + recap.heroes[k].healed + recap.heroes[k].taken / 2;
   kinds.sort((a, b) => work(b) - work(a));
   const mvp = mvpKind(recap);
@@ -165,11 +195,8 @@ export function runResult(meta: Meta, recap: RunRecap, head: { title: string; to
     return { kind: k, growth: heroGrowth(k, xpFrom, xpTo, 'lasting', lastingMult(meta, k)), face: face(meta, k, recap.heroes[k].grade), mvp: k === mvp };
   });
   const t = mvp ? recap.heroes[mvp] : undefined;
-  const counts: JrCount[] = [
-    { label: 'Gold earned', n: recap.earned, icon: ICONS.gold },
-    { label: 'Crowns', n: recap.crowns, icon: ICONS.crowns },
-  ];
-  if (recap.chests) counts.push({ label: 'Chests', n: recap.chests });
+  // (RECAP-SPOILS: the run's spoils page: its crowns and stones, gear and items; no gold, the owner: it is only for the waves)
+  const spoils = spoilsPage(recap.spoils ?? [], recap.crowns, run);
   return {
     won: head.tone === 'won',
     title: head.tone === 'won' ? 'VICTORY' : 'DEFEAT',
@@ -181,9 +208,10 @@ export function runResult(meta: Meta, recap: RunRecap, head: { title: string; to
       ...(figures.hearts ? [{ label: 'Hearts burned', value: String(figures.hearts) }] : []),
     ],
     heroes,
-    ...(mvp && t ? { mvp: { face: face(meta, mvp, t.grade), name: heroTitle(mvp), line: mvpLine(t) } } : {}),
-    counts,
+    ...(mvp && t ? { mvp: { face: mvpFace(meta, mvp, t.grade), name: heroTitle(mvp), line: mvpLine(t) } } : {}),
+    counts: [],
     items: [],
+    spoils,
     lines: [],
   };
 }

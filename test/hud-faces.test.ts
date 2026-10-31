@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { ALL_HEROES } from '../src/sim/units';
-import { HUD_FACES, faceBox, faceRect, faceUrl, hasFace } from '../src/heroFaceRules';
+import { HUD_FACES, bustRect, faceBox, faceRect, faceUrl, hasFace } from '../src/heroFaceRules';
 
 /** A WebP's width and height, from its header (lossy, lossless or extended). */
 function webpSize(file: string): { w: number; h: number } {
@@ -54,4 +54,17 @@ test('a face square is kept inside its picture', () => {
   assert.deepEqual(faceRect([0.02, 0.01, 0.3], 100, 100), { x: 0, y: 0, side: 30 });
   assert.deepEqual(faceRect([0.99, 0.99, 0.3], 100, 100), { x: 70, y: 70, side: 30 });
   assert.deepEqual(faceRect([0.5, 0.5, 2], 100, 60), { x: 20, y: 0, side: 60 });
+});
+
+test("the MVP's bust is about twice the face across, starts just above it, and stays inside the picture", () => {
+  for (const kind of ALL_HEROES) {
+    for (const step of [0, 1]) {
+      const box = faceBox(kind, step)!;
+      const { w, h } = webpSize(`src/art/${faceUrl(kind, step)}`);
+      const r = bustRect(box, w, h, 136 / 176);
+      assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.w <= w + 1 && r.y + r.h <= h + 1, `${kind} ${step}: inside`);
+      assert.ok(Math.abs(r.w / r.h - 136 / 176) < 0.02, `${kind} ${step}: its shape`);
+      assert.ok(r.y <= box[1] * h && r.y + r.h >= box[1] * h, `${kind} ${step}: the face's centre is in it`);
+    }
+  }
 });

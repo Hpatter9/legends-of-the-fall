@@ -4,7 +4,6 @@
 // wave comes in by, the spell cards, and the bottom shop bar. The rules are `sim/stand.ts`; this file only shows them and passes
 // the player's taps on. It draws into the page's own Pixi canvas, with the board of the ordinary fights hidden meanwhile.
 
-import { ORES } from './sim/awakenMats';
 import { Container, Graphics, Sprite, type Application } from 'pixi.js';
 import { tileAt } from './sim/board';
 import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
@@ -37,8 +36,8 @@ import { heroFace } from './heroFace';
 // (JRPG-RECAP: the end card's results: each hero's run levels and the stats they added, the MVP, the crowns counted up)
 import { playResults, type JrHero, type JrPlayer } from './jrpgRecapView';
 import { standGrowth, statsAt } from './sim/jrpgRecap';
-import { facePortrait } from './jrpgResults';
-import { ICONS } from './menuArt';
+import { facePortrait, mvpArt, spoilsPage } from './jrpgResults';
+import { standSpoilGains } from './sim/runSpoils';
 import { heroTitle } from './sim/heroNames';
 import { awakenedOf } from './sim/awaken';
 import { rankMult } from './sim/meta';
@@ -1869,14 +1868,9 @@ export class StandView {
     const row = (a: string, b: string) => rows.append(Object.assign(el('div'), { innerHTML: `<span>${a}</span><b>${b}</b>` }));
     row('Waves cleared', String(sum.cleared));
     row('Foes felled', String(sum.kills));
-    const chests = [sum.bronze && `${sum.bronze} bronze`, sum.silver && `${sum.silver} silver`, sum.gold && `${sum.gold} gold`].filter(Boolean).join(', ');
-    if (chests) row('Chests', chests);
-    if (sum.gear.length) row('Equipment', sum.gear.join(', '));
-    // (a record past a tenth wave pays a couple of rift ores: AWAKEN-MATS)
-    if (sum.ores?.length) row('Rift ores', sum.ores.map((d) => `${d.n} ${ORES[d.trait]?.name ?? d.trait}`).join(', '));
+    // (RECAP-SPOILS: the chests, equipment, rift ores (a record past a tenth wave, AWAKEN-MATS) and relics (those holding the line
+    // paid among them, STAND-HOLD-RELIC) moved to the results screen's spoils page)
     row('Heroes held', String(sum.heroes));
-    // (the relics the run gathered, those holding the line paid among them: STAND-HOLD-RELIC)
-    if (sum.relics) row('Relics', `${sum.relics}${sum.heldRelics ? ` (${sum.heldRelics} for holding the line)` : ''}`);
     card.append(jrBody, rows);
     this.endResults?.stop();
     this.endResults = playResults({ head: jrHead, body: jrBody }, {
@@ -1890,8 +1884,9 @@ export class StandView {
       ],
       heroes: this.endHeroes(m),
       ...this.endMvp(m),
-      counts: [{ label: 'Crowns', n: sum.crowns, icon: ICONS.crowns }],
+      counts: [],
       items: [],
+      spoils: spoilsPage(standSpoilGains(sum, m.equipment ?? []), sum.crowns),
       lines: [],
     });
     card.addEventListener('click', (e) => void (!(e.target as HTMLElement).closest('button') && this.endResults?.finish()));
@@ -1918,7 +1913,7 @@ export class StandView {
     return (this.s?.run.heroes ?? []).map((h) => {
       const k = rankMult(heroRank(m, h.kind));
       const base = statsAt(h.kind, levelOfKind(m, h.kind), 'lasting', { hp: k, atk: k });
-      return { kind: h.kind, growth: standGrowth(h.kind, h.lv, h.xp, base), face: facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1)), fell: !!h.fallen, mvp: h.id === best?.id, note: `${h.kills ?? 0} felled` };
+      return { kind: h.kind, growth: standGrowth(h.kind, h.lv, h.xp, base), face: heroFace(h.kind, awakenedOf(m, h.kind), 112, facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1))), fell: !!h.fallen, mvp: h.id === best?.id, note: `${h.kills ?? 0} felled` };
     });
   }
   /** The hero that felled the most (none when nobody felled any). */
@@ -1929,7 +1924,7 @@ export class StandView {
   private endMvp(m: Meta) {
     const h = this.endBest();
     if (!h) return {};
-    return { mvp: { face: facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1)), name: heroTitle(h.kind), line: `Felled the most foes · ${h.kills ?? 0} felled · run level ${h.lv}` } };
+    return { mvp: { face: mvpArt(h.kind, awakenedOf(m, h.kind), facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1))), name: heroTitle(h.kind), line: `Felled the most foes · ${h.kills ?? 0} felled · run level ${h.lv}` } };
   }
 
   /** For tests and screenshots: the pause sheet of the run in play. */

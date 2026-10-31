@@ -35,7 +35,7 @@ const ALL = [...new Set([...PARTY, ...KITS, ...STAND])];
 
 async function open(w, h, extra = {}) {
   // (the awake scene: the second and fourth heroes of the party awakened)
-  if (extra === 'awake') extra = { awakened: { cleric: 1, archer: 1 } };
+  if (extra === 'awake') extra = { awakened: { cleric: 1, archer: 1 }, shards: { cleric: 9999, archer: 9999 } };
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message); });
