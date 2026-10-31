@@ -14,6 +14,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### TAVERN-LIFE — Every hero's own place and activity in the tavern
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-life`, `/home/user/lotf-tavern-life` (from main 0.263.0).
+- **Goal:** the owner's ask: each hero in the tavern gets a proper animation at a fixed spot of their own (idling, sitting, darts, singing, drinking...), not random; Gwen added to the next art prompt.
+- **Scope:** new `src/render/tavernLife.ts`, `src/tavernLifeDraw.ts`, `src/art/tavern/life/`, `tools/tavern-life/`, `test/tavern-life.test.ts`, `docs/notes/tavern-art-prompt.md`; spots reassigned in `src/render/tavernSpots.ts`; hooks in `src/tavern.ts`; `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/tavern-life.md); [art prompt](notes/tavern-art-prompt.md) (52 images); screenshots `samples/tavern-life-*.png`.
 ### UNIT-INFO — Hold a unit between waves for its skills and stats
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/unit-info`, `/home/user/lotf-unit-info` (from main 0.263.0, main 0.264.0 merged).
