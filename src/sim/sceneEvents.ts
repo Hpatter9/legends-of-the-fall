@@ -13,6 +13,8 @@ export const EVENT_SCENES: Scene[] = [
     blurb: 'A portal rips open over the keep, an invasion pours out, and somebody has to go in.',
     moment: { kind: 'calOpen' },
     calamity: true,
+    // (REVEAL: the end card says the Calamity is open and where to find it)
+    reveal: { kind: 'mode', mode: 'calamity' },
     cast: {
       hero: { role: 'party:0', x: 270, facing: 'right', hidden: true },
       mate: { role: 'party:1', x: 232, facing: 'right', hidden: true },
@@ -295,6 +297,8 @@ export const EVENT_SCENES: Scene[] = [
     blurb: 'Karnok topples, the portal seals itself, and nobody planned for peace.',
     moment: { kind: 'calVictory' },
     calamity: true,
+    // (REVEAL: a first clear opens the Ascension levels)
+    reveal: { kind: 'ascension' },
     cast: {
       hero: { role: 'hero', x: 275, facing: 'right', hidden: true },
       second: { role: 'party:1', x: 235, facing: 'right', hidden: true },

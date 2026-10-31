@@ -14,6 +14,12 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### REVEAL-VAULT — A film's end card for what it revealed
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/cinematic-reveal-vault`, `/home/user/lotf-reveal` (from main 0.273.0).
+- **Goal:** the owner's "at the end of a cinematic, if it was revealing something, it should come up at the end to show what happened or was unlocked" (seen on the Calamity's opening) (the vault part was withdrawn: the owner meant the altar).
+- **Scope:** new `src/sim/sceneReveal.ts`, `src/revealCard.ts`, `src/reveal.css`, `tools/reveal-vault/shots.mjs`, `test/scene-reveal.test.ts`, `test/vault-words.test.ts`; `Scene.reveal` and its type in `sceneKit.ts`; the `reveal` field on five films (`sceneEvents.ts`, `sceneFamilies.ts`); hooks in `src/main.ts` (`playDue`, `playScene`, `armyWon`), `src/home.ts` (`enterCalamity`, the Treasury's sheet), `src/castle.ts` (the Treasury's card), `build.mjs` (the CSS). No sim rule, save or version change.
+- **Status:** ready for review. [Note](notes/cinematic-reveal-vault.md); screenshots `samples/reveal-*.png`.
 ### CALAMITY-HUB — The living Rift Sanctuary: the rift walk-in and the walk back out
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-hub`, `/home/user/lotf-calhub` (from main 0.274.0).

@@ -301,6 +301,11 @@ export class Home {
     then();
   }
 
+  /** Into the Calamity from the home screen, as its place on the Battle tab does (REVEAL: the end card's button). */
+  enterCalamity(): void {
+    this.go(this.hooks.onCalamity);
+  }
+
   show(tab: Tab): void {
     if (!$('hmSheet').hidden) this.closeSheet();
     this.tab = tab;
