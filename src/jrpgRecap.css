@@ -165,3 +165,33 @@ body[data-move] #result.jr { background: #08110e66; }
   .jrHead .jrRays { opacity: .55; }
 }
 .jrBody.calm .jrIn { opacity: 1; transform: none; }
+
+/* RECAP-SPOILS (docs/notes/hud-faces.md): the painted faces (drawn smooth), the MVP's bigger piece of art, and the spoils page */
+.jrBody :is(.jrFace, .jrMvpFace) canvas.heroFace, :is(#recap, .rcDetail) .rcFace canvas.heroFace { image-rendering: auto; }
+.jrBody .jrMvpFace:has(.jrMvpArt) { width: 74px; height: 94px; padding: 3px; overflow: hidden; }
+.jrBody .jrMvpFace canvas.jrMvpArt { display: block; width: 68px; height: 88px; border-radius: 2px; background: #0d1a13; image-rendering: auto; }
+.jrBody .jrMvpFace .jrCrown { z-index: 1; }
+.jrBody .jrSpoilsPage { gap: 8px; padding: 8px 9px 10px; border: 1px solid var(--jr-rim); border-radius: 6px; background: linear-gradient(#ffe0a00d, transparent 40%), var(--jr-panel); }
+.jrBody .jrGroup { display: flex; flex-direction: column; gap: 5px; }
+.jrBody .jrGroupHead { margin: 0; color: #c6b180; font: 700 9px var(--body); letter-spacing: .16em; text-transform: uppercase; }
+.jrBody .jrGearList { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.jrBody .jrGearList.many { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.jrBody .jrGear { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 3px 7px 3px 3px; border: 1px solid #9c845488; border-left-width: 3px; border-radius: 4px; background: #0d1a13e6; }
+.jrBody .jrGear .jrIco { flex: none; width: 30px; height: 30px; object-fit: contain; image-rendering: pixelated; }
+.jrBody .jrGear .eqIcon.jrIco { display: inline-grid; place-items: center; padding: 0; position: relative; }
+.jrBody .jrGear .eqIcon.jrIco img { width: 26px; height: 26px; image-rendering: pixelated; }
+.jrBody .jrGear .eqIcon.painted.jrIco { background: none; }
+.jrBody .jrGear .eqIcon.painted.jrIco :is(.eqFrame, .eqGlow) { display: none; }
+.jrBody .jrGear .eqIcon.painted.jrIco .eqArt { inset: 0; }
+.jrBody .jrGearWords { display: flex; flex-direction: column; min-width: 0; }
+.jrBody .jrGearWords b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ebdfc1; font: 700 12px/1.2 var(--body); }
+.jrBody .jrGearWords small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #a99d80; font: 400 10px/1.2 var(--body); }
+.jrBody .jrGear.r1 { border-left-color: #b9b2a0; }
+.jrBody .jrGear.r2 { border-color: #5aa0e0aa; } .jrBody .jrGear.r2 b { color: #8cc4f4; }
+.jrBody .jrGear.r3 { border-color: #b07ae8bb; } .jrBody .jrGear.r3 b { color: #cfa6f6; }
+.jrBody .jrGear.r4 { border-color: #f0c050cc; } .jrBody .jrGear.r4 b { color: #ffd77a; }
+.jrBody .jrGear.r5 { border-color: #ff6a5acc; } .jrBody .jrGear.r5 b { color: #ff9a8a; }
+.jrBody .jrNone { margin: 2px 0; color: #a99d80; font: italic 12px var(--body); text-align: center; }
+@media (max-width: 370px) {
+  .jrBody .jrGearList.many { grid-template-columns: minmax(0, 1fr); }
+}

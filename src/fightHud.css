@@ -279,3 +279,6 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 @keyframes umFade { 0% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes umFadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes umFlashSoft { 0% { opacity: 0; } 40% { opacity: 0.3; } 100% { opacity: 0; } }
+
+/* HUD-FACES (docs/notes/hud-faces.md): a painted face drawn smooth (the sprite portraits stay pixelated); same box as the sprite it replaces */
+:is(.fhPic, .uiCard, .stSheetHead) canvas.heroFace { image-rendering: auto; object-fit: cover; }

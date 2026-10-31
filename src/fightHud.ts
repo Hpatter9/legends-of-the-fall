@@ -16,6 +16,7 @@ import { keyOf, type Skill } from './sim/abilities';
 import { heroKitOf } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
 import { portrait } from './render/sheets';
+import { heroFace } from './heroFace';
 import { battleSheet } from './render/awakenLook';
 import { GLOW, skillElement, type Element } from './render/fxRules';
 import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type Which } from './fightHudRules';
@@ -167,8 +168,10 @@ export class FightHud {
       `<span class="fhBar hp"><i></i><b></b></span><span class="fhBar res ${hk.pool}"><i></i><b></b></span>` +
       `<span class="fhChips">${chip(1, hk.s1.skill, hk.s1.heals)}${chip(2, hk.s2.skill, hk.s2.heals)}</span>` +
       '<span class="fhCast"></span>';
-    const pic = portrait(battleSheet(u.def, this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0, u.grade ?? 1), 40, u.grade ?? 1);
-    pic.className = 'fhPortrait';
+    const step = this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0;
+    // (HUD-FACES: the hero's painted face, cut to its face box; the pixel portrait until the painting loads, and for any without one)
+    const pic = heroFace(u.def, step, 72, portrait(battleSheet(u.def, step, u.grade ?? 1), 40, u.grade ?? 1));
+    pic.classList.add('fhPortrait');
     el.querySelector('.fhPic')!.prepend(pic);
     el.querySelector('.fhName')!.textContent = heroName(u.def);
     for (const c of el.querySelectorAll<HTMLElement>('.fhChip')) {
