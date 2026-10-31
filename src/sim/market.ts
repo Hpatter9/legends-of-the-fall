@@ -17,6 +17,16 @@ import { RELIC_IDS, RELICS } from './relics';
 import { HEROES, UNITS } from './units';
 import { gearStage, summonCost, type Run } from './run';
 import type { EventOption } from './events';
+import { drawGuest, guestPrice } from './guest';
+import { heroName } from './heroNames';
+
+/** The cart's guest hero as a ware (GUEST-HERO): dear, and a sixth hero on the field for this run. */
+export const guestOption = (run: Run, stage: number, kind: string): EventOption => ({
+  label: `Guest: ${heroName(kind)} the ${UNITS[kind].name}`,
+  text: 'fights as a sixth hero beside your five, at your party\'s level, for this run only',
+  cost: guestPrice(run, stage),
+  effect: { t: 'guest', kind },
+});
 
 const MARKET_SALT = 0x3a4e7;
 /** Wares a visit may buy (the rummage does not count). */
@@ -76,8 +86,11 @@ export function stockMarket(run: Run, stage: number, roll = 0): EventOption[] {
 
 /** The whole card's options: the wares, the rummage, and the way on. */
 export function marketOptions(run: Run, stage: number): EventOption[] {
+  // (now and then a guest hero, on its own side stream, so the stock is as it was: GUEST-HERO)
+  const guest = drawGuest(run, stage);
   return [
     ...stockMarket(run, stage),
+    ...(guest ? [guestOption(run, stage, guest)] : []),
     { label: 'Rummage in the back', text: 'the unsold wares are put away and others brought out (once a visit)', cost: rummagePrice(stage), effect: { t: 'reroll' } },
     { label: 'Leave', text: 'Move on.', cost: 0, effect: { t: 'leave' } },
   ];
