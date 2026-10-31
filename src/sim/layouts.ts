@@ -7,14 +7,17 @@
 // the old way (`classic`: rolling land with platforms and pits). Pure rules: no Pixi, no DOM, and its own side stream of
 // the seed (`0x1a70`), so nothing else on the board moves with it.
 
-import { boardOk, DEPLOY_ROWS, LAVA_LANDS, RAMP, solid, standable, tileAt, TOP, type Area, type Board, type Ground, type Tile } from './board';
+import { DEPLOY_ROWS, LAVA_LANDS, tileAt, TOP, type Area, type Board, type Ground, type Tile } from './board';
+import { clampH, easeAround, fit, fluidOf, idx, put, rowLevel, spread, type Plan } from './layoutKit';
 import { mixSeed, Rng } from './rng';
+import { ZONE_TEMPLATES, type ZoneId } from './calZones';
 
 export const LAYOUT_IDS = ['classic', 'plain', 'river', 'hill', 'pass', 'fort', 'islands', 'ring', 'plateaus'] as const;
-export type LayoutId = (typeof LAYOUT_IDS)[number];
+/** A layout: one of the shapes any fight can be laid in, or one of the Calamity's own zones (`calZones.ts`, laid only when asked for: `layoutFor` never picks one). */
+export type LayoutId = (typeof LAYOUT_IDS)[number] | ZoneId;
 
 /** What each layout is called, and what the codex says of it. */
-export const LAYOUT_INFO: Record<LayoutId, { name: string; text: string }> = {
+export const LAYOUT_INFO: Record<(typeof LAYOUT_IDS)[number], { name: string; text: string }> = {
   classic: { name: 'Rolling land', text: 'Hills, platforms with a staircase and pits.' },
   plain: { name: 'Open plain', text: 'Low, level ground with a few boulders: nothing to hide behind or climb.' },
   river: { name: 'The river', text: 'Deep water splits the field. Cross by the bridges and fords, or fly.' },
@@ -26,8 +29,8 @@ export const LAYOUT_INFO: Record<LayoutId, { name: string; text: string }> = {
   plateaus: { name: 'The ravine', text: 'Two plateaus split by a ravine. One bridge crosses it.' },
 };
 
-type Weights = Partial<Record<LayoutId, number>>;
-const BASE: Record<LayoutId, number> = { classic: 5, plain: 1.5, river: 2, hill: 2, pass: 2, fort: 2, islands: 1.2, ring: 1.5, plateaus: 2 };
+type Weights = Partial<Record<(typeof LAYOUT_IDS)[number], number>>;
+const BASE: Record<(typeof LAYOUT_IDS)[number], number> = { classic: 5, plain: 1.5, river: 2, hill: 2, pass: 2, fort: 2, islands: 1.2, ring: 1.5, plateaus: 2 };
 /** What each area changes of the base odds (an area not named takes the base). */
 const BY_AREA: Partial<Record<Area, Weights>> = {
   highlands: { river: 2.5, hill: 2.5 },
@@ -56,95 +59,6 @@ export function layoutFor(seed: number, area: Area): LayoutId {
   let r = new Rng(mixSeed(seed, 0x1a70)).next() * total;
   for (const id of LAYOUT_IDS) if ((r -= w[id]) < 0) return id;
   return 'classic';
-}
-
-/** What a layout is made of, as the template builds it. */
-interface Plan {
-  b: Board;
-  rng: Rng;
-  area: Area;
-  /** The tiles whose heights the template fixed (the rest are eased round them). */
-  pinned: Set<number>;
-  /** The first and last rows of the middle ground. */
-  m0: number;
-  m1: number;
-}
-
-const idx = (p: Plan, u: number, v: number): number => v * p.b.w + u;
-
-/** Set a tile of the plan: its height and what lies on it. The tile is pinned. */
-function put(p: Plan, u: number, v: number, patch: Partial<Tile>): void {
-  const t = tileAt(p.b, u, v);
-  if (!t) return;
-  delete t.ground;
-  delete t.wall;
-  delete t.bridge;
-  Object.assign(t, patch);
-  p.pinned.add(idx(p, u, v));
-}
-
-const clampH = (h: number): number => Math.max(0, Math.min(TOP, Math.round(h)));
-
-/** What fills a river or a sea: deep water (the page draws it as a lake of lava on a volcano or at a forge; it is as impassable, and as safe to stand beside, as water). */
-const fluidOf = (_area: Area): Ground => 'deep';
-
-/** Ease the board's heights to a ramp round the tiles a template pinned. A loose tile keeps its own (rolling) height as far as it can: no more than a ramp
- *  above the lowest the pinned tiles allow it (their height plus the walk to them) and no less than a ramp below the highest. Solid tiles and deep water do not count. */
-function easeAround(b: Board, pinned: ReadonlySet<number>): void {
-  const n = b.w * b.d;
-  const flat = (i: number) => !solid(b.tiles[i]) && b.tiles[i].ground !== 'deep';
-  const hi = new Array<number>(n).fill(Infinity);
-  const lo = new Array<number>(n).fill(-Infinity);
-  for (const i of pinned) if (flat(i)) hi[i] = lo[i] = b.tiles[i].h;
-  const near = (i: number): number[] => {
-    const u = i % b.w;
-    const v = Math.floor(i / b.w);
-    const out: number[] = [];
-    if (u > 0) out.push(i - 1);
-    if (u < b.w - 1) out.push(i + 1);
-    if (v > 0) out.push(i - b.w);
-    if (v < b.d - 1) out.push(i + b.w);
-    return out.filter(flat);
-  };
-  for (let pass = 0; pass < 40; pass++) {
-    let moved = false;
-    for (let i = 0; i < n; i++) {
-      if (!flat(i) || pinned.has(i)) continue;
-      for (const j of near(i)) {
-        if (hi[j] + RAMP < hi[i]) (hi[i] = hi[j] + RAMP), (moved = true);
-        if (lo[j] - RAMP > lo[i]) (lo[i] = lo[j] - RAMP), (moved = true);
-      }
-    }
-    if (!moved) break;
-  }
-  for (let i = 0; i < n; i++) {
-    if (!flat(i) || pinned.has(i)) continue;
-    const t = b.tiles[i];
-    const l = Math.max(0, lo[i]);
-    const h = Math.min(TOP, hi[i]);
-    t.h = l <= h ? Math.max(l, Math.min(h, t.h)) : Math.round((l + h) / 2);
-  }
-}
-
-/** A mean of the heights of the tiles in a row of the land (to set a level for a bank). */
-const rowLevel = (b: Board, v: number): number => {
-  let n = 0;
-  let s = 0;
-  for (let u = 0; u < b.w; u++) {
-    const t = tileAt(b, u, v);
-    if (t) (s += t.h), n++;
-  }
-  return n ? s / n : 0;
-};
-
-/** Pick `n` distinct columns at least `gap` apart in [lo, hi]. */
-function spread(rng: Rng, lo: number, hi: number, n: number, gap: number): number[] {
-  const out: number[] = [];
-  for (let tries = 0; tries < 40 && out.length < n; tries++) {
-    const c = rng.int(lo, hi);
-    if (out.every((x) => Math.abs(x - c) >= gap)) out.push(c);
-  }
-  return out;
 }
 
 // ---- the templates ---------------------------------------------------------------------------------------------------
@@ -359,28 +273,23 @@ function plain(p: Plan): void {
   for (let v = 0; v < b.d; v++) for (let u = 0; u < b.w; u++) put(p, u, v, { h: b.tiles[idx(p, u, v)].h >= 3 ? 1 : Math.min(1, b.tiles[idx(p, u, v)].h) });
 }
 
-const TEMPLATES: Partial<Record<LayoutId, (p: Plan) => void>> = { plain, river, hill, pass, fort, islands, ring, plateaus };
-
-/** Whether a board laid by a template is fit: walkable end to end, the deploy rows clear of obstacles and with room for a party. */
-function fit(b: Board): boolean {
-  for (let v = 0; v < b.d; v++) {
-    if (v >= DEPLOY_ROWS && v < b.d - DEPLOY_ROWS) continue;
-    for (let u = 0; u < b.w; u++) if (!standable(tileAt(b, u, v))) return false;
-  }
-  return boardOk(b);
-}
+const TEMPLATES: Partial<Record<(typeof LAYOUT_IDS)[number], (p: Plan) => void>> = { plain, river, hill, pass, fort, islands, ring, plateaus };
 
 /** Lay a template on the board (its land already rolled and eased to a ramp). Returns whether it took: if not, the board is left as it was. */
 export function applyLayout(b: Board, id: LayoutId): boolean {
-  const template = TEMPLATES[id];
+  const template = TEMPLATES[id as (typeof LAYOUT_IDS)[number]] ?? ZONE_TEMPLATES[id as ZoneId];
   if (!template) return false;
   const before = b.tiles.map((t) => ({ ...t }));
   for (let attempt = 0; attempt < 5; attempt++) {
     b.tiles = before.map((t) => ({ ...t }));
-    const p: Plan = { b, rng: new Rng(mixSeed(b.seed, 0x1a71, attempt)), area: b.area, pinned: new Set(), m0: DEPLOY_ROWS, m1: b.d - 1 - DEPLOY_ROWS };
+    const p: Plan = { b, rng: new Rng(mixSeed(b.seed, 0x1a71, attempt)), area: b.area, pinned: new Set(), m0: DEPLOY_ROWS, m1: b.d - 1 - DEPLOY_ROWS, props: [] };
     template(p);
     easeAround(b, p.pinned);
-    if (fit(b)) return true;
+    if (fit(b)) {
+      // (a Calamity zone's things on its tiles: the tiles they stand on are the zone's own, so they are kept with it)
+      if (p.props.length) b.props = p.props;
+      return true;
+    }
   }
   b.tiles = before;
   return false;

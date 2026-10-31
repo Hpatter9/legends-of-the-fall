@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CAL-ZONES — The Calamity's battle zones: varied shapes, things on the board, moving parts
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/calamity-zones`, `/home/user/lotf-calzones` (from main 0.277.0, main merged in before the push).
+- **Goal:** the owner's "make the battle zones for Calamity much more interesting, more varied, with objects and moving parts. Make it feel alive and real."
+- **Scope:** new `src/sim/calZones.ts` (six zones: nave, crystal chasm, crypt rows, broken bridge, ritual circle, flooded vault), `src/sim/layoutKit.ts` (the template tools, moved out of `layouts.ts` unchanged), `src/render/zoneLife.ts`, `src/art/calzones/`, `test/calamity-zones.test.ts`, `tools/calamity/zone-shots.mjs`; hooks in `layouts.ts` (zone templates), `board.ts` (`Tile.chasm`, `Board.props`), `sanctuary.ts` (`destinationBoard` lays a zone), `tower.ts` (passes the act), `boardView.ts` (props, chasms, the air), `main.ts` (one line: fade tall things over fighters). No save or version change.
+- **Status:** ready for review. [Note](notes/calamity-zones.md); screenshots `samples/calzones-*.png`.
+
 ### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-rankup`, `/home/user/lotf-rankup` (from main 0.273.0).
