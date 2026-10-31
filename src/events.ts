@@ -5,6 +5,7 @@
 import { chooseOption, leaveEvent, type EventOption } from './sim/events';
 import { gearText, SLOTS, type Gear } from './sim/gear';
 import { RELICS } from './sim/relics';
+import { setCount, setOf } from './sim/relicSets';
 import { equip, unequip, type Run } from './sim/run';
 import { equipBestRun } from './sim/runGear';
 import { UNITS } from './sim/units';
@@ -128,7 +129,7 @@ export class Events {
 
   /* ------------------------------------------------------------ the relics strip */
 
-  /** The relics held as small icons into `#relics`; tap one for what it does. */
+  /** The relics held as small icons into `#relics` (shown on the wave-prep screen only, by the stylesheet); tap one for what it does. */
   drawStrip(run: Run): void {
     const box = $('relics');
     const ids = run.relics ?? [];
@@ -146,7 +147,12 @@ export class Events {
       });
       box.append(b);
     }
-    if (this.pick && ids.includes(this.pick)) box.append(el('span', 'hint', `${RELICS[this.pick].name}: ${RELICS[this.pick].text}`));
+    // (RELICS-PREP: the strip shows on the wave-prep screen only, so a tap reads the relic there: what it does, and its set's count)
+    if (this.pick && ids.includes(this.pick)) {
+      const set = setOf(this.pick);
+      const of = set ? ` (${set.name} set ${setCount(set, ids)}/${set.relics.length})` : '';
+      box.append(el('span', 'hint', `${RELICS[this.pick].name}: ${RELICS[this.pick].text}${of}`));
+    }
   }
 
   /* ------------------------------------------------------------ the pack */
