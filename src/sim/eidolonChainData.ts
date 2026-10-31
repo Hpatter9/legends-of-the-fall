@@ -37,7 +37,9 @@ export interface ChainPart {
 export type ChainOpens = Need | { kind: 'calCleared' };
 
 /** The binding ceremony, beat by beat (ms from its start), as data: the page draws each beat (`eidolonBinding.ts`). */
-export type BindingBeatKind = 'dark' | 'pieces' | 'circle' | 'rise' | 'name' | 'line' | 'bound';
+/** HORN-GIFT: `horn` (the Summoner hands over the War Horn of the first kings, its painting shown) and `hornFull` (the Eidolon fills it)
+ *  follow `bound` in the first chain's binding: the horn is the player's from then (`warHorn.ts` `hornHeld`). */
+export type BindingBeatKind = 'dark' | 'pieces' | 'circle' | 'rise' | 'name' | 'line' | 'bound' | 'horn' | 'hornFull';
 export interface BindingBeat {
   at: number;
   beat: BindingBeatKind;
@@ -115,7 +117,15 @@ const ASKEL_BINDING: readonly BindingBeat[] = [
   { at: 5400, beat: 'rise' },
   { at: 6600, beat: 'name' },
   { at: 8000, beat: 'line', who: 'eidolon', text: 'A bell I have not heard in three hundred years. I have run a long way, little keep. Blow your horn, and I will run for you.' },
-  { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. Askel answers the War Horn when it is full: boss waves and fallen foes fill it.' },
+  { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Cinderhound has come home.' },
+  // (HORN-GIFT: the horn he asked for is handed over, and he fills it, so the keep can blow it in its very next fight)
+  {
+    at: 15500,
+    beat: 'horn',
+    who: 'summoner',
+    text: 'He asks for a horn, and the keep has one. The War Horn of the first kings: it called this hound to the hunt for a hundred years, and it has hung silent above this altar since the pacts broke. It is yours now.',
+  },
+  { at: 22000, beat: 'hornFull', who: 'eidolon', text: 'There. I have breathed my fire into it. Blow it in your next fight, little keep, and I will come running.' },
 ];
 
 /** The six chains, easiest first. Only Askel's is written; the rest are the rails for their batches (the design's givers and openings,

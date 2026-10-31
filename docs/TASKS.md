@@ -14,6 +14,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### HORN-GIFT — The War Horn given at the first binding
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/horn-gift`, `/home/user/lotf-horngift` (from main 0.277.0, with `claude/cinematic-reveal-vault` merged).
+- **Goal:** the owner's "The Eidolon horn should be given to the player after earning an Eidolon, as part of the story": no horn anywhere (and no fill) before an Eidolon is bound; Askel's binding hands it over full, with two story beats and a "Received: The War Horn" end card.
+- **Scope:** `src/sim/warHorn.ts` (`hornHeld`, `addHorn`, `bindEidolon`), `src/sim/eidolonChainData.ts` (the beats), `src/sim/sceneKit.ts` + `sceneReveal.ts` (the `horn` reveal), `src/eidolonBinding.ts`, `src/eidolonChains.css`, `src/eidolonCall.ts`, `src/eidolons.css`, `src/home.ts`, `src/revealCard.ts`, `src/reveal.css`; `test/horn-gift.test.ts`, `tools/horn-gift/shots.mjs`.
+- **Status:** ready for review. [Note](notes/horn-gift.md); screenshots `samples/horn-gift-*.png`.
+
 ### TAVERN-RANKUP — Upgrades marked in the tavern, and a quick way to take them
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/tavern-rankup`, `/home/user/lotf-rankup` (from main 0.273.0).

@@ -2,6 +2,8 @@
 // the chain's beats (`ChainDef.binding`, plain data, so the general shot layer can take them over): the chamber darkens, the pieces float
 // up onto the altar, the bell is rung and a summoning circle catches fire, the Eidolon rises behind the altar in its painted figure, its
 // name stamps in, it speaks its line, and the seal reads "Bound". A tap moves on to the next beat; the last waits for Continue.
+// HORN-GIFT: Askel's binding goes on past the seal: the Summoner hands over the War Horn of the first kings (its painting rises over the
+// altar, `horn`) and the hound breathes his fire into it (its full painting and glow, `hornFull`); the page's end card follows.
 // Reduced motion: no rises or drifts, everything fades in and out held still. It changes nothing in the save: the page binds the
 // chain (`bindChain`) once it has played (a replay from the Pact Gallery binds nothing).
 
@@ -21,7 +23,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: stri
 };
 
 /** The sound of each beat as it begins. */
-const BEAT_SOUND = { pieces: 'holyChime', circle: 'riseSummon', rise: 'fireWhoosh', name: 'stingSummon', bound: 'setChime3' } as const;
+const BEAT_SOUND = { pieces: 'holyChime', circle: 'riseSummon', rise: 'fireWhoosh', name: 'stingSummon', bound: 'setChime3', horn: 'horn', hornFull: 'fireWhoosh' } as const;
 
 /** Play a chain's binding. Resolves when the player taps Continue on its last beat. */
 export function playBinding(chain: ChainDef, replay = false): Promise<void> {
@@ -63,11 +65,21 @@ export function playBinding(chain: ChainDef, replay = false): Promise<void> {
   say.append(sayWho, sayText);
   const seal = el('div', 'ebSeal');
   seal.append(el('b', '', 'Bound'), el('small', '', replay ? `${e.name}, as the pact was made` : `${e.name} answers the War Horn`));
+  // (HORN-GIFT: the War Horn's paintings, the empty one and the full one over it, shown on the `horn` and `hornFull` beats)
+  const horn = el('div', 'ebHorn');
+  for (const [state, cls] of [['empty', 'ebHornEmpty'], ['ready', 'ebHornReady']] as const) {
+    const h = el('img', cls);
+    h.alt = '';
+    h.draggable = false;
+    h.src = `eidolons/horn-${state}.webp`;
+    horn.append(h);
+  }
+  if (!beats.some((b) => b.beat === 'horn')) horn.hidden = true;
   const go = el('button', 'primary ebGo', 'Continue');
   const bars = el('div', 'ebBars');
   bars.append(el('i'), el('i'));
   room.append(glow, circle, fig, altar, embers);
-  layer.append(room, bars, name, say, seal, go);
+  layer.append(room, bars, name, horn, say, seal, go);
   document.body.append(layer);
   duck(true, 'binding');
 
@@ -84,6 +96,8 @@ export function playBinding(chain: ChainDef, replay = false): Promise<void> {
       layer.dataset.beat = b.beat;
       // (every beat up to this one stays shown: the classes build the picture up)
       for (const x of beats.slice(0, n + 1)) layer.classList.add(`b-${x.beat}`);
+      // (Continue shows on the last beat: the seal's, or the horn's after it)
+      layer.classList.toggle('end', n === beats.length - 1);
       if (b.text) {
         sayWho.textContent = b.who === 'summoner' ? 'The Summoner' : b.who === 'eidolon' ? e.name : '';
         say.classList.toggle('narrator', b.who === 'narrator');
