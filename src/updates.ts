@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.312.0',
+    date: '2026-11-01',
+    title: 'The Eidolons\' reliquaries',
+    notes: ['18 new Calamity relics in six Eidolon reliquaries. Hold all three of one and its Eidolon answers sooner and stays longer: the War Horn fills faster.'],
+  },
+  {
     version: '0.311.0',
     date: '2026-11-01',
     title: 'Three skill buttons in battle',
