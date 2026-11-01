@@ -14,6 +14,8 @@ PICKS = [
     *[(f'books-shop/books/{k}-{r}.png', f'book-{k}-{r}', 160) for k in ('manual', 'grimoire', 'hymnal', 'bestiary') for r in ('common', 'rare')],
     ('books-shop/books/universal-rare.png', 'book-universal-rare', 160),
     ('books-shop/people/hester-vane.png', 'hester', 360),
+    ('books-shop/people/caravan-master.png', 'caravan-master', 360),
+    ('books-shop/people/gloaming-dealer.png', 'gloaming-dealer', 360),
     ('books-shop/stall/shop-stall.png', 'stall', 200),
     ('books-shop/study/studying.png', 'studying', 96),
     ('books-shop/study/learned.png', 'learned', 128),

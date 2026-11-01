@@ -11,6 +11,7 @@ import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openStall } from './stallView';
 import { newStock } from './sim/stall';
+import { caravanHere, gloamingHere } from './sim/traders';
 import { shopArt } from './bookArt';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
@@ -626,7 +627,9 @@ export class Home {
     swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
     // (Hester's Stall, SHOP-BOOKS-GEAR: the stall's picture over its plate; a gold dot while the day's stock is new and unseen)
     const fresh = newStock(m, todayKey());
-    const stall = place('hmStall', 'stall', 'Hester’s Stall', fresh ? 'new stock' : 'books · gear', `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
+    // (a visiting trader puts his name on the plate: the Dealer after a guardian falls, the caravan on its day)
+    const visitor = gloamingHere(m, todayKey()) ? 'Gloaming Dealer' : caravanHere(m, todayKey()) ? 'Caravan today' : '';
+    const stall = place('hmStall', 'stall', 'Hester’s Stall', visitor || (fresh ? 'new stock' : 'books · gear'), `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}${visitor ? `; ${visitor === 'Caravan today' ? 'Rustam Saffar’s caravan is here today' : 'the Gloaming Dealer is here'}` : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
     const pic = el('img', 'cpStallPic');
     pic.src = shopArt('stall');
     pic.alt = '';

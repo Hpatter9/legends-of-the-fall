@@ -4,12 +4,14 @@
 // `src/sim/stall.ts`, `books.ts` and `wear.ts`; this only reads and changes the meta through them.
 
 import { bookIcon, shopArt } from './bookArt';
+import { classWord, oreIcon } from './oreView';
 import { itemIcon } from './equipView';
 import { ICONS, icon } from './menuArt';
 import { todayKey } from './modes';
 import { chestShopCards } from './shopView';
 import { TOME_ICON } from './tomeArt';
 import { play } from './render/sound';
+import { ORES } from './sim/awakenMats';
 import { BOOKS, KIND_NAMES, RARITY_WORDS, bookById, type BookDef } from './sim/bookData';
 import { canRead, copiesOf, knowsBook, slotFor, studyLength, suitedTo } from './sim/books';
 import { EQUIP_BASES, RARITY_NAMES, describeAbility, hasAbility, itemName, itemStats, sellPrice, spareEquipment, statLines, wearerOf, type Equipment } from './sim/equipment';
@@ -20,6 +22,7 @@ import {
   stallRepairAll, standingOf, stockOf, toNextStanding, whyNotBuy, type StallTab, type Ware,
 } from './sim/stall';
 import { TOMES } from './sim/tomes';
+import { TRADER_NAMES, buyFromTrader, caravanHere, gloamingHere, oreWareName, stockOfTrader, tradeLeft, traderLine, whyNotBuyFrom, type TradeWare, type Trader } from './sim/traders';
 import { durabilityOf, maxDurability, needingRepair, repairAllCost, repairCost, wearState } from './sim/wear';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -36,8 +39,11 @@ const img = (src: string, cls = '', alt = ''): HTMLImageElement => {
   return i;
 };
 
-const TAB_NAMES: Record<StallTab, string> = { books: 'Books', gear: 'Gear', tomes: 'Tomes', chests: 'Chests', sell: 'Sell', repair: 'Repair' };
-const TAB_ICON: Record<StallTab, () => string> = {
+type AnyTab = StallTab | Trader;
+const TAB_NAMES: Record<AnyTab, string> = { books: 'Books', gear: 'Gear', tomes: 'Tomes', chests: 'Chests', sell: 'Sell', repair: 'Repair', caravan: TRADER_NAMES.caravan.tab, gloaming: TRADER_NAMES.gloaming.tab };
+const TAB_ICON: Record<AnyTab, () => string> = {
+  caravan: () => shopArt('caravan-master'),
+  gloaming: () => shopArt('gloaming-dealer'),
   books: () => shopArt('book-manual-common'),
   gear: () => 'gear/gear-64.webp',
   tomes: () => TOME_ICON.small,
@@ -48,20 +54,23 @@ const TAB_ICON: Record<StallTab, () => string> = {
 /** Repair all asks first above this many crowns. */
 const ASK_OVER = 500;
 
+const STALL_TAB_LIST: readonly StallTab[] = ['books', 'gear', 'tomes', 'chests', 'sell', 'repair'];
 const KIND_PLURAL: Record<BookDef['kind'], string> = { manual: 'Manuals', grimoire: 'Grimoires', hymnal: 'Hymnals', bestiary: 'Bestiaries', universal: 'Universal books' };
 
 type SellFilter = 'all' | 'common' | 'rare' | 'epic' | 'books';
 
 /** Open Hester's Stall over the page, on a tab. `onChange` runs after anything is bought, sold or mended, and when the stall is shut. */
-export function openStall(m: Meta, onChange: () => void, first: StallTab = 'books'): void {
+export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'): void {
   document.getElementById('stall')?.remove();
   const root = el('div', 'stallView');
   root.id = 'stall';
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-label', 'Hester’s Stall');
-  let tab: StallTab = first;
+  const day0 = todayKey();
+  // (a trader who is not here today cannot be the first tab)
+  let tab: AnyTab = (first === 'caravan' && !caravanHere(m, day0)) || (first === 'gloaming' && !gloamingHere(m, day0)) ? 'books' : first;
   let filter: SellFilter = 'all';
-  let said = hesterLine(m, todayKey(), first === 'books' ? undefined : first);
+  let said = tab === 'caravan' || tab === 'gloaming' ? traderLine(m, tab, day0) : hesterLine(m, day0, tab === 'books' ? undefined : tab);
   let sure = '';
   const standingWas = standingOf(m);
   markSeen(m, todayKey());
@@ -100,16 +109,20 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
     purse.append(icon(ICONS.crowns, ''), String(m.crowns));
     head.append(back, title, seal, purse);
     // (the close-up: her shelf, the better one from standing 2; Hester leaning in; her line)
-    const scene = el('div', `hsScene${standing >= 2 ? ' rare' : ''}`);
-    scene.style.backgroundImage = `url(${shopArt(standing >= 2 ? 'shelf-rare' : 'shelf')})`;
-    scene.append(img(shopArt('hester'), 'hsHester', 'Hester Vane'));
+    const trader: Trader | null = tab === 'caravan' || tab === 'gloaming' ? tab : null;
+    const scene = el('div', `hsScene${standing >= 2 ? ' rare' : ''}${trader ? ` ${trader}` : ''}`);
+    scene.style.backgroundImage = `url(${shopArt(standing >= 2 || trader === 'gloaming' ? 'shelf-rare' : 'shelf')})`;
+    scene.append(img(shopArt(trader === 'caravan' ? 'caravan-master' : trader === 'gloaming' ? 'gloaming-dealer' : 'hester'), 'hsHester', trader ? TRADER_NAMES[trader].name : 'Hester Vane'));
     const say = el('p', 'hsSay');
-    say.append(el('b', '', 'Hester'), el('span', '', said));
+    say.append(el('b', '', trader ? TRADER_NAMES[trader].name : 'Hester'), el('span', '', said));
     scene.append(say);
     // (the tabs)
     const tabs = el('div', 'hsTabs');
     tabs.setAttribute('role', 'tablist');
-    for (const t of Object.keys(TAB_NAMES) as StallTab[]) {
+    const here: AnyTab[] = [...STALL_TAB_LIST, ...(caravanHere(m, day) ? (['caravan'] as const) : []), ...(gloamingHere(m, day) ? (['gloaming'] as const) : [])];
+    tabs.style.gridTemplateColumns = `repeat(${here.length}, 1fr)`;
+    tabs.classList.toggle('many', here.length > 6);
+    for (const t of here) {
       const b = el('button', `hsTab${t === tab ? ' on' : ''}`);
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', String(t === tab));
@@ -121,14 +134,15 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
         if (tab === t) return;
         tab = t;
         sure = '';
-        said = hesterLine(m, day, t);
+        said = t === 'caravan' || t === 'gloaming' ? traderLine(m, t, day) : hesterLine(m, day, t);
         play('tap');
         draw();
       });
       tabs.append(b);
     }
     const body = el('div', 'hsBody');
-    if (tab === 'books' || tab === 'gear' || tab === 'tomes') shelfTab(body, day);
+    if (tab === 'caravan' || tab === 'gloaming') traderTab(body, tab, day);
+    else if (tab === 'books' || tab === 'gear' || tab === 'tomes') shelfTab(body, day);
     else if (tab === 'chests') body.append(...chestShopCards(m, changed, draw));
     else if (tab === 'sell') sellTab(body, day);
     else repairTab(body, day);
@@ -137,7 +151,13 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
 
   // ---- the shelves ----
 
-  const wareArt = (w: Ware, px: number): HTMLElement => {
+  const wareArt = (w: Ware | TradeWare, px: number): HTMLElement => {
+    if (w.type === 'ore') {
+      const box = el('span', 'hsTome');
+      box.append(oreIcon(w.trait, 'hsOre'));
+      box.style.width = box.style.height = `${px}px`;
+      return box;
+    }
     if (w.type === 'book') return bookIcon(bookById(w.book)!, px);
     if (w.type === 'gear') {
       const i = itemIcon({ id: 0, ...w.item }, EQUIP_BASES[w.item.base].slot, 'big');
@@ -149,7 +169,7 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
     box.style.width = box.style.height = `${px}px`;
     return box;
   };
-  const wareName = (w: Ware): string => (w.type === 'book' ? bookById(w.book)!.title : w.type === 'gear' ? itemName(w.item) : TOMES[w.size].name);
+  const wareName = (w: Ware | TradeWare): string => (w.type === 'ore' ? oreWareName(w) : w.type === 'book' ? bookById(w.book)!.title : w.type === 'gear' ? itemName(w.item) : TOMES[w.size].name);
 
   const shelfTab = (body: HTMLElement, day: number): void => {
     const st = stockOf(m, day);
@@ -179,8 +199,31 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
     else body.append(el('p', 'hsNote', 'A tome is read to a hero from its page, for XP.'));
   };
 
+  /** A visiting trader's shelf: the same planks, a ware a copy (no standing locks on the Dealer's). */
+  const traderTab = (body: HTMLElement, trader: Trader, day: number): void => {
+    const grid = el('div', 'hsShelf');
+    for (const w of stockOfTrader(m, trader, day)) {
+      const left = tradeLeft(m, trader, w, day);
+      const locked = standingOf(m) < w.standing;
+      const card = el('button', `hsWare${left <= 0 ? ' out' : ''}${locked ? ' locked' : ''}`);
+      card.setAttribute('aria-label', `${wareName(w)}, ${w.price} crowns${left <= 0 ? ', sold out' : locked ? `, Hester's standing ${w.standing}` : ''}`);
+      card.append(wareArt(w, 72), el('b', 'hsWareName', wareName(w)));
+      const tag = el('span', 'hsTag');
+      tag.style.backgroundImage = `url(${shopArt('price-tag')})`;
+      tag.append(el('span', '', String(w.price)));
+      card.append(tag);
+      if (left <= 0) card.append(img(shopArt('sold-out'), 'hsSold', 'Sold out'));
+      else if (locked) card.append(el('small', 'hsLeft', `Standing ${w.standing}`));
+      else card.append(el('small', 'hsLeft', 'one only'));
+      card.addEventListener('click', () => warePage(w, trader));
+      grid.append(card);
+    }
+    body.append(grid);
+    body.append(el('p', 'hsNote', trader === 'caravan' ? 'The caravan comes one day a week, with one of each and no more. Hester’s regulars may buy the better wares (her standing).' : 'The Dealer stands here for the rest of the day a Calamity guardian falls. What he sells is dear, and what is bought here does not count towards Hester’s standing.'));
+  };
+
   /** A ware's page, up from the bottom: the art large, what it is, and Buy. */
-  const warePage = (w: Ware): void => {
+  const warePage = (w: Ware | TradeWare, trader?: Trader): void => {
     play('tap');
     document.getElementById('stallSheet')?.remove();
     const veil = el('div', 'hsVeil');
@@ -198,7 +241,8 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
     } else if (w.type === 'gear') words.append(el('small', '', `${RARITY_NAMES[w.item.rarity]} ${EQUIP_BASES[w.item.base].slot} · Lv ${w.item.level}`));
     top.append(wareArt(w, 112), words);
     sheet.append(top);
-    if (w.type === 'book') bookDetail(sheet, bookById(w.book)!);
+    if (w.type === 'ore') sheet.append(el('p', 'hsLine', `${w.n} ${ORES[w.trait]?.name ?? w.trait}, the awakening ore of ${classWord(w.trait)}s, for any hero of that class on its awakening panel.`));
+    else if (w.type === 'book') bookDetail(sheet, bookById(w.book)!);
     else if (w.type === 'gear') {
       const it: Equipment = { id: 0, ...w.item };
       const stats = itemStats(it);
@@ -210,13 +254,20 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
       const base = EQUIP_BASES[it.base];
       sheet.append(el('p', 'hsLine', hasAbility(it.rarity) ? `${stats.abilities[0]?.name}: ${describeAbility(base.ability, stats.abilities[0]?.s ?? 1)}` : `Epic and up: ${base.ability.name}`));
       sheet.append(el('p', 'hsLine', `Durability ${maxDurability(it)}: it loses a point for each wave it is worn in.`));
-    } else sheet.append(el('p', 'hsLine', `${TOMES[w.size].xp.toLocaleString('en-GB')} XP for one hero, read from its page.`));
-    const why = whyNotBuy(m, w, todayKey());
+    } else if (w.type === 'tome') sheet.append(el('p', 'hsLine', `${TOMES[w.size].xp.toLocaleString('en-GB')} XP for one hero, read from its page.`));
+    const why = trader ? whyNotBuyFrom(m, trader, w as TradeWare, todayKey()) : whyNotBuy(m, w as Ware, todayKey());
     const buy = el('button', 'hsBuy');
     buy.append(icon(ICONS.crowns, ''), `Buy · ${w.price}`);
     if (why) buy.append(el('small', '', ` · ${why}`));
     buy.disabled = !!why;
     buy.addEventListener('click', () => {
+      if (trader) {
+        if (!buyFromTrader(m, trader, w.key, todayKey())) return;
+        play('coin');
+        close();
+        after(traderLine(m, trader, todayKey(), true));
+        return;
+      }
       const got = buyWare(m, w.key, todayKey());
       if (!got) return;
       play('coin');
