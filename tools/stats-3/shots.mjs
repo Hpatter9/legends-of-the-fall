@@ -66,6 +66,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     await page.click('#fight').catch(() => {});
     await page.waitForTimeout(1500);
     await skip(page);
+    await page.getByText('Run recap').first().click({ timeout: 20000 }).catch(() => {});
     await page.waitForSelector('#recap .jrRow', { timeout: 100000 }).catch(() => {});
     await page.waitForTimeout(7000);
     await page.evaluate(() => { document.querySelector('#recap')?.scrollTo?.(0, 0); });
