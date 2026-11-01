@@ -43,6 +43,8 @@ export function safeTile(b: Battle, me: Unit, n: number): At | undefined {
       const at = { u, v };
       const d = apart(me, at);
       if (d === 0 || d > n || !canLand(b, me, at)) continue;
+      // (a hero guarding a post in the Last Stand blinks only as far as its leash lets it, as its charges do)
+      if (me.post && Math.abs(u - me.post.u) + Math.abs(v - me.post.v) > me.post.leash) continue;
       const c = { at, away: away(at), h: tileAt(b.board, u, v)!.h, d, i: v * b.board.w + u };
       if (!best || c.away > best.away || (c.away === best.away && (c.h > best.h || (c.h === best.h && (c.d < best.d || (c.d === best.d && c.i < best.i)))))) best = c;
     }

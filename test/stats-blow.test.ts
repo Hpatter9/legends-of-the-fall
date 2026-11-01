@@ -244,9 +244,9 @@ test('a fight replays the same: the same seed, placing and orders give the same 
 });
 
 test("fights last within 10% of main's: every hero in a team at level 1, 10 and 30", () => {
-  // (main's mean fight length on these 135 fights a level, measured on 0.313.0 before this batch: this batch's were 22,284, 22,941 and
-  // 12,484 ms, +6.6%, +0.7% and +1.0%)
-  const main: [number, number, number][] = [[1, 5, 20910], [10, 24, 22779], [30, 39, 12364]];
+  // (main's mean fight length on these 135 fights a level, measured on 0.320.0, with stats batch 2, before this batch: this batch's were
+  // 21,770, 23,181 and 12,435 ms, +6.4%, +0.0% and +0.4%)
+  const main: [number, number, number][] = [[1, 5, 20469], [10, 24, 23174], [30, 39, 12386]];
   for (const [level, stage, was] of main) {
     const now = meanLength(level, stage).t;
     assert.ok(Math.abs(now / was - 1) <= 0.1, `level ${level}: ${Math.round(now)} ms against main's ${was}`);

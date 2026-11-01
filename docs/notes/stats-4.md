@@ -58,27 +58,30 @@ Every roll is a hash of the fight's seed and the moment (`STATS_SALT` with salts
 so the streams draw less than before, and a fight replays from its seed, placing and orders (a test). Nothing new is saved: `Pending.res`,
 `Pending.turned` and `Battle.blowMatch` live only in a fight.
 
-## The numbers (main 0.313.0 against this batch, the same seeded tools)
+## The numbers
 
-| What | Main | This batch |
+Measured against main **0.320.0, with stats batch 2 merged in** (the director's ask: heroes' power by score is live), on the merged code,
+with the same seeded tools.
+
+| What | Main 0.320.0 | This batch (merged) |
 | --- | --- | --- |
-| Fight length, 135 fights a level, level 1 / 10 / 30 (the test's own) | 20.9 / 22.8 / 12.4 s | 22.3 / 22.9 / 12.5 s (+6.6%, +0.7%, +1.0%) |
-| Field fights, 225 a level (stage 5/24/39): heroes win, level 1 / 10 / 30 | 88.0 / 81.3 / 100% | 86.7 / 83.1 / 100% |
-| Per fight: foes' blows, heroes' blows, level 1 | 753, 1,306 | 748, 1,320 |
-| Armies, single tries, 96 saves (clear, waves of 15): Undead 8 | 4%, 10.6 | 7%, 10.4 |
-| Beasts 15 | 61%, 11.3 | 57%, 10.9 |
-| Wildwood 22 | 90%, 13.7 | 85%, 13.5 |
-| Labyrinth 30 | 27%, 5.5 | 28%, 5.2 |
-| Ogres 38 | 6%, 4.1 | 7%, 3.9 |
-| Golems 52 | 0%, 4.5 | 0%, 3.6 |
-| Orcs Legendary 55 | 85%, 14.8 | 86%, 14.9 |
-| Daily, 120 dates, fresh save (with hearts / none) | 74% / 56% | 79% / 59% |
-| Last Stand, 40 runs, median wave at 1 / 10 / 30 (mean) | 4 / 8 / 15 (3.6, 8.3, 15.4) | 4 / 9 / 15 (3.7, 8.4, 15.9) |
-| Last Stand, 30 runs, at 60 / 100 | 20 / 30 (20.6, 28.0) | 20 / 28 (20.2, 26.9) |
-| Calamity, 100 runs, mean maps (map 2 / map 3) | 1.82 (80% / 3%) | 1.83 (77% / 6%) |
-| Spire, 96 runs, mean floors, castle full / none | 88.6 / 78.8 | 88.6 / 77.8 |
+| Fight length, 135 fights a level, level 1 / 10 / 30 (the test's own) | 20.5 / 23.2 / 12.4 s | 21.8 / 23.2 / 12.4 s (+6.4%, +0.0%, +0.4%) |
+| Armies, single tries, 96 saves (clear, waves of 15): Undead 8 | 3%, 10.7 | 7%, 10.8 |
+| Beasts 15 | 61%, 11.2 | 60%, 11.3 |
+| Wildwood 22 | 91%, 13.9 | 90%, 13.9 |
+| Labyrinth 30 | 30%, 5.5 | 24%, 4.5 |
+| Ogres 38 | 8%, 4.7 | 7%, 3.9 |
+| Golems 52 | 0%, 4.8 | 0%, 4.2 |
+| Orcs Legendary 55 | 88%, 14.8 | 91%, 14.9 |
+| Daily, 120 dates, fresh save (with hearts / none) | 78% / 59% | 81% / 66% |
+| Last Stand, 40 runs, median wave at 1 / 10 / 30 / 100 (mean) | 4 / 8 / 15 / 25 (3.6, 8.4, 15.9, 27.2) | 4 / 8 / 15 / 24 (3.7, 8.3, 15.7, 26.1) |
+| Calamity, 100 runs, mean maps (map 2 / map 3) | 1.80 (76% / 4%) | 1.81 (75% / 6%) |
+| Spire, 96 runs, mean floors, castle full / none | 89.5 / 80.9 | 88.4 / 78.9 |
 | Hero parity, 12,000 teams, spread at level 1 (stage 5) | +3.7 to −4.0 | +3.8 to −5.3 |
-| Hero parity at level 30 (stage 78) | +3.7 to −4.7 | +4.4 to −4.9 |
+| Hero parity at level 30 (stage 78) | +4.5 to −5.2 | +5.4 to −4.5 |
+
+Before the merge, against main 0.313.0, the same cells were as close (Beasts 61% / 57%, the daily 74% / 79%, the Last Stand at 30 15 / 15,
+the Calamity 1.82 / 1.83; parity at 30 +3.7 to −4.7 against +4.4 to −4.9).
 
 A blow at level 1 now hits about 59% of the time, glances 24% and misses 17% (field fights), and the mean blow that lands is about 12%
 bigger (`BLOW_SCALE` and the crits), so each side's total blow damage is within 2% of main's.
@@ -86,6 +89,19 @@ bigger (`BLOW_SCALE` and the crits), so each side's total blow damage is within 
 **How it got here** (each step measured on the same cells): with the bosses' +2 to hit and +2 AC the armies came out about a wave harder
 than main (Beasts 58% to 48%, Golems 4.5 to 3.1 waves), so `BOSS_BLOCK` is off; a +1 to the foes' to hit matched the daily and the Last
 Stand but left the armies half a wave hard, so it went too once the pool rule and the fits were in.
+
+## The merge with stats batch 2
+
+`origin/main` (0.320.0) was merged in (a merge commit). The blow's scores now read a hero's rank and its talents' and gear's score points
+as batch 2 does (`Unit.rank`, `statInputOf`), so a rank's +1 to two scores reaches its to hit. Three tests that came with main follow
+single seeded fights the d20 moves, and were re-pinned on the same rule batch 2 used:
+- **Voltara's trial** (`eidolon-chain-4`): she takes her second form in nine of the ten seeds 2003 to 2012, as on main; 2004 is now the one
+  that misses, so the test is on 2003 again.
+- **A lost technique cast on its own** (`lost-techniques`): every reader casts in 12 of 12 seeds but the Wizard's Words of Unmaking in slot
+  1, 11 of 12, and seed 11 was the miss: the test is on seed 12.
+- **A Last Stand hero within its leash** (`stand`): the Kunoichi's Smoke Bomb blinked her 6 tiles from her post (leash 4). A real gap, not
+  noise: the toolkit's `safeTile` (the blinks' landing) now keeps a posted hero within its leash, as its charges already did
+  (`toolkit/blink.ts`). Only the Last Stand reads a post, so no other fight moves.
 
 ## Tests
 
@@ -109,30 +125,30 @@ Stand but left the armies half a wave hard, so it went too once the pool rule an
 
 - **The cards.** The unit card still shows "Dodge 20%" (`statRows`) and the kit passives say "Slips 20% of blows": they are AC now. The
   page batch (3) shows AC; I left the cards to it.
-- Ranks are not on a fighter (`Unit`), so a hero's rank steps (+1 to two scores a rank) do not reach its to hit here; an awakened hero is
-  counted at the top rank. Batch 2 brings the rank.
 - Tier proficiency for the foes, the bosses' blocks, and every mode's retune: the joint rebalance (batch 7).
 
 ## Checks
 
-`npm run typecheck` clean. The affected tests while working; the full `npm test` at the end: **2,160 of 2,164 pass, 4 fail**, each a
-fixed-sample threshold check (below). `npm run web` built. The renderer change is a label and a number's size and colour in a fight; I did
-not take phone screenshots of it (a glance can't be set up on demand in the page).
+`npm run typecheck` clean. The affected tests while working; the full `npm test` on the merged code at the end: **2,208 of 2,212 pass, 4
+fail** (below). `npm run web` built. The renderer change is a label and a number's size and colour in a fight; I did not take phone
+screenshots of it (a glance can't be set up on demand in the page). The identity fixtures and the Last Stand's pinned fights were re-taken
+on the merged code.
 
 ### The four failing tests
 
-All four are fixed single samples whose measure, taken over more samples, is within noise of main. I have not loosened them:
+I have not loosened them. Two are noise on a fixed sample; two look real and are the joint rebalance's:
 
-1. **`armies`: the Orc Warlord is a wall at level 1** (at most 2 of 8 clears): 3 of 8 here. Over 24 tries: main 4 (17%), this batch 6 (25%);
-   main's own first 8 sit exactly on the line (2 of 8).
-2. **`hero-kits-all`: at least 35 of 45 heroes cast both skills** in nine long level-30 fights: 33 here, 38 on main (the Samurai, Warlock,
-   Shambler, Lancer and Sage don't reach their skill 2's conditions in those fights).
-3. **`new-heroes`: a team of new heroes is about as strong as the starting five** (at least 0.6 of the five's wins against skeletons): 10
-   against 19. Over 90 seeds main is 27.3 against 45 (0.61, just in), this batch 25 against 48 (0.52). The starting five gained in easy fights
-   (against unboosted field bands, 53 of 90 against main's 37, while other teams went from 37 to 42); I could not pin the cause down: it is
-   not the AC conversion (the old dodge roll gives the same), initiative or the to-hit spread.
-4. **`stand-retreat`: a strong party falls back room by room** to the fourth room by wave 16: this seed's level-100 party falls first. Over 30
-   runs at level 100: main median 30 waves (mean 28.0), this batch 28 (26.9).
+1. **`armies`: the Orc Warlord is a wall at level 1** (at most 2 of 8 clears): 3 of 8. Over 24 tries main and this batch are about the same
+   (main 4 to 5, this batch 5 to 6); main's own first 8 sit on the line. Noise.
+2. **`armies`: each army needs more levels than the one before, "beasts at 20"** (at least 30% of 16 tries): over 48 tries the starting five
+   at level 20 clear the Beasts 5 times here against 13 on main, while at the Undead at 22 they clear 24 of 32 against 18. Real: the beasts
+   are skirmishers (AC 14, DEX 16) and the family blocks make some armies harder for this party and others easier. The recruits' party at
+   the Beasts' own level (15) clears 60% against 61%.
+3. **`new-heroes`: a team of new heroes is about as strong as the starting five** (at least 0.6 of the five's wins against skeletons): 9.8
+   against 18. Over 90 seeds main is 0.61 and this batch 0.52: the starting five do better in easy fights and against skeletons (armoured,
+   AC 15). I could not pin the cause down: it is not the AC conversion (the old dodge roll gives the same), initiative or the to-hit spread.
+4. **`stand-retreat`: a strong party falls back room by room** to the fourth room by wave 16: this seed's level-100 party falls first. Over 40
+   runs at level 100, main's median is 25 waves, this batch's 24. Noise.
 
 ## Questions for the owner
 
@@ -140,4 +156,5 @@ All four are fixed single samples whose measure, taken over more samples, is wit
    all right? Without it heavy armour and STR 17 heroes ran away with parity.
 2. **The foes matched to the heroes** (rule 2), for now, rather than proficiency by tier: all right until the joint rebalance?
 3. **7% of dodge a point of AC**, not 5%?
-4. **The four failing tests**: retune (and how), or re-sample them (more tries, same thresholds)?
+4. **The four failing tests**: retune now (the beasts and the starting five look real), leave them to the joint rebalance, or re-sample the two
+   noisy ones (more tries, same thresholds)?

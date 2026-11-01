@@ -62,8 +62,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // (STATS-2, the D&D stats design's batch 2, docs/notes/stats-2.md: the scores move every scenario with a hero above level 1, rank 1 or grade 1.
 // Re-recorded field30, bosses, armyFoes, spells, lands, army, daily, tower and stand, by the test's own hashes; field1 and calamity kept theirs)
 // (STATS batch 4, "AC and the blow", docs/notes/stats-4.md, re-recorded every scenario: the blows' d20 against Armour Class, initiative, and
-// the dodges and tall grass as Armour Class move every fight. The new hashes: field1 00950772, field30 903a61f8, bosses bf1f2e8e, armyFoes
-// b24d2f70, spells 47389f82, lands 86518b9a, army 451121ce, daily 5a08576a, tower bafdd766, stand 72e9b3e8, calamity 3f082009.)
+// the dodges and tall grass as Armour Class move every fight. The new hashes: field1 00950772, field30 fbe3c79e, bosses d75ef8c4, armyFoes
+// a92e5f5c, spells c619ffa8, lands f86eb3bb, army ac449f98, daily df06e488, tower 8a116be0, stand a1c0843a, calamity c77e8e96.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
