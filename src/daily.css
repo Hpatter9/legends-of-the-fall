@@ -22,7 +22,7 @@
 .dayResult { display: flex; align-items: center; justify-content: center; gap: 12px; width: min(300px, calc(86 * var(--vw))); box-sizing: border-box; padding: 6px 8px; text-align: left; font: 400 12px/1.4 var(--body); color: var(--text); background: rgb(var(--p0-rgb) / 0.8); border: 2px solid var(--p2); }
 .dayResult .chestPic { flex: none; filter: drop-shadow(0 0 5px var(--p4)); }
 .dayResult[hidden] { display: none; }
-.chestShow.daily .chestRays { background: repeating-conic-gradient(from 0deg, rgb(var(--p4-rgb) / 0.5) 0 7deg, rgb(var(--p4-rgb) / 0) 7deg 20deg); }
+/* (the daily chest's violet rays: chestStash.ts raysCanvas, from --p4) */
 /* a themed daily (DAILY-BUILDS): the theme block on the start card, the boss beside its name, and the featured trait lit on the deploy screen */
 .dayCard.themed { gap: 8px; }
 .dayTheme { width: min(340px, calc(90 * var(--vw))); box-sizing: border-box; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; text-align: left; background: rgb(var(--s1-rgb) / 0.9); border: 2px solid var(--gold); box-shadow: 0 0 10px rgb(var(--e6-rgb) / 0.35); }

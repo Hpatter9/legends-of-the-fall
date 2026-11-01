@@ -113,7 +113,7 @@ export class FightHud {
       const tab = t.closest<HTMLElement>('[data-tab]');
       if (tab && this.open) {
         const w = tab.dataset.tab!;
-        return this.openInfo(this.open.id, w === 'ult' ? 'ult' : (Number(w) as 1 | 2));
+        return this.openInfo(this.open.id, w === 'ult' ? 'ult' : (Number(w) as 1 | 2 | 3));
       }
       if (t === this.sheet || t.closest('.fsClose')) this.closeInfo();
     });
@@ -283,7 +283,7 @@ export class FightHud {
     const v = sheetOf(b, u, which, this.opts.autoOn?.() ?? false);
     if (!v) return;
     const hk = heroKitOf(u)!;
-    const heals = which === 1 ? hk.s1.heals : which === 2 ? hk.s2.heals : false;
+    const heals = which === 'ult' ? false : hk.slots[which - 1]?.heals;
     const el = elOf(v.skill);
     const tab = (w: Which, label: string) => `<button type="button" data-tab="${w}" class="${w === which ? 'on' : ''}"${w === which ? ' aria-current="true"' : ''}>${label}</button>`;
     const card = document.createElement('div');
@@ -291,7 +291,7 @@ export class FightHud {
     card.style.setProperty('--el', hex(GLOW[el]));
     card.innerHTML =
       `<div class="fsHead">${skillIcon(v.skill, 32, heals)}<div><b></b><small></small></div><button type="button" class="fsClose" aria-label="Close">×</button></div>` +
-      `<div class="fsTabs">${tab(1, 'Skill 1')}${tab(2, 'Skill 2')}${tab('ult', 'Ultimate')}</div>` +
+      `<div class="fsTabs">${tab(1, 'Skill 1')}${tab(2, 'Skill 2')}${hk.s3 ? tab(3, 'Skill 3') : ''}${tab('ult', 'Ultimate')}</div>` +
       '<p></p><dl></dl><ul class="fsTiers"></ul><div class="fsHeld">Fight paused · tap outside to resume</div>';
     card.querySelector('.fsHead b')!.textContent = v.name;
     card.querySelector('.fsHead small')!.textContent = `${heroName(u.def)} · ${v.label} · ${el}`;
@@ -359,7 +359,7 @@ export class FightHud {
     const hk = u && heroKitOf(u);
     if (!u || !hk) return;
     this.keep = true;
-    const s = which === 1 ? hk.s1.skill : which === 2 ? hk.s2.skill : undefined;
+    const s = which === 'ult' ? undefined : hk.slots[which - 1]?.skill;
     this.cast(u, which, s ? keyOf(s) : '');
     this.keep = false;
   }
@@ -377,7 +377,7 @@ export class FightHud {
   private cast(u: Unit, which: Which, key: string): void {
     const hk = heroKitOf(u)!;
     const ult = ultOf(this.b!, u).skill;
-    const s = which === 'ult' ? ult : which === 1 ? hk.s1.skill : hk.s2.revive && keyOf(hk.s2.revive.skill) === key ? hk.s2.revive.skill : hk.s2.skill;
+    const s = which === 'ult' ? ult : which === 2 && hk.s2.revive && keyOf(hk.s2.revive.skill) === key ? hk.s2.revive.skill : hk.slots[which - 1]?.skill;
     const r = this.rows.find((x) => x.id === u.id);
     if (!s || !r) return;
     const colour = hex(GLOW[elOf(s)]);

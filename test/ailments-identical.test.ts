@@ -57,6 +57,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // army, daily, tower, stand and calamity. Every hero's skills now cost and cool by their class, so every fight with a hero moves; batch 1 moved none.)
 // (SKILLS-1 batch 3, docs/notes/skills-1.md, re-recorded army, daily and tower, the scenarios with merged heroes, whose tier skills went; the rest kept
 // their hashes)
+// (SKILLS-4, the skills overhaul's batch 4, docs/notes/skills-4.md: every hero's skill 3, open from level 20, re-recorded field30, bosses, armyFoes,
+// spells, army and stand, the scenarios with heroes at level 20 or more; field1, lands, daily, tower and calamity kept their hashes)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

@@ -1,6 +1,6 @@
 // The unit's info card (UNIT-INFO, docs/notes/unit-info.md): what a press-and-hold on a unit between waves shows. A hero's portrait line,
 // level, grade and awakening, its health and stats as the fight would use them, its traits and what it wears, and each of its moves (skill
-// 1, skill 2 locked below level 10, the ultimate locked below level 30), read through the fight HUD's own skill-sheet rules (`sheetOf`), so
+// 1, skill 2 locked below level 10, skill 3 below level 20, the ultimate locked below level 30), read through the fight HUD's own skill-sheet rules (`sheetOf`), so
 // a re-costed or renamed skill shows as it now is. A foe's or a boss's stats, its family, its kit, its second form (`PHASE2`) and the
 // codex's tips (`tipsOf`); the summons, the Last Stand's king and Duchess get small cards of their own. Pure: it only reads the battle,
 // the unit and the data tables, and never changes either (a bench hero not on the board is read from a unit made on a scratch copy of
@@ -37,7 +37,7 @@ export type InfoKind = 'hero' | 'foe' | 'boss' | 'elite' | 'summon' | 'king' | '
 
 /** One of a unit's moves, as the card lists it. */
 export interface MoveInfo {
-  /** "Skill 1", "Skill 2", "Ultimate", "Skill" (a foe's), "Passive". */
+  /** "Skill 1", "Skill 2", "Skill 3", "Ultimate", "Skill" (a foe's), "Passive". */
   label: string;
   name: string;
   text: string;
@@ -210,10 +210,10 @@ export function gearLines(u: Unit, opts: InfoOpts): string[] {
   return out;
 }
 
-/** A hero's moves through the fight HUD's sheets: skill 1, skill 2 and the ultimate, then its passive. */
+/** A hero's moves through the fight HUD's sheets: skills 1, 2 and 3 (skill 3 locked below level 20) and the ultimate, then its passive. */
 function heroMoves(b: Battle, u: Unit, auto: boolean): MoveInfo[] {
   const out: MoveInfo[] = [];
-  for (const w of [1, 2, 'ult'] as const) {
+  for (const w of [1, 2, 3, 'ult'] as const) {
     const v = sheetOf(b, u, w, auto);
     if (!v) continue;
     const locked = v.rows.some(([k]) => k === 'Locked');

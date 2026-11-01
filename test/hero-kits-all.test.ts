@@ -121,9 +121,9 @@ test('skill 2 is never cast below its level', () => {
   while (b.phase === 'fight') for (const e of stepBattle(b)) assert.ok(!(e.kind === 'skill' && second.has(e.name) && heroKitOf(b.units.find((u) => u.id === e.by)!)), e.kind === 'skill' ? e.name : '');
 });
 
-test('every readiness look names a real skill 2', async () => {
+test('every readiness look names a real skill 2 or 3 (the third skills\' utilities, the skills overhaul\'s batch 4)', async () => {
   const { SKILL2_WHEN } = await import('../src/sim/kits/when');
-  const second = new Set(ALL_HEROES.map((h) => keyOf(HERO_KITS()[h].s2.skill)));
+  const second = new Set(ALL_HEROES.flatMap((h) => HERO_KITS()[h].slots.slice(1).map((s) => keyOf(s.skill))));
   for (const name of Object.keys(SKILL2_WHEN)) assert.ok(second.has(name), name);
 });
 
