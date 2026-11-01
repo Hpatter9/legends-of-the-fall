@@ -72,11 +72,10 @@ export function faceOf(key: string, cls = 'qFace'): HTMLElement {
     box.classList.add('hero');
     img.src = `heroes/${key.slice(5)}-portrait.webp`;
   } else if (key === 'ruler') {
-    // (the ruler's sheet's first frame, as the settings' picker shows it: The King's on his throne)
+    // (the ruler's sheet's first frame, as the settings' picker shows it)
     const id = settings().ruler;
     const pic = el('span', 'qRuler');
     pic.style.backgroundImage = `url("${RULER_URLS[id] ?? FACES.ruler}")`;
-    if (id === 'the_king') pic.style.backgroundPosition = `0 ${(6 / 7) * 100}%`;
     box.classList.add('ruler');
     box.append(pic);
     return box;

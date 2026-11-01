@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.327.0',
+    date: '2026-11-01',
+    title: 'A new opening',
+    notes: ['The opening is rebuilt: one pass over the warcamp, three defenders with their own voices, your ruler and Duchess, and the warlord\'s arrival.'],
+  },
+  {
+    version: '0.326.0',
+    date: '2026-11-01',
+    title: 'The Iron Stag leads',
+    notes: ['The Iron Stag is now the default ruler. The old King is retired: saves that chose him now follow the Iron Stag, in the new art everywhere.'],
+  },
+  {
+    version: '0.325.0',
+    date: '2026-11-01',
+    title: 'Every score counts',
+    notes: ['CON and the casting score size pools, INT shortens cooldowns, CHA fills ultimates, WIS sees through cover, STR climbs; quick heroes flank and kite.'],
+  },
+  {
     version: '0.324.0',
     date: '2026-11-01',
     title: 'Saving throws',

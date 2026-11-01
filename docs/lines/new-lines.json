@@ -2801,7 +2801,7 @@
  "scenes": {
   "opening": {
    "title": "The Road Begins",
-   "blurb": "Your three brave pioneers meet the king, the court goat and the first army on the road.",
+   "blurb": "The Last Keep stands alone. Three defenders, one desperate crown, and a strategic goat.",
    "cast": {
     "front": "party:0",
     "striker": "party:1",
@@ -2812,11 +2812,15 @@
    },
    "shots": [
     {
-     "caption": "A rather bleak dawn",
+     "caption": "The Outer Marches",
      "lines": [
       {
        "who": "narrator",
-       "text": "Every army in the land is marching on the Last Keep. Some brought *packed lunches*."
+       "text": "Every kingdom has fallen. Every fortress has burned."
+      },
+      {
+       "who": "narrator",
+       "text": "Only the Last Keep remains standing. And the road to its gate is wide open."
       }
      ]
     },
@@ -2825,11 +2829,15 @@
      "lines": [
       {
        "who": "front",
-       "text": "Right. Who gets the honour of the sharp end?"
+       "text": "Good news: the view from the ridge is magnificent."
+      },
+      {
+       "who": "back",
+       "text": "Bad news: thirty thousand orcs are marching through the view."
       },
       {
        "who": "striker",
-       "text": "You do. You are literally standing on it."
+       "text": "Then we do not need to aim. Every strike finds flesh."
       }
      ]
     },
@@ -2837,16 +2845,16 @@
      "caption": "The Crown",
      "lines": [
       {
-       "who": "narrator",
-       "text": "The king of the Last Keep places the heroes. That is you."
+       "who": "king",
+       "text": "Hold this pass, soldiers! The entire realm rests upon your shoulders!"
       },
       {
-       "who": "narrator",
-       "text": "After that, they scrap. Applaud, or drop a meteor."
+       "who": "duchess",
+       "text": "Baaaah."
       },
       {
-       "who": "back",
-       "text": "Applause is lovely, majesty. We prefer the meteor."
+       "who": "king",
+       "text": "...Her Grace Duchess reminds me that the realm is already gone. Just hold the road."
       }
      ]
     },
@@ -2854,12 +2862,16 @@
      "caption": null,
      "lines": [
       {
-       "who": "duchess",
-       "text": "Mehh."
+       "who": "king",
+       "text": "I will direct your positions from the rear. Standard tactical doctrine."
       },
       {
-       "who": "narrator",
-       "text": "Duchess, the court goat: Her Grace, not the king. She disagrees."
+       "who": "front",
+       "text": "You take the point, majesty. We will applaud from the ramparts."
+      },
+      {
+       "who": "king",
+       "text": "Rulers are not aerodynamically designed for frontline combat."
       }
      ]
     },
@@ -2872,7 +2884,7 @@
      "lines": [
       {
        "who": "back",
-       "text": "I should like to stand *three miles* further back."
+       "text": "That one is roughly the size of a tavern."
       }
      ]
     },
@@ -2880,8 +2892,16 @@
      "caption": null,
      "lines": [
       {
+       "who": "striker",
+       "text": "Steel ready."
+      },
+      {
+       "who": "front",
+       "text": "Brace the line!"
+      },
+      {
        "who": "narrator",
-       "text": "The first army was on the road."
+       "text": "Place your champions."
       }
      ]
     }
