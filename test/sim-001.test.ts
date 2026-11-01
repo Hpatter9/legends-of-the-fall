@@ -25,10 +25,11 @@ for (const blocked of ['dead', 'dodge', 'shield'] as const) {
     by.hp = 1;
     by.eq = { ...emptyStats(), abilities: [{ id: 'honestStrike', s: 1, name: 'Honest Strike' }] };
     if (blocked === 'dead') { to.alive = false; to.hp = 0; }
+    // (a dodge is a blow its d20 missed now, STATS batch 4)
     if (blocked === 'dodge') to.eq = { ...emptyStats(), dodge: 1 };
     if (blocked === 'shield') to.shield = { hp: 1000, until: 5000 };
     const hp = other.hp;
-    b.pending.push({ at: 100, kind: 'land', by: by.id, to: to.id, dmg: 20, heavy: false });
+    b.pending.push({ at: 100, kind: 'land', by: by.id, to: to.id, dmg: 20, heavy: false, ...(blocked === 'dodge' ? { res: 'miss' as const } : {}) });
     const stream = b.skillRng;
     const events = stepBattle(b);
     assert.equal(by.hp, 1, 'no phantom leech');

@@ -53,27 +53,32 @@ test('a ruined wall stops a shot even from a level above; a barrel does not', ()
   assert.ok(sightClear(b, { u: 0, v: 0 }, { u: 0, v: 1 }), 'the next tile is always seen');
 });
 
-test('a fighter in tall grass is missed a share of the time, and not otherwise', () => {
+test('a fighter in tall grass is cover: +2 Armour Class, so blows on it miss more often (STATS batch 4)', () => {
   const dodges = (grass: boolean): number => {
-    const b = arena();
-    if (grass) tileAt(b.board, 3, 5)!.ground = 'tall';
-    const foe = addUnit(b, 'skeleton', 3, 4);
-    foe.hp = foe.maxHp = 1e7;
-    const me = addUnit(b, 'knight', 3, 5);
-    me.hp = me.maxHp = 1e7;
-    me.busyUntil = 1e9;
     let swings = 0;
     let missed = 0;
-    for (const e of run(b, 60_000)) {
-      if (e.kind === 'swing' && e.by === foe.id) swings++;
-      if (e.kind === 'dodge' && e.to === me.id) missed++;
+    // (a fight stops at its time limit: forty fights' worth of the skeleton's blows)
+    for (let seed = 1; seed <= 40; seed++) {
+      const b = arena();
+      b.seed = seed;
+      if (grass) tileAt(b.board, 3, 5)!.ground = 'tall';
+      const foe = addUnit(b, 'skeleton', 3, 4);
+      foe.hp = foe.maxHp = 1e7;
+      const me = addUnit(b, 'knight', 3, 5);
+      me.hp = me.maxHp = 1e7;
+      me.busyUntil = 1e9;
+      for (const e of run(b, 60_000)) {
+        if (e.kind === 'swing' && e.by === foe.id) swings++;
+        if (e.kind === 'dodge' && e.to === me.id) missed++;
+      }
     }
     return swings ? missed / swings : -1;
   };
+  // (a skeleton, +4, needs 12 against the Knight's AC 16 and misses on 1 to 6: 30%; in the grass it needs 14, and misses 40%)
   const bare = dodges(false);
   const hidden = dodges(true);
-  assert.equal(bare, 0);
-  assert.ok(hidden > 0.05 && hidden < 0.2, `missed ${hidden}`);
+  assert.ok(bare > 0.24 && bare < 0.36, `missed ${bare} in the open`);
+  assert.ok(hidden - bare > 0.05 && hidden - bare < 0.15, `missed ${hidden} in the grass, ${bare} in the open`);
 });
 
 test('a walker stepping onto ice may slide a tile further, never onto lava, a fighter or a climb, and a flier never slides', () => {
@@ -186,7 +191,8 @@ test('a barrel beside another sets it off too, in a chain; a blast alone does no
   me.busyUntil = 1e9;
   const foe = addUnit(b, 'skeleton', 3, 4);
   foe.hp = foe.maxHp = 1e7;
-  const events = run(b, 1500);
+  // (long enough for the skeleton's d20 to land a blow: STATS batch 4)
+  const events = run(b, 6000);
   assert.equal(events.filter((e) => e.kind === 'boom').length, 2, 'the pair went; the lone barrel across the field stood');
   assert.deepEqual(b.barrels, [2 * W + 6]);
 });
@@ -228,12 +234,12 @@ test('a badly hurt fighter with nobody to strike walks to a shrine close by, and
 
 test('the codex explains every ground, with the rules\' own numbers, and every battlefield shape', async () => {
   const { TERRAIN_INFO, LAYOUT_LIST } = await import('../src/sim/terrainInfo');
-  const { GROUND_COST, LAVA_BURN, TALL_DODGE } = await import('../src/sim/board');
+  const { GROUND_COST, LAVA_BURN, TALL_AC } = await import('../src/sim/board');
   const ids = TERRAIN_INFO.map((t) => t.id);
   for (const g of Object.keys(GROUND_COST)) assert.ok(ids.includes(g), `${g} is explained`);
   for (const extra of ['wall', 'barrel', 'bridge']) assert.ok(ids.includes(extra), `${extra} is explained`);
   assert.ok(TERRAIN_INFO.find((t) => t.id === 'lava')!.tip.includes(`${Math.round(LAVA_BURN * 100)}%`));
-  assert.ok(TERRAIN_INFO.find((t) => t.id === 'tall')!.tip.includes(`${Math.round(TALL_DODGE * 100)}%`));
+  assert.ok(TERRAIN_INFO.find((t) => t.id === 'tall')!.tip.includes(`+${TALL_AC} Armour Class`));
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(LAYOUT_LIST.length, 9);
   for (const t of [...TERRAIN_INFO, ...LAYOUT_LIST]) assert.ok(t.name.length > 0 && t.tip.length > 10);

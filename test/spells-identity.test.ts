@@ -44,6 +44,11 @@
 // level 20 or more: field30, field30Others, heroes30, heroes30Others, bosses, armyFoes, spells (each at level 30), army (saves at 30 to 70) and stand
 // (a party at 30). field1, field1Others, heroes1, heroes1Others, heroes10, heroes10Others, lands (level 10), daily and tower (fresh saves) and
 // calamity kept their hashes)
+// (STATS batch 4, "AC and the blow", docs/notes/stats-4.md, re-recorded every scenario: every ordinary blow now rolls a d20 against Armour
+// Class (hit, glance, miss, a natural 20's crit), every fighter rolls initiative, and the dodges and tall grass are Armour Class, so every
+// fight moves. The new hashes: field1 3f065be1, field30 bf9955c4, bosses fe974784, armyFoes 34f361e0, spells 3b8d84af, lands 377841c2, army
+// efea921f, daily 071f3620, tower 0e93c9ab, stand 497f2a67, calamity f53216b1, heroes1 678a2297, heroes10 4f39e41f, heroes30 53ac77d4,
+// field1Others 51aaabff, field30Others 6d8bb96e, heroes1Others 78dc03a1, heroes10Others 3dbb1a14, heroes30Others 37a00779.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
@@ -95,7 +100,8 @@ test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and w
 });
 
 test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
-  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
+  // (STATS batch 4: the Calamity's greedy run now reaches a boss whose signatures move it, so `calamity` joins the scenarios with a boss)
+  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand', 'calamity'];
   const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
   assert.deepEqual(recordedStrengths(() => identityHashes(rest)), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
   const now = recordedStrengths(() => identityHashes(moved));

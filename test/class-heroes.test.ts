@@ -1,4 +1,5 @@
 import { SKILL2_LEVEL } from '../src/sim/heroKits';
+import { acAgainst } from '../src/sim/blow';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -336,10 +337,11 @@ test('a team of class heroes fights a whole battle to its end, the same way twic
   assert.ok(defOf(startBattle(1).units[0]));
 });
 
-test('a kitless summon can slip a blow from a team dodge bonus without a crash', () => {
+test('a kitless summon takes a team dodge bonus as Armour Class without a crash (STATS batch 4)', () => {
   const b = arena();
   b.traits = { dodge: 1 };
   const t = spawn(b, 'treant', 3, 5);
   const s = spawn(b, 'skeleton', 3, 4);
-  assert.equal(onStrike(b, s, t, 50, 'blow', false, []), null);
+  assert.ok(Math.abs(acAgainst(b, t, 0, 0, false).cover - 1 / 0.07) < 1e-5);
+  assert.equal(onStrike(b, s, t, 50, 'blow', false, []), 50, 'a blow its d20 let through lands');
 });

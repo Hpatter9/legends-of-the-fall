@@ -37,7 +37,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   wizard: 0.211,
   peasant: 0.565,
   ninjaMonk: 0.533,
-  wanderer: 1.059,
+  wanderer: 1.25, // (STATS batch 4: 1.059 to 1.25, the Wanderer was 6.3 points under the roster at level 30 once blows rolled against AC)
   lightningMage: 0.406, // (RPG-SPELLS batch 6: 0.93 before; she stood +5.9 at level 10)
   kitsune: 0.586,
   karasu: 0.24, // (RPG-SPELLS batch 7: 0.4 before; striking from behind made Swoop +4 at level 1)

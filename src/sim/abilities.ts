@@ -26,7 +26,7 @@ import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
-import { relicCharge, relicDodge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
+import { relicCharge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
 import { TRIALS, type TrialSummon } from './eidolonTrials';
 
 /** A skill fires at this much charge. */
@@ -1795,16 +1795,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const blow = src === 'blow';
   const kit = kitOf(to);
   const team = to.side === 'hero' ? b.traits : undefined;
-  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0) + relicDodge(b, to);
-  if (blow && dodge && roll(b) < dodge) {
-    out.push({ kind: 'dodge', to: to.id });
-    if (b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) {
-      spawnSpiritWisp(b, to, out);
-    }
-    if (poolOf(to)) poolOnTaken(b, to, true);
-    else gain(to, (kit?.skill.taken ?? 0) * 0.5);
-    return null;
-  }
+  // (the old dodge shares are Armour Class now, STATS batch 4: a blow that misses never comes here, `blow.ts` and `settle`)
   // (what the hero kits leave on fighters: a parry, a guise, smoke, marks, a standard, a song, a vow...; null when the blow is turned aside)
   const kitted = kitStrike(b, by, to, dmg, src, splash, out);
   if (kitted === null) return null;
@@ -1858,9 +1849,28 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
 
 /** A blow's own odds at swing time: a crit, with its extra damage. */
 export function rollCrit(b: Battle, me: Unit): number {
+  const { chance, mult } = critOf(b, me);
+  return chance && roll(b) < chance ? mult : 1;
+}
+
+/** A fighter's crit beside the d20's (STATS batch 4): its kit's, its side's traits' and its gear's chance, and how big its crit is. */
+export function critOf(b: Battle, me: Unit): { chance: number; mult: number } {
   const c = kitOf(me)?.passive.crit;
-  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0);
-  return chance && roll(b) < chance ? c?.mult ?? 1.5 : 1;
+  return { chance: (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0), mult: c?.mult ?? 1.5 };
+}
+
+/** A blow that missed its target (STATS batch 4; the old dodge's book-keeping): the striker's pool or charge still gains as from a blow
+ *  (the swing is part of the fight's rhythm: without it every skill came round a fifth slower once blows could miss), the target's gains as
+ *  from a dodge, and a miss its dodge or cover turned calls up a yokai's spirit wisp. */
+export function onDodged(b: Battle, by: Unit, to: Unit, turned: boolean, out: BattleEvent[]): void {
+  out.push({ kind: 'dodge', to: to.id });
+  if (by.alive) {
+    if (poolOf(by)) poolOnDealt(by);
+    else gain(by, kitOf(by)?.skill.dealt ?? 0);
+  }
+  if (turned && b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) spawnSpiritWisp(b, to, out);
+  if (poolOf(to)) poolOnTaken(b, to, true);
+  else gain(to, (kitOf(to)?.skill.taken ?? 0) * 0.5);
 }
 
 /** After a blow has landed: a crit makes the foe bleed, and a flame blow sets it alight. */

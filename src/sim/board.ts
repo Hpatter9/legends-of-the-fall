@@ -58,8 +58,8 @@ export const COALS_STAND = 0.03;
 export const TALL_TOP = 1.7;
 /** How high a ruined wall stands for a shot's line (above a boulder, so a shooter a level up still cannot see over it). */
 export const WALL_TOP = 2.6;
-/** The chance a blow on a fighter in tall growth misses it. */
-export const TALL_DODGE = 0.12;
+/** Tall growth is cover: the Armour Class it adds to a fighter standing in it (STATS batch 4, `blow.ts`; it was a 12% dodge). */
+export const TALL_AC = 2;
 /** The share of its hp a fighter on a shrine mends each second. */
 export const SHRINE_HEAL = 0.05;
 /** What a barrel's blast takes from each fighter within a tile of it (a share of the fighter's hp). */
