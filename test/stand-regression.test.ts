@@ -38,9 +38,10 @@ test('ordinary fights play out as they did before the Last Stand', () => {
   }
 });
 
-// (re-pinned for STATS batch 4, docs/notes/stats-4.md: every ordinary blow now rolls a d20 against Armour Class and every fighter rolls
+// (re-pinned for STATS batch 5, docs/notes/stats-5.md: a saving throw rolls in every fight with an ailment, a shove or a blast; seven of the
+// twelve moved, each won or lost as before. Before it, for STATS batch 4, docs/notes/stats-4.md: every ordinary blow now rolls a d20 against Armour Class and every fighter rolls
 // initiative, so every fight moves; before it, for the skills overhaul's batch 2, docs/notes/skills-1.md)
 const PINNED: string[] = [
-  'won 13500 5/0 236392521', 'won 25200 5/0 1726175922', 'won 28800 2/0 3509804726', 'lost 24700 0/3 834015834', 'lost 11800 0/4 2060110542', 'won 15200 4/0 1096069142',
-  'lost 18200 0/2 810896742', 'lost 14500 0/4 2082392979', 'won 18600 4/0 3992050719', 'lost 13200 0/5 2465024716', 'lost 21000 0/4 3171264422', 'lost 11800 0/5 2397442154',
+  'won 13500 5/0 236392521', 'won 23000 5/0 590386976', 'won 37100 2/0 350626376', 'lost 22600 0/3 1465851504', 'lost 11800 0/4 2060110542', 'won 14600 4/0 4191306295',
+  'lost 17100 0/2 1442732412', 'lost 14500 0/4 2082392979', 'won 18100 4/0 896813566', 'lost 13200 0/5 2465024716', 'lost 21000 0/4 1339698609', 'lost 11800 0/5 2397442154',
 ];
