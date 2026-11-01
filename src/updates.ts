@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.321.0',
+    date: '2026-11-01',
+    title: 'Real gear in runs',
+    notes: ['Runs now drop real gear you keep: worn on the spot with a field boost, and brought home after. The early armies are a touch tougher to match.'],
+  },
+  {
     version: '0.320.0',
     date: '2026-11-01',
     title: 'An Android app',

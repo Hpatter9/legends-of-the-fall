@@ -30,6 +30,8 @@ export interface WaveGain {
 /** What the save and the run held that a wave can add to, taken just before the wave is settled. */
 export interface GainSnap {
   items: number[];
+  /** RUN-GEAR: the real pieces the run had found. */
+  pack?: number[];
   relics: string[];
   roster: number[];
   towerOres: number;
@@ -45,6 +47,7 @@ export interface GainSnap {
 export function snapGains(m: Meta, run: Run): GainSnap {
   return {
     items: (run.items ?? []).map((g) => g.id),
+    pack: (run.pack ?? []).map((g) => g.id),
     relics: [...(run.relics ?? [])],
     roster: run.roster.map((h) => h.id),
     towerOres: run.tower?.ores?.length ?? 0,
@@ -81,6 +84,8 @@ export function gainsSince(was: GainSnap, m: Meta, run: Run): WaveGain[] {
     add({ kind: 'chest', id: kind, name: CHEST_NAMES[kind], n: 1 });
   }
   for (const e of m.equipment ?? []) if (!was.equipment.includes(e.id)) add({ kind: 'equip', id: `${e.base}:${e.rarity}`, name: itemName(e), n: 1, rarity: e.rarity });
+  // (RUN-GEAR: a real-gear run's finds are real pieces, shown as equipment)
+  for (const e of run.pack ?? []) if (!(was.pack ?? []).includes(e.id)) add({ kind: 'equip', id: `${e.base}:${e.rarity}`, name: itemName(e), n: 1, rarity: e.rarity });
   for (const g of run.items ?? []) if (!was.items.includes(g.id)) add({ kind: 'gear', id: `${g.slot}:${g.tier}`, name: g.name, n: 1, rarity: Math.min(3, g.tier) });
   for (const r of run.relics ?? []) if (!was.relics.includes(r) && RELICS[r]) add({ kind: 'relic', id: r, name: RELICS[r].name, n: 1 });
   // (a hero who joined has its unlock shards taken off: only a rise counts)
@@ -103,6 +108,6 @@ export function gainText(g: WaveGain): string {
 /** The run's own lines of what a wave found (`run.found`) that the gains do not already show: the gear, relics and ores are listed
  *  as gains, and the gold is in the pay line, so what is left is the rest (a choice of relics waiting on the map, say). */
 export function otherFinds(found: readonly string[], gains: readonly WaveGain[]): string[] {
-  const names = gains.filter((g) => g.kind === 'gear' || g.kind === 'relic' || g.kind === 'ore').map((g) => g.name);
+  const names = gains.filter((g) => g.kind === 'gear' || g.kind === 'equip' || g.kind === 'relic' || g.kind === 'ore').map((g) => g.name);
   return found.filter((f) => !/\bgold from\b/.test(f) && !names.some((n) => f.startsWith(`${n} (`) || f.startsWith(`the ${n} (`) || f.startsWith(`the ${n.replace(/^The /, '')} (`) || (/^\d+ /.test(f) && f.replace(/^\d+ /, '') === n)));
 }

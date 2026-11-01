@@ -19,7 +19,8 @@
 // Pure rules: no Pixi, no DOM.
 
 import type { Rng } from './rng';
-import { dropGear, gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear';
+import { gearText, SLOTS, type Gear } from './gear';
+import { canTemper, findGear, findsAsGear, findSlotGear, isReal, loseFound, SMALL_UPGRADE, SOURCE, stow, tempered, upgradeFound, UPGRADE_LEVELS } from './runGear';
 import { GREAT_RELIC_IDS, RELIC_IDS, relicText, theRelic, TheRelic } from './relics';
 import { hpShare, healParty, hurtParty } from './health';
 import { HEROES, UNITS } from './units';
@@ -79,7 +80,8 @@ const leave = (): EventOption => ({ label: 'Leave', text: 'Move on.', cost: 0, e
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 /** Every piece of gear the run holds, the pack's first and then what the heroes wear. */
-const allGear = (run: Run): Gear[] => [...(run.items ?? []), ...run.roster.flatMap((h) => SLOTS.flatMap((s) => (h.gear?.[s] ? [h.gear[s]!] : [])))];
+// (RUN-GEAR: in a real-gear run, the pieces it has found: never the lasting kit)
+const allGear = (run: Run): Gear[] => (isReal(run) ? findsAsGear(run) : [...(run.items ?? []), ...run.roster.flatMap((h) => SLOTS.flatMap((s) => (h.gear?.[s] ? [h.gear[s]!] : [])))]);
 
 /** The relic the altar gives: a legendary one not yet held, else an ordinary one, else none. */
 function greatRelic(run: Run, rng: Rng): string {
@@ -140,16 +142,16 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
     }
     case 'forge': {
       const gear = allGear(run);
-      const ups = gear.filter((g) => g.tier < MAX_TIER);
+      const ups = gear.filter(canTemper);
       const g = ups.length ? pick(rng, ups) : gear.length ? pick(rng, gear) : undefined;
       if (!g) {
-        const fresh = dropGear(rng, gearId(run), stage);
+        const fresh = findGear(run, rng, gearId(run), stage, 0, SOURCE.mystery);
         return card('An abandoned forge', 'The coals are still warm. You have no gear to work on, but there is iron on the anvil.', [act(`Hammer out a ${fresh.name}`, `${fresh.slot}: ${gearText(fresh)}`, 20 + 2 * stage, { k: 'newGear', gear: fresh }), leave()]);
       }
       const melt = 15 * g.tier + stage;
       const options: EventOption[] = [];
-      if (g.tier < MAX_TIER) {
-        const up = makeGear(g.id, g.slot, g.tier + 1);
+      if (canTemper(g) || (g.piece && g.piece.rarity < 3)) {
+        const up = forged(g);
         options.push(act(`Reforge the ${g.name}`, `it becomes a ${up.name} (${gearText(up)})`, 22 * (g.tier + 1) + 2 * stage, { k: 'forge', gear: g.id, melt: false, n: 0 }));
       }
       options.push(act(`Melt the ${g.name}`, `+${melt} gold, and the ${g.slot} is gone for good`, 0, { k: 'forge', gear: g.id, melt: true, n: melt }), leave());
@@ -177,7 +179,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       ]);
     }
     case 'mimic': {
-      const gear = dropGear(rng, gearId(run), stage, 1);
+      const gear = findGear(run, rng, gearId(run), stage, 1, SOURCE.mystery);
       const gold = 30 + 6 * stage;
       const real = rng.chance(0.4);
       return card('A suspicious chest', 'It sits in the middle of the road, much too neatly. It might be breathing.', [
@@ -195,7 +197,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       ]);
     }
     case 'cairn': {
-      const gear = dropGear(rng, gearId(run), stage, 1);
+      const gear = findGear(run, rng, gearId(run), stage, 1, SOURCE.mystery);
       return card("A fallen knight's cairn", 'A heap of stones, a rusted helm, and a good sword that somebody was buried with. The wind sounds like a warning.', [
         act(`Take the ${gear.name}`, `${gear.slot}: ${gearText(gear)}; the next fight's foes have +${pct(CAIRN_FOES - 1)} hp and attack`, 0, { k: 'cairn', gear, foes: CAIRN_FOES }),
         act('Pay your respects', `the dead knight's blessing heals every hero ${pct(0.25)}`, 0, { k: 'respects', frac: 0.25 }),
@@ -234,7 +236,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       const win = rng.chance(0.6);
       const safeCost = 25 + 3 * stage;
       if (!target) {
-        const fresh = makeGear(gearId(run), 'weapon', 1);
+        const fresh = findSlotGear(run, gearId(run), 'weapon', 1, stage, SOURCE.mystery);
         return card(
           'The Goblin Gambler Forge',
           'A maniacal goblin smith balances atop a smoking anvil. "No weapon to gamble? A travesty! Buy me experimental blade or scram!"',
@@ -302,7 +304,7 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
       const wound = 0.15;
       const atkBoost = 0.2;
       const coinCost = 30 + 3 * stage;
-      const gear = dropGear(rng, gearId(run), stage, 1);
+      const gear = findGear(run, rng, gearId(run), stage, 1, SOURCE.mystery);
       return card(
         'The Whispering Void Well',
         'A bottomless well carved from star-stone hums with dark planar energy. Whispers echo from its depths, offering forbidden might for a price.',
@@ -338,6 +340,9 @@ export function drawMystery(run: Run, stage: number, kind: EventKind, rng: Rng):
   }
 }
 
+/** What the forge makes of a piece: a simple piece a tier up; a found piece a grade up while below Epic, else three item levels. */
+const forged = (g: Gear): Gear => (g.piece && g.piece.rarity < 3 ? { ...g, piece: { ...g.piece, rarity: (g.piece.rarity + 1) as 2 | 3 } } : tempered(g));
+
 /** Take a hero out of the run for good: its gear goes back to the pack, the squad is topped up from the bench if it would run empty. */
 function loseHero(run: Run, id: number): void {
   const h = run.roster.find((x) => x.id === id);
@@ -363,6 +368,8 @@ function bump(run: Run, id: number, hp: number, atk: number): void {
 
 /** Find a piece of gear the run holds (in the pack or on a hero) and swap it for another, or take it out (null). */
 function swapGear(run: Run, id: number, to: Gear | null): boolean {
+  // (RUN-GEAR: a found piece taken out is lost from the pack)
+  if (isReal(run) && !to) return loseFound(run, id);
   const i = run.items?.findIndex((g) => g.id === id) ?? -1;
   if (i >= 0) {
     if (to) run.items![i] = to;
@@ -421,12 +428,14 @@ export function applyMystery(run: Run, a: MysteryAct): string {
         run.gold += a.n;
         return `The ${g.name} is melted down: +${a.n} gold.`;
       }
-      const up = makeGear(g.id, g.slot, g.tier + 1);
-      swapGear(run, a.gear, up);
+      const up = forged(g);
+      // (RUN-GEAR: the forge raises a found piece a grade, up to Epic, else three item levels)
+      if (g.piece) upgradeFound(run, g.id, UPGRADE_LEVELS, g.piece.rarity < 3);
+      else swapGear(run, a.gear, up);
       return `The ${g.name} is reforged as a ${up.name} (${gearText(up)}).`;
     }
     case 'newGear':
-      (run.items ??= []).push(a.gear);
+      stow(run, a.gear);
       return `You hammer out a ${a.gear.name} (${a.gear.slot}, ${gearText(a.gear)}).`;
     case 'lesson': {
       const t = run.tower;
@@ -445,7 +454,7 @@ export function applyMystery(run: Run, a: MysteryAct): string {
     case 'prod':
       if (a.real) {
         run.gold += a.gold;
-        (run.items ??= []).push(a.gear);
+        stow(run, a.gear);
         return `Nothing bites. It is only a chest: +${a.gold} gold and a ${a.gear.name}.`;
       }
       hurtParty(run, a.bite);
@@ -461,7 +470,7 @@ export function applyMystery(run: Run, a: MysteryAct): string {
       run.gold += a.n;
       return `You find ${a.n} gold.`;
     case 'cairn':
-      (run.items ??= []).push(a.gear);
+      stow(run, a.gear);
       run.buff = { ...run.buff, foes: (run.buff?.foes ?? 1) * a.foes };
       return `You take the ${a.gear.name} (${a.gear.slot}, ${gearText(a.gear)}). The wind rises: the next foes will be stronger.`;
     case 'respects':
@@ -488,11 +497,20 @@ export function applyMystery(run: Run, a: MysteryAct): string {
     case 'goblinForge': {
       // (the price is the option's cost, paid by `chooseOption`: it is not taken twice)
       if (a.fresh) {
-        (run.items ??= []).push(a.fresh);
+        stow(run, a.fresh);
         return `You purchase the experimental ${a.fresh.name}.`;
       }
       const g = allGear(run).find((x) => x.id === a.gearId);
       if (!g) return 'The forge coals die down. Nothing happens.';
+      // (RUN-GEAR: a found piece is honed by item levels, or lost to the spoon)
+      if (g.piece) {
+        if (a.buySafe || a.win) {
+          upgradeFound(run, g.id, a.buySafe ? SMALL_UPGRADE : UPGRADE_LEVELS);
+          return a.buySafe ? `The whetstone bites into the edge: the ${g.name} is safely sharpened (+${SMALL_UPGRADE} item levels).` : `CLANG! The goblin hits the anvil with a manic cackle! White sparks shower the room: the ${g.name} is upgraded (+${UPGRADE_LEVELS} item levels)!`;
+        }
+        loseFound(run, g.id);
+        return 'KAPOW! A cloud of greasy smoke billows up. Your weapon has turned into a bent, greasy "Rusted Spoon", and the goblin keeps it. "No refunds, chum!"';
+      }
       if (a.buySafe) {
         g.atk = Number(((g.atk || 0) + a.boost).toFixed(2));
         g.name = `${g.name} (Honed)`;
@@ -549,7 +567,7 @@ export function applyMystery(run: Run, a: MysteryAct): string {
         return `The void liquid burns cold as ice. The party surges with dark power (+${pct(a.atk)} attack for ${a.floors} floors), but the dark essence extracts its toll (-${pct(a.wound)} hp).`;
       }
       if (a.coin) {
-        if (a.gear) (run.items ??= []).push(a.gear);
+        if (a.gear) stow(run, a.gear);
         return `The gold sinks into the bottomless abyss. Moments later, the water bubbles and yields a ${a.gear?.name ?? 'trinket'}!`;
       }
       return 'You step back from the void well.';

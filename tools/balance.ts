@@ -44,6 +44,20 @@ import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
 import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
 import { calamityTable } from './tower-balance';
+import { equipAll } from '../src/sim/equipment';
+import { FIELD_BOOST, GRADE_TABLE } from '../src/sim/runGear';
+// (RUN-GEAR: `--normal 1:0,1:0,1:0.33,2:0` tries another Normal column of the finds' grade table, steps 1 to 4 as grade:chance-up)
+if (process.argv.includes('--normal'))
+  process.argv[process.argv.indexOf('--normal') + 1].split(',').forEach((cell, i) => {
+    const [g, up] = cell.split(':').map(Number);
+    GRADE_TABLE[i + 1][0] = [g, up || 0];
+  });
+// (RUN-GEAR: `--field 1.5,3` tries another fresh-from-the-field boost for army runs and bare runs; a tuning run, nothing is written)
+if (process.argv.includes('--field')) {
+  const [a, b] = process.argv[process.argv.indexOf('--field') + 1].split(',').map(Number);
+  if (a > 0) FIELD_BOOST.army = a;
+  if (b > 0) FIELD_BOOST.bare = b;
+}
 import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
@@ -420,8 +434,8 @@ function spendCrowns(meta: Meta): void {
 
 function realClimb(): void {
   console.log(`\n5c. THE REALISTIC CLIMB  (${SAVES} fresh saves; recruits, a castle grown from the crowns each try pays (${CASTLE_SHARE * 100}% of what it has), gear, levels carried; at most ${MAX_TRIES} tries an army)\n`);
-  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14)].join(''));
-  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0 }));
+  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14), rpad('pieces', 8), rpad('Legendary %', 12)].join(''));
+  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0, pieces: 0, legend: 0 }));
   for (let save = 1; save <= SAVES; save++) {
     const meta = startedMeta(save);
     for (let i = 0; i < ARMIES.length; i++) {
@@ -431,11 +445,16 @@ function realClimb(): void {
       const st = stats[i];
       while (tries < MAX_TRIES && !cleared) {
         spendCrowns(meta);
+        // (RUN-GEAR: the pieces its runs found and brought home are put on at camp, Equip all, before each try)
+        equipAll(meta);
         const party = bestParty(meta);
         if (tries === 0) {
           st.lv += party.reduce((n, k) => n + levelOfKind(meta, k), 0) / party.length;
           st.castle += Object.values(meta.castle).reduce((n, v) => n + v, 0);
           st.owned += meta.unlocked.length;
+          // (RUN-GEAR: the pieces the save's runs have brought home so far, and whether any is Legendary)
+          st.pieces += meta.equipment?.length ?? 0;
+          if ((meta.equipment ?? []).some((x) => x.rarity >= 4)) st.legend++;
           st.seen++;
         }
         const r = playArmy(meta, army.id, mixSeed(save, 0xc11c, i * 100 + tries), party, { ...meta.castle }, true);
@@ -462,6 +481,8 @@ function realClimb(): void {
         rpad((st.lv / n).toFixed(1), 13),
         rpad((st.castle / n).toFixed(1), 13),
         rpad((st.owned / n).toFixed(1), 14),
+        rpad((st.pieces / n).toFixed(1), 8),
+        rpad(f1(pct(st.legend, n)).trim(), 12),
       ].join(''),
     );
   });

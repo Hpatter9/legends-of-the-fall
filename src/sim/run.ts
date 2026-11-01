@@ -23,8 +23,9 @@ import { lastingBoost } from './levels';
 import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
 import { drawEvent, eventAfter, type EventCard } from './events';
-import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
-import type { EquipStats } from './equipment';
+import { gearBoost, type Gear, type Slot } from './gear';
+import type { EquipSlot, EquipStats, Equipment } from './equipment';
+import { findGear, foundLine, SOURCE, stow, type FoundHome } from './runGear';
 import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
@@ -151,8 +152,23 @@ export interface Run {
   relicBook?: number;
   /** A line for the next prep screen, once (the relics converted); cleared when shown. */
   relicNote?: string;
-  /** Gear in the pack, not worn by anyone. */
+  /** Gear in the pack, not worn by anyone (a run on the old rules, before RUN-GEAR). */
   items?: Gear[];
+  /** RUN-GEAR (`runGear.ts`): a run started since then finds real pieces of equipment, not simple gear. Absent in an older save, which
+   *  finishes on the old rules. */
+  real?: true;
+  /** RUN-GEAR: every real piece the run has found (ids of the run's own, `nextGear`), worn or not. */
+  pack?: Equipment[];
+  /** RUN-GEAR: the found pieces each hero kind wears this run, by slot (pack ids). In a run that brings the lasting kit they take the
+   *  place of the kind's lasting pieces in those slots, and stay worn for real when the run ends. */
+  worn?: Record<string, Partial<Record<EquipSlot, number>>>;
+  /** RUN-GEAR: the pack ids a boss dropped (an auto-replay run always brings these home). */
+  bossFinds?: number[];
+  /** RUN-GEAR: the army index the finds' item levels follow when the run has no army of its own (the furthest cleared). */
+  findAt?: number;
+  /** RUN-GEAR: the finds have been brought home (`settleFinds`), and what came, for the result card's Found row. */
+  findsHome?: boolean;
+  foundHome?: FoundHome;
   /** The next gear id. */
   nextGear?: number;
   /** An event waiting between two fights (`events.ts`). */
@@ -193,7 +209,7 @@ export type QuestMode = { kind: 'quest'; quest: string; cast: string[]; practice
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
-  const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle } };
+  const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle }, real: true };
   // (an ordinary run gets) two grade-1 heroes, drawn from the same stream as every summon but free
   // (a second of a kind waits on the bench: one of each hero on the field, ONE-OF-EACH)
   for (let i = 0; i < free; i++) {
@@ -501,11 +517,12 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     noteGold(run, 'earned', pay);
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
-    if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1));
-    for (const g of prizes) {
-      (run.items ??= []).push(g);
-      run.found.push(`${g.name} (${g.slot}, ${gearText(g)})`);
-    }
+    // (RUN-GEAR: in a real-gear run each is a real piece, drawn at the same moment from the same stream: `runGear.ts`)
+    if (boss) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1, SOURCE.boss));
+    prizes.forEach((g, i) => {
+      stow(run, g, boss && i === prizes.length - 1 ? SOURCE.boss : SOURCE.curse);
+      run.found!.push(foundLine(g));
+    });
     if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
     if (army && run.stage >= army.waves.length) {
       // (the army's last boss has fallen, or the day's: the run is won and over)

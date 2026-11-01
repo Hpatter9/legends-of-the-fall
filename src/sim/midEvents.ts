@@ -24,6 +24,7 @@
 
 import { mixSeed, Rng } from './rng';
 import { gearText, makeGear, MAX_TIER, SLOTS, type Gear } from './gear';
+import { canTemper, findPrice, findsAsGear, findSlotGear, isReal, loseFound, SMALL_UPGRADE, SOURCE, stow, tempered, upgradeFound, UPGRADE_LEVELS } from './runGear';
 import { GREAT_RELIC_IDS, pickRelic, RELIC_IDS, relicText, theRelic, TheRelic } from './relics';
 import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
@@ -183,7 +184,11 @@ const leave = (label = 'Leave', text = 'Move on.'): EventOption => ({ label, tex
 const twistText = (id: string) => `${TWISTS[id].name}: ${TWISTS[id].text.charAt(0).toLowerCase()}${TWISTS[id].text.slice(1).replace(/\.$/, '')}`;
 const unowned = (run: Run, ids: readonly string[]) => ids.filter((id) => !run.relics?.includes(id));
 /** Every piece of gear the run holds: the pack's first, then what the heroes wear. */
-const allGear = (run: Run): Gear[] => [...(run.items ?? []), ...run.roster.flatMap((h) => SLOTS.flatMap((s) => (h.gear?.[s] ? [h.gear[s]!] : [])))];
+// (RUN-GEAR: in a real-gear run, the pieces it has found: never the lasting kit)
+const allGear = (run: Run): Gear[] => (isReal(run) ? findsAsGear(run) : [...(run.items ?? []), ...run.roster.flatMap((h) => SLOTS.flatMap((s) => (h.gear?.[s] ? [h.gear[s]!] : [])))]);
+/** What a temper's words say it does: a tier (or item levels) up, or the lesser boon (attack, or a little level). */
+const upWords = (g: Gear): string => (g.piece ? `${UPGRADE_LEVELS} item levels up` : 'a tier up');
+const smallWords = (g: Gear, atk: number): string => (g.piece ? `+${SMALL_UPGRADE} item levels` : `+${Math.round(atk * 100)}% attack`);
 /** The squad's heroes, or the roster's when none is chosen. */
 const fielded = (run: Run) => {
   const s = run.roster.filter((h) => run.squad.includes(h.id));
@@ -283,8 +288,8 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
         road('Stake coin', `a single hand for ${pot} gold (an even chance)`, stake, coinWin ? { line: `Three queens. The countess sighs and pushes ${pot} gold across the coffin lid.`, gold: pot } : { line: 'Two pair against her full house. The countess smiles with too many teeth.' }),
       ];
       if (gear) {
-        const up = gear.tier < MAX_TIER;
-        options.push(road(`Stake the ${gear.name}`, `win and she has it tempered (${up ? 'a tier up' : '+6% attack'}); lose and it is hers`, 0, gearWin
+        const up = canTemper(gear);
+        options.push(road(`Stake the ${gear.name}`, `win and she has it tempered (${up ? upWords(gear) : smallWords(gear, 0.06)}); lose and it is hers`, 0, gearWin
           ? { line: `You win. Her smith returns the ${gear.name} ${up ? 'a tier better' : 'keener than ever'}.`, temper: up ? { gear: gear.id, up: true } : { gear: gear.id, atk: 0.06 } }
           : { line: `You lose. The ${gear.name} vanishes into her skirts.`, lost: gear.id }));
       }
@@ -310,21 +315,21 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
     }
     case 'temper': {
       const gear = allGear(run);
-      const ups = gear.filter((g) => g.tier < MAX_TIER);
+      const ups = gear.filter(canTemper);
       const g = ups.length ? pick(rng, ups) : gear.length ? pick(rng, gear) : undefined;
       if (!g) {
-        const fresh = makeGear(gearId(run), pick(rng, SLOTS), marketTier(run, s));
+        const fresh = findSlotGear(run, gearId(run), pick(rng, SLOTS), marketTier(run, s), s, SOURCE.road);
         return card('A crossroads forge', "A smith with burn-scarred arms works a forge where four roads meet. 'No steel on you? Then buy some.'", [
-          road(`Buy the ${fresh.name}`, `${fresh.slot}: ${gearText(fresh)}`, 28 * fresh.tier + 2 * s, { line: `The ${fresh.name} is still warm.`, gear: fresh }),
+          road(`Buy the ${fresh.name}`, `${fresh.slot}: ${gearText(fresh)}`, findPrice(fresh, s), { line: `The ${fresh.name} is still warm.`, gear: fresh }),
           leave(),
         ]);
       }
       const options: EventOption[] = [];
-      if (g.tier < MAX_TIER) {
-        const up = makeGear(g.id, g.slot, g.tier + 1);
+      if (canTemper(g)) {
+        const up = tempered(g);
         options.push(road(`Temper the ${g.name}`, `it becomes a ${up.name} (${gearText(up)})`, 20 * (g.tier + 1) + 2 * s, { line: `Hammer, fire and water: the ${g.name} comes out a ${up.name}.`, temper: { gear: g.id, up: true } }));
       }
-      options.push(road(`Quench the ${g.name} in blood`, `+5% attack on it, free; next fight: ${twistText('cursed')}`, 0, { line: `The ${g.name} drinks, and hisses, and is keener. Everyone feels a little paler.`, temper: { gear: g.id, atk: 0.05 }, buff: { twist: 'cursed' } }), leave());
+      options.push(road(`Quench the ${g.name} in blood`, `${smallWords(g, 0.05)} on it, free; next fight: ${twistText('cursed')}`, 0, { line: `The ${g.name} drinks, and hisses, and is keener. Everyone feels a little paler.`, temper: { gear: g.id, atk: 0.05 }, buff: { twist: 'cursed' } }), leave());
       return card('A crossroads forge', "A smith with burn-scarred arms works a forge where four roads meet. 'Bring me steel. I'll make it sing.'", options);
     }
     case 'crown': {
@@ -399,7 +404,7 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
       const who = named.length ? pick(rng, named) : fielded(run)[0];
       const kind = who?.kind ?? '';
       const nm = kind ? heroName(kind) : 'one of you';
-      const heir = makeGear(gearId(run), 'charm', Math.min(MAX_TIER, marketTier(run, s) + 1));
+      const heir = findSlotGear(run, gearId(run), 'charm', Math.min(MAX_TIER, marketTier(run, s) + 1), s, SOURCE.heir);
       heir.name = `${nm}'s Heirloom`;
       return card('A stranger who knows a name', `A hooded pilgrim steps from the trees and bows, not to the party, but to the ${UNITS[kind]?.name ?? 'hero'}. '${nm}. Your people still sing of you, far from here.'`, [
         road('Buy the heirloom she carries', `charm: ${gearText(heir)}`, 30 + 3 * s, { line: `She presses ${heir.name} into ${nm}'s hand and is gone.`, gear: heir }),
@@ -425,6 +430,7 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
 
 /** Find a piece of gear the run holds (in the pack or worn) and change it, or take it out (`to` null). */
 function changeGear(run: Run, id: number, to: (g: Gear) => Gear | null): void {
+  // (RUN-GEAR: a real-gear run's smiths work only on its finds, `applyRoad`)
   const i = run.items?.findIndex((g) => g.id === id) ?? -1;
   if (i >= 0) {
     const g = to(run.items![i]);
@@ -473,7 +479,7 @@ export function applyRoad(run: Run, a: RoadAct, cost = 0): string {
     if (!run.relics.includes(a.relic)) run.relics.push(a.relic);
   }
   if (a.drop) run.relics = run.relics?.filter((id) => id !== a.drop);
-  if (a.gear) (run.items ??= []).push(a.gear);
+  if (a.gear) stow(run, a.gear);
   let line = a.line;
   if (a.heart === -1) run.retries = Math.min(MAX_RETRIES, (run.retries ?? 0) + 1);
   if (a.heart === 1) {
@@ -486,11 +492,15 @@ export function applyRoad(run: Run, a: RoadAct, cost = 0): string {
     const h = run.roster.find((x) => x.id === a.bump!.hero);
     if (h) h.bump = { hp: Math.max(-0.5, (h.bump?.hp ?? 0) + a.bump.hp), atk: (h.bump?.atk ?? 0) + a.bump.atk };
   }
-  if (a.temper) {
+  if (a.temper && isReal(run)) upgradeFound(run, a.temper.gear, a.temper.up ? UPGRADE_LEVELS : SMALL_UPGRADE);
+  else if (a.temper) {
     const t = a.temper;
     changeGear(run, t.gear, (g) => (t.up && g.tier < MAX_TIER ? makeGear(g.id, g.slot, g.tier + 1) : { ...g, atk: Number((g.atk + (t.atk ?? 0)).toFixed(2)) }));
   }
-  if (a.lost !== undefined) changeGear(run, a.lost, () => null);
+  if (a.lost !== undefined) {
+    if (isReal(run)) loseFound(run, a.lost);
+    else changeGear(run, a.lost, () => null);
+  }
   if (a.buff) addBuff(run, a.buff);
   if (a.owe) (run.road ??= {}).owed = [...(run.road?.owed ?? []), a.owe];
   return line;

@@ -6,17 +6,17 @@
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
-import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
+import { fightXp, gainXp, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
-import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
-import { awakenStats } from '../src/sim/awaken';
+import { startedMeta, type Meta } from '../src/sim/meta';
 import { armyById } from '../src/sim/armies';
-import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
 import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
-import { autoDeploy, autoRound, dressSquad, strengthOf } from '../src/sim/autoplay';
+import { autoDeploy, autoRound, botBoost, dressSquad, strengthOf } from '../src/sim/autoplay';
+import { settleFinds } from '../src/sim/runGear';
 import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
 import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, mapFor, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
@@ -93,6 +93,9 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(castle)));
   }
+  // (RUN-GEAR: what the run found comes home, worn or to the stash, so the save's later runs fight in it; `RUN_GEAR_KEEP=0`, a tuning
+  // switch, leaves it in the run, to see what keeping it does)
+  if (typeof process === 'undefined' || process.env?.RUN_GEAR_KEEP !== '0') settleFinds(meta, run);
   const cleared = !!run.cleared && won === army.waves.length;
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
 }
@@ -122,6 +125,7 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(newCastle())));
   }
+  settleFinds(meta, run);
   return { won, cleared: !!run.cleared, hearts: run.retries ?? 0, bonus: dailyBonus(run).filter((r) => r.earned).length, stars: dailyBonus(run).map((r) => r.earned), ms: run.tally?.ms ?? 0, lost: run.tally?.lost ?? 0, bossFell: run.tally?.bossFell ?? 0, bossLost: run.tally?.bossLost ?? 0 };
 }
 
@@ -170,11 +174,11 @@ function fightNode(meta: Meta, run: Run): Battle {
   const squad = [...run.roster].sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run)).slice(0, squadLimit(run));
   const before = squad.map((h) => run.tower!.hp[String(h.id)] ?? 1);
   run.squad = squad.map((h) => h.id);
-  dressSquad(run);
+  dressSquad(run, meta);
   const b = startStage(run);
   const spots = frontSpots(b);
   const order = [...squad].sort((a, c) => Number(UNITS[a.kind].range > 1) - Number(UNITS[c.kind].range > 1));
-  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
+  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h, run) : botBoost(meta, h, run)), carry: run.tower!.hp[String(h.id)] }));
   fight(b);
   maybeSpells(b, meta, run.castle ?? newCastle());
   playOut(b);
@@ -366,5 +370,6 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     }
   }
   starterEnd = heroLevel(starter);
+  settleFinds(meta, run);
   return { floors: calamity ? run.tower!.spots ?? 0 : run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act, level: run.roster.reduce((n, h) => n + heroLevel(h), 0) / run.roster.length };
 }

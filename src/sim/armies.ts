@@ -114,7 +114,7 @@ export const ARMIES: readonly Army[] = [
     area: 'graveyard',
     lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
-    start: 1.7, // (SPELLS-RETUNE: 1.48 measured by a bot that never cast the king's spells; raised so a level-1 party whose Auto casts them still cannot grind through it, `docs/notes/spells-retune.md`; was 1.52 until WORLD-ROAD retuned it on the army road)
+    start: 1.74, // (RUN-GEAR: 1.7 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.48 measured by a bot that never cast the king's spells; raised so a level-1 party whose Auto casts them still cannot grind through it, `docs/notes/spells-retune.md`; was 1.52 until WORLD-ROAD retuned it on the army road)
     xpStart: 1.48,
     tierStart: 0.7,
     growth: 0.05,
@@ -132,7 +132,7 @@ export const ARMIES: readonly Army[] = [
     area: 'plains',
     lands: ['plains', 'autumn'],
     waves: waves(ramp(['packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'], 13), { 8: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 15: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack', 'packWhite'] }),
-    start: 2.17, // (SPELLS-RETUNE: 1.66 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`)
+    start: 2.27, // (RUN-GEAR: 2.17 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.66 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`)
     xpStart: 1.66,
     tierStart: 0.85,
     growth: 0.05,
@@ -154,7 +154,7 @@ export const ARMIES: readonly Army[] = [
         10: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
         15: ['forestBoss3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'],
       }),
-    start: 2.52, // (SPELLS-RETUNE: 2.01 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`; was 1.86 until WORLD-ROAD retuned it on the army road)
+    start: 2.7, // (RUN-GEAR: 2.52 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 2.01 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`; was 1.86 until WORLD-ROAD retuned it on the army road)
     xpStart: 2.01,
     tierStart: 1.15,
     growth: 0.05,

@@ -14,13 +14,21 @@ import { boostOf, equip, sitsOut, squadLimit, summon, type Owned, type Run } fro
 import { localBoost } from './climb';
 import { guestBoost } from './guest';
 import { autoMerge } from './merge';
+import { botKitStats, equipBestReal, isReal } from './runGear';
 import { UNITS } from './units';
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
 export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
   const def = UNITS[h.kind];
-  const boost = h.guest && run && !run.local ? guestBoost(run, meta, h) : run?.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind));
+  const boost = h.guest && run && !run.local ? guestBoost(run, meta, h) : run?.local ? localBoost(h, run) : botBoost(meta, h, run);
   return def.hp * def.atk * (boost.hp ?? 1) * (boost.atk ?? 1);
+}
+
+/** The bot's boost for a hero of a run that brings the lasting kit: its grade, rank and level and its awakening, as ever, and in a real-gear
+ *  run (RUN-GEAR) the equipment its kind fights in: the lasting pieces with the run's finds in their slots, fresh (`botKitStats`). */
+export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
+  const awake = awakenStats(meta, h.kind);
+  return boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake);
 }
 
 /** Whether a kind fights from behind: it shoots, or reaches past the next tile. */
@@ -80,8 +88,15 @@ export function autoEvent(run: Run): void {
   }
 }
 
-/** Gives the squad the gear in the pack: each piece to the squad hero whose piece in that slot is weakest (or missing), if it is better. */
-export function dressSquad(run: Run): void {
+/** Gives the squad the gear in the pack: each piece to the squad hero whose piece in that slot is weakest (or missing), if it is better. A
+ *  real-gear run (RUN-GEAR) dresses the squad's kinds from its pack with Equip best, the strongest first (`equipBestReal`). */
+export function dressSquad(run: Run, meta?: Meta): void {
+  if (isReal(run)) {
+    const squad = run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !h.guest);
+    if (meta) squad.sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+    equipBestReal(run, meta, squad.map((h) => h.kind));
+    return;
+  }
   for (let again = true; again; ) {
     again = false;
     for (const g of [...(run.items ?? [])]) {
@@ -93,7 +108,7 @@ export function dressSquad(run: Run): void {
 }
 
 /** Gear owned by the run, worn or in the pack (a merge only moves it, so the difference over a run is what it found). */
-export const gearCount = (run: Run): number => (run.items?.length ?? 0) + run.roster.reduce((n, h) => n + Object.keys(h.gear ?? {}).length, 0);
+export const gearCount = (run: Run): number => (run.items?.length ?? 0) + (run.pack?.length ?? 0) + run.roster.reduce((n, h) => n + Object.keys(h.gear ?? {}).length, 0);
 
 /** Everything between two fights: the event, the summons while the gold lasts, the squad of the strongest, and its gear. Gear is optional so the balance report can leave it out. */
 export function autoRound(run: Run, meta: Meta, gear = true): void {
@@ -102,7 +117,7 @@ export function autoRound(run: Run, meta: Meta, gear = true): void {
   autoMerge(run);
   while (summon(run)) autoMerge(run);
   run.squad = pickSquad(run, meta).map((h) => h.id);
-  if (gear) dressSquad(run);
+  if (gear) dressSquad(run, meta);
 }
 
 /** The tiles the heroes may stand on, as `[u, v]`. Boulders are out; water and lava are left for last (`avoidTile`). */
@@ -183,7 +198,7 @@ export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned
   const spots = autoFormation(b.board, squad);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
-    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (h.guest && !run.local ? guestBoost(run, meta, h) : run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
+    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (h.guest && !run.local ? guestBoost(run, meta, h) : run.local ? localBoost(h, run) : botBoost(meta, h, run)));
   }
   return spots;
 }

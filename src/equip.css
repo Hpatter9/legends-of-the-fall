@@ -59,6 +59,9 @@ span.eqIcon.painted.empty { border: 0; } .eqIcon.painted.empty .eqArt { opacity:
 .eqIcon.wear-broken .eqArt, .eqIcon.wear-broken > img:not(.eqBadge) { filter: grayscale(0.85) brightness(0.7); }
 .eqIcon > i.eqCracks { position: absolute; inset: 6%; background: center / contain no-repeat; z-index: 2; pointer-events: none; opacity: 0.9; }
 .eqIcon > img.eqBadge { position: absolute; right: -2px; top: -2px; width: 40%; height: 40%; z-index: 4; image-rendering: auto; pointer-events: none; }
+.eqIcon > img.eqBadge.field { right: auto; left: -2px; }
+/* RUN-GEAR: the pack's fresh-from-the-field line under a find (docs/notes/run-gear.md) */
+.evcard.pack small.fresh { color: #f0b860; }
 .eqDurLine { display: block; font: 400 12px var(--body); color: var(--dim); }
 .eqDurLine.worn { color: #e8b55a; }
 .eqDurLine.broken { color: #ec7b6c; }
