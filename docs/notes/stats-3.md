@@ -25,16 +25,27 @@ copied formula, so the page stays true when batch 2 (scores drive power) lands.
   that key), so the picker shows no new lines yet. The tests hold it.
 - `test/stats-3.test.ts`, and `tools/stats-3/shots.mjs` for the pictures (`docs/samples/stats-3-*.png`).
 
+## After batch 2 (merged, 0.316.0)
+
+- **The gear compare is real.** Gear bases carry `scores` now; the picker lists, on each spare piece, "STR 19 → 20 (+4 → +5): blows and skills +5%,
+  to hit +1, skill DC +1" (or "+4 still"), worked from the hero's scores as it stands (level, rank, what it wears and its talents, `heroStats`)
+  plus the swap's difference. The worn piece shows none. The sheet's tiles and the unit card include the worn gear's points too.
+- **`LIVE` (in `statLines.ts`) is the hook for what fights do.** The page says only what is live: blows, skills and health by score, AC, to hit,
+  skill DC and the saves. Off for now, with no line anywhere: `crit`, `initiative`, `blowSpeed` (batch 4), `shove` (5), `cooldown`, `ultFill`,
+  `pools`, `perception` (6). Each batch flips its own flag to `true` and the figure, tap line, card roll and compare clause appear. A test holds
+  them off. The panel therefore lists AC, To hit, Skill DC and Proficiency; the Crit and Initiative figures come with batch 4. (AC, to hit, DC
+  and the saves are on as the director's list left them; they are also batch 4 and 5 effects, so flip `ac`, `toHit`, `dc`, `saves` off if they
+  should wait too.)
+- `tools/stats-3/gear.mjs` takes `docs/samples/stats-3-gear-393.png`.
+
 ## Open points
 
-- The panel's lines for crit, initiative, blow speed, cooldowns and ultimate fill describe what the design makes the scores do; those effects
-  arrive in batches 4 to 6. Until then the panel's figures are the data, not yet a fight rule. Say if the page should hold those lines back.
 - The foe card shows the Normal tier's proficiency (a battle does not carry its army's tier).
 - The Last Stand's recap shows no score lines.
 
 ## Checks
 
-`npm run typecheck` clean; `npm test -- stats-3` 10 of 10; the full `npm test` 2161 pass, 0 fail (the identity fixtures unmoved); `npm run web` built.
+`npm run typecheck` clean; `npm test -- stats-3` 13 of 13; the full `npm test` 2181 pass, 0 fail (the identity fixtures unmoved); `npm run web` built.
 Shots (`node tools/stats-3/shots.mjs`; 393x852, 360x780, 412x915, no sideways scroll, no page errors): `docs/samples/stats-3-sheet-*.png`,
 `stats-3-sheet-tap-*.png` (a tile tapped), `stats-3-card-hero-*.png`, `stats-3-card-foe-*.png`, `stats-3-recap-*.png` (Kwame's level 8 shows
 "STR 15 → 16 +1 improvement · STR +3"). The gear compare has no shot: no piece has score points until batch 2.
