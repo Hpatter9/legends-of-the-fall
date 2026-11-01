@@ -24,7 +24,7 @@ import { questLines } from './sim/jrpgRecap';
 import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
 import { noteSpoils } from './sim/runSpoils';
 import { showRecap } from './recapView';
-import { foundRow } from './foundRow';
+import { foundList, foundRow } from './foundRow';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
 import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
@@ -62,7 +62,7 @@ import { SCENES, SCENE_ORDER, type Moment, type Scene } from './sim/sceneScripts
 import { previewFrames } from './render/sceneClock';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
-import { runKitStats, settleFinds, settleRunWear, slotTaken } from './sim/runGear';
+import { isReal, runKitStats, settleFinds, spareFinds, settleRunWear, slotTaken } from './sim/runGear';
 import { powerOf, powerText } from './sim/power';
 import { benchXp, fightXp, gainXp, levelOfKind, type LevelUp } from './sim/levels';
 import { levelBadge } from './levelBadge';
@@ -540,6 +540,8 @@ class Game {
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
     (window as unknown as { __settleFinds: typeof settleFinds }).__settleFinds = settleFinds;
+    // (the screenshot tool draws the wave card's lines from given moments)
+    (window as unknown as { __waveNotes: (m: WaveMoments) => void }).__waveNotes = (m) => drawWaveNotes($('waveNotes'), waveNotes(m), []);
     // (a hero's first awakening has its cinematic)
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
@@ -2062,6 +2064,10 @@ class Game {
     for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : []), ...(a.totals.drops ? [['Rare drops', a.totals.drops] as const] : [])] as const) {
       rows.append(Object.assign(document.createElement('span'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: String(n) }));
     }
+    // (RUN-GEAR-2: the real pieces the runs brought home, best first, each in its grade frame; the same icons as the Found row)
+    card.querySelector('.asumFinds')?.remove();
+    const finds = foundList(a.totals.finds ?? []);
+    if (finds) rows.after(finds);
     $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
     card.dataset.why = why;
     card.hidden = false;
@@ -3198,7 +3204,7 @@ class Game {
       // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
       const waveGains = gainsSince(held, this.meta, run);
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -3219,6 +3225,7 @@ class Game {
           gear: over ? gearCount(run) : 0,
           ores: this.oreGain?.drops.reduce((n, d) => n + d.n, 0) ?? 0,
           drops: this.dropGain?.words.length ?? 0,
+          finds: over ? run.foundHome?.pieces : undefined,
         });
         this.autoWait = 900;
       } else {

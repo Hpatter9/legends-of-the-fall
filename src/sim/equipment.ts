@@ -271,6 +271,11 @@ export const STASH_MAX = 150;
 /** Past a full stash, this many more wait on the camp's cart. */
 export const CART_MAX = 20;
 
+/** The stash's count in words ("12 / 150"; read-only, RUN-GEAR-2). */
+export const stashCount = (m: Meta): string => `${spareEquipment(m).length} / ${STASH_MAX}`;
+/** Whether the stash is full: pieces brought home now wait on the cart (RUN-GEAR-2: the camp's cart wears a red "full" tag). */
+export const stashFull = (m: Meta): boolean => spareEquipment(m).length >= STASH_MAX;
+
 /** Bring a piece home: into the stash while it has room, else onto the cart, and past the cart sold for its price. An old save above the
  *  cap keeps everything; only new pieces wait. */
 export function bringHome(m: Meta, item: NewEquipment & { wear?: number }): { kind: 'stash'; item: Equipment } | { kind: 'cart' } | { kind: 'sold'; crowns: number } {
