@@ -223,7 +223,7 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   plate.append(
     el('small', 'trKicker', opts.lucky ? 'A lucky summon' : 'A new ally answers'),
     titleLine(kind, 'h3', '', true),
-    el('span', 'trTitle', `${def.name} · ${a.numeral} · ${a.title}`),
+    el('span', 'trTitle', `${def.name} · ${a.title}`),
     el('p', 'trRole', def.role),
     el('span', 'trJoin', 'Joins your company'),
   );

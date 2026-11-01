@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.329.0',
+    date: '2026-11-01',
+    title: 'Cleaner faces',
+    notes: ['Ten heroes repainted for new skin tones get clean faces: no stray old-skin pixels, eyes kept sharp. The summon card no longer shows the card number.'],
+  },
+  {
     version: '0.328.0',
     date: '2026-11-01',
     title: 'The great rebalance',
