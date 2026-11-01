@@ -280,6 +280,24 @@ export function gearScores(stats: { scores?: Partial<Scores> } | undefined): Par
   return s && ABILITIES.some((a) => (s[a] ?? 0) !== 0) ? s : undefined;
 }
 
+/** What a score's change does, in the page's words ("blows +5%", "to hit +1"): the clauses for `a` between two derived sets of one hero. */
+export function scoreEffects(p: StatProfile, before: Derived, after: Derived, a: Ability, figures = true): string[] {
+  const fx: string[] = [];
+  const share = (label: string, x: number, y: number) => { if (Math.round((y - x) * 100) !== 0) fx.push(`${label} ${signedPct(y - x)}`); };
+  const step = (label: string, x: number, y: number) => { if (y !== x) fx.push(`${label} ${signed(y - x)}`); };
+  if (LIVE.power && p.blow === a) share('blows', before.atkMult, after.atkMult);
+  if (LIVE.power && p.cast === a && p.blow !== a) share('skills', before.castMult, after.castMult);
+  if (LIVE.power && p.cast === a && p.blow === a && fx.length) fx[fx.length - 1] = fx[fx.length - 1].replace('blows', 'blows and skills');
+  if (LIVE.power && a === 'con') share('health', before.hpMult, after.hpMult);
+  if (a === 'dex' && LIVE.blowSpeed) share('blows', before.blowSpeed, after.blowSpeed);
+  if (a === 'int' && LIVE.cooldown) share('skills sooner', 1 / before.cooldown, 1 / after.cooldown);
+  if (a === 'cha' && LIVE.ultFill) share('ultimate', before.ultFill, after.ultFill);
+  if (figures && LIVE.toHit) step('to hit', before.toHit, after.toHit);
+  if (figures && LIVE.dc) step('skill DC', before.dc, after.dc);
+  if (figures && LIVE.ac) step('AC', before.ac, after.ac);
+  return fx;
+}
+
 /** What a swap of score points means for a hero: a line per score that changes ("STR 19 → 20 (+4 → +5): blows +5%, to hit +1"),
  *  saying so when the modifier does not move. `delta` is the points gained (negative for a loss). */
 export function scoreCompare(kind: string, at: HeroAt, delta: Partial<Scores>): string[] {
@@ -296,19 +314,7 @@ export function scoreCompare(kind: string, at: HeroAt, delta: Partial<Scores>): 
     const s1 = after.scores[a];
     if (s0 === s1) { out.push(`${ABILITY_SHORT[a]} stays ${s0} (at its top)`); continue; }
     if (modOf(s0) === modOf(s1)) { out.push(`${ABILITY_SHORT[a]} ${s0} → ${s1}, ${signed(modOf(s0))} still`); continue; }
-    const fx: string[] = [];
-    const share = (label: string, x: number, y: number) => { if (Math.round((y - x) * 100) !== 0) fx.push(`${label} ${signedPct(y - x)}`); };
-    const step = (label: string, x: number, y: number) => { if (y !== x) fx.push(`${label} ${signed(y - x)}`); };
-    if (LIVE.power && p.blow === a) share('blows', before.atkMult, after.atkMult);
-    if (LIVE.power && p.cast === a && p.blow !== a) share('skills', before.castMult, after.castMult);
-    if (LIVE.power && p.cast === a && p.blow === a && fx.length) fx[fx.length - 1] = fx[fx.length - 1].replace('blows', 'blows and skills');
-    if (LIVE.power && a === 'con') share('health', before.hpMult, after.hpMult);
-    if (a === 'dex' && LIVE.blowSpeed) share('blows', before.blowSpeed, after.blowSpeed);
-    if (a === 'int' && LIVE.cooldown) share('skills sooner', 1 / before.cooldown, 1 / after.cooldown);
-    if (a === 'cha' && LIVE.ultFill) share('ultimate', before.ultFill, after.ultFill);
-    if (LIVE.toHit) step('to hit', before.toHit, after.toHit);
-    if (LIVE.dc) step('skill DC', before.dc, after.dc);
-    if (LIVE.ac) step('AC', before.ac, after.ac);
+    const fx = scoreEffects(p, before, after, a);
     out.push(`${ABILITY_SHORT[a]} ${s0} → ${s1} (${signed(modOf(s0))} → ${signed(modOf(s1))})${fx.length ? `: ${fx.join(', ')}` : ''}`);
   }
   return out;

@@ -6,7 +6,7 @@ import { keyOf, KITS, type Skill } from './sim/abilities';
 import { levelLine as skillLevelLine, levelShare, useOf } from './sim/skillLevels';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { traitsOf, TRAITS } from './sim/traits';
-import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
+import { MAX_RANK, RANK_SHARDS, heroRank, rankOf, takenRank, type Meta } from './sim/meta';
 import { readyToRise } from './sim/rankUp';
 import { openRankUp, type Taken } from './rankUpView';
 // (TAVERN-RANKUP: the gold chevron on a hero with an upgrade ready, and the sheet's hop to the next such hero)
@@ -15,7 +15,7 @@ import { markReady, nextUpgradeKind, talentPointsReady } from './sim/upgradesRea
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
-import { lastingBoost, progressOf, xpOf } from './sim/levels';
+import { progressOf, xpOf } from './sim/levels';
 import { compactXp, levelBadge } from './levelBadge';
 import { drawEquipment } from './equipView';
 import { drawSkillBook } from './skillBookView';
@@ -25,6 +25,7 @@ import { drawStatsPanel } from './statsPanel';
 import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
+import { fightFigures } from './sim/rankStep';
 import { heroArtwork, openHeroArtwork } from './heroArtwork';
 import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
@@ -320,12 +321,12 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     skills.append(detailHeading('Arts of war', 'Every hero has a way to turn the tide.'));
     if (open) skills.append(drawSkillBook(meta, kind, () => redraw()));
     box.append(tabs, ...panels);
-    const b = lastingBoost(x.level);
-    const m = rankMult(full);
+    // (health and attack as a fight has them, with the score steps; the Rank up card reads the same: `sim/rankStep.ts`)
+    const fig = fightFigures(kind, x.level, full, heroStats(meta, kind)?.scores);
     const stat = el('div', 'hstats four');
     // (STATS batch 3: health, attack and armour sit at the head of the Stats panel; range and the speeds stay here)
     const lead: HTMLElement[] = [];
-    for (const [name, v] of [['Health', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Armour', def.def]] as const) {
+    for (const [name, v] of [['Health', fig.hp], ['Attack', fig.atk], ['Armour', def.def]] as const) {
       const cell = el('div');
       cell.append(el('b', '', String(v)), el('small', '', name));
       lead.push(cell);
