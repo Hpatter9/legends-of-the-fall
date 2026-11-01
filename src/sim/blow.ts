@@ -22,7 +22,7 @@
 // no DOM.
 
 import { mixSeed } from './rng';
-import { BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, profileOf, STATS_SALT, type BlowResult, type StatInput } from './stats';
+import { ABILITIES, BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, profileOf, STATS_SALT, type BlowResult, type Scores, type StatInput } from './stats';
 import { kitOf } from './abilities';
 import { relicDodge } from './relicFight';
 import { TALL_AC } from './board';
@@ -107,6 +107,11 @@ export interface BlowStats {
 export interface BlowMatch {
   aim: number;
   ac: number;
+  /** STATS batch 5 (`saves.ts`): their skill DC's growth, and each save's. */
+  dc: number;
+  save: Scores;
+  /** Their STR modifier's growth (the shoves' contest). */
+  str: number;
 }
 
 const cache = new WeakMap<Unit, BlowStats>();
@@ -115,7 +120,7 @@ const cache = new WeakMap<Unit, BlowStats>();
 export const statInputOf = (u: Unit): StatInput => ({ level: u.level ?? 1, grade: u.grade ?? 1, rank: u.rank ?? 0, extra: u.eq?.scores });
 
 /** Whether a fighter is a hero with a profile of its own (not a summon kind). */
-const profiled = (u: Unit) => u.side === 'hero' && !UNITS[u.def].summon && !!profileOf(u.def);
+export const profiled = (u: Unit) => u.side === 'hero' && !UNITS[u.def].summon && !!profileOf(u.def);
 
 /** The heroes' growth since level 1, worked out once when the fight starts (from the heroes then on the field). */
 export function matchOf(b: Battle): BlowMatch {
@@ -123,16 +128,23 @@ export function matchOf(b: Battle): BlowMatch {
   const heroes = b.units.filter((u) => profiled(u) && u.owner === undefined);
   let aim = 0;
   let ac = 0;
+  let dc = 0;
+  let str = 0;
+  const save = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
   for (const h of heroes) {
     const p = profileOf(h.def)!;
     const now = derivedOf(p, statInputOf(h));
     const one = derivedOf(p);
     aim += now.toHit - one.toHit;
     ac += now.ac - one.ac;
+    dc += now.dc - one.dc;
+    str += now.mods.str - one.mods.str;
+    for (const a of ABILITIES) save[a] += now.saves[a] - one.saves[a];
   }
   const n = Math.max(1, heroes.length);
+  for (const a of ABILITIES) save[a] /= n;
   // (kept exact, not rounded: rounding a mean near a half handed the foes half a point of AC and of aim at some levels, measured)
-  b.blowMatch = { aim: aim / n, ac: ac / n };
+  b.blowMatch = { aim: aim / n, ac: ac / n, dc: dc / n, save, str: str / n };
   return b.blowMatch;
 }
 

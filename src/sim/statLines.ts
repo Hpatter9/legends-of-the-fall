@@ -22,7 +22,7 @@ export const LIVE = {
   crit: false,
   initiative: false,
   blowSpeed: false,
-  shove: false,
+  shove: true,
   cooldown: false,
   ultFill: false,
   pools: false,
@@ -107,7 +107,8 @@ export function scoreWhy(p: StatProfile, d: Derived, a: Ability): string {
   if (LIVE.power && p.blow === a) parts.push(`blows ${signedPct(d.atkMult - 1)}`);
   if (LIVE.power && p.cast === a) parts.push(`skills ${signedPct(d.castMult - 1)}`);
   switch (a) {
-    case 'str': if (LIVE.shove) parts.push('shoves further, climbs higher'); break;
+    // (the climb, Athletics, comes with batch 6)
+    case 'str': if (LIVE.shove) parts.push('shoves further, resists shoves'); break;
     case 'dex':
       if (LIVE.ac) parts.push(`AC ${signed(m)}`);
       if (LIVE.crit) parts.push(`crit ${Math.round(d.crit * 100)}%`);
@@ -174,6 +175,10 @@ export function heroCardScores(kind: string, level: number, grade: number, awake
   const d = derivedOf(p, { level, grade, extra, rank: rank ?? (awaken > 0 ? 4 + awaken : 1) });
   return cardOf(d.scores, d.mods, d.ac, d.toHit, d.dc, d.initiative);
 }
+
+/** A boss's Legendary Resistance (STATS batch 5): its old ladder against hard control, named as the design's section 3.3 names it. A boss
+ *  makes no saving throws; this is its save. */
+export const LEGENDARY_RESISTANCE = { name: 'Legendary Resistance', text: 'hard control fades faster, and three in a row it shrugs off' } as const;
 
 /** A foe's card scores from its family block; the card has no army tier to read, so it shows the Normal tier's. */
 export function foeCardScores(def: Pick<UnitDef, 'id' | 'sheet' | 'shot' | 'flies'>, tier = 0): CardScores {

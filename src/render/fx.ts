@@ -393,6 +393,8 @@ export class Fx {
       } else if (e.kind === 'arc') this.arc(e.from, e.to, e.ail === 'shock');
       // (STATUS-FX: an ailment shrugged off, and a frozen fighter's ice shattering)
       else if (e.kind === 'immune') this.immune(e.to, e.what);
+      // (STATS batch 5: a saving throw halved it)
+      else if (e.kind === 'saved') this.saved(e.to, e.what);
       else if (e.kind === 'shatter') this.shatter(e.to);
       else if (e.kind === 'frenzy') {
         const by = this.sprites.get(e.by);
@@ -2476,6 +2478,18 @@ export class Fx {
     const { txt } = this.label('Immune', s.x + 6, s.y - s.tall - 12, IMMUNE_COLOUR, 9, 800);
     if (txt.children.length) return;
     const chip = ailmentChip(what, undefined, true);
+    chip.position.set(-txt.width / 2 - 8, -txt.height / 2);
+    txt.addChild(chip);
+  }
+
+  /** A saving throw halved an ailment, a charm, a shove or a blast (STATS batch 5): the "Immune" pop's look, the word "Saved", with the
+   *  ailment's chip (not crossed out: it still takes hold, for half as long). */
+  private saved(id: number, what: AilmentKey | 'charm' | 'shove' | 'blast'): void {
+    const s = this.sprites.get(id);
+    if (!s || !settings().numbers) return;
+    const { txt } = this.label('Saved', s.x + 6, s.y - s.tall - 12, IMMUNE_COLOUR, 9, 800);
+    if (txt.children.length || what === 'charm' || what === 'shove' || what === 'blast') return;
+    const chip = ailmentChip(what, undefined, false);
     chip.position.set(-txt.width / 2 - 8, -txt.height / 2);
     txt.addChild(chip);
   }

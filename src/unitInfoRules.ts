@@ -23,7 +23,8 @@ import type { Meta } from './sim/meta';
 import { heroRank } from './sim/awaken';
 import { UNITS, type UnitDef } from './sim/units';
 import { poolTag, sheetOf } from './fightHudRules';
-import { foeCardScores, heroCardScores, type CardScores } from './sim/statLines';
+import { foeCardScores, heroCardScores, LEGENDARY_RESISTANCE, type CardScores } from './sim/statLines';
+import { ailBoss } from './sim/ailments';
 import { useOf } from './sim/skillLevels';
 
 /** How long a finger must rest on a unit, without moving, for its card to open (ms). */
@@ -296,6 +297,8 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
     ...base,
     kind,
     scores: foeCardScores(def),
+    // (STATS batch 5: a boss's save is its Legendary Resistance)
+    traits: ailBoss(u) ? [{ ...LEGENDARY_RESISTANCE }] : [],
     name: def.name,
     title: e?.epithet,
     sub: `${label} · ${familyOf(def)} · ${def.role}`,

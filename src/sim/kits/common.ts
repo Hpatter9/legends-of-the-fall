@@ -3,7 +3,8 @@
 import { standable, tileAt, type At } from '../board';
 import { atkOf, unitAt, wayTo, tileOf, hurt, type Battle, type BattleEvent, type Unit } from '../battle';
 import { DIR, durOf, foesOf, net, apart } from '../abilities';
-import { stunFor } from '../ailments';
+import { ailBoss, stunFor } from '../ailments';
+import { shoveTiles } from '../saves';
 
 export const stun = (b: Battle, f: Unit, ms: number): void => {
   stunFor(b, f, ms);
@@ -21,8 +22,15 @@ export const toughest = (x: Unit, y: Unit) => y.hp - x.hp || x.id - y.id;
 /** A duration lengthened by the caster's `dur` talent. */
 export const ms = (me: Unit, n: number): number => durOf(me, n);
 
-/** Shove a fighter `tiles` away from `from`, a tile at a time; true if it was stopped by something (a wall, a ledge, a fighter, the edge). */
-export function shove(b: Battle, f: Unit, from: At, tiles: number): boolean {
+/** Shove a fighter `tiles` away from `from`, a tile at a time; true if it was stopped by something (a wall, a ledge, a fighter, the edge).
+ *  `by`, the shover, contests it as the toolkit's shoves do (STR, and the target's STR save; STATS batch 5): a saved shove that is left no
+ *  tile to go is not stopped, it is shaken off. */
+export function shove(b: Battle, f: Unit, from: At, tiles: number, by?: Unit, out?: BattleEvent[]): boolean {
+  if (by && !ailBoss(f)) {
+    const t = shoveTiles(b, by, f, tiles);
+    if (t.saved) (out ?? b.spells.events).push({ kind: 'saved', to: f.id, what: 'shove' });
+    tiles = t.n;
+  }
   const way = wayTo(from, f);
   for (let i = 0; i < tiles; i++) {
     const to = { u: f.u + DIR[way][0], v: f.v + DIR[way][1] };
