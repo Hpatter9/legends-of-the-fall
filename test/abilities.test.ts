@@ -9,6 +9,13 @@ import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 import { HERO_KITS, resMax } from '../src/sim/heroKits';
 import { dotOf } from '../src/sim/ailments';
+import { REST } from '../src/sim/statRest';
+
+// (these stage each old kit's written numbers in a fixed arena: the pools by score and the AI's flank and kite, STATS batch 6, are held off
+// here and staged in `test/stats-rest.test.ts`)
+REST.pools = false;
+REST.flank = false;
+REST.kite = false;
 
 /** A hero's pool after one cast of its skill 1 from a full pool (COMBAT-002: a skill costs its pool, it no longer empties a charge meter). */
 const paidOnce = (kind: string): number => {

@@ -2,6 +2,7 @@
 // rampart, the Shambler's meal, the Mummy's strings and the Minotaur's rush. (RPG-SPELLS batch 7 put the Kraken Mate's Tidal Wave and the
 // Yamabushi's Wind Wall in place of the flood and the turning wind: `monsters.ts`.)
 
+import { saveAware } from '../saves';
 import { atkOf, defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { DIR, apart, foesOf, kitOf, mendUnit } from '../abilities';
 import { UNITS } from '../units';
@@ -11,7 +12,8 @@ import { charmFor } from '../ailments';
 
 /** Knight, Shield Bash: the strongest foe beside him is struck, stunned 1.5s and shoved back a tile. */
 export function shieldBash(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const f = foesNear(b, me, 1).sort(strongest)[0];
+  // (STATS batch 6: among the foes he values the same, the one with the weakest CON save)
+  const f = saveAware(b, me, foesNear(b, me, 1).sort(strongest), atkOf, 'stun')[0];
   if (!f) return false;
   me.facing = wayTo(me, f);
   strike(b, me, f, 1.2, out, true);
@@ -104,7 +106,7 @@ export function devour(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 export function puppetStrings(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
   if (foes.length < 2) return false;
-  const f = foes.filter((x) => apart(me, x) <= 4 && !(x.charmUntil !== undefined && x.charmUntil > b.t)).sort(strongest)[0];
+  const f = saveAware(b, me, foes.filter((x) => apart(me, x) <= 4 && !(x.charmUntil !== undefined && x.charmUntil > b.t)).sort(strongest), atkOf, 'charm')[0];
   if (!f) return false;
   charmFor(b, f, ms(me, 3000));
   f.taunt = undefined;

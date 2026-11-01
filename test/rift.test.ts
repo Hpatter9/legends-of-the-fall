@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { REST } from '../src/sim/statRest';
 import { fight, place, playOut, type BattleEvent } from '../src/sim/battle';
 import { localBoost, heroLevel, hireHero } from '../src/sim/climb';
 import { startedMeta } from '../src/sim/meta';
@@ -202,7 +203,10 @@ test('a final boss entry guarantees level 30 and tier three, even on a short rou
   assert.equal(run.roster[0].grade, 3);
 });
 
-test('a corrupted boss inherits its patron: Bastion shields and Echo drains charge', () => {
+test('a corrupted boss inherits its patron: Bastion shields and Echo drains charge', (t) => {
+  // (the pool's written points: the pools by score, STATS batch 6, are held off here and staged in `stats-rest`)
+  REST.pools = false;
+  t.after(() => { REST.pools = true; });
   const bastion = field('bastion', false, true);
   const foe = bastion.b.units.find((x) => x.side === 'foe')!;
   foe.shield = undefined;

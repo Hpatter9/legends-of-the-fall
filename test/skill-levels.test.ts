@@ -23,6 +23,7 @@ import { ARMIES } from '../src/sim/armies';
 import { newStandRun, startFirstWave, startStand, stepStand, type Stand } from '../src/sim/stand';
 import { ALL_HEROES } from '../src/sim/units';
 import { SAVES } from '../src/sim/saves';
+import { REST } from '../src/sim/statRest';
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -210,7 +211,9 @@ test("the Last Stand tallies each wave's use on the run, to count it when the ru
 test('every skill has its Level 5 step, as the probe of its cast finds it', (t) => {
   // (it stages the skill's written numbers: the saving throws, STATS batch 5, are held off for it and staged in `test/stats-saves.test.ts`)
   SAVES.on = false;
-  t.after(() => void (SAVES.on = true));
+  // (and the pools and cooldowns by score, STATS batch 6, staged in `stats-rest`)
+  REST.pools = REST.cooldown = false;
+  t.after(() => void (SAVES.on = REST.pools = REST.cooldown = true));
   const probe = lv5Table();
   const keys = ALL_HEROES.flatMap((k) => HERO_KITS()[k]?.slots.map((s) => keyOf(s.skill)) ?? []);
   for (const k of keys) assert.ok(LV5[k], `${k} has a step`);

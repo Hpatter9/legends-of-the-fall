@@ -19,6 +19,7 @@ import { mixSeed, Rng } from '../src/sim/rng';
 import { MANA_MAX } from '../src/sim/spells';
 import { autoDeploy } from '../src/sim/autoplay';
 import { deploySpots } from '../tools/heroSweep';
+import { REST } from '../src/sim/statRest';
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -151,7 +152,10 @@ test('Auto never calls it: a headless fight with its ultimates on their own, and
   for (const f of ['src/sim/autoplay.ts', 'src/sim/autoReplay.ts', 'src/sim/heroKits.ts', 'src/sim/battle.ts']) assert.ok(!readFileSync(f, 'utf8').includes('orderEidolon'), f);
 });
 
-test('the riders: fire burns and warms, ice freezes, light raises and heals, lightning charges, earth guards and stuns, dark strips and drains', () => {
+test('the riders: fire burns and warms, ice freezes, light raises and heals, lightning charges, earth guards and stuns, dark strips and drains', (t) => {
+  // (the riders' written times: the herald, STATS batch 6, lengthens them by the heroes' best CHA; held off here, staged in `stats-rest`)
+  REST.herald = false;
+  t.after(() => void (REST.herald = true));
   // (Askel: burning ground on the foes' half, the heroes +15% attack for 10 s, then back)
   let b = arena();
   let h = spawn(b, 'knight', 3, 9);

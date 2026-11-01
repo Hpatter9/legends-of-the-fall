@@ -11,14 +11,15 @@
 
 import type { Battle, BattleEvent, Unit } from './battle';
 import { CHARGE_MAX, keyOf, kitOf, KITS, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
-import { profileOf } from './stats';
+import { derivedOf, PER_POINT, profileOf, STAM_BASE, MANA_BASE, type Ability, type StatInput, type StatProfile } from './stats';
+import { cooldownOf, heroDerived, REST, rosterMean, ultFillOf } from './statRest';
 import { skillShare, skillStatOf } from './statPower';
 import { UNITS } from './units';
 import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
-import { CLASS_WEIGHT, type SkillClass } from './skillRules';
+import { CLASS_RANGE, CLASS_WEIGHT, type SkillClass } from './skillRules';
 import { relicCharge } from './relicFight';
 import { kitWithLevels, noteCast, REVIVE_POINTS } from './skillLevels';
 
@@ -168,14 +169,58 @@ export function heroKitOf(u: Unit): HeroKit | undefined {
 const levelled = new WeakMap<number[], { base: HeroKit; kit: HeroKit }>();
 
 export const poolOf = (u: Unit): Pool | undefined => heroKitOf(u)?.pool;
+/** A pool's written size, before the scores (`topOf` is a hero's own). */
 export const resMax = (pool: Pool): number => (pool === 'mana' ? RES.MANA_MAX : RES.STAM_MAX);
+
+// ---- Pools by score (STATS batch 6, `statRest.ts`): a stamina hero's pool follows its CON, a mana hero's its casting ability. Each point of
+// modifier adds 3 SP (5 MP) to the top and fills the pool 4% faster (its refill and its gains from blows), counted against the roster's mean
+// for that pool at the same level, so the mean hero's pool is as written and only how the heroes differ shows. ----
+
+/** The ability that sets a pool. */
+export const poolAbility = (p: StatProfile, pool: Pool): Ability => (pool === 'stamina' ? 'con' : p.cast);
+let poolKinds: Record<Pool, string[]> | undefined;
+/** A hero kind's pool at a level, rank, grade and extra: which it is, its top in points and how much faster it fills, against the roster's
+ *  mean for that pool at that level (the fight and the page read the same numbers). Undefined for a kind with no kit or no profile. */
+export function poolNumbers(kind: string, at: StatInput = {}): { pool: Pool; top: number; fill: number } | undefined {
+  const hk = HERO_KITS()[kind];
+  const p = profileOf(kind);
+  if (!hk || !p) return undefined;
+  const pool = hk.pool;
+  if (!poolKinds) {
+    poolKinds = { mana: [], stamina: [] };
+    for (const [k, x] of Object.entries(HERO_KITS())) if (profileOf(k)) poolKinds[x.pool].push(k);
+  }
+  const mean = rosterMean(`pool-${pool}`, at.level ?? 1, (q, m) => m[poolAbility(q, pool)], poolKinds[pool]);
+  const shift = derivedOf(p, at).mods[poolAbility(p, pool)] - mean;
+  return {
+    pool,
+    top: pool === 'mana' ? MANA_BASE + PER_POINT.MANA_TOP * shift : STAM_BASE + PER_POINT.STAM_TOP * shift,
+    fill: (1 + PER_POINT.REFILL * (mean + shift)) / (1 + PER_POINT.REFILL * mean),
+  };
+}
+/** A fighter's pool's top and fill (worked out once a fighter: nothing they read changes in a fight; its pool is its kit's). */
+const poolMemo = new WeakMap<Unit, { top: number; fill: number }>();
+function poolStats(u: Unit, pool: Pool): { top: number; fill: number } {
+  let s = poolMemo.get(u);
+  if (!s) {
+    const n = REST.pools && heroDerived(u) ? poolNumbers(u.def, { level: u.level ?? 1, grade: u.grade ?? 1, rank: u.rank ?? 0, extra: u.eq?.scores }) : undefined;
+    s = n && n.pool === pool ? { top: n.top, fill: n.fill } : { top: resMax(pool), fill: 1 };
+    poolMemo.set(u, s);
+  }
+  return s;
+}
+/** A hero's pool's top in points: the written size, +3 SP (+5 MP) a point of its pool's ability over the roster's mean. */
+export const topOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => poolStats(u, pool).top;
+/** How much faster a hero's pool fills (its refill and its gains): 4% a point of its pool's ability over the roster's mean. */
+export const fillOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => poolStats(u, pool).fill;
+
 /** The pool's points (mana or stamina). */
-export const resOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => (u.charge / CHARGE_MAX) * resMax(pool);
+export const resOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => (u.charge / CHARGE_MAX) * topOf(u, pool);
 /** Add (or take, below zero) points of a hero's pool; nothing for a fighter without one. */
 export function addRes(u: Unit, n: number): void {
   const pool = poolOf(u);
   if (!pool || !u.alive) return;
-  u.charge = Math.max(0, Math.min(CHARGE_MAX, u.charge + (n / resMax(pool)) * CHARGE_MAX));
+  u.charge = Math.max(0, Math.min(CHARGE_MAX, u.charge + (n / topOf(u, pool)) * CHARGE_MAX));
 }
 const ks = (u: Unit): KitState => (u.ks ??= {});
 
@@ -183,20 +228,20 @@ const ks = (u: Unit): KitState => (u.ks ??= {});
 export function startPool(u: Unit, carried?: number): void {
   const pool = poolOf(u);
   if (!pool) return;
-  u.charge = carried !== undefined ? Math.min(CHARGE_MAX, carried) : ((pool === 'mana' ? RES.MANA_START : RES.STAM_START) / resMax(pool)) * CHARGE_MAX;
+  u.charge = carried !== undefined ? Math.min(CHARGE_MAX, carried) : Math.min(CHARGE_MAX, ((pool === 'mana' ? RES.MANA_START : RES.STAM_START) / topOf(u, pool)) * CHARGE_MAX);
 }
 
 /** A blow (or shot) this hero dealt landed. */
 export function poolOnDealt(u: Unit): void {
   const pool = poolOf(u);
-  if (pool) addRes(u, (pool === 'mana' ? RES.MANA_ON_BLOW : RES.STAM_ON_BLOW) * RES.PACE * skill2Pace(u, pool));
+  if (pool) addRes(u, (pool === 'mana' ? RES.MANA_ON_BLOW : RES.STAM_ON_BLOW) * RES.PACE * skill2Pace(u, pool) * fillOf(u, pool));
 }
 /** This hero was struck (a blow or a skill, not burning), or slipped a blow. */
 export function poolOnTaken(b: Battle, u: Unit, dodged = false): void {
   const pool = poolOf(u);
   if (!pool) return;
   if (!dodged) ks(u).hitAt = b.t;
-  if (pool === 'stamina') addRes(u, (dodged ? RES.STAM_ON_DODGE : RES.STAM_ON_HIT) * RES.PACE * skill2Pace(u, pool));
+  if (pool === 'stamina') addRes(u, (dodged ? RES.STAM_ON_DODGE : RES.STAM_ON_HIT) * RES.PACE * skill2Pace(u, pool) * fillOf(u, pool));
 }
 
 /** How much faster the pool comes back once skill 2 is open, and again once skill 3 is (for a kit that has one). */
@@ -207,7 +252,7 @@ const skill2Pace = (u: Unit, pool: Pool): number =>
 export function regenOf(b: Battle, u: Unit): number {
   const pool = poolOf(u);
   if (!pool) return 0;
-  const k = RES.PACE * skill2Pace(u, pool) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) * relicCharge(b, u);
+  const k = RES.PACE * skill2Pace(u, pool) * fillOf(u, pool) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) * relicCharge(b, u);
   const s = u.ks;
   if (pool === 'stamina') return s?.winded !== undefined && s.winded > b.t ? 0 : RES.STAM_REGEN * k;
   const focus = s?.hitAt === undefined || b.t - s.hitAt >= RES.FOCUS_MS ? RES.FOCUS_MULT : 1;
@@ -224,7 +269,8 @@ export function tickPool(b: Battle, u: Unit, tickMs: number): void {
 function fillUlt(u: Unit, n: number): void {
   const ult = ultimateOf(u);
   if (!ult || !u.alive || n <= 0) return;
-  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate')) * (u.ultPace ?? 1);
+  // (CHA's inspiration, STATS batch 6: the meter fills 3% faster a point, against the roster's mean)
+  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate')) * (u.ultPace ?? 1) * ultFillOf(u);
   u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * rate);
 }
 /** The ultimate meter's share of a fight's damage or healing: `amount` points of health dealt (or healed) or taken by a hero with a kit. */
@@ -262,7 +308,16 @@ export function canPay(b: Battle, u: Unit, hk: HeroKit, n: number): boolean {
   if (resOf(u, hk.pool) + 1e-9 < costOf(u, slot)) return false;
   if (slot.hpCost && u.hp <= u.maxHp * slot.hpCost * 2) return false;
   const at = lastAt(u, n);
-  return at === undefined || b.t - at >= slot.cd;
+  return at === undefined || b.t - at >= cdOf(u, slot);
+}
+
+/** A hero's cooldown on a skill: the slot's (its class's and its skill level's), 2% shorter a point of INT against the roster's mean, at most
+ *  10% either way (STATS batch 6, `statRest.ts`), and never moved out of its class's range. */
+export function cdOf(u: Unit, slot: Slot): number {
+  const k = cooldownOf(u);
+  if (k === 1) return slot.cd;
+  const [lo, hi] = CLASS_RANGE[slot.cls].cd;
+  return Math.max(Math.min(lo, slot.cd), Math.min(Math.max(hi, slot.cd), slot.cd * k));
 }
 
 /** Whether the hero is still taking its breath after its last cast. */
@@ -349,7 +404,7 @@ function holdsFor(b: Battle, me: Unit, hk: HeroKit, n: number, m: number): boole
   if (!hasWork(b, me, hk, m)) return false;
   const hold = hk.pool === 'mana' ? RES.HOLD_MANA_MS : RES.HOLD_STAM_MS;
   const at = lastAt(me, m);
-  const cdLeft = at === undefined ? 0 : Math.max(0, at + heavy.cd - b.t);
+  const cdLeft = at === undefined ? 0 : Math.max(0, at + cdOf(me, heavy) - b.t);
   if (cdLeft > hold) return false;
   const rate = Math.max(0.1, regenOf(b, me));
   const res = resOf(me, hk.pool);

@@ -19,6 +19,9 @@
 // (SUMMON-TIMERS, the owner's ask for summons and shapeshifts on a timer, docs/notes/summon-timers.md, re-recorded field30, bosses, armyFoes and
 // spells: each has the Druid, Beastmaster, Reaper, Samurai Commander, Werewolf, Kitsune or Demon Swordsman at level 10 or more, whose wraith,
 // standard and shapes now last longer. Only those moved.)
+// (STATS batch 6, docs/notes/stats-6.md, re-recorded every scenario: the pools, cooldowns and ultimate fill by score, the quick heroes' flank
+// and kite and the weakest-save picks move every fight with a hero. The new hashes: field1 0fbf64a7, field30 e9196ebf, bosses 85bc0f6e,
+// armyFoes 29d733d0, spells b4a3a947, lands 0a1bce75, army d7da8ae8, daily be916c2e, tower 7874beb1, stand fb295e70, calamity 8638915a.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

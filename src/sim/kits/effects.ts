@@ -15,6 +15,7 @@ import { AILMENT_SWITCH, ailmentsOf, burnFor, dotOf, setDot } from '../ailments'
 import { stormBolt } from './mages';
 import { monsterTick } from './monsters';
 import { TIMER, timeSummon, WOLF_LOOK } from '../carry';
+import { perceptionOf } from '../statRest';
 
 /** The kits' marks and stances on a fighter (hero or foe): each a time it lasts until, or a small state. */
 export interface KitFx {
@@ -174,7 +175,8 @@ export function kitStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow
   const blow = src === 'blow';
   const bx = by.kx;
   const tx = to.kx;
-  if (blow && bx && on(bx.smoke, b) && roll(b) < KIT.SMOKE_MISS) {
+  // (smoke, ink and sand: a striker's perception, WIS, sees through a share of the misses, STATS batch 6)
+  if (blow && bx && on(bx.smoke, b) && roll(b) < KIT.SMOKE_MISS * (1 - perceptionOf(by))) {
     out.push({ kind: 'dodge', to: to.id });
     return null;
   }
