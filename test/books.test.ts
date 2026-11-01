@@ -10,6 +10,7 @@ import { HERO_KITS, heroKitOf } from '../src/sim/heroKits';
 import { CLASS_RANGE } from '../src/sim/skillRules';
 import { fightLevels, kitWithLevels, settleSkillUse, skillLevelOf, USE_AT } from '../src/sim/skillLevels';
 import { keyOf } from '../src/sim/abilities';
+import { lostSlot } from '../src/sim/kits/lost';
 import { loadMeta, startedMeta, type Meta } from '../src/sim/meta';
 import { heroStats } from '../src/sim/talents';
 import { ALL_HEROES } from '../src/sim/units';
@@ -123,8 +124,10 @@ test('a book slot keeps the skill class and cooldown, costs its place in the cla
       const s = slotFor(k, b.id)!;
       const [lo, hi] = CLASS_RANGE[s.cls][HERO_KITS()[k].pool];
       assert.ok(s.cost >= lo && s.cost <= hi, `${b.id} on ${k}: ${s.cost} in ${lo}-${hi}`);
-      assert.equal(s.cls, bookSource(b)!.cls);
-      assert.equal(s.cd, bookSource(b)!.cd);
+      // (a lost technique has no hero's skill as its source: its class and cooldown are its own, `kits/lost.ts`)
+      const from = b.lost ? lostSlot(b.lost, 100)! : bookSource(b)!;
+      assert.equal(s.cls, from.cls);
+      assert.equal(s.cd, from.cd);
     }
   // a skill at the top of its class's range in stamina is at the top of it in mana
   const top = { ...HERO_KITS().barbarian.s1, cost: CLASS_RANGE.strike.stamina[1], cls: 'strike' as const };

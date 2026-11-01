@@ -226,7 +226,13 @@ export function slotFor(kind: string, pick: SkillPick): Slot | undefined {
   if (at >= 0) return own.slots[at];
   const book = bookById(pick);
   // (a lost technique has a skill of its own, not a hero's: its cost a share of the reader's pool)
-  if (book?.lost) return lostSlot(book.lost, resMax(own.pool));
+  if (book?.lost) {
+    const ls = lostSlot(book.lost, resMax(own.pool));
+    if (!ls) return undefined;
+    // (kept inside its class's cost range for the reader's pool, as every other skill is)
+    const [lo, hi] = CLASS_RANGE[ls.cls][own.pool];
+    return { ...ls, cost: Math.max(lo, Math.min(hi, ls.cost)) };
+  }
   const src = book && HERO_KITS()[book.from.hero];
   const s = book && bookSource(book);
   if (!book || !src || !s) return undefined;
