@@ -227,7 +227,9 @@ const VOLTARA_TRIAL: TrialDef = {
   ],
   like: { army: 'labyrinth', wave: 13 },
   ease: 0.6,
-  lift: { hp: 1, atk: 1 },
+  // (the joint rebalance: Voltara herself eased, so the level-40 party of the chain's test wins about 6 trials in 10 again, as before the D&D
+  // scores; 2 in 10 after them, docs/notes/stats-2.md and docs/notes/joint-rebalance.md)
+  lift: { hp: 0.88, atk: 0.88 },
   // (Kwame or Minh, one from each starter pack; any starter hero stands in)
   cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
   blurb: 'Voltara hangs over the Lightning Heights with the storm held in her hands. Before she takes a roof, she wants to see who built it.',

@@ -97,7 +97,7 @@ export const ARMIES: readonly Army[] = [
     area: 'warcamp',
     lands: ['warcamp', 'highlands'],
     waves: waves(ramp(['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'], 13), { 8: ['orcChieftain', 'orcGrunt', 'orcGrunt', 'orcArcher'], 15: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute', 'orcBrute'] }),
-    start: 0.58, // (SPELLS-RETUNE: 0.39 measured by a bot that never cast the king's spells, raised so a player whose Auto casts them takes as many tries, `docs/notes/spells-retune.md`; was 0.5 until WORLD-ROAD retuned it on the army road)
+    start: 0.62, // (the joint rebalance: 0.58 to 0.62, the realistic climb's 2.0 tries again, docs/notes/joint-rebalance.md) (SPELLS-RETUNE: 0.39 measured by a bot that never cast the king's spells, raised so a player whose Auto casts them takes as many tries, `docs/notes/spells-retune.md`; was 0.5 until WORLD-ROAD retuned it on the army road)
     xpStart: 0.39,
     tierStart: 0.5,
     growth: 0.176,
@@ -114,7 +114,7 @@ export const ARMIES: readonly Army[] = [
     area: 'graveyard',
     lands: ['graveyard', 'dungeon'],
     waves: waves(ramp(['skeleton', 'skeleton', 'boneVolley', 'spearman', 'skeleton', 'spearman', 'boneVolley', 'spearman'], 13), { 8: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], 15: ['lichKing', 'skeleton', 'spearman', 'spearman', 'boneVolley', 'boneVolley'] }),
-    start: 1.74, // (RUN-GEAR: 1.7 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.48 measured by a bot that never cast the king's spells; raised so a level-1 party whose Auto casts them still cannot grind through it, `docs/notes/spells-retune.md`; was 1.52 until WORLD-ROAD retuned it on the army road)
+    start: 2.02, // (the joint rebalance: 1.74 to 2.02, the realistic climb's 2.9 tries again (1.8 at 1.74), docs/notes/joint-rebalance.md) (RUN-GEAR: 1.7 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.48 measured by a bot that never cast the king's spells; raised so a level-1 party whose Auto casts them still cannot grind through it, `docs/notes/spells-retune.md`; was 1.52 until WORLD-ROAD retuned it on the army road)
     xpStart: 1.48,
     tierStart: 0.7,
     growth: 0.05,
@@ -132,7 +132,7 @@ export const ARMIES: readonly Army[] = [
     area: 'plains',
     lands: ['plains', 'autumn'],
     waves: waves(ramp(['packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'], 13), { 8: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 15: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack', 'packWhite'] }),
-    start: 2.27, // (RUN-GEAR: 2.17 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.66 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`)
+    start: 2.39, // (the joint rebalance: 2.27 to 2.39, the realistic climb's 4.3 tries again, docs/notes/joint-rebalance.md) (RUN-GEAR: 2.17 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.66 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`)
     xpStart: 1.66,
     tierStart: 0.85,
     growth: 0.05,
@@ -154,7 +154,7 @@ export const ARMIES: readonly Army[] = [
         10: ['forestBoss2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3'],
         15: ['forestBoss3', 'groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1', 'groveSatyr2'],
       }),
-    start: 2.7, // (RUN-GEAR: 2.52 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 2.01 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`; was 1.86 until WORLD-ROAD retuned it on the army road)
+    start: 2.8, // (the joint rebalance: 2.7 to 2.8, the realistic climb's 2.0 tries again, docs/notes/joint-rebalance.md) (RUN-GEAR: 2.52 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 2.01 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`; was 1.86 until WORLD-ROAD retuned it on the army road)
     xpStart: 2.01,
     tierStart: 1.15,
     growth: 0.05,
@@ -172,7 +172,7 @@ export const ARMIES: readonly Army[] = [
     area: 'temple',
     lands: ['temple', 'ruins'],
     waves: waves(ramp(['mazeMino1', 'mazeMino2', 'mazeGorgon1', 'mazeMino3', 'mazeGorgon2', 'mazeMino1', 'mazeGorgon3', 'mazeMino2'], 13), { 8: ['gorgonQueen', 'mazeMino1', 'mazeMino2', 'mazeGorgon3'], 15: ['minotaurChampion', 'mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino3'] }),
-    start: 7, // (SPELLS-RETUNE: 4.85 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.25 raised with it so a run pays what it did; was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 3.05 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 7.9, // (the joint rebalance: 7 to 7.9, `labyrinth:0:30` back to main 0.321's 28% of single tries (26% at 8, 51% at 7), docs/notes/joint-rebalance.md) (SPELLS-RETUNE: 4.85 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.25 raised with it so a run pays what it did; was 2.25: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 3.05 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.25,
     tierStart: 1.38,
     growth: 0.05,
@@ -193,7 +193,7 @@ export const ARMIES: readonly Army[] = [
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
     // (11.4 since the skills overhaul's batch 3, docs/notes/skills-1.md: with the tier skills gone a merged party took 4.5 tries at SPELLS-RETUNE's
     // 12.2 (`node tools/spells-retune/run.mjs cell ogres:45:0:tp`); 2.3 at 11.4, SPELLS-RETUNE's figure)
-    start: 11.4, // (SPELLS-RETUNE: 12.2; 9.3 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.8 raised with it so a run pays what it did; was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 4.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 12.2, // (the joint rebalance: 11.4 to 12.2, `ogres:0:38` back to about main 0.321's 8% of single tries (19% at 11.4, 6% at 12.5), docs/notes/joint-rebalance.md) (SPELLS-RETUNE: 12.2; 9.3 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.8 raised with it so a run pays what it did; was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 4.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.67,
     tierStart: 1.55,
     growth: 0.05,
@@ -214,7 +214,7 @@ export const ARMIES: readonly Army[] = [
     waves: waves(ramp(['hellImp', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon'], 13), { 8: ['devilLeader', 'hellImp', 'hellDemon', 'hellImp'], 15: ['demonLord', 'hellImp', 'hellDemon', 'hellImp', 'hellDemon', 'hellImp'] }),
     // (15.65 since the skills overhaul's batch 3, docs/notes/skills-1.md, the owner's late three kept hard: the casting bot with hearts on 24 saves,
     // `node tools/spells-retune/run.mjs cell infernal:55:0:tph`, took 3.7 tries at 15.4 and SPELLS-RETUNE's 4.3 is meant; see the note for 15.65)
-    start: 15.65, // (SPELLS-RETUNE: 16.2; 14.9 put it back where main's spell-less bot had it; the owner then asked for LATE-RETUNE's figure again, about 5 tries at level 55 with hearts, measured casting; 12.5 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.01 raised with it so a run pays what it did; LATE-RETUNE, hearts: 10.2 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts, `docs/notes/late-retune.md`; 9.4 until two of a kind merged, MERGE-TWO, and made the late game easy, `docs/notes/late-retune.md`; was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
+    start: 20.1, // (the joint rebalance: 15.65 to 20.1, `infernal:55:0:tph` 4.6 tries again (4.3 at 19.9, 5.0 at 20.2) once the foes fought at their tier's proficiency, docs/notes/joint-rebalance.md) (SPELLS-RETUNE: 16.2; 14.9 put it back where main's spell-less bot had it; the owner then asked for LATE-RETUNE's figure again, about 5 tries at level 55 with hearts, measured casting; 12.5 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.01 raised with it so a run pays what it did; LATE-RETUNE, hearts: 10.2 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts, `docs/notes/late-retune.md`; 9.4 until two of a kind merged, MERGE-TWO, and made the late game easy, `docs/notes/late-retune.md`; was 3.01: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 5.67 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`; 10 until STATUS-FX's ailments, whose boss rules and fire-proof imps made it harder)
     xpStart: 3.9,
     tierStart: 1.64,
     growth: 0.05,
@@ -235,7 +235,7 @@ export const ARMIES: readonly Army[] = [
     waves: waves(ramp(['yokaiFox', 'yokaiCrow', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiMonk', 'yokaiCrow', 'yokaiWitch'], 13), { 8: ['nineTails', 'yokaiFox', 'yokaiWitch', 'yokaiCrow'], 15: ['oniKing', 'yokaiMonk', 'yokaiWitch', 'yokaiSeer', 'yokaiFox', 'yokaiCrow'] }),
     // (18 since the skills overhaul's batch 3, docs/notes/skills-1.md, the owner's late three kept hard: `yokai:65:0:tph` on 24 saves took 10.3
     // tries at 17.86 and 12.7 at 18.1, for SPELLS-RETUNE's 11.7 (83% clear); SPELLS-RETUNE's 18.3 read harder with the tier skills gone)
-    start: 18, // (SPELLS-RETUNE: 18.3; 15 put it back where main's spell-less bot had it; the owner then asked for LATE-RETUNE's figure again, about 10 tries at level 65 with hearts, measured casting; 14.2 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.38 raised with it so a run pays what it did; LATE-RETUNE, hearts: 12.8 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.5 until two of a kind merged, MERGE-TWO, and its bosses stronger, `docs/notes/late-retune.md`; it stays under the Golem Forge's; was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 23.35, // (the joint rebalance: 18 to 23.35, `yokai:65:0:tph` back to the owner's 11 to 12 tries (9.8 at 23.2, 17.3 at 24.0) once the foes fought at their tier's proficiency, docs/notes/joint-rebalance.md) (SPELLS-RETUNE: 18.3; 15 put it back where main's spell-less bot had it; the owner then asked for LATE-RETUNE's figure again, about 10 tries at level 65 with hearts, measured casting; 14.2 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.38 raised with it so a run pays what it did; LATE-RETUNE, hearts: 12.8 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.5 until two of a kind merged, MERGE-TWO, and its bosses stronger, `docs/notes/late-retune.md`; it stays under the Golem Forge's; was 3.38: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 4.36,
     tierStart: 1.55,
     growth: 0.05,
@@ -256,7 +256,7 @@ export const ARMIES: readonly Army[] = [
     waves: waves(ramp(['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem', 'ironGolem', 'magmaGolem'], 13), { 8: ['sapphireColossus', 'stoneGolem', 'crystalGolem', 'ironGolem'], 15: ['forgeTitan', 'ironGolem', 'magmaGolem', 'crystalGolem', 'stoneGolem', 'magmaGolem'] }),
     // (19.1 since the skills overhaul's batch 3, docs/notes/skills-1.md, the owner's late three kept hard: `golems:65:0:tph` on 24 saves took 6.0
     // tries at 19.03 and 8.6 at 19.3, for SPELLS-RETUNE's 6.6; its 19.8 read 11.3 with the tier skills gone)
-    start: 18.7, // (SKILLS-4, the skills overhaul's batch 4: 19.1 before; with every hero's skill 3 the strong party of `test/army-pace.test.ts` stopped a wave short at level 80 in all six tries, docs/notes/skills-4.md; batch 8 re-tunes the armies. SPELLS-RETUNE: 19.8; 16.8 put it back where main's spell-less bot had it; the owner then asked for LATE-RETUNE's figure again, about 8 tries at level 65 with hearts, measured casting (19.8, not more: the strong party of `test/army-pace.test.ts` must still clear it at level 80); 14.6 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.63 raised with it so a run pays what it did; its bosses' fixed strength makes it move less with `start` than the others; LATE-RETUNE, hearts: 13.7 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.7 until two of a kind merged, MERGE-TWO, `docs/notes/late-retune.md`; was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 27.6, // (the joint rebalance: 18.7 to 27.6, `golems:65:0:tph` back to the owner's 6.6 to 8 tries (5.8 at 27.0, 9.1 at 28.3) once the foes fought at their tier's proficiency, docs/notes/joint-rebalance.md) (SKILLS-4, the skills overhaul's batch 4: 19.1 before; with every hero's skill 3 the strong party of `test/army-pace.test.ts` stopped a wave short at level 80 in all six tries, docs/notes/skills-4.md; batch 8 re-tunes the armies. SPELLS-RETUNE: 19.8; 16.8 put it back where main's spell-less bot had it; the owner then asked for LATE-RETUNE's figure again, about 8 tries at level 65 with hearts, measured casting (19.8, not more: the strong party of `test/army-pace.test.ts` must still clear it at level 80); 14.6 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 3.63 raised with it so a run pays what it did; its bosses' fixed strength makes it move less with `start` than the others; LATE-RETUNE, hearts: 13.7 measured for a player whose run ends at the first lost wave, raised so the order holds for a player who burns hearts; 12.7 until two of a kind merged, MERGE-TWO, `docs/notes/late-retune.md`; was 3.63: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 7.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 4.92,
     tierStart: 1.7,
     growth: 0.05,
@@ -286,10 +286,14 @@ export const nextArmy = (a: Army): Army | undefined => ARMIES[armyIndex(a.id) + 
 /** The bosses (mid and final) of an army's waves, in order, by wave number. */
 export const bossesOf = (a: Army): { wave: number; id: string }[] => a.waves.flatMap((w, i) => (w.boss ? [{ wave: i + 1, id: w.foes[0] }] : []));
 
+/** The first wave of an army's Normal tier is eased by this (the joint rebalance, docs/notes/joint-rebalance.md): a fresh party's first fight was
+ *  lost about once in a hundred after the D&D stats (once in 400 before them); the rest of the curve, the bosses and the harder tiers are as they were. */
+export const FIRST_WAVE_EASE = 0.87;
+
 /** How the foes of wave n of an army are boosted (n from 1), on a difficulty tier (Normal by default): hp, attack and speed. */
 export function waveBoost(a: Army, n: number, tier = 0): Stage {
   const t = tierOf(tier);
-  const k = (tier > 0 ? a.tierStart ?? a.start : a.start) * (1 + (tier > 0 ? a.tierGrowth ?? a.growth : a.growth) * (n - 1));
+  const k = (tier > 0 ? a.tierStart ?? a.start : a.start) * (1 + (tier > 0 ? a.tierGrowth ?? a.growth : a.growth) * (n - 1)) * (tier === 0 && n === 1 ? FIRST_WAVE_EASE : 1);
   const w = a.waves[n - 1];
   let boss: Boost | undefined;
   if (w?.boss) {

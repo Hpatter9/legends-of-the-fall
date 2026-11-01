@@ -60,7 +60,7 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.35;
+export const WAVE_GROWTH_LATE = 0.39; // (the joint rebalance: 0.35 to 0.39, a level-30 stand back to wave 15, docs/notes/joint-rebalance.md)
 /** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace
  *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: 0.88, with a steeper late and deep climb; SPELLS-RETUNE 1.2, so a
  *  stand whose Auto casts the king's spells holds the waves it did for a bot that never cast, `docs/notes/spells-retune.md`). */
@@ -70,7 +70,7 @@ export const HALL_EASE = 1.2;
  *  ultimates that now come round about once a wave, the late climb to 0.2 and the deep one to 0.29, so the climb past wave 18 is as steep as it was;
  *  STATUS-FX, for the heroes' ailments, which carried a level-30 party three waves further, the late climb to 0.26 and the deep one to 0.24). */
 export const WAVE_DEEP = 18;
-export const WAVE_GROWTH_DEEP = 0.24;
+export const WAVE_GROWTH_DEEP = 0.22; // (the joint rebalance: 0.24 to 0.22, with the steeper late climb, so a level-100 stand keeps about wave 25)
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;

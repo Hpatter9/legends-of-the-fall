@@ -529,7 +529,7 @@ export function sideChoices(run: Run): SideSpot[] {
 /** The spire's own step for each act after the first (a Calamity sets its own, `CAL_SCALE.step`): 0 until the skills overhaul (batches 2 and 3),
  *  whose cheaper, quicker skills carried a full castle's long climbs further (a mean of 43.6 floors where main's was 35.8, 96 climbs of
  *  `tools/merge-two/run.mjs spire:max`); at 0.04 it is 36.0 again. It answers the later acts and leaves the first as it was. */
-export const SPIRE_ACT_STEP = 0.04;
+export const SPIRE_ACT_STEP = 0.08; // (the joint rebalance: 0.04 to 0.08, a fresh climb back to main's floors once the held-back rules were on, docs/notes/joint-rebalance.md)
 export const foeScale = (floor: number, scale?: TowerState['scale'], act = 1): number => (scale?.start ?? FOE_START) * (1 + (scale?.growth ?? TOWER_GROWTH) * (floor - 1)) * (1 + (scale ? scale.step ?? 0 : SPIRE_ACT_STEP) * (act - 1));
 
 /** The band of a plain fight or an elite on a floor: the usual field bands in the first act, then those and the waves of every unlocked army. */

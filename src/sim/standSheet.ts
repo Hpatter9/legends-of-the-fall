@@ -4,7 +4,7 @@
 
 import { atkOf, defenceOf, type Unit } from './battle';
 import { kitOf, ULT_LEVEL, ultimateOf } from './abilities';
-import { costOf, HERO_KITS, resMax, resOf, skill2Open, SKILL2_LEVEL } from './heroKits';
+import { costOf, HERO_KITS, resMax, resOf, skill2Open, SKILL2_LEVEL, topOf } from './heroKits';
 import { UNITS } from './units';
 import type { Stand, StandHero } from './stand';
 
@@ -76,7 +76,7 @@ function rowOf(s: Stand, h: StandHero): SheetHero {
     fallen,
     hp: u && !fallen ? Math.max(0, Math.ceil(u.hp)) : 0,
     maxHp: u?.maxHp ?? def?.hp ?? 0,
-    pool: hk ? { kind: hk.pool, now: fallen ? 0 : Math.floor(res), max: resMax(hk.pool) } : null,
+    pool: hk ? { kind: hk.pool, now: fallen ? 0 : Math.floor(res), max: Math.floor(u ? topOf(u, hk.pool) : resMax(hk.pool)) } : null, // (the hero's own top: its pool follows its scores, STATS batch 6)
     atk: Math.round(u ? atkOf(u) : def?.atk ?? 0),
     def: u ? defenceOf(u) : def?.def ?? 0,
     kills: h.kills ?? 0,

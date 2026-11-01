@@ -61,13 +61,14 @@ test('a tier lift multiplies that tier’s foes, hp and attack, and never Normal
 // king's spells, so the first four's Normal strength rose (it was 0.39, 1.48, 1.66 and 2.01) and each keeps its old XP through `xpStart`; their
 // levels and curves are as they were. RUN-GEAR, the owner's answer: saves keep and wear what their runs find, so the Undead's, Beasts' and
 // Wildwood's Normal strength rose again (1.7, 2.17, 2.52 to 1.74, 2.27, 2.7) to keep the realistic climb's tries, with the same `xpStart`,
-// docs/notes/run-gear.md)
+// docs/notes/run-gear.md. The joint rebalance, the owner's retune once the D&D stats' held-back rules were switched on: 0.58, 1.74, 2.27, 2.7 to
+// 0.62, 2.02, 2.39, 2.8, so the realistic climb takes the tries 0.321.0 set, with the same `xpStart`, docs/notes/joint-rebalance.md)
 test('the early armies keep their levels and curves, at the strength SPELLS-RETUNE measured for a player who casts', () => {
   assert.deepEqual(ARMIES.slice(0, 4).map((a) => [a.id, a.level, a.start, a.growth, a.xpStart]), [
-    ['orcs', 1, 0.58, 0.176, 0.39],
-    ['undead', 8, 1.74, 0.05, 1.48],
-    ['beasts', 15, 2.27, 0.05, 1.66],
-    ['wildwood', 22, 2.7, 0.05, 2.01],
+    ['orcs', 1, 0.62, 0.176, 0.39],
+    ['undead', 8, 2.02, 0.05, 1.48],
+    ['beasts', 15, 2.39, 0.05, 1.66],
+    ['wildwood', 22, 2.8, 0.05, 2.01],
   ]);
 });
 

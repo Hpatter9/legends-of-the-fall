@@ -350,7 +350,8 @@ function armies(): void {
   const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, first: 0, lv: 0, seen: 0, crowns: 0 }));
   for (let save = 1; save <= SAVES; save++) {
     const meta = startedMeta(save);
-    for (let i = 0; i < ARMIES.length; i++) {
+    // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
+    for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];
       let tries = 0;
       let cleared = false;
@@ -439,7 +440,8 @@ function realClimb(): void {
   const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0, pieces: 0, legend: 0 }));
   for (let save = 1; save <= SAVES; save++) {
     const meta = startedMeta(save);
-    for (let i = 0; i < ARMIES.length; i++) {
+    // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
+    for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];
       let tries = 0;
       let cleared = false;

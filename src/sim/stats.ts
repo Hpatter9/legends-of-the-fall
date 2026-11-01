@@ -361,10 +361,11 @@ export const TIER_PROFICIENCY: readonly number[] = [2, 3, 4, 5, 6];
  *  each `per` acts, maps or waves past the first, to `DEPTH_PROF_MAX`. */
 export const DEPTH_PROF_MAX = 8;
 export const depthProficiency = (depth: number, per = 1): number => Math.min(DEPTH_PROF_MAX, 2 + Math.floor(Math.max(0, depth - 1) / per));
-/** How many of each depth one more point of the foes' proficiency takes: the spire's acts, the Calamity's maps, the Last Stand's waves. */
-export const SPIRE_PROF_PER = 1;
-export const CAL_PROF_PER = 1;
-export const STAND_PROF_PER = 5;
+/** How many of each depth one more point of the foes' proficiency takes: the spire's acts, the Calamity's maps, the Last Stand's waves. (Two acts
+ *  or maps a point: the run's heroes reach level 30 and +5 at most, so a point an act left the deep acts +7 and +8 against them.) */
+export const SPIRE_PROF_PER = 2;
+export const CAL_PROF_PER = 2;
+export const STAND_PROF_PER = 4;
 
 /**
  * The joint rebalance (docs/notes/joint-rebalance.md; the D&D stats design's batch 7 with the skills overhaul's batch 8): what batches 4 to

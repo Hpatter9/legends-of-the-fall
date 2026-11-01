@@ -4,7 +4,7 @@
 
 import { type Battle, type Unit } from './sim/battle';
 import { keyOf, kitOf, ultimateOf, ULT_LEVEL, type Skill } from './sim/abilities';
-import { costOf, heroKitOf, resMax, resOf, reviveCost, reviveReady, SLOT_LEVELS, slotOpen, ultFull, type HeroKit, type Slot } from './sim/heroKits';
+import { costOf, heroKitOf, resOf, topOf, reviveCost, reviveReady, SLOT_LEVELS, slotOpen, ultFull, type HeroKit, type Slot } from './sim/heroKits';
 import { REVIVE } from './sim/kits/revive';
 import { levelLine, levelOfUse, levelSteps } from './sim/skillLevels';
 import type { SkillClass } from './sim/skillRules';
@@ -143,7 +143,8 @@ export function ultOf(b: Battle, u: Unit): UltView {
 /** The bars' numbers: health and the pool, "1419/1978" and "48/60 SP". */
 export function barNumbers(u: Unit): { hp: string; pool: string; hpShare: number; poolShare: number } {
   const hk = heroKitOf(u);
-  const max = hk ? resMax(hk.pool) : 1;
+  // (the hero's own top: a pool follows its scores, STATS batch 6)
+  const max = hk ? Math.floor(topOf(u, hk.pool)) : 1;
   const res = hk ? resOf(u, hk.pool) : 0;
   return {
     hp: `${Math.max(0, Math.ceil(u.hp))}/${u.maxHp}`,

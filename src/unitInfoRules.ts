@@ -9,7 +9,7 @@
 import { timerOf } from './sim/carry';
 import { addUnit, atkOf, defenceOf, type Battle, type Boost, type Unit } from './sim/battle';
 import { kitOf, KITS, type Kit, type Passive, type Skill } from './sim/abilities';
-import { heroKitOf, resMax, resOf, ULT_FILL } from './sim/heroKits';
+import { heroKitOf, resOf, topOf, ULT_FILL } from './sim/heroKits';
 import { PHASE2, PHASE_AT, type PhaseKit } from './sim/bossPhases';
 import { BOSS_IDS } from './sim/foes';
 import { entryOfDef, tipsOf, type FoeClass } from './sim/codex';
@@ -251,7 +251,8 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
   if (hk) {
     const n = HERO_NAMES[u.def];
     const stats = base.stats;
-    const max = resMax(hk.pool);
+    // (the hero's own top: a pool follows its scores, STATS batch 6)
+    const max = Math.floor(topOf(u, hk.pool));
     stats.unshift(['Pool', `${hk.pool === 'mana' ? 'Mana' : 'Stamina'}: ${Math.floor(resOf(u, hk.pool))}/${max} ${poolTag(hk)}`]);
     // (SUMMON-TIMERS: a shape's time left, which carries into the next wave)
     const shape = timerOf(u, b.t);
