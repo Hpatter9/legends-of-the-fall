@@ -20,6 +20,7 @@ import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { EQUIP_SLOTS, itemName, RARITY_NAMES, SLOT_NAMES, wornIn } from './sim/equipment';
 import { gearText, SLOTS, type Gear, type Slot as GearSlot } from './sim/gear';
 import type { Meta } from './sim/meta';
+import { heroRank } from './sim/awaken';
 import { UNITS, type UnitDef } from './sim/units';
 import { poolTag, sheetOf } from './fightHudRules';
 import { foeCardScores, heroCardScores, type CardScores } from './sim/statLines';
@@ -264,7 +265,7 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
       grade: u.grade ?? 1,
       awaken: u.awaken ?? 0,
       stats,
-      scores: heroCardScores(u.def, u.level ?? 1, u.grade ?? 1, u.awaken ?? 0),
+      scores: heroCardScores(u.def, u.level ?? 1, u.grade ?? 1, u.awaken ?? 0, opts.meta ? heroRank(opts.meta, u.def) : undefined, u.eq?.scores),
       traits: traitsOf(u.def).map((t) => ({ name: TRAITS[t].name, text: TRAITS[t].tiers.map((x) => `${x.need}: ${x.text}`).join(' · ') })),
       gear: gearLines(u, opts),
       moves: heroMoves(b, u, !!opts.autoUlt, opts.meta),

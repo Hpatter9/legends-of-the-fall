@@ -9,13 +9,34 @@ import {
 } from './stats';
 import type { UnitDef } from './units';
 
+/** Which effects of the scores a fight really has now. The page shows only these: a line for an effect that is not live would promise
+ *  what a fight does not do. Each later batch switches its own on (the first line of its change): batch 4 `crit`, `initiative`, `blowSpeed`
+ *  (DEX's), batch 5 `shove`, batch 6 `cooldown`, `ultFill`, `pools`, `perception`. Power (blows, skills, health), the figures AC, to hit and
+ *  skill DC, and the saves are shown as the design's data. */
+export const LIVE = {
+  power: true,
+  ac: true,
+  toHit: true,
+  dc: true,
+  saves: true,
+  crit: false,
+  initiative: false,
+  blowSpeed: false,
+  shove: false,
+  cooldown: false,
+  ultFill: false,
+  pools: false,
+  perception: false,
+};
+export type LiveKey = keyof typeof LIVE;
+
 /** A signed number the way the sheet writes it: "+3", "−1" (a true minus), "+0". */
 export const signed = (n: number): string => (n < 0 ? `−${-n}` : `+${n}`);
 /** A change of share as a signed percentage ("+10%", "−5%"). */
 export const signedPct = (share: number): string => signed(Math.round(share * 100)) + '%';
 
 /** A hero's level, whole rank (as `heroRank` counts it) and grade: what `scoresOf` needs. */
-export type HeroAt = Required<Pick<StatInput, 'level' | 'rank' | 'grade'>>;
+export type HeroAt = Required<Pick<StatInput, 'level' | 'rank' | 'grade'>> & Pick<StatInput, 'extra'>;
 
 /** One tile of the Stats panel. */
 export interface ScoreTile {
@@ -44,14 +65,15 @@ export interface FigureRow {
 
 /** The derived figures the sheet lists: Armour Class, to hit, skill DC, crit, initiative, proficiency. */
 export function figureRows(d: Derived): FigureRow[] {
-  return [
-    { key: 'ac', label: 'AC', value: String(d.ac) },
-    { key: 'hit', label: 'To hit', value: signed(d.toHit) },
-    { key: 'dc', label: 'Skill DC', value: String(d.dc) },
-    { key: 'crit', label: 'Crit', value: `${Math.round(d.crit * 100)}%` },
-    { key: 'init', label: 'Initiative', value: signed(d.initiative) },
+  const rows: (FigureRow | false)[] = [
+    LIVE.ac && { key: 'ac', label: 'AC', value: String(d.ac) },
+    LIVE.toHit && { key: 'hit', label: 'To hit', value: signed(d.toHit) },
+    LIVE.dc && { key: 'dc', label: 'Skill DC', value: String(d.dc) },
+    LIVE.crit && { key: 'crit', label: 'Crit', value: `${Math.round(d.crit * 100)}%` },
+    LIVE.initiative && { key: 'init', label: 'Initiative', value: signed(d.initiative) },
     { key: 'prof', label: 'Proficiency', value: signed(d.proficiency) },
   ];
+  return rows.filter((r): r is FigureRow => !!r);
 }
 
 /** A saving throw as the sheet lists it (trained saves are marked). */
@@ -62,6 +84,7 @@ export interface SaveCell {
   trained: boolean;
 }
 export function saveCells(p: StatProfile, d: Derived): SaveCell[] {
+  if (!LIVE.saves) return [];
   return ABILITIES.map((a) => ({ ability: a, short: ABILITY_SHORT[a], bonus: d.saves[a], trained: p.saves.includes(a) }));
 }
 
@@ -81,18 +104,26 @@ export function figureWhy(key: FigureRow['key'], d: Derived): string {
 export function scoreWhy(p: StatProfile, d: Derived, a: Ability): string {
   const m = d.mods[a];
   const parts: string[] = [];
-  if (p.blow === a) parts.push(`blows ${signedPct(d.atkMult - 1)}`);
-  if (p.cast === a) parts.push(`skills ${signedPct(d.castMult - 1)}`);
+  if (LIVE.power && p.blow === a) parts.push(`blows ${signedPct(d.atkMult - 1)}`);
+  if (LIVE.power && p.cast === a) parts.push(`skills ${signedPct(d.castMult - 1)}`);
   switch (a) {
-    case 'str': parts.push('shoves further, climbs higher'); break;
-    case 'dex': parts.push(`AC ${signed(m)}`, `crit ${Math.round(d.crit * 100)}%`, `blows ${signedPct(d.blowSpeed - 1)} faster`, `initiative ${signed(d.initiative)}`); break;
-    case 'con': parts.push(`health ${signedPct(d.hpMult - 1)}`, `stamina ${Math.round(d.stamTop)}`); break;
-    case 'int': parts.push(`skills ${signedPct(1 - d.cooldown)} sooner`); break;
-    case 'wis': parts.push('sees through cover, resists fear'); break;
-    case 'cha': parts.push(`ultimate fills ${signedPct(d.ultFill - 1)} faster`); break;
+    case 'str': if (LIVE.shove) parts.push('shoves further, climbs higher'); break;
+    case 'dex':
+      if (LIVE.ac) parts.push(`AC ${signed(m)}`);
+      if (LIVE.crit) parts.push(`crit ${Math.round(d.crit * 100)}%`);
+      if (LIVE.blowSpeed) parts.push(`blows ${signedPct(d.blowSpeed - 1)} faster`);
+      if (LIVE.initiative) parts.push(`initiative ${signed(d.initiative)}`);
+      break;
+    case 'con':
+      parts.push(`health ${signedPct(d.hpMult - 1)}`);
+      if (LIVE.pools) parts.push(`stamina ${Math.round(d.stamTop)}`);
+      break;
+    case 'int': if (LIVE.cooldown) parts.push(`skills ${signedPct(1 - d.cooldown)} sooner`); break;
+    case 'wis': if (LIVE.perception) parts.push('sees through cover, resists fear'); break;
+    case 'cha': if (LIVE.ultFill) parts.push(`ultimate fills ${signedPct(d.ultFill - 1)} faster`); break;
   }
-  const save = `${ABILITY_SHORT[a]} save ${signed(d.saves[a])}${p.saves.includes(a) ? ' (trained)' : ''}`;
-  return `${ABILITY_NAME[a]} ${d.scores[a]} (${signed(m)}): ${[...parts, save].join(' · ')}`;
+  if (LIVE.saves) parts.push(`${ABILITY_SHORT[a]} save ${signed(d.saves[a])}${p.saves.includes(a) ? ' (trained)' : ''}`);
+  return `${ABILITY_NAME[a]} ${d.scores[a]} (${signed(m)})${parts.length ? `: ${parts.join(' · ')}` : ''}`;
 }
 
 /** The next level that raises a score, and what it adds: "Level 12 · STR +2". Null when every improvement is gained. */
@@ -115,10 +146,10 @@ export interface StatPanel {
   derived: Derived;
   profile: StatProfile;
 }
-export function statPanelOf(kind: string, at: HeroAt): StatPanel | undefined {
+export function statPanelOf(kind: string, at: HeroAt, extra?: Partial<Scores>): StatPanel | undefined {
   const profile = profileOf(kind);
   if (!profile) return undefined;
-  const derived = derivedOf(profile, at);
+  const derived = derivedOf(profile, { ...at, extra: extra ?? at.extra });
   return { tiles: scoreTiles(profile, derived), figures: figureRows(derived), saves: saveCells(profile, derived), proficiency: derived.proficiency, next: nextImprovement(profile, at.level), derived, profile };
 }
 
@@ -132,15 +163,15 @@ export interface CardScores {
 }
 const cardOf = (scores: Scores, mods: Scores, ac: number, toHit: number, dc: number, init: number): CardScores => ({
   tiles: ABILITIES.map((a) => ({ short: ABILITY_SHORT[a], score: scores[a], mod: mods[a] })),
-  rolls: `AC ${ac} · To hit ${signed(toHit)} · DC ${dc} · Init ${signed(init)}`,
+  rolls: [LIVE.ac && `AC ${ac}`, LIVE.toHit && `To hit ${signed(toHit)}`, LIVE.dc && `DC ${dc}`, LIVE.initiative && `Init ${signed(init)}`].filter(Boolean).join(' · '),
 });
 
 /** A hero's card scores. A unit does not carry its taken rank, only its awakened steps: an awakened hero counts as `rank` 4 plus those,
  *  any other as rank 1 (the page's sheet, which knows the meta, shows the exact rank). */
-export function heroCardScores(kind: string, level: number, grade: number, awaken: number, rank?: number): CardScores | undefined {
+export function heroCardScores(kind: string, level: number, grade: number, awaken: number, rank?: number, extra?: Partial<Scores>): CardScores | undefined {
   const p = profileOf(kind);
   if (!p) return undefined;
-  const d = derivedOf(p, { level, grade, rank: rank ?? (awaken > 0 ? 4 + awaken : 1) });
+  const d = derivedOf(p, { level, grade, extra, rank: rank ?? (awaken > 0 ? 4 + awaken : 1) });
   return cardOf(d.scores, d.mods, d.ac, d.toHit, d.dc, d.initiative);
 }
 
@@ -187,9 +218,9 @@ export function scoreRises(kind: string, from: number, to: number, rank = 1, gra
 
 // ---- The gear compare ----
 
-/** A gear piece's score points, when it has any (batch 2 puts a `scores` key on a piece's stats; until then there is none). */
-export function gearScores(stats: object | undefined): Partial<Scores> | undefined {
-  const s = (stats as { scores?: Partial<Scores> } | undefined)?.scores;
+/** A gear piece's score points (`EquipStats.scores`), when it has any. */
+export function gearScores(stats: { scores?: Partial<Scores> } | undefined): Partial<Scores> | undefined {
+  const s = stats?.scores;
   return s && ABILITIES.some((a) => (s[a] ?? 0) !== 0) ? s : undefined;
 }
 
@@ -199,7 +230,8 @@ export function scoreCompare(kind: string, at: HeroAt, delta: Partial<Scores>): 
   const p = profileOf(kind);
   if (!p) return [];
   const before = derivedOf(p, at);
-  const after = derivedOf(p, { ...at, extra: delta });
+  // (the hero's own extra points, from what it wears and its talents, plus the points the swap adds or takes)
+  const after = derivedOf(p, { ...at, extra: Object.fromEntries(ABILITIES.map((a) => [a, (at.extra?.[a] ?? 0) + (delta[a] ?? 0)])) });
   const out: string[] = [];
   for (const a of ABILITIES) {
     const d = delta[a] ?? 0;
@@ -211,15 +243,16 @@ export function scoreCompare(kind: string, at: HeroAt, delta: Partial<Scores>): 
     const fx: string[] = [];
     const share = (label: string, x: number, y: number) => { if (Math.round((y - x) * 100) !== 0) fx.push(`${label} ${signedPct(y - x)}`); };
     const step = (label: string, x: number, y: number) => { if (y !== x) fx.push(`${label} ${signed(y - x)}`); };
-    if (p.blow === a) share('blows', before.atkMult, after.atkMult);
-    if (p.cast === a) share('skills', before.castMult, after.castMult);
-    if (a === 'con') share('health', before.hpMult, after.hpMult);
-    if (a === 'dex') share('blows', before.blowSpeed, after.blowSpeed);
-    if (a === 'int') share('skills sooner', before.cooldown === 1 ? 1 : 1 / before.cooldown, after.cooldown === 1 ? 1 : 1 / after.cooldown);
-    if (a === 'cha') share('ultimate', before.ultFill, after.ultFill);
-    step('to hit', before.toHit, after.toHit);
-    step('skill DC', before.dc, after.dc);
-    step('AC', before.ac, after.ac);
+    if (LIVE.power && p.blow === a) share('blows', before.atkMult, after.atkMult);
+    if (LIVE.power && p.cast === a && p.blow !== a) share('skills', before.castMult, after.castMult);
+    if (LIVE.power && p.cast === a && p.blow === a && fx.length) fx[fx.length - 1] = fx[fx.length - 1].replace('blows', 'blows and skills');
+    if (LIVE.power && a === 'con') share('health', before.hpMult, after.hpMult);
+    if (a === 'dex' && LIVE.blowSpeed) share('blows', before.blowSpeed, after.blowSpeed);
+    if (a === 'int' && LIVE.cooldown) share('skills sooner', 1 / before.cooldown, 1 / after.cooldown);
+    if (a === 'cha' && LIVE.ultFill) share('ultimate', before.ultFill, after.ultFill);
+    if (LIVE.toHit) step('to hit', before.toHit, after.toHit);
+    if (LIVE.dc) step('skill DC', before.dc, after.dc);
+    if (LIVE.ac) step('AC', before.ac, after.ac);
     out.push(`${ABILITY_SHORT[a]} ${s0} → ${s1} (${signed(modOf(s0))} → ${signed(modOf(s1))})${fx.length ? `: ${fx.join(', ')}` : ''}`);
   }
   return out;

@@ -1,6 +1,7 @@
 // STATS batch 3: the Stats panel of the hero sheet (six score tiles, the figures they make, the saves, a plain line a tap opens) and the
 // unit card's row of scores. Reads `sim/statLines.ts` only (which reads `sim/stats.ts`); it changes nothing in the game.
 
+import type { Scores } from './sim/stats';
 import { figureWhy, scoreWhy, signed, statPanelOf, type CardScores, type HeroAt } from './sim/statLines';
 
 const el = (tag: string, cls = '', text = ''): HTMLElement => {
@@ -12,8 +13,8 @@ const el = (tag: string, cls = '', text = ''): HTMLElement => {
 
 /** The panel for a hero kind at a level, rank and grade; `lead` are the sheet's own cells (health, attack, armour) it carries on top.
  *  Undefined for a kind without a profile. */
-export function drawStatsPanel(kind: string, at: HeroAt, lead: HTMLElement[] = []): HTMLElement | undefined {
-  const panel = statPanelOf(kind, at);
+export function drawStatsPanel(kind: string, at: HeroAt, lead: HTMLElement[] = [], extra?: Partial<Scores>): HTMLElement | undefined {
+  const panel = statPanelOf(kind, at, extra);
   if (!panel) return undefined;
   const box = el('section', 'stPanel');
   box.setAttribute('aria-label', 'Ability scores');
@@ -63,7 +64,8 @@ export function drawStatsPanel(kind: string, at: HeroAt, lead: HTMLElement[] = [
     if (s.trained) c.title = 'Trained: proficiency is added';
     saves.append(c);
   }
-  box.append(saves, why);
+  if (panel.saves.length) box.append(saves);
+  box.append(why);
   box.append(el('small', 'stNext', panel.next ? `Next: ${panel.next}` : 'Every improvement gained'));
   return box;
 }

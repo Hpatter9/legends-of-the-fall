@@ -350,7 +350,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       pv.textContent = powerText(kindPower(meta, kind));
       for (const [v, rate] of speeds) v.textContent = rate();
     };
-    const scores = drawStatsPanel(kind, { level: x.level, rank: full, grade: 1 }, lead);
+    const scores = drawStatsPanel(kind, { level: x.level, rank: full, grade: 1 }, lead, heroStats(meta, kind)?.scores);
     overview.append(power, ...(scores ? [scores] : []), stat);
     const profile = el('div', 'dossierProfile');
     profile.append(detailHeading('Combat profile', def.role));

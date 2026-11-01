@@ -8,6 +8,7 @@ import { combineAll, combineGroup, combineGroups, combinePreview, COMBINE_COUNT 
 import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './sim/gearSets';
 import { saveMeta, type Meta } from './sim/meta';
 import { heroRank } from './sim/awaken';
+import { heroStats } from './sim/talents';
 import { levelOfKind } from './sim/levels';
 import { ABILITIES } from './sim/stats';
 import { gearScores, scoreCompare, type HeroAt } from './sim/statLines';
@@ -290,13 +291,14 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     return b;
   };
 
-  const at: HeroAt = { level: levelOfKind(meta, kind), rank: heroRank(meta, kind), grade: 1 };
   const picker = (slot: EquipSlot) => {
+    // (the hero as it is now, with what it wears and its talents: the compare is against this)
+    const at: HeroAt = { level: levelOfKind(meta, kind), rank: heroRank(meta, kind), grade: 1, extra: heroStats(meta, kind)?.scores };
     const cur = wornIn(meta, kind, slot);
     panel.replaceChildren(el('h4', '', `${SLOT_NAMES[slot]} · ${UNITS[kind].name}`));
     if (cur) {
       const worn = el('div', `eqRow worn r${cur.rarity}`);
-      worn.append(el('small', 'eqTag', 'Worn'), itemCard(cur, kind, undefined, at));
+      worn.append(el('small', 'eqTag', 'Worn'), itemCard(cur, kind));
       const off = el('button', '', 'Unequip');
       off.type = 'button';
       off.addEventListener('click', () => {

@@ -17,7 +17,7 @@
 .stTile.weak { border-color: #3a3a30; }
 .stTile.weak b, .stTile.weak small { opacity: .65; }
 .stTile[aria-pressed='true'], .stFig[aria-pressed='true'] { background: #243420; border-color: #bda16c; }
-.stFigs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.stFigs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 4px; }
 .stFig { flex-direction: row; justify-content: space-between; gap: 4px; padding: 5px 7px; }
 .stFig b { font: 700 14px var(--body); color: var(--kk-text, #f0e6d2); }
 .stSaves { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font: 700 12px var(--body); color: var(--kk-muted, #b8ad94); }

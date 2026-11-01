@@ -1,10 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
-import { derivedOf, profileOf, scoresOf } from '../src/sim/stats';
+import { ABILITIES, derivedOf, profileOf, scoresOf } from '../src/sim/stats';
 import {
   figureRows, foeCardScores, gearScores, heroCardScores, nextImprovement, saveCells, scoreCompare, scoreRises, scoreTiles, scoreWhy, signed, statPanelOf,
 } from '../src/sim/statLines';
+import { LIVE } from '../src/sim/statLines';
+import { itemStats } from '../src/sim/equipment';
 import { heroGrowth } from '../src/sim/jrpgRecap';
 import { FOES } from '../src/sim/foes';
 
@@ -38,7 +40,10 @@ test("a score's line names its effects in numbers, and the blow ability's names 
   const d = derivedOf(p, at);
   assert.match(scoreWhy(p, d, p.blow), /blows [+−]\d+%/);
   assert.match(scoreWhy(p, d, 'con'), /health [+−]\d+%/);
-  assert.match(scoreWhy(p, d, 'dex'), /initiative/);
+  // (an effect no fight has yet is not promised: crit, initiative, blow speed, cooldowns and ultimate fill are switched off in LIVE)
+  assert.doesNotMatch(scoreWhy(p, d, 'dex'), /initiative|crit|faster/);
+  assert.doesNotMatch(scoreWhy(p, d, 'int'), /sooner/);
+  assert.doesNotMatch(scoreWhy(p, d, 'cha'), /ultimate/);
   assert.match(scoreWhy(p, d, p.saves[0]), /\(trained\)/);
 });
 
@@ -93,15 +98,41 @@ test('the gear compare says what a point does, and when it does not move the mod
   assert.match(two[0], /\+\d → \+\d/);
 });
 
+test('the compare adds the swap to the points the hero already wears', () => {
+  const w = { ...at, extra: { str: 1 } };
+  const p = profileOf('knight')!;
+  const lines = scoreCompare('knight', w, { str: 2 });
+  const from = scoresOf(p, w).str;
+  assert.match(lines[0], new RegExp(`^STR ${from} → ${from + 2}`));
+});
+
 test('a piece with no score points shows nothing, and one with some is read', () => {
-  assert.equal(gearScores({ hp: 0 }), undefined);
+  assert.equal(gearScores({}), undefined);
   assert.equal(gearScores(undefined), undefined);
   assert.deepEqual(gearScores({ scores: { str: 1 } }), { str: 1 });
 });
 
-test('figures are six, tiles are six', () => {
+test('the figures show only what is live', () => {
+  const keys = statPanelOf('knight', at)!.figures.map((f) => f.key);
+  assert.deepEqual(keys, ['ac', 'hit', 'dc', 'prof']);
+  assert.equal(LIVE.crit, false);
+  assert.doesNotMatch(heroCardScores('knight', 8, 1, 0)!.rolls, /Init/);
+});
+
+test('a real piece of gear has score points, and the compare reads them for the hero', () => {
+  const sword = itemStats({ id: 1, base: 'ironSword', rarity: 4, level: 5 } as never, 'knight');
+  const pts = gearScores(sword)!;
+  assert.ok(pts && ABILITIES.some((a) => (pts[a] ?? 0) > 0));
+  // the hero's scores with the piece on are what the panel shows
+  const withGear = statPanelOf('knight', { ...at, extra: pts })!;
+  const bare = statPanelOf('knight', at)!;
+  assert.ok(withGear.tiles.some((t, i) => t.score > bare.tiles[i].score));
+  assert.ok(scoreCompare('knight', { ...at, extra: pts }, pts).length >= 1);
+});
+
+test('figures are four, tiles are six', () => {
   const panel = statPanelOf('knight', at)!;
-  assert.equal(panel.figures.length, 6);
+  assert.equal(panel.figures.length, 4);
   assert.equal(scoreTiles(panel.profile, panel.derived).length, 6);
-  assert.equal(figureRows(panel.derived).length, 6);
+  assert.equal(figureRows(panel.derived).length, 4);
 });
