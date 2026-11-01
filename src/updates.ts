@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.327.0',
+    date: '2026-11-01',
+    title: 'A new opening',
+    notes: ['The opening is rebuilt: one pass over the warcamp, three defenders with their own voices, your ruler and Duchess, and the warlord\'s arrival.'],
+  },
+  {
     version: '0.326.0',
     date: '2026-11-01',
     title: 'The Iron Stag leads',
