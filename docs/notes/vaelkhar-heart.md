@@ -36,5 +36,5 @@ heals 120 rather than 100); and the save. `typecheck`, `eidolon*` and `vaelkhar-
 ## Left open
 
 - The Eidolon's card (Pact Gallery) still reads 25%; a line there once the gift is given would need the card to know the save.
-- A Calamity run is the only place the Heart is found (the Eidolons' and Storied relics come from the tower's altar and the Calamity); if the
-  Heart ever drops to the keep itself, `noteHeart` is the one place to call.
+- Storied relics are given only by the tower's black altar and the cursed crown (`relics.ts`), so the Heart is found only in a tower run; if it
+  ever reaches the keep another way, `noteHeart` is the one place to call.
