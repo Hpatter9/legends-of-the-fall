@@ -13,7 +13,7 @@ import { ALL_HEROES, HEROES } from './units';
 import { readStarter, starterPacks, type Starter } from './starter';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
-import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
+import { readCart, readEquipment, readEquipped, type CartPiece, type EquipSlot, type Equipment } from './equipment';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTomes, type TomeCounts } from './tomes';
@@ -120,6 +120,9 @@ export interface Meta {
   equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** The next equipment id. */
   nextItem?: number;
+  /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
+   *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
+  cart?: CartPiece[];
   /** The rank the player has taken for each hero kind (`rankUp.ts`): shards earn a rank, a tap on "Rank up" takes it. Missing means every earned rank counts (the tests' and tools' saves); a save from before is read with the ranks it had. */
   ranked?: Record<string, number>;
   /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
@@ -472,6 +475,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.equipment = readEquipment(m.equipment);
       m.equipped = readEquipped(m.equipped, m.equipment);
       m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
+      // (RUN-GEAR: the cart's pieces; a save from before has none)
+      m.cart = readCart(m.cart);
+      if (!m.cart.length) delete m.cart;
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)

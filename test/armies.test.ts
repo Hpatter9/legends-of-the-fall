@@ -353,13 +353,14 @@ test('winning waves moves on, the last boss wins the army and ends the run', () 
   }
   assert.equal(run.stage, n);
   // (a boss wave drops gear)
-  const before = (run.items ?? []).length;
+  // (RUN-GEAR: a real piece, in the pack)
+  const before = (run.pack ?? []).length;
   finish(run, true, 2);
   assert.equal(run.cleared, true);
   assert.equal(run.over, true);
   assert.equal(run.stage, n);
   assert.equal(run.event, undefined);
-  assert.ok((run.items ?? []).length > before);
+  assert.ok((run.pack ?? []).length > before);
 });
 
 test('the first wave of the first army is won by a fresh party, every time', () => {

@@ -27,6 +27,7 @@ PICKS = [
     *[(f'books-shop/ui/standing-{n}.png', f'standing-{n}', 96) for n in (1, 2, 3)],
     ('gear/wear/badge-worn.png', 'badge-worn', 48),
     ('gear/wear/badge-broken.png', 'badge-broken', 48),
+    ('gear/wear/badge-field.png', 'badge-field', 48),
     ('gear/wear/wear-broken.png', 'wear-broken', 128),
     ('gear/wear/repair.png', 'repair', 96),
     ('gear/wear/repair-all.png', 'repair-all', 96),

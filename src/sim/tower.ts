@@ -16,7 +16,8 @@ import { spireArea } from './lands';
 import { armyById, armyIndex, armyUnlocked, ARMIES } from './armies';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS } from './foes';
 import { grantEquipment, itemName, rollEquipment } from './equipment';
-import { dropGear, gearText, type Gear } from './gear';
+import { gearText, type Gear } from './gear';
+import { findGear, findPrice, foundLine, SOURCE, stow } from './runGear';
 import { FALLEN, healParty } from './health';
 import { drawEvent, TOWER_EVENT_KINDS } from './events';
 import type { Meta } from './meta';
@@ -606,8 +607,8 @@ function stockShop(run: Run, floor: number): ShopItem[] {
     relics.splice(relics.indexOf(id), 1);
     items.push({ kind: 'relic', label: RELICS[id].name, text: relicText(id), cost: relicPriceOf(id, 55 + 3 * floor + rng.int(0, 15)), ref: id });
   }
-  const g = dropGear(rng, gearId(run), floor);
-  items.push({ kind: 'gear', label: g.name, text: `${g.slot}: ${gearText(g)}`, cost: 24 * g.tier + 2 * floor, gear: g });
+  const g = findGear(run, rng, gearId(run), floor, 0, SOURCE.shop);
+  items.push({ kind: 'gear', label: g.name, text: `${g.slot}: ${gearText(g)}`, cost: findPrice(g, floor, 24), gear: g });
   // (a calamity's shop offers a hero it does not have yet, of any of the 45; the usual one a hero of the party)
   const pool = hireable(run);
   const kind = pool.length ? rng.pick(pool) : undefined;
@@ -670,7 +671,7 @@ function stockChest(run: Run, floor: number): Treasure {
   const relics = unownedRelics(run);
   const chest: Treasure = { gold: 30 + 6 * floor };
   if (relics.length && rng.chance(0.45)) chest.relic = pickRelic(() => rng.next(), relics);
-  else chest.gear = dropGear(rng, gearId(run), floor, rng.chance(0.3) ? 1 : 0);
+  else chest.gear = findGear(run, rng, gearId(run), floor, rng.chance(0.3) ? 1 : 0, SOURCE.floorChest);
   return chest;
 }
 
@@ -919,9 +920,10 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     run.found.push(`${drop.n} ${ORES[drop.trait].name}`);
   }
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
+  let bossDrop = -1;
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
   // (a run whose heroes start bare finds gear in its fights too: now and then in a plain one, always from an elite; from a side stream)
-  if (run.local && !t.cur?.side && (kind === 'elite' || (kind === 'fight' && new Rng(mixSeed(run.seed, 0x6ea5, floor)).chance(FIGHT_GEAR)))) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea6, floor)), gearId(run), floor, kind === 'elite' ? 1 : 0));
+  if (run.local && !t.cur?.side && (kind === 'elite' || (kind === 'fight' && new Rng(mixSeed(run.seed, 0x6ea5, floor)).chance(FIGHT_GEAR)))) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea6, floor)), gearId(run), floor, kind === 'elite' ? 1 : 0, SOURCE.floor));
   const relics = unownedRelics(run);
   const relicOf = (id: string) => {
     (run.relics ??= []).push(id);
@@ -930,7 +932,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   };
   if (kind === 'elite' && t.cur?.side) {
     // (a detour's mini-boss: double gold and a good piece of gear, and no relic; no healing after, and a quarter of the XP)
-    prizes.push(dropGear(rng, gearId(run), floor, 1));
+    prizes.push(findGear(run, rng, gearId(run), floor, 1, SOURCE.elite));
   } else if (kind === 'elite') {
     // (an elite always pays a relic, one of three: the page offers them on the map; none left, it pays gear)
     const offer = drawOffer(run, floor);
@@ -938,10 +940,12 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
       t.offer = offer;
       t.lastElite = t.cur?.fight?.elite;
       run.found.push(`a choice of ${offer.length >= OFFER_SIZE ? 'three' : offer.length} relics, on the map`);
-    } else prizes.push(dropGear(rng, gearId(run), floor, 1));
+    } else prizes.push(findGear(run, rng, gearId(run), floor, 1, SOURCE.elite));
   } else if (kind === 'boss') {
     // (a boss drops gear, and a relic if one is left)
-    prizes.push(dropGear(rng, gearId(run), floor, 1));
+    const bossGear = findGear(run, rng, gearId(run), floor, 1, SOURCE.boss);
+    bossDrop = bossGear.id;
+    prizes.push(bossGear);
     if (relics.length) relicOf(pickRelic(() => rng.next(), relics));
     // (a calamity's bosses are its own: not for the meta's list of bosses beaten)
     if (!t.maps) t.lastBoss = t.cur?.fight?.band[0];
@@ -953,11 +957,11 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     if (recap) recap.gold += gold;
     run.found.push(`${gold} gold from the mimic's chest`);
     if (relics.length) relicOf(pickRelic(() => rng.next(), relics));
-    prizes.push(dropGear(rng, gearId(run), floor, 1));
+    prizes.push(findGear(run, rng, gearId(run), floor, 1, SOURCE.chest));
   }
   for (const g of prizes) {
-    (run.items ??= []).push(g);
-    run.found.push(`${g.name} (${g.slot}, ${gearText(g)})`);
+    stow(run, g, g.id === bossDrop ? SOURCE.boss : undefined);
+    run.found.push(foundLine(g));
     recap?.gear.push(g.name);
   }
   if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
@@ -1011,7 +1015,7 @@ export function buy(run: Run, i: number): string | null {
       (run.relics ??= []).push(it.ref!);
       return `Bought the ${it.label}.`;
     case 'gear':
-      (run.items ??= []).push(it.gear!);
+      stow(run, it.gear!);
       return `Bought the ${it.label}.`;
     case 'hero':
       hireHero(run, it.ref!, it.cost);
@@ -1040,7 +1044,7 @@ export function openTreasure(run: Run): string[] | null {
     lines.push(`${theRelic(ch.relic)}: ${relicText(ch.relic)}`);
   }
   if (ch.gear) {
-    (run.items ??= []).push(ch.gear);
+    stow(run, ch.gear);
     recap?.gear.push(ch.gear.name);
     lines.push(`${ch.gear.name} (${ch.gear.slot}, ${gearText(ch.gear)})`);
   }

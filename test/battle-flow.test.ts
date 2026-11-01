@@ -122,7 +122,9 @@ test('retries are saved with the run and a run without the field has both left',
 });
 
 test('the pack\'s best gear goes on the fielded heroes, strongest first, and the rest stays in the pack', () => {
+  // (a run on the old rules, saved before RUN-GEAR; a real-gear run's Equip best is in test/run-gear.test.ts)
   const r = newRun(21);
+  delete r.real;
   const [a, b] = r.roster;
   r.squad = [a.id, b.id];
   const low = makeGear(1, 'weapon', 1);
@@ -145,6 +147,7 @@ test('the pack\'s best gear goes on the fielded heroes, strongest first, and the
 
 test('equipping the best leaves heroes not named alone, and no piece is on two heroes', () => {
   const r = newRun(22);
+  delete r.real;
   r.gold = 1000;
   summon(r);
   const [a, b, c] = r.roster;

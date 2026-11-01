@@ -158,7 +158,7 @@ test('a climb finds gear in its plain fights (from its own stream), more than an
       enterNode(run, choices(run)[0].id);
       const b = playNode(run);
       finishTower(run, b, true);
-      n += run.items?.length ?? 0;
+      n += (run.items?.length ?? 0) + (run.pack?.length ?? 0);
     }
     return n;
   };
@@ -596,7 +596,7 @@ test('a mini-boss pays a relic to choose, gear, and double gold', () => {
   const floor = run.stage;
   finishTower(run, playNode(run), true);
   assert.ok(run.tower!.offer && run.tower!.offer.length >= 1, 'a relic to choose');
-  assert.ok((run.items?.length ?? 0) >= 1, 'gear');
+  assert.ok((run.pack?.length ?? 0) >= 1, 'gear');
   assert.ok(run.gold - gold >= 2 * (20 + 6 * floor) * 0.9, 'double gold');
 });
 
@@ -735,11 +735,13 @@ test('the wandering bard: awful ballad grants temporary Earworm speed buff, or p
 });
 
 test('the goblin gambler forge: gambles weapon for +20% attack or humorous Rusted Spoon', () => {
+  // (RUN-GEAR: these runs are on the old rules; a real-gear run's forge is in test/run-gear.test.ts)
   // Find a winning seed and a losing seed
   let winSeed = 0;
   let loseSeed = 0;
   for (let s = 1; s <= 50; s++) {
     const testRun = calamityRun(s, startedMeta(1), 'knight');
+    delete testRun.real; // (a run on the old rules, saved before RUN-GEAR: its simple gear)
     (testRun.items ??= []).push(makeGear(1, 'weapon', 1));
     const card = drawEvent(testRun, 3, ['goblinForge']);
     const fx = card.options[0].effect;
@@ -753,6 +755,7 @@ test('the goblin gambler forge: gambles weapon for +20% attack or humorous Ruste
 
   // Test Win resolution: +20% attack
   const runWin = calamityRun(winSeed, startedMeta(1), 'knight');
+  delete runWin.real; // (a run on the old rules, saved before RUN-GEAR: its simple gear)
   const sword = makeGear(5, 'weapon', 1);
   (runWin.items ??= []).push(sword);
   runWin.event = drawEvent(runWin, 3, ['goblinForge']);
@@ -763,6 +766,7 @@ test('the goblin gambler forge: gambles weapon for +20% attack or humorous Ruste
 
   // Test Loss resolution: transformed into Rusted Spoon
   const runLose = calamityRun(loseSeed, startedMeta(1), 'knight');
+  delete runLose.real; // (a run on the old rules, saved before RUN-GEAR: its simple gear)
   const dagger = makeGear(6, 'weapon', 1);
   (runLose.items ??= []).push(dagger);
   runLose.event = drawEvent(runLose, 3, ['goblinForge']);
@@ -775,6 +779,7 @@ test('the goblin gambler forge: gambles weapon for +20% attack or humorous Ruste
 
   // Test Safe Sharpening Option (Whetstone)
   const runSafe = calamityRun(1, startedMeta(1), 'knight');
+  delete runSafe.real; // (a run on the old rules, saved before RUN-GEAR: its simple gear)
   runSafe.gold = 100;
   const axe = makeGear(7, 'weapon', 1);
   (runSafe.items ??= []).push(axe);
@@ -850,7 +855,7 @@ test('the whispering void well: drink deep for attack buff or toss gold for reli
   const cost = run2.event.options[1].cost;
   chooseOption(run2, 1);
   assert.equal(run2.gold, 60 - cost);
-  assert.equal(run2.items?.length, 1);
+  assert.equal(run2.pack?.length, 1);
 });
 
 test('an event\'s blessing waits for the next fight: clearing the mystery floor does not spend it, the fight does', () => {

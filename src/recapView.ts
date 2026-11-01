@@ -40,6 +40,8 @@ export interface RecapHead {
   /** JRPG-RECAP: the results screen at the top (the banner, each hero's XP and levels over the run, the MVP, the gold and crowns);
    *  it takes the place of the headline figures and the XP list. */
   results?: JrData;
+  /** RUN-GEAR: the Found row (`foundRow.ts`), under the results. */
+  found?: HTMLElement | null;
 }
 
 /** The "How to come back stronger" card on a lost run's recap (`sim/comeback.ts`): each pointer's button closes the recap and goes there. */
@@ -89,6 +91,7 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
 
   // the party, the MVP and the spoils (JRPG-RECAP), or the headline figures
   if (player) sheet.append(jrBody);
+  if (head.found) sheet.append(head.found);
   const grid = el('div', 'rcGrid');
   const fig = (label: string, value: string) => {
     const f = el('div', 'rcFig');

@@ -102,14 +102,14 @@ test('a detour fight pays double gold and a good piece of gear, no relic and no 
       for (let at: number | undefined = side.from; at !== undefined; at = t.map.find((n) => n.next.includes(at!) && n.row === t.map[at!].row - 1)?.id) chain.unshift(at);
       for (const id of chain) if (!t.path.includes(id)) clear(r, id);
       assert.ok(sideChoices(r).some((s) => s.id === side.id));
-      const gear = r.items?.length ?? 0;
+      const gear = r.pack?.length ?? 0;
       const relics = r.relics?.length ?? 0;
       const gold = r.gold;
       assert.equal(enterNode(r, side.id), true);
       if (kind === 'elite') {
         elite++;
         win(r);
-        assert.ok((r.items?.length ?? 0) === gear + 1, 'a piece of gear');
+        assert.ok((r.pack?.length ?? 0) === gear + 1, 'a piece of gear');
         assert.equal(r.relics?.length ?? 0, relics, 'no relic');
         assert.equal(t.offer, undefined, 'no choice of relics');
         assert.ok(r.gold - gold > 0);

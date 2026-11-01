@@ -15,7 +15,7 @@ import { ORES } from './sim/awakenMats';
 import { showWhenPainted } from './paintReady';
 import { BOOKS, KIND_NAMES, RARITY_WORDS, bookById, type BookDef } from './sim/bookData';
 import { canRead, copiesOf, knowsBook, slotFor, studyLength, suitedTo } from './sim/books';
-import { EQUIP_BASES, RARITY_NAMES, describeAbility, hasAbility, itemName, itemStats, sellPrice, spareEquipment, statLines, wearerOf, type Equipment } from './sim/equipment';
+import { EQUIP_BASES, RARITY_NAMES, STASH_MAX, describeAbility, hasAbility, itemName, itemStats, sellPrice, spareEquipment, statLines, wearerOf, type Equipment } from './sim/equipment';
 import { heroName } from './sim/heroNames';
 import { saveMeta, type Meta } from './sim/meta';
 import {
@@ -319,7 +319,9 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     }
     body.append(pills);
     const spare = spareEquipment(m).sort((a, b) => a.rarity - b.rarity || a.level - b.level || a.id - b.id);
-    body.append(el('p', 'hsNote', `Spare gear: ${spare.length} piece${spare.length === 1 ? '' : 's'}. What a hero wears is never offered.`));
+    // (RUN-GEAR: the stash holds STASH_MAX; pieces brought home to a full one wait on the cart, and move in as room is made)
+    body.append(el('p', 'hsNote', `Spare gear: ${spare.length} / ${STASH_MAX}. What a hero wears is never offered.`));
+    if (m.cart?.length) body.append(el('p', 'hsNote hsFull', `Your stash is full: ${m.cart.length} piece${m.cart.length === 1 ? ' waits' : 's wait'} on the cart.`));
     const list = el('div', 'hsList');
     if (filter !== 'books')
       for (const it of spare.filter((x) => filter === 'all' || (filter === 'common' ? x.rarity === 1 : filter === 'rare' ? x.rarity === 2 : x.rarity >= 3))) {

@@ -23,6 +23,7 @@ import { questLines } from './sim/jrpgRecap';
 import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
 import { noteSpoils } from './sim/runSpoils';
 import { showRecap } from './recapView';
+import { foundRow } from './foundRow';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
 import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
@@ -60,6 +61,7 @@ import { SCENES, SCENE_ORDER, type Moment, type Scene } from './sim/sceneScripts
 import { previewFrames } from './render/sceneClock';
 import { xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
+import { runKitStats, settleFinds, settleRunWear, slotTaken } from './sim/runGear';
 import { powerOf, powerText } from './sim/power';
 import { benchXp, fightXp, gainXp, levelOfKind, type LevelUp } from './sim/levels';
 import { levelBadge } from './levelBadge';
@@ -242,7 +244,7 @@ class Game {
   private run!: Run;
   private meta!: Meta;
   private gacha!: Gacha;
-  private events = new Events((kind) => awakenedOf(this.meta, kind));
+  private events = Object.assign(new Events((kind) => awakenedOf(this.meta, kind)), { metaOf: () => this.meta as Meta | undefined });
   private towerView!: TowerView;
   /** The Last Stand (`standView.ts`): while it is up the ordinary board is hidden and this page's own frame does nothing. */
   private stand!: StandView;
@@ -535,6 +537,8 @@ class Game {
     (window as unknown as { __game: Game }).__game = this;
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
+    // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
+    (window as unknown as { __settleFinds: typeof settleFinds }).__settleFinds = settleFinds;
     // (a hero's first awakening has its cinematic)
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
@@ -2200,10 +2204,11 @@ class Game {
   /** A roster hero's boost for the fight: its grade, rank, level, gear and equipment, and the tower's wounds. */
   private boostFor(h: Owned): Boost {
     // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
-    if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
+    if (this.run.local) return { ...localBoost(h, this.run), carry: hpShare(this.run, h.id) };
     // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
-    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
+    // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
+    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -2242,6 +2247,7 @@ class Game {
     const run = this.run;
     if (!abandonTower(run)) return this.home.open();
     const summary = settleTower(this.meta, run)!;
+    settleFinds(this.meta, run);
     saveMeta(this.meta);
     saveRun(run);
     dropSlot(run.mode?.kind === 'calamity' ? 'calamity' : 'tower');
@@ -2517,7 +2523,9 @@ class Game {
     const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
     // (JRPG-RECAP: the run's results screen at the top: each hero's XP over the run, the MVP, the gold and crowns counted up)
     const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) }, run);
-    showRecap($('recap'), recapOf(run), { ...head, joke, results, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
+    // (RUN-GEAR: the pieces the run brought home, and Sell the Commons)
+    const found = foundRow(this.meta, run.foundHome, todayKey(), () => saveMeta(this.meta));
+    showRecap($('recap'), recapOf(run), { ...head, joke, results, found, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -3118,6 +3126,8 @@ class Game {
       this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : quest ? 0 : earn(this.meta, stage, won, rating.stars);
       if (run.tower) run.tower.crowns += this.crownGain;
       if (run.tower && run.over) settleTower(this.meta, run);
+      // (RUN-GEAR: a run that has ended brings its finds home, once: worn for real, to the stash, the cart or sold)
+      if (run.over) settleFinds(this.meta, run, !!this.auto);
       if (won && !army && !daily && !quest && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
       // (QUESTS: the quests this fight completes are told after the achievements' toasts)
       const readyBefore = readyQuests(this.meta);
@@ -3164,7 +3174,9 @@ class Game {
       // the Calamity count too, though their heroes fight at Level 1 there: the owner's answers)
       const useCut = useShare(run.mode, !!this.auto);
       const skillUps = useCut > 0 ? levelUpWords(settleSkillUse(this.meta, fightUse(b, this.meta.unlocked), useCut)) : [];
-      const wore = run.local ? [] : wearWords(settleWear(this.meta, placed.map((u) => ({ kind: u.def, fell: !u.alive })), !!this.auto), heroName);
+      // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
+      const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
+      const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
       noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);

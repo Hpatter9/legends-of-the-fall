@@ -189,7 +189,9 @@ test('a duel, a gamble and the forge settle what was rolled with the card', () =
   const act = road(run.event!.options[0]);
   chooseOption(run, 0);
   assert.deepEqual(hero.bump, { hp: act.bump!.hp, atk: act.bump!.atk });
+  // (a run on the old rules, saved before RUN-GEAR: its simple gear)
   const forge = army();
+  delete forge.real;
   forge.gold = 999;
   forge.items = [makeGear(50, 'armour', 1)];
   withCard(forge, 'temper');

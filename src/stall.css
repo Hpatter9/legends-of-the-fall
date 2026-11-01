@@ -40,6 +40,7 @@
 .hsTome img { width: 70%; height: 70%; image-rendering: pixelated; }
 .bookIcon .eqArt { background-repeat: no-repeat; }
 .hsNote { margin: 0; font: 400 12px/1.4 var(--body); color: #c3b99f; }
+.hsNote.hsFull { color: #ef8f7a; font-weight: 700; } /* RUN-GEAR: the cart waits for room */
 .hsEmpty { margin: 24px 8px; font: italic 400 15px/1.4 var(--body); color: #e8d6ad; text-align: center; }
 
 .hsVeil { position: absolute; inset: 0; z-index: 5; display: flex; align-items: flex-end; background: #0009; }
