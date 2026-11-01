@@ -376,7 +376,8 @@ export const benched = (run: Run) => run.roster.filter((h) => !run.squad.include
 export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
   const k = gradeMult(grade) * rankMult(rank);
   const lv = lastingBoost(level);
-  return { hp: k * lv.hp, atk: k * lv.atk, grade, level };
+  // (the rank also gives score steps: `statPower.ts`, read by `addUnit`)
+  return { hp: k * lv.hp, atk: k * lv.atk, grade, level, ...(rank > 0 ? { rank } : {}) };
 };
 /** A roster hero's whole boost: grade and rank, its gear, its training bumps, and the kind's permanent equipment (`equip`, from `equipStats(meta, kind)`; none when it wears nothing). */
 export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {

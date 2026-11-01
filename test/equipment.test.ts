@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { statMults } from '../src/sim/statPower';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
@@ -362,5 +363,7 @@ test('worn equipment reaches the boost a run places its hero with', () => {
   const b = startBattle(2);
   place(b, 'knight', 3, D - 1, 1, boostOf({ id: 1, kind: 'knight', grade: 1 }, 0, 1, eq));
   const k = b.units[b.units.length - 1];
-  assert.ok(Math.abs(k.power! - (1 + eq!.atk)) < 1e-9);
+  // (and the piece's score, STATS batch 2: a Legendary sword is STR +2, which the Knight's blows carry)
+  assert.deepEqual(eq!.scores, { str: 2 });
+  assert.ok(Math.abs(k.power! - (1 + eq!.atk) * statMults('knight', { level: 1, equip: eq }).blow) < 1e-9);
 });

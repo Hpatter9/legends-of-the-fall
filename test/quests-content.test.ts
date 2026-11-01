@@ -90,7 +90,8 @@ test('every hero, army, boss, spell, combo, trait and ore a quest names is in th
   for (const q of QUESTS) {
     const g = q.goal as Goal & Record<string, unknown>;
     needOk(q.needs, q.id);
-    if (q.hero) assert.ok(heroes.has(q.hero) && q.giver === 'patron', q.id);
+    // (a lost technique's chain is told in a hero's face too, LOST-TECHNIQUES)
+    if (q.hero) assert.ok(heroes.has(q.hero) && (q.giver === 'patron' || q.giver === 'lost'), q.id);
     if (q.giver === 'patron') assert.ok(q.hero, `${q.id}: a patron's quest names its hero`);
     if (q.after) assert.ok(questById(q.after) && questById(q.after)!.id !== q.id, `${q.id}: after ${q.after}`);
     for (const b of q.from ?? []) assert.ok(BOSS_IDS.includes(b), `${q.id}: from ${b}`);

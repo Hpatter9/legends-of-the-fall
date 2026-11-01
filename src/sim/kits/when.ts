@@ -11,6 +11,7 @@ import { FONT, fireLane, inTrouble } from './mages';
 import { tidalLane } from './monsters';
 import { chokeLine, shieldLine } from '../toolkit';
 import { bellowWork, curseWork } from './third';
+import { HYMN, UNMAKING, HUNGER, NINEFOLD } from './lost';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -63,4 +64,9 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   'Wall of Stone': (b, me) => !!chokeLine(b, me, 3),
   'Curse of Weakness': curseWork,
   Bellow: bellowWork,
+  // (LOST-TECHNIQUES: the four lost techniques, by their keys; the Hymn only while it has not been sung and a friend near is hurt)
+  ninefoldCut: (b, me) => foesWithin(b, me, NINEFOLD.REACH),
+  wordsOfUnmaking: (b, me) => foesWithin(b, me, UNMAKING.REACH),
+  oldHunger: (b, me) => foesWithin(b, me, HUNGER.REACH),
+  longDawn: (b, me) => !me.kx?.hymned && allies(b, me).some((a) => apart(a, me) <= HYMN.REACH && a.hp < a.maxHp * HYMN.UNDER),
 };

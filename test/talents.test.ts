@@ -58,7 +58,7 @@ test('every hero has a tree of sixteen nodes in seven tiers (three old rows, fou
       assert.ok(n.name.length > 2 && n.text.length > 5, n.id);
       assert.ok(existsSync(`src/art/equip/${n.icon}.png`) && EQUIP_ICONS[n.icon], `${n.id} icon ${n.icon}`);
       assert.ok(!/\b(armor|color|center|defense|favor)\b/i.test(`${n.name} ${n.text}`), `British spelling: ${n.id}`);
-      if (n.tier === 1) assert.ok(n.stats && !n.tal && !n.abilities, `${n.id} is a stat node`);
+      if (n.tier === 1) assert.ok((n.stats || n.scores) && !n.tal && !n.abilities, `${n.id} is a stat node`);
       else assert.ok(n.tal || n.abilities || n.stats, `${n.id} does something`);
       for (const k of Object.keys(n.tal ?? {})) (assert.ok(known.has(k), `${n.id} key ${k}`), used.add(k));
       for (const id of n.abilities ?? []) {
@@ -496,8 +496,10 @@ test('heroStats puts the talents and the equipment together, and nothing taken i
   learn(m, 'knight', 'knight:2a');
   learn(m, 'knight', 'knight:3b');
   const t = heroStats(m, 'knight')!;
-  assert.equal(t.hp, nodeOf('knight', 'knight:1a')!.stats!.hp);
-  assert.equal(t.atk, nodeOf('knight', 'knight:1b')!.stats!.atk);
+  // (the health and attack nodes are CON +2 and STR +2 since STATS batch 2)
+  assert.deepEqual(t.scores, { con: 2, str: 2 });
+  assert.equal(t.hp, 0);
+  assert.equal(t.atk, 0);
   assert.deepEqual(t.tal, { dur: 0.5 });
   assert.deepEqual(t.abilities.map((x) => x.id), ['tl_knight_shout']);
   // with a worn sword, both
@@ -506,6 +508,7 @@ test('heroStats puts the talents and the equipment together, and nothing taken i
   const both = heroStats(m, 'knight')!;
   assert.ok(both.atk > t.atk);
   assert.equal(both.hp, t.hp);
+  assert.deepEqual(both.scores, { con: 2, str: 2 }, 'a Common sword has no score');
   assert.deepEqual(both.tal, { dur: 0.5 });
   assert.equal(both.abilities.length, 1);
   // other heroes are untouched

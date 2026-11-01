@@ -81,6 +81,11 @@ export function leansOf(n: TalentNode): Record<Lean, number> {
     const [lean, size] = STAT_LEAN[k as StatKey] ?? ['aid', 1];
     out[lean] += (v ?? 0) / size;
   }
+  // (a stat node's score points, STATS batch 2: CON +2 is worth the health share it replaced, any other score the attack share)
+  for (const [k, v] of Object.entries(n.scores ?? {})) {
+    const [lean] = STAT_LEAN[k === 'con' ? 'hp' : 'atk'];
+    out[lean] += (v ?? 0) / 2;
+  }
   for (const [k, v] of Object.entries(n.tal ?? {})) {
     const [lean, size] = TAL_LEAN[k] ?? ['aid', Math.abs(v) || 1];
     out[lean] += v / size;

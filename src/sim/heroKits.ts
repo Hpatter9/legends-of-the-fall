@@ -10,7 +10,9 @@
 // Randomness: none here. The skills that roll (the Buccaneer's dice) use the battle's skill stream (`roll`), as every skill does.
 
 import type { Battle, BattleEvent, Unit } from './battle';
-import { CHARGE_MAX, keyOf, kitOf, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
+import { CHARGE_MAX, keyOf, kitOf, KITS, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
+import { profileOf } from './stats';
+import { skillShare, skillStatOf } from './statPower';
 import { UNITS } from './units';
 import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
@@ -266,6 +268,27 @@ export function canPay(b: Battle, u: Unit, hk: HeroKit, n: number): boolean {
 /** Whether the hero is still taking its breath after its last cast. */
 const breathing = (b: Battle, u: Unit): boolean => u.ks?.breath !== undefined && b.t < u.ks.breath;
 
+/** The hero each skill belongs to (its home kit), by key: a book's skill keeps the ability it is cast with at home (`skillStatOf`). */
+let homes: Map<string, string> | undefined;
+function homeOf(key: string): string | undefined {
+  if (!homes) {
+    homes = new Map();
+    for (const [kind, hk] of Object.entries(HERO_KITS())) for (const s of hk.slots) if (!homes.has(keyOf(s.skill))) homes.set(keyOf(s.skill), kind);
+    for (const kind of Object.keys(HERO_KITS())) {
+      const ult = KITS[kind]?.ultimate;
+      if (ult && !homes.has(keyOf(ult))) homes.set(keyOf(ult), kind);
+    }
+  }
+  return homes.get(key);
+}
+/** How much a skill's own ability lifts it over the hero's blows (STATS batch 2: a spell by the casting ability, a breath by CON, a weapon
+ *  skill as its blows already are); 1 for a hero whose scores move nothing. */
+function statShare(me: Unit, s: Skill): number {
+  if (!me.stats) return 1;
+  const key = keyOf(s);
+  return skillShare(me.stats, skillStatOf(key, profileOf(homeOf(key) ?? me.def)));
+}
+
 /** Cast one of a hero's skills (it pays, and its marks are left on what it hit), or false if it had nothing to do. */
 function fire(b: Battle, me: Unit, hk: HeroKit, n: number, out: BattleEvent[]): boolean {
   const slot = hk.slots[n - 1];
@@ -274,7 +297,7 @@ function fire(b: Battle, me: Unit, hk: HeroKit, n: number, out: BattleEvent[]): 
   if (slot.mods) me.castMods = slot.mods;
   let ok: boolean;
   try {
-    ok = powered(b, me, slot.skill, slot.tune - 1, out);
+    ok = powered(b, me, slot.skill, slot.tune - 1, out, statShare(me, slot.skill));
   } finally {
     if (slot.mods) delete me.castMods;
   }
@@ -366,7 +389,7 @@ export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): 
   if (hk.s2.revive && me.ultOrder === undefined && castRevive(b, me, hk, out)) return true;
   const ult = ultimateOf(me);
   if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false)) {
-    if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out)) {
+    if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out, statShare(me, ult))) {
       me.charge2 = (me.charge2 ?? 0) - ult.need;
       delete me.ultOrder;
       return began(b, me, ult, out, 'ult');
