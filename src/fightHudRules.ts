@@ -4,11 +4,15 @@
 
 import { type Battle, type Unit } from './sim/battle';
 import { keyOf, kitOf, ultimateOf, ULT_LEVEL, type Skill } from './sim/abilities';
-import { costOf, heroKitOf, resMax, resOf, reviveCost, reviveReady, skill2Open, SKILL2_LEVEL, ultFull, type HeroKit, type Slot } from './sim/heroKits';
+import { costOf, heroKitOf, resMax, resOf, reviveCost, reviveReady, SLOT_LEVELS, slotOpen, ultFull, type HeroKit, type Slot } from './sim/heroKits';
 import { REVIVE } from './sim/kits/revive';
 
-/** Which of a hero's moves a chip or a sheet shows: skill 1, skill 2 or the ultimate. */
-export type Which = 1 | 2 | 'ult';
+/** Which of a hero's moves a chip or a sheet shows: skill 1, 2 or 3 (the skills overhaul's batch 4), or the ultimate. */
+export type Which = 1 | 2 | 3 | 'ult';
+/** A skill slot's number. */
+export type SlotNo = 1 | 2 | 3;
+/** A hero's slot `n`, when its kit has one. */
+const slotAt = (hk: HeroKit, n: SlotNo): Slot | undefined => hk.slots[n - 1];
 
 /** The pool's short tag, as the bars and chips show it. */
 export const poolTag = (hk: HeroKit): 'MP' | 'SP' => (hk.pool === 'mana' ? 'MP' : 'SP');
@@ -21,7 +25,7 @@ export const EVERY_RANK = { title: 'Every rank', text: 'The same at every rank: 
 
 /** What a skill chip shows. */
 export interface ChipView {
-  which: 1 | 2;
+  which: SlotNo;
   skill: Skill;
   name: string;
   /** What it costs this hero now (the tier 3 discount taken off), rounded. */
@@ -42,16 +46,16 @@ export interface ChipView {
 }
 
 /** A hero's skill chip, as it stands at the battle's time. */
-export function chipOf(b: Battle, u: Unit, which: 1 | 2): ChipView | undefined {
+export function chipOf(b: Battle, u: Unit, which: SlotNo): ChipView | undefined {
   const hk = heroKitOf(u);
-  if (!hk) return undefined;
-  const slot = which === 1 ? hk.s1 : hk.s2;
+  const slot = hk && slotAt(hk, which);
+  if (!hk || !slot) return undefined;
   const revive = which === 2 && !!hk.s2.revive && reviveReady(b, u);
   const skill = revive ? hk.s2.revive!.skill : slot.skill;
-  const open = which === 1 || skill2Open(u);
+  const open = slotOpen(u, which);
   const cost = revive ? reviveCost(hk) : costOf(u, slot);
   const gap = revive ? REVIVE.GAP_MS : gapOf(hk, slot);
-  const at = revive ? u.ks?.atRev : which === 1 ? u.ks?.at1 : u.ks?.at2;
+  const at = revive ? u.ks?.atRev : which === 1 ? u.ks?.at1 : which === 2 ? u.ks?.at2 : u.ks?.at3;
   const cd = at === undefined ? 0 : Math.max(0, Math.min(1, (at + gap - b.t) / gap));
   const res = resOf(u, hk.pool);
   return {
@@ -73,7 +77,7 @@ export function chipOf(b: Battle, u: Unit, which: 1 | 2): ChipView | undefined {
 /** The chip's second line: "30 SP", "25 SP +10%HP" for a blood cost, "· 2.4s" while it cools; "Lv 10" while locked. `compact` is the cost
  *  alone (the small chips of a party over five; their sheet has the rest). */
 export function chipLine(c: ChipView, compact = false): string {
-  if (!c.open) return compact ? `Lv${SKILL2_LEVEL}` : `Lv ${SKILL2_LEVEL}`;
+  if (!c.open) return compact ? `Lv${SLOT_LEVELS[c.which - 1]}` : `Lv ${SLOT_LEVELS[c.which - 1]}`;
   if (compact) return `${c.cost}`;
   const cool = c.cd > 0 ? ` · ${((c.cd * c.gap) / 1000).toFixed(1)}s` : '';
   return `${c.cost} ${c.tag}${c.blood ? ` +${Math.round(c.blood * 100)}%HP` : ''}${cool}`;
@@ -114,6 +118,7 @@ export function whichCast(u: Unit, key: string): Which | null {
   if (!hk) return null;
   if (keyOf(hk.s1.skill) === key) return 1;
   if (keyOf(hk.s2.skill) === key || (hk.s2.revive && keyOf(hk.s2.revive.skill) === key)) return 2;
+  if (hk.s3 && keyOf(hk.s3.skill) === key) return 3;
   const ult = ultimateOf(u);
   return ult && keyOf(ult) === key ? 'ult' : null;
 }
@@ -121,7 +126,7 @@ export function whichCast(u: Unit, key: string): Which | null {
 /** A skill's sheet: its heading, what it does, its numbers as label and words, and its tier lines. */
 export interface SheetView {
   name: string;
-  /** "Skill 1", "Skill 2" or "Ultimate". */
+  /** "Skill 1", "Skill 2", "Skill 3" or "Ultimate". */
   label: string;
   skill: Skill;
   text: string;
@@ -148,11 +153,12 @@ export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetVi
     rows.push(['Cast time', secs(ult.castMs)]);
     return { name: ult.name, label: 'Ultimate', skill: ult, text: ult.text, rows, tiers: [EVERY_RANK] };
   }
-  const slot = which === 1 ? hk.s1 : hk.s2;
+  const slot = slotAt(hk, which);
+  if (!slot) return undefined;
   const s = slot.skill;
-  const open = which === 1 || skill2Open(u);
+  const open = slotOpen(u, which);
   const rows: [string, string][] = [];
-  if (!open) rows.push(['Locked', `Opens at level ${SKILL2_LEVEL}`]);
+  if (!open) rows.push(['Locked', `Opens at level ${SLOT_LEVELS[which - 1]}`]);
   rows.push(['Cost', `${Math.round(costOf(u, slot))} ${hk.pool}${slot.hpCost ? ` and ${Math.round(slot.hpCost * 100)}% of max health` : ''}`]);
   rows.push(['Cooldown', `${secs(gapOf(hk, slot))} between casts`]);
   rows.push(['Strength', `${Math.round(slot.tune * 100)}% of attack`]);

@@ -6,8 +6,8 @@ import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, keyOf } from '../src/sim/abilities';
 import { HERO_KITS, RES, SLOT_LEVELS, canPay, castHero, costOf, resMax, slotOpen, type HeroKit } from '../src/sim/heroKits';
-import { CLASSES } from '../src/sim/kits/table';
-import { CAST_EXEMPT, CLASS_RANGE, CLASS_WEIGHT, kitDemand } from '../src/sim/skillRules';
+import { CLASSES, THIRD_KINDS } from '../src/sim/kits/table';
+import { CAST_EXEMPT, CLASS_RANGE, CLASS_WEIGHT, INCOME, kitDemand, slotDemand } from '../src/sim/skillRules';
 import { ALL_HEROES } from '../src/sim/units';
 
 function arena(): Battle {
@@ -20,28 +20,32 @@ function arena(): Battle {
 }
 const spawn = (b: Battle, def: string, u: number, v: number, level = 1): Unit => addUnit(b, def, u, v, level > 1 ? { level } : {});
 
-test('every hero kit lists its skills in slots, the first two the same as s1 and s2, each with a class and a cooldown', () => {
+test('every hero kit lists its skills in slots, the first two the same as s1 and s2 (the third as s3), each with a class and a cooldown', () => {
   for (const h of ALL_HEROES) {
     const hk = HERO_KITS()[h];
-    assert.equal(hk.slots.length, 2, h);
+    // (the skills overhaul's batch 4: a third skill for each hero)
+    assert.equal(hk.slots.length, THIRD_KINDS.includes(h) ? 3 : 2, h);
     assert.equal(hk.slots[0], hk.s1, h);
     assert.equal(hk.slots[1], hk.s2, h);
+    assert.equal(hk.slots[2], hk.s3, h);
     hk.slots.forEach((s, i) => {
-      assert.equal(s.cls, CLASSES[h][i], `${h} skill ${i + 1}`);
+      if (i < 2) assert.equal(s.cls, CLASSES[h][i], `${h} skill ${i + 1}`);
       assert.ok(CLASS_RANGE[s.cls], `${h} skill ${i + 1}`);
       assert.ok(s.cd > 0, `${h} skill ${i + 1} has a cooldown`);
     });
   }
 });
 
-test('the slots open at their levels: skill 1 from level 1, skill 2 from level 10', () => {
-  assert.deepEqual(SLOT_LEVELS, [1, 10]);
+test('the slots open at their levels: skill 1 from level 1, skill 2 from level 10, skill 3 from level 20', () => {
+  assert.deepEqual(SLOT_LEVELS, [1, 10, 20]);
   const b = arena();
   const low = spawn(b, 'knight', 1, 1, 9);
   const high = spawn(b, 'knight', 2, 2, 10);
+  const top = spawn(b, 'knight', 3, 3, 20);
   assert.ok(slotOpen(low, 1) && !slotOpen(low, 2));
   assert.ok(slotOpen(high, 1) && slotOpen(high, 2));
-  assert.ok(!slotOpen(high, 3), 'no third slot yet');
+  assert.ok(!slotOpen(high, 3), 'skill 3 is shut below level 20');
+  assert.ok(slotOpen(top, 3) && !slotOpen(top, 4));
 });
 
 test('a slot past the kit, or one not yet open, is never paid for or cast', () => {
@@ -51,7 +55,8 @@ test('a slot past the kit, or one not yet open, is never paid for or cast', () =
   const hk = HERO_KITS().archer;
   k.charge = CHARGE_MAX;
   assert.ok(!canPay(b, k, hk, 2), 'skill 2 is shut at level 1');
-  assert.ok(!canPay(b, k, hk, 3), 'there is no slot 3');
+  assert.ok(!canPay(b, k, hk, 3), 'slot 3 is shut at level 1');
+  assert.ok(!canPay(b, k, hk, 4), 'there is no slot 4');
   // (a kit given a third slot that opens at no level is never cast)
   const three: HeroKit = { ...hk, slots: [...hk.slots, { ...hk.s2 }] };
   const out: BattleEvent[] = [];
@@ -90,8 +95,19 @@ test('within a kit a heavy skill is its dearest and a jab its cheapest', () => {
   }
 });
 
-test('no kit\'s two skills ask more than 3.5 times its pool\'s income (the floor, 1.4, waits for the third skills)', () => {
-  for (const h of ALL_HEROES) assert.ok(kitDemand(HERO_KITS()[h]) <= 3.5, `${h} asks ${kitDemand(HERO_KITS()[h]).toFixed(2)}`);
+test('a kit\'s skills ask between 1.4 and 3.5 times its pool\'s income (rule 3; the floor once the kit has its third skill)', () => {
+  for (const h of ALL_HEROES) {
+    const d = kitDemand(HERO_KITS()[h]);
+    assert.ok(d <= 3.5, `${h} asks ${d.toFixed(2)}`);
+    if (HERO_KITS()[h].s3) assert.ok(d >= 1.4, `${h} asks ${d.toFixed(2)}`);
+  }
+});
+
+test('a jab never empties the pool on its own: its cost over its cooldown is under the pool\'s income (rule 2, the measured income)', () => {
+  for (const h of ALL_HEROES) {
+    const hk = HERO_KITS()[h];
+    for (const s of hk.slots) if (s.cls === 'jab') assert.ok(slotDemand(s) < INCOME[hk.pool], `${h}: ${s.skill.name} asks ${slotDemand(s).toFixed(2)} a second`);
+  }
 });
 
 const full = (u: Unit) => (u.charge = CHARGE_MAX);
