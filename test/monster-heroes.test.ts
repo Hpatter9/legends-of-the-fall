@@ -6,6 +6,11 @@ import { BANNER_MULT, CHARGE_MAX, KITS, finishOf, frenzyOf, onKill, onStrike, su
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { HERO_TRAITS, TRAITS, membersOf, traitEffects } from '../src/sim/traits';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
+import { SAVES } from '../src/sim/saves';
+
+// (these stage what each skill's row says, its written times and tiles: the saving throws, STATS batch 5, are held off here and staged in
+// `test/stats-saves.test.ts`)
+SAVES.on = false;
 
 const NEW = ['werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander'];
 

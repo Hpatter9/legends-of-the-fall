@@ -17,7 +17,7 @@ export function shieldBash(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   strike(b, me, f, 1.2, out, true);
   if (!f.alive) return true;
   stun(b, f, ms(me, 1500));
-  if (!kitOf(f)?.passive.steady) shove(b, f, me, 1);
+  if (!kitOf(f)?.passive.steady) shove(b, f, me, 1, me, out);
   return true;
 }
 
@@ -121,7 +121,7 @@ export function bullRush(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   for (const f of near) {
     strike(b, me, f, 1.0, out, true);
     if (!f.alive) continue;
-    const stopped = kitOf(f)?.passive.steady ? true : shove(b, f, me, 2);
+    const stopped = kitOf(f)?.passive.steady ? true : shove(b, f, me, 2, me, out);
     f.busyUntil = Math.max(f.busyUntil, b.t + 400);
     if (stopped) stun(b, f, ms(me, 1500));
   }

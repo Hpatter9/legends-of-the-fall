@@ -54,7 +54,7 @@ function headbutt(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!f) return false;
   strike(b, me, f, 1.6, out, true);
   if (!f.alive) return true;
-  if (!kitOf(f)?.passive.steady) shove(b, f, me, 2);
+  if (!kitOf(f)?.passive.steady) shove(b, f, me, 2, me, out);
   stun(b, f, ms(me, 1000));
   return true;
 }

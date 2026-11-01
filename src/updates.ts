@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.324.0',
+    date: '2026-11-01',
+    title: 'Saving throws',
+    notes: ['Ailments, shoves and blasts now allow a save against the caster\'s skill DC: a save halves the effect and shows \'Saved\'. Strong heroes shove further.'],
+  },
+  {
     version: '0.323.0',
     date: '2026-11-01',
     title: 'Armour and the d20',

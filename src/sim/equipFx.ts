@@ -74,10 +74,10 @@ function fire(b: Battle, me: Unit, a: Ability, s: number, foe: Unit | undefined,
       if (!dotOf(foe!)) setDot(b, foe!, { kind: AILMENT_SWITCH.on && a.id === 'tl_ranger_poison' ? 'poison' : a.kind, dmg: Math.max(1, Math.round(atkOf(me) * v)), every: 1000, ms: 3000, by: me.id, next: b.t + 1000, until: b.t + 3000 });
       break;
     case 'slow':
-      chillFor(b, foe!, w);
+      chillFor(b, foe!, w, false, false, me);
       break;
     case 'stun':
-      stunFor(b, foe!, w, true);
+      stunFor(b, foe!, w, true, 'stun', me);
       break;
     case 'chain': {
       const second = beside(foe!, 2).sort((x, y) => apart(x, foe!) - apart(y, foe!) || x.id - y.id)[0];

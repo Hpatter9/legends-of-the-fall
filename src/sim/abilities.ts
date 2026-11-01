@@ -24,7 +24,8 @@ import { blastShoves } from './kits/mages';
 import { monsterKits } from './kits/monsters';
 import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
-import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
+import { rollSave } from './saves';
+import { ailBoss, ailCtx, AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
 import { relicCharge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
 import { TRIALS, type TrialSummon } from './eidolonTrials';
@@ -1017,7 +1018,7 @@ function drag(b: Battle, f: Unit, to: At): boolean {
 }
 
 /** The ms a foe is slowed for, taken on to any slow it has already. */
-const slowFor = (b: Battle, f: Unit, ms: number): void => void chillFor(b, f, ms);
+const slowFor = (b: Battle, f: Unit, ms: number, by?: Unit): void => void chillFor(b, f, ms, false, false, by);
 
 /** Shambler: every foe within two tiles starts to rot, and the Shambler drinks part of what it costs them. */
 const ROT_MS = 4000;
@@ -1705,6 +1706,9 @@ export function powered(b: Battle, me: Unit, s: Skill, more: number, out: Battle
   const from = out.length;
   const k = 1 + tal(me, 'pow') + more;
   let ok: boolean;
+  // (what the skill lays is saved against the caster's DC, STATS batch 5)
+  const outer = ailCtx.by;
+  ailCtx.by = me;
   if (k === 1 && stat === 1) ok = s.cast(b, me, out);
   else {
     me.power = (me.power ?? 1) * k * stat;
@@ -1713,6 +1717,7 @@ export function powered(b: Battle, me: Unit, s: Skill, more: number, out: Battle
     castK = 1;
     me.power = (me.power ?? 1) / (k * stat);
   }
+  ailCtx.by = outer;
   // (what the skill leaves on the foes it struck: a burn, a shock, a bleed... `ailmentSources.ts`, STATUS-FX)
   if (ok) skillRiders(b, me, keyOf(s), out, from);
   // (RELICS-3: the Wyrm's Breath Vial freezes what the fight's first skill struck)
@@ -1843,9 +1848,9 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   if (blow && to.side === 'hero' && by.side === 'foe' && b.relics?.hooks?.foeSlow) relicStruck(b, by);
   // (a talent's rider on a skill: what it hits is slowed or held)
   if (src === 'skill' && by.eq?.tal && by.side !== to.side) {
-    if (by.eq.tal.skillSlow) chillFor(b, to, by.eq.tal.skillSlow);
+    if (by.eq.tal.skillSlow) chillFor(b, to, by.eq.tal.skillSlow, false, false, by);
     if (by.eq.tal.skillStun) {
-      stunFor(b, to, by.eq.tal.skillStun);
+      stunFor(b, to, by.eq.tal.skillStun, false, 'stun', by);
     }
   }
   fxStruck(b, by, to, left, blow && !splash, out);
@@ -1922,7 +1927,7 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
   // (RELICS-3: the Tempest Ring's tenth blow strikes a second foe nearby)
   if (dmg > 0 && by.side === 'hero' && b.relics?.hooks?.echoEvery) relicEcho(b, by, to, dmg, out);
   if (!to.alive) return;
-  if (p?.slow) chillFor(b, to, p.slow);
+  if (p?.slow) chillFor(b, to, p.slow, false, false, by);
   // (the relic sets: a hero's blows burn the foe, its first blow chills it, its crits make it bleed)
   const set = by.side === 'hero' ? b.relics?.set : undefined;
   if (set?.chill && !to.chilled) {
@@ -1940,10 +1945,15 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
   blowRiders(b, by, to);
 }
 
-/** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck (`r` tiles wider each way for a widened one). */
+/** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck (`r` tiles wider each way for a widened one). Each makes
+ *  a DEX save against the caster's DC, a save halving it ("Saved"; a boss does not save; STATS batch 5, `saves.ts`). */
 export function landArea(b: Battle, kind: 'rain' | 'meteor', by: Unit, u: number, v: number, power: number, out: BattleEvent[], r = 0): void {
   for (const f of b.units)
-    if (f.alive && f.side !== by.side && Math.abs(f.u - u) <= 1 + r && Math.abs(f.v - v) <= 1 + r) hurt(b, by, f, net(power, f), kind === 'meteor', false, out, 'skill');
+    if (f.alive && f.side !== by.side && Math.abs(f.u - u) <= 1 + r && Math.abs(f.v - v) <= 1 + r) {
+      const save = rollSave(b, by, f, 'blast', ailBoss(f));
+      if (save.saved) out.push({ kind: 'saved', to: f.id, what: 'blast' });
+      hurt(b, by, f, Math.max(1, Math.round(net(power, f) * save.mult)), kind === 'meteor', false, out, 'skill');
+    }
   if (kind === 'meteor') {
     const ms = durOf(by, BURN_MS);
     b.zones.push({ u, v, side: by.side, by: by.id, until: b.t + ms, next: b.t + BURN_EVERY, dmg: 6 });
@@ -2009,7 +2019,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       for (const f of b.units)
         if (f.alive && f.side !== z.side && near3x3(f, z)) {
           hurt(b, by, f, z.dmg, false, false, out, 'dot');
-          if (z.slow && f.alive) slowFor(b, f, z.slow);
+          if (z.slow && f.alive) slowFor(b, f, z.slow, by);
         }
     }
   }
@@ -2024,7 +2034,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       const layer = b.units.find((x) => x.id === tr.by)!;
       hurt(b, layer, f, net(tr.dmg, f), true, false, out, 'skill');
       if (f.alive) {
-        stunFor(b, f, durOf(layer, tr.hold ?? ROOT_MS), true);
+        stunFor(b, f, durOf(layer, tr.hold ?? ROOT_MS), true, 'stun', layer);
       }
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);

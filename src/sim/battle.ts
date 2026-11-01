@@ -277,6 +277,8 @@ export type BattleEvent =
   | { kind: 'eidolon'; id: string; phase: 'call' | 'done' }
   /** An ailment shrugged off (resisted, a boss's ladder, a ward): the page shows "Immune". */
   | { kind: 'immune'; to: number; what: AilmentKey }
+  /** STATS batch 5: a saving throw halved an ailment, a charm, a shove or a blast on it (`saves.ts`). */
+  | { kind: 'saved'; to: number; what: AilmentKey | 'charm' | 'shove' | 'blast' }
   /** A frozen fighter's ice shattered under a heavy blow (the extra hit follows, tagged `shatter`). */
   | { kind: 'shatter'; to: number }
   /** A skill is cast: `name` is the skill's fixed key (`keyOf`), what the page looks its look and sound up by; the words it shows are `skillShown`. */

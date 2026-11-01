@@ -64,6 +64,9 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // (STATS batch 4, "AC and the blow", docs/notes/stats-4.md, re-recorded every scenario: the blows' d20 against Armour Class, initiative, and
 // the dodges and tall grass as Armour Class move every fight. The new hashes: field1 750d7f85, field30 9985c20a, bosses ed8d0233, armyFoes
 // e78dd722, spells 8d8d569b, lands 2ee6e036, army 2758d962, daily b2d1b62a, tower 8b2517af, stand 1a34e1e0, calamity 0a98c5c7.)
+// (STATS batch 5, "Saves", docs/notes/stats-5.md, re-recorded every scenario: a saving throw rolls in every fight with an ailment, a shove
+// or a blast, and the Warlock's, Time Witch's and Minotaur's ultimates moved. The new hashes: field1 d3c4a58e, field30 b602c463, bosses cc0df714,
+// armyFoes dc4bde6a, spells 34781325, lands 501d74f0, army 039c4f4d, daily eb58f864, tower efc7f9d0, stand 3a05f6eb, calamity ab3d95f4.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

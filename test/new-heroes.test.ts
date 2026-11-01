@@ -7,6 +7,7 @@ import { CHARGE_MAX, KITS, afterBlow, onStrike, tickStatus } from '../src/sim/ab
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import layout from '../src/art/units/sheets.json';
+import { SAVES } from '../src/sim/saves';
 
 const NEW = ['ninjaMonk', 'peasant', 'lightningMage', 'wanderer', 'kitsune', 'karasu', 'yamabushi'];
 
@@ -41,7 +42,10 @@ test('the seven new heroes are registered with kits, rarities and sensible scale
   }
 });
 
-test('Thousand Fists strikes three times and stuns', () => {
+test('Thousand Fists strikes three times and stuns', (t) => {
+  // (it stages the skill's written numbers: the saving throws, STATS batch 5, are held off for it and staged in `test/stats-saves.test.ts`)
+  SAVES.on = false;
+  t.after(() => void (SAVES.on = true));
   const b = arena();
   const m = spawn(b, 'ninjaMonk', 3, 5, CHARGE_MAX);
   const s = spawn(b, 'skeleton', 3, 4);

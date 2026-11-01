@@ -510,7 +510,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   karasu: { rate: 0.77, power: 5.634 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
   yamabushi: { rate: 1.85, power: 3.294 },
   werewolf: { rate: 0.73, power: 2.208 }, // (RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
-  minotaur: { rate: 1.51, power: 2.983 },
+  minotaur: { rate: 1.51, power: 2.7 }, // (STATS batch 5: 2.983 before; with the saves he sat at +6.0 at level 30)
   satyr: { rate: 0.69, power: 0.879 },
   gorgon: { rate: 1.29, power: 2.347 },
   samuraiCommander: { rate: 0.95, power: 1.391 }, // (the skills overhaul's batch 4: rate 1.1 before; with Command Strike he stood +6.2 at level 30, and Rally Cry's banner does not scale with power)
@@ -519,7 +519,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   druid: { rate: 1.19, power: 0.38 },
   barbarian: { rate: 0.9, power: 2.158 },
   ranger: { rate: 0.84, power: 1.162 },
-  warlock: { rate: 0.5, power: 0.929 }, // (RPG-SPELLS batch 6: 1.07 before; the Circle of Death's ring made it +6.3 at level 30)
+  warlock: { rate: 0.5, power: 1.0 }, // (RPG-SPELLS batch 6: 1.07 before, then 0.929; STATS batch 5 lifted it back to 1.0: with the saves he fell to -6.5 at level 30)
   illusionist: { rate: 1.08, power: 0.535 },
   gunslinger: { rate: 0.37, power: 1.78 },
   shambler: { rate: 1.04, power: 0.709 }, // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
@@ -532,7 +532,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   kraken: { rate: 1.37, power: 1.079 },
   lancer: { rate: 2.3, power: 3.29 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
   reaper: { rate: 1.79, power: 2.511 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
-  timeWitch: { rate: 1.09, power: 0.735 },
+  timeWitch: { rate: 1.09, power: 0.85 }, // (STATS batch 5: 0.735 before; with the saves she fell to -6.8 at level 30)
   arcBlade: { rate: 0.59, power: 1.878 }, // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
   dreadPirate: { rate: 1.06, power: 1.376 },
   siegeBot: { rate: 0.5, power: 2.347 },

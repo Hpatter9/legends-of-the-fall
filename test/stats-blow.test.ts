@@ -205,7 +205,7 @@ test('initiative: every fighter rolls d20 + DEX as the fight starts, and waits 3
 test('the foes answer the heroes’ growth: at level 1 the blocks are as written; at 30 the foes’ AC rises with the heroes’ to hit', () => {
   const one = duel('gunslinger', 'skeleton', 1);
   fight(one.b);
-  assert.deepEqual(matchOf(one.b), { aim: 0, ac: 0 });
+  assert.deepEqual(matchOf(one.b), { aim: 0, ac: 0, dc: 0, save: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }, str: 0 });
   const thirty = duel('gunslinger', 'skeleton', 30);
   fight(thirty.b);
   const g = STAT_PROFILES.gunslinger;

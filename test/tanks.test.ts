@@ -11,6 +11,11 @@ import { hasAil } from '../src/sim/ailments';
 import { tileAt } from '../src/sim/board';
 import { auraOfProtection, bane, divineSmite, seismicSlam, shieldRush, smiteBane, spearWall, tunnelStrike } from '../src/sim/kits/tanks';
 import { airborne } from '../src/sim/toolkit';
+import { SAVES } from '../src/sim/saves';
+
+// (these stage what each skill's row says, its written times and tiles: the saving throws, STATS batch 5, are held off here and staged in
+// `test/stats-saves.test.ts`)
+SAVES.on = false;
 
 function arena(): Battle {
   const b = startBattle(3);
