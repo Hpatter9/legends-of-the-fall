@@ -3,7 +3,7 @@
 //   node tools/stats/fit.mjs                  level 1, rank 1
 //   node tools/stats/fit.mjs --level 20 --rank 4 --grade 2
 //
-// Read-only: it changes nothing. Nothing in a fight reads the scores yet.
+// Read-only: it changes nothing. A fight reads the scores through `statPower.ts` (STATS batch 2).
 
 import { ALL_HEROES, UNITS } from '../../src/sim/units';
 import { ABILITIES, ABILITY_SHORT, bodyOf, derivedOf, STAT_PROFILES } from '../../src/sim/stats';
