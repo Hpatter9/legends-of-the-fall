@@ -23,6 +23,8 @@ test('every hero reads exactly one kind of book, and every book teaches a real s
   assert.equal(all.length, ALL_HEROES.length);
   assert.deepEqual([...new Set(all)].sort(), [...ALL_HEROES].sort());
   for (const b of BOOKS) {
+    // (a lost technique has a skill of its own, not a hero's: `test/lost-techniques.test.ts`)
+    if (b.lost) continue;
     const src = HERO_KITS()[b.from.hero];
     assert.ok(src, b.id);
     if (b.kind !== 'universal') assert.ok(READS[b.kind].includes(b.from.hero), `${b.id} comes from a reader of its own kind`);
