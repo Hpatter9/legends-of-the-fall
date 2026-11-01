@@ -14,6 +14,11 @@ import { loadRun, newRun, saveRun } from '../src/sim/run';
 import { bareBoard } from './bare';
 import { readyBattle } from './helpers';
 import { startBattle } from '../src/sim/battle';
+import { SAVES } from '../src/sim/saves';
+
+// (these stage what each skill's row says, its written times and tiles: the saving throws, STATS batch 5, are held off here and staged in
+// `test/stats-saves.test.ts`)
+SAVES.on = false;
 
 const EIDOLON_SETS = SET_IDS.filter((id) => SETS[id].eidolon);
 const withRelics = (ids: string[], seed = 7): Battle => {
