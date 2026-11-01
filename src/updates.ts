@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.318.0',
+    date: '2026-11-01',
+    title: 'Vaelkhar\'s Heart returned',
+    notes: ['If you have ever held Vaelkhar\'s Heart, binding him returns it to him, and he pays the debt: his War Horn drain gives back 30% of the damage dealt, not 25%.'],
+  },
+  {
     version: '0.317.0',
     date: '2026-11-01',
     title: 'Lost techniques',
