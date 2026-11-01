@@ -1268,9 +1268,16 @@ const SWEEP_DRINK = 0.25;
 function hellbladeSweep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 2));
   if (!near.length) return false;
+  // (a foe under his Infernal Brand, skill 3, gives twice what it was dealt to the drink)
   const before = me.dealt ?? 0;
-  for (const f of near) hurt(b, me, f, net(atkOf(me) * 1.3, f), false, false, out, 'skill');
-  mendUnit(me, ((me.dealt ?? 0) - before) * SWEEP_DRINK, out);
+  let extra = 0;
+  for (const f of near) {
+    const was = me.dealt ?? 0;
+    const branded = f.kx?.brand !== undefined && f.kx.brand > b.t;
+    hurt(b, me, f, net(atkOf(me) * 1.3, f), false, false, out, 'skill');
+    if (branded) extra += (me.dealt ?? 0) - was;
+  }
+  mendUnit(me, ((me.dealt ?? 0) - before + extra) * SWEEP_DRINK, out);
   return true;
 }
 

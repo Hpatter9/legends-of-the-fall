@@ -11,7 +11,7 @@ import { atkOf, defOf, hurt, type Battle, type BattleEvent, type Unit } from '..
 import { foesOf, mendUnit, net, roll } from '../abilities';
 import { addRes, heroKitOf, skill2Open } from '../heroKits';
 import { UNITS, type UnitDef } from '../units';
-import { AILMENT_SWITCH, ailmentsOf, dotOf, setDot } from '../ailments';
+import { AILMENT_SWITCH, ailmentsOf, burnFor, dotOf, setDot } from '../ailments';
 import { stormBolt } from './mages';
 import { monsterTick } from './monsters';
 import { TIMER, timeSummon, WOLF_LOOK } from '../carry';
@@ -92,6 +92,18 @@ export interface KitFx {
   harvest?: number;
   /** Time Witch's Rewind: where a hero stood, and how it was, the last few seconds (a snapshot each half second). */
   hist?: { t: number; hp: number; u: number; v: number }[];
+  /** The third skills (the skills overhaul's batch 4, `kits/third.ts`): */
+  /** Takes `mult` more from every blow and skill until then (from `by` alone, when set): the Barbarian's Reckless Swing on himself, the
+   *  Wanderer's Acid Flask, the Minotaur's Bellow, the Warlock's Curse of Weakness. */
+  exposed?: { until: number; mult: number; by?: number };
+  /** Queen Dragoon's Scale Ward: takes less until then, and a blow on her burns its striker. */
+  scales?: number;
+  /** Bound by the Paladin's Warding Bond until then: takes less, and part of every blow on it is his instead. */
+  bond?: { by: number; until: number };
+  /** Branded by the Demon Swordsman until then: his Cleave drinks double from it. */
+  brand?: number;
+  /** The High Priestess's Sacred Flame: its next blow misses. */
+  missNext?: boolean;
 }
 
 /** Timed terrain a kit made (a flood, a rampart, a statue): the tile, what it was, and when it goes back. */
@@ -137,6 +149,10 @@ export const KIT = {
   ANGEL_HEAL: 0.3,
   HUNTER_BLEED: 0.12,
   BRUTE_SPLASH: 0.4,
+  SCALE_GUARD: 0.3,
+  SCALE_BURN_MS: 2000,
+  BOND_GUARD: 0.1,
+  BOND_SHARE: 0.5,
 } as const;
 
 /** Whether a fighter stands within `reach` of a living fighter of kind `def` on `side` whose `test` holds. */
@@ -155,6 +171,12 @@ export function kitStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow
   const bx = by.kx;
   const tx = to.kx;
   if (blow && bx && on(bx.smoke, b) && roll(b) < KIT.SMOKE_MISS) {
+    out.push({ kind: 'dodge', to: to.id });
+    return null;
+  }
+  // (the High Priestess's Sacred Flame: the foe's next blow goes wide)
+  if (blow && bx?.missNext) {
+    bx.missNext = false;
     out.push({ kind: 'dodge', to: to.id });
     return null;
   }
@@ -189,6 +211,26 @@ export function kitStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow
     if (tx.bounty && on(tx.bounty.until, b) && by.side !== to.side) dmg *= KIT.BOUNTY_MULT;
     if (tx.condemned && on(tx.condemned.until, b) && by.side !== to.side) dmg *= KIT.CONDEMN_MULT;
     if (tx.wolf === 'brute' || on(tx.moon, b)) dmg *= 1 - KIT.BRUTE_GUARD;
+    // (the third skills' marks: one that takes more, the Dragoon's scales, the Paladin's bond)
+    if (tx.exposed && on(tx.exposed.until, b) && (tx.exposed.by === undefined || tx.exposed.by === by.id)) dmg *= 1 + tx.exposed.mult;
+    if (on(tx.scales, b)) {
+      dmg *= 1 - KIT.SCALE_GUARD;
+      if (blow && by.alive && by.side !== to.side) burnFor(b, to, by, KIT.SCALE_BURN_MS);
+    }
+    if (tx.bond && on(tx.bond.until, b) && by.side !== to.side && !redirecting) {
+      dmg *= 1 - KIT.BOND_GUARD;
+      const pal = b.units.find((x) => x.id === tx.bond!.by && x.alive && x !== to);
+      if (pal) {
+        const part = dmg * KIT.BOND_SHARE;
+        redirecting = true;
+        try {
+          hurt(b, by, pal, Math.max(1, Math.round(part)), false, true, out, 'skill');
+        } finally {
+          redirecting = false;
+        }
+        dmg -= part;
+      }
+    }
   }
   // (a standard on the field: the heroes within two of it take less and hit harder)
   if (b.kits.standards) {

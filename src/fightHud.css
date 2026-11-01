@@ -1,5 +1,5 @@
 /* The fight's hero rows and the king's spell orbs (BATTLE-HUD, docs/notes/battle-hud.md, `fightHud.ts`). One row a hero: portrait, name, health
-   and pool with numbers, two wide skill chips, and the ultimate's pearlescent glow filling along the row (full: a sheen crosses it, TAP on the
+   and pool with numbers, three skill chips, and the ultimate's pearlescent glow filling along the row (full: a sheen crosses it, TAP on the
    portrait). A party over five takes two columns of compact rows. The king's spells are round orbs under the top bar, the mana and the Auto
    switch beside them. Text is 12px and never bold; nothing blinks (glows ease in and out, the pearl's colours drift by position, never by
    brightness), and with reduced motion everything holds still. Loaded after battleCommand.css. */
@@ -15,7 +15,7 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 .fightHud.pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--fh-rows, 4), auto); grid-auto-flow: column; column-gap: 3px; }
 
 /* ---- a row ---- */
-.fhRow { position: relative; overflow: hidden; min-width: 0; box-sizing: border-box; display: grid; grid-template-columns: 34px minmax(0, 0.92fr) minmax(0, 2.08fr);
+.fhRow { position: relative; overflow: hidden; min-width: 0; box-sizing: border-box; display: grid; grid-template-columns: 34px minmax(0, 0.8fr) minmax(0, 2.2fr);
   grid-template-rows: 12px 12px 12px; column-gap: 4px; row-gap: 0; align-items: center; height: 38px; padding: 0 2px 0 0;
   color: #f0e6d2; font: 400 12px/12px var(--body); text-shadow: var(--outline); touch-action: manipulation; cursor: pointer; -webkit-touch-callout: none; user-select: none;
   border: 1px solid #a28a58; border-radius: 3px; background: radial-gradient(ellipse at top, #83945b33, transparent 75%), linear-gradient(#2b372a, #111d17);
@@ -39,9 +39,10 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 
 /* (a skill chip: an element-coloured edge, its pack icon, the name and the cost; the cooldown sweeps off it, a thin line under it fills towards
    the cost; greyed while it cannot be paid, dim and grey while locked) */
-.fhChips { grid-column: 3; grid-row: 1 / span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; align-self: stretch; padding: 2px 0; }
-.fhChip { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 3px; overflow: hidden; min-width: 0; padding: 0 3px 1px 3px;
+.fhChips { grid-column: 3; grid-row: 1 / span 3; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; align-self: stretch; padding: 2px 0; }
+.fhChip { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 2px; overflow: hidden; min-width: 0; padding: 0 2px 1px 2px;
   background: linear-gradient(90deg, color-mix(in srgb, var(--el, #fff) 24%, rgb(8 14 11 / 0.82)), rgb(8 14 11 / 0.78) 60%); border: 1px solid rgb(255 255 255 / 0.2); border-left: 3px solid var(--el, #fff); }
+.fhChip:not(:has(.fhIcon)) { grid-template-columns: minmax(0, 1fr); }
 .fhIcon { display: block; flex: none; background-repeat: no-repeat; image-rendering: pixelated; }
 .fhSk { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .fhSk b { font: 400 12px/12px 'Pixelify Sans', var(--body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -77,16 +78,17 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 .fhRow.casting .fhCast { animation: fhCastName 1.05s ease-out 1; }
 .fhRow.nudge { animation: fhNudge 0.35s ease-out 1; }
 
-/* ---- compact rows (a party over five): portrait, name and bars, the two skills as small chips (icon and cost) stacked at the right ---- */
-.pairs .fhRow { grid-template-columns: 30px minmax(0, 1fr) 40px; column-gap: 3px; }
-.pairs .fhChip.shut .fhIcon { display: none; }
-.pairs .fhChip.shut { grid-template-columns: minmax(0, 1fr); }
+/* ---- compact rows (a party over five): portrait, name and bars, the three skills as 12px chips (the cost alone) stacked at the right ---- */
+.pairs .fhRow { grid-template-columns: 30px minmax(0, 1fr) 44px; column-gap: 3px; }
 .pairs .fhPic { width: 30px; height: 36px; margin-top: 0; }
 .pairs .fhPortrait { height: 30px; margin-top: 3px; }
-.pairs .fhChips { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
-.pairs .fhChip { padding: 0 2px 1px 2px; border-left-width: 2px; column-gap: 2px; }
+/* (three chips 12px high with 1px between: 36 of the row's 38px; the cost number alone, the cooldown sweeping across it) */
+.pairs .fhChips { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(3, 12px); gap: 1px; padding: 1px 0; align-self: center; }
+.pairs .fhChip { display: block; height: 12px; padding: 0 2px; border-left-width: 2px; border-top-width: 0; border-bottom-width: 0; }
+.pairs .fhSk { display: block; }
 .pairs .fhSk b { display: none; }
-.pairs .fhSk em { text-align: right; }
+.pairs .fhSk em { display: block; font: 400 12px/12px 'Pixelify Sans', var(--body); text-align: right; }
+.pairs .fhPay { height: 1px; }
 .pairs .fhBar b { letter-spacing: -0.5px; }
 
 /* ---- the Auto switch, beside the orbs ---- */
@@ -173,7 +175,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 .fsHead b { font: 400 14px/14px var(--body); color: var(--el); text-shadow: var(--outline); }
 .fsHead small { font: 400 12px/12px 'Pixelify Sans', var(--body); color: var(--text-dim, #b8ad94); }
 .fsClose { min-height: 32px; width: 32px; padding: 0; font-size: 16px; }
-.fsTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+.fsTabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; margin-top: 6px; }
 .fsTabs button { min-height: 28px; padding: 2px 4px; font: 400 12px/12px var(--body); }
 .fsTabs button.on { border-color: var(--el); color: #fff; box-shadow: inset 0 -2px 0 var(--el); }
 .fsCard p { margin: 6px 0; }

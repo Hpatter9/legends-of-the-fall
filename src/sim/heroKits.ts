@@ -16,7 +16,7 @@ import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
-import { CLASS_WEIGHT, INCOME, slotDemand, type SkillClass } from './skillRules';
+import { CLASS_WEIGHT, type SkillClass } from './skillRules';
 import { relicCharge } from './relicFight';
 
 export type Pool = 'mana' | 'stamina';
@@ -56,10 +56,15 @@ export const RES = {
    *  well, so both skills come round in a fight. */
   SKILL2_PACE_MANA: 1.45,
   SKILL2_PACE_STAM: 1.05,
+  /** Once skill 3 is open (level 20), the pool comes back this much faster again (the skills overhaul's `SKILL3_PACE`, batch 4): a third skill
+   *  to feed, so the well deepens a little more. */
+  SKILL3_PACE: 1.1,
 } as const;
 
 /** The level skill 2 opens at (skill 1 is open from level 1; the ultimate at `ULT_LEVEL`). */
 export const SKILL2_LEVEL = 10;
+/** The level skill 3 opens at (the skills overhaul's batch 4, the owner's answer: halfway between skill 2 and the ultimate). */
+export const SKILL3_LEVEL = 20;
 /** What the old charge gifts (a tier skill's charge rider, a combo's beat, a gear ability, a bard's tune, a kill's charge back) are worth to a hero's pool:
  *  this share of the pool for each point of charge. A cast used to take 100 charge, and a skill now costs about half a pool, so a cast's worth is a cast's worth. */
 export const CHARGE_TO_POOL = 0.5;
@@ -105,10 +110,12 @@ export interface Slot {
 
 export interface HeroKit {
   pool: Pool;
-  /** Its skills in slot order (skill 1 opens at level 1, skill 2 at `SKILL2_LEVEL`). `s1` and `s2` are the first two, the same objects. */
+  /** Its skills in slot order (skill 1 opens at level 1, skill 2 at `SKILL2_LEVEL`, skill 3 at `SKILL3_LEVEL`). `s1` and `s2` are the first two,
+   *  the same objects; `s3` the third, when the kit has one. */
   slots: Slot[];
   s1: Slot;
   s2: Slot;
+  s3?: Slot;
   /** A new role line for the hero's card (the design's archetype). */
   role: string;
 }
@@ -176,8 +183,9 @@ export function poolOnTaken(b: Battle, u: Unit, dodged = false): void {
   if (pool === 'stamina') addRes(u, (dodged ? RES.STAM_ON_DODGE : RES.STAM_ON_HIT) * RES.PACE * skill2Pace(u, pool));
 }
 
-/** How much faster the pool comes back once skill 2 is open. */
-const skill2Pace = (u: Unit, pool: Pool): number => (skill2Open(u) ? (pool === 'mana' ? RES.SKILL2_PACE_MANA : RES.SKILL2_PACE_STAM) : 1);
+/** How much faster the pool comes back once skill 2 is open, and again once skill 3 is (for a kit that has one). */
+const skill2Pace = (u: Unit, pool: Pool): number =>
+  (skill2Open(u) ? (pool === 'mana' ? RES.SKILL2_PACE_MANA : RES.SKILL2_PACE_STAM) : 1) * (skill3Open(u) && heroKitOf(u)?.s3 ? RES.SKILL3_PACE : 1);
 
 /** The pool's refill a second: the pool's own, faster for a mana hero left alone, none while a stamina hero is winded; times the team's and its gear's refill. */
 export function regenOf(b: Battle, u: Unit): number {
@@ -211,13 +219,15 @@ export function ultOnDamage(u: Unit, amount: number, taken: boolean): void {
 
 /** Whether a hero's skill 2 is open at the level it fights at. */
 export const skill2Open = (u: Unit): boolean => (u.level ?? 1) >= SKILL2_LEVEL;
+/** Whether a hero's skill 3 is open at the level it fights at. */
+export const skill3Open = (u: Unit): boolean => (u.level ?? 1) >= SKILL3_LEVEL;
 
 /** What a skill costs this hero: its slot's cost (the same at every rank since the skills overhaul's batch 3: the tier 3 discount went with the
  *  tier skills). */
 export const costOf = (_u: Unit, slot: Slot): number => slot.cost;
 
 /** The level each slot opens at (slot 1, 2, ...). */
-export const SLOT_LEVELS: readonly number[] = [1, SKILL2_LEVEL];
+export const SLOT_LEVELS: readonly number[] = [1, SKILL2_LEVEL, SKILL3_LEVEL];
 /** Whether a hero's skill in slot `n` (1, 2, ...) is open at the level it fights at. */
 export const slotOpen = (u: Unit, n: number): boolean => (u.level ?? 1) >= (SLOT_LEVELS[n - 1] ?? Infinity);
 /** The open slots, from the highest down (skill 2 is weighed before skill 1). */
@@ -269,7 +279,8 @@ function fire(b: Battle, me: Unit, hk: HeroKit, n: number, out: BattleEvent[]): 
   // (a talent's "charge back" gives back that share of what the cast cost)
   const refund = me.eq?.tal?.refund;
   if (refund) addRes(me, (cost * refund) / 100);
-  return began(b, me, slot.skill, out, n === 1 ? 'skill' : 'skill2');
+  // (skill 3 counts as skill 1 for the talents' cast effects: most are cheap, quick jabs, which would otherwise double their worth)
+  return began(b, me, slot.skill, out, n === 2 ? 'skill2' : 'skill');
 }
 
 /** Whether a skill has something to do, as far as saving for it goes: its `SKILL2_WHEN` look (`kits/when.ts`), and it did not just find nothing. */
@@ -282,13 +293,13 @@ function hasWork(b: Battle, me: Unit, hk: HeroKit, m: number): boolean {
 
 /** Whether the hero should pass over slot `n` to save for slot `m` (the design's step 5, the old holding rule made general): `m` is of a heavier
  *  class and has something to do, its cooldown ends within the hold, and paying for `n` now would leave it short when its cooldown ends. So a
- *  heavy skill is saved for (its cost is what holds it back), and a lighter one waits only while the heavier one is coming round. A jab is never
- *  held while its own demand is under the pool's income. */
+ *  heavy skill is saved for (its cost is what holds it back), and a lighter one waits only while the heavier one is coming round. A jab is held
+ *  the same way (the skills overhaul's batch 4: at the measured income a jab cast whenever it is ready drinks nearly the whole refill, so the
+ *  design's "a jab is never held" starved the heavies); with nothing heavier coming round it jabs whenever its cooldown allows. */
 function holdsFor(b: Battle, me: Unit, hk: HeroKit, n: number, m: number): boolean {
   const light = hk.slots[n - 1];
   const heavy = hk.slots[m - 1];
   if (CLASS_WEIGHT[heavy.cls] <= CLASS_WEIGHT[light.cls]) return false;
-  if (light.cls === 'jab' && slotDemand(light) < INCOME[hk.pool]) return false;
   if (!hasWork(b, me, hk, m)) return false;
   const hold = hk.pool === 'mana' ? RES.HOLD_MANA_MS : RES.HOLD_STAM_MS;
   const at = lastAt(me, m);

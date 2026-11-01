@@ -56,6 +56,45 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
+/** MENU-GLITCH: the light behind the reveal, painted once into a canvas at half the screen's css size: thin rays (4 degrees every
+ *  19, from 7) round a point at the middle and 45% down, fading out over an ellipse, as the old masked gradient drew them. That
+ *  gradient spun as a layer 1.8 screens wide and tall, with its mask another, which on a phone came to tens of megabytes of
+ *  graphics memory; running out left parts of the reveal unpainted (flat boxes, light cut off at a tile's edge). */
+function raysCanvas(): HTMLCanvasElement {
+  const c = el('canvas', 'trRays');
+  const w = Math.max(1, Math.round(innerWidth * 0.9));
+  const h = Math.max(1, Math.round(innerHeight * 0.9));
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  if (!g) return c;
+  const cx = w / 2;
+  const cy = h * 0.45;
+  const far = Math.hypot(w, h);
+  const deg = Math.PI / 180;
+  g.fillStyle = 'rgb(255 241 172 / 0.125)';
+  for (let a = 7; a < 367; a += 19) {
+    // (a CSS conic gradient's 0 degrees is straight up, the canvas's is to the right)
+    g.beginPath();
+    g.moveTo(cx, cy);
+    g.arc(cx, cy, far, (a - 90) * deg, (Math.min(a + 4, 367) - 90) * deg);
+    g.closePath();
+    g.fill();
+  }
+  // (the fade: CSS's farthest-corner ellipse round that point, solid at the middle and gone 60% of the way out)
+  const rx = (w / 2) * Math.SQRT2;
+  const ry = h * 0.55 * Math.SQRT2;
+  g.globalCompositeOperation = 'destination-in';
+  g.setTransform(1, 0, 0, ry / rx, 0, cy - (cy * ry) / rx);
+  const fade = g.createRadialGradient(cx, cy, 0, cx, cy, rx);
+  fade.addColorStop(0, 'rgb(0 0 0)');
+  fade.addColorStop(0.6, 'rgb(0 0 0 / 0)');
+  g.fillStyle = fade;
+  g.fillRect(0, (0 - (cy - (cy * ry) / rx)) * (rx / ry), w, h * (rx / ry));
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  return c;
+}
+
 /** The look of a hero's card: its class trait, colour, sigil row, arcana number and class icon. */
 export function arcanaOf(kind: string): { trait: string; title: string; colour: string; row: number; numeral: string; icon: string } {
   const trait = traitsOf(kind)[1] ?? 'guardian';
@@ -162,7 +201,7 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const charge = el('div', 'trCharge');
   const beam = el('div', 'trBeam');
   const impact = el('div', 'trImpact');
-  const rays = el('div', 'trRays');
+  const rays = raysCanvas();
   const stage = el('div', 'trStage');
   const actor = summoner();
   const flash = el('div', 'trFlash');
@@ -338,7 +377,7 @@ const css = `
 .tarotReveal::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 90px 24px #0008; pointer-events: none; }
 .tarotReveal .trHeading { position: absolute; top: max(30px, 5%); z-index: 3; text-align: center; font: 700 12px var(--display); letter-spacing: 4px; text-transform: uppercase; color: #e6ca87; }
 .tarotReveal .trHeading::after { content: ''; display: block; width: 110px; height: 1px; margin: 14px auto; background: linear-gradient(90deg, transparent, #edca77, transparent); }
-.tarotReveal .trRays { position: absolute; inset: -40%; background: repeating-conic-gradient(from 7deg at 50% 45%, #fff1ac20 0deg 4deg, transparent 4deg 19deg); opacity: 0; transition: opacity .6s; mask-image: radial-gradient(ellipse at 50% 45%, #000, transparent 60%); }
+.tarotReveal .trRays { position: absolute; inset: -40%; width: 180%; height: 180%; opacity: 0; transition: opacity .6s; }
 .tarotReveal .trLead { position: absolute; top: 21%; z-index: 3; margin: 0; font: italic 700 18px var(--display); color: #e9d6a5; transition: opacity .3s; text-align: center; padding: 0 24px; }
 .tarotReveal .trStage { position: absolute; top: 12%; bottom: 26%; width: min(100%, 440px); display: grid; place-items: center; }
 .tarotReveal .trStage > * { position: absolute; pointer-events: none; }

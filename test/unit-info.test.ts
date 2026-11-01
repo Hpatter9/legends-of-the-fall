@@ -19,14 +19,22 @@ function deploy(): Battle {
   return b;
 }
 
-test('every hero card lists skill 1, skill 2 and the ultimate from its kit, with skill 2 and the ultimate locked below their levels', () => {
+test('every hero card lists skills 1, 2 and 3 and the ultimate from its kit, with skills 2 and 3 and the ultimate locked below their levels', () => {
   const b = deploy();
   ALL_HEROES.forEach((h, i) => {
     const low = addUnit(b, h, i % 8, 9, {});
     const info = infoOf(b, low);
     const hk = HERO_KITS()[h];
     assert.equal(info.kind, 'hero');
-    const [s1, s2, ult] = info.moves;
+    // (the skills overhaul's batch 4: skill 3, locked below level 20, between skill 2 and the ultimate)
+    const [s1, s2, ...more] = info.moves;
+    const s3 = hk.s3 ? more.shift() : undefined;
+    const ult = more[0];
+    if (hk.s3) {
+      assert.equal(s3!.name, hk.s3.skill.name, h);
+      assert.equal(s3!.label, 'Skill 3');
+      assert.ok(s3!.locked && s3!.rows.some(([k, v]) => k === 'Locked' && v === 'Opens at level 20'), `${h}: skill 3 waits for level 20`);
+    }
     assert.equal(s1.name, hk.s1.skill.name, h);
     assert.equal(s1.locked, false);
     assert.equal(s2.name, hk.s2.skill.name, h);
@@ -38,8 +46,7 @@ test('every hero card lists skill 1, skill 2 and the ultimate from its kit, with
     assert.equal(info.moves.at(-1)!.label, 'Passive');
     const high = addUnit(b, h, i % 8, 10, { level: ULT_LEVEL });
     const open = infoOf(b, high);
-    assert.equal(open.moves[1].locked, false);
-    assert.equal(open.moves[2].locked, false);
+    assert.ok(open.moves.slice(0, -1).every((m) => !m.locked), `${h}: every move open at level ${ULT_LEVEL}`);
     assert.equal(open.level, ULT_LEVEL);
   });
 });
