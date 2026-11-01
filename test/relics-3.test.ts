@@ -89,18 +89,18 @@ test("the bound echo: the Eidolon's rider lasts half as long again, for the boun
   assert.equal(burn(SETS.askel.relics.slice(0, 2)), RIDER.BURN_MS, 'two are not the echo');
 });
 
-test('Cinder Collar: +10% attack, heroes heal 20% less', () => {
+test('Cinder Collar: +14% attack, heroes heal 20% less', () => {
   const b = withRelics(['cinderCollar']);
   const plain = withRelics([]);
   heroes(b).forEach((x) => {
     assert.ok(near(x.healMult ?? 1, 0.8));
     assert.equal(plain.units.find((u) => u.id === x.id)!.healMult, undefined);
   });
-  assert.equal(relicEffects(['cinderCollar']).atk, 1.1);
+  assert.equal(relicEffects(['cinderCollar']).atk, 1.14);
   assert.ok(RELICS.cinderCollar.price);
 });
 
-test("Hound's Ash-Tooth: each kill gives that hero +3% attack, to +15%, for the fight", () => {
+test("Hound's Ash-Tooth: each kill gives that hero +4% attack, to +20%, for the fight", () => {
   const b = withRelics(['ashTooth']);
   const [x, y] = heroes(b);
   const target = foes(b)[0];
@@ -108,7 +108,7 @@ test("Hound's Ash-Tooth: each kill gives that hero +3% attack, to +15%, for the 
   for (let k = 1; k <= 7; k++) {
     const foe = addUnit(b, 'skeleton', 0, 0);
     hurt(b, x, foe, 99999, false, false, []);
-    assert.ok(near(relicBlow(b, x, target, 1, false), 1 + Math.min(0.15, 0.03 * k)), `after ${k} kills`);
+    assert.ok(near(relicBlow(b, x, target, 1, false), 1 + Math.min(0.2, 0.04 * k)), `after ${k} kills`);
   }
   assert.equal(relicBlow(b, y, target, 1, false), 1, "another hero's blows are its own");
   relicStart(b);
@@ -119,19 +119,19 @@ test('Ember Brand: crits leave the foe burning, plain blows do not', () => {
   const b = withRelics(['emberBrand']);
   const x = heroes(b)[0];
   const foe = foes(b)[0];
-  assert.equal(relicEffects(['emberBrand']).crit, 0.05);
+  assert.equal(relicEffects(['emberBrand']).crit, 0.08);
   afterBlow(b, x, foe, false, 10, []);
   assert.ok(!foe.ail?.some((a) => a.kind === 'burn'), 'a plain blow leaves nothing');
   afterBlow(b, x, foe, true, 10, []);
   assert.ok(foe.ail?.some((a) => a.kind === 'burn'), 'a crit burns');
 });
 
-test('Rime Pearl: a foe that strikes a hero is slowed 10% for 2 seconds', () => {
+test('Rime Pearl: a foe that strikes a hero is slowed 5% for 2 seconds', () => {
   const b = withRelics(['rimePearl']);
   const foe = foes(b)[0];
   assert.equal(relicFoeSlow(b, foe), 1);
   relicStruck(b, foe);
-  assert.ok(near(relicFoeSlow(b, foe), 0.9));
+  assert.ok(near(relicFoeSlow(b, foe), 0.95));
   b.t += 2100;
   assert.equal(relicFoeSlow(b, foe), 1);
   assert.equal(relicFoeSlow(withRelics([]), foe), 1);
@@ -151,11 +151,11 @@ test("Wyrm's Breath Vial: the first skill each fight freezes the foe it struck f
   assert.ok((f2.stunUntil ?? 0) <= b.t, 'the second skill does not');
 });
 
-test('Glacier Step: heroes slip 4% of blows, 10% while they stand still', () => {
+test('Glacier Step: heroes slip 2% of blows, 6% while they stand still', () => {
   const b = withRelics(['glacierStep']);
   const x = heroes(b)[0];
-  assert.equal(relicEffects(['glacierStep']).dodge, 0.04);
-  assert.ok(near(relicDodge(b, x), 0.06), 'standing: 6% more on the 4%');
+  assert.equal(relicEffects(['glacierStep']).dodge, 0.02);
+  assert.ok(near(relicDodge(b, x), 0.04), 'standing: 4% more on the 2%');
   x.step = { u: 0, v: 0, h: 0, at: b.t, ms: 100 };
   assert.equal(relicDodge(b, x), 0, 'walking');
 });
@@ -178,62 +178,62 @@ test('Mane-Gold Thread: the first hero to drop under a quarter health heals 25%,
   assert.equal(relicEffects(['maneThread']).hp, 1.06);
 });
 
-test("Lion's Oath-Ring: heroes heal 3% whenever a foe falls", () => {
+test("Lion's Oath-Ring: heroes heal 2% whenever a foe falls", () => {
   const b = withRelics(['oathRing']);
   const hs = heroes(b);
   for (const h of hs) h.hp = Math.round(h.maxHp * 0.5);
   const foe = foes(b)[0];
   hurt(b, hs[0], foe, 99999, false, false, []);
   assert.equal(foe.alive, false);
-  for (const h of hs) assert.equal(h.hp, Math.round(h.maxHp * 0.5) + Math.round(h.maxHp * 0.03), 'each hero');
+  for (const h of hs) assert.equal(h.hp, Math.round(h.maxHp * 0.5) + Math.round(h.maxHp * 0.02), 'each hero');
 });
 
 test('The Dawn Chart, Thunder Horn, Copper Torc, Granite Heart, Doom Helm: plain numbers', () => {
-  assert.equal(relicEffects(['dawnChart']).mana, 1.12);
+  assert.equal(relicEffects(['dawnChart']).mana, 1.25);
   assert.equal(relicEffects(['thunderHorn']).speed, 1.06);
   const torc = relicEffects(['copperTorc']);
-  assert.deepEqual([torc.charge, torc.hp], [1.12, 0.97]);
+  assert.deepEqual([torc.charge, torc.hp], [1.2, 0.98]);
   assert.ok(RELICS.copperTorc.price);
   const heart = relicEffects(['graniteHeart']);
   assert.deepEqual([heart.hp, heart.speed], [1.1, 0.97]);
   const helm = relicEffects(['doomHelm']);
-  assert.deepEqual([helm.guard, helm.first], [0.04, 500]);
+  assert.deepEqual([helm.guard, helm.first], [0.06, 500]);
 });
 
-test('Tempest Ring: every tenth blow strikes a second foe nearby', () => {
+test('Tempest Ring: every sixth blow strikes a second foe nearby', () => {
   const b = withRelics(['tempestRing']);
   const x = heroes(b)[0];
   const [first] = foes(b);
   const others = () => foes(b).filter((f) => f !== first).reduce((n, f) => n + f.hp, 0);
   const was = others();
   assert.ok(was > 0 && foes(b).some((f) => f !== first && Math.abs(f.u - first.u) + Math.abs(f.v - first.v) <= 2), 'a foe is near');
-  for (let i = 0; i < 9; i++) relicEcho(b, x, first, 20, []);
-  assert.equal(others(), was, 'nine blows: nothing');
+  for (let i = 0; i < 5; i++) relicEcho(b, x, first, 20, []);
+  assert.equal(others(), was, 'five blows: nothing');
   const out: BattleEvent[] = [];
   relicEcho(b, x, first, 20, out);
-  assert.ok(others() < was, 'the tenth');
+  assert.ok(others() < was, 'the sixth');
   assert.ok(out.some((e) => e.kind === 'arc'));
   assert.equal(relicEffects(['tempestRing']).crit, 0.06);
 });
 
-test('Quarry Gauntlet: 6% less damage, 12% for heroes who have not moved this fight', () => {
+test('Quarry Gauntlet: 5% less damage, 10% for heroes who have not moved this fight', () => {
   const b = withRelics(['quarryGauntlet']);
   const x = heroes(b)[0];
   const foe = foes(b)[0];
-  assert.equal(relicEffects(['quarryGauntlet']).guard, 0.06);
-  assert.ok(near(relicTaken(b, x, foe), 0.94), 'still: 6% more on the 6%');
+  assert.equal(relicEffects(['quarryGauntlet']).guard, 0.05);
+  assert.ok(near(relicTaken(b, x, foe), 0.95), 'still: 5% more on the 5%');
   x.u += 1;
   assert.equal(relicTaken(b, x, foe), 1, 'moved');
 });
 
-test('Moss Bell: heroes heal 0.4% of their health a second', () => {
+test('Moss Bell: heroes heal 0.7% of their health a second', () => {
   const b = withRelics(['mossBell']);
   const x = heroes(b)[0];
   x.hp = Math.round(x.maxHp / 2);
   const at = x.hp;
   for (let i = 0; i < 40 && x.alive; i++) stepBattle(b);
   assert.ok(x.hp !== at);
-  assert.ok(b.relics?.hooks?.regen === 0.004);
+  assert.ok(b.relics?.hooks?.regen === 0.007);
 });
 
 test('Void Shard: +12% against the Calamity\'s guardians only; the Sigil quickens ultimates too', () => {
@@ -244,8 +244,8 @@ test('Void Shard: +12% against the Calamity\'s guardians only; the Sigil quicken
   assert.equal(relicBlow(b, x, foes(b)[0], 1, false), 1);
   const plain = withRelics([]);
   assert.equal(heroes(plain)[0].ultPace, undefined);
-  assert.ok(near(x.ultPace ?? 1, 1.1));
-  assert.equal(relicEffects(['dragonSigil']).charge, 1.1);
+  assert.ok(near(x.ultPace ?? 1, 1.15));
+  assert.equal(relicEffects(['dragonSigil']).charge, 1.15);
 });
 
 test('old Calamity relics convert to the Eidolons\', merged pairs paid back, and a run is only told once', () => {

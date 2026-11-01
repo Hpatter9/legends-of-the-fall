@@ -51,29 +51,29 @@ export interface RelicSet {
 const e = (id: string, name: string, lore: string, text: string, effects: Relic['effects'], more: Partial<Relic> = {}): Relic => ({ id, name, lore, text, effects, rarity: 'eidolon', ...more });
 export const SET_RELICS: Record<string, Relic> = {
   // ---- Askel, the Cinderhound
-  cinderCollar: e('cinderCollar', 'Cinder Collar', 'It never fitted him. He wore it anyway.', '+10% attack for every hero', { atk: 1.1, hooks: { healLess: 0.2 } }, { price: 'heroes heal 20% less' }),
-  ashTooth: e('ashTooth', "Hound's Ash-Tooth", 'Lost in a fight with something larger. He won.', "a hero's kill gives it +3% attack for the rest of the fight (to +15%)", { hooks: { killAtk: { v: 0.03, max: 0.15 } } }),
-  emberBrand: e('emberBrand', 'Ember Brand', 'Where Askel lay down, the ground kept the shape.', '+5% crit chance; crits leave the foe burning', { crit: 0.05, hooks: { critBurn: 0.03 } }),
+  cinderCollar: e('cinderCollar', 'Cinder Collar', 'It never fitted him. He wore it anyway.', '+14% attack for every hero', { atk: 1.14, hooks: { healLess: 0.2 } }, { price: 'heroes heal 20% less' }),
+  ashTooth: e('ashTooth', "Hound's Ash-Tooth", 'Lost in a fight with something larger. He won.', "a hero's kill gives it +4% attack for the rest of the fight (to +20%)", { hooks: { killAtk: { v: 0.04, max: 0.2 } } }),
+  emberBrand: e('emberBrand', 'Ember Brand', 'Where Askel lay down, the ground kept the shape.', '+8% crit chance; crits leave the foe burning', { crit: 0.08, hooks: { critBurn: 0.05 } }),
   // ---- Nivra, the Rime Wyrm
-  rimePearl: e('rimePearl', 'Rime Pearl', 'It forms in her throat once a century. She coughs.', 'foes that strike a hero are slowed 10% for 2 seconds', { hooks: { foeSlow: { v: 0.1, ms: 2000 } } }),
+  rimePearl: e('rimePearl', 'Rime Pearl', 'It forms in her throat once a century. She coughs.', 'foes that strike a hero are slowed 5% for 2 seconds', { hooks: { foeSlow: { v: 0.05, ms: 2000 } } }),
   wyrmVial: e('wyrmVial', "Wyrm's Breath Vial", 'Do not open indoors.', 'skills charge 10% faster; the first skill each fight freezes its target for a second', { charge: 1.1, hooks: { firstFreeze: 1000 } }),
-  glacierStep: e('glacierStep', 'Glacier Step', 'Her tracks, kept in ice, from when she still walked.', 'heroes slip 4% of blows, 10% while they stand still', { dodge: 0.04, hooks: { stillDodge: 0.06 } }),
+  glacierStep: e('glacierStep', 'Glacier Step', 'Her tracks, kept in ice, from when she still walked.', 'heroes slip 2% of blows, 6% while they stand still', { dodge: 0.02, hooks: { stillDodge: 0.04 } }),
   // ---- Aurelan, the Lion of Dawn
-  maneThread: e('maneThread', 'Mane-Gold Thread', 'One hair, and enough to sew a banner with.', '+6% hp; the first hero to drop under a quarter health heals 25% (once a fight)', { hp: 1.06, hooks: { rescue: { under: 0.25, heal: 0.25 } } }),
-  dawnChart: e('dawnChart', 'The Dawn Chart', 'Where the sun rose on the day he first spoke.', "the king's mana fills 12% faster", { mana: 1.12 }),
-  oathRing: e('oathRing', "Lion's Oath-Ring", 'Whoever wears it cannot lie. It is rarely worn.', 'heroes heal 3% of their health whenever a foe falls', { hooks: { killHeal: 0.03 } }),
+  maneThread: e('maneThread', 'Mane-Gold Thread', 'One hair, and enough to sew a banner with.', '+6% hp; the first hero to drop under a quarter health heals 15% (once a fight)', { hp: 1.06, hooks: { rescue: { under: 0.25, heal: 0.15 } } }),
+  dawnChart: e('dawnChart', 'The Dawn Chart', 'Where the sun rose on the day he first spoke.', "the king's mana fills 25% faster", { mana: 1.25 }),
+  oathRing: e('oathRing', "Lion's Oath-Ring", 'Whoever wears it cannot lie. It is rarely worn.', 'heroes heal 2% of their health whenever a foe falls', { hooks: { killHeal: 0.02 } }),
   // ---- Voltara, the Copper Goddess
   thunderHorn: e('thunderHorn', 'Thunder Horn', "Her herald's. It only plays one note, and it is loud.", 'heroes act and walk 6% faster', { speed: 1.06 }),
-  copperTorc: e('copperTorc', 'Copper Torc', 'Struck by lightning every hour, on the hour.', 'skills charge 12% faster', { charge: 1.12, hp: 0.97 }, { price: 'heroes have 3% less hp' }),
-  tempestRing: e('tempestRing', 'Tempest Ring', 'Small, and humming.', '+6% crit chance; every tenth blow strikes a second foe nearby', { crit: 0.06, hooks: { echoEvery: 10 } }),
+  copperTorc: e('copperTorc', 'Copper Torc', 'Struck by lightning every hour, on the hour.', 'skills charge 20% faster', { charge: 1.2, hp: 0.98 }, { price: 'heroes have 2% less hp' }),
+  tempestRing: e('tempestRing', 'Tempest Ring', 'Small, and humming.', '+6% crit chance; every sixth blow strikes a second foe nearby', { crit: 0.06, hooks: { echoEvery: 6 } }),
   // ---- Gorm, the Quarry Titan
   graniteHeart: e('graniteHeart', 'Granite Heart', 'It beats once a day, which is plenty.', '+10% hp for every hero', { hp: 1.1, speed: 0.97 }, { price: 'heroes act and walk 3% slower' }),
-  quarryGauntlet: e('quarryGauntlet', 'Quarry Gauntlet', "He wore it to dig the keep's first foundation.", 'heroes take 6% less damage; 12% for heroes who have not moved this fight', { guard: 0.06, hooks: { stillGuard: 0.06 } }),
-  mossBell: e('mossBell', 'Moss Bell', 'Rung once, it has been ringing slowly ever since.', 'heroes heal 0.4% of their health a second', { hooks: { regen: 0.004 } }),
+  quarryGauntlet: e('quarryGauntlet', 'Quarry Gauntlet', "He wore it to dig the keep's first foundation.", 'heroes take 5% less damage; 10% for heroes who have not moved this fight', { guard: 0.05, hooks: { stillGuard: 0.05 } }),
+  mossBell: e('mossBell', 'Moss Bell', 'Rung once, it has been ringing slowly ever since.', 'heroes heal 0.7% of their health a second', { hooks: { regen: 0.007 } }),
   // ---- Vaelkhar, the Dragon King
-  voidShard: e('voidShard', 'Void Shard', 'A splinter of the sky he flew through to get here.', "+6% attack; +12% against the Calamity's guardians", { atk: 1.06, hooks: { guardianAtk: 0.12 } }),
-  dragonSigil: e('dragonSigil', "Dragon-King's Sigil", 'His seal, on a letter the keep never answered.', 'skills charge 10% faster; ultimates charge 10% faster too', { charge: 1.1, hooks: { ultPace: 0.1 } }),
-  doomHelm: e('doomHelm', 'Doom Helm', 'Made for his rider. He has never let anyone ride him.', 'heroes take 4% less damage, and the foes wait half a second', { guard: 0.04, first: 500 }),
+  voidShard: e('voidShard', 'Void Shard', 'A splinter of the sky he flew through to get here.', "+8% attack; +12% against the Calamity's guardians", { atk: 1.08, hooks: { guardianAtk: 0.12 } }),
+  dragonSigil: e('dragonSigil', "Dragon-King's Sigil", 'His seal, on a letter the keep never answered.', 'skills charge 15% faster; ultimates charge 15% faster too', { charge: 1.15, hooks: { ultPace: 0.15 } }),
+  doomHelm: e('doomHelm', 'Doom Helm', 'Made for his rider. He has never let anyone ride him.', 'heroes take 6% less damage, and the foes wait half a second', { guard: 0.06, first: 500 }),
 };
 
 /** The six Chapters of the keep's history: each four of the keep's own relics, in the order the page lists them. The two and three bonuses are
