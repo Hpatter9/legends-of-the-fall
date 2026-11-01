@@ -208,6 +208,13 @@ def recolour(a, m, ramp, lo, hi):
 
 
 SKIN_WINDOW = [-15, 36, 0.04, 0.7, 0.35, 1.0]
+# The wider window the skin may spread into once it is found: it takes in the shades the teaching window leaves out (the
+# deepest shadow under the chin and hairline, the palest highlight and the warm cheek rim). The outline (value under
+# 0.2) and the lips and blush (hot, saturated reds and oranges) are never skin, so they keep their own colours.
+GROW_WINDOW = [-15, 36, 0.04, 0.98, 0.2, 1.0]
+# The palest highlights run cream-yellow (hue to 56) and white: they join only when the skin all but surrounds them.
+PALE_WINDOW = [-15, 56, 0.0, 0.32, 0.86, 1.0]
+LIP = {'sat': 0.78, 'val': 0.7, 'hue': 22}
 
 
 def run(hero, tones, hairs, looks, preview=None):
@@ -225,17 +232,39 @@ def run(hero, tones, hairs, looks, preview=None):
     # (the skin's shaded rim is nearer in colour to hair and leather than to the lit face, so the skin then spreads a
     #  pixel or two into skin-like pixels that are not hair: the cheek's edge, the nostril, the neck's shadow)
     skin = {}
+    gwin = cfg['skin'].get('grow', GROW_WINDOW)
+    lip = dict(LIP, **cfg['skin'].get('lip', {}))
     for s in sheets:
-        room = window(images[s], win)
+        a = images[s]
+        strict = window(a, win)
+        room = strict | window(a, gwin)
+        h_, s_, v_ = hsv(a)
+        # (lips, blush and other hot, saturated reds are features, not skin: they keep their colours)
+        room &= ~((s_ >= lip['sat']) & (v_ >= lip['val']) & ((h_ <= lip['hue']) | (h_ >= 340)))
+        # (and the deeper rose of a lip or a blush: red, not the orange of shaded skin)
+        room &= ~((s_ >= 0.45) & (v_ >= 0.55) & ((h_ <= 9) | (h_ >= 340)))
         if hairm is not None:
             room &= ~hairm[s]
         m = core[s]
-        for _ in range(cfg['skin'].get('spread', 3)):
-            m = m | (room & (neighbours(m) > 0))
+        # (a pixel the teaching window already counts as skin-like may be cream cloth or a pale cuff: the skin spreads only
+        #  `spreadLit` pixels into those, and `spread` into the deeper and warmer shades the teaching window left out)
+        for i in range(cfg['skin'].get('spread', 3)):
+            lit_ok = i < cfg['skin'].get('spreadLit', 1)
+            m = m | ((room if lit_ok else room & ~strict) & (neighbours(m) > 0))
+        # (pale highlights ringed by skin on four sides or more are the face's own; a cuff's straight edge touches only three)
+        for _ in range(3):
+            m = m | (room & (neighbours(m) >= cfg['skin'].get('ring', 4)))
+        # (the face's palest sparkles are near white and have no hue; they join only when the skin all but surrounds them,
+        #  so an eye's white, which the dark iris and lid keep apart from the skin, never does)
+        white = window(a, cfg['skin'].get('pale', PALE_WINDOW)) | ((a[..., 3] > 0) & (s_ < 0.04) & (v_ >= 0.8))
+        if hairm is not None:
+            white &= ~hairm[s]
+        for _ in range(2):
+            m = m | (white & (neighbours(m) >= cfg['skin'].get('sparkle', 4)))
         skin[s] = m
     # (the lightness range of the taught skin sets where the ramp starts and ends, the same for every sheet of the hero)
-    allpx = np.concatenate([images[s][core[s]][:, :3] for s in sheets]).astype(float)
-    lo, hi = np.percentile(luma(allpx), [3, 99])
+    allpx = np.concatenate([images[s][skin[s]][:, :3] for s in sheets]).astype(float)
+    lo, hi = np.percentile(luma(allpx), [1, 99.5])
     for s in sheets:
         out[s] = recolour(out[s], skin[s], tones[tone], lo, hi)
     if hairm is not None:

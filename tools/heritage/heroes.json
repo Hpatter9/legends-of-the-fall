@@ -608,7 +608,9 @@
      "hero_res_lightning_mage_back",
      0
     ]
-   ]
+   ],
+   "spreadLit": 2,
+   "ring": 3
   }
  }
 }
