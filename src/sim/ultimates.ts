@@ -519,7 +519,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   druid: { rate: 1.19, power: 0.38 },
   barbarian: { rate: 0.9, power: 2.158 },
   ranger: { rate: 0.84, power: 1.162 },
-  warlock: { rate: 0.5, power: 0.929 }, // (RPG-SPELLS batch 6: 1.07 before; the Circle of Death's ring made it +6.3 at level 30)
+  warlock: { rate: 0.5, power: 1.0 }, // (RPG-SPELLS batch 6: 1.07 before; the Circle of Death's ring made it +6.3 at level 30)
   illusionist: { rate: 1.08, power: 0.535 },
   gunslinger: { rate: 0.37, power: 1.78 },
   shambler: { rate: 1.04, power: 0.709 }, // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
@@ -532,7 +532,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   kraken: { rate: 1.37, power: 1.079 },
   lancer: { rate: 2.3, power: 3.29 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
   reaper: { rate: 1.79, power: 2.511 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
-  timeWitch: { rate: 1.09, power: 0.735 },
+  timeWitch: { rate: 1.09, power: 0.85 },
   arcBlade: { rate: 0.59, power: 1.878 }, // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
   dreadPirate: { rate: 1.06, power: 1.376 },
   siegeBot: { rate: 0.5, power: 2.347 },
