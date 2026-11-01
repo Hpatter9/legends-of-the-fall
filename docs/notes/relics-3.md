@@ -68,7 +68,7 @@ Vial +4.7, Glacier +4.7, Mane-Gold +7.7, Dawn Chart +1.7, Oath-Ring +4.0, Horn +
 Quarry +7.0, Moss Bell +8.3, Shard +5.0, Sigil +5.7, Doom Helm +5.3. Then Brand, Dawn Chart, Torc raised and Moss Bell trimmed.
 The Void Shard's guardian bonus does not show in this cell (no guardians).
 
-Calamity sweep (`npm run balance -- --no-tables --calamity --attempts 36`): see the figures in the reply and below.
+Calamity sweep (`npm run balance -- --no-tables --calamity --attempts 36`, the same command on main 0.304.0 and this branch; mean maps, map 1/2/3 cleared): main 1.83 (100% / 81% / 3%), this branch 1.75 (97% / 75% / 3%). The difference is within the noise of 36 runs; the Calamity stays where it was.
 
 ## Checks
 
