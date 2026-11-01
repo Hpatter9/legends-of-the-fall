@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.315.0',
+    date: '2026-11-01',
+    title: 'Three book slots',
+    notes: ['Every hero has three skill slots from the start (the third opens at level 20). A book\'s skill levels up with use like any other, and its cost fits the reader.'],
+  },
+  {
     version: '0.314.0',
     date: '2026-11-01',
     title: 'Gorm\'s and Vaelkhar\'s chains',

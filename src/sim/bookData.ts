@@ -14,8 +14,8 @@ export interface BookDef {
   rarity: BookRarity;
   /** The line of its history, shown in italics. */
   history: string;
-  /** The skill it teaches: that hero's skill 1 or 2 (its cast, painting and strength). */
-  from: { hero: string; slot: 1 | 2 };
+  /** The skill it teaches: that hero's skill 1, 2 or 3 (its cast, painting, class and strength; `bookSource` in `books.ts` reads it). */
+  from: { hero: string; slot: 1 | 2 | 3 };
   /** A share of the source skill's strength (1 when unset): the balance knob for a book's skill in another hero's hands. */
   tune?: number;
 }
