@@ -28,7 +28,7 @@ import { goatSheet } from '../duchess';
 import { AwakenAura } from './awakenAura';
 import { FRAME as GOAT_FRAME } from './duchessRules';
 import { settings } from '../settings';
-import { rulerTextures } from './rulerArt';
+import { loadRulers, rulerPortraitTexture, rulerTextures } from './rulerArt';
 import { rulerFrame, rulerOf, rulerWords, type RulerAction } from '../rulerRules';
 import type { Area } from '../sim/board';
 import { FACES, GWEN } from '../questArt';
@@ -567,6 +567,10 @@ class Run {
           const base = await textureOf(GWEN.url);
           base.source.scaleMode = 'nearest';
           this.giverFrames.set(key, Array.from({ length: GWEN.talk }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(i * GWEN.cell, GWEN.cell, GWEN.cell, GWEN.cell) })));
+        } else if (key === 'ruler') {
+          // (the Crown speaks with the face of the ruler picked in Settings)
+          await loadRulers();
+          this.giverFrames.set(key, [rulerPortraitTexture(settings().ruler)]);
         } else {
           const t = await textureOf(FACES[key as GiverId] ?? FACES.gwen);
           t.source.scaleMode = 'nearest';

@@ -43,6 +43,30 @@ export function loadRulers(): Promise<void> {
     }
   })]).then(() => undefined);
 }
+/** A ruler's portrait for a talking head: the head and shoulders of the first idle frame (the top of the figure, found from the
+ *  frame's own pixels, so a tall crown or a short one is whole). */
+const portraits = new Map<RulerId, Texture>();
+export function rulerPortraitTexture(id: RulerId): Texture {
+  let t = portraits.get(id);
+  if (t) return t;
+  const img = images.get(id)!;
+  const w = img.width / 4, h = img.height / 8;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.drawImage(img, 0, 0, w, h, 0, 0, w, h);
+  const px = g.getImageData(0, 0, w, h).data;
+  let top = -1, left = w, right = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (px[(y * w + x) * 4 + 3] > 20) { if (top < 0) top = y; left = Math.min(left, x); right = Math.max(right, x); }
+  top = Math.max(top, 0);
+  const side = Math.min(w, Math.max(right - left + 1, 1), h - top);
+  const cx = Math.round((left + right) / 2);
+  const x0 = Math.max(0, Math.min(w - side, cx - Math.floor(side / 2)));
+  t = new Texture({ source: Texture.from(img).source, frame: new Rectangle(x0, top, side, Math.min(Math.round(side * 0.95), h - top)) });
+  portraits.set(id, t);
+  return t;
+}
 export const rulerThrone = (id: RulerId): Texture => thrones.get(id)!;
 export const rulerTextures = (id: RulerId, action: RulerAction): Texture[] => frames.get(`${id}:${action}`)!;
 /** The texture of a ruler on the throne (seated, or commanding from it): the throne stays put whatever the time (`seatFrame`). */
