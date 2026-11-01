@@ -117,7 +117,7 @@ test('a quest that names a secret hero asks for it, so it is offered only to a s
   };
   const bad: string[] = [];
   for (const q of QUESTS) {
-    if (q.giver === 'tale' || (['shepherd', 'gaoler', 'smith', 'sexton', 'pawnbroker', 'lantern', 'herald', 'clock', 'falconer', 'archivist'] as string[]).includes(q.giver)) continue;
+    if ((['shepherd', 'gaoler', 'smith', 'sexton', 'pawnbroker', 'lantern', 'herald', 'clock', 'falconer', 'archivist'] as string[]).includes(q.giver)) continue;
     // (a foe may share a hero's word, like the Alpha Werewolf: take the foes' names out first)
     let words = [q.title, q.text, q.going, ...q.offer, ...q.done].join(' ');
     for (const f of Object.values(FOES)) if (f.name) words = words.split(f.name).join('');
