@@ -24,6 +24,9 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: android-actions/setup-android@v3
+        with:
+          # (the old default also asks for 'tools', a package the SDK no longer has)
+          packages: 'platform-tools'
       - run: npm ci
       - run: npm run web
       - run: npx cap sync android
