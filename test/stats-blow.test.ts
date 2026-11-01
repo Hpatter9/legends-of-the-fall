@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, swing, type Battle, type BattleEvent, type Pending, type Unit } from '../src/sim/battle';
-import { acAgainst, blowFit, blowShare, blowStatsOf, BOSS_BLOCK, DODGE_PER_AC, HIGH_AC_MAX, INIT_MAX_MS, INIT_MS, initiativeWaits, matchOf, rollBlow } from '../src/sim/blow';
+import { acAgainst, blowFit, blowShare, blowStatsOf, BOSS_BLOCK, DODGE_PER_AC, FOE_AC, HERO_AC, HERO_AIM, HIGH_AC_MAX, INIT_MAX_MS, INIT_MS, initiativeWaits, matchOf, rollBlow } from '../src/sim/blow';
 import { TALL_AC } from '../src/sim/board';
 import { FIELD_BANDS, isBoss } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
@@ -44,7 +44,9 @@ test("a fighter's blow numbers: a hero's from its scores, a foe's from its famil
   const k = derivedOf(STAT_PROFILES.knight);
   const s0 = foeStatsOf(UNITS.skeleton);
   assert.deepEqual(blowStatsOf(b, h), { toHit: k.toHit, aim1: k.toHit, ac1: k.ac, ac: k.ac, dexCrit: 0, quick: 1, init: k.initiative });
-  assert.ok(Math.abs(blowFit(b, h, f) - 1 / blowShare(4, s0.ac)) < 1e-12, 'the Knight (+4) against the skeleton\u2019s AC');
+  // (the skeleton's block is fitted against an ordinary hero: as a target for its AC, as a striker for its to hit; the Knight not at all)
+  assert.ok(Math.abs(blowFit(b, h, f) - blowShare(HERO_AIM, FOE_AC) / blowShare(HERO_AIM, s0.ac)) < 1e-12);
+  assert.ok(Math.abs(blowFit(b, f, h) - blowShare(HERO_AIM, HERO_AC) / blowShare(s0.toHit, HERO_AC)) < 1e-12);
   assert.equal(blowStatsOf(b, h).ac, 16, 'the Knight is in plate');
   const s = foeStatsOf(UNITS.skeleton);
   assert.deepEqual(blowStatsOf(b, f), { toHit: s.toHit, aim1: s.toHit, ac1: s.ac, ac: s.ac, dexCrit: s.crit - 0.05, quick: 1, init: s.initiative });
@@ -61,24 +63,26 @@ test("a fighter's blow numbers: a hero's from its scores, a foe's from its famil
   assert.ok(Math.abs(blowStatsOf(g.b, g.h).dexCrit - 0.05) < 1e-9, 'DEX +5 crits 5% of its hits');
 });
 
-test('the fit: at level 1 every blow, hero or foe of any family, deals on average what it did before blows rolled', () => {
+test('the heroes\u2019 armour and aim show from level 1 (the owner\u2019s answer); the foes\u2019 families are fitted', () => {
   // (an armoured skeleton, a shooter, a brute, a skirmisher and a caster: their to hit runs +3 to +5 and their AC 12 to 15)
   const foes = ['skeleton', 'boneArcher', 'orcBrute', 'wolfBlack', 'orcShaman'].filter((id) => UNITS[id]?.side === 'foe');
   assert.ok(foes.length >= 4, foes.join(' '));
-  for (const foe of foes)
-    for (const kind of ALL_HEROES) {
-      const { b, h, f } = duel(kind, foe);
-      const hs = blowStatsOf(b, h);
-      const fs = blowStatsOf(b, f);
-      // (the fit times the d20's average share is 1, both ways)
-      assert.ok(Math.abs(blowFit(b, h, f) * blowShare(hs.toHit, fs.ac) - 1) < 1e-12, `${kind} on ${foe}`);
-      assert.ok(Math.abs(blowFit(b, f, h) * blowShare(fs.toHit, hs.ac) - 1) < 1e-12, `${foe} on ${kind}`);
-    }
-  // (a grown hero keeps its level-1 fit: what it gains from there shows)
-  const one = duel('gunslinger', 'skeleton', 1);
-  const thirty = duel('gunslinger', 'skeleton', 30);
-  assert.equal(blowFit(one.b, one.h, one.f), blowFit(thirty.b, thirty.h, thirty.f));
-  assert.ok(blowStatsOf(thirty.b, thirty.h).toHit > blowStatsOf(one.b, one.h).toHit);
+  // (a family's block moves how often it hits and is hit, not how much it deals to, or takes from, an ordinary hero)
+  for (const foe of foes) {
+    const { b, h, f } = duel('samurai', foe);
+    const fs = blowStatsOf(b, f);
+    assert.ok(Math.abs(blowFit(b, f, h) * blowShare(fs.toHit, HERO_AC) - blowShare(HERO_AIM, HERO_AC)) < 1e-12, `${foe} strikes`);
+    assert.ok(Math.abs(blowFit(b, h, f) * blowShare(HERO_AIM, fs.ac) - blowShare(HERO_AIM, FOE_AC)) < 1e-12, `${foe} is struck`);
+  }
+  // (a hero is not fitted: the plated Knight takes less from the same foe than the robed Wizard, and the STR 10 Beastmaster deals less)
+  const knight = duel('knight', 'orcBrute');
+  const wizard = duel('wizard', 'orcBrute');
+  const taken = (d: ReturnType<typeof duel>) => blowFit(d.b, d.f, d.h) * blowShare(blowStatsOf(d.b, d.f).toHit, blowStatsOf(d.b, d.h).ac);
+  assert.ok(taken(knight) < taken(wizard) * 0.85, `${taken(knight)} against ${taken(wizard)}`);
+  const beast = duel('beastmaster', 'orcBrute');
+  const gun = duel('gunslinger', 'orcBrute');
+  const dealt = (d: ReturnType<typeof duel>) => blowFit(d.b, d.h, d.f) * blowShare(blowStatsOf(d.b, d.h).toHit, blowStatsOf(d.b, d.f).ac);
+  assert.ok(dealt(beast) < dealt(gun) * 0.85, `${dealt(beast)} against ${dealt(gun)}`);
 });
 
 test('cover: tall grass is +2 AC, higher ground +1 a level to three, and every 7% of an old dodge share +1', () => {

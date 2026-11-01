@@ -1423,7 +1423,8 @@ export const KITS: Record<string, Kit> = {
   },
   illusionist: {
     skill: { name: 'Mirror Image', text: 'Slips away, leaving two decoys that draw the foes nearby for 3s', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 400, anim: 'attack2', cast: mirrorImage },
-    passive: { name: 'Sleight of Hand', text: 'Slips 25% of blows', dodge: 0.25 },
+    // (STATS batch 4, the owner's answer: 25% to 35%, so that once robes showed she is back in the roster's band; it is Armour Class now)
+    passive: { name: 'Sleight of Hand', text: 'Slips 35% of blows', dodge: 0.35 },
   },
   gunslinger: {
     skill: { name: 'Piercing Shot', key: 'Dead Eye', text: 'One slug through every foe in a line, for more than double', need: CHARGE_MAX, dealt: 14, taken: 4, perSec: 1.5, castMs: 500, anim: 'attack', cast: deadEye },
@@ -1465,7 +1466,8 @@ export const KITS: Record<string, Kit> = {
   },
   lancer: {
     skill: { name: 'Charge', key: 'Lance Charge', text: 'Charges up to 5 tiles at a foe for more than double, then rides faster for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: lanceCharge },
-    passive: { name: 'Couched Lance', text: 'Blows deal 40% more to shooters', prey: 1.4 },
+    // (STATS batch 4, the owner's answer: 1.4 to 1.1; in plate and sure of hand from level 1 he stood above the roster's band)
+    passive: { name: 'Couched Lance', text: 'Blows deal 10% more to shooters', prey: 1.1 },
   },
   reaper: {
     skill: { name: 'Reap', text: 'Cuts every foe within 3 tiles; a foe under 30% health takes nearly triple', need: CHARGE_MAX, dealt: 6, taken: 3, perSec: 2, castMs: 500, anim: 'attack2', cast: reap },
@@ -1477,7 +1479,8 @@ export const KITS: Record<string, Kit> = {
   },
   arcBlade: {
     skill: { name: 'Thunder Step', key: 'Voltage Blink', text: 'Blinks beside the thickest knot of foes and discharges: the 3x3 is hurt and held for 1s', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: voltageBlink },
-    passive: { name: 'Static Discharge', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
+    // (STATS batch 4, the owner's answer: 25% to 15%; with his DEX 17 aim from level 1 he stood above the roster's band)
+    passive: { name: 'Static Discharge', text: '15% of blows arc to a second foe nearby', arc: 0.15 },
   },
   dreadPirate: {
     skill: { name: 'Cannonade', key: 'Broadside', text: 'A ghost ship\'s broadside falls on a 3x3 of tiles', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: broadside },
@@ -1541,7 +1544,9 @@ export const KITS: Record<string, Kit> = {
   },
   minotaur: {
     skill: { name: 'Gore Charge', text: 'Charges up to 4 tiles in a line at a foe, hits it for double, knocks it back and stuns it for 1.5s', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 550, anim: 'attack', cast: goreCharge },
-    passive: { name: 'Trample', text: 'Blows deal a quarter more to a foe under half health', finish: { under: 0.5, mult: 1.25 } },
+    // (STATS batch 4, the owner's answer: a quarter to 15%; in plate and sure of hand he stood far above the roster's band at level 30. The
+    // maze minotaurs, foes, keep a quarter)
+    passive: { name: 'Trample', text: 'Blows deal 15% more to a foe under half health', finish: { under: 0.5, mult: 1.15 } },
   },
   satyr: {
     skill: { name: 'Pipes of Pan', text: 'Hastens the allies within 3 tiles, and him, for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 500, anim: 'attack', cast: pipes },
@@ -1572,7 +1577,7 @@ KITS.lichKing = {
 KITS.boneVolley = { skill: KITS.archer.skill, passive: { name: 'Dead Aim', text: 'Arrows ignore 2 defence', pierce: 2 } };
 for (const id of ['packBlack', 'packRed', 'packWhite']) KITS[id] = KITS.werewolf;
 for (const id of ['groveSatyr1', 'groveSatyr2', 'groveSatyr3']) KITS[id] = KITS.satyr;
-for (const id of ['mazeMino1', 'mazeMino2', 'mazeMino3']) KITS[id] = KITS.minotaur;
+for (const id of ['mazeMino1', 'mazeMino2', 'mazeMino3']) KITS[id] = { ...KITS.minotaur, passive: { ...KITS.minotaur.passive, text: 'Blows deal a quarter more to a foe under half health', finish: { under: 0.5, mult: 1.25 } } };
 for (const id of ['mazeGorgon1', 'mazeGorgon2', 'mazeGorgon3']) KITS[id] = { skill: KITS.gorgon.skill, passive: KITS.gorgon.passive };
 for (const id of ['clanOgre', 'clanBrute']) KITS[id] = KITS.hornedOgre;
 KITS.hellImp = { skill: KITS.boarKing.skill, passive: KITS.devilLeader.passive };

@@ -31,14 +31,14 @@ export const MANA_TUNE = 0.7;
  *  whose worth is mostly what it does rather than what it deals (a guard, a banner, decoys, a yank) carries little attack, and keeps a longer gap. */
 export const TUNE1: Readonly<Record<string, number>> = {
   knight: 0.172,
-  samurai: 0.671,
+  samurai: 0.57, // (STATS batch 4: 0.671 to 0.57, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   kunoichi: 0.285,
   archer: 0.77,
   wizard: 0.211,
   peasant: 0.565,
   ninjaMonk: 0.533,
   wanderer: 1.25, // (STATS batch 4: 1.059 to 1.25, the Wanderer was 6.3 points under the roster at level 30 once blows rolled against AC)
-  lightningMage: 0.406, // (RPG-SPELLS batch 6: 0.93 before; she stood +5.9 at level 10)
+  lightningMage: 0.731, // (STATS batch 4: 0.406 to 0.731, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 6: 0.93 before; she stood +5.9 at level 10)
   kitsune: 0.586,
   karasu: 0.24, // (RPG-SPELLS batch 7: 0.4 before; striking from behind made Swoop +4 at level 1)
   yamabushi: 0.431,
@@ -46,33 +46,33 @@ export const TUNE1: Readonly<Record<string, number>> = {
   minotaur: 0.438, // (RPG-SPELLS batch 7: 0.45 before; he was -5.7 at level 10 on main)
   satyr: 0.096,
   gorgon: 0.343,
-  samuraiCommander: 0.061,
+  samuraiCommander: 0.046, // (STATS batch 4: 0.061 to 0.046, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   paladin: 0.578,
   cleric: 2.784,
-  druid: 0.629,
+  druid: 0.944, // (STATS batch 4: 0.629 to 0.944, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   barbarian: 0.463,
   ranger: 0.138,
-  warlock: 0.368, // (RPG-SPELLS batch 6: 0.59 before; Eldritch Blast's shove made him +3.3 at level 1)
+  warlock: 0.552, // (STATS batch 4: 0.368 to 0.552, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 6: 0.59 before; Eldritch Blast's shove made him +3.3 at level 1)
   illusionist: 0.096,
   gunslinger: 0.366,
-  shambler: 2.087, // (RPG-SPELLS batch 7: Contagion's rot; 0.78 was Rotting Touch's)
+  shambler: 2.713, // (STATS batch 4: 2.087 to 2.713, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 7: Contagion's rot; 0.78 was Rotting Touch's)
   rifleBot: 0.708,
   mercenary: 0.595,
-  mummy: 0.59,
+  mummy: 1.003, // (STATS batch 4: 0.59 to 1.003, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   buccaneer: 0.486,
   wolfBard: 0.272,
-  beastmaster: 0.077,
+  beastmaster: 0.154, // (STATS batch 4: 0.077 to 0.154, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   kraken: 0.078,
   lancer: 0.14,
   reaper: 0.467,
   timeWitch: 0.054,
-  arcBlade: 0.153,
+  arcBlade: 0.107, // (STATS batch 4: 0.153 to 0.107, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   dreadPirate: 0.53,
   siegeBot: 0.163,
   priestess: 0.792,
-  dragoon: 0.553,
+  dragoon: 0.487, // (STATS batch 4: 0.553 to 0.487, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   juggernaut: 0.847, // (RPG-SPELLS batch 3: Seismic Slam, 0.52 as Earthquake)
-  sage: 0.538,
+  sage: 0.807, // (STATS batch 4: 0.538 to 0.807, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   demonSwordsman: 0.631,
   tyrant: 0.932,
 };
@@ -91,12 +91,12 @@ export const TUNE2: Readonly<Record<string, number>> = {
   peasant: 0.281,
   ninjaMonk: 1.72,
   wanderer: 0.106,
-  lightningMage: 0.072,
+  lightningMage: 0.094, // (STATS batch 4: 0.072 to 0.094, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   kitsune: 0.052,
   karasu: 1.678,
   yamabushi: 3.501,
   werewolf: 0.885,
-  minotaur: 3.132,
+  minotaur: 1.879, // (STATS batch 4: 3.132 to 1.879, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   satyr: 0.066,
   gorgon: 1.638,
   samuraiCommander: 1.109,
@@ -105,7 +105,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   druid: 0.066,
   barbarian: 0.097,
   ranger: 0.052,
-  warlock: 0.068,
+  warlock: 0.088, // (STATS batch 4: 0.068 to 0.088, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   illusionist: 0.073,
   gunslinger: 0.895,
   shambler: 0.057,
@@ -114,11 +114,11 @@ export const TUNE2: Readonly<Record<string, number>> = {
   mummy: 0.067,
   buccaneer: 1.006,
   wolfBard: 0.13,
-  beastmaster: 0.058,
+  beastmaster: 0.116, // (STATS batch 4: 0.058 to 0.116, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   kraken: 0.343,
   lancer: 0.69,
   reaper: 0.097,
-  timeWitch: 0.058,
+  timeWitch: 0.087, // (STATS batch 4: 0.058 to 0.087, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   arcBlade: 0.209,
   dreadPirate: 0.721,
   siegeBot: 6.232,
@@ -252,32 +252,32 @@ export const TUNE3: Readonly<Record<string, number>> = {
   tyrant: 0.768,
   archer: 0.422,
   ranger: 0.43,
-  gunslinger: 0.807,
+  gunslinger: 0.968, // (STATS batch 4: 0.807 to 0.968, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   rifleBot: 0.897,
   siegeBot: 0.934,
   dreadPirate: 0.371,
-  wizard: 1.135,
-  lightningMage: 0.699,
-  warlock: 1.012,
+  wizard: 1.305, // (STATS batch 4: 1.135 to 1.305, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  lightningMage: 0.839, // (STATS batch 4: 0.699 to 0.839, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  warlock: 1.316, // (STATS batch 4: 1.012 to 1.316, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   sage: 0.917,
-  timeWitch: 0.553,
+  timeWitch: 0.774, // (STATS batch 4: 0.553 to 0.774, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   illusionist: 0.538,
   cleric: 1.936,
   priestess: 0.451,
   wanderer: 0.598,
-  druid: 0.6,
-  beastmaster: 0.67,
+  druid: 0.78, // (STATS batch 4: 0.6 to 0.78, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  beastmaster: 1.34, // (STATS batch 4: 0.67 to 1.34, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   reaper: 0.527,
   kitsune: 0.257,
   karasu: 0.648,
   yamabushi: 1.229,
   werewolf: 0.671,
-  minotaur: 0.701,
+  minotaur: 0.28, // (STATS batch 4: 0.701 to 0.28, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   satyr: 0.665,
   gorgon: 0.925,
   shambler: 0.415,
   mummy: 0.567,
-  kraken: 1.196,
+  kraken: 1.555, // (STATS batch 4: 1.196 to 1.555, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
 };
 
 /** Each hero's skill 3 (the design's section 2 table): its class, cost and cooldown (ms), and the skill. The guards' `emergency` is their trigger. */

@@ -32,6 +32,10 @@ export function plantStandard(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   return true;
 }
 
+/** How hard each wolf strikes as it leaps in (STATS batch 4, the owner's answer: 1.2 to 3, so the Beastmaster, who blows with STR 10 and
+ *  misses more once aim showed, is back in the roster's band). */
+export const SIC_STRIKE = 3;
+
 /** Beastmaster, Sic 'Em: every wolf of his leaps at the foe he marks (the weakest within 4 of him): it is struck and slowed, and the wolves hit a quarter harder for 4s and keep on it.
  *  With no wolf standing, one answers instead. */
 export function sicEm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
@@ -52,7 +56,7 @@ export function sicEm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
     w.banner = { until: b.t + ms(me, 4000) };
     w.taunt = { to: f.id, until: b.t + ms(me, 4000) };
     if (apart(w, f) === 1) {
-      strike(b, w, f, 1.2, out, true);
+      strike(b, w, f, SIC_STRIKE, out, true);
       if (f.alive) slowFor(b, f, ms(me, 2000));
     }
   }

@@ -8,9 +8,9 @@
 // (a part of a point is a whole one that part of the time); tall grass, +2 (cover, in place of its 12% dodge); and higher ground, +1 a level
 // above the striker, to three (in place of `guardMult`'s 3% a level).
 //
-// Today's numbers are each fighter's level 1 (the design's rule, as batch 1 fitted health and attack): every blow is fitted (`blowFit`) so
-// that at level 1 each pair of fighters deals on average what it did; to hit and AC decide how often a blow misses, glances or hits, and
-// what they gain with levels, cover and the dodges show in full.
+// The heroes' armour and aim show from level 1 (the owner's answer): the heavily armoured and the sure-handed feel their AC and to hit, and
+// the heroes who fell behind for it are lifted by their own kit tunes. The foes' families are fitted (`blowFit`), so their blocks move how
+// often they hit and are hit, not how much an army deals or takes.
 //
 // The foes use their family's block (`foeStatsOf`; a boss's +2 to hit and AC wait, `BOSS_BLOCK`). So that this batch moves no mode (the joint
 // rebalance is later), the foes are matched to the heroes they fight: their AC rises by as much as the placed heroes' to hit has grown since
@@ -29,8 +29,8 @@ import { TALL_AC } from './board';
 import { UNITS } from './units';
 import type { Battle, Unit } from './battle';
 
-/** The global knob on every ordinary blow's damage (the fit already puts each blow's average back where it was, so it is 1). */
-export const BLOW_SCALE = 1;
+/** The global knob on every ordinary blow's damage, which puts the average blow back where it was before hits, glances and misses. */
+export const BLOW_SCALE = 1.28;
 /** Whether a boss's block has its +2 to hit and +2 AC in the blow (`foeStatsOf`). Off in this batch: with it, the armies came out about a
  *  wave harder than main at their levels (measured, docs/notes/stats-4.md), and the modes are the joint rebalance's to retune. */
 export const BOSS_BLOCK = false;
@@ -53,22 +53,37 @@ export function blowShare(toHit: number, ac: number): number {
   return n / 20;
 }
 
-// ---- The fit (as batch 1 fitted health and attack to today's numbers) ----
-// Every blow's damage is divided by the share a blow at the striker's level-1 to hit deals against the target's level-1 AC (`blowFit`), so
-// that at level 1 every pair of fighters, hero or foe of any family, deals on average what it dealt before blows rolled: the d20 decides
-// how often a blow hits, glances or misses, not how much a side deals. What moves the average is what comes on top: cover and the dodges,
-// the crits, and what to hit and AC gain with levels. (A fit for the heroes alone, against one yardstick, left the foes' families apart: the
-// Beasts' skirmishers, AC 14 and +5, came out harder than before and the skeletons, +4, easier.)
+// ---- The foes' families (the owner's answer of 1 November 2026: the heroes' armour and aim show from level 1) ----
+// A hero's AC and to hit count in full: a plated Knight is missed more, a STR 10 Beastmaster misses more. The foes' family blocks, though,
+// would make whole armies harder or easier than before (the Beasts' skirmishers, +5 and AC 14, came out harder, the skeletons, +4, easier),
+// and the modes are not retuned in this batch. So a foe's family is fitted (`blowFit`): its block changes how often it hits and is hit, not
+// how much it deals or takes on average, measured against an ordinary hero (`HERO_AIM` and `HERO_AC`).
+
+/** The ordinary hero the foes' blocks are fitted against: +5 to hit (proficiency +2 and a 17), and AC 14 (the roster's mean at level 1). */
+export const HERO_AIM = 5;
+export const HERO_AC = 14;
+/** The ordinary foe's AC, the yardstick of the blocks' AC. */
+export const FOE_AC = 13;
 
 const fitMemo = new Map<string, number>();
-/** The fit on `by`'s blow on `to`. */
-export function blowFit(b: Battle, by: Unit, to: Unit): number {
-  const aim = blowStatsOf(b, by).aim1;
-  const ac = blowStatsOf(b, to).ac1;
-  const key = `${aim}:${ac}`;
+const memo = (key: string, f: () => number): number => {
   let v = fitMemo.get(key);
-  if (v === undefined) fitMemo.set(key, (v = 1 / blowShare(aim, ac)));
+  if (v === undefined) fitMemo.set(key, (v = f()));
   return v;
+};
+/** The fit on `by`'s blow on `to`: a fighter with no profile (a foe, a summon) is fitted for its block's to hit as a striker and for its
+ *  block's AC as a target; a hero not at all. */
+export function blowFit(b: Battle, by: Unit, to: Unit): number {
+  let m = 1;
+  if (!profiled(by)) {
+    const aim = blowStatsOf(b, by).aim1;
+    m *= memo(`a${aim}`, () => blowShare(HERO_AIM, HERO_AC) / blowShare(aim, HERO_AC));
+  }
+  if (!profiled(to)) {
+    const ac = blowStatsOf(b, to).ac1;
+    m *= memo(`c${ac}`, () => blowShare(HERO_AIM, FOE_AC) / blowShare(HERO_AIM, ac));
+  }
+  return m;
 }
 
 /** Initiative: the fighters act in turn at the fight's start, this many ms a point behind the best roll, at most `INIT_MAX_MS`. */
@@ -79,7 +94,7 @@ export const INIT_MAX_MS = 600;
  *  blows are than its kind's at level 1 (from DEX), and its initiative modifier. */
 export interface BlowStats {
   toHit: number;
-  /** Its to hit and AC at level 1 (a foe's, its block's before the match): what the fit reads (`blowFit`). */
+  /** Its to hit and AC at level 1 (a foe's, its block's before the match): what the foes' fit reads (`blowFit`). */
   aim1: number;
   ac1: number;
   ac: number;
