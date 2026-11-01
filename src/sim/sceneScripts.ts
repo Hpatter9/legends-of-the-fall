@@ -32,7 +32,7 @@ const PILOTS: Record<string, Scene> = {
       back: { role: 'party:2', x: 180, facing: 'right', hidden: true },
       king: { role: 'unit:standKing', x: 120, facing: 'right', hidden: true, scale: 1.2 },
       duchess: { role: 'duchess', x: 155, facing: 'right', hidden: true },
-      warlord: { role: 'unit:orcWarlord', x: 390, facing: 'left', hidden: true, scale: 1.4, shade: true },
+      warlord: { role: 'unit:orcWarlord', x: 390, facing: 'left', hidden: true, scale: 1.4 },
     },
     shots: [
       {
@@ -74,8 +74,10 @@ const PILOTS: Record<string, Scene> = {
         ],
       },
       {
-        cam: close(['king', 'front'], 1.3),
-        ...shoot('ots', 'front', 'drift'),
+        // (a two-shot with the ruler and the knight both in view, so each line shows who says it; the director's over-the-shoulder
+        // held the knight's portrait through the ruler's lines)
+        cam: wide(183, 220),
+        ...shoot('wide', undefined, 'still'),
         lines: [
           say('king', 'I will direct your positions from the rear. Standard tactical doctrine.', undefined),
           say('front', 'You take the point, majesty. We will applaud from the ramparts.', undefined),
@@ -93,8 +95,10 @@ const PILOTS: Record<string, Scene> = {
       },
       { cam: close('back'), ...shoot('close', 'back', 'snapZoom'), lines: [say('back', 'That one is roughly the size of a tavern.', undefined)] },
       {
-        cam: wide(290, 205),
-        ...shoot('high', undefined, 'pullOut', 'dissolve'),
+        cam: wide(250, 215),
+        // (the warlord has marched in to 322 so the three and he are all in the picture)
+        acts: [{ who: 'warlord', walk: 322 }],
+        ...shoot('wide', undefined, 'still', 'dissolve'),
         lines: [say('striker', 'Steel ready.', undefined), say('front', 'Brace the line!', 'shout'), { ...tell('Place your champions.'), beat: 0.8 }],
       },
     ],

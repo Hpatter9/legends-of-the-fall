@@ -29,5 +29,12 @@ default line length plus short beats on the shots that need one (the narrator's 
 - Test changes: Duchess's line may be "Baaaah." as well as "Mehh." (`cinematics.test.ts`); `scene-fixes.test.ts` finds the
   king's shot by "from the rear" and not "That is you".
 
+## Director's fixes after review (merged with 0.326.0, Iron Stag the default ruler)
+- Shot 4 is a still wide two-shot (cam x 183) with the ruler and the knight both in view; the over-the-shoulder framing held the
+  knight's portrait through the ruler's lines. The speaker box shows the chosen ruler's name (Iron Stag by default).
+- Shot 7 is a still wide shot (cam x 250) and the warlord walks in to x 322, so all three defenders and the warlord are in the
+  picture for the handover (visible width at this zoom is only about 200 stage px).
+- The warlord is no longer a black `shade` silhouette (it read as a blob): he is drawn in full, under the shot's `darken`.
+
 ## Frames
 `docs/samples/opening-v2-1.png` to `-8.png` (393x852).
