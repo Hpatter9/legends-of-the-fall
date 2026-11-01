@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { barOf, countAt, growthAt, heroGrowth, learntBetween, mvpLine, partyRows, questLines, questMoves, resultLines, statRises, statsAt, xpToNext } from '../src/sim/jrpgRecap';
+import { barOf, countAt, growthAt, heroGrowth, learntBetween, levelRise, mvpLine, partyRows, questLines, questMoves, resultLines, statRises, statsAt, xpToNext } from '../src/sim/jrpgRecap';
 import { KITS, ULT_LEVEL } from '../src/sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL } from '../src/sim/heroKits';
 import { lastingBoost, levelBoost, levelOf, RUN_MAX_LEVEL, xpFor } from '../src/sim/levels';
@@ -139,4 +139,13 @@ test('between waves the short card says each quest the wave moved in a line of i
   assert.equal(notes[1].text, 'Quest complete: Slay the lich · return to the tavern');
   const lines = resultLines(m, { quests: [{ title: 'Slay the lich', kind: 'done' }] });
   assert.deepEqual(lines.map((l) => l.text), ['Quest complete: Slay the lich · return to the tavern']);
+});
+
+test('the recap shows a hero\'s level start to finish: the level the run began at, to where it ended', () => {
+  const g = heroGrowth('knight', xpFor(12) + 3, xpFor(14) + 9);
+  assert.deepEqual(levelRise(g), { from: 12, to: 14, gain: 2 });
+  // no level-up, no level line
+  assert.equal(levelRise(heroGrowth('knight', xpFor(12) + 3, xpFor(12) + 9)), null);
+  // an older run in progress (no start figure kept) just reads from zero XP and still agrees with the bar
+  assert.equal(levelRise(heroGrowth('archer', 0, xpFor(3)))?.to, 3);
 });
