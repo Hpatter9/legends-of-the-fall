@@ -21,6 +21,7 @@ import { rulerWords } from './rulerRules';
 import { LAYOUT_LIST, TERRAIN_INFO } from './sim/terrainInfo';
 import { portrait, sprite, figureOf } from './render/sheets';
 import { COMBOS, COMBO_NAME } from './sim/combos';
+import { slotBrief } from './fightHudRules';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -78,9 +79,9 @@ function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   const hk = hero ? HERO_KITS()[hero] : undefined;
   const rows: [string, { name: string; text: string }, number?][] = hk
     ? [
-        [`Skill 1 (${hk.s1.cost} ${hk.pool})`, hk.s1.skill],
-        [`Skill 2 (${hk.s2.cost} ${hk.pool})`, hk.s2.skill, SKILL2_LEVEL],
-        ...(hk.s3 ? ([[`Skill 3 (${hk.s3.cost} ${hk.pool})`, hk.s3.skill, SKILL3_LEVEL]] as [string, { name: string; text: string }, number][]) : []),
+        [`Skill 1 (${slotBrief(hk, hk.s1)})`, hk.s1.skill],
+        [`Skill 2 (${slotBrief(hk, hk.s2)})`, hk.s2.skill, SKILL2_LEVEL],
+        ...(hk.s3 ? ([[`Skill 3 (${slotBrief(hk, hk.s3)})`, hk.s3.skill, SKILL3_LEVEL]] as [string, { name: string; text: string }, number][]) : []),
       ]
     : [['Skill', kit.skill]];
   if (kit.ultimate) rows.push(['Ultimate', kit.ultimate, hero ? kit.ultimate.unlock : undefined]);

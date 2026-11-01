@@ -19,7 +19,7 @@ import { portrait } from './render/sheets';
 import { heroFace } from './heroFace';
 import { battleSheet } from './render/awakenLook';
 import { GLOW, skillElement, type Element } from './render/fxRules';
-import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type Which } from './fightHudRules';
+import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type ChipView, type Which } from './fightHudRules';
 import atlasUrl from './art/fx/pack/atlas.png';
 import atlas from './art/fx/pack/atlas.json';
 
@@ -159,14 +159,14 @@ export class FightHud {
     el.className = `fhRow${(u.grade ?? 1) > 3 ? ' g4' : ''}`;
     el.dataset.unit = String(u.id);
     el.setAttribute('role', 'button');
-    const chip = (n: 1 | 2, s: Skill, heals = false) =>
-      `<span class="fhChip" data-skill="${n}" role="button" tabindex="0" style="--el:${hex(GLOW[elOf(s)])}">${skillIcon(s, this.compact ? 14 : 18, heals)}<span class="fhSk"><b></b><em></em></span><i class="fhCd"></i><i class="fhPay"></i></span>`;
+    const chip = (n: 1 | 2 | 3, s: Skill, heals = false) =>
+      `<span class="fhChip" data-skill="${n}" role="button" tabindex="0" style="--el:${hex(GLOW[elOf(s)])}">${this.compact ? '' : skillIcon(s, 14, heals)}<span class="fhSk"><b></b><em></em></span><i class="fhCd"></i><i class="fhPay"></i></span>`;
     el.innerHTML =
       '<i class="fhPearl"></i><i class="fhSheen"></i>' +
       '<span class="fhPic"><span class="fhPlate" hidden>TAP</span></span>' +
       '<span class="fhName"></span>' +
       `<span class="fhBar hp"><i></i><b></b></span><span class="fhBar res ${hk.pool}"><i></i><b></b></span>` +
-      `<span class="fhChips">${chip(1, hk.s1.skill, hk.s1.heals)}${chip(2, hk.s2.skill, hk.s2.heals)}</span>` +
+      `<span class="fhChips">${chip(1, hk.s1.skill, hk.s1.heals)}${chip(2, hk.s2.skill, hk.s2.heals)}${hk.s3 ? chip(3, hk.s3.skill, hk.s3.heals) : ''}</span>` +
       '<span class="fhCast"></span>';
     const step = this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0;
     // (HUD-FACES: the hero's painted face, cut to its face box; the pixel portrait until the painting loads, and for any without one)
@@ -178,7 +178,7 @@ export class FightHud {
       c.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.press?.fired) return void (this.press = null);
-        this.openInfo(u.id, Number(c.dataset.skill) as 1 | 2);
+        this.openInfo(u.id, Number(c.dataset.skill) as 1 | 2 | 3);
       });
     }
     // (a long press anywhere on the row opens the ultimate's sheet; a tap fires the ultimate, as the hero bar's portrait did)
@@ -236,9 +236,9 @@ export class FightHud {
       if (!u) continue;
       const ult = ultOf(b, u);
       const bars = barNumbers(u);
-      const chips = [chipOf(b, u, 1)!, chipOf(b, u, 2)!];
+      const chips = ([1, 2, 3] as const).map((n) => chipOf(b, u, n)).filter((c): c is ChipView => !!c);
       const lines = chips.map((c) => chipLine(c, this.compact));
-      const state = `${Math.round(ult.meter * 60)}|${bars.hp}|${bars.pool}|${lines.join(',')}|${chips.map((c) => `${c.name}${+c.short}${Math.round(c.cd * 24)}${Math.round(c.pay * 24)}`).join()}|${+ult.ready}${+ult.queued}${+ult.locked}${+u.alive}`;
+      const state = `${Math.round(ult.meter * 60)}|${bars.hp}|${bars.pool}|${lines.join(',')}|${chips.map((c) => `${c.chip}${+c.short}${Math.round(c.cd * 24)}${Math.round(c.pay * 24)}`).join()}|${+ult.ready}${+ult.queued}${+ult.locked}${+u.alive}`;
       if (state === r.last) continue;
       r.last = state;
       const el = r.el;
@@ -263,7 +263,7 @@ export class FightHud {
         ce.classList.toggle('short', c.short);
         ce.classList.toggle('cool', c.open && c.cd > 0);
         ce.classList.toggle('revive', c.revive);
-        ce.querySelector('b')!.textContent = c.name;
+        ce.querySelector('b')!.textContent = c.chip;
         ce.querySelector('em')!.textContent = lines[i];
         ce.title = `${c.name}: ${c.open ? `${c.cost} ${c.tag}` : lines[i]} (tap for more)`;
       });
