@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.316.0',
+    date: '2026-11-01',
+    title: 'D&D scores drive power',
+    notes: ['Health grows with CON, blows and skills with their ability; level-ups raise scores, and ranks, talents and gear add points. Average power is unchanged.'],
+  },
+  {
     version: '0.315.0',
     date: '2026-11-01',
     title: 'Three book slots',
