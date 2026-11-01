@@ -505,6 +505,16 @@ export class SummoningHall {
     });
   }
 
+  /** Paint one still picture without starting the loop (MENU-GLITCH: the page has its picture before it ever slides into view). */
+  paintOnce(): void {
+    if (this.raf || document.hidden) return;
+    void loadArt().then(() => {
+      if (this.raf) return;
+      this.fit();
+      this.draw();
+    });
+  }
+
   /** Stop drawing (another tab is showing). A pull in flight is finished at once so the reveal is not lost. */
   stop(): void {
     this.running = false;

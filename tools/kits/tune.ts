@@ -1,8 +1,8 @@
 // The hero kits' balance tuner (COMBAT-002): plays the hero sweep (`tools/heroSweep.ts`, the same seeded fights `test/hero-balance*.test.ts` hold)
 // with a set of per-hero knobs, in several processes at once, prints each hero's lift, and suggests the next knobs (a damped step toward the average).
-//   node tools/kits/tune.mjs <state.json> <level> <stage> [games] [--apply]     state: { "<hero>": { "t1": 0.5, "t2": 1, "up": 0.5, "ur": 1 } }
-// t1 and t2 are the skills' `tune`, up and ur the ultimate's `tuned.power` and `.rate`. With --apply the suggestion is written back to the file:
-// at level 1 to t1 (only skill 1 is open), at level 30 to up (the ultimate is the late lever).
+//   node tools/kits/tune.mjs <state.json> <level> <stage> [games] [--apply]     state: { "<hero>": { "t1": 0.5, "t2": 1, "t3": 0.8, "up": 0.5, "ur": 1 } }
+// t1, t2 and t3 are the skills' `tune`, up and ur the ultimate's `tuned.power` and `.rate`. With --apply the suggestion is written back to the file:
+// at level 1 to t1 (only skill 1 is open), at 10 to t2, at 20 to t3 (the skills overhaul's batch 4), at level 30 to up (the ultimate is the late lever).
 
 import { fork } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -16,13 +16,14 @@ import { fieldBoost, pickTeam, play } from '../heroSweep';
 /** Each ultimate's strength before the hero kits (0.170.0's `TUNE`): the floor the tuner keeps to. */
 const OLD_POWER: Record<string, number> = { knight: 0.25, samurai: 1.24, kunoichi: 0.08, archer: 0.07, wizard: 0.89, peasant: 0.05, ninjaMonk: 0.07, wanderer: 0.07, lightningMage: 0.07, kitsune: 0.07, karasu: 0.07, yamabushi: 1.42, werewolf: 0.07, minotaur: 0.92, satyr: 0.1, gorgon: 0.07, samuraiCommander: 1.05, paladin: 0.07, cleric: 0.07, druid: 0.07, barbarian: 0.07, ranger: 0.07, warlock: 0.05, illusionist: 0.05, gunslinger: 0.07, shambler: 0.07, rifleBot: 0.13, mercenary: 0.07, mummy: 0.07, buccaneer: 0.07, wolfBard: 0.05, beastmaster: 0.05, kraken: 0.07, lancer: 0.07, reaper: 0.09, timeWitch: 0.05, arcBlade: 0.07, dreadPirate: 0.07, siegeBot: 0.5, priestess: 0.05, dragoon: 0.07, juggernaut: 0.97, sage: 0.13, demonSwordsman: 1.05, tyrant: 0.89 };
 
-export interface Knobs { t1?: number; t2?: number; up?: number; ur?: number; c1?: number; c2?: number }
+export interface Knobs { t1?: number; t2?: number; t3?: number; up?: number; ur?: number; c1?: number; c2?: number }
 export function applyKnobs(state: Record<string, Knobs>): void {
   for (const [h, k] of Object.entries(state)) {
     const kit = HERO_KITS()[h];
     if (!kit) continue;
     if (k.t1 !== undefined) kit.s1.tune = k.t1;
     if (k.t2 !== undefined) kit.s2.tune = k.t2;
+    if (k.t3 !== undefined && kit.s3) kit.s3.tune = k.t3;
     if (k.c1 !== undefined) kit.s1.cost = k.c1;
     if (k.c2 !== undefined) kit.s2.cost = k.c2;
     const u = KITS[h].ultimate?.tuned;
@@ -72,7 +73,7 @@ if (args[0] === '--child') {
     console.log(`level ${level} stage ${stage}, ${n} fights: average ${avg.toFixed(1)}%, spread ${(Math.max(...win) - Math.min(...win)).toFixed(1)}, beyond 6: ${lifts.filter((x) => Math.abs(x.lift) > 6).map((x) => x.h).join(' ') || 'none'}, beyond 4: ${lifts.filter((x) => Math.abs(x.lift) > 4).length}`);
     console.log(lifts.map((x) => `${x.h} ${x.lift.toFixed(1)}`).join(', '));
     if (!process.argv.includes('--apply')) return;
-    const key: keyof Knobs = (process.env.KEY as keyof Knobs | undefined) ?? (Number(level) >= 30 ? 'up' : Number(level) >= 10 ? 't2' : 't1');
+    const key: keyof Knobs = (process.env.KEY as keyof Knobs | undefined) ?? (Number(level) >= 30 ? 'up' : Number(level) >= 20 ? 't3' : Number(level) >= 10 ? 't2' : 't1');
     const step = Number(process.env.STEP ?? 0.035);
     const prev: Record<string, number> = {};
     // (with TARGET set, every hero is stepped toward that win rate rather than the roster's average: the roster's overall strength moves too)
@@ -80,7 +81,7 @@ if (args[0] === '--child') {
     if (target !== undefined) for (const x of lifts) x.lift = x.lift + avg - target;
     for (const { h, lift } of lifts) {
       const k = (state[h] ??= {});
-      const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 'ur' ? KITS[h].ultimate!.tuned!.rate : key === 't1' ? HERO_KITS()[h].s1.tune : HERO_KITS()[h].s2.tune);
+      const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 'ur' ? KITS[h].ultimate!.tuned!.rate : key === 't1' ? HERO_KITS()[h].s1.tune : key === 't3' ? HERO_KITS()[h].s3!.tune : HERO_KITS()[h].s2.tune);
       prev[h] = now;
       // (a damped multiplicative step: a hero 4 points over the average loses about 13% of its strength)
       const next = Math.max(0.05, Math.min(10, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));

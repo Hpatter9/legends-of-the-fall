@@ -100,6 +100,8 @@ import robotSwordsman from '../art/units/robot_swordsman.png';
 import hkGhost from '../art/units/hk_ghost.png';
 // (EIDOLON-TRIAL: Nivra as the boss of her trial, cut from the owner's generated sheet by tools/eidolon-trial/cut_nivra.py)
 import eidolonNivra from '../art/units/eidolon_nivra.png';
+// (EIDOLON-CHAIN-3: Aurelan's, cut by tools/eidolon-trial/cut_aurelan.py)
+import eidolonAurelan from '../art/units/eidolon_aurelan.png';
 // (SUMMON-ART: the summons' own sheets, cut by tools/summon-art/cut.py; which summon wears which is in summonArt.ts)
 import summonWolf from '../art/units/summon_wolf.png';
 import summonWolfWhite from '../art/units/summon_wolf_white.png';
@@ -233,6 +235,7 @@ const URLS: Record<string, string> = {
   robot_swordsman: robotSwordsman,
   hk_ghost: hkGhost,
   eidolon_nivra: eidolonNivra,
+  eidolon_aurelan: eidolonAurelan,
   summon_wolf: summonWolf,
   summon_wolf_white: summonWolfWhite,
   summon_direwolf: summonDirewolf,
@@ -393,6 +396,19 @@ function idleBounds(sheet: string): { x: number; y: number; w: number; h: number
   const box = x1 < 0 ? { x: 0, y: 0, w: l.w, h: l.h } : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
   bounds.set(sheet, box);
   return box;
+}
+
+/** MENU-GLITCH: find each loaded sheet's idle box a few at a time while the page is idle, so a screen of portraits (the codex, the
+ *  party) does not stop to read every figure's pixels as it opens (that held the codex's first opening for most of a second). */
+export function warmPortraits(): void {
+  const todo = [...images.keys()].filter((k) => LAYOUT[k] && !bounds.has(k));
+  const later = (f: (d?: IdleDeadline) => void) => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 50));
+  const step = (d?: IdleDeadline): void => {
+    let n = 0;
+    while (todo.length && (d ? d.timeRemaining() > 4 : n++ < 3)) idleBounds(todo.pop()!);
+    if (todo.length) later(step);
+  };
+  later(step);
 }
 
 /** The whole figure (weapons, wings and all, nothing cut off) of a sheet's first idle frame, at the largest whole-number
