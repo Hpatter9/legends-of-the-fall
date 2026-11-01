@@ -20,7 +20,7 @@ holds a lighter skill for it only when it has work.
 | **The Ninefold Cut** (Manual) | blinks from foe to foe, up to four in turn (the nearest unstruck foe within 3 of where the last cut left him), cutting each; the last cut is double and bleeds 3 s | heavy, 0.5 pool, 11 s, 0.68 |
 | **Words of Unmaking** (Grimoire) | a line of void 4 tiles long across the thickest lane (the Wall of Fire's `laneLine`) for 5 s: foes in it lose shield, haste and guard, are slowed, and take 30% more while marked; needs two foes in the lane | utility, 0.5 pool, 16 s, 1.0 |
 | **The Hymn of the Long Dawn** (Hymnal) | for 4 s every friend within 3 heals each second (a third of the singer's attack, scaled by the slot) and cannot fall below 1 health; once a fight, and only while a friend near is under 60% | utility, 0.45 pool, 20 s, 1.0 |
-| **The Old Hunger** (Bestiary) | leaps on the hardest-hitting foe within 5, strikes it and pins it 2 s, strikes every other foe within 2 for half and shoves it two tiles away, and heals 8% for each foe struck | heavy, 0.5 pool, 12 s, 0.7 |
+| **The Old Hunger** (Bestiary) | leaps on the hardest-hitting foe within 5, strikes it and pins it 1.5 s, strikes every other foe within 2 for 40% and shoves it two tiles away, and heals 4% for each foe struck | heavy, 0.5 pool, 12 s, 0.5 |
 
 Built from the toolkit as designed (`chargePlans`/`leapTo`, `moveMany`, `raiseAura`, `laneLine`, `stunFor`/`chillFor`/`bleedFor`, the kits'
 `exposed` mark); one new kit mark, `kx.dawn` ("cannot fall below 1": `kitSpare` holds it up beside Blood Fury) and `kx.hymned`.
@@ -42,12 +42,14 @@ its own two skills, 400 games a cell, six readers a technique (noise about plus 
 | Ninefold Cut | Kwame -1.5/+0.8, Kenji +3.0/-0.3, Natsu -2.0/-1.5, Barbarian -0.3/-3.5, Lancer +5.5/+4.0, Reaper +0.3/+0.3 | +0.9 |
 | Words of Unmaking | Ravi +1.0/-2.0, Lightning Mage +0.8/+0.8, Warlock -0.3/+3.0, Illusionist -5.0/-1.5, Tyrant -0.8/-1.5, Sage +1.8/+2.5 | -0.2 |
 | Hymn of the Long Dawn | Selam +1.3/+2.3, Linnea -4.3/+0.3, Paladin 0.0/-1.0, Druid +4.3/+2.8, Wolf Bard +2.5/+5.3, Time Witch +6.0/+3.8 | +1.7 |
-| Old Hunger | Vuk +9.5/+13.0, Minotaur -1.3/+1.0, Gorgon -0.8/+0.8, Kitsune -6.3/-8.0, Kraken -0.5/+0.3, Mummy -1.0/-2.3 | +0.3 (with Vuk), -1.1 (without) |
+| Old Hunger (toned down at the owner's word: pin 1.5 s, splash 40%, heal 4%, tune 0.5) | Vuk +7.3/+10.0, Minotaur -1.5/+0.5, Gorgon -0.5/-2.0, Kitsune -9.3/-9.5, Kraken -3.0/-3.3, Mummy -1.8/-4.3 | -0.9 (with Vuk), -3.1 (without) |
 
-That is the design's "up to 2 points above the hero's own best loadout" on average; the exceptions are Vuk (his own kit is the weakest
+The three before are as first measured (the Hunger's were re-taken after it was toned down). That is the design's "up to 2 points above the hero's own best loadout" on average; the exceptions are Vuk (his own kit is the weakest
 at level 30, and the Hunger's pin and healing suit him; the chain is his, so it reads as the book finding its owner) and the Kitsune and the
 Illusionist, for whom a lost technique is a poor swap (they are utility casters whose own two skills are doing something the lost ones do not).
 Nobody is forced to read one.
+
+**Vuk's floor.** The owner asked for the Hunger to sit within about +2 for Vuk. It cannot: with the skill all but switched off (tune 0.05, no pin, no heal) Vuk still gains +3.0/+4.3, because swapping out one of his own two skills helps him (they are the weakest of the kits at level 30). A stronger tone-down than the one above (pin 1 s, splash 30%, heal 3%, tune 0.35) only moved him to +6.0/+8.8 while the other readers fell to -2 to -10. So the numbers above are the compromise; getting Vuk to +2 would mean retuning his own kit, which is outside this change.
 
 ## The chains (`src/sim/questData/lost.ts`)
 

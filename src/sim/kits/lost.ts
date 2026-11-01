@@ -137,7 +137,7 @@ export function hymnOfTheLongDawn(b: Battle, me: Unit, out: BattleEvent[]): bool
 
 /** Leaps on the hardest-hitting foe within `REACH`, strikes it (the skill's strength) and pins it `PIN` ms, strikes every other foe within `NEAR`
  *  of where it lands for `SPLASH` as much and shoves each two tiles away, and heals `HEAL` of its health for each foe struck. */
-export const HUNGER = { REACH: 5, PIN: 2000, NEAR: 2, SPLASH: 0.5, SHOVE: 2, HEAL: 0.08 } as const;
+export const HUNGER = { REACH: 5, PIN: 1500, NEAR: 2, SPLASH: 0.4, SHOVE: 2, HEAL: 0.04 } as const;
 export function oldHunger(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const target = foesOf(b, me)
     .filter((f) => !f.under && apart(me, f) <= HUNGER.REACH)
@@ -205,7 +205,7 @@ export const LOST: Readonly<Record<string, LostDef>> = {
     cls: 'heavy',
     share: 0.5,
     cd: 12000,
-    tune: 0.7,
+    tune: 0.5,
   },
 };
 
