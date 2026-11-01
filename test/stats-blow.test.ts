@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, swing, type Battle, type BattleEvent, type Pending, type Unit } from '../src/sim/battle';
-import { acAgainst, blowShare, blowStatsOf, BOSS_BLOCK, DODGE_PER_AC, FIT_AC, FIT_TO_HIT, HIGH_AC_MAX, INIT_MAX_MS, INIT_MS, initiativeWaits, matchOf, rollBlow } from '../src/sim/blow';
+import { acAgainst, blowFit, blowShare, blowStatsOf, BOSS_BLOCK, DODGE_PER_AC, HIGH_AC_MAX, INIT_MAX_MS, INIT_MS, initiativeWaits, matchOf, rollBlow } from '../src/sim/blow';
 import { TALL_AC } from '../src/sim/board';
 import { FIELD_BANDS, isBoss } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
@@ -42,12 +42,12 @@ test("the odds table: over 10,000 hashed rolls, each number the d20 needs gives 
 test("a fighter's blow numbers: a hero's from its scores, a foe's from its family's block; DEX quickens a grown hero's blows", () => {
   const { b, h, f } = duel('knight', 'skeleton');
   const k = derivedOf(STAT_PROFILES.knight);
-  const { fit, guard, ...rest } = blowStatsOf(b, h);
-  assert.deepEqual(rest, { toHit: k.toHit, ac: k.ac, dexCrit: 0, quick: 1, init: k.initiative });
-  assert.ok(fit > 1 && guard > 1, 'the Knight (+4, AC 16) is fitted up in its blows and the blows it takes');
+  const s0 = foeStatsOf(UNITS.skeleton);
+  assert.deepEqual(blowStatsOf(b, h), { toHit: k.toHit, aim1: k.toHit, ac1: k.ac, ac: k.ac, dexCrit: 0, quick: 1, init: k.initiative });
+  assert.ok(Math.abs(blowFit(b, h, f) - 1 / blowShare(4, s0.ac)) < 1e-12, 'the Knight (+4) against the skeleton\u2019s AC');
   assert.equal(blowStatsOf(b, h).ac, 16, 'the Knight is in plate');
   const s = foeStatsOf(UNITS.skeleton);
-  assert.deepEqual(blowStatsOf(b, f), { toHit: s.toHit, fit: 1, guard: 1, ac: s.ac, dexCrit: s.crit - 0.05, quick: 1, init: s.initiative });
+  assert.deepEqual(blowStatsOf(b, f), { toHit: s.toHit, aim1: s.toHit, ac1: s.ac, ac: s.ac, dexCrit: s.crit - 0.05, quick: 1, init: s.initiative });
   // (a boss fights with its family's block in this batch: its +2 to hit and +2 AC wait for the joint rebalance, `BOSS_BLOCK`)
   const boss = Object.keys(UNITS).find((id) => isBoss(id) && UNITS[id].side === 'foe')!;
   const bb = bareBoard(startBattle(41, [boss]));
@@ -61,27 +61,23 @@ test("a fighter's blow numbers: a hero's from its scores, a foe's from its famil
   assert.ok(Math.abs(blowStatsOf(g.b, g.h).dexCrit - 0.05) < 1e-9, 'DEX +5 crits 5% of its hits');
 });
 
-test('the fits: at level 1 every hero deals and takes the roster\u2019s average blow, against AC 13 and from a +5 foe', () => {
-  const dealt: number[] = [];
-  const taken: number[] = [];
-  for (const kind of ALL_HEROES) {
-    const { b, h } = duel(kind, 'skeleton');
-    const d = derivedOf(STAT_PROFILES[kind]);
-    const s = blowStatsOf(b, h);
-    assert.equal(s.toHit, d.toHit, kind);
-    dealt.push(s.fit * blowShare(d.toHit, FIT_AC));
-    taken.push(s.guard * blowShare(FIT_TO_HIT, d.ac));
-  }
-  for (const v of dealt) assert.ok(Math.abs(v - dealt[0]) < 1e-9);
-  for (const v of taken) assert.ok(Math.abs(v - taken[0]) < 1e-9);
-  // (the fits' 1 is the roster's average share, so the roster deals and takes what it did)
-  const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
-  assert.ok(Math.abs(dealt[0] - mean(ALL_HEROES.map((k) => blowShare(derivedOf(STAT_PROFILES[k]).toHit, FIT_AC)))) < 1e-9);
-  assert.ok(Math.abs(taken[0] - mean(ALL_HEROES.map((k) => blowShare(FIT_TO_HIT, derivedOf(STAT_PROFILES[k]).ac)))) < 1e-9);
+test('the fit: at level 1 every blow, hero or foe of any family, deals on average what it did before blows rolled', () => {
+  // (an armoured skeleton, a shooter, a brute, a skirmisher and a caster: their to hit runs +3 to +5 and their AC 12 to 15)
+  const foes = ['skeleton', 'boneArcher', 'orcBrute', 'wolfBlack', 'orcShaman'].filter((id) => UNITS[id]?.side === 'foe');
+  assert.ok(foes.length >= 4, foes.join(' '));
+  for (const foe of foes)
+    for (const kind of ALL_HEROES) {
+      const { b, h, f } = duel(kind, foe);
+      const hs = blowStatsOf(b, h);
+      const fs = blowStatsOf(b, f);
+      // (the fit times the d20's average share is 1, both ways)
+      assert.ok(Math.abs(blowFit(b, h, f) * blowShare(hs.toHit, fs.ac) - 1) < 1e-12, `${kind} on ${foe}`);
+      assert.ok(Math.abs(blowFit(b, f, h) * blowShare(fs.toHit, hs.ac) - 1) < 1e-12, `${foe} on ${kind}`);
+    }
   // (a grown hero keeps its level-1 fit: what it gains from there shows)
   const one = duel('gunslinger', 'skeleton', 1);
   const thirty = duel('gunslinger', 'skeleton', 30);
-  assert.equal(blowStatsOf(one.b, one.h).fit, blowStatsOf(thirty.b, thirty.h).fit);
+  assert.equal(blowFit(one.b, one.h, one.f), blowFit(thirty.b, thirty.h, thirty.f));
   assert.ok(blowStatsOf(thirty.b, thirty.h).toHit > blowStatsOf(one.b, one.h).toHit);
 });
 

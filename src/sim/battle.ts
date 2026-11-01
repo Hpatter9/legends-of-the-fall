@@ -42,7 +42,7 @@ import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
 import { settleKeg } from './kits/shooters';
-import { blowStatsOf, GLANCE_SHARE, matchOf, rollBlow, rollInitiative, BLOW_SCALE, type BlowMatch } from './blow';
+import { blowFit, blowStatsOf, GLANCE_SHARE, matchOf, rollBlow, rollInitiative, BLOW_SCALE, type BlowMatch } from './blow';
 import type { BlowResult } from './stats';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
@@ -1323,7 +1323,7 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   const c = critOf(b, me);
   const r = rollBlow(b, me, to, hMe, hTo, tileOf(b, to).ground === 'tall', c.chance, c.mult);
   const crit = r.crit;
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowStatsOf(b, me).fit * blowStatsOf(b, to).guard * (r.res === 'glance' ? GLANCE_SHARE : 1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1) * blowStatsOf(b, me).quick;
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));

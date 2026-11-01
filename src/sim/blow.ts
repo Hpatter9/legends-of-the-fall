@@ -8,9 +8,9 @@
 // (a part of a point is a whole one that part of the time); tall grass, +2 (cover, in place of its 12% dodge); and higher ground, +1 a level
 // above the striker, to three (in place of `guardMult`'s 3% a level).
 //
-// Today's numbers are each hero's level 1 (the design's rule, as batch 1 fitted health and attack): a hero's blows and the blows it takes
-// are fitted (`fit`, `guard`) so that at level 1 its average blow and the average blow on it are the roster's; its to hit and AC still decide
-// how often it misses, glances and is missed, and what they gain with levels shows in full.
+// Today's numbers are each fighter's level 1 (the design's rule, as batch 1 fitted health and attack): every blow is fitted (`blowFit`) so
+// that at level 1 each pair of fighters deals on average what it did; to hit and AC decide how often a blow misses, glances or hits, and
+// what they gain with levels, cover and the dodges show in full.
 //
 // The foes use their family's block (`foeStatsOf`; a boss's +2 to hit and AC wait, `BOSS_BLOCK`). So that this batch moves no mode (the joint
 // rebalance is later), the foes are matched to the heroes they fight: their AC rises by as much as the placed heroes' to hit has grown since
@@ -22,15 +22,15 @@
 // no DOM.
 
 import { mixSeed } from './rng';
-import { BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, profileOf, STATS_SALT, STAT_PROFILES, type BlowResult, type StatInput } from './stats';
+import { BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, profileOf, STATS_SALT, type BlowResult, type StatInput } from './stats';
 import { kitOf } from './abilities';
 import { relicDodge } from './relicFight';
 import { TALL_AC } from './board';
 import { UNITS } from './units';
 import type { Battle, Unit } from './battle';
 
-/** The global knob on every ordinary blow's damage, which puts the average blow back where it was before hits, glances and misses. */
-export const BLOW_SCALE = 1.23;
+/** The global knob on every ordinary blow's damage (the fit already puts each blow's average back where it was, so it is 1). */
+export const BLOW_SCALE = 1;
 /** Whether a boss's block has its +2 to hit and +2 AC in the blow (`foeStatsOf`). Off in this batch: with it, the armies came out about a
  *  wave harder than main at their levels (measured, docs/notes/stats-4.md), and the modes are the joint rebalance's to retune. */
 export const BOSS_BLOCK = false;
@@ -42,9 +42,6 @@ export const DODGE_PER_AC = 0.07;
 /** Higher ground is cover: +1 AC a level the target stands above the striker, to three. */
 export const HIGH_AC = 1;
 export const HIGH_AC_MAX = 3;
-/** The fits' yardstick: an ordinary foe's AC 13, and a +5 foe's blow (proficiency +2 and a 16). */
-export const FIT_TO_HIT = 5;
-export const FIT_AC = 13;
 
 /** The share of its damage a blow deals on average at this to hit against this AC (a hit 1, a glance `GLANCE_SHARE`, a natural 20 1.5). */
 export function blowShare(toHit: number, ac: number): number {
@@ -56,16 +53,22 @@ export function blowShare(toHit: number, ac: number): number {
   return n / 20;
 }
 
-/** The roster's average blow share at level 1, dealt (against `FIT_AC`) and taken (from a `FIT_TO_HIT` foe): the fits' 1. */
-let roster: { dealt: number; taken: number } | undefined;
-function rosterShares(): { dealt: number; taken: number } {
-  if (roster) return roster;
-  const ps = Object.values(STAT_PROFILES).map((p) => derivedOf(p));
-  roster = {
-    dealt: ps.reduce((n, d) => n + blowShare(d.toHit, FIT_AC), 0) / ps.length,
-    taken: ps.reduce((n, d) => n + blowShare(FIT_TO_HIT, d.ac), 0) / ps.length,
-  };
-  return roster;
+// ---- The fit (as batch 1 fitted health and attack to today's numbers) ----
+// Every blow's damage is divided by the share a blow at the striker's level-1 to hit deals against the target's level-1 AC (`blowFit`), so
+// that at level 1 every pair of fighters, hero or foe of any family, deals on average what it dealt before blows rolled: the d20 decides
+// how often a blow hits, glances or misses, not how much a side deals. What moves the average is what comes on top: cover and the dodges,
+// the crits, and what to hit and AC gain with levels. (A fit for the heroes alone, against one yardstick, left the foes' families apart: the
+// Beasts' skirmishers, AC 14 and +5, came out harder than before and the skeletons, +4, easier.)
+
+const fitMemo = new Map<string, number>();
+/** The fit on `by`'s blow on `to`. */
+export function blowFit(b: Battle, by: Unit, to: Unit): number {
+  const aim = blowStatsOf(b, by).aim1;
+  const ac = blowStatsOf(b, to).ac1;
+  const key = `${aim}:${ac}`;
+  let v = fitMemo.get(key);
+  if (v === undefined) fitMemo.set(key, (v = 1 / blowShare(aim, ac)));
+  return v;
 }
 
 /** Initiative: the fighters act in turn at the fight's start, this many ms a point behind the best roll, at most `INIT_MAX_MS`. */
@@ -76,11 +79,9 @@ export const INIT_MAX_MS = 600;
  *  blows are than its kind's at level 1 (from DEX), and its initiative modifier. */
 export interface BlowStats {
   toHit: number;
-  /** The fitted aim and guard (as batch 1 fitted health and attack to today's numbers): a hero's blows are multiplied by `fit`, and the
-   *  blows it takes by `guard`, so that at level 1 its average blow against `FIT_AC`, and a `FIT_TO_HIT` foe's average blow on it, are the
-   *  roster's average. Its to hit and AC still decide how often it misses, glances and is missed, and what they gain from there shows. */
-  fit: number;
-  guard: number;
+  /** Its to hit and AC at level 1 (a foe's, its block's before the match): what the fit reads (`blowFit`). */
+  aim1: number;
+  ac1: number;
   ac: number;
   dexCrit: number;
   quick: number;
@@ -115,7 +116,8 @@ export function matchOf(b: Battle): BlowMatch {
     ac += now.ac - one.ac;
   }
   const n = Math.max(1, heroes.length);
-  b.blowMatch = { aim: Math.round(aim / n), ac: Math.round(ac / n) };
+  // (kept exact, not rounded: rounding a mean near a half handed the foes half a point of AC and of aim at some levels, measured)
+  b.blowMatch = { aim: aim / n, ac: ac / n };
   return b.blowMatch;
 }
 
@@ -129,14 +131,13 @@ export function blowStatsOf(b: Battle, u: Unit): BlowStats {
     const p = profileOf(u.def)!;
     const now = derivedOf(p, statInputOf(u));
     const one = derivedOf(p);
-    const r = rosterShares();
-    s = { toHit: now.toHit, fit: r.dealt / blowShare(one.toHit, FIT_AC), guard: r.taken / blowShare(FIT_TO_HIT, one.ac), ac: now.ac, dexCrit: now.crit - BASE_CRIT, quick: now.blowSpeed / one.blowSpeed, init: now.initiative };
+    s = { toHit: now.toHit, aim1: one.toHit, ac1: one.ac, ac: now.ac, dexCrit: now.crit - BASE_CRIT, quick: now.blowSpeed / one.blowSpeed, init: now.initiative };
   } else {
     const f = foeStatsOf(def, 0, BOSS_BLOCK ? undefined : false);
     const m = matchOf(b);
     // (a foe answers the heroes' growth; a hero's summon grows with them)
     const foe = u.side === 'foe';
-    s = { toHit: f.toHit + (foe ? m.ac : m.aim), fit: 1, guard: 1, ac: f.ac + (foe ? m.aim : m.ac), dexCrit: f.crit - BASE_CRIT, quick: 1, init: f.initiative };
+    s = { toHit: f.toHit + (foe ? m.ac : m.aim), aim1: f.toHit, ac1: f.ac, ac: f.ac + (foe ? m.aim : m.ac), dexCrit: f.crit - BASE_CRIT, quick: 1, init: f.initiative };
   }
   cache.set(u, s);
   return s;
@@ -173,12 +174,14 @@ export function rollBlow(b: Battle, by: Unit, to: Unit, hBy: number, hTo: number
   const roll = d20At(b.seed, b.t, by.id, to.id);
   const me = blowStatsOf(b, by);
   const at = acAgainst(b, to, hBy, hTo, tall);
-  // (a part of a point of AC is a whole point that part of the time: its own hash of the moment)
-  const part = at.ac - Math.floor(at.ac);
-  const ac = Math.floor(at.ac) + (part > 0 && unit(b, by, to, 2) < part ? 1 : 0);
+  // (a part of a point, of AC or of a foe's matched to hit, is a whole point that part of the time: its own hash of the moment)
+  const aim = Math.floor(me.toHit);
+  const need = at.ac - (me.toHit - aim);
+  const part = need - Math.floor(need);
+  const ac = Math.floor(need) + (part > 1e-9 && unit(b, by, to, 2) < part ? 1 : 0);
   const cover = Math.ceil(at.cover);
-  const res = blowResult(roll, me.toHit, ac);
-  const turned = res === 'miss' && at.cover > 0 && blowResult(roll, me.toHit, ac - cover) !== 'miss';
+  const res = blowResult(roll, aim, ac);
+  const turned = res === 'miss' && at.cover > 0 && blowResult(roll, aim, ac - cover) !== 'miss';
   if (res === 'crit') return { res, crit: critMult, turned };
   // (DEX's and the kit's, traits' and gear's crit find the gap in any blow that lands: a keen glance strikes home as a crit)
   if (res !== 'miss') {
