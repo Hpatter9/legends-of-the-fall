@@ -26,7 +26,7 @@ import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
-import { relicCharge, relicDodge, relicTaken } from './relicFight';
+import { relicCharge, relicDodge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
 import { TRIALS, type TrialSummon } from './eidolonTrials';
 
 /** A skill fires at this much charge. */
@@ -1702,6 +1702,8 @@ export function powered(b: Battle, me: Unit, s: Skill, more: number, out: Battle
   }
   // (what the skill leaves on the foes it struck: a burn, a shock, a bleed... `ailmentSources.ts`, STATUS-FX)
   if (ok) skillRiders(b, me, keyOf(s), out, from);
+  // (RELICS-3: the Wyrm's Breath Vial freezes what the fight's first skill struck)
+  if (ok && me.side === 'hero' && b.relics?.hooks?.firstFreeze && !b.relicFroze) relicSkill(b, me, out, from);
   return ok;
 }
 /** How strong the skill being cast is, as a multiple (1 unless a talent or an ultimate's `power` lifts it): an ultimate's engines scale what is not an attack (how long a stun or guard lasts, how much is shielded) by it. */
@@ -1833,6 +1835,8 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     else gain(to, kit?.skill.taken ?? 0);
   }
   const left = Math.max(1, Math.round(dmg));
+  // (RELICS-3: the Rime Pearl slows the foe that struck a hero)
+  if (blow && to.side === 'hero' && by.side === 'foe' && b.relics?.hooks?.foeSlow) relicStruck(b, by);
   // (a talent's rider on a skill: what it hits is slowed or held)
   if (src === 'skill' && by.eq?.tal && by.side !== to.side) {
     if (by.eq.tal.skillSlow) chillFor(b, to, by.eq.tal.skillSlow);
@@ -1892,6 +1896,8 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
       hurt(b, by, second, net(dmg * ARC_SHARE + defenceOf(second), second), false, true, out, 'skill');
     }
   }
+  // (RELICS-3: the Tempest Ring's tenth blow strikes a second foe nearby)
+  if (dmg > 0 && by.side === 'hero' && b.relics?.hooks?.echoEvery) relicEcho(b, by, to, dmg, out);
   if (!to.alive) return;
   if (p?.slow) chillFor(b, to, p.slow);
   // (the relic sets: a hero's blows burn the foe, its first blow chills it, its crits make it bleed)
@@ -1901,7 +1907,9 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
     chillFor(b, to, set.chill, false, true, by);
   }
   const share = set && (crit ? set.bleed : set.burn);
-  const relicDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : undefined;
+  // (RELICS-3: Ember Brand's crits leave the foe burning)
+  const brand = crit && by.side === 'hero' ? b.relics?.hooks?.critBurn : undefined;
+  const relicDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : brand ? { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(by) * brand)), every: 500, ms: 3000 } : undefined;
   const dot = (crit ? p?.crit?.bleed : p?.ignite) ?? relicDot;
   // (with the ailments on, a venomous foe's blows poison rather than curse: Nyssa and the Calamity's Blight, STATUS-FX)
   const venom = AILMENT_SWITCH.on && dot?.kind === 'curse' && (by.def === 'eliteNyssa' || by.def === 'calBoss5' || by.def === 'calBoss6');
@@ -1945,7 +1953,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
         mendUnit(u, u.hot.amount, out, b.units.find((x) => x.id === u.hot!.by) ?? u);
       }
     }
-    const regen = (p?.regen ?? 0) + (u.side === 'hero' ? b.relics?.set?.regen ?? 0 : 0);
+    const regen = (p?.regen ?? 0) + (u.side === 'hero' ? (b.relics?.set?.regen ?? 0) + (b.relics?.hooks?.regen ?? 0) : 0);
     if (regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * regen, out);
     if (p?.tune) {
       u.tuneAt ??= b.t + p.tune.every;

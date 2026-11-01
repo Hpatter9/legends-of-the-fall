@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, hurt, startBattle, place, stepBattle, type Battle, type Stage } from '../src/sim/battle';
-import { convertRelics, effectsOf, fightRelics, GREAT_RELIC_IDS, pickRelic, pricedFor, RELIC_IDS, RELIC_NOTE, relicEffects, relicName, relicPriceOf, RELICS, theRelic } from '../src/sim/relics';
+import { convertRelics, effectsOf, fightRelics, GREAT_RELIC_IDS, pickRelic, pricedFor, RELIC_BOOK, RELIC_IDS, RELIC_NOTE, relicEffects, relicName, relicPriceOf, RELICS, theRelic } from '../src/sim/relics';
 import { relicBlow, relicCharge, relicDodge, relicMana, relicSpeed, relicTaken, isBeast } from '../src/sim/relicFight';
 import { CHAPTER_IDS, setBonus, setCount, SETS } from '../src/sim/relicSets';
 import { finish, loadRun, newRun, noteFight, saveRun, startStage } from '../src/sim/run';
@@ -148,7 +148,7 @@ test('old saves convert: merged relics kept once and paid back, a note once, ren
   assert.deepEqual(sb.offer, ['luckyCoin', 'banner']);
   assert.equal(sb.relicNote, RELIC_NOTE);
   saveStand(sb, io);
-  assert.equal(JSON.parse(store['legends.stand']).relicBook, 2);
+  assert.equal(JSON.parse(store['legends.stand']).relicBook, RELIC_BOOK);
   assert.equal(theRelic('banner'), 'the First Banner');
   assert.equal(theRelic('phoenix'), 'the Phoenix Feather');
 });

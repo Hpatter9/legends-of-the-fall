@@ -583,12 +583,15 @@ export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = local
  */
 export function catalogueRun(r: Run): Run {
   if (r.relicBook === RELIC_BOOK) return r;
+  // (RELICS-3: a run already in the second catalogue is only quietly moved on; the line is for the first conversion, or a relic that changed)
+  const first = r.relicBook === undefined;
   r.relicBook = RELIC_BOOK;
-  const had = (r.relics?.length ?? 0) > 0;
+  let had = (r.relics?.length ?? 0) > 0;
   if (Array.isArray(r.relics)) {
-    const { ids, refund } = convertRelics(r.relics);
+    const { ids, refund, changed } = convertRelics(r.relics);
     r.relics = ids;
     r.gold += refund;
+    had = had && (first || changed);
   }
   if (Array.isArray(r.tower?.offer)) r.tower!.offer = convertRelics(r.tower!.offer.filter((id) => !r.relics?.includes(RELIC_RENAMES[id] ?? id))).ids;
   for (const o of r.road?.owed ?? []) if (o.relic) o.relic = RELIC_RENAMES[o.relic] ?? o.relic;

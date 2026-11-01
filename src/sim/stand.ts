@@ -24,7 +24,7 @@ import { CLASS_OF } from './starter';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
 import { armyById, ARMIES, armyIndex, armyUnlocked } from './armies';
 import { mixSeed, Rng } from './rng';
-import { ALL_RELIC_IDS, convertRelics, fightRelics, mergeEffects, pickRelic, pricedFor, RELIC_BOOK, RELIC_NOTE, relicEffects, relicPriceOf, RELICS, type RelicMarks } from './relics';
+import { RELIC_IDS, convertRelics, fightRelics, mergeEffects, pickRelic, pricedFor, RELIC_BOOK, RELIC_NOTE, relicEffects, relicPriceOf, RELICS, type RelicMarks } from './relics';
 import { relicFoe, relicStart } from './relicFight';
 import { addRelicMarks, relicCtx } from './run';
 import { fxStart } from './equipFx';
@@ -58,7 +58,7 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.26;
+export const WAVE_GROWTH_LATE = 0.32;
 /** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace
  *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: 0.88, with a steeper late and deep climb; SPELLS-RETUNE 1.2, so a
  *  stand whose Auto casts the king's spells holds the waves it did for a bot that never cast, `docs/notes/spells-retune.md`). */
@@ -636,7 +636,7 @@ export function goNow(s: Stand): boolean {
 
 /** A relic offer for the break before wave `n`: up to `OFFER` unowned ones, drawn from a side stream of the run. */
 export function drawOffer(run: StandRun, n: number): string[] {
-  const rest = ALL_RELIC_IDS.filter((id) => !run.relics.includes(id));
+  const rest = RELIC_IDS.filter((id) => !run.relics.includes(id));
   const rng = new Rng(mixSeed(run.seed, 0x57a7, n));
   const out: string[] = [];
   while (out.length < OFFER && rest.length) {
@@ -704,7 +704,7 @@ export function fallBack(s: Stand): boolean {
  * every other draw are as they were). Null when every relic is owned.
  */
 export function holdRelic(run: Pick<StandRun, 'seed' | 'relics'>, n: number): string | null {
-  const rest = ALL_RELIC_IDS.filter((id) => !run.relics.includes(id));
+  const rest = RELIC_IDS.filter((id) => !run.relics.includes(id));
   if (!rest.length) return null;
   const rng = new Rng(mixSeed(run.seed, 0x401e, n));
   return pickRelic(() => rng.next(), rest);
@@ -1166,8 +1166,9 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
     const out: StandRun = { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: isHall(r.hall) ? r.hall : undefined, act, retreat, heldRelics };
     // (RELICS-2: a run saved before the relics were catalogued anew: the merged ones renamed, a pair now one paid back in gold, one line for the break)
     if (out.relicBook !== RELIC_BOOK) {
-      const had = out.relics.length > 0;
-      const { ids, refund } = convertRelics(out.relics);
+      const first = out.relicBook === undefined;
+      const { ids, refund, changed } = convertRelics(out.relics);
+      const had = out.relics.length > 0 && (first || changed);
       out.relics = ids;
       out.gold += refund;
       out.offer = convertRelics(out.offer).ids.filter((id) => !ids.includes(id));

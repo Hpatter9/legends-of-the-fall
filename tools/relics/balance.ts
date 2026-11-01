@@ -43,7 +43,8 @@ function savedAt(level: number, seed: number): Meta {
   return m;
 }
 
-const ids = ['', 'old', ...[...RELIC_IDS, ...GREAT_RELIC_IDS].filter((id) => !ONLY || ONLY.includes(id))];
+const EIDOLON_RELICS = Object.keys(RELICS).filter((id) => RELICS[id].rarity === 'eidolon');
+const ids = ['', 'old', ...[...RELIC_IDS, ...GREAT_RELIC_IDS, ...EIDOLON_RELICS].filter((id) => !ONLY || ONLY.includes(id))];
 const label = (id: string) => (id === '' ? '(none)' : id === 'old' ? '(old Whetstone, +8% attack)' : `${RELICS[id].name} [${RELICS[id].rarity}]`);
 const OLD = { atk: 1.08, duration: 999 };
 

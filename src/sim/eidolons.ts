@@ -22,6 +22,7 @@ import { CHARGE_MAX, ultimateOf } from './abilities';
 import { heroKitOf } from './heroKits';
 import { chillFor, cleanse, freezeFor, stunFor } from './ailments';
 import { MANA_MAX } from './spells';
+import { riderLong } from './relicFight';
 
 /** An Eidolon's element (the names the page's effects use: `fxRules.ts` `Element`). */
 export type EidolonElement = 'fire' | 'ice' | 'light' | 'lightning' | 'earth' | 'dark';
@@ -242,6 +243,9 @@ const heroesOf = (b: Battle, alive = true) => b.units.filter((x) => x.side === '
 function rider(b: Battle, e: Eidolon, struck: readonly Unit[], out: BattleEvent[]): void {
   const left = struck.filter((f) => f.alive);
   const st = b.eidolon!;
+  // (RELICS-3: the bound echo, a whole reliquary held: the rider lasts half as long again, and Voltara's gift is half as large again)
+  const long = riderLong(b);
+  const ms = (n: number): number => Math.round(n * long);
   switch (e.element) {
     case 'fire': {
       // the foes' half of the board burns (3x3 zones laid edge to edge over it), and the heroes are warmed
@@ -252,19 +256,19 @@ function rider(b: Battle, e: Eidolon, struck: readonly Unit[], out: BattleEvent[
         const half = Math.ceil(b.board.d / 2);
         for (let v = 1; v < half + 1; v += 3)
           for (let u = 1; u < b.board.w + 1; u += 3) {
-            b.zones.push({ u, v, side: 'hero', by: by.id, until: b.t + RIDER.BURN_MS, next: b.t + 1000, dmg });
-            out.push({ kind: 'zone', u, v, ms: RIDER.BURN_MS });
+            b.zones.push({ u, v, side: 'hero', by: by.id, until: b.t + ms(RIDER.BURN_MS), next: b.t + 1000, dmg });
+            out.push({ kind: 'zone', u, v, ms: ms(RIDER.BURN_MS) });
           }
       }
       for (const h of heroesOf(b)) h.power = (h.power ?? 1) * RIDER.WARM_MULT;
-      st.warmUntil = b.t + RIDER.WARM_MS;
-      for (const h of heroesOf(b)) out.push({ kind: 'mark', to: h.id, by: EIDOLON_BY, what: 'eidolonWarm', ms: RIDER.WARM_MS });
+      st.warmUntil = b.t + ms(RIDER.WARM_MS);
+      for (const h of heroesOf(b)) out.push({ kind: 'mark', to: h.id, by: EIDOLON_BY, what: 'eidolonWarm', ms: ms(RIDER.WARM_MS) });
       break;
     }
     case 'ice':
       for (const f of left) {
-        if (isBoss(f.def)) chillFor(b, f, RIDER.BOSS_SLOW_MS);
-        else freezeFor(b, f, RIDER.FREEZE_MS, true);
+        if (isBoss(f.def)) chillFor(b, f, ms(RIDER.BOSS_SLOW_MS));
+        else freezeFor(b, f, ms(RIDER.FREEZE_MS), true);
       }
       break;
     case 'light': {
@@ -281,7 +285,7 @@ function rider(b: Battle, e: Eidolon, struck: readonly Unit[], out: BattleEvent[
         const amount = h.maxHp - h.hp;
         h.hp = h.maxHp;
         cleanse(b, h);
-        h.shield = { hp: Math.round(h.maxHp * RIDER.SHIELD), until: b.t + RIDER.SHIELD_MS };
+        h.shield = { hp: Math.round(h.maxHp * RIDER.SHIELD), until: b.t + ms(RIDER.SHIELD_MS) };
         out.push({ kind: 'heal', to: h.id, amount, by: EIDOLON_BY });
       }
       const king = b.stand && b.units.find((x) => x.id === b.stand!.king && x.alive);
@@ -295,17 +299,17 @@ function rider(b: Battle, e: Eidolon, struck: readonly Unit[], out: BattleEvent[
     case 'lightning':
       for (const h of heroesOf(b)) {
         if (!heroKitOf(h)) continue;
-        if (ultimateOf(h)) h.charge2 = Math.min(CHARGE_MAX, (h.charge2 ?? 0) + CHARGE_MAX * RIDER.CHARGE);
-        else h.charge = Math.min(CHARGE_MAX, h.charge + CHARGE_MAX * RIDER.CHARGE);
+        if (ultimateOf(h)) h.charge2 = Math.min(CHARGE_MAX, (h.charge2 ?? 0) + CHARGE_MAX * RIDER.CHARGE * long);
+        else h.charge = Math.min(CHARGE_MAX, h.charge + CHARGE_MAX * RIDER.CHARGE * long);
       }
-      b.spells.mana = Math.min(MANA_MAX, b.spells.mana + RIDER.MANA);
+      b.spells.mana = Math.min(MANA_MAX, b.spells.mana + RIDER.MANA * long);
       break;
     case 'earth':
       for (const h of heroesOf(b)) {
-        h.guardUntil = Math.max(h.guardUntil ?? 0, b.t + RIDER.SKIN_MS);
-        out.push({ kind: 'mark', to: h.id, by: EIDOLON_BY, what: 'eidolonSkin', ms: RIDER.SKIN_MS });
+        h.guardUntil = Math.max(h.guardUntil ?? 0, b.t + ms(RIDER.SKIN_MS));
+        out.push({ kind: 'mark', to: h.id, by: EIDOLON_BY, what: 'eidolonSkin', ms: ms(RIDER.SKIN_MS) });
       }
-      for (const f of left) if (isBoss(f.def)) stunFor(b, f, RIDER.BOSS_STUN_MS);
+      for (const f of left) if (isBoss(f.def)) stunFor(b, f, ms(RIDER.BOSS_STUN_MS));
       break;
     case 'dark':
       for (const f of left) {
@@ -316,9 +320,9 @@ function rider(b: Battle, e: Eidolon, struck: readonly Unit[], out: BattleEvent[
         f.auraGuard = undefined;
         f.wardUntil = undefined;
       }
-      st.drainUntil = b.t + RIDER.DRAIN_MS;
+      st.drainUntil = b.t + ms(RIDER.DRAIN_MS);
       st.dealt = Object.fromEntries(heroesOf(b).map((h) => [h.id, h.dealt ?? 0]));
-      for (const h of heroesOf(b)) out.push({ kind: 'mark', to: h.id, by: EIDOLON_BY, what: 'eidolonDrain', ms: RIDER.DRAIN_MS });
+      for (const h of heroesOf(b)) out.push({ kind: 'mark', to: h.id, by: EIDOLON_BY, what: 'eidolonDrain', ms: ms(RIDER.DRAIN_MS) });
       break;
   }
 }

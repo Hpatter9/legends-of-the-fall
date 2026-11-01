@@ -6,8 +6,8 @@
 // heroes' boost, the rest become a team bonus like a trait's, and the rest are the fight's own hooks (`RelicHooks`, `relicFight.ts`).
 //
 // Twenty-four are the keep's own, in six Chapters of its history (`relicSets.ts`: two of a chapter give a small bonus, three the strong
-// one); six are Storied (only the tower's black altar and the cursed crown give them). The Calamity's sets keep their pieces, in
-// `relicSets.ts`, until their own turn comes (step 2).
+// one); six are Storied (only the tower's black altar and the cursed crown give them); eighteen are the Eidolons', in six reliquaries of three
+// (`relicSets.ts`), found only in the Calamity.
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
@@ -15,7 +15,7 @@ import { setBonus, SET_RELICS, type SetHooks } from './relicSets';
 import type { TraitEffects } from './traits';
 
 /** How rare a relic is: what draws it (`pickRelic`), what it costs, and its frame on the page. */
-export type Rarity = 'common' | 'rare' | 'storied';
+export type Rarity = 'common' | 'rare' | 'eidolon' | 'storied';
 
 export interface Relic {
   id: string;
@@ -101,6 +101,33 @@ export interface RelicHooks {
   struck?: number;
   /** Every foe has this much more hp. */
   foeHp?: number;
+  // ---- the Eidolons' relics (RELICS-3)
+  /** Heroes heal this much less (Cinder Collar). */
+  healLess?: number;
+  /** A hero's kill gives it `v` more attack for the rest of the fight, to `max` (Hound's Ash-Tooth). */
+  killAtk?: { v: number; max: number };
+  /** A hero's crit sets the foe burning: each tick is this share of its attack (Ember Brand). */
+  critBurn?: number;
+  /** A foe that strikes a hero is slowed `v` for `ms` (Rime Pearl). */
+  foeSlow?: { v: number; ms: number };
+  /** The first skill of a fight freezes the foe it struck for this many ms (Wyrm's Breath Vial). */
+  firstFreeze?: number;
+  /** Heroes slip this much more of blows while they stand still (Glacier Step). */
+  stillDodge?: number;
+  /** The first hero to fall under `under` of its health heals `heal` of it, once a fight (Mane-Gold Thread). */
+  rescue?: { under: number; heal: number };
+  /** Every hero heals this share of its health whenever a foe falls (Lion's Oath-Ring). */
+  killHeal?: number;
+  /** Every this-many-th blow of a hero strikes a second foe nearby (Tempest Ring). */
+  echoEvery?: number;
+  /** Heroes who have not moved this fight take this much less damage (Quarry Gauntlet). */
+  stillGuard?: number;
+  /** Every hero heals this share of its health each second (Moss Bell). */
+  regen?: number;
+  /** Heroes deal this much more to the Calamity's guardians (Void Shard). */
+  guardianAtk?: number;
+  /** Ultimates charge this much faster (Dragon-King's Sigil). */
+  ultPace?: number;
 }
 
 /** What a set of relics gives. Multipliers are x1 when absent. */
@@ -258,7 +285,7 @@ export const pricedFor = (ids: readonly string[] | undefined, n: number): number
 export const relicPriceOf = (id: string, base: number): number => (RELICS[id]?.rarity === 'rare' ? Math.round(base * 1.5) : base);
 
 /** How often a draw picks each rarity while one is left: a Rare a third as often as a Common. */
-const WEIGHT: Record<Rarity, number> = { common: 3, rare: 1, storied: 1 };
+const WEIGHT: Record<Rarity, number> = { common: 3, rare: 1, eidolon: 3, storied: 1 };
 
 /** One relic from a pool, a Rare a third as often as a Common, on one number from the stream (as a plain pick takes), so no other draw moves. */
 export function pickRelic(next: () => number, pool: readonly string[]): string {
@@ -282,11 +309,18 @@ export function mergeEffects(a: TraitEffects, b: TraitEffects): TraitEffects {
 /* ------------------------------------------------------------------ old saves (RELICS-2) */
 
 /** Old relics that are now part of another: a run that held both keeps one, and is paid the other's price back (`RELIC_REFUND`). */
-export const RELIC_RENAMES: Readonly<Record<string, string>> = { coinHoard: 'luckyCoin', goldBand: 'gildedIngot' };
+export const RELIC_RENAMES: Readonly<Record<string, string>> = {
+  coinHoard: 'luckyCoin', goldBand: 'gildedIngot',
+  // (RELICS-3: the Calamity's old sets become the Eidolons' reliquaries; two pairs merge into one)
+  cloudTreads: 'glacierStep', thunderPendant: 'copperTorc', mossAmulet: 'mossBell', earthenBell: 'mossBell', stoneGauntlet: 'quarryGauntlet',
+  bloodVial: 'cinderCollar', rubyLocket: 'cinderCollar', bloodstoneRing: 'emberBrand', reaverHelm: 'ashTooth',
+  starChart: 'dawnChart', cometShard: 'wyrmVial', moonLantern: 'rimePearl', astralCirclet: 'oathRing',
+  riftShard: 'voidShard', voidSigil: 'dragonSigil', lastLight: 'maneThread',
+};
 /** The gold paid back for a relic merged into one already held. */
 export const RELIC_REFUND = 70;
-/** The relics' catalogue a save was written with: 2 since RELICS-2 (absent before). */
-export const RELIC_BOOK = 2;
+/** The relics' catalogue a save was written with: 2 since RELICS-2, 3 since the Eidolons' reliquaries (RELICS-3); absent before. */
+export const RELIC_BOOK = 3;
 /** The line the next prep screen shows once, after a run's relics are converted. */
 export const RELIC_NOTE = "The keep's relics have been catalogued anew: each now has its own story and rule. Tap one to read it.";
 
