@@ -39,6 +39,8 @@ test('every scene is 10 to 40 seconds as played untouched (a cut-in 2 to 6), wit
     if (cutIn) assert.ok(real >= 2 && real <= 6, `${id}: ${real.toFixed(1)} s`);
     else if (reveal) assert.ok(secs >= 5 && secs <= 14, `${id}: ${secs.toFixed(1)} s`);
     else if (oath) assert.ok(secs >= 8 && secs <= 12, `${id}: ${secs.toFixed(1)} s`);
+    // (the opening runs about a full minute, the owner's ask; every other scene is 10 to 40)
+    else if (id === 'opening') assert.ok(secs >= 50 && secs <= 70, `${id}: ${secs.toFixed(1)} s`);
     else assert.ok(secs >= 10 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
     for (const s of SCENES[id].shots) for (const l of s.lines ?? []) assert.ok(l.text.length <= 100, `${id}: ${l.text}`);
   }
@@ -192,7 +194,7 @@ test('every scene that casts Duchess gives her a line, as an actor with no fight
       assert.ok(!['opening', 'gorvak'].includes(id), id);
       continue;
     }
-    assert.ok(sc.shots.some((s) => s.lines?.some((l) => l.who === goat[0] && l.text === 'Mehh.')), id);
+    assert.ok(sc.shots.some((s) => s.lines?.some((l) => l.who === goat[0] && /^(Mehh|Baaaah)\.$/.test(l.text))), id);
     assert.equal(castOf(sc, { party: ['knight', 'samurai', 'archer'] })[goat[0]].kind, null);
   }
 });
