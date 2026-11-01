@@ -5,11 +5,13 @@
 
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
-import { MAX_RANK, RANK_SHARDS, rankMult, saveMeta, takenRank, type Meta } from './sim/meta';
+import { MAX_RANK, RANK_SHARDS, saveMeta, takenRank, type Meta } from './sim/meta';
 import { ORES } from './sim/awakenMats';
 import { AWAKEN_COSTS, AWAKEN_SHARDS, PASSIVES, awaken, awakenPlan, awakenedOf } from './sim/awaken';
 import { rankPlan, rankUp } from './sim/rankUp';
-import { lastingBoost, progressOf, xpOf } from './sim/levels';
+import { levelOfKind } from './sim/levels';
+import { stepPlan } from './sim/rankStep';
+import { heroStats } from './sim/talents';
 import { lookSheet, stepOfRank } from './render/awakenLook';
 import { loadAwakenedSheets, sprite } from './render/sheets';
 import { play } from './render/sound';
@@ -39,14 +41,6 @@ function pic(kind: string, full: number): { box: HTMLElement; tick: (n: number) 
   box.append(spr.canvas);
   return { box, tick: spr.tick };
 }
-
-/** What a hero's hp and attack are at a whole rank (its level's boost and the rank's multiplier). */
-const statsAt = (meta: Meta, kind: string, full: number): { hp: number; atk: number } => {
-  const def = UNITS[kind];
-  const b = lastingBoost(progressOf(xpOf(meta, kind)).level);
-  const m = rankMult(full);
-  return { hp: Math.round(def.hp * b.hp * m), atk: Math.round(def.atk * b.atk * m) };
-};
 
 /** Open the card for a hero's next step: its rank when one is waiting, else its awakening. Does nothing when neither is. */
 let opening = false;
@@ -86,16 +80,23 @@ function openReadyRankUp(meta: Meta, kind: string, done: (t: Taken) => void): vo
   const have = meta.shards[kind] ?? 0;
   card.append(el('p', 'ruEarned', rp ? `Earned with ${RANK_SHARDS[rp.to - 1]} shards (you have ${have}).` : `${AWAKEN_SHARDS[steps]} shards in all, and ${AWAKEN_COSTS[steps]} of them are used up${ap?.ore && ORES[ap.ore] ? `, with ${ap.oreCost} ${ORES[ap.ore].name}` : ''}.`));
   // the stats, before and after
-  const a = statsAt(meta, kind, now);
-  const b = statsAt(meta, kind, next);
+  // (every number is the fight's own, with the score steps: `sim/rankStep.ts`)
+  const plan = stepPlan(kind, levelOfKind(meta, kind), now, next, heroStats(meta, kind)?.scores);
   const table = el('div', 'ruStats');
   const row = (name: string, from: string, to: string): void => {
     table.append(el('span', 'k', name), el('span', 'v', from), el('span', 'a', '→'), el('span', 'v up', to));
   };
   if (rp) row('Rank', stars(taken), stars(rp.to));
-  row('Hp', String(a.hp), String(b.hp));
-  row('Attack', String(a.atk), String(b.atk));
+  if (plan) {
+    row('Hp', String(plan.hp[0]), String(plan.hp[1]));
+    row('Attack', String(plan.atk[0]), String(plan.atk[1]));
+  }
   card.append(table);
+  if (plan) {
+    if (plan.scores.length) card.append(el('p', 'ruScores', plan.scores.map((sc) => `${sc.short} ${sc.from} → ${sc.to}`).join(' · ')));
+    const words = [...plan.scores.filter((sc) => sc.mod).map((sc) => `${sc.short} ${sc.mod}${sc.effects.length ? `: ${sc.effects.join(', ')}` : ''}`), ...plan.figures];
+    if (words.length) card.append(el('p', 'ruNote ruWhy', words.join(' · ')));
+  }
   const p = PASSIVES[kind];
   if (!rp && p) card.append(el('p', 'ruNote', steps === 0 ? `Wakes ${p.name}: ${p.text}.` : `${p.name} grows stronger.`));
   const btns = el('div', 'ruBtns');
