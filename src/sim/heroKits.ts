@@ -18,6 +18,7 @@ import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
 import { CLASS_WEIGHT, type SkillClass } from './skillRules';
 import { relicCharge } from './relicFight';
+import { kitWithLevels, noteCast, REVIVE_POINTS } from './skillLevels';
 
 export type Pool = 'mana' | 'stamina';
 
@@ -106,6 +107,11 @@ export interface Slot {
   onHit?: (b: Battle, me: Unit, to: Unit, out: BattleEvent[]) => void;
   /** A healer's skill 2 has a revive face (RPG-SPELLS batch 2, `kits/revive.ts`): cast instead when a friend lies fallen and it is ready. */
   revive?: ReviveFace;
+  /** Its skill level by use, when above 1 (the skills overhaul's batch 5, `skillLevels.ts`: its strength, cost and cooldown are already that
+   *  level's), its Level 1 cooldown (what a cast earns), and what it adds to the caster's talents while it is cast (durations, the Level 5 step). */
+  lv?: number;
+  baseCd?: number;
+  mods?: Record<string, number>;
 }
 
 export interface HeroKit {
@@ -147,8 +153,9 @@ export function heroKitOf(u: Unit): HeroKit | undefined {
   if (u.side !== 'hero' || u.owner !== undefined || u.kit) return undefined;
   if (UNITS[u.def]?.summon) return undefined;
   // (a hero with skills from books in its slots: its kit with those two, `books.ts`)
-  if (u.book) return kitWithLoadout(u.def, u.book);
-  return HERO_KITS()[u.def];
+  const kit = u.book ? kitWithLoadout(u.def, u.book) : HERO_KITS()[u.def];
+  // (and its skills at the levels they have reached by use, `skillLevels.ts`)
+  return kit && u.skillLv ? kitWithLevels(kit, u.book ? `${u.def}|${u.book.join('|')}` : u.def, u.skillLv) : kit;
 }
 
 export const poolOf = (u: Unit): Pool | undefined => heroKitOf(u)?.pool;
@@ -256,7 +263,16 @@ const breathing = (b: Battle, u: Unit): boolean => u.ks?.breath !== undefined &&
 function fire(b: Battle, me: Unit, hk: HeroKit, n: number, out: BattleEvent[]): boolean {
   const slot = hk.slots[n - 1];
   const from = out.length;
-  if (!powered(b, me, slot.skill, slot.tune - 1, out)) return false;
+  // (a levelled skill's durations and Level 5 step sit on the caster's talents while it is cast: `skillLevels.ts`)
+  if (slot.mods) me.castMods = slot.mods;
+  let ok: boolean;
+  try {
+    ok = powered(b, me, slot.skill, slot.tune - 1, out);
+  } finally {
+    if (slot.mods) delete me.castMods;
+  }
+  if (!ok) return false;
+  noteCast(me, n, slot);
   const cost = costOf(me, slot);
   addRes(me, -cost);
   if (slot.hpCost) me.hp = Math.max(1, Math.round(me.hp - me.maxHp * slot.hpCost));
@@ -412,6 +428,7 @@ function castRevive(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): boole
   addRes(me, -reviveCost(hk));
   ks(me).atRev = b.t;
   b.revives = (b.revives ?? 0) + 1;
+  noteCast(me, 2, hk.s2, REVIVE_POINTS);
   raiseFallen(b, me, x, REVIVE.SHARE, out, (u) => startPool(u));
   return began(b, me, hk.s2.revive!.skill, out, 'skill2');
 }

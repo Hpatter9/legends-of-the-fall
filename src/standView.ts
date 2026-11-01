@@ -26,6 +26,7 @@ import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
 import { settleStudy } from './sim/books';
+import { levelUpWords, settleSkillUse } from './sim/skillLevels';
 import { settleWear } from './sim/wear';
 import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
@@ -174,6 +175,8 @@ export class StandView {
   private ultm!: UltMoments;
   private shown = new Map<string, string>();
   private summary: StandSummary | null = null;
+  /** The skills that rose a level by use in the run just ended (the skills overhaul's batch 5), for the end card. */
+  private skillUps: string[] = [];
   /** EIDOLONS: the War Horn and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
 
@@ -1848,6 +1851,7 @@ export class StandView {
     const s = this.s!;
     const m = this.host.meta();
     const first = !s.run.summary;
+    this.skillUps = [];
     this.summary = settleStand(m, s.run, s.run.armies);
     // (the waves the run cleared count for the quests taken, once: QUESTS)
     // (EIDOLONS: the run fills the War Horn at the Stand's share, its boss waves and its foes, at most 300; none if it was blown in it)
@@ -1863,6 +1867,8 @@ export class StandView {
         settleStudy(m, kinds);
         settleWear(m, kinds.map((kind) => ({ kind, fell: false })));
       }
+      // (the skills overhaul's batch 5: what the guard's skills earned by use in every wave fought counts, in full; the levels reached are told on the end card)
+      this.skillUps = levelUpWords(settleSkillUse(m, s.run.use ?? {}));
     }
     saveMeta(m);
     dropStand();
@@ -1901,7 +1907,7 @@ export class StandView {
       counts: [],
       items: [],
       spoils: spoilsPage(standSpoilGains(sum, m.equipment ?? []), sum.crowns),
-      lines: [],
+      lines: this.skillUps.map((text) => ({ kind: 'skill' as const, text })),
     });
     card.addEventListener('click', (e) => void (!(e.target as HTMLElement).closest('button') && this.endResults?.finish()));
     const btns = el('div', 'stRow');

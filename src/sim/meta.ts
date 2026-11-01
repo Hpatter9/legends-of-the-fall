@@ -33,6 +33,7 @@ import { grantSpells } from './spellSources';
 import { readShop } from './chestShop';
 import { readStall } from './stall';
 import { readBooks } from './books';
+import { readSkillUse } from './skillLevels';
 import { readCards, readScenes } from './sceneRules';
 import { readQuests, type QuestState } from './quests';
 import { readEidolons, type EidolonMeta } from './warHorn';
@@ -174,6 +175,9 @@ export interface Meta {
   study?: Record<string, { book: string; done: number }>;
   studyKept?: Record<string, Record<string, number>>;
   loadout?: Record<string, [string, string]>;
+  /** Skill levels by use (the skills overhaul's batch 5, `skillLevels.ts`): the use points each hero kind has earned with each of its skills, under the
+   *  skill's fixed key (its own three and the learned ones alike). Saves from before have none: every skill at Level 1. */
+  skillUse?: Record<string, Record<string, number>>;
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -519,6 +523,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.stall = readStall(m.stall);
       if (!m.stall) delete m.stall;
       readBooks(m);
+      readSkillUse(m);
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)

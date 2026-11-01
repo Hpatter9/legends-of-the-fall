@@ -3,13 +3,22 @@
 // same numbers come out again on the same code.
 
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
-import { fight, place, startBattle, stepBattle, type Battle, type Stage } from '../src/sim/battle';
+import { fight, place, startBattle, stepBattle, type Battle, type Boost, type Stage } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 
 export const TEAM = 5;
+
+/** The level every hero's three skills fight at (the skills overhaul's batch 5, `skillLevels.ts`): `--skill-level <1-5>` on the command line, or
+ *  `SKILL_LEVEL` in the environment (which the tools' forked children inherit). Level 1, the default, is the skills as learnt. */
+const argLevel = process.argv.includes('--skill-level') ? process.argv[process.argv.indexOf('--skill-level') + 1] : process.env.SKILL_LEVEL;
+export const SWEEP_SKILL_LEVEL = Math.max(1, Math.min(5, Math.floor(Number(argLevel ?? 1)) || 1));
+if (SWEEP_SKILL_LEVEL > 1) process.env.SKILL_LEVEL = String(SWEEP_SKILL_LEVEL);
+
+/** A sweep hero's boost: its grade and level, and its skills at `SWEEP_SKILL_LEVEL`. */
+export const sweepBoost = (grade: number, level: number): Boost => ({ ...gradeBoost(grade, 0, level), ...(SWEEP_SKILL_LEVEL > 1 ? { skillLv: [SWEEP_SKILL_LEVEL, SWEEP_SKILL_LEVEL, SWEEP_SKILL_LEVEL] } : {}) });
 
 /** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
 export const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
@@ -47,7 +56,7 @@ export interface Played {
 export function play(seed: number, band: string, foes: Stage, team: string[], grade = 1, level = 1): Played {
   const b = startBattle(seed, band, foes);
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(grade, 0, level)));
+  team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(grade, level)));
   const out: Played = { won: false, dealt: new Map(), taken: new Map() };
   // (the events name fighters by id; a fighter can be added mid-fight, so look each one up as it comes)
   const unitOf = (id: number) => b.units.find((x) => x.id === id)!;

@@ -123,17 +123,23 @@ test("the ultimate's sheet: locked below level 30, else its meter and how it fir
   assert.ok(ultOf(b, u).ready);
 });
 
-// (the skills overhaul's batch 3, the owner's rule: a rank gives health and attack only, so every sheet has one rank line, the same at every rank;
-// the tier lines, and the tier 3 discount's, went with the tier skills)
-test('the rank line: every skill and the ultimate are the same at every rank', () => {
+// (the skills overhaul's batch 3, the owner's rule: a rank gives health and attack only, so every sheet had one rank line, the same at every rank;
+// the tier lines, and the tier 3 discount's, went with the tier skills. Batch 5, the owner-approved design's section 7: a skill's sheet lists its
+// five levels by use in that line's place, its own marked, and shows its Level row; the ultimate, which does not level, keeps the rank line)
+test('the rank line on the ultimate; the skill levels on each skill, the one it fights at marked', () => {
   const b = arena();
-  const u = addUnit(b, 'samurai', 0, 0, { level: 30, grade: 3 });
-  for (const which of [1, 2, 'ult'] as const) {
-    const s = sheetOf(b, u, which)!;
-    assert.equal(s.tiers.length, 1);
-    assert.equal(s.tiers[0].title, 'Every rank');
-    assert.match(s.tiers[0].text, /health and attack/);
-  }
+  const u = addUnit(b, 'samurai', 0, 0, { level: 30, grade: 3, skillLv: [3, 1, 1] });
+  const ult = sheetOf(b, u, 'ult')!;
+  assert.equal(ult.tiers.length, 1);
+  assert.equal(ult.tiers[0].title, 'Every rank');
+  assert.match(ult.tiers[0].text, /health and attack/);
+  const s1 = sheetOf(b, u, 1)!;
+  assert.deepEqual(s1.tiers.map((t) => t.title), ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']);
+  assert.deepEqual(s1.tiers.map((t) => t.now), [false, false, true, false, false]);
+  assert.equal(s1.rows.find(([k]) => k === 'Level')![1], 'Level 3');
+  assert.equal(sheetOf(b, u, 1, false, () => 812)!.rows.find(([k]) => k === 'Level')![1], 'Level 3 · 812 of 1,500 to Level 4');
+  // (a save's level that the fight does not use, in the spire or the Calamity)
+  assert.equal(sheetOf(b, u, 2, false, () => 812)!.rows.find(([k]) => k === 'Level')![1], 'Level 3 · 812 of 1,500 to Level 4 · Level 1 here');
 });
 
 test('the bars show health and the pool with their numbers', () => {

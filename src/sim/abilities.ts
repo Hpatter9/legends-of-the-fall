@@ -183,7 +183,7 @@ export const foesOf = (b: Battle, me: Unit) => b.units.filter((x) => x.alive && 
 const near3x3 = (a: At, c: At) => Math.abs(a.u - c.u) <= 1 && Math.abs(a.v - c.v) <= 1;
 
 /** A talent modifier a hero has (`talents.ts` lists the keys; 0 for a hero without it, and for every foe). */
-export const tal = (u: Unit, key: string): number => u.eq?.tal?.[key] ?? 0;
+export const tal = (u: Unit, key: string): number => (u.eq?.tal?.[key] ?? 0) + (u.castMods?.[key] ?? 0);
 /** A skill's duration in ms, lengthened by the caster's `dur` talent. */
 const durOf = (me: Unit, ms: number): number => Math.round(ms * (1 + tal(me, 'dur')));
 /** A skill's reach in tiles, lengthened by the caster's `reach` talent. */
@@ -828,7 +828,12 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Druid: a treant rises beside her (one at a time) and fights for her side. */
 const callTreant = (b: Battle, me: Unit) => callSummon(b, me, 'treant', tal(me, 'extra'));
 /** Beastmaster: wolves (two at a time) come at his call. */
-const callWolves = (b: Battle, me: Unit) => callSummon(b, me, 'wolf', 1 + tal(me, 'extra'));
+const callWolves = (b: Battle, me: Unit) => {
+  if (!callSummon(b, me, 'wolf', 1 + tal(me, 'extra'))) return false;
+  // (Summon Beast at Level 5: a dire wolf answers beside the wolf, one at a time, `skillLevels.ts`)
+  if (tal(me, 'dire')) callSummon(b, me, 'direWolf', 0);
+  return true;
+};
 /** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already.
  *  A hero's summon lasts `ms` of fighting time (SUMMON-TIMERS, `carry.ts`: a minute, half that from an ultimate) and carries into the next
  *  wave; with the summons at their cap, a call renews the one of the caster's nearest its end once it has a quarter of its time left. */

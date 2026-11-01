@@ -22,6 +22,7 @@ import { gearText, SLOTS, type Gear, type Slot as GearSlot } from './sim/gear';
 import type { Meta } from './sim/meta';
 import { UNITS, type UnitDef } from './sim/units';
 import { poolTag, sheetOf } from './fightHudRules';
+import { useOf } from './sim/skillLevels';
 
 /** How long a finger must rest on a unit, without moving, for its card to open (ms). */
 export const HOLD_MS = 400;
@@ -211,10 +212,10 @@ export function gearLines(u: Unit, opts: InfoOpts): string[] {
 }
 
 /** A hero's moves through the fight HUD's sheets: skills 1, 2 and 3 (skill 3 locked below level 20) and the ultimate, then its passive. */
-function heroMoves(b: Battle, u: Unit, auto: boolean): MoveInfo[] {
+function heroMoves(b: Battle, u: Unit, auto: boolean, meta?: Meta): MoveInfo[] {
   const out: MoveInfo[] = [];
   for (const w of [1, 2, 3, 'ult'] as const) {
-    const v = sheetOf(b, u, w, auto);
+    const v = sheetOf(b, u, w, auto, meta ? (key) => useOf(meta, u.def, key) : undefined);
     if (!v) continue;
     const locked = v.rows.some(([k]) => k === 'Locked');
     // (between waves the meter's share means little: the ultimate's card says what it costs instead)
@@ -262,7 +263,7 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
       stats,
       traits: traitsOf(u.def).map((t) => ({ name: TRAITS[t].name, text: TRAITS[t].tiers.map((x) => `${x.need}: ${x.text}`).join(' · ') })),
       gear: gearLines(u, opts),
-      moves: heroMoves(b, u, !!opts.autoUlt),
+      moves: heroMoves(b, u, !!opts.autoUlt, opts.meta),
     };
   }
   if (u.def === 'standKing')

@@ -37,6 +37,7 @@ import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { settleStudy, studyWords } from './sim/books';
+import { AUTO_SHARE, fightUse, levelUpWords, settleSkillUse, useOf } from './sim/skillLevels';
 import { settleWear, wearWords } from './sim/wear';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
@@ -1775,6 +1776,7 @@ class Game {
         this.setAutoOn(this.b);
       },
       autoOn: () => this.ultAutoOn(),
+      useOf: (kind, key) => useOf(this.meta, kind, key),
       dockTop: () => $('panel').getBoundingClientRect().top,
       ultFull: () => fullScene(settings().ultFull, this.ultAutoOn()),
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
@@ -3156,6 +3158,9 @@ class Game {
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)
       const placed = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def));
       const studied = studyWords(settleStudy(this.meta, placed.map((u) => u.def)), heroName);
+      // (the skills overhaul's batch 5: the placed heroes' skills earn use points, half under auto-replay; none in the runs whose heroes start
+      // bare, the spire and the Calamity, whose skills stay at Level 1)
+      const skillUps = run.local ? [] : levelUpWords(settleSkillUse(this.meta, fightUse(b, this.meta.unlocked), this.auto ? AUTO_SHARE : 1));
       const wore = run.local ? [] : wearWords(settleWear(this.meta, placed.map((u) => ({ kind: u.def, fell: !u.alive })), !!this.auto), heroName);
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
@@ -3176,7 +3181,7 @@ class Game {
       // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
       const waveGains = gainsSince(held, this.meta, run);
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(wore.length ? { wear: wore } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
