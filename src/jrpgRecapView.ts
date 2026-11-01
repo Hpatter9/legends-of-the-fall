@@ -8,7 +8,7 @@
 // level-up's burst is a one-off CSS animation; nothing loops or blinks. Reduced motion shows the end at once.
 
 import { compactXp, levelBadge } from './levelBadge';
-import { countAt, growthAt, xpToNext, type HeroGrowth, type ResultLine } from './sim/jrpgRecap';
+import { countAt, growthAt, levelRise, xpToNext, type HeroGrowth, type ResultLine } from './sim/jrpgRecap';
 import { heroName } from './sim/heroNames';
 import { play } from './render/sound';
 import { reducedMotion } from './reviveView';
@@ -109,7 +109,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const num = (n: number) => Math.round(n).toLocaleString('en-GB');
 
-const MARKS: Record<ResultLine['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', bench: '▲', learned: '✦', skill: '✦', study: '✎', wear: '⚒', guest: '⚑' };
+const MARKS: Record<ResultLine['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', bench: '▲', learned: '✦', skill: '✦', study: '✎', wear: '⚒', guest: '⚑', pack: '◈' };
 
 /** The clock's beats, in ms. */
 const T = { ROWS: 450, FILL: 1300, COUNT: 900, ITEM: 70, LINE: 90, GAP: 150 };
@@ -187,8 +187,15 @@ export function playResults(parts: { head: HTMLElement; body: HTMLElement }, d: 
       main.append(name, bar, nums);
       root.append(face, main);
       // (the stats that rose and what opened, shown from the level-up on)
-      if (g.stats.length || g.scores.length || g.learnt.length) {
+      const lvUp = levelRise(g);
+      if (lvUp || g.stats.length || g.scores.length || g.learnt.length) {
         const up = el('div', 'jrGrowth');
+        // (the level itself, start to finish, first and like the stat lines)
+        if (lvUp) {
+          const line = el('span', 'jrStat jrLevel');
+          line.append(el('small', '', 'LV'), el('b', '', num(lvUp.from)), el('i', '', '→'), el('b', 'to', num(lvUp.to)), el('em', '', `+${num(lvUp.gain)}`));
+          up.append(line);
+        }
         for (const s of g.stats) {
           const line = el('span', 'jrStat');
           line.append(el('small', '', s.stat), el('b', '', num(s.from)), el('i', '', '→'), el('b', 'to', num(s.to)), el('em', '', `+${num(s.gain)}`));

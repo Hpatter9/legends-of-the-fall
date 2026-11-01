@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.322.0',
+    date: '2026-11-01',
+    title: 'Rulers, levels and finds',
+    notes: ['The Crown\'s herald in the Eidolon stories now shows the ruler you chose in Settings, not a stock messenger.', 'The end-of-run recap shows each hero\'s level from the run\'s start to its end when they levelled up, beside their stat gains.', 'A line between waves when a find waits in your pack, a red \'full\' tag on the cart, the stash count on the gear panel, and finds on the auto-replay recap.'],
+  },
+  {
     version: '0.321.0',
     date: '2026-11-01',
     title: 'Real gear in runs',

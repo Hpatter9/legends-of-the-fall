@@ -103,6 +103,12 @@ export interface HeroGrowth {
   top: boolean;
 }
 
+/** The hero's level, start to finish, as a line like the stat lines ("Lv 12 → 14", +2); none when it did not rise. The start is the
+ *  level the run's first XP found it at (`heroGrowth` reads it from the XP before), so a run in progress needs no extra field. */
+export function levelRise(g: Pick<HeroGrowth, 'from' | 'to'>): { from: number; to: number; gain: number } | null {
+  return g.to > g.from ? { from: g.from, to: g.to, gain: g.to - g.from } : null;
+}
+
 export function heroGrowth(kind: string, xpFrom: number, xpTo: number, rule: LevelRule = 'lasting', mult?: StatMult, rank = 1, grade = 1): HeroGrowth {
   const lo = Math.max(0, Math.min(xpFrom, xpTo));
   const hi = Math.max(lo, xpTo);

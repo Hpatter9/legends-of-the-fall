@@ -18,7 +18,7 @@ import { paintGearIcon } from './gearIcons';
 import { shopArt } from './bookArt';
 import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
 import { sellAsks, sellPiece, stallRepair } from './sim/stall';
-import { sellPrice } from './sim/equipment';
+import { sellPrice, stashCount, stashFull } from './sim/equipment';
 import { todayKey } from './modes';
 import { icon } from './menuArt';
 import { play } from './render/sound';
@@ -215,6 +215,8 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     comb.addEventListener('click', () => combineView());
     more.append(sets, comb);
     panel.append(more);
+    // (RUN-GEAR-2: the stash's count; red once it is full and finds wait on the cart)
+    panel.append(el('small', `eqStash${stashFull(meta) ? ' full' : ''}`, `Stash ${stashCount(meta)}${stashFull(meta) ? ' · full' : ''}`));
   };
 
   const allSets = () => {

@@ -3,6 +3,7 @@
 // it stops); the page does the playing. Pure: no DOM, no random numbers.
 
 import { armyById, armyUnlocked, recordOf } from './armies';
+import type { Equipment } from './equipment';
 import type { Meta } from './meta';
 
 /** The run counts on offer. */
@@ -51,7 +52,12 @@ export interface AutoTotals {
   ores?: number;
   /** Rare drops the waves found, shards and tomes (`armyDrops.ts`; missing is none). */
   drops?: number;
+  /** RUN-GEAR-2: the real pieces the runs brought home (`FoundHome.pieces`), kept to `FINDS_KEPT`; missing is none. */
+  finds?: Equipment[];
 }
+
+/** The most finds an auto-replay's recap remembers (ten runs of a boss each fill it quickly; the rest are only counted in Gear found). */
+export const FINDS_KEPT = 60;
 
 export type AutoEnd = 'done' | 'loss' | 'stopped' | 'tickets';
 
@@ -78,11 +84,12 @@ export function startAuto(m: Meta, armyId: string, tier: number, count: number, 
 }
 
 /** What a settled fight adds to the totals and what the replay does next: another `wave`, a new `run`, or `end` (see `ended`). */
-export function afterFight(a: AutoReplay, f: { won: boolean; cleared: boolean; wave: number; crowns: number; xp: number; chests?: number; gear?: number; ores?: number; drops?: number }): 'wave' | 'run' | 'end' {
+export function afterFight(a: AutoReplay, f: { won: boolean; cleared: boolean; wave: number; crowns: number; xp: number; chests?: number; gear?: number; ores?: number; drops?: number; finds?: readonly Equipment[] }): 'wave' | 'run' | 'end' {
   a.totals.crowns += f.crowns;
   if (f.ores) a.totals.ores = (a.totals.ores ?? 0) + f.ores;
   if (f.drops) a.totals.drops = (a.totals.drops ?? 0) + f.drops;
   a.totals.xp += f.xp;
+  if (f.finds?.length) a.totals.finds = [...(a.totals.finds ?? []), ...f.finds].slice(0, FINDS_KEPT);
   if (!f.won) {
     a.ended = 'loss';
     a.lostAt = f.wave;
