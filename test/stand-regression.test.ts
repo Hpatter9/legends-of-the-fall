@@ -38,10 +38,11 @@ test('ordinary fights play out as they did before the Last Stand', () => {
   }
 });
 
-// (re-pinned for STATS batch 5, docs/notes/stats-5.md: a saving throw rolls in every fight with an ailment, a shove or a blast; seven of the
+// (re-pinned for STATS batch 6, docs/notes/stats-6.md: the starting five's pools, cooldowns and AI (the Samurai and Kunoichi flank, the Archer
+// kites) moved all twelve; the third, a close win, is now lost at the minute. Before it, for STATS batch 5, docs/notes/stats-5.md: a saving throw rolls in every fight with an ailment, a shove or a blast; seven of the
 // twelve moved, each won or lost as before. Before it, for STATS batch 4, docs/notes/stats-4.md: every ordinary blow now rolls a d20 against Armour Class and every fighter rolls
 // initiative, so every fight moves; before it, for the skills overhaul's batch 2, docs/notes/skills-1.md)
 const PINNED: string[] = [
-  'won 13500 5/0 236392521', 'won 23000 5/0 590386976', 'won 37100 2/0 350626376', 'lost 22600 0/3 1465851504', 'lost 11800 0/4 2060110542', 'won 14600 4/0 4191306295',
-  'lost 17100 0/2 1442732412', 'lost 14500 0/4 2082392979', 'won 18100 4/0 896813566', 'lost 13200 0/5 2465024716', 'lost 21000 0/4 1339698609', 'lost 11800 0/5 2397442154',
+  'won 14100 5/0 236392521', 'won 30500 3/0 2798023671', 'lost 59900 0/1 1862486204', 'lost 22400 0/4 3929252987', 'lost 12300 0/4 3891676355', 'won 15000 5/0 4191306295',
+  'lost 19900 0/2 3274298225', 'lost 9900 0/5 2842111043', 'won 16700 5/0 2096543709', 'lost 11000 0/5 1897130243', 'lost 31500 0/3 643921742', 'lost 11800 0/5 4229007967',
 ];

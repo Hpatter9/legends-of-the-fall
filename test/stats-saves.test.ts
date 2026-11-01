@@ -207,9 +207,10 @@ test('the same moment gives the same save, and a fight replays the same with the
   assert.ok(JSON.parse(once)[2] > 0, 'saves are made in a real fight');
 });
 
-test('the page: STR’s line names the shoves now they are live', () => {
+test('the page: STR’s line names the shoves now they are live (and the climb, since STATS batch 6 put Athletics in fights)', () => {
   assert.equal(LIVE.shove, true);
   const p = STAT_PROFILES.minotaur;
   assert.match(scoreWhy(p, derivedOf(p), 'str'), /shoves further/);
-  assert.doesNotMatch(scoreWhy(p, derivedOf(p), 'str'), /climbs/);
+  assert.match(scoreWhy(p, derivedOf(p), 'str'), /climbs a step higher at \+4/, 'STR 17 is +3: the climb is a step away');
+  assert.match(scoreWhy(p, derivedOf(p, { level: 4 }), 'str'), /climbs a step higher \(Athletics\)/);
 });

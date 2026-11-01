@@ -2,6 +2,7 @@ import { HERO_KITS } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { REST } from '../src/sim/statRest';
 import { existsSync } from 'node:fs';
 import { addUnit, apart, atkOf, hurt, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike, ULT_LEVEL, keyOf } from '../src/sim/abilities';
@@ -177,7 +178,10 @@ test('Grappling Hook drags the nearest shooter in beside the Buccaneer and holds
   assert.ok(archer.hp < archer.maxHp);
 });
 
-test('Dirge slows every foe within four tiles, and the bard\'s tune charges the friend with the least', () => {
+test('Dirge slows every foe within four tiles, and the bard\'s tune charges the friend with the least', (t) => {
+  // (the pools' written points: the pools by score, STATS batch 6, are held off here and staged in `stats-rest`)
+  REST.pools = false;
+  t.after(() => { REST.pools = true; });
   const b = arena();
   const me = spawn(b, 'wolfBard', 3, 6, CHARGE_MAX);
   const f = spawn(b, 'skeleton', 3, 3);
@@ -345,7 +349,10 @@ test('Earthquake holds every foe within three tiles', () => {
   assert.equal(far.stunUntil, undefined);
 });
 
-test('Starfall calls stars on up to three separate crowds, and Astral Convergence fills the allies\' meters', () => {
+test('Starfall calls stars on up to three separate crowds, and Astral Convergence fills the allies\' meters', (t) => {
+  // (the pools' written points: the pools by score, STATS batch 6, are held off here and staged in `stats-rest`)
+  REST.pools = false;
+  t.after(() => { REST.pools = true; });
   const b = arena();
   const me = spawn(b, 'sage', 3, 8, CHARGE_MAX);
   [[0, 4], [3, 4], [6, 4]].forEach(([u, v]) => spawn(b, 'skeleton', u, v));

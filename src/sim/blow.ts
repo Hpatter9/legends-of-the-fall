@@ -26,6 +26,7 @@ import { ABILITIES, BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiat
 import { kitOf } from './abilities';
 import { relicDodge } from './relicFight';
 import { TALL_AC } from './board';
+import { perceptionOf } from './statRest';
 import { UNITS } from './units';
 import type { Battle, Unit } from './battle';
 
@@ -179,9 +180,11 @@ export function dodgeShareOf(b: Battle, to: Unit): number {
 /** What a target's AC is worth now, struck from height `hBy`: its own AC, the dodge shares as AC, and cover (tall grass, higher ground). Also
  *  how much of it is the dodge and the cover, for a miss they turned. A share that is not a whole 5% leaves a part of a point (`ac` is then
  *  not whole): the blow's roll makes it +1 that part of the time (`rollBlow`), so a 3% dodge on gear is still worth 3%. */
-export function acAgainst(b: Battle, to: Unit, hBy: number, hTo: number, tall: boolean): { ac: number; cover: number } {
+export function acAgainst(b: Battle, to: Unit, hBy: number, hTo: number, tall: boolean, by?: Unit): { ac: number; cover: number } {
   const dodge = Math.round((dodgeShareOf(b, to) / DODGE_PER_AC) * 1e6) / 1e6;
-  const cover = dodge + (tall ? TALL_AC : 0) + HIGH_AC * Math.max(0, Math.min(HIGH_AC_MAX, hTo - hBy));
+  // (STATS batch 6: a striker's perception, WIS, sees through a share of tall grass's cover, `perceptionOf`)
+  const grass = tall ? Math.round(TALL_AC * (1 - (by ? perceptionOf(by) : 0)) * 1e6) / 1e6 : 0;
+  const cover = dodge + grass + HIGH_AC * Math.max(0, Math.min(HIGH_AC_MAX, hTo - hBy));
   return { ac: blowStatsOf(b, to).ac + cover, cover };
 }
 
@@ -200,7 +203,7 @@ const unit = (b: Battle, by: Unit, to: Unit, salt: number): number => (mixSeed(b
 export function rollBlow(b: Battle, by: Unit, to: Unit, hBy: number, hTo: number, tall: boolean, critChance: number, critMult: number): BlowRoll {
   const roll = d20At(b.seed, b.t, by.id, to.id);
   const me = blowStatsOf(b, by);
-  const at = acAgainst(b, to, hBy, hTo, tall);
+  const at = acAgainst(b, to, hBy, hTo, tall, by);
   // (a part of a point, of AC or of a foe's matched to hit, is a whole point that part of the time: its own hash of the moment)
   const aim = Math.floor(me.toHit);
   const need = at.ac - (me.toHit - aim);

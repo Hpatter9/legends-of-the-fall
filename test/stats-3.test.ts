@@ -40,10 +40,15 @@ test("a score's line names its effects in numbers, and the blow ability's names 
   const d = derivedOf(p, at);
   assert.match(scoreWhy(p, d, p.blow), /blows [+−]\d+%/);
   assert.match(scoreWhy(p, d, 'con'), /health [+−]\d+%/);
-  // (an effect no fight has yet is not promised: crit, initiative, blow speed, cooldowns and ultimate fill are switched off in LIVE)
-  assert.doesNotMatch(scoreWhy(p, d, 'dex'), /initiative|crit|faster/);
-  assert.doesNotMatch(scoreWhy(p, d, 'int'), /sooner/);
-  assert.doesNotMatch(scoreWhy(p, d, 'cha'), /ultimate/);
+  // (STATS batch 6: every effect is in fights now, so every line is shown: crit and initiative, the climb, the pool, cooldowns and the
+  // ultimate's fill counted against the heroes' average, perception)
+  assert.match(scoreWhy(p, d, 'dex'), /crit \d+%.*initiative [+−]\d/);
+  assert.match(scoreWhy(p, d, 'str'), /climbs a step higher/);
+  const w = statPanelOf('knight', at)!.why;
+  assert.match(scoreWhy(p, d, 'con', w), /SP \d+/, "the Knight's stamina follows CON");
+  assert.match(scoreWhy(profileOf('wizard')!, derivedOf(profileOf('wizard')!, at), 'int', statPanelOf('wizard', at)!.why), /skills \+\d+% sooner.*MP \d+/);
+  assert.match(scoreWhy(profileOf('paladin')!, derivedOf(profileOf('paladin')!, at), 'cha', statPanelOf('paladin', at)!.why), /ultimate fills \+\d+% faster/);
+  assert.match(scoreWhy(profileOf('druid')!, derivedOf(profileOf('druid')!, at), 'wis'), /sees through \d+% of cover and smoke/);
   assert.match(scoreWhy(p, d, p.saves[0]), /\(trained\)/);
 });
 
@@ -112,11 +117,11 @@ test('a piece with no score points shows nothing, and one with some is read', ()
   assert.deepEqual(gearScores({ scores: { str: 1 } }), { str: 1 });
 });
 
-test('the figures show only what is live', () => {
+test('the figures show only what is live (STATS batch 6: everything is)', () => {
   const keys = statPanelOf('knight', at)!.figures.map((f) => f.key);
-  assert.deepEqual(keys, ['ac', 'hit', 'dc', 'prof']);
-  assert.equal(LIVE.crit, false);
-  assert.doesNotMatch(heroCardScores('knight', 8, 1, 0)!.rolls, /Init/);
+  assert.deepEqual(keys, ['ac', 'hit', 'dc', 'crit', 'init', 'prof', 'pool', 'ult']);
+  assert.ok(Object.values(LIVE).every(Boolean));
+  assert.match(heroCardScores('knight', 8, 1, 0)!.rolls, /Init [+−]\d/);
 });
 
 test('a real piece of gear has score points, and the compare reads them for the hero', () => {
@@ -130,9 +135,9 @@ test('a real piece of gear has score points, and the compare reads them for the 
   assert.ok(scoreCompare('knight', { ...at, extra: pts }, pts).length >= 1);
 });
 
-test('figures are four, tiles are six', () => {
+test('figures are eight (three rows of the grid, STATS batch 6), tiles are six', () => {
   const panel = statPanelOf('knight', at)!;
-  assert.equal(panel.figures.length, 4);
+  assert.equal(panel.figures.length, 8);
   assert.equal(scoreTiles(panel.profile, panel.derived).length, 6);
-  assert.equal(figureRows(panel.derived).length, 4);
+  assert.equal(figureRows(panel.derived).length, 6, 'the six the scores alone make; the pool and the ultimate read the kind');
 });

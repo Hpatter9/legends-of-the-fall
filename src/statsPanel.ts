@@ -45,7 +45,7 @@ export function drawStatsPanel(kind: string, at: HeroAt, lead: HTMLElement[] = [
   for (const t of panel.tiles) {
     const b = button(`stTile${t.primary ? ' prime' : ''}${t.weak ? ' weak' : ''}`, `${t.short} ${t.score}, ${signed(t.mod)}`);
     b.append(el('small', '', t.short), el('b', '', String(t.score)), el('em', '', signed(t.mod)));
-    b.addEventListener('click', () => explain(b, scoreWhy(panel.profile, panel.derived, t.ability)));
+    b.addEventListener('click', () => explain(b, scoreWhy(panel.profile, panel.derived, t.ability, panel.why)));
     tiles.append(b);
   }
   box.append(tiles);

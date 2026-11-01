@@ -8,6 +8,7 @@
 // the attack while it casts. What is not an attack (a heal, a shield) is scaled by `castPower()`, as the ultimates' heals are. No randomness:
 // every choice is a fixed order (then by id).
 
+import { saveAware } from '../saves';
 import { atkOf, canStrike, hurt, strikeDef, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, castPower, foesOf, HEX_EVERY, mendUnit, net } from '../abilities';
 import { bleedFor, burnFor, charmFor, chillFor, cleanse, curseFor, fearFor, harmed, hasAil, poisonFor, setDot, shockFor, stunFor, ward, weakFor } from '../ailments';
@@ -373,7 +374,8 @@ const curseable = (b: Battle, me: Unit) =>
     .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id);
 export const curseWork = (b: Battle, me: Unit): boolean => curseable(b, me).length > 0;
 export function curseOfWeakness(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const fs = curseable(b, me).slice(0, CURSE_WEAK.N);
+  // (STATS batch 6: among the foes he values the same, the weakest STR saves first)
+  const fs = saveAware(b, me, curseable(b, me), atkOf, 'weak').slice(0, CURSE_WEAK.N);
   if (!fs.length) return false;
   const t = ms(me, CURSE_WEAK.MS);
   for (const f of fs) {

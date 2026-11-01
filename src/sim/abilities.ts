@@ -24,7 +24,7 @@ import { blastShoves } from './kits/mages';
 import { monsterKits } from './kits/monsters';
 import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
-import { rollSave } from './saves';
+import { DEX_SAVES, rollSave, saveAware } from './saves';
 import { ailBoss, ailCtx, AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
 import { relicCharge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
@@ -415,9 +415,11 @@ function chainLightning(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const CHARM_MS = 3500;
 function charm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
-  const f = foes
+  const cands = foes
     .filter((x) => apart(me, x) <= reachOf(me, 5) && !(x.charmUntil !== undefined && x.charmUntil > b.t) && foes.some((o) => o !== x))
-    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id);
+  // (STATS batch 6: among the foes she values the same, the one with the weakest WIS save)
+  const f = saveAware(b, me, cands, atkOf, 'charm')[0];
   if (!f) return false;
   charmFor(b, f, durOf(me, CHARM_MS));
   f.taunt = undefined;
@@ -596,9 +598,10 @@ export const sureFooted = (u: Unit): boolean => !!kitOf(u)?.passive.sure;
 const GAZE_REACH = 5;
 const PETRIFY_MS = 3000;
 function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const f = foesOf(b, me)
+  // (STATS batch 6: among the foes it values the same, the one with the weakest CON save)
+  const f = saveAware(b, me, foesOf(b, me)
     .filter((x) => apart(me, x) <= reachOf(me, GAZE_REACH) && sightClear(b.board, me, x))
-    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id), atkOf, 'stun')[0];
   if (!f) return false;
   me.facing = wayTo(me, f);
   hurt(b, me, f, net(atkOf(me), f), false, false, out, 'skill');
@@ -613,9 +616,10 @@ function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const DREAM_MS = 4000;
 function nineTails(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
-  const prey = foes
+  // (STATS batch 6: among the foes she values the same, the weakest WIS saves first)
+  const prey = saveAware(b, me, foes
     .filter((x) => apart(me, x) <= 7 && !(x.charmUntil !== undefined && x.charmUntil > b.t))
-    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id), atkOf, 'charm')
     .slice(0, Math.min(3, foes.length - 1));
   if (!prey.length) return false;
   for (const f of prey) {
@@ -1230,7 +1234,8 @@ function dragonBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const ms = durOf(me, 3000);
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
-    hurt(b, me, f, net(atkOf(me) * 1.4, f), true, false, out, 'skill');
+    // (STATS batch 6: a breath is a blast, halved on a DEX save)
+    hurt(b, me, f, Math.max(1, Math.round(net(atkOf(me) * 1.4, f) * (DEX_SAVES.breath ? blastSave(b, me, f, out) : 1))), true, false, out, 'skill');
     if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
   return true;
@@ -1943,6 +1948,14 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
   const venom = AILMENT_SWITCH.on && dot?.kind === 'curse' && (by.def === 'eliteNyssa' || by.def === 'calBoss5' || by.def === 'calBoss6');
   if (dot) setDot(b, to, { ...dot, ...(venom ? { kind: 'poison' as const } : {}), by: by.id, next: b.t + dot.every, until: b.t + dot.ms });
   blowRiders(b, by, to);
+}
+
+/** A blast's DEX save (STATS batch 5 and 6): `f` saves against `by`'s DC, a save halving it ("Saved"; a boss does not save). What the blast's
+ *  damage is multiplied by. */
+export function blastSave(b: Battle, by: Unit, f: Unit, out: BattleEvent[]): number {
+  const save = rollSave(b, by, f, 'blast', ailBoss(f));
+  if (save.saved) out.push({ kind: 'saved', to: f.id, what: 'blast' });
+  return save.mult;
 }
 
 /** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck (`r` tiles wider each way for a widened one). Each makes

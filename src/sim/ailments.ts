@@ -246,13 +246,13 @@ function upsert(u: Unit, kind: AilmentKey, until: number, by: number): Ailment {
  * any other, as the one field did. On: it stands beside the others; laying it again keeps the stronger tick and the later end; poison
  * stacks; fire thaws a freeze (and does not take) and puts out a chill.
  */
-export function setDot(b: Battle, to: Unit, d: Dot & { by: number; next: number; until: number }): void {
+export function setDot(b: Battle, to: Unit, d: Dot & { by: number; next: number; until: number }, what: SaveWhat = d.kind): void {
   if (!on()) {
     to.ail = ailmentsOf(to).filter((a) => !DOTS.has(a.kind));
     to.ail.push({ kind: d.kind, dmg: d.dmg, every: d.every, ms: d.ms, by: d.by, next: d.next, until: d.until });
     return;
   }
-  const ms = gate(b, to, d.kind, d.until - b.t, layer(b, d.by));
+  const ms = gate(b, to, d.kind, d.until - b.t, layer(b, d.by), what);
   if (!ms) return;
   if (d.kind === 'burn') {
     if (hasAil(to, 'freeze', b.t)) return thaw(b, to);
@@ -272,9 +272,9 @@ export function setDot(b: Battle, to: Unit, d: Dot & { by: number; next: number;
 }
 
 /** The new damage over time at its usual numbers (on only): fire, poison (a stack), a bleed or a curse, from `by`'s attack. */
-export function burnFor(b: Battle, by: Unit, to: Unit, ms = AIL.BURN_MS, share = AIL.BURN_SHARE): void {
+export function burnFor(b: Battle, by: Unit, to: Unit, ms = AIL.BURN_MS, share = AIL.BURN_SHARE, what: SaveWhat = 'burn'): void {
   if (!on() || !to.alive) return;
-  setDot(b, to, { kind: 'burn', dmg: Math.max(1, Math.round(attack(by) * share)), every: AIL.BURN_EVERY, ms, by: by.id, next: b.t + AIL.BURN_EVERY, until: b.t + ms });
+  setDot(b, to, { kind: 'burn', dmg: Math.max(1, Math.round(attack(by) * share)), every: AIL.BURN_EVERY, ms, by: by.id, next: b.t + AIL.BURN_EVERY, until: b.t + ms }, what);
 }
 export function poisonFor(b: Battle, by: Unit, to: Unit, share = AIL.POISON_SHARE, ms = AIL.POISON_MS): void {
   if (!on() || !to.alive) return;
