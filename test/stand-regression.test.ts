@@ -38,8 +38,9 @@ test('ordinary fights play out as they did before the Last Stand', () => {
   }
 });
 
-// (re-pinned for the skills overhaul's batch 2, docs/notes/skills-1.md: every hero's skills now cost and cool by their class, so every fight moves)
+// (re-pinned for STATS batch 4, docs/notes/stats-4.md: every ordinary blow now rolls a d20 against Armour Class and every fighter rolls
+// initiative, so every fight moves; before it, for the skills overhaul's batch 2, docs/notes/skills-1.md)
 const PINNED: string[] = [
-  'won 10800 4/0 364274915', 'won 24900 4/0 3621682932', 'won 30600 2/0 4077699199', 'lost 21200 0/3 3425299711', 'lost 12800 0/4 1996169345', 'won 17900 5/0 1727904812',
-  'lost 16400 0/3 3970075092', 'lost 12200 0/3 2082392979', 'won 17100 4/0 896813566', 'lost 12000 0/5 3728696056', 'lost 25000 0/4 3235205619', 'lost 11800 0/5 1133770814',
+  'won 13500 5/0 236392521', 'won 25200 5/0 1726175922', 'won 28800 2/0 3509804726', 'lost 24700 0/3 834015834', 'lost 11800 0/4 2060110542', 'won 15200 4/0 1096069142',
+  'lost 18200 0/2 810896742', 'lost 14500 0/4 2082392979', 'won 18600 4/0 3992050719', 'lost 13200 0/5 2465024716', 'lost 21000 0/4 3171264422', 'lost 11800 0/5 2397442154',
 ];

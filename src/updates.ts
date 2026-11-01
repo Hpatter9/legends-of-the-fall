@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.323.0',
+    date: '2026-11-01',
+    title: 'Armour and the d20',
+    notes: ['Blows roll a d20 against Armour Class: misses, glancing blows, crits on a natural 20. DEX speeds blows and decides who acts first; armour counts from level 1.'],
+  },
+  {
     version: '0.322.0',
     date: '2026-11-01',
     title: 'Rulers, levels and finds',

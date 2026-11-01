@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { initiativeWaits } from '../src/sim/blow';
 import assert from 'node:assert/strict';
 import { fight, place, stepBattle, playOut, hurt, type Battle } from '../src/sim/battle';
 import { RELICS, RELIC_IDS, relicEffects } from '../src/sim/relics';
@@ -63,9 +64,12 @@ test('the Siege Drum: the foes wait at the start, the heroes do not', () => {
   run.relics = ['warDrum'];
   const b = startStage(run);
   place(b, 'knight', 3, 8, 1);
+  // (STATS batch 4: every fighter also waits its initiative; the drum's wait comes on top of the foes')
+  const waits = initiativeWaits(b);
   fight(b);
-  assert.ok(b.units.filter((u) => u.side === 'foe').every((u) => u.busyUntil === 300));
-  assert.equal(b.units.find((u) => u.side === 'hero')!.busyUntil, 0);
+  assert.ok(b.units.filter((u) => u.side === 'foe').every((u) => u.busyUntil === 300 + waits.get(u.id)!));
+  const hero = b.units.find((u) => u.side === 'hero')!;
+  assert.equal(hero.busyUntil, waits.get(hero.id));
 });
 
 test('the Coronation Crown-Piece adds gold to a win, more with a fuller purse', () => {

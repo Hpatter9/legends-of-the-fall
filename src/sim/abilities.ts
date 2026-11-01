@@ -26,7 +26,7 @@ import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
-import { relicCharge, relicDodge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
+import { relicCharge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
 import { TRIALS, type TrialSummon } from './eidolonTrials';
 
 /** A skill fires at this much charge. */
@@ -1423,7 +1423,8 @@ export const KITS: Record<string, Kit> = {
   },
   illusionist: {
     skill: { name: 'Mirror Image', text: 'Slips away, leaving two decoys that draw the foes nearby for 3s', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 400, anim: 'attack2', cast: mirrorImage },
-    passive: { name: 'Sleight of Hand', text: 'Slips 25% of blows', dodge: 0.25 },
+    // (STATS batch 4, the owner's answer: 25% to 35%, so that once robes showed she is back in the roster's band; it is Armour Class now)
+    passive: { name: 'Sleight of Hand', text: 'Slips 35% of blows', dodge: 0.35 },
   },
   gunslinger: {
     skill: { name: 'Piercing Shot', key: 'Dead Eye', text: 'One slug through every foe in a line, for more than double', need: CHARGE_MAX, dealt: 14, taken: 4, perSec: 1.5, castMs: 500, anim: 'attack', cast: deadEye },
@@ -1465,7 +1466,8 @@ export const KITS: Record<string, Kit> = {
   },
   lancer: {
     skill: { name: 'Charge', key: 'Lance Charge', text: 'Charges up to 5 tiles at a foe for more than double, then rides faster for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: lanceCharge },
-    passive: { name: 'Couched Lance', text: 'Blows deal 40% more to shooters', prey: 1.4 },
+    // (STATS batch 4, the owner's answer: 1.4 to 1.1; in plate and sure of hand from level 1 he stood above the roster's band)
+    passive: { name: 'Couched Lance', text: 'Blows deal 10% more to shooters', prey: 1.1 },
   },
   reaper: {
     skill: { name: 'Reap', text: 'Cuts every foe within 3 tiles; a foe under 30% health takes nearly triple', need: CHARGE_MAX, dealt: 6, taken: 3, perSec: 2, castMs: 500, anim: 'attack2', cast: reap },
@@ -1473,11 +1475,13 @@ export const KITS: Record<string, Kit> = {
   },
   timeWitch: {
     skill: { name: 'Slow', key: 'Temporal Surge', text: 'A slowing field round her for 4s: foes within 4 tiles are slowed, and her friends within 3 hastened', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: temporalSurge },
-    passive: { name: 'Stutter', text: 'Slips 20% of blows', dodge: 0.2 },
+    // (STATS batch 4, the owner's answer: 20% to 30%, so that once robes showed she is back in the roster's band; it is Armour Class now)
+    passive: { name: 'Stutter', text: 'Slips 30% of blows', dodge: 0.3 },
   },
   arcBlade: {
     skill: { name: 'Thunder Step', key: 'Voltage Blink', text: 'Blinks beside the thickest knot of foes and discharges: the 3x3 is hurt and held for 1s', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: voltageBlink },
-    passive: { name: 'Static Discharge', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
+    // (STATS batch 4, the owner's answer: 25% to 10%; with his DEX 17 aim from level 1 he stood above the roster's band)
+    passive: { name: 'Static Discharge', text: '10% of blows arc to a second foe nearby', arc: 0.1 },
   },
   dreadPirate: {
     skill: { name: 'Cannonade', key: 'Broadside', text: 'A ghost ship\'s broadside falls on a 3x3 of tiles', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: broadside },
@@ -1541,7 +1545,9 @@ export const KITS: Record<string, Kit> = {
   },
   minotaur: {
     skill: { name: 'Gore Charge', text: 'Charges up to 4 tiles in a line at a foe, hits it for double, knocks it back and stuns it for 1.5s', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 550, anim: 'attack', cast: goreCharge },
-    passive: { name: 'Trample', text: 'Blows deal a quarter more to a foe under half health', finish: { under: 0.5, mult: 1.25 } },
+    // (STATS batch 4, the owner's answer: a quarter to 15%; in plate and sure of hand he stood far above the roster's band at level 30. The
+    // maze minotaurs, foes, keep a quarter)
+    passive: { name: 'Trample', text: 'Blows deal 15% more to a foe under half health', finish: { under: 0.5, mult: 1.15 } },
   },
   satyr: {
     skill: { name: 'Pipes of Pan', text: 'Hastens the allies within 3 tiles, and him, for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 500, anim: 'attack', cast: pipes },
@@ -1572,7 +1578,7 @@ KITS.lichKing = {
 KITS.boneVolley = { skill: KITS.archer.skill, passive: { name: 'Dead Aim', text: 'Arrows ignore 2 defence', pierce: 2 } };
 for (const id of ['packBlack', 'packRed', 'packWhite']) KITS[id] = KITS.werewolf;
 for (const id of ['groveSatyr1', 'groveSatyr2', 'groveSatyr3']) KITS[id] = KITS.satyr;
-for (const id of ['mazeMino1', 'mazeMino2', 'mazeMino3']) KITS[id] = KITS.minotaur;
+for (const id of ['mazeMino1', 'mazeMino2', 'mazeMino3']) KITS[id] = { ...KITS.minotaur, passive: { ...KITS.minotaur.passive, text: 'Blows deal a quarter more to a foe under half health', finish: { under: 0.5, mult: 1.25 } } };
 for (const id of ['mazeGorgon1', 'mazeGorgon2', 'mazeGorgon3']) KITS[id] = { skill: KITS.gorgon.skill, passive: KITS.gorgon.passive };
 for (const id of ['clanOgre', 'clanBrute']) KITS[id] = KITS.hornedOgre;
 KITS.hellImp = { skill: KITS.boarKing.skill, passive: KITS.devilLeader.passive };
@@ -1797,16 +1803,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const blow = src === 'blow';
   const kit = kitOf(to);
   const team = to.side === 'hero' ? b.traits : undefined;
-  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0) + relicDodge(b, to);
-  if (blow && dodge && roll(b) < dodge) {
-    out.push({ kind: 'dodge', to: to.id });
-    if (b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) {
-      spawnSpiritWisp(b, to, out);
-    }
-    if (poolOf(to)) poolOnTaken(b, to, true);
-    else gain(to, (kit?.skill.taken ?? 0) * 0.5);
-    return null;
-  }
+  // (the old dodge shares are Armour Class now, STATS batch 4: a blow that misses never comes here, `blow.ts` and `settle`)
   // (what the hero kits leave on fighters: a parry, a guise, smoke, marks, a standard, a song, a vow...; null when the blow is turned aside)
   const kitted = kitStrike(b, by, to, dmg, src, splash, out);
   if (kitted === null) return null;
@@ -1860,9 +1857,28 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
 
 /** A blow's own odds at swing time: a crit, with its extra damage. */
 export function rollCrit(b: Battle, me: Unit): number {
+  const { chance, mult } = critOf(b, me);
+  return chance && roll(b) < chance ? mult : 1;
+}
+
+/** A fighter's crit beside the d20's (STATS batch 4): its kit's, its side's traits' and its gear's chance, and how big its crit is. */
+export function critOf(b: Battle, me: Unit): { chance: number; mult: number } {
   const c = kitOf(me)?.passive.crit;
-  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0);
-  return chance && roll(b) < chance ? c?.mult ?? 1.5 : 1;
+  return { chance: (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0), mult: c?.mult ?? 1.5 };
+}
+
+/** A blow that missed its target (STATS batch 4; the old dodge's book-keeping): the striker's pool or charge still gains as from a blow
+ *  (the swing is part of the fight's rhythm: without it every skill came round a fifth slower once blows could miss), the target's gains as
+ *  from a dodge, and a miss its dodge or cover turned calls up a yokai's spirit wisp. */
+export function onDodged(b: Battle, by: Unit, to: Unit, turned: boolean, out: BattleEvent[]): void {
+  out.push({ kind: 'dodge', to: to.id });
+  if (by.alive) {
+    if (poolOf(by)) poolOnDealt(by);
+    else gain(by, kitOf(by)?.skill.dealt ?? 0);
+  }
+  if (turned && b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) spawnSpiritWisp(b, to, out);
+  if (poolOf(to)) poolOnTaken(b, to, true);
+  else gain(to, (kitOf(to)?.skill.taken ?? 0) * 0.5);
 }
 
 /** After a blow has landed: a crit makes the foe bleed, and a flame blow sets it alight. */

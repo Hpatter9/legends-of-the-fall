@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { tileAt } from '../src/sim/board';
 import { addUnit, canStrike, fight, stepBattle, startBattle, shotReach, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, KITS, afterBlow, onStrike, rollCrit, tickStatus } from '../src/sim/abilities';
+import { acAgainst } from '../src/sim/blow';
 import { UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 import { HERO_KITS, resMax } from '../src/sim/heroKits';
@@ -137,13 +138,12 @@ test('Shadow Step: slips behind the weakest foe and backstabs it', () => {
   assert.equal(nin.facing, 1);
 });
 
-test('Evasion: the kunoichi slips about a fifth of blows, and a dodge takes no damage', () => {
+test('Evasion: the kunoichi\u2019s fifth of blows slipped is Armour Class (STATS batch 4, 7% a point); a blow that reaches it lands, and so does a skill', () => {
   const b = arena();
   const nin = spawn(b, 'kunoichi', 3, 5);
   const skel = spawn(b, 'skeleton', 3, 4);
-  let slipped = 0;
-  for (let i = 0; i < 1000; i++) if (onStrike(b, skel, nin, 50, 'blow', false, []) === null) slipped++;
-  assert.ok(slipped > 150 && slipped < 250, `slipped ${slipped}`);
+  assert.ok(Math.abs(acAgainst(b, nin, 0, 0, false).cover - 0.2 / 0.07) < 1e-5);
+  for (let i = 0; i < 100; i++) assert.notEqual(onStrike(b, skel, nin, 50, 'blow', false, []), null);
   assert.equal(onStrike(b, skel, nin, 50, 'skill', false, []), 50, 'a skill cannot be slipped');
 });
 

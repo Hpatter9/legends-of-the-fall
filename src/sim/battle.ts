@@ -9,7 +9,7 @@
 import type { Rift } from './rift';
 import { startRift, tickRift } from './riftBattle';
 import { tickHazards } from './hazards';
-import { BARREL_BLAST, boardOk, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, TALL_DODGE, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
+import { BARREL_BLAST, boardOk, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
 import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
@@ -25,7 +25,7 @@ import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
-import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, spawnSpiritWisp, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, rollCrit, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
@@ -42,6 +42,8 @@ import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
 import { settleKeg } from './kits/shooters';
+import { blowFit, blowStatsOf, GLANCE_SHARE, matchOf, rollBlow, rollInitiative, BLOW_SCALE, type BlowMatch } from './blow';
+import type { BlowResult } from './stats';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 import { statMults, type StatMults } from './statPower';
@@ -159,6 +161,8 @@ export interface Unit {
   level?: number;
   /** The steps a hero has awakened (1 or 2); absent is none. Only the look reads it (the passive runs through `equip`). */
   awaken?: number;
+  /** Its whole rank (as `Boost.rank`), for its scores in the blow's roll (STATS batch 4, `blow.ts`); unset is rank 0. */
+  rank?: number;
   /** What the hero's permanent equipment adds (`equipment.ts`); absent when it wears none. */
   eq?: EquipStats;
   /** The share of its hp the hero starts the fight with (a wound carried over from the last floor of the tower); absent is whole. */
@@ -249,6 +253,10 @@ export interface Pending {
   heavy: boolean;
   /** A blow that crit. */
   crit?: boolean;
+  /** What an ordinary blow's d20 made of it (STATS batch 4, `blow.ts`): a glance lands for half, a miss not at all; and whether a miss
+   *  was its target's dodge or cover's doing. */
+  res?: BlowResult;
+  turned?: boolean;
   /** Where a volley or meteor falls. */
   u?: number;
   v?: number;
@@ -264,7 +272,7 @@ export type HitSrc = 'blow' | 'skill' | 'dot';
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
-  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true }
+  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; /** A glancing blow (STATS batch 4): the page shows its number smaller and grey. */ glance?: true; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true }
   /** An Eidolon answers the War Horn (`eidolons.ts`): its strike begins (`call`) and has struck, the rider laid (`done`). */
   | { kind: 'eidolon'; id: string; phase: 'call' | 'done' }
   /** An ailment shrugged off (resisted, a boss's ladder, a ward): the page shows "Immune". */
@@ -447,6 +455,9 @@ export interface Battle {
   sigN?: number;
   /** EIDOLONS: the Eidolon this fight may call when the War Horn is full, and its call once made (`eidolons.ts`). Unset in almost every fight. */
   eidolon?: EidolonFight;
+  /** STATS batch 4 (`blow.ts`): how much the placed heroes' to hit and AC have grown since level 1, fixed when the fight starts; the foes
+   *  answer it. */
+  blowMatch?: BlowMatch;
 }
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
@@ -533,8 +544,6 @@ export function wayTo(a: At, b: At): number {
 
 /** What each level of height is worth to a blow: +15% a level above the target, -15% a level below (to three either way). */
 export const HEIGHT_BLOW = 0.15;
-/** A defender on higher ground also guards a little: this much less damage per level above the attacker (to three). */
-export const HIGH_GUARD = 0.03;
 /** How many extra tiles of reach a shooter gets per level above its target (a hero's own `heightReach` replaces it). */
 export const HIGH_REACH = 0.9;
 
@@ -544,8 +553,6 @@ export function blowMult(hFrom: number, hTo: number, way: number, toFacing: numb
   return angle * (1 + HEIGHT_BLOW * Math.max(-3, Math.min(3, hFrom - hTo)));
 }
 
-/** What a defender's footing takes off a blow: 3% a level it stands above the attacker (to three). */
-export const guardMult = (hFrom: number, hTo: number): number => 1 - HIGH_GUARD * Math.max(0, Math.min(3, hTo - hFrom));
 
 /** How far a shooter reaches: its range, and more from high ground. */
 export const shotReach = (range: number, hFrom: number, hTo: number, perStep = HIGH_REACH) => range + Math.floor(Math.max(0, hFrom - hTo) * perStep);
@@ -681,6 +688,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   }
   if (boost.level && boost.level > 1) unit.level = boost.level;
   if (boost.awaken) unit.awaken = boost.awaken;
+  if (def.side === 'hero' && boost.rank) unit.rank = boost.rank;
   if (tag !== undefined) unit.tag = tag;
   // (a hero's skill keeps the charge it built up in the run's last wave)
   if (boost.charge) unit.charge = Math.min(CHARGE_MAX, boost.charge);
@@ -757,6 +765,9 @@ export function fight(b: Battle): boolean {
   startKept(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
+  // (STATS batch 4: the foes answer the heroes' growth, and every fighter rolls initiative)
+  matchOf(b);
+  rollInitiative(b);
   return true;
 }
 
@@ -951,16 +962,16 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
       return;
     }
   }
-  // (a fighter in tall growth is a little hard to hit: its own hash of the moment, so no stream moves)
-  if (tileOf(b, target).ground === 'tall' && (mixSeed(b.seed, 0xd0d6, p.at, by.id, target.id) >>> 0) / 4294967296 < TALL_DODGE) {
-    out.push({ kind: 'dodge', to: target.id });
-    if (b.traits?.yokaiWisp && traitsOf(target.def).includes('yokai')) {
-      spawnSpiritWisp(b, target, out);
-    }
-    return;
-  }
+  // (the blow's d20 missed: STATS batch 4, `blow.ts`; tall grass and the dodges are Armour Class now)
+  if (p.res === 'miss') return onDodged(b, by, target, !!p.turned, out);
   // (only a blow that reached health counts for leech, equipment and the hero kits: SIM-001)
-  if (hurt(b, by, target, p.dmg, p.heavy, false, out)) {
+  const from = out.length;
+  const reached = hurt(b, by, target, p.dmg, p.heavy, false, out);
+  if (p.res === 'glance') {
+    const e = out.slice(from).find((x) => x.kind === 'hit' && x.to === target.id && x.by === by.id && x.src === 'blow');
+    if (e?.kind === 'hit') e.glance = true;
+  }
+  if (reached) {
     afterBlow(b, by, target, !!p.crit, p.dmg, out);
     kitBlow(b, by, target, !!p.crit, p.dmg, out);
     if (by.electrifiedUntil && by.electrifiedUntil > b.t) {
@@ -1304,15 +1315,21 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   const def = me.kx ? kitDef(b, me, defOf(me)) : defOf(me);
   const way = wayTo(me, to);
   me.facing = way;
-  const mult = blowMult(tileOf(b, me).h, tileOf(b, to).h, way, to.facing) * guardMult(tileOf(b, me).h, tileOf(b, to).h);
-  const crit = rollCrit(b, me);
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && tileOf(b, me).h > tileOf(b, to).h) * rng.range(0.9, 1.1)));
-  const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1);
+  const hMe = tileOf(b, me).h;
+  const hTo = tileOf(b, to).h;
+  const mult = blowMult(hMe, hTo, way, to.facing);
+  // (STATS batch 4: a d20 + to hit against the target's Armour Class, with its cover; a natural 20 crits, a hit may crit from DEX and the
+  // kit, a glance lands for half, and `BLOW_SCALE` puts the average blow back where it was)
+  const c = critOf(b, me);
+  const r = rollBlow(b, me, to, hMe, hTo, tileOf(b, to).ground === 'tall', c.chance, c.mult);
+  const crit = r.crit;
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1)));
+  const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1) * blowStatsOf(b, me).quick;
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
   me.busyUntil = b.t + atkMs;
-  b.pending.push({ at: b.t + windup, kind: def.shot ? 'release' : 'land', by: me.id, to: to.id, dmg, heavy: mult * crit >= 1.4, crit: crit > 1 });
+  b.pending.push({ at: b.t + windup, kind: def.shot ? 'release' : 'land', by: me.id, to: to.id, dmg, heavy: mult * crit >= 1.4, crit: crit > 1, res: r.res, ...(r.turned ? { turned: true } : {}) });
   out.push({ kind: 'swing', by: me.id, to: to.id });
 }
 

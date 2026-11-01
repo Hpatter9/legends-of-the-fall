@@ -147,13 +147,15 @@ test('Stand Firm: Wind Gust hurts a steady commander but does not shove it', () 
   assert.equal(y.u, 3);
 });
 
-test('Trample: blows deal a quarter more to a foe under half health', () => {
+test('Trample: blows deal 15% more to a foe under half health (STATS batch 4, the owner\u2019s answer: a quarter before; the maze minotaurs keep a quarter)', () => {
   const b = arena();
   const m = spawn(b, 'minotaur', 0, 0);
   const s = spawn(b, 'skeleton', 0, 1);
   assert.equal(finishOf(m, s), 1);
   s.hp = Math.floor(s.maxHp * 0.4);
-  assert.equal(finishOf(m, s), 1.25);
+  assert.equal(finishOf(m, s), 1.15);
+  const maze = spawn(b, 'mazeMino1', 1, 1);
+  assert.equal(finishOf(maze, s), 1.25);
   const k = spawn(b, 'knight', 1, 0);
   s.hp = Math.floor(s.maxHp * 0.4);
   assert.equal(finishOf(k, s), 1, 'only the minotaur has it');

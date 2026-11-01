@@ -377,11 +377,10 @@ export interface FoeStats {
 }
 
 /** A foe's numbers from its family's block, the army's tier (0 Normal to 4 Mythic) and whether it is a boss. A foe's health and attack stay
- *  its own (as a D&D monster's hit points are written, not worked out); no foe levels. */
-export function foeStatsOf(def: Pick<UnitDef, 'id' | 'sheet' | 'shot' | 'flies'>, tier = 0): FoeStats {
+ *  its own (as a D&D monster's hit points are written, not worked out); no foe levels. `boss` overrides whether it takes a boss's block. */
+export function foeStatsOf(def: Pick<UnitDef, 'id' | 'sheet' | 'shot' | 'flies'>, tier = 0, boss = isBoss(def.id)): FoeStats {
   const family = foeFamilyOf(def);
   const block = FOE_BLOCKS[family];
-  const boss = isBoss(def.id);
   const scores = { ...block.scores };
   if (boss) {
     const best = [...ABILITIES].sort((a, b) => scores[b] - scores[a] || ABILITIES.indexOf(a) - ABILITIES.indexOf(b)).slice(0, 2);

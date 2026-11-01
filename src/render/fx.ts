@@ -491,7 +491,9 @@ export class Fx {
         } else this.anim(impact, hx, hy, 0.9 * spark, 45);
         if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
-        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail);
+        // (a glancing blow, STATS batch 4: the word, and a smaller grey number)
+        if (e.glance) this.label('Glance', to.x, to.y - to.tall - 22, 0xb4b4b4, 10, 600);
+        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail, e.glance);
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
         const share = e.dmg / target.maxHp;
@@ -2498,7 +2500,7 @@ export class Fx {
 
   /** A damage number: white (gold for a heavy blow, red on a hero), or an ailment's colour for its ticks and riders (STATUS-FX), and
    *  bigger and ice-white for a shatter. */
-  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean, high = false, ail?: AilmentKey | 'shatter'): void {
+  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean, high = false, ail?: AilmentKey | 'shatter', glance = false): void {
     if (!settings().numbers) return;
     // (numbers over the same fighter within half a second step up a row each, and to alternate sides, so they never sit on each other)
     const key = `${Math.round(x / 16)},${Math.round(y / 16)}`;
@@ -2509,7 +2511,7 @@ export class Fx {
     if (this.stacks.size > 64) for (const [s, v] of this.stacks) if (now - v.at > 1000) this.stacks.delete(s);
     const txt = new Text({
       text: String(n),
-      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: ail === 'shatter' ? 13 : heavy ? 12 : 9, fill: numberColour(ail) ?? (onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff), stroke: { color: 0x1a1008, width: 3 } },
+      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: ail === 'shatter' ? 13 : glance ? 8 : heavy ? 12 : 9, fill: numberColour(ail) ?? (glance ? 0xa8a8a8 : onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff), stroke: { color: 0x1a1008, width: 3 } },
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);
