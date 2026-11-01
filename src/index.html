@@ -366,7 +366,9 @@
   #hmBest { flex: 1 1 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
   #hmPages { grid-area: pages; position: relative; overflow: hidden; }
   /* (MENU-GLITCH: the pages ride one strip, moved as one by home.ts; a page not on screen or sliding is hidden) */
-  .hmTrack { position: absolute; inset: 0; will-change: transform; }
+  .hmTrack { position: absolute; inset: 0; }
+  /* (its own layer only while it slides: kept as one all the time it cost a phone's graphics memory a whole screen) */
+  .hmTrack.sliding { will-change: transform; }
   .hmPage { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; padding: 12px 12px 16px; visibility: hidden; background: radial-gradient(var(--s6), var(--s2)); }
   .hmPage.on { visibility: visible; }
   .hm-battle { padding: 0; overflow: hidden; background: var(--s2); }

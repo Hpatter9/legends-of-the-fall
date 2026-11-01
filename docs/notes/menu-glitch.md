@@ -56,16 +56,17 @@ Glitch frames (blank + bounce + pop + stale + torn) and ghost clicks over the 42
 | Build | Size | CPU | Glitch frames | blank | bounce | pop | stale | torn | Ghost clicks | Late pictures | Pictures rebuilt (6 tab changes) | Main thread busy (6 tab changes) | Codex first open busy |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | before | 393x852 | 4x | 13 | 0 | 0 | 5 | 7 | 1 | 3 | 2 | 66 | 601 ms | 1279 ms |
-| after | 393x852 | 4x | **1** | 0 | 0 | 1 | 0 | 0 | **0** | 0 | 12 | 142 ms | 526 ms |
+| after | 393x852 | 4x | **2** | 0 | 0 | 2 | 0 | 0 | **0** | 0 | 12 | 268 ms | 696 ms |
 | before | 360x780 | 4x | 16 | 0 | 0 | 6 | 8 | 2 | 3 | 15 | 66 | 599 ms | 1288 ms |
 | after | 360x780 | 4x | **1** | 0 | 0 | 1 | 0 | 0 | **0** | 0 | 12 | 137 ms | 545 ms |
 | before | 412x915 | 4x | 15 | 0 | 0 | 5 | 8 | 2 | 3 | 8 | 66 | 682 ms | 1424 ms |
-| after | 412x915 | 4x | **1** | 0 | 0 | 1 | 0 | 0 | **0** | 0 | 12 | 138 ms | 652 ms |
+| after | 412x915 | 4x | **1** | 0 | 0 | 1 | 0 | 0 | **0** | 0 | 12 | 255 ms | 710 ms |
 | before | 393x852 | 6x | 14 | 0 | 0 | 4 | 7 | 3 | 3 | 9 | 66 | 955 ms | 1942 ms |
 | after | 393x852 | 6x | **1** | 0 | 0 | 1 | 0 | 0 | **0** | 0 | 12 | 439 ms | 756 ms |
 
-The one frame left in every after run is the Pact Gallery's own rise (its box fades and lifts in over 0.3 s, sampled sparsely on a
-slowed CPU), which is the panel's designed entrance. No run, before or after, had a page error.
+The frames left after are designed entrances, sampled sparsely on a slowed CPU: the Pact Gallery's rise (its box fades and lifts in
+over 0.3 s) and, in the last 393x852 run, a quest giver's card fading in (before the fix that card shut the moment it opened, so
+there was nothing to flag). The 393x852 and 412x915 after runs were made again after the chest work below. No run, before or after, had a page error.
 
 Not improved: the Armies screen still holds the main thread for 0.5-0.7 s (slowed four times) as it opens. Most of it is the
 screen's own layout and its figures' first drawing (`snapFigures` reading the layout); it now shows whole rather than dark and then
@@ -79,6 +80,52 @@ The per-change numbers are in `docs/samples/menu-glitch-<before|after>-<size>.js
 - `docs/samples/menu-glitch-tab-heroes-recruit-before.png` / `-after.png`: a 265 ms freeze and the sanctum sliding in empty, then a prompt slide of a painted page.
 - `docs/samples/menu-glitch-gallery-open-before.png` / `-after.png`, `menu-glitch-armies-open-*`, `menu-glitch-deploy-home-*`.
 
+## The chest that would not open (the owner's phone)
+
+The director passed on a case from the owner's phone (Android Chrome, the installed app, about 412 px wide): a Bronze chest bought on
+Hester's Stall's Chests tab opened with the title, the chest and the rays, but a flat grey-brown box over the lower right of the chest,
+the rays cut off by a hard line across the screen, an empty dark band under it, the rewards never showing and the stall dimly showing
+through.
+
+**Cause: the phone ran out of graphics memory, and the parts it could not paint were left as flat boxes.** On a phone a page is
+painted in tiles within a memory budget. The chest's light was a 520 px spinning square of conic gradient under a radial CSS mask; at
+the phone's pixel ratio (about 2.6) that is a layer of about 11 MB, and its mask another. Under the opening's 94% dark backdrop the
+stall, the home screen and the game's board were all still being painted too. Past the budget, tiles are skipped: a flat rectangle
+where a tile of the chest should be, the rays ending at a tile's edge, the reward cards and the Collect button missing.
+
+Reproduced in Chromium at 412x915 with the phone's pixel ratio 2.625, GPU rasterisation and a fixed graphics budget
+(`--force-gpu-mem-available-mb`), buying a Bronze chest on the stall: frames at 1.3 s and 3.5 s, a trial failing when the chest's own
+picture is left unpainted (by measuring flat 40 px blocks in it, and by eye).
+
+| Graphics budget | main | this branch |
+| --- | --- | --- |
+| 512 MB | 0 of 2 fail | 0 of 2 |
+| 48 MB | 1 of 6 fail (`menu-glitch-stall-chest-before-after.png`: the rays cut across the chest, its lower half and the Collect button gone, the stall through the band) | 0 of 6 |
+| 40 MB | 1 of 6 fail | 0 of 6 |
+| 24 MB | 4 of 5 fail (the chest and the rays gone) | 0 of 5 by the measure, but by eye parts of the chest still go missing in some frames: at that budget a full-screen reveal at this pixel ratio does not fit whatever is done |
+
+The earlier menu work had made it worse before this fix: the pages' strip kept a permanent `will-change: transform`, a whole extra
+screen-sized layer, and at 48 MB that build lost the chest 4 times in 4.
+
+**Fix:**
+
+- The chest's rays are painted once into a 520 px canvas (`raysCanvas` in `src/chestStash.ts`: the same rays, colour and fade), which
+  costs about 1 MB at any pixel ratio, in place of the masked gradient's two full-resolution layers. The daily chest's violet comes
+  from `--p4` as before.
+- While a full-screen reveal is up (`.chestShow`, `.tarotReveal`, an Eidolon's binding until it starts to fade out), the screens it
+  covers (the game's board, the home screen, the party, the summoning, the stall and the old chest shop) are `visibility: hidden`,
+  so the phone paints the reveal alone (`src/pixel.css`). Under the chest's 94% backdrop the dim stall no longer shows; nothing else
+  changes.
+- The home pages' strip is its own layer only while it slides (`.hmTrack.sliding`).
+
+**Every other reveal checked.** The stash's chests on the Battle tab (the army star chests, the daily chest, and any opened with Open
+all) use the same opening and so share the fix. The first-time summoning reveal had the same fault and worse: its rays were a masked
+gradient 1.8 screens wide and tall, spinning, tens of megabytes; at 48 MB the home screen showed through holes in it and the hero's
+painting never came (`menu-glitch-summon-reveal-before-after.png`). It gets the same treatment (`raysCanvas` in `src/summonTarot.ts`,
+half the screen's size, the same thin rays and elliptical fade) and the screens under it hidden. The Eidolon binding was not
+measured (it needs a bound chain); it is opaque and full-screen, so the screens under it are hidden as well. The other
+masked layers left (the War Horn's fill and aura) are small.
+
 ## Checks
 
 - `npm install`; `npm run typecheck`: passed.
@@ -88,12 +135,16 @@ The per-change numbers are in `docs/samples/menu-glitch-<before|after>-<size>.js
   four times slower, and at 393x852 six times slower: the table above. The final screens of each tab, the stall and the Calamity
   were looked at, at 360x780 and 412x915 as well: laid out as before.
 - Reduced motion (Playwright `reducedMotion: 'reduce'`): a tab change shows the new page at once, with no slide.
+- The chest and summoning trials above (`--force-gpu-mem-available-mb`, pixel ratio 2.625, 412x915), against main and this branch.
+  After the chest work: `npm run typecheck` passed, the full `npm test` 1963 of 1963 passed, `npm run web` built, and the menu scan
+  at 393x852 and 412x915 gave the after rows above.
 
 ## Files
 
 `src/tapGuard.ts`, `src/tapGuardRules.ts`, `src/paintReady.ts` (new); `src/home.ts` (the strip, `handOff`, `sheetUp`,
 `primeScenes`, keyed castle chips and stall); `src/castle.ts` (keyed chamber cards and power banner); `src/camp.ts` (`paintOnce`,
 the army drawn at once, the width kept, the plate written only when it changes); `src/hall.ts`, `src/library.ts` (`paintOnce`);
-`src/render/sheets.ts` (`warmPortraits`); `src/stallView.ts`, `src/eidolonChainView.ts` (shown once painted); `src/main.ts`
+`src/render/sheets.ts` (`warmPortraits`); `src/stallView.ts`, `src/eidolonChainView.ts` (shown once painted); `src/chestStash.ts`, `src/summonTarot.ts` (rays in a canvas);
+`src/pixel.css`, `src/daily.css` (the chest's rays, the covered screens hidden); `src/main.ts`
 (installs the guard); `src/index.html` (`.hmTrack`, `.handoff`, `.paintWait`); `test/tap-guard.test.ts`;
 `tools/menu-glitch/scan.mjs`, `tools/menu-glitch/strip.py`; `docs/samples/menu-glitch-*`.

@@ -563,6 +563,7 @@ export class Home {
     this.shown = to;
     const token = ++this.slideToken;
     this.slide = { from, to, anim: null };
+    this.track.classList.add('sliding');
     // (two frames: the first draws the page beside the view, the second shows it drawn; then it moves)
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
@@ -581,6 +582,7 @@ export class Home {
     this.slide = null;
     this.slideToken++;
     s.anim?.cancel();
+    this.track.classList.remove('sliding');
     const next = this.pages.get(s.to)!;
     next.style.transform = '';
     if (s.from !== s.to) this.pages.get(s.from)!.classList.remove('on');

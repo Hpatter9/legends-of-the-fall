@@ -15,7 +15,7 @@
  },
  "results": {
   "tab-battle-heroes": {
-   "frames": 60,
+   "frames": 51,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -26,11 +26,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 2,
-   "longMs": 138,
-   "longMax": 138
+   "longMs": 143,
+   "longMax": 143
   },
   "tab-heroes-recruit": {
-   "frames": 71,
+   "frames": 64,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -45,7 +45,7 @@
    "longMax": 0
   },
   "tab-recruit-castle": {
-   "frames": 22,
+   "frames": 21,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -56,11 +56,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 2,
-   "longMs": 0,
-   "longMax": 0
+   "longMs": 62,
+   "longMax": 62
   },
   "tab-castle-spells": {
-   "frames": 84,
+   "frames": 62,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -75,7 +75,7 @@
    "longMax": 0
   },
   "tab-spells-battle": {
-   "frames": 69,
+   "frames": 63,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -90,7 +90,7 @@
    "longMax": 0
   },
   "tab-battle-castle": {
-   "frames": 41,
+   "frames": 36,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -101,11 +101,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 2,
-   "longMs": 0,
-   "longMax": 0
+   "longMs": 50,
+   "longMax": 50
   },
   "roster-open": {
-   "frames": 8,
+   "frames": 10,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -116,11 +116,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 0,
-   "longMs": 0,
-   "longMax": 0
+   "longMs": 82,
+   "longMax": 82
   },
   "roster-hero": {
-   "frames": 40,
+   "frames": 42,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -131,25 +131,10 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 16,
-   "longMs": 57,
-   "longMax": 57
+   "longMs": 91,
+   "longMax": 91
   },
   "hero-tab-2": {
-   "frames": 77,
-   "blank": [],
-   "bounce": [],
-   "pop": [],
-   "stale": [],
-   "torn": [],
-   "late": 0,
-   "shift": 0,
-   "ghost": 0,
-   "ghostOn": [],
-   "churn": 0,
-   "longMs": 67,
-   "longMax": 67
-  },
-  "hero-tab-3": {
    "frames": 78,
    "blank": [],
    "bounce": [],
@@ -161,11 +146,26 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 0,
-   "longMs": 0,
-   "longMax": 0
+   "longMs": 56,
+   "longMax": 56
+  },
+  "hero-tab-3": {
+   "frames": 75,
+   "blank": [],
+   "bounce": [],
+   "pop": [],
+   "stale": [],
+   "torn": [],
+   "late": 0,
+   "shift": 0,
+   "ghost": 0,
+   "ghostOn": [],
+   "churn": 0,
+   "longMs": 79,
+   "longMax": 79
   },
   "hero-back": {
-   "frames": 88,
+   "frames": 87,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -180,7 +180,7 @@
    "longMax": 0
   },
   "quests-open": {
-   "frames": 18,
+   "frames": 17,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -225,7 +225,7 @@
    "longMax": 0
   },
   "stall-open": {
-   "frames": 67,
+   "frames": 66,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -236,11 +236,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 0,
-   "longMs": 66,
-   "longMax": 66
+   "longMs": 58,
+   "longMax": 58
   },
   "stall-tab": {
-   "frames": 81,
+   "frames": 78,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -255,7 +255,7 @@
    "longMax": 0
   },
   "stall-close": {
-   "frames": 77,
+   "frames": 73,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -270,11 +270,11 @@
    "longMax": 0
   },
   "gallery-open": {
-   "frames": 54,
+   "frames": 48,
    "blank": [],
    "bounce": [],
    "pop": [
-    16
+    21
    ],
    "stale": [],
    "torn": [],
@@ -287,7 +287,7 @@
    "longMax": 0
   },
   "gallery-close": {
-   "frames": 84,
+   "frames": 78,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -302,7 +302,7 @@
    "longMax": 0
   },
   "codex-open": {
-   "frames": 53,
+   "frames": 58,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -313,11 +313,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 2,
-   "longMs": 652,
+   "longMs": 710,
    "longMax": 546
   },
   "codex-tab": {
-   "frames": 56,
+   "frames": 59,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -328,8 +328,8 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 63,
-   "longMs": 0,
-   "longMax": 0
+   "longMs": 60,
+   "longMax": 60
   },
   "codex-close": {
    "frames": 53,
@@ -347,7 +347,7 @@
    "longMax": 0
   },
   "achievements-open": {
-   "frames": 54,
+   "frames": 56,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -362,7 +362,7 @@
    "longMax": 0
   },
   "achievements-close": {
-   "frames": 53,
+   "frames": 52,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -377,7 +377,7 @@
    "longMax": 0
   },
   "settings-open": {
-   "frames": 77,
+   "frames": 76,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -392,7 +392,7 @@
    "longMax": 0
   },
   "settings-close": {
-   "frames": 74,
+   "frames": 77,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -407,7 +407,7 @@
    "longMax": 0
   },
   "upgrades-open": {
-   "frames": 82,
+   "frames": 84,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -433,11 +433,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 2,
-   "longMs": 604,
-   "longMax": 293
+   "longMs": 718,
+   "longMax": 353
   },
   "armies-close": {
-   "frames": 76,
+   "frames": 66,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -452,7 +452,7 @@
    "longMax": 0
   },
   "party-open": {
-   "frames": 18,
+   "frames": 19,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -463,11 +463,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 0,
-   "longMs": 877,
-   "longMax": 772
+   "longMs": 795,
+   "longMax": 652
   },
   "party-back": {
-   "frames": 67,
+   "frames": 69,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -478,11 +478,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 4,
-   "longMs": 50,
-   "longMax": 50
+   "longMs": 72,
+   "longMax": 72
   },
   "fight-enter": {
-   "frames": 62,
+   "frames": 57,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -493,11 +493,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 0,
-   "longMs": 438,
-   "longMax": 380
+   "longMs": 487,
+   "longMax": 487
   },
   "calamity-enter": {
-   "frames": 58,
+   "frames": 52,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -512,7 +512,7 @@
    "longMax": 0
   },
   "calamity-back": {
-   "frames": 66,
+   "frames": 65,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -523,11 +523,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 20,
-   "longMs": 0,
-   "longMax": 0
+   "longMs": 83,
+   "longMax": 83
   },
   "camp-hero-tap": {
-   "frames": 69,
+   "frames": 68,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -542,7 +542,7 @@
    "longMax": 0
   },
   "camp-sheet-close": {
-   "frames": 79,
+   "frames": 72,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -553,11 +553,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 0,
-   "longMs": 0,
-   "longMax": 0
+   "longMs": 85,
+   "longMax": 85
   },
   "tavern-tap": {
-   "frames": 17,
+   "frames": 20,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -568,11 +568,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 4,
-   "longMs": 52,
-   "longMax": 52
+   "longMs": 54,
+   "longMax": 54
   },
   "tavern-sheet-close": {
-   "frames": 81,
+   "frames": 85,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -602,7 +602,7 @@
    "longMax": 0
   },
   "deploy-home": {
-   "frames": 94,
+   "frames": 92,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -613,11 +613,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 4,
-   "longMs": 133,
-   "longMax": 133
+   "longMs": 83,
+   "longMax": 83
   },
   "result-recap": {
-   "frames": 39,
+   "frames": 48,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -628,11 +628,11 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 0,
-   "longMs": 52,
-   "longMax": 52
+   "longMs": 0,
+   "longMax": 0
   },
   "recap-home": {
-   "frames": 79,
+   "frames": 76,
    "blank": [],
    "bounce": [],
    "pop": [],
@@ -643,8 +643,8 @@
    "ghost": 0,
    "ghostOn": [],
    "churn": 12,
-   "longMs": 364,
-   "longMax": 364
+   "longMs": 437,
+   "longMax": 437
   }
  },
  "errors": []
