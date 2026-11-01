@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.310.0',
+    date: '2026-11-01',
+    title: 'Eidolon quest: The Dry Storm',
+    notes: ['Once Aurelan is bound and the Labyrinth falls, a royal courier brings Voltara\'s tale: three pieces, then a trial on the Lightning Heights.'],
+  },
+  {
     version: '0.309.0',
     date: '2026-11-01',
     title: 'The caravan and the Gloaming Dealer',
