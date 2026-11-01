@@ -166,7 +166,11 @@ export interface Meta {
   eidolons?: EidolonMeta;
   /** Hester's Stall (`stall.ts`): the day's sales by ware, the crowns ever spent there (standing), the day it was last looked at, and the
    *  pieces sold today (to buy back). Saves from before have none: standing 1, nothing bought. */
-  stall?: { day: number; sold: Record<string, number>; spent: number; seen?: number; soldToday?: { item: Equipment; price: number }[] };
+  stall?: {
+    day: number; sold: Record<string, number>; spent: number; seen?: number; soldToday?: { item: Equipment; price: number }[];
+    /** The visiting traders (`traders.ts`): Calamity guardians felled, the day the Gloaming Dealer stands at the stall, a Dealer due on the page's next look, and each trader's sales for the visit (the caravan's week, the Dealer's guardian count). */
+    guardians?: number; gloaming?: number; dealerDue?: boolean; trade?: { caravan?: { visit: number; sold: Record<string, number> }; gloaming?: { visit: number; sold: Record<string, number> } };
+  };
   /** Skill books (`books.ts`): unread copies by book, the books each hero kind has learned, the book each is studying (fights done),
    *  the progress of books put down, and the two skills each kind has chosen for its slots. Saves from before have none. */
   books?: Record<string, number>;

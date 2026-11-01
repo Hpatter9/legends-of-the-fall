@@ -97,8 +97,8 @@ test("Nivra's trial is one entry: her fighter, kit, great attacks, second form a
   // (the cast asks only for starter heroes, from both packs)
   for (const slot of qb.cast) for (const k of [...slot.heroes, ...(slot.standIns ?? [])]) assert.ok(STARTERS.includes(k), k);
   for (const pack of [0, 1] as const) assert.ok(castOf(packSave(1, pack), qb), `pack ${pack}`);
-  // (chains 3 to 6 keep their flag; with no trial written for them they have none yet; Askel's chain has none)
-  for (const c of CHAINS.slice(2)) assert.ok(c.trial && !trialOf(c), c.id);
+  // (chains 5 and 6 keep their flag; with no trial written for them they have none yet; Askel's chain has none)
+  for (const c of CHAINS.slice(4)) assert.ok(c.trial && !trialOf(c), c.id);
   assert.equal(trialOf(chainById('askel')!), undefined);
   assert.equal(stepsOf(nivra), 4);
   assert.equal(stepsOf(chainById('askel')!), 3);

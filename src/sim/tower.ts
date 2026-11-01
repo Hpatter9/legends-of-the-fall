@@ -34,6 +34,7 @@ import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel,
 import { xpRate } from './castle';
 import { payClear, type ClearReward } from './calReward';
 import { bossOres, eliteOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
+import { noteGuardians } from './traders';
 import { xpFor } from './levels';
 
 /** Floors in an act: the path floors, then the boss on the last. */
@@ -1101,6 +1102,7 @@ function settleCalamity(m: Meta, run: Run): TowerSummary {
   const armies = t.armies.filter((id) => armyById(id) && armyUnlocked(m, id));
   const army = armyById(armies[armies.length - 1] ?? ARMIES[0].id)!;
   for (let i = 0; i < c.gold; i++) m.stash.push({ army: army.id, at: 10, tier: 0, seed: mixSeed(run.seed, 0xca1c, i + 1), tower: true });
+  noteGuardians(m, maps);
   const best = m.calamity ?? { best: 0, clears: 0 };
   const cleared = ascCleared(m);
   m.calamity = { ...best, best: Math.max(best.best, maps), clears: best.clears + (run.cleared ? 1 : 0) };

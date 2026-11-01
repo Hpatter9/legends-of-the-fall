@@ -117,8 +117,136 @@ const NIVRA_TRIAL: TrialDef = {
   },
 };
 
-/** Every trial written, one a chain (chains 3 to 6 add theirs here). */
-export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL];
+
+/* ------------------------------------------------------------------ Aurelan, the Lion of Dawn (chain 3, `docs/notes/eidolon-chain-3.md`) */
+
+const AURELAN_TRIAL: TrialDef = {
+  id: 'aurelanTrial',
+  chain: 'aurelan',
+  boss: {
+    id: 'aurelanLion',
+    name: 'Aurelan',
+    title: 'The Lion of Dawn, Who Tests the Keep',
+    side: 'foe',
+    sheet: 'eidolon_aurelan',
+    scale: 0.6,
+    hp: 1800,
+    atk: 52,
+    def: 9,
+    range: 1,
+    moveMs: 650,
+    atkMs: 1200,
+    jump: 4,
+    role: 'Lances of light on a column, a roaring that stuns the front rank, a dome of dawn',
+  },
+  kit: {
+    skill: { name: 'The Pride Answers', text: "Two of the grove's satyrs run to the Lion's side, sworn to the dawn (four at most, six in a fight)", kind: 'groveSatyr1', n: 2, most: 4, limit: 6 },
+    passive: { name: 'Dome of Dawn', text: 'A radiant dome stands round him: blows from the front lose a quarter', block: 0.25 },
+  },
+  signatures: [
+    { key: 'dawnLances', name: 'Lances of Dawn', rage: 'The Sun Comes Down', el: 'light', shape: { kind: 'rain', n: 3 }, power: 1.5, rider: 'burn' },
+    { key: 'dawnRoar', name: 'Dawnbreak Roar', rage: 'Dawnbreak Unending', el: 'light', shape: { kind: 'row', w: 1 }, power: 1.4, rider: 'stun' },
+  ],
+  phase: {
+    line: 'THE DAWN IS HERE. STAND IN MY LIGHT, IF YOU CAN!',
+    atk: 1.2,
+    heal: 0.08,
+    shield: 0.2,
+    haste: 6000,
+    adds: { kind: 'groveSatyr1', n: 2 },
+    passive: { block: 0.35 },
+  },
+  land: 'highlands',
+  waves: [
+    { foes: ['groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1'] },
+    { foes: ['aurelanLion', 'groveSatyr2', 'groveSatyr3'], boss: 'final' },
+  ],
+  like: { army: 'wildwood', wave: 13 },
+  ease: 0.68,
+  lift: { hp: 1, atk: 1 },
+  // (Kwame or Minh, one from each starter pack; any starter hero stands in)
+  cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+  blurb: 'Aurelan stands on the hill at the edge of dawn. Before he answers the horn, he wants to see what blows it.',
+  part: {
+    title: 'The Trial',
+    text: 'Win the trial against Aurelan himself on the Dawn Hill (Kwame or Minh fights; any starter hero may stand in)',
+    begin: 'You have the pieces. Do you have the light? Come up the hill before sunrise, little keep, and stand in mine.',
+  },
+  lines: {
+    place: 'The hill above the Sanctum, an hour before sunrise. The east is grey, and something large and gold is waiting in it.',
+    challenge: ['So. The little keep that lit a lamp against the dark.', 'You have the pieces. Do you have the light?'],
+    answer: 'We have been standing in the dark a long time. Show us the dawn.',
+    after: 'Good. Night is long, and you outlasted it. Take me to your Summoner, little keep: I will answer your horn.',
+    afterHero: 'The sun comes up behind him. He looks pleased, and slightly smug about it.',
+  },
+};
+
+/* ------------------------------------------------------------------ Voltara, the Copper Goddess (chain 4, `docs/notes/eidolon-chain-4.md`) */
+
+const VOLTARA_TRIAL: TrialDef = {
+  id: 'voltaraTrial',
+  chain: 'voltara',
+  boss: {
+    id: 'voltaraGoddess',
+    name: 'Voltara',
+    title: 'The Copper Goddess, Who Tests the Keep',
+    side: 'foe',
+    sheet: 'eidolon_voltara',
+    scale: 0.6,
+    hp: 1700,
+    atk: 50,
+    def: 8,
+    range: 4,
+    moveMs: 750,
+    atkMs: 1150,
+    jump: 4,
+    shot: 'bolt',
+    role: 'A chain of lightning that leaps hero to hero, a storm that strikes where it has marked, a ring of copper that turns shots aside',
+  },
+  kit: {
+    skill: { name: 'Copper Sentries', text: "Two crystal golems, wired to her coil, step out of the storm to her side (three at most, five in a fight)", kind: 'crystalGolem', n: 2, most: 3, limit: 5 },
+    passive: { name: 'Copper Ring', text: 'A ring of copper turns shots aside (they lose 40%), and her blows may arc to a second hero beside the first', scales: 0.4, arc: 0.5 },
+  },
+  signatures: [
+    { key: 'chainArc', name: 'Chain Lightning', rage: 'The Arc Unbroken', el: 'lightning', shape: { kind: 'line', len: 8, w: 1 }, power: 1.45, rider: 'stun' },
+    { key: 'stormMark', name: 'Marked Storm', rage: 'The Sky Falls In', el: 'lightning', shape: { kind: 'rain', n: 4 }, power: 1.3, rider: 'burn' },
+  ],
+  phase: {
+    line: 'OVERCHARGED! LET THE WHOLE SKY IN!',
+    atk: 1.25,
+    heal: 0.06,
+    shield: 0.2,
+    haste: 7000,
+    adds: { kind: 'crystalGolem', n: 1 },
+    passive: { scales: 0.55, arc: 0.8 },
+  },
+  land: 'crystal',
+  waves: [
+    { foes: ['mazeGorgon1', 'mazeMino1', 'mazeGorgon2', 'mazeMino2'] },
+    { foes: ['voltaraGoddess', 'mazeGorgon3', 'mazeMino3'], boss: 'final' },
+  ],
+  like: { army: 'labyrinth', wave: 13 },
+  ease: 0.6,
+  lift: { hp: 1, atk: 1 },
+  // (Kwame or Minh, one from each starter pack; any starter hero stands in)
+  cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+  blurb: 'Voltara hangs over the Lightning Heights with the storm held in her hands. Before she takes a roof, she wants to see who built it.',
+  part: {
+    title: 'The Trial',
+    text: 'Win the trial against Voltara herself on the Lightning Heights (Kwame or Minh fights; any starter hero may stand in)',
+    begin: 'You have the coil, the clock and the glass. Now stand under the open sky and show me you can bear a house worth sheltering in.',
+  },
+  lines: {
+    place: 'The Lightning Heights above the keep, where the crystals hum and the sky is the colour of a bruise. Something bright hangs in the middle of it, turning slowly.',
+    challenge: ['So. A roof, and a door, and a very small keep underneath.', 'You have the coil, the clock and the glass. Do you have the nerve to be struck?'],
+    answer: 'Strike, then. We have a rod, and a very good ceiling.',
+    after: 'A door that held. Three hundred years I have been looking, and it was a keep. Take me to your Summoner, little roof: I will answer your horn.',
+    afterHero: 'She comes down out of the storm and the clouds break, all at once, into a very ordinary and welcome rain.',
+  },
+};
+
+/** Every trial written, one a chain (chains 5 and 6 add theirs here). */
+export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL, AURELAN_TRIAL, VOLTARA_TRIAL];
 
 const BY_CHAIN = new Map(TRIALS.map((t) => [t.chain, t]));
 /** A chain's trial, if one is written. */

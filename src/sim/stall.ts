@@ -13,6 +13,7 @@ import { SET_OF_BASE } from './gearSets';
 import type { Meta } from './meta';
 import { mixSeed, Rng } from './rng';
 import { grantTomes, type TomeSize } from './tomes';
+import { readTrade } from './traders';
 import { repairAll, repairItem } from './wear';
 
 const STALL_SALT = 0x57a11;
@@ -282,6 +283,11 @@ export function readStall(raw: unknown): Meta['stall'] {
   if (r.sold && typeof r.sold === 'object') for (const [k, n] of Object.entries(r.sold)) if (typeof n === 'number' && n >= 1) sold[k] = Math.floor(n);
   const out: NonNullable<Meta['stall']> = { day: r.day | 0, sold, spent: Math.max(0, Math.floor(Number(r.spent) || 0)) };
   if (typeof r.seen === 'number') out.seen = r.seen | 0;
+  if (typeof r.guardians === 'number' && r.guardians >= 1) out.guardians = Math.floor(r.guardians);
+  if (typeof r.gloaming === 'number') out.gloaming = r.gloaming | 0;
+  if (r.dealerDue === true) out.dealerDue = true;
+  const trade = readTrade(r.trade);
+  if (trade) out.trade = trade;
   if (Array.isArray(r.soldToday)) {
     const list = r.soldToday.filter((e) => e && typeof e.price === 'number' && e.item && typeof e.item.id === 'number' && EQUIP_BASES[e.item.base]).slice(0, SOLD_TODAY);
     if (list.length) out.soldToday = list.map((e) => ({ item: { ...e.item }, price: Math.max(1, Math.floor(e.price)) }));

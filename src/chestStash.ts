@@ -88,6 +88,38 @@ export function chestPicture(kind: ChestKind, scale: number): { root: HTMLElemen
   return { root };
 }
 
+/** MENU-GLITCH: the light burst behind an opening chest, painted once into a 520 px canvas: rays of 7 degrees every 20, in the chest's
+ *  light (violet for the daily), at half strength, fading out from the middle as the old radial mask did (solid to 8% of the way to a
+ *  corner, gone by 68%). A canvas's texture is its own 520 px whatever the screen's pixel ratio, where the masked gradient it
+ *  replaces cost a phone two full-resolution layers. */
+function raysCanvas(kind: ChestKind): HTMLCanvasElement {
+  const size = 520;
+  const c = el('canvas', 'chestRays');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  if (!g) return c;
+  const rgb = getComputedStyle(document.documentElement).getPropertyValue(kind === 'daily' ? '--p4-rgb' : '--e8-rgb').trim() || '255 184 120';
+  g.fillStyle = `rgb(${rgb} / 0.5)`;
+  const mid = size / 2;
+  const far = mid * Math.SQRT2;
+  const deg = Math.PI / 180;
+  for (let a = 0; a < 360; a += 20) {
+    // (a CSS conic gradient's 0 degrees is straight up, the canvas's is to the right)
+    g.beginPath();
+    g.moveTo(mid, mid);
+    g.arc(mid, mid, far, (a - 90) * deg, (a + 7 - 90) * deg);
+    g.closePath();
+    g.fill();
+  }
+  g.globalCompositeOperation = 'destination-in';
+  const fade = g.createRadialGradient(mid, mid, 0, mid, mid, far);
+  fade.addColorStop(0.08, 'rgb(0 0 0)');
+  fade.addColorStop(0.68, 'rgb(0 0 0 / 0)');
+  g.fillStyle = fade;
+  g.fillRect(0, 0, size, size);
+  return c;
+}
+
 /** The reward line's picture: a hero's face, a piece of gear's icon, or the crown. */
 function lootIcon(it: LootItem): HTMLElement {
   if (it.type === 'crowns') return icon(ICONS.crowns, 'lootIco');
@@ -107,7 +139,7 @@ function lootIcon(it: LootItem): HTMLElement {
 export function showChest(loot: Loot, then: () => void): void {
   const root = el('div', `chestShow ${loot.kind}`);
   root.setAttribute('role', 'dialog');
-  root.append(el('div', 'chestRays'), el('div', 'chestGlow'));
+  root.append(raysCanvas(loot.kind), el('div', 'chestGlow'));
   const title = el('div', 'chestTitle', CHEST_NAME[loot.kind]);
   const stage = el('div', 'chestStage');
   const pic = chestPicture(loot.kind, 4);
@@ -192,7 +224,7 @@ export function showChestSummary(loots: readonly Loot[], then: () => void): void
   const root = el('div', `chestShow chestAll ${kind}`);
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-label', `${sum.chests} chests opened`);
-  root.append(el('div', 'chestRays'), el('div', 'chestGlow'));
+  root.append(raysCanvas(kind), el('div', 'chestGlow'));
   const title = el('div', 'chestTitle', `${sum.chests} chests opened`);
   const stage = el('div', 'chestStage');
   const pic = chestPicture(kind, 3);
