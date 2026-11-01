@@ -198,7 +198,8 @@ export function statPanelOf(kind: string, at: HeroAt, extra?: Partial<Scores>): 
   const figures = figureRows(derived);
   // (STATS batch 6: the pool and the ultimate's fill, which read the hero's kind and level)
   const pool = poolLine(why);
-  if (pool) figures.push({ key: 'pool', label: pool.label, value: pool.value });
+  // (the figure is the top alone, so it fits a third of a phone's width; the tap line adds the refill)
+  if (pool) figures.push({ key: 'pool', label: pool.label, value: pool.value.split(' ')[0] });
   const fill = ultFillShare(derived, at.level) - 1;
   if (LIVE.ultFill) figures.push({ key: 'ult', label: 'Ultimate', value: signedPct(fill) });
   return { why, tiles: scoreTiles(profile, derived), figures, saves: saveCells(profile, derived), proficiency: derived.proficiency, next: nextImprovement(profile, at.level), derived, profile };
