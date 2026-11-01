@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.317.0',
+    date: '2026-11-01',
+    title: 'Lost techniques',
+    notes: ['Four Legendary skill books, each won through a hero\'s own three-part quest from level 30: the Ninefold Cut, Words of Unmaking, the Long Dawn and Old Hunger.'],
+  },
+  {
     version: '0.316.0',
     date: '2026-11-01',
     title: 'D&D scores drive power',

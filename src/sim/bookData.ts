@@ -18,7 +18,13 @@ export interface BookDef {
   from: { hero: string; slot: 1 | 2 | 3 };
   /** A share of the source skill's strength (1 when unset): the balance knob for a book's skill in another hero's hands. */
   tune?: number;
+  /** A lost technique (LOST-TECHNIQUES): the id of its own skill in `kits/lost.ts`. It has no source hero (`from` is `LOST_FROM`), is never sold
+   *  and is found only at the end of its quest chain (`questData/lost.ts`). */
+  lost?: string;
 }
+
+/** The `from` of a lost technique: no hero's skill. */
+export const LOST_FROM = { hero: 'lost', slot: 1 } as const;
 
 /** The kinds' names, as the shelf and the sheet show them. */
 export const KIND_NAMES: Readonly<Record<BookKind, string>> = { manual: 'Manual', grimoire: 'Grimoire', hymnal: 'Hymnal', bestiary: 'Bestiary', universal: 'Universal' };
@@ -55,6 +61,11 @@ export const BOOKS: readonly BookDef[] = [
   { id: 'gorgonsMirror', title: 'The Gorgon’s Mirror', kind: 'bestiary', rarity: 'rare', from: { hero: 'gorgon', slot: 2 }, history: 'Read it in a mirror. The scholar who didn’t is the bookend.' },
   { id: 'pocketbook', title: 'The Illusionist’s Pocketbook', kind: 'universal', rarity: 'rare', from: { hero: 'illusionist', slot: 1 }, history: 'There are two of these. Or one. It depends who’s looking.' },
   { id: 'wellOfStars', title: 'A Well of Stars', kind: 'universal', rarity: 'rare', from: { hero: 'sage', slot: 2 }, history: 'A sage’s diary of the nights the sky gave more than it took.' },
+  // (LOST-TECHNIQUES: the four Legendary books, each the end of a quest chain; never sold. `docs/notes/lost-techniques.md`)
+  { id: 'ninefoldCut', title: 'The Ninefold Cut', kind: 'manual', rarity: 'legendary', from: LOST_FROM, lost: 'ninefoldCut', history: 'The Bridge School taught one cut for nine hundred years. Its last student kept the book and lost the school.' },
+  { id: 'wordsOfUnmaking', title: 'Words of Unmaking', kind: 'grimoire', rarity: 'legendary', from: LOST_FROM, lost: 'wordsOfUnmaking', history: 'A page from a book that was never written, in a library that was never built. It is very heavy.' },
+  { id: 'longDawn', title: 'The Hymn of the Long Dawn', kind: 'hymnal', rarity: 'legendary', from: LOST_FROM, lost: 'longDawn', history: 'Sung once, at a siege that should have been lost. Nobody wrote down the tune; the wounded remembered it.' },
+  { id: 'oldHunger', title: 'The Old Hunger', kind: 'bestiary', rarity: 'legendary', from: LOST_FROM, lost: 'oldHunger', history: 'Not a book. A hide, scratched with claws, rolled and tied. Whatever wrote it was very hungry and very patient.' },
 ];
 
 export const BOOK_BY_ID: Readonly<Record<string, BookDef>> = Object.fromEntries(BOOKS.map((b) => [b.id, b]));

@@ -52,6 +52,8 @@ export const FACES: Record<GiverId, string> = {
   clock: clockFace,
   falconer: falconerFace,
   archivist: archivistFace,
+  // (LOST-TECHNIQUES: a part with no hero to speak it is told by the page itself: a book's picture is a gear icon for now)
+  lost: spoilsFace,
 };
 
 /** Gwen behind the bar: 64 px cells, facing left; row 0 her stand (1 frame), row 1 talking (5 frames). */

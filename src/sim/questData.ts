@@ -16,9 +16,10 @@ import { DUCHESS_QUESTS } from './questData/duchess';
 import { REPEAT_QUESTS } from './questData/repeat';
 import { BATTLE_QUESTS } from './questData/battles';
 import { TALE_QUESTS } from './questData/tales';
+import { LOST_QUESTS } from './questData/lost';
 
 /** Who offers a quest and takes it back. A patron is one of the player's own heroes (the quest's `hero`). */
-export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith' | 'sexton' | 'pawnbroker' | 'lantern' | 'herald' | 'clock' | 'falconer' | 'archivist';
+export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith' | 'sexton' | 'pawnbroker' | 'lantern' | 'herald' | 'clock' | 'falconer' | 'archivist' | 'lost';
 
 /**
  * Where a giver's offers come from. Gwen's own; the notices pinned to the board by strangers; the passersby (one a day, whoever
@@ -62,6 +63,8 @@ export const GIVERS: Record<GiverId, Giver> = {
   clock: { id: 'clock', name: 'Hesper Tock', title: 'A clockmaker, usually on time', slot: 'tale' },
   falconer: { id: 'falconer', name: 'Wren Halloway', title: 'Falconer of the high crags', slot: 'tale' },
   archivist: { id: 'archivist', name: 'Ivy Penhallow', title: "Keeper of the keep's bestiary", slot: 'tale' },
+  // (LOST-TECHNIQUES: the four chains that end in a Legendary book; a part with a `hero` is told in that hero's own face and name)
+  lost: { id: 'lost', name: 'A lost page', title: 'A technique nobody wrote down', slot: 'tale' },
 };
 
 /** The draws, in order: each slot is drawn from its own side stream (its index here is its salt), so a slot added at the end leaves the others' draws as they were. */
@@ -223,6 +226,8 @@ export interface Reward {
   /** SECRET-HEROES: a hero who joins (a hero quest's last part), told as `tease` until it has ("the stranger joins your company"); a save
    *  that already has the hero is paid `instead`. */
   hero?: { kind: string; tease: string; instead: Reward };
+  /** LOST-TECHNIQUES: a Legendary book (by id, `bookData.ts`) added to the bag at the hand-in. */
+  book?: string;
 }
 
 /** A quest's mood, for the writers' spread (not shown). */
@@ -267,6 +272,8 @@ export const QUESTS: readonly QuestDef[] = [
   ...BATTLE_QUESTS,
   // (SECRET-HEROES: the hero quests, each ending with a secret hero joining; ten since HERO-TALES-2)
   ...TALE_QUESTS,
+  // (LOST-TECHNIQUES: the four chains of the Legendary books)
+  ...LOST_QUESTS,
 ];
 
 const BY_ID = new Map(QUESTS.map((q) => [q.id, q]));
