@@ -61,9 +61,9 @@ export function blowShare(toHit: number, ac: number): number {
 
 /** The ordinary hero the foes' blocks are fitted against: +5 to hit (proficiency +2 and a 17), and AC 14 (the roster's mean at level 1). */
 export const HERO_AIM = 5;
-export const HERO_AC = 14;
+export const HERO_AC = 13;
 /** The ordinary foe's AC, the yardstick of the blocks' AC. */
-export const FOE_AC = 13;
+export const FOE_AC = 14;
 
 const fitMemo = new Map<string, number>();
 const memo = (key: string, f: () => number): number => {

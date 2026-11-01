@@ -1475,12 +1475,13 @@ export const KITS: Record<string, Kit> = {
   },
   timeWitch: {
     skill: { name: 'Slow', key: 'Temporal Surge', text: 'A slowing field round her for 4s: foes within 4 tiles are slowed, and her friends within 3 hastened', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: temporalSurge },
-    passive: { name: 'Stutter', text: 'Slips 20% of blows', dodge: 0.2 },
+    // (STATS batch 4, the owner's answer: 20% to 30%, so that once robes showed she is back in the roster's band; it is Armour Class now)
+    passive: { name: 'Stutter', text: 'Slips 30% of blows', dodge: 0.3 },
   },
   arcBlade: {
     skill: { name: 'Thunder Step', key: 'Voltage Blink', text: 'Blinks beside the thickest knot of foes and discharges: the 3x3 is hurt and held for 1s', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: voltageBlink },
-    // (STATS batch 4, the owner's answer: 25% to 15%; with his DEX 17 aim from level 1 he stood above the roster's band)
-    passive: { name: 'Static Discharge', text: '15% of blows arc to a second foe nearby', arc: 0.15 },
+    // (STATS batch 4, the owner's answer: 25% to 10%; with his DEX 17 aim from level 1 he stood above the roster's band)
+    passive: { name: 'Static Discharge', text: '10% of blows arc to a second foe nearby', arc: 0.1 },
   },
   dreadPirate: {
     skill: { name: 'Cannonade', key: 'Broadside', text: 'A ghost ship\'s broadside falls on a 3x3 of tiles', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: broadside },
