@@ -174,6 +174,8 @@ export interface EidolonFight {
   warmUntil?: number;
   drainUntil?: number;
   dealt?: Record<number, number>;
+  /** VAELKHAR-HEART: extra share his drain heals (the gift for returning his Heart, `vaelkharHeart.ts`). */
+  drainBonus?: number;
 }
 
 /** A pseudo-fighter for the strike's events (`by: 0`, as the king's spells are). Never in `b.units`. */
@@ -181,9 +183,9 @@ const EIDOLON_BY = 0;
 
 /** Put the Eidolon chosen on a fight (the page does, when the horn is full and one is bound), before or during it. False when there is no
  *  such Eidolon or the fight has already had one. `mid` and `trial` say how its boss is counted. */
-export function armEidolon(b: Battle, id: string, opts: { mid?: boolean; trial?: boolean } = {}): boolean {
+export function armEidolon(b: Battle, id: string, opts: { mid?: boolean; trial?: boolean; drainBonus?: number } = {}): boolean {
   if (!eidolonById(id) || b.eidolon?.called !== undefined) return false;
-  b.eidolon = { id, ...(opts.mid ? { mid: true } : {}), ...(opts.trial ? { trial: true } : {}) };
+  b.eidolon = { id, ...(opts.mid ? { mid: true } : {}), ...(opts.trial ? { trial: true } : {}), ...(opts.drainBonus ? { drainBonus: opts.drainBonus } : {}) };
   return true;
 }
 
@@ -343,7 +345,7 @@ export function tickEidolon(b: Battle, out: BattleEvent[]): void {
       const gain = now - (seen[h.id] ?? now);
       seen[h.id] = now;
       if (gain > 0 && h.alive && h.hp < h.maxHp) {
-        const amount = Math.min(h.maxHp - h.hp, Math.max(1, Math.round(gain * RIDER.DRAIN)));
+        const amount = Math.min(h.maxHp - h.hp, Math.max(1, Math.round(gain * (RIDER.DRAIN + (st.drainBonus ?? 0)))));
         h.hp += amount;
         out.push({ kind: 'heal', to: h.id, amount, by: EIDOLON_BY });
       }
