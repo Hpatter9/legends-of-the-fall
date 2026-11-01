@@ -154,9 +154,16 @@ export function heroKitOf(u: Unit): HeroKit | undefined {
   if (UNITS[u.def]?.summon) return undefined;
   // (a hero with skills from books in its slots: its kit with those two, `books.ts`)
   const kit = u.book ? kitWithLoadout(u.def, u.book) : HERO_KITS()[u.def];
-  // (and its skills at the levels they have reached by use, `skillLevels.ts`)
-  return kit && u.skillLv ? kitWithLevels(kit, u.book ? `${u.def}|${u.book.join('|')}` : u.def, u.skillLv) : kit;
+  // (and its skills at the levels they have reached by use, `skillLevels.ts`; looked up once a fighter, as this is read every tick)
+  if (!kit || !u.skillLv) return kit;
+  const had = levelled.get(u.skillLv);
+  if (had && had.base === kit) return had.kit;
+  const out = kitWithLevels(kit, u.book ? `${u.def}|${u.book.join('|')}` : u.def, u.skillLv);
+  levelled.set(u.skillLv, { base: kit, kit: out });
+  return out;
 }
+/** A fighter's levelled kit, by its levels' array (each fighter has its own), with the kit it was built from. */
+const levelled = new WeakMap<number[], { base: HeroKit; kit: HeroKit }>();
 
 export const poolOf = (u: Unit): Pool | undefined => heroKitOf(u)?.pool;
 export const resMax = (pool: Pool): number => (pool === 'mana' ? RES.MANA_MAX : RES.STAM_MAX);
