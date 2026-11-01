@@ -23,6 +23,7 @@ import { bindEidolon, boundOf, chooseEidolon } from './warHorn';
 import { castOf, questBattleById } from './questBattles';
 import { eidolonById } from './eidolons';
 import { CHAINS, chainById, type ChainDef, type ChainOpens, type ChainPart, type ChainState, type PieceDef } from './eidolonChainData';
+import { returnHeart } from './vaelkharHeart';
 import { trialOfChainId, type TrialDef } from './eidolonTrials';
 
 const stateOf = (m: Meta) => (m.quests ??= blankQuests());
@@ -131,6 +132,7 @@ export function bindChain(m: Meta, id: string): boolean {
   bindEidolon(m, c.eidolon);
   chooseEidolon(m, c.eidolon);
   chainState(m, id)!.bound = true;
+  if (c.eidolon === 'vaelkhar') returnHeart(m);
   payReward(m, { chest: 'gold' }, `chain:${id}:bound`);
   return true;
 }

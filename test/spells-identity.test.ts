@@ -44,6 +44,11 @@
 // level 20 or more: field30, field30Others, heroes30, heroes30Others, bosses, armyFoes, spells (each at level 30), army (saves at 30 to 70) and stand
 // (a party at 30). field1, field1Others, heroes1, heroes1Others, heroes10, heroes10Others, lands (level 10), daily and tower (fresh saves) and
 // calamity kept their hashes)
+// (STATS-2, the D&D stats design's batch 2, docs/notes/stats-2.md: the scores move a fight once a hero is above level 1, rank 1 or grade 1 (health by
+// CON, blows and skills by their ability, the level curve trimmed by the roster's mean, score steps from ranks, grades, talents and gear).
+// Re-recorded field30, bosses, armyFoes, spells, lands, army, daily, tower, stand, heroes1, heroes10, heroes30, field30Others, heroes1Others,
+// heroes10Others and heroes30Others, each by the test's own hash (heroes1 and heroes1Others place grades 1 to 3; daily and tower merge). field1,
+// field1Others and calamity, whose heroes fight at level 1, grade 1, kept their hashes.)
 // (STATS batch 4, "AC and the blow", docs/notes/stats-4.md, re-recorded every scenario: every ordinary blow now rolls a d20 against Armour
 // Class (hit, glance, miss, a natural 20's crit), every fighter rolls initiative, and the dodges and tall grass are Armour Class, so every
 // fight moves. The new hashes: field1 3f065be1, field30 bf9955c4, bosses fe974784, armyFoes 34f361e0, spells 3b8d84af, lands 377841c2, army

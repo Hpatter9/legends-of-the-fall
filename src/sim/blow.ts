@@ -22,7 +22,7 @@
 // no DOM.
 
 import { mixSeed } from './rng';
-import { BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, profileOf, STATS_SALT, STAT_MAX_RANK, STAT_PROFILES, type BlowResult, type StatInput } from './stats';
+import { BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, profileOf, STATS_SALT, STAT_PROFILES, type BlowResult, type StatInput } from './stats';
 import { kitOf } from './abilities';
 import { relicDodge } from './relicFight';
 import { TALL_AC } from './board';
@@ -95,9 +95,8 @@ export interface BlowMatch {
 
 const cache = new WeakMap<Unit, BlowStats>();
 
-/** What a hero is, for its scores: its level and grade, and an awakened hero counted at the top rank and its steps. (The rank itself
- *  is not on a fighter; batch 2 brings it.) */
-export const statInputOf = (u: Unit): StatInput => ({ level: u.level ?? 1, grade: u.grade ?? 1, rank: u.awaken ? STAT_MAX_RANK + u.awaken : 1 });
+/** What a hero is, for its scores: its level, rank, grade and its talents' and gear's score points, as batch 2 reads them (`statMults`). */
+export const statInputOf = (u: Unit): StatInput => ({ level: u.level ?? 1, grade: u.grade ?? 1, rank: u.rank ?? 0, extra: u.eq?.scores });
 
 /** Whether a fighter is a hero with a profile of its own (not a summon kind). */
 const profiled = (u: Unit) => u.side === 'hero' && !UNITS[u.def].summon && !!profileOf(u.def);

@@ -34,6 +34,7 @@ import { UNITS } from './units';
 import { grantOres } from './awakenMats';
 import { grantTomes } from './tomes';
 import { giveShards } from './unlock';
+import { grantBook } from './books';
 import { isSecret } from './secretHeroes';
 import { ascCleared } from './ascension';
 import { gotOf, totalOf } from './codex';
@@ -359,6 +360,8 @@ export function payReward(m: Meta, r: Reward, id: string, times = 0): void {
     if (isSecret(m, r.shards.kind)) m.stones = (m.stones ?? 0) + r.shards.n;
     else giveShards(m, r.shards.kind, r.shards.n);
   }
+  // (LOST-TECHNIQUES: a lost technique's book, into the bag)
+  if (r.book) grantBook(m, r.book);
   // (SECRET-HEROES: a hero quest's end: its hero joins, at rank 0, once; a save that has it already is paid the other reward)
   if (r.hero) {
     if (m.unlocked.includes(r.hero.kind)) payReward(m, r.hero.instead, `${id}:instead`, times);

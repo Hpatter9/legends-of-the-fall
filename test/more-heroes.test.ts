@@ -380,11 +380,13 @@ test('Hellblade Sweep heals the Demon Swordsman, and Demon Form lifts his attack
   const before = dm.power ?? 1;
   run(c, 200);
   assert.ok(Math.abs((dm.power ?? 1) / before - FORM_MULT) < 1e-6, `in form: ${(dm.power ?? 1) / before}`);
-  // (and no second Demon Form while the first wears off: with ULT-CHARGE's quicker meter it would be full again before then; the form lasts
-  // 7 s times the square root of its tuned strength, a hero's 15 s, SUMMON-TIMERS: about 25 s; it used to end sooner only because the swordsman
-  // fell, and with blows rolling against AC, STATS batch 4, he stands, so it is run past the form's whole length)
+  // (and no second Demon Form while the first wears off: with ULT-CHARGE's quicker meter it would be full again before then. A hero's form
+  // lasts SUMMON-TIMERS' `TIMER.demon` times the square root of its tuned strength, so he is kept standing until it has run out: until
+  // STATS-2 this ran 13 s, and the form was seen off only because he fell at 12.8 s)
   c.autoUlt = false;
-  run(c, 26000);
+  const until = dm.form!.until;
+  dm.hp = dm.maxHp = 1e6;
+  run(c, until - c.t + 500);
   assert.ok(Math.abs((dm.power ?? 1) / before - 1) < 1e-6, `worn off: ${(dm.power ?? 1) / before}, form ${JSON.stringify(dm.form)} at ${c.t}`);
   assert.equal(dm.form, undefined);
 });

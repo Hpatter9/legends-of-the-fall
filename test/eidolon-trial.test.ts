@@ -18,7 +18,7 @@ import { activeChain, beginChain, bindChain, chainDone, chainOfBattle, chainWant
 import { TRIALS, trialOfBattle, trialOfChainId } from '../src/sim/eidolonTrials';
 import { FOES, isBoss } from '../src/sim/foes';
 import { KITS } from '../src/sim/abilities';
-import { SIGNATURES } from '../src/sim/bossAttacks';
+import { SIG, SIGNATURES } from '../src/sim/bossAttacks';
 import { PHASE2 } from '../src/sim/bossPhases';
 import { fight, stepBattle, type Battle, type BattleEvent } from '../src/sim/battle';
 import { autoDeploy, autoEvent, pickSquad } from '../src/sim/autoplay';
@@ -97,8 +97,8 @@ test("Nivra's trial is one entry: her fighter, kit, great attacks, second form a
   // (the cast asks only for starter heroes, from both packs)
   for (const slot of qb.cast) for (const k of [...slot.heroes, ...(slot.standIns ?? [])]) assert.ok(STARTERS.includes(k), k);
   for (const pack of [0, 1] as const) assert.ok(castOf(packSave(1, pack), qb), `pack ${pack}`);
-  // (chains 5 and 6 keep their flag; with no trial written for them they have none yet; Askel's chain has none)
-  for (const c of CHAINS.slice(4)) assert.ok(c.trial && !trialOf(c), c.id);
+  // (every chain after Askel's has its trial written; Askel's has none)
+  for (const c of CHAINS.slice(1)) assert.ok(c.trial && trialOf(c), c.id);
   assert.equal(trialOf(chainById('askel')!), undefined);
   assert.equal(stepsOf(nivra), 4);
   assert.equal(stepsOf(chainById('askel')!), 3);
@@ -202,11 +202,13 @@ function fightTrial(level: number, seed: number): { won: boolean; events: string
     for (let n = 0; b.phase === 'fight' && n < 30000; n++) {
       for (const e of stepBattle(b) as BattleEvent[]) {
         if (e.kind === 'bossSig' || e.kind === 'phase' || e.kind === 'skill') events.push(`${b.t}:${e.kind}:${'key' in e ? e.key : ''}:${'phase' in e ? e.phase : ''}`);
-        // (the breath strikes a whole row: every marked tile on one row, the field's full width where it can be stood on)
+        // (the breath strikes a whole row: every marked tile on one row, the field's full width where it can be stood on; its rage version,
+        // once the fight has dragged on, a row deeper, `sigTiles`. STATS-2's fights reach the rage breath on this seed, where main's did not)
         if (e.kind === 'bossSig' && e.phase === 'warn' && e.key === 'rimeBreath') {
           const rows = new Set(e.tiles.map((i) => Math.floor(i / b.board.w)));
-          assert.equal(rows.size, 1, 'one row');
-          assert.ok(e.tiles.length >= b.board.w - 3, `most of the row: ${e.tiles.length}`);
+          const deep = 1 + (e.rage ? SIG.RAGE_REACH : 0);
+          assert.equal(rows.size, deep, e.rage ? 'the rage breath: a row deeper' : 'one row');
+          assert.ok(e.tiles.length >= deep * (b.board.w - 3), `most of the row: ${e.tiles.length}`);
         }
       }
     }

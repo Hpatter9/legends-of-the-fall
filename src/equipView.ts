@@ -7,6 +7,11 @@ import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SLOT_NAMES, call
 import { combineAll, combineGroup, combineGroups, combinePreview, COMBINE_COUNT } from './sim/equipment';
 import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './sim/gearSets';
 import { saveMeta, type Meta } from './sim/meta';
+import { heroRank } from './sim/awaken';
+import { heroStats } from './sim/talents';
+import { levelOfKind } from './sim/levels';
+import { ABILITIES } from './sim/stats';
+import { gearScores, scoreCompare, type HeroAt } from './sim/statLines';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
 import { paintGearIcon } from './gearIcons';
@@ -92,7 +97,7 @@ function compareRows(next: EquipStats, cur: EquipStats | undefined): HTMLElement
 }
 
 /** What the picker shows for one item: its icon and name, the stat rows (against `against` when given), the affixes. */
-function itemCard(it: Equipment, kind: string, against?: Equipment): HTMLElement {
+function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt): HTMLElement {
   const base = EQUIP_BASES[it.base];
   const card = el('div', 'eqCard');
   const head = el('div', 'eqHead');
@@ -102,6 +107,13 @@ function itemCard(it: Equipment, kind: string, against?: Equipment): HTMLElement
   card.append(head);
   const stats = itemStats(it, kind);
   card.append(...compareRows(stats, against ? itemStats(against, kind) : undefined));
+  // (STATS batch 3: a piece's score points, and what they make for this hero; a piece with none shows nothing)
+  const gained = gearScores(stats);
+  const lost = against ? gearScores(itemStats(against, kind)) : undefined;
+  if (at && (gained || lost)) {
+    const delta = Object.fromEntries(ABILITIES.map((a) => [a, (gained?.[a] ?? 0) - (lost?.[a] ?? 0)]));
+    for (const line of scoreCompare(kind, at, delta)) card.append(el('small', 'eqScore', line));
+  }
   // (its durability: SHOP-BOOKS-GEAR, `wear.ts`)
   const state = wearState(it);
   card.append(el('small', `eqDurLine ${state}`, `Durability ${Math.ceil(durabilityOf(it))}/${maxDurability(it)}${state === 'broken' ? ' · Broken: gives nothing until mended' : state === 'worn' ? ' · Worn' : ''}`));
@@ -280,6 +292,8 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
   };
 
   const picker = (slot: EquipSlot) => {
+    // (the hero as it is now, with what it wears and its talents: the compare is against this)
+    const at: HeroAt = { level: levelOfKind(meta, kind), rank: heroRank(meta, kind), grade: 1, extra: heroStats(meta, kind)?.scores };
     const cur = wornIn(meta, kind, slot);
     panel.replaceChildren(el('h4', '', `${SLOT_NAMES[slot]} · ${UNITS[kind].name}`));
     if (cur) {
@@ -301,7 +315,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const list = el('div', 'eqList');
     for (const it of spare) {
       const row = el('div', `eqRow r${it.rarity}`);
-      row.append(itemCard(it, kind, cur));
+      row.append(itemCard(it, kind, cur, at));
       const set = SET_OF_BASE[it.base];
       if (set) {
         const before = set.pieces.filter((p) => wornBases(meta, kind).includes(p)).length;

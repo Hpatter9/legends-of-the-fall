@@ -3,6 +3,7 @@
 // costs, cooldowns and talents as at grade 1. This replaces `tier-skills.test.ts` (the tier skills, their riders and echoes, and the tier 3
 // discount went with this batch).
 import { test } from 'node:test';
+import { statMults } from '../src/sim/statPower';
 import assert from 'node:assert/strict';
 import { addUnit, fight, place, startBattle, stepBattle, type BattleEvent } from '../src/sim/battle';
 import { CHARGE_MAX } from '../src/sim/abilities';
@@ -18,8 +19,11 @@ test('a grade changes health and attack only: by its step, with the same kit, co
     for (let g = 2; g <= GRADE_BOOST.length; g++) {
       const big = addUnit(b, kind, 2 + g, 9, gradeBoost(g, 0, 10));
       assert.equal(big.grade, g);
-      assert.ok(Math.abs(big.maxHp / plain.maxHp - gradeMult(g)) < 0.02, `${kind} grade ${g} health`);
-      assert.ok(Math.abs((big.power ?? 1) / (plain.power ?? 1) - gradeMult(g)) < 0.02, `${kind} grade ${g} attack`);
+      // (and the grade's score steps, +1 to the two best scores a grade, on top: STATS batch 2, the owner's answer 4)
+      const st = statMults(kind, { level: 10, grade: g });
+      const st1 = statMults(kind, { level: 10 });
+      assert.ok(Math.abs(big.maxHp / plain.maxHp - gradeMult(g) * (st.hp / st1.hp)) < 0.02, `${kind} grade ${g} health`);
+      assert.ok(Math.abs((big.power ?? 1) / (plain.power ?? 1) - gradeMult(g) * (st.blow / st1.blow)) < 0.02, `${kind} grade ${g} attack`);
       assert.equal(heroKitOf(big), heroKitOf(plain), `${kind} grade ${g} keeps its kit`);
       for (const s of HERO_KITS()[kind].slots) assert.equal(costOf(big, s), costOf(plain, s), `${kind} grade ${g} pays as grade 1`);
       assert.deepEqual(big.eq?.tal ?? {}, plain.eq?.tal ?? {}, `${kind} grade ${g} gains no talent`);

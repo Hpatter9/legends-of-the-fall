@@ -1692,18 +1692,20 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return began(b, me, k.skill, out);
 }
 
-/** Cast a skill with the caster's `pow` talent (and `more`, an ultimate's) lifting its attack while it runs: the blows, the volleys and meteors, the healing and what is called up all take it. */
-export function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]): boolean {
+/** Cast a skill with the caster's `pow` talent (and `more`, an ultimate's) lifting its attack while it runs: the blows, the volleys and meteors, the healing and what is called up all take it.
+ *  `stat` is the skill's own ability's share over the hero's blows (STATS batch 2, `statShare` in `heroKits.ts`): it lifts the attack the skill
+ *  carries, but not `castPower`, so what a skill lasts is not stretched by a score. */
+export function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[], stat = 1): boolean {
   const from = out.length;
   const k = 1 + tal(me, 'pow') + more;
   let ok: boolean;
-  if (k === 1) ok = s.cast(b, me, out);
+  if (k === 1 && stat === 1) ok = s.cast(b, me, out);
   else {
-    me.power = (me.power ?? 1) * k;
+    me.power = (me.power ?? 1) * k * stat;
     castK = k;
     ok = s.cast(b, me, out);
     castK = 1;
-    me.power = (me.power ?? 1) / k;
+    me.power = (me.power ?? 1) / (k * stat);
   }
   // (what the skill leaves on the foes it struck: a burn, a shock, a bleed... `ailmentSources.ts`, STATUS-FX)
   if (ok) skillRiders(b, me, keyOf(s), out, from);

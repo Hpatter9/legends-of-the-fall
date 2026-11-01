@@ -22,6 +22,7 @@
 
 import type { Battle, BattleEvent } from './sim/battle';
 import type { Meta } from './sim/meta';
+import { drainBonus } from './sim/vaelkharHeart';
 import { armEidolon, canCallEidolon, eidolonById, eidolonFullName, EIDOLONS, type Eidolon } from './sim/eidolons';
 import { orderEidolon } from './sim/orders';
 import { blowHorn, boundOf, chooseEidolon, chosenOf, HORN, hornHeld, hornOf, hornReady, noteSeen, seenCall } from './sim/warHorn';
@@ -277,7 +278,7 @@ export class EidolonCall {
     this.b = b;
     const m = this.opts.meta();
     const id = chosenOf(m);
-    if (hornReady(m) && id) armEidolon(b, id, { mid, trial });
+    if (hornReady(m) && id) armEidolon(b, id, { mid, trial, drainBonus: drainBonus(m) });
     this.refresh(b);
     // (the figure loaded before it is needed, so the cinematic never waits on it)
     if (id && hornReady(m)) new Image().src = figureUrl(id);
@@ -292,7 +293,7 @@ export class EidolonCall {
     // (a fight already going, as a Last Stand carried on from its save: armed now)
     if (b.phase === 'fight' && !b.eidolon) {
       const id = chosenOf(this.opts.meta());
-      if (id && hornReady(this.opts.meta())) armEidolon(b, id);
+      if (id && hornReady(this.opts.meta())) armEidolon(b, id, { drainBonus: drainBonus(this.opts.meta()) });
     }
     this.refresh(b);
   }

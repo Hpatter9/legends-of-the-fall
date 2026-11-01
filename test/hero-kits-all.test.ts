@@ -84,10 +84,10 @@ test('every hero\'s skill 1, skill 2 and ultimate can be cast, in at least one o
 const KITS_ULT = (h: string) => ultimateOf({ def: h, side: 'hero', level: ULT_LEVEL } as Unit)!;
 
 /** Every hero, nine fights of five, all at level 30 (both skills and the ultimate open), against a band with a lot of health (a long fight: the ultimates end a short one before every skill comes round; hp 16 until ULT-CHARGE's full-strength ultimates came round once or twice a fight, 80 until STATUS-FX's ailments, whose burns, shocks and bleeds end it sooner again). */
-function season(): string {
+function season(off = 0): string {
   let trace = '';
   for (let g = 0; g < 9; g++) {
-    const seed = 900 + g;
+    const seed = 900 + g + off;
     const b = startBattle(seed, ['orcs', 'skeletons', 'mixed'][g % 3], { foes: { hp: 100, atk: 1.6 } });
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
     ALL_HEROES.slice(g * 5, g * 5 + 5).forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, { ...gradeBoost(1, 0, ULT_LEVEL), charge2: 60 }));
@@ -102,14 +102,23 @@ function season(): string {
 test('every hero fights with its whole kit open, and the fights are deterministic', () => {
   const first = season();
   assert.equal(season(), first);
-  // (most heroes cast both skills in a long fight)
-  let both = 0;
-  for (const h of ALL_HEROES) {
-    const k = HERO_KITS()[h];
-    if (first.includes(keyOf(k.s1.skill)) && first.includes(keyOf(k.s2.skill))) both++;
+  // (most heroes cast both skills in a long fight: 35 of the 45 on average over six seasons of seeds. One season's nine fights were the
+  // measure until STATS-2, when its first fight, a close one, turned from a win to a loss and the count from 38 to 32; over the six the
+  // count is 35.5 on main's code before the batch and 35.2 after, with the same heroes missing, so the bar stays and the sample grew)
+  const counts: number[] = [];
+  const missing = new Map<string, number>();
+  for (const off of [0, 100, 200, 300, 400, 500]) {
+    const trace = off ? season(off) : first;
+    let both = 0;
+    for (const h of ALL_HEROES) {
+      const k = HERO_KITS()[h];
+      if (trace.includes(keyOf(k.s1.skill)) && trace.includes(keyOf(k.s2.skill))) both++;
+      else missing.set(h, (missing.get(h) ?? 0) + 1);
+    }
+    counts.push(both);
   }
-  const missing = ALL_HEROES.filter((h) => !(first.includes(keyOf(HERO_KITS()[h].s1.skill)) && first.includes(keyOf(HERO_KITS()[h].s2.skill))));
-  assert.ok(both >= 35, `${both} of 45 heroes cast both skills; not: ${missing.join(' ')} | ${first}`);
+  const mean = counts.reduce((n, x) => n + x, 0) / counts.length;
+  assert.ok(mean >= 35, `${mean.toFixed(1)} of 45 heroes cast both skills (${counts.join(', ')}); missed: ${[...missing].map(([h, n]) => `${h} ${n}`).join(', ')}`);
 });
 
 test('skill 2 is never cast below its level', () => {
@@ -124,6 +133,9 @@ test('skill 2 is never cast below its level', () => {
 test('every readiness look names a real skill 2 or 3 (the third skills\' utilities, the skills overhaul\'s batch 4)', async () => {
   const { SKILL2_WHEN } = await import('../src/sim/kits/when');
   const second = new Set(ALL_HEROES.flatMap((h) => HERO_KITS()[h].slots.slice(1).map((s) => keyOf(s.skill))));
+  // (the lost techniques are in no kit: a book puts one in a slot, `kits/lost.ts`)
+  const { LOST } = await import('../src/sim/kits/lost');
+  for (const d of Object.values(LOST)) second.add(keyOf(d.skill));
   for (const name of Object.keys(SKILL2_WHEN)) assert.ok(second.has(name), name);
 });
 

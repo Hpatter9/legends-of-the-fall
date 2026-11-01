@@ -3,6 +3,7 @@
 // `HoldPress` is the press: a ring fills under the finger (it shows only after a moment, so a tap shows nothing), and a finger that moves
 // lets the press go as a drag, as before. The card only reads; it closes on a tap outside it or on its close button.
 
+import { drawCardScores } from './statsPanel';
 import { HOLD_MS, RING_DELAY_MS, holdBroken, type MoveInfo, type UnitInfo } from './unitInfoRules';
 
 const reduced = (): boolean => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -132,6 +133,7 @@ export class UnitInfoCard {
     bar.append(fill);
     hp.append(el('b', '', 'Health'), bar, el('span', '', v.hp));
     card.append(hp);
+    if (v.scores) card.append(drawCardScores(v.scores));
     const stats = el('dl', 'uiStats');
     for (const [k, t] of v.stats) stats.append(el('dt', '', k), el('dd', '', t));
     card.append(stats);

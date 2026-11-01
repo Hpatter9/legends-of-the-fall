@@ -2,6 +2,7 @@
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
 import * as toolkit from './sim/toolkit';
@@ -3475,4 +3476,6 @@ new Game().start().catch((err) => {
   $('loading').textContent = `Could not start: ${err}`;
 });
 
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
+// (the app bundles every file itself, so its page skips the service worker; the web page keeps it)
+checkAppUpdate(__GAME_VERSION__);
+if (!inApp() && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});

@@ -114,7 +114,8 @@ The wave card's wear and study lines are in `test/wear.test.ts`. `test/castleSce
   and the cart, the Found row, old runs finishing on the old rules) and its balance pass: a large change to every run's strength that
   needs the balance tools taught real finds first. Runs still hand out their simple gear.
 - **The caravan** (Rustam Saffar, weekly) and **the Gloaming Dealer** (after a guardian falls), their tabs and portraits (the art is
-  in PR #240 and not imported yet), and the **lost techniques** (Legendary books, quest chains and battles).
+  in PR #240 and not imported yet). The **lost techniques** (Legendary books, quest chains and battles) are built:
+  [lost-techniques.md](lost-techniques.md).
 - **Book balance:** a `--books` switch on the balance tool and tuning each book's `tune` into the kits' band; for now a book skill
   is its source's strength, re-costed for the reader's pool.
 - **Mastery:** replaced by the coming skills overhaul (skill levels by use for every skill).

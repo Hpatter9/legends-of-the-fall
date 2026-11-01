@@ -12,6 +12,7 @@ import { countAt, growthAt, xpToNext, type HeroGrowth, type ResultLine } from '.
 import { heroName } from './sim/heroNames';
 import { play } from './render/sound';
 import { reducedMotion } from './reviveView';
+import { signed } from './sim/statLines';
 
 /** One hero's row. */
 export interface JrHero {
@@ -186,11 +187,18 @@ export function playResults(parts: { head: HTMLElement; body: HTMLElement }, d: 
       main.append(name, bar, nums);
       root.append(face, main);
       // (the stats that rose and what opened, shown from the level-up on)
-      if (g.stats.length || g.learnt.length) {
+      if (g.stats.length || g.scores.length || g.learnt.length) {
         const up = el('div', 'jrGrowth');
         for (const s of g.stats) {
           const line = el('span', 'jrStat');
           line.append(el('small', '', s.stat), el('b', '', num(s.from)), el('i', '', '→'), el('b', 'to', num(s.to)), el('em', '', `+${num(s.gain)}`));
+          up.append(line);
+        }
+        // (STATS batch 3: the ability scores those levels raised, and on a proficiency step to hit and skill DC)
+        for (const s of g.scores) {
+          const line = el('span', 'jrStat jrScore');
+          const sh = (n: number) => (s.signed ? signed(n) : num(n));
+          line.append(el('small', '', s.label), el('b', '', sh(s.from)), el('i', '', '→'), el('b', 'to', sh(s.to)), el('em', '', `+${num(s.gain)}`), el('small', 'jrWhy', s.note));
           up.append(line);
         }
         for (const l of g.learnt) up.append(el('span', `jrLearn ${l.kind}`, l.text));

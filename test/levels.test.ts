@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { statMults } from '../src/sim/statPower';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
 import { benchXp, BENCH_SHARE } from '../src/sim/levels';
@@ -148,8 +149,10 @@ test('a level stacks with the grade and rank in the hero boost, and reaches the 
   const b = startBattle(2);
   place(b, 'knight', 0, 8, 1, gradeBoost(1, 0, 5));
   const u = b.units.find((x) => x.side === 'hero')!;
-  assert.equal(u.maxHp, Math.round(UNITS.knight.hp * levelBoost(5).hp));
-  assert.ok(Math.abs(u.power! - levelBoost(5).atk) < 1e-9);
+  // (times what the Knight's scores at level 5 make of them, over the roster's mean: STATS batch 2)
+  const st = statMults('knight', { level: 5 });
+  assert.equal(u.maxHp, Math.round(UNITS.knight.hp * levelBoost(5).hp * st.hp));
+  assert.ok(Math.abs(u.power! - levelBoost(5).atk * st.blow) < 1e-9);
 });
 
 test('old saves load with no XP, and bad XP is dropped', () => {

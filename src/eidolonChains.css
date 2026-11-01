@@ -182,6 +182,28 @@
 .ebLayer.el-lightning .ebName small { color: #f0c890; }
 .ebLayer.el-lightning .ebSeal b { color: #0a1a2a; background: linear-gradient(#e6f6ff, #b0d8f0 55%, #c88a48); border-color: #0a1a2a; box-shadow: 0 0 0 2px #cfeaff, 0 0 24px #8fd2ff, 0 0 30px #d08a40; }
 .ebLayer.el-lightning .ebSeal small { color: #d6efff; }
+/* EIDOLON-CHAIN-5: an earth Eidolon's binding (Gorm): the circle stone-grey with an ember glow, the Sanctum dimmed and mossy, green and orange
+   motes rising, the name and seal in lichen and ember */
+.ebLayer.el-earth { --glow: #f0903a; }
+.ebLayer.el-earth .ebCircle { filter: grayscale(0.7) brightness(1.15) sepia(0.4) hue-rotate(60deg) drop-shadow(0 0 10px #f0903a) drop-shadow(0 0 14px #6a8a3a); }
+.ebLayer.el-earth.b-circle .ebRoom { filter: brightness(0.55) saturate(0.7) sepia(0.35) hue-rotate(40deg); }
+.ebLayer.el-earth .ebEmbers i { background: #ffb060; box-shadow: 0 0 7px #f0903a, 0 0 10px #4a6a2a; }
+.ebLayer.el-earth .ebEmbers i:nth-child(3n) { background: #9ac060; }
+.ebLayer.el-earth .ebName b { color: #e4e6d6; text-shadow: 0 0 18px #f0903a, 0 0 28px #5a7a2a, 0 3px 0 #1a1a14; }
+.ebLayer.el-earth .ebName small { color: #b8d890; }
+.ebLayer.el-earth .ebSeal b { color: #1a1a14; background: linear-gradient(#dfe4cc, #a0a890 55%, #c8803a); border-color: #1a1a14; box-shadow: 0 0 0 2px #c8d4a8, 0 0 24px #f0903a, 0 0 30px #6a8a3a; }
+.ebLayer.el-earth .ebSeal small { color: #d6e6b0; }
+/* EIDOLON-CHAIN-6: a dark Eidolon's binding (Vaelkhar): the circle void purple, the Sanctum all but black, violet motes falling like ash,
+   the name and seal in pale violet and a little gold (the crown) */
+.ebLayer.el-dark { --glow: #b080ff; }
+.ebLayer.el-dark .ebCircle { filter: hue-rotate(250deg) saturate(1.5) brightness(0.95) drop-shadow(0 0 10px #b080ff) drop-shadow(0 0 16px #5a20b0); }
+.ebLayer.el-dark.b-circle .ebRoom { filter: brightness(0.32) saturate(0.7) sepia(0.4) hue-rotate(230deg); }
+.ebLayer.el-dark .ebEmbers i { background: #d6b8ff; box-shadow: 0 0 7px #b080ff, 0 0 12px #5a20b0; }
+.ebLayer.el-dark .ebEmbers i:nth-child(3n) { background: #f0d080; }
+.ebLayer.el-dark .ebName b { color: #f0e6ff; text-shadow: 0 0 18px #b080ff, 0 0 30px #5a20b0, 0 3px 0 #0a0414; }
+.ebLayer.el-dark .ebName small { color: #e8cc80; }
+.ebLayer.el-dark .ebSeal b { color: #0a0414; background: linear-gradient(#f0e6ff, #b898e8 55%, #d8b050); border-color: #0a0414; box-shadow: 0 0 0 2px #d6c0ff, 0 0 24px #b080ff, 0 0 30px #5a20b0; }
+.ebLayer.el-dark .ebSeal small { color: #e0d0ff; }
 .ebLayer.out { opacity: 0; transition: opacity 0.4s ease; }
 .ebLayer.saver .ebEmbers i:nth-child(n+7) { display: none; }
 /* (reduced motion: nothing rises, drifts or turns; every beat fades in and out held still) */

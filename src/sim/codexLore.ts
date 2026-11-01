@@ -46,6 +46,8 @@ export const FOE_LORE: Record<string, string> = {
   nivraWyrm: 'The Rime Wyrm herself, awake and testing the keep before she answers its horn. She breathes winter down a whole rank and calls the white wolves to heel.',
   aurelanLion: 'The Lion of Dawn himself, crowned and cross, testing the keep before he answers its horn. Lances of light fall on a column of heroes, his roar stuns the front rank, and a dome of sunrise shuts round him.',
   voltaraGoddess: 'The Copper Goddess herself, bright and impatient, testing the keep before she answers its horn. A chain of lightning leaps from hero to hero, a storm falls where she has marked, and a ring of copper turns shots aside.',
+  gormTitan: 'The Quarry Titan himself, half hill and half stone, testing the keep he built before he answers its horn. A landslide clears the ground round him, pillars rise where he has marked, and nothing shoves him.',
+  vaelkharKing: 'The Dragon King himself, black-scaled and haloed in violet fire, testing the keep before he answers its horn. A torrent of black fire runs down a whole line, the void drags heroes in, and his scales drink what they stop.',
   forgeTitan: 'The primal forge\'s opening hammer and its last. Each strike rings like an anvil; his chest furnace roars.',
   boarKing: 'He brakes for no wall and swerves for no hero. The line is merely an obstacle between him and forage.',
   devilLeader: 'Commands the pit from the vanguard, showering hellfire upon anything that isn\'t actively incinerating.',
