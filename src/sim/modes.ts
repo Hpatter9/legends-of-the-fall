@@ -16,6 +16,7 @@ import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recr
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { RIFT_ROWS } from './rift';
+import { noteHeart } from './vaelkharHeart';
 import { CAL_SCALE, CAL_START_GOLD } from './calamity';
 import { armyUnlocked, ARMIES } from './armies';
 import { modeOpen, MODE_NEED, opensAt } from './modeUnlock';
@@ -215,6 +216,8 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   const quest = run.mode?.kind === 'quest';
   if (fight.won && boss && !quest && !m.bosses.includes(boss)) m.bosses.push(boss);
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));
+  // (VAELKHAR-HEART: a run that holds his Heart is noted in the save)
+  noteHeart(m, run.relics);
   // (the codex notes the foes this fight met and felled)
   if (fight.battle) noteFoes(m, fight.battle);
   // (and a combo that went off is seen, for the codex)

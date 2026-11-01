@@ -43,6 +43,8 @@ export interface EidolonMeta {
   calls?: number;
   seen?: string[];
   confirmed?: boolean;
+  /** VAELKHAR-HEART (`vaelkharHeart.ts`): his Storied relic has been held ('held'), and given back at his binding ('returned'). */
+  heart?: 'held' | 'returned';
 }
 
 /** The slice of the Meta these rules read and change. */
@@ -64,6 +66,7 @@ export function readEidolons(raw: unknown): EidolonMeta | undefined {
   const seen = known(r.seen);
   if (seen.length) out.seen = seen;
   if (r.confirmed) out.confirmed = true;
+  if (r.heart === 'held' || r.heart === 'returned') out.heart = r.heart;
   return out;
 }
 

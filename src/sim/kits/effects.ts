@@ -104,6 +104,10 @@ export interface KitFx {
   brand?: number;
   /** The High Priestess's Sacred Flame: its next blow misses. */
   missNext?: boolean;
+  /** The lost techniques (`kits/lost.ts`): held up by the Hymn of the Long Dawn until then (it cannot fall below 1 health), and whether
+   *  its singer has sung it this fight (once a wave). */
+  dawn?: number;
+  hymned?: boolean;
 }
 
 /** Timed terrain a kit made (a flood, a rampart, a statue): the tile, what it was, and when it goes back. */
@@ -292,7 +296,7 @@ export function kitBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg: numbe
 export function kitSpare(b: Battle, to: Unit, out: BattleEvent[]): boolean {
   const x = to.kx;
   if (!x) return false;
-  if (on(x.fury, b)) {
+  if (on(x.fury, b) || on(x.dawn, b)) {
     to.hp = 1;
     return true;
   }

@@ -11,8 +11,9 @@
 
 import { BOOKS, bookById, readsKind, STUDY, type BookDef } from './bookData';
 import { mixSeed, Rng } from './rng';
-import { HERO_KITS, type HeroKit, type Pool, type Slot } from './heroKits';
+import { HERO_KITS, resMax, type HeroKit, type Pool, type Slot } from './heroKits';
 import { CLASS_RANGE } from './skillRules';
+import { lostSlot } from './kits/lost';
 import type { Meta } from './meta';
 import { ALL_HEROES } from './units';
 
@@ -224,6 +225,14 @@ export function slotFor(kind: string, pick: SkillPick): Slot | undefined {
   const at = OWNS.indexOf(pick);
   if (at >= 0) return own.slots[at];
   const book = bookById(pick);
+  // (a lost technique has a skill of its own, not a hero's: its cost a share of the reader's pool)
+  if (book?.lost) {
+    const ls = lostSlot(book.lost, resMax(own.pool));
+    if (!ls) return undefined;
+    // (kept inside its class's cost range for the reader's pool, as every other skill is)
+    const [lo, hi] = CLASS_RANGE[ls.cls][own.pool];
+    return { ...ls, cost: Math.max(lo, Math.min(hi, ls.cost)) };
+  }
   const src = book && HERO_KITS()[book.from.hero];
   const s = book && bookSource(book);
   if (!book || !src || !s) return undefined;

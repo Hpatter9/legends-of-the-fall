@@ -133,6 +133,9 @@ test('skill 2 is never cast below its level', () => {
 test('every readiness look names a real skill 2 or 3 (the third skills\' utilities, the skills overhaul\'s batch 4)', async () => {
   const { SKILL2_WHEN } = await import('../src/sim/kits/when');
   const second = new Set(ALL_HEROES.flatMap((h) => HERO_KITS()[h].slots.slice(1).map((s) => keyOf(s.skill))));
+  // (the lost techniques are in no kit: a book puts one in a slot, `kits/lost.ts`)
+  const { LOST } = await import('../src/sim/kits/lost');
+  for (const d of Object.values(LOST)) second.add(keyOf(d.skill));
   for (const name of Object.keys(SKILL2_WHEN)) assert.ok(second.has(name), name);
 });
 
