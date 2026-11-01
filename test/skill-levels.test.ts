@@ -10,7 +10,7 @@ import { keyOf, tal } from '../src/sim/abilities';
 import { HERO_KITS, castHero, heroKitOf, SKILL2_LEVEL, SKILL3_LEVEL } from '../src/sim/heroKits';
 import {
   AUTO_SHARE, castModsOf, castPoints, CONJURE_TREANT, FIELD_POINTS, fightLevels, fightUse, LEVEL_STEPS, levelLine, levelOfUse, levelUpWords, MAX_USE, readSkillUse,
-  settleSkillUse, slotKeysOf, SUMMON_BEAST, USE_AT, useOf,
+  settleSkillUse, slotKeysOf, SUMMON_BEAST, USE_AT, useOf, useShare,
 } from '../src/sim/skillLevels';
 import { LV5 } from '../src/sim/kits/lv5';
 import { lv5Table } from '../tools/skills/lv5';
@@ -230,4 +230,31 @@ test("a hero's own boost of Level 1 skills changes nothing on the fighter", () =
   assert.equal(u.skillLv, undefined);
   assert.equal(heroKitOf(u), HERO_KITS().archer);
   assert.ok(SKILL3_LEVEL > SKILL2_LEVEL);
+});
+
+test('the owner\'s answers: a practice replay counts nothing, auto-replay half, every other mode in full (the spire and the Calamity too)', () => {
+  assert.equal(useShare({ kind: 'daily', practice: true }, false), 0);
+  assert.equal(useShare({ kind: 'quest', practice: true }, false), 0);
+  assert.equal(useShare({ kind: 'daily', practice: false }, false), 1);
+  assert.equal(useShare({ kind: 'quest' }, false), 1);
+  assert.equal(useShare({ kind: 'army' }, true), AUTO_SHARE);
+  assert.equal(useShare({ kind: 'tower' }, false), 1);
+  assert.equal(useShare({ kind: 'calamity' }, false), 1);
+  assert.equal(useShare(undefined, false), 1);
+});
+
+test('a spire or Calamity fight earns use toward the lasting levels, though its heroes fight at Level 1', () => {
+  const m = owned(['knight']);
+  const k1 = keyOf(HERO_KITS().knight.s1.skill);
+  m.skillUse = { knight: { [k1]: 1500 } };
+  const b = startBattle(11);
+  place(b, 'knight', 3, b.board.d - 1, 300, localBoost({ id: 300, kind: 'knight', grade: 1 }));
+  const u = b.units.find((x) => x.def === 'knight')!;
+  assert.equal(heroKitOf(u), HERO_KITS().knight, 'Level 1 in the fight');
+  fight(b);
+  for (let i = 0; i < 4000 && b.phase === 'fight'; i++) stepBattle(b);
+  const gain = fightUse(b, m.unlocked);
+  assert.ok((gain.knight?.[k1] ?? 0) >= FIELD_POINTS, 'its casts and the wave counted');
+  settleSkillUse(m, gain, useShare({ kind: 'calamity' }, false));
+  assert.equal(useOf(m, 'knight', k1), 1500 + gain.knight[k1], 'into the lasting points');
 });

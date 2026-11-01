@@ -38,12 +38,13 @@ level, there is **no** head start for old saves, and skill levels do **not** app
   built once a kit and level set). A slot carries its strength, cost and cooldown already moved; its durations and Level 5 step sit on the
   caster's talents only while it is cast (`Slot.mods` set as `Unit.castMods` around `powered`; `tal` adds them), so every engine that reads
   `tal(me, 'dur' | 'extra' | 'reach')` needed no change. A level gained takes effect from the next wave.
-- **The spire and the Calamity** build their heroes bare (`localBoost`: no `heroStats`), so their skills are Level 1, and nothing is counted
-  there (`run.local`). The Last Stand, the armies, the daily, quest battles and the endless stages read the levels and count.
+- **The spire and the Calamity** build their heroes bare (`localBoost`: no `heroStats`), so their skills are Level 1; their fights still
+  earn use toward the lasting levels (the owner's answer, below). The Last Stand, the armies, the daily, quest battles and the endless stages
+  read the levels; every mode counts.
 - **Counting:** `noteCast` (in `fire` and the revive) puts a cast's points on the fighter (`Unit.usePts`, by slot); `fightUse(b, kinds)` reads a
   settled wave's placed heroes (the save's own kinds, so a guest it does not have is left out); `settleSkillUse` adds them and returns each
   skill that rose a level. The page counts it in the wave's settle beside study and wear (`main.ts`: armies, the daily, quests, the endless
-  stages; half under auto-replay). The Last Stand is one long battle: each wave's casts and fielding fold into the run (`StandRun.use`, by
+  stages, the spire and the Calamity; `useShare`: half under auto-replay, nothing for a practice replay of a daily or a quest battle). The Last Stand is one long battle: each wave's casts and fielding fold into the run (`StandRun.use`, by
   `foldUse` at each clear, held line and the king's fall; a hero fallen in an earlier wave counts no more), and the run's tally is counted in
   full when it ends (`standView.ts`).
 - **Where it shows:**
@@ -85,7 +86,7 @@ bands, every hero's skills at the level shown (the ultimate unchanged).
   nothing); a guest kind left out; auto-replay's half; the cap at 3,500 and each level told once; unknown keys and kinds not counted; a learned
   skill under its own key in either slot; each level's strength, cost and cooldown; the durations and Level 5 steps only while a skill is cast;
   Summon Beast's third wolf at Level 3 and dire wolf at 5; a Level 5 skill dealing more in the same seeded fights; the levels reaching the fight
-  from the save but not through the spire's and Calamity's boost; the Last Stand's tally per wave; every skill's Level 5 step matching the
+  from the save but not through the spire's and Calamity's boost; the Last Stand's tally per wave; a practice replay counting nothing and a spire or Calamity fight counting into the lasting points; every skill's Level 5 step matching the
   probe; a save's nonsense dropped; a Level 1 boost leaving the fighter as before.
 - **A Level 1 fight is unchanged:** `test/spells-identity.test.ts` and `test/ailments-identical.test.ts` pass with no fixture re-recorded (the
   identity scenarios field heroes with no skill levels: the slots, costs and cooldowns are the very kit objects of batch 4).
@@ -98,12 +99,9 @@ bands, every hero's skills at the level shown (the ultimate unchanged).
 summon-timers meta stand.test revive hero-kits`; `npm run web`; the full `npm test` (2,095 of 2,095); `node tools/skills/levelShots.mjs` (393x852: the
 hero sheet's Skills tab, a skill's sheet in a fight, the wave card's line; no page error).
 
-## Open questions for the owner
+## The owner's answers (1 November 2026)
 
-1. **The 40 skills with nothing that lasts** (a plain blow, a heal): their Level 5 step is "8% stronger again", as "lasts 15% longer again" would
-   do nothing. Keep, or another step?
-2. **The spire and the Calamity count no use** (their heroes fight at Level 1, the owner's answer 6; the design had them count in full).
-   Should a spire or Calamity run still earn points for the lasting levels used elsewhere?
-3. **Level 5's size:** a mastered team wins about 15 points more at level 30 (27 at level 20). Leave it to batch 8's rebalance (the design's
-   order), or ease the steps now?
-4. **Practice runs** (a daily or quest battle replayed for practice) count use as any fight does, as study does. Keep?
+1. The skills with nothing that lasts keep "8% stronger again" as their Level 5 step.
+2. Level 5's size is left to batch 8's rebalance.
+3. Spire and Calamity fights **do** earn use toward the lasting levels (their heroes still fight at Level 1 there): built.
+4. Practice replays (a daily or quest battle that pays nothing) do **not** count: built (`useShare`).

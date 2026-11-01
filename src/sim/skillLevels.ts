@@ -59,6 +59,13 @@ export const FIELD_POINTS = 2;
 export const REVIVE_POINTS = 30;
 export const AUTO_SHARE = 0.5;
 
+/** The share of a settled wave's use a run counts (the owner's answers): none for a practice replay (a daily or quest battle that pays
+ *  nothing), half under auto-replay, else all of it. The spire and the Calamity count in full, though their heroes fight at Level 1 there. */
+export function useShare(mode: { kind: string; practice?: boolean } | undefined, auto: boolean): number {
+  if (mode && (mode.kind === 'daily' || mode.kind === 'quest') && mode.practice) return 0;
+  return auto ? AUTO_SHARE : 1;
+}
+
 /** Points a cast of a skill with this (Level 1) cooldown earns: its cooldown in whole seconds. */
 export const castPoints = (cdMs: number): number => Math.max(1, Math.round(cdMs / 1000));
 
