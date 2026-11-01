@@ -102,6 +102,8 @@ import hkGhost from '../art/units/hk_ghost.png';
 import eidolonNivra from '../art/units/eidolon_nivra.png';
 // (EIDOLON-CHAIN-3: Aurelan's, cut by tools/eidolon-trial/cut_aurelan.py)
 import eidolonAurelan from '../art/units/eidolon_aurelan.png';
+// (EIDOLON-CHAIN-4: Voltara's, cut by tools/eidolon-trial/cut_voltara.py)
+import eidolonVoltara from '../art/units/eidolon_voltara.png';
 // (SUMMON-ART: the summons' own sheets, cut by tools/summon-art/cut.py; which summon wears which is in summonArt.ts)
 import summonWolf from '../art/units/summon_wolf.png';
 import summonWolfWhite from '../art/units/summon_wolf_white.png';
@@ -236,6 +238,7 @@ const URLS: Record<string, string> = {
   hk_ghost: hkGhost,
   eidolon_nivra: eidolonNivra,
   eidolon_aurelan: eidolonAurelan,
+  eidolon_voltara: eidolonVoltara,
   summon_wolf: summonWolf,
   summon_wolf_white: summonWolfWhite,
   summon_direwolf: summonDirewolf,

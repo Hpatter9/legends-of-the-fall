@@ -143,6 +143,34 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
         { cam: close('a'), lines: [tell('Where the Queen turned to rubble, the shutters burst open, and the first light in three hundred years falls on a plinth. A crown of beaten gold lies on it, spiked like rays.'), say('a', 'It is warm. Somebody has been keeping it warm for him.')] },
       ]),
   },
+  {
+    // (Voltara's chain, part 2: the copper works where the great clock stopped, and the warden who still guards its face)
+    id: 'copperWorks',
+    title: 'The Copper Works',
+    blurb: 'The great clock stopped in the old copper works, and its golem warden still guards the face.',
+    land: 'forge',
+    like: { army: 'labyrinth', wave: 11 },
+    ease: 0.76,
+    // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
+    cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+    waves: [
+      { foes: ['ironGolem', 'stoneGolem', 'crystalGolem'] },
+      { foes: ['ironGolem', 'crystalGolem', 'stoneGolem', 'ironGolem'] },
+      { foes: ['sapphireColossus', 'ironGolem', 'crystalGolem', 'stoneGolem'], boss: 'final' },
+    ],
+    boss: { name: 'The Mint-Warden', title: 'Who Keeps the Last Spark' },
+    before: (c) =>
+      story('copperWorks', 'The Copper Works', 'forge', { a: hero(c[0] ?? 'knight', 230), warden: foe('sapphireColossus', 430, 1.3, { name: 'The Mint-Warden', hidden: true }) }, [
+        { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Copper Works', lines: [tell('Rows of cold furnaces and green copper pipes. High above the floor a great clock has stopped, its one hand hanging at the minute the pacts broke. Something huge and blue stands under it, quite still.')] },
+        { cam: close('a'), lines: [say('a', 'Nobody has wound that in three hundred years. And it is still humming.'), tell('A blue spark runs along a pipe and goes in at the Warden\'s chest.')] },
+        { cam: wide(380, 205), acts: [{ who: 'warden', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('warden', 'THE CLOCK IS NOT TO BE TOUCHED. THE SPARK IS NOT TO BE SPENT. WIND DOWN, LITTLE FUSES.', 'shout')] },
+        { cam: close('a'), lines: [say('a', 'We only want the face. We will bring it back. Probably.')] },
+      ]),
+    after: (c) =>
+      story('copperWorksAfter', 'The Copper Works', 'forge', { a: hero(c[0] ?? 'knight', 260) }, [
+        { cam: close('a'), lines: [tell('The Warden goes down in a shower of copper filings, and the great clock ticks once. On the floor under it, a round face of white enamel with one copper hand.'), say('a', 'Still going. Somebody has been waiting for someone to pick it up.')] },
+      ]),
+  },
   // (EIDOLON-TRIAL: the trials, one a chain)
   ...TRIALS.map(trialBattle),
 ];
