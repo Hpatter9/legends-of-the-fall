@@ -31,3 +31,10 @@ copied formula, so the page stays true when batch 2 (scores drive power) lands.
   arrive in batches 4 to 6. Until then the panel's figures are the data, not yet a fight rule. Say if the page should hold those lines back.
 - The foe card shows the Normal tier's proficiency (a battle does not carry its army's tier).
 - The Last Stand's recap shows no score lines.
+
+## Checks
+
+`npm run typecheck` clean; `npm test -- stats-3` 10 of 10; the full `npm test` 2161 pass, 0 fail (the identity fixtures unmoved); `npm run web` built.
+Shots (`node tools/stats-3/shots.mjs`; 393x852, 360x780, 412x915, no sideways scroll, no page errors): `docs/samples/stats-3-sheet-*.png`,
+`stats-3-sheet-tap-*.png` (a tile tapped), `stats-3-card-hero-*.png`, `stats-3-card-foe-*.png`, `stats-3-recap-*.png` (Kwame's level 8 shows
+"STR 15 → 16 +1 improvement · STR +3"). The gear compare has no shot: no piece has score points until batch 2.
