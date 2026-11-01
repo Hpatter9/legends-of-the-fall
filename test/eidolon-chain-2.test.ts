@@ -126,7 +126,7 @@ test('offered only once Askel is bound and the Beast Packs cleared (an older sav
   clear(b, 'undead', 'beasts');
   assert.equal(offeredChain(b), nivra);
   assert.ok(summonerWaiting(b));
-  assert.equal(beginChain(b, 'aurelan'), false);
+  assert.equal(beginChain(b, 'voltara'), false);
   assert.ok(beginChain(b, 'nivra'));
   assert.equal(beginChain(b, 'nivra'), false, 'once');
   assert.equal(activeChain(b), nivra);
@@ -219,9 +219,10 @@ test('binding: Nivra is bound and chosen over Askel, a gold chest is paid, the h
   assert.equal(card.label, 'Bound');
   assert.equal(card.name, 'Nivra, the Rime Wyrm');
   assert.match(card.where, /Pact Gallery/);
-  // (the next chain is a rail: nothing more is offered)
+  // (the next chain, Aurelan's, opens once the Wildwood is cleared)
+  assert.equal(offeredChain(m), undefined, 'not before the Wildwood');
   clear(m, 'wildwood');
-  assert.equal(offeredChain(m), undefined);
+  assert.equal(offeredChain(m)?.id, 'aurelan');
 });
 
 /* ------------------------------------------------------------------ determinism and saves */

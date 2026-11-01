@@ -150,8 +150,8 @@ test('the offer is the same from the same run, and leans to a set already begun'
 });
 
 // (RELICS-2, the owner's approved redesign: the keep's six Chapters and the Calamity's five sets; the tests follow the new pieces)
-test('the sets: eleven of three or four relics each, every relic in one set at most', () => {
-  assert.equal(SET_IDS.length, 11, "the keep's six Chapters and the Calamity's five sets");
+test('the sets: twelve of three or four relics each, every relic in one set at most', () => {
+  assert.equal(SET_IDS.length, 12, "the keep's six Chapters and the Eidolons' six reliquaries");
   const seen = new Set<string>();
   for (const id of SET_IDS) {
     const s = SETS[id];
@@ -259,10 +259,10 @@ test('no set pieces, no change: a run plays out exactly as before', () => {
   assert.equal(startStage((() => { const r = newRun(9); r.relics = ['luckyCoin']; return r; })()).relics, undefined);
 });
 
-test('fifty relics in all, each with an effect, a name and an icon, and every set a theme with a two and a three bonus', () => {
+test('forty-eight relics in all, each with an effect, a name and an icon, and every set a theme with a two and a three bonus', () => {
   const all = Object.keys(RELICS);
-  assert.equal(all.length, 50);
-  assert.equal(new Set(all.map((id) => RELICS[id].name)).size, 50, 'no two relics share a name');
+  assert.equal(all.length, 48);
+  assert.equal(new Set(all.map((id) => RELICS[id].name)).size, 48, 'no two relics share a name');
   const art = new Set(readdirSync('src/art/items').map((f) => f.replace(/\.png$/, '')));
   const snake = (id: string) => id.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
   for (const id of all) {
@@ -272,10 +272,10 @@ test('fifty relics in all, each with an effect, a name and an icon, and every se
   }
   for (const id of SET_IDS) {
     assert.ok(SETS[id].two.text && SETS[id].three.text, `${id}: both bonuses are described`);
-    assert.equal(SETS[id].relics.length, 4);
+    assert.equal(SETS[id].relics.length, SETS[id].eidolon ? 3 : 4);
   }
   // (the new pieces' numbers reach the fight: gold, the foes' wait and reach are folded in with the set)
   assert.equal(relicEffects(['luckyCoin', 'gildedIngot']).gold, 8 + 20 + 6);
-  assert.equal(relicEffects(['riftShard', 'voidSigil']).first, 300);
-  assert.equal(relicEffects(['riftShard', 'voidSigil', 'doomHelm']).first, 500 + 300 + 500);
+  assert.equal(relicEffects(['voidShard', 'dragonSigil']).first, 300);
+  assert.equal(relicEffects(['voidShard', 'dragonSigil', 'doomHelm']).first, 500 + 300);
 });

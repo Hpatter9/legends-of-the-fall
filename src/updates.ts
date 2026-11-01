@@ -27,6 +27,54 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.312.0',
+    date: '2026-11-01',
+    title: 'The Eidolons\' reliquaries',
+    notes: ['18 new Calamity relics in six Eidolon reliquaries. Hold all three of one and its Eidolon answers sooner and stays longer: the War Horn fills faster.'],
+  },
+  {
+    version: '0.311.0',
+    date: '2026-11-01',
+    title: 'Three skill buttons in battle',
+    notes: ['Every hero\'s row in battle now shows all three skills, with their cost and cooldown; the Last Stand and Calamity get compact rows.'],
+  },
+  {
+    version: '0.310.0',
+    date: '2026-11-01',
+    title: 'Eidolon quest: The Dry Storm',
+    notes: ['Once Aurelan is bound and the Labyrinth falls, a royal courier brings Voltara\'s tale: three pieces, then a trial on the Lightning Heights.'],
+  },
+  {
+    version: '0.309.0',
+    date: '2026-11-01',
+    title: 'The caravan and the Gloaming Dealer',
+    notes: ['Rustam Saffar\'s caravan visits once a week with rare books, Epic gear and ore. After Calamity guardians fall, the Gloaming Dealer opens for a day.'],
+  },
+  {
+    version: '0.308.0',
+    date: '2026-11-01',
+    title: 'Daily goals you can always meet',
+    notes: ['Every daily theme\'s star goal now asks only for what the day\'s starting five can field, so no goal needs a lucky hire or two of one hero.'],
+  },
+  {
+    version: '0.307.0',
+    date: '2026-11-01',
+    title: 'Eidolon quest: The Late Dawn',
+    notes: ['Once Nivra is bound and the Wildwood falls, Gwen Tallow climbs to the Sanctum: three pieces, then a trial against Aurelan, the Lion of Dawn.'],
+  },
+  {
+    version: '0.306.0',
+    date: '2026-11-01',
+    title: 'Every hero\'s third skill',
+    notes: ['At level 20 every hero learns a third skill, often a quick jab or a guard that fits their calling. See them on the skill sheet\'s new Skill 3 tab.'],
+  },
+  {
+    version: '0.305.0',
+    date: '2026-11-01',
+    title: 'Fewer screen glitches',
+    notes: ['Chests, summons and full artwork now draw fully on sharp phone screens: hidden screens stop being painted and the big light effects cost far less.'],
+  },
+  {
     version: '0.304.0',
     date: '2026-10-31',
     title: 'Skills with cooldowns; ranks give stats',

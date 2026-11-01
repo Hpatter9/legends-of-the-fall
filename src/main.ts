@@ -139,6 +139,7 @@ import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
+import { installTapGuard } from './tapGuard';
 import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
@@ -158,7 +159,8 @@ import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains
 import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
-import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
+import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHorn';
+import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
@@ -3174,7 +3176,8 @@ class Game {
       const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
       // (EIDOLONS: the War Horn takes the fight's share: a boss wave 100, each foe slain 1, an auto-replay half; nothing in a fight lost,
       // practised, or one in which it was blown)
-      const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)));
+      // (RELICS-3: a whole Eidolon's reliquary, with that Eidolon answering the horn, fills it 25% faster)
+      const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)) * hornEcho(run.relics, chosenOf(this.meta)));
       if (horn.added > 0) this.eid.gained(horn.added);
       const hornSaid = hornLine(horn);
       // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
@@ -3466,6 +3469,8 @@ function overBench(x: number, y: number): boolean {
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 }
 
+// (MENU-GLITCH: a tap that opens a panel does not also press what of it is under the finger)
+installTapGuard();
 new Game().start().catch((err) => {
   $('loading').textContent = `Could not start: ${err}`;
 });

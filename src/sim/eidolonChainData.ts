@@ -191,6 +191,122 @@ const NIVRA_BINDING: readonly BindingBeat[] = [
   { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Rime Wyrm wakes for the keep.' },
 ];
 
+
+/* ------------------------------------------------------------------ Aurelan, the Lion of Dawn (chain 3, `docs/notes/eidolon-chain-3.md`) */
+
+/** Aurelan's three pieces. */
+export const DAWN_THREAD: PieceDef = {
+  id: 'dawnThread',
+  name: 'The Dawn-Thread',
+  lines: ["Caught on a forest lord's armour: one long hair of living gold, as stiff as wire and warm as a hearth-stone.", 'It lies across your palm like a sunrise on a very small scale.'],
+  art: 'phoenixFeather',
+};
+export const SUN_CROWN: PieceDef = {
+  id: 'sunCrown',
+  name: 'The Sun-Crown',
+  lines: ["In the Eclipse Queen's cold hall, on a plinth of black stone: a crown of beaten gold, spiked like rays.", 'It was cold as a tombstone until you held it. Now it will not stop glowing.'],
+  art: 'circlet',
+};
+export const DAWN_LAMP: PieceDef = {
+  id: 'dawnLamp',
+  name: 'The Dawn-Lamp',
+  lines: ["Gwen's own hearth-lamp, from the tavern door. After the fourth unbroken win it lit itself, and it has not gone out since.", 'It burns without oil. It is, Gwen says, a perfectly good lamp, and she wants it back.'],
+  art: 'luckyCharm',
+};
+
+/** Gwen Tallow, heard over the prologue: her face fills the picture as she speaks (the quests' own portrait, `face:gwen`). */
+const GWEN: CastMember = { role: 'face:gwen', x: 0, facing: 'right', hidden: true, name: 'Gwen Tallow' };
+
+/** The prologue of Aurelan's chain: Gwen Tallow, the tavern-keeper, walks up to the Sanctum once the Wildwood has fallen and the Summoner
+ *  names the Lion of Dawn. Her lamps keep going out at dusk, and the dawn has been coming late. The party's first two heroes answer. */
+const THE_LATE_DAWN: Scene = {
+  id: 'eid-aurelan-prologue',
+  title: 'The Late Dawn',
+  blurb: 'Gwen Tallow brings word that the dawn is coming late.',
+  moment: { kind: 'eidolon', chain: 'aurelan' },
+  music: 'solemn',
+  cast: { gwen: GWEN, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  shots: [
+    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, before sunrise', lines: [tell('Grey light in the Sanctum windows. The tavern-keeper has left her bar, her dog and her slate, and walked up the hill in the dark.')] },
+    { cam: wide(250, 200), lines: [say('gwen', 'I do not leave the taproom. Ask anyone. Forty years I have not left the taproom.')] },
+    { cam: close(['a', 'b']), lines: [say('b', 'Then something is wrong.')] },
+    { cam: wide(250, 200), lines: [say('gwen', 'The lamps go out at dusk. All of them. Lit properly, trimmed, filled. And the dawn comes late. A little later each day. The cockerel has given up.')] },
+    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'The Wildwood is quiet, and the quiet has let you hear it. Aurelan, the Lion of Dawn. He walked ahead of the sun for the first kings, and roared it up over the hill each morning.'), say('summoner', 'When the pacts broke he lay down in the dark to wait. He has been waiting a long time. A lion can lose count of nights.')] },
+    { cam: close('a'), lines: [say('a', 'And if we wake him?')] },
+    { cam: wide(250, 200), lines: [say('gwen', 'Then I shall have lamps again, and I shall stop having to explain myself to the cockerel.')] },
+    { cam: wide(260, 200), lines: [say('summoner', 'A thread of his mane, the crown he laid down, and a light that has not been put out. Bring me those, and I will bind him.'), tell("Aurelan's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+  ],
+};
+
+/** Aurelan's binding, in gold and rose: the pieces on the altar, the lamp lit, the circle catching like a sunrise, the Lion walking out of it.
+ *  The horn is already the keep's, so there are no horn beats. */
+const AURELAN_BINDING: readonly BindingBeat[] = [
+  { at: 0, beat: 'dark' },
+  { at: 500, beat: 'pieces', who: 'summoner', text: 'The thread, the crown, the lamp. Set them on the altar. And shade your eyes.' },
+  { at: 3000, beat: 'circle', who: 'narrator', text: 'The lamp flares. Gold and rose run out across the floor in a ring, and every brazier in the Sanctum stands up straight, like a sentry.' },
+  { at: 5400, beat: 'rise' },
+  { at: 6600, beat: 'name' },
+  { at: 8000, beat: 'line', who: 'eidolon', text: 'Night is long, little keep, and you lit a lamp in it. I saw it from the far side of the dark. I am coming.' },
+  { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Lion of Dawn comes home.' },
+];
+
+/* ------------------------------------------------------------------ Voltara, the Copper Goddess (chain 4, `docs/notes/eidolon-chain-4.md`) */
+
+/** Voltara's three pieces. */
+export const COPPER_COIL: PieceDef = {
+  id: 'copperCoil',
+  name: 'The Copper Coil',
+  lines: ['Wound round a maze-lord\'s horn like a wedding band: a coil of bright copper wire, warm, and humming on one thin note.', 'Hold it to your ear and it sounds like a storm a very long way off, practising.'],
+  art: 'circlet',
+};
+export const CLOCK_FACE: PieceDef = {
+  id: 'clockFace',
+  name: 'The Stopped Clock-Face',
+  lines: ['From the Copper Works, where the great clock stopped at the very minute the pacts broke: a round face of white enamel and one copper hand.', 'It is still ticking, in a small, sulky way, against your palm.'],
+  art: 'luckyCharm',
+};
+export const STORM_GLASS: PieceDef = {
+  id: 'stormGlass',
+  name: 'The Storm-Glass',
+  lines: ['A bottle of blown glass the Crown\'s own glassmaker sent up. It was empty. After the sixth great strike it was not.', 'A small blue storm turns over and over inside, looking for the cork.'],
+  art: 'vialOfVigor',
+};
+
+/** The Crown's herald, heard over the prologue: the ruler's own portrait (`face:ruler`), the royal quests' voice. */
+const CROWN: CastMember = { role: 'face:ruler', x: 0, facing: 'right', hidden: true, name: 'The Crown' };
+
+/** The prologue of Voltara's chain: a royal courier walks up to the Sanctum with the Crown's charge once the Labyrinth has fallen. The
+ *  weathercocks of the keep have been spinning for a week and no rain has come; the Summoner names the Copper Goddess. */
+const THE_DRY_STORM: Scene = {
+  id: 'eid-voltara-prologue',
+  title: 'The Dry Storm',
+  blurb: 'A royal courier brings word that the storm will not break.',
+  moment: { kind: 'eidolon', chain: 'voltara' },
+  music: 'solemn',
+  cast: { crown: CROWN, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  shots: [
+    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, under a bruised sky', lines: [tell('Every weathercock on the keep has been spinning for a week. The air smells of struck flint. Not a drop of rain has fallen, and a royal courier has come up the hill with a sealed charge and a singed moustache.')] },
+    { cam: wide(250, 200), lines: [say('crown', 'By the Crown\'s seal, and the Crown\'s patience, which is thin. Lightning has struck the same tower of the keep seven nights running, and not once has it hit the rod.')] },
+    { cam: close(['a', 'b']), lines: [say('b', 'Seven? Then it is not weather.')] },
+    { cam: wide(250, 200), lines: [say('crown', 'The Crown\'s astronomers agree, and have gone to lie down. They say it is looking for something. Please, say it is not the Crown.')] },
+    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'It is looking for a house. Voltara, the Copper Goddess. She married the storm, and the storm kept the house, and she has been wandering the sky ever since, looking for the door.'), say('summoner', 'The Labyrinth held her wires down for three hundred years. Now it is quiet, and the sky is crowded with her.')] },
+    { cam: close('a'), lines: [say('a', 'And if we give her a door?')] },
+    { cam: wide(250, 200), lines: [say('crown', 'Then the Crown shall have a ceiling, and the courier shall have a moustache again.')] },
+    { cam: wide(260, 200), lines: [say('summoner', 'A coil of her own wire, the face of the clock that stopped, and a storm kept in glass. Bring me those, and I will bind her.'), tell("Voltara's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+  ],
+};
+
+/** Voltara's binding, in copper and electric blue: the pieces laid on the altar, the storm-glass uncorked, the circle crackling, the Goddess stepping down on a bolt. */
+const VOLTARA_BINDING: readonly BindingBeat[] = [
+  { at: 0, beat: 'dark' },
+  { at: 500, beat: 'pieces', who: 'summoner', text: 'The coil, the clock, the glass. Set them on the altar, and stand on something that does not conduct.' },
+  { at: 3000, beat: 'circle', who: 'narrator', text: 'The glass is uncorked. Copper and blue run across the floor in a ring, and every brazier in the Sanctum stands on end like hair.' },
+  { at: 5400, beat: 'rise' },
+  { at: 6600, beat: 'name' },
+  { at: 8000, beat: 'line', who: 'eidolon', text: 'A door. Oh, a door, and it has a roof on it. I have been so very far above you, little keep. Let me come in out of the weather.' },
+  { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Copper Goddess comes in out of the storm.' },
+];
+
 /** The six chains, easiest first. Askel's and Nivra's are written; the rest are the rails for their batches (the design's givers and
  *  openings, rewritten for the six chosen Eidolons when their chains are written). */
 export const CHAINS: readonly ChainDef[] = [
@@ -279,8 +395,92 @@ export const CHAINS: readonly ChainDef[] = [
       },
     ],
   },
-  { id: 'aurelan', eidolon: 'aurelan', order: 3, title: "Aurelan's chain", giver: { name: 'Gwen Tallow', title: 'Keeper of the tavern' }, opens: { kind: 'army', army: 'wildwood' }, opensWords: 'the Wildwood cleared', trial: true, parts: [] },
-  { id: 'voltara', eidolon: 'voltara', order: 4, title: "Voltara's chain", giver: { name: 'The Crown', title: 'A Royal charge' }, opens: { kind: 'army', army: 'labyrinth' }, opensWords: 'the Labyrinth cleared', trial: true, parts: [] },
+  {
+    id: 'aurelan',
+    eidolon: 'aurelan',
+    order: 3,
+    title: 'The Late Dawn',
+    giver: { name: 'Gwen Tallow', title: 'Keeper of the tavern' },
+    opens: { kind: 'army', army: 'wildwood' },
+    opensWords: 'the Wildwood cleared',
+    // (EIDOLON-TRIAL: after the three pieces, the trial against Aurelan himself on the Dawn Hill, `eidolonTrials.ts`; then the binding)
+    trial: true,
+    prologue: THE_LATE_DAWN,
+    binding: AURELAN_BINDING,
+    call: { title: 'Gwen Tallow waits by the altar', line: 'Come up the hill in the dark, with her slate under her arm · tap to listen' },
+    parts: [
+      {
+        id: 'aurelan1',
+        title: 'Gold in the Grove',
+        text: 'Beat a Wildwood boss: the Thorn Warden (wave 5), the Wood Raider (wave 10) or the Grove Spearlord (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'wildwood', boss: ['forestBoss1', 'forestBoss2', 'forestBoss3'] },
+        begin: "The forest lords have been up before dawn for three hundred years, and they have not slept since. Beat one again. Look in its armour. Whatever it keeps, it keeps the way a magpie does.",
+        piece: DAWN_THREAD,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'aurelan2',
+        title: 'The Sunless Shrine',
+        text: 'Win the quest battle The Sunless Shrine (Kwame or Minh fights; any starter hero may stand in)',
+        goal: { kind: 'battle', n: 1, battle: 'sunlessShrine' },
+        begin: "There is a shrine out east where the sun never rises: shuttered, they say, by someone who prefers it. The Lion's crown was put away there. Mind the gorgons. They like it dark.",
+        piece: SUN_CROWN,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'aurelan3',
+        title: 'Not One on the Floor',
+        text: 'Win 4 waves with no hero falling',
+        goal: { kind: 'wavesWon', n: 4, flawless: true },
+        begin: "Last thing, and it is my lamp. Take it round with you. It only burns for a party that brings everyone home, and it has opinions. Four fights, and not one of yours on the floor.",
+        piece: DAWN_LAMP,
+        reward: { chest: 'bronze' },
+      },
+    ],
+  },
+  {
+    id: 'voltara',
+    eidolon: 'voltara',
+    order: 4,
+    title: 'The Dry Storm',
+    giver: { name: 'The Crown', title: 'A Royal charge' },
+    opens: { kind: 'army', army: 'labyrinth' },
+    opensWords: 'the Labyrinth cleared',
+    // (EIDOLON-TRIAL: after the three pieces, the trial against Voltara herself on the Lightning Heights, `eidolonTrials.ts`; then the binding)
+    trial: true,
+    prologue: THE_DRY_STORM,
+    binding: VOLTARA_BINDING,
+    call: { title: 'A royal courier waits by the altar', line: 'Come up the hill with a singed moustache and a sealed charge · tap to listen' },
+    parts: [
+      {
+        id: 'voltara1',
+        title: 'Wire in the Maze',
+        text: 'Beat a Labyrinth boss: the Gorgon Queen (wave 8) or the Minotaur Champion (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'labyrinth', boss: ['gorgonQueen', 'minotaurChampion'] },
+        begin: "The Labyrinth's lords kept her copper wire down there for three hundred years, and wore it like jewellery. Beat one again, and look in its horns, its hair, its hems.",
+        piece: COPPER_COIL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'voltara2',
+        title: 'The Copper Works',
+        text: 'Win the quest battle The Copper Works (Kwame or Minh fights; any starter hero may stand in)',
+        goal: { kind: 'battle', n: 1, battle: 'copperWorks' },
+        begin: "East of the keep stand the old Copper Works, where the great clock stopped on the minute the pacts broke. Its warden has stood guard over the face ever since. He will not have noticed the pacts are over.",
+        piece: CLOCK_FACE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'voltara3',
+        title: 'Thunder on Demand',
+        text: 'Fire 6 ultimates',
+        goal: { kind: 'ults', n: 6 },
+        begin: "Last, a vessel. The Crown's glassmaker has blown a flask, and it wants to be filled with something that has been shouted. Six great strikes, and the glass will be satisfied.",
+        piece: STORM_GLASS,
+        reward: { chest: 'bronze' },
+      },
+    ],
+  },
   { id: 'gorm', eidolon: 'gorm', order: 5, title: "Gorm's chain", giver: { name: 'Duchess', title: 'A goat of consequence' }, opens: { kind: 'army', army: 'infernal' }, opensWords: 'the Infernal Host cleared', trial: true, parts: [] },
   { id: 'vaelkhar', eidolon: 'vaelkhar', order: 6, title: "Vaelkhar's chain", giver: { name: 'A voice in the rift', title: 'Heard where a guardian fell' }, opens: { kind: 'calCleared' }, opensWords: 'the Calamity cleared once', trial: true, parts: [] },
 ];

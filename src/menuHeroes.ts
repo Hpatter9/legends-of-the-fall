@@ -42,6 +42,7 @@ import { warmIcon } from './menuArt';
 import { tomeControl } from './tomeView';
 import { TOME_SIZES, tomesOf, tomeTotal } from './sim/tomes';
 import { TOME_ICON } from './tomeArt';
+import { slotBrief } from './fightHudRules';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
 
@@ -367,10 +368,10 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     if (kit)
       // (COMBAT-002: two skills paid from the hero's pool, skill 2 from level 10; since the skills overhaul's batch 3 a rank no longer changes them)
       for (const [label, a, cost, opens] of [
-        ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
-        ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
+        ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? slotBrief(hk, hk.s1) : '', 1],
+        ...(hk ? ([['Skill 2', hk.s2.skill, slotBrief(hk, hk.s2), SKILL2_LEVEL]] as const) : []),
         // (the skills overhaul's batch 4: skill 3, from level 20)
-        ...(hk?.s3 ? ([['Skill 3', hk.s3.skill, `${hk.s3.cost} ${hk.pool}`, SKILL3_LEVEL]] as const) : []),
+        ...(hk?.s3 ? ([['Skill 3', hk.s3.skill, slotBrief(hk, hk.s3), SKILL3_LEVEL]] as const) : []),
         ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
         ['Passive', kit.passive, '', 1],
       ] as const) {

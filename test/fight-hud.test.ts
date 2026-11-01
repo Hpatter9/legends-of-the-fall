@@ -6,10 +6,10 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, keyOf, ULT_LEVEL } from '../src/sim/abilities';
-import { HERO_KITS, costOf, heroKitOf, SKILL2_LEVEL } from '../src/sim/heroKits';
+import { HERO_KITS, costOf, heroKitOf, SKILL2_LEVEL, SKILL3_LEVEL } from '../src/sim/heroKits';
 import { REVIVE } from '../src/sim/kits/revive';
 import { ALL_HEROES } from '../src/sim/units';
-import { barNumbers, chipLine, chipOf, gapOf, hudLayout, sheetOf, ultOf, whichCast } from '../src/fightHudRules';
+import { barNumbers, chipLine, chipName, chipOf, gapOf, hudLayout, sheetOf, ultOf, whichCast } from '../src/fightHudRules';
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -53,7 +53,7 @@ test('an MP caster, a blood-cost hero, a monster hero and a summoner read right'
   // (the Barbarian's skill 2 is paid in blood too: the chip and the sheet say so)
   const b2 = chipOf(b, barb, 2)!;
   assert.equal(b2.blood, HERO_KITS().barbarian.s2.hpCost);
-  assert.equal(chipLine(b2), `${b2.cost} SP +10%HP`);
+  assert.equal(chipLine(b2), `${b2.cost} SP`);
   const sheet = sheetOf(b, barb, 2)!;
   assert.match(sheet.rows.find(([k]) => k === 'Cost')![1], /and 10% of max health/);
   // (the monster hero's chips are its reworked moves, by name; the summoner's call keeps its own long cooldown, a utility's 18 s since the skills
@@ -76,14 +76,16 @@ test('a chip cools from its last cast, greys while the pool cannot pay, and is s
   const c = chipOf(b, u, 1)!;
   assert.ok(c.short && c.pay === 0);
   assert.ok(Math.abs(c.cd - (1 - 1000 / gapOf(hk, hk.s1))) < 1e-9);
-  assert.match(chipLine(c), /· \d+\.\ds$/);
+  assert.match(chipLine(c), /^\d+ SP$/);
   u.charge = CHARGE_MAX;
   assert.ok(!chipOf(b, u, 1)!.short);
   const low = spawn(b, 'knight', 1, 5);
   const shut = chipOf(b, low, 2)!;
   assert.ok(!shut.open);
   assert.equal(chipLine(shut), `Lv ${SKILL2_LEVEL}`);
-  assert.equal(chipLine(shut, true), `Lv${SKILL2_LEVEL}`);
+  assert.equal(chipLine(shut, true), `L${SKILL2_LEVEL}`);
+  assert.equal(chipLine(chipOf(b, low, 3)!), `Lv ${SKILL3_LEVEL}`);
+  assert.equal(chipLine(chipOf(b, low, 3)!, true), `L${SKILL3_LEVEL}`);
   assert.equal(chipLine(chipOf(b, low, 1)!, true), String(Math.round(costOf(low, hk.s1))));
 });
 
@@ -159,4 +161,22 @@ test('up to five heroes take a full row each; more (the Last Stand eight, a Cala
   assert.deepEqual(hudLayout(8), { pairs: true, rows: 4 });
   assert.deepEqual(hudLayout(10), { pairs: true, rows: 5 });
   assert.deepEqual(hudLayout(7), { pairs: true, rows: 4 });
+});
+
+test('every chip name is one word of at most 8 letters, unique within its hero kit (revive faces too), and a sheet gives the skill 3 class', () => {
+  const b = arena();
+  ALL_HEROES.forEach((h, i) => {
+    const hk = HERO_KITS()[h];
+    const skills = [...hk.slots.map((x) => x.skill), ...(hk.s2.revive ? [hk.s2.revive.skill] : [])];
+    const names = skills.map(chipName);
+    for (const n of names) assert.match(n, /^[A-Za-z]{1,8}$/, `${h}: ${n}`);
+    // (the revive face replaces skill 2 on the chip, so it only has to differ from skills 1 and 3)
+    const shown = [hk.s1.skill, hk.s3?.skill, hk.s2.skill].filter(Boolean).map((s) => chipName(s!));
+    assert.equal(new Set(shown).size, shown.length, `${h}: ${shown}`);
+    if (hk.s2.revive) assert.ok(![chipName(hk.s1.skill), ...(hk.s3 ? [chipName(hk.s3.skill)] : [])].includes(chipName(hk.s2.revive.skill)), h);
+    const u = spawn(b, h, ULT_LEVEL, i);
+    const rows = sheetOf(b, u, 3)!.rows;
+    assert.ok(rows.some(([k, v]) => k === 'Class' && v.length > 3), h);
+    assert.ok(rows.some(([k]) => k === 'Cooldown'), h);
+  });
 });

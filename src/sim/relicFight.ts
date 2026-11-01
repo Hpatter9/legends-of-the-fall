@@ -8,11 +8,14 @@
 //
 // Pure rules: no Pixi, no DOM.
 
-import type { Battle, BattleEvent, Unit } from './battle';
+import { hurt, type Battle, type BattleEvent, type Unit } from './battle';
 import { isBoss } from './foes';
 import { ELITE_FOES } from './eliteFoes';
 import { UNITS } from './units';
 import { mixSeed, Rng } from './rng';
+import { freezeFor } from './ailments';
+import { mendUnit } from './abilities';
+import { ECHO_RIDER } from './relicSets';
 
 /** The side-stream salt of the Wedding Ring's struck hero. */
 const STRUCK_SALT = 0x5e1c;
@@ -42,8 +45,21 @@ export function relicStart(b: Battle, wave = false): void {
   b.relicFell = false;
   b.lastStood = undefined;
   b.grief = undefined;
+  b.relicRescued = false;
+  b.relicFroze = false;
   if (!h) return;
   const heroes = b.units.filter((u) => u.alive && partyHero(u));
+  // (RELICS-3: where each hero stood, for the Quarry Gauntlet; its kills and blows begin again)
+  for (const x of heroes) {
+    x.relicU0 = x.u;
+    x.relicV0 = x.v;
+    x.relicKills = 0;
+    x.relicBlows = 0;
+  }
+  if (!wave) {
+    if (h.healLess) for (const x of heroes) x.healMult = (x.healMult ?? 1) * (1 - h.healLess);
+    if (h.ultPace) for (const x of heroes) x.ultPace = (x.ultPace ?? 1) * (1 + h.ultPace);
+  }
   if (h.startMana) b.spells.mana = Math.min(MANA_CAP, b.spells.mana + h.startMana);
   if (h.backHp && !wave)
     for (const x of heroes) {
@@ -90,6 +106,8 @@ export function relicBlow(b: Battle, me: Unit, to: Unit, crit: number, highShot:
   if (h.beast && isBeast(to.def)) m *= 1 + h.beast;
   if (h.execCrit && crit > 1 && to.hp < to.maxHp / 2) m *= 1 + h.execCrit;
   if (h.highShot && highShot) m *= 1 + h.highShot;
+  if (h.killAtk && me.relicKills) m *= 1 + Math.min(h.killAtk.max, h.killAtk.v * me.relicKills);
+  if (h.guardianAtk && to.def.startsWith('calBoss')) m *= 1 + h.guardianAtk;
   return m;
 }
 
@@ -100,13 +118,16 @@ export function relicTaken(b: Battle, to: Unit, by: Unit): number {
   let m = 1;
   if (h.bossGuard && isBoss(by.def)) m *= 1 - h.bossGuard;
   if (h.lastStand && b.lastStood === to.id) m *= 1 - h.lastStand.guard;
+  if (h.stillGuard && to.relicU0 === to.u && to.relicV0 === to.v) m *= 1 - h.stillGuard;
   return m;
 }
 
 /** The share of blows a hero slips besides its own: the Watchman's Charm in the fight's first seconds. */
 export function relicDodge(b: Battle, to: Unit): number {
-  const e = to.side === 'hero' ? b.relics?.hooks?.earlyDodge : undefined;
-  return e && b.t - (b.relicT0 ?? 0) < e.ms ? e.v : 0;
+  const h = to.side === 'hero' ? b.relics?.hooks : undefined;
+  if (!h) return 0;
+  const e = h.earlyDodge;
+  return (e && b.t - (b.relicT0 ?? 0) < e.ms ? e.v : 0) + (h.stillDodge && !to.step ? h.stillDodge : 0);
 }
 
 /** How much faster a hero's skills charge: the Rime Sapphire above half health. */
@@ -136,10 +157,18 @@ export function relicRose(b: Battle, to: Unit, out: BattleEvent[]): void {
 }
 
 /** A fighter has fallen: the tally (a hero of the party, an elite or a boss), the Harness's haste, the Warden's Medal on the last one standing. */
-export function relicFall(b: Battle, to: Unit, out: BattleEvent[]): void {
+export function relicFall(b: Battle, to: Unit, out: BattleEvent[], by?: Unit): void {
   const t = (b.relicTally ??= {});
   if (to.side === 'foe') {
     if (isGreatFoe(to.def)) t.elites = (t.elites ?? 0) + 1;
+    const g = b.relics?.hooks;
+    if (!g) return;
+    // (RELICS-3: a hero's kill feeds the Ash-Tooth; every foe that falls heals the heroes, for the Oath-Ring)
+    if (by && g.killAtk && by.side === 'hero') {
+      const credit = by.owner !== undefined ? b.units.find((x) => x.id === by.owner) ?? by : by;
+      credit.relicKills = (credit.relicKills ?? 0) + 1;
+    }
+    if (g.killHeal) for (const x of b.units) if (x.alive && partyHero(x)) mendUnit(x, x.maxHp * g.killHeal, out);
     return;
   }
   if (!partyHero(to)) return;
@@ -167,3 +196,59 @@ export function relicFall(b: Battle, to: Unit, out: BattleEvent[]): void {
     }
   }
 }
+
+/* ------------------------------------------------------------------ the Eidolons' relics (RELICS-3) */
+
+/** The Mane-Gold Thread: the first hero to drop under the share rescued heals (once a fight). */
+export function relicHurt(b: Battle, to: Unit, out: BattleEvent[]): void {
+  const r = b.relics?.hooks?.rescue;
+  if (!r || b.relicRescued || !partyHero(to) || to.hp >= to.maxHp * r.under) return;
+  b.relicRescued = true;
+  mendUnit(to, to.maxHp * r.heal, out);
+  out.push({ kind: 'relic', to: to.id, id: 'maneThread' });
+}
+
+/** The Rime Pearl: a foe that has struck a hero is slowed. */
+export function relicStruck(b: Battle, by: Unit): void {
+  const s = b.relics?.hooks?.foeSlow;
+  if (s) by.rimeUntil = b.t + s.ms;
+}
+/** How much slower a foe walks and acts: the Rime Pearl's slow while it lasts. */
+export function relicFoeSlow(b: Battle, x: Unit): number {
+  const s = b.relics?.hooks?.foeSlow;
+  return s && x.rimeUntil !== undefined && x.rimeUntil > b.t ? 1 - s.v : 1;
+}
+
+/** The Wyrm's Breath Vial: the foe the fight's first skill struck is frozen (the skill's own `hit` events, from `from`). */
+export function relicSkill(b: Battle, me: Unit, out: BattleEvent[], from: number): void {
+  const ms = b.relics?.hooks?.firstFreeze;
+  if (!ms || b.relicFroze) return;
+  for (let i = from; i < out.length; i++) {
+    const e = out[i];
+    if (e.kind !== 'hit' || e.by !== me.id) continue;
+    const f = b.units.find((x) => x.id === e.to);
+    if (!f || !f.alive || f.side !== 'foe') continue;
+    b.relicFroze = true;
+    freezeFor(b, f, ms, true, me);
+    out.push({ kind: 'relic', to: me.id, id: 'wyrmVial' });
+    return;
+  }
+}
+
+const apart = (a: Unit, c: Unit): number => Math.abs(a.u - c.u) + Math.abs(a.v - c.v);
+/** The share of a blow the Tempest Ring's echo carries to the second foe. */
+const ECHO_SHARE = 0.6;
+/** The Tempest Ring: every n-th blow a hero lands strikes a second foe near the first. */
+export function relicEcho(b: Battle, by: Unit, to: Unit, dmg: number, out: BattleEvent[]): void {
+  const n = b.relics?.hooks?.echoEvery;
+  if (!n) return;
+  by.relicBlows = (by.relicBlows ?? 0) + 1;
+  if (by.relicBlows % n) return;
+  const second = b.units.filter((f) => f.alive && f.side === 'foe' && f !== to && apart(f, to) <= 2).sort((x, y) => apart(x, to) - apart(y, to) || x.id - y.id)[0];
+  if (!second) return;
+  out.push({ kind: 'arc', from: to.id, to: second.id });
+  hurt(b, by, second, Math.max(1, Math.round(dmg * ECHO_SHARE)), false, true, out, 'skill');
+}
+
+/** How much longer an Eidolon's rider lasts (or reaches): half as long again when its whole reliquary is held (the bound echo). */
+export const riderLong = (b: Battle): number => (b.eidolon && b.relics?.set?.echo?.includes(b.eidolon.id) ? ECHO_RIDER : 1);
