@@ -95,7 +95,7 @@ bands, every hero's skills at the level shown (the ultimate unchanged).
 ## Checks
 
 `npm run typecheck`; `npm test -- skill-levels identity ailments-identical fight-hud unit-info wave-card jrpg books skill3 skill-rules
-summon-timers meta stand.test revive hero-kits`; `npm run web`; the full `npm test` (below); `node tools/skills/levelShots.mjs` (393x852: the
+summon-timers meta stand.test revive hero-kits`; `npm run web`; the full `npm test` (2,095 of 2,095); `node tools/skills/levelShots.mjs` (393x852: the
 hero sheet's Skills tab, a skill's sheet in a fight, the wave card's line; no page error).
 
 ## Open questions for the owner
