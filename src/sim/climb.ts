@@ -9,6 +9,7 @@ import { ALL_HEROES, UNITS } from './units';
 import { CAL_TIER, tierOfLevel } from './calamity';
 import { canJoin, gradeMult, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
 import { gearBoost } from './gear';
+import { bareKitStats } from './runGear';
 import { KILL_KEEP, killShares, XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
 
@@ -32,11 +33,13 @@ export const heroLevel = (h: Owned): number => levelOf(h.xp ?? 0, RUN_MAX_LEVEL)
  * A run hero's whole boost: its grade and level, its gear and training bumps, and the skill charge it keeps. No rank, no
  * lasting equipment or talents, and no kind-by-kind multipliers: every hero starts the climb alike.
  */
-export function localBoost(h: Owned): Boost {
+export function localBoost(h: Owned, run?: Run): Boost {
   const k = h.tiered ? CAL_TIER.mult ** (h.grade - 1) : gradeMult(h.grade);
   const lv = levelBoost(heroLevel(h));
   const g = gearBoost(h.gear);
-  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}), ...keptBoost(h) };
+  // (RUN-GEAR: in a real-gear run the found pieces its kind wears count, fresh from the field; a guest wears none)
+  const equip = run && !h.guest ? bareKitStats(run, h.kind) : undefined;
+  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}), ...keptBoost(h) };
 }
 
 /** The XP each hero (by roster id) earned in a finished fight: the same pay as `fightXp`, its kills split the same way (`KILL_KEEP`,

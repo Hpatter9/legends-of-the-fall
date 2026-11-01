@@ -8,7 +8,7 @@
 import { BOOKS, BOOK_PRICE, BOOK_SELL_SHARE, RARE_BOOK_SELL, bookById, type BookDef } from './bookData';
 import { copiesOf, grantBook, readersOf } from './books';
 import { shopArmyIndex } from './chestShop';
-import { EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_SLOTS, MAX_ITEM_LEVEL, grantEquipment, sellPrice, spareEquipment, wearerOf, type Equipment, type NewEquipment, type Rarity } from './equipment';
+import { EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_SLOTS, MAX_ITEM_LEVEL, grantEquipment, sellPrice, spareEquipment, wearerOf, type Equipment, type NewEquipment, type Rarity, unloadCart } from './equipment';
 import { SET_OF_BASE } from './gearSets';
 import type { Meta } from './meta';
 import { mixSeed, Rng } from './rng';
@@ -179,6 +179,8 @@ export function sellPiece(m: Meta, id: number, day: number): number {
   m.crowns += price;
   const s = today(m, day);
   s.soldToday = [{ item: { ...it }, price }, ...(s.soldToday ?? [])].slice(0, SOLD_TODAY);
+  // (RUN-GEAR: the room it leaves takes a piece waiting on the cart)
+  unloadCart(m);
   return price;
 }
 

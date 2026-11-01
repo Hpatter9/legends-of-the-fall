@@ -203,3 +203,13 @@ body[data-move] #result.passing > :is(#stars, #armyStars, #oreDrop, #waveNotes) 
   display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left;
 }
 #towerMap .rcDetail > h3 { margin: 7px 0 0; padding: 9px 0; border: 0; border-bottom: 1px solid #9c845466; background: none; color: #ddc38e; font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; text-shadow: none; }
+/* RUN-GEAR: the result card's Found row (docs/notes/run-gear.md): the pieces the run brought home in their grade frames, a "+n" chip,
+   the line of the piece tapped, and Sell the Commons. */
+.rcFound { margin: 8px 0 0; padding: 10px 12px; border: 1px solid var(--report-rim, #9c8454); border-radius: 5px; background: var(--report-surface, #18241d); }
+.rcFound h3 { margin: 0 0 6px; color: #dfc691; font: 700 12px var(--body); letter-spacing: .14em; text-transform: uppercase; }
+.rcFoundRow { display: flex; flex-wrap: wrap; gap: 6px; }
+.rcFoundRow button { padding: 0; border: 0; background: none; min-width: 44px; min-height: 44px; }
+.rcFoundRow .rcFoundMore { width: 44px; height: 44px; border: 1px solid #9c8454; border-radius: 5px; background: #111e18; color: #f2d494; font: 700 14px var(--body); }
+.rcFoundLine, .rcFoundNote { margin: 6px 0 0; color: #e0d6bc; font: 400 12px/1.35 var(--body); }
+.rcFoundNote { color: #edb29f; }
+.rcFoundSell { margin-top: 8px; min-height: 40px; padding: 0 14px; border: 1px solid #bca164; border-radius: 4px; background: #5b5030; color: #ffedb6; font: 700 13px var(--body); }

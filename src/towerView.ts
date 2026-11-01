@@ -3,6 +3,8 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
+import { foundRow } from './foundRow';
+import { todayKey } from './modes';
 import { SanctuaryView } from './sanctuaryView';
 import { worldPicture } from './sanctuaryArt';
 import { expeditionOf, shiftDestinations, WORLDS } from './sim/sanctuary';
@@ -1264,7 +1266,9 @@ export class TowerView {
     card.append(rewards);
     const line = chestLine(s);
     card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? `Clear every ${unit} for a chest.` : 'No chests yet: climb further to earn them.'));
-    // (RECAP-REVEAL: no list of the gear found: it leaves with the run, and each fight's card named it)
+    // (RUN-GEAR: the gear found is kept now, to the stash: the Found row)
+    const found = foundRow(this.hooks.meta(), run.foundHome, todayKey());
+    if (found) card.append(found);
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {
       this.close();

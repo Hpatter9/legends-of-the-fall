@@ -5,7 +5,7 @@
 // and gives nothing at all until mended. Nothing is ever destroyed by wear. Kept as `Equipment.wear` (points lost; missing is a full
 // piece), so old saves are whole and the numbers can be retuned without touching saves. Pure rules: no Pixi, no DOM, no randomness.
 
-import { DUR, EQUIP_SLOTS, itemName, maxDurability, wearerOf, wornIn, type Equipment } from './equipment';
+import { DUR, EQUIP_SLOTS, itemName, maxDurability, wearerOf, wornIn, type EquipSlot, type Equipment } from './equipment';
 import type { Meta } from './meta';
 
 /** Crowns a point of repair costs by grade, at item level 1 (index 0 is unused). */
@@ -46,7 +46,7 @@ export interface WearNote {
 
 /** A wave has been settled: every piece worn by a hero that fought in it loses a point (half under auto-replay), and a hero that fell
  *  loses one more on its armour. Returns the pieces that crossed into worn or broken. */
-export function settleWear(m: Meta, fought: readonly Fought[], auto = false): WearNote[] {
+export function settleWear(m: Meta, fought: readonly Fought[], auto = false, skip?: (kind: string, slot: EquipSlot) => boolean): WearNote[] {
   const out: WearNote[] = [];
   const share = auto ? AUTO_WEAR : 1;
   const seen = new Set<string>();
@@ -55,7 +55,8 @@ export function settleWear(m: Meta, fought: readonly Fought[], auto = false): We
     seen.add(f.kind);
     for (const slot of EQUIP_SLOTS) {
       const it = wornIn(m, f.kind, slot);
-      if (!it) continue;
+      // (RUN-GEAR: a lasting piece a run's find sits in for this run is not worn: `skip`)
+      if (!it || skip?.(f.kind, slot)) continue;
       const was = wearState(it);
       if (was === 'broken') continue;
       const loss = share * (1 + (f.fell && slot === 'armour' ? 1 : 0));

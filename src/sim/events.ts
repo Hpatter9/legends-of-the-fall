@@ -23,7 +23,8 @@
 // `drawEvent`) are used only inside its functions, never as the modules load.
 
 import { mixSeed, Rng } from './rng';
-import { dropGear, gearText, type Gear } from './gear';
+import { gearText, type Gear } from './gear';
+import { findGear, findPrice, SOURCE, stow } from './runGear';
 import { pickRelic, pricedFor, RELIC_IDS, relicPriceOf, RELICS, relicText, theRelic } from './relics';
 import { healParty, hurtParty } from './health';
 import { UNITS } from './units';
@@ -206,12 +207,13 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
       };
     case 'merchant': {
       const second = relics.length ? pickRelic(() => rng.next(), relics) : '';
-      const g = dropGear(rng, gearId(run), stage);
+      // (RUN-GEAR: a real piece in a real-gear run, priced by its grade)
+      const g = findGear(run, rng, gearId(run), stage, 0, SOURCE.merchant);
       return {
         kind, stage, title: 'A travelling merchant', text: 'A cart creaks out of the mist, hung with trinkets. The merchant says everything is a bargain. He says it to the goat, too.',
         options: [
           second ? relicOption(second, relicPriceOf(second, 70 + 4 * stage)) : { label: 'A sack of coin', text: 'Nothing else to sell.', cost: 0, effect: { t: 'gold', n: 20 } },
-          gearOption(g, 28 * g.tier + 2 * stage),
+          gearOption(g, findPrice(g, stage)),
           leave(),
         ],
       };
@@ -219,14 +221,14 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
     case 'chest': {
       const roll = rng.int(0, 2);
       const id = relics.length ? pickRelic(() => rng.next(), relics) : '';
-      const effect: Effect = roll === 0 && id ? { t: 'relic', id } : roll === 1 ? { t: 'gear', gear: dropGear(rng, gearId(run), stage) } : { t: 'gold', n: 50 + 8 * stage };
+      const effect: Effect = roll === 0 && id ? { t: 'relic', id } : roll === 1 ? { t: 'gear', gear: findGear(run, rng, gearId(run), stage, 0, SOURCE.chest) } : { t: 'gold', n: 50 + 8 * stage };
       return {
         kind, stage, title: 'A mystery chest', text: 'It sits in the road, locked by nothing but luck. Someone has already licked it.',
         options: [{ label: 'Open it', text: 'A relic, gear or gold.', cost: 0, effect }, leave()],
       };
     }
     case 'cursed': {
-      const gear = dropGear(rng, gearId(run), stage, 1);
+      const gear = findGear(run, rng, gearId(run), stage, 1, SOURCE.curse);
       const gold = 40 + 8 * stage;
       return {
         kind, stage, title: 'A cursed path', text: 'The way ahead is dark. Whatever waits there guards something good, and is probably short of staff.',
@@ -297,7 +299,7 @@ export function chooseOption(run: Run, i: number): string | null {
       line = `Found ${theRelic(fx.id)}: ${relicText(fx.id)}.`;
       break;
     case 'gear':
-      (run.items ??= []).push(fx.gear);
+      stow(run, fx.gear);
       run.tower?.recap?.gear.push(fx.gear.name);
       line = `Got the ${fx.gear.name} (${fx.gear.slot}, ${gearText(fx.gear)}).`;
       break;

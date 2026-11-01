@@ -29,6 +29,7 @@ import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
 import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
 import { noteBattleWon } from './questRun';
 import { noteChains } from './eidolonChains';
+import { shopArmyIndex } from './chestShop';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -56,6 +57,8 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
     area: dailyArea(date),
     mode: { kind: 'daily', date, practice, ...(scale > 1 ? { scale } : {}), ...(theme ? { theme: theme.id } : {}) },
     stars: 0,
+    // (RUN-GEAR: it finds real pieces; the page sets `findAt` to the save's furthest army for their item levels)
+    real: true,
   };
   for (const kind of five) {
     run.roster.push({ id: run.nextId, kind, grade: 1 });
@@ -89,7 +92,10 @@ export function startDaily(m: Meta, date: number): Run {
   const entry = (m.daily[key] ??= { best: 0, plays: 0 });
   const practice = entry.plays > 0;
   entry.plays++;
-  return dailyRun(date, practice, dailyScale(m, date));
+  const run = dailyRun(date, practice, dailyScale(m, date));
+  // (RUN-GEAR: its finds' item levels follow the save's furthest army)
+  run.findAt = shopArmyIndex(m);
+  return run;
 }
 
 /** The daily run saved for a date, if it is still going (so Daily resumes it rather than starting over). */
@@ -173,7 +179,7 @@ export function settleDaily(m: Meta, run: Run, fight: { won: boolean; stage: num
  * it stands, and the first act's map (`tower.ts`).
  */
 export function towerRun(seed: number, m: Meta): Run {
-  const run: Run = { seed, gold: START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.party], castle: { ...m.castle }, local: true };
+  const run: Run = { seed, gold: START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.party], castle: { ...m.castle }, local: true, real: true, findAt: shopArmyIndex(m) };
   for (const kind of m.party) run.squad.push(recruit(run, kind, SUMMON_BASE).id);
   run.mode = { kind: 'tower' };
   run.tower = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
@@ -184,7 +190,7 @@ export function towerRun(seed: number, m: Meta): Run {
 export function calamityRun(seed: number, m: Meta, hero: string, ascension = 0): Run {
   const level = Math.max(0, Math.min(Math.floor(ascension) || 0, ascUnlocked(m)));
   const kind = m.unlocked.includes(hero) ? hero : m.party[0];
-  const run: Run = { seed, gold: Math.max(0, CAL_START_GOLD - ascRules(level).startGold) + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true };
+  const run: Run = { seed, gold: Math.max(0, CAL_START_GOLD - ascRules(level).startGold) + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true, real: true, findAt: shopArmyIndex(m) };
   run.squad.push(recruit(run, kind, 0).id);
   run.mode = level ? { kind: 'calamity', ascension: level } : { kind: 'calamity' };
   const t = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);

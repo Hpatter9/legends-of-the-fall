@@ -353,13 +353,14 @@ test('winning waves moves on, the last boss wins the army and ends the run', () 
   }
   assert.equal(run.stage, n);
   // (a boss wave drops gear)
-  const before = (run.items ?? []).length;
+  // (RUN-GEAR: a real piece, in the pack)
+  const before = (run.pack ?? []).length;
   finish(run, true, 2);
   assert.equal(run.cleared, true);
   assert.equal(run.over, true);
   assert.equal(run.stage, n);
   assert.equal(run.event, undefined);
-  assert.ok((run.items ?? []).length > before);
+  assert.ok((run.pack ?? []).length > before);
 });
 
 test('the first wave of the first army is won by a fresh party, every time', () => {
@@ -385,7 +386,10 @@ test('each army needs more levels than the one before: the same hero levels clea
   // is 35% at 21 and 39% at 22 now, so it is checked at 22; `docs/notes/merge-two.md`)
   assert.ok(clearRate('undead', 22, 16) >= 0.35, 'undead at 22');
   assert.ok(clearRate('beasts', 6) <= 0.25, 'beasts at 6');
-  assert.ok(clearRate('beasts', 20, 16) >= 0.3, 'beasts at 20');
+  // (RUN-GEAR, the owner's answer: saves now keep and wear what their runs find, so the Beasts' Normal strength rose (2.17 to 2.27) to keep
+  // the climb's pace; a bare starting five, with no kit, now needs a few more levels: over 32 tries 41% at level 20 before, 19% at 20 and
+  // 41% at 23 now, so it is checked at 23; `docs/notes/run-gear.md`)
+  assert.ok(clearRate('beasts', 23, 16) >= 0.3, 'beasts at 23');
   assert.ok(clearRate('infernal', 14) <= 0.1, 'infernal at 14');
   assert.ok(clearRate('orcs', 14) > clearRate('infernal', 14));
 });

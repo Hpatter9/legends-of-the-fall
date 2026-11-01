@@ -159,8 +159,11 @@ export interface Equipment {
   level: number;
   /** Durability points lost to wear (`wear.ts`); missing is a full piece (and every piece from before wear). */
   wear?: number;
+  /** RUN-GEAR: found in the run of this id (the run's seed) and not yet home: fresh from the field, it gives its main stats times
+   *  `FIELD_BOOST` in that run, and only such a piece takes a run's upgrades (`runGear.ts`). Cleared when the run ends. */
+  found?: number;
 }
-export type NewEquipment = Omit<Equipment, 'id' | 'wear'>;
+export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found'>;
 
 /** Durability by grade before the item level is added (index 0 is unused): Common 30 to Mythic 90 (`wear.ts`). */
 export const DUR: readonly number[] = [0, 30, 40, 55, 70, 90];
@@ -261,6 +264,45 @@ export function grantEquipment(m: Meta, item: NewEquipment): Equipment {
   return made;
 }
 
+// ---- RUN-GEAR: the stash's cap and the camp's cart ----
+
+/** The stash (every spare piece) holds this many; pieces a hero wears never count. */
+export const STASH_MAX = 150;
+/** Past a full stash, this many more wait on the camp's cart. */
+export const CART_MAX = 20;
+
+/** Bring a piece home: into the stash while it has room, else onto the cart, and past the cart sold for its price. An old save above the
+ *  cap keeps everything; only new pieces wait. */
+export function bringHome(m: Meta, item: NewEquipment & { wear?: number }): { kind: 'stash'; item: Equipment } | { kind: 'cart' } | { kind: 'sold'; crowns: number } {
+  if (spareEquipment(m).length < STASH_MAX) {
+    const made = grantEquipment(m, item);
+    if (item.wear) made.wear = item.wear;
+    return { kind: 'stash', item: made };
+  }
+  if ((m.cart?.length ?? 0) < CART_MAX) {
+    (m.cart ??= []).push({ base: item.base, rarity: item.rarity, level: item.level, ...(item.wear ? { wear: item.wear } : {}) });
+    return { kind: 'cart' };
+  }
+  const crowns = sellPrice({ id: 0, ...item });
+  m.crowns += crowns;
+  return { kind: 'sold', crowns };
+}
+
+/** Move the cart's pieces into the stash while it has room, the best first. Returns how many moved. */
+export function unloadCart(m: Meta): number {
+  let n = 0;
+  if (!m.cart?.length) return 0;
+  m.cart.sort((a, b) => b.rarity - a.rarity || b.level - a.level);
+  while (m.cart.length && spareEquipment(m).length < STASH_MAX) {
+    const p = m.cart.shift()!;
+    const made = grantEquipment(m, p);
+    if (p.wear) made.wear = p.wear;
+    n++;
+  }
+  if (!m.cart.length) delete m.cart;
+  return n;
+}
+
 /** Put a spare item on a hero kind. The piece in that slot goes back to the inventory. False when the item isn't spare or the kind isn't unlocked. */
 export function equipItem(m: Meta, kind: string, id: number): boolean {
   const it = spareEquipment(m).find((x) => x.id === id);
@@ -296,6 +338,8 @@ export function salvageItem(m: Meta, id: number): number {
   m.equipment = m.equipment!.filter((x) => x.id !== id);
   const n = sellPrice(it);
   m.crowns += n;
+  // (RUN-GEAR: a piece sold makes room for one waiting on the cart)
+  unloadCart(m);
   return n;
 }
 
@@ -346,7 +390,10 @@ export function combineItems(m: Meta, ids: readonly number[]): Equipment | null 
   if (!canCombineGrade(first.rarity) || (used as Equipment[]).some((x) => x.base !== first.base || x.rarity !== first.rarity)) return null;
   const level = Math.max(...(used as Equipment[]).map((x) => x.level));
   m.equipment = m.equipment!.filter((x) => !ids.includes(x.id));
-  return grantEquipment(m, { base: first.base, rarity: (first.rarity + 1) as Rarity, level });
+  const made = grantEquipment(m, { base: first.base, rarity: (first.rarity + 1) as Rarity, level });
+  // (RUN-GEAR: three pieces made one, so two places in the stash open for the cart's pieces)
+  unloadCart(m);
+  return made;
 }
 
 /** Combine one group of a base and grade (its three best pieces). Null when fewer than three are spare. */
@@ -440,6 +487,16 @@ export function readEquipment(raw: unknown): Equipment[] {
       out.push(made);
     }
   return out;
+}
+
+/** RUN-GEAR: a piece waiting on the camp's cart for room in the stash (no id until it moves in). */
+export type CartPiece = NewEquipment & { wear?: number };
+
+/** Saved cart pieces that are sane (as `readEquipment`, without ids). */
+export function readCart(raw: unknown): CartPiece[] {
+  if (!Array.isArray(raw)) return [];
+  const withIds = readEquipment(raw.map((x, i) => (x && typeof x === 'object' ? { ...(x as object), id: i + 1 } : x)));
+  return withIds.map(({ id: _id, ...rest }) => rest);
 }
 
 /** Saved wearing that is sane: a hero kind, a slot, an owned item of that slot, each item on one hero only. */

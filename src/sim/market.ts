@@ -12,7 +12,8 @@
 // went: it buys the same things a little more by choice. Pure rules: no Pixi, no DOM.
 
 import { mixSeed, Rng } from './rng';
-import { gearText, makeGear, SLOTS, type Gear } from './gear';
+import { gearText, SLOTS, type Gear } from './gear';
+import { findPrice, findSlotGear, SOURCE } from './runGear';
 import { pickRelic, pricedFor, RELIC_IDS, relicPriceOf, RELICS, relicText } from './relics';
 import { HEROES, UNITS } from './units';
 import { gearStage, summonCost, type Run } from './run';
@@ -46,8 +47,8 @@ export const POTIONS = [
 const gearId = (run: Run) => (run.nextGear = (run.nextGear ?? 1) + 1) - 1;
 /** The tier the cart's gear is: a drop's for the stage (an army further on drops as if further on). */
 export const marketTier = (run: Run, stage: number): number => 1 + Math.floor((gearStage(run, stage) - 1) / 8);
-/** A piece of gear's price on the cart (the old merchant's). */
-export const gearPrice = (g: Gear, stage: number): number => 28 * g.tier + 2 * stage;
+/** A piece of gear's price on the cart (the old merchant's; a real piece of a real-gear run is priced by its grade, `findPrice`). */
+export const gearPrice = (g: Gear, stage: number): number => findPrice(g, stage);
 export const relicPrice = (stage: number): number => 70 + 4 * stage;
 export const rummagePrice = (stage: number): number => 10 + stage;
 
@@ -66,7 +67,7 @@ export function stockMarket(run: Run, stage: number, roll = 0): EventOption[] {
   const slots = [...SLOTS];
   for (let i = 0; i < 2; i++) {
     const slot = slots.splice(rng.int(0, slots.length - 1), 1)[0];
-    const g = makeGear(gearId(run), slot, tier);
+    const g = findSlotGear(run, gearId(run), slot, tier, stage, SOURCE.cart);
     wares.push({ label: g.name, text: `${g.slot}: ${gearText(g)}`, cost: gearPrice(g, stage), effect: { t: 'gear', gear: g } });
   }
   const potions = [...POTIONS];
