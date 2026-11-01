@@ -56,7 +56,7 @@ Glitch frames (blank + bounce + pop + stale + torn) and ghost clicks over the 42
 | Build | Size | CPU | Glitch frames | blank | bounce | pop | stale | torn | Ghost clicks | Late pictures | Pictures rebuilt (6 tab changes) | Main thread busy (6 tab changes) | Codex first open busy |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | before | 393x852 | 4x | 13 | 0 | 0 | 5 | 7 | 1 | 3 | 2 | 66 | 601 ms | 1279 ms |
-| after | 393x852 | 4x | **2** | 0 | 0 | 2 | 0 | 0 | **0** | 0 | 12 | 268 ms | 696 ms |
+| after | 393x852 | 4x | **1** | 0 | 0 | 1 | 0 | 0 | **0** | 0 | 12 | 293 ms | 582 ms |
 | before | 360x780 | 4x | 16 | 0 | 0 | 6 | 8 | 2 | 3 | 15 | 66 | 599 ms | 1288 ms |
 | after | 360x780 | 4x | **1** | 0 | 0 | 1 | 0 | 0 | **0** | 0 | 12 | 137 ms | 545 ms |
 | before | 412x915 | 4x | 15 | 0 | 0 | 5 | 8 | 2 | 3 | 8 | 66 | 682 ms | 1424 ms |
@@ -66,7 +66,7 @@ Glitch frames (blank + bounce + pop + stale + torn) and ghost clicks over the 42
 
 The frames left after are designed entrances, sampled sparsely on a slowed CPU: the Pact Gallery's rise (its box fades and lifts in
 over 0.3 s) and, in the last 393x852 run, a quest giver's card fading in (before the fix that card shut the moment it opened, so
-there was nothing to flag). The 393x852 and 412x915 after runs were made again after the chest work below. No run, before or after, had a page error.
+there was nothing to flag). The 393x852 after run was made again after the full-artwork work below, and the 412x915 one after the chest work. No run, before or after, had a page error.
 
 Not improved: the Armies screen still holds the main thread for 0.5-0.7 s (slowed four times) as it opens. Most of it is the
 screen's own layout and its figures' first drawing (`snapFigures` reading the layout); it now shows whole rather than dark and then
@@ -126,6 +126,49 @@ half the screen's size, the same thin rays and elliptical fade) and the screens 
 measured (it needs a bound chain); it is opaque and full-screen, so the screens under it are hidden as well. The other
 masked layers left (the War Horn's fill and aura) are small.
 
+## The hero's full artwork, half painted (the owner's phone)
+
+A second case from the owner's phone: "View full artwork" on a hero's sheet (Dorion, Piper of the Revel) showed the artwork only in an
+L-shaped part of the panel; a large rectangle showed the old hero sheet through it, dimmed, with the panel's frame cut along it.
+
+**Cause: the same, graphics memory; most of it held by screens nobody could see.** The composited layers with the viewer open
+(CDP `LayerTree`, at 412x915 and pixel ratio 2.625) came to about 165 MB on main (187 MB on this branch before this fix):
+
+- the fight's sky under the home screen: five parallax layers 124% of the screen wide, each kept on the graphics card for good by
+  `#sky div { will-change: transform }`, about 65 MB, all the time the menus were up;
+- the board's WebGL canvas, the bench panel (`#panel`) and its pseudo-elements, another 30 MB or so, also under the opaque home screen;
+- the hero sheet under the viewer's 91% backdrop (its scrolling body, its frame's pseudo-elements and portrait);
+- on this branch, the tavern's canvas and the top bar, promoted beside them.
+
+With the viewer: 4 drawing layers, about 31 MB. On the home screen: about 47 MB.
+
+**Reproduced:** buying nothing, just opening Dorion's sheet and the artwork, frames compared with one drawn with plenty of memory:
+main was wrong in 3 of 3 at 48 MB and 3 of 3 at 32 MB (the lower part of the panel unpainted, the sheet through it, the frame cut:
+`menu-glitch-hero-artwork-before-after.png`); this branch 0 of 3 at both.
+
+**Fix (`src/pixel.css`):**
+
+- While the home screen is open, the game's own screen under it (the sky, the board's canvas, the HUD, the bench, the duchess) is
+  `visibility: hidden`. The home screen is opaque, so nothing changes to the eye. A screen opened from the home screen gets them back
+  as the home screen closes (also while it is still drawn under the new screen, `.handoff`).
+- While the full artwork is open (`dialog.heroArtViewer[open]`), the screens under it are hidden as under the chest. The sheet no
+  longer shows faintly through the 91% backdrop.
+
+With these the chest opening now paints fully even at 24 MB (3 of 3), where it lost parts of the chest before; the first-time
+summoning reveal is whole at 48 MB, but at 32 MB the lower part of the hero's painting can still be missing.
+
+**Audit of the rest, as the director asked:**
+
+- `backdrop-filter`: one use, the locked Calamity portal on the Battle tab (`campPlaces.css`, greying the citadel painted behind it);
+  it makes that button a screen-sized layer (about 10 MB) while the Calamity is locked. Left as it is: replacing it changes the look,
+  and it goes once the Calamity opens.
+- `will-change` left on for good: the sky layers (now hidden under the menus, still needed in a fight); the home strip's was removed
+  (only while it slides).
+- Full-size artwork: the hero illustrations are 1024x1536 (portraits 320x480), about 6 MB each decoded; shown one at a time, they fit
+  once the hidden screens are out of the way, so they were not cut down.
+- Big filters: the drop-shadows on the dossier portrait and the artwork are painted with them, not separate layers; nothing showed in
+  the layer tree.
+
 ## Checks
 
 - `npm install`; `npm run typecheck`: passed.
@@ -138,6 +181,9 @@ masked layers left (the War Horn's fill and aura) are small.
 - The chest and summoning trials above (`--force-gpu-mem-available-mb`, pixel ratio 2.625, 412x915), against main and this branch.
   After the chest work: `npm run typecheck` passed, the full `npm test` 1963 of 1963 passed, `npm run web` built, and the menu scan
   at 393x852 and 412x915 gave the after rows above.
+- The full-artwork trials and the layer tree above. After that work: `npm run typecheck` passed, the full `npm test` 1963 of 1963
+  passed, `npm run web` built, and the menu scan at 393x852 (the after row above) found no stale, torn or blank frame; the final
+  frames of entering a fight, coming home from one, the Calamity and the party screen look as before.
 
 ## Files
 
@@ -145,6 +191,6 @@ masked layers left (the War Horn's fill and aura) are small.
 `primeScenes`, keyed castle chips and stall); `src/castle.ts` (keyed chamber cards and power banner); `src/camp.ts` (`paintOnce`,
 the army drawn at once, the width kept, the plate written only when it changes); `src/hall.ts`, `src/library.ts` (`paintOnce`);
 `src/render/sheets.ts` (`warmPortraits`); `src/stallView.ts`, `src/eidolonChainView.ts` (shown once painted); `src/chestStash.ts`, `src/summonTarot.ts` (rays in a canvas);
-`src/pixel.css`, `src/daily.css` (the chest's rays, the covered screens hidden); `src/main.ts`
+`src/pixel.css`, `src/daily.css` (the chest's rays, the screens covered by a reveal, the artwork or the home screen hidden); `src/main.ts`
 (installs the guard); `src/index.html` (`.hmTrack`, `.handoff`, `.paintWait`); `test/tap-guard.test.ts`;
 `tools/menu-glitch/scan.mjs`, `tools/menu-glitch/strip.py`; `docs/samples/menu-glitch-*`.
