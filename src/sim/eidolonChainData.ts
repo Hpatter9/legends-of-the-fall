@@ -307,6 +307,63 @@ const VOLTARA_BINDING: readonly BindingBeat[] = [
   { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Copper Goddess comes in out of the storm.' },
 ];
 
+/* ------------------------------------------------------------------ Gorm, the Quarry Titan (chain 5, `docs/notes/eidolon-chain-5.md`) */
+
+/** Gorm's three pieces. */
+export const EMBER_CRACK: PieceDef = {
+  id: 'emberCrack',
+  name: 'The Ember-Crack',
+  lines: ['Prised out of a pit-lord\'s horn: a flake of grey quarry stone with one crack of orange running through it, still warm.', 'It is the colour of a forge a long way down, and it pulses once a minute, as if it were counting.'],
+  art: 'relicShard',
+};
+export const MASONS_MARK: PieceDef = {
+  id: 'masonsMark',
+  name: "The Mason's Mark",
+  lines: ['A dressed block from the foundations of the keep, with a mark cut deep in one face: a very large G, and under it, smaller, "built this".', 'It was face down in the dark for three hundred years, and nobody thought to turn it over.'],
+  art: 'stoneIdol',
+};
+export const KNOCKING_STONE: PieceDef = {
+  id: 'knockingStone',
+  name: 'The Knocking-Stone',
+  lines: ['Duchess\'s own: the round grey stone she has been butting at dawn for a month, because it knocked back.', 'Once the party had taken a proper beating it started to hum, low, like a very large door being thought about.'],
+  art: 'ironRing',
+};
+
+/** Duchess, heard over the prologue: the goat's own portrait (`face:duchess`), speaking in bleats with her asides in brackets (as `quipData.ts` writes her). */
+const DUCHESS: CastMember = { role: 'face:duchess', x: 0, facing: 'right', hidden: true, name: 'Duchess' };
+
+/** The prologue of Gorm's chain: Duchess the goat leads the party out to the keep's own foundation stone once the Infernal Host has fallen.
+ *  She has headbutted one stone at every dawn for a month, and it has started to answer; the Summoner names the Quarry Titan. */
+const A_GOAT_OF_CONSEQUENCE: Scene = {
+  id: 'eid-gorm-prologue',
+  title: 'A Goat of Consequence',
+  blurb: 'Duchess shows the keep a stone that knocks back.',
+  moment: { kind: 'eidolon', chain: 'gorm' },
+  music: 'solemn',
+  cast: { duchess: DUCHESS, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  shots: [
+    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, at the foot of the keep', lines: [tell('A goat has walked up the Sanctum steps with great purpose, and is standing on the altar. She does not appear to have been invited. She does not appear to need to be.')] },
+    { cam: wide(250, 200), lines: [say('duchess', 'Mehh. (She has been butting the keep. One stone, low down, at the corner. Every dawn, for a month.)')] },
+    { cam: close(['a', 'b']), lines: [say('b', 'That is not unusual, for her.'), say('a', 'She is not usually ahead of the schedule.')] },
+    { cam: wide(250, 200), lines: [say('duchess', 'MEHH. (It knocked back. She would like it noted that it knocked back. She has not been so insulted since the tavern cat.)')] },
+    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'It is not a stone. Or it is, but a very large one, and it is only the part of him that is showing. Gorm, the Quarry Titan.'), say('summoner', 'He cut the hill for the first kings, and raised this keep out of it, block by block, and then, I believe, forgot to mention it. When the pacts broke he lay down in the quarry and let the grass come over. The hill under your walls is him.')] },
+    { cam: close('a'), lines: [say('a', 'We have been living on a person.'), say('b', 'We have been living on a very patient person.')] },
+    { cam: wide(250, 200), lines: [say('duchess', 'Meh. (She has found the rest of him. She is not saying where. She wants a cabbage.)')] },
+    { cam: wide(260, 200), lines: [say('summoner', 'A flake of his fire, the mark he cut in his first block, and the stone that knocked. Bring me those, and I will bind him.'), tell("Gorm's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+  ],
+};
+
+/** Gorm's binding, in stone grey, moss green and ember orange: the pieces on the altar, the foundation-stone cracking along its seams, the circle rising like a hill. */
+const GORM_BINDING: readonly BindingBeat[] = [
+  { at: 0, beat: 'dark' },
+  { at: 500, beat: 'pieces', who: 'summoner', text: 'The flake, the mark, the stone. Set them on the altar, and mind your feet: the altar is about to be very slightly higher.' },
+  { at: 3000, beat: 'circle', who: 'narrator', text: 'The floor of the Sanctum lifts, quite slowly, the way a hill does. Orange runs along the seams of the flagstones in a ring, and every brazier is nudged half a pace to the left.' },
+  { at: 5400, beat: 'rise' },
+  { at: 6600, beat: 'name' },
+  { at: 8000, beat: 'line', who: 'eidolon', text: 'I built a keep. I meant to tell somebody. It has been three hundred years and the grass is very comfortable. I will get up now.' },
+  { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Quarry Titan gets up off the hill.' },
+];
+
 /** The six chains, easiest first. Askel's and Nivra's are written; the rest are the rails for their batches (the design's givers and
  *  openings, rewritten for the six chosen Eidolons when their chains are written). */
 export const CHAINS: readonly ChainDef[] = [
@@ -481,7 +538,49 @@ export const CHAINS: readonly ChainDef[] = [
       },
     ],
   },
-  { id: 'gorm', eidolon: 'gorm', order: 5, title: "Gorm's chain", giver: { name: 'Duchess', title: 'A goat of consequence' }, opens: { kind: 'army', army: 'infernal' }, opensWords: 'the Infernal Host cleared', trial: true, parts: [] },
+  {
+    id: 'gorm',
+    eidolon: 'gorm',
+    order: 5,
+    title: 'A Goat of Consequence',
+    giver: { name: 'Duchess', title: 'A goat of consequence' },
+    opens: { kind: 'army', army: 'infernal' },
+    opensWords: 'the Infernal Host cleared',
+    // (EIDOLON-TRIAL: after the three pieces, the trial against Gorm himself in the Old Quarry, `eidolonTrials.ts`; then the binding)
+    trial: true,
+    prologue: A_GOAT_OF_CONSEQUENCE,
+    binding: GORM_BINDING,
+    call: { title: 'A goat stands on the altar', line: 'Come out to the foundation stone, where something is knocking back · tap to listen' },
+    parts: [
+      {
+        id: 'gorm1',
+        title: 'Fire in the Stone',
+        text: 'Beat an Infernal Host boss: the Devil Leader (wave 8) or the Demon Lord (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'infernal', boss: ['devilLeader', 'demonLord'] },
+        begin: "The pit-lords dug their hall under his quarry and wore a piece of him home. Mehh. (She means the horns. Beat one again, and look in them.)",
+        piece: EMBER_CRACK,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'gorm2',
+        title: 'The Buried Foundation',
+        text: 'Win the quest battle The Buried Foundation (Kwame or Minh fights; any starter hero may stand in)',
+        goal: { kind: 'battle', n: 1, battle: 'buriedFoundation' },
+        begin: "Under the keep there is a cellar nobody has opened, and in the cellar a clerk of works who was never told it was over. Mehh. (He has a clipboard. It is stone. She does not like him.)",
+        piece: MASONS_MARK,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'gorm3',
+        title: 'Stand Your Ground',
+        text: 'Take 25,000 damage across fights (and carry on standing)',
+        goal: { kind: 'tally', n: 25000, stat: 'taken' },
+        begin: "Last, the stone that knocked. It will only hum for a party that has been properly hit and has not moved house. Mehh. (Twenty-five thousand knocks. She will be supervising from the trough.)",
+        piece: KNOCKING_STONE,
+        reward: { chest: 'bronze' },
+      },
+    ],
+  },
   { id: 'vaelkhar', eidolon: 'vaelkhar', order: 6, title: "Vaelkhar's chain", giver: { name: 'A voice in the rift', title: 'Heard where a guardian fell' }, opens: { kind: 'calCleared' }, opensWords: 'the Calamity cleared once', trial: true, parts: [] },
 ];
 

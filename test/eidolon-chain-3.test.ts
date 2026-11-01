@@ -79,7 +79,7 @@ test('the data: three parts and pieces, Gwen at the Sanctum, a binding with no h
   assert.deepEqual(aurelan.opens, { kind: 'army', army: 'wildwood' });
   assert.deepEqual(aurelan.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'wavesWon']);
   assert.ok(aurelan.parts.every((p) => p.reward.chest === 'bronze' && PIECES.has(p.piece.id)));
-  assert.equal(PIECES.size, 12);
+  assert.equal(PIECES.size, 15);
   assert.equal(aurelan.binding!.at(-1)!.beat, 'bound');
   assert.ok(!aurelan.binding!.some((b) => b.beat === 'horn' || b.beat === 'hornFull'));
   const lines = aurelan.prologue!.shots.flatMap((s) => s.lines ?? []);

@@ -245,8 +245,70 @@ const VOLTARA_TRIAL: TrialDef = {
   },
 };
 
-/** Every trial written, one a chain (chains 5 and 6 add theirs here). */
-export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL, AURELAN_TRIAL, VOLTARA_TRIAL];
+/* ------------------------------------------------------------------ Gorm, the Quarry Titan (chain 5, `docs/notes/eidolon-chain-5.md`) */
+
+const GORM_TRIAL: TrialDef = {
+  id: 'gormTrial',
+  chain: 'gorm',
+  boss: {
+    id: 'gormTitan',
+    name: 'Gorm',
+    title: 'The Quarry Titan, Who Tests the Keep',
+    side: 'foe',
+    sheet: 'eidolon_gorm',
+    scale: 0.66,
+    hp: 2600,
+    atk: 55,
+    def: 16,
+    range: 1,
+    moveMs: 1000,
+    atkMs: 1500,
+    jump: 2,
+    role: 'A landslide that clears the ground round him, pillars that rise where he has marked, a hide of granite that cannot be shoved',
+  },
+  kit: {
+    skill: { name: 'Stone Raises Stone', text: 'Two stone golems peel off the quarry wall to his side (four at most, six in a fight)', kind: 'stoneGolem', n: 2, most: 4, limit: 6 },
+    passive: { name: 'Granite Hide', text: 'Blows from the front lose a third, he cannot be shoved, and what strikes him in melee takes a tenth back', block: 0.33, steady: true, thorns: 0.1 },
+  },
+  signatures: [
+    { key: 'landslide', name: 'Landslide', rage: 'The Hill Comes Down', el: 'earth', shape: { kind: 'ring', r0: 1, r: 3 }, power: 1.45, rider: 'shove' },
+    { key: 'risingPillars', name: 'Rising Pillars', rage: 'The Whole Quarry', el: 'earth', shape: { kind: 'rain', n: 4 }, power: 1.35, rider: 'stun' },
+  ],
+  phase: {
+    line: 'I WAS THE HILL. I AM STILL THE HILL. MIND YOUR FEET!',
+    atk: 1.2,
+    heal: 0.05,
+    shield: 0.25,
+    adds: { kind: 'stoneGolem', n: 2 },
+    passive: { block: 0.45, thorns: 0.2 },
+  },
+  land: 'ruins',
+  waves: [
+    { foes: ['stoneGolem', 'ironGolem', 'magmaGolem', 'stoneGolem'] },
+    { foes: ['gormTitan', 'stoneGolem', 'ironGolem'], boss: 'final' },
+  ],
+  like: { army: 'infernal', wave: 13 },
+  ease: 0.27,
+  lift: { hp: 1, atk: 1 },
+  // (Kwame or Minh, one from each starter pack; any starter hero stands in)
+  cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+  blurb: 'Gorm lies in the Old Quarry, half hill and half titan. Before he gets up, he wants to see whether the keep he built is still standing.',
+  part: {
+    title: 'The Trial',
+    text: 'Win the trial against Gorm himself in the Old Quarry (Kwame or Minh fights; any starter hero may stand in)',
+    begin: 'You have the flake, the mark and the stone. Now come down to the quarry, little keep, and let me see whether I built you well.',
+  },
+  lines: {
+    place: 'The Old Quarry, a mile below the keep: grey walls cut in great steps, moss on every ledge. A part of the hillside stands up and turns round.',
+    challenge: ['So. Somebody has been knocking on my foundations.', 'You have the flake, the mark and the stone. Do you have the weight?'],
+    answer: 'We have lived on you for three hundred years. We would like to know whether we may go on.',
+    after: 'Hm. It held. I built it well, and I never said. Take me to your Summoner, little keep: I will answer your horn.',
+    afterHero: 'He sits down on the quarry floor, very carefully, and the whole valley feels it. He looks, if a hill can look, rather pleased.',
+  },
+};
+
+/** Every trial written, one a chain (chain 6 adds its own here). */
+export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL, AURELAN_TRIAL, VOLTARA_TRIAL, GORM_TRIAL];
 
 const BY_CHAIN = new Map(TRIALS.map((t) => [t.chain, t]));
 /** A chain's trial, if one is written. */
