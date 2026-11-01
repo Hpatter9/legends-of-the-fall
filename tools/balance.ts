@@ -45,7 +45,6 @@ import { TIERS } from '../src/sim/tiers';
 import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
 import { calamityTable } from './tower-balance';
 import { equipAll } from '../src/sim/equipment';
-import { openAll } from '../src/sim/armyStars';
 import { FIELD_BOOST, GRADE_TABLE } from '../src/sim/runGear';
 // (RUN-GEAR: `--normal 1:0,1:0,1:0.33,2:0` tries another Normal column of the finds' grade table, steps 1 to 4 as grade:chance-up)
 if (process.argv.includes('--normal'))
@@ -446,9 +445,7 @@ function realClimb(): void {
       const st = stats[i];
       while (tries < MAX_TRIES && !cleared) {
         spendCrowns(meta);
-        // (RUN-GEAR: `--chests` opens the chests its waves paid first, as a player does; the pieces its runs found and brought home, and
-        // the chests' gear, are put on at camp, Equip all, before each try)
-        if (process.argv.includes('--chests')) openAll(meta);
+        // (RUN-GEAR: the pieces its runs found and brought home are put on at camp, Equip all, before each try)
         equipAll(meta);
         const party = bestParty(meta);
         if (tries === 0) {

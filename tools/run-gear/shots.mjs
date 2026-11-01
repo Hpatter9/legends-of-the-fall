@@ -46,7 +46,8 @@ for (const [w, h] of SIZES) {
   // (the run's end: its finds come home and the result card shows the Found row)
   await page.evaluate(() => {
     const g = window.__game;
-    document.querySelector('#events > div')?.replaceChildren();
+    // (the pack closed by its own button)
+    [...document.querySelectorAll('.evcard.pack header button')].find((b) => b.textContent === 'Close')?.click();
     const run = g.run;
     run.over = true;
     window.__settleFinds(g.meta, run);

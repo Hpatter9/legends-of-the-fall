@@ -69,7 +69,64 @@ them and finishes on the old rules.
 
 ## The balance pass
 
-BALANCE_PLACEHOLDER
+Measured on main (0.313.0, e296369) and on this branch with the same tools. The tools learned the real finds first: the bot's runs
+(`tools/autoplay.ts` `playArmy`, `playDaily`, the spire's and Calamity's climbs) drop, wear and bring home real pieces (`settleFinds`), its
+fights count the kit a kind wears with the run's finds in it (`botBoost`, `botKitStats`; on the old rules it was the awakening only), its
+dressing is Equip best from the pack, and the realistic climb puts the found pieces on at camp (Equip all) before each try, so a save's
+later armies fight in what its earlier runs found. Tuning switches: `npm run balance -- ... --field 1.5,3` (the boosts), `--normal
+1:0,1:0,1:0.33,2:0` (the grade table's Normal column), and `RUN_GEAR_KEEP=0` (finds left in the run, to see what keeping them does).
+`node tools/run-gear/sweep.mjs --attempts 60` measures the spire, the Calamity and the daily in one go.
+
+**The realistic climb** (`npm run balance -- --no-tables --climb --saves 120`, mean tries per army; no save clears the Labyrinth in 25
+tries on main either, so the table stops there):
+
+| | Orcs | Undead | Beasts | Wildwood | pieces owned at the Beasts |
+| --- | --- | --- | --- | --- | --- |
+| main | 2.0 | 3.0 | 4.7 | 2.2 | |
+| real finds, kept (x2 / x3, the design's grade table), 60 saves | 2.1 | 2.8 | 3.2 | 1.8 | 8 |
+| the same, army boost x1 | 2.1 | 2.6 | 3.3 | 1.9 | 8 |
+| army boost x1.5 | 2.2 | 2.4 | 3.0 | 1.8 | 8 |
+| x2, Normal one grade lower (step 4 Rare) | 2.1 | 2.5 | 3.5 | 1.7 | 8 |
+| x1.5, Normal all Common (step 4 a third Rare) | 2.1 | 2.6 | 3.8 | 1.9 | 8 |
+| **x2, finds not kept** (`RUN_GEAR_KEEP=0`) | 2.1 | 2.7 | 5.3 | 2.3 | 0 |
+
+At 120 saves a mean moves about 0.3 between runs, so only the gap at the Beasts is clearly real. **The fresh boost is not what
+moves the climb**: with the finds left in the run, x2 plays as main's simple gear did, within noise, and every boost from x1 to x2
+with the finds kept lands at about 3 tries at the Beasts. **Keeping the finds is.** By the Beasts a save has brought home about 8
+pieces, so its five heroes wear a kit from the first wave of every later army, where main's started each run bare. A lower grade
+table barely changes this: a Common kit is worth about +6% and a Rare one about +10% (`gear-balance`), and the kit is there in every wave.
+The climb models a save with no chest gear (its waves pay no chests), so the found kit is its only kit. A real save at that point
+also wears what its chests gave, which would leave less room for finds to help, but the climb cannot show that. The values stay at the design's (`FIELD_BOOST` x2 and x3, the design's
+grade table), and the gap is a question for the owner below. No save had a Legendary piece from finds before the Labyrinth (the sixth
+army is never reached in the climb).
+
+**The other modes** (60 runs each, `node tools/run-gear/sweep.mjs --attempts 60`; the daily from a fresh save, the spire and Calamity
+from fresh saves with no castle, at their recommended starts):
+
+| | main | branch |
+| --- | --- | --- |
+| The spire: floors reached (mean) | 81.6 | 80.3 (-1.6%) |
+| The Calamity: spots cleared (mean), maps | 15.6, 1.80 | 15.7, 1.82 |
+| The daily: cleared, waves won (mean) | 65.0%, 9.32 | 65.0%, 9.32 (a daily finds about one piece a run) |
+
+**The Last Stand** (`npm run stand-balance`, 30 runs a row at levels 1 to 100) finds nothing in the run (as before) and plays exactly
+as on main: every row's median, mean, low, high, kills and peak foes are the same.
+
+**Gear balance** (`npm run gear-balance`): it measures the pieces themselves (a whole kit by grade, each base alone), which this batch
+does not change: its first table's rows match main exactly (army 1: Common +6%, Rare +10%, Epic +19%, Legendary +22%, Mythic +27%; army 3:
++7, +11, +21, +25, +29%; army 5: +8, +13, +25, +28, +34%). The full per-base table takes over twenty minutes and was not rerun.
+
+**The identity hashes** moved for the run modes only, as they should (their fights now wear real finds): `test/fixtures/spells-identity.json`
+and `test/fixtures/ailment-logs.json`, the keys `daily`, `tower` and `calamity` (the tests' actual hashes taken for those keys alone).
+
+## A question for the owner
+
+Keeping what runs find makes the early armies quicker to beat in the bot's climb: at the Beasts about 3 tries against 4.7 on main
+(Undead 2.6 to 2.8 against 3.0, Wildwood about 1.8 against 2.2). Main's numbers come back when the finds are not kept (in the run they
+match the old simple gear), and no setting of the fresh boost or of the grade table brings them back with the finds kept. The choices:
+keep it as built (a save that fights more gets stronger sooner: what keeping finds means), make the found pieces weaker
+at home (a lower item level when they come home, say), or make the early armies (Undead to Wildwood) a little harder after this ships, so the climb is
+back at main's pace (the armies' tuning, `docs/notes/difficulty.md`).
 
 ## Tests
 
@@ -79,6 +136,11 @@ fresh boost over the lasting kit, the lasting piece not worn, the find's wear, t
 merges leave finds alone; only this run's finds upgrade (the road's temper never touches the lasting kit); the stash, cart and sale;
 the auto half rate; old runs coming home; the merchant's price and the forge's grade; the cart read back. Tests that checked the
 simple gear of a new run now read the pack; tests of the old rules mark their run as saved before (`delete run.real`).
+
+## Checks
+
+`npm run typecheck`; the full `npm test` (2,164 tests, all passed); `npm run web`; the pack and the Found row at 393x852, 360x780 and
+412x915 through `node tools/run-gear/shots.mjs`, with no page errors. The balance runs are above.
 
 ## Left for later
 
