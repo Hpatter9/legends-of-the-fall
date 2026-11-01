@@ -87,6 +87,11 @@
 .hsBackRow { display: flex; flex-wrap: wrap; gap: 8px; }
 .hsBack1 { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; min-height: 44px; background: #1e1711; border: 1px solid #4c3d28; border-radius: 4px; color: #f4d69a; font: 400 12px var(--body); }
 
+/* the visiting traders (src/sim/traders.ts): up to eight tabs across; the Dealer's shelf is darker, with no filter or blur (a plain gradient) */
+.hsTabs.many .hsTab { font-size: 11px; letter-spacing: -0.2px; }
+.hsScene.gloaming::before { content: ''; position: absolute; inset: 0; z-index: 0; background: linear-gradient(#1a0f2cb0, #0a0614d0); pointer-events: none; }
+.hsOre { width: 80%; height: 80%; object-fit: contain; image-rendering: pixelated; }
+
 @media (max-height: 800px) {
   .hsScene { height: 176px; }
   .hsHester { height: 196px; }
