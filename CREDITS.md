@@ -426,8 +426,8 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 - The dust kicked up as a wave comes in (`landdust.png`): the `landing-dust` effect of **PVFX Foundry** (Pixel VFX Studio,
   `pvfx-foundry-thirteen-spritesheets`), CC0 1.0, its grid sheet as it is.
 - The stained-glass window, the gilt pilaster with its banner and the dark back wall behind the field (`window.png`, `pilaster.png`,
-  `backwall.png`) are cut from the castle's own throne room (`src/art/throne/throne_room.png`); the king on his throne is the castle's
-  enthroned king (`src/art/throne/king_throne.png`, used as it is), so he looks the same everywhere.
+  `backwall.png`) are cut from the castle's own throne room (`src/art/throne/throne_room.png`).
+  (The old enthroned king, `king_throne.png`, and The King's atlas were removed in DEFAULT-RULER: the chosen ruler sits there now.)
 - The banners, braziers, lamps, fountain, well, chests, crates, barrels and pots are the castle courtyard's Chronos kit pieces already in
   `src/art/castle/` (see "Castle courtyard"), and the standards the war camp's (`src/art/camp/standard.png`); the courtyard's grass is
   `src/art/ground/grass1.png` and `grass2.png`.
@@ -494,7 +494,6 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 
 Original generated illustrations for the approved Calamity portal-expedition direction: the emerald-and-obsidian sanctuary and six destination environments (Ashen Keep, Rootbound Shrine, Lost Caravan, Prism Vault, Hollow Court and Frostwatch). They are in `src/art/rift-sanctuary/`, converted to WebP (quality 86) from the unchanged PNGs; provenance and hashes are recorded alongside them. Equal SVG viewports select the destination atlas panels for cards, scenic encounter screens and battle backdrops. The live arenas reuse the credited Chronos isometric stone, terrain, vegetation, ruins, camps and light assets, and the original Calamity arrival portal. Hero sprites retain their existing pack credits.
 - The living sanctuary (CALAMITY-HUB, `src/sanctuaryView.ts`) adds no new art: its rifts reuse the arrival portal above and the PVFX Foundry rift (`src/art/calmap/portal.png`), its mist the Cloudscape nebula (`src/art/calmap/nebula_2.png`) and its motes the sparkle strips in `src/art/fx/vfx/`, all credited where they were first copied in.
-- `src/art/rulers/the_king.png` (The King, the ninth ruler and the default since STARTER-KING): the earlier king brought back, no new artwork. The seated and command rows are the castle's enthroned king (`src/art/throne/king_throne.png`, see the throne room entries above) as it is. The standing rows are the Last Stand's old king from the **Himeko Sutori** character pack in `chronos-assets` (`Template_Male`, `Plate_06_Lordly_Male` and its top, `Helm/Helm_Crown_Male`), with the same pack's `Facial Hair/BeardBlond` and `Staff_05_Radiant_Male` as his sceptre, cut from the pack's 128 px grid and drawn twice up; his fall ends on the kneel turned 90 degrees. Built by `tools/rulers/the-king.py` (lossless pixel moves only). When he rises from his seat he stands before the Iron Stag's throne from `thrones.png` (the old art has no empty throne).
 
 ## Anime hero gallery
 

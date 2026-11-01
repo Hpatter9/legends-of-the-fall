@@ -10,7 +10,7 @@ const server = createServer((q,r) => {
   r.setHeader('Content-Type', types[path.split('.').pop()] || 'application/octet-stream');
   r.end(readFileSync(path));
 }).listen(Number(process.env.PORT ?? 8163), '127.0.0.1');
-const ids = ['the_king','sun_viper','frost_witch','ash_empress','rose_duchess','moon_oracle','iron_stag','storm_corsair','gilded_necromancer'];
+const ids = ['sun_viper','frost_witch','ash_empress','rose_duchess','moon_oracle','iron_stag','storm_corsair','gilded_necromancer'];
 const names = ['The King','Sun Viper','Frost Witch','Ash Empress','Rose Duchess','Moon Oracle','Iron Stag','Storm Corsair','Gilded Necromancer'];
 const heroes = ['knight','samurai','kunoichi','archer','wizard','paladin','druid','mercenary'];
 const errors = [];

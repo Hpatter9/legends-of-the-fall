@@ -13,7 +13,7 @@ const srv = createServer((q, r) => {
   r.end(readFileSync(p));
 }).listen(Number(process.env.PORT ?? 8263));
 const label = process.env.LABEL ?? 'after';
-const rulers = (process.env.RULERS ?? 'iron_stag,sun_viper,the_king').split(',');
+const rulers = (process.env.RULERS ?? 'iron_stag,sun_viper,storm_corsair').split(',');
 mkdirSync('out/seat-strip', { recursive: true });
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const heroes = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'paladin', 'druid', 'mercenary'];
