@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.307.0',
+    date: '2026-11-01',
+    title: 'Eidolon quest: The Late Dawn',
+    notes: ['Once Nivra is bound and the Wildwood falls, Gwen Tallow climbs to the Sanctum: three pieces, then a trial against Aurelan, the Lion of Dawn.'],
+  },
+  {
     version: '0.306.0',
     date: '2026-11-01',
     title: 'Every hero\'s third skill',

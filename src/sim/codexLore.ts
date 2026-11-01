@@ -44,6 +44,7 @@ export const FOE_LORE: Record<string, string> = {
   magmaGolem: 'Still glowing from the subterranean furnace. His fist leaves molten slag, and the mud remembers.',
   sapphireColossus: 'Deep blue as a mountain tarn and hard as diamond. When his crystal shrapnel flies, take cover.',
   nivraWyrm: 'The Rime Wyrm herself, awake and testing the keep before she answers its horn. She breathes winter down a whole rank and calls the white wolves to heel.',
+  aurelanLion: 'The Lion of Dawn himself, crowned and cross, testing the keep before he answers its horn. Lances of light fall on a column of heroes, his roar stuns the front rank, and a dome of sunrise shuts round him.',
   forgeTitan: 'The primal forge\'s opening hammer and its last. Each strike rings like an anvil; his chest furnace roars.',
   boarKing: 'He brakes for no wall and swerves for no hero. The line is merely an obstacle between him and forage.',
   devilLeader: 'Commands the pit from the vanguard, showering hellfire upon anything that isn\'t actively incinerating.',

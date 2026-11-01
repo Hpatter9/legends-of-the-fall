@@ -115,6 +115,34 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
         { cam: close('a'), lines: [tell("Where the Warden broke apart, a pearl of black ice lies on the mere. Under the glass, the long pale shape stirs, once."), say('a', 'Sorry. Go back to sleep. We will knock properly.')] },
       ]),
   },
+  {
+    // (Aurelan's chain, part 2: the shrine the sun never reaches, and the gorgon queen who shuttered it)
+    id: 'sunlessShrine',
+    title: 'The Sunless Shrine',
+    blurb: "The shrine where the Lion's crown was put away is shuttered against the sun, and gorgons keep its hall.",
+    land: 'shrine',
+    like: { army: 'wildwood', wave: 11 },
+    ease: 0.78,
+    // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
+    cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+    waves: [
+      { foes: ['mazeGorgon1', 'stoneGolem', 'mazeGorgon2'] },
+      { foes: ['mazeGorgon1', 'stoneGolem', 'mazeGorgon2', 'stoneGolem'] },
+      { foes: ['gorgonQueen', 'stoneGolem', 'mazeGorgon1', 'mazeGorgon2'], boss: 'final' },
+    ],
+    boss: { name: 'The Eclipse Queen', title: 'Who Keeps the Sun in Stone' },
+    before: (c) =>
+      story('sunlessShrine', 'The Sunless Shrine', 'shrine', { a: hero(c[0] ?? 'knight', 230), queen: foe('gorgonQueen', 430, 1.3, { name: 'The Eclipse Queen', hidden: true }) }, [
+        { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Sunless Shrine', lines: [tell('A shrine with its shutters nailed down, and no light in it at noon. Statues stand in the dark, each caught mid-step, each facing the door.')] },
+        { cam: close('a'), lines: [say('a', 'Nobody has been in here for a long time. Nobody who left, anyway.'), tell('Something with a great many eyes opens its shutters one at a time.')] },
+        { cam: wide(380, 205), acts: [{ who: 'queen', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('queen', 'The sun is late. The sun is STONE. Kneel to the shade, little torches.', 'shout')] },
+        { cam: close('a'), lines: [say('a', 'We brought our own light. Mind your eyes.')] },
+      ]),
+    after: (c) =>
+      story('sunlessShrineAfter', 'The Sunless Shrine', 'shrine', { a: hero(c[0] ?? 'knight', 260) }, [
+        { cam: close('a'), lines: [tell('Where the Queen turned to rubble, the shutters burst open, and the first light in three hundred years falls on a plinth. A crown of beaten gold lies on it, spiked like rays.'), say('a', 'It is warm. Somebody has been keeping it warm for him.')] },
+      ]),
+  },
   // (EIDOLON-TRIAL: the trials, one a chain)
   ...TRIALS.map(trialBattle),
 ];

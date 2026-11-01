@@ -117,8 +117,72 @@ const NIVRA_TRIAL: TrialDef = {
   },
 };
 
-/** Every trial written, one a chain (chains 3 to 6 add theirs here). */
-export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL];
+
+/* ------------------------------------------------------------------ Aurelan, the Lion of Dawn (chain 3, `docs/notes/eidolon-chain-3.md`) */
+
+const AURELAN_TRIAL: TrialDef = {
+  id: 'aurelanTrial',
+  chain: 'aurelan',
+  boss: {
+    id: 'aurelanLion',
+    name: 'Aurelan',
+    title: 'The Lion of Dawn, Who Tests the Keep',
+    side: 'foe',
+    sheet: 'eidolon_aurelan',
+    scale: 0.6,
+    hp: 1800,
+    atk: 52,
+    def: 9,
+    range: 1,
+    moveMs: 650,
+    atkMs: 1200,
+    jump: 4,
+    role: 'Lances of light on a column, a roaring that stuns the front rank, a dome of dawn',
+  },
+  kit: {
+    skill: { name: 'The Pride Answers', text: "Two of the grove's satyrs run to the Lion's side, sworn to the dawn (four at most, six in a fight)", kind: 'groveSatyr1', n: 2, most: 4, limit: 6 },
+    passive: { name: 'Dome of Dawn', text: 'A radiant dome stands round him: blows from the front lose a quarter', block: 0.25 },
+  },
+  signatures: [
+    { key: 'dawnLances', name: 'Lances of Dawn', rage: 'The Sun Comes Down', el: 'light', shape: { kind: 'rain', n: 3 }, power: 1.5, rider: 'burn' },
+    { key: 'dawnRoar', name: 'Dawnbreak Roar', rage: 'Dawnbreak Unending', el: 'light', shape: { kind: 'row', w: 1 }, power: 1.4, rider: 'stun' },
+  ],
+  phase: {
+    line: 'THE DAWN IS HERE. STAND IN MY LIGHT, IF YOU CAN!',
+    atk: 1.2,
+    heal: 0.08,
+    shield: 0.2,
+    haste: 6000,
+    adds: { kind: 'groveSatyr1', n: 2 },
+    passive: { block: 0.35 },
+  },
+  land: 'highlands',
+  waves: [
+    { foes: ['groveSatyr1', 'groveSatyr2', 'groveSatyr3', 'groveSatyr1'] },
+    { foes: ['aurelanLion', 'groveSatyr2', 'groveSatyr3'], boss: 'final' },
+  ],
+  like: { army: 'wildwood', wave: 13 },
+  ease: 0.68,
+  lift: { hp: 1, atk: 1 },
+  // (Kwame or Minh, one from each starter pack; any starter hero stands in)
+  cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+  blurb: 'Aurelan stands on the hill at the edge of dawn. Before he answers the horn, he wants to see what blows it.',
+  part: {
+    title: 'The Trial',
+    text: 'Win the trial against Aurelan himself on the Dawn Hill (Kwame or Minh fights; any starter hero may stand in)',
+    begin: 'You have the pieces. Do you have the light? Come up the hill before sunrise, little keep, and stand in mine.',
+  },
+  lines: {
+    place: 'The hill above the Sanctum, an hour before sunrise. The east is grey, and something large and gold is waiting in it.',
+    challenge: ['So. The little keep that lit a lamp against the dark.', 'You have the pieces. Do you have the light?'],
+    answer: 'We have been standing in the dark a long time. Show us the dawn.',
+    after: 'Good. Night is long, and you outlasted it. Take me to your Summoner, little keep: I will answer your horn.',
+    afterHero: 'The sun comes up behind him. He looks pleased, and slightly smug about it.',
+  },
+};
+
+/** Every trial written, one a chain (chains 4 to 6 add theirs here). */
+export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL, AURELAN_TRIAL];
 
 const BY_CHAIN = new Map(TRIALS.map((t) => [t.chain, t]));
 /** A chain's trial, if one is written. */
