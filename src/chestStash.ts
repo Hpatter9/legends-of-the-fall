@@ -8,7 +8,7 @@ import { bookById } from './sim/bookData';
 import { ORE_ICON } from './oreView';
 import { ORES } from './sim/awakenMats';
 import { itemIcon } from './equipView';
-import { EQUIP_BASES } from './sim/equipment';
+import { EQUIP_BASES, stashFull } from './sim/equipment';
 import { bestChest, chestKind, openAll, openChest, sumLoot, type ChestKind, type Loot, type LootItem } from './sim/armyStars';
 import { TOME_SIZES } from './sim/tomes';
 import { TOME_ICON } from './tomeArt';
@@ -36,7 +36,10 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 /** Fill `host` with the stash: nothing when it is empty. A tap on a chest opens it; `onChange` runs after the meta changes (and the opening is closed). */
 export function drawChestStash(host: HTMLElement, m: Meta, onChange: () => void): void {
   host.replaceChildren();
-  host.classList.toggle('empty', m.stash.length === 0);
+  // (RUN-GEAR-2: the cart wears a red "full" tag once the stash is full, so pieces from runs wait on it; it shows with no chests too)
+  const full = stashFull(m);
+  host.classList.toggle('empty', m.stash.length === 0 && !full);
+  if (full) host.append(el('i', 'csFull', 'Full'));
   if (!m.stash.length) return;
   // (one chest stands for the whole pile: the best one waiting, with how many there are beside it; a tap opens that best one)
   const i = bestChest(m.stash);

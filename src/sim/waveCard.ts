@@ -32,13 +32,15 @@ export interface WaveMoments {
   skills?: readonly string[];
   /** Gear that turned worn or broke this wave (`wear.ts`: "Kenji's Runed Blade broke"); missing is none. */
   wear?: readonly string[];
+  /** RUN-GEAR-2: finds waiting in the run's pack that no hero wears (`spareFinds`); missing or 0 is none. */
+  waiting?: number;
   /** The quests the wave moved, in words (JRPG-RECAP: "Quest complete: ...", "Quest: Hunt the wolves 3/5"; missing is none). */
   quests?: readonly string[];
 }
 
 /** One line on the card, with its kind (the line's mark and colour). */
 export interface WaveNote {
-  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest' | 'learned' | 'skill' | 'study' | 'wear' | 'guest';
+  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest' | 'learned' | 'skill' | 'study' | 'wear' | 'guest' | 'pack';
   text: string;
 }
 
@@ -78,6 +80,7 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
   for (const w of m.wear ?? []) out.push({ kind: 'wear', text: w });
+  if (m.waiting) out.push({ kind: 'pack', text: m.waiting > 1 ? `${m.waiting} finds wait in the pack` : 'A find waits in the pack' });
   for (const s of m.study ?? []) if (!s.learned) out.push({ kind: 'study', text: s.text });
   return out;
 }

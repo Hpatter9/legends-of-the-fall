@@ -109,7 +109,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 const num = (n: number) => Math.round(n).toLocaleString('en-GB');
 
-const MARKS: Record<ResultLine['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', bench: '▲', learned: '✦', skill: '✦', study: '✎', wear: '⚒', guest: '⚑' };
+const MARKS: Record<ResultLine['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', bench: '▲', learned: '✦', skill: '✦', study: '✎', wear: '⚒', guest: '⚑', pack: '◈' };
 
 /** The clock's beats, in ms. */
 const T = { ROWS: 450, FILL: 1300, COUNT: 900, ITEM: 70, LINE: 90, GAP: 150 };
