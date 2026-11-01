@@ -235,15 +235,16 @@ test("a hero's own boost of Level 1 skills changes nothing on the fighter", () =
 test('the owner\'s answers: a practice replay counts nothing, auto-replay half, every other mode in full (the spire and the Calamity too)', () => {
   assert.equal(useShare({ kind: 'daily', practice: true }, false), 0);
   assert.equal(useShare({ kind: 'quest', practice: true }, false), 0);
-  assert.equal(useShare({ kind: 'daily', practice: false }, false), 1);
-  assert.equal(useShare({ kind: 'quest' }, false), 1);
+  assert.equal(useShare({ kind: 'daily', practice: false }, false), 0, 'only army runs count (the owner\'s answer)');
+  assert.equal(useShare({ kind: 'quest' }, false), 0);
   assert.equal(useShare({ kind: 'army' }, true), AUTO_SHARE);
-  assert.equal(useShare({ kind: 'tower' }, false), 1);
+  assert.equal(useShare({ kind: 'army' }, false), 1);
+  assert.equal(useShare({ kind: 'tower' }, false), 0);
   assert.equal(useShare({ kind: 'calamity' }, false), 0, 'the Calamity is a separate game (the owner\'s later answer)');
   assert.equal(useShare(undefined, false), 1);
 });
 
-test('a spire fight earns use toward the lasting levels, though its heroes fight at Level 1', () => {
+test('a fight built at Level 1 still earns use toward the lasting levels when it is an army run', () => {
   const m = owned(['knight']);
   const k1 = keyOf(HERO_KITS().knight.s1.skill);
   m.skillUse = { knight: { [k1]: 1500 } };
@@ -255,6 +256,6 @@ test('a spire fight earns use toward the lasting levels, though its heroes fight
   for (let i = 0; i < 4000 && b.phase === 'fight'; i++) stepBattle(b);
   const gain = fightUse(b, m.unlocked);
   assert.ok((gain.knight?.[k1] ?? 0) >= FIELD_POINTS, 'its casts and the wave counted');
-  settleSkillUse(m, gain, useShare({ kind: 'tower' }, false));
+  settleSkillUse(m, gain, useShare({ kind: 'army' }, false));
   assert.equal(useOf(m, 'knight', k1), 1500 + gain.knight[k1], 'into the lasting points');
 });

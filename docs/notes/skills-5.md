@@ -110,3 +110,8 @@ hero sheet's Skills tab, a skill's sheet in a fight, the wave card's line; no pa
 
 "Last Stand and Calamity actually shouldn't raise skill use. They're separate." `useShare` gives the Calamity 0, and the Last Stand's end card
 no longer settles its tally (`standView.ts`; `run.use` is still kept on the run, unused). The spire still counts in full.
+
+## The owner's final answer: army runs only
+
+"Skill use should only come from the army runs." `useShare` counts an army run (or a run with no mode) in full, half under auto-replay, and
+every other mode (the daily, quest battles, the spire, the Calamity, the Last Stand) not at all.
