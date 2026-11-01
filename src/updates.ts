@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.309.0',
+    date: '2026-11-01',
+    title: 'The caravan and the Gloaming Dealer',
+    notes: ['Rustam Saffar\'s caravan visits once a week with rare books, Epic gear and ore. After Calamity guardians fall, the Gloaming Dealer opens for a day.'],
+  },
+  {
     version: '0.308.0',
     date: '2026-11-01',
     title: 'Daily goals you can always meet',
