@@ -177,7 +177,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.38,
     growth: 0.05,
     tierGrowth: 0.128,
-    tierLift: [1, 2.1, 2.34, 0.83, 0.98], // (the joint rebalance: Hard 1.86 to 2.1, just enough that each tier's last wave stays 3% over the one below the tougher Normal, in attack as in hp, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: Hard 1.6 to 1.86, so it stays over the tougher Normal, `docs/notes/spells-retune.md`; ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 2.048, 2.34, 0.83, 0.98], // (the joint rebalance: Hard 1.86 to 2.048, just enough that each tier's last wave stays half a per cent over the one below the tougher Normal, in attack as in hp, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: Hard 1.6 to 1.86, so it stays over the tougher Normal, `docs/notes/spells-retune.md`; ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 1700, atk: 46 },
     last: { hp: 2420, atk: 61 },
     pay: 2.21,
@@ -193,7 +193,7 @@ export const ARMIES: readonly Army[] = [
     waves: waves(ramp(['clanOgre', 'clanBrute', 'clanBrute', 'clanOgre', 'clanOgre', 'clanBrute', 'clanOgre'], 13), { 8: ['shamanKing', 'clanBrute', 'clanOgre', 'clanBrute'], 15: ['hornedOgre', 'clanOgre', 'clanBrute', 'clanOgre', 'clanBrute', 'clanOgre'] }),
     // (11.4 since the skills overhaul's batch 3, docs/notes/skills-1.md: with the tier skills gone a merged party took 4.5 tries at SPELLS-RETUNE's
     // 12.2 (`node tools/spells-retune/run.mjs cell ogres:45:0:tp`); 2.3 at 11.4, SPELLS-RETUNE's figure)
-    start: 12.2, // (the joint rebalance: 11.4 to 12.2, `ogres:0:38` back to about main 0.321's 8% of single tries (19% at 11.4, 6% at 12.5), docs/notes/joint-rebalance.md) (SPELLS-RETUNE: 12.2; 9.3 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.8 raised with it so a run pays what it did; was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 4.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
+    start: 12.5, // (the joint rebalance: 11.4 to 12.5, `ogres:0:38` back to about main 0.321's 8% of single tries (19% at 11.4, 15% at 12.2, 13% at 12.4, 6% at 12.5 and 13.5), docs/notes/joint-rebalance.md) (SPELLS-RETUNE: 12.2; 9.3 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`, its `xpStart` 2.8 raised with it so a run pays what it did; was 2.8: ARMY-PACE, the late armies steeper, `docs/notes/army-pace.md`; 4.1 until ULT-CHARGE answered the ultimates' full strength, `docs/notes/ult-charge.md`)
     xpStart: 3.67,
     tierStart: 1.55,
     growth: 0.05,
@@ -219,7 +219,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.64,
     growth: 0.05,
     tierGrowth: 0.13,
-    tierLift: [1, 4.56, 3.5, 1.01, 0.95], // (the joint rebalance: 3.59, 2.75, 0.8 to 4.56, 3.5, 1.01, each tier 3% over the one below the tougher Normal, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: 3.27, 2.51, 0.76, raised just enough that each tier stays 3% over the one below the tougher Normal, `docs/notes/spells-retune.md`; ONE-OF-EACH: Mythic 0.87 to 0.95, so a level-100 squad of one of each takes about four tries again, `docs/notes/one-of-each.md`; LATE-RETUNE, hearts: Hard 2.97 and Elite 2.38, raised so each tier stays over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 4.448, 3.325, 0.933, 0.95], // (the joint rebalance: 3.59, 2.75, 0.8 to 4.448, 3.325, 0.933, each tier half a per cent over the one below the tougher Normal, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: 3.27, 2.51, 0.76, raised just enough that each tier stays 3% over the one below the tougher Normal, `docs/notes/spells-retune.md`; ONE-OF-EACH: Mythic 0.87 to 0.95, so a level-100 squad of one of each takes about four tries again, `docs/notes/one-of-each.md`; LATE-RETUNE, hearts: Hard 2.97 and Elite 2.38, raised so each tier stays over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2000, atk: 50 },
     last: { hp: 1840, atk: 41 },
     pay: 4.1,
@@ -240,7 +240,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.55,
     growth: 0.05,
     tierGrowth: 0.127,
-    tierLift: [1, 5.54, 4.25, 1.23, 1.01], // (the joint rebalance: 4.35, 3.34, 0.96, 0.79 to 5.54, 4.25, 1.23, 1.01, each tier 3% over the one below the tougher Normal, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: 3.99, 3.06, 0.88, raised just enough that each tier stays 3% over the one below the tougher Normal, `docs/notes/spells-retune.md`; ONE-OF-EACH: Mythic 0.72 to 0.78, so a level-100 squad of one of each takes about four tries again, `docs/notes/one-of-each.md`; LATE-RETUNE, hearts: 3.57, 2.81, 0.81, 0.68, raised so each tier stays over the tougher Normal; before that 3.45, 2.76, 0.79, 0.67, raised a little with Normal's `start` so the harder tiers keep their step over it; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 5.404, 4.039, 1.133, 0.901], // (the joint rebalance: 4.35, 3.34, 0.96, 0.79 to 5.404, 4.039, 1.133, 0.901, each tier half a per cent over the one below the tougher Normal, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: 3.99, 3.06, 0.88, raised just enough that each tier stays 3% over the one below the tougher Normal, `docs/notes/spells-retune.md`; ONE-OF-EACH: Mythic 0.72 to 0.78, so a level-100 squad of one of each takes about four tries again, `docs/notes/one-of-each.md`; LATE-RETUNE, hearts: 3.57, 2.81, 0.81, 0.68, raised so each tier stays over the tougher Normal; before that 3.45, 2.76, 0.79, 0.67, raised a little with Normal's `start` so the harder tiers keep their step over it; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 2600, atk: 58 }, // (LATE-RETUNE: 2200 and 52, `docs/notes/late-retune.md`)
     last: { hp: 3000, atk: 57 }, // (LATE-RETUNE: 2500 and 50)
     pay: 5.11,
@@ -261,7 +261,7 @@ export const ARMIES: readonly Army[] = [
     tierStart: 1.7,
     growth: 0.05,
     tierGrowth: 0.124,
-    tierLift: [1, 6.08, 4.66, 1.34, 1.1], // (the joint rebalance: 4.36, 3.34, 0.96, 0.79 to 6.08, 4.66, 1.34, 1.1, each tier 3% over the one below the tougher Normal, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: 3.8, 2.92, 0.84, 0.73, raised just enough that each tier stays 3% over the one below the tougher Normal, `docs/notes/spells-retune.md`; LATE-RETUNE, hearts: 3.49, 2.69, 0.78, raised so each tier stays over the tougher Normal; before that 3.3, 2.5, 0.74, raised to stay over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
+    tierLift: [1, 5.926, 4.429, 1.242, 0.988], // (the joint rebalance: 4.36, 3.34, 0.96, 0.79 to 5.926, 4.429, 1.242, 0.988, each tier half a per cent over the one below the tougher Normal, docs/notes/joint-rebalance.md) // (SPELLS-RETUNE: 3.8, 2.92, 0.84, 0.73, raised just enough that each tier stays 3% over the one below the tougher Normal, `docs/notes/spells-retune.md`; LATE-RETUNE, hearts: 3.49, 2.69, 0.78, raised so each tier stays over the tougher Normal; before that 3.3, 2.5, 0.74, raised to stay over the tougher Normal; before that, ULT-CHARGE: Hard and Elite lifted, Legendary and Mythic eased under the tiers' own rise, for the full-strength ultimates; `docs/notes/ult-charge.md`)
     mid: { hp: 1800, atk: 56 },
     last: { hp: 2040, atk: 55 },
     pay: 6.26,
