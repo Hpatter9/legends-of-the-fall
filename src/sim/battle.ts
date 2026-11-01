@@ -32,7 +32,7 @@ import type { SetHooks } from './relicSets';
 import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { mergeEffects, type RelicHooks } from './relics';
-import { relicBlow, relicFall, relicRose, relicStart } from './relicFight';
+import { relicBlow, relicFall, relicHurt, relicRose, relicStart } from './relicFight';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
 import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
@@ -172,6 +172,13 @@ export interface Unit {
   owner?: number;
   /** All healing it receives is multiplied by this (a holy-ground twist); absent is x1. */
   healMult?: number;
+  /** RELICS-3 (`relicFight.ts`): kills this fight (Ash-Tooth), blows struck (Tempest Ring), where it stood at the start (Quarry Gauntlet), and
+   *  until when a foe is slowed by the Rime Pearl. */
+  relicKills?: number;
+  relicBlows?: number;
+  relicU0?: number;
+  relicV0?: number;
+  rimeUntil?: number;
   /** A boss that changes form (`bossPhases.ts`): the share of its health it does so at, and whether it has. */
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
@@ -378,6 +385,9 @@ export interface Battle {
   lastStood?: number;
   grief?: number[];
   relicTally?: { rises?: number; fell?: number; elites?: number };
+  /** RELICS-3: the Mane-Gold Thread's rescue and the Wyrm's Breath Vial's freeze, each once a fight. */
+  relicRescued?: boolean;
+  relicFroze?: boolean;
   /** The floor's twist (`twists.ts`), when it has one. */
   twist?: TwistFx;
   /** A themed daily's featured trait (`Stage.featured`). */
@@ -987,6 +997,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   let killed = to.hp <= 0;
+  // (RELICS-3: the Mane-Gold Thread rescues the first hero to fall low)
+  if (!killed && to.side === 'hero' && b.relics?.hooks?.rescue) relicHurt(b, to, out);
 
   // Guardian trait milestone (three Guardians): an emergency Aegis shield the first time a hero drops below 30% health
   if (b.traits?.guardianShield && to.side === 'hero' && !to.guardianShieldUsed && to.hp < to.maxHp * 0.3 && !killed) {
@@ -1065,7 +1077,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.step = undefined;
     to.swing = undefined;
     // (RELICS-2: the run's tally, the Harness's haste and the Warden's Medal)
-    relicFall(b, to, out);
+    relicFall(b, to, out, credit ? by : undefined);
     // (a hero's shape ends as it falls, so a hero raised again rises in its own: SUMMON-TIMERS)
     if (realHero(to) && shapesOf(to, b.t).length) endShapes(to);
   }

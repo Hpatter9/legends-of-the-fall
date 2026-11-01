@@ -24,7 +24,7 @@ import { CLASS_OF } from './starter';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
 import { armyById, ARMIES, armyIndex, armyUnlocked } from './armies';
 import { mixSeed, Rng } from './rng';
-import { ALL_RELIC_IDS, convertRelics, fightRelics, mergeEffects, pickRelic, pricedFor, RELIC_BOOK, RELIC_NOTE, relicEffects, relicPriceOf, RELICS, type RelicMarks } from './relics';
+import { RELIC_IDS, convertRelics, fightRelics, mergeEffects, pickRelic, pricedFor, RELIC_BOOK, RELIC_NOTE, relicEffects, relicPriceOf, RELICS, type RelicMarks } from './relics';
 import { relicFoe, relicStart } from './relicFight';
 import { addRelicMarks, relicCtx } from './run';
 import { fxStart } from './equipFx';
@@ -636,7 +636,7 @@ export function goNow(s: Stand): boolean {
 
 /** A relic offer for the break before wave `n`: up to `OFFER` unowned ones, drawn from a side stream of the run. */
 export function drawOffer(run: StandRun, n: number): string[] {
-  const rest = ALL_RELIC_IDS.filter((id) => !run.relics.includes(id));
+  const rest = RELIC_IDS.filter((id) => !run.relics.includes(id));
   const rng = new Rng(mixSeed(run.seed, 0x57a7, n));
   const out: string[] = [];
   while (out.length < OFFER && rest.length) {
@@ -704,7 +704,7 @@ export function fallBack(s: Stand): boolean {
  * every other draw are as they were). Null when every relic is owned.
  */
 export function holdRelic(run: Pick<StandRun, 'seed' | 'relics'>, n: number): string | null {
-  const rest = ALL_RELIC_IDS.filter((id) => !run.relics.includes(id));
+  const rest = RELIC_IDS.filter((id) => !run.relics.includes(id));
   if (!rest.length) return null;
   const rng = new Rng(mixSeed(run.seed, 0x401e, n));
   return pickRelic(() => rng.next(), rest);
@@ -1166,8 +1166,9 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
     const out: StandRun = { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: isHall(r.hall) ? r.hall : undefined, act, retreat, heldRelics };
     // (RELICS-2: a run saved before the relics were catalogued anew: the merged ones renamed, a pair now one paid back in gold, one line for the break)
     if (out.relicBook !== RELIC_BOOK) {
-      const had = out.relics.length > 0;
-      const { ids, refund } = convertRelics(out.relics);
+      const first = out.relicBook === undefined;
+      const { ids, refund, changed } = convertRelics(out.relics);
+      const had = out.relics.length > 0 && (first || changed);
       out.relics = ids;
       out.gold += refund;
       out.offer = convertRelics(out.offer).ids.filter((id) => !ids.includes(id));

@@ -29,29 +29,27 @@ import dragon_heart from '../art/items/dragon_heart.png';
 import storm_ring from '../art/items/storm_ring.png';
 import void_lens from '../art/items/void_lens.png';
 import thunder_horn from '../art/items/thunder_horn.png';
-import cloud_treads from '../art/items/cloud_treads.png';
-import thunder_pendant from '../art/items/thunder_pendant.png';
+import glacier_step from '../art/items/glacier_step.png';
+import copper_torc from '../art/items/copper_torc.png';
 import tempest_ring from '../art/items/tempest_ring.png';
 import granite_heart from '../art/items/granite_heart.png';
-import moss_amulet from '../art/items/moss_amulet.png';
-import stone_gauntlet from '../art/items/stone_gauntlet.png';
-import earthen_bell from '../art/items/earthen_bell.png';
-import blood_vial from '../art/items/blood_vial.png';
-import bloodstone_ring from '../art/items/bloodstone_ring.png';
-import reaver_helm from '../art/items/reaver_helm.png';
-import ruby_locket from '../art/items/ruby_locket.png';
-import star_chart from '../art/items/star_chart.png';
-import comet_shard from '../art/items/comet_shard.png';
-import moon_lantern from '../art/items/moon_lantern.png';
-import astral_circlet from '../art/items/astral_circlet.png';
+import quarry_gauntlet from '../art/items/quarry_gauntlet.png';
+import moss_bell from '../art/items/moss_bell.png';
+import cinder_collar from '../art/items/cinder_collar.png';
+import ember_brand from '../art/items/ember_brand.png';
+import ash_tooth from '../art/items/ash_tooth.png';
+import dawn_chart from '../art/items/dawn_chart.png';
+import wyrm_vial from '../art/items/wyrm_vial.png';
+import rime_pearl from '../art/items/rime_pearl.png';
+import oath_ring from '../art/items/oath_ring.png';
 import coin_hoard from '../art/items/coin_hoard.png';
 import gilded_ingot from '../art/items/gilded_ingot.png';
 import jewel_crown from '../art/items/jewel_crown.png';
 import gold_band from '../art/items/gold_band.png';
-import rift_shard from '../art/items/rift_shard.png';
-import void_sigil from '../art/items/void_sigil.png';
+import void_shard from '../art/items/void_shard.png';
+import dragon_sigil from '../art/items/dragon_sigil.png';
 import doom_helm from '../art/items/doom_helm.png';
-import last_light from '../art/items/last_light.png';
+import mane_thread from '../art/items/mane_thread.png';
 import weapon1 from '../art/items/weapon1.png';
 import weapon2 from '../art/items/weapon2.png';
 import weapon3 from '../art/items/weapon3.png';
@@ -92,30 +90,29 @@ const RELIC_ICONS: Record<string, string> = {
   dragonHeart: dragon_heart,
   stormRing: storm_ring,
   voidLens: void_lens,
+  // (RELICS-3: the Eidolons' relics wear the old Calamity tiles until the painted icons come; the two merged pieces' tiles are retired)
+  cinderCollar: cinder_collar,
+  ashTooth: ash_tooth,
+  emberBrand: ember_brand,
+  rimePearl: rime_pearl,
+  wyrmVial: wyrm_vial,
+  glacierStep: glacier_step,
+  maneThread: mane_thread,
+  dawnChart: dawn_chart,
+  oathRing: oath_ring,
   thunderHorn: thunder_horn,
-  cloudTreads: cloud_treads,
-  thunderPendant: thunder_pendant,
+  copperTorc: copper_torc,
   tempestRing: tempest_ring,
   graniteHeart: granite_heart,
-  mossAmulet: moss_amulet,
-  stoneGauntlet: stone_gauntlet,
-  earthenBell: earthen_bell,
-  bloodVial: blood_vial,
-  bloodstoneRing: bloodstone_ring,
-  reaverHelm: reaver_helm,
-  rubyLocket: ruby_locket,
-  starChart: star_chart,
-  cometShard: comet_shard,
-  moonLantern: moon_lantern,
-  astralCirclet: astral_circlet,
+  quarryGauntlet: quarry_gauntlet,
+  mossBell: moss_bell,
+  voidShard: void_shard,
+  dragonSigil: dragon_sigil,
+  doomHelm: doom_helm,
   coinHoard: coin_hoard,
   gildedIngot: gilded_ingot,
   jewelCrown: jewel_crown,
   goldBand: gold_band,
-  riftShard: rift_shard,
-  voidSigil: void_sigil,
-  doomHelm: doom_helm,
-  lastLight: last_light,
 };
 const GEAR_ICONS: Record<string, readonly string[]> = {
   weapon: [weapon1, weapon2, weapon3],

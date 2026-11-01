@@ -21,7 +21,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-const RARITY = { common: 'Common', rare: 'Rare', storied: 'Storied' } as const;
+const RARITY = { common: 'Common', rare: 'Rare', eidolon: 'Eidolon', storied: 'Storied' } as const;
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI'];
 const STATS = { atk: 'attack', crit: 'crit chance', charge: 'skill charge' } as const;
 

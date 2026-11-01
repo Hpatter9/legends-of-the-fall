@@ -157,7 +157,8 @@ import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains
 import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
-import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
+import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHorn';
+import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
@@ -3168,7 +3169,8 @@ class Game {
       const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
       // (EIDOLONS: the War Horn takes the fight's share: a boss wave 100, each foe slain 1, an auto-replay half; nothing in a fight lost,
       // practised, or one in which it was blown)
-      const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)));
+      // (RELICS-3: a whole Eidolon's reliquary, with that Eidolon answering the horn, fills it 25% faster)
+      const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)) * hornEcho(run.relics, chosenOf(this.meta)));
       if (horn.added > 0) this.eid.gained(horn.added);
       const hornSaid = hornLine(horn);
       // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
