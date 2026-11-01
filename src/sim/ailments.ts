@@ -15,6 +15,7 @@ import { isBoss } from './foes';
 import { mendUnit, type Dot } from './abilities';
 import { mixSeed } from './rng';
 import { rollSave, type SaveWhat } from './saves';
+import { JOINT } from './stats';
 
 import { AILMENT_KEYS, type AilmentKey } from './ailmentKeys';
 export { AILMENT_KEYS, type AilmentKey };
@@ -180,7 +181,7 @@ const note = (b: Battle, e: BattleEvent) => b.spells.events.push(e);
 /**
  * How long an ailment laid on `to` lasts after its resists, its saving throw, the boss rules and a cleanse's ward: 0 when it does not take
  * hold (an "Immune" is shown). `by` laid it (when not given, the fighter casting a skill now, `ailCtx.by`): `to` saves against its DC and a
- * save halves the time ("Saved"; STATS batch 5, `saves.ts`); a boss does not save, its Legendary Resistance is the ladder below. Only with
+ * save halves the time ("Saved"; STATS batch 5, `saves.ts`); a boss saves too since the joint rebalance (every save trained), and its Legendary Resistance, the ladder below, follows. Only with
  * the switch on.
  */
 export function gate(b: Battle, to: Unit, kind: AilmentKey, ms: number, by?: Unit, what: SaveWhat = kind): number {
@@ -367,8 +368,9 @@ export function chillFor(b: Battle, to: Unit, ms: number, set = false, frost = f
 /** Charmed (fights its own side): not one of the eleven, but hard control, so a boss takes it with diminishing returns. Any other saves
  *  with WIS against `by`'s DC (`ailCtx.by` when not given), a save halving it (STATS batch 5). */
 export function charmFor(b: Battle, to: Unit, ms: number, by?: Unit): boolean {
-  if (on() && !ailBoss(to)) {
-    const save = rollSave(b, by ?? ailCtx.by, to, 'charm', false);
+  // (a boss saves too since the joint rebalance, `JOINT.bossSaves`, and then meets its ladder)
+  if (on() && (!ailBoss(to) || JOINT.bossSaves)) {
+    const save = rollSave(b, by ?? ailCtx.by, to, 'charm', ailBoss(to));
     ms = Math.max(TICK, Math.round(ms * save.mult));
     if (save.saved) note(b, { kind: 'saved', to: to.id, what: 'charm' });
   }

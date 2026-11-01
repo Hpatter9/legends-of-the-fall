@@ -357,6 +357,29 @@ export function foeFamilyOf(def: Pick<UnitDef, 'sheet' | 'shot' | 'flies'>): Foe
 
 /** The foes' proficiency by the army's tier (Normal +2 to Mythic +6); a boss has `BOSS_PROF` more. */
 export const TIER_PROFICIENCY: readonly number[] = [2, 3, 4, 5, 6];
+/** The foes' proficiency in a mode with no tier, by its depth (the design's section 9: the spire and the Calamity +2 to +8): +2, and +1 for
+ *  each `per` acts, maps or waves past the first, to `DEPTH_PROF_MAX`. */
+export const DEPTH_PROF_MAX = 8;
+export const depthProficiency = (depth: number, per = 1): number => Math.min(DEPTH_PROF_MAX, 2 + Math.floor(Math.max(0, depth - 1) / per));
+/** How many of each depth one more point of the foes' proficiency takes: the spire's acts, the Calamity's maps, the Last Stand's waves. */
+export const SPIRE_PROF_PER = 1;
+export const CAL_PROF_PER = 1;
+export const STAND_PROF_PER = 5;
+
+/**
+ * The joint rebalance (docs/notes/joint-rebalance.md; the D&D stats design's batch 7 with the skills overhaul's batch 8): what batches 4 to
+ * 6 held back so that no mode moved before the modes were retuned once, now switched on (the owner's decisions of 1 November 2026). Each is
+ * a switch for measuring one at a time; off, it plays batch 6's rule exactly.
+ *
+ * - `tierProf`: a foe's to hit, AC, DC and saves come from its family's block and the army's tier (Normal +2 to Mythic +6; the spire, the
+ *   Calamity and the Last Stand by their depth), in place of being matched to the heroes' growth.
+ * - `bossBlock`: a boss's block has its +2 proficiency, +2 to its two best scores and +2 AC in the blow and the saves.
+ * - `bossSaves`: a boss makes saving throws, every save trained, and its Legendary Resistance (the old ladder) still follows.
+ * - `families`: a foe's family shows in how much it deals and takes (no `blowFit`).
+ * - `saves`: a save's halving is felt (no `saveFit`).
+ * - `pools`, `cooldown`, `ultFill`: a hero's pool, cooldowns and ultimate fill are counted from a modifier of +0, not the roster's mean.
+ */
+export const JOINT = { tierProf: true, bossBlock: true, bossSaves: true, families: true, saves: true, pools: true, cooldown: true, ultFill: true };
 export const BOSS_PROF = 2;
 /** A boss's block: +2 to its two best scores, +2 AC, and every save trained (and its Legendary Resistance, the existing ladder). */
 export const BOSS_SCORE = 2;
@@ -378,7 +401,7 @@ export interface FoeStats {
 
 /** A foe's numbers from its family's block, the army's tier (0 Normal to 4 Mythic) and whether it is a boss. A foe's health and attack stay
  *  its own (as a D&D monster's hit points are written, not worked out); no foe levels. `boss` overrides whether it takes a boss's block. */
-export function foeStatsOf(def: Pick<UnitDef, 'id' | 'sheet' | 'shot' | 'flies'>, tier = 0, boss = isBoss(def.id)): FoeStats {
+export function foeStatsOf(def: Pick<UnitDef, 'id' | 'sheet' | 'shot' | 'flies'>, tier = 0, boss = isBoss(def.id), prof?: number): FoeStats {
   const family = foeFamilyOf(def);
   const block = FOE_BLOCKS[family];
   const scores = { ...block.scores };
@@ -387,7 +410,8 @@ export function foeStatsOf(def: Pick<UnitDef, 'id' | 'sheet' | 'shot' | 'flies'>
     for (const a of best) scores[a] = Math.min(SCORE_CAP, scores[a] + BOSS_SCORE);
   }
   const mods = modsOf(scores);
-  const proficiency = TIER_PROFICIENCY[Math.max(0, Math.min(TIER_PROFICIENCY.length - 1, tier | 0))] + (boss ? BOSS_PROF : 0);
+  // (`prof`, when given, is the fight's own: a tier's or a depth's, `Boost.prof`)
+  const proficiency = (prof ?? TIER_PROFICIENCY[Math.max(0, Math.min(TIER_PROFICIENCY.length - 1, tier | 0))]) + (boss ? BOSS_PROF : 0);
   // (a foe's blows use STR or DEX, whichever is better, and its skills its best mental score)
   const blow = mods.dex > mods.str ? mods.dex : mods.str;
   const cast = Math.max(mods.int, mods.wis, mods.cha);

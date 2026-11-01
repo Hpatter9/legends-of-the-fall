@@ -29,6 +29,7 @@ import { findGear, foundLine, SOURCE, stow, type FoundHome } from './runGear';
 import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
+import { CAL_PROF_PER, depthProficiency, SPIRE_PROF_PER, TIER_PROFICIENCY } from './stats';
 import type { RoadState } from './midEvents';
 import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
@@ -230,6 +231,10 @@ export function armyRun(seed: number, army: string, party: readonly string[] = H
 }
 /** The difficulty tier an army run is fought on (0 Normal, for any other run too). */
 export const tierOfRun = (run: Run): number => (run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0);
+
+/** The foes' proficiency in a run's fight (the joint rebalance, `Boost.prof`): the spire's and the Calamity's by the act or map (the design's
+ *  "by their depth"), an army's by its tier (the daily and the quests fight the Normal tier's). */
+export const foeProfOf = (run: Run): number => (run.tower ? depthProficiency(run.tower.act, run.mode?.kind === 'calamity' ? CAL_PROF_PER : SPIRE_PROF_PER) : TIER_PROFICIENCY[tierOfRun(run)] ?? TIER_PROFICIENCY[0]);
 
 /** Keep each hero's skill charge for the next wave of the run: a hero still standing keeps what it had built up; one that fell, or that sat
  *  out the fight, starts the next one empty. */
@@ -489,7 +494,7 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board ?? base.board,
-    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
+    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed, prof: foeProfOf(run) },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle) * (run.buff?.speed ?? 1),

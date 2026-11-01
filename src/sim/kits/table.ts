@@ -42,12 +42,12 @@ export const TUNE1: Readonly<Record<string, number>> = {
   kitsune: 0.586,
   karasu: 0.24, // (RPG-SPELLS batch 7: 0.4 before; striking from behind made Swoop +4 at level 1)
   yamabushi: 0.431,
-  werewolf: 0.787,
+  werewolf: 0.85, // (the joint rebalance: 0.787 to 0.85, Vuk's own kit lifted so the Old Hunger is less of a lift for him, his ultimate trimmed to keep his level-30 parity, docs/notes/joint-rebalance.md)
   minotaur: 0.438, // (RPG-SPELLS batch 7: 0.45 before; he was -5.7 at level 10 on main)
   satyr: 0.096,
-  gorgon: 0.343,
-  samuraiCommander: 0.046, // (STATS batch 4: 0.061 to 0.046, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  paladin: 0.578,
+  gorgon: 0.55, // (the joint rebalance: 0.343 to 0.55, level-1 and level-10 parity, docs/notes/joint-rebalance.md)
+  samuraiCommander: 0.042, // (the joint rebalance: 0.046 to 0.042, level-1 parity, docs/notes/joint-rebalance.md) (STATS batch 4: 0.061 to 0.046, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  paladin: 0.5, // (the joint rebalance: 0.578 to 0.5, level-1 parity, docs/notes/joint-rebalance.md)
   cleric: 2.784,
   druid: 0.944, // (STATS batch 4: 0.629 to 0.944, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   barbarian: 0.463,
@@ -55,20 +55,20 @@ export const TUNE1: Readonly<Record<string, number>> = {
   warlock: 0.552, // (STATS batch 4: 0.368 to 0.552, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 6: 0.59 before; Eldritch Blast's shove made him +3.3 at level 1)
   illusionist: 0.096,
   gunslinger: 0.366,
-  shambler: 2.713, // (STATS batch 4: 2.087 to 2.713, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 7: Contagion's rot; 0.78 was Rotting Touch's)
+  shambler: 2.17, // (the joint rebalance: 2.713 to 2.17, level-10 parity, docs/notes/joint-rebalance.md) // (STATS batch 4: 2.087 to 2.713, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 7: Contagion's rot; 0.78 was Rotting Touch's)
   rifleBot: 0.708,
   mercenary: 0.595,
   mummy: 1.003, // (STATS batch 4: 0.59 to 1.003, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   buccaneer: 0.486,
   wolfBard: 0.272,
-  beastmaster: 0.154, // (STATS batch 4: 0.077 to 0.154, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  beastmaster: 0.19, // (the joint rebalance: 0.154 to 0.19, level-1 parity, docs/notes/joint-rebalance.md) (STATS batch 4: 0.077 to 0.154, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   kraken: 0.078,
   lancer: 0.14,
   reaper: 0.467,
   timeWitch: 0.054,
   arcBlade: 0.107, // (STATS batch 4: 0.153 to 0.107, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   dreadPirate: 0.53,
-  siegeBot: 0.163,
+  siegeBot: 0.27, // (the joint rebalance: 0.163 to 0.27, level-10 parity, docs/notes/joint-rebalance.md)
   priestess: 0.792,
   dragoon: 0.487, // (STATS batch 4: 0.553 to 0.487, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   juggernaut: 0.847, // (RPG-SPELLS batch 3: Seismic Slam, 0.52 as Earthquake)
@@ -89,7 +89,7 @@ export const TUNE2: Readonly<Record<string, number>> = {
   archer: 0.073,
   wizard: 4.744, // (RPG-SPELLS batch 6: the Wall of Fire's burn; 2.26 was Wildfire's eruption)
   peasant: 0.281,
-  ninjaMonk: 1.72,
+  ninjaMonk: 1.332, // (the joint rebalance: 1.72 to 1.332, level-10 parity, docs/notes/joint-rebalance.md)
   wanderer: 0.106,
   lightningMage: 0.094, // (STATS batch 4: 0.072 to 0.094, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   kitsune: 0.052,
@@ -98,10 +98,10 @@ export const TUNE2: Readonly<Record<string, number>> = {
   werewolf: 0.885,
   minotaur: 1.879, // (STATS batch 4: 3.132 to 1.879, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   satyr: 0.066,
-  gorgon: 1.638,
+  gorgon: 2.4, // (the joint rebalance: 1.638 to 2.4, level-10 parity, docs/notes/joint-rebalance.md)
   samuraiCommander: 1.109,
   paladin: 0.315,
-  cleric: 0.592,
+  cleric: 0.84, // (the joint rebalance: 0.592 to 0.84, level-10 parity, docs/notes/joint-rebalance.md)
   druid: 0.066,
   barbarian: 0.097,
   ranger: 0.052,
@@ -110,12 +110,12 @@ export const TUNE2: Readonly<Record<string, number>> = {
   gunslinger: 0.895,
   shambler: 0.057,
   rifleBot: 0.125,
-  mercenary: 0.887, // (RPG-SPELLS batch 4: 3.06 before; Hunter's Mark was the weakest skill 2 at level 10)
+  mercenary: 0.688, // (the joint rebalance: 0.887 to 0.688, level-10 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 4: 3.06 before; Hunter's Mark was the weakest skill 2 at level 10)
   mummy: 0.067,
   buccaneer: 1.006,
   wolfBard: 0.13,
   beastmaster: 0.116, // (STATS batch 4: 0.058 to 0.116, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  kraken: 0.343,
+  kraken: 0.7, // (the joint rebalance: 0.343 to 0.7, level-10 parity, docs/notes/joint-rebalance.md)
   lancer: 0.69,
   reaper: 0.097,
   timeWitch: 0.087, // (STATS batch 4: 0.058 to 0.087, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
@@ -213,7 +213,7 @@ export const COSTS: Readonly<Record<string, readonly [number, number, number, nu
   priestess: [36, 6000, 44, 16000],
   wanderer: [32, 7000, 46, 15000],
   druid: [50, 20000, 48, 20000],
-  samuraiCommander: [28, 18000, 28, 20000],
+  samuraiCommander: [28, 20000, 28, 20000], // (the joint rebalance: the standard's 18 s to 20 s, the utility class's longest, level-1 parity, docs/notes/joint-rebalance.md)
   wolfBard: [38, 8000, 38, 14000],
   tyrant: [36, 7000, 46, 12000],
   beastmaster: [28, 18000, 28, 9000],
@@ -224,8 +224,8 @@ export const COSTS: Readonly<Record<string, readonly [number, number, number, nu
   werewolf: [20, 6000, 22, 16000],
   minotaur: [26, 7000, 32, 10000],
   satyr: [38, 18000, 50, 14000],
-  gorgon: [36, 7000, 46, 12000],
-  shambler: [24, 14000, 20, 18000],
+  gorgon: [36, 7000, 42, 9000], // (the joint rebalance: Flesh to Stone 46 MP and 12 s to 42 and 9 s, the heavy class's cheapest and quickest, level-10 parity, docs/notes/joint-rebalance.md)
+  shambler: [24, 14000, 20, 20000], // (the joint rebalance: Devour 18 s to 20 s, level-10 parity, docs/notes/joint-rebalance.md)
   mummy: [32, 7000, 50, 14000],
   kraken: [22, 6000, 34, 11000],
 };
@@ -379,7 +379,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     werewolf: S('werewolf', sk('Shapechange', 'Changes form for 40s, wave to wave: the Hunter (quicker, bites bleed) or the Brute (takes a quarter less, blows splash); Brute when badly hurt or crowded', 400, 'attack', shift, 'Shift'), 'A shapeshifter: a hunting wolf and a great brute'),
     minotaur: S('minotaur', sk('Bull Rush', 'Every foe beside him is struck and shoved two tiles; one that hits something is stunned for 1.5s', 550, 'attack', bullRush), 'A bulldozer: slams foes into walls and each other'),
     satyr: M('satyr', sk('Irresistible Dance', 'The foes within 4 dance towards one spot ahead of him for 2s, bunched and not striking', 600, 'attack', piedPiper, 'Pied Piper'), 'A lure: pipes that hasten friends and gather foes', {}),
-    gorgon: M('gorgon', sk('Flesh to Stone', 'Every stunned or slowed foe within 5 turns to stone for 2s; one that dies as stone stays as a statue', 700, 'attack', stoneGarden, 'Stone Garden'), 'A petrifier: stone foes that stay as statues'),
+    gorgon: M('gorgon', sk('Flesh to Stone', 'Every stunned or slowed foe within 5 turns to stone for 3s; one that dies as stone stays as a statue', 700, 'attack', stoneGarden, 'Stone Garden'), 'A petrifier: stone foes that stay as statues'),
     samuraiCommander: S('samuraiCommander', sk('Plant the Standard', 'Plants a standard for 30s (planted again beside him in the next wave): friends within 2 of it take a tenth less and hit a tenth harder while it stands', 600, 'attack2', plantStandard), 'A banner-bearer: plants a standard that must be knocked down', {}),
     paladin: M('paladin', sk('Aura of Protection', 'For 8s the allies within 3 of him take 30% less, heal 1% of their health a second, and each shrugs off the next ailment', 600, 'defend', auraOfProtection), 'A holy shield: smites the wicked and guards his friends', {}, {}),
     cleric: {
@@ -392,7 +392,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     },
     druid: M('druid', sk('Wild Shape', 'For 20s (it carries into the next wave) she becomes a treant: more health, more defence, foes beside her must strike her; she heals 15% after', 700, 'attack2', treeform, 'Treeform'), 'A shapeshifter: calls a treant, or becomes one; she can raise the fallen', {}, { revive: REVIVE_FACES.druid }),
     barbarian: S('barbarian', sk('Rage', 'Paid in blood: for 4s his blows come 30% faster and drink an eighth, and he cannot fall below 1 health', 400, 'attack2', bloodFury, 'Blood Fury'), 'A berserker: stronger the more he bleeds', {}, { hpCost: 0.1 }),
-    ranger: S('ranger', sk('Spike Growth', 'Caltrops on the 3x3 round the nearest foe for 6s: whoever stands in it is slowed and bleeds', 500, 'attack', spikeField, 'Spike Field'), 'A trapper: snares and fields of caltrops', {}),
+    ranger: S('ranger', sk('Spike Growth', 'Caltrops on the 3x3 round the nearest foe for 4s: whoever stands in it is slowed and bleeds', 500, 'attack', spikeField, 'Spike Field'), 'A trapper: snares and fields of caltrops', {}),
     warlock: M('warlock', sk('Drain Life', 'Channels 2s on the weakest foe in reach, draining it; what he drains heals his most hurt friend', 2000, 'attack2', soulSiphon, 'Soul Siphon'), 'A leech: drinks his foes and feeds his friends'),
     illusionist: M('illusionist', sk('Transposition', 'She and the friend in most trouble within 5 change places, and a decoy springs up beside the friend; the foes that were striking the friend now face her (she slips a quarter of blows)', 400, 'attack2', transposition, 'Trade Places'), 'A trickster: decoys, and friends swapped out of danger', { emergency: selfUnder(0.25) }, {}),
     gunslinger: S('gunslinger', sk('Fan the Hammer', 'With a foe within 2 she first rolls clear; then three fast shots at the nearest foe in reach, and a long reload', 1900, 'attack', fanTheHammer), 'A quick-draw: slugs through a line, or three fast shots'),

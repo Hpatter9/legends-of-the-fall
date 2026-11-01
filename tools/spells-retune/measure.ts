@@ -12,6 +12,7 @@
 // page does); the castle: `c` the curve's (none until the sixth army, `tools/curve`), `p` the army pace's (`castleAt`, `tools/army-pace`),
 // `m` every building at its top, none of them no castle.
 // Environment: SAVES (12), CAP (25), TARGET (2.8), START and LIFT (army:value / army:tier:value, as `tools/army-pace`), TIERK (as there).
+import '../joint/off';
 import { ARMIES, armyById } from '../../src/sim/armies';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
 import { BUILDINGS, maxLevel, newCastle, xpRate, type BuildingId, type Castle } from '../../src/sim/castle';

@@ -41,6 +41,7 @@ import type { Run } from './run';
 import { grantEquipment, rollEquipment, itemName } from './equipment';
 import { UNITS } from './units';
 import { ailmentsOf } from './ailments';
+import { depthProficiency, STAND_PROF_PER } from './stats';
 
 /* ------------------------------------------------------------------ the numbers */
 
@@ -597,7 +598,8 @@ function beginWave(s: Stand, hold?: WaveSpec): void {
   b.revived = false;
   // (RELICS-2: a wave is the Last Stand's fight for the relics' start-of-fight rules: the king's first mana, the Ember's and the Ring's prices)
   relicStart(b, true);
-  b.foeBoost = { hp: spec.hp, atk: spec.atk };
+  // (the foes' proficiency by the wave, the joint rebalance's depth: +2, and +1 each `STAND_PROF_PER` waves)
+  b.foeBoost = { hp: spec.hp, atk: spec.atk, prof: depthProficiency(run.wave, STAND_PROF_PER) };
   const gap = Math.max(100, Math.min(600, SPAWN_SPAN / spec.foes.length));
   s.queue = spec.foes.map((def, i) => ({
     at: i * gap,

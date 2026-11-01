@@ -1421,7 +1421,7 @@ export const KITS: Record<string, Kit> = {
   },
   ranger: {
     skill: { name: 'Snare', key: 'Snare Trap', text: 'Lays two traps on the tiles foes will step on; the first to spring one is hurt and held for 2s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: snareTrap },
-    passive: { name: 'Long Shot', text: 'Arrows deal 35% more to foes 4 or more tiles away', far: 0.35 },
+    passive: { name: 'Long Shot', text: 'Arrows deal 15% more to foes 4 or more tiles away', far: 0.15 }, // (the joint rebalance: 35% to 15%, the Ranger trimmed by his kit at level 10, docs/notes/joint-rebalance.md)
   },
   warlock: {
     skill: { name: 'Eldritch Blast', key: 'Hex', text: 'Three beams of dark force at the three toughest foes in reach: each is hexed (burns for 5s, and he drinks 60% of it) and shoved a tile back', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 700, anim: 'attack2', cast: eldritchBlast },
@@ -1477,7 +1477,7 @@ export const KITS: Record<string, Kit> = {
   },
   reaper: {
     skill: { name: 'Reap', text: 'Cuts every foe within 3 tiles; a foe under 30% health takes nearly triple', need: CHARGE_MAX, dealt: 6, taken: 3, perSec: 2, castMs: 500, anim: 'attack2', cast: reap },
-    passive: { name: 'Wraith Form', text: 'Slips 20% of blows', dodge: 0.2 },
+    passive: { name: 'Wraith Form', text: 'Slips 12% of blows', dodge: 0.12 }, // (the joint rebalance: 20% to 12%, the Reaper trimmed by his kit at level 10, docs/notes/joint-rebalance.md)
   },
   timeWitch: {
     skill: { name: 'Slow', key: 'Temporal Surge', text: 'A slowing field round her for 4s: foes within 4 tiles are slowed, and her friends within 3 hastened', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: temporalSurge },
@@ -1495,7 +1495,7 @@ export const KITS: Record<string, Kit> = {
   },
   siegeBot: {
     skill: { name: 'Bombard', key: 'Shell Barrage', text: 'A heavy shell bursts on the thickest crowd within 7 tiles: the foe at its heart is thrown 2 tiles and the rest shoved a tile out', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: shellBarrage },
-    passive: { name: 'Reinforced Chassis', text: 'Blows from the front lose a fifth, and it cannot be knocked back', block: 0.2, steady: true },
+    passive: { name: 'Reinforced Chassis', text: 'Blows from the front lose 35%, and it cannot be knocked back', block: 0.35, steady: true }, // (the joint rebalance: a fifth to 35%, the Siege Bot lifted by its kit at level 10, docs/notes/joint-rebalance.md)
   },
   priestess: {
     skill: { name: 'Cure Wounds', key: 'Holy Light', text: 'A great light heals the worst hurt ally and cleanses it; allies near it are healed too', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: holyLight },

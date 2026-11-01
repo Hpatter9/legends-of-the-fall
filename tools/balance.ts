@@ -26,6 +26,7 @@
 // runs (a greedy player on fresh saves, carrying the hero levels from run to run). Every fight is seeded, so the same
 // numbers come out again on the same code.
 
+import './joint/off';
 import { fight, place, playOut } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';

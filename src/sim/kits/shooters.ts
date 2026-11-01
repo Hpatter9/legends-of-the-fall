@@ -26,12 +26,15 @@ export function pinningShot(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Ranger, Spike Field: caltrops on the 3x3 round the nearest foe for 6s: whoever stands in it is slowed and bleeds. */
+/** How long the Ranger's caltrops last. */
+export const SPIKE_MS = 4000;
+/** Ranger, Spike Field: caltrops on the 3x3 round the nearest foe for 4s (6s until the joint rebalance trimmed the Ranger at level 10): whoever
+ *  stands in it is slowed and bleeds. */
 export function spikeField(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = nearestFoe(b, me);
   if (!f || apart(me, f) > strikeDef(b, me).range + 3) return false;
   if (b.zones.some((z) => z.by === me.id && z.slow && Math.abs(z.u - f.u) <= 1 && Math.abs(z.v - f.v) <= 1)) return false;
-  const until = b.t + ms(me, 6000);
+  const until = b.t + ms(me, SPIKE_MS);
   b.zones.push({ u: f.u, v: f.v, side: me.side, by: me.id, until, next: b.t + 500, dmg: Math.max(1, Math.round(atkOf(me) * 0.18)), slow: 800 });
   out.push({ kind: 'zone', u: f.u, v: f.v, ms: until - b.t, what: 'spikes' });
   return true;

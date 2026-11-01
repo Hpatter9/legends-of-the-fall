@@ -9,20 +9,21 @@
 // above the striker, to three (in place of `guardMult`'s 3% a level).
 //
 // The heroes' armour and aim show from level 1 (the owner's answer): the heavily armoured and the sure-handed feel their AC and to hit, and
-// the heroes who fell behind for it are lifted by their own kit tunes. The foes' families are fitted (`blowFit`), so their blocks move how
-// often they hit and are hit, not how much an army deals or takes.
+// the heroes who fell behind for it are lifted by their own kit tunes.
 //
-// The foes use their family's block (`foeStatsOf`; a boss's +2 to hit and AC wait, `BOSS_BLOCK`). So that this batch moves no mode (the joint
-// rebalance is later), the foes are matched to the heroes they fight: their AC rises by as much as the placed heroes' to hit has grown since
-// level 1, and their to hit by as much as the heroes' AC has (`matchOf`); at level 1 the blocks are as written. A hero's summon takes the
-// block of its kind's family and the heroes' own growth.
+// The foes use their family's block (`foeStatsOf`). Batches 4 to 6 held three things back so that no mode moved before the joint rebalance:
+// a boss's +2 to hit and AC, the families' difference (`blowFit` fitted it out) and the foes' own proficiency (they were matched to the
+// heroes' growth, `matchOf`). The joint rebalance (docs/notes/joint-rebalance.md, `JOINT` in `stats.ts`) switches all three on: a foe fights
+// at its army tier's proficiency (Normal +2 to Mythic +6), or its depth's in the spire, the Calamity and the Last Stand (`Boost.prof`), a
+// boss with its block, and a family's block moves what it deals and takes. A hero's summon takes the block of its kind's family and the
+// heroes' own growth.
 //
 // Randomness: the d20, the crit, the part of a point of AC and the initiative d20 are hashes of the fight's seed and the moment (`STATS_SALT`,
 // `INIT_SALT`), never draws from `b.rng` or `b.skillRng`, so a fight replays from its seed, its placing and its orders. Pure rules: no Pixi,
 // no DOM.
 
 import { mixSeed } from './rng';
-import { ABILITIES, BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, profileOf, STATS_SALT, type BlowResult, type Scores, type StatInput } from './stats';
+import { ABILITIES, BASE_CRIT, blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, JOINT, profileOf, STATS_SALT, TIER_PROFICIENCY, type BlowResult, type Scores, type StatInput } from './stats';
 import { kitOf } from './abilities';
 import { relicDodge } from './relicFight';
 import { TALL_AC } from './board';
@@ -32,9 +33,13 @@ import type { Battle, Unit } from './battle';
 
 /** The global knob on every ordinary blow's damage, which puts the average blow back where it was before hits, glances and misses. */
 export const BLOW_SCALE = 1.28;
-/** Whether a boss's block has its +2 to hit and +2 AC in the blow (`foeStatsOf`). Off in this batch: with it, the armies came out about a
- *  wave harder than main at their levels (measured, docs/notes/stats-4.md), and the modes are the joint rebalance's to retune. */
-export const BOSS_BLOCK = false;
+/** Whether a boss's block has its +2 proficiency, +2 to two scores and +2 AC in the blow and the saves (`foeStatsOf`). Off in batches 4 to 6
+ *  (with it, the armies came out about a wave harder, docs/notes/stats-4.md); on since the joint rebalance (`JOINT.bossBlock`). */
+export const bossBlockOn = (): boolean => JOINT.bossBlock;
+/** The foes' proficiency in a fight with none set (a quest's, a trial's): the Normal tier's. */
+export const FOE_PROF = TIER_PROFICIENCY[0];
+/** A foe's (or a summon's) family block in this fight: its tier's or depth's proficiency (`Boost.prof`), and a boss's block when on. */
+export const foeBlockOf = (b: Battle, u: Unit) => foeStatsOf(UNITS[u.def], 0, bossBlockOn() ? undefined : false, JOINT.tierProf ? b.foeBoost?.prof ?? FOE_PROF : FOE_PROF);
 /** A glancing blow deals this share. */
 export const GLANCE_SHARE = 0.5;
 /** Each 7% of an old dodge share is +1 AC. (The design said 5%; but with glances a point of AC takes about 7% off a blow's average,
@@ -75,6 +80,8 @@ const memo = (key: string, f: () => number): number => {
 /** The fit on `by`'s blow on `to`: a fighter with no profile (a foe, a summon) is fitted for its block's to hit as a striker and for its
  *  block's AC as a target; a hero not at all. */
 export function blowFit(b: Battle, by: Unit, to: Unit): number {
+  // (the joint rebalance: the families show, `JOINT.families`)
+  if (JOINT.families) return 1;
   let m = 1;
   if (!profiled(by)) {
     const aim = blowStatsOf(b, by).aim1;
@@ -154,18 +161,19 @@ export function blowStatsOf(b: Battle, u: Unit): BlowStats {
   const had = cache.get(u);
   if (had) return had;
   let s: BlowStats;
-  const def = UNITS[u.def];
   if (profiled(u)) {
     const p = profileOf(u.def)!;
     const now = derivedOf(p, statInputOf(u));
     const one = derivedOf(p);
     s = { toHit: now.toHit, aim1: one.toHit, ac1: one.ac, ac: now.ac, dexCrit: now.crit - BASE_CRIT, quick: now.blowSpeed / one.blowSpeed, init: now.initiative };
   } else {
-    const f = foeStatsOf(def, 0, BOSS_BLOCK ? undefined : false);
+    const f = foeBlockOf(b, u);
     const m = matchOf(b);
-    // (a foe answers the heroes' growth; a hero's summon grows with them)
+    // (a hero's summon grows with the heroes; a foe answered their growth until the joint rebalance, and now fights at its tier's or depth's
+    // proficiency, `JOINT.tierProf`)
     const foe = u.side === 'foe';
-    s = { toHit: f.toHit + (foe ? m.ac : m.aim), aim1: f.toHit, ac1: f.ac, ac: f.ac + (foe ? m.aim : m.ac), dexCrit: f.crit - BASE_CRIT, quick: 1, init: f.initiative };
+    const lift = foe ? (JOINT.tierProf ? { aim: 0, ac: 0 } : { aim: m.ac, ac: m.aim }) : { aim: m.aim, ac: m.ac };
+    s = { toHit: f.toHit + lift.aim, aim1: f.toHit, ac1: f.ac, ac: f.ac + lift.ac, dexCrit: f.crit - BASE_CRIT, quick: 1, init: f.initiative };
   }
   cache.set(u, s);
   return s;

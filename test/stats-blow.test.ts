@@ -2,12 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, swing, type Battle, type BattleEvent, type Pending, type Unit } from '../src/sim/battle';
-import { acAgainst, blowFit, blowShare, blowStatsOf, BOSS_BLOCK, DODGE_PER_AC, FOE_AC, HERO_AC, HERO_AIM, HIGH_AC_MAX, INIT_MAX_MS, INIT_MS, initiativeWaits, matchOf, rollBlow } from '../src/sim/blow';
+import { acAgainst, blowFit, blowShare, blowStatsOf, bossBlockOn, DODGE_PER_AC, HIGH_AC_MAX, INIT_MAX_MS, INIT_MS, initiativeWaits, matchOf, rollBlow } from '../src/sim/blow';
 import { TALL_AC } from '../src/sim/board';
 import { FIELD_BANDS, isBoss } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
-import { blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, STAT_PROFILES } from '../src/sim/stats';
+import { blowResult, d20At, derivedOf, foeStatsOf, initiativeRoll, JOINT, STAT_PROFILES, TIER_PROFICIENCY } from '../src/sim/stats';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { deploySpots, pickTeam } from '../tools/heroSweep';
 
@@ -44,36 +44,42 @@ test("a fighter's blow numbers: a hero's from its scores, a foe's from its famil
   const k = derivedOf(STAT_PROFILES.knight);
   const s0 = foeStatsOf(UNITS.skeleton);
   assert.deepEqual(blowStatsOf(b, h), { toHit: k.toHit, aim1: k.toHit, ac1: k.ac, ac: k.ac, dexCrit: 0, quick: 1, init: k.initiative });
-  // (the skeleton's block is fitted against an ordinary hero: as a target for its AC, as a striker for its to hit; the Knight not at all)
-  assert.ok(Math.abs(blowFit(b, h, f) - blowShare(HERO_AIM, FOE_AC) / blowShare(HERO_AIM, s0.ac)) < 1e-12);
-  assert.ok(Math.abs(blowFit(b, f, h) - blowShare(HERO_AIM, HERO_AC) / blowShare(s0.toHit, HERO_AC)) < 1e-12);
+  // (the joint rebalance: no fit, the skeleton's block shows in what it deals and takes, `JOINT.families`)
+  assert.equal(blowFit(b, h, f), 1);
+  assert.equal(blowFit(b, f, h), 1);
   assert.equal(blowStatsOf(b, h).ac, 16, 'the Knight is in plate');
   const s = foeStatsOf(UNITS.skeleton);
   assert.deepEqual(blowStatsOf(b, f), { toHit: s.toHit, aim1: s.toHit, ac1: s.ac, ac: s.ac, dexCrit: s.crit - 0.05, quick: 1, init: s.initiative });
-  // (a boss fights with its family's block in this batch: its +2 to hit and +2 AC wait for the joint rebalance, `BOSS_BLOCK`)
+  assert.equal(s0.toHit, s.toHit);
+  // (a boss fights with its block since the joint rebalance: +2 proficiency, +2 to two scores, +2 AC, `JOINT.bossBlock`)
   const boss = Object.keys(UNITS).find((id) => isBoss(id) && UNITS[id].side === 'foe')!;
   const bb = bareBoard(startBattle(41, [boss]));
   const bu = bb.units[0];
-  assert.equal(BOSS_BLOCK, false);
-  assert.equal(blowStatsOf(bb, bu).ac, foeStatsOf(UNITS[boss], 0, false).ac);
-  assert.equal(blowStatsOf(bb, bu).ac, foeStatsOf(UNITS[boss]).ac - 2);
+  assert.equal(bossBlockOn(), true);
+  assert.equal(blowStatsOf(bb, bu).ac, foeStatsOf(UNITS[boss]).ac);
+  assert.equal(blowStatsOf(bb, bu).ac, foeStatsOf(UNITS[boss], 0, false).ac + 2);
+  assert.ok(blowStatsOf(bb, bu).toHit >= foeStatsOf(UNITS[boss], 0, false).toHit + 2);
   // (the Gunslinger at level 20 has DEX 20, +5, against 17's +3: 2% quicker a point than its kind's level-1 blows)
   const g = duel('gunslinger', 'skeleton', 20);
   assert.ok(Math.abs(blowStatsOf(g.b, g.h).quick - 1.1 / 1.06) < 1e-9);
   assert.ok(Math.abs(blowStatsOf(g.b, g.h).dexCrit - 0.05) < 1e-9, 'DEX +5 crits 5% of its hits');
 });
 
-test('the heroes\u2019 armour and aim show from level 1 (the owner\u2019s answer); the foes\u2019 families are fitted', () => {
+test('the heroes\u2019 armour and aim show from level 1 (the owner\u2019s answer); the foes\u2019 families show (the joint rebalance)', () => {
   // (an armoured skeleton, a shooter, a brute, a skirmisher and a caster: their to hit runs +3 to +5 and their AC 12 to 15)
   const foes = ['skeleton', 'boneArcher', 'orcBrute', 'wolfBlack', 'orcShaman'].filter((id) => UNITS[id]?.side === 'foe');
   assert.ok(foes.length >= 4, foes.join(' '));
-  // (a family's block moves how often it hits and is hit, not how much it deals to, or takes from, an ordinary hero)
+  // (a family's block moves how often it hits and is hit, and so how much it deals and takes: nothing is fitted out)
   for (const foe of foes) {
     const { b, h, f } = duel('samurai', foe);
-    const fs = blowStatsOf(b, f);
-    assert.ok(Math.abs(blowFit(b, f, h) * blowShare(fs.toHit, HERO_AC) - blowShare(HERO_AIM, HERO_AC)) < 1e-12, `${foe} strikes`);
-    assert.ok(Math.abs(blowFit(b, h, f) * blowShare(HERO_AIM, fs.ac) - blowShare(HERO_AIM, FOE_AC)) < 1e-12, `${foe} is struck`);
+    assert.equal(blowFit(b, f, h), 1, `${foe} strikes`);
+    assert.equal(blowFit(b, h, f), 1, `${foe} is struck`);
   }
+  // (the samurai lands less on the plated skeleton, AC 15, than on the brute, AC 12)
+  const bones = duel('samurai', 'skeleton');
+  const brute = duel('samurai', 'orcBrute');
+  const lands = (d: ReturnType<typeof duel>) => blowShare(blowStatsOf(d.b, d.h).toHit, blowStatsOf(d.b, d.f).ac);
+  assert.ok(lands(bones) < lands(brute) * 0.85, `${lands(bones)} against ${lands(brute)}`);
   // (a hero is not fitted: the plated Knight takes less from the same foe than the robed Wizard, and the STR 10 Beastmaster deals less)
   const knight = duel('knight', 'orcBrute');
   const wizard = duel('wizard', 'orcBrute');
@@ -202,7 +208,7 @@ test('initiative: every fighter rolls d20 + DEX as the fight starts, and waits 3
   for (const u of b.units) assert.equal(waits.get(u.id), u.busyUntil);
 });
 
-test('the foes answer the heroes’ growth: at level 1 the blocks are as written; at 30 the foes’ AC rises with the heroes’ to hit', () => {
+test('the foes fight at their tier’s proficiency (the joint rebalance): not matched to the heroes’ growth; a hero’s summon still grows with them', () => {
   const one = duel('gunslinger', 'skeleton', 1);
   fight(one.b);
   assert.deepEqual(matchOf(one.b), { aim: 0, ac: 0, dc: 0, save: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }, str: 0 });
@@ -211,9 +217,24 @@ test('the foes answer the heroes’ growth: at level 1 the blocks are as written
   const g = STAT_PROFILES.gunslinger;
   const m = matchOf(thirty.b);
   assert.equal(m.aim, derivedOf(g, { level: 30 }).toHit - derivedOf(g).toHit);
-  assert.equal(m.ac, derivedOf(g, { level: 30 }).ac - derivedOf(g).ac);
-  assert.equal(blowStatsOf(thirty.b, thirty.f).ac, foeStatsOf(UNITS.skeleton).ac + m.aim);
-  assert.equal(blowStatsOf(thirty.b, thirty.f).toHit, foeStatsOf(UNITS.skeleton).toHit + m.ac);
+  assert.ok(m.aim > 0);
+  // (the skeleton's AC and to hit are its block's at the Normal tier's +2, whatever the heroes' level)
+  assert.equal(blowStatsOf(thirty.b, thirty.f).ac, foeStatsOf(UNITS.skeleton).ac);
+  assert.equal(blowStatsOf(thirty.b, thirty.f).toHit, foeStatsOf(UNITS.skeleton).toHit);
+  // (a Legendary fight's foes, proficiency +5, hit 3 more and their DC is 3 more; their AC is the block's)
+  const leg = bareBoard(startBattle(41, ['skeleton'], { foes: { prof: TIER_PROFICIENCY[3] } }));
+  const lf = leg.units[0];
+  assert.equal(blowStatsOf(leg, lf).toHit, foeStatsOf(UNITS.skeleton).toHit + 3);
+  assert.equal(blowStatsOf(leg, lf).ac, foeStatsOf(UNITS.skeleton).ac);
+  // (with the switch off, batch 6's match: the foe's AC rises with the heroes' to hit)
+  JOINT.tierProf = false;
+  try {
+    const old = duel('gunslinger', 'skeleton', 30);
+    fight(old.b);
+    assert.equal(blowStatsOf(old.b, old.f).ac, foeStatsOf(UNITS.skeleton).ac + matchOf(old.b).aim);
+  } finally {
+    JOINT.tierProf = true;
+  }
 });
 
 /** Every hero in a seeded team of five (grades 1 to 3) at `level` against a field band at `stage`, three times over: the fights' mean

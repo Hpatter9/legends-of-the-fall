@@ -147,13 +147,13 @@ export const KIT = {
   CRIT_NEXT: 1.6,
   FURY_QUICK: 1.3,
   FURY_LEECH: 0.12,
-  HUNTER_QUICK: 1.25,
+  HUNTER_QUICK: 1.35, // (the joint rebalance: 1.25 to 1.35, with the bleed and the splash, Vuk's Shapechange lifted for his Old Hunger, docs/notes/joint-rebalance.md)
   SIEGE_QUICK: 1.25,
   SIEGE_RANGE: 2,
   TREE_DEF: 6,
   ANGEL_HEAL: 0.3,
-  HUNTER_BLEED: 0.12,
-  BRUTE_SPLASH: 0.4,
+  HUNTER_BLEED: 0.18, // (the joint rebalance: 0.12 to 0.18)
+  BRUTE_SPLASH: 0.5, // (the joint rebalance: 0.4 to 0.5)
   SCALE_GUARD: 0.3,
   SCALE_BURN_MS: 2000,
   BOND_GUARD: 0.1,

@@ -509,10 +509,10 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   ninjaMonk: { rate: 2.41, power: 3.381 },
   wanderer: { rate: 0.37, power: 1.203 },
   lightningMage: { rate: 0.92, power: 1.363 },
-  kitsune: { rate: 0.8, power: 2.953 }, // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
+  kitsune: { rate: 0.8, power: 2.169 }, // (the joint rebalance: 2.953 to 2.169, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
   karasu: { rate: 0.77, power: 5.634 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
   yamabushi: { rate: 1.85, power: 3.294 },
-  werewolf: { rate: 0.73, power: 2.208 }, // (RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
+  werewolf: { rate: 0.73, power: 1.1 }, // (the joint rebalance: 2.208 to 1.1, as his own two skills rose for Vuk's Old Hunger, docs/notes/joint-rebalance.md; RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
   minotaur: { rate: 1.51, power: 2.45 }, // (STATS batch 5: 2.983 before; with the saves he sat at +6.0 at level 30. STATS batch 6: 2.7 before; with Athletics he climbed to +6.3)
   satyr: { rate: 0.69, power: 0.879 },
   gorgon: { rate: 1.29, power: 2.347 },
@@ -527,7 +527,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   warlock: { rate: 0.5, power: 1.0 }, // (RPG-SPELLS batch 6: 1.07 before, then 0.929; STATS batch 5 lifted it back to 1.0: with the saves he fell to -6.5 at level 30)
   illusionist: { rate: 1.08, power: 0.535 },
   gunslinger: { rate: 0.37, power: 1.78 },
-  shambler: { rate: 1.04, power: 0.709 }, // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
+  shambler: { rate: 1.04, power: 0.933 }, // (the joint rebalance: 0.709 to 0.933, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
   rifleBot: { rate: 1.01, power: 1.972 },
   mercenary: { rate: 1.21, power: 2.811 },
   mummy: { rate: 0.99, power: 0.465 },
@@ -538,8 +538,8 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   lancer: { rate: 2.3, power: 3.29 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
   reaper: { rate: 1.79, power: 2.511 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
   timeWitch: { rate: 1.09, power: 0.95 }, // (STATS batch 5: 0.735 before; with the saves she fell to -6.8 at level 30. STATS batch 6: 0.85 before; -5.9)
-  arcBlade: { rate: 0.59, power: 1.878 }, // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
-  dreadPirate: { rate: 1.06, power: 1.376 },
+  arcBlade: { rate: 0.59, power: 2.403 }, // (the joint rebalance: 1.878 to 2.403, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
+  dreadPirate: { rate: 1.06, power: 1.86 }, // (the joint rebalance: 1.376 to 1.86, level-30 parity, docs/notes/joint-rebalance.md)
   siegeBot: { rate: 0.5, power: 2.347 },
   priestess: { rate: 0.38, power: 0.403 },
   dragoon: { rate: 1.1, power: 2.85 },
