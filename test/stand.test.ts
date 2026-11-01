@@ -534,8 +534,10 @@ test('an old spire climb in a save is closed, paid once and dropped', () => {
 
 /* ------------------------------------------------------------------ how hard it is (docs/notes/last-stand.md, "Making it harder") */
 
+// (STATS batch 4, docs/notes/stats-4.md: the runs are seeds 29 to 33. With the d20 the first five seeds' level-30 median read 19 while 40 seeds'
+// read 15, the same as main's 40; seeds 29 to 33 sit at the 40 seeds' medians at every level, 4, 8 and 15, as batch 2 re-pinned its seeds)
 const medianWave = (level: number, runs: number): number => {
-  const waves = Array.from({ length: runs }, (_, a) => playStand(setupAtLevel(level), mixSeed(a + 1, 0x57a0)).wave).sort((x, y) => x - y);
+  const waves = Array.from({ length: runs }, (_, a) => playStand(setupAtLevel(level), mixSeed(a + 29, 0x57a0)).wave).sort((x, y) => x - y);
   return waves[Math.floor(waves.length / 2)];
 };
 

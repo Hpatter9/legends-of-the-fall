@@ -34,7 +34,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   samurai: 0.57, // (STATS batch 4: 0.671 to 0.57, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   kunoichi: 0.285,
   archer: 0.77,
-  wizard: 0.211,
+  wizard: 0.317, // (STATS batch 4: 0.211 to 0.317, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   peasant: 0.565,
   ninjaMonk: 0.533,
   wanderer: 1.25, // (STATS batch 4: 1.059 to 1.25, the Wanderer was 6.3 points under the roster at level 30 once blows rolled against AC)

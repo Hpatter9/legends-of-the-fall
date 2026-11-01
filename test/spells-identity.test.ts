@@ -51,9 +51,9 @@
 // field1Others and calamity, whose heroes fight at level 1, grade 1, kept their hashes.)
 // (STATS batch 4, "AC and the blow", docs/notes/stats-4.md, re-recorded every scenario: every ordinary blow now rolls a d20 against Armour
 // Class (hit, glance, miss, a natural 20's crit), every fighter rolls initiative, and the dodges and tall grass are Armour Class, so every
-// fight moves. The new hashes: field1 96b761f3, field30 9b7f9c68, bosses 9e2b65c5, armyFoes e89121a1, spells 462dc28d, lands adc0c56e, army
-// 4786e20f, daily 7f2f0f09, tower db8257aa, stand 87c8e707, calamity 11adf2ef, heroes1 ee093be6, heroes10 ffe21599, heroes30 5999677b,
-// field1Others 6a0746fb, field30Others 4ce79c73, heroes1Others 71720f4f, heroes10Others bf9a731a, heroes30Others 3f22ac1d.)
+// fight moves. The new hashes: field1 f4056537, field30 7d034326, bosses 9e2b65c5, armyFoes e89121a1, spells f4717b49, lands adc0c56e, army
+// 4786e20f, daily 91719bb0, tower ea2146ad, stand 253f3102, calamity c67b2edc, heroes1 3b09182f, heroes10 37137eda, heroes30 5999677b,
+// field1Others 09784271, field30Others d8cc41cd, heroes1Others 0b1df526, heroes10Others 86849ad8, heroes30Others 3f22ac1d.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

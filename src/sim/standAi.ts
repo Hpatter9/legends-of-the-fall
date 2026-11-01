@@ -287,8 +287,9 @@ function heroDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): boolean 
   if (me.u !== post.u || me.v !== post.v) {
     const blocked = new Set<number>();
     for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
-    // (a hero pushed far from its post may need a long way round: the walk is not held to the leash)
-    const walk = walkNear(b.board, me, def.jump, blocked, home, Math.max(post.leash, apart(me, home)) + 6);
+    // (a hero pushed far from its post may need a long way round: the walk is not held to the leash; one still inside its leash walks home
+    // inside it, so a way round others never takes it out past the leash, STATS batch 4)
+    const walk = walkNear(b.board, me, def.jump, blocked, home, strayed ? Math.max(post.leash, apart(me, home)) + 6 : post.leash);
     const next = firstOf(walk, post.v * b.board.w + post.u);
     if (next !== null) {
       stepTo(b, me, next, out);
