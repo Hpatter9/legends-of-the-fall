@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.331.0',
+    date: '2026-11-01',
+    title: 'Hero sheet fixed on the party screen',
+    notes: ['A hero\'s sheet opened from the party screen showed blank: the phone ran out of graphics memory. The screens hidden beneath it are no longer drawn.'],
+  },
+  {
     version: '0.330.0',
     date: '2026-11-01',
     title: 'Rank-ups show their scores',
