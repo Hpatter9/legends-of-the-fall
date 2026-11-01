@@ -40,6 +40,10 @@
 // Legion's new start), daily, tower, heroes1,
 // heroes10, heroes30 and the three `heroes...Others`: each fields merged heroes (the hero scenarios place grades 1 to 3), whose tier skills went;
 // every scenario of grade-1 heroes kept its hash)
+// (SKILLS-4, the skills overhaul's batch 4, docs/notes/skills-4.md: every hero's skill 3, open from level 20, re-recorded the scenarios with heroes at
+// level 20 or more: field30, field30Others, heroes30, heroes30Others, bosses, armyFoes, spells (each at level 30), army (saves at 30 to 70) and stand
+// (a party at 30). field1, field1Others, heroes1, heroes1Others, heroes10, heroes10Others, lands (level 10), daily and tower (fresh saves) and
+// calamity kept their hashes)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

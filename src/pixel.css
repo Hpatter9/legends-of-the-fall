@@ -358,7 +358,24 @@ body .sbSlot { min-height: 44px; }
 .chestTitle { font: bold 22px var(--display); color: var(--gold-hi); text-shadow: 0 3px 0 var(--s2); z-index: 2; }
 .chestStage { position: relative; width: 220px; height: 170px; display: grid; place-items: center; z-index: 2; }
 .chestStage .chestPic { z-index: 2; }
-.chestRays { position: absolute; left: 50%; top: calc(8vh + 125px); width: 520px; height: 520px; margin: -260px 0 0 -260px; opacity: 0; background: repeating-conic-gradient(from 0deg, rgb(var(--e8-rgb) / 0.5) 0 7deg, rgb(var(--e8-rgb) / 0) 7deg 20deg); -webkit-mask: radial-gradient(circle, var(--black) 8%, transparent 68%); mask: radial-gradient(circle, var(--black) 8%, transparent 68%); animation: asSpin 14s linear infinite; }
+.chestRays { position: absolute; left: 50%; top: calc(8vh + 125px); width: 520px; height: 520px; margin: -260px 0 0 -260px; opacity: 0; animation: asSpin 14s linear infinite; }
+/* (MENU-GLITCH: the rays are painted once into a canvas (chestStash.ts raysCanvas). As a masked conic gradient this 520 px spinning
+   layer, and its mask, took over 20 MB of a phone's graphics memory at its pixel ratio; with the screens under it still drawn the
+   phone ran out, and parts of the chest, the rays and the rewards were left unpainted: flat boxes, rays cut off at a tile's edge) */
+/* (and the screens a full-screen reveal covers, the chest's or a hero's first summoning, are not drawn under it: the phone has the
+   memory for the reveal alone. A page that sets its own visibility, the home tab showing, is hidden too. An Eidolon's binding
+   fades out at its end, so what it covers comes back as it starts to fade) */
+body:has(> :is(.chestShow, .tarotReveal, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
+body:has(> :is(.chestShow, .tarotReveal, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }
+/* (MENU-GLITCH: the same for the hero's full artwork, a modal dialog over the hero sheet) */
+body:has(> dialog.heroArtViewer[open]) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
+body:has(> dialog.heroArtViewer[open]) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }
+/* (MENU-GLITCH: the home screen is opaque and covers the game's own screen; under it the fight's sky (five parallax layers kept on
+   the graphics card for their drift), the board's canvas, the HUD and the bench were still painted and held on the phone's graphics
+   memory all the time the menus were up, about 95 MB at a phone's pixel ratio. They are not drawn while the home screen is open; a
+   screen opened from it (`.handoff`, the home closed but still drawn) has them back) */
+body:has(> #home:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess),
+body:has(> #home:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess) * { visibility: hidden !important; }
 .chestGlow { position: absolute; left: 50%; top: calc(8vh + 125px); width: 300px; height: 300px; margin: -150px 0 0 -150px; opacity: 0; background: radial-gradient(circle, rgb(var(--e9-rgb) / 0.95), rgb(var(--e6-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.silver .chestGlow { background: radial-gradient(circle, rgb(var(--b6-rgb) / 0.95), rgb(var(--b4-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.daily .chestGlow { background: radial-gradient(circle, rgb(var(--p5-rgb) / 0.95), rgb(var(--p3-rgb) / 0.35) 45%, transparent 70%); }

@@ -72,6 +72,8 @@ export function missileOf(shot: Shot, shooter: string): Missile {
     case 'curse':
       return orb('dark', 1);
   }
+  // (a shot with no missile of its own: the Kitsune wearing the shape of a foe that reaches but throws nothing; a plain orb, so nothing breaks)
+  return orb('wind', 0.8);
 }
 
 /** The element an arrow's or bullet's landing spark is drawn in (wind for arrows reads as a white scatter). */

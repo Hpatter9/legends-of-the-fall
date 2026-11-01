@@ -17,6 +17,8 @@ import { alterSelf, tidalWave, windWall } from './monsters';
 import { plantStandard, sicEm } from './callers';
 import { REVIVE_FACES } from './revive';
 import { auraOfProtection, bane, shieldRush, spearWall, tunnelStrike } from './tanks';
+import * as T3 from './third';
+import { GUARD } from './third';
 
 /** A new skill (its charge numbers are unused: a hero's skills cost its pool). */
 const sk = (name: string, text: string, castMs: number, anim: Skill['anim'], cast: Skill['cast'], key?: string): Skill => ({ name, ...(key ? { key } : {}), text, need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs, anim, cast });
@@ -228,6 +230,113 @@ export const COSTS: Readonly<Record<string, readonly [number, number, number, nu
   kraken: [22, 6000, 34, 11000],
 };
 
+/** Each hero's skill 3 strength (the skills overhaul's batch 4: the design's "x0.8", times the caster's attack while it casts; a guard's heal or
+ *  shield is scaled by it too), found by the hero sweep at level 20 (stage 30) and checked at level 30 (stage 78), docs/notes/skills-4.md. */
+export const TUNE3: Readonly<Record<string, number>> = {
+  knight: 1.166,
+  paladin: 1.784,
+  peasant: 0.99,
+  juggernaut: 1.242,
+  samurai: 1.232,
+  kunoichi: 0.244,
+  ninjaMonk: 1.185,
+  barbarian: 1.211,
+  mercenary: 0.52,
+  lancer: 0.594,
+  arcBlade: 0.489,
+  demonSwordsman: 0.669,
+  buccaneer: 0.693,
+  dragoon: 0.545,
+  samuraiCommander: 0.566,
+  wolfBard: 1.415,
+  tyrant: 0.768,
+  archer: 0.422,
+  ranger: 0.43,
+  gunslinger: 0.807,
+  rifleBot: 0.897,
+  siegeBot: 0.934,
+  dreadPirate: 0.371,
+  wizard: 1.135,
+  lightningMage: 0.699,
+  warlock: 1.012,
+  sage: 0.917,
+  timeWitch: 0.553,
+  illusionist: 0.538,
+  cleric: 1.936,
+  priestess: 0.451,
+  wanderer: 0.598,
+  druid: 0.6,
+  beastmaster: 0.67,
+  reaper: 0.527,
+  kitsune: 0.257,
+  karasu: 0.648,
+  yamabushi: 1.229,
+  werewolf: 0.671,
+  minotaur: 0.701,
+  satyr: 0.665,
+  gorgon: 0.925,
+  shambler: 0.415,
+  mummy: 0.567,
+  kraken: 1.196,
+};
+
+/** Each hero's skill 3 (the design's section 2 table): its class, cost and cooldown (ms), and the skill. The guards' `emergency` is their trigger. */
+const THIRD: Readonly<Record<string, { cls: SkillClass; cost: number; cd: number; skill: Skill; emergency?: Slot['emergency']; heals?: boolean; onHit?: Slot['onHit'] }>> = {
+  knight: { cls: 'guard', cost: 15, cd: 20000, emergency: GUARD.holdFast, heals: true, skill: sk('Hold Fast', 'When he falls under 40% with a foe beside him he plants his feet: a fifth of his health comes back and he shakes off his ailments', 400, 'defend', T3.holdFast) },
+  paladin: { cls: 'guard', cost: 30, cd: 18000, emergency: GUARD.bond, skill: sk('Warding Bond', 'When a friend within 4 falls under 35% it is bound to him for 6s: it takes 10% less, and half of every blow on it comes to him instead', 400, 'defend', T3.wardingBond) },
+  peasant: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Pitchfork Jab', 'A quick thrust at the foe before him that shoves it a tile back', 350, 'attack', T3.pitchforkJab) },
+  juggernaut: { cls: 'utility', cost: 26, cd: 16000, skill: sk('Wall of Stone', 'Three tiles of stone wall rise across the nearest foes\' way to his back line, for 6s', 600, 'attack2', T3.wallOfStone) },
+  samurai: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Kesa Cut', 'A fast diagonal cut on the foe before him; it bleeds 3s', 300, 'attack', T3.kesaCut) },
+  kunoichi: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Shuriken Fan', 'Three shuriken at the three nearest foes within 4; each is slowed 1s', 350, 'attack', T3.shurikenFan) },
+  ninjaMonk: { cls: 'guard', cost: 14, cd: 15000, emergency: GUARD.stepWind, skill: sk('Step of the Wind', 'With two or more foes on him he steps up to 3 tiles to the safest tile and slips every blow for 1.5s; two Flow are added for his palm', 300, 'attack2', T3.stepOfWind) },
+  barbarian: { cls: 'jab', cost: 10, cd: 4000, skill: sk('Reckless Swing', 'A wild overhead blow on the foe before him; he takes 10% more for 2s', 400, 'attack', T3.recklessSwing) },
+  mercenary: { cls: 'jab', cost: 9, cd: 4000, skill: sk('Dirty Trick', 'Sand in the eyes of the foe before him: it misses half its blows for 2s', 300, 'attack', T3.dirtyTrick) },
+  lancer: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Lance Sweep', 'A sweep of the lance at the foes beside him, each shoved a tile; it gives him a step of Momentum', 400, 'attack', T3.lanceSweep) },
+  arcBlade: { cls: 'jab', cost: 8, cd: 3000, skill: sk('Static Edge', 'A crackling cut on the foe before him; it is shocked, and a tenth of the cut is stored for Thunderwave', 300, 'attack', T3.staticEdge) },
+  demonSwordsman: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Infernal Brand', 'Brands the foe before him (it burns 3s); his Cleave drinks double from a branded foe', 350, 'attack', T3.infernalBrand) },
+  buccaneer: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Pistol Shot', 'A flintlock shot at the nearest foe within 4; a shooter it hits is staggered 0.5s', 350, 'attack', T3.pistolShot) },
+  dragoon: { cls: 'guard', cost: 15, cd: 18000, emergency: GUARD.scales, skill: sk('Scale Ward', 'When she falls under 50% her scales harden: she takes 30% less for 4s, and whoever strikes her burns', 400, 'defend', T3.scaleWard) },
+  samuraiCommander: { cls: 'jab', cost: 9, cd: 4000, skill: sk('Command Strike', 'He and the friend nearest him each strike the foe before them at once', 300, 'attack', T3.commandStrike) },
+  wolfBard: { cls: 'guard', cost: 28, cd: 16000, emergency: GUARD.countercharm, skill: sk('Countercharm', 'When two near him carry an ailment, every friend within 3 is freed of its ailments and shrugs off new ones for 3s', 500, 'attack2', T3.countercharm) },
+  archer: { cls: 'jab', cost: 8, cd: 3000, skill: sk('Double Shot', 'Two fast arrows at the nearest foe in reach', 300, 'attack', T3.doubleShot) },
+  ranger: { cls: 'jab', cost: 8, cd: 3000, skill: sk('Barbed Arrow', 'An arrow at the nearest foe in reach that bleeds 3s; a foe held by a snare, slowed or standing in caltrops takes double', 300, 'attack', T3.barbedArrow) },
+  gunslinger: { cls: 'jab', cost: 9, cd: 4000, skill: sk('Skip Shot', 'A shot that skips off the nearest foe in reach to a second within 2', 350, 'attack', T3.skipShot) },
+  rifleBot: { cls: 'guard', cost: 15, cd: 18000, emergency: T3.droneNeeded, skill: sk('Barrier Drone', 'When it or the friend nearest it falls under 40%, a drone shields both for 5s (a fifth of each one\'s health)', 500, 'defend', T3.barrierDrone) },
+  siegeBot: { cls: 'guard', cost: 12, cd: 10000, emergency: T3.flakNeeded, skill: sk('Flak Burst', 'With a foe beside it: a point-blank charge hurts the foes within 1 and shoves them 2 tiles back', 400, 'attack', T3.flakBurst) },
+  dreadPirate: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Grapeshot', 'A blast of grapeshot over the three tiles before him; each foe hit is slowed 1s', 400, 'attack', T3.grapeshot) },
+  wizard: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Fire Bolt', 'A quick bolt at the nearest foe; a burning foe takes half as much again', 350, 'attack', T3.fireBolt) },
+  lightningMage: { cls: 'jab', cost: 10, cd: 3500, skill: sk('Spark', 'A spark at the nearest foe, which is Charged (so Storm Surge can set it off)', 300, 'attack', T3.spark) },
+  warlock: { cls: 'utility', cost: 36, cd: 16000, skill: sk('Curse of Weakness', 'The three strongest foes within 6 are weakened for 6s, and take a fifth more from him while it lasts', 600, 'attack2', T3.curseOfWeakness) },
+  sage: { cls: 'guard', cost: 28, cd: 15000, emergency: T3.wardNeeded, skill: sk('Arcane Ward', 'When a friend within 5 (or he) falls under 35%, it is warded for 5s (a fifth of its health)', 400, 'defend', T3.arcaneWard) },
+  timeWitch: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Hourglass Bolt', 'A bolt of sand at the nearest foe: slowed 1.5s, and its skill meter loses a tenth', 350, 'attack', T3.hourglassBolt) },
+  illusionist: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Phantasmal Blade', 'A blade of illusion at the nearest foe within 3, past its defence; for 1s it strikes at random', 350, 'attack', T3.phantasmalBlade) },
+  cleric: { cls: 'jab', cost: 14, cd: 4000, heals: true, skill: sk('Healing Word', 'A quick word of healing: the most hurt friend within 6 heals 8% of its health', 300, 'defend', T3.healingWord) },
+  priestess: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Sacred Flame', 'A pillar of light on the nearest foe (the undead and fiends take half again); its next blow misses', 350, 'attack', T3.sacredFlame) },
+  wanderer: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Acid Flask', 'A flask of acid at the nearest foe: its armour eaten, it takes a fifth more for 4s', 350, 'attack', T3.acidFlask) },
+  druid: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Thorn Whip', 'A whip of thorns at the nearest foe within 4 drags it a tile towards her treant (towards her, with none)', 400, 'attack', T3.thornWhip) },
+  beastmaster: { cls: 'guard', cost: 14, cd: 15000, emergency: T3.packNeeded, heals: true, skill: sk('Mend the Pack', 'When a wolf of hers falls under 30%, every wolf heals a third and is shielded 3s; with none, she heals a tenth when hurt', 400, 'defend', T3.mendThePack) },
+  reaper: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Soul Snare', 'A spectral hook drags the weakest foe within 4 a tile towards him and cuts it; a foe under 30% is dragged into his reach', 350, 'attack', T3.soulSnare) },
+  kitsune: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Fox Wisps', 'Three wisps of fox fire at the three nearest foes within 4, each burning 2s', 350, 'attack', T3.foxWisps) },
+  karasu: { cls: 'jab', cost: 8, cd: 3000, skill: sk('Feather Darts', 'Razor feathers at the two nearest foes within 4; each bleeds 2s', 300, 'attack', T3.featherDarts) },
+  yamabushi: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Ringing Staff', 'A blow of his ringed staff on the foe before him; it is stunned 0.5s', 350, 'attack', T3.ringingStaff) },
+  werewolf: { cls: 'jab', cost: 8, cd: 3000, skill: sk('Rend', 'Claws rake the foe before him and it bleeds 4s; in the Hunter form he rakes twice', 300, 'attack', T3.rend) },
+  minotaur: { cls: 'utility', cost: 20, cd: 16000, skill: sk('Bellow', 'Every foe within 3 is frightened for 2s (it runs from him), and takes 15% more from him for 5s', 500, 'attack2', T3.bellow) },
+  satyr: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Butting Horns', 'Butts the foe before him and shoves it a tile', 350, 'attack', T3.buttingHorns) },
+  gorgon: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Serpent Bite', 'Her serpent hair bites the nearest foe within 2: poisoned 3s and slowed 1s (so Flesh to Stone can take it)', 300, 'attack', T3.serpentBite) },
+  shambler: { cls: 'jab', cost: 8, cd: 3000, skill: sk('Bile Spit', 'Spits bile at the nearest foe within 3; it rots 3s', 350, 'attack', T3.bileSpit) },
+  mummy: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Tomb Rot', 'A touch of grave-rot on the foe before him; it is cursed 3s (it heals less)', 350, 'attack', T3.tombRot) },
+  kraken: { cls: 'guard', cost: 15, cd: 15000, emergency: T3.inkNeeded, skill: sk('Ink Cloud', 'When two or more foes crowd him, a cloud of ink: the foes within 2 miss half their blows for 3s, and he slips a tile back', 350, 'defend', T3.inkCloud) },
+  tyrant: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Scourge', 'A lash of his chain at the nearest foe within 3; it is weakened 2s', 350, 'attack', T3.scourge) },
+};
+
+/** A hero's skill 3 slot, when it has one. */
+const third = (kind: string): Slot | undefined => {
+  const t = THIRD[kind];
+  return t && { skill: t.skill, cls: t.cls, cost: t.cost, cd: t.cd, tune: TUNE3[kind] ?? 0.8, ...(t.emergency ? { emergency: t.emergency } : {}), ...(t.heals ? { heals: true } : {}), ...(t.onHit ? { onHit: t.onHit } : {}) };
+};
+/** Every hero kind that has a skill 3. */
+export const THIRD_KINDS: readonly string[] = Object.keys(THIRD);
+
 /** Build the table (called once, on first use: `KITS` must be built first). */
 export function HERO_TABLE(): Record<string, HeroKit> {
   const old = (kind: string) => KITS[kind].skill;
@@ -245,7 +354,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     ...slots({ skill: old(kind), cls: CLASSES[kind][0], cost: COSTS[kind][0], tune: TUNE1[kind] ?? MANA_TUNE, cd: COSTS[kind][1], ...more1 }, { skill: s2, cls: CLASSES[kind][1], cost: COSTS[kind][2], tune: TUNE2[kind] ?? 1, cd: COSTS[kind][3], ...more2 }),
     role,
   });
-  return {
+  const kits: Record<string, HeroKit> = {
     knight: S('knight', sk('Shield Rush', 'Charges up to 3 tiles in a line at a foe, bashes it (stunned 1s) and drives it 2 tiles back; a slam into a wall or a fighter hurts it again', 500, 'attack', shieldRush), 'A wall of a man: draws the foes and drives them back', { emergency: selfUnder(0.3) }, {}),
     samurai: S('samurai', sk('Riposte', 'For 2.5s every melee blow on him is parried and answered with a cut', 400, 'defend', parryStance, 'Parry Stance'), 'A duellist: dashes through a line, parries and answers'),
     kunoichi: S('kunoichi', sk('Smoke Bomb', 'She cannot be targeted for 2s; foes in the smoke miss half their blows for 3s, her next blow crits, and she blinks clear to the safest tile within 3', 400, 'attack2', smokeBomb), 'Blinks behind the weak, vanishes in smoke', {}, { emergency: smokeNeeded }),
@@ -306,4 +415,12 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     demonSwordsman: S('demonSwordsman', sk('Blood Pact', 'Paid in blood: his next three blows deal 60% more and drink 30%', 400, 'attack2', bloodPrice, 'Blood Price'), 'A blood pact: pays health for power', {}, { hpCost: 0.1 }),
     tyrant: M('tyrant', sk('Bane', 'Iron chains drag the toughest foe within 6 up to 3 tiles towards him and mark it for 6s: every hero goes for it and deals 20% more (if it falls, every hero gains pool); the two foes nearest it are weakened', 500, 'attack2', bane, 'Condemn'), 'A condemner: names a foe for the whole party', {}, {}),
   };
+  // (the skills overhaul's batch 4: each hero's skill 3, opening at level 20)
+  for (const [kind, k] of Object.entries(kits)) {
+    const s3 = third(kind);
+    if (!s3) continue;
+    k.s3 = s3;
+    k.slots.push(s3);
+  }
+  return kits;
 }

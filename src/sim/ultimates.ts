@@ -513,7 +513,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   minotaur: { rate: 1.51, power: 2.983 },
   satyr: { rate: 0.69, power: 0.879 },
   gorgon: { rate: 1.29, power: 2.347 },
-  samuraiCommander: { rate: 1.1, power: 1.391 },
+  samuraiCommander: { rate: 0.95, power: 1.391 }, // (the skills overhaul's batch 4: rate 1.1 before; with Command Strike he stood +6.2 at level 30, and Rally Cry's banner does not scale with power)
   paladin: { rate: 1.31, power: 0.886 },
   cleric: { rate: 1, power: 0.92 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
   druid: { rate: 1.19, power: 0.38 },
