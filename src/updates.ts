@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.330.0',
+    date: '2026-11-01',
+    title: 'Rank-ups show their scores',
+    notes: ['The rank-up and awakening card shows a hero\'s true health and attack after the step, and which scores rise: e.g. STR 17 to 18, blows +5%.'],
+  },
+  {
     version: '0.329.0',
     date: '2026-11-01',
     title: 'Cleaner faces',
