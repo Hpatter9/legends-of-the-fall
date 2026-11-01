@@ -10,6 +10,7 @@ import { HERO_KITS, SKILL2_LEVEL } from './heroKits';
 import { BADGE_NAMES, badgeOf, lastingBoost, levelBoost, levelOf, MAX_LEVEL, MILESTONES, RUN_MAX_LEVEL, xpFor } from './levels';
 import { UNITS } from './units';
 import { lvMult, xpNeed } from './stand';
+import { scoreRises, type ScoreRise } from './statLines';
 import { waveNotes, type WaveMoments, type WaveNote } from './waveCard';
 
 /** Which level rules a hero's XP is read by: a hero kind's lasting level (to `MAX_LEVEL`), or a spire or Calamity run's own (to 30). */
@@ -95,12 +96,14 @@ export interface HeroGrowth {
   fillFrom: number;
   fillTo: number;
   stats: StatRise[];
+  /** The ability scores (and on a proficiency step, to hit and skill DC) those levels raised (STATS batch 3). */
+  scores: ScoreRise[];
   learnt: Learnt[];
   /** At the top level already: the bar stays full and the XP has nowhere to go. */
   top: boolean;
 }
 
-export function heroGrowth(kind: string, xpFrom: number, xpTo: number, rule: LevelRule = 'lasting', mult?: StatMult): HeroGrowth {
+export function heroGrowth(kind: string, xpFrom: number, xpTo: number, rule: LevelRule = 'lasting', mult?: StatMult, rank = 1, grade = 1): HeroGrowth {
   const lo = Math.max(0, Math.min(xpFrom, xpTo));
   const hi = Math.max(lo, xpTo);
   const a = barOf(lo, rule);
@@ -116,6 +119,7 @@ export function heroGrowth(kind: string, xpFrom: number, xpTo: number, rule: Lev
     fillFrom: a.fill,
     fillTo: b.fill,
     stats: statRises(kind, a.level, b.level, rule, mult),
+    scores: scoreRises(kind, a.level, b.level, rank, grade),
     learnt: learntBetween(kind, a.level, b.level, rule),
     top: b.level >= capOf(rule),
   };
@@ -132,7 +136,7 @@ export function standGrowth(kind: string, lv: number, xp: number, base: { hp: nu
   const atk = Math.round(base.atk * m.atk);
   if (to > 0 && hp > base.hp) stats.push({ stat: 'HP', from: base.hp, to: hp, gain: hp - base.hp });
   if (to > 0 && atk > base.atk) stats.push({ stat: 'ATK', from: base.atk, to: atk, gain: atk - base.atk });
-  return { kind, rule: 'stand', xpFrom: 0, xpTo: 0, gained: 0, from: 0, to, fillFrom: 0, fillTo: Math.max(0, Math.min(1, xp / xpNeed(to + 1))), stats, learnt: [], top: false };
+  return { kind, rule: 'stand', xpFrom: 0, xpTo: 0, gained: 0, from: 0, to, fillFrom: 0, fillTo: Math.max(0, Math.min(1, xp / xpNeed(to + 1))), stats, scores: [], learnt: [], top: false };
 }
 
 /** The XP still to find for the next level (0 at the top). */

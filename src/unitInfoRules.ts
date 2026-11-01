@@ -20,8 +20,10 @@ import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { EQUIP_SLOTS, itemName, RARITY_NAMES, SLOT_NAMES, wornIn } from './sim/equipment';
 import { gearText, SLOTS, type Gear, type Slot as GearSlot } from './sim/gear';
 import type { Meta } from './sim/meta';
+import { heroRank } from './sim/awaken';
 import { UNITS, type UnitDef } from './sim/units';
 import { poolTag, sheetOf } from './fightHudRules';
+import { foeCardScores, heroCardScores, type CardScores } from './sim/statLines';
 import { useOf } from './sim/skillLevels';
 
 /** How long a finger must rest on a unit, without moving, for its card to open (ms). */
@@ -64,6 +66,8 @@ export interface UnitInfo {
   hp: string;
   hpShare: number;
   stats: [string, string][];
+  /** STATS batch 3: the six ability scores and the rolls they make (heroes and foes). */
+  scores?: CardScores;
   traits: { name: string; text: string }[];
   gear: string[];
   moves: MoveInfo[];
@@ -125,7 +129,7 @@ function statRows(b: Battle, u: Unit, kit: Kit | undefined): [string, string][] 
   const walk = def.moveMs / (pace * (1 + (u.eq?.moveSpeed ?? 0)) * (u.side === 'hero' ? b.heroMove ?? 1 : 1));
   const rows: [string, string][] = [
     ['Attack', String(Math.round(atkOf(u)))],
-    ['Defence', String(Math.round(defenceOf(u)))],
+    ['Armour', String(Math.round(defenceOf(u)))],
     ['Range', `${range} ${range === 1 ? 'tile' : 'tiles'}${def.shot ? ', shoots' : ''}${def.splash ? ', splash' : ''}`],
     ['Blows', `every ${secs(blow)}`],
     ['Walk', def.still ? 'Stands still' : `${secs(walk)} a tile`],
@@ -261,6 +265,7 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
       grade: u.grade ?? 1,
       awaken: u.awaken ?? 0,
       stats,
+      scores: heroCardScores(u.def, u.level ?? 1, u.grade ?? 1, u.awaken ?? 0, opts.meta ? heroRank(opts.meta, u.def) : undefined, u.eq?.scores),
       traits: traitsOf(u.def).map((t) => ({ name: TRAITS[t].name, text: TRAITS[t].tiers.map((x) => `${x.need}: ${x.text}`).join(' · ') })),
       gear: gearLines(u, opts),
       moves: heroMoves(b, u, !!opts.autoUlt, opts.meta),
@@ -290,6 +295,7 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
   return {
     ...base,
     kind,
+    scores: foeCardScores(def),
     name: def.name,
     title: e?.epithet,
     sub: `${label} · ${familyOf(def)} · ${def.role}`,

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.319.0',
+    date: '2026-11-01',
+    title: 'The Stats panel',
+    notes: ['Each hero\'s sheet shows the six D&D scores, AC, to hit, skill DC and saves; the unit card and level-up recap show them, and gear compares by score.'],
+  },
+  {
     version: '0.318.0',
     date: '2026-11-01',
     title: 'Vaelkhar\'s Heart returned',
