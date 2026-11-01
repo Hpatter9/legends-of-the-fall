@@ -3,7 +3,7 @@
 // through `settleRun`, practice replays, and the save.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ARMIES, armyById, recordOf, waveBoost, FIRST_WAVE_EASE } from '../src/sim/armies';
+import { ARMIES, armyById, recordOf, waveBoost } from '../src/sim/armies';
 import { AREAS } from '../src/sim/board';
 import { FOES, isBoss } from '../src/sim/foes';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
@@ -162,8 +162,7 @@ test('each battle is an army in shape: its waves on its land, its last wave as s
     assert.equal(a.clear, 0);
     const last = waveBoost(a, qb.waves.length).foes!.hp!;
     // (times its own `ease`, tuned by `npm run quest-rate`)
-    // (the army's own first wave is eased for a fresh party since the joint rebalance, `FIRST_WAVE_EASE`; a quest battle takes the curve's strength)
-    const want = (waveBoost(like, qb.like.wave).foes!.hp! / (qb.like.wave === 1 ? FIRST_WAVE_EASE : 1)) * (qb.ease ?? 1);
+    const want = waveBoost(like, qb.like.wave).foes!.hp! * (qb.ease ?? 1);
     assert.ok(qb.ease === undefined || (qb.ease > 0.3 && qb.ease < 2.5), qb.id);
     assert.ok(Math.abs(last - want) < 1e-9, `${qb.id}: ${last} vs ${want}`);
     // (each wave before is a little weaker)

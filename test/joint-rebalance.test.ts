@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ARMIES, FIRST_WAVE_EASE, waveBoost } from '../src/sim/armies';
+import { ARMIES, waveBoost } from '../src/sim/armies';
 import { armyRun, foeProfOf, startStage } from '../src/sim/run';
 import { calamityRun, towerRun } from '../src/sim/modes';
 import { startedMeta } from '../src/sim/meta';
@@ -43,14 +43,10 @@ test("the foes' proficiency: an army's by its tier (Normal +2 to Mythic +6), the
   assert.equal(foeProfOf(cal), depthProficiency(4, CAL_PROF_PER));
 });
 
-test('a fresh party’s first wave is eased on Normal only; every later wave, boss and harder tier is as the curve has it', () => {
+test('no wave is eased: a fresh party’s first wave is as the curve has it (the owner removed the first-wave ease)', () => {
   for (const a of ARMIES) {
     const plain = (n: number) => a.start * (1 + a.growth * (n - 1));
-    assert.ok(Math.abs(waveBoost(a, 1, 0).foes!.hp! - plain(1) * FIRST_WAVE_EASE) < 1e-9, a.id);
+    assert.ok(Math.abs(waveBoost(a, 1, 0).foes!.hp! - plain(1)) < 1e-9, a.id);
     assert.ok(Math.abs(waveBoost(a, 2, 0).foes!.hp! - plain(2)) < 1e-9, a.id);
-    // (a harder tier's first wave keeps its curve: wave 2 over wave 1 is its own growth)
-    const g = a.tierGrowth ?? a.growth;
-    assert.ok(Math.abs(waveBoost(a, 2, 1).foes!.hp! / waveBoost(a, 1, 1).foes!.hp! - (1 + g)) < 1e-9, a.id);
   }
-  assert.ok(FIRST_WAVE_EASE > 0.8 && FIRST_WAVE_EASE < 1);
 });

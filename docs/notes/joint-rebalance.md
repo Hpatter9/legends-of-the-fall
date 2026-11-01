@@ -218,3 +218,12 @@ in a second tree for its column.
 6. **The harder tiers' order rule** (each tier's last wave over the one below in raw health and attack) no longer says what it meant once the
    tiers have their own proficiency (a Normal foe at +2 needs more health to be as hard as a Mythic one at +6). It held this batch with half a
    per cent; recommended: keep it as a floor, but measure the tiers by tries (the difficulty note's tables), not by it.
+
+## The owner's answers (at release)
+
+1. Level 5 skills: keep their size; a later batch measures the late armies at realistic skill levels and tunes the five who leave the band.
+2. The lightest new-hero team against skeletons: leave it (the families showing, as decided).
+3. **The first wave's ease: removed.** `FIRST_WAVE_EASE` is gone; a fresh party's first wave is as the curve has it (about 1 loss in 70 on this
+   code). `test/joint-rebalance.test.ts` now checks that no wave is eased; the quest battles take the curve's strength as before. The
+   first-wave test's seeds (100 to 123) still win all 24.
+4. Vuk's Old Hunger at +3.7 / +6.2: accepted.

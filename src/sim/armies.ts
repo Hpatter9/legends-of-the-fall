@@ -286,15 +286,10 @@ export const nextArmy = (a: Army): Army | undefined => ARMIES[armyIndex(a.id) + 
 /** The bosses (mid and final) of an army's waves, in order, by wave number. */
 export const bossesOf = (a: Army): { wave: number; id: string }[] => a.waves.flatMap((w, i) => (w.boss ? [{ wave: i + 1, id: w.foes[0] }] : []));
 
-/** The first wave of a campaign army's Normal tier is eased by this (the joint rebalance, docs/notes/joint-rebalance.md): a fresh party's first fight
- *  was lost about once in a hundred after the D&D stats (once in 400 before them); the rest of the curve, the bosses, the harder tiers and the
- *  daily's own army (`dailyArmy`, tuned by `DAILY_START`) are as they were. */
-export const FIRST_WAVE_EASE = 0.87;
-
 /** How the foes of wave n of an army are boosted (n from 1), on a difficulty tier (Normal by default): hp, attack and speed. */
 export function waveBoost(a: Army, n: number, tier = 0): Stage {
   const t = tierOf(tier);
-  const k = (tier > 0 ? a.tierStart ?? a.start : a.start) * (1 + (tier > 0 ? a.tierGrowth ?? a.growth : a.growth) * (n - 1)) * (tier === 0 && n === 1 && ARMIES.some((x) => x.id === a.id) ? FIRST_WAVE_EASE : 1);
+  const k = (tier > 0 ? a.tierStart ?? a.start : a.start) * (1 + (tier > 0 ? a.tierGrowth ?? a.growth : a.growth) * (n - 1));
   const w = a.waves[n - 1];
   let boss: Boost | undefined;
   if (w?.boss) {
