@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.313.0',
+    date: '2026-11-01',
+    title: 'Skills grow with use',
+    notes: ['A hero\'s skills now level up with use in army runs (half under auto-replay). The daily, quests, the spire, the Calamity and the Last Stand don\'t count.'],
+  },
+  {
     version: '0.312.0',
     date: '2026-11-01',
     title: 'The Eidolons\' reliquaries',
