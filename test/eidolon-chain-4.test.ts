@@ -208,10 +208,12 @@ function fightTrial(level: number, seed: number): { won: boolean; events: string
 }
 
 test('the trial battle is deterministic, and Voltara fights with her kit: the chain arc, the marked storm, her sentries, the overcharged form', () => {
-  const a = fightTrial(40, 2003);
-  assert.deepEqual(a, fightTrial(40, 2003), 'the same seed, the same fight');
+  // (seed 2004: STATS-2's scores turned seed 2003's close fight into one the party loses before she takes her second form; she takes it in nine
+  // of the ten seeds 2003 to 2012, as on main's code before the batch, where 2004 was the one that missed)
+  const a = fightTrial(40, 2004);
+  assert.deepEqual(a, fightTrial(40, 2004), 'the same seed, the same fight');
   const kinds = a.events.map((e) => e.split(':').slice(1, 3).join(':'));
   for (const k of ['bossSig:chainArc', 'bossSig:stormMark', 'skill:', 'phase:']) assert.ok(kinds.some((x) => x.startsWith(k)), `${k} in ${[...new Set(kinds)].join(' ')}`);
   assert.ok(a.boss.phased && a.boss.called > 0, JSON.stringify(a.boss));
-  assert.notDeepEqual(fightTrial(40, 2004).events, a.events);
+  assert.notDeepEqual(fightTrial(40, 2005).events, a.events);
 });

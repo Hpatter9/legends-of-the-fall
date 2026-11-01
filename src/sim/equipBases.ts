@@ -123,5 +123,23 @@ export const EQUIP_LIST: readonly EquipBase[] = [
 
 export const EQUIP_BASES: Readonly<Record<string, EquipBase>> = Object.fromEntries(EQUIP_LIST.map((b) => [b.id, b]));
 export const EQUIP_BASE_IDS: readonly string[] = EQUIP_LIST.map((b) => b.id);
+
+/** The ability score each base gives (STATS batch 2; the design's section 6), by what it is: a sword, axe, mace, maul, spear or harness
+ *  STR; a katana, dagger, scythe, knuckles, bow, gun, leathers, cloak or mithril DEX; mail, scale, plate, hide, bone or a vial CON; a
+ *  staff, tome, robe, scroll, orb or spectacles INT; vestments, a gi, an aegis, a bell, a pendant, a relic or an idol WIS; a wand, silk, a
+ *  charm, a drum, a lyre or a circlet CHA. Fixed by the base (nothing is rolled), so every piece already owned has it. */
+export const BASE_SCORE: Readonly<Record<string, 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'>> = {
+  ironSword: 'str', runedBlade: 'str', claymore: 'str', frostbrand: 'str', katana: 'dex', dragonboneAxe: 'str', headsmanAxe: 'str', spikedMace: 'str',
+  stonebreakerMaul: 'str', ashenSpear: 'str', vampireFang: 'dex', reapersScythe: 'dex', ironKnuckles: 'dex', huntersBow: 'dex', sunfireLongbow: 'dex',
+  ironwoodCrossbow: 'dex', blunderbuss: 'dex', stormStaff: 'int', emberWand: 'cha', grimoire: 'int',
+  leatherJerkin: 'dex', hideVest: 'con', rangerCloak: 'dex', shadowcloak: 'dex', chainMail: 'con', scaleHauberk: 'con', plateCuirass: 'con', thornplate: 'con',
+  bastionPlate: 'con', mageRobe: 'int', sageVestments: 'wis', silkenRobe: 'cha', dragonscaleMail: 'con', monkGi: 'wis', lamellar: 'con', mithrilMail: 'dex',
+  sunforgedAegis: 'wis', boneArmour: 'con', gladiatorHarness: 'str', emberRobe: 'cha',
+  luckyCharm: 'cha', ironRing: 'str', bootsOfHaste: 'dex', phoenixFeather: 'con', warDrum: 'cha', healerLyre: 'cha', silverBell: 'wis', emberAmulet: 'int',
+  moonPendant: 'wis', sapphireRing: 'int', rubyRing: 'str', emeraldBand: 'wis', scryingOrb: 'int', scholarScroll: 'int', vialOfVigor: 'con', swiftElixir: 'dex',
+  relicShard: 'wis', stoneIdol: 'wis', seerSpectacles: 'int', circlet: 'cha',
+};
+/** The score points a piece gives, by rarity (index 0 unused): none at Common, +1 at Rare and Epic, +2 at Legendary and Mythic. */
+export const RARITY_SCORE: readonly number[] = [0, 0, 1, 1, 2, 2];
 /** Every ability, by id. */
 export const ABILITIES: Readonly<Record<string, Ability>> = Object.fromEntries(EQUIP_LIST.map((b) => [b.ability.id, b.ability]));
