@@ -133,7 +133,10 @@ saved: `Unit.kiteAt` and `Unit.flankAt` live only in a fight, and a hero's pool 
 
 ## Checks
 
-CHECKS
+`npm run typecheck` clean. The full `npm test` on the final code (after merging main): **2,252 of 2,252 pass, 0 fail**. `npm run web`
+built. The page: `node tools/stats-6/shots.mjs` (`docs/samples/stats-6-knight-*.png`, `stats-6-wizard-*.png`) at 393x852, 360x780 and
+412x915: the panel's eight figures in three rows, a CON and an INT tile tapped, no sideways scroll (the panel's right edge inside the page at
+each width), no page errors. Measured: the tables above, both trees side by side, and the parity sweeps at levels 1 and 30.
 
 ## Open for the owner
 
