@@ -9,6 +9,7 @@ import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
 import type { DevGift } from './sim/devGrant';
+import { appUpdate } from './appUpdate';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 
 const KEY = 'legends.settings';
@@ -332,7 +333,19 @@ function aboutRows(): HTMLElement[] {
     'Credits',
     'Art from free pixel-art packs (most from Craftpix, some from DawnLike and others) and some made for the game. Music from OpenGameArt composers and others. Most sound effects are made in the game, with a few recorded hits. Every source is named in the game’s credits list.',
   );
-  return [name, credits];
+  const rows = [name, credits];
+  const up = appUpdate(); // (the app only: a newer release was found at start)
+  if (up) {
+    const [r, text] = row('Update available', `Version ${up.version} is out. `);
+    const a = document.createElement('a');
+    a.href = up.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = 'Get the new version';
+    text.lastElementChild?.append(a);
+    rows.unshift(r);
+  }
+  return rows;
 }
 
 function row(title: string, hint: string): [HTMLElement, HTMLElement] {

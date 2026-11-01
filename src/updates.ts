@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.320.0',
+    date: '2026-11-01',
+    title: 'An Android app',
+    notes: ['The game can now be installed as an Android app from the GitHub Releases page; inside the app, Settings shows when a newer version is out.'],
+  },
+  {
     version: '0.319.0',
     date: '2026-11-01',
     title: 'The Stats panel',
