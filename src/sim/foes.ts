@@ -144,7 +144,7 @@ export const FOE_BANDS: Record<string, string[]> = {
   gorgons: ['gorgon1', 'gorgon2', 'gorgon3', 'gorgon1', 'gorgon2'],
   satyrs: ['satyr1', 'satyr2', 'satyr3', 'satyr1', 'satyr2'],
   mixed: ['wolfRed', 'minotaur1', 'gorgon1', 'satyr1', 'minotaur2'],
-  orcs: ['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'],
+  orcs: ['orcGrunt', 'orcBrute', 'orcArcher', 'orcBrute', 'orcGrunt'], // (the joint rebalance: a grunt to a brute, so the starting five win about 75% here again once the brutes' AC 12 showed, docs/notes/joint-rebalance.md)
   demons: ['imp', 'imp', 'demon', 'imp', 'demon'],
   ogres: ['ogre', 'imp', 'ogre', 'imp', 'ogre'],
   orcWarlord: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute'],

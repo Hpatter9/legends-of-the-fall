@@ -10,17 +10,17 @@
 // - **The herald** (CHA): an Eidolon's rider lasts 5% longer a point of the highest CHA modifier among the heroes on the field.
 //
 // The scores show from level 1 (the owner's rule: no level-1 fit on the heroes): a CHA 8 hero waits longer for its ultimate than a CHA 17
-// one from its first fight. As batch 2 does for power (`trimOf`), the pools, cooldowns and the ultimate's fill are measured against the
-// roster's mean at the same level, so the mean hero is where it was and only how the 45 differ moves; the modes stay where they are until
-// the joint rebalance. Ranks, grades, talents and gear are not trimmed: they are what the hero has earned. Perception, Athletics and the
-// herald are D&D's own rules, small, and kept whole.
+// one from its first fight. Batch 6 measured the pools, cooldowns and the ultimate's fill against the roster's mean at the same level (as
+// batch 2 does for power, `trimOf`), so that the modes stayed where they were; the joint rebalance (`JOINT` in `stats.ts`,
+// docs/notes/joint-rebalance.md) counts them from a modifier of +0, as the design means, so the scores lift the heroes on purpose and the
+// modes were retuned for it. Perception, Athletics and the herald are D&D's own rules, small, and kept whole.
 //
 // The foes: their families are evened (the owner's rule until the joint rebalance), so a foe has no pool, cooldown, fill, perception or
 // climb from its block; a summon neither.
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
-import { ABILITIES, derivedOf, modOf, PER_POINT, profileOf, scoresAtLevel, STAT_PROFILES, type Ability, type Derived, type StatInput, type StatProfile } from './stats';
+import { ABILITIES, derivedOf, JOINT, modOf, PER_POINT, profileOf, scoresAtLevel, STAT_PROFILES, type Ability, type Derived, type StatInput, type StatProfile } from './stats';
 import { UNITS } from './units';
 import type { Unit } from './battle';
 
@@ -81,8 +81,8 @@ export function rosterMean(tag: string, level: number, f: (p: StatProfile, mods:
 
 /** The cooldown share INT gives a modifier: 2% shorter a point, at most 10% either way. */
 export const cdShare = (intMod: number): number => 1 - Math.max(-PER_POINT.COOLDOWN_CAP, Math.min(PER_POINT.COOLDOWN_CAP, PER_POINT.COOLDOWN * intMod));
-/** What a hero's cooldowns are multiplied by at a level: its INT's share over the roster's mean (the page reads it too). */
-export const cooldownShare = (d: Derived, level: number): number => d.cooldown / rosterMean('cd', level, (_p, m) => cdShare(m.int));
+/** What a hero's cooldowns are multiplied by at a level: its INT's share (over the roster's mean until the joint rebalance; the page reads it too). */
+export const cooldownShare = (d: Derived, level: number): number => (JOINT.cooldown ? d.cooldown : d.cooldown / rosterMean('cd', level, (_p, m) => cdShare(m.int)));
 /** A fighter's cooldowns are multiplied by this (1 for a foe, a summon, or with the rule off). */
 export function cooldownOf(u: Unit): number {
   const d = REST.cooldown ? heroDerived(u) : undefined;
@@ -91,8 +91,8 @@ export function cooldownOf(u: Unit): number {
 
 // ---- Inspiration (CHA) ----
 
-/** How much faster a hero's ultimate fills at a level: its CHA's share over the roster's mean (the page reads it too). */
-export const ultFillShare = (d: Derived, level: number): number => d.ultFill / rosterMean('ult', level, (_p, m) => 1 + PER_POINT.ULT_FILL * m.cha);
+/** How much faster a hero's ultimate fills at a level: its CHA's share (over the roster's mean until the joint rebalance; the page reads it too). */
+export const ultFillShare = (d: Derived, level: number): number => (JOINT.ultFill ? d.ultFill : d.ultFill / rosterMean('ult', level, (_p, m) => 1 + PER_POINT.ULT_FILL * m.cha));
 /** A fighter's ultimate fills this much faster (1 for a foe or with the rule off). */
 export function ultFillOf(u: Unit): number {
   const d = REST.ultFill ? heroDerived(u) : undefined;

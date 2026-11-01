@@ -2,6 +2,7 @@
 // how many waves each gets through. `npm run balance -- --no-tables --stand` runs it through tools/balance.mjs's bundle;
 // `npm run stand-balance` runs it alone. Options: `--levels 1,10,20` `--attempts 30` `--castle maxed` `` `--waves 150` `--smart` (the attentive buyer: tanks first, heals at 40%), `--hold` (hold the line at every act's end: STAND-RETREAT; without it the guard falls back at once).
 
+import './joint/off';
 import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '../src/sim/castle';
 import { TICK_MS } from '../src/sim/battle';
 import { gradeBoost } from '../src/sim/run';

@@ -16,7 +16,7 @@ const games = Number(process.argv[2]) || 300;
 const only = process.argv[3];
 const readers = process.argv[4]?.split(',');
 const LEVEL = 30;
-const STAGE = 78;
+const STAGE = Number(process.env.STAGE ?? 78); // (STAGE=90: the joint rebalance's level-30 yardstick, where a team wins about 60%)
 
 const SETS: Record<string, string[]> = {
   ninefoldCut: ['knight', 'samurai', 'archer', 'barbarian', 'lancer', 'reaper'],

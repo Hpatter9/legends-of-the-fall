@@ -11,7 +11,7 @@
 
 import type { Battle, BattleEvent, Unit } from './battle';
 import { CHARGE_MAX, keyOf, kitOf, KITS, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
-import { derivedOf, PER_POINT, profileOf, STAM_BASE, MANA_BASE, type Ability, type StatInput, type StatProfile } from './stats';
+import { derivedOf, JOINT, PER_POINT, profileOf, STAM_BASE, MANA_BASE, type Ability, type StatInput, type StatProfile } from './stats';
 import { cooldownOf, heroDerived, REST, rosterMean, ultFillOf } from './statRest';
 import { skillShare, skillStatOf } from './statPower';
 import { UNITS } from './units';
@@ -173,8 +173,8 @@ export const poolOf = (u: Unit): Pool | undefined => heroKitOf(u)?.pool;
 export const resMax = (pool: Pool): number => (pool === 'mana' ? RES.MANA_MAX : RES.STAM_MAX);
 
 // ---- Pools by score (STATS batch 6, `statRest.ts`): a stamina hero's pool follows its CON, a mana hero's its casting ability. Each point of
-// modifier adds 3 SP (5 MP) to the top and fills the pool 4% faster (its refill and its gains from blows), counted against the roster's mean
-// for that pool at the same level, so the mean hero's pool is as written and only how the heroes differ shows. ----
+// modifier adds 3 SP (5 MP) to the top and fills the pool 4% faster (its refill and its gains from blows), counted from a modifier of +0
+// (the joint rebalance, `JOINT.pools`; batch 6 counted it against the roster's mean for that pool at the same level). ----
 
 /** The ability that sets a pool. */
 export const poolAbility = (p: StatProfile, pool: Pool): Ability => (pool === 'stamina' ? 'con' : p.cast);
@@ -190,7 +190,8 @@ export function poolNumbers(kind: string, at: StatInput = {}): { pool: Pool; top
     poolKinds = { mana: [], stamina: [] };
     for (const [k, x] of Object.entries(HERO_KITS())) if (profileOf(k)) poolKinds[x.pool].push(k);
   }
-  const mean = rosterMean(`pool-${pool}`, at.level ?? 1, (q, m) => m[poolAbility(q, pool)], poolKinds[pool]);
+  // (counted from a modifier of +0 since the joint rebalance, `JOINT.pools`; against the roster's mean for the pool before)
+  const mean = JOINT.pools ? 0 : rosterMean(`pool-${pool}`, at.level ?? 1, (q, m) => m[poolAbility(q, pool)], poolKinds[pool]);
   const shift = derivedOf(p, at).mods[poolAbility(p, pool)] - mean;
   return {
     pool,

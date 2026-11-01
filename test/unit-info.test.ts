@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle } from '../src/sim/battle';
 import { KITS, ULT_LEVEL } from '../src/sim/abilities';
-import { HERO_KITS, SKILL2_LEVEL } from '../src/sim/heroKits';
+import { HERO_KITS, SKILL2_LEVEL, topOf } from '../src/sim/heroKits';
 import { PHASE2 } from '../src/sim/bossPhases';
 import { HERO_NAMES } from '../src/sim/heroNames';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
@@ -56,7 +56,8 @@ test('a hero card shows its pool, health, attack and traits; a mana caster says 
   const wiz = addUnit(b, 'wizard', 0, 9, { level: 12, grade: 2 });
   const info = infoOf(b, wiz);
   const pool = info.stats.find(([k]) => k === 'Pool')![1];
-  assert.match(pool, HERO_KITS().wizard.pool === 'mana' ? /Mana: \d+\/100 MP/ : /Stamina: \d+\/60 SP/);
+  // (the pool's top is the hero's own, by its scores: STATS batch 6, counted from +0 by the joint rebalance)
+  assert.match(pool, HERO_KITS().wizard.pool === 'mana' ? new RegExp(`Mana: \\d+/${Math.floor(topOf(wiz))} MP`) : /Stamina: \d+\/\d+ SP/);
   assert.equal(info.hp, `${wiz.maxHp}/${wiz.maxHp}`);
   assert.equal(info.grade, 2);
   assert.equal(info.name, HERO_NAMES.wizard?.name ?? 'Fire Wizard');

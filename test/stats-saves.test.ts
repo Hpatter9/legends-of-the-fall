@@ -2,20 +2,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
-import { AIL, gate, poisonFor, stunFor } from '../src/sim/ailments';
+import { AIL, gate, poisonFor } from '../src/sim/ailments';
 import { landArea } from '../src/sim/abilities';
 import { matchOf } from '../src/sim/blow';
 import { isBoss } from '../src/sim/foes';
 import { gradeBoost } from '../src/sim/run';
 import { CONTEST_GAP, dcAgainst, meanShare, rollSave, SAVE_OF, SAVE_SHARE, SAVES, saveChance, saveFit, saveStatsOf, shoveTiles } from '../src/sim/saves';
-import { derivedOf, foeStatsOf, STAT_PROFILES } from '../src/sim/stats';
+import { derivedOf, foeStatsOf, JOINT, STAT_PROFILES, TIER_PROFICIENCY } from '../src/sim/stats';
 import { LEGENDARY_RESISTANCE, LIVE, scoreWhy } from '../src/sim/statLines';
 import { previewMove } from '../src/sim/toolkit/move';
 import { UNITS } from '../src/sim/units';
 
 // STATS batch 5, "Saves" (docs/notes/stats-5.md; the design is docs/notes/rpg-stats-design.md, section 3.3): skill DCs, the six saves, a
 // save halving an ailment, a hold or a blast ("Saved"), the shoves' contest of STR (a saved shove is a tile shorter), and the bosses'
-// Legendary Resistance (their old ladder, unchanged: a boss makes no save).
+// Legendary Resistance (their old ladder). The joint rebalance (docs/notes/joint-rebalance.md) turned three of batch 5's stand-ins into the design's
+// rules: no fit (a save's halving is felt), the foes at their tier's proficiency (not matched to the heroes' growth), and a boss saves, every
+// save trained, with its ladder after.
 
 /** A fight on bare level ground with heroes (kind and level) and foes, placed, not yet begun. */
 function field(heroes: [string, number][], foes: string[]): { b: Battle; hs: Unit[]; fs: Unit[] } {
@@ -82,31 +84,40 @@ test('a CON 20 hero shakes off poison more often than a CON 12 one', () => {
   assert.equal([...lens.saved][0], Math.round([...lens.not][0] * SAVE_SHARE));
 });
 
-test('the fit: an ordinary hero, on average over the roster, takes a foe’s ailment as long as before; a hero’s own save shows', () => {
+test('no fit (the joint rebalance): a lay is its written length, halved on a save, so a saved stun is half and an unsaved one whole', () => {
   const { b, hs, fs } = field([['knight', 1]], ['skeleton', 'orcGrunt']);
-  const skel = fs[0];
-  const f = saveFit(b, skel, hs[0], 'con');
-  const dc = foeStatsOf(UNITS.skeleton).dc;
-  const heroes = Object.values(STAT_PROFILES).map((p) => derivedOf(p).saves.con);
-  const mean = heroes.reduce((n, s) => n + meanShare(dc, s), 0) / heroes.length;
-  assert.ok(Math.abs(f * mean - 1) < 1e-12);
-  // (a hero's lay on a foe: the foe's block is fitted out against the roster's DCs)
-  const g = saveFit(b, hs[0], fs[1], 'con');
-  const dcs = Object.values(STAT_PROFILES).map((p) => derivedOf(p).dc);
-  const save = foeStatsOf(UNITS[fs[1].def]).saves.con;
-  assert.ok(Math.abs(g * (dcs.reduce((n, d) => n + meanShare(d, save), 0) / dcs.length) - 1) < 1e-12);
+  assert.equal(saveFit(b, fs[0], hs[0], 'con'), 1);
+  assert.equal(saveFit(b, hs[0], fs[1], 'con'), 1);
+  const seen = new Set<number>();
+  for (let i = 0; i < 40; i++) {
+    b.t = i * 100;
+    seen.add(rollSave(b, hs[0], fs[1], 'stun', false).mult);
+  }
+  assert.deepEqual([...seen].sort(), [SAVE_SHARE, 1]);
+  // (with the switch off, batch 5's fit: the ordinary hero, on average over the roster, takes a foe's ailment as long as before)
+  JOINT.saves = false;
+  try {
+    const f = saveFit(b, fs[0], hs[0], 'con');
+    const dc = foeStatsOf(UNITS.skeleton).dc;
+    const heroes = Object.values(STAT_PROFILES).map((p) => derivedOf(p).saves.con);
+    assert.ok(Math.abs(f * (heroes.reduce((n, x) => n + meanShare(dc, x), 0) / heroes.length) - 1) < 1e-12);
+  } finally {
+    JOINT.saves = true;
+  }
 });
 
-test('the foes stay matched: their DC rises with the heroes’ saves, their saves with the heroes’ DC', () => {
+test('the foes at their tier’s proficiency (the joint rebalance): their DC and saves are their block’s, not matched to the heroes’ growth', () => {
   const { b, fs } = field([['knight', 30]], ['skeleton']);
   fight(b);
-  const m = matchOf(b);
-  const k = (lv: number) => derivedOf(STAT_PROFILES.knight, { level: lv });
-  assert.equal(m.dc, k(30).dc - k(1).dc);
-  assert.equal(m.save.con, k(30).saves.con - k(1).saves.con);
   const s = foeStatsOf(UNITS.skeleton, 0, false);
-  assert.equal(dcAgainst(b, fs[0], 'con'), s.dc + m.save.con);
-  assert.equal(saveStatsOf(b, fs[0])!.saves.con, s.saves.con + m.dc);
+  assert.ok(matchOf(b).dc > 0);
+  assert.equal(dcAgainst(b, fs[0], 'con'), s.dc);
+  assert.equal(saveStatsOf(b, fs[0])!.saves.con, s.saves.con);
+  // (a Mythic fight's foes, proficiency +6: their DC and their trained saves 4 more than the Normal tier's)
+  const myth = bareBoard(startBattle(41, ['skeleton'], { foes: { prof: TIER_PROFICIENCY[4] } }));
+  assert.equal(dcAgainst(myth, myth.units[0], 'con'), s.dc + 4);
+  assert.equal(saveStatsOf(myth, myth.units[0])!.saves.con, s.saves.con + 4);
+  assert.equal(saveStatsOf(myth, myth.units[0])!.saves.int, s.saves.int, 'an untrained save has no proficiency');
 });
 
 test('a saved shove is a tile shorter; the contest of STR moves it a tile either way', () => {
@@ -168,24 +179,36 @@ test('a saved blast deals half; the pop says "Saved"', () => {
   assert.ok(Math.abs(s - n * SAVE_SHARE) <= 1, `saved ${s}, not ${n}`);
 });
 
-test('bosses as before: a boss makes no save (its Legendary Resistance is its old ladder), and the card names it', () => {
+test('a boss saves (the joint rebalance): every save trained, and its Legendary Resistance follows; the card names it', () => {
   const boss = Object.keys(UNITS).find((id) => isBoss(id) && UNITS[id].side === 'foe')!;
-  const lay = (on: boolean) => {
-    SAVES.on = on;
-    const { b, hs, fs } = field([['knight', 30]], [boss]);
-    const out: number[] = [];
+  const { b, hs, fs } = field([['knight', 30]], [boss]);
+  const st = saveStatsOf(b, fs[0])!;
+  const f = foeStatsOf(UNITS[boss]);
+  // (+2 proficiency on the Normal tier's +2, in every save)
+  for (const a of ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const) assert.equal(st.saves[a], f.mods[a] + TIER_PROFICIENCY[0] + 2, a);
+  // (it saves, some of the time, and a saved stun is half of the ladder's own)
+  const out: number[] = [];
+  for (let i = 0; i < 40; i++) {
+    b.t = i * 20000;
+    fs[0].cc = undefined;
+    out.push(gate(b, fs[0], 'stun', 2000, hs[0]));
+  }
+  const saved = b.spells.events.filter((e) => e.kind === 'saved').length;
+  assert.ok(saved > 0 && saved < 40, `${saved} of 40 saved`);
+  const whole = Math.round(2000 * AIL.BOSS_SHARE);
+  assert.ok(out.includes(whole) && out.includes(Math.round(whole * SAVE_SHARE)), out.join(' '));
+  // (with the switch off, batch 5's rule: a boss makes no save, its ladder alone)
+  JOINT.bossSaves = false;
+  try {
+    const c = field([['knight', 30]], [boss]);
     for (let i = 0; i < 6; i++) {
-      b.t = i * 3000;
-      out.push(gate(b, fs[0], 'stun', 2000, hs[0]), gate(b, fs[0], 'poison', AIL.POISON_MS, hs[0]));
-      stunFor(b, fs[0], 1500, false, 'stun', hs[0]);
+      c.b.t = i * 3000;
+      gate(c.b, c.fs[0], 'stun', 2000, c.hs[0]);
     }
-    const ev = b.spells.events.filter((e) => e.kind === 'saved');
-    SAVES.on = true;
-    return { out, ev: ev.length };
-  };
-  const on = lay(true);
-  assert.deepEqual(on.out, lay(false).out);
-  assert.equal(on.ev, 0);
+    assert.equal(c.b.spells.events.filter((e) => e.kind === 'saved').length, 0);
+  } finally {
+    JOINT.bossSaves = true;
+  }
   assert.equal(LEGENDARY_RESISTANCE.name, 'Legendary Resistance');
   assert.match(LEGENDARY_RESISTANCE.text, /three in a row/);
 });

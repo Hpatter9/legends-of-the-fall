@@ -14,7 +14,9 @@ export const CAL_ROWS: readonly number[] = [6, 7, 7, 8, 8, 8];
 export const CAL_MAPS = CAL_ROWS.length;
 /** Foes' hp and attack on a floor are `start` x (1 + `growth` x (floor - 1)), the floors running on through the maps. Each hero past the fifth makes them `perHero` stronger (more heroes would otherwise make every fight easy), and each map after the first adds `step` of itself on top. The last map's fights (not its boss) have `final` more of both, so the last map is the hardest. From the second map on the foes' attack (not their hp) is `atkBias` more, so the fights draw blood: the heroes end them hurt, as the bigger squads and tiers would otherwise let them walk through. */
 // (SPELLS-RETUNE: `start` 0.435 to 0.6, so a climb whose Auto casts the king's spells clears the maps it did for a bot that never cast, `docs/notes/spells-retune.md`)
-export const CAL_SCALE = { start: 0.6, growth: 0.05, perHero: 0.06, step: 0.64, bossHp: 0.75, bossStep: 0.06, atkBias: 0.45, final: 1 };
+// (the joint rebalance: `start` 0.6 to 0.66 and `bossStep` 0.06 to 0.12, so a fresh climb clears the maps main's did, 74 of 100 past the second, once
+// the foes fought at their depth's proficiency and the bosses with their blocks, docs/notes/joint-rebalance.md)
+export const CAL_SCALE = { start: 0.66, growth: 0.05, perHero: 0.06, step: 0.64, bossHp: 0.75, bossStep: 0.12, atkBias: 0.45, final: 1 };
 /** A built castle makes a Calamity's foes answer it by this much more power than the spire's (`CASTLE_ANSWER`): the castle's hp and attack boost, to the power `CASTLE_ANSWER.share` + this. A Calamity's heroes also gain tiers, so with the same answer a built castle would carry them through the middle maps. */
 export const CAL_CASTLE_EXTRA = 0.3;
 

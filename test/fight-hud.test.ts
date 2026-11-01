@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, keyOf, ULT_LEVEL } from '../src/sim/abilities';
-import { HERO_KITS, costOf, heroKitOf, SKILL2_LEVEL, SKILL3_LEVEL } from '../src/sim/heroKits';
+import { HERO_KITS, costOf, heroKitOf, SKILL2_LEVEL, SKILL3_LEVEL, topOf } from '../src/sim/heroKits';
 import { REVIVE } from '../src/sim/kits/revive';
 import { ALL_HEROES } from '../src/sim/units';
 import { barNumbers, chipLine, chipName, chipOf, gapOf, hudLayout, sheetOf, ultOf, whichCast } from '../src/fightHudRules';
@@ -151,7 +151,10 @@ test('the bars show health and the pool with their numbers', () => {
   u.charge = CHARGE_MAX / 4;
   const n = barNumbers(u);
   assert.equal(n.hp, `${u.hp}/${u.maxHp}`);
-  assert.equal(n.pool, '25/100 MP');
+  // (a pool's top is the hero's own: the level-12 Wizard's INT +5 makes it 125 MP, STATS batch 6 counted from +0 by the joint rebalance)
+  const top = Math.floor(topOf(u));
+  assert.equal(top, 125);
+  assert.equal(n.pool, `${Math.floor(top / 4)}/${top} MP`);
   assert.equal(n.poolShare, 0.25);
 });
 

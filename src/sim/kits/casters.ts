@@ -76,17 +76,19 @@ export function piedPiper(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Gorgon, Stone Garden: every stunned or slowed foe within 5 turns to stone for 2s (with none, the strongest within 5); one that dies as stone stays as a statue that blocks its tile for 6s. */
+/** Gorgon, Stone Garden: every stunned or slowed foe within 5 turns to stone for 3s (with none, the strongest within 5); one that dies as stone stays as a statue that blocks its tile for 6s. */
+/** How long Flesh to Stone holds (2 s until the joint rebalance lifted the Gorgon at level 10, where a CON save now halves it). */
+export const STONE_MS = 3000;
 export function stoneGarden(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const near = foesNear(b, me, 5);
   const held = near.filter((f) => on(f.stunUntil, b) || on(f.slowUntil, b));
   const prey = held.length ? held : near.sort(strongest).slice(0, 1);
   if (!prey.length) return false;
   for (const f of prey) {
-    stun(b, f, ms(me, 2000));
-    kx(f).stone = b.t + ms(me, 2000);
+    stun(b, f, ms(me, STONE_MS));
+    kx(f).stone = b.t + ms(me, STONE_MS);
     out.push({ kind: 'gaze', by: me.id, to: f.id });
-    mark(out, me, f, 'stone', ms(me, 2000));
+    mark(out, me, f, 'stone', ms(me, STONE_MS));
   }
   return true;
 }

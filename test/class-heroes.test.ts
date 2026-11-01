@@ -264,7 +264,7 @@ test('Long Shot adds damage only against foes 4 or more tiles away', async () =>
   const near = spawn(b, 'skeleton', 3, 4);
   const far = spawn(b, 'skeleton', 3, 1);
   assert.equal(farOf(r, near), 1);
-  assert.equal(farOf(r, far), 1.35);
+  assert.equal(farOf(r, far), 1.15); // (the joint rebalance trimmed Long Shot from 35% to 15%, docs/notes/joint-rebalance.md)
 });
 
 test('Hex curses the three toughest foes in reach, and the Warlock drinks part of the burn', () => {

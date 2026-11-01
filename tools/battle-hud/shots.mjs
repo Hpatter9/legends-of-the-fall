@@ -24,7 +24,7 @@ const srv = createServer((q, r) => {
   r.writeHead(200, { 'content-type': types[p.split('.').pop()] ?? 'application/octet-stream' });
   r.end(readFileSync(p));
 }).listen(PORT);
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 mkdirSync('docs/samples', { recursive: true });
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
 let errors = 0;

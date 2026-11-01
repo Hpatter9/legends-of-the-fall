@@ -5,6 +5,7 @@
 //
 //   node tools/merge-two/run.mjs orcs:4:55 infernal:0:55          SAVES (default 24) tries a cell
 //   node tools/merge-two/run.mjs early:beasts:20 spire:max         the starting five at a level (no castle or talents); the spire's climb
+import '../joint/off';
 import { ARMIES, armyById } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { TIERS } from '../../src/sim/tiers';

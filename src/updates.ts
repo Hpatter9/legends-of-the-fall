@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.328.0',
+    date: '2026-11-01',
+    title: 'The great rebalance',
+    notes: ['Foes gain proficiency by tier, bosses fight with full blocks, and foe families and saves show. Every mode is retuned to its pace, every hero to the band.'],
+  },
+  {
     version: '0.327.0',
     date: '2026-11-01',
     title: 'A new opening',

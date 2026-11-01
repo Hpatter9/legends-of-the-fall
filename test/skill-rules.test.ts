@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, keyOf } from '../src/sim/abilities';
-import { HERO_KITS, RES, SLOT_LEVELS, canPay, castHero, costOf, resMax, slotOpen, type HeroKit } from '../src/sim/heroKits';
+import { HERO_KITS, RES, SLOT_LEVELS, canPay, castHero, costOf, poolNumbers, resMax, slotOpen, type HeroKit } from '../src/sim/heroKits';
 import { CLASSES, THIRD_KINDS } from '../src/sim/kits/table';
 import { CAST_EXEMPT, CLASS_RANGE, CLASS_WEIGHT, heroIncome, INCOME, kitDemand, slotDemand } from '../src/sim/skillRules';
 import { REST } from '../src/sim/statRest';
@@ -115,7 +115,10 @@ test('a jab never empties the pool on its own: its cost over its cooldown is und
   for (const h of ALL_HEROES) {
     const hk = HERO_KITS()[h];
     const income = heroIncome(h);
-    assert.ok(Math.abs(income / INCOME[hk.pool] - 1) < 0.1, `${h}: its own income is within a few percent of the reference (${income.toFixed(2)})`);
+    // (the reference income times the hero's own fill: 4% a point of its pool's ability, counted from +0 since the joint rebalance; batch 6
+    // counted it against the roster's mean, when each hero's income sat within a tenth of the reference)
+    assert.ok(Math.abs(income - INCOME[hk.pool] * poolNumbers(h, { level: 20 })!.fill) < 1e-9, `${h}: its own income ${income.toFixed(2)}`);
+    assert.ok(income >= INCOME[hk.pool] * 0.9 && income <= INCOME[hk.pool] * 1.4, `${h}: ${income.toFixed(2)}`);
     for (const s of hk.slots) if (s.cls === 'jab') assert.ok(slotDemand(s) < income, `${h}: ${s.skill.name} asks ${slotDemand(s).toFixed(2)} a second against ${income.toFixed(2)}`);
   }
 });

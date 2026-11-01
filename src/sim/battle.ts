@@ -488,6 +488,9 @@ export interface Boost {
   equip?: EquipStats;
   /** How much faster the foes act and walk (a harder army tier); only the foes' boost reads it. */
   speed?: number;
+  /** The foes' proficiency in this fight (their to hit, AC, DC and saves; the joint rebalance, `blow.ts`): the army tier's, or the depth's in
+   *  the spire, the Calamity and the Last Stand. Only the foes' boost reads it; unset is the Normal tier's +2. */
+  prof?: number;
   /** Skill charge carried over from the run's last wave (and an ultimate's charge). */
   charge?: number;
   charge2?: number;

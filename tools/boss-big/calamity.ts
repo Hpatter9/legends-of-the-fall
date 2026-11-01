@@ -2,6 +2,7 @@
 // signature attacks on or `--off`: how many of `--seeds` (40) runs clear it, and the map each lost run fell on.
 //   node tools/boss-big/run.mjs calamity [--off] [--seeds 40]
 import './switch';
+import '../joint/off';
 import { playCalamity } from '../autoplay';
 import { startedMeta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';

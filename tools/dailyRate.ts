@@ -5,6 +5,7 @@
 //   npm run daily-rate                 60 dates
 //   npm run daily-rate -- --days 200   more dates
 
+import './joint/off';
 import { dailyArmy, dailyBossName, DAILY_WAVES } from '../src/sim/daily';
 import { dateKey } from '../src/sim/dailySeed';
 import { startedMeta } from '../src/sim/meta';

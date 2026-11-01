@@ -9,7 +9,7 @@ import { addRes, cdOf, fillOf, HERO_KITS, poolNumbers, RES, resMax, resOf, start
 import { gradeBoost } from '../src/sim/run';
 import { DEX_SAVES, saveAware, saveFit, saveStatsOf, SAVES } from '../src/sim/saves';
 import { CLASS_RANGE } from '../src/sim/skillRules';
-import { derivedOf, PER_POINT, STAT_PROFILES } from '../src/sim/stats';
+import { derivedOf, JOINT, PER_POINT, STAT_PROFILES } from '../src/sim/stats';
 import { athleticsOf, cooldownOf, heraldOf, perceptionOf, REST, ultFillOf } from '../src/sim/statRest';
 import { UNITS } from '../src/sim/units';
 import { kitStrike } from '../src/sim/kits/effects';
@@ -37,22 +37,29 @@ const hero = (b: Battle, kind: string, u: number, v: number, level = 1): Unit =>
 
 // ---- Pools by score ----
 
-test('pools by score: a CON 17 stamina hero has a deeper pool that fills faster than a CON 12 one; the mean hero keeps the written pool', () => {
+test('pools by score: a CON 17 stamina hero has a deeper pool that fills faster than a CON 12 one, each counted from +0 (the joint rebalance)', () => {
   const b = arena();
   const knight = hero(b, 'knight', 1, 1);
   const kunoichi = hero(b, 'kunoichi', 3, 1);
   assert.equal(HERO_KITS().knight.pool, 'stamina');
   assert.equal(HERO_KITS().kunoichi.pool, 'stamina');
-  assert.ok(topOf(knight) > RES.STAM_MAX && topOf(kunoichi) < RES.STAM_MAX, `${topOf(knight)} and ${topOf(kunoichi)}`);
+  // (counted from +0 since the joint rebalance: CON +3 is 9 SP over the written 60, CON +1 is 3 over; batch 6 counted from the roster's mean)
+  assert.ok(Math.abs(topOf(knight) - RES.STAM_MAX - 3 * PER_POINT.STAM_TOP) < 1e-9, `${topOf(knight)}`);
+  assert.ok(Math.abs(topOf(kunoichi) - RES.STAM_MAX - PER_POINT.STAM_TOP) < 1e-9, `${topOf(kunoichi)}`);
   // (3 SP a point of CON between them: CON 17 is +3, CON 12 +1)
   assert.ok(Math.abs(topOf(knight) - topOf(kunoichi) - 2 * PER_POINT.STAM_TOP) < 1e-9);
-  assert.ok(fillOf(knight) > 1 && fillOf(kunoichi) < 1);
+  assert.ok(Math.abs(fillOf(knight) - (1 + 3 * PER_POINT.REFILL)) < 1e-9 && Math.abs(fillOf(kunoichi) - (1 + PER_POINT.REFILL)) < 1e-9);
   assert.ok(Math.abs(fillOf(knight) / fillOf(kunoichi) - (1 + 3 * PER_POINT.REFILL) / (1 + PER_POINT.REFILL)) < 1e-9);
-  // (the roster's mean stays the written pool, at every level)
-  for (const level of [1, 20, 60]) {
-    const stam = Object.keys(HERO_KITS()).filter((k) => STAT_PROFILES[k] && HERO_KITS()[k].pool === 'stamina');
-    const mean = stam.reduce((n, k) => n + poolNumbers(k, { level })!.top, 0) / stam.length;
-    assert.ok(Math.abs(mean - RES.STAM_MAX) < 1e-9, `level ${level}: ${mean}`);
+  // (a hero's pool grows with its CON by level: the roster's mean is above the written pool, more so at 60 than at 1)
+  const stam = Object.keys(HERO_KITS()).filter((k) => STAT_PROFILES[k] && HERO_KITS()[k].pool === 'stamina');
+  const mean = (level: number) => stam.reduce((n, k) => n + poolNumbers(k, { level })!.top, 0) / stam.length;
+  assert.ok(RES.STAM_MAX < mean(1) && mean(1) < mean(20) && mean(20) < mean(60), `${mean(1)} ${mean(20)} ${mean(60)}`);
+  // (with the switch off, batch 6's rule: the roster's mean is the written pool at every level)
+  JOINT.pools = false;
+  try {
+    for (const level of [1, 20, 60]) assert.ok(Math.abs(mean(level) - RES.STAM_MAX) < 1e-9, `level ${level}: ${mean(level)}`);
+  } finally {
+    JOINT.pools = true;
   }
 });
 
@@ -65,7 +72,8 @@ test("pools by score: a mana hero's pool follows its casting ability, and its po
   // (INT 17 is +3; the Satyr casts with CHA 17, +3 too: the same top; the Druid with WIS 17 as well)
   assert.equal(poolNumbers('satyr')!.top, n.top);
   const mana = Object.keys(HERO_KITS()).filter((k) => STAT_PROFILES[k] && HERO_KITS()[k].pool === 'mana');
-  assert.ok(Math.abs(mana.reduce((x, k) => x + poolNumbers(k)!.top, 0) / mana.length - RES.MANA_MAX) < 1e-9, 'the mean mana hero keeps 100');
+  assert.equal(n.top, RES.MANA_MAX + 3 * PER_POINT.MANA_TOP, 'INT +3 is 15 MP over the written 100');
+  assert.ok(mana.reduce((x, k) => x + poolNumbers(k)!.top, 0) / mana.length > RES.MANA_MAX, 'the mean mana hero has more than 100');
   startPool(wizard);
   assert.ok(Math.abs(resOf(wizard) - RES.MANA_START) < 1e-9, 'a fight starts with the written points');
   addRes(wizard, 10);
@@ -91,8 +99,8 @@ test("INT's cooldowns: an INT 17 Wizard's skills come round sooner than an INT 8
   const wizard = hero(b, 'wizard', 1, 1, 20);
   const peasant = hero(b, 'peasant', 3, 1, 20);
   assert.ok(cooldownOf(wizard) < 1 && cooldownOf(peasant) > 1, `${cooldownOf(wizard)} ${cooldownOf(peasant)}`);
-  // (INT +5 is the 10% cap; the mean hero is about 1% under the written)
-  assert.ok(cooldownOf(wizard) >= 0.88 && cooldownOf(peasant) <= 1.12);
+  // (INT +5 is the 10% cap; counted from +0 since the joint rebalance, so the Wizard's are 10% under the written and the Peasant's 2% over)
+  assert.ok(Math.abs(cooldownOf(wizard) - 0.9) < 1e-9 && Math.abs(cooldownOf(peasant) - 1.02) < 1e-9, `${cooldownOf(wizard)} ${cooldownOf(peasant)}`);
   for (const [u, k] of [[wizard, 'wizard'], [peasant, 'peasant']] as const)
     for (const s of HERO_KITS()[k].slots) {
       const cd = cdOf(u, s);
@@ -108,14 +116,13 @@ test("INT's cooldowns: an INT 17 Wizard's skills come round sooner than an INT 8
 
 // ---- CHA's inspiration and the herald ----
 
-test("CHA's inspiration: a CHA 17 Paladin's ultimate fills faster than a CHA 8 Samurai's; the roster's mean fills as written", () => {
+test("CHA's inspiration: a CHA 17 Paladin's ultimate fills faster than a CHA 8 Samurai's, counted from +0 (the joint rebalance)", () => {
   const b = arena();
   const paladin = hero(b, 'paladin', 1, 1, 30);
   const samurai = hero(b, 'samurai', 3, 1, 30);
   assert.ok(ultimateOf(paladin) && ultimateOf(samurai));
   assert.ok(ultFillOf(paladin) > 1 && ultFillOf(samurai) < 1);
-  const mean = Object.values(STAT_PROFILES).reduce((n, p) => n + derivedOf(p, { level: 30 }).ultFill, 0) / Object.keys(STAT_PROFILES).length;
-  assert.ok(Math.abs(derivedOf(STAT_PROFILES.paladin, { level: 30 }).ultFill / mean - ultFillOf(paladin)) < 1e-9);
+  assert.ok(Math.abs(derivedOf(STAT_PROFILES.paladin, { level: 30 }).ultFill - ultFillOf(paladin)) < 1e-9);
   // (a second's time share on the meter, against the same hero with the rule off: each kit's own rate stays)
   const plain = hero(b, 'paladin', 5, 1, 30);
   paladin.charge2 = 0;
@@ -284,8 +291,9 @@ test('the Wall of Fire is a DEX save, not a CON one, and a breath is halved on a
   const { b, hs, fs } = field([['dragoon', 1]], ['skeleton']);
   const [dragoon] = hs;
   const [skel] = fs;
-  // (the fit on the wall's burn reads the DEX save)
-  assert.notEqual(saveFit(b, dragoon, skel, 'dex'), saveFit(b, dragoon, skel, 'con'));
+  // (the skeleton's DEX save is not its CON save, so which one the burn reads shows; no fit since the joint rebalance)
+  assert.notEqual(saveStatsOf(b, skel)!.saves.dex, saveStatsOf(b, skel)!.saves.con);
+  assert.equal(saveFit(b, dragoon, skel, 'dex'), 1);
   // (over many moments, a breath's blast: about the DEX save's share are saved, each "Saved" and half)
   let saved = 0;
   let halves = 0;

@@ -6,21 +6,21 @@
 // Which save: STR against shoves, drags and weakening; DEX against blasts; CON against poison, bleeding, burning, chill and freezing,
 // shock and stuns; INT against silence; WIS against fear and charm; CHA against curses.
 //
-// Who does not save: a boss (its Legendary Resistance is the old ladder, `AIL.BOSS_SHARE` and `hardGate`, unchanged: bosses behave as
-// before), a fighter of the layer's own side, and anything laid by no fighter (the land, the king's spells, the combos, the Eidolons).
+// Who does not save: a fighter of the layer's own side, and anything laid by no fighter (the land, the king's spells, the combos, the
+// Eidolons). A boss saved only by its Legendary Resistance (the old ladder, `AIL.BOSS_SHARE` and `hardGate`) until the joint rebalance; now it
+// makes its saves as well, every one trained, and the ladder follows (`JOINT.bossSaves`).
 //
-// The fit (`saveFit`), as the blows' `blowFit`: so that this batch moves no mode before the joint rebalance, a lay is lengthened (or a blast
-// strengthened) by what the saves take off on average, measured for the ordinary hero. A hero's own DC and saves show (a CON 20 Knight
-// shakes off a skeleton's poison more often than a CON 12 Wizard); a foe's family block is fitted out, so it moves how often a foe saves
-// and is saved against, not how long its ailments last on average. The foes are matched to the heroes' growth (`matchOf`): a foe's DC
-// rises by as much as the heroes' saves have grown since level 1, and its saves by as much as their DC has.
+// Batches 5 and 6 fitted the saves out (`saveFit`: a lay lengthened by what the saves take off on average) and matched the foes to the heroes'
+// growth (`matchOf`), so that no mode moved before the joint rebalance. Both are off now (`JOINT.saves`, `JOINT.tierProf`,
+// docs/notes/joint-rebalance.md): a save halves what it is made against, as written, and a foe's DC and saves come from its family's block
+// at its tier's or depth's proficiency.
 //
 // Randomness: the d20 is a hash of the fight's seed and the moment (`SAVE_SALT`), never a draw from `b.rng` or `b.skillRng`. Pure rules:
 // no Pixi, no DOM.
 
 import { mixSeed } from './rng';
-import { ABILITIES, derivedOf, foeStatsOf, profileOf, STAT_PROFILES, type Ability, type Scores } from './stats';
-import { BOSS_BLOCK, matchOf, profiled, statInputOf } from './blow';
+import { ABILITIES, derivedOf, JOINT, profileOf, STAT_PROFILES, type Ability, type Scores } from './stats';
+import { foeBlockOf, matchOf, profiled, statInputOf } from './blow';
 import { UNITS } from './units';
 import { isBoss } from './foes';
 import { REST } from './statRest';
@@ -89,17 +89,20 @@ export function saveStatsOf(b: Battle, u: Unit): SaveStats | null {
     const one = derivedOf(p);
     s = { dc: now.dc, dcLift: ZERO, saves: now.saves, dc1: one.dc, saves1: one.saves, str: now.mods.str };
   } else if (def && u.id !== 0) {
-    const f = foeStatsOf(def, 0, BOSS_BLOCK ? undefined : false);
+    const f = foeBlockOf(b, u);
     const m = matchOf(b);
-    // (a foe answers the heroes' growth: its DC their saves', its saves their DC's; a hero's summon grows with them)
+    // (a hero's summon grows with the heroes; a foe answered their growth until the joint rebalance, its DC their saves', its saves their DC's,
+    // and now has its tier's or depth's proficiency alone, `JOINT.tierProf`)
     const foe = u.side === 'foe';
+    const own = foe && JOINT.tierProf;
     const saves = { ...f.saves };
     const dcLift = { ...ZERO };
-    for (const a of ABILITIES) {
-      saves[a] += foe ? m.dc : m.save[a];
-      dcLift[a] = foe ? m.save[a] : m.dc;
-    }
-    s = { dc: f.dc, dcLift, saves, dc1: f.dc, saves1: f.saves, str: f.mods.str + m.str };
+    if (!own)
+      for (const a of ABILITIES) {
+        saves[a] += foe ? m.dc : m.save[a];
+        dcLift[a] = foe ? m.save[a] : m.dc;
+      }
+    s = { dc: f.dc, dcLift, saves, dc1: f.dc, saves1: f.saves, str: f.mods.str + (own ? 0 : m.str) };
   }
   cache.set(u, s);
   return s;
@@ -124,6 +127,8 @@ const fitMemo = new Map<string, number>();
  *  roster's mean at level 1; a hero's own DC or save shows against it, a foe's block is fitted out (both at their level-1 numbers, the
  *  match keeping the gap). */
 export function saveFit(b: Battle, by: Unit, to: Unit, a: Ability): number {
+  // (the joint rebalance: a save's halving is felt, `JOINT.saves`)
+  if (JOINT.saves) return 1;
   const sb = saveStatsOf(b, by);
   const st = saveStatsOf(b, to);
   if (!sb || !st) return 1;
@@ -150,9 +155,10 @@ export interface SaveRoll {
 }
 const NO_SAVE: SaveRoll = { saved: false, mult: 1 };
 
-/** Whether `to` makes a save against `what` from `by` at all: the other side, not a boss (its Legendary Resistance), and both with a block. */
+/** Whether `to` makes a save against `what` from `by` at all: the other side, and both with a block. A boss (`boss`) saved only by its
+ *  Legendary Resistance until the joint rebalance; now it saves as well, every save trained (`JOINT.bossSaves`), and the ladder follows. */
 export function savesAgainst(b: Battle, by: Unit | undefined, to: Unit, boss: boolean): by is Unit {
-  return SAVES.on && !!by && by !== to && by.side !== to.side && !boss && by.id !== 0 && !!saveStatsOf(b, by) && !!saveStatsOf(b, to);
+  return SAVES.on && !!by && by !== to && by.side !== to.side && (!boss || JOINT.bossSaves) && by.id !== 0 && !!saveStatsOf(b, by) && !!saveStatsOf(b, to);
 }
 
 /** The d20 of `to`'s save against `by`'s `what` now (1 to 20): a hash of the moment, the pair and the thing. */
