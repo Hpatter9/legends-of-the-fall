@@ -376,6 +376,18 @@ body:has(> dialog.heroArtViewer[open]) > :is(#stage, #home, #top, #panel, #gacha
    screen opened from it (`.handoff`, the home closed but still drawn) has them back) */
 body:has(> #home:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess),
 body:has(> #home:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess) * { visibility: hidden !important; }
+/* (HERO-SHEET-GLITCH: the party screen is opaque too, but once it has taken over from the home screen the home is hidden, so the
+   rule above let go and the sky, the board's canvas, the HUD and the bench were all painted again under it. A hero's sheet opened
+   on the party screen then ran out of the phone's graphics memory: the art cut off, the board's sprites through it, the tabs'
+   pages left empty. They are not drawn while the party screen is up either; they come back as it closes) */
+body:has(> #party:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess),
+body:has(> #party:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess) * { visibility: hidden !important; }
+/* (and the party screen's own page under a hero's sheet opened on it: the scene's drifting embers sit at the top of the scrolling
+   list, so every card after them was given a layer of its own, over a hundred, the list one 3.6 screens tall. Under the sheet's
+   backdrop they are not drawn, as the tavern's sheet has the home screen under a near-solid backdrop) */
+#party:has(> #ptSheet:not([hidden])) > :not(#ptSheet),
+#party:has(> #ptSheet:not([hidden])) > :not(#ptSheet) * { visibility: hidden !important; }
+#ptSheet { padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px); background: #10140fe8; }
 .chestGlow { position: absolute; left: 50%; top: calc(8vh + 125px); width: 300px; height: 300px; margin: -150px 0 0 -150px; opacity: 0; background: radial-gradient(circle, rgb(var(--e9-rgb) / 0.95), rgb(var(--e6-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.silver .chestGlow { background: radial-gradient(circle, rgb(var(--b6-rgb) / 0.95), rgb(var(--b4-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.daily .chestGlow { background: radial-gradient(circle, rgb(var(--p5-rgb) / 0.95), rgb(var(--p3-rgb) / 0.35) 45%, transparent 70%); }
