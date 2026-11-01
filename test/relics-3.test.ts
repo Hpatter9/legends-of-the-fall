@@ -119,7 +119,7 @@ test('Ember Brand: crits leave the foe burning, plain blows do not', () => {
   const b = withRelics(['emberBrand']);
   const x = heroes(b)[0];
   const foe = foes(b)[0];
-  assert.equal(relicEffects(['emberBrand']).crit, 0.08);
+  assert.equal(relicEffects(['emberBrand']).crit, 0.1);
   afterBlow(b, x, foe, false, 10, []);
   assert.ok(!foe.ail?.some((a) => a.kind === 'burn'), 'a plain blow leaves nothing');
   afterBlow(b, x, foe, true, 10, []);
@@ -189,10 +189,10 @@ test("Lion's Oath-Ring: heroes heal 2% whenever a foe falls", () => {
 });
 
 test('The Dawn Chart, Thunder Horn, Copper Torc, Granite Heart, Doom Helm: plain numbers', () => {
-  assert.equal(relicEffects(['dawnChart']).mana, 1.25);
+  assert.equal(relicEffects(['dawnChart']).mana, 1.35);
   assert.equal(relicEffects(['thunderHorn']).speed, 1.06);
   const torc = relicEffects(['copperTorc']);
-  assert.deepEqual([torc.charge, torc.hp], [1.2, 0.98]);
+  assert.deepEqual([torc.charge, torc.hp], [1.3, 0.98]);
   assert.ok(RELICS.copperTorc.price);
   const heart = relicEffects(['graniteHeart']);
   assert.deepEqual([heart.hp, heart.speed], [1.1, 0.97]);
@@ -226,14 +226,14 @@ test('Quarry Gauntlet: 5% less damage, 10% for heroes who have not moved this fi
   assert.equal(relicTaken(b, x, foe), 1, 'moved');
 });
 
-test('Moss Bell: heroes heal 0.7% of their health a second', () => {
+test('Moss Bell: heroes heal 0.5% of their health a second', () => {
   const b = withRelics(['mossBell']);
   const x = heroes(b)[0];
   x.hp = Math.round(x.maxHp / 2);
   const at = x.hp;
   for (let i = 0; i < 40 && x.alive; i++) stepBattle(b);
   assert.ok(x.hp !== at);
-  assert.ok(b.relics?.hooks?.regen === 0.007);
+  assert.ok(b.relics?.hooks?.regen === 0.005);
 });
 
 test('Void Shard: +12% against the Calamity\'s guardians only; the Sigil quickens ultimates too', () => {
