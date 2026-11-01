@@ -171,6 +171,62 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
         { cam: close('a'), lines: [tell('The Warden goes down in a shower of copper filings, and the great clock ticks once. On the floor under it, a round face of white enamel with one copper hand.'), say('a', 'Still going. Somebody has been waiting for someone to pick it up.')] },
       ]),
   },
+  {
+    // (Gorm's chain, part 2: the cellar under the keep's first foundation, and the clerk of works who was never told it was over)
+    id: 'buriedFoundation',
+    title: 'The Buried Foundation',
+    blurb: 'Under the keep lies the cellar of its first foundation, where a stone clerk of works is still checking the masonry.',
+    land: 'dungeon',
+    like: { army: 'infernal', wave: 11 },
+    ease: 0.24,
+    // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
+    cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+    waves: [
+      { foes: ['stoneGolem', 'ironGolem', 'stoneGolem'] },
+      { foes: ['ironGolem', 'magmaGolem', 'stoneGolem', 'ironGolem'] },
+      { foes: ['forgeTitan', 'stoneGolem', 'magmaGolem', 'ironGolem'], boss: 'final' },
+    ],
+    boss: { name: 'The Clerk of Works', title: 'Who Was Never Told It Was Over' },
+    before: (c) =>
+      story('buriedFoundation', 'The Buried Foundation', 'dungeon', { a: hero(c[0] ?? 'knight', 230), clerk: foe('forgeTitan', 430, 1.3, { name: 'The Clerk of Works', hidden: true }) }, [
+        { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Buried Foundation', lines: [tell('A cellar of great grey blocks, every one fitted so well that a knife would not go in the seams. Chalk marks on the walls, in a very large hand. Something enormous is standing in the corner, checking a clipboard of slate.')] },
+        { cam: close('a'), lines: [say('a', 'Nobody has been down here for three hundred years. And somebody is still inspecting the work.'), tell('A stone chisel ticks off a line on the slate.')] },
+        { cam: wide(380, 205), acts: [{ who: 'clerk', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('clerk', 'THE WORK IS NOT SIGNED OFF. THE WORK IS NOT COMPLETE. NO ONE HAS BEEN TOLD IT IS OVER. STAND CLEAR OF THE MASONRY.', 'shout')] },
+        { cam: close('a'), lines: [say('a', 'Nobody told you it was over? It has been three hundred years.'), say('a', 'Fine. We will tell you with a hammer. It is the local custom.')] },
+      ]),
+    after: (c) =>
+      story('buriedFoundationAfter', 'The Buried Foundation', 'dungeon', { a: hero(c[0] ?? 'knight', 260) }, [
+        { cam: close('a'), lines: [tell('The Clerk comes apart in a long slow slide of masonry, and the clipboard falls and does not break. Under it, on the lowest block of the keep, a mark cut deep: a very large G, and under it, smaller, "built this".'), say('a', 'Somebody was proud of it. And then forgot to say.')] },
+      ]),
+  },
+  {
+    // (Vaelkhar's chain, part 2: the keep's oldest guest wing, and the chamberlain still keeping the Dragon King's things)
+    id: 'guestWing',
+    title: 'The Guest Wing',
+    blurb: "The keep's oldest wing has kept a dragon's things for three hundred years, and its chamberlain has not been told the guest checked out.",
+    land: 'graveyard',
+    like: { army: 'golems', wave: 11 },
+    ease: 0.21,
+    // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
+    cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+    waves: [
+      { foes: ['skeleton', 'spearman', 'boneVolley', 'skeleton'] },
+      { foes: ['spearman', 'boneVolley', 'skeleton', 'spearman', 'boneVolley'] },
+      { foes: ['lichKing', 'spearman', 'boneVolley', 'skeleton'], boss: 'final' },
+    ],
+    boss: { name: 'The Chamberlain', title: "Who Keeps the Guest's Things" },
+    before: (c) =>
+      story('guestWing', 'The Guest Wing', 'graveyard', { a: hero(c[0] ?? 'knight', 230), chamberlain: foe('lichKing', 430, 1.3, { name: 'The Chamberlain', hidden: true }) }, [
+        { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Guest Wing', lines: [tell('A long corridor of shut doors in the oldest wing of the keep. Dust lies in one perfectly straight line down the middle, as though something very large had been carried out on a tray. At the last door, a chamberlain in rusted mail is polishing nothing.')] },
+        { cam: close('a'), lines: [say('a', 'Three hundred years, and the brass is still bright.'), tell('The chamberlain turns a page in a ledger as long as an arm. It is mostly one entry.')] },
+        { cam: wide(380, 205), acts: [{ who: 'chamberlain', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('chamberlain', "THE GUEST HAS NOT CHECKED OUT. THE GUEST'S THINGS ARE NOT TO BE REMOVED. PLEASE REMAIN SEATED.", 'shout')] },
+        { cam: close('a'), lines: [say('a', 'He checked out three hundred years ago. He is asking after his things.'), say('a', '...Fine. We will conclude the stay.')] },
+      ]),
+    after: (c) =>
+      story('guestWingAfter', 'The Guest Wing', 'graveyard', { a: hero(c[0] ?? 'knight', 260) }, [
+        { cam: close('a'), lines: [tell('The Chamberlain folds up like a deckchair, and the last door swings open on a velvet cushion. On it lies a letter in violet wax, addressed in a very large hand: "To the Keep. Re: my things."'), say('a', 'Somebody should have answered this. A few centuries ago.')] },
+      ]),
+  },
   // (EIDOLON-TRIAL: the trials, one a chain)
   ...TRIALS.map(trialBattle),
 ];
