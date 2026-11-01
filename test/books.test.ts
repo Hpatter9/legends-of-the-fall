@@ -5,8 +5,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, fight, place, startBattle, stepBattle, type Battle } from '../src/sim/battle';
 import { BOOKS, READS, bookById } from '../src/sim/bookData';
-import { canRead, chestBook, fightLoadout, kitWithLoadout, loadoutOf, readBooks, setSlot, settleStudy, slotFor, startStudy, stopStudy, studentCap, studyLeft, studyLength, whyNotRead, grantBook, OWN1, OWN2 } from '../src/sim/books';
-import { HERO_KITS, heroKitOf, resMax } from '../src/sim/heroKits';
+import { canRead, chestBook, fightLoadout, kitWithLoadout, loadoutOf, readBooks, setSlot, settleStudy, slotFor, startStudy, stopStudy, studentCap, studyLeft, studyLength, whyNotRead, grantBook, bookSource, costForPool, ownPicks, OWN1, OWN2, OWN3 } from '../src/sim/books';
+import { HERO_KITS, heroKitOf } from '../src/sim/heroKits';
+import { CLASS_RANGE } from '../src/sim/skillRules';
+import { fightLevels, kitWithLevels, settleSkillUse, skillLevelOf, USE_AT } from '../src/sim/skillLevels';
+import { keyOf } from '../src/sim/abilities';
 import { loadMeta, startedMeta, type Meta } from '../src/sim/meta';
 import { heroStats } from '../src/sim/talents';
 import { ALL_HEROES } from '../src/sim/units';
@@ -82,21 +85,25 @@ test('the library cuts study and takes more students', () => {
   assert.ok(startStudy(m, 'samurai', 'whirlingStep'));
 });
 
-test('the slots: either slot takes any known skill, a skill never sits in both, and back to its own two drops the loadout', () => {
+test('the slots: any slot takes any known skill, a skill never sits in two, and back to its own three drops the loadout', () => {
   const m = meta();
   assert.equal(setSlot(m, 'knight', 1, 'whirlingStep'), false, 'not learned yet');
   m.learned = { knight: ['whirlingStep'] };
   assert.ok(setSlot(m, 'knight', 2, 'whirlingStep'));
-  assert.deepEqual(loadoutOf(m, 'knight'), [OWN1, 'whirlingStep']);
+  assert.deepEqual(loadoutOf(m, 'knight'), [OWN1, 'whirlingStep', OWN3], 'a book takes the place of skill 2');
   assert.ok(setSlot(m, 'knight', 1, 'whirlingStep'));
-  assert.deepEqual(loadoutOf(m, 'knight'), ['whirlingStep', OWN1], 'the two trade places');
+  assert.deepEqual(loadoutOf(m, 'knight'), ['whirlingStep', OWN1, OWN3], 'the two trade places');
+  assert.ok(setSlot(m, 'knight', 3, 'whirlingStep'));
+  assert.deepEqual(loadoutOf(m, 'knight'), [OWN3, OWN1, 'whirlingStep'], 'a book in the third slot, from the first');
   assert.ok(setSlot(m, 'knight', 1, OWN1));
   assert.ok(setSlot(m, 'knight', 2, OWN2));
+  assert.ok(setSlot(m, 'knight', 3, OWN3));
   assert.equal(m.loadout, undefined);
+  assert.equal(setSlot(m, 'knight', 3, 'firstFires'), false, 'a skill it does not know');
   assert.equal(fightLoadout(m, 'knight'), undefined);
 });
 
-test('a book slot costs the same share of the reader pool, keeps the skill strength, and leaves the revive with its own hero', () => {
+test('a book slot keeps the skill class and cooldown, costs its place in the class range for the reader pool, and leaves the revive with its own hero', () => {
   const book = bookById('morningPrayers')!;
   const src = HERO_KITS().cleric.s2;
   assert.ok(src.revive, 'the cleric heals with a revive face');
@@ -107,10 +114,25 @@ test('a book slot costs the same share of the reader pool, keeps the skill stren
   const whirl = HERO_KITS().barbarian.s1;
   assert.equal(stam.cost, whirl.cost, 'stamina to stamina');
   const onMage = slotFor('lightningMage', 'firstFires')!;
-  assert.ok(Math.abs(onMage.cost / resMax('mana') - HERO_KITS().wizard.s1.cost / resMax('mana')) < 0.01);
-  const kit = kitWithLoadout('knight', ['whirlingStep', OWN2])!;
+  assert.equal(onMage.cost, HERO_KITS().wizard.s1.cost, 'mana to mana');
+  // every book on every reader sits inside its class's cost and cooldown ranges for the reader's pool
+  for (const b of BOOKS)
+    for (const k of ['knight', 'wizard', 'cleric', 'gorgon'].filter((k) => canRead(meta(), k, b))) {
+      const s = slotFor(k, b.id)!;
+      const [lo, hi] = CLASS_RANGE[s.cls][HERO_KITS()[k].pool];
+      assert.ok(s.cost >= lo && s.cost <= hi, `${b.id} on ${k}: ${s.cost} in ${lo}-${hi}`);
+      assert.equal(s.cls, bookSource(b)!.cls);
+      assert.equal(s.cd, bookSource(b)!.cd);
+    }
+  // a skill at the top of its class's range in stamina is at the top of it in mana
+  const top = { ...HERO_KITS().barbarian.s1, cost: CLASS_RANGE.strike.stamina[1], cls: 'strike' as const };
+  assert.equal(costForPool(top, 'stamina', 'mana'), CLASS_RANGE.strike.mana[1], 'the top of the range in one pool is the top in the other');
+  assert.equal(costForPool({ ...top, cost: CLASS_RANGE.strike.stamina[0] }, 'stamina', 'mana'), CLASS_RANGE.strike.mana[0]);
+  const kit = kitWithLoadout('knight', ['whirlingStep', OWN2, OWN3])!;
   assert.equal(kit.s1.skill.name, 'Whirlwind');
   assert.equal(kit.s2, HERO_KITS().knight.s2);
+  assert.equal(kit.s3, HERO_KITS().knight.s3);
+  assert.equal(kit.slots.length, 3);
   assert.equal(kit.pool, 'stamina');
 });
 
@@ -120,7 +142,7 @@ test('the loadout rides on the boost into the fight; a hero with none fights wit
   m.learned = { knight: ['whirlingStep'] };
   setSlot(m, 'knight', 1, 'whirlingStep');
   const eq = heroStats(m, 'knight');
-  assert.deepEqual(eq?.book, ['whirlingStep', OWN2]);
+  assert.deepEqual(eq?.book, ['whirlingStep', OWN2, OWN3]);
   const b = startBattle(3);
   const k = addUnit(b, 'knight', 1, 1, { equip: eq });
   assert.equal(heroKitOf(k)?.s1.skill.name, 'Whirlwind');
@@ -137,15 +159,16 @@ test('every book can be cast by every hero who reads it: a fight with it in eith
   for (const book of BOOKS) {
     const readers = book.kind === 'universal' ? ['knight', 'cleric', 'gorgon', 'wizard'] : READS[book.kind].filter((k) => k !== book.from.hero).slice(0, 3);
     for (const reader of readers)
-      for (const slot of [1, 2] as const) {
+      for (const slot of [1, 2, 3] as const) {
         const b = startBattle(7, 'orcs');
         bareBoard(b);
-        const l: [string, string] = slot === 1 ? [book.id, OWN2] : [OWN1, book.id];
+        const l = ownPicks(reader);
+        l[slot - 1] = book.id;
         const eq = { hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [], book: l };
         place(b, reader, 3, 9, undefined, { level: 30, equip: eq });
         place(b, 'knight', 4, 9, undefined, { level: 30 });
         const u = b.units.find((x) => x.def === reader)!;
-        assert.equal(heroKitOf(u)!.s1.skill.name, (slot === 1 ? slotFor(reader, book.id) : HERO_KITS()[reader].s1)!.skill.name);
+        assert.equal(heroKitOf(u)!.slots[slot - 1].skill.name, slotFor(reader, book.id)!.skill.name);
         assert.doesNotThrow(() => play(b), `${book.id} on ${reader} in slot ${slot}`);
       }
   }
@@ -156,13 +179,14 @@ test('saves: the books, learning, study and loadouts read back; nonsense is drop
   grantBook(m, 'firstFires', 2);
   m.learned = { knight: ['whirlingStep', 'firstFires', 'nope'], barbarian: ['whirlingStep'] };
   m.study = { samurai: { book: 'shieldwallDrill', done: 2 }, wizard: { book: 'whirlingStep', done: 1 } };
-  m.loadout = { knight: ['whirlingStep', OWN1], samurai: [OWN1, OWN1], cleric: ['firstFires', OWN2] };
+  m.loadout = { knight: ['whirlingStep', OWN1], samurai: [OWN1, OWN1], cleric: ['firstFires', OWN2], wizard: [OWN2, OWN1, OWN3], archer: [OWN1, OWN2, OWN3] };
   (m.books as Record<string, number>).fake = 3;
   readBooks(m);
   assert.deepEqual(m.books, { firstFires: 2 });
   assert.deepEqual(m.learned, { knight: ['whirlingStep'] });
   assert.deepEqual(m.study, { samurai: { book: 'shieldwallDrill', done: 2 } });
-  assert.deepEqual(m.loadout, { knight: ['whirlingStep', OWN1] });
+  // a two-slot save keeps its two picks, and the third slot takes the kit's own third skill; a loadout of its own three is dropped
+  assert.deepEqual(m.loadout, { knight: ['whirlingStep', OWN1, OWN3], wizard: [OWN2, OWN1, OWN3] });
   const store = new Map<string, string>([['legends.meta', JSON.stringify(startedMeta(3))]]);
   const old = loadMeta(1, { getItem: (k) => store.get(k) ?? null });
   for (const k of ['books', 'learned', 'study', 'studyKept', 'loadout', 'stall'] as const) assert.equal(old[k], undefined, k);
@@ -180,4 +204,38 @@ test('Rare books are found: now and then in silver and gold chests, always in a 
   assert.ok(gold > 230 && gold < 370, `gold ${gold}`);
   assert.equal(chestBook(7, 'gold'), chestBook(7, 'gold'));
   for (let s = 1; s <= 50; s++) assert.equal(bookById(chestBook(s, 'silver', true)!)?.rarity, 'rare');
+});
+
+test('a learned book levels by use like any skill, under its own key for the reader, wherever it sits', () => {
+  const m = meta();
+  m.learned = { knight: ['whirlingStep'], samurai: ['whirlingStep'] };
+  const key = keyOf(slotFor('knight', 'whirlingStep')!.skill);
+  assert.equal(key, keyOf(HERO_KITS().barbarian.s1.skill), 'the book is the source skill, so one key');
+  const ups = settleSkillUse(m, { knight: { [key]: USE_AT[2] } });
+  assert.deepEqual(ups, [{ kind: 'knight', key, level: 3 }]);
+  assert.equal(skillLevelOf(m, 'knight', key), 3);
+  assert.equal(skillLevelOf(m, 'samurai', key), 1, 'each reader has its own level');
+  for (const slot of [1, 2, 3] as const) {
+    setSlot(m, 'knight', slot, 'whirlingStep');
+    const l = fightLevels(m, 'knight')!;
+    assert.equal(l[slot - 1], 3, `level 3 in slot ${slot}`);
+    assert.equal(l.filter((x) => x > 1).length, 1);
+  }
+  // at Level 3 it is stronger and 10% cheaper than the same book at Level 1
+  const base = slotFor('knight', 'whirlingStep')!;
+  const kit = kitWithLevels(kitWithLoadout('knight', loadoutOf(m, 'knight'))!, 'knight|test', [1, 1, 3])!;
+  assert.ok(kit.s3!.tune > base.tune);
+  assert.equal(kit.s3!.cost, Math.round(base.cost * 0.9 * 10) / 10);
+  assert.equal(kit.s3!.lv, 3);
+});
+
+test('a book in the third slot opens at level 20 and a levelled one fights', () => {
+  const b = startBattle(9, 'orcs');
+  bareBoard(b);
+  const eq = { hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [], book: [OWN1, OWN2, 'whirlingStep'], skillLv: [1, 1, 4] };
+  place(b, 'knight', 3, 9, undefined, { level: 30, equip: eq });
+  const u = b.units.find((x) => x.def === 'knight')!;
+  assert.equal(heroKitOf(u)!.s3!.skill.name, 'Whirlwind');
+  assert.equal(heroKitOf(u)!.s3!.lv, 4);
+  assert.doesNotThrow(() => play(b));
 });

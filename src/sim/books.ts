@@ -1,24 +1,29 @@
 // Skill books' rules (docs/notes/shop-books-gear.md): reading a book starts study, a fight (a wave the hero fought in) moves it on,
-// and when it is done the skill joins the hero kind's skill book for good. A hero kind then chooses which two of the skills it knows
-// sit in its two skill slots (its loadout); its ultimate is never touched. In a fight the loadout rides on the hero's boost
-// (`EquipStats.book`, set by `heroStats`) and `heroKitOf` builds the kit from it, so a hero with no loadout fights exactly as before.
+// and when it is done the skill joins the hero kind's skill book for good. A hero kind then chooses which of the skills it knows sit in its
+// three skill slots (its loadout; the skills overhaul's batch 9, docs/notes/skills-9.md); its ultimate is never touched. In a fight the loadout
+// rides on the hero's boost (`EquipStats.book`, set by `heroStats`) and `heroKitOf` builds the kit from it, so a hero with no loadout fights
+// exactly as before.
 //
-// The owner's decisions: either slot takes any known skill; learning takes study, not an instant; a hero reads only the kind suited
-// to its calling (and the universal books); nothing is ever forgotten. Mastery ranks are left out: a later change gives every skill
-// levels by use. Pure rules: no Pixi, no DOM, no randomness.
+// The owner's decisions: any open slot takes any known skill; learning takes study, not an instant; a hero reads only the kind suited
+// to its calling (and the universal books); nothing is ever forgotten. A learned skill levels by use like any other (`skillLevels.ts`, under
+// its own key for the reader); there are no mastery ranks. A book's skill sits in the class of its source and is costed for the reader's
+// pool (`slotFor`). Pure rules: no Pixi, no DOM, no randomness.
 
 import { BOOKS, bookById, readsKind, STUDY, type BookDef } from './bookData';
 import { mixSeed, Rng } from './rng';
-import { HERO_KITS, resMax, type HeroKit, type Slot } from './heroKits';
+import { HERO_KITS, type HeroKit, type Pool, type Slot } from './heroKits';
+import { CLASS_RANGE } from './skillRules';
 import type { Meta } from './meta';
 import { ALL_HEROES } from './units';
 
-/** What a slot holds: the hero's own skill 1 or 2, or a learned book's skill (by the book's id). */
+/** What a slot holds: the hero's own skill 1, 2 or 3, or a learned book's skill (by the book's id). */
 export type SkillPick = string;
 export const OWN1 = 'own1';
 export const OWN2 = 'own2';
-/** A kind's two slots, skill 1 then skill 2. */
-export type Loadout = [SkillPick, SkillPick];
+export const OWN3 = 'own3';
+const OWNS: readonly SkillPick[] = [OWN1, OWN2, OWN3];
+/** A kind's slots in order (skill 1, 2, 3; two for a kit with no third skill). */
+export type Loadout = SkillPick[];
 
 /** The library cuts study by this share a level (rounded up, at least one fight). */
 export const STUDY_CUT = 0.08;
@@ -148,64 +153,96 @@ export function chestBook(seed: number, kind: string, sure = false): string | un
   return rare[rng.int(0, rare.length - 1)].id;
 }
 
-// ---- the two slots ----
+// ---- the three slots ----
 
-/** Every skill a hero kind knows, as picks: its own two, then the learned in the order learned. */
-export const knownPicks = (m: Meta, kind: string): SkillPick[] => [OWN1, OWN2, ...learnedOf(m, kind)];
-/** A kind's slots (its own two when it has never chosen). */
-export const loadoutOf = (m: Meta, kind: string): Loadout => m.loadout?.[kind] ?? [OWN1, OWN2];
+/** A kind's own skills as picks, in slot order. */
+export const ownPicks = (kind: string): SkillPick[] => (HERO_KITS()[kind]?.slots ?? []).map((_, i) => OWNS[i]);
+/** Every skill a hero kind knows, as picks: its own, then the learned in the order learned. */
+export const knownPicks = (m: Meta, kind: string): SkillPick[] => [...ownPicks(kind), ...learnedOf(m, kind)];
+const isOwn = (kind: string, l: readonly SkillPick[]): boolean => {
+  const own = ownPicks(kind);
+  return l.length === own.length && own.every((p, i) => l[i] === p);
+};
+/** A saved loadout made whole: one pick for each of the kit's slots, a short one (a two-slot save) filled with the slot's own skill, or else one it left out. */
+function whole(kind: string, l: readonly SkillPick[]): Loadout {
+  const own = ownPicks(kind);
+  const out = own.map((_, i) => l[i] ?? '');
+  for (let i = 0; i < out.length; i++) if (!out[i]) out[i] = [own[i], ...own].find((p) => !out.includes(p)) ?? own[i];
+  return out;
+}
+/** A kind's slots (its own skills when it has never chosen). */
+export const loadoutOf = (m: Meta, kind: string): Loadout => (m.loadout?.[kind] ? whole(kind, m.loadout[kind]) : ownPicks(kind));
 
-/** Put a known skill in slot 1 or 2. A skill already in the other slot trades places with this one, so one skill never sits in
- *  both. A loadout back to the kind's own two is dropped. False (nothing changes) for a skill the kind does not know. */
-export function setSlot(m: Meta, kind: string, slot: 1 | 2, pick: SkillPick): boolean {
+/** Put a known skill in slot 1, 2 or 3. A skill already in another slot trades places with this one, so one skill never sits in two. A
+ *  loadout back to the kind's own skills is dropped. False (nothing changes) for a skill the kind does not know or a slot its kit lacks. */
+export function setSlot(m: Meta, kind: string, slot: 1 | 2 | 3, pick: SkillPick): boolean {
   if (!m.unlocked.includes(kind) || !knownPicks(m, kind).includes(pick)) return false;
-  const cur: Loadout = [...loadoutOf(m, kind)];
+  const cur = [...loadoutOf(m, kind)];
   const i = slot - 1;
-  const other = 1 - i;
-  if (cur[other] === pick) cur[other] = cur[i];
+  if (i >= cur.length) return false;
+  const from = cur.indexOf(pick);
+  if (from >= 0) cur[from] = cur[i];
   cur[i] = pick;
-  if (cur[0] === OWN1 && cur[1] === OWN2) {
+  if (isOwn(kind, cur)) {
     if (m.loadout) delete m.loadout[kind];
     if (m.loadout && !Object.keys(m.loadout).length) delete m.loadout;
   } else (m.loadout ??= {})[kind] = cur;
   return true;
 }
 
-/** The loadout a hero fights with, for its boost: undefined when it uses its own two in their own order (so the fight is as before). */
+/** The loadout a hero fights with, for its boost: undefined when it uses its own skills in their own order (so the fight is as before). */
 export function fightLoadout(m: Meta, kind: string): Loadout | undefined {
   const l = m.loadout?.[kind];
-  return l && !(l[0] === OWN1 && l[1] === OWN2) ? [l[0], l[1]] : undefined;
+  if (!l) return undefined;
+  const w = whole(kind, l);
+  return isOwn(kind, w) ? undefined : w;
 }
 
-/** The slot a pick makes for a hero kind: its own skill, or a book's skill re-costed for its pool. A book's cost is the same share
- *  of the reader's pool as the skill's cost is of its first owner's (half a pool is half a pool, mana or stamina); its strength is the
- *  skill's own (times the book's `tune`). A healer's revive face stays with its own hero. */
+/** The skill a book teaches, as its source hero's slot (the one place that says where a book's skill comes from, so other kinds of book
+ *  can be added as data). */
+export function bookSource(book: BookDef): Slot | undefined {
+  return HERO_KITS()[book.from.hero]?.slots[book.from.slot - 1];
+}
+
+/** A slot's cost moved from one pool to another by its place in its class's range (a skill at the top of the Heavy cost range in stamina
+ *  is at the top of it in mana): the overhaul's classes hold for the reader's pool. */
+export function costForPool(s: Slot, from: Pool, to: Pool): number {
+  if (from === to) return s.cost;
+  const [flo, fhi] = CLASS_RANGE[s.cls][from];
+  const [tlo, thi] = CLASS_RANGE[s.cls][to];
+  const at = fhi > flo ? Math.max(0, Math.min(1, (s.cost - flo) / (fhi - flo))) : 0;
+  return Math.round((tlo + at * (thi - tlo)) * 10) / 10;
+}
+
+/** The slot a pick makes for a hero kind: its own skill, or a book's skill. A book's skill keeps its class, strength (times the book's
+ *  `tune`) and cooldown (the class's range is the same in either pool), and its cost is its place in the class's range for the reader's
+ *  pool. It levels by use under its own key (`skillLevels.ts`), and its cost and cooldown follow that level. A healer's revive face
+ *  stays with its own hero. */
 export function slotFor(kind: string, pick: SkillPick): Slot | undefined {
   const own = HERO_KITS()[kind];
   if (!own) return undefined;
-  if (pick === OWN1) return own.s1;
-  if (pick === OWN2) return own.s2;
+  const at = OWNS.indexOf(pick);
+  if (at >= 0) return own.slots[at];
   const book = bookById(pick);
   const src = book && HERO_KITS()[book.from.hero];
-  if (!book || !src) return undefined;
-  const s = book.from.slot === 1 ? src.s1 : src.s2;
-  const slot: Slot = { ...s, cost: Math.round(((s.cost / resMax(src.pool)) * resMax(own.pool)) * 10) / 10, tune: s.tune * (book.tune ?? 1) };
+  const s = book && bookSource(book);
+  if (!book || !src || !s) return undefined;
+  const slot: Slot = { ...s, cost: costForPool(s, src.pool, own.pool), tune: s.tune * (book.tune ?? 1) };
   delete slot.revive;
   return slot;
 }
 
 const built = new Map<string, HeroKit>();
-/** A hero kind's kit with a loadout's two skills in its slots (built once and kept). The kind's own kit when anything is unknown. */
-export function kitWithLoadout(kind: string, l: Loadout): HeroKit | undefined {
+/** A hero kind's kit with a loadout's skills in its slots (built once and kept). The kind's own kit when anything is unknown. */
+export function kitWithLoadout(kind: string, l: readonly SkillPick[]): HeroKit | undefined {
   const own = HERO_KITS()[kind];
   if (!own) return undefined;
-  const key = `${kind}|${l[0]}|${l[1]}`;
+  const key = `${kind}|${l.join('|')}`;
   let k = built.get(key);
   if (!k) {
-    const s1 = slotFor(kind, l[0]);
-    const s2 = slotFor(kind, l[1]);
-    // (the skills overhaul: the kit's slots are the ones the AI weighs, so they carry the chosen two as well)
-    k = s1 && s2 ? { ...own, s1, s2, slots: [s1, s2, ...own.slots.slice(2)] } : own;
+    const slots = own.slots.map((_, i) => slotFor(kind, l[i] ?? ownPicks(kind)[i]));
+    // (the kit's slots are the ones the AI weighs, so they carry the chosen skills; `s1`, `s2` and `s3` are the same objects)
+    k = slots.every((x) => x) ? { ...own, s1: slots[0]!, s2: slots[1]!, ...(slots[2] ? { s3: slots[2] } : {}), slots: slots as Slot[] } : own;
     built.set(key, k);
   }
   return k;
@@ -219,7 +256,7 @@ export function pickName(kind: string, pick: SkillPick): string {
 // ---- saves ----
 
 /** Saved books, learning and loadouts that are sane: known books, owned-in-the-game kinds, studies of books a kind may read, loadouts
- *  of skills the kind knows with no skill in both slots. Anything else is dropped (and an empty record is removed). */
+ *  of skills the kind knows with no skill in two slots. Anything else is dropped (and an empty record is removed). */
 export function readBooks(m: Meta): void {
   const books: Record<string, number> = {};
   if (m.books && typeof m.books === 'object') for (const [id, n] of Object.entries(m.books)) if (bookById(id) && typeof n === 'number' && n >= 1) books[id] = Math.floor(n);
@@ -250,10 +287,12 @@ export function readBooks(m: Meta): void {
   const loadout: Record<string, Loadout> = {};
   if (m.loadout && typeof m.loadout === 'object')
     for (const [kind, l] of Object.entries(m.loadout)) {
-      if (!ALL_HEROES.includes(kind) || !Array.isArray(l) || l.length !== 2) continue;
+      // (a save from before the third slot has two picks: it keeps them and the third slot takes the skill left over)
+      if (!ALL_HEROES.includes(kind) || !Array.isArray(l) || l.length < 2 || l.length > 3) continue;
       const known = knownPicks(m, kind);
-      if (!known.includes(l[0]) || !known.includes(l[1]) || l[0] === l[1] || (l[0] === OWN1 && l[1] === OWN2)) continue;
-      loadout[kind] = [l[0], l[1]];
+      if (l.some((p) => !known.includes(p)) || new Set(l).size !== l.length) continue;
+      const w = whole(kind, l);
+      if (!isOwn(kind, w)) loadout[kind] = w;
     }
   m.loadout = loadout;
   for (const k of ['books', 'learned', 'study', 'studyKept', 'loadout'] as const) if (!Object.keys(m[k]!).length) delete m[k];
