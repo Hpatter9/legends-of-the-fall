@@ -105,3 +105,8 @@ hero sheet's Skills tab, a skill's sheet in a fight, the wave card's line; no pa
 2. Level 5's size is left to batch 8's rebalance.
 3. Spire and Calamity fights **do** earn use toward the lasting levels (their heroes still fight at Level 1 there): built.
 4. Practice replays (a daily or quest battle that pays nothing) do **not** count: built (`useShare`).
+
+## The owner's later answer: the Last Stand and the Calamity count nothing
+
+"Last Stand and Calamity actually shouldn't raise skill use. They're separate." `useShare` gives the Calamity 0, and the Last Stand's end card
+no longer settles its tally (`standView.ts`; `run.use` is still kept on the run, unused). The spire still counts in full.

@@ -26,7 +26,7 @@ import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
 import { settleStudy } from './sim/books';
-import { levelUpWords, settleSkillUse } from './sim/skillLevels';
+
 import { settleWear } from './sim/wear';
 import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
@@ -1867,8 +1867,8 @@ export class StandView {
         settleStudy(m, kinds);
         settleWear(m, kinds.map((kind) => ({ kind, fell: false })));
       }
-      // (the skills overhaul's batch 5: what the guard's skills earned by use in every wave fought counts, in full; the levels reached are told on the end card)
-      this.skillUps = levelUpWords(settleSkillUse(m, s.run.use ?? {}));
+      // (the skills overhaul's batch 5: the Last Stand is a separate game, so its skill use counts towards nothing: the owner's later answer)
+      this.skillUps = [];
     }
     saveMeta(m);
     dropStand();

@@ -60,9 +60,11 @@ export const REVIVE_POINTS = 30;
 export const AUTO_SHARE = 0.5;
 
 /** The share of a settled wave's use a run counts (the owner's answers): none for a practice replay (a daily or quest battle that pays
- *  nothing), half under auto-replay, else all of it. The spire and the Calamity count in full, though their heroes fight at Level 1 there. */
+ *  nothing) and none in the Calamity (a separate game: the owner's later answer; the Last Stand likewise counts nothing, `standView.ts`),
+ *  half under auto-replay, else all of it. The spire counts in full, though its heroes fight at Level 1 there. */
 export function useShare(mode: { kind: string; practice?: boolean } | undefined, auto: boolean): number {
   if (mode && (mode.kind === 'daily' || mode.kind === 'quest') && mode.practice) return 0;
+  if (mode?.kind === 'calamity') return 0;
   return auto ? AUTO_SHARE : 1;
 }
 

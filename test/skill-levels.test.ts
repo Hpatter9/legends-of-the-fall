@@ -239,11 +239,11 @@ test('the owner\'s answers: a practice replay counts nothing, auto-replay half, 
   assert.equal(useShare({ kind: 'quest' }, false), 1);
   assert.equal(useShare({ kind: 'army' }, true), AUTO_SHARE);
   assert.equal(useShare({ kind: 'tower' }, false), 1);
-  assert.equal(useShare({ kind: 'calamity' }, false), 1);
+  assert.equal(useShare({ kind: 'calamity' }, false), 0, 'the Calamity is a separate game (the owner\'s later answer)');
   assert.equal(useShare(undefined, false), 1);
 });
 
-test('a spire or Calamity fight earns use toward the lasting levels, though its heroes fight at Level 1', () => {
+test('a spire fight earns use toward the lasting levels, though its heroes fight at Level 1', () => {
   const m = owned(['knight']);
   const k1 = keyOf(HERO_KITS().knight.s1.skill);
   m.skillUse = { knight: { [k1]: 1500 } };
@@ -255,6 +255,6 @@ test('a spire or Calamity fight earns use toward the lasting levels, though its 
   for (let i = 0; i < 4000 && b.phase === 'fight'; i++) stepBattle(b);
   const gain = fightUse(b, m.unlocked);
   assert.ok((gain.knight?.[k1] ?? 0) >= FIELD_POINTS, 'its casts and the wave counted');
-  settleSkillUse(m, gain, useShare({ kind: 'calamity' }, false));
+  settleSkillUse(m, gain, useShare({ kind: 'tower' }, false));
   assert.equal(useOf(m, 'knight', k1), 1500 + gain.knight[k1], 'into the lasting points');
 });
