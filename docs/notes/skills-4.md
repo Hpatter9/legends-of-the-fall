@@ -128,7 +128,7 @@ The rest (the cuts, shots and bolts, the heals and wards) read well enough with 
 
 `npm run typecheck`; the affected tests for each group (`skill3`, `skill-rules`, `hero-kits`, `hero-kits-all`, `hero-kits-looks`, `skill-keys`,
 `unit-info`, `fight-hud`, `revive`, `class-heroes`, `new-heroes`, `more-heroes`, `ranged`, `mages`, `monsters`, `melee`, `summon-timers`); the
-identity tests; the full `npm test` (2,080 of 2,082 on the first run: `army-pace`'s Golem Forge and `battle-sound`, both answered above; FULLRUN); `npm run web`. The page changes are a tab on the skill sheet and lines on the cards, read through the same rules the tests
+identity tests; the full `npm test` (2,080 of 2,082 on the first run: `army-pace`'s Golem Forge and `battle-sound`, both answered above; then 2,082 of 2,082); `npm run web`. The page changes are a tab on the skill sheet and lines on the cards, read through the same rules the tests
 read; the HUD's chips are batch 7, which takes the screenshots.
 
 ## Open questions for the owner
