@@ -186,10 +186,12 @@ export class StandView {
     if (this.ready) return;
     this.ready = true;
     this.holder.sortableChildren = true;
-    this.holder.addChild(this.marks, this.rings, this.foeBars, this.fx.dimLayer, this.fx.root);
+    this.holder.addChild(this.marks, this.fx.ground, this.rings, this.foeBars, this.fx.dimLayer, this.fx.root);
     // (the post marks and the heroes' rings lie on the floor, under everyone; the foes' bars over everyone)
     this.marks.zIndex = -5e5;
     this.rings.zIndex = -4e5;
+    // (FIXES-4: the effects' tile marks over the hall's floor and the posts' marks, under the fighters)
+    this.fx.ground.zIndex = -4.5e5;
     this.foeBars.zIndex = 9e5;
     this.world.addChild(this.holder);
     this.board.renderer = this.host.app.renderer;
@@ -1291,7 +1293,7 @@ export class StandView {
         kingSays(n.boss ? 'bossWave' : 'waveStart', () => this.anchorOf(s.king.id));
         this.grumbleAt = s.b.t + GRUMBLE_AFTER_MS;
         this.grumbleBoss = n.boss;
-        this.music(s.run.seed);
+        this.music(s.run.seed, n.boss);
         if (n.boss) play('standBoss');
         this.hall.burst(waveSpec(s.run.seed, s.run.armies, n.n, s.run.hall).edges);
         this.picked = null;
@@ -1334,6 +1336,7 @@ export class StandView {
         this.drawChoice(n.n, n.to);
       } else if (n.kind === 'hold') {
         this.showPlate('ONE MORE WAVE', 'HOLD THE LINE', 'boss');
+        this.music(s.run.seed, n.boss);
         newQuipScene();
         kingSays('bossWave', () => this.anchorOf(s.king.id));
         play('standBoss');
@@ -1402,13 +1405,13 @@ export class StandView {
     });
   }
 
-  /** The battle music: one track for the whole run (`standTrack`: the general battle track), started with its first wave and kept, boss waves
-   *  and breaks included, until the king falls or the run is left (`battleMusic.ts`). */
+  /** The battle music: the battle track for the whole run (`standTrack`), started with its first wave and kept, breaks included, until
+   *  the king falls or the run is left; the boss track takes over for a boss wave, and the battle track comes back after it (`battleMusic.ts`). */
   private hold = false;
   private track = '';
-  private music(seed: number): void {
+  private music(seed: number, boss = false): void {
     // (one hook for the rooms of the retreat: `standMusic.ts`; today every room keeps the run's track)
-    const want = standRoomTrack(seed, this.s ? hallNow(this.s.run) : 'courtyard');
+    const want = standRoomTrack(seed, this.s ? hallNow(this.s.run) : 'courtyard', boss);
     if (want === this.track) return;
     this.track = want;
     startFight(want);
@@ -1750,11 +1753,14 @@ export class StandView {
     const offer = this.parts.offer;
     offer.replaceChildren();
     offer.hidden = !run.offer.length || over || s.phase === 'deploy';
-    const price = offerCost(s);
+    // (RELICS-2: a run whose relics were just converted says so once, until its next wave begins; a Rare costs more, so each has its price)
+    if (run.relicNote && s.phase === 'wave') run.relicNote = undefined;
+    if (run.relicNote && !offer.hidden) offer.append(el('small', 'relicNote', run.relicNote));
     run.offer.forEach((id, i) => {
+      const price = offerCost(s, i);
       const b = el('button', 'stRelic');
       b.title = relicLine(id);
-      b.append(el('span', '', RELICS[id].name), el('small', '', RELICS[id].text), el('em', '', `${price} gold`));
+      b.append(el('span', '', RELICS[id].name), el('small', '', RELICS[id].text + (RELICS[id].price ? `; ${RELICS[id].price}` : '')), el('em', '', `${price} gold`));
       b.disabled = run.gold < price;
       b.addEventListener('click', () => this.buy(() => buyRelic(s, i) !== null));
       offer.append(b);

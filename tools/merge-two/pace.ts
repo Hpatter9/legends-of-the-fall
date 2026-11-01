@@ -17,7 +17,7 @@ import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, st
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
-import { playArmy, playTower, savedAt } from '../autoplay';
+import { maybeSpells, playArmy, playTower, savedAt } from '../autoplay';
 import { HEROES } from '../../src/sim/units';
 import { startedMeta } from '../../src/sim/meta';
 import * as run_ from '../../src/sim/run';
@@ -125,6 +125,7 @@ for (const cell of process.argv.slice(2)) {
       const b = startStage(run);
       autoDeploy(b, run, meta, bf);
       fight(b);
+      maybeSpells(b, meta, run.castle);
       playOut(b);
       const ok = b.phase === 'won';
       if (!ok && HEARTS && canRetry(run)) {

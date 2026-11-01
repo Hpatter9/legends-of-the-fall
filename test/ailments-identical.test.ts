@@ -39,10 +39,24 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
 // scenario keeps its hash)
+// (RELICS-2, the owner's approved relic redesign, docs/notes/relics-2.md, re-recorded `army`, `daily` and `stand`: the greedy player finds and
+// buys relics on the way, and the relics' rules and draws are new; every other scenario keeps its hash)
+// (SPELLS-RETUNE, the owner's call to tune the game for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, re-recorded
+// `daily` and `stand` alone: the daily's foes start stronger (`DAILY_START` 0.565 to 0.76) and the Last Stand's waves are eased less (`HALL_EASE`
+// 0.88 to 1.2). The armies' and the Calamity's raised strengths are put back for this proof, and its greedy players cast no spells; every other
+// scenario keeps its hash)
 // (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks are switched off for
 // this proof, as the ailments are; with them off every scenario plays as recorded)
 // (the balance pass that followed, step two, moved a few foe strengths and the Shambler's Plague Tide to answer the ailments: they are put back to
 // main's for this proof)
+// (XP-SPLIT, the owner's ask for a fight's kill XP to be shared, docs/notes/xp-split.md, re-recorded `daily`: its greedy player levels its
+// heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
+// keeps its hash, the fights themselves are unchanged; then `tower` too, when the spire and the Calamity took the same split: its heroes level
+// from their own run XP fight by fight. `calamity` did not move)
+// (SKILLS-1, the skills overhaul's batch 2, docs/notes/skills-1.md, re-recorded every scenario: field1, field30, bosses, armyFoes, spells, lands,
+// army, daily, tower, stand and calamity. Every hero's skills now cost and cool by their class, so every fight with a hero moves; batch 1 moved none.)
+// (SKILLS-1 batch 3, docs/notes/skills-1.md, re-recorded army, daily and tower, the scenarios with merged heroes, whose tier skills went; the rest kept
+// their hashes)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
@@ -50,13 +64,17 @@ test('with the new ailments off, every mode plays as it did before the ailment m
   type Strength = { start: number; mid?: { hp: number; atk: number }; last?: { hp: number; atk: number } };
   const yokai = ARMIES.find((a) => a.id === 'yokai') as unknown as Strength;
   const golems = ARMIES.find((a) => a.id === 'golems') as unknown as Strength;
-  const late = { yokai: { ...yokai }, golems: golems.start };
+  const undead = ARMIES.find((a) => a.id === 'undead') as unknown as { start: number };
+  const late = { yokai: { ...yokai }, golems: golems.start, undead: undead.start, calStart: CAL_SCALE.start };
   const plague = KITS.shambler.ultimate!.tuned!;
   const tuned = { start: infernal.start, bossHp: CAL_SCALE.bossHp, ult: DAILY_ANSWER.ult, plague: plague.power };
   AILMENT_SWITCH.on = false;
   infernal.start = 10;
   Object.assign(yokai, { start: 12.5, mid: { hp: 2200, atk: 52 }, last: { hp: 2500, atk: 50 } });
   golems.start = 12.7;
+  // (SPELLS-RETUNE raised the Undead Legion's start and the Calamity's, docs/notes/spells-retune.md: put back to the strengths recorded)
+  undead.start = 1.48;
+  CAL_SCALE.start = 0.435;
   CAL_SCALE.bossHp = 1;
   DAILY_ANSWER.ult = 0.17;
   plague.power = 0.99;
@@ -69,6 +87,8 @@ test('with the new ailments off, every mode plays as it did before the ailment m
     infernal.start = tuned.start;
     Object.assign(yokai, late.yokai);
     golems.start = late.golems;
+    undead.start = late.undead;
+    CAL_SCALE.start = late.calStart;
     CAL_SCALE.bossHp = tuned.bossHp;
     DAILY_ANSWER.ult = tuned.ult;
     plague.power = tuned.plague;

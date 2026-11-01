@@ -47,3 +47,11 @@
 .tBox .tTitle b { font: 400 12px var(--display); color: var(--gold-hi); }
 .tBig { grid-row: 1 / 3; width: 64px; height: 64px; image-rendering: pixelated; padding: 4px; box-sizing: content-box; background: radial-gradient(var(--e2), var(--s3)); border: 2px solid var(--gold-hi); }
 .tBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .tBtns button { min-height: 48px; font-size: 12px; }
+/* TALENT-AUTO: the Auto button over the tree, and the list of what it would learn (in its box, and in the Upgrades list's Auto all) */
+.tAutoHead { font: 400 12px var(--display); color: var(--gold-hi); }
+.tPlan { display: flex; flex-direction: column; gap: 4px; max-height: 45vh; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; counter-reset: tPlan; }
+.tPlan li { display: grid; grid-template-columns: 18px 32px 1fr auto; align-items: center; gap: 8px; padding: 2px 6px 2px 4px; background: rgb(var(--black-rgb) / 0.3); border: 1px solid var(--s6); counter-increment: tPlan; }
+.tPlan li::before { content: counter(tPlan); font: 700 11px var(--body); color: var(--dim); text-align: right; }
+.tPlan img { width: 32px; height: 32px; image-rendering: pixelated; }
+.tPlan b { min-width: 0; font: 400 12px/1.3 var(--body); color: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tPlan small { font: 400 11px var(--body); color: var(--dim); white-space: nowrap; }

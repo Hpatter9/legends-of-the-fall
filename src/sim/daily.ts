@@ -17,7 +17,9 @@ export const DAILY_MID = 5;
 
 /** The foes' hp and attack at wave 1, as a share of their stats in `foes.ts`, and the share they gain each wave after (the same for every day). */
 // (0.565 since ONE-OF-EACH: a squad of five different heroes cleared a fresh save's daily 79% of the time at 0.55; 71% now, `docs/notes/one-of-each.md`)
-export const DAILY_START = 0.565;
+// (0.74 since the skills overhaul's batches 2 and 3, docs/notes/skills-1.md: with the tier skills gone a fresh save cleared 65% at SPELLS-RETUNE's
+// 0.76; 72% at 0.74, as SPELLS-RETUNE measured)
+export const DAILY_START = 0.74; // (SPELLS-RETUNE: 0.76; 0.565 measured by a bot that never cast the king's spells; with Auto casting them a fresh save cleared every date, `docs/notes/spells-retune.md`)
 export const DAILY_GROWTH = 0.155;
 /** The hp and attack a mid-boss and the boss of the day have at wave 1's strength (the wave's multiplier then applies). */
 export const DAILY_MID_STATS = { hp: 1500, atk: 46 };

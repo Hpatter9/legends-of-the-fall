@@ -2,8 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES } from '../src/sim/armies';
 import { armyRun, newRun, waveArmyOf, type Run } from '../src/sim/run';
-import { GENERAL_TRACK, VICTORY_BED, VICTORY_LOOP, armyTrack, atPlace, endAt, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
-import { ARMY_TRACKS, TRACK_OF_PLACE } from '../src/render/epicMusic';
+import { BATTLE_TRACK, BOSS_IN_S, BOSS_OUT_S, BOSS_TRACK, CROSSFADE_S, VICTORY_BED, VICTORY_LOOP, atPlace, crossfadeOf, endAt, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
+import { standRoomTrack } from '../src/render/standMusic';
+import { TRACK_OF_PLACE } from '../src/render/epicMusic';
 import { EPIC_MANIFEST } from '../src/render/epicManifest';
 import { FakeContext, installFakeAudio } from './audioFake';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
@@ -20,62 +21,111 @@ function towerAt(stage: number, kind: 'fight' | 'elite' | 'boss', calamity = fal
 }
 const daily = (date: number): Run => ({ ...armyRun(1, ARMIES[0].id), mode: { kind: 'daily', date, practice: true } });
 
-test('a battle keeps one track from its first wave to its last: no switching by wave, and a boss wave does not change it', () => {
+test('every battle plays the one battle track, wave after wave, and the boss track only for a boss\'s own wave', () => {
+  // (changed for the owner's "One good battle music for all the battles, with a more intense one for bosses": each army had
+  // its own track, kept through its boss wave; docs/notes/battle-music-2.md)
+  let bossWaves = 0;
   for (const army of ARMIES) {
     for (const tier of [0, 1, 2, 3, 4]) {
       const run = armyRun(1234 + tier, army.id, undefined, undefined, tier);
-      const first = trackOfRun(run);
       for (let w = 1; w <= army.waves.length; w++) {
         run.stage = w;
-        assert.equal(trackOfRun(run), first, `${army.id} tier ${tier} wave ${w}`);
+        const boss = !!army.waves[w - 1].boss;
+        if (boss) bossWaves++;
+        assert.equal(trackOfRun(run), boss ? BOSS_TRACK : BATTLE_TRACK, `${army.id} tier ${tier} wave ${w}`);
       }
     }
   }
-  const d = daily(20261029);
-  const first = trackOfRun(d);
-  for (let w = 1; w <= waveArmyOf(d)!.waves.length; w++) assert.equal(trackOfRun({ ...d, stage: w }), first, `daily wave ${w}`);
-  assert.ok(waveArmyOf(d)!.waves.some((w) => w.boss), 'the daily has its boss wave, and it plays the battle\'s track');
-});
-
-test('each army plays its own track (the main theme in its dress) at every tier; the daily and the Last Stand the general one', () => {
-  const seen = new Set<string>();
-  for (const army of ARMIES) {
-    for (const tier of [0, 1, 2, 3, 4]) {
-      const want = army.waves.length === 1 && army.waves[0].boss ? 'boss' : armyTrack(army.id);
-      assert.equal(trackOfRun(armyRun(40 + tier, army.id, undefined, undefined, tier)), want, `${army.id} tier ${tier}`);
-    }
-    // (the seed no longer picks: every run of an army sounds like that army)
-    assert.equal(trackOfRun(armyRun(1, army.id)), trackOfRun(armyRun(2, army.id)), army.id);
-    seen.add(trackOfRun(armyRun(1, army.id)));
+  assert.ok(bossWaves > 0, 'the armies have boss waves');
+  // (the daily, every day: the battle track, and its boss wave the boss track)
+  for (const date of [20261029, 20261030, 20270101]) {
+    const d = daily(date);
+    const waves = waveArmyOf(d)!.waves;
+    assert.ok(waves.some((w) => w.boss), 'the daily has its boss wave');
+    for (let w = 1; w <= waves.length; w++) assert.equal(trackOfRun({ ...d, stage: w }), waves[w - 1].boss ? BOSS_TRACK : BATTLE_TRACK, `daily ${date} wave ${w}`);
   }
-  assert.equal(seen.size, ARMIES.length, 'no two armies share a track');
-  for (const id of ARMY_TRACKS) assert.ok(ARMIES.some((a) => a.id === id), `${id} is an army`);
-  for (const id of ARMY_TRACKS) assert.ok(EPIC_MANIFEST[id]?.loop, `${id} has its file`);
-  assert.equal(armyTrack('an army with no track yet'), GENERAL_TRACK);
-  assert.equal(trackOfRun(daily(20261029)), GENERAL_TRACK);
-  assert.equal(trackOfRun(daily(20261030)), GENERAL_TRACK, 'every day');
-  assert.equal(standTrack(77), GENERAL_TRACK);
-  assert.equal(standTrack(-5), GENERAL_TRACK);
+  // (the Last Stand: the battle track, a boss wave the boss track, whatever the seed)
+  for (const seed of [77, -5]) {
+    assert.equal(standTrack(seed), BATTLE_TRACK);
+    assert.equal(standTrack(seed, true), BOSS_TRACK);
+  }
+  for (const hall of ['courtyard', 'library', 'chapel', 'hall'] as const) {
+    assert.equal(standRoomTrack(3, hall), BATTLE_TRACK, hall);
+    assert.equal(standRoomTrack(3, hall, true), BOSS_TRACK, `${hall}, a boss wave`);
+  }
+  // (only the two tracks are battle music, and both have their files)
+  assert.ok(EPIC_MANIFEST.battle.loop && EPIC_MANIFEST.boss.loop && BATTLE_TRACK === 'battle' && BOSS_TRACK === 'boss');
+  assert.notEqual(BATTLE_TRACK, BOSS_TRACK);
 });
 
-test('a single fight takes its track by what it is: a boss, the Calamity, a spire floor the general track', () => {
-  assert.equal(trackOfRun(towerAt(4, 'boss', true)), 'boss');
-  assert.equal(trackOfRun(towerAt(4, 'fight', true)), 'calbattle');
-  assert.equal(trackOfRun(towerAt(30, 'boss')), 'boss');
-  assert.deepEqual([1, 9, 10, 24, 25].map((f) => trackOfRun(towerAt(f, 'fight'))), Array(5).fill(GENERAL_TRACK));
-  assert.equal(trackOfRun(towerAt(3, 'elite')), GENERAL_TRACK);
-  assert.equal(trackOfRun(newRun(1)), GENERAL_TRACK, 'a field fight');
+test('a single fight: a boss (the spire\'s, the Calamity\'s) the boss track, every other fight the battle track', () => {
+  assert.equal(trackOfRun(towerAt(4, 'boss', true)), BOSS_TRACK);
+  assert.equal(trackOfRun(towerAt(4, 'fight', true)), BATTLE_TRACK, 'a Calamity fight');
+  assert.equal(trackOfRun(towerAt(4, 'elite', true)), BATTLE_TRACK, 'a Calamity elite');
+  assert.equal(trackOfRun(towerAt(30, 'boss')), BOSS_TRACK);
+  assert.deepEqual([1, 9, 10, 24, 25].map((f) => trackOfRun(towerAt(f, 'fight'))), Array(5).fill(BATTLE_TRACK));
+  assert.equal(trackOfRun(towerAt(3, 'elite')), BATTLE_TRACK);
+  assert.equal(trackOfRun(newRun(1)), BATTLE_TRACK, 'a field fight');
+});
+
+test('the boss track crossfades in quickly and gives the battle track back gently; other changes at the usual crossfade', () => {
+  assert.equal(crossfadeOf(BATTLE_TRACK, BOSS_TRACK), BOSS_IN_S);
+  assert.equal(crossfadeOf('deploy', BOSS_TRACK), BOSS_IN_S, 'a boss fought straight from the deploy');
+  assert.equal(crossfadeOf(null, BOSS_TRACK), BOSS_IN_S);
+  assert.equal(crossfadeOf(BOSS_TRACK, BATTLE_TRACK), BOSS_OUT_S);
+  assert.equal(crossfadeOf('deploy', BATTLE_TRACK), CROSSFADE_S);
+  assert.equal(crossfadeOf(BOSS_TRACK, BOSS_TRACK), CROSSFADE_S, 'the same track (a level change) as before');
+  assert.equal(crossfadeOf('camp', 'tavern'), CROSSFADE_S);
+  // (in: quick enough to land with the boss, never a cut; out: longer, so the step down is not a jolt)
+  assert.ok(BOSS_IN_S >= 1 && BOSS_IN_S <= 2);
+  assert.ok(BOSS_OUT_S > BOSS_IN_S && BOSS_OUT_S <= 4);
+});
+
+test('through an army run: battle, the boss track for the boss wave, back to the battle track after it, or the victory', () => {
+  const want = (s: MusicState) => musicOf(s, (p) => TRACK_OF_PLACE[p]);
+  // (an army with a boss wave before its last, and one whose boss is its last wave)
+  const mid = ARMIES.find((a) => a.waves.slice(0, -1).some((w) => w.boss));
+  const last = ARMIES.find((a) => a.waves.length > 1 && a.waves[a.waves.length - 1].boss);
+  assert.ok(last, 'an army ends on its boss');
+  for (const army of [mid, last]) {
+    if (!army) continue;
+    const run = armyRun(9, army.id);
+    let s: MusicState = { place: 'deploy', battle: null, fighting: false, victory: false };
+    for (let w = 1; w <= army.waves.length; w++) {
+      run.stage = w;
+      // (the page: `startFight(trackOfRun(run))` as each wave begins)
+      s = { ...s, battle: trackOfRun(run), fighting: true, victory: false };
+      assert.equal(want(s).track, army.waves[w - 1].boss ? BOSS_TRACK : BATTLE_TRACK, `${army.id} wave ${w} fought`);
+      s = { ...s, fighting: false };
+      const end = endOfFight(run, true);
+      const after = endAt(s, end);
+      s = after.state;
+      if (w < army.waves.length) {
+        assert.equal(end, 'next');
+        assert.equal(after.sting, null);
+        // (between waves, the result and the next deploy: the battle track, the boss's wave over)
+        assert.deepEqual(want(s), { track: BATTLE_TRACK, level: 1 }, `${army.id} after wave ${w}`);
+      } else {
+        assert.equal(end, 'victory');
+        assert.equal(after.sting, 'victory');
+        assert.equal(want(s).track, VICTORY_LOOP);
+      }
+    }
+  }
+  // (a fall a heart revives in the boss's wave: the boss track plays on through the fight resumed)
+  const bossy: MusicState = { place: 'deploy', battle: BOSS_TRACK, fighting: false, victory: false };
+  assert.deepEqual(endAt(bossy, 'none'), { state: bossy, sting: null });
 });
 
 test('victory music only when the whole battle is won; the defeat sting only when it is lost for good', () => {
   const army = ARMIES[0];
   const run = armyRun(3, army.id);
-  for (let w = 1; w < army.waves.length; w++) assert.equal(endOfFight({ ...run, stage: w }, true), 'none', `wave ${w} won: the battle goes on`);
+  for (let w = 1; w < army.waves.length; w++) assert.equal(endOfFight({ ...run, stage: w }, true), 'next', `wave ${w} won: the battle goes on`);
   assert.equal(endOfFight({ ...run, stage: army.waves.length }, true), 'victory', 'the last wave won');
   assert.equal(endOfFight(run, false), 'none', 'a fall a heart revives');
   assert.equal(endOfFight({ ...run, retries: 99 }, false), 'defeat', 'no heart left');
   const d = daily(20261029);
-  assert.equal(endOfFight({ ...d, stage: 3 }, true), 'none');
+  assert.equal(endOfFight({ ...d, stage: 3 }, true), 'next');
   assert.equal(endOfFight({ ...d, stage: waveArmyOf(d)!.waves.length }, true), 'victory');
   // (a spire floor and a Calamity spot are battles of their own: each won is a victory, each lost the end)
   assert.equal(endOfFight(towerAt(7, 'fight'), true), 'victory');
@@ -89,11 +139,11 @@ test('the battle track plays through the breaks between waves, a victory holds t
   const want = (s: MusicState) => musicOf(s, (p) => TRACK_OF_PLACE[p]);
   let s: MusicState = { place: 'deploy', battle: null, fighting: false, victory: false };
   assert.equal(want(s).track, 'deploy', 'the first deploy has its own music');
-  s = { ...s, battle: 'orcs', fighting: true };
-  assert.deepEqual(want(s), { track: 'orcs', level: 1 });
+  s = { ...s, battle: 'battle', fighting: true };
+  assert.deepEqual(want(s), { track: 'battle', level: 1 });
   // (a wave won: the fight is over, the result screen and the next deploy are on the board, and the battle plays on)
   s = { ...s, fighting: false };
-  assert.deepEqual(want(atPlace(s, 'deploy')), { track: 'orcs', level: 1 });
+  assert.deepEqual(want(atPlace(s, 'deploy')), { track: 'battle', level: 1 });
   // (the battle won: the triumph bed, lower than a track's full level)
   const won: MusicState = { ...s, battle: null, victory: true };
   assert.deepEqual(want(won), { track: VICTORY_LOOP, level: VICTORY_BED });
@@ -105,14 +155,14 @@ test('the battle track plays through the breaks between waves, a victory holds t
   // changed for the owner's "Music sounds like it runs from the fights into the main screen after"; it used to play the battle)
   const behind = atPlace({ ...s, fighting: true }, 'camp');
   assert.equal(want(behind).track, 'camp');
-  assert.equal(behind.battle, 'orcs');
-  assert.deepEqual(want(atPlace(behind, 'deploy')), { track: 'orcs', level: 1 });
+  assert.equal(behind.battle, 'battle');
+  assert.deepEqual(want(atPlace(behind, 'deploy')), { track: 'battle', level: 1 });
 });
 
 test('off the board (the camp, any tab, a map) there is never battle or victory music, whatever happened before', () => {
   const want = (s: MusicState) => musicOf(s, (p) => TRACK_OF_PLACE[p]);
   const places = ['camp', 'tower', 'calmap'] as const;
-  for (const battle of [null, 'orcs', 'boss', 'battle', 'calbattle'] as const)
+  for (const battle of [null, 'boss', 'battle'] as const)
     for (const fighting of [false, true])
       for (const victory of [false, true])
         for (const place of places) {
@@ -135,7 +185,7 @@ test('off the board (the camp, any tab, a map) there is never battle or victory 
 
 test('a fight ending on the board rings its sting: a victory holds the triumph bed, a defeat lets the battle go, a wave carries on', () => {
   const want = (s: MusicState) => musicOf(s, (p) => TRACK_OF_PLACE[p]);
-  const s: MusicState = { place: 'deploy', battle: 'orcs', fighting: true, victory: false };
+  const s: MusicState = { place: 'deploy', battle: 'battle', fighting: true, victory: false };
   const won = endAt(s, 'victory');
   assert.equal(won.sting, 'victory');
   assert.deepEqual(want(won.state), { track: VICTORY_LOOP, level: VICTORY_BED });
@@ -147,6 +197,10 @@ test('a fight ending on the board rings its sting: a victory holds the triumph b
   const on = endAt(s, 'none');
   assert.equal(on.sting, null);
   assert.deepEqual(on.state, s);
+  const next = endAt(s, 'next');
+  assert.equal(next.sting, null);
+  assert.deepEqual(next.state, s, 'a wave won on the battle track: it plays on');
+  assert.deepEqual(endAt({ ...s, battle: BOSS_TRACK }, 'next').state, s, 'after the boss\'s wave: the battle track again');
 });
 
 /** A baked track as an epic file would give it. */
@@ -208,12 +262,41 @@ test('two track changes in a row leave only the last one playing: the triumph do
     await new Promise((r) => setTimeout(r, 10));
     assert.deepEqual(music.sounding, ['camp']);
     // (and the same with a battle track left for a map and then the camp)
-    music.setTrack('orcs');
+    music.setTrack('boss');
     await new Promise((r) => setTimeout(r, 10));
     music.setTrack('tower');
     music.setTrack('camp');
     await new Promise((r) => setTimeout(r, 10));
     assert.deepEqual(music.sounding, ['camp']);
+    music.destroy();
+  } finally {
+    undo();
+  }
+});
+
+test('the boss track comes in over its own crossfade, and the battle track it takes over from fades out over the same', async () => {
+  const undo = installFakeAudio();
+  const { MusicPlayer, FADE_S } = await import('../src/render/audioProcessors');
+  try {
+    assert.equal(CROSSFADE_S, FADE_S, 'the usual crossfade is the player\'s own');
+    const ctx = new FakeContext();
+    const music = new MusicPlayer(ctx as unknown as AudioContext, async () => epicBaked(ctx), async () => ({ duration: 1 }) as unknown as AudioBuffer);
+    music.setTrack(BATTLE_TRACK, 1, crossfadeOf(null, BATTLE_TRACK));
+    await new Promise((r) => setTimeout(r, 10));
+    const before = FakeContext.made.length;
+    music.setTrack(BOSS_TRACK, 1, crossfadeOf(BATTLE_TRACK, BOSS_TRACK));
+    await new Promise((r) => setTimeout(r, 10));
+    assert.deepEqual(music.sounding, [BOSS_TRACK]);
+    // (the time constant is a third of the crossfade: the fade is about 95 % done when it ends)
+    const taus = (from: number) => FakeContext.made.slice(from).flatMap((n) => (n.gain?.calls ?? []).filter((c) => c[0] === 'target').map((c) => c[3] as number));
+    assert.ok(taus(before).some((t) => Math.abs(t - BOSS_IN_S / 3) < 1e-9), 'the boss fades in over BOSS_IN_S');
+    const outs = FakeContext.made.flatMap((n) => (n.gain?.calls ?? []).filter((c) => c[0] === 'target' && c[1] === 0).map((c) => c[3] as number));
+    assert.ok(outs.some((t) => Math.abs(t - BOSS_IN_S / 3) < 1e-9), 'the battle track fades out over the same');
+    const mark = FakeContext.made.length;
+    music.setTrack(BATTLE_TRACK, 1, crossfadeOf(BOSS_TRACK, BATTLE_TRACK));
+    await new Promise((r) => setTimeout(r, 10));
+    assert.deepEqual(music.sounding, [BATTLE_TRACK]);
+    assert.ok(taus(mark).some((t) => Math.abs(t - BOSS_OUT_S / 3) < 1e-9), 'the battle track comes back over BOSS_OUT_S');
     music.destroy();
   } finally {
     undo();

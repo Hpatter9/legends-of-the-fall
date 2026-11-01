@@ -37,6 +37,9 @@ streams, and the chains draw nothing at all.
   Gwen, the Crown, Duchess, a voice in the rift), what opens it (the Beast Packs, the Wildwood, the Labyrinth and the Infernal Host
   cleared, the Calamity cleared once), `trial: true`, and no parts yet: **a chain with no parts is never offered**, so each later batch
   writes its parts, pieces, prologue and binding and it opens by itself.
+- **The trials** (EIDOLON-TRIAL, the owner's call): a chain with `trial: true` whose trial is written in `src/sim/eidolonTrials.ts` (one
+  `TrialDef`: the Eidolon as a boss, its kit, its great attacks, its second form, the arena and the lines) has a fourth step after its
+  pieces, the fight against the Eidolon, before the binding. Nivra's is the first ([eidolon-chain-2.md](eidolon-chain-2.md), "The trial").
 - **One at a time** (`offeredChain`): nothing is offered while a chain goes (`activeChain`); the next is the first chain not done, offered
   once the chain before it is done and its own opening holds. A chain is done when bound at the Summoner, or when its Eidolon is bound some
   other way (the `?eidolons=all` dev flag), so the flag never leaves a chain hanging.

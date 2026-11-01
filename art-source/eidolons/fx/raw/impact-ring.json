@@ -1,0 +1,235 @@
+{
+ "frames": [
+  {
+   "filename": "eidolon-impact-ring 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  },
+  {
+   "filename": "eidolon-impact-ring 1.png",
+   "frame": {
+    "x": 100,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  },
+  {
+   "filename": "eidolon-impact-ring 2.png",
+   "frame": {
+    "x": 200,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  },
+  {
+   "filename": "eidolon-impact-ring 3.png",
+   "frame": {
+    "x": 0,
+    "y": 97,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  },
+  {
+   "filename": "eidolon-impact-ring 4.png",
+   "frame": {
+    "x": 100,
+    "y": 97,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  },
+  {
+   "filename": "eidolon-impact-ring 5.png",
+   "frame": {
+    "x": 200,
+    "y": 97,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  },
+  {
+   "filename": "eidolon-impact-ring 6.png",
+   "frame": {
+    "x": 0,
+    "y": 194,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  },
+  {
+   "filename": "eidolon-impact-ring 7.png",
+   "frame": {
+    "x": 100,
+    "y": 194,
+    "w": 100,
+    "h": 97
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 100,
+    "h": 97
+   },
+   "sourceSize": {
+    "w": 100,
+    "h": 97
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.26804123711340205
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "eidolon-impact-ring.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 300,
+   "h": 291
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 50,
+   "y": 26
+  },
+  "frameTags": [
+   {
+    "name": "eidolon-impact-ring",
+    "from": 0,
+    "to": 7,
+    "direction": "forward"
+   }
+  ]
+ }
+}

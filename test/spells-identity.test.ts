@@ -30,23 +30,61 @@
 // bosses, spells, heroes10 and heroes30: each has the Druid, Beastmaster, Reaper, Samurai Commander, Werewolf, Kitsune or Demon Swordsman at
 // level 10 or more, whose wraith, standard and shapes now last longer. The `...Others` scenarios now leave those seven out of every team
 // (recorded on main's code before this work) and did not move; nor did field1, armyFoes, lands, army, daily, tower, stand, calamity or heroes1.
+// RELICS-2 (the owner's approved relic redesign, docs/notes/relics-2.md) re-recorded army, daily and stand: the greedy player finds and buys the
+// new relics on the way. Only those moved.
+// (SKILLS-1, the owner-approved skills overhaul's batch 2, docs/notes/skills-1.md, re-recorded every scenario: field1, field30, bosses, armyFoes,
+// spells, lands, army, daily, tower, stand, calamity, heroes1, heroes10, heroes30 and the five `...Others`. Every hero's skills now cost and cool by
+// their class, a breath follows each cast and the AI saves for its heavier skill, so every fight with a hero in it moves; batch 1, the rules as
+// data, moved none of them.)
+// (SKILLS-1 batch 3, the owner's rule that a rank gives health and attack only, docs/notes/skills-1.md, re-recorded army (also for the Undead
+// Legion's new start), daily, tower, heroes1,
+// heroes10, heroes30 and the three `heroes...Others`: each fields merged heroes (the hero scenarios place grades 1 to 3), whose tier skills went;
+// every scenario of grade-1 heroes kept its hash)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
+import { armyById } from '../src/sim/armies';
+import { CAL_SCALE } from '../src/sim/calamity';
 
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
+// scenario keeps its hash)
+// (SPELLS-RETUNE, the owner's call to tune the game for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, re-recorded
+// `daily` and `stand` alone: the daily's foes start stronger (`DAILY_START` 0.565 to 0.76) and the Last Stand's waves are eased less (`HALL_EASE`
+// 0.88 to 1.2). The armies' and the Calamity's raised strengths are put back for this proof, and its greedy players cast no spells; every other
 // scenario keeps its hash)
 // (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks, and the heroes'
 // stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
 // with them on, the scenarios with no boss (every field fight, every hero alone, the tower's and the Calamity's early floors) still do, so
 // the dodge changes nothing where no boss has marked the ground. Only bosses, armyFoes, army, daily and stand move.)
+// (XP-SPLIT, the owner's ask for a fight's kill XP to be shared, docs/notes/xp-split.md, re-recorded `daily`: its greedy player levels its
+// heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
+// keeps its hash, the fights themselves are unchanged; then `tower` too, when the spire and the Calamity took the same split: its heroes level
+// from their own run XP fight by fight. `calamity` did not move)
+// (SPELLS-RETUNE, the owner's call to tune the armies for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, raised the
+// armies' Normal `start`. The `army` scenario plays the Undead Legion, the Infernal Host, the Golem Forge and the Yokai Night Parade on Normal:
+// their recorded strengths are put back for this proof, as the ailments' proof does, and the Calamity's `CAL_SCALE.start` (0.435) with them. The greedy players cast no spells in
+// either proof, `identityHashes`.)
+const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
+function recordedStrengths<T>(fn: () => T): T {
+  const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
+  const calStart = CAL_SCALE.start;
+  for (const [id, v] of Object.entries(RECORDED_START)) (armyById(id) as unknown as { start: number }).start = v;
+  CAL_SCALE.start = 0.435;
+  try {
+    return fn();
+  } finally {
+    for (const [id, v] of Object.entries(was)) (armyById(id) as unknown as { start: number }).start = v;
+    CAL_SCALE.start = calStart;
+  }
+}
+
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   try {
-    assert.deepEqual(identityHashes(), recorded);
+    assert.deepEqual(recordedStrengths(() => identityHashes()), recorded);
   } finally {
     BOSS_BIG.on = true;
   }
@@ -55,7 +93,7 @@ test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and w
 test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
   const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
   const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
-  assert.deepEqual(identityHashes(rest), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
-  const now = identityHashes(moved);
+  assert.deepEqual(recordedStrengths(() => identityHashes(rest)), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
+  const now = recordedStrengths(() => identityHashes(moved));
   for (const k of moved) assert.notEqual(now[k], (recorded as Record<string, string>)[k], `${k} has a boss whose signatures move it`);
 });

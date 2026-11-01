@@ -10,6 +10,8 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 import { lockInfo } from './sim/contentHeroes';
+import { comboHint, isSecret, SECRET_NAME } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
 import type { Meta } from './sim/meta';
@@ -18,7 +20,6 @@ import { settings } from './settings';
 import { rulerWords } from './rulerRules';
 import { LAYOUT_LIST, TERRAIN_INFO } from './sim/terrainInfo';
 import { portrait, sprite, figureOf } from './render/sheets';
-import { TIER_SKILLS } from './sim/tierSkills';
 import { COMBOS, COMBO_NAME } from './sim/combos';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -70,7 +71,7 @@ function stat(box: HTMLElement, rows: readonly (readonly [string, string])[]): v
   box.append(g);
 }
 
-/** A kit's lines (a hero's too lists its tier 2, tier 3 and tier 4 skills, and the level its ultimate unlocks at). */
+/** A kit's lines (a hero's too lists the level its ultimate unlocks at; since the skills overhaul's batch 3 a rank no longer changes a skill). */
 function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   if (!kit) return;
   // (a hero: its two skills and what they cost from its pool, COMBAT-002; a foe: its one skill)
@@ -78,8 +79,6 @@ function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   const rows: [string, { name: string; text: string }, number?][] = hk
     ? [[`Skill 1 (${hk.s1.cost} ${hk.pool})`, hk.s1.skill], [`Skill 2 (${hk.s2.cost} ${hk.pool})`, hk.s2.skill, SKILL2_LEVEL]]
     : [['Skill', kit.skill]];
-  const tiers = hero ? TIER_SKILLS[hero] : undefined;
-  if (tiers) rows.push(['Tier 2', tiers[0]], ['Tier 3', tiers[1]], ['Tier 4', tiers[2]]);
   if (kit.ultimate) rows.push(['Ultimate', kit.ultimate, hero ? kit.ultimate.unlock : undefined]);
   rows.push(['Passive', kit.passive]);
   for (const [label, a, unlock] of rows) {
@@ -127,6 +126,18 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
 }
 
 function openHero(root: HTMLElement, m: Meta, kind: string): void {
+  // (SECRET-HEROES: a secret hero's page is the dark figure, "???" and its vague hint, nothing more)
+  if (isSecret(m, kind)) {
+    const { box, close } = sheet(root);
+    const head = el('div', 'hhead');
+    const pic = el('div', 'cxPic');
+    pic.append(secretFigure(96));
+    const title = el('div');
+    title.append(el('h3', '', SECRET_NAME), el('em', '', 'a secret, for now'));
+    head.append(pic, title);
+    box.append(head, el('p', 'cxLore locked', `🔒 ${lockInfo(m, kind)!.line}.`), closeButton(close));
+    return;
+  }
   const def = UNITS[kind];
   const known = heroKnown(m, kind);
   const { box, close } = sheet(root);
@@ -267,7 +278,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
         const row = el('div', `scRow${seen ? '' : ' locked'}`);
         const text = el('div');
         if (seen) text.append(el('b', '', `${c.name}: ${c.move}`), el('small', '', `${c.heroes.map((k) => UNITS[k].name).join(', ')}. ${c.text}.`));
-        else text.append(el('b', '', '???'), el('small', '', `Five heroes who belong together, one of them the ${UNITS[c.heroes[0]].name}. Fight with all five to see what they do.`));
+        // (SECRET-HEROES: the hint names its first hero only when that hero is no secret)
+        else text.append(el('b', '', '???'), el('small', '', comboHint(m, c.heroes)));
         row.append(text);
         grid.append(row);
       }
@@ -297,6 +309,13 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       for (const k of ALL_HEROES) {
         const known = heroKnown(m, k);
         const def = UNITS[k];
+        if (isSecret(m, k)) {
+          const c = el('button', 'cxCard secret');
+          c.append(secretFigure(52), el('b', '', SECRET_NAME), el('small', '', 'a secret'));
+          c.addEventListener('click', () => openHero(root, m, k));
+          grid.append(c);
+          continue;
+        }
         // (a hero met goes by its own name, its class under it)
         const c = card(def.sheet, 1, known ? heroName(k) : def.name, known ? def.name : 'locked', true);
         if (!known) c.classList.add('dark');

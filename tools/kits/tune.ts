@@ -83,7 +83,7 @@ if (args[0] === '--child') {
       const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 'ur' ? KITS[h].ultimate!.tuned!.rate : key === 't1' ? HERO_KITS()[h].s1.tune : HERO_KITS()[h].s2.tune);
       prev[h] = now;
       // (a damped multiplicative step: a hero 4 points over the average loses about 13% of its strength)
-      const next = Math.max(0.05, Math.min(3, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));
+      const next = Math.max(0.05, Math.min(10, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));
       k[key] = Math.round(next * 1000) / 1000;
     }
     // (the step moves heroes against each other, not the roster as a whole: the knob's geometric mean is held where it was)

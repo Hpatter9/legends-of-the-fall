@@ -2,6 +2,8 @@
 // and "Upgrade all" (after a confirm that shows the totals). A row updates where it is after its step is taken, with the sheet's
 // own flourish played short over its picture, so nothing has to be backed out of. The steps are the rules' own (`sim/upgradesReady.ts`
 // calls `rankUp` and `awaken`). Also the small gold chevron that marks a hero with an upgrade ready, wherever a hero card is drawn.
+// With talent rows, "Auto all talents" (TALENT-AUTO) shows each hero's points and the nodes `sim/talentAuto.ts` would learn in the same
+// confirm, and learns them all on its yes.
 
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
@@ -12,6 +14,8 @@ import { planUpgradeAll, takeUpgrade, talentList, talentPointsReady, upgradeAll,
 import { heroArtwork } from './heroArtwork';
 import { gems, playAwakenShow, tellAwakened } from './awakenView';
 import { oreIcon } from './oreView';
+import { autoPlanAll, autoSpendAll, planCost } from './sim/talentAuto';
+import { nodeOf } from './sim/talents';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -65,7 +69,7 @@ let openNow: (() => void) | null = null;
 /** Open the list over the page. `kinds` is the roster order (the order "Upgrade all" pays in); `changed` is told when it closes
  *  after anything was taken; `onHero` opens a hero's sheet (a tap on a row's picture or name); `onTalents` opens a hero's talent tree
  *  (TALENT-ARROWS: a row "Talent points: 2 to spend" for each hero with points to spend, after the ranks and awakenings; "Upgrade all"
- *  never spends them, as talents are choices). */
+ *  never spends them, as talents are choices; "Auto all talents" does, after its own confirm: TALENT-AUTO). */
 export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () => void, onHero?: (kind: string) => void, onTalents?: (kind: string) => void): void {
   openNow?.();
   const order = kinds.filter((k) => meta.unlocked.includes(k));
@@ -94,14 +98,22 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
   const ask = el('div', 'ulAsk');
   ask.hidden = true;
   const askText = el('p');
+  // (TALENT-AUTO: the heroes and what each would learn, shown only when the confirm is for "Auto all talents")
+  const askList = el('div', 'ulPlans');
+  askList.hidden = true;
   const yes = el('button', 'primary', 'Upgrade all');
   yes.type = 'button';
   const no = el('button', '', 'Cancel');
   no.type = 'button';
   const askBtns = el('div', 'ulAskBtns');
   askBtns.append(yes, no);
-  ask.append(askText, askBtns);
-  foot.append(all, ask);
+  ask.append(askText, askList, askBtns);
+  const auto = el('button', 'ulAuto');
+  auto.type = 'button';
+  auto.hidden = !talents.length;
+  /** What the confirm is for: "Upgrade all", or "Auto all talents". */
+  let asking: 'all' | 'auto' = 'all';
+  foot.append(all, auto, ask);
   card.append(head, rows, foot);
   back.append(card);
 
@@ -158,7 +170,7 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
     pic.append(picOf(t.kind));
     const text = el('div', 'ulText');
     const what = el('span', 'ulWhat');
-    text.append(el('b', '', heroName(t.kind)), what, el('small', 'ulCost', 'A choice: pick the talents yourself'));
+    text.append(el('b', '', heroName(t.kind)), what, el('small', 'ulCost', 'Pick them yourself, or Auto all below'));
     const go = el('button', 'ulGo', 'Spend');
     go.type = 'button';
     box.append(pic, text, go);
@@ -224,24 +236,67 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
     const plan = planUpgradeAll(meta, order);
     all.disabled = !plan.steps.length;
     all.textContent = plan.steps.length ? `Upgrade all (${plan.steps.length})` : 'Nothing more to upgrade';
+    // (the talent plans are only worked out when asked for; this is only whether any hero has points that buy something)
+    auto.disabled = !spend;
+    auto.classList.toggle('primary', !!spend && !plan.steps.length);
+    auto.textContent = spend ? `Auto all talents (${spend})` : 'Talents all spent';
     if (!made.length && !talents.length) rows.replaceChildren(el('p', 'ulNone', 'No hero has an upgrade ready. Shards earn ranks; at four stars, shards and rift ores awaken a hero.'));
   };
 
   all.addEventListener('click', () => {
     const plan = planUpgradeAll(meta, order);
     if (!plan.steps.length) return;
+    asking = 'all';
     askText.textContent = allWords(plan);
+    askList.hidden = true;
+    yes.textContent = 'Upgrade all';
     ask.hidden = false;
     all.hidden = true;
+    auto.hidden = true;
+    yes.focus();
+  });
+  // (TALENT-AUTO: the confirm lists each hero with points, and the nodes it would learn in order)
+  auto.addEventListener('click', () => {
+    const plans = autoPlanAll(meta, talents.map((t) => t.kind));
+    if (!plans.length) return paint();
+    asking = 'auto';
+    const points = plans.reduce((s, p) => s + planCost(p.kind, p.picks), 0);
+    askText.textContent = `${plans.length} ${plans.length === 1 ? 'hero' : 'heroes'}: ${points} talent ${points === 1 ? 'point' : 'points'}, chosen to suit each hero.`;
+    askList.replaceChildren(
+      ...plans.map((p) => {
+        const box = el('div', 'ulPlan');
+        const cost = planCost(p.kind, p.picks);
+        box.append(
+          el('b', '', `${heroName(p.kind)} · ${cost} of ${p.points} ${p.points === 1 ? 'point' : 'points'}`),
+          el('span', '', p.picks.map((id) => nodeOf(p.kind, id)?.name ?? id).join(' › ')),
+        );
+        return box;
+      }),
+    );
+    askList.hidden = false;
+    yes.textContent = 'Spend all';
+    ask.hidden = false;
+    all.hidden = true;
+    auto.hidden = true;
     yes.focus();
   });
   const unask = (): void => {
     ask.hidden = true;
+    askList.hidden = true;
     all.hidden = false;
+    auto.hidden = !talents.length;
   };
   no.addEventListener('click', unask);
   yes.addEventListener('click', () => {
     unask();
+    if (asking === 'auto') {
+      const learnt = autoSpendAll(meta, talents.map((t) => t.kind));
+      if (learnt.length) {
+        saveMeta(meta);
+        took = true;
+      }
+      return paint();
+    }
     const done = upgradeAll(meta, order);
     if (!done.steps.length) return paint();
     saveMeta(meta);

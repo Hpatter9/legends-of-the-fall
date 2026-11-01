@@ -35,8 +35,10 @@ the raw files), copied one sprite at a time from the private assets repository (
 - **Tower map backdrop** (`src/art/tower/`, cut by `tools/tower-art.py`): the brick (`brick.png`, tinted warm and cold for `brick2.png` and `brick3.png`), the barred window, the small window and the wall torch frames (`window.png`, `slit.png`, `torch.png`, glow disc dropped) from the Craftpix **Free 2D Top-Down Pixel Dungeon Asset Pack** (`walls_floor.png`, `fire_animation.png`); the cloud strips (`cloud_*.png`) from the Craftpix **Free Clouds Pixel Art Asset Pack** (white, gray and black, Shape2); and the far peaks (`peaks.png`) from the Craftpix **Free Mountain Peak Pixel Art Backgrounds** (background 3, Plan 2). The banners are the castle banner already in `src/art/castle/`.
 - **Floor twist icons** (`src/art/twists/`) and the four legendary relics' icons (`src/art/items/sun_crown.png`, `dragon_heart.png`, `storm_ring.png`, `void_lens.png`): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Effect0, Potion, Rock, Money, Boot, ShortWep, Hat, Shield, Amulet, Ring), by `tools/twist-icons.py` (CC-BY 4.0).
 - **The Calamity relic sets' icons** (`src/art/items/`: Thunder Horn, Cloud Treads, Thunder Pendant, Tempest Ring, Granite Heart, Moss Amulet, Stone Gauntlet, Earthen Bell, Blood Vial, Bloodstone Ring, Reaver Helm, Ruby Locket, Star Chart, Comet Shard, Moon Lantern, Astral Circlet, Coin Hoard, Gilded Ingot, Jewelled Crown, Gold Band, Rift Shard, Void Sigil, Doom Helm, Last Light): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Items: Music, Boot, Amulet, Ring, Glove, Potion, Hat, Book, Money), by `tools/relic-icons.py` (CC-BY 4.0).
+- **Placeholder relic icons** (RELICS-2: `src/art/items/founders_ledger.png`, `book_of_names.png`, `unfinished_chronicle.png`, for The Founder's Ledger, The Book of Names and The Unfinished Chronicle until the painted relic icons come): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Items: Book), by `tools/relics/relic-icons-2.py` (CC-BY 4.0).
 - **Equipment icons** (`src/art/equip/`): 16x16 tiles cut one tile each from the same **DawnLike** tileset by DragonDePlatino (Items: LongWep, ShortWep, Ammo, Wand, Book, Scroll, Armor, Amulet, Ring, Boot, Glove, Hat, Music, Potion, Rock, Tool), by `tools/equip-icons.py`, for the hero equipment (CC-BY 4.0).
 - **The Eidolons and the War Horn** (`src/art/eidolons/`, from `art-source/eidolons/`): original art made for this game with AI image generation. The six Eidolons' figures and cards (Askel, Nivra, Aurelan, Voltara, Gorm, Vaelkhar) were painted with Dreamina and cleaned of the generator's marks by `tools/eidolons/clean_marks.py`; `tools/eidolons/import.py` cuts each figure from its grey ground with a soft alpha matte, crops the cards to head and shoulders, and sizes them as WebP. The War Horn's four paintings and the calling's circle and rift sheets are from the first Eidolon art set (`art-source/eidolons/horn/`, `call/`). Loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/eidolons.md`.
+- **Nivra in her trial** (`src/art/units/eidolon_nivra.png`, from `art-source/eidolons/gemini/nivra-sheet.jpg`, the branch `art/gemini-eidolons`): original art made for this game with AI image generation (Gemini; the prompt is in that branch's `art-source/eidolons/gemini/PROMPTS.md`). `tools/eidolon-trial/cut_nivra.py` keys out its magenta, brings it down to the fighters' size and lays it out as a fighter's sheet. See `docs/notes/eidolon-chain-2.md`.
 - **Painted equipment icons** (`src/art/gear/`, from `art-source/gear/`): original art made for this game with AI image generation: a standard and a Mythic painting of each of the 60 equipment bases, the four grade glows and the wear and selling pieces (the second painted set), plus the five grade frames and five wear pieces kept from the first set. Cleaned of stray edge bits and packed into atlases by `tools/gear/import-gear-icons.py` (`docs/notes/gear-icons.md`). The DawnLike tiles above are kept as the fallback for a base with no painting, and for the talent icons.
 - **Hester's Stall and the skill books** (`src/art/shop/`, from `art-source/books-shop/` and `art-source/gear/wear/`): original art made for this game with AI image generation: the skill books' covers (Manual, Grimoire, Hymnal, Bestiary, Universal), Hester Vane's portrait, the camp stall, the studying and learned icons, the shelves, price tag, sold-out ribbon, standing seals and coin purse (the books-and-shop art set, PR #240, with the second set's repaints of Hester, the stall, the Manual and Bestiary covers and the first seal, PR #243), and the wear, repair and selling pieces of the painted equipment set above. Sized down to WebP by `tools/shop/import-shop-art.py`; loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/shop-books-gear.md`.
 - **XP tome icons** (`src/art/ui/tome-small.png`, `tome-medium.png`, `tome-large.png`): three 16x16 tiles cut one each from the same **DawnLike** tileset by DragonDePlatino (Items: Book), by `tools/tome-icons.py` (CC-BY 4.0).
@@ -355,6 +357,35 @@ headbutt and her fall are **generated with PixelLab** from her own standing fram
 The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon**'s RPG Maker MV animals pack (`animals/wolfdog.png`, from the private assets repository `hpatter9/chronos-assets`), the
 right-facing row of three walking frames, scaled up 2x with nearest-neighbour. The script builds the game's rows from them (a step cycle, a lunge made of the stride shifted forward, an idle, a hurt
 frame brightened, and a dead frame rolled onto its side). The pack folder has no licence file: the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
+
+## The sprite Eidolons on the board (`src/art/eidolons/sprites/`; `tools/eidolon-call-2/cut_sprites.py`, EIDOLON-CALL-2)
+
+After an Eidolon's painting crosses the screen, its sprite comes onto the board and performs the attack (`docs/notes/eidolon-call-2.md`):
+
+- Askel (`src/art/eidolons/sprites/askel.png`, and his flame `src/art/eidolons/sprites/askel-breath.png`): generated by the owner with
+  Gemini (`art-source/eidolons/gemini/askel-sheet-gemini.jpg`, four rows of six frames on magenta: idle, run, leap, fire breath), cut by
+  `tools/eidolon-call-2/cut_askel.py` (the magenta keyed out, a quarter size a block at a time, every frame on one baseline, the breath's
+  flame cut out as its own strip and the cropped breathing frames given the rear of the frame before). Original art for this game.
+- Nivra, Aurelan, Voltara, Gorm and Vaelkhar (`src/art/eidolons/sprites/nivra.png`, `src/art/eidolons/sprites/aurelan.png`,
+  `src/art/eidolons/sprites/voltara.png`, `src/art/eidolons/sprites/gorm.png`, `src/art/eidolons/sprites/vaelkhar.png`, and the breaths, beam and bolt `nivra-breath.png`, `aurelan-breath.png`, `voltara-breath.png`, `vaelkhar-breath.png`):
+  generated by the owner with Gemini (the Gemini app, the paintings as references; `art-source/eidolons/gemini/<id>-sheet.jpg`, rows
+  idle, move, special, attack on magenta), cut by `tools/eidolon-fx/cut_gemini.py` the way Askel's was (EIDOLON-FX: the magenta and its
+  fringe keyed out, brought down a whole factor a block at a time, every frame on one baseline, frames cropped by the one before made
+  whole, the breath cut off as its own strip). Original art for this game. They replace the whtdragon pack sprites and the golem the
+  call used before, and give Voltara hers.
+
+## The Eidolons' strike effects (`src/art/eidolons/fx/`; `tools/eidolon-fx/cut_fx.py`, EIDOLON-FX)
+
+- The pillars, bursts, aftershocks and aftermaths (`askel-pillar`, `fire-burst`, `nivra-pillar`, `ice-burst`, `aurelan-pillar`,
+  `light-burst`, `voltara-pillar`, `lightning-burst`, `gorm-pillar`, `gorm-ring`, `earth-burst`, `vaelkhar-pillar`, `dark-burst` and the
+  rest, `.webp`): cut from the game's own painted spell sheets (`art-source/spell-fx/`, credited above under spell and movement effects:
+  the fire, ice, light and stone walls, the ultimate's element bursts, the orbital strike, the storm cloud's bolt, the divine smite, the
+  lightning storm, the launch ring, the fissure and the reign of terror), resized to 160 px frames; Aurelan's beam recoloured gold and
+  Vaelkhar's fire black and violet. Original art for this game.
+- The shared impact flash and shockwave ring (`impact-ring.png`): generated for this project with PixelLab's VFX artist
+  (`art-source/eidolons/fx/raw/impact-ring.png`, its job in `impact-ring-result.json`), its eight frames doubled by whole pixels. Original
+  art for this game.
+- Prompts for Gemini-generated replacements, not yet made (the key's image quota was 0): `art-source/eidolons/fx/PROMPTS.md`.
 
 ## The summons' own sheets (`src/art/units/summon_*.png`; `tools/summon-art/cut.py`, SUMMON-ART)
 

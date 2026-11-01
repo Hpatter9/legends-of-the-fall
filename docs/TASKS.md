@@ -14,6 +14,39 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### RELICS-2 — The relics redone as the keep's lost artefacts (step 1: the six Chapters and the Storied relics)
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.296.0 merged).
+- **Goal:** the owner's approved redesign (`docs/notes/relics-redesign.md`), step 1: the keep's 24 relics in six Chapters and six Storied relics, each with lore and a rule with character (a price, a condition, growth, a tie to the keep's enemies); the relic card on the prep screen (lore always shown, prices in red); a relic's icon over the hero when it fires; old saves converted (merged relics paid back, one line on the next prep screen); Auto leaves prices it cannot pay well; `npm run relic-balance`; placeholder icons and the painted icons' prompts. Step 2 (the Eidolons' reliquaries in the Calamity) is not begun. Part 1 (the strip on the prep screen only, `claude/relics`) is included.
+- **Scope:** new `src/sim/relicFight.ts`, `src/relicCard.ts`, `src/relicCard.css`, `test/relics-2.test.ts`, `tools/relics/`; `src/sim/relics.ts`, `relicSets.ts`; hooks in `src/sim/battle.ts`, `abilities.ts`, `heroKits.ts`, `spells.ts`, `run.ts`, `stand.ts`, `tower.ts`, `events.ts`, `market.ts`, `midEvents.ts`, `mystery.ts`, `elites.ts`, `autoplay.ts`, `waveGains.ts`; `src/events.ts`, `src/towerElites.ts`, `src/standView.ts`, `src/render/fx.ts`, `src/render/items.ts`, `build.mjs`, `package.json`, `CREDITS.md`.
+- **Status:** ready for review. [Note](notes/relics-2.md); [art prompts](notes/relic-art-prompts.md); screenshots `samples/relics-2-*.png`, `samples/relics-prep-*.png`.
+### OVERLOOK-STAND — The loss's word off the plates; the Last Stand in the overlook's watchtower
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/overlook-stand`, `/home/user/lotf-overlook` (from main 0.289.0).
+- **Goal:** the owner's "Losing to a wave leaves a message up on the overlook. That covers daily and Last Stand", and "a new place for Last Stand ... like the Calamity one" ("the tower off to the left in the overlook screen for its access point"): the run's last word moved off the plates and fading by itself; the Last Stand's place on the painted watchtower, lit and alive, with its plate and record, and its own way in.
+- **Scope:** new `src/standGate.ts`, `src/render/standTowerLife.ts`, `tools/overlook-stand/`; `src/render/overlookLayout.ts` (the tower's place, the Daily board alone in the row), hooks in `src/camp.ts`, `src/home.ts`, `src/campPlaces.css`; `test/overlook.test.ts` (one rule changed with the owner's ask, one test added). No sim, save or version change.
+- **Status:** ready for review. [Note](notes/overlook-stand.md); screenshots `samples/overlook-*.png`.
+### SECRET-HEROES — The heroes earned in play kept secret; three hero quests that bring one in
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/secret-heroes`, `/home/user/lotf-secret` (from main 0.289.0).
+- **Goal:** the owner's "Let's keep the heroes that are gained from specific unlock scenarios a secret. Also, let's add some quests in which a hero comes from": the ten heroes earned in play are a dark figure, "???" and a vague hint in every list until they join; three tales in the tavern (two or three parts, a quest battle each) bring in the Werewolf, the Dread Pirate and the Juggernaut, moved off their milestones.
+- **Scope:** new `src/sim/secretHeroes.ts`, `src/sim/rewardWords.ts`, `src/sim/questData/tales.ts`, `src/sim/taleBattleData.ts`, `src/secretView.ts`, `src/secret.css`, `src/art/quests/{shepherd,gaoler,smith}-face.png`, `tools/hero-quests/cut.py`, `tools/secret-heroes/shots.mjs`, `test/secret-heroes.test.ts`; hooks in `contentHeroes.ts`, `questData.ts`, `quests.ts`, `questBattles.ts`, `run.ts`, `guest.ts`, `climb.ts`, `sceneScripts.ts`, `questData/battles.ts` (one line), `menuHeroes.ts`, `party.ts`, `gacha.ts`, `codexView.ts`, `questCard.ts`, `questLog.ts`, `questArt.ts`, `home.ts`, `main.ts`, `build.mjs`, `tools/quest-battles/rate.ts`; tests moved to the rule (listed in the note).
+- **Status:** ready for review. [Note](notes/secret-heroes.md); screenshots `samples/secret-*.png`, `samples/hero-quest-*.png`.
+
+### SANCTUM-TIDY — The Summoner's plaque gone once Askel is bound; the shop and Pact Gallery as small corner buttons
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/sanctum-tidy`, `/home/user/lotf-sanctum` (from main 0.289.0).
+- **Goal:** the owner's "I already bound the Cinderhound but the message is still on the summon screen" (the plaque and the Pact Gallery's button had `display: flex` and no `[hidden]` rule, so the plaque stayed showing its last words after the binding and an empty bar after a reload) and "the shop and Pact Gallery should be small buttons at the top left" (a corner of two small labelled icon buttons, the plaque one short row, the shards' scroll folded to one row; the lower panel 153px tall at 393x852, about 310 before).
+- **Scope:** `src/hall.ts`, `src/eidolonChains.css`, `src/sim/eidolonChains.ts` (`hallPlaque`, moved from `src/eidolonChainView.ts`); `test/hall-plaque.test.ts`, `tools/sanctum-tidy/`.
+- **Status:** ready for review. [Note](notes/sanctum-tidy.md); screenshots `samples/sanctum-*.png`.
+
+### XP-SPLIT — Each kill's XP split: the killer keeps half, the rest shared by every hero that fought
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/xp-split`, `/home/user/lotf-xpsplit` (from main 0.289.0).
+- **Goal:** the owner's "The heroes in a fight should get more of an XP split, with the killing hero still getting more": `KILL_KEEP` (0.5) of a kill to the killer, the rest shared evenly by every fighter (fallen and guest too, not summons); a fight's total XP unchanged.
+- **Scope:** `src/sim/levels.ts` (`KILL_KEEP`, `killShares`, `fightXp`), `src/sim/climb.ts` (`fightXpByHero`: the spire and the Calamity, the owner's yes); new `test/xp-split.test.ts`, `tools/xp-split/`; `docs/notes/levels.md`.
+- **Status:** ready for review. [Note](notes/xp-split.md) (before/after and the pace).
+
 ### STATS-1 — The six ability scores as data (D&D stats design, batch 1)
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/stats-1`, `/home/user/lotf-stats1` (from main 0.289.0).
@@ -72,12 +105,25 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "make the battle zones for Calamity much more interesting, more varied, with objects and moving parts. Make it feel alive and real."
 - **Scope:** new `src/sim/calZones.ts` (six zones: nave, crystal chasm, crypt rows, broken bridge, ritual circle, flooded vault), `src/sim/layoutKit.ts` (the template tools, moved out of `layouts.ts` unchanged), `src/render/zoneLife.ts`, `src/art/calzones/`, `test/calamity-zones.test.ts`, `tools/calamity/zone-shots.mjs`; hooks in `layouts.ts` (zone templates), `board.ts` (`Tile.chasm`, `Board.props`), `sanctuary.ts` (`destinationBoard` lays a zone), `tower.ts` (passes the act), `boardView.ts` (props, chasms, the air), `main.ts` (one line: fade tall things over fighters). No save or version change.
 - **Status:** ready for review. [Note](notes/calamity-zones.md); screenshots `samples/calzones-*.png`.
+### SKILLS-1 — The skills overhaul, batches 0 to 3: the measure, the rules as data, cooldowns by class, ranks without skills
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/skills-1`, `/home/user/lotf-skills1` (from main 0.284.0).
+- **Goal:** the owner-approved skills overhaul ([design](notes/skills-overhaul-design.md)), its build plan's batches 0, 1 and 2: main measured; every skill given a class and a cooldown of its own, kits in slots, the AI for any number of slots (no fight changed); then skills 1 and 2 costed and cooled by class, the breath between casts, the general saving rule, and the roster re-tuned into the band at levels 1, 10 and 30; then (batch 3, shipped with 2) ranks give health and attack only: the tier skills and the tier 3 discount gone, `GRADE_BOOST`, `CAL_TIER`, the spire's act step and the daily's start re-tuned to main's numbers.
+- **Scope:** new `src/sim/skillRules.ts`, `test/skill-rules.test.ts`, `tools/skills/measure.ts` (+ `.mjs`); `src/sim/heroKits.ts` (`Slot.cls`, `Slot.cd`, `HeroKit.slots`, `castHero`, `RES`), `src/sim/kits/table.ts` (`CLASSES`, `COSTS`, `TUNE1`, `TUNE2`), `src/sim/ultimates.ts` (`TUNE` powers at level 30), `src/fightHudRules.ts` (`gapOf`), `tools/kits/` (table, tune's cap); batch 3: `src/sim/tierSkills.ts` and `tools/rank4/` removed, `run.ts` (`GRADE_BOOST`), `calamity.ts` (`CAL_TIER`), `tower.ts` (`SPIRE_ACT_STEP`), `daily.ts` (`DAILY_START`), `fx.ts`, `menuHeroes.ts`, `codexView.ts`, `tools/balance.ts`, `test/grade-stats.test.ts` (replaces `tier-skills.test.ts`); tests moved to the new rules and the two identity fixtures re-recorded (listed in the note).
+- **Status:** ready for review (batches 2 and 3 ship together); batches 4 on not started. [Note](notes/skills-1.md).
+
 ### ONE-OF-EACH — One unit of a hero on the battlefield at a time
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).
 - **Goal:** the owner's "we should only allow one unit of a hero on the battlefield at a time": a second hero of a kind is refused on the field and in the squad (copies wait on the bench to merge), a bench copy swaps in on its twin's tile, the bench marks a copy "On field", the greedy player and auto-place pick one of each, old saves send the extra copy back to the bench.
 - **Scope:** `placeBlock`/`twinOf` in `src/sim/battle.ts`; `squadTwin`/`canJoin` in `src/sim/run.ts` (and its callers in `climb.ts`, `mystery.ts`, `tower.ts`); `pickSquad`/`autoDeploy`/`oneOfEach` in `src/sim/autoplay.ts`; new `src/sim/oneEach.ts`, `src/oneEachNote.ts`, `src/oneEach.css`; hooks in `src/main.ts`, `src/render/boardView.ts`, `build.mjs`; new `tools/one-of-each/`, `test/one-of-each.test.ts`; fixtures moved to the rule (listed in the note).
 - **Status:** ready for review; the owner's three answers done (new saves left hard; the daily and Mythic retuned; the mirror's clone stands in for its original). [Note](notes/one-of-each.md); screenshots `samples/one-of-each-*.png`.
+### EIDOLON-CALL-2 — The Eidolon crosses the screen, then its sprite performs the attack from a source you saw
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-call-2`, `/home/user/lotf-eidcall` (from main 0.289.0).
+- **Goal:** the owner's "have the summon's image come on screen and move across in a way that represents who they are. Then it moves off screen and its attack happens, so the attack isn't blocked ... where does the fire come from?", and "a sprite version of the summons that actually perform the attack": each Eidolon's painting crosses in its own way and leaves, then its sprite comes onto the board and its attack runs from its breath, its trail, the sky or the edge, landing with the sim's strike. Page only; the strike's rules unchanged.
+- **Scope:** `src/eidolonPass.ts` (new), `src/eidolonRules.ts`, `src/eidolonCall.ts`, `src/eidolons.css`, `src/art/eidolons/sprites/`, `art-source/eidolons/gemini/`, `CREDITS.md`; `test/eidolon-pass.test.ts` (new), `test/eidolon-moment.test.ts`; `tools/eidolon-call-2/`.
+- **Status:** ready for review. [Note](notes/eidolon-call-2.md); screenshots `samples/eidolon-call2-*.png`. Voltara has no sprite (effect-only): prompts for generated art in the note.
 ### HORN-GIFT — The War Horn given at the first binding
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/horn-gift`, `/home/user/lotf-horngift` (from main 0.277.0, with `claude/cinematic-reveal-vault` merged).
@@ -166,6 +212,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Goal:** the owner's "click and hold on a unit in between waves to get a run-down on skills and stats": a press-and-hold (400 ms, a ring under the finger; a move lets it go as a drag) on any unit on the board, a bench card or a Last Stand tray card, in a deploy or a Stand break, opens a read-only card of its stats, traits, equipment, skills (locked ones marked), a boss's second form and a foe's tips.
 - **Scope:** new `src/unitInfoRules.ts`, `src/unitInfo.ts`, `src/unitInfo.css`, `test/unit-info.test.ts`, `tools/unit-info/`; small hooks in `src/main.ts`, `src/standView.ts`, `build.mjs` (the CSS).
 - **Status:** ready for review. [Note](notes/unit-info.md); screenshots `samples/unit-info-*.png`.
+
+### EIDOLON-TRIAL — Nivra's trial, and the trials as data for chains 3 to 6
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/eidolon-chain-2` (Nivra's chain, main 0.293.0 merged in).
+- **Goal:** the owner's call that chains 2 to 6 end with a trial against the Eidolon before the binding: after Nivra's three pieces, Part 4 "The Trial", Nivra herself the boss (her Gemini sheet cut into a fighter's), frost breath down a row, a ring of ice, frost wolves, ice armour at half health; lines before and after; a win leads straight to the binding, a loss waits in the log; about 40 to 50% where it opens; one `TrialDef` a chain so chains 3 to 6 add theirs as data.
+- **Scope:** new `src/sim/eidolonTrials.ts`, `src/art/units/eidolon_nivra.png`, `art-source/eidolons/gemini/nivra-sheet.jpg`, `tools/eidolon-trial/`, `test/eidolon-trial.test.ts`; hooks in `src/sim/eidolonChains.ts`, `eidolonChainData.ts`, `chainBattleData.ts`, `questBattles.ts` (`bossLift`), `foes.ts`, `abilities.ts`, `bossAttacks.ts` (the `row` shape), `bossPhases.ts`, `sceneFamilies.ts`, `codex.ts`, `codexLore.ts`; `src/eidolonChainView.ts`, `src/home.ts`, `src/main.ts`, `src/render/sheets.ts`, `src/art/units/sheets.json`, `CREDITS.md`; two checks in `test/eidolon-chain-2.test.ts` updated.
+- **Status:** ready for review. [Note](notes/eidolon-chain-2.md) ("The trial"); screenshots `samples/eidolon-trial-*.png`.
 
 ### EIDOLON-CHAINS — Quests batch 5: Askel's chain, end to end
 

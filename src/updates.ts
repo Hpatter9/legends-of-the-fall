@@ -27,6 +27,72 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.304.0',
+    date: '2026-10-31',
+    title: 'Skills with cooldowns; ranks give stats',
+    notes: ['Every skill now has a cost and a cooldown by its type, so heroes cast more often. Ranking up gives more health and attack instead of upgraded skills.'],
+  },
+  {
+    version: '0.303.0',
+    date: '2026-10-31',
+    title: 'The Eidolons\' calls, redone',
+    notes: ['Each Eidolon crosses the screen its own way, then its sprite strikes with its own attack: wildfire, frost, falling light, chain lightning, a quake, shadow fire.'],
+  },
+  {
+    version: '0.302.0',
+    date: '2026-10-31',
+    title: 'Relics become the keep\'s lost artefacts',
+    notes: ['30 relics in six Chapters of the keep\'s history plus six Storied ones, each with lore and its own rule: prices, conditions, powers that grow. Old runs convert.'],
+  },
+  {
+    version: '0.301.0',
+    date: '2026-10-31',
+    title: 'Armies retuned for Auto spells',
+    notes: ['Now that Auto casts your spells, the armies, the daily, the Last Stand and the Calamity are retuned to match. The late three armies are harder again.'],
+  },
+  {
+    version: '0.300.0',
+    date: '2026-10-31',
+    title: 'Clearer marks, one unlock card, auto talents',
+    notes: ['Skill and boss marks sit under the heroes. Each unlock is told once. Auto spends a hero\'s talent points, or everyone\'s from the Upgrades list.'],
+  },
+  {
+    version: '0.299.0',
+    date: '2026-10-31',
+    title: 'One battle theme, and a boss theme',
+    notes: ['Every fight now plays one strong battle track, and a heavier boss track takes over when a boss arrives. All music is levelled to the same loudness.'],
+  },
+  {
+    version: '0.298.0',
+    date: '2026-10-31',
+    title: 'Eidolon quest: What Sleeps Under the Mere',
+    notes: ['Once Askel is bound and the Beast Packs fall, a frost-bitten hunter brings Nivra\'s tale: three pieces, then a trial against Nivra herself.'],
+  },
+  {
+    version: '0.297.0',
+    date: '2026-10-31',
+    title: 'The Last Stand\'s tower',
+    notes: ['The Last Stand now opens from the tower on the overlook\'s left, with its record and a short entry. A lost run\'s message no longer covers the Daily.'],
+  },
+  {
+    version: '0.296.0',
+    date: '2026-10-31',
+    title: 'Secret heroes and ten tavern tales',
+    notes: ['The ten heroes earned in play are secret until they join. Each now comes from its own tale in the tavern, told by a giver and ending in a hard battle.'],
+  },
+  {
+    version: '0.295.0',
+    date: '2026-10-31',
+    title: 'A clearer summoning room',
+    notes: ['Shop and Pacts are small corner buttons, the Summoner\'s line is one short row and the shards panel folds, so the room shows. No leftover Askel message.'],
+  },
+  {
+    version: '0.294.0',
+    date: '2026-10-31',
+    title: 'Kill XP is shared with the party',
+    notes: ['The hero who lands a kill keeps half its XP; the rest is shared by everyone who fought, so weaker heroes level up faster beside a strong one.'],
+  },
+  {
     version: '0.293.0',
     date: '2026-10-31',
     title: 'D&D ability scores, behind the scenes',

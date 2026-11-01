@@ -246,18 +246,16 @@ body .sbSlot { min-height: 44px; }
 .armyCrowns { display: inline-flex; align-items: center; gap: 2px; font-weight: bold; color: var(--ink); }
 .armyCrowns img { width: 16px; height: 16px; }
 .armyNew { position: absolute; top: -6px; right: -4px; padding: 1px 6px; font: bold 11px var(--display); font-style: normal; color: var(--btn-ink); background: var(--gold-hi); box-shadow: 0 2px 0 var(--black); }
-/* the unlock moment */
+/* the unlock ribbon: a film's end card (revealCard.ts) */
 .unlock { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; text-align: center; background: rgb(var(--s0-rgb) / 0.88); animation: pxUnlockIn 0.5s steps(5) both; }
 @keyframes pxUnlockIn { from { opacity: 0; } to { opacity: 1; } }
-.unlockDown { font-size: 13px; color: var(--dim); text-shadow: var(--outline); }
 .unlockRib { display: flex; align-items: center; justify-content: center; min-height: 64px; padding: 0 8px; border-style: solid; border-width: 0 48px; border-image: url(ui/ribbon.png) 0 12 fill / 0 48px stretch; image-rendering: pixelated; animation: pxUnlockSlam 0.6s steps(6) 0.25s both; }
 .unlockRib b { font: bold clamp(20px, calc(6.4 * var(--vw)), 28px) var(--display); color: var(--gold-hi); text-shadow: 0 2px 0 var(--s2); white-space: nowrap; }
 @keyframes pxUnlockSlam { from { transform: translateY(-120px); opacity: 0; } 70% { transform: translateY(6px); opacity: 1; } to { transform: none; } }
-.unlockFace { width: min(144px, calc(40 * var(--vw))); height: min(144px, calc(40 * var(--vw))); image-rendering: pixelated; border: 4px solid var(--gold-hi); background: radial-gradient(var(--s6), var(--s1)); animation: pxArmyGlow 1.4s steps(1) 0.8s infinite; }
 .unlockName { font: bold 22px var(--display); color: var(--gold-hi); text-shadow: var(--outline); }
 .unlockLine { max-width: 320px; font-size: 13px; color: var(--ink); text-shadow: var(--outline); }
 .unlock button { min-width: 200px; }
-@media (prefers-reduced-motion: reduce) { .unlockFace, .unlockRib, .unlock { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .unlockRib, .unlock { animation: none; } }
 
 /* (the game is played upright only: a phone held sideways is asked to turn back; a desktop window of any shape plays on) */
 #turnUp { display: none; }

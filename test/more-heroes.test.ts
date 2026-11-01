@@ -209,11 +209,12 @@ test('Call of the Wild brings two dire wolves, no more, that fight for the Beast
   const wolves = () => b.units.filter((x) => x.alive && x.def === 'wolf');
   assert.equal(wolves().length, 1);
   assert.equal(wolves()[0].owner, me.id);
-  // (a skill keeps a gap before it goes again, 9 s for Call of the Wild (COMBAT-002): the gap is taken as passed each time)
+  // (a skill keeps a gap before it goes again, 9 s for Call of the Wild (COMBAT-002; 18 s, a utility's, since the skills overhaul): the gap is
+  // taken as passed each time; the run is long enough for the cast and the breath after it, `RES.BREATH_MS`, which the overhaul's batch 2 added)
   const again = () => {
     me.charge = CHARGE_MAX;
     if (me.ks) me.ks.at1 = -1e9;
-    run(b, 1500);
+    run(b, 2500);
   };
   again();
   assert.equal(wolves().length, 2);

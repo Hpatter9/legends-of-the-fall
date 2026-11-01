@@ -6,65 +6,68 @@
 import { HORN_FULL } from './sim/warHorn';
 import type { EidolonElement } from './sim/eidolons';
 
-/** The beats of the call, ms from the tap. The fight is held from the tap; the sim's strike is let through on the first attack beat, so the
- *  foes fall under the blow; the fight runs again at `RESUME`. */
+/** The beats of the call, ms from the tap (EIDOLON-CALL-2: the arrival from a rift became the pass across the screen, and the strike waits
+ *  for the figure to have gone). The fight is held from the tap; the sim's strike is let through on the first attack beat, so the foes fall
+ *  under the blow; the fight runs again at `RESUME`. */
 export interface MomentTimes {
   /** The horn swings up and is blown; the board dims. */
   HORN: number;
-  /** The summoning circle draws itself across the board. */
-  CIRCLE: number;
-  /** The sky tears; the figure rises; the letterbox bars slide in. */
-  ARRIVE: number;
-  /** The name and title stamp in, then the attack's name. */
-  NAME: number;
-  /** A cut to the close-up on its face (its painted card), as it speaks its line (the short one has none: `CLOSE` equals `STRIKE`). */
-  CLOSE: number;
+  /** The Eidolon's painting comes on at one side and crosses the screen in its own way (`eidolonPass.ts`), its name stamped above it. */
+  PASS: number;
+  /** It has left the screen: nothing covers the board from here. */
+  EXIT: number;
+  /** The owner's addition: its sprite comes onto the board from where it left (walking, running or flying in) to stand before the foes. */
+  SPRITE: number;
+  /** The sprite begins its attack, the source of its attack flares (the sprite's breath or blow, the trail it left, the sky, the edge)
+   *  and the element runs from there to each foe; the sprite's blow lands on the strike. With no sprite the build-up begins at `SPRITE`. */
+  BUILD: number;
   /** The attack's beats begin (one every `BEAT`); the first lets the strike through. */
   STRIKE: number;
   BEAT: number;
-  /** The figure fades up and out; the element's wash lies over the board. */
+  /** The aftermath: the scorched or frosted ground, the drifting embers, steam or dust; the dim lifts. */
   AFTER: number;
-  /** The dim lifts, the bars go, the fight runs again. */
+  /** The fight runs again. */
   RESUME: number;
   /** The freeze on the first blow (real ms), and the shake as it lets go (0 to 1). */
   HIT_STOP: number;
   SHAKE: number;
-  /** The dim's strength (the ultimate's is lighter). */
+  /** The dim's strength while the horn sounds (lighter as it passes, so the board shows under it). */
   DIM: number;
   /** Letterbox bars. */
   BARS: boolean;
 }
 
-export const FULL: MomentTimes = { HORN: 0, CIRCLE: 350, ARRIVE: 800, NAME: 1500, CLOSE: 2100, STRIKE: 2800, BEAT: 300, AFTER: 4000, RESUME: 4800, HIT_STOP: 250, SHAKE: 1, DIM: 0.9, BARS: true };
-/** The short one (the setting off, after the first call): the circle, the figure, the strike, no letterbox; about two seconds. */
-export const SHORT: MomentTimes = { HORN: 0, CIRCLE: 0, ARRIVE: 250, NAME: 500, CLOSE: 900, STRIKE: 900, BEAT: 220, AFTER: 1500, RESUME: 1950, HIT_STOP: 160, SHAKE: 0.75, DIM: 0.75, BARS: false };
+/** In full: about four seconds. */
+export const FULL: MomentTimes = { HORN: 0, PASS: 380, EXIT: 1720, SPRITE: 1720, BUILD: 2250, STRIKE: 2720, BEAT: 240, AFTER: 3450, RESUME: 3950, HIT_STOP: 250, SHAKE: 1, DIM: 0.8, BARS: true };
+/** The short one (the setting off, after the first call): a quicker pass, no horn shot or letterbox; about two seconds. */
+export const SHORT: MomentTimes = { HORN: 0, PASS: 0, EXIT: 850, SPRITE: 850, BUILD: 1150, STRIKE: 1450, BEAT: 220, AFTER: 1800, RESUME: 2200, HIT_STOP: 160, SHAKE: 0.75, DIM: 0.65, BARS: false };
+/** When the build-up begins: with a sprite, as it attacks; without one, as soon as the painting has gone. */
+export const buildAt = (m: MomentTimes, sprite: boolean): number => (sprite ? m.BUILD : m.SPRITE);
 
 /**
- * The shots (the owner's ask: "more epic and movie-like: different camera angles, close-ups, lines"). The cinematic cuts between them rather
- * than holding one frame; each is a framing of the board's picture (a scale about a point: the page's canvas under the cinematic) and of the
- * figure. Kept as plain data so a general shot layer can take them over later.
- *   horn: as the fight was · circle: a slow push in on the board's middle · arrive: a low angle, the figure towering as it rises ·
- *   name: the figure framed whole · close: a cut to its face (its card), pushing in on the eyes as it speaks · strike: a cut to a wide shot of
- *   the field, a snap zoom on each blow · after: easing back.
+ * The shots: horn (the horn blown, as the fight was) · pass (the figure crossing, the board under it) · sprite (its sprite comes onto the
+ * board, a slow push in) · build (it has gone; the source flares
+ * and the element runs to the foes, a slow push in) · strike (the blows, a snap zoom on the first) · after (easing back over the aftermath).
+ * Kept as plain data so a general shot layer can take them over later.
  */
-export type Shot = 'horn' | 'circle' | 'arrive' | 'name' | 'close' | 'strike' | 'after' | 'resume';
-export const SHOTS: readonly Shot[] = ['horn', 'circle', 'arrive', 'name', 'close', 'strike', 'after', 'resume'];
+export type Shot = 'horn' | 'pass' | 'sprite' | 'build' | 'strike' | 'after' | 'resume';
+export const SHOTS: readonly Shot[] = ['horn', 'pass', 'sprite', 'build', 'strike', 'after', 'resume'];
 /** The shot playing `ms` into a cinematic. */
 export function shotAt(m: MomentTimes, ms: number): Shot {
   if (ms >= m.RESUME) return 'resume';
   if (ms >= m.AFTER) return 'after';
   if (ms >= m.STRIKE) return 'strike';
-  if (ms >= m.CLOSE) return 'close';
-  if (ms >= m.NAME) return 'name';
-  if (ms >= m.ARRIVE) return 'arrive';
-  if (ms >= m.CIRCLE) return 'circle';
+  if (ms >= m.BUILD) return 'build';
+  if (ms >= m.SPRITE) return 'sprite';
+  if (ms >= m.PASS) return 'pass';
   return 'horn';
 }
-/** The board's framing in each shot (a scale of the board's picture), and a snap zoom's on a blow. */
-export const BOARD_ZOOM: Readonly<Record<Shot, number>> = { horn: 1, circle: 1.08, arrive: 1.12, name: 1.05, close: 1.05, strike: 0.88, after: 0.96, resume: 1 };
-export const SNAP_ZOOM = 1.32;
+/** The board's framing in each shot (a scale of the board's picture), and a snap zoom's on a blow. The trail and the runs are drawn on a
+ *  layer framed the same way, so they stay on their tiles. */
+export const BOARD_ZOOM: Readonly<Record<Shot, number>> = { horn: 1, pass: 1, sprite: 1.04, build: 1.07, strike: 1, after: 1, resume: 1 };
+export const SNAP_ZOOM = 1.22;
 export const SNAP_MS = 110;
-/** Where each Eidolon's eyes are in its card (shares of its width and height): the close-up pushes in there. */
+/** Where each Eidolon's eyes are in its card (shares of its width and height): its portrait beside its line is centred there. */
 export const EYES: Readonly<Record<string, readonly [number, number]>> = {
   askel: [0.6, 0.38],
   nivra: [0.45, 0.32],
@@ -74,7 +77,7 @@ export const EYES: Readonly<Record<string, readonly [number, number]>> = {
   vaelkhar: [0.5, 0.42],
 };
 
-/** The line an Eidolon speaks in its close-up: its first words the first time, then one of its others in turn (by how often the horn has
+/** The line an Eidolon speaks as it passes: its first words the first time, then one of its others in turn (by how often the horn has
  *  been blown). */
 export function lineOf(e: { line: string; lines: readonly string[] }, first: boolean, calls: number): string {
   return first || !e.lines.length ? e.line : e.lines[calls % e.lines.length];
@@ -91,14 +94,19 @@ export const REACTIONS: Readonly<Record<EidolonElement, readonly string[]>> = {
 };
 export const reactionOf = (el: EidolonElement, calls: number): string => REACTIONS[el][calls % REACTIONS[el].length];
 
-/** A tap skips the cinematic once this much has played (never on an Eidolon's first call). */
-export const SKIP_AFTER_MS = 1000;
+/** A tap skips once this much has played (never on an Eidolon's first call). */
+export const SKIP_AFTER_MS = 600;
 
 /** Which cinematic plays: the first call of each Eidolon always in full; after that the setting says. */
 export const momentOf = (firstCall: boolean, fullSetting: boolean): MomentTimes => (firstCall || fullSetting ? FULL : SHORT);
 
 /** Whether a tap may skip now. */
 export const canSkip = (ms: number, firstCall: boolean): boolean => !firstCall && ms >= SKIP_AFTER_MS;
+
+/** A tap skips to the strike: the pass is cut, the source flares for a moment and the strike lands (never later than it would have). */
+export const SKIP_BUILD_MS = 250;
+export const skipTarget = (m: MomentTimes, ms: number): number => Math.max(ms, m.EXIT, m.STRIKE - SKIP_BUILD_MS);
+// (with a sprite, a skip lands it already standing, mid-attack: the page places it by the clock, so nothing more is needed)
 
 /** How many of the attack's beats play (the short one plays two), and their times. */
 export function beatTimes(m: MomentTimes, beats: number): number[] {
@@ -124,22 +132,22 @@ export const LOOKS: Readonly<Record<EidolonElement, EidolonLook>> = {
 };
 
 /** Where each beat of the attack lands on the board, as a share of its width and depth from the foes' edge (0, 0) to the heroes' (1, 1):
- *  the beat's spots, drawn as the element's huge bursts. Each Eidolon's choreography in brief: a ring run round the field, a burst up the
- *  middle, a crescent rolling across, a lattice, pillars under the foes, a torrent sweeping the field. `foes` means on each foe struck. */
+ *  the beat's spots, drawn as the element's huge bursts. `foes` means on each foe struck. EIDOLON-CALL-2: the first beat is always the one on
+ *  the foes (the strike lands where the element has just run to); the others are its aftershocks. */
 export type BeatSpots = readonly (readonly [number, number])[] | 'foes';
 export const CHOREO: Readonly<Record<string, readonly BeatSpots[]>> = {
-  // the howl, the ring of fire run round the field, the ring erupting inward, embers raining
-  askel: [[[0.5, 0.15]], [[0.1, 0.1], [0.9, 0.1], [0.1, 0.5], [0.9, 0.5]], 'foes', [[0.3, 0.25], [0.7, 0.3]]],
-  // frost cracking, the wyrm bursting up mid-field, the ring of breath, the ice shattering
-  nivra: [[[0.5, 0.3]], [[0.5, 0.25]], 'foes', [[0.2, 0.2], [0.8, 0.2], [0.5, 0.45]]],
-  // a pillar of sunlight, the leap down, the crescent of light rolling across, sunrise
-  aurelan: [[[0.5, 0.2]], [[0.5, 0.3]], 'foes', [[0.2, 0.35], [0.5, 0.4], [0.8, 0.35]]],
-  // the coils spinning up, the lattice of lightning, one colossal bolt mid-field, static
-  voltara: [[[0.25, 0.2], [0.75, 0.2]], 'foes', [[0.5, 0.3]], [[0.3, 0.15], [0.7, 0.4]]],
-  // built from stone, the hammer slamming, pillars bursting up under the foes, rubble raining
-  gorm: [[[0.5, 0.35]], [[0.5, 0.2]], 'foes', [[0.2, 0.3], [0.8, 0.3]]],
-  // the sun going dark, the descent, the torrent of black fire, the void collapsing
-  vaelkhar: [[[0.5, 0.15]], [[0.15, 0.25], [0.5, 0.25], [0.85, 0.25]], 'foes', [[0.5, 0.3]]],
+  // the wall of fire round each foe bursts, the blaze rolls outward, embers rain
+  askel: ['foes', [[0.15, 0.15], [0.85, 0.15], [0.5, 0.4]], [[0.3, 0.25], [0.7, 0.3]]],
+  // the spears of ice under the foes, the frost bursting up mid-field, the ice shattering
+  nivra: ['foes', [[0.5, 0.25]], [[0.2, 0.2], [0.8, 0.2], [0.5, 0.45]]],
+  // the lances of light, the sunrise rolling across
+  aurelan: ['foes', [[0.2, 0.3], [0.5, 0.35], [0.8, 0.3]], [[0.5, 0.15]]],
+  // the bolts on the foes, one colossal bolt mid-field, static crackling off
+  voltara: ['foes', [[0.5, 0.3]], [[0.3, 0.15], [0.7, 0.4]]],
+  // the stone bursting up under the foes, the ground heaving, rubble raining
+  gorm: ['foes', [[0.5, 0.3]], [[0.2, 0.3], [0.8, 0.3]]],
+  // the torrent over the foes, the void collapsing behind it
+  vaelkhar: ['foes', [[0.15, 0.25], [0.5, 0.25], [0.85, 0.25]], [[0.5, 0.3]]],
 };
 
 /** The horn's look for a fill: the share revealed from mouthpiece to bell (0 to 1), whether it is full, and how strong the code glow along

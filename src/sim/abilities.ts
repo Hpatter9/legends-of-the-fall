@@ -13,7 +13,6 @@ import { Rng } from './rng';
 import { ALL_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { heroUltimates } from './ultimates';
-import { runRiders } from './tierSkills';
 import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
@@ -27,6 +26,8 @@ import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
 import { renewable, timeSummon, TIMER } from './carry';
+import { relicCharge, relicDodge, relicTaken } from './relicFight';
+import { TRIALS, type TrialSummon } from './eidolonTrials';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -734,6 +735,32 @@ function raiseDead(b: Battle, me: Unit): boolean {
     me.raised = (me.raised ?? 0) + 1;
   }
   return true;
+}
+
+/** EIDOLON-TRIAL: an Eidolon in its trial calls fighters of a kind to its side (`eidolonTrials.ts` `TrialSummon`): `n` a cast on the free
+ *  tiles nearest it (a fixed order), while fewer than `most` of them stand and until it has called `limit` in the fight. */
+function callPack(spec: TrialSummon): Skill['cast'] {
+  return (b, me) => {
+    const standing = b.units.filter((x) => x.alive && x.side === me.side && x.def === spec.kind && x.owner === me.id).length;
+    const room = Math.min(spec.n, spec.most - standing, spec.limit - (me.raised ?? 0));
+    if (room <= 0) return false;
+    const jump = defOf(me).jump;
+    const h = tileOf(b, me).h;
+    const spots: At[] = [];
+    for (let dv = -2; dv <= 2; dv++)
+      for (let du = -2; du <= 2; du++) {
+        const at = { u: me.u + du, v: me.v + dv };
+        const t = tileAt(b.board, at.u, at.v);
+        if (apart(me, at) >= 1 && t && standable(t) && !unitAt(b, at.u, at.v) && Math.abs(t.h - h) <= jump) spots.push(at);
+      }
+    if (!spots.length) return false;
+    spots.sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
+    for (const at of spots.slice(0, room)) {
+      addUnit(b, spec.kind, at.u, at.v, { hp: b.foeBoost?.hp, atk: b.foeBoost?.atk }).owner = me.id;
+      me.raised = (me.raised ?? 0) + 1;
+    }
+    return true;
+  };
 }
 
 /** Lich King's ultimate, Soul Nova: a ring of cold soul fire hurts every foe within four tiles and freezes it where it stands. */
@@ -1590,6 +1617,12 @@ for (const [kind, ult] of Object.entries(heroUltimates((kind) => KITS[kind].ulti
 
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
 Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
+// (EIDOLON-TRIAL: each Eidolon in its trial: its summoning and its passive, `eidolonTrials.ts`. Its summoning wears the Beastmaster's
+// Call of the Wild (its key: its painting, look and sound), under its own name)
+for (const t of TRIALS) {
+  const k = t.kit.skill;
+  KITS[t.boss.id] = { skill: { name: k.name, key: 'Call of the Wild', text: k.text, need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: callPack(k) }, passive: t.kit.passive };
+}
 // (a foe that shares one of the first eight's kits, such as the elites Sethra and Kuro, keeps the ultimate as it was: only the hero's copy waits for its level)
 for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ultimate) && OWN_ULTIMATES.get(name) !== GATED.get(k.ultimate)) KITS[name] = { ...k, ultimate: GATED.get(k.ultimate) };
 
@@ -1687,13 +1720,11 @@ export function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[], slot: '
   me.busyUntil = b.t + s.castMs;
   out.push({ kind: 'skill', by: me.id, name: keyOf(s), ms: s.castMs });
   if (slot === 'ult') triggerDuoComboOnUlt(b, me, out);
-  // (a hero merged up adds its tier skill's riders to the ordinary skill; the ultimate is the same at every grade)
-  if (me.grade && s === kitOf(me)?.skill)
-    runRiders(b, me, out, (ms, share) => b.pending.push({ at: b.t + ms, kind: 'echo', by: me.id, to: me.id, dmg: share, heavy: false }));
   return true;
 }
 
-/** A tier skill's echo: the hero's skill goes off again at `share` of its strength (nothing happens if it has nothing to hit, or the hero has fallen). It is not a cast: no charge, no busy time, and no riders of its own. */
+/** A tier skill's echo: the hero's skill goes off again at `share` of its strength (nothing happens if it has nothing to hit, or the hero has fallen). It is not a cast: no charge, no busy time, and no riders of its own.
+ *  (The tier skills went with the skills overhaul's batch 3, so nothing schedules an echo now; it stays for a battle saved with one pending.) */
 export function echoSkill(b: Battle, me: Unit, share: number, out: BattleEvent[]): void {
   const s = kitOf(me)?.skill;
   if (!s || !me.alive) return;
@@ -1750,7 +1781,7 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const blow = src === 'blow';
   const kit = kitOf(to);
   const team = to.side === 'hero' ? b.traits : undefined;
-  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0);
+  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0) + relicDodge(b, to);
   if (blow && dodge && roll(b) < dodge) {
     out.push({ kind: 'dodge', to: to.id });
     if (b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) {
@@ -1783,6 +1814,8 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (to.brittleUntil !== undefined && to.brittleUntil > b.t) dmg *= BRITTLE_MULT;
   if (team?.guard) dmg *= 1 - team.guard;
+  // (RELICS-2: the Scorched Scale against a boss, the Warden's Medal on the last one standing)
+  if (team && b.relics?.hooks) dmg *= relicTaken(b, to, by);
   if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {
     if (blow && !splash) {
@@ -1886,7 +1919,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     if (!u.alive) continue;
     const k = kitOf(u);
     if (poolOf(u)) tickPool(b, u, 100);
-    else if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
+    else if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) * relicCharge(b, u) : 1));
     if (u.form && b.t >= u.form.until) {
       u.power = (u.power ?? 1) / FORM_MULT;
       u.form = undefined;

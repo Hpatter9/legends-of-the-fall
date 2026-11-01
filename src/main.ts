@@ -25,8 +25,8 @@ import { noteSpoils } from './sim/runSpoils';
 import { showRecap } from './recapView';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
-import { ARMIES, armyById, armyXpShare, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
-import { drawRunStars, showUnlock } from './armiesView';
+import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
+import { drawRunStars } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
@@ -46,7 +46,10 @@ import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { direct } from './sim/cineDirector';
 import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
-import { revealOf, type RevealGo } from './sim/sceneReveal';
+import { revealCard, revealOf, type RevealGo } from './sim/sceneReveal';
+import type { Reveal } from './sim/sceneKit';
+import { ascOpenedBy, tellsByCard, unlockOfReveal } from './sim/unlockTell';
+import { ascOf } from './sim/ascension';
 import { showEndCard } from './revealCard';
 import { ACT_HALLS, ACT_NUMERALS, ROOM_NAMES } from './sim/standActs';
 import { roomLine } from './standRetreatLines';
@@ -85,12 +88,13 @@ import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastJoined, toastLines, toastSpells, toastStones } from './achievementsView';
+import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
 import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
 import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
+import { secretsOf } from './sim/secretHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
@@ -150,7 +154,8 @@ import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
 import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
-import { chainOfBattle, type PieceFound } from './sim/eidolonChains';
+import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
+import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, hornGain, HORN_FULL } from './sim/warHorn';
@@ -316,6 +321,9 @@ class Game {
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
     this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
+    // (FIXES-4: the effects lay their tile marks on the tiles' own ground, under the fighters)
+    this.fx.groundAt = (u, v) => this.boardView.groundAt(u, v);
+    this.fx.groundRow = (d) => this.boardView.groundRow(d);
     this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.boardView.renderer = this.app.renderer;
@@ -660,7 +668,10 @@ class Game {
   /** Queue the cinematic due at a moment, if there is one: they play one after another, and the returned promise is done when this one is. */
   private queueScene(moment: Moment, party?: readonly string[]): Promise<void> {
     const players = party ? { ...this.players(), party: [...party] } : undefined;
-    if (!this.scenesOn() || !dueScene(this.meta, moment)) return this.sceneChain;
+    const id = dueScene(this.meta, moment);
+    if (!id || this.auto) return this.sceneChain;
+    // (UNLOCK-ONCE: with cinematics off, a film that opened something still has its end card, alone: it is the one thing that tells it)
+    if (!this.scenesOn() && !SCENES[id]?.reveal) return this.sceneChain;
     this.sceneHold++;
     this.sceneChain = this.sceneChain
       .then(() => this.playDue(moment, players))
@@ -712,20 +723,32 @@ class Game {
     // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    if (!settings().cinematics) return;
-    await this.scenes.play(id, players);
-    // (REVEAL: a film that revealed something ends on its card, played through or skipped)
+    if (settings().cinematics) await this.scenes.play(id, players);
+    // (REVEAL: a film that revealed something ends on its card, played through or skipped; with cinematics off the card comes alone,
+    // UNLOCK-ONCE: it is the only thing that tells the player)
     await this.endCard(id);
   }
 
-  /** The end cards shown this session, by key (REVEAL): the older army banner stands aside for one already shown. */
+  /** The end cards shown this session, by key (REVEAL): an unlock whose film's card was shown is not told again. */
   private revealed = new Set<string>();
+
+  /** UNLOCK-ONCE (`sim/unlockTell.ts`): tell an unlock whose film did not play (seen already, or the unlock came another way) with the
+   *  film's own end card, unless this session has shown it. Resolves `true` when the player took the card's button. */
+  private async tellUnlock(r: Reveal, mayGo = true): Promise<boolean> {
+    if (!tellsByCard(unlockOfReveal(r))) return false;
+    const card = revealCard(r, this.meta);
+    if (!card || this.revealed.has(card.key)) return false;
+    this.revealed.add(card.key);
+    const to = card.go?.to;
+    const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
+    return showEndCard(card, go);
+  }
 
   /** A film's end card, if it revealed something (REVEAL, `sim/sceneReveal.ts`): its button goes there only from the home screen (never
    *  out of a fight or its result, nor out of the Scenes list's replay, `mayGo` false); elsewhere it says where, with Continue. */
   private async endCard(id: string, mayGo = true): Promise<void> {
     const card = revealOf(id, this.meta);
-    if (!card) return;
+    if (!card || !tellsByCard(unlockOfReveal(SCENES[id].reveal!))) return;
     this.revealed.add(card.key);
     const to = card.go?.to;
     const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
@@ -973,8 +996,10 @@ class Game {
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
     if (!fight(this.b)) return;
-    // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite)
-    this.eid.arm(this.b, midBossWave(this.run, this.run.stage));
+    // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
+    // in its own trial as a great being, EIDOLON-TRIAL)
+    const qbNow = questBattleOfRun(this.run);
+    this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
@@ -2127,6 +2152,12 @@ class Game {
       .then(() => {
         this.sceneHold--;
         void this.revealEarned().then(() => {
+          // (EIDOLON-TRIAL: the trial won, the binding plays at once)
+          if (!practice && trialOfBattle(qb.id) && readyToBind(this.meta)?.id === trialOfBattle(qb.id)!.chain) {
+            this.home.open(`${qb.title} won! The Summoner is waiting at the altar.`);
+            void this.home.bindAfterTrial();
+            return;
+          }
           // (EIDOLON-CHAINS: a chain's battle hands no quest in: its piece was found, and the log opens on the chain)
           const chain = chainOfBattle(qb.id);
           this.home.open(practice ? `${qb.title}: won again, for practice.` : chain ? `${qb.title} won! A piece of the pact is found.` : `${qb.title} won! Hand the quest in at the tavern.`);
@@ -2233,6 +2264,10 @@ class Game {
     if (this.run.mode?.kind === 'calamity') this.run.pool = [...this.meta.unlocked];
     // (a quest battle keeps the party picked for it: QUEST-BATTLES)
     else if (this.run.mode?.kind !== 'daily' && this.run.mode?.kind !== 'quest') this.run.pool = [...this.meta.party];
+    // (SECRET-HEROES: the heroes still secret are never offered as a guest or a Calamity hire)
+    const hide = secretsOf(this.meta);
+    if (hide.length) this.run.hide = hide;
+    else delete this.run.hide;
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
@@ -2315,15 +2350,20 @@ class Game {
       $('result').hidden = true;
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
-    if (this.run.cleared && !this.run.tower) return this.armyWon();
+    if (this.run.cleared && !this.run.tower) return void this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
       $('result').hidden = true;
       saveRun(this.run);
       if (this.run.over) {
         const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in ${this.run.rift?.expedition ? 'region' : 'map'} ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
-        // (a Calamity cleared whole has its ending cinematic first, then the victory card)
-        if (this.run.cleared && this.run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' }).then(show);
+        // (a Calamity cleared whole has its ending cinematic first, then the victory card; UNLOCK-ONCE: an Ascension level it opened is
+        // told by the film's end card, or by that card alone once the film has been seen)
+        const level = ascOf(this.run);
+        if (this.run.cleared && this.run.mode?.kind === 'calamity')
+          void this.queueScene({ kind: 'calVictory' })
+            .then(() => (ascOpenedBy(level, this.meta) ? this.tellUnlock({ kind: 'ascension' }, false) : false))
+            .then(show);
         else show();
         return;
       }
@@ -2485,17 +2525,19 @@ class Game {
     this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
-  /** An army's last boss has fallen: if that opens the next army, its banner rises first ("A new army marches"), then the armies screen. */
-  private armyWon(): void {
+  /** An army's last boss has fallen: if that opens the next army, its end card comes first (UNLOCK-ONCE: unless the army's last-stand
+   *  film already showed it), then the armies screen. */
+  private async armyWon(): Promise<void> {
     const army = armyOfRun(this.run)!;
     $('result').hidden = true;
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
     const focus = this.runStars?.chests.length ? army.id : undefined;
-    // (REVEAL: the army's last-stand film already ended on this army's card: straight to the armies)
-    if (next && !this.revealed.has(`army:${next.id}`)) showUnlock(next, army, () => this.home.openArmies(focus));
-    else this.home.openArmies(focus);
+    // (the card's own button goes to the new army; Continue to the armies, on the one just cleared)
+    const before = next ? ARMIES[armyIndex(next.id) - 1] : undefined;
+    if (before && (await this.tellUnlock({ kind: 'nextArmy', after: before.id }))) return;
+    this.home.openArmies(focus);
   }
 
   /** Two fingers are down on the board: a pinch begins (a hero being dragged stays where it was). */
@@ -3089,14 +3131,12 @@ class Game {
       this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
       // (ARMY-DROPS: a won army wave now and then drops shards or a tome, from a side stream of the run's seed and the wave; `window.__forceDrop` = 'shards' | 'tome' | 'both' forces one for screenshots)
       this.dropGain = army ? settleArmyDrop(this.meta, won, army.waves[stage - 1]?.boss, tierOfRun(run), run.seed, stage, (window as unknown as { __forceDrop?: 'shards' | 'tome' | 'both' }).__forceDrop) : null;
-      if (this.dropGain?.joined && this.dropGain.drop.shards) toastJoined([this.dropGain.drop.shards.kind]);
       // (the stars this run won may have opened an army: its banner rises when the run's result is left)
       if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
-      // (a milestone this fight reached may bring in a hero)
+      // (a milestone this fight reached may bring in a hero: its reveal tells it, UNLOCK-ONCE, as the result is left)
       const joined = grantContent(this.meta);
-      toastJoined(joined);
       // (and may teach a spell)
-      toastSpells(grantSpells(this.meta), joined.length);
+      toastSpells(grantSpells(this.meta));
       // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
       // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)

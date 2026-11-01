@@ -1,4 +1,4 @@
-// RELICS-PREP: the run's relics on the wave-prep screen (a tapped one read out), and gone once the fight starts.
+// RELICS-PREP: the run's relics on the wave-prep screen (a tap opens the relic's card, RELICS-2), and gone once the fight starts.
 // Usage: node tools/relics/prep-shots.mjs [root] [port]   (after `npm run web`); writes docs/samples/relics-prep-*.png.
 // The relics are set on the run by hand (a presentation fixture, not a played run).
 import { openBrowser } from '../world-001/browser.mjs';
@@ -37,15 +37,17 @@ try {
     await page.evaluate(() => { document.querySelector('.csSkip')?.click(); document.querySelector('#tipSkip')?.click(); });
     await page.evaluate(() => document.querySelectorAll('#relics .relic')[2]?.click());
     await page.waitForTimeout(300);
-    const read = () => page.evaluate(() => ({ phase: document.body.dataset.phase, shown: getComputedStyle(document.getElementById('relics')).display !== 'none', icons: document.querySelectorAll('#relics .relic').length, hint: document.querySelector('#relics .hint')?.textContent, overflow: document.documentElement.scrollWidth > innerWidth }));
+    const read = () => page.evaluate(() => ({ phase: document.body.dataset.phase, shown: getComputedStyle(document.getElementById('relics')).display !== 'none', icons: document.querySelectorAll('#relics .relic').length, card: !!document.querySelector('.rlWrap .rlCard'), overflow: document.documentElement.scrollWidth > innerWidth }));
     const prep = await read();
+    // (RELICS-2: a tap opens the relic's card; it is closed for the strip's shot)
+    await page.evaluate(() => document.querySelector('.rlWrap')?.click());
     await page.screenshot({ path: `docs/samples/relics-prep-${w}x${h}.png` });
     await page.evaluate(() => document.getElementById('fight').click());
     await page.waitForTimeout(1500);
     const fight = await read();
     if (w === 393) await page.screenshot({ path: `docs/samples/relics-prep-fight-${w}x${h}.png` });
     console.log(`${w}x${h}`, JSON.stringify({ prep, fight, errors }));
-    if (prep.phase !== 'deploy' || !prep.shown || !prep.hint || prep.overflow || fight.phase !== 'fight' || fight.shown || errors.length) bad++;
+    if (prep.phase !== 'deploy' || !prep.shown || !prep.card || prep.overflow || fight.phase !== 'fight' || fight.shown || errors.length) bad++;
     await ctx.close();
   }
 } finally {

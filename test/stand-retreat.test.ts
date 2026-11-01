@@ -18,6 +18,7 @@ import { newCastle } from '../src/sim/castle';
 import { ARMIES } from '../src/sim/armies';
 import { newMeta } from '../src/sim/meta';
 import { TICK_MS } from '../src/sim/battle';
+import { STARTER_SPELLS } from '../src/sim/spells';
 import { ALL_RELIC_IDS, RELICS } from '../src/sim/relics';
 
 const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle() });
@@ -68,6 +69,9 @@ test('a strong party falls back room by room, in order, and each new room is lai
       assert.ok(retreatAfter(s.run.wave - 1, s.run.hall!), 'the choice comes at an act\'s end');
       assert.ok(fallBack(s));
     }
+    // (SPELLS-RETUNE, docs/notes/spells-retune.md: the waves are tuned for a stand whose Auto casts the king's spells, so this strong party
+    // casts the starting three on its own, as the page's Auto does; without them it no longer reaches the fourth room)
+    if (!s.b.autoSpells) s.b.autoSpells = [...STARTER_SPELLS];
     stepStand(s);
     for (const n of s.notes.splice(0)) {
       notes.push(n);

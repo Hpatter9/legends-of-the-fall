@@ -1,11 +1,13 @@
 // Renders the epic music: `node tools/epic-music/render.mjs [id ...]` writes WAVs to a scratch folder and encodes the
 // tracks to Opus in src/audio/. Each file holds one loop plus a second of its own start again, so the page can loop a
 // window of it without caring how a decoder trims the ends. `--wav` skips the encode; `--out DIR` sets the scratch folder.
+// Every encode is levelled to the music's one loudness target (`loudness.mjs`: -18 LUFS, true peaks under -1 dBTP) and its
+// measures written to `loudness.json`.
 
 import { mkdirSync, writeFileSync, readdirSync, statSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { SR } from './dsp.mjs';
 import { stats } from './song.mjs';
+import { level, readTable, writeTable } from './loudness.mjs';
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
@@ -38,6 +40,13 @@ function wav(L, R, n, pad, rot = 0) {
 }
 
 const manifest = {};
+const table = readTable();
+/** Encodes the WAV to the shipped Opus file at the music's loudness, and records its measures. */
+function encodeLevelled(id, kbps) {
+  const r = level(`${scratch}/${id}.wav`, `${root}src/audio/${id}.opus`, kbps);
+  table.files[id] = { lufs: r.after.lufs, tp: r.after.tp, ...(table.files[id]?.before ? { before: table.files[id].before } : {}) };
+  return r;
+}
 for (const id of want) {
   const t0 = Date.now();
   const mod = await import(`./tracks/${id}.mjs`);
@@ -45,9 +54,9 @@ for (const id of want) {
   // (`--encode-only` re-encodes the WAVs a last run left in the scratch folder, for a change of bitrate)
   if (flag('--encode-only')) {
     const kbps = song.kbps ?? 37;
-    execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', `${scratch}/${id}.wav`, '-c:a', 'libopus', '-b:a', `${kbps}k`, '-vbr', 'constrained', '-application', 'audio', '-compression_level', '10', `${root}src/audio/${id}.opus`]);
+    const lv = encodeLevelled(id, kbps);
     const bytes = statSync(`${root}src/audio/${id}.opus`).size;
-    console.log(`${id}: ${(bytes / 1024).toFixed(0)} KB at ${kbps} kbps`);
+    console.log(`${id}: ${(bytes / 1024).toFixed(0)} KB at ${kbps} kbps, ${lv.after.lufs} LUFS`);
     manifest[id] = { loop: song.loop, seconds: +song.loopSeconds.toFixed(4) + (song.loop ? 0 : song.tail), bytes };
     continue;
   }
@@ -77,8 +86,9 @@ for (const id of want) {
   let bytes = 0;
   if (!flag('--wav')) {
     const kbps = song.kbps ?? 37;
-    execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', `${scratch}/${id}.wav`, '-c:a', 'libopus', '-b:a', `${kbps}k`, '-vbr', 'constrained', '-application', 'audio', '-compression_level', '10', `${root}src/audio/${id}.opus`]);
+    const lv = encodeLevelled(id, kbps);
     bytes = statSync(`${root}src/audio/${id}.opus`).size;
+    console.log(`   levelled ${lv.before.lufs} -> ${lv.after.lufs} LUFS, peak ${lv.after.tp} dBTP`);
   }
   console.log(`${id}: ${(N / SR).toFixed(1)}s ${song.bpm}bpm rms ${st.rmsDb} peak ${st.peakDb} crest ${st.crest} bands[62..8k] ${st.bands} seam ${seam.toFixed(2)} · melody on chord tones ${(rev.share * 100).toFixed(0)}% · ${bytes ? (bytes / 1024).toFixed(0) + ' KB' : 'wav only'} · ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   for (const o of rev.odd.slice(0, 12)) console.log(`   ${o}`);
@@ -86,3 +96,4 @@ for (const id of want) {
   if (flag('--lines')) for (const o of rev.lines ?? []) console.log(`   ${o}`);
 }
 writeFileSync(`${scratch}/last-render.json`, JSON.stringify(manifest, null, 1));
+if (!flag('--wav')) writeTable(table);

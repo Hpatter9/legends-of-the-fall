@@ -29,7 +29,8 @@ import {
   type Goat,
 } from './render/duchessRules';
 import type { Camp } from './render/campSpots';
-import { CAMP_PAINT, scoutCamp, overlookLayout, overlookCrew, overlookRanks } from './render/overlookLayout';
+import { CAMP_PAINT, scoutCamp, overlookLayout, overlookCrew, overlookRanks, STAND_TOWER } from './render/overlookLayout';
+import { TowerLife } from './render/standTowerLife';
 import { UNITS } from './sim/units';
 import { AREA_NAMES } from './menuArt';
 import overlookUrl from './art/camp/overlook.png';
@@ -111,9 +112,11 @@ export class CampScene {
   readonly root = el('div', 'cpWrap');
   /** Earned chests rest by the supplies at the left of the ledge. */
   readonly stashMount = el('div', 'cpStash');
-  /** Two mode plaques below the company and the distant Calamity landmark. */
+  /** The Daily board's plaque below the company, the Last Stand's watchtower on the left (OVERLOOK-STAND) and the distant Calamity landmark. */
   readonly dailySlot = el('div', 'cpSlot');
-  readonly towerSlot = el('div', 'cpSlot');
+  readonly towerSlot = el('div', 'cpSlot cpTowerSlot');
+  /** The watchtower's lights, embers and crows (OVERLOOK-STAND). */
+  private towerLife = new TowerLife();
   readonly calamitySlot = el('div', 'cpSlot cpPortalSlot');
   /** Hester's Stall on the ledge (SHOP-BOOKS-GEAR): its picture and plate, filled by the home page. */
   readonly stallSlot = el('div', 'cpSlot cpStallSlot');
@@ -160,7 +163,7 @@ export class CampScene {
     this.plate.addEventListener('click', () => this.onParty());
     this.heading.append(el('span', 'cpEyebrow', 'THE WAR COUNCIL'), el('h2', '', 'Battle Overlook'), el('p', '', 'Scout the approaching army'));
     this.canvas.setAttribute('role', 'img');
-    this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Calamity citadel on the horizon.');
+    this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Last Stand’s watchtower on the left and the Calamity citadel on the horizon.');
     this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.stallSlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
@@ -309,6 +312,15 @@ export class CampScene {
     this.layOut();
   }
 
+  /** The middle of the Last Stand's painted tower in css pixels inside the scene's box: its entry zooms in there (OVERLOOK-STAND). */
+  standFocus(): { x: number; y: number } | null {
+    const camp = this.camp;
+    if (!camp) return null;
+    const t = STAND_TOWER;
+    const p = this.at(camp.w * ((t.left + t.right) / 2), camp.h * ((t.top + t.base) / 2));
+    return { x: parseFloat(p.left), y: parseFloat(p.top) };
+  }
+
   /** Where a scene pixel is on the page. */
   private at(x: number, y: number): { left: string; top: string } {
     const ox = ((this.boxW || this.root.clientWidth) - this.camp!.w * this.unit) / 2;
@@ -326,7 +338,7 @@ export class CampScene {
     box(this.calamitySlot, camp.places.calamity.box);
     if (camp.places.stall) box(this.stallSlot, camp.places.stall.box);
     this.stallSlot.hidden = !camp.places.stall;
-    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', '44px');
+    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', `${e === this.towerSlot ? camp.places.tower.plate.h : 44}px`);
     this.layPlate();
   }
 
@@ -344,7 +356,7 @@ export class CampScene {
     }
     this.root.dataset.army = n.army.id;
     this.root.dataset.area = n.army.area;
-    this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Calamity citadel looms on the horizon.`);
+    this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Last Stand’s watchtower stands on the left; the Calamity citadel looms on the horizon.`);
     this.plate.setAttribute('aria-label', `War council: ${n.army.name}, led by ${n.boss}. Opens your party.`);
     Object.assign(this.plate.style, this.at(camp.table.x, camp.table.y + 1));
   }
@@ -580,6 +592,7 @@ export class CampScene {
     }
     this.stepGoat(dt);
     this.burn(dt);
+    if (this.camp) this.towerLife.step(dt, this.camp.w, this.camp.h, !this.towerSlot.classList.contains('shut'), this.reduced);
     this.draw();
   }
 
@@ -651,6 +664,7 @@ export class CampScene {
     g.drawImage(this.back, 0, 0);
     this.army(g, camp);
     this.mist(g, camp);
+    this.towerLife.draw(g, camp.w, camp.h, this.now, !this.towerSlot.classList.contains('shut'), this.reduced);
     const list: { depth: number; paint: () => void }[] = [];
     list.push({ depth: camp.fire.y, paint: () => this.fire(g, camp) });
     for (const actor of this.actors.values()) list.push({ depth: actor.spot.y, paint: () => this.hero(g, actor) });

@@ -88,7 +88,7 @@ export function revealCard(r: Reveal, m: Meta): EndCard | null {
       const level = ascUnlocked(m);
       if (level < 1) return null;
       return {
-        key: 'ascension',
+        key: `ascension:${level}`,
         label: 'Unlocked',
         name: `Ascension ${level}`,
         line: `A harder Calamity that pays more (crowns x${ascCrowns(level).toFixed(1)}, more chests). Clear a level to open the next, up to ${ASC_MAX}.`,
@@ -144,7 +144,8 @@ export function revealCard(r: Reveal, m: Meta): EndCard | null {
         label: 'Bound',
         name: `${e.name}, ${e.title}`,
         line: `An Eidolon answers the War Horn: ${e.rider}.`,
-        where: 'Fill the War Horn in fights, then tap it to call.',
+        // (EIDOLON-CHAIN-2: with more than one bound, the newest answers, and the Pact Gallery chooses)
+        where: boundOf(m).length > 1 ? `${e.name} answers the War Horn now. Choose who answers in the Pact Gallery.` : 'Fill the War Horn in fights, then tap it to call.',
         art: { kind: 'eidolon', id: r.id },
       };
     }

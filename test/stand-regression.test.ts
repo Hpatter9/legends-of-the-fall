@@ -38,7 +38,8 @@ test('ordinary fights play out as they did before the Last Stand', () => {
   }
 });
 
+// (re-pinned for the skills overhaul's batch 2, docs/notes/skills-1.md: every hero's skills now cost and cool by their class, so every fight moves)
 const PINNED: string[] = [
-  'won 10000 5/0 428216112', 'won 21300 4/0 2989847262', 'won 22600 4/0 542449967', 'lost 15400 0/4 4121076578', 'lost 18000 0/3 1236451281', 'won 17600 4/0 2295799285',
-  'lost 14900 0/4 2138509279', 'lost 12500 0/4 2210275373', 'won 14600 5/0 1528649236', 'lost 12900 0/5 3728696056', 'lost 22200 0/5 2035475476', 'lost 11800 0/5 565876341',
+  'won 10800 4/0 364274915', 'won 24900 4/0 3621682932', 'won 30600 2/0 4077699199', 'lost 21200 0/3 3425299711', 'lost 12800 0/4 1996169345', 'won 17900 5/0 1727904812',
+  'lost 16400 0/3 3970075092', 'lost 12200 0/3 2082392979', 'won 17100 4/0 896813566', 'lost 12000 0/5 3728696056', 'lost 25000 0/4 3235205619', 'lost 11800 0/5 1133770814',
 ];
