@@ -83,7 +83,7 @@ test("the data: three parts and pieces, the Crown's courier at the Sanctum, a bi
   assert.deepEqual(voltara.opens, { kind: 'army', army: 'labyrinth' });
   assert.deepEqual(voltara.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'ults']);
   assert.ok(voltara.parts.every((p) => p.reward.chest === 'bronze' && PIECES.has(p.piece.id)));
-  assert.equal(PIECES.size, 12);
+  assert.equal(PIECES.size, 18);
   assert.equal(voltara.binding!.at(-1)!.beat, 'bound');
   assert.ok(!voltara.binding!.some((b) => b.beat === 'horn' || b.beat === 'hornFull'));
   const lines = voltara.prologue!.shots.flatMap((s) => s.lines ?? []);

@@ -85,7 +85,7 @@ export interface EquipStats {
   tal?: Record<string, number>;
   /** The two skills the hero kind has chosen for its slots, when not its own two in order (`books.ts`: 'own1', 'own2' or a learned
    *  book's id); `heroKitOf` builds its kit from them. */
-  book?: [string, string];
+  book?: string[];
   /** The kind's skill levels by use in slot order, when any is above 1 (`skillLevels.ts`, set by `heroStats`). */
   skillLv?: number[];
   /** Ability score points from the worn pieces (`BASE_SCORE`) and the talents' stat nodes (STATS batch 2; `statPower.ts` reads them). */

@@ -187,8 +187,8 @@ export interface Unit {
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
-  /** A hero's chosen skills for its two slots, when not its own two (`books.ts`; from `Boost.equip.book`). */
-  book?: [string, string];
+  /** A hero's chosen skills for its slots, when not its own (`books.ts`; from `Boost.equip.book`). */
+  book?: string[];
   /** Its skills' levels by use in slot order, when any is above 1 (`skillLevels.ts`; from `Boost.skillLv`); what a levelled skill adds to its
    *  talents while it is being cast; and the use points its casts have earned this fight (by slot), counted when the wave settles. */
   skillLv?: number[];
