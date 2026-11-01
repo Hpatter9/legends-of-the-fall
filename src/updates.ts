@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.311.0',
+    date: '2026-11-01',
+    title: 'Three skill buttons in battle',
+    notes: ['Every hero\'s row in battle now shows all three skills, with their cost and cooldown; the Last Stand and Calamity get compact rows.'],
+  },
+  {
     version: '0.310.0',
     date: '2026-11-01',
     title: 'Eidolon quest: The Dry Storm',

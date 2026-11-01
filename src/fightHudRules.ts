@@ -6,6 +6,7 @@ import { type Battle, type Unit } from './sim/battle';
 import { keyOf, kitOf, ultimateOf, ULT_LEVEL, type Skill } from './sim/abilities';
 import { costOf, heroKitOf, resMax, resOf, reviveCost, reviveReady, SLOT_LEVELS, slotOpen, ultFull, type HeroKit, type Slot } from './sim/heroKits';
 import { REVIVE } from './sim/kits/revive';
+import type { SkillClass } from './sim/skillRules';
 
 /** Which of a hero's moves a chip or a sheet shows: skill 1, 2 or 3 (the skills overhaul's batch 4), or the ultimate. */
 export type Which = 1 | 2 | 3 | 'ult';
@@ -23,11 +24,51 @@ export const gapOf = (_hk: HeroKit, slot: Slot): number => slot.cd;
 /** The one rank line a skill's sheet shows (the skills overhaul's batch 3): merging no longer changes a skill. */
 export const EVERY_RANK = { title: 'Every rank', text: 'The same at every rank: a rank gives more health and attack, never a better skill.', on: true, now: false };
 
+/** The one-word name a chip shows (the skills overhaul's batch 7): a chip has room for about 8 letters at 360 px. A name that is one short word
+ *  stays whole; the rest are listed here, one word and unique within a hero's kit (a test checks both). The skill's full name is on its sheet. */
+export const CHIP_NAMES: Readonly<Record<string, string>> = {
+  'Shield Wall': 'Wall', 'Shield Rush': 'Rush', 'Hold Fast': 'Hold', 'Kesa Cut': 'Kesa', 'Sneak Attack': 'Sneak', 'Smoke Bomb': 'Smoke', 'Shuriken Fan': 'Shuriken',
+  'Aimed Shot': 'Aimed', 'Double Shot': 'Double', 'Wall of Fire': 'Wall', 'Fire Bolt': 'Bolt', 'Spear Wall': 'Spear', 'Pitchfork Jab': 'Fork', 'Flurry of Blows': 'Flurry',
+  'Quivering Palm': 'Palm', 'Step of the Wind': 'Step', 'Healing Draught': 'Draught', 'Healing Mist': 'Mist', 'Elixir of Life': 'Elixir', 'Acid Flask': 'Acid',
+  'Chain Lightning': 'Chain', 'Storm Surge': 'Surge', 'Charm Monster': 'Charm', 'Alter Self': 'Alter', 'Fox Wisps': 'Wisps', 'Feather Darts': 'Feather', 'Gust of Wind': 'Gust',
+  'Wind Wall': 'Wall', 'Ringing Staff': 'Staff', 'Gore Charge': 'Gore', 'Bull Rush': 'Rush', 'Pipes of Pan': 'Pipes', 'Irresistible Dance': 'Dance', 'Butting Horns': 'Horns',
+  'Petrifying Gaze': 'Gaze', 'Flesh to Stone': 'Stone', 'Serpent Bite': 'Bite', 'War Banner': 'Banner', 'Plant the Standard': 'Standard', 'Command Strike': 'Command',
+  'Divine Smite': 'Smite', 'Aura of Protection': 'Aura', 'Warding Bond': 'Bond', 'Guiding Bolt': 'Bolt', 'Prayer of Healing': 'Prayer', 'Healing Word': 'Word',
+  'Conjure Treant': 'Treant', 'Wild Shape': 'Shape', 'Thorn Whip': 'Whip', 'Reckless Swing': 'Reckless', 'Spike Growth': 'Spikes', 'Barbed Arrow': 'Barbed',
+  'Eldritch Blast': 'Blast', 'Drain Life': 'Drain', 'Curse of Weakness': 'Curse', 'Mirror Image': 'Mirror', 'Phantasmal Blade': 'Blade', 'Piercing Shot': 'Pierce',
+  'Fan the Hammer': 'Fan', 'Skip Shot': 'Skip', 'Rapid Shot': 'Rapid', 'Suppressing Fire': 'Suppress', 'Barrier Drone': 'Drone', 'Hunter\'s Mark': 'Mark', 'Dirty Trick': 'Trick',
+  'Hold Person': 'Hold', 'Dominate Monster': 'Dominate', 'Tomb Rot': 'Rot', 'Grappling Hook': 'Hook', 'Loaded Dice': 'Dice', 'Pistol Shot': 'Pistol', 'Vicious Mockery': 'Mockery',
+  'Bardic Inspiration': 'Inspire', 'Summon Beast': 'Summon', 'Pack Tactics': 'Pack', 'Mend the Pack': 'Mend', 'Grasping Tentacles': 'Tentacle', 'Tidal Wave': 'Tidal',
+  'Ink Cloud': 'Ink', 'Animate Dead': 'Animate', 'Soul Snare': 'Snare', 'Hourglass Bolt': 'Glass', 'Thunder Step': 'Thunder', 'Static Edge': 'Static', 'Powder Keg': 'Keg',
+  'Siege Mode': 'Siege', 'Flak Burst': 'Flak', 'Cure Wounds': 'Cure', 'Death Ward': 'Ward', 'Sacred Flame': 'Sacred', 'Dragon Breath': 'Breath', 'Dragon Dive': 'Dive',
+  'Scale Ward': 'Scale', 'Seismic Slam': 'Slam', 'Tunnel Strike': 'Tunnel', 'Wall of Stone': 'Wall', 'Magic Missile': 'Missile', 'Font of Magic': 'Font', 'Arcane Ward': 'Ward',
+  'Blood Pact': 'Pact', 'Infernal Brand': 'Brand', 'Lance Sweep': 'Sweep', Resurrection: 'Raise', Revivify: 'Revive', Reincarnate: 'Rebirth', Cannonade: 'Cannon', Grapeshot: 'Grape',
+  Judgement: 'Judge', Contagion: 'Plague', Transposition: 'Swap', Shapechange: 'Shift', Disengage: 'Retreat', Whirlwind: 'Whirl', Countercharm: 'Counter', Thunderwave: 'Wave',
+};
+
+/** A skill's chip name: its entry in `CHIP_NAMES`, else its first word (cut to 8 letters). */
+export const chipName = (s: Skill): string => CHIP_NAMES[s.name] ?? s.name.split(' ')[0].slice(0, 8);
+
+/** A skill class in words, as the sheet's Class row says it. */
+export const CLASS_WORDS: Readonly<Record<SkillClass, string>> = {
+  jab: 'Jab: cheap and quick',
+  strike: 'Strike: the bread and butter',
+  heavy: 'Heavy: big, saved for the right moment',
+  utility: 'Utility: a lasting aura, banner, summon or shape',
+  guard: 'Guard: an escape, ward or save, cast at once when it is needed',
+};
+
+/** A slot in a few words for the hero sheet and the codex: "Strike · 24 SP · 5.0s". */
+export const slotBrief = (hk: HeroKit, slot: Slot): string =>
+  `${slot.cls[0].toUpperCase()}${slot.cls.slice(1)} · ${slot.cost} ${poolTag(hk)}${slot.hpCost ? ` and ${Math.round(slot.hpCost * 100)}% health` : ''} · ${(slot.cd / 1000).toFixed(1)}s`;
+
 /** What a skill chip shows. */
 export interface ChipView {
   which: SlotNo;
   skill: Skill;
   name: string;
+  /** The one-word name the chip shows. */
+  chip: string;
   /** What it costs this hero now (the tier 3 discount taken off), rounded. */
   cost: number;
   /** A share of max health it also costs (the blood heroes), or 0. */
@@ -62,6 +103,7 @@ export function chipOf(b: Battle, u: Unit, which: SlotNo): ChipView | undefined 
     which,
     skill,
     name: skill.name,
+    chip: chipName(skill),
     cost: Math.round(cost),
     blood: revive ? 0 : slot.hpCost ?? 0,
     tag: poolTag(hk),
@@ -74,13 +116,11 @@ export function chipOf(b: Battle, u: Unit, which: SlotNo): ChipView | undefined 
   };
 }
 
-/** The chip's second line: "30 SP", "25 SP +10%HP" for a blood cost, "· 2.4s" while it cools; "Lv 10" while locked. `compact` is the cost
- *  alone (the small chips of a party over five; their sheet has the rest). */
+/** The chip's second line: "30 SP"; "Lv 20" while locked. The cooldown shows as the sweep (its seconds and a blood cost are on the sheet).
+ *  `compact` is the cost alone (the small chips of a party over five) and "L20" while locked. */
 export function chipLine(c: ChipView, compact = false): string {
-  if (!c.open) return compact ? `Lv${SLOT_LEVELS[c.which - 1]}` : `Lv ${SLOT_LEVELS[c.which - 1]}`;
-  if (compact) return `${c.cost}`;
-  const cool = c.cd > 0 ? ` · ${((c.cd * c.gap) / 1000).toFixed(1)}s` : '';
-  return `${c.cost} ${c.tag}${c.blood ? ` +${Math.round(c.blood * 100)}%HP` : ''}${cool}`;
+  if (!c.open) return compact ? `L${SLOT_LEVELS[c.which - 1]}` : `Lv ${SLOT_LEVELS[c.which - 1]}`;
+  return compact ? `${c.cost}` : `${c.cost} ${c.tag}`;
 }
 
 /** What the ultimate's part of a row shows. */
@@ -159,6 +199,7 @@ export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetVi
   const open = slotOpen(u, which);
   const rows: [string, string][] = [];
   if (!open) rows.push(['Locked', `Opens at level ${SLOT_LEVELS[which - 1]}`]);
+  rows.push(['Class', CLASS_WORDS[slot.cls]]);
   rows.push(['Cost', `${Math.round(costOf(u, slot))} ${hk.pool}${slot.hpCost ? ` and ${Math.round(slot.hpCost * 100)}% of max health` : ''}`]);
   rows.push(['Cooldown', `${secs(gapOf(hk, slot))} between casts`]);
   rows.push(['Strength', `${Math.round(slot.tune * 100)}% of attack`]);
@@ -170,7 +211,7 @@ export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetVi
 }
 
 /** How the rows are laid out for `n` heroes: one full row each up to five; more (the Last Stand's eight, a Calamity's ten) in two columns of
- *  compact rows (portrait, name, bars with numbers, two small skill chips), `rows` deep. */
+ *  compact rows (portrait, name, bars with numbers, three small skill chips), `rows` deep. */
 export function hudLayout(n: number): { pairs: boolean; rows: number } {
   return n > 5 ? { pairs: true, rows: Math.ceil(n / 2) } : { pairs: false, rows: Math.max(1, n) };
 }
