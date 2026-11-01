@@ -130,8 +130,8 @@ body[data-move] #result #banner { background: #15251ac4; }
 #result #waveNotes[hidden] { display: none; }
 #result #waveNotes .wn { display: flex; align-items: baseline; gap: 7px; margin: 0; padding: 5px 9px; border-left: 2px solid #9c8454; background: #0d1a13aa; color: #ebdfc1; font: 400 13px/1.35 var(--body); opacity: 0; animation: reportArrive .35s ease-out forwards; animation-delay: calc(var(--i) * .12s + .2s); }
 #result #waveNotes .wn > span { flex: none; width: 12px; text-align: center; color: #d8bf86; }
-#result #waveNotes .wn.level, #result #waveNotes .wn.ult { border-left-color: #ebce85; }
-#result #waveNotes .wn.level > span, #result #waveNotes .wn.ult > span { color: #f6dc9b; }
+#result #waveNotes .wn.level, #result #waveNotes .wn.ult, #result #waveNotes .wn.skill { border-left-color: #ebce85; }
+#result #waveNotes .wn.level > span, #result #waveNotes .wn.ult > span, #result #waveNotes .wn.skill > span { color: #f6dc9b; }
 #result #waveNotes .wn.found > span { color: #9fd3e6; }
 /* ARMY-DROPS: a rare drop's line: gold, a warm glow and one slow shine across it as it arrives (it settles, nothing loops). */
 #result #waveNotes .wn.drop { position: relative; overflow: hidden; border-left-color: #f2c76a; background: linear-gradient(90deg, #3a2a0ecc, #0d1a13aa 80%); color: #fbe7b4; font-weight: 700; text-shadow: 0 0 6px #f0b94a66; box-shadow: inset 0 0 0 1px #f2c76a44, 0 0 10px #f0b94a33; }

@@ -10,6 +10,8 @@ import { heroName } from './sim/heroNames';
 import { levelOfKind } from './sim/levels';
 import { saveMeta, type Meta } from './sim/meta';
 import { OWN1, OWN2, knownPicks, loadoutOf, pickName, readableNow, setSlot, slotFor, startStudy, stopStudy, studentCap, students, studyLeft, studyLength, type SkillPick } from './sim/books';
+import { keyOf } from './sim/abilities';
+import { levelLine, useOf } from './sim/skillLevels';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -97,7 +99,8 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
       const book = bookById(pick);
       if (book) row.append(bookIcon(book, 44));
       const words = el('div', 'kbWords');
-      words.append(el('b', '', slot.skill.name), el('small', '', `${pickFrom(pick)} · ${Math.round(slot.cost)} ${own?.pool ?? ''}`), el('p', '', slot.skill.text));
+      // (the skills overhaul's batch 5: a skill keeps its level by use wherever it sits)
+      words.append(el('b', '', slot.skill.name), el('small', '', `${pickFrom(pick)} · ${Math.round(slot.cost)} ${own?.pool ?? ''} · ${levelLine(useOf(meta, kind, keyOf(slot.skill)))}`), el('p', '', slot.skill.text));
       const where = l.indexOf(pick);
       if (where >= 0) words.append(el('small', 'kbIn', `In use as skill ${where + 1}`));
       // (a healer's revive belongs to its own skill 2: swapping it out loses the revive, and the picker says so)

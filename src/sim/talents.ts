@@ -13,6 +13,7 @@
 // Pure rules: no Pixi, no DOM, no randomness of its own.
 
 import { fightLoadout } from './books';
+import { fightLevels } from './skillLevels';
 import type { Ability, Kind, Trig } from './equipBases';
 import { addStats, capStats, emptyStats, equipStats, STAT_KEYS, type EquipStats, type StatKey } from './equipment';
 import { levelOfKind, milestonePoints } from './levels';
@@ -782,6 +783,9 @@ export function heroStats(m: Meta, kind: string): EquipStats | undefined {
   // (the two skills the kind has chosen for its slots, when not its own two: `books.ts`; nothing else changes)
   const book = fightLoadout(m, kind);
   if (book) (total ??= emptyStats()).book = book;
+  // (and the levels its skills have reached by use, `skillLevels.ts`; a run whose heroes start bare, the spire's and the Calamity's, never reads this)
+  const lv = fightLevels(m, kind);
+  if (lv) (total ??= emptyStats()).skillLv = lv;
   return total;
 }
 

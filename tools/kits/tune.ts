@@ -1,7 +1,7 @@
 // The hero kits' balance tuner (COMBAT-002): plays the hero sweep (`tools/heroSweep.ts`, the same seeded fights `test/hero-balance*.test.ts` hold)
 // with a set of per-hero knobs, in several processes at once, prints each hero's lift, and suggests the next knobs (a damped step toward the average).
 //   node tools/kits/tune.mjs <state.json> <level> <stage> [games] [--apply]     state: { "<hero>": { "t1": 0.5, "t2": 1, "t3": 0.8, "up": 0.5, "ur": 1 } }
-// t1, t2 and t3 are the skills' `tune`, up and ur the ultimate's `tuned.power` and `.rate`. With --apply the suggestion is written back to the file:
+// --skill-level <1-5> fights every hero's skills at that level (`tools/heroSweep.ts`; the children inherit it). t1, t2 and t3 are the skills' `tune`, up and ur the ultimate's `tuned.power` and `.rate`. With --apply the suggestion is written back to the file:
 // at level 1 to t1 (only skill 1 is open), at 10 to t2, at 20 to t3 (the skills overhaul's batch 4), at level 30 to up (the ultimate is the late lever).
 
 import { fork } from 'node:child_process';
@@ -50,7 +50,7 @@ if (args[0] === '--child') {
   }
   process.send!({ inN, inW });
 } else {
-  const [file, level, stage, games = '12000'] = args.filter((a) => !a.startsWith('--'));
+  const [file, level, stage, games = '12000'] = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--skill-level');
   const n = Number(games);
   const parts = Number(process.env.PARTS ?? 3);
   const state: Record<string, Knobs> = JSON.parse(readFileSync(file, 'utf8'));

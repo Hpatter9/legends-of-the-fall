@@ -11,6 +11,7 @@
 // again from it. Pure rules: no Pixi, no DOM; every draw is a side stream of the run's seed.
 
 import { ULT_FILL } from './heroKits';
+import { addUse, unitUse, type UseGain } from './skillLevels';
 import { grantOres, standOres, type OreDrop } from './awakenMats';
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, FOG_RANGE, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { weatherOf } from './weather';
@@ -171,6 +172,9 @@ export interface StandRun {
   over: boolean;
   best: number;
   summary?: StandSummary;
+  /** Skill levels by use (the skills overhaul's batch 5, `skillLevels.ts`): the use points the guard's skills have earned in the waves fought so
+   *  far, by hero kind and skill key, counted into the save when the run ends. Absent until a wave is fought (and in older saves). */
+  use?: UseGain;
 }
 
 /** What a finished run pays (kept on the run, shown on the end screen). */
@@ -264,6 +268,8 @@ export interface Stand {
   kingGrace: number;
   /** The idle heroes' helping (`standHelp.ts`): who has had nothing to do since when; not saved. Absent on a stand made by hand is a fresh one. */
   help?: HelpBook;
+  /** The fallen heroes whose last wave's use has been counted (`foldUse`); not saved (a run built again leaves the fallen off the field). */
+  useDown?: number[];
   /** The retreat (STAND-RETREAT): the choice's time left, the walk's time left, the bonus wave under way, when the last foes' running is over. */
   choiceLeft?: number;
   retreatLeft?: number;
@@ -655,6 +661,7 @@ function clearWave(s: Stand): void {
   run.earned += gold;
   // (RELICS-2: the wave's tally for the growing relics, and their new size)
   standMarks(s);
+  foldUse(s);
   for (const h of run.heroes) if (standing(h)) giveXp(s, h, waveXp(n));
   // (the heroes standing get their breath back: the hurt mend a little; the fallen stay down)
   for (const u of s.b.units) {
@@ -730,6 +737,7 @@ function clearHold(s: Stand): void {
   run.gold += gold;
   run.earned += gold;
   standMarks(s);
+  foldUse(s);
   if (relic) {
     takeRelic(s, relic);
     run.heldRelics = [...(run.heldRelics ?? []), relic];
@@ -962,6 +970,22 @@ export function stepStand(s: Stand): BattleEvent[] {
 
 const FIELD_LAST = 23;
 
+/** A wave is over (cleared, held or lost): what the guard's skills earned in it goes into the run's tally (`skillLevels.ts`): each hero's casts
+ *  this wave, and the wave's points for each open skill of every hero that stood in it or fell in it (one fallen in an earlier wave is
+ *  counted no more). The casts are taken off the fighters, so the next wave counts from nothing. */
+function foldUse(s: Stand): void {
+  const done = (s.useDown ??= []);
+  for (const u of s.b.units) {
+    if (u.side !== 'hero' || u.tag === undefined || u.owner !== undefined) continue;
+    const id = Number(u.tag);
+    if (done.includes(id)) continue;
+    if (!u.alive) done.push(id);
+    const gain = unitUse(u);
+    delete u.usePts;
+    if (Object.keys(gain).length) addUse((s.run.use ??= {}), { [u.def]: gain });
+  }
+}
+
 /** A hero whose unit has fallen is marked so, for good: no rising at the clear, no XP, no levels, and it is left off the field when the run is built again. */
 function markFallen(s: Stand): void {
   for (const h of s.run.heroes) {
@@ -993,6 +1017,8 @@ function dropCorpses(s: Stand): void {
 }
 
 function endRun(s: Stand, events: BattleEvent[]): BattleEvent[] {
+  // (the wave the king fell in was fought too: its skills' use counts)
+  if (s.phase === 'wave') foldUse(s);
   s.phase = 'over';
   s.run.over = true;
   s.run.king = 0;

@@ -185,6 +185,11 @@ export interface Unit {
   kit?: Kit;
   /** A hero's chosen skills for its two slots, when not its own two (`books.ts`; from `Boost.equip.book`). */
   book?: [string, string];
+  /** Its skills' levels by use in slot order, when any is above 1 (`skillLevels.ts`; from `Boost.skillLv`); what a levelled skill adds to its
+   *  talents while it is being cast; and the use points its casts have earned this fight (by slot), counted when the wave settles. */
+  skillLv?: number[];
+  castMods?: Record<string, number>;
+  usePts?: number[];
   /** The player's tap on this hero's portrait has queued its ultimate (the time it was applied, `orders.ts`): it fires the first time the hero is free, or lapses after `ORDER_WAIT_MS`. */
   ultOrder?: number;
   /** A hero kit's pool bookkeeping (`heroKits.ts`): when each skill was last cast, focus, winded. */
@@ -473,6 +478,8 @@ export interface Boost {
   surge?: number;
   /** A boss starts the fight behind a shield of this share of its health. */
   shield?: number;
+  /** A hero's skill levels by use, in slot order (`skillLevels.ts`); unset (or `equip.skillLv` unset) is Level 1 for all. */
+  skillLv?: number[];
 }
 /** Boosts for a fight's foes: all of them by `foes`, and the first one more by `boss` (a boss stage). */
 export interface Stage {
@@ -648,6 +655,9 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   if (eq) unit.eq = eq;
   // (a hero that learned skills from books fights with the two it chose: `heroKitOf` builds its kit from them)
   if (eq?.book && !def.summon) unit.book = eq.book;
+  // (and its skills at the levels earned by use: `heroKitOf` builds its slots at them)
+  const lv = def.side === 'hero' && !def.summon ? boost.skillLv ?? eq?.skillLv : undefined;
+  if (lv?.some((x) => x > 1)) unit.skillLv = [...lv];
   if (def.side === 'hero' && boost.carry !== undefined && boost.carry < 1) {
     unit.carry = Math.max(0.01, boost.carry);
     unit.hp = Math.max(1, Math.round(hp * unit.carry));

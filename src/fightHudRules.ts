@@ -6,6 +6,7 @@ import { type Battle, type Unit } from './sim/battle';
 import { keyOf, kitOf, ultimateOf, ULT_LEVEL, type Skill } from './sim/abilities';
 import { costOf, heroKitOf, resMax, resOf, reviveCost, reviveReady, SLOT_LEVELS, slotOpen, ultFull, type HeroKit, type Slot } from './sim/heroKits';
 import { REVIVE } from './sim/kits/revive';
+import { levelLine, levelOfUse, levelSteps } from './sim/skillLevels';
 import type { SkillClass } from './sim/skillRules';
 
 /** Which of a hero's moves a chip or a sheet shows: skill 1, 2 or 3 (the skills overhaul's batch 4), or the ultimate. */
@@ -176,8 +177,9 @@ export interface SheetView {
 
 const secs = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
 
-/** The sheet for one of a hero's moves (the ultimate's too). `auto` is whether the ultimates fire on their own. */
-export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetView | undefined {
+/** The sheet for one of a hero's moves (the ultimate's too). `auto` is whether the ultimates fire on their own; `use` (when the page has the save)
+ *  gives the hero kind's use points with a skill, by key, for its level's progress. */
+export function sheetOf(b: Battle, u: Unit, which: Which, auto = false, use?: (key: string) => number): SheetView | undefined {
   const hk = heroKitOf(u);
   if (!hk) return undefined;
   if (which === 'ult') {
@@ -204,9 +206,18 @@ export function sheetOf(b: Battle, u: Unit, which: Which, auto = false): SheetVi
   rows.push(['Cooldown', `${secs(gapOf(hk, slot))} between casts`]);
   rows.push(['Strength', `${Math.round(slot.tune * 100)}% of attack`]);
   rows.push(['Cast time', secs(s.castMs)]);
+  // (the skills overhaul's batch 5: the level it has reached by use, and the level it fights at here: Level 1 in the spire and the Calamity)
+  const lv = slot.lv ?? 1;
+  const points = use?.(keyOf(s));
+  const has = points === undefined ? lv : levelOfUse(points);
+  rows.push(['Level', `${points === undefined ? `Level ${lv}` : levelLine(points)}${has !== lv ? ` · Level ${lv} here` : ''}`]);
   if (slot.revive) rows.push(['Revive', `${slot.revive.skill.name}: with a friend fallen, it raises them instead (${reviveCost(hk)} ${hk.pool}, once every ${REVIVE.GAP_MS / 1000}s)`]);
-  // (the skills overhaul's batch 3, the owner's rule: a rank gives health and attack only, never a better skill)
-  const tiers = [EVERY_RANK];
+  // (the skills overhaul's batch 3, the owner's rule: a rank gives health and attack only, never a better skill; batch 5: the skill's levels by
+  // use take the tier lines' place)
+  const tiers = levelSteps(keyOf(s)).map((line, i) => {
+    const [title, text] = line.split(': ');
+    return { title, text, on: i < lv, now: i === lv - 1 };
+  });
   return { name: s.name, label: `Skill ${which}`, skill: s, text: s.text, rows, tiers };
 }
 

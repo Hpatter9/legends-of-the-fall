@@ -2,7 +2,8 @@
 // skills. Reads the meta only.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { KITS } from './sim/abilities';
+import { keyOf, KITS, type Skill } from './sim/abilities';
+import { levelLine as skillLevelLine, levelShare, useOf } from './sim/skillLevels';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { traitsOf, TRAITS } from './sim/traits';
 import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
@@ -382,6 +383,17 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
         const body = el('div');
         body.append(el('small', 'dossierAbilityLabel', cost ? `${label} · ${cost}` : label), el('h5', '', a.name), el('p', '', a.text));
         if (locked) body.append(el('span', 'ultLock', `Unlocks at level ${opens}`));
+        // (the skills overhaul's batch 5: each skill's level by use, and a thin bar to the next; the ultimate and the passive do not level)
+        if (open && label.startsWith('Skill')) {
+          const pts = useOf(meta, kind, keyOf(a as Skill));
+          const lvRow = el('div', 'skillLv');
+          const barEl = el('i', 'skillLvBar');
+          const fill = el('span');
+          fill.style.width = `${Math.round(levelShare(pts) * 100)}%`;
+          barEl.append(fill);
+          lvRow.append(el('small', '', skillLevelLine(pts)), barEl);
+          body.append(lvRow);
+        }
         card.append(detailIcon(icon), body);
         skills.append(card);
       }

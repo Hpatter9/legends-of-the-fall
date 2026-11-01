@@ -85,8 +85,10 @@ export interface EquipStats {
   /** The two skills the hero kind has chosen for its slots, when not its own two in order (`books.ts`: 'own1', 'own2' or a learned
    *  book's id); `heroKitOf` builds its kit from them. */
   book?: [string, string];
+  /** The kind's skill levels by use in slot order, when any is above 1 (`skillLevels.ts`, set by `heroStats`). */
+  skillLv?: number[];
 }
-export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal' | 'book'>;
+export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal' | 'book' | 'skillLv'>;
 export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist'];
 export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [] });
 

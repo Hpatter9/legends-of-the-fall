@@ -30,6 +30,8 @@ export interface FightHudOpts {
   onAuto: (on: boolean) => void;
   /** Whether the ultimates fire on their own now (the ultimate's sheet says so). */
   autoOn?: () => boolean;
+  /** A hero kind's use points with a skill (by key), for its sheet's level line (`skillLevels.ts`). */
+  useOf?: (kind: string, key: string) => number;
   /** A tap was refused (a locked or unfilled ultimate). */
   onRefused?: (u: Unit) => void;
   /** Any tap on a hero's row (before its ultimate is ordered or refused): the Last Stand pans its camera to the hero. */
@@ -280,7 +282,8 @@ export class FightHud {
     const b = this.b;
     const u = b?.units.find((x) => x.id === id);
     if (!b || !u) return;
-    const v = sheetOf(b, u, which, this.opts.autoOn?.() ?? false);
+    const use = this.opts.useOf;
+    const v = sheetOf(b, u, which, this.opts.autoOn?.() ?? false, use ? (key) => use(u.def, key) : undefined);
     if (!v) return;
     const hk = heroKitOf(u)!;
     const heals = which === 'ult' ? false : hk.slots[which - 1]?.heals;

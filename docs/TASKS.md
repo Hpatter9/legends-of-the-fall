@@ -112,6 +112,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Scope:** new `src/sim/skillRules.ts`, `test/skill-rules.test.ts`, `tools/skills/measure.ts` (+ `.mjs`); `src/sim/heroKits.ts` (`Slot.cls`, `Slot.cd`, `HeroKit.slots`, `castHero`, `RES`), `src/sim/kits/table.ts` (`CLASSES`, `COSTS`, `TUNE1`, `TUNE2`), `src/sim/ultimates.ts` (`TUNE` powers at level 30), `src/fightHudRules.ts` (`gapOf`), `tools/kits/` (table, tune's cap); batch 3: `src/sim/tierSkills.ts` and `tools/rank4/` removed, `run.ts` (`GRADE_BOOST`), `calamity.ts` (`CAL_TIER`), `tower.ts` (`SPIRE_ACT_STEP`), `daily.ts` (`DAILY_START`), `fx.ts`, `menuHeroes.ts`, `codexView.ts`, `tools/balance.ts`, `test/grade-stats.test.ts` (replaces `tier-skills.test.ts`); tests moved to the new rules and the two identity fixtures re-recorded (listed in the note).
 - **Status:** ready for review (batches 2 and 3 ship together); batches 4 on not started. [Note](notes/skills-1.md).
 
+### SKILLS-5 — The skills overhaul, batch 5: skill levels by use
+
+- **Owner:** Claude worker. **Branch/worktree:** `claude/skills-5` (from `claude/skills-4`, main merged in).
+- **Goal:** the owner-approved design's section 5 with the owner's answers (the ultimate does not level; no head start; the spire and the Calamity use Level 1): skills 1 to 3 and learned book skills earn use points (a cast its cooldown in seconds, 2 a wave fought, auto-replay half) into five levels at 200, 600, 1,500 and 3,500 points, stronger, cheaper, quicker and longer, with a Level 5 step; counted at every settle; shown on the wave card, results screen, skill sheet, unit card, hero sheet and skill book.
+- **Scope:** new `src/sim/skillLevels.ts`, `src/sim/kits/lv5.ts`, `test/skill-levels.test.ts`, `tools/skills/lv5*.{ts,mjs}`, `tools/skills/levelShots.mjs`; hooks in `meta.ts` (`skillUse`), `heroKits.ts` (`Slot.lv`, levelled kits, `castMods` around a cast, casts noted), `abilities.ts` (`tal` adds `castMods`; the dire wolf), `battle.ts` (`Boost.skillLv`, `Unit.skillLv`, `usePts`), `equipment.ts`, `talents.ts` (`heroStats`), `stand.ts` (`StandRun.use`), `main.ts`, `standView.ts`, `waveCard.ts`, `waveCardView.ts`, `jrpgRecapView.ts`, `fightHudRules.ts`, `fightHud.ts`, `unitInfoRules.ts`, `menuHeroes.ts`, `skillBookView.ts`, CSS; `tools/heroSweep.ts` (`--skill-level`), `tools/kits/tune.ts`, `tools/skills/measure.ts`; `test/fight-hud.test.ts` moved to the sheet's level list. Optional save fields; no version change.
+- **Status:** ready for review. [Note](notes/skills-5.md).
+
 ### ONE-OF-EACH — One unit of a hero on the battlefield at a time
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/one-of-each`, `/home/user/lotf-one-each` (from main 0.272.0).

@@ -4,18 +4,17 @@
 // is cast (a minute of standing), the mean fight length, and the sim's time per fight.
 //
 //   node tools/skills/measure.mjs <level>:<stage> [<level>:<stage> ...]     GAMES fights a cell (default 2000)
-//   PER=1 adds each hero's income and casts a minute.
+//   PER=1 adds each hero's income and casts a minute. --skill-level <1-5> fights every skill at that level (`tools/heroSweep.ts`).
 //
 // Income is the sum of each tick's rise in a hero's pool (a cast's tick, where the pool falls, is left out: one tick of refill lost a cast).
 
 import { fight, place, startBattle, stepBattle } from '../../src/sim/battle';
 import { FIELD_BANDS } from '../../src/sim/foes';
-import { gradeBoost } from '../../src/sim/run';
 import { mixSeed, Rng } from '../../src/sim/rng';
 import { ALL_HEROES, UNITS } from '../../src/sim/units';
 import { keyOf } from '../../src/sim/abilities';
 import { HERO_KITS, resMax } from '../../src/sim/heroKits';
-import { deploySpots, fieldBoost, pickTeam } from '../heroSweep';
+import { deploySpots, fieldBoost, pickTeam, sweepBoost } from '../heroSweep';
 
 const GAMES = Number(process.env.GAMES ?? 2000);
 
@@ -31,7 +30,7 @@ function cell(level: number, stage: number) {
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
     const b = startBattle(seed, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(stage));
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-    team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, gradeBoost(1, 0, level)));
+    team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(1, level)));
     fight(b);
     const heroes = b.units.filter((u) => u.side === 'hero' && HERO_KITS()[u.def]);
     while (b.phase === 'fight') {
@@ -76,7 +75,7 @@ function cell(level: number, stage: number) {
   if (process.env.PER) for (const r of rows) console.log(`  ${UNITS[r.h].name}: ${r.income.toFixed(2)} ${r.pool === 'mana' ? 'MP' : 'SP'}/s, casts a minute ${r.c.map((c) => c.toFixed(1)).join('/')}`);
 }
 
-for (const a of process.argv.slice(2)) {
+for (const a of process.argv.slice(2).filter((x) => x.includes(':'))) {
   const [level, stage] = a.split(':').map(Number);
   cell(level, stage);
 }

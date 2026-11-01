@@ -313,6 +313,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 .dossierAbility.locked > img { filter: grayscale(.85); opacity: .65; }
 .dossierAbility[data-type='ultimate'] { background: linear-gradient(120deg, #3c3024, #141b15); }
 .dossierAbility .ultLock { display: block; margin-top: 8px; color: #dfbe8d; font: 13px/1.4 var(--body); }
+.dossierAbility .skillLv { margin-top: 8px; }
+.dossierAbility .skillLv small { display: block; color: #dfbe8d; font: 12px/1.4 var(--body); }
+.dossierAbility .skillLvBar { display: block; height: 4px; margin-top: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.dossierAbility .skillLvBar span { display: block; height: 100%; background: linear-gradient(90deg, #b98a3e, #f2d48c); }
 .heroDetail .heroTabPanel { scroll-margin-top: 10px; }
 @media (max-width: 375px) {
   .heroDetail .hhead { padding: 18px 22px 36px; }
