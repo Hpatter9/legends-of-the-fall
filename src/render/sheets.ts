@@ -104,6 +104,9 @@ import eidolonNivra from '../art/units/eidolon_nivra.png';
 import eidolonAurelan from '../art/units/eidolon_aurelan.png';
 // (EIDOLON-CHAIN-4: Voltara's, cut by tools/eidolon-trial/cut_voltara.py)
 import eidolonVoltara from '../art/units/eidolon_voltara.png';
+// (EIDOLON-CHAIN-5 and 6: Gorm's and Vaelkhar's, cut by tools/eidolon-trial/cut_gorm.py and cut_vaelkhar.py)
+import eidolonGorm from '../art/units/eidolon_gorm.png';
+import eidolonVaelkhar from '../art/units/eidolon_vaelkhar.png';
 // (SUMMON-ART: the summons' own sheets, cut by tools/summon-art/cut.py; which summon wears which is in summonArt.ts)
 import summonWolf from '../art/units/summon_wolf.png';
 import summonWolfWhite from '../art/units/summon_wolf_white.png';
@@ -239,6 +242,8 @@ const URLS: Record<string, string> = {
   eidolon_nivra: eidolonNivra,
   eidolon_aurelan: eidolonAurelan,
   eidolon_voltara: eidolonVoltara,
+  eidolon_gorm: eidolonGorm,
+  eidolon_vaelkhar: eidolonVaelkhar,
   summon_wolf: summonWolf,
   summon_wolf_white: summonWolfWhite,
   summon_direwolf: summonDirewolf,

@@ -21,6 +21,7 @@ import { drawEquipment } from './equipView';
 import { drawSkillBook } from './skillBookView';
 import { fightLoadout, kitWithLoadout } from './sim/books';
 import { drawTalents } from './talentView';
+import { drawStatsPanel } from './statsPanel';
 import { TREES } from './sim/talents';
 import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
@@ -36,7 +37,6 @@ import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
 import targetIcon from './art/talent/target.png';
 import haloIcon from './art/talent/halo.png';
-import heartIcon from './art/talent/heart.png';
 import crystalIcon from './art/talent/crystal.png';
 import { warmIcon } from './menuArt';
 import { tomeControl } from './tomeView';
@@ -322,12 +322,17 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     box.append(tabs, ...panels);
     const b = lastingBoost(x.level);
     const m = rankMult(full);
-    const stat = el('div', 'hstats');
-    for (const [name, v] of [['HP', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Defence', def.def], ['Range', def.range]] as const) {
+    const stat = el('div', 'hstats four');
+    // (STATS batch 3: health, attack and armour sit at the head of the Stats panel; range and the speeds stay here)
+    const lead: HTMLElement[] = [];
+    for (const [name, v] of [['Health', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Armour', def.def]] as const) {
       const cell = el('div');
-      cell.append(detailIcon(({ HP: heartIcon, Attack: swordIcon, Defence: shieldIcon, Range: targetIcon })[name]), el('b', '', String(v)), el('small', '', name));
-      stat.append(cell);
+      cell.append(el('b', '', String(v)), el('small', '', name));
+      lead.push(cell);
     }
+    const range = el('div', 'hspeed');
+    range.append(el('b', '', String(def.range)), el('small', '', 'Range'));
+    stat.append(range);
     // (how often it swings and how fast it walks, with what its equipment and talents add; they follow an equip or a talent learned)
     const speeds: [HTMLElement, () => string][] = [];
     for (const [name, rate] of [['Attack speed', () => rateText(blowsPerSecond(kind, heroStats(meta, kind)))], ['Walk', () => rateText(tilesPerSecond(kind, heroStats(meta, kind)))], ['Jump', () => jumpText(kind)]] as const) {
@@ -345,7 +350,8 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       pv.textContent = powerText(kindPower(meta, kind));
       for (const [v, rate] of speeds) v.textContent = rate();
     };
-    overview.append(power, stat);
+    const scores = drawStatsPanel(kind, { level: x.level, rank: full, grade: 1 }, lead, heroStats(meta, kind)?.scores);
+    overview.append(power, ...(scores ? [scores] : []), stat);
     const profile = el('div', 'dossierProfile');
     profile.append(detailHeading('Combat profile', def.role));
     const traits = el('div', 'dossierTraits');

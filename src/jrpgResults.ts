@@ -139,18 +139,18 @@ export function fightResult(i: FightResultIn, sub: string, hint?: string): JrDat
       const lb = h ? localBoost(h) : null;
       const lv = h ? levelBoost(heroLevel(h)) : null;
       const mult = lb && lv ? { hp: (lb.hp ?? 1) / lv.hp, atk: (lb.atk ?? 1) / lv.atk } : undefined;
-      rows.push({ kind: g.kind, growth: heroGrowth(g.kind, xpTo - g.xp, xpTo, 'run', mult), face: face(meta, g.kind, h?.grade ?? 1), fell: fell.has(g.kind), mvp: mvp?.kind === g.kind });
+      rows.push({ kind: g.kind, growth: heroGrowth(g.kind, xpTo - g.xp, xpTo, 'run', mult, 1, h?.grade ?? 1), face: face(meta, g.kind, h?.grade ?? 1), fell: fell.has(g.kind), mvp: mvp?.kind === g.kind });
     }
   } else {
     for (const k of kinds) {
       const xpTo = meta.xp[k] ?? 0;
       const got = (i.gains[k] ?? 0) + (i.bench[k] ?? 0);
-      rows.push({ kind: k, growth: heroGrowth(k, xpTo - got, xpTo, 'lasting', lastingMult(meta, k)), face: face(meta, k, grade(k)), fell: fell.has(k), mvp: mvp?.kind === k });
+      rows.push({ kind: k, growth: heroGrowth(k, xpTo - got, xpTo, 'lasting', lastingMult(meta, k), heroRank(meta, k)), face: face(meta, k, grade(k)), fell: fell.has(k), mvp: mvp?.kind === k });
     }
     for (const k of Object.keys(i.bench)) {
       if (kinds.includes(k)) continue;
       const xpTo = meta.xp[k] ?? 0;
-      rows.push({ kind: k, growth: heroGrowth(k, xpTo - i.bench[k], xpTo, 'lasting', lastingMult(meta, k)), face: face(meta, k), bench: true });
+      rows.push({ kind: k, growth: heroGrowth(k, xpTo - i.bench[k], xpTo, 'lasting', lastingMult(meta, k), heroRank(meta, k)), face: face(meta, k), bench: true });
     }
   }
   const heroes = partyRows(rows);
@@ -192,7 +192,7 @@ export function runResult(meta: Meta, recap: RunRecap, head: { title: string; to
   const heroes: JrHero[] = kinds.map((k) => {
     const xpTo = meta.xp[k] ?? 0;
     const xpFrom = recap.xpAt?.[k] ?? xpTo - (recap.xp[k] ?? 0);
-    return { kind: k, growth: heroGrowth(k, xpFrom, xpTo, 'lasting', lastingMult(meta, k)), face: face(meta, k, recap.heroes[k].grade), mvp: k === mvp };
+    return { kind: k, growth: heroGrowth(k, xpFrom, xpTo, 'lasting', lastingMult(meta, k), heroRank(meta, k)), face: face(meta, k, recap.heroes[k].grade), mvp: k === mvp };
   });
   const t = mvp ? recap.heroes[mvp] : undefined;
   // (RECAP-SPOILS: the run's spoils page: its crowns and stones, gear and items; no gold, the owner: it is only for the waves)

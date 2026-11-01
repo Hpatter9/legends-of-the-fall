@@ -56,6 +56,7 @@ import { showEndCard } from './revealCard';
 import { chainById, type ChainDef } from './sim/eidolonChainData';
 import { openPactGallery } from './eidolonChainView';
 import { playBinding } from './eidolonBinding';
+import { heartHeld, noteSavedHeart, withHeart } from './sim/vaelkharHeart';
 import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
@@ -465,7 +466,9 @@ export class Home {
   private async bind(ready: ChainDef): Promise<void> {
     const m = this.meta;
     this.hall.stop();
-    await playBinding(ready);
+    // (VAELKHAR-HEART: bound with his Heart held, he takes it back in the ceremony; a run still going is looked in first)
+    if (ready.eidolon === 'vaelkhar') noteSavedHeart(m, localStorage);
+    await playBinding(ready, false, ready.eidolon === 'vaelkhar' && heartHeld(m) && ready.binding ? withHeart(ready.binding) : undefined);
     // (HORN-GIFT: the first binding hands over the War Horn, full; its end card says what it does and where it is)
     const hadHorn = hornHeld(m);
     if (bindChain(m, ready.id)) saveMeta(m);

@@ -176,12 +176,12 @@ export interface Meta {
     guardians?: number; gloaming?: number; dealerDue?: boolean; trade?: { caravan?: { visit: number; sold: Record<string, number> }; gloaming?: { visit: number; sold: Record<string, number> } };
   };
   /** Skill books (`books.ts`): unread copies by book, the books each hero kind has learned, the book each is studying (fights done),
-   *  the progress of books put down, and the two skills each kind has chosen for its slots. Saves from before have none. */
+   *  the progress of books put down, and the skills each kind has chosen for its three slots (a two-slot save is made whole when read). Saves from before have none. */
   books?: Record<string, number>;
   learned?: Record<string, string[]>;
   study?: Record<string, { book: string; done: number }>;
   studyKept?: Record<string, Record<string, number>>;
-  loadout?: Record<string, [string, string]>;
+  loadout?: Record<string, string[]>;
   /** Skill levels by use (the skills overhaul's batch 5, `skillLevels.ts`): the use points each hero kind has earned with each of its skills, under the
    *  skill's fixed key (its own three and the learned ones alike). Saves from before have none: every skill at Level 1. */
   skillUse?: Record<string, Record<string, number>>;

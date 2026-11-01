@@ -27,6 +27,42 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.319.0',
+    date: '2026-11-01',
+    title: 'The Stats panel',
+    notes: ['Each hero\'s sheet shows the six D&D scores, AC, to hit, skill DC and saves; the unit card and level-up recap show them, and gear compares by score.'],
+  },
+  {
+    version: '0.318.0',
+    date: '2026-11-01',
+    title: 'Vaelkhar\'s Heart returned',
+    notes: ['If you have ever held Vaelkhar\'s Heart, binding him returns it to him, and he pays the debt: his War Horn drain gives back 30% of the damage dealt, not 25%.'],
+  },
+  {
+    version: '0.317.0',
+    date: '2026-11-01',
+    title: 'Lost techniques',
+    notes: ['Four Legendary skill books, each won through a hero\'s own three-part quest from level 30: the Ninefold Cut, Words of Unmaking, the Long Dawn and Old Hunger.'],
+  },
+  {
+    version: '0.316.0',
+    date: '2026-11-01',
+    title: 'D&D scores drive power',
+    notes: ['Health grows with CON, blows and skills with their ability; level-ups raise scores, and ranks, talents and gear add points. Average power is unchanged.'],
+  },
+  {
+    version: '0.315.0',
+    date: '2026-11-01',
+    title: 'Three book slots',
+    notes: ['Every hero has three skill slots from the start (the third opens at level 20). A book\'s skill levels up with use like any other, and its cost fits the reader.'],
+  },
+  {
+    version: '0.314.0',
+    date: '2026-11-01',
+    title: 'Gorm\'s and Vaelkhar\'s chains',
+    notes: ['The last two Eidolon stories: Duchess the goat brings Gorm\'s, a voice in the rift brings Vaelkhar\'s. Each ends in a trial; the Dragon King\'s is the hardest.'],
+  },
+  {
     version: '0.313.0',
     date: '2026-11-01',
     title: 'Skills grow with use',

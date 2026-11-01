@@ -13,7 +13,7 @@ import sanctumUrl from './art/hall/sanctum.png';
 import { figureUrl } from './eidolonCall';
 import { pieceSigil } from './eidolonChainView';
 import { eidolonById } from './sim/eidolons';
-import type { ChainDef } from './sim/eidolonChainData';
+import type { BindingBeat, ChainDef } from './sim/eidolonChainData';
 import { duck, play, type Sfx } from './render/sound';
 import { settings } from './settings';
 
@@ -29,9 +29,9 @@ const BEAT_SOUND = { pieces: 'holyChime', circle: 'riseSummon', rise: 'fireWhoos
 const ELEMENT_SOUND: Partial<Record<string, Partial<Record<keyof typeof BEAT_SOUND, Sfx>>>> = { ice: { circle: 'frostCrack', rise: 'frostShatter' } };
 
 /** Play a chain's binding. Resolves when the player taps Continue on its last beat. */
-export function playBinding(chain: ChainDef, replay = false): Promise<void> {
+export function playBinding(chain: ChainDef, replay = false, own?: readonly BindingBeat[]): Promise<void> {
   const e = eidolonById(chain.eidolon);
-  const beats = chain.binding ?? [];
+  const beats = own ?? chain.binding ?? [];
   if (!e || !beats.length) return Promise.resolve();
   const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const layer = el('div', `ebLayer el-${e.element}${reduced ? ' still' : ''}${settings().saver ? ' saver' : ''}`);

@@ -59,6 +59,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // their hashes)
 // (SKILLS-4, the skills overhaul's batch 4, docs/notes/skills-4.md: every hero's skill 3, open from level 20, re-recorded field30, bosses, armyFoes,
 // spells, army and stand, the scenarios with heroes at level 20 or more; field1, lands, daily, tower and calamity kept their hashes)
+// (STATS-2, the D&D stats design's batch 2, docs/notes/stats-2.md: the scores move every scenario with a hero above level 1, rank 1 or grade 1.
+// Re-recorded field30, bosses, armyFoes, spells, lands, army, daily, tower and stand, by the test's own hashes; field1 and calamity kept theirs)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

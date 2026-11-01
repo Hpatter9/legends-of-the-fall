@@ -14,7 +14,7 @@ import { play } from './render/sound';
 import { ORES } from './sim/awakenMats';
 import { showWhenPainted } from './paintReady';
 import { BOOKS, KIND_NAMES, RARITY_WORDS, bookById, type BookDef } from './sim/bookData';
-import { canRead, copiesOf, knowsBook, slotFor, studyLength, suitedTo } from './sim/books';
+import { bookSource, canRead, copiesOf, knowsBook, studyLength, suitedTo } from './sim/books';
 import { EQUIP_BASES, RARITY_NAMES, STASH_MAX, describeAbility, hasAbility, itemName, itemStats, sellPrice, spareEquipment, statLines, wearerOf, type Equipment } from './sim/equipment';
 import { heroName } from './sim/heroNames';
 import { saveMeta, type Meta } from './sim/meta';
@@ -285,7 +285,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
   /** A book's page: its history, the skill it teaches, the study, and the owned heroes who could read it. */
   const bookDetail = (sheet: HTMLElement, b: BookDef): void => {
     sheet.append(el('p', 'hsHistory', b.history));
-    const slot = slotFor(b.from.hero, b.from.slot === 1 ? 'own1' : 'own2');
+    const slot = bookSource(b);
     if (slot) sheet.append(el('p', 'hsLine', `Teaches ${slot.skill.name}: ${slot.skill.text}`));
     const len = studyLength(b, m.castle.library);
     sheet.append(el('p', 'hsLine', `Study: ${len} fight${len === 1 ? '' : 's'}${m.castle.library ? ' (with the library)' : ''}. A hero studies one fight for each wave it fights in.`));

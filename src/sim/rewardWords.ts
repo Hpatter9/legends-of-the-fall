@@ -4,6 +4,7 @@
 // it. Pure: no Pixi, no DOM.
 
 import { ORES } from './awakenMats';
+import { bookById } from './bookData';
 import { heroName } from './heroNames';
 import type { Meta } from './meta';
 import type { Reward } from './questData';
@@ -27,6 +28,7 @@ export function rewardWords(r: Reward, m?: Pick<Meta, 'unlocked'>): string {
   for (const o of r.ores ?? []) parts.push(`${o.n} ${ORES[o.trait]?.name ?? 'ore'}`);
   for (const [size, n] of Object.entries(r.tomes ?? {})) if (n) parts.push(tomeWords(size as TomeSize, n));
   if (r.shards && !secretShards) parts.push(`${r.shards.n} of ${heroName(r.shards.kind)}'s shards`);
+  if (r.book) parts.push(`the book ${bookById(r.book)?.title ?? 'of a lost technique'}`);
   if (r.keepsake) parts.push(`a keepsake`);
   return parts.join(' · ');
 }
