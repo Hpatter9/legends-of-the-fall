@@ -81,3 +81,10 @@ card at 393x852 (`docs/samples/relics-3-*.png`).
 1. Eidolon relics' power target (aimed at Common level).
 2. Voltara's echo makes her rider half as large again, since it has no duration.
 3. The Void Shard's guardian bonus is not measured by the classic-army sweep.
+
+### The Last Stand's pace (at release)
+
+With the Eidolons' relics gone from the Last Stand's offers, its draws are the keep's own relics only, stronger on average than the old Calamity
+commons they shared the pool with: a level-30 party's median went from about 14 to 19. `WAVE_GROWTH_LATE` (`stand.ts`) goes from 0.26 to 0.32
+(waves 11 on only), which puts the medians at 4, 8 and 15 for levels 1, 10 and 30, inside the agreed targets. The `stand` hashes in
+`test/fixtures/ailment-logs.json` and `spells-identity.json` move with the new offers.
