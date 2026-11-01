@@ -75,3 +75,23 @@ export function foundRow(meta: Meta, home: FoundHome | undefined, day: number, c
   }
   return box;
 }
+
+/** RUN-GEAR-2: the auto-replay recap's list of finds: each piece in its grade frame (a "+n" chip past `SHOWN`), or null for none. The
+ *  pieces are the runs' own (saved ids), so a piece sold or merged since still shows as it was found. */
+export function foundList(pieces: readonly Equipment[]): HTMLElement | null {
+  if (!pieces.length) return null;
+  const box = el('div', 'asumFinds');
+  box.setAttribute('aria-label', 'Finds');
+  box.append(el('small', '', 'Finds'));
+  const row = el('div', 'rcFoundRow');
+  const best = [...pieces].sort((a, b) => b.rarity - a.rarity || b.level - a.level);
+  for (const p of best.slice(0, SHOWN)) {
+    const b = el('span', 'rcFoundPiece');
+    b.append(itemIcon(p, EQUIP_BASES[p.base].slot, 'small'));
+    b.title = itemName(p);
+    row.append(b);
+  }
+  if (best.length > SHOWN) row.append(el('span', 'rcFoundMore', `+${best.length - SHOWN}`));
+  box.append(row);
+  return box;
+}

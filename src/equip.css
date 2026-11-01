@@ -91,3 +91,5 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .kbRow { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid #4c3d28; border-radius: 4px; background: #1e1711; }
 .kbRow.on { border-color: #c49a4f; }
 .kbRow > button { flex: none; min-height: 44px; }
+.eqStash { display: block; margin-top: 6px; text-align: center; font-size: 11px; color: var(--dim); }
+.eqStash.full { color: #ff8a80; font-weight: 700; }

@@ -139,6 +139,7 @@ body[data-move] #result #banner { background: #15251ac4; }
 #result #waveNotes .wn.drop::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, #fff4cf55 50%, transparent 70%); transform: translateX(-110%); animation: dropShine 1.1s ease-out forwards; animation-delay: calc(var(--i) * .12s + .55s); pointer-events: none; }
 @keyframes dropShine { to { transform: translateX(110%); } }
 #result #waveNotes .wn.fell { border-left-color: #a8705f; color: #e2c7b8; }
+#result #waveNotes .wn.pack { border-left-color: #6fa8c9; }
 #result #waveNotes .wn.fell > span, #result #waveNotes .wn.heart > span { color: #e2917d; }
 #result #waveNotes .wn.heart { border-left-color: #c75f53; }
 /* RECAP-REVEAL: everything the wave brought in, as small chips with the packs' icons; many wrap, and past three rows they scroll a little. */
@@ -213,3 +214,10 @@ body[data-move] #result.passing > :is(#stars, #armyStars, #oreDrop, #waveNotes) 
 .rcFoundLine, .rcFoundNote { margin: 6px 0 0; color: #e0d6bc; font: 400 12px/1.35 var(--body); }
 .rcFoundNote { color: #edb29f; }
 .rcFoundSell { margin-top: 8px; min-height: 40px; padding: 0 14px; border: 1px solid #bca164; border-radius: 4px; background: #5b5030; color: #ffedb6; font: 700 13px var(--body); }
+/* RUN-GEAR-2: the auto-replay recap's finds, the camp cart's red "full" tag, the equipment panel's stash count */
+.asumFinds { margin: 8px 0 0; text-align: center; }
+.asumFinds small { display: block; color: var(--dim); font-size: 11px; margin-bottom: 4px; }
+.asumFinds .rcFoundRow { justify-content: center; }
+.asumFinds .rcFoundPiece { display: inline-flex; min-width: 40px; min-height: 40px; }
+.asumFinds .rcFoundMore { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid #9c8454; border-radius: 5px; background: #111e18; color: #f2d494; font: 700 13px var(--body); }
+.csFull { align-self: stretch; text-align: center; padding: 1px 3px; font: bold 11px var(--display); font-style: normal; text-transform: uppercase; color: #fff; background: #b3261e; border: 1px solid #5b0f0b; }
