@@ -1,15 +1,15 @@
-// The hero sheet's Skill book panel (SHOP-BOOKS-GEAR, docs/notes/shop-books-gear.md): the two skill slots and what sits in them (a
+// The hero sheet's Skill book panel (SHOP-BOOKS-GEAR, docs/notes/shop-books-gear.md): the three skill slots and what sits in them (a
 // tap opens the picker of every skill the hero knows), the book it is studying with the fights left, and "Read a book" (the unread
 // books in the bag this hero could read). The rules are `src/sim/books.ts`; this only changes the meta through them.
 
 import { bookIcon, shopArt } from './bookArt';
 import { play } from './render/sound';
 import { bookById } from './sim/bookData';
-import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
+import { HERO_KITS, SLOT_LEVELS } from './sim/heroKits';
 import { heroName } from './sim/heroNames';
 import { levelOfKind } from './sim/levels';
 import { saveMeta, type Meta } from './sim/meta';
-import { OWN1, OWN2, knownPicks, loadoutOf, pickName, readableNow, setSlot, slotFor, startStudy, stopStudy, studentCap, students, studyLeft, studyLength, type SkillPick } from './sim/books';
+import { OWN1, OWN2, OWN3, knownPicks, loadoutOf, pickName, readableNow, setSlot, slotFor, startStudy, stopStudy, studentCap, students, studyLeft, studyLength, type SkillPick } from './sim/books';
 import { keyOf } from './sim/abilities';
 import { levelLine, useOf } from './sim/skillLevels';
 
@@ -21,7 +21,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 
 /** Where a pick comes from, in words: "own skill 1", or the book's title. */
-const pickFrom = (pick: SkillPick): string => (pick === OWN1 ? 'Own skill 1' : pick === OWN2 ? 'Own skill 2' : `Learned · ${bookById(pick)?.title ?? ''}`);
+const pickFrom = (pick: SkillPick): string => (pick === OWN1 ? 'Own skill 1' : pick === OWN2 ? 'Own skill 2' : pick === OWN3 ? 'Own skill 3' : `Learned · ${bookById(pick)?.title ?? ''}`);
 
 /** The Skill book panel for an owned hero kind. `changed` redraws the sheet after a change (the skill cards follow the slots). */
 export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HTMLElement {
@@ -37,7 +37,7 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
     panel.replaceChildren(el('h4', '', 'Skill book'));
     const l = loadoutOf(meta, kind);
     const slots = el('div', 'kbSlots');
-    ([1, 2] as const).forEach((n) => {
+    ([1, 2, 3] as const).slice(0, l.length).forEach((n) => {
       const pick = l[n - 1];
       const b = el('button', 'kbSlot');
       b.type = 'button';
@@ -45,7 +45,7 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
       if (book) b.append(bookIcon(book, 40));
       else b.append(el('span', 'kbOwn', String(n)));
       const words = el('span', 'kbWords');
-      words.append(el('small', '', `Skill ${n}${n === 2 && levelOfKind(meta, kind) < SKILL2_LEVEL ? ` · opens at level ${SKILL2_LEVEL}` : ''}`), el('b', '', pickName(kind, pick)), el('small', '', pickFrom(pick)));
+      words.append(el('small', '', `Skill ${n}${levelOfKind(meta, kind) < SLOT_LEVELS[n - 1] ? ` · opens at level ${SLOT_LEVELS[n - 1]}` : ''}`), el('b', '', pickName(kind, pick)), el('small', '', pickFrom(pick)));
       b.append(words);
       b.setAttribute('aria-label', `Skill ${n}: ${pickName(kind, pick)}. Choose a skill`);
       b.addEventListener('click', () => picker(n));
@@ -88,7 +88,7 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
   };
 
   /** The picker: every skill the hero knows, its own first, and which slot each goes in. */
-  const picker = (n: 1 | 2): void => {
+  const picker = (n: 1 | 2 | 3): void => {
     panel.replaceChildren(el('h4', '', `Skill ${n} · ${heroName(kind)}`));
     const l = loadoutOf(meta, kind);
     const list = el('div', 'kbList');
@@ -100,7 +100,7 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
       if (book) row.append(bookIcon(book, 44));
       const words = el('div', 'kbWords');
       // (the skills overhaul's batch 5: a skill keeps its level by use wherever it sits)
-      words.append(el('b', '', slot.skill.name), el('small', '', `${pickFrom(pick)} · ${Math.round(slot.cost)} ${own?.pool ?? ''} · ${levelLine(useOf(meta, kind, keyOf(slot.skill)))}`), el('p', '', slot.skill.text));
+      words.append(el('b', '', slot.skill.name), el('small', '', `${pickFrom(pick)} · ${Math.round(slot.cost)} ${own?.pool ?? ''} · ${Math.round(slot.cd / 1000)} s · ${levelLine(useOf(meta, kind, keyOf(slot.skill)))}`), el('p', '', slot.skill.text));
       const where = l.indexOf(pick);
       if (where >= 0) words.append(el('small', 'kbIn', `In use as skill ${where + 1}`));
       // (a healer's revive belongs to its own skill 2: swapping it out loses the revive, and the picker says so)
@@ -116,7 +116,7 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
       }
       list.append(row);
     }
-    panel.append(list, el('small', 'eqDim', 'Swap skills at camp as often as you like: nothing learned is ever forgotten. The ultimate stays as it is.'));
+    panel.append(list, el('small', 'eqDim', 'Swap skills at camp as often as you like: nothing learned is ever forgotten. A skill keeps its level wherever it sits. The ultimate stays as it is.'));
     const back = el('button', '', 'Back');
     back.type = 'button';
     back.addEventListener('click', overview);

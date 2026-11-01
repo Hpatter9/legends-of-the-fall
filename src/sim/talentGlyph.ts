@@ -36,5 +36,7 @@ export function glyphOf(n: TalentNode): string {
   const tal = Object.keys(n.tal ?? {}).map((k) => TAL_GLYPH[k]).find(Boolean);
   if (tal) return tal;
   const stat = (Object.keys(n.stats ?? {}) as StatKey[]).map((k) => STAT_GLYPH[k]).find(Boolean);
-  return stat ?? 'burst';
+  // (a stat node's score points, STATS batch 2: CON is the health it replaced, any other score the attack)
+  const score = n.scores ? (n.scores.con ? STAT_GLYPH.hp : STAT_GLYPH.atk) : undefined;
+  return stat ?? score ?? 'burst';
 }

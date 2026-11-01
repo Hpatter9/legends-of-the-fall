@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { statMults } from '../src/sim/statPower';
 import assert from 'node:assert/strict';
 import { addUnit, place, playOut, startBattle } from '../src/sim/battle';
 import { autoMerge, merge } from '../src/sim/merge';
@@ -63,8 +64,10 @@ test('grade raises hp and attack in the fight', () => {
   place(b2, 'knight', 1, 8, 2, gradeBoost(3));
   const [lo, hi] = [...b.units, ...b2.units].filter((u) => u.side === 'hero');
   assert.equal(lo.tag, 1);
-  assert.equal(hi.maxHp, Math.round(UNITS.knight.hp * GRADE_BOOST[2]));
-  assert.ok(Math.abs((hi.power ?? 0) - GRADE_BOOST[2]) < 1e-9);
+  // (and the grade's score steps, CON and STR +2 for the Knight: STATS batch 2)
+  const st = statMults('knight', { grade: 3 });
+  assert.equal(hi.maxHp, Math.round(UNITS.knight.hp * GRADE_BOOST[2] * st.hp));
+  assert.ok(Math.abs((hi.power ?? 0) - GRADE_BOOST[2] * st.blow) < 1e-9);
   assert.equal(lo.power, undefined);
 });
 
