@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.305.0',
+    date: '2026-11-01',
+    title: 'Fewer screen glitches',
+    notes: ['Chests, summons and full artwork now draw fully on sharp phone screens: hidden screens stop being painted and the big light effects cost far less.'],
+  },
+  {
     version: '0.304.0',
     date: '2026-10-31',
     title: 'Skills with cooldowns; ranks give stats',

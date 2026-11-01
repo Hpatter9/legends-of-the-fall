@@ -10,6 +10,7 @@ import { todayKey } from './modes';
 import { chestShopCards } from './shopView';
 import { TOME_ICON } from './tomeArt';
 import { play } from './render/sound';
+import { showWhenPainted } from './paintReady';
 import { BOOKS, KIND_NAMES, RARITY_WORDS, bookById, type BookDef } from './sim/bookData';
 import { canRead, copiesOf, knowsBook, slotFor, studyLength, suitedTo } from './sim/books';
 import { EQUIP_BASES, RARITY_NAMES, describeAbility, hasAbility, itemName, itemStats, sellPrice, spareEquipment, statLines, wearerOf, type Equipment } from './sim/equipment';
@@ -408,4 +409,6 @@ export function openStall(m: Meta, onChange: () => void, first: StallTab = 'book
 
   draw();
   document.body.append(root);
+  // (MENU-GLITCH: the stall shows once its shelf, Hester and the wares are decoded, not filling in picture by picture)
+  void showWhenPainted(root);
 }

@@ -395,6 +395,19 @@ function idleBounds(sheet: string): { x: number; y: number; w: number; h: number
   return box;
 }
 
+/** MENU-GLITCH: find each loaded sheet's idle box a few at a time while the page is idle, so a screen of portraits (the codex, the
+ *  party) does not stop to read every figure's pixels as it opens (that held the codex's first opening for most of a second). */
+export function warmPortraits(): void {
+  const todo = [...images.keys()].filter((k) => LAYOUT[k] && !bounds.has(k));
+  const later = (f: (d?: IdleDeadline) => void) => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 50));
+  const step = (d?: IdleDeadline): void => {
+    let n = 0;
+    while (todo.length && (d ? d.timeRemaining() > 4 : n++ < 3)) idleBounds(todo.pop()!);
+    if (todo.length) later(step);
+  };
+  later(step);
+}
+
 /** The whole figure (weapons, wings and all, nothing cut off) of a sheet's first idle frame, at the largest whole-number
  * scale that fits `maxW` x `maxH` CSS pixels (at least once over), mirrored with `mirror`. For the boss card. */
 export function wholeFigure(sheet: string, maxW: number, maxH: number, mirror = false): HTMLCanvasElement {

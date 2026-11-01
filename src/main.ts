@@ -138,6 +138,7 @@ import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
+import { installTapGuard } from './tapGuard';
 import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
@@ -3460,6 +3461,8 @@ function overBench(x: number, y: number): boolean {
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 }
 
+// (MENU-GLITCH: a tap that opens a panel does not also press what of it is under the finger)
+installTapGuard();
 new Game().start().catch((err) => {
   $('loading').textContent = `Could not start: ${err}`;
 });

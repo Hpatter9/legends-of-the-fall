@@ -57,6 +57,8 @@ import { openPactGallery } from './eidolonChainView';
 import { playBinding } from './eidolonBinding';
 import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
+import { showWhenPainted } from './paintReady';
+import { warmPortraits } from './render/sheets';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -65,6 +67,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (text) e.textContent = text;
   return e;
 };
+
+const reducedMotion = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export interface HomeHooks {
   /** Whether a run is saved and not over. */
@@ -152,6 +156,13 @@ export class Home {
   private castleShut = el('div', 'ctShut');
   private cardOpen = false;
   private lastViewedHero?: string;
+  // (MENU-GLITCH: the pages ride one strip; `shown` is the page the strip rests on, `slide` the move under way)
+  private track = el('div', 'hmTrack');
+  private shown: Tab = 'battle';
+  private slide: { to: Tab; from: Tab; anim: Animation | null } | null = null;
+  private slideToken = 0;
+  private snapNext = true;
+  private primed = false;
 
   constructor(
     private meta: Meta,
@@ -209,9 +220,10 @@ export class Home {
     );
     const pages = $('hmPages');
     const bar = $('hmTabs');
+    pages.append(this.track);
     for (const t of TABS) {
-      const page = el('section', `hmPage hm-${t.id}`);
-      pages.append(page);
+      const page = el('section', `hmPage hm-${t.id}${t.id === this.shown ? ' on' : ''}`);
+      this.track.append(page);
       this.pages.set(t.id, page);
       const b = el('button', `hmTab${t.id === 'battle' ? ' hero' : ''}`);
       b.append(icon(ICONS[t.id]), el('span', '', t.label), el('i', 'badge'));
@@ -266,10 +278,15 @@ export class Home {
   /** Open the home screen; `note` is a line shown on the Battle page (the last run's end). */
   open(note = this.note): void {
     this.note = note;
+    // (coming back to the home screen it is simply there, on the Battle page: nothing slides)
+    if ($('home').hidden) this.snapNext = true;
     $('home').hidden = false;
+    this.handToken++;
+    $('home').classList.remove('handoff', 'handoffQuiet');
     this.closeSub();
     this.closeSheet();
     this.show('battle');
+    this.primeScenes();
     tips.offer('home', $('hmBattle'));
     // (a run has just ended: the crowns are there to spend)
     if (note) tips.offer('crowns', $('hmTabs'));
@@ -300,6 +317,9 @@ export class Home {
   private go(then: () => void): void {
     closeGiverCard();
     $('home').hidden = true;
+    // (MENU-GLITCH: the home screen is closed, but stays drawn, still and untouchable, under the screen `then` puts up, until that
+    //  screen is gone again or covers it: see `handOff`)
+    $('home').classList.add('handoff');
     this.camp.stop();
     this.tavern.stop();
     this.castle.stop();
@@ -308,6 +328,46 @@ export class Home {
     this.note = '';
     this.hooks.onScene?.();
     then();
+    this.handOff();
+  }
+
+  /** MENU-GLITCH: a screen opened from the home screen and laid over it (the party, the Calamity's pick, the daily's card, the Last
+   *  Stand) fades in. With the home screen gone at once, the fade showed the last fight's board behind it (stale and out of place);
+   *  now the home screen stays drawn under it, so the new screen fades in over where the player was, and goes (in the same frame)
+   *  once nothing covers it any more: a fight's board shows, or the home screen opens again. A screen that is the board itself
+   *  (the deploy) covers nothing, so the home screen goes at once, as before. */
+  private handToken = 0;
+  private handOff(): void {
+    const home = $('home');
+    const token = ++this.handToken;
+    const drop = (): void => {
+      watch.disconnect();
+      if (token === this.handToken) home.classList.remove('handoff', 'handoffQuiet');
+    };
+    const watch = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        if (token !== this.handToken || !home.hidden || !this.coveredHome()) drop();
+      });
+    });
+    let queued = false;
+    if (!home.hidden || !this.coveredHome()) return drop();
+    // (from here it takes no taps: they belong to the screen over it)
+    home.classList.add('handoffQuiet');
+    watch.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+  }
+
+  /** Whether a screen is laid over the home screen at the middle of the view (one of the page's own layers above it). */
+  private coveredHome(): boolean {
+    const home = $('home');
+    let e = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+    while (e && e.parentElement && e.parentElement !== document.body) e = e.parentElement;
+    if (!e || e === home || e === document.body || e === document.documentElement) return false;
+    const z = Number.parseInt(getComputedStyle(e).zIndex, 10) || 0;
+    const zHome = Number.parseInt(getComputedStyle(home).zIndex, 10) || 0;
+    return z > zHome || (z === zHome && !!(home.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING));
   }
 
   private gating = false;
@@ -352,7 +412,7 @@ export class Home {
   openQuests(tab: LogTab = 'active'): void {
     closeGiverCard();
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     this.tavern.paintOnce();
     this.camp.stop();
@@ -480,12 +540,8 @@ export class Home {
     // tabs
     const order = TABS.map((t) => t.id);
     const cur = order.indexOf(this.tab);
-    order.forEach((id, i) => {
-      // (a page more than one tab away waits just off screen: a switch slides only the two pages it is between, never a hidden one across the view, which showed as an empty band)
-      this.pages.get(id)!.style.transform = `translateX(${Math.max(-1, Math.min(1, i - cur)) * 100}%)`;
-      this.pages.get(id)!.classList.toggle('on', id === this.tab);
-      this.tabBtns.get(id)!.classList.toggle('on', id === this.tab);
-    });
+    for (const id of order) this.tabBtns.get(id)!.classList.toggle('on', id === this.tab);
+    this.placePages(order, cur);
     const affordable = BUILDING_IDS.some((id) => {
       const c = nextCost(m.castle, id);
       return c !== null && m.crowns >= c;
@@ -518,6 +574,73 @@ export class Home {
     // (the courtyard moves only while it is showing, and not under a building card)
     if (this.tab === 'castle' && !this.cardOpen && modeOpen(m, 'castle')) this.castle.start();
     else this.castle.stop();
+  }
+
+  /** MENU-GLITCH: the pages are one strip. The page showing rests in place; on a tab change the page it goes to is laid beside it (on
+   *  the side its tab is), given two frames to be drawn, and then the strip carries the two across together as one move, so they can
+   *  never drift apart (an empty band or one page over the other, when each page slid on its own clock) and the new page never slides
+   *  in half drawn. A change made while one is sliding finishes that one first. Reduced motion, or the home screen just opened: no slide. */
+  private placePages(order: Tab[], cur: number): void {
+    const to = this.tab;
+    if (this.slide?.to === to) return;
+    if (this.slide) this.endSlide();
+    const from = this.shown;
+    const snap = this.snapNext || from === to || reducedMotion() || document.hidden;
+    this.snapNext = false;
+    if (snap) {
+      this.shown = to;
+      for (const id of order) {
+        const page = this.pages.get(id)!;
+        page.style.transform = '';
+        page.classList.toggle('on', id === to);
+      }
+      return;
+    }
+    const dir = cur > order.indexOf(from) ? 1 : -1;
+    const next = this.pages.get(to)!;
+    next.style.transform = `translateX(${dir * 100}%)`;
+    next.classList.add('on');
+    this.shown = to;
+    const token = ++this.slideToken;
+    this.slide = { from, to, anim: null };
+    this.track.classList.add('sliding');
+    // (two frames: the first draws the page beside the view, the second shows it drawn; then it moves)
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (token !== this.slideToken || !this.slide) return;
+        const anim = this.track.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-dir * 100}%)` }], { duration: 320, easing: 'cubic-bezier(0.3, 0.8, 0.3, 1)', fill: 'forwards' });
+        this.slide.anim = anim;
+        anim.onfinish = () => token === this.slideToken && this.endSlide();
+      }),
+    );
+  }
+
+  /** The slide is over (or cut short): the new page rests in place and the old one is put away, in the one step, so no frame shows between. */
+  private endSlide(): void {
+    const s = this.slide;
+    if (!s) return;
+    this.slide = null;
+    this.slideToken++;
+    s.anim?.cancel();
+    this.track.classList.remove('sliding');
+    const next = this.pages.get(s.to)!;
+    next.style.transform = '';
+    if (s.from !== s.to) this.pages.get(s.from)!.classList.remove('on');
+  }
+
+  /** MENU-GLITCH: once the home screen is up, each page's scene paints one still picture while the page is idle, so no page ever
+   *  slides in as an empty canvas the first time its tab is opened. */
+  private primeScenes(): void {
+    if (this.primed) return;
+    this.primed = true;
+    const idle = (f: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(() => f(), { timeout: 1500 }) : setTimeout(f, 300));
+    idle(() => {
+      if (this.tab !== 'heroes') this.tavern.paintOnce();
+      if (this.tab !== 'recruit') this.hall.paintOnce();
+      if (this.tab !== 'spells') this.library.paintOnce();
+      if (this.tab !== 'battle') this.camp.paintOnce();
+      warmPortraits();
+    });
   }
 
   private drawBattle(): void {
@@ -625,15 +748,19 @@ export class Home {
     swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
     swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
     // (Hester's Stall, SHOP-BOOKS-GEAR: the stall's picture over its plate; a gold dot while the day's stock is new and unseen)
+    // (MENU-GLITCH: built only when its state changes: a new picture made on every refresh only to be thrown away still had to be decoded)
     const fresh = newStock(m, todayKey());
-    const stall = place('hmStall', 'stall', 'Hester’s Stall', fresh ? 'new stock' : 'books · gear', `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
-    const pic = el('img', 'cpStallPic');
-    pic.src = shopArt('stall');
-    pic.alt = '';
-    pic.draggable = false;
-    stall.prepend(pic);
-    if (fresh) stall.append(el('i', 'badge'));
-    swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
+    if (this.camp.stallSlot.dataset.key !== String(fresh) || !this.camp.stallSlot.querySelector('.cpPlace')) {
+      this.camp.stallSlot.dataset.key = String(fresh);
+      const stall = place('hmStall', 'stall', 'Hester’s Stall', fresh ? 'new stock' : 'books · gear', `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
+      const pic = el('img', 'cpStallPic');
+      pic.src = shopArt('stall');
+      pic.alt = '';
+      pic.draggable = false;
+      stall.prepend(pic);
+      if (fresh) stall.append(el('i', 'badge'));
+      swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
+    }
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     // Earned chests rest by the overlook's supplies.
     const stash = el('div', 'csStash');
@@ -651,9 +778,14 @@ export class Home {
   private drawCastle(): void {
     const m = this.meta;
     const bar = this.castleBar;
+    const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
+    const up = modeOpen(m, 'castle');
+    // (MENU-GLITCH: the chips are built again only when what they show has changed, so a refresh replaces none of their icons)
+    const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexAnyWaiting(m)}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
+    if (bar.dataset.key === key) return;
+    bar.dataset.key = key;
     bar.replaceChildren();
     const row = el('div', 'ctChips');
-    const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
     const ach = el('button', 'ctChip');
     ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got}/${ACHIEVEMENTS.length}`));
     if (m.achievements.length > seenCount() || unclaimed(m).length) ach.append(el('i', 'badge'));
@@ -679,7 +811,6 @@ export class Home {
     row.append(ach, cdx, levelBtn, resetTipsButton());
     bar.append(row, el('div', 'ctHelp', 'tap heroes to salute · tap any chamber to upgrade or inspect'));
     // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
-    const up = modeOpen(m, 'castle');
     this.castle.root.hidden = !up;
     this.castleShut.hidden = up;
     if (!up) {
@@ -717,7 +848,7 @@ export class Home {
     this.closeSheet();
     this.cardOpen = true;
     this.castle.stop();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     const box = $('hmSheetBox');
     box.className = 'hsheet bcard';
     this.drawBuildingCard(box, id);
@@ -728,7 +859,7 @@ export class Home {
     this.closeSheet();
     this.cardOpen = true;
     this.castle.stop();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     const box = $('hmSheetBox');
     box.className = 'hsheet bcard';
     const m = this.meta;
@@ -822,7 +953,7 @@ export class Home {
   /** The roster page: every hero, the locked ones with how to get them. */
   private openRoster(): void {
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     // (the tavern holds a picture under the roster, so its page never slides past empty as the tab changes)
     this.tavern.paintOnce();
@@ -833,7 +964,7 @@ export class Home {
   private openSheet(kind: string, fromRoster = false, tab = 'overview'): void {
     if (this.meta.unlocked.includes(kind)) this.lastViewedHero = kind;
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     this.camp.stop();
     this.stopSheet = drawHeroSheet(
@@ -843,9 +974,25 @@ export class Home {
     );
   }
 
+  /** Put the sheet layer up (its content is drawn straight after). MENU-GLITCH: a sheet coming up fresh shows once its pictures
+   *  are decoded; one already up and drawn again (a tab, the next hero) stays in view as it is redrawn. */
+  private sheetUp(): void {
+    const sheet = $('hmSheet');
+    const fresh = sheet.hidden && !this.sheetWasUp;
+    sheet.hidden = false;
+    if (fresh) queueMicrotask(() => void showWhenPainted(sheet));
+  }
+  /** Whether the sheet was up a moment ago (a redraw closes it and puts it up again in the one step). */
+  private sheetWasUp = false;
+
   private closeSheet(): void {
     this.stopSheet?.();
     this.stopSheet = null;
+    // (a redraw shuts the sheet and puts it straight back: remembered until the page next draws, so it is not taken for a fresh one)
+    if (!$('hmSheet').hidden) {
+      this.sheetWasUp = true;
+      queueMicrotask(() => (this.sheetWasUp = false));
+    }
     $('hmSheet').hidden = true;
     this.cardOpen = false;
     this.cardFor = null;
@@ -928,6 +1075,8 @@ export class Home {
     const body = $('hmSubBody');
     body.replaceChildren();
     draw(body);
+    // (MENU-GLITCH: the page shows once its pictures (the armies' lands, say) are decoded, not dark and then filled in)
+    void showWhenPainted($('hmSub'));
     // (looking at the achievements clears the badge)
     if (achievements)
       try {
