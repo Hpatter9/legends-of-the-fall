@@ -508,9 +508,15 @@ export class CastleScene {
     this.renderPowerBanner(meta);
 
     // 3. Render each ornate chamber card
+    // (MENU-GLITCH: a card is built again only when what it shows has changed, so a home refresh, or the builders' clock each second,
+    //  replaces none of its pictures; the countdown's own text is ticked by the home screen)
+    const works = meta.works ? `${meta.works.id}:${meta.works.level}` : '';
     for (const c of CHAMBERS) {
       const card = this.chamberEls.get(c.id);
       if (!card) continue;
+      const key = c.id === 'chapel' ? `${chapelBuilt(meta)}|${canBuildChapel(meta)}|${works}` : `${meta.castle[c.id as BuildingId] ?? 0}|${nextCost(meta.castle, c.id as BuildingId)}|${meta.crowns >= (nextCost(meta.castle, c.id as BuildingId) ?? Infinity)}|${works}`;
+      if (card.dataset.key === key) continue;
+      card.dataset.key = key;
 
       if (c.id === 'chapel') {
         this.renderChapelCard(card, c, meta);
@@ -533,6 +539,10 @@ export class CastleScene {
       { icon: '📜', label: 'XP', val: `+${c.library * 6}%`, active: c.library > 0 },
     ];
 
+    // (MENU-GLITCH: drawn again only when a figure changes)
+    const key = pills.map((p) => p.val).join('|');
+    if (this.powerBanner.dataset.key === key) return;
+    this.powerBanner.dataset.key = key;
     this.powerBanner.replaceChildren();
     for (const p of pills) {
       const badge = el('div', `ctPowerPill${p.active ? ' active' : ''}`);

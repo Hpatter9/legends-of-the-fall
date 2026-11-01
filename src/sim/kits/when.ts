@@ -1,4 +1,4 @@
-// When a hero's skill 2 has something to do (COMBAT-002): a cheap look, without casting, that the AI takes before it holds skill 1 back for skill 2's
+// When a hero's skill 2 (or 3) has something to do (COMBAT-002): a cheap look, without casting, that the AI takes before it holds skill 1 back for skill 2's
 // turn. It mirrors each cast's own first check (the cast still makes the final call); a skill 2 not named here is taken to have work most of the time.
 
 import { renewable, shapeRenewable } from '../carry';
@@ -9,7 +9,8 @@ import { harmed } from '../ailments';
 import { THUNDER_STORE } from './melee';
 import { FONT, fireLane, inTrouble } from './mages';
 import { tidalLane } from './monsters';
-import { shieldLine } from '../toolkit';
+import { chokeLine, shieldLine } from '../toolkit';
+import { bellowWork, curseWork } from './third';
 
 const on = (t: number | undefined, b: Battle) => t !== undefined && t > b.t;
 const foesWithin = (b: Battle, me: Unit, n: number) => foesOf(b, me).some((f) => apart(me, f) <= n);
@@ -58,4 +59,8 @@ export const SKILL2_WHEN: Readonly<Record<string, (b: Battle, me: Unit) => boole
   Benediction: (b, me) => allies(b, me).some((a) => harmed(a) || a.hp < a.maxHp * 0.85),
   // (Healing Mist, keyed Sanctuary: a hurt friend within its reach)
   Sanctuary: (b, me) => allies(b, me).some((a) => a.hp < a.maxHp * 0.75 && apart(a, me) <= 2),
+  // (the skills overhaul's batch 4: the third skills' utilities, which a jab may be held back for; the guards answer their own triggers)
+  'Wall of Stone': (b, me) => !!chokeLine(b, me, 3),
+  'Curse of Weakness': curseWork,
+  Bellow: bellowWork,
 };
