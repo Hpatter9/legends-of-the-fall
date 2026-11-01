@@ -2793,7 +2793,8 @@
   "calBoss4": "The living mountain. He shoves whole formations back, while no battering ram has ever budged him.",
   "calBoss5": "Keeper of the dying cinder. What he poisons he consumes, growing bloated upon your party's collapse.",
   "calBoss6": "The terminus of all journeys. Armed with every herald's malice, and a final charge to seal the keep.",
-  "aurelanLion": "The Lion of Dawn himself, crowned and cross, testing the keep before he answers its horn. Lances of light fall on a column of heroes, his roar stuns the front rank, and a dome of sunrise shuts round him."
+  "aurelanLion": "The Lion of Dawn himself, crowned and cross, testing the keep before he answers its horn. Lances of light fall on a column of heroes, his roar stuns the front rank, and a dome of sunrise shuts round him.",
+  "voltaraGoddess": "The Copper Goddess herself, bright and impatient, testing the keep before she answers its horn. A chain of lightning leaps from hero to hero, a storm falls where she has marked, and a ring of copper turns shots aside."
  },
  "scenes": {
   "opening": {
@@ -7792,6 +7793,25 @@
       {
        "who": "boss",
        "text": "THE DAWN IS HERE. STAND IN MY LIGHT, IF YOU CAN!"
+      }
+     ]
+    }
+   ]
+  },
+  "form:voltaraGoddess": {
+   "title": "Voltara: Second Form",
+   "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
+   "shots": [
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "OVERCHARGED! LET THE WHOLE SKY IN!"
       }
      ]
     }
