@@ -1802,7 +1802,7 @@ export class StandView {
     const card = el('div', 'stCard stSheetCard');
     const king = el('div', 'stSheetKing');
     const kb = el('div');
-    kb.append(el('span', '', `The King · wave ${sh.wave} · ${sh.gold} gold`), el('b', '', `${sh.king.hp} / ${sh.king.maxHp}`), this.barEl(sh.king.hp / sh.king.maxHp, 'hp'));
+    kb.append(el('span', '', `${rulerOf(settings().ruler).name} · wave ${sh.wave} · ${sh.gold} gold`), el('b', '', `${sh.king.hp} / ${sh.king.maxHp}`), this.barEl(sh.king.hp / sh.king.maxHp, 'hp'));
     king.append(el('i', 'stCrown'), kb);
     card.append(el('i', 'stCrest'), el('h2', '', 'Paused'), king);
     const list = el('div', 'stSheetList');
