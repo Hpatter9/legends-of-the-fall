@@ -59,13 +59,15 @@ test('a tier lift multiplies that tier’s foes, hp and attack, and never Normal
 
 // (SPELLS-RETUNE, an owner-approved change of requirement, docs/notes/spells-retune.md: the armies are tuned for a player whose Auto casts the
 // king's spells, so the first four's Normal strength rose (it was 0.39, 1.48, 1.66 and 2.01) and each keeps its old XP through `xpStart`; their
-// levels and curves are as they were)
+// levels and curves are as they were. RUN-GEAR, the owner's answer: saves keep and wear what their runs find, so the Undead's, Beasts' and
+// Wildwood's Normal strength rose again (1.7, 2.17, 2.52 to 1.74, 2.27, 2.7) to keep the realistic climb's tries, with the same `xpStart`,
+// docs/notes/run-gear.md)
 test('the early armies keep their levels and curves, at the strength SPELLS-RETUNE measured for a player who casts', () => {
   assert.deepEqual(ARMIES.slice(0, 4).map((a) => [a.id, a.level, a.start, a.growth, a.xpStart]), [
     ['orcs', 1, 0.58, 0.176, 0.39],
-    ['undead', 8, 1.7, 0.05, 1.48],
-    ['beasts', 15, 2.17, 0.05, 1.66],
-    ['wildwood', 22, 2.52, 0.05, 2.01],
+    ['undead', 8, 1.74, 0.05, 1.48],
+    ['beasts', 15, 2.27, 0.05, 1.66],
+    ['wildwood', 22, 2.7, 0.05, 2.01],
   ]);
 });
 

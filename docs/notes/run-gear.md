@@ -119,14 +119,27 @@ does not change: its first table's rows match main exactly (army 1: Common +6%, 
 **The identity hashes** moved for the run modes only, as they should (their fights now wear real finds): `test/fixtures/spells-identity.json`
 and `test/fixtures/ailment-logs.json`, the keys `daily`, `tower` and `calamity` (the tests' actual hashes taken for those keys alone).
 
-## A question for the owner
+## The owner's answer: keep the finds, retune the early armies
 
-Keeping what runs find makes the early armies quicker to beat in the bot's climb: at the Beasts about 3 tries against 4.7 on main
-(Undead 2.6 to 2.8 against 3.0, Wildwood about 1.8 against 2.2). Main's numbers come back when the finds are not kept (in the run they
-match the old simple gear), and no setting of the fresh boost or of the grade table brings them back with the finds kept. The choices:
-keep it as built (a save that fights more gets stronger sooner: what keeping finds means), make the found pieces weaker
-at home (a lower item level when they come home, say), or make the early armies (Undead to Wildwood) a little harder after this ships, so the climb is
-back at main's pace (the armies' tuning, `docs/notes/difficulty.md`).
+The owner kept the finds as built and asked for the early armies to be made a little harder, with their own strength knobs, so the
+climb takes main's tries again. After merging main (0.319.0), Normal's `start` (`armies.ts`) was raised: the Undead Legion 1.7 to
+1.74, the Beast Packs 2.17 to 2.27, the Wildwood 2.52 to 2.7. Each army's `xpStart` is unchanged, so a run pays the XP it did, and
+`tierStart` is unchanged, so the harder tiers are as they were. Found with `--set` on the climb, 120 saves each:
+
+| | Orcs | Undead | Beasts | Wildwood |
+| --- | --- | --- | --- | --- |
+| main 0.319.0 | 1.9 | 2.8 | 4.6 | 2.0 |
+| this branch, merged, armies as on main | 2.0 | 2.6 | 3.1 | 1.6 |
+| Undead 1.76, Beasts 2.36, Wildwood 2.66 | 2.0 | 3.0 | 5.3 | 1.9 |
+| Undead 1.73, Beasts 2.3, Wildwood 2.66 | 2.0 | 2.9 | 5.0 | 1.9 |
+| **Undead 1.74, Beasts 2.27, Wildwood 2.7 (shipped)** | 2.0 | 2.9 | 4.3 | 2.0 |
+
+The other modes, after the retune, against main 0.319.0: the spire 80.5 floors (main 81.6), the Calamity 15.75 spots and 1.73 maps
+(15.67, 1.75), the daily (`npm run daily-rate -- --days 200`) 77% cleared (76%), the Last Stand identical row for row. The identity
+hashes, re-taken after the merge for the keys this branch moves: `daily` and `calamity` (the finds) and `tower` (the spire meets the
+armies' foes, so the retuned starts move it). Two tests that pin the early armies moved with the owner's answer: `test/army-pace.test.ts`
+records the new `start`s, and `test/armies.test.ts` checks the bare starting five against the Beasts at level 23 (over 32 tries 41% at
+level 20 before; 19% at 20 and 41% at 23 now: a save with no kit needs a few more levels, one that keeps its finds climbs at main's pace).
 
 ## Tests
 
@@ -139,7 +152,7 @@ simple gear of a new run now read the pack; tests of the old rules mark their ru
 
 ## Checks
 
-`npm run typecheck`; the full `npm test` (2,164 tests, all passed); `npm run web`; the pack and the Found row at 393x852, 360x780 and
+`npm run typecheck`; the full `npm test` (2,210 tests after merging main 0.319.0 and the army retune, all passed); `npm run web`; the pack and the Found row at 393x852, 360x780 and
 412x915 through `node tools/run-gear/shots.mjs`, with no page errors. The balance runs are above.
 
 ## Left for later
