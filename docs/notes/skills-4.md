@@ -68,6 +68,17 @@ The final lifts at level 20 run from -4.5 (Cleric) and -4.2 (Paladin) to +3.7 (R
 The design leaves the overall strength to the global knobs last (batch 8, the full rebalance, with the armies' `start`, `CAL_SCALE`, `DAILY_START`);
 `SKILL3_PACE` is the other lever if the owner wants it answered now (open question below).
 
+**One army moved now, because a test holds it.** `test/army-pace.test.ts`'s strong party (Knight, Paladin, Archer, Warlock, Cleric at level 80,
+every talent, a full castle, two saves of three tries) clears the Golem Forge on main in one try of six, at its last wave; with the third skills
+every try stopped at wave 14 of 15. It is a knife edge, not one skill: taking away any one of the party's skill 3s but the Warlock's let one try
+through, and so did shutting slot 3. The Golem Forge's `start` went from 19.1 to **18.7** (2% easier; at 19.0 and 18.9 it still fell a wave
+short). Batch 8 re-tunes every army against batch 0, so this is a stopgap. The identity proofs put the Golem Forge's recorded strength back, so
+none of their hashes moved for it.
+
+**A sound fallback.** `battle-sound.test.ts`'s level-20 fights reached an old gap: the Kitsune's Alter Self can take the shape of a foe that reaches
+past a tile but throws nothing, and her blow then sends a `shot` with no missile, which the sound and effects table (`missileOf`, `fxRules.ts`) did
+not cover. It now draws and sounds a plain orb. That is renderer only, so no fight changes.
+
 ## The identity fixtures
 
 Only the scenarios with heroes at level 20 or more moved, and only those were written back:
@@ -117,7 +128,7 @@ The rest (the cuts, shots and bolts, the heals and wards) read well enough with 
 
 `npm run typecheck`; the affected tests for each group (`skill3`, `skill-rules`, `hero-kits`, `hero-kits-all`, `hero-kits-looks`, `skill-keys`,
 `unit-info`, `fight-hud`, `revive`, `class-heroes`, `new-heroes`, `more-heroes`, `ranged`, `mages`, `monsters`, `melee`, `summon-timers`); the
-identity tests; FULLTEST; `npm run web`. The page changes are a tab on the skill sheet and lines on the cards, read through the same rules the tests
+identity tests; the full `npm test` (2,080 of 2,082 on the first run: `army-pace`'s Golem Forge and `battle-sound`, both answered above; FULLRUN); `npm run web`. The page changes are a tab on the skill sheet and lines on the cards, read through the same rules the tests
 read; the HUD's chips are batch 7, which takes the screenshots.
 
 ## Open questions for the owner
@@ -125,3 +136,4 @@ read; the HUD's chips are batch 7, which takes the screenshots.
 1. **The roster's strength from level 20.** Skill 3 lifts a level-20 team by about 6 points of wins (54% to 60% at stage 30) and a level-30 one by
    about 4. Leave it for batch 8's rebalance (the design's order), or ease it now with `SKILL3_PACE` (1.1) below 1?
 2. **Jabs held for the heavies** (above), in place of the design's "a jab is never held": accept?
+3. **The Golem Forge's start eased to 18.7** for `army-pace`'s strong party at level 80: keep it until batch 8, or answer the cell another way?
