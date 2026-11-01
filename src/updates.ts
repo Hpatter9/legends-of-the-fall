@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.306.0',
+    date: '2026-11-01',
+    title: 'Every hero\'s third skill',
+    notes: ['At level 20 every hero learns a third skill, often a quick jab or a guard that fits their calling. See them on the skill sheet\'s new Skill 3 tab.'],
+  },
+  {
     version: '0.305.0',
     date: '2026-11-01',
     title: 'Fewer screen glitches',
