@@ -10,9 +10,10 @@ import type { Meta } from './meta';
 import type { Rng } from './rng';
 import { ALL_HEROES, UNITS } from './units';
 import { levelOfKind } from './levels';
+import type { Scores } from './stats';
 import { setBonus, type SetBonus } from './gearSets';
 
-import { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
+import { ABILITIES, BASE_SCORE, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, RARITY_SCORE, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
 export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
 export type { Ability, Calling, EquipSlot, MainKey };
 
@@ -87,8 +88,10 @@ export interface EquipStats {
   book?: string[];
   /** The kind's skill levels by use in slot order, when any is above 1 (`skillLevels.ts`, set by `heroStats`). */
   skillLv?: number[];
+  /** Ability score points from the worn pieces (`BASE_SCORE`) and the talents' stat nodes (STATS batch 2; `statPower.ts` reads them). */
+  scores?: Partial<Scores>;
 }
-export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal' | 'book' | 'skillLv'>;
+export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal' | 'book' | 'skillLv' | 'scores'>;
 export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist'];
 export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [] });
 
@@ -189,12 +192,21 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
   const k = MAIN_SCALE * RARITY_SCALE[it.rarity] * (1 + LEVEL_STEP * (it.level - 1)) * (kind && base.calling && base.calling === callingOf(kind) ? CALLING_BONUS : 1);
   for (const [stat, v] of Object.entries(base.main) as [MainKey, number][]) out[stat] = stat === 'range' ? Math.floor((v * (it.rarity + 1)) / 3) : v * k;
   if (hasAbility(it.rarity)) out.abilities.push({ id: base.ability.id, name: it.rarity >= 5 ? base.mythic : base.ability.name, s: abilityScale(it.rarity, it.level) });
+  // (and its ability score, by its base and rarity: STATS batch 2)
+  const score = BASE_SCORE[it.base];
+  const points = RARITY_SCORE[it.rarity] ?? 0;
+  if (score && points) out.scores = { [score]: points };
   return out;
 }
 
 export function addStats(a: EquipStats, b: EquipStats): EquipStats {
   for (const k of STAT_KEYS) a[k] += b[k];
   a.abilities.push(...b.abilities);
+  if (b.scores) {
+    const s: Partial<Scores> = { ...a.scores };
+    for (const [k, v] of Object.entries(b.scores) as [keyof Scores, number][]) s[k] = (s[k] ?? 0) + v;
+    a.scores = s;
+  }
   return a;
 }
 

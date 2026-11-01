@@ -22,6 +22,7 @@ import { awakenSpent } from './awakenRules';
 import { awakenStats } from './awaken';
 import { ALL_HEROES } from './units';
 import { deepNodes } from './talentsDeep';
+import { ABILITIES, ABILITY_SHORT, profileOf, type Scores } from './stats';
 
 /** One point for every this many levels (3, 6, 9, ... 99), and one more at each deep milestone (levels 40 to 100: `levelPoints`). */
 export const LEVEL_POINT_EVERY = 3;
@@ -73,6 +74,9 @@ export interface TalentNode {
   icon: string;
   /** Stat shares it adds (`def` is flat). */
   stats?: Partial<Record<StatKey, number>>;
+  /** Ability score points it adds (a tier-1 node that gave health gives CON +2, one that gave attack the hero's blow ability +2: STATS
+   *  batch 2, the design's section 6). */
+  scores?: Partial<Scores>;
   /** Skill and passive changes (`TAL_KEYS`). */
   tal?: Record<string, number>;
   /** Abilities it switches on (ids of `TALENT_ABILITIES`). */
@@ -118,10 +122,34 @@ interface Pick {
   abilities?: string[];
 }
 const LETTERS = 'abcd';
+/** The score points a tier-1 stat node gives in place of its health or attack share (`NODE_SCORE` each). */
+export const NODE_SCORE = 2;
+function nodeScores(kind: string, stats: Stats): Partial<Scores> | undefined {
+  const p = profileOf(kind);
+  if (!p || (!stats.hp && !stats.atk)) return undefined;
+  const out: Partial<Scores> = {};
+  if (stats.hp) out.con = (out.con ?? 0) + NODE_SCORE;
+  if (stats.atk) out[p.blow] = (out[p.blow] ?? 0) + NODE_SCORE;
+  return out;
+}
+/** Score points in words: "CON +2". */
+export const scoreText = (s: Partial<Scores>): string => ABILITIES.filter((a) => s[a]).map((a) => `${ABILITY_SHORT[a]} +${s[a]}`).join(', ');
 /** Four stat nodes, then the two choices of tier 2 and of tier 3. */
 function tree(kind: string, ones: [string, string, Stats][], twos: [Pick, Pick], threes: [Pick, Pick]): TalentTree {
   const nodes: TalentNode[] = [];
-  ones.forEach(([name, icon, stats], i) => nodes.push({ id: `${kind}:1${LETTERS[i]}`, tier: 1, name, text: statText(stats), icon, stats }));
+  ones.forEach(([name, icon, stats], i) => {
+    // (a health node is CON +2 and an attack node the blow ability +2, the ids and names kept; the rest stay shares until the batches that
+    // give DEX its crit and Armour Class and INT its cooldowns)
+    const scores = nodeScores(kind, stats);
+    const rest: Stats = { ...stats };
+    if (scores) {
+      delete rest.hp;
+      delete rest.atk;
+    }
+    const left = Object.keys(rest).length ? rest : undefined;
+    const text = [scores ? scoreText(scores) : '', left ? statText(left) : ''].filter(Boolean).join(', ');
+    nodes.push({ id: `${kind}:1${LETTERS[i]}`, tier: 1, name, text, icon, ...(left ? { stats: left } : {}), ...(scores ? { scores } : {}) });
+  });
   twos.forEach((p, i) => nodes.push({ id: `${kind}:2${LETTERS[i]}`, tier: 2, ...p }));
   threes.forEach((p, i) => nodes.push({ id: `${kind}:3${LETTERS[i]}`, tier: 3, ...p }));
   return { kind, nodes };
@@ -755,6 +783,7 @@ export function talentStats(m: Meta, kind: string): EquipStats | undefined {
   const tal: Record<string, number> = {};
   for (const n of picks) {
     for (const k of STAT_KEYS) out[k] += n.stats?.[k] ?? 0;
+    if (n.scores) addStats(out, { ...emptyStats(), scores: n.scores });
     for (const [k, v] of Object.entries(n.tal ?? {})) tal[k] = (tal[k] ?? 0) + v;
     for (const id of n.abilities ?? []) out.abilities.push({ id, name: TALENT_ABILITIES[id]?.name ?? id, s: 1 });
   }

@@ -4,8 +4,8 @@
 // differently. From the scores come a modifier each, a proficiency bonus by level, Armour Class, the to-hit, the skill DC, saves, crit,
 // initiative, pools and the rest (the design's section 3.4).
 //
-// This batch is the scores as data only: nothing here is read by a fight yet (the identity fixtures must not move). Later batches hook these
-// pure functions into `addUnit`, `swing` and the ailments.
+// Batch 1 made the scores data; batch 2 (docs/notes/stats-2.md, `statPower.ts`) reads them in `addUnit` for health, blows and skills. Later
+// batches hook these pure functions into `swing` and the ailments.
 //
 // Growth is fixed by calling, never rolled (the owner's answer): an ability score improvement (+2) at levels 4, 8, 12, 16 and 20 and an
 // epic boon (+1) at 30 and every ten levels to 100, poured into the scores in the calling's order; the two lowest never grow from levels.

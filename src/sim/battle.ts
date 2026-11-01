@@ -44,6 +44,7 @@ import { endShapes, shapesOf, startKept, type Kept } from './carry';
 import { settleKeg } from './kits/shooters';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
+import { statMults, type StatMults } from './statPower';
 import { blastThrows, type Throws } from './kits/ranged';
 import { airborne, erupt, shotWall, tickToolkit, WALL, type Aura, type Burrowing, type Wall, type WallKind } from './toolkit';
 
@@ -145,6 +146,9 @@ export interface Unit {
   diedAt?: number;
   /** Multiplies the kind's attack (grade, stage); absent is x1. */
   power?: number;
+  /** What a hero's six scores multiply (STATS batch 2, `statPower.ts`): its health and blows are already in `maxHp` and `power`; a skill's
+   *  share of its own ability is read from here as it is cast (`skillShare`). Absent when all are 1 (level 1, rank 1, nothing extra). */
+  stats?: StatMults;
   /** Which of the player's roster this hero is, so two of a kind can fight side by side. */
   tag?: number;
   /** How much bigger than its kind it is drawn (a boss); absent is x1. */
@@ -459,6 +463,8 @@ export interface Boost {
   grade?: number;
   /** The level the hero fights at (a kind's lasting level, or the spire's and Calamity's in-run level): it unlocks the hero's ultimate (`abilities.ts`). Unset is level 1. */
   level?: number;
+  /** A hero's whole rank (0 to 4, and 5 and 6 for its awakened steps, as `heroRank`): its score steps (`statPower.ts`). Unset is rank 0. */
+  rank?: number;
   /** A hero's awakened steps (1 or 2), for how it is drawn. */
   awaken?: number;
   /** The hero's permanent equipment (`equipment.ts`): hp and attack go into its stats, the rest are read by the fight's hooks. */
@@ -647,11 +653,14 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
   const def = UNITS[defId];
   const castle = def.side === 'hero' ? b.heroBoost : undefined;
   const eq = def.side === 'hero' ? boost.equip : undefined;
+  // (a hero's six scores: health by CON, blows by its blow ability, from its level, rank, grade, talents and gear; STATS batch 2)
+  const st = def.side === 'hero' && !def.summon ? statMults(defId, boost) : undefined;
   // (a boss with signature attacks has a little less health, BOSS-BIG's re-tune: `sigHp`)
-  const hp = Math.round(def.hp * (boost.hp ?? 1) * (castle?.hp ?? 1) * (1 + (eq?.hp ?? 0)) * (def.side === 'foe' ? sigHp(defId) : 1));
+  const hp = Math.round(def.hp * (boost.hp ?? 1) * (castle?.hp ?? 1) * (1 + (eq?.hp ?? 0)) * (st?.hp ?? 1) * (def.side === 'foe' ? sigHp(defId) : 1));
   const unit: Unit = { id: b.nextId++, def: defId, side: def.side, u, v, hp, maxHp: hp, facing: def.side === 'hero' ? 3 : 1, alive: true, busyUntil: 0, charge: 0 };
-  const power = (boost.atk ?? 1) * (castle?.atk ?? 1) * (1 + (eq?.atk ?? 0));
+  const power = (boost.atk ?? 1) * (castle?.atk ?? 1) * (1 + (eq?.atk ?? 0)) * (st?.blow ?? 1);
   if (power !== 1) unit.power = power;
+  if (st && (st.hp !== 1 || st.blow !== 1 || st.cast !== 1 || st.con !== 1)) unit.stats = st;
   if (eq) unit.eq = eq;
   // (a hero that learned skills from books fights with the two it chose: `heroKitOf` builds its kit from them)
   if (eq?.book && !def.summon) unit.book = eq.book;
