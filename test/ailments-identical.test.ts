@@ -70,6 +70,11 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // (STATS batch 5, "Saves", docs/notes/stats-5.md, re-recorded every scenario: a saving throw rolls in every fight with an ailment, a shove
 // or a blast, and the Warlock's, Time Witch's and Minotaur's ultimates moved. The new hashes: field1 d3c4a58e, field30 b602c463, bosses cc0df714,
 // armyFoes dc4bde6a, spells 34781325, lands 501d74f0, army 039c4f4d, daily eb58f864, tower efc7f9d0, stand 3a05f6eb, calamity ab3d95f4.)
+// (the joint rebalance, docs/notes/joint-rebalance.md, re-recorded every scenario: the foes at their tier's or depth's proficiency, the bosses'
+// blocks and saves, the families and the saves shown, the pools, cooldowns and fill from +0, the modes retuned and twenty heroes' kits. The
+// new hashes:
+// field1 4c43d569, field30 79b0a95f, bosses c0166803, armyFoes 3be4bc73, spells c281071e, lands 776aabc7, army 74abcbbd, daily fc542939, tower
+// 7f01a490, stand 49a206c8, calamity 6d82a760.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

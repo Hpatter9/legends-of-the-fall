@@ -183,7 +183,7 @@ export const CLASSES: Readonly<Record<string, readonly [SkillClass, SkillClass]>
 /** Each hero's skill 1 and skill 2 cost and cooldown (ms), in their classes' ranges (the skills overhaul's section 3, batch 2): [cost 1, cooldown 1,
  *  cost 2, cooldown 2]. Cheap, quick things are held back by their cooldown, big ones by their cost. */
 export const COSTS: Readonly<Record<string, readonly [number, number, number, number]>> = {
-  knight: [20, 14000, 28, 12000],
+  knight: [22, 14000, 30, 12000], // (the joint rebalance: Shield Wall 20 to 22 SP and Shield Rush 28 to 30, so his kit asks at least 1.4 times his own CON 17 income, rule 3, docs/notes/joint-rebalance.md)
   paladin: [36, 6000, 48, 16000],
   peasant: [22, 12000, 32, 11000],
   juggernaut: [26, 7000, 36, 12000],

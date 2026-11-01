@@ -267,7 +267,11 @@ test('a fight replays the same: the same seed, placing and orders give the same 
 test("fights last within 10% of main's: every hero in a team at level 1, 10 and 30", () => {
   // (main's mean fight length on these 135 fights a level, measured on 0.321.0, with stats batch 2, before this batch: this batch's were
   // 21,046, 23,564 and 12,649 ms, +2.8%, +1.7% and +2.1%)
-  const main: [number, number, number][] = [[1, 5, 20469], [10, 24, 23174], [30, 39, 12386]];
+  // (the joint rebalance, docs/notes/joint-rebalance.md: the field's foes now fight at the Normal tier's +2 where they were matched to the
+  // heroes' growth, so a level-10 team wins at stage 27 what it won at 24, and a level-30 one at 45 what it won at 39: main's lengths are
+  // held against those stages, the same fights in difficulty; at the old stages the stronger heroes end them about a tenth sooner. Measured
+  // here: 20,660, 22,759 and 12,253 ms, +0.9%, -1.8% and -1.1%)
+  const main: [number, number, number][] = [[1, 5, 20469], [10, 27, 23174], [30, 45, 12386]];
   for (const [level, stage, was] of main) {
     const now = meanLength(level, stage).t;
     assert.ok(Math.abs(now / was - 1) <= 0.1, `level ${level}: ${Math.round(now)} ms against main's ${was}`);
