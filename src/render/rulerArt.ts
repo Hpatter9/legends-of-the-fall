@@ -4,9 +4,8 @@ import { loadImage } from './loadImage';
 import { BREATH_PX, RULERS, RULER_ACTIONS, SEAT_BREATH, rulerFrame, seatFrame, type RulerAction, type RulerId } from '../rulerRules';
 import { RULER_URLS } from '../rulerUrls';
 import thronesUrl from '../art/rulers/thrones.png';
-/** Each ruler's cell in thrones.png (four by two, in the eight rulers' order). The King had no empty throne in the old art, so he
- *  stands before the Iron Stag's (red velvet, gold and fur, the nearest to his own) when he rises from it. */
-const THRONE_CELL: Record<RulerId, number> = { sun_viper: 0, frost_witch: 1, ash_empress: 2, rose_duchess: 3, moon_oracle: 4, iron_stag: 5, storm_corsair: 6, gilded_necromancer: 7, the_king: 5 };
+/** Each ruler's cell in thrones.png (four by two, in the eight rulers' order).  */
+const THRONE_CELL: Record<RulerId, number> = { sun_viper: 0, frost_witch: 1, ash_empress: 2, rose_duchess: 3, moon_oracle: 4, iron_stag: 5, storm_corsair: 6, gilded_necromancer: 7 };
 const images = new Map<RulerId, HTMLImageElement>();
 const frames = new Map<string, Texture[]>();
 const thrones = new Map<RulerId, Texture>();

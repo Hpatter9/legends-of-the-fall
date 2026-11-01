@@ -17,8 +17,7 @@ const KEY = 'legends.settings';
 export interface Settings {
   /** The player's ruler; cosmetic, shared by every view. */
   ruler: RulerId;
-  /** Set once the player picks a ruler in the picker. Before The King (0.212.0) any saved setting carried the old default,
-   *  Iron Stag, so a saved Iron Stag without this is read as the old default and moves to The King, the owner's call. */
+  /** Set once the player picks a ruler in the picker (kept for old saves; the Iron Stag is the default again and stays whoever picked it). */
   rulerPicked?: boolean;
   /** Music volume, 0 to 100. */
   music: number;
@@ -63,7 +62,8 @@ export function parseSettings(raw: string | null): Settings {
   const flag = (x: unknown, d: boolean) => (typeof x === 'boolean' ? x : d);
   const validHat = (x: unknown): DuchessCosmeticId => (typeof x === 'string' && DUCHESS_COSMETICS.some((c) => c.id === x) ? (x as DuchessCosmeticId) : DEFAULTS.duchessHat);
   return {
-    ruler: saved.ruler === 'iron_stag' && saved.rulerPicked !== true ? DEFAULT_RULER : rulerOf(saved.ruler).id,
+    // (a saved `the_king` loads as the default, the Iron Stag, quietly: every other setting is kept)
+    ruler: rulerOf(saved.ruler).id,
     ...(saved.rulerPicked === true ? { rulerPicked: true } : {}),
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
@@ -413,12 +413,11 @@ function rulerRow(value: RulerId): HTMLElement {
   return r;
 }
 
-/** A ruler's portrait: the first frame of their sheet (The King's on his throne: his standing figure is the old, smaller pack sprite). */
+/** A ruler's portrait: the first frame of their sheet. */
 function rulerPortrait(id: RulerId): HTMLElement {
   const picture = document.createElement('span');
   picture.className = 'rulerPortrait';
   picture.style.backgroundImage = `url("${RULER_URLS[id]}")`;
-  if (id === 'the_king') picture.style.backgroundPosition = `0 ${(6 / 7) * 100}%`;
   picture.setAttribute('aria-hidden', 'true');
   return picture;
 }

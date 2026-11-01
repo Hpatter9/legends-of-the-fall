@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.326.0',
+    date: '2026-11-01',
+    title: 'The Iron Stag leads',
+    notes: ['The Iron Stag is now the default ruler. The old King is retired: saves that chose him now follow the Iron Stag, in the new art everywhere.'],
+  },
+  {
     version: '0.325.0',
     date: '2026-11-01',
     title: 'Every score counts',
