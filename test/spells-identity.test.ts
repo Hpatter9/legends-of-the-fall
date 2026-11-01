@@ -59,6 +59,11 @@
 // field30 0e8052fa, bosses ffdc9d19, armyFoes 8a538bb0, spells fcfa8d15, lands ddce5cb5, army 4086d614, daily b6406a38, tower c73d90f1, stand
 // cc337df3, calamity 5285c952, heroes1 2513606a, heroes10 c8342037, heroes30 d9b039e5, field1Others 90440262, field30Others dc95ac94,
 // heroes1Others 032e5e9a, heroes10Others 6c1a3232, heroes30Others f444d8e4.)
+// (STATS batch 6, "The rest", docs/notes/stats-6.md, re-recorded every scenario: every hero's pool now follows its CON or casting score, its
+// cooldowns its INT and its ultimate's fill its CHA, the quick heroes flank and kite, and the control skills pick the weakest save, so every
+// fight with a hero moves. The new hashes: field1 392597b5, field30 12598187, bosses dae9a64f, armyFoes f36c8b82, spells 0445658a, lands
+// ca4f1ce0, army f76ccfc3, daily 4254748f, tower 07522e4a, stand 1e9391a7, calamity 3aa3b446, heroes1 923e83d2, heroes10 260564c4, heroes30
+// 24a11513, field1Others 5828b6e0, field30Others c96281c2, heroes1Others 4718f845, heroes10Others 17eed86d, heroes30Others 46987872.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

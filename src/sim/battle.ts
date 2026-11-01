@@ -43,6 +43,7 @@ import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
 import { settleKeg } from './kits/shooters';
 import { blowFit, blowStatsOf, GLANCE_SHARE, matchOf, rollBlow, rollInitiative, BLOW_SCALE, type BlowMatch } from './blow';
+import { athleticsOf, heroDerived, REST } from './statRest';
 import type { BlowResult } from './stats';
 import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, realHero, type KitFx, type TerrainFx } from './kits/effects';
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
@@ -87,6 +88,9 @@ export interface Unit {
   step?: { u: number; v: number; h: number; at: number; ms: number; arc?: number };
   /** The blow being swung, from when and for how long. */
   swing?: { at: number; ms: number; to: number };
+  /** When a quick shooter last stepped back from a brute, and a quick blade last stepped round a foe (STATS batch 6, `kiteStep`, `flankStep`). */
+  kiteAt?: number;
+  flankAt?: number;
   hurtAt?: number;
   /** Skill charge, 0 to `CHARGE_MAX` (heroes only). */
   charge: number;
@@ -840,7 +844,8 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   const extra = me.eq?.range ?? 0;
   // (twists: fog shortens a shooter's range, a gale lifts every jump)
   const fog = def.shot ? (b.twist?.fog ?? 0) + (b.fog ?? 0) : 0;
-  const jump = b.twist?.jump ?? 0;
+  // (STATS batch 6: Athletics, a hero of STR +4 or more climbs a step higher, `athleticsOf`)
+  const jump = (b.twist?.jump ?? 0) + (me.side === 'hero' ? athleticsOf(me) : 0);
   if (!extra && !fog && !jump && !(reach && def.shot)) return def;
   return { ...def, range: Math.max(1, def.range + extra - fog), ...(jump ? { jump: def.jump + jump } : {}), ...(reach && def.shot ? { heightReach: (def.heightReach ?? HIGH_REACH) + reach } : {}) };
 }
@@ -1216,6 +1221,87 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
   return goal >= 0 ? firstStep(walk, goal)! : -1;
 }
 
+// ---- STATS batch 6: the AI reads the scores (the design's section 7, "How the AI uses the scores"). Fixed orders over the fight's state, ties
+// broken by tile; no new randomness. Heroes only: the foes' families are evened until the joint rebalance. ----
+
+/** The DEX modifier a hero needs to flank (melee) or kite (a shooter). */
+export const QUICK_DEX = 3;
+/** What a tile at a foe's back, or its side, is worth to a flanking hero, in steps of walking (the blow's x1.5 and x1.25): enough to go round a
+ *  foe that faces it (its side is two steps further than its front, its back four). */
+export const FLANK_BACK = 4.5;
+export const FLANK_SIDE = 2.5;
+/** A quick shooter steps back from a brute (a quick blade round a foe) at most this often. */
+export const KITE_MS = 3000;
+/** The most a quick blade walks (cost) to step round a foe it could already strike. */
+export const FLANK_HOP = 2;
+
+/** Whether a fighter is a hero quick enough to flank or kite (DEX +3 or more). */
+const quickHero = (me: Unit): boolean => me.side === 'hero' && (heroDerived(me)?.mods.dex ?? -9) >= QUICK_DEX;
+/** What striking `f` from `at` is worth for its angle: its back, its side, or nothing (its front). */
+export function flankValue(at: At, f: Unit): number {
+  const way = wayTo(at, f);
+  return way === f.facing ? FLANK_BACK : (way + 2) % 4 === f.facing ? 0 : FLANK_SIDE;
+}
+
+/** A quick melee hero's step round (flanking), when it could already strike `target` from its front: a free tile a step or two away at the
+ *  target's side or back that still holds it, while the target is busy with someone else (one fighting it turns to face it anyway); at most
+ *  once in `KITE_MS`. The first step's index, or -1 to stand and strike. */
+export function flankStep(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
+  if (!REST.flank || def.shot || !quickHero(me) || (b.stand && me.post)) return -1;
+  if (flankValue(me, target) > 0 || target.swing?.to === me.id) return -1;
+  if (me.flankAt !== undefined && b.t - me.flankAt < KITE_MS) return -1;
+  const blocked = new Set<number>();
+  for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
+  let goal = -1;
+  let best = 0;
+  for (let i = 0; i < walk.cost.length; i++) {
+    const at = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
+    if (walk.cost[i] === 0 || walk.cost[i] > FLANK_HOP || blocked.has(i) || !canStrike(b.board, def, at, target)) continue;
+    const g = b.board.tiles[i].ground;
+    if (g === 'lava' || g === 'coals') continue;
+    const gain = flankValue(at, target) - walk.cost[i];
+    if (gain > best) {
+      best = gain;
+      goal = i;
+    }
+  }
+  if (goal < 0) return -1;
+  me.flankAt = b.t;
+  return firstStep(walk, goal)!;
+}
+
+/** A quick shooter's step back (kiting): with a melee foe beside it striking it, a free tile a step away out of every such foe's reach, from which it can
+ *  still shoot a foe; at most once in `KITE_MS`. The tile's index, or -1 to stand and shoot. */
+export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[]): number {
+  if (!REST.kite || !quickHero(me) || (b.stand && me.post)) return -1;
+  if (me.kiteAt !== undefined && b.t - me.kiteAt < KITE_MS) return -1;
+  // (a brute beside it that is striking it: one busy with a friend is better left to that friend)
+  const brutes = foes.filter((f) => !defOf(f).shot && apart(me, f) <= defOf(f).range && f.side !== me.side && f.swing?.to === me.id);
+  if (!brutes.length) return -1;
+  const blocked = new Set<number>();
+  for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
+  let goal = -1;
+  let best = -Infinity;
+  for (let i = 0; i < walk.cost.length; i++) {
+    const at = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
+    if (apart(me, at) !== 1 || walk.cost[i] === Infinity || walk.cost[i] === 0 || blocked.has(i)) continue;
+    const g = b.board.tiles[i].ground;
+    if (g === 'lava' || g === 'coals') continue;
+    if (brutes.some((f) => apart(at, f) <= defOf(f).range)) continue;
+    if (!foes.some((f) => canStrike(b.board, def, at, f))) continue;
+    const room = Math.min(...brutes.map((f) => apart(at, f)));
+    const score = room * 10 - walk.cost[i];
+    if (score > best) {
+      best = score;
+      goal = i;
+    }
+  }
+  if (goal >= 0) me.kiteAt = b.t;
+  return goal;
+}
+
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // (a feared fighter runs from the nearest foe and strikes nobody, STATUS-FX)
   if (isFeared(b, me)) return flee(b, me, out);
@@ -1264,6 +1350,12 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     return;
   }
   if (inReach.length) {
+    // (STATS batch 6: a quick shooter steps back from a brute beside it, when it can still shoot from there)
+    const back = def.shot ? kiteStep(b, me, def, foes) : -1;
+    if (back >= 0) return stepTo(b, me, back, out);
+    // (and a quick blade steps round to the side of a foe busy with someone else)
+    const round = def.shot ? -1 : flankStep(b, me, def, inReach[0]);
+    if (round >= 0) return stepTo(b, me, round, out);
     const up = perchFor(b, me, def, inReach[0]);
     return up >= 0 ? stepTo(b, me, up, out) : swing(b, me, inReach[0], rng, out);
   }
@@ -1282,6 +1374,8 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   }
   const byDistance = [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id);
   const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
+  // (STATS batch 6: a quick melee hero, DEX +3 or more, goes round to a foe's side or back)
+  const flank = REST.flank && !def.shot && quickHero(me);
   for (const f of byDistance) {
     const hf = tileOf(b, f).h;
     // (the way costs steps; high ground over the foe takes off the cost of getting there, a shooter's tile under a brute's club adds to it)
@@ -1298,6 +1392,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
       if (walk.cost[i] > nearest + PERCH_DETOUR) continue;
       let score = walk.cost[i] - perchValue(def, b.board.tiles[i].h, hf) + groundScore(def, wound, b.board.tiles[i].ground);
       for (const m of menace) if (apart({ u: i % b.board.w, v: Math.floor(i / b.board.w) }, m) <= 2) score += MENACE_COST;
+      if (flank) score -= flankValue({ u: i % b.board.w, v: Math.floor(i / b.board.w) }, f);
       if (score < best) {
         best = score;
         goal = i;

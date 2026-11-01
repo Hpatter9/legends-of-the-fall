@@ -10,10 +10,14 @@ import { enterPhase } from '../src/sim/bossPhases';
 import { ALL_HEROES } from '../src/sim/units';
 import { gradeBoost } from '../src/sim/run';
 import { SAVES } from '../src/sim/saves';
+import { REST } from '../src/sim/statRest';
 
 // (these stage what each skill's row says, its written times and tiles: the saving throws, STATS batch 5, are held off here and staged in
 // `test/stats-saves.test.ts`)
 SAVES.on = false;
+// (and the pools and the ultimate's fill by score, STATS batch 6, are held off here and staged in `test/stats-rest.test.ts`)
+REST.pools = false;
+REST.ultFill = false;
 
 // The eight heroes that have had an ultimate from the start (their kits' identity); every other hero's is unlocked at level 30.
 const FIRST_EIGHT = ['demonSwordsman', 'gorgon', 'karasu', 'kitsune', 'sage', 'samuraiCommander', 'tyrant', 'yamabushi'];

@@ -2,7 +2,7 @@
 // the class sets the range its cost, cooldown and cast time sit in. Cheap, quick skills are held back by their cooldown; big ones by their cost.
 // Pure data and arithmetic: nothing here draws from any stream, and the battle reads only `SkillClass` (through `Slot.cls`).
 
-import type { HeroKit, Pool, Slot } from './heroKits';
+import { poolNumbers, type HeroKit, type Pool, type Slot } from './heroKits';
 
 /** A skill's class: a quick poke (jab), the hero's bread and butter (strike), a big one saved for (heavy), a lasting aura, banner, summon or
  *  shape (utility), or an escape, ward or save cast at once when its trigger holds (guard). */
@@ -33,5 +33,17 @@ export const INCOME: Readonly<Record<Pool, number>> = { stamina: 2.8, mana: 3.8 
 /** A slot's demand: what it would drink a second if cast every time its cooldown came round (its blood is not counted). */
 export const slotDemand = (s: Slot): number => s.cost / (s.cd / 1000);
 
-/** A kit's demand against its pool's income (rule 3): above 1 no kit can cast all its cooldowns allow, so the AI's choices matter. */
-export const kitDemand = (hk: HeroKit, slots: readonly Slot[] = hk.slots): number => slots.reduce((a, s) => a + slotDemand(s), 0) / INCOME[hk.pool];
+/** A kit's demand against its pool's income (rule 3): above 1 no kit can cast all its cooldowns allow, so the AI's choices matter. With a
+ *  hero kind, against that hero's own income at `level` (`heroIncome`). */
+export const kitDemand = (hk: HeroKit, slots: readonly Slot[] = hk.slots, kind?: string, level = INCOME_LEVEL): number =>
+  slots.reduce((a, s) => a + slotDemand(s), 0) / (kind ? heroIncome(kind, level) : INCOME[hk.pool]);
+
+/** The level the reference income was measured at. */
+export const INCOME_LEVEL = 20;
+/** A hero kind's own income at a level (STATS batch 6, pools by score): the reference income for its pool, times how much faster its pool
+ *  fills than the roster's mean for that pool (CON for stamina, its casting ability for mana; `poolNumbers`). */
+export function heroIncome(kind: string, level = INCOME_LEVEL): number {
+  const n = poolNumbers(kind, { level });
+  return n ? INCOME[n.pool] * n.fill : INCOME.mana;
+}
+

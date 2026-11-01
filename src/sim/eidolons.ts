@@ -23,6 +23,7 @@ import { heroKitOf } from './heroKits';
 import { chillFor, cleanse, freezeFor, stunFor } from './ailments';
 import { MANA_MAX } from './spells';
 import { riderLong } from './relicFight';
+import { heraldOf } from './statRest';
 
 /** An Eidolon's element (the names the page's effects use: `fxRules.ts` `Element`). */
 export type EidolonElement = 'fire' | 'ice' | 'light' | 'lightning' | 'earth' | 'dark';
@@ -247,7 +248,9 @@ function rider(b: Battle, e: Eidolon, struck: readonly Unit[], out: BattleEvent[
   const st = b.eidolon!;
   // (RELICS-3: the bound echo, a whole reliquary held: the rider lasts half as long again, and Voltara's gift is half as large again)
   const long = riderLong(b);
-  const ms = (n: number): number => Math.round(n * long);
+  // (STATS batch 6: the herald, the highest CHA among the heroes, makes what the rider leaves last 5% longer a point, `heraldOf`)
+  const herald = heraldOf(b.units);
+  const ms = (n: number): number => Math.round(n * long * herald);
   switch (e.element) {
     case 'fire': {
       // the foes' half of the board burns (3x3 zones laid edge to edge over it), and the heroes are warmed

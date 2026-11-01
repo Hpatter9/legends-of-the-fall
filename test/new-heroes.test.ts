@@ -8,6 +8,7 @@ import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import layout from '../src/art/units/sheets.json';
 import { SAVES } from '../src/sim/saves';
+import { REST } from '../src/sim/statRest';
 
 const NEW = ['ninjaMonk', 'peasant', 'lightningMage', 'wanderer', 'kitsune', 'karasu', 'yamabushi'];
 
@@ -54,7 +55,10 @@ test('Thousand Fists strikes three times and stuns', (t) => {
   assert.ok(s.busyUntil >= m.busyUntil + 500 || s.busyUntil >= 1500);
 });
 
-test('Iron Fists ignore defence', () => {
+test('Iron Fists ignore defence', (t) => {
+  // (a blow from a fixed tile: the quick blade's step round, STATS batch 6, is held off here and staged in `stats-rest`)
+  REST.flank = false;
+  t.after(() => void (REST.flank = true));
   const b = arena();
   const m = spawn(b, 'ninjaMonk', 3, 5);
   const s = spawn(b, 'skeleton', 3, 4);
@@ -190,7 +194,10 @@ test('Karasu Tengu flies up cliffs and dives on shooters', () => {
   assert.equal(k2.busyUntil, b2.t + UNITS.karasu.moveMs);
 });
 
-test('Hunter\'s Eye: blows hit shooters harder', () => {
+test('Hunter\'s Eye: blows hit shooters harder', (t) => {
+  // (a blow from a fixed tile: the quick blade's step round, STATS batch 6, is held off here and staged in `stats-rest`)
+  REST.flank = false;
+  t.after(() => void (REST.flank = true));
   const b = arena();
   const k = spawn(b, 'karasu', 3, 5);
   const a = spawn(b, 'boneArcher', 3, 4);

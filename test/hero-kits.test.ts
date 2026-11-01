@@ -8,9 +8,16 @@ import { CHARGE_MAX, KITS, ULT_LEVEL, keyOf, onStrike, tickStatus, ultimateOf } 
 import { HERO_KITS, RES, SKILL2_LEVEL, ULT_FILL, canPay, castHero, costOf, heroKitOf, poolOf, regenOf, resMax, resOf } from '../src/sim/heroKits';
 import { ORDER_WAIT_MS, canOrderUltimate, orderUltimate, replayLog, type LogEntry } from '../src/sim/orders';
 import { gradeBoost } from '../src/sim/run';
+import { REST } from '../src/sim/statRest';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES } from '../src/sim/units';
 import { deploySpots } from '../tools/heroSweep';
+
+// (these stage the pools' written numbers and the ultimate's written fill: the pools, cooldowns and fill by score, STATS batch 6, are held off
+// here and staged in `test/stats-rest.test.ts`)
+REST.pools = false;
+REST.cooldown = false;
+REST.ultFill = false;
 
 function arena(): Battle {
   const b = startBattle(3);

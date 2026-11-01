@@ -7,7 +7,13 @@ import { addUnit, startBattle, type Battle, type BattleEvent, type Unit } from '
 import { CHARGE_MAX, keyOf } from '../src/sim/abilities';
 import { HERO_KITS, RES, SLOT_LEVELS, canPay, castHero, costOf, resMax, slotOpen, type HeroKit } from '../src/sim/heroKits';
 import { CLASSES, THIRD_KINDS } from '../src/sim/kits/table';
-import { CAST_EXEMPT, CLASS_RANGE, CLASS_WEIGHT, INCOME, kitDemand, slotDemand } from '../src/sim/skillRules';
+import { CAST_EXEMPT, CLASS_RANGE, CLASS_WEIGHT, heroIncome, INCOME, kitDemand, slotDemand } from '../src/sim/skillRules';
+import { REST } from '../src/sim/statRest';
+
+// (the AI's tests below stage each skill's written cost and cooldown: the pools and cooldowns by score, STATS batch 6, are held off here and
+// staged in `test/stats-rest.test.ts`; rules 2 and 3 read each hero's own income)
+REST.pools = false;
+REST.cooldown = false;
 import { ALL_HEROES } from '../src/sim/units';
 
 function arena(): Battle {
@@ -95,18 +101,22 @@ test('within a kit a heavy skill is its dearest and a jab its cheapest', () => {
   }
 });
 
-test('a kit\'s skills ask between 1.4 and 3.5 times its pool\'s income (rule 3; the floor once the kit has its third skill)', () => {
+// (STATS batch 6: pools by score, so each hero's income differs by a few percent: rules 2 and 3 read each hero's own income at level 20,
+// `heroIncome`)
+test('a kit\'s skills ask between 1.4 and 3.5 times its pool\'s income (rule 3; the floor once the kit has its third skill), each hero\'s own', () => {
   for (const h of ALL_HEROES) {
-    const d = kitDemand(HERO_KITS()[h]);
+    const d = kitDemand(HERO_KITS()[h], undefined, h);
     assert.ok(d <= 3.5, `${h} asks ${d.toFixed(2)}`);
     if (HERO_KITS()[h].s3) assert.ok(d >= 1.4, `${h} asks ${d.toFixed(2)}`);
   }
 });
 
-test('a jab never empties the pool on its own: its cost over its cooldown is under the pool\'s income (rule 2, the measured income)', () => {
+test('a jab never empties the pool on its own: its cost over its cooldown is under the pool\'s income (rule 2, the measured income), each hero\'s own', () => {
   for (const h of ALL_HEROES) {
     const hk = HERO_KITS()[h];
-    for (const s of hk.slots) if (s.cls === 'jab') assert.ok(slotDemand(s) < INCOME[hk.pool], `${h}: ${s.skill.name} asks ${slotDemand(s).toFixed(2)} a second`);
+    const income = heroIncome(h);
+    assert.ok(Math.abs(income / INCOME[hk.pool] - 1) < 0.1, `${h}: its own income is within a few percent of the reference (${income.toFixed(2)})`);
+    for (const s of hk.slots) if (s.cls === 'jab') assert.ok(slotDemand(s) < income, `${h}: ${s.skill.name} asks ${slotDemand(s).toFixed(2)} a second against ${income.toFixed(2)}`);
   }
 });
 

@@ -8,6 +8,8 @@ import {
   type Ability, type Derived, type Scores, type StatInput, type StatProfile,
 } from './stats';
 import type { UnitDef } from './units';
+import { ATHLETICS_MOD, cooldownShare, ultFillShare } from './statRest';
+import { poolNumbers } from './heroKits';
 
 /** Which effects of the scores a fight really has now. The page shows only these: a line for an effect that is not live would promise
  *  what a fight does not do. Each later batch switches its own on (the first line of its change): batch 4 `crit`, `initiative`, `blowSpeed`
@@ -19,14 +21,16 @@ export const LIVE = {
   toHit: true,
   dc: true,
   saves: true,
-  crit: false,
-  initiative: false,
-  blowSpeed: false,
+  crit: true,
+  initiative: true,
+  blowSpeed: true,
   shove: true,
-  cooldown: false,
-  ultFill: false,
-  pools: false,
-  perception: false,
+  cooldown: true,
+  ultFill: true,
+  pools: true,
+  perception: true,
+  /** STATS batch 6: Athletics, the climb at STR +4. */
+  climb: true,
 };
 export type LiveKey = keyof typeof LIVE;
 
@@ -58,7 +62,7 @@ export function scoreTiles(p: StatProfile, d: Derived): ScoreTile[] {
 /** One line of the figures under the tiles. */
 export interface FigureRow {
   /** Which line of explanation a tap opens. */
-  key: 'ac' | 'hit' | 'dc' | 'crit' | 'init' | 'prof';
+  key: 'ac' | 'hit' | 'dc' | 'crit' | 'init' | 'prof' | 'pool' | 'ult';
   label: string;
   value: string;
 }
@@ -97,32 +101,68 @@ export function figureWhy(key: FigureRow['key'], d: Derived): string {
     case 'crit': return `A natural 20 crits (5%), and every point of DEX above +0 adds 1% more.`;
     case 'init': return `Initiative is the DEX modifier: ${signed(d.initiative)} on the d20 that says who acts first.`;
     case 'prof': return `Proficiency ${signed(d.proficiency)} grows with level and is added to to hit, skill DC and the two saves the calling is trained in.`;
+    case 'pool': return `The pool's top and how fast it fills follow CON for stamina and the casting score for mana: 3 SP or 5 MP and 4% a point, against the heroes' average.`;
+    case 'ult': return `The ultimate's meter fills 3% faster a point of CHA, against the heroes' average.`;
   }
 }
 
-/** What a score does for this hero, in numbers (the tap on a tile): only the effects it has. */
-export function scoreWhy(p: StatProfile, d: Derived, a: Ability): string {
+/** Where a hero stands for the lines that read it beside its scores (its kind and level): its pool, and the shares counted against the
+ *  roster's mean at its level (cooldowns, the ultimate's fill). */
+export interface WhyAt {
+  kind: string;
+  at: StatInput;
+}
+
+/** The pool a hero has at `at` as the sheet writes it: "SP 63 (+8% refill)". */
+export function poolLine(w: WhyAt): { label: string; value: string; ability: Ability } | undefined {
+  const n = LIVE.pools ? poolNumbers(w.kind, w.at) : undefined;
+  const p = profileOf(w.kind);
+  if (!n || !p) return undefined;
+  const fill = Math.round((n.fill - 1) * 100);
+  return { label: n.pool === 'mana' ? 'MP' : 'SP', value: `${Math.round(n.top)}${fill ? ` (${signed(fill)}% refill)` : ''}`, ability: n.pool === 'mana' ? p.cast : 'con' };
+}
+
+/** What a score does for this hero, in numbers (the tap on a tile): only the effects it has. `w` (the hero's kind and level) adds the lines
+ *  that read them: the pool, and the cooldowns and ultimate fill, counted against the heroes' average at its level. */
+export function scoreWhy(p: StatProfile, d: Derived, a: Ability, w?: WhyAt): string {
   const m = d.mods[a];
   const parts: string[] = [];
+  const level = w?.at.level ?? 1;
   if (LIVE.power && p.blow === a) parts.push(`blows ${signedPct(d.atkMult - 1)}`);
   if (LIVE.power && p.cast === a) parts.push(`skills ${signedPct(d.castMult - 1)}`);
+  const pool = w ? poolLine(w) : undefined;
   switch (a) {
-    // (the climb, Athletics, comes with batch 6)
-    case 'str': if (LIVE.shove) parts.push('shoves further, resists shoves'); break;
-    case 'dex':
+    case 'str':
+      if (LIVE.shove) parts.push('shoves further, resists shoves');
+      if (LIVE.climb) parts.push(m >= ATHLETICS_MOD ? 'climbs a step higher (Athletics)' : `climbs a step higher at ${signed(ATHLETICS_MOD)}`);
+      break;
+    case 'dex': {
       if (LIVE.ac) parts.push(`AC ${signed(m)}`);
       if (LIVE.crit) parts.push(`crit ${Math.round(d.crit * 100)}%`);
-      if (LIVE.blowSpeed) parts.push(`blows ${signedPct(d.blowSpeed - 1)} faster`);
+      // (blows quicken with the DEX gained since level 1: every level-1 blow time is the kind's own)
+      const quick = d.blowSpeed / derivedOf(p).blowSpeed - 1;
+      if (LIVE.blowSpeed && Math.round(quick * 100)) parts.push(`blows ${signedPct(quick)} faster than at level 1`);
       if (LIVE.initiative) parts.push(`initiative ${signed(d.initiative)}`);
       break;
-    case 'con':
-      parts.push(`health ${signedPct(d.hpMult - 1)}`);
-      if (LIVE.pools) parts.push(`stamina ${Math.round(d.stamTop)}`);
+    }
+    case 'con': parts.push(`health ${signedPct(d.hpMult - 1)}`); break;
+    case 'int': {
+      const sooner = 1 - cooldownShare(d, level);
+      if (LIVE.cooldown && Math.round(sooner * 100)) parts.push(`skills ${signedPct(sooner)} sooner`);
       break;
-    case 'int': if (LIVE.cooldown) parts.push(`skills ${signedPct(1 - d.cooldown)} sooner`); break;
-    case 'wis': if (LIVE.perception) parts.push('sees through cover, resists fear'); break;
-    case 'cha': if (LIVE.ultFill) parts.push(`ultimate fills ${signedPct(d.ultFill - 1)} faster`); break;
+    }
+    case 'wis': {
+      const seen = Math.round(m * 10);
+      if (LIVE.perception && seen) parts.push(seen > 0 ? `sees through ${seen}% of cover and smoke` : `cover and smoke fool it ${-seen}% more`);
+      break;
+    }
+    case 'cha': {
+      const fill = ultFillShare(d, level) - 1;
+      if (LIVE.ultFill && Math.round(fill * 100)) parts.push(`ultimate fills ${signedPct(fill)} ${fill > 0 ? 'faster' : 'more slowly'}`);
+      break;
+    }
   }
+  if (pool && pool.ability === a) parts.push(`${pool.label} ${pool.value}`);
   if (LIVE.saves) parts.push(`${ABILITY_SHORT[a]} save ${signed(d.saves[a])}${p.saves.includes(a) ? ' (trained)' : ''}`);
   return `${ABILITY_NAME[a]} ${d.scores[a]} (${signed(m)})${parts.length ? `: ${parts.join(' · ')}` : ''}`;
 }
@@ -139,6 +179,8 @@ export function nextImprovement(p: StatProfile, level: number): string | null {
 
 /** Everything the hero sheet's Stats panel shows, for a kind at a level, rank and grade. Undefined for a kind without a profile. */
 export interface StatPanel {
+  /** The kind and what its scores were worked out at (for the lines that read them, `scoreWhy`). */
+  why: WhyAt;
   tiles: ScoreTile[];
   figures: FigureRow[];
   saves: SaveCell[];
@@ -150,8 +192,17 @@ export interface StatPanel {
 export function statPanelOf(kind: string, at: HeroAt, extra?: Partial<Scores>): StatPanel | undefined {
   const profile = profileOf(kind);
   if (!profile) return undefined;
-  const derived = derivedOf(profile, { ...at, extra: extra ?? at.extra });
-  return { tiles: scoreTiles(profile, derived), figures: figureRows(derived), saves: saveCells(profile, derived), proficiency: derived.proficiency, next: nextImprovement(profile, at.level), derived, profile };
+  const input = { ...at, extra: extra ?? at.extra };
+  const derived = derivedOf(profile, input);
+  const why: WhyAt = { kind, at: input };
+  const figures = figureRows(derived);
+  // (STATS batch 6: the pool and the ultimate's fill, which read the hero's kind and level)
+  const pool = poolLine(why);
+  // (the figure is the top alone, so it fits a third of a phone's width; the tap line adds the refill)
+  if (pool) figures.push({ key: 'pool', label: pool.label, value: pool.value.split(' ')[0] });
+  const fill = ultFillShare(derived, at.level) - 1;
+  if (LIVE.ultFill) figures.push({ key: 'ult', label: 'Ultimate', value: signedPct(fill) });
+  return { why, tiles: scoreTiles(profile, derived), figures, saves: saveCells(profile, derived), proficiency: derived.proficiency, next: nextImprovement(profile, at.level), derived, profile };
 }
 
 // ---- The unit card ----

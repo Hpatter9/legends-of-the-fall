@@ -10,10 +10,14 @@ import { HERO_KITS, SKILL3_LEVEL, castHero, type HeroKit } from '../src/sim/hero
 import { THIRD_KINDS } from '../src/sim/kits/table';
 import { ALL_HEROES } from '../src/sim/units';
 import { SAVES } from '../src/sim/saves';
+import { REST } from '../src/sim/statRest';
 
 // (these stage what each skill's row says, its written times and tiles: the saving throws, STATS batch 5, are held off here and staged in
 // `test/stats-saves.test.ts`)
 SAVES.on = false;
+// (and the pools and cooldowns by score, STATS batch 6, are held off here and staged in `test/stats-rest.test.ts`)
+REST.pools = false;
+REST.cooldown = false;
 
 function arena(): Battle {
   const b = startBattle(3);

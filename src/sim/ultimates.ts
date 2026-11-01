@@ -17,6 +17,7 @@ import { setLook } from './kits/effects';
 import { TIMER } from './carry';
 import { addUnit, atkOf, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import {
+  blastSave,
   BANNER_MULT,
   CHARGE_MAX,
   DIR,
@@ -45,6 +46,7 @@ import {
   tal,
   type Skill,
 } from './abilities';
+import { DEX_SAVES } from './saves';
 import { charmFor, cleanse, harmed, setDot, stunFor } from './ailments';
 import { fallenFor, raiseFallen } from './kits/revive';
 import { startPool } from './heroKits';
@@ -381,7 +383,8 @@ function infernoBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const ms = dur(me, 5000);
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
-    hurt(b, me, f, net(atkOf(me) * 2.8, f), true, false, out, 'skill');
+    // (STATS batch 6: a breath is a blast, halved on a DEX save)
+    hurt(b, me, f, Math.max(1, Math.round(net(atkOf(me) * 2.8, f) * (DEX_SAVES.breath ? blastSave(b, me, f, out) : 1))), true, false, out, 'skill');
     if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
   // (RPG-SPELLS batch 4: the line she breathed down stays alight for 4s, a fire wall)
@@ -510,10 +513,12 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   karasu: { rate: 0.77, power: 5.634 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
   yamabushi: { rate: 1.85, power: 3.294 },
   werewolf: { rate: 0.73, power: 2.208 }, // (RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
-  minotaur: { rate: 1.51, power: 2.7 }, // (STATS batch 5: 2.983 before; with the saves he sat at +6.0 at level 30)
+  minotaur: { rate: 1.51, power: 2.45 }, // (STATS batch 5: 2.983 before; with the saves he sat at +6.0 at level 30. STATS batch 6: 2.7 before; with Athletics he climbed to +6.3)
   satyr: { rate: 0.69, power: 0.879 },
   gorgon: { rate: 1.29, power: 2.347 },
-  samuraiCommander: { rate: 0.95, power: 1.391 }, // (the skills overhaul's batch 4: rate 1.1 before; with Command Strike he stood +6.2 at level 30, and Rally Cry's banner does not scale with power)
+  // (the skills overhaul's batch 4: rate 1.1 before; with Command Strike he stood +6.2 at level 30, and Rally Cry's banner does not scale with power.
+  // STATS batch 6: 0.95 before; CHA 17 fills his meter sooner, and he stood +6.2 again)
+  samuraiCommander: { rate: 0.85, power: 1.391 },
   paladin: { rate: 1.31, power: 0.886 },
   cleric: { rate: 1, power: 0.92 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
   druid: { rate: 1.19, power: 0.38 },
@@ -529,10 +534,10 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   buccaneer: { rate: 3.11, power: 3.373 },
   wolfBard: { rate: 0.93, power: 0.525 },
   beastmaster: { rate: 0.7, power: 0.65 },
-  kraken: { rate: 1.37, power: 1.079 },
+  kraken: { rate: 1.37, power: 1.3 }, // (STATS batch 6: 1.079 before; with a WIS caster's slow fill (CHA 12) he fell to -6.6 at level 30)
   lancer: { rate: 2.3, power: 3.29 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
   reaper: { rate: 1.79, power: 2.511 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
-  timeWitch: { rate: 1.09, power: 0.85 }, // (STATS batch 5: 0.735 before; with the saves she fell to -6.8 at level 30)
+  timeWitch: { rate: 1.09, power: 0.95 }, // (STATS batch 5: 0.735 before; with the saves she fell to -6.8 at level 30. STATS batch 6: 0.85 before; -5.9)
   arcBlade: { rate: 0.59, power: 1.878 }, // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
   dreadPirate: { rate: 1.06, power: 1.376 },
   siegeBot: { rate: 0.5, power: 2.347 },

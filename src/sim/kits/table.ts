@@ -199,7 +199,7 @@ export const COSTS: Readonly<Record<string, readonly [number, number, number, nu
   dragoon: [26, 7000, 36, 13000],
   archer: [24, 6000, 34, 12000],
   ranger: [26, 9000, 36, 14000],
-  gunslinger: [26, 6000, 32, 11000],
+  gunslinger: [26, 7000, 32, 11000], // (STATS batch 6: 6000 to 7000, her own income (CON 12) is a tenth under the stamina heroes' mean, and the kit asked 3.7 of it)
   rifleBot: [22, 5000, 32, 11000],
   siegeBot: [26, 7000, 26, 18000],
   dreadPirate: [26, 7000, 34, 12000],
@@ -287,7 +287,8 @@ const THIRD: Readonly<Record<string, { cls: SkillClass; cost: number; cd: number
   peasant: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Pitchfork Jab', 'A quick thrust at the foe before him that shoves it a tile back', 350, 'attack', T3.pitchforkJab) },
   juggernaut: { cls: 'utility', cost: 26, cd: 16000, skill: sk('Wall of Stone', 'Three tiles of stone wall rise across the nearest foes\' way to his back line, for 6s', 600, 'attack2', T3.wallOfStone) },
   samurai: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Kesa Cut', 'A fast diagonal cut on the foe before him; it bleeds 3s', 300, 'attack', T3.kesaCut) },
-  kunoichi: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Shuriken Fan', 'Three shuriken at the three nearest foes within 4; each is slowed 1s', 350, 'attack', T3.shurikenFan) },
+  // (STATS batch 6: the Kunoichi's Shuriken Fan 3500 to 3600 ms, so it asks less than her own income, CON 12)
+  kunoichi: { cls: 'jab', cost: 9, cd: 3600, skill: sk('Shuriken Fan', 'Three shuriken at the three nearest foes within 4; each is slowed 1s', 350, 'attack', T3.shurikenFan) },
   ninjaMonk: { cls: 'guard', cost: 14, cd: 15000, emergency: GUARD.stepWind, skill: sk('Step of the Wind', 'With two or more foes on him he steps up to 3 tiles to the safest tile and slips every blow for 1.5s; two Flow are added for his palm', 300, 'attack2', T3.stepOfWind) },
   barbarian: { cls: 'jab', cost: 10, cd: 4000, skill: sk('Reckless Swing', 'A wild overhead blow on the foe before him; he takes 10% more for 2s', 400, 'attack', T3.recklessSwing) },
   mercenary: { cls: 'jab', cost: 9, cd: 4000, skill: sk('Dirty Trick', 'Sand in the eyes of the foe before him: it misses half its blows for 2s', 300, 'attack', T3.dirtyTrick) },
@@ -315,7 +316,8 @@ const THIRD: Readonly<Record<string, { cls: SkillClass; cost: number; cd: number
   wanderer: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Acid Flask', 'A flask of acid at the nearest foe: its armour eaten, it takes a fifth more for 4s', 350, 'attack', T3.acidFlask) },
   druid: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Thorn Whip', 'A whip of thorns at the nearest foe within 4 drags it a tile towards her treant (towards her, with none)', 400, 'attack', T3.thornWhip) },
   beastmaster: { cls: 'guard', cost: 14, cd: 15000, emergency: T3.packNeeded, heals: true, skill: sk('Mend the Pack', 'When a wolf of hers falls under 30%, every wolf heals a third and is shielded 3s; with none, she heals a tenth when hurt', 400, 'defend', T3.mendThePack) },
-  reaper: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Soul Snare', 'A spectral hook drags the weakest foe within 4 a tile towards him and cuts it; a foe under 30% is dragged into his reach', 350, 'attack', T3.soulSnare) },
+  // (STATS batch 6: the Reaper's Soul Snare 3500 to 3600 ms, so it asks less than his own income, CON 12)
+  reaper: { cls: 'jab', cost: 9, cd: 3600, skill: sk('Soul Snare', 'A spectral hook drags the weakest foe within 4 a tile towards him and cuts it; a foe under 30% is dragged into his reach', 350, 'attack', T3.soulSnare) },
   kitsune: { cls: 'jab', cost: 12, cd: 3500, skill: sk('Fox Wisps', 'Three wisps of fox fire at the three nearest foes within 4, each burning 2s', 350, 'attack', T3.foxWisps) },
   karasu: { cls: 'jab', cost: 8, cd: 3000, skill: sk('Feather Darts', 'Razor feathers at the two nearest foes within 4; each bleeds 2s', 300, 'attack', T3.featherDarts) },
   yamabushi: { cls: 'jab', cost: 9, cd: 3500, skill: sk('Ringing Staff', 'A blow of his ringed staff on the foe before him; it is stunned 0.5s', 350, 'attack', T3.ringingStaff) },

@@ -22,12 +22,19 @@ import { mixSeed } from './rng';
 import { ABILITIES, derivedOf, foeStatsOf, profileOf, STAT_PROFILES, type Ability, type Scores } from './stats';
 import { BOSS_BLOCK, matchOf, profiled, statInputOf } from './blow';
 import { UNITS } from './units';
+import { isBoss } from './foes';
+import { REST } from './statRest';
 import type { AilmentKey } from './ailmentKeys';
 import type { Battle, Unit } from './battle';
 
 /** The saves on (the game) or off (batch 4's rules exactly: no save, no fit, no contest of STR), for measuring before and after and for
  *  the tests that stage another rule (the toolkit's moves). */
 export const SAVES = { on: true };
+
+/** STATS batch 6: the areas brought into the DEX save, each on its own switch (measured one at a time): a fire wall's burn (the Wall of
+ *  Fire, the Inferno Breath's line) is saved with DEX in place of CON, and a breath's blast (Dragon Breath, Inferno Breath) is halved on a
+ *  DEX save as a volley's is. (The Dread Pirate's keg was already one, through `landArea`, since batch 5.) */
+export const DEX_SAVES = { wall: true, breath: true };
 
 /** What a save leaves of the effect (the owner's answer 3: a save halves it). */
 export const SAVE_SHARE = 0.5;
@@ -177,4 +184,24 @@ export function shoveTiles(b: Battle, by: Unit, to: Unit, n: number): { n: numbe
   const contest = gap >= CONTEST_GAP ? 1 : gap <= -CONTEST_GAP ? -1 : 0;
   const save = rollSave(b, by, to, 'shove', false, false);
   return { n: Math.max(0, n + contest - (save.saved ? 1 : 0)), saved: save.saved };
+}
+
+// ---- STATS batch 6: saves-aware control (the design's section 7, "How the AI uses the scores") ----
+
+/** Targets a skill values within this share of its best count as the same, and among them the one with the weakest save goes first. */
+export const SAVE_PICK_BAND = 0.15;
+
+/** Reorder a skill's targets (`list`, best first by `value`) so that among those it values within `SAVE_PICK_BAND` of the best, the one with
+ *  the weakest save against `what` comes first (a boss, whose Legendary Resistance is its save, last of them); the rest keep their order.
+ *  A hero's skills only (the foes' families are evened), and only with the saves on. Ties keep the list's own order. */
+export function saveAware<T extends Unit>(b: Battle, by: Unit, list: T[], value: (u: T) => number, what: SaveWhat): T[] {
+  if (!REST.savePick || !SAVES.on || list.length < 2 || !profiled(by)) return list;
+  const top = value(list[0]);
+  const floor = top > 0 ? top * (1 - SAVE_PICK_BAND) : top;
+  const a = SAVE_OF[what];
+  const save = (u: Unit): number => (u.side === 'foe' && (isBoss(u.def) || (u.size ?? 1) > 1) ? 99 : saveStatsOf(b, u)?.saves[a] ?? 0);
+  const near = list.filter((u) => value(u) >= floor);
+  const rest = list.filter((u) => value(u) < floor);
+  const order = new Map(list.map((u, i) => [u, i]));
+  return [...near.sort((x, y) => save(x) - save(y) || order.get(x)! - order.get(y)!), ...rest];
 }
