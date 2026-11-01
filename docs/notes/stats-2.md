@@ -126,5 +126,5 @@ New tool: `node tools/stats/budget.mjs [--levels 1,20,100] [--heroes]` (read-onl
 ## Checks
 
 `npm run typecheck` clean; the full `npm test` 2158 pass, 0 fail; `npm run web` built. Measured: `tools/stats/budget.mjs` on main and after
-(the table above) and the level-30 hero sweep (12,000 fights) on both. No page changed (the only words the player sees move are the four
+(the table above) and the level-30 hero sweep (12,000 fights) on both. No page changed (the only words the player sees move are the
 health and attack nodes' lines on the talent tree, "CON +2" in place of "+5% hp"), so no browser check; the Stats panel is batch 3.
