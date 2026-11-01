@@ -307,8 +307,72 @@ const GORM_TRIAL: TrialDef = {
   },
 };
 
-/** Every trial written, one a chain (chain 6 adds its own here). */
-export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL, AURELAN_TRIAL, VOLTARA_TRIAL, GORM_TRIAL];
+/* ------------------------------------------------------------------ Vaelkhar, the Dragon King (chain 6, `docs/notes/eidolon-chain-6.md`) */
+
+const VAELKHAR_TRIAL: TrialDef = {
+  id: 'vaelkharTrial',
+  chain: 'vaelkhar',
+  boss: {
+    id: 'vaelkharKing',
+    name: 'Vaelkhar',
+    title: 'The Dragon King, Who Tests the Keep',
+    side: 'foe',
+    sheet: 'eidolon_vaelkhar',
+    scale: 0.7,
+    hp: 3000,
+    atk: 60,
+    def: 14,
+    range: 3,
+    moveMs: 700,
+    atkMs: 1150,
+    jump: 5,
+    shot: 'curse',
+    role: 'A torrent of black fire down a whole line, a void that drags heroes in, scales that turn shots aside and drink what they stop',
+  },
+  kit: {
+    skill: { name: 'The Court of Night', text: 'Two demons of his court step out of the dark to his side (three at most, five in a fight)', kind: 'hellDemon', n: 2, most: 3, limit: 5 },
+    passive: { name: 'Doom Scales', text: 'Blows from the front lose a quarter, shots lose a third, and he heals a fifth of the damage he deals', block: 0.25, scales: 0.33, leech: 0.2 },
+  },
+  signatures: [
+    { key: 'voidfire', name: 'Voidfire', rage: 'Torrent of Night', el: 'dark', shape: { kind: 'line', len: 9, w: 2 }, power: 1.6, rider: 'curse' },
+    { key: 'voidCollapse', name: 'The Void Collapses', rage: 'Crown of Night', el: 'dark', shape: { kind: 'pull', reach: 6, drag: 2, r: 2 }, power: 1.5, rider: 'stun' },
+  ],
+  phase: {
+    line: 'KNEEL, LITTLE KING. THEN STAND, AND WATCH!',
+    atk: 1.3,
+    heal: 0.08,
+    shield: 0.25,
+    haste: 8000,
+    adds: { kind: 'hellDemon', n: 2 },
+    passive: { block: 0.35, scales: 0.5, leech: 0.35 },
+  },
+  land: 'volcano',
+  waves: [
+    { foes: ['hellImp', 'hellDemon', 'hellImp', 'hellDemon'] },
+    { foes: ['vaelkharKing', 'hellDemon', 'hellImp', 'hellDemon'], boss: 'final' },
+  ],
+  like: { army: 'golems', wave: 13 },
+  ease: 0.215,
+  lift: { hp: 1, atk: 1 },
+  // (Kwame or Minh, one from each starter pack; any starter hero stands in)
+  cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
+  blurb: 'Vaelkhar hangs above the Black Summit with the sun put out behind him. Before he takes his seat, he wants to see who keeps the door.',
+  part: {
+    title: 'The Trial',
+    text: 'Win the trial against Vaelkhar himself on the Black Summit (Kwame or Minh fights; any starter hero may stand in)',
+    begin: 'You have the scale, the letter and the tine. Now come up to the Black Summit, little keep, and show me what keeps my door.',
+  },
+  lines: {
+    place: 'The Black Summit above the rift, where the sun has been put out like a candle. A halo of violet fire hangs in the dark, and under it, something very large unfolds its wings.',
+    challenge: ['So. The little keep that dusted my things.', 'You have the scale, the letter and the tine. Do you have the crown?'],
+    answer: 'We shut your last door, and came back for the next. Kneel? We would rather stand, and watch.',
+    after: 'Hm. A king is tested by those who keep his door, and the door held. Take me to your Summoner, little keep: I will answer your horn.',
+    afterHero: 'He folds his wings, one at a time, like putting away a very large umbrella, and the sun comes back on behind him with a faint, embarrassed click.',
+  },
+};
+
+/** Every trial written, one a chain. */
+export const TRIALS: readonly TrialDef[] = [NIVRA_TRIAL, AURELAN_TRIAL, VOLTARA_TRIAL, GORM_TRIAL, VAELKHAR_TRIAL];
 
 const BY_CHAIN = new Map(TRIALS.map((t) => [t.chain, t]));
 /** A chain's trial, if one is written. */

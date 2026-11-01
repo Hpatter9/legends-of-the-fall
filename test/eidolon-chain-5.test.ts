@@ -87,7 +87,7 @@ test("the data: three parts and pieces, Duchess at the Sanctum, a binding with n
   assert.deepEqual(gorm.opens, { kind: 'army', army: 'infernal' });
   assert.deepEqual(gorm.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'tally']);
   assert.ok(gorm.parts.every((p) => p.reward.chest === 'bronze' && PIECES.has(p.piece.id)));
-  assert.equal(PIECES.size, 15);
+  assert.equal(PIECES.size, 18);
   assert.equal(gorm.binding!.at(-1)!.beat, 'bound');
   assert.ok(!gorm.binding!.some((b) => b.beat === 'horn' || b.beat === 'hornFull'));
   const lines = gorm.prologue!.shots.flatMap((s) => s.lines ?? []);

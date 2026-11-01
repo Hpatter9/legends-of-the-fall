@@ -364,6 +364,65 @@ const GORM_BINDING: readonly BindingBeat[] = [
   { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Quarry Titan gets up off the hill.' },
 ];
 
+/* ------------------------------------------------------------------ Vaelkhar, the Dragon King (chain 6, `docs/notes/eidolon-chain-6.md`) */
+
+/** Vaelkhar's three pieces. */
+export const BLACK_SCALE: PieceDef = {
+  id: 'blackScale',
+  name: 'The Black Scale',
+  lines: ["From under a Calamity guardian, where it was keeping something warm: one black scale as broad as a shield, with violet showing through the cracks.", 'It is cold on the outside and humming on the inside, like a very large cat that has decided to put up with you.'],
+  art: 'relicShard',
+};
+export const UNANSWERED_LETTER: PieceDef = {
+  id: 'unansweredLetter',
+  name: 'The Unanswered Letter',
+  lines: ['From the keep\'s oldest guest wing: a letter sealed in violet wax, addressed in a very large hand "To the Keep. Re: my things."', 'It has been delivered, and not answered, for three hundred years. The seal is still warm. The tone, on opening, is polite.'],
+  art: 'scholarScroll',
+};
+export const CROWN_TINE: PieceDef = {
+  id: 'crownTine',
+  name: 'The Crown-Tine',
+  lines: ['One golden spike of a dragon\'s crown, sent to the keep as a deposit and spent, at some point, on something. It came back when the keep had earned a ransom\'s worth of damage.', 'It is warm to hold, and very slightly smug about it.'],
+  art: 'moonPendant',
+};
+
+/** The voice in the rift, heard over the prologue: the rift's own picture (`face:rift`, a rift shard), the Calamity quests' voice, small letters and all. */
+const RIFT_VOICE: CastMember = { role: 'face:rift', x: 0, facing: 'right', hidden: true, name: 'A voice in the rift' };
+
+/** The prologue of Vaelkhar's chain: a crack of violet light opens in the Sanctum floor once the Calamity has been cleared, and a voice from the
+ *  rift carries a message for the keep from a guest who is too large to come through. The Summoner names the Dragon King. */
+const THE_GUESTS_THINGS: Scene = {
+  id: 'eid-vaelkhar-prologue',
+  title: "The Guest's Things",
+  blurb: 'A voice in the rift carries a message from a very large guest.',
+  moment: { kind: 'eidolon', chain: 'vaelkhar' },
+  music: 'solemn',
+  cast: { voice: RIFT_VOICE, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  shots: [
+    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, after the Calamity', lines: [tell('A crack of violet light has opened in the Sanctum floor, about the size of a letterbox. The braziers lean away from it. A voice comes up out of it, from a long way down, and very politely.')] },
+    { cam: wide(250, 200), lines: [say('voice', 'you shut the last door. thank you. it was loud.')] },
+    { cam: close(['a', 'b']), lines: [say('a', 'Who is that?'), say('b', 'It sounds like the voice from the guardians\' floors.')] },
+    { cam: wide(250, 200), lines: [say('voice', 'i keep the rift. i am only the post. this one is not mine. it is from someone too large to come through, who has asked me to ask.')] },
+    { cam: wide(250, 200), lines: [say('voice', 'he came to your keep once. as a guest. one night. he left his things, and the doors shut behind him. he has wondered for three hundred years whether it is rude to ask for them back.')] },
+    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'Vaelkhar. The Dragon King. He flew over the first kings\' walls as an invited guest, and the pacts broke while he was asleep in the east wing.'), say('summoner', 'He left a scale, a seal and a helm made for a rider. He also gave the first queen his heart, as a gift. On reflection, he would like it back. The keep may keep it, I think, if it gives him a receipt.')] },
+    { cam: close('a'), lines: [say('a', 'Is he angry?')] },
+    { cam: wide(250, 200), lines: [say('voice', 'he is a king. it comes out as the same thing. but if you bring him his things, he will answer your horn. he says it is lonely at the top.')] },
+    { cam: wide(260, 200), lines: [say('summoner', 'A scale from the last guardians\' floor, the letter that was never answered, and a tine of his crown. Bring me those, and I will bind him.'), tell("Vaelkhar's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+  ],
+};
+
+/** Vaelkhar's binding, in void purple and black: the pieces laid on the altar, the windows going dark one pane at a time, a ring of violet fire,
+ *  the Dragon King under a crown of night. The horn is already the keep's, so there are no horn beats. */
+const VAELKHAR_BINDING: readonly BindingBeat[] = [
+  { at: 0, beat: 'dark' },
+  { at: 500, beat: 'pieces', who: 'summoner', text: 'The scale, the letter, the tine. Set them on the altar. Three of his four things: the heart, the keep may keep, and he has asked for a receipt.' },
+  { at: 3000, beat: 'circle', who: 'narrator', text: 'The windows go dark, one pane at a time. A ring of violet fire stands up on the Sanctum floor, and for a moment the whole keep is under a crown.' },
+  { at: 5400, beat: 'rise' },
+  { at: 6600, beat: 'name' },
+  { at: 8000, beat: 'line', who: 'eidolon', text: 'I came as a guest, and I left my things, and you kept them dusted. That is more than a king may ask of a keep. Kneel, little king. No. Do not kneel. Stand, and watch.' },
+  { at: 12500, beat: 'bound', who: 'narrator', text: 'Bound. The Dragon King comes for his things, and stays for the company.' },
+];
+
 /** The six chains, easiest first. Askel's and Nivra's are written; the rest are the rails for their batches (the design's givers and
  *  openings, rewritten for the six chosen Eidolons when their chains are written). */
 export const CHAINS: readonly ChainDef[] = [
@@ -581,7 +640,49 @@ export const CHAINS: readonly ChainDef[] = [
       },
     ],
   },
-  { id: 'vaelkhar', eidolon: 'vaelkhar', order: 6, title: "Vaelkhar's chain", giver: { name: 'A voice in the rift', title: 'Heard where a guardian fell' }, opens: { kind: 'calCleared' }, opensWords: 'the Calamity cleared once', trial: true, parts: [] },
+  {
+    id: 'vaelkhar',
+    eidolon: 'vaelkhar',
+    order: 6,
+    title: "The Guest's Things",
+    giver: { name: 'A voice in the rift', title: 'Heard where a guardian fell' },
+    opens: { kind: 'calCleared' },
+    opensWords: 'the Calamity cleared once',
+    // (EIDOLON-TRIAL: after the three pieces, the trial against Vaelkhar himself on the Black Summit, `eidolonTrials.ts`; then the binding)
+    trial: true,
+    prologue: THE_GUESTS_THINGS,
+    binding: VAELKHAR_BINDING,
+    call: { title: 'A crack of violet light waits in the floor', line: 'It is the size of a letterbox, and very polite · tap to listen' },
+    parts: [
+      {
+        id: 'vaelkhar1',
+        title: 'Under the Guardians',
+        text: 'Fell 2 Calamity guardians',
+        goal: { kind: 'calGuardian', n: 2 },
+        begin: 'he shed a scale on the floor of every map he flew over on his way in. the guardians sit on them. fell two, and look underneath. they will not like it.',
+        piece: BLACK_SCALE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'vaelkhar2',
+        title: 'The Guest Wing',
+        text: 'Win the quest battle The Guest Wing (Kwame or Minh fights; any starter hero may stand in)',
+        goal: { kind: 'battle', n: 1, battle: 'guestWing' },
+        begin: "the oldest wing of your keep has a door at the end of it, and a chamberlain who was told to keep the guest's things until he came back for them. he has not been told the guest checked out. be gentle. no. do not be gentle.",
+        piece: UNANSWERED_LETTER,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'vaelkhar3',
+        title: "A King's Ransom",
+        text: 'Deal 200,000 damage across fights',
+        goal: { kind: 'tally', n: 200000, stat: 'dealt' },
+        begin: "last, a tine of his crown. it was sent to the keep as a deposit and has been spent on something. it will be returned to a party that has dealt a king's ransom of damage. two hundred thousand, give or take a hero.",
+        piece: CROWN_TINE,
+        reward: { chest: 'bronze' },
+      },
+    ],
+  },
 ];
 
 const BY_ID = new Map(CHAINS.map((c) => [c.id, c]));
