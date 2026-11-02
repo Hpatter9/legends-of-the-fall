@@ -17,6 +17,7 @@ import { titleLine } from './heroTitleView';
 import { duck, play as playSfx } from './render/sound';
 import { SKIP_GUARD_MS } from './render/summonRules';
 import overlookUrl from './art/camp/overlook.png';
+import { openScreen } from './screens';
 
 /** The arrival's beats (ms): the deed and the road, the hero walking in, the hero arriving (its art, one strike), the plate. */
 export const ARRIVAL_BEATS = [0, 600, 2300, 3100] as const;
@@ -64,6 +65,8 @@ export function earnedArrival(meta: Meta, kind: string, opts: { hold?: 1 | 2 | 3
   plate.append(el('small', 'eaKicker', 'A new ally rides in'), titleLine(kind, 'h3', '', true), el('span', 'eaTitle', [def.name, title].filter(Boolean).join(' · ')), el('p', 'eaRole', def.role), el('span', 'eaJoin', 'Joins your company'));
   const hint = el('small', 'eaHint', 'Tap to skip');
   root.append(deed, lead, stage, plate, hint);
+  // (CLOSE-SCREENS: a moment, laid over whatever is up; it is the player's to dismiss)
+  const leave = openScreen('earned', () => undefined, { kind: 'moment' });
   document.body.append(root);
   duck(true, 'reveal');
   let at = performance.now();
@@ -104,6 +107,7 @@ export function earnedArrival(meta: Meta, kind: string, opts: { hold?: 1 | 2 | 3
       duck(false, 'reveal');
       showcase.stop();
       root.remove();
+      leave();
       done();
     });
   });

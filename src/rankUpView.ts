@@ -15,6 +15,7 @@ import { heroStats } from './sim/talents';
 import { lookSheet, stepOfRank } from './render/awakenLook';
 import { loadAwakenedSheets, sprite } from './render/sheets';
 import { play } from './render/sound';
+import { openScreen } from './screens';
 
 export interface Taken {
   /** `rank`: a shard rank taken (`n` is the new rank); `awaken`: an awakened step (`n` is the step, 1 or 2); `cache`: a Rift Cache opened on the awakening panel (`n` ores; no show). */
@@ -113,9 +114,12 @@ function openReadyRankUp(meta: Meta, kind: string, done: (t: Taken) => void): vo
     before.tick(n);
     after.tick(n);
   }, 140);
+  // (CLOSE-SCREENS: a moment over the hero's sheet (a place, which stays))
+  const leave = openScreen('rankUp', () => undefined, { kind: 'moment' });
   const close = (): void => {
     clearInterval(timer);
     back.remove();
+    leave();
   };
   no.addEventListener('click', close);
   back.addEventListener('click', (e) => {

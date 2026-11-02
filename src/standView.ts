@@ -504,7 +504,7 @@ export class StandView {
     this.host.hideBoard(true);
     this.world.visible = true;
     this.root.hidden = false;
-    this.parts.end.hidden = true;
+    this.closeEnd();
     this.parts.ask.hidden = true;
     this.endTitle();
     this.parts.choice.hidden = true;
@@ -534,6 +534,7 @@ export class StandView {
     this.hud.hideFloating();
     this.root.hidden = true;
     this.world.visible = false;
+    this.closeEnd();
     this.parts.ask.hidden = true;
     this.showSky(false);
     this.hallFor++;
@@ -1918,7 +1919,8 @@ export class StandView {
     btns.append(again, home);
     card.append(btns);
     end.append(card);
-    window.setTimeout(() => {
+    window.clearTimeout(this.endTimer);
+    this.endTimer = window.setTimeout(() => {
       end.hidden = false;
     }, 900);
     play('defeat');
@@ -1926,6 +1928,17 @@ export class StandView {
 
   /** JRPG-RECAP: the end card's results screen, while it counts up. */
   private endResults: JrPlayer | null = null;
+  /** The end card's short wait before it shows. */
+  private endTimer = 0;
+
+  /** CLOSE-SCREENS: the end card is closed for good (leaving, or standing again): its count-ups stopped, its wait cleared, emptied. */
+  private closeEnd(): void {
+    window.clearTimeout(this.endTimer);
+    this.endResults?.stop();
+    this.endResults = null;
+    this.parts.end.hidden = true;
+    this.parts.end.replaceChildren();
+  }
 
   /** The eight's rows for the end card: each one's run levels (from 0) and the hp and attack they added on its stats as it came in. */
   private endHeroes(m: Meta): JrHero[] {

@@ -9,6 +9,7 @@ import { portrait } from './render/sheets';
 import { heroArtUrl } from './ultMoment';
 import { CHAMBERS } from './castle';
 import portalUrl from './art/calmap/portal.png';
+import { openScreen } from './screens';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -39,12 +40,13 @@ function artOf(card: EndCard): HTMLElement {
   return frame;
 }
 
-let open: HTMLElement | null = null;
+let open: { root: HTMLElement; finish: (went: boolean) => void } | null = null;
 
 /** Show the card and wait for it to be dismissed. `go`: what the card's own button does (left out: Continue only). Resolves `true` when
  *  the player took the button that goes there. */
 export function showEndCard(card: EndCard, go?: () => void): Promise<boolean> {
-  open?.remove();
+  // (CLOSE-SCREENS: a card already up is finished, not just taken away: its key listener goes and its wait ends)
+  open?.finish(false);
   return new Promise((done) => {
     const root = el('div', 'unlock rvCard');
     root.setAttribute('role', 'dialog');
@@ -60,7 +62,8 @@ export function showEndCard(card: EndCard, go?: () => void): Promise<boolean> {
     const finish = (went: boolean): void => {
       window.removeEventListener('keydown', keys, true);
       root.remove();
-      if (open === root) open = null;
+      leave();
+      if (open?.root === root) open = null;
       done(went);
       if (went) go?.();
     };
@@ -82,8 +85,9 @@ export function showEndCard(card: EndCard, go?: () => void): Promise<boolean> {
     cont.addEventListener('click', () => finish(false));
     row.append(cont);
     root.append(rib, artOf(card), name, line, where, row);
+    const leave = openScreen('endCard', () => undefined, { kind: 'moment' });
     document.body.append(root);
-    open = root;
+    open = { root, finish };
     window.addEventListener('keydown', keys, true);
     (goBtn ?? cont).focus({ preventScroll: true });
   });

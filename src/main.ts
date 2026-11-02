@@ -165,6 +165,7 @@ import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHorn';
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
+import { openScreen, openScreens } from './screens';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -274,6 +275,10 @@ class Game {
   /** JRPG-RECAP: the results screen's data once a fight is settled, and its player once the card is up. */
   private jrData: JrData | null = null;
   private jr: JrPlayer | null = null;
+  /** CLOSE-SCREENS: the result card has been left (the run's recap, the home screen, the next wave): it stays shut until the next fight
+   *  ends, and its closer in the screen stack while it is up. */
+  private resultDone = false;
+  private resultCloser: (() => void) | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -536,6 +541,7 @@ class Game {
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    (window as unknown as { __screens: () => string[] }).__screens = openScreens;
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
@@ -574,7 +580,9 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
-    this.stopResults();
+    // (CLOSE-SCREENS: the last fight's card is closed; the new fight's comes up when it ends)
+    this.closeResult();
+    this.resultDone = false;
     this.placeSquad();
     this.acc = 0;
     this.chosen = null;
@@ -2050,6 +2058,13 @@ class Game {
     this.refreshAuto();
     const army = armyById(a.army)!;
     const card = $('autoSum');
+    // (CLOSE-SCREENS: a flow screen: its rows and finds go as it closes; one already up is closed first)
+    this.autoSumCloser = openScreen('autoSum', () => {
+      this.autoSumCloser = null;
+      card.hidden = true;
+      card.querySelector('.asumRows')!.replaceChildren();
+      card.querySelector('.asumFinds')?.remove();
+    });
     card.querySelector('h2')!.textContent = why === 'done' ? 'Auto-replay done' : why === 'loss' ? 'Auto-replay stopped' : 'Auto-replay stopped';
     card.querySelector('.asumWhy')!.textContent =
       why === 'done'
@@ -2073,11 +2088,13 @@ class Game {
     card.hidden = false;
     this.refresh();
   }
+  private autoSumCloser: (() => void) | null = null;
 
   private closeAutoSummary(): void {
     const card = $('autoSum');
-    card.hidden = true;
     const why = card.dataset.why;
+    if (this.autoSumCloser) this.autoSumCloser();
+    else card.hidden = true;
     // (a run that was stopped carries on by hand where it stands; a finished one goes on to the armies, a lost one home)
     if (why === 'done') this.armyWon();
     else if (why === 'loss') this.goHome();
@@ -2151,7 +2168,7 @@ class Game {
     const run = this.run;
     const qb = questBattleOfRun(run);
     if (run.mode?.kind !== 'quest' || !qb) return this.goHome();
-    $('result').hidden = true;
+    this.closeResult();
     endVictory();
     if (!run.cleared) {
       const next = startQuestBattle(this.meta, qb.id, run.pool ?? run.mode.cast);
@@ -2185,7 +2202,7 @@ class Game {
 
   /** Leave a lost quest battle (the result card's Leave): back to the quest log, where its Fight waits. */
   private leaveQuest(): void {
-    $('result').hidden = true;
+    this.closeResult();
     endVictory();
     const qb = questBattleOfRun(this.run);
     this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
@@ -2337,6 +2354,21 @@ class Game {
   }
 
   /** JRPG-RECAP: the results screen is going (a new fight): its clock stops and its parts are emptied. */
+  /** CLOSE-SCREENS: the fight's result card is done with: hidden, emptied and its count-ups stopped, and kept shut while the battle
+   *  stays ended (`refresh` would otherwise put it back up under whatever opens next: the owner's chest over the last recap). */
+  private closeResult(): void {
+    const shut = this.resultCloser;
+    if (shut) shut();
+    else this.dropResult();
+  }
+  private dropResult(): void {
+    this.resultCloser = null;
+    this.resultDone = true;
+    $('result').hidden = true;
+    this.stopResults();
+    for (const id of ['banner', 'summary', 'joke', 'stars', 'armyStars', 'oreDrop', 'dayResult', 'waveNotes', 'xp', 'fightStats']) $(id).replaceChildren();
+  }
+
   private stopResults(): void {
     this.jr?.stop();
     this.jr = null;
@@ -2359,17 +2391,19 @@ class Game {
 
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
+    // (CLOSE-SCREENS: the result card is left, whichever way the game goes on)
+    this.closeResult();
     // (a won battle's victory music ends with its results)
     endVictory();
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
-      $('result').hidden = true;
+      this.closeResult();
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
     if (this.run.cleared && !this.run.tower) return void this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
-      $('result').hidden = true;
+      this.closeResult();
       saveRun(this.run);
       if (this.run.over) {
         const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in ${this.run.rift?.expedition ? 'region' : 'map'} ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
@@ -2539,7 +2573,7 @@ class Game {
   private goHome(): void {
     const r = this.run;
     const army = armyOfRun(r);
-    $('result').hidden = true;
+    this.closeResult();
     this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
@@ -2547,7 +2581,7 @@ class Game {
    *  film already showed it), then the armies screen. */
   private async armyWon(): Promise<void> {
     const army = armyOfRun(this.run)!;
-    $('result').hidden = true;
+    this.closeResult();
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
@@ -3289,7 +3323,9 @@ class Game {
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0 || !!this.questBlock();
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    result.hidden = this.resultDone || !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    // (CLOSE-SCREENS: the card is one step of the fight's end: in the screen stack while it is up, so the next screen closes it)
+    if (!result.hidden && !this.resultCloser) this.resultCloser = openScreen('result', () => this.dropResult());
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       const cal = run.mode?.kind === 'calamity';

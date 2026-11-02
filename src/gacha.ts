@@ -53,6 +53,10 @@ export class Gacha {
   close(): void {
     this.clearReveal();
     $('gacha').hidden = true;
+    // (CLOSE-SCREENS: the pull's cards go with the screen; each opening starts empty, as `open` has it)
+    $('reveal').replaceChildren();
+    $('gacha').classList.remove('hasResults');
+    $('resultIntro').hidden = true;
     this.onClose();
     // (a join whose cards were closed before its reveal came, by a quick tap on Continue, still has it: over the hall)
     void revealUnseen(this.meta);

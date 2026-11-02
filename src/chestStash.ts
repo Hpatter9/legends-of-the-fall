@@ -26,6 +26,7 @@ import chestSilver from './art/ui/chest-silver.png';
 import chestGold from './art/ui/chest-gold.png';
 import chestDaily from './art/ui/chest-daily.png';
 
+import { openScreen } from './screens';
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -161,15 +162,16 @@ export function showChest(loot: Loot, then: () => void): void {
   const go = el('button', 'primary chestGo', 'Collect');
   go.hidden = true;
   root.append(title, stage, list, go);
-  document.body.append(root);
   const timers: number[] = [];
   const at = (ms: number, f: () => void) => timers.push(window.setTimeout(f, ms));
   let fast = false;
-  const done = () => {
+  // (CLOSE-SCREENS: a finished screen under it (the run's recap, a result card) is closed as the chest opens; Collect closes it for good)
+  const done = openScreen('chest', () => {
     timers.forEach(clearTimeout);
     root.remove();
     then();
-  };
+  });
+  document.body.append(root);
   go.addEventListener('click', done);
   // (a tap before the end hurries the rest along)
   root.addEventListener('click', (e) => {
@@ -258,8 +260,14 @@ export function showChestSummary(loots: readonly Loot[], then: () => void): void
   }
   const go = el('button', 'primary chestGo', 'Collect all');
   root.append(title, stage, tiles, gearHead, list, go);
-  document.body.append(root);
   const timers: number[] = [];
+  // (CLOSE-SCREENS: as one chest's opening)
+  const done = openScreen('chest', () => {
+    timers.forEach(clearTimeout);
+    root.remove();
+    then();
+  });
+  document.body.append(root);
   const reveal = () => {
     timers.forEach(clearTimeout);
     pic.root.classList.remove('shaking');
@@ -275,10 +283,6 @@ export function showChestSummary(loots: readonly Loot[], then: () => void): void
   root.addEventListener('click', (e) => {
     if (e.target !== go && !root.classList.contains('shown')) reveal();
   });
-  go.addEventListener('click', () => {
-    timers.forEach(clearTimeout);
-    root.remove();
-    then();
-  });
+  go.addEventListener('click', done);
 }
 
