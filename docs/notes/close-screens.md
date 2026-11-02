@@ -66,6 +66,38 @@ Left open on purpose: the places (home, its tabs, the party, the stall, the spir
 HUD, which the player comes back to; the trophy wall (`trophyWall.ts`), a place's panel rebuilt on each opening. `#ask` (one line of
 text) is left as it was.
 
+## Reproduced, before and after
+
+`tools/close-screens/probe.mjs` (Playwright, Chromium, pixel ratio 3, touch) loses a run of the Orc Warband with no heart left, opens
+the run recap, presses Continue, dismisses the unlock card the run brought, opens and shuts the summoning screen (its close refreshes
+the game, as many things do), puts a chest on the cart and taps it. Then it tours the other screens, back to the home screen after
+each, twice: Open all, the stall, the codex, settings, a hero's sheet, the armies; it counts the drawing layers (CDP `LayerTree`, the
+layers that draw content, as in `hero-sheet-glitch.md`) and the page's elements after each.
+
+| | before (0.331.0) | after |
+| --- | --- | --- |
+| Result card once the recap is left and the summoning shut | up again, drawn under the home screen | hidden, emptied |
+| Under the chest | the result card through the backdrop: its panel and "Run recap" (`close-screens-chest-before-after.png`, left) | nothing (right) |
+| Drawing layers with the chest up (393x852) | 31 | 27 |
+| Drawing layers on the home screen, after every screen of the tour | 10 | 6 |
+| The page's elements on the home screen through the tour | 1521, growing to 3052 (the sheet, codex page, settings and the armies kept) | 1567 to 1565: flat |
+| Sheets and pages left filled under the home screen | hero sheet 9, settings 8, the armies or codex page | none |
+| The screen stack after each return home | (none) | empty |
+| Page errors | 0 | 0 |
+
+The same after run at 360x780 and 412x915: the result card shut, 27-28 layers under the chest, 6 on the home screen and the elements
+flat through the tour, no errors (`close-screens-chest-sizes.png`: the chest at 393x852, 360x780 and 412x915).
+
 ## Checks
 
-(filled in below)
+- `npm run typecheck`: passed. `npm test` (the full suite): 2267 tests, 2267 passed (with the new `test/close-screens.test.ts`).
+- `npm run web`: built.
+- The probe above, on the build before (0.331.0) at 393x852 and after at 393x852, 360x780 and 412x915.
+
+## Files
+
+`src/screens.ts`, `src/screenRules.ts` (new); `src/main.ts` (the result card's close, the auto summary, `window.__screens`);
+`src/recapView.ts`, `src/chestStash.ts`, `src/towerView.ts`, `src/standView.ts` (flow screens); `src/summonTarot.ts`,
+`src/earnedArrival.ts`, `src/revealCard.ts`, `src/rankUpView.ts`, `src/eidolonBinding.ts` (moments); `src/home.ts`, `src/party.ts`,
+`src/settings.ts`, `src/gacha.ts` (closed places' sheets emptied); `test/close-screens.test.ts`; `tools/close-screens/probe.mjs`;
+`docs/samples/close-screens-*`.
