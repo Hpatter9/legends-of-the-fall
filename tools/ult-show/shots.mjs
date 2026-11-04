@@ -60,7 +60,7 @@ async function open() {
   await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
-  await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
+  await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip, .rvCard, .unlock { display: none !important; }' });
   // (our own clock: the ticker stopped, `__step(ms)` moves the page's frame and every CSS animation on by 16 ms steps)
   await page.evaluate(() => {
     const g = window.__game;
