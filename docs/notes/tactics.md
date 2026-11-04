@@ -145,3 +145,5 @@ begins (`formationOf`, `startFormation`), from where the heroes stand; the first
   while a friend stands beside and its open ends; the spearhead's march, first blow and tip; the square's guard while two friends stand
   round and its splash, the skirmish's splash; Arrange sets a party out in each shape, read back as that shape.
 - Shots: `docs/samples/tactics-{deploy,sheet,arranged,fight}-{393,360,412}.png` (the save has Auto place open).
+- After merging main (0.343.0): `set-powers`' small fights (new on main) re-seeded nine powers to seed 7, where each fires under Advance
+  together (the table records "where each power was seen to fire").

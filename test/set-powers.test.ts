@@ -21,16 +21,17 @@ function duel(id: string, wearer = 'knight', band = 'orcs', seed = 1, hp = 1): B
   return b;
 }
 const firedIn = (b: Battle, wearer: string, id: string) => powerFired(b.units.find((x) => x.def === wearer)!, id);
-/** Where each power was seen to fire (the wearer, the band, the seed, the heroes' health share). */
+/** Where each power was seen to fire (the wearer, the band, the seed, the heroes' health share). (With the tactics, docs/notes/tactics.md, nine
+ *  moved to seed 7, where each fires: under Advance together, the default, their old seeds' fights no longer bring the moment.) */
 const SETUPS: Record<string, [string, string, number, number]> = {
-  longWinter: ['knight', 'orcs', 1, 1], eyeOfStorm: ['knight', 'orcs', 1, 1], lastWall: ['knight', 'orcs', 3, 1], dawnbringer: ['knight', 'orcs', 1, 1],
-  dragonsHeart: ['knight', 'orcs', 1, 1], shadowDance: ['knight', 'orcs', 3, 1], thousandDuels: ['knight', 'orcs', 1, 1], armyOfDead: ['knight', 'orcs', 3, 1],
+  longWinter: ['knight', 'orcs', 1, 1], eyeOfStorm: ['knight', 'orcs', 1, 1], lastWall: ['knight', 'orcs', 7, 1], dawnbringer: ['knight', 'orcs', 1, 1],
+  dragonsHeart: ['knight', 'orcs', 7, 1], shadowDance: ['knight', 'orcs', 7, 1], thousandDuels: ['knight', 'orcs', 1, 1], armyOfDead: ['knight', 'orcs', 7, 1],
   echoingWord: ['knight', 'orcs', 1, 1], pyreWalker: ['knight', 'orcs', 1, 1], wildHunt: ['knight', 'orcs', 1, 1], tailwind: ['knight', 'orcs', 1, 1],
-  undertow: ['archer', 'orcs', 1, 1], kingOfHill: ['knight', 'orcs', 1, 1],
+  undertow: ['archer', 'orcs', 1, 1], kingOfHill: ['knight', 'orcs', 7, 1],
   lastKing: ['knight', 'orcs', 1, 0.3], laughingFox: ['knight', 'orcs', 1, 1], sevenWinters: ['knight', 'orcs', 1, 1], ferryman: ['knight', 'orcs', 1, 0.3],
-  aegisOdile: ['knight', 'orcs', 1, 1], lastLight: ['knight', 'orcs', 3, 1], gravesong: ['knight', 'orcs', 3, 1], widowsBow: ['knight', 'skeletons', 1, 1],
+  aegisOdile: ['knight', 'orcs', 1, 1], lastLight: ['knight', 'orcs', 7, 1], gravesong: ['knight', 'orcs', 7, 1], widowsBow: ['knight', 'skeletons', 1, 1],
   hundredNames: ['knight', 'orcs', 1, 1], bellOfEnding: ['knight', 'orcs', 1, 1], sevenLeague: ['knight', 'orcs', 1, 1], ashwalker: ['knight', 'orcs', 1, 1],
-  moonSlippers: ['knight', 'orcs', 1, 1], rookBandolier: ['knight', 'orcs', 1, 1], hourglass: ['knight', 'orcs', 1, 1], gorgonEye: ['knight', 'orcs', 1, 1],
+  moonSlippers: ['knight', 'orcs', 1, 1], rookBandolier: ['knight', 'orcs', 1, 1], hourglass: ['knight', 'orcs', 7, 1], gorgonEye: ['knight', 'orcs', 7, 1],
 };
 
 test('every full set has a power, and each fires in a small fight', () => {
