@@ -209,6 +209,11 @@ export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
   plagueDoctor: ['undead', 'arcanist'],
   bombardier: ['machine', 'gunner'],
   astrologer: ['royal', 'arcanist'],
+  inquisitor: ['holy', 'arcanist'],
+  seraph: ['holy', 'guardian'],
+  corsairSurgeon: ['pirate', 'support'],
+  harpooner: ['pirate', 'gunner'],
+  seaReaver: ['pirate', 'vanguard'],
 };
 
 /** A trait by id, the coming ones included. */

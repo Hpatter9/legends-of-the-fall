@@ -125,6 +125,12 @@ export const UNITS: Record<string, UnitDef> = {
   plagueDoctor: { id: 'plagueDoctor', name: 'Plague Doctor', side: 'hero', sheet: 'hero_res_plague_doctor', scale: 0.520833, hp: 192, atk: 26, def: 4, range: 3, moveMs: 660, atkMs: 1450, jump: 2, shot: 'curse', role: 'An ash-apothecary: swings his censer, steps as crows to mend friends and raises thorn quarantines' },
   bombardier: { id: 'bombardier', name: 'Bombardier', side: 'hero', sheet: 'hero_res_bombardier', scale: 0.520833, hp: 176, atk: 31, def: 4, range: 5, moveMs: 680, atkMs: 1650, jump: 3, shot: 'bullet', splash: true, role: 'An iron alchemist: rocket-jumps over the fray, lobs concussion shells and lays firebombs' },
   astrologer: { id: 'astrologer', name: 'Astrologer', side: 'hero', sheet: 'hero_res_astrologer', scale: 0.520833, hp: 184, atk: 30, def: 3, range: 4, moveMs: 680, atkMs: 1550, jump: 2, shot: 'fire', role: 'A star-keeper: pulls foes into gravity wells, glides along orbits and bridges starlight' },
+  // The twenty heroes' fourth batch, waiting as the others do
+  inquisitor: { id: 'inquisitor', name: 'Inquisitor', side: 'hero', sheet: 'hero_res_inquisitor', scale: 0.520833, hp: 202, atk: 28, def: 5, range: 3, moveMs: 640, atkMs: 1400, jump: 2, shot: 'holy', role: 'A sun-judge: chains the wicked in place, raises blazing edicts and tips the scales' },
+  seraph: { id: 'seraph', name: 'Seraph', side: 'hero', sheet: 'hero_res_seraph', scale: 0.625, hp: 288, atk: 18, def: 8, range: 1, moveMs: 500, atkMs: 1050, jump: 9, flies: true, role: 'A winged guardian: dives on the wicked, lifts her friends up and raises the fallen' },
+  corsairSurgeon: { id: 'corsairSurgeon', name: 'Corsair Surgeon', side: 'hero', sheet: 'hero_res_corsair_surgeon', scale: 0.520833, hp: 218, atk: 18, def: 5, range: 2, moveMs: 600, atkMs: 1150, jump: 3, shot: 'bullet', role: 'A reef sawbones: swings in by rope to mend friends, stitches wounds and hooks his friends clear' },
+  harpooner: { id: 'harpooner', name: 'Harpooner', side: 'hero', sheet: 'hero_res_harpooner', scale: 0.520833, hp: 196, atk: 29, def: 4, range: 4, moveMs: 620, atkMs: 1350, jump: 2, shot: 'arrow', role: 'A floe whaler: reels distant prey in on a barbed line, slides on the ice and slams his catch' },
+  seaReaver: { id: 'seaReaver', name: 'Sea Reaver', side: 'hero', sheet: 'hero_res_sea_reaver', scale: 0.625, hp: 246, atk: 25, def: 6, range: 1, moveMs: 500, atkMs: 900, jump: 3, role: 'A hull-breaker: rides a cresting wave into the line, slams his anchor and drags foes in' },
 
   // called up by Beastmaster
   wolf: { id: 'wolf', name: 'Wolf', side: 'hero', sheet: 'wolf_grey', scale: 0.55, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster', forms: ['wolf_grey', 'wolf_grey', 'wolf_black'] },
@@ -154,7 +160,7 @@ export const UNITS: Record<string, UnitDef> = {
 
 /** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
  *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */
-export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'banneret', 'geomancer', 'bellWarden', 'falconer', 'astralSphinx', 'mirageDancer', 'plagueDoctor', 'bombardier', 'astrologer'];
+export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'banneret', 'geomancer', 'bellWarden', 'falconer', 'astralSphinx', 'mirageDancer', 'plagueDoctor', 'bombardier', 'astrologer', 'inquisitor', 'seraph', 'corsairSurgeon', 'harpooner', 'seaReaver'];
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;

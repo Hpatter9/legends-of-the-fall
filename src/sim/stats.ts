@@ -127,6 +127,11 @@ const COMING_ROWS: Readonly<Record<string, Row>> = {
   plagueDoctor: [8, 12, 15, 17, 13, 10, 'int', 'int', 'medium', 'con', 'int', 'Wizard (plague doctor)'],
   bombardier: [12, 15, 17, 13, 10, 8, 'dex', 'int', 'medium', 'dex', 'con', 'Artificer (bombardier)'],
   astrologer: [8, 12, 13, 17, 15, 10, 'int', 'int', 'robes', 'int', 'wis', 'Wizard (astrologer)'],
+  inquisitor: [10, 15, 13, 8, 17, 12, 'dex', 'wis', 'medium', 'wis', 'cha', 'Cleric (judgement)'],
+  seraph: [15, 10, 13, 8, 12, 17, 'str', 'cha', 'heavy', 'wis', 'cha', 'Paladin (seraph)'],
+  corsairSurgeon: [10, 15, 13, 12, 17, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Cleric (sawbones)'],
+  harpooner: [17, 13, 15, 8, 12, 10, 'str', 'str', 'medium', 'str', 'con', 'Fighter (whaler)'],
+  seaReaver: [17, 12, 15, 8, 10, 13, 'str', 'str', 'brute', 'str', 'con', 'Barbarian (reaver)'],
 };
 const COMING_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromEntries(
   Object.entries(COMING_ROWS).map(([kind, r]) => [kind, { base: toScores(r.slice(0, 6) as number[]), blow: r[6], cast: r[7], armour: r[8], saves: [r[9], r[10]], calling: r[11] }]),

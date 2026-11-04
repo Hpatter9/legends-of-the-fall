@@ -103,6 +103,30 @@ Astrologer is "Astrologer" (the branch's "Grand Astrologer"), the canon's Cyra; 
 a long fight at level 30 (its four shells refill his meter), starving his skills of the turn. Its rate must come down in the tuning pass.
 `test/wave3-kits.test.ts`: the roster's kit rules, the five waiting, their traits in a fight, and the beasts still the roster's four.
 
+## Batch 4: the Inquisitor, the Seraph, the Corsair Surgeon, the Harpooner and the Sea Reaver
+
+`src/sim/kits/wave4.ts`, as the others (traits Holy Arcanist, Holy Guardian, Pirate Support, Pirate Gunner, Pirate Vanguard). With it all
+twenty heroes wait as coming heroes. Changes to the branch:
+
+- **The two new healers' revives sit on skill 2**, as main's do (`castRevive` reads skill 2's `revive` face): on the branch the Seraph's
+  hung on Sanctuary Wings and the Corsair Surgeon's on his skill 3, where main would never cast it. So each one's heal is its skill 2
+  (Mercy's Ascent, Sawbones Triage) with its face (Reliquary Grace, Smelling Salts, written as `kits/revive.ts` writes the four), and
+  Sanctuary Wings is the Seraph's skill 3. The roster still has its four healers (`test/revive.test.ts`); these two join with their batch.
+- **Grappling Extraction hooks a friend, never himself**: the branch picked the most at-risk fighter, which could be the Surgeon, and then
+  did nothing. Its trigger and its target are now a friend within 4.
+- The Seraph is "Seraph" (the branch's "Reliquary Seraph"), the canon's Gabriela.
+
+| Hero | Pool | Skill 1 | Skill 2 | Skill 3 | Ultimate |
+| --- | --- | --- | --- | --- | --- |
+| Inquisitor (Soraya) | mana | Chains of Judgement (strike 36, 7 s) | Blazing Edict (utility 36, 16 s) | Purging Scales (guard 30, 15 s; a heal: a friend within 5 under 40%) | Solar Tribunal |
+| Seraph (Gabriela) | mana | Halo Dive (strike 36, 7 s) | Mercy's Ascent (utility 42, 14 s; a heal; revive: Reliquary Grace) | Sanctuary Wings (utility 34, 16 s) | Descent of the Host |
+| Corsair Surgeon (Tariq) | mana | Boarding Swing (strike 36, 7 s; mends) | Sawbones Triage (utility 40, 12 s; a heal; revive: Smelling Salts) | Grappling Extraction (guard 30, 15 s: a friend within 4 under 40% with a foe beside it) | Crimson Dispensary |
+| Harpooner (Siku) | stamina | Barbed Harpoon (strike 24, 7 s) | Floe Slide (utility 22, 16 s) | Whaler's Reel (heavy 30, 11 s) | Leviathan Line |
+| Sea Reaver (Nakoa) | stamina | Breaker Rush (strike 24, 7 s) | Anchor Slam (heavy 32, 12 s) | Riptide Undertow (utility 22, 16 s) | Wrath of the Reef |
+
+`test/wave4-kits.test.ts`: the roster's kit rules, the five waiting (and all twenty), their traits in a fight, and both revives raising
+the nearest fallen friend at 30% from level 10.
+
 ## The art imported (PRs #344 to #349)
 
 ChatGPT's six art PRs (from [twenty-heroes-art-prompts.md](twenty-heroes-art-prompts.md)) are merged into this branch as they are (PNGs under

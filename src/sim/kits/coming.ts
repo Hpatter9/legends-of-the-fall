@@ -9,6 +9,7 @@ import type { Row, RowSlot } from './comingRow';
 import { vampireRows } from './vampires';
 import { wave2Rows } from './wave2';
 import { wave3Rows } from './wave3';
+import { wave4Rows } from './wave4';
 
 /** Each coming hero's slot strengths (their `tune`, times the caster's attack while it casts): the roster's defaults (`STAM_TUNE` 0.5 or
  *  `MANA_TUNE` 0.7, 1 for skill 2 and 0.8 for skill 3) until the hero sweep tunes them when they join, as it tuned the 45 (`tools/kits/tune.ts`). */
@@ -28,6 +29,11 @@ export const COMING_TUNE: Readonly<Record<string, readonly [number, number, numb
   plagueDoctor: [0.7, 1, 0.8],
   bombardier: [0.5, 1, 0.8],
   astrologer: [0.7, 1, 0.8],
+  inquisitor: [0.7, 1, 0.8],
+  seraph: [0.7, 1, 0.8],
+  corsairSurgeon: [0.7, 1, 0.8],
+  harpooner: [0.5, 1, 0.8],
+  seaReaver: [0.5, 1, 0.8],
 };
 
 let built: { kits: Record<string, Kit>; heroKits: Record<string, HeroKit> } | undefined;
@@ -35,7 +41,7 @@ function build() {
   if (built) return built;
   const kits: Record<string, Kit> = {};
   const heroKits: Record<string, HeroKit> = {};
-  const rows: Record<string, Row> = { ...vampireRows(), ...wave2Rows(), ...wave3Rows() };
+  const rows: Record<string, Row> = { ...vampireRows(), ...wave2Rows(), ...wave3Rows(), ...wave4Rows() };
   for (const [kind, r] of Object.entries(rows)) {
     const t = COMING_TUNE[kind] ?? [r.pool === 'mana' ? 0.7 : 0.5, 1, 0.8];
     const slot = (s: RowSlot, tune: number): Slot => ({ skill: s.skill, cls: s.cls, cost: s.cost, cd: s.cd, tune, ...(s.more ?? {}) });
