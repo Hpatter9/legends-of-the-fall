@@ -14,6 +14,7 @@ import { ALL_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { powerCast, powerDodged, powerStrike, powersOn } from './setPowers';
 import { heroUltimates } from './ultimates';
+import { comingKits } from './kits/vampires';
 import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
@@ -1691,7 +1692,8 @@ for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ulti
 // own copies: `kits/monsters.ts`)
 monsterKits(KITS, (me) => tal(me, 'extra'));
 
-export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
+// (a hero still to join the roster has its kit in `kits/vampires.ts` until it does, docs/notes/twenty-heroes.md)
+export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def] ?? comingKits()[u.def];
 /** The key of a fighter's kit skill, and of its kit's ultimate (the page looks a cast's look and sound up by these). */
 export const keyOfKit = (u: Unit): string => { const k = kitOf(u); return k ? keyOf(k.skill) : ''; };
 export const ultKeyOf = (u: Unit): string | undefined => { const k = kitOf(u)?.ultimate; return k ? keyOf(k) : undefined; };
@@ -1942,7 +1944,8 @@ export function gangOf(b: Battle, by: Unit, to: Unit): number {
 
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
-  const leech = (p?.leech ?? 0) + tal(by, 'leech');
+  // (the Vampire origin's leech is a team bonus: every hero's blows drink it, as the other traits' bonuses reach every hero)
+  const leech = (p?.leech ?? 0) + tal(by, 'leech') + (by.side === 'hero' ? (b.traits?.leech ?? 0) : 0);
   if (leech && by.alive) mendUnit(by, dmg * leech, out);
   fxBlow(b, by, to, crit, dmg, out);
   if (p?.through && dmg > 0) {
