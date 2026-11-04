@@ -60,7 +60,7 @@ import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene 
 import { onAwakened } from './awakenView';
 import { SCENES, SCENE_ORDER, type Moment, type Scene } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
-import { xpRate } from './sim/castle';
+import { siteLevel, xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { isReal, runKitStats, settleFinds, spareFinds, settleRunWear, slotTaken } from './sim/runGear';
 import { powerOf, powerText } from './sim/power';
@@ -94,6 +94,10 @@ import { showBuilt } from './builtCard';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
+import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
+import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
+import { showMarchCard } from './marchCard';
+import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
 import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
@@ -415,8 +419,16 @@ class Game {
         this.party.open('start', () => {
           const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
-          this.startRun(next);
-          if (auto) this.beginAuto({ army: id, tier }, auto);
+          const go = () => {
+            this.startRun(next);
+            if (auto) this.beginAuto({ army: id, tier }, auto);
+          };
+          // (DEPTH-BUILD: the March orders card, once any modifier is open; an auto replay marches plain)
+          if (auto) return go();
+          showMarchCard(this.meta, id, tier, next.seed, (orders) => {
+            if (orders) next.orders = orders;
+            go();
+          });
         }),
       onParty: () =>
         this.party.open('edit', () => {
@@ -470,7 +482,7 @@ class Game {
           toastSpells(learnt);
         }
         // (a popup, no cinematic: UI batch 1)
-        showBuilt(site, site === 'chapel' ? 1 : this.meta.castle[site]);
+        showBuilt(site, siteLevel(this.meta.castle, site, site === 'chapel'));
       },
     });
     this.towerView = new TowerView({
@@ -972,6 +984,17 @@ class Game {
     nameEl.style.fontSize = `${px}px`;
     nameEl.style.letterSpacing = `${px >= 36 ? 4 : 2}px`;
     card.querySelector('span')!.textContent = named ? named.title : elite ? elite.epithet : titleOf(boss.def);
+    // (DEPTH-BUILD: the boss's weakness, once learnt in full or read with the Library's Archive)
+    card.querySelector('em.weakLine')?.remove();
+    // (a Scouted march knows the final boss's weakness for that run)
+    const scouted = this.run.orders?.mod === 'scouted';
+    const known = WEAKNESS[boss.def] ? knownClues(boss.def, scouted ? { clues: 3, marks: [] } : this.meta.weak?.[boss.def], roomOpen(this.run.castle, 'archive')) : null;
+    if (known?.full) {
+      const line = document.createElement('em');
+      line.className = 'weakLine';
+      line.textContent = `Known weakness: ${known.lines[2]}`;
+      card.append(line);
+    }
     // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
     const old = card.querySelector('canvas')!;
@@ -2560,13 +2583,14 @@ class Game {
     const left = retriesLeft(run);
     // (a fall with a heart left: the last full heart burns until the fight resumes and spends it)
     const burning = this.revive && !this.revive.swapped ? left - 1 : -1;
-    const key = `${left}:${burning}`;
+    const key = `${left}:${burning}:${run.orders?.mod ?? ''}`;
     if (box.dataset.key === key) return;
     box.dataset.key = key;
     box.replaceChildren();
     box.title = `${left} ${left === 1 ? 'life' : 'lives'} left`;
     box.setAttribute('aria-label', box.title);
-    for (let i = 0; i < MAX_RETRIES; i++) {
+    // (DEPTH-BUILD: a cursed march has one heart instead of two; the orders' badge sits beside them, a tap says what they are)
+    for (let i = 0; i < MAX_RETRIES - heartsLost(run.orders); i++) {
       const img = document.createElement('img');
       img.src = heartUrl;
       img.alt = '';
@@ -2578,6 +2602,19 @@ class Game {
         box.append(heart);
         burnHeart(heart, img, this.reviveTimes().swap);
       } else box.append(img);
+    }
+    const line = ordersLine(run.orders);
+    if (line && run.orders?.mod) {
+      const badge = document.createElement('button');
+      badge.className = 'marchBadge';
+      badge.textContent = marchDef(run.orders.mod).icon;
+      badge.title = line;
+      badge.setAttribute('aria-label', line);
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toastLines([line]);
+      });
+      box.append(badge);
     }
   }
 
@@ -3222,6 +3259,8 @@ class Game {
       const openBefore = army ? ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id) : [];
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
+      // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
+      if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
       // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)
@@ -3238,7 +3277,10 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
+      const earned = settleRun(this.meta, run, settled);
+      // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
+      toastLines(weakLines(settled.weak));
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
@@ -3261,7 +3303,7 @@ class Game {
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       // (a quest battle replayed for practice pays nothing, XP neither)
-      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
+      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) * marchPay(run.orders).xp : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.filter((h) => !h.guest).map((h) => h.kind));
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)

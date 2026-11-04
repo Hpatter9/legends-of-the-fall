@@ -15,7 +15,7 @@ const readyAskel = (seed: number): Meta => {
   const m = startedMeta(seed);
   m.armies.orcs = { ...recordOf(m, 'orcs'), clears: 1 };
   beginChain(m, 'askel');
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
   return m;
 };

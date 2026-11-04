@@ -14,6 +14,7 @@
 // Environment: SAVES (default 12), CAP (25 tries a tier, or to clear), ONLY (army ids), START, GROWTH (army:value,...), ARMY (the army `stars` chases: orcs),
 // HEARTS=1 (a lost wave burns a heart and is fought again, as the page does; by default a loss ends the try, as every figure in the notes was
 // measured; the star "clear without using a heart" is then met by every clear).
+import { WEAK } from '../../src/sim/weakness';
 import { ARMIES, ARMY_WAVES, armyById, armyUnlocked } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
@@ -29,6 +30,8 @@ import { TIERS } from '../../src/sim/tiers';
 import { maybeSpells, savedAt } from '../autoplay';
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
+// (DEPTH-BUILD: WEAK=0 measures the armies without the bosses' weaknesses, `weakness.ts`)
+if (process.env.WEAK === '0') WEAK.on = false;
 const SAVES = Number(process.env.SAVES ?? 12);
 const CAP = Number(process.env.CAP ?? 25);
 const HEARTS = process.env.HEARTS === '1';

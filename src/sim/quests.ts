@@ -259,7 +259,9 @@ export function canOffer(m: Meta, q: QuestDef, date?: number): boolean {
   return needMet(m, q.needs) && heroesOwnedFor(m, q) && cooledDown(m, q, date);
 }
 
-export const slotOf = (q: QuestDef): GiverSlot => GIVERS[q.giver].slot;
+export const slotOf = (q: QuestDef): GiverSlot => q.slot ?? GIVERS[q.giver].slot;
+/** A quest whose parts follow one another: its first part is drawn, the rest go up when the part before is handed in (the tales, the campaigns). */
+const follows = (q: QuestDef): boolean => slotOf(q) === 'tale' || (slotOf(q) === 'campaign' && !!q.after);
 
 /** Pick an offer from what is open: a giver's unique quests first, with a share of the draws for their repeatables. */
 function pickOffer(rng: Rng, open: readonly QuestDef[]): QuestDef | undefined {
@@ -296,7 +298,7 @@ export function refreshOffers(m: Meta, date: number, pool: readonly QuestDef[] =
     if (held >= rule.cap) return;
     const last = s.drawn?.[slot];
     if (rule.every && last && today - dayNumber(last) < rule.every) return;
-    const q = pickOffer(new Rng(mixSeed(m.seed, QUEST_SALT, today, i)), pool.filter((d) => slotOf(d) === slot && canOffer(m, d, date)));
+    const q = pickOffer(new Rng(mixSeed(m.seed, QUEST_SALT, today, i)), pool.filter((d) => slotOf(d) === slot && !follows(d) && canOffer(m, d, date)));
     if (!q) return;
     s.offers.push({ id: q.id, giver: q.giver, day: date });
     if (rule.every) (s.drawn ??= {})[slot] = date;
@@ -313,7 +315,7 @@ export function offerTales(m: Meta, date: number, pool: readonly QuestDef[] = QU
   const s = stateOf(m);
   let added = false;
   for (const q of pool) {
-    if (slotOf(q) !== 'tale' || !canOffer(m, q, date)) continue;
+    if (!follows(q) || !canOffer(m, q, date)) continue;
     s.offers.push({ id: q.id, giver: q.giver, day: date });
     added = true;
   }

@@ -54,13 +54,14 @@ export const giverWords = (q: QuestDef, line: string): string => (q.giver === 'r
 /** The plain-words label of where an offer came from, for the board ("passing today", "a Royal charge"...). */
 export function offerFrom(q: QuestDef): string {
   const { name } = giverName(giverKeyOf(q));
-  const slot = GIVERS[q.giver].slot;
+  const slot = q.slot ?? GIVERS[q.giver].slot;
   if (slot === 'passerby') return `${name}, passing today`;
   if (slot === 'patron') return `${name}, in the tavern`;
   if (slot === 'royal') return `${name} · a Royal charge`;
   if (slot === 'spoils') return 'Spoils, found on a fallen boss';
   if (slot === 'rift') return 'A voice in the rift';
   if (slot === 'tale') return `${name}, by the tavern's fire`;
+  if (slot === 'campaign') return `${name} · a campaign`;
   return name;
 }
 

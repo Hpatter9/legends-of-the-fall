@@ -10,12 +10,12 @@ import type { Area } from './board';
 import type { QuestBattle } from './questBattles';
 import { heroName } from './heroNames';
 
-const hero = (kind: string, x: number, more: Partial<CastMember> = {}): CastMember => ({ role: `unit:${kind}`, x, facing: 'right', name: heroName(kind), ...more });
-const foe = (kind: string, x: number, scale = 1.2, more: Partial<CastMember> = {}): CastMember => ({ role: `unit:${kind}`, x, facing: 'left', scale, ...more });
+export const hero = (kind: string, x: number, more: Partial<CastMember> = {}): CastMember => ({ role: `unit:${kind}`, x, facing: 'right', name: heroName(kind), ...more });
+export const foe = (kind: string, x: number, scale = 1.2, more: Partial<CastMember> = {}): CastMember => ({ role: `unit:${kind}`, x, facing: 'left', scale, ...more });
 
 /** A story: its cast and shots, in the cinematics' own shape (played by the page's scene player, not kept in the Scenes list). The
  *  story before a battle ends on a smash cut into the fight; the beat after fades (CINE-001: the shot language, `sceneKit.ts`). */
-const story = (id: string, title: string, look: Area, cast: Scene['cast'], shots: Shot[]): Scene => ({
+export const story = (id: string, title: string, look: Area, cast: Scene['cast'], shots: Shot[]): Scene => ({
   id: `qb-${id}`,
   title,
   blurb: title,
@@ -26,9 +26,9 @@ const story = (id: string, title: string, look: Area, cast: Scene['cast'], shots
   shots: shots.map((s, i) => (i === 0 ? { look, fx: ['fadeIn'], ...s } : s)),
 });
 /** A quest giver, heard over the opening: their face fills the picture as they speak (`face:<giver>`). */
-const giver = (key: string, name: string): CastMember => ({ role: `face:${key}`, x: 0, facing: 'right', hidden: true, name });
+export const giver = (key: string, name: string): CastMember => ({ role: `face:${key}`, x: 0, facing: 'right', hidden: true, name });
 /** A boss's title card, as it arrives: its title over its name. */
-const card = (name: string, title: string): Shot['title'] => ({ over: title, name });
+export const card = (name: string, title: string): Shot['title'] => ({ over: title, name });
 
 export const QUEST_BATTLES: readonly QuestBattle[] = [
   {

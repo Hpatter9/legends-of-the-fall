@@ -122,7 +122,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: "The shrine where the Lion's crown was put away is shuttered against the sun, and gorgons keep its hall.",
     land: 'shrine',
     like: { army: 'wildwood', wave: 11 },
-    ease: 0.78,
+    ease: 0.82, // (Q9: 0.78; about 35% for the probe party, docs/notes/eidolon-chains-hard.md)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
@@ -150,7 +150,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: 'The great clock stopped in the old copper works, and its golem warden still guards the face.',
     land: 'forge',
     like: { army: 'labyrinth', wave: 11 },
-    ease: 0.76,
+    ease: 0.97, // (Q9: 0.76 won two in three; about 30% now)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
@@ -178,7 +178,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: 'Under the keep lies the cellar of its first foundation, where a stone clerk of works is still checking the masonry.',
     land: 'dungeon',
     like: { army: 'infernal', wave: 11 },
-    ease: 0.24,
+    ease: 0.28, // (Q9: 0.24 won over half; about 35% now)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
@@ -206,7 +206,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: "The keep's oldest wing has kept a dragon's things for three hundred years, and its chamberlain has not been told the guest checked out.",
     land: 'graveyard',
     like: { army: 'golems', wave: 11 },
-    ease: 0.21,
+    ease: 0.22, // (Q9: 0.21; about a third)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
