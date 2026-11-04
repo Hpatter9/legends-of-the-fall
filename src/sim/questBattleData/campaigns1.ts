@@ -16,7 +16,7 @@ export const CAMPAIGNS1_BATTLES: readonly QuestBattle[] = [
     blurb: 'Kwame and Ravi hold the lake shore while the drowned crew climbs out on the spring tide.',
     land: 'swamp',
     like: { army: 'undead', wave: 12 },
-    ease: 1.0,
+    ease: 1.6,
     cast: [{ heroes: ['knight'] }, { heroes: ['wizard'] }],
     rules: { survive: 90 },
     waves: [
@@ -43,7 +43,7 @@ export const CAMPAIGNS1_BATTLES: readonly QuestBattle[] = [
     blurb: 'Kwame leads the gaoler\'s last prisoner up the stair, with the warden of the maze at their heels.',
     land: 'dungeon',
     like: { army: 'labyrinth', wave: 12 },
-    ease: 1.2,
+    ease: 0.4,
     cast: [{ heroes: ['knight'] }],
     rules: { protect: { kind: 'guestPrisoner', hp: 1.2 } },
     waves: [
@@ -71,7 +71,7 @@ export const CAMPAIGNS1_BATTLES: readonly QuestBattle[] = [
     blurb: 'Natsu finds the pack\'s den, a white cub at its heart, and must fell the wolves round it without harming the child.',
     land: 'autumn',
     like: { army: 'beasts', wave: 13 },
-    ease: 1.1,
+    ease: 0.4,
     cast: [{ heroes: ['archer'] }],
     rules: { spare: 'packWhite' },
     waves: [
@@ -99,7 +99,7 @@ export const CAMPAIGNS1_BATTLES: readonly QuestBattle[] = [
     blurb: 'Kwame and Ravi have until the furnace cools to fell the Forge Titan and its choir.',
     land: 'forge',
     like: { army: 'golems', wave: 10 },
-    ease: 1.0,
+    ease: 0.9,
     cast: [{ heroes: ['knight'] }, { heroes: ['wizard'] }],
     rules: { race: 210 },
     waves: [

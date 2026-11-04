@@ -1350,6 +1350,11 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const def = strikeDef(b, me);
   me.step = undefined;
   let foes = b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
+  // (QUESTS-3, Q5: a foe the battle asks to be spared is not struck by the heroes' own mind: they go for the others)
+  if (b.spared?.length && me.side === 'hero') {
+    const rest = foes.filter((x) => !b.spared!.includes(x.id));
+    if (rest.length) foes = rest;
+  }
   // (a hero wearing a foe's guise is picked last: the foes go for any other first)
   if (b.kits && me.side !== 'hero' && foes.some((x) => x.kx?.guise)) {
     const plain = foes.filter((x) => !(x.kx?.guise && x.kx.guise.until > b.t));

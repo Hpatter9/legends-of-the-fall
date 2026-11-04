@@ -85,9 +85,14 @@ test('spare: a spared foe falling loses the fight; it is won when every other fo
   // (every other foe of the band fell; the spared one is still standing)
   assert.equal(ok.phase, 'won');
   assert.ok(ok.units.some((u) => u.side === 'foe' && u.def === spared && u.alive));
-  const bad = begin({ spare: spared }, strong);
-  run(bad);
-  assert.equal(bad.phase, 'lost', 'the heroes felled it');
+  // (the heroes' own mind goes for the others: a spared foe is not struck while any other stands; one that is struck down anyway loses the fight)
+  const mind = begin({ spare: spared }, strong);
+  const target = mind.units.find((u) => u.side === 'foe' && u.def === spared)!;
+  run(mind);
+  assert.equal(mind.phase, target.alive ? 'won' : 'lost');
+  const bad = begin({ spare: spared }, strong, 'skeletons', (b) => void (b.units.find((u) => u.side === 'foe' && u.def === spared)!.hp = 1));
+  bad.units.find((u) => u.side === 'foe' && u.def === spared)!.alive = false;
+  assert.equal(ruleEnd(bad, true), 'lost', 'a spared foe felled loses the fight');
 });
 
 test('mutators: foes hasten, no healing, no hearts and a smaller purse', () => {

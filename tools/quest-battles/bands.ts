@@ -5,6 +5,7 @@
 //
 //   npm run quest-bands                      every new battle: its rate now, and the ease that centres its band
 //   npm run quest-bands -- --only=<id> [--tries=24]
+//   npm run quest-bands -- --check           the rate at the eases written down, in the band or not
 
 import { fight, playOut } from '../../src/sim/battle';
 import { armyById } from '../../src/sim/armies';
@@ -25,6 +26,8 @@ import { savedAt, maybeSpells } from '../autoplay';
 const arg = (k: string): string | undefined => process.argv.find((a) => a.startsWith(`--${k}=`))?.split('=')[1];
 const tries = Number(arg('tries')) || 20;
 const only = arg('only');
+/** `--check`: only the rate at the ease each battle has now, without searching for another. */
+const check = process.argv.includes('--check');
 const FILL = ['knight', 'samurai', 'archer', 'peasant', 'kunoichi', 'wizard', 'cleric', 'warlock', 'lightningMage', 'sage'];
 const BAND: Record<number, [number, number]> = { 3: [0.45, 0.7], 4: [0.25, 0.45], 5: [0.1, 0.25] };
 const mid = (s: number): number => (BAND[s] ? (BAND[s][0] + BAND[s][1]) / 2 : 0.5);
@@ -89,9 +92,9 @@ function rate(qb: QuestBattle, level: number): number {
 /** The ease whose win rate is nearest `target`: a bisection on the log of the ease (the rate falls as it rises). */
 function tune(qb: QuestBattle, level: number, target: number): { ease: number; rate: number } {
   let lo = 0.12;
-  let hi = 3;
+  let hi = 6;
   let best = { ease: qb.ease ?? 1, rate: -1 };
-  for (let k = 0; k < 7; k++) {
+  for (let k = 0; k < 8; k++) {
     const e = Math.sqrt(lo * hi);
     (qb as { ease?: number }).ease = e;
     forgetQuestArmies();
@@ -103,6 +106,33 @@ function tune(qb: QuestBattle, level: number, target: number): { ease: number; r
   return { ease: Math.round(best.ease * 100) / 100, rate: best.rate };
 }
 
+/** For a battle whose ease cannot reach its band (a race, a survive or a protect battle won whatever the foes' strength): bisect the rule's own number
+ *  instead: seconds to race (fewer is harder), seconds to survive (more is harder), the guest's health (less is harder). */
+function tuneRule(qb: QuestBattle, level: number, target: number): { what: string; value: number; rate: number } | null {
+  const r = qb.rules;
+  if (!r) return null;
+  const key = r.race !== undefined ? 'race' : r.survive !== undefined ? 'survive' : r.protect ? 'protect' : null;
+  if (!key) return null;
+  const get = () => (key === 'protect' ? r.protect!.hp ?? 1 : (r[key] as number));
+  const set = (v: number) => (key === 'protect' ? (r.protect = { ...r.protect!, hp: v }) : ((r as Record<string, number>)[key] = v));
+  const start = get();
+  // (the range runs from "easy" to "hard" for the rule; the rate falls along it)
+  let easy = key === 'race' ? start * 3 : key === 'survive' ? 20 : 8;
+  let hard = key === 'race' ? 8 : key === 'survive' ? 500 : 0.05;
+  let best: { what: string; value: number; rate: number } | null = null;
+  for (let k = 0; k < 8; k++) {
+    const v = Math.sqrt(easy * hard);
+    set(Math.round(v * 100) / 100);
+    forgetQuestArmies();
+    const rt = rate(qb, level);
+    if (!best || Math.abs(rt - target) < Math.abs(best.rate - target)) best = { what: key, value: Math.round(v * 100) / 100, rate: rt };
+    if (rt > target) easy = v;
+    else hard = v;
+  }
+  set(start);
+  return best;
+}
+
 for (const qb of NEW_BATTLES) {
   if (only && qb.id !== only) continue;
   const q = QUESTS.find((x) => x.goal.kind === 'battle' && x.goal.battle === qb.id)!;
@@ -111,9 +141,16 @@ for (const qb of NEW_BATTLES) {
   const own = qb.ease ?? 1;
   forgetQuestArmies();
   const now = rate(qb, level);
-  const t = tune(qb, level, mid(stars));
+  const t = check ? { ease: own, rate: now } : tune(qb, level, mid(stars));
   (qb as { ease?: number }).ease = own;
   forgetQuestArmies();
   console.log(`${qb.id.padEnd(22)} ★${stars} lvl ${String(level).padStart(2)}  ease ${String(own).padEnd(5)} won ${Math.round(now * 100)}%   band ${BAND[stars].map((x) => Math.round(x * 100)).join('-')}%  -> ease ${t.ease} (${Math.round(t.rate * 100)}%)`);
   void castOf;
+  // (a rate the ease cannot move: the rule's own number)
+  if (!check && Math.abs(t.rate - mid(stars)) > 0.2) {
+    (qb as { ease?: number }).ease = 1;
+    const tr = tuneRule(qb, level, mid(stars));
+    if (tr) console.log(`${''.padEnd(22)} ease cannot reach the band: at ease 1, ${tr.what} ${tr.value} (${Math.round(tr.rate * 100)}%)`);
+    (qb as { ease?: number }).ease = own;
+  }
 }

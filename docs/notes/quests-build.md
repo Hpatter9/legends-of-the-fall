@@ -141,3 +141,50 @@ by other riders; a few ★2 quests carry a time limit (the design table has them
 See [eidolon-chains-hard.md](eidolon-chains-hard.md): every chain is now five parts (the three old ones kept in place with riders added, two new parts
 with new pieces), the chain battles and trials raised, saves at the old end of a chain read as finished. The campaign-row crowns and stones of design
 section 5 are **not** attached to chain parts (the chain engine pays chests only); decide whether to add them.
+
+## Closing the open items (director's three)
+
+1. **The new battles' ease, tuned with a save-like probe** (`npm run quest-bands`, `tools/quest-battles/bands.ts`). The probe fields a party with every talent
+   row its level opens and the castle a climb has at that level (as `tools/army-pace`), at the level the quest opens (`openLevel`), and bisects the
+   `ease` whose win rate sits in the middle of the star band (three stars 45-70%, four 25-45%, five 10-25%). `--check` prints the rate at the eases written
+   down. Gear is not dressed, so it under-rates a real save a little (the band's middle was aimed at). Results, 20 tries each:
+
+| Battle | Stars | Opens at level | Ease | Win rate | Band |
+| --- | --- | --- | --- | --- | --- |
+| drownedBellTide | ★4 | 8 | 1.6 | 40% | 25-45% |
+| thirteenthDoor | ★4 | 35 | 0.4 | 40% | 25-45% |
+| harvestCubDen | ★4 | 45 | 0.4 | 10% | 25-45% |
+| ironFurnaceRace | ★4 | 74 | 0.9 | 35% | 25-45% |
+| borderFort | ★4 | 15 | 2.16 | 35% | 25-45% |
+| taxToll | ★3 | 22 | 2.4 | 50% | 45-70% |
+| winterStandard | ★4 | 45 | 4.99 | 20% | 25-45% |
+| embassyRoad | ★3 | 45 | 0.46 | 55% | 45-70% |
+| embassyGuard | ★4 | 45 | 0.85 | 30% | 25-45% |
+| usurperHall | ★5 | 65 | 0.7 | 25% | 10-25% |
+| unpaidCrew | ★4 | 15 | 0.66 | 35% | 25-45% |
+| finalVerdict | ★5 | 65 | 0.6 | 20% | 10-25% |
+| hayInspection | ★3 | 1 | 1.15 | 55% | 45-70% |
+| goatNotForSale | ★4 | 35 | 3.4 | 40% | 25-45% |
+| captiveRace | ★3 | 8 | 1.28 | 55% | 45-70% |
+| tickingBox | ★4 | 74 | 2.71 | 40% | 25-45% |
+| pilgrimEscort | ★3 | 22 | 0.7 | 50% | 45-70% |
+| cartInRiver | ★3 | 35 | 1.91 | 55% | 45-70% |
+| longWayFlood | ★4 | 35 | 4.29 | 45% | 25-45% |
+| whatWaitsUnder | ★5 | 94 | 1.1 | 20% | 10-25% |
+| weddingUninvited | ★4 | 45 | 0.35 | 30% | 25-45% |
+| marketLastStall | ★5 | 65 | 0.9 | 20% | 10-25% |
+| winterCourt | ★5 | 60 | 5.64 | 15% | 10-25% |
+| siegeMorning | ★5 | 50 | 2.93 | 20% | 10-25% |
+| ninthVigil | ★5 | 90 | 1.1 | 10% | 10-25% |
+| ninthKing | ★5 | 90 | 1.38 | 15% | 10-25% |
+
+   Caveats: **harvestCubDen** (spare) sits at 10% (a spared foe is now left alone by the heroes' own targeting, `Battle.spared`, but area attacks still
+   hit it); **winterStandard** was set a little easier than its measurement. Race, survive and protect battles ignore the foes' strength (a strong party
+   clears a small wave before any clock matters), so for the five that stayed won whatever the ease their rule's own number was tightened (taxToll 22 s,
+   longWayFlood 25 s per wave, winterCourt survive 290 s, winterStandard guest health x1) and the ease then tuned; the eases there run high (to 5.6).
+   Because that makes the foes' stats very large, a real play-through of those five is worth doing before release.
+   Also found and fixed: **whatWaitsUnder** used a Calamity boss that the army stat table does not know (its boss wave crashed the fight); it now uses the
+   Demon Lord, and a test makes every wave of every new battle.
+2. **Chain pay.** `chainPartReward` (questPay): every Eidolon chain part pays its share of the Campaign row (four stars: Askel, Nivra, Aurelan; five:
+   Voltara, Gorm, Vaelkhar), the finale the most, beside its bronze chest. Test in `quest-pay.test.ts`.
+3. **Time limits** removed from every quest of one or two stars (five quests; their words reworded); a test holds it.

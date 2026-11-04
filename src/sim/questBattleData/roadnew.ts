@@ -14,7 +14,7 @@ export const ROADNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'Kwame (or Minh) walks a humming pilgrim down the shrine road, through three waves of the Wildwood.',
     land: 'forest',
     like: { army: 'wildwood', wave: 10 },
-    ease: 0.8,
+    ease: 0.7,
     cast: [{ heroes: ['knight', 'peasant'] }],
     rules: { protect: { kind: 'guestPilgrim', hp: 1.5 } },
     waves: [
@@ -42,7 +42,7 @@ export const ROADNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'Hold the old ford for ninety seconds while the Crown\'s mail cart is hauled out of the water.',
     land: 'swamp',
     like: { army: 'labyrinth', wave: 9 },
-    ease: 0.85,
+    ease: 1.91,
     cast: [{ heroes: ['samurai', 'kunoichi'] }],
     rules: { survive: 90 },
     waves: [{ foes: ['mazeMino1', 'mazeGorgon1', 'mazeMino2', 'mazeGorgon2', 'mazeMino1', 'mazeMino3'] }],
@@ -64,9 +64,9 @@ export const ROADNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'The river is rising over the old causeway. Clear every wave before the water takes the road.',
     land: 'swamp',
     like: { army: 'undead', wave: 11 },
-    ease: 0.9,
+    ease: 4.29,
     cast: [{ heroes: ['archer', 'wizard'] }],
-    rules: { race: 150 },
+    rules: { race: 25 },
     waves: [
       { foes: ['skeleton', 'spearman', 'boneVolley', 'skeleton'] },
       { foes: ['boneCaptain', 'skeleton', 'spearman', 'boneVolley'], boss: 'final' },
@@ -96,7 +96,7 @@ export const ROADNEW_BATTLES: readonly QuestBattle[] = [
     waves: [
       { foes: ['imp', 'demon', 'imp', 'demon'] },
       { foes: ['skeleton', 'spearman', 'boneArcher', 'spearman', 'orcBrute'] },
-      { foes: ['calBoss6', 'orcBrute', 'orcGrunt', 'orcBrute', 'orcArcher'], boss: 'final' },
+      { foes: ['demonLord', 'orcBrute', 'orcGrunt', 'orcBrute', 'orcArcher'], boss: 'final' },
     ],
     boss: { name: 'What Waits Under', title: 'Born of Every Door' },
     before: (c) =>

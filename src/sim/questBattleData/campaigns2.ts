@@ -14,7 +14,7 @@ export const CAMPAIGNS2_BATTLES: readonly QuestBattle[] = [
     blurb: 'An ogre cousin comes to the wedding for the cake. The priest will not run.',
     land: 'autumn',
     like: { army: 'ogres', wave: 10 },
-    ease: 1.15,
+    ease: 0.35,
     cast: [{ heroes: ['knight', 'peasant'] }],
     rules: { protect: { kind: 'guestPilgrim', hp: 1.5 } },
     waves: [
@@ -43,7 +43,7 @@ export const CAMPAIGNS2_BATTLES: readonly QuestBattle[] = [
     blurb: 'Ayame holds the last stall of the Night Market until the cocks crow, against faster foxes.',
     land: 'shrine',
     like: { army: 'yokai', wave: 12 },
-    ease: 1.25,
+    ease: 0.9,
     cast: [{ heroes: ['kunoichi'] }],
     rules: { survive: 80, hasten: 0.15 },
     waves: [
@@ -71,9 +71,9 @@ export const CAMPAIGNS2_BATTLES: readonly QuestBattle[] = [
     blurb: 'A court of ice at the head of the long valley, where the winter is held. No healing reaches it.',
     land: 'snow',
     like: { army: 'beasts', wave: 14 },
-    ease: 1.0,
+    ease: 5.64,
     cast: [{ heroes: ['archer', 'ranger'] }],
-    rules: { survive: 100, noHeal: true },
+    rules: { survive: 290, noHeal: true },
     waves: [
       { foes: ['packWhite', 'packBlack', 'packWhite'] },
       { foes: ['packWhite', 'packRed', 'packBlack', 'packWhite'] },
@@ -99,7 +99,7 @@ export const CAMPAIGNS2_BATTLES: readonly QuestBattle[] = [
     blurb: 'Kwame stands the morning the siege keeps replaying, on the same wall, against foes with practice.',
     land: 'ruins',
     like: { army: 'labyrinth', wave: 14 },
-    ease: 1.45,
+    ease: 2.93,
     cast: [{ heroes: ['knight'] }],
     rules: { survive: 100, hasten: 0.2 },
     waves: [
@@ -127,7 +127,7 @@ export const CAMPAIGNS2_BATTLES: readonly QuestBattle[] = [
     blurb: 'Kenji keeps the stair of the nine thrones against the Ninth\'s heralds. Nothing heals down there.',
     land: 'dungeon',
     like: { army: 'golems', wave: 12 },
-    ease: 1.4,
+    ease: 1.1,
     cast: [{ heroes: ['samurai'] }],
     rules: { survive: 90, noHeal: true },
     waves: [
@@ -155,7 +155,7 @@ export const CAMPAIGNS2_BATTLES: readonly QuestBattle[] = [
     blurb: 'Kwame and Ravi go down to the last throne, to end the claim of the king before the first king.',
     land: 'crystal',
     like: { army: 'golems', wave: 15 },
-    ease: 1.65,
+    ease: 1.38,
     cast: [{ heroes: ['knight'] }, { heroes: ['wizard'] }],
     rules: { race: 260, hasten: 0.1 },
     waves: [

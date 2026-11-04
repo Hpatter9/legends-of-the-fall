@@ -13,7 +13,7 @@ export const HEROESNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'Tiago and Harrow walk a very drunk bosun through the drowned crew he still owes wages to.',
     land: 'swamp',
     like: { army: 'beasts', wave: 12 },
-    ease: 1,
+    ease: 0.66,
     cast: [{ heroes: ['buccaneer'] }, { heroes: ['dreadPirate'] }],
     rules: { protect: { kind: 'guestBosun', hp: 1.5 } },
     waves: [
@@ -41,7 +41,7 @@ export const HEROESNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'Edmund stands trial before the old court of his own kingdom, and his banner must not fall.',
     land: 'ruins',
     like: { army: 'yokai', wave: 12 },
-    ease: 1,
+    ease: 0.6,
     cast: [{ heroes: ['tyrant'] }],
     rules: { protect: { kind: 'standard', hp: 4 }, hasten: 0.1 },
     waves: [
@@ -70,7 +70,7 @@ export const HEROESNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'Minh walks Duchess down the long barn while three waves of orcs try to inspect the hay for themselves.',
     land: 'plains',
     like: { army: 'orcs', wave: 9 },
-    ease: 0.85,
+    ease: 1.15,
     cast: [{ heroes: ['peasant'] }],
     rules: { protect: { kind: 'duchess', hp: 1.5 } },
     waves: [
@@ -97,7 +97,7 @@ export const HEROESNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'Duchess has joined the satyrs for snacks. Fell the rest of them, and hand her back unharmed.',
     land: 'autumn',
     like: { army: 'wildwood', wave: 12 },
-    ease: 0.9,
+    ease: 3.4,
     cast: [{ heroes: ['knight', 'peasant'] }, { heroes: ['archer', 'ranger'] }],
     rules: { spare: 'satyr3' },
     waves: [
@@ -125,7 +125,7 @@ export const HEROESNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'A captive gave up where the Legion hides its dead. Reach the hideout before its door is shut for the night.',
     land: 'graveyard',
     like: { army: 'undead', wave: 10 },
-    ease: 0.8,
+    ease: 1.28,
     cast: [{ heroes: ['samurai', 'kunoichi'] }],
     rules: { race: 110 },
     waves: [
@@ -151,7 +151,7 @@ export const HEROESNEW_BATTLES: readonly QuestBattle[] = [
     blurb: 'A brass box found on a golem boss is winding down. Hold the forge floor until it stops.',
     land: 'forge',
     like: { army: 'golems', wave: 7 },
-    ease: 0.75,
+    ease: 2.71,
     cast: [{ heroes: ['knight', 'peasant'] }, { heroes: ['wizard', 'archer'] }],
     rules: { survive: 120 },
     waves: [{ foes: ['stoneGolem', 'ironGolem', 'crystalGolem', 'magmaGolem', 'stoneGolem'] }],

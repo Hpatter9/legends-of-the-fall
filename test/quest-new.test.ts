@@ -74,6 +74,8 @@ test('every new battle can be started and fought: its rules are in the fight, an
     m.quests = { active: [{ id: opener.id, progress: 0, took: 20261030, v: 1 }], offers: [], done: [] };
     const run = startQuestBattle(m, qb.id, cast)!;
     assert.ok(run, `${qb.id} starts`);
+    // (every wave of it can be made, a boss wave too: a boss must be one the armies' own stat table knows)
+    for (let n = 1; n <= qb.waves.length; n++) assert.ok(startStage({ ...run, stage: n }), `${qb.id} wave ${n}`);
     const b = startStage(run);
     assert.deepEqual(b.rules, qb.rules, `${qb.id}: the rules are in the fight`);
     const spots: [number, number][] = [];
