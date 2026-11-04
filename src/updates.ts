@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.350.0',
+    date: '2026-11-04',
+    title: 'Painted king\'s spells, gear balance',
+    notes: ['The 14 new king\'s spells get their own painted effects and icons. Armies, the daily and the Last Stand retuned for the default ruler.', 'Gear slots and runes balanced: early climbs and the daily back on their targets.'],
+  },
+  {
     version: '0.349.0',
     date: '2026-11-04',
     title: 'Ornate menus, painted ultimates',
