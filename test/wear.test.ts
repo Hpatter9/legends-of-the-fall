@@ -63,17 +63,17 @@ test('worn at a quarter, broken at nothing: a broken piece gives nothing, and Eq
   assert.equal(read.find((x) => x.id === spare.id)!.wear, 31, 'saved wear is capped');
 });
 
-test('repairs: by grade, level and points lost, rounded up; the Armoury takes 4% a level; mending is to full', () => {
+test('repairs (SEVEN-SLOT GEAR: 1.6 times dearer a point): by grade, level and points lost, rounded up; the Armoury takes 4% a level; mending is to full', () => {
   const m = kit();
   const sword = worn(m, 'ironSword');
   assert.equal(repairCost(sword), 0);
   sword.wear = 31;
-  assert.equal(repairCost(sword), 7);
-  assert.equal(repairCost({ id: 1, base: 'ironSword', rarity: 5, level: 20, wear: 110 }), 107);
-  assert.equal(repairCost({ id: 1, base: 'ironSword', rarity: 5, level: 20, wear: 110 }, 7), 77);
+  assert.equal(repairCost(sword), 10);
+  assert.equal(repairCost({ id: 1, base: 'ironSword', rarity: 5, level: 20, wear: 110 }), 171);
+  assert.equal(repairCost({ id: 1, base: 'ironSword', rarity: 5, level: 20, wear: 110 }, 7), 123);
   m.castle.armoury = 0;
-  assert.equal(repairItem(m, sword.id), 7);
-  assert.equal(m.crowns, 9993);
+  assert.equal(repairItem(m, sword.id), 10);
+  assert.equal(m.crowns, 9990);
   assert.equal(sword.wear, undefined);
   m.crowns = 0;
   sword.wear = 5;

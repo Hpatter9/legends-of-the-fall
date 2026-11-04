@@ -56,8 +56,9 @@ export function showEndCard(card: EndCard, go?: () => void): Promise<boolean> {
     rib.append(el('b', '', card.label));
     const name = el('div', 'unlockName', card.name);
     const line = el('div', 'unlockLine', card.line);
+    // (UX-FIXES: when the card's own button takes the player there, the "Where" line only says the place they are about to enter)
     const where = el('div', 'rvWhere');
-    where.append(el('i', '', 'Where: '), card.where);
+    if (!(go && card.go)) where.append(el('i', '', 'Where: '), card.where);
     const row = el('div', 'rvRow');
     const finish = (went: boolean): void => {
       window.removeEventListener('keydown', keys, true);
@@ -84,7 +85,7 @@ export function showEndCard(card: EndCard, go?: () => void): Promise<boolean> {
     cont.type = 'button';
     cont.addEventListener('click', () => finish(false));
     row.append(cont);
-    root.append(rib, artOf(card), name, line, where, row);
+    root.append(rib, artOf(card), name, line, ...(where.firstChild ? [where] : []), row);
     const leave = openScreen('endCard', () => undefined, { kind: 'moment' });
     document.body.append(root);
     open = { root, finish };

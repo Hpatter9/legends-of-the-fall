@@ -10,7 +10,8 @@ import { FIELD_BANDS } from '../../src/sim/foes';
 import { mixSeed, Rng } from '../../src/sim/rng';
 import { roleOf, type PartyRole } from '../../src/sim/suggest';
 import { UNITS } from '../../src/sim/units';
-import { setTactic, type Tactic } from '../../src/sim/tactics';
+import { setTactic, TACTICS, type Tactic } from '../../src/sim/tactics';
+if (process.argv.includes('--answer')) TACTICS.answer = Number(process.argv[process.argv.indexOf('--answer') + 1]);
 import { fieldBoost, pickTeam, sweepBoost } from '../heroSweep';
 
 const flag = (n: string, d: string) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : d);

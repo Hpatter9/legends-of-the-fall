@@ -8,12 +8,16 @@
 import { standable, tileAt } from './board';
 import { CHARGE_MAX, mendUnit } from './abilities';
 import { addUnit, apart, defOf, hurt, TICK_MS, unitAt, type Battle, type BattleEvent, type Unit } from './battle';
-import { AILMENT_SWITCH, burnFor, chillFor, cleanse, curseFor, freezeFor, poisonFor, shockFor, tagged, unfear, ward } from './ailments';
+import { AILMENT_SWITCH, burnFor, charmFor, chillFor, cleanse, curseFor, freezeFor, hasAil, isFrozen, poisonFor, shockFor, stunFor, tagged, unfear, ward } from './ailments';
+import { raiseWall, wallAt } from './toolkit/walls';
+import { moveMany } from './toolkit/move';
 import { relicFoeSlow, relicMana, relicSpeed } from './relicFight';
 
 export type SpellId =
   | 'heal' | 'meteor' | 'haste' | 'shield' | 'chain' | 'frost' | 'rally' | 'quake' | 'smite' | 'resurrect' | 'poison'
-  | 'cleanse' | 'blink' | 'hex' | 'lance' | 'renewal' | 'deepfreeze' | 'warcry' | 'bulwark' | 'wolves' | 'starfall';
+  | 'cleanse' | 'blink' | 'hex' | 'lance' | 'renewal' | 'deepfreeze' | 'warcry' | 'bulwark' | 'wolves' | 'starfall'
+  // (KING-SPELLS batch 4: the schools' new spells)
+  | 'firewall' | 'icewall' | 'shatter' | 'gale' | 'thunderclap' | 'snare' | 'charm' | 'foresight' | 'sunbeam' | 'venom' | 'mirage' | 'drain' | 'bonewall' | 'raisedead';
 
 /** The mana bar's top, and what it gains each second. */
 export const MANA_MAX = 10;
@@ -121,8 +125,24 @@ export const SPELLS: Record<SpellId, Spell> = {
   bulwark: sp('bulwark', 'Bulwark', 'Every hero gains a shield worth 30% of its health for 6s', 5, 16000, 4, 'all'),
   wolves: sp('wolves', 'Call the Wolves', 'Two Dire Wolves come up on free tiles in a 3x3 and fight for you', 5, 20000, 4),
   starfall: sp('starfall', 'Meteor Shower', 'Five small meteors rain round the tapped tile, one after another, each blasting a 3x3', 7, 18000, 5),
+  // (KING-SPELLS batch 4: the schools' new spells, docs/notes/king-spells-b4.md)
+  firewall: sp('firewall', 'Wall of Fire', 'A wall of fire three tiles wide burns the foes that stand in it or cross it for 6s', 4, 12000, 3),
+  icewall: sp('icewall', 'Ice Wall', 'A wall of ice three tiles wide bars the foes\' way for 6s and chills those beside it', 3, 12000, 2),
+  shatter: sp('shatter', 'Shatter', 'Foes in a 3x3 take a heavy blow, twice as heavy on a frozen or chilled foe', 4, 10000, 3),
+  gale: sp('gale', 'Gale', 'A gust throws the foes in a 3x3 two tiles back from your heroes', 3, 10000, 2),
+  thunderclap: sp('thunderclap', 'Thunderclap', 'Thunder strikes every foe beside a hero and stuns it for 1s', 4, 12000, 3, 'all'),
+  snare: sp('snare', 'Thorn Snare', 'Thorns hold the foes in a 3x3 still for 2s', 3, 12000, 2),
+  charm: sp('charm', 'Charm', 'The sturdiest foe in a 3x3 (never a boss) fights for you for 4s', 4, 14000, 3),
+  foresight: sp('foresight', 'Foresight', 'Heroes in a 3x3 slip from sight for 2s: no foe can single them out', 3, 12000, 2),
+  sunbeam: sp('sunbeam', 'Sunbeam', 'A beam of sun runs along the tapped row and burns every foe in it', 4, 9000, 3),
+  venom: sp('venom', 'Venom Fang', 'The sturdiest foe in a 3x3 is bitten and poisoned three times over', 3, 8000, 2),
+  mirage: sp('mirage', 'Mirage', 'Two decoys rise on free tiles in a 3x3 and draw the foes\' blows', 3, 14000, 2),
+  drain: sp('drain', 'Drain Life', 'The sturdiest foe in a 3x3 is struck, and your most wounded hero heals by the harm done', 4, 10000, 3),
+  bonewall: sp('bonewall', 'Bone Wall', 'A wall of bone three tiles wide bars the foes\' way for 8s', 3, 14000, 2),
+  raisedead: sp('raisedead', 'Raise Dead', 'Up to two foes that fell in a 3x3 rise as wraiths and fight for you', 5, 20000, 4),
 };
-export const SPELL_IDS: SpellId[] = ['heal', 'meteor', 'haste', 'shield', 'smite', 'chain', 'poison', 'frost', 'rally', 'quake', 'resurrect', 'cleanse', 'blink', 'hex', 'lance', 'renewal', 'deepfreeze', 'warcry', 'bulwark', 'wolves', 'starfall'];
+export const SPELL_IDS: SpellId[] = ['heal', 'meteor', 'haste', 'shield', 'smite', 'chain', 'poison', 'frost', 'rally', 'quake', 'resurrect', 'cleanse', 'blink', 'hex', 'lance', 'renewal', 'deepfreeze', 'warcry', 'bulwark', 'wolves', 'starfall',
+  'firewall', 'icewall', 'shatter', 'gale', 'thunderclap', 'snare', 'charm', 'foresight', 'sunbeam', 'venom', 'mirage', 'drain', 'bonewall', 'raisedead'];
 /** The three every save starts with (and has equipped). */
 export const STARTER_SPELLS: readonly SpellId[] = ['heal', 'meteor', 'haste'];
 /** How many spells a run takes. */
@@ -165,6 +185,8 @@ export interface SpellState {
   spill?: number;
   /** The ruler's Decree on this fight (KING-SPELLS batch 2, `decrees.ts`); unset when none was armed. */
   decree?: DecreeState;
+  /** The fallen foes Raise Dead has already lifted (KING-SPELLS batch 4), so none rises twice. */
+  risen?: number[];
   /** Each spell's rank, 1 to 3 (KING-SPELLS batch 3: the page copies the save's ranks onto the fight); unset is rank 1 for all. */
   ranks?: Partial<Record<SpellId, number>>;
   /** When a spell was last cast on its own (AUTO-CAST, `autoCast.ts`); unset until one is. */
@@ -264,7 +286,23 @@ export const RIDERS: Record<SpellId, string> = {
   bulwark: 'the shields last 9s',
   wolves: 'three wolves come',
   starfall: 'seven meteors fall',
+  firewall: 'the wall is five tiles wide',
+  icewall: 'the wall is five tiles wide',
+  shatter: 'a frozen or chilled foe takes three times as much',
+  gale: 'the gust throws them three tiles',
+  thunderclap: 'the stun lasts 2s',
+  snare: 'the thorns hold for 3s',
+  charm: 'the charm lasts 6s',
+  foresight: 'they stay out of sight for 3s',
+  sunbeam: 'the beam runs along three rows',
+  venom: 'the bite poisons five times over',
+  mirage: 'three decoys rise',
+  drain: 'every hero in the area heals too',
+  bonewall: 'the wall is five tiles wide',
+  raisedead: 'three wraiths rise',
 };
+// (the look table, `SPELL_LOOK`, `lookOf` and `withLooks`, lives in `spellLooks.ts`: the renderer reads it without loading the fight's modules)
+export { lookOf, SPELL_LOOK, withLooks, type BaseSpellId } from './spellLooks';
 export const RIDER_SPOTS: readonly (readonly [number, number])[] = [[-2, -2], [2, 2]];
 
 /** Milliseconds until a spell may be cast again (0 when ready). */
@@ -272,6 +310,32 @@ export const cooldownLeft = (b: Battle, id: SpellId) => Math.max(0, b.spells.rea
 
 /** Whether a spell could be cast now (mana and cooldown; the tile is checked by `castSpell`). */
 export const canAfford = (b: Battle, id: SpellId) => b.phase === 'fight' && b.spells.mana >= SPELLS[id].cost && cooldownLeft(b, id) === 0;
+
+/** KING-SPELLS batch 4: the schools' new spells' numbers. */
+export const SHATTER_POWER = 90;
+export const THUNDER_POWER = 50;
+export const SUNBEAM_POWER = 75;
+export const VENOM_POWER = 40;
+export const DRAIN_POWER = 100;
+export const RISEN_BOOST = { hp: 1.3, atk: 1.1 };
+/** The walls: what kind (`toolkit/walls.ts`) and how long they stand. */
+export const WALLS = { firewall: { kind: 'fire', ms: 6000 }, icewall: { kind: 'ice', ms: 6000 }, bonewall: { kind: 'stone', ms: 8000 } } as const;
+/** A row of tiles centred on (u, v), `half` either side, on the board. */
+const rowTiles = (b: Battle, u: number, v: number, half: number) => {
+  const out: { u: number; v: number }[] = [];
+  for (let du = -half; du <= half; du++) if (tileAt(b.board, u + du, v)) out.push({ u: u + du, v });
+  return out;
+};
+/** Whether a wall could stand on a tile (a fire wall may burn under a fighter). */
+const wallFree = (b: Battle, at: { u: number; v: number }, onFighters: boolean) => {
+  const t = tileAt(b.board, at.u, at.v);
+  return !!t && standable(t) && !wallAt(b, at.u, at.v) && (onFighters || !unitAt(b, at.u, at.v)) && !(b.stand && apart(at, b.stand.at) <= 1);
+};
+/** The foes fallen in the 3x3 that Raise Dead could lift: not a boss or a summoned fighter, on a tile now free, and not already risen. */
+export const fallenFoesIn = (b: Battle, u: number, v: number) =>
+  b.units
+    .filter((x) => !x.alive && x.side === 'foe' && (x.size ?? 1) <= 1 && !defOf(x).summon && inArea(x, u, v) && !b.spells.risen?.includes(x.id) && !unitAt(b, x.u, x.v))
+    .sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id);
 
 /** The foes in the 3x3 around a tile, in id order. */
 const foesIn = (b: Battle, u: number, v: number) => b.units.filter((x) => x.alive && x.side === 'foe' && inArea(x, u, v));
@@ -302,8 +366,15 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
   // (Blink needs a free tile to land on and a hero to move; the wolves need room to come up)
   const leaper = id === 'blink' ? mostWounded(b) : undefined;
   if (id === 'blink' && (!leaper || !standable(tileAt(b.board, u, v)) || unitAt(b, u, v))) return false;
-  const room = id === 'wolves' ? freeIn(b, u, v) : [];
-  if (id === 'wolves' && !room.length) return false;
+  const room = id === 'wolves' || id === 'mirage' ? freeIn(b, u, v) : [];
+  if ((id === 'wolves' || id === 'mirage') && !room.length) return false;
+  // (KING-SPELLS batch 4: a wall needs a tile to stand on; Raise Dead a foe fallen in the area to lift)
+  const rk0 = rankOf(b, id);
+  const wall = WALLS[id as keyof typeof WALLS];
+  const wallTiles = wall ? rowTiles(b, u, v, rk0 >= RANK_MAX ? 2 : 1).filter((at) => wallFree(b, at, wall.kind === 'fire')) : [];
+  if (wall && !wallTiles.length) return false;
+  const corpses = id === 'raisedead' ? fallenFoesIn(b, u, v) : [];
+  if (id === 'raisedead' && !corpses.length) return false;
   const s = b.spells;
   s.mana -= spell.cost;
   feedDecree(b, spell.cost * DECREE_PER_SPENT);
@@ -440,6 +511,93 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       break;
     case 'wolves':
       for (const at of room.slice(0, WOLVES + (top ? 1 : 0))) fx(addUnit(b, 'wolf', at.u, at.v, WOLF_BOOST));
+      break;
+    // (KING-SPELLS batch 4: the schools' new spells)
+    case 'firewall':
+    case 'icewall':
+    case 'bonewall':
+      raiseWall(b, KING, wallTiles, wall!.kind, wall!.ms, ev, wall!.kind === 'fire' ? { pow: pot, onFighters: true } : {});
+      break;
+    case 'shatter':
+      for (const x of foesIn(b, u, v)) {
+        const brittle = isFrozen(b, x) || isSlowed(b, x) || hasAil(x, 'chill', b.t);
+        fx(x);
+        kingStrike(b, x, SHATTER_POWER * pot * (brittle ? (top ? 3 : 2) : 1), true, ev);
+      }
+      break;
+    case 'gale': {
+      // (thrown back from the hero nearest the gust, who lends the shove its strength against the foes' saves)
+      const by = b.units.filter((x) => x.alive && x.side === 'hero' && x.id !== 0).sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id)[0];
+      const fs = foesIn(b, u, v);
+      for (const x of fs) fx(x);
+      if (by) moveMany(b, by, fs, top ? 3 : 2, 'shove', ev);
+      break;
+    }
+    case 'thunderclap':
+      for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && b.units.some((h) => h.alive && h.side === 'hero' && h.id !== 0 && apart(h, y) <= 1))) {
+        fx(x);
+        kingStrike(b, x, THUNDER_POWER * pot, false, ev);
+        if (x.alive && stunFor(b, x, top ? 2000 : 1000, true)) x.step = undefined;
+      }
+      break;
+    case 'snare':
+      for (const x of foesIn(b, u, v)) {
+        if (stunFor(b, x, top ? 3000 : 2000, true)) x.step = undefined;
+        fx(x);
+      }
+      break;
+    case 'charm': {
+      const x = foesIn(b, u, v).filter((y) => (y.size ?? 1) <= 1).sort((y, z) => z.hp - y.hp || y.id - z.id)[0];
+      if (x) {
+        charmFor(b, x, top ? 6000 : 4000);
+        fx(x);
+      }
+      break;
+    }
+    case 'foresight':
+      for (const x of b.units) {
+        if (!x.alive || x.side !== 'hero' || !inArea(x, u, v)) continue;
+        x.hideUntil = Math.max(x.hideUntil ?? 0, b.t + (top ? 3000 : 2000));
+        fx(x);
+      }
+      break;
+    case 'sunbeam':
+      for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && Math.abs(y.v - v) <= (top ? 1 : 0)).sort((y, z) => y.u - z.u || y.v - z.v || y.id - z.id)) {
+        fx(x);
+        kingStrike(b, x, SUNBEAM_POWER * pot, false, ev);
+        if (x.alive) burnFor(b, KING, x);
+      }
+      break;
+    case 'venom': {
+      const x = foesIn(b, u, v).sort((y, z) => z.hp - y.hp || y.id - z.id)[0];
+      if (x) {
+        fx(x);
+        kingStrike(b, x, VENOM_POWER * pot, false, ev);
+        if (x.alive) for (let i = 0; i < (top ? 5 : 3); i++) poisonFor(b, KING, x);
+      }
+      break;
+    }
+    case 'mirage':
+      for (const at of room.slice(0, top ? 3 : 2)) fx(addUnit(b, 'decoy', at.u, at.v));
+      break;
+    case 'drain': {
+      const x = foesIn(b, u, v).sort((y, z) => z.hp - y.hp || y.id - z.id)[0];
+      if (x) {
+        fx(x);
+        const before = x.hp;
+        kingStrike(b, x, DRAIN_POWER * pot, true, ev);
+        const dealt = Math.max(0, before - Math.max(0, x.hp));
+        const low = mostWounded(b);
+        if (low && dealt) mendUnit(low, dealt, ev);
+        if (top && dealt) for (const h of b.units) if (h.alive && h.side === 'hero' && h !== low && inArea(h, u, v)) mendUnit(h, dealt / 2, ev);
+      }
+      break;
+    }
+    case 'raisedead':
+      for (const x of corpses.slice(0, top ? 3 : 2)) {
+        (s.risen ??= []).push(x.id);
+        fx(addUnit(b, 'wraith', x.u, x.v, RISEN_BOOST));
+      }
       break;
     case 'cleanse':
       for (const x of b.units) {

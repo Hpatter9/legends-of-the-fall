@@ -22,9 +22,10 @@ export type Tactic = 'advance' | 'charge' | 'hold';
 export const TACTICS_LIST: readonly Tactic[] = ['advance', 'charge', 'hold'];
 
 /** The switches: the tactic a fight takes when the page (or a tool) sets none (Charge plays every fight exactly as before the tactics), and
- *  the foes' answer to the party's tactics: every foe standing as a fight begins has this much more health and attack (the owner's answer:
- *  the foes are strengthened so each mode keeps its pace with Advance the default; the Last Stand is left as it was). */
-export const TACTICS = { fallback: 'charge' as Tactic, answer: 1 };
+ *  the foes' answer to the party's tactics: every foe of a fight's band strikes this much harder (`startBattle`; attack alone, so no health is rounded twice; the owner's
+ *  answer: the foes are strengthened so each mode keeps its pace with Advance the default; the Last Stand's waves, which come by their own
+ *  rules, are left as they were). */
+export const TACTICS = { fallback: 'advance' as Tactic, answer: 1.02 };
 
 /** The fight's tactic, once it has begun: who is held, who the front line is, and when the line met the foe (then nobody is held). */
 export interface TacticState {
@@ -85,15 +86,6 @@ export function startTactic(b: Battle): void {
   const kind = tacticOf(b);
   b.tactic = undefined;
   if (b.stand) return;
-  // (the foes' answer, whatever the tactic: Charge is the old fight against stronger foes)
-  if (TACTICS.answer !== 1) {
-    for (const f of b.units) {
-      if (!f.alive || f.side !== 'foe') continue;
-      f.maxHp = Math.round(f.maxHp * TACTICS.answer);
-      f.hp = Math.round(f.hp * TACTICS.answer);
-      f.power = (f.power ?? 1) * TACTICS.answer;
-    }
-  }
   if (kind === 'charge') return;
   const heroes = b.units.filter((u) => u.alive && u.side === 'hero' && UNITS[u.def]?.side === 'hero');
   const front = heroes.filter((u) => roleOf(u.def) === 'front').map((u) => u.id);

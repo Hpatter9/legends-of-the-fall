@@ -49,6 +49,7 @@ import {
 } from './equipment';
 import type { Meta } from './meta';
 import { OLD_BASES } from './equipBases';
+import { claimLegends } from './legends';
 import { mixSeed, Rng } from './rng';
 import { armyIndex } from './armies';
 import { AUTO_WEAR, wearState, type Fought, type WearNote } from './wear';
@@ -418,6 +419,8 @@ export function settleFinds(meta: Meta, run: Run, auto = false): FoundHome | nul
   }
   out.pieces.sort(bestFirst);
   run.foundHome = out;
+  // (SEVEN-SLOT GEAR: a legend whose source the run met is found as it ends)
+  claimLegends(meta);
   return out;
 }
 

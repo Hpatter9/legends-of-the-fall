@@ -44,6 +44,8 @@
 .cxReward.done { color: var(--g4); border-color: var(--g2); }
 .cxReward button { min-height: 32px; font-size: 12px; }
 .cxClaimAll { min-height: 44px; font-size: 12px; }
+/* SEVEN-SLOT GEAR batch 2: the Legends page's verses */
+.scRow small.cxVerse { display: block; margin-top: 2px; font-style: italic; opacity: 0.85; }
 
 /* DEPTH-BUILD: a boss's Weakness block in its codex page */
 .cxWeak { margin: 10px 0; padding: 8px 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); box-shadow: inset 0 0 0 1px rgba(255, 210, 74, 0.25); }

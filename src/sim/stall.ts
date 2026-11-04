@@ -15,6 +15,7 @@ import { mixSeed, Rng } from './rng';
 import { grantTomes, type TomeSize } from './tomes';
 import { readTrade } from './traders';
 import { repairAll, repairItem } from './wear';
+import { ENCHANT_STANDING, REFORGE_STANDING, enchantItem, reforgeItem } from './enchant';
 
 const STALL_SALT = 0x57a11;
 const LINE_SALT = 0x57a12;
@@ -36,7 +37,7 @@ export function toNextStanding(m: Meta): number | undefined {
 }
 
 /** Gear's base price at the stall by grade at item level 1 (Mythic is never sold: index 0 and 5 unused). */
-export const GEAR_PRICE: readonly number[] = [0, 80, 200, 600, 1500, 0];
+export const GEAR_PRICE: readonly number[] = [0, 200, 550, 1600, 4000, 0];
 /** The XP tomes on the shelf: price, copies a day, and the standing that opens each. */
 export const TOME_WARES: Readonly<Record<TomeSize, { price: number; copies: number; standing: 1 | 2 | 3 }>> = {
   small: { price: 150, copies: 3, standing: 1 },
@@ -160,6 +161,20 @@ export function stallRepair(m: Meta, id: number, day: number): number {
   spend(m, n, day);
   return n;
 }
+/** SEVEN-SLOT GEAR batch 3: reforge a piece's scars away at the stall (standing 2). Returns the crowns paid (0 when it cannot). */
+export function stallReforge(m: Meta, id: number, day: number): number {
+  if (standingOf(m) < REFORGE_STANDING) return 0;
+  const n = reforgeItem(m, id);
+  spend(m, n, day);
+  return n;
+}
+/** Put a glyph on a piece at the stall's Enchant tab (standing 1). Returns the crowns paid (0 when it cannot). */
+export function stallEnchant(m: Meta, id: number, glyph: string, day: number): number {
+  if (standingOf(m) < ENCHANT_STANDING) return 0;
+  const n = enchantItem(m, id, glyph);
+  spend(m, n, day);
+  return n;
+}
 /** Mend everything the heroes wear (or these kinds wear) at the stall. Returns the crowns paid. */
 export function stallRepairAll(m: Meta, day: number, kinds?: readonly string[]): number {
   const n = repairAll(m, kinds);
@@ -178,7 +193,8 @@ export const sellAsks = (m: Meta, it: Equipment): boolean => it.rarity >= 3 || l
  *  changes, when it is worn by a hero or not owned). */
 export function sellPiece(m: Meta, id: number, day: number): number {
   const it = spareEquipment(m).find((x) => x.id === id);
-  if (!it) return 0;
+  // (SEVEN-SLOT GEAR: a named legend is never sold)
+  if (!it || EQUIP_BASES[it.base]?.legend) return 0;
   const price = sellPrice(it);
   m.equipment = m.equipment!.filter((x) => x.id !== id);
   m.crowns += price;
@@ -252,8 +268,8 @@ export function sellBook(m: Meta, id: string): number {
 
 // ---- Hester's lines ----
 
-export type StallTab = 'books' | 'gear' | 'tomes' | 'chests' | 'sell' | 'repair';
-export const STALL_TABS: readonly StallTab[] = ['books', 'gear', 'tomes', 'chests', 'sell', 'repair'];
+export type StallTab = 'books' | 'gear' | 'tomes' | 'chests' | 'sell' | 'repair' | 'enchant';
+export const STALL_TABS: readonly StallTab[] = ['books', 'gear', 'tomes', 'chests', 'sell', 'repair', 'enchant'];
 const LINES: Readonly<Record<StallTab | 'open', readonly string[]>> = {
   open: ['Morning, Your Majesty. Don’t touch the ones that hum.', 'Everything’s genuine. Mostly.', 'Back again? I’ll put the kettle on.', 'Fresh off the cart, Your Majesty. Mind the step.'],
   books: ['Every one of these was somebody’s whole life. Mind the margins.', 'Read it twice. Fight with it once.', 'A book a day keeps the goblins away. Nearly.'],
@@ -262,6 +278,7 @@ const LINES: Readonly<Record<StallTab | 'open', readonly string[]>> = {
   chests: ['Locked, sealed, and none of my business what’s inside.', 'A gold chest I’d sell my own mother for. Well. Rent her.'],
   sell: ['Let’s see what the cat dragged in.', 'I’ll give you a fair price. Fair for me.', 'Bring me your dents and dings.'],
   repair: ['Who’ve you been hitting with this?', 'Good as new. Better, actually. Don’t tell the smith.', 'Leave it with me. And step back from the anvil.'],
+  enchant: ['Three glyphs, no more. A fourth and it starts talking back.', 'It’ll wear faster, mind. Power always costs.', 'Pick one. I don’t do refunds, I do glyphs.'],
 };
 /** What Hester says when the stall opens (`tab` undefined) or on a tab: drawn from a side stream of the day, so a reload says the same. */
 export function hesterLine(m: Meta, day: number, tab?: StallTab): string {

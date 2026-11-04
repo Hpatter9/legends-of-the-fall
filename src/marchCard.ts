@@ -8,6 +8,8 @@ import { MARCHES, CURSES, curseFor, marchOpen, ordersFor, type MarchMod, type Or
 import { SIGNATURES } from './sim/bossAttacks';
 import { bossName, cluesOf, WEAKNESS } from './sim/weakness';
 import type { Meta } from './sim/meta';
+import { roomOpen } from './sim/rooms';
+import { VIGILS, VIGIL_IDS, type VigilId } from './sim/chapelRooms';
 
 const CSS = `
 #marchCard { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0.55); }
@@ -25,6 +27,8 @@ const CSS = `
 #marchCard .mcTile:disabled { opacity: 0.55; }
 #marchCard .mcTile:disabled .mcIco { filter: grayscale(1); }
 #marchCard .mcTile .mcLock { color: #9a9a8e; font-style: italic; }
+#marchCard .mcVigilHead { margin: 12px 0 6px; }
+#marchCard .mcVigil { grid-template-columns: 1fr 1fr 1fr; }
 #marchCard .mcNote { margin: 10px 0 0; min-height: 2.6em; color: #e6d9a8; font-size: 12px; }
 #marchCard .mcRow { display: flex; gap: 8px; margin-top: 12px; }
 #marchCard .mcRow button { flex: 1; min-height: 46px; font-size: 15px; }
@@ -37,8 +41,10 @@ let styled = false;
 
 /** Whether the card has anything to choose: some modifier other than the plain march is open. */
 export function marchChoice(meta: Meta, army: string, tier: number): boolean {
-  return MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
+  return vigilOpen(meta) || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
 }
+/** The Chapel's Vigil is chosen on the card too, once its room stands. */
+const vigilOpen = (meta: Meta): boolean => roomOpen(meta.castle, 'vigil', meta.chapel);
 
 /** Show the card (or go straight on with a plain march when nothing is open). `go` gets the orders chosen (undefined for plain). */
 export function showMarchCard(meta: Meta, army: string, tier: number, seed: number, go: (orders: Orders | undefined) => void): void {
@@ -67,9 +73,11 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
   };
   const tierName = ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic'][tier] ?? 'Normal';
   let chosen: MarchMod | 'plain' = 'plain';
+  let vigil: VigilId | undefined = vigilOpen(meta) ? 'shielded' : undefined;
   const done = (orders: Orders | undefined) => {
     wrap.remove();
-    go(orders);
+    const o = vigil ? { ...(orders ?? {}), vigil } : orders;
+    go(o);
   };
 
   const drawPick = () => {
@@ -98,6 +106,24 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
       tiles.push(t);
     }
     box.append(note);
+    // (the Chapel's Vigil, once its room stands: how the party rises when a heart burns)
+    if (vigil) {
+      add(box, 'p', 'mcSub mcVigilHead', 'The Vigil · when a heart burns, the party rises');
+      const vg = add(box, 'div', 'mcGrid mcVigil');
+      const vt: HTMLButtonElement[] = [];
+      for (const id of VIGIL_IDS) {
+        const v = VIGILS[id];
+        const t = add(vg, 'button', `mcTile${id === vigil ? ' on' : ''}`);
+        add(t, 'span', 'mcIco', v.icon);
+        add(t, 'b', '', v.name);
+        add(t, 'small', '', v.line);
+        t.addEventListener('click', () => {
+          vigil = id;
+          for (const x of vt) x.classList.toggle('on', x === t);
+        });
+        vt.push(t);
+      }
+    }
     const row = add(box, 'div', 'mcRow');
     const march = add(row, 'button', 'primary', 'March');
     march.addEventListener('click', () => (chosen === 'scouted' ? drawReport() : done(ordersFor(chosen, seed))));

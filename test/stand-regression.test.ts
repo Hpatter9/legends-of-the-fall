@@ -40,12 +40,14 @@ test('ordinary fights play out as they did before the Last Stand', () => {
 
 // (re-pinned for FOE-STYLES, docs/notes/foe-styles.md: every foe fights its own way (its passive, its way of moving, the common foes' stats
 // retuned), so all twelve moved; the third, a close loss at 44.6s, is now won, and the seventh, a close win by two heroes, is now lost; the rest as
-// before. Before it, re-pinned for the joint rebalance, docs/notes/joint-rebalance.md: the foes' proficiency, the bosses' blocks, the families and saves shown and
+// before. Before it, re-pinned for the tactics, docs/notes/tactics.md: Advance together, the default, holds the strikers behind the Knight until he meets the
+// foe, the foes strike 2% harder in answer, and the Werewolf's, Karasu's, Siege Bot's, Knight's and Shambler's kits and the War Banner moved;
+// every fight moved, the third (a loss) is now won and the seventh (a win) now lost. Before it, re-pinned for the joint rebalance, docs/notes/joint-rebalance.md: the foes' proficiency, the bosses' blocks, the families and saves shown and
 // the pools from +0 moved nine of the twelve; the seventh, a close loss, is now won (by the two heroes left standing), the rest as before. Before it, re-pinned for STATS batch 6, docs/notes/stats-6.md: the starting five's pools, cooldowns and AI (the Samurai and Kunoichi flank, the Archer
 // kites) moved all twelve; the third, a close win, is now lost at the minute. Before it, for STATS batch 5, docs/notes/stats-5.md: a saving throw rolls in every fight with an ailment, a shove or a blast; seven of the
 // twelve moved, each won or lost as before. Before it, for STATS batch 4, docs/notes/stats-4.md: every ordinary blow now rolls a d20 against Armour Class and every fighter rolls
 // initiative, so every fight moves; before it, for the skills overhaul's batch 2, docs/notes/skills-1.md)
 const PINNED: string[] = [
-  'won 13700 5/0 2763735201', 'won 23800 5/0 2421952789', 'won 20600 3/0 3069792647', 'lost 20800 0/4 2161628371', 'lost 10800 0/5 3955617552', 'won 14200 5/0 1791846009',
-  'lost 22600 0/2 810896742', 'lost 18000 0/4 3913958792', 'won 17400 4/0 1592590433', 'lost 10400 0/5 1265294573', 'lost 23800 0/3 1339698609', 'lost 10800 0/5 3725054691',
+  'won 11000 5/0 2259781925', 'won 30500 4/0 1030399055', 'won 27600 2/0 2877969056', 'lost 25100 0/3 3361358514', 'lost 16700 0/4 36721138', 'won 15700 5/0 1223951536',
+  'lost 24400 0/2 3210357028', 'lost 15600 0/4 2650287452', 'won 18300 5/0 832872369', 'lost 11300 0/5 697400100', 'lost 25200 0/5 1907593082', 'lost 12500 0/5 1133770814',
 ];

@@ -147,16 +147,16 @@ test('crowns buy no pull; chests give stones (every chest source), and a stone i
 });
 
 test('the chest shop: prices, contents, a daily stock, and prices that rise with the heroes owned', () => {
-  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 400, 3, 1], ['silver', 1500, 1, 3], ['gold', 6000, 1, 6]]);
+  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 600, 3, 1], ['silver', 2400, 1, 3], ['gold', 9000, 1, 6]]);
   const m = fresh(11);
   m.crowns = 100000;
-  assert.equal(shopPrice(m, 'bronze'), 400, 'the base price while the starter is all you own');
+  assert.equal(shopPrice(m, 'bronze'), 600, 'the base price while the starter is all you own');
   // (a bronze chest: its stones, and gear now and then)
   let gear = 0;
   for (let i = 0; i < 3; i++) {
     const before = { crowns: m.crowns, stones: stonesOf(m), gear: m.equipment?.length ?? 0 };
     const loot = buyChest(m, 'bronze', DAY)!;
-    assert.equal(m.crowns, before.crowns - 400);
+    assert.equal(m.crowns, before.crowns - 600);
     assert.equal(stonesOf(m) - before.stones, 1);
     assert.equal(loot.kind, 'bronze');
     assert.equal(loot.items.find((i) => i.type === 'stones')!.n, 1);
@@ -167,28 +167,29 @@ test('the chest shop: prices, contents, a daily stock, and prices that rise with
   assert.equal(stockLeft(m, 'bronze', DAY), 0);
   assert.equal(canBuy(m, 'bronze', DAY), false, 'sold out for the day');
   assert.equal(buyChest(m, 'bronze', DAY), null);
-  assert.equal(m.crowns, 100000 - 1200);
+  assert.equal(m.crowns, 100000 - 1800);
   assert.equal(stockLeft(m, 'bronze', DAY + 1), 3, 'it restocks the next day');
-  // (silver and gold always hold a piece of gear)
+  // (SEVEN-SLOT GEAR's economy: a silver chest holds gear 60% of the time, a gold one always)
   for (const kind of ['silver', 'gold'] as const) {
     const loot = buyChest(m, kind, DAY)!;
-    assert.equal(loot.items.filter((i) => i.type === 'gear').length, 1, kind);
+    assert.equal(loot.items.filter((i) => i.type === 'gear').length, kind === 'gold' ? 1 : loot.items.filter((i) => i.type === 'gear').length, kind);
+    assert.ok(loot.items.filter((i) => i.type === 'gear').length <= 1, kind);
     assert.equal(loot.items.find((i) => i.type === 'stones')!.n, shopChest(kind).stones);
-    assert.equal(m.crowns, 100000 - 1200 - (kind === 'silver' ? 1500 : 7500));
+    assert.equal(m.crowns, 100000 - 1800 - (kind === 'silver' ? 2400 : 11400));
   }
   assert.ok(gear >= 0);
   // (a poor player buys nothing, and a look at the shop changes nothing)
   const poor = fresh(12);
-  poor.crowns = 399;
+  poor.crowns = 599;
   assert.equal(buyChest(poor, 'bronze', DAY), null);
-  assert.equal(poor.crowns, 399);
+  assert.equal(poor.crowns, 599);
   const peek = peekShopChest(m, 'gold');
   assert.equal(peek.kind, 'gold');
   assert.equal(m.shopBuys, 5);
   // (the price rises with the pullable heroes owned beyond the starter's three)
   const big = fresh(13);
   big.unlocked = [...PULL_HEROES];
-  assert.equal(shopPrice(big, 'bronze'), Math.round((400 * (1 + PRICE_GROW * (PULL_HEROES.length - 3))) / 50) * 50);
+  assert.equal(shopPrice(big, 'bronze'), Math.round((600 * (1 + PRICE_GROW * (PULL_HEROES.length - 3))) / 50) * 50);
   assert.ok(shopPrice(big, 'gold') > 10 * shopPrice(fresh(1), 'gold') / 2);
   // (the same save and the same purchase give the same chest: the gear comes from a side stream of the seed and the count)
   const a = fresh(21);
