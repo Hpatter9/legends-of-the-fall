@@ -572,3 +572,5 @@ body .sbCard .top { align-items: center; }
 /* the Auto card the repeat runs share (autoAsk.ts) */
 .autoAsk { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: #000a; }
 .qlReplay.auto, .ecnLink.auto { margin-left: 4px; }
+/* UX-FIXES: a badge with a number in it (the Heroes tab's upgrades ready) is a small round pill, not a bare dot */
+.hmTab i.badge:not(:empty) { min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; font: 700 11px/16px var(--body); font-style: normal; color: #fff; text-align: center; border-radius: 9px; }
