@@ -5,6 +5,8 @@
 // The pieces have no paintings of their own yet: a piece's sigil is the painted gear icon its data names (`PieceDef.art`, from
 // `src/art/gear/`), set in a ring of its Eidolon's colour. Unbound Eidolons show as their card's silhouette with a "?".
 
+import { autoButton } from './autoAsk';
+import { canAutoQuest } from './sim/autoReplay';
 import { showWhenPainted } from './paintReady';
 import gearIndex from './art/gear/index.json';
 import { cardUrl, figureUrl } from './eidolonCall';
@@ -124,7 +126,7 @@ export function nextWords(m: Meta, found: PieceFound): string {
 
 export interface ChainHooks {
   /** Fight a chain's quest battle (the party with its cast locked in). */
-  fight?(battle: string): void;
+  fight?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if one is. */
   saved?(): string | null;
   /** Go to the Summoner (the Recruit tab's Sanctum). */
@@ -244,6 +246,7 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         again.title = 'Fight it again for practice: no reward';
         again.addEventListener('click', () => hooks.fight!(battle));
         more.append(again);
+        if (canAutoQuest(m, battle)) more.append(autoButton(m, questBattleById(battle)!.title, (n) => hooks.fight!(battle, n), 'ecnLink auto'));
       }
       // (EIDOLON-TRIAL: the trial too, once won, for practice)
       const t = trialOf(c);
@@ -252,6 +255,7 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         again.title = 'Fight it again for practice: no reward';
         again.addEventListener('click', () => hooks.fight!(t.id));
         more.append(again);
+        if (canAutoQuest(m, t.id)) more.append(autoButton(m, questBattleById(t.id)!.title, (n) => hooks.fight!(t.id, n), 'ecnLink auto'));
       }
       if (more.childElementCount) body.append(more);
     }

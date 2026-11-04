@@ -74,7 +74,7 @@ import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDr
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
 import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, splitGuestXp } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
-import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
+import { afterFight, canAutoQuest, maxSpeed, spendTicket, startAuto, startAutoDaily, startAutoQuest, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
 import { Events } from './events';
@@ -403,7 +403,7 @@ class Game {
           const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
           this.startRun(next);
-          if (auto) this.beginAuto(id, tier, auto);
+          if (auto) this.beginAuto({ army: id, tier }, auto);
         }),
       onParty: () =>
         this.party.open('edit', () => {
@@ -417,7 +417,10 @@ class Game {
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
-        showDailyStart(this.meta, todayKey(), () => this.startRun(startDaily(this.meta, todayKey())), () => this.home.open());
+        showDailyStart(this.meta, todayKey(), (auto) => {
+          this.startRun(startDaily(this.meta, todayKey()));
+          if (auto) this.beginAuto({ daily: todayKey() }, auto);
+        }, () => this.home.open());
       },
       onTower: () => this.openStand(),
       onCalamity: () => this.openMode('calamity'),
@@ -433,7 +436,7 @@ class Game {
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
       // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
-      onQuestBattle: (id) => this.openQuestBattle(id),
+      onQuestBattle: (id, auto) => this.openQuestBattle(id, auto),
       // (EIDOLON-CHAINS: a chain's prologue, played over the home screen whatever the Cinematics setting: it is the chain's sense)
       onStory: (scene) => this.scenes.play(scene, this.players()),
       questSaved: () => {
@@ -1982,8 +1985,9 @@ class Game {
   }
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
-  private beginAuto(army: string, tier: number, count: number): void {
-    const a = startAuto(this.meta, army, tier, count, todayKey());
+  private beginAuto(what: { army: string; tier: number } | { quest: string } | { daily: number }, count: number): void {
+    const day = todayKey();
+    const a = 'quest' in what ? startAutoQuest(this.meta, what.quest, count, day) : 'daily' in what ? startAutoDaily(this.meta, what.daily, count) : startAuto(this.meta, what.army, what.tier, count, day);
     if (!a || !spendTicket(this.meta, todayKey())) return;
     saveMeta(this.meta);
     this.auto = a;
@@ -2019,7 +2023,9 @@ class Game {
       // (each run spends a day's auto ticket; a new day mid-replay refills them)
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
-      const nextRun = armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      // (a quest battle's next try, or the daily's next practice run, or the army's next run)
+      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      if (!nextRun) return void this.endAuto('stopped');
       if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
       this.startRun(nextRun);
       this.autoPrep();
@@ -2034,9 +2040,11 @@ class Game {
     bar.hidden = !a;
     if (!a) return;
     const army = armyOfRun(this.run);
+    const fixed = waveArmyOf(this.run);
+    const name = a.kind === 'quest' ? questBattleById(a.quest!)?.title : a.kind === 'daily' ? 'Daily' : army?.name;
     bar.classList.toggle('paused', document.hidden);
     bar.querySelector('b')!.textContent = `Auto ${a.run}/${a.count}`;
-    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : army ? `${army.name} · wave ${Math.min(this.run.stage, army.waves.length)}/${army.waves.length}` : '';
+    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : name && fixed ? `${name} · wave ${Math.min(this.run.stage, fixed.waves.length)}/${fixed.waves.length}` : name ?? '';
   }
 
   /** The replay is over (the count ran out, a run was lost, or Stop was tapped): the banner goes and the summary card shows the totals. */
@@ -2048,7 +2056,8 @@ class Game {
     this.auto = null;
     this.autoNext = null;
     this.refreshAuto();
-    const army = armyById(a.army)!;
+    // (what was repeated, in words: "the Ashen Host", "Kenji's tale", "the daily")
+    const army = { name: a.kind === 'quest' ? questBattleById(a.quest!)?.title ?? 'battle' : a.kind === 'daily' ? 'daily' : armyById(a.army)!.name };
     const card = $('autoSum');
     card.querySelector('h2')!.textContent = why === 'done' ? 'Auto-replay done' : why === 'loss' ? 'Auto-replay stopped' : 'Auto-replay stopped';
     card.querySelector('.asumWhy')!.textContent =
@@ -2068,8 +2077,9 @@ class Game {
     card.querySelector('.asumFinds')?.remove();
     const finds = foundList(a.totals.finds ?? []);
     if (finds) rows.after(finds);
-    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
+    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : a.kind && a.kind !== 'army' ? 'Home' : 'To the armies';
     card.dataset.why = why;
+    card.dataset.kind = a.kind && a.kind !== 'army' ? 'other' : 'army';
     card.hidden = false;
     this.refresh();
   }
@@ -2079,7 +2089,8 @@ class Game {
     card.hidden = true;
     const why = card.dataset.why;
     // (a run that was stopped carries on by hand where it stands; a finished one goes on to the armies, a lost one home)
-    if (why === 'done') this.armyWon();
+    const army = !this.auto && card.dataset.kind !== 'other';
+    if (why === 'done') army ? void this.armyWon() : this.goHome();
     else if (why === 'loss') this.goHome();
   }
 
@@ -2094,7 +2105,12 @@ class Game {
   /* -------------------------------------------------------------- quest battles (QUEST-BATTLES, batch 2 of the quests) */
 
   /** A quest battle's Fight: the one saved part-way carries on; else the party screen with its cast locked in, then a new try. */
-  private openQuestBattle(id: string): void {
+  private openQuestBattle(id: string, auto?: number): void {
+    // (an auto-replay of a battle already won: a fresh try with the saved party, no picker; the cast is kept by the squad pick)
+    if (auto) {
+      if (!canAutoQuest(this.meta, id)) return this.home.open();
+      return this.beginQuestTry(id, this.meta.party, auto);
+    }
     const saved = loadSlot('quest');
     if (saved?.mode?.kind === 'quest' && saved.mode.quest === id) {
       this.run = saved;
@@ -2109,10 +2125,11 @@ class Game {
   }
 
   /** A new try of a quest battle with the party picked: its own seed and slot (an army run saved is not touched), then its story, the first time. */
-  private beginQuestTry(id: string, picked: readonly string[]): void {
+  private beginQuestTry(id: string, picked: readonly string[], auto?: number): void {
     const run = startQuestBattle(this.meta, id, picked);
     if (!run) return this.home.open();
     this.startRun(run);
+    if (auto) return this.beginAuto({ quest: id }, auto);
     void this.tellQuestStory(id);
   }
 

@@ -101,7 +101,7 @@ export interface HomeHooks {
   /** The top bar was drawn (EIDOLONS: the War Horn's chip beside the stones follows the save). */
   onTopBar?(): void;
   /** Begin or carry on a quest battle (batch 2 of the quests: the log's Fight, a giver's card, the Done tab's Replay). */
-  onQuestBattle?(battle: string): void;
+  onQuestBattle?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if one is (its Fight reads Continue). */
   questSaved?(): string | null;
   /** EIDOLON-CHAINS: play a chain's story (its giver's prologue) over the home screen; resolves when it ends. */
@@ -427,7 +427,7 @@ export class Home {
           this.revealJoined();
         },
         close: () => this.closeSheet(),
-        fight: (id) => this.questBattle(id),
+        fight: (id, auto) => this.questBattle(id, auto),
         saved: () => this.hooks.questSaved?.() ?? null,
         summoner: () => this.show('recruit'),
         story: (id) => {
@@ -508,10 +508,10 @@ export class Home {
   }
 
   /** A quest battle's Fight (batch 2): the sheet and the card close, and the page takes it from there (the party, the story, the deploy). */
-  private questBattle(id: string): void {
+  private questBattle(id: string, auto?: number): void {
     if (!this.hooks.onQuestBattle) return;
     this.closeSheet();
-    this.go(() => this.hooks.onQuestBattle!(id));
+    this.go(() => this.hooks.onQuestBattle!(id, auto));
   }
 
   /** Redraw the page that is showing (after crowns or unlocks change elsewhere). */
