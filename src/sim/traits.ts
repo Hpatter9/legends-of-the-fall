@@ -188,7 +188,7 @@ export const COMING_TRAITS: Record<string, Trait> = {
   vampire: { id: 'vampire', name: 'Vampire', kind: 'origin', short: 'Vm', tiers: [
     { need: 2, effects: { leech: 0.06 }, text: 'Blows leech 6% of the damage dealt as health' },
     { need: 4, effects: { leech: 0.12, atk: 1.06 }, text: 'Blows leech 12% of the damage dealt, and +6% attack' },
-    { need: 5, effects: { leech: 0.18, atk: 1.14, vampireSwarm: true }, text: 'Blows leech 18%, +14% attack, and a Vampire brought low bursts into bats and mends, once a fight' },
+    { need: 5, effects: { leech: 0.15, atk: 1.1, vampireSwarm: true }, text: 'Blows leech 15%, +10% attack; once a fight a Vampire brought low bursts into bats' },
   ] },
 };
 

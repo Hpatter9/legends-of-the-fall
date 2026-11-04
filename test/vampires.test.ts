@@ -1,5 +1,5 @@
 // The Vampire origin and its Last Oath (docs/notes/twenty-heroes.md, batch 0): the trait's tiers at two, four and five, the leech it gives
-// every hero's blows, the bat swarm at five, and the Crimson Court. The five Vampires wait for their battle sheets, so they are fielded
+// every hero's blows, the bat swarm at five, and their Last Oath, the Night Kin. The five Vampires wait for their battle sheets, so they are fielded
 // here with `addUnit` and are not yet in `ALL_HEROES`, the roster's traits or `COMBOS`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,7 +51,7 @@ test('the Vampire origin wakes at two, four and five Vampires', () => {
   assert.equal(traitEffects(FIVE.slice(0, 4)).leech, 0.12);
   assert.ok(!traitEffects(FIVE.slice(0, 4)).vampireSwarm);
   const five = traitEffects(FIVE);
-  assert.equal(five.leech, 0.18);
+  assert.equal(five.leech, 0.15);
   assert.ok(five.vampireSwarm);
   // (a Vampire's class counts as its class does: two Blades with the Vampire Lord)
   assert.ok(countTraits(['vampireLord', 'samurai']).find((c) => c.trait.id === 'blade')!.active);
@@ -124,7 +124,7 @@ test('the swarm moves the Vampire to the free tile within 2 farthest from the fo
   if (a.blink) assert.ok(Math.abs(a.to.u - a.from.u) + Math.abs(a.to.v - a.from.v) <= 2);
 });
 
-test('the Crimson Court forms with all five Vampires, fills, and its Eternal Eclipse lands', () => {
+test('the Night Kin forms with all five Vampires, fills, and its Blood Moon lands', () => {
   const c = COMING_COMBOS.find((x) => x.id === 'bloodCourt')!;
   assert.deepEqual([...c.heroes], FIVE);
   assert.equal(comboById('bloodCourt'), c);
@@ -148,7 +148,7 @@ test('the Crimson Court forms with all five Vampires, fills, and its Eternal Ecl
   b.combo!.charge = COMBO_NEED - 0.01;
   const events: BattleEvent[] = [];
   for (let i = 0; i < 40; i++) events.push(...stepBattle(b));
-  assert.ok(events.some((e) => e.kind === 'comboLand'), 'the Eternal Eclipse lands');
+  assert.ok(events.some((e) => e.kind === 'comboLand'), 'the Blood Moon lands');
   assert.ok(b.units.some((u) => u.side === 'foe' && ailmentsOf(u).some((a) => a.kind === 'bleed')), 'the foes bleed');
   const five = b.combo!.ids.map((id) => b.units.find((u) => u.id === id)!).filter((u) => u.alive);
   const land = events.findIndex((e) => e.kind === 'comboLand');

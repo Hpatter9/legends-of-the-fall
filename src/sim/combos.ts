@@ -53,7 +53,7 @@ export type Beat =
   | { k: 'mendFive'; share: number };
 
 /** The look of a combo's move: the page reads it for colours and the effect layers (`render/comboFx.ts`). */
-export type ComboTone = 'holy' | 'arcane' | 'shadow' | 'sea' | 'wild' | 'spirit' | 'earth' | 'dark';
+export type ComboTone = 'holy' | 'arcane' | 'shadow' | 'sea' | 'wild' | 'spirit' | 'earth' | 'dark' | 'blood';
 
 export interface Combo {
   id: string;
@@ -111,14 +111,14 @@ export const COMBOS: readonly Combo[] = [
   },
 ];
 
-/** The Last Oaths still to join the roster: the Vampires' Crimson Court (the director's yes, docs/notes/twenty-heroes-audit.md). Its five have
+/** The Last Oaths still to join the roster: the Vampires' Night Kin (once the Crimson Court) (the director's yes, docs/notes/twenty-heroes-audit.md). Its five have
  *  their kits but wait for their battle sheets; a fight with all five forms it like any other, while the codex and the roster's rules
  *  (`COMBOS`: five to eight, every member a hero of `ALL_HEROES`) leave it out until they join and it moves into `COMBOS`. */
 export const COMING_COMBOS: readonly Combo[] = [
   {
-    id: 'bloodCourt', heroes: ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'], name: 'The Crimson Court', move: 'Eternal Eclipse', tone: 'dark',
-    text: 'A blood moon eclipses the field: every foe is struck and bleeds for 4s, while the five drink back a quarter of their health and every ally is hastened for 4s',
-    beats: [{ k: 'hurt', mult: 0.65 }, { k: 'burn', mult: 0.055, ms: 4000, kind: 'bleed' }, { k: 'mendFive', share: 0.25 }, { k: 'haste', ms: 4000 }],
+    id: 'bloodCourt', heroes: ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'], name: 'The Night Kin', move: 'Blood Moon', tone: 'blood',
+    text: 'A blood moon rises over the field: every foe is struck and bleeds for 4s, while the five drink back a tenth of their health and every ally is hastened for 4s',
+    beats: [{ k: 'hurt', mult: 0.65 }, { k: 'burn', mult: 0.055, ms: 4000, kind: 'bleed' }, { k: 'mendFive', share: 0.1 }, { k: 'haste', ms: 4000 }],
   },
 ];
 const ANY_COMBO: readonly Combo[] = [...COMBOS, ...COMING_COMBOS];
