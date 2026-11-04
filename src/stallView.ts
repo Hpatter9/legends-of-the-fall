@@ -26,7 +26,7 @@ import { TOMES } from './sim/tomes';
 import { TRADER_NAMES, buyFromTrader, caravanHere, gloamingHere, oreWareName, stockOfTrader, tradeLeft, traderLine, whyNotBuyFrom, type TradeWare, type Trader } from './sim/traders';
 import { durabilityOf, maxDurability, needingRepair, repairAllCost, repairCost, wearState } from './sim/wear';
 import { REMEDIES } from './sim/remedies';
-import { REMEDY_ICON } from './remedyArt';
+import { GLYPH_STONE, REMEDY_ICON } from './gearUiArt';
 import { GLYPHS, REFORGE_STANDING, clearGlyphs, enchantOffers, glyphPrice, patchBlock, patchCost, patchItem, reforgeCost } from './sim/enchant';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -54,8 +54,8 @@ const TAB_ICON: Record<AnyTab, () => string> = {
   chests: () => shopArt('coin-purse'),
   sell: () => shopArt('sell'),
   repair: () => shopArt('repair'),
-  // (until the glyph stones are painted: docs/notes/gear-art-todo.md)
-  enchant: () => shopArt('book-universal-rare'),
+  // (the gold glyph stone, the owner's painting: `gearUiArt.ts`)
+  enchant: () => GLYPH_STONE[3],
 };
 /** Repair all asks first above this many crowns. */
 const ASK_OVER = 500;
@@ -172,7 +172,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       return i;
     }
     const box = el('span', 'hsTome');
-    box.append(img(w.type === 'remedy' ? REMEDY_ICON[w.remedy] : TOME_ICON[w.size]));
+    box.append(w.type === 'remedy' ? img(REMEDY_ICON[w.remedy], 'hsPainted') : img(TOME_ICON[w.size]));
     box.style.width = box.style.height = `${px}px`;
     return box;
   };
@@ -514,7 +514,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       const row = el('div', `hsRow hsEnchant r${it.rarity}`);
       const words = el('div', 'hsRowWords');
       words.append(el('b', '', itemName(it)), el('small', '', `${who ? `${heroName(who)} · ` : 'spare · '}${RARITY_NAMES[it.rarity]} Lv ${it.level}`));
-      for (const g of it.glyphs ?? []) words.append(el('small', 'hsGlyph', `${GLYPHS[g].name}: ${GLYPHS[g].text}`));
+      (it.glyphs ?? []).forEach((g, i) => {
+        const line = el('small', 'hsGlyph');
+        line.append(img(GLYPH_STONE[i + 1], 'hsGlyphStone'), `${GLYPHS[g].name}: ${GLYPHS[g].text}`);
+        words.append(line);
+      });
       const btns = el('div', 'hsBtns');
       const price = glyphPrice(it);
       if (price !== null)
