@@ -48,7 +48,7 @@ const SOUND: Partial<Record<Beat['kind'], Sfx[]>> = {
 
 type Pt = { x: number; y: number; tall: number };
 /** A prop for a beat: where (the beat's spot `at`, the far end or foe `to`), and the showcase's plan (for the Buccaneer's rolls). */
-type Prop = (fx: Fx, at: Pt, to: Pt | null, plan: ShowPlan, b: Beat) => void;
+type Prop = (fx: Pick<Fx, 'showProp'>, at: Pt, to: Pt | null, plan: ShowPlan, b: Beat) => void;
 const dieFace = (plan: ShowPlan, id: number): ShowArt => {
   // (a high roll (4 to 6) where the sim's cut landed heavy, a low one (1 to 3) where not; which of the three by the foe)
   const n = (plan.cast.heavy.includes(id) ? 4 : 1) + (id % 3);
@@ -132,8 +132,21 @@ const PROPS: Record<string, Partial<Record<Beat['kind'], Prop>>> = {
 /** How a hero's shots are drawn: a bolt from the sky, a stream of flame, or a bullet (the rest). */
 const HOW: Record<string, 'bolt' | 'flame' | 'bullet'> = { lightningMage: 'bolt', dragoon: 'flame' };
 
+/** A prop's light: the dim lifts round it while it is up (world px, and the showcase's ms). */
+interface Light {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  from: number;
+  to: number;
+}
+
 export class UltShow {
   plan: ShowPlan | null = null;
+  private lit: Light[] = [];
+  private now = 0;
   private fired = 0;
   private beats: Beat[] = [];
   private staged = new Set<number>();
@@ -151,6 +164,7 @@ export class UltShow {
   frame(t: number, beats = true): void {
     const plan = this.plan;
     if (!plan) return;
+    this.now = t;
     while (beats && this.fired < this.beats.length && this.beats[this.fired].at <= t) this.beat(plan, this.beats[this.fired++]);
     const poses = posesAt(plan, t);
     for (const id of this.staged)
@@ -205,11 +219,19 @@ export class UltShow {
     if (!p) return;
     const prop = PROPS[plan.kind]?.[b.kind];
     if (prop) {
+      // (each prop lifts the dim round itself while it is up)
+      const lighter: Pick<Fx, 'showProp'> = {
+        showProp: (art, x, y, o) => {
+          const from = this.now + (o.delay ?? 0);
+          this.lit.push({ x, y, vx: o.vx ?? 0, vy: o.vy ?? 0, r: o.h * 0.9, from, to: from + o.life });
+          return fx.showProp(art, x, y, o);
+        },
+      };
       const far = b.foe !== undefined ? foeAt(b.foe) : b.to ? on(b.to) : null;
       const to = far && !Array.isArray(far) ? far : far ? { x: far[0], y: far[1], tall } : null;
       for (const a of b.kind === 'sky' ? b.all ?? [b.where] : [b.where]) {
         const q = on(a);
-        if (q) prop(fx, { x: q[0], y: q[1], tall }, to, plan, b);
+        if (q) prop(lighter, { x: q[0], y: q[1], tall }, to, plan, b);
       }
     }
     switch (b.kind) {
@@ -246,8 +268,15 @@ export class UltShow {
     }
   }
 
+  /** The props' lights now: where each is (world px) and how far round it the dim lifts. */
+  lights(): { x: number; y: number; r: number }[] {
+    const t = this.now;
+    return this.lit.filter((l) => t >= l.from && t <= l.to).map((l) => ({ x: l.x + l.vx * (t - l.from), y: l.y + l.vy * (t - l.from), r: l.r }));
+  }
+
   /** The showcase is over (or skipped, or the fight left): every fighter drawn as the sim says again. */
   end(): void {
+    this.lit = [];
     for (const id of this.staged) {
       const s = this.opts.sprite(id);
       if (s) s.stage = null;
