@@ -163,6 +163,9 @@ export interface Meta {
   duchessTreat?: number;
   /** Whether the heroes' ultimates fire on their own in a fight (the hero bar's Auto switch, COMBAT-002); off (the player taps) when unset. Auto-replay always fires them. */
   ultAuto?: boolean;
+  /** ULT-SHOW: how many full moments of each hero kind's ultimate the player has seen (only heroes with a showcase are counted; the first
+   *  and every Nth play the long showcase: `ultShowRules.ts`). Saves from before have none: every showcase still to see. */
+  ultSeen?: Record<string, number>;
   /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
   bossCards?: string[];
   /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
@@ -205,6 +208,10 @@ export interface StashChest {
   bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
   first?: boolean;
+  /** QUESTS-3: a chest that holds no summoning stones (a Last Stand re-climb's, a quest of one or two stars's). */
+  dry?: boolean;
+  /** QUESTS-3: a chest that holds half its stones, rounded up (a Calamity clear's). */
+  half?: boolean;
 }
 
 export interface DailyEntry {
@@ -525,6 +532,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (typeof m.duchessTreat === 'number' && Number.isFinite(m.duchessTreat)) m.duchessTreat = m.duchessTreat | 0;
       else delete m.duchessTreat;
       if (!m.bossCards.length) delete m.bossCards;
+      // (saves from before the showcases have seen none)
+      if (m.ultSeen && typeof m.ultSeen === 'object' && !Array.isArray(m.ultSeen))
+        m.ultSeen = Object.fromEntries(Object.entries(m.ultSeen).filter(([, n]) => typeof n === 'number' && Number.isFinite(n) && n > 0).map(([k, n]) => [k, Math.floor(n)]));
+      else delete m.ultSeen;
       // (saves from before the earned deploy helpers have told none: `featureUnlocks.ts`)
       if (Array.isArray(m.featuresTold)) m.featuresTold = m.featuresTold.filter((x) => typeof x === 'string');
       else delete m.featuresTold;

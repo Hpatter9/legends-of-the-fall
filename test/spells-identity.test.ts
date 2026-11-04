@@ -70,6 +70,8 @@
 // field1 81b0369e, field30 3f9b2a5e, bosses 11c33a36, armyFoes e3c7011a, spells 69b1d534, lands 99da4981, army d78fb13d, daily d00ddcc9, tower
 // d1468e2a, stand 69c8c642, calamity 18f58bc9, heroes1 58aac7f4, heroes10 9c513279, heroes30 526f4f47, field1Others f1bc7c9d, field30Others
 // dd370f3f, heroes1Others d75813fa, heroes10Others c7f3b928, heroes30Others 1e0ab73b.)
+// (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
+// foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

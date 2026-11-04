@@ -159,6 +159,8 @@ export interface SpellState {
   rate: number;
   /** Events recorded between ticks, handed out by the next one. */
   events: BattleEvent[];
+  /** Mana over the bar's top, kept to pour back in (`fillMana`); unset until some spills. */
+  spill?: number;
   /** When a spell was last cast on its own (AUTO-CAST, `autoCast.ts`); unset until one is. */
   autoAt?: number;
 }
@@ -177,10 +179,32 @@ export const isSlowed = (b: Battle, x: Unit) => x.slowUntil !== undefined && x.s
 /** How much faster a fighter acts now (1 when neither hasted nor slowed): it moves and swings at this speed. */
 export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? (b.traits?.speed ?? 1) * relicSpeed(b, x) : (b.foeSpeed ?? 1) * relicFoeSlow(b, x)) * (b.twist?.pace ?? 1);
 
-/** Mana gain for one tick. */
+/** Mana that comes in over the top of the bar is kept, up to this much more (KING-SPELLS batch 1): it waits behind the bar and pours back in as
+ *  soon as a cast makes room, so a king who waits for the right moment loses nothing. */
+export const SPILL_MAX = 10;
+
+/** Mana gain for one tick; what will not fit in the bar goes to the spill, and the spill tops the bar up when there is room. */
 export function fillMana(b: Battle): void {
-  b.spells.mana = Math.min(MANA_MAX, Math.round((b.spells.mana + (TICK_MS * MANA_PER_SEC * b.spells.rate * relicMana(b)) / 1000) * 1000) / 1000);
+  const s = b.spells;
+  const r3 = (n: number) => Math.round(n * 1000) / 1000;
+  const total = r3(s.mana + (s.spill ?? 0) + (TICK_MS * MANA_PER_SEC * s.rate * relicMana(b)) / 1000);
+  s.mana = Math.min(MANA_MAX, total);
+  const spill = Math.min(SPILL_MAX, r3(total - s.mana));
+  if (spill > 0 || s.spill !== undefined) s.spill = spill;
 }
+
+/**
+ * How hard the king's blows land (KING-SPELLS batch 1): the damage spells were flat numbers, so they faded as the foes grew with the level and
+ * the tier. Now they grow with the health boost the fight's foes were made with (`Battle.foeBoost`: the army, the tier, the wave and the mode's
+ * own), from `MIGHT_FROM` (about the first army's), to the power `MIGHT_POWER`. Never below 1, so the first armies, and any fight with no boost
+ * (the tests' arenas), play as before. The Last Stand sets the boost wave by wave, so the king keeps pace there too.
+ */
+export const MIGHT_FROM = 1.4;
+export const MIGHT_POWER = 0.5;
+export const kingMight = (b: Battle) => Math.max(1, ((b.foeBoost?.hp ?? 1) / MIGHT_FROM) ** MIGHT_POWER);
+
+/** The mana bar's words: the mana, and the spill waiting behind it ("10/10 +4"). */
+export const manaText = (s: SpellState) => `${Math.floor(s.mana)}/${MANA_MAX}${(s.spill ?? 0) >= 1 ? ` +${Math.floor(s.spill!)}` : ''}`;
 
 /** Milliseconds until a spell may be cast again (0 when ready). */
 export const cooldownLeft = (b: Battle, id: SpellId) => Math.max(0, b.spells.ready[id] - b.t);
@@ -206,7 +230,7 @@ const freeIn = (b: Battle, u: number, v: number) => {
 const mostWounded = (b: Battle) => b.units.filter((x) => x.alive && x.side === 'hero' && !defOf(x).summon).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
 
 /** A raw blow from the king: the foe's defence comes off. */
-const strike = (b: Battle, x: Unit, power: number, heavy: boolean, out: BattleEvent[]) => hurt(b, KING, x, Math.max(1, Math.round(power) - defOf(x).def), heavy, false, out, 'skill');
+const strike = (b: Battle, x: Unit, power: number, heavy: boolean, out: BattleEvent[], might = kingMight(b)) => hurt(b, KING, x, Math.max(1, Math.round(power * might) - defOf(x).def), heavy, false, out, 'skill');
 
 /** Cast a spell on the 3x3 around tile (u, v) (the tile is ignored by spells that go everywhere). False (and nothing changed) if the fight isn't on, the tile isn't on the board, the mana or cooldown isn't there, or Resurrect has nobody to lift. */
 export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean {
@@ -411,9 +435,10 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
   s.falls.sort((x, y) => x.at - y.at);
   while (s.falls.length && s.falls[0].at <= b.t) {
     const f = s.falls.shift()!;
+    const might = kingMight(b);
     for (const x of b.units) {
       if (!x.alive || x.side !== 'foe' || !inArea(x, f.u, f.v)) continue;
-      hurt(b, KING, x, Math.max(1, (f.power ?? METEOR_POWER) - defOf(x).def), true, false, out, 'skill');
+      hurt(b, KING, x, Math.max(1, Math.round((f.power ?? METEOR_POWER) * might) - defOf(x).def), true, false, out, 'skill');
       // (a meteor, not a shower's star, sets what it strikes burning: STATUS-FX)
       if (f.power === undefined) burnFor(b, KING, x);
     }
@@ -421,8 +446,9 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
   for (const c of s.clouds) {
     while (c.next <= b.t && c.next <= c.until) {
       c.next += POISON_EVERY;
+      const might = kingMight(b);
       for (const x of foesIn(b, c.u, c.v)) {
-        tagged(out, 'poison', () => hurt(b, KING, x, POISON_DMG, false, false, out, 'dot'));
+        tagged(out, 'poison', () => hurt(b, KING, x, Math.round(POISON_DMG * might), false, false, out, 'dot'));
         // (and each bite leaves a stack of poison: STATUS-FX)
         poisonFor(b, KING, x);
       }
