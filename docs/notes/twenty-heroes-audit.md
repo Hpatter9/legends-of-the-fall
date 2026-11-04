@@ -132,3 +132,14 @@ Work on `claude/twenty-heroes`, merging `origin/main` with merge commits. No ver
 3. Whether the Crimson Court becomes a ninth Last Oath.
 4. The PixelLab top-up, and leave to spend about 3,000 to 4,000 generations on the 80 battle sheets.
 5. Whether a batch may land with its kit tested but its heroes held out of the roster until their sheets arrive.
+
+## The decisions (the director, 4 November)
+
+1. The canon as proposed: names, titles and heritages from `heroNames.ts`, sex from the name, origins and classes from `traits.ts`,
+   the Dhampir's unit name "Dhampir", `NOT_HUMAN` only the five named above. No "Morbius" anywhere.
+2. Five-hero tiers for the Vampire origin only (2, 4 and 5); every other trait keeps main's rules.
+3. The Crimson Court becomes a ninth Last Oath.
+4. The battle sheets are painted by ChatGPT, not PixelLab (the owner's choice): one prompt a hero, every frame its own transparent
+   PNG, packed into main's grid by `tools/heroes-20/pack-sheets.py`. The prompts are in
+   [twenty-heroes-art-prompts.md](twenty-heroes-art-prompts.md). No PixelLab generations are needed.
+5. A batch may land with its kits tested while its heroes stay out of `ALL_HEROES` until their sheets arrive.
