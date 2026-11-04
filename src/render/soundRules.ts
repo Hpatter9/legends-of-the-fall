@@ -9,7 +9,7 @@ import { keyOfKit, kitOf, ultKeyOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
 import { BIG_FOE_HP } from './skillFx';
 import { SPELL_ELEMENT, deathKind, impactElement, isBackstab, missileOf, skillElement, type Element } from './fxRules';
-import { lookOf } from '../sim/spellLooks';
+import { soundOf } from '../sim/spellSounds';
 
 /** Every sound the page can make. The first group is the page's own (taps, summons, stingers); the rest are the fight's. */
 export type Cue =
@@ -403,7 +403,7 @@ export function spellCues(id: keyof typeof SPELL_ELEMENT): Cued[] {
     // (each meteor's fall and boom come from its own `area` event)
     case 'starfall': return [{ cue: 'fireWhoosh', gain: 0.5 }];
     // (a school's new spell borrows its cue: KING-SPELLS batch 4)
-    default: return spellCues(lookOf(id));
+    default: return spellCues(soundOf(id));
   }
 }
 

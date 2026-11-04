@@ -13,9 +13,17 @@ import { AREA_PAINT, MOVE_PAINT, movePaintParts } from '../src/render/movePaints
 type Row = [string, 'once' | 'loop', number, number, number];
 const manifest = JSON.parse(readFileSync('tools/spell-fx/spell-parts.json', 'utf8')) as Record<string, unknown>;
 const SRC_CELL = manifest.cell as number;
-const sessions = Object.fromEntries(Object.entries(manifest).filter(([k]) => k !== '_' && k !== 'cell')) as Record<string, Record<string, Row[]>>;
+const sessions = Object.fromEntries(Object.entries(manifest).filter(([k]) => k !== '_' && k !== 'cell' && k !== 'prefix')) as Record<string, Record<string, Row[]>>;
+// (KING-SPELLS batch 5: a session may read its keys with a prefix, the king's `king-charm` beside the heroes' `charm`)
+const PREFIX = (manifest.prefix ?? {}) as Record<string, string>;
 const PARTS = new Set(['cast', 'travel', 'beam', 'impact', 'ground', 'rise', 'stand', 'break', 'motes', 'trail']);
-const rowsOf = (key: string): Row[] | undefined => Object.values(sessions).find((s) => key in s)?.[key];
+const rowsOf = (key: string): Row[] | undefined => {
+  for (const [session, s] of Object.entries(sessions)) {
+    const p = PREFIX[session] ?? '';
+    if (key.startsWith(p) && key.slice(p.length) in s) return s[key.slice(p.length)];
+  }
+  return undefined;
+};
 const inManifest = (partKey: string): boolean => {
   const dot = partKey.lastIndexOf('.');
   return !!rowsOf(partKey.slice(0, dot))?.some((r) => r[0] === partKey.slice(dot + 1));
@@ -40,7 +48,7 @@ const webpSize = (path: string): [number, number] => {
   return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
 };
 
-test('the manifest lists the brief: 144 sheets, 271 rows (with the ultimate\'s kit, ULT-EPIC), each row a known part with a sane range and size', () => {
+test('the manifest lists the brief: 158 sheets, 302 rows (with the ultimate\'s kit, ULT-EPIC, and the king\'s fourteen, KING-SPELLS batch 5), each row a known part with a sane range and size', () => {
   let sheets = 0;
   let rows = 0;
   for (const keys of Object.values(sessions))
@@ -56,8 +64,8 @@ test('the manifest lists the brief: 144 sheets, 271 rows (with the ultimate\'s k
         assert.ok(size > 0 && size <= 8, `${key}.${part}: ${size} tiles`);
       }
     }
-  assert.equal(sheets, 144);
-  assert.equal(rows, 271);
+  assert.equal(sheets, 158);
+  assert.equal(rows, 302);
   assert.equal(SRC_CELL, 256);
 });
 

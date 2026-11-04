@@ -112,6 +112,10 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 
 ## Magic effects (the spells, the skills and the crits)
 
+- **The rune stones** (`src/art/runes/`, eight 16px frames, `src/runeArt.ts`): the second frame of the fire, wind, crystal, forest, light,
+  water, moon and dark rune strips (`pixel-effects/sprites/<element>-rune/16/02.png`) of the **5000 Pixel Effects** pack by blueberry
+  (https://blueberry-assets.itch.io), from the private assets repository, copied unchanged, under the same licence as the effects below.
+
 - **The skill, spell and hit effects** (`src/art/fx/magic/`, 22 sheets of six 32px frames each, copied unchanged from the
   `sheet-32.png` strips of the **5000 Pixel Effects** pack by blueberry (`pixel-effects/sprites/<effect>/`, from the
   private assets repository): light gather, light nova and circle, wind vortex, wave, burst and strike, earth shield,

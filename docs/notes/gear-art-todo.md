@@ -4,8 +4,19 @@ The OpenAI image account is out of credits for now, so the new pieces show a cle
 name on it: `itemIcon` in `src/equipView.ts`). This list is every painting still to make; a test (`test/equipment.test.ts`) checks that
 every base without an icon is on it. Tick a piece off (remove its line) when its painting is in `src/art/` and its atlas.
 
-The house prompt and the style references are in [gear-art-prompt.md](gear-art-prompt.md); the tool is planned as
-`tools/gear/gen-icons.mjs` (the design's section 12). Paint a slot at a time, about 20 to a batch, head first.
+**The tool** is `tools/gear/gen-icons.mjs` (the design's section 12): one prompt a piece from its name and slot in the house style of
+the 120 paintings already in the game, through the connected image API, saved at 256 x 256 to `art-source/gear/<slot>/<id>.png` (the
+legends to `legends/`); then `python3 tools/gear/import-gear-icons.py --contact <png>` cleans, centres and packs them (it now reads all
+210 bases, and a new base needs only its standard painting: its Mythic is the same painting in the Mythic frame). Paint a slot at a
+time, about 20 to a batch, head first: `node tools/gear/gen-icons.mjs --slot head --limit 20` (`--dry` prints the prompts and sends
+nothing). It has not been run: the image account was out of credits when it was written.
+
+**The pack audit** (batch 7, `hpatter9/chronos-assets`): the packs have no equipment icons in the paintings' style. `Helm/` and
+`Shield/` are worn layers for 1024 x 1024 character sheets (a few pixels of helm or shield on a body), not item icons;
+`Magic_Items_01_Pack_FREE` is 16 to 48 px pixel art (wands, staves, rings, amulets, tomes, scrolls) that would sit badly beside the
+painted icons; `pixelvault-rpg-weapons-armor` holds ten weapon sprites, no armour. So no pack sprite is used for the gear; the
+placeholders stay until the paintings come. **The rune stones were found in the packs**: the 16px rune discs of the 5000 Pixel Effects
+pack, one element a kind (`src/runeArt.ts`, credited in `CREDITS.md`).
 
 ## New bases (129): one painting each; a Mythic is the same painting in the Mythic glow frame
 
@@ -186,7 +197,7 @@ The house prompt and the style references are in [gear-art-prompt.md](gear-art-p
 
 ## Still to come in later batches
 
-- The 8 rune stones, the 5 rune frames and the merge spark (batches 4 and 5).
+- The 5 rune frames and the merge spark (batches 4 and 5); the 8 rune stones are the pack's rune discs, so they need no painting.
 - The 5 remedies (batch 6): the rogue pack's potion and elixir sprites stand in (`src/remedyArt.ts`).
 - The 14 set emblems, the 7 empty-slot outlines of the paper doll, the doll's backing and the 3 glyph stones (batches 1 to 3); the
   stall's Enchant tab shows a Rare book until its glyph-stone icon is made.

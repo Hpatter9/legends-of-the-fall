@@ -80,6 +80,8 @@
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
 // fourteen. No other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` and `stand` alone: `DAILY_START` 0.785 to 0.83 and `HALL_EASE` 1.2 to
+// 1.36, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
@@ -112,6 +114,7 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower`, and batch 6 again over the tactics (calamity 1d879f22, daily 22ed0372, tower 2337ec08): a run started now finds runes, not pieces, and a won
 // wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 8, the balance, re-recorded `daily` alone (6992282b): DAILY_START 0.785 to 0.77 and runes at 0.7; every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));

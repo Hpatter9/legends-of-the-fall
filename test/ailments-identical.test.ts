@@ -87,12 +87,15 @@ import { WEAK } from '../src/sim/weakness';
 // 000d28c3 (its party's Knight), calamity 5270a261.)
 // (SEVEN-SLOT GEAR batches 4 and 6, merged over the tactics, re-recorded `calamity`, `daily` and `tower` (calamity 244264f2, daily 3e144113,
 // tower e5d59809): a run started now finds runes, a won wave adds one, and its fallen stand again at half; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 8, the balance, re-recorded `daily` alone (93752413): DAILY_START 0.785 to 0.77 and runes at 0.7; every other scenario keeps its hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again, now 81e830d7: it casts each king's spell once, and the
 // schools added fourteen. No other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` (915214bc on main 0.347.0's code) and `stand` (3c117f1a) alone: `DAILY_START` 0.785 to
+// 0.83 and `HALL_EASE` 1.2 to 1.36, constants, retuned for the default ruler's player; every other scenario keeps its hash.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

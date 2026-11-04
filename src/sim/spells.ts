@@ -301,8 +301,8 @@ export const RIDERS: Record<SpellId, string> = {
   bonewall: 'the wall is five tiles wide',
   raisedead: 'three wraiths rise',
 };
-// (the look table, `SPELL_LOOK`, `lookOf` and `withLooks`, lives in `spellLooks.ts`: the renderer reads it without loading the fight's modules)
-export { lookOf, SPELL_LOOK, withLooks, type BaseSpellId } from './spellLooks';
+// (the sound table, `SPELL_SOUND`, `soundOf` and `withSounds`, lives in `spellSounds.ts`: the sound reads it without loading the fight's modules)
+export { soundOf, SPELL_SOUND, withSounds, type BaseSpellId } from './spellSounds';
 export const RIDER_SPOTS: readonly (readonly [number, number])[] = [[-2, -2], [2, 2]];
 
 /** Milliseconds until a spell may be cast again (0 when ready). */
