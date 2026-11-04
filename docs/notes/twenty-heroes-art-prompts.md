@@ -323,8 +323,9 @@ cleaned rather than leaving a hard edge. Do not change the motifs or colours.
 
 ## Prompt 7: one painted icon a move (after the kits are settled)
 
-Paste this only once the twenty kits are on main (step 2 of the audit's plan): the move names below are the branch's, and some may
-change when the kits are rebuilt on main's skill system. Update the lists from main's `kits/table.ts` and `ultimates.ts` first.
+The move list below is the kits as reworked after the review ([twenty-heroes-review.md](twenty-heroes-review.md)) and tuned
+(`kits/vampires.ts`, `wave2.ts`, `wave3.ts`, `wave4.ts` on `claude/twenty-heroes`); an earlier version of this prompt listed the
+branch's moves, many since renamed or replaced.
 
 ```text
 You are painting ability art for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
@@ -344,45 +345,46 @@ Rules for this task:
 
 The moves (hero: skill 1, skill 2, skill 3, ultimate; each with what it does, for the motif):
 1. Vampire Lord: Crimson Lunge (a dash through a line of foes in a red arc), Impaling Thrust (a rapier impaling and lifting), Mist
-   Step (a blink in crimson mist), Red Eclipse (a blood moon eclipsing, a slash across five foes).
+   Step (a short step through a wisp of crimson mist, a quick cut), Banquet of Blood (a noble's goblet overflowing as blood is drawn
+   from a seized foe).
 2. Hemomancer: Sanguine Lash (a blood whip tethering two foes), Blood Chalice (a gold chalice pouring healing blood), Crimson Mist
-   (a gliding blood mist leaving a boiling pool), Exsanguinate (veins of blood drawn out of many foes into one point).
-3. Nightstalker: Dusk Dive (a winged swoop from above), Abduct (claws snatching a foe into the air), Echolocation (rings of a bat
-   shriek), Midnight Hunt (a storm of bat silhouettes over a moonlit field).
+   (a gliding blood mist leaving a boiling pool), Blood Tithe (drops of blood rising from many points into a dark offering bowl).
+3. Strigoi: Dusk Dive (a winged swoop from above), Abduct (claws snatching a foe into the air), Echolocation (rings of a bat
+   shriek striking one point), Belfry Swoop (great bat wings carrying a captive up past a bell tower).
 4. Blood Gargoyle: Gargoyle Crash (a stone body slamming down, rubble burst), Stone Slumber (turning to granite, a stone shell),
-   Wing Buffet (stone wings beating a gust), Cathedral Perch (a gothic spire rising, the gargoyle atop).
-5. Dhampir: Silver Stake (a silver crossbow bolt pinning to stone), Grapple Vault (a grapple line and a backward vault), Consecrated
-   Trap (a silver snare circle with holy sparks), Judgement of Dusk (a rain of silver bolts at twilight).
-6. War Drummer: Thunder Beat (a taiko strike, a ring of sound), Marching Cadence (rhythm lines urging forward), Resonant Leap (a leap
-   landing in a sound wave), Storm of Ten Thousand Drums (a storm cloud of drum strikes and lightning).
-7. Banneret: Standard Charge (a lance charge with a streaming guidon), Rampart Drop (a stone rampart wall dropping), Phalanx Sweep (a
-   sweep of shield edges), Oriflamme of the Keep (a great flame-red banner over the field).
-8. Geomancer: Tectonic Shove (a stone pillar erupting), Earthglide (a burrow trail through earth), Lodestone Pull (a magnetic stone
-   dragging iron), Mountain's Embrace (a ring of crags and falling rocks).
-9. Bell Warden: Bronze Slam (a bell slammed down, cracked ground), Echoing Toll (bronze sound rings), Sanctuary Vault (a golden dome
-   of chimes), Midnight Knell (a huge dark bell tolling, a shock ring).
-10. Falconer: Falcon Stoop (a falcon diving in a streak), Gale Vault (a whirl of wind lifting), Talon Snare (talons and a cord snare),
-    Sky Hunt (a flock of hunting falcons spiralling).
-11. Astral Sphinx: Rift Pounce (a lion paw through a star rift), Riddle of Repulsion (a glowing glyph ring pushing out), Constellation
-    Swap (two stars linked, trading places), Celestial Convergence (constellations collapsing to one point).
-12. Mirage Dancer: Whirling Veils (a spin of silk and blades), Dune Swap (a sand mirage switching places), Sirocco Leap (a leap on a
-    hot desert wind), Dance of Seven Mirages (seven shimmering dancer silhouettes in a ring, no faces).
+   Granite Fist (a cracked stone fist striking), Cathedral Perch (a gargoyle dropping from a gothic spire, a stunning shock ring).
+5. Dhampir: Silver Stake (a silver crossbow bolt pinning to stone), Grapple Vault (a grapple line and a backward vault), Silver
+   Shot (a quick silver bolt with a bright glint), Silver Requiem (a fan of five silver stakes at twilight).
+6. War Drummer: Thunder Beat (a taiko strike, a ring of sound), Marching Cadence (rhythm lines urging forward), Drum Strike (a
+   drumstick crack with a spark), Ten Thousand Drums (a storm cloud of drum strikes and lightning).
+7. Banneret: Standard Charge (a lance charge with a streaming guidon), Phalanx Sweep (a sweep of shield edges round a lance), Banner
+   Jab (a banner-lance point thrusting), Oriflamme of the Keep (a great flame-red banner over a shining shield ring).
+8. Geomancer: Tectonic Shove (a stone pillar erupting), Lodestone Pull (a magnetic stone dragging foes in), Crag Staff (a stone-headed
+   staff striking, a flying shard), Mountain's Embrace (a wall of crags rising before a shield of stone).
+9. Bell Warden: Bronze Peal (a bronze bell ringing a silencing ring), Echoing Toll (bronze sound rings pushing out), Sanctuary Vault
+   (a golden dome of chimes), Midnight Knell (a huge dark bell tolling, everything round it frozen still).
+10. Falconer: Falcon Stoop (a falcon diving in a streak), Talon Snare (talons and a cord snare), Gale Vault (a whirl of wind
+    lifting), Sky Hunt (a flock of hunting falcons spiralling down).
+11. Astral Sphinx: Rift Pounce (a lion paw through a star rift), Riddle of Repulsion (a glowing glyph ring pushing out), Riddling
+    Glance (a starlit eye with a spiral of confusion), The Last Riddle (a vast glyph-sealed mouth, silence falling over many).
+12. Mirage Dancer: Whirling Veils (a spin on the spot of silk and blades), Dune Swap (a sand mirage switching places), Veil Flick (a
+    flick of a sand-heavy veil), Dance of Seven Mirages (seven shimmering dancer silhouettes in a ring, no faces).
 13. Plague Doctor: Censer Swing (a swinging censer, green smoke), Crow Step (a burst of black feathers), Quarantine Line (a line of
-    green miasma), Black Miasma (a towering black and green plague cloud).
-14. Bombardier: Blast Jump (a rocket blast launching upward), Concussion Mortar (a mortar shell and shock ring), Firebomb Line (a row
-    of fire bombs), Carpet Bombardment (a rain of shells over a field).
-15. Astrologer: Gravity Well (a collapsing star pulling inward), Retrograde Orbit (a planet looping backward on its orbit), Starlight
-    Bridge (a bridge of starlight), Supernova Alignment (planets aligning into a supernova).
-16. Inquisitor: Chains of Judgement (solar chains), Blazing Edict (a sealed scroll bursting into flame, no writing), Purging Scales
-    (golden balance scales with fire), Solar Tribunal (a ring of sun discs judging the field).
-17. Seraph: Halo Dive (a diving halo of light), Sanctuary Wings (golden wings folding round as a shield), Mercy's Ascent (a rising
-    column of feathers and light), Descent of the Host (a host of golden wings from the sky).
-18. Corsair Surgeon: Boarding Swing (a rope swing and a pistol flash), Sawbones Triage (a bone saw and bandages, green heal), Grappling
-    Extraction (a grapple hook pulling free), Crimson Dispensary (a burst of red tonic bottles).
-19. Harpooner: Barbed Harpoon (a barbed harpoon on a line), Floe Slide (sliding ice floes), Whaler's Reel (a coiled line reeling in),
-    Leviathan Line (a vast sea serpent's shadow on a taut line).
-20. Sea Reaver: Breaker Rush (a cresting wave charge), Anchor Slam (an anchor smashing down), Riptide Undertow (a swirling undertow),
-    Wrath of the Reef (coral and surf erupting round an anchor).
+    thorny brambles in green miasma), Black Miasma (a towering black and green plague cloud).
+14. Bombardier: Concussion Mortar (a mortar shell and shock ring), Blast Jump (a rocket blast launching upward), Firebomb Line (a row
+    of fire bombs), Shell Storm (a rain of shells over a field).
+15. Astrologer: Gravity Well (a collapsing star pulling inward), Retrograde Orbit (a planet looping backward on its orbit), Star
+    Dart (a small mote of starlight with a cold trail), Supernova Alignment (planets aligning into a supernova).
+16. Inquisitor: Chains of Judgement (solar chains), Blazing Edict (a burning sun-seal branded on a target, no writing), Purging
+    Scales (golden balance scales with fire), Solar Tribunal (a ring of sun discs judging the field).
+17. Seraph: Halo Dive (a diving halo of light), Sanctuary Wings (golden wings beating foes back), Radiant Thrust (a spear of light
+    thrusting, a glint of shield), Descent of the Host (a host of golden wings from the sky over a shining halo).
+18. Corsair Surgeon: Boarding Swing (a rope swing and a pistol flash), Sawbones Triage (a bone saw and bandages, green heal),
+    Grappling Extraction (a grapple hook pulling free), Rum Ration (a ship's rum cask and tin cups, healing spray).
+19. Harpooner: Barbed Harpoon (a barbed harpoon on a line), Whaler's Reel (a coiled line reeling in), Flensing Throw (a short
+    flensing harpoon in flight), Leviathan Line (a vast sea serpent's shadow on a taut line).
+20. Sea Reaver: Breaker Rush (a breaker bursting in a ring round a figure), Anchor Slam (an anchor smashing down), Gaff Hook (a hooked
+    gaff pulling), Wrath of the Reef (surf erupting round an anchor).
 ```
 
 ## Battle sheets: one prompt a hero (frames for the packer)
