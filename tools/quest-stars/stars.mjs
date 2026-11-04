@@ -4,7 +4,7 @@ import * as esbuild from 'esbuild';
 import { spawnSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
 
-const outdir = 'out/questStars';
+const outdir = `out/questStars-${process.pid}`;
 rmSync(outdir, { recursive: true, force: true });
 await esbuild.build({
   entryPoints: ['tools/quest-stars/stars.ts'],
@@ -17,4 +17,5 @@ await esbuild.build({
   loader: { '.png': 'empty' },
 });
 const run = spawnSync(process.execPath, [`${outdir}/questStars.cjs`, ...process.argv.slice(2)], { stdio: 'inherit' });
+rmSync(outdir, { recursive: true, force: true });
 process.exit(run.status ?? 1);

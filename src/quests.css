@@ -76,6 +76,17 @@
 .qlChip.on { color: var(--gold-hi); box-shadow: inset 0 0 0 2px var(--gold-hi); }
 .hmFront .hmQuest .hmQStars { color: var(--gold-lo); }
 
+/* QUESTS-3: a checklist, the rules asked, the days left */
+.qlSteps { margin: 2px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; font: 400 12px/1.25 var(--body); color: var(--s12, #d0c8b8); }
+.qlSteps li.ok { color: var(--gold-hi); }
+.qlBody .qlRules { color: var(--gold-lo); font-style: italic; }
+.qlBody .qlLimit { align-self: flex-start; padding: 0 8px; border-radius: 9px; color: #1b1405; background: #e0a23c; }
+.qlBody .qlLimit.last { background: #d8604c; color: #fff; }
+
+/* a failed quest, struck through */
+.qlBody b.qlStruck { text-decoration: line-through; color: var(--dim); }
+.qlRow.failed { border-color: var(--r3, #a0503c); }
+
 /* the Battle tab's tracked quest: a slim chip in the command bar's top row, at the right; the army's line moves to the left for it */
 .hmFront.withQuest .hmBanner { align-self: flex-start; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hmFront .hmQuest { position: absolute; right: 8px; top: 4px; max-width: calc(50% - 12px); height: 28px; min-height: 28px; margin: 0; padding: 0 10px; display: flex; align-items: center; gap: 8px; font: 400 12px/1 var(--body); color: var(--gold-hi); background: rgb(var(--s1-rgb) / 0.88); border: 2px solid var(--gold-lo); border-radius: 14px; white-space: nowrap; }

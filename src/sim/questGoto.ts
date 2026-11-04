@@ -9,7 +9,9 @@
 
 import { ARMIES, armyById, armyCleared, armyUnlocked, bossesOf, tierOpen, waveFoes, type Army } from './armies';
 import type { Meta } from './meta';
-import type { Goal } from './questData';
+import { heroName } from './heroNames';
+import type { Cond, Goal, QuestDef } from './questData';
+import { objectiveDone, objectivesOf, type QuestActive } from './quests';
 import { TIERS } from './tiers';
 
 export type Destination =
@@ -78,10 +80,51 @@ function fightDestination(m: Meta, goal: Extract<Goal, { kind: 'wavesWon' | 'bos
   if (goal.mode === 'tower' || goal.mode === 'stand') return { to: 'stand' };
   if (goal.mode === 'calamity') return { to: 'calamity' };
   const named = armyNamed(goal);
-  const army = named ?? frontArmy(m);
+  // (a goal open to any army, with a tier asked: the furthest army that has that tier open, so the hard fight is one the player can start)
+  const want0 = Math.max(0, Math.min(TIERS.length - 1, goal.tier ?? 0));
+  const tiered = !named && want0 > 0 ? [...ARMIES].reverse().find((a) => armyUnlocked(m, a.id) && tierOpen(m, a, want0)) : undefined;
+  const army = named ?? tiered ?? frontArmy(m);
   if (!armyUnlocked(m, army.id)) return { to: 'armies', army: army.id };
   // (a tier asked for: that one if it is open, else the Armies screen shows what opens it)
   const want = Math.max(0, Math.min(TIERS.length - 1, goal.tier ?? 0));
   if (!tierOpen(m, army, want)) return { to: 'armies', army: army.id };
   return { to: 'army', army: army.id, tier: want };
+}
+
+/** Where a quest is done (QUESTS-3): the place of its first unfinished objective (every objective has one, since each is a goal), and the rules to show there. */
+export interface QuestPlace {
+  /** Which objective the place is for (0 the quest's `goal`, 1 and up its `goals`). */
+  objective: number;
+  dest: Destination;
+  /** The rules the objective, and the quest as a whole, ask of the fight ("No ultimates in this fight", "Level 30 or lower"). */
+  rules: string[];
+}
+
+/** The rules a quest and one objective ask, in plain words (British spelling). */
+export function ruleLines(q: QuestDef, goal: Goal = q.goal): string[] {
+  const c = goal as Goal & Cond;
+  const out: string[] = [];
+  if (q.ordered) out.push('Objectives in order');
+  if (q.oneRun) out.push('All in one army run');
+  if (q.streak) out.push(`${q.streak} days running`);
+  if (q.within) out.push(`Within ${q.within} day${q.within === 1 ? '' : 's'} of taking it`);
+  if (c.noUlts) out.push('No ultimates in this fight');
+  if (c.noSpells) out.push("No king's spells");
+  if (c.noHires) out.push('No heroes hired');
+  if (c.noHeart) out.push('No heart spent');
+  if (c.flawless) out.push('No hero falls');
+  if (c.quick !== undefined) out.push(`Win within ${c.quick} seconds`);
+  if (c.levelCap !== undefined) out.push(`Heroes of level ${c.levelCap} or lower`);
+  if (c.benchBest) out.push('Your best hero sits out');
+  if (c.without?.length) out.push(`Without ${c.without.map(heroName).join(', ')}`);
+  if (c.exactly !== undefined) out.push(`Exactly ${c.exactly} heroes`);
+  if (c.most !== undefined) out.push(`At most ${c.most} hero${c.most === 1 ? '' : 'es'}`);
+  return out;
+}
+
+/** The place of a quest for this save: its first unfinished objective (the first, for a quest not begun), with the rules to show there. */
+export function questPlace(m: Meta, q: QuestDef, a?: QuestActive): QuestPlace {
+  const objs = objectivesOf(q);
+  const i = a ? Math.max(0, objs.findIndex((_, k) => !objectiveDone(a, q, k))) : 0;
+  return { objective: i, dest: destinationOf(m, objs[i]), rules: ruleLines(q, objs[i]) };
 }
