@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.341.0',
+    date: '2026-11-04',
+    title: 'Spell ranks and school marks',
+    notes: ['Earn a mark for each Mage Tower level and army cleared; spend marks to rank spells up to 3. Rank 3 adds a rider to every spell.'],
+  },
+  {
     version: '0.340.0',
     date: '2026-11-04',
     title: 'Quests rebuilt, Schools of the Crown',
