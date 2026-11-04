@@ -60,17 +60,18 @@ function pairFight(snap: Record<string, number>): { b: Battle; x: ReturnType<typ
 }
 const find = (b: Battle, id: number) => b.units.find((u) => u.id === id)!;
 
-test('Comrades give +3% attack within two tiles, Shieldmates more and quicker skills; nothing beyond two tiles', () => {
+test('Comrades guard (blows 3% lighter) within two tiles, no attack; Shieldmates attack and quicker skills; nothing beyond two tiles', () => {
   const { b, x, y } = pairFight({ 'knight|peasant': 2 });
   assert.equal(b.bonds?.length, 1);
   const base = atkOf({ ...x, bondAtk: 1 });
   y.u = x.u + 1;
   y.v = x.v;
   tickBonds(b);
-  assert.ok(Math.abs(atkOf(x) / base - 1.03) < 1e-9);
+  assert.equal(atkOf(x), base, 'no attack from Comrades');
+  assert.ok(Math.abs(x.bondGuard! - (1 - BOND.GUARD2)) < 1e-9);
   y.u = x.u + 3;
   tickBonds(b);
-  assert.equal(atkOf(x), base);
+  assert.equal(x.bondGuard, 1);
   const s = pairFight({ 'knight|peasant': 4 });
   s.y.u = s.x.u;
   s.y.v = s.x.v + 1;
@@ -153,5 +154,6 @@ test('a hero takes its best bond only: bonds do not stack across partners', () =
   a.v = k.v + 1;
   tickBonds(b);
   assert.ok(Math.abs(k.bondAtk! - (1 + BOND.ATK4)) < 1e-9, 'the best, not both multiplied');
-  assert.ok(Math.abs(a.bondAtk! - 1.03) < 1e-9);
+  assert.equal(a.bondAtk, 1, 'a Comrade pair adds no attack');
+  assert.ok(Math.abs(a.bondGuard! - (1 - BOND.GUARD2)) < 1e-9);
 });

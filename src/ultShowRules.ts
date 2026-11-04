@@ -17,7 +17,7 @@ import type { BattleEvent, Unit } from './sim/battle';
 import type { Element } from './render/fxRules';
 
 /** How a showcase is staged (the staging is shared; each hero's beats and look are its own). */
-export type ShowStyle = 'blinks' | 'sky' | 'pack' | 'line' | 'leap' | 'blows' | 'hooks';
+export type ShowStyle = 'blinks' | 'sky' | 'pack' | 'line' | 'leap' | 'blows' | 'hooks' | 'shots' | 'burst' | 'burrow' | 'bless' | 'change';
 
 export interface Showcase {
   style: ShowStyle;
@@ -31,6 +31,15 @@ export interface Showcase {
   run?: number;
   wind?: number;
   sheathe?: number;
+  /** shots: the still moment before the first (a draw at noon), and a storm cloud gathering over the caster first. */
+  draw?: number;
+  cloud?: boolean;
+  /** burst: what reaches each foe (vines, stone creeping up it, a smite of the element, a pull round to face the caster, a cut), and
+   *  whether the ground it changed rises (rock spires). */
+  hit?: 'snare' | 'stone' | 'smite' | 'taunt' | 'cut';
+  rise?: boolean;
+  /** pack: those called up rise out of the ground where they stand, rather than running in from the edge. */
+  emerge?: boolean;
 }
 
 /** The heroes whose ultimate has a showcase: the pilot (Ayame, the Wizard, the Beastmaster) and batch 1 (the blades that move). */
@@ -46,6 +55,44 @@ export const SHOWCASES: Record<string, Showcase> = {
   barbarian: { style: 'leap', el: 'blood', line: 'He leaps high over the field and comes down on the thickest crowd; the ground cracks and they are thrown back' },
   ninjaMonk: { style: 'blows', el: 'wind', line: 'A blur of fists on each foe in turn, blow after blow, the last throwing it away' },
   buccaneer: { style: 'hooks', el: 'dark', line: 'He throws out his hooks and reels the foes in one by one, cutting each as it lands at his feet' },
+  // (batch 2: from the sky and the guns)
+  archer: { style: 'sky', el: 'wind', line: 'She looses high into the sky; a ring marks each crowd and the volleys come down on them' },
+  dreadPirate: { style: 'sky', el: 'dark', line: 'The ghost fleet\'s guns mark each crowd in cold fire, and its broadsides come howling down' },
+  siegeBot: { style: 'sky', el: 'fire', line: 'A targeting ring locks on to the thickest crowd; the great shell whistles down, and a second after it' },
+  lightningMage: { style: 'shots', el: 'lightning', cloud: true, draw: 900, line: 'A storm cloud gathers over her, rolls out over the field, and its first bolt picks out the toughest foe' },
+  gunslinger: { style: 'shots', el: 'fire', draw: 1000, line: 'The field goes still at high noon; she draws, and six shots fan out one by one' },
+  rifleBot: { style: 'shots', el: 'lightning', draw: 500, line: 'It jets to the high ground, glows as it overclocks, and fires four shots at the weakest foe' },
+  dragoon: { style: 'shots', el: 'fire', draw: 700, line: 'She rears back and breathes fire down the longest line of foes; the ground stays alight behind it' },
+  ranger: { style: 'burst', el: 'forest', hit: 'snare', line: 'She flings the net of vines over the field; it snaps tight round every foe in sight, one after another' },
+  // (batch 3: the bursts round the caster)
+  knight: { style: 'burst', el: 'light', hit: 'taunt', line: 'He plants his shield and roars; every foe near him is dragged round to face him, and the shield\'s light closes over him' },
+  paladin: { style: 'burst', el: 'light', hit: 'smite', line: 'He kneels and a holy nova rings out; each foe it reaches is struck by light and turns to him' },
+  yamabushi: { style: 'burst', el: 'wind', hit: 'smite', line: 'A gale gathers in his hands and bursts out, throwing every foe near him up and away' },
+  gorgon: { style: 'burst', el: 'poison', hit: 'stone', line: 'Her eyes open; stone creeps up each foe in her sight, one after another' },
+  juggernaut: { style: 'burst', el: 'earth', hit: 'smite', rise: true, line: 'He stamps; the ground splits outward under every foe near him and rock spires rise from the rift' },
+  kraken: { style: 'burst', el: 'ice', hit: 'smite', line: 'A whirlpool opens round him and drags the foes in, one after another' },
+  mummy: { style: 'burst', el: 'earth', hit: 'smite', line: 'A sand-wind drags the foes in and curses each; the two strongest are pulled up on strings' },
+  warlock: { style: 'burst', el: 'dark', hit: 'smite', line: 'A circle of death rings out from him; a curse falls on each foe, and he drinks from them' },
+  tyrant: { style: 'burst', el: 'blood', hit: 'smite', line: 'He roars from his throne; each foe near him is struck and cowers, and his allies stand taller' },
+  shambler: { style: 'burrow', el: 'poison', line: 'He sinks into the grave-earth; the ground heaves as he tunnels towards the thickest crowd' },
+  reaper: { style: 'burst', el: 'dark', hit: 'cut', line: 'The scythe sweeps round, dragging the foes in, and cuts them all; the reaped rise as wraiths' },
+  // (batch 4: the callers and the changers)
+  druid: { style: 'pack', el: 'forest', emerge: true, rise: true, line: 'The thorn hedge grows up across the foes\' way, and two treants rise out of the earth at her side' },
+  illusionist: { style: 'pack', el: 'dark', emerge: true, line: 'Mirror copies of her step out of the air round her, and the foes turn on them' },
+  priestess: { style: 'bless', el: 'light', line: 'Light falls from her on each of her friends in turn; the fallen rise in it, and the Wall of Light goes up' },
+  werewolf: { style: 'change', el: 'blood', line: 'The moon fills; he writhes as both his forms take him at once, and his howl frightens the foes near him' },
+  demonSwordsman: { style: 'change', el: 'fire', line: 'Chains of hellfire drag the nearest foes to him; then the demon form takes him in a burst of flame' },
+  kitsune: { style: 'burst', el: 'fire', hit: 'smite', line: 'Fox fire spins out to the strongest foes, and each shrinks to a little fox' },
+  karasu: { style: 'sky', el: 'wind', line: 'He marks the thickest knot of foes, and the razor feathers whirl down into a cloud over it' },
+  timeWitch: { style: 'burst', el: 'light', hit: 'stone', line: 'Her clock strikes; the foes stop where they stand one after another, their colour drained, and her friends quicken' },
+  // (batch 5: the blessings)
+  wanderer: { style: 'bless', el: 'light', line: 'A dawn light runs from him to each ally in turn, healing, shielding and quickening each' },
+  satyr: { style: 'bless', el: 'forest', line: 'He plays his pipes; the notes dance out to each ally and they quicken to the tune' },
+  samuraiCommander: { style: 'bless', el: 'fire', line: 'He raises the war banner; its fire runs to each ally, and the swords among them charge' },
+  sage: { style: 'bless', el: 'lightning', line: 'Arcane threads run from him to every ally; each pool fills and a shield forms round each' },
+  cleric: { style: 'bless', el: 'light', line: 'The spirits come one by one and circle her, and their light reaches her friends near by' },
+  peasant: { style: 'bless', el: 'earth', line: 'The allies close ranks round him at his call, and he leads the charge at the nearest foe' },
+  wolfBard: { style: 'bless', el: 'wind', line: 'The opening chord throws the foes near him back; then the hymn carries to every ally' },
 };
 
 export const hasShowcase = (kind: string): boolean => kind in SHOWCASES;
@@ -106,6 +153,18 @@ export interface Cast {
   moved: Map<number, At>;
   /** The foes it hooked in (an arc to each). */
   hooks: number[];
+  /** Its shots in order, at whom (a shot, or a bolt's arc when it shot none), and the ground it set alight. */
+  shots: number[];
+  ground: At[];
+  /** The foes it touched with no blow (taunted round to face it: the page reads them), and its burrow's way underground. */
+  touched: number[];
+  burrow?: { from: At; path: At[] };
+  /** The allies it helped (healed, quickened, raised; or every ally standing when the events name none: an aura, a banner), the fallen it
+   *  raised, the tile its zone stands on, and whether it changed its own shape. */
+  helped: number[];
+  raised: number[];
+  zone?: At;
+  changed: boolean;
 }
 
 /** Read a cast from its tick's events (`events`), the caster (`me`, as it stands after the tick), the fighters that appeared on it, where a
@@ -117,6 +176,8 @@ export function readCast(
   born: readonly Pick<Unit, 'id' | 'owner' | 'u' | 'v'>[] = [],
   tileOf: (id: number) => At | undefined = () => undefined,
   originOf: (id: number) => At | undefined = () => undefined,
+  touched: readonly number[] = [],
+  allies: readonly number[] = [],
 ): Cast {
   const hops: Hop[] = [];
   const dashes: { from: At; to: At }[] = [];
@@ -126,13 +187,29 @@ export function readCast(
   const run = new Map<number, number>();
   const moved = new Map<number, At>();
   const arcs: number[] = [];
+  const shots: number[] = [];
+  const ground: At[] = [];
   let leap: Cast['leap'];
+  let burrow: Cast['burrow'];
+  let zone: At | undefined;
+  let changed = false;
+  const helped: number[] = [];
+  const raised: number[] = [];
+  const looks: number[] = [];
   for (const e of events) {
     if (e.kind === 'blink' && e.by === me.id) hops.push({ from: { ...e.from }, to: { ...e.to } });
     else if (e.kind === 'dash' && e.by === me.id) dashes.push({ from: { ...e.from }, to: { ...e.to } });
     else if (e.kind === 'launch' && e.to === me.id) leap = { from: { ...e.from }, land: { ...e.land } };
     else if (e.kind === 'launch' && !moved.has(e.to)) moved.set(e.to, { ...e.from });
     else if (e.kind === 'arc' && e.from === me.id) arcs.push(e.to);
+    else if (e.kind === 'shot' && e.by === me.id) shots.push(e.to);
+    else if ((e.kind === 'heal' || e.kind === 'haste') && e.to !== me.id && allies.includes(e.to) && !helped.includes(e.to)) helped.push(e.to);
+    else if (e.kind === 'revive' && e.by === me.id && !raised.includes(e.to)) raised.push(e.to);
+    else if (e.kind === 'aura' && e.by === me.id && e.at) zone = { ...e.at };
+    else if ((e.kind === 'look' || e.kind === 'frenzy') && e.by === me.id) changed = true;
+    else if (e.kind === 'look' && e.by !== me.id && !allies.includes(e.by)) looks.push(e.by);
+    else if (e.kind === 'burrow' && e.by === me.id && e.phase === 'down') burrow = { from: { u: e.u, v: e.v }, path: e.path.map((p) => ({ ...p })) };
+    else if (e.kind === 'terrain' && !ground.some((g) => g.u === e.u && g.v === e.v)) ground.push({ u: e.u, v: e.v });
     else if (e.kind === 'hit' && e.by === me.id && e.to !== me.id && e.src === 'skill') {
       const h = hops[hops.length - 1];
       if (h && h.struck === undefined) h.struck = e.to;
@@ -144,7 +221,9 @@ export function readCast(
     } else if (e.kind === 'area' && e.by === me.id && !aims.some((a) => a.u === e.u && a.v === e.v)) aims.push({ u: e.u, v: e.v });
   }
   const tiles = new Map<number, At>();
-  for (const id of struck) {
+  // (the foes it touched with no blow: taunted (the page reads them), changed in shape, or held by an arc)
+  const quiet = [...new Set([...touched, ...looks, ...arcs])].filter((id) => !struck.includes(id) && !allies.includes(id) && id !== me.id);
+  for (const id of [...struck, ...quiet]) {
     const at = tileOf(id);
     if (at) tiles.set(id, { u: at.u, v: at.v });
   }
@@ -156,7 +235,7 @@ export function readCast(
   }
   const hooks = arcs.filter((id) => moved.has(id) && struck.includes(id));
   const start = hops[0]?.from ?? dashes[0]?.from ?? leap?.from ?? { u: me.u, v: me.v };
-  return { caster: me.id, start, hops, dashes, leap, aims, born: born.filter((u) => u.owner === me.id).map((u) => ({ id: u.id, at: { u: u.u, v: u.v } })), struck, blows, run, tiles, moved, hooks };
+  return { caster: me.id, start, hops, dashes, leap, aims, born: born.filter((u) => u.owner === me.id).map((u) => ({ id: u.id, at: { u: u.u, v: u.v } })), struck, blows, run, tiles, moved, hooks, shots: shots.length ? shots : arcs.filter((id) => struck.includes(id)), ground, touched: quiet, burrow, helped: helped.length ? helped : allies.filter((id) => id !== me.id), raised, zone, changed };
 }
 
 /* ------------------------------------------------------------------ the plan: a track of keys for each fighter it stages */
@@ -198,7 +277,7 @@ export interface Pose {
 /** A one-off beat: an effect and its sound at a time (ms into the showcase). `where` a tile, `to` a second tile, `foe` a fighter. */
 export interface Beat {
   at: number;
-  kind: 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook';
+  kind: 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare' | 'stone' | 'smite' | 'taunt' | 'rise' | 'tunnel' | 'bless' | 'transform';
   where: At;
   to?: At;
   foe?: number;
@@ -207,6 +286,8 @@ export interface Beat {
 }
 
 export interface ShowPlan {
+  /** The hero kind whose showcase it is. */
+  kind: string;
   style: ShowStyle;
   el: Element;
   /** How long it plays (ms, real time: the x1 rule). */
@@ -264,6 +345,24 @@ export const SHOW = {
   HOOK_CUT: 120,
   HOOK_GAP: 700,
   HOOK_TAIL: 450,
+  /** shots: a jet to the high ground first, each shot's gap, and the tail; the ground catching alight after the last. */
+  JET: 700,
+  SHOT: 260,
+  SHOTS_TAIL: 600,
+  BURN: 90,
+  /** burst: the caster's raise, the ring going out, each foe after the last, and the tail. */
+  BURST_RAISE: 650,
+  BURST_EACH: 170,
+  BURST_TAIL: 700,
+  /** burrow: the sinking, each tile of the way underground, and the tail. */
+  SINK: 700,
+  TUNNEL: 420,
+  TUNNEL_TAIL: 500,
+  /** bless: from one ally to the next, and the tail; change: the writhing, and the tail. */
+  BLESS: 260,
+  BLESS_TAIL: 650,
+  WRITHE: 1100,
+  CHANGE_TAIL: 900,
   /** A foe's flinch. */
   FLINCH: 240,
   /** The shortest a showcase plays (its last pose held), so with the opening and the fade it is never under 4 s; and the most a chain of hops
@@ -278,6 +377,7 @@ export function planShow(kind: string, cast: Cast): ShowPlan | null {
   const sc = SHOWCASES[kind];
   if (!sc) return null;
   const b = new Builder(sc, cast);
+  b.plan.kind = kind;
   const ok =
     sc.style === 'blinks' ? b.blinks()
     : sc.style === 'sky' ? b.sky()
@@ -285,6 +385,11 @@ export function planShow(kind: string, cast: Cast): ShowPlan | null {
     : sc.style === 'line' ? b.line()
     : sc.style === 'leap' ? b.leapIn()
     : sc.style === 'blows' ? b.flurries()
+    : sc.style === 'shots' ? b.shooting()
+    : sc.style === 'burst' ? b.burst()
+    : sc.style === 'burrow' ? b.tunnel()
+    : sc.style === 'bless' ? b.bless()
+    : sc.style === 'change' ? b.change()
     : b.hookIn();
   // (the cast had nothing of its style's shape (a charge with a foe already beside it): its blows on each foe it struck, in turn; every style
   // checks its shape before it adds a key, so the plan is still empty here)
@@ -323,7 +428,7 @@ const same = (a: At, b: At): boolean => a.u === b.u && a.v === b.v;
 class Builder {
   plan: ShowPlan;
   constructor(private sc: Showcase, private c: Cast) {
-    this.plan = { style: sc.style, el: sc.el, ms: 0, beats: [], tracks: new Map(), cast: c, zoom: 1.6, followMs: Infinity };
+    this.plan = { kind: '', style: sc.style, el: sc.el, ms: 0, beats: [], tracks: new Map(), cast: c, zoom: 1.6, followMs: Infinity };
   }
   private key(id: number, k: Key): void {
     const t = this.plan.tracks.get(id) ?? [];
@@ -373,6 +478,8 @@ class Builder {
 
   sky(): boolean {
     const c = this.c;
+    // (a zone set on the field stands for an aim: the cloud of feathers)
+    if (!c.aims.length && c.zone) c.aims.push(c.zone);
     if (!c.aims.length) return false;
     this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 0.6, look: c.aims[0] });
     this.key(c.caster, { at: SHOW.RAISE, tile: c.start, row: 'attack2', p0: 0.6, look: c.aims[0] });
@@ -395,12 +502,14 @@ class Builder {
     c.born.forEach((w, i) => {
       const s = SHOW.CALL + i * SHOW.BEAST;
       const side = runSide(c.start, w.at);
-      const off = { dx: side * SHOW.RUN_FROM, dy: -SHOW.RUN_FROM * 0.35 };
+      const off = this.sc.emerge ? { dx: 0, dy: 18 } : { dx: side * SHOW.RUN_FROM, dy: -SHOW.RUN_FROM * 0.35 };
       this.key(w.id, { at: 0, tile: w.at, alpha: 0 });
-      this.key(w.id, { at: s, tile: w.at, off, alpha: 0, row: 'walk', cycle: 3, glide: true, fade: true });
+      this.key(w.id, { at: s, tile: w.at, off, alpha: 0, row: this.sc.emerge ? 'idle' : 'walk', cycle: this.sc.emerge ? 0 : 3, glide: true, fade: true });
       this.key(w.id, { at: s + SHOW.RUN, tile: w.at, look: c.start });
-      this.beat({ at: s + SHOW.RUN, kind: 'land', where: w.at, foe: w.id });
+      if (this.sc.emerge) this.beat({ at: s, kind: 'appear', where: w.at });
+      else this.beat({ at: s + SHOW.RUN, kind: 'land', where: w.at, foe: w.id });
     });
+    if (this.sc.rise) c.ground.forEach((g, i) => this.beat({ at: 300 + i * SHOW.BURN, kind: 'rise', where: g }));
     const last = SHOW.CALL + (c.born.length - 1) * SHOW.BEAST + SHOW.RUN;
     this.beat({ at: last + 80, kind: 'finish', where: c.start });
     this.plan.ms = last + SHOW.PACK_TAIL;
@@ -513,6 +622,159 @@ class Builder {
     this.key(c.caster, { at: s, tile: c.start });
     this.plan.ms = s + SHOW.HOOK_TAIL;
     this.plan.zoom = 1.5;
+    return true;
+  }
+
+  shooting(): boolean {
+    const c = this.c;
+    if (!c.shots.length) return false;
+    let s = 0;
+    const first = c.tiles.get(c.shots[0]);
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 0.4, look: first });
+    if (c.leap) {
+      // (it jets to the high ground first)
+      this.key(c.caster, { at: 200, tile: c.leap.from, glide: true, arc: 40, row: 'walk', cycle: 2, look: c.leap.land });
+      this.key(c.caster, { at: 200 + SHOW.JET, tile: c.leap.land, look: first });
+      this.beat({ at: 200, kind: 'dash', where: c.leap.from, to: c.leap.land });
+      s = 200 + SHOW.JET;
+    }
+    if (this.sc.cloud) this.beat({ at: 120, kind: 'cloud', where: c.start });
+    else this.beat({ at: 80, kind: 'gather', where: c.leap?.land ?? c.start });
+    s += this.sc.draw ?? 500;
+    const from = c.leap?.land ?? c.start;
+    const hit = new Set<number>();
+    c.shots.forEach((id, i) => {
+      const at = c.moved.get(id) ?? c.tiles.get(id);
+      if (!at) return;
+      const t = s + i * SHOW.SHOT;
+      this.key(c.caster, { at: t, tile: from, row: 'attack', p0: 0, p1: 1, look: at });
+      this.beat({ at: t, kind: 'shot', where: from, foe: id });
+      if (!hit.has(id)) {
+        hit.add(id);
+        this.foe(id, t + 120, from);
+      }
+    });
+    const end = s + c.shots.length * SHOW.SHOT;
+    // (the ground it set alight catches, tile by tile from the caster out)
+    const far = (a: At) => Math.abs(a.u - from.u) + Math.abs(a.v - from.v);
+    [...c.ground].sort((a, b) => far(a) - far(b)).forEach((g, i) => this.beat({ at: s + i * SHOW.BURN, kind: 'burn', where: g }));
+    this.key(c.caster, { at: end + 160, tile: from });
+    this.plan.ms = end + SHOW.SHOTS_TAIL;
+    this.plan.zoom = 1.35;
+    return true;
+  }
+
+  burst(): boolean {
+    const c = this.c;
+    const all = [...c.struck, ...c.touched];
+    if (!all.length) return false;
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1, look: c.tiles.get(all[0]) });
+    this.key(c.caster, { at: SHOW.BURST_RAISE, tile: c.start, row: 'attack2', p0: 1 });
+    this.beat({ at: 80, kind: 'gather', where: c.start });
+    this.beat({ at: SHOW.BURST_RAISE - 120, kind: 'call', where: c.start });
+    // (each foe in turn, the nearest first, as the ring reaches it)
+    const near = (id: number) => {
+      const t = c.tiles.get(id);
+      return t ? Math.abs(t.u - c.start.u) + Math.abs(t.v - c.start.v) : 99;
+    };
+    const order = all.sort((a, b) => near(a) - near(b) || a - b);
+    const hit = this.sc.hit ?? 'smite';
+    order.forEach((id, i) => {
+      const t = SHOW.BURST_RAISE + i * SHOW.BURST_EACH;
+      this.beat({ at: t, kind: hit, where: c.start, foe: id });
+      this.foe(id, t, c.start, SHOW.THROW);
+    });
+    // (the ground it changed rises, from the caster out)
+    if (this.sc.rise) {
+      const far = (a: At) => Math.abs(a.u - c.start.u) + Math.abs(a.v - c.start.v);
+      [...c.ground].sort((a, b) => far(a) - far(b)).forEach((g, i) => this.beat({ at: SHOW.BURST_RAISE + 120 + i * SHOW.BURN, kind: 'rise', where: g }));
+    }
+    const end = SHOW.BURST_RAISE + order.length * SHOW.BURST_EACH;
+    this.key(c.caster, { at: end, tile: c.start });
+    this.beat({ at: end, kind: 'finish', where: c.start });
+    this.plan.ms = end + SHOW.BURST_TAIL;
+    this.plan.zoom = 1.25;
+    return true;
+  }
+
+  tunnel(): boolean {
+    const c = this.c;
+    const w = c.burrow;
+    if (!w) return false;
+    // (he sinks into the ground where he stands; the earth heaves along his way under it; the sim's burst out plays once the fight runs)
+    this.key(c.caster, { at: 0, tile: w.from, row: 'hurt', p0: 0, p1: 1 });
+    this.key(c.caster, { at: 300, tile: w.from, row: 'hurt', p0: 1, glide: true, fade: true });
+    this.key(c.caster, { at: 300 + SHOW.SINK, tile: w.from, off: { dx: 0, dy: 14 }, alpha: 0 });
+    this.beat({ at: 80, kind: 'gather', where: w.from });
+    this.beat({ at: 300, kind: 'tunnel', where: w.from });
+    w.path.forEach((p, i) => this.beat({ at: 300 + SHOW.SINK + i * SHOW.TUNNEL, kind: 'tunnel', where: p }));
+    this.plan.ms = 300 + SHOW.SINK + w.path.length * SHOW.TUNNEL + SHOW.TUNNEL_TAIL;
+    this.plan.zoom = 1.3;
+    this.plan.followMs = 300 + SHOW.SINK;
+    return true;
+  }
+
+  bless(): boolean {
+    const c = this.c;
+    if (!c.helped.length && !c.raised.length && !c.struck.length) return false;
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1 });
+    this.key(c.caster, { at: SHOW.BURST_RAISE, tile: c.start, row: 'attack2', p0: 1 });
+    this.beat({ at: 80, kind: 'gather', where: c.start });
+    this.beat({ at: SHOW.BURST_RAISE - 120, kind: 'call', where: c.start });
+    // (the opening chord throws the foes near him back first)
+    for (const [id] of c.moved) if (!c.dashes.length) this.foe(id, SHOW.BURST_RAISE - 80, c.start, SHOW.THROW);
+    let t = SHOW.BURST_RAISE;
+    for (const id of [...c.raised, ...c.helped.filter((x) => !c.raised.includes(x))]) {
+      this.beat({ at: t, kind: 'bless', where: c.start, foe: id });
+      t += SHOW.BLESS;
+    }
+    // (and he leads the charge)
+    const d = c.dashes[0];
+    if (d) {
+      t += 150;
+      this.key(c.caster, { at: t, tile: d.from, row: 'walk', cycle: 3, glide: true, look: d.to });
+      this.key(c.caster, { at: t + 420, tile: d.to, row: 'attack', p0: 0.4, p1: 1, look: d.to });
+      this.beat({ at: t, kind: 'dash', where: d.from, to: d.to });
+      for (const id of c.struck) {
+        this.beat({ at: t + 420, kind: 'cut', where: d.to, foe: id });
+        this.foe(id, t + 420, d.to, SHOW.THROW);
+      }
+      t += 420;
+    }
+    const at = d?.to ?? c.start;
+    this.key(c.caster, { at: t + 200, tile: at });
+    this.beat({ at: t, kind: 'finish', where: at });
+    this.plan.ms = t + SHOW.BLESS_TAIL;
+    this.plan.zoom = 1.25;
+    return true;
+  }
+
+  change(): boolean {
+    const c = this.c;
+    if (!c.changed && !c.moved.size) return false;
+    let t = 300;
+    this.key(c.caster, { at: 0, tile: c.start });
+    // (chains of hellfire drag the nearest foes in first)
+    for (const [id, was] of c.moved) {
+      const now = c.tiles.get(id);
+      if (!now) continue;
+      this.beat({ at: t, kind: 'hook', where: c.start, to: was, foe: id });
+      this.key(id, { at: 0, tile: was, look: c.start });
+      this.key(id, { at: t + SHOW.HOOK_FLY, tile: was, row: 'hurt', p0: 0, p1: 1, glide: true, arc: 12, look: c.start });
+      this.key(id, { at: t + SHOW.HOOK_FLY + SHOW.HOOK_PULL, tile: now, row: 'hurt', p0: 1, look: c.start });
+      t += 380;
+    }
+    // (the change takes him: he writhes as power gathers, then bursts into his new shape and howls)
+    this.key(c.caster, { at: t, tile: c.start, row: 'hurt', cycle: 4 });
+    this.beat({ at: t, kind: 'gather', where: c.start });
+    t += SHOW.WRITHE;
+    this.key(c.caster, { at: t, tile: c.start, row: 'attack2', p0: 0, p1: 1 });
+    this.beat({ at: t, kind: 'transform', where: c.start });
+    this.beat({ at: t + 150, kind: 'call', where: c.start });
+    for (const id of [...c.struck, ...c.touched]) if (!c.moved.has(id)) this.foe(id, t + 250, c.start);
+    this.key(c.caster, { at: t + 600, tile: c.start });
+    this.plan.ms = t + SHOW.CHANGE_TAIL;
+    this.plan.zoom = 1.6;
     return true;
   }
 }

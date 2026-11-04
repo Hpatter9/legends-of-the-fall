@@ -1,7 +1,7 @@
 // Hero bonds and rivalries (DEPTH-BUILD, docs/notes/depth-design.md section 4). Two heroes both placed in a won wave earn a bond point.
 // At 10, 40, 120, 300 and 600 points the pair reaches bond levels 1 to 5; any pair can reach level 2 ("Comrades"), levels 3 to 5 are for
 // kindred pairs, written from the heroes' stories and the duo combos. A bond gives a small reward while both stand within two tiles (the
-// owner's call, Q4.1: small power to level 4, none past it). Rival pairs charge their skills 10% slower within two tiles of each other,
+// owner's call, Q4.1: small power to level 4, none past it; only for the two of the pair, and Comrades guards rather than strikes). Rival pairs charge their skills 10% slower within two tiles of each other,
 // and a rival who sees the other fall fights 10% harder for the rest of the wave; rivals who win ten waves together settle into a kindred
 // pair at bond level 1 (Q4.3). Bonds count in the armies only (not the daily, the spire or the Calamity). A run takes a snapshot of the
 // levels when it starts (`Run.bonds`), so its fights replay. Deterministic: no stream is drawn from. Pure rules: no Pixi, no DOM.
@@ -43,11 +43,13 @@ export const SETTLE_WINS = 10;
 /** The numbers (one place to tune them). */
 export const BOND = {
   RANGE: 2,
-  /** Attack while within range: level 2, and level 4 in all. */
-  ATK2: 0.03,
-  ATK4: 0.045,
+  /** Level 2 (Comrades, any pair): a blow on one while the other is within range lands this much lighter. Not attack: the director's
+   *  call, so a reward every pair reaches does not lift the whole party's attack (it halved the Infernal Host's tries). */
+  GUARD2: 0.03,
+  /** Level 4 (Shieldmates, kindred only): attack while within range, for the two of them. */
+  ATK4: 0.03,
   /** Level 4: the pair's skills charge this much faster while together. */
-  CHARGE4: 0.03,
+  CHARGE4: 0.02,
   /** Level 3: once a wave, when one would fall, the other's guard takes this share of that blow. Off (0): measured, the cover made the
    *  late armies several tries easier (the Infernal Host 11.8 to 6.6 at bond level 4), so it went first, as the design says; Sworn is a
    *  scene's level now (docs/notes/depth-build.md). */
@@ -158,8 +160,8 @@ export function tickBonds(b: Battle): void {
   const pairs = b.bonds;
   if (!pairs) return;
   const byId = new Map(b.units.map((u) => [u.id, u]));
-  const best = new Map<number, { atk: number; cd: number; rival: boolean }>();
-  for (const p of pairs) for (const id of [p.a, p.b]) best.set(id, { atk: 1, cd: 1, rival: false });
+  const best = new Map<number, { atk: number; cd: number; guard: number; rival: boolean }>();
+  for (const p of pairs) for (const id of [p.a, p.b]) best.set(id, { atk: 1, cd: 1, guard: 1, rival: false });
   for (const p of pairs) {
     const x = byId.get(p.a);
     const y = byId.get(p.b);
@@ -168,8 +170,11 @@ export function tickBonds(b: Battle): void {
       const e = best.get(u.id)!;
       if (p.lv < 0) e.rival = true;
       else {
-        if (p.lv >= 2) e.atk = Math.max(e.atk, 1 + (p.lv >= 4 ? BOND.ATK4 : BOND.ATK2));
-        if (p.lv >= 4) e.cd = Math.min(e.cd, 1 - BOND.CHARGE4);
+        if (p.lv >= 2) e.guard = Math.min(e.guard, 1 - BOND.GUARD2);
+        if (p.lv >= 4) {
+          e.atk = Math.max(e.atk, 1 + BOND.ATK4);
+          e.cd = Math.min(e.cd, 1 - BOND.CHARGE4);
+        }
       }
     }
   }
@@ -177,6 +182,7 @@ export function tickBonds(b: Battle): void {
     const u = byId.get(id);
     if (!u) continue;
     u.bondAtk = e.atk;
+    u.bondGuard = e.guard;
     u.bondCd = e.cd * (e.rival ? 1 + BOND.RIVAL_SLOW : 1);
   }
 }
@@ -235,7 +241,7 @@ export function pairWords(lv: number): string {
   if (lv < 0) return 'rivals: skills charge 10% slower within two tiles';
   return [
     BOND_NAMES[lv],
-    lv >= 4 ? `+${BOND.ATK4 * 100}% attack and skills ${BOND.CHARGE4 * 100}% quicker within two tiles` : lv >= 2 ? `+${BOND.ATK2 * 100}% attack within two tiles` : 'a thread between them',
+    lv >= 4 ? `blows ${BOND.GUARD2 * 100}% lighter, +${BOND.ATK4 * 100}% attack and skills ${BOND.CHARGE4 * 100}% quicker within two tiles` : lv >= 2 ? `blows ${BOND.GUARD2 * 100}% lighter within two tiles of each other` : 'a thread between them',
     lv >= 3 && BOND.COVER > 0 ? 'covers the other once a wave' : '',
   ].filter(Boolean).join(': ').replace(': covers', ', covers');
 }
