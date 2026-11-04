@@ -22,13 +22,14 @@ test('a better piece scores higher: rarity, item level, calling and ability coun
   assert.ok(itemScore(sword(3, 5), 'knight') - itemScore(sword(2, 5), 'knight') > 10);
 });
 
-test('equip best fills the three slots from the bag with the strongest pieces', () => {
+test('equip best fills the slots it has pieces for from the bag with the strongest pieces', () => {
   const m = startedMeta(1);
   give(m, { base: 'ironSword', rarity: 1, level: 1 }, { base: 'runedBlade', rarity: 4, level: 8 }, { base: 'leatherJerkin', rarity: 2, level: 2 }, { base: 'thornplate', rarity: 4, level: 7 }, { base: 'luckyCharm', rarity: 1, level: 1 }, { base: 'phoenixFeather', rarity: 4, level: 6 });
   const n = equipBest(m, 'knight');
   assert.equal(n, 3);
-  const worn = EQUIP_SLOTS.map((s) => wornIn(m, 'knight', s)!);
+  const worn = (['main', 'torso', 'acc'] as const).map((s) => wornIn(m, 'knight', s)!);
   assert.ok(worn.every(Boolean));
+  assert.equal(EQUIP_SLOTS.filter((s) => wornIn(m, 'knight', s)).length, 3, 'the slots it has no piece for stay empty');
   assert.equal(worn[0].base, 'runedBlade');
   assert.equal(worn[1].base, 'thornplate');
   // (a second go changes nothing)
@@ -42,19 +43,19 @@ test('bag only never strips another hero; taking from others does, and never dou
   assert.ok(equipItem(m, 'samurai', great.id));
   // (the knight, from the bag only, gets the poor sword and leaves the samurai's alone)
   assert.equal(equipBest(m, 'knight', false), 1);
-  assert.equal(wornIn(m, 'knight', 'weapon')!.id, poor.id);
+  assert.equal(wornIn(m, 'knight', 'main')!.id, poor.id);
   assert.equal(wearerOf(m, great.id), 'samurai');
   assert.deepEqual(bestFor(m, 'knight', false).slots, {});
   // taking from others: the knight would now take the great blade, the samurai is left bare
-  assert.equal(bestFor(m, 'knight', true).slots.weapon, great.id);
+  assert.equal(bestFor(m, 'knight', true).slots.main, great.id);
   assert.equal(equipBest(m, 'knight', true), 1);
   assert.equal(wearerOf(m, great.id), 'knight');
-  assert.equal(wornIn(m, 'samurai', 'weapon'), undefined);
+  assert.equal(wornIn(m, 'samurai', 'main'), undefined);
   everyoneOnce(m);
   // (a locked item stays)
   assert.equal(equipBest(m, 'samurai', true, new Set([great.id])), 1);
   assert.equal(wearerOf(m, great.id), 'knight');
-  assert.equal(wornIn(m, 'samurai', 'weapon')!.id, poor.id);
+  assert.equal(wornIn(m, 'samurai', 'main')!.id, poor.id);
   everyoneOnce(m);
 });
 
@@ -68,13 +69,13 @@ test('equip all serves the strongest heroes first and never puts an item on two 
   assert.ok(n >= 4);
   everyoneOnce(m);
   // (the strongest hero got the best melee weapon)
-  assert.equal(wornIn(m, 'samurai', 'weapon')!.base, 'runedBlade');
+  assert.equal(wornIn(m, 'samurai', 'main')!.base, 'runedBlade');
   // (a second go changes nothing; and with taking allowed an earlier hero keeps its piece)
   assert.equal(equipAll(m), 0);
   const before = JSON.stringify(m.equipped);
   equipAll(m, true);
   everyoneOnce(m);
-  assert.equal(wornIn(m, 'samurai', 'weapon')!.base, 'runedBlade');
+  assert.equal(wornIn(m, 'samurai', 'main')!.base, 'runedBlade');
   void before;
   // (a locked hero is not equipped)
   const fresh = startedMeta(2);

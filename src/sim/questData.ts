@@ -17,6 +17,7 @@ import { REPEAT_QUESTS } from './questData/repeat';
 import { BATTLE_QUESTS } from './questData/battles';
 import { TALE_QUESTS } from './questData/tales';
 import { LOST_QUESTS } from './questData/lost';
+import { RETUNE } from './questRetune';
 
 /** Who offers a quest and takes it back. A patron is one of the player's own heroes (the quest's `hero`). */
 export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith' | 'sexton' | 'pawnbroker' | 'lantern' | 'herald' | 'clock' | 'falconer' | 'archivist' | 'lost';
@@ -163,6 +164,20 @@ export interface Cond {
   noSpells?: boolean;
   /** One of these bosses felled in it. */
   boss?: readonly string[];
+  /** QUESTS-3: no ultimate fired in the fight. */
+  noUlts?: boolean;
+  /** QUESTS-3: no hero hired in the run so far (the run's gold not spent on summoning). */
+  noHires?: boolean;
+  /** QUESTS-3: no heart burnt in the run so far (no wave tried again). With `oneRun`, the whole run. */
+  noHeart?: boolean;
+  /** QUESTS-3: every hero fielded is at this level or lower. */
+  levelCap?: number;
+  /** QUESTS-3: the save's highest-level hero does not fight. */
+  benchBest?: boolean;
+  /** QUESTS-3: none of these heroes fielded. */
+  without?: readonly string[];
+  /** QUESTS-3: exactly this many heroes fielded (beside `most`, at most). */
+  exactly?: number;
 }
 
 /** The heroes' tallies a goal can add up across fights (`fightStats.ts`). */
@@ -255,10 +270,60 @@ export interface QuestDef {
   goal: Goal;
   reward: Reward;
   mood?: Mood;
+  /** QUESTS-3: more objectives beside `goal`: every one must be done, each with its own bar (the log shows a checklist). */
+  goals?: readonly Goal[];
+  /** QUESTS-3: a few words for each objective (`goal`, then `goals`), for the log's checklist. */
+  steps?: readonly string[];
+  /** QUESTS-3: the objectives (`goal`, then `goals`) must be done one after another. */
+  ordered?: boolean;
+  /** QUESTS-3: every count must come in one army run; a run ending without the quest done starts it again from nothing. */
+  oneRun?: boolean;
+  /** QUESTS-3: done within this many days of taking it, else it fails (it leaves the log and is back on the board after its cooldown). */
+  within?: number;
+  /** QUESTS-3: a count on this many days running (the goal's own count, once a day); its progress is the days in a row. */
+  streak?: number;
+  /** QUESTS-3 (Q4): a quest that was retuned harder keeps what it asked before, for quests taken before the retune (`defFor`). */
+  was?: Was;
+  /** QUESTS-3: the difficulty (1 to 5 stars) and the length tag; unset, `questStars.ts` reads its table. */
+  stars?: number;
+  length?: 'short' | 'long' | 'chain' | 'campaign';
+}
+
+/** What a retuned quest asked before (a quest already taken keeps it until it is handed in or dropped). */
+export interface Was {
+  goal: Goal;
+  text: string;
+}
+
+/** A retune of an existing quest (QUESTS-3, Q4; `questRetune/`): its new goal, riders, words and stars. Its story, giver, needs and ids stay. */
+export interface Retune {
+  stars: number;
+  length: 'short' | 'long' | 'chain' | 'campaign';
+  goal: Goal;
+  goals?: readonly Goal[];
+  steps?: readonly string[];
+  ordered?: boolean;
+  oneRun?: boolean;
+  within?: number;
+  streak?: number;
+  /** The goal in plain words, as `QuestDef.text`. */
+  text: string;
+  /** New lines where the old ones named the old count (a quest's own words are kept otherwise). */
+  offer?: readonly string[];
+  going?: string;
+  done?: readonly string[];
+}
+
+/** A quest with its retune laid over it (the original goal kept as `was`). */
+function retuned(q: QuestDef): QuestDef {
+  const r = RETUNE[q.id];
+  if (!r) return q;
+  const { stars, length, ...rest } = r;
+  return { ...q, ...rest, stars, length, was: { goal: q.goal, text: q.text } };
 }
 
 /** Every quest: each giver's uniques, then the repeatables. */
-export const QUESTS: readonly QuestDef[] = [
+const BASE_QUESTS: readonly QuestDef[] = [
   ...GWEN_QUESTS,
   ...NOTICE_QUESTS,
   ...ROAD_QUESTS,
@@ -276,5 +341,17 @@ export const QUESTS: readonly QuestDef[] = [
   ...LOST_QUESTS,
 ];
 
+export const QUESTS: readonly QuestDef[] = BASE_QUESTS.map(retuned);
+
 const BY_ID = new Map(QUESTS.map((q) => [q.id, q]));
 export const questById = (id: string): QuestDef | undefined => BY_ID.get(id);
+
+/** For the tests and the tools: run `fn` with extra quests known to `questById` (and so to the log's rules), then forget them. */
+export function withQuests<T>(extra: readonly QuestDef[], fn: () => T): T {
+  for (const q of extra) BY_ID.set(q.id, q);
+  try {
+    return fn();
+  } finally {
+    for (const q of extra) if (!QUESTS.includes(q)) BY_ID.delete(q.id);
+  }
+}

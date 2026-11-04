@@ -47,6 +47,7 @@ import { CampScene } from './camp';
 import { readyKinds } from './sim/rankUp';
 import type { ComebackGo } from './sim/comeback';
 import { announceArmy } from './armyShown';
+import { starsOf } from './sim/questStars';
 import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
 import { questById } from './sim/questData';
 import { drawQuestLog, type LogTab } from './questLog';
@@ -727,7 +728,7 @@ export class Home {
       const p = progressOf(tracked);
       const chip = el('button', `hmQuest${isDone(tracked) ? ' done' : ''}`);
       chip.id = 'hmQuest';
-      chip.append(el('b', '', tq.title), el('span', '', isDone(tracked) ? 'Done: hand it in' : `${p.now}/${p.need}`));
+      chip.append(el('b', '', tq.title), el('span', 'hmQStars', `★${starsOf(tq)}`), el('span', '', isDone(tracked) ? 'Done: hand it in' : `${p.now}/${p.need}`));
       chip.setAttribute('aria-label', `Quest: ${tq.title}, ${isDone(tracked) ? 'done, hand it in at the tavern' : `${p.now} of ${p.need}`}. Open the quest log`);
       chip.addEventListener('click', () => this.openQuests('active'));
       fr.classList.add('withQuest');

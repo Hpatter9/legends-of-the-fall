@@ -180,8 +180,9 @@ test('settleRun counts an army wave for a quest taken, and the quest waits for i
   const crowns = m.crowns;
   const stones = m.stones ?? 0;
   assert.ok(handIn(m, 'cartersWheels'));
+  // (QUESTS-3: a one-star quest pays crowns and no stones; the authored crowns stay when they are more than its share of the table)
   assert.equal(m.crowns, crowns + 120);
-  assert.equal(m.stones, stones + 2);
+  assert.equal(m.stones, stones);
   assert.deepEqual(m.quests.done, ['cartersWheels']);
   assert.equal(m.quests.active.length, 0);
   assert.equal(handIn(m, 'cartersWheels'), false, 'paid once');

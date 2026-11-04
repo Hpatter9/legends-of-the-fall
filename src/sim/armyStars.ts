@@ -255,8 +255,10 @@ export function peekChest(m: Meta, index: number): Loot | null {
  * (`rollChest`) are untouched, so every chest still holds the crowns and the gear it did; the hero shards they once named are stones now, which are
  * not tied to a hero: a stone is one shard of a hero drawn when it is used (`pullOnce`).
  */
-export function chestStones(c: Pick<StashChest, 'at' | 'daily' | 'bonus'>): number {
-  return c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) : CHEST_STONES[c.at] ?? 1;
+export function chestStones(c: Pick<StashChest, 'at' | 'daily' | 'bonus' | 'dry' | 'half'>): number {
+  if (c.dry) return 0;
+  const n = c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) : CHEST_STONES[c.at] ?? 1;
+  return c.half ? Math.ceil(n / 2) : n;
 }
 
 /** The reveal lines of a chest's stones (a plain line and, when there is one, the prize line), the gear after. Shared with the shop's chests. */
@@ -388,7 +390,7 @@ export function readStash(raw: unknown, rawArmies: unknown, seed: number): Stash
     for (const c of raw as Partial<StashChest>[]) {
       // (a daily chest names its date and has no army)
       if (c && c.army === 'daily' && /^\d{8}$/.test(String(c.daily)) && typeof c.seed === 'number') add({ army: 'daily', at: 3, tier: 0, seed: c.seed >>> 0, daily: c.daily as number, bonus: Math.max(0, Math.min(dailyStarsMax(c.daily as number), (c.bonus ?? 0) | 0)) });
-      else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}) });
+      else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}), ...(c.dry === true ? { dry: true } : {}), ...(c.half === true ? { half: true } : {}) });
     }
   // (the earlier format: a record with its given chests and the opened ones)
   if (rawArmies && typeof rawArmies === 'object')

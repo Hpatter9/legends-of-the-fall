@@ -147,7 +147,7 @@ test('crowns buy no pull; chests give stones (every chest source), and a stone i
 });
 
 test('the chest shop: prices, contents, a daily stock, and prices that rise with the heroes owned', () => {
-  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 400, 3, 3], ['silver', 1500, 1, 8], ['gold', 6000, 1, 15]]);
+  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 400, 3, 1], ['silver', 1500, 1, 3], ['gold', 6000, 1, 6]]);
   const m = fresh(11);
   m.crowns = 100000;
   assert.equal(shopPrice(m, 'bronze'), 400, 'the base price while the starter is all you own');
@@ -157,9 +157,9 @@ test('the chest shop: prices, contents, a daily stock, and prices that rise with
     const before = { crowns: m.crowns, stones: stonesOf(m), gear: m.equipment?.length ?? 0 };
     const loot = buyChest(m, 'bronze', DAY)!;
     assert.equal(m.crowns, before.crowns - 400);
-    assert.equal(stonesOf(m) - before.stones, 3);
+    assert.equal(stonesOf(m) - before.stones, 1);
     assert.equal(loot.kind, 'bronze');
-    assert.equal(loot.items.find((i) => i.type === 'stones')!.n, 3);
+    assert.equal(loot.items.find((i) => i.type === 'stones')!.n, 1);
     const got = loot.items.filter((i) => i.type === 'gear').length;
     assert.equal(m.equipment?.length ?? 0, before.gear + got);
     gear += got;
@@ -244,17 +244,18 @@ test('an old save keeps its crowns, pity and heroes, and is given stones once', 
 test('the pace holds its shape: stones a day from the shop and the chests are bounded, and the first heroes come at once', () => {
   // (the unlock-pace tool plays the whole year; these are the numbers it rests on: see docs/notes/summon-stones.md)
   const shopMax = SHOP.reduce((n, c) => n + c.stock * c.stones, 0);
-  assert.equal(shopMax, 32, 'the shop sells at most 32 stones a day');
+  assert.equal(shopMax, 12, 'the shop sells at most 12 stones a day (QUESTS-3: it was 32)');
   assert.ok(DAILY_CHEST_STONES + 2 <= 4);
-  // (a first day: the first clear's bronze chest, the daily chest and a bronze chest from the shop is about nine stones, five heroes)
+  // (a first day, QUESTS-3: the first clear's bronze chest, the daily chest with a bonus star, and the shop's three bronze chests is
+  // seven stones: the fifth hero for about half the saves on the first day, and for nearly all of them by the third)
   let five = 0;
   for (let seed = 1; seed <= 40; seed++) {
     const m = fresh(seed);
-    m.stones = CHEST_STONES[3] + DAILY_CHEST_STONES + 1 + shopChest('bronze').stones * 2;
+    m.stones = CHEST_STONES[3] + DAILY_CHEST_STONES + 1 + shopChest('bronze').stones * 3 + 1;
     while (useStones(m, 1, { lucky: false })) if (m.unlocked.length >= 5) break;
     if (ownedCount(m) >= 5) five++;
   }
-  assert.ok(five >= 30, `${five} of 40`);
+  assert.ok(five >= 20, `${five} of 40`);
   assert.ok(needOf(fresh(1)) <= 3);
   void ALL_HEROES;
 });
