@@ -60,9 +60,10 @@ export const RES = {
    *  well, so both skills come round in a fight. */
   SKILL2_PACE_MANA: 1.45,
   SKILL2_PACE_STAM: 1.05,
-  /** Once skill 3 is open (level 20), the pool comes back this much faster again (the skills overhaul's `SKILL3_PACE`, batch 4): a third skill
-   *  to feed, so the well deepens a little more. */
-  SKILL3_PACE: 1.1,
+  /** Once skill 3 is open (level 20), the pool comes back at this share again (the skills overhaul's `SKILL3_PACE`, batch 4). SKILLS-10
+   *  (docs/notes/skills-10.md): 1.1 to 0.65. Skill 3 became the kit's big skill (heavy, weighed first), and the slower well is what gives the
+   *  roster back the strength it gained: the pool goes to skill 3 before skills 1 and 2, so a level-30 team wins what it did. */
+  SKILL3_PACE: 0.65,
 } as const;
 
 /** The level skill 2 opens at (skill 1 is open from level 1; the ultimate at `ULT_LEVEL`). */

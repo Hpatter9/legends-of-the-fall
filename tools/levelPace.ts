@@ -7,6 +7,9 @@
 //   node tools/levelPace.mjs [--seeds 20] [--days 365] [--samples 6] [--fav 1.3] [--runs 13]
 //
 // Every assumption is a constant below; change one and run it again. `docs/notes/level-100.md` has the table.
+// It also counts the favourite's skill use (SKILLS-10, docs/notes/skills-10.md): the use points each slot earns in the sample runs (the party's
+// mean, by slot), counted into the favourite's three skills as it plays (each from the level its slot opens; auto-replays at half), and reports
+// the skill levels it has on the day it reaches each hero level (`--mastery auto` in the tools reads that table, `tools/skills/mastery.ts`).
 
 import { ARMIES, armyXpShare, replayTotal } from '../src/sim/armies';
 import { fight, playOut } from '../src/sim/battle';
@@ -20,6 +23,9 @@ import { autoDeploy, autoRound } from '../src/sim/autoplay';
 import { ratingOf } from '../src/sim/stars';
 import { TIERS } from '../src/sim/tiers';
 import { savedAt } from './autoplay';
+import { fightUse, levelOfUse, MAX_USE, AUTO_SHARE } from '../src/sim/skillLevels';
+import { HERO_KITS, SLOT_LEVELS } from '../src/sim/heroKits';
+import { keyOf } from '../src/sim/abilities';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -35,6 +41,8 @@ const FARM_RUNS = arg('--runs', 13);
 const FAV = arg('--fav', 1.3);
 /** The share of the runs the favourite is in the party. */
 const FAV_PLAYS = 0.9;
+/** Of the day's runs, how many are played by hand (the rest are auto-replays, as in `unlockPace.ts`). */
+const BY_HAND = 3;
 /** The extra runs (tries) on the day an army or tier is first cleared. */
 const FIRST_CLEAR_TRIES = 4;
 /** The level of the party the runs are measured with (and a maxed castle): strong enough to clear every army on every tier, so a run pays what a won run pays (kill XP follows the foes' hp, not how fast they fall). */
@@ -70,6 +78,8 @@ const tomesBy = (day: number): number => {
 };
 
 /** What a run of an army on a tier pays a hero of the party, on average (one entry per sample run), before the tier's and the Library's multipliers. */
+/** Use points a run earns each slot of a party hero (the party's mean, slot 1 to 3), one entry per sample run, by army and tier. */
+const USE: number[][][][] = [];
 function measure(): number[][][] {
   const castle = newCastle();
   for (const id of Object.keys(castle) as (keyof typeof castle)[]) castle[id] = maxLevel(id);
@@ -87,6 +97,7 @@ function measure(): number[][][] {
         const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
         const run = armyRun(mixSeed(s, 0x1e7e1, ai * 10 + t), a.id, PARTY, castle, t);
         let sum = 0;
+        const use = [0, 0, 0];
         while (!run.over) {
           autoRound(run, meta, true);
           const b = startStage(run);
@@ -97,15 +108,18 @@ function measure(): number[][][] {
           noteFight(run, b);
           finish(run, ok, ratingOf(b, isBossRun(run)).stars);
           sum += Object.values(fightXp(b, armyXpShare(a, t))).reduce((n, x) => n + x, 0) / PARTY.length;
+          const gain = fightUse(b, PARTY);
+          for (const k of PARTY) HERO_KITS()[k].slots.forEach((sl, i) => (use[i] += (gain[k]?.[keyOf(sl.skill)] ?? 0) / PARTY.length));
         }
         out.push(sum);
+        ((USE[ai] ??= [])[t] ??= []).push(use);
       }
       return out;
     }),
   );
 }
 
-interface Report { day: Record<number, number>; xp: Record<number, number>; bench: Record<number, number> }
+interface Report { day: Record<number, number>; xp: Record<number, number>; bench: Record<number, number>; skills: Record<number, number[]> }
 
 function simulate(seed: number, table: number[][][]): Report {
   const rng = new Rng(mixSeed(seed, 0x9ace));
@@ -116,11 +130,19 @@ function simulate(seed: number, table: number[][][]): Report {
   const bench: Record<number, number> = {};
   const day: Record<number, number> = {};
   const xpAt: Record<number, number> = {};
-  const runXp = (ai: number, t: number, day: number): number => {
+  /** The favourite's use points in each slot. */
+  const pts = [0, 0, 0];
+  const skills: Record<number, number[]> = {};
+  const runXp = (ai: number, t: number, day: number, share = 1): number => {
     const samples = table[ai][t];
+    const pick = rng.int(0, samples.length - 1);
+    const lvNow = levelOf(xp);
+    USE[ai][t][pick].forEach((p, i) => {
+      if (lvNow >= SLOT_LEVELS[i]) pts[i] = Math.min(MAX_USE, pts[i] + FAV_PLAYS * share * p);
+    });
     const lib = newCastle();
     lib.library = libraryAt(day);
-    const mean = samples[rng.int(0, samples.length - 1)] * TIERS[t].xp * xpRate(lib);
+    const mean = samples[pick] * TIERS[t].xp * xpRate(lib);
     benched += BENCH_SHARE * mean;
     return mean * FAV;
   };
@@ -138,18 +160,19 @@ function simulate(seed: number, table: number[][][]): Report {
     let best: [number, number] | null = null;
     let bestPay = 0;
     ARMIES.forEach((a, i) => TIERS.forEach((_, t) => cleared[i][t] && replayTotal(a, t) > bestPay && ((bestPay = replayTotal(a, t)), (best = [i, t]))));
-    if (best) for (let k = 0; k < FARM_RUNS; k++) xp += FAV_PLAYS * runXp(best[0], best[1], d);
+    // (of the day's runs, all but `BY_HAND` are auto-replays, whose skill use counts half)
+    if (best) for (let k = 0; k < FARM_RUNS; k++) xp += FAV_PLAYS * runXp(best[0], best[1], d, k < BY_HAND ? 1 : AUTO_SHARE);
     const tomes = tomesBy(d) - tomesBy(d - 1);
     xp += tomes;
     benched += tomes;
     const lv = levelOf(xp);
-    for (const m of MARKS) if (day[m] === undefined && lv >= m) day[m] = d;
+    for (const m of MARKS) if (day[m] === undefined && lv >= m) ((day[m] = d), (skills[m] = pts.map(levelOfUse)));
     const bl = levelOf(benched);
     for (const m of MARKS) if (bench[m] === undefined && bl >= m) bench[m] = d;
     if (d % 30 === 0 || d === 7) xpAt[d] = Math.round(xp);
     fresh = [];
   }
-  return { day, xp: xpAt, bench };
+  return { day, xp: xpAt, bench, skills };
 }
 
 const table = measure();
@@ -164,6 +187,10 @@ for (const m of MARKS) {
   const fmt = (x: number) => (Number.isFinite(x) ? String(x) : `>${DAYS}`);
   console.log(`${String(m).padStart(5)}  ${String(xpFor(m)).padStart(9)}   ${fmt(med(ds)).padStart(5)}  (${fmt(Math.min(...ds))} to ${fmt(Math.max(...ds))})`);
 }
+console.log(`\nThe favourite's skill levels the day it reaches each hero level (median of the seeds; skill 1 / 2 / 3, each from the level its slot opens)`);
+console.log('use points a run earns a party hero, by slot (mean of the samples; Normal / Hard / Elite / Legendary):');
+ARMIES.forEach((a, i) => console.log(`  ${a.name.padEnd(20)} ${USE[i].map((t) => [0, 1, 2].map((k) => Math.round(t.reduce((n, x) => n + x[k], 0) / t.length)).join('/').padStart(12)).join(' ')}`));
+for (const m of MARKS) console.log(`${String(m).padStart(5)}  ${[0, 1, 2].map((k) => med(reports.map((r) => r.skills[m]?.[k] ?? 1))).join(' / ')}`);
 console.log(`\nA hero kept on the bench for every run (${BENCH_SHARE * 100}% of the party mean a run): day reached`);
 for (const m of MARKS) {
   const ds = reports.map((r) => r.bench[m] ?? Infinity);

@@ -27,6 +27,7 @@ import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
 import { armEidolon } from '../src/sim/eidolons';
 import { orderEidolon } from '../src/sim/orders';
 import { STARTER_SPELLS, type SpellId } from '../src/sim/spells';
+import { giveMastery, MASTERY_AUTO } from './skills/mastery';
 
 export { strengthOf };
 
@@ -152,6 +153,8 @@ export function playFinal(meta: Meta, armyId: string, seed: number, party: reado
 export function savedAt(level: number, party: readonly string[], seed: number): Meta {
   const m = startedMeta(seed);
   for (const k of party) m.xp[k] = xpFor(level);
+  // (`--mastery auto`: the skill levels a player of that hero level has, SKILLS-10)
+  if (MASTERY_AUTO) giveMastery(m, party, level);
   return m;
 }
 
