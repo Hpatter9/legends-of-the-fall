@@ -19,7 +19,7 @@ import { secretFigure } from './secretView';
 import { drawHeroSheet, starsOf } from './menuHeroes';
 import { upMark } from './rankUpList';
 import { markReady } from './sim/upgradesReady';
-import { kindPower, powerText } from './sim/power';
+import { kindPower, partyPower, powerText } from './sim/power';
 import { partyTableau } from './partyScene';
 import { awakenedStep } from './render/awakenRig';
 import { ROLE_NAMES, roleOf, suggestParty, type PartyRole } from './sim/suggest';
@@ -278,7 +278,8 @@ export class Party {
     $('ptBonds').hidden = !counts.length;
     $('ptStatus').textContent = full ? 'Ready · summons draw from this company' : `${slots - this.picked.length} more ${slots - this.picked.length === 1 ? 'hero' : 'heroes'} needed`;
     $('ptSceneTitle').textContent = this.quest ? this.quest.title : full ? `${slots === 5 ? 'Five' : slots} heroes. One last stand.` : this.picked.length ? 'A company worth fighting for.' : 'Your legend begins here.';
-    $('ptCount').textContent = `${this.picked.length} / ${slots} ready`;
+    // (the company's combined power: the same number each hero's card shows, added up, and moving as heroes are swapped)
+    $('ptCount').textContent = `${this.picked.length} / ${slots} ready · Party power ${powerText(partyPower(m, this.picked))}`;
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     this.drawWear();
     const key = this.picked.join('|');
