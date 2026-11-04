@@ -15,6 +15,7 @@
 // HEARTS=1 (a lost wave burns a heart and is fought again, as the page does; by default a loss ends the try, as every figure in the notes was
 // measured; the star "clear without using a heart" is then met by every clear).
 import { WEAK } from '../../src/sim/weakness';
+import { RITES } from '../../src/sim/chapelRooms';
 import { ARMIES, ARMY_WAVES, armyById, armyUnlocked } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
@@ -32,6 +33,9 @@ import { maybeSpells, savedAt } from '../autoplay';
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 // (DEPTH-BUILD: WEAK=0 measures the armies without the bosses' weaknesses, `weakness.ts`)
 if (process.env.WEAK === '0') WEAK.on = false;
+// (RITES_HP / RITES_MS try other numbers for the Chapel's Last Rites)
+if (process.env.RITES_HP) RITES.HP = Number(process.env.RITES_HP);
+if (process.env.RITES_MS) RITES.DELAY_MS = Number(process.env.RITES_MS);
 const SAVES = Number(process.env.SAVES ?? 12);
 const CAP = Number(process.env.CAP ?? 25);
 const HEARTS = process.env.HEARTS === '1';
@@ -53,6 +57,8 @@ export function castleAt(L: number): Castle {
     const id = open.sort((a, b) => c[a] - c[b])[0];
     c[id]++;
   }
+  // (DEPTH-BUILD: CHAPEL=3 gives the player the Chapel's Last Rites, to measure it)
+  if (process.env.CHAPEL) c.chapel = Number(process.env.CHAPEL);
   return c;
 }
 const set = (env: string | undefined, key: 'start' | 'growth') => {

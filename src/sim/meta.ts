@@ -23,6 +23,7 @@ import { readAwakened } from './awaken';
 import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readWeak, type WeakRecord } from './weakness';
+import { readBonds } from './bonds';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
 import { readTickets } from './autoReplay';
@@ -138,6 +139,10 @@ export interface Meta {
   codex?: CodexRecord;
   /** DEPTH-BUILD: what is known of each boss's weakness and the Hunter's marks won (`weakness.ts`); missing is nothing known. */
   weak?: Record<string, WeakRecord>;
+  /** DEPTH-BUILD: bond points by pair ("knight|peasant"), the rivalries settled, the bond scenes seen (`bonds.ts`); missing is none. */
+  bonds?: Record<string, number>;
+  bondSettled?: string[];
+  bondScenes?: string[];
   codexClaimed?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
@@ -184,6 +189,8 @@ export interface Meta {
   books?: Record<string, number>;
   learned?: Record<string, string[]>;
   study?: Record<string, { book: string; done: number }>;
+  /** DEPTH-BUILD: the Library's Reading Room: each student's queued next book (its copy already out of the bag); missing is none. */
+  studyNext?: Record<string, string>;
   studyKept?: Record<string, Record<string, number>>;
   loadout?: Record<string, string[]>;
   /** Skill levels by use (the skills overhaul's batch 5, `skillLevels.ts`): the use points each hero kind has earned with each of its skills, under the
@@ -507,6 +514,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.codex = readCodex(m.codex);
       m.weak = readWeak(m.weak);
       if (!m.weak) delete m.weak;
+      m.bonds = readBonds(m.bonds);
+      if (!m.bonds) delete m.bonds;
+      if (!Array.isArray(m.bondSettled)) delete m.bondSettled;
+      if (!Array.isArray(m.bondScenes)) delete m.bondScenes;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)
       delete (m as { codexPaid?: unknown }).codexPaid;

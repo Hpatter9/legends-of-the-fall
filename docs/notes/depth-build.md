@@ -85,3 +85,20 @@ crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by
   it; an auto replay marches plain). Tiles in two columns (three from 400 px), locked ones with their lock line, the cursed tile names the
   run's curse. In the run, a badge beside the hearts (a cursed run shows one heart); a tap says the orders.
 - Tests: `test/march.test.ts`. Shots: `node tools/depth/shots.mjs march`, `march-report`.
+
+## Batch 4: the Chapel's and the Library's rooms
+
+- **Vigil** (Chapel 2; `src/sim/chapelRooms.ts`): chosen on the march card (a second row of three tiles, Shielded by default; the card
+  now also comes up when only the Vigil is open) and kept in `Run.orders.vigil`. When a heart burns the page calls `applyVigil` after
+  `reviveParty`: Shielded (a shield of 15% of health), Swift (hasted 4 s) or Cleansed (every ailment gone).
+- **Last Rites** (Chapel 3): an army run that has not spent it starts each fight with `Battle.rites` (the stage's `rites`). The first
+  hero to fall is marked (`ritesFall`, from `hurt`) and rises at a quarter of its health 5 s later (`tickRites`); `noteFight` keeps
+  `Run.ritesUsed`, so it comes once a run. If the whole party falls inside those 5 s, the wave is lost as before.
+- **Reading Room** (Library 2): `queueStudy` / `unqueueStudy` and `Meta.studyNext` (optional): a student queues its next book (the copy
+  leaves the bag at once); `settleStudy` starts it, with any kept progress, when the first is learnt. The book page's reader gains
+  "Queue next" and the queued row.
+- **Scriptorium** (Library 5): `crossOk`: one book of another calling a hero (never a lost technique), which `slotFor` teaches at
+  `CROSS_TUNE` (0.75) of its strength. The reader marks such a book.
+- **Left for later:** the Smithy's three rooms wait for the gear build (`claude/gear-build`), which is changing wear and the slots now;
+  the Mage Tower's Spell Lectern needs a mid-run spell swap the page does not have yet.
+- Tests: `test/chapel-rooms.test.ts`, `test/library-rooms.test.ts`.

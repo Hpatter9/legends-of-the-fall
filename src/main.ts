@@ -97,6 +97,8 @@ import { toastAchievements, toastLines, toastSpells, toastStones } from './achie
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
 import { showMarchCard } from './marchCard';
+import { applyVigil } from './sim/chapelRooms';
+import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
@@ -2270,6 +2272,11 @@ class Game {
   }
 
   private startRun(run: Run): void {
+    // (DEPTH-BUILD: an army run keeps a snapshot of the bonds as it starts, so its fights replay)
+    if (run.mode?.kind === 'army' && !run.bonds) {
+      const snap = bondSnapshot(this.meta);
+      if (Object.keys(snap).length) run.bonds = snap;
+    }
     this.run = run;
     this.syncPool();
     this.placed.clear();
@@ -2531,6 +2538,8 @@ class Game {
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
+      // (DEPTH-BUILD: the Chapel's Vigil: how the party rises, chosen on the march card)
+      applyVigil(this.b, fallen, this.run.orders?.vigil);
       // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
       this.fx.undim();
       this.acc = 0;
@@ -3259,7 +3268,7 @@ class Game {
       const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
       const earned = settleRun(this.meta, run, settled);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
-      toastLines(weakLines(settled.weak));
+      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
@@ -3487,7 +3496,9 @@ class Game {
     // (a themed daily's featured trait leads the strip)
     const lead = this.theme()?.trait;
     const counts = countTraits(kindsOf(this.b.units)).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
-    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
+    // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot, as a Bonds chip at the end)
+    const pairs = placedPairs(this.run.bonds, kindsOf(this.b.units));
+    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join();
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
     const featured = lead;
@@ -3517,8 +3528,28 @@ class Game {
       });
       strip.append(pill);
     }
+    if (pairs.length) {
+      const pill = document.createElement('button');
+      pill.className = `trait bonds on${this.traitPick === 'bonds' ? ' picked' : ''}`;
+      const head = document.createElement('span');
+      head.className = 'thead';
+      head.textContent = `${pairs.some((p) => p.lv < 0) ? '⚔ ' : '❦ '}Bonds ${pairs.length}`;
+      const fx = document.createElement('small');
+      fx.textContent = pairs.map((p) => p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' & ')).join(', ');
+      pill.append(head, fx);
+      pill.addEventListener('click', () => {
+        this.traitPick = this.traitPick === 'bonds' ? undefined : 'bonds';
+        this.refreshTraits();
+      });
+      strip.append(pill);
+    }
     this.traitTiers = new Map(counts.map((c) => [c.trait.id, c.tier]));
     strip.dataset.drawn = '1';
+    if (this.traitPick === 'bonds' && pairs.length) {
+      hint.classList.remove('wake');
+      hint.textContent = pairs.map((p) => `${p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' and ')}, ${pairWords(p.lv)}`).join('; ');
+      return;
+    }
     const picked = counts.find((c) => c.trait.id === this.traitPick);
     const near = closestTrait(counts);
     hint.classList.toggle('wake', woke.length > 0);

@@ -43,6 +43,7 @@ import { warmIcon } from './menuArt';
 import { tomeControl } from './tomeView';
 import { TOME_SIZES, tomesOf, tomeTotal } from './sim/tomes';
 import { TOME_ICON } from './tomeArt';
+import { BOND_NAMES, SETTLE_WINS, partnersOf } from './sim/bonds';
 import { slotBrief } from './fightHudRules';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
@@ -363,6 +364,33 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     arts.addEventListener('click', () => { select(3); buttons[3].focus(); });
     profile.append(arts);
     overview.append(profile);
+    // (DEPTH-BUILD: the hero's bonds: its three strongest partners and its rivals, a tap for them all)
+    const partners = partnersOf(meta, kind);
+    if (partners.length) {
+      const bonds = el('div', 'dossierBonds');
+      bonds.append(detailHeading('Bonds', 'Won waves together, side by side'));
+      const list = el('div', 'bondList');
+      const draw = (all: boolean) => {
+        list.replaceChildren();
+        for (const p of all ? partners : partners.slice(0, 3)) {
+          const row = el('div', `bondRow${p.rival ? ' rival' : ''}`);
+          row.append(el('b', '', `${p.rival ? '⚔ ' : p.kindred ? '❦ ' : ''}${UNITS[p.kind]?.name ?? p.kind}`), el('small', '', p.rival ? `Rivals · ${p.points}/${SETTLE_WINS} wins together to settle it` : `${BOND_NAMES[p.lv] || 'Strangers'} · ${p.points}${p.next ? `/${p.next}` : ''} points${p.kindred ? '' : ' · comrades at most'}`));
+          list.append(row);
+        }
+      };
+      draw(false);
+      bonds.append(list);
+      if (partners.length > 3) {
+        const more = el('button', 'dossierSkillsLink', `All bonds (${partners.length})  ›`);
+        more.type = 'button';
+        more.addEventListener('click', () => {
+          draw(true);
+          more.remove();
+        });
+        bonds.append(more);
+      }
+      overview.append(bonds);
+    }
     const path = el('ol', 'dossierRanks');
     path.setAttribute('aria-label', 'Hero rank progression');
     for (let n = 1; n <= MAX_RANK; n++) {

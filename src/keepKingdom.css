@@ -1242,3 +1242,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 .bcard .ctRooms {
   margin: 8px 0;
 }
+
+/* DEPTH-BUILD: the hero sheet's Bonds block */
+.dossierBonds { display: flex; flex-direction: column; gap: 8px; }
+.bondList { display: flex; flex-direction: column; gap: 4px; }
+.bondRow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; padding: 6px 8px; border-radius: 6px; background: rgba(0, 0, 0, 0.25); }
+.bondRow b { color: #f3e2a0; }
+.bondRow small { color: #c9bf9e; }
+.bondRow.rival b { color: #f08a7a; }
