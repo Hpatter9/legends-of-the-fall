@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.358.0',
+    date: '2026-11-04',
+    title: 'Calamity oaths and scars',
+    notes: ['Campfires in the Calamity may offer an oath (keep up to three) or a scar: 60 gold for a hero who fights on at 10% less health.'],
+  },
+  {
     version: '0.357.0',
     date: '2026-11-04',
     title: 'Clearer ten-card summons',
