@@ -7,7 +7,7 @@ import { buildLand, type Land } from './castleLand';
 // (the Armoury's repair cut and the Library's study, docs/notes/shop-books-gear.md)
 import { ARMOURY_REPAIR_CUT } from '../sim/wear';
 import { STUDY_CUT, studentCap } from '../sim/books';
-import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, isRoomBuilding, siteName, siteTop, type BuildingId, type SiteId } from '../sim/castle';
+import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, isRoomBuilding, siteName, siteTop, type BuildingId, type SiteId } from '../sim/castle';
 import { roomsOpenedAt, roomToast } from '../sim/rooms';
 
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
@@ -615,7 +615,7 @@ export function effectText(id: BuildingId, level: number): string {
     case 'library':
       return `heroes earn ${Math.round(XP_PER_LEVEL * level * 100)}% more XP from every fight${level > 0 ? `; study ${Math.round(STUDY_CUT * level * 100)}% shorter, ${studentCap(level)} students at once` : ''}`;
     case 'mageTower':
-      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster, +${spellBudget({ ...newCastle(), mageTower: level }) - spellBudget()} spell power`;
+      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster`;
   }
 }
 

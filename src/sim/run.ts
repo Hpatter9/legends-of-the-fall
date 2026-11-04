@@ -513,6 +513,8 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
     // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
     ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
+    // (a quest battle's own rules, if it has any: `questRules.ts`)
+    ...(run.mode?.kind === 'quest' && questBattleById(run.mode.quest)?.rules ? { rules: questBattleById(run.mode.quest)!.rules } : {}),
     // (a quest battle has Duchess every time its story has her, and never otherwise: no roll)
     duchess: run.mode?.kind === 'quest' ? (questBattleById(run.mode.quest)?.duchess ? 'always' : 'never') : duchessModeOk(run.mode) ? duchess : 'never',
   });

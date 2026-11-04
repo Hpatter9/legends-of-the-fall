@@ -121,6 +121,10 @@ import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type Sp
 import { autoSpellsFor } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
 import { snapSpell } from './sim/spellAim';
+import { castList, fitSchool, schoolOf } from './sim/schools';
+import { armDecree } from './sim/decrees';
+import { fightRanks } from './sim/spellRanks';
+import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { WeatherView } from './render/weatherView';
@@ -507,7 +511,17 @@ class Game {
     bindSpellbook(this.meta, () => {
       saveMeta(this.meta);
       this.home.refresh();
-    });
+    }, () => settings().ruler);
+    // (KING-SPELLS batch 2: the loadout follows the ruler's school, on load and whenever the ruler is changed)
+    let school = '';
+    const fit = () => {
+      if (school === settings().ruler && this.meta.spellbook.school === school) return;
+      school = settings().ruler;
+      fitSchool(this.meta.spellbook, school);
+      saveMeta(this.meta);
+    };
+    fit();
+    onSettings(fit);
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
@@ -1049,6 +1063,10 @@ class Game {
     // in its own trial as a great being, EIDOLON-TRIAL)
     const qbNow = questBattleOfRun(this.run);
     this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
+    // (KING-SPELLS batch 2: the ruler's Decree, once a fight)
+    armDecree(this.b, schoolOf(settings().ruler).decree);
+    // (KING-SPELLS batch 3: the save's spell ranks)
+    this.b.spells.ranks = fightRanks(this.meta.spellbook);
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
@@ -1813,10 +1831,12 @@ class Game {
   private setAutoOn(b: Battle): void {
     const on = this.ultAutoOn();
     b.autoUlt = on;
-    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, this.meta.spellbook.equipped);
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.meta.spellbook));
   }
 
   private wire(): void {
+    // (KING-SPELLS batch 2: the mana box casts the ruler's Decree once its meter is full)
+    bindDecree($('mana'), () => this.b, () => this.refreshSpells());
     // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
     this.hold = new HoldPress();
     this.info = new UnitInfoCard();
@@ -3070,7 +3090,7 @@ class Game {
   private buildSpells(): void {
     const cards = $('spellCards');
     cards.replaceChildren();
-    for (const id of this.meta.spellbook.equipped) {
+    for (const id of castList(this.meta.spellbook)) {
       const sp = SPELLS[id];
       const card = document.createElement('button');
       card.className = 'spell';
@@ -3165,6 +3185,7 @@ class Game {
     if (dropped) this.spell = null;
     ($('mana').querySelector('i span') as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
     $('mana').querySelector('b')!.textContent = manaText(b.spells);
+    refreshDecree($('mana'), b);
     for (const card of $('spellCards').children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
       card.classList.toggle('dim', !canAfford(b, id));

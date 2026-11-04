@@ -26,7 +26,7 @@ function ready(): Meta {
   m.calamity = { best: 30, clears: 1 };
   for (const e of ['askel', 'nivra', 'aurelan', 'voltara', 'gorm']) bindEidolon(m, e);
   assert.ok(beginChain(m, 'vaelkhar'));
-  m.quests!.chains = { ...m.quests!.chains, vaelkhar: { part: 3, progress: 0, trialWon: true } };
+  m.quests!.chains = { ...m.quests!.chains, vaelkhar: { part: 5, progress: 0, trialWon: true } };
   m.quests!.pieces = ['blackScale', 'unansweredLetter', 'crownTine'];
   assert.equal(readyToBind(m)?.id, 'vaelkhar');
   return m;
