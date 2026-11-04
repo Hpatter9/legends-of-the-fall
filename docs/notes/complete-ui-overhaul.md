@@ -75,7 +75,7 @@ This overhaul unifies the entire game's chrome under the owner-chosen **Keep & K
   - Ancient leather & brass bestiary folio with milestone pips, category tabs, and ornate inspect dossier sheets.
 - **Hall of Feats & Achievements (`.ach`, `.claimAll`)**:
   - Royal Hall of Feats header, ornate "Claim All" banner with glowing crown and stone totals, achievement cards with ornate progress gauges, glowing "Claim" buttons.
-- **Spire / Tower & Calamity Nodes (`.rtCard`, `.cvBox`, `.cvCard`, `#shop`)**:
+- **Calamity map & Last Stand cards (`.rtCard`, `.cvBox`, `.cvCard`, `#shop`)**:
   - The Campfire, The Treasure, Relic Pick, Chest Shop, and Surrender / Abandon confirmation dialogs all follow the ornate brass & stone framing.
 - **Combat Results & Encounters (`#result`, `#bossCard`, `#phaseBanner`, `#twistBanner`)**:
   - Heraldic victory/defeat banners, After-Action Report parchment with gold filigree dividers, hero level cards in ornate brass portrait frames, and march button.

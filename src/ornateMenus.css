@@ -329,7 +329,7 @@ button.danger:active:not(:disabled) {
 }
 
 #tip button {
-  min-height: 38px;
+  min-height: 44px;
   font-size: 13px;
   padding: 6px 14px;
 }
@@ -381,6 +381,7 @@ button.danger:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
+  filter: drop-shadow(0 0 8px rgba(219, 193, 139, 0.4));
   animation: turnUpPulse 2s ease-in-out infinite;
 }
 
@@ -420,9 +421,10 @@ button.danger:active:not(:disabled) {
   max-width: 280px;
 }
 
+/* (the medallion's glow is steady; only its size breathes, test/no-flicker) */
 @keyframes turnUpPulse {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(219, 193, 139, 0.2)); }
-  50% { transform: scale(1.06); filter: drop-shadow(0 0 12px rgba(219, 193, 139, 0.6)); }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
 }
 
 /* --------------------------------------------------------------------------
@@ -961,7 +963,7 @@ button.danger:active:not(:disabled) {
 }
 
 /* --------------------------------------------------------------------------
-   10. SPIRE & CALAMITY MODALS (.rtCard, .cvBox, .cvCard, #shop)
+   10. CALAMITY MAP & LAST STAND MODALS (.rtCard, .cvBox, .cvCard, #shop)
    -------------------------------------------------------------------------- */
 .rtCardWrap {
   background: radial-gradient(circle at center, rgba(16, 20, 15, 0.78), rgba(5, 7, 5, 0.94));
@@ -1023,7 +1025,7 @@ button.danger:active:not(:disabled) {
   font-size: 13px;
 }
 
-/* Spire Shop (.shopView, #shop) */
+/* The Calamity map's shop (.shopView, #shop) */
 .shopView {
   background: radial-gradient(ellipse at 50% 5%, #2a3d2e38 0%, transparent 65%),
               linear-gradient(180deg, #151b14 0%, #0d120c 100%),
@@ -1466,8 +1468,11 @@ body #spellbook h2 {
 }
 
 .cxTab {
+  min-width: 0;
+  padding: 6px 2px;
+  overflow-wrap: anywhere;
   font-family: var(--display);
-  font-size: 14px;
+  font-size: 13px;
   color: #a89f89;
   border: 1px solid #5c4e33;
   background: #1c2018;
@@ -1659,4 +1664,49 @@ body #spellbook h2 {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* --------------------------------------------------------------------------
+   TAP FLOOR: every control this restyle draws is at least 44 px each way on a phone
+   -------------------------------------------------------------------------- */
+#settingsClose,
+#tip button,
+#tip #tipSkip,
+#party #ptBack,
+#party #ptSuggest,
+#ptFilters button,
+.heroBack,
+.dialogActions button,
+#asumOk,
+.ctBar .ctChip,
+.ctBar .ctChips > button,
+.ctPortalChip,
+.ctUpgradeBtn,
+.rankUp,
+#spellbook button,
+.hm-spells button,
+.hmLink,
+.hm-spells button.rankUp,
+.sbCard button,
+.tvQuests,
+.tvUpgrades,
+.tvTrophies,
+.tvRoster,
+.tvRoom1,
+.tvNav button.tvRoom1 {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.ptSearch input,
+#ptSearch {
+  min-height: 44px;
+}
+
+/* The small caps eyebrows and the "New" dot read at 11 px or more on a phone. */
+.cardEyebrow,
+.settingsEyebrow,
+.tipEyebrow,
+#settingsBody .newDot {
+  font-size: 11px;
 }
