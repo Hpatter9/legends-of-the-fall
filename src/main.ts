@@ -182,6 +182,7 @@ import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
 import { pickedTactic, pickTactic } from './sim/tacticPick';
+import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -1902,6 +1903,7 @@ class Game {
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       arrange: (f) => this.arrangeFormation(f),
+      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
