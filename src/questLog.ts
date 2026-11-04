@@ -15,6 +15,8 @@ import { todayKey } from './modes';
 import { battleOfQuest, canFightBattle } from './sim/questRun';
 import { chainsShown, summonerWaiting } from './sim/eidolonChains';
 import { drawEidolonsTab } from './eidolonChainView';
+import { destinationOf, type Destination } from './sim/questGoto';
+import { takeMeThere } from './questGo';
 
 export type LogTab = 'active' | 'board' | 'eidolons' | 'done';
 
@@ -45,6 +47,8 @@ export interface LogHooks {
   /** EIDOLON-CHAINS: go to the Summoner in the Sanctum, and play a chain's prologue again. */
   summoner?(): void;
   story?(chain: string): void;
+  /** "Take me there": go where a goal is done (UI batch 1: `sim/questGoto.ts`; the page closes the log and opens the fight, the mode or the screen). */
+  goTo?(dest: Destination): void;
 }
 
 /** Draw the log on a tab into the sheet's box. */
@@ -160,6 +164,8 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
         redraw();
       });
       side.append(pin, drop);
+      // (UI batch 1: a way to where the goal is done: its battle, army, mode or screen)
+      if (hooks.goTo) side.prepend(takeMeThere(q.title, destinationOf(m, q.goal), hooks));
     }
     row.append(questFace(q), body, side);
     list.append(row);

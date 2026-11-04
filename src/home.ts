@@ -49,6 +49,7 @@ import { announceArmy } from './armyShown';
 import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
 import { questById } from './sim/questData';
 import { drawQuestLog, type LogTab } from './questLog';
+import type { Destination } from './sim/questGoto';
 import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } from './sim/eidolonChains';
 import { hornHeld } from './sim/warHorn';
 import { revealCard } from './sim/sceneReveal';
@@ -430,6 +431,7 @@ export class Home {
         fight: (id) => this.questBattle(id),
         saved: () => this.hooks.questSaved?.() ?? null,
         summoner: () => this.show('recruit'),
+        goTo: (dest) => this.questGoto(dest),
         story: (id) => {
           const scene = chainById(id)?.prologue;
           if (scene) void this.hooks.onStory?.(scene);
@@ -505,6 +507,27 @@ export class Home {
         if (c) void playBinding(c, true);
       },
     });
+  }
+
+  /** "Take me there" (UI batch 1): the log closes and the screen the goal is done on opens: a battle, an army's party screen, a mode, or the Armies. */
+  private questGoto(dest: Destination): void {
+    this.closeSheet();
+    this.show('battle');
+    switch (dest.to) {
+      case 'battle':
+        return this.questBattle(dest.battle);
+      case 'army':
+        return this.go(() => this.hooks.onArmy(dest.army, dest.tier));
+      case 'armies':
+        return this.openArmies(dest.army);
+      case 'daily':
+        return this.go(this.hooks.onDaily);
+      case 'stand':
+        // (shut until the stars open it: the camp's own rule)
+        return towerOpen(this.meta) || this.hooks.slotInfo?.('tower') ? this.go(this.hooks.onTower) : this.openArmies();
+      case 'calamity':
+        return modeOpen(this.meta, 'calamity') || this.hooks.slotInfo?.('calamity') ? this.enterCalamity() : this.openArmies();
+    }
   }
 
   /** A quest battle's Fight (batch 2): the sheet and the card close, and the page takes it from there (the party, the story, the deploy). */
