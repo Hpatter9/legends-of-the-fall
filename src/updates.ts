@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.353.0',
+    date: '2026-11-04',
+    title: 'Charge has an edge, stronger formations',
+    notes: ['Charge now marches faster and its first blows hit archers hard. Shield Wall and Hollow Square give real cover. Kitsune and Werewolf trimmed at level 10.'],
+  },
+  {
     version: '0.352.0',
     date: '2026-11-04',
     title: 'Groundwork for the Vampires',
