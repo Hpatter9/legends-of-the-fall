@@ -45,8 +45,8 @@ export const BREAK_GOLD = 5;
 export const KEYSTONE_ONE_IN = 15;
 /** A rune's strength by level, as a multiple of level I (index 0 unused). */
 export const RUNE_LEVEL: readonly number[] = [0, 1, 2, 3.5, 5.5, 8];
-/** One knob for every rune's numbers: 0.5 brings a fresh save's daily back to about 80% (the joint rebalance's 79%; batch 8 re-measures every
- *  mode, docs/notes/gear-build.md). */
+/** One knob for every rune's numbers. Batch 8's balance set it at 0.7 alongside the seven slots' SLOT_SCALE, the Beast Packs' start and the
+ *  daily's start, measured against every mode (docs/notes/gear-build.md, "Batch 8"). */
 export const RUNE_SCALE = { k: 0.7 };
 /** The kinds a rune can be (the Keystone only from the side stream's 1 in 15). */
 export const RUNE_KINDS: readonly RuneKind[] = ['ember', 'bulwark', 'arcana', 'gale', 'hawk', 'wellspring', 'warding'];

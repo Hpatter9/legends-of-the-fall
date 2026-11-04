@@ -64,10 +64,11 @@ test('a tier lift multiplies that tier’s foes, hp and attack, and never Normal
 // docs/notes/run-gear.md. The joint rebalance, the owner's retune once the D&D stats' held-back rules were switched on: 0.58, 1.74, 2.27, 2.7 to
 // 0.62, 2.02, 2.39, 2.8, so the realistic climb takes the tries 0.321.0 set, with the same `xpStart`, docs/notes/joint-rebalance.md)
 test('the early armies keep their levels and curves, at the strength SPELLS-RETUNE measured for a player who casts', () => {
+  // (SEVEN-SLOT GEAR's balance, batch 8, moved the Beast Packs' start 2.39 to 2.3 for the seven-slot kit and the runes, docs/notes/gear-build.md)
   assert.deepEqual(ARMIES.slice(0, 4).map((a) => [a.id, a.level, a.start, a.growth, a.xpStart]), [
     ['orcs', 1, 0.62, 0.176, 0.39],
     ['undead', 8, 2.02, 0.05, 1.48],
-    ['beasts', 15, 2.39, 0.05, 1.66],
+    ['beasts', 15, 2.3, 0.05, 1.66],
     ['wildwood', 22, 2.8, 0.05, 2.01],
   ]);
 });

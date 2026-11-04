@@ -209,3 +209,35 @@ design's eight batches, each with its tests. This note says what each batch buil
 - **The painting pipeline** is ready for when the image account has credits: `tools/gear/gen-icons.mjs` paints a slot at a time into
   `art-source/gear/<slot>/`, and `tools/gear/import-gear-icons.py` now reads all 210 bases (new bases need only their standard painting).
   Nothing has been generated yet.
+
+## Batch 8: the balance
+
+Every mode re-measured against main (0.347.0, the king's old three spells) to the joint rebalance's pace (`docs/notes/joint-rebalance.md`).
+The knobs that moved:
+
+- `RUNE_SCALE.k` 0.7 (`src/sim/runes.ts`).
+- `SLOT_SCALE` (`src/sim/equipment.ts`): main and torso 0.75, off-hand and accessory 0.45, head, feet and belt 0.34, which keeps a whole
+  seven-piece kit near the old three-piece kit's worth.
+- The Beast Packs' Normal start 2.39 to 2.3 (`src/sim/armies.ts`); the bare-five-at-23 test still passes.
+- `DAILY_START` 0.785 to 0.77 (`src/sim/daily.ts`).
+
+What it measures (`CLIMB_ARMIES=4 npm run balance -- --no-tables --climb --saves 120`, `npm run daily-rate -- --days 120`,
+`tools/gear-balance.ts --kits-only`):
+
+| | target | before | after |
+| --- | --- | --- | --- |
+| Orc Warband tries | 2.0 | 2.3 | 2.1 |
+| Undead Legion tries | 2.9 | 2.8 | 2.9 |
+| Beast Packs tries | 4.3 | 5.7 | 4.5 |
+| The Wildwood tries | 2.0 | 2.0 | 2.3 |
+| Daily, two hearts | 79% | 73% | 78% |
+| Daily, no hearts | 63% | 60% | 67% |
+
+A whole seven-piece kit is worth +4% (Common) to +29% (Mythic) at army 1 and +5% to +43% at army 7, against the old three's +4% to +25% and
++12% to +37%. Only the daily's identity hash moved (re-recorded); the Last Stand's bars were not touched.
+
+**The king's spells.** The king's-spells branch tunes the same two shared knobs against its own spells; whichever lands second multiplies:
+final = this batch's value × the spells' ratio (beasts 2.3 × 1.025, daily 0.77 × 1.057), then re-checks the beasts-at-23 test and the daily rate.
+
+**For the owner: the smith's upkeep.** `tools/econ/day.ts` models a day's crowns: keeping a full seven-piece kit repaired early on costs more
+than the daily's wave crowns bring in. Nothing was changed for it; the repair price (×1.6) is the owner's approved answer, so it is flagged here.

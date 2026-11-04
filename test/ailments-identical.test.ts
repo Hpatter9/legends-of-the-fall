@@ -87,6 +87,7 @@ import { WEAK } from '../src/sim/weakness';
 // 000d28c3 (its party's Knight), calamity 5270a261.)
 // (SEVEN-SLOT GEAR batches 4 and 6, merged over the tactics, re-recorded `calamity`, `daily` and `tower` (calamity 244264f2, daily 3e144113,
 // tower e5d59809): a run started now finds runes, a won wave adds one, and its fallen stand again at half; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 8, the balance, re-recorded `daily` alone (93752413): DAILY_START 0.785 to 0.77 and runes at 0.7; every other scenario keeps its hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
