@@ -1,6 +1,7 @@
 // The twenty heroes' fourth batch's kits (docs/notes/twenty-heroes.md, batch 4): the Inquisitor, the Seraph, the Corsair Surgeon, the
-// Harpooner and the Sea Reaver, held to the roster's kit rules as the others are (`test/comingKits.ts`); and the Seraph's and the Corsair
-// Surgeon's revive faces on skill 2, as the four roster healers' are (`test/revive.test.ts`).
+// Harpooner and the Sea Reaver, held to the roster's kit rules as the others are (`test/comingKits.ts`); and the Corsair Surgeon's revive face on
+// skill 2, as the four roster healers' are (`test/revive.test.ts`). The Seraph is a guardian, not a healer (docs/notes/twenty-heroes-review.md):
+// she neither heals nor raises.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
@@ -49,8 +50,8 @@ function arena(): Battle {
   return b;
 }
 
-test('the Seraph and the Corsair Surgeon raise the nearest fallen friend at 30% with their skill 2\'s revive face, as the roster\'s healers do', () => {
-  for (const [h, name] of [['seraph', 'Revive: Reliquary Grace'], ['corsairSurgeon', 'Revive: Smelling Salts']] as const) {
+test('the Corsair Surgeon raises the nearest fallen friend at 30% with his skill 2\'s revive face, as the roster\'s healers do', () => {
+  for (const [h, name] of [['corsairSurgeon', 'Revive: Smelling Salts']] as const) {
     const b = arena();
     const me = addUnit(b, h, 3, 9, { level: 10 });
     assert.ok(heroKitOf(me)!.s2.revive, `${h} has a revive face on skill 2`);
@@ -74,9 +75,22 @@ test('the Seraph and the Corsair Surgeon raise the nearest fallen friend at 30% 
   }
   // (and one below level 10, whose skill 2 is not open, raises no one)
   const b = arena();
-  const me: Unit = addUnit(b, 'seraph', 3, 9);
+  const me: Unit = addUnit(b, 'corsairSurgeon', 3, 9);
   const x = addUnit(b, 'knight', 3, 8);
   x.hp = 0;
   x.alive = false;
+  assert.ok(!reviveReady(b, me));
+});
+
+test('the Seraph holds the line as a guardian: no revive face, and none of her skills or her ultimate heals', () => {
+  const b = arena();
+  const me = addUnit(b, 'seraph', 3, 9, { level: 30 });
+  const hk = heroKitOf(me)!;
+  assert.ok(!hk.s2.revive);
+  assert.ok(hk.slots.every((s) => !s.heals));
+  const x = addUnit(b, 'knight', 3, 8, { level: 30 });
+  x.hp = 0;
+  x.alive = false;
+  x.diedAt = b.t;
   assert.ok(!reviveReady(b, me));
 });

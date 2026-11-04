@@ -729,7 +729,7 @@ export const COMING_TREES: Readonly<Record<string, TalentTree>> = {
     ],
     [
       { name: 'Vital Transfusion', icon: 'vial', text: 'Every 7s the weakest ally is healed 16% of its health.', abilities: [ab('tl_hemomancer_transfuse', 'Vital Transfusion', 'tick', 'healAlly', { n: 7, v: 0.16, show: true })] },
-      { name: 'Blood Tithe', icon: 'amulet', text: 'Each kill heals her 12% of her health.', abilities: [ab('tl_hemomancer_tithe', 'Blood Tithe', 'kill', 'heal', { v: 0.12 })] },
+      { name: 'Gorged Chalice', icon: 'amulet', text: 'Each kill heals her 12% of her health.', abilities: [ab('tl_hemomancer_tithe', 'Gorged Chalice', 'kill', 'heal', { v: 0.12 })] },
     ],
   ),
   nightstalker: tree(
@@ -808,8 +808,8 @@ export const COMING_TREES: Readonly<Record<string, TalentTree>> = {
     'bellWarden',
     [['Bronze Yoke', 'plate', { hp: HP }], ['Heavy Clapper', 'maul', { atk: ATK }], ['Sanctuary Greaves', 'boots', { def: 1 }], ['Incense Burner', 'bell', { regen: 0.004 }]],
     [
-      { name: 'Far Vesper', icon: 'bell', text: 'Bronze Slam reaches 2 tiles further.', tal: { reach: 2 } },
-      { name: 'Deafening Chime', icon: 'idol', text: 'Bronze Slam holds foes 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Far Vesper', icon: 'bell', text: 'Bronze Peal reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Deafening Chime', icon: 'idol', text: 'Bronze Peal silences 60% longer.', tal: { dur: 0.6 } },
     ],
     [
       { name: 'Belfry Aegis', icon: 'aegis', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { COMING_HERO_TRAITS, HERO_TRAITS } from '../src/sim/traits';
 import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
 import { KITS } from '../src/sim/abilities';
-import { comingKits } from '../src/sim/kits/coming';
+import { comingHeroKits, comingKits } from '../src/sim/kits/coming';
 
 const classOf = (k: string): string => (HERO_TRAITS[k] ?? COMING_HERO_TRAITS[k])[1];
 const KEYS = ['hp', 'atk', 'def', 'moveMs', 'atkMs', 'dps'] as const;
@@ -46,4 +46,11 @@ test('each coming passive does one thing, as the roster\'s do, and none is a ros
     seen.set(key, k);
     names.add(p.name);
   }
+});
+
+test("slot 3 follows the roster's mix: mostly jabs, a few guards and utilities, and never a heavy", () => {
+  const cls = COMING_HEROES.map((k) => comingHeroKits()[k].slots[2].cls);
+  assert.ok(!cls.includes('heavy'), 'no heavy in slot 3');
+  assert.ok(cls.filter((c) => c === 'jab').length >= 12, `jabs: ${cls.filter((c) => c === 'jab').length}`);
+  assert.ok(cls.filter((c) => c === 'utility').length <= 3, `utilities: ${cls.filter((c) => c === 'utility').length}`);
 });

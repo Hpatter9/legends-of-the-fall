@@ -109,10 +109,11 @@ export const UNITS: Record<string, UnitDef> = {
   tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hero_res_tyrant', scale: 0.625, hp: 262, atk: 20, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, role: 'A condemner: names a foe for the whole party', },
   // The Vampires (docs/notes/twenty-heroes.md): their kits are in, but they wait for their battle sheets before they join `ALL_HEROES`
   // (each of the twenty's numbers sits inside its class's roster spread, docs/notes/twenty-heroes-review.md: health, attack, defence, walk,
-  // blow time and damage a second; the Nightstalker and the Astral Sphinx keep their wings, a hunter of the night sky and a star-lioness)
+  // blow time and damage a second; the Strigoi and the Astral Sphinx keep their wings, a hunter of the night sky and a star-lioness)
   vampireLord: { id: 'vampireLord', name: 'Vampire Lord', side: 'hero', sheet: 'hero_res_vampire_lord', scale: 0.520833, hp: 236, atk: 26, def: 6, range: 1, moveMs: 520, atkMs: 950, jump: 3, role: 'A blood-duellist: lunges through lines, impales and drinks' },
   hemomancer: { id: 'hemomancer', name: 'Hemomancer', side: 'hero', sheet: 'hero_res_hemomancer', scale: 0.520833, hp: 178, atk: 28, def: 3, range: 3, moveMs: 700, atkMs: 1450, jump: 2, shot: 'curse', role: 'A blood weaver: tethers foes together and glides in mist' },
-  nightstalker: { id: 'nightstalker', name: 'Nightstalker', side: 'hero', sheet: 'hero_res_nightstalker', scale: 0.520833, hp: 188, atk: 25, def: 4, range: 1, moveMs: 420, atkMs: 800, jump: 9, flies: true, role: 'A winged strigoi: swoops from the dark and drags prey aloft' },
+  // (the Strigoi's key is still `nightstalker`, as the saves and the art have it)
+  nightstalker: { id: 'nightstalker', name: 'Strigoi', side: 'hero', sheet: 'hero_res_nightstalker', scale: 0.520833, hp: 188, atk: 25, def: 4, range: 1, moveMs: 420, atkMs: 800, jump: 9, flies: true, role: 'A winged night-hunter: swoops from the dark and carries his prey off' },
   bloodGargoyle: { id: 'bloodGargoyle', name: 'Blood Gargoyle', side: 'hero', sheet: 'hero_res_blood_gargoyle', scale: 0.625, hp: 325, atk: 19, def: 9, range: 1, moveMs: 720, atkMs: 1250, jump: 2, role: 'A stone sentinel: crashes down from the eaves and turns to granite' },
   dhampir: { id: 'dhampir', name: 'Dhampir', side: 'hero', sheet: 'hero_res_dhampir', scale: 0.520833, hp: 168, atk: 28, def: 3, range: 5, moveMs: 700, atkMs: 1350, jump: 3, shot: 'arrow', role: 'A silver-bolt hunter: vaults clear and pins foes to stone' },
   // The twenty heroes' second batch (docs/notes/twenty-heroes.md), waiting as the Vampires do

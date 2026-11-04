@@ -29,22 +29,22 @@ const inReach = (b: Battle, me: Unit): Unit[] => {
     .sort((x, y) => x.hp - y.hp || x.id - y.id);
 };
 /** The foe before the caster: the weakest it could strike now. */
-const before = (b: Battle, me: Unit): Unit | undefined => inReach(b, me)[0];
+export const before = (b: Battle, me: Unit): Unit | undefined => inReach(b, me)[0];
 /** The foes within `n`, nearest first (then the weakest, then by id). */
-const nearest = (b: Battle, me: Unit, n: number): Unit[] => foesNear(b, me, n).sort((x, y) => apart(me, x) - apart(me, y) || x.hp - y.hp || x.id - y.id);
+export const nearest = (b: Battle, me: Unit, n: number): Unit[] => foesNear(b, me, n).sort((x, y) => apart(me, x) - apart(me, y) || x.hp - y.hp || x.id - y.id);
 /** The caster's living friends (not itself, not summons), the most hurt share first. */
 const friends = (b: Battle, me: Unit, reach: number): Unit[] =>
   b.units
     .filter((a) => a.alive && a !== me && a.side === me.side && a.owner === undefined && !UNITS[a.def].summon && apart(a, me) <= reach)
     .sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id);
 /** A melee cut: it faces the foe, the swing is drawn, and it is struck for `mult` of the caster's attack. */
-function cut(b: Battle, me: Unit, f: Unit, out: BattleEvent[], mult = 1): void {
+export function cut(b: Battle, me: Unit, f: Unit, out: BattleEvent[], mult = 1): void {
   me.facing = wayTo(me, f);
   out.push({ kind: 'swing', by: me.id, to: f.id });
   strike(b, me, f, mult, out);
 }
 /** A missile (a shot, a bolt, a wisp): drawn as a streak from the caster, then struck for `mult`. */
-function bolt(b: Battle, me: Unit, f: Unit, out: BattleEvent[], mult = 1): void {
+export function bolt(b: Battle, me: Unit, f: Unit, out: BattleEvent[], mult = 1): void {
   me.facing = wayTo(me, f);
   out.push({ kind: 'arc', from: me.id, to: f.id });
   strike(b, me, f, mult, out);

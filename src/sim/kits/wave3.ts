@@ -4,11 +4,11 @@
 
 import { addUnit, atkOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { apart, castPower, crowd, durOf, foesOf, mendUnit, near3x3, reachOf } from '../abilities';
-import { addRes } from '../heroKits';
-import { bleedFor, burnFor, chillFor, cleanse, poisonFor, silenceFor, stunFor, weakFor } from '../ailments';
-import { blinkStrike, blinkTo, charge, chokeLine, displace, laneLine, launch, leapTo, mostAtRisk, moveMany, raiseAura, raiseWall, safeTile, shieldLine, shove, swapPlaces, teleportSlash } from '../toolkit';
+import { bleedFor, burnFor, charmFor, chillFor, cleanse, poisonFor, silenceFor, weakFor } from '../ailments';
+import { blinkStrike, blinkTo, chokeLine, displace, laneLine, launch, leapTo, moveMany, raiseAura, raiseWall, safeTile, shove, swapPlaces, teleportSlash } from '../toolkit';
 import { alliesOf, foesNear, freeNear, ms, strike, strongest } from './common';
-import { friendInDanger, sk, ult, type Row } from './comingRow';
+import { before, bolt, cut, nearest } from './third';
+import { sk, ult, type Row } from './comingRow';
 
 const weakest = (x: Unit, y: Unit) => x.hp - y.hp || x.id - y.id;
 const farthest = (me: Unit) => (x: Unit, y: Unit) => apart(me, y) - apart(me, x) || x.id - y.id;
@@ -40,38 +40,24 @@ export function riddleOfRepulsion(b: Battle, me: Unit, out: BattleEvent[]): bool
   return true;
 }
 
-/** Skill 3 — Constellation Swap: swaps places with the ally most at risk within 5 tiles, shielding both and restoring pool. */
-export function constellationSwap(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const friend = mostAtRisk(b, me);
-  if (!friend || !foesNear(b, me, 6).length) return false;
-  if (friend !== me && apart(me, friend) <= 5) {
-    if (!swapPlaces(b, me, friend, out)) {
-      const spot = freeNear(b, friend, 1)[0];
-      if (spot) blinkTo(b, me, spot, out);
-    }
-  }
-  const sh = Math.round(me.maxHp * 0.2);
-  me.shield = { hp: sh, until: b.t + ms(me, 4000) };
-  friend.shield = { hp: sh, until: b.t + ms(me, 4000) };
-  addRes(friend, 15);
-  // (the shields show as wards, as the roster's shields do: a heal of nothing on each)
-  out.push({ kind: 'heal', to: me.id, amount: 0, by: me.id });
-  if (friend !== me) out.push({ kind: 'heal', to: friend.id, amount: 0, by: me.id });
+/** Skill 3 — Riddling Glance (a jab): a riddle in a glance at the nearest foe within 3: struck, and confused for 1s. */
+export function riddlingGlance(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearest(b, me, 3)[0];
+  if (!f) return false;
+  bolt(b, me, f, out, 0.8);
+  if (f.alive) charmFor(b, f, ms(me, 1000), me);
   return true;
 }
 
-/** Ultimate — Celestial Convergence: drags every foe within 5 tiles into a star-vortex, stuns them for 1.8s, and calls down starlight. */
-export function celestialConvergence(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+/** Ultimate — The Last Riddle: every foe within 5 tiles is struck and silenced for 2.5s, none of them able to answer. */
+export function lastRiddle(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesNear(b, me, 5);
   if (!foes.length) return false;
-  moveMany(b, me, foes, 2, 'drag', out);
   for (const f of foes) {
+    out.push({ kind: 'arc', from: me.id, to: f.id });
     strike(b, me, f, 1.65, out, true);
-    if (f.alive) stunFor(b, f, ultDur(me, 1800), false, 'stun', me);
+    if (f.alive) silenceFor(b, f, ultDur(me, 2500), me);
   }
-  const aim = foes[0];
-  b.pending.push({ at: b.t + 550, kind: 'rain', by: me.id, to: aim.id, dmg: atkOf(me) * 1.8, heavy: true, u: aim.u, v: aim.v });
-  out.push({ kind: 'area', by: me.id, id: 'volley', u: aim.u, v: aim.v, ms: 550 });
   return true;
 }
 
@@ -79,12 +65,17 @@ export function celestialConvergence(b: Battle, me: Unit, out: BattleEvent[]): b
 // 12. MIRAGE DANCER (Zahara) — frontier · trickster
 // ============================================================================
 
-/** Skill 1 — Whirling Veils: spins up to 4 tiles through a line of foes, cutting each and leaving a sand decoy on the tile she left. */
+/** Skill 1 — Whirling Veils: spins on the spot, cutting the foes within 1, and leaves a sand mirage on a free tile beside her for 4.5s. */
 export function whirlingVeils(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const old = { u: me.u, v: me.v };
-  if (!charge(b, me, { tiles: reachOf(me, 4), route: 'line', through: true, mult: 1.5 }, out)) return false;
-  if (!unitAt(b, old.u, old.v)) {
-    const d = addUnit(b, 'decoy', old.u, old.v);
+  const near = foesNear(b, me, 1);
+  if (!near.length) return false;
+  for (const f of near) {
+    out.push({ kind: 'swing', by: me.id, to: f.id });
+    strike(b, me, f, 1.5, out);
+  }
+  const spot = freeNear(b, me, 1)[0];
+  if (spot && !unitAt(b, spot.u, spot.v)) {
+    const d = addUnit(b, 'decoy', spot.u, spot.v);
     d.hp = d.maxHp = Math.max(1, Math.round(me.maxHp * 0.35));
     d.expires = b.t + ms(me, 4500);
     d.owner = me.id;
@@ -108,23 +99,22 @@ export function duneSwap(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Skill 3 — Sirocco Leap: leaps up to 3 tiles over the melee and raises a 3-tile Wind Wall that reflects enemy shots. */
-export function siroccoLeap(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!foesNear(b, me, 5).length) return false;
-  const ok = charge(b, me, { tiles: 3, route: 'leap', mult: 1.4 }, out);
-  const line = shieldLine(b, me, 3) ?? freeNear(b, me, 1).slice(0, 2);
-  if (line.length) raiseWall(b, me, line, 'wind', ms(me, 4500), out);
-  return ok || line.length > 0;
+/** Skill 3 — Veil Flick (a jab): a flick of her sand-heavy veil at the foe before her; it is weakened for 1.5s. */
+export function veilFlick(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = before(b, me);
+  if (!f) return false;
+  cut(b, me, f, out, 0.85);
+  if (f.alive) weakFor(b, f, ms(me, 1500), me);
+  return true;
 }
 
-/** Ultimate — Dance of Seven Mirages: summons two sand decoys and performs a 5-hop teleport slash, stunning and bleeding each foe struck. */
+/** Ultimate — Dance of Seven Mirages: a 5-hop slash through the foes, bleeding each, and two sand mirages left behind. */
 export function sevenMirages(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const hit = teleportSlash(b, me, { k: 5, reach: reachOf(me, 6), mult: 1.7, order: weakest }, out);
   if (!hit.length) return false;
   for (const f of hit) {
     if (!f.alive) continue;
     bleedFor(b, me, f, 0.08, ultDur(me, 3500));
-    stunFor(b, f, ultDur(me, 1100), false, 'stun', me);
   }
   for (const spot of freeNear(b, me, 2).slice(0, 2)) {
     const d = addUnit(b, 'decoy', spot.u, spot.v);
@@ -175,16 +165,15 @@ export function quarantineLine(b: Battle, me: Unit, out: BattleEvent[]): boolean
   return true;
 }
 
-/** Ultimate — Black Miasma: blinks to a central vantage, shoves adjacent foes away, and raises a 4-tile Miasma aura for 8s. */
+/** Ultimate — Black Miasma: strikes and poisons every foe within 4, and raises a Black Miasma round him for 8s that poisons the foes there. */
 export function blackMiasma(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!foesOf(b, me).length) return false;
-  const close = foesNear(b, me, 1);
-  if (close.length) moveMany(b, me, close, 2, 'shove', out);
-  for (const f of foesNear(b, me, 4)) {
+  const foes = foesNear(b, me, 4);
+  if (!foes.length) return false;
+  for (const f of foes) {
     strike(b, me, f, 1.3, out, true);
     if (f.alive) poisonFor(b, me, f);
   }
-  raiseAura(b, me, { what: 'Black Miasma', reach: 4, ms: ultDur(me, 8000), every: 1000, foe: { dmg: 0.35 * castPower(), slow: 1200, ail: 'poison' }, ally: { heal: 0.05 } }, out);
+  raiseAura(b, me, { what: 'Black Miasma', reach: 4, ms: ultDur(me, 8000), every: 1000, foe: { dmg: 0.35 * castPower(), ail: 'poison' } }, out);
   return true;
 }
 
@@ -235,8 +224,8 @@ export function firebombLine(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Ultimate — Carpet Bombardment: rocket-jumps to high ground and rains 4 concussion mortar salvos across the field. */
-export function carpetBombardment(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+/** Ultimate — Shell Storm: rocket-jumps to high ground and rains 4 concussion mortar salvos across the field. */
+export function shellStorm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
   if (!foes.length) return false;
   const safe = safeTile(b, me, 3);
@@ -280,22 +269,21 @@ export function retrogradeOrbit(b: Battle, me: Unit, out: BattleEvent[]): boolea
   return true;
 }
 
-/** Skill 3 — Starlight Bridge: swaps an endangered ally to safety and raises a 3-tile Astrolabe aura that refills pools. */
-export function starlightBridge(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!foesOf(b, me).length) return false;
-  const friend = mostAtRisk(b, me);
-  if (friend && friend !== me && apart(me, friend) <= 4 && friend.hp < friend.maxHp * 0.6) swapPlaces(b, me, friend, out);
-  raiseAura(b, me, { what: 'Starlight Bridge', reach: 3, ms: ms(me, 6000), every: 1000, ally: { mana: 6, stamina: 3, atk: 0.15 } }, out);
+/** Skill 3 — Star Dart (a jab): a mote of starlight at the nearest foe within 4; it is slowed 1s. */
+export function starDart(b: Battle, me: Unit, out: BattleEvent[]): boolean {
+  const f = nearest(b, me, 4)[0];
+  if (!f) return false;
+  bolt(b, me, f, out, 0.85);
+  if (f.alive) chillFor(b, f, ms(me, 1000), false, false, me);
   return true;
 }
 
-/** Ultimate — Supernova Alignment: pulls foes within 6 tiles together and drops two twin supernovas on them. */
+/** Ultimate — Supernova Alignment: pulls foes within 6 tiles together and drops two twin supernovas on them (the gravity is hers: she keeps the one pull-in of the twenty's ultimates that drags a crowd). */
 export function supernovaAlignment(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const aim = crowd(b, me, (f) => apart(me, f) <= reachOf(me, 6)) ?? foesOf(b, me)[0];
   if (!aim) return false;
   for (const f of foesOf(b, me).filter((x) => apart(x, aim) <= 4)) {
     if (f !== aim) displace(b, me, f, wayTo(f, aim), 2, 'drag', out);
-    stunFor(b, f, ultDur(me, 1200), false, 'stun', me);
   }
   for (let i = 0; i < 2; i++) {
     b.pending.push({ at: b.t + 600 + i * 350, kind: 'meteor', by: me.id, to: aim.id, dmg: atkOf(me) * 2.4, heavy: true, u: aim.u, v: aim.v });
@@ -309,8 +297,6 @@ export function supernovaAlignment(b: Battle, me: Unit, out: BattleEvent[]): boo
 // The guards' and heals' triggers (each guard's cast checks the same trigger the AI reads, as `kits/third.ts`'s do)
 // ============================================================================
 
-/** The Astral Sphinx's Constellation Swap: a friend within 5 (or she) under 40% with a foe beside it. */
-const swapNeeded = friendInDanger(5, 0.4);
 /** The Astrologer's Retrograde Orbit: she is under 35% with a foe within 2. */
 const orbitNeeded = (b: Battle, me: Unit): boolean => me.hp < me.maxHp * 0.35 && foesNear(b, me, 2).length > 0;
 /** The Bombardier's Blast Jump: a foe within 2 of him (he fights from range, and gets clear). */
@@ -323,21 +309,21 @@ export function wave3Rows(): Record<string, Row> {
   return {
     astralSphinx: {
       pool: 'mana',
-      role: 'A star-lioness: pounces across rifts, flings foes away with riddles and trades places by starlight',
+      role: 'A star-lioness: pounces across rifts and confounds her foes with riddles',
       passive: { name: 'Starlit Wings', text: 'Slips 15% of blows', dodge: 0.15 },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Rift Pounce', 'Steps through a star-rift behind the strongest foe within 4 and strikes it; the other foes beside her are shoved a tile away', 550, 'attack', riftPounce) },
       s2: { cls: 'heavy', cost: 44, cd: 11000, skill: sk('Riddle of Repulsion', 'Puts a riddle to the strongest foe within 4: it is struck, silenced for 2s and thrown 3 tiles away', 550, 'attack2', riddleOfRepulsion) },
-      s3: { cls: 'guard', cost: 30, cd: 15000, more: { emergency: swapNeeded }, skill: sk('Constellation Swap', 'When a friend within 5 falls under 40% with a foe beside it, she trades places with it by starlight, shields them both for a fifth of her health and refills its pool', 450, 'attack2', (b, me, out) => swapNeeded(b, me) && constellationSwap(b, me, out)) },
-      ultimate: ult('Celestial Convergence', 'Drags every foe within 5 tiles 2 tiles into a star-vortex, strikes and stuns them for 1.8s, and calls down a fall of starlight', 800, celestialConvergence, { rate: 1.05, power: 1.5 }),
+      s3: { cls: 'jab', cost: 14, cd: 3500, skill: sk('Riddling Glance', 'A riddle in a glance at the nearest foe within 3: struck, and confused for 1s', 350, 'attack', riddlingGlance) },
+      ultimate: ult('The Last Riddle', 'Every foe within 5 tiles is struck and silenced for 2.5s, none of them able to answer', 800, lastRiddle, { rate: 1.05, power: 1.5 }),
     },
     mirageDancer: {
       pool: 'stamina',
-      role: 'A dune-dancer: spins through foes, trades places with her mirages and leaps on the sirocco',
+      role: 'A dune-dancer: spins in the melee and trades places with her mirages',
       passive: { name: 'Desert Shimmer', text: 'Slips 18% of blows', dodge: 0.18 },
-      s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Whirling Veils', 'Spins up to 4 tiles through a line of foes, cutting each, and leaves a sand mirage on the tile she left for 4.5s', 450, 'attack', whirlingVeils) },
+      s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Whirling Veils', 'Spins on the spot, cutting the foes beside her, and leaves a sand mirage on a tile beside her for 4.5s', 450, 'attack', whirlingVeils) },
       s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Dune Swap', 'Trades places with her sand mirage (or the farthest foe within 4) and cuts and weakens every foe beside her as she arrives', 500, 'attack2', duneSwap) },
-      s3: { cls: 'utility', cost: 22, cd: 16000, skill: sk('Sirocco Leap', 'Leaps up to 3 tiles over the melee and raises a Wind Wall 3 tiles across for 4.5s: shots through it fly back at their shooters', 500, 'attack2', siroccoLeap) },
-      ultimate: ult('Dance of Seven Mirages', 'Slashes through five foes within 6 tiles in turn, stunning and bleeding each, and leaves two sand mirages behind', 700, sevenMirages, { rate: 1.25, power: 1.7 }),
+      s3: { cls: 'jab', cost: 10, cd: 3500, skill: sk('Veil Flick', 'A flick of her sand-heavy veil at the foe before her; it is weakened for 1.5s', 300, 'attack', veilFlick) },
+      ultimate: ult('Dance of Seven Mirages', 'Slashes through five foes within 6 tiles in turn, bleeding each, and leaves two sand mirages behind', 700, sevenMirages, { rate: 1.25, power: 1.7 }),
     },
     plagueDoctor: {
       pool: 'mana',
@@ -346,7 +332,7 @@ export function wave3Rows(): Record<string, Row> {
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Censer Swing', 'Swings his smoking censer: the foes beside him are shoved 2 tiles back, and the thickest crowd within 4 is struck and poisoned on a 3x3', 600, 'attack', censerSwing) },
       s2: { cls: 'utility', cost: 40, cd: 14000, more: { heals: true, emergency: crowNeeded }, skill: sk('Crow Step', 'Scatters into ash-crows and comes together on the safest tile within 3, cleansing and mending the most hurt friend', 560, 'attack2', crowStep) },
       s3: { cls: 'utility', cost: 34, cd: 16000, skill: sk('Quarantine Line', 'Raises a Wall of Thorns 3 tiles across the foes\' way for 6s and drags the nearest foe into the brambles', 600, 'attack2', quarantineLine) },
-      ultimate: ult('Black Miasma', 'Shoves the foes beside him 2 tiles back, strikes and poisons every foe within 4, and raises a Black Miasma round him for 8s that poisons and slows foes and mends friends', 800, blackMiasma, { rate: 0.95, power: 1.4 }),
+      ultimate: ult('Black Miasma', 'Strikes and poisons every foe within 4, and raises a Black Miasma round him for 8s that poisons the foes there', 800, blackMiasma, { rate: 0.95, power: 1.4 }),
     },
     bombardier: {
       pool: 'stamina',
@@ -355,16 +341,16 @@ export function wave3Rows(): Record<string, Row> {
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Concussion Mortar', 'A heavy shell on the thickest crowd within 6: the foe at its heart is thrown 2 tiles, the others round it struck and shoved a tile out', 600, 'attack', concussionMortar) },
       s2: { cls: 'guard', cost: 16, cd: 12000, more: { emergency: blastNeeded }, skill: sk('Blast Jump', 'With a foe within 2, a charge at his feet burns and shoves the foes beside him; he rocket-jumps to the safest tile within 3 and fires at the nearest foe', 500, 'attack2', (b, me, out) => blastNeeded(b, me) && blastJump(b, me, out)) },
       s3: { cls: 'utility', cost: 22, cd: 16000, skill: sk('Firebomb Line', 'Skids a tile back and lays a Wall of Fire 3 tiles across the lane most foes are walking, for 6s', 550, 'attack2', firebombLine) },
-      ultimate: ult('Carpet Bombardment', 'Rocket-jumps to the safest tile within 3 and rains four salvos of shells across the foes', 850, carpetBombardment, { rate: 0.9, power: 1.6 }),
+      ultimate: ult('Shell Storm', 'Rocket-jumps to the safest tile within 3 and rains four salvos of shells across the foes', 850, shellStorm, { rate: 0.9, power: 1.6 }),
     },
     astrologer: {
       pool: 'mana',
-      role: 'A star-keeper: pulls foes into gravity wells, glides along orbits and bridges starlight',
+      role: 'A star-keeper: pulls foes into gravity wells and glides along orbits',
       passive: { name: 'Chart of the Heavens', text: 'Her starlight deals 25% more to foes 4 or more tiles away', far: 0.25 },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Gravity Well', 'A star collapses on the thickest crowd within 5: the foes within 3 of it are dragged 2 tiles in and struck', 650, 'attack', gravityWell) },
       s2: { cls: 'guard', cost: 30, cd: 14000, more: { emergency: orbitNeeded }, skill: sk('Retrograde Orbit', 'When she falls under 35% with a foe within 2, she strikes the nearest foe, flings it 2 tiles back and slows it, and glides to the safest tile within 3', 450, 'attack2', (b, me, out) => orbitNeeded(b, me) && retrogradeOrbit(b, me, out)) },
-      s3: { cls: 'utility', cost: 40, cd: 18000, skill: sk('Starlight Bridge', 'Trades places with a friend within 4 under 60% and raises a Starlight Bridge round her for 6s: friends within 3 refill their pools and hit 15% harder', 600, 'attack2', starlightBridge) },
-      ultimate: ult('Supernova Alignment', 'Drags the foes within 4 of the thickest crowd 2 tiles together and stuns them, then drops two supernovas on it', 850, supernovaAlignment, { rate: 0.95, power: 1.5 }),
+      s3: { cls: 'jab', cost: 13, cd: 3000, skill: sk('Star Dart', 'A mote of starlight at the nearest foe within 4; it is slowed 1s', 350, 'attack', starDart) },
+      ultimate: ult('Supernova Alignment', 'Drags the foes within 4 of the thickest crowd 2 tiles together, then drops two supernovas on it', 850, supernovaAlignment, { rate: 0.95, power: 1.5 }),
     },
   };
 }
