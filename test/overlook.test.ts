@@ -30,9 +30,10 @@ test('portrait layouts keep mode controls, chests and party on separate ground',
       assert.ok(p.box.w >= 44 && p.box.h >= 44);
     }
     assert.ok(calamity.box.y + calamity.box.h < h * 0.3);
-    assert.ok(c.heroes.every((p) => p.y > h * 0.7 && p.y < daily.box.y - 30));
+    // (UI batch 1: the Daily is a small icon at the right edge above the Battle bar; the heroes' feet stand above it)
+    assert.ok(c.heroes.every((p) => p.y > h * 0.7 && p.y < daily.box.y));
     assert.ok(c.stash.x + c.stash.w < w / 2 - 109, 'chests clear of army plaque');
-    assert.ok(c.stash.y + c.stash.h <= daily.box.y);
+    assert.ok(c.stash.x + c.stash.w <= daily.box.x, 'chests and the Daily icon on opposite sides');
     const ranks = overlookRanks(w, h);
     assert.ok(ranks.length > 0 && ranks.length < 30);
     assert.deepEqual(ranks, overlookRanks(w, h));
@@ -70,7 +71,7 @@ test('the Last Stand’s place covers the painted watchtower and its plate hangs
     // (the plate is the box's foot, and clear of the stall below it and of the Daily board)
     assert.equal(tower.plate.y + tower.plate.h, tower.box.y + tower.box.h);
     assert.ok(!stall || tower.box.y + tower.box.h < stall.box.y, 'clear of the stall');
-    // (the Daily board alone in the plaque row, in the middle)
-    assert.ok(Math.abs(daily.box.x + daily.box.w / 2 - w / 2) <= 1 && daily.box.w >= 180, 'the Daily board in the middle');
+    // (UI batch 1: the Daily is a small icon at the right edge, a thumb wide, clear of the tower)
+    assert.ok(daily.box.x + daily.box.w <= w && daily.box.x > w / 2 && daily.box.w >= 44 && daily.box.w <= 64, 'the Daily icon at the right edge');
   }
 });

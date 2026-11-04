@@ -1,5 +1,7 @@
 # Tower elites and relic sets
 
+> **Status (0.332.0):** The elites and relic sets are now met in the Calamity only (the codex says "Calamity elite"); the endless tower they were written for is retired.
+
 Rules: `src/sim/elites.ts`, `src/sim/eliteFoes.ts`, `src/sim/relicSets.ts` (pure, deterministic). Page: `src/towerElites.ts`
 (+ `src/eliteSets.css`), wired into `towerView.ts` and the boss intro card in `main.ts`. Tests: `test/elites.test.ts`.
 

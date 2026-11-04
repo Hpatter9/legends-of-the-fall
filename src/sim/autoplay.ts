@@ -40,7 +40,9 @@ export const isBackline = (kind: string): boolean => !!UNITS[kind].shot || UNITS
 export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): Owned[] {
   // (a hero a mirror's clone stands in for sits out: ONE-OF-EACH)
   // (a guest is not one of the five: it takes its own sixth place after them, GUEST-HERO)
-  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
+  // (a quest battle's required cast must fight: they are always kept, ahead of the strongest)
+  const must = run.mode?.kind === 'quest' ? run.roster.filter((h) => !h.guest && !sitsOut(run, h.id) && run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind)).map((h) => h.id) : [];
+  const kept = [...must, ...keep.filter((id) => !must.includes(id))].map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
   const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
   const five = oneOfEach([...kept, ...rest]).slice(0, squadLimit(run));
   const guest = run.roster.find((h) => h.guest);
