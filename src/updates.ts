@@ -27,6 +27,66 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.353.0',
+    date: '2026-11-04',
+    title: 'Charge has an edge, stronger formations',
+    notes: ['Charge now marches faster and its first blows hit archers hard. Shield Wall and Hollow Square give real cover. Kitsune and Werewolf trimmed at level 10.'],
+  },
+  {
+    version: '0.352.0',
+    date: '2026-11-04',
+    title: 'Groundwork for the Vampires',
+    notes: ['The Vampire origin, its bat swarm and the Crimson Court are built and tested; the five Vampires join once their art is painted.'],
+  },
+  {
+    version: '0.351.0',
+    date: '2026-11-04',
+    title: 'Every foe fights its own way',
+    notes: ['Common foes flank, kite, hunt, guard or charge, with a passive each; elites and army kinds gain a skill. Armies retuned to match.'],
+  },
+  {
+    version: '0.350.0',
+    date: '2026-11-04',
+    title: 'Painted king\'s spells, gear balance',
+    notes: ['The 14 new king\'s spells get their own painted effects and icons. Armies, the daily and the Last Stand retuned for the default ruler.', 'Gear slots and runes balanced: early climbs and the daily back on their targets.'],
+  },
+  {
+    version: '0.349.0',
+    date: '2026-11-04',
+    title: 'Ornate menus, painted ultimates',
+    notes: ['Every menu, popup and prompt restyled in the ornate Keep and Kingdom look, with bigger tap targets.', 'Painted frames in the ultimate showcases: the Samurai\'s iaido, the Buccaneer\'s die, the Dread Pirate\'s ghost ship and more.'],
+  },
+  {
+    version: '0.348.0',
+    date: '2026-11-04',
+    title: 'Tactic advice',
+    notes: ['The tactic sheet now gives advice that holds up: advance together, and a warning if you hold the line against archers.'],
+  },
+  {
+    version: '0.347.0',
+    date: '2026-11-04',
+    title: 'Runes, remedies, new Eidolon art',
+    notes: ['Runes replace run finds: three per hero, merge them up. Fallen heroes stand again at half after a won wave; pack remedies in your satchel.', 'Repainted War Horn and quest givers on the quest board.'],
+  },
+  {
+    version: '0.346.0',
+    date: '2026-11-04',
+    title: 'Cleaner hero art',
+    notes: ['Pinholes cleared from every awakened hero sheet, and sharper, solid hero portraits.'],
+  },
+  {
+    version: '0.345.0',
+    date: '2026-11-04',
+    title: 'Every ultimate shown, formations, tactics',
+    notes: ['All 45 heroes now show their ultimate in a showcase. Pick a tactic before a fight, call Charge!, and stand in formations: Shield Wall, Spearhead and more.', 'Bonds help only the pair. The Calamity\'s crossroads offer guardians and boons. A Hire to start prompt, tidier chests, Equip and Settings.'],
+  },
+  {
+    version: '0.344.0',
+    date: '2026-11-04',
+    title: 'Bonds, legacy, new rooms, 14 spells',
+    notes: ['Chapel and Library rooms; bonds and rivalries between heroes; retire heroes into a legacy with perks and Hall plinths.', 'Fourteen new king\'s spells across the schools. The party now advances together by default.'],
+  },
+  {
     version: '0.343.0',
     date: '2026-11-04',
     title: 'Gear sets, legends and enchanting',

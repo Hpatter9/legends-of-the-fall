@@ -16,6 +16,7 @@ import { grantTomes, type TomeSize } from './tomes';
 import { readTrade } from './traders';
 import { repairAll, repairItem } from './wear';
 import { ENCHANT_STANDING, REFORGE_STANDING, enchantItem, reforgeItem } from './enchant';
+import { REMEDY_LIST, grantRemedy, type RemedyId } from './remedies';
 
 const STALL_SALT = 0x57a11;
 const LINE_SALT = 0x57a12;
@@ -51,7 +52,9 @@ export const SOLD_TODAY = 10;
 export type Ware =
   | { key: string; type: 'book'; book: string; price: number; copies: number; standing: 1 | 2 | 3 }
   | { key: string; type: 'gear'; item: NewEquipment; price: number; copies: number; standing: 1 | 2 | 3 }
-  | { key: string; type: 'tome'; size: TomeSize; price: number; copies: number; standing: 1 | 2 | 3 };
+  | { key: string; type: 'tome'; size: TomeSize; price: number; copies: number; standing: 1 | 2 | 3 }
+  // (SEVEN-SLOT GEAR batch 6: the remedies, on the tomes' shelf: `remedies.ts`)
+  | { key: string; type: 'remedy'; remedy: RemedyId; price: number; copies: number; standing: 1 | 2 | 3 };
 
 /** A day's shelves. */
 export interface Stock {
@@ -99,6 +102,7 @@ export function stockOf(m: Meta, day: number): Stock {
     return { key: `gear:${slot}`, type: 'gear', item, price: gearPrice(item), copies: 1, standing: rarity === 4 ? 3 : rarity === 3 ? 2 : 1 };
   });
   const tomes: Ware[] = (Object.entries(TOME_WARES) as [TomeSize, (typeof TOME_WARES)[TomeSize]][]).map(([size, t]) => ({ key: `tome:${size}`, type: 'tome', size, price: t.price, copies: t.copies, standing: t.standing }));
+  for (const r of REMEDY_LIST) tomes.push({ key: `remedy:${r.id}`, type: 'remedy', remedy: r.id, price: r.price, copies: r.stock, standing: r.standing });
   return { books, gear, tomes };
 }
 
@@ -132,7 +136,7 @@ export function spend(m: Meta, n: number, day: number): void {
 }
 
 /** What buying gave: the piece made, the book or tomes. */
-export type Bought = { type: 'gear'; item: Equipment } | { type: 'book'; book: string } | { type: 'tome'; size: TomeSize };
+export type Bought = { type: 'gear'; item: Equipment } | { type: 'book'; book: string } | { type: 'tome'; size: TomeSize } | { type: 'remedy'; remedy: RemedyId };
 
 /** Buy a ware on `day` (by its key on the day's shelves): the crowns are paid and count for standing. Null (nothing changes) when it
  *  cannot be bought. */
@@ -148,6 +152,10 @@ export function buyWare(m: Meta, key: string, day: number): Bought | null {
   if (w.type === 'book') {
     grantBook(m, w.book);
     return { type: 'book', book: w.book };
+  }
+  if (w.type === 'remedy') {
+    grantRemedy(m, w.remedy);
+    return { type: 'remedy', remedy: w.remedy };
   }
   grantTomes(m, { [w.size]: 1 });
   return { type: 'tome', size: w.size };

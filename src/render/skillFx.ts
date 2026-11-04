@@ -183,6 +183,21 @@ export const SPELL_FX: Record<Exclude<SpellId, 'meteor'>, Effect> = {
   bulwark: { sheet: 'earthShield', scale: 1.8 },
   wolves: { sheet: 'earthBurst', scale: 1.4 },
   starfall: { sheet: 'fireExplosion', scale: 1.2 },
+  // (KING-SPELLS batch 5: the schools' fourteen spells' own looks)
+  firewall: { sheet: 'fireCircle', scale: 1.5 },
+  icewall: { sheet: 'iceShield', scale: 1.5 },
+  shatter: { sheet: 'iceShield', scale: 1.3, tint: 0xc8f0ff },
+  gale: { sheet: 'windWave', scale: 1.5 },
+  thunderclap: { sheet: 'lightningBurst', scale: 1.6 },
+  snare: { sheet: 'earthBurst', scale: 1.4, tint: 0x8fd16a },
+  charm: { sheet: 'pinkHeart', scale: 1.4 },
+  foresight: { sheet: 'goldBurst', scale: 1.4 },
+  sunbeam: { sheet: 'lightNova', scale: 1.6 },
+  venom: { sheet: 'darkSlash', scale: 1.3, tint: 0x8ee86a },
+  mirage: { sheet: 'whiteBurst', scale: 1.4 },
+  drain: { sheet: 'bloodExplosion', scale: 1.3 },
+  bonewall: { sheet: 'earthWave', scale: 1.5, tint: 0xe8dcc0 },
+  raisedead: { sheet: 'darkCircle', scale: 1.6 },
 };
 
 /** The word that floats up from each fighter a spell touches (Haste, Rally and Shield say theirs in `fx.ts`). */
@@ -210,6 +225,21 @@ export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms:
   bulwark: { color: 0xb88a5a, ms: 600 },
   wolves: { color: 0x7dff8a, ms: 600 },
   starfall: { color: 0xff5a2a, ms: 700 },
+  // (KING-SPELLS batch 5: the schools' fourteen spells' own looks)
+  firewall: { color: 0xff7a3d, ms: 600 },
+  icewall: { color: 0x9ad8ff, ms: 600 },
+  shatter: { color: 0xc8f0ff, ms: 500 },
+  gale: { color: 0x7fe0d0, ms: 600 },
+  thunderclap: { color: 0xfff27a, ms: 500 },
+  snare: { color: 0x8fd16a, ms: 600 },
+  charm: { color: 0xff9ad8, ms: 600 },
+  foresight: { color: 0xffe08a, ms: 600 },
+  sunbeam: { color: 0xfff0a0, ms: 500 },
+  venom: { color: 0x8ee86a, ms: 500 },
+  mirage: { color: 0xd8c8ff, ms: 600 },
+  drain: { color: 0xff5a6a, ms: 600 },
+  bonewall: { color: 0xe8dcc0, ms: 600 },
+  raisedead: { color: 0xb08af0, ms: 700 },
 };
 
 /** A foe this big (its full health) that dies is a big kill: a burst, a white flash, a hard shake. */

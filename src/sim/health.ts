@@ -10,8 +10,16 @@ export const FALLEN = 0.25;
 /** The least a hurt hero can be left with (a cost of hp never kills). */
 const LEAST = 0.05;
 
-/** A hero's share of its hp (1 outside the tower). */
-export const hpShare = (run: Run, id: number): number => run.tower?.hp[String(id)] ?? 1;
+/** A hero's share of its hp: the tower's wounds, else an army run's (SEVEN-SLOT GEAR batch 6, `wounds.ts`), else whole. */
+export const hpShare = (run: Run, id: number): number => run.tower?.hp[String(id)] ?? run.wounds?.[String(id)] ?? 1;
+/** Set a hero's share of its hp in whichever record the run keeps (a whole hero is dropped from an army run's). */
+export function setShare(run: Run, id: number, share: number): void {
+  const s = Math.max(0, Math.min(1, share));
+  if (run.tower) run.tower.hp[String(id)] = s;
+  else if (s >= 1) {
+    if (run.wounds) delete run.wounds[String(id)];
+  } else (run.wounds ??= {})[String(id)] = s;
+}
 
 /** Heal every hero of the roster by `frac` of its full hp, a fallen one included (an ascended calamity halves it, an elixir `whole` excepted). */
 export function healParty(run: Run, frac: number, whole = false): void {

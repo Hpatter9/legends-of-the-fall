@@ -10,7 +10,12 @@ import { FIELD_BANDS } from '../../src/sim/foes';
 import { mixSeed, Rng } from '../../src/sim/rng';
 import { roleOf, type PartyRole } from '../../src/sim/suggest';
 import { UNITS } from '../../src/sim/units';
-import { setTactic, type Tactic } from '../../src/sim/tactics';
+import { setTactic, TACTICS, type Tactic } from '../../src/sim/tactics';
+import { formationSpots, setFormations, type Formation } from '../../src/sim/formations';
+import { adviseTactic } from '../../src/sim/tacticAdvice';
+const ADVICE_ON = process.argv.includes('--advice');
+const FORMATION = (process.argv.includes('--formation') ? process.argv[process.argv.indexOf('--formation') + 1] : '') as Formation | '';
+if (process.argv.includes('--answer')) TACTICS.answer = Number(process.argv[process.argv.indexOf('--answer') + 1]);
 import { fieldBoost, pickTeam, sweepBoost } from '../heroSweep';
 
 const flag = (n: string, d: string) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : d);
@@ -91,7 +96,10 @@ for (let g = 0; g < GAMES; g++) {
   const seed = g + 1;
   const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
   const b = startBattle(seed, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(STAGE));
-  const spots = PLACED === 'random' ? random(b, seed) : sensible(b, team);
+  const advice = ADVICE_ON ? adviseTactic(b.units.filter((u) => u.side === 'foe').map((u) => u.def), team, 'advance') : undefined;
+  const shape = advice ? advice.formation : FORMATION;
+  const spots = shape ? formationSpots(b.board, team, shape).map((a) => [a.u, a.v] as [number, number]) : PLACED === 'random' ? random(b, seed) : sensible(b, team);
+  if (FORMATION || ADVICE_ON || process.argv.includes('--formations-on')) setFormations(b, true);
   team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(1, LEVEL)));
   const role = new Map<number, PartyRole>();
   for (const u of b.units) if (u.side === 'hero') role.set(u.id, roleOf(u.def));
@@ -102,7 +110,8 @@ for (let g = 0; g < GAMES; g++) {
   const takenBefore = new Map<number, number>();
   const diedAt = new Map<number, number>();
   let frontAt = Infinity;
-  if (TACTIC) setTactic(b, TACTIC);
+  if (advice) setTactic(b, advice.tactic);
+  else if (TACTIC) setTactic(b, TACTIC);
   fight(b);
   while (b.phase === 'fight') {
     // (the prototypes: hold the strikers and the back line until the front line is at the foe)
@@ -179,7 +188,7 @@ for (let g = 0; g < GAMES; g++) {
 
 const pc = (a: number, n: number) => `${((100 * a) / Math.max(1, n)).toFixed(1)}%`;
 const med = (xs: number[]) => (xs.length ? [...xs].sort((a, c) => a - c)[Math.floor(xs.length / 2)] : 0);
-console.log(`\nlevel ${LEVEL}, stage ${STAGE}, ${GAMES} field fights, random teams, placed ${PLACED}, prototype ${MODE}, tactic ${TACTIC || 'the default'}`);
+console.log(`\nlevel ${LEVEL}, stage ${STAGE}, ${GAMES} field fights, random teams, placed ${PLACED}, prototype ${MODE}, tactic ${TACTIC || 'the default'}${FORMATION ? `, formation ${FORMATION}` : ''}`);
 console.log(`won ${pc(T.won, T.fights)}; with a front-liner that came to blows: ${T.withFront}`);
 console.log(`front line's first blow: median ${(med(T.frontFirst) / 1000).toFixed(1)} s`);
 console.log(`fights where a striker was at blows first: ${pc(T.fightsEarly, T.withFront)} (won ${pc(T.wonEarly, T.fightsEarly)}; the rest won ${pc(T.wonNotEarly, T.withFront - T.fightsEarly)})`);

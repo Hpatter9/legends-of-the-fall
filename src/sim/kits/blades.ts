@@ -72,7 +72,7 @@ export function pilfer(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 }
 
 /** Werewolf, Shift: changes between the Hunter (the white wolf: quicker, bites that bleed) and the Brute (the black wolf: takes a quarter less, blows that splash).
- *  He goes Brute under half health or with three foes beside him, else Hunter; at most once in 4s. The form lasts 40s of fighting time and
+ *  He goes Brute under half health or with three foes beside him, else Hunter; at most once in 4s. The form lasts 25s of fighting time and
  *  carries into the next wave (SUMMON-TIMERS, `carry.ts`); the same form is taken again (its timer renewed) only with a quarter of it left. */
 export function shift(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesNear(b, me, 4).length) return false;

@@ -235,10 +235,12 @@ function fightTrial(level: number, seed: number): { won: boolean; events: string
 }
 
 test('the trial battle is deterministic, and Vaelkhar fights with his kit: the voidfire, the collapse, his court, the second form', () => {
-  const a = fightTrial(70, 2003);
-  assert.deepEqual(a, fightTrial(70, 2003), 'the same seed, the same fight');
+  // (seed 2004: under Advance together, the tactics' default (docs/notes/tactics.md), seed 2003's last try ends before his second form;
+  // 2004's shows the whole kit)
+  const a = fightTrial(70, 2004);
+  assert.deepEqual(a, fightTrial(70, 2004), 'the same seed, the same fight');
   const kinds = a.events.map((e) => e.split(':').slice(1, 3).join(':'));
   for (const k of ['bossSig:voidfire', 'bossSig:voidCollapse', 'skill:', 'phase:']) assert.ok(kinds.some((x) => x.startsWith(k)), `${k} in ${[...new Set(kinds)].join(' ')}`);
   assert.ok(a.boss.phased && a.boss.called > 0, JSON.stringify(a.boss));
-  assert.notDeepEqual(fightTrial(70, 2004).events, a.events);
+  assert.notDeepEqual(fightTrial(70, 2006).events, a.events);
 });

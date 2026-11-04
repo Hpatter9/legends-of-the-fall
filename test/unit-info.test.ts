@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle } from '../src/sim/battle';
-import { KITS, ULT_LEVEL } from '../src/sim/abilities';
+import { hasSkill, KITS, ULT_LEVEL } from '../src/sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL, topOf } from '../src/sim/heroKits';
 import { PHASE2 } from '../src/sim/bossPhases';
 import { HERO_NAMES } from '../src/sim/heroNames';
@@ -91,7 +91,8 @@ test('a foe card has its family, its kit and the codex tips; a boss with a secon
   assert.equal(familyOf(UNITS.wolfBlack), 'Werewolf');
   assert.match(info.sub, /Werewolf/);
   assert.ok(info.tips.length);
-  if (KITS.wolfBlack) assert.equal(info.moves[0].name, KITS.wolfBlack.skill.name);
+  // (FOE-STYLES: a common foe has no skill, only its passive and its way of moving, which its card shows first)
+  if (KITS.wolfBlack) assert.equal(info.moves[0].name, hasSkill(KITS.wolfBlack) ? KITS.wolfBlack.skill.name : KITS.wolfBlack.passive.name);
   const boss = addUnit(b, 'orcWarlord', 4, 1, { phase: 0.5, size: 1.4 });
   const bi = infoOf(b, boss);
   assert.equal(bi.kind, 'boss');

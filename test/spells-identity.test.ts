@@ -70,8 +70,24 @@
 // field1 81b0369e, field30 3f9b2a5e, bosses 11c33a36, armyFoes e3c7011a, spells 69b1d534, lands 99da4981, army d78fb13d, daily d00ddcc9, tower
 // d1468e2a, stand 69c8c642, calamity 18f58bc9, heroes1 58aac7f4, heroes10 9c513279, heroes30 526f4f47, field1Others f1bc7c9d, field30Others
 // dd370f3f, heroes1Others d75813fa, heroes10Others c7f3b928, heroes30Others 1e0ab73b.)
+// (the tactics, docs/notes/tactics.md, re-recorded every scenario but `stand`, which kept its hash (the Last Stand takes no tactic and no
+// answer): Advance together, the default, holds the strikers and the back line until the front line meets the foe, the foes of
+// every band strike 2% harder in answer, and six heroes' kits were retuned for parity. The new hashes: field1 c4c76edd, field30 cf333734,
+// bosses 017421d4, armyFoes 88cd9831, spells d961099b, lands aceefe84, army f4b8c46b, daily 5db72448, tower ff21fdcb, calamity 2e1e9aed, heroes1
+// 63c68ffd, heroes10 04f5f766, heroes30 18918923, field1Others 0f677ef4, field30Others 6dcf91f2, heroes1Others 92b9bcd8, heroes10Others
+// f0b63f3f, heroes30Others 4b47763c.)
+// (the tactics' batch 6, docs/notes/tactics.md, re-recorded field1, field30, bosses, spells, heroes1, heroes10 and heroes30: Charge's edge, and
+// the Kitsune's Alter Self and the Werewolf's Shapechange and Pounce trimmed for level-10 parity. The new hashes: field1 18bd549d, field30
+// d624b730, bosses 1d33b673, spells 271f368b, heroes1 4034a1fa, heroes10 533e38b8, heroes30 d5449c96; every other scenario keeps its hash)
+// (the tactics' batch 6 merged over FOE-STYLES, with the Great Sage's Arcane Surge filling faster for level-30 parity, re-recorded field1
+// ccfaec2c, field30 a13ea4ae, bosses 1d6f9a2d, armyFoes a260d80f, spells 699db651, heroes1 5340f148, heroes10 375d0e79, heroes30 866d2923,
+// field30Others 013dd38b and heroes30Others d17d85f6; every other scenario keeps main's hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
+// (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
+// fourteen. No other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` and `stand` alone: `DAILY_START` 0.785 to 0.83 and `HALL_EASE` 1.2 to
+// 1.36, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
@@ -102,6 +118,9 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // either proof, `identityHashes`.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (f3dc7098): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower`, and batch 6 again over the tactics (calamity 1d879f22, daily 22ed0372, tower 2337ec08): a run started now finds runes, not pieces, and a won
+// wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 8, the balance, re-recorded `daily` alone (6992282b): DAILY_START 0.785 to 0.77 and runes at 0.7; every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
@@ -116,6 +135,13 @@ function recordedStrengths<T>(fn: () => T): T {
   }
 }
 
+// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario on main 0.345.0, and
+// `daily`, `tower` and `calamity` again on 0.349.0 (its runes and remedies): every scenario meets foes, and every foe now has a passive and a
+// way of moving, the common ones retuned, the armies' starts, the daily's and the Last Stand's knobs with them; by the tests' own computation
+// (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the test itself, whose put-back strengths that tool does not know
+// since main 0.339). The new hashes: field1 e1902c7e, field30 0805df76, bosses c6f1850f, armyFoes 4098cb71, spells d89512c0, lands bae90a64,
+// army fc40786d, daily 4f70a194, tower 94d881d8, stand 131fe78c, calamity d9c9bc8a, heroes1 d5321e5c, heroes10 97713696, heroes30 15a1bbf5,
+// field1Others 433f0011, field30Others 760831e8, heroes1Others 7941ba32, heroes10Others 563b72ce, heroes30Others fb2fb4a1)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
@@ -129,8 +155,9 @@ test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and w
 });
 
 test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
-  // (STATS batch 4: the Calamity's greedy run now reaches a boss whose signatures move it, so `calamity` joins the scenarios with a boss)
-  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand', 'calamity'];
+  // (STATS batch 4: the Calamity's greedy run now reaches a boss whose signatures move it, so `calamity` joined the scenarios with a boss;
+  // since the tactics, docs/notes/tactics.md, its run ends before that boss again, so it plays as recorded with them on, as it did before)
+  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
   const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
   assert.deepEqual(recordedStrengths(() => identityHashes(rest)), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
   const now = recordedStrengths(() => identityHashes(moved));

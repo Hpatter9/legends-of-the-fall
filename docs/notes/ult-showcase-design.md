@@ -87,7 +87,19 @@ strike does). A foe the cast moved starts from where the page saw it before the 
 Captures: `docs/samples/ult-showcase-<hero>.mp4` for each of the eight and `docs/samples/ult-showcase-batch1.jpg`
 (`tools/ult-show/shots.mjs --picks ... [--stage 9]`: a fresh page for each hero).
 
-## Frames to generate (the OpenAI image account is out of credits until tomorrow)
+## The painted frames (in: PR #332, `art/ult-showcase`)
+
+The frames below were generated (OpenAI image generation) and are wired in: `tools/ult-show/cut_art.py` cuts `art-source/ult-showcase/`
+down to `src/art/ult-show/` (poses 160 px tall, die faces 64 px, props 192 px; about 480 KB, bundled for offline play); `showArt.ts` loads
+them behind the game. A **pose** stands in for the sprite's frame for its beat (`SHOWCASES[kind].poses`: the wind-up, the run, the strike,
+the flight, the call, the finish), drawn a little taller than the fighter and facing as staged; the Arc Blade's strike plays his six
+lightning frames. A **prop** plays on the moment's layer for its beat (`PROPS` in `ultShow.ts`) and lifts the dim round itself while it is
+up: the Buccaneer's hook flies out and his die rolls over each cut and lands on a high face where the sim's cut was heavy, a low one where
+not; the ghost ship sails over the field; the reticle locks on; the meteor falls; the noon clock and the moon hang over the caster; the
+ground clock spreads under the Time Witch; the fox pops up on each foe; the chains, the holy light and the notes run to their targets.
+Until a frame has loaded the pack's effect plays alone. Checked at 393 x 852, 360 x 780 and 412 x 915.
+
+The list as asked for:
 
 Everything above is built from what is in the game. These would make it read better, made as the art plan says:
 
@@ -103,61 +115,64 @@ Everything above is built from what is in the game. These would make it read bet
 | Wizard | a falling meteor with its trail (the pack's orb stands in) |
 | Beastmaster | the horn raised to his lips |
 | Kunoichi | a kneeling finish, blade sheathed |
+| Dread Pirate | a ghost ship sailing out of the fog |
+| Siege Bot | a targeting reticle |
+| Gunslinger | a clock face striking noon |
+| Time Witch | a clock face spreading over the field |
+| Demon Swordsman | chains of hellfire |
+| Kitsune | a little fox (the foxes use the Kitsune's own sheet now) |
+| Werewolf | a moon rising behind him |
+| Satyr, Wolf Bard | music notes |
+| Priestess | a shaft of light falling on a fallen hero |
 
-## Every hero, from its ultimate's own words (the plan for the other 34)
+## Batches 2 to 5 (built): every hero has one
 
-Each takes one of a few **styles** (the staging code is shared, the beats per hero), so a batch is mostly data plus art.
+The table as built: each hero's style and what we see (the words are `SHOWCASES[kind].line`). New styles: **shots** (a still beat, then each
+shot at its foe in turn: a bullet's muzzle flash and spark, a bolt out of a storm cloud, a stream of flame; a jet to the high ground first;
+the ground it set alight catching tile by tile), **burst** (the caster raises its power, a ring goes out, and it reaches each foe in turn,
+the nearest first, with vines, stone, a smite of its element, a cut, or a line dragging the foe round to face it), **burrow** (he sinks;
+the earth heaves along his way), **bless** (a ribbon of the element from the caster to each ally in turn, the fallen first; then a charge
+if it leads one), **change** (chains drag foes in, then he writhes and bursts into his new shape and howls). A pack's called-up may
+**emerge** out of the ground instead of running in, and a zone stands for a sky style's aim.
+
+What the cast's events do not name, the page reads: the foes taunted round to face the caster (`taunt.to`), and the allies standing (for
+a blessing with no healed or quickened ally named, an aura or a banner).
 
 | Batch | Style | Hero: what we see |
 |---|---|---|
-| Pilot | blinks | **Kunoichi** (above) |
-| Pilot | sky | **Wizard** (above) |
-| Pilot | pack | **Beastmaster** (above) |
-| 1 | blinks | **Mercenary**: steps out of the dark beside each of the three hardest hitters, one heavy cut each |
-| 1 | blinks | **Arc Blade**: becomes a bolt that zig-zags through up to six foes, each lit, then snaps back to where he started |
-| 1 | line | **Samurai**: crouches, the screen goes still, one flash of a dash along the line, sheathes; every foe on it splits a beat later |
-| 1 | line | **Lancer**: rides the whole line, each foe flung aside as he passes; the riders near him spur on |
-| 1 | line | **Minotaur**: three charges in a row, the camera chasing, each foe launched |
-| 1 | leap | **Barbarian**: a huge leap (his shadow growing under the crowd), a crash, the 3x3 thrown out |
-| 1 | blows | **Ninja Monk**: a blur of fists on each of three foes in turn, a count of blows, the last throws each away |
-| 1 | hooks | **Buccaneer**: three hooks thrown out and three foes reeled in; a die rolls over each cut |
-| 2 | sky | **Archer**: she looses into the sky; five volleys darken it and fall crowd by crowd |
-| 2 | sky | **Dread Pirate**: the ghost fleet sails out of the fog at the board's edge and fires three broadsides |
-| 2 | sky | **Siege Bot**: a targeting ring locks on, the shell whistles down, a second follows |
-| 2 | sky | **Lightning Mage**: the storm cloud gathers over her and rolls out; the first bolt picks its foe |
-| 2 | shots | **Gunslinger**: the clock strikes noon, she draws, six shots fan out one by one |
-| 2 | shots | **Rifle Bot**: jets up to the high ground, glows as it overclocks, four shots |
-| 2 | line | **Dragoon**: rears back and breathes fire down the longest line of foes |
-| 2 | burst | **Ranger**: the net of vines flung out over everyone in sight, snapping tight |
-| 3 | burst | **Knight**: plants his shield; every foe within 5 is dragged round to face him; the shield's light closes over him |
-| 3 | burst | **Paladin**: kneels, a holy nova rings out, the foes turn to him and the allies glow |
-| 3 | burst | **Yamabushi**: a gale gathers in his hands and throws every foe near him up and away |
-| 3 | burst | **Gorgon**: her eyes open; stone spreads up each foe in sight, one by one |
-| 3 | burst | **Juggernaut**: a stamp, the ground splits outward, the rock spires rise |
-| 3 | burst | **Kraken**: the whirlpool opens and drags the foes round and in |
-| 3 | burst | **Mummy**: the sand-wind drags them in; the two strongest are pulled up on strings |
-| 3 | burst | **Warlock**: the circle of death rings out, curses on each foe, the drink drawn back to him |
-| 3 | burst | **Tyrant**: a roar; the foes cower and slow, his allies stand taller |
-| 3 | burst | **Shambler**: he sinks into the grave-earth and bursts out in the crowd, the rot rolling out |
-| 3 | burst | **Reaper**: the scythe's sweep drags them in and cuts; the reaped rise as wraiths |
-| 4 | pack | **Druid**: the thorn hedge grows across the foes' way and two treants rise at her side |
-| 4 | pack | **Illusionist**: four mirror copies of her step out; the foes turn to them |
-| 4 | pack | **Priestess**: light falls on the fallen and they rise, then the Wall of Light |
-| 4 | change | **Werewolf**: the moon fills, he changes, a howl that frightens the foes near him |
-| 4 | change | **Demon Swordsman**: chains of hellfire drag three foes in, then his demon form |
-| 4 | change | **Kitsune**: fox fire spins round the three strongest foes and they shrink to little foxes |
-| 4 | burst | **Karasu Tengu**: the razor feathers whirl into a cloud over the knot of foes |
-| 4 | burst | **Time Witch**: a clock face spreads over the field and the foes freeze mid-step, colour drained |
-| 5 | bless | **Wanderer**: a dawn light runs from ally to ally, each healed and shielded |
-| 5 | bless | **Satyr**: the pipes play and the allies dance faster, notes rising |
-| 5 | bless | **Samurai Commander**: the war banner goes up, the melee allies charge |
-| 5 | bless | **Sage**: arcane threads to every ally, each pool filling, each shield forming |
-| 5 | bless | **Cleric**: the spirits come one by one and circle her |
-| 5 | bless | **Peasant**: the allies close ranks round him and he leads the charge |
-| 5 | bless | **Wolf Bard**: the opening chord's shove, then the hymn's notes over every ally |
+| Pilot | blinks / sky / pack | **Kunoichi**, **Wizard**, **Beastmaster** (above) |
+| 1 | blinks / line / leap / blows / hooks | **Mercenary**, **Arc Blade**, **Samurai**, **Lancer**, **Minotaur**, **Barbarian**, **Ninja Monk**, **Buccaneer** (above) |
+| 2 | sky | **Archer**: she looses high; a ring marks each crowd and the volleys come down |
+| 2 | sky | **Dread Pirate**: the ghost fleet's guns mark each crowd in cold fire; the broadsides come howling down |
+| 2 | sky | **Siege Bot**: a targeting ring locks on; the great shell whistles down, and a second after it |
+| 2 | shots | **Lightning Mage**: a storm cloud gathers over her, and its first bolt picks out the toughest foe |
+| 2 | shots | **Gunslinger**: the field goes still at high noon; she draws, and six shots fan out one by one |
+| 2 | shots | **Rifle Bot**: it jets to the high ground and fires four shots at the weakest foe |
+| 2 | shots | **Dragoon**: she breathes fire down the line; the ground stays alight behind it |
+| 2 | burst | **Ranger**: the net of vines snaps tight round every foe in sight, one after another |
+| 3 | burst | **Knight**: he plants his shield; every foe near him is dragged round to face him |
+| 3 | burst | **Paladin**: a holy nova; each foe it reaches is struck by light |
+| 3 | burst | **Yamabushi**: a gale bursts out, throwing every foe near him up and away |
+| 3 | burst | **Gorgon**: her eyes open; stone creeps up each foe in her sight |
+| 3 | burst | **Juggernaut**: the ground splits under every foe near him and rock spires rise |
+| 3 | burst | **Kraken**: a whirlpool drags the foes in, one after another |
+| 3 | burst | **Mummy**: a sand-wind drags the foes in and curses each |
+| 3 | burst | **Warlock**: a circle of death; a curse falls on each foe |
+| 3 | burst | **Tyrant**: he roars; each foe near him is struck and cowers |
+| 3 | burrow | **Shambler**: he sinks into the grave-earth and tunnels towards the crowd |
+| 3 | burst | **Reaper**: the scythe sweeps round, dragging the foes in, and cuts them all |
+| 4 | pack | **Druid**: thorns rise across the foes' way and two treants rise out of the earth |
+| 4 | pack | **Illusionist**: mirror copies of her step out of the air |
+| 4 | bless | **Priestess**: light falls on each friend in turn; the fallen rise in it |
+| 4 | change | **Werewolf**: he writhes as both forms take him, and howls |
+| 4 | change | **Demon Swordsman**: chains of hellfire drag the nearest foes in, then the demon form bursts out |
+| 4 | burst | **Kitsune**: fox fire reaches the strongest foes, each a little fox |
+| 4 | sky | **Karasu Tengu**: he marks the knot of foes and the feathers whirl down over it |
+| 4 | burst | **Time Witch**: the foes stop one after another, their colour drained |
+| 5 | bless | **Wanderer**, **Satyr**, **Samurai Commander**, **Sage**, **Cleric**, **Wolf Bard**: the blessing runs to each ally in turn |
+| 5 | bless | **Peasant**: the blessing to each ally, then he leads the charge |
 
-Each batch: the hero's beats as data in `SHOWCASES` (style and timings), any new style's poses in `posesAt` and beats in `fx.showBeat`,
-a test that reads a real cast, captures at the three phone sizes, and the art below.
+Captures for batches 2 to 5 are strips (`docs/samples/ult-showcase-batch<N>.jpg`), at 300 ms steps.
 
 ## The art plan
 

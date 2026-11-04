@@ -2,6 +2,8 @@
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { socketStrip } from './runeTray';
+import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
@@ -183,6 +185,11 @@ import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHo
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
+import { TacticsView } from './tacticsView';
+import { setTactic } from './sim/tactics';
+import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
+import { pickedTactic, pickTactic } from './sim/tacticPick';
+import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -1070,6 +1077,9 @@ class Game {
   private begin(): void {
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
+    // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
+    setTactic(this.b, pickedTactic(this.meta.tactics, this.run.mode));
+    setFormations(this.b, autoPlaceOpen(this.meta));
     if (!fight(this.b)) return;
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
     // in its own trial as a great being, EIDOLON-TRIAL)
@@ -1838,6 +1848,7 @@ class Game {
   private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
+  private tactics!: TacticsView;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
@@ -1887,6 +1898,7 @@ class Game {
         return t ? at(u, v, t.h) : null;
       },
       seen: (kind) => seenOf(this.meta, kind),
+      toClient: (x, y) => this.toClient(x, y),
       saw: (kind) => {
         noteSeen(this.meta, kind);
         saveMeta(this.meta);
@@ -1894,6 +1906,20 @@ class Game {
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
+    // (the party's tactic: the chip beside Auto, and the Charge! call in the fight; docs/notes/tactics.md)
+    this.tactics = new TacticsView({
+      picked: () => pickedTactic(this.meta.tactics, this.run.mode),
+      pick: (t) => {
+        pickTactic(this.meta, this.run.mode, t);
+        saveMeta(this.meta);
+        this.refresh();
+      },
+      // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
+      formationsOpen: () => autoPlaceOpen(this.meta),
+      formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
+      arrange: (f) => this.arrangeFormation(f),
+      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
+    });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
       meta: () => this.meta,
@@ -2047,6 +2073,28 @@ class Game {
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
   /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
+  /** Set the placed heroes out in a formation's shape (the tactic sheet's Arrange): each taken back and placed again at its tile of the shape
+   *  (`formationSpots`), or where it stood if that tile will not take it. */
+  private arrangeFormation(shape: Formation): void {
+    const b = this.b;
+    if (b.phase !== 'deploy') return;
+    const heroes = b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !UNITS[u.def].summon).map((u) => ({ def: u.def, tag: u.tag!, was: [u.u, u.v] as [number, number], h: this.run.roster.find((r) => r.id === u.tag) }));
+    if (!heroes.length) return;
+    const spots = formationSpots(b.board, heroes.map((x) => x.def), shape);
+    for (const x of heroes) unplace(b, x.def, x.tag);
+    heroes.forEach((x, i) => {
+      const boost = x.h ? this.boostFor(x.h) : undefined;
+      const s = spots[i];
+      const at: [number, number] = s && place(b, x.def, s.u, s.v, x.tag, boost) ? [s.u, s.v] : x.was;
+      if (at === x.was) place(b, x.def, at[0], at[1], x.tag, boost);
+      this.placed.set(String(x.tag), at);
+    });
+    saveRun(this.run);
+    this.syncSprites();
+    play('summon');
+    this.refresh();
+  }
+
   private autoArrange(manual = false): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;
@@ -3036,7 +3084,10 @@ class Game {
   private buildBench(): void {
     const bench = $('bench');
     const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
-    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    // (SEVEN-SLOT GEAR batch 5: the Pack button says how many rune merges are ready)
+    const merges = this.run.runes && this.b.phase === 'deploy' ? mergesReady(this.run.runes) : 0;
+    $('pack').textContent = merges ? `Pack · ${merges} merge${merges === 1 ? '' : 's'}` : 'Pack';
+    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};${this.run.runes ? JSON.stringify(this.run.runes.worn) + this.b.phase : ''};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -3092,6 +3143,8 @@ class Game {
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      // (SEVEN-SLOT GEAR batch 5: a rune run shows each hero's three sockets over its card, twins rimmed, on the deploy screen)
+      if (this.run.runes && !h.guest && this.b.phase === 'deploy') card.append(socketStrip(this.run.runes, h.kind));
       // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
       card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
@@ -3245,6 +3298,7 @@ class Game {
   private refresh(): void {
     const b = this.b;
     const run = this.run;
+    this.tactics.refresh(b);
     this.syncAct();
     this.syncScene();
     const n = heroesPlaced(b);
@@ -3434,7 +3488,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? (b.tactic && b.tactic.metAt === undefined ? `${stage} · ${b.tactic.kind === 'hold' ? 'Holding the line' : 'The line advances'}` : `${stage} · Fight!`) : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
@@ -3443,6 +3497,10 @@ class Game {
     const block = hireBlock(run);
     buy.textContent = block === 'bench' ? 'Bench full' : `Hire · ${summonCost(run)}`;
     buy.disabled = block !== null;
+    // (UX-FIXES: an empty deploy board says what to do: hire. Hire is the lit button until a hero is on the bench, then Fight! takes over)
+    const needHire = b.phase === 'deploy' && !run.roster.length && block === null && run.mode?.kind !== 'calamity';
+    $('hireHint').hidden = !needHire;
+    buy.classList.toggle('primary', needHire);
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
     // (DEPLOY-ZOOM: Auto merge is earned by beating the second army, Auto place the fourth, `featureUnlocks.ts`; each is told once)
@@ -3617,8 +3675,11 @@ class Game {
       card.classList.toggle('twinOn', !!twin && !(twin.tag !== undefined && canMerge(this.run, Number(id), twin.tag)));
       const mark = card.querySelector<HTMLElement>('.twinMark');
       if (mark) mark.textContent = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
-      const share = u ? u.hp / u.maxHp : 1;
+      // (SEVEN-SLOT GEAR batch 6: a hero risen at half shows its wound before the fight, with a bandage mark)
+      const wound = !u && !this.run.tower ? hpShare(this.run, Number(id)) : 1;
+      const share = u ? u.hp / u.maxHp : wound;
       (card.querySelector('i span') as HTMLElement).style.width = `${Math.round(share * 100)}%`;
+      card.classList.toggle('wounded', !u && wound < 1);
     }
   }
 

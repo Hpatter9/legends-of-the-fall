@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { foundOf } from './helpers';
 import assert from 'node:assert/strict';
 import { chooseOption, drawEvent, MYSTERY_KINDS, TOWER_EVENT_KINDS, type EventKind } from '../src/sim/events';
 import { applyMystery, IMP_ODDS, type MysteryAct } from '../src/sim/mystery';
@@ -263,13 +264,13 @@ test('mimic chest: opening it brings a fight, and winning pays a great chest', (
   assert.equal(b.units.filter((u) => u.side === 'foe').length, spec.band.length);
   const gold = run.gold;
   const relics = run.relics?.length ?? 0;
-  const items = run.pack?.length ?? 0;
+  const items = foundOf(run).length;
   finishTower(run, b, true);
   assert.equal(run.stage, 7);
   assert.equal(run.tower!.cur, undefined);
   assert.ok(run.gold - gold >= 40 + 8 * 6);
   assert.equal(run.relics!.length, relics + 1);
-  assert.ok(run.pack!.length > items);
+  assert.ok(foundOf(run).length > items);
   assert.ok(run.found!.some((l) => l.includes('mimic')));
   // (losing it ends the run)
   const lost = onFloor('mimic', 2, 6);
@@ -287,7 +288,7 @@ test('mimic chest: prodding it is a fixed gamble', () => {
     take(run, /^Prod/);
     if (a.real) {
       assert.equal(run.gold, gold + a.gold);
-      assert.ok(run.pack!.some((g) => g.id === a.gear.id));
+      assert.ok(foundOf(run).includes(a.gear.id));
     } else for (const h of run.roster) assert.ok(hpShare(run, h.id) < 1);
     assert.equal(inBattle(run), false);
   }
@@ -318,9 +319,9 @@ test('black book: a lasting attack bump or a hurt party, fixed with the card; th
 
 test('knight\'s cairn: gear now and tougher foes next, or a healed party', () => {
   const run = onFloor('cairn');
-  const items = run.pack?.length ?? 0;
+  const items = foundOf(run).length;
   take(run, /^Take the/);
-  assert.equal(run.pack!.length, items + 1);
+  assert.equal(foundOf(run).length, items + 1);
   assert.equal(run.buff!.foes, 1.25);
   run.tower!.cur = { id: 0, kind: 'fight', fight: { band: ['skeleton'], stage: { foes: { hp: 1, atk: 1 } } } };
   const hard = startStage(run).units.find((u) => u.side === 'foe')!;
