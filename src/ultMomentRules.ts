@@ -92,9 +92,12 @@ export interface UltMoment {
   el?: Element;
   targets?: UltTargets;
   landing?: UltTargets;
+  /** ULT-SHOW (`ultShowRules.ts`): the showcase's length (ms) when this use plays the long version; it plays after the opening, the fight
+   *  still held, and the blow lands as it ends. */
+  show?: number;
 }
 
-export type UltPhase = 'idle' | 'open' | 'impact' | 'settle' | 'fade';
+export type UltPhase = 'idle' | 'open' | 'show' | 'impact' | 'settle' | 'fade';
 
 /** The queue of ultimate moments and the one playing: `step` it with the page's frame time; `holdsBattle` says whether the battle may step,
  *  `runsEffects` whether the effects may (they are frozen through the opening, so the cast plays after it). */
@@ -169,7 +172,9 @@ export class UltQueue {
 
   private next(): void {
     const m = this.current!;
-    if (this.phase === 'open') {
+    // (ULT-SHOW: the showcase follows the opening, and the blow lands as it ends)
+    if (this.phase === 'open' && m.show) return this.to('show', m.show);
+    if (this.phase === 'open' || this.phase === 'show') {
       // (the blow lands as the opening ends, unless it is a salvo still in the air)
       if (m.shape !== 'delayed') this.strike();
       if (m.shape === 'instant') return this.to('impact', ULT_MOMENT.IMPACT_MS);
@@ -212,14 +217,20 @@ export class UltQueue {
     this.since = null;
   }
 
-  /** Whether the battle is held now (the opening, an instant one's effects playing, and the freeze on any blow). */
+  /** Whether the battle is held now (the opening, a showcase, an instant one's effects playing, and the freeze on any blow). */
   get holdsBattle(): boolean {
-    return this.phase === 'open' || this.phase === 'impact' || this.stopLeft > 0;
+    return this.phase === 'open' || this.phase === 'show' || this.phase === 'impact' || this.stopLeft > 0;
   }
 
-  /** Whether the effects may move now (frozen through the opening, so the cast plays once the name has shown, and through the freeze). */
+  /** Whether the effects may move now (frozen through the opening and a showcase, so the cast plays once they are over, and through the
+   *  freeze). */
   get runsEffects(): boolean {
-    return this.phase !== 'open' && this.stopLeft <= 0;
+    return this.phase !== 'open' && this.phase !== 'show' && this.stopLeft <= 0;
+  }
+
+  /** ULT-SHOW: ms into the showcase playing (null: none is). */
+  get showT(): number | null {
+    return this.phase === 'show' && this.current?.show ? this.current.show - this.left : null;
   }
 
   /** The dim's strength, 0 to 1: full through the opening, eased down to a light veil as the blow lands (ULT-EPIC), then out through the

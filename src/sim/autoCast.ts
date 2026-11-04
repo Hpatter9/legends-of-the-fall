@@ -6,11 +6,11 @@
 // The chooser (`chooseSpell`) is a set of plain rules, read off the board as it stands:
 // - Help first: Resurrect a fallen hero, Heal or Renewal the hurt, Shield or Bulwark heroes standing in a boss's marked blow (or badly
 //   hurt in the thick of it), Cleanse the held, charmed or burning, Blink the one about to fall.
-// - Then harm: an area spell where the foes stand thickest (three or more worth hitting, or the boss), the lone-target spells on the boss
+// - Then harm: an area spell where the foes stand thickest (two or more worth hitting, an elite, or the boss), the lone-target spells on the boss
 //   or the sturdiest foe. A foe with little health left is not worth a spell: the heroes will finish it.
 // - Then the buffs (Haste, Rally, Battle Cry), once three heroes are in the fight, never while the last of the wave is nearly done.
 // - A reserve: while a help spell is equipped and nobody needs it, a harm or buff spell leaves enough mana to cast that help spell
-//   (unless the mana is full anyway). At most one spell a tick, and a short gap between two.
+//   (unless the mana is full anyway). And a buff waits while a harm spell has foes to hit but not yet the mana (KING-SPELLS batch 1). At most one spell a tick, and a short gap between two.
 //
 // The War Horn stays the player's own (`orderEidolon`): nothing here blows it. Unset `autoSpells` (every headless fight, every fight with
 // Auto off) casts nothing, so those fights play exactly as before.
@@ -19,9 +19,10 @@
 
 import { standable, tileAt } from './board';
 import { apart, defOf, unitAt, type Battle, type Unit } from './battle';
-import { canAfford, castSpell, fallenIn, HEAL_SHARE, MANA_MAX, RENEWAL_MS, RENEWAL_SHARE, SHOWER_SPOTS, SMITE_POWER, SPELLS, type SpellId } from './spells';
+import { canAfford, castSpell, cooldownLeft, fallenIn, HEAL_SHARE, kingMight, MANA_MAX, RENEWAL_MS, RENEWAL_SHARE, SHOWER_SPOTS, SMITE_POWER, SPELLS, type SpellId } from './spells';
 import { CHARGE_MAX } from './abilities';
 import { hasAil, isFrozen } from './ailments';
+import { ELITE_FOES } from './eliteFoes';
 
 /** The least time between two spells cast on their own (ms): a beat for the eye, and no burst of three at once. */
 export const AUTO_GAP_MS = 1500;
@@ -29,6 +30,9 @@ export const AUTO_GAP_MS = 1500;
 export const SPENT = 0.25;
 /** An area spell is cast on at least this many foes worth hitting (or on fewer when they are all that is left, or on the boss). */
 export const CROWD = 3;
+/** The harm spells on an area (Meteor, Poison Cloud, Frost Nova, Hex, Chain Lightning, Light Lance, Earthquake) are cast on two foes worth
+ *  hitting, or on one elite (KING-SPELLS batch 1: at three they waited for a crowd that seldom formed, and Meteor was never cast). */
+export const AREA_CROWD = 2;
 /** A hero below this share of its health is hurt badly enough for a heal on it alone (the king in the Last Stand a little sooner). */
 export const HURT = 0.5;
 export const KING_HURT = 0.65;
@@ -57,6 +61,7 @@ const at3 = (x: { u: number; v: number }, u: number, v: number) => Math.abs(x.u 
 const heroesOf = (b: Battle) => b.units.filter((x) => x.alive && x.side === 'hero' && x.id !== 0);
 const foesOf = (b: Battle) => b.units.filter((x) => x.alive && x.side === 'foe' && !x.under);
 const isBig = (x: Unit) => (x.size ?? 1) > 1;
+const isElite = (x: Unit) => x.def in ELITE_FOES;
 /** A foe worth a spell: not nearly done, or a boss (always worth it). */
 const worth = (x: Unit) => isBig(x) || x.hp > x.maxHp * SPENT;
 const share = (x: Unit) => x.hp / x.maxHp;
@@ -101,11 +106,11 @@ function pickFor(b: Battle, id: SpellId, heroes: Unit[], foes: Unit[]): AutoPick
   const worthy = foes.filter(worth);
   const boss = worthy.find(isBig);
   // (an area of foes is worth it with enough of them in it, with the boss in it, or with every foe left that is worth a blow)
-  const crowd = (n: number, withBoss: boolean) => (withBoss ? n + CROWD : n >= Math.min(CROWD, Math.max(2, worthy.length)) ? n : 0);
+  const crowd = (n: number, withBoss: boolean, withElite = false) => (withBoss ? n + CROWD : n >= AREA_CROWD || (withElite && n >= 1) ? n : 0);
   const area = (filter: (f: Unit) => boolean = () => true) =>
     best(centres(b, worthy), (p) => {
       const hit = worthy.filter((f) => at3(f, p.u, p.v) && filter(f));
-      return crowd(hit.length, hit.some(isBig));
+      return crowd(hit.length, hit.some(isBig), hit.some(isElite));
     });
   const inFight = heroes.filter((h) => engaged(h, foes));
   switch (id) {
@@ -185,7 +190,7 @@ function pickFor(b: Battle, id: SpellId, heroes: Unit[], foes: Unit[]): AutoPick
       // (on a foe with others close by to leap to, or the boss)
       const top = best(worthy, (f) => {
         const near = worthy.filter((g) => g !== f && apart(g, f) <= 3).length;
-        return isBig(f) ? near + CROWD : near >= 2 || near + 1 >= worthy.length ? near + 1 : 0;
+        return isBig(f) ? near + CROWD : near + 1 >= AREA_CROWD || isElite(f) || near + 1 >= worthy.length ? near + 1 : 0;
       });
       return top && { id, u: top.u, v: top.v };
     }
@@ -205,7 +210,7 @@ function pickFor(b: Battle, id: SpellId, heroes: Unit[], foes: Unit[]): AutoPick
     case 'smite':
     case 'deepfreeze': {
       // (the boss, or the sturdiest foe at the heroes with health enough to be worth the bolt)
-      const sturdy = (id === 'smite' ? worthy.filter((f) => isBig(f) || f.hp >= SMITE_POWER * 0.6) : worthy.filter((f) => !isFrozen(b, f)))
+      const sturdy = (id === 'smite' ? worthy.filter((f) => isBig(f) || f.hp >= SMITE_POWER * kingMight(b) * 0.6) : worthy.filter((f) => !isFrozen(b, f)))
         .filter((f) => engaged(f, heroes))
         .sort((f, g) => Number(isBig(g)) - Number(isBig(f)) || g.hp - f.hp || f.id - g.id)[0];
       if (!sturdy) return;
@@ -257,9 +262,13 @@ export function chooseSpell(b: Battle, ids: readonly SpellId[]): AutoPick | unde
   // (the help spells that might be wanted later: the cheapest's cost is kept back, unless the mana is full anyway)
   const keep = help.filter((id) => id !== 'blink').reduce((n, id) => Math.min(n, SPELLS[id].cost), Infinity);
   const reserve = Number.isFinite(keep) && mana < MANA_MAX - 0.5 ? keep : 0;
+  // (KING-SPELLS batch 1: a harm spell that has foes to hit but not yet the mana is saved for, so the cheap buffs do not starve it for ever)
+  const harm = rest.filter((id) => !isBuff(id));
+  const saving = harm.some((id) => cooldownLeft(b, id) === 0 && mana - SPELLS[id].cost < reserve && pickFor(b, id, heroes, foes) !== undefined);
   for (const id of order) {
     if (!canAfford(b, id)) continue;
     if (!HELP.has(id) && mana - SPELLS[id].cost < reserve) continue;
+    if (saving && isBuff(id)) continue;
     const pick = pickFor(b, id, heroes, foes);
     if (pick) return pick;
   }
