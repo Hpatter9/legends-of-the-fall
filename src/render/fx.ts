@@ -136,7 +136,7 @@ const MARK_WORDS: Record<string, string> = {
 
 /** A small random offset (the renderer's own, not the sim's). */
 /** ULT-SHOW: the beats a showcase plays (`ultShowRules.ts`). */
-export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook';
+export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare';
 const jitter = (n: number) => (Math.random() * 2 - 1) * n;
 
 interface Item {
@@ -620,7 +620,7 @@ export class Fx {
   /** ULT-SHOW (`ultShow.ts`): one beat of an ultimate's showcase, drawn on the moment's layer (it runs while the fight is held), in the
    *  colours of its element (`el`). (x, y) is a fighter's feet or a tile's ground, `tall` its height; `to` a foe (a cut, a blow) or the far
    *  end (a dash, a hook). The painted toolkit's parts when they are there, else the pack's. */
-  showBeat(kind: ShowBeat, x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element } = {}): void {
+  showBeat(kind: ShowBeat, x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element; how?: 'bolt' | 'flame' | 'bullet' } = {}): void {
     const m = this.moment;
     const el = o.el ?? 'dark';
     const tint = ULT_TINT[el];
@@ -688,6 +688,42 @@ export class Fx {
         if (!to) return;
         if (!this.paintAlong(PAINT.tether, x, y - lift, to.x, to.y - lift, { layer: m })) play(m, packKey('dark', 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 2, frameMs: 40 });
         this.paintOnce(PAINT.grip, to.x, to.y - lift, { layer: m, delay: 180 });
+        return;
+      }
+      case 'shot': {
+        // (a shot at a foe: a bolt down out of the cloud, a stream of flame along the line, or a muzzle's flash and a bullet's spark)
+        if (!to) return;
+        const ty = to.y - to.tall * 0.5;
+        if (o.how === 'bolt') {
+          play(m, packKey('lightning', 'strike'), to.x, to.y - 40, { scale: 3, frameMs: 45 });
+          play(m, packKey('lightning', 'hit'), to.x, ty, { scale: 2, frameMs: 45, delay: 60 });
+          this.trauma = Math.min(1, this.trauma + 0.2);
+        } else if (o.how === 'flame') {
+          for (let i = 1; i <= 6; i++) play(m, packKey('fire', 'flame'), x + ((to.x - x) * i) / 6, y - lift + ((ty - y + lift) * i) / 6, { scale: 1.6 + i * 0.12, frameMs: 55, delay: i * 35 });
+          play(m, packKey('fire', 'explosion'), to.x, ty, { scale: 1.8, frameMs: 55, delay: 220 });
+        } else {
+          play(m, packKey('fire', 'hit'), x + Math.sign(to.x - x || 1) * 10, y - lift, { scale: 1, frameMs: 35 });
+          play(m, packKey(el, 'hit'), to.x, ty, { scale: 1.5, frameMs: 40, delay: 70, tint });
+          this.puffAtOn(m, to.x, ty, 0.6);
+          this.trauma = Math.min(1, this.trauma + 0.1);
+        }
+        return;
+      }
+      case 'cloud':
+        // (a storm cloud gathers over the caster and flickers)
+        for (let i = 0; i < 6; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(40), y: y - 110 + jitter(12), scale: 2.4, life: 2600, grow: 0.0003, alpha: 0.9, delay: i * 90 });
+        play(m, packKey(el, 'vortex'), x, y - 110, { scale: 3.2, frameMs: 80, life: 2400, loop: true, alpha: 0.8 });
+        play(m, packKey(el, 'strike'), x + 18, y - 70, { scale: 2, frameMs: 45, delay: 500 });
+        return;
+      case 'burn':
+        // (a tile catching alight, burning on through the showcase)
+        play(m, packKey('fire', 'flame'), x, y - 8, { scale: 1.8, frameMs: 70, life: 2200, loop: true });
+        return;
+      case 'snare': {
+        // (vines snap tight round a foe)
+        if (!to) return;
+        play(m, packKey(el, 'spikes'), to.x, to.y - 4, { scale: 2, frameMs: 60 });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.4, frameMs: 45, delay: 60, tint });
         return;
       }
       case 'gather':

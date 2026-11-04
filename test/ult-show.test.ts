@@ -172,3 +172,24 @@ test('a cast with nothing of its style\'s shape but foes struck still gets a sho
   assert.ok(plan.beats.some((x) => x.kind === 'cut' && x.foe === 2));
   assert.equal(planShow('minotaur', readCast({ id: 1, u: 3, v: 2 }, [])), null, 'nothing struck, nothing to show');
 });
+
+test('batch 2: the sky marks every aim, each shot is seen at its foe, the net reaches every foe it held; all end where the sim put them', () => {
+  for (const kind of ['archer', 'dreadPirate', 'siegeBot', 'lightningMage', 'gunslinger', 'rifleBot', 'dragoon', 'ranger']) {
+    const { b, me, events, plan } = fire(kind);
+    const end = posesAt(plan, plan.ms);
+    assert.deepEqual(end.get(me.id)!.at, { u: me.u, v: me.v }, `${kind}: the caster ends on its tile`);
+    if (plan.style === 'sky') {
+      const aims = new Set(events.flatMap((e) => (e.kind === 'area' && e.by === me.id ? [`${e.u},${e.v}`] : [])));
+      assert.deepEqual(new Set(plan.beats.flatMap((x) => (x.kind === 'mark' ? [`${x.where.u},${x.where.v}`] : []))), aims, kind);
+    } else {
+      const seen = plan.style === 'shots' ? 'shot' : 'snare';
+      for (const id of plan.cast.struck) {
+        assert.ok(plan.beats.some((x) => x.kind === seen && x.foe === id), `${kind}: foe ${id} is seen struck`);
+        const f = b.units.find((u) => u.id === id)!;
+        assert.deepEqual(end.get(id)!.at, { u: f.u, v: f.v }, `${kind}: foe ${id} ends on its tile`);
+      }
+    }
+  }
+  // (the dragoon's fire catches along the ground it left alight)
+  assert.ok(fire('dragoon').plan.beats.some((x) => x.kind === 'burn'));
+});
