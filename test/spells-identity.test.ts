@@ -80,8 +80,8 @@
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
 // fourteen. No other scenario moved.)
-// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` and `stand` alone: `DAILY_START` 0.785 to 0.8 and `HALL_EASE` 1.2 to
-// 1.3, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` and `stand` alone: `DAILY_START` 0.785 to 0.83 and `HALL_EASE` 1.2 to
+// 1.36, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

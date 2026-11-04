@@ -47,6 +47,7 @@ The default ruler's loadout is the change, not the Decree: with `BOT_DECREE=0` t
 
 | Knob | Before | After | Why |
 | --- | --- | --- | --- |
+| (on main 0.346.0; see section 2b for 0.347.0) | | | |
 | Undead Legion `start` | 2.02 | **2.19** | bisected to 4.2 tries at level 8 |
 | Beast Packs `start` | 2.39 | **2.52** | toward 2.5 tries at 15 (2.64), held by the level-23 test |
 | Infernal Host `start` | 20.6 | **22.7** | bisected to 5.8 tries at 55 with hearts |
@@ -82,6 +83,44 @@ The default ruler's loadout is the change, not the Decree: with `BOT_DECREE=0` t
   - the runs that reached map 2: 19 with the old bot, 25 with the new;
   - full clears: 1 with the old bot, 2 with the new;
   - at 0.7: **21** reached map 2, and 1 cleared.
+
+## 2b. Re-measured on main 0.347.0 (the director's ask)
+
+The director held this batch back. Main moved to 0.347.0 (gear batches 4 to 6: runes in place of a run's finds, and the fallen stand again at
+half). On that main, two tests failed with the knobs above: the Beasts at 23, and the Infernal Host's Mythic, a first-try clear at 100. Every
+cell was measured again on the merged code, both ways, with main's own values for the old bot (`START=...` for the armies, and the constants put
+back for its runs):
+
+| Cell | Old bot, main's values | New bot, retuned | Knob now |
+| --- | --- | --- | --- |
+| Orc Warband, 1 | 1.7 | 1.6 | (unchanged) |
+| Undead Legion, 8 | 4.3 | 4.5 | 2.19 |
+| Beast Packs, 15 | 2.6 | 3.0 at 2.52 | **2.45**, held by the bare five at 23 (2.52 failed it on 0.347) |
+| The Wildwood, 22 | 2.1 | 1.3, then bisected to 2.1 | **3.17** (2.8) |
+| The Labyrinth, 35 | 3.3 | 2.6, then bisected to 3.3 | **8.15** (7.9) |
+| Ogre Clans, 45 | 1.5 | 1.4 | (unchanged) |
+| Infernal Host, 55 h | 4.2 | 5.8 at 22.7, bisected to 4.2 | **22.0** |
+| Yokai, 65 h | 15.7 (67%) | 12.7 | 25.3 |
+| Golem Forge, 65 h | 10.3 (92%) | 6.0 | 28.2, held by the level-80 test (the director: keep the bar) |
+| Golem Forge, 74 | 7.1 (92%) | 8.0 (92%) | |
+
+- The Infernal Host's Mythic lift went from 0.95 to **1.05**, so the default ruler's player with every talent still needs more than a try and a half
+  at level 100 (`test/difficulty.test.ts`).
+- **The daily** (112 dates): 75% / 61% for the old bot. The new bot cleared 83% / 71% at 0.8 and **76% / 63% at 0.83**.
+- **The Last Stand** (median wave, levels 1 / 10 / 20 / 40 / 60 / 80):
+  - the old bot: 4 / 9 / 12 / 20 / 20 / 21;
+  - the new bot at 1.3: 4 / 10 / 11 / 20 / 23 / 24;
+  - **at 1.36**: 3 / 9 / 11 / 19 / 21 / 23.
+
+  The director accepted half a wave lost at level 1.
+- **The Calamity**: the old bot at main's 0.66 reached map 2 in 16 of 30 runs, with none cleared. The new bot at 0.7 reached it in 19 and
+  cleared 1, within the noise of 30 runs, so it stays.
+- **Shared with the gear worker** (its batch 8 is balance, against the old bot). The gear worker owns `RUNE_SCALE` and `SLOT_SCALE`, and also
+  moves `DAILY_START` and the Beasts' start for gear. These spells deltas are ratios on its values: `DAILY_START` x1.057 and the Beasts x1.025.
+  Whichever lands second composes them and re-checks the daily and the bare five at 23. The other knobs here are this batch's alone.
+
+The director's answers to section 4's questions: keep the existing bars (the Beasts and the Golem Forge held a little easier by their tests),
+the default ruler alone is the measure for now, and a Last Stand half a wave harder at level 1 is acceptable.
 
 ## 3. Tests (changed because the rule did)
 

@@ -63,7 +63,7 @@ export const WAVE_KNEE = 10;
 export const WAVE_GROWTH_LATE = 0.39; // (the joint rebalance: 0.35 to 0.39, a level-30 stand back to wave 15, docs/notes/joint-rebalance.md)
 /** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace
  *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: 0.88, with a steeper late and deep climb; SPELLS-RETUNE 1.2, so a
- *  stand whose Auto casts the king's spells holds the waves it did for a bot that never cast, `docs/notes/spells-retune.md`; KING-SPELLS batch 6 1.3, for the default
+ *  stand whose Auto casts the king's spells holds the waves it did for a bot that never cast, `docs/notes/spells-retune.md`; KING-SPELLS batch 6 1.36 (1.3 on main 0.346.0), for the default
  *  ruler's player with his school, Decree and ranks, `docs/notes/king-spells-b6.md`). */
 export const HALL_EASE = 1.36;
 /** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100;
