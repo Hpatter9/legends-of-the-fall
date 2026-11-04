@@ -187,6 +187,6 @@ The house prompt and the style references are in [gear-art-prompt.md](gear-art-p
 ## Still to come in later batches
 
 - The 8 rune stones, the 5 rune frames and the merge spark (batches 4 and 5).
-- The 5 remedies (batch 6).
+- The 5 remedies (batch 6): the rogue pack's potion and elixir sprites stand in (`src/remedyArt.ts`).
 - The 14 set emblems, the 7 empty-slot outlines of the paper doll, the doll's backing and the 3 glyph stones (batches 1 to 3); the
   stall's Enchant tab shows a Rare book until its glyph-stone icon is made.
