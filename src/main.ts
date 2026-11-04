@@ -90,6 +90,7 @@ import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
 import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
+import { showBuilt } from './builtCard';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
@@ -453,7 +454,8 @@ class Game {
           saveMeta(this.meta);
           toastSpells(learnt);
         }
-        void this.queueScene({ kind: 'castle', site });
+        // (a popup, no cinematic: UI batch 1)
+        showBuilt(site, site === 'chapel' ? 1 : this.meta.castle[site]);
       },
     });
     this.towerView = new TowerView({

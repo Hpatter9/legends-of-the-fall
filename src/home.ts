@@ -97,7 +97,7 @@ export interface HomeHooks {
   onScene?(): void;
   /** Play a cinematic again (the codex's Scenes list). */
   onWatchScene?(id: string): void;
-  /** A build was raised (the castle's cinematic): the building, or `chapel`. */
+  /** A build was raised (the page puts up its popup): the building, or `chapel`. */
   onBuilt?(site: BuildSite): void;
   /** The top bar was drawn (EIDOLONS: the War Horn's chip beside the stones follows the save). */
   onTopBar?(): void;
