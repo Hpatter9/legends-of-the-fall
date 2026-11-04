@@ -136,7 +136,7 @@ const MARK_WORDS: Record<string, string> = {
 
 /** A small random offset (the renderer's own, not the sim's). */
 /** ULT-SHOW: the beats a showcase plays (`ultShowRules.ts`). */
-export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare';
+export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare' | 'stone' | 'smite' | 'taunt' | 'rise' | 'tunnel';
 const jitter = (n: number) => (Math.random() * 2 - 1) * n;
 
 interface Item {
@@ -726,6 +726,41 @@ export class Fx {
         play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.4, frameMs: 45, delay: 60, tint });
         return;
       }
+      case 'stone': {
+        // (stone creeps up a foe: grey dust rising round it and a crack of earth at its feet)
+        if (!to) return;
+        play(m, packKey('earth', 'spikes'), to.x, to.y - 2, { scale: 1.6, frameMs: 70, tint: 0x9a9a92 });
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffSand, x: to.x + jitter(8), y: to.y - i * 10, scale: 1, life: 600, vy: -0.03, delay: i * 90, tint: 0xb8b8ae });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.3, frameMs: 50, delay: 150 });
+        return;
+      }
+      case 'smite': {
+        // (the element strikes a foe: a pillar of it and a burst)
+        if (!to) return;
+        play(m, packKey(el, 'pillar'), to.x, to.y - 10, { scale: 1.6, frameMs: 55 });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.8, frameMs: 45, delay: 40, tint });
+        this.trauma = Math.min(1, this.trauma + 0.07);
+        return;
+      }
+      case 'taunt': {
+        // (a foe dragged round to face him: a line of light from it to him, and a ring on it)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.tether, to.x, to.y - to.tall * 0.5, x, y - lift, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 1.6, frameMs: 45 });
+        play(m, packKey(el, 'circle'), to.x, to.y - 2, { scale: 1.3, frameMs: 60, alpha: 0.85 });
+        return;
+      }
+      case 'rise':
+        // (a rock spire rising out of the ground)
+        play(m, packKey('earth', 'spikes'), x, y - 4, { scale: 2.2, frameMs: 70 });
+        this.puffAtOn(m, x, y, 1.1);
+        this.trauma = Math.min(1, this.trauma + 0.05);
+        return;
+      case 'tunnel':
+        // (the ground heaving where he goes under it)
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffSand, x: x + jitter(10), y: y + jitter(4), scale: 1.2, life: 520, vy: -0.025, delay: i * 50 });
+        play(m, packKey(el, 'puff'), x, y - 4, { scale: 1.2, frameMs: 60, alpha: 0.8 });
+        this.trauma = Math.min(1, this.trauma + 0.04);
+        return;
       case 'gather':
         // (power gathers at the caster's feet: a circle of the element and its gathering)
         play(m, packKey(el, 'circle'), x, y - 2, { scale: 2.6, frameMs: 80, life: 2400, loop: true, alpha: 0.9 });

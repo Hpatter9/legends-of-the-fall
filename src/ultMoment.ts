@@ -129,7 +129,9 @@ export class UltMoments {
             const st = b.units.find((x) => x.id === id)?.step;
             return st && st.at >= b.t - 100 ? { u: st.u, v: st.v } : undefined;
           };
-          const plan = planShow(u.def, readCast(u, events, born, tileOf, originOf));
+          // (the foes it turned on itself without a blow: taunted round to face it)
+          const touched = b.units.filter((x) => x.alive && x.side !== u.side && x.taunt?.to === u.id).map((x) => x.id);
+          const plan = planShow(u.def, readCast(u, events, born, tileOf, originOf, touched));
           if (plan) {
             m.show = plan.ms;
             this.plans.set(m, plan);
