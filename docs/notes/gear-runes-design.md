@@ -1,7 +1,8 @@
 # Seven-slot gear, runes and remedies (design)
 
-A design for the owner's approval. No game code changes until it is approved. It answers four asks in one plan:
 The design is also published as a page for reading on the phone: https://claude.ai/artifact/1gCUF5VY5bmgzDzG7qQeaF
+
+A design for the owner's approval. No game code changes until it is approved. It answers four asks in one plan:
 
 
 1. **The big gear update.** Lasting gear gets seven slots (head, torso, right hand, left hand, feet, belt, accessory) and 30 pieces
