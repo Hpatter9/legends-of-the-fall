@@ -23,6 +23,7 @@ import { canAfford, castSpell, cooldownLeft, fallenIn, HEAL_SHARE, kingMight, MA
 import { CHARGE_MAX } from './abilities';
 import { hasAil, isFrozen } from './ailments';
 import { ELITE_FOES } from './eliteFoes';
+import { autoDecree } from './decrees';
 
 /** The least time between two spells cast on their own (ms): a beat for the eye, and no burst of three at once. */
 export const AUTO_GAP_MS = 1500;
@@ -281,6 +282,11 @@ export function autoCast(b: Battle): SpellId | undefined {
   const ids = b.autoSpells;
   if (!ids?.length || b.phase !== 'fight') return;
   if (b.spells.autoAt !== undefined && b.t - b.spells.autoAt < AUTO_GAP_MS) return;
+  // (the ruler's Decree, by its own rule, before any spell: KING-SPELLS batch 2)
+  if (autoDecree(b)) {
+    b.spells.autoAt = b.t;
+    return;
+  }
   const pick = chooseSpell(b, ids);
   if (!pick || !castSpell(b, pick.id, pick.u, pick.v)) return;
   b.spells.autoAt = b.t;

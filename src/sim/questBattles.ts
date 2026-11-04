@@ -22,10 +22,13 @@ import type { Scene } from './sceneKit';
 import { traitsOf, TRAITS } from './traits';
 import { heroName } from './heroNames';
 import type { With } from './questData';
+import { rulesWords, type QuestRules } from './questRules';
+import { UNITS } from './units';
 import { QUEST_BATTLES } from './questBattleData';
 import { CHAIN_BATTLES } from './chainBattleData';
 import { TALE_BATTLES } from './taleBattleData';
 import { LOST_BATTLES } from './lostBattleData';
+import { NEW_BATTLES } from './questBattleData/newBattles';
 
 /** The side stream a quest battle's seed is drawn from. */
 export const QB_SALT = 0x9b47;
@@ -63,6 +66,8 @@ export interface QuestBattle {
   only?: With;
   /** At most this many heroes fielded (a small room). */
   most?: number;
+  /** QUESTS-3 (Q5): the battle's own rules: protect a guest, survive, race, spare a foe, and mutators (`questRules.ts`). */
+  rules?: QuestRules;
   /** Duchess fights in it (every time: she is part of the story). */
   duchess?: boolean;
   /** The story before (played before the first deploy, the first time) and the beat after a win. `c` is the cast, slot by slot. */
@@ -72,9 +77,9 @@ export interface QuestBattle {
 
 // (EIDOLON-CHAINS: the chains' own battles are found by id too; no quest in the log opens them, a chain's part does. SECRET-HEROES: the
 // hero quests' battles, each opened by its tale's last part as any battle quest is)
-const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES].map((q) => [q.id, q]));
+const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES, ...NEW_BATTLES].map((q) => [q.id, q]));
 export const questBattleById = (id: string): QuestBattle | undefined => BY_ID.get(id);
-export { QUEST_BATTLES, CHAIN_BATTLES, TALE_BATTLES, LOST_BATTLES };
+export { QUEST_BATTLES, CHAIN_BATTLES, TALE_BATTLES, LOST_BATTLES, NEW_BATTLES };
 
 /* ------------------------------------------------------------------ the army it is */
 
@@ -149,7 +154,8 @@ export function castWords(qb: QuestBattle, cast: readonly string[]): string {
   const who = `${andList(cast.map(heroName))} must fight`;
   const rule = qb.only?.traits ? ` · only ${qb.only.traits.map((t) => TRAITS[t]?.name ?? t).join(', ').replace(/, ([^,]*)$/, ' or $1')} heroes` : '';
   const most = qb.most !== undefined ? ` · ${qb.most} heroes at most` : '';
-  return who + rule + most;
+  const rules = rulesWords(qb.rules, (k) => UNITS[k]?.name ?? k).map((r) => ` · ${r}`).join('');
+  return who + rule + most + rules;
 }
 
 /** Why the fight cannot begin yet, in words for the deploy line ("Place Kenji to begin"), or null. */

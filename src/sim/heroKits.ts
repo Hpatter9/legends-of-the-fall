@@ -22,6 +22,7 @@ import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
 import { CLASS_RANGE, CLASS_WEIGHT, type SkillClass } from './skillRules';
 import { relicCharge } from './relicFight';
 import { kitWithLevels, noteCast, REVIVE_POINTS } from './skillLevels';
+import { castGate, isOpener } from './tactics';
 
 export type Pool = 'mana' | 'stamina';
 
@@ -445,7 +446,8 @@ export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): 
   // (a healer's revive goes before anything but an ultimate the player has queued, RPG-SPELLS batch 2)
   if (hk.s2.revive && me.ultOrder === undefined && castRevive(b, me, hk, out)) return true;
   const ult = ultimateOf(me);
-  if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false)) {
+  // (a hero held by the party's tactic saves an ultimate that would carry it into the foe, `tactics.ts`)
+  if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false) && !(castGate.held && isOpener(ult))) {
     if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out, statShare(me, ult))) {
       me.charge2 = (me.charge2 ?? 0) - ult.need;
       delete me.ultOrder;
@@ -459,11 +461,13 @@ export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): 
   for (const n of urgent) {
     const slot = hk.slots[n - 1];
     if (breath && slot.cls !== 'guard') continue;
+    if (castGate.held && isOpener(slot.skill)) continue;
     if (slot.emergency && canPay(b, me, hk, n) && slot.emergency(b, me) && fire(b, me, hk, n, out)) return true;
   }
   if (breath) return false;
   for (const n of pickOrder(me, hk, open)) {
     if (!canPay(b, me, hk, n)) continue;
+    if (castGate.held && isOpener(hk.slots[n - 1].skill)) continue;
     if (holding(b, me, hk, n)) continue;
     if (reserve(b, me, hk, n)) continue;
     if (fire(b, me, hk, n, out)) return true;

@@ -19,6 +19,7 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
 import { duchessDue, joinDuchess, type DuchessWish } from './duchessFight';
+import { applyRules, endBy, joinGuest, ruleEnd, spareIds, type QuestRules } from './questRules';
 import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
@@ -42,6 +43,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
+import { castGate, heldBy, heldStep, startTactic, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
@@ -299,6 +301,8 @@ export type BattleEvent =
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
+  /** The line has met the foe (or the player called the charge): the held heroes go (`tactics.ts`). */
+  | { kind: 'lineMet'; how: 'met' | 'charge' }
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number; r?: number }
   | { kind: 'arc'; from: number; to: number; ail?: 'shock' }
   | { kind: 'zone'; u: number; v: number; ms: number; what?: 'spikes' }
@@ -342,6 +346,8 @@ export type BattleEvent =
   /** Duchess the goat has wandered on to fight for the heroes (`duchessFight.ts`). */
   | { kind: 'duchess'; by: number }
   | { kind: 'ultLapse'; by: number }
+  /** The ruler's Decree was cast (KING-SPELLS batch 2, `decrees.ts`): its name for the banner, the spell whose look it borrows. */
+  | { kind: 'decree'; id: string; look: SpellId }
   /** A fighter is drawn with another sheet (a form, a guise), or its own again (null). */
   | { kind: 'look'; by: number; sheet: string | null }
   /** Timed terrain from a kit is laid on a tile for `ms` (0: it is gone again). */
@@ -459,6 +465,9 @@ export interface Battle {
   /** The player's orders waiting for the next tick (`orders.ts`), and every order applied so far, with the king's spells: with the seed and the placing, a fight replays from it. */
   orders?: Order[];
   log?: LogEntry[];
+  /** The party's tactic picked before the fight (`setTactic`), and the fight's own once it begins (`tactics.ts`). */
+  tacticPick?: Tactic;
+  tactic?: TacticState;
   /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
@@ -472,6 +481,11 @@ export interface Battle {
   auras?: Aura[];
   /** Duchess the goat joins this fight as it begins (`duchessFight.ts`): set when the fight is made; unset in almost every fight. */
   duchess?: true;
+  /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`) and the id of the guest it asks the heroes to protect; unset in every other fight. */
+  rules?: QuestRules;
+  guard?: number;
+  /** The units a quest battle's spare rule asks to leave standing (their ids, found as the fight begins). */
+  spared?: number[];
   /** BOSS-BIG (`bossAttacks.ts`): the bosses' signature attacks winding up (their tiles marked), each boss's own clock for them, and how
    *  many have begun this fight. None until a boss with one acts. */
   warnings?: BossWarning[];
@@ -564,6 +578,8 @@ export interface Stage {
   layout?: LayoutId;
   /** A themed daily's featured trait: its woken bonus counts double (`dailyThemes.ts`). */
   featured?: string;
+  /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`). */
+  rules?: QuestRules;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -670,6 +686,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   });
   if (tw?.ambush) ambush(b);
   if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;
+  if (stage.rules) applyRules(b, stage.rules);
   return b;
 }
 
@@ -806,8 +823,13 @@ export function fight(b: Battle): boolean {
   startRift(b);
   // (a hero's summons and shapes kept from the last wave stand up again: SUMMON-TIMERS, `carry.ts`)
   startKept(b);
+  // (the party's tactic: who is held until the line meets the foe, `tactics.ts`)
+  startTactic(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
+  // (a quest battle that asks the heroes to protect a guest: it stands beside them as the fight begins)
+  if (b.rules?.protect) joinGuest(b);
+  if (b.rules?.spare) b.spared = spareIds(b);
   // (STATS batch 4: the foes answer the heroes' growth, and every fighter rolls initiative)
   matchOf(b);
   rollInitiative(b);
@@ -884,7 +906,8 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   const night = def.shot && b.night && (tileAt(b.board, me.u, me.v)?.h ?? 0) < MARCH.NIGHT_HEIGHT ? 1 : 0;
   const fog = def.shot ? (b.twist?.fog ?? 0) + (b.fog ?? 0) + night : 0;
   // (STATS batch 6: Athletics, a hero of STR +4 or more climbs a step higher, `athleticsOf`)
-  const jump = (b.twist?.jump ?? 0) + (me.side === 'hero' ? athleticsOf(me) : 0);
+  // (SEVEN-SLOT GEAR: and a hero's gear, at most a step: `EquipStats.jump`)
+  const jump = (b.twist?.jump ?? 0) + (me.side === 'hero' ? athleticsOf(me) + Math.min(1, me.eq?.jump ?? 0) : 0);
   if (!extra && !fog && !jump && !(reach && def.shot)) return def;
   return { ...def, range: Math.max(1, def.range + extra - fog), ...(jump ? { jump: def.jump + jump } : {}), ...(reach && def.shot ? { heightReach: (def.heightReach ?? HIGH_REACH) + reach } : {}) };
 }
@@ -931,6 +954,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
   if (b.board.hazards) tickHazards(b, out);
+  if (b.tactic) tickTactic(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
   tickCombo(b, out);
@@ -945,7 +969,15 @@ function stepOnce(b: Battle): BattleEvent[] {
     return out;
   }
   const heroes = b.units.some((x) => x.alive && realHero(x));
-  const foes = b.units.some((x) => x.alive && x.side === 'foe');
+  // (QUESTS-3, Q5: a quest battle's rules may end the fight: a guest fallen, a clock run out, a spared foe felled)
+  if (b.rules) {
+    const end = ruleEnd(b, heroes);
+    if (end) {
+      endBy(b, end, out);
+      return out;
+    }
+  }
+  const foes = b.units.some((x) => x.alive && x.side === 'foe' && !b.spared?.includes(x.id));
   if (!heroes || !foes || b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) {
     b.phase = heroes && !foes ? 'won' : 'lost';
     b.pending = [];
@@ -1367,6 +1399,11 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const def = strikeDef(b, me);
   me.step = undefined;
   let foes = b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
+  // (QUESTS-3, Q5: a foe the battle asks to be spared is not struck by the heroes' own mind: they go for the others)
+  if (b.spared?.length && me.side === 'hero') {
+    const rest = foes.filter((x) => !b.spared!.includes(x.id));
+    if (rest.length) foes = rest;
+  }
   // (a hero wearing a foe's guise is picked last: the foes go for any other first)
   if (b.kits && me.side !== 'hero' && foes.some((x) => x.kx?.guise)) {
     const plain = foes.filter((x) => !(x.kx?.guise && x.kx.guise.until > b.t));
@@ -1385,7 +1422,12 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     else me.taunt = undefined;
   }
   me.cast = undefined;
-  if (tryCast(b, me, out)) return;
+  // (the party's tactic: a held hero saves its openers, and walks no further than the line, `tactics.ts`)
+  const held = b.tactic ? heldBy(b, me) : false;
+  castGate.held = held;
+  const cast = tryCast(b, me, out);
+  castGate.held = false;
+  if (cast) return;
   // strike the weakest foe in reach (first stepping up to higher ground a step or two away, if it holds the target too)
   const inReach = foes.filter((f) => canStrike(b.board, def, me, f) && !(f.air !== undefined && !def.shot && airborne(b, f))).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
   // (a foe the Tyrant condemned is every hero's first target, when it can be reached)
@@ -1407,6 +1449,12 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     if (round >= 0) return stepTo(b, me, round, out);
     const up = perchFor(b, me, def, inReach[0]);
     return up >= 0 ? stepTo(b, me, up, out) : swing(b, me, inReach[0], rng, out);
+  }
+  if (held) {
+    const step = heldStep(b, me, def.jump);
+    if (step >= 0) return stepTo(b, me, step, out);
+    me.busyUntil = b.t + WAIT_MS;
+    return;
   }
   // else walk toward the nearest foe it can get a blow at
   const blocked = new Set<number>();

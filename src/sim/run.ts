@@ -28,6 +28,7 @@ import { mixSeed, Rng } from './rng';
 import { drawEvent, eventAfter, type EventCard } from './events';
 import { gearBoost, type Gear, type Slot } from './gear';
 import type { EquipSlot, EquipStats, Equipment } from './equipment';
+import { migrateRunWorn } from './gearMigrate';
 import { findGear, foundLine, SOURCE, stow, type FoundHome } from './runGear';
 import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
@@ -526,6 +527,8 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
     // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
     ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
+    // (a quest battle's own rules, if it has any: `questRules.ts`)
+    ...(run.mode?.kind === 'quest' && questBattleById(run.mode.quest)?.rules ? { rules: questBattleById(run.mode.quest)!.rules } : {}),
     // (a quest battle has Duchess every time its story has her, and never otherwise: no roll)
     duchess: run.mode?.kind === 'quest' ? (questBattleById(run.mode.quest)?.duchess ? 'always' : 'never') : duchessModeOk(run.mode) ? duchess : 'never',
   });
@@ -633,6 +636,8 @@ export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = local
  * any relic gets one line on its next prep screen. A run already in the new catalogue is left as it is.
  */
 export function catalogueRun(r: Run): Run {
+  // (SEVEN-SLOT GEAR: the finds a run from before wears move to the new slots)
+  migrateRunWorn(r);
   if (r.relicBook === RELIC_BOOK) return r;
   // (RELICS-3: a run already in the second catalogue is only quietly moved on; the line is for the first conversion, or a relic that changed)
   const first = r.relicBook === undefined;

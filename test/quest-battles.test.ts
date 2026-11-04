@@ -128,7 +128,8 @@ test('hidden until owned: a battle quest is not offered, nor drawn, until its wh
   clear(m, ...ARMIES.map((a) => a.id));
   for (let d = 0; d < 40; d++) {
     refreshOffers(m, 20261101 + (d % 28) + 100 * Math.floor(d / 28));
-    for (const o of m.quests!.offers) assert.notEqual(questById(o.id)!.goal.kind, 'battle', o.id);
+    // (QUESTS-3: a battle whose cast the save does own, Kwame alone for the new ones, may be offered: never one whose cast it lacks)
+    for (const o of m.quests!.offers) if (questById(o.id)!.goal.kind === 'battle') assert.ok(castOf(m, battleOfQuest(o.id)!), o.id);
     m.quests!.offers = [];
   }
   // (once owned, and its needs met, it can be)

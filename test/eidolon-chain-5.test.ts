@@ -38,31 +38,33 @@ const packSave = (seed: number, pack: 0 | 1): Meta => {
 const STARTERS = FIXED_PACKS.flatMap((p) => p.heroes);
 const gorm = chainById('gorm')!;
 const win = (army: string, more: Partial<QuestFight> = {}): QuestFight => ({ won: true, waves: 1, boss: false, heroes: ['knight'], flawless: true, kills: [], dailyCleared: false, mode: 'army', army, spells: [], ...more });
-const bossWin = (army: string, boss: string): QuestFight => win(army, { boss: true, kills: [boss], bosses: [boss] });
+const bossWin = (army: string, boss: string, more: Partial<QuestFight> = {}): QuestFight => win(army, { boss: true, kills: [boss], bosses: [boss], ...more });
+/** Q9: the chains' parts ask for Hard (tier 1). */
+const HARD = { tier: 1 } as const;
 
-/** Askel, Nivra, Aurelan and Gorm bound, the Infernal Host cleared, Gorm's chain begun at `part` (3: every piece in). */
+/** Askel, Nivra, Aurelan and Gorm bound, the Infernal Host cleared, Gorm's chain begun at `part` (5: every piece in). */
 function atPart(seed: number, pack: 0 | 1, part: number): Meta {
   const m = packSave(seed, pack);
   clear(m, 'orcs', 'beasts', 'wildwood', 'labyrinth', 'infernal');
   assert.ok(beginChain(m, 'askel'));
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
   assert.ok(bindChain(m, 'askel'));
   assert.ok(beginChain(m, 'nivra'));
-  m.quests!.chains!.nivra = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.nivra = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('rimeScale', 'merePearl', 'heldBreath');
   assert.ok(bindChain(m, 'nivra'));
   assert.ok(beginChain(m, 'aurelan'));
-  m.quests!.chains!.aurelan = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.aurelan = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('dawnThread', 'sunCrown', 'dawnLamp');
   assert.ok(bindChain(m, 'aurelan'));
   assert.ok(beginChain(m, 'voltara'));
-  m.quests!.chains!.voltara = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.voltara = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('copperCoil', 'clockFace', 'stormGlass');
   assert.ok(bindChain(m, 'voltara'));
   assert.ok(beginChain(m, 'gorm'));
   m.quests!.chains!.gorm = { part, progress: 0 };
-  m.quests!.pieces.push(...['emberCrack', 'masonsMark', 'knockingStone'].slice(0, part));
+  m.quests!.pieces.push(...['emberCrack', 'masonsMark', 'knockingStone', 'quarryBell', 'plumbLine'].slice(0, part));
   return m;
 }
 
@@ -81,20 +83,20 @@ function playThrough(m: Meta, id: string, lose = false): void {
   }
 }
 
-test("the data: three parts and pieces, Duchess at the Sanctum, a binding with no horn beats ending on the seal, a trial of its own", () => {
-  assert.equal(gorm.parts.length, 3);
+test("the data: five parts and pieces (Q9), Duchess at the Sanctum, a binding with no horn beats ending on the seal, a trial of its own", () => {
+  assert.equal(gorm.parts.length, 5);
   assert.equal(gorm.giver.name, 'Duchess');
   assert.deepEqual(gorm.opens, { kind: 'army', army: 'infernal' });
-  assert.deepEqual(gorm.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'tally']);
+  assert.deepEqual(gorm.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'tally', 'clearArmy', 'wavesWon']);
   assert.ok(gorm.parts.every((p) => p.reward.chest === 'bronze' && PIECES.has(p.piece.id)));
-  assert.equal(PIECES.size, 18);
+  assert.equal(PIECES.size, 30);
   assert.equal(gorm.binding!.at(-1)!.beat, 'bound');
   assert.ok(!gorm.binding!.some((b) => b.beat === 'horn' || b.beat === 'hornFull'));
   const lines = gorm.prologue!.shots.flatMap((s) => s.lines ?? []);
   assert.ok(lines.length >= 8 && lines.some((l) => 'who' in l && l.who === 'duchess'));
   assert.ok(gorm.prologue!.shots.every((s) => s.lines?.every((l) => lineLen(l) > 0)));
   assert.ok(gorm.call && /goat/.test(gorm.call.title));
-  assert.equal(stepsOf(gorm), 4);
+  assert.equal(stepsOf(gorm), 6);
   assert.ok(trialOf(gorm));
 });
 
@@ -120,9 +122,11 @@ test('offered once Voltara is bound and the Infernal Host cleared, not before; t
   const p = atPart(6, 1, 0);
   assert.equal(activeChain(p), gorm);
   assert.equal(chainWantsBattle(p, 'buriedFoundation'), false, 'the battle only on its part');
-  assert.deepEqual(noteChains(p, bossWin('orcs', 'orcWarlord')), []);
+  assert.deepEqual(noteChains(p, bossWin('orcs', 'orcWarlord', HARD)), []);
   const stash = p.stash.length;
-  const found = noteChains(p, bossWin('infernal', 'demonLord'));
+  assert.deepEqual(noteChains(p, bossWin('infernal', 'demonLord')), [], 'Q9: Hard only');
+  assert.deepEqual(noteChains(p, bossWin('infernal', 'demonLord', { ...HARD, flawless: false })), [], 'Q9: no hero falling');
+  const found = noteChains(p, bossWin('infernal', 'demonLord', HARD));
   assert.deepEqual(found.map((f) => f.piece.id), ['emberCrack']);
   assert.equal(p.stash.length, stash + 1);
   assert.ok(chainWantsBattle(p, 'buriedFoundation') && canFightBattle(p, 'buriedFoundation'));
@@ -130,10 +134,19 @@ test('offered once Voltara is bound and the Infernal Host cleared, not before; t
   assert.equal(currentPart(p)?.index, 1, 'a loss counts nothing');
   playThrough(p, 'buriedFoundation');
   assert.equal(currentPart(p)?.index, 2);
-  // (part 3: 25,000 damage taken, won or lost)
+  // (part 3: 25,000 damage taken in Hard army fights with no hero falling)
+  noteChains(p, win('orcs', { ...HARD, flawless: false, stats: [{ kind: 'knight', dealt: 0, healed: 0, taken: 12000, kills: 0 }] }));
   noteChains(p, win('orcs', { stats: [{ kind: 'knight', dealt: 0, healed: 0, taken: 12000, kills: 0 }] }));
+  assert.equal(p.quests!.chains!.gorm.progress, 0, 'Q9: not on Normal, nor with a hero fallen');
+  noteChains(p, win('orcs', { ...HARD, stats: [{ kind: 'knight', dealt: 0, healed: 0, taken: 12000, kills: 0 }] }));
   assert.ok(p.quests!.chains!.gorm.progress > 0);
-  noteChains(p, win('orcs', { stats: [{ kind: 'knight', dealt: 0, healed: 0, taken: 14000, kills: 0 }] }));
+  noteChains(p, win('orcs', { ...HARD, stats: [{ kind: 'knight', dealt: 0, healed: 0, taken: 14000, kills: 0 }] }));
+  // (Q9, part 4: the Infernal Host cleared on Hard with no heart; part 5: five Hard waves, flawless, no hires)
+  assert.equal(currentPart(p)?.part.id, 'gorm4');
+  assert.deepEqual(noteChains(p, win('infernal', { ...HARD, cleared: true, hearts: 1 })), []);
+  assert.equal(noteChains(p, win('infernal', { ...HARD, cleared: true }))[0].piece.id, 'quarryBell');
+  assert.deepEqual(noteChains(p, win('orcs', { ...HARD, waves: 5, hires: 1 })), []);
+  assert.equal(noteChains(p, win('orcs', { ...HARD, waves: 5 }))[0].piece.id, 'plumbLine');
   assert.equal(currentPart(p), undefined);
   assert.ok(trialDue(p));
 });
@@ -143,7 +156,7 @@ test("the trial is one entry: Gorm's fighter, kit, great attacks, second form; i
   assert.equal(FOES[t.boss.id].sheet, 'eidolon_gorm');
   assert.deepEqual(SIGNATURES[t.boss.id].map((s) => [s.key, s.shape.kind, s.el, s.rider]), [['landslide', 'ring', 'earth', 'shove'], ['risingPillars', 'rain', 'earth', 'stun']]);
   assert.ok(PHASE2[t.boss.id].shield! > 0 && KITS[t.boss.id].passive?.steady);
-  const m = atPart(30, 0, 3);
+  const m = atPart(30, 0, 5);
   assert.equal(bindChain(m, 'gorm'), false, 'not before the trial');
   assert.equal(trialDue(m)?.trial.id, 'gormTrial');
   playThrough(m, 'gormTrial');
@@ -151,7 +164,7 @@ test("the trial is one entry: Gorm's fighter, kit, great attacks, second form; i
 });
 
 test('the binding: Gorm is bound and chosen, a gold chest is paid, the horn is untouched, his Bound card shows', () => {
-  const m = atPart(31, 1, 3);
+  const m = atPart(31, 1, 5);
   m.quests!.chains!.gorm.trialWon = true;
   m.eidolons!.horn = 300;
   const stash = m.stash.length;
@@ -175,7 +188,7 @@ test('the save keeps the chain (junk dropped)', () => {
   const back = loadMeta(1, { getItem: (k) => map.get(k) ?? null });
   assert.deepEqual(back.quests!.chains!.gorm, { part: 2, progress: 0 });
   assert.deepEqual(readChainState({ chains: { gorm: { part: 2, progress: 0, trialWon: true } } }), { chains: { gorm: { part: 2, progress: 0 } } });
-  assert.deepEqual(readChainState({ chains: { gorm: { part: 9, progress: 9, bound: true } } }), { chains: { gorm: { part: 3, progress: 0, bound: true } } });
+  assert.deepEqual(readChainState({ chains: { gorm: { part: 9, progress: 9, bound: true } } }), { chains: { gorm: { part: 5, progress: 0, bound: true } } });
 });
 
 /** The trial fought as the rating tool fights it. */
