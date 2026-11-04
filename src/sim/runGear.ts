@@ -51,6 +51,7 @@ import {
 import type { Meta } from './meta';
 import { OLD_BASES } from './equipBases';
 import { claimLegends } from './legends';
+import { unpackSatchel } from './remedies';
 import { BREAK_GOLD, WAVE_SOURCE, addRune, allRunes, autoRunes, rollRune, runeName, runeStats, takeOffRune, whereRune, type Rune } from './runes';
 import { mixSeed, Rng } from './rng';
 import { armyIndex } from './armies';
@@ -496,8 +497,9 @@ export function settleFinds(meta: Meta, run: Run, auto = false): FoundHome | nul
   }
   out.pieces.sort(bestFirst);
   run.foundHome = out;
-  // (SEVEN-SLOT GEAR: a legend whose source the run met is found as it ends)
+  // (SEVEN-SLOT GEAR: a legend whose source the run met is found as it ends; batch 6: the unused remedies come home)
   claimLegends(meta);
+  unpackSatchel(meta, run);
   return out;
 }
 

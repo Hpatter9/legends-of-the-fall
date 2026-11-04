@@ -3,6 +3,7 @@
 // long press, or the small i, opens the hero's role and skill), and the locked heroes shaded at the end. A draft is kept
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
+import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from './sim/remedies';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { heroClassLabel, heroName } from './sim/heroNames';
@@ -235,6 +236,51 @@ export class Party {
     };
   }
 
+  /** SEVEN-SLOT GEAR batch 6: the satchel the run will take (up to five remedies, one Elixir; the last choice is remembered) and the switch
+   *  that lets Auto use them (off by default). Shown once a remedy is owned. */
+  private drawSatchel(): void {
+    const m = this.meta;
+    const go = $('ptGo');
+    let box = document.getElementById('ptSatchel');
+    if (!box) {
+      box = el('div', 'ptSatchel');
+      box.id = 'ptSatchel';
+      go.before(box);
+    }
+    const owned = REMEDY_LIST.filter((r) => (m.satchel?.[r.id] ?? 0) > 0);
+    box.hidden = !owned.length && !m.autoRemedies;
+    if (box.hidden) return;
+    const pick = satchelFor(m);
+    const taken = REMEDY_LIST.reduce((n, r) => n + (pick[r.id] ?? 0), 0);
+    box.replaceChildren(el('b', '', `Satchel · ${taken} / ${SATCHEL_MAX}`));
+    for (const r of owned) {
+      const row = el('div', 'ptRemedy');
+      const n = pick[r.id] ?? 0;
+      const less = el('button', '', '−');
+      const more = el('button', '', '+');
+      less.disabled = n <= 0;
+      more.disabled = taken >= SATCHEL_MAX || n >= (m.satchel?.[r.id] ?? 0) || (r.id === 'elixir' && n >= ELIXIR_MAX);
+      const set = (k: number) => {
+        pickSatchel(m, { ...pick, [r.id]: k });
+        saveMeta(m);
+        this.drawSatchel();
+      };
+      less.addEventListener('click', () => set(n - 1));
+      more.addEventListener('click', () => set(n + 1));
+      row.append(el('span', '', `${r.name} · ${n} of ${m.satchel?.[r.id] ?? 0}`), less, more);
+      box.append(row);
+    }
+    const auto = el('button', 'ptAutoRemedy', `Auto may use remedies: ${m.autoRemedies ? 'On' : 'Off'}`);
+    auto.title = 'With it on, Auto heals any hero under half with the cheapest remedy that brings it to three quarters, and keeps the Phoenix Ash and the Elixir for a boss';
+    auto.addEventListener('click', () => {
+      if (m.autoRemedies) delete m.autoRemedies;
+      else m.autoRemedies = true;
+      saveMeta(m);
+      this.drawSatchel();
+    });
+    box.append(auto);
+  }
+
   private draw(): void {
     const m = this.meta;
     const slots = this.slots;
@@ -284,6 +330,7 @@ export class Party {
     $('ptCount').textContent = `${this.picked.length} / ${slots} ready · Party power ${powerText(partyPower(m, this.picked))}`;
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     this.drawWear();
+    this.drawSatchel();
     const key = this.picked.join('|');
     if (this.sceneKey !== key || !$('ptTableau').firstChild) {
       $('ptTableau').replaceChildren(partyTableau(this.picked, (k) => awakenedStep(this.meta, k)));

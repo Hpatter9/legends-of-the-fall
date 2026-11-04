@@ -143,3 +143,19 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .rnPick { margin: 0; font-size: 11px; color: var(--e8); }
 #bench .card .rnStrip { top: 3px; gap: 3px; }
 #bench .card .rnStrip .rnStone.rn-small { width: 9px; height: 9px; margin: 2px; }
+
+/* SEVEN-SLOT GEAR batch 6: the party screen's satchel, the tray's remedies pocket, and a wounded hero's bench card */
+.ptSatchel { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; padding: 6px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); font-size: 12px; }
+.ptSatchel > b { color: var(--gold-hi); font-size: 12px; }
+.ptRemedy { display: flex; align-items: center; gap: 6px; } .ptRemedy span { flex: 1; }
+.ptRemedy button { min-height: 32px; min-width: 36px; padding: 0 8px; }
+.ptAutoRemedy { min-height: 34px; font-size: 12px; }
+.rmPocket { display: flex; flex-direction: column; gap: 4px; }
+.rmRow { display: flex; flex-wrap: wrap; gap: 4px; }
+.rmBtn { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 2px 8px; font-size: 12px; }
+.rmBtn img { width: 24px; height: 24px; image-rendering: pixelated; } .rmBtn.sel { border-color: #ffd24a; }
+.rmHeroes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.rmHero { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-height: 40px; padding: 3px 6px; font-size: 11px; } .rmHero.can { border-color: #ffd24a; }
+.rmBar { display: block; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; } .rmBar b { display: block; height: 100%; background: #6fc46a; }
+#bench .card.wounded i span { background: #d9a23c; }
+#bench .card.wounded::after { content: '✚'; position: absolute; right: 4px; top: 18px; font-size: 13px; line-height: 1; color: #f2e9d8; text-shadow: 0 0 2px #000, 0 0 2px #000; pointer-events: none; }

@@ -4,6 +4,8 @@
 // same run and the same board always give the same formation.
 
 import { autoRunes } from './runes';
+import { autoRemedy, packSatchel, remedyBonus } from './remedies';
+import { hpShare } from './health';
 import { CLASS_OF } from './starter';
 import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
@@ -11,7 +13,7 @@ import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
 import { heroRank, type Meta } from './meta';
 import { awakenStats } from './awaken';
-import { boostOf, equip, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
+import { boostOf, equip, isBossRun, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
 import { guestBoost } from './guest';
 import { autoMerge } from './merge';
@@ -29,7 +31,10 @@ export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
  *  run (RUN-GEAR) the equipment its kind fights in: the lasting pieces with the run's finds in their slots, fresh (`botKitStats`). */
 export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
   const awake = awakenStats(meta, h.kind);
-  return boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake);
+  const boost = boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake);
+  // (SEVEN-SLOT GEAR batch 6: a hero risen at half after a won wave starts the next so, as the page's does)
+  const share = run && !run.tower ? hpShare(run, h.id) : 1;
+  return share < 1 ? { ...boost, carry: share } : boost;
 }
 
 /** Whether a kind fights from behind: it shoots, or reaches past the next tile. */
@@ -123,6 +128,11 @@ export function autoRound(run: Run, meta: Meta, gear = true): void {
   while (summon(run)) autoMerge(run);
   run.squad = pickSquad(run, meta).map((h) => h.id);
   if (gear) dressSquad(run, meta);
+  // (SEVEN-SLOT GEAR batch 6: with the switch on, Auto heals the wounded from the satchel: `remedies.ts`)
+  if (meta.autoRemedies && !run.over) {
+    packSatchel(meta, run);
+    autoRemedy(run, isBossRun(run), (k) => remedyBonus(meta, k));
+  }
 }
 
 /** The tiles the heroes may stand on, as `[u, v]`. Boulders are out; water and lava are left for last (`avoidTile`). */

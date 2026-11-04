@@ -23,6 +23,9 @@ async function setUp(page) {
       worn: { knight: [{ id: 1, kind: 'bulwark', lv: 2 }, { id: 2, kind: 'ember', lv: 1 }], archer: [{ id: 3, kind: 'hawk', lv: 2 }], wizard: [{ id: 4, kind: 'arcana', lv: 3 }, { id: 5, kind: 'warding', lv: 1 }, { id: 6, kind: 'wellspring', lv: 5 }] },
       next: 20,
     };
+    // (batch 6: the knight fell last wave and stands again at half; a satchel of remedies)
+    r.wounds = { 1: 0.5 };
+    r.satchel = { bandage: 2, draught: 1, stew: 1 };
     localStorage.setItem('legends.run', JSON.stringify(r));
     // (no cinematics over the deploy screen)
     const st = JSON.parse(localStorage.getItem('legends.settings') ?? '{}');
@@ -54,6 +57,26 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.evaluate(() => document.querySelector('.rnBag .rnCell .k-ember')?.closest('button')?.click());
   await wait(page, 300);
   await page.screenshot({ path: `docs/samples/gear-build-runes-pick-${w}x${h}.png` });
+  // (the remedies pocket: a Bandage Roll chosen, the wounded knight lit)
+  await page.evaluate(() => document.querySelector('.rnBag .rnCell.sel')?.click());
+  await page.evaluate(() => document.querySelector('.rmBtn')?.click());
+  await wait(page, 300);
+  await page.evaluate(() => document.querySelector('.rmPocket')?.scrollIntoView({ block: 'center' }));
+  await wait(page, 200);
+  await page.screenshot({ path: `docs/samples/gear-build-remedies-${w}x${h}.png` });
+  // (the party screen's satchel and Auto's switch)
+  await page.evaluate(() => [...document.querySelectorAll('.evcard.pack header button')].find((b) => b.textContent === 'Close')?.click());
+  await wait(page, 300);
+  await page.evaluate(() => {
+    const g = window.__game;
+    g.meta.satchel = { bandage: 4, draught: 2, phoenix: 1 };
+    g.meta.satchelPick = { bandage: 2, draught: 1 };
+    g.party.open('edit', () => {});
+  });
+  await wait(page, 700);
+  await page.evaluate(() => document.getElementById('ptSatchel')?.scrollIntoView({ block: 'center' }));
+  await wait(page, 200);
+  await page.screenshot({ path: `docs/samples/gear-build-satchel-${w}x${h}.png` });
   const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   console.log(`${w}x${h}`, 'pack button:', label, '· side scroll', wide);
   errors += errs.length;

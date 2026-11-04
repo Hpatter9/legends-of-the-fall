@@ -28,6 +28,9 @@ import { gearBoost, type Gear, type Slot } from './gear';
 import type { EquipSlot, EquipStats, Equipment } from './equipment';
 import { migrateRunWorn } from './gearMigrate';
 import { newRunes, readRunes, type RuneState } from './runes';
+import { settleWounds } from './wounds';
+import { heroName } from './heroNames';
+import type { RemedyId } from './remedies';
 import { findGear, foundLine, SOURCE, stow, waveRune, type FoundHome } from './runGear';
 import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
@@ -175,6 +178,12 @@ export interface Run {
   runes?: RuneState;
   /** The lasting pieces a rune run's bosses left as trophies, each coming home a quarter of the time (always on a first clear of a tier). */
   trophies?: Equipment[];
+  /** SEVEN-SLOT GEAR batch 6 (`wounds.ts`): the heroes standing again at part of their hp after a won wave, by roster id (missing: whole). */
+  wounds?: Record<string, number>;
+  /** The heroes risen at half after the last wave, for the wave card. */
+  risen?: number[];
+  /** The remedies taken into this run, by id (`remedies.ts`); unused ones go home at its end. Missing: not yet packed. */
+  satchel?: Partial<Record<RemedyId, number>>;
   /** RUN-GEAR: the army index the finds' item levels follow when the run has no army of its own (the furthest cleared). */
   findAt?: number;
   /** RUN-GEAR: the finds have been brought home (`settleFinds`), and what came, for the result card's Found row. */
@@ -262,6 +271,8 @@ export function keepCharges(run: Run, b: Battle): void {
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
 export function noteFight(run: Run, b: Battle): void {
   addRelicMarks(run, b);
+  // (SEVEN-SLOT GEAR batch 6: a won wave's fallen stand again at half, `wounds.ts`)
+  settleWounds(run, b);
   const army = waveArmyOf(run);
   if (!army) return;
   const fell = b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon).length;
@@ -545,6 +556,11 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     // (SEVEN-SLOT GEAR batch 4: a rune run's won wave gives a rune of its own, from its side stream)
     if (run.runes) prizes.push(waveRune(run));
     if (boss) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1, SOURCE.boss));
+    // (and the wave card says who stands again at half)
+    for (const id of run.risen ?? []) {
+      const h = run.roster.find((x) => x.id === id);
+      if (h) run.found.push(`${heroName(h.kind)} stands again at half`);
+    }
     prizes.forEach((g, i) => {
       stow(run, g, boss && i === prizes.length - 1 ? SOURCE.boss : SOURCE.curse);
       run.found!.push(foundLine(g));

@@ -8,6 +8,11 @@
 import { BAG_MAX, RUNE_COLOUR, autoRunes, dropRune, mergeAll, mergesReady, runeName, runeTargets, runeText, runeTotals, socketsOf, twinIds, type Rune, type RuneState } from './sim/runes';
 import { heroName } from './sim/heroNames';
 import { play } from './render/sound';
+import { REMEDY_LIST, packSatchel, remedyBlock, remedyBonus, useRemedy, type RemedyId } from './sim/remedies';
+import { hpShare } from './sim/health';
+import { REMEDY_ICON } from './remedyArt';
+import type { Run } from './sim/run';
+import type { Meta } from './sim/meta';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -139,6 +144,72 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
       const r = [...state.bag, ...Object.values(state.worn).flat()].find((x) => x.id === sel);
       if (r) box.append(el('p', 'rnPick', `${runeName(r)}: ${runeText(r)}`));
     }
+  };
+  draw();
+}
+
+/** SEVEN-SLOT GEAR batch 6: the tray's remedies pocket. The run's satchel (packed from the save as it is first opened), each remedy with its
+ *  count; tap one that heals all to use it, or tap one and then a wounded hero. The heroes show their health between waves. */
+export function drawRemedies(card: HTMLElement, run: Run, meta: Meta | undefined, heroes: readonly { id: number; kind: string }[], canUse: boolean, changed: () => void): void {
+  if (meta) packSatchel(meta, run);
+  const box = el('div', 'rmPocket');
+  card.append(box);
+  let sel: RemedyId | undefined;
+  const bonus = (k: string) => remedyBonus(meta, k);
+  const draw = () => {
+    box.replaceChildren(el('small', 'rnHead', 'Remedies'));
+    const have = REMEDY_LIST.filter((r) => (run.satchel?.[r.id] ?? 0) > 0);
+    if (!have.length) {
+      box.append(el('p', 'note', 'No remedies in the satchel. Hester sells them; the party screen packs them for a run.'));
+      return;
+    }
+    const row = el('div', 'rmRow');
+    for (const r of have) {
+      const b = el('button', `rmBtn${sel === r.id ? ' sel' : ''}`);
+      b.type = 'button';
+      const pic = el('img');
+      pic.src = REMEDY_ICON[r.id];
+      pic.alt = '';
+      b.append(pic, el('span', '', `${r.name} ×${run.satchel![r.id]}`));
+      b.title = r.text;
+      b.disabled = !canUse;
+      b.addEventListener('click', () => {
+        if (r.all) {
+          if (useRemedy(run, r.id, undefined, bonus)) {
+            play('heal');
+            changed();
+          }
+          sel = undefined;
+          return draw();
+        }
+        sel = sel === r.id ? undefined : r.id;
+        draw();
+      });
+      row.append(b);
+    }
+    box.append(row);
+    const list = el('div', 'rmHeroes');
+    for (const h of heroes) {
+      const share = hpShare(run, h.id);
+      const b = el('button', `rmHero${sel && !remedyBlock(run, sel, h.id) ? ' can' : ''}`);
+      b.type = 'button';
+      const bar = el('i', 'rmBar');
+      const fill = el('b');
+      fill.style.width = `${Math.round(share * 100)}%`;
+      bar.append(fill);
+      b.append(el('span', '', `${heroName(h.kind)} · ${Math.round(share * 100)}%`), bar);
+      b.disabled = !canUse || !sel || !!remedyBlock(run, sel, h.id);
+      b.addEventListener('click', () => {
+        if (sel && useRemedy(run, sel, h.id, bonus)) {
+          play('heal');
+          changed();
+        }
+        sel = undefined;
+        draw();
+      });
+      list.append(b);
+    }
+    box.append(list);
   };
   draw();
 }

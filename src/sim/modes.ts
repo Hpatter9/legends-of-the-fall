@@ -6,6 +6,7 @@
 // date is passed in as yyyymmdd.
 
 import { newRunes } from './runes';
+import { grantRemedy } from './remedies';
 import { checkAchievements, type Achievement } from './achievements';
 import type { Battle } from './battle';
 import { dailyArea, dailySeed, dateKey } from './dailySeed';
@@ -168,6 +169,8 @@ export function settleDaily(m: Meta, run: Run, fight: { won: boolean; stage: num
     entry.stars = bonus;
     m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, date), daily: date, bonus });
     chest = true;
+    // (SEVEN-SLOT GEAR batch 6: a cleared daily gives a Bandage Roll)
+    grantRemedy(m, 'bandage');
   }
   if (run.over) {
     entry.over = true;

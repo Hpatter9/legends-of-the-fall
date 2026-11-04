@@ -11,14 +11,14 @@ import { equip, unequip, type Owned, type Run } from './sim/run';
 import { equipBestRun, FIELD_BOOST, foundIn, isReal, spareFinds, takeOffFound, wearFound } from './sim/runGear';
 import { EQUIP_BASES, EQUIP_SLOTS, SLOT_NAMES, spareEquipment, STASH_MAX, wornIn, type EquipSlot, type Equipment } from './sim/equipment';
 import { pieceGear } from './sim/gear';
-import type { Meta } from './sim/meta';
+import { saveMeta, type Meta } from './sim/meta';
 import { itemIcon } from './equipView';
 import { shopArt } from './bookArt';
 import { UNITS } from './sim/units';
 import { battleSheet } from './render/awakenLook';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
-import { drawRuneTray } from './runeTray';
+import { drawRemedies, drawRuneTray } from './runeTray';
 import { twistIcon } from './twistView';
 import ironDraught from './art/items/blood_vial.png';
 import fireTonic from './art/items/ember_ruby.png';
@@ -227,6 +227,12 @@ export class Events {
       const fielded = placed.length ? placed : run.roster.filter((h) => !h.guest);
       const kinds = [...new Set(fielded.map((h) => h.kind))];
       drawRuneTray(card, run.runes, kinds.map((kind) => ({ kind, face: () => portrait(battleSheet(kind, this.equipmentStep(kind), 1), 40, 1) })), this.canEquip, () => this.onChange());
+      // (SEVEN-SLOT GEAR batch 6: and the satchel's remedies, used between waves)
+      drawRemedies(card, run, this.metaOf(), fielded, this.canEquip, () => {
+        const meta = this.metaOf();
+        if (meta) saveMeta(meta);
+        this.onChange();
+      });
       return;
     }
     card.append(heroes);

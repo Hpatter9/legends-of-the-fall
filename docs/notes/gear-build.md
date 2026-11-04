@@ -169,3 +169,31 @@ design's eight batches, each with its tests. This note says what each batch buil
 - **Pure helpers** (`runes.ts`): `socketsOf`, `runeTotals`, `runeTargets`, `dropRune`; tested in `test/runes-page.test.ts`.
 - **Screenshots:** `node tools/gear-build/rune-shots.mjs` writes `docs/samples/gear-build-runes-bench-*.png`, `-tray-` and `-pick-` (a
   rune chosen, its targets lit), at the three sizes, no sideways scroll, no page errors.
+
+## Batch 6: wounds and remedies
+
+- **Wounds** (`src/sim/wounds.ts`): in a run started since runes, after a won wave of an army, the daily or a quest battle, each hero that
+  fell stands again at half its hp (`REVIVE_SHARE`), those still standing are whole, and the Ring of Returning's wearer comes back whole.
+  After a lost wave with hearts left, everyone is whole again. Settled in `noteFight`, which the page and the bot both call; kept as
+  `Run.wounds`; read as a fight's start share through `hpShare` (`health.ts`), which the page already passed to every hero; the bot's
+  `botBoost` now passes it too. The wave card says "Aiko stands again at half". A hero's bench card shows its wound before the fight (a
+  part-filled amber bar and a bandage mark). The spire and the Calamity keep their own wounds (25%, campfires; the owner's answer 3).
+- **Remedies** (`src/sim/remedies.ts`): the Bandage Roll (+30%, 60 crowns), Healing Draught (+60%, 180), Camp Stew (the squad +25%, 320,
+  standing 2), Phoenix Ash (to full, 500, standing 2) and Elixir of the Keep (the squad to full, 1,400, standing 3). Owned in `Meta.satchel`.
+  **Where the words changed:** the Phoenix Ash heals to full without the "+10% max hp for the next wave" (there is no next-wave bonus
+  to hang it on without touching the fight); remedies are not in chests or first and Mythic clears yet (only Hester's shelf and a daily's
+  clear give them), so a chest's opening did not need a new kind of item.
+- **The satchel:** the party screen shows it once a remedy is owned: up to five, at most one Elixir, each with − and +, the last choice
+  remembered (`satchelFor`, `pickSatchel`; the strongest first when room runs out), and the switch **Auto may use remedies** (off by
+  default). The satchel is packed into the run the first time it is needed (the pack opens, or Auto heals) and its unused remedies come
+  home when the run ends (`settleFinds`).
+- **Using them:** the pack's tray has a Remedies pocket: tap a squad remedy to use it, or tap one and then a wounded hero (each hero shows
+  its health). They work in the spire and the Calamity too, on their own wounds (`setShare`). The Alchemist's Sash adds a quarter and the
+  Pilgrim's Cord a half on their wearer (`remedyBonus`).
+- **Auto's rule** (`autoRemedy`, run by `autoRound` before a wave when the switch is on): any hero under half gets the cheapest remedy
+  that brings it to three quarters (else the strongest it may use), keeping the Phoenix Ash and the Elixir for a boss wave; it never buys.
+- **The stall:** the Tomes tab shelves the remedies (four Bandages and two Draughts a day, then the better ones by standing); they sell back
+  for a fifth (`sellRemedy`). A cleared daily gives a Bandage Roll. Their icons are the rogue pack's potion and elixir until painted.
+- **Tests:** `test/wounds.test.ts`, `test/remedies.test.ts`.
+- **Screenshots:** `docs/samples/gear-build-remedies-*.png` (the pocket, a Bandage Roll chosen, the wounded knight lit),
+  `gear-build-satchel-*.png` (the party screen) and `gear-build-runes-bench-*.png` (the wounded knight's card).
