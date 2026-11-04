@@ -10,7 +10,8 @@ import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { TICK_MS, type Battle, type BattleEvent, type Unit } from './sim/battle';
 import { autoSpellsFor } from './sim/autoCast';
 import { ARMIES, armyUnlocked } from './sim/armies';
-import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { castSpell, canAfford, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
+import { snapSpell } from './sim/spellAim';
 import {
   autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine, holdPurse, purseLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
@@ -976,7 +977,7 @@ export class StandView {
       const tile = this.tileAtScreen(x, e.clientY);
       if (!tile || !this.s) return;
       if (this.spell) {
-        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
+        if (castSpell(this.s.b, this.spell, ...snapSpell(this.s.b, this.spell, tile[0], tile[1]))) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
         this.spell = null;
         this.refreshSpells();
         return;
@@ -1655,7 +1656,7 @@ export class StandView {
     const b = s.b;
     if (this.spell && !canAfford(b, this.spell)) this.spell = null;
     ((this.parts.mana.querySelector('i span')) as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
-    this.text('mana', this.parts.mana.querySelector('b'), `${Math.floor(b.spells.mana)}/${MANA_MAX}`);
+    this.text('mana', this.parts.mana.querySelector('b'), manaText(b.spells));
     for (const card of this.parts.cards.children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
       // (Resurrect has nobody to lift in the Last Stand: the fallen stay down)
