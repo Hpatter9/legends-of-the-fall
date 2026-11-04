@@ -220,3 +220,15 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
 - The campfire card lists the oaths sworn. Not yet: the pennant banner in the Sanctuary, travellers, act scenes.
 - Measured (`CAL_OATHS=1`, new switch: the bot swears every oath offered instead of resting or training; `npm run balance -- --no-tables --calamity --attempts 300`): guardians felled by 100 / 53 / 3% of runs with none, 100 / 53 / 5% with every oath, inside the design's two points.
 - Tests: `test/cal-journey.test.ts`.
+
+## Batch 10: travellers
+
+- **Travellers** (`calJourney.ts`, `journey.met`): the Pilgrim, the Deserter and the Cartographer. One of them (by the run's seed, side
+  stream `0x7a7e`) sits at the first campfire of Act I: help them (40 gold) or wrong them (+40 gold); neither takes the fire's turn. They
+  come back once, at the first campfire of Act II or III: helped, the Pilgrim mends every hero, the Deserter brings 100 gold, the
+  Cartographer two sacks of provisions; wronged, any of them springs a trap (every hero loses 15% of their health).
+- The design's return gifts were a free hire, a map with its fog lifted, or a trap; the hire and the fog need the recruit and fog code to
+  take a gift from outside, so the first pass gives a mend, gold and provisions instead. The bot meets no traveller, so the Calamity's
+  measure is unchanged. Travellers are written and shown on the campfire card; their sprites are on the art list.
+- Not yet: the act scenes.
+- Tests: `test/cal-journey.test.ts`.

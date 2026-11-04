@@ -9,3 +9,6 @@ stands in now and what should be made.
 | Watchtower card picture | `src/art/castle/watchtower.png` (kit piece) | Fine as it is; a grander look for level 3 |
 | Hall of Legends card picture | `src/art/castle/longhouse.png` (kit piece) | A columned hall with four plinths (castle kits' statues and pillars) |
 | Room icons (17) | text symbols in `rooms.ts` (`icon`) | 16 to 24 px icons from the packs' item and UI sheets: anvil, thread, mark, books, scroll, quill, candle, cross, eye, moon, compass, crossed swords, plinth, lectern |
+| Travellers (3) | words only on the campfire card | The Pilgrim, the Deserter, the Cartographer from the heroes' layered kits (body, outfit, helm), idle only |
+| Oath pennants (4) | words only | Small pennants from the packs' banner sheets for the Sanctuary's oath banner |
+| Provisions sack | words only | A sack icon from the item sheets |

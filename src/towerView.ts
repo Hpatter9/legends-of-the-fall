@@ -3,7 +3,8 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
-import { OATHS, OATH_MAX, SCAR, oathOffer, swearOath, takeScar, BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
+import { healParty, hurtParty } from './sim/health';
+import { TRAVELLERS, TRAVEL, meetTraveller, travellerAt, travellerBack, travellerReturns, OATHS, OATH_MAX, SCAR, oathOffer, swearOath, takeScar, BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
 import { foundRow } from './foundRow';
 import { todayKey } from './modes';
 import { SanctuaryView } from './sanctuaryView';
@@ -1193,7 +1194,35 @@ export class TowerView {
     const cur = run.tower!.cur!;
     const card = this.cardShell('The campfire', 'campfire');
     const flame = icon(fire, 'rtFlame');
-    card.append(flame, el('p', 'rtLead', 'A fire crackles in a ring of stones. The heroes bind their wounds.'), this.partyBars());
+    card.append(flame, el('p', 'rtLead', 'A fire crackles in a ring of stones. The heroes bind their wounds.'));
+    // (DEPTH-BUILD: a traveller met by the fire in Act I, and its return in Act II or III, `calJourney.ts`; neither takes the fire's turn)
+    if (run.mode?.kind === 'calamity' && run.rift) {
+      const j = (run.tower!.journey ??= {});
+      if (travellerReturns(j, run.tower!.act)) {
+        const back = travellerBack(j);
+        run.gold += back.gold;
+        if (back.mend) healParty(run, 1, true);
+        if (back.hurt) hurtParty(run, back.hurt);
+        saveSlot(run);
+        card.append(el('p', 'rtNote', back.line));
+      }
+      const who = cur.camp ? undefined : travellerAt(run.seed, run.tower!.act, j);
+      if (who) {
+        const t = TRAVELLERS[who];
+        card.append(el('p', 'rtLead', `${t.name}: ${t.meet}`));
+        for (const help of [true, false]) {
+          const b = el('button', 'rtChoice', help ? t.help : t.wrong);
+          b.disabled = help && run.gold < TRAVEL.GOLD;
+          b.addEventListener('click', () => {
+            if (!meetTraveller(run, j, who, help)) return;
+            saveSlot(run);
+            this.campCard();
+          });
+          card.append(b);
+        }
+      }
+    }
+    card.append(this.partyBars());
     if (cur.camp) {
       card.append(el('p', 'rtNote', cur.camp));
       const go = el('button', 'primary', 'Break camp');
