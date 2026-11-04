@@ -7,6 +7,7 @@
 import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SLOT_NAMES, callingOf, equipAll, equipBest, equipItem, equipStats, itemName, RARITY_NAMES, itemStats, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
 import { combineAll, combineGroup, combineGroups, combinePreview, COMBINE_COUNT } from './sim/equipment';
 import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './sim/gearSets';
+import { GLYPH_STONE, SET_EMBLEM } from './gearUiArt';
 import { saveMeta, type Meta } from './sim/meta';
 import { heroRank } from './sim/awaken';
 import { heroStats } from './sim/talents';
@@ -34,6 +35,14 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (cls) e.className = cls;
   if (text) e.textContent = text;
   return e;
+};
+/** A small painting set in a line of words (a set's emblem, a glyph's stone: `gearUiArt.ts`). */
+const paint = (src: string, cls: string): HTMLImageElement => {
+  const i = el('img', cls);
+  i.src = src;
+  i.alt = '';
+  i.draggable = false;
+  return i;
 };
 
 /** An item's icon: its painting in its grade's frame and glow (`gearIcons.ts`), or the old pixel icon on a rarity-coloured
@@ -150,7 +159,11 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt)
     card.append(line);
   }
   if (it.scars) card.append(el('small', 'eqDim', `Patched: ${it.scars} durability lost for good (a reforge at Hester's clears it)`));
-  for (const g of it.glyphs ?? []) card.append(el('small', 'eqGlyph', `${GLYPHS[g].name} glyph: ${GLYPHS[g].text}`));
+  (it.glyphs ?? []).forEach((g, i) => {
+    const line = el('small', 'eqGlyph');
+    line.append(paint(GLYPH_STONE[i + 1], 'eqGlyphStone'), `${GLYPHS[g].name} glyph: ${GLYPHS[g].text}`);
+    card.append(line);
+  });
   const sig = stats.abilities[0];
   if (base.legend) {
     // (a named legend: its power at its renown, and how far its story has opened: `legends.ts`)
@@ -184,7 +197,10 @@ function setCard(set: GearSet, worn: ReadonlySet<string>): HTMLElement {
   const card = el('div', `eqSet${on ? ' on' : ''}`);
   card.style.setProperty('--sc', set.colour);
   const head = el('div', 'eqSetHead');
-  head.append(el('b', '', set.name), el('small', '', `${n} / ${set.pieces.length}`));
+  const name = el('b', '');
+  if (SET_EMBLEM[set.id]) name.append(paint(SET_EMBLEM[set.id], 'eqEmblem'));
+  name.append(set.name);
+  head.append(name, el('small', '', `${n} / ${set.pieces.length}`));
   card.append(head);
   const pieces = el('div', 'eqSetPieces');
   for (const p of set.pieces) pieces.append(el('span', worn.has(p) ? 'got' : '', EQUIP_BASES[p].name));
@@ -398,7 +414,10 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       if (set) {
         const before = set.pieces.filter((p) => wornBases(meta, kind).includes(p)).length;
         const after = set.pieces.filter((p) => wornBases(meta, kind, it).includes(p)).length;
-        row.append(el('small', `eqSetHint${after > before ? ' up' : after < before ? ' down' : ''}`, `${set.name} set: ${before} → ${after} of ${set.pieces.length}`));
+        const hint = el('small', `eqSetHint${after > before ? ' up' : after < before ? ' down' : ''}`);
+        if (SET_EMBLEM[set.id]) hint.append(paint(SET_EMBLEM[set.id], 'eqEmblem'));
+        hint.append(`${set.name} set: ${before} → ${after} of ${set.pieces.length}`);
+        row.append(hint);
       }
       const btns = el('div', 'eqBtns');
       const on = el('button', 'primary', cur ? 'Swap' : 'Equip');

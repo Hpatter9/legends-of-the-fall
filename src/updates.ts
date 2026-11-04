@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.354.0',
+    date: '2026-11-04',
+    title: 'Painted gear, runes and legends',
+    notes: ['60 more gear pieces and all 21 legends painted; painted rune stones, remedies, set emblems and glyph stones.'],
+  },
+  {
     version: '0.353.0',
     date: '2026-11-04',
     title: 'Charge has an edge, stronger formations',
