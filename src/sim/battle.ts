@@ -30,7 +30,8 @@ import { ritesFall, tickRites } from './chapelRooms';
 import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bonds';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
-import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { chargeOf, noteStep, preyOrder, walkOrder, moveOf } from './foeStyles';
+import { afterBlow, gangOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
@@ -98,6 +99,8 @@ export interface Unit {
   swing?: { at: number; ms: number; to: number };
   /** When a quick shooter last stepped back from a brute, and a quick blade last stepped round a foe (STATS batch 6, `kiteStep`, `flankStep`). */
   kiteAt?: number;
+  /** A charging foe's steps in a row since its last blow (FOE-STYLES, `foeStyles.ts`). */
+  run?: number;
   flankAt?: number;
   hurtAt?: number;
   /** Skill charge, 0 to `CHARGE_MAX` (heroes only). */
@@ -320,6 +323,8 @@ export type BattleEvent =
   | { kind: 'heal'; to: number; amount: number; by?: number }
   /** A kill quickens the fighter's blows (Werewolf); `n` stacks now. */
   | { kind: 'frenzy'; by: number; n: number }
+  /** A foe's way of fighting showed (FOE-STYLES): a charge's blow ("Charge!"). */
+  | { kind: 'style'; by: number; what: string }
   /** A stare stiffens a foe (Gorgon). */
   | { kind: 'gaze'; by: number; to: number }
   /** A song hastens the allies near the singer (Satyr), for `ms`. */
@@ -1344,8 +1349,8 @@ export function flankValue(at: At, f: Unit): number {
 /** A quick melee hero's step round (flanking), when it could already strike `target` from its front: a free tile a step or two away at the
  *  target's side or back that still holds it, while the target is busy with someone else (one fighting it turns to face it anyway); at most
  *  once in `KITE_MS`. The first step's index, or -1 to stand and strike. */
-export function flankStep(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
-  if (!REST.flank || def.shot || !quickHero(me) || (b.stand && me.post)) return -1;
+export function flankStep(b: Battle, me: Unit, def: UnitDef, target: Unit, styled = false): number {
+  if (def.shot || !(styled || (REST.flank && quickHero(me))) || (b.stand && me.post)) return -1;
   if (flankValue(me, target) > 0 || target.swing?.to === me.id) return -1;
   if (me.flankAt !== undefined && b.t - me.flankAt < KITE_MS) return -1;
   const blocked = new Set<number>();
@@ -1371,8 +1376,8 @@ export function flankStep(b: Battle, me: Unit, def: UnitDef, target: Unit): numb
 
 /** A quick shooter's step back (kiting): with a melee foe beside it striking it, a free tile a step away out of every such foe's reach, from which it can
  *  still shoot a foe; at most once in `KITE_MS`. The tile's index, or -1 to stand and shoot. */
-export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[]): number {
-  if (!REST.kite || !quickHero(me) || (b.stand && me.post)) return -1;
+export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[], styled = false): number {
+  if (!(styled || (REST.kite && quickHero(me))) || (b.stand && me.post)) return -1;
   if (me.kiteAt !== undefined && b.t - me.kiteAt < KITE_MS) return -1;
   // (a brute beside it that is striking it: one busy with a friend is better left to that friend)
   const brutes = foes.filter((f) => !defOf(f).shot && apart(me, f) <= defOf(f).range && f.side !== me.side && f.swing?.to === me.id);
@@ -1445,8 +1450,10 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const cast = tryCast(b, me, out);
   castGate.held = false;
   if (cast) return;
+  // (FOE-STYLES: a foe's own way of moving and picking its prey, `foeStyles.ts`)
+  const mv = moveOf(me);
   // strike the weakest foe in reach (first stepping up to higher ground a step or two away, if it holds the target too)
-  const inReach = foes.filter((f) => canStrike(b.board, def, me, f) && !(f.air !== undefined && !def.shot && airborne(b, f))).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
+  let inReach = foes.filter((f) => canStrike(b.board, def, me, f) && !(f.air !== undefined && !def.shot && airborne(b, f))).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
   // (a foe the Tyrant condemned is every hero's first target, when it can be reached)
   if (b.kits && me.side === 'hero') {
     const doomed = inReach.find((f) => f.kx?.condemned && f.kx.condemned.until > b.t);
@@ -1458,11 +1465,13 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     return;
   }
   if (inReach.length) {
-    // (STATS batch 6: a quick shooter steps back from a brute beside it, when it can still shoot from there)
-    const back = def.shot ? kiteStep(b, me, def, foes) : -1;
+    if (mv) inReach = preyOrder(b, me, mv, inReach);
+    // (STATS batch 6: a quick shooter steps back from a brute beside it, when it can still shoot from there; FOE-STYLES: so does a kiting foe, a
+    // spear too)
+    const back = def.shot || mv === 'kite' ? kiteStep(b, me, def, foes, mv === 'kite') : -1;
     if (back >= 0) return stepTo(b, me, back, out);
-    // (and a quick blade steps round to the side of a foe busy with someone else)
-    const round = def.shot ? -1 : flankStep(b, me, def, inReach[0]);
+    // (and a quick blade steps round to the side of a foe busy with someone else; a flanking foe too)
+    const round = def.shot ? -1 : flankStep(b, me, def, inReach[0], mv === 'flank');
     if (round >= 0) return stepTo(b, me, round, out);
     const up = perchFor(b, me, def, inReach[0]);
     return up >= 0 ? stepTo(b, me, up, out) : swing(b, me, inReach[0], rng, out);
@@ -1486,10 +1495,10 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     for (let i = 0; i < walk.cost.length; i++) if (b.board.tiles[i].ground === 'shrine' && walk.cost[i] > 0 && walk.cost[i] <= SHRINE_RUN && (shrine < 0 || walk.cost[i] < walk.cost[shrine])) shrine = i;
     if (shrine >= 0) return stepTo(b, me, firstStep(walk, shrine)!, out);
   }
-  const byDistance = [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id);
+  const byDistance = walkOrder(b, me, mv, [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id));
   const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
   // (STATS batch 6: a quick melee hero, DEX +3 or more, goes round to a foe's side or back)
-  const flank = REST.flank && !def.shot && quickHero(me);
+  const flank = !def.shot && ((REST.flank && quickHero(me)) || mv === 'flank');
   for (const f of byDistance) {
     const hf = tileOf(b, f).h;
     // (the way costs steps; high ground over the foe takes off the cost of getting there, a shooter's tile under a brute's club adds to it)
@@ -1535,13 +1544,16 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   const c = critOf(b, me);
   const r = rollBlow(b, me, to, hMe, hTo, tileOf(b, to).ground === 'tall', c.chance, c.mult);
   const crit = r.crit;
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1) * (b.tactic?.edgeAt !== undefined && r.res !== 'miss' ? chargeBlow(b, me, to) : 1)));
+  // (FOE-STYLES: a charger's blow at the end of its run, a pack's bite with friends round the prey)
+  const rush = chargeOf(me);
+  if (rush > 1) out.push({ kind: 'style', by: me.id, what: 'Charge!' });
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * rush * gangOf(b, me, to) * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1) * (b.tactic?.edgeAt !== undefined && r.res !== 'miss' ? chargeBlow(b, me, to) : 1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1) * blowStatsOf(b, me).quick;
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
   me.swing = { at: b.t, ms: windup + 250, to: to.id };
   me.busyUntil = b.t + atkMs;
-  b.pending.push({ at: b.t + windup, kind: def.shot ? 'release' : 'land', by: me.id, to: to.id, dmg, heavy: mult * crit >= 1.4, crit: crit > 1, res: r.res, ...(r.turned ? { turned: true } : {}) });
+  b.pending.push({ at: b.t + windup, kind: def.shot ? 'release' : 'land', by: me.id, to: to.id, dmg, heavy: mult * crit * rush >= 1.4, crit: crit > 1, res: r.res, ...(r.turned ? { turned: true } : {}) });
   out.push({ kind: 'swing', by: me.id, to: to.id });
 }
 
@@ -1574,6 +1586,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   me.u = next.u;
   me.v = next.v;
   me.busyUntil = b.t + ms;
+  noteStep(me);
   // lava and hot coals burn whoever ends a step on them (fliers pass over)
   // (with the ailments on, lava's sear is half what it was and it sets the walker burning, `groundStep`)
   if (to.ground === 'lava' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * LAVA_BURN * (AILMENT_SWITCH.on ? 0.5 : 1))), false, false, out, 'dot');

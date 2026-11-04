@@ -83,6 +83,8 @@
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
 // fourteen. No other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` and `stand` alone: `DAILY_START` 0.785 to 0.83 and `HALL_EASE` 1.2 to
+// 1.36, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
@@ -115,6 +117,7 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower`, and batch 6 again over the tactics (calamity 1d879f22, daily 22ed0372, tower 2337ec08): a run started now finds runes, not pieces, and a won
 // wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 8, the balance, re-recorded `daily` alone (6992282b): DAILY_START 0.785 to 0.77 and runes at 0.7; every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
@@ -129,6 +132,13 @@ function recordedStrengths<T>(fn: () => T): T {
   }
 }
 
+// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario on main 0.345.0, and
+// `daily`, `tower` and `calamity` again on 0.349.0 (its runes and remedies): every scenario meets foes, and every foe now has a passive and a
+// way of moving, the common ones retuned, the armies' starts, the daily's and the Last Stand's knobs with them; by the tests' own computation
+// (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the test itself, whose put-back strengths that tool does not know
+// since main 0.339). The new hashes: field1 e1902c7e, field30 0805df76, bosses c6f1850f, armyFoes 4098cb71, spells d89512c0, lands bae90a64,
+// army fc40786d, daily 4f70a194, tower 94d881d8, stand 131fe78c, calamity d9c9bc8a, heroes1 d5321e5c, heroes10 97713696, heroes30 15a1bbf5,
+// field1Others 433f0011, field30Others 760831e8, heroes1Others 7941ba32, heroes10Others 563b72ce, heroes30Others fb2fb4a1)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)

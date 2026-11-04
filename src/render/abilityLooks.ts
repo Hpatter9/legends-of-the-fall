@@ -22,6 +22,11 @@ export function shapeFamily(shape: Shape): Family {
     case 'cone': return 'flame';
     case 'orbit': case 'spiral': case 'inward': case 'draw': return 'gather';
     case 'ring': case 'ripple': return 'wave';
+    // (KING-SPELLS batch 5's releases)
+    case 'wall': case 'crystal': case 'rise': case 'vines': return 'pillar';
+    case 'shards': return 'hit';
+    case 'hearts': case 'haze': case 'eye': return 'gather';
+    case 'sigil': return 'wave';
     case 'beam': case 'fan': case 'chain': case 'dash': return 'orb';
     default: return 'hit';
   }
