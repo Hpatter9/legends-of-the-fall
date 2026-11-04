@@ -1898,6 +1898,7 @@ class Game {
         return t ? at(u, v, t.h) : null;
       },
       seen: (kind) => seenOf(this.meta, kind),
+      toClient: (x, y) => this.toClient(x, y),
       saw: (kind) => {
         noteSeen(this.meta, kind);
         saveMeta(this.meta);

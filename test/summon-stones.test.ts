@@ -123,7 +123,7 @@ test('shards come from stones and the armies\' rare drop: no other source calls 
     for (const f of readdirSync(dir)) {
       const p = join(dir, f);
       if (statSync(p).isDirectory()) walk(p);
-      else if (p.endsWith('.ts')) files.push(p);
+      else if (p.endsWith('.ts')) files.push(p.replace(/\\/g, '/'));
     }
   };
   walk('src');

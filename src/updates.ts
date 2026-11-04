@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.349.0',
+    date: '2026-11-04',
+    title: 'Ornate menus, painted ultimates',
+    notes: ['Every menu, popup and prompt restyled in the ornate Keep and Kingdom look, with bigger tap targets.', 'Painted frames in the ultimate showcases: the Samurai\'s iaido, the Buccaneer\'s die, the Dread Pirate\'s ghost ship and more.'],
+  },
+  {
     version: '0.348.0',
     date: '2026-11-04',
     title: 'Tactic advice',
