@@ -313,3 +313,60 @@ export function readRunes(raw: unknown): RuneState | undefined {
   const next = Math.max(typeof r.next === 'number' ? r.next : 1, ...[...bag, ...Object.values(worn).flat()].map((x) => x.id + 1), 1);
   return { bag, worn, next };
 }
+
+// ---- the page's helpers (SEVEN-SLOT GEAR batch 5: the rune tray and the bench's sockets read these; pure) ----
+
+/** A hero's three sockets for the page: the rune in each (or none), and whether it has a twin somewhere. */
+export function socketsOf(state: RuneState, kind: string): { rune?: Rune; twin: boolean }[] {
+  const twins = twinIds(state);
+  const worn = state.worn[kind] ?? [];
+  return Array.from({ length: SOCKETS }, (_, i) => ({ rune: worn[i], twin: !!worn[i] && twins.has(worn[i].id) }));
+}
+/** What a hero's worn runes give, in a line ("+4% attack, +2.5% hp"); empty when none. */
+export function runeTotals(worn: readonly Rune[] | undefined): string {
+  const s = runeStats(worn);
+  if (!s) return '';
+  const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
+  const out: string[] = [];
+  if (s.atk) out.push(`+${pct(s.atk)} attack`);
+  if (s.hp) out.push(`+${pct(s.hp)} hp`);
+  if (s.def) out.push(`+${Math.round(s.def * 10) / 10} defence`);
+  if (s.tal?.pow) out.push(`+${pct(s.tal.pow)} skill power`);
+  if (s.atkSpeed) out.push(`+${pct(s.atkSpeed)} attack speed`);
+  if (s.moveSpeed) out.push(`+${pct(s.moveSpeed)} move speed`);
+  if (s.crit) out.push(`+${pct(s.crit)} crit chance`);
+  if (s.regen) out.push(`mends ${pct(s.regen)} hp/s`);
+  if (s.resist) out.push(`+${pct(s.resist)} resist`);
+  return out.join(', ');
+}
+/** Where a tapped rune can go, for the page to light up: the heroes it can be set on (a Keystone on none), the bag (when it is worn), and
+ *  the runes it merges with. */
+export function runeTargets(state: RuneState, id: number, kinds: readonly string[]): { heroes: string[]; bag: boolean; merge: number[] } {
+  const at = whereRune(state, id);
+  if (!at) return { heroes: [], bag: false, merge: [] };
+  return {
+    heroes: at.rune.kind === 'keystone' ? [] : kinds.filter((k) => k !== at.kind),
+    bag: !!at.kind,
+    merge: allRunes(state).filter((o) => canMerge(at.rune, o)).map((o) => o.id),
+  };
+}
+/** Do what a tap on a target means: onto a rune, merge (or swap onto a hero's socket when they do not merge); onto a hero, set it (a full
+ *  set gives up `swap`); onto the bag, take it off. Returns what happened, or null when nothing could. */
+export function dropRune(state: RuneState, id: number, to: { rune?: number; kind?: string; bag?: boolean }): 'merged' | 'set' | 'off' | null {
+  if (to.rune !== undefined) {
+    if (mergeRunes(state, id, to.rune)) return 'merged';
+    const onto = whereRune(state, to.rune);
+    if (onto?.kind && setRune(state, onto.kind, id, to.rune)) return 'set';
+    return null;
+  }
+  if (to.kind) return setRune(state, to.kind, id) ? 'set' : null;
+  if (to.bag) {
+    const at = whereRune(state, id);
+    return at?.kind && takeOffRune(state, at.kind, id) ? 'off' : null;
+  }
+  return null;
+}
+/** A rune's colour on the page (until its painted stone: docs/notes/gear-art-todo.md). */
+export const RUNE_COLOUR: Readonly<Record<RuneKind, string>> = {
+  ember: '#d9503b', bulwark: '#8f969e', arcana: '#9b6bd6', gale: '#5fbf6a', hawk: '#e0b545', wellspring: '#4f9fe0', warding: '#e9e4d8', keystone: '#1d1d22',
+};

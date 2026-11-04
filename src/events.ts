@@ -18,6 +18,7 @@ import { UNITS } from './sim/units';
 import { battleSheet } from './render/awakenLook';
 import { gearIcon, iconImg, relicIcon } from './render/items';
 import { portrait } from './render/sheets';
+import { drawRuneTray } from './runeTray';
 import { twistIcon } from './twistView';
 import ironDraught from './art/items/blood_vial.png';
 import fireTonic from './art/items/ember_ruby.png';
@@ -191,7 +192,7 @@ export class Events {
       this.root.hidden = true;
       this.root.replaceChildren();
     });
-    head.append(el('h2', '', 'Relics and gear'), close);
+    head.append(el('h2', '', run.runes ? 'Relics and runes' : 'Relics and gear'), close);
     card.append(head);
     // relics
     const relics = el('div', 'list');
@@ -218,6 +219,15 @@ export class Events {
         this.drawPack();
       });
       heroes.append(b);
+    }
+    // (SEVEN-SLOT GEAR batch 5: a rune run's pack is the rune tray, a row for each fielded hero: `runeTray.ts`)
+    if (run.runes) {
+      // (the fielded heroes; before any is placed, the whole company)
+      const placed = this.listed().filter((h) => !h.guest);
+      const fielded = placed.length ? placed : run.roster.filter((h) => !h.guest);
+      const kinds = [...new Set(fielded.map((h) => h.kind))];
+      drawRuneTray(card, run.runes, kinds.map((kind) => ({ kind, face: () => portrait(battleSheet(kind, this.equipmentStep(kind), 1), 40, 1) })), this.canEquip, () => this.onChange());
+      return;
     }
     card.append(heroes);
     const hero = this.listed().find((h) => h.id === this.hero);

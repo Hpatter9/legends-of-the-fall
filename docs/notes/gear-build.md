@@ -148,3 +148,24 @@ design's eight batches, each with its tests. This note says what each batch buil
 - **Tests:** `test/runes.test.ts`; the RUN-GEAR tests now run on a run saved before runes (`pre` in `test/run-gear.test.ts`), the events,
   mystery, Calamity and recap tests count runes (`foundOf` in `test/helpers.ts`), and the wave's gains list a run's new runes
   (`waveGains.ts`).
+
+## Batch 5: runes, the page
+
+- **The rune tray** (`src/runeTray.ts`): in a rune run the pack ("Relics and runes") is the tray: a row for each fielded hero (each hero
+  of the company before any is placed) with its portrait, name, three sockets and what its runes give ("+2% attack, +5% hp, +1 defence");
+  the bag's eight cells; **Merge all** (with the merges ready) and **Auto runes**. Runes change between waves only (the tray is read-only in
+  a fight). The relics stay at its top as before.
+- **Tap to do it:** tap a rune and the places it can go light up in gold (the heroes' free sockets, the bag when it is worn, its twins);
+  tap one to set it, swap it onto a full hero's rune, take it off, or merge it. Tap it again to put it down. **Drag is not built**: tapping
+  does everything one-handed, and dragging between the tray's small cells on a phone was the riskier half; it can come later.
+- **Showing who wears what:** each hero's card on the bench carries its three sockets over its portrait on the deploy screen (hidden in
+  the fight). **Sockets over the heroes on the board are not built** (the board is drawn by Pixi; the bench beside it shows the same).
+  Twins (a rune with another of its kind and level, or a Keystone of its level) have a gold rim and a "2" badge in the tray; the rim pulses
+  gently, and holds still with reduced motion. The Pack button says "Pack · 3 merges" when merges are ready.
+- **The stones** are drawn in their kind's colour with the level as pips (a clear placeholder) until their paintings come
+  (`gear-art-todo.md`).
+- **The wave card:** a rune's line reads "Ember rune I (+2% attack)"; a rune broken for room in a full bag says so; the wave's gains list
+  new runes as its gear.
+- **Pure helpers** (`runes.ts`): `socketsOf`, `runeTotals`, `runeTargets`, `dropRune`; tested in `test/runes-page.test.ts`.
+- **Screenshots:** `node tools/gear-build/rune-shots.mjs` writes `docs/samples/gear-build-runes-bench-*.png`, `-tray-` and `-pick-` (a
+  rune chosen, its targets lit), at the three sizes, no sideways scroll, no page errors.

@@ -155,7 +155,7 @@ export const RUNE_PRICE: readonly number[] = [0, 25, 60, 120, 180, 240];
 export const findPrice = (g: Gear, stage: number, perTier = 28): number => (g.rune ? RUNE_PRICE[g.rune.lv] : g.piece ? FIELD_PRICE[g.piece.rarity] : perTier * g.tier) + 2 * stage;
 
 /** The line a find gets on the result screen ("Frostbrand (weapon, Rare Lv 7: +6% attack)"). */
-export const foundLine = (g: Gear): string => `${g.name} (${g.slot}, ${gearText(g)})`;
+export const foundLine = (g: Gear): string => (g.rune ? `${g.name} (${gearText(g)})` : `${g.name} (${g.slot}, ${gearText(g)})`);
 
 /** Put a find in the run's pack: a real piece in `run.pack`, simple gear in `run.items`. */
 export function stow(run: Run, g: Gear, source?: number): void {
