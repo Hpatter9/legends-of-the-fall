@@ -410,7 +410,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       });
       // (Sell took Salvage's place: the same crowns for a full piece, less for a worn one; an Epic or the last of a base asks first, by a
       // second tap; the piece waits on the stall's Sold today shelf until midnight)
-      const sell = el('button', '', `Sell +${sellPrice(it)}`);
+      const sell = el('button', 'eqSell', `Sell +${sellPrice(it)}`);
       sell.type = 'button';
       let sure = !sellAsks(meta, it);
       sell.addEventListener('click', () => {
@@ -432,10 +432,11 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       list.append(row);
     }
     panel.append(list);
-    const back = el('button', '', 'Back');
+    // (UX-FIXES: the way back from a slot's pieces is "‹ Back" at the top, so the sheet's own Back below is the only one at the foot)
+    const back = el('button', 'eqBack', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
-    panel.append(back);
+    panel.querySelector('h4')?.before(back);
   };
 
   overview();

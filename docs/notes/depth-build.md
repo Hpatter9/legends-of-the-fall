@@ -140,9 +140,7 @@ crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by
   wave (4 / 6 / 8%), attack (2 / 3 / 4%) or health (3 / 4.5 / 6%) by the mentor's band (60, 80, 100); a bonded partner of the mentor
   (bond level 3 or more, so a kindred pair) has it at double strength (Q8.3). Perks are fixed into the run as it starts (`Run.legacy`,
   `legacySnapshot`), laid on the hero's boost (`legacyBoost`, the page and the bot alike), in the armies only.
-- **Not built yet:** the taught talent row. The trees are each hero's own, so "the mentor's highest row's choice is free" has no direct
-  meaning for an apprentice of another kind; it needs the owner's word (the same tier's node at the same place in the apprentice's tree is
-  the nearest reading). The farewell scenes come with the scene batches.
+- **Dropped:** the taught talent row (the director's call). The farewell scenes come with the scene batches.
 - **The page:** the hero sheet's legacy block (an apprentice's "Mentored by ..." line; from level 60 the perk it would give, how many
   heroes it would reach and Retire, with a confirm tap); the party picker marks a mentor "In the Hall" and will not take it; the Hall of
   Legends' card shows its four plinths (mentor, level, perk, Recall with a confirm tap, or what an empty seat needs).
@@ -166,3 +164,30 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   halves its tries, so no attack bonus at all passes the "within one try" bar there, while the Yokai and Golems sit near it. Level 1
   (threads, no power) leaves every fight exactly as it was. The choices are to keep these small numbers, cut the attack to the kindred pairs
   only, or make bonds story only (Q4.1's other answer).
+
+### The director's three calls (the owner told the director to go with the recommendations)
+
+1. **Bonds never hold back the Infernal bar.** Bond power is for the two of the pair only, with no party-wide attack: **Comrades** (any pair)
+   now guards rather than strikes, blows on either landing 3% lighter while the other is within two tiles (`BOND.GUARD2`, `Unit.bondGuard`,
+   in `hurt`); **Shieldmates** (kindred only) add +3% attack and skills 2% quicker for the two of them. Measured (`BONDS=n`, mean tries):
+   Infernal Host @ 58: 11.8 without bonds, 13.7 at level 2, 13.0 at level 4 (inside the bar; the rise is the cell's noise). Yokai and Golem
+   Forge at level 4: 20.9 → 19.8 and 6.3 → 5.4 (Golems over 24 saves), about one try each.
+2. **The taught talent row is dropped.** A mentor teaches catch-up XP and its perk, nothing else.
+3. **The second Calamity crossroads offers a boon** (or a harder or easier last act), since only Karnok is left by then (below).
+
+## Batch 7: the Calamity's journey
+
+- The Calamity is three regions now (the rift's guardians 1, 3 and 6, `RIFT_BOSSES`), not the design's six maps, so each region is an
+  act and the journey is the same length (Q6.3), Karnok always last (Q6.2). `src/sim/calJourney.ts`:
+  - **The crossroads** after Act I (`crossroadsAfter`, its own side stream `0xc055`): three rifts, each a guardian not yet met, drawn from
+    the four between Gorvak and Karnok; the one taken (`chooseLand`) waits at the end of Act II (`TowerState.journey.route`). The fight's
+    band takes the journey's guardian (`landAt`); its strength stays the act's (`calBossBoost` of the place), so any choice is as hard.
+  - **The last crossroads** after Act II (stream `0xb007`): three of four boons: the Healer's Rift (every hero mended), the Gilded Rift
+    (+80 gold), the Burning Rift (+150 gold, the last act's foes 15% stronger), the Quiet Rift (the last act's foes 10% weaker).
+  - A run that never chooses, and every run saved before, keeps the fixed order fight for fight (a test).
+- **The page** (`towerView.ts`): the crossroads card comes after the cleared region's recap (and again on coming back, it is kept in the
+  run); the map's title reads "Act II of III"; the boss gate and the guardian's entrance scene follow the journey's guardian (the scene was
+  keyed by the act before, so Act II played Thorn Warden's scene before Malphas; it now plays the guardian's own).
+- **Not built yet:** oaths, scars, travellers, provisions and the act scenes (the design's 6.3 to 6.5), and the greedy bot's choices for the
+  Calamity measure (the bot takes no crossroads, so its numbers are the fixed order's).
+- Tests: `test/cal-journey.test.ts`.

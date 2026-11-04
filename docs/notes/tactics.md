@@ -102,3 +102,48 @@ and the front-liners' charges are not.
   signatures on (its greedy run ends before that boss again), and two tests re-staged (`boss-big`'s dodge on a charging party, as its
   heroes packed behind the line left no tile to step to; the Vaelkhar trial on seed 2004, which shows his whole kit under Advance).
 - **Tools**: `TACTICS_OFF=1` (`tools/tactics/off.ts`, imported by `tools/balance.ts`) measures as before the tactics; `run.mjs --answer`.
+
+## Batch 3: the page
+
+- **The chip** (`src/tacticsView.ts`, `src/tactics.css`): on the prep screen between Auto and Home, a pennant and the tactic picked for this
+  run's mode or army ("Advance"). A tap opens a bottom sheet: the three tactics as large buttons with one line each, the picked one lit, and
+  Close (it is a screen in the page's stack, `openScreen`, so the back button closes it). A pick is kept in the save at once.
+- **The pick** (`src/sim/tacticPick.ts`, `Meta.tactics`): kept per army in the army runs (`army:<id>`, any tier) and per mode in the others
+  (`daily`, `calamity`, `quest`...); Advance together where none is. A save from before has none; an unknown tactic in a save is dropped on
+  load. `begin` sets it on the battle (`setTactic`) before `fight`, so Auto's replays and the page's own fights take it alike.
+- **Charge!** (`#chargeBtn`): at the right of the board, under the spell row and its Auto switch, while the party is held (`canCharge`); a tap
+  sends the sim's order (`orderCharge`) and the button goes. The status line says "The line advances" (or "Holding the line") until the
+  line meets the foe, then "Fight!" as before.
+- Shots (`node tools/tactics/shots.mjs` after `npm run web`): `docs/samples/tactics-{deploy,sheet,fight}-{393,360,412}.png`.
+- Tests: `test/tactic-pick.test.ts` (new, 3): the keys by army and mode and the default; saved and loaded, with an unknown tactic dropped and a
+  save from before having none; every tactic's words.
+
+## Batch 4: formations
+
+All the rules are in `src/sim/formations.ts` (pure), hooked into the AC (`acAgainst`, `blow.ts`), the facing a blow is weighed against
+(`swing`'s `blowMult`), a step's time (`stepTo`), a blow's damage (`swing`) and splash (`hurt`). A formation is read once, as the fight
+begins (`formationOf`, `startFormation`), from where the heroes stand; the first shape that fits, in this order:
+
+| Formation | Shape | Bonus | Weak point |
+|---|---|---|---|
+| Shield Wall | 3 or more side by side on the front row, 2 of them front-liners (`roleOf`) | +1 AC each while a friend of the wall stands beside it | the ends: a blow from the outer side counts as from behind |
+| Spearhead | a tip on the front row, a wing a row behind on each diagonal | tip and wings march 15% faster for 6 s; the tip's first landed blow +20% | the tip at -1 AC |
+| Hollow Square | a back-liner on the back row, a friend on each side (beside or a row ahead) and one ahead | while 2 friends stand round it, every blow on it counts as from the front | its heroes take 15% more splash while packed (2 friends round) |
+| Skirmish | 4 or more, no two on touching tiles | splash on them 20% less | none of its own: nobody stands beside a friend, so guards and auras reach fewer |
+
+- **On only where set** (`setFormations`): the page sets it once Auto place is open (the owner's answer: formations with Auto place, army
+  3); every other fight, the tools' and the records' included, reads no formation and plays exactly as before (a test holds it). Batch 5
+  turns them on for Auto and its tools. The Last Stand reads none.
+- **Splash** is the splash of a blow (the `splash` hits); a skill's area is not counted in this batch.
+- **Arrange** (`formationSpots`): a party's tiles in a shape, the front-liners and strikers taking the lead's tiles and the back line the
+  rear's, laid at the centre column that fits most; a tile that does not fit goes to the nearest free one. The page's sheet shows the
+  formations under the tactics once they are open: the shape the heroes stand in now ("Formation: Shield Wall") and the four as buttons
+  (name, bonus and weak point); a tap sets the placed heroes out in that shape. The chip shows it as a small second line ("Advance / Wall").
+- **No dice**: every rule is read from where the fighters stand.
+- Tests: `test/formations.test.ts` (new, 6): each shape read (a wall needs two front-liners; a spearhead staged as a square is a
+  spearhead, the first that fits); off, a fight plays exactly as with none, and on, the same seed gives the same fight; the wall's AC
+  while a friend stands beside and its open ends; the spearhead's march, first blow and tip; the square's guard while two friends stand
+  round and its splash, the skirmish's splash; Arrange sets a party out in each shape, read back as that shape.
+- Shots: `docs/samples/tactics-{deploy,sheet,arranged,fight}-{393,360,412}.png` (the save has Auto place open).
+- After merging main (0.343.0): `set-powers`' small fights (new on main) re-seeded nine powers to seed 7, where each fires under Advance
+  together (the table records "where each power was seen to fire").
