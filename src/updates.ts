@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.335.0',
+    date: '2026-11-04',
+    title: 'Ultimate showcases',
+    notes: ['A hero\'s first ultimate, and every 10th, plays a long showcase at normal speed: Ayame, the Wizard and the Beastmaster first. New settings to shorten it.'],
+  },
+  {
+    version: '0.334.0',
+    date: '2026-11-04',
+    title: 'Story scenes rewritten',
+    notes: ['Every story scene, from the Eidolon chains to the hero tales and quests, is rewritten in the new opening\'s style: one place, clear voices, no tutorial talk.'],
+  },
+  {
     version: '0.333.0',
     date: '2026-11-04',
     title: 'Effects, auto and small fixes',
