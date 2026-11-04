@@ -20,6 +20,8 @@ const [W, H] = opt('--size', '393x852').split('x').map(Number);
 const PICKS = opt('--picks', 'kunoichi,wizard,beastmaster').split(',');
 const EVERY = Number(opt('--every', '100'));
 const UNTIL = Number(opt('--until', '6400'));
+// (the army's wave: a later one has more foes, for an ultimate that needs them placed just so)
+const STAGE = Number(opt('--stage', '3'));
 const AT = [...Array(Math.floor(UNTIL / EVERY) + 1).keys()].map((i) => i * EVERY);
 const REDUCED = args.includes('--reduced');
 const SAVER = args.includes('--saver');
@@ -35,7 +37,7 @@ const srv = createServer((q, r) => {
 }).listen(PORT);
 const browser = await chromium.launch({ ...(EXE ? { executablePath: EXE } : {}), args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
-const ALL = ['knight', 'cleric', 'wizard', 'archer', 'samurai', 'kunoichi', 'beastmaster', 'paladin', 'kraken', 'minotaur'];
+const ALL = [...new Set(['knight', 'cleric', 'wizard', 'archer', 'samurai', ...PICKS])];
 // (each pick fights beside four others, as the director's capture did)
 const PARTY_OF = (pick) => [pick, ...['knight', 'cleric', 'archer', 'wizard', 'samurai'].filter((k) => k !== pick)].slice(0, 5);
 let errors = 0;
@@ -60,7 +62,7 @@ async function open() {
   await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
-  await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
+  await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip, .rvCard, .unlock { display: none !important; }' });
   // (our own clock: the ticker stopped, `__step(ms)` moves the page's frame and every CSS animation on by 16 ms steps)
   await page.evaluate(() => {
     const g = window.__game;
@@ -83,14 +85,14 @@ async function open() {
 }
 
 async function army(page, party) {
-  await page.evaluate((party) => {
+  await page.evaluate(([party, STAGE]) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'beasts' }, stage: 3, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'beasts' }, stage: STAGE, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
-  }, party);
+  }, [party, STAGE]);
   await page.waitForTimeout(700);
   await page.evaluate(() => document.getElementById('fight').click());
   await page.waitForFunction(() => {
@@ -100,8 +102,9 @@ async function army(page, party) {
   await page.waitForTimeout(1200);
 }
 
-const { ctx, page } = await open();
+// (a fresh page for each pick, so one fight's end leaves nothing behind for the next)
 for (const pick of PICKS) {
+  const { ctx, page } = await open();
   try {
     await army(page, PARTY_OF(pick));
     await page.evaluate((pick) => {
@@ -113,8 +116,16 @@ for (const pick of PICKS) {
       u.charge2 = 100;
       document.querySelector(`.fhRow[data-unit="${u.id}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       // (on until the moment begins)
-      for (let i = 0; i < 400 && !g.ultm.queue.current; i++) window.__step(16);
-    }, pick);
+      // (an ultimate that needs its foes placed just so, a line for a charge, may wait: the meter kept full and the row tapped again)
+      for (let i = 0; i < 1600 && !g.ultm.queue.current && g.b.phase === 'fight'; i++) {
+        window.__step(16);
+        if (i % 200 === 199 && u.alive) {
+          u.charge2 = 100;
+          document.querySelector(`.fhRow[data-unit="${u.id}"]`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+      }
+      return { moment: !!g.ultm.queue.current, show: g.ultm.queue.current?.show ?? 0, phase: g.b.phase, auto: g.ultAutoOn?.(), seen: JSON.stringify(g.meta.ultSeen ?? {}) };
+    }, pick).then((r) => console.log(pick, JSON.stringify(r)));
     let t = 0;
     for (const ms of AT) {
       await page.evaluate((d) => window.__step(d), ms - t);
@@ -126,8 +137,8 @@ for (const pick of PICKS) {
   } catch (e) {
     console.log('FAILED', pick, String(e.message).split('\n')[0]);
   }
+  await ctx.close();
 }
-await ctx.close();
 console.log('page errors:', errors, '404s:', missing);
 await browser.close();
 srv.close();

@@ -28,6 +28,12 @@ const SOUND: Partial<Record<Beat['kind'], Sfx[]>> = {
   sky: ['meteorFall'],
   call: ['horn'],
   land: ['dash'],
+  dash: ['dash'],
+  crash: ['earthRumble', 'hitHeavy'],
+  blow: ['hitFist'],
+  hook: ['throwBone'],
+  appear: [],
+  finish: [],
 };
 
 export class UltShow {
@@ -59,19 +65,28 @@ export class UltShow {
       }
     for (const [id, pose] of poses) {
       const s = this.opts.sprite(id);
-      const w = this.opts.world(pose.at.u, pose.at.v);
-      if (!s || !w) continue;
-      let [x, y] = w;
-      if (pose.from) {
+      const p = this.spot(pose.at, pose.off);
+      if (!s || !p) continue;
+      let [x, y] = p;
+      if (pose.to) {
+        const q = this.spot(pose.to.at, pose.to.off);
         const k = pose.k ?? 1;
-        x += pose.from.dx * (1 - k);
-        y += pose.from.dy * (1 - k);
+        if (q) [x, y] = [x + (q[0] - x) * k, y + (q[1] - y) * k];
       }
+      const lift = pose.lift ?? 0;
       const look = pose.look && this.opts.world(pose.look.u, pose.look.v);
-      const face: 1 | -1 = look && Math.abs(look[0] - x) > 1 ? (look[0] > x ? 1 : -1) : pose.from ? (pose.from.dx > 0 ? -1 : 1) : (s.stage?.face ?? 1);
-      s.stage = { x, y, z: depth(pose.at.u, pose.at.v) + 5, alpha: pose.alpha, row: pose.row, p: pose.p, face };
+      const moving = pose.to && this.spot(pose.to.at, pose.to.off);
+      const face: 1 | -1 = look && Math.abs(look[0] - x) > 1 ? (look[0] > x ? 1 : -1) : moving && Math.abs(moving[0] - x) > 1 ? (moving[0] > x ? 1 : -1) : (s.stage?.face ?? 1);
+      // (a fighter in the air is drawn over what it flies across)
+      const tile = pose.to && (pose.k ?? 0) > 0.5 ? pose.to.at : pose.at;
+      s.stage = { x, y: y - lift, z: depth(tile.u, tile.v) + 5 + (lift > 4 ? 40 : 0), alpha: pose.alpha, row: pose.row, p: pose.p, face };
       this.staged.add(id);
     }
+  }
+
+  private spot(at: At, off?: { dx: number; dy: number }): [number, number] | null {
+    const w = this.opts.world(at.u, at.v);
+    return w ? [w[0] + (off?.dx ?? 0), w[1] + (off?.dy ?? 0)] : null;
   }
 
   private beat(plan: ShowPlan, b: Beat): void {
@@ -82,32 +97,39 @@ export class UltShow {
     const fx = this.opts.fx;
     if (!fx) return;
     const caster = this.opts.sprite(plan.cast.caster);
+    const el = plan.el;
     const tall = caster?.tall ?? 40;
     const on = (a: At) => this.opts.world(a.u, a.v);
+    const foeAt = (id: number) => {
+      const s = this.opts.sprite(id);
+      return s ? { x: s.x, y: s.y, tall: s.tall } : null;
+    };
+    const p = on(b.where);
+    if (!p) return;
     switch (b.kind) {
-      case 'cut': {
-        const from = on(b.from);
-        const foe = this.opts.sprite(b.foe);
-        const at = plan.cast.tiles.get(b.foe);
-        const to = at && on(at);
-        if (from && to) fx.showBeat('cut', from[0], from[1], { tall, to: { x: to[0], y: to[1], tall: foe?.tall ?? 40 } });
-        return;
-      }
       case 'sky':
-        for (const a of b.where) {
-          const p = on(a);
-          if (p) fx.showBeat('sky', p[0], p[1]);
+        for (const a of b.all ?? [b.where]) {
+          const q = on(a);
+          if (q) fx.showBeat('sky', q[0], q[1], { el });
         }
         return;
-      case 'land': {
-        const p = on(b.where);
-        if (p) fx.showBeat('land', p[0], p[1], { tall: this.opts.sprite(b.id)?.tall });
+      case 'cut':
+      case 'blow': {
+        const to = b.foe !== undefined ? foeAt(b.foe) : null;
+        if (to) fx.showBeat(b.kind, p[0], p[1], { tall, to, el });
         return;
       }
-      default: {
-        const p = on(b.where);
-        if (p) fx.showBeat(b.kind, p[0], p[1], { tall, el: plan.style === 'blinks' ? 'dark' : plan.style === 'sky' ? 'fire' : 'forest' });
+      case 'dash':
+      case 'hook': {
+        const q = b.to && on(b.to);
+        if (q) fx.showBeat(b.kind, p[0], p[1], { tall, to: { x: q[0], y: q[1], tall }, el });
+        return;
       }
+      case 'land':
+        fx.showBeat('land', p[0], p[1], { tall: b.foe !== undefined ? this.opts.sprite(b.foe)?.tall : tall, el });
+        return;
+      default:
+        fx.showBeat(b.kind, p[0], p[1], { tall, el });
     }
   }
 
