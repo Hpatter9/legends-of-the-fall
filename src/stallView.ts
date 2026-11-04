@@ -100,7 +100,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     const standing = standingOf(m);
     // (the head: back, the name, the standing's seal, the purse)
     const head = el('div', 'hsHead');
-    const back = el('button', 'hsBack', '‹');
+    const back = el('button', 'hsBack', '‹ Back');
     back.setAttribute('aria-label', 'Back to the camp');
     back.addEventListener('click', () => {
       root.remove();

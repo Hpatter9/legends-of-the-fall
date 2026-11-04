@@ -286,7 +286,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     });
     bar.append(buy, re);
     panel.append(bar, el('small', 'tSub', `${shardsToSpend(meta, kind)} spare shard${shardsToSpend(meta, kind) === 1 ? '' : 's'} · ${bought} of ${MAX_SHARD_POINTS} shard points bought. Spending shards never lowers a rank. You have ${meta.crowns} crowns.`));
-    const back = button('Back');
+    const back = button('‹ Back');
     back.addEventListener('click', () => {
       confirming = false;
       overview();

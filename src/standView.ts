@@ -493,7 +493,7 @@ export class StandView {
       chosen.splice(0, chosen.length, ...pickEight(m, chosen));
       draw();
     });
-    const home = el('button', '', 'Back');
+    const home = el('button', '', '‹ Back');
     home.addEventListener('click', () => {
       box.hidden = true;
       this.leave();

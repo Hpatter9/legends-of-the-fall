@@ -287,7 +287,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const list = el('div', 'eqList');
     for (const set of GEAR_SETS) list.append(setCard(set, worn));
     panel.append(list);
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     panel.append(back);
@@ -331,7 +331,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       commit();
       combineView(made.length ? `Made ${made.length} piece(s)` : '');
     });
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     btns.append(everything, back);

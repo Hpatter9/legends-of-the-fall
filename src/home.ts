@@ -597,6 +597,11 @@ export class Home {
     if (heroBadge) heroBadge.textContent = readyN > 0 ? String(Math.min(readyN, 99)) : '';
     this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));
     this.tabBtns.get('battle')!.classList.remove('new');
+    // (UX-FIXES: the Spells tab is dimmed with a lock until the Chapel is built; a tap says why on its page)
+    const spellsTab = this.tabBtns.get('spells')!;
+    const shut = !chapelBuilt(m);
+    spellsTab.classList.toggle('locked', shut);
+    spellsTab.setAttribute('aria-label', shut ? 'Spells (locked: build the Chapel in the Castle)' : 'Spells');
     this.drawBattle();
     this.tavern.update(m);
     this.drawCastle();

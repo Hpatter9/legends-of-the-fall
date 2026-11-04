@@ -574,3 +574,6 @@ body .sbCard .top { align-items: center; }
 .qlReplay.auto, .ecnLink.auto { margin-left: 4px; }
 /* UX-FIXES: a badge with a number in it (the Heroes tab's upgrades ready) is a small round pill, not a bare dot */
 .hmTab i.badge:not(:empty) { min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; font: 700 11px/16px var(--body); font-style: normal; color: #fff; text-align: center; border-radius: 9px; }
+/* UX-FIXES: a locked tab (Spells, before the Chapel) is dimmed and carries a small lock */
+.hmTab.locked { opacity: 0.55; }
+.hmTab.locked span::after { content: ' 🔒'; font-size: 10px; }
