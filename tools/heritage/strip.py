@@ -34,7 +34,8 @@ def main():
             for anim in (['idle', 'attack', 'hurt'] if not sheet.endswith('_back') else ['idle']):
                 k = first(l, anim)
                 a = cell(sheet, k, os.path.join(UNITS, sheet + '.png'))
-                b = cell(sheet, k, os.path.join(UNITS, f'{sheet}_{tone}.png'))
+                retoned = os.path.join(UNITS, f'{sheet}_{tone}.png')
+                b = cell(sheet, k, retoned if os.path.exists(retoned) else os.path.join(UNITS, sheet + '.png'))
                 for im in (a, b):
                     bb = a.getbbox() or (0, 0, l['w'], l['h'])
                     c = im.crop(bb)

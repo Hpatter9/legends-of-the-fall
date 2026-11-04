@@ -11,6 +11,7 @@ import type { Battle } from './sim/battle';
 import { canCharge, orderCharge, TACTICS_LIST, type Tactic } from './sim/tactics';
 import { FORMATION_WORDS, TACTIC_WORDS } from './sim/tacticPick';
 import { FORMATIONS_LIST, type Formation } from './sim/formations';
+import type { Advice } from './sim/tacticAdvice';
 import { openScreen } from './screens';
 
 export interface TacticsViewOpts {
@@ -23,6 +24,8 @@ export interface TacticsViewOpts {
   formation: () => Formation | undefined;
   /** Set the placed heroes out in a shape. */
   arrange: (f: Formation) => void;
+  /** The advice against this wave's foes for the tactic picked (`tacticAdvice.ts`). */
+  advice: () => Advice;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -89,6 +92,10 @@ export class TacticsView {
     const card = el('div', 'tacCard');
     card.append(el('h2', '', 'Party tactic'));
     const now = this.opts.picked();
+    // (the advice against this wave's foes, and a warning when the pick is the one that loses to them)
+    const advice = this.opts.advice();
+    card.append(el('p', 'tacAdvice', advice.line));
+    if (advice.warn) card.append(el('p', 'tacWarn', advice.warn));
     for (const t of TACTICS_LIST) {
       const w = TACTIC_WORDS[t];
       const b = el('button', `tacOpt${t === now ? ' on' : ''}`);
