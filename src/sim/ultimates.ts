@@ -544,7 +544,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   priestess: { rate: 0.38, power: 0.382 },
   dragoon: { rate: 1.1, power: 2.844 },
   juggernaut: { rate: 1.55, power: 1.63 },
-  sage: { rate: 1.7, power: 1.71 },
+  sage: { rate: 2.1, power: 1.71 }, // (TACTICS, merged over FOE-STYLES: rate 1.7 to 2.1, level-30 parity; his Arcane Surge fills pools and shields, so its power is no lever, docs/notes/tactics.md)
   demonSwordsman: { rate: 1.8, power: 2.718 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
   tyrant: { rate: 0.88, power: 1.322 },
 };

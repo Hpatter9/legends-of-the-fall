@@ -379,11 +379,16 @@ class Game {
     saveMeta(this.meta);
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
+    let firstSession = false;
     if (needsStarter(this.meta)) {
+      // (UX-FIXES: a new save goes from the pick straight to wave 1's deploy: the opening is the one title sequence, so the Orc Warband's
+      // own intro film is marked seen and not played again behind it; the Scenes list still has it)
+      firstSession = !seed;
       // (the opening cinematic comes first, before the pick: the player has no heroes yet, so a fixed trio plays it; a test page with a seed has none)
       if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
+      if (firstSession) markSeen(this.meta, `intro:${ARMIES[0].id}`);
       saveMeta(this.meta);
     }
     // (a save from before the summoning stones was given a few, once: it says so)
@@ -544,7 +549,15 @@ class Game {
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
-    if (!seed) this.home.open(closed ?? undefined);
+    // (UX-FIXES: ... except a new save's first session, which starts on wave 1 of the first army: the run is saved, and Home is one tap away)
+    // (UX-FIXES: the home screen's opening tells the unlock cards held back during a run)
+    const homeOpen = this.home.open.bind(this.home);
+    this.home.open = (...a: Parameters<Home['open']>) => {
+      homeOpen(...a);
+      if (this.heldReveals.length) setTimeout(() => this.flushReveals(), 400);
+    };
+    if (firstSession) saveRun(this.run);
+    else if (!seed) this.home.open(closed ?? undefined);
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
@@ -808,10 +821,28 @@ class Game {
     if (!tellsByCard(unlockOfReveal(r))) return false;
     const card = revealCard(r, this.meta);
     if (!card || this.revealed.has(card.key)) return false;
+    // (UX-FIXES: an unlock card never lands over a wave result in the middle of a run: it waits for the home screen and shows then)
+    if (!this.home.isOpen && $('home').hidden && !this.run.over && !this.run.cleared) {
+      this.heldReveals.push([r, mayGo]);
+      return false;
+    }
     this.revealed.add(card.key);
     const to = card.go?.to;
     const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
     return showEndCard(card, go);
+  }
+
+  /** UX-FIXES: a road event's card waits until the wave result card is gone, so two cards never fight for focus. */
+  private openEventWhenClear(open: () => void): void {
+    const go = () => ($('result').hidden && !document.querySelector('.rvCard, .unlock') ? open() : setTimeout(go, 300));
+    go();
+  }
+
+  /** Unlock cards held back while a run was going (UX-FIXES): told, one at a time, once the home screen is open. */
+  private heldReveals: [Reveal, boolean][] = [];
+  private flushReveals(): void {
+    const held = this.heldReveals.splice(0);
+    void held.reduce((p, [r, go]) => p.then(() => this.tellUnlock(r, go).then(() => undefined)), Promise.resolve());
   }
 
   /** A film's end card, if it revealed something (REVEAL, `sim/sceneReveal.ts`): its button goes there only from the home screen (never
@@ -1918,7 +1949,7 @@ class Game {
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       arrange: (f) => this.arrangeFormation(f),
-      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
+      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
@@ -2441,7 +2472,7 @@ class Game {
     this.newBattle();
     if (this.run.event) {
       const buffWas = JSON.stringify(this.run.buff ?? null);
-      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+      this.openEventWhenClear(() => this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh())));
     }
   }
 
@@ -2580,7 +2611,7 @@ class Game {
     // (an event waits between two fights: its card opens over the new stage's board)
     if (this.run.event) {
       const buffWas = JSON.stringify(this.run.buff ?? null);
-      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+      this.openEventWhenClear(() => this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh())));
     }
   }
 
@@ -2591,9 +2622,15 @@ class Game {
 
   /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the fight resumes by itself. */
   private beginRevive(): void {
-    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
+    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine(this.reviveWords(), this.reviveTimes().end) };
     play('sparkle');
     this.drawLives(this.run);
+  }
+
+  /** UX-FIXES: what a lost wave says: which wave, and how many hearts (your lives) are left once this one is spent. */
+  private reviveWords(): string {
+    const left = Math.max(0, retriesLeft(this.run) - 1);
+    return `Wave ${this.run.stage} lost · a heart burns, ${left} ${left === 1 ? 'heart (life)' : 'hearts (lives)'} left. The party rises.`;
   }
 
   /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (and sends the line away). */

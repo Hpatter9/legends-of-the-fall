@@ -61,7 +61,7 @@ export function showDailyStart(m: Meta, date: number, go: (auto?: number) => voi
   const status = el('div', 'dayStatus', `Today: ${dailyStatus(m, date)}`);
   const row = el('div', 'dayBtns');
   const fight = el('button', 'primary', played ? 'Practice' : 'Fight!');
-  const leave = el('button', '', 'Back');
+  const leave = el('button', '', '‹ Back');
   fight.addEventListener('click', () => {
     root.remove();
     go();

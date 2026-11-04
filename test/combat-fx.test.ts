@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { KITS, keyOf } from '../src/sim/abilities';
+import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
 import { castSpell, FREEZE_MS, SPELL_IDS } from '../src/sim/spells';
 import { fight, stepBattle } from '../src/sim/battle';
 import { readyBattle } from './helpers';
@@ -63,7 +63,8 @@ describe('missiles', () => {
 
 describe('skills and spells', () => {
   it('names an element for every skill, ultimate and spell', () => {
-    for (const k of Object.values(KITS)) {
+    // (FOE-STYLES: a common foe's kit has no skill to name)
+    for (const k of Object.values(KITS).filter(hasSkill)) {
       assert.ok(SKILL_ELEMENT[keyOf(k.skill)], keyOf(k.skill));
       if (k.ultimate) assert.ok(SKILL_ELEMENT[keyOf(k.ultimate)], keyOf(k.ultimate));
     }

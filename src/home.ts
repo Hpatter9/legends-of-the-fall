@@ -6,7 +6,8 @@
 
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
-import { roomsOf } from './sim/rooms';
+import { roomOpen, roomsOf } from './sim/rooms';
+import { SPAR, settleSparring, startSparring } from './sim/bonds';
 import { CALLINGS, PERKS, recall } from './sim/legacy';
 import { roomsStrip } from './castle';
 import { CastleScene, lookPicture } from './castle';
@@ -36,7 +37,7 @@ import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
-import { resetTipsButton, tips } from './tips';
+import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
@@ -584,13 +585,24 @@ export class Home {
       const c = nextCost(m.castle, id);
       return c !== null && m.crowns >= c;
     });
-    this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
+    // (UX-FIXES: a badge only for what the player can act on now; "fresh" building news no longer lights the tab, and the Battle tab has none)
+    void fresh;
+    this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m));
     // (EIDOLON-CHAINS: the Summoner has a chain to tell, or one to bind)
     this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0 || summonerWaiting(m));
     // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
-    this.tabBtns.get('heroes')!.classList.toggle('new', readyKinds(m, m.unlocked).length > 0);
+    // (a number, not a bare dot: how many heroes have an upgrade ready)
+    const readyN = readyKinds(m, m.unlocked).length;
+    this.tabBtns.get('heroes')!.classList.toggle('new', readyN > 0);
+    const heroBadge = this.tabBtns.get('heroes')!.querySelector('i.badge');
+    if (heroBadge) heroBadge.textContent = readyN > 0 ? String(Math.min(readyN, 99)) : '';
     this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));
-    this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
+    this.tabBtns.get('battle')!.classList.remove('new');
+    // (UX-FIXES: the Spells tab is dimmed with a lock until the Chapel is built; a tap says why on its page)
+    const spellsTab = this.tabBtns.get('spells')!;
+    const shut = !chapelBuilt(m);
+    spellsTab.classList.toggle('locked', shut);
+    spellsTab.setAttribute('aria-label', shut ? 'Spells (locked: build the Chapel in the Castle)' : 'Spells');
     this.drawBattle();
     this.tavern.update(m);
     this.drawCastle();
@@ -713,7 +725,7 @@ export class Home {
     battle.id = 'hmBattle';
     battle.append(el('span', '', 'Choose your battle'));
     battle.setAttribute('aria-label', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'Battle! A new army marches. Choose an army' : 'Battle! Choose an army');
-    if (ARMIES.some((a) => armyIsNew(m, a.id))) battle.append(el('i', 'badge'));
+    // (UX-FIXES: the main Battle button carries no badge)
     battle.addEventListener('click', () => this.openArmies());
     go.append(party2, battle);
     if (has) {
@@ -851,7 +863,9 @@ export class Home {
       saveMeta(m);
       this.refresh();
     });
-    row.append(ach, cdx, levelBtn, resetTipsButton());
+    // (UX-FIXES: Achievements is the trophy in the top bar and Reset tips is in Settings: one door each)
+    void ach;
+    row.append(cdx, levelBtn);
     bar.append(row, el('div', 'ctHelp', 'tap heroes to salute · tap any chamber to upgrade or inspect'));
     // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
     this.castle.root.hidden = !up;
@@ -954,6 +968,8 @@ export class Home {
     box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
     const strip = roomsStrip(id, level);
     if (strip) box.append(strip);
+    // (DEPTH-BUILD: the Barracks' Sparring Yard: two heroes spar while you are away, for bond points)
+    if (id === 'barracks' && roomOpen(m.castle, 'sparringYard')) box.append(this.sparringYard());
     this.cardFor = id;
     const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
     const done = el('button', '', 'Close');
@@ -993,6 +1009,42 @@ export class Home {
     const row = el('div', 'brow2');
     row.append(buy, done);
     box.append(row);
+  }
+
+  private sparringYard(): HTMLElement {
+    const m = this.meta;
+    const wrap = el('div', 'hallPlinths');
+    const note = settleSparring(m, Date.now());
+    if (note) saveMeta(m);
+    const s = m.sparring;
+    if (s) {
+      const row = el('div', 'hallPlinth');
+      row.append(el('small', '', `${UNITS[s.a]?.name ?? s.a} and ${UNITS[s.b]?.name ?? s.b} are sparring: `), el('span', 'worksLeft', clockText(Math.max(0, s.doneAt - Date.now()))));
+      wrap.append(row);
+      return wrap;
+    }
+    const row = el('div', 'hallPlinth');
+    const pick = (): HTMLSelectElement => {
+      const sel = el('select');
+      for (const k of m.unlocked) {
+        const o = el('option', '', UNITS[k]?.name ?? k);
+        o.value = k;
+        sel.append(o);
+      }
+      return sel;
+    };
+    const a = pick();
+    const b = pick();
+    if (b.options.length > 1) b.selectedIndex = 1;
+    const go = el('button', '', `Spar · ${SPAR.POINTS} bond points · 8h`);
+    go.addEventListener('click', () => {
+      if (!startSparring(m, a.value, b.value, Date.now(), roomOpen(m.castle, 'sparringYard'))) return;
+      saveMeta(m);
+      this.openBuilding('barracks');
+    });
+    row.append(a, b, go);
+    wrap.append(el('small', '', 'Sparring Yard: two heroes spar while you are away.'), row);
+    return wrap;
   }
 
   private hallPlinths(level: number): HTMLElement {

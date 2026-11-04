@@ -27,6 +27,48 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.357.0',
+    date: '2026-11-04',
+    title: 'Clearer ten-card summons',
+    notes: ['A ten-card summon shows new heroes large and repeats small, with crowns summed in one line. Hero quips no longer cover the HUD.'],
+  },
+  {
+    version: '0.356.0',
+    date: '2026-11-04',
+    title: 'Cleaner screens and a quicker start',
+    notes: ['A new game goes straight to wave 1. Bigger fight HUD, 44 px buttons, fewer badges, pop-ups that queue instead of stacking, clearer wave losses.', 'Sell asks twice; pages say Back and cards say Close; bigger films; tidier Castle, stall and hero pages.'],
+  },
+  {
+    version: '0.355.0',
+    date: '2026-11-04',
+    title: 'Calamity provisions, Sparring Yard',
+    notes: ['Calamity runs carry provisions: rest eats one, a hungry rest heals half; shops sell sacks. The Barracks\' Sparring Yard builds bonds between a pair.'],
+  },
+  {
+    version: '0.354.0',
+    date: '2026-11-04',
+    title: 'Painted gear, runes and legends',
+    notes: ['60 more gear pieces and all 21 legends painted; painted rune stones, remedies, set emblems and glyph stones.'],
+  },
+  {
+    version: '0.353.0',
+    date: '2026-11-04',
+    title: 'Charge has an edge, stronger formations',
+    notes: ['Charge now marches faster and its first blows hit archers hard. Shield Wall and Hollow Square give real cover. Kitsune and Werewolf trimmed at level 10.'],
+  },
+  {
+    version: '0.352.0',
+    date: '2026-11-04',
+    title: 'Groundwork for the Vampires',
+    notes: ['The Vampire origin, its bat swarm and the Crimson Court are built and tested; the five Vampires join once their art is painted.'],
+  },
+  {
+    version: '0.351.0',
+    date: '2026-11-04',
+    title: 'Every foe fights its own way',
+    notes: ['Common foes flank, kite, hunt, guard or charge, with a passive each; elites and army kinds gain a skill. Armies retuned to match.'],
+  },
+  {
     version: '0.350.0',
     date: '2026-11-04',
     title: 'Painted king\'s spells, gear balance',

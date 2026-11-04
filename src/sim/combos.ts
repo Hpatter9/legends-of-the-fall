@@ -111,7 +111,19 @@ export const COMBOS: readonly Combo[] = [
   },
 ];
 
-export const comboById = (id: string): Combo | undefined => COMBOS.find((c) => c.id === id);
+/** The Last Oaths still to join the roster: the Vampires' Crimson Court (the director's yes, docs/notes/twenty-heroes-audit.md). Its five have
+ *  their kits but wait for their battle sheets; a fight with all five forms it like any other, while the codex and the roster's rules
+ *  (`COMBOS`: five to eight, every member a hero of `ALL_HEROES`) leave it out until they join and it moves into `COMBOS`. */
+export const COMING_COMBOS: readonly Combo[] = [
+  {
+    id: 'bloodCourt', heroes: ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'], name: 'The Crimson Court', move: 'Eternal Eclipse', tone: 'dark',
+    text: 'A blood moon eclipses the field: every foe is struck and bleeds for 4s, while the five drink back a quarter of their health and every ally is hastened for 4s',
+    beats: [{ k: 'hurt', mult: 0.65 }, { k: 'burn', mult: 0.055, ms: 4000, kind: 'bleed' }, { k: 'mendFive', share: 0.25 }, { k: 'haste', ms: 4000 }],
+  },
+];
+const ANY_COMBO: readonly Combo[] = [...COMBOS, ...COMING_COMBOS];
+
+export const comboById = (id: string): Combo | undefined => ANY_COMBO.find((c) => c.id === id);
 
 /** What a fight keeps of its combo: which one, how full the bar is, how many times it has gone off, and whether a member has fallen. */
 export interface ComboState {
@@ -129,7 +141,7 @@ export interface ComboState {
 }
 
 /** The combo whose five heroes are all among these kinds (the first one, if two are). */
-export const comboOf = (kinds: readonly string[]): Combo | undefined => COMBOS.find((c) => c.heroes.every((k) => kinds.includes(k)));
+export const comboOf = (kinds: readonly string[]): Combo | undefined => ANY_COMBO.find((c) => c.heroes.every((k) => kinds.includes(k)));
 
 /** Look for a combo among the placed heroes as the fight starts. */
 export function startCombo(b: Battle): void {
@@ -257,4 +269,4 @@ export function noteCombos(m: Meta, b: Pick<Battle, 'combo'>): string[] {
 }
 
 /** A saved list of the combos seen, read safely. */
-export const readCombosSeen = (raw: unknown): string[] => (Array.isArray(raw) ? [...new Set(raw.filter((x): x is string => typeof x === 'string' && COMBOS.some((c) => c.id === x)))] : []);
+export const readCombosSeen = (raw: unknown): string[] => (Array.isArray(raw) ? [...new Set(raw.filter((x): x is string => typeof x === 'string' && ANY_COMBO.some((c) => c.id === x)))] : []);

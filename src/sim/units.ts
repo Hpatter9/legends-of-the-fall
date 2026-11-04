@@ -107,6 +107,12 @@ export const UNITS: Record<string, UnitDef> = {
   sage: { id: 'sage', name: 'Great Sage', side: 'hero', sheet: 'hero_res_sage', scale: 0.520833, hp: 204, atk: 29, def: 3, range: 4, moveMs: 700, atkMs: 1600, jump: 2, shot: 'fire', role: 'A mana battery: stars, and his friends\' pools filled' },
   demonSwordsman: { id: 'demonSwordsman', name: 'Demon Swordsman', side: 'hero', sheet: 'hero_res_demon_swordsman', scale: 0.520833, hp: 220, atk: 22, def: 7, range: 1, moveMs: 560, atkMs: 950, jump: 3, role: 'A blood pact: pays health for power' },
   tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hero_res_tyrant', scale: 0.625, hp: 262, atk: 20, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, role: 'A condemner: names a foe for the whole party', },
+  // The Vampires (docs/notes/twenty-heroes.md): their kits are in, but they wait for their battle sheets before they join `ALL_HEROES`
+  vampireLord: { id: 'vampireLord', name: 'Vampire Lord', side: 'hero', sheet: 'hero_res_vampire_lord', scale: 0.520833, hp: 236, atk: 26, def: 6, range: 1, moveMs: 520, atkMs: 900, jump: 3, role: 'A blood-duellist: lunges through lines, impales and drinks' },
+  hemomancer: { id: 'hemomancer', name: 'Hemomancer', side: 'hero', sheet: 'hero_res_hemomancer', scale: 0.520833, hp: 178, atk: 30, def: 3, range: 3, moveMs: 680, atkMs: 1450, jump: 2, shot: 'curse', role: 'A blood weaver: tethers foes together and glides in mist' },
+  nightstalker: { id: 'nightstalker', name: 'Nightstalker', side: 'hero', sheet: 'hero_res_nightstalker', scale: 0.520833, hp: 188, atk: 28, def: 4, range: 1, moveMs: 380, atkMs: 700, jump: 9, flies: true, role: 'A winged strigoi: swoops from the dark and drags prey aloft' },
+  bloodGargoyle: { id: 'bloodGargoyle', name: 'Blood Gargoyle', side: 'hero', sheet: 'hero_res_blood_gargoyle', scale: 0.625, hp: 325, atk: 20, def: 9, range: 1, moveMs: 720, atkMs: 1250, jump: 9, flies: true, role: 'A stone sentinel: crashes down from the eaves and turns to granite' },
+  dhampir: { id: 'dhampir', name: 'Dhampir', side: 'hero', sheet: 'hero_res_dhampir', scale: 0.520833, hp: 168, atk: 32, def: 3, range: 5, moveMs: 580, atkMs: 1350, jump: 3, shot: 'arrow', role: 'A silver-bolt hunter: vaults clear and pins foes to stone' },
 
   // called up by Beastmaster
   wolf: { id: 'wolf', name: 'Wolf', side: 'hero', sheet: 'wolf_grey', scale: 0.55, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster', forms: ['wolf_grey', 'wolf_grey', 'wolf_black'] },
@@ -119,8 +125,8 @@ export const UNITS: Record<string, UnitDef> = {
   standard: { id: 'standard', name: 'Standard', side: 'hero', sheet: 'samurai_commander', scale: 0.67, hp: 60, atk: 0, def: 6, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, still: true, role: 'The Samurai Commander\'s standard: friends near it fight harder' },
   decoy: { id: 'decoy', name: 'Decoy', side: 'hero', sheet: 'hero_res_illusionist', scale: 0.4375, hp: 80, atk: 5, def: 0, range: 1, moveMs: 700, atkMs: 1200, jump: 2, summon: true, role: 'A mirage that draws blows' },
 
-  skeleton: { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Sword and shield' },
-  spearman: { id: 'spearman', name: 'Skeleton Spearman', side: 'foe', sheet: 'skeleton_spearman', scale: 0.67, hp: 270, atk: 28, def: 5, range: 2, moveMs: 650, atkMs: 1250, jump: 2, role: 'Reaches two tiles' },
+  skeleton: { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Shield up, guards the archers' },
+  spearman: { id: 'spearman', name: 'Skeleton Spearman', side: 'foe', sheet: 'skeleton_spearman', scale: 0.67, hp: 270, atk: 28, def: 5, range: 2, moveMs: 650, atkMs: 1250, jump: 2, role: 'Long spear, keeps its distance' },
   // Duchess the court's goat, in the rare fight she joins (`duchessFight.ts`): her base before her level-100 gains
   duchess: { id: 'duchess', name: 'Duchess', side: 'hero', sheet: 'duchess_goat', scale: 0.66, hp: 220, atk: 20, def: 6, range: 1, moveMs: 520, atkMs: 900, jump: 4, summon: true, role: 'Her Grace the court goat: she fights for herself, and today that is you' },
   // (QUESTS-3, Q5: the guests of a quest battle's protect rule, `questRules.ts`: they fight on the heroes' side under the AI, and the fight is lost if one falls. Their looks are the packs' own)
@@ -131,8 +137,12 @@ export const UNITS: Record<string, UnitDef> = {
   guestPrisoner: { id: 'guestPrisoner', name: 'The Prisoner', side: 'hero', sheet: 'hero_res_druid', scale: 0.520833, hp: 200, atk: 4, def: 2, range: 1, moveMs: 800, atkMs: 1400, jump: 2, summon: true, role: 'A prisoner set free: keep them alive' },
   // The Last Stand's ruler defends the central dais in melee; their hp remains the run's objective.
   standKing: { id: 'standKing', name: 'The King', side: 'hero', sheet: 'stand_king', scale: 0.8, hp: 1000, atk: 24, def: 4, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, role: 'The ruler, defending the central dais' },
-  boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 200, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows' },
+  boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 195, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows, backs off' },
 };
+
+/** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
+ *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */
+export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'];
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;

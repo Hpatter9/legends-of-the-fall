@@ -109,8 +109,21 @@ export const STAT_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromE
   Object.entries(ROWS).map(([kind, r]) => [kind, { base: toScores(r.slice(0, 6) as number[]), blow: r[6], cast: r[7], armour: r[8], saves: [r[9], r[10]], calling: r[11] }]),
 );
 
+/** The heroes still to join the roster (`COMING_HEROES`, docs/notes/twenty-heroes.md): their rows, in the same array, until they join and move
+ *  into the table above. */
+const COMING_ROWS: Readonly<Record<string, Row>> = {
+  vampireLord: [12, 17, 13, 10, 8, 15, 'dex', 'cha', 'medium', 'dex', 'cha', 'Fighter (duellist), vampire'],
+  hemomancer: [8, 13, 12, 15, 10, 17, 'cha', 'cha', 'robes', 'con', 'cha', 'Sorcerer (blood)'],
+  nightstalker: [12, 17, 13, 8, 15, 10, 'dex', 'dex', 'light', 'dex', 'int', 'Rogue (strigoi)'],
+  bloodGargoyle: [15, 8, 17, 10, 13, 12, 'str', 'str', 'heavy', 'str', 'con', 'Gargoyle (sentinel)'],
+  dhampir: [10, 17, 13, 12, 15, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Ranger (hunter)'],
+};
+const COMING_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromEntries(
+  Object.entries(COMING_ROWS).map(([kind, r]) => [kind, { base: toScores(r.slice(0, 6) as number[]), blow: r[6], cast: r[7], armour: r[8], saves: [r[9], r[10]], calling: r[11] }]),
+);
+
 /** A hero kind's profile (undefined for a foe or a summon: they take a family block, `foeBlockOf`). */
-export const profileOf = (kind: string): StatProfile | undefined => STAT_PROFILES[kind];
+export const profileOf = (kind: string): StatProfile | undefined => STAT_PROFILES[kind] ?? COMING_PROFILES[kind];
 
 // ---- The modifier and proficiency (the design's section 2) ----
 
