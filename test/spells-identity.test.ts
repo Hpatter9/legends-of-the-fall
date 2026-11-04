@@ -72,6 +72,8 @@
 // dd370f3f, heroes1Others d75813fa, heroes10Others c7f3b928, heroes30Others 1e0ab73b.)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
+// (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
+// fourteen. No other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

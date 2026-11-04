@@ -2,7 +2,7 @@
 // plays on each foe it strikes (`hit`). These names now select painted materials through `fx.ts`; the old names
 // retain the skill vocabulary. Pure data: no Pixi, no DOM, so the tests can check that every skill has an entry.
 
-import type { SpellId } from '../sim/spells';
+import { withLooks, type SpellId } from '../sim/spells';
 
 /** The named skill cues resolved by `fx.ts`. */
 export type MagicKey =
@@ -162,7 +162,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
 };
 
 /** The king's spells: a sheet on each fighter the spell touches (the meteor's is its landing). */
-export const SPELL_FX: Record<Exclude<SpellId, 'meteor'>, Effect> = {
+export const SPELL_FX: Record<Exclude<SpellId, 'meteor'>, Effect> = withLooks({
   heal: { sheet: 'lightGather', scale: 1.6 },
   haste: { sheet: 'windVortex', scale: 1.5, tint: 0xffe27a },
   shield: { sheet: 'earthShield', scale: 1.5 },
@@ -183,13 +183,13 @@ export const SPELL_FX: Record<Exclude<SpellId, 'meteor'>, Effect> = {
   bulwark: { sheet: 'earthShield', scale: 1.8 },
   wolves: { sheet: 'earthBurst', scale: 1.4 },
   starfall: { sheet: 'fireExplosion', scale: 1.2 },
-};
+});
 
 /** The word that floats up from each fighter a spell touches (Haste, Rally and Shield say theirs in `fx.ts`). */
 export const SPELL_WORD: Partial<Record<SpellId, string>> = { cleanse: 'Cleansed', hex: 'Hexed', renewal: 'Renewal', deepfreeze: 'Frozen', warcry: 'Battle Cry', bulwark: 'Bulwark', wolves: 'Wolf', blink: 'Blink' };
 
 /** The tint of the tiles a spell lights, and how long (ms) they glow. */
-export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms: number }> = {
+export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms: number }> = withLooks({
   heal: { color: 0x7dff8a, ms: 600 },
   haste: { color: 0xffe27a, ms: 600 },
   shield: { color: 0x9ad0ff, ms: 600 },
@@ -210,7 +210,7 @@ export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms:
   bulwark: { color: 0xb88a5a, ms: 600 },
   wolves: { color: 0x7dff8a, ms: 600 },
   starfall: { color: 0xff5a2a, ms: 700 },
-};
+});
 
 /** A foe this big (its full health) that dies is a big kill: a burst, a white flash, a hard shake. */
 export const BIG_FOE_HP = 400;

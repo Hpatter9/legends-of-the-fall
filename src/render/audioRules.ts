@@ -31,7 +31,7 @@ export function panOfTile(u: number, v: number): number {
 
 /** The king's spells cast on no tile (their `target` is 'all'; named here, not read from `SPELLS`, as importing the spells here
  *  loops back on itself; `test/spell-sfx.test.ts` checks the two agree). */
-export const NO_TILE_SPELLS: ReadonlySet<SpellId> = new Set<SpellId>(['rally', 'quake', 'warcry', 'bulwark']);
+export const NO_TILE_SPELLS: ReadonlySet<SpellId> = new Set<SpellId>(['rally', 'quake', 'warcry', 'bulwark', 'thunderclap']);
 
 /** Where on the board a battle event happens, for its sound's pan: the fighter it is about, or the tile it lands on.
  *  Null for events with no place (the end of the fight). */

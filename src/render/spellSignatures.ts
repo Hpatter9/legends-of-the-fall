@@ -1,5 +1,5 @@
 // The king's spells have their own artwork and release geometry, separate from identically named hero magic.
-import type { SpellId } from '../sim/spells';
+import { withLooks, type SpellId } from '../sim/spells';
 import type { Signature, Step } from './signatures';
 
 const step = (id: SpellId, s: Step['s'], o: Partial<Step> = {}): Step => ({ s, k: 'light-hit', art: `spell:${id}`, z: 2.2, a: 0.9, ...o });
@@ -7,7 +7,7 @@ const spell = (id: SpellId, shape: Step['s'], options: Partial<Step> = {}): Sign
   wind: [], cast: [step(id, shape, options)], hit: [step(id, 'pop', { z: 1.5, f: 85 })],
 });
 
-export const SPELL_SIGNATURES: Record<SpellId, Signature> = {
+export const SPELL_SIGNATURES: Record<SpellId, Signature> = withLooks({
   heal: spell('heal', 'spiral', { n: 4, r: 14, z: 1.4, on: 'allies' }),
   meteor: spell('meteor', 'meteor', { z: 3, l: 'fire-explosion' }),
   haste: spell('haste', 'orbit', { n: 3, r: 22, z: 1.4 }),
@@ -29,4 +29,4 @@ export const SPELL_SIGNATURES: Record<SpellId, Signature> = {
   bulwark: spell('bulwark', 'pillars', { n: 3, r: 32, z: 1.7 }),
   wolves: spell('wolves', 'pop', { z: 3, f: 90 }),
   starfall: spell('starfall', 'rain', { n: 5, z: 2.6, l: 'fire-hit' }),
-};
+});

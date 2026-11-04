@@ -8,7 +8,7 @@
 // play instead: each part carries its `fallback`, and `coveredBySpells` only applies once the files are in.
 
 import type { Battle, BattleEvent } from '../sim/battle';
-import { SPELLS, type SpellId } from '../sim/spells';
+import { lookOf, SPELLS, withLooks, type SpellId } from '../sim/spells';
 import { panOfTile } from './audioRules';
 import { spellCues, type Cued } from './soundRules';
 import { SPELL_SFX_FILES, type SpellSfxId } from './spellSfxManifest';
@@ -29,11 +29,11 @@ export interface SpellPart {
 /** When each spell's effect starts, ms after its event. Most land with the cast's whoomp (`WHOOMP_MS`), as the spell's look
  *  bursts; a few are set by their own look: a lance and a chain strike at once, a quake's shake begins at once, the wolves
  *  howl as they rise. (Meteor and Meteor Shower are timed by their falls instead, from the `area` events.) */
-export const EFFECT_DELAY: Record<SpellId, number> = {
+export const EFFECT_DELAY: Record<SpellId, number> = withLooks({
   heal: 70, shield: 60, smite: 40, chain: 0, poison: 70, frost: 40, rally: 70, quake: 0, resurrect: 80, cleanse: 60,
   blink: 0, hex: 70, lance: 0, renewal: 70, deepfreeze: 50, warcry: 70, bulwark: 60, wolves: 100, haste: 40,
   meteor: 0, starfall: 0,
-};
+});
 
 /** When the cast's whoomp falls (ms into its file). */
 export const WHOOMP_MS = Math.round((SPELL_SFX_FILES['cast-heal'].whoomp ?? 0) * 1000);
@@ -48,17 +48,18 @@ export const STAR_GAIN = 1;
 export const HOP_GAIN = 0.85;
 /** Each spell's trim, on its cast and its effect alike (`audioMix.ts` says how the mix was set): the files were rendered one by one
  *  and differ by about seven LU, so each is brought to the same loudness, just above a fight's loudest moments. */
-export const SPELL_TRIM: Record<SpellId, number> = {
+export const SPELL_TRIM: Record<SpellId, number> = withLooks({
   heal: 0.81, meteor: 1.16, haste: 0.89, shield: 0.81, smite: 0.97, chain: 1.25, poison: 1.21, frost: 0.62, rally: 0.77, quake: 1.17, resurrect: 0.98, cleanse: 0.85,
   blink: 1.36, hex: 0.96, lance: 0.82, renewal: 0.83, deepfreeze: 1.29, warcry: 0.88, bulwark: 1.46, wolves: 0.88, starfall: 0.8,
-};
+});
 
 /** Every file a spell can play (the loader fetches these). */
 export const SPELL_FILES = Object.keys(SPELL_SFX_FILES) as SpellSfxId[];
 
 /** The cast and effect files for a spell. */
-export const castOf = (id: SpellId): SpellSfxId => `cast-${id}`;
-export const effectOf = (id: SpellId): SpellSfxId => `fx-${id}`;
+// (a school's new spell plays the sound of the spell it borrows from, until its own: KING-SPELLS batch 4)
+export const castOf = (id: SpellId): SpellSfxId => `cast-${lookOf(id)}`;
+export const effectOf = (id: SpellId): SpellSfxId => `fx-${lookOf(id)}`;
 
 /** How far into a file its falling thing lands (ms). */
 const impactMs = (file: SpellSfxId): number => Math.round(((SPELL_SFX_FILES[file] as { impact?: number }).impact ?? 0) * 1000);
