@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.344.0',
+    date: '2026-11-04',
+    title: 'Bonds, legacy, new rooms, 14 spells',
+    notes: ['Chapel and Library rooms; bonds and rivalries between heroes; retire heroes into a legacy with perks and Hall plinths.', 'Fourteen new king\'s spells across the schools. The party now advances together by default.'],
+  },
+  {
     version: '0.343.0',
     date: '2026-11-04',
     title: 'Gear sets, legends and enchanting',
