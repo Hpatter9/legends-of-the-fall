@@ -16,6 +16,7 @@
 // measured; the star "clear without using a heart" is then met by every clear).
 import { WEAK } from '../../src/sim/weakness';
 import { RITES } from '../../src/sim/chapelRooms';
+import { KINDRED, RIVALS, bondKey } from '../../src/sim/bonds';
 import { ARMIES, ARMY_WAVES, armyById, armyUnlocked } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
@@ -99,6 +100,15 @@ function attempt(meta: Meta, id: string, seed: number, castle: Castle, tier: num
   const army = armyById(id)!;
   dress(meta);
   const run: Run = armyRun(seed, id, party, castle, tier);
+  // (DEPTH-BUILD: BONDS=n gives the party's kindred pairs bond level n and every other pair Comrades at most, to measure the bonds)
+  if (process.env.BONDS) {
+    const n = Number(process.env.BONDS);
+    run.bonds = {};
+    for (let i = 0; i < party.length; i++) for (let j = i + 1; j < party.length; j++) {
+      const key = bondKey(party[i], party[j]);
+      run.bonds[key] = RIVALS.includes(key) ? -1 : KINDRED.includes(key) ? n : Math.min(2, n);
+    }
+  }
   const bf = boostFor(meta);
   let won = 0;
   while (!run.over) {

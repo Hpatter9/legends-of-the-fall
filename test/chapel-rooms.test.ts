@@ -32,7 +32,7 @@ test('a heart burns with each Vigil choice: shielded, swift or cleansed', () => 
   assert.equal(readOrders({ vigil: 'sideways' }), undefined);
 });
 
-test('Last Rites: the first hero to fall rises at a quarter of health after 5 s, once a fight', () => {
+test('Last Rites: the first hero to fall rises at 15% of health after 10 s, once a fight', () => {
   const b = readyBattle(4, 'skeletons', { rites: true });
   fight(b);
   const [a, c] = b.units.filter((u) => u.side === 'hero');

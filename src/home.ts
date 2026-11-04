@@ -77,6 +77,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const reducedMotion = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export interface HomeHooks {
+  /** DEPTH-BUILD: the home screen has opened (the camp or the castle): a bond scene now due plays then. */
+  onOpened?: () => void;
   /** Whether a run is saved and not over. */
   hasRun(): boolean;
   /** The saved run's stage and gold, if there is one going: with the army it fights (none for a daily, tower or older run) and a line naming it. */
@@ -300,6 +302,7 @@ export class Home {
     if (note) tips.offer('crowns', $('hmTabs'));
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
     void revealUnseen(this.meta).then(() => this.refresh());
+    this.hooks.onOpened?.();
   }
 
   get isOpen(): boolean {

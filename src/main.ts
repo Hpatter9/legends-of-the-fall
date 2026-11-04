@@ -99,6 +99,7 @@ import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/m
 import { showMarchCard } from './marchCard';
 import { applyVigil } from './sim/chapelRooms';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
+import { bondScenesDue } from './sim/bondScenes';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
@@ -471,6 +472,13 @@ class Game {
         if (!this.eid) return;
         if (!this.eid.camp.root.isConnected) $('hmStones').after(this.eid.camp.root);
         this.eid.refreshCamp();
+      },
+      // (DEPTH-BUILD: a bond scene due plays when the camp or the castle opens, one at a time)
+      onOpened: () => {
+        if (!this.scenesOn()) return;
+        const id = bondScenesDue(this.meta, (x) => seenScene(this.meta, x))[0];
+        const sc = id ? SCENES[id] : undefined;
+        if (sc) void this.queueScene(sc.moment);
       },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)

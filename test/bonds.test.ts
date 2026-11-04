@@ -111,3 +111,43 @@ test('the same seed with the same bonds plays the same, and old saves have none'
   assert.deepEqual(readBonds({ 'knight|peasant': 4, 'peasant|knight': 9, 'nobody|knight': 2, 'archer|knight': 0 }), { 'knight|peasant': 4 });
   startBonds(readyBattle(1), undefined);
 });
+
+import { BOND_SCENES, bondScenesDue, bondSceneId } from '../src/sim/bondScenes';
+import { SCENES } from '../src/sim/sceneScripts';
+import { dueScene } from '../src/sim/sceneRules';
+
+test('the first batch of bond scenes: ten kindred pairs at level 1, real heroes and backdrops, due once the pair reaches it', () => {
+  assert.equal(BOND_SCENES.length, 10);
+  for (const s of BOND_SCENES) {
+    assert.ok(s.moment.kind === 'bond' && KINDRED.includes(s.moment.pair) && s.moment.level === 1, s.id);
+    assert.ok(SCENES[s.id], 'in the scenes list');
+    const lines = s.shots.flatMap((x) => x.lines ?? []);
+    assert.ok(lines.length >= 3 && lines.length <= 6, s.id);
+  }
+  const m = { ...newMeta(1), bonds: { 'knight|peasant': 9 } };
+  const seen = new Set<string>();
+  assert.deepEqual(bondScenesDue(m, (id) => seen.has(id)), []);
+  m.bonds['knight|peasant'] = 10;
+  const id = bondSceneId('knight|peasant', 1);
+  assert.deepEqual(bondScenesDue(m, (x) => seen.has(x)), [id]);
+  assert.equal(dueScene(m, { kind: 'bond', pair: 'knight|peasant', level: 1 }), id);
+  seen.add(id);
+  assert.deepEqual(bondScenesDue(m, (x) => seen.has(x)), []);
+});
+
+test('a hero takes its best bond only: bonds do not stack across partners', () => {
+  const b = readyBattle(6, 'skeletons', { bonds: { 'knight|peasant': 4, 'archer|knight': 2 } });
+  const heroes = b.units.filter((u) => u.side === 'hero');
+  heroes[0].def = 'knight';
+  heroes[1].def = 'peasant';
+  heroes[2].def = 'archer';
+  fight(b);
+  const [k, p, a] = heroes.map((h) => b.units.find((u) => u.id === h.id)!);
+  p.u = k.u + 1;
+  p.v = k.v;
+  a.u = k.u;
+  a.v = k.v + 1;
+  tickBonds(b);
+  assert.ok(Math.abs(k.bondAtk! - 1.06) < 1e-9, 'the best, not 1.06 x 1.03');
+  assert.ok(Math.abs(a.bondAtk! - 1.03) < 1e-9);
+});

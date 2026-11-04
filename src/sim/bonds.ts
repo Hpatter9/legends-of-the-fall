@@ -150,26 +150,32 @@ export function startBonds(b: Battle, snap: Record<string, number> | undefined):
 
 const near = (x: Unit, y: Unit): boolean => Math.abs(x.u - y.u) + Math.abs(x.v - y.v) <= BOND.RANGE;
 
-/** Each tick: each bonded or rival hero's attack and charge for where it stands now. */
+/** Each tick: each bonded or rival hero's attack and charge for where it stands now. A hero takes its best bond's reward only (bonds do
+ *  not stack across partners: the design's "one pair at a time"); a rival nearby slows it on top. */
 export function tickBonds(b: Battle): void {
   const pairs = b.bonds;
   if (!pairs) return;
   const byId = new Map(b.units.map((u) => [u.id, u]));
-  for (const p of pairs) for (const id of [p.a, p.b]) {
-    const u = byId.get(id);
-    if (u) (u.bondAtk = 1), (u.bondCd = 1);
-  }
+  const best = new Map<number, { atk: number; cd: number; rival: boolean }>();
+  for (const p of pairs) for (const id of [p.a, p.b]) best.set(id, { atk: 1, cd: 1, rival: false });
   for (const p of pairs) {
     const x = byId.get(p.a);
     const y = byId.get(p.b);
     if (!x?.alive || !y?.alive || !near(x, y)) continue;
     for (const u of [x, y]) {
-      if (p.lv < 0) u.bondCd! *= 1 + BOND.RIVAL_SLOW;
+      const e = best.get(u.id)!;
+      if (p.lv < 0) e.rival = true;
       else {
-        if (p.lv >= 2) u.bondAtk! *= 1 + (p.lv >= 4 ? BOND.ATK4 : BOND.ATK2);
-        if (p.lv >= 4) u.bondCd! *= 1 - BOND.CHARGE4;
+        if (p.lv >= 2) e.atk = Math.max(e.atk, 1 + (p.lv >= 4 ? BOND.ATK4 : BOND.ATK2));
+        if (p.lv >= 4) e.cd = Math.min(e.cd, 1 - BOND.CHARGE4);
       }
     }
+  }
+  for (const [id, e] of best) {
+    const u = byId.get(id);
+    if (!u) continue;
+    u.bondAtk = e.atk;
+    u.bondCd = e.cd * (e.rival ? 1 + BOND.RIVAL_SLOW : 1);
   }
 }
 

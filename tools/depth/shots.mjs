@@ -117,6 +117,12 @@ for (const [w, h] of sizes) {
     await page.evaluate(() => document.querySelector('#traits .trait.bonds')?.click());
     await page.waitForTimeout(400);
     await shot('bonds-deploy');
+  } else if (scene === 'bond-scene') {
+    await page.evaluate(() => { const g = window.__game; void g.scenes.play('bond:knight|peasant:1', { party: g.meta.party }); });
+    await page.waitForTimeout(5500);
+    await shot('bond-scene');
+    await page.waitForTimeout(9000);
+    await shot('bond-scene-2');
   } else if (scene.startsWith('card-')) {
     const site = scene.slice(5);
     await page.evaluate(() => window.__game.home.show('castle'));

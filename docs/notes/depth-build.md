@@ -92,8 +92,12 @@ crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by
   now also comes up when only the Vigil is open) and kept in `Run.orders.vigil`. When a heart burns the page calls `applyVigil` after
   `reviveParty`: Shielded (a shield of 15% of health), Swift (hasted 4 s) or Cleansed (every ailment gone).
 - **Last Rites** (Chapel 3): an army run that has not spent it starts each fight with `Battle.rites` (the stage's `rites`). The first
-  hero to fall is marked (`ritesFall`, from `hurt`) and rises at a quarter of its health 5 s later (`tickRites`); `noteFight` keeps
-  `Run.ritesUsed`, so it comes once a run. If the whole party falls inside those 5 s, the wave is lost as before.
+  hero to fall is marked (`ritesFall`, from `hurt`) and rises at 15% of its health 10 s later (`tickRites`); `noteFight` keeps
+  `Run.ritesUsed`, so it comes once a run. If the whole party falls inside those 10 s, the wave is lost as before.
+  - **Measured** (`CHAPEL=3`, new switch in `tools/army-pace`; mean tries at each army's recommended level, 12 saves): at the design's
+    numbers (a quarter of health after 5 s) the Yokai fell from 20.9 to 17.7 tries and the Golem Forge from 7.7 to 6.2, past the bar of
+    one. Softened to 15% after 10 s: Yokai 20.9 → 20.9, Golem Forge 7.7 → 6.8, Infernal Host 11.8 → 10.7, the rest within a few tenths.
+    (`RITES_HP` / `RITES_MS` try other numbers.)
 - **Reading Room** (Library 2): `queueStudy` / `unqueueStudy` and `Meta.studyNext` (optional): a student queues its next book (the copy
   leaves the bag at once); `settleStudy` starts it, with any kept progress, when the first is learnt. The book page's reader gains
   "Queue next" and the queued row.
@@ -102,3 +106,25 @@ crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by
 - **Left for later:** the Smithy's three rooms wait for the gear build (`claude/gear-build`), which is changing wear and the slots now;
   the Mage Tower's Spell Lectern needs a mid-run spell swap the page does not have yet.
 - Tests: `test/chapel-rooms.test.ts`, `test/library-rooms.test.ts`.
+
+## Batch 5: hero bonds and rivalries
+
+- **Rules** (`src/sim/bonds.ts`): 40 kindred pairs (the eight duo combos and 32 written from the heroes' stories) and 15 rival pairs.
+  `Meta.bonds?` (points by pair key, the two kinds in alphabetical order), `Meta.bondSettled?`, `Meta.bondScenes?` (all optional).
+  `noteBonds` (from `settleRun`, army runs only): a won wave gives every pair placed together a point. Levels at 10 / 40 / 120 / 300 / 600;
+  a pair that is not kindred stops at 2 (Comrades). Rivals who win 10 waves together settle into a kindred pair at level 1.
+- **In the fight:** the run keeps a snapshot as it starts (`Run.bonds`: each pair's level, -1 for rivals; the page takes it in
+  `startRun`), the stage carries it, and `startBonds` fixes the placed pairs as the fight starts. `tickBonds` sets each hero's
+  `bondAtk` / `bondCd` for where it stands (two tiles, the same walking distance the rest of the fight uses): Comrades +3% attack,
+  Shieldmates +6% and skills 5% quicker (`cdOf`), rivals' skills 10% slower. Sworn (3+): once a wave, a blow that would fell one has 20%
+  of it taken on the partner's guard, never felling the partner (`bondCover`, in `hurt`). A rival who sees the other fall fights 10% harder
+  for the rest of the wave (`bondFury`). The formations design adds no adjacency rule of its own, so there is one distance and one drawing.
+- **The page:** the hero sheet's **Bonds** block (three strongest partners, rivals marked, "All bonds" for the rest); a **Bonds** chip at
+  the end of the deploy board's trait strip, a tap for each pair's words; a level risen or a rivalry settled comes as a toast after the
+  wave. The gold thread and red spark on the board itself, the tavern seating, the Sparring Yard and the scenes are still to come.
+- Tests: `test/bonds.test.ts`. Shots: `node tools/depth/shots.mjs bonds-sheet`, `bonds-deploy`.
+- **Scenes, batch 1** (`src/sim/bondScenes.ts`): the first ten kindred pairs' level-1 scenes (the eight duo pairs, Knight and Paladin,
+  Archer and Ranger), drafted for the owner to read: one backdrop, the two walk on, four or five lines, a push in for the last word. A new
+  moment kind (`{ kind: 'bond', pair, level }`, its key carries the level), the family "Bonds between heroes" in the Scenes list. The
+  page plays one due scene when the camp or the castle opens (`HomeHooks.onOpened`). Levels 3 and 5, the rest of the pairs and the
+  settling scenes follow in batches of ten. Shot: `node tools/depth/shots.mjs bond-scene`.

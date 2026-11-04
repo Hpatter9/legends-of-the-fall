@@ -1,6 +1,6 @@
 // The Chapel's rooms (DEPTH-BUILD, docs/notes/depth-design.md section 3): the Vigil (level 2) chooses how the party rises when a heart
-// burns, set on the march card (`Run.orders.vigil`); Last Rites (level 3) raises the first hero to fall in a wave at a quarter of health
-// after 5 s, once a run. Both are fixed when the fight starts (the stage carries them) and draw from no stream. Pure rules: no Pixi, no DOM.
+// burns, set on the march card (`Run.orders.vigil`); Last Rites (level 3) raises the first hero to fall in a wave at 15% of health
+// after 10 s, once a run (softened from the design's quarter after 5 s: docs/notes/depth-build.md). Both are fixed when the fight starts (the stage carries them) and draw from no stream. Pure rules: no Pixi, no DOM.
 
 import { cleanse } from './ailments';
 import type { Battle, BattleEvent, Unit } from './battle';
@@ -14,7 +14,7 @@ export const VIGILS: Readonly<Record<VigilId, { name: string; line: string; icon
 export const VIGIL_IDS = Object.keys(VIGILS) as VigilId[];
 export const isVigil = (x: unknown): x is VigilId => typeof x === 'string' && (VIGIL_IDS as string[]).includes(x);
 
-export const RITES = { DELAY_MS: 5000, HP: 0.25, SHIELD: 0.15, HASTE_MS: 4000 };
+export const RITES = { DELAY_MS: 10_000, HP: 0.15, SHIELD: 0.15, HASTE_MS: 4000 };
 
 /** The Vigil's gift to the heroes a heart has just raised (called after `reviveParty`). */
 export function applyVigil(b: Battle, raised: readonly Unit[], vigil: VigilId | undefined, out: BattleEvent[] = []): void {
@@ -37,7 +37,7 @@ export function ritesFall(b: Battle, to: Unit): void {
   r.at = b.t + RITES.DELAY_MS;
 }
 
-/** Each tick: a hero marked by Last Rites rises when its time comes, at a quarter of its health (once; the run then spends the room). */
+/** Each tick: a hero marked by Last Rites rises when its time comes, at 15% of its health (once; the run then spends the room). */
 export function tickRites(b: Battle, out: BattleEvent[]): void {
   const r = b.rites;
   if (!r || r.id === undefined || r.done || b.t < (r.at ?? Infinity)) return;
