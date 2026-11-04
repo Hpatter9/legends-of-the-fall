@@ -60,7 +60,7 @@ function pairFight(snap: Record<string, number>): { b: Battle; x: ReturnType<typ
 }
 const find = (b: Battle, id: number) => b.units.find((u) => u.id === id)!;
 
-test('Comrades give +3% attack within two tiles, Shieldmates +6% and quicker skills; nothing beyond two tiles', () => {
+test('Comrades give +3% attack within two tiles, Shieldmates more and quicker skills; nothing beyond two tiles', () => {
   const { b, x, y } = pairFight({ 'knight|peasant': 2 });
   assert.equal(b.bonds?.length, 1);
   const base = atkOf({ ...x, bondAtk: 1 });
@@ -75,7 +75,7 @@ test('Comrades give +3% attack within two tiles, Shieldmates +6% and quicker ski
   s.y.u = s.x.u;
   s.y.v = s.x.v + 1;
   tickBonds(s.b);
-  assert.ok(Math.abs(s.x.bondAtk! - 1.06) < 1e-9);
+  assert.ok(Math.abs(s.x.bondAtk! - (1 + BOND.ATK4)) < 1e-9);
   assert.ok(Math.abs(s.x.bondCd! - (1 - BOND.CHARGE4)) < 1e-9);
 });
 
@@ -87,7 +87,9 @@ test('rivals charge 10% slower within two tiles', () => {
   assert.ok(Math.abs(x.bondCd! - 1.1) < 1e-9 && x.bondAtk === 1);
 });
 
-test('a sworn partner covers once a wave', () => {
+test('a sworn partner covers once a wave (when the cover is on: it is off since the measure)', () => {
+  const shipped = BOND.COVER;
+  BOND.COVER = 0.2;
   const { b, x, y } = pairFight({ 'knight|peasant': 3 });
   y.u = x.u + 1;
   y.v = x.v;
@@ -96,6 +98,8 @@ test('a sworn partner covers once a wave', () => {
   assert.equal(was - y.hp, Math.round((x.hp + 10) * BOND.COVER));
   assert.equal(left, x.hp + 10 - (was - y.hp));
   assert.equal(bondCover(b, x, x.hp + 10), x.hp + 10, 'once a wave');
+  BOND.COVER = shipped;
+  assert.equal(bondCover(pairFight({ 'knight|peasant': 3 }).b, x, x.hp + 10), x.hp + 10, 'off as shipped');
 });
 
 test('the same seed with the same bonds plays the same, and old saves have none', () => {
@@ -148,6 +152,6 @@ test('a hero takes its best bond only: bonds do not stack across partners', () =
   a.u = k.u;
   a.v = k.v + 1;
   tickBonds(b);
-  assert.ok(Math.abs(k.bondAtk! - 1.06) < 1e-9, 'the best, not 1.06 x 1.03');
+  assert.ok(Math.abs(k.bondAtk! - (1 + BOND.ATK4)) < 1e-9, 'the best, not both multiplied');
   assert.ok(Math.abs(a.bondAtk! - 1.03) < 1e-9);
 });

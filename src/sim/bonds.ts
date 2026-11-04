@@ -45,11 +45,13 @@ export const BOND = {
   RANGE: 2,
   /** Attack while within range: level 2, and level 4 in all. */
   ATK2: 0.03,
-  ATK4: 0.06,
+  ATK4: 0.045,
   /** Level 4: the pair's skills charge this much faster while together. */
-  CHARGE4: 0.05,
-  /** Level 3: once a wave, when one would fall, the other's guard takes this share of that blow. */
-  COVER: 0.2,
+  CHARGE4: 0.03,
+  /** Level 3: once a wave, when one would fall, the other's guard takes this share of that blow. Off (0): measured, the cover made the
+   *  late armies several tries easier (the Infernal Host 11.8 to 6.6 at bond level 4), so it went first, as the design says; Sworn is a
+   *  scene's level now (docs/notes/depth-build.md). */
+  COVER: 0,
   /** Rivals within range charge their skills this much slower; one who sees the other fall fights this much harder. */
   RIVAL_SLOW: 0.1,
   FURY: 0.1,
@@ -183,7 +185,7 @@ export function tickBonds(b: Battle): void {
  *  (never falling to it). Returns what is left of the blow. */
 export function bondCover(b: Battle, to: Unit, dmg: number): number {
   const pairs = b.bonds;
-  if (!pairs || dmg < to.hp) return dmg;
+  if (!pairs || dmg < to.hp || BOND.COVER <= 0) return dmg;
   for (const p of pairs) {
     if (p.lv < 3 || p.covered || (p.a !== to.id && p.b !== to.id)) continue;
     const other = b.units.find((u) => u.id === (p.a === to.id ? p.b : p.a));
@@ -233,8 +235,8 @@ export function pairWords(lv: number): string {
   if (lv < 0) return 'rivals: skills charge 10% slower within two tiles';
   return [
     BOND_NAMES[lv],
-    lv >= 4 ? '+6% attack and skills 5% quicker within two tiles' : lv >= 2 ? '+3% attack within two tiles' : 'a thread between them',
-    lv >= 3 ? 'covers the other once a wave' : '',
+    lv >= 4 ? `+${BOND.ATK4 * 100}% attack and skills ${BOND.CHARGE4 * 100}% quicker within two tiles` : lv >= 2 ? `+${BOND.ATK2 * 100}% attack within two tiles` : 'a thread between them',
+    lv >= 3 && BOND.COVER > 0 ? 'covers the other once a wave' : '',
   ].filter(Boolean).join(': ').replace(': covers', ', covers');
 }
 

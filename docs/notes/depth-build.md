@@ -147,3 +147,22 @@ crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by
   heroes it would reach and Retire, with a confirm tap); the party picker marks a mentor "In the Hall" and will not take it; the Hall of
   Legends' card shows its four plinths (mentor, level, perk, Recall with a confirm tap, or what an empty seat needs).
 - Tests: `test/legacy.test.ts`. Shots: `node tools/depth/shots.mjs retire`, `hall`.
+
+### Bonds measured (and changed)
+
+`BONDS=n` (new switch in `tools/army-pace`) gives the recruits' party (Knight, Paladin, Archer, Warlock, Cleric) its kindred pairs (Knight
+and Paladin, Paladin and Cleric) at level n and every other pair Comrades at most. Mean tries at the recommended level, after the merge of
+0.340.0 (seven gear slots); Golem Forge over 24 saves, the others 12:
+
+| Army | No bonds | Level 1 (no power) | Level 2 | Level 4 as designed | Level 4 now |
+|---|---|---|---|---|---|
+| Infernal Host @ 58 | 11.8 | 11.8 | 5.5 | 6.6 | 6.6 |
+| Yokai Night Parade @ 65 | 20.9 | | 20.8 | 17.3 | 18.3 |
+| Golem Forge @ 74 | 6.3 | | 5.9 | 4.2 | 5.1 |
+
+- Changed: a hero takes its **best** bond only (they stacked across all four partners before); Shieldmates is +4.5% attack and skills 3%
+  quicker (was +6% and 5%); the **cover is off** (`BOND.COVER = 0`), as the design says goes first; Sworn is a scene's level now.
+- **Open (for the owner):** the Infernal Host's cell is a cliff: a party-wide +3% attack (Comrades, which any pair reaches at 40 wins)
+  halves its tries, so no attack bonus at all passes the "within one try" bar there, while the Yokai and Golems sit near it. Level 1
+  (threads, no power) leaves every fight exactly as it was. The choices are to keep these small numbers, cut the attack to the kindred pairs
+  only, or make bonds story only (Q4.1's other answer).
