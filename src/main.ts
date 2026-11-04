@@ -60,7 +60,7 @@ import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene 
 import { onAwakened } from './awakenView';
 import { SCENES, SCENE_ORDER, type Moment, type Scene } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
-import { xpRate } from './sim/castle';
+import { siteLevel, xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { isReal, runKitStats, settleFinds, spareFinds, settleRunWear, slotTaken } from './sim/runGear';
 import { powerOf, powerText } from './sim/power';
@@ -464,7 +464,7 @@ class Game {
           toastSpells(learnt);
         }
         // (a popup, no cinematic: UI batch 1)
-        showBuilt(site, site === 'chapel' ? 1 : this.meta.castle[site]);
+        showBuilt(site, siteLevel(this.meta.castle, site, site === 'chapel'));
       },
     });
     this.towerView = new TowerView({

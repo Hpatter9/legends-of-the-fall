@@ -445,6 +445,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
+      // (DEPTH-BUILD: the Chapel is levelled; the old flag reads as level 1, and a level keeps the flag set, which the spellbook reads)
+      if (m.chapel) m.castle.chapel = Math.max(1, m.castle.chapel ?? 0);
+      else if ((m.castle.chapel ?? 0) > 0) m.chapel = true;
       m.works = readWorks(m.works);
       // (saves from before shards have none)
       const shards: Record<string, number> = {};

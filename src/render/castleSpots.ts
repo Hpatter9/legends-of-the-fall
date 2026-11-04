@@ -7,7 +7,8 @@ import { buildLand, type Land } from './castleLand';
 // (the Armoury's repair cut and the Library's study, docs/notes/shop-books-gear.md)
 import { ARMOURY_REPAIR_CUT } from '../sim/wear';
 import { STUDY_CUT, studentCap } from '../sim/books';
-import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, type BuildingId } from '../sim/castle';
+import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, isRoomBuilding, siteName, siteTop, type BuildingId, type SiteId } from '../sim/castle';
+import { roomsOpenedAt, roomToast } from '../sim/rooms';
 
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
 export const STAGES = 4;
@@ -628,9 +629,16 @@ export const BLURB: Record<BuildingId, string> = {
 };
 
 /** A finished build's popup words (UI batch 1): the building and level raised, and what it gives (the Chapel opens the spellbook). */
-export function builtWords(site: BuildingId | 'chapel', level: number): { title: string; level: string; gives: string } {
-  if (site === 'chapel') return { title: 'Chapel', level: 'built', gives: 'The spellbook is open: study the ruler\'s spells.' };
-  return { title: BUILDINGS[site].name, level: `level ${level} of ${maxLevel(site)}`, gives: effectText(site, level) };
+export function builtWords(site: SiteId, level: number): { title: string; level: string; gives: string } {
+  // (DEPTH-BUILD: the Chapel has levels, and the room buildings give only rooms)
+  if (site === 'chapel' || isRoomBuilding(site)) {
+    const opened = roomsOpenedAt(site, level).map((r) => r.name);
+    const first = site === 'chapel' && level <= 1 ? 'The spellbook is open: study the ruler\'s spells.' : '';
+    const rooms = opened.length ? `Opens the ${opened.join(' and ')}.` : '';
+    return { title: siteName(site), level: site === 'chapel' && level <= 1 ? 'built' : `level ${level} of ${siteTop(site)}`, gives: [first, rooms].filter(Boolean).join(' ') || 'Built.' };
+  }
+  const rooms = roomsOpenedAt(site, level).map((r) => roomToast(r) + '.');
+  return { title: BUILDINGS[site].name, level: `level ${level} of ${maxLevel(site)}`, gives: [effectText(site, level), ...rooms].join(' ') };
 }
 
 export const NAME_OF = (id: BuildingId): string => BUILDINGS[id].name;
