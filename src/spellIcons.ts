@@ -1,14 +1,15 @@
-// A pixel icon for each king's spell, cut from the Pixel Effects atlas (`src/art/fx/pack/atlas.png`, the same strips the
-// spells' effects play): one 32px frame of a strip, drawn at 2x with hard edges. `spellIcon(id)` gives the element,
+// A pixel icon for each of the first 21 king's spells, cut from the Pixel Effects atlas (`src/art/fx/pack/atlas.png`, the same strips the
+// spells' effects play): one 32px frame of a strip, drawn at 2x with hard edges; the schools' fourteen spells show their own painted emblem. `spellIcon(id)` gives the element,
 // `spellIconHtml(id)` the same as markup (for the cards that are built from strings).
 
 import atlasUrl from './art/fx/pack/atlas.png';
 import atlas from './art/fx/pack/atlas.json';
 import type { SpellId } from './sim/spells';
-import { withLooks } from './sim/spellLooks';
+import kingsUrl from './art/fx/kings/icons.webp';
+import kingOrder from './art/fx/kings/icons.json';
 
 /** The strip and frame (0 to 5) each spell shows. */
-export const SPELL_ICON: Record<SpellId, [strip: string, frame: number]> = withLooks({
+export const SPELL_ICON: Partial<Record<SpellId, [strip: string, frame: number]>> = {
   heal: ['light-gather', 3],
   meteor: ['fire-orb', 2],
   haste: ['wind-vortex', 2],
@@ -30,7 +31,9 @@ export const SPELL_ICON: Record<SpellId, [strip: string, frame: number]> = withL
   bulwark: ['earth-shield', 3],
   wolves: ['forest-gather', 3],
   starfall: ['fire-explosion', 3],
-});
+};
+/** KING-SPELLS batch 5: the schools' fourteen spells show their own round painted emblem (`tools/king-spells/icons.py`), from one strip. */
+export const KING_ICONS: readonly string[] = kingOrder;
 
 const SCALE = 2;
 const SHEET = atlas as unknown as Record<string, [number, number, number]>;
@@ -38,7 +41,9 @@ let styled = false;
 
 /** The offset style of a spell's frame, or '' for a strip the atlas lacks. */
 function place(id: SpellId): string {
-  const [strip, frame] = SPELL_ICON[id];
+  const king = KING_ICONS.indexOf(id);
+  if (king >= 0) return `background:url(${kingsUrl}) no-repeat ${-king * 32 * SCALE}px 0 / ${KING_ICONS.length * 32 * SCALE}px ${32 * SCALE}px;image-rendering:auto`;
+  const [strip, frame] = SPELL_ICON[id] ?? ['', 0];
   const at = SHEET[strip];
   return at ? `background-position:${-(at[0] + frame * 32) * SCALE}px ${-at[1] * SCALE}px` : '';
 }

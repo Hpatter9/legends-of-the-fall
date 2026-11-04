@@ -58,7 +58,9 @@ import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, im
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
+import { loadShowArt, showArt, type ShowArt } from './showArt';
 import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
+import { KING_SHEET, KING_WALL } from './kingArt';
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
@@ -108,6 +110,8 @@ export async function loadFx(): Promise<void> {
   await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
   // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
   void loadSpellArt();
+  // (ULT-SHOW: the showcases' painted poses and props, behind the game too)
+  void loadShowArt();
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
   const tex = async (url: string) => Texture.from(await loadImage(url));
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
@@ -810,6 +814,15 @@ export class Fx {
         if (el === 'dark') smoke(5, 1.6);
         return;
     }
+  }
+
+  /** ULT-SHOW: a painted prop (`showArt.ts`) on the moment's layer, `h` px tall at (x, y), drifting, turning and lasting as asked. False
+   *  when it has not loaded (the pack's effect plays alone then). */
+  showProp(art: ShowArt, x: number, y: number, o: { h: number; life: number; vx?: number; vy?: number; spin?: number; rotation?: number; delay?: number; alpha?: number; add?: boolean }): boolean {
+    const t = showArt(art);
+    if (!t) return false;
+    this.moment.spawn({ frames: [t], x, y, scale: o.h / Math.max(1, t.height), frameMs: o.life, life: o.life, prio: true, ...(o.vx ? { vx: o.vx } : {}), ...(o.vy ? { vy: o.vy } : {}), ...(o.spin ? { spin: o.spin } : {}), ...(o.rotation ? { rotation: o.rotation } : {}), ...(o.delay ? { delay: o.delay } : {}), alpha: o.alpha ?? 1, add: o.add ?? false });
+    return true;
   }
 
   /** ULT-SHOW: the ordinary effects hidden while a showcase plays its own on the moment's layer (what the cast left, its numbers and its cuts,
@@ -1746,6 +1759,9 @@ export class Fx {
     const [x, y] = this.tilePos(b, u, v);
     const i = v * b.board.w + u;
     const live = () => !!b.walls?.some((w) => w.i === i && w.kind === kind && w.until > b.t);
+    // (KING-SPELLS batch 5: a wall the king raised, `by` 0, stands as its spell's own painted loop)
+    const king = b.walls?.find((w) => w.i === i && w.kind === kind && w.until > b.t)?.by === 0 ? KING_WALL[kind] : undefined;
+    if (king && this.paintWall(king, x, y + 2, live)) return;
     if (look.paint && this.paintWall(look.paint, x, y + 2, live)) return;
     this.lookOnce(look, x, y - 8, 1.6);
     if (look.prop && kitArt) {
@@ -2483,6 +2499,9 @@ export class Fx {
     const [svx, svy] = targetPt ? [targetPt.x - centre.x, (targetPt.y - targetPt.tall * 0.5) - (centre.y - 20)] : [0, -1];
     const slen = Math.hypot(svx, svy) || 1;
     playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: svx / slen, y: svy / slen }, ms: 700, size: 1 });
+    // (KING-SPELLS batch 5: the schools' fourteen spells' painted cast, where the spell lands)
+    const sheet = KING_SHEET[e.id];
+    if (sheet) this.paintOnce(`${sheet}.cast`, centre.x, centre.y);
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
@@ -2538,6 +2557,9 @@ export class Fx {
     if (!s || e.id === 'meteor') return;
     const spot = { x: s.x, y: s.y, tall: s.tall };
     playSteps(SPELL_SIGNATURES[e.id].hit, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: -1 }, ms: 500, size: 1 });
+    // (KING-SPELLS batch 5: the painted impact on each fighter the spell touches)
+    const sheet = KING_SHEET[e.id];
+    if (sheet) this.paintOnce(`${sheet}.impact`, s.x, s.y - s.tall * 0.4);
     if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
     if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
     if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);

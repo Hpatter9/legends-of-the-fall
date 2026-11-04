@@ -114,7 +114,63 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .eqSeasonBar b { display: block; height: 100%; background: #d9b44a; }
 .eqGlyph { font-size: 10px; color: var(--b3); }
 .eqMend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; grid-column: 1 / -1; } .eqMend small { grid-column: 1 / -1; }
+
+/* SEVEN-SLOT GEAR batch 5: runes (`runeTray.ts`). A stone is its kind's colour (--rc) with its level as pips, until the painted stones
+   come; a rune with a twin has a gold rim and a "2" badge (it swells gently, a steady glow, and holds still with reduced motion). */
+.rnStone { position: relative; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; transform: rotate(45deg); border: 2px solid #0008; background: var(--rc, transparent); box-shadow: inset 0 0 0 2px #fff3; }
+.rnStone.rn-big { width: 30px; height: 30px; margin: 6px; } .rnStone.rn-small { width: 14px; height: 14px; margin: 2px; border-width: 1px; }
+.rnStone.empty { background: #0006; border: 2px dashed var(--s8); box-shadow: none; } .rnStone.rn-small.empty { border-width: 1px; }
+.rnStone.k-keystone { border-color: #e0b545; }
+.rnStone .rnPips { display: flex; gap: 1px; transform: rotate(-45deg); } .rnStone .rnPip { display: block; width: 3px; height: 3px; border-radius: 50%; background: #000c; }
+.rnStone.k-keystone .rnPip { background: #e0b545; } .rnStone.rn-small .rnPip { width: 2px; height: 2px; }
+.rnStone.twin { border-color: #ffd24a; box-shadow: 0 0 6px #ffd24a, inset 0 0 0 2px #fff5; animation: rnTwin 1.6s ease-in-out infinite; }
+.rnStone .rnTwin { display: block; position: absolute; top: -8px; right: -8px; transform: rotate(-45deg); font: 700 9px/1 var(--body); color: #1b1408; background: #ffd24a; border-radius: 6px; padding: 1px 3px; font-style: normal; }
+.rnStone.rn-small .rnTwin { display: none; }
+@keyframes rnTwin { 50% { transform: rotate(45deg) scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .rnStone.twin { animation: none; } }
+.rnStrip { display: flex; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); display: flex; gap: 1px; z-index: 3; pointer-events: none; }
+.rnTray { display: flex; flex-direction: column; gap: 6px; }
+.rnHero { display: flex; align-items: center; gap: 6px; padding: 4px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); }
+.rnHero.can { border-color: #ffd24a; }
+.rnWords { flex: 1; min-width: 0; display: flex; flex-direction: column; } .rnWords b { font-size: 13px; } .rnWords small { font-size: 10px; color: var(--dim); }
+.rnSockets, .rnBag { display: flex; gap: 2px; flex-wrap: wrap; }
+.rnBag { padding: 4px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s5); justify-content: center; }
+.rnBag.can { border-color: #ffd24a; }
+.rnCell { min-height: 0; padding: 0; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 2px solid transparent; }
+.rnCell.sel { border-color: var(--white); } .rnCell.can { border-color: #ffd24a; background: #ffd24a22; }
+.rnHead { font-size: 11px; color: var(--gold-hi); }
+.rnBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.rnPick { margin: 0; font-size: 11px; color: var(--e8); }
+#bench .card .rnStrip { top: 3px; gap: 3px; }
+#bench .card .rnStrip .rnStone.rn-small { width: 9px; height: 9px; margin: 2px; }
+
+/* SEVEN-SLOT GEAR batch 6: the party screen's satchel, the tray's remedies pocket, and a wounded hero's bench card */
+.ptSatchel { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; padding: 6px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); font-size: 12px; }
+.ptSatchel > b { color: var(--gold-hi); font-size: 12px; }
+.ptRemedy { display: flex; align-items: center; gap: 6px; } .ptRemedy span { flex: 1; }
+.ptRemedy button { min-height: 32px; min-width: 36px; padding: 0 8px; }
+.ptAutoRemedy { min-height: 34px; font-size: 12px; }
+.rmPocket { display: flex; flex-direction: column; gap: 4px; }
+.rmRow { display: flex; flex-wrap: wrap; gap: 4px; }
+.rmBtn { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 2px 8px; font-size: 12px; }
+.rmBtn img { width: 24px; height: 24px; image-rendering: pixelated; } .rmBtn.sel { border-color: #ffd24a; }
+.rmHeroes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.rmHero { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-height: 40px; padding: 3px 6px; font-size: 11px; } .rmHero.can { border-color: #ffd24a; }
+.rmBar { display: block; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; } .rmBar b { display: block; height: 100%; background: #6fc46a; }
+#bench .card.wounded i span { background: #d9a23c; }
+#bench .card.wounded::after { content: '✚'; position: absolute; right: 4px; top: 18px; font-size: 13px; line-height: 1; color: #f2e9d8; text-shadow: 0 0 2px #000, 0 0 2px #000; pointer-events: none; }
 /* UX-FIXES: Sell is a small plain button under the big Equip (they sat side by side at one size, a slip sold the piece) */
 .eqBtns:has(.eqSell) { grid-template-columns: 1fr; }
 .eqBtns .eqSell { justify-self: end; min-height: 44px; min-width: 120px; padding: 0 12px; font-size: 13px; background: none; border: 1px solid #6b6454; color: #cfc6ad; box-shadow: none; }
 .eqBack { align-self: flex-start; min-height: 44px; min-width: 88px; margin-bottom: 4px; }
+
+/* SEVEN-SLOT GEAR batch 7: a rune is its pack disc (`runeArt.ts`), upright and pixel-sharp, its pips below; an empty socket keeps the diamond */
+.rnStone:not(.empty) { transform: none; background: none; border: 0; box-shadow: none; border-radius: 50%; }
+.rnStone:not(.empty) .rnPic { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.rnStone:not(.empty) .rnPips { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); gap: 2px; }
+.rnStone:not(.empty) .rnPip { background: #ffe9a8; box-shadow: 0 0 0 1px #000a; }
+.rnStone.twin:not(.empty) { box-shadow: 0 0 0 2px #ffd24a, 0 0 8px #ffd24a; animation-name: rnTwinUp; }
+@keyframes rnTwinUp { 50% { transform: scale(1.1); } }
+.rnStone:not(.empty) .rnTwin { transform: none; top: -6px; right: -8px; }
+#bench .card .rnStrip .rnStone.rn-small:not(.empty) { width: 12px; height: 12px; }
+@media (prefers-reduced-motion: reduce) { .rnStone.twin:not(.empty) { animation: none; } }

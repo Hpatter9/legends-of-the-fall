@@ -3,6 +3,7 @@
 // by comparing what the save and the run held before the wave was settled with what they hold after, so a new kind of drop shows up
 // here as soon as it lands in one of the counted places, without the settlement having to report it. Pure rules: no Pixi, no DOM.
 
+import { allRunes, runeName } from './runes';
 import { chestKind } from './armyStars';
 import { ORES } from './awakenMats';
 import { itemName, RARITY_NAMES } from './equipment';
@@ -29,6 +30,8 @@ export interface WaveGain {
 
 /** What the save and the run held that a wave can add to, taken just before the wave is settled. */
 export interface GainSnap {
+  /** SEVEN-SLOT GEAR batch 4: a rune run's runes (missing in a snap from before). */
+  runes?: number[];
   items: number[];
   /** RUN-GEAR: the real pieces the run had found. */
   pack?: number[];
@@ -48,6 +51,7 @@ export function snapGains(m: Meta, run: Run): GainSnap {
   return {
     items: (run.items ?? []).map((g) => g.id),
     pack: (run.pack ?? []).map((g) => g.id),
+    runes: run.runes ? allRunes(run.runes).map((r) => r.id) : [],
     relics: [...(run.relics ?? [])],
     roster: run.roster.map((h) => h.id),
     towerOres: run.tower?.ores?.length ?? 0,
@@ -86,6 +90,8 @@ export function gainsSince(was: GainSnap, m: Meta, run: Run): WaveGain[] {
   for (const e of m.equipment ?? []) if (!was.equipment.includes(e.id)) add({ kind: 'equip', id: `${e.base}:${e.rarity}`, name: itemName(e), n: 1, rarity: e.rarity });
   // (RUN-GEAR: a real-gear run's finds are real pieces, shown as equipment)
   for (const e of run.pack ?? []) if (!(was.pack ?? []).includes(e.id)) add({ kind: 'equip', id: `${e.base}:${e.rarity}`, name: itemName(e), n: 1, rarity: e.rarity });
+  // (SEVEN-SLOT GEAR batch 4: a rune run's new runes, shown as its gear)
+  for (const r of run.runes ? allRunes(run.runes) : []) if (!(was.runes ?? []).includes(r.id)) add({ kind: 'gear', id: `rune:${r.kind}:${r.lv}`, name: runeName(r), n: 1, rarity: Math.min(3, r.lv) });
   for (const g of run.items ?? []) if (!was.items.includes(g.id)) add({ kind: 'gear', id: `${g.slot}:${g.tier}`, name: g.name, n: 1, rarity: Math.min(3, g.tier) });
   for (const r of run.relics ?? []) if (!was.relics.includes(r) && RELICS[r]) add({ kind: 'relic', id: r, name: RELICS[r].name, n: 1 });
   // (a hero who joined has its unlock shards taken off: only a rise counts)

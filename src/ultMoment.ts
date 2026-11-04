@@ -45,6 +45,8 @@ export interface UltMomentOpts {
   /** ULT-SHOW: how many full moments of a hero kind's ultimate the player has seen (the save's count), and one more seen. */
   seen?: (kind: string) => number;
   saw?: (kind: string) => void;
+  /** A point in the world on the page (client px): a showcase's props' light. */
+  toClient?: (x: number, y: number) => { x: number; y: number } | null;
 }
 
 /** A hero's painted art: the awakened art once awakened, else the portrait (every one of the 45 has both, cached for offline play). */
@@ -294,6 +296,14 @@ export class UltMoments {
       g.fillRect(-r, -r, r * 2, r * 2);
       g.restore();
     }
+    // (ULT-SHOW: the light round a showcase's props while they are up: the ghost ship, the moon, the clock)
+    const to = this.opts.toClient;
+    if (this.show?.plan && to)
+      for (const l of this.show.lights()) {
+        const c = to(l.x, l.y);
+        const e = to(l.x + l.r, l.y);
+        if (c && e) pools.push({ x: c.x, y: c.y, r: Math.max(20, Math.abs(e.x - c.x)) });
+      }
     for (const p of pools) {
       const r = p.r * k;
       const grad = g.createRadialGradient(p.x * k, p.y * k, r * 0.45, p.x * k, p.y * k, r);
