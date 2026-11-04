@@ -223,17 +223,21 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
         r.what.textContent = `${UNITS[r.kind].name} · all taken`;
         r.cost.replaceChildren();
         r.go.textContent = '✓ Done';
+        r.go.classList.remove('primary');
         continue;
       }
       if (w.can) ready++;
       r.what.textContent = w.what;
       r.cost.replaceChildren(...(w.ore ? [oreIcon(w.ore, 'oreIco ulOre')] : []), w.cost);
       r.go.textContent = w.btn;
+      r.go.classList.toggle('primary', w.can);
     }
     for (const p of talentRows) p();
     const spend = talents.filter((t) => talentPointsReady(meta, t.kind) > 0).length;
-    count.textContent = ready || spend ? [ready ? `${ready} ready` : '', spend ? `${spend} with talents` : ''].filter(Boolean).join(' · ') : 'all taken';
     const plan = planUpgradeAll(meta, order);
+    // (UX-FIXES: the header counts what "Upgrade all" would take, so the two numbers agree after a hero is awakened by hand)
+    const ready2 = ready ? plan.steps.length || ready : 0;
+    count.textContent = ready2 || spend ? [ready2 ? `${ready2} ready` : '', spend ? `${spend} with talents` : ''].filter(Boolean).join(' · ') : 'all taken';
     all.disabled = !plan.steps.length;
     all.textContent = plan.steps.length ? `Upgrade all (${plan.steps.length})` : 'Nothing more to upgrade';
     // (the talent plans are only worked out when asked for; this is only whether any hero has points that buy something)

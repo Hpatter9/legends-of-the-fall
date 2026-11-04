@@ -11,12 +11,14 @@ import { BOSS_BANDS, FOE_BANDS } from '../src/sim/foes';
 import { BOSS_BIG, dangerFor, dodgeStep, SIG, SIGNATURES, sigTiles } from '../src/sim/bossAttacks';
 import { castSpell } from '../src/sim/spells';
 import { readyBattle } from './helpers';
+import { setTactic, type Tactic } from '../src/sim/tactics';
 
 type Sig = Extract<BattleEvent, { kind: 'bossSig' }>;
 
 /** A fight against `id`, the boss tamed so the heroes live through a few of its signatures. */
-function bossFight(id: string, seed = 3): { b: Battle; boss: Unit } {
+function bossFight(id: string, seed = 3, tactic?: Tactic): { b: Battle; boss: Unit } {
   const b = readyBattle(seed, [id, 'orcGrunt'], { boss: { size: 1.5, hp: 1.2, atk: 0.3 } });
+  if (tactic) setTactic(b, tactic);
   fight(b);
   return { b, boss: b.units.find((u) => u.def === id)! };
 }
@@ -99,7 +101,9 @@ test('the heroes step off the marked tiles: fewer are struck than when they stan
 });
 
 test('a hero on marked ground steps to an unmarked tile; one on safe ground stays', () => {
-  const { b } = bossFight('hornedOgre');
+  // (staged on a charging party, as before the tactics: under Advance the held heroes stand packed behind the line, round the tile this
+  // picks, and leave the hero no free tile to step to; the dodge is the same rule either way, `docs/notes/tactics.md`)
+  const { b } = bossFight('hornedOgre', 3, 'charge');
   const w = untilWarn(b)!;
   const danger = new Set(w.tiles);
   // (the heroes see the marks a moment after they appear)

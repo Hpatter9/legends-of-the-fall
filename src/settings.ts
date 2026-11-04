@@ -175,6 +175,8 @@ function go(to: Page | null): void {
 /** The rows of the page showing, drawn from the settings as they are now. */
 function draw(): void {
   const s = current;
+  // (UX-FIXES: a submenu has its "‹ Back" and no second Close beside it)
+  $('settingsClose').hidden = page !== null;
   const body = $('settingsBody');
   const title = document.querySelector<HTMLElement>('#settings h2');
   const at = PAGES.find((p) => p.id === page);

@@ -50,7 +50,7 @@
 .ulCost { display: flex; align-items: center; gap: 4px; font: 400 11px/1.3 var(--body); color: var(--dim); }
 .ulOre { width: 14px; height: 14px; image-rendering: pixelated; }
 .ulGo { min-width: 84px; min-height: 44px; padding: 0 10px; font-size: 12px; }
-.ulGo:not(:disabled) { color: var(--btn-ink); background: linear-gradient(var(--e9), var(--e6)); border: 2px solid var(--gold-hi); }
+.ulGo:not(:disabled):not(.primary) { color: var(--btn-ink); background: linear-gradient(var(--e9), var(--e6)); border: 2px solid var(--gold-hi); }
 .ulFoot { display: flex; flex-direction: column; gap: 8px; }
 .ulAll { min-height: 48px; font-size: 12px; }
 .ulAsk { display: flex; flex-direction: column; gap: 8px; padding: 10px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--gold-hi); }

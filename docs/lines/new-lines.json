@@ -8778,6 +8778,342 @@
      ]
     }
    ]
+  },
+  "bond:knight|peasant:1": {
+   "title": "Margaret",
+   "blurb": "The knight finds the peasant holding the line with a spear older than both of them.",
+   "shots": [
+    {
+     "caption": "Margaret",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You held the left flank with a boar spear older than I am."
+      },
+      {
+       "who": "b",
+       "text": "It was my gran's, sir. She called it Margaret."
+      },
+      {
+       "who": "a",
+       "text": "Next time, take a new one from the rack."
+      },
+      {
+       "who": "b",
+       "text": "And leave Margaret behind? She has seen off three wolves and a tax man."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Margaret. Very well. Margaret stands with us."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:kunoichi|samurai:1": {
+   "title": "Two Kinds of Quiet",
+   "blurb": "A sword drawn in the open and a blade that never is.",
+   "shots": [
+    {
+     "caption": "Two Kinds of Quiet",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You struck from behind him. There is no honour in that."
+      },
+      {
+       "who": "b",
+       "text": "He had a hundred friends. I had you. I did the arithmetic."
+      },
+      {
+       "who": "a",
+       "text": "...The arithmetic was sound."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then face them in the open, and I will see to the honour of their backs."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:archer|lightningMage:1": {
+   "title": "Who Hit It First",
+   "blurb": "An argument over a felled ogre that neither will give up.",
+   "shots": [
+    {
+     "caption": "Who Hit It First",
+     "lines": [
+      {
+       "who": "b",
+       "text": "My bolt dropped it. You saw the smoke."
+      },
+      {
+       "who": "a",
+       "text": "My arrow was in its eye before your smoke had an opinion."
+      },
+      {
+       "who": "b",
+       "text": "Shall we count it as half each?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I will count it as mine, and you may count the smoke."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:wanderer|wizard:1": {
+   "title": "A Map With No Edges",
+   "blurb": "The wizard asks the wanderer where the road goes.",
+   "shots": [
+    {
+     "caption": "A Map With No Edges",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Where were you before the Keep, traveller?"
+      },
+      {
+       "who": "b",
+       "text": "Walking. Before that, walking somewhere else."
+      },
+      {
+       "who": "a",
+       "text": "And where will you go when this is done?"
+      },
+      {
+       "who": "b",
+       "text": "Wherever the road wants. It has never once asked my opinion."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "A sensible road. Mine only ever led to libraries."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:cleric|paladin:1": {
+   "title": "The Same Hymn",
+   "blurb": "Two of the faithful, one with a shield and one with a prayer.",
+   "shots": [
+    {
+     "caption": "The Same Hymn",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You sang the dawn hymn as you charged. Off key."
+      },
+      {
+       "who": "a",
+       "text": "The foe did not seem to mind."
+      },
+      {
+       "who": "b",
+       "text": "The foe was not standing beside you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Then stand beside me again tomorrow, and correct me."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:barbarian|werewolf:1": {
+   "title": "Who Howled",
+   "blurb": "Two who fight like storms compare their storms.",
+   "shots": [
+    {
+     "caption": "Who Howled",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You howled at the moon mid-fight. I respect that."
+      },
+      {
+       "who": "a",
+       "text": "It was a sunny afternoon."
+      },
+      {
+       "who": "b",
+       "text": "Then you howled at the sun. Even better."
+      },
+      {
+       "who": "a",
+       "text": "You are the first who has not run from the howling."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Run? I was howling too. You just could not hear me."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:rifleBot|siegeBot:1": {
+   "title": "Calibration",
+   "blurb": "Two machines compare how they keep count.",
+   "shots": [
+    {
+     "caption": "Calibration",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Shots fired: forty-one. Shots landed: forty-one."
+      },
+      {
+       "who": "b",
+       "text": "Walls flattened: three. Walls intended: two."
+      },
+      {
+       "who": "a",
+       "text": "Query: the third wall?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "It was in the way of the second wall. Logged as a bonus."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:karasu|kitsune:1": {
+   "title": "Feathers and Foxfire",
+   "blurb": "The fox spirit and the crow tengu, old neighbours on the mountain.",
+   "shots": [
+    {
+     "caption": "Feathers and Foxfire",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You stole my feathers for a disguise, eighty years ago."
+      },
+      {
+       "who": "a",
+       "text": "Seventy. And I gave them back."
+      },
+      {
+       "who": "b",
+       "text": "You gave back different feathers."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Better feathers. You have looked very dashing since."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:knight|paladin:1": {
+   "title": "Oaths, Compared",
+   "blurb": "Two sworn swords measure their oaths over the campfire.",
+   "shots": [
+    {
+     "caption": "Oaths, Compared",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Whom did you swear to, before the Keep?"
+      },
+      {
+       "who": "b",
+       "text": "To the light, to the weak, and to rising before dawn."
+      },
+      {
+       "who": "a",
+       "text": "I swore to a king who is dust now."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then swear to the one who stands here. I will hold you to it."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:archer|ranger:1": {
+   "title": "Fletching",
+   "blurb": "Two bow hands trade arrows and insults.",
+   "shots": [
+    {
+     "caption": "Fletching",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Your fletching is crooked. Goose feathers?"
+      },
+      {
+       "who": "a",
+       "text": "Duck. The geese would not volunteer."
+      },
+      {
+       "who": "b",
+       "text": "Here. Try one of mine. Hawk."
+      },
+      {
+       "who": "a",
+       "text": "It flies straight. Annoyingly straight."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Keep it. I want to see you miss with it."
+      }
+     ]
+    }
+   ]
   }
  },
  "king": {

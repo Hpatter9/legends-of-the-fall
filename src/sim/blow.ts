@@ -30,6 +30,7 @@ import { TALL_AC } from './board';
 import { perceptionOf } from './statRest';
 import { UNITS } from './units';
 import type { Battle, Unit } from './battle';
+import { formationAc } from './formations';
 
 /** The global knob on every ordinary blow's damage, which puts the average blow back where it was before hits, glances and misses. */
 export const BLOW_SCALE = 1.28;
@@ -193,7 +194,8 @@ export function acAgainst(b: Battle, to: Unit, hBy: number, hTo: number, tall: b
   // (STATS batch 6: a striker's perception, WIS, sees through a share of tall grass's cover, `perceptionOf`)
   const grass = tall ? Math.round(TALL_AC * (1 - (by ? perceptionOf(by) : 0)) * 1e6) / 1e6 : 0;
   const cover = dodge + grass + HIGH_AC * Math.max(0, Math.min(HIGH_AC_MAX, hTo - hBy));
-  return { ac: blowStatsOf(b, to).ac + cover, cover };
+  // (a formation's AC: the Shield Wall's +1, the Spearhead's tip's -1, `formations.ts`)
+  return { ac: blowStatsOf(b, to).ac + cover + (b.formation ? formationAc(b, to) : 0), cover };
 }
 
 /** A blow's roll: what it does (`res`), the crit multiplier it carries (1 for none), and whether a miss was the dodge's or the cover's
