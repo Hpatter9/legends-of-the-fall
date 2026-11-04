@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.336.0',
+    date: '2026-11-04',
+    title: 'King\'s spells, first fixes',
+    notes: ['Spare mana is kept, not lost; damage spells grow with the foes; Auto casts spells sooner; bigger buttons; aiming slides to where it hits more foes.'],
+  },
+  {
+    version: '0.335.0',
+    date: '2026-11-04',
+    title: 'Ultimate showcases',
+    notes: ['A hero\'s first ultimate, and every 10th, plays a long showcase at normal speed: Ayame, the Wizard and the Beastmaster first. New settings to shorten it.'],
+  },
+  {
     version: '0.334.0',
     date: '2026-11-04',
     title: 'Story scenes rewritten',

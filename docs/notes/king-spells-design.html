@@ -1,0 +1,238 @@
+<title>Schools of the Crown</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow reading column like the game's own panels; a mana-bar rule between sections; tables scroll in their own box. Dark-first, after the game's slate and gilt HUD. */
+:root {
+  --bg: #161c22; --panel: #1f2830; --ink: #e9e4d8; --dim: #a8b0b4; --gilt: #e6bc67; --mana: #5fb2ef; --bad: #ef7a6a; --line: #33404a;
+  --display: "Alegreya SC", Georgia, serif; --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif; --num: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #f3f1ec; --panel: #ffffff; --ink: #1d242a; --dim: #56616a; --gilt: #8a5f12; --mana: #1f6fae; --bad: #b43a2a; --line: #d6d2c8; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #f3f1ec; --panel: #ffffff; --ink: #1d242a; --dim: #56616a; --gilt: #8a5f12; --mana: #1f6fae; --bad: #b43a2a; --line: #d6d2c8; color-scheme: light; }
+body { background: var(--bg); color: var(--ink); font: 17px/1.55 var(--body); }
+main { max-width: 680px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 30px; }
+section { display: grid; gap: 14px; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: 2.2rem; color: var(--gilt); }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.15rem; color: var(--gilt); }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 6px; }
+.eyebrow { font: 500 0.75rem/1 var(--num); letter-spacing: 0.12em; text-transform: uppercase; color: var(--mana); }
+.lede { color: var(--dim); }
+.status { border: 1px solid var(--gilt); border-radius: 6px; padding: 10px 12px; font-size: 0.95rem; }
+.rule { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--mana) 0 62%, var(--line) 62%); opacity: 0.7; }
+.wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 0.9rem; }
+th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 700; color: var(--dim); font-size: 0.8rem; letter-spacing: 0.04em; }
+td.n { font-family: var(--num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.grp td { color: var(--gilt); font-weight: 700; background: var(--panel); }
+.zero { color: var(--bad); }
+.chart { display: grid; gap: 8px; background: var(--panel); border-radius: 6px; padding: 14px; }
+.bar { display: grid; grid-template-columns: 7.5em 1fr 3em; gap: 8px; align-items: center; font-size: 0.85rem; }
+.bar i { display: block; height: 12px; border-radius: 2px; background: var(--mana); }
+.bar i.h { background: var(--gilt); }
+.bar span:last-child { font-family: var(--num); text-align: right; }
+.legend { font-size: 0.8rem; color: var(--dim); }
+.legend b { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+.weak { counter-reset: w; list-style: none; padding: 0; gap: 12px; }
+.weak li { display: grid; grid-template-columns: 1.8em 1fr; gap: 6px; }
+.weak li::before { counter-increment: w; content: counter(w); font: 500 0.9rem var(--num); color: var(--bad); padding-top: 2px; }
+.dir { background: var(--panel); border-radius: 8px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.dir.pick { outline: 2px solid var(--gilt); }
+.tag { justify-self: start; font: 500 0.72rem/1 var(--num); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bg); background: var(--gilt); padding: 5px 8px; border-radius: 3px; }
+dl { display: grid; gap: 8px; margin: 0; }
+dt { font-weight: 700; font-size: 0.85rem; color: var(--mana); letter-spacing: 0.03em; }
+dd { margin: 0 0 4px; }
+.schools { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.school { border-left: 4px solid var(--c); padding: 6px 8px; background: var(--bg); border-radius: 0 4px 4px 0; font-size: 0.85rem; min-width: 0; }
+.school b { display: block; font-family: var(--display); font-size: 0.98rem; }
+.school em { color: var(--dim); }
+.fixes li b { color: var(--gilt); }
+.q li { color: var(--ink); }
+small, .foot { color: var(--dim); font-size: 0.85rem; }
+code { font-family: var(--num); font-size: 0.82em; }
+</style>
+
+<main>
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Legends of the Last Keep · design for approval</div>
+    <h1>Schools of the Crown</h1>
+    <p class="lede">A revamp of the king's spells: what the system does now, what I found when I played and measured it, three directions, and the one I recommend.</p>
+    <p class="status">Design only. No game code has changed. The same text is in <code>docs/notes/king-spells-design.md</code>.</p>
+  </header>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <section>
+    <div class="eyebrow">1 · The system today</div>
+    <h2>How the king's magic works on 0.331</h2>
+    <div class="wrap"><table>
+      <tr><th>Part</th><th>How it works now</th></tr>
+      <tr><td>Spells</td><td>21. The starting three are Heal, Meteor and Haste. The rest: Shield, Smite, Chain Lightning, Poison Cloud, Frost Nova, Rally, Earthquake, Resurrect, Cleanse, Blink, Hex, Light Lance, Renewal, Deep Freeze, Battle Cry, Bulwark, Call the Wolves, Meteor Shower.</td></tr>
+      <tr><td>Earning</td><td>The Mage Tower teaches 12 (three a level). Six grand spells come from milestones. Gold chests hold a scroll 30% of the time, Mythic chests 60%.</td></tr>
+      <tr><td>Choosing</td><td>The spellbook, opened by the Chapel (200 crowns). Three slots whose power adds up to 9, plus 1 at Mage Tower 2 and 4. The starting three cost 8.</td></tr>
+      <tr><td>Mana</td><td>Starts at 2, fills 0.5 a second (×1.12 a Mage Tower level), holds 10.</td></tr>
+      <tr><td>Casting</td><td>Tap an orb then a tile (a 3×3 preview), or drag the orb to the grid. Four spells need no tile.</td></tr>
+      <tr><td>Auto</td><td>The one Auto switch casts spells by rule: help first, then harm, then buffs, with mana held back for the cheapest help spell. The game has been tuned for this player since 0.292.</td></tr>
+      <tr><td>The ruler</td><td>Eight rulers, a look and a voice. None changes a spell.</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">2 · Played and measured</div>
+    <h2>What a fight looks like</h2>
+    <p>On the page at 393×852, Orc Warband wave 1, Mage Tower 1. The spell row is a 62 px mana bar, three <b>40 px</b> orbs and the Auto switch, under the top bar. With Auto off, a Meteor's 5 mana came at <b>5.6 s</b>. Tapping it put a two-line hint over the board. The wave was won at <b>17.4 s</b> with the bar full at <b>10/10 and nothing cast</b>. With Auto on, it cast Haste and Heal and finished with 5 mana unspent.</p>
+    <p>Then the game's own casting bot (Auto's chooser), 8 saves a cell, <code>tools/king-spells-design/</code>:</p>
+    <div class="chart" role="img" aria-label="Share of damage and healing the king did, starting three versus a damage set">
+      <div class="legend"><b style="background:var(--gilt)"></b>King's share of healing, starting three &nbsp; <b style="background:var(--mana)"></b>King's share of damage, Meteor + Chain + Smite</div>
+      <div class="bar"><span>Orcs, lv 1</span><i class="h" style="width:53%"></i><span>53%</span></div>
+      <div class="bar"><span></span><i style="width:23%"></i><span>23%</span></div>
+      <div class="bar"><span>Beasts, lv 15</span><i class="h" style="width:45%"></i><span>45%</span></div>
+      <div class="bar"><span></span><i style="width:11%"></i><span>11%</span></div>
+      <div class="bar"><span>Labyrinth, lv 35</span><i class="h" style="width:35%"></i><span>35%</span></div>
+      <div class="bar"><span></span><i style="width:15%"></i><span>15%</span></div>
+      <div class="bar"><span>Infernal, lv 55</span><i class="h" style="width:35%"></i><span>35%</span></div>
+      <div class="bar"><span></span><i style="width:7%"></i><span>7%</span></div>
+      <small>Bars are drawn to a 0–100% scale. With the starting three the king's share of damage is 0% in every cell.</small>
+    </div>
+    <div class="wrap"><table>
+      <tr><th>Cell</th><th>Fight</th><th>Casts</th><th>Damage</th><th>Healing</th><th>Bar full</th><th>Casts by spell</th></tr>
+      <tr class="grp"><td colspan="7">Heal, Meteor, Haste (what the game is tuned on)</td></tr>
+      <tr><td>Orc Warband, 1</td><td class="n">30.8 s</td><td class="n">3.9</td><td class="n zero">0%</td><td class="n">53%</td><td class="n">1%</td><td>Heal 2.0, Haste 1.9, <span class="zero">Meteor 0.0</span></td></tr>
+      <tr><td>Undead Legion, 8</td><td class="n">33.1 s</td><td class="n">4.4</td><td class="n zero">0%</td><td class="n">53%</td><td class="n">1%</td><td>Heal 2.6, Haste 1.8, <span class="zero">Meteor 0.0</span></td></tr>
+      <tr><td>Beast Packs, 15</td><td class="n">20.2 s</td><td class="n">2.4</td><td class="n zero">0%</td><td class="n">45%</td><td class="n">0%</td><td>Heal 1.4, Haste 1.0</td></tr>
+      <tr><td>The Labyrinth, 35</td><td class="n">43.2 s</td><td class="n">6.0</td><td class="n zero">0%</td><td class="n">35%</td><td class="n">2%</td><td>Heal 3.3, Haste 2.7</td></tr>
+      <tr><td>Infernal Host, 55</td><td class="n">18.6 s</td><td class="n">2.3</td><td class="n zero">0%</td><td class="n">35%</td><td class="n">1%</td><td>Heal 1.9, Haste 0.4</td></tr>
+      <tr class="grp"><td colspan="7">Meteor alone</td></tr>
+      <tr><td>Orc Warband, 1</td><td class="n">30.3 s</td><td class="n">0.9</td><td class="n">12%</td><td class="n">0%</td><td class="n">29%</td><td>Meteor 0.9</td></tr>
+      <tr><td>The Labyrinth, 35</td><td class="n">33.9 s</td><td class="n zero">0.0</td><td class="n zero">0%</td><td class="n">0%</td><td class="n zero">55%</td><td></td></tr>
+      <tr class="grp"><td colspan="7">Meteor, Chain Lightning, Smite</td></tr>
+      <tr><td>Orc Warband, 1</td><td class="n">24.6 s</td><td class="n">3.6</td><td class="n">23%</td><td class="n">0%</td><td class="n">0%</td><td>Smite 2.0, Chain 1.5</td></tr>
+      <tr><td>Beast Packs, 15</td><td class="n">18.1 s</td><td class="n">2.7</td><td class="n">11%</td><td class="n">1%</td><td class="n">0%</td><td>Smite 1.6, Chain 1.1</td></tr>
+      <tr><td>The Labyrinth, 35</td><td class="n">32.9 s</td><td class="n">4.7</td><td class="n">15%</td><td class="n">0%</td><td class="n">0%</td><td>Smite 3.2, Chain 1.5</td></tr>
+      <tr><td>Infernal Host, 55</td><td class="n">10.3 s</td><td class="n">1.6</td><td class="n">7%</td><td class="n">0%</td><td class="n">0%</td><td>Smite 1.0, Chain 0.6</td></tr>
+      <tr><td>Golem Forge, 74</td><td class="n">16.9 s</td><td class="n">2.6</td><td class="n">15%</td><td class="n">0%</td><td class="n">0%</td><td>Smite 1.4, Chain 1.3</td></tr>
+    </table></div>
+    <small>The game keeps no play statistics (it is offline and private), so how often real players cast is not known. These are the bot's numbers and my own play.</small>
+  </section>
+
+  <section>
+    <div class="eyebrow">3 · Where it is weak</div>
+    <h2>Nine problems</h2>
+    <ol class="weak">
+      <li><span><b>The king is a heal button.</b> With the starting three, Auto never cast Meteor (0.0 a fight in every cell). Alone, Meteor was never cast at the Labyrinth while the bar sat full for 55% of the fight. The king does a third to a half of all the healing.</span></li>
+      <li><span><b>Collecting spells changes nothing.</b> SPELLS-RETUNE found no set a top save can afford that beats the starting three. Eighteen spells are earned and none is needed.</span></li>
+      <li><span><b>Few, small decisions.</b> Fights of 10 to 45 s buy 2 to 6 casts. The power budget blocks pairs more than it invites them. A spell never grows.</span></li>
+      <li><span><b>The numbers stay still.</b> Meteor (110 raw), Smite (160), Chain (70), Lance (85) are flat against foes that grow with level and tier. Heal and Shield are shares of health, so they keep pace. Damage spells fall from 23% of the damage to 7–15%.</span></li>
+      <li><span><b>Mana spills at the cap.</b> Waiting for the right moment wastes mana at 10. A wave won early ends with a full bar.</span></li>
+      <li><span><b>Fiddly on a phone.</b> 40 px orbs (under 44 px), at the top of the screen, a hint over the board, and a 3×3 aimed on an isometric grid of moving fighters under a thumb. The same row holds the horn and Auto. A fight offers 3 spells, 5 ultimates, the horn, Auto and the speed.</span></li>
+      <li><span><b>Overlap.</b> Heal, Shield, Haste, Rally and Battle Cry repeat the Cleric, Knight, Paladin and bards. The Wizard's Fireball is a 3×3 fire burst like Meteor. The Eidolon horn is now the king's big moment and outshines every spell.</span></li>
+      <li><span><b>The ruler is only a face.</b> The Frost Witch carries "an annotated spellbook", the Necromancer "a spectral companion", and neither changes the magic.</span></li>
+      <li><span><b>Auto helps well and harms timidly.</b> Its rules suit Heal and Haste; harm spells wait for a crowd of three that seldom forms.</span></li>
+    </ol>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <section>
+    <div class="eyebrow">4 · Three directions</div>
+    <h2>Ways to rebuild it</h2>
+    <p class="lede">All three keep the sim deterministic, cast through the same <code>castSpell</code>, play offline and stay upright only.</p>
+
+    <article class="dir">
+      <h3>A · The Royal Hand</h3>
+      <p>A small deck you build and draw from.</p>
+      <dl>
+        <dt>Play</dt><dd>Build a deck of 8 cards from the spells you know (up to 2 copies). The hand holds 3; a cast card goes to the bottom and the next is drawn. The cap rises to 12, and a card held 12 s can be swiped away for 2 mana.</dd>
+        <dt>Phone</dt><dd>Three 56 px cards just above the hero rows, where the thumb is. Drag one up onto the board.</dd>
+        <dt>Progression</dt><dd>Duplicate scrolls rank a card up (1 to 3). The Mage Tower raises the deck limit to 10, then 12.</dd>
+        <dt>Auto</dt><dd>The chooser reads the hand, with a rule to cycle cards it will not use soon.</dd>
+        <dt>Balance</dt><dd>Each card's worth per mana set against one yardstick, then every mode re-measured with the bot on 8-card decks.</dd>
+        <dt>Art and sound</dt><dd>Card frames per element, a card back, draw and discard sounds. Spell effects reused.</dd>
+        <dt>Trade-off</dt><dd>Every spell can earn a place and each fight takes a new shape. But it adds luck to a game the player can barely steer, and the ruler is still only a face.</dd>
+      </dl>
+    </article>
+
+    <article class="dir pick">
+      <span class="tag">Recommended</span>
+      <h3>B · Schools of the Crown</h3>
+      <p>Each of the eight rulers leads a school of five spells and one Decree.</p>
+      <div class="schools">
+        <div class="school" style="--c:#e6bc67"><b>Iron Stag · Steel</b>Rally, Bulwark, Light Lance, Shield, Smite<br><em>Stand Fast</em></div>
+        <div class="school" style="--c:#ff884d"><b>Ash Empress · Fire</b>Meteor, Meteor Shower, Firewall, Smite, Battle Cry<br><em>Red Sky</em></div>
+        <div class="school" style="--c:#a4d9ff"><b>Frost Witch · Ice</b>Frost Nova, Deep Freeze, Ice Wall, Shatter, Shield<br><em>Long Winter</em></div>
+        <div class="school" style="--c:#65c9e8"><b>Storm Corsair · Storm</b>Chain Lightning, Gale, Blink, Haste, Thunderclap<br><em>The Tempest</em></div>
+        <div class="school" style="--c:#ed91b1"><b>Rose Duchess · Thorns</b>Poison Cloud, Hex, Thorn Snare, Charm, Cleanse<br><em>The Rose's Price</em></div>
+        <div class="school" style="--c:#c8b4ff"><b>Moon Oracle · Stars</b>Haste, Renewal, Blink, Starfall, Foresight<br><em>Stop the Clock</em></div>
+        <div class="school" style="--c:#35d7c4"><b>Sun Viper · Sun</b>Heal, Sunbeam, Venom Fang, Mirage, Cleanse<br><em>High Noon</em></div>
+        <div class="school" style="--c:#9dd59a"><b>Gilded Necromancer · Death</b>Resurrect, Raise Dead, Drain Life, Hex, Bone Wall<br><em>The Gilded Toll</em></div>
+      </div>
+      <small>Decrees in italics. Most spells are today's 21 moved to the school that suits them; about 14 are new.</small>
+      <dl>
+        <dt>Play</dt><dd>Three slots from your ruler's school and one open slot for any spell you know from another school. No power budget. Mana that would spill over 10 fills the <b>Decree</b> meter instead (a little more comes from each hero ultimate). Full, the ruler's face glows and one tap casts it, once a fight. The horn stays the Eidolon's.</dd>
+        <dt>Phone</dt><dd>Four 52 px orbs in one row, the Decree as the ruler's face at the end. Tap then tile, or drag, with a soft snap that puts the 3×3 on the nearest crowd under the finger. The hint shrinks to a label on the orb.</dd>
+        <dt>Progression</dt><dd>Three ranks per spell, bought with school marks from the Mage Tower and the school's own milestones. Rank 3 adds a rider: Meteor leaves the ground burning; Frost Nova shatters the frozen.</dd>
+        <dt>Auto</dt><dd>A rule per school (freeze before Shatter; Raise Dead where foes fell). The Decree when a boss is below half or three heroes are. A looser crowd rule (two foes, or one elite) so harm spells get cast.</dd>
+        <dt>Balance</dt><dd>Damage spells scale with level and tier like hero skills. Each school is measured so none falls more than 10% behind the starting set in tries to clear. Then the armies, tiers, daily, Last Stand and Calamity are re-measured to the owner's pace, turning only the knobs that move.</dd>
+        <dt>Art and sound</dt><dd>Eight Decree effects and about 14 new spell effects from the Pixel Effects atlas and the packs. The rulers' command pose, a voiced Decree line each, about 28 new sounds, school badges.</dd>
+        <dt>Trade-off</dt><dd>The ruler matters, the starting three stop being the answer, Auto uses harm spells, and no mana is lost. It is the biggest build, and it turns the ruler from a look into a play choice.</dd>
+      </dl>
+    </article>
+
+    <article class="dir">
+      <h3>C · Royal Momentum</h3>
+      <p>Spells that charge and grow during a fight.</p>
+      <dl>
+        <dt>Play</dt><dd>Two spells, no mana. Each spell's ring charges from the fight (hits, kills, ultimates) to level 1, 2 or 3; a tap casts it at its level. Two elements in a row make a combo: Frost then Meteor shatters, Poison then Fire explodes.</dd>
+        <dt>Phone</dt><dd>Two 64 px rings at the bottom right, under the thumb. No aim: harm lands on the thickest crowd, help on the most hurt.</dd>
+        <dt>Progression</dt><dd>Levels raise each spell's top charge and open combos in a combo book.</dd>
+        <dt>Auto</dt><dd>Casts at level 2, or waits for 3 by a setting.</dd>
+        <dt>Balance</dt><dd>Charge per hit, one value per mode, then the usual re-measure.</dd>
+        <dt>Art and sound</dt><dd>Three looks per spell, combo flashes, a rising charge sound.</dd>
+        <dt>Trade-off</dt><dd>The easiest on a phone, with rising tension in every fight. But no aim means less control, combos need many pairs tested, and it copies the heroes' own charge meters.</dd>
+      </dl>
+    </article>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <section>
+    <div class="eyebrow">5 · Recommendation</div>
+    <h2>Build B, with two pieces of C</h2>
+    <p>Schools of the Crown, plus the Decree meter fed by spilt mana and the soft snap for aiming. It gives the ruler its own magic, lets spells rank up and keep pace with the game, gets Auto to use harm spells, and gives the king a moment that is not the horn's.</p>
+    <h3>Four fixes that stand alone</h3>
+    <ol class="fixes">
+      <li><b>Bigger orbs</b> (48 px or more) and the hint moved off the board.</li>
+      <li><b>Damage spells scaled</b> to level and tier, not flat numbers.</li>
+      <li><b>Auto's crowd rule eased</b> so it casts Meteor and the other area spells.</li>
+      <li><b>Mana over the cap kept</b>, in a meter or a rising cap.</li>
+    </ol>
+    <h3>Build order if B is approved</h3>
+    <ol>
+      <li>The four fixes and the measure.</li>
+      <li>Schools and the slot rule on today's 21 spells, the Decree meter and two Decrees.</li>
+      <li>Ranks and school marks.</li>
+      <li>The new spells, school by school.</li>
+      <li>The other Decrees, voices and sounds.</li>
+      <li>The full re-measure to the owner's pace.</li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="eyebrow">6 · Questions for the owner</div>
+    <h2>Your calls</h2>
+    <ul class="q">
+      <li>Should the ruler you pick change your spells (B), or should rulers stay a look and the magic come from a deck (A) or charge (C)?</li>
+      <li>If B: can a player change ruler freely, and do ranks carry over?</li>
+      <li>Does Heal stay open to every ruler, so no school is left without healing?</li>
+      <li>May the Decree and the Eidolon's call both be used in one fight?</li>
+      <li>Should Auto cast the Decree, or should it stay your tap, as the horn does?</li>
+    </ul>
+  </section>
+
+  <p class="foot">Measured on main 0.331.0 with <code>node tools/king-spells-design/run.mjs 8</code>; played on <code>npm run web</code> at 393×852.</p>
+</main>
