@@ -63,11 +63,13 @@ test('a tier lift multiplies that tier’s foes, hp and attack, and never Normal
 // Wildwood's Normal strength rose again (1.7, 2.17, 2.52 to 1.74, 2.27, 2.7) to keep the realistic climb's tries, with the same `xpStart`,
 // docs/notes/run-gear.md. The joint rebalance, the owner's retune once the D&D stats' held-back rules were switched on: 0.58, 1.74, 2.27, 2.7 to
 // 0.62, 2.02, 2.39, 2.8, so the realistic climb takes the tries 0.321.0 set, with the same `xpStart`, docs/notes/joint-rebalance.md)
+// (KING-SPELLS batch 6, the owner-approved spell revamp's re-measure, docs/notes/king-spells-b6.md: the balance bot now plays the default
+// ruler's school, Decree and ranks, so the Undead's and Beasts' Normal strength rose (2.02, 2.39 to 2.19, 2.52), with the same `xpStart`)
 test('the early armies keep their levels and curves, at the strength SPELLS-RETUNE measured for a player who casts', () => {
   assert.deepEqual(ARMIES.slice(0, 4).map((a) => [a.id, a.level, a.start, a.growth, a.xpStart]), [
     ['orcs', 1, 0.62, 0.176, 0.39],
-    ['undead', 8, 2.02, 0.05, 1.48],
-    ['beasts', 15, 2.39, 0.05, 1.66],
+    ['undead', 8, 2.19, 0.05, 1.48],
+    ['beasts', 15, 2.52, 0.05, 1.66],
     ['wildwood', 22, 2.8, 0.05, 2.01],
   ]);
 });
