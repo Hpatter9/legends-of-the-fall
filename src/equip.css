@@ -108,3 +108,9 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .eqNote { margin: 0; font-size: 12px; color: var(--gold-hi); }
 /* SEVEN-SLOT GEAR batch 2: a legend's verse in its card, and in the codex's Legends page */
 .eqVerse { font-size: 11px; font-style: italic; color: var(--s10); }
+/* SEVEN-SLOT GEAR batch 3: seasoning's thin gold bar, glyph lines, and Repair beside Patch */
+.eqSeason { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--gold-hi); }
+.eqSeasonBar { display: inline-block; flex: none; width: 48px; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; }
+.eqSeasonBar b { display: block; height: 100%; background: #d9b44a; }
+.eqGlyph { font-size: 10px; color: var(--b3); }
+.eqMend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; grid-column: 1 / -1; } .eqMend small { grid-column: 1 / -1; }

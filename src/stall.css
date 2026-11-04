@@ -106,3 +106,7 @@
 #party .ptWear { width: 100%; min-height: 44px; margin: 0 0 6px; padding: 6px 10px; font: 400 14px var(--body); color: #2c1d08; background: linear-gradient(#f0c063, #c98f2c); border: 1px solid #8a5d17; border-radius: 3px; box-shadow: none; }
 #party .ptWear[hidden] { display: none; }
 #party .ptWear:disabled { filter: saturate(0.4); opacity: 0.75; }
+/* SEVEN-SLOT GEAR batch 3: the Enchant tab, and Repair, Patch and Reforge side by side */
+.hsBtns { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.hsRow.hsEnchant { align-items: flex-start; }
+.hsGlyph { color: var(--b3); }

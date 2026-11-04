@@ -86,3 +86,29 @@ design's eight batches, each with its tests. This note says what each batch buil
   sources, one copy, never sold or combined, renown's steps, saves).
 - **Screenshots:** `docs/samples/gear-build-legend-*.png` (a full Winter Court on the doll), `gear-build-legend-card-*.png` and
   `gear-build-legends-codex-*.png`, at the three sizes.
+
+## Batch 3: growth, repair, patch, enchant, prices
+
+- **Seasoning** (`season`, `seasonNeed`, `SEASON_CAP` in `wear.ts`; `Equipment.xp`): a piece worn in a wave gains a point (half under
+  auto-replay, none while broken); at 8 + 2 x level points its item level goes up one, to its grade's cap (Common 8, Rare 12, Epic 16,
+  Legendary and Mythic 20), and its durability with it. A legend grows by renown instead. The card shows a thin gold bar and "Seasoning
+  14/26 waves · Lv 9 (cap 16)".
+- **Repairs** are 1.6 times dearer a point (`REPAIR`: 0.32 Common to 0.88 Mythic), a quarter more for each glyph (`pointsCost`).
+- **Patch and reforge** (`enchant.ts`): a patch, at camp or the stall, mends to 60% for 40% of a repair's price now, and scars the piece 2
+  points of maximum durability for good (`Equipment.scars`, to a third of it; `maxDurability` takes them off). A reforge at the stall
+  (standing 2) clears the scars for the price of a full repair from nothing.
+- **Enchanting** (`glyphs.ts`, `enchant.ts`; the stall's new **Enchant** tab, standing 1): ten glyphs, each slot taking its own four to
+  six; three are offered for a piece's next one, drawn from `mixSeed(m.seed, ENCHANT_SALT, piece id, count)` (`Meta.enchants` counts
+  each glyph taken or cleared), so a reload offers the same three. Up to three a piece, at 300, 900 and 2,400 crowns times the grade's
+  step (0.5 Common to 2 Mythic). Each wears the piece a fifth faster and makes its repairs a quarter dearer; clearing is free and returns
+  nothing; a glyph adds nothing to the sale price. A legend takes none.
+- **Prices and odds** (the design's economy table): stall gear 200 / 550 / 1,600 / 4,000; books 500 / 1,300, the traders' Rare 3,400;
+  chests 600 / 2,400 / 9,000 with gear in 15% / 60% / every one; silver chests' Legendary 5% and no Mythic, gold's Legendary 16% and
+  Mythic 3% (`QUALITY_WEIGHTS`, used by every chest). Income is not touched. Hester's welcome (everything mended once) came with batch 1's
+  move.
+- **The page:** the piece's card (seasoning, scars, glyphs) and Patch beside Repair; the stall's Repair tab with Patch and Reforge, and
+  the Enchant tab. The Enchant tab's icon is a Rare book until its glyph-stone painting is made.
+- **Tests:** `test/gear-upkeep.test.ts` (seasoning and its caps, patch scars and reforge, glyph offers, prices, wear and repairs, the
+  no-loop rules: patching then selling never beats selling, an enchanted piece sells for no more); `wear.test.ts` and `stall.test.ts`
+  brought to the new prices.
+- **Screenshots:** `docs/samples/gear-build-upkeep-card-*.png`, `gear-build-stall-repair-*.png` and `gear-build-stall-enchant-*.png`.

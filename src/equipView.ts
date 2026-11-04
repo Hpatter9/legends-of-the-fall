@@ -25,6 +25,8 @@ import { icon } from './menuArt';
 import { play } from './render/sound';
 import { portrait } from './render/sheets';
 import { takeGearNote } from './sim/gearMigrate';
+import { GLYPHS, patchBlock, patchCost, patchItem } from './sim/enchant';
+import { SEASON_CAP, seasonNeed } from './sim/wear';
 import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -134,6 +136,21 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt)
   // (its durability: SHOP-BOOKS-GEAR, `wear.ts`)
   const state = wearState(it);
   card.append(el('small', `eqDurLine ${state}`, `Durability ${Math.ceil(durabilityOf(it))}/${maxDurability(it)}${state === 'broken' ? ' · Broken: gives nothing until mended' : state === 'worn' ? ' · Worn' : ''}`));
+  // (SEVEN-SLOT GEAR batch 3: its seasoning towards the next item level, its patches' scars and its glyphs)
+  if (!base.legend) {
+    const cap = SEASON_CAP[it.rarity];
+    const line = el('small', 'eqSeason', it.level >= cap ? `Seasoned to its cap: Lv ${cap}` : `Seasoning ${Math.floor(it.xp ?? 0)}/${seasonNeed(it.level)} waves · Lv ${it.level} (cap ${cap})`);
+    if (it.level < cap) {
+      const bar = el('i', 'eqSeasonBar');
+      const fill = el('b');
+      fill.style.width = `${Math.round(((it.xp ?? 0) / seasonNeed(it.level)) * 100)}%`;
+      bar.append(fill);
+      line.prepend(bar);
+    }
+    card.append(line);
+  }
+  if (it.scars) card.append(el('small', 'eqDim', `Patched: ${it.scars} durability lost for good (a reforge at Hester's clears it)`));
+  for (const g of it.glyphs ?? []) card.append(el('small', 'eqGlyph', `${GLYPHS[g].name} glyph: ${GLYPHS[g].text}`));
   const sig = stats.abilities[0];
   if (base.legend) {
     // (a named legend: its power at its renown, and how far its story has opened: `legends.ts`)
@@ -322,7 +339,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
   };
 
   /** Mend a piece here, at the stall's price (it counts for standing as a repair at the stall does). */
-  const repairButton = (it: Equipment, then: () => void): HTMLButtonElement => {
+  const repairButton = (it: Equipment, then: () => void): HTMLElement => {
     const cost = repairCost(it, meta.castle.armoury);
     const b = el('button', 'eqRepair');
     b.type = 'button';
@@ -334,7 +351,22 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       commit();
       then();
     });
-    return b;
+    // (SEVEN-SLOT GEAR batch 3: or a patch, here at camp: cheaper, but it scars the piece for good)
+    if (patchBlock(it)) return b;
+    const pc = patchCost(it, meta.castle.armoury);
+    const p = el('button', 'eqRepair');
+    p.type = 'button';
+    p.append(`Patch · ${pc}`);
+    p.disabled = meta.crowns < pc;
+    p.addEventListener('click', () => {
+      if (!patchItem(meta, it.id)) return;
+      play('coin');
+      commit();
+      then();
+    });
+    const both = el('div', 'eqMend');
+    both.append(b, p, el('small', 'eqDim', 'A patch mends to 60% for less, but costs 2 durability for good.'));
+    return both;
   };
 
   const picker = (slot: EquipSlot) => {

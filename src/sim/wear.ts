@@ -8,8 +8,17 @@
 import { DUR, EQUIP_BASES, EQUIP_SLOTS, QUIET_SLOTS, itemName, maxDurability, wearerOf, wornIn, type EquipSlot, type Equipment } from './equipment';
 import type { Meta } from './meta';
 
-/** Crowns a point of repair costs by grade, at item level 1 (index 0 is unused). */
-export const REPAIR: readonly number[] = [0, 0.2, 0.25, 0.35, 0.45, 0.55];
+/** Crowns a point of repair costs by grade, at item level 1 (index 0 is unused): SEVEN-SLOT GEAR's economy, 1.6 times the old 0.2 to 0.55
+ *  (the owner's answer to the design's question 4). */
+export const REPAIR: readonly number[] = [0, 0.32, 0.4, 0.56, 0.72, 0.88];
+/** Each enchanting glyph makes a piece wear this much faster, and its repairs this much dearer (`enchant.ts`). */
+export const GLYPH_WEAR = 0.2;
+export const GLYPH_REPAIR = 0.25;
+/** SEVEN-SLOT GEAR batch 3: seasoning. A piece worn in a wave gains a point (half under auto-replay, none while broken); at
+ *  `seasonNeed(level)` points its item level goes up one, to its grade's cap (index 0 unused: Common 8, Rare 12, Epic 16, Legendary and
+ *  Mythic 20). A named legend grows by renown instead. */
+export const SEASON_CAP: readonly number[] = [0, 8, 12, 16, 20, 20];
+export const seasonNeed = (level: number): number => 8 + 2 * level;
 /** An auto-replay wave wears at this share (as the War Horn fills at half). */
 export const AUTO_WEAR = 0.5;
 /** At or under this share of its durability a piece shows as worn. */
@@ -63,8 +72,9 @@ export function settleWear(m: Meta, fought: readonly Fought[], auto = false, ski
       if (EQUIP_BASES[it.base]?.legend) it.renown = Math.round(((it.renown ?? 0) + share) * 2) / 2;
       const was = wearState(it);
       if (was === 'broken') continue;
-      // (SEVEN-SLOT GEAR: the quiet slots wear at half; kept in quarters)
-      const loss = share * (QUIET_SLOTS.includes(slot) ? 0.5 : 1 + (f.fell && slot === 'torso' ? 1 : 0));
+      season(it, share);
+      // (SEVEN-SLOT GEAR: the quiet slots wear at half; kept in quarters; each glyph wears it a fifth faster)
+      const loss = share * (QUIET_SLOTS.includes(slot) ? 0.5 : 1 + (f.fell && slot === 'torso' ? 1 : 0)) * (1 + GLYPH_WEAR * (it.glyphs?.length ?? 0));
       it.wear = Math.min(maxDurability(it), Math.round(((it.wear ?? 0) + loss) * 4) / 4);
       const now = wearState(it);
       if (now !== was && now !== 'good') out.push({ kind: f.kind, id: it.id, name: itemName(it), state: now });
@@ -73,14 +83,31 @@ export function settleWear(m: Meta, fought: readonly Fought[], auto = false, ski
   return out;
 }
 
-/** What mending a piece to full costs, with an Armoury of `armoury` levels: the grade's price a point, a little more for each item
- *  level, for every point lost; rounded up, at least 1 (0 for a full piece). */
-export function repairCost(it: Equipment, armoury = 0): number {
-  const lost = Math.ceil(it.wear ?? 0);
+/** A wave's seasoning on a worn piece (not a legend): `share` points, and an item level for each `seasonNeed` reached, to the grade's cap. */
+export function season(it: Equipment, share: number): boolean {
+  if (EQUIP_BASES[it.base]?.legend || it.level >= SEASON_CAP[it.rarity]) return false;
+  let xp = (it.xp ?? 0) + share;
+  let up = false;
+  while (it.level < SEASON_CAP[it.rarity] && xp >= seasonNeed(it.level)) {
+    xp -= seasonNeed(it.level);
+    it.level++;
+    up = true;
+  }
+  if (it.level >= SEASON_CAP[it.rarity] || xp <= 0) delete it.xp;
+  else it.xp = Math.round(xp * 2) / 2;
+  return up;
+}
+
+/** What mending `points` of a piece costs, with an Armoury of `armoury` levels: the grade's price a point, a little more for each item level
+ *  and a quarter more for each glyph; rounded up, at least 1 (0 for none). */
+export function pointsCost(it: Equipment, points: number, armoury = 0): number {
+  const lost = Math.ceil(points - 1e-9);
   if (lost <= 0) return 0;
   const cut = 1 - ARMOURY_REPAIR_CUT * Math.max(0, Math.min(7, armoury));
-  return Math.max(1, Math.ceil(REPAIR[it.rarity] * (1 + 0.04 * (it.level - 1)) * lost * cut - 1e-9));
+  return Math.max(1, Math.ceil(REPAIR[it.rarity] * (1 + 0.04 * (it.level - 1)) * (1 + GLYPH_REPAIR * (it.glyphs?.length ?? 0)) * lost * cut - 1e-9));
 }
+/** What mending a piece to full costs (0 for a full piece). */
+export const repairCost = (it: Equipment, armoury = 0): number => pointsCost(it, it.wear ?? 0, armoury);
 
 /** Every piece that has lost anything: those worn by heroes in the party first, then the rest worn by heroes, then spares; the most
  *  worn first within each. */

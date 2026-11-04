@@ -133,6 +133,8 @@ export interface Meta {
   legendsNew?: string[];
   /** Waves each hero kind has fought (halves under auto-replay; the Pilgrim's Cord's source). Missing is none counted. */
   wavesFought?: Record<string, number>;
+  /** The glyphs taken or cleared on each piece, by piece id (`enchant.ts`: its offers' stream moves on with each). Missing is none. */
+  enchants?: Record<number, number>;
   /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
    *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
   cart?: CartPiece[];
@@ -509,6 +511,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!Array.isArray(m.legendsNew) || !m.legendsNew.length) delete m.legendsNew;
       if (m.wavesFought && typeof m.wavesFought === 'object') m.wavesFought = Object.fromEntries(Object.entries(m.wavesFought).filter(([, n]) => typeof n === 'number' && Number.isFinite(n) && n > 0));
       else delete m.wavesFought;
+      if (m.enchants && typeof m.enchants === 'object') m.enchants = Object.fromEntries(Object.entries(m.enchants).filter(([, n]) => typeof n === 'number' && Number.isInteger(n) && n > 0));
+      else delete m.enchants;
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)

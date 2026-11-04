@@ -14,6 +14,7 @@ import { levelOfKind } from './levels';
 import type { Scores } from './stats';
 import { SET_OF_BASE, setBonus, type GearSet, type SetBonus } from './gearSets';
 import { legendStrength } from './legendRenown';
+import { GLYPHS, MAX_GLYPHS } from './glyphs';
 
 import { ABILITIES, BASE_SCORE, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, OLD_BASES, RARITY_SCORE, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
 export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
@@ -37,8 +38,9 @@ export type Quality = 'bronze' | 'silver' | 'gold';
 /** Chance of each rarity (Common to Mythic) in percent, by chest quality. */
 export const QUALITY_WEIGHTS: Readonly<Record<Quality, Readonly<Record<Rarity, number>>>> = {
   bronze: { 1: 70, 2: 25, 3: 5, 4: 0, 5: 0 },
-  silver: { 1: 30, 2: 40, 3: 22, 4: 7, 5: 1 },
-  gold: { 1: 5, 2: 25, 3: 40, 4: 24, 5: 6 },
+  // (SEVEN-SLOT GEAR's economy: gear harder to get, silver Legendary 5% and no Mythic, gold Legendary 16% and Mythic 3%)
+  silver: { 1: 30, 2: 42, 3: 23, 4: 5, 5: 0 },
+  gold: { 1: 5, 2: 28, 3: 48, 4: 16, 5: 3 },
 };
 export const MAX_ITEM_LEVEL = 20;
 /** What a main stat of each rarity is worth against a Common one (index 0 is unused). */
@@ -176,16 +178,22 @@ export interface Equipment {
   wear?: number;
   /** A named legend's renown: the waves it has fought (`legends.ts`; halves under auto-replay). Missing is none. */
   renown?: number;
+  /** SEVEN-SLOT GEAR batch 3: seasoning, the waves fought towards its next item level (`wear.ts` `seasonNeed`; halves under auto-replay). */
+  xp?: number;
+  /** Points of maximum durability lost to patches for good (`enchant.ts`; a reforge clears them). */
+  scars?: number;
+  /** The enchanting glyphs on it, up to three (`enchant.ts`). */
+  glyphs?: string[];
   /** RUN-GEAR: found in the run of this id (the run's seed) and not yet home: fresh from the field, it gives its main stats times
    *  `FIELD_BOOST` in that run, and only such a piece takes a run's upgrades (`runGear.ts`). Cleared when the run ends. */
   found?: number;
 }
-export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found' | 'renown'>;
+export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found' | 'renown' | 'xp' | 'scars' | 'glyphs'>;
 
 /** Durability by grade before the item level is added (index 0 is unused): Common 30 to Mythic 90 (`wear.ts`). */
 export const DUR: readonly number[] = [0, 30, 40, 55, 70, 90];
 /** A piece's full durability: its grade's and its item level. */
-export const maxDurability = (it: Pick<Equipment, 'rarity' | 'level'>): number => DUR[it.rarity] + it.level;
+export const maxDurability = (it: Pick<Equipment, 'rarity' | 'level' | 'scars'>): number => DUR[it.rarity] + it.level - (it.scars ?? 0);
 /** A piece worn to nothing is broken: it gives nothing (no stats, no ability, no set count) until it is mended (`wear.ts`). */
 export const brokenPiece = (it: Equipment): boolean => (it.wear ?? 0) >= maxDurability(it);
 
@@ -216,6 +224,8 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
     for (const [stat, v] of Object.entries(base.legend.flat ?? {}) as [MainKey, number][]) out[stat] += v;
     out.powers = [{ id: base.legend.power, name: base.legend.powerName, s: legendStrength((it as Equipment).renown ?? 0) }];
   } else if (hasAbility(it.rarity)) out.abilities.push({ id: base.ability.id, name: it.rarity >= 5 ? base.mythic : base.ability.name, s: abilityScale(it.rarity, it.level) });
+  // (SEVEN-SLOT GEAR batch 3: its enchanting glyphs, each a small line of its own, not scaled by grade or level)
+  for (const g of (it as Equipment).glyphs ?? []) for (const [stat, v] of Object.entries(GLYPHS[g]?.main ?? {}) as [MainKey, number][]) out[stat] += v;
   // (and its ability score, by its base and rarity: STATS batch 2)
   const score = BASE_SCORE[it.base];
   const points = RARITY_SCORE[it.rarity] ?? 0;
@@ -516,6 +526,16 @@ export function readEquipment(raw: unknown): Equipment[] {
       if (Number.isFinite(wear) && wear > 0) made.wear = Math.min(maxDurability(made), Math.round(wear * 4) / 4);
       const renown = Number(x.renown);
       if (Number.isFinite(renown) && renown > 0) made.renown = Math.round(renown * 2) / 2;
+      // (SEVEN-SLOT GEAR batch 3: seasoning, scars and glyphs; a save from before has none)
+      const xp = Number(x.xp);
+      if (Number.isFinite(xp) && xp > 0) made.xp = Math.round(xp * 2) / 2;
+      const scars = Math.floor(Number(x.scars));
+      if (Number.isFinite(scars) && scars > 0) made.scars = Math.min(scars, Math.floor((DUR[rarity] + level) / 3));
+      if (Array.isArray(x.glyphs)) {
+        const glyphs = x.glyphs.filter((g): g is string => typeof g === 'string' && !!GLYPHS[g]).slice(0, MAX_GLYPHS);
+        if (glyphs.length) made.glyphs = glyphs;
+      }
+      if (made.wear !== undefined) made.wear = Math.min(maxDurability(made), made.wear);
       out.push(made);
     }
   return out;
