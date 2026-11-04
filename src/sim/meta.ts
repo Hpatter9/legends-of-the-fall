@@ -14,6 +14,7 @@ import { readStarter, starterPacks, type Starter } from './starter';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
 import { readCart, readEquipment, readEquipped, type CartPiece, type EquipSlot, type Equipment } from './equipment';
+import { GEAR_V, migrateGear, type GearNote } from './gearMigrate';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTomes, type TomeCounts } from './tomes';
@@ -120,6 +121,10 @@ export interface Meta {
   equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** The next equipment id. */
   nextItem?: number;
+  /** SEVEN-SLOT GEAR: the gear version the save is on (`gearMigrate.ts`; missing is a save from before seven slots, moved over once). */
+  gearV?: number;
+  /** What moving to seven slots did, for the hero sheet's lines (each shown once; `gearMigrate.ts`). */
+  gearNote?: GearNote;
   /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
    *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
   cart?: CartPiece[];
@@ -242,7 +247,7 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the two starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {}, gearV: GEAR_V });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -478,11 +483,13 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.claimed = Array.isArray(m.claimed) ? m.claimed.filter((a) => typeof a === 'string' && m.achievements.includes(a)) : [...m.achievements];
       // (saves from before equipment have none)
       m.equipment = readEquipment(m.equipment);
-      m.equipped = readEquipped(m.equipped, m.equipment);
       m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
       // (RUN-GEAR: the cart's pieces; a save from before has none)
       m.cart = readCart(m.cart);
       if (!m.cart.length) delete m.cart;
+      // (SEVEN-SLOT GEAR: a save from before seven slots is moved over once: `gearMigrate.ts`)
+      if (m.gearV !== GEAR_V) migrateGear(m);
+      m.equipped = readEquipped(m.equipped, m.equipment);
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)

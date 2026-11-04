@@ -2,20 +2,21 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadMeta, saveMeta, startedMeta, type Meta } from '../src/sim/meta';
 import { ABILITIES, EQUIP_BASES, bestFor, combineAll, combineGroup, combineGroups, combineItems, equipAll, equipBest, equipItem, equipStats, grantEquipment, itemStats, spareEquipment, wornIn, type NewEquipment } from '../src/sim/equipment';
-import { GEAR_SETS, SET_OF_BASE, activeTiers, setBonus, setCounts } from '../src/sim/gearSets';
+import { GEAR_SETS, SET_OF_BASE, activeTiers, setBonus, setCounts, setPowers } from '../src/sim/gearSets';
 
 const give = (m: Meta, ...items: NewEquipment[]) => items.map((i) => grantEquipment(m, i));
 const store = () => {
   let v = '';
   return { setItem: (_: string, s: string) => (v = s), getItem: () => v };
 };
-const EMBER = ['dragonboneAxe', 'emberRobe', 'emberAmulet'];
+// (the Emberforged: the axe, the robe, the amulet from before, and the censer and girdle of seven slots)
+const EMBER = ['dragonboneAxe', 'emberRobe', 'emberAmulet', 'emberCenser', 'emberGirdle'];
 
-test('the sets: 8 to 12 of them, two or three pieces, one a slot, each base in one set, every ability real', () => {
-  assert.ok(GEAR_SETS.length >= 8 && GEAR_SETS.length <= 12);
+test('SEVEN-SLOT GEAR: 14 sets of five to seven pieces (84 in all, twelve a slot), one a slot, each base in one set, every ability real', () => {
+  assert.equal(GEAR_SETS.length, 14);
+  assert.deepEqual(GEAR_SETS.map((s) => s.pieces.length).sort(), [5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 7]);
   const seen = new Set<string>();
   for (const set of GEAR_SETS) {
-    assert.ok(set.pieces.length === 2 || set.pieces.length === 3, set.id);
     const slots = set.pieces.map((p) => EQUIP_BASES[p]?.slot);
     assert.ok(slots.every(Boolean), `${set.id} bases exist`);
     assert.equal(new Set(slots).size, slots.length, `${set.id}: one piece a slot`);
@@ -24,26 +25,34 @@ test('the sets: 8 to 12 of them, two or three pieces, one a slot, each base in o
       seen.add(p);
       assert.equal(SET_OF_BASE[p], set);
     }
-    assert.equal(!!set.three, set.pieces.length === 3, `${set.id}: a three-piece tier only for three pieces`);
-    for (const t of [set.two, set.three]) if (t?.ability) assert.ok(ABILITIES[t.ability.id], `${set.id}: ${t.ability.id}`);
+    for (const t of [set.two, set.four]) if (t.ability) assert.ok(ABILITIES[t.ability.id], `${set.id}: ${t.ability.id}`);
     assert.ok(set.two.text && (set.two.stats || set.two.ability));
+    assert.ok(set.four.ability, `${set.id}: the four-piece tier is a signature ability`);
+    assert.ok(set.full.power && set.full.name && set.full.text);
   }
+  assert.equal(seen.size, 84);
+  for (const slot of ['head', 'torso', 'main', 'off', 'feet', 'belt', 'acc']) assert.equal([...seen].filter((p) => EQUIP_BASES[p].slot === slot).length, 12, slot);
   assert.equal(new Set(GEAR_SETS.map((s) => s.id)).size, GEAR_SETS.length);
   assert.equal(new Set(GEAR_SETS.map((s) => s.name)).size, GEAR_SETS.length);
+  assert.equal(new Set(GEAR_SETS.map((s) => s.full.power)).size, GEAR_SETS.length);
 });
 
-test('one piece gives nothing, two the small bonus, three the strong one on top', () => {
+test('one piece gives nothing, two the small bonus, four the signature ability on top, the full set its power', () => {
   const ember = GEAR_SETS.find((s) => s.id === 'ember')!;
   assert.deepEqual(setBonus([EMBER[0]]).stats, {});
   assert.equal(setBonus([EMBER[0]]).active.length, 0);
   const two = setBonus(EMBER.slice(0, 2));
   assert.equal(two.stats.atk, 0.05);
   assert.equal(two.abilities.length, 0);
-  const three = setBonus(EMBER);
-  assert.ok(Math.abs((three.stats.atk ?? 0) - 0.09) < 1e-9, 'the three keeps the two');
-  assert.equal(three.abilities[0].id, 'dragonfire');
-  assert.equal(activeTiers(ember, 3).length, 2);
-  assert.equal(setCounts([...EMBER, 'ironSword']).get(ember), 3);
+  assert.equal(setBonus(EMBER.slice(0, 3)).abilities.length, 0, 'three is still the two-piece tier');
+  const four = setBonus(EMBER.slice(0, 4));
+  assert.ok(Math.abs((four.stats.atk ?? 0) - 0.09) < 1e-9, 'the four keeps the two');
+  assert.equal(four.abilities[0].id, 'dragonfire');
+  assert.equal(activeTiers(ember, 4).length, 2);
+  assert.equal(activeTiers(ember, 5).length, 3);
+  assert.deepEqual(setPowers(ember.pieces.slice(0, 4)), []);
+  assert.deepEqual(setPowers(ember.pieces), ['pyreWalker']);
+  assert.equal(setCounts([...EMBER.slice(0, 4), 'ironSword']).get(ember), 4);
   // (the same base twice is one piece; bases of different sets do not mix)
   assert.equal(setCounts([EMBER[0], EMBER[0]]).get(ember), 1);
   assert.equal(setBonus([EMBER[0], 'stormStaff']).active.length, 0);
@@ -60,24 +69,27 @@ test('a hero wearing a set gets its bonus in the fight stats, whatever the grade
   const two = equipStats(m, 'knight')!;
   assert.ok(Math.abs(two.atk - (solo.atk + itemStats(b, 'knight').atk + 0.05)) < 1e-9);
   equipItem(m, 'knight', c.id);
-  const three = equipStats(m, 'knight')!;
-  assert.ok(three.abilities.some((x) => x.id === 'dragonfire'), 'the three-piece ability');
+  assert.ok(!equipStats(m, 'knight')!.abilities.some((x) => x.id === 'dragonfire'), 'three pieces: not yet');
+  const [d] = give(m, { base: EMBER[3], rarity: 1, level: 1 });
+  equipItem(m, 'knight', d.id);
+  const four = equipStats(m, 'knight')!;
+  assert.ok(four.abilities.some((x) => x.id === 'dragonfire'), 'the four-piece ability');
   // (an ability the piece already carries is not added twice: Common pieces have none, so the Epic axe's own stays alone)
   const n = startedMeta(2);
-  const [axe, robe, amulet] = give(n, { base: EMBER[0], rarity: 3, level: 1 }, { base: EMBER[1], rarity: 1, level: 1 }, { base: EMBER[2], rarity: 1, level: 1 });
-  for (const it of [axe, robe, amulet]) equipItem(n, 'knight', it.id);
+  const kit = give(n, { base: EMBER[0], rarity: 3, level: 1 }, ...EMBER.slice(1, 4).map((base) => ({ base, rarity: 1 as const, level: 1 })));
+  for (const it of kit) equipItem(n, 'knight', it.id);
   assert.equal(equipStats(n, 'knight')!.abilities.filter((x) => x.id === 'dragonfire').length, 1);
 });
 
 test('equip best weighs a set: it takes the matching pieces over a slightly stronger single one', () => {
   const m = startedMeta(4);
-  // (a plain Rare sword beats a Common ember axe alone, but the set's two other pieces make the axe worth wearing)
-  give(m, { base: 'ironSword', rarity: 2, level: 2 }, { base: EMBER[0], rarity: 1, level: 1 }, { base: EMBER[1], rarity: 2, level: 1 }, { base: EMBER[2], rarity: 2, level: 1 });
+  // (a plain Rare sword beats a Common ember axe alone, but the set's other pieces make the axe worth wearing: it lifts two to four)
+  give(m, { base: 'ironSword', rarity: 2, level: 2 }, { base: EMBER[0], rarity: 1, level: 1 }, ...EMBER.slice(1, 4).map((base) => ({ base, rarity: 2 as const, level: 1 })));
   const plan = bestFor(m, 'knight');
   const axe = m.equipment!.find((x) => x.base === EMBER[0])!;
-  assert.equal(plan.slots.weapon, axe.id);
-  assert.equal(equipBest(m, 'knight'), 3);
-  assert.equal(wornIn(m, 'knight', 'weapon')!.base, EMBER[0]);
+  assert.equal(plan.slots.main, axe.id);
+  assert.equal(equipBest(m, 'knight'), 4);
+  assert.equal(wornIn(m, 'knight', 'main')!.base, EMBER[0]);
   // (again: nothing more to change)
   assert.equal(equipBest(m, 'knight'), 0);
 });
@@ -86,12 +98,12 @@ test('equip best with no set pieces picks the strongest of each slot as before, 
   const m = startedMeta(4);
   const [first, second] = give(m, { base: 'ironSword', rarity: 2, level: 3 }, { base: 'ironSword', rarity: 2, level: 3 });
   equipBest(m, 'knight');
-  assert.equal(wornIn(m, 'knight', 'weapon')!.id, first.id);
+  assert.equal(wornIn(m, 'knight', 'main')!.id, first.id);
   assert.notEqual(second.id, first.id);
   const n = startedMeta(4);
   give(n, { base: 'ironSword', rarity: 1, level: 1 }, { base: 'huntersBow', rarity: 4, level: 6 });
   equipBest(n, 'archer');
-  assert.equal(wornIn(n, 'archer', 'weapon')!.base, 'huntersBow');
+  assert.equal(wornIn(n, 'archer', 'main')!.base, 'huntersBow');
 });
 
 test('equip all hands sets out hero by hero and never puts a piece on two heroes', () => {
@@ -101,7 +113,7 @@ test('equip all hands sets out hero by hero and never puts a piece on two heroes
   equipAll(m);
   const ids = Object.values(m.equipped ?? {}).flatMap((s) => Object.values(s));
   assert.equal(new Set(ids).size, ids.length);
-  assert.equal(ids.length, 6);
+  assert.equal(ids.length, 8);
   // (the strongest-first hero ends with a whole set)
   const full = Object.entries(m.equipped!).filter(([k]) => setCounts(Object.values(m.equipped![k]!).map((id) => m.equipment!.find((x) => x.id === id)!.base)).size > 0);
   assert.ok(full.length >= 1);

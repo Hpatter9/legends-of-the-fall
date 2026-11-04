@@ -856,7 +856,8 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   // (twists: fog shortens a shooter's range, a gale lifts every jump)
   const fog = def.shot ? (b.twist?.fog ?? 0) + (b.fog ?? 0) : 0;
   // (STATS batch 6: Athletics, a hero of STR +4 or more climbs a step higher, `athleticsOf`)
-  const jump = (b.twist?.jump ?? 0) + (me.side === 'hero' ? athleticsOf(me) : 0);
+  // (SEVEN-SLOT GEAR: and a hero's gear, at most a step: `EquipStats.jump`)
+  const jump = (b.twist?.jump ?? 0) + (me.side === 'hero' ? athleticsOf(me) + Math.min(1, me.eq?.jump ?? 0) : 0);
   if (!extra && !fog && !jump && !(reach && def.shot)) return def;
   return { ...def, range: Math.max(1, def.range + extra - fog), ...(jump ? { jump: def.jump + jump } : {}), ...(reach && def.shot ? { heightReach: (def.heightReach ?? HIGH_REACH) + reach } : {}) };
 }

@@ -61,10 +61,12 @@ export function pieceText(it: Equipment): string {
 
 export const gearText = (g: Gear) => (g.piece ? pieceText(g.piece) : [g.atk ? `+${Math.round(g.atk * 100)}% attack` : '', g.hp ? `+${Math.round(g.hp * 100)}% hp` : ''].filter(Boolean).join(', '));
 
-/** A real piece carried as run gear (`piece`): its id is the piece's, its slot the base's (a trinket is a charm), its tier its grade (at most `MAX_TIER`). */
+/** A real piece carried as run gear (`piece`): its id is the piece's, its slot the base's (the right hand is a weapon, the torso armour,
+ *  any other slot a charm), its tier its grade (at most `MAX_TIER`). */
 export function pieceGear(it: Equipment): Gear {
   const slot = EQUIP_BASES[it.base]?.slot;
-  return { id: it.id, slot: slot === 'trinket' ? 'charm' : slot ?? 'weapon', tier: Math.max(1, Math.min(MAX_TIER, it.rarity)), name: itemName(it), hp: 0, atk: 0, piece: it };
+  // (the Grimoire, a weapon before seven slots and a left hand since, is still a weapon among a run's finds)
+  return { id: it.id, slot: slot === 'main' || !slot || it.base === 'grimoire' ? 'weapon' : slot === 'torso' ? 'armour' : 'charm', tier: Math.max(1, Math.min(MAX_TIER, it.rarity)), name: itemName(it), hp: 0, atk: 0, piece: it };
 }
 
 /** What a hero's gear (a slot map, maybe absent) multiplies its hp and attack by. */
