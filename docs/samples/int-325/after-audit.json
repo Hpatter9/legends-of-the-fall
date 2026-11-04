@@ -1,0 +1,713 @@
+[
+ {
+  "size": "393x852",
+  "screen": "home",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "summon",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "heroes",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "castle",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "10px small. \"0/25\"",
+   "10px small. \"11/113\"",
+   "10px div.ctCrestSub \"Citadel Rank 3 / 46 \"",
+   "9px div.ctTapSaluteHint \"✨ Tap heroes to salu\"",
+   "8px span. \"HIGH THRONE · IRON S\"",
+   "9px small. \"Gold\"",
+   "9px small. \"ATK\"",
+   "9px small. \"HP\"",
+   "9px small. \"Mana\"",
+   "9px small. \"Speed\"",
+   "9px small. \"XP\"",
+   "10px button.ctPortalChip \"🍺 Tavern\"",
+   "10px button.ctPortalChip \"📖 Spells\"",
+   "10px button.ctPortalChip \"⚔️ March\"",
+   "10px button.ctPortalChip \"🏆 Trophies\"",
+   "9px span.ctLvPill \"Lv. 1 / 5\"",
+   "10px small.ctRelicSub \"◆ Crown of Minted Va\"",
+   "9px span.ctLvPill \"Lv. 0 / 7\"",
+   "10px small.ctRelicSub \"◆ Sunforge Aegis\"",
+   "9px span.ctLvPill \"Lv. 1 / 7\"",
+   "9px span.ctLvPill \"Lv. 0 / 4\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "spellbook",
+  "hscroll": false,
+  "small": [
+   "button. \"Unequip\" 77x36"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "10px small. \"Steel\"",
+   "10px em. \"4 mana\"",
+   "10px em. \"3 mana\"",
+   "10px small. \"Open\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "party",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\"",
+   "9px small. \"THE LAST KEEP\"",
+   "8px span. \"YOUR COMPANY\"",
+   "10px span.ptSlotNumber \"1\"",
+   "10px span.ptSlotNumber \"2\"",
+   "10px span.ptSlotNumber \"3\"",
+   "10px span.ptSlotNumber \"4\"",
+   "10px span.ptSlotNumber \"5\"",
+   "10px span.pips \"●●●○\"",
+   "10px span.pips \"●○\"",
+   "8px span.ptPickedFlag \"◆ Chosen\"",
+   "10px span.ptCardRole \"Front-liner\"",
+   "9px span.ptInfo \"i\"",
+   "10px span.ptCardRole \"Striker\""
+  ],
+  "overflow": [
+   "clipped span.srOnly \"Search heroes\" 86>1"
+  ],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "hero-sheet",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "settings",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "codex",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\"",
+   "10px small. \"not met\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "popup-ask",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "popup-tip",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "toast",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "393x852",
+  "screen": "daily",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 180x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "home",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "summon",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "heroes",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "castle",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "10px small. \"0/25\"",
+   "10px small. \"11/113\"",
+   "10px div.ctCrestSub \"Citadel Rank 3 / 46 \"",
+   "9px div.ctTapSaluteHint \"✨ Tap heroes to salu\"",
+   "8px span. \"HIGH THRONE · IRON S\"",
+   "9px small. \"Gold\"",
+   "9px small. \"ATK\"",
+   "9px small. \"HP\"",
+   "9px small. \"Mana\"",
+   "9px small. \"Speed\"",
+   "9px small. \"XP\"",
+   "10px button.ctPortalChip \"🍺 Tavern\"",
+   "10px button.ctPortalChip \"📖 Spells\"",
+   "10px button.ctPortalChip \"⚔️ March\"",
+   "10px button.ctPortalChip \"🏆 Trophies\"",
+   "9px span.ctLvPill \"Lv. 1 / 5\"",
+   "10px small.ctRelicSub \"◆ Crown of Minted Va\"",
+   "9px span.ctLvPill \"Lv. 0 / 7\"",
+   "10px small.ctRelicSub \"◆ Sunforge Aegis\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "spellbook",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "10px small. \"Steel\"",
+   "10px em. \"4 mana\"",
+   "10px em. \"3 mana\"",
+   "10px small. \"Open\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "party",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\"",
+   "9px small. \"THE LAST KEEP\"",
+   "8px span. \"YOUR COMPANY\"",
+   "10px span.ptSlotNumber \"1\"",
+   "10px span.ptSlotNumber \"2\"",
+   "10px span.ptSlotNumber \"3\"",
+   "10px span.ptSlotNumber \"4\"",
+   "10px span.ptSlotNumber \"5\"",
+   "10px span.pips \"●●●○\"",
+   "10px span.pips \"●○\"",
+   "8px span.ptPickedFlag \"◆ Chosen\"",
+   "9px span.ptInfo \"i\""
+  ],
+  "overflow": [
+   "clipped span.srOnly \"Search heroes\" 86>1"
+  ],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "hero-sheet",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "settings",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "codex",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\"",
+   "10px small. \"not met\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "popup-ask",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "popup-tip",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "toast",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "360x780",
+  "screen": "daily",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 163x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "home",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "summon",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "heroes",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "castle",
+  "hscroll": false,
+  "small": [],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "10px small. \"0/25\"",
+   "10px small. \"11/113\"",
+   "10px div.ctCrestSub \"Citadel Rank 3 / 46 \"",
+   "9px div.ctTapSaluteHint \"✨ Tap heroes to salu\"",
+   "8px span. \"HIGH THRONE · IRON S\"",
+   "9px small. \"Gold\"",
+   "9px small. \"ATK\"",
+   "9px small. \"HP\"",
+   "9px small. \"Mana\"",
+   "9px small. \"Speed\"",
+   "9px small. \"XP\"",
+   "10px button.ctPortalChip \"🍺 Tavern\"",
+   "10px button.ctPortalChip \"📖 Spells\"",
+   "10px button.ctPortalChip \"⚔️ March\"",
+   "10px button.ctPortalChip \"🏆 Trophies\"",
+   "9px span.ctLvPill \"Lv. 1 / 5\"",
+   "10px small.ctRelicSub \"◆ Crown of Minted Va\"",
+   "9px span.ctLvPill \"Lv. 0 / 7\"",
+   "10px small.ctRelicSub \"◆ Sunforge Aegis\"",
+   "9px span.ctLvPill \"Lv. 1 / 7\"",
+   "10px small.ctRelicSub \"◆ Warhelm of Valor\"",
+   "9px span.ctLvPill \"Lv. 0 / 4\"",
+   "10px small.ctRelicSub \"◆ Heart of the Leyli\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "spellbook",
+  "hscroll": false,
+  "small": [
+   "button. \"Unequip\" 77x36"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "10px small. \"Steel\"",
+   "10px em. \"4 mana\"",
+   "10px em. \"3 mana\"",
+   "10px small. \"Open\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "party",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\"",
+   "9px small. \"THE LAST KEEP\"",
+   "8px span. \"YOUR COMPANY\"",
+   "10px span.ptSlotNumber \"1\"",
+   "10px span.ptSlotNumber \"2\"",
+   "10px span.ptSlotNumber \"3\"",
+   "10px span.ptSlotNumber \"4\"",
+   "10px span.ptSlotNumber \"5\"",
+   "10px span.pips \"●●●○\"",
+   "10px span.pips \"●○\"",
+   "8px span.ptPickedFlag \"◆ Chosen\"",
+   "10px span.ptCardRole \"Front-liner\"",
+   "9px span.stars \"☆☆☆☆ ◇◇\"",
+   "9px span.pw \"Power 2,355\"",
+   "9px span.ptInfo \"i\"",
+   "10px span.ptCardRole \"Striker\"",
+   "9px span.pw \"Power 907\"",
+   "9px span.pw \"Power 957\""
+  ],
+  "overflow": [
+   "clipped span.srOnly \"Search heroes\" 86>1"
+  ],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "hero-sheet",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\"",
+   "10px small. \"STR\"",
+   "10px small. \"DEX\"",
+   "10px small. \"CON\"",
+   "10px small. \"INT\"",
+   "10px small. \"WIS\"",
+   "10px small. \"CHA\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "settings",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "codex",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\"",
+   "10px small. \"not met\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "popup-ask",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "popup-tip",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "toast",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ },
+ {
+  "size": "412x915",
+  "screen": "daily",
+  "hscroll": false,
+  "small": [
+   "button#hmParty.hmLink \"Party\" 189x24"
+  ],
+  "tiny": [
+   "0px button.round \"🏆\"",
+   "0px button.round \"⚙\"",
+   "8px span.cpEyebrow \"THE ENEMY BELOW\"",
+   "9px span.cpEyebrow \"THE WAR COUNCIL\""
+  ],
+  "overflow": [],
+  "lowContrast": []
+ }
+]
