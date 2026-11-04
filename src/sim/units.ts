@@ -107,6 +107,12 @@ export const UNITS: Record<string, UnitDef> = {
   sage: { id: 'sage', name: 'Great Sage', side: 'hero', sheet: 'hero_res_sage', scale: 0.520833, hp: 204, atk: 29, def: 3, range: 4, moveMs: 700, atkMs: 1600, jump: 2, shot: 'fire', role: 'A mana battery: stars, and his friends\' pools filled' },
   demonSwordsman: { id: 'demonSwordsman', name: 'Demon Swordsman', side: 'hero', sheet: 'hero_res_demon_swordsman', scale: 0.520833, hp: 220, atk: 22, def: 7, range: 1, moveMs: 560, atkMs: 950, jump: 3, role: 'A blood pact: pays health for power' },
   tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hero_res_tyrant', scale: 0.625, hp: 262, atk: 20, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, role: 'A condemner: names a foe for the whole party', },
+  // The Vampires (docs/notes/twenty-heroes.md): their kits are in, but they wait for their battle sheets before they join `ALL_HEROES`
+  vampireLord: { id: 'vampireLord', name: 'Vampire Lord', side: 'hero', sheet: 'hero_res_vampire_lord', scale: 0.520833, hp: 236, atk: 26, def: 6, range: 1, moveMs: 520, atkMs: 900, jump: 3, role: 'A blood-duellist: lunges through lines, impales and drinks' },
+  hemomancer: { id: 'hemomancer', name: 'Hemomancer', side: 'hero', sheet: 'hero_res_hemomancer', scale: 0.520833, hp: 178, atk: 30, def: 3, range: 3, moveMs: 680, atkMs: 1450, jump: 2, shot: 'curse', role: 'A blood weaver: tethers foes together and glides in mist' },
+  nightstalker: { id: 'nightstalker', name: 'Nightstalker', side: 'hero', sheet: 'hero_res_nightstalker', scale: 0.520833, hp: 188, atk: 28, def: 4, range: 1, moveMs: 380, atkMs: 700, jump: 9, flies: true, role: 'A winged strigoi: swoops from the dark and drags prey aloft' },
+  bloodGargoyle: { id: 'bloodGargoyle', name: 'Blood Gargoyle', side: 'hero', sheet: 'hero_res_blood_gargoyle', scale: 0.625, hp: 325, atk: 20, def: 9, range: 1, moveMs: 720, atkMs: 1250, jump: 9, flies: true, role: 'A stone sentinel: crashes down from the eaves and turns to granite' },
+  dhampir: { id: 'dhampir', name: 'Dhampir', side: 'hero', sheet: 'hero_res_dhampir', scale: 0.520833, hp: 168, atk: 32, def: 3, range: 5, moveMs: 580, atkMs: 1350, jump: 3, shot: 'arrow', role: 'A silver-bolt hunter: vaults clear and pins foes to stone' },
 
   // called up by Beastmaster
   wolf: { id: 'wolf', name: 'Wolf', side: 'hero', sheet: 'wolf_grey', scale: 0.55, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster', forms: ['wolf_grey', 'wolf_grey', 'wolf_black'] },
@@ -133,6 +139,10 @@ export const UNITS: Record<string, UnitDef> = {
   standKing: { id: 'standKing', name: 'The King', side: 'hero', sheet: 'stand_king', scale: 0.8, hp: 1000, atk: 24, def: 4, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, role: 'The ruler, defending the central dais' },
   boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 195, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows, backs off' },
 };
+
+/** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
+ *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */
+export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'];
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;

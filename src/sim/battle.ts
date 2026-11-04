@@ -241,6 +241,8 @@ export interface Unit {
   tricksterLogUsed?: boolean;
   /** Guardian emergency aegis shield spent once per fight. */
   guardianShieldUsed?: boolean;
+  /** The Vampires' bat swarm spent, once a fight. */
+  vampireSwarmUsed?: boolean;
   /** The movement toolkit (`toolkit/`, RPG-SPELLS): in the air after a launch until then (melee cannot reach it); underground while it
    *  burrows (it cannot act, be targeted or be struck, and its tile is free); an aura's guard (a share less damage taken) and attack lift. */
   air?: number;
@@ -1183,6 +1185,29 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
 
       out.push({ kind: 'decoyLog', by: to.id, from: { u: oldU, v: oldV }, to: { u: to.u, v: to.v } });
       out.push({ kind: 'blink', by: to.id, from: { u: oldU, v: oldV }, to: { u: to.u, v: to.v } });
+    }
+  }
+
+  // Vampire trait milestone (five Vampires): a blow that leaves a Vampire under 30% health (not a fatal one) bursts it into a swarm of bats:
+  // it mends 15% of its health and comes together on the free tile within 2 farthest from the foes (once a fight; no stream is drawn)
+  if (b.traits?.vampireSwarm && traitsOf(to.def).includes('vampire') && !to.vampireSwarmUsed && !killed && to.hp < to.maxHp * 0.3) {
+    to.vampireSwarmUsed = true;
+    mendUnit(to, Math.round(to.maxHp * 0.15), out, to);
+    const from = { u: to.u, v: to.v };
+    const foes = b.units.filter((u) => u.alive && u.side !== to.side);
+    const far = (at: { u: number; v: number }) => (foes.length ? Math.min(...foes.map((f) => apart(at, f))) : 0);
+    const spots: { u: number; v: number }[] = [];
+    for (let dv = -2; dv <= 2; dv++)
+      for (let du = -2; du <= 2; du++) {
+        const at = { u: from.u + du, v: from.v + dv };
+        if ((du || dv) && apart(from, at) <= 2 && standable(tileAt(b.board, at.u, at.v)) && !unitAt(b, at.u, at.v)) spots.push(at);
+      }
+    const best = spots.sort((x, y) => far(y) - far(x) || x.v - y.v || x.u - y.u)[0];
+    if (best && far(best) > far(from)) {
+      to.u = best.u;
+      to.v = best.v;
+      to.step = undefined;
+      out.push({ kind: 'blink', by: to.id, from, to: { ...best } });
     }
   }
   // (a kit holds it up: Blood Fury, a guardian angel)
