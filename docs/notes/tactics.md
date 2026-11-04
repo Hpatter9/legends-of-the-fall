@@ -271,3 +271,6 @@ sheet's words for Charge and the formations say their new numbers.
 - `test/tactics.test.ts`: Charge's edge (the march, the first blow on a shooter once, none on a foe that does not shoot, none for the foes,
   none with the switch off) and the player's Charge! carrying it; `test/formations.test.ts`: the wall's melee guard, the square's AC, the
   skirmish's guard against skills, the wings' first blow; `test/tactic-advice.test.ts`: the three cases and the two warnings.
+- **Merged over FOE-STYLES (main 0.351.0)**: the blow keeps main's `rush` and `gangOf` with Charge's edge. The Great Sage fell to -6.6 at
+  level 30 (stage 92); his Arcane Surge (pools and shields, so its `power` moves nothing) now fills faster, `rate` 1.7 to 2.1: -5.2, and no
+  hero beyond 6 (average 63.2%, spread 11.1). `ailment-logs` and `spells-identity` re-recorded from the tests' own output.

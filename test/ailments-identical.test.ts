@@ -93,6 +93,8 @@ import { WEAK } from '../src/sim/weakness';
 // (the tactics' batch 6, docs/notes/tactics.md, re-recorded field1, field30, bosses and spells: Charge's edge, and the Kitsune's Alter Self (6 s, its
 // attack at most a tenth more) and the Werewolf's Shapechange (25 s) and Pounce trimmed for level-10 parity. The new hashes: field1 8b5d4e62,
 // field30 576b61cc, bosses 996d175f, spells bfa78cb6; every other scenario keeps its hash)
+// (the tactics' batch 6 merged over FOE-STYLES, with the Great Sage's Arcane Surge filling faster for level-30 parity, re-recorded field1
+// d706885f, field30 3ca649c3, bosses 3c2dc6fd, armyFoes bacacdac and spells 79e8a713; every other scenario keeps main's hash)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again, now 81e830d7: it casts each king's spell once, and the
