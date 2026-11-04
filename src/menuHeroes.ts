@@ -392,7 +392,12 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       for (const [v, rate] of speeds) v.textContent = rate();
     };
     const scores = drawStatsPanel(kind, { level: x.level, rank: full, grade: 1 }, lead, heroStats(meta, kind)?.scores);
-    overview.append(power, ...(scores ? [scores] : []), stat);
+    // (UX-FIXES: the Overview leads with the role, power, health, attack and armour; the scores, figures and speeds fold under "Details")
+    const headline = el('div', 'hstats three');
+    for (const c of lead) headline.append(c.cloneNode(true));
+    const fold = el('details', 'dossierFold');
+    fold.append(el('summary', '', 'Details: scores, saves, speeds'), ...(scores ? [scores] : []), stat);
+    overview.append(power, headline, fold);
     const profile = el('div', 'dossierProfile');
     profile.append(detailHeading('Combat profile', def.role));
     const traits = el('div', 'dossierTraits');

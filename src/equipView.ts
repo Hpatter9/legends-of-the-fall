@@ -258,8 +258,11 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       overview();
       panel.append(el('small', 'eqUp', what));
     };
-    auto.append(best, all, toggle);
-    panel.append(auto, note);
+    // (UX-FIXES: "Equip best" is the one button in view; the rest of the choices are folded under "More")
+    const moreFold = el('details', 'eqMore');
+    moreFold.append(el('summary', '', 'More'), all, toggle, note);
+    auto.append(best, moreFold);
+    panel.append(auto);
     // the gear sets: the ones this hero wears a piece of, with how far each is
     const worn = new Set(wornBases(meta, kind));
     const mine = [...setCounts([...worn]).keys()];
@@ -275,7 +278,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     sets.addEventListener('click', allSets);
     comb.addEventListener('click', () => combineView());
     more.append(sets, comb);
-    panel.append(more);
+    moreFold.append(more);
     // (RUN-GEAR-2: the stash's count; red once it is full and finds wait on the cart)
     panel.append(el('small', `eqStash${stashFull(meta) ? ' full' : ''}`, `Stash ${stashCount(meta)}${stashFull(meta) ? ' · full' : ''}`));
   };

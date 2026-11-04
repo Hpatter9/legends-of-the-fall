@@ -469,14 +469,31 @@ export class StandView {
     const card = el('div', 'stCard stPickCard');
     card.append(el('h2', '', 'Last Stand'), el('p', 'stDim', 'Eight heroes hold the keep: pick them, or let the game fill the party. Once the first wave begins nobody needs moving.'));
     const grid = el('div', 'stGrid');
+    // (UX-FIXES: the eight picked are portraits in a strip above the pool, empty posts as dashes, so the choice is not just a colour)
+    const strip = el('div', 'stStrip');
     const count = el('p', 'stBig');
     const go = el('button', 'primary', 'To the keep');
     const draw = () => {
       grid.replaceChildren();
+      strip.replaceChildren();
+      for (let i = 0; i < 8; i++) {
+        const slot = el('button', 'stSlot');
+        slot.type = 'button';
+        const kind = chosen[i];
+        if (kind && UNITS[kind]) {
+          slot.append(portrait(lookSheet(kind, heroRank(m, kind), 1), 36, 1));
+          slot.setAttribute('aria-label', `${UNITS[kind].name}: tap to drop`);
+          slot.addEventListener('click', () => {
+            chosen.splice(i, 1);
+            draw();
+          });
+        } else slot.classList.add('empty');
+        strip.append(slot);
+      }
       for (const kind of [...m.unlocked].sort((x, y) => levelOfKind(m, y) - levelOfKind(m, x))) {
         if (UNITS[kind]?.summon) continue;
         const b = el('button', chosen.includes(kind) ? 'on' : '');
-        b.append(el('span', '', UNITS[kind].name), el('em', '', `Lv ${levelOfKind(m, kind)}`));
+        b.append(portrait(lookSheet(kind, heroRank(m, kind), 1), 40, 1), el('span', '', `${chosen.includes(kind) ? '✓ ' : ''}${UNITS[kind].name}`), el('em', '', `Lv ${levelOfKind(m, kind)}`));
         b.addEventListener('click', () => {
           const i = chosen.indexOf(kind);
           if (i >= 0) chosen.splice(i, 1);
@@ -505,7 +522,7 @@ export class StandView {
     });
     const row = el('div', 'stRow');
     row.append(home, auto, go);
-    card.append(count, grid, row);
+    card.append(count, strip, grid, row);
     box.append(card);
     box.hidden = false;
     draw();

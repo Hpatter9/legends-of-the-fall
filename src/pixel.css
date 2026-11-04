@@ -577,3 +577,9 @@ body .sbCard .top { align-items: center; }
 /* UX-FIXES: a locked tab (Spells, before the Chapel) is dimmed and carries a small lock */
 .hmTab.locked { opacity: 0.55; }
 .hmTab.locked span::after { content: ' 🔒'; font-size: 10px; }
+/* UX-FIXES: the hero Overview's fold of numbers: a 44 px summary line, the rest hidden until opened */
+.dossierFold > summary { min-height: 44px; display: flex; align-items: center; padding: 0 10px; cursor: pointer; font: 400 14px var(--body); color: var(--gold-hi); border: 1px solid #6b5a38; border-radius: 3px; background: #1b231d; list-style: none; }
+.dossierFold > summary::-webkit-details-marker { display: none; }
+.dossierFold[open] > summary { margin-bottom: 8px; }
+.hstats.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; text-align: center; }
+.hstats.three b { display: block; font-size: 18px; } .hstats.three small { font-size: 12px; }

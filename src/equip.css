@@ -174,3 +174,9 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .rnStone:not(.empty) .rnTwin { transform: none; top: -6px; right: -8px; }
 #bench .card .rnStrip .rnStone.rn-small:not(.empty) { width: 12px; height: 12px; }
 @media (prefers-reduced-motion: reduce) { .rnStone.twin:not(.empty) { animation: none; } }
+/* UX-FIXES: the equipment tab's "More" fold (Equip all heroes, the bag switch, All sets, Combine) */
+.eqMore > summary { min-height: 44px; display: flex; align-items: center; padding: 0 10px; cursor: pointer; font: 400 14px var(--body); color: var(--gold-hi); border: 1px solid #6b5a38; border-radius: 3px; background: #1b231d; list-style: none; }
+.eqMore > summary::-webkit-details-marker { display: none; }
+.eqMore[open] > * + * { margin-top: 6px; }
+.eqMore { grid-column: 1 / -1; }
+.eqAuto > button.primary { grid-column: 1 / -1; }
