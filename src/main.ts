@@ -109,6 +109,7 @@ import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
 import { fullScene } from './ultMomentRules';
+import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
@@ -1131,7 +1132,8 @@ class Game {
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
-      this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
+      // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed; the short versions keep it)
+      this.acc += Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale();
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       this.setAutoOn(b);
@@ -1203,6 +1205,8 @@ class Game {
     this.refreshBossBar();
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
+    // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
+    if (b.phase === 'fight') this.ultm.stage();
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
       else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
@@ -1802,6 +1806,17 @@ class Game {
       },
       art: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
       fx: this.fx,
+      // (ULT-SHOW: the showcase stages the real sprites, and the save counts the full moments seen)
+      sprite: (id) => this.sprites.get(id),
+      world: (u, v) => {
+        const t = tileAt(this.b.board, u, v);
+        return t ? at(u, v, t.h) : null;
+      },
+      seen: (kind) => seenOf(this.meta, kind),
+      saw: (kind) => {
+        noteSeen(this.meta, kind);
+        saveMeta(this.meta);
+      },
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
