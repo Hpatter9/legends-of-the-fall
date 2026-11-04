@@ -1,11 +1,11 @@
 // Gear that wears out (the owner's ask: "If gear is going to be purchasable, it needs to be able to break. So it can either be
 // replaced or be repaired. Only being damaged while getting used."; docs/notes/shop-books-gear.md). A piece wears only when a hero
 // placed on the board wears it in a wave: one point a wave, won or lost, one more on its armour if the hero falls, half under
-// auto-replay. It keeps its full strength until it breaks (the owner's decision); at 25% it shows as worn, at nothing it is broken
+// auto-replay (SEVEN-SLOT GEAR: the head, feet, belt and accessory wear at half again). It keeps its full strength until it breaks (the owner's decision); at 25% it shows as worn, at nothing it is broken
 // and gives nothing at all until mended. Nothing is ever destroyed by wear. Kept as `Equipment.wear` (points lost; missing is a full
 // piece), so old saves are whole and the numbers can be retuned without touching saves. Pure rules: no Pixi, no DOM, no randomness.
 
-import { DUR, EQUIP_SLOTS, itemName, maxDurability, wearerOf, wornIn, type EquipSlot, type Equipment } from './equipment';
+import { DUR, EQUIP_SLOTS, QUIET_SLOTS, itemName, maxDurability, wearerOf, wornIn, type EquipSlot, type Equipment } from './equipment';
 import type { Meta } from './meta';
 
 /** Crowns a point of repair costs by grade, at item level 1 (index 0 is unused). */
@@ -59,8 +59,9 @@ export function settleWear(m: Meta, fought: readonly Fought[], auto = false, ski
       if (!it || skip?.(f.kind, slot)) continue;
       const was = wearState(it);
       if (was === 'broken') continue;
-      const loss = share * (1 + (f.fell && slot === 'armour' ? 1 : 0));
-      it.wear = Math.min(maxDurability(it), Math.round(((it.wear ?? 0) + loss) * 2) / 2);
+      // (SEVEN-SLOT GEAR: the quiet slots wear at half; kept in quarters)
+      const loss = share * (QUIET_SLOTS.includes(slot) ? 0.5 : 1 + (f.fell && slot === 'torso' ? 1 : 0));
+      it.wear = Math.min(maxDurability(it), Math.round(((it.wear ?? 0) + loss) * 4) / 4);
       const now = wearState(it);
       if (now !== was && now !== 'good') out.push({ kind: f.kind, id: it.id, name: itemName(it), state: now });
     }

@@ -31,7 +31,8 @@ test('the stock is the same all day, changes with the day, and holds only books 
       assert.ok(b.rarity === 'common' || b.rarity === 'uncommon');
     }
   const st = stockOf(m, DAY);
-  assert.equal(st.gear.length, 3);
+  assert.equal(st.gear.length, 4);
+  assert.equal(new Set(st.gear.map((w) => w.key)).size, 4, 'four different slots');
   assert.deepEqual(st.gear.map((w) => w.type === 'gear' && w.item.rarity).filter((r) => r === 3 || r === 4).sort(), [3, 4], 'one Epic and one Legendary');
 });
 
