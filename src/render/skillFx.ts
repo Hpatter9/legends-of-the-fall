@@ -2,7 +2,8 @@
 // plays on each foe it strikes (`hit`). These names now select painted materials through `fx.ts`; the old names
 // retain the skill vocabulary. Pure data: no Pixi, no DOM, so the tests can check that every skill has an entry.
 
-import { withLooks, type SpellId } from '../sim/spells';
+import type { SpellId } from '../sim/spells';
+import { withLooks } from '../sim/spellLooks';
 
 /** The named skill cues resolved by `fx.ts`. */
 export type MagicKey =

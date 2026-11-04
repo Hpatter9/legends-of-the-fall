@@ -90,5 +90,10 @@ them their own.
   - `spell-sources.test.ts`: the Mage Tower's new lists.
   - `spells-more.test.ts`: the count of spells.
 - The identity proofs re-recorded `spells` alone, which casts every spell once, now 35. No other scenario moved.
+- `individual-ability-fx.test.ts` holds the first 21 spells to their own authored art (the owner's "no two the same" rule). It now also checks
+  that the fourteen new ones borrow their look from `SPELL_LOOK`. Batch 5, with the art credits back, paints them and takes them out of
+  `SPELL_LOOK`, which brings them under the rule.
+- The look table lives in `src/sim/spellLooks.ts`, which imports nothing at run time: the renderer's tables read it while the page loads, and
+  importing it from `spells.ts` tripped the `spells` and `battle` load order (three test files failed to load).
 - Shots (`docs/samples/king-spells-b4-*.png`): a Storm Corsair save with Auto on, its first cast (Gale) at 393x852, and the spellbook at
   393x852, 360x780 and 412x915 ("30 of 35 spells known" with the tower at 4). No sideways scroll.

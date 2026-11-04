@@ -9,7 +9,7 @@ import { keyOfKit, kitOf, ultKeyOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
 import { BIG_FOE_HP } from './skillFx';
 import { SPELL_ELEMENT, deathKind, impactElement, isBackstab, missileOf, skillElement, type Element } from './fxRules';
-import { lookOf } from '../sim/spells';
+import { lookOf } from '../sim/spellLooks';
 
 /** Every sound the page can make. The first group is the page's own (taps, summons, stingers); the rest are the fight's. */
 export type Cue =

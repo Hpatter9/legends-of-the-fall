@@ -1,5 +1,6 @@
 // The king's spells have their own artwork and release geometry, separate from identically named hero magic.
-import { withLooks, type SpellId } from '../sim/spells';
+import type { SpellId } from '../sim/spells';
+import { withLooks } from '../sim/spellLooks';
 import type { Signature, Step } from './signatures';
 
 const step = (id: SpellId, s: Step['s'], o: Partial<Step> = {}): Step => ({ s, k: 'light-hit', art: `spell:${id}`, z: 2.2, a: 0.9, ...o });

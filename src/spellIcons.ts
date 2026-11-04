@@ -4,7 +4,8 @@
 
 import atlasUrl from './art/fx/pack/atlas.png';
 import atlas from './art/fx/pack/atlas.json';
-import { withLooks, type SpellId } from './sim/spells';
+import type { SpellId } from './sim/spells';
+import { withLooks } from './sim/spellLooks';
 
 /** The strip and frame (0 to 5) each spell shows. */
 export const SPELL_ICON: Record<SpellId, [strip: string, frame: number]> = withLooks({

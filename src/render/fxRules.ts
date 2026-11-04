@@ -4,7 +4,8 @@
 // `PackKey` is '<element>-<family>' and the tests check that every one named here is in the atlas.
 
 import type { Unit } from '../sim/battle';
-import { withLooks, type SpellId } from '../sim/spells';
+import type { SpellId } from '../sim/spells';
+import { withLooks } from '../sim/spellLooks';
 import type { Shot } from '../sim/units';
 import { kitElement } from './kitLooks';
 

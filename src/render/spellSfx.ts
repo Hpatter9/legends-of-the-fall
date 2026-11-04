@@ -8,7 +8,8 @@
 // play instead: each part carries its `fallback`, and `coveredBySpells` only applies once the files are in.
 
 import type { Battle, BattleEvent } from '../sim/battle';
-import { lookOf, SPELLS, withLooks, type SpellId } from '../sim/spells';
+import { SPELLS, type SpellId } from '../sim/spells';
+import { lookOf, withLooks } from '../sim/spellLooks';
 import { panOfTile } from './audioRules';
 import { spellCues, type Cued } from './soundRules';
 import { SPELL_SFX_FILES, type SpellSfxId } from './spellSfxManifest';
