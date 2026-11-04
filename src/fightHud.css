@@ -100,7 +100,7 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 .fhAuto.on { color: #fff3d0; background: linear-gradient(#9d8e4e, #655930); border-color: #f6db91; }
 .fhAuto.on .sw b { left: 13px; background: #fff3b0; }
 /* (AUTO-CAST: what the switch covers, the ultimates and the spells) */
-.fhAuto small { font: 700 7px/7px var(--body); letter-spacing: 0.2px; white-space: nowrap; opacity: 0.85; }
+.fhAuto small { font: 700 9px/9px var(--body); letter-spacing: 0.2px; white-space: nowrap; opacity: 0.85; }
 
 /* ---- the king's spells as orbs under the top bar (the main fight screen) ---- */
 #hudSpells { position: fixed; z-index: 3; left: 8px; right: 8px; top: 96px; display: none; align-items: flex-start; gap: 4px; pointer-events: none; }
@@ -294,3 +294,19 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 #hudSpells #mana.decreeReady::before { content: 'DECREE'; color: #ffe9a8; }
 /* (a narrow phone with the War Horn as well: the Auto switch may drop under the row rather than push it off the screen) */
 #hudSpells { flex-wrap: wrap; }
+
+/* ---- UX-FIXES (the audit's #3): bigger rows for a party of five or fewer, and the skill name no longer covers the casting hero's own row ----
+   Skill chips are 44px, the HP and SP numbers 13px in 14px bars; the cut-in banner (above the rows) names the skill, and the row only flashes its edge.
+   A party over five keeps its compact rows (two columns of twelve-pixel chips): there is no room for more. */
+.fightHud:not(.pairs) .fhRow { height: 46px; grid-template-rows: 14px 14px 14px; grid-template-columns: 38px minmax(0, 0.9fr) minmax(0, 2.1fr); }
+.fightHud:not(.pairs) .fhPic { width: 38px; height: 38px; }
+.fightHud:not(.pairs) .fhBar { height: 14px; }
+.fightHud:not(.pairs) .fhBar b { font-size: 13px; line-height: 12px; }
+.fightHud:not(.pairs) .fhChips { padding: 1px 0; }
+.fightHud:not(.pairs) .fhChip { min-height: 44px; }
+.fhRow .fhCast { display: none !important; }
+.fhRow.casting { box-shadow: inset 0 0 0 2px var(--cast, #fff), 0 0 8px var(--cast, #fff); }
+.fhAuto small { font-size: 9px; line-height: 9px; }
+/* (the crest under the top bar hangs to about 110px: the spell orbs start below it) */
+#hudSpells { top: 112px; }
+#hudSpells #spells button { min-width: 48px; min-height: 48px; }
