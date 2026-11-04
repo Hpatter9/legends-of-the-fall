@@ -38,6 +38,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
+import { castGate, heldBy, heldStep, startTactic, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
@@ -289,6 +290,8 @@ export type BattleEvent =
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
+  /** The line has met the foe (or the player called the charge): the held heroes go (`tactics.ts`). */
+  | { kind: 'lineMet'; how: 'met' | 'charge' }
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number; r?: number }
   | { kind: 'arc'; from: number; to: number; ail?: 'shock' }
   | { kind: 'zone'; u: number; v: number; ms: number; what?: 'spikes' }
@@ -441,6 +444,9 @@ export interface Battle {
   /** The player's orders waiting for the next tick (`orders.ts`), and every order applied so far, with the king's spells: with the seed and the placing, a fight replays from it. */
   orders?: Order[];
   log?: LogEntry[];
+  /** The party's tactic picked before the fight (`setTactic`), and the fight's own once it begins (`tactics.ts`). */
+  tacticPick?: Tactic;
+  tactic?: TacticState;
   /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
@@ -772,6 +778,8 @@ export function fight(b: Battle): boolean {
   startRift(b);
   // (a hero's summons and shapes kept from the last wave stand up again: SUMMON-TIMERS, `carry.ts`)
   startKept(b);
+  // (the party's tactic: who is held until the line meets the foe, `tactics.ts`)
+  startTactic(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
   // (STATS batch 4: the foes answer the heroes' growth, and every fighter rolls initiative)
@@ -892,6 +900,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
   if (b.board.hazards) tickHazards(b, out);
+  if (b.tactic) tickTactic(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
   tickCombo(b, out);
@@ -1339,7 +1348,12 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     else me.taunt = undefined;
   }
   me.cast = undefined;
-  if (tryCast(b, me, out)) return;
+  // (the party's tactic: a held hero saves its openers, and walks no further than the line, `tactics.ts`)
+  const held = b.tactic ? heldBy(b, me) : false;
+  castGate.held = held;
+  const cast = tryCast(b, me, out);
+  castGate.held = false;
+  if (cast) return;
   // strike the weakest foe in reach (first stepping up to higher ground a step or two away, if it holds the target too)
   const inReach = foes.filter((f) => canStrike(b.board, def, me, f) && !(f.air !== undefined && !def.shot && airborne(b, f))).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
   // (a foe the Tyrant condemned is every hero's first target, when it can be reached)
@@ -1361,6 +1375,12 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     if (round >= 0) return stepTo(b, me, round, out);
     const up = perchFor(b, me, def, inReach[0]);
     return up >= 0 ? stepTo(b, me, up, out) : swing(b, me, inReach[0], rng, out);
+  }
+  if (held) {
+    const step = heldStep(b, me, def.jump);
+    if (step >= 0) return stepTo(b, me, step, out);
+    me.busyUntil = b.t + WAIT_MS;
+    return;
   }
   // else walk toward the nearest foe it can get a blow at
   const blocked = new Set<number>();
