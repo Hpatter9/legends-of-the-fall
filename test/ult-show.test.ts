@@ -81,14 +81,13 @@ function fire(kind: string): { b: Battle; me: Unit; plan: ShowPlan; events: Batt
   for (let i = 0; i < 400 && b.phase === 'fight'; i++) {
     me.charge2 = CHARGE_MAX;
     const born = b.units.length;
+    // (as the page does: where everyone stood before the tick)
+    const before = new Map(b.units.map((u) => [u.id, { u: u.u, v: u.v }]));
     const events = stepBattle(b);
     const ult = ultimateOf(me)!;
     if (events.some((e) => e.kind === 'skill' && e.by === me.id && e.name === keyOf(ult))) {
       const unit = (id: number) => b.units.find((u) => u.id === id);
-      const origin = (id: number) => {
-        const st = unit(id)?.step;
-        return st && st.at >= b.t - 100 ? { u: st.u, v: st.v } : undefined;
-      };
+      const origin = (id: number) => before.get(id);
       const plan = planShow(kind, readCast(me, events, b.units.slice(born), unit, origin));
       assert.ok(plan, `${kind}: a plan`);
       return { b, me, plan, events };

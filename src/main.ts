@@ -1154,9 +1154,11 @@ class Game {
       while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
+        // (ULT-SHOW: where everyone stood before the tick, for a showcase to start a moved foe from)
+        const before = new Map(b.units.map((u) => [u.id, { u: u.u, v: u.v }]));
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
-        if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
+        if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born), before)) this.acc = 0;
         this.bossm.note(b, events);
         if (this.eid.noteEvents(b, events)) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);

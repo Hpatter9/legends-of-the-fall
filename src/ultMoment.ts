@@ -108,7 +108,7 @@ export class UltMoments {
 
   /** A tick's events: each hero ultimate that fired becomes a moment (full setting only); true when the battle should stop stepping now.
    *  It also tells the effects whose events are an ultimate's (drawn at its scale), and sees a delayed ultimate's salvo land. */
-  note(b: Battle, events: readonly BattleEvent[], born: readonly Unit[]): boolean {
+  note(b: Battle, events: readonly BattleEvent[], born: readonly Unit[], before?: ReadonlyMap<number, { u: number; v: number }>): boolean {
     const epic = new Set<number>();
     for (const e of events) {
       if (e.kind !== 'skill') continue;
@@ -122,8 +122,10 @@ export class UltMoments {
         const s = settings();
         if (wantsShow(u.def, { full: true, short: s.ultShort, seen: this.opts.seen?.(u.def) ?? 0, every: s.ultEvery })) {
           const tileOf = (id: number) => b.units.find((x) => x.id === id);
-          // (where a fighter the cast moved stood before it: its step, begun on this tick)
+          // (where a fighter the cast moved stood before it: the page's note of the tick before, else its step begun on this tick)
           const originOf = (id: number) => {
+            const was = before?.get(id);
+            if (was) return was;
             const st = b.units.find((x) => x.id === id)?.step;
             return st && st.at >= b.t - 100 ? { u: st.u, v: st.v } : undefined;
           };
