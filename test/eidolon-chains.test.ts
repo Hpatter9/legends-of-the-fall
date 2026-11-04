@@ -41,6 +41,8 @@ const packSave = (seed: number, pack: 0 | 1): Meta => {
   return m;
 };
 /** A won army boss wave, as the goals read it. */
+/** Q9: the chains' parts ask for Hard (tier 1). */
+const HARD = { tier: 1 } as const;
 const bossWin = (army: string, boss: string): QuestFight => ({ won: true, waves: 1, boss: true, heroes: ['knight'], flawless: true, kills: [boss], dailyCleared: false, mode: 'army', army, bosses: [boss] });
 const STARTERS = FIXED_PACKS.flatMap((p) => p.heroes);
 const askel = chainById('askel')!;
@@ -76,8 +78,8 @@ test('six chains, easiest first, one an Eidolon; Askel\'s is written (and Nivra\
   }
   // (each part has its words, a goal, a piece and a little pay; the pieces are all different)
   for (const p of askel.parts) assert.ok(p.title && p.text && p.begin && p.goal.n >= 1 && p.piece.lines.length === 2 && p.reward.chest, p.id);
-  assert.equal(PIECES.size, 30, "Askel's three, Nivra's three, Aurelan's three, Voltara's three, Gorm's three and Vaelkhar's three");
-  assert.deepEqual(askel.parts.map((p) => p.piece.name), ['The Ember Heart', 'The Kennel Collar', 'The Kennel Bell']);
+  assert.equal(PIECES.size, 30, "five a chain (Q9 appended two to each chain's three)");
+  assert.deepEqual(askel.parts.map((p) => p.piece.name), ['The Ember Heart', 'The Kennel Collar', 'The Kennel Bell', "The Huntsman's Whistle", 'The Hearth-Brand']);
   // (the binding's beats run in order, reach bound, then hand over the War Horn and fill it (HORN-GIFT, the owner's new ask: this test
   //  said the beats ended on bound before the horn became the binding's gift); the Eidolon speaks a line)
   const at = askel.binding!.map((b) => b.at);
