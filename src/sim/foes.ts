@@ -48,15 +48,15 @@ const GOLEM = { side: 'foe', hp: 460, atk: 28, def: 9, range: 1, moveMs: 1000, a
 
 export const FOES: Record<string, UnitDef> = {
   wolfBlack: { ...WOLF, id: 'wolfBlack', name: 'Black Werewolf', sheet: 'werewolf_black', scale: 0.81, hp: 243, role: 'Pack hunter, goes round the flank' },
-  wolfRed: { ...WOLF, id: 'wolfRed', name: 'Red Werewolf', sheet: 'werewolf_red', scale: 0.81, hp: 235, atk: 23, def: 3, role: 'Rends, and hunts the shooters' },
+  wolfRed: { ...WOLF, id: 'wolfRed', name: 'Red Werewolf', sheet: 'werewolf_red', scale: 0.81, hp: 228, atk: 23, def: 3, role: 'Rends, and hunts the shooters' },
   wolfWhite: { ...WOLF, id: 'wolfWhite', name: 'White Werewolf', sheet: 'werewolf_white', scale: 0.81, hp: 200, atk: 22, def: 5, moveMs: 340, role: 'Ghostly and quick, slips blows' },
 
   minotaur1: { ...MINOTAUR, id: 'minotaur1', name: 'Minotaur', sheet: 'minotaur_1', scale: 0.5, atk: 26, role: 'Charges, and will not be shoved' },
   minotaur2: { ...MINOTAUR, id: 'minotaur2', name: 'Minotaur', sheet: 'minotaur_2', scale: 0.54, hp: 300, atk: 22, role: 'Charges, rages as it bleeds' },
   minotaur3: { ...MINOTAUR, id: 'minotaur3', name: 'Minotaur', sheet: 'minotaur_3', scale: 0.5, hp: 400, def: 10, atk: 20, role: 'A wall of horn by its friends' },
 
-  gorgon1: { ...GORGON, id: 'gorgon1', name: 'Gorgon', sheet: 'gorgon_1', scale: 0.6, hp: 270, atk: 25, role: 'Shoots, and its glare slows' },
-  gorgon2: { ...GORGON, id: 'gorgon2', name: 'Gorgon', sheet: 'gorgon_2', scale: 0.6, hp: 290, atk: 21, role: 'Shoots venom, backs off' },
+  gorgon1: { ...GORGON, id: 'gorgon1', name: 'Gorgon', sheet: 'gorgon_1', scale: 0.6, hp: 260, atk: 25, role: 'Shoots, and its glare slows' },
+  gorgon2: { ...GORGON, id: 'gorgon2', name: 'Gorgon', sheet: 'gorgon_2', scale: 0.6, hp: 290, atk: 20, role: 'Shoots venom, backs off' },
   gorgon3: { ...GORGON, id: 'gorgon3', name: 'Gorgon', sheet: 'gorgon_3', scale: 0.6, hp: 245, atk: 25, role: 'Hunts the shooters' },
 
   satyr1: { ...SATYR, id: 'satyr1', name: 'Satyr', sheet: 'satyr_1', scale: 0.71, role: 'Sure-footed, goes round the flank' },
@@ -65,10 +65,10 @@ export const FOES: Record<string, UnitDef> = {
 
   orcGrunt: { ...ORC, id: 'orcGrunt', name: 'Orc Grunt', sheet: 'hk_orc_grunt', scale: 0.63, role: 'Stronger shoulder to shoulder' },
   orcArcher: { ...ORC, id: 'orcArcher', name: 'Orc Archer', sheet: 'hk_orc_archer', scale: 0.69, hp: 192, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, shot: 'arrow', role: 'Fire arrows, backs off' },
-  orcBrute: { ...ORC, id: 'orcBrute', name: 'Orc Brute', sheet: 'hk_orc_brute', scale: 0.57, hp: 405, atk: 29, def: 8, moveMs: 900, atkMs: 1300, role: 'Charges in with heavy blows' },
+  orcBrute: { ...ORC, id: 'orcBrute', name: 'Orc Brute', sheet: 'hk_orc_brute', scale: 0.57, hp: 395, atk: 29, def: 8, moveMs: 900, atkMs: 1300, role: 'Charges in with heavy blows' },
 
   imp: { ...IMP, id: 'imp', name: 'Imp', sheet: 'hk_imp', scale: 0.65, role: 'Small and quick, sets alight' },
-  demon: { ...DEMON, id: 'demon', name: 'Demon', sheet: 'hk_demon', scale: 0.39, hp: 395, atk: 30, role: 'Flies at the shooters, drinks blood' },
+  demon: { ...DEMON, id: 'demon', name: 'Demon', sheet: 'hk_demon', scale: 0.39, hp: 395, atk: 29, role: 'Flies at the shooters, drinks blood' },
   ogre: { ...OGRE, id: 'ogre', name: 'Ogre', sheet: 'hk_ogre', scale: 0.42, atk: 31, role: 'A huge club that hits two' },
 
   orcWarlord: { ...WARLORD, id: 'orcWarlord', name: 'Orc Warlord', sheet: 'hk_orc_warlord', scale: 0.55 },

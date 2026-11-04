@@ -30,7 +30,7 @@ export function foeKits(k: Record<string, Kit>): Record<string, Kit> {
 
     // ---- the Undead Legion (and the skeleton band) ----
     skeleton: plain({ name: 'Bone Shield', text: 'Blows from the front lose an eighth; it keeps by the archers and strikes whoever strikes them', block: 0.12, move: 'guard' }),
-    spearman: plain({ name: 'Long Spear', text: 'Its thrust also hits the hero behind for half, and it steps back from a blade to keep its reach', through: 0.5, move: 'kite' }),
+    spearman: plain({ name: 'Long Spear', text: 'Its spear point finds the gaps in armour (it ignores 2 defence), and it steps back from a blade to keep its reach', pierce: 2, move: 'kite' }),
     boneArcher: plain({ name: 'Hollow Draw', text: 'Arrows deal a fifth more to heroes 4 or more tiles away, and it backs off from a blade', far: 0.2, move: 'kite' }),
     boneVolley: { skill: k.archer.skill, passive: { name: 'Dead Aim', text: 'Arrows ignore 2 defence', pierce: 2 } },
 
