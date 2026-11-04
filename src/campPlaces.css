@@ -133,3 +133,5 @@
 .hm-battle .cpDailySlot .cpPlace.done .cpTag b { color: var(--g5); }
 .hm-battle .cpDailySlot .cpPlace i.badge { top: -4px; right: -4px; }
 .hm-battle .cpDailySlot .cpPlace i.dailyDone { top: -6px; right: -6px; }
+/* UX-FIXES: "Open all" fits inside the stash box (it ran 7 px off the left edge at every phone size) and is a full-size tap target */
+.hm-battle .cpStash .csAll { width: 100%; min-width: 0; min-height: 44px; margin: 4px 0 0; padding: 2px 4px; }

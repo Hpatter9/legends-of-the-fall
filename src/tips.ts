@@ -22,7 +22,7 @@ interface TipDef {
 }
 
 export const TIPS: Readonly<Record<TipId, TipDef>> = {
-  home: { text: 'Start a New run to send your heroes out.', page: 'home' },
+  home: { text: 'Tap Choose your battle to send your heroes out.', page: 'home' },
   deploy: { text: 'Drag your heroes onto the blue tiles. High ground hits harder; blows from behind hit hardest.', page: 'game', during: 'deploy' },
   fight: { text: 'Press Fight! Your heroes fight on their own.', page: 'game', during: 'deploy' },
   mana: { text: 'Tap a spell card, then a tile, to cast.', page: 'game', during: 'fight' },
@@ -253,6 +253,8 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 function pageUp(page: TipDef['page']): boolean {
   const up = (id: string) => !$(id).hidden;
   if (up('gacha')) return false;
+  // (a game tip waits while a sheet, a card or a film is over the board: the party picker, Settings, an unlock or a cutscene)
+  if (page === 'game' && (up('party') || up('settings') || document.querySelector('.rvCard, .unlock, #cutscene:not([hidden])'))) return false;
   if (page === 'any') return true;
   if (page === 'result') return !up('home') && up('result');
   return page === 'home' ? up('home') : !up('home') && !up('result');
