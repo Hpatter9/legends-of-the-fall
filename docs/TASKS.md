@@ -16,7 +16,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### EXPANSION-20 — 20 New Heroes, Vampire Origin & 3-Skill Engine
 
-- **Owner:** Antigravity worker.
+- **Owner:** Antigravity worker. **Branch:** `feat/twenty-heroes-vampire`. **PR URL:** `https://github.com/Hpatter9/legends-of-the-fall/pull/new/feat/twenty-heroes-vampire`.
 - **Goal:** Expand roster from 45 to 65 heroes. Round out all 12 existing Origins to 5 heroes each; introduce the all-new Vampire Origin with 5 heroes. Balance all 13 Classes to exactly 5 heroes each. Introduce the 3 Active Skills engine (`s1` Lv 1, `s2` Lv 10, `s3` Lv 20) + Ultimate (Lv 30) across the game, combat HUD, and Codex. Implement dynamic movement mechanics (charges, leaps, blinks, vaults, swaps, walls, tethers, burrows, auras) using `src/sim/toolkit/`.
 - **Scope:**
   - `src/sim/units.ts`, `heroNames.ts`, `heroLooks.ts`, `starter.ts`: 20 new unit definitions, heritages, naming, and starting pool.
