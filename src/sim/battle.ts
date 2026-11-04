@@ -127,6 +127,8 @@ export interface Unit {
   /** DEPTH-BUILD (`bonds.ts`): a bond's attack and charge for where the hero stands now, and a rival's fury once the other has fallen. */
   bondAtk?: number;
   bondCd?: number;
+  /** DEPTH-BUILD: a comrade near: blows on this hero land this much lighter (`bonds.ts`). */
+  bondGuard?: number;
   bondFury?: number;
   /** Soaks this much damage until then (the king's Shield). */
   shield?: { hp: number; until: number };
@@ -1110,6 +1112,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     ultOnDamage(to, landed, true);
   }
   // (DEPTH-BUILD: a sworn partner's guard takes a share of a blow that would fell it, once a wave)
+  if (b.bonds && to.side === 'hero' && to.bondGuard !== undefined && to.bondGuard < 1 && by !== to) dmg = Math.max(1, Math.round(dmg * to.bondGuard));
   if (b.bonds && to.side === 'hero' && dmg >= to.hp) dmg = bondCover(b, to, dmg);
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;

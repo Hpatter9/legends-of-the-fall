@@ -98,6 +98,7 @@ import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
 import { showMarchCard } from './marchCard';
 import { applyVigil } from './sim/chapelRooms';
+import { landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
 import { bondScenesDue } from './sim/bondScenes';
 import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
@@ -706,7 +707,7 @@ class Game {
     const out: Moment[] = [];
     const mode = run.mode?.kind;
     if (mode === 'calamity' && run.tower) {
-      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.tower.act });
+      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.rift ? landAt(run.tower.journey, run.tower.act) : run.tower.act });
       if ((run.mode as { ascension?: number }).ascension === 1) out.push({ kind: 'ascension' });
     }
     if (mode === 'tower' && [10, 25, 50].includes(run.stage)) out.push({ kind: 'spire', floor: run.stage });

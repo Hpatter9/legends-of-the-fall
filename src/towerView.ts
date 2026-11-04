@@ -3,6 +3,7 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
+import { BOONS, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
 import { foundRow } from './foundRow';
 import { todayKey } from './modes';
 import { SanctuaryView } from './sanctuaryView';
@@ -197,6 +198,7 @@ export class TowerView {
     else if (pendingAltar(run)) this.altarCard();
     else if (run.tower?.offer) this.offerCard();
     else if (this.calamity && run.tower?.mapDone && !run.over) this.recapCard();
+    else if (this.calamity && run.tower?.journey?.cross && !run.over) this.crossCard();
   }
 
   /** The map gives way to another screen (the home screen, a fight, the Last Stand): saved as its own Home button saves it, and shut.
@@ -269,7 +271,7 @@ export class TowerView {
       // (a map to clear before the next, not a floor: its title, and under it how many of its spots are cleared)
       const { done, total } = mapProgress(t);
       const title = el('div', 'rtTitle');
-      title.append(el('h2', '', `Map ${t.act}/${t.maps ?? CAL_MAPS}`), el('small', '', `${done} of ${total} spots cleared`));
+      title.append(el('h2', '', this.calamity && this.run.rift ? actLine(t.act) : `Map ${t.act}/${t.maps ?? CAL_MAPS}`), el('small', '', `${done} of ${total} spots cleared`));
       top.append(title);
     } else top.append(el('h2', '', `Act ${t.act} · Floor ${run.stage}`));
     const gold = el('span', 'rtGold');
@@ -412,7 +414,8 @@ export class TowerView {
 
   /** The big gate at the top of the act: the boss that waits there, by name and face. */
   private gate(act: number): HTMLElement {
-    const boss = UNITS[bossOfAct(this.run.rift ? RIFT_BOSSES[act - 1] : act, this.calamity)];
+    // (DEPTH-BUILD: the guardian of the route's land at this map, `calJourney.ts`)
+    const boss = UNITS[bossOfAct(this.run.rift ? landAt(this.run.tower?.journey, act) : act, this.calamity)];
     const lay = this.lay;
     const g = el('div', 'rtGate');
     g.style.left = `${Math.round((lay.W - 224) / 2)}px`;
@@ -906,6 +909,7 @@ export class TowerView {
       if (reforge) this.campCard();
       else if (run.tower?.offer) this.offerCard();
       else if (run.tower?.mapDone) this.recapCard();
+      else if (run.tower?.journey?.cross) this.crossCard();
     };
     // (the rank the starter will have once this step is chosen; a reforge keeps the rank it has)
     const rank = reforge ? riftRank(r) : riftRank(r) + 1;
@@ -996,10 +1000,54 @@ export class TowerView {
       saveSlot(run);
       this.card?.remove();
       this.card = null;
-      if (pendingAltar(run)) this.altarCard();
+      // (DEPTH-BUILD: the journey's crossroads, after Acts I and II)
+      if (t.journey?.cross) this.crossCard();
+      else if (pendingAltar(run)) this.altarCard();
     }, !!expeditionOf(run));
     // (WAVE-RECAP-2: the map's share of the company's work, its XP and its fights; its finds are the recap's own groups)
     putDetail(card, done.detail, { strip: 'Fight by fight', prefix: '#', equipmentStep: (kind) => awakenedOf(this.hooks.meta(), kind) });
+  }
+
+  /** The Calamity's crossroads (DEPTH-BUILD, `calJourney.ts`): after Act I, three rifts, each a land and its guardian, the one taken crossed
+   *  next; after Act II, three boons. Kept in the run, so leaving and coming back finds it. */
+  private crossCard(): void {
+    const run = this.run;
+    const j = run.tower!.journey!;
+    const cross = j.cross;
+    if (!cross) return;
+    const card = this.cardShell(cross.after === 1 ? 'The crossroads' : 'The last crossroads', 'boss');
+    card.append(el('p', 'rtLead', cross.after === 1 ? 'Three rifts open where the road forks. Each leads to a land not yet crossed, and to its guardian. A guardian is as strong as its place on the road, whichever you meet.' : 'Only the Hollow Heart is left. The rift offers a gift for the last road.'));
+    const list = el('div', 'rtShop');
+    const done = () => {
+      saveSlot(run);
+      this.card?.remove();
+      this.card = null;
+      this.draw(true);
+      if (pendingAltar(run)) this.altarCard();
+    };
+    if (cross.after === 1)
+      for (const land of cross.lands) {
+        const boss = UNITS[bossOfAct(land, true)];
+        const b = el('button', 'rtBuy');
+        b.append(el('b', '', boss?.name ?? `Land ${land}`), el('small', '', 'Its guardian waits at the end of Act II; Karnok waits beyond.'));
+        b.addEventListener('click', () => chooseLand(j, land) && done());
+        list.append(b);
+      }
+    else
+      for (const id of cross.boons) {
+        const b = el('button', 'rtBuy');
+        b.append(el('b', '', BOONS[id].name), el('small', '', BOONS[id].line));
+        b.addEventListener('click', () => {
+          if (!chooseBoon(j, id)) return;
+          const now = boonNow(id);
+          run.gold += now.gold;
+          if (now.mend) run.tower!.hp = {};
+          done();
+        });
+        list.append(b);
+      }
+    card.append(list);
+    saveSlot(run);
   }
 
   /** The relics an elite paid: choose one (the offer is kept in the run, so leaving and coming back finds it). */
