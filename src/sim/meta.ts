@@ -203,6 +203,10 @@ export interface StashChest {
   bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
   first?: boolean;
+  /** QUESTS-3: a chest that holds no summoning stones (a Last Stand re-climb's, a quest of one or two stars's). */
+  dry?: boolean;
+  /** QUESTS-3: a chest that holds half its stones, rounded up (a Calamity clear's). */
+  half?: boolean;
 }
 
 export interface DailyEntry {

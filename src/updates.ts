@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.337.0',
+    date: '2026-11-04',
+    title: 'Quest stars, rarer summons, tactics',
+    notes: ['Every quest shows a 1-5 star difficulty and its length; harder quests pay better and easy ones pay no stones. Summoning stones are much rarer.', 'Tactics arrive in fights (Advance together, Charge, Hold the line); the choice comes to the prep screen next.'],
+  },
+  {
     version: '0.336.0',
     date: '2026-11-04',
     title: 'King\'s spells, first fixes',
