@@ -5,6 +5,7 @@
 
 import type { Unit } from '../sim/battle';
 import type { SpellId } from '../sim/spells';
+import { withLooks } from '../sim/spellLooks';
 import type { Shot } from '../sim/units';
 import { kitElement } from './kitLooks';
 
@@ -198,7 +199,7 @@ export const SKILL_ELEMENT: Record<string, Element> = {
 export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? kitElement(name) ?? 'light';
 
 /** The element of each king's spell. */
-export const SPELL_ELEMENT: Record<SpellId, Element> = {
+export const SPELL_ELEMENT: Record<SpellId, Element> = withLooks({
   heal: 'light',
   meteor: 'fire',
   haste: 'wind',
@@ -220,7 +221,7 @@ export const SPELL_ELEMENT: Record<SpellId, Element> = {
   bulwark: 'earth',
   wolves: 'forest',
   starfall: 'fire',
-};
+});
 
 /* ------------------------------------------------------------------ deaths */
 
@@ -318,7 +319,7 @@ export const arcStyle = (fromDef: string): ArcStyle => (fromDef === 'kitsune' ? 
 /* ------------------------------------------------------------------ the king's spells */
 
 /** What a spell throws where it lands (on the tapped tile's centre): strips and their size (1 = 32px). */
-export const SPELL_CAST: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; scale: number }[]> = {
+export const SPELL_CAST: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; scale: number }[]> = withLooks({
   heal: [{ key: 'light-circle', scale: 2.8 }, { key: 'forest-aura', scale: 3 }],
   haste: [{ key: 'wind-circle', scale: 2.8 }, { key: 'wind-vortex', scale: 3 }],
   shield: [{ key: 'light-circle', scale: 2.8 }, { key: 'light-nova', scale: 3 }],
@@ -339,10 +340,10 @@ export const SPELL_CAST: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; scal
   bulwark: [{ key: 'earth-shield', scale: 3 }],
   wolves: [{ key: 'forest-circle', scale: 2.8 }, { key: 'forest-gather', scale: 3 }],
   starfall: [{ key: 'fire-circle', scale: 3.2 }],
-};
+});
 
 /** What a spell plays on each fighter it touches: a strip, its size as a share of the fighter's height, and where up the body. */
-export const SPELL_TOUCH: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; size: number; at: number } | undefined> = {
+export const SPELL_TOUCH: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; size: number; at: number } | undefined> = withLooks({
   heal: { key: 'forest-sparkle', size: 1.3, at: 0.5 },
   haste: { key: 'wind-nova', size: 1.2, at: 0.5 },
   shield: { key: 'light-shield', size: 1.2, at: 0.5 },
@@ -363,7 +364,7 @@ export const SPELL_TOUCH: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; siz
   bulwark: { key: 'earth-shield', size: 1.3, at: 0.5 },
   wolves: { key: 'forest-nova', size: 1.4, at: 0.3 },
   starfall: undefined,
-};
+});
 
 /* ------------------------------------------------------------------ keeping big effects readable */
 

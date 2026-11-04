@@ -70,8 +70,16 @@
 // field1 81b0369e, field30 3f9b2a5e, bosses 11c33a36, armyFoes e3c7011a, spells 69b1d534, lands 99da4981, army d78fb13d, daily d00ddcc9, tower
 // d1468e2a, stand 69c8c642, calamity 18f58bc9, heroes1 58aac7f4, heroes10 9c513279, heroes30 526f4f47, field1Others f1bc7c9d, field30Others
 // dd370f3f, heroes1Others d75813fa, heroes10Others c7f3b928, heroes30Others 1e0ab73b.)
+// (the tactics, docs/notes/tactics.md, re-recorded every scenario but `stand`, which kept its hash (the Last Stand takes no tactic and no
+// answer): Advance together, the default, holds the strikers and the back line until the front line meets the foe, the foes of
+// every band strike 2% harder in answer, and six heroes' kits were retuned for parity. The new hashes: field1 c4c76edd, field30 cf333734,
+// bosses 017421d4, armyFoes 88cd9831, spells d961099b, lands aceefe84, army f4b8c46b, daily 5db72448, tower ff21fdcb, calamity 2e1e9aed, heroes1
+// 63c68ffd, heroes10 04f5f766, heroes30 18918923, field1Others 0f677ef4, field30Others 6dcf91f2, heroes1Others 92b9bcd8, heroes10Others
+// f0b63f3f, heroes30Others 4b47763c.)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
+// (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
+// fourteen. No other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
@@ -102,7 +110,7 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // either proof, `identityHashes`.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (f3dc7098): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
-// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower` (calamity e3944281, daily ae09024b, tower f4b9d2b2): a run started now finds runes, not pieces, and a won
+// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower`, and batch 6 again over the tactics (calamity 1d879f22, daily 22ed0372, tower 2337ec08): a run started now finds runes, not pieces, and a won
 // wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
@@ -131,8 +139,8 @@ test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and w
 });
 
 test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
-  // (STATS batch 4: the Calamity's greedy run now reaches a boss whose signatures move it, so `calamity` joins the scenarios with a boss)
-  // (SEVEN-SLOT GEAR batch 4: with runes in place of finds the Calamity's greedy run no longer reaches such a boss, so it is back with the rest)
+  // (STATS batch 4: the Calamity's greedy run now reaches a boss whose signatures move it, so `calamity` joined the scenarios with a boss;
+  // since the tactics, docs/notes/tactics.md, its run ends before that boss again, so it plays as recorded with them on, as it did before)
   const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
   const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
   assert.deepEqual(recordedStrengths(() => identityHashes(rest)), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));

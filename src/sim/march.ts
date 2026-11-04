@@ -6,6 +6,7 @@
 import { mixSeed } from './rng';
 import { roomOpen, type RoomId } from './rooms';
 import type { Castle } from './castle';
+import { isVigil, type VigilId } from './chapelRooms';
 
 export type MarchMod = 'cursed' | 'scouted' | 'night' | 'forced';
 export type CurseId = 'noShop' | 'healHalf' | 'secondForm';
@@ -16,7 +17,8 @@ export interface Orders {
   curse?: CurseId;
   /** (Later batches: the route, the Chapel's Vigil and the Smithy's marked hero.) */
   route?: string;
-  vigil?: string;
+  /** The Chapel's Vigil (`chapelRooms.ts`): how the party rises when a heart burns. */
+  vigil?: VigilId;
   marked?: string;
 }
 
@@ -135,7 +137,8 @@ export function readOrders(raw: unknown): Orders | undefined {
   const out: Orders = {};
   if (mod) out.mod = mod;
   if (mod === 'cursed') out.curse = CURSE_IDS.includes(o.curse as CurseId) ? o.curse : 'healHalf';
-  for (const k of ['route', 'vigil', 'marked'] as const) if (typeof o[k] === 'string') out[k] = o[k];
+  for (const k of ['route', 'marked'] as const) if (typeof o[k] === 'string') out[k] = o[k];
+  if (isVigil(o.vigil)) out.vigil = o.vigil;
   return Object.keys(out).length ? out : undefined;
 }
 

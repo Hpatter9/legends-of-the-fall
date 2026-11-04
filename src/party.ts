@@ -4,6 +4,7 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from './sim/remedies';
+import { retired } from './sim/legacy';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { heroClassLabel, heroName } from './sim/heroNames';
@@ -137,7 +138,7 @@ export class Party {
     const q = this.quest;
     this.picked = q
       ? [...q.cast, ...suggestParty(this.meta.unlocked.filter((k) => !q.cast.includes(k) && q.fits(k)), this.slots - q.cast.length, (k) => kindPower(this.meta, k))]
-      : suggestParty(this.meta.unlocked, this.slots, (k) => kindPower(this.meta, k));
+      : suggestParty(this.meta.unlocked.filter((k) => !retired(this.meta, k)), this.slots, (k) => kindPower(this.meta, k));
     const traits = countTraits(this.picked).filter((c) => c.active).map((c) => c.trait.name);
     const roles = [...new Set(this.picked.map(roleOf))].map((r) => ROLE_NAMES[r]);
     this.note = '';
@@ -159,6 +160,11 @@ export class Party {
     }
     if (this.quest && !this.picked.includes(kind) && !this.quest.fits(kind)) {
       this.note = `${heroName(kind)} may not fight in this one: ${this.quest.rule}.`;
+      return this.draw();
+    }
+    // (DEPTH-BUILD: a hero mentoring in the Hall of Legends does not march; recall it from the Hall first)
+    if (!this.picked.includes(kind) && retired(this.meta, kind)) {
+      this.note = `${heroName(kind)} is in the Hall of Legends: recall them there first.`;
       return this.draw();
     }
     if (this.picked.includes(kind)) {
@@ -385,6 +391,7 @@ export class Party {
       card.setAttribute('aria-pressed', String(on));
       card.append(secret ? secretFigure(56) : portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 56));
       if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
+      else if (open && retired(m, kind)) card.append(el('span', 'ptPickedFlag', 'In the Hall'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);
       card.append(el('b', '', open || lock?.named ? heroName(kind) : '???'));

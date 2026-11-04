@@ -3,6 +3,8 @@
 // merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { ritesSpent } from './chapelRooms';
+import { roomOpen } from './rooms';
 import { heartsLost, marchFx, readOrders, shopShut, skipsWave, type Orders } from './march';
 import { keepSummons, keptBoost, type KeptForm, type KeptSummon } from './carry';
 import { duchessModeOk, type DuchessWish } from './duchessFight';
@@ -151,6 +153,12 @@ export interface Run {
   pool?: string[];
   /** DEPTH-BUILD: the march orders the run took (`march.ts`); none is a plain march. */
   orders?: Orders;
+  /** DEPTH-BUILD: the Chapel's Last Rites has been spent this run (`chapelRooms.ts`). */
+  ritesUsed?: boolean;
+  /** DEPTH-BUILD: the bonds' snapshot as the run began (`bonds.ts`: each pair's level, -1 rivals); none is no bonds. */
+  bonds?: Record<string, number>;
+  /** DEPTH-BUILD: the mentors' perks for the party as the run began (`legacy.ts`); none is none. */
+  legacy?: Record<string, { hp?: number; atk?: number; shield?: number }>;
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;
   /** Relic ids held (`relics.ts`). */
@@ -273,6 +281,8 @@ export function noteFight(run: Run, b: Battle): void {
   addRelicMarks(run, b);
   // (SEVEN-SLOT GEAR batch 6: a won wave's fallen stand again at half, `wounds.ts`)
   settleWounds(run, b);
+  // (DEPTH-BUILD: the Chapel's Last Rites comes once a run)
+  if (ritesSpent(b)) run.ritesUsed = true;
   const army = waveArmyOf(run);
   if (!army) return;
   const fell = b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon).length;
@@ -519,6 +529,10 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(march.heroHeal !== 1 ? { heal: march.heroHeal } : {}),
     ...(march.foeHeal !== 1 ? { foeHeal: march.foeHeal } : {}),
     ...(march.night ? { night: true } : {}),
+    // (DEPTH-BUILD: the bonds, in an army run, from its snapshot)
+    ...(run.mode?.kind === 'army' && run.bonds ? { bonds: run.bonds } : {}),
+    // (DEPTH-BUILD: the Chapel's Last Rites, in an army run that has not spent it)
+    ...(army && run.mode?.kind === 'army' && !run.ritesUsed && roomOpen(run.castle, 'lastRites') ? { rites: true } : {}),
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board ?? base.board,

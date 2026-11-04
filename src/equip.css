@@ -159,3 +159,7 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .rmBar { display: block; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; } .rmBar b { display: block; height: 100%; background: #6fc46a; }
 #bench .card.wounded i span { background: #d9a23c; }
 #bench .card.wounded::after { content: '✚'; position: absolute; right: 4px; top: 18px; font-size: 13px; line-height: 1; color: #f2e9d8; text-shadow: 0 0 2px #000, 0 0 2px #000; pointer-events: none; }
+/* UX-FIXES: Sell is a small plain button under the big Equip (they sat side by side at one size, a slip sold the piece) */
+.eqBtns:has(.eqSell) { grid-template-columns: 1fr; }
+.eqBtns .eqSell { justify-self: end; min-height: 44px; min-width: 120px; padding: 0 12px; font-size: 13px; background: none; border: 1px solid #6b6454; color: #cfc6ad; box-shadow: none; }
+.eqBack { align-self: flex-start; min-height: 44px; min-width: 88px; margin-bottom: 4px; }

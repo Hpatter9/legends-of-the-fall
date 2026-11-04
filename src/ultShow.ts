@@ -32,9 +32,21 @@ const SOUND: Partial<Record<Beat['kind'], Sfx[]>> = {
   crash: ['earthRumble', 'hitHeavy'],
   blow: ['hitFist'],
   hook: ['throwBone'],
+  cloud: ['thunder'],
+  snare: ['rustle'],
+  stone: ['frostCrack'],
+  smite: ['hitHeavy'],
+  taunt: ['block'],
+  rise: ['earthRumble'],
+  tunnel: ['earthRumble'],
+  bless: ['heal'],
+  transform: ['fireBoom'],
   appear: [],
   finish: [],
 };
+
+/** How a hero's shots are drawn: a bolt from the sky, a stream of flame, or a bullet (the rest). */
+const HOW: Record<string, 'bolt' | 'flame' | 'bullet'> = { lightningMage: 'bolt', dragoon: 'flame' };
 
 export class UltShow {
   plan: ShowPlan | null = null;
@@ -114,9 +126,16 @@ export class UltShow {
         }
         return;
       case 'cut':
-      case 'blow': {
+      case 'blow':
+      case 'shot':
+      case 'snare':
+      case 'stone':
+      case 'smite':
+      case 'taunt':
+      case 'bless': {
         const to = b.foe !== undefined ? foeAt(b.foe) : null;
-        if (to) fx.showBeat(b.kind, p[0], p[1], { tall, to, el });
+        if (to) fx.showBeat(b.kind, p[0], p[1], { tall, to, el, how: HOW[plan.kind] });
+        if (b.kind === 'shot') play(HOW[plan.kind] === 'flame' ? 'fireWhoosh' : HOW[plan.kind] === 'bolt' ? 'thunder' : 'gun');
         return;
       }
       case 'dash':
