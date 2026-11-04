@@ -82,6 +82,8 @@ import { WEAK } from '../src/sim/weakness';
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again, now 81e830d7: it casts each king's spell once, and the
+// schools added fourteen. No other scenario moved.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

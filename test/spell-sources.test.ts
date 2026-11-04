@@ -18,18 +18,19 @@ test('every spell past the starting three comes from the Mage Tower or a milesto
     const milestone = MILESTONE_SPELLS[id] !== undefined;
     assert.ok(tower !== milestone, id);
   }
-  // (the tower teaches three a level, over its four levels)
-  for (let lvl = 1; lvl <= 4; lvl++) assert.equal(Object.values(TOWER_SPELLS).filter((n) => n === lvl).length, 3, `level ${lvl}`);
+  // (the tower teaches three of the first spells a level, over its four levels, and since KING-SPELLS batch 4 the schools' fourteen new
+  // spells too: four, four, four and two more)
+  for (const [lvl, n] of [[1, 7], [2, 7], [3, 7], [4, 5]] as const) assert.equal(Object.values(TOWER_SPELLS).filter((x) => x === lvl).length, n, `level ${lvl}`);
 });
 
 test('the Mage Tower teaches its spells as it rises, and only once', () => {
   const m = startedMeta(1);
   assert.deepEqual(grantSpells(m), []);
   m.castle.mageTower = 1;
-  assert.deepEqual(grantSpells(m).sort(), ['cleanse', 'shield', 'smite']);
+  assert.deepEqual(grantSpells(m).sort(), ['cleanse', 'gale', 'icewall', 'shield', 'smite', 'snare', 'venom']);
   assert.deepEqual(grantSpells(m), [], 'once');
   m.castle.mageTower = 3;
-  assert.deepEqual(grantSpells(m).sort(), ['blink', 'chain', 'frost', 'hex', 'lance', 'poison']);
+  assert.deepEqual(grantSpells(m).sort(), ['blink', 'bonewall', 'chain', 'drain', 'firewall', 'foresight', 'frost', 'hex', 'lance', 'mirage', 'poison', 'shatter', 'sunbeam', 'thunderclap']);
   assert.equal(sourceMet(m, 'rally'), false);
 });
 
