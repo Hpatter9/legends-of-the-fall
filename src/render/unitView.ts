@@ -148,7 +148,7 @@ export class UnitSprite {
   tall = 40;
   /** ULT-SHOW (`ultShow.ts`): a pose the page stages over what the sim says while an ultimate's showcase plays (world px, its depth, how
    *  solid, a row and how far through it, the way it faces on the screen); null: drawn as the sim says. */
-  stage: { x: number; y: number; z: number; alpha: number; row: Row; p: number; face: 1 | -1 } | null = null;
+  stage: { x: number; y: number; z: number; alpha: number; row: Row; p: number; face: 1 | -1; art?: Texture } | null = null;
 
   constructor(public unit: Unit, private readonly equipmentStep = unit.awaken ?? 0) {
     const def = defOf(unit);
@@ -409,10 +409,17 @@ export class UnitSprite {
   /** ULT-SHOW: drawn in the pose the showcase stages (its place, its row's frame, its facing, how solid), over the sim's. */
   private drawStaged(st: NonNullable<UnitSprite['stage']>): void {
     const row: Row = hasRow(this.sheet, st.row) ? st.row : st.row === 'attack2' ? 'attack' : st.row;
-    const list = rowFrames(this.sheet, row);
-    this.body.texture = list[Math.min(list.length - 1, Math.max(0, Math.floor(st.p * list.length)))];
-    const dx = st.face * (facesRightOf(this.sheet) ? 1 : -1);
-    this.body.scale.set(this.scaleNow * dx, this.scaleNow);
+    if (st.art) {
+      // (a painted pose: drawn a little taller than the fighter so it reads, facing as staged; every pose faces right)
+      this.body.texture = st.art;
+      const k = (this.tall * 1.35) / this.sizeNow / Math.max(1, st.art.height);
+      this.body.scale.set(k * st.face, k);
+    } else {
+      const list = rowFrames(this.sheet, row);
+      this.body.texture = list[Math.min(list.length - 1, Math.max(0, Math.floor(st.p * list.length)))];
+      const dx = st.face * (facesRightOf(this.sheet) ? 1 : -1);
+      this.body.scale.set(this.scaleNow * dx, this.scaleNow);
+    }
     this.body.x = 0;
     this.body.rotation = 0;
     this.rim.x = 0;

@@ -58,6 +58,7 @@ import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, im
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
+import { loadShowArt, showArt, type ShowArt } from './showArt';
 import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
@@ -108,6 +109,8 @@ export async function loadFx(): Promise<void> {
   await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
   // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
   void loadSpellArt();
+  // (ULT-SHOW: the showcases' painted poses and props, behind the game too)
+  void loadShowArt();
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
   const tex = async (url: string) => Texture.from(await loadImage(url));
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
@@ -814,6 +817,15 @@ export class Fx {
         if (el === 'dark') smoke(5, 1.6);
         return;
     }
+  }
+
+  /** ULT-SHOW: a painted prop (`showArt.ts`) on the moment's layer, `h` px tall at (x, y), drifting, turning and lasting as asked. False
+   *  when it has not loaded (the pack's effect plays alone then). */
+  showProp(art: ShowArt, x: number, y: number, o: { h: number; life: number; vx?: number; vy?: number; spin?: number; rotation?: number; delay?: number; alpha?: number; add?: boolean }): boolean {
+    const t = showArt(art);
+    if (!t) return false;
+    this.moment.spawn({ frames: [t], x, y, scale: o.h / Math.max(1, t.height), frameMs: o.life, life: o.life, prio: true, ...(o.vx ? { vx: o.vx } : {}), ...(o.vy ? { vy: o.vy } : {}), ...(o.spin ? { spin: o.spin } : {}), ...(o.rotation ? { rotation: o.rotation } : {}), ...(o.delay ? { delay: o.delay } : {}), alpha: o.alpha ?? 1, add: o.add ?? false });
+    return true;
   }
 
   /** ULT-SHOW: the ordinary effects hidden while a showcase plays its own on the moment's layer (what the cast left, its numbers and its cuts,

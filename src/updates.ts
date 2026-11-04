@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.349.0',
+    date: '2026-11-04',
+    title: 'Ornate menus, painted ultimates',
+    notes: ['Every menu, popup and prompt restyled in the ornate Keep and Kingdom look, with bigger tap targets.', 'Painted frames in the ultimate showcases: the Samurai\'s iaido, the Buccaneer\'s die, the Dread Pirate\'s ghost ship and more.'],
+  },
+  {
+    version: '0.348.0',
+    date: '2026-11-04',
+    title: 'Tactic advice',
+    notes: ['The tactic sheet now gives advice that holds up: advance together, and a warning if you hold the line against archers.'],
+  },
+  {
+    version: '0.347.0',
+    date: '2026-11-04',
+    title: 'Runes, remedies, new Eidolon art',
+    notes: ['Runes replace run finds: three per hero, merge them up. Fallen heroes stand again at half after a won wave; pack remedies in your satchel.', 'Repainted War Horn and quest givers on the quest board.'],
+  },
+  {
+    version: '0.346.0',
+    date: '2026-11-04',
+    title: 'Cleaner hero art',
+    notes: ['Pinholes cleared from every awakened hero sheet, and sharper, solid hero portraits.'],
+  },
+  {
     version: '0.345.0',
     date: '2026-11-04',
     title: 'Every ultimate shown, formations, tactics',

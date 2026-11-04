@@ -10,8 +10,8 @@ import type { Formation } from './formations';
 /** The words for each tactic: its name, a short label for the chip, and one line for the sheet. */
 export const TACTIC_WORDS: Record<Tactic, { name: string; short: string; line: string }> = {
   advance: { name: 'Advance together', short: 'Advance', line: 'Strikers and shooters stay behind the front line and save their leaps until it meets the foe.' },
-  charge: { name: 'Charge', short: 'Charge', line: 'Everyone goes at once. Best against archers and casters, where waiting costs.' },
-  hold: { name: 'Hold the line', short: 'Hold', line: 'Nobody leaves the deploy rows until the foe comes. Strong against brutes, weak against archers.' },
+  charge: { name: 'Charge', short: 'Charge', line: 'Everyone goes at once, as before: the quickest reach the foe first, often alone.' },
+  hold: { name: 'Hold the line', short: 'Hold', line: 'Nobody leaves the deploy rows until the foe comes. Archers will shoot a line that waits.' },
 };
 
 /** The words for each formation: its name, a short label for the chip, and its bonus and weak point in a line. */

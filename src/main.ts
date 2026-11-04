@@ -2,6 +2,8 @@
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { socketStrip } from './runeTray';
+import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
@@ -187,6 +189,7 @@ import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
 import { pickedTactic, pickTactic } from './sim/tacticPick';
+import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -1895,6 +1898,7 @@ class Game {
         return t ? at(u, v, t.h) : null;
       },
       seen: (kind) => seenOf(this.meta, kind),
+      toClient: (x, y) => this.toClient(x, y),
       saw: (kind) => {
         noteSeen(this.meta, kind);
         saveMeta(this.meta);
@@ -1914,6 +1918,7 @@ class Game {
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       arrange: (f) => this.arrangeFormation(f),
+      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
@@ -3079,7 +3084,10 @@ class Game {
   private buildBench(): void {
     const bench = $('bench');
     const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
-    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    // (SEVEN-SLOT GEAR batch 5: the Pack button says how many rune merges are ready)
+    const merges = this.run.runes && this.b.phase === 'deploy' ? mergesReady(this.run.runes) : 0;
+    $('pack').textContent = merges ? `Pack · ${merges} merge${merges === 1 ? '' : 's'}` : 'Pack';
+    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};${this.run.runes ? JSON.stringify(this.run.runes.worn) + this.b.phase : ''};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -3135,6 +3143,8 @@ class Game {
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      // (SEVEN-SLOT GEAR batch 5: a rune run shows each hero's three sockets over its card, twins rimmed, on the deploy screen)
+      if (this.run.runes && !h.guest && this.b.phase === 'deploy') card.append(socketStrip(this.run.runes, h.kind));
       // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
       card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
@@ -3665,8 +3675,11 @@ class Game {
       card.classList.toggle('twinOn', !!twin && !(twin.tag !== undefined && canMerge(this.run, Number(id), twin.tag)));
       const mark = card.querySelector<HTMLElement>('.twinMark');
       if (mark) mark.textContent = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
-      const share = u ? u.hp / u.maxHp : 1;
+      // (SEVEN-SLOT GEAR batch 6: a hero risen at half shows its wound before the fight, with a bandage mark)
+      const wound = !u && !this.run.tower ? hpShare(this.run, Number(id)) : 1;
+      const share = u ? u.hp / u.maxHp : wound;
       (card.querySelector('i span') as HTMLElement).style.width = `${Math.round(share * 100)}%`;
+      card.classList.toggle('wounded', !u && wound < 1);
     }
   }
 

@@ -112,3 +112,88 @@ design's eight batches, each with its tests. This note says what each batch buil
   no-loop rules: patching then selling never beats selling, an enchanted piece sells for no more); `wear.test.ts` and `stall.test.ts`
   brought to the new prices.
 - **Screenshots:** `docs/samples/gear-build-upkeep-card-*.png`, `gear-build-stall-repair-*.png` and `gear-build-stall-enchant-*.png`.
+
+## Batch 4: runes, the rules
+
+- **`src/sim/runes.ts`**: the eight kinds (Ember +4% attack, Bulwark +1 defence and +5% hp, Arcana +5% skill power, Gale +4% attack and
+  move speed, Hawk crit, Wellspring mending, Warding resist, and the Keystone), levels I to V at x1, x2, x3.5, x5.5, x8 (`RUNE_LEVEL`), times
+  one knob, `RUNE_SCALE` (0.5 for now; see below). A level V rune adds a flourish, a signature ability the gear already runs.
+- **Where the words changed:** Hawk is crit chance alone (+4.5% at I: the fight has no gear-side crit damage to raise); Wellspring is
+  mending alone (0.3% hp a second); Warding is resist alone; Arcana's skill power is the talents' `pow` (it lifts the skills' blows and
+  heals), so no new stat was needed; the level V flourishes are the nearest signature abilities (Ember V burns, Gale V a haste at the start,
+  Bulwark V a ward at the start, Hawk V a crit feeds the skill...).
+- **Getting runes:** every source that handed out a run's gear hands out a rune instead (`findGear`, `findSlotGear`): it still draws the
+  slot from its own stream, so events, relics and foes play out the same, and the rune's kind from `mixSeed(run.seed, RUNE_SALT, stage,
+  source, n)`, one in fifteen a Keystone. A better source (a boss, an elite, a cursed path) gives a level II. Every won wave adds a level I of
+  its own (`waveRune`, its own source), so a boss wave gives two, one of them II. The merchant prices them 25 (I), 60 (II), and 60 a level
+  past that, plus 2 a stage. The road's smiths and the mystery forges (the rune-carver) raise a rune a level (`upgradeFound`); a lost wager
+  or a melt takes one (`loseFound`). The first clear's Keystone II is left for later.
+- **Wearing, the bag, merging:** three sockets a hero kind (`RuneState.worn`, so merges and partings keep them); a Keystone is never worn.
+  The bag holds eight: a ninth merges at once with a twin there, or the lowest is broken for 5 gold (the wave card says so). Two of a kind
+  and level, or one and a Keystone of that level, make the next level where the one dropped onto was; V is the top. `mergeAll` merges the
+  highest first, Keystones last, keeping the result on the hero that wore one.
+- **Auto** (`autoRunes`): merges everything, then hands the runes out best first to the heroes named (the strongest first), three each, to
+  the hero whose role wants it most (`RUNE_ROLE`: front-liners Bulwark, Ember, Warding; shooters Hawk, Gale, Ember; casters Arcana, Hawk;
+  healers Arcana, Wellspring); a rune stays put unless a place rates it a tenth higher. The bot and auto-replay run it before every wave
+  (`dressSquad`), and a rune run's Equip best is it.
+- **In the fight:** a kind's worn runes add on top of its lasting kit (`runKitStats`), or alone in a run whose heroes start bare
+  (`bareKitStats`), capped as the kit is.
+- **The run's end:** runes are gone. A boss leaves a trophy (`trophyPiece`: any base of the catalogue, its own stream), which comes home a
+  quarter of the time, every one on an army's first clear of its tier (`settleFinds`, read after the clear is recorded). Nothing else comes
+  home. A run saved before runes (no `run.runes`) finishes on its finds as before.
+- **`RUNE_SCALE` 0.5:** at 1 a fresh save cleared the daily's measured window 89% of the time (the test's bar is 50 to 85%); 0.5 reads
+  80% and 0.25 71%, against the joint rebalance's 79%. Batch 6's wounds make the late waves harder, and batch 8 re-measures every mode.
+- **Fixtures:** `calamity`, `daily` and `tower` re-recorded in `ailments-identical` and `spells-identity` (the run modes, as the design
+  said); the Calamity's greedy run no longer reaches a boss with signature attacks, so it left that test's moved list.
+- **Tests:** `test/runes.test.ts`; the RUN-GEAR tests now run on a run saved before runes (`pre` in `test/run-gear.test.ts`), the events,
+  mystery, Calamity and recap tests count runes (`foundOf` in `test/helpers.ts`), and the wave's gains list a run's new runes
+  (`waveGains.ts`).
+
+## Batch 5: runes, the page
+
+- **The rune tray** (`src/runeTray.ts`): in a rune run the pack ("Relics and runes") is the tray: a row for each fielded hero (each hero
+  of the company before any is placed) with its portrait, name, three sockets and what its runes give ("+2% attack, +5% hp, +1 defence");
+  the bag's eight cells; **Merge all** (with the merges ready) and **Auto runes**. Runes change between waves only (the tray is read-only in
+  a fight). The relics stay at its top as before.
+- **Tap to do it:** tap a rune and the places it can go light up in gold (the heroes' free sockets, the bag when it is worn, its twins);
+  tap one to set it, swap it onto a full hero's rune, take it off, or merge it. Tap it again to put it down. **Drag is not built**: tapping
+  does everything one-handed, and dragging between the tray's small cells on a phone was the riskier half; it can come later.
+- **Showing who wears what:** each hero's card on the bench carries its three sockets over its portrait on the deploy screen (hidden in
+  the fight). **Sockets over the heroes on the board are not built** (the board is drawn by Pixi; the bench beside it shows the same).
+  Twins (a rune with another of its kind and level, or a Keystone of its level) have a gold rim and a "2" badge in the tray; the stone swells
+  gently (its glow is steady, as the no-flicker rule asks), and holds still with reduced motion. The Pack button says "Pack · 3 merges" when merges are ready.
+- **The stones** are drawn in their kind's colour with the level as pips (a clear placeholder) until their paintings come
+  (`gear-art-todo.md`).
+- **The wave card:** a rune's line reads "Ember rune I (+2% attack)"; a rune broken for room in a full bag says so; the wave's gains list
+  new runes as its gear.
+- **Pure helpers** (`runes.ts`): `socketsOf`, `runeTotals`, `runeTargets`, `dropRune`; tested in `test/runes-page.test.ts`.
+- **Screenshots:** `node tools/gear-build/rune-shots.mjs` writes `docs/samples/gear-build-runes-bench-*.png`, `-tray-` and `-pick-` (a
+  rune chosen, its targets lit), at the three sizes, no sideways scroll, no page errors.
+
+## Batch 6: wounds and remedies
+
+- **Wounds** (`src/sim/wounds.ts`): in a run started since runes, after a won wave of an army, the daily or a quest battle, each hero that
+  fell stands again at half its hp (`REVIVE_SHARE`), those still standing are whole, and the Ring of Returning's wearer comes back whole.
+  After a lost wave with hearts left, everyone is whole again. Settled in `noteFight`, which the page and the bot both call; kept as
+  `Run.wounds`; read as a fight's start share through `hpShare` (`health.ts`), which the page already passed to every hero; the bot's
+  `botBoost` now passes it too. The wave card says "Aiko stands again at half". A hero's bench card shows its wound before the fight (a
+  part-filled amber bar and a bandage mark). The spire and the Calamity keep their own wounds (25%, campfires; the owner's answer 3).
+- **Remedies** (`src/sim/remedies.ts`): the Bandage Roll (+30%, 60 crowns), Healing Draught (+60%, 180), Camp Stew (the squad +25%, 320,
+  standing 2), Phoenix Ash (to full, 500, standing 2) and Elixir of the Keep (the squad to full, 1,400, standing 3). Owned in `Meta.satchel`.
+  **Where the words changed:** the Phoenix Ash heals to full without the "+10% max hp for the next wave" (there is no next-wave bonus
+  to hang it on without touching the fight); remedies are not in chests or first and Mythic clears yet (only Hester's shelf and a daily's
+  clear give them), so a chest's opening did not need a new kind of item.
+- **The satchel:** the party screen shows it once a remedy is owned: up to five, at most one Elixir, each with − and +, the last choice
+  remembered (`satchelFor`, `pickSatchel`; the strongest first when room runs out), and the switch **Auto may use remedies** (off by
+  default). The satchel is packed into the run the first time it is needed (the pack opens, or Auto heals) and its unused remedies come
+  home when the run ends (`settleFinds`).
+- **Using them:** the pack's tray has a Remedies pocket: tap a squad remedy to use it, or tap one and then a wounded hero (each hero shows
+  its health). They work in the spire and the Calamity too, on their own wounds (`setShare`). The Alchemist's Sash adds a quarter and the
+  Pilgrim's Cord a half on their wearer (`remedyBonus`).
+- **Auto's rule** (`autoRemedy`, run by `autoRound` before a wave when the switch is on): any hero under half gets the cheapest remedy
+  that brings it to three quarters (else the strongest it may use), keeping the Phoenix Ash and the Elixir for a boss wave; it never buys.
+- **The stall:** the Tomes tab shelves the remedies (four Bandages and two Draughts a day, then the better ones by standing); they sell back
+  for a fifth (`sellRemedy`). A cleared daily gives a Bandage Roll. Their icons are the rogue pack's potion and elixir until painted.
+- **Tests:** `test/wounds.test.ts`, `test/remedies.test.ts`.
+- **Screenshots:** `docs/samples/gear-build-remedies-*.png` (the pocket, a Bandage Roll chosen, the wounded knight lit),
+  `gear-build-satchel-*.png` (the party screen) and `gear-build-runes-bench-*.png` (the wounded knight's card).

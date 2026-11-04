@@ -25,6 +25,8 @@ import {
 import { TOMES } from './sim/tomes';
 import { TRADER_NAMES, buyFromTrader, caravanHere, gloamingHere, oreWareName, stockOfTrader, tradeLeft, traderLine, whyNotBuyFrom, type TradeWare, type Trader } from './sim/traders';
 import { durabilityOf, maxDurability, needingRepair, repairAllCost, repairCost, wearState } from './sim/wear';
+import { REMEDIES } from './sim/remedies';
+import { REMEDY_ICON } from './remedyArt';
 import { GLYPHS, REFORGE_STANDING, clearGlyphs, enchantOffers, glyphPrice, patchBlock, patchCost, patchItem, reforgeCost } from './sim/enchant';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -170,11 +172,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       return i;
     }
     const box = el('span', 'hsTome');
-    box.append(img(TOME_ICON[w.size]));
+    box.append(img(w.type === 'remedy' ? REMEDY_ICON[w.remedy] : TOME_ICON[w.size]));
     box.style.width = box.style.height = `${px}px`;
     return box;
   };
-  const wareName = (w: Ware | TradeWare): string => (w.type === 'ore' ? oreWareName(w) : w.type === 'book' ? bookById(w.book)!.title : w.type === 'gear' ? itemName(w.item) : TOMES[w.size].name);
+  const wareName = (w: Ware | TradeWare): string => (w.type === 'ore' ? oreWareName(w) : w.type === 'book' ? bookById(w.book)!.title : w.type === 'gear' ? itemName(w.item) : w.type === 'remedy' ? REMEDIES[w.remedy].name : TOMES[w.size].name);
 
   const shelfTab = (body: HTMLElement, day: number): void => {
     const st = stockOf(m, day);
@@ -260,6 +262,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       sheet.append(el('p', 'hsLine', hasAbility(it.rarity) ? `${stats.abilities[0]?.name}: ${describeAbility(base.ability, stats.abilities[0]?.s ?? 1)}` : `Epic and up: ${base.ability.name}`));
       sheet.append(el('p', 'hsLine', `Durability ${maxDurability(it)}: it loses a point for each wave it is worn in.`));
     } else if (w.type === 'tome') sheet.append(el('p', 'hsLine', `${TOMES[w.size].xp.toLocaleString('en-GB')} XP for one hero, read from its page.`));
+    else if (w.type === 'remedy') sheet.append(el('p', 'hsLine', `A remedy: ${REMEDIES[w.remedy].text}, used between waves from the run's pack. You own ${m.satchel?.[w.remedy] ?? 0}; a run takes up to five (one Elixir), chosen on the party screen.`));
     const why = trader ? whyNotBuyFrom(m, trader, w as TradeWare, todayKey()) : whyNotBuy(m, w as Ware, todayKey());
     const buy = el('button', 'hsBuy');
     buy.append(icon(ICONS.crowns, ''), `Buy · ${w.price}`);
@@ -277,7 +280,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       if (!got) return;
       play('coin');
       close();
-      after(got.type === 'book' ? 'Mind the spine. It bites.' : got.type === 'gear' ? 'Sharp end goes at the enemy. You’d be amazed.' : 'Don’t read it all at once.');
+      after(got.type === 'book' ? 'Mind the spine. It bites.' : got.type === 'gear' ? 'Sharp end goes at the enemy. You’d be amazed.' : got.type === 'remedy' ? 'Tastes awful. Works, though.' : 'Don’t read it all at once.');
     });
     const shut = el('button', 'hsShut', 'Close');
     shut.addEventListener('click', close);

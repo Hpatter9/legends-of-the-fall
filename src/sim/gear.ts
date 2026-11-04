@@ -10,6 +10,7 @@
 import type { Boost } from './battle';
 import type { Rng } from './rng';
 import { EQUIP_BASES, itemName, itemStats, RARITY_NAMES, statLines, type Equipment } from './equipment';
+import { runeName, runeText, type Rune } from './runes';
 
 export type Slot = 'weapon' | 'armour' | 'charm';
 export const SLOTS: readonly Slot[] = ['weapon', 'armour', 'charm'];
@@ -27,6 +28,8 @@ export interface Gear {
   atk: number;
   /** RUN-GEAR: a real piece found in a real-gear run (its name, slot and stats are the piece's; `hp` and `atk` are then 0). */
   piece?: Equipment;
+  /** SEVEN-SLOT GEAR batch 4: a rune, in a run that finds runes (its name is the rune's; `hp` and `atk` are then 0: `runes.ts`). */
+  rune?: Rune;
 }
 
 const NAMES: Record<Slot, readonly string[]> = {
@@ -59,7 +62,7 @@ export function pieceText(it: Equipment): string {
   return `${RARITY_NAMES[it.rarity]} Lv ${it.level}${stats.length ? `: ${stats.join(', ')}` : ''}`;
 }
 
-export const gearText = (g: Gear) => (g.piece ? pieceText(g.piece) : [g.atk ? `+${Math.round(g.atk * 100)}% attack` : '', g.hp ? `+${Math.round(g.hp * 100)}% hp` : ''].filter(Boolean).join(', '));
+export const gearText = (g: Gear) => (g.rune ? runeText(g.rune) : g.piece ? pieceText(g.piece) : [g.atk ? `+${Math.round(g.atk * 100)}% attack` : '', g.hp ? `+${Math.round(g.hp * 100)}% hp` : ''].filter(Boolean).join(', '));
 
 /** A real piece carried as run gear (`piece`): its id is the piece's, its slot the base's (the right hand is a weapon, the torso armour,
  *  any other slot a charm), its tier its grade (at most `MAX_TIER`). */
@@ -68,6 +71,9 @@ export function pieceGear(it: Equipment): Gear {
   // (the Grimoire, a weapon before seven slots and a left hand since, is still a weapon among a run's finds)
   return { id: it.id, slot: slot === 'main' || !slot || it.base === 'grimoire' ? 'weapon' : slot === 'torso' ? 'armour' : 'charm', tier: Math.max(1, Math.min(MAX_TIER, it.rarity)), name: itemName(it), hp: 0, atk: 0, piece: it };
 }
+
+/** A rune carried as run gear (`rune`): its id is the rune's, the slot the one its source drew, its tier its level (at most `MAX_TIER`). */
+export const runeGear = (r: Rune, slot: Slot): Gear => ({ id: r.id, slot, tier: Math.max(1, Math.min(MAX_TIER, r.lv)), name: runeName(r), hp: 0, atk: 0, rune: r });
 
 /** What a hero's gear (a slot map, maybe absent) multiplies its hp and attack by. */
 export function gearBoost(gear?: Partial<Record<Slot, Gear>>): Boost {

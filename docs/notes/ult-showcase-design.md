@@ -87,7 +87,19 @@ strike does). A foe the cast moved starts from where the page saw it before the 
 Captures: `docs/samples/ult-showcase-<hero>.mp4` for each of the eight and `docs/samples/ult-showcase-batch1.jpg`
 (`tools/ult-show/shots.mjs --picks ... [--stage 9]`: a fresh page for each hero).
 
-## Frames to generate (the OpenAI image account is out of credits until tomorrow)
+## The painted frames (in: PR #332, `art/ult-showcase`)
+
+The frames below were generated (OpenAI image generation) and are wired in: `tools/ult-show/cut_art.py` cuts `art-source/ult-showcase/`
+down to `src/art/ult-show/` (poses 160 px tall, die faces 64 px, props 192 px; about 480 KB, bundled for offline play); `showArt.ts` loads
+them behind the game. A **pose** stands in for the sprite's frame for its beat (`SHOWCASES[kind].poses`: the wind-up, the run, the strike,
+the flight, the call, the finish), drawn a little taller than the fighter and facing as staged; the Arc Blade's strike plays his six
+lightning frames. A **prop** plays on the moment's layer for its beat (`PROPS` in `ultShow.ts`) and lifts the dim round itself while it is
+up: the Buccaneer's hook flies out and his die rolls over each cut and lands on a high face where the sim's cut was heavy, a low one where
+not; the ghost ship sails over the field; the reticle locks on; the meteor falls; the noon clock and the moon hang over the caster; the
+ground clock spreads under the Time Witch; the fox pops up on each foe; the chains, the holy light and the notes run to their targets.
+Until a frame has loaded the pack's effect plays alone. Checked at 393 x 852, 360 x 780 and 412 x 915.
+
+The list as asked for:
 
 Everything above is built from what is in the game. These would make it read better, made as the art plan says:
 
