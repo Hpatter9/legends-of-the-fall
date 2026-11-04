@@ -16,6 +16,15 @@ export const CLASS_OF: Readonly<Record<string, StarterClass>> = {
   cleric: 'support', priestess: 'support', wolfBard: 'support', wanderer: 'support', satyr: 'support',
 };
 
+/** The twenty coming heroes' starter classes (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
+export const COMING_CLASS_OF: Readonly<Record<string, StarterClass>> = {
+  bloodGargoyle: 'front', banneret: 'front', geomancer: 'front', bellWarden: 'front', seraph: 'front',
+  vampireLord: 'striker', nightstalker: 'striker', astralSphinx: 'striker', mirageDancer: 'striker', seaReaver: 'striker',
+  dhampir: 'shooter', falconer: 'shooter', bombardier: 'shooter', harpooner: 'shooter',
+  hemomancer: 'caster', plagueDoctor: 'caster', astrologer: 'caster', inquisitor: 'caster',
+  warDrummer: 'support', corsairSurgeon: 'support',
+};
+
 export const CLASS_NAMES: Readonly<Record<StarterClass, string>> = { front: 'Front-liner', striker: 'Striker', shooter: 'Shooter', caster: 'Caster', support: 'Support' };
 
 /** A starter pack: its name, a line and chips for the pick screen, and its three heroes (front-liner, striker, back-liner). */

@@ -127,6 +127,50 @@ twenty heroes wait as coming heroes. Changes to the branch:
 `test/wave4-kits.test.ts`: the roster's kit rules, the five waiting (and all twenty), their traits in a fight, and both revives raising
 the nearest fallen friend at 30% from level 10.
 
+## The page-side rows, ready to move
+
+Each per-hero table that the roster's tests hold to `ALL_HEROES` (its keys exactly the roster's) has a coming twin beside it, with the
+twenty's rows written to the same rules (`test/coming-page.test.ts` holds them to each roster test's rules):
+
+| Table | Coming twin | From the branch, and what changed |
+| --- | --- | --- |
+| `HERO_NAMES` (`heroNames.ts`) | `COMING_NAMES` | the canon (`heroNames.ts` there) |
+| `HERO_STORY` (`codexLore.ts`) | `COMING_STORY` | rewritten to the canon's names and sexes (the branch's said Lady Genevieve, "he" for the Sphinx, and so on) |
+| `HERO_QUIPS` (`quipData.ts`) | `COMING_QUIPS` | as written: first-person lines, every one within 8 to 70 characters |
+| `CLASS_OF` (`starter.ts`) | `COMING_CLASS_OF` | as written |
+| `PERKS` (`legacy.ts`) | `COMING_PERKS` | new: legacy came after the branch |
+| `DEEP_KITS` (`talentsDeep.ts`) | `COMING_DEEP_KITS` | the skill and ultimate names of the kits as built (the Bombardier's skill 1 is Concussion Mortar); `plain` (below) |
+| `TREES` (`talents.ts`) | `COMING_TREES` | each tree names the hero's real skill 1 (the branch's named Blood Lance, Shadow Fang, Stone Dive and others that are not the kits' skills), and uses only effects the twenty's casts read |
+| `PASSIVES` (`awaken.ts`) | `COMING_PASSIVES` | the Vampires' five take free abilities of the equipment (the branch added five new ones); the other fifteen as written |
+
+- **Talent effects the twenty's casts read.** `reach` (through `reachOf`), `dur` (through `ms`), `pow`, and the cast's own heal, shield
+  and haste. Not `extra`, `skillStun` or `skillSlow`, which only some roster skills read: the branch's nodes that used them now give
+  haste, a shield or a heal. The deep rows' "one more of what it makes" (the archmage's Spellstorm, the marksman's Rain of Ruin) is
+  `plain` for the twenty: 15% more strength instead, and the words say so.
+- Not yet written (they want the battle sprites, or come with joining): tavern spots and activities (`SPOTS`, `LIFE`, placed by eye in
+  the rooms), HUD face boxes (`HUD_FACES`), the recruit scenes (`sceneScripts.ts`), the looks (`HERO_LOOKS`: the new sprites are drawn in
+  their own tones, so most need none), ultimate showcases, and the skill books (built from `HERO_KITS` when they join).
+
+## Tuning: what the sweep found
+
+The tuner can now tune the coming heroes against the roster without touching the roster's knobs: `COMING=1` puts the twenty in the sweep's
+teams (`SWEEP_POOL` in `tools/heroSweep.ts`), and `tools/kits/tune.ts` then measures them against the roster's average and steps only their
+knobs (`COMING_TUNE`, `COMING_ULT` and the new `COMING_PASSIVE` in `kits/coming.ts`). Without it the sweep and the balance tests are as
+they were (`test/coming-tune.test.ts`).
+
+At level 1 (stage 5, 12,000 fights, the band is 6 points):
+
+- **As the branch wrote them, the twenty are far too strong**: 15 of the 20 beyond 6 points, the Seraph +22.7, the Plague Doctor +15.1, the
+  Sea Reaver +13.5. With their passives they also lift the roster's own average win rate, from about 54% to about 68%, when they share its teams.
+- **It is not skill 1**: with every skill 1 at the tuner's floor (0.05) they were still +5 to +23.
+- **Most of it is the passives**: with the passives taken away most fall within the band (the Seraph still +9). The branch's passives
+  were written for the 0.262 roster, before main's great rebalance and the D&D scores, and stack team-wide (auras, halos, big blocks and
+  leech). A passive-strength knob (`p`, `scalePassive`) lets the sweep scale them down; ten rounds brought 17 of the 20 within 6, but only
+  by taking most passives to a tenth or less of what was written (`tools/kits/coming-level1.json` is that run), and the Seraph (+13.6)
+  and the Sea Reaver (+12.1) stay out: Halo Dive's ally shields and stun and Breaker Rush's haste do not scale with a skill's strength.
+- So no tuned numbers are written yet: bringing the twenty into the band means rewriting what the branch made, which is the director's
+  call. The Bombardier's ultimate rate (batch 3) waits on the same answer: at level 30 the sweep is dominated by the passives' excess.
+
 ## The art imported (PRs #344 to #349)
 
 ChatGPT's six art PRs (from [twenty-heroes-art-prompts.md](twenty-heroes-art-prompts.md)) are merged into this branch as they are (PNGs under

@@ -1,0 +1,62 @@
+{
+ "vampireLord": {
+  "p": 0.09
+ },
+ "hemomancer": {
+  "p": 0.533
+ },
+ "nightstalker": {
+  "p": 0.16
+ },
+ "bloodGargoyle": {
+  "p": 0.133
+ },
+ "dhampir": {
+  "p": 0.085
+ },
+ "warDrummer": {
+  "p": 1
+ },
+ "banneret": {
+  "p": 0.092
+ },
+ "geomancer": {
+  "p": 1
+ },
+ "bellWarden": {
+  "p": 0.132
+ },
+ "falconer": {
+  "p": 0.066
+ },
+ "astralSphinx": {
+  "p": 0.09
+ },
+ "mirageDancer": {
+  "p": 0.283
+ },
+ "plagueDoctor": {
+  "p": 0.167
+ },
+ "bombardier": {
+  "p": 0.097
+ },
+ "astrologer": {
+  "p": 0.697
+ },
+ "inquisitor": {
+  "p": 0.465
+ },
+ "seraph": {
+  "p": 0.061
+ },
+ "corsairSurgeon": {
+  "p": 0.538
+ },
+ "harpooner": {
+  "p": 0.119
+ },
+ "seaReaver": {
+  "p": 0.061
+ }
+}

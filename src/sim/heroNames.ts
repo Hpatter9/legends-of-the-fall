@@ -63,6 +63,30 @@ export const HERO_NAMES: Record<string, HeroName> = {
   tyrant: { name: 'Edmund', title: 'the Unbending Verdict', heritage: 'English' },
 };
 
+/** The twenty coming heroes' names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). The canon: docs/notes/twenty-heroes-audit.md. */
+export const COMING_NAMES: Record<string, HeroName> = {
+  vampireLord: { name: 'Vladislav', title: 'Voivode of the Red Keep', heritage: 'Romanian (Wallachian)' },
+  hemomancer: { name: 'Carmilla', title: 'Countess of the Chalice', heritage: 'Austrian (Styrian)' },
+  nightstalker: { name: 'Sorin', title: 'Wing of the Crypt', heritage: 'a Transylvanian strigoi' },
+  bloodGargoyle: { name: 'Gavril', title: 'Stone Sentinel of the Fane', heritage: 'a cathedral gargoyle' },
+  dhampir: { name: 'Klara', title: 'Silver-Bolt Hunter', heritage: 'Czech (Bohemian)' },
+  warDrummer: { name: 'Raiden', title: 'Thunder of the Keep', heritage: 'Japanese' },
+  banneret: { name: 'Isolde', title: 'Voice of the Rampart', heritage: 'Norman French' },
+  geomancer: { name: 'Tenzin', title: 'Shaper of Crags', heritage: 'Tibetan' },
+  bellWarden: { name: 'Kavi', title: 'Keeper of the Bronze Toll', heritage: 'a yokai temple-bell guardian' },
+  falconer: { name: 'Aisling', title: 'Wing of the Glen', heritage: 'Scottish Gaelic' },
+  astralSphinx: { name: 'Nenet', title: 'Riddle of the Stars', heritage: 'Egyptian myth' },
+  mirageDancer: { name: 'Zahara', title: 'Veil of the Dunes', heritage: 'Nubian (Sudanese-Egyptian)' },
+  plagueDoctor: { name: 'Corvus', title: 'Censer of Ash', heritage: 'Venetian undead lore' },
+  bombardier: { name: 'Soren', title: 'Iron Alchemist', heritage: 'Danish' },
+  astrologer: { name: 'Cyra', title: 'Keeper of the Astrolabe', heritage: 'Alexandrian Greek' },
+  inquisitor: { name: 'Soraya', title: 'Scales of the Sun', heritage: 'Persian (Iranian)' },
+  seraph: { name: 'Gabriela', title: 'Wing of the Reliquary', heritage: 'Castilian Spanish' },
+  corsairSurgeon: { name: 'Tariq', title: 'Sawbones of the Reef', heritage: 'Moroccan' },
+  harpooner: { name: 'Siku', title: 'Whaler of the Floes', heritage: 'Inuit (Greenlandic)' },
+  seaReaver: { name: 'Nakoa', title: 'Breaker of Hulls', heritage: 'Hawaiian (Polynesian)' },
+};
+
 /** A fighter's own name: a hero's personal name, or the unit's name for anything else (foes, summons). */
 export const heroName = (kind: string): string => HERO_NAMES[kind]?.name ?? UNITS[kind]?.name ?? kind;
 

@@ -71,6 +71,30 @@ export const DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: strin
   tyrant: { calling: 'berserker', skill: 'Judgement', ult: 'Reign of Terror' },
 };
 
+/** The twenty coming heroes' callings and skill names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`); the test checks the names against their kits (`kits/coming.ts`). `plain`: their casts make no "one more" of anything (they do not read `extra`), so the deep rows give them strength instead. */
+export const COMING_DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string; plain: true }>> = {
+  vampireLord: { calling: 'duelist', skill: 'Crimson Lunge', ult: 'Red Eclipse', plain: true },
+  hemomancer: { calling: 'archmage', skill: 'Sanguine Lash', ult: 'Exsanguinate', plain: true },
+  nightstalker: { calling: 'duelist', skill: 'Dusk Dive', ult: 'Midnight Hunt', plain: true },
+  bloodGargoyle: { calling: 'bulwark', skill: 'Gargoyle Crash', ult: 'Cathedral Perch', plain: true },
+  dhampir: { calling: 'marksman', skill: 'Silver Stake', ult: 'Judgement of Dusk', plain: true },
+  warDrummer: { calling: 'support', skill: 'Thunder Beat', ult: 'Storm of Ten Thousand Drums', plain: true },
+  banneret: { calling: 'support', skill: 'Standard Charge', ult: 'Oriflamme of the Keep', plain: true },
+  geomancer: { calling: 'archmage', skill: 'Tectonic Shove', ult: "Mountain's Embrace", plain: true },
+  bellWarden: { calling: 'bulwark', skill: 'Bronze Slam', ult: 'Midnight Knell', plain: true },
+  falconer: { calling: 'marksman', skill: 'Falcon Stoop', ult: 'Sky Hunt', plain: true },
+  astralSphinx: { calling: 'duelist', skill: 'Rift Pounce', ult: 'Celestial Convergence', plain: true },
+  mirageDancer: { calling: 'duelist', skill: 'Whirling Veils', ult: 'Dance of Seven Mirages', plain: true },
+  plagueDoctor: { calling: 'archmage', skill: 'Censer Swing', ult: 'Black Miasma', plain: true },
+  bombardier: { calling: 'marksman', skill: 'Concussion Mortar', ult: 'Carpet Bombardment', plain: true },
+  astrologer: { calling: 'archmage', skill: 'Gravity Well', ult: 'Supernova Alignment', plain: true },
+  inquisitor: { calling: 'archmage', skill: 'Chains of Judgement', ult: 'Solar Tribunal', plain: true },
+  seraph: { calling: 'healer', skill: 'Halo Dive', ult: 'Descent of the Host', plain: true },
+  corsairSurgeon: { calling: 'healer', skill: 'Boarding Swing', ult: 'Crimson Dispensary', plain: true },
+  harpooner: { calling: 'marksman', skill: 'Barbed Harpoon', ult: 'Leviathan Line', plain: true },
+  seaReaver: { calling: 'berserker', skill: 'Breaker Rush', ult: 'Wrath of the Reef', plain: true },
+};
+
 type Stats = Partial<Record<StatKey, number>>;
 interface Pick {
   name: string;
@@ -105,7 +129,7 @@ function deepen(key: string, v: number, skill: string): { tal: Record<string, nu
 
 /** The four deep rows (tiers 4 to 7) of a hero's tree, two nodes each. `second` is the hero's tier-2 nodes (their effect keys fit the skill). */
 export function deepNodes(kind: string, second: readonly TalentNode[], index: number, ab: AbMaker, words: StatWords): TalentNode[] {
-  const kit = DEEP_KITS[kind];
+  const kit = DEEP_KITS[kind] ?? COMING_DEEP_KITS[kind];
   if (!kit) return [];
   const { calling, skill, ult } = kit;
   const id = (s: string) => `tl_${kind}_${s}`;
@@ -225,7 +249,15 @@ export function deepNodes(kind: string, second: readonly TalentNode[], index: nu
         { name: 'Grand Banner', icon: 'pendant', text: 'Every 10s, allies within 3 tiles hit a quarter harder for 5s, and +8% attack.', stats: { atk: 0.08 }, abilities: [ab(id('banner'), 'Grand Banner', 'tick', 'rally', { n: 10, w: 5, show: true })] },
       ];
   }
-  const rows: [Pick, Pick][] = [row4, row5, row6, row7];
+  // (a hero whose casts make no "one more" of anything, `plain`: the twenty heroes' casts do not read `extra`, so the node it would be
+  // on is that much stronger instead, and says so)
+  const unextra = (p: Pick): Pick => {
+    if (!('plain' in kit && kit.plain) || !p.tal?.extra) return p;
+    const { extra: _extra, ...rest } = p.tal;
+    void _extra;
+    return { ...p, tal: { ...rest, pow: (rest.pow ?? 0) + 0.15 }, text: p.text.replace(/makes one more of what it makes and is (\d+)% stronger/, (_m, n: string) => `is ${Number(n) + 15}% stronger`) };
+  };
+  const rows: [Pick, Pick][] = [row4, row5, row6, row7].map(([a, b]) => [unextra(a), unextra(b)]);
   const out: TalentNode[] = [];
   rows.forEach((pair, r) =>
     pair.forEach((p, i) => out.push({ id: `${kind}:${r + 4}${'abcd'[i]}`, tier: (r + 4) as TalentNode['tier'], name: p.name, icon: p.icon, text: p.text || words(p.stats ?? {}), ...(p.stats ? { stats: p.stats } : {}), ...(p.tal ? { tal: p.tal } : {}), ...(p.abilities ? { abilities: p.abilities } : {}) })),

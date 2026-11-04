@@ -7,7 +7,7 @@ import { fight, place, startBattle, stepBattle, type Battle, type Boost, type St
 import { FIELD_BANDS } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
-import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
 
 export const TEAM = 5;
 
@@ -23,9 +23,13 @@ export const sweepBoost = (grade: number, level: number): Boost => ({ ...gradeBo
 /** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
 export const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
 
+/** The heroes the sweep draws teams from: the roster, and with `COMING=1` in the environment (which the tools' forked children inherit)
+ *  the coming heroes too (docs/notes/twenty-heroes.md), so the tuner can tune them against the roster before they join. */
+export const SWEEP_POOL: readonly string[] = process.env.COMING === '1' ? [...ALL_HEROES, ...COMING_HEROES] : ALL_HEROES;
+
 /** A random team of `TEAM` different hero kinds (from every hero there is). */
 export function pickTeam(rng: Rng): string[] {
-  const pool = [...ALL_HEROES];
+  const pool = [...SWEEP_POOL];
   const team: string[] = [];
   for (let i = 0; i < TEAM; i++) team.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   return team;

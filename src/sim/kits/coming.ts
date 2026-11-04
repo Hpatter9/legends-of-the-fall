@@ -3,7 +3,7 @@
 // roster's kits have: `KITS`'s (skill 1, passive, ultimate), read through `kitOf`, and `HERO_KITS`'s (the pool and three slots), read through
 // `heroKitOf`. A hero that joins the roster moves out of here.
 
-import type { Kit } from '../abilities';
+import type { Kit, Passive } from '../abilities';
 import type { HeroKit, Slot } from '../heroKits';
 import type { Row, RowSlot } from './comingRow';
 import { vampireRows } from './vampires';
@@ -36,19 +36,50 @@ export const COMING_TUNE: Readonly<Record<string, readonly [number, number, numb
   seaReaver: [0.5, 1, 0.8],
 };
 
+/** Each coming hero's passive strength: its passive's numbers scaled by this (1, as written). The branch's passives were written for the 0.262
+ *  roster and outweigh main's, so the hero sweep tunes this knob as well (`tools/kits/tune.ts`, key `p`). */
+export const COMING_PASSIVE: Readonly<Record<string, number>> = {};
+/** Each coming hero's ultimate knobs once tuned (`tuned`: its meter's rate and its strength), over the row's own. */
+export const COMING_ULT: Readonly<Record<string, { rate: number; power: number }>> = {};
+
+/** A passive's numbers scaled by `k`: its shares and chances times `k`, its multipliers' part above 1 times `k`, its damage over time and
+ *  the charge it gives times `k`; its switches (`sure`, `steady`) and timings as written. */
+export function scalePassive(p: Passive, k: number): Passive {
+  if (k === 1) return p;
+  const out: Passive = { ...p };
+  const share = ['dodge', 'block', 'pierce', 'arc', 'regen', 'leech', 'huddle', 'scales', 'blockHeal', 'aura', 'rage', 'thorns', 'far', 'through', 'halo', 'undying'] as const;
+  for (const key of share) if (typeof p[key] === 'number') out[key] = p[key]! * k;
+  if (p.prey) out.prey = 1 + (p.prey - 1) * k;
+  if (p.slow) out.slow = Math.round(p.slow * k);
+  if (p.crit) out.crit = { ...p.crit, chance: p.crit.chance * k, mult: 1 + (p.crit.mult - 1) * k };
+  if (p.mend) out.mend = { ...p.mend, share: p.mend.share * k };
+  if (p.tune) out.tune = { ...p.tune, charge: p.tune.charge * k };
+  if (p.ignite) out.ignite = { ...p.ignite, dmg: p.ignite.dmg * k };
+  if (p.finish) out.finish = { ...p.finish, mult: 1 + (p.finish.mult - 1) * k };
+  return out;
+}
+
+const rowsOf = (): Record<string, Row> => ({ ...vampireRows(), ...wave2Rows(), ...wave3Rows(), ...wave4Rows() });
+/** Set a coming hero's passive strength in its built kit (the tuner's `p` knob). */
+export function setComingPassive(kind: string, k: number): void {
+  const kit = comingKits()[kind];
+  const row = rowsOf()[kind];
+  if (kit && row) kit.passive = scalePassive(row.passive, k);
+}
+
 let built: { kits: Record<string, Kit>; heroKits: Record<string, HeroKit> } | undefined;
 function build() {
   if (built) return built;
   const kits: Record<string, Kit> = {};
   const heroKits: Record<string, HeroKit> = {};
-  const rows: Record<string, Row> = { ...vampireRows(), ...wave2Rows(), ...wave3Rows(), ...wave4Rows() };
+  const rows = rowsOf();
   for (const [kind, r] of Object.entries(rows)) {
     const t = COMING_TUNE[kind] ?? [r.pool === 'mana' ? 0.7 : 0.5, 1, 0.8];
     const slot = (s: RowSlot, tune: number): Slot => ({ skill: s.skill, cls: s.cls, cost: s.cost, cd: s.cd, tune, ...(s.more ?? {}) });
     const s1 = slot(r.s1, t[0]);
     const s2 = slot(r.s2, t[1]);
     const s3 = slot(r.s3, t[2]);
-    kits[kind] = { skill: r.s1.skill, passive: r.passive, ultimate: r.ultimate };
+    kits[kind] = { skill: r.s1.skill, passive: scalePassive(r.passive, COMING_PASSIVE[kind] ?? 1), ultimate: COMING_ULT[kind] ? { ...r.ultimate, tuned: { ...COMING_ULT[kind] } } : r.ultimate };
     heroKits[kind] = { pool: r.pool, s1, s2, s3, slots: [s1, s2, s3], role: r.role };
   }
   return (built = { kits, heroKits });

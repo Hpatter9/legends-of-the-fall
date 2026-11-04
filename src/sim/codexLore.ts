@@ -119,3 +119,27 @@ export const HERO_STORY: Record<string, string> = {
   demonSwordsman: 'He feeds upon the lifeblood he cleaves, while the demon slumbering in the steel drains him. The longer the battle drags, the fuzzier the distinction between them.',
   tyrant: 'He reigns through ruthless decree, crushing the mutinous and rallying the loyal with a glare. In forty years on the magistrate\'s bench, he has never lost a verdict.',
 };
+
+/** The twenty coming heroes' stories (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
+export const COMING_STORY: Record<string, string> = {
+  vampireLord: 'Voivode Vladislav ruled the high crags for three centuries before taking an interest in border politics. He lunges through the battle line in a swirl of crimson velvet, drinking back whatever vigour his blade spills.',
+  hemomancer: 'Countess Carmilla regards the circulatory system as a needlessly closed loop. Her blood-lash binds whole ranks together, and the chalice she pours puts the colour back in her flagging companions.',
+  nightstalker: 'Sorin roosts in the belfry rafters until the lanterns dim and the stragglers drift apart. A flutter of leathery wings and a flash of fangs are the only warning the enemy rear guard ever receives.',
+  bloodGargoyle: 'Gavril was chiselled from dark cathedral basalt to ward off evil, then grew peckish and joined the fray himself. When he turns to granite, blades simply bounce off the masonry.',
+  dhampir: 'Born between dusk and daybreak, Klara hunts her noisier cousins with a repeating crossbow and a pocketful of silver stakes. She vaults clear of charging brutes before pinning them neatly to the turf.',
+  warDrummer: 'Raiden hauls a great oxhide taiko onto the ridge and beats a cadence that rattles enemy teeth loose. Every thunderous strike rolls a wave of sound across the grass and puts fresh wind into friendly lungs.',
+  banneret: 'Isolde carries the keep\'s silk guidon at the tip of her couched lance. When she plants the standard in the thick of the press, even the most bruised footmen straighten their backs and swing harder.',
+  geomancer: 'Tenzin listens to the slow grumbling of the bedrock and turns its complaints into jagged granite spires. With a sharp stamp of her staff, whole enemy files are tossed skyward or fenced behind fresh stone.',
+  bellWarden: 'Kavi marches into battle with a two-ton bronze temple bell upon his shoulders. One swing of the striker knocks the front rank flat and wraps his neighbours in a soothing golden chime.',
+  falconer: 'Aisling whistles from the heather, and her gyrfalcon drops out of the sun like a feathered thunderbolt. Between stoops, a gale from its wings blows encroaching swordsmen back down the slope.',
+  astralSphinx: 'Nenet is older than the desert pyramids and twice as fond of riddles. She lounges in starlight until a foe steps too close, and a wrong answer sends the asker flying.',
+  mirageDancer: 'Zahara spins across the dunes in a haze of shimmering silk and twin scimitars. Foes who swing at her find only a laughing sand-mirage while she cuts from behind.',
+  plagueDoctor: 'Doctor Corvus insists his bubbling green vials are strictly preventative medicine, though the enemy rarely survives the dosage. His miasma rots hostile armour while his tinctures patch up the party.',
+  bombardier: 'Soren measures black powder by eye and considers eyebrows an entirely optional feature. When the front rank crowds too close, he lights a fuse at his feet and rocket-jumps merrily to safety.',
+  astrologer: 'Cyra charts the motion of the spheres with a brass astrolabe and a very long quill. At her word, stray stars tumble onto enemy heads while their gravity drags the formation into a tidy heap.',
+  inquisitor: 'Armed with a sanctified arbalest and a ledger of heresies, Soraya chains the wicked to the earth with solar fire. Any foe who weighs light on her golden scales receives an immediate, fiery audit.',
+  seraph: 'Six golden wings carry Gabriela above the smoke of the fray, her halberd gleaming like daybreak. She dives upon the wicked in a pillar of light and calls fallen comrades back to their feet.',
+  corsairSurgeon: 'Tariq learned his anatomy during pitch-black boarding actions and sees no reason to slow down on dry land. A splash of spiced rum and a brisk stitch put the wounded right back into the scrap.',
+  harpooner: 'Siku spent twenty winters hauling leviathans from the icy main and treats enemy warlords much the same. Once his barbed iron bites, a sharp haul on the line drags the quarry straight to his boots.',
+  seaReaver: 'Nakoa swings a barnacle-crusted ship\'s anchor as though it were a willow switch. Each sweeping haul drags clustered foes into the surf before his crushing overhead slam splits the deck.',
+};

@@ -73,6 +73,31 @@ export const PASSIVES: Readonly<Record<string, AwakenPassive>> = {
   tyrant: { name: 'Gaze of Judgement', ability: 'idolsGaze', text: 'Blows taken now and then draw the attacker onto it' },
 };
 
+/** The twenty coming heroes' awakened passives (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table
+ *  above when its hero joins `ALL_HEROES`). Each takes an ability no roster hero has. */
+export const COMING_PASSIVES: Readonly<Record<string, AwakenPassive>> = {
+  vampireLord: { name: 'Crimson Aristocrat', ability: 'coldBlood', text: 'Below a third hp his blood hardens into a shield' },
+  hemomancer: { name: 'Blood Ward', ability: 'shieldWall', text: 'Blows taken now and then wrap her in a blood shield' },
+  nightstalker: { name: 'Vesper Cloak', ability: 'fadeOut', text: 'Below a third hp he slips into the dark' },
+  bloodGargoyle: { name: 'Cathedral Stone', ability: 'watchful', text: 'Starts each fight behind a stone shield' },
+  dhampir: { name: 'Daywalker Step', ability: 'shadowStep', text: 'Blows taken now and then let her slip out of sight' },
+  warDrummer: { name: 'Taiko Cadence', ability: 'warCry', text: 'Raises the attack of friends beside him' },
+  banneret: { name: 'Royal Spoils', ability: 'spoilsOfWar', text: 'A kill mends the weakest friend' },
+  geomancer: { name: 'Shale Ripple', ability: 'mithrilRipple', text: 'Blows taken now and then stun the attacker' },
+  bellWarden: { name: 'Sanctuary Counter', ability: 'ironPalm', text: 'Blows taken now and then are answered at once' },
+  falconer: { name: 'Stooping Talons', ability: 'pinpoint', text: 'Shots now and then make the foe bleed' },
+  astralSphinx: { name: 'Starlit Aegis', ability: 'secondWind', text: 'Below a third hp a great shield forms round her' },
+  mirageDancer: { name: 'Desert Rush', ability: 'adrenaline', text: 'Below a third hp she is hastened for a while' },
+  plagueDoctor: { name: 'Emergency Tincture', ability: 'emergencyDraught', text: 'Below a third hp he drinks a draught and heals' },
+  bombardier: { name: 'Powder Rush', ability: 'crowdsRoar', text: 'A kill hastens him for a moment' },
+  astrologer: { name: 'Astral Ledger', ability: 'scholarsInsight', text: 'Slowly feeds the king mana every second' },
+  inquisitor: { name: 'Runed Quarrel', ability: 'runeSurge', text: 'A crit feeds the king mana' },
+  seraph: { name: 'Celestial Siphon', ability: 'arcaneSiphon', text: 'A kill feeds the king mana' },
+  corsairSurgeon: { name: 'Boarders\' Sprint', ability: 'sprint', text: 'Starts each fight in haste for a longer stretch' },
+  harpooner: { name: 'Whaler\'s Focus', ability: 'sapphireFocus', text: 'Every sixth throw adds to his skill charge' },
+  seaReaver: { name: 'Barnacle Wall', ability: 'boneWall', text: 'A kill wraps him in a shield' },
+};
+
 /** The strength of a passive at each step (the equipment's Mythic is 0.7): the first step switches it on, the second makes it stronger. */
 export const PASSIVE_STRENGTH: readonly number[] = [0.6, 0.85];
 
