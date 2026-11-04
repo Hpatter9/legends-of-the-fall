@@ -1,13 +1,14 @@
 // The balance report: plays many headless fights with the sim and prints how strong each hero, foe band and stage is,
 // and how a greedy player fares over whole runs. Run it with `npm run balance` (tools/balance.mjs bundles this file with
 // esbuild, as test.mjs does for the tests).
+// The greedy players cast the king's spells as the page's Auto does (SPELLS-RETUNE, `docs/notes/spells-retune.md`); `BOT_SPELLS=0 npm run balance ...`
+// plays the old spell-less bot, `BOT_LOADOUT=heal,meteor,haste` fixes the loadout.
 //
 //   npm run balance                    the default number of fights (4000 for the heroes; a quarter of that per cell)
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --heroes-only --hero-level 100 --hero-stage 60   the same with every hero at a level (pick a stage where the average team wins about half)
-//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2, 3 or 4: the tier skills, `tierSkills.ts`)
-//   npm run balance -- --heroes-only --hero-grade 4 --tier-cap 3 ...   the same, every hero casting no higher than its tier 3 skill (to set tier 4 against it; `tools/rank4/` measures each hero's step)
+//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2, 3 or 4: more health and attack, `GRADE_BOOST`)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
 //   npm run balance -- --heroes-only  only the hero value table (table 1); --json file.json also writes each hero's win rate and lift; --seed-offset n plays other fights
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
@@ -17,6 +18,7 @@
 //   npm run balance -- --no-tables --tiers --levels 8,14,20   table 5e: each army on each difficulty tier (recruits, maxed castle, gear)
 //   npm run balance -- --no-tables --deep --levels 30,40,60,100 --attempts 10 [--talents] [--tiers-at 2,3]   table 5f: mean tries to clear each army on the top tiers at deep hero levels
 //   npm run balance -- --no-tables --stand --levels 1,10,20 --attempts 30   the Last Stand held by a greedy player (`tools/stand-balance.ts`; `--tower` is the same, the Tower's old name)
+//   npm run balance -- --eidolon 15[:nivra] ...   any of the above with an Eidolon called at that wave of every army attempt (EIDOLONS)
 //   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
@@ -24,19 +26,40 @@
 // runs (a greedy player on fresh saves, carrying the hero levels from run to run). Every fight is seeded, so the same
 // numbers come out again on the same code.
 
+import './joint/off';
+import './tactics/off';
 import { fight, place, playOut } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
 import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
-import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { CAL_TIER } from '../src/sim/calamity';
+import { boostOf, GRADE_BOOST, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+// (GB=1,1.35,1.75,2.65 tries other grade steps for the run: a tuning knob, nothing is written)
+if (process.env.GB) (GRADE_BOOST as number[]).splice(0, 4, ...process.env.GB.split(',').map(Number));
+// (CALTIER=1.28 tries another Calamity tier step, `CAL_TIER.mult`)
+if (process.env.CALTIER) CAL_TIER.mult = Number(process.env.CALTIER);
 import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
-import { playArmy, savedAt } from './autoplay';
+import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
 import { calamityTable } from './tower-balance';
+import { equipAll } from '../src/sim/equipment';
+import { FIELD_BOOST, GRADE_TABLE } from '../src/sim/runGear';
+// (RUN-GEAR: `--normal 1:0,1:0,1:0.33,2:0` tries another Normal column of the finds' grade table, steps 1 to 4 as grade:chance-up)
+if (process.argv.includes('--normal'))
+  process.argv[process.argv.indexOf('--normal') + 1].split(',').forEach((cell, i) => {
+    const [g, up] = cell.split(':').map(Number);
+    GRADE_TABLE[i + 1][0] = [g, up || 0];
+  });
+// (RUN-GEAR: `--field 1.5,3` tries another fresh-from-the-field boost for army runs and bare runs; a tuning run, nothing is written)
+if (process.argv.includes('--field')) {
+  const [a, b] = process.argv[process.argv.indexOf('--field') + 1].split(',').map(Number);
+  if (a > 0) FIELD_BOOST.army = a;
+  if (b > 0) FIELD_BOOST.bare = b;
+}
 import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
@@ -45,7 +68,6 @@ import { deploySpots, fieldBoost, pickTeam, play } from './heroSweep';
 import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
 import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { writeFileSync } from 'node:fs';
-import { capTiers } from './rank4/cap';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -62,7 +84,12 @@ const HERO_STAGE = arg('--hero-stage', 5);
 const HERO_LEVEL = arg('--hero-level', 1);
 const HERO_GRADE = arg('--hero-grade', 1);
 // (`--tier-cap 3`: every hero casts its tier 3 skill at grade 4, as it did before tier 4 was added)
-if (process.argv.includes('--tier-cap')) capTiers(ALL_HEROES, arg('--tier-cap', 4));
+// (EIDOLONS: `--eidolon <wave>[:<id>]` calls an Eidolon at that wave of every army attempt, to see the walls with and without one)
+if (process.argv.includes('--eidolon')) {
+  const [w, id] = (process.argv[process.argv.indexOf('--eidolon') + 1] ?? '').split(':');
+  eidolonAt.wave = Number(w) | 0;
+  if (id) eidolonAt.id = id;
+}
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');
@@ -227,6 +254,7 @@ function playRun(meta: Meta, seed: number): number {
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a, run.stage)));
     squad.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
     fight(b);
+    maybeSpells(b, meta, CASTLE);
     playOut(b);
     finish(run, b.phase === 'won', ratingOf(b, isBossStage(run.stage)).stars);
     gainXp(meta, fightXp(b, xpRate(CASTLE)));
@@ -323,7 +351,8 @@ function armies(): void {
   const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, first: 0, lv: 0, seen: 0, crowns: 0 }));
   for (let save = 1; save <= SAVES; save++) {
     const meta = startedMeta(save);
-    for (let i = 0; i < ARMIES.length; i++) {
+    // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
+    for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];
       let tries = 0;
       let cleared = false;
@@ -408,22 +437,28 @@ function spendCrowns(meta: Meta): void {
 
 function realClimb(): void {
   console.log(`\n5c. THE REALISTIC CLIMB  (${SAVES} fresh saves; recruits, a castle grown from the crowns each try pays (${CASTLE_SHARE * 100}% of what it has), gear, levels carried; at most ${MAX_TRIES} tries an army)\n`);
-  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14)].join(''));
-  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0 }));
+  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14), rpad('pieces', 8), rpad('Legendary %', 12)].join(''));
+  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0, pieces: 0, legend: 0 }));
   for (let save = 1; save <= SAVES; save++) {
     const meta = startedMeta(save);
-    for (let i = 0; i < ARMIES.length; i++) {
+    // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
+    for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];
       let tries = 0;
       let cleared = false;
       const st = stats[i];
       while (tries < MAX_TRIES && !cleared) {
         spendCrowns(meta);
+        // (RUN-GEAR: the pieces its runs found and brought home are put on at camp, Equip all, before each try)
+        equipAll(meta);
         const party = bestParty(meta);
         if (tries === 0) {
           st.lv += party.reduce((n, k) => n + levelOfKind(meta, k), 0) / party.length;
           st.castle += Object.values(meta.castle).reduce((n, v) => n + v, 0);
           st.owned += meta.unlocked.length;
+          // (RUN-GEAR: the pieces the save's runs have brought home so far, and whether any is Legendary)
+          st.pieces += meta.equipment?.length ?? 0;
+          if ((meta.equipment ?? []).some((x) => x.rarity >= 4)) st.legend++;
           st.seen++;
         }
         const r = playArmy(meta, army.id, mixSeed(save, 0xc11c, i * 100 + tries), party, { ...meta.castle }, true);
@@ -450,6 +485,8 @@ function realClimb(): void {
         rpad((st.lv / n).toFixed(1), 13),
         rpad((st.castle / n).toFixed(1), 13),
         rpad((st.owned / n).toFixed(1), 14),
+        rpad((st.pieces / n).toFixed(1), 8),
+        rpad(f1(pct(st.legend, n)).trim(), 12),
       ].join(''),
     );
   });

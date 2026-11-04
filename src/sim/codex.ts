@@ -2,8 +2,8 @@
 // randomness. What is kept in the meta (both fields optional, so older saves load as they were): the foe kinds met and the kills
 // per kind (`Meta.codex`), counted when a fight settles from the battle's units, and the milestone rewards claimed
 // (`Meta.codexClaimed`). Milestones sit at 25, 50, 75 and 100% of each collection and pay a few crowns and a summoning stone
-// (`CODEX_STONES`), taken with a tap like achievements. Each entry, a foe's, a boss's or a hero's, also pays a stone the first time
-// it is discovered (`ENTRY_STONES`), taken with the same tap; the entries paid are kept in `Meta.codexPaid`. The entries (one per look of foe, so the three minotaur sheets are one entry) are listed in `FOE_ENTRIES`.
+// (`CODEX_STONES`), taken with a tap like achievements. Stones come from the milestones only: a single entry pays nothing of its own (the owner's
+// answer, 0.332.0; saves keep the stones they already took). The entries (one per look of foe, so the three minotaur sheets are one entry) are listed in `FOE_ENTRIES`.
 
 import type { Battle } from './battle';
 import { KITS, type Kit } from './abilities';
@@ -11,7 +11,8 @@ import { ARMIES } from './armies';
 import { calBossBand, CAL_BOSSES, CAL_BOSS_FOES } from './calamityBosses';
 import { ELITES } from './elites';
 import { ELITE_FOES } from './eliteFoes';
-import { BOSS_BANDS, BOSS_IDS, FIELD_BANDS, FOE_BANDS } from './foes';
+import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
+import { TRIALS } from './eidolonTrials';
 import type { Meta } from './meta';
 import { ALL_HEROES, UNITS, type UnitDef } from './units';
 
@@ -52,7 +53,7 @@ function buildEntries(): FoeEntry[] {
       have.defs.push(d.id);
       continue;
     }
-    const e: FoeEntry = { id: d.id, name: d.name, defs: [d.id], class: BOSS_IDS.includes(d.id) ? 'boss' : 'common' };
+    const e: FoeEntry = { id: d.id, name: d.name, defs: [d.id], class: isBoss(d.id) ? 'boss' : 'common' };
     byName.set(d.name, e);
     out.push(e);
   }
@@ -159,42 +160,6 @@ export function claimCodex(m: Meta, id: string): number {
   return ms.crowns;
 }
 
-/* ------------------------------------------------------------------ a stone for each entry discovered */
-
-/** The summoning stones each entry pays the first time it is discovered (the owner's ask), beside the milestones'. */
-export const ENTRY_STONES = 1;
-/** The id an entry's payment is kept under: `foe:<entry>` for the bestiary, `hero:<kind>` for the heroes. */
-export const foeKey = (e: FoeEntry): string => `foe:${e.id}`;
-export const heroKey = (kind: string): string => `hero:${kind}`;
-const ALL_ENTRY_KEYS: ReadonlySet<string> = new Set([...FOE_ENTRIES.map(foeKey), ...ALL_HEROES.map(heroKey)]);
-/** Every entry discovered so far, by its key: the foes met and the heroes owned, in the codex's order. */
-export const discoveredKeys = (m: Meta): string[] => [...metEntries(m).map(foeKey), ...ALL_HEROES.filter((k) => heroKnown(m, k)).map(heroKey)];
-/** The entries discovered whose stone is not yet taken. */
-export const entriesWaiting = (m: Meta): string[] => {
-  const paid = new Set(m.codexPaid ?? []);
-  return discoveredKeys(m).filter((k) => !paid.has(k));
-};
-/** Take the stone of every entry discovered and not yet paid. Returns the stones paid (0 when none waits); an entry pays once. */
-export function claimEntries(m: Meta): number {
-  const waiting = entriesWaiting(m);
-  if (!waiting.length) return 0;
-  (m.codexPaid ??= []).push(...waiting);
-  const stones = waiting.length * ENTRY_STONES;
-  m.stones = (m.stones ?? 0) + stones;
-  return stones;
-}
-/** Whether anything in the codex waits for a tap: a milestone, or an entry's stone. */
-export const codexAnyWaiting = (m: Meta): boolean => codexWaiting(m).length > 0 || entriesWaiting(m).length > 0;
-/**
- * The entries paid, read from a save. A save from before the entry stones has none: every entry it has already discovered counts as
- * paid, so an old save is not paid for its whole codex at once, only for the entries it discovers from now on. Call it after the codex,
- * the bosses and the heroes are read.
- */
-export function readCodexPaid(raw: unknown, m: Meta): string[] {
-  if (!Array.isArray(raw)) return discoveredKeys(m);
-  return [...new Set(raw.filter((k): k is string => typeof k === 'string' && ALL_ENTRY_KEYS.has(k)))];
-}
-
 /** The saved claims read safely. */
 export const readCodexClaimed = (raw: unknown): string[] | undefined => (Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && ALL_MILESTONES.some((ms) => ms.id === id)) : undefined);
 
@@ -205,21 +170,23 @@ export function whereMet(e: FoeEntry): string[] {
   const out: string[] = [];
   if (e.class === 'elite') {
     const el = ELITES.find((x) => x.def === e.id)!;
-    out.push(`Elite of the endless tower (${el.tier === 3 ? 'act 3 on' : `act ${el.tier}`})`);
+    out.push(`Elite of the Calamity (${el.tier === 3 ? 'map 3 on' : `map ${el.tier}`})`);
   } else if (e.class === 'calamity') {
     out.push(`Calamity: the boss of map ${CAL_BOSSES.indexOf(e.id) + 1}`);
   } else {
     const inBand = (bands: readonly string[]) => bands.some((b) => FOE_BANDS[b].some((d) => e.defs.includes(d)));
-    if (e.defs.some((d) => BOSS_BANDS.some((b) => FOE_BANDS[b][0] === d))) out.push('Boss stage of a run and the tower');
-    else if (inBand(FIELD_BANDS)) out.push('Stages of a run and the tower');
-    else if (inBand(BOSS_BANDS)) out.push('Boss stages of a run and the tower');
+    if (e.defs.some((d) => BOSS_BANDS.some((b) => FOE_BANDS[b][0] === d))) out.push('Boss stage of a run and the Last Stand');
+    else if (inBand(FIELD_BANDS)) out.push('Stages of a run and the Last Stand');
+    else if (inBand(BOSS_BANDS)) out.push('Boss stages of a run and the Last Stand');
     for (const a of ARMIES) {
       if (!a.waves.some((w) => w.foes.some((f) => e.defs.includes(f)))) continue;
       const boss = a.waves.some((w) => w.boss && e.defs.includes(w.foes[0]));
       out.push(`${a.name}${boss ? ' (boss wave)' : ''}`);
     }
     if ([1, 2, 3, 4, 5, 6].some((map) => calBossBand(map).some((d) => e.defs.includes(d)))) out.push('Calamity maps');
-    if (ELITES.some((x) => x.escort.some((d) => e.defs.includes(d)))) out.push('Escort of tower elites');
+    if (ELITES.some((x) => x.escort.some((d) => e.defs.includes(d)))) out.push('Escort of Calamity elites');
+    // (EIDOLON-TRIAL: an Eidolon met in its own trial)
+    for (const t of TRIALS) if (e.defs.includes(t.boss.id)) out.push(`${t.part.title}: the last part of ${t.boss.name}'s Eidolon chain`);
   }
   return out;
 }

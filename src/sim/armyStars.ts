@@ -6,6 +6,9 @@
 // be rerolled by reloading or by the order of opening, and they pay better the higher the milestone and the tier and the
 // later the army. Pure rules: no Pixi, no DOM.
 
+import { marchPay } from './march';
+import { bookById } from './bookData';
+import { chestBook, grantBook } from './books';
 import { dailyStarsMax } from './dailyThemes';
 import { chestOres, grantOres, ORES, sumOres, type OreDrop } from './awakenMats';
 import { ARMIES, armyById, armyIndex, recordOf, type Army, type ArmyRecord } from './armies';
@@ -58,6 +61,8 @@ export interface StarResult {
   chests: number[];
   /** The milestone that sizes the first-clear chest this run paid (3, 5 or 10), or 0 when the tier was cleared before. */
   firstClear: number;
+  /** DEPTH-BUILD: the extra chests a cursed or night march's clear put in the stash. */
+  marchChests?: number;
 }
 
 /** Settle a finished army run in the meta: the conditions it met are merged into the tier's best, and any chest the new total reaches is given. Null unless the run cleared its army. */
@@ -77,7 +82,11 @@ export function settleArmyRun(m: Meta, run: Run): StarResult | null {
   });
   (rec.met ??= {})[String(tier)] = before | mask;
   const firstClear = grantFirstClear(m, a, rec, tier);
-  return { tier, rules, fresh, gained: fresh.length, total: starsOf(rec), chests: grantChests(m, a, rec, tier), firstClear };
+  // (DEPTH-BUILD: a cursed clear earns the tier's laurel; a cursed or night march's clear one more chest, from its own side stream)
+  if (run.orders?.mod === 'cursed' && !(rec.cursed ?? []).includes(tier)) rec.cursed = [...(rec.cursed ?? []), tier].sort();
+  const extra = marchPay(run.orders).chests;
+  for (let i = 0; i < extra; i++) m.stash.push({ army: a.id, at: 3, tier, seed: mixSeed(run.seed, 0x6d62, i) });
+  return { tier, rules, fresh, gained: fresh.length, total: starsOf(rec), chests: grantChests(m, a, rec, tier), firstClear, ...(extra ? { marchChests: extra } : {}) };
 }
 
 /** The star milestone whose chest size an army's first clear of each tier pays: Normal bronze, Hard and Elite silver, Legendary and Mythic gold. */
@@ -158,7 +167,7 @@ export function rollGear(rng: Rng, at: number, armyIdx: number): GearDrop[] {
 }
 
 export interface LootItem {
-  type: 'crowns' | 'stones' | 'gear' | 'tomes' | 'spell' | 'ores';
+  type: 'crowns' | 'stones' | 'gear' | 'tomes' | 'spell' | 'ores' | 'book';
   /** A line for the reveal: "320 crowns", "3 summoning stones". */
   text: string;
   /** The equipment's base it is about. */
@@ -169,6 +178,8 @@ export interface LootItem {
   size?: TomeSize;
   /** The class trait of the rift ores a line holds (`awakenMats.ts`). */
   trait?: string;
+  /** The skill book it is (`bookData.ts`). */
+  book?: string;
   /** The spell a scroll teaches (`spellSources.ts`). */
   spell?: SpellId;
   /** A piece of equipment this reward is (for its icon and frame). */
@@ -251,8 +262,10 @@ export function peekChest(m: Meta, index: number): Loot | null {
  * (`rollChest`) are untouched, so every chest still holds the crowns and the gear it did; the hero shards they once named are stones now, which are
  * not tied to a hero: a stone is one shard of a hero drawn when it is used (`pullOnce`).
  */
-export function chestStones(c: Pick<StashChest, 'at' | 'daily' | 'bonus'>): number {
-  return c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) : CHEST_STONES[c.at] ?? 1;
+export function chestStones(c: Pick<StashChest, 'at' | 'daily' | 'bonus' | 'dry' | 'half'>): number {
+  if (c.dry) return 0;
+  const n = c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) : CHEST_STONES[c.at] ?? 1;
+  return c.half ? Math.ceil(n / 2) : n;
 }
 
 /** The reveal lines of a chest's stones (a plain line and, when there is one, the prize line), the gear after. Shared with the shop's chests. */
@@ -268,6 +281,9 @@ export function stoneItems(plain: number, prize: number): LootItem[] {
 export function tomeItems(t: TomeCounts): LootItem[] {
   return TOME_SIZES.filter((size) => (t[size] ?? 0) > 0).map((size) => ({ type: 'tomes', text: tomeWords(size, t[size]!), n: t[size], size, ...(size === 'large' ? { prize: true } : {}) }));
 }
+
+/** The reveal line of a skill book a chest holds. */
+export const bookItem = (id: string): LootItem => ({ type: 'book', text: `A skill book: ${bookById(id)?.title ?? id}`, book: id, prize: true });
 
 /** The reveal line of a piece of gear a chest drops. */
 export const gearItem = (g: GearDrop): LootItem => ({ type: 'gear', text: `${itemName(g.item)} (${RARITY_NAMES[g.item.rarity]}, Lv ${g.item.level})`, ref: g.item.base, rarity: g.item.rarity, equip: g.item, prize: g.item.rarity >= 5 });
@@ -296,6 +312,13 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
     if (apply) grantOres(m, [ores]);
     items.push({ type: 'ores', text: `${ores.n} ${ORES[ores.trait].name}`, n: ores.n, trait: ores.trait });
   }
+  // (SHOP-BOOKS-GEAR: now and then a silver or gold chest holds a Rare skill book, and an army's first clear on Hard or above always
+  // does: from its own side stream of the chest's seed, so nothing else in it changes)
+  const book = daily ? undefined : chestBook(c.seed, chestKind(c.at), !!c.first && c.tier >= 1);
+  if (book) {
+    if (apply) grantBook(m, book);
+    items.push(bookItem(book));
+  }
   // (equipment: last, as it was drawn last; granted once, when the chest is opened)
   for (const g of roll.gear) {
     if (apply) grantEquipment(m, g.item);
@@ -319,12 +342,14 @@ export interface LootSummary {
   stones: number;
   tomes: TomeCounts;
   spells: LootItem[];
+  /** Skill books found (SHOP-BOOKS-GEAR). */
+  books: LootItem[];
   gear: LootItem[];
   /** Rift ores, the same kinds added together. */
   ores: OreDrop[];
 }
 export function sumLoot(loots: readonly Loot[]): LootSummary {
-  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, spells: [], gear: [], ores: [] };
+  const out: LootSummary = { chests: loots.length, crowns: 0, stones: 0, tomes: {}, spells: [], books: [], gear: [], ores: [] };
   const ores: OreDrop[] = [];
   for (const l of loots)
     for (const it of l.items) {
@@ -332,6 +357,7 @@ export function sumLoot(loots: readonly Loot[]): LootSummary {
       else if (it.type === 'stones') out.stones += it.n ?? 0;
       else if (it.type === 'tomes' && it.size) out.tomes = addTomes(out.tomes, { [it.size]: it.n ?? 0 });
       else if (it.type === 'spell') out.spells.push(it);
+      else if (it.type === 'book') out.books.push(it);
       else if (it.type === 'gear') out.gear.push(it);
       else if (it.type === 'ores' && it.trait) ores.push({ trait: it.trait, n: it.n ?? 0 });
     }
@@ -371,7 +397,7 @@ export function readStash(raw: unknown, rawArmies: unknown, seed: number): Stash
     for (const c of raw as Partial<StashChest>[]) {
       // (a daily chest names its date and has no army)
       if (c && c.army === 'daily' && /^\d{8}$/.test(String(c.daily)) && typeof c.seed === 'number') add({ army: 'daily', at: 3, tier: 0, seed: c.seed >>> 0, daily: c.daily as number, bonus: Math.max(0, Math.min(dailyStarsMax(c.daily as number), (c.bonus ?? 0) | 0)) });
-      else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}) });
+      else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}), ...(c.dry === true ? { dry: true } : {}), ...(c.half === true ? { half: true } : {}) });
     }
   // (the earlier format: a record with its given chests and the opened ones)
   if (rawArmies && typeof rawArmies === 'object')

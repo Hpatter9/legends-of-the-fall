@@ -246,18 +246,16 @@ body .sbSlot { min-height: 44px; }
 .armyCrowns { display: inline-flex; align-items: center; gap: 2px; font-weight: bold; color: var(--ink); }
 .armyCrowns img { width: 16px; height: 16px; }
 .armyNew { position: absolute; top: -6px; right: -4px; padding: 1px 6px; font: bold 11px var(--display); font-style: normal; color: var(--btn-ink); background: var(--gold-hi); box-shadow: 0 2px 0 var(--black); }
-/* the unlock moment */
+/* the unlock ribbon: a film's end card (revealCard.ts) */
 .unlock { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; text-align: center; background: rgb(var(--s0-rgb) / 0.88); animation: pxUnlockIn 0.5s steps(5) both; }
 @keyframes pxUnlockIn { from { opacity: 0; } to { opacity: 1; } }
-.unlockDown { font-size: 13px; color: var(--dim); text-shadow: var(--outline); }
 .unlockRib { display: flex; align-items: center; justify-content: center; min-height: 64px; padding: 0 8px; border-style: solid; border-width: 0 48px; border-image: url(ui/ribbon.png) 0 12 fill / 0 48px stretch; image-rendering: pixelated; animation: pxUnlockSlam 0.6s steps(6) 0.25s both; }
 .unlockRib b { font: bold clamp(20px, calc(6.4 * var(--vw)), 28px) var(--display); color: var(--gold-hi); text-shadow: 0 2px 0 var(--s2); white-space: nowrap; }
 @keyframes pxUnlockSlam { from { transform: translateY(-120px); opacity: 0; } 70% { transform: translateY(6px); opacity: 1; } to { transform: none; } }
-.unlockFace { width: min(144px, calc(40 * var(--vw))); height: min(144px, calc(40 * var(--vw))); image-rendering: pixelated; border: 4px solid var(--gold-hi); background: radial-gradient(var(--s6), var(--s1)); animation: pxArmyGlow 1.4s steps(1) 0.8s infinite; }
 .unlockName { font: bold 22px var(--display); color: var(--gold-hi); text-shadow: var(--outline); }
 .unlockLine { max-width: 320px; font-size: 13px; color: var(--ink); text-shadow: var(--outline); }
 .unlock button { min-width: 200px; }
-@media (prefers-reduced-motion: reduce) { .unlockFace, .unlockRib, .unlock { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .unlockRib, .unlock { animation: none; } }
 
 /* (the game is played upright only: a phone held sideways is asked to turn back; a desktop window of any shape plays on) */
 #turnUp { display: none; }
@@ -360,7 +358,36 @@ body .sbSlot { min-height: 44px; }
 .chestTitle { font: bold 22px var(--display); color: var(--gold-hi); text-shadow: 0 3px 0 var(--s2); z-index: 2; }
 .chestStage { position: relative; width: 220px; height: 170px; display: grid; place-items: center; z-index: 2; }
 .chestStage .chestPic { z-index: 2; }
-.chestRays { position: absolute; left: 50%; top: calc(8vh + 125px); width: 520px; height: 520px; margin: -260px 0 0 -260px; opacity: 0; background: repeating-conic-gradient(from 0deg, rgb(var(--e8-rgb) / 0.5) 0 7deg, rgb(var(--e8-rgb) / 0) 7deg 20deg); -webkit-mask: radial-gradient(circle, var(--black) 8%, transparent 68%); mask: radial-gradient(circle, var(--black) 8%, transparent 68%); animation: asSpin 14s linear infinite; }
+.chestRays { position: absolute; left: 50%; top: calc(8vh + 125px); width: 520px; height: 520px; margin: -260px 0 0 -260px; opacity: 0; animation: asSpin 14s linear infinite; }
+/* (MENU-GLITCH: the rays are painted once into a canvas (chestStash.ts raysCanvas). As a masked conic gradient this 520 px spinning
+   layer, and its mask, took over 20 MB of a phone's graphics memory at its pixel ratio; with the screens under it still drawn the
+   phone ran out, and parts of the chest, the rays and the rewards were left unpainted: flat boxes, rays cut off at a tile's edge) */
+/* (and the screens a full-screen reveal covers, the chest's or a hero's first summoning, are not drawn under it: the phone has the
+   memory for the reveal alone. A page that sets its own visibility, the home tab showing, is hidden too. An Eidolon's binding
+   fades out at its end, so what it covers comes back as it starts to fade) */
+body:has(> :is(.chestShow, .tarotReveal, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
+body:has(> :is(.chestShow, .tarotReveal, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }
+/* (MENU-GLITCH: the same for the hero's full artwork, a modal dialog over the hero sheet) */
+body:has(> dialog.heroArtViewer[open]) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
+body:has(> dialog.heroArtViewer[open]) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }
+/* (MENU-GLITCH: the home screen is opaque and covers the game's own screen; under it the fight's sky (five parallax layers kept on
+   the graphics card for their drift), the board's canvas, the HUD and the bench were still painted and held on the phone's graphics
+   memory all the time the menus were up, about 95 MB at a phone's pixel ratio. They are not drawn while the home screen is open; a
+   screen opened from it (`.handoff`, the home closed but still drawn) has them back) */
+body:has(> #home:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess),
+body:has(> #home:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess) * { visibility: hidden !important; }
+/* (HERO-SHEET-GLITCH: the party screen is opaque too, but once it has taken over from the home screen the home is hidden, so the
+   rule above let go and the sky, the board's canvas, the HUD and the bench were all painted again under it. A hero's sheet opened
+   on the party screen then ran out of the phone's graphics memory: the art cut off, the board's sprites through it, the tabs'
+   pages left empty. They are not drawn while the party screen is up either; they come back as it closes) */
+body:has(> #party:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess),
+body:has(> #party:not([hidden])) > :is(#sky, #stage, #top, #twistBanner, #hudSpells, #autoBar, #bossBar, #panel, .duchess) * { visibility: hidden !important; }
+/* (and the party screen's own page under a hero's sheet opened on it: the scene's drifting embers sit at the top of the scrolling
+   list, so every card after them was given a layer of its own, over a hundred, the list one 3.6 screens tall. Under the sheet's
+   backdrop they are not drawn, as the tavern's sheet has the home screen under a near-solid backdrop) */
+#party:has(> #ptSheet:not([hidden])) > :not(#ptSheet),
+#party:has(> #ptSheet:not([hidden])) > :not(#ptSheet) * { visibility: hidden !important; }
+#ptSheet { padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px); background: #10140fe8; }
 .chestGlow { position: absolute; left: 50%; top: calc(8vh + 125px); width: 300px; height: 300px; margin: -150px 0 0 -150px; opacity: 0; background: radial-gradient(circle, rgb(var(--e9-rgb) / 0.95), rgb(var(--e6-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.silver .chestGlow { background: radial-gradient(circle, rgb(var(--b6-rgb) / 0.95), rgb(var(--b4-rgb) / 0.35) 45%, transparent 70%); }
 .chestShow.daily .chestGlow { background: radial-gradient(circle, rgb(var(--p5-rgb) / 0.95), rgb(var(--p3-rgb) / 0.35) 45%, transparent 70%); }
@@ -542,3 +569,6 @@ body .sbCard .top { align-items: center; }
 /* the Mythic star's chest: the gold chest turned violet, with a violet glow (the best chest the armies give) */
 .asChest.mythic .chestPic, .csChest.mythic .chestPic { filter: hue-rotate(250deg) saturate(1.4) drop-shadow(0 0 5px var(--p4)); }
 .chestShow.mythic .chestPic { filter: hue-rotate(250deg) saturate(1.4) drop-shadow(0 0 14px var(--p4)); }
+/* the Auto card the repeat runs share (autoAsk.ts) */
+.autoAsk { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: #000a; }
+.qlReplay.auto, .ecnLink.auto { margin-left: 4px; }

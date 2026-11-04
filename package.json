@@ -1,7 +1,7 @@
 {
   "name": "legends-of-the-fall",
   "productName": "Legends of the Last Keep",
-  "version": "0.262.0",
+  "version": "0.344.0",
   "private": true,
   "description": "A King God Castle style auto-battler on an FF Tactics height grid.",
   "scripts": {
@@ -11,15 +11,22 @@
     "dev": "node build.mjs --serve",
     "balance": "node tools/balance.mjs",
     "stand-balance": "node tools/stand-balance.mjs",
+    "relic-balance": "node tools/relics/run.mjs",
     "gear-balance": "node tools/gear-balance.mjs",
     "talent-balance": "node tools/talent-balance.mjs",
     "unlock-pace": "node tools/unlockPace.mjs",
     "daily-rate": "node tools/dailyRate.mjs",
+    "quest-rate": "node tools/quest-battles/rate.mjs",
+    "quest-stars": "node tools/quest-stars/stars.mjs",
+    "quest-bands": "node tools/quest-battles/bands.mjs",
     "level-pace": "node tools/levelPace.mjs",
     "music": "node tools/epic-music/render.mjs && node tools/epic-music/manifest.mjs"
   },
   "license": "UNLICENSED",
   "devDependencies": {
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/cli": "^7.6.10",
+    "@capacitor/core": "^7.6.10",
     "@fontsource/alegreya-sans": "^5.3.0",
     "@fontsource/cinzel-decorative": "^5.3.0",
     "@fontsource/pixelify-sans": "^5.3.0",

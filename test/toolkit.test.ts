@@ -8,6 +8,7 @@ import { bareBoard } from './bare';
 import { addUnit, canStrike, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { canStep, sightClear, tileAt } from '../src/sim/board';
 import { hasAil } from '../src/sim/ailments';
+import { SAVES } from '../src/sim/saves';
 import {
   MOVE,
   airborne,
@@ -63,6 +64,10 @@ const at = (x: Unit) => [x.u, x.v];
 const tile = (b: Battle, u: number, v: number) => tileAt(b.board, u, v)!;
 
 // ---- the shared move rule ----
+
+// (these stage the move rule itself, tile by tile: the saves and the contest of STR, STATS batch 5, are held off here and staged in
+// `test/stats-saves.test.ts`)
+SAVES.on = false;
 
 test('a shove moves a fighter straight away, tile by tile, and the page is told the path', () => {
   const b = arena();

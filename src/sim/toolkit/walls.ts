@@ -14,6 +14,7 @@ import { DIRS, standable, tileAt, type At, type Tile } from '../board';
 import { atkOf, defOf, defenceOf, hurt, unitAt, type Battle, type BattleEvent, type Unit } from '../battle';
 import { walkFrom } from '../path';
 import { bleedFor, burnFor, chillFor } from '../ailments';
+import { DEX_SAVES } from '../saves';
 
 export type WallKind = 'stone' | 'ice' | 'thorns' | 'light' | 'fire' | 'wind';
 
@@ -136,7 +137,8 @@ export function tickWalls(b: Battle, out: BattleEvent[]): void {
       const at = { u: w.i % b.board.w, v: Math.floor(w.i / b.board.w) };
       const by = b.units.find((y) => y.id === w.by) ?? x;
       const d = apart(at, x);
-      if (w.kind === 'fire' && d === 0 && !defOf(x).flies) burnFor(b, by, x, WALL.FIRE_MS, WALL.FIRE_SHARE * (w.pow ?? 1));
+      // (STATS batch 6: a fire wall is an area, so its burn is a DEX save, not a CON one, `DEX_SAVES.wall`)
+      if (w.kind === 'fire' && d === 0 && !defOf(x).flies) burnFor(b, by, x, WALL.FIRE_MS, WALL.FIRE_SHARE * (w.pow ?? 1), DEX_SAVES.wall ? 'blast' : 'burn');
       if (!second || d !== 1 || touched.has(w.kind)) continue;
       touched.add(w.kind);
       if (w.kind === 'thorns') {

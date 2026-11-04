@@ -6,17 +6,17 @@
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
-import { fightXp, gainXp, levelOfKind, xpFor } from '../src/sim/levels';
+import { fightXp, gainXp, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
-import { startedMeta, heroRank, type Meta } from '../src/sim/meta';
-import { awakenStats } from '../src/sim/awaken';
+import { startedMeta, type Meta } from '../src/sim/meta';
 import { armyById } from '../src/sim/armies';
-import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
 import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
 import { ratingOf } from '../src/sim/stars';
-import { autoDeploy, autoRound, dressSquad, strengthOf } from '../src/sim/autoplay';
+import { autoDeploy, autoRound, botBoost, dressSquad, strengthOf } from '../src/sim/autoplay';
+import { settleFinds } from '../src/sim/runGear';
 import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
 import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, mapFor, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
@@ -24,8 +24,44 @@ import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
 import { chooseAltar, pendingAltar } from '../src/sim/rift';
 import { squadHealth } from '../src/sim/health';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
+import { armEidolon } from '../src/sim/eidolons';
+import { orderEidolon } from '../src/sim/orders';
+import { STARTER_SPELLS, type SpellId } from '../src/sim/spells';
 
 export { strengthOf };
+
+/** AUTO-CAST and SPELLS-RETUNE (`docs/notes/spells-retune.md`): the balance tools' switch for the king's spells cast on their own
+ *  (`src/sim/autoCast.ts`), as the page's Auto does. **On by default** since SPELLS-RETUNE (the owner's call: Auto stays as smart as it is and
+ *  the armies are tuned for a player who casts), so every table and difficulty test is measured with spells cast. `BOT_SPELLS=0` in the
+ *  environment turns it off (the spell-less bot every table before 0.292 was measured with); `BOT_LOADOUT=heal,meteor,haste` fixes the
+ *  loadout. Otherwise each fight casts the loadout a player owns at that stage of the game (`botLoadout`). */
+export const botSpells: { on: boolean; loadout?: SpellId[] } = {
+  on: typeof process === 'undefined' || process.env?.BOT_SPELLS !== '0',
+  loadout: typeof process !== 'undefined' && process.env?.BOT_LOADOUT ? (process.env.BOT_LOADOUT.split(',') as SpellId[]) : undefined,
+};
+/**
+ * The three spells the balance tools cast at a stage of the game (the castle stands for it: what a player owns and can afford then,
+ * `spell-sources.md`, `spellbook.md`). A fresh save owns only the starting three (Heal, Meteor, Haste: 8 of the 9 power), and they stay the
+ * bot's choice later too: with the Mage Tower at its top (11 power, Rally taught, Resurrect and Meteor Shower earned) Heal, Meteor and
+ * Resurrect, Rally or Meteor Shower measured no stronger (`docs/notes/spells-retune.md`), so a player who keeps the three is the measure.
+ */
+export function botLoadout(_castle: Castle = newCastle()): SpellId[] {
+  return [...(botSpells.loadout ?? STARTER_SPELLS)];
+}
+/** Set a fight just begun to cast the stage's spells on its own, when `botSpells` is on (the castle is the run's: it sets the stage). */
+export function maybeSpells(b: Battle, _meta: Meta, castle: Castle = newCastle()): void {
+  if (botSpells.on) b.autoSpells = botLoadout(castle);
+}
+
+/** EIDOLONS: the balance tool's `--eidolon <wave>[:<id>]` calls an Eidolon as the fight at that wave of every army attempt begins (0, the
+ *  default, never: the greedy player, like Auto, never blows the horn, so every existing table stays as it is). */
+export const eidolonAt: { wave: number; id: string } = { wave: 0, id: 'askel' };
+/** Call the Eidolon in a fight just begun, when `eidolonAt` asks for this wave (a mid-boss wave counts its boss as a mid-boss). */
+export function maybeEidolon(b: Battle, wave: number, mid = false): void {
+  if (!eidolonAt.wave || wave !== eidolonAt.wave) return;
+  armEidolon(b, eidolonAt.id, { mid });
+  orderEidolon(b, eidolonAt.id);
+}
 
 /** The deploy tiles front row first, the middle of a row first: where the tower climb's greedy player puts the heroes that hold the line. */
 export function frontSpots(b: Battle): [number, number][] {
@@ -48,6 +84,8 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     const b = startStage(run);
     autoDeploy(b, run, meta, boostFor);
     fight(b);
+    maybeSpells(b, meta, castle);
+    maybeEidolon(b, run.stage, army.waves[run.stage - 1]?.boss === 'mid');
     playOut(b);
     const ok = b.phase === 'won';
     if (ok) won = run.stage;
@@ -55,6 +93,9 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(castle)));
   }
+  // (RUN-GEAR: what the run found comes home, worn or to the stash, so the save's later runs fight in it; `RUN_GEAR_KEEP=0`, a tuning
+  // switch, leaves it in the run, to see what keeping it does)
+  if (typeof process === 'undefined' || process.env?.RUN_GEAR_KEEP !== '0') settleFinds(meta, run);
   const cleared = !!run.cleared && won === army.waves.length;
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
 }
@@ -72,6 +113,7 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
     const b = startStage(run);
     autoDeploy(b, run, meta);
     fight(b);
+    maybeSpells(b, meta);
     playOut(b);
     const ok = b.phase === 'won';
     if (!ok && hearts && canRetry(run)) {
@@ -83,6 +125,7 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(newCastle())));
   }
+  settleFinds(meta, run);
   return { won, cleared: !!run.cleared, hearts: run.retries ?? 0, bonus: dailyBonus(run).filter((r) => r.earned).length, stars: dailyBonus(run).map((r) => r.earned), ms: run.tally?.ms ?? 0, lost: run.tally?.lost ?? 0, bossFell: run.tally?.bossFell ?? 0, bossLost: run.tally?.bossLost ?? 0 };
 }
 
@@ -97,6 +140,7 @@ export function playFinal(meta: Meta, armyId: string, seed: number, party: reado
     if (!last) for (const u of b.units) if (u.side === 'foe') u.hp = u.maxHp = 1;
     autoDeploy(b, run, meta);
     fight(b);
+    maybeSpells(b, meta, castle);
     playOut(b);
     if (last) return b.phase === 'won';
     noteFight(run, b);
@@ -130,12 +174,13 @@ function fightNode(meta: Meta, run: Run): Battle {
   const squad = [...run.roster].sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run)).slice(0, squadLimit(run));
   const before = squad.map((h) => run.tower!.hp[String(h.id)] ?? 1);
   run.squad = squad.map((h) => h.id);
-  dressSquad(run);
+  dressSquad(run, meta);
   const b = startStage(run);
   const spots = frontSpots(b);
   const order = [...squad].sort((a, c) => Number(UNITS[a.kind].range > 1) - Number(UNITS[c.kind].range > 1));
-  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))), carry: run.tower!.hp[String(h.id)] }));
+  order.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, { ...(run.local ? localBoost(h, run) : botBoost(meta, h, run)), carry: run.tower!.hp[String(h.id)] }));
   fight(b);
+  maybeSpells(b, meta, run.castle ?? newCastle());
   playOut(b);
   const ends = squad.map((h) => {
     const u = b.units.find((x) => x.side === 'hero' && x.tag === h.id);
@@ -325,5 +370,6 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     }
   }
   starterEnd = heroLevel(starter);
+  settleFinds(meta, run);
   return { floors: calamity ? run.tower!.spots ?? 0 : run.stage - 1, bosses: run.tower!.bosses, act: run.tower!.act, level: run.roster.reduce((n, h) => n + heroLevel(h), 0) / run.roster.length };
 }

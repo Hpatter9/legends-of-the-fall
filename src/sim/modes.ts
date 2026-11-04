@@ -12,10 +12,11 @@ import { dailyBossName, dailyChestSeed, dailyWaveCrowns, DAILY_WAVES } from './d
 import { kindPower, powerOf } from './power';
 import { levelOfKind } from './levels';
 import { ULT_LEVEL } from './abilities';
-import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
+import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, tierOfRun, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { RIFT_ROWS } from './rift';
+import { noteHeart } from './vaelkharHeart';
 import { CAL_SCALE, CAL_START_GOLD } from './calamity';
 import { armyUnlocked, ARMIES } from './armies';
 import { modeOpen, MODE_NEED, opensAt } from './modeUnlock';
@@ -23,8 +24,14 @@ import { HEROES } from './units';
 import type { Meta } from './meta';
 import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
+import { noteWeakness, type WeakNote } from './weakness';
+import { noteBonds, type BondNote } from './bonds';
 import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
+import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
+import { noteBattleWon } from './questRun';
+import { noteChains } from './eidolonChains';
+import { shopArmyIndex } from './chestShop';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -52,6 +59,8 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
     area: dailyArea(date),
     mode: { kind: 'daily', date, practice, ...(scale > 1 ? { scale } : {}), ...(theme ? { theme: theme.id } : {}) },
     stars: 0,
+    // (RUN-GEAR: it finds real pieces; the page sets `findAt` to the save's furthest army for their item levels)
+    real: true,
   };
   for (const kind of five) {
     run.roster.push({ id: run.nextId, kind, grade: 1 });
@@ -85,7 +94,10 @@ export function startDaily(m: Meta, date: number): Run {
   const entry = (m.daily[key] ??= { best: 0, plays: 0 });
   const practice = entry.plays > 0;
   entry.plays++;
-  return dailyRun(date, practice, dailyScale(m, date));
+  const run = dailyRun(date, practice, dailyScale(m, date));
+  // (RUN-GEAR: its finds' item levels follow the save's furthest army)
+  run.findAt = shopArmyIndex(m);
+  return run;
 }
 
 /** The daily run saved for a date, if it is still going (so Daily resumes it rather than starting over). */
@@ -169,7 +181,7 @@ export function settleDaily(m: Meta, run: Run, fight: { won: boolean; stage: num
  * it stands, and the first act's map (`tower.ts`).
  */
 export function towerRun(seed: number, m: Meta): Run {
-  const run: Run = { seed, gold: START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.party], castle: { ...m.castle }, local: true };
+  const run: Run = { seed, gold: START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.party], castle: { ...m.castle }, local: true, real: true, findAt: shopArmyIndex(m) };
   for (const kind of m.party) run.squad.push(recruit(run, kind, SUMMON_BASE).id);
   run.mode = { kind: 'tower' };
   run.tower = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
@@ -180,7 +192,7 @@ export function towerRun(seed: number, m: Meta): Run {
 export function calamityRun(seed: number, m: Meta, hero: string, ascension = 0): Run {
   const level = Math.max(0, Math.min(Math.floor(ascension) || 0, ascUnlocked(m)));
   const kind = m.unlocked.includes(hero) ? hero : m.party[0];
-  const run: Run = { seed, gold: Math.max(0, CAL_START_GOLD - ascRules(level).startGold) + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true };
+  const run: Run = { seed, gold: Math.max(0, CAL_START_GOLD - ascRules(level).startGold) + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true, real: true, findAt: shopArmyIndex(m) };
   run.squad.push(recruit(run, kind, 0).id);
   run.mode = level ? { kind: 'calamity', ascension: level } : { kind: 'calamity' };
   const t = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
@@ -203,18 +215,39 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle }): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
   const boss = fixed ? (isBossRun(run, fight.stage) ? fixed.waves[fight.stage - 1].foes[0] : '') : run.tower ? run.tower.lastBoss ?? '' : isBossStage(fight.stage) ? bandFor(fight.stage) : '';
-  if (fight.won && boss && !m.bosses.includes(boss)) m.bosses.push(boss);
+  // (a quest battle's boss is a named stand-in on a boss's look: it is not that boss beaten)
+  const quest = run.mode?.kind === 'quest';
+  if (fight.won && boss && !quest && !m.bosses.includes(boss)) m.bosses.push(boss);
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));
+  // (VAELKHAR-HEART: a run that holds his Heart is noted in the save)
+  noteHeart(m, run.relics);
   // (the codex notes the foes this fight met and felled)
   if (fight.battle) noteFoes(m, fight.battle);
+  // (DEPTH-BUILD: the bosses' weaknesses: clues by meeting, escorts and losing; a Hunter's mark for a win with one used; not for a quest's stand-in)
+  if (fight.battle && !quest) fight.weak = noteWeakness(m, fight.battle, fight.won, tierOfRun(run));
+  // (DEPTH-BUILD: bond points, in the armies only: a won wave gives every pair placed together one)
+  if (fight.battle && run.mode?.kind === 'army' && fixed) fight.bonds = noteBonds(m, fight.battle, fight.won);
   // (and a combo that went off is seen, for the codex)
   if (fight.battle) noteCombos(m, fight.battle);
-  return checkAchievements({ battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m });
+  const ctx = { battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m };
+  // (the quests taken count the fight too, from the same facts and the page's tallies: `quests.ts`; the page sees a quest done by
+  // `readyQuests`; a boss won may turn up spoils, or the rift's voice, on the quest board)
+  const qf = questFightOf(ctx, { stats: fight.stats, ults: fight.ults });
+  // (a replay of a quest battle already won is practice: it counts for nothing)
+  if (!(run.mode?.kind === 'quest' && run.mode.practice)) {
+    noteQuests(m, qf);
+    // (EIDOLON-CHAINS: and the Eidolon chain's part going; the page sees a piece found in `Meta.quests.pieces`)
+    noteChains(m, qf);
+  }
+  // (a quest battle's last wave won: remembered, so a replay after is practice)
+  if (fight.won && fight.battle) noteBattleWon(m, run);
+  if (fight.battle) offerAfterFight(m, qf, run.seed, fight.stage);
+  return checkAchievements(ctx);
 }
 
 /** The daily's standing for a date, in words: "not tried", "wave 4/10" (a run going), "fell at 6/10" or "cleared ✓". */

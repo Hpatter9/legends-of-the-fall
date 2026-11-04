@@ -8,11 +8,9 @@ import { EPIC_INFO, type Baked } from './musicBake';
 import type { Track } from './musicScore';
 import type { Scene } from './audioRules';
 
-/** The armies' own battle tracks: the main theme in each army's dress (docs/notes/music-theme.md), named as the armies are. */
-export const ARMY_TRACKS = ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'] as const;
-export type ArmyTrack = (typeof ARMY_TRACKS)[number];
-/** Tracks that exist only as files (the synth has no score for them). */
-export type EpicOnly = 'camp' | 'deploy' | 'tower' | 'calmap' | 'calbattle' | 'tavern' | ArmyTrack;
+/** Tracks that exist only as files (the synth has no score for them). Every battle plays `battle`, and a boss `boss`
+ *  (`battleMusic.ts`; the armies' own tracks and the Calamity's are gone: docs/notes/battle-music-2.md). */
+export type EpicOnly = 'camp' | 'deploy' | 'tower' | 'calmap' | 'tavern';
 /** Every track the player can be asked for. `town` is the old name of the camp's theme. */
 export type MusicId = Track | EpicOnly;
 export type StingId = 'victory' | 'defeat';
@@ -22,8 +20,7 @@ export const STING_IDS: readonly StingId[] = ['victory', 'defeat'];
 export const SYNTH_OF: Record<MusicId, Track> = {
   town: 'town', battle: 'battle', boss: 'boss', opening: 'opening', gorvak: 'gorvak', herald2: 'herald2', herald3: 'herald3', herald4: 'herald4', herald5: 'herald5', herald6: 'herald6',
   triumph: 'triumph', comic: 'comic', solemn: 'solemn', spire: 'spire',
-  camp: 'town', deploy: 'town', tower: 'town', calmap: 'boss', calbattle: 'boss', tavern: 'town',
-  orcs: 'battle', undead: 'battle', beasts: 'battle', wildwood: 'battle', labyrinth: 'battle', ogres: 'battle', infernal: 'battle', yokai: 'battle', golems: 'battle',
+  camp: 'town', deploy: 'town', tower: 'town', calmap: 'boss', tavern: 'town',
 };
 
 type FileId = keyof typeof EPIC_MANIFEST;

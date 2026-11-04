@@ -14,6 +14,8 @@ import { atkOf, hurt, defOf, tileOf, type Battle, type BattleEvent, type Unit } 
 import { isBoss } from './foes';
 import { mendUnit, type Dot } from './abilities';
 import { mixSeed } from './rng';
+import { rollSave, type SaveWhat } from './saves';
+import { JOINT } from './stats';
 
 import { AILMENT_KEYS, type AilmentKey } from './ailmentKeys';
 export { AILMENT_KEYS, type AilmentKey };
@@ -95,8 +97,9 @@ export const AIL = {
   GRAVE_ROT: 5,
 };
 
-/** The battle being stepped (set by `stepBattle` and `castSpell`): healing reads it to turn a curse's healing into harm. */
-export const ailCtx: { b?: Battle } = {};
+/** The battle being stepped (set by `stepBattle` and `castSpell`): healing reads it to turn a curse's healing into harm. `by` is the fighter
+ *  casting a skill just now (set by `powered`): an ailment its skill lays without naming who laid it is saved against its DC (STATS batch 5). */
+export const ailCtx: { b?: Battle; by?: Unit } = {};
 
 /* ------------------------------------------------------------------ reading */
 
@@ -176,10 +179,12 @@ export const ailBoss = (u: Unit): boolean => u.side === 'foe' && (isBoss(u.def) 
 const note = (b: Battle, e: BattleEvent) => b.spells.events.push(e);
 
 /**
- * How long an ailment laid on `to` lasts after its resists, the boss rules and a cleanse's ward: 0 when it does not take hold
- * (an "Immune" is shown). Only with the switch on.
+ * How long an ailment laid on `to` lasts after its resists, its saving throw, the boss rules and a cleanse's ward: 0 when it does not take
+ * hold (an "Immune" is shown). `by` laid it (when not given, the fighter casting a skill now, `ailCtx.by`): `to` saves against its DC and a
+ * save halves the time ("Saved"; STATS batch 5, `saves.ts`); a boss saves too since the joint rebalance (every save trained), and its Legendary Resistance, the ladder below, follows. Only with
+ * the switch on.
  */
-export function gate(b: Battle, to: Unit, kind: AilmentKey, ms: number): number {
+export function gate(b: Battle, to: Unit, kind: AilmentKey, ms: number, by?: Unit, what: SaveWhat = kind): number {
   if (!to.alive) return 0;
   const immune = () => {
     note(b, { kind: 'immune', to: to.id, what: kind });
@@ -190,7 +195,11 @@ export function gate(b: Battle, to: Unit, kind: AilmentKey, ms: number): number 
   if (r.immune.has(kind)) return immune();
   if (r.half.has(kind)) ms *= 0.5;
   if (r.longer.has(kind)) ms *= 1.5;
-  if (ailBoss(to)) {
+  const boss = ailBoss(to);
+  const save = rollSave(b, by ?? ailCtx.by, to, what, boss);
+  ms *= save.mult;
+  if (save.saved) note(b, { kind: 'saved', to: to.id, what: kind });
+  if (boss) {
     if (kind === 'fear') return immune();
     ms *= AIL.BOSS_SHARE;
     if (HARD.has(kind)) {
@@ -238,13 +247,13 @@ function upsert(u: Unit, kind: AilmentKey, until: number, by: number): Ailment {
  * any other, as the one field did. On: it stands beside the others; laying it again keeps the stronger tick and the later end; poison
  * stacks; fire thaws a freeze (and does not take) and puts out a chill.
  */
-export function setDot(b: Battle, to: Unit, d: Dot & { by: number; next: number; until: number }): void {
+export function setDot(b: Battle, to: Unit, d: Dot & { by: number; next: number; until: number }, what: SaveWhat = d.kind): void {
   if (!on()) {
     to.ail = ailmentsOf(to).filter((a) => !DOTS.has(a.kind));
     to.ail.push({ kind: d.kind, dmg: d.dmg, every: d.every, ms: d.ms, by: d.by, next: d.next, until: d.until });
     return;
   }
-  const ms = gate(b, to, d.kind, d.until - b.t);
+  const ms = gate(b, to, d.kind, d.until - b.t, layer(b, d.by), what);
   if (!ms) return;
   if (d.kind === 'burn') {
     if (hasAil(to, 'freeze', b.t)) return thaw(b, to);
@@ -264,9 +273,9 @@ export function setDot(b: Battle, to: Unit, d: Dot & { by: number; next: number;
 }
 
 /** The new damage over time at its usual numbers (on only): fire, poison (a stack), a bleed or a curse, from `by`'s attack. */
-export function burnFor(b: Battle, by: Unit, to: Unit, ms = AIL.BURN_MS, share = AIL.BURN_SHARE): void {
+export function burnFor(b: Battle, by: Unit, to: Unit, ms = AIL.BURN_MS, share = AIL.BURN_SHARE, what: SaveWhat = 'burn'): void {
   if (!on() || !to.alive) return;
-  setDot(b, to, { kind: 'burn', dmg: Math.max(1, Math.round(attack(by) * share)), every: AIL.BURN_EVERY, ms, by: by.id, next: b.t + AIL.BURN_EVERY, until: b.t + ms });
+  setDot(b, to, { kind: 'burn', dmg: Math.max(1, Math.round(attack(by) * share)), every: AIL.BURN_EVERY, ms, by: by.id, next: b.t + AIL.BURN_EVERY, until: b.t + ms }, what);
 }
 export function poisonFor(b: Battle, by: Unit, to: Unit, share = AIL.POISON_SHARE, ms = AIL.POISON_MS): void {
   if (!on() || !to.alive) return;
@@ -279,7 +288,7 @@ export function bleedFor(b: Battle, by: Unit, to: Unit, share: number, ms = 3000
 /** A curse that only turns healing to harm (a Hex spell's), or deepens one already ticking. */
 export function curseFor(b: Battle, by: Unit, to: Unit, ms = AIL.CURSE_MS): void {
   if (!on() || !to.alive) return;
-  const t = gate(b, to, 'curse', ms);
+  const t = gate(b, to, 'curse', ms, by);
   if (!t) return;
   const a = upsert(to, 'curse', b.t + t, by.id);
   a.every ??= 1000;
@@ -302,7 +311,7 @@ export function stunFor(b: Battle, to: Unit, ms: number, set = false, kind: 'stu
     to.stunUntil = set ? b.t + ms : Math.max(to.stunUntil ?? 0, b.t + ms);
     return true;
   }
-  const t = gate(b, to, kind, ms);
+  const t = gate(b, to, kind, ms, by);
   if (!t) return false;
   to.busyUntil = Math.max(to.busyUntil, b.t + t);
   to.stunUntil = Math.max(to.stunUntil ?? 0, b.t + t);
@@ -342,7 +351,7 @@ export function chillFor(b: Battle, to: Unit, ms: number, set = false, frost = f
     to.slowUntil = set ? b.t + ms : Math.max(to.slowUntil ?? 0, b.t + ms);
     return true;
   }
-  const t = gate(b, to, 'chill', ms);
+  const t = gate(b, to, 'chill', ms, by);
   if (!t) return false;
   to.slowUntil = Math.max(to.slowUntil ?? 0, b.t + t);
   upsert(to, 'chill', b.t + t, by?.id ?? to.id);
@@ -356,8 +365,15 @@ export function chillFor(b: Battle, to: Unit, ms: number, set = false, frost = f
   return true;
 }
 
-/** Charmed (fights its own side): not one of the eleven, but hard control, so a boss takes it with diminishing returns. */
-export function charmFor(b: Battle, to: Unit, ms: number): boolean {
+/** Charmed (fights its own side): not one of the eleven, but hard control, so a boss takes it with diminishing returns. Any other saves
+ *  with WIS against `by`'s DC (`ailCtx.by` when not given), a save halving it (STATS batch 5). */
+export function charmFor(b: Battle, to: Unit, ms: number, by?: Unit): boolean {
+  // (a boss saves too since the joint rebalance, `JOINT.bossSaves`, and then meets its ladder)
+  if (on() && (!ailBoss(to) || JOINT.bossSaves)) {
+    const save = rollSave(b, by ?? ailCtx.by, to, 'charm', ailBoss(to));
+    ms = Math.max(TICK, Math.round(ms * save.mult));
+    if (save.saved) note(b, { kind: 'saved', to: to.id, what: 'charm' });
+  }
   if (on() && ailBoss(to)) {
     const t = hardGate(b, to, ms * AIL.BOSS_SHARE);
     if (t <= 0) {
@@ -373,7 +389,7 @@ export function charmFor(b: Battle, to: Unit, ms: number): boolean {
 /** Weakened: attack cut as the Hex cuts it (`HEX_MULT`, put back when it fades in `settleFalls`). On only. */
 export function weakFor(b: Battle, to: Unit, ms = AIL.WEAK_MS, by?: Unit, mult = 0.7): void {
   if (!on()) return;
-  const t = gate(b, to, 'weak', ms);
+  const t = gate(b, to, 'weak', ms, by);
   if (!t) return;
   if (to.weakUntil === undefined) to.power = (to.power ?? 1) * mult;
   to.weakUntil = Math.max(to.weakUntil ?? 0, b.t + t);
@@ -381,18 +397,18 @@ export function weakFor(b: Battle, to: Unit, ms = AIL.WEAK_MS, by?: Unit, mult =
 }
 export function silenceFor(b: Battle, to: Unit, ms = AIL.SILENCE_MS, by?: Unit): void {
   if (!on()) return;
-  const t = gate(b, to, 'silence', ms);
+  const t = gate(b, to, 'silence', ms, by);
   if (t) upsert(to, 'silence', b.t + t, by?.id ?? to.id);
 }
 export function fearFor(b: Battle, to: Unit, ms = AIL.FEAR_MS, by?: Unit): void {
   if (!on()) return;
-  const t = gate(b, to, 'fear', ms);
+  const t = gate(b, to, 'fear', ms, by);
   if (t) upsert(to, 'fear', b.t + t, by?.id ?? to.id);
 }
 /** Shocked: every second a spark jumps from it to a fighter of its own side nearby (to every one in the same water). */
 export function shockFor(b: Battle, by: Unit, to: Unit, ms = AIL.SHOCK_MS, relay = true, from?: number): void {
   if (!on() || !to.alive) return;
-  const t = gate(b, to, 'shock', ms);
+  const t = gate(b, to, 'shock', ms, by);
   if (!t) return;
   const had = find(to, 'shock');
   const a = upsert(to, 'shock', b.t + t, by.id);

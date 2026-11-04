@@ -183,9 +183,11 @@ test('the first run works with any pack: a run starts from the three, and a figh
     // (the front deploy row of this board, whatever its size: army maps are 14x18 since the winding maps)
     const front: number[] = [];
     for (let u = 0; u < b.board.w; u++) if (standable(tileAt(b.board, u, b.board.d - DEPLOY_ROWS))) front.push(u);
+    // (a second hire of the same kind is refused on the field: one of each hero, ONE-OF-EACH)
     run.squad.forEach((id, n) => {
       const h = heroOf(run, id)!;
-      assert.ok(place(b, h.kind, front[n * 2], b.board.d - DEPLOY_ROWS, id, boostOf(h)), `${h.kind} is placed`);
+      const twin = run.squad.slice(0, n).some((x) => heroOf(run, x)!.kind === h.kind);
+      assert.equal(place(b, h.kind, front[n * 2], b.board.d - DEPLOY_ROWS, id, boostOf(h)), !twin, `${h.kind} is placed${twin ? ' only once' : ''}`);
     });
     fight(b);
     playOut(b);

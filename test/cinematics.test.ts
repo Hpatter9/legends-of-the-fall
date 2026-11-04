@@ -39,6 +39,8 @@ test('every scene is 10 to 40 seconds as played untouched (a cut-in 2 to 6), wit
     if (cutIn) assert.ok(real >= 2 && real <= 6, `${id}: ${real.toFixed(1)} s`);
     else if (reveal) assert.ok(secs >= 5 && secs <= 14, `${id}: ${secs.toFixed(1)} s`);
     else if (oath) assert.ok(secs >= 8 && secs <= 12, `${id}: ${secs.toFixed(1)} s`);
+    // (the opening runs about a full minute, the owner's ask; every other scene is 10 to 40)
+    else if (id === 'opening') assert.ok(secs >= 50 && secs <= 70, `${id}: ${secs.toFixed(1)} s`);
     else assert.ok(secs >= 10 && secs <= 40, `${id}: ${secs.toFixed(1)} s`);
     for (const s of SCENES[id].shots) for (const l of s.lines ?? []) assert.ok(l.text.length <= 100, `${id}: ${l.text}`);
   }
@@ -192,7 +194,7 @@ test('every scene that casts Duchess gives her a line, as an actor with no fight
       assert.ok(!['opening', 'gorvak'].includes(id), id);
       continue;
     }
-    assert.ok(sc.shots.some((s) => s.lines?.some((l) => l.who === goat[0] && l.text === 'Mehh.')), id);
+    assert.ok(sc.shots.some((s) => s.lines?.some((l) => l.who === goat[0] && /^(Mehh|Baaaah)\.$/.test(l.text))), id);
     assert.equal(castOf(sc, { party: ['knight', 'samurai', 'archer'] })[goat[0]].kind, null);
   }
 });
@@ -470,4 +472,37 @@ test('an old saved settings object with the summoning-scene switch is read witho
   assert.equal(s.music, 40);
   assert.equal(s.cinematics, true);
   assert.equal('summonScene' in DEFAULTS, false);
+});
+
+// (CINE-STORY, docs/notes/cine-story.md: the story scenes follow the opening's rules)
+test('a story scene keeps one backdrop from its first shot to its last, and no foe is a silhouette', async () => {
+  const { QUEST_BATTLES, TALE_BATTLES, LOST_BATTLES } = await import('../src/sim/questBattles');
+  // (the lands a scene stands in, in order; a shot that names the land it is already on changes nothing)
+  const looksOf = (sc: Scene): (string | undefined)[] => sc.shots.reduce<(string | undefined)[]>((l, s) => (s.look && s.look !== l[l.length - 1] ? [...l, s.look] : l), []);
+  // (the functional cut-ins and the castle popup are not story scenes)
+  const functional = (sc: Scene): boolean => !!sc.short || sc.family === 'form' || sc.family === 'oath' || sc.family === 'oathcut' || sc.family === 'castle';
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    if (functional(sc)) continue;
+    assert.deepEqual(looksOf(sc), [sc.shots[0].look], `${id}: the backdrop changes mid-scene`);
+  }
+  const scenes: Scene[] = [];
+  for (const q of [...QUEST_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES]) {
+    const cast = q.cast.map((s) => s.heroes[0]);
+    scenes.push(q.before(cast), q.after(cast));
+  }
+  for (const sc of scenes) {
+    assert.deepEqual(looksOf(sc), [sc.shots[0].look], `${sc.id}: the backdrop changes mid-scene`);
+    // (a silhouette is allowed only on a hero a tale keeps secret: "The stranger")
+    for (const [k, m] of Object.entries(sc.cast)) if (m.shade) assert.equal(m.name, 'The stranger', `${sc.id}: ${k} is a silhouette`);
+  }
+});
+
+test('no story line speaks to the player', () => {
+  const fourth = /\b(tap|click|button|the player|you are the king|that is you)\b/i;
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    if (id === 'opening') continue;
+    for (const s of sc.shots) for (const l of s.lines ?? []) assert.ok(!fourth.test(l.text), `${id}: ${l.text}`);
+  }
 });

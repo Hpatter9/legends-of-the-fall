@@ -313,6 +313,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 .dossierAbility.locked > img { filter: grayscale(.85); opacity: .65; }
 .dossierAbility[data-type='ultimate'] { background: linear-gradient(120deg, #3c3024, #141b15); }
 .dossierAbility .ultLock { display: block; margin-top: 8px; color: #dfbe8d; font: 13px/1.4 var(--body); }
+.dossierAbility .skillLv { margin-top: 8px; }
+.dossierAbility .skillLv small { display: block; color: #dfbe8d; font: 12px/1.4 var(--body); }
+.dossierAbility .skillLvBar { display: block; height: 4px; margin-top: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.dossierAbility .skillLvBar span { display: block; height: 100%; background: linear-gradient(90deg, #b98a3e, #f2d48c); }
 .heroDetail .heroTabPanel { scroll-margin-top: 10px; }
 @media (max-width: 375px) {
   .heroDetail .hhead { padding: 18px 22px 36px; }
@@ -1184,3 +1188,73 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 .rulerPortrait { display: block; width: 100px; height: 100px; background-size: 400% 800%; background-position: 0 0; background-repeat: no-repeat; image-rendering: pixelated; }
 .rulerChoice b { font-size: 13px; line-height: 1.25; text-align: center; }
 .rulerChoice small { margin-top: 3px; font-size: 11px; color: var(--ruler-colour); }
+
+/* DEPTH-BUILD: a building's Rooms strip (one row per room; lit when its level stands, stone grey until then). In the chamber grid only
+   the names show; the building's own card gives each room's line. */
+.ctRooms {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0;
+}
+.ctRoom {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #8a8b80;
+  font: 600 11px/1.25 var(--body);
+}
+.ctRoom.open {
+  color: #f6e7b0;
+  background: rgba(120, 90, 20, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.35);
+}
+.ctRoomIco {
+  text-align: center;
+  filter: grayscale(1) opacity(0.6);
+}
+.ctRoom.open .ctRoomIco {
+  filter: none;
+}
+.ctRoomWords {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ctRoomWords small {
+  font-weight: 500;
+  font-size: 11px;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+.ctChamberCard .ctRoomWords small {
+  display: none;
+}
+.ctRoomLv {
+  font-style: normal;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.bcard .ctRooms {
+  margin: 8px 0;
+}
+
+/* DEPTH-BUILD: the hero sheet's Bonds block */
+.dossierBonds { display: flex; flex-direction: column; gap: 8px; }
+.bondList { display: flex; flex-direction: column; gap: 4px; }
+.bondRow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; padding: 6px 8px; border-radius: 6px; background: rgba(0, 0, 0, 0.25); }
+.bondRow b { color: #f3e2a0; }
+.bondRow small { color: #c9bf9e; }
+.bondRow.rival b { color: #f08a7a; }
+
+/* DEPTH-BUILD: the hero sheet's legacy block, and the Hall of Legends' plinths on its card */
+.dossierLegacy { display: flex; flex-direction: column; gap: 6px; }
+.legacyLine { margin: 0; font-size: 13px; color: #e8dcb4; }
+.hallPlinths { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.hallPlinth { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(0, 0, 0, 0.28); box-shadow: inset 0 0 0 1px rgba(233, 213, 255, 0.18); }
+.hallPlinth div { display: flex; flex-direction: column; min-width: 0; }
+.hallPlinth small { color: #c9bf9e; overflow-wrap: anywhere; }

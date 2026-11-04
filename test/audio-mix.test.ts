@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { addUnit, startBattle, type BattleEvent } from '../src/sim/battle';
 import { castSpell, SPELL_IDS } from '../src/sim/spells';
 import { EPIC_MANIFEST } from '../src/render/epicManifest';
-import { MUSIC_LEVEL, SFX_LEVEL, SHOW_CUES, TRACK_GAIN, UI_CUES, UI_LEVEL, busOf, trackGain } from '../src/render/audioMix';
+import { AMBIENCE_LEVEL, LOOP_GAIN, MUSIC_LEVEL, SFX_LEVEL, SHOW_CUES, STING_GAIN, TRACK_GAIN, UI_CUES, UI_LEVEL, busOf, trackGain } from '../src/render/audioMix';
 import { CUES, type Cue } from '../src/render/soundRules';
 import { CAST_GAIN, SPELL_TRIM, spellParts } from '../src/render/spellSfx';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
@@ -38,14 +38,18 @@ test('the buses sit inside the master, and the music under the effects', () => {
   assert.ok(MUSIC_LEVEL < SFX_LEVEL, 'the music bus is the quieter');
 });
 
-test('the music under a fight is trimmed below the menus\' music (measured loudness: docs/notes/audio-mix.md)', () => {
-  // (each battle track sits 7 LU under the fight; the menus' music 2.5 LU above the battle tracks. The trims are what gets there
-  //  from each file's own loudness, so only their sanity is checked here: a battle track is never lifted above its file)
-  // (the battle tracks are the main theme's arrangements since MUSIC-THEME: the general one, the boss, the Calamity's and each army's)
-  const battles = ['battle', 'boss', 'calbattle', 'orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'] as const;
-  for (const id of battles) assert.ok(TRACK_GAIN[id] < 1, `${id} is brought down`);
-  // (and each sits below every menu track, as the fight's music steps down from the camp's)
-  for (const id of battles) for (const menu of ['camp', 'tavern', 'deploy', 'calmap'] as const) assert.ok(TRACK_GAIN[id] < TRACK_GAIN[menu], `${id} under ${menu}`);
+test('every loop takes the one trim (the files are mastered to one loudness), the stings ring over it', () => {
+  // (changed for the owner's "level their volumes. It still feels off": the battle tracks were trimmed 2.5 LU under the menus'
+  //  music and the scenes 1 LU over it, from files 10 LU apart; now every file is at -18 LUFS and every loop plays at the one
+  //  level, docs/notes/battle-music-2.md; the levels at the speakers are checked in test/music-loudness.test.ts)
+  for (const [id, e] of Object.entries(EPIC_MANIFEST)) {
+    if (e.loop) assert.equal(TRACK_GAIN[id as keyof typeof TRACK_GAIN], LOOP_GAIN, id);
+  }
+  assert.equal(LOOP_GAIN, 1);
+  assert.equal(TRACK_GAIN.victory, STING_GAIN.victory);
+  assert.equal(TRACK_GAIN.defeat, STING_GAIN.defeat);
+  assert.ok(STING_GAIN.victory > STING_GAIN.defeat && STING_GAIN.defeat > 1, 'the fanfare over the fall\'s sting, both over the music');
+  assert.ok(AMBIENCE_LEVEL < MUSIC_LEVEL, 'the beds under the music');
 });
 
 test('every king\'s spell has a trim, and the trim scales its cast and its effect alike', () => {
@@ -77,11 +81,11 @@ test('the music player plays a file at its trim, and a level on top of it (the v
       return b;
     };
     const music = new MusicPlayer(ctx as unknown as AudioContext, async () => baked(), async () => ({ duration: 1 }) as unknown as AudioBuffer);
-    music.setTrack('calbattle');
+    music.setTrack('boss');
     await new Promise((r) => setTimeout(r, 10));
-    assert.ok(FakeContext.made.some((n) => n.gain?.target === TRACK_GAIN.calbattle), 'the loop fades in to its trim');
-    music.setTrack('calbattle', 0.5);
-    assert.ok(FakeContext.made.some((n) => n.gain?.target === 0.5 * TRACK_GAIN.calbattle), 'a level glides on top of it');
+    assert.ok(FakeContext.made.some((n) => n.gain?.target === TRACK_GAIN.boss), 'the loop fades in to its trim');
+    music.setTrack('boss', 0.5);
+    assert.ok(FakeContext.made.some((n) => n.gain?.target === 0.5 * TRACK_GAIN.boss), 'a level glides on top of it');
     music.destroy();
   } finally {
     undo();

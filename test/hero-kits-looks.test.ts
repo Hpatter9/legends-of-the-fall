@@ -11,7 +11,7 @@ import { skillElement } from '../src/render/fxRules';
 
 test('every hero kit skill has a signature to play: its own, or a borrowed one recoloured', () => {
   for (const h of ALL_HEROES) {
-    for (const slot of [HERO_KITS()[h].s1, HERO_KITS()[h].s2]) {
+    for (const slot of HERO_KITS()[h].slots) {
       const name = keyOf(slot.skill);
       const own = !!SIGNATURES[name];
       assert.ok(own || KIT_LOOKS[name], `${h}: ${name} has no look`);

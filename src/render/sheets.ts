@@ -98,6 +98,23 @@ import robotDestroyer from '../art/units/robot_destroyer.png';
 import robotInfantry from '../art/units/robot_infantry.png';
 import robotSwordsman from '../art/units/robot_swordsman.png';
 import hkGhost from '../art/units/hk_ghost.png';
+// (EIDOLON-TRIAL: Nivra as the boss of her trial, cut from the owner's generated sheet by tools/eidolon-trial/cut_nivra.py)
+import eidolonNivra from '../art/units/eidolon_nivra.png';
+// (EIDOLON-CHAIN-3: Aurelan's, cut by tools/eidolon-trial/cut_aurelan.py)
+import eidolonAurelan from '../art/units/eidolon_aurelan.png';
+// (EIDOLON-CHAIN-4: Voltara's, cut by tools/eidolon-trial/cut_voltara.py)
+import eidolonVoltara from '../art/units/eidolon_voltara.png';
+// (EIDOLON-CHAIN-5 and 6: Gorm's and Vaelkhar's, cut by tools/eidolon-trial/cut_gorm.py and cut_vaelkhar.py)
+import eidolonGorm from '../art/units/eidolon_gorm.png';
+import eidolonVaelkhar from '../art/units/eidolon_vaelkhar.png';
+// (SUMMON-ART: the summons' own sheets, cut by tools/summon-art/cut.py; which summon wears which is in summonArt.ts)
+import summonWolf from '../art/units/summon_wolf.png';
+import summonWolfWhite from '../art/units/summon_wolf_white.png';
+import summonDirewolf from '../art/units/summon_direwolf.png';
+import summonWraith from '../art/units/summon_wraith.png';
+import summonDecoy from '../art/units/summon_decoy.png';
+import summonStandard from '../art/units/summon_standard.png';
+import { SUMMON_SHEETS } from './summonArt';
 import heroMercenary from '../art/units/hero_mercenary.png';
 import heroWolfBard from '../art/units/hero_wolf_bard.png';
 import heroBeastmaster from '../art/units/hero_beastmaster.png';
@@ -222,6 +239,17 @@ const URLS: Record<string, string> = {
   robot_infantry: robotInfantry,
   robot_swordsman: robotSwordsman,
   hk_ghost: hkGhost,
+  eidolon_nivra: eidolonNivra,
+  eidolon_aurelan: eidolonAurelan,
+  eidolon_voltara: eidolonVoltara,
+  eidolon_gorm: eidolonGorm,
+  eidolon_vaelkhar: eidolonVaelkhar,
+  summon_wolf: summonWolf,
+  summon_wolf_white: summonWolfWhite,
+  summon_direwolf: summonDirewolf,
+  summon_wraith: summonWraith,
+  summon_decoy: summonDecoy,
+  summon_standard: summonStandard,
   hero_mercenary: heroMercenary,
   hero_wolf_bard: heroWolfBard,
   hero_beastmaster: heroBeastmaster,
@@ -290,7 +318,7 @@ export async function loadAwakenedSheets(kinds: readonly string[]): Promise<void
 /** Load the units' sheets and their rear views and transformation forms. Legacy hero imports
  * remain available as source art without allocating obsolete GPU textures. */
 export async function loadSheets(): Promise<void> {
-  const required = new Set(Object.values(UNITS).flatMap(def => [def.sheet, ...(def.forms ?? [])]));
+  const required = new Set([...Object.values(UNITS).flatMap(def => [def.sheet, ...(def.forms ?? [])]), ...SUMMON_SHEETS]);
   for (const id of [...required]) if (LAYOUT[id]?.rear) required.add(LAYOUT[id].rear!);
   await Promise.all([loadRulers(), ...[...required].filter(id => URLS[id] && LAYOUT[id]).map(loadSheet)]);
 }
@@ -376,6 +404,19 @@ function idleBounds(sheet: string): { x: number; y: number; w: number; h: number
   const box = x1 < 0 ? { x: 0, y: 0, w: l.w, h: l.h } : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
   bounds.set(sheet, box);
   return box;
+}
+
+/** MENU-GLITCH: find each loaded sheet's idle box a few at a time while the page is idle, so a screen of portraits (the codex, the
+ *  party) does not stop to read every figure's pixels as it opens (that held the codex's first opening for most of a second). */
+export function warmPortraits(): void {
+  const todo = [...images.keys()].filter((k) => LAYOUT[k] && !bounds.has(k));
+  const later = (f: (d?: IdleDeadline) => void) => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 50));
+  const step = (d?: IdleDeadline): void => {
+    let n = 0;
+    while (todo.length && (d ? d.timeRemaining() > 4 : n++ < 3)) idleBounds(todo.pop()!);
+    if (todo.length) later(step);
+  };
+  later(step);
 }
 
 /** The whole figure (weapons, wings and all, nothing cut off) of a sheet's first idle frame, at the largest whole-number

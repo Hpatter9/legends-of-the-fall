@@ -36,6 +36,7 @@
 .ruNote, .ruEarned { margin: 0; font: 400 12px/1.6 var(--body); color: var(--dim); text-align: center; }
 .ruStats { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 6px 12px; padding: 12px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); font: 400 12px var(--body); }
 .ruStats .k { color: var(--dim); } .ruStats .v { color: var(--white); text-align: right; } .ruStats .a { color: var(--dim); } .ruStats .v.up { color: var(--g4); }
+.ruScores { margin: 0; text-align: center; font: 400 12px var(--body); color: var(--g4); } .ruWhy { margin: 0; font-size: 11px; line-height: 1.35; }
 .ruBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .ruBtns button { min-height: 48px; font-size: 12px; }
 
 /* The awakened aura's layers round a menu picture (`render/auraCanvas.ts`): never caught by the pictures' own canvas rules. */

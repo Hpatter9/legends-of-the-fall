@@ -7,20 +7,20 @@
 .rsStats { grid-column:1/-1;display:flex;justify-content:space-between;gap:7px;font-size:11px;color:#c1c7b8; }
 .rsStats b { color:#f3cf7c; }
 .rsScene { position:relative;isolation:isolate;flex:1;min-height:200px;overflow:hidden;background:#102c27; }
-.rsScenery { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 64%;z-index:-2; }
-.rsScene::after { content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(#01130c00 55%,#071310dd);box-shadow:inset 0 0 25px #0006; }
-.rsPortalView { position:absolute;left:35%;top:5%;width:31%;height:49%;border-radius:50% 50% 35% 35%;overflow:hidden;opacity:.75;box-shadow:0 0 20px #39faca7a;mask-image:radial-gradient(ellipse,#000 30%,transparent 73%); }
+.rsScenery { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 64%; }
+.rsShade { position:absolute;inset:0;pointer-events:none;background:linear-gradient(#01130c00 55%,#071310dd);box-shadow:inset 0 0 25px #0006; }
+.rsPortalView { position:absolute;transform:translate(-50%,-50%);border-radius:50% 50% 35% 35%;overflow:hidden;opacity:.75;box-shadow:0 0 20px #39faca7a;mask-image:radial-gradient(ellipse,#000 30%,transparent 73%); }
 .rsPortalView svg { width:100%;height:100%; }
-.rsPortalCaption { position:absolute;top:5px;width:100%;text-align:center;font:600 12px var(--display);color:#fff0ce;text-shadow:0 2px 4px #000,0 0 6px #000;margin:0; }
-.rsParty { position:absolute;bottom:41px;left:19%;right:8%;display:flex;align-items:end;justify-content:center;flex-wrap:wrap;gap:0; }
+.rsPortalCaption { position:absolute;z-index:3;top:5px;width:100%;text-align:center;font:600 12px var(--display);color:#fff0ce;text-shadow:0 2px 4px #000,0 0 6px #000;margin:0; }
+.rsParty { position:absolute;z-index:150;width:max-content;max-width:92%;transform:translate(-50%,-100%);transform-origin:50% 100%;display:flex;align-items:end;justify-content:center;flex-wrap:wrap;gap:0;pointer-events:none; }
 .rsHero { position:relative;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 7px 4px #000);margin:0 -4px; }
 .rsHero canvas { image-rendering:pixelated;max-width:65px;max-height:83px; }
 .rsHero.starter { order:0;margin:0 4px;filter:drop-shadow(0 0 9px #e7b845); }
 .rsHero.starter canvas { max-width:82px;max-height:104px; }
 .rsHero span { color:#ffe1a3;font-size:9px;white-space:nowrap;text-shadow:0 2px 3px #000; }
-.rsAltar { position:absolute;bottom:20px;left:10px;min-height:44px;font-size:10px;padding:6px 10px;border:1px solid #a5864d;border-radius:3px;background:linear-gradient(#1a3129ed,#0a1813ed);color:#f7d48b;box-shadow:0 0 12px #4ee6ba25; }
-.rsGrowth { position:absolute;bottom:8px;right:12px;font-size:10px;color:#d5ccad;margin:0;text-shadow:0 2px 4px #000; }
-.rsFragments { position:absolute;top:25%;left:7%;right:7%;display:flex;justify-content:space-between;pointer-events:none; }
+.rsAltar { position:absolute;z-index:3;bottom:20px;left:10px;min-height:44px;font-size:10px;padding:6px 10px;border:1px solid #a5864d;border-radius:3px;background:linear-gradient(#1a3129ed,#0a1813ed);color:#f7d48b;box-shadow:0 0 12px #4ee6ba25; }
+.rsGrowth { position:absolute;z-index:3;bottom:8px;right:12px;font-size:10px;color:#d5ccad;margin:0;text-shadow:0 2px 4px #000; }
+.rsFragments { position:absolute;z-index:3;top:25%;left:7%;right:7%;display:flex;justify-content:space-between;pointer-events:none; }
 .rsFragment { display:block;width:28px;height:32px;transform:rotate(12deg);opacity:.8;box-shadow:0 0 12px #8cdedc;clip-path:polygon(50% 0,100% 25%,85% 85%,15% 100%,0 25%); }
 .rsFragment svg {width:100%;height:100%;}
 .rsDestinations { position:relative;z-index:1;padding:9px 12px calc(env(safe-area-inset-bottom) + 8px);background:linear-gradient(#10241d,#08110d);border-top:1px solid #b39453;box-shadow:0 -8px 22px #0008; }
@@ -48,16 +48,59 @@
 #towerMap .rsLocation .rtCard { background:linear-gradient(#0b1c13ec,#08110df5);border:1px solid #bf9a57;box-shadow:0 0 0 3px #b89a4925,0 20px 60px #000; }
 .riftBattleBackdrop svg {width:100%;height:100%;opacity:.8;}
 @media (max-height:800px) { .rsHead {padding-top:8px;padding-bottom:7px;} .rsHead h2 {font-size:18px;} .rsDestination > svg {height:58px;} .rsDestinationName {font-size:11px;min-height:31px;padding-top:5px;} .rsDetails {font-size:10px;min-height:61px;padding-block:7px;} .rsDestinations {padding-top:7px;} .rsScene {min-height:170px;} }
-@media (prefers-reduced-motion:no-preference) { .rsPortalView {animation:rsBreathe 5s ease-in-out infinite;} .rsHero {animation:rsArrive .6s ease-out both;} @keyframes rsBreathe {50% {transform:scale(1.025);}} @keyframes rsArrive {from{opacity:0;transform:translateY(-12px) scale(.8);}to{opacity:1;transform:none;}} }
-.rsCrossing {position:absolute;z-index:10;inset:0;display:grid;place-items:center;color:#fff3cc;font:700 22px var(--display);background:radial-gradient(ellipse,#3fae8c80,#071b17ef);animation:rsCross .65s ease-in both;}
-.rsDeparting .rsParty {transition:transform .5s,opacity .5s;transform:translateY(-85px) scale(.4);opacity:0;}
-@keyframes rsCross {from{opacity:0;}to{opacity:1;}}
-@media(prefers-reduced-motion:reduce){.rsCrossing{animation:none;}.rsDeparting .rsParty{transition:none;}}
+@media (prefers-reduced-motion:no-preference) { .rsPortalView {animation:rsBreathe 5s ease-in-out infinite;} @keyframes rsBreathe {0%,100% {transform:translate(-50%,-50%);} 50% {transform:translate(-50%,-50%) scale(1.025);}} }
 body:has(#towerMap.rsMode:not([hidden])) #version {top:calc(env(safe-area-inset-top) + 76px);right:8px;font-size:7px;opacity:.65;}
 .riftLandscape {image-rendering:auto;}
 .rsParty.large .rsHero canvas {max-width:42px;max-height:54px;}
 .rsParty.large .rsHero.starter canvas {max-width:64px;max-height:82px;}
-.riftSanctuary[data-region='2'] .rsScene::after {background:radial-gradient(ellipse at 50% 20%,#7047a433,transparent 70%),linear-gradient(transparent 55%,#0d0b1be6);}
-.riftSanctuary[data-region='3'] .rsScene::after {background:radial-gradient(ellipse at 50% 20%,#cf5b452a,transparent 70%),linear-gradient(transparent 55%,#190c0be6);}
+.riftSanctuary[data-region='2'] .rsShade {background:radial-gradient(ellipse at 50% 20%,#7047a433,transparent 70%),linear-gradient(transparent 55%,#0d0b1be6);}
+.riftSanctuary[data-region='3'] .rsShade {background:radial-gradient(ellipse at 50% 20%,#cf5b452a,transparent 70%),linear-gradient(transparent 55%,#190c0be6);}
 .riftSanctuary[data-patron='ember'] .rsPortalView {box-shadow:0 0 25px #ffc76599;}
 .riftSanctuary[data-patron='echo'] .rsPortalView {box-shadow:0 0 25px #ba82ff99;}
+
+/* ===== The living room (CALAMITY-HUB, `sanctuaryView.ts`, `hubMotion.ts`). The stage is the camera; the room slides behind the
+   ring of rifts; the motes are one small canvas. Looping animations change only size, turn or frame, never brightness. ===== */
+.rsStage { position:absolute;inset:0;will-change:transform; }
+.rsRoom { position:absolute;top:0;bottom:0;left:-8%;width:116%;will-change:transform; }
+.rsLight { position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;mix-blend-mode:screen;opacity:.55;
+  background:radial-gradient(circle,var(--hue) 0,color-mix(in srgb,var(--hue) 35%,transparent) 38%,transparent 70%); }
+.rsMist { position:absolute;top:-4%;left:-20%;width:140%;height:58%;object-fit:cover;opacity:.32;mix-blend-mode:screen;pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 40%,transparent);mask-image:linear-gradient(#000 40%,transparent);will-change:transform; }
+.rsRing { position:absolute;inset:0;pointer-events:none; }
+.rsRift { position:absolute;padding:0;border:0;background:none;transform:translate(-50%,-100%);aspect-ratio:1312/1199;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 8px 6px #000a); }
+#towerMap .rsRift { min-height:0;min-width:0; }
+.rsRift.behind { pointer-events:none; }
+.rsRift.far { filter:drop-shadow(0 6px 5px #000a) brightness(.78) saturate(.85); }
+.rsRiftFrame { position:absolute;inset:0;width:100%;height:100%;pointer-events:none; }
+.rsRiftWorld { position:absolute;left:31%;top:17%;width:38%;height:62%;border-radius:50% 50% 44% 44%;overflow:hidden;pointer-events:none;
+  -webkit-mask-image:radial-gradient(ellipse,#000 48%,transparent 76%);mask-image:radial-gradient(ellipse,#000 48%,transparent 76%); }
+.rsRiftWorld svg { width:100%;height:100%; }
+.rsRiftSwirl { position:absolute;left:28%;top:22%;width:44%;aspect-ratio:1;pointer-events:none;mix-blend-mode:screen;opacity:.45;image-rendering:pixelated;
+  background:0 0/1600% 100% no-repeat; }
+.rsRiftGlow { position:absolute;left:12%;top:4%;width:76%;height:86%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(ellipse,color-mix(in srgb,var(--glow) 55%,transparent) 0,transparent 68%); }
+.rsRift.selected .rsRiftGlow { background:radial-gradient(ellipse,color-mix(in srgb,var(--glow) 80%,transparent) 0,transparent 70%); }
+.rsBloom { position:absolute;border-radius:50%;pointer-events:none;opacity:0;z-index:160;
+  background:radial-gradient(circle,#fff 0,#fff 22%,color-mix(in srgb,var(--glow,#7ff5d0) 80%,#fff) 45%,transparent 70%); }
+.rsMotes { position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;z-index:170; }
+.rsFlash { position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:radial-gradient(circle at var(--at,50% 40%),#fff 0,#fff 35%,color-mix(in srgb,var(--glow) 55%,#fff) 70%,color-mix(in srgb,var(--glow) 70%,#e8fff6) 100%); }
+.rsFlash.calm { background:color-mix(in srgb,var(--glow) 35%,#061712); }
+#towerMap .rsDestination { border-color:color-mix(in srgb,var(--glow,#897044) 55%,#897044); }
+#towerMap .rsDestination.selected { border-color:var(--glow,#f1cc74);box-shadow:0 0 0 1px color-mix(in srgb,var(--glow,#f1cc74) 45%,transparent),0 0 14px color-mix(in srgb,var(--glow,#d4ad48) 40%,transparent); }
+.rsDestination .rsDestinationName { color:color-mix(in srgb,var(--glow,#f4dfae) 35%,#f4dfae); }
+.rsRise { pointer-events:none; }
+.rsRise.up { pointer-events:auto; }
+@keyframes rsCardFade { from { opacity:0; } to { opacity:1; } }
+.rsReturning .rsDetails,.rsReturning .rsEnter { animation:rsCardFade .5s ease-out .9s both; }
+@media (prefers-reduced-motion:no-preference) {
+  .rsRiftSwirl { animation:rsSwirl 1.8s steps(16) infinite; }
+  .rsRiftGlow { animation:rsRiftBreathe 3.6s ease-in-out infinite; }
+  .rsRiftWorld svg { animation:rsWorldTurn 40s linear infinite; }
+  .rsLight { animation:rsFlicker var(--beat,3s) ease-in-out infinite; }
+  @keyframes rsSwirl { to { background-position:100% 0; } }
+  @keyframes rsRiftBreathe { 50% { transform:scale(1.07); } }
+  @keyframes rsWorldTurn { to { transform:scale(1.35) rotate(360deg); } from { transform:scale(1.35) rotate(0deg); } }
+  @keyframes rsFlicker { 0%,100% { transform:scale(1); } 23% { transform:scale(1.22); } 41% { transform:scale(.9); } 67% { transform:scale(1.12); } 82% { transform:scale(.96); } }
+}
+@media (prefers-reduced-motion:reduce) { .rsRiftWorld svg { transform:scale(1.35); } }

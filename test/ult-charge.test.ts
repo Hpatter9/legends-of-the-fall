@@ -12,7 +12,9 @@ import { deploySpots, fieldBoost, pickTeam } from '../tools/heroSweep';
 // meter part full, so the first ultimate comes by about mid-fight, and it fills fast enough for a second in a long or boss fight.
 
 /** A battle with five heroes placed at a level, as the hero sweep places them (deploy, not yet fought). */
-function placed(seed: number, level: number, stage = 56): Battle {
+// (stage 65: 56 until the joint rebalance, docs/notes/joint-rebalance.md, when the field's foes fought at the Normal tier's +2 where they were
+// matched to the heroes' growth, so level-30 teams won as quickly as no fight lasted 35 s; the parity table moved by the same share, 78 to 90)
+function placed(seed: number, level: number, stage = 65): Battle {
   const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
   const b = startBattle(seed, FIELD_BANDS[seed % FIELD_BANDS.length], fieldBoost(stage));
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));

@@ -101,7 +101,7 @@ export interface Camp {
   cart: { x: number; y: number };
   stash: Rect;
   /** The places: the Tower on the left, the Daily board on the right, the Calamity's portal in the road inside the gate. `x` is a place's centre, `foot` the foot line of its picture, `plate` its name plate and `box` the tap box (picture and plate together). */
-  places: { tower: Place; daily: Place; calamity: Place };
+  places: { tower: Place; daily: Place; calamity: Place; /** Hester's Stall (SHOP-BOOKS-GEAR): the overlook's only; the older camp has none. */ stall?: Place };
   /** The first row of scene pixels the Battle! button covers. */
   buttonTop: number;
 }

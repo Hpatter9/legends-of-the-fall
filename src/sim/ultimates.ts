@@ -14,8 +14,10 @@
 
 import { sightClear, standable, tileAt, type At } from './board';
 import { setLook } from './kits/effects';
+import { TIMER } from './carry';
 import { addUnit, atkOf, canStrike, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import {
+  blastSave,
   BANNER_MULT,
   CHARGE_MAX,
   DIR,
@@ -44,6 +46,7 @@ import {
   tal,
   type Skill,
 } from './abilities';
+import { DEX_SAVES } from './saves';
 import { charmFor, cleanse, harmed, setDot, stunFor } from './ailments';
 import { fallenFor, raiseFallen } from './kits/revive';
 import { startPool } from './heroKits';
@@ -251,7 +254,8 @@ function fortify(b: Battle, me: Unit, out: BattleEvent[], o: Fortify): boolean {
 function summon(b: Battle, me: Unit, kind: string, n: number): boolean {
   const total = n + tal(me, 'extra');
   let called = false;
-  for (let i = 0; i < total; i++) called = callSummon(b, me, kind, total - 1) || called;
+  // (each lasts 30s of fighting time and carries into the next wave: SUMMON-TIMERS, `carry.ts`)
+  for (let i = 0; i < total; i++) called = callSummon(b, me, kind, total - 1, TIMER.ultBeast) || called;
   return called;
 }
 
@@ -314,10 +318,13 @@ function fists(b: Battle, me: Unit, out: BattleEvent[], foesN: number, blows: nu
 function fullMoon(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = kitOf(me)?.passive.frenzy;
   if (!f || !foesOf(b, me).some((x) => apart(me, x) <= 7)) return false;
-  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + dur(me, 7000) };
+  // (SUMMON-TIMERS: a hero's moon is up 15s of fighting time, where it was 7s, and carries into the next wave)
+  const time = dur(me, me.side === 'hero' ? TIMER.moon : 7000);
+  me.frenzy = { n: f.max + 2 + tal(me, 'frenzyMax'), until: b.t + time };
   mendUnit(me, me.maxHp * share(0.25), out);
   // (both his forms at once while the moon is up: the Hunter's speed and bleed, the Brute's hide and splash)
-  (me.kx ??= {}).moon = b.t + dur(me, 7000);
+  (me.kx ??= {}).moon = b.t + time;
+  if (me.side === 'hero') me.kx.moonMs = time;
   setLook(me, 'werewolf_black', out);
   out.push({ kind: 'frenzy', by: me.id, n: me.frenzy.n });
   return true;
@@ -376,7 +383,8 @@ function infernoBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const ms = dur(me, 5000);
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
-    hurt(b, me, f, net(atkOf(me) * 2.8, f), true, false, out, 'skill');
+    // (STATS batch 6: a breath is a blast, halved on a DEX save)
+    hurt(b, me, f, Math.max(1, Math.round(net(atkOf(me) * 2.8, f) * (DEX_SAVES.breath ? blastSave(b, me, f, out) : 1))), true, false, out, 'skill');
     if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.15)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
   // (RPG-SPELLS batch 4: the line she breathed down stays alight for 4s, a fire wall)
@@ -492,51 +500,53 @@ const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommand
  *  and a few heroes whose kits fall behind against the stronger foes a level-30 team now meets (the Samurai, Ninja Monk, Buccaneer, Demon Swordsman)
  *  fire theirs more than twice in a long fight. `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
-  knight: { rate: 1.46, power: 0.78 },
-  samurai: { rate: 2.33, power: 3.07 },
-  kunoichi: { rate: 1.65, power: 3.07 },
-  archer: { rate: 0.65, power: 1.15 },
-  wizard: { rate: 0.51, power: 1.6 }, // (RPG-SPELLS batch 6: 1.44 before; it carries the Wall of Fire's lighter skill 2 at level 30)
-  peasant: { rate: 1.11, power: 0.77 },
-  ninjaMonk: { rate: 2.41, power: 3.07 },
-  wanderer: { rate: 0.37, power: 0.96 },
-  lightningMage: { rate: 0.92, power: 1.24 },
-  kitsune: { rate: 0.8, power: 3 }, // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
-  karasu: { rate: 0.77, power: 6 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
-  yamabushi: { rate: 1.85, power: 3.07 },
-  werewolf: { rate: 0.73, power: 2.3 }, // (RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
-  minotaur: { rate: 1.51, power: 2.85 },
-  satyr: { rate: 0.69, power: 0.89 },
-  gorgon: { rate: 1.29, power: 2.2 },
-  samuraiCommander: { rate: 1.1, power: 1.6 },
-  paladin: { rate: 1.31, power: 0.83 },
-  cleric: { rate: 1.0, power: 1.0 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
-  druid: { rate: 1.19, power: 0.4 },
-  barbarian: { rate: 0.9, power: 2.14 },
-  ranger: { rate: 0.84, power: 1.11 },
-  warlock: { rate: 0.5, power: 0.95 }, // (RPG-SPELLS batch 6: 1.07 before; the Circle of Death's ring made it +6.3 at level 30)
-  illusionist: { rate: 1.08, power: 0.47 },
-  gunslinger: { rate: 0.37, power: 1.7 },
-  shambler: { rate: 1.04, power: 0.75 }, // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
-  rifleBot: { rate: 1.01, power: 2.17 },
-  mercenary: { rate: 1.21, power: 3.07 },
-  mummy: { rate: 0.99, power: 0.49 },
-  buccaneer: { rate: 3.11, power: 3.07 },
-  wolfBard: { rate: 0.93, power: 0.49 },
-  beastmaster: { rate: 0.7, power: 0.59 },
-  kraken: { rate: 1.37, power: 0.94 },
-  lancer: { rate: 2.3, power: 3.07 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
-  reaper: { rate: 1.79, power: 2.6 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
-  timeWitch: { rate: 1.09, power: 0.62 },
-  arcBlade: { rate: 0.59, power: 1.8 }, // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
-  dreadPirate: { rate: 1.06, power: 1.24 },
-  siegeBot: { rate: 0.5, power: 2.06 },
-  priestess: { rate: 0.38, power: 0.43 },
-  dragoon: { rate: 1.1, power: 3.07 },
-  juggernaut: { rate: 1.55, power: 1.5 },
-  sage: { rate: 1.7, power: 1.51 },
-  demonSwordsman: { rate: 1.8, power: 3.07 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
-  tyrant: { rate: 0.88, power: 1.82 },
+  knight: { rate: 1.46, power: 0.82 },
+  samurai: { rate: 2.33, power: 3.141 },
+  kunoichi: { rate: 1.65, power: 3.13 },
+  archer: { rate: 0.65, power: 1.192 },
+  wizard: { rate: 0.51, power: 1.73 }, // (RPG-SPELLS batch 6: 1.44 before; it carries the Wall of Fire's lighter skill 2 at level 30)
+  peasant: { rate: 1.11, power: 0.805 },
+  ninjaMonk: { rate: 2.41, power: 3.381 },
+  wanderer: { rate: 0.37, power: 1.203 },
+  lightningMage: { rate: 0.92, power: 1.363 },
+  kitsune: { rate: 0.8, power: 2.169 }, // (the joint rebalance: 2.953 to 2.169, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
+  karasu: { rate: 0.77, power: 5.634 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
+  yamabushi: { rate: 1.85, power: 3.294 },
+  werewolf: { rate: 0.73, power: 1.1 }, // (the joint rebalance: 2.208 to 1.1, as his own two skills rose for Vuk's Old Hunger, docs/notes/joint-rebalance.md; RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
+  minotaur: { rate: 1.51, power: 2.45 }, // (STATS batch 5: 2.983 before; with the saves he sat at +6.0 at level 30. STATS batch 6: 2.7 before; with Athletics he climbed to +6.3)
+  satyr: { rate: 0.69, power: 0.879 },
+  gorgon: { rate: 1.29, power: 2.347 },
+  // (the skills overhaul's batch 4: rate 1.1 before; with Command Strike he stood +6.2 at level 30, and Rally Cry's banner does not scale with power.
+  // STATS batch 6: 0.95 before; CHA 17 fills his meter sooner, and he stood +6.2 again)
+  samuraiCommander: { rate: 0.85, power: 1.391 },
+  paladin: { rate: 1.31, power: 0.886 },
+  cleric: { rate: 1, power: 0.92 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
+  druid: { rate: 1.19, power: 0.38 },
+  barbarian: { rate: 0.9, power: 2.158 },
+  ranger: { rate: 0.84, power: 1.162 },
+  warlock: { rate: 0.5, power: 1.0 }, // (RPG-SPELLS batch 6: 1.07 before, then 0.929; STATS batch 5 lifted it back to 1.0: with the saves he fell to -6.5 at level 30)
+  illusionist: { rate: 1.08, power: 0.535 },
+  gunslinger: { rate: 0.37, power: 1.78 },
+  shambler: { rate: 1.04, power: 0.84 }, // (the joint rebalance: 0.709 to 0.933, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm) (TACTICS: 0.933 to 0.84, level 30, parity under Advance together, docs/notes/tactics.md)
+  rifleBot: { rate: 1.01, power: 1.972 },
+  mercenary: { rate: 1.21, power: 2.811 },
+  mummy: { rate: 0.99, power: 0.465 },
+  buccaneer: { rate: 3.11, power: 3.373 },
+  wolfBard: { rate: 0.93, power: 0.525 },
+  beastmaster: { rate: 0.7, power: 0.65 },
+  kraken: { rate: 1.37, power: 1.3 }, // (STATS batch 6: 1.079 before; with a WIS caster's slow fill (CHA 12) he fell to -6.6 at level 30)
+  lancer: { rate: 2.3, power: 3.29 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
+  reaper: { rate: 1.79, power: 2.511 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
+  timeWitch: { rate: 1.09, power: 0.95 }, // (STATS batch 5: 0.735 before; with the saves she fell to -6.8 at level 30. STATS batch 6: 0.85 before; -5.9)
+  arcBlade: { rate: 0.59, power: 2.403 }, // (the joint rebalance: 1.878 to 2.403, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
+  dreadPirate: { rate: 1.06, power: 1.86 }, // (the joint rebalance: 1.376 to 1.86, level-30 parity, docs/notes/joint-rebalance.md)
+  siegeBot: { rate: 0.5, power: 2.347 },
+  priestess: { rate: 0.38, power: 0.403 },
+  dragoon: { rate: 1.1, power: 2.85 },
+  juggernaut: { rate: 1.55, power: 1.57 },
+  sage: { rate: 1.7, power: 1.743 },
+  demonSwordsman: { rate: 1.8, power: 2.766 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
+  tyrant: { rate: 0.88, power: 1.601 },
 };
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */
@@ -588,9 +598,9 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     mercenary: ult('Killing Spree', 'Slips beside the three hardest-hitting foes in turn and cuts each hard', 600, 'attack2', (b, me, out) => blinks(b, me, out, 3, 2.1, strongest), 'Contract Killer'),
     ninjaMonk: ult('Hundred-Hand Strike', 'Five blows on each of the three nearest foes, each stunned for 1.2s; the last blow throws each 2 tiles', 700, 'attack2', (b, me, out) => fists(b, me, out, 3, 5, 0.65, 1200, true), 'Hundred Fists'),
     barbarian: ult('Berserker Leap', 'He leaps up to 4 tiles onto the thickest crowd: the 3x3 round him is struck and shoved a tile out; he drinks a third of what it deals and runs fast for 5s', 700, 'attack2', (b, me, out) => berserkerLeap(b, me, out, 3.0, dur(me, 5000), (n) => mendUnit(me, n, out)), 'Bloodlust'),
-    werewolf: ult('Full Moon', 'His frenzy fills to the brim and he is both his forms at once for 7s, and a quarter of his health comes back', 700, 'attack2', fullMoon),
+    werewolf: ult('Full Moon', 'His frenzy fills to the brim and he is both his forms at once for 15s (it carries into the next wave), and a quarter of his health comes back', 700, 'attack2', fullMoon),
     lancer: ult('Cavalry Charge', 'He rides up to 7 tiles in a line through every foe on it, each struck and thrown a tile aside, and the riders near him gallop faster for 4s', 700, 'attack2', cavalry, 'Charge of the Knights'),
-    reaper: ult('Harvest of Souls', 'The scythe\'s sweep drags every foe within 5 tiles a tile towards him, then cuts them all; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 5s', 800, 'attack2', (b, me, out) => {
+    reaper: ult('Harvest of Souls', 'The scythe\'s sweep drags every foe within 5 tiles a tile towards him, then cuts them all; those under a third of their health are reaped for far more, each kill feeds him and rises as a wraith for 12s', 800, 'attack2', (b, me, out) => {
       // (RPG-SPELLS batch 5: the sweep drags them in first)
       if (!foesOf(b, me).some((f) => apart(me, f) <= reachOf(me, 5))) return false;
       reaperDrag(b, me, reachOf(me, 5), out);
@@ -656,8 +666,8 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       bless(b, me, out, { haste: 6000, hot: { amount: 1.0, ms: 6000 }, charge: 30, song: 6000 });
       return true;
     }),
-    beastmaster: ult('Conjure Animals', 'Four wolves answer his call at once', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4), 'Hunt of the Pack'),
-    druid: ult('Wall of Thorns', 'A hedge of thorns rises across the foes\' way for 8s, two treants rise at her side, and every ally is healed', 900, 'attack2', (b, me, out) => {
+    beastmaster: ult('Conjure Animals', 'Four wolves answer his call at once, for 30s of fighting, wave to wave', 800, 'attack2', (b, me) => summon(b, me, 'wolf', 4), 'Hunt of the Pack'),
+    druid: ult('Wall of Thorns', 'A hedge of thorns rises across the foes\' way for 8s, two treants rise at her side for 30s, and every ally is healed', 900, 'attack2', (b, me, out) => {
       if (!summon(b, me, 'treant', 2)) return false;
       bless(b, me, out, { heal: 4 });
       const line = chokeLine(b, me, THORN_WALL);
@@ -674,7 +684,7 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
     ...form,
     name: 'Metamorphosis',
     key: 'Demon Form',
-    text: 'Chains of hellfire drag the three nearest foes within 4 tiles to him; for 7s he hits half as hard again, and a fifth of his health comes back',
+    text: 'Chains of hellfire drag the three nearest foes within 4 tiles to him; for 15s (it carries into the next wave) he hits half as hard again, and a fifth of his health comes back',
     cast: (b, me, out) => {
       hellChains(b, me, out);
       return form.cast(b, me, out);

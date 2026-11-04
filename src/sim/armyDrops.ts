@@ -110,6 +110,5 @@ export function settleArmyDrop(m: Meta, won: boolean, boss: WaveBoss, tier: numb
   }
   if (drop.tome) grantTomes(m, { [drop.tome]: 1 });
   const words = dropWords(drop);
-  if (joined) words[0] += ' (joins you!)';
   return { drop, words, joined };
 }

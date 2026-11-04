@@ -1,0 +1,7 @@
+{
+  "appId": "com.hpatter9.lastkeep",
+  "appName": "Legends of the Last Keep",
+  "webDir": "out/web",
+  "backgroundColor": "#000000",
+  "android": { "allowMixedContent": false }
+}

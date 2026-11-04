@@ -93,7 +93,8 @@ export const GLOWS: readonly { x: number; y: number; r: number; al: number }[] =
 
 const S = (x: number, y: number, facing: 1 | -1, seat: SeatKind = 'none', depth = y): Spot => ({ x, y, depth, facing, seat });
 
-/** A spot for every hero (`ALL_HEROES`): the starting five sit along the bar in the first room so a young tavern still looks lived-in. */
+/** A spot for every hero (`ALL_HEROES`): the starting five sit along the bar in the first room so a young tavern still looks lived-in. What each
+ *  does there, and why that hero at that spot, is `LIFE` in `tavernLife.ts`. */
 export const SPOTS: Record<string, Spot> = {
   // ---- the bar room ----
   // at the bar
@@ -105,16 +106,16 @@ export const SPOTS: Record<string, Spot> = {
   peasant: S(130, 196, 1),
   // by the little hearth
   ninjaMonk: S(30, 190, 1, 'chair'),
-  yamabushi: S(74, 190, 1, 'stool'),
+  yamabushi: S(74, 190, -1, 'stool'),
   // the round table on the left
   wanderer: S(48, 258, 1, 'chair'),
   lightningMage: S(104, 258, -1, 'chair'),
   gorgon: S(76, 296, 1, 'stool'),
-  // the long table
+  // the long table (its two front stools: the arm-wrestle)
   paladin: S(152, 258, 1, 'chair'),
   cleric: S(228, 258, -1, 'chair'),
   barbarian: S(164, 296, 1, 'stool'),
-  ranger: S(216, 296, -1, 'stool'),
+  minotaur: S(216, 296, -1, 'stool'),
 
   // ---- the hearth hall ----
   // standing at the fire
@@ -136,13 +137,13 @@ export const SPOTS: Record<string, Spot> = {
   // standing about between the tables
   werewolf: S(H + 138, 256, 1),
   karasu: S(H + 192, 250, -1),
-  minotaur: S(H + 246, 250, -1),
+  ranger: S(H + 246, 250, -1),
 
   // ---- the games room ----
-  // darts at the board
-  dragoon: S(H * 2 + 88, 184, -1),
+  // darts: the scorekeeper under the board, the two players at the line
+  dreadPirate: S(H * 2 + 88, 184, 1),
   lancer: S(H * 2 + 136, 184, -1),
-  dreadPirate: S(H * 2 + 184, 184, -1),
+  dragoon: S(H * 2 + 184, 184, -1),
   // the first card table
   sage: S(H * 2 + 122, 258, 1, 'chair'),
   demonSwordsman: S(H * 2 + 178, 258, -1, 'chair'),

@@ -9,6 +9,11 @@ import { KITS, ULT_LEVEL, keyOf, powered, ultimateOf } from '../src/sim/abilitie
 import { HERO_KITS, heroKitOf } from '../src/sim/heroKits';
 import { hasAil } from '../src/sim/ailments';
 import { THUNDER_STORE } from '../src/sim/kits/melee';
+import { SAVES } from '../src/sim/saves';
+
+// (these stage what each skill's row says, its written times and tiles: the saving throws, STATS batch 5, are held off here and staged in
+// `test/stats-saves.test.ts`)
+SAVES.on = false;
 
 function arena(): Battle {
   const b = startBattle(3);

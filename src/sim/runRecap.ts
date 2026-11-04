@@ -3,8 +3,9 @@
 // It lives on the run (`run.recap`, optional, so older saves load as they were) and is shown when the run is over.
 // Pure rules: no Pixi, no DOM.
 
-import { mvpOf, type FightStats, type HeroStat } from './fightStats';
+import { mvpOf, recapKind, type FightStats, type HeroStat } from './fightStats';
 import type { Run } from './run';
+import type { WaveGain } from './waveGains';
 
 /** One hero kind's totals over the run (all the heroes of the kind added together). */
 export interface KindTotals {
@@ -37,6 +38,12 @@ export interface RunRecap {
   /** The gear and prizes the run picked up, by name (the wave's `run.found`; optional). Still kept, but no longer shown: the owner
    *  asked for a run's finds only on each wave's card, as they leave with the run (RECAP-REVEAL). */
   found?: string[];
+  /** Each kind's lasting XP when it first earned any in the run (JRPG-RECAP: the end screen fills each hero's bar from here; optional,
+   *  an older save reads it from the XP the run noted). */
+  xpAt?: Record<string, number>;
+  /** Everything the run's waves brought in, two of a thing as one line (RECAP-SPOILS, `runSpoils.ts`: the final recap's spoils page;
+   *  optional, an older save shows what it has from here on). */
+  spoils?: WaveGain[];
 }
 
 /** One wave's line in the end recap's wave-by-wave strip. */
@@ -94,6 +101,12 @@ export function notePayout(run: Run, xp: Record<string, number>, ups: readonly {
   r.chests += chests;
 }
 
+/** Note each kind's lasting XP before a fight paid it (`before`, by kind), for the kinds the run has not yet noted (JRPG-RECAP). */
+export function noteXpStart(run: Run, before: Readonly<Record<string, number>>): void {
+  const r = recapOf(run);
+  for (const [k, xp] of Object.entries(before)) if (!(k in (r.xpAt ??= {}))) r.xpAt[k] = xp;
+}
+
 /** Add a finished wave's line (its stars, time, MVP, hearts) and anything it found, for the end recap. */
 export function noteWave(run: Run, row: WaveRow, found: readonly string[] = []): void {
   const r = recapOf(run);
@@ -112,7 +125,7 @@ export const heartsBurned = (r: RunRecap): number => (r.waves ?? []).reduce((n, 
 
 /** The kind that did the most over the run (by `fightStats`' own measure), or null when nobody did anything. */
 export function mvpKind(r: RunRecap): string | null {
-  const rows: HeroStat[] = Object.entries(r.heroes).map(([kind, t], id) => ({ id, kind, dealt: t.dealt, taken: t.taken, healed: t.healed, kills: t.kills }));
+  const rows: HeroStat[] = Object.entries(r.heroes).filter(([kind]) => recapKind(kind)).map(([kind, t], id) => ({ id, kind, dealt: t.dealt, taken: t.taken, healed: t.healed, kills: t.kills }));
   return mvpOf(rows)?.kind ?? null;
 }
 

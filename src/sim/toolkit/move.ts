@@ -11,6 +11,7 @@ import { DIRS, solidFor, standable, tileAt, type At } from '../board';
 import { atkOf, blast, defOf, defenceOf, hurt, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { kitOf } from '../abilities';
 import { ailBoss, burnFor, stunFor } from '../ailments';
+import { shoveTiles } from '../saves';
 
 export type MoveHow = 'shove' | 'drag' | 'launch';
 /** What a moved fighter ended against. */
@@ -92,6 +93,10 @@ export function previewMove(b: Battle, by: Unit, f: Unit, way: number, n: number
       how = 'shove';
       n = 1;
     } else n = Math.max(1, Math.floor(n / 2));
+  } else if (how !== 'launch') {
+    // (STATS batch 5: the contest of STR, a tile further or shorter, and the target's STR save, a tile shorter; a launch is a throw)
+    n = shoveTiles(b, by, f, n).n;
+    if (n <= 0) return undefined;
   }
   const def = defOf(f);
   const flier = !!def.flies;
@@ -214,6 +219,8 @@ const share = (by: Unit, to: Unit, mult: number): number => Math.max(1, Math.rou
 /** Move `f` as `previewMove` plans it, with everything the move causes: the slam, the collision, the fall, the barrel, lava, the
  *  stun of a slam or a landing, and its event. Returns the plan, or undefined when it cannot be moved. */
 export function displace(b: Battle, by: Unit, f: Unit, way: number, n: number, how: MoveHow, out: BattleEvent[]): MovePlan | undefined {
+  // (a saved shove or drag shows "Saved", even when the save left it no tile to go)
+  if (how !== 'launch' && movable(f) === 'yes' && f.side !== by.side && shoveTiles(b, by, f, n).saved) out.push({ kind: 'saved', to: f.id, what: 'shove' });
   const plan = previewMove(b, by, f, way, n, how);
   if (!plan) return undefined;
   const h0 = tileOf(b, f).h;

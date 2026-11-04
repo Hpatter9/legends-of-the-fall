@@ -7,6 +7,7 @@
 // kits (the wolf packs, the maze minotaurs and gorgons, the grove satyrs, the yokai) have taken their own copies: so a foe keeps the old move.
 // No randomness: every choice is a fixed order.
 
+import { saveAware } from '../saves';
 import { DIRS, sightClear, type At } from '../board';
 import { atkOf, blowMult, canStrike, defOf, hurt, strikeDef, tileOf, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
 import { HEX_EVERY, apart, castPower, chargeAt, crowd, durOf, foesOf, mendUnit, net, reachOf, type Kit, type Skill } from '../abilities';
@@ -91,7 +92,7 @@ export function holdPerson(wraps: Skill['cast']): Skill['cast'] {
   return (b, me, out) => {
     const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 2));
     if (!wraps(b, me, out)) return false;
-    const f = near.filter((x) => x.alive).sort(strongest)[0];
+    const f = saveAware(b, me, near.filter((x) => x.alive).sort(strongest), atkOf, 'stun')[0];
     if (f) stunFor(b, f, durOf(me, 1500), true, 'stun', me);
     return true;
   };
@@ -170,10 +171,11 @@ export function tidalWave(b: Battle, me: Unit, out: BattleEvent[]): boolean {
  *  slowed. A boss keeps its shape and is only weakened and silenced, for half the time. */
 export const POLY = { MS: 4000, N: 3, REACH: 7, MULT: 0.2 } as const;
 export function massPolymorph(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const prey = foesOf(b, me)
+  const near = foesOf(b, me)
     .filter((f) => apart(me, f) <= POLY.REACH && sightClear(b.board, me, f) && !f.kx?.poly)
-    .sort(strongest)
-    .slice(0, POLY.N);
+    .sort(strongest);
+  // (STATS batch 6: among the foes she values the same, the weakest INT saves first)
+  const prey = saveAware(b, me, near, atkOf, 'silence').slice(0, POLY.N);
   if (!prey.length) return false;
   const long = ultMs(me, POLY.MS);
   for (const f of prey) {
