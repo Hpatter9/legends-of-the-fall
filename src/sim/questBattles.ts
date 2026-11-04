@@ -28,6 +28,7 @@ import { QUEST_BATTLES } from './questBattleData';
 import { CHAIN_BATTLES } from './chainBattleData';
 import { TALE_BATTLES } from './taleBattleData';
 import { LOST_BATTLES } from './lostBattleData';
+import { NEW_BATTLES } from './questBattleData/newBattles';
 
 /** The side stream a quest battle's seed is drawn from. */
 export const QB_SALT = 0x9b47;
@@ -76,9 +77,9 @@ export interface QuestBattle {
 
 // (EIDOLON-CHAINS: the chains' own battles are found by id too; no quest in the log opens them, a chain's part does. SECRET-HEROES: the
 // hero quests' battles, each opened by its tale's last part as any battle quest is)
-const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES].map((q) => [q.id, q]));
+const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES, ...NEW_BATTLES].map((q) => [q.id, q]));
 export const questBattleById = (id: string): QuestBattle | undefined => BY_ID.get(id);
-export { QUEST_BATTLES, CHAIN_BATTLES, TALE_BATTLES, LOST_BATTLES };
+export { QUEST_BATTLES, CHAIN_BATTLES, TALE_BATTLES, LOST_BATTLES, NEW_BATTLES };
 
 /* ------------------------------------------------------------------ the army it is */
 

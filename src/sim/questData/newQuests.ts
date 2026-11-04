@@ -3,5 +3,7 @@
 import type { QuestDef } from '../questData';
 import { PROVING_QUESTS } from './proving';
 import { WANTED_QUESTS } from './wanted';
+import { CAMPAIGNS1_QUESTS } from './campaigns1';
+import { ROYALNEW_QUESTS } from './royalnew';
 
-export const NEW_QUESTS: readonly QuestDef[] = [...PROVING_QUESTS, ...WANTED_QUESTS];
+export const NEW_QUESTS: readonly QuestDef[] = [...PROVING_QUESTS, ...WANTED_QUESTS, ...CAMPAIGNS1_QUESTS, ...ROYALNEW_QUESTS];

@@ -41,7 +41,7 @@ function atPart(seed: number, pack: 0 | 1, part: number): Meta {
   const m = packSave(seed, pack);
   clear(m, 'orcs');
   assert.ok(beginChain(m, 'askel'));
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
   assert.ok(bindChain(m, 'askel'));
   clear(m, 'beasts');
@@ -159,7 +159,7 @@ test('old saves mid-chain still work: a save at any part loads and goes on; one 
   assert.equal(currentPart(mid)?.part.id, 'nivra2');
   // (saved with every piece in, before trials existed (it was ready to bind then): now its trial is due)
   const all = round(atPart(41, 0, 3));
-  assert.deepEqual(all.quests!.chains!.nivra, { part: 3, progress: 0 });
+  assert.deepEqual(all.quests!.chains!.nivra, { part: 5, progress: 0 });
   assert.equal(activeChain(all), nivra);
   assert.equal(trialDue(all)?.trial.id, 'nivraTrial');
   // (the trial won survives the save)
@@ -173,8 +173,8 @@ test('old saves mid-chain still work: a save at any part loads and goes on; one 
   assert.ok(chainDone(back, nivra) && !trialDue(back));
   // (junk: a trial "won" before the pieces are in, or not `true`, is dropped)
   assert.deepEqual(readChainState({ chains: { nivra: { part: 2, progress: 0, trialWon: true } } }), { chains: { nivra: { part: 2, progress: 0 } } });
-  assert.deepEqual(readChainState({ chains: { nivra: { part: 3, progress: 0, trialWon: 'yes' } } }), { chains: { nivra: { part: 3, progress: 0 } } });
-  assert.deepEqual(readChainState({ chains: { nivra: { part: 3, progress: 0, trialWon: true } } }), { chains: { nivra: { part: 3, progress: 0, trialWon: true } } });
+  assert.deepEqual(readChainState({ chains: { nivra: { part: 5, progress: 0, trialWon: 'yes' } } }), { chains: { nivra: { part: 5, progress: 0 } } });
+  assert.deepEqual(readChainState({ chains: { nivra: { part: 5, progress: 0, trialWon: true } } }), { chains: { nivra: { part: 5, progress: 0, trialWon: true } } });
 });
 
 /* ------------------------------------------------------------------ the battle */

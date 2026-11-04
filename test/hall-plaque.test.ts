@@ -19,7 +19,7 @@ const clearOrcs = (m: Meta) => (m.armies.orcs = { ...recordOf(m, 'orcs'), clears
 const ready = (m: Meta) => {
   clearOrcs(m);
   beginChain(m, 'askel');
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
 };
 /** Through the page's store and back, as a reload does. */
@@ -66,7 +66,7 @@ test('a save already bound loads with nothing waiting, as does Askel bound some 
   const old = save(5);
   clearOrcs(old);
   Object.assign(old, {
-    quests: { active: [], offers: [], done: [], chains: { askel: { part: 3, progress: 0, bound: true } }, pieces: ['emberHeart', 'kennelCollar', 'kennelBell'] },
+    quests: { active: [], offers: [], done: [], chains: { askel: { part: 5, progress: 0, bound: true } }, pieces: ['emberHeart', 'kennelCollar', 'kennelBell'] },
     eidolons: { horn: 1000, bound: ['askel'], chosen: 'askel' },
   });
   const back = reload(old);

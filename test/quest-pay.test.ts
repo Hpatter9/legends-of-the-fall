@@ -40,7 +40,7 @@ test('every quest pays what its stars say: no stones at one or two stars (a Chai
   for (const q of QUESTS) {
     const r = rewardOf(q);
     // (the tales and lost techniques pay as written)
-    if (GIVERS[q.giver].slot === 'tale') {
+    if (!q.slot && GIVERS[q.giver].slot === 'tale') {
       assert.deepEqual(r, q.reward, q.id);
       continue;
     }
@@ -50,7 +50,7 @@ test('every quest pays what its stars say: no stones at one or two stars (a Chai
     assert.ok((r.crowns ?? 0) >= (q.reward.crowns ?? 0), `${q.id}: crowns are never cut`);
   }
   // (a story's parts add to its total)
-  const last = QUESTS.filter((q) => GIVERS[q.giver].slot !== 'tale' && lengthOf(q) === 'chain' && !QUESTS.some((x) => x.after === q.id) && starsOf(q) >= 2);
+  const last = QUESTS.filter((q) => (q.slot || GIVERS[q.giver].slot !== 'tale') && lengthOf(q) === 'chain' && !QUESTS.some((x) => x.after === q.id) && starsOf(q) >= 2);
   assert.ok(last.length > 0);
   for (const q of last) {
     const parts: typeof q[] = [];

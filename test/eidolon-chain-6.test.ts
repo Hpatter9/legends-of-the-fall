@@ -40,34 +40,34 @@ const vaelkhar = chainById('vaelkhar')!;
 const win = (army: string, more: Partial<QuestFight> = {}): QuestFight => ({ won: true, waves: 1, boss: false, heroes: ['knight'], flawless: true, kills: [], dailyCleared: false, mode: 'army', army, spells: [], ...more });
 const bossWin = (army: string, boss: string): QuestFight => win(army, { boss: true, kills: [boss], bosses: [boss] });
 
-/** Askel, Nivra, Aurelan and Vaelkhar bound, the Calamity cleared once, Vaelkhar's chain begun at `part` (3: every piece in). */
+/** Askel, Nivra, Aurelan and Vaelkhar bound, the Calamity cleared once, Vaelkhar's chain begun at `part` (5: every piece in). */
 function atPart(seed: number, pack: 0 | 1, part: number): Meta {
   const m = packSave(seed, pack);
   clear(m, 'orcs', 'beasts', 'wildwood', 'labyrinth', 'infernal');
   m.calamity = { best: 30, clears: 1 };
   assert.ok(beginChain(m, 'askel'));
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
   assert.ok(bindChain(m, 'askel'));
   assert.ok(beginChain(m, 'nivra'));
-  m.quests!.chains!.nivra = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.nivra = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('rimeScale', 'merePearl', 'heldBreath');
   assert.ok(bindChain(m, 'nivra'));
   assert.ok(beginChain(m, 'aurelan'));
-  m.quests!.chains!.aurelan = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.aurelan = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('dawnThread', 'sunCrown', 'dawnLamp');
   assert.ok(bindChain(m, 'aurelan'));
   assert.ok(beginChain(m, 'voltara'));
-  m.quests!.chains!.voltara = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.voltara = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('copperCoil', 'clockFace', 'stormGlass');
   assert.ok(bindChain(m, 'voltara'));
   assert.ok(beginChain(m, 'gorm'));
-  m.quests!.chains!.gorm = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.gorm = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('emberCrack', 'masonsMark', 'knockingStone');
   assert.ok(bindChain(m, 'gorm'));
   assert.ok(beginChain(m, 'vaelkhar'));
   m.quests!.chains!.vaelkhar = { part, progress: 0 };
-  m.quests!.pieces.push(...['blackScale', 'unansweredLetter', 'crownTine'].slice(0, part));
+  m.quests!.pieces.push(...['blackScale', 'unansweredLetter', 'crownTine', 'violetSeal', 'openLedger'].slice(0, part));
   return m;
 }
 
@@ -86,13 +86,13 @@ function playThrough(m: Meta, id: string, lose = false): void {
   }
 }
 
-test("the data: three parts and pieces, the voice in the rift at the Sanctum, a binding with no horn beats ending on the seal, a trial of its own", () => {
-  assert.equal(vaelkhar.parts.length, 3);
+test("the data: five parts and pieces (Q9), the voice in the rift at the Sanctum, a binding with no horn beats ending on the seal, a trial of its own", () => {
+  assert.equal(vaelkhar.parts.length, 5);
   assert.equal(vaelkhar.giver.name, 'A voice in the rift');
   assert.deepEqual(vaelkhar.opens, { kind: 'calCleared' });
-  assert.deepEqual(vaelkhar.parts.map((p) => p.goal.kind), ['calGuardian', 'battle', 'tally']);
+  assert.deepEqual(vaelkhar.parts.map((p) => p.goal.kind), ['calGuardian', 'battle', 'tally', 'calClear', 'calGuardian']);
   assert.ok(vaelkhar.parts.every((p) => p.reward.chest === 'bronze' && PIECES.has(p.piece.id)));
-  assert.equal(PIECES.size, 18);
+  assert.equal(PIECES.size, 30);
   assert.equal(vaelkhar.binding!.at(-1)!.beat, 'bound');
   assert.ok(!vaelkhar.binding!.some((b) => b.beat === 'horn' || b.beat === 'hornFull'));
   const lines = vaelkhar.prologue!.shots.flatMap((s) => s.lines ?? []);
@@ -130,8 +130,9 @@ test('offered once Gorm is bound and the Calamity cleared once, not before; the 
   assert.deepEqual(noteChains(p, bossWin('orcs', 'orcWarlord')), []);
   const stash = p.stash.length;
   assert.deepEqual(noteChains(p, win('orcs', { boss: true, kills: ['orcWarlord'], bosses: ['orcWarlord'] })), [], 'only the Calamity guardians count');
-  const guardian = (map: number): QuestFight => win('orcs', { mode: 'calamity', map, boss: true });
+  const guardian = (map: number, more: Partial<QuestFight> = {}): QuestFight => win('orcs', { mode: 'calamity', map, boss: true, ...more });
   assert.deepEqual(noteChains(p, guardian(1)), []);
+  assert.deepEqual(noteChains(p, guardian(2, { flawless: false })), [], 'Q9: no hero falling');
   const found = noteChains(p, guardian(2));
   assert.deepEqual(found.map((f) => f.piece.id), ['blackScale']);
   assert.equal(p.stash.length, stash + 1);
@@ -140,10 +141,21 @@ test('offered once Gorm is bound and the Calamity cleared once, not before; the 
   assert.equal(currentPart(p)?.index, 1, 'a loss counts nothing');
   playThrough(p, 'guestWing');
   assert.equal(currentPart(p)?.index, 2);
-  // (part 3: 200,000 damage dealt, won or lost)
+  // (part 3: 200,000 damage dealt in Calamity fights with no king's spell, won or lost)
   noteChains(p, win('orcs', { stats: [{ kind: 'knight', dealt: 90000, healed: 0, taken: 0, kills: 0 }] }));
+  noteChains(p, win('orcs', { mode: 'calamity', spells: ['fireball'], stats: [{ kind: 'knight', dealt: 90000, healed: 0, taken: 0, kills: 0 }] }));
+  assert.equal(p.quests!.chains!.vaelkhar.progress, 0, 'Q9: only the Calamity, and no spell');
+  noteChains(p, win('orcs', { mode: 'calamity', stats: [{ kind: 'knight', dealt: 90000, healed: 0, taken: 0, kills: 0 }] }));
   assert.ok(p.quests!.chains!.vaelkhar.progress > 0);
-  noteChains(p, win('orcs', { stats: [{ kind: 'knight', dealt: 120000, healed: 0, taken: 0, kills: 0 }] }));
+  noteChains(p, win('orcs', { mode: 'calamity', stats: [{ kind: 'knight', dealt: 120000, healed: 0, taken: 0, kills: 0 }] }));
+  // (Q9, part 4: the Calamity cleared whole with no heart and no spell; part 5: three guardians, flawless, no ultimate)
+  assert.equal(currentPart(p)?.part.id, 'vaelkhar4');
+  assert.deepEqual(noteChains(p, win('orcs', { mode: 'calamity', cleared: true, hearts: 1 })), []);
+  assert.equal(noteChains(p, win('orcs', { mode: 'calamity', cleared: true }))[0].piece.id, 'violetSeal');
+  assert.deepEqual(noteChains(p, guardian(2, { ults: ['knight'] })), []);
+  noteChains(p, guardian(1));
+  noteChains(p, guardian(2));
+  assert.equal(noteChains(p, guardian(3))[0].piece.id, 'openLedger');
   assert.equal(currentPart(p), undefined);
   assert.ok(trialDue(p));
 });
@@ -153,7 +165,7 @@ test("the trial is one entry: Vaelkhar's fighter, kit, great attacks, second for
   assert.equal(FOES[t.boss.id].sheet, 'eidolon_vaelkhar');
   assert.deepEqual(SIGNATURES[t.boss.id].map((s) => [s.key, s.shape.kind, s.el, s.rider]), [['voidfire', 'line', 'dark', 'curse'], ['voidCollapse', 'pull', 'dark', 'stun']]);
   assert.ok(PHASE2[t.boss.id].shield! > 0 && KITS[t.boss.id].passive?.leech);
-  const m = atPart(30, 0, 3);
+  const m = atPart(30, 0, 5);
   assert.equal(bindChain(m, 'vaelkhar'), false, 'not before the trial');
   assert.equal(trialDue(m)?.trial.id, 'vaelkharTrial');
   playThrough(m, 'vaelkharTrial');
@@ -161,7 +173,7 @@ test("the trial is one entry: Vaelkhar's fighter, kit, great attacks, second for
 });
 
 test('the binding: Vaelkhar is bound and chosen, a gold chest is paid, the horn is untouched, his Bound card shows', () => {
-  const m = atPart(31, 1, 3);
+  const m = atPart(31, 1, 5);
   m.quests!.chains!.vaelkhar.trialWon = true;
   m.eidolons!.horn = 300;
   const stash = m.stash.length;
@@ -185,7 +197,7 @@ test('the save keeps the chain (junk dropped)', () => {
   const back = loadMeta(1, { getItem: (k) => map.get(k) ?? null });
   assert.deepEqual(back.quests!.chains!.vaelkhar, { part: 2, progress: 0 });
   assert.deepEqual(readChainState({ chains: { vaelkhar: { part: 2, progress: 0, trialWon: true } } }), { chains: { vaelkhar: { part: 2, progress: 0 } } });
-  assert.deepEqual(readChainState({ chains: { vaelkhar: { part: 9, progress: 9, bound: true } } }), { chains: { vaelkhar: { part: 3, progress: 0, bound: true } } });
+  assert.deepEqual(readChainState({ chains: { vaelkhar: { part: 9, progress: 9, bound: true } } }), { chains: { vaelkhar: { part: 5, progress: 0, bound: true } } });
 });
 
 /** The trial fought as the rating tool fights it. */
