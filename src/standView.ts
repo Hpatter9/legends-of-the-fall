@@ -6,6 +6,7 @@
 
 import { Container, Graphics, Sprite, type Application } from 'pixi.js';
 import { tileAt } from './sim/board';
+import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { TICK_MS, type Battle, type BattleEvent, type Unit } from './sim/battle';
 import { autoSpellsFor } from './sim/autoCast';
 import { ARMIES, armyUnlocked } from './sim/armies';
@@ -303,6 +304,18 @@ export class StandView {
       },
       art: (u) => heroArtUrl(u.def, u.awaken ?? 0),
       fx: this.fx,
+      // (ULT-SHOW: the showcase stages the real sprites, and the save counts the full moments seen)
+      sprite: (id) => this.sprites.get(id),
+      world: (u, v) => {
+        const b = this.state?.b;
+        const t = b ? tileAt(b.board, u, v) : undefined;
+        return t ? at(u, v, t.h) : null;
+      },
+      seen: (kind) => seenOf(this.host.meta(), kind),
+      saw: (kind) => {
+        noteSeen(this.host.meta(), kind);
+        saveMeta(this.host.meta());
+      },
     });
     // (the king's spells as orbs under the top bar, with the Auto switch at the row's end: BATTLE-HUD)
     const orbs = el('div', 'stOrbs');
@@ -1195,7 +1208,8 @@ export class StandView {
       this.hud.refresh(s.b);
     } else if (fighting) {
       // (the walk to the door goes at its own pace, whatever the speed: STAND-RETREAT)
-      this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : this.speed * this.fx.timeScale());
+      // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed)
+      this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale());
       let guard = 0;
       const ts = performance.now();
       // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
@@ -1242,6 +1256,8 @@ export class StandView {
     const t = s.phase === 'deploy' ? performance.now() : s.b.t - TICK_MS + this.acc;
     const view = this.fx.view;
     const tu = performance.now();
+    // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
+    if (s.phase !== 'deploy') this.ultm.stage();
     for (const [, sp] of this.sprites) {
       // (a fighter far off the screen is not drawn, and is looked at only now and then)
       const off = sp.x < view.x0 - 80 || sp.x > view.x1 + 80 || sp.y < view.y0 - 120 || sp.y > view.y1 + 80;
