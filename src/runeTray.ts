@@ -2,16 +2,15 @@
 // shows a row for each fielded hero (its portrait, name, three sockets and what its runes give), the bag's eight cells, Merge all and
 // Auto runes. Any rune with a twin (another of its kind and level, or a Keystone of its level) has a gold rim and a "2" badge. Tap a rune
 // and the places it can go light up (a hero's sockets, the bag, its twins); tap one to set, swap, take off or merge. Runes change between
-// waves only. The rules are all `sim/runes.ts`; this only draws them. The stones are the pack's rune discs (`runeArt.ts`) with the level as
-// pips; an empty socket is a dark diamond.
+// waves only. The rules are all `sim/runes.ts`; this only draws them. The stones are the owner's paintings (`gearUiArt.ts`): the stone in its
+// level's frame, with the level as pips too; an empty socket is a dark diamond, and a merge's new rune flashes the merge spark once.
 
 import { BAG_MAX, RUNE_COLOUR, autoRunes, dropRune, mergeAll, mergesReady, runeName, runeTargets, runeText, runeTotals, socketsOf, twinIds, type Rune, type RuneState } from './sim/runes';
 import { heroName } from './sim/heroNames';
 import { play } from './render/sound';
 import { REMEDY_LIST, packSatchel, remedyBlock, remedyBonus, useRemedy, type RemedyId } from './sim/remedies';
 import { hpShare } from './sim/health';
-import { REMEDY_ICON } from './remedyArt';
-import { RUNE_ICON } from './runeArt';
+import { MERGE_SPARK, REMEDY_ICON, RUNE_FRAME, RUNE_ICON } from './gearUiArt';
 import type { Run } from './sim/run';
 import type { Meta } from './sim/meta';
 
@@ -39,7 +38,13 @@ export function runeStone(r: Rune | undefined, twin = false, size: 'big' | 'smal
   pic.alt = '';
   pic.draggable = false;
   pic.className = 'rnPic';
-  s.append(pic);
+  // (the painted frame round it says its level: copper, silver, gold, gold with sapphires, gold with amethysts)
+  const frame = document.createElement('img');
+  frame.src = RUNE_FRAME[r.lv];
+  frame.alt = '';
+  frame.draggable = false;
+  frame.className = 'rnFrame';
+  s.append(pic, frame);
   s.title = `${runeName(r)}: ${runeText(r)}`;
   s.setAttribute('aria-label', runeName(r));
   const pips = tag('rn-pips', 'rnPips');
@@ -64,6 +69,8 @@ export function socketStrip(state: RuneState, kind: string): HTMLElement {
  *  any rune moves (the page saves the run and starts the stage again). */
 export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readonly { kind: string; face: () => HTMLElement }[], canEdit: boolean, changed: () => void): void {
   let sel: number | undefined;
+  /** The runes a merge has just made: the merge spark plays once over each as the tray is drawn again. */
+  let fresh = new Set<number>();
   const box = el('div', 'rnTray');
   card.append(box);
   const kinds = heroes.map((h) => h.kind);
@@ -72,6 +79,7 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
     if (what === 'merged' || what === 'all') play('merge');
     changed();
     draw();
+    fresh = new Set();
   };
   const tapRune = (id: number) => {
     if (!canEdit) return;
@@ -80,11 +88,23 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
       return draw();
     }
     const done = dropRune(state, sel, { rune: id });
+    if (done === 'merged') fresh = new Set([id]);
     if (done) after(done);
     else {
       sel = id;
       draw();
     }
+  };
+  /** A rune's stone, with the merge spark over it if a merge has just made it. */
+  const stone = (r: Rune | undefined, twin: boolean) => {
+    const s = runeStone(r, twin);
+    if (r && fresh.has(r.id)) {
+      const spark = tag('rn-spark', 'rnSpark');
+      spark.style.backgroundImage = `url(${MERGE_SPARK})`;
+      spark.addEventListener('animationend', () => spark.remove());
+      s.append(spark);
+    }
+    return s;
   };
   const draw = () => {
     box.replaceChildren();
@@ -100,7 +120,7 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
       for (const s of socketsOf(state, h.kind)) {
         const b = el('button', `rnCell${s.rune && s.rune.id === sel ? ' sel' : ''}${s.rune && lit?.merge.includes(s.rune.id) ? ' can' : !s.rune && lit?.heroes.includes(h.kind) ? ' can' : ''}`);
         b.type = 'button';
-        b.append(runeStone(s.rune, s.twin));
+        b.append(stone(s.rune, s.twin));
         b.disabled = !canEdit;
         b.addEventListener('click', () => {
           if (s.rune) return tapRune(s.rune.id);
@@ -119,7 +139,7 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
       const r = state.bag[i];
       const b = el('button', `rnCell${r && r.id === sel ? ' sel' : ''}${r && lit?.merge.includes(r.id) ? ' can' : !r && lit?.bag ? ' can' : ''}`);
       b.type = 'button';
-      b.append(runeStone(r, !!r && twins.has(r.id)));
+      b.append(stone(r, !!r && twins.has(r.id)));
       b.disabled = !canEdit;
       b.addEventListener('click', () => {
         if (r) return tapRune(r.id);
@@ -135,7 +155,7 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
     all.type = 'button';
     all.disabled = !canEdit || !merges;
     all.addEventListener('click', () => {
-      mergeAll(state);
+      fresh = new Set(mergeAll(state).map((r) => r.id));
       after('all');
     });
     const auto = el('button', 'primary', 'Auto runes');

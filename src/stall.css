@@ -109,4 +109,6 @@
 /* SEVEN-SLOT GEAR batch 3: the Enchant tab, and Repair, Patch and Reforge side by side */
 .hsBtns { display: flex; flex-direction: column; gap: 4px; flex: none; }
 .hsRow.hsEnchant { align-items: flex-start; }
-.hsGlyph { color: var(--b3); }
+.hsGlyph { color: var(--b3); display: flex; align-items: center; gap: 4px; }
+/* SEVEN-SLOT GEAR batch 7: the painted glyph stones and remedies are smooth paintings, not pixel art */
+.hsGlyphStone { width: 14px; height: 14px; flex: none; } .hsTome img.hsPainted { width: 86%; height: 86%; image-rendering: auto; }

@@ -37,6 +37,29 @@ export interface Journey {
   /** A crossroads waiting for the player: after map 2 (lands) or map 4 (boons), and what it offers. */
   cross?: { after: 1; lands: number[] } | { after: 2; boons: BoonId[] };
   boon?: BoonId;
+  /** Provisions carried (`PROVISIONS`): a campfire's rest eats one; missing is the start's three (a run saved before has them). */
+  provisions?: number;
+}
+
+/** Provisions: a run starts with three and carries six at most; a campfire's rest costs one, and with none the party rests at half. A shop
+ *  sells them (`PROVISIONS.COST` gold). */
+export const PROVISIONS = { START: 3, MAX: 6, COST: 25, HUNGRY: 0.5, /** the switch (tools measure without them) */ on: true };
+export const provisionsOf = (j: Journey | undefined): number => j?.provisions ?? PROVISIONS.START;
+/** A rest: eats a provision if there is one; returns the share of the usual healing it gives (1, or half when none were left). */
+export function eatProvision(j: Journey): number {
+  if (!PROVISIONS.on) return 1;
+  const n = provisionsOf(j);
+  if (n <= 0) return PROVISIONS.HUNGRY;
+  j.provisions = n - 1;
+  return 1;
+}
+/** Buy a provision at a shop: false when the sack is full or the gold is short. */
+export function buyProvision(run: { gold: number }, j: Journey): boolean {
+  const n = provisionsOf(j);
+  if (n >= PROVISIONS.MAX || run.gold < PROVISIONS.COST) return false;
+  run.gold -= PROVISIONS.COST;
+  j.provisions = n + 1;
+  return true;
 }
 
 /** The fixed order: the guardian at each act when nothing is chosen. */
