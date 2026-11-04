@@ -30,7 +30,7 @@ import { BOSS, canJoin, FOE_START, ownHeroes, relicCtx, reward, spendBuff, squad
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
-import { boonFoes, crossroadsAfter, landAt, type Journey } from './calJourney';
+import { boonFoes, crossroadsAfter, eatProvision, landAt, type Journey } from './calJourney';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel, hireable, hireHero, ownsKind, promoteByLevel, type Promotion } from './climb';
 import { xpRate } from './castle';
@@ -984,8 +984,10 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
 export function rest(run: Run): boolean {
   const cur = run.tower?.cur;
   if (cur?.kind !== 'campfire' || cur.camp) return false;
-  healParty(run, REST_HEAL);
-  cur.camp = `The party rests and is healed ${Math.round(REST_HEAL * 100)}%.`;
+  // (DEPTH-BUILD: in the Calamity a rest eats a provision; with none left the party rests at half, `calJourney.ts`)
+  const share = run.mode?.kind === 'calamity' && run.rift ? eatProvision((run.tower!.journey ??= {})) : 1;
+  healParty(run, REST_HEAL * share);
+  cur.camp = share < 1 ? `No provisions left: the party rests hungry and is healed ${Math.round(REST_HEAL * share * 100)}%.` : `The party rests and is healed ${Math.round(REST_HEAL * 100)}%.`;
   return true;
 }
 

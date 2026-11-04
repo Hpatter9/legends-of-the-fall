@@ -26,6 +26,7 @@
 // runs (a greedy player on fresh saves, carrying the hero levels from run to run). Every fight is seeded, so the same
 // numbers come out again on the same code.
 
+import { PROVISIONS } from '../src/sim/calJourney';
 import './joint/off';
 import './tactics/off';
 import { fight, place, playOut } from '../src/sim/battle';
@@ -601,6 +602,8 @@ if (process.argv.includes('--no-tables')) {
   armies();
 }
 if (process.argv.includes('--stand') || process.argv.includes('--tower')) standTable();
+// (DEPTH-BUILD: --no-provisions measures the Calamity without them)
+if (process.argv.includes('--no-provisions')) PROVISIONS.on = false;
 if (process.argv.includes('--calamity')) calamityTable();
 if (process.argv.includes('--climb')) realClimb();
 if (process.argv.includes('--maxed')) maxedCastle();
