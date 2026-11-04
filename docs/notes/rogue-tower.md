@@ -1,5 +1,7 @@
 # The roguelike tower
 
+> **Status (0.332.0):** The endless tower is retired: the Last Stand (`src/sim/stand.ts`, `docs/notes/last-stand.md`) took its place at the camp, and no player can start a tower climb. The engine below still runs the Calamity's maps (`run.tower` is code naming), so read "the tower" here as the Calamity's map engine.
+
 The endless tower is a floor-by-floor roguelike in the spirit of Slay the Spire's map. Rules: `src/sim/tower.ts` (pure,
 deterministic) and `src/sim/health.ts`; screens: `src/towerView.ts` + `src/rogue.css`; balance: `tools/tower-balance.ts`.
 

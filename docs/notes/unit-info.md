@@ -21,7 +21,7 @@ the battle, `previewUnit`), and in a Stand break the break's clock waits while t
   level 30"; it costs no pool, its own meter starts each fight `ULT_FILL.START`% full), each with what it does, cost, cooldown, strength, cast
   time, a revive face, and its tier lines, all from the fight HUD's `sheetOf` (`fightHudRules.ts`), so the kit data is the one source; and
   its passive.
-- **Foes and bosses:** name and epithet (elites, the Calamity's heralds), Foe / Boss / Tower elite / Calamity herald, its family (from its
+- **Foes and bosses:** name and epithet (elites, the Calamity's heralds), Foe / Boss / Calamity elite / Calamity herald, its family (from its
   look: Werewolf, Orc, Undead, Golem, Yokai ...: `familyOf`) and role; health, attack, defence (as boosted for this wave), range, blows and
   steps at the army tier's pace, climb, crit, dodge; the codex's lore line; its skill, ultimate and passive; a boss's second form when it has
   one armed (`PHASE2`: at what health, the line it shouts, how much harder it hits, heals, shields, haste, the adds it calls, the skill and

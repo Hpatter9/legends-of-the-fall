@@ -74,7 +74,7 @@ import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDr
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
 import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, splitGuestXp } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
-import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
+import { afterFight, canAutoQuest, maxSpeed, spendTicket, startAuto, startAutoDaily, startAutoQuest, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
 import { Events } from './events';
@@ -90,6 +90,7 @@ import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
 import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
+import { showBuilt } from './builtCard';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
@@ -160,12 +161,14 @@ import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
 import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
 import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
+import { chainById } from './sim/eidolonChainData';
 import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHorn';
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
+import { openScreen, openScreens } from './screens';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -275,6 +278,10 @@ class Game {
   /** JRPG-RECAP: the results screen's data once a fight is settled, and its player once the card is up. */
   private jrData: JrData | null = null;
   private jr: JrPlayer | null = null;
+  /** CLOSE-SCREENS: the result card has been left (the run's recap, the home screen, the next wave): it stays shut until the next fight
+   *  ends, and its closer in the screen stack while it is up. */
+  private resultDone = false;
+  private resultCloser: (() => void) | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -404,7 +411,7 @@ class Game {
           const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
           this.startRun(next);
-          if (auto) this.beginAuto(id, tier, auto);
+          if (auto) this.beginAuto({ army: id, tier }, auto);
         }),
       onParty: () =>
         this.party.open('edit', () => {
@@ -418,7 +425,10 @@ class Game {
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
-        showDailyStart(this.meta, todayKey(), () => this.startRun(startDaily(this.meta, todayKey())), () => this.home.open());
+        showDailyStart(this.meta, todayKey(), (auto) => {
+          this.startRun(startDaily(this.meta, todayKey()));
+          if (auto) this.beginAuto({ daily: todayKey() }, auto);
+        }, () => this.home.open());
       },
       onTower: () => this.openStand(),
       onCalamity: () => this.openMode('calamity'),
@@ -434,7 +444,7 @@ class Game {
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
       // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
-      onQuestBattle: (id) => this.openQuestBattle(id),
+      onQuestBattle: (id, auto) => this.openQuestBattle(id, auto),
       // (EIDOLON-CHAINS: a chain's prologue, played over the home screen whatever the Cinematics setting: it is the chain's sense)
       onStory: (scene) => this.scenes.play(scene, this.players()),
       questSaved: () => {
@@ -454,7 +464,8 @@ class Game {
           saveMeta(this.meta);
           toastSpells(learnt);
         }
-        void this.queueScene({ kind: 'castle', site });
+        // (a popup, no cinematic: UI batch 1)
+        showBuilt(site, site === 'chapel' ? 1 : this.meta.castle[site]);
       },
     });
     this.towerView = new TowerView({
@@ -537,6 +548,7 @@ class Game {
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    (window as unknown as { __screens: () => string[] }).__screens = openScreens;
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
@@ -575,7 +587,9 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
-    this.stopResults();
+    // (CLOSE-SCREENS: the last fight's card is closed; the new fight's comes up when it ends)
+    this.closeResult();
+    this.resultDone = false;
     this.placeSquad();
     this.acc = 0;
     this.chosen = null;
@@ -785,7 +799,7 @@ class Game {
   }
 
   /** A film made on the spot, by a preview key (CINE-001; for the Scenes previews and the screenshots): `quest:<battle>` and
-   *  `questAfter:<battle>` (its story before and after, with its first cast), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
+   *  `questAfter:<battle>` (its story before and after, with its first cast), `chain:<id>` (an Eidolon chain's prologue), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
    *  Last Stand's act card of act n, 1 to 3, with a line of the ruler's). */
   private filmOf(key: string): Scene | null {
     const [kind, arg = ''] = key.split(':');
@@ -795,6 +809,7 @@ class Game {
       const cast = qb.cast.map((x) => x.heroes[0]);
       return kind === 'quest' ? qb.before(cast) : qb.after(cast);
     }
+    if (kind === 'chain') return chainById(arg)?.prologue ?? null;
     if (kind === 'arrive' && UNITS[arg]) return arrivalScene(arg, UNITS[arg].name, titleOf(arg), 'volcano');
     if (kind === 'act') {
       const act = Math.max(1, Math.min(3, Number(arg) || 1));
@@ -1997,8 +2012,9 @@ class Game {
   }
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
-  private beginAuto(army: string, tier: number, count: number): void {
-    const a = startAuto(this.meta, army, tier, count, todayKey());
+  private beginAuto(what: { army: string; tier: number } | { quest: string } | { daily: number }, count: number): void {
+    const day = todayKey();
+    const a = 'quest' in what ? startAutoQuest(this.meta, what.quest, count, day) : 'daily' in what ? startAutoDaily(this.meta, what.daily, count) : startAuto(this.meta, what.army, what.tier, count, day);
     if (!a || !spendTicket(this.meta, todayKey())) return;
     saveMeta(this.meta);
     this.auto = a;
@@ -2034,7 +2050,9 @@ class Game {
       // (each run spends a day's auto ticket; a new day mid-replay refills them)
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
-      const nextRun = armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      // (a quest battle's next try, or the daily's next practice run, or the army's next run)
+      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      if (!nextRun) return void this.endAuto('stopped');
       if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
       this.startRun(nextRun);
       this.autoPrep();
@@ -2049,9 +2067,11 @@ class Game {
     bar.hidden = !a;
     if (!a) return;
     const army = armyOfRun(this.run);
+    const fixed = waveArmyOf(this.run);
+    const name = a.kind === 'quest' ? questBattleById(a.quest!)?.title : a.kind === 'daily' ? 'Daily' : army?.name;
     bar.classList.toggle('paused', document.hidden);
     bar.querySelector('b')!.textContent = `Auto ${a.run}/${a.count}`;
-    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : army ? `${army.name} · wave ${Math.min(this.run.stage, army.waves.length)}/${army.waves.length}` : '';
+    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : name && fixed ? `${name} · wave ${Math.min(this.run.stage, fixed.waves.length)}/${fixed.waves.length}` : name ?? '';
   }
 
   /** The replay is over (the count ran out, a run was lost, or Stop was tapped): the banner goes and the summary card shows the totals. */
@@ -2063,8 +2083,16 @@ class Game {
     this.auto = null;
     this.autoNext = null;
     this.refreshAuto();
-    const army = armyById(a.army)!;
+    // (what was repeated, in words: "the Ashen Host", "Kenji's tale", "the daily")
+    const army = { name: a.kind === 'quest' ? questBattleById(a.quest!)?.title ?? 'battle' : a.kind === 'daily' ? 'daily' : armyById(a.army)!.name };
     const card = $('autoSum');
+    // (CLOSE-SCREENS: a flow screen: its rows and finds go as it closes; one already up is closed first)
+    this.autoSumCloser = openScreen('autoSum', () => {
+      this.autoSumCloser = null;
+      card.hidden = true;
+      card.querySelector('.asumRows')!.replaceChildren();
+      card.querySelector('.asumFinds')?.remove();
+    });
     card.querySelector('h2')!.textContent = why === 'done' ? 'Auto-replay done' : why === 'loss' ? 'Auto-replay stopped' : 'Auto-replay stopped';
     card.querySelector('.asumWhy')!.textContent =
       why === 'done'
@@ -2083,18 +2111,22 @@ class Game {
     card.querySelector('.asumFinds')?.remove();
     const finds = foundList(a.totals.finds ?? []);
     if (finds) rows.after(finds);
-    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
+    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : a.kind && a.kind !== 'army' ? 'Home' : 'To the armies';
     card.dataset.why = why;
+    card.dataset.kind = a.kind && a.kind !== 'army' ? 'other' : 'army';
     card.hidden = false;
     this.refresh();
   }
+  private autoSumCloser: (() => void) | null = null;
 
   private closeAutoSummary(): void {
     const card = $('autoSum');
-    card.hidden = true;
     const why = card.dataset.why;
+    if (this.autoSumCloser) this.autoSumCloser();
+    else card.hidden = true;
     // (a run that was stopped carries on by hand where it stands; a finished one goes on to the armies, a lost one home)
-    if (why === 'done') this.armyWon();
+    const army = !this.auto && card.dataset.kind !== 'other';
+    if (why === 'done') army ? void this.armyWon() : this.goHome();
     else if (why === 'loss') this.goHome();
   }
 
@@ -2109,7 +2141,12 @@ class Game {
   /* -------------------------------------------------------------- quest battles (QUEST-BATTLES, batch 2 of the quests) */
 
   /** A quest battle's Fight: the one saved part-way carries on; else the party screen with its cast locked in, then a new try. */
-  private openQuestBattle(id: string): void {
+  private openQuestBattle(id: string, auto?: number): void {
+    // (an auto-replay of a battle already won: a fresh try with the saved party, no picker; the cast is kept by the squad pick)
+    if (auto) {
+      if (!canAutoQuest(this.meta, id)) return this.home.open();
+      return this.beginQuestTry(id, this.meta.party, auto);
+    }
     const saved = loadSlot('quest');
     if (saved?.mode?.kind === 'quest' && saved.mode.quest === id) {
       this.run = saved;
@@ -2124,10 +2161,11 @@ class Game {
   }
 
   /** A new try of a quest battle with the party picked: its own seed and slot (an army run saved is not touched), then its story, the first time. */
-  private beginQuestTry(id: string, picked: readonly string[]): void {
+  private beginQuestTry(id: string, picked: readonly string[], auto?: number): void {
     const run = startQuestBattle(this.meta, id, picked);
     if (!run) return this.home.open();
     this.startRun(run);
+    if (auto) return this.beginAuto({ quest: id }, auto);
     void this.tellQuestStory(id);
   }
 
@@ -2166,7 +2204,7 @@ class Game {
     const run = this.run;
     const qb = questBattleOfRun(run);
     if (run.mode?.kind !== 'quest' || !qb) return this.goHome();
-    $('result').hidden = true;
+    this.closeResult();
     endVictory();
     if (!run.cleared) {
       const next = startQuestBattle(this.meta, qb.id, run.pool ?? run.mode.cast);
@@ -2200,7 +2238,7 @@ class Game {
 
   /** Leave a lost quest battle (the result card's Leave): back to the quest log, where its Fight waits. */
   private leaveQuest(): void {
-    $('result').hidden = true;
+    this.closeResult();
     endVictory();
     const qb = questBattleOfRun(this.run);
     this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
@@ -2352,6 +2390,21 @@ class Game {
   }
 
   /** JRPG-RECAP: the results screen is going (a new fight): its clock stops and its parts are emptied. */
+  /** CLOSE-SCREENS: the fight's result card is done with: hidden, emptied and its count-ups stopped, and kept shut while the battle
+   *  stays ended (`refresh` would otherwise put it back up under whatever opens next: the owner's chest over the last recap). */
+  private closeResult(): void {
+    const shut = this.resultCloser;
+    if (shut) shut();
+    else this.dropResult();
+  }
+  private dropResult(): void {
+    this.resultCloser = null;
+    this.resultDone = true;
+    $('result').hidden = true;
+    this.stopResults();
+    for (const id of ['banner', 'summary', 'joke', 'stars', 'armyStars', 'oreDrop', 'dayResult', 'waveNotes', 'xp', 'fightStats']) $(id).replaceChildren();
+  }
+
   private stopResults(): void {
     this.jr?.stop();
     this.jr = null;
@@ -2374,17 +2427,19 @@ class Game {
 
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
+    // (CLOSE-SCREENS: the result card is left, whichever way the game goes on)
+    this.closeResult();
     // (a won battle's victory music ends with its results)
     endVictory();
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
-      $('result').hidden = true;
+      this.closeResult();
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
     if (this.run.cleared && !this.run.tower) return void this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
-      $('result').hidden = true;
+      this.closeResult();
       saveRun(this.run);
       if (this.run.over) {
         const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in ${this.run.rift?.expedition ? 'region' : 'map'} ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
@@ -2554,7 +2609,7 @@ class Game {
   private goHome(): void {
     const r = this.run;
     const army = armyOfRun(r);
-    $('result').hidden = true;
+    this.closeResult();
     this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
@@ -2562,7 +2617,7 @@ class Game {
    *  film already showed it), then the armies screen. */
   private async armyWon(): Promise<void> {
     const army = armyOfRun(this.run)!;
-    $('result').hidden = true;
+    this.closeResult();
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
@@ -3304,7 +3359,9 @@ class Game {
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0 || !!this.questBlock();
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    result.hidden = this.resultDone || !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    // (CLOSE-SCREENS: the card is one step of the fight's end: in the screen stack while it is up, so the next screen closes it)
+    if (!result.hidden && !this.resultCloser) this.resultCloser = openScreen('result', () => this.dropResult());
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       const cal = run.mode?.kind === 'calamity';

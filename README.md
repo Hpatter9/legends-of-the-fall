@@ -11,7 +11,7 @@ home screen). Place your heroes, press **Fight!**, and watch them fight on their
 - Afterwards, **Restart** replays the same board with your heroes where you put them; **New board** rolls a new one.
 - `?seed=123` in the address opens a given board.
 
-The ground matters. A blow from higher ground hits harder (+10% a step, up to three), and so does one from the side
+The ground matters. A blow from higher ground hits harder (+15% a step, up to three), and so does one from the side
 (x1.25) or behind (x1.5). Archers and the wizard shoot further from high ground, and a ridge or boulder can block their
 shot. Swords and spears can't reach a foe more than a couple of steps above or below them.
 

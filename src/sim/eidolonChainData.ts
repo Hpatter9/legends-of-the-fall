@@ -7,7 +7,7 @@
 // Every story here is plain data in the cinematics' shape (`sceneKit.ts`) or as lines, so the general shot layer can take them over.
 // The voice: wry and warm, in British spelling. Pure data: no Pixi, no DOM.
 
-import { close, say, tell, wide, type CastMember, type Scene } from './sceneKit';
+import { say, tell, wide, type CastMember, type Scene } from './sceneKit';
 import type { Goal, Need, Reward } from './questData';
 
 /** A piece of an Eidolon's pact: found by a chain's part, set on the altar at the binding. `art` names a painted gear icon the piece's
@@ -74,6 +74,15 @@ export interface ChainDef {
 
 const party = (i: number, x: number, more: Partial<CastMember> = {}): CastMember => ({ role: `party:${i}`, x, facing: 'right', ...more });
 
+
+/** The Summoner, standing at her altar in the Sanctum (a priestess's figure), and the two heroes who hear her out. One backdrop, the
+ *  Sanctum, carries every prologue from its first shot to its last (docs/notes/cine-eidolon.md): the giver walks in rather than the scene
+ *  cutting away, and everyone who speaks is on the stage or has a face in the picture. */
+const SUMMONER: CastMember = { role: 'unit:priestess', x: 118, facing: 'right', scale: 1.15, name: 'The Summoner' };
+const hearers = (): Record<string, CastMember> => ({ summoner: SUMMONER, a: party(0, 250, { facing: 'left' }), b: party(1, 214, { facing: 'left' }) });
+/** A still wide shot of the altar, the Summoner and the two heroes all in view, so each line shows who says it. */
+const altar = { angle: 'wide', move: 'still', cam: wide(185, 215) } as const;
+
 /** Askel's three pieces. */
 export const EMBER_HEART: PieceDef = {
   id: 'emberHeart',
@@ -99,16 +108,21 @@ export const KENNEL_BELL: PieceDef = {
 const HEARTH_BELOW: Scene = {
   id: 'eid-askel-prologue',
   title: 'The Hearth Below',
-  blurb: 'The Summoner tells of the first kings\' hound.',
+  blurb: "The Summoner tells of the first kings' hound.",
   moment: { kind: 'eidolon', chain: 'askel' },
   music: 'solemn',
-  cast: { summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: hearers(),
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn', 'glow'], cue: 'earthRumble', caption: 'The Summoning Sanctum', lines: [tell('The Warlord has fallen. Under the Sanctum\'s floor, something breathes, like a hearth banked for the night.')] },
-    { cam: close(['a', 'b']), lines: [say('summoner', 'Did you feel it, when the Warlord fell? Heat, under the stones. The keep has not felt that since the first kings.'), say('a', 'I thought that was the braziers.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'The braziers do not growl. The first kings kept a hound of living embers: Askel, the Cinderhound. He ran their hunts, and slept by their hearth.'), say('summoner', 'When the Calamity broke the old pacts, he ran into the fire under the hills. He has been running ever since.')] },
-    { cam: close('b'), lines: [say('b', 'And he wants to come home?')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'Every hound does. We call him the old way: the ember of his heart, his collar, and the bell that called him to supper. Find them, and I will bind him to the keep.'), tell("Askel's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    // (establish: the Sanctum, the floor warm underfoot)
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn', 'glow'], cue: 'earthRumble', caption: 'The Summoning Sanctum', lines: [tell('The Warlord is down. Under the Sanctum floor, something breathes slowly, like a hearth banked for the night.')] },
+    // (the characters: the Summoner dry, the heroes unimpressed)
+    { ...altar, lines: [say('summoner', 'Did you feel that when the Warlord fell? Heat, under the stones. This keep has not been so warm since the first kings.'), say('a', 'I assumed the braziers.'), say('summoner', 'The braziers do not growl.')] },
+    // (the turn: who it is)
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'Askel, the Cinderhound. He ran the first kings\' hunts and slept by their hearth. When the pacts broke, he ran into the fire under the hills.'), say('summoner', 'He has been running ever since.')] },
+    // (the payoff: why it matters)
+    { ...altar, lines: [say('b', 'And he wants to come home.'), say('summoner', 'Every hound does. He needs only to be called the old way.')] },
+    // (the handover)
+    { ...altar, lines: [say('summoner', 'The ember of his heart, his collar, and the bell that called him to supper. Find them, and I will bind him to the keep.'), say('a', 'Three errands for a dog. Fine.')] },
   ],
 };
 
@@ -164,18 +178,16 @@ const UNDER_THE_MERE: Scene = {
   blurb: 'A frost-bitten hunter tells why the pack ran south.',
   moment: { kind: 'eidolon', chain: 'nivra' },
   music: 'solemn',
-  cast: { hunter: HUNTER, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { hunter: HUNTER, ...hearers() },
   shots: [
-    { look: 'snow', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The northern meres', lines: [tell('Far to the north, a lake lies frozen like glass, a mile across. Under it, something has turned over in its sleep.')] },
-    { look: 'temple', cam: wide(260, 200), caption: 'The Summoning Sanctum', lines: [tell('Snow on the Sanctum steps, in spring. A hunter has walked down from the north, frost on the hood and two fingers short.')] },
-    // (the hunter speaks over wide shots: their face fills the picture, so it never sits over a hero's close-up)
-    { cam: wide(250, 200), lines: [say('hunter', 'You called the fire-dog home. Whole north heard it. Now call something else.')] },
-    { cam: close(['a', 'b']), lines: [say('a', 'Something bigger than a dog, I take it.')] },
-    { cam: wide(250, 200), lines: [say('hunter', 'The pack ran south this winter. Not hunting. Running. From the lake. From under the ice.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'Nivra. The Rime Wyrm. She lay under the northern meres and kept the passes shut, winter after winter, for the first kings.'), say('summoner', 'When the pacts broke she went down into the cold to sleep it off. Three hundred years is a long nap, even for a wyrm.')] },
-    { cam: close('b'), lines: [say('b', 'And if she wakes up cross?')] },
-    { cam: wide(250, 200), lines: [say('hunter', 'Then be her friend first. Quickly.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A scale she has shed, the pearl of her cold heart, and the breath she holds. Bring me those, and I will bind her.'), tell("Nivra's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    // (establish: the Sanctum, with the north's snow blowing in at the door)
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn'], weather: 'snow', caption: 'The Summoning Sanctum', lines: [tell('Snow on the Sanctum steps, in spring. A hunter has walked down from the north, frost on the hood and two fingers short.')] },
+    // (the hunter's face fills the picture as they speak)
+    { cam: wide(185, 215), lines: [say('hunter', 'You called the fire-dog home. The whole north heard it. Now call something else.'), say('hunter', 'The pack ran south this winter. Not hunting. Running. From the lake, and what is under the ice.')] },
+    { ...altar, lines: [say('a', 'Something bigger than a dog, I take it.'), say('summoner', 'Nivra, the Rime Wyrm. She lay under the northern meres and kept the passes shut, winter after winter, for the first kings.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'When the pacts broke she went down into the cold to sleep it off. Three hundred years is a long nap, even for a wyrm.'), say('b', 'And if she wakes up cross?')] },
+    { cam: wide(185, 215), lines: [say('hunter', 'Then be her friend first. Quickly.')] },
+    { ...altar, lines: [say('summoner', 'A scale she has shed, the pearl of her cold heart, and the breath she holds. Bring me those, and I will bind her.'), say('b', 'We will take cloaks.')] },
   ],
 };
 
@@ -225,16 +237,15 @@ const THE_LATE_DAWN: Scene = {
   blurb: 'Gwen Tallow brings word that the dawn is coming late.',
   moment: { kind: 'eidolon', chain: 'aurelan' },
   music: 'solemn',
-  cast: { gwen: GWEN, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { gwen: GWEN, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, before sunrise', lines: [tell('Grey light in the Sanctum windows. The tavern-keeper has left her bar, her dog and her slate, and walked up the hill in the dark.')] },
-    { cam: wide(250, 200), lines: [say('gwen', 'I do not leave the taproom. Ask anyone. Forty years I have not left the taproom.')] },
-    { cam: close(['a', 'b']), lines: [say('b', 'Then something is wrong.')] },
-    { cam: wide(250, 200), lines: [say('gwen', 'The lamps go out at dusk. All of them. Lit properly, trimmed, filled. And the dawn comes late. A little later each day. The cockerel has given up.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'The Wildwood is quiet, and the quiet has let you hear it. Aurelan, the Lion of Dawn. He walked ahead of the sun for the first kings, and roared it up over the hill each morning.'), say('summoner', 'When the pacts broke he lay down in the dark to wait. He has been waiting a long time. A lion can lose count of nights.')] },
-    { cam: close('a'), lines: [say('a', 'And if we wake him?')] },
-    { cam: wide(250, 200), lines: [say('gwen', 'Then I shall have lamps again, and I shall stop having to explain myself to the cockerel.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A thread of his mane, the crown he laid down, and a light that has not been put out. Bring me those, and I will bind him.'), tell("Aurelan's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn'], weather: 'motes', caption: 'The Summoning Sanctum, before sunrise', lines: [tell('Grey light in the Sanctum windows. The tavern-keeper has left her bar, her dog and her slate, and walked up the hill in the dark.')] },
+    { cam: wide(185, 215), lines: [say('gwen', 'I do not leave the taproom. Ask anyone. Forty years.'), say('gwen', 'But the lamps go out at dusk, every one, lit and trimmed and filled. And the dawn comes late. A little later each day. The cockerel has given up.')] },
+    { ...altar, lines: [say('b', 'Then something is wrong.'), say('summoner', 'The Wildwood is quiet, and the quiet lets you hear it. Aurelan, the Lion of Dawn.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'He walked ahead of the sun for the first kings and roared it up over the hill each morning. When the pacts broke he lay down in the dark to wait.'), say('summoner', 'A lion can lose count of nights.')] },
+    { ...altar, lines: [say('a', 'And if we wake him?')] },
+    { cam: wide(185, 215), lines: [say('gwen', 'Then I shall have lamps again, and I shall stop explaining myself to the cockerel.')] },
+    { ...altar, lines: [say('summoner', 'A thread of his mane, the crown he laid down, and a light that has not been put out. Bring me those, and I will bind him.'), say('b', 'We will be back by breakfast. Whenever that is.')] },
   ],
 };
 
@@ -283,16 +294,14 @@ const THE_DRY_STORM: Scene = {
   blurb: 'A royal courier brings word that the storm will not break.',
   moment: { kind: 'eidolon', chain: 'voltara' },
   music: 'solemn',
-  cast: { crown: CROWN, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { crown: CROWN, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, under a bruised sky', lines: [tell('Every weathercock on the keep has been spinning for a week. The air smells of struck flint. Not a drop of rain has fallen, and a royal courier has come up the hill with a sealed charge and a singed moustache.')] },
-    { cam: wide(250, 200), lines: [say('crown', 'By the Crown\'s seal, and the Crown\'s patience, which is thin. Lightning has struck the same tower of the keep seven nights running, and not once has it hit the rod.')] },
-    { cam: close(['a', 'b']), lines: [say('b', 'Seven? Then it is not weather.')] },
-    { cam: wide(250, 200), lines: [say('crown', 'The Crown\'s astronomers agree, and have gone to lie down. They say it is looking for something. Please, say it is not the Crown.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'It is looking for a house. Voltara, the Copper Goddess. She married the storm, and the storm kept the house, and she has been wandering the sky ever since, looking for the door.'), say('summoner', 'The Labyrinth held her wires down for three hundred years. Now it is quiet, and the sky is crowded with her.')] },
-    { cam: close('a'), lines: [say('a', 'And if we give her a door?')] },
-    { cam: wide(250, 200), lines: [say('crown', 'Then the Crown shall have a ceiling, and the courier shall have a moustache again.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A coil of her own wire, the face of the clock that stopped, and a storm kept in glass. Bring me those, and I will bind her.'), tell("Voltara's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn', 'darken'], weather: 'dust', caption: 'The Summoning Sanctum, under a bruised sky', lines: [tell('Every weathercock on the keep has spun for a week. The air smells of struck flint, and not a drop of rain has fallen. A royal courier has come up the hill with a sealed charge and a singed moustache.')] },
+    { cam: wide(185, 215), lines: [say('crown', 'By the Crown\'s seal, and the Crown\'s patience, which is thin: lightning has struck the same tower seven nights running, and never once the rod.'), say('crown', 'The astronomers say it is looking for something. They have gone to lie down.')] },
+    { ...altar, lines: [say('b', 'Seven? Then it is not weather.'), say('summoner', 'No. It is looking for a house. Voltara, the Copper Goddess.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'She married the storm, and the storm kept the house, and she has wandered the sky ever since, looking for the door. The Labyrinth held her wires down for three hundred years. Now the sky is crowded with her.'), say('a', 'And if we give her a door?')] },
+    { cam: wide(185, 215), lines: [say('crown', 'Then the Crown shall have a ceiling, and the courier a moustache.')] },
+    { ...altar, lines: [say('summoner', 'A coil of her own wire, the face of the clock that stopped, and a storm kept in glass. Bring me those, and I will bind her.'), say('b', 'Gloves, then.')] },
   ],
 };
 
@@ -329,8 +338,6 @@ export const KNOCKING_STONE: PieceDef = {
   art: 'ironRing',
 };
 
-/** Duchess, heard over the prologue: the goat's own portrait (`face:duchess`), speaking in bleats with her asides in brackets (as `quipData.ts` writes her). */
-const DUCHESS: CastMember = { role: 'face:duchess', x: 0, facing: 'right', hidden: true, name: 'Duchess' };
 
 /** The prologue of Gorm's chain: Duchess the goat leads the party out to the keep's own foundation stone once the Infernal Host has fallen.
  *  She has headbutted one stone at every dawn for a month, and it has started to answer; the Summoner names the Quarry Titan. */
@@ -340,16 +347,14 @@ const A_GOAT_OF_CONSEQUENCE: Scene = {
   blurb: 'Duchess shows the keep a stone that knocks back.',
   moment: { kind: 'eidolon', chain: 'gorm' },
   music: 'solemn',
-  cast: { duchess: DUCHESS, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { duchess: { role: 'duchess', x: 190, facing: 'left', hidden: true, name: 'Duchess' }, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, at the foot of the keep', lines: [tell('A goat has walked up the Sanctum steps with great purpose, and is standing on the altar. She does not appear to have been invited. She does not appear to need to be.')] },
-    { cam: wide(250, 200), lines: [say('duchess', 'Mehh. (She has been butting the keep. One stone, low down, at the corner. Every dawn, for a month.)')] },
-    { cam: close(['a', 'b']), lines: [say('b', 'That is not unusual, for her.'), say('a', 'She is not usually ahead of the schedule.')] },
-    { cam: wide(250, 200), lines: [say('duchess', 'MEHH. (It knocked back. She would like it noted that it knocked back. She has not been so insulted since the tavern cat.)')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'It is not a stone. Or it is, but a very large one, and it is only the part of him that is showing. Gorm, the Quarry Titan.'), say('summoner', 'He cut the hill for the first kings, and raised this keep out of it, block by block, and then, I believe, forgot to mention it. When the pacts broke he lay down in the quarry and let the grass come over. The hill under your walls is him.')] },
-    { cam: close('a'), lines: [say('a', 'We have been living on a person.'), say('b', 'We have been living on a very patient person.')] },
-    { cam: wide(250, 200), lines: [say('duchess', 'Meh. (She has found the rest of him. She is not saying where. She wants a cabbage.)')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A flake of his fire, the mark he cut in his first block, and the stone that knocked. Bring me those, and I will bind him.'), tell("Gorm's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn'], caption: 'The Summoning Sanctum, at the foot of the keep', acts: [{ who: 'duchess', enter: 190, from: 330 }], lines: [tell('A goat has walked up the Sanctum steps with great purpose. She does not appear to have been invited. She does not appear to need to be.')] },
+    { ...altar, lines: [say('duchess', 'Mehh.'), say('a', 'She says she has been butting one stone at the corner of the keep. Every dawn for a month.'), say('b', 'That is not unusual, for her.')] },
+    { ...altar, lines: [say('duchess', 'MEHH.'), say('a', 'She would like it noted that it knocked back.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'It is not a stone. Or it is, but only the part of him that shows. Gorm, the Quarry Titan.'), say('summoner', 'He cut the hill for the first kings and raised this keep out of it, block by block, and then forgot to mention it. The hill under your walls is him.')] },
+    { ...altar, lines: [say('a', 'We have been living on a person.'), say('b', 'A very patient person.')] },
+    { ...altar, lines: [say('summoner', 'A flake of his fire, the mark he cut in his first block, and the stone that knocked. Bring me those, and I will bind him.'), say('duchess', 'Meh.'), say('a', 'She wants a cabbage. For services.')] },
   ],
 };
 
@@ -397,17 +402,15 @@ const THE_GUESTS_THINGS: Scene = {
   blurb: 'A voice in the rift carries a message from a very large guest.',
   moment: { kind: 'eidolon', chain: 'vaelkhar' },
   music: 'solemn',
-  cast: { voice: RIFT_VOICE, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { voice: RIFT_VOICE, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, after the Calamity', lines: [tell('A crack of violet light has opened in the Sanctum floor, about the size of a letterbox. The braziers lean away from it. A voice comes up out of it, from a long way down, and very politely.')] },
-    { cam: wide(250, 200), lines: [say('voice', 'you shut the last door. thank you. it was loud.')] },
-    { cam: close(['a', 'b']), lines: [say('a', 'Who is that?'), say('b', 'It sounds like the voice from the guardians\' floors.')] },
-    { cam: wide(250, 200), lines: [say('voice', 'i keep the rift. i am only the post. this one is not mine. it is from someone too large to come through, who has asked me to ask.')] },
-    { cam: wide(250, 200), lines: [say('voice', 'he came to your keep once. as a guest. one night. he left his things, and the doors shut behind him. he has wondered for three hundred years whether it is rude to ask for them back.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'Vaelkhar. The Dragon King. He flew over the first kings\' walls as an invited guest, and the pacts broke while he was asleep in the east wing.'), say('summoner', 'He left a scale, a seal and a helm made for a rider. He also gave the first queen his heart, as a gift. On reflection, he would like it back. The keep may keep it, I think, if it gives him a receipt.')] },
-    { cam: close('a'), lines: [say('a', 'Is he angry?')] },
-    { cam: wide(250, 200), lines: [say('voice', 'he is a king. it comes out as the same thing. but if you bring him his things, he will answer your horn. he says it is lonely at the top.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A scale from the last guardians\' floor, the letter that was never answered, and a tine of his crown. Bring me those, and I will bind him.'), tell("Vaelkhar's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn', 'darken'], weather: 'embers', caption: 'The Summoning Sanctum, after the Calamity', lines: [tell('A crack of violet light has opened in the Sanctum floor, about the size of a letterbox. The braziers lean away from it. A voice comes up out of it, very politely, from a long way down.')] },
+    { cam: wide(185, 215), lines: [say('voice', 'you shut the last door. thank you. it was loud.'), say('voice', 'i am only the post. this is from someone too large to come through, who asked me to ask.')] },
+    { ...altar, lines: [say('a', 'Ask what?'), say('b', 'It sounds like the voice from the guardians\' floors.')] },
+    { cam: wide(185, 215), lines: [say('voice', 'he came to your keep once, as a guest, for one night. he left his things, and the doors shut behind him. he has wondered for three hundred years if it is rude to ask for them back.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'Vaelkhar, the Dragon King. He flew over the first kings\' walls as an invited guest and fell asleep in the east wing as the pacts broke.'), say('a', 'Is he angry?')] },
+    { cam: wide(185, 215), lines: [say('voice', 'he is a king. it comes out the same. but bring him his things and he will answer your horn. he says it is lonely at the top.')] },
+    { ...altar, lines: [say('summoner', 'A scale from the last guardians\' floor, the letter never answered, and a tine of his crown. Bring me those, and I will bind him.'), say('b', 'We will write back. Politely.')] },
   ],
 };
 

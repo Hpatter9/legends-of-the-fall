@@ -10,6 +10,7 @@ import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openStall } from './stallView';
+import { closeFinished } from './screens';
 import { newStock } from './sim/stall';
 import { caravanHere, gloamingHere } from './sim/traders';
 import { shopArt } from './bookArt';
@@ -26,8 +27,8 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
-import { drawCodex, ENTRIES_CLAIM, stopCodex } from './codexView';
-import { claimCodex, claimEntries, codexAnyWaiting, gotOf, totalOf } from './sim/codex';
+import { drawCodex, stopCodex } from './codexView';
+import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
@@ -49,6 +50,7 @@ import { announceArmy } from './armyShown';
 import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
 import { questById } from './sim/questData';
 import { drawQuestLog, type LogTab } from './questLog';
+import type { Destination } from './sim/questGoto';
 import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } from './sim/eidolonChains';
 import { hornHeld } from './sim/warHorn';
 import { revealCard } from './sim/sceneReveal';
@@ -96,12 +98,12 @@ export interface HomeHooks {
   onScene?(): void;
   /** Play a cinematic again (the codex's Scenes list). */
   onWatchScene?(id: string): void;
-  /** A build was raised (the castle's cinematic): the building, or `chapel`. */
+  /** A build was raised (the page puts up its popup): the building, or `chapel`. */
   onBuilt?(site: BuildSite): void;
   /** The top bar was drawn (EIDOLONS: the War Horn's chip beside the stones follows the save). */
   onTopBar?(): void;
   /** Begin or carry on a quest battle (batch 2 of the quests: the log's Fight, a giver's card, the Done tab's Replay). */
-  onQuestBattle?(battle: string): void;
+  onQuestBattle?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if one is (its Fight reads Continue). */
   questSaved?(): string | null;
   /** EIDOLON-CHAINS: play a chain's story (its giver's prologue) over the home screen; resolves when it ends. */
@@ -280,6 +282,8 @@ export class Home {
   /** Open the home screen; `note` is a line shown on the Battle page (the last run's end). */
   open(note = this.note): void {
     this.note = note;
+    // (CLOSE-SCREENS: back to a place: any flow screen still open (a result card, a recap, a summary) is closed, not left under it)
+    closeFinished();
     // (coming back to the home screen it is simply there, on the Battle page: nothing slides)
     if ($('home').hidden) this.snapNext = true;
     $('home').hidden = false;
@@ -427,9 +431,10 @@ export class Home {
           this.revealJoined();
         },
         close: () => this.closeSheet(),
-        fight: (id) => this.questBattle(id),
+        fight: (id, auto) => this.questBattle(id, auto),
         saved: () => this.hooks.questSaved?.() ?? null,
         summoner: () => this.show('recruit'),
+        goTo: (dest) => this.questGoto(dest),
         story: (id) => {
           const scene = chainById(id)?.prologue;
           if (scene) void this.hooks.onStory?.(scene);
@@ -507,11 +512,32 @@ export class Home {
     });
   }
 
+  /** "Take me there" (UI batch 1): the log closes and the screen the goal is done on opens: a battle, an army's party screen, a mode, or the Armies. */
+  private questGoto(dest: Destination): void {
+    this.closeSheet();
+    this.show('battle');
+    switch (dest.to) {
+      case 'battle':
+        return this.questBattle(dest.battle);
+      case 'army':
+        return this.go(() => this.hooks.onArmy(dest.army, dest.tier));
+      case 'armies':
+        return this.openArmies(dest.army);
+      case 'daily':
+        return this.go(this.hooks.onDaily);
+      case 'stand':
+        // (shut until the stars open it: the camp's own rule)
+        return towerOpen(this.meta) || this.hooks.slotInfo?.('tower') ? this.go(this.hooks.onTower) : this.openArmies();
+      case 'calamity':
+        return modeOpen(this.meta, 'calamity') || this.hooks.slotInfo?.('calamity') ? this.enterCalamity() : this.openArmies();
+    }
+  }
+
   /** A quest battle's Fight (batch 2): the sheet and the card close, and the page takes it from there (the party, the story, the deploy). */
-  private questBattle(id: string): void {
+  private questBattle(id: string, auto?: number): void {
     if (!this.hooks.onQuestBattle) return;
     this.closeSheet();
-    this.go(() => this.hooks.onQuestBattle!(id));
+    this.go(() => this.hooks.onQuestBattle!(id, auto));
   }
 
   /** Redraw the page that is showing (after crowns or unlocks change elsewhere). */
@@ -719,11 +745,13 @@ export class Home {
       b.addEventListener('click', onTap);
       return b;
     };
-    // (the Daily board: a new daily wears the red dot; a cleared one a green check; the plate names the boss of the day and how it went)
+    // (the Daily: a small icon at the scene's right edge: a new daily wears the red dot, a cleared one a green check; the whole line "Today: Orc Warlord · not tried" is read aloud)
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
-    // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily', '', `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    daily.title = `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`;
+    daily.querySelector('small')?.remove();
+    daily.prepend(icon(ICONS.daily, 'ico cpDailyIcon'));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
@@ -788,7 +816,7 @@ export class Home {
     const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
     const up = modeOpen(m, 'castle');
     // (MENU-GLITCH: the chips are built again only when what they show has changed, so a refresh replaces none of their icons)
-    const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexAnyWaiting(m)}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
+    const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexWaiting(m).length > 0}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
     if (bar.dataset.key === key) return;
     bar.dataset.key = key;
     bar.replaceChildren();
@@ -800,7 +828,7 @@ export class Home {
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
-    if (codexAnyWaiting(m)) cdx.append(el('i', 'badge'));
+    if (codexWaiting(m).length > 0) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
     const levelBtn = el('button', 'ctChip');
     levelBtn.append(el('b', '', '🏰 Build Town'));
@@ -1001,6 +1029,8 @@ export class Home {
       queueMicrotask(() => (this.sheetWasUp = false));
     }
     $('hmSheet').hidden = true;
+    // (CLOSE-SCREENS: the sheet left is emptied, not kept under the page; each opening draws it afresh)
+    $('hmSheetBox').replaceChildren();
     this.cardOpen = false;
     this.cardFor = null;
     if (this.isOpen && this.tab === 'heroes') this.tavern.start();
@@ -1054,11 +1084,11 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
-  /** The codex page; a Claim takes a milestone's crowns and stone (or the new entries' stones), saves, and draws the page again. */
+  /** The codex page; a Claim takes a milestone's crowns and stone, saves, and draws the page again. */
   openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {
-        if (!(id === ENTRIES_CLAIM ? claimEntries(this.meta) : claimCodex(this.meta, id))) return;
+        if (!(claimCodex(this.meta, id))) return;
         saveMeta(this.meta);
         play('coinClaim');
         const keep = b.scrollTop;
@@ -1097,6 +1127,9 @@ export class Home {
   private closeSub(): void {
     stopCodex();
     $('hmSub').hidden = true;
+    // (CLOSE-SCREENS: the armies, codex or achievements page left is emptied (a codex entry's sheet with it))
+    $('hmSubBody').replaceChildren();
+    $('hmSub').querySelector('.cxOverlay')?.remove();
     this.hooks.onScene?.();
   }
 }
