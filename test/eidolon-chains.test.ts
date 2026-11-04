@@ -41,9 +41,9 @@ const packSave = (seed: number, pack: 0 | 1): Meta => {
   return m;
 };
 /** A won army boss wave, as the goals read it. */
+const bossWin = (army: string, boss: string, more: Partial<QuestFight> = {}): QuestFight => ({ won: true, waves: 1, boss: true, heroes: ['knight'], flawless: true, kills: [boss], dailyCleared: false, mode: 'army', army, bosses: [boss], ...more });
 /** Q9: the chains' parts ask for Hard (tier 1). */
 const HARD = { tier: 1 } as const;
-const bossWin = (army: string, boss: string): QuestFight => ({ won: true, waves: 1, boss: true, heroes: ['knight'], flawless: true, kills: [boss], dailyCleared: false, mode: 'army', army, bosses: [boss] });
 const STARTERS = FIXED_PACKS.flatMap((p) => p.heroes);
 const askel = chainById('askel')!;
 
@@ -176,11 +176,14 @@ test('the parts go in order, each finding its piece and paying a bronze chest; t
   beginChain(m, 'askel');
   const stash = m.stash.length;
   // (part 3's goal met first counts for nothing: the parts go in order)
-  assert.deepEqual(noteChains(m, bossWin('undead', 'boneCaptain')), []);
-  assert.deepEqual(noteChains(m, { ...bossWin('orcs', 'orcWarlord'), won: false }), [], 'a lost fight counts nothing');
+  assert.deepEqual(noteChains(m, bossWin('undead', 'boneCaptain', HARD)), []);
+  assert.deepEqual(noteChains(m, { ...bossWin('orcs', 'orcWarlord', HARD), won: false }), [], 'a lost fight counts nothing');
   assert.equal(canFightBattle(m, 'kennelFires'), false, 'the battle waits for its part');
-  // (part 1: an Orc Warband boss)
-  const found = noteChains(m, bossWin('orcs', 'orcChieftain'));
+  // (part 1, Q9: the Orc Warlord on Hard with no hero falling; the Chieftain, Normal or a hero fallen count nothing)
+  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcChieftain', HARD)), []);
+  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord')), []);
+  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord', { ...HARD, flawless: false })), []);
+  const found = noteChains(m, bossWin('orcs', 'orcWarlord', HARD));
   assert.deepEqual(found.map((f) => [f.chain, f.part, f.piece.id]), [['askel', 0, 'emberHeart']]);
   assert.equal(m.stash.length, stash + 1);
   assert.equal(currentPart(m)?.index, 1);
@@ -197,14 +200,24 @@ test('the parts go in order, each finding its piece and paying a bronze chest; t
   const prac = startQuestBattle(m, 'kennelFires', m.party)!;
   assert.ok(prac.mode?.kind === 'quest' && prac.mode.practice);
   // (part 3: the Bone Captain, on the Undead Legion)
-  assert.deepEqual(noteChains(m, bossWin('ogres', 'boneCaptain')), [], 'the Undead Legion\'s Bone Captain, not another army\'s');
-  assert.equal(noteChains(m, bossWin('undead', 'boneCaptain'))[0].piece.id, 'kennelBell');
+  assert.deepEqual(noteChains(m, bossWin('ogres', 'boneCaptain', HARD)), [], 'the Undead Legion\'s Bone Captain, not another army\'s');
+  assert.deepEqual(noteChains(m, bossWin('undead', 'boneCaptain')), [], 'Q9: Hard only');
+  assert.deepEqual(noteChains(m, bossWin('undead', 'boneCaptain', { ...HARD, hires: 1 })), [], 'Q9: no hire in the run');
+  assert.equal(noteChains(m, bossWin('undead', 'boneCaptain', HARD))[0].piece.id, 'kennelBell');
   assert.equal(m.stash.length, stash + 3);
+  // (Q9, part 4: the Orc Warband cleared on Hard with no heart; part 5: six Hard army waves with no ultimate)
+  const clearWin = (more: Partial<QuestFight> = {}) => bossWin('orcs', 'orcWarlord', { ...HARD, cleared: true, ...more });
+  assert.deepEqual(noteChains(m, clearWin({ hearts: 1 })), []);
+  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord', { cleared: true })), [], 'not on Normal');
+  assert.equal(noteChains(m, clearWin())[0].piece.id, 'huntWhistle');
+  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord', { ...HARD, waves: 6, ults: ['knight'] })), []);
+  assert.equal(noteChains(m, bossWin('orcs', 'orcWarlord', { ...HARD, waves: 6 }))[0].piece.id, 'hearthBrand');
+  assert.equal(m.stash.length, stash + 5);
   assert.equal(currentPart(m), undefined);
   assert.equal(readyToBind(m), askel);
   assert.ok(summonerWaiting(m));
   // (nothing more counts once every piece is in)
-  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord')), []);
+  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord', HARD)), []);
 });
 
 test('binding: Askel is bound and chosen to answer the horn, a gold chest is paid, and the chain is over', () => {
@@ -213,7 +226,7 @@ test('binding: Askel is bound and chosen to answer the horn, a gold chest is pai
   beginChain(m, 'askel');
   assert.equal(bindChain(m, 'askel'), false, 'not before every piece is in');
   m.quests!.chains!.askel = { part: 5, progress: 0 };
-  m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
+  m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell', 'huntWhistle', 'hearthBrand'];
   // (another Eidolon already chosen, as by the dev flag: the newly bound one is chosen)
   bindEidolon(m, 'nivra');
   const stash = m.stash.length;
@@ -251,7 +264,7 @@ test('the same fights give the same chain, and the save keeps it (junk dropped; 
     const m = packSave(11, 1);
     clear(m, 'orcs');
     beginChain(m, 'askel');
-    noteChains(m, bossWin('orcs', 'orcWarlord'));
+    noteChains(m, bossWin('orcs', 'orcWarlord', HARD));
     return m;
   };
   assert.deepEqual(play(), play());

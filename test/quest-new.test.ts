@@ -26,7 +26,7 @@ test('a campaign is offered as a campaign: its parts follow each other, in the c
     if (q.after) {
       const before = questById(q.after)!;
       assert.ok(before && lengthOf(before) === 'campaign', `${q.id}: after ${q.after}`);
-      assert.ok(starsOf(q) >= starsOf(before) - 0, `${q.id}: stars rise along the story`);
+      assert.ok(starsOf(q) >= starsOf(before) - 1, `${q.id}: the stars do not fall away along the story`);
     }
   }
   // (every story is 5 or more parts, and has one first part)

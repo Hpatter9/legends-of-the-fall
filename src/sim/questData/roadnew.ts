@@ -155,7 +155,7 @@ export const ROADNEW_QUESTS: readonly QuestDef[] = [
     steps: ['A wave of the Orc Warband', 'A wave of the Undead Legion', 'A wave of the Beast Packs', 'A wave of the Wildwood', 'A wave of the Labyrinth'],
     reward: { crowns: 120 },
     mood: 'mysterious',
-    stars: 2,
+    stars: 3,
     length: 'chain',
   },
   {

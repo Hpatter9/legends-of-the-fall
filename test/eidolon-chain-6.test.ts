@@ -99,7 +99,7 @@ test("the data: five parts and pieces (Q9), the voice in the rift at the Sanctum
   assert.ok(lines.length >= 8 && lines.some((l) => 'who' in l && l.who === 'voice'));
   assert.ok(vaelkhar.prologue!.shots.every((s) => s.lines?.every((l) => lineLen(l) > 0)));
   assert.ok(vaelkhar.call && /violet light/.test(vaelkhar.call.title));
-  assert.equal(stepsOf(vaelkhar), 4);
+  assert.equal(stepsOf(vaelkhar), 6);
   assert.ok(trialOf(vaelkhar));
 });
 

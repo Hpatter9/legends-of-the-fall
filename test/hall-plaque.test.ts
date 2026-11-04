@@ -20,7 +20,7 @@ const ready = (m: Meta) => {
   clearOrcs(m);
   beginChain(m, 'askel');
   m.quests!.chains!.askel = { part: 5, progress: 0 };
-  m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
+  m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell', 'huntWhistle', 'hearthBrand'];
 };
 /** Through the page's store and back, as a reload does. */
 const reload = (m: Meta): Meta => {
@@ -37,12 +37,12 @@ test('the plaque through Askel\'s chain: nothing before the Orc Warband falls, t
   assert.ok(summonerWaiting(m));
   beginChain(m, 'askel');
   assert.equal(hallPlaque(m)?.kind, 'going');
-  assert.equal(hallPlaque(m)?.title, 'Askel · 0 of 3 pieces');
+  assert.equal(hallPlaque(m)?.title, 'Askel · 0 of 5 pieces');
   assert.match(hallPlaque(m)!.line, /^Part 1: /);
   assert.equal(summonerWaiting(m), false, 'a part going waits on the player, not the Summoner');
   m.quests!.chains!.askel = { part: 1, progress: 0 };
   m.quests!.pieces = ['emberHeart'];
-  assert.equal(hallPlaque(m)?.title, 'Askel · 1 of 3 pieces');
+  assert.equal(hallPlaque(m)?.title, 'Askel · 1 of 5 pieces');
   assert.match(hallPlaque(m)!.line, /^Part 2: /);
   ready(m);
   assert.deepEqual(hallPlaque(m), { kind: 'bind', title: 'Bind Askel', line: 'every piece is on the altar' });
@@ -91,11 +91,11 @@ test('the plaque is one short row: every line it can show fits the Sanctum\'s wi
   };
   add();
   beginChain(m, 'askel');
-  for (const part of [0, 1, 2, 3]) {
+  for (const part of [0, 1, 2, 3, 4]) {
     m.quests!.chains!.askel = { part, progress: 0 };
     add();
   }
-  assert.equal(rows.length, 5);
-  // ("Askel · 1 of 3 pieces · Part 2: The Kennel Fires", 48 characters, takes about 300 of the row's 360px at 393 wide; it may wrap at 360)
+  assert.equal(rows.length, 6);
+  // ("Askel · 1 of 5 pieces · Part 2: The Kennel Fires", 48 characters, takes about 300 of the row's 360px at 393 wide; it may wrap at 360)
   for (const r of rows) assert.ok(r.length <= 56, `"${r}" is ${r.length} characters`);
 });

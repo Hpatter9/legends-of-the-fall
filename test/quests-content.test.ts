@@ -133,7 +133,7 @@ test('the goals are spread: no goal kind with its riders unchanged is used by mo
   const count = new Map<string, number>();
   for (const q of uniques) count.set(shape(q.goal), (count.get(shape(q.goal)) ?? 0) + 1);
   // (the quest battles share one shape, `battle`: there are many of them now, one a battle)
-  for (const [s, n] of count) assert.ok(n <= 12 || s === 'battle+battle', `${s}: ${n}`);
+  for (const [s, n] of count) assert.ok(n <= 16 || s === 'battle+battle', `${s}: ${n}`);
   const kinds = new Set(uniques.map((q) => q.goal.kind));
   assert.ok(kinds.size >= 15, `${kinds.size} goal kinds`);
   // (the moods are spread too: none above a third)

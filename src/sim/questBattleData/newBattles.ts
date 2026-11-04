@@ -3,5 +3,8 @@
 import type { QuestBattle } from '../questBattles';
 import { CAMPAIGNS1_BATTLES } from './campaigns1';
 import { ROYALNEW_BATTLES } from './royalnew';
+import { HEROESNEW_BATTLES } from './heroesnew';
+import { ROADNEW_BATTLES } from './roadnew';
+import { CAMPAIGNS2_BATTLES } from './campaigns2';
 
-export const NEW_BATTLES: readonly QuestBattle[] = [...CAMPAIGNS1_BATTLES, ...ROYALNEW_BATTLES];
+export const NEW_BATTLES: readonly QuestBattle[] = [...CAMPAIGNS1_BATTLES, ...ROYALNEW_BATTLES, ...HEROESNEW_BATTLES, ...ROADNEW_BATTLES, ...CAMPAIGNS2_BATTLES];

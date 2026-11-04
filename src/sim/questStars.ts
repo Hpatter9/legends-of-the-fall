@@ -109,6 +109,8 @@ export function starEstimate(q: QuestDef): number {
   const g = q.goal as Goal & Cond;
   let s = 1 + bulk(g) + riders(g) + battleWeight(g);
   if (g.kind === 'clearArmy' || g.kind === 'calClear') s += 0.8;
+  // (QUESTS-3: the quest-level rules: each objective beyond the first, one run, a time limit, a streak)
+  s += (q.goals?.length ?? 0) * 0.8 + (q.oneRun ? 1 : 0) + (q.within ? 0.5 : 0) + (q.streak ? (q.streak >= 5 ? 1.5 : q.streak >= 3 ? 1 : 0.5) : 0);
   if (g.kind === 'bossDown' || g.kind === 'calGuardian') s += 0.4;
   return Math.max(1, Math.min(5, Math.round(s)));
 }

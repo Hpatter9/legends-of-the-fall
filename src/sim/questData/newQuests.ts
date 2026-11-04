@@ -5,5 +5,9 @@ import { PROVING_QUESTS } from './proving';
 import { WANTED_QUESTS } from './wanted';
 import { CAMPAIGNS1_QUESTS } from './campaigns1';
 import { ROYALNEW_QUESTS } from './royalnew';
+import { HEROESNEW_QUESTS } from './heroesnew';
+import { ROADNEW_QUESTS } from './roadnew';
+import { MODES_QUESTS } from './modes';
+import { CAMPAIGNS2_QUESTS } from './campaigns2';
 
-export const NEW_QUESTS: readonly QuestDef[] = [...PROVING_QUESTS, ...WANTED_QUESTS, ...CAMPAIGNS1_QUESTS, ...ROYALNEW_QUESTS];
+export const NEW_QUESTS: readonly QuestDef[] = [...PROVING_QUESTS, ...WANTED_QUESTS, ...CAMPAIGNS1_QUESTS, ...ROYALNEW_QUESTS, ...HEROESNEW_QUESTS, ...ROADNEW_QUESTS, ...MODES_QUESTS, ...CAMPAIGNS2_QUESTS];
