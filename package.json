@@ -18,6 +18,7 @@
     "daily-rate": "node tools/dailyRate.mjs",
     "quest-rate": "node tools/quest-battles/rate.mjs",
     "quest-stars": "node tools/quest-stars/stars.mjs",
+    "quest-bands": "node tools/quest-battles/bands.mjs",
     "level-pace": "node tools/levelPace.mjs",
     "music": "node tools/epic-music/render.mjs && node tools/epic-music/manifest.mjs"
   },

@@ -56,3 +56,17 @@ export const chestHoldsStones = (q: QuestDef): boolean => starsOf(q) >= 3;
 
 /** The stones every quest pays in all (once each), for the pace tool and the tests. */
 export const totalQuestStones = (pool: readonly QuestDef[] = QUESTS): number => pool.filter((q) => !q.repeat).reduce((n, q) => n + (rewardOf(q).stones ?? 0), 0);
+
+/** The stars of each Eidolon chain (a Campaign): the chain's pay is the Campaign row of the table at these stars, shared over its parts, the last the most. */
+export const CHAIN_STARS: Readonly<Record<string, number>> = { askel: 4, nivra: 4, aurelan: 4, voltara: 5, gorm: 5, vaelkhar: 5 };
+
+/** What a chain's part pays: its own reward (a bronze chest) with its share of the chain's campaign crowns and stones (`part` counted from 0). */
+export function chainPartReward(chain: string, part: number, parts: number, own: Reward): Reward {
+  const pay = questPay(CHAIN_STARS[chain] ?? 4, 'campaign');
+  const r: Reward = { ...own };
+  const crowns = shareOf(pay.crowns, part + 1, parts);
+  const stones = shareOf(pay.stones, part + 1, parts);
+  if (crowns) r.crowns = (r.crowns ?? 0) + crowns;
+  if (stones) r.stones = (r.stones ?? 0) + stones;
+  return r;
+}

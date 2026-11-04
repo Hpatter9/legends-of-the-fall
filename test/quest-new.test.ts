@@ -84,3 +84,7 @@ test('every new battle can be started and fought: its rules are in the fight, an
     for (let i = 0; i < 1500 && b.phase === 'fight'; i++) stepBattle(b);
   }
 });
+
+test('a time limit is for three stars and up: no quest of one or two stars carries one', () => {
+  for (const q of QUESTS) if (q.within) assert.ok(starsOf(q) >= 3, `${q.id}: ${starsOf(q)} stars with ${q.within} days`);
+});
