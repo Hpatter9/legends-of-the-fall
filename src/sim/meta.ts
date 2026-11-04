@@ -16,6 +16,7 @@ import { BOSS_IDS } from './foes';
 import { readCart, readEquipment, readEquipped, type CartPiece, type EquipSlot, type Equipment } from './equipment';
 import { GEAR_V, migrateGear, type GearNote } from './gearMigrate';
 import { claimLegends, readLegends } from './legends';
+import { readRemedies, type RemedyId } from './remedies';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTomes, type TomeCounts } from './tomes';
@@ -139,6 +140,10 @@ export interface Meta {
   wavesFought?: Record<string, number>;
   /** The glyphs taken or cleared on each piece, by piece id (`enchant.ts`: its offers' stream moves on with each). Missing is none. */
   enchants?: Record<number, number>;
+  /** SEVEN-SLOT GEAR batch 6 (`remedies.ts`): the remedies owned, the satchel last chosen for a run, and whether Auto may use them (off). */
+  satchel?: Partial<Record<RemedyId, number>>;
+  satchelPick?: Partial<Record<RemedyId, number>>;
+  autoRemedies?: boolean;
   /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
    *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
   cart?: CartPiece[];
@@ -532,6 +537,11 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       else delete m.wavesFought;
       if (m.enchants && typeof m.enchants === 'object') m.enchants = Object.fromEntries(Object.entries(m.enchants).filter(([, n]) => typeof n === 'number' && Number.isInteger(n) && n > 0));
       else delete m.enchants;
+      m.satchel = readRemedies(m.satchel);
+      if (!m.satchel) delete m.satchel;
+      m.satchelPick = readRemedies(m.satchelPick);
+      if (!m.satchelPick) delete m.satchelPick;
+      if (m.autoRemedies !== true) delete m.autoRemedies;
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)
