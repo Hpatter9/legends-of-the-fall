@@ -11,36 +11,75 @@ import { wave2Rows } from './wave2';
 import { wave3Rows } from './wave3';
 import { wave4Rows } from './wave4';
 
-/** Each coming hero's slot strengths (their `tune`, times the caster's attack while it casts): the roster's defaults (`STAM_TUNE` 0.5 or
- *  `MANA_TUNE` 0.7, 1 for skill 2 and 0.8 for skill 3) until the hero sweep tunes them when they join, as it tuned the 45 (`tools/kits/tune.ts`). */
+/** Each coming hero's slot strengths (their `tune`, times the caster's attack while it casts), tuned by the hero sweep with the twenty in its
+ *  teams (`COMING=1 tools/kits/tune.mjs`, docs/notes/twenty-heroes.md): skill 1 at level 1, skill 2 at level 10, skill 3 at level 20. */
 export const COMING_TUNE: Readonly<Record<string, readonly [number, number, number]>> = {
-  vampireLord: [0.5, 1, 0.8],
-  hemomancer: [0.7, 1, 0.8],
-  nightstalker: [0.5, 1, 0.8],
-  bloodGargoyle: [0.5, 1, 0.8],
-  dhampir: [0.5, 1, 0.8],
-  warDrummer: [0.5, 1, 0.8],
-  banneret: [0.5, 1, 0.8],
-  geomancer: [0.7, 1, 0.8],
-  bellWarden: [0.5, 1, 0.8],
-  falconer: [0.5, 1, 0.8],
-  astralSphinx: [0.7, 1, 0.8],
-  mirageDancer: [0.5, 1, 0.8],
-  plagueDoctor: [0.7, 1, 0.8],
-  bombardier: [0.5, 1, 0.8],
-  astrologer: [0.7, 1, 0.8],
-  inquisitor: [0.7, 1, 0.8],
-  seraph: [0.7, 1, 0.8],
-  corsairSurgeon: [0.7, 1, 0.8],
-  harpooner: [0.5, 1, 0.8],
-  seaReaver: [0.5, 1, 0.8],
+  vampireLord: [0.138, 0.537, 0.781],
+  hemomancer: [0.38, 0.271, 0.312],
+  nightstalker: [1.592, 0.539, 0.721],
+  bloodGargoyle: [0.348, 0.05, 0.095],
+  dhampir: [0.565, 0.075, 0.399],
+  warDrummer: [0.519, 1.166, 0.553],
+  banneret: [0.194, 1.835, 0.469],
+  geomancer: [2.715, 0.574, 0.853],
+  bellWarden: [0.458, 0.571, 0.216],
+  falconer: [0.05, 0.05, 0.199],
+  astralSphinx: [0.05, 0.322, 0.66],
+  mirageDancer: [0.05, 0.149, 0.826],
+  plagueDoctor: [0.27, 0.455, 0.446],
+  bombardier: [0.236, 0.521, 0.229],
+  astrologer: [0.826, 1.081, 0.97],
+  inquisitor: [0.895, 1.677, 0.425],
+  seraph: [0.05, 0.766, 0.884],
+  corsairSurgeon: [0.119, 0.47, 0.191],
+  harpooner: [0.05, 0.272, 0.747],
+  seaReaver: [0.05, 0.359, 0.473],
 };
 
-/** Each coming hero's passive strength: its passive's numbers scaled by this (1, as written). The branch's passives were written for the 0.262
- *  roster and outweigh main's, so the hero sweep tunes this knob as well (`tools/kits/tune.ts`, key `p`). */
-export const COMING_PASSIVE: Readonly<Record<string, number>> = {};
-/** Each coming hero's ultimate knobs once tuned (`tuned`: its meter's rate and its strength), over the row's own. */
-export const COMING_ULT: Readonly<Record<string, { rate: number; power: number }>> = {};
+/** Each coming hero's passive strength: its passive's numbers scaled by this (1, as written, for any hero not listed), tuned by the sweep
+ *  at level 10 (`tools/kits/tune.ts`, key `p`). */
+export const COMING_PASSIVE: Readonly<Record<string, number>> = {
+  vampireLord: 0.879,
+  hemomancer: 0.931,
+  nightstalker: 0.824,
+  bloodGargoyle: 0.578,
+  dhampir: 0.508,
+  warDrummer: 0.966,
+  banneret: 0.901,
+  geomancer: 0.883,
+  bellWarden: 0.968,
+  falconer: 0.295,
+  astralSphinx: 0.891,
+  mirageDancer: 0.721,
+  bombardier: 0.907,
+  astrologer: 0.991,
+  corsairSurgeon: 0.856,
+  harpooner: 0.681,
+  seaReaver: 0.965,
+};
+/** Each coming hero's ultimate knobs (`tuned`: its meter's rate and its strength), tuned by the sweep at level 30, over the row's own. */
+export const COMING_ULT: Readonly<Record<string, { rate: number; power: number }>> = {
+  vampireLord: { rate: 1.267, power: 4.815 },
+  hemomancer: { rate: 0.959, power: 1.204 },
+  nightstalker: { rate: 1.401, power: 7.761 },
+  bloodGargoyle: { rate: 1.364, power: 2.671 },
+  dhampir: { rate: 1.065, power: 1.897 },
+  warDrummer: { rate: 1.137, power: 2.376 },
+  banneret: { rate: 1.061, power: 1.333 },
+  geomancer: { rate: 1.241, power: 2.109 },
+  bellWarden: { rate: 1.522, power: 1.188 },
+  falconer: { rate: 1.062, power: 1.099 },
+  astralSphinx: { rate: 1.001, power: 4.162 },
+  mirageDancer: { rate: 1.49, power: 1.035 },
+  plagueDoctor: { rate: 0.904, power: 2.434 },
+  bombardier: { rate: 0.836, power: 0.967 },
+  astrologer: { rate: 1.014, power: 1.59 },
+  inquisitor: { rate: 1.039, power: 1.263 },
+  seraph: { rate: 1.992, power: 5.749 },
+  corsairSurgeon: { rate: 0.5, power: 2.345 },
+  harpooner: { rate: 1.122, power: 1.944 },
+  seaReaver: { rate: 1.226, power: 5.463 },
+};
 
 /** A passive's numbers scaled by `k`: its shares and chances times `k`, its multipliers' part above 1 times `k`, its damage over time and
  *  the charge it gives times `k`; its switches (`sure`, `steady`) and timings as written. */

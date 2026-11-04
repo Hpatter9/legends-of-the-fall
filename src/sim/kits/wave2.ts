@@ -235,7 +235,7 @@ export function falconStoop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'arrow', ms: 150 });
   strike(b, me, f, 1.55, out, true);
   if (f.alive) {
-    weakFor(b, f, ms(me, 3500), me);
+    weakFor(b, f, ms(me, 2000), me);
     pull(b, me, f, 1, out);
   }
   return true;
@@ -253,7 +253,7 @@ export function galeVault(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Skill 2 — Talon Snare: dashes 2 tiles to a clear firing angle and sends her falcon to pin (stun 1.5s) and bleed the strongest foe. */
+/** Skill 2 — Talon Snare: dashes 2 tiles to a clear firing angle and sends her falcon to pin (stun 1s) and bleed the strongest foe. */
 export function talonSnare(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = foesNear(b, me, reachOf(me, 6)).sort(strongest)[0];
   if (!f) return false;
@@ -262,7 +262,7 @@ export function talonSnare(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'arrow', ms: 140 });
   strike(b, me, f, 1.45, out, true);
   if (f.alive) {
-    stunFor(b, f, ms(me, 1500), true, 'stun', me);
+    stunFor(b, f, ms(me, 1000), true, 'stun', me);
     bleedFor(b, me, f, 0.08, ms(me, 3000));
   }
   return true;
@@ -335,8 +335,8 @@ export function wave2Rows(): Record<string, Row> {
       pool: 'stamina',
       role: 'A highland hawker: stoops her falcon on foes, gale-vaults to perches and pins her prey',
       passive: { name: 'Wind-Borne Talons', text: 'Her shots leave the foe bleeding from the talons', rider: { dot: 'bleed', share: 0.04, ms: 3000 } },
-      s1: { cls: 'strike', cost: 24, cd: 6000, skill: sk('Falcon Stoop', 'Her falcon dives on the farthest foe within 6: it is struck, weakened for 3.5s and flushed a tile towards her', 500, 'attack', falconStoop) },
-      s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Talon Snare', 'Steps to the highest tile within 2 and sends her falcon at the strongest foe within 6: struck, pinned for 1.5s and bleeding', 500, 'attack2', talonSnare) },
+      s1: { cls: 'strike', cost: 24, cd: 6000, skill: sk('Falcon Stoop', 'Her falcon dives on the farthest foe within 6: it is struck, weakened for 2s and flushed a tile towards her', 500, 'attack', falconStoop) },
+      s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Talon Snare', 'Steps to the highest tile within 2 and sends her falcon at the strongest foe within 6: struck, pinned for 1s and bleeding', 500, 'attack2', talonSnare) },
       s3: { cls: 'guard', cost: 14, cd: 12000, more: { emergency: galeNeeded }, skill: sk('Gale Vault', 'When she falls under 35% with a foe within 2, a gust shoves the foes beside her a tile back and she vaults to the safest tile within 3, hastened for 3.5s', 450, 'attack2', (b, me, out) => galeNeeded(b, me) && galeVault(b, me, out)) },
       ultimate: ult('Sky Hunt', 'Vaults to the safest tile within 3 and calls three dives of falcons down on the foes', 750, skyHunt, { rate: 0.95, power: 1.5 }),
     },

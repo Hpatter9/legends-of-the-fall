@@ -173,14 +173,14 @@ jabs, and repeating a few moves; the director asked for its fixes to be folded i
 | Vampire Lord (Vladislav) | Noble Thirst | Crimson Lunge (strike 24, 7 s) | Impaling Thrust (heavy 30, 11 s) | Mist Step (jab 10, 4 s) | Banquet of Blood |
 | Hemomancer (Carmilla) | Chalice Overflow | Sanguine Lash (strike 36, 7 s) | Blood Chalice (utility 42, 14 s) | Crimson Mist (guard 30, 15 s) | Blood Tithe |
 | Strigoi (Sorin) | Predator of the Crypt | Dusk Dive (strike 22, 6 s) | Abduct (heavy 30, 14 s) | Echolocation (jab 10, 4 s) | Belfry Swoop |
-| Blood Gargoyle (Gavril) | Granite Hide | Gargoyle Crash (strike 26, 7 s) | Stone Slumber (utility 26, 16 s) | Granite Fist (jab 10, 3.5 s) | Cathedral Perch |
+| Blood Gargoyle (Gavril) | Granite Hide | Gargoyle Crash (strike 26, 7 s) | Stone Slumber (utility 26, 18 s) | Granite Fist (jab 10, 3.5 s) | Cathedral Perch |
 | Dhampir (Klara) | Half-Blood Hunter | Silver Stake (strike 24, 7 s) | Grapple Vault (guard 16, 14 s) | Silver Shot (jab 10, 3.5 s) | Silver Requiem |
 | War Drummer (Raiden) | Rhythm of War | Thunder Beat (strike 24, 7 s) | Marching Cadence (utility 26, 16 s) | Drum Strike (jab 10, 3.5 s) | Ten Thousand Drums |
 | Banneret (Isolde) | Shield-Sister | Standard Charge (strike 24, 7 s) | Phalanx Sweep (heavy 30, 12 s) | Banner Jab (jab 10, 3.5 s) | Oriflamme of the Keep |
 | Geomancer (Tenzin) | Jagged Bedrock | Tectonic Shove (strike 36, 7 s) | Lodestone Pull (utility 40, 14 s) | Crag Staff (jab 12, 3.5 s) | Mountain's Embrace |
 | Bell Warden (Kavi) | Temple Bronze | Bronze Peal (strike 24, 7 s) | Echoing Toll (heavy 30, 11 s) | Sanctuary Vault (guard 16, 14 s) | Midnight Knell |
 | Falconer (Aisling) | Wind-Borne Talons | Falcon Stoop (strike 24, 6 s) | Talon Snare (heavy 30, 11 s) | Gale Vault (guard 14, 12 s) | Sky Hunt |
-| Astral Sphinx (Nenet) | Starlit Wings | Rift Pounce (strike 36, 7 s) | Riddle of Repulsion (heavy 44, 11 s) | Riddling Glance (jab 14, 3.5 s) | The Last Riddle |
+| Astral Sphinx (Nenet) | Starlit Wings | Rift Pounce (strike 36, 9 s) | Riddle of Repulsion (heavy 44, 14 s) | Riddling Glance (jab 14, 3.5 s) | The Last Riddle |
 | Mirage Dancer (Zahara) | Desert Shimmer | Whirling Veils (strike 24, 7 s) | Dune Swap (heavy 30, 11 s) | Veil Flick (jab 10, 3.5 s) | Dance of Seven Mirages |
 | Plague Doctor (Corvus) | Ash Apothecary | Censer Swing (strike 36, 7 s) | Crow Step (utility 40, 14 s) | Quarantine Line (utility 34, 16 s) | Black Miasma |
 | Bombardier (Soren) | Shrapnel Shells | Concussion Mortar (strike 24, 7 s) | Blast Jump (guard 16, 12 s) | Firebomb Line (utility 22, 16 s) | Shell Storm |
@@ -217,23 +217,41 @@ twenty's rows written to the same rules (`test/coming-page.test.ts` holds them t
 
 ## Tuning: what the sweep found
 
-The tuner can now tune the coming heroes against the roster without touching the roster's knobs: `COMING=1` puts the twenty in the sweep's
+The tuner can tune the coming heroes against the roster without touching the roster's knobs: `COMING=1` puts the twenty in the sweep's
 teams (`SWEEP_POOL` in `tools/heroSweep.ts`), and `tools/kits/tune.ts` then measures them against the roster's average and steps only their
-knobs (`COMING_TUNE`, `COMING_ULT` and the new `COMING_PASSIVE` in `kits/coming.ts`). Without it the sweep and the balance tests are as
-they were (`test/coming-tune.test.ts`).
+knobs (`COMING_TUNE`, `COMING_PASSIVE` and `COMING_ULT` in `kits/coming.ts`). Without it the sweep and the balance tests are as they were
+(`test/coming-tune.test.ts`).
 
-At level 1 (stage 5, 12,000 fights, the band is 6 points):
+**Before the review**, as the branch wrote them, the twenty were far too strong (15 of 20 beyond 6 points at level 1, the Seraph +22.7),
+mostly from passives that stacked team-wide; scaling the passives down alone could not bring the Seraph and the Sea Reaver in. That led
+to the review and its rework (above).
 
-- **As the branch wrote them, the twenty are far too strong**: 15 of the 20 beyond 6 points, the Seraph +22.7, the Plague Doctor +15.1, the
-  Sea Reaver +13.5. With their passives they also lift the roster's own average win rate, from about 54% to about 68%, when they share its teams.
-- **It is not skill 1**: with every skill 1 at the tuner's floor (0.05) they were still +5 to +23.
-- **Most of it is the passives**: with the passives taken away most fall within the band (the Seraph still +9). The branch's passives
-  were written for the 0.262 roster, before main's great rebalance and the D&D scores, and stack team-wide (auras, halos, big blocks and
-  leech). A passive-strength knob (`p`, `scalePassive`) lets the sweep scale them down; ten rounds brought 17 of the 20 within 6, but only
-  by taking most passives to a tenth or less of what was written (`tools/kits/coming-level1.json` is that run), and the Seraph (+13.6)
-  and the Sea Reaver (+12.1) stay out: Halo Dive's ally shields and stun and Breaker Rush's haste do not scale with a skill's strength.
-- So no tuned numbers are written yet: bringing the twenty into the band means rewriting what the branch made, which is the director's
-  call. The Bombardier's ultimate rate (batch 3) waits on the same answer: at level 30 the sweep is dominated by the passives' excess.
+**After the rework**, the knobs were tuned in cycles (`KEY=t1` at level 1 stage 5, `t2` at level 10 stage 24, `t3` at level 20 stage
+30, `up` and `ur` at level 30 stage 92, and `p` at level 10; 12,000 fights a round). Where a knob reached the tuner's floor (0.05) and
+the hero was still over the band, the excess was in what no knob scales, so the kit was trimmed instead: the Falconer's talon bleed (4%
+of her attack a tick, not 12%), her Falcon Stoop's weakening (2 s) and Talon Snare's pin (1 s) and her walk (700 ms); the Seraph's Halo
+Dive (a 0.8 s stun and a shield of 8% of her health); the Blood Gargoyle's Stone Slumber (3 s of half damage and a taunt on the foes
+within 2, nothing more). Two kits needed their dearer skills' cooldowns lengthened so the cheap one came round at all (the AI saves for
+a heavier skill that is nearly ready): the Strigoi's (Abduct 14 s, Echolocation's old utility 20 s) and the Astral Sphinx's (Rift Pounce
+9 s, Riddle of Repulsion 14 s).
+
+The result, 20,000 fights a level, the knobs as written (every one of the twenty within the band of 6):
+
+| Level (stage) | Roster average | Widest of the twenty |
+| --- | ---: | --- |
+| 1 (5) | 58.7% | Sea Reaver +5.4, Falconer +4.8 |
+| 10 (24) | 71.1% | Falconer +5.3 |
+| 20 (30) | 92.6% | Bell Warden +2.7 |
+| 30 (92) | 62.3% | Blood Gargoyle -2.5 |
+
+- **The Bombardier's ultimate** (Shell Storm, once Carpet Bombardment) no longer runs away: its rate is 0.836 (was the branch's 0.9 that
+  came round every 2 s at level 30) and he is -0.6 at level 30.
+- **Ultimates with big power knobs**: the Strigoi's Belfry Swoop (7.76), the Seraph's Descent of the Host (5.75), the Sea Reaver's Wrath of
+  the Reef (5.46), the Vampire Lord's Banquet of Blood (4.82) and the Astral Sphinx's The Last Riddle (4.16) sit at or above the roster's
+  highest (5.63). Their casts are single-target or short (a carry-off, a crash, a drink), so the sweep needs a large multiplier for them to
+  pull their weight; the power also lengthens their stuns (by its square root). A design pass could raise their base strikes instead.
+- The heroes' skill 1 strengths run from the floor (0.05: the Falconer, the Sphinx, the Mirage Dancer, the Seraph, the Harpooner, the Sea
+  Reaver, whose skill 1s carry fixed riders) to 2.7 (the Geomancer's Tectonic Shove, now she fights in melee).
 
 ## The art imported (PRs #344 to #349)
 

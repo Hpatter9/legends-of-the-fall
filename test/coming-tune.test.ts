@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Passive } from '../src/sim/abilities';
-import { comingKits, scalePassive, setComingPassive } from '../src/sim/kits/coming';
+import { COMING_PASSIVE, comingKits, scalePassive, setComingPassive } from '../src/sim/kits/coming';
 import { SWEEP_POOL } from '../tools/heroSweep';
 import { ALL_HEROES } from '../src/sim/units';
 
@@ -22,11 +22,15 @@ test('a passive scaled by k: shares and chances times k, multipliers above 1 tim
 });
 
 test('the tuner can set a coming hero\'s passive strength in its kit, and back', () => {
+  // (the kit holds the tuned strength, `COMING_PASSIVE`; the tuner's knob scales the passive as written)
+  const tuned = comingKits().vampireLord.passive.leech!;
+  setComingPassive('vampireLord', 1);
   const written = comingKits().vampireLord.passive.leech!;
+  assert.ok(Math.abs(tuned - written * (COMING_PASSIVE.vampireLord ?? 1)) < 1e-12);
   setComingPassive('vampireLord', 0.5);
   assert.ok(Math.abs(comingKits().vampireLord.passive.leech! - written * 0.5) < 1e-12);
-  setComingPassive('vampireLord', 1);
-  assert.equal(comingKits().vampireLord.passive.leech, written);
+  setComingPassive('vampireLord', COMING_PASSIVE.vampireLord ?? 1);
+  assert.equal(comingKits().vampireLord.passive.leech, tuned);
 });
 
 test('without COMING=1 the sweep draws from the roster alone, as the balance tests hold it', () => {
