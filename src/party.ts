@@ -206,6 +206,8 @@ export class Party {
     this.stopSheet?.();
     this.stopSheet = null;
     $('ptSheet').hidden = true;
+    // (CLOSE-SCREENS: the sheet left is emptied; the party's page under it stays, as the place the player is in)
+    $('ptSheetBox').replaceChildren();
   }
 
   /** SHOP-BOOKS-GEAR: an amber strip above the start button while the company wears worn or broken gear, with one tap to mend it all

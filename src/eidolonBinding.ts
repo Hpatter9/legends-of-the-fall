@@ -16,6 +16,7 @@ import { eidolonById } from './sim/eidolons';
 import type { BindingBeat, ChainDef } from './sim/eidolonChainData';
 import { duck, play, type Sfx } from './render/sound';
 import { settings } from './settings';
+import { openScreen } from './screens';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -83,6 +84,8 @@ export function playBinding(chain: ChainDef, replay = false, own?: readonly Bind
   bars.append(el('i'), el('i'));
   room.append(glow, circle, fig, altar, embers);
   layer.append(room, bars, name, horn, say, seal, go);
+  // (CLOSE-SCREENS: a moment, laid over whatever is up; it is the player's to dismiss)
+  const leave = openScreen('binding', () => undefined, { kind: 'moment' });
   document.body.append(layer);
   duck(true, 'binding');
 
@@ -127,6 +130,7 @@ export function playBinding(chain: ChainDef, replay = false, own?: readonly Bind
       duck(false, 'binding');
       layer.classList.add('out');
       setTimeout(() => layer.remove(), 400);
+      leave();
       resolve();
     });
     // (the figure decodes before the beats begin, so it never rises as an empty box)

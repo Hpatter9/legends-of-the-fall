@@ -10,6 +10,7 @@ import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openStall } from './stallView';
+import { closeFinished } from './screens';
 import { newStock } from './sim/stall';
 import { caravanHere, gloamingHere } from './sim/traders';
 import { shopArt } from './bookArt';
@@ -280,6 +281,8 @@ export class Home {
   /** Open the home screen; `note` is a line shown on the Battle page (the last run's end). */
   open(note = this.note): void {
     this.note = note;
+    // (CLOSE-SCREENS: back to a place: any flow screen still open (a result card, a recap, a summary) is closed, not left under it)
+    closeFinished();
     // (coming back to the home screen it is simply there, on the Battle page: nothing slides)
     if ($('home').hidden) this.snapNext = true;
     $('home').hidden = false;
@@ -1001,6 +1004,8 @@ export class Home {
       queueMicrotask(() => (this.sheetWasUp = false));
     }
     $('hmSheet').hidden = true;
+    // (CLOSE-SCREENS: the sheet left is emptied, not kept under the page; each opening draws it afresh)
+    $('hmSheetBox').replaceChildren();
     this.cardOpen = false;
     this.cardFor = null;
     if (this.isOpen && this.tab === 'heroes') this.tavern.start();
@@ -1097,6 +1102,9 @@ export class Home {
   private closeSub(): void {
     stopCodex();
     $('hmSub').hidden = true;
+    // (CLOSE-SCREENS: the armies, codex or achievements page left is emptied (a codex entry's sheet with it))
+    $('hmSubBody').replaceChildren();
+    $('hmSub').querySelector('.cxOverlay')?.remove();
     this.hooks.onScene?.();
   }
 }
