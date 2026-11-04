@@ -160,8 +160,8 @@ design's eight batches, each with its tests. This note says what each batch buil
   does everything one-handed, and dragging between the tray's small cells on a phone was the riskier half; it can come later.
 - **Showing who wears what:** each hero's card on the bench carries its three sockets over its portrait on the deploy screen (hidden in
   the fight). **Sockets over the heroes on the board are not built** (the board is drawn by Pixi; the bench beside it shows the same).
-  Twins (a rune with another of its kind and level, or a Keystone of its level) have a gold rim and a "2" badge in the tray; the rim pulses
-  gently, and holds still with reduced motion. The Pack button says "Pack · 3 merges" when merges are ready.
+  Twins (a rune with another of its kind and level, or a Keystone of its level) have a gold rim and a "2" badge in the tray; the stone swells
+  gently (its glow is steady, as the no-flicker rule asks), and holds still with reduced motion. The Pack button says "Pack · 3 merges" when merges are ready.
 - **The stones** are drawn in their kind's colour with the level as pips (a clear placeholder) until their paintings come
   (`gear-art-todo.md`).
 - **The wave card:** a rune's line reads "Ember rune I (+2% attack)"; a rune broken for room in a full bag says so; the wave's gains list
