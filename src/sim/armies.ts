@@ -132,7 +132,7 @@ export const ARMIES: readonly Army[] = [
     area: 'plains',
     lands: ['plains', 'autumn'],
     waves: waves(ramp(['packBlack', 'packRed', 'packWhite', 'packBlack', 'packRed', 'packWhite', 'packBlack'], 13), { 8: ['alphaWolf', 'packBlack', 'packRed', 'packWhite'], 15: ['boarKing', 'packBlack', 'packRed', 'packWhite', 'packBlack', 'packWhite'] }),
-    start: 2.39, // (the joint rebalance: 2.27 to 2.39, the realistic climb's 4.3 tries again, docs/notes/joint-rebalance.md) (RUN-GEAR: 2.17 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.66 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`)
+    start: 2.3, // (SEVEN-SLOT GEAR's balance, docs/notes/gear-build.md: 2.39 to 2.3, the realistic climb's 4.3 tries again once runs bring home only a boss's trophy (5.6 at 2.39, 2.7 at 2.2)) (the joint rebalance: 2.27 to 2.39, the realistic climb's 4.3 tries again, docs/notes/joint-rebalance.md) (RUN-GEAR: 2.17 before; raised so the realistic climb, whose saves now keep and wear what their runs find, takes main's tries again, `docs/notes/run-gear.md`) (SPELLS-RETUNE: 1.66 measured by a bot that never cast the king's spells, `docs/notes/spells-retune.md`)
     xpStart: 1.66,
     tierStart: 0.85,
     growth: 0.05,
