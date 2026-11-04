@@ -1,7 +1,6 @@
 // The king's spell cards, King God Castle style: the one thing the player does during a fight. Mana fills slowly over
-// the fight; a spell costs some and then has to cool down. Each spell also has a power rating, and the three the
-// player equips for a run must fit the power budget (`spellBudget` in castle.ts), so three strong spells can't be
-// taken together. Most work on a 3x3 of tiles; Rally, Earthquake, Battle Cry and Bulwark need no tile. `castSpell` is the only way in; it
+// the fight; a spell costs some and then has to cool down. Each spell also has a power rating (shown as pips in the spellbook; the power
+// budget it once counted against went with the Schools of the Crown: `schools.ts` holds the loadout's rules now). Most work on a 3x3 of tiles; Rally, Earthquake, Battle Cry and Bulwark need no tile. `castSpell` is the only way in; it
 // checks the mana, the cooldown and the tile, and leaves its events for the next tick to hand to the renderer.
 //
 // Pure rules: no Pixi, no DOM, no randomness (a cast does the same every time).
@@ -9,7 +8,6 @@
 import { standable, tileAt } from './board';
 import { CHARGE_MAX, mendUnit } from './abilities';
 import { addUnit, apart, defOf, hurt, TICK_MS, unitAt, type Battle, type BattleEvent, type Unit } from './battle';
-import { spellBudget, type Castle } from './castle';
 import { AILMENT_SWITCH, burnFor, chillFor, cleanse, curseFor, freezeFor, poisonFor, shockFor, tagged, unfear, ward } from './ailments';
 import { relicFoeSlow, relicMana, relicSpeed } from './relicFight';
 
@@ -161,6 +159,8 @@ export interface SpellState {
   events: BattleEvent[];
   /** Mana over the bar's top, kept to pour back in (`fillMana`); unset until some spills. */
   spill?: number;
+  /** The ruler's Decree on this fight (KING-SPELLS batch 2, `decrees.ts`); unset when none was armed. */
+  decree?: DecreeState;
   /** When a spell was last cast on its own (AUTO-CAST, `autoCast.ts`); unset until one is. */
   autoAt?: number;
 }
@@ -168,7 +168,7 @@ export interface SpellState {
 export const freshSpells = (rate = 1): SpellState => ({ mana: MANA_START, ready: Object.fromEntries(SPELL_IDS.map((id) => [id, 0])) as Record<SpellId, number>, falls: [], clouds: [], rate, events: [] });
 
 /** The king stands behind the meteor's blows: not on the board, so it has no side effects on the fighters. */
-const KING: Unit = { id: 0, def: 'king', side: 'hero', u: 0, v: 0, hp: 1, maxHp: 1, facing: 0, alive: true, busyUntil: 0, charge: 0 };
+export const KING: Unit = { id: 0, def: 'king', side: 'hero', u: 0, v: 0, hp: 1, maxHp: 1, facing: 0, alive: true, busyUntil: 0, charge: 0 };
 
 const inArea = (x: { u: number; v: number }, u: number, v: number) => Math.abs(x.u - u) <= 1 && Math.abs(x.v - v) <= 1;
 
@@ -183,12 +183,33 @@ export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1)
  *  soon as a cast makes room, so a king who waits for the right moment loses nothing. */
 export const SPILL_MAX = 10;
 
-/** Mana gain for one tick; what will not fit in the bar goes to the spill, and the spill tops the bar up when there is room. */
+/** A ruler's Decree on a fight (KING-SPELLS batch 2; its rules and effects are in `decrees.ts`): which, how full its meter, and whether it was cast. */
+export interface DecreeState {
+  id: string;
+  fill: number;
+  used: boolean;
+}
+/** The Decree's meter: its top, and what feeds it (the spill one for one, half the mana spent on spells, and a trickle a second). */
+export const DECREE_FULL = 10;
+export const DECREE_PER_SPENT = 0.5;
+export const DECREE_PER_SEC = 0.1;
+/** Add to the meter (to its top); nothing when no Decree is armed or it was cast. */
+export function feedDecree(b: Battle, n: number): void {
+  const d = b.spells.decree;
+  if (d && !d.used && n > 0) d.fill = Math.min(DECREE_FULL, Math.round((d.fill + n) * 1000) / 1000);
+}
+
+/** Mana gain for one tick; what will not fit in the bar goes to the spill, and the spill tops the bar up when there is room. With a Decree armed
+ *  (KING-SPELLS batch 2) what will not fit feeds the Decree's meter instead, and the meter takes its trickle. */
 export function fillMana(b: Battle): void {
   const s = b.spells;
   const r3 = (n: number) => Math.round(n * 1000) / 1000;
   const total = r3(s.mana + (s.spill ?? 0) + (TICK_MS * MANA_PER_SEC * s.rate * relicMana(b)) / 1000);
   s.mana = Math.min(MANA_MAX, total);
+  if (s.decree && !s.decree.used) {
+    feedDecree(b, r3(total - s.mana) + (DECREE_PER_SEC * TICK_MS) / 1000);
+    return;
+  }
   const spill = Math.min(SPILL_MAX, r3(total - s.mana));
   if (spill > 0 || s.spill !== undefined) s.spill = spill;
 }
@@ -229,8 +250,8 @@ const freeIn = (b: Battle, u: number, v: number) => {
 /** The hero Blink would move: the one with the least health left, as a share (the lowest id of equals). */
 const mostWounded = (b: Battle) => b.units.filter((x) => x.alive && x.side === 'hero' && !defOf(x).summon).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp || x.id - y.id)[0];
 
-/** A raw blow from the king: the foe's defence comes off. */
-const strike = (b: Battle, x: Unit, power: number, heavy: boolean, out: BattleEvent[], might = kingMight(b)) => hurt(b, KING, x, Math.max(1, Math.round(power * might) - defOf(x).def), heavy, false, out, 'skill');
+/** A raw blow from the king, grown by the might: the foe's defence comes off. */
+export const kingStrike = (b: Battle, x: Unit, power: number, heavy: boolean, out: BattleEvent[], might = kingMight(b)) => hurt(b, KING, x, Math.max(1, Math.round(power * might) - defOf(x).def), heavy, false, out, 'skill');
 
 /** Cast a spell on the 3x3 around tile (u, v) (the tile is ignored by spells that go everywhere). False (and nothing changed) if the fight isn't on, the tile isn't on the board, the mana or cooldown isn't there, or Resurrect has nobody to lift. */
 export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean {
@@ -245,6 +266,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
   if (id === 'wolves' && !room.length) return false;
   const s = b.spells;
   s.mana -= spell.cost;
+  feedDecree(b, spell.cost * DECREE_PER_SPENT);
   s.ready[id] = b.t + spell.cooldownMs;
   s.events.push({ kind: 'spell', id, u, v });
   // (kept in the fight's log with the heroes' ultimates, so a recorded fight replays whole: `orders.ts`)
@@ -285,7 +307,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       const target = foesIn(b, u, v).sort((x, y) => y.hp - x.hp || x.id - y.id)[0];
       if (target) {
         fx(target);
-        strike(b, target, SMITE_POWER, true, ev);
+        kingStrike(b, target, SMITE_POWER, true, ev);
       }
       break;
     }
@@ -296,7 +318,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       for (let n = 0; at && n <= CHAIN_JUMPS; n++) {
         hit.add(at.id);
         fx(at);
-        strike(b, at, power, false, ev);
+        kingStrike(b, at, power, false, ev);
         shockFor(b, KING, at);
         power *= CHAIN_FALLOFF;
         const from: Unit = at;
@@ -316,7 +338,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'quake':
       for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && tileAt(b.board, y.u, y.v)!.h <= QUAKE_LOW)) {
         fx(x);
-        strike(b, x, QUAKE_POWER, false, ev);
+        kingStrike(b, x, QUAKE_POWER, false, ev);
       }
       break;
     case 'poison':
@@ -325,7 +347,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'lance':
       for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && y.u === u).sort((y, z) => y.v - z.v || y.id - z.id)) {
         fx(x);
-        strike(b, x, LANCE_POWER, false, ev);
+        kingStrike(b, x, LANCE_POWER, false, ev);
       }
       break;
     case 'bulwark':
@@ -469,62 +491,34 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
 
 /* -------------------------------------------------------------- the loadout */
 
-/** The spells a player owns and the (up to three) equipped for runs. Kept in the Meta. */
+/** The spells a player knows, the school slots' spells and the open slot's (the Schools of the Crown: `schools.ts`). Kept in the Meta. */
 export interface Loadout {
   owned: SpellId[];
+  /** The school slots (three at most). */
   equipped: SpellId[];
+  /** The open slot: any spell known (KING-SPELLS batch 2). */
+  open?: SpellId;
+  /** The school the loadout was last fitted to (`fitSchool`); unset on a save from before the schools. */
+  school?: string;
 }
 
+/** A new save's: the starting three known and in the slots (the page fits them to the ruler's school when it loads: `fitSchool`). */
 export const newLoadout = (): Loadout => ({ owned: [...STARTER_SPELLS], equipped: [...STARTER_SPELLS] });
 
 /** The total power of some spells. */
 export const powerOf = (ids: readonly SpellId[]) => ids.reduce((n, id) => n + SPELLS[id].power, 0);
 
-/** The slice of the Meta the loadout rules read and change. */
-export interface SpellMeta {
-  crowns: number;
-  castle: Castle;
-  spellbook: Loadout;
-}
-
-/** The power the equipped spells may add up to. */
-export const budgetOf = (m: SpellMeta) => spellBudget(m.castle);
-
-/** Why a spell can't be equipped now, or null when it can. */
-export function equipBlock(m: SpellMeta, id: SpellId): string | null {
-  const l = m.spellbook;
-  if (!SPELLS[id]) return 'No such spell';
-  if (!l.owned.includes(id)) return 'Not unlocked yet';
-  if (l.equipped.includes(id)) return 'Already equipped';
-  if (l.equipped.length >= LOADOUT_SIZE) return 'All three slots are full: unequip one first';
-  if (powerOf(l.equipped) + SPELLS[id].power > budgetOf(m)) return 'Over the power budget';
-  return null;
-}
-
-/** Equip a spell. False (and nothing changed) when `equipBlock` says no. */
-export function equipSpell(m: SpellMeta, id: SpellId): boolean {
-  if (equipBlock(m, id)) return false;
-  m.spellbook.equipped.push(id);
-  return true;
-}
-
-/** Take a spell out of the loadout. False when it wasn't in it. */
-export function unequipSpell(m: SpellMeta, id: SpellId): boolean {
-  const i = m.spellbook.equipped.indexOf(id);
-  if (i < 0) return false;
-  m.spellbook.equipped.splice(i, 1);
-  return true;
-}
-
-/** A loadout read from a saved value: the starting three are always owned (and equipped when nothing was saved), and the equipped ones must be owned, three at most and within the budget (the later ones drop first). */
-export function readLoadout(raw: unknown, budget: number): Loadout {
+/** A loadout read from a saved value: the starting three are always known (and in the slots when nothing was saved); the slots and the open
+ *  slot hold only spells known, three at most in the slots. Old saves keep every spell they own; the page then fits the slots to the ruler's
+ *  school (`fitSchool`). */
+export function readLoadout(raw: unknown): Loadout {
   const l = newLoadout();
   if (!raw || typeof raw !== 'object') return l;
   const list = (x: unknown): SpellId[] => (Array.isArray(x) ? [...new Set(x.filter((id): id is SpellId => typeof id === 'string' && id in SPELLS))] : []);
   const r = raw as Record<string, unknown>;
   l.owned = [...new Set([...STARTER_SPELLS, ...list(r.owned)])];
-  const wanted = Array.isArray(r.equipped) ? list(r.equipped).filter((id) => l.owned.includes(id)) : [...STARTER_SPELLS];
-  l.equipped = [];
-  for (const id of wanted) if (l.equipped.length < LOADOUT_SIZE && powerOf(l.equipped) + SPELLS[id].power <= budget) l.equipped.push(id);
+  l.equipped = (Array.isArray(r.equipped) ? list(r.equipped).filter((id) => l.owned.includes(id)) : [...STARTER_SPELLS]).slice(0, LOADOUT_SIZE);
+  if (typeof r.open === 'string' && l.owned.includes(r.open as SpellId) && !l.equipped.includes(r.open as SpellId)) l.open = r.open as SpellId;
+  if (typeof r.school === 'string') l.school = r.school;
   return l;
 }

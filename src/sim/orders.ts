@@ -9,13 +9,14 @@ import type { Battle, BattleEvent } from './battle';
 import { ultimateOf } from './abilities';
 import { heroKitOf, ultFull } from './heroKits';
 import { castSpell, type SpellId } from './spells';
+import { castDecree } from './decrees';
 import { isSilenced } from './ailments';
 import { canCallEidolon, strikeEidolon } from './eidolons';
 
 /** A tap waiting for the next tick. */
 export type Order = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'eidolon'; id: string };
 /** What a fight's log keeps: each ultimate ordered, each king's spell cast, and the War Horn blown (EIDOLONS), at the battle time it was asked for. */
-export type LogEntry = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'spell'; id: SpellId; u: number; v: number } | { t: number; kind: 'eidolon'; id: string };
+export type LogEntry = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'spell'; id: SpellId; u: number; v: number } | { t: number; kind: 'eidolon'; id: string } | { t: number; kind: 'decree' };
 
 /** How long a queued ultimate waits for its hero to be free and to have something to hit, before the order lapses (the meter stays full). */
 export const ORDER_WAIT_MS = 3000;
@@ -76,6 +77,7 @@ export function replayLog(b: Battle, log: readonly LogEntry[]): void {
     if (e.t !== b.t) continue;
     if (e.kind === 'ult') orderUltimate(b, e.unit);
     else if (e.kind === 'eidolon') orderEidolon(b, e.id);
+    else if (e.kind === 'decree') castDecree(b);
     else castSpell(b, e.id, e.u, e.v);
   }
 }

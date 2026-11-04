@@ -160,9 +160,6 @@ export const moveRate = (c: Castle = newCastle()) => 1 + MOVE_PER_LEVEL * c.stab
 /** How much more XP every hero earns from a fight (the Library). */
 export const xpRate = (c: Castle = newCastle()) => 1 + XP_PER_LEVEL * c.library;
 
-/** The power the three equipped spells may add up to: 9, and the Mage Tower adds 1 at level 2 and again at level 4. */
-export const SPELL_BUDGET = 9;
-export const spellBudget = (c: Castle = newCastle()) => SPELL_BUDGET + Math.floor(c.mageTower / 2);
 
 /** The Chapel (the owner's call: the Tavern is free, the Chapel is bought): one purchase of this many crowns, no levels. Until it is built the spellbook is locked. */
 export const CHAPEL_COST = 200;
