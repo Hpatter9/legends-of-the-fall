@@ -8,7 +8,7 @@ import { addRes } from '../heroKits';
 import { bleedFor, burnFor, chillFor, cleanse, poisonFor, silenceFor, stunFor, weakFor } from '../ailments';
 import { blinkStrike, blinkTo, charge, chokeLine, displace, laneLine, launch, leapTo, mostAtRisk, moveMany, raiseAura, raiseWall, safeTile, shieldLine, shove, swapPlaces, teleportSlash } from '../toolkit';
 import { alliesOf, foesNear, freeNear, ms, strike, strongest } from './common';
-import { bleedDot, friendInDanger, sk, ult, type Row } from './comingRow';
+import { friendInDanger, sk, ult, type Row } from './comingRow';
 
 const weakest = (x: Unit, y: Unit) => x.hp - y.hp || x.id - y.id;
 const farthest = (me: Unit) => (x: Unit, y: Unit) => apart(me, y) - apart(me, x) || x.id - y.id;
@@ -324,7 +324,7 @@ export function wave3Rows(): Record<string, Row> {
     astralSphinx: {
       pool: 'mana',
       role: 'A star-lioness: pounces across rifts, flings foes away with riddles and trades places by starlight',
-      passive: { name: 'Starlit Wings', text: 'Slips 12% of blows, and friends within 2 heal 2% of their health each second', dodge: 0.12, aura: 0.02 },
+      passive: { name: 'Starlit Wings', text: 'Slips 15% of blows', dodge: 0.15 },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Rift Pounce', 'Steps through a star-rift behind the strongest foe within 4 and strikes it; the other foes beside her are shoved a tile away', 550, 'attack', riftPounce) },
       s2: { cls: 'heavy', cost: 44, cd: 11000, skill: sk('Riddle of Repulsion', 'Puts a riddle to the strongest foe within 4: it is struck, silenced for 2s and thrown 3 tiles away', 550, 'attack2', riddleOfRepulsion) },
       s3: { cls: 'guard', cost: 30, cd: 15000, more: { emergency: swapNeeded }, skill: sk('Constellation Swap', 'When a friend within 5 falls under 40% with a foe beside it, she trades places with it by starlight, shields them both for a fifth of her health and refills its pool', 450, 'attack2', (b, me, out) => swapNeeded(b, me) && constellationSwap(b, me, out)) },
@@ -333,7 +333,7 @@ export function wave3Rows(): Record<string, Row> {
     mirageDancer: {
       pool: 'stamina',
       role: 'A dune-dancer: spins through foes, trades places with her mirages and leaps on the sirocco',
-      passive: { name: 'Desert Shimmer', text: 'Slips 18% of blows, and 20% of blows crit for x1.6 and bleed', dodge: 0.18, crit: { chance: 0.2, mult: 1.6, bleed: bleedDot } },
+      passive: { name: 'Desert Shimmer', text: 'Slips 18% of blows', dodge: 0.18 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Whirling Veils', 'Spins up to 4 tiles through a line of foes, cutting each, and leaves a sand mirage on the tile she left for 4.5s', 450, 'attack', whirlingVeils) },
       s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Dune Swap', 'Trades places with her sand mirage (or the farthest foe within 4) and cuts and weakens every foe beside her as she arrives', 500, 'attack2', duneSwap) },
       s3: { cls: 'utility', cost: 22, cd: 16000, skill: sk('Sirocco Leap', 'Leaps up to 3 tiles over the melee and raises a Wind Wall 3 tiles across for 4.5s: shots through it fly back at their shooters', 500, 'attack2', siroccoLeap) },
@@ -342,7 +342,7 @@ export function wave3Rows(): Record<string, Row> {
     plagueDoctor: {
       pool: 'mana',
       role: 'An ash-apothecary: swings his censer, steps as crows to mend friends and raises thorn quarantines',
-      passive: { name: 'Ash Apothecary', text: 'Every 3s mends the most hurt friend, and his shots curse the foe', mend: { every: 3000, share: 0.55 }, ignite: { kind: 'curse', dmg: 5, every: 500, ms: 3000 } },
+      passive: { name: 'Ash Apothecary', text: 'His blows lay a curse that eats at the foe', ignite: { kind: 'curse', dmg: 3, every: 500, ms: 2000 } },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Censer Swing', 'Swings his smoking censer: the foes beside him are shoved 2 tiles back, and the thickest crowd within 4 is struck and poisoned on a 3x3', 600, 'attack', censerSwing) },
       s2: { cls: 'utility', cost: 40, cd: 14000, more: { heals: true, emergency: crowNeeded }, skill: sk('Crow Step', 'Scatters into ash-crows and comes together on the safest tile within 3, cleansing and mending the most hurt friend', 560, 'attack2', crowStep) },
       s3: { cls: 'utility', cost: 34, cd: 16000, skill: sk('Quarantine Line', 'Raises a Wall of Thorns 3 tiles across the foes\' way for 6s and drags the nearest foe into the brambles', 600, 'attack2', quarantineLine) },
@@ -351,7 +351,7 @@ export function wave3Rows(): Record<string, Row> {
     bombardier: {
       pool: 'stamina',
       role: 'An iron alchemist: rocket-jumps over the fray, lobs concussion shells and lays firebombs',
-      passive: { name: 'Shrapnel Shells', text: 'Shells ignore 3 defence and set the target alight', pierce: 3, ignite: { kind: 'burn', dmg: 5, every: 500, ms: 2000 } },
+      passive: { name: 'Shrapnel Shells', text: 'Shells also strike the foe behind the target for 40%', through: 0.4 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Concussion Mortar', 'A heavy shell on the thickest crowd within 6: the foe at its heart is thrown 2 tiles, the others round it struck and shoved a tile out', 600, 'attack', concussionMortar) },
       s2: { cls: 'guard', cost: 16, cd: 12000, more: { emergency: blastNeeded }, skill: sk('Blast Jump', 'With a foe within 2, a charge at his feet burns and shoves the foes beside him; he rocket-jumps to the safest tile within 3 and fires at the nearest foe', 500, 'attack2', (b, me, out) => blastNeeded(b, me) && blastJump(b, me, out)) },
       s3: { cls: 'utility', cost: 22, cd: 16000, skill: sk('Firebomb Line', 'Skids a tile back and lays a Wall of Fire 3 tiles across the lane most foes are walking, for 6s', 550, 'attack2', firebombLine) },
@@ -360,7 +360,7 @@ export function wave3Rows(): Record<string, Row> {
     astrologer: {
       pool: 'mana',
       role: 'A star-keeper: pulls foes into gravity wells, glides along orbits and bridges starlight',
-      passive: { name: 'Chart of the Heavens', text: 'Every 3s a friend near her gains 18 skill charge, and her shots deal 15% more at 4 tiles or more', tune: { every: 3000, charge: 18 }, far: 0.15 },
+      passive: { name: 'Chart of the Heavens', text: 'Her starlight ignores 3 of the foe\'s defence', pierce: 3 },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Gravity Well', 'A star collapses on the thickest crowd within 5: the foes within 3 of it are dragged 2 tiles in and struck', 650, 'attack', gravityWell) },
       s2: { cls: 'guard', cost: 30, cd: 14000, more: { emergency: orbitNeeded }, skill: sk('Retrograde Orbit', 'When she falls under 35% with a foe within 2, she strikes the nearest foe, flings it 2 tiles back and slows it, and glides to the safest tile within 3', 450, 'attack2', (b, me, out) => orbitNeeded(b, me) && retrogradeOrbit(b, me, out)) },
       s3: { cls: 'utility', cost: 40, cd: 18000, skill: sk('Starlight Bridge', 'Trades places with a friend within 4 under 60% and raises a Starlight Bridge round her for 6s: friends within 3 refill their pools and hit 15% harder', 600, 'attack2', starlightBridge) },

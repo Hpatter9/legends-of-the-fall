@@ -318,7 +318,7 @@ export function wave2Rows(): Record<string, Row> {
     warDrummer: {
       pool: 'stamina',
       role: 'A taiko master: thunder-beats that shove foes and drive his friends forward',
-      passive: { name: 'Rhythm of War', text: 'Every 3s the friend near him with the least skill charge gains 18', tune: { every: 3000, charge: 18 } },
+      passive: { name: 'Rhythm of War', text: 'Every 4s the ally with the least skill charge near him gains 16', tune: { every: 4000, charge: 16 } },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Thunder Beat', 'Booms his taiko drum: the foes within 2 are struck, shocked and shoved a tile back, and the friends within 3 are hastened for 3s', 550, 'attack', thunderBeat) },
       s2: { cls: 'utility', cost: 26, cd: 16000, skill: sk('Marching Cadence', 'Beats a forward march: the friends within 3 gain a shield of 16% of his health for 4s, and those who fight up close dash up to 2 tiles at the foes', 550, 'attack2', marchingCadence) },
       s3: { cls: 'utility', cost: 22, cd: 18000, skill: sk('Resonant Leap', 'Leaps beside his friends and raises a Taiko Cadence round him for 6s: friends within 3 hit 15% harder and refill their pools, foes there are shocked', 550, 'attack2', resonantLeap) },
@@ -327,7 +327,7 @@ export function wave2Rows(): Record<string, Row> {
     banneret: {
       pool: 'stamina',
       role: 'A rampart warden: charges with the standard, drops ramparts and sweeps the line',
-      passive: { name: 'Shield-Sister', text: 'Friends within 2 take 10% less damage, and she takes 8% less for each friend beside her', halo: 0.1, huddle: 0.08 },
+      passive: { name: 'Shield-Sister', text: 'Takes 6% less from each ally beside her (up to 3)', huddle: 0.06 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Standard Charge', 'Charges up to 3 tiles along a path to strike and shove a foe, and rallies the friends within 2 (a quarter more attack for 4s)', 550, 'attack', standardCharge) },
       s2: { cls: 'guard', cost: 16, cd: 14000, more: { emergency: rampartNeeded }, skill: sk('Rampart Drop', 'When a friend within 3 falls under 40% with a foe beside it, she leaps beside it, shields them both and raises a Wall of Light 3 tiles across the foes\' way', 450, 'attack2', (b, me, out) => rampartNeeded(b, me) && rampartDrop(b, me, out)) },
       s3: { cls: 'heavy', cost: 30, cd: 12000, skill: sk('Phalanx Sweep', 'Sweeps her banner-lance round her: the foes within 2 are struck, pulled a tile in and stunned for 1s', 500, 'attack2', phalanxSweep) },
@@ -336,7 +336,7 @@ export function wave2Rows(): Record<string, Row> {
     geomancer: {
       pool: 'mana',
       role: 'A crag-shaper: raises stone pillars, glides through the earth and pulls with lodestone',
-      passive: { name: 'Bedrock Stance', text: 'Cannot be knocked back, climbs at no extra cost, and sends back 15% of melee blows', steady: true, sure: true, thorns: 0.15 },
+      passive: { name: 'Jagged Bedrock', text: 'A fifth of the damage of a melee blow she takes is sent back', thorns: 0.2 },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Tectonic Shove', 'A stone pillar erupts under the strongest foe within 4: it is struck and thrown 2 tiles into the air, and a stone wall stands on its tile for 5s', 650, 'attack', tectonicShove) },
       s2: { cls: 'heavy', cost: 46, cd: 12000, skill: sk('Earthglide', 'Glides through the earth and erupts under a crowd of foes within 5: the foe there is thrown 2 tiles and its neighbours are struck; she is shielded for 5s', 650, 'attack2', earthglide) },
       s3: { cls: 'utility', cost: 36, cd: 14000, skill: sk('Lodestone Pull', 'Her staff turns lodestone: up to three foes within 4 are dragged 2 tiles towards her, struck and slowed for 3s', 600, 'attack2', lodestonePull) },
@@ -345,7 +345,7 @@ export function wave2Rows(): Record<string, Row> {
     bellWarden: {
       pool: 'stamina',
       role: 'A bronze keeper: slams his temple bell, tolls shockwaves and vaults to guard his friends',
-      passive: { name: 'Temple Bronze', text: 'Blows from the front lose 35%, and he heals for half of what he blocks', block: 0.35, blockHeal: 0.5 },
+      passive: { name: 'Temple Bronze', text: 'Blows from the front lose a fifth', block: 0.2 },
       s1: { cls: 'strike', cost: 26, cd: 7000, skill: sk('Bronze Slam', 'Leaps up to 3 tiles and slams his bronze bell down: the foe he lands on is stunned for 1.2s and the 3x3 is struck', 650, 'attack', bronzeSlam) },
       s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Echoing Toll', 'Rings his temple bell: the foes within 2 are struck, silenced for 1.5s and shoved 2 tiles back, and the friends within 3 are warded for 4s', 550, 'attack2', echoingToll) },
       s3: { cls: 'guard', cost: 16, cd: 14000, more: { emergency: vaultNeeded }, skill: sk('Sanctuary Vault', 'When a friend within 4 falls under 40% with a foe beside it, he swaps places with it (or blinks beside it), takes a fifth less for 4s, shields it, and the foes beside him must strike him', 450, 'defend', (b, me, out) => vaultNeeded(b, me) && sanctuaryVault(b, me, out)) },
@@ -354,7 +354,7 @@ export function wave2Rows(): Record<string, Row> {
     falconer: {
       pool: 'stamina',
       role: 'A highland hawker: stoops her falcon on foes, gale-vaults to perches and pins her prey',
-      passive: { name: 'Wind-Borne Sight', text: 'Arrows deal 25% more at 4 tiles or more, and 20% of blows crit for x1.6 and bleed', far: 0.25, crit: { chance: 0.2, mult: 1.6, bleed: bleedDot } },
+      passive: { name: 'Wind-Borne Talons', text: '15% of blows crit for x1.6 and make the foe bleed', crit: { chance: 0.15, mult: 1.6, bleed: bleedDot } },
       s1: { cls: 'strike', cost: 24, cd: 6000, skill: sk('Falcon Stoop', 'Her falcon dives on the farthest foe within 6: it is struck, weakened for 3.5s and flushed a tile towards her', 500, 'attack', falconStoop) },
       s2: { cls: 'guard', cost: 14, cd: 12000, more: { emergency: galeNeeded }, skill: sk('Gale Vault', 'When she falls under 35% with a foe within 2, a gust shoves the foes beside her a tile back and she vaults to the safest tile within 3, hastened for 3.5s', 450, 'attack2', (b, me, out) => galeNeeded(b, me) && galeVault(b, me, out)) },
       s3: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Talon Snare', 'Steps to the highest tile within 2 and sends her falcon at the strongest foe within 6: struck, pinned for 1.5s and bleeding', 500, 'attack2', talonSnare) },

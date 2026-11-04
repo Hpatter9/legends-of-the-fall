@@ -4,7 +4,7 @@
 // choice is a fixed order (then by id).
 
 import { atkOf, defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
-import { bleedDot, friendInDanger, sk, ult, type Row } from './comingRow';
+import { friendInDanger, sk, ult, type Row } from './comingRow';
 import { apart, castPower, crowd, durOf, foesOf, mendUnit, near3x3, reachOf } from '../abilities';
 import { bleedFor, curseFor, shockFor, silenceFor, stunFor, weakFor } from '../ailments';
 import {
@@ -165,11 +165,21 @@ export function exsanguinate(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 // 3. NIGHTSTALKER (Sorin) — vampire · assassin
 // ============================================================================
 
-/** Skill 1 — Dusk Dive: swoops up to 5 tiles onto a back-line or weak foe, cutting it and silencing it for 1.5s. */
+/** Skill 1 — Dusk Dive: swoops up to 5 tiles onto a back-line or weak foe, cutting it and silencing it for 1.5s; already in the thick of it, he
+ *  cuts and silences the foe before him. */
 export function duskDive(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const back = (f: Unit) => defOf(f).range >= 2;
   const ok = charge(b, me, { tiles: reachOf(me, 5), route: 'leap', mult: 1.6, only: back }, out) || charge(b, me, { tiles: reachOf(me, 5), route: 'leap', mult: 1.6 }, out);
-  if (!ok) return false;
+  if (!ok) {
+    // (with no foe to swoop on, already in the thick of it: he cuts the foe before him, and silences it)
+    const f = foesNear(b, me, 1).sort(weakest)[0];
+    if (!f) return false;
+    me.facing = wayTo(me, f);
+    out.push({ kind: 'swing', by: me.id, to: f.id });
+    strike(b, me, f, 1.6, out);
+    if (f.alive) silenceFor(b, f, ms(me, 1500), me);
+    return true;
+  }
   const f = nearestFoe(b, me);
   if (f && apart(me, f) <= 1 && f.alive) silenceFor(b, f, ms(me, 1500), me);
   return true;
@@ -361,7 +371,7 @@ export function vampireRows(): Record<string, Row> {
     vampireLord: {
       pool: 'stamina',
       role: 'A blood-duellist: lunges through lines, impales and steps through crimson mist',
-      passive: { name: 'Noble Thirst', text: 'Heals for 18% of the damage his blows deal, and 15% of blows crit for x1.6 and bleed', leech: 0.18, crit: { chance: 0.15, mult: 1.6, bleed: bleedDot } },
+      passive: { name: 'Noble Thirst', text: 'Heals for 15% of the damage his blows deal', leech: 0.15 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Crimson Lunge', 'Dashes up to 4 tiles through a line of foes, cutting and bleeding each, and drinks a quarter of what he deals', 500, 'attack', crimsonLunge) },
       s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Impaling Thrust', 'Lunges up to 2 tiles at the strongest foe within 3, impaling it and throwing it 2 tiles into the air while drinking 35% of what he deals', 500, 'attack2', impalingThrust) },
       s3: { cls: 'jab', cost: 10, cd: 4000, skill: sk('Mist Step', 'Dissolves into crimson mist and steps behind the weakest foe within 5, cutting and bleeding it; he is hastened for 3s', 350, 'attack', mistStep) },
@@ -370,7 +380,7 @@ export function vampireRows(): Record<string, Row> {
     hemomancer: {
       pool: 'mana',
       role: 'A blood weaver: tethers foes together, pours the chalice, and glides in mist',
-      passive: { name: 'Chalice Overflow', text: 'Every 2.5s mends the most hurt ally, and her blows leech 12% of the damage dealt', mend: { every: 2500, share: 0.65 }, leech: 0.12 },
+      passive: { name: 'Chalice Overflow', text: 'Every 3.5s pours a little of the chalice on the most hurt ally', mend: { every: 3500, share: 0.8 } },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Sanguine Lash', 'Whips a blood tether between the two nearest foes within 4, dragging the farther one 2 tiles towards the nearer and bleeding both', 600, 'attack', sanguineLash) },
       s2: { cls: 'utility', cost: 42, cd: 14000, more: { heals: true, emergency: chaliceNeeded }, skill: sk('Blood Chalice', 'Drains the strongest foe within 4 and pours the chalice over the most hurt ally, mending it and hastening it for 3s', 600, 'attack2', bloodChalice) },
       s3: { cls: 'guard', cost: 30, cd: 15000, more: { emergency: mistNeeded }, skill: sk('Crimson Mist', 'When she falls under 35% with a foe within 2, she glides in blood-mist to the safest tile within 3, leaving a boiling Blood Pool on her old tile for 5s that slows and bleeds foes', 450, 'defend', (b, me, out) => mistNeeded(b, me) && crimsonMist(b, me, out)) },
@@ -379,16 +389,16 @@ export function vampireRows(): Record<string, Row> {
     nightstalker: {
       pool: 'stamina',
       role: 'A winged strigoi: swoops from the dark, abducts prey and strikes by echolocation',
-      passive: { name: 'Predator of the Crypt', text: '25% of blows crit for x1.7 and bleed, and blows deal 25% more to shooters', crit: { chance: 0.25, mult: 1.7, bleed: bleedDot }, prey: 1.25 },
-      s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Dusk Dive', 'Swoops up to 5 tiles onto a back-line foe (or any, with none), cutting it and silencing it for 1.5s', 450, 'attack', duskDive) },
-      s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Abduct', 'Snatches the weakest foe within 2 into the air and flings it 2 tiles towards his friends, stunned for 1.2s', 500, 'attack2', abduct) },
-      s3: { cls: 'utility', cost: 22, cd: 14000, skill: sk('Echolocation', 'A bat-shriek shocks and weakens the foes within 4 for 3.5s, then he steps behind the strongest of them and cuts it', 450, 'attack2', echolocation) },
+      passive: { name: 'Predator of the Crypt', text: 'Blows deal 25% more to shooters', prey: 1.25 },
+      s1: { cls: 'strike', cost: 22, cd: 6000, skill: sk('Dusk Dive', 'Swoops up to 5 tiles onto a back-line foe (or any, with none), cutting it and silencing it for 1.5s; in the thick of it, he cuts and silences the foe before him', 450, 'attack', duskDive) },
+      s2: { cls: 'heavy', cost: 30, cd: 14000, skill: sk('Abduct', 'Snatches the weakest foe within 2 into the air and flings it 2 tiles towards his friends, stunned for 1.2s', 500, 'attack2', abduct) },
+      s3: { cls: 'utility', cost: 22, cd: 20000, skill: sk('Echolocation', 'A bat-shriek shocks and weakens the foes within 4 for 3.5s, then he steps behind the strongest of them and cuts it', 450, 'attack2', echolocation) },
       ultimate: ult('Midnight Hunt', 'Vanishes into the dark and slashes through the four weakest foes within 7 tiles in turn, throwing the last into the air', 700, midnightHunt, { rate: 1.3, power: 1.9 }),
     },
     bloodGargoyle: {
       pool: 'stamina',
       role: 'A stone sentinel: crashes down from the eaves, turns to granite and shields his friends',
-      passive: { name: 'Granite Hide', text: 'Blows from the front lose 30% (he heals 40% of what he blocks), and he takes a quarter less from shots', block: 0.3, blockHeal: 0.4, scales: 0.25 },
+      passive: { name: 'Granite Hide', text: 'Takes a quarter less from shots', scales: 0.25 },
       s1: { cls: 'strike', cost: 26, cd: 7000, skill: sk('Gargoyle Crash', 'Leaps up to 4 tiles onto a crowd: the 3x3 is struck, the foe he lands on is stunned 0.8s, and the foes beside him are shoved a tile out', 600, 'attack', gargoyleCrash) },
       s2: { cls: 'utility', cost: 26, cd: 16000, skill: sk('Stone Slumber', 'Turns to living granite for 4s: takes half damage behind a shield of a quarter of his health, the foes within 3 must strike him, and stone dust slows the foes near him', 550, 'defend', stoneSlumber) },
       s3: { cls: 'guard', cost: 16, cd: 14000, more: { emergency: buffetNeeded }, skill: sk('Wing Buffet', 'When a friend within 3 falls under 40% with a foe beside it, his stone wings shove the foes within 2 two tiles back and he leaps beside the friend most at risk, shielding it', 400, 'attack2', (b, me, out) => buffetNeeded(b, me) && wingBuffet(b, me, out)) },
@@ -397,7 +407,7 @@ export function vampireRows(): Record<string, Row> {
     dhampir: {
       pool: 'stamina',
       role: 'A silver-bolt hunter: vaults clear and pins foes to stone',
-      passive: { name: 'Half-Blood Hunter', text: 'Bolts ignore 3 defence, deal 20% more at 4 tiles or more, and leech 10%', pierce: 3, far: 0.2, leech: 0.1 },
+      passive: { name: 'Half-Blood Hunter', text: 'Bolts deal 20% more to foes 4 or more tiles away', far: 0.2 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Silver Stake', 'A heavy silver bolt at the strongest foe within 5 shoves it 2 tiles back; if it slams into a wall or a fighter it is pinned for 1.8s', 500, 'attack', silverStake) },
       s2: { cls: 'guard', cost: 16, cd: 14000, more: { emergency: vaultNeeded }, skill: sk('Grapple Vault', 'With a foe within 2, she hooks a grapple to the safest tile within 3 and vaults there, then looses two silver bolts at the nearest foes, each bleeding', 450, 'attack', (b, me, out) => vaultNeeded(b, me) && grappleVault(b, me, out)) },
       s3: { cls: 'utility', cost: 22, cd: 16000, skill: sk('Consecrated Trap', 'Tumbles a tile aside and leaves a silver snare on her old tile for 8s (it holds the foe that steps in), behind a Wall of Light 2 tiles across for 5s', 500, 'attack2', consecratedTrap) },

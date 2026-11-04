@@ -285,7 +285,7 @@ export function wave4Rows(): Record<string, Row> {
     inquisitor: {
       pool: 'mana',
       role: 'A sun-judge: chains the wicked in place, raises blazing edicts and tips the scales',
-      passive: { name: 'Sun-Forged Verdict', text: 'Shots ignore 3 defence and set the target burning', pierce: 3, ignite: { kind: 'burn', dmg: 6, every: 500, ms: 2000 } },
+      passive: { name: 'Sun-Forged Verdict', text: 'Her shots set the foe burning', ignite: { kind: 'burn', dmg: 3, every: 500, ms: 2000 } },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Chains of Judgement', 'Hurls solar chains at the strongest foe within 5: it is struck, dragged 2 tiles towards her, stunned for 1.2s and burning', 600, 'attack', chainsOfJudgement) },
       s2: { cls: 'utility', cost: 36, cd: 16000, skill: sk('Blazing Edict', 'Leaps to the safest tile within 2 and raises a Wall of Light 3 tiles across the foes\' way for 5.5s', 550, 'attack2', blazingEdict) },
       s3: { cls: 'guard', cost: 30, cd: 15000, more: { heals: true, emergency: scalesNeeded }, skill: sk('Purging Scales', 'When a friend within 5 falls under 40%, she tips her golden scales: the healthiest foe within 4 is struck and shoved a tile, and the most hurt friend is cleansed and mended', 450, 'attack2', (b, me, out) => scalesNeeded(b, me) && purgingScales(b, me, out)) },
@@ -294,7 +294,7 @@ export function wave4Rows(): Record<string, Row> {
     seraph: {
       pool: 'mana',
       role: 'A winged guardian: dives on the wicked, lifts her friends up and raises the fallen',
-      passive: { name: 'Reliquary Halo', text: 'Friends within 2 take 12% less damage and heal 1.5% of their health each second', halo: 0.12, aura: 0.015 },
+      passive: { name: 'Reliquary Halo', text: 'Allies within 2 tiles (and she) take 6% less from every blow', halo: 0.06 },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Halo Dive', 'Dives up to 4 tiles onto a foe: it is stunned for 1.2s, the 3x3 is struck, and the friends within 2 of her are shielded for 4s', 550, 'attack', haloDive) },
       s2: { cls: 'utility', cost: 42, cd: 14000, more: { heals: true, emergency: healNeeded, revive: face('Reliquary Grace', 'Golden wings enfold the nearest fallen friend: it rises at 30% health, cleansed (once every 30s; each friend once a wave)') }, skill: sk("Mercy's Ascent", 'Flies beside the most hurt friend within 5, cleanses and mends it, and both take a fifth less for 3.5s', 550, 'attack2', mercysAscent) },
       s3: { cls: 'utility', cost: 34, cd: 16000, skill: sk('Sanctuary Wings', 'Her wings beat: the foes within 2 are struck and shoved 2 tiles back, and a Wall of Light rises 3 tiles across their way for 5s', 550, 'attack2', sanctuaryWings) },
@@ -303,7 +303,7 @@ export function wave4Rows(): Record<string, Row> {
     corsairSurgeon: {
       pool: 'mana',
       role: 'A reef sawbones: swings in by rope to mend friends, stitches wounds and hooks his friends clear',
-      passive: { name: 'Field Sawbones', text: 'Every 2.5s mends the most hurt friend, and slips 10% of blows', mend: { every: 2500, share: 0.7 }, dodge: 0.1 },
+      passive: { name: 'Field Sawbones', text: 'Every 3s stitches up the most hurt ally', mend: { every: 3000, share: 0.9 } },
       s1: { cls: 'strike', cost: 36, cd: 7000, more: { heals: true }, skill: sk('Boarding Swing', 'Swings on a rigging line beside the most hurt friend within 3 and mends it, and his pistol shoves the nearest foe a tile back', 550, 'attack', boardingSwing) },
       s2: { cls: 'utility', cost: 40, cd: 12000, more: { heals: true, emergency: healNeeded, revive: face('Smelling Salts', 'A sharp draught wakes the nearest fallen friend: it rises at 30% health, cleansed (once every 30s; each friend once a wave)') }, skill: sk('Sawbones Triage', 'Stitches up the most hurt friend: cleansed, mended and hastened for 3.5s', 550, 'attack2', sawbonesTriage) },
       s3: { cls: 'guard', cost: 30, cd: 15000, more: { emergency: extractNeeded }, skill: sk('Grappling Extraction', 'When a friend within 4 falls under 40% with a foe beside it, he hooks it out: they trade places, it is shielded, and a powder trap waits on the tile it left', 450, 'attack2', (b, me, out) => extractNeeded(b, me) && grapplingExtraction(b, me, out)) },
@@ -312,7 +312,7 @@ export function wave4Rows(): Record<string, Row> {
     harpooner: {
       pool: 'stamina',
       role: 'A floe whaler: reels distant prey in on a barbed line, slides on the ice and slams his catch',
-      passive: { name: 'Chill-Iron Barbs', text: 'Harpoons slow the foe for 1.5s, ignore 3 defence, and deal 25% more to a foe under half health', slow: 1500, pierce: 3, finish: { under: 0.5, mult: 1.25 } },
+      passive: { name: 'Chill-Iron Barbs', text: 'Harpoons deal 20% more to a foe under half health', finish: { under: 0.5, mult: 1.2 } },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Barbed Harpoon', 'Hurls a whaling harpoon at the farthest foe within 5: it is struck, bleeds and is dragged up to 3 tiles towards him', 550, 'attack', barbedHarpoon) },
       s2: { cls: 'utility', cost: 22, cd: 16000, skill: sk('Floe Slide', 'Slides to the safest tile within 3 and raises a Wall of Ice 3 tiles across the foes\' way for 6s', 550, 'attack2', floeSlide) },
       s3: { cls: 'heavy', cost: 30, cd: 11000, skill: sk("Whaler's Reel", 'Reels himself up to 3 tiles onto a foe: it is struck, stunned for 1s and slammed 2 tiles back', 500, 'attack2', whalersReel) },
@@ -321,7 +321,7 @@ export function wave4Rows(): Record<string, Row> {
     seaReaver: {
       pool: 'stamina',
       role: 'A hull-breaker: rides a cresting wave into the line, slams his anchor and drags foes in',
-      passive: { name: 'Undying Tide', text: 'Once a fight, when he would fall he rises at 35% health; his attack grows up to 45% as his health falls', undying: 0.35, rage: 0.45 },
+      passive: { name: 'Rising Tide', text: 'Attack grows by up to 60% as his health falls', rage: 0.6 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Breaker Rush', 'Surfs a cresting wave up to 4 tiles through a line of foes, striking each and shoving the last, and is hastened for 2s', 500, 'attack', breakerRush) },
       s2: { cls: 'heavy', cost: 32, cd: 12000, skill: sk('Anchor Slam', 'Leaps up to 3 tiles and brings his anchor down: the foe there is thrown 2 tiles into the air and the 3x3 is struck', 550, 'attack2', anchorSlam) },
       s3: { cls: 'utility', cost: 22, cd: 16000, skill: sk('Riptide Undertow', 'Hauls his anchor chain in: the foes within 3 are dragged 2 tiles towards him and struck, and a tide-shield of 22% of his health holds for 4s', 500, 'attack2', riptideUndertow) },
