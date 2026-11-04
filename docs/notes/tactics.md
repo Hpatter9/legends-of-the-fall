@@ -117,3 +117,31 @@ and the front-liners' charges are not.
 - Shots (`node tools/tactics/shots.mjs` after `npm run web`): `docs/samples/tactics-{deploy,sheet,fight}-{393,360,412}.png`.
 - Tests: `test/tactic-pick.test.ts` (new, 3): the keys by army and mode and the default; saved and loaded, with an unknown tactic dropped and a
   save from before having none; every tactic's words.
+
+## Batch 4: formations
+
+All the rules are in `src/sim/formations.ts` (pure), hooked into the AC (`acAgainst`, `blow.ts`), the facing a blow is weighed against
+(`swing`'s `blowMult`), a step's time (`stepTo`), a blow's damage (`swing`) and splash (`hurt`). A formation is read once, as the fight
+begins (`formationOf`, `startFormation`), from where the heroes stand; the first shape that fits, in this order:
+
+| Formation | Shape | Bonus | Weak point |
+|---|---|---|---|
+| Shield Wall | 3 or more side by side on the front row, 2 of them front-liners (`roleOf`) | +1 AC each while a friend of the wall stands beside it | the ends: a blow from the outer side counts as from behind |
+| Spearhead | a tip on the front row, a wing a row behind on each diagonal | tip and wings march 15% faster for 6 s; the tip's first landed blow +20% | the tip at -1 AC |
+| Hollow Square | a back-liner on the back row, a friend on each side (beside or a row ahead) and one ahead | while 2 friends stand round it, every blow on it counts as from the front | its heroes take 15% more splash while packed (2 friends round) |
+| Skirmish | 4 or more, no two on touching tiles | splash on them 20% less | none of its own: nobody stands beside a friend, so guards and auras reach fewer |
+
+- **On only where set** (`setFormations`): the page sets it once Auto place is open (the owner's answer: formations with Auto place, army
+  3); every other fight, the tools' and the records' included, reads no formation and plays exactly as before (a test holds it). Batch 5
+  turns them on for Auto and its tools. The Last Stand reads none.
+- **Splash** is the splash of a blow (the `splash` hits); a skill's area is not counted in this batch.
+- **Arrange** (`formationSpots`): a party's tiles in a shape, the front-liners and strikers taking the lead's tiles and the back line the
+  rear's, laid at the centre column that fits most; a tile that does not fit goes to the nearest free one. The page's sheet shows the
+  formations under the tactics once they are open: the shape the heroes stand in now ("Formation: Shield Wall") and the four as buttons
+  (name, bonus and weak point); a tap sets the placed heroes out in that shape. The chip shows it as a small second line ("Advance / Wall").
+- **No dice**: every rule is read from where the fighters stand.
+- Tests: `test/formations.test.ts` (new, 6): each shape read (a wall needs two front-liners; a spearhead staged as a square is a
+  spearhead, the first that fits); off, a fight plays exactly as with none, and on, the same seed gives the same fight; the wall's AC
+  while a friend stands beside and its open ends; the spearhead's march, first blow and tip; the square's guard while two friends stand
+  round and its splash, the skirmish's splash; Arrange sets a party out in each shape, read back as that shape.
+- Shots: `docs/samples/tactics-{deploy,sheet,arranged,fight}-{393,360,412}.png` (the save has Auto place open).

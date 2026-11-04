@@ -180,6 +180,7 @@ import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
 import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
+import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
 import { pickedTactic, pickTactic } from './sim/tacticPick';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
@@ -1063,6 +1064,7 @@ class Game {
     if (this.questBlock()) return void this.refresh();
     // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
     setTactic(this.b, pickedTactic(this.meta.tactics, this.run.mode));
+    setFormations(this.b, autoPlaceOpen(this.meta));
     if (!fight(this.b)) return;
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
     // in its own trial as a great being, EIDOLON-TRIAL)
@@ -1893,6 +1895,10 @@ class Game {
         saveMeta(this.meta);
         this.refresh();
       },
+      // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
+      formationsOpen: () => autoPlaceOpen(this.meta),
+      formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
+      arrange: (f) => this.arrangeFormation(f),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
@@ -2047,6 +2053,28 @@ class Game {
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
   /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
+  /** Set the placed heroes out in a formation's shape (the tactic sheet's Arrange): each taken back and placed again at its tile of the shape
+   *  (`formationSpots`), or where it stood if that tile will not take it. */
+  private arrangeFormation(shape: Formation): void {
+    const b = this.b;
+    if (b.phase !== 'deploy') return;
+    const heroes = b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !UNITS[u.def].summon).map((u) => ({ def: u.def, tag: u.tag!, was: [u.u, u.v] as [number, number], h: this.run.roster.find((r) => r.id === u.tag) }));
+    if (!heroes.length) return;
+    const spots = formationSpots(b.board, heroes.map((x) => x.def), shape);
+    for (const x of heroes) unplace(b, x.def, x.tag);
+    heroes.forEach((x, i) => {
+      const boost = x.h ? this.boostFor(x.h) : undefined;
+      const s = spots[i];
+      const at: [number, number] = s && place(b, x.def, s.u, s.v, x.tag, boost) ? [s.u, s.v] : x.was;
+      if (at === x.was) place(b, x.def, at[0], at[1], x.tag, boost);
+      this.placed.set(String(x.tag), at);
+    });
+    saveRun(this.run);
+    this.syncSprites();
+    play('summon');
+    this.refresh();
+  }
+
   private autoArrange(manual = false): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;

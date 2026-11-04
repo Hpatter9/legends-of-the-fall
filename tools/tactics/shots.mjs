@@ -1,6 +1,7 @@
 // The tactics' screenshots (docs/notes/tactics.md), on the BATTLE-HUD shots' set-up. After `npm run web`:
 //   node tools/tactics/shots.mjs
-// Scenes: deploy (the chip beside Auto), sheet (the tactic's sheet open), fight (the party held, Charge! up), at 393x852, 360x780 and 412x915.
+// Scenes: deploy (the chip beside Auto), sheet (the tactic's sheet open, with the formations), arranged (set out in a Shield Wall), fight (the
+// party held, Charge! up), at 393x852, 360x780 and 412x915. The save has the first four armies cleared, so Auto place and the formations are open.
 // Writes docs/samples/tactics-<scene>-<w>.png.
 //
 // Scenes: deploy, fight (mid-fight, one hero's ultimate full), sheet (a skill's sheet open, the fight paused), ult (the ultimate's sheet), cast (a
@@ -18,7 +19,7 @@ const args = process.argv.slice(2);
 const ULT_SCENES = ['slash', 'name', 'dim', 'linger', 'short'];
 const prefix = 'tactics';
 const want = args.length ? args : SCENES();
-function SCENES() { return ['deploy', 'sheet', 'fight']; }
+function SCENES() { return ['deploy', 'sheet', 'arranged', 'fight']; }
 const SIZES = (process.env.SIZES ?? '393,360,412').split(',').map((w) => ({ 393: [393, 852], 360: [360, 780], 412: [412, 915] })[w]);
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
 const srv = createServer((q, r) => {
@@ -67,14 +68,21 @@ async function army(page) {
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
-  }, ['knight', 'kunoichi', 'werewolf', 'archer', 'cleric']);
+  }, ['knight', 'minotaur', 'kunoichi', 'archer', 'cleric']);
   await page.waitForTimeout(700);
 }
 
 for (const [w, h] of SIZES) {
   for (const scene of want) {
-    const { ctx, page } = await open(w, h);
+    const cleared = { waves: 15, best: 15, won: 15, clears: 1, stars: {} };
+    const { ctx, page } = await open(w, h, { armies: { orcs: cleared, undead: cleared, beasts: cleared, wildwood: cleared }, featuresTold: ['autoMerge', 'autoPlace'] });
     await army(page);
+    if (scene === 'arranged') {
+      await page.evaluate(() => document.getElementById('tactic').click());
+      await page.waitForTimeout(300);
+      await page.evaluate(() => document.querySelector('#tacticSheet .tacForm').click());
+      await page.waitForTimeout(500);
+    }
     if (scene === 'sheet') {
       await page.evaluate(() => document.getElementById('tactic').click());
       await page.waitForTimeout(300);

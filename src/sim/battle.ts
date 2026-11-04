@@ -41,6 +41,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
+import { formationBlow, formationFacing, formationMove, formationSplash, startFormation, type FormationState } from './formations';
 import { castGate, heldBy, heldStep, startTactic, TACTICS, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
@@ -457,6 +458,9 @@ export interface Battle {
   /** The party's tactic picked before the fight (`setTactic`), and the fight's own once it begins (`tactics.ts`). */
   tacticPick?: Tactic;
   tactic?: TacticState;
+  /** Whether the formations count in this fight (`setFormations`), and the shape the heroes stood in as it began (`formations.ts`). */
+  formationsOn?: boolean;
+  formation?: FormationState;
   /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
@@ -807,6 +811,8 @@ export function fight(b: Battle): boolean {
   startKept(b);
   // (the party's tactic: who is held until the line meets the foe, `tactics.ts`)
   startTactic(b);
+  // (the shape the heroes stand in, if the fight has the formations on)
+  startFormation(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
   // (a quest battle that asks the heroes to protect a guest: it stands beside them as the fight begins)
@@ -1063,6 +1069,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
+  // (a formation takes splash differently: a skirmisher less, a square packed together more, `formations.ts`)
+  if (splash && b.formation) dmg = Math.max(1, Math.round(dmg * formationSplash(b, to)));
   // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)
   const shatter = shatterOf(b, by, to, dmg, heavy, src);
   if (to.shield) {
@@ -1486,13 +1494,14 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   me.facing = way;
   const hMe = tileOf(b, me).h;
   const hTo = tileOf(b, to).h;
-  const mult = blowMult(hMe, hTo, way, to.facing);
+  // (a formation's ends and its square weigh where a blow comes from, `formations.ts`)
+  const mult = blowMult(hMe, hTo, way, b.formation ? formationFacing(b, me, to, way) : to.facing);
   // (STATS batch 4: a d20 + to hit against the target's Armour Class, with its cover; a natural 20 crits, a hit may crit from DEX and the
   // kit, a glance lands for half, and `BLOW_SCALE` puts the average blow back where it was)
   const c = critOf(b, me);
   const r = rollBlow(b, me, to, hMe, hTo, tileOf(b, to).ground === 'tall', c.chance, c.mult);
   const crit = r.crit;
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1) * blowStatsOf(b, me).quick;
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
@@ -1525,7 +1534,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
     me.kx.momentum = me.kx.lastWay === way ? Math.min(5, (me.kx.momentum ?? 0) + 1) : 1;
     me.kx.lastWay = way;
   }
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)) * (b.walk ?? 1));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

@@ -5,12 +5,21 @@
 
 import type { RunMode } from './run';
 import { TACTICS, TACTICS_LIST, type Tactic } from './tactics';
+import type { Formation } from './formations';
 
 /** The words for each tactic: its name, a short label for the chip, and one line for the sheet. */
 export const TACTIC_WORDS: Record<Tactic, { name: string; short: string; line: string }> = {
   advance: { name: 'Advance together', short: 'Advance', line: 'Strikers and shooters stay behind the front line and save their leaps until it meets the foe.' },
   charge: { name: 'Charge', short: 'Charge', line: 'Everyone goes at once. Best against archers and casters, where waiting costs.' },
   hold: { name: 'Hold the line', short: 'Hold', line: 'Nobody leaves the deploy rows until the foe comes. Strong against brutes, weak against archers.' },
+};
+
+/** The words for each formation: its name, a short label for the chip, and its bonus and weak point in a line. */
+export const FORMATION_WORDS: Record<Formation, { name: string; short: string; line: string }> = {
+  wall: { name: 'Shield Wall', short: 'Wall', line: 'Three side by side in front, two of them sturdy: +1 armour. The ends are open.' },
+  spear: { name: 'Spearhead', short: 'Spear', line: 'A tip with a wing behind each side: they march faster and the tip strikes hard. The tip stands alone.' },
+  square: { name: 'Hollow Square', short: 'Square', line: 'Shooters at the back with friends round them: never struck from the side. Packed close, splash hurts more.' },
+  skirmish: { name: 'Skirmish', short: 'Skirmish', line: 'Four or more, nobody touching: splash hurts less. Nobody guards a friend.' },
 };
 
 /** Where a pick is kept: by army in the army runs, by mode in the others. */
