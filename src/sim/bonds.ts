@@ -261,3 +261,36 @@ export function partnersOf(m: BondMeta, kind: string): { kind: string; points: n
     .filter((p) => p.points > 0 || p.rival)
     .sort((a, b) => Number(a.rival) - Number(b.rival) || b.points - a.points || a.kind.localeCompare(b.kind));
 }
+
+/* ------------------------------------------------------------------ the Sparring Yard (the Barracks' room) */
+
+/** Two heroes spar while the player is away: eight hours for five bond points, one pair at a time. */
+export const SPAR = { MS: 8 * 60 * 60 * 1000, POINTS: 5 };
+export interface Sparring {
+  a: string;
+  b: string;
+  doneAt: number;
+}
+/** Set a pair sparring (the page passes the clock). False while another pair spars, for a hero with itself, or a pair not both owned. */
+export function startSparring(m: BondMeta & { sparring?: Sparring; unlocked: readonly string[] }, a: string, b: string, now: number, open: boolean): boolean {
+  if (!open || m.sparring || a === b || !m.unlocked.includes(a) || !m.unlocked.includes(b)) return false;
+  m.sparring = { a, b, doneAt: now + SPAR.MS };
+  return true;
+}
+/** Settle the sparring if its time is up: the pair's points (a rivalry counts them towards settling). Returns the note, or null. */
+export function settleSparring(m: BondMeta & { sparring?: Sparring }, now: number): BondNote | null {
+  const s = m.sparring;
+  if (!s || now < s.doneAt) return null;
+  delete m.sparring;
+  const key = bondKey(s.a, s.b);
+  const before = levelOf(m, key);
+  const pts = ((m.bonds ??= {})[key] = (m.bonds[key] ?? 0) + SPAR.POINTS);
+  const note: BondNote = { ups: [], settled: [] };
+  if (isRival(m, key) && pts >= SETTLE_WINS) {
+    (m.bondSettled ??= []).push(key);
+    note.settled.push(key);
+  }
+  const after = levelOf(m, key);
+  if (after > before) note.ups.push({ key, from: before, to: after });
+  return note;
+}
