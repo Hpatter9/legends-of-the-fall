@@ -60,7 +60,8 @@ test('the acts: the courtyard for waves 1-5, the library 6-10, the chapel 11-15,
 });
 
 test('a strong party falls back room by room, in order, and each new room is laid out with the heroes at the ring plan\'s posts', () => {
-  const s = startStand(newStandRun(21, EIGHT, armies), setupAt(100));
+  // (FOE-STYLES on 0.350: re-staged from seed 21, which now falls in wave 15, to seed 1; 11 of seeds 1 to 12 reach the fourth room)
+  const s = startStand(newStandRun(1, EIGHT, armies), setupAt(100));
   startFirstWave(s);
   const rooms: { hall: HallKind; wave: number }[] = [];
   const notes: StandNote[] = [];

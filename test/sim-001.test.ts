@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
-import { addUnit, hurt, noteTerrain, startBattle, stepBattle, type BattleEvent } from '../src/sim/battle';
+import { addUnit, hurt, noteTerrain, startBattle, stepBattle, wayTo, type BattleEvent } from '../src/sim/battle';
 import { tileAt } from '../src/sim/board';
 import { emptyStats } from '../src/sim/equipment';
 import { fightXp, killXp, XP_TAKE_PART } from '../src/sim/levels';
@@ -42,6 +42,8 @@ for (const blocked of ['dead', 'dodge', 'shield'] as const) {
 
 for (const shield of [0, 10, 20]) test(`effective blow with ${shield} shield retains leech and equipment hook`, () => {
   const { b, by, to } = arena();
+  // (FOE-STYLES: the skeleton's Bone Shield turns an eighth of a blow from the front, so it is struck from behind)
+  to.facing = wayTo(by, to);
   by.hp = 1;
   by.eq = { ...emptyStats(), abilities: [{ id: 'honestStrike', s: 1, name: 'Honest Strike' }] };
   if (shield) to.shield = { hp: shield, until: 5000 };

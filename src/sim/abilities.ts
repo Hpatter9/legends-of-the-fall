@@ -24,6 +24,7 @@ import { divineSmite, seismicSlam } from './kits/tanks';
 import { BOMBARD_THROWS } from './kits/ranged';
 import { blastShoves } from './kits/mages';
 import { monsterKits } from './kits/monsters';
+import { foeKits } from './foeKits';
 import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { DEX_SAVES, rollSave, saveAware } from './saves';
@@ -139,7 +140,24 @@ export interface Passive {
   halo?: number;
   /** Once a fight, when it would fall it rises with this share of its health. */
   undying?: number;
+  /** A foe's way of moving and picking its prey (FOE-STYLES, `foeStyles.ts`): round to a hero's side, back off from a blade, after the
+   *  shooters, by its hurt friends, or a charge whose first blow lands hard. Read for foes only, and not in the Last Stand (its foes march). */
+  move?: FoeMove;
+  /** Its blows deal this much more for each other ally of its own beside the target (up to three): a pack's bite. */
+  gang?: number;
+  /** Its blows leave a bleed, a burn or poison of `share` of its attack every half second for `ms` (FOE-STYLES: grows with the foe, where
+   *  `ignite`'s is fixed). */
+  rider?: { dot: 'bleed' | 'burn' | 'poison'; share: number; ms: number };
 }
+
+/** A foe's way of moving (FOE-STYLES): see `Passive.move`. */
+export type FoeMove = 'flank' | 'kite' | 'hunt' | 'guard' | 'charge';
+
+/** The skill of a foe that has none, only a passive and a way of moving (FOE-STYLES: the common foes; the stronger ones have a skill): it never
+ *  charges and never fires, and the page shows no charge bar or skill line for it. */
+export const NO_SKILL: Skill = { name: '', text: '', need: Infinity, dealt: 0, taken: 0, perSec: 0, castMs: 0, anim: 'attack', cast: () => false };
+/** Whether a kit has a skill to fire (every kit but a common foe's). */
+export const hasSkill = (k: Kit | undefined): boolean => !!k && Number.isFinite(k.skill.need);
 
 export interface Skill {
   /** What the player reads. */
@@ -1583,14 +1601,6 @@ KITS.lichKing = {
   ultimate: { name: 'Soul Nova', text: 'A ring of cold soul fire hurts every hero within 4 tiles and freezes them for 1.8s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 900, anim: 'attack2', cast: soulNova },
   passive: { name: 'Soul Drain', text: 'Heals for a sixth of the damage his blows deal', leech: 0.16 },
 };
-KITS.boneVolley = { skill: KITS.archer.skill, passive: { name: 'Dead Aim', text: 'Arrows ignore 2 defence', pierce: 2 } };
-for (const id of ['packBlack', 'packRed', 'packWhite']) KITS[id] = KITS.werewolf;
-for (const id of ['groveSatyr1', 'groveSatyr2', 'groveSatyr3']) KITS[id] = KITS.satyr;
-for (const id of ['mazeMino1', 'mazeMino2', 'mazeMino3']) KITS[id] = { ...KITS.minotaur, passive: { ...KITS.minotaur.passive, text: 'Blows deal a quarter more to a foe under half health', finish: { under: 0.5, mult: 1.25 } } };
-for (const id of ['mazeGorgon1', 'mazeGorgon2', 'mazeGorgon3']) KITS[id] = { skill: KITS.gorgon.skill, passive: KITS.gorgon.passive };
-for (const id of ['clanOgre', 'clanBrute']) KITS[id] = KITS.hornedOgre;
-KITS.hellImp = { skill: KITS.boarKing.skill, passive: KITS.devilLeader.passive };
-KITS.hellDemon = { skill: KITS.devilLeader.skill, passive: KITS.devilLeader.passive };
 KITS.orcChieftain = { skill: KITS.samuraiCommander.skill, passive: { name: 'Thick Hide', text: 'Blows from the front lose a fifth', block: 0.2 } };
 KITS.boneCaptain = { skill: KITS.samuraiCommander.skill, passive: { name: 'Bone Plate', text: 'Blows from the front lose a quarter', block: 0.25 } };
 KITS.alphaWolf = KITS.werewolf;
@@ -1598,12 +1608,9 @@ KITS.gorgonQueen = { skill: KITS.gorgon.skill, ultimate: KITS.gorgon.ultimate, p
 KITS.minotaurChampion = { skill: KITS.minotaur.skill, passive: { name: 'Unyielding', text: 'Blows from the front lose a fifth, and he cannot be knocked back', block: 0.2, steady: true } };
 
 // The Yokai Night Parade (`foes.ts`): fox spirits trick and curse, crows dive and possess, the tengu monk blows heroes about.
-KITS.yokaiFox = { skill: KITS.illusionist.skill, passive: { name: 'Fox Guile', text: 'Slips 20% of blows', dodge: 0.2 } };
 // (the old Hex, as before the Warlock's became Eldritch Blast in RPG-SPELLS batch 6)
 KITS.yokaiWitch = { skill: { name: 'Hex', text: 'Curses the three toughest foes in reach: they burn for 5s and he drinks 60% of it', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 700, anim: 'attack2', cast: hex }, passive: { name: 'Black Curse', text: 'Heals for a sixth of the damage its blows deal', leech: 0.16 } };
-KITS.yokaiCrow = { skill: KITS.karasu.skill, passive: KITS.karasu.passive };
 KITS.yokaiSeer = { skill: { ...KITS.kitsune.skill, name: 'Possession', text: 'The strongest hero nearby is possessed and fights its own side for 3.5s' }, passive: { name: 'Evil Eye', text: 'Blows deal 30% more to shooters', prey: 1.3 } };
-KITS.yokaiMonk = { skill: KITS.yamabushi.skill, passive: KITS.yamabushi.passive };
 KITS.nineTails = {
   skill: { name: 'Foxfire', text: 'A fireball blasts a 3x3 of heroes and leaves it burning', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: meteor },
   ultimate: KITS.kitsune.ultimate,
@@ -1632,6 +1639,10 @@ KITS.forgeTitan = {
   ultimate: { name: 'Furnace Blast', text: 'A meteor of molten iron blasts a 3x3 of heroes and leaves it burning', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 900, anim: 'attack', cast: meteor },
   passive: { name: 'Adamant Plate', text: 'Blows from the front lose a third, it cannot be knocked back and it mends 1% of its health a second', block: 0.33, steady: true, regen: 0.01 },
 };
+
+// (FOE-STYLES: the common foes' and the armies' kinds' own kits, each its own way of fighting, `foeKits.ts`; the yokai witch and seer, the iron
+// golem above are its starting points)
+Object.assign(KITS, foeKits(KITS));
 
 // Every other hero's ultimate (`ultimates.ts`), unlocked at `ULT_LEVEL`; the first eight's are retuned there.
 const OWN_ULTIMATES = new Map<string, Skill>(Object.entries(KITS).filter(([, k]) => k.ultimate).map(([kind, k]) => [kind, k.ultimate!]));
@@ -1922,6 +1933,14 @@ export const rageOf = (u: Unit): number => {
   return r ? 1 + r * (1 - u.hp / u.maxHp) : 1;
 };
 export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
+/** How much more a pack's blow deals (FOE-STYLES' `gang`): a share for each other ally of the striker's beside the target, up to three. */
+export function gangOf(b: Battle, by: Unit, to: Unit): number {
+  const g = kitOf(by)?.passive.gang;
+  if (!g) return 1;
+  let n = 0;
+  for (const x of b.units) if (x.alive && x !== by && x.side === by.side && apart(x, to) === 1) n++;
+  return 1 + g * Math.min(3, n);
+}
 
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
@@ -1955,7 +1974,8 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
   // (RELICS-3: Ember Brand's crits leave the foe burning)
   const brand = crit && by.side === 'hero' ? b.relics?.hooks?.critBurn : undefined;
   const relicDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : brand ? { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(by) * brand)), every: 500, ms: 3000 } : undefined;
-  const dot = (crit ? p?.crit?.bleed : p?.ignite) ?? relicDot;
+  const rider: Dot | undefined = p?.rider ? { kind: p.rider.dot, dmg: Math.max(1, Math.round(atkOf(by) * p.rider.share)), every: 500, ms: p.rider.ms } : undefined;
+  const dot = (crit ? p?.crit?.bleed : p?.ignite ?? rider) ?? relicDot;
   // (with the ailments on, a venomous foe's blows poison rather than curse: Nyssa and the Calamity's Blight, STATUS-FX)
   const venom = AILMENT_SWITCH.on && dot?.kind === 'curse' && (by.def === 'eliteNyssa' || by.def === 'calBoss5' || by.def === 'calBoss6');
   if (dot) setDot(b, to, { ...dot, ...(venom ? { kind: 'poison' as const } : {}), by: by.id, next: b.t + dot.every, until: b.t + dot.ms });
