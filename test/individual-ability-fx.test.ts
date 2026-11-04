@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cleanAtlasCell } from '../src/render/atlasCell';
-import { KITS, keyOf } from '../src/sim/abilities';
+import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
 import { SPELL_IDS } from '../src/sim/spells';
 import { SIGNATURES } from '../src/render/signatures';
 import { SPELL_SIGNATURES } from '../src/render/spellSignatures';
