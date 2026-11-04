@@ -76,6 +76,9 @@
 // bosses 017421d4, armyFoes 88cd9831, spells d961099b, lands aceefe84, army f4b8c46b, daily 5db72448, tower ff21fdcb, calamity 2e1e9aed, heroes1
 // 63c68ffd, heroes10 04f5f766, heroes30 18918923, field1Others 0f677ef4, field30Others 6dcf91f2, heroes1Others 92b9bcd8, heroes10Others
 // f0b63f3f, heroes30Others 4b47763c.)
+// (the tactics' batch 6, docs/notes/tactics.md, re-recorded field1, field30, bosses, spells, heroes1, heroes10 and heroes30: Charge's edge, and
+// the Kitsune's Alter Self and the Werewolf's Shapechange and Pounce trimmed for level-10 parity. The new hashes: field1 18bd549d, field30
+// d624b730, bosses 1d33b673, spells 271f368b, heroes1 4034a1fa, heroes10 533e38b8, heroes30 d5449c96; every other scenario keeps its hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added

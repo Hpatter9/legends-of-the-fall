@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, type Battle, type Unit } from '../src/sim/battle';
 import { DEPLOY_ROWS } from '../src/sim/board';
-import { FORM, formationAc, formationBlow, formationFacing, formationMove, formationOf, formationSpots, formationSplash, FORMATIONS_LIST, setFormations } from '../src/sim/formations';
+import { FORM, formationAc, formationBlow, formationFacing, formationMelee, formationMove, formationOf, formationSpots, formationSplash, FORMATIONS_LIST, setFormations } from '../src/sim/formations';
 
 // The party's formations (docs/notes/tactics.md, batch 4): a shape on the deploy rows read as the fight begins, each with a small bonus and
 // a weak point, counted only where the fight has them on.
@@ -124,4 +124,21 @@ test('Arrange: a party set out at formationSpots stands in that shape', () => {
     const read = formationOf(b.board.d, b.units.filter((u) => u.side === 'hero').map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })));
     assert.equal(read?.kind, shape, shape);
   }
+});
+
+test('the tuned shapes (batch 6): the wall takes less from melee blows, the square is armoured while packed, the skirmish takes less from skills', () => {
+  const w = staged(['knight', 'minotaur', 'samurai', 'archer'], [[2, 0], [3, 0], [4, 0], [3, 2]]);
+  fight(w);
+  assert.equal(formationMelee(w, unit(w, 'minotaur')), FORM.WALL_MELEE);
+  assert.equal(formationMelee(w, unit(w, 'archer')), 1);
+  const q = staged(['knight', 'minotaur', 'samurai', 'kunoichi', 'archer', 'cleric'], [[3, 0], [4, 0], [2, 1], [5, 1], [3, 2], [4, 2]]);
+  fight(q);
+  assert.equal(formationAc(q, unit(q, 'archer')), FORM.SQUARE_AC);
+  const k = staged(['knight', 'samurai', 'kunoichi', 'archer', 'wizard'], [[1, 0], [5, 0], [3, 1], [0, 2], [6, 2]]);
+  fight(k);
+  assert.equal(formationSplash(k, unit(k, 'wizard'), true), FORM.SKIRMISH_SKILL);
+  // (the spearhead's wings strike their first blow harder too)
+  const s = staged(['samurai', 'knight', 'minotaur', 'archer'], [[3, 0], [2, 1], [4, 1], [3, 2]]);
+  fight(s);
+  assert.equal(formationBlow(s, unit(s, 'knight')), FORM.WING_BLOW);
 });

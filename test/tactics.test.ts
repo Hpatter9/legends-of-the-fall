@@ -4,7 +4,7 @@ import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { DEPLOY_ROWS } from '../src/sim/board';
 import { replayLog } from '../src/sim/orders';
-import { ADVANCE_CAP, canCharge, HOLD_CAP, heldBy, isOpener, orderCharge, OPENERS, setTactic, startTactic, TACTICS, type Tactic } from '../src/sim/tactics';
+import { ADVANCE_CAP, CHARGE, chargeBlow, chargeMove, canCharge, HOLD_CAP, heldBy, isOpener, orderCharge, OPENERS, setTactic, startTactic, TACTICS, type Tactic } from '../src/sim/tactics';
 import { HERO_KITS } from '../src/sim/heroKits';
 
 // The party's tactics (docs/notes/tactics.md; the design is docs/notes/tactics-design.md): Advance together holds the strikers and the back
@@ -34,6 +34,7 @@ function asBefore<T>(fn: () => T): T {
   const was = { ...TACTICS };
   TACTICS.fallback = 'charge';
   TACTICS.answer = 1;
+  TACTICS.edge = false;
   try {
     return fn();
   } finally {
@@ -173,4 +174,40 @@ test('the openers are real skills of the heroes; the escapes and the front-liner
   for (const hk of Object.values(HERO_KITS())) for (const s of hk.slots) names.add(s.skill.name).add(s.skill.key ?? s.skill.name);
   for (const n of ['Shadow Step', 'Pilfer', 'Ravage', 'Voltage Blink', 'Iaido']) assert.ok(names.has(n), n);
   for (const n of ['Smoke Bomb', 'Shield Rush', 'Gore Charge', 'Storm Surge', 'Aimed Shot']) assert.equal(isOpener({ name: n }), false, n);
+});
+
+test("Charge's edge: the party marches quicker for its first seconds, and each hero's first landed blow on a foe that shoots is harder, once", () => {
+  const b = field('charge', ['kunoichi', 'archer'], 'skeletons');
+  fight(b);
+  assert.equal(b.tactic?.kind, 'charge');
+  assert.equal(canCharge(b), false, 'nobody is held: there is nothing to call');
+  const kunoichi = unit(b, 'kunoichi');
+  const archer = b.units.find((u) => u.def === 'boneArcher')!;
+  const skeleton = b.units.find((u) => u.def === 'skeleton')!;
+  assert.equal(chargeMove(b, kunoichi), CHARGE.MOVE);
+  assert.equal(chargeBlow(b, kunoichi, skeleton), 1, 'a foe that does not shoot');
+  assert.equal(chargeBlow(b, kunoichi, archer), CHARGE.BLOW);
+  assert.equal(chargeBlow(b, kunoichi, archer), 1, 'only the first');
+  b.t = CHARGE.MS + 100;
+  assert.equal(chargeMove(b, kunoichi), 1);
+  // (the foes have no edge; with the edge switched off, Charge is the old fight)
+  assert.equal(chargeMove({ ...b, t: 100 } as Battle, skeleton), 1);
+  const old = asBefore(() => {
+    const c = field('charge');
+    fight(c);
+    return c;
+  });
+  assert.equal(old.tactic, undefined);
+});
+
+test("the player's Charge! gives the edge from the call", () => {
+  const b = field('advance');
+  fight(b);
+  const k = unit(b, 'kunoichi');
+  assert.equal(chargeMove(b, k), 1, 'no edge while advancing');
+  for (let i = 0; i < 5; i++) stepBattle(b);
+  orderCharge(b);
+  stepBattle(b);
+  assert.equal(b.tactic?.edgeAt, b.t);
+  assert.equal(chargeMove(b, k), CHARGE.MOVE);
 });
