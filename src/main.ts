@@ -159,6 +159,7 @@ import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
 import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
 import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
+import { chainById } from './sim/eidolonChainData';
 import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
@@ -784,7 +785,7 @@ class Game {
   }
 
   /** A film made on the spot, by a preview key (CINE-001; for the Scenes previews and the screenshots): `quest:<battle>` and
-   *  `questAfter:<battle>` (its story before and after, with its first cast), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
+   *  `questAfter:<battle>` (its story before and after, with its first cast), `chain:<id>` (an Eidolon chain's prologue), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
    *  Last Stand's act card of act n, 1 to 3, with a line of the ruler's). */
   private filmOf(key: string): Scene | null {
     const [kind, arg = ''] = key.split(':');
@@ -794,6 +795,7 @@ class Game {
       const cast = qb.cast.map((x) => x.heroes[0]);
       return kind === 'quest' ? qb.before(cast) : qb.after(cast);
     }
+    if (kind === 'chain') return chainById(arg)?.prologue ?? null;
     if (kind === 'arrive' && UNITS[arg]) return arrivalScene(arg, UNITS[arg].name, titleOf(arg), 'volcano');
     if (kind === 'act') {
       const act = Math.max(1, Math.min(3, Number(arg) || 1));
