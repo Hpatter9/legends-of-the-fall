@@ -24,6 +24,7 @@ import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
 import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
+import { readWeak, type WeakRecord } from './weakness';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
 import { readTickets } from './autoReplay';
@@ -147,6 +148,8 @@ export interface Meta {
   talents?: Record<string, KindTalents>;
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
   codex?: CodexRecord;
+  /** DEPTH-BUILD: what is known of each boss's weakness and the Hunter's marks won (`weakness.ts`); missing is nothing known. */
+  weak?: Record<string, WeakRecord>;
   codexClaimed?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
@@ -215,6 +218,10 @@ export interface StashChest {
   bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
   first?: boolean;
+  /** QUESTS-3: a chest that holds no summoning stones (a Last Stand re-climb's, a quest of one or two stars's). */
+  dry?: boolean;
+  /** QUESTS-3: a chest that holds half its stones, rounded up (a Calamity clear's). */
+  half?: boolean;
 }
 
 export interface DailyEntry {
@@ -460,6 +467,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
+      // (DEPTH-BUILD: the Chapel is levelled; the old flag reads as level 1, and a level keeps the flag set, which the spellbook reads)
+      if (m.chapel) m.castle.chapel = Math.max(1, m.castle.chapel ?? 0);
+      else if ((m.castle.chapel ?? 0) > 0) m.chapel = true;
       m.works = readWorks(m.works);
       // (saves from before shards have none)
       const shards: Record<string, number> = {};
@@ -519,6 +529,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.opened = Array.isArray(m.opened) ? m.opened.filter((x) => typeof x === 'string') : grandfather(m);
       // (saves from before the codex have none)
       m.codex = readCodex(m.codex);
+      m.weak = readWeak(m.weak);
+      if (!m.weak) delete m.weak;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)
       delete (m as { codexPaid?: unknown }).codexPaid;

@@ -77,6 +77,7 @@ import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
+import { WEAK } from '../src/sim/weakness';
 import { armyById } from '../src/sim/armies';
 import { CAL_SCALE } from '../src/sim/calamity';
 
@@ -117,10 +118,13 @@ function recordedStrengths<T>(fn: () => T): T {
 
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
+  // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
+  WEAK.on = false;
   try {
     assert.deepEqual(recordedStrengths(() => identityHashes()), recorded);
   } finally {
     BOSS_BIG.on = true;
+    WEAK.on = true;
   }
 });
 

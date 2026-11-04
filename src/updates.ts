@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.339.0',
+    date: '2026-11-04',
+    title: 'Rooms, bosses\' weaknesses, march orders',
+    notes: ['The castle gains rooms and three new buildings (Smithy, Watchtower, Hall) and a Chapel with levels.', 'Every boss has a weakness to find through clues, earning Hunter\'s marks. Before an army run, pick its march orders.'],
+  },
+  {
+    version: '0.338.0',
+    date: '2026-11-04',
+    title: 'Seven gear slots',
+    notes: ['Heroes now wear gear in seven slots: head, torso, both hands, feet, belt and an accessory, shown on a paper doll. Your gear moves over, nothing is lost.'],
+  },
+  {
+    version: '0.337.0',
+    date: '2026-11-04',
+    title: 'Quest stars, rarer summons, tactics',
+    notes: ['Every quest shows a 1-5 star difficulty and its length; harder quests pay better and easy ones pay no stones. Summoning stones are much rarer.', 'Tactics arrive in fights (Advance together, Charge, Hold the line); the choice comes to the prep screen next.'],
+  },
+  {
     version: '0.336.0',
     date: '2026-11-04',
     title: 'King\'s spells, first fixes',

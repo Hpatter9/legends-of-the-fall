@@ -1153,8 +1153,10 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
   const open = armies.filter((id) => armyById(id) && armyUnlocked(m, id));
   const army = armyById(open[Math.min(open.length - 1, Math.floor(cleared / 13))] ?? ARMIES[0].id)!;
   let n = 0;
+  // (QUESTS-3: stones only in the chests of a new best; a climb that does not pass the record pays crowns and gear)
+  const dry = !(run.best > (m.stand ?? 0));
   const give = (at: number, count: number) => {
-    for (let i = 0; i < count; i++) m.stash.push({ army: army.id, at, tier: 0, seed: mixSeed(run.seed, 0x70e7, ++n), tower: true } satisfies StashChest);
+    for (let i = 0; i < count; i++) m.stash.push({ army: army.id, at, tier: 0, seed: mixSeed(run.seed, 0x70e7, ++n), tower: true, ...(dry ? { dry: true } : {}) } satisfies StashChest);
   };
   give(3, c.bronze);
   give(5, c.silver);

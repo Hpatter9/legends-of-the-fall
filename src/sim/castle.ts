@@ -25,8 +25,34 @@ export const BUILDINGS: Record<BuildingId, Building> = {
 };
 export const BUILDING_IDS: BuildingId[] = ['treasury', 'barracks', 'armoury', 'mageTower', 'stable', 'library'];
 
-/** The level of each building (0 = not built). */
-export type Castle = Record<BuildingId, number>;
+/** The level of each building (0 = not built). The three room buildings and the Chapel's level (DEPTH-BUILD) are optional, so a castle
+ *  written before them (in a save, a run or a tool) still reads; missing is 0 (the Chapel's level also reads `Meta.chapel`). */
+export type Castle = Record<BuildingId, number> & Partial<Record<RoomBuildingId | 'chapel', number>>;
+
+/* -------------------------------------------------------------- the room buildings (DEPTH-BUILD, docs/notes/depth-build.md) */
+
+/** The three buildings that add no number of their own, only rooms (`rooms.ts`): the Smithy, the Watchtower and the Hall of Legends. */
+export type RoomBuildingId = 'smithy' | 'watchtower' | 'hall';
+export const ROOM_BUILDING_IDS: RoomBuildingId[] = ['smithy', 'watchtower', 'hall'];
+export const ROOM_BUILDINGS: Record<RoomBuildingId, { id: RoomBuildingId; name: string; blurb: string; costs: readonly number[] }> = {
+  smithy: { id: 'smithy', name: 'Smithy', blurb: 'A forge for the road: mending at the camp, patched gear, one hero whose gear never wears.', costs: [150, 400, 900] },
+  watchtower: { id: 'watchtower', name: 'Watchtower', blurb: 'Scouts and lookouts: opens march orders before a run, and in time the roads an army takes.', costs: [120, 350, 800] },
+  hall: { id: 'hall', name: 'Hall of Legends', blurb: 'Where retired heroes stand and teach: one mentor seat a level, one for each calling.', costs: [600, 1200, 2000, 3000] },
+};
+/** The Chapel's levels: level 1 is the old one purchase (`CHAPEL_COST`), then Vigil and Last Rites. */
+export const CHAPEL_COSTS: readonly number[] = [200, 450, 1000];
+
+/** Anything the builders can raise a level of. */
+export type SiteId = BuildingId | RoomBuildingId | 'chapel';
+export const isRoomBuilding = (id: string): id is RoomBuildingId => (ROOM_BUILDING_IDS as string[]).includes(id);
+/** The costs of every level of a site. */
+export const siteCosts = (id: SiteId): readonly number[] => (id === 'chapel' ? CHAPEL_COSTS : isRoomBuilding(id) ? ROOM_BUILDINGS[id].costs : BUILDINGS[id].costs);
+export const siteName = (id: SiteId): string => (id === 'chapel' ? 'Chapel' : isRoomBuilding(id) ? ROOM_BUILDINGS[id].name : BUILDINGS[id].name);
+export const siteTop = (id: SiteId): number => siteCosts(id).length;
+/** A site's level in a castle (the Chapel's also from the old flag, when the caller passes it). */
+export const siteLevel = (c: Castle, id: SiteId, chapelFlag = false): number => (id === 'chapel' ? Math.max(c.chapel ?? 0, chapelFlag ? 1 : 0) : (c[id] ?? 0));
+/** The crowns a site's next level costs, or null at the top. */
+export const siteNextCost = (c: Castle, id: SiteId, chapelFlag = false): number | null => siteCosts(id)[siteLevel(c, id, chapelFlag)] ?? null;
 
 export const GOLD_PER_LEVEL = 10;
 export const HP_PER_LEVEL = 0.06;
@@ -37,7 +63,7 @@ export const XP_PER_LEVEL = 0.06;
 
 export const newCastle = (): Castle => ({ treasury: 0, barracks: 0, armoury: 0, mageTower: 0, stable: 0, library: 0 });
 
-export const maxLevel = (id: BuildingId) => BUILDINGS[id].costs.length;
+export const maxLevel = (id: SiteId) => siteCosts(id).length;
 /** The crowns the next level costs, or null at the top. */
 export const nextCost = (c: Castle, id: BuildingId): number | null => BUILDINGS[id].costs[c[id]] ?? null;
 
@@ -52,8 +78,8 @@ export function upgrade(m: { crowns: number; castle: Castle }, id: BuildingId): 
 
 /* -------------------------------------------------------------- building takes time */
 
-/** What the builders are raising: a building's next level (or the Chapel), and when it stands. One at a time. */
-export type BuildSite = BuildingId | 'chapel';
+/** What the builders are raising: a building's next level (or the Chapel's, or a room building's), and when it stands. One at a time. */
+export type BuildSite = SiteId;
 export interface Works {
   id: BuildSite;
   /** The level it reaches when done (1 for the Chapel). */
@@ -66,7 +92,8 @@ export interface Works {
 export const BUILD_MS: readonly number[] = [60_000, 5 * 60_000, 20 * 60_000, 60 * 60_000, 3 * 60 * 60_000, 8 * 60 * 60_000, 24 * 60 * 60_000];
 /** The Chapel takes as long as a second level. */
 export const CHAPEL_MS = BUILD_MS[1];
-export const buildMs = (id: BuildSite, level: number): number => (id === 'chapel' ? CHAPEL_MS : BUILD_MS[Math.min(BUILD_MS.length, Math.max(1, level)) - 1]);
+/** (The Chapel's levels take one step longer than a building's: its first is `CHAPEL_MS`, as before; a room building's take the usual table.) */
+export const buildMs = (id: BuildSite, level: number): number => (id === 'chapel' ? BUILD_MS[Math.min(BUILD_MS.length - 1, Math.max(1, level))] : BUILD_MS[Math.min(BUILD_MS.length, Math.max(1, level)) - 1]);
 
 /** The slice of the Meta the builders read and change. */
 export interface WorksMeta extends ChapelMeta {
@@ -84,11 +111,28 @@ export function startBuild(m: WorksMeta, id: BuildingId, now: number): boolean {
   return true;
 }
 
+/** Pay for the next level of any site (a building, a room building or the Chapel) and set the builders to it. False (and nothing changed) at the top,
+ *  when too poor or while the builders are busy. */
+export function startSite(m: WorksMeta, id: SiteId, now: number): boolean {
+  if (id === 'chapel') return startChapel(m, now);
+  if (!isRoomBuilding(id)) return startBuild(m, id, now);
+  const cost = siteNextCost(m.castle, id);
+  if (m.works || cost === null || m.crowns < cost) return false;
+  m.crowns -= cost;
+  const level = siteLevel(m.castle, id) + 1;
+  m.works = { id, level, doneAt: now + buildMs(id, level) };
+  return true;
+}
+
 /** Pay for the Chapel and set the builders to it. False when it stands, is being built, the crowns are short, or the builders are busy. */
 export function startChapel(m: WorksMeta, now: number): boolean {
-  if (m.works || !canBuildChapel(m)) return false;
-  m.crowns -= CHAPEL_COST;
-  m.works = { id: 'chapel', level: 1, doneAt: now + CHAPEL_MS };
+  if (m.works) return false;
+  // (its first level is the old purchase; levels 2 and 3 open the Vigil and Last Rites, DEPTH-BUILD)
+  const level = chapelLevel(m) + 1;
+  const cost = CHAPEL_COSTS[level - 1];
+  if (cost === undefined || m.crowns < cost) return false;
+  m.crowns -= cost;
+  m.works = { id: 'chapel', level, doneAt: now + buildMs('chapel', level) };
   return true;
 }
 
@@ -96,7 +140,10 @@ export function startChapel(m: WorksMeta, now: number): boolean {
 export function settleWorks(m: WorksMeta, now: number): BuildSite | null {
   const w = m.works;
   if (!w || now < w.doneAt) return null;
-  if (w.id === 'chapel') m.chapel = true;
+  if (w.id === 'chapel') {
+    m.chapel = true;
+    m.castle.chapel = Math.max(chapelLevel(m), Math.min(CHAPEL_COSTS.length, w.level));
+  } else if (isRoomBuilding(w.id)) m.castle[w.id] = Math.max(m.castle[w.id] ?? 0, Math.min(siteTop(w.id), w.level));
   else m.castle[w.id] = Math.max(m.castle[w.id], Math.min(maxLevel(w.id), w.level));
   delete m.works;
   return w.id;
@@ -120,10 +167,10 @@ export function readWorks(raw: unknown): Works | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const w = raw as Partial<Works>;
   const id = w.id as BuildSite;
-  const okId = id === 'chapel' || BUILDING_IDS.includes(id as BuildingId);
+  const okId = id === 'chapel' || isRoomBuilding(id) || BUILDING_IDS.includes(id as BuildingId);
   const level = Math.floor(Number(w.level));
   const doneAt = Number(w.doneAt);
-  if (!okId || !Number.isFinite(doneAt) || !(level >= 1) || (id !== 'chapel' && level > maxLevel(id as BuildingId))) return undefined;
+  if (!okId || !Number.isFinite(doneAt) || !(level >= 1) || level > siteTop(id)) return undefined;
   return { id, level, doneAt };
 }
 
@@ -134,6 +181,12 @@ export function readCastle(raw: unknown): Castle {
     for (const id of BUILDING_IDS) {
       const n = Math.floor(Number((raw as Record<string, unknown>)[id]));
       c[id] = Number.isFinite(n) ? Math.max(0, Math.min(maxLevel(id), n)) : 0;
+    }
+  // (the room buildings and the Chapel's level: kept only when built, so a castle from before reads exactly as it did)
+  if (raw && typeof raw === 'object')
+    for (const id of [...ROOM_BUILDING_IDS, 'chapel'] as const) {
+      const n = Math.floor(Number((raw as Record<string, unknown>)[id]));
+      if (Number.isFinite(n) && n > 0) c[id] = Math.min(siteTop(id), n);
     }
   return c;
 }
@@ -171,16 +224,20 @@ export const CHAPEL_COST = 200;
 export interface ChapelMeta {
   crowns: number;
   chapel?: boolean;
+  castle?: Castle;
 }
 
 export const chapelBuilt = (m: Pick<ChapelMeta, 'chapel'>): boolean => m.chapel === true;
 export const canBuildChapel = (m: ChapelMeta): boolean => !chapelBuilt(m) && m.crowns >= CHAPEL_COST;
+/** The Chapel's level (DEPTH-BUILD): the castle's own when set, else 1 when the old flag says it stands. */
+export const chapelLevel = (m: { chapel?: boolean; castle?: Castle }): number => Math.max(m.castle?.chapel ?? 0, m.chapel === true ? 1 : 0);
 
 /** Pay for the Chapel. False (and nothing changed) when it stands already or the crowns are short. */
 export function buildChapel(m: ChapelMeta): boolean {
   if (!canBuildChapel(m)) return false;
   m.crowns -= CHAPEL_COST;
   m.chapel = true;
+  if (m.castle) m.castle.chapel = Math.max(1, m.castle.chapel ?? 0);
   return true;
 }
 

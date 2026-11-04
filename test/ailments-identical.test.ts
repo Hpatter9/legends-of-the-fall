@@ -32,6 +32,7 @@ import { CAL_SCALE } from '../src/sim/calamity';
 import { DAILY_ANSWER } from '../src/sim/modes';
 import { KITS } from '../src/sim/abilities';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
+import { WEAK } from '../src/sim/weakness';
 
 // (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
 // by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
@@ -75,6 +76,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // new hashes:
 // field1 4c43d569, field30 79b0a95f, bosses c0166803, armyFoes 3be4bc73, spells c281071e, lands 776aabc7, army 74abcbbd, daily fc542939, tower
 // 7f01a490, stand 49a206c8, calamity 6d82a760.)
+// (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
+// find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
@@ -101,10 +104,13 @@ test('with the new ailments off, every mode plays as it did before the ailment m
   DAILY_ANSWER.ult = 0.17;
   plague.power = 0.99;
   BOSS_BIG.on = false;
+  // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
+  WEAK.on = false;
   try {
     assert.deepEqual(scenarioHashes(), recorded);
   } finally {
     BOSS_BIG.on = true;
+    WEAK.on = true;
     AILMENT_SWITCH.on = was;
     infernal.start = tuned.start;
     Object.assign(yokai, late.yokai);

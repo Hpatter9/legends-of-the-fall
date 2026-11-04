@@ -14,6 +14,7 @@ import { payClear } from '../src/sim/calReward';
 import { ARMIES, armyFoes, replayTotal, firstClearTotal } from '../src/sim/armies';
 import { chestSeed, firstClearSeed, FIRST_CLEAR_CHEST, openChest } from '../src/sim/armyStars';
 import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
+import { totalQuestStones } from '../src/sim/questPay';
 import { newMeta, pickStarter, stageCrowns, stonesOf, useStones, type Meta } from '../src/sim/meta';
 import { TOME_SIZES, TOMES, tomesOf } from '../src/sim/tomes';
 import { buyChest, SHOP, shopPrice, stockLeft } from '../src/sim/chestShop';
@@ -88,6 +89,9 @@ const EXTRA_CROWNS = 900;
 /** And the stones they pay beside those crowns: the same share of every achievement's and codex reward's stones as `EXTRA_CROWNS` is of their crowns. `--nobadges 1` leaves them out. */
 const BADGE_CROWNS = ACHIEVEMENTS.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
 const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
+/** The stones every one-off quest pays in all (`questPay.ts`); `--noquests 1` leaves quests out. */
+const QUEST_STONES = totalQuestStones();
+const NO_QUESTS = arg('--noquests', 0) > 0;
 /** `--nodrops 1`: the army waves drop no shards or tomes (ARMY-DROPS: the pace before them). */
 const NO_DROPS = arg('--nodrops', 0) > 0;
 // `--droprate 0.5`: the drops' chances times this (shards and tomes alike), to try other rates without editing the rules.
@@ -95,7 +99,7 @@ const DROP_RATE = arg('--droprate', 1);
 for (const t of [SHARD_CHANCE, TOME_CHANCE] as Record<string, number>[]) for (const k of Object.keys(t)) t[k] *= DROP_RATE;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
+interface Report { ledger: Record<string, number>; aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
 /** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
 const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
@@ -142,6 +146,9 @@ function simulate(seed: number): Report {
       aw.src.cache += 8;
     }
   };
+  // (QUESTS-3: the stones each source paid, by day windows, for the report's ledger)
+  const ledger: Record<string, number> = {};
+  const note = (src: string, n: number) => void (ledger[src] = (ledger[src] ?? 0) + n);
   let pullable = Infinity;
   const by: Record<number, number> = {};
   for (let day = 1; day <= DAYS; day++) {
@@ -193,9 +200,11 @@ function simulate(seed: number): Report {
       let crowns = 0;
       for (let f = 1; f <= floors; f++) crowns += stageCrowns(f);
       today += crowns;
-      m.tower = Math.max(m.tower, floors + (day % 3 === 0 ? 1 : 0));
-      for (let k = 0; k < Math.floor(floors / 8); k++) m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 3, tier: 0, seed: mixSeed(seed, 0x70e7, day, k), tower: true });
-      for (let k = 0; k < Math.floor(floors / 15); k++) m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 5, tier: 0, seed: mixSeed(seed, 0x70e8, day, k), tower: true });
+      // (QUESTS-3: the spire's stones are only in the chests of a new best; the model's best moves up on the days the climb passes it)
+      const dry = floors <= m.tower ? { dry: true } : {};
+      m.tower = Math.max(m.tower, floors);
+      for (let k = 0; k < Math.floor(floors / 8); k++) m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 3, tier: 0, seed: mixSeed(seed, 0x70e7, day, k), tower: true, ...dry });
+      for (let k = 0; k < Math.floor(floors / 15); k++) m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 5, tier: 0, seed: mixSeed(seed, 0x70e8, day, k), tower: true, ...dry });
     }
     // the calamity: from CALAMITY_DAY, one a week; each full clear a level higher
     if (day >= CALAMITY_DAY && (day - CALAMITY_DAY) % 7 === 0) {
@@ -203,9 +212,11 @@ function simulate(seed: number): Report {
       if (day === CALAMITY_DAY || (day - CALAMITY_DAY) % ASCENSION_GAP === 0) asc = level;
       today += MAP_CROWNS.reduce((n, c) => n + c, 0) * (1 + 0.2 * Math.max(0, asc));
       m.calamity = { best: 6, clears: 1 + Math.floor((day - CALAMITY_DAY) / 7), asc };
-      m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 10, tier: 0, seed: mixSeed(seed, 0xca1c, day), tower: true });
+      m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 10, tier: 0, seed: mixSeed(seed, 0xca1c, day), tower: true, half: true });
       // (the finishing reward: crowns, shards, a title; `calReward.ts`)
+      const calBefore = m.stones ?? 0;
       payClear(m, mixSeed(seed, 0xca1d, day), asc, Math.min(ARMIES.length - 1, Math.floor(day / 12)));
+      note('Calamity clear', (m.stones ?? 0) - calBefore);
       // (the ores: six bosses and three mini-bosses of their maps' kinds; the clear's Rift Cache came with payClear)
       const rs = mixSeed(seed, 0x0e51, day);
       for (let map = 1; map <= 6; map++) gain(bossOres(rs, map, asc));
@@ -213,13 +224,27 @@ function simulate(seed: number): Report {
     }
     if (day <= 150) {
       today += EXTRA_CROWNS / 150;
-      m.stones = (m.stones ?? 0) + Math.floor((EXTRA_STONES * day) / 150) - Math.floor((EXTRA_STONES * (day - 1)) / 150);
+      const badge = Math.floor((EXTRA_STONES * day) / 150) - Math.floor((EXTRA_STONES * (day - 1)) / 150);
+      m.stones = (m.stones ?? 0) + badge;
+      note('Achievements and codex', badge);
+    }
+    // (QUESTS-3: the quests, modelled from the pay table: the stones of every one-off quest, spread over the first 240 days as a daily
+    // player reaches them, and the four weekly contracts (2 stones each) after the first month; `--noquests 1` leaves them out)
+    if (!NO_QUESTS) {
+      const q = Math.floor((QUEST_STONES * day) / 240) - Math.floor((QUEST_STONES * (day - 1)) / 240) + (day > 30 && day % 7 === 0 ? 2 : 0);
+      m.stones = (m.stones ?? 0) + q;
+      note('Quests', q);
     }
     m.crowns += Math.round(today);
     income += Math.round(today);
     // the chests are opened the day they come
     const before = held();
-    while (m.stash.length) openChest(m, 0);
+    while (m.stash.length) {
+      const c = m.stash[0];
+      const was = m.stones ?? 0;
+      openChest(m, 0);
+      note(c.daily !== undefined ? 'Daily chest' : c.half ? 'Calamity chest' : c.tower ? 'Spire chests' : 'Army first-clear and star chests', (m.stones ?? 0) - was);
+    }
     aw.src.chest += held() - before;
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
     // the castle first, then the pulls
@@ -231,7 +256,9 @@ function simulate(seed: number): Report {
     // the chest shop: the dearest chest the budget reaches, again and again; every stone is then used (ten at a time, then singles)
     for (;;) {
       const c = [...SHOP].reverse().find((x) => shopPrice(m, x.kind) <= left && stockLeft(m, x.kind, 20260000 + day) > 0);
+      const was = m.stones ?? 0;
       if (NO_SHOP || !c || !buyChest(m, c.kind, 20260000 + day)) break;
+      note('Chest shop', (m.stones ?? 0) - was);
       left -= shopPrice(m, c.kind);
     }
     while (stonesOf(m) > 0) {
@@ -283,7 +310,7 @@ function simulate(seed: number): Report {
     spent += 0;
   }
   void spent;
-  return { aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, drops };
+  return { ledger, aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, drops };
 }
 
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
@@ -292,6 +319,11 @@ const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length
 console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
 console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex's milestones)`);
 console.log(`Army drops in ${DAYS} days (mean): ${Math.round(mean(reports.map((r) => r.drops.shards)))} shard drops, ${Math.round(mean(reports.map((r) => r.drops.tomes)))} tomes${NO_DROPS ? ' (--nodrops: none)' : ''}`);
+console.log('\nstones by source, a year (mean per save)');
+const srcs = [...new Set(reports.flatMap((r) => Object.keys(r.ledger)))];
+const total = srcs.reduce((n, k) => n + mean(reports.map((r) => r.ledger[k] ?? 0)), 0);
+for (const k of srcs) console.log(`${k.padEnd(36)} ${String(Math.round(mean(reports.map((r) => r.ledger[k] ?? 0)))).padStart(6)}  ${Math.round((mean(reports.map((r) => r.ledger[k] ?? 0)) / total) * 100)}%`);
+console.log(`${'All'.padEnd(36)} ${String(Math.round(total)).padStart(6)}`);
 console.log('\nheroes  day reached (median, earliest, latest)');
 for (const n of MARKS) {
   const ds = reports.map((r) => r.days[n] ?? Infinity);

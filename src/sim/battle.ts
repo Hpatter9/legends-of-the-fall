@@ -23,6 +23,8 @@ import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
+import { tickWeakness, weakHurt } from './weakness';
+import { MARCH } from './march';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
@@ -39,6 +41,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
+import { castGate, heldBy, heldStep, startTactic, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
@@ -276,6 +279,8 @@ export type HitSrc = 'blow' | 'skill' | 'dot';
 
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
+  /** DEPTH-BUILD: a boss's weakness was used (`weakness.ts`): the page's "Weakness!" over it. */
+  | { kind: 'weakness'; by: number; def: string }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
   | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; /** A glancing blow (STATS batch 4): the page shows its number smaller and grey. */ glance?: true; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true }
   /** An Eidolon answers the War Horn (`eidolons.ts`): its strike begins (`call`) and has struck, the rider laid (`done`). */
@@ -290,6 +295,8 @@ export type BattleEvent =
   | { kind: 'skill'; by: number; name: string; ms: number }
   | { kind: 'dash'; by: number; from: At; to: At }
   | { kind: 'blink'; by: number; from: At; to: At }
+  /** The line has met the foe (or the player called the charge): the held heroes go (`tactics.ts`). */
+  | { kind: 'lineMet'; how: 'met' | 'charge' }
   | { kind: 'area'; by: number; id: 'volley' | 'meteor'; u: number; v: number; ms: number; r?: number }
   | { kind: 'arc'; from: number; to: number; ail?: 'shock' }
   | { kind: 'zone'; u: number; v: number; ms: number; what?: 'spikes' }
@@ -420,6 +427,9 @@ export interface Battle {
   pause?: number;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heroHeal?: number;
+  /** DEPTH-BUILD: the foes' heals' multiplier (a night march halves them) and the night itself (shots below height 2 reach a tile less). */
+  foeHeal?: number;
+  night?: boolean;
   /** The five-hero combo this fight has, when the placed heroes make one (`combos.ts`). */
   combo?: ComboState;
   /** Active duo-combos tracked this fight (`duoCombos.ts`). */
@@ -442,6 +452,9 @@ export interface Battle {
   /** The player's orders waiting for the next tick (`orders.ts`), and every order applied so far, with the king's spells: with the seed and the placing, a fight replays from it. */
   orders?: Order[];
   log?: LogEntry[];
+  /** The party's tactic picked before the fight (`setTactic`), and the fight's own once it begins (`tactics.ts`). */
+  tacticPick?: Tactic;
+  tactic?: TacticState;
   /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
@@ -460,6 +473,9 @@ export interface Battle {
   warnings?: BossWarning[];
   sigs?: Record<number, SigState>;
   sigN?: number;
+  /** DEPTH-BUILD (`weakness.ts`): the uses of each boss's weakness this fight, by fighter id, and the blows counted towards a crack. */
+  exploited?: Record<string, number>;
+  weakState?: Record<number, { blows: number }>;
   /** EIDOLONS: the Eidolon this fight may call when the War Horn is full, and its call once made (`eidolons.ts`). Unset in almost every fight. */
   eidolon?: EidolonFight;
   /** STATS batch 4 (`blow.ts`): how much the placed heroes' to hit and AC have grown since level 1, fixed when the fight starts; the foes
@@ -531,6 +547,9 @@ export interface Stage {
   twist?: TwistFx;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heal?: number;
+  /** DEPTH-BUILD (`march.ts`): every foe's healing is multiplied by this, and a night march's reach rule. */
+  foeHeal?: number;
+  night?: boolean;
   /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
@@ -600,6 +619,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.featured) b.featured = stage.featured;
   if (stage.rift) { b.rift = { ...stage.rift }; b.riftBoss = stage.riftBoss; }
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
+  if (stage.foeHeal && stage.foeHeal !== 1) b.foeHeal = stage.foeHeal;
+  if (stage.night) b.night = true;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
@@ -688,7 +709,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
     unit.carry = Math.max(0.01, boost.carry);
     unit.hp = Math.max(1, Math.round(hp * unit.carry));
   }
-  const heal = (b.twist?.heal ?? 1) * (def.side === 'hero' ? b.heroHeal ?? 1 : 1);
+  const heal = (b.twist?.heal ?? 1) * (def.side === 'hero' ? b.heroHeal ?? 1 : b.foeHeal ?? 1);
   if (heal !== 1) unit.healMult = heal;
   if (boost.phase && PHASE2[defId]) unit.phase = { at: boost.phase, done: false, ...(boost.surge ? { surge: boost.surge } : {}) };
   if (boost.shield) unit.shield = { hp: Math.round(hp * boost.shield), until: 1e9 };
@@ -773,6 +794,8 @@ export function fight(b: Battle): boolean {
   startRift(b);
   // (a hero's summons and shapes kept from the last wave stand up again: SUMMON-TIMERS, `carry.ts`)
   startKept(b);
+  // (the party's tactic: who is held until the line meets the foe, `tactics.ts`)
+  startTactic(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
   // (STATS batch 4: the foes answer the heroes' growth, and every fighter rolls initiative)
@@ -847,7 +870,9 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   const reach = me.side === 'hero' ? b.traits?.reach : undefined;
   const extra = me.eq?.range ?? 0;
   // (twists: fog shortens a shooter's range, a gale lifts every jump)
-  const fog = def.shot ? (b.twist?.fog ?? 0) + (b.fog ?? 0) : 0;
+  // (DEPTH-BUILD: a night march: a shooter below height 2 reaches a tile less)
+  const night = def.shot && b.night && (tileAt(b.board, me.u, me.v)?.h ?? 0) < MARCH.NIGHT_HEIGHT ? 1 : 0;
+  const fog = def.shot ? (b.twist?.fog ?? 0) + (b.fog ?? 0) + night : 0;
   // (STATS batch 6: Athletics, a hero of STR +4 or more climbs a step higher, `athleticsOf`)
   // (SEVEN-SLOT GEAR: and a hero's gear, at most a step: `EquipStats.jump`)
   const jump = (b.twist?.jump ?? 0) + (me.side === 'hero' ? athleticsOf(me) + Math.min(1, me.eq?.jump ?? 0) : 0);
@@ -889,11 +914,13 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.warnings) tickWeakness(b, out);
   if (b.warnings) tickSignatures(b, out);
   if (b.walls?.length || b.auras) tickToolkit(b, out);
   tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
   if (b.board.hazards) tickHazards(b, out);
+  if (b.tactic) tickTactic(b, out);
   for (const me of b.units) if (me.alive && me.busyUntil <= b.t) decide(b, me, rng, out);
   b.rng = rng.state;
   tickCombo(b, out);
@@ -1010,6 +1037,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return false;
   dmg = left;
+  // (DEPTH-BUILD: a boss whose guard cracks to one calling's blows, `weakness.ts`)
+  if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)
@@ -1344,7 +1373,12 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     else me.taunt = undefined;
   }
   me.cast = undefined;
-  if (tryCast(b, me, out)) return;
+  // (the party's tactic: a held hero saves its openers, and walks no further than the line, `tactics.ts`)
+  const held = b.tactic ? heldBy(b, me) : false;
+  castGate.held = held;
+  const cast = tryCast(b, me, out);
+  castGate.held = false;
+  if (cast) return;
   // strike the weakest foe in reach (first stepping up to higher ground a step or two away, if it holds the target too)
   const inReach = foes.filter((f) => canStrike(b.board, def, me, f) && !(f.air !== undefined && !def.shot && airborne(b, f))).sort((x, y) => x.hp - y.hp || apart(me, x) - apart(me, y) || x.id - y.id);
   // (a foe the Tyrant condemned is every hero's first target, when it can be reached)
@@ -1366,6 +1400,12 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     if (round >= 0) return stepTo(b, me, round, out);
     const up = perchFor(b, me, def, inReach[0]);
     return up >= 0 ? stepTo(b, me, up, out) : swing(b, me, inReach[0], rng, out);
+  }
+  if (held) {
+    const step = heldStep(b, me, def.jump);
+    if (step >= 0) return stepTo(b, me, step, out);
+    me.busyUntil = b.t + WAIT_MS;
+    return;
   }
   // else walk toward the nearest foe it can get a blow at
   const blocked = new Set<number>();
