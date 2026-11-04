@@ -527,7 +527,7 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   warlock: { rate: 0.5, power: 1.0 }, // (RPG-SPELLS batch 6: 1.07 before, then 0.929; STATS batch 5 lifted it back to 1.0: with the saves he fell to -6.5 at level 30)
   illusionist: { rate: 1.08, power: 0.535 },
   gunslinger: { rate: 0.37, power: 1.78 },
-  shambler: { rate: 1.04, power: 0.933 }, // (the joint rebalance: 0.709 to 0.933, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
+  shambler: { rate: 1.04, power: 0.84 }, // (the joint rebalance: 0.709 to 0.933, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm) (TACTICS: 0.933 to 0.84, level 30, parity under Advance together, docs/notes/tactics.md)
   rifleBot: { rate: 1.01, power: 1.972 },
   mercenary: { rate: 1.21, power: 2.811 },
   mummy: { rate: 0.99, power: 0.465 },

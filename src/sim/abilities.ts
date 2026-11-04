@@ -675,7 +675,7 @@ function rallyCry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Samurai Commander: a war banner raises the attack of the allies within three tiles (itself too) for a while. */
 export const BANNER_MULT = 1.25;
-const BANNER_MS = 6000;
+const BANNER_MS = 4000; // (TACTICS: 6 s to 4 s, level-1 parity: the banner reaches a party standing together, docs/notes/tactics.md)
 function banner(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= reachOf(me, 3));
   if (!near.some((a) => a !== me)) return false;
@@ -1565,7 +1565,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Scaled Hide', text: 'Takes a fifth less from shots', scales: 0.2 },
   },
   samuraiCommander: {
-    skill: { name: 'War Banner', text: 'Raises the attack of the allies within 3 tiles by a quarter for 6s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 600, anim: 'attack2', cast: banner },
+    skill: { name: 'War Banner', text: 'Raises the attack of the allies within 3 tiles by a quarter for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 600, anim: 'attack2', cast: banner },
     ultimate: { name: 'Rally Cry', text: 'The war banner flies over every ally: attack up a quarter for 9s and a quarter of their health back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 700, anim: 'attack2', cast: rallyCry },
     passive: { name: 'Stand Firm', text: 'Cannot be knocked back', steady: true },
   },

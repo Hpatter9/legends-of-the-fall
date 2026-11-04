@@ -27,6 +27,7 @@
 // numbers come out again on the same code.
 
 import './joint/off';
+import './tactics/off';
 import { fight, place, playOut } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';

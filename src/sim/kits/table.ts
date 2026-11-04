@@ -40,7 +40,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   wanderer: 1.25, // (STATS batch 4: 1.059 to 1.25, the Wanderer was 6.3 points under the roster at level 30 once blows rolled against AC)
   lightningMage: 0.731, // (STATS batch 4: 0.406 to 0.731, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 6: 0.93 before; she stood +5.9 at level 10)
   kitsune: 0.586,
-  karasu: 0.24, // (RPG-SPELLS batch 7: 0.4 before; striking from behind made Swoop +4 at level 1)
+  karasu: 0.36, // (RPG-SPELLS batch 7: 0.4 before; striking from behind made Swoop +4 at level 1) (TACTICS: 0.24 to 0.36, his held opener, parity under Advance together, docs/notes/tactics.md)
   yamabushi: 0.431,
   werewolf: 0.85, // (the joint rebalance: 0.787 to 0.85, Vuk's own kit lifted so the Old Hunger is less of a lift for him, his ultimate trimmed to keep his level-30 parity, docs/notes/joint-rebalance.md)
   minotaur: 0.438, // (RPG-SPELLS batch 7: 0.45 before; he was -5.7 at level 10 on main)
@@ -68,7 +68,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   timeWitch: 0.054,
   arcBlade: 0.107, // (STATS batch 4: 0.153 to 0.107, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   dreadPirate: 0.53,
-  siegeBot: 0.27, // (the joint rebalance: 0.163 to 0.27, level-10 parity, docs/notes/joint-rebalance.md)
+  siegeBot: 0.38, // (the joint rebalance: 0.163 to 0.27, level-10 parity, docs/notes/joint-rebalance.md) (TACTICS: 0.27 to 0.38, parity under Advance together, docs/notes/tactics.md)
   priestess: 0.792,
   dragoon: 0.487, // (STATS batch 4: 0.553 to 0.487, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   juggernaut: 0.847, // (RPG-SPELLS batch 3: Seismic Slam, 0.52 as Earthquake)
@@ -233,7 +233,7 @@ export const COSTS: Readonly<Record<string, readonly [number, number, number, nu
 /** Each hero's skill 3 strength (the skills overhaul's batch 4: the design's "x0.8", times the caster's attack while it casts; a guard's heal or
  *  shield is scaled by it too), found by the hero sweep at level 20 (stage 30) and checked at level 30 (stage 78), docs/notes/skills-4.md. */
 export const TUNE3: Readonly<Record<string, number>> = {
-  knight: 1.166,
+  knight: 0.8, // (TACTICS: 1.166 to 0.8, level 30, parity under Advance together, docs/notes/tactics.md)
   paladin: 1.784,
   peasant: 0.99,
   juggernaut: 1.242,

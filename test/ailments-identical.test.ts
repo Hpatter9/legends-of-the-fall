@@ -78,6 +78,11 @@ import { WEAK } from '../src/sim/weakness';
 // 7f01a490, stand 49a206c8, calamity 6d82a760.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (the tactics, docs/notes/tactics.md, re-recorded every scenario: Advance together, the default, holds the strikers and the back line until
+// the front line meets the foe, the foes of every band strike 2% harder in answer, and the Werewolf's Hunter, the Karasu's Pounce, the Siege
+// Bot's Bombard, the Knight's Hold Fast, the Shambler's ultimate and the War Banner were retuned for parity. The new hashes: field1 508646cc,
+// field30 2d8389e4, bosses d137df9b, armyFoes 38dfab07, spells 7c55b72f, lands 5c0935af, army e2b79f62, daily 4c6a7269, tower af158bbc, stand
+// 000d28c3 (its party's Knight), calamity 5270a261.)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
