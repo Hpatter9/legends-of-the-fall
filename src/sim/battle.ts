@@ -23,6 +23,8 @@ import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
+import { tickWeakness, weakHurt } from './weakness';
+import { MARCH } from './march';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
@@ -276,6 +278,8 @@ export type HitSrc = 'blow' | 'skill' | 'dot';
 
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
+  /** DEPTH-BUILD: a boss's weakness was used (`weakness.ts`): the page's "Weakness!" over it. */
+  | { kind: 'weakness'; by: number; def: string }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
   | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; /** A glancing blow (STATS batch 4): the page shows its number smaller and grey. */ glance?: true; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true }
   /** An Eidolon answers the War Horn (`eidolons.ts`): its strike begins (`call`) and has struck, the rider laid (`done`). */
@@ -422,6 +426,9 @@ export interface Battle {
   pause?: number;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heroHeal?: number;
+  /** DEPTH-BUILD: the foes' heals' multiplier (a night march halves them) and the night itself (shots below height 2 reach a tile less). */
+  foeHeal?: number;
+  night?: boolean;
   /** The five-hero combo this fight has, when the placed heroes make one (`combos.ts`). */
   combo?: ComboState;
   /** Active duo-combos tracked this fight (`duoCombos.ts`). */
@@ -465,6 +472,9 @@ export interface Battle {
   warnings?: BossWarning[];
   sigs?: Record<number, SigState>;
   sigN?: number;
+  /** DEPTH-BUILD (`weakness.ts`): the uses of each boss's weakness this fight, by fighter id, and the blows counted towards a crack. */
+  exploited?: Record<string, number>;
+  weakState?: Record<number, { blows: number }>;
   /** EIDOLONS: the Eidolon this fight may call when the War Horn is full, and its call once made (`eidolons.ts`). Unset in almost every fight. */
   eidolon?: EidolonFight;
   /** STATS batch 4 (`blow.ts`): how much the placed heroes' to hit and AC have grown since level 1, fixed when the fight starts; the foes
@@ -536,6 +546,9 @@ export interface Stage {
   twist?: TwistFx;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
   heal?: number;
+  /** DEPTH-BUILD (`march.ts`): every foe's healing is multiplied by this, and a night march's reach rule. */
+  foeHeal?: number;
+  night?: boolean;
   /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
@@ -605,6 +618,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.featured) b.featured = stage.featured;
   if (stage.rift) { b.rift = { ...stage.rift }; b.riftBoss = stage.riftBoss; }
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
+  if (stage.foeHeal && stage.foeHeal !== 1) b.foeHeal = stage.foeHeal;
+  if (stage.night) b.night = true;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
@@ -693,7 +708,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
     unit.carry = Math.max(0.01, boost.carry);
     unit.hp = Math.max(1, Math.round(hp * unit.carry));
   }
-  const heal = (b.twist?.heal ?? 1) * (def.side === 'hero' ? b.heroHeal ?? 1 : 1);
+  const heal = (b.twist?.heal ?? 1) * (def.side === 'hero' ? b.heroHeal ?? 1 : b.foeHeal ?? 1);
   if (heal !== 1) unit.healMult = heal;
   if (boost.phase && PHASE2[defId]) unit.phase = { at: boost.phase, done: false, ...(boost.surge ? { surge: boost.surge } : {}) };
   if (boost.shield) unit.shield = { hp: Math.round(hp * boost.shield), until: 1e9 };
@@ -854,7 +869,9 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
   const reach = me.side === 'hero' ? b.traits?.reach : undefined;
   const extra = me.eq?.range ?? 0;
   // (twists: fog shortens a shooter's range, a gale lifts every jump)
-  const fog = def.shot ? (b.twist?.fog ?? 0) + (b.fog ?? 0) : 0;
+  // (DEPTH-BUILD: a night march: a shooter below height 2 reaches a tile less)
+  const night = def.shot && b.night && (tileAt(b.board, me.u, me.v)?.h ?? 0) < MARCH.NIGHT_HEIGHT ? 1 : 0;
+  const fog = def.shot ? (b.twist?.fog ?? 0) + (b.fog ?? 0) + night : 0;
   // (STATS batch 6: Athletics, a hero of STR +4 or more climbs a step higher, `athleticsOf`)
   // (SEVEN-SLOT GEAR: and a hero's gear, at most a step: `EquipStats.jump`)
   const jump = (b.twist?.jump ?? 0) + (me.side === 'hero' ? athleticsOf(me) + Math.min(1, me.eq?.jump ?? 0) : 0);
@@ -896,6 +913,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.warnings) tickWeakness(b, out);
   if (b.warnings) tickSignatures(b, out);
   if (b.walls?.length || b.auras) tickToolkit(b, out);
   tickRift(b, out);
@@ -1018,6 +1036,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return false;
   dmg = left;
+  // (DEPTH-BUILD: a boss whose guard cracks to one calling's blows, `weakness.ts`)
+  if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)
