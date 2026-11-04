@@ -1,14 +1,16 @@
 // The party's formations (docs/notes/tactics.md, batch 4; the design is docs/notes/tactics-design.md, section 3). A formation is a shape on
 // the three deploy rows, read from where the heroes stand as the fight begins (`formationOf`); each has a small bonus and a weak point:
 //
-//   - Shield Wall: three or more heroes side by side on the front row, two of them front-liners. Each in the wall has +1 AC while a friend of
-//     the wall still stands beside it; but the wall's ends are open: a blow on an end from its outer side counts as from behind.
-//   - Spearhead: a hero at the front, two a row behind it on each diagonal. The tip and its wings march 15% faster for 6 s and the tip's
-//     first blow is +20%; but the tip stands alone, at -1 AC.
-//   - Hollow Square: a back-liner on the back row with friends on both sides and in front. While two friends still stand round it, a blow
-//     on it counts as from its front; but packed together, the square's heroes take 15% more from splash.
-//   - Skirmish: four or more heroes, no two on touching tiles. Splash on them is 20% less; but nobody stands beside a friend (the guards,
-//     auras and ranks reach fewer: no rule of its own).
+//   - Shield Wall (against brutes): three or more heroes side by side on the front row, two of them front-liners. Each in the wall has +2 AC
+//     while a friend of the wall still stands beside it; but the wall's ends are open: a blow on an end from its outer side counts as from
+//     behind.
+//   - Spearhead (against shooters): a hero at the front, two a row behind it on each diagonal. The tip and its wings march 25% faster for
+//     6 s, the tip's first blow is +50% and each wing's +25%; but the tip stands alone, at -1 AC.
+//   - Hollow Square (against flankers): a back-liner on the back row with friends on both sides and in front. While two friends still stand
+//     round them, its heroes have +1 AC and a blow on the back-liner counts as from its front; but packed together, they take 15% more from
+//     splash.
+//   - Skirmish (against blasts): four or more heroes, no two on touching tiles. Splash on them is 40% less and the foes' skills 20% less;
+//     but nobody stands beside a friend (the guards, auras and ranks reach fewer: no rule of its own).
 //
 // The formations count only where the fight has them on (`setFormations`: the page, once Auto place is open, the owner's answer; the tools
 // that play Auto, batch 5), so every other fight plays as before. Nothing rolls a die.
@@ -24,7 +26,7 @@ export type Formation = 'wall' | 'spear' | 'square' | 'skirmish';
 export const FORMATIONS_LIST: readonly Formation[] = ['wall', 'spear', 'square', 'skirmish'];
 
 /** The numbers (`FORM`): the wall's AC, the tip's, the spearhead's march and first blow, the splash on a square and on skirmishers. */
-export const FORM = { WALL_AC: 1, TIP_AC: -1, SPEAR_MOVE: 1.15, SPEAR_MS: 6000, TIP_BLOW: 1.2, SQUARE_SPLASH: 1.15, SKIRMISH_SPLASH: 0.8 };
+export const FORM = { WALL_AC: 1, WALL_MELEE: 0.8, TIP_AC: -1, SPEAR_MOVE: 1.3, SPEAR_MS: 6000, TIP_BLOW: 1.5, WING_BLOW: 1.5, SQUARE_AC: 2, SQUARE_SPLASH: 1.15, SKIRMISH_SPLASH: 0.5, SKIRMISH_SKILL: 0.7 };
 
 /** The fight's formation, once it has begun: its kind and who plays which part (by id). */
 export interface FormationState {
@@ -33,10 +35,11 @@ export interface FormationState {
   members: number[];
   /** The Shield Wall's ends: the left (lower `u`) and the right. */
   ends?: [number, number];
-  /** The Spearhead's tip and its wings; whether the tip has struck its first blow. */
+  /** The Spearhead's tip and its wings; whether the tip has struck its first blow, and who of the three has. */
   tip?: number;
   wings?: number[];
   struck?: boolean;
+  hit?: number[];
   /** The Hollow Square's back-liners inside it. */
   inside?: number[];
 }
@@ -112,6 +115,7 @@ export function formationAc(b: Battle, to: Unit): number {
   if (!f || to.side !== 'hero') return 0;
   if (f.kind === 'wall' && f.members.includes(to.id) && friendsBy(b, to, f.members, beside) > 0) return FORM.WALL_AC;
   if (f.kind === 'spear' && f.tip === to.id) return FORM.TIP_AC;
+  if (f.kind === 'square' && f.members.includes(to.id) && friendsBy(b, to, f.members, touching) >= 2) return FORM.SQUARE_AC;
   return 0;
 }
 
@@ -133,21 +137,31 @@ export function formationMove(b: Battle, me: Unit): number {
   return f?.kind === 'spear' && b.t <= FORM.SPEAR_MS && f.members.includes(me.id) ? FORM.SPEAR_MOVE : 1;
 }
 
-/** The Spearhead's tip's first blow: `TIP_BLOW` once (the call marks it struck). */
+/** The Spearhead's first blows: the tip's `TIP_BLOW`, each wing's `WING_BLOW`, once each (the call marks it struck). */
 export function formationBlow(b: Battle, me: Unit): number {
   const f = b.formation;
-  if (f?.kind !== 'spear' || f.tip !== me.id || f.struck) return 1;
-  f.struck = true;
-  return FORM.TIP_BLOW;
+  if (f?.kind !== 'spear' || !f.members.includes(me.id)) return 1;
+  f.hit ??= [];
+  if (f.hit.includes(me.id)) return 1;
+  f.hit.push(me.id);
+  if (me.id === f.tip) f.struck = true;
+  return me.id === f.tip ? FORM.TIP_BLOW : FORM.WING_BLOW;
 }
 
-/** What a splash on `to` is worth: less on a skirmisher, more on a square's hero standing among two friends. */
-export function formationSplash(b: Battle, to: Unit): number {
+/** What a splash (or, for a skirmisher, a foe's skill) on `to` is worth: less on a skirmisher, more on a square's hero standing among two
+ *  friends. */
+export function formationSplash(b: Battle, to: Unit, skill = false): number {
   const f = b.formation;
   if (!f || to.side !== 'hero' || !f.members.includes(to.id)) return 1;
-  if (f.kind === 'skirmish') return FORM.SKIRMISH_SPLASH;
-  if (f.kind === 'square' && friendsBy(b, to, f.members, touching) >= 2) return FORM.SQUARE_SPLASH;
+  if (f.kind === 'skirmish') return skill ? FORM.SKIRMISH_SKILL : FORM.SKIRMISH_SPLASH;
+  if (f.kind === 'square' && !skill && friendsBy(b, to, f.members, touching) >= 2) return FORM.SQUARE_SPLASH;
   return 1;
+}
+
+/** What a melee blow on `to` is worth: less on a Shield Wall's hero while a friend of the wall stands beside it. */
+export function formationMelee(b: Battle, to: Unit): number {
+  const f = b.formation;
+  return f?.kind === 'wall' && to.side === 'hero' && f.members.includes(to.id) && friendsBy(b, to, f.members, beside) > 0 ? FORM.WALL_MELEE : 1;
 }
 
 // ---- Arranging a party into a shape (the page's Arrange) ----
