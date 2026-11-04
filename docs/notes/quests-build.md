@@ -85,3 +85,16 @@ Tests: `test/quest-rules.test.ts` (new, 10 tests).
 `src/sim/questRetune.ts` holds `RETUNE`, a record by quest id of `Retune`s (new stars, length, goal, riders, words); `questData.ts` lays each over its
 quest, keeping the old goal and text as `was`. A quest taken since (`QuestActive.v = 1`) counts the present goal; one taken before, or in a save
 from before, has no `v` and counts `was` until it is handed in or dropped (`defFor`, `activeDef`). The pay follows the new stars at hand-in.
+
+## Q5: quest battle rules
+
+`src/sim/questRules.ts`; a `QuestBattle` may carry `rules` (`QuestRules`), passed to the fight by `startStage` and applied by `startBattle` (`Stage.rules`,
+`Battle.rules`). Quest battles only: every other fight leaves them unset (a test plays a fight with and without an empty set tick for tick).
+
+- **protect** `{ kind, hp }`: a guest (new hero-side summons `guestCarter`, `guestPilgrim`, `guestBosun`, `guestEnvoy`, `guestPrisoner`, using the packs' own
+  looks; Duchess or the standard work too) joins as the fight begins (`Battle.guard`); the fight is lost the moment it falls.
+- **survive** `s`: won when the clock reaches s with a hero standing (lost if the heroes fall first). **race** `s`: lost unless every foe has fallen by s.
+- **spare** `kind`: those foes (`Battle.spared`) must not fall; won when every other foe has fallen.
+- **mutators**: `hasten` (foe speed), `noHeal` (the heroes' healing is 0), `noHearts` (the run's retries are spent at its start), `purse` (start gold times it).
+- The party screen's cast line lists the rules (`castWords`, `rulesWords`).
+Tests: `test/quest-battle-rules.test.ts`. No battle uses a rule yet (Q6 to Q8 do).

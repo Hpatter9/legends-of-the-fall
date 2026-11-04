@@ -19,6 +19,7 @@ import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
 import { duchessDue, joinDuchess, type DuchessWish } from './duchessFight';
+import { applyRules, endBy, joinGuest, ruleEnd, spareIds, type QuestRules } from './questRules';
 import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
@@ -454,6 +455,11 @@ export interface Battle {
   auras?: Aura[];
   /** Duchess the goat joins this fight as it begins (`duchessFight.ts`): set when the fight is made; unset in almost every fight. */
   duchess?: true;
+  /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`) and the id of the guest it asks the heroes to protect; unset in every other fight. */
+  rules?: QuestRules;
+  guard?: number;
+  /** The units a quest battle's spare rule asks to leave standing (their ids, found as the fight begins). */
+  spared?: number[];
   /** BOSS-BIG (`bossAttacks.ts`): the bosses' signature attacks winding up (their tiles marked), each boss's own clock for them, and how
    *  many have begun this fight. None until a boss with one acts. */
   warnings?: BossWarning[];
@@ -536,6 +542,8 @@ export interface Stage {
   layout?: LayoutId;
   /** A themed daily's featured trait: its woken bonus counts double (`dailyThemes.ts`). */
   featured?: string;
+  /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`). */
+  rules?: QuestRules;
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -638,6 +646,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   });
   if (tw?.ambush) ambush(b);
   if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;
+  if (stage.rules) applyRules(b, stage.rules);
   return b;
 }
 
@@ -774,6 +783,9 @@ export function fight(b: Battle): boolean {
   startKept(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
+  // (a quest battle that asks the heroes to protect a guest: it stands beside them as the fight begins)
+  if (b.rules?.protect) joinGuest(b);
+  if (b.rules?.spare) b.spared = spareIds(b);
   // (STATS batch 4: the foes answer the heroes' growth, and every fighter rolls initiative)
   matchOf(b);
   rollInitiative(b);
@@ -906,7 +918,15 @@ function stepOnce(b: Battle): BattleEvent[] {
     return out;
   }
   const heroes = b.units.some((x) => x.alive && realHero(x));
-  const foes = b.units.some((x) => x.alive && x.side === 'foe');
+  // (QUESTS-3, Q5: a quest battle's rules may end the fight: a guest fallen, a clock run out, a spared foe felled)
+  if (b.rules) {
+    const end = ruleEnd(b, heroes);
+    if (end) {
+      endBy(b, end, out);
+      return out;
+    }
+  }
+  const foes = b.units.some((x) => x.alive && x.side === 'foe' && !b.spared?.includes(x.id));
   if (!heroes || !foes || b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) {
     b.phase = heroes && !foes ? 'won' : 'lost';
     b.pending = [];
