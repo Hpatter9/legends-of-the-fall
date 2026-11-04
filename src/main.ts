@@ -3442,6 +3442,10 @@ class Game {
     const block = hireBlock(run);
     buy.textContent = block === 'bench' ? 'Bench full' : `Hire · ${summonCost(run)}`;
     buy.disabled = block !== null;
+    // (UX-FIXES: an empty deploy board says what to do: hire. Hire is the lit button until a hero is on the bench, then Fight! takes over)
+    const needHire = b.phase === 'deploy' && !run.roster.length && block === null && run.mode?.kind !== 'calamity';
+    $('hireHint').hidden = !needHire;
+    buy.classList.toggle('primary', needHire);
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
     // (DEPLOY-ZOOM: Auto merge is earned by beating the second army, Auto place the fourth, `featureUnlocks.ts`; each is told once)

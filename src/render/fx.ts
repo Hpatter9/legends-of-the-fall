@@ -690,8 +690,6 @@ export class Fx {
         this.paintOnce(PAINT.grip, to.x, to.y - lift, { layer: m, delay: 180 });
         return;
       }
-<<<<<<< HEAD
-=======
       case 'shot': {
         // (a shot at a foe: a bolt down out of the cloud, a stream of flame along the line, or a muzzle's flash and a bullet's spark)
         if (!to) return;
@@ -778,7 +776,6 @@ export class Fx {
         play(m, packKey(el, 'puff'), x, y - 4, { scale: 1.2, frameMs: 60, alpha: 0.8 });
         this.trauma = Math.min(1, this.trauma + 0.04);
         return;
->>>>>>> origin/claude/ult-showcase
       case 'gather':
         // (power gathers at the caster's feet: a circle of the element and its gathering)
         play(m, packKey(el, 'circle'), x, y - 2, { scale: 2.6, frameMs: 80, life: 2400, loop: true, alpha: 0.9 });
