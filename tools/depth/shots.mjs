@@ -60,6 +60,24 @@ for (const [w, h] of sizes) {
     await page.evaluate(() => document.querySelector('.cxWeak')?.scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(300);
     await shot('codex-boss');
+  } else if (scene === 'march' || scene === 'march-report') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.castle.watchtower = 2;
+      window.__game.home.hooks.onArmy('orcs', 0);
+    });
+    await page.waitForTimeout(800);
+    await page.evaluate(() => document.getElementById('ptGo')?.click());
+    await page.waitForTimeout(600);
+    if (scene === 'march-report') {
+      await page.evaluate(() => { [...document.querySelectorAll('#marchCard .mcTile')][2]?.click(); document.querySelector('#marchCard .primary')?.click(); });
+    } else await page.evaluate(() => [...document.querySelectorAll('#marchCard .mcTile')][1]?.click());
+    await page.waitForTimeout(400);
+    await shot(scene);
+    await page.evaluate(() => document.querySelector('#marchCard .mcRow .primary')?.click());
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => document.getElementById('tipSkip')?.click());
+    await shot(scene + '-run');
   } else if (scene.startsWith('card-')) {
     const site = scene.slice(5);
     await page.evaluate(() => window.__game.home.show('castle'));

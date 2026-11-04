@@ -43,3 +43,45 @@ each with its tests. This note says what each batch built, what it measured and 
 - **The page:** the codex's boss page gains a **Weakness** block (each clue written or a dark bar saying how to learn more, and the five
   marks as badges); the boss's entrance card shows "Known weakness: ..." once the full rule is known; a clue or a mark found comes as a toast.
 - Tests: `test/weakness.test.ts`. Shot: `node tools/depth/shots.mjs codex-boss`.
+
+### Batch 2 measure (the bosses' weaknesses, the bot that does not seek them)
+
+`node tools/army-pace/run.mjs cell orcs:1 undead:8 beasts:15 wildwood:22 labyrinth:35 ogres:45 infernal:58 yokai:65 golems:74`, with
+`WEAK=0` (new switch) and without; mean tries to clear each army's Normal at its recommended level, 12 saves:
+
+| Army @ level | Without | With |
+|---|---|---|
+| Orc Warband @ 1 | 2.0 | 2.0 |
+| Undead Legion @ 8 | 3.3 | 2.9 |
+| Beast Packs @ 15 | 1.6 | 1.6 |
+| The Wildwood @ 22 | 1.0 | 1.0 |
+| The Labyrinth @ 35 | 2.3 | 2.3 |
+| Ogre Clans @ 45 | 2.3 | 2.3 |
+| Infernal Host @ 58 | 10.8 | 10.8 |
+| Yokai Night Parade @ 65 | 21.5 | 21.1 |
+| Golem Forge @ 74 | 9.4 | 9.8 |
+
+The Undead Legion moves most: the recruits' party has two devout heroes (Paladin, Cleric), so the Lich King's and Bone Captain's guards
+crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by more than one), so no boss's health was raised.
+
+## Batch 3: march orders
+
+- **Rules** (`src/sim/march.ts`): the five tiles (Plain, Cursed, Scouted, Night, Forced) and `Run.orders?: { mod, curse, ... }` (optional;
+  `readOrders` drops odd values; a run saved before is a plain march).
+  - **Cursed** (opens with the army cleared at the tier): foes +20% health, one heart instead of two (`heartsLost` in `retriesLeft`), and a
+    curse drawn from the run's seed by its own side stream (`0x6d61`): *Withered Hands* (the heroes' healing halved, the stage's `heal`),
+    *Unbroken* (the final boss's second form at 65%) or *Empty Stalls* (no passing cart on the road: the army road has no mid-boss shop
+    of its own, so this is the nearest thing; the drawn card is dropped, the stream untouched). Pays crowns and XP x1.4 and one extra chest
+    on a clear (side stream `0x6d62`), and the tier's **laurel** (`ArmyRecord.cursed`). Stars are earned as usual (Q5.2).
+  - **Scouted** (Watchtower 1, Lookout): the scouts' report after March names the final boss, its two great attacks and its weakness, and
+    the boss's entrance card shows the weakness for that run. Crowns x0.9. (The design's "every wave's foes shown before it" is Far Sight's,
+    not yet built.)
+  - **Night march** (Watchtower 2, Night Watch): `Battle.night`, fixed at the fight's start: a shooter standing below height 2 reaches a
+    tile less (in `strikeDef`, beside fog); foes heal half (`Battle.foeHeal`, the foes' side of `healMult`). A moonlit chest on a clear.
+    The design's "Tricksters and Yokai act 10% faster" is left out for now; no night grade on the battle's look yet (art list).
+  - **Forced march** (army cleared at the tier): waves 4, 6, 11 and 13 skipped (`finish` steps over them; their gold is not paid). XP x0.8.
+  - Pay: `marchCrowns` adds the difference to the wave's pay once (the page, after `settleWave`); `marchPay(...).xp` multiplies the fight's XP.
+- **The page:** `src/marchCard.ts`, a sheet that rises after the party is picked, only once some modifier is open (a new player never sees
+  it; an auto replay marches plain). Tiles in two columns (three from 400 px), locked ones with their lock line, the cursed tile names the
+  run's curse. In the run, a badge beside the hearts (a cursed run shows one heart); a tap says the orders.
+- Tests: `test/march.test.ts`. Shots: `node tools/depth/shots.mjs march`, `march-report`.
