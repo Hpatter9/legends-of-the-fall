@@ -23,7 +23,8 @@ function started(kinds: readonly string[], seed = 5): Battle {
 const hero = (b: Battle, kind: string) => b.units.find((x) => x.def === kind)!;
 
 test('the five Vampires wait outside the roster: units and traits, but not ALL_HEROES, the roster traits or COMBOS', () => {
-  assert.deepEqual([...COMING_HEROES], FIVE);
+  // (the Vampires came first; later batches wait after them)
+  assert.deepEqual(COMING_HEROES.slice(0, 5), FIVE);
   for (const k of FIVE) {
     assert.equal(UNITS[k].side, 'hero', k);
     assert.ok(!ALL_HEROES.includes(k), `${k} is not yet in ALL_HEROES`);

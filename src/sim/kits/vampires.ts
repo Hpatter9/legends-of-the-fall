@@ -4,9 +4,8 @@
 // choice is a fixed order (then by id).
 
 import { atkOf, defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../battle';
-import type { HeroKit, Pool, Slot } from '../heroKits';
-import type { SkillClass } from '../skillRules';
-import { apart, type Kit, type Passive, type Skill, castPower, crowd, durOf, foesOf, mendUnit, near3x3, reachOf } from '../abilities';
+import { bleedDot, friendInDanger, sk, ult, type Row } from './comingRow';
+import { apart, castPower, crowd, durOf, foesOf, mendUnit, near3x3, reachOf } from '../abilities';
 import { bleedFor, curseFor, shockFor, silenceFor, stunFor, weakFor } from '../ailments';
 import {
   blinkStrike,
@@ -344,8 +343,7 @@ export function judgementOfDusk(b: Battle, me: Unit, out: BattleEvent[]): boolea
 /** The Hemomancer's Crimson Mist: she is under 35% with a foe within 2. */
 const mistNeeded = (b: Battle, me: Unit): boolean => me.hp < me.maxHp * 0.35 && foesNear(b, me, 2).length > 0;
 /** The Blood Gargoyle's Wing Buffet: a friend within 3 (or he) is under 40% with a foe beside it. */
-const buffetNeeded = (b: Battle, me: Unit): boolean =>
-  b.units.some((a) => a.alive && a.side === me.side && a.owner === undefined && apart(a, me) <= 3 && a.hp < a.maxHp * 0.4 && foesNear(b, a, 1).length > 0);
+const buffetNeeded = friendInDanger(3, 0.4);
 /** The Dhampir's Grapple Vault: a foe within 2 of her. */
 const vaultNeeded = (b: Battle, me: Unit): boolean => foesNear(b, me, 2).length > 0;
 /** The Hemomancer's Blood Chalice is a heal: it waits for a friend within 5 under 40%. */
@@ -357,34 +355,8 @@ export const VAMPIRE_GUARDS = { mistNeeded, buffetNeeded, vaultNeeded, chaliceNe
 // The kits: each Vampire's skill 1 (its own skill, as every hero's old skill is in `KITS`), passive and ultimate, and its three slots
 // ============================================================================
 
-/** A skill (its old charge numbers are unused: a hero's skills cost its pool). */
-const sk = (name: string, text: string, castMs: number, anim: Skill['anim'], cast: Skill['cast']): Skill => ({ name, text, need: 100, dealt: 0, taken: 0, perSec: 0, castMs, anim, cast });
-/** An ultimate: opens at level 30 (`ULT_LEVEL`), with its balance knobs. */
-const ult = (name: string, text: string, castMs: number, cast: Skill['cast'], tuned: { rate: number; power: number }): Skill => ({ ...sk(name, text, castMs, 'attack2', cast), unlock: 30, tuned });
-const bleedDot = { kind: 'bleed' as const, dmg: 4, every: 500, ms: 3000 };
-
-/** One Vampire's kit, as written. */
-interface Row {
-  pool: Pool;
-  role: string;
-  passive: Passive;
-  s1: { skill: Skill; cls: SkillClass; cost: number; cd: number; more?: Partial<Slot> };
-  s2: { skill: Skill; cls: SkillClass; cost: number; cd: number; more?: Partial<Slot> };
-  s3: { skill: Skill; cls: SkillClass; cost: number; cd: number; more?: Partial<Slot> };
-  ultimate: Skill;
-}
-
-/** Each slot's strength (its `tune`, times the caster's attack while it casts): the roster's defaults (`STAM_TUNE`, `MANA_TUNE`, 1 for skill 2
- *  and 0.8 for skill 3) until the hero sweep tunes them, as it tuned the 45 (`tools/kits/tune.ts`). */
-export const VAMPIRE_TUNE: Readonly<Record<string, readonly [number, number, number]>> = {
-  vampireLord: [0.5, 1, 0.8],
-  hemomancer: [0.7, 1, 0.8],
-  nightstalker: [0.5, 1, 0.8],
-  bloodGargoyle: [0.5, 1, 0.8],
-  dhampir: [0.5, 1, 0.8],
-};
-
-function rows(): Record<string, Row> {
+/** The five Vampires' kits as written. */
+export function vampireRows(): Record<string, Row> {
   return {
     vampireLord: {
       pool: 'stamina',
@@ -433,25 +405,3 @@ function rows(): Record<string, Row> {
     },
   };
 }
-
-let built: { kits: Record<string, Kit>; heroKits: Record<string, HeroKit> } | undefined;
-function build() {
-  if (built) return built;
-  const kits: Record<string, Kit> = {};
-  const heroKits: Record<string, HeroKit> = {};
-  for (const [kind, r] of Object.entries(rows())) {
-    const t = VAMPIRE_TUNE[kind];
-    const slot = (s: Row['s1'], tune: number): Slot => ({ skill: s.skill, cls: s.cls, cost: s.cost, cd: s.cd, tune, ...(s.more ?? {}) });
-    const s1 = slot(r.s1, t[0]);
-    const s2 = slot(r.s2, t[1]);
-    const s3 = slot(r.s3, t[2]);
-    kits[kind] = { skill: r.s1.skill, passive: r.passive, ultimate: r.ultimate };
-    heroKits[kind] = { pool: r.pool, s1, s2, s3, slots: [s1, s2, s3], role: r.role };
-  }
-  return (built = { kits, heroKits });
-}
-
-/** The Vampires' kits as `KITS` holds the roster's (skill 1, passive, ultimate), until they join the roster. */
-export const comingKits = (): Record<string, Kit> => build().kits;
-/** The Vampires' three-slot kits as `HERO_KITS` holds the roster's, until they join the roster. */
-export const comingHeroKits = (): Record<string, HeroKit> => build().heroKits;

@@ -17,7 +17,7 @@ import { skillShare, skillStatOf } from './statPower';
 import { UNITS } from './units';
 import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
-import { comingHeroKits } from './kits/vampires';
+import { comingHeroKits } from './kits/coming';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
 import { CLASS_RANGE, CLASS_WEIGHT, type SkillClass } from './skillRules';

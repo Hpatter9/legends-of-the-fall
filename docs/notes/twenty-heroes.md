@@ -16,8 +16,8 @@ a coming twin, looked up after the roster's:
 | The hero list | `ALL_HEROES` | `COMING_HEROES` (`units.ts`) | (the unit defs are in `UNITS` already) |
 | Origin and class | `HERO_TRAITS`, `TRAITS` | `COMING_HERO_TRAITS`, `COMING_TRAITS` (`traits.ts`) | `traitsOf`, `traitById`, `countTraits` |
 | Last Oaths | `COMBOS` | `COMING_COMBOS` (`combos.ts`) | `comboOf`, `comboById`, `readCombosSeen` |
-| Skill 1, passive, ultimate | `KITS` | `comingKits()` (`kits/vampires.ts`) | `kitOf` |
-| The three slots | `HERO_KITS()` | `comingHeroKits()` (`kits/vampires.ts`) | `heroKitOf`, `poolNumbers` |
+| Skill 1, passive, ultimate | `KITS` | `comingKits()` (`kits/coming.ts`) | `kitOf` |
+| The three slots | `HERO_KITS()` | `comingHeroKits()` (`kits/coming.ts`) | `heroKitOf`, `poolNumbers` |
 | D&D scores | `STAT_PROFILES` | `COMING_ROWS` (`stats.ts`) | `profileOf` |
 
 So the roster's rules (every trait two to four heroes, five to eight Last Oaths, every combo hero in `ALL_HEROES`, every skill painted,
@@ -42,7 +42,8 @@ tavern, the shop, books and talents).
 
 ## Batch 1: the Vampires' kits
 
-`src/sim/kits/vampires.ts` holds the five's casts, brought from the branch's `kits/twentyNew.ts` (they compiled against main's toolkit and
+`src/sim/kits/vampires.ts` holds the five's casts and rows (`vampireRows`; `kits/comingRow.ts` is a row's shape, and `kits/coming.ts` builds every
+batch's rows into kits), brought from the branch's `kits/twentyNew.ts` (they compiled against main's toolkit and
 ailments unchanged), and their kits in main's skill system: a pool, three slots with a class, cost and cooldown in their class's range, and
 an ultimate at level 30. The branch's own 3-skill engine is not used: main's is the owner-approved one.
 
@@ -56,12 +57,31 @@ an ultimate at level 30. The branch's own 3-skill engine is not used: main's is 
 
 - Each guard's cast checks its own trigger, as `kits/third.ts`'s do. The passives are the branch's (Noble Thirst, Chalice Overflow, Predator
   of the Crypt, Granite Hide, Half-Blood Hunter); the D&D rows are new (`COMING_ROWS`).
-- **Not yet tuned.** The slots' strengths are the roster's defaults (`VAMPIRE_TUNE`: 0.5 or 0.7, 1 and 0.8) and the ultimates' knobs are
+- **Not yet tuned.** The slots' strengths are the roster's defaults (`COMING_TUNE` in `kits/coming.ts`: 0.5 or 0.7, 1 and 0.8) and the ultimates' knobs are
   the branch's. The hero sweep and its tuner (`tools/kits/tune.ts`, `test/hero-balance*.test.ts`) read `ALL_HEROES`, so the five are tuned
   when they join, in the same change.
-- `test/vampire-kits.test.ts` holds the roster's rules on the five: the class ranges, heavy dearest and jab cheapest, demand 1.4 to 3.5 of
+- `test/vampire-kits.test.ts` holds the roster's rules on the five (since batch 2 the checks are in `test/comingKits.ts`, run by each
+  batch's test file with its five): the class ranges, heavy dearest and jab cheapest, demand 1.4 to 3.5 of
   each one's own income, a jab under its income; every skill and ultimate cast in a scene; a guard cast only in its case; the slots opening
   at 1, 10, 20 and 30; and four long fights of the five where every skill and ultimate comes round, the first played twice the same.
+
+## Batch 2: the War Drummer, the Banneret, the Geomancer, the Bell Warden and the Falconer
+
+`src/sim/kits/wave2.ts` holds their casts (from the branch, unchanged but for an event: Sanctuary Vault now shows its shield as the roster's
+shields do, a heal of nothing on the friend) and their rows; their unit defs, traits (Samurai Support, Knightly Warden, Mystic Bulwark,
+Yokai Bulwark, Wild Marksman: roster traits, which they count for in a fight but are not yet members of) and D&D rows wait beside the
+Vampires'.
+
+| Hero | Pool | Skill 1 | Skill 2 | Skill 3 | Ultimate |
+| --- | --- | --- | --- | --- | --- |
+| War Drummer (Raiden) | stamina | Thunder Beat (strike 24, 7 s) | Marching Cadence (utility 26, 16 s) | Resonant Leap (utility 22, 18 s) | Storm of Ten Thousand Drums |
+| Banneret (Isolde) | stamina | Standard Charge (strike 24, 7 s) | Rampart Drop (guard 16, 14 s: a friend within 3 under 40% with a foe beside it) | Phalanx Sweep (heavy 30, 12 s) | Oriflamme of the Keep |
+| Geomancer (Tenzin) | mana | Tectonic Shove (strike 36, 7 s) | Earthglide (heavy 46, 12 s) | Lodestone Pull (utility 36, 14 s) | Mountain's Embrace |
+| Bell Warden (Kavi) | stamina | Bronze Slam (strike 26, 7 s) | Echoing Toll (heavy 30, 11 s) | Sanctuary Vault (guard 16, 14 s: a friend within 4 under 40% with a foe beside it) | Midnight Knell |
+| Falconer (Aisling) | stamina | Falcon Stoop (strike 24, 6 s) | Gale Vault (guard 14, 12 s: she under 35% with a foe within 2) | Talon Snare (heavy 30, 11 s) | Sky Hunt |
+
+Not yet tuned, as the Vampires. `test/wave2-kits.test.ts`: the roster's kit rules (`test/comingKits.ts`), and that the five wait outside
+the roster while counting for their traits in a fight.
 
 ## The art imported (PRs #344 to #349)
 
@@ -87,7 +107,7 @@ ChatGPT's six art PRs (from [twenty-heroes-art-prompts.md](twenty-heroes-art-pro
   awakened cards, dossier portrait and full artwork, pointed at the new files, each loading and fitting (`docs/samples/heroes-20/art-*.png`).
 - `CREDITS.md` credits both sets.
 
-## Still to do for the Vampires to join
+## Still to do for a batch to join
 
 Their art (the prompts), then in one change: the rows into the roster's tables and `ALL_HEROES`, the tuning, the page's words (names and
 titles from `heroNames.ts` as the canon, lore, quips, codex, tavern spots, starter classes), books, talents, looks borrowed until their

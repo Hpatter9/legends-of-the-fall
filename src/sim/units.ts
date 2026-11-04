@@ -113,6 +113,12 @@ export const UNITS: Record<string, UnitDef> = {
   nightstalker: { id: 'nightstalker', name: 'Nightstalker', side: 'hero', sheet: 'hero_res_nightstalker', scale: 0.520833, hp: 188, atk: 28, def: 4, range: 1, moveMs: 380, atkMs: 700, jump: 9, flies: true, role: 'A winged strigoi: swoops from the dark and drags prey aloft' },
   bloodGargoyle: { id: 'bloodGargoyle', name: 'Blood Gargoyle', side: 'hero', sheet: 'hero_res_blood_gargoyle', scale: 0.625, hp: 325, atk: 20, def: 9, range: 1, moveMs: 720, atkMs: 1250, jump: 9, flies: true, role: 'A stone sentinel: crashes down from the eaves and turns to granite' },
   dhampir: { id: 'dhampir', name: 'Dhampir', side: 'hero', sheet: 'hero_res_dhampir', scale: 0.520833, hp: 168, atk: 32, def: 3, range: 5, moveMs: 580, atkMs: 1350, jump: 3, shot: 'arrow', role: 'A silver-bolt hunter: vaults clear and pins foes to stone' },
+  // The twenty heroes' second batch (docs/notes/twenty-heroes.md), waiting as the Vampires do
+  warDrummer: { id: 'warDrummer', name: 'War Drummer', side: 'hero', sheet: 'hero_res_war_drummer', scale: 0.520833, hp: 248, atk: 19, def: 6, range: 2, moveMs: 620, atkMs: 1100, jump: 2, role: 'A taiko master: thunder-beats that shove foes and drive his friends forward' },
+  banneret: { id: 'banneret', name: 'Banneret', side: 'hero', sheet: 'hero_res_banneret', scale: 0.520833, hp: 282, atk: 18, def: 8, range: 2, moveMs: 660, atkMs: 1150, jump: 2, role: 'A rampart warden: charges with the standard, drops ramparts and sweeps the line' },
+  geomancer: { id: 'geomancer', name: 'Geomancer', side: 'hero', sheet: 'hero_res_geomancer', scale: 0.520833, hp: 295, atk: 21, def: 8, range: 2, moveMs: 760, atkMs: 1350, jump: 2, shot: 'bolt', role: 'A crag-shaper: raises stone pillars, glides through the earth and pulls with lodestone' },
+  bellWarden: { id: 'bellWarden', name: 'Bell Warden', side: 'hero', sheet: 'hero_res_bell_warden', scale: 0.625, hp: 332, atk: 20, def: 9, range: 1, moveMs: 820, atkMs: 1350, jump: 2, role: 'A bronze keeper: slams his temple bell, tolls shockwaves and vaults to guard his friends' },
+  falconer: { id: 'falconer', name: 'Falconer', side: 'hero', sheet: 'hero_res_falconer', scale: 0.520833, hp: 174, atk: 29, def: 3, range: 5, moveMs: 600, atkMs: 1300, jump: 3, shot: 'arrow', heightReach: 1.2, role: 'A highland hawker: stoops her falcon on foes, gale-vaults to perches and pins her prey' },
 
   // called up by Beastmaster
   wolf: { id: 'wolf', name: 'Wolf', side: 'hero', sheet: 'wolf_grey', scale: 0.55, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster', forms: ['wolf_grey', 'wolf_grey', 'wolf_black'] },
@@ -142,7 +148,7 @@ export const UNITS: Record<string, UnitDef> = {
 
 /** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
  *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */
-export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'];
+export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'banneret', 'geomancer', 'bellWarden', 'falconer'];
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;

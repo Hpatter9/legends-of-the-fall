@@ -199,6 +199,11 @@ export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
   nightstalker: ['vampire', 'assassin'],
   bloodGargoyle: ['vampire', 'bulwark'],
   dhampir: ['vampire', 'gunner'],
+  warDrummer: ['samurai', 'support'],
+  banneret: ['knightly', 'warden'],
+  geomancer: ['mystic', 'bulwark'],
+  bellWarden: ['yokai', 'bulwark'],
+  falconer: ['wild', 'marksman'],
 };
 
 /** A trait by id, the coming ones included. */

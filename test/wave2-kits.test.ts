@@ -1,0 +1,32 @@
+// The twenty heroes' second batch's kits (docs/notes/twenty-heroes.md, batch 2): the War Drummer, the Banneret, the Geomancer, the Bell Warden
+// and the Falconer, held to the roster's kit rules as the Vampires are (`test/comingKits.ts`).
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { countTraits, HERO_TRAITS, membersOf, traitsOf } from '../src/sim/traits';
+import { profileOf } from '../src/sim/stats';
+import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
+import { comingKitTests } from './comingKits';
+
+comingKitTests('batch 2', ['warDrummer', 'banneret', 'geomancer', 'bellWarden', 'falconer']);
+
+const BATCH = { warDrummer: ['samurai', 'support'], banneret: ['knightly', 'warden'], geomancer: ['mystic', 'bulwark'], bellWarden: ['yokai', 'bulwark'], falconer: ['wild', 'marksman'] } as const;
+
+test('batch 2 waits outside the roster: units, traits and scores, not ALL_HEROES or the roster\'s trait members', () => {
+  for (const [k, traits] of Object.entries(BATCH)) {
+    assert.ok(COMING_HEROES.includes(k) && !ALL_HEROES.includes(k), k);
+    assert.equal(UNITS[k].side, 'hero');
+    assert.ok(profileOf(k), `${k} has scores`);
+    assert.deepEqual([...traitsOf(k)], [...traits], k);
+    assert.ok(!HERO_TRAITS[k], `${k} is not yet in HERO_TRAITS`);
+    for (const t of traits) assert.ok(!membersOf(t).includes(k), `${k} is not yet a member of ${t}`);
+  }
+});
+
+test('in a fight a batch-2 hero counts for its origin and class as a roster hero does', () => {
+  // (the War Drummer and the Samurai: two Samurai)
+  assert.ok(countTraits(['warDrummer', 'samurai']).find((c) => c.trait.id === 'samurai')!.active);
+  // (the Banneret and the Cleric: two Wardens)
+  assert.ok(countTraits(['banneret', 'cleric']).find((c) => c.trait.id === 'warden')!.active);
+  // (the Geomancer and the Bell Warden: two Bulwarks)
+  assert.equal(countTraits(['geomancer', 'bellWarden']).find((c) => c.trait.id === 'bulwark')!.count, 2);
+});
