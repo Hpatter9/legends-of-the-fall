@@ -111,3 +111,33 @@ at every stage of a save three star counts and two lengths are open). `quests.te
 Screenshots: `docs/samples/quest-stars-*` (the Active tab with a checklist, a "7 days left" chip and the rules line).
 Not done: the battles' `ease` have not been re-tuned to their star bands: the probe party is behind the game (design section 1), so a measured band
 needs the save-like probe, which was not built (see Q1).
+
+## Q6 to Q8: the new quests
+
+Written as new data files (no existing quest edited), gathered by `questData/newQuests.ts` and `questBattleData/newBattles.ts`; each carries its own `stars`
+and `length`, and a test keeps them within one of `starEstimate`. `starEstimate` now also weighs `goals` (0.8 each), `oneRun`, `within` and `streak`.
+~165 new quests in all, with 26 new quest battles using protect, survive, race, spare and mutators:
+
+- `proving.ts`, `wanted.ts` (Q6): the Proving Grounds (Oswy Carne, a new giver) and the wanted posters.
+- `roadnew.ts`, `modes.ts` (Q6/Q7): the passersby (with the Pilgrim's Escort, a Cart in the River and the Long Way Round), the Last Stand, the Calamity
+  (What Waits Under, a 5-part campaign) and the daily.
+- `heroesnew.ts` (Q7): the patrons (Edmund's 5-part campaign), Duchess (the Grand Goat Tour) and spoils.
+- `royalnew.ts`, `campaigns1.ts`, `campaigns2.ts` (Q8): the Crown's six stories (a campaign of 5 to 8 parts or a chain) and the twelve long campaigns by
+  new and old givers. Campaign parts have `slot: 'campaign'` (new slot: a first part drawn every 4 days, later parts as the part before is handed in;
+  `QuestDef.slot` overrides a giver's own). New givers: Oswy Carne, Mother Teal, Pim Ashby, Maren Fold, Sorrel Vane (faces borrowed from pack faces).
+- Guests of protect battles are the new hero-side summons `guestCarter/Pilgrim/Bosun/Envoy/Prisoner` (the packs' own sheets).
+- Tests: `test/quest-new.test.ts` (stars, campaign order, every battle opened by one quest, rules valid, every battle can be started and fought).
+  Updated for the owner-approved content: the shape and mood caps in `quests-content.test.ts` scale with the number of quests; `quest-battles.test.ts`
+  allows offers of battles whose cast the save owns.
+
+**Approximations the writers had to make (the sim has no exact rider):** "no ranged hero" is a `without` list; Ravi's "only ultimate" is `most: 2` + `ultsIn`;
+the Last Stand's `oneRun` cannot tell runs apart (stand fights carry no run id); "no spell in the Last Stand" and the daily's bonus stars are approximated
+by other riders; a few ★2 quests carry a time limit (the design table has them; the owner's rule says time limits start at ★3: decide).
+**Untuned:** every new battle's `ease` is copied from the nearest existing battle and has not been measured (the probe party is behind the game).
+`race` and `survive` run on each wave's own clock.
+
+## Q9: the Eidolon chains
+
+See [eidolon-chains-hard.md](eidolon-chains-hard.md): every chain is now five parts (the three old ones kept in place with riders added, two new parts
+with new pieces), the chain battles and trials raised, saves at the old end of a chain read as finished. The campaign-row crowns and stones of design
+section 5 are **not** attached to chain parts (the chain engine pays chests only); decide whether to add them.

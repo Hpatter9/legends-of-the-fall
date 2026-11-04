@@ -83,7 +83,7 @@ export const CAMPAIGNS2_QUESTS: readonly QuestDef[] = [
     length: 'campaign',
     needs: { kind: 'armies', n: 5 },
     after: 'weddingCake',
-    text: 'Win 12 Wildwood waves with no more than two heroes on the field',
+    text: 'Win 12 Wildwood waves with two heroes at most',
     offer: [
       'Something old, something new, something borrowed. Brigid wants the borrowed thing from the Wildwood: a ribbon a dryad owes the baker for a loaf, and the dryad will only lend it to a small, quiet party.',
       'Twelve waves of the Wildwood, two heroes at most. Think of it as a very long courtesy call.',

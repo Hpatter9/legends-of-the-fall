@@ -19,8 +19,8 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     localStorage.clear();
     const d = new Date();
     const today = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-    const q = { day: today, done: [], active: [{ id: 'cellarDoor', progress: 1, more: [0], took: today, v: 1 }, { id: 'gwensLedger', progress: 1, took: today, v: 1 }, { id: 'boneCollector', progress: 12, took: today, v: 1 }], failed: { quietHands: today },
-      offers: ['roundForTheHouse', 'twoBladesBridge', 'cartersWheels', 'repGlasses'].map((id) => ({ id, giver: 'gwen', day: today })), drawn: {} };
+    const q = { day: today, done: [], active: [{ id: 'cellarDoor', progress: 1, more: [0], took: today, v: 1 }, { id: 'gwensLedger', progress: 1, took: today, v: 1 }, { id: 'boneCollector', progress: 12, took: today, v: 1 }, { id: 'bellRinging', progress: 0, took: today, v: 1 }], failed: { quietHands: today },
+      offers: ['roundForTheHouse', 'provShoestring', 'wantedChieftainQuickly', 'repGlasses'].map((id) => ({ id, giver: 'gwen', day: today })), drawn: {} };
     const m = { seed: 7, crowns: 4000, stones: 30, unlocked: heroes, party: ['knight', 'samurai', 'archer', 'kunoichi', 'wizard'], pulls: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: Object.fromEntries(heroes.map((k) => [k, 4_000_000])), bestStage: 14, tower: 0, daily: {}, bosses: [], achievements: [], armies, armySeen: Object.keys(armies), stash: [], scenes: ['opening'], heroesSeen: heroes, quests: q };
     localStorage.setItem('legends.meta', JSON.stringify(m));
     localStorage.setItem('lotf-tips-off', '1');
