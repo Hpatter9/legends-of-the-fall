@@ -2,7 +2,7 @@
 // (health, attack, defence, walk, blow time and damage a second), so a new hero is no stronger, faster or busier than its class.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { COMING_HERO_TRAITS, HERO_TRAITS } from '../src/sim/traits';
+import { COMING_HERO_TRAITS, COMING_TRAITS, HERO_TRAITS, TRAITS } from '../src/sim/traits';
 import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
 import { KITS } from '../src/sim/abilities';
 import { comingHeroKits, comingKits } from '../src/sim/kits/coming';
@@ -53,4 +53,13 @@ test("slot 3 follows the roster's mix: mostly jabs, a few guards and utilities, 
   assert.ok(!cls.includes('heavy'), 'no heavy in slot 3');
   assert.ok(cls.filter((c) => c === 'jab').length >= 12, `jabs: ${cls.filter((c) => c === 'jab').length}`);
   assert.ok(cls.filter((c) => c === 'utility').length <= 3, `utilities: ${cls.filter((c) => c === 'utility').length}`);
+});
+
+test('with the twenty joined, every trait has two to five heroes (the owner\'s call), and no trait gains a tier for its fifth', () => {
+  const all = [...ALL_HEROES, ...COMING_HEROES];
+  for (const t of [...Object.keys(TRAITS), ...Object.keys(COMING_TRAITS)]) {
+    const n = all.filter((k) => classOf(k) === t || (HERO_TRAITS[k] ?? COMING_HERO_TRAITS[k])[0] === t).length;
+    assert.ok(n >= 2 && n <= 5, `${t} has ${n}`);
+  }
+  for (const t of Object.values(TRAITS)) assert.ok(t.tiers.every((x) => x.need <= 4), `${t.id}: no tier at five`);
 });

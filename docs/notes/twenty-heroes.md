@@ -163,8 +163,10 @@ jabs, and repeating a few moves; the director asked for its fixes to be folded i
 - **The Vampire origin's 5 tier** is leech 15% and +10% attack with the bat swarm (was 18% and +14%). **The Last Oath is the Night Kin**
   (was the Crimson Court), its move the Blood Moon: the five drink back a tenth (was a quarter), with a tone of its own (`blood`, red
   first) beside the Dread Court's dark.
-- **Held**: the review's point 6 (every trait reaching five heroes) waits on the owner. The traits stay data in `COMING_HERO_TRAITS`, so
-  either answer is a table edit.
+- **Five heroes a trait (the owner's answer to the review's point 6)**: with the twenty joined every origin and class has five heroes,
+  and that is allowed: the roster's rule is now two to five (`test/traits.test.ts`, an owner-approved change; `test/coming-stats.test.ts`
+  holds it with the twenty counted). No trait gains a tier for its fifth; the Vampires keep their own 2/4/5. With more heroes to draw on,
+  the top (4) tiers are easier to reach: when a batch joins, the balance pass trims them slightly if the sweep shows them too strong.
 
 | Hero | Passive | Skill 1 | Skill 2 | Skill 3 | Ultimate |
 | --- | --- | --- | --- | --- | --- |
