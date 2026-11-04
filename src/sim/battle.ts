@@ -45,8 +45,8 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
-import { formationBlow, formationFacing, formationMove, formationSplash, startFormation, type FormationState } from './formations';
-import { castGate, heldBy, heldStep, startTactic, TACTICS, tickTactic, type Tactic, type TacticState } from './tactics';
+import { formationBlow, formationFacing, formationMelee, formationMove, formationSplash, startFormation, type FormationState } from './formations';
+import { chargeBlow, chargeMove, castGate, heldBy, heldStep, startTactic, TACTICS, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
@@ -1100,8 +1100,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
-  // (a formation takes splash differently: a skirmisher less, a square packed together more, `formations.ts`)
-  if (splash && b.formation) dmg = Math.max(1, Math.round(dmg * formationSplash(b, to)));
+  // (a formation takes splash differently, a skirmisher less, a square packed together more, and a skirmisher the foes' skills less, `formations.ts`)
+  if (b.formation && src === 'blow' && !splash && by.side !== to.side && !UNITS[by.def]?.shot) dmg = Math.max(1, Math.round(dmg * formationMelee(b, to)));
+  if (b.formation && (splash || (src === 'skill' && by.side !== to.side))) dmg = Math.max(1, Math.round(dmg * formationSplash(b, to, !splash)));
   // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)
   const shatter = shatterOf(b, by, to, dmg, heavy, src);
   if (to.shield) {
@@ -1571,7 +1572,7 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   // (FOE-STYLES: a charger's blow at the end of its run, a pack's bite with friends round the prey)
   const rush = chargeOf(me);
   if (rush > 1) out.push({ kind: 'style', by: me.id, what: 'Charge!' });
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * rush * gangOf(b, me, to) * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * rush * gangOf(b, me, to) * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1) * (b.tactic?.edgeAt !== undefined && r.res !== 'miss' ? chargeBlow(b, me, to) : 1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1) * blowStatsOf(b, me).quick;
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
@@ -1604,7 +1605,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
     me.kx.momentum = me.kx.lastWay === way ? Math.min(5, (me.kx.momentum ?? 0) + 1) : 1;
     me.kx.lastWay = way;
   }
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1)) * (b.walk ?? 1));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1) * (b.tactic?.edgeAt !== undefined ? chargeMove(b, me) : 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

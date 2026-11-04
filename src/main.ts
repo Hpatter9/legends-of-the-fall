@@ -1918,7 +1918,7 @@ class Game {
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       arrange: (f) => this.arrangeFormation(f),
-      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
+      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
