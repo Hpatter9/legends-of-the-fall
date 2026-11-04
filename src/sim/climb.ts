@@ -3,12 +3,14 @@
 // in the run (`Owned.xp`), by the same curve as the lasting levels (`levels.ts`), and its gear is what the run finds.
 // Pure rules: no Pixi, no DOM.
 
+import { keptBoost } from './carry';
 import type { Battle, Boost, Unit } from './battle';
 import { ALL_HEROES, UNITS } from './units';
 import { CAL_TIER, tierOfLevel } from './calamity';
-import { gradeMult, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
+import { canJoin, gradeMult, isClone, ownHeroes, recruit, squadLimit, type Owned, type Run } from './run';
 import { gearBoost } from './gear';
-import { XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
+import { bareKitStats } from './runGear';
+import { KILL_KEEP, killShares, XP_PER_DAMAGE, XP_PER_HEALING, XP_TAKE_PART, XP_WIN, levelBoost, levelOf, RUN_MAX_LEVEL, type LevelUp } from './levels';
 
 
 /** What a hero's run-level XP is worth on top of the lasting rate: the climb is tuned on this. */
@@ -31,22 +33,27 @@ export const heroLevel = (h: Owned): number => levelOf(h.xp ?? 0, RUN_MAX_LEVEL)
  * A run hero's whole boost: its grade and level, its gear and training bumps, and the skill charge it keeps. No rank, no
  * lasting equipment or talents, and no kind-by-kind multipliers: every hero starts the climb alike.
  */
-export function localBoost(h: Owned): Boost {
+export function localBoost(h: Owned, run?: Run): Boost {
   const k = h.tiered ? CAL_TIER.mult ** (h.grade - 1) : gradeMult(h.grade);
   const lv = levelBoost(heroLevel(h));
   const g = gearBoost(h.gear);
-  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+  // (RUN-GEAR: in a real-gear run the found pieces its kind wears count, fresh from the field; a guest wears none)
+  const equip = run && !h.guest ? bareKitStats(run, h.kind) : undefined;
+  return { hp: k * lv.hp * g.hp! + (h.bump?.hp ?? 0), atk: k * lv.atk * g.atk! + (h.bump?.atk ?? 0), grade: h.grade, level: heroLevel(h), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}), ...keptBoost(h) };
 }
 
-/** The XP each hero (by roster id) earned in a finished fight: the same pay as `fightXp`, but kept for the hero, not its kind. `rate` is the castle's Library. */
-export function fightXpByHero(b: Battle, rate = 1, climbXp = CLIMB_XP): Record<number, number> {
+/** The XP each hero (by roster id) earned in a finished fight: the same pay as `fightXp`, its kills split the same way (`KILL_KEEP`,
+ *  `killShares`: the killer keeps half, the rest shared by every hero that fought), but kept for the hero, not its kind. `rate` is the
+ *  castle's Library. */
+export function fightXpByHero(b: Battle, rate = 1, climbXp = CLIMB_XP, keep = KILL_KEEP): Record<number, number> {
   const out: Record<number, number> = {};
   const won = b.phase === 'won';
-  const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
+  const kills = killShares(b, keep);
+  const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING;
   for (const u of b.units) {
     if (u.side !== 'hero' || u.owner !== undefined || u.tag === undefined) continue;
     const called = b.units.filter((x) => x.owner === u.id).reduce((n, x) => n + shareOf(x), 0);
-    out[Number(u.tag)] = (out[Number(u.tag)] ?? 0) + Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called) * rate * climbXp);
+    out[Number(u.tag)] = (out[Number(u.tag)] ?? 0) + Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called + (kills.get(u.id) ?? 0)) * rate * climbXp);
   }
   return out;
 }
@@ -105,7 +112,8 @@ export const ownsKind = (run: Run, kind: string): boolean => run.roster.some((h)
 /** The hero kinds a Calamity can still hire: all of them (the player's own and the ones it has not unlocked), each only once a run, so not those already on the roster. A run that is not a Calamity hires from its pool as ever. */
 export function hireable(run: Run): string[] {
   if (run.mode?.kind !== 'calamity') return (run.pool?.length ? run.pool : ALL_HEROES).filter((k) => !!UNITS[k]);
-  return ALL_HEROES.filter((k) => !!UNITS[k] && !ownsKind(run, k));
+  // (SECRET-HEROES: never a hero still secret to the save)
+  return ALL_HEROES.filter((k) => !!UNITS[k] && !ownsKind(run, k) && !run.hide?.includes(k));
 }
 
 /** Hire a hero for `paid` gold: it joins at the run's catch-up XP (and the tier that level earns, in a calamity), and (in a calamity, unless told otherwise) takes a place in the squad if there is room. */
@@ -117,7 +125,7 @@ export function hireHero(run: Run, kind: string, paid: number, toSquad = run.mod
   // (a mirror's clone gives up its place in a full squad to a hero who stays)
   const guest = run.squad.find((id) => run.roster.some((x) => x.id === id && isClone(x)));
   if (toSquad && run.squad.length >= squadLimit(run) && guest !== undefined) run.squad = run.squad.filter((id) => id !== guest);
-  if (toSquad && run.squad.length < squadLimit(run) && !run.squad.includes(h.id)) run.squad.push(h.id);
+  if (toSquad && canJoin(run, h.id)) run.squad.push(h.id);
   return h;
 }
 

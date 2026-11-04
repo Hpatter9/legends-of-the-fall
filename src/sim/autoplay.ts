@@ -3,39 +3,63 @@
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
 // same run and the same board always give the same formation.
 
+import { legacyBoost } from './legacy';
+import { CLASS_OF } from './starter';
 import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
 import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
 import { heroRank, type Meta } from './meta';
 import { awakenStats } from './awaken';
-import { boostOf, equip, squadLimit, summon, type Owned, type Run } from './run';
+import { boostOf, equip, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
+import { guestBoost } from './guest';
 import { autoMerge } from './merge';
+import { botKitStats, equipBestReal, isReal } from './runGear';
 import { UNITS } from './units';
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
 export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
   const def = UNITS[h.kind];
-  const boost = run?.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind));
+  const boost = h.guest && run && !run.local ? guestBoost(run, meta, h) : run?.local ? localBoost(h, run) : botBoost(meta, h, run);
   return def.hp * def.atk * (boost.hp ?? 1) * (boost.atk ?? 1);
+}
+
+/** The bot's boost for a hero of a run that brings the lasting kit: its grade, rank and level and its awakening, as ever, and in a real-gear
+ *  run (RUN-GEAR) the equipment its kind fights in: the lasting pieces with the run's finds in their slots, fresh (`botKitStats`). */
+export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
+  const awake = awakenStats(meta, h.kind);
+  // (DEPTH-BUILD: a mentor's legacy perk from the run's snapshot, `legacy.ts`)
+  return legacyBoost(run?.legacy, h.kind, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake));
 }
 
 /** Whether a kind fights from behind: it shoots, or reaches past the next tile. */
 export const isBackline = (kind: string): boolean => !!UNITS[kind].shot || UNITS[kind].range > 1;
 
-/** The squad for the next fight: the heroes in `keep` (that are still owned) first, then the strongest of the rest, up to `SQUAD`. */
+/** The squad for the next fight: the heroes in `keep` (that are still owned) first, then the strongest of the rest, up to `SQUAD`. One of
+ *  each kind (ONE-OF-EACH, `docs/notes/one-of-each.md`): a second of a kind is passed over (the strongest copy is the one taken), so a
+ *  smaller roster of kinds fields fewer heroes. */
 export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): Owned[] {
-  const kept = keep.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h).slice(0, squadLimit(run));
-  const rest = run.roster.filter((h) => !kept.includes(h)).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
-  return [...kept, ...rest].slice(0, squadLimit(run));
+  // (a hero a mirror's clone stands in for sits out: ONE-OF-EACH)
+  // (a guest is not one of the five: it takes its own sixth place after them, GUEST-HERO)
+  // (a quest battle's required cast must fight: they are always kept, ahead of the strongest)
+  const must = run.mode?.kind === 'quest' ? run.roster.filter((h) => !h.guest && !sitsOut(run, h.id) && run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind)).map((h) => h.id) : [];
+  const kept = [...must, ...keep.filter((id) => !must.includes(id))].map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
+  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+  const five = oneOfEach([...kept, ...rest]).slice(0, squadLimit(run));
+  const guest = run.roster.find((h) => h.guest);
+  return guest && !five.some((h) => h.kind === guest.kind) ? [...five, guest] : five;
 }
 
+/** The heroes in order with every later hero of a kind already listed left out (ONE-OF-EACH). */
+export const oneOfEach = <T extends { kind: string }>(heroes: readonly T[]): T[] => heroes.filter((h, i) => heroes.findIndex((x) => x.kind === h.kind) === i);
+
 /** The best way to spend an event: the free relic, then gear, then a blessing, then coin. A cursed path and anything dear is left alone. */
-export function eventPick(options: readonly EventOption[], gold: number): number {
+export function eventPick(options: readonly EventOption[], gold: number, run?: Run): number {
   let best = -1;
   options.forEach((o, i) => {
-    const r = pickRank(o);
+    // (RELICS-2: a relic whose price this party cannot pay well is left alone, as a cursed path is)
+    const r = o.effect.t === 'relic' && run && !relicSuits(run, o.effect.id) ? 0 : pickRank(o);
     if (!o.done && o.cost === 0 && o.cost <= gold && r > 0 && (best < 0 || r > pickRank(options[best]))) best = i;
   });
   return best;
@@ -48,18 +72,35 @@ function pickRank(o: EventOption): number {
   return rank[o.effect.t as keyof typeof rank] ?? 0;
 }
 
+/**
+ * RELICS-2: whether Auto takes a relic with a price. The Ember of the Great Hall's wound each fight wants a healer in the party to mend it;
+ * the Pawned Crown's 10 gold a win wants a purse to spare (40 gold). Every other relic, and every relic with no price, suits.
+ */
+export function relicSuits(run: Run, id: string): boolean {
+  if (id === 'emberRuby') return run.roster.some((h) => run.squad.includes(h.id) && CLASS_OF[h.kind] === 'support');
+  if (id === 'jewelCrown') return run.gold >= 40;
+  return true;
+}
+
 /** Settles the event waiting between two fights: the best free pick, then on. */
 export function autoEvent(run: Run): void {
   while (run.event) {
-    let i = eventPick(run.event.options, run.gold);
+    let i = eventPick(run.event.options, run.gold, run);
     // (a card with no way to walk off, a road event's hazard or debt, MID-EVENTS: the page offers no Leave, so neither may the greedy player; it takes the first free choice)
     if (i < 0 && !run.event.options.some((o) => o.effect.t === 'leave')) i = run.event.options.findIndex((o) => o.cost === 0 && !o.done);
     if (i < 0 || chooseOption(run, i) === null) leaveEvent(run);
   }
 }
 
-/** Gives the squad the gear in the pack: each piece to the squad hero whose piece in that slot is weakest (or missing), if it is better. */
-export function dressSquad(run: Run): void {
+/** Gives the squad the gear in the pack: each piece to the squad hero whose piece in that slot is weakest (or missing), if it is better. A
+ *  real-gear run (RUN-GEAR) dresses the squad's kinds from its pack with Equip best, the strongest first (`equipBestReal`). */
+export function dressSquad(run: Run, meta?: Meta): void {
+  if (isReal(run)) {
+    const squad = run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !h.guest);
+    if (meta) squad.sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+    equipBestReal(run, meta, squad.map((h) => h.kind));
+    return;
+  }
   for (let again = true; again; ) {
     again = false;
     for (const g of [...(run.items ?? [])]) {
@@ -71,7 +112,7 @@ export function dressSquad(run: Run): void {
 }
 
 /** Gear owned by the run, worn or in the pack (a merge only moves it, so the difference over a run is what it found). */
-export const gearCount = (run: Run): number => (run.items?.length ?? 0) + run.roster.reduce((n, h) => n + Object.keys(h.gear ?? {}).length, 0);
+export const gearCount = (run: Run): number => (run.items?.length ?? 0) + (run.pack?.length ?? 0) + run.roster.reduce((n, h) => n + Object.keys(h.gear ?? {}).length, 0);
 
 /** Everything between two fights: the event, the summons while the gold lasts, the squad of the strongest, and its gear. Gear is optional so the balance report can leave it out. */
 export function autoRound(run: Run, meta: Meta, gear = true): void {
@@ -80,7 +121,7 @@ export function autoRound(run: Run, meta: Meta, gear = true): void {
   autoMerge(run);
   while (summon(run)) autoMerge(run);
   run.squad = pickSquad(run, meta).map((h) => h.id);
-  if (gear) dressSquad(run);
+  if (gear) dressSquad(run, meta);
 }
 
 /** The tiles the heroes may stand on, as `[u, v]`. Boulders are out; water and lava are left for last (`avoidTile`). */
@@ -155,11 +196,13 @@ export function autoFormation(board: Board, heroes: readonly { id: number; kind:
 /** Arranges the run's squad (`boostFor` gives a hero's whole boost, as the page places it; the plain grade, rank and level when unset) on the battle's deploy rows by `autoFormation` (taking back any hero already placed first). Returns the spots. */
 export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned) => Boost): Spot[] {
   for (const u of [...b.units]) if (u.side === 'hero') unplace(b, u.def, u.tag);
-  const squad = run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h);
+  // (one of each kind on the field: a squad from an older save with two of a kind sends the later one back to the bench, ONE-OF-EACH)
+  const squad = oneOfEach(run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h));
+  run.squad = squad.map((h) => h.id);
   const spots = autoFormation(b.board, squad);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
-    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (run.local ? localBoost(h) : boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
+    place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (h.guest && !run.local ? guestBoost(run, meta, h) : run.local ? localBoost(h, run) : botBoost(meta, h, run)));
   }
   return spots;
 }

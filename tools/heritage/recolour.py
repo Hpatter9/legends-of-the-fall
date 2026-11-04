@@ -26,6 +26,8 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 UNITS = os.path.join(ROOT, 'src', 'art', 'units')
 LAYOUT = json.load(open(os.path.join(UNITS, 'sheets.json')))
 CONFIG = json.load(open(os.path.join(os.path.dirname(__file__), 'heroes.json')))
+# Heroes whose sheets are made already in their tone, by another tool, and must not be re-toned here.
+DRAWN_IN_TONE = {'knight': 'tools/knight/plain.py', 'paladin': 'tools/paladin/plain.py'}
 
 
 def read_table():
@@ -57,21 +59,12 @@ def hsv(a):
     return h * 60, np.where(mx > 0, d / np.maximum(mx, 1e-6), 0), mx
 
 
-def mouth_mucosa(a):
-    """Open screaming mouths in hurt frames have saturated salmon/red tongues and lips that should not become skin."""
-    r, g, b = [a[..., i].astype(int) for i in range(3)]
-    return (r - g >= 95) & ((g - b) < (r - b) * 0.27)
-
-
-def window(a, w, exclude_mouth=False):
+def window(a, w):
     """The pixels whose colour could be the part at all (a loose hue, saturation and value window)."""
     h, s, v = hsv(a)
     # (a window that starts below 0 wraps round: pink shades sit just under red's 360)
     hue = ((h >= w[0]) | (h >= 360 + w[0])) & (h <= w[1]) if w[0] < 0 else (h >= w[0]) & (h <= w[1])
-    m = (a[..., 3] > 0) & hue & (s >= w[2]) & (s <= w[3]) & (v >= w[4]) & (v <= w[5])
-    if exclude_mouth:
-        m &= ~mouth_mucosa(a)
-    return m
+    return (a[..., 3] > 0) & hue & (s >= w[2]) & (s <= w[3]) & (v >= w[4]) & (v <= w[5])
 
 
 def lab(rgb):
@@ -141,40 +134,35 @@ def grow(m, r):
     return out
 
 
-def classify(images, part, win, skip=None, is_skin=False):
+def classify(images, part, win, skip=None):
     """The part's pixels on every sheet of a hero: taught by its boxes, then tidied (see the file's head). Pixels near
     a box teach nothing either way (the box is drawn tight inside the part, whose edge it does not know), and `skip`
     (the skin, when the hair is taught) is left out of both."""
     pos, neg = [], []
     taught = {}
-    neg_frames = set(tuple(x) for x in part.get('negatives', []))
     for sheet, k, x0, y0, x1, y1 in part['boxes']:
         taught.setdefault((sheet, k), []).append((x0, y0, x1, y1))
-        if k == 0:
-            neg_frames.add((sheet, k))
     for sheet, k in part.get('negatives', []):
         taught.setdefault((sheet, k), [])
     for (sheet, k), boxes in taught.items():
         l = LAYOUT[sheet]
         fx, fy = frame_origin(l, k)
         f = images[sheet][fy:fy + l['h'], fx:fx + l['w']]
-        m = window(f, win, exclude_mouth=is_skin)
+        m = window(f, win)
         inside = np.zeros_like(m)
         for x0, y0, x1, y1 in boxes:
             inside[y0:y1, x0:x1] = True
         if skip is not None:
             m &= ~skip[sheet][fy:fy + l['h'], fx:fx + l['w']]
-        if boxes:
-            pos.append(f[m & inside][:, :3])
-        if (sheet, k) in neg_frames:
-            neg.append(f[m & ~grow(inside, part.get('margin', 6))][:, :3])
+        pos.append(f[m & inside][:, :3])
+        neg.append(f[m & ~grow(inside, part.get('margin', 6))][:, :3])
     P = lab(np.concatenate(pos).astype(float))
     N = lab(np.concatenate(neg).astype(float)) if sum(len(n) for n in neg) else np.zeros((1, 3)) + 1e6
     bias = part.get('bias', 1.0)
     masks = {}
     for sheet in part['sheets']:
         a = images[sheet]
-        loose = window(a, win, exclude_mouth=is_skin)
+        loose = window(a, win)
         cols, inv = np.unique(a[loose][:, :3], axis=0, return_inverse=True)
         L = lab(cols.astype(float))
         dp, dn = nearest(L, P), nearest(L, N)
@@ -191,13 +179,6 @@ def classify(images, part, win, skip=None, is_skin=False):
         lab_, count = components(m)
         sizes = np.bincount(lab_.ravel(), minlength=count + 1)
         m &= sizes[lab_] >= part.get('minArea', 6)
-        for sheet_, k, x0, y0, x1, y1 in part.get('force', []):
-            if sheet_ == sheet:
-                fx, fy = frame_origin(LAYOUT[sheet], k)
-                sub = a[fy + y0:fy + y1, fx + x0:fx + x1]
-                _, _, v = hsv(sub)
-                fm = (sub[..., 3] > 200) & (v >= 0.35) & ~mouth_mucosa(sub)
-                m[fy + y0:fy + y1, fx + x0:fx + x1] |= fm
         for sheet_, k, x0, y0, x1, y1 in part.get('never', []):
             if sheet_ == sheet:
                 fx, fy = frame_origin(LAYOUT[sheet], k)
@@ -226,8 +207,14 @@ def recolour(a, m, ramp, lo, hi):
     return out
 
 
-SKIN_WINDOW = [-16, 38, 0.035, 0.7, 0.35, 1.0]
-SPREAD_WINDOW = [-20, 50, 0.02, 0.72, 0.35, 1.0]
+SKIN_WINDOW = [-15, 36, 0.04, 0.7, 0.35, 1.0]
+# The wider window the skin may spread into once it is found: it takes in the shades the teaching window leaves out (the
+# deepest shadow under the chin and hairline, the palest highlight and the warm cheek rim). The outline (value under
+# 0.2) and the lips and blush (hot, saturated reds and oranges) are never skin, so they keep their own colours.
+GROW_WINDOW = [-15, 36, 0.04, 0.98, 0.2, 1.0]
+# The palest highlights run cream-yellow (hue to 56) and white: they join only when the skin all but surrounds them.
+PALE_WINDOW = [-15, 56, 0.0, 0.32, 0.86, 1.0]
+LIP = {'sat': 0.78, 'val': 0.7, 'hue': 22}
 
 
 def run(hero, tones, hairs, looks, preview=None):
@@ -238,37 +225,46 @@ def run(hero, tones, hairs, looks, preview=None):
     out = {s: images[s].copy() for s in sheets}
     skin_part = dict(cfg['skin'], sheets=sheets)
     win = cfg['skin'].get('window', SKIN_WINDOW)
-    core = classify(images, skin_part, win, is_skin=True)
+    core = classify(images, skin_part, win)
     hairm = None
     if hair and 'hair' in cfg:
         hairm = classify(images, dict(cfg['hair'], sheets=sheets), cfg['hair']['window'], core)
     # (the skin's shaded rim is nearer in colour to hair and leather than to the lit face, so the skin then spreads a
     #  pixel or two into skin-like pixels that are not hair: the cheek's edge, the nostril, the neck's shadow)
     skin = {}
+    gwin = cfg['skin'].get('grow', GROW_WINDOW)
+    lip = dict(LIP, **cfg['skin'].get('lip', {}))
     for s in sheets:
         a = images[s]
-        room = window(a, cfg['skin'].get('window', SPREAD_WINDOW), exclude_mouth=True)
+        strict = window(a, win)
+        room = strict | window(a, gwin)
+        h_, s_, v_ = hsv(a)
+        # (lips, blush and other hot, saturated reds are features, not skin: they keep their colours)
+        room &= ~((s_ >= lip['sat']) & (v_ >= lip['val']) & ((h_ <= lip['hue']) | (h_ >= 340)))
+        # (and the deeper rose of a lip or a blush: red, not the orange of shaded skin)
+        room &= ~((s_ >= 0.45) & (v_ >= 0.55) & ((h_ <= 9) | (h_ >= 340)))
         if hairm is not None:
             room &= ~hairm[s]
-        for sheet_, k, x0, y0, x1, y1 in skin_part.get('never', []):
-            if sheet_ == s:
-                fx, fy = frame_origin(LAYOUT[s], k)
-                room[fy + y0:fy + y1, fx + x0:fx + x1] = False
-        m = core[s].copy()
-        for _ in range(cfg['skin'].get('spread', 3)):
-            m = m | (room & (neighbours(m) > 0))
-        # Also absorb tiny enclosed specular highlight pinholes (1-4 px) ringed by skin (>= 5 skin neighbours)
-        _, s_ch, v_ch = hsv(a)
-        hi_room = (window(a, [-25, 52, 0.0, 0.75, 0.45, 1.0], exclude_mouth=True)
-                   | ((a[..., 3] > 200) & (s_ch <= 0.16) & (v_ch >= 0.45) & ~mouth_mucosa(a)))
+        m = core[s]
+        # (a pixel the teaching window already counts as skin-like may be cream cloth or a pale cuff: the skin spreads only
+        #  `spreadLit` pixels into those, and `spread` into the deeper and warmer shades the teaching window left out)
+        for i in range(cfg['skin'].get('spread', 3)):
+            lit_ok = i < cfg['skin'].get('spreadLit', 1)
+            m = m | ((room if lit_ok else room & ~strict) & (neighbours(m) > 0))
+        # (pale highlights ringed by skin on four sides or more are the face's own; a cuff's straight edge touches only three)
+        for _ in range(3):
+            m = m | (room & (neighbours(m) >= cfg['skin'].get('ring', 4)))
+        # (the face's palest sparkles are near white and have no hue; they join only when the skin all but surrounds them,
+        #  so an eye's white, which the dark iris and lid keep apart from the skin, never does)
+        white = window(a, cfg['skin'].get('pale', PALE_WINDOW)) | ((a[..., 3] > 0) & (s_ < 0.04) & (v_ >= 0.8))
         if hairm is not None:
-            hi_room &= ~hairm[s]
+            white &= ~hairm[s]
         for _ in range(2):
-            m = m | (hi_room & ~m & (neighbours(m) >= 5))
+            m = m | (white & (neighbours(m) >= cfg['skin'].get('sparkle', 4)))
         skin[s] = m
     # (the lightness range of the taught skin sets where the ramp starts and ends, the same for every sheet of the hero)
-    allpx = np.concatenate([images[s][core[s]][:, :3] for s in sheets]).astype(float)
-    lo, hi = np.percentile(luma(allpx), [3, 99])
+    allpx = np.concatenate([images[s][skin[s]][:, :3] for s in sheets]).astype(float)
+    lo, hi = np.percentile(luma(allpx), [1, 99.5])
     for s in sheets:
         out[s] = recolour(out[s], skin[s], tones[tone], lo, hi)
     if hairm is not None:
@@ -316,6 +312,11 @@ def main():
         del args[i:i + 2]
     tones, hairs, looks = read_table()
     for hero in args or [h for h in CONFIG if looks.get(h) and looks[h][0] != 'source']:
+        if hero in DRAWN_IN_TONE:
+            # (his sheets are made from his awakened ones, already drawn in his tone: re-toning them again would darken
+            #  his skin twice. tools/knight/plain.py writes both the source and the re-toned copy; docs/notes/knight-sprite.md)
+            print(f'{hero}: drawn in its tone already ({DRAWN_IN_TONE[hero]}); skipped')
+            continue
         run(hero, tones, hairs, looks, preview)
     write_map(looks)
 

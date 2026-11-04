@@ -1,0 +1,41 @@
+/* ===== STATS batch 3: the hero sheet's Stats panel (`statsPanel.ts`) and the unit card's score row. Inlined after relicCard.css by build.mjs.
+   Compact: one row of six tiles, a three-wide figure grid, one line of saves, one line of words a tap opens. ===== */
+.stPanel { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #151a13; border: 1px solid #6e6243; border-radius: 3px; min-width: 0; }
+.stHead { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.stHead b { font: 700 16px var(--display, var(--body)); color: var(--kk-gold, #f5c542); }
+.stHead span { font: 700 12px var(--body); color: var(--kk-muted, #b8ad94); }
+.stLead { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.stLead div { padding: 4px 2px; background: rgb(var(--black-rgb) / 0.35); border-radius: 3px; }
+.stLead b { display: block; font: 700 16px var(--body); color: var(--kk-text, #f0e6d2); }
+.stLead small { font-size: 11px; color: var(--dim, #b8ad94); }
+.stTiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.stTile, .stFig { display: flex; flex-direction: column; align-items: center; min-width: 0; padding: 4px 1px; background: #0e130c; border: 1px solid #4b4d39; border-radius: 3px; color: inherit; font: inherit; cursor: pointer; }
+.stTile small, .stFig small { font: 700 10px var(--body); letter-spacing: .06em; color: var(--kk-muted, #b8ad94); }
+.stTile b { font: 700 18px/1.1 var(--body); color: var(--kk-text, #f0e6d2); }
+.stTile em { font: 700 12px var(--body); font-style: normal; color: #9bd68f; }
+.stTile.prime { border-color: var(--kk-gold, #f5c542); box-shadow: inset 0 0 0 1px #f5c54255; }
+.stTile.weak { border-color: #3a3a30; }
+.stTile.weak b, .stTile.weak small { opacity: .65; }
+.stTile[aria-pressed='true'], .stFig[aria-pressed='true'] { background: #243420; border-color: #bda16c; }
+.stFigs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 4px; }
+.stFig { flex-direction: row; justify-content: space-between; gap: 4px; padding: 5px 7px; }
+.stFig b { font: 700 14px var(--body); color: var(--kk-text, #f0e6d2); }
+.stSaves { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font: 700 12px var(--body); color: var(--kk-muted, #b8ad94); }
+.stSaves small { font: 700 11px var(--body); letter-spacing: .06em; }
+.stSaves .trained { color: var(--kk-gold, #f5c542); }
+.stWhy { margin: 0; min-height: 2.6em; font-size: 13px !important; line-height: 1.3 !important; color: var(--kk-muted, #b8ad94); }
+.stNext { font: 12px var(--body); color: var(--kk-gold, #f5c542); }
+.heroDetail .hstats.four .hspeed { grid-column: span 3; }
+
+/* the unit card's row of six scores */
+.uiScores { margin: 4px 0; }
+.uiScoreRow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; text-align: center; }
+.uiScoreRow span { display: flex; flex-direction: column; padding: 2px 0; background: rgb(var(--black-rgb) / 0.35); }
+.uiScoreRow small { font-size: 10px; color: var(--text-dim, #b8ad94); }
+.uiScoreRow b { font: 400 14px var(--body); color: var(--text, #f0e6d2); }
+.uiScoreRow em { font-style: normal; font-size: 11px; color: #9bd68f; }
+.uiRolls { display: block; margin-top: 3px; font-size: 12px; color: var(--text-dim, #b8ad94); }
+
+.jrBody .jrStat .jrWhy { color: #9c8454; font: 400 10px var(--body); letter-spacing: 0; }
+@media (prefers-reduced-motion: reduce) { .stTile, .stFig { transition: none; } }
+.eqScore { display: block; color: #9bd68f; font: 12px var(--body); }

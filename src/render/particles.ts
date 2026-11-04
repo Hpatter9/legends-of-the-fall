@@ -53,7 +53,13 @@ interface Live {
   span: number;
   /** The `cover` multiplier, fixed when it starts. */
   k: number;
+  /** Where its own drift has taken it, apart from the pose's lift (a painted still rises, falls and leans on top of this: `paintedPose`). */
+  bx: number;
+  by: number;
 }
+
+/** Whether a bit is drawn squashed (a ground ring): a turned squash would spin its ellipse, so it does not turn. */
+const flatOf = (b: Burst): boolean => b.stretchX !== undefined && b.stretchY !== undefined && Math.abs(b.stretchX) !== Math.abs(b.stretchY);
 
 export class Particles {
   readonly root = new Container();
@@ -97,12 +103,13 @@ export class Particles {
     sp.alpha = (b.alpha ?? 1) * k;
     sp.texture = b.frames[0];
     sp.scale.set(b.scale ?? 1);
-    paintSprite(sp, 0, b.life ?? b.frames.length * (b.frameMs ?? 70), b.scale ?? 1, b.rotation ?? 0, (b.alpha ?? 1) * k, b.loop ?? false, this.calm);
+    const pose = paintSprite(sp, 0, b.life ?? b.frames.length * (b.frameMs ?? 70), b.scale ?? 1, b.rotation ?? 0, (b.alpha ?? 1) * k, b.loop ?? false, this.calm, flatOf(b));
+    if (pose) sp.position.set(b.x + pose.dx * 32 * (b.scale ?? 1), b.y + pose.dy * 32 * (b.scale ?? 1));
     sp.scale.x *= b.stretchX ?? 1;
     sp.scale.y *= b.stretchY ?? 1;
     this.root.addChild(sp);
     const frameMs = b.frameMs ?? 70;
-    this.live.push({ sp, b, scale: b.scale ?? 1, t: -(b.delay ?? 0), vy: b.vy ?? 0, frames: b.frames.length, span: b.life ?? b.frames.length * frameMs, k });
+    this.live.push({ sp, b, scale: b.scale ?? 1, t: -(b.delay ?? 0), vy: b.vy ?? 0, frames: b.frames.length, span: b.life ?? b.frames.length * frameMs, k, bx: b.x, by: b.y });
   }
 
   /** Step every live one by `dt` ms; the ones that are done go back in the pool. */
@@ -119,8 +126,9 @@ export class Particles {
       const { b, sp } = p;
       sp.visible = true;
       p.vy += (b.gravity ?? 0) * dt;
-      sp.x += (b.vx ?? 0) * dt;
-      sp.y += p.vy * dt;
+      p.bx += (b.vx ?? 0) * dt;
+      p.by += p.vy * dt;
+      sp.position.set(p.bx, p.by);
       if (b.spin) sp.rotation += b.spin * dt;
       p.scale = Math.max(0.05, p.scale + (b.grow ?? 0) * dt);
       sp.scale.set(p.scale);
@@ -130,7 +138,8 @@ export class Particles {
       // (a fade over the last third, so a puff thins out instead of popping)
       const left = 1 - p.t / p.span;
       sp.alpha = (b.alpha ?? 1) * p.k * Math.min(1, left * 3);
-      paintSprite(sp, p.t, p.span, p.scale, (b.rotation ?? 0) + (this.calm ? 0 : (b.spin ?? 0) * p.t), (b.alpha ?? 1) * p.k, b.loop ?? false, this.calm);
+      const pose = paintSprite(sp, p.t, p.span, p.scale, (b.rotation ?? 0) + (this.calm ? 0 : (b.spin ?? 0) * p.t), (b.alpha ?? 1) * p.k, b.loop ?? false, this.calm, flatOf(b));
+      if (pose) sp.position.set(p.bx + pose.dx * 32 * p.scale, p.by + pose.dy * 32 * p.scale);
       sp.scale.x *= b.stretchX ?? 1;
       sp.scale.y *= b.stretchY ?? 1;
     }

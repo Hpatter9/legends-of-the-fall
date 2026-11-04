@@ -1,3 +1,132 @@
+# Cinematics
+
+## CINE-001: shot language, every story scene cut as a film
+
+The owner: "Let's make cinematics for it. But make the cinematics more epic, and movie-like. Different camera angles, close-ups,
+lines." Asked which: "All story scenes." Branch `claude/cinematics`.
+
+### What the player sees
+
+- **Every scene is cut as a film.** An establishing wide shot first; whoever speaks in close-up (a hero's **painted portrait** filling
+  the picture, the land behind thrown out of focus; a foe, a boss, the king or Duchess drawn large and sharp from their own sheets);
+  over-the-shoulder shots when two trade lines; a reaction shot (a held look at the hero) after a boss roars; a boss **seen from the
+  ground** as it comes on, its name and title on a **title card**; a **Dutch tilt** when a villain menaces; a slow **push in** on a
+  hero's resolve; and a **smash cut** to black straight into the fight. Quest givers (Gwen, the pedlar, the hunter, the pilgrim) speak
+  with their face over the picture.
+- **The air and the light.** Each land's weather drifts through the picture (embers on the volcano and the forge, ash over the war
+  camp, snow, rain in the swamp and the graveyard, dust in the desert and the ruins, motes in the dungeons and temples, leaves in
+  autumn); shafts of light slant through the wide views of the bright lands; a vignette; the land's own boulders, dark and out of
+  focus, at the edges of the wide views; the letterbox closes in on a close-up.
+- **Lines that feel spoken.** Typed at the pace of their punctuation (a breath at a comma, a stop at a full stop, longer at a dash or
+  an ellipsis); a word marked `*so*` is said with weight (brighter, a touch slower); a faint blip in the speaker's voice under the
+  typing (the narrator's quill, a hero's, a boss's growl, a beast's, the king's, the goat's); beats of silence (`say(..., tone, beat)`);
+  the score held down while a line is said.
+- **Sound.** A hit on a smash cut, a whoosh through a flash and a snap zoom, a swell under every low-angle reveal, on top of the scenes'
+  scores and stings.
+- **Controls.** A tap finishes the line, the next goes on; **holding a finger down** (a ring fills, 650 ms) or **Skip** ends the scene;
+  Escape too. The Cinematics setting is kept as it was: quest stories always play (they explain the quest); everything else follows the
+  setting (off: the old boss card, the old act card). **Reduced motion:** nothing moves, tilts or zooms, every cut is a cross-fade, no
+  smash at the end, the lines appear whole. **Battery saver:** a third of the motes, no blur, no light rays, the canvas at 2x at most.
+
+### The shot vocabulary (`src/sim/sceneKit.ts`)
+
+| Field | Values |
+| --- | --- |
+| `angle` (framing) | `wide` establishing; `medium` knees up; `two` a pair; `close` one face; `extreme` the eyes; `ots` over the shoulder; `low` from the ground, looking up; `high` from above; `dutch` tilted |
+| `subject` | the actor the framing is on (else the speaker, else the camera's `on`) |
+| `move` | `still`, `pushIn`, `pullOut`, `pan`, `track`, `rack` (focus pulled from the land to the subject), `snapZoom`, `drift`, `shake` (hand-held) |
+| `cut` (into the shot) | `cut`, `match`, `fade`, `smash` (through black, with a hit), `flash` (through white), `dissolve` (cross-fade) |
+| `weather` | `embers`, `snow`, `rain`, `dust`, `motes`, `ash`, `leaves`, `none` (left out: the land's own) |
+| `rays`, `title` | light shafts; a title card `{ over, name }` (the act over the room; a boss's title over its name) |
+| `Scene.out` | `smash` (into the fight) or `fade` at the scene's end |
+| `Line.beat`, `*emphasis*` | a silence after the line; a word said with weight |
+| role `face:<giver>` | a quest giver heard over the scene, their face shown as they speak |
+
+The old fields (`cam`, `to`, `acts`, `fx`, `cue`, `caption`, `lines`, `hold`, `slow`) work as before.
+
+### How to author a scene
+
+Write it as before; frame the shots that matter with `shoot(angle, subject?, move?, cut?)`:
+
+```ts
+{ cam: wide(420, 205), ...shoot('low', 'oni', 'pushIn', 'smash'), acts: [{ who: 'oni', enter: 420, from: 'right' }], cue: 'boom',
+  title: { over: 'Toll-Keeper of the Eastern Span', name: 'The Bridge Oni' }, lines: [tell('At the far end, something with a club and a ledger has set up a toll.')] },
+{ cam: close('oni'), ...shoot('dutch', 'oni', 'drift'), lines: [say('oni', 'One coin a head. You have *two* heads. I will take both.', 'shout')] },
+```
+
+Leave the rest to the **director** (`src/sim/cineDirector.ts`, `direct(scene, { calm })`, pure): a shot without an `angle` and with
+several lines is split into a shot a line (the first keeps the written framing; the rest are the speaker's close-up, over the
+shoulder when two trade lines, a big foe's shout from below or tilted, a whisper in tight, the narrator back on the master view; acts
+waiting for a line go with it, a held pose is held on); a big foe coming on (`scale >= 1.3`, not a hero) is a low angle through a smash
+cut, named on a title card in a boss scene; a reaction close-up (0.9 s, two a scene at most) follows a big foe's shout; every shot gets
+its move, its cut (a fade first, a dissolve where the land changes), its weather and rays; a boss scene ends on a smash cut. The lines,
+their order and their time are kept (a test holds it: a directed scene is the written one plus its reactions). The player directs
+every scene as it plays it (`ScenePlayer.play`), and the preview frames (`__game.sceneFrames`) are the directed scene's.
+
+### The numbers (`src/render/cineShots.ts`, pure, for anyone to reuse)
+
+`frame(angle, move, base, aim, t, len, calm)` is the whole camera: where a framing looks (`ZOOM_OF`, `AIM_OF` on the subject's figure),
+how a move changes it over the shot, the tilt and the land's blur. `cutVeil(cut, t)` and `outVeil(out, left)` are the cuts and endings,
+`typeTimes`/`typedCount`/`emphasis` the words, `VOICE_CUE`/`blipsBetween` the voices, `pressOf` the hold to skip, `weightOf` what a
+battery saver and reduced motion leave out. **For the War Horn and Eidolon call** (`claude/war-horn`): a moment of its own can frame its
+shots with `frame()` and come in with `cutVeil()`, or be written as a `Scene` and played by `ScenePlayer`. The call as merged
+(`src/eidolonCall.ts`, `eidolonRules.ts` `shotAt`/`BOARD_ZOOM`) frames the live board and DOM layers with its own named shots; its
+easing, its reduced-motion and saver rules map onto `easeInOut`, `weightOf` and `cutVeil` one for one, but moving it over is a change of
+its own (left alone here).
+
+### The player (`src/render/sceneView.ts`)
+
+The pixel stage is drawn sharp at the next whole-number size into a texture, then eased down to the camera's real size (and tilt), so
+a slow push in glides without the pixels crawling. (This replaces the old rule of whole-number scales only and no tilt: the owner asked for
+camera moves and angles; the pixels stay square in every frame, softened by at most a screen pixel at the edges.) A hero's close-up is
+the portrait cutout `heroes/<kind>-portrait.webp` (or `heroes/awakened-<kind>.webp` once awakened), framed on its head (found by
+scanning the picture's paint; seven heads set by eye, `FACE_AT`); every file is already in the service worker's list. Quest givers' faces
+are `questArt.ts`'s (Gwen's talking frames from her sheet). A dissolve keeps the last picture in a second texture. Particles, rays, the
+vignette and the veils are a few `Graphics` redrawn each frame (no allocation per mote). The page's HUD (`#cutscene`) is one for the page,
+shared by the Last Stand's player.
+
+### Scenes rewritten or added
+
+- **Quest battles** (all eleven, `questBattleData.ts`): each story before rewritten in shots (an opening wide, close-ups for every line,
+  the boss's low-angle entrance with its title card, a closing beat, a smash cut into the fight), with new lines where they were thin
+  (the Bridge Oni's toll, Captain Brine's bill, Ravi's matches, Zofia's small print, Mr Quill's "initial here", the Conductor's
+  *FORTISSIMO*, Vesper's "Then I shall deliver it", the Sweeper's "OFF. THE. FLOOR."); the givers speak their own openings (the pedlar,
+  the hunter twice, Gwen, the pilgrim); each beat after framed and closing on a pull-out.
+- **Army intros** (new, nine: `intro:<army>`, family "The armies on the march", moment `armyIntro`): the first time a run of an army is
+  set up (wave 1), once a save; an army whose last stand was already seen is not introduced. The land, an underling, the warlord's
+  low-angle entrance with its title card, its boast tilted, the underling's aside, a hero's answer, a smash cut.
+- **Boss arrivals** (new, `cineMoments.ts` `arrivalScene`): with cinematics on, a boss's first meeting (the boss card's own once-a-save
+  rule, `cardDue`) is a six-second villain entrance (the ground trembling through black, the figure from below with its name and title,
+  its line tilted and too close, a smash cut) in place of the slam-down card, unless a scene has just introduced it (a herald). Every
+  boss with a title has its own line (`ARRIVAL_LINES`); quest bosses and named elites use their own names and titles.
+- **The Last Stand's act cards** (`actScene`): with cinematics on, each new room is a short film: "Act II" over "The Library" through
+  black, the king and the heroes coming in, the ruler's line in close (the same `roomLine` as the card), Duchess's aside, the heroes from
+  below, a smash cut back into the fight. Cinematics off: the old card.
+- **The opening**: a title card ("Legends of" over "The Last Keep"), the warlord's low-angle entrance, a snap zoom on the hero who wants
+  to stand three miles back, a pull-out on "The first army was on the road."
+- **The heralds and Gorvak**: the director's coverage, each herald named on a title card as it comes on, Gorvak's strike from below.
+- **The armies' last stands**: the beaten boss seen from above, its last words tilted, a pull-out to close. **Awakenings**: a rack
+  focus onto the hero, then the light from below. **Forms**: a snap zoom from below, then the line tilted. **The Last Stand's
+  milestones**: the king's resolve from below. **Everything else** (the Calamity's reveal and end, the first loss, the firsts, the castle,
+  the Last Oaths): the director's coverage.
+- A data fix: the Duchess fight scene's foe flinched on a line its shot did not have (it never flinched); now on the shot.
+
+### Tests and checks
+
+`test/cine-shots.test.ts` (15 tests): the director keeps every line and its time (plus at most two reactions); every directed shot of
+every scene (the table, the 22 quest stories, the arrivals, the act cards) has a framing, a move, a cut and its air; the split, the
+close-ups, the boss from below with its card and the reaction; a framed shot kept; reduced motion (no moves, no tilt, cross-fades, no
+smash, a still camera); the camera's framings and moves; cuts and endings; the typing's pauses and emphasis; hold to skip; the battery
+saver; a directed scene played through by the clock and by taps; every army's intro due once; every arrival and act card short with a
+smash out; the quest stories' boss entrances. The existing cinematics, scene-fixes and quest-battles tests still pass unchanged; the writer's copy of the scenes,
+`docs/lines/new-lines.json`, is brought in step with the new and rewritten lines (`test/new-lines.test.ts`).
+
+Frame strips: `docs/samples/cine-*.png` (393x852; `-360` and `-412` at the other sizes; `-calm` with reduced motion), made by
+`node tools/cinematics/cine-strips.mjs out/web <raw> --sizes=393,360,412` and `python3 tools/cinematics/cine-strip.py <raw> <id> <out>`
+(the script also checks for page errors, sideways overflow, Skip and the held finger).
+
+---
+
 # Cinematics (the pilots, and every scene since)
 
 The owner's ask: "Let's explore adding some cinematics." This note is the proposal: what the player sees, how a scene is

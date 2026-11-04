@@ -69,7 +69,7 @@ test('the king and the foes of the Last Stand have six and eight lines a moment,
   }
 });
 
-test('Duchess says only Mehh and Nom (and, in brackets, what she means)', () => {
+test('Duchess says only Mehh and Nom (and, in brackets, what she means), bar the opening one Baaaah', () => {
   const word = /^(?:m+e+h+(?:-heh)*|meh-meh|n+o+m+)[.!?,]*$/i;
   const check = (t: string, where: string) => {
     const spoken = t.replace(/\([^)]*\)/g, ' ').split(/\s+/).filter(Boolean);
@@ -84,7 +84,7 @@ test('Duchess says only Mehh and Nom (and, in brackets, what she means)', () => 
     }
   }
   assert.equal(DUCHESS_LINES.ate.length, 25);
-  for (const id of SCENE_ORDER) for (const sh of SCENES[id].shots) for (const l of sh.lines ?? []) if (l.who === 'duchess') assert.equal(l.text, 'Mehh.', id);
+  for (const id of SCENE_ORDER) for (const sh of SCENES[id].shots) for (const l of sh.lines ?? []) if (l.who === 'duchess') assert.match(l.text, /^(Mehh|Baaaah)\.$/, id);
 });
 
 test('the machines and Gorvak shout in capitals, and the shambler hrrngh', () => {

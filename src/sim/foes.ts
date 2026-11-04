@@ -5,6 +5,7 @@
 // `FIELD_BANDS` are the bands of ordinary stages, in turn; `BOSS_BANDS` the bosses, one per boss stage, in turn.
 
 import type { UnitDef } from './units';
+import { TRIALS } from './eidolonTrials';
 
 const WOLF = { side: 'foe', hp: 250, atk: 24, def: 4, range: 1, moveMs: 380, atkMs: 800, jump: 3, role: 'Fast, leaps ledges' } as const;
 const MINOTAUR = { side: 'foe', hp: 440, atk: 27, def: 9, range: 1, moveMs: 900, atkMs: 1400, jump: 2, role: 'Tanky, heavy blows' } as const;
@@ -121,10 +122,19 @@ export const FOES: Record<string, UnitDef> = {
   shamanKing: { ...SHAMAN_KING, id: 'shamanKing', name: 'Shaman King', sheet: 'shaman_king', scale: 0.5, hp: 8400, atk: 130 },
 };
 
+// (EIDOLON-TRIAL: each Eidolon's trial brings the Eidolon as a fighter of its own, `eidolonTrials.ts`)
+for (const t of TRIALS) {
+  const { title: _title, ...def } = t.boss;
+  FOES[def.id] = def;
+}
+/** The Eidolons as the bosses of their trials (kept out of the list below, which is the meta's boss codex). */
+const TRIAL_BOSSES: ReadonlySet<string> = new Set(TRIALS.map((t) => t.boss.id));
+
 /** The bosses' ids: the first foe of a boss band is one of these. */
 export const BOSS_IDS: readonly string[] = ['orcWarlord', 'demonLord', 'hornedOgre', 'forestBoss1', 'forestBoss2', 'forestBoss3', 'boarKing', 'devilLeader', 'shamanKing', 'orcChieftain', 'boneCaptain', 'alphaWolf', 'gorgonQueen', 'lichKing', 'minotaurChampion', 'nineTails', 'oniKing', 'sapphireColossus', 'forgeTitan'];
-/** A boss: one of the list above, or one of the calamity's own (`calamityBosses.ts`, kept out of the list: it is the meta's boss codex). */
-export const isBoss = (id: string) => BOSS_IDS.includes(id) || id.startsWith('calBoss');
+/** A boss: one of the list above, one of the calamity's own (`calamityBosses.ts`, kept out of the list: it is the meta's boss codex), or an
+ *  Eidolon in its trial. */
+export const isBoss = (id: string) => BOSS_IDS.includes(id) || id.startsWith('calBoss') || TRIAL_BOSSES.has(id);
 
 /** The bands a fight can meet: five foes each, by their ids in `UNITS`. The boss bands are below (their first foe is the boss). */
 export const FOE_BANDS: Record<string, string[]> = {
@@ -134,7 +144,7 @@ export const FOE_BANDS: Record<string, string[]> = {
   gorgons: ['gorgon1', 'gorgon2', 'gorgon3', 'gorgon1', 'gorgon2'],
   satyrs: ['satyr1', 'satyr2', 'satyr3', 'satyr1', 'satyr2'],
   mixed: ['wolfRed', 'minotaur1', 'gorgon1', 'satyr1', 'minotaur2'],
-  orcs: ['orcGrunt', 'orcGrunt', 'orcArcher', 'orcBrute', 'orcGrunt'],
+  orcs: ['orcGrunt', 'orcBrute', 'orcArcher', 'orcBrute', 'orcGrunt'], // (the joint rebalance: a grunt to a brute, so the starting five win about 75% here again once the brutes' AC 12 showed, docs/notes/joint-rebalance.md)
   demons: ['imp', 'imp', 'demon', 'imp', 'demon'],
   ogres: ['ogre', 'imp', 'ogre', 'imp', 'ogre'],
   orcWarlord: ['orcWarlord', 'orcGrunt', 'orcArcher', 'orcGrunt', 'orcBrute'],

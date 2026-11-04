@@ -68,7 +68,8 @@ test('a merchant sells for gold, stays open, and cannot be robbed', () => {
   assert.ok(run.event, 'the stall stays open');
   assert.equal(chooseOption(run, 0), null, 'sold');
   assert.ok(chooseOption(run, 1));
-  assert.equal(run.items!.length, 1);
+  // (RUN-GEAR: a new run's piece is a real one, in its pack)
+  assert.equal(run.pack!.length, 1);
   assert.equal(run.relics!.length, 1);
   assert.equal(chooseOption(run, 2) !== null && run.event === undefined, true, 'leaving closes it');
 });
@@ -77,7 +78,7 @@ test('a chest gives a relic, gear or gold', () => {
   const run = runWith('chest');
   const before = run.gold;
   assert.ok(chooseOption(run, 0));
-  assert.ok((run.relics?.length ?? 0) + (run.items?.length ?? 0) === 1 || run.gold > before);
+  assert.ok((run.relics?.length ?? 0) + (run.pack?.length ?? 0) === 1 || run.gold > before);
   assert.equal(run.event, undefined);
 });
 
@@ -92,7 +93,7 @@ test('a cursed path toughens the foes and pays a prize for a win', () => {
   const g = run.gold;
   finish(run, true);
   assert.ok(run.gold >= g + gold);
-  assert.equal(run.items!.length, 1);
+  assert.equal(run.pack!.length, 1);
   assert.equal(run.buff, undefined);
 });
 
@@ -112,7 +113,7 @@ test('a boss stage drops a sure piece of gear, and leaving takes nothing', () =>
   const run = newRun(21);
   run.stage = 5;
   finish(run, true);
-  assert.equal(run.items!.length, 1);
+  assert.equal(run.pack!.length, 1);
   assert.equal(run.found!.length, 1);
   assert.equal(run.event, undefined);
   run.event = drawEvent(run, 2);

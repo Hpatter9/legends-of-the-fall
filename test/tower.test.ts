@@ -182,7 +182,8 @@ test('a shop: buying spends gold, a piece is sold once, and a poor party cannot 
   assert.ok(run.roster.length > heroes || run.roster.some((h) => h.grade > 1), 'a hero joins, or merges up');
   const gear = stock.findIndex((s) => s.kind === 'gear');
   assert.ok(buy(run, gear));
-  assert.equal(run.items!.length, 1);
+  // (RUN-GEAR: a real piece, in the pack)
+  assert.equal(run.pack!.length, 1);
 });
 
 test('a shop sells healing: the draught a share, the elixir all of it', () => {
@@ -209,7 +210,7 @@ test('treasure: the chest gives its gold and a relic or gear, once', () => {
   const lines = openTreasure(run)!;
   assert.ok(run.gold > before);
   assert.ok(lines.length >= 2);
-  assert.ok((run.relics?.length ?? 0) + (run.items?.length ?? 0) >= 1);
+  assert.ok((run.relics?.length ?? 0) + (run.pack?.length ?? 0) >= 1);
   assert.equal(openTreasure(run), null);
 });
 

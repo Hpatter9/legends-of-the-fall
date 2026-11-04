@@ -42,21 +42,26 @@ test('Start over wipes every run in progress: the ordinary one and the spire and
   assert.ok(!SAVE_KEYS.includes('legends.settings') && !SAVE_KEYS.includes('legends.sound'));
 });
 
-test('the chosen ruler is saved by identity; missing and malformed choices get the classic king, a saved Iron Stag never picked becomes the classic king', () => {
-  assert.equal(parseSettings(null).ruler, 'the_king');
-  assert.equal(parseSettings('{"music":40}').ruler, 'the_king', 'settings saved before the rulers');
+test('the chosen ruler is saved by identity; missing and malformed choices get the Iron Stag', () => {
+  assert.equal(parseSettings(null).ruler, 'iron_stag');
+  assert.equal(parseSettings('{"music":40}').ruler, 'iron_stag', 'settings saved before the rulers');
   assert.equal(parseSettings('{"ruler":"frost_witch"}').ruler, 'frost_witch');
-  assert.equal(parseSettings('{"ruler":"iron_stag"}').ruler, 'the_king', 'the old default moves to The King');
+  assert.equal(parseSettings('{"ruler":"iron_stag"}').ruler, 'iron_stag');
   for (const ruler of [null, 2, {}, 'lichKing', 'unknown']) {
-    assert.equal(parseSettings(JSON.stringify({ ruler })).ruler, 'the_king');
+    assert.equal(parseSettings(JSON.stringify({ ruler })).ruler, 'iron_stag');
   }
 });
 
-// The King became the default in 0.212.0; before that every saved setting carried Iron Stag, so a saved Iron Stag without a
-// pick in the picker is read as the old default and moves to The King once (the owner's call). A real pick sticks.
-test('a saved Iron Stag never picked moves to The King; a picked one, or any other ruler, stays', () => {
-  assert.equal(parseSettings('{"ruler":"iron_stag"}').ruler, 'the_king');
-  assert.equal(parseSettings('{"ruler":"iron_stag","rulerPicked":true}').ruler, 'iron_stag');
+// The King was retired in DEFAULT-RULER (the owner's call): a save that chose him loads as the Iron Stag, quietly, with every other setting kept.
+test('a saved The King loads as the Iron Stag and keeps every other setting', () => {
+  const saved = { ruler: 'the_king', rulerPicked: true, music: 40, effects: 25, speed: 2, shake: false, quips: false };
+  const got = parseSettings(JSON.stringify(saved));
+  assert.equal(got.ruler, 'iron_stag');
+  assert.deepEqual({ ...got, ruler: 'x' }, { ...parseSettings(JSON.stringify({ ...saved, ruler: 'iron_stag' })), ruler: 'x' });
+  assert.equal(got.music, 40);
+  assert.equal(got.speed, 2);
+  assert.equal(got.shake, false);
+  assert.equal(parseSettings('{"ruler":"the_king"}').ruler, 'iron_stag', 'a King never picked in the picker too');
   assert.equal(parseSettings('{"ruler":"sun_viper"}').ruler, 'sun_viper');
   assert.equal(parseSettings('{"ruler":"iron_stag","rulerPicked":true}').rulerPicked, true);
 });

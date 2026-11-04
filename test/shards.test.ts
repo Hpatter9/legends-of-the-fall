@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { statMults } from '../src/sim/statPower';
 import assert from 'node:assert/strict';
 import { place, startBattle } from '../src/sim/battle';
 import { loadMeta, MAX_RANK, startedMeta, pullOnce, rankMult, rankOf, RANK_MULT, saveMeta } from '../src/sim/meta';
@@ -55,8 +56,11 @@ test('the rank bonus reaches the fight: a ranked hero has more hp and attack', (
   const plain = b.units.find((u) => u.tag === 1)!;
   const ranked = b.units.find((u) => u.tag === 2)!;
   assert.equal(plain.maxHp, UNITS.knight.hp);
-  assert.equal(ranked.maxHp, Math.round(UNITS.archer.hp * rankMult(4)));
-  assert.ok(Math.abs((ranked.power ?? 1) - rankMult(4)) < 1e-9);
+  // (and the rank's score steps, DEX and WIS +3 for the Archer: STATS batch 2)
+  const st = statMults('archer', { rank: 4 });
+  assert.ok(st.blow > 1);
+  assert.equal(ranked.maxHp, Math.round(UNITS.archer.hp * rankMult(4) * st.hp));
+  assert.ok(Math.abs((ranked.power ?? 1) - rankMult(4) * st.blow) < 1e-9);
 });
 
 test('a saved meta without shards loads with none, and junk shards are dropped', () => {

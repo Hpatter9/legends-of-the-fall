@@ -69,7 +69,8 @@ test('a healer at level 10 raises the nearest fallen friend at 30%: cleansed, it
   assert.ok(Math.abs(resOf(near) - RES.STAM_START) < 1e-6, 'its pool is back to its start');
   assert.ok((near.hideUntil ?? 0) >= b.t + REVIVE.RISE_MS && near.busyUntil >= b.t + REVIVE.RISE_MS, 'it cannot be targeted while it gets up');
   assert.ok(Math.abs(before - resOf(me) - reviveCost(heroKitOf(me)!)) < 1e-6, 'it costs skill 2 and 20 more');
-  assert.equal(reviveCost(heroKitOf(me)!), 80);
+  // (the skills overhaul's batch 2 set Prayer of Healing at 46 MP, a utility's cost: 60 before, so the revive was 80)
+  assert.equal(reviveCost(heroKitOf(me)!), 66);
 });
 
 test('below level 10 there is no revive; nor when it cannot pay', () => {

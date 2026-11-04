@@ -3,6 +3,10 @@
 // merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { ritesSpent } from './chapelRooms';
+import { roomOpen } from './rooms';
+import { heartsLost, marchFx, readOrders, shopShut, skipsWave, type Orders } from './march';
+import { keepSummons, keptBoost, type KeptForm, type KeptSummon } from './carry';
 import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
 import { CLASSIC_AREAS, type Area } from './board';
@@ -13,6 +17,7 @@ import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './sc
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { dailyArmy } from './daily';
+import { questArmy, questBattleById } from './questBattles';
 import { SWARM_HP, themeById, themeFx, themeGoalMet, type DailyTheme } from './dailyThemes';
 import { kindsOf } from './traits';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
@@ -21,11 +26,14 @@ import { lastingBoost } from './levels';
 import { starGold } from './stars';
 import { mixSeed, Rng } from './rng';
 import { drawEvent, eventAfter, type EventCard } from './events';
-import { dropGear, gearBoost, gearText, type Gear, type Slot } from './gear';
-import type { EquipStats } from './equipment';
-import { relicEffects } from './relics';
+import { gearBoost, type Gear, type Slot } from './gear';
+import type { EquipSlot, EquipStats, Equipment } from './equipment';
+import { migrateRunWorn } from './gearMigrate';
+import { findGear, foundLine, SOURCE, stow, type FoundHome } from './runGear';
+import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
+import { CAL_PROF_PER, depthProficiency, SPIRE_PROF_PER, TIER_PROFICIENCY } from './stats';
 import type { RoadState } from './midEvents';
 import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
@@ -46,8 +54,11 @@ export const BENCH_MAX = 10;
 export const MAX_RETRIES = 2;
 /** Hp and attack of a hero at each grade (1 to 4), as a multiple of grade 1 (MERGE-TWO, `docs/notes/merge-two.md`). Two of a kind make the
  *  next grade, so grade g holds 2^(g-1) hires (it was three of a kind and 3^(g-1)): the steps are smaller than the old x1.6 a grade so a run
- *  reaches the strength it did at the same gold, and the last step is the biggest, so rank 4 is a prize. */
-export const GRADE_BOOST: readonly number[] = [1, 1.3, 1.6, 2.4];
+ *  reaches the strength it did at the same gold, and the last step is the biggest, so rank 4 is a prize. Since the skills overhaul's batch 3 a grade
+ *  gives health and attack only (the tier skills and the tier 3 discount went, the owner's rule): the steps were [1, 1.3, 1.6, 2.4] while they
+ *  came with a better skill, and were raised so a merged party wins about what it won with them (`npm run balance -- --heroes-only
+ *  --hero-grade G ...`, docs/notes/skills-1.md). */
+export const GRADE_BOOST: readonly number[] = [1, 1.38, 1.85, 3.0];
 /** The first grade step (grade 2 over grade 1); a merge's step is at least this. */
 export const GRADE_MULT = GRADE_BOOST[1];
 /** Hp and attack multiplier of a grade from merging (`GRADE_BOOST`; past the top it keeps the top's). */
@@ -89,6 +100,16 @@ export interface Owned {
   cloneFloors?: number;
   /** Whether this hero is an inverted mirror clone (with snarky quips). */
   inverted?: boolean;
+  /** A mirror's clone that stands in for its original on the field (ONE-OF-EACH, the owner's call): the original's roster id. The original
+   *  sits out on the bench for the clone's floors and takes its place again when the clone goes (`sitsOut`). Absent in an older save. */
+  standsFor?: number;
+  /** A guest hero (GUEST-HERO, `guest.ts`): hired at the passing cart for this run only, it fights as a sixth beside the five, never
+   *  merges or is recycled, earns no lasting XP and leaves when the run ends. Absent in an older save. */
+  guest?: boolean;
+  /** SUMMON-TIMERS (`carry.ts`): the summons this hero kept standing at the end of the last wave won (each with its share of health and the
+   *  ms of its timer left), and the shapes it wore. Put back as the next wave's fight begins if it is fielded; absent in an older save. */
+  summons?: KeptSummon[];
+  form?: KeptForm[];
 }
 
 /** What the next fight carries over from an event: heroes' multipliers, foes' multiplier, a prize for a win. */
@@ -122,13 +143,45 @@ export interface Run {
   /** The stage reached when it ended. */
   best: number;
   /** The hero kinds summons draw from (the party); the starting five when unset. */
+  /** SECRET-HEROES: the heroes secret to the save when the run was opened (earned in play, not joined yet); no guest or Calamity hire
+   *  is drawn from them. Set by the page; a run without it (an old save, the tools) draws from every hero as before. */
+  hide?: string[];
   pool?: string[];
+  /** DEPTH-BUILD: the march orders the run took (`march.ts`); none is a plain march. */
+  orders?: Orders;
+  /** DEPTH-BUILD: the Chapel's Last Rites has been spent this run (`chapelRooms.ts`). */
+  ritesUsed?: boolean;
+  /** DEPTH-BUILD: the bonds' snapshot as the run began (`bonds.ts`: each pair's level, -1 rivals); none is no bonds. */
+  bonds?: Record<string, number>;
+  /** DEPTH-BUILD: the mentors' perks for the party as the run began (`legacy.ts`); none is none. */
+  legacy?: Record<string, { hp?: number; atk?: number; shield?: number }>;
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;
   /** Relic ids held (`relics.ts`). */
   relics?: string[];
-  /** Gear in the pack, not worn by anyone. */
+  /** RELICS-2: the run's tally the growing relics read (waves won, elites felled, heroes fallen, the Phoenix's rises); absent until a fight is noted. */
+  relicMarks?: RelicMarks;
+  /** The relics' catalogue the run was saved with (`RELIC_BOOK`); absent in a save from before RELICS-2, which is converted as it loads. */
+  relicBook?: number;
+  /** A line for the next prep screen, once (the relics converted); cleared when shown. */
+  relicNote?: string;
+  /** Gear in the pack, not worn by anyone (a run on the old rules, before RUN-GEAR). */
   items?: Gear[];
+  /** RUN-GEAR (`runGear.ts`): a run started since then finds real pieces of equipment, not simple gear. Absent in an older save, which
+   *  finishes on the old rules. */
+  real?: true;
+  /** RUN-GEAR: every real piece the run has found (ids of the run's own, `nextGear`), worn or not. */
+  pack?: Equipment[];
+  /** RUN-GEAR: the found pieces each hero kind wears this run, by slot (pack ids). In a run that brings the lasting kit they take the
+   *  place of the kind's lasting pieces in those slots, and stay worn for real when the run ends. */
+  worn?: Record<string, Partial<Record<EquipSlot, number>>>;
+  /** RUN-GEAR: the pack ids a boss dropped (an auto-replay run always brings these home). */
+  bossFinds?: number[];
+  /** RUN-GEAR: the army index the finds' item levels follow when the run has no army of its own (the furthest cleared). */
+  findAt?: number;
+  /** RUN-GEAR: the finds have been brought home (`settleFinds`), and what came, for the result card's Found row. */
+  findsHome?: boolean;
+  foundHome?: FoundHome;
   /** The next gear id. */
   nextGear?: number;
   /** An event waiting between two fights (`events.ts`). */
@@ -162,13 +215,20 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number };
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+/** A quest battle (`questBattles.ts`): the battle, the heroes of its required cast who came (slot by slot), and `practice` for a
+ *  replay of one already won (it pays nothing). */
+export type QuestMode = { kind: 'quest'; quest: string; cast: string[]; practice?: boolean };
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
-  const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle } };
+  const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle }, real: true };
   // (an ordinary run gets) two grade-1 heroes, drawn from the same stream as every summon but free
-  for (let i = 0; i < free; i++) run.squad.push(add(run, draw(run), SUMMON_BASE).id);
+  // (a second of a kind waits on the bench: one of each hero on the field, ONE-OF-EACH)
+  for (let i = 0; i < free; i++) {
+    const h = add(run, draw(run), SUMMON_BASE);
+    if (canJoin(run, h.id)) run.squad.push(h.id);
+  }
   return run;
 }
 
@@ -184,6 +244,10 @@ export function armyRun(seed: number, army: string, party: readonly string[] = H
 /** The difficulty tier an army run is fought on (0 Normal, for any other run too). */
 export const tierOfRun = (run: Run): number => (run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0);
 
+/** The foes' proficiency in a run's fight (the joint rebalance, `Boost.prof`): the spire's and the Calamity's by the act or map (the design's
+ *  "by their depth"), an army's by its tier (the daily and the quests fight the Normal tier's). */
+export const foeProfOf = (run: Run): number => (run.tower ? depthProficiency(run.tower.act, run.mode?.kind === 'calamity' ? CAL_PROF_PER : SPIRE_PROF_PER) : TIER_PROFICIENCY[tierOfRun(run)] ?? TIER_PROFICIENCY[0]);
+
 /** Keep each hero's skill charge for the next wave of the run: a hero still standing keeps what it had built up; one that fell, or that sat
  *  out the fight, starts the next one empty. */
 export function keepCharges(run: Run, b: Battle): void {
@@ -193,10 +257,15 @@ export function keepCharges(run: Run, b: Battle): void {
     h.charge = alive && u.charge > 0 ? u.charge : undefined;
     h.charge2 = alive && (u.charge2 ?? 0) > 0 ? u.charge2 : undefined;
   }
+  // (and its summons and shapes, with what is left of their timers: SUMMON-TIMERS)
+  keepSummons(run, b);
 }
 
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
 export function noteFight(run: Run, b: Battle): void {
+  addRelicMarks(run, b);
+  // (DEPTH-BUILD: the Chapel's Last Rites comes once a run)
+  if (ritesSpent(b)) run.ritesUsed = true;
   const army = waveArmyOf(run);
   if (!army) return;
   const fell = b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon).length;
@@ -209,10 +278,22 @@ export function noteFight(run: Run, b: Battle): void {
   const theme = runTheme(run);
   if (theme && run.stage >= army.waves.length && b.phase === 'won') run.themeMet = themeGoalMet(theme, kindsOf(b.units));
 }
+/** RELICS-2: a fight's tally added to the run's, for the relics that grow (a win counts as a wave won). Every run keeps it, relics or none. */
+export function addRelicMarks(run: { relicMarks?: RelicMarks }, b: Battle): void {
+  const t = b.relicTally ?? {};
+  const m = (run.relicMarks ??= {});
+  if (b.phase === 'won') m.won = (m.won ?? 0) + 1;
+  if (t.elites) m.elites = (m.elites ?? 0) + t.elites;
+  if (t.fell) m.fallen = (m.fallen ?? 0) + t.fell;
+  if (t.rises) m.rises = (m.rises ?? 0) + t.rises;
+}
+/** What a run's relics read beside their ids: its tally and its purse. */
+export const relicCtx = (run: { relicMarks?: RelicMarks; gold?: number }): RelicCtx => ({ marks: run.relicMarks, gold: run.gold });
 /** The army a run is fighting, if it is an army run. */
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
 /** The fixed run of waves a run is fighting: an army's, or a date's daily (`daily.ts`, an army in shape that is in no list and keeps no army record). */
-export const waveArmyOf = (run: Run): Army | undefined => (run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : armyOfRun(run));
+export const waveArmyOf = (run: Run): Army | undefined =>
+  run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : run.mode?.kind === 'quest' ? questArmy(run.mode.quest) : armyOfRun(run);
 /** A themed daily run's theme (DAILY-BUILDS: named in its mode when it began), or null for any other run, a daily before the themes among them. */
 export const runTheme = (run: Run): DailyTheme | null => (run.mode?.kind === 'daily' ? themeById(run.mode.theme) : null);
 /** Whether stage n of the run (its current one by default) has a boss. */
@@ -285,7 +366,10 @@ export const recycleValue = (run: Run): number => Math.max(1, Math.round(summonC
  *  change, so this is no way to reroll for free. Returns the gold paid, or null when the hero is unknown, the run is over, or it is the last hero. */
 export function recycle(run: Run, heroId: number): number | null {
   const h = heroOf(run, heroId);
-  if (!h || run.over || run.roster.length <= 1 || run.rift?.starter === heroId) return null;
+  // (a guest is not the party's to sell: GUEST-HERO)
+  if (!h || h.guest || run.over || run.roster.length <= 1 || run.rift?.starter === heroId) return null;
+  // (a quest battle's required hero is not recycled while it is the last of its kind: it must fight)
+  if (isCastHero(run, h)) return null;
   const gold = recycleValue(run);
   for (const g of Object.values(h.gear ?? {})) (run.items ??= []).push(g);
   run.roster = run.roster.filter((x) => x.id !== heroId);
@@ -295,8 +379,11 @@ export function recycle(run: Run, heroId: number): number | null {
   return gold;
 }
 
+/** Whether a hero is the last of its kind among a quest battle's required cast (it cannot be recycled). */
+export const isCastHero = (run: Run, h: Owned): boolean => run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind) && run.roster.filter((x) => x.kind === h.kind).length <= 1;
+
 /** Retries left in the run. */
-export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - (run.retries ?? 0));
+export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - heartsLost(run.orders) - (run.retries ?? 0));
 /** The gold a retry pays to help the second go: one Hire at the price it stands at. */
 export const retryGold = (run: Run): number => summonCost(run);
 /** Whether a wave just lost may be tried again: the run is still going, has hearts (retries) left, and is not the tower or the calamity (which have their own way of failing). Armies and the daily lose hearts; with none left the loss is settled by `finish` and the run ends. */
@@ -316,21 +403,22 @@ export function retryWave(run: Run): number | null {
 export const heroOf = (run: Run, id: number) => run.roster.find((h) => h.id === id);
 /** Whether a roster hero is a cursed mirror's clone: a guest for a few floors, never counted as one of the party's own (room, hires' catch-up XP). */
 export const isClone = (h: Owned): boolean => h.cloneFloors !== undefined;
-/** The party's own heroes: the roster without a mirror's clone. */
-export const ownHeroes = (run: Run): Owned[] => run.roster.filter((h) => !isClone(h));
+/** The party's own heroes: the roster without a mirror's clone or a guest (GUEST-HERO). */
+export const ownHeroes = (run: Run): Owned[] => run.roster.filter((h) => !isClone(h) && !h.guest);
 export const benched = (run: Run) => run.roster.filter((h) => !run.squad.includes(h.id));
 
 /** Hp and attack multipliers of a grade, times the hero kind's rank (from its shards) and its level (from its XP). Every hero kind is alike here: what sets one apart is its own stats and skill. */
 export const gradeBoost = (grade: number, rank = 0, level = 1): Boost => {
   const k = gradeMult(grade) * rankMult(rank);
   const lv = lastingBoost(level);
-  return { hp: k * lv.hp, atk: k * lv.atk, grade, level };
+  // (the rank also gives score steps: `statPower.ts`, read by `addUnit`)
+  return { hp: k * lv.hp, atk: k * lv.atk, grade, level, ...(rank > 0 ? { rank } : {}) };
 };
 /** A roster hero's whole boost: grade and rank, its gear, its training bumps, and the kind's permanent equipment (`equip`, from `equipStats(meta, kind)`; none when it wears nothing). */
 export function boostOf(h: Owned, rank = 0, level = 1, equip?: EquipStats): Boost {
   const base = gradeBoost(h.grade, rank, level);
   const g = gearBoost(h.gear);
-  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}) };
+  return { ...base, hp: base.hp! * g.hp! + (h.bump?.hp ?? 0), atk: base.atk! * g.atk! + (h.bump?.atk ?? 0), ...(equip ? { equip } : {}), ...(h.charge ? { charge: h.charge } : {}), ...(h.charge2 ? { charge2: h.charge2 } : {}), ...keptBoost(h) };
 }
 
 /** Give a hero a piece of gear from the pack (the piece it replaces goes back). False when it isn't in the pack. */
@@ -400,35 +488,49 @@ export function chainOf(run: Run): Section[] | null {
 /** Make the fight for the run's stage. `duchess`: whether Duchess the goat may join (`duchessFight.ts`); the page passes 'roll', and every headless
  *  caller (the tests, the balance tools) leaves it 'never', so their fights are as they were. A mode she stays out of never has her. */
 export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
-  const rl = relicEffects(run.relics);
+  const rl = relicEffects(run.relics, relicCtx(run));
   const army = waveArmyOf(run);
   // (a floor of the tower brings its own band and strength, fixed when the node was entered)
   const node = run.tower?.cur?.fight;
   const base = node ? node.stage : army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
+  // (DEPTH-BUILD: the march orders, fixed for the run: a cursed run's tougher foes and its curse, a night march)
+  const march = marchFx(run.orders);
+  const marchBoss = march.secondForm && base.boss?.phase ? { boss: { ...base.boss, phase: march.secondForm } } : {};
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
   // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs; the daily's answer the squad's lasting power, `dailyScale`)
   const calAns = run.mode?.kind === 'calamity' ? heroBoost(run.castle) : undefined;
   const ans = run.local ? (calAns ? { hp: foeAnswer(run.castle).hp! * calAns.hp! ** CAL_CASTLE_EXTRA, atk: foeAnswer(run.castle).atk! * calAns.atk! ** CAL_CASTLE_EXTRA } : foeAnswer(run.castle)) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
-  const { atk, hp, mana, first, revive, gold: _gold, set, ...team } = rl;
+  const { atk, hp, mana, relics } = fightRelics(rl);
   const section = chainOf(run)?.[run.stage - 1];
   // (a themed daily: its twist on every wave, its featured trait, and a swarm's thin foes)
   const theme = runTheme(run);
   const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
+    ...marchBoss,
+    ...(march.heroHeal !== 1 ? { heal: march.heroHeal } : {}),
+    ...(march.foeHeal !== 1 ? { foeHeal: march.foeHeal } : {}),
+    ...(march.night ? { night: true } : {}),
+    // (DEPTH-BUILD: the bonds, in an army run, from its snapshot)
+    ...(run.mode?.kind === 'army' && run.bonds ? { bonds: run.bonds } : {}),
+    // (DEPTH-BUILD: the Chapel's Last Rites, in an army run that has not spent it)
+    ...(army && run.mode?.kind === 'army' && !run.ritesUsed && roomOpen(run.castle, 'lastRites') ? { rites: true } : {}),
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board ?? base.board,
-    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed },
+    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin * march.foeHp, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed, prof: foeProfOf(run) },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle) * (run.buff?.speed ?? 1),
-    relics: Object.keys(team).length || first || revive || set ? { team, first, revive, set } : undefined,
+    relics,
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
     // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
     ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
-    duchess: duchessModeOk(run.mode) ? duchess : 'never',
+    // (a quest battle's own rules, if it has any: `questRules.ts`)
+    ...(run.mode?.kind === 'quest' && questBattleById(run.mode.quest)?.rules ? { rules: questBattleById(run.mode.quest)!.rules } : {}),
+    // (a quest battle has Duchess every time its story has her, and never otherwise: no roll)
+    duchess: run.mode?.kind === 'quest' ? (questBattleById(run.mode.quest)?.duchess ? 'always' : 'never') : duchessModeOk(run.mode) ? duchess : 'never',
   });
 }
 
@@ -440,17 +542,19 @@ export function finish(run: Run, won: boolean, stars = 0): void {
   if (won) {
     const boss = isBossRun(run);
     const army = waveArmyOf(run);
-    const bonus = (relicEffects(run.relics).gold ?? 0) + (run.buff?.gold ?? 0);
-    const pay = reward(run.stage) + starGold(stars) + bonus;
+    const bonus = (relicEffects(run.relics, relicCtx(run)).gold ?? 0) + (run.buff?.gold ?? 0);
+    // (a price relic's gold, the Pawned Crown's, may take more than a win pays: never below nothing)
+    const pay = Math.max(0, reward(run.stage) + starGold(stars) + bonus);
     run.gold += pay;
     noteGold(run, 'earned', pay);
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
-    if (boss) prizes.push(dropGear(new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1));
-    for (const g of prizes) {
-      (run.items ??= []).push(g);
-      run.found.push(`${g.name} (${g.slot}, ${gearText(g)})`);
-    }
+    // (RUN-GEAR: in a real-gear run each is a real piece, drawn at the same moment from the same stream: `runGear.ts`)
+    if (boss) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1, SOURCE.boss));
+    prizes.forEach((g, i) => {
+      stow(run, g, boss && i === prizes.length - 1 ? SOURCE.boss : SOURCE.curse);
+      run.found!.push(foundLine(g));
+    });
     if (run.buff?.gold) run.found.push(`${run.buff.gold} gold from the cursed path`);
     if (army && run.stage >= army.waves.length) {
       // (the army's last boss has fallen, or the day's: the run is won and over)
@@ -459,8 +563,12 @@ export function finish(run: Run, won: boolean, stars = 0): void {
       run.event = undefined;
     } else {
       run.stage++;
-      // (the endless tower has no events)
-      run.event = run.mode?.kind !== 'tower' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
+      // (DEPTH-BUILD: a forced march skips its waves; their gold is not paid)
+      while (skipsWave(run.orders, run.stage) && army && run.stage < army.waves.length) run.stage++;
+      // (the endless tower has no events, nor a quest battle: its story is its own)
+      run.event = run.mode?.kind !== 'tower' && run.mode?.kind !== 'quest' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
+      // (DEPTH-BUILD: the Empty Stalls curse: no passing cart stops for a cursed march)
+      if (shopShut(run.orders) && run.event?.kind === 'merchant') run.event = undefined;
     }
   } else run.over = true;
   spendBuff(run);
@@ -478,31 +586,73 @@ export function spendBuff(run: Run): void {
   run.buff = { ...(b.hp ? { hp: b.hp } : {}), ...(b.atk ? { atk: b.atk } : {}), ...(b.speed ? { speed: b.speed } : {}), duration: left };
 }
 
-/** Choose or release a hero for the fight. Returns whether the squad changed. */
+/** ONE-OF-EACH (`docs/notes/one-of-each.md`): the hero of kind `kind` in the squad, other than hero `except`, if there is one. The squad is
+ *  the heroes on the field, so it holds one hero of each kind at most; copies wait on the bench to be merged. */
+export const squadTwin = (run: Run, kind: string, except?: number): Owned | undefined =>
+  run.squad.map((id) => heroOf(run, id)).find((h): h is Owned => !!h && h.kind === kind && h.id !== except);
+
+/** Whether hero `id` sits out: a mirror's clone stands in for it on the field for the clone's floors (ONE-OF-EACH). */
+export const sitsOut = (run: Run, id: number): boolean => run.roster.some((x) => x.standsFor === id && x.cloneFloors !== undefined);
+
+/** How many of the squad's places are taken: the guest has a sixth place of its own and is not counted (GUEST-HERO). */
+export const squadUsed = (run: Run): number => run.squad.filter((id) => !heroOf(run, id)?.guest).length;
+
+/** Whether hero `id` may join the squad now: there is room, no other hero of its kind is in it, and no mirror's clone stands in for it
+ *  (ONE-OF-EACH). A guest always has room: its place is an extra one beyond the five (GUEST-HERO). */
+export function canJoin(run: Run, id: number): boolean {
+  const h = heroOf(run, id);
+  return !!h && !run.squad.includes(id) && (h.guest || squadUsed(run) < squadLimit(run)) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
+}
+
+/** Choose or release a hero for the fight. Returns whether the squad changed. A second hero of a kind already chosen is refused (ONE-OF-EACH). */
 export function setSquad(run: Run, id: number, on: boolean): boolean {
   const has = run.squad.includes(id);
   if (on === has || !heroOf(run, id)) return false;
   if (on) {
-    if (run.squad.length >= squadLimit(run)) return false;
+    if (!canJoin(run, id)) return false;
     run.squad.push(id);
   } else run.squad = run.squad.filter((x) => x !== id);
   return true;
 }
 
 const KEY = 'legends.run';
-/** The tower and the calamity each keep their own save, so a climb survives the armies' runs and a reload (`saveSlot`). */
-export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity' } as const;
+/** The tower, the calamity and a quest battle each keep their own save, so a climb (or a quest battle) survives the armies' runs and a reload (`saveSlot`). */
+export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity', quest: 'legends.questRun' } as const;
 export type SlotKind = keyof typeof SLOT_KEYS;
 /** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
-export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
+export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => (run.relicBook = RELIC_BOOK) && store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
 /** The run saved in a mode's slot, if it is still going (a lost or cleared one is no run to carry on). */
 export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(SLOT_KEYS[kind]) ?? 'null') as Run | null;
-    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over && runFits(r) ? r : null;
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && r.mode?.kind === kind && !r.over && runFits(r) ? catalogueRun(r) : null;
   } catch {
     return null;
   }
+}
+/**
+ * RELICS-2: a run saved before the relics were catalogued anew is converted as it loads. Merged relics are renamed (a pair that is now one is
+ * kept once, and the other's price paid back in gold), as are the relics waiting on an elite's offer and the Pale Lady's due; a run that held
+ * any relic gets one line on its next prep screen. A run already in the new catalogue is left as it is.
+ */
+export function catalogueRun(r: Run): Run {
+  // (SEVEN-SLOT GEAR: the finds a run from before wears move to the new slots)
+  migrateRunWorn(r);
+  if (r.relicBook === RELIC_BOOK) return r;
+  // (RELICS-3: a run already in the second catalogue is only quietly moved on; the line is for the first conversion, or a relic that changed)
+  const first = r.relicBook === undefined;
+  r.relicBook = RELIC_BOOK;
+  let had = (r.relics?.length ?? 0) > 0;
+  if (Array.isArray(r.relics)) {
+    const { ids, refund, changed } = convertRelics(r.relics);
+    r.relics = ids;
+    r.gold += refund;
+    had = had && (first || changed);
+  }
+  if (Array.isArray(r.tower?.offer)) r.tower!.offer = convertRelics(r.tower!.offer.filter((id) => !r.relics?.includes(RELIC_RENAMES[id] ?? id))).ids;
+  for (const o of r.road?.owed ?? []) if (o.relic) o.relic = RELIC_RENAMES[o.relic] ?? o.relic;
+  if (had) r.relicNote = RELIC_NOTE;
+  return r;
 }
 /** Empty a mode's slot (the run was abandoned or ended). */
 export const dropSlot = (kind: SlotKind, store: Pick<Storage, 'removeItem'> = localStorage) => store.removeItem(SLOT_KEYS[kind]);
@@ -518,14 +668,22 @@ export function adoptOldTower(store: Pick<Storage, 'getItem' | 'setItem' | 'remo
  *  wave. An endless daily saved by an older version could be on stage 14 of what is now ten waves, and starting it broke. */
 export const runFits = (r: Run): boolean => {
   if (r.mode?.kind === 'army' && r.mode.scenario !== undefined && r.mode.scenario !== 'classic' && !isScenario(r.mode.scenario)) return false;
+  // (a quest battle no longer in the game, or with no cast, is no run to carry on)
+  if (r.mode?.kind === 'quest' && (!questBattleById(r.mode.quest) || !Array.isArray(r.mode.cast))) return false;
   const army = waveArmyOf(r);
   return !army || (r.stage >= 1 && r.stage <= army.waves.length);
 };
-export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(run));
+export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
 export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(KEY) ?? 'null') as Run | null;
-    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? r : null;
+    if (r && 'orders' in r) {
+      // (DEPTH-BUILD: odd orders read as a plain march)
+      const o = readOrders(r.orders);
+      if (o) r.orders = o;
+      else delete r.orders;
+    }
+    return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? catalogueRun(r) : null;
   } catch {
     return null;
   }

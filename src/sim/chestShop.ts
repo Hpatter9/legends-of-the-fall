@@ -8,7 +8,8 @@
 import { ARMIES, armyCleared } from './armies';
 import { grantEquipment, rollEquipment, type Quality } from './equipment';
 import type { Loot, LootItem } from './armyStars';
-import { gearItem, stoneItems, tomeItems } from './armyStars';
+import { bookItem, gearItem, stoneItems, tomeItems } from './armyStars';
+import { chestBook, grantBook } from './books';
 import { grantTomes, rollTomes } from './tomes';
 import type { Meta } from './meta';
 import { mixSeed, Rng } from './rng';
@@ -34,9 +35,9 @@ export interface ShopChest {
 
 /** The shop's chests, smallest first. A bigger chest holds better gear, and a few more stones (the stock a day, not the price, is what bounds them). */
 export const SHOP: readonly ShopChest[] = [
-  { kind: 'bronze', name: 'Bronze chest', price: 400, stock: 3, stones: 3, gearChance: 0.35, quality: 'bronze', at: 3 },
-  { kind: 'silver', name: 'Silver chest', price: 1500, stock: 1, stones: 8, gearChance: 1, quality: 'silver', at: 5 },
-  { kind: 'gold', name: 'Gold chest', price: 6000, stock: 1, stones: 15, gearChance: 1, quality: 'gold', at: 10 },
+  { kind: 'bronze', name: 'Bronze chest', price: 600, stock: 3, stones: 1, gearChance: 0.15, quality: 'bronze', at: 3 },
+  { kind: 'silver', name: 'Silver chest', price: 2400, stock: 1, stones: 3, gearChance: 0.6, quality: 'silver', at: 5 },
+  { kind: 'gold', name: 'Gold chest', price: 9000, stock: 1, stones: 6, gearChance: 1, quality: 'gold', at: 10 },
 ];
 export const shopChest = (kind: ShopKind): ShopChest => SHOP.find((c) => c.kind === kind)!;
 
@@ -89,6 +90,12 @@ function shopLoot(m: Meta, kind: ShopKind, apply: boolean): Loot {
   const tomes = rollTomes(mixSeed(m.seed, SHOP_SALT, m.shopBuys ?? 0), c.kind);
   if (apply) grantTomes(m, tomes);
   items.push(...tomeItems(tomes));
+  // (SHOP-BOOKS-GEAR: a Rare skill book now and then in a silver or gold chest, from its own side stream: the rest rolls as before)
+  const book = chestBook(mixSeed(m.seed, SHOP_SALT, m.shopBuys ?? 0), c.kind);
+  if (book) {
+    if (apply) grantBook(m, book);
+    items.push(bookItem(book));
+  }
   if (c.gearChance >= 1 || rng.chance(c.gearChance)) {
     const item = rollEquipment(rng, { quality: c.quality, armyIndex: shopArmyIndex(m), milestone: c.at >= 10 });
     if (apply) grantEquipment(m, item);

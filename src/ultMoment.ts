@@ -26,6 +26,9 @@ import { settings } from './settings';
 import { whichCast } from './fightHudRules';
 import { ULT_MOMENT, UltQueue, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
 import { burstSpots, KIT, KIT_SESSION, litPools, ultTargets, ultZoom, type Pt, type UltTargets } from './ultEpicRules';
+import { hasShowcase, planShow, readCast, wantsShow, type ShowPlan } from './ultShowRules';
+import { UltShow } from './ultShow';
+import type { UnitSprite } from './render/unitView';
 
 export interface UltMomentOpts {
   /** The middle of a fighter's sprite on the page, for the pool of light; null when it cannot be told. */
@@ -36,6 +39,12 @@ export interface UltMomentOpts {
   tile?: (u: number, v: number) => { x: number; y: number } | null;
   /** The fight's effects: the moment's gathering and bursts are drawn there, and it is told which casters' effects are the ultimate's. */
   fx?: Fx;
+  /** ULT-SHOW: the fighters' sprites and a tile's ground in the world, for the showcase to stage them (none: no showcases). */
+  sprite?: (id: number) => UnitSprite | undefined;
+  world?: (u: number, v: number) => [number, number] | null;
+  /** ULT-SHOW: how many full moments of a hero kind's ultimate the player has seen (the save's count), and one more seen. */
+  seen?: (kind: string) => number;
+  saw?: (kind: string) => void;
 }
 
 /** A hero's painted art: the awakened art once awakened, else the portrait (every one of the 45 has both, cached for offline play). */
@@ -62,8 +71,12 @@ export class UltMoments {
   private kitCanvas: HTMLCanvasElement | null = null;
   private slashT = 0;
   private reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /** ULT-SHOW: each long moment's showcase plan, and the showcase on the page. */
+  private plans = new WeakMap<UltMoment, ShowPlan>();
+  private show: UltShow | null;
 
   constructor(private opts: UltMomentOpts) {
+    this.show = opts.sprite && opts.world ? new UltShow({ sprite: opts.sprite, world: opts.world, fx: opts.fx }) : null;
     this.layer = document.createElement('div');
     this.layer.className = 'umLayer';
     this.layer.hidden = true;
@@ -95,7 +108,7 @@ export class UltMoments {
 
   /** A tick's events: each hero ultimate that fired becomes a moment (full setting only); true when the battle should stop stepping now.
    *  It also tells the effects whose events are an ultimate's (drawn at its scale), and sees a delayed ultimate's salvo land. */
-  note(b: Battle, events: readonly BattleEvent[], born: readonly Unit[]): boolean {
+  note(b: Battle, events: readonly BattleEvent[], born: readonly Unit[], before?: ReadonlyMap<number, { u: number; v: number }>): boolean {
     const epic = new Set<number>();
     for (const e of events) {
       if (e.kind !== 'skill') continue;
@@ -103,7 +116,31 @@ export class UltMoments {
       if (!u || u.side !== 'hero' || whichCast(u, e.name) !== 'ult') continue;
       const ult = ultimateOf(u)!;
       const { shape, ms } = ultShape(ult, u.id, events, born);
-      this.queue.push({ unit: u.id, kind: u.def, name: ult.name, shape, ms, el: skillElement(keyOf(ult)), targets: ultTargets(events, u.id) });
+      const m: UltMoment = { unit: u.id, kind: u.def, name: ult.name, shape, ms, el: skillElement(keyOf(ult)), targets: ultTargets(events, u.id) };
+      // (ULT-SHOW: the hero's first use, and every Nth after, plays the long version; every full moment of a hero with a showcase is counted)
+      if (this.show && hasShowcase(u.def)) {
+        const s = settings();
+        if (wantsShow(u.def, { full: true, short: s.ultShort, seen: this.opts.seen?.(u.def) ?? 0, every: s.ultEvery })) {
+          const tileOf = (id: number) => b.units.find((x) => x.id === id);
+          // (where a fighter the cast moved stood before it: the page's note of the tick before, else its step begun on this tick)
+          const originOf = (id: number) => {
+            const was = before?.get(id);
+            if (was) return was;
+            const st = b.units.find((x) => x.id === id)?.step;
+            return st && st.at >= b.t - 100 ? { u: st.u, v: st.v } : undefined;
+          };
+          const plan = planShow(u.def, readCast(u, events, born, tileOf, originOf));
+          if (plan) {
+            m.show = plan.ms;
+            this.plans.set(m, plan);
+            // (the light falls on everything the showcase stages: the wolves called up, each tile a hop lands on)
+            const t = m.targets ?? { struck: [], helped: [], tiles: [] };
+            m.targets = { struck: t.struck, helped: [...t.helped, ...plan.cast.born.map((w) => w.id)], tiles: [...t.tiles, ...plan.cast.hops.map((h) => h.to), plan.cast.start] };
+          }
+        }
+        this.opts.saw?.(u.def);
+      }
+      this.queue.push(m);
       epic.add(u.id);
     }
     // (a salvo in the air under the dim: its blows are the ultimate's too, and the first of them is its impact)
@@ -124,6 +161,14 @@ export class UltMoments {
   /** Where the page's camera should lean in now (the hero, through the opening), and how far over the view it holds; null: as it was. */
   get focus(): { unit: number; zoom: number } | null {
     const q = this.queue;
+    // (ULT-SHOW: through a showcase the camera follows the caster, leaning in a little; a salvo's showcase lets go once the staff is raised)
+    const plan = q.current && this.plans.get(q.current);
+    const t = q.showT;
+    if (q.current && plan && t !== null) {
+      if (t > plan.followMs) return null;
+      const zoom = this.calm() ? 1 : plan.zoom;
+      return zoom === 1 ? null : { unit: q.current.unit, zoom };
+    }
     if (!q.current || q.phase !== 'open') return null;
     const zoom = ultZoom(true, this.calm());
     return zoom === 1 ? null : { unit: q.current.unit, zoom };
@@ -170,6 +215,27 @@ export class UltMoments {
     this.drawDim(m, q.dim);
     if (!paused) this.slashT += step;
     if (this.kitCanvas) this.drawKit(m);
+    this.pose(true);
+  }
+
+  /** ULT-SHOW: the showcase's stages (its first poses through the opening, then as it plays; its beats only while it plays), dropped as it
+   *  ends. The page calls `stage` again just before it draws the sprites, so a fighter a cast called up this frame is staged too. */
+  private pose(beats: boolean): void {
+    const q = this.queue;
+    const plan = q.current && this.plans.get(q.current);
+    const t = q.phase === 'open' ? 0 : q.showT;
+    if (this.show && plan && t !== null) {
+      if (this.show.plan !== plan) this.show.begin(plan);
+      this.show.frame(t, beats && q.phase === 'show');
+      this.opts.fx?.hush(true);
+    } else if (this.show?.plan) {
+      this.show.end();
+      this.opts.fx?.hush(false);
+    }
+  }
+
+  stage(): void {
+    this.pose(false);
   }
 
   /** The blow lands: the bursts, a flash of the element's colour eased in and out round where it struck, and the heavy sting. */
@@ -316,6 +382,8 @@ export class UltMoments {
   }
 
   private hide(): void {
+    this.show?.end();
+    this.opts.fx?.hush(false);
     this.layer.hidden = true;
     this.layer.querySelector('.umSlash')?.remove();
     this.layer.querySelector('.umFlash')?.remove();

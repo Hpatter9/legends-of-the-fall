@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Legends of the Last Keep</string>
+    <string name="title_activity_main">Legends of the Last Keep</string>
+    <string name="package_name">com.hpatter9.lastkeep</string>
+    <string name="custom_url_scheme">com.hpatter9.lastkeep</string>
+</resources>

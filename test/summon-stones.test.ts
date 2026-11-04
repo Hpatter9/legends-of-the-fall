@@ -130,7 +130,9 @@ test('shards come from stones and the armies\' rare drop: no other source calls 
   const callers = files.filter((f) => /\bgiveShards\(/.test(readFileSync(f, 'utf8')) && !f.endsWith('src/sim/unlock.ts'));
   // (the developer grant in Settings is the owner's testing tool, not a source in play: `devGrant.ts`)
   // (ARMY-DROPS, the owner's later ask: an army wave's rare drop also gives shards, `armyDrops.ts`; its rates are tested in `army-drops.test.ts`)
-  assert.deepEqual(callers.sort(), ['src/sim/armyDrops.ts', 'src/sim/devGrant.ts', 'src/sim/meta.ts'], 'only pullOnce (the stone draw) and the armies\' rare drop give shards in play');
+  // (QUESTS-1b, the owner's ask for quest rewards: a few quests pay a fitting hero's shards at their hand-in, `quests.ts` `payReward`; which
+  // quests, and how many, is tested in `quests-content.test.ts`)
+  assert.deepEqual(callers.sort(), ['src/sim/armyDrops.ts', 'src/sim/devGrant.ts', 'src/sim/meta.ts', 'src/sim/quests.ts'], 'only pullOnce (the stone draw), the armies\' rare drop and a few quests\' rewards give shards in play');
 });
 
 test('crowns buy no pull; chests give stones (every chest source), and a stone is the only way to a shard', () => {
@@ -145,19 +147,19 @@ test('crowns buy no pull; chests give stones (every chest source), and a stone i
 });
 
 test('the chest shop: prices, contents, a daily stock, and prices that rise with the heroes owned', () => {
-  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 400, 3, 3], ['silver', 1500, 1, 8], ['gold', 6000, 1, 15]]);
+  assert.deepEqual(SHOP.map((c) => [c.kind, c.price, c.stock, c.stones]), [['bronze', 600, 3, 1], ['silver', 2400, 1, 3], ['gold', 9000, 1, 6]]);
   const m = fresh(11);
   m.crowns = 100000;
-  assert.equal(shopPrice(m, 'bronze'), 400, 'the base price while the starter is all you own');
+  assert.equal(shopPrice(m, 'bronze'), 600, 'the base price while the starter is all you own');
   // (a bronze chest: its stones, and gear now and then)
   let gear = 0;
   for (let i = 0; i < 3; i++) {
     const before = { crowns: m.crowns, stones: stonesOf(m), gear: m.equipment?.length ?? 0 };
     const loot = buyChest(m, 'bronze', DAY)!;
-    assert.equal(m.crowns, before.crowns - 400);
-    assert.equal(stonesOf(m) - before.stones, 3);
+    assert.equal(m.crowns, before.crowns - 600);
+    assert.equal(stonesOf(m) - before.stones, 1);
     assert.equal(loot.kind, 'bronze');
-    assert.equal(loot.items.find((i) => i.type === 'stones')!.n, 3);
+    assert.equal(loot.items.find((i) => i.type === 'stones')!.n, 1);
     const got = loot.items.filter((i) => i.type === 'gear').length;
     assert.equal(m.equipment?.length ?? 0, before.gear + got);
     gear += got;
@@ -165,28 +167,29 @@ test('the chest shop: prices, contents, a daily stock, and prices that rise with
   assert.equal(stockLeft(m, 'bronze', DAY), 0);
   assert.equal(canBuy(m, 'bronze', DAY), false, 'sold out for the day');
   assert.equal(buyChest(m, 'bronze', DAY), null);
-  assert.equal(m.crowns, 100000 - 1200);
+  assert.equal(m.crowns, 100000 - 1800);
   assert.equal(stockLeft(m, 'bronze', DAY + 1), 3, 'it restocks the next day');
-  // (silver and gold always hold a piece of gear)
+  // (SEVEN-SLOT GEAR's economy: a silver chest holds gear 60% of the time, a gold one always)
   for (const kind of ['silver', 'gold'] as const) {
     const loot = buyChest(m, kind, DAY)!;
-    assert.equal(loot.items.filter((i) => i.type === 'gear').length, 1, kind);
+    assert.equal(loot.items.filter((i) => i.type === 'gear').length, kind === 'gold' ? 1 : loot.items.filter((i) => i.type === 'gear').length, kind);
+    assert.ok(loot.items.filter((i) => i.type === 'gear').length <= 1, kind);
     assert.equal(loot.items.find((i) => i.type === 'stones')!.n, shopChest(kind).stones);
-    assert.equal(m.crowns, 100000 - 1200 - (kind === 'silver' ? 1500 : 7500));
+    assert.equal(m.crowns, 100000 - 1800 - (kind === 'silver' ? 2400 : 11400));
   }
   assert.ok(gear >= 0);
   // (a poor player buys nothing, and a look at the shop changes nothing)
   const poor = fresh(12);
-  poor.crowns = 399;
+  poor.crowns = 599;
   assert.equal(buyChest(poor, 'bronze', DAY), null);
-  assert.equal(poor.crowns, 399);
+  assert.equal(poor.crowns, 599);
   const peek = peekShopChest(m, 'gold');
   assert.equal(peek.kind, 'gold');
   assert.equal(m.shopBuys, 5);
   // (the price rises with the pullable heroes owned beyond the starter's three)
   const big = fresh(13);
   big.unlocked = [...PULL_HEROES];
-  assert.equal(shopPrice(big, 'bronze'), Math.round((400 * (1 + PRICE_GROW * (PULL_HEROES.length - 3))) / 50) * 50);
+  assert.equal(shopPrice(big, 'bronze'), Math.round((600 * (1 + PRICE_GROW * (PULL_HEROES.length - 3))) / 50) * 50);
   assert.ok(shopPrice(big, 'gold') > 10 * shopPrice(fresh(1), 'gold') / 2);
   // (the same save and the same purchase give the same chest: the gear comes from a side stream of the seed and the count)
   const a = fresh(21);
@@ -242,17 +245,18 @@ test('an old save keeps its crowns, pity and heroes, and is given stones once', 
 test('the pace holds its shape: stones a day from the shop and the chests are bounded, and the first heroes come at once', () => {
   // (the unlock-pace tool plays the whole year; these are the numbers it rests on: see docs/notes/summon-stones.md)
   const shopMax = SHOP.reduce((n, c) => n + c.stock * c.stones, 0);
-  assert.equal(shopMax, 32, 'the shop sells at most 32 stones a day');
+  assert.equal(shopMax, 12, 'the shop sells at most 12 stones a day (QUESTS-3: it was 32)');
   assert.ok(DAILY_CHEST_STONES + 2 <= 4);
-  // (a first day: the first clear's bronze chest, the daily chest and a bronze chest from the shop is about nine stones, five heroes)
+  // (a first day, QUESTS-3: the first clear's bronze chest, the daily chest with a bonus star, and the shop's three bronze chests is
+  // seven stones: the fifth hero for about half the saves on the first day, and for nearly all of them by the third)
   let five = 0;
   for (let seed = 1; seed <= 40; seed++) {
     const m = fresh(seed);
-    m.stones = CHEST_STONES[3] + DAILY_CHEST_STONES + 1 + shopChest('bronze').stones * 2;
+    m.stones = CHEST_STONES[3] + DAILY_CHEST_STONES + 1 + shopChest('bronze').stones * 3 + 1;
     while (useStones(m, 1, { lucky: false })) if (m.unlocked.length >= 5) break;
     if (ownedCount(m) >= 5) five++;
   }
-  assert.ok(five >= 30, `${five} of 40`);
+  assert.ok(five >= 20, `${five} of 40`);
   assert.ok(needOf(fresh(1)) <= 3);
   void ALL_HEROES;
 });

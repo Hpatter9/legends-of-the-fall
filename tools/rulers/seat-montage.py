@@ -1,5 +1,5 @@
 # Joins tools/rulers/seat-strip.mjs's crops into one picture: for each ruler, the castle and Last Stand rows, before and after,
-# four frames (before 350 ms apart, after 700 ms, so a breath shows). Run from the repo root: python3 tools/rulers/seat-montage.py iron_stag,sun_viper,the_king docs/samples/x.png
+# four frames (before 350 ms apart, after 700 ms, so a breath shows). Run from the repo root: python3 tools/rulers/seat-montage.py iron_stag,sun_viper,storm_corsair docs/samples/x.png
 import sys, os
 from PIL import Image, ImageDraw
 rulers = sys.argv[1].split(','); out = sys.argv[2]

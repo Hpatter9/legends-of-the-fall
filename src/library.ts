@@ -134,6 +134,16 @@ export class Library {
     });
   }
 
+  /** Paint one still picture without starting the loop (MENU-GLITCH: the page has its picture before it ever slides into view). */
+  paintOnce(): void {
+    if (this.raf || document.hidden) return;
+    void loadArt().then(() => {
+      if (this.raf) return;
+      this.fit();
+      this.draw();
+    });
+  }
+
   stop(): void {
     this.running = false;
     this.halt();

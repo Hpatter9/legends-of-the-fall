@@ -12,11 +12,22 @@
 // went: it buys the same things a little more by choice. Pure rules: no Pixi, no DOM.
 
 import { mixSeed, Rng } from './rng';
-import { gearText, makeGear, SLOTS, type Gear } from './gear';
-import { RELIC_IDS, RELICS } from './relics';
+import { gearText, SLOTS, type Gear } from './gear';
+import { findPrice, findSlotGear, SOURCE } from './runGear';
+import { pickRelic, pricedFor, RELIC_IDS, relicPriceOf, RELICS, relicText } from './relics';
 import { HEROES, UNITS } from './units';
 import { gearStage, summonCost, type Run } from './run';
 import type { EventOption } from './events';
+import { drawGuest, guestPrice } from './guest';
+import { heroName } from './heroNames';
+
+/** The cart's guest hero as a ware (GUEST-HERO): dear, and a sixth hero on the field for this run. */
+export const guestOption = (run: Run, stage: number, kind: string): EventOption => ({
+  label: `Guest: ${heroName(kind)} the ${UNITS[kind].name}`,
+  text: 'fights as a sixth hero beside your five, for this run only',
+  cost: guestPrice(run, stage),
+  effect: { t: 'guest', kind },
+});
 
 const MARKET_SALT = 0x3a4e7;
 /** Wares a visit may buy (the rummage does not count). */
@@ -36,8 +47,8 @@ export const POTIONS = [
 const gearId = (run: Run) => (run.nextGear = (run.nextGear ?? 1) + 1) - 1;
 /** The tier the cart's gear is: a drop's for the stage (an army further on drops as if further on). */
 export const marketTier = (run: Run, stage: number): number => 1 + Math.floor((gearStage(run, stage) - 1) / 8);
-/** A piece of gear's price on the cart (the old merchant's). */
-export const gearPrice = (g: Gear, stage: number): number => 28 * g.tier + 2 * stage;
+/** A piece of gear's price on the cart (the old merchant's; a real piece of a real-gear run is priced by its grade, `findPrice`). */
+export const gearPrice = (g: Gear, stage: number): number => findPrice(g, stage);
 export const relicPrice = (stage: number): number => 70 + 4 * stage;
 export const rummagePrice = (stage: number): number => 10 + stage;
 
@@ -56,7 +67,7 @@ export function stockMarket(run: Run, stage: number, roll = 0): EventOption[] {
   const slots = [...SLOTS];
   for (let i = 0; i < 2; i++) {
     const slot = slots.splice(rng.int(0, slots.length - 1), 1)[0];
-    const g = makeGear(gearId(run), slot, tier);
+    const g = findSlotGear(run, gearId(run), slot, tier, stage, SOURCE.cart);
     wares.push({ label: g.name, text: `${g.slot}: ${gearText(g)}`, cost: gearPrice(g, stage), effect: { t: 'gear', gear: g } });
   }
   const potions = [...POTIONS];
@@ -68,16 +79,21 @@ export function stockMarket(run: Run, stage: number, roll = 0): EventOption[] {
   wares.push({ label: `A sellsword ${UNITS[kind].name}`, text: 'joins the bench, grade 1', cost: summonCost(run) + HIRE_EXTRA, effect: { t: 'hire', kind } });
   const relics = RELIC_IDS.filter((id) => !run.relics?.includes(id));
   if (relics.length && rng.chance(MARKET_RELIC)) {
-    const id = rng.pick(relics);
-    wares.push({ label: RELICS[id].name, text: RELICS[id].text, cost: relicPrice(stage), effect: { t: 'relic', id } });
+    const id = pickRelic(() => rng.next(), relics);
+    wares.push({ label: RELICS[id].name, text: relicText(id), cost: relicPriceOf(id, relicPrice(stage)), effect: { t: 'relic', id } });
   }
+  // (RELICS-2: the Tax Ingot's dearer prices)
+  for (const w of wares) w.cost = pricedFor(run.relics, w.cost);
   return wares;
 }
 
 /** The whole card's options: the wares, the rummage, and the way on. */
 export function marketOptions(run: Run, stage: number): EventOption[] {
+  // (now and then a guest hero, on its own side stream, so the stock is as it was: GUEST-HERO)
+  const guest = drawGuest(run, stage);
   return [
     ...stockMarket(run, stage),
+    ...(guest ? [guestOption(run, stage, guest)] : []),
     { label: 'Rummage in the back', text: 'the unsold wares are put away and others brought out (once a visit)', cost: rummagePrice(stage), effect: { t: 'reroll' } },
     { label: 'Leave', text: 'Move on.', cost: 0, effect: { t: 'leave' } },
   ];

@@ -15,7 +15,7 @@ import { castSpell, MANA_MAX, SPELL_IDS, type SpellId } from '../../src/sim/spel
 import { startedMeta } from '../../src/sim/meta';
 import { newCastle } from '../../src/sim/castle';
 import { deploySpots, fieldBoost, pickTeam, play } from '../heroSweep';
-import { legacyCalamity, playArmy, playCalamity, playDaily, playTower, savedAt } from '../autoplay';
+import { botSpells, legacyCalamity, playArmy, playCalamity, playDaily, playTower, savedAt } from '../autoplay';
 import { playStand, setupAtLevel } from '../stand-balance';
 import type { Area } from '../../src/sim/board';
 
@@ -95,14 +95,21 @@ export const SCENARIOS: Record<string, () => void> = {
   calamity: () => playCalamity(startedMeta(5), 21, 'wizard', newCastle(), 0, legacyCalamity),
 };
 
-/** Play every scenario and give each one's hash. */
+/** Play every scenario and give each one's hash. The greedy players cast no spells here (SPELLS-RETUNE turned the balance tools' spells on by
+ *  default; the fixture was recorded by a player that never cast, and this proof is about the fights, not the bot). */
 export function scenarioHashes(only?: readonly string[]): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const [name, run] of Object.entries(SCENARIOS)) {
-    if (only && !only.includes(name)) continue;
-    h = 0x811c9dc5;
-    run();
-    out[name] = h.toString(16).padStart(8, '0');
+  const was = botSpells.on;
+  botSpells.on = false;
+  try {
+    for (const [name, run] of Object.entries(SCENARIOS)) {
+      if (only && !only.includes(name)) continue;
+      h = 0x811c9dc5;
+      run();
+      out[name] = h.toString(16).padStart(8, '0');
+    }
+  } finally {
+    botSpells.on = was;
   }
   return out;
 }

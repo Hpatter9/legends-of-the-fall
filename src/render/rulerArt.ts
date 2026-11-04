@@ -4,9 +4,8 @@ import { loadImage } from './loadImage';
 import { BREATH_PX, RULERS, RULER_ACTIONS, SEAT_BREATH, rulerFrame, seatFrame, type RulerAction, type RulerId } from '../rulerRules';
 import { RULER_URLS } from '../rulerUrls';
 import thronesUrl from '../art/rulers/thrones.png';
-/** Each ruler's cell in thrones.png (four by two, in the eight rulers' order). The King had no empty throne in the old art, so he
- *  stands before the Iron Stag's (red velvet, gold and fur, the nearest to his own) when he rises from it. */
-const THRONE_CELL: Record<RulerId, number> = { sun_viper: 0, frost_witch: 1, ash_empress: 2, rose_duchess: 3, moon_oracle: 4, iron_stag: 5, storm_corsair: 6, gilded_necromancer: 7, the_king: 5 };
+/** Each ruler's cell in thrones.png (four by two, in the eight rulers' order).  */
+const THRONE_CELL: Record<RulerId, number> = { sun_viper: 0, frost_witch: 1, ash_empress: 2, rose_duchess: 3, moon_oracle: 4, iron_stag: 5, storm_corsair: 6, gilded_necromancer: 7 };
 const images = new Map<RulerId, HTMLImageElement>();
 const frames = new Map<string, Texture[]>();
 const thrones = new Map<RulerId, Texture>();
@@ -42,6 +41,30 @@ export function loadRulers(): Promise<void> {
       breaths.set(id, { canvas, texture: Texture.from(canvas) });
     }
   })]).then(() => undefined);
+}
+/** A ruler's portrait for a talking head: the head and shoulders of the first idle frame (the top of the figure, found from the
+ *  frame's own pixels, so a tall crown or a short one is whole). */
+const portraits = new Map<RulerId, Texture>();
+export function rulerPortraitTexture(id: RulerId): Texture {
+  let t = portraits.get(id);
+  if (t) return t;
+  const img = images.get(id)!;
+  const w = img.width / 4, h = img.height / 8;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.drawImage(img, 0, 0, w, h, 0, 0, w, h);
+  const px = g.getImageData(0, 0, w, h).data;
+  let top = -1, left = w, right = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (px[(y * w + x) * 4 + 3] > 20) { if (top < 0) top = y; left = Math.min(left, x); right = Math.max(right, x); }
+  top = Math.max(top, 0);
+  const side = Math.min(w, Math.max(right - left + 1, 1), h - top);
+  const cx = Math.round((left + right) / 2);
+  const x0 = Math.max(0, Math.min(w - side, cx - Math.floor(side / 2)));
+  t = new Texture({ source: Texture.from(img).source, frame: new Rectangle(x0, top, side, Math.min(Math.round(side * 0.95), h - top)) });
+  portraits.set(id, t);
+  return t;
 }
 export const rulerThrone = (id: RulerId): Texture => thrones.get(id)!;
 export const rulerTextures = (id: RulerId, action: RulerAction): Texture[] => frames.get(`${id}:${action}`)!;

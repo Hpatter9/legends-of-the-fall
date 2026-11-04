@@ -1,5 +1,6 @@
-/* ===== Equipment: the hero sheet's panel and picker (`equipView.ts`). Inlined after pixel.css by build.mjs. Icons are 16px tiles
-   drawn at whole-number scales (4x on a slot, 3x in a list), never smoothed; rarity colours come from --rc (.r1 to .r5). ===== */
+/* ===== Equipment: the hero sheet's panel and picker (`equipView.ts`). Inlined after pixel.css by build.mjs. Icons are the painted
+   ones (`gearIcons.ts`, `.painted`); a base without a painting keeps its 16px tile, drawn at whole-number scales (4x on a slot,
+   3x in a list), never smoothed; rarity colours come from --rc (.r1 to .r5). ===== */
 .eqPanel { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s1); }
 .eqPanel h4 { margin: 0; font: 700 14px var(--display); color: var(--gold-hi); }
 .eqSlots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -10,6 +11,15 @@
 .eqIcon img { image-rendering: pixelated; display: block; }
 .eqIcon.big img { width: 48px; height: 48px; } .eqIcon.small img { width: 32px; height: 32px; }
 .eqIcon.empty { border-style: dashed; border-color: var(--s8); } .eqIcon.empty img { opacity: 0.25; filter: grayscale(1); }
+/* The painted icons (`gearIcons.ts`): the grade's glow, the painting and the grade's painted frame, stacked in the box and smoothed
+   (paintings, not pixel art). The box's own border and fill give way to the painted frame; the painting sits inside its band. */
+span.eqIcon.painted { position: relative; border: 0; background: radial-gradient(circle at 50% 42%, #2a2f38 0%, #14171c 75%); box-shadow: none; border-radius: 9%; image-rendering: auto; overflow: hidden; }
+.eqIcon.painted > i { position: absolute; background-repeat: no-repeat; pointer-events: none; }
+.eqIcon.painted .eqFrame { inset: 0; }
+.eqIcon.painted .eqGlow { inset: 4%; opacity: 0.78; }
+.eqIcon.painted .eqArt { inset: 9%; }
+.eqIcon.painted.r5 .eqArt { inset: 7%; }
+span.eqIcon.painted.empty { border: 0; } .eqIcon.painted.empty .eqArt { opacity: 0.22; filter: grayscale(1); } .eqIcon.painted.empty .eqFrame { opacity: 0.55; }
 .eqSum { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
 .eqList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
 .eqRow { display: flex; flex-direction: column; gap: 4px; padding: 4px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--rc, var(--s8)); }
@@ -38,3 +48,69 @@
 .eqSetPieces { display: flex; flex-wrap: wrap; gap: 3px 8px; font-size: 10px; color: var(--s10); } .eqSetPieces .got { color: var(--white); }
 .eqTier { font-size: 10px; color: var(--s10); } .eqTier.on { color: var(--g4); }
 .eqSetHint { font-size: 10px; color: var(--dim); } .eqSetHint.up { color: var(--g4); } .eqSetHint.down { color: var(--r6); }
+
+/* SHOP-BOOKS-GEAR: wear on a piece (`wear.ts`): a slim durability bar along the foot, the worn or broken badge, a broken piece greyed
+   under its cracks; the durability line, the Repair button and a sale's second tap in the picker */
+.eqIcon { position: relative; }
+.eqIcon > i.eqDur { position: absolute; left: 8%; right: 8%; bottom: 5%; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; z-index: 3; pointer-events: none; }
+.eqIcon > i.eqDur b { display: block; height: 100%; background: #6fc46a; }
+.eqIcon.wear-worn > i.eqDur b { background: #e3a43c; }
+.eqIcon.wear-broken > i.eqDur b { background: #d0473a; }
+.eqIcon.wear-broken .eqArt, .eqIcon.wear-broken > img:not(.eqBadge) { filter: grayscale(0.85) brightness(0.7); }
+.eqIcon > i.eqCracks { position: absolute; inset: 6%; background: center / contain no-repeat; z-index: 2; pointer-events: none; opacity: 0.9; }
+.eqIcon > img.eqBadge { position: absolute; right: -2px; top: -2px; width: 40%; height: 40%; z-index: 4; image-rendering: auto; pointer-events: none; }
+.eqIcon > img.eqBadge.field { right: auto; left: -2px; }
+/* RUN-GEAR: the pack's fresh-from-the-field line under a find (docs/notes/run-gear.md) */
+.evcard.pack small.fresh { color: #f0b860; }
+.eqDurLine { display: block; font: 400 12px var(--body); color: var(--dim); }
+.eqDurLine.worn { color: #e8b55a; }
+.eqDurLine.broken { color: #ec7b6c; }
+button.eqRepair { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+button.eqRepair img.eqRepairIco { width: 22px; height: 22px; image-rendering: auto; }
+button.eqSure { border-color: #e3a43c; color: #ffd98a; }
+
+/* SHOP-BOOKS-GEAR: the hero sheet's Skill book panel (src/skillBookView.ts) */
+.kbPanel { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 12px; padding: 10px; border: 1px solid #7d6538; border-radius: 4px; background: linear-gradient(#1d1810e6, #120e09e6); }
+.kbPanel h4 { margin: 0; font: 400 16px var(--display); color: #ffe0a1; }
+.kbSlots { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.kbSlot { min-height: 64px; display: flex; align-items: center; gap: 8px; padding: 6px; text-align: left; background: #241c13; border: 1px solid #8e733e; border-radius: 4px; color: #f2e6c8; }
+.kbOwn { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font: 400 20px var(--display); color: #ffe0a1; border: 1px solid #8e733e; border-radius: 50%; background: #3a2c18; }
+.kbWords { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kbWords b { font: 400 14px/1.2 var(--body); color: #f2e6c8; }
+.kbWords small { font: 400 12px/1.25 var(--body); color: #bfb294; }
+.kbWords p { margin: 0; font: 400 12px/1.35 var(--body); color: #d8d0bb; }
+.kbWords .kbIn { color: #9fe39a; }
+.kbWords .kbWarn { color: #e8b55a; }
+.kbWords .kbHistory { font-style: italic; color: #cbbf9f; }
+.kbStudy { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid #5f4d2c; border-radius: 4px; background: #1a1610; }
+.kbStudyIco { width: 40px; height: 40px; flex: none; image-rendering: auto; }
+.kbBar { display: block; height: 5px; margin-top: 3px; border-radius: 3px; background: #0008; overflow: hidden; }
+.kbBar b { display: block; height: 100%; background: linear-gradient(90deg, #c99a43, #ffe0a1); }
+.kbRead { min-height: 44px; }
+.kbList { display: flex; flex-direction: column; gap: 6px; }
+.kbRow { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid #4c3d28; border-radius: 4px; background: #1e1711; }
+.kbRow.on { border-color: #c49a4f; }
+.kbRow > button { flex: none; min-height: 44px; }
+.eqStash { display: block; margin-top: 6px; text-align: center; font-size: 11px; color: var(--dim); }
+.eqStash.full { color: #ff8a80; font-weight: 700; }
+
+/* SEVEN-SLOT GEAR: the paper doll (the hero in the middle, its seven slots around it), a new base's placeholder (its slot's outline and
+   its name, until its painting comes: docs/notes/gear-art-todo.md), the sets' pips and the move's one-time lines. */
+.eqDoll { grid-template-areas: "acc head ." "main hero off" "belt torso feet"; align-items: start; }
+.eqDoll .at-head { grid-area: head; } .eqDoll .at-torso { grid-area: torso; } .eqDoll .at-main { grid-area: main; } .eqDoll .at-off { grid-area: off; }
+.eqDoll .at-feet { grid-area: feet; } .eqDoll .at-belt { grid-area: belt; } .eqDoll .at-acc { grid-area: acc; }
+.eqDoll .eqDollHero { grid-area: hero; justify-self: center; align-self: center; width: 88px; height: 88px; image-rendering: pixelated; opacity: 0.9; pointer-events: none; }
+.eqIcon.ph { position: relative; overflow: hidden; }
+.eqIcon.ph > .eqIcon { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: none; }
+.eqIcon.ph > .eqPh { position: relative; z-index: 2; max-width: 92%; padding: 1px 3px; font: 700 10px/1.1 var(--body); color: var(--white); text-align: center; overflow-wrap: anywhere; background: rgb(var(--black-rgb) / 0.6); border-radius: 3px; }
+.eqIcon.small.ph > .eqPh { font-size: 9px; }
+.eqPips { display: flex; gap: 2px; } .eqPips i { width: 6px; height: 6px; border-radius: 50%; background: var(--s5); } .eqPips i.on { background: var(--sc, var(--g4)); }
+.eqNote { margin: 0; font-size: 12px; color: var(--gold-hi); }
+/* SEVEN-SLOT GEAR batch 2: a legend's verse in its card, and in the codex's Legends page */
+.eqVerse { font-size: 11px; font-style: italic; color: var(--s10); }
+/* SEVEN-SLOT GEAR batch 3: seasoning's thin gold bar, glyph lines, and Repair beside Patch */
+.eqSeason { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--gold-hi); }
+.eqSeasonBar { display: inline-block; flex: none; width: 48px; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; }
+.eqSeasonBar b { display: block; height: 100%; background: #d9b44a; }
+.eqGlyph { font-size: 10px; color: var(--b3); }
+.eqMend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; grid-column: 1 / -1; } .eqMend small { grid-column: 1 / -1; }

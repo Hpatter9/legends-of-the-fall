@@ -1,5 +1,7 @@
 # The daily has a goal
 
+> **SPELLS-RETUNE (0.292):** `DAILY_START` is now 0.76 (it was 0.565): with Auto casting the king's spells a fresh save cleared every date. `npm run daily-rate` casts by default; with spells it reads 72% with the hearts and 52% without (112 dates), where the spell-less bot read 71% and 50%. `docs/notes/spells-retune.md`.
+
 The owner's ask: "The daily should have a goal. Not just be endless." Chosen: a fixed run with a boss of the day, and a daily
 chest for clearing it.
 

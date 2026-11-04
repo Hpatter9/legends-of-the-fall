@@ -4,7 +4,6 @@
 
 import { itemIcon } from './equipView';
 import { chestPicture } from './chestStash';
-import { ASC_MAX } from './sim/ascension';
 import { CAL_MAPS } from './sim/calamity';
 import { EQUIP_BASES, RARITY_NAMES, type Equipment } from './sim/equipment';
 import { RELICS } from './sim/relics';
@@ -144,7 +143,6 @@ export function victoryCard(card: HTMLElement, s: TowerSummary, onDone: () => vo
   stats.append(row('Spots cleared', String(s.floors || total.spots)), row('Relics', String(s.relics)), row('Heroes', String(s.heroes)), row('Events met', String(total.events)));
   rewards.push(group('The run', [stats]));
   card.append(...rewards.filter((x): x is HTMLElement => !!x));
-  if (s.cleared && c.level < ASC_MAX) card.append(el('p', 'ccLead', `Ascension ${c.level + 1} is open.`));
   const go = el('button', 'primary', 'Back to camp');
   go.addEventListener('click', onDone);
   card.append(go);

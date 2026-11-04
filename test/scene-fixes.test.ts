@@ -85,9 +85,10 @@ test('the king is the player: a shot about the king shows the king, never Duches
     }
     for (const t of linesOf(id)) assert.ok(!/sovereign goat|goat.*\b(is|was) the king\b|duchess.*\b(is|was) the king\b/i.test(t), `${id}: ${t}`);
   }
-  // (the opening's "That is you" shot shows the king, drawn from the Last Stand's king, and the goat comes on in a shot of her own)
-  const shot = SCENES.opening.shots.find((s) => s.lines?.some((l) => /That is you/.test(l.text)))!;
-  assert.ok([shot.cam.on].flat().includes('king'));
+  // (the opening's shot of the king giving his orders shows the king, drawn from the Last Stand's king; the goat shares only the shot where she is named as Her Grace)
+  const shot = SCENES.opening.shots.find((s) => s.lines?.some((l) => /from the rear/.test(l.text)))!;
+  // (a wide two-shot of the ruler and the three: the ruler is on stage, left of the heroes, and the goat does not come on in it)
+  assert.ok(SCENES.opening.cast.king.x < SCENES.opening.cast.front.x && (shot.cam.x ?? 0) > SCENES.opening.cast.king.x);
   assert.ok(!(shot.acts ?? []).some((a) => a.who === 'duchess'));
   assert.equal(SCENES.opening.cast.king.role, 'unit:standKing');
 });
@@ -118,15 +119,12 @@ test('the Last Stand and the Calamity are told without towers: a breach, a thron
   assert.ok(linesOf('calamityEnds').some((t) => /portal/.test(t)));
 });
 
-test('the Dread Pirate and the Tyrant join at the Last Stand’s waves 20 and 40 (an old save’s tower floors still count)', () => {
+test('no hero joins at the Last Stand’s waves now (an old save’s tower floors neither): the Dread Pirate and the Tyrant come by tales', () => {
   const m = picked(43);
-  m.stand = 19;
-  assert.deepEqual(grantContent(m), []);
-  m.stand = 20;
-  assert.deepEqual(grantContent(m), ['dreadPirate']);
+  // (SECRET-HEROES and HERO-TALES-2: wave 20 brought the Dread Pirate and wave 40 the Tyrant; A Sellsword in Chains and The Second Throne do now)
   m.stand = 40;
-  assert.deepEqual(grantContent(m), ['tyrant']);
+  assert.deepEqual(grantContent(m), []);
   const old = picked(44);
   old.tower = 40;
-  assert.deepEqual(grantContent(old), ['dreadPirate', 'tyrant']);
+  assert.deepEqual(grantContent(old), []);
 });

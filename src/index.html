@@ -287,13 +287,14 @@
   #bossCard .rib { max-width: 100%; animation: bcSlam 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) 0.8s both; }
   #bossCard b { display: block; font: 900 clamp(30px, calc(10.5 * var(--vw)), 48px)/1.15 var(--display); letter-spacing: 4px; color: var(--gold); text-shadow: 0 3px 0 var(--black), 0 0 24px rgb(var(--black-rgb) / 0.8); }
   #bossCard span { display: block; color: var(--dim); font-style: italic; text-shadow: 0 1px 0 var(--black); animation: bcTitle 0.4s ease-out 1.1s both; }
+  #bossCard em.weakLine { display: block; max-width: min(92vw, 520px); margin: 8px auto 0; color: #ffd24a; font-size: 13px; text-shadow: 0 1px 0 var(--black); animation: bcTitle 0.4s ease-out 1.3s both; }
   @keyframes bcDim { from { opacity: 0; } }
   @keyframes bcPort { from { transform: translateX(calc(-120 * var(--vw))); } }
   @keyframes bcSlam { 0% { opacity: 0; transform: scale(2.2); } 100% { opacity: 1; transform: none; } }
   @keyframes bcTitle { from { opacity: 0; transform: translateY(6px); } }
   @keyframes bcFlash { 0% { opacity: 0.45; } 100% { opacity: 0; } }
   /* (reduced motion: the card just fades in, nothing slides or slams) */
-  @media (prefers-reduced-motion: reduce) { #bossCard canvas, #bossCard .rib, #bossCard span { animation: bcDim 0.5s ease-out both; } #bossCard::after { display: none; } }
+  @media (prefers-reduced-motion: reduce) { #bossCard canvas, #bossCard .rib, #bossCard span, #bossCard em.weakLine { animation: bcDim 0.5s ease-out both; } #bossCard::after { display: none; } }
   /* a boss changes form: the banner over the held fight (it comes in once; no loops) */
   #phaseBanner { position: fixed; left: 0; right: 0; top: 17%; z-index: 4; pointer-events: none; text-align: center; padding: 10px 12px; background: linear-gradient(90deg, transparent, rgb(var(--s0-rgb) / 0.82) 15%, rgb(var(--s0-rgb) / 0.82) 85%, transparent); animation: pbIn 0.3s cubic-bezier(0.2, 1.3, 0.4, 1) both; text-shadow: 0 2px 0 var(--black); }
   #phaseBanner[hidden] { display: none; }
@@ -347,6 +348,12 @@
   /* the home screen: top bar, five sliding pages, a bottom tab bar */
   #home { position: fixed; inset: 0; z-index: 4; display: grid; grid-template-rows: auto 1fr auto; grid-template-areas: 'top' 'pages' 'tabs'; background: var(--s2); image-rendering: pixelated; overflow: hidden; }
   #home[hidden] { display: none; }
+  /* (MENU-GLITCH: closed, but still drawn under the screen opened from it until that screen covers it: home.ts handOff) */
+  #home[hidden].handoff { display: grid; }
+  #home.handoffQuiet { pointer-events: none; }
+  /* (MENU-GLITCH: a panel waiting for its pictures: laid out and painted, but not seen until they are ready; paintReady.ts) */
+  .paintWait { opacity: 0 !important; }
+  .paintWait, .paintWait * { animation-play-state: paused !important; }
   #hmTop { grid-area: top; position: relative; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 6px) 10px 4px; background: linear-gradient(var(--s5), var(--s3)); border-bottom: 3px solid var(--gold); box-shadow: 0 3px 10px rgb(var(--black-rgb) / 0.6); }
   #hmTop .grow { flex: 1; }
   .chip { display: flex; align-items: center; gap: 5px; min-width: 70px; padding: 3px 10px 3px 5px; background: var(--s1); border: 2px solid var(--edge); border-radius: 14px; color: var(--gold); font-size: 15px; box-shadow: inset 0 2px 4px rgb(var(--black-rgb) / 0.6); }
@@ -359,8 +366,12 @@
   .hmTab:not(.new) i.badge { display: none; }
   #hmBest { flex: 1 1 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
   #hmPages { grid-area: pages; position: relative; overflow: hidden; }
-  .hmPage { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; padding: 12px 12px 16px; visibility: hidden; transition: transform 0.32s cubic-bezier(0.3, 0.8, 0.3, 1), visibility 0s 0.32s; background: radial-gradient(var(--s6), var(--s2)); }
-  .hmPage.on { visibility: visible; transition-delay: 0s; }
+  /* (MENU-GLITCH: the pages ride one strip, moved as one by home.ts; a page not on screen or sliding is hidden) */
+  .hmTrack { position: absolute; inset: 0; }
+  /* (its own layer only while it slides: kept as one all the time it cost a phone's graphics memory a whole screen) */
+  .hmTrack.sliding { will-change: transform; }
+  .hmPage { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; padding: 12px 12px 16px; visibility: hidden; background: radial-gradient(var(--s6), var(--s2)); }
+  .hmPage.on { visibility: visible; }
   .hm-battle { padding: 0; overflow: hidden; background: var(--s2); }
   .hmPanel { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: linear-gradient(var(--s5), var(--s3)); border: 3px solid var(--gold); border-radius: 12px; outline: 2px solid var(--s1); box-shadow: 0 6px 18px rgb(var(--black-rgb) / 0.6), inset 0 0 0 2px var(--s8); text-align: center; }
   .hmPanel.wide { max-width: 560px; text-align: left; }
@@ -556,6 +567,8 @@
   /* events, relics and gear */
   #relics { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
   #relics[hidden] { display: none; }
+  /* (RELICS-PREP: the run's relics are read on the wave-prep screen only; the fight and its result card leave them out) */
+  body:not([data-phase='deploy']) #relics { display: none; }
   #relics .relic { padding: 2px; border-radius: 6px; line-height: 0; }
   #relics .relic.picked { border-color: var(--gold); box-shadow: 0 0 8px var(--gold); }
   #relics .hint { flex: 1 1 100%; font-size: 11px; color: var(--dim); }
@@ -820,16 +833,18 @@
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
+  <div id="jrHead" hidden></div>
   <div id="summary"></div>
   <div id="joke" hidden></div>
   <div id="stars" hidden></div>
   <div id="armyStars" hidden></div>
   <div id="oreDrop" hidden></div>
   <div id="dayResult" class="dayResult" hidden></div>
+  <div id="jrBody" hidden></div>
   <div id="waveNotes" hidden></div>
   <div id="xp" hidden></div>
   <div id="fightStats" hidden></div>
-  <div class="row"><button id="next" class="primary">Next stage</button></div>
+  <div class="row"><button id="qbLeave" hidden>Leave</button><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="recap" hidden></div>
 <div id="ask" hidden><div class="asumCard"><p id="askText"></p><div class="row"><button id="askNo">Keep</button><button id="askYes" class="primary">Recycle</button></div></div></div>

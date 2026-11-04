@@ -4,7 +4,8 @@
 
 - **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
 
-- **Resonance hero pilot** (`hero_soldier.png`, `hero_samurai_archer.png`): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
+- **The Knight's plain form** (`hero_soldier.png`, `hero_soldier_back.png` and their `_deep` copies, which the game bundles): his awakened sheets (`src/art/awakened/awakened_knight*.png`, credited under Awakened hero equipment below), frame for frame, with the gold, the red cape, the green inlays, the blade's blue core and the shield's lion recoloured to steel and dark blue cloth and a plain steel cross put on the shield by `tools/knight/plain.py`. No new artwork was generated; the face, hair, outlines and alpha are the awakened sheets' own. See `docs/notes/knight-sprite.md`.
+- **Resonance hero pilot** (`hero_samurai_archer.png`; the Knight's pilot sheet has since been replaced, above): original generated pixel artwork, directed from the owner's approved concept and Final Fantasy Resonance style references. No franchise sprites are included. Cropped, packed and sampled with nearest-neighbour scaling by `tools/resonance/pack.cjs`. These replace the Knight and Archer's displayed art at all grades; current grade effects and awakened class auras apply. Original Craftpix sheets and their credits remain available.
 
 Most of the art is from free **Craftpix.net** packs (craftpix.net, free licence: use in games allowed, no redistributing
 the raw files), copied one sprite at a time from the private assets repository (`hpatter9/chronos-assets`).
@@ -29,12 +30,17 @@ the raw files), copied one sprite at a time from the private assets repository (
   (`src/renderer/art/effects/`).
 - **Rift ore icons** (`src/art/ui/ore/`, the awakening materials): thirteen 32x32 icons from the **Free Mining Pixel 32x32 Icons** pack by Craftpix (craftpix.net, free licence), each recoloured to its class's aura colour by `tools/awaken/ore-icons.py`.
 - **Item icons** (`src/art/items/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Armor, Amulet, Boot, Hat, LongWep, Ring, Shield), for relics and gear.
-  The ten relics of the tower's relic sets (Ember Ruby, Dragon Scale, Frost Sapphire, Winter Cloak, Holy Chalice, Saint's Medal, Shadow Cloak, Viper Fang, Wolf Fang, Beast Harness) reuse tiles of the same tileset already cut for the equipment (`src/art/equip/`), copied one a file (CC-BY 4.0).
-- **Tower map icons** (`src/art/rogue/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Effect0, Money, GUI1, Potion, LongWep; crossed swords is the sword tile and its mirror), by `tools/rogue-icons.py` (CC-BY 4.0).
-- **Tower map backdrop** (`src/art/tower/`, cut by `tools/tower-art.py`): the brick (`brick.png`, tinted warm and cold for `brick2.png` and `brick3.png`), the barred window, the small window and the wall torch frames (`window.png`, `slit.png`, `torch.png`, glow disc dropped) from the Craftpix **Free 2D Top-Down Pixel Dungeon Asset Pack** (`walls_floor.png`, `fire_animation.png`); the cloud strips (`cloud_*.png`) from the Craftpix **Free Clouds Pixel Art Asset Pack** (white, gray and black, Shape2); and the far peaks (`peaks.png`) from the Craftpix **Free Mountain Peak Pixel Art Backgrounds** (background 3, Plan 2). The banners are the castle banner already in `src/art/castle/`.
+  The ten relics of the elite relic sets (Ember Ruby, Dragon Scale, Frost Sapphire, Winter Cloak, Holy Chalice, Saint's Medal, Shadow Cloak, Viper Fang, Wolf Fang, Beast Harness) reuse tiles of the same tileset already cut for the equipment (`src/art/equip/`), copied one a file (CC-BY 4.0).
+- **Calamity map icons** (the old tower's map art) (`src/art/rogue/`): single 16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Effect0, Money, GUI1, Potion, LongWep; crossed swords is the sword tile and its mirror), by `tools/rogue-icons.py` (CC-BY 4.0).
+- **Calamity map backdrop** (the old tower's map art) (`src/art/tower/`, cut by `tools/tower-art.py`): the brick (`brick.png`, tinted warm and cold for `brick2.png` and `brick3.png`), the barred window, the small window and the wall torch frames (`window.png`, `slit.png`, `torch.png`, glow disc dropped) from the Craftpix **Free 2D Top-Down Pixel Dungeon Asset Pack** (`walls_floor.png`, `fire_animation.png`); the cloud strips (`cloud_*.png`) from the Craftpix **Free Clouds Pixel Art Asset Pack** (white, gray and black, Shape2); and the far peaks (`peaks.png`) from the Craftpix **Free Mountain Peak Pixel Art Backgrounds** (background 3, Plan 2). The banners are the castle banner already in `src/art/castle/`.
 - **Floor twist icons** (`src/art/twists/`) and the four legendary relics' icons (`src/art/items/sun_crown.png`, `dragon_heart.png`, `storm_ring.png`, `void_lens.png`): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Effect0, Potion, Rock, Money, Boot, ShortWep, Hat, Shield, Amulet, Ring), by `tools/twist-icons.py` (CC-BY 4.0).
 - **The Calamity relic sets' icons** (`src/art/items/`: Thunder Horn, Cloud Treads, Thunder Pendant, Tempest Ring, Granite Heart, Moss Amulet, Stone Gauntlet, Earthen Bell, Blood Vial, Bloodstone Ring, Reaver Helm, Ruby Locket, Star Chart, Comet Shard, Moon Lantern, Astral Circlet, Coin Hoard, Gilded Ingot, Jewelled Crown, Gold Band, Rift Shard, Void Sigil, Doom Helm, Last Light): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Items: Music, Boot, Amulet, Ring, Glove, Potion, Hat, Book, Money), by `tools/relic-icons.py` (CC-BY 4.0).
+- **Placeholder relic icons** (RELICS-2: `src/art/items/founders_ledger.png`, `book_of_names.png`, `unfinished_chronicle.png`, for The Founder's Ledger, The Book of Names and The Unfinished Chronicle until the painted relic icons come): single 16x16 tiles cut from the same **DawnLike** tileset by DragonDePlatino (Items: Book), by `tools/relics/relic-icons-2.py` (CC-BY 4.0).
 - **Equipment icons** (`src/art/equip/`): 16x16 tiles cut one tile each from the same **DawnLike** tileset by DragonDePlatino (Items: LongWep, ShortWep, Ammo, Wand, Book, Scroll, Armor, Amulet, Ring, Boot, Glove, Hat, Music, Potion, Rock, Tool), by `tools/equip-icons.py`, for the hero equipment (CC-BY 4.0).
+- **The Eidolons and the War Horn** (`src/art/eidolons/`, from `art-source/eidolons/`): original art made for this game with AI image generation. The six Eidolons' figures and cards (Askel, Nivra, Aurelan, Voltara, Gorm, Vaelkhar) were painted with Dreamina and cleaned of the generator's marks by `tools/eidolons/clean_marks.py`; `tools/eidolons/import.py` cuts each figure from its grey ground with a soft alpha matte, crops the cards to head and shoulders, and sizes them as WebP. The War Horn's four paintings and the calling's circle and rift sheets are from the first Eidolon art set (`art-source/eidolons/horn/`, `call/`). Loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/eidolons.md`.
+- **Nivra in her trial** (`src/art/units/eidolon_nivra.png`, from `art-source/eidolons/gemini/nivra-sheet.jpg`, the branch `art/gemini-eidolons`): original art made for this game with AI image generation (Gemini; the prompt is in that branch's `art-source/eidolons/gemini/PROMPTS.md`). `tools/eidolon-trial/cut_nivra.py` keys out its magenta, brings it down to the fighters' size and lays it out as a fighter's sheet. See `docs/notes/eidolon-chain-2.md`.
+- **Painted equipment icons** (`src/art/gear/`, from `art-source/gear/`): original art made for this game with AI image generation: a standard and a Mythic painting of each of the 60 equipment bases, the four grade glows and the wear and selling pieces (the second painted set), plus the five grade frames and five wear pieces kept from the first set. Cleaned of stray edge bits and packed into atlases by `tools/gear/import-gear-icons.py` (`docs/notes/gear-icons.md`). The DawnLike tiles above are kept as the fallback for a base with no painting, and for the talent icons.
+- **Hester's Stall and the skill books** (`src/art/shop/`, from `art-source/books-shop/` and `art-source/gear/wear/`): original art made for this game with AI image generation: the skill books' covers (Manual, Grimoire, Hymnal, Bestiary, Universal), Hester Vane's portrait, the portraits of the visiting traders Rustam Saffar and the Gloaming Dealer, the camp stall, the studying and learned icons, the shelves, price tag, sold-out ribbon, standing seals and coin purse (the books-and-shop art set, PR #240, with the second set's repaints of Hester, the stall, the Manual and Bestiary covers and the first seal, PR #243), and the wear, repair and selling pieces of the painted equipment set above, with its "fresh from the field" badge (`badge-field`, the run gear finds: `docs/notes/run-gear.md`). Sized down to WebP by `tools/shop/import-shop-art.py`; loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/shop-books-gear.md`.
 - **XP tome icons** (`src/art/ui/tome-small.png`, `tome-medium.png`, `tome-large.png`): three 16x16 tiles cut one each from the same **DawnLike** tileset by DragonDePlatino (Items: Book), by `tools/tome-icons.py` (CC-BY 4.0).
 - **Army chests** (`src/art/ui/chest-bronze.png`, `chest-silver.png`, `chest-gold.png`): the chest (closed and open frames) from the Craftpix **Free Platformer Game Tileset Pixel Art** pack (`chest.png`), cropped, with its iron bands tinted bronze, silver and gold by a script (hue shifts only). The **daily chest** (`src/art/ui/chest-daily.png`) is the silver chest with its wood hue-shifted to violet. The army scenes on the Armies screen use the foes' existing sprite sheets and the land backdrops, with no new art.
 
@@ -191,6 +197,33 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   the bench and the bard's stage trimmed to their pixels). The bar room's wall is the old `wall.png` without its top 48 rows. Nothing is
   scaled; `tools/tavern/hall.py` does the cuts, `docs/notes/tavern-hall.md` lists the prompts.
 
+## The quests' placeholders (`src/art/quests/`, cut by `tools/quests/cut.py`; QUESTS batch 1)
+
+- **Gwen Tallow** behind the tavern's bar (`gwen.png`) and her card's portrait (`gwen-face.png`): composed from the
+  **Universal LPC Spritesheet** layers (`Universal-LPC-spritesheet-master` in the packs: the female body, brown shoes, the underdress,
+  the white sleeveless shirt, a brown cloth belt and the grey ponytail; CC-BY-SA 3.0 / GPL 3.0, the LPC artists listed in that pack's
+  `AUTHORS.txt`). Her stand is the walk-left row's first frame; her talk the spellcast-left frames. Placeholders until the owner's
+  painted giver portraits land.
+- **The passersby's portraits** (`pedlar-face.png`, `pilgrim-face.png`; batch 1b's `messenger-face.png`, `hunter-face.png`): the **Tiny
+  RPG Town** pack's `npc.png` (16 px faces, scaled 4x).
+- **Duchess's card portrait** (`duchess-face.png`, batch 1b): the first frame of the game's own goat sheet (`src/art/duchess/goat.png`,
+  credited with Duchess), squared and scaled. The spoils' and the rift's cards show two of the gear icons already in the game
+  (`src/art/items/star_chart.png`, `rift_shard.png`); the heroes and the ruler show their own painted portraits.
+- **The quest board** (`board.png`): Craftpix's **Free Medieval Field Work 2D Tileset for Platformer** ("Quest Board", craftpix.net free
+  licence), trimmed and scaled to 64 px across with hard alpha.
+
+## The tavern life's placeholder props (`src/art/tavern/life/pack-*.png`, copied by `tools/tavern-life/cut.py`; TAVERN-LIFE)
+
+- **Notes, z's, steam, embers, sparks, a "!" and a bead of sweat** over the heroes at their activities (`pack-note-gold`, `pack-note-pink`,
+  `pack-zzz`, `pack-steam`, `pack-ember`, `pack-spark`, `pack-zap`, `pack-star`, `pack-bang`, `pack-sweat`): ten 16px `sheet-16.png` strips
+  (six frames each), copied unchanged from the **5000 Pixel Effects** pack by blueberry (`pixel-effects/sprites/<effect>/`: gold-note,
+  pink-note, white-zzz, white-smoke-x, fire-sparkle-x, gold-sparkle-x, lightning-sparkle-x, star-sparkle-x, white-exclaim, white-sweat).
+  The pack's licence allows use in games; credit appreciated (https://blueberry-assets.itch.io).
+- **A book, shepherd's pipes and a joint of meat** in the heroes' hands (`pack-book`, `pack-pipes`, `pack-meat`): single
+  16x16 tiles cut from the **DawnLike** tileset by DragonDePlatino (Items: Book, Music, Flesh; CC-BY 4.0).
+- The tankard, cup, cards, dice, coin, dart, clasped hands and Gwen's cloth are a few code-drawn pixels each (no pack has them at this
+  size) until the painted props of `docs/notes/tavern-art-prompt.md` land.
+
 ## Art generated with PixelLab
 
 - **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.
@@ -274,7 +307,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 - The portal (`portal.png`, also in the war camp) is the `rift-portal` effect of **PVFX Foundry** (Pixel VFX Studio, `pvfx-foundry-thirteen-spritesheets`), CC0 1.0: sixteen
   frames, the visible 64 pixels of each, in one row.
 
-- **The camp's places** (`src/art/camp/tower.png`, `tower_locked.png`, `board.png`, `tools/camp/places.py`): the Tower is the Knights watchtower already used by the castle
+- **The camp's places** (`src/art/camp/tower.png`, `tower_locked.png`, `board.png`, `tools/camp/places.py`): the Last Stand's place (once the Tower) is the Knights watchtower already used by the castle
   (`src/art/castle/watchtower.png`), its locked picture that drained of colour with a chain and padlock drawn on it; the Daily board is the Fae ribbon signpost of the same
   isometric kits (`hpatter9/little-town`), halved by a 2x2 box average.
 
@@ -325,6 +358,47 @@ The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon*
 right-facing row of three walking frames, scaled up 2x with nearest-neighbour. The script builds the game's rows from them (a step cycle, a lunge made of the stride shifted forward, an idle, a hurt
 frame brightened, and a dead frame rolled onto its side). The pack folder has no licence file: the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
 
+## The sprite Eidolons on the board (`src/art/eidolons/sprites/`; `tools/eidolon-call-2/cut_sprites.py`, EIDOLON-CALL-2)
+
+After an Eidolon's painting crosses the screen, its sprite comes onto the board and performs the attack (`docs/notes/eidolon-call-2.md`):
+
+- Askel (`src/art/eidolons/sprites/askel.png`, and his flame `src/art/eidolons/sprites/askel-breath.png`): generated by the owner with
+  Gemini (`art-source/eidolons/gemini/askel-sheet-gemini.jpg`, four rows of six frames on magenta: idle, run, leap, fire breath), cut by
+  `tools/eidolon-call-2/cut_askel.py` (the magenta keyed out, a quarter size a block at a time, every frame on one baseline, the breath's
+  flame cut out as its own strip and the cropped breathing frames given the rear of the frame before). Original art for this game.
+- Nivra, Aurelan, Voltara, Gorm and Vaelkhar (`src/art/eidolons/sprites/nivra.png`, `src/art/eidolons/sprites/aurelan.png`,
+  `src/art/eidolons/sprites/voltara.png`, `src/art/eidolons/sprites/gorm.png`, `src/art/eidolons/sprites/vaelkhar.png`, and the breaths, beam and bolt `nivra-breath.png`, `aurelan-breath.png`, `voltara-breath.png`, `vaelkhar-breath.png`):
+  generated by the owner with Gemini (the Gemini app, the paintings as references; `art-source/eidolons/gemini/<id>-sheet.jpg`, rows
+  idle, move, special, attack on magenta), cut by `tools/eidolon-fx/cut_gemini.py` the way Askel's was (EIDOLON-FX: the magenta and its
+  fringe keyed out, brought down a whole factor a block at a time, every frame on one baseline, frames cropped by the one before made
+  whole, the breath cut off as its own strip). Original art for this game. They replace the whtdragon pack sprites and the golem the
+  call used before, and give Voltara hers.
+
+## The Eidolons' strike effects (`src/art/eidolons/fx/`; `tools/eidolon-fx/cut_fx.py`, EIDOLON-FX)
+
+- The pillars, bursts, aftershocks and aftermaths (`askel-pillar`, `fire-burst`, `nivra-pillar`, `ice-burst`, `aurelan-pillar`,
+  `light-burst`, `voltara-pillar`, `lightning-burst`, `gorm-pillar`, `gorm-ring`, `earth-burst`, `vaelkhar-pillar`, `dark-burst` and the
+  rest, `.webp`): cut from the game's own painted spell sheets (`art-source/spell-fx/`, credited above under spell and movement effects:
+  the fire, ice, light and stone walls, the ultimate's element bursts, the orbital strike, the storm cloud's bolt, the divine smite, the
+  lightning storm, the launch ring, the fissure and the reign of terror), resized to 160 px frames; Aurelan's beam recoloured gold and
+  Vaelkhar's fire black and violet. Original art for this game.
+- The shared impact flash and shockwave ring (`impact-ring.png`): generated for this project with PixelLab's VFX artist
+  (`art-source/eidolons/fx/raw/impact-ring.png`, its job in `impact-ring-result.json`), its eight frames doubled by whole pixels. Original
+  art for this game.
+- Prompts for Gemini-generated replacements, not yet made (the key's image quota was 0): `art-source/eidolons/fx/PROMPTS.md`.
+
+## The summons' own sheets (`src/art/units/summon_*.png`; `tools/summon-art/cut.py`, SUMMON-ART)
+
+- The wolves and the dire wolf (`summon_wolf.png`, `summon_wolf_white.png`, `summon_direwolf.png`): the grey, white and black wild dogs of
+  **whtdragon**'s RPG Maker MV animals pack (`animals/wilddogs.png`), the right-facing walking frames doubled by whole pixels, the bite,
+  idle, hurt and fall rows made by moving them by whole pixels. The same licence note as the wolves above.
+- The Reaper's wraith (`summon_wraith.png`) and the Illusionist's decoy (`summon_decoy.png`): figures 13 and 33 of the **Golems and
+  elementals** pack by batareya, moved by whole pixels as the Golem Forge's golems are, coming apart pixel by pixel as they fall (the same
+  licence note as the golems).
+- The Samurai Commander's standard (`summon_standard.png`): the war camp's standard (`src/art/camp/standard.png`, Chronos Settlement's
+  isometric kits, credited under the war camp) without its sand plot, its pennants stirring by whole pixels.
+- The Druid's treant is drawn in the older treant sheets already in the game (`cls_treant.png`, `cls_treant_2.png`, `cls_treant_3.png`, credited above).
+
 ## The combo and promotion effects (`src/render/spectacle.ts`)
 
 No new art: the five-hero combos' gathering and strike, a tier skill's ring and a promotion's pillar of light are the **5000 Pixel Effects** strips by blueberry already credited above
@@ -352,8 +426,8 @@ No new art: the five-hero combos' gathering and strike, a tier skill's ring and 
 - The dust kicked up as a wave comes in (`landdust.png`): the `landing-dust` effect of **PVFX Foundry** (Pixel VFX Studio,
   `pvfx-foundry-thirteen-spritesheets`), CC0 1.0, its grid sheet as it is.
 - The stained-glass window, the gilt pilaster with its banner and the dark back wall behind the field (`window.png`, `pilaster.png`,
-  `backwall.png`) are cut from the castle's own throne room (`src/art/throne/throne_room.png`); the king on his throne is the castle's
-  enthroned king (`src/art/throne/king_throne.png`, used as it is), so he looks the same everywhere.
+  `backwall.png`) are cut from the castle's own throne room (`src/art/throne/throne_room.png`).
+  (The old enthroned king, `king_throne.png`, and The King's atlas were removed in DEFAULT-RULER: the chosen ruler sits there now.)
 - The banners, braziers, lamps, fountain, well, chests, crates, barrels and pots are the castle courtyard's Chronos kit pieces already in
   `src/art/castle/` (see "Castle courtyard"), and the standards the war camp's (`src/art/camp/standard.png`); the courtyard's grass is
   `src/art/ground/grass1.png` and `grass2.png`.
@@ -419,7 +493,7 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ### Rift Sanctuary and destination worlds
 
 Original generated illustrations for the approved Calamity portal-expedition direction: the emerald-and-obsidian sanctuary and six destination environments (Ashen Keep, Rootbound Shrine, Lost Caravan, Prism Vault, Hollow Court and Frostwatch). They are in `src/art/rift-sanctuary/`, converted to WebP (quality 86) from the unchanged PNGs; provenance and hashes are recorded alongside them. Equal SVG viewports select the destination atlas panels for cards, scenic encounter screens and battle backdrops. The live arenas reuse the credited Chronos isometric stone, terrain, vegetation, ruins, camps and light assets, and the original Calamity arrival portal. Hero sprites retain their existing pack credits.
-- `src/art/rulers/the_king.png` (The King, the ninth ruler and the default since STARTER-KING): the earlier king brought back, no new artwork. The seated and command rows are the castle's enthroned king (`src/art/throne/king_throne.png`, see the throne room entries above) as it is. The standing rows are the Last Stand's old king from the **Himeko Sutori** character pack in `chronos-assets` (`Template_Male`, `Plate_06_Lordly_Male` and its top, `Helm/Helm_Crown_Male`), with the same pack's `Facial Hair/BeardBlond` and `Staff_05_Radiant_Male` as his sceptre, cut from the pack's 128 px grid and drawn twice up; his fall ends on the kneel turned 90 degrees. Built by `tools/rulers/the-king.py` (lossless pixel moves only). When he rises from his seat he stands before the Iron Stag's throne from `thrones.png` (the old art has no empty throne).
+- The living sanctuary (CALAMITY-HUB, `src/sanctuaryView.ts`) adds no new art: its rifts reuse the arrival portal above and the PVFX Foundry rift (`src/art/calmap/portal.png`), its mist the Cloudscape nebula (`src/art/calmap/nebula_2.png`) and its motes the sparkle strips in `src/art/fx/vfx/`, all credited where they were first copied in.
 
 ## Anime hero gallery
 
@@ -430,7 +504,7 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 ## Heritage looks
 
-- `src/art/units/*_{deep,brown,tan,olive}.png` (23 sheets, front and rear, for twelve human heroes; the Cleric's back shows no skin and is used as it is): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
+- `src/art/units/*_{deep,brown,tan,olive}.png` (23 sheets, front and rear, for twelve human heroes; the Cleric's back shows no skin and is used as it is; the Knight's two are now copies of his plain form, above, which already has his tone): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
 
 
 ## Last Stand ornate room artwork (`src/art/stand/ornate/`)
@@ -453,3 +527,4 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Spell and movement effects (painted)
 
 - Spell and movement effects (`src/art/fx/spells/`): original painted effects made with AI image generation for this game, all seven sessions of the brief (131 sheets): sessions A (the movement toolkit) and C (healers and revives) with OpenAI image generation, whose unchanged generations are retained in `art-source/spell-fx/originals/`; sessions B, D, E, F and G (auras, casters, martial and monster moves, the other moves and spells) with another AI image-generation tool. The source sheets are in `art-source/spell-fx/<session>/`; `tools/spell-fx/import-spell-art.py` packs one atlas a session, `src/art/fx/spells/<session>.webp`, with the small frame fixes listed in `tools/spell-fx/spell-fixes.json` (`docs/notes/spell-art.md`, `docs/notes/spell-art-bde.md`).
+- **The Calamity's battle zones** (`src/art/calzones/`, CAL-ZONES): the skull totem's six frames (`totem.png`, the first row of `Animation4.png`) and the crystal shards (`shards.png`, `Crystal_shadow1_3`, `Crystal_shadow2_3`) from the Craftpix **Free Undead Tileset Top-Down Pixel Art**; the crystal cluster (`crystal.png`, `Blue-green_crystal_light_shadow1`, turned grey so each world tints it), the gargoyle statue (`gargoyle.png`, `caveman_statue_light_shadow1`) and the summoning circle (`circle.png`, `magic_circle_dark_shadow`) from the Craftpix **Free Top-Down Pixel Art Cave Objects**; the hanging chain (`chain.png`) from the Craftpix **Free Underwater World 2D Game Objects**; the banner (`banner.png`, Banner 03) from the Craftpix **Free Medieval Field Work 2D Tileset for Platformer**; the coffins and candles (`decor.png`, Decor0 and Decor1, both frames) and the bats (`bats.png`, Avian0 and Avian1) from the **DawnLike** tileset by DragonDePlatino (CC-BY 4.0); the runes (`rune-crystal.png`, `rune-blood.png`, `rune-poison.png`, `rune-moon.png`, the slow rune sheets) from **5000 Pixel Effects**. The pillars are the Last Stand hall's pilaster and the braziers, statues, bones and rubble the army road's atlas, both credited above. Craftpix free licence: https://craftpix.net/file-licenses/

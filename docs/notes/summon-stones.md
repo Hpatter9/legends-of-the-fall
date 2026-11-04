@@ -26,7 +26,6 @@ equipment and summoning stones. Each summoning stone gives one shard, with a 1/1
 | Calamity clear (`clearStones`) | `CAL_STONES_PER_DRAW` (3) for each of `2 + level/2` draws: 6 at level 0, 21 at level 10 |
 | The chest shop | see below |
 | Codex milestones (`CODEX_STONES`) | 1 each, beside the crowns: 8 in all |
-| Codex entries (`ENTRY_STONES`, `claimEntries`) | 1 for each foe, boss or hero entry the first time it is discovered: 108 in all (63 bestiary, 45 heroes) |
 | Achievements (`ACHIEVEMENT_STONES`, `stonesOfAchievement`) | 2 each, beside the crowns; `BIG_STONES` (3) for Thirtieth Stage, Legend in the Making (level 50), Full Roster, Boss Slayer and Last Stand (wave 20); `CENTURION_STONES` (5) for Centurion (level 100): 50 in all |
 | Old saves, once | 10 (`STONES_GIFT`) |
 
@@ -36,15 +35,10 @@ and an older save's achievements already load as claimed. The reward text shows 
 Claim button ("Claim +40 · 3 stones"), Claim all, the toast, and the codex's reward rows ("+60 crowns, +1 stone") and its "Paid ... of
 ... crowns and ... of ... summoning stones" line.
 
-**Each codex entry** (the owner's later call) also pays a stone the first time it is discovered: a foe or boss entry when it is first met
-(`isMet`: the codex's foes met, or the bosses beaten), a hero entry when the hero is first owned. The codex pays by claims, so the entry
-stones are claimed too: the entries discovered and not yet paid (`entriesWaiting`) are taken with the codex's "Claim rewards" button
-(`claimEntries`, through `ENTRIES_CLAIM` in `codexView.ts`), above which a line says "3 new entries discovered: +3 summoning stones to
-claim"; the Codex chip on the home screen shows its badge while any wait (`codexAnyWaiting`). The entries paid are kept in
-`Meta.codexPaid` (`foe:<entry>`, `hero:<kind>`), so none pays twice. A save from before has no `codexPaid`: `readCodexPaid` counts every
-entry it had already discovered as paid when it loads, so it is paid only for the entries it discovers from now on. A new save's
-starter heroes are discovered entries, so it has 3 stones waiting in the codex from the start. Nothing is paid where a fight settles;
-`noteFoes` is unchanged. Every chest's crowns and gear roll exactly as before (`rollChest`
+**Codex entries pay no stone** (0.332.0, the owner's answer: "milestones only"). An earlier round paid 1 stone for each entry
+the first time it was discovered (about 108, claimed with the codex's button, kept in `Meta.codexPaid`); that is gone, with
+`ENTRY_STONES`, `claimEntries` and `readCodexPaid`. Stones already taken stay, and an old save's `codexPaid` is dropped on load.
+Every chest's crowns and gear roll exactly as before (`rollChest`
 and `rollDailyChest` are untouched); only the hero shards they named became stones (`chestStones`). `stand.ts` is untouched: its
 chests are the same stash chests, so they pay stones through `lootOf`.
 
@@ -70,8 +64,7 @@ The shop opens from a "Chest shop" button on the Recruit tab.
 
 The model now buys the dearest chest its crown budget reaches (stock permitting), opens every chest, and uses every stone. Pullable
 heroes owned (the starter's three count), day reached, median of 30 seeds; `--shop "400:3:3,1500:1:8,6000:1:15"` tries another shop, `--nobadges 1` leaves out the achievements' and codex milestones' stones (the model
-pays 54 of their 58 over the first 150 days, the same share as their crowns), `--noentries 1` leaves out the codex entries' stones (the
-model claims them each day: about 88 a year, as it meets only the armies' foes on their Normal clears), and
+pays 54 of their 58 over the first 150 days, the same share as their crowns), (the old `--noentries` switch went with the entry stones), and
 `--noshop 1` plays with free stones only (3,500 a year: the 5th pullable hero on day 3, the 10th on day 58, the 35th on day 312), which is why the shop exists.
 
 "Before stones" is the game before this branch; "First cut" is the first stones version (silver 5, gold 8, no badge stones); "Bigger

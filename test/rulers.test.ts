@@ -2,19 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BREATH_MS, DEFAULT_RULER, RULERS, SEAT_BREATH, rulerFrame, rulerOf, rulerWords, seatFrame } from '../src/rulerRules';
 
-test('the roster contains nine distinct appearances: five women and four men', () => {
-  assert.equal(new Set(RULERS.map((r) => r.id)).size, 9);
+test('the roster contains eight distinct appearances: five women and three men', () => {
+  assert.equal(new Set(RULERS.map((r) => r.id)).size, 8);
   assert.equal(RULERS.filter((r) => r.female).length, 5);
-  assert.equal(RULERS.filter((r) => !r.female).length, 4);
+  assert.equal(RULERS.filter((r) => !r.female).length, 3);
 });
 
-test('the classic king is the default ruler, first in the picker, and anything unknown falls back to him', () => {
-  assert.equal(DEFAULT_RULER, 'the_king');
-  assert.equal(RULERS[0].id, 'the_king');
-  assert.equal(rulerOf('the_king').female, false);
-  for (const v of [undefined, null, 3, 'lichKing']) assert.equal(rulerOf(v).id, 'the_king');
-  assert.equal(rulerOf('iron_stag').id, 'iron_stag');
-  assert.equal(rulerWords('The king at his throne.', 'the_king'), 'The king at his throne.');
+test('the Iron Stag is the default ruler, first in the picker, and anything unknown falls back to him; The King is retired but still read', () => {
+  assert.equal(DEFAULT_RULER, 'iron_stag');
+  assert.equal(RULERS[0].id, 'iron_stag');
+  assert.equal(rulerOf('iron_stag').female, false);
+  for (const v of [undefined, null, 3, 'lichKing']) assert.equal(rulerOf(v).id, 'iron_stag');
+  assert.ok(!RULERS.some((r) => (r.id as string) === 'the_king'), 'not in the picker');
+  assert.equal(rulerOf('the_king').id, 'iron_stag', 'the old id reads as the Iron Stag');
+  assert.equal(rulerWords('The king at his throne.', 'iron_stag'), 'The king at his throne.');
 });
 
 test('death and actions finish without restarting; idle and walking keep moving', () => {
@@ -56,12 +57,4 @@ test('on the throne the throne never moves: a painted ruler holds one seated fra
     assert.equal(seatFrame(r.id, 'seated', BREATH_MS + 1).breath, true);
     assert.equal(seatFrame(r.id, 'seated', 2 * BREATH_MS + 1).breath, false);
   }
-});
-
-test('The King keeps his own throne frames, which share one throne: a slow two-frame idle and his decree', () => {
-  assert.equal(SEAT_BREATH.the_king, null);
-  assert.deepEqual(seatFrame('the_king', 'seated', 0), { action: 'seated', col: 0, breath: false });
-  assert.deepEqual(seatFrame('the_king', 'seated', BREATH_MS + 1), { action: 'seated', col: 2, breath: false });
-  assert.equal(seatFrame('the_king', 'seated', BREATH_MS + 1, true).col, 0);
-  assert.equal(seatFrame('the_king', 'command', 9000).col, 3);
 });

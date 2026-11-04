@@ -13,12 +13,12 @@ import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 
 const heroSkills = (kind: string): Skill[] => {
   const hk = HERO_KITS()[kind];
-  return [hk.s1.skill, hk.s2.skill, KITS[kind].ultimate!];
+  return [hk.s1.skill, hk.s2.skill, ...(hk.s3 ? [hk.s3.skill] : []), KITS[kind].ultimate!];
 };
 
 test('a skill with no key of its own is keyed by its name; a renamed skill keeps its old key (RPG-SPELLS batch 2: the healers)', () => {
   for (const kind of ALL_HEROES) for (const s of heroSkills(kind)) assert.equal(keyOf(s), s.key ?? s.name, `${kind}: ${s.name}`);
-  const keyed = (kind: string) => heroSkills(kind).map((s) => `${s.name}=${keyOf(s)}`);
+  const keyed = (kind: string) => heroSkills(kind).filter((s) => s !== HERO_KITS()[kind].s3?.skill).map((s) => `${s.name}=${keyOf(s)}`);
   assert.deepEqual(keyed('cleric'), ['Guiding Bolt=Smite', 'Prayer of Healing=Benediction', 'Spirit Guardians=Divine Intervention']);
   assert.deepEqual(keyed('priestess'), ['Cure Wounds=Holy Light', 'Death Ward=Guardian Angel', 'Mass Resurrection=Resurrection']);
   assert.deepEqual(keyed('wanderer'), ['Healing Draught=Flask Toss', 'Healing Mist=Sanctuary', 'Panacea=Dawn Light']);

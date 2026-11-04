@@ -71,13 +71,14 @@ test('the events join the draw: a long climb meets them all, and the old kinds a
 });
 
 test('legendary relics are kept out of the ordinary draws and each does something', () => {
-  assert.equal(GREAT_RELIC_IDS.length, 4);
+  // (RELICS-2, the owner's approved redesign: six Storied relics, each with a price or a rule of its own; the keep's own relics are 24)
+  assert.equal(GREAT_RELIC_IDS.length, 6);
   for (const id of GREAT_RELIC_IDS) {
     assert.ok(!RELIC_IDS.includes(id));
-    assert.ok(RELICS[id].text.startsWith('LEGENDARY'));
-    assert.ok(Object.keys(relicEffects([id])).length > 0);
+    assert.equal(RELICS[id].rarity, 'storied');
+    assert.ok(Object.keys(relicEffects([id], { marks: { fallen: 3 } })).length > 0 || id === 'unfinishedChronicle');
   }
-  assert.equal(RELIC_IDS.length, 12);
+  assert.equal(RELIC_IDS.length, 24);
 });
 
 test('black altar: a hero is lost for good and a legendary relic is gained', () => {
@@ -91,7 +92,7 @@ test('black altar: a hero is lost for good and a legendary relic is gained', () 
   assert.equal(run.roster.length, heroes - 1);
   assert.ok(run.squad.length >= 1 && run.squad.every((id) => run.roster.some((h) => h.id === id)));
   assert.ok(run.relics!.some((id) => GREAT_RELIC_IDS.includes(id)));
-  assert.ok(line.includes('Sun Crown') || line.includes('Dragon Heart') || line.includes('Storm Ring') || line.includes('Void Lens'));
+  assert.ok(GREAT_RELIC_IDS.some((id) => line.includes(RELICS[id].name.replace(/^The /, ''))));
   assert.equal(run.event, undefined);
 });
 
@@ -172,7 +173,9 @@ test('fountain: a clean drink heals everyone, a foul one poisons one hero; the f
 });
 
 test('forge: reforge raises a piece a tier for gold, or melt it for gold; with no gear, hammer out a new piece', () => {
-  const run = onFloor('forge');
+  // (runs on the old rules, saved before RUN-GEAR: their simple gear; a real-gear run's forge is in test/run-gear.test.ts)
+  const old = <T extends { real?: true }>(r: T): T => (delete r.real, r);
+  const run = old(onFloor('forge'));
   run.items = [makeGear(40, 'weapon', 1)];
   run.event = drawEvent(run, 4, ['forge']);
   const before = run.gold;
@@ -182,7 +185,7 @@ test('forge: reforge raises a piece a tier for gold, or melt it for gold; with n
   assert.equal(run.items![0].id, 40);
   assert.equal(run.items![0].tier, 2);
   assert.equal(run.items![0].atk, makeGear(40, 'weapon', 2).atk);
-  const melt = onFloor('forge');
+  const melt = old(onFloor('forge'));
   melt.items = [makeGear(41, 'armour', 2)];
   melt.event = drawEvent(melt, 4, ['forge']);
   const gold = melt.gold;
@@ -190,19 +193,22 @@ test('forge: reforge raises a piece a tier for gold, or melt it for gold; with n
   assert.equal(melt.items!.length, 0);
   assert.ok(melt.gold > gold);
   // (worn gear is found too, and kept in its slot when reforged)
-  const worn = onFloor('forge');
+  const worn = old(onFloor('forge'));
   worn.roster[0].gear = { charm: makeGear(42, 'charm', 1) };
   worn.event = drawEvent(worn, 4, ['forge']);
   take(worn, /^Reforge/);
   assert.equal(worn.roster[0].gear!.charm!.tier, 2);
-  const none = onFloor('forge');
+  const none = old(onFloor('forge'));
+  none.event = drawEvent(none, 4, ['forge']);
   assert.equal(none.items, undefined);
   take(none, /^Hammer/);
   assert.equal(none.items!.length, 1);
 });
 
 test('forge: a piece at the top tier can only be melted', () => {
+  // (a run on the old rules, saved before RUN-GEAR)
   const run = onFloor('forge');
+  delete run.real;
   run.items = [makeGear(50, 'weapon', 3)];
   run.event = drawEvent(run, 4, ['forge']);
   assert.equal(pick(run, /^Reforge/), -1);
@@ -257,13 +263,13 @@ test('mimic chest: opening it brings a fight, and winning pays a great chest', (
   assert.equal(b.units.filter((u) => u.side === 'foe').length, spec.band.length);
   const gold = run.gold;
   const relics = run.relics?.length ?? 0;
-  const items = run.items?.length ?? 0;
+  const items = run.pack?.length ?? 0;
   finishTower(run, b, true);
   assert.equal(run.stage, 7);
   assert.equal(run.tower!.cur, undefined);
   assert.ok(run.gold - gold >= 40 + 8 * 6);
   assert.equal(run.relics!.length, relics + 1);
-  assert.ok(run.items!.length > items);
+  assert.ok(run.pack!.length > items);
   assert.ok(run.found!.some((l) => l.includes('mimic')));
   // (losing it ends the run)
   const lost = onFloor('mimic', 2, 6);
@@ -281,7 +287,7 @@ test('mimic chest: prodding it is a fixed gamble', () => {
     take(run, /^Prod/);
     if (a.real) {
       assert.equal(run.gold, gold + a.gold);
-      assert.ok(run.items!.some((g) => g.id === a.gear.id));
+      assert.ok(run.pack!.some((g) => g.id === a.gear.id));
     } else for (const h of run.roster) assert.ok(hpShare(run, h.id) < 1);
     assert.equal(inBattle(run), false);
   }
@@ -312,9 +318,9 @@ test('black book: a lasting attack bump or a hurt party, fixed with the card; th
 
 test('knight\'s cairn: gear now and tougher foes next, or a healed party', () => {
   const run = onFloor('cairn');
-  const items = run.items?.length ?? 0;
+  const items = run.pack?.length ?? 0;
   take(run, /^Take the/);
-  assert.equal(run.items!.length, items + 1);
+  assert.equal(run.pack!.length, items + 1);
   assert.equal(run.buff!.foes, 1.25);
   run.tower!.cur = { id: 0, kind: 'fight', fight: { band: ['skeleton'], stage: { foes: { hp: 1, atk: 1 } } } };
   const hard = startStage(run).units.find((u) => u.side === 'foe')!;

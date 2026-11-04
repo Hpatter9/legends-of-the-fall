@@ -80,7 +80,9 @@ export function tickAuras(b: Battle, out: BattleEvent[]): void {
   for (const a of b.auras) {
     if (a.next > b.t) continue;
     a.next = b.t + a.every;
-    const c = auraCentre(b, a)!;
+    // (its caster may have fallen earlier this tick, to another aura's blow: then it is gone, as it would be next tick)
+    const c = auraCentre(b, a);
+    if (!c) continue;
     const by = b.units.find((x) => x.id === a.by)!;
     const hold = b.t + a.every + 100;
     for (const x of b.units) {

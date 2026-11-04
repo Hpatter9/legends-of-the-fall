@@ -11,9 +11,11 @@ import { atkOf, defOf, hurt, type Battle, type BattleEvent, type Unit } from '..
 import { foesOf, mendUnit, net, roll } from '../abilities';
 import { addRes, heroKitOf, skill2Open } from '../heroKits';
 import { UNITS, type UnitDef } from '../units';
-import { AILMENT_SWITCH, ailmentsOf, dotOf, setDot } from '../ailments';
+import { AILMENT_SWITCH, ailmentsOf, burnFor, dotOf, setDot } from '../ailments';
 import { stormBolt } from './mages';
 import { monsterTick } from './monsters';
+import { TIMER, timeSummon, WOLF_LOOK } from '../carry';
+import { perceptionOf } from '../statRest';
 
 /** The kits' marks and stances on a fighter (hero or foe): each a time it lasts until, or a small state. */
 export interface KitFx {
@@ -30,19 +32,23 @@ export interface KitFx {
   /** Ninja Monk: blows on the same foe in a row (his Flow). */
   flow?: { to: number; n: number };
   /** Kitsune: wears a foe's shape until then (its kind, and how much her attack was multiplied). */
-  guise?: { def: string; until: number; mult: number };
+  guise?: { def: string; until: number; mult: number; ms?: number; look?: string };
   /** Yamabushi: shots at his friends are blown back until then. */
   reflect?: number;
   /** Werewolf: his form, when he last changed, and until when the Full Moon gives him both. */
   wolf?: 'hunter' | 'brute';
   wolfAt?: number;
   moon?: number;
+  /** SUMMON-TIMERS (`carry.ts`): until when his form lasts, and its full length; the Full Moon's full length. */
+  wolfUntil?: number;
+  wolfMs?: number;
+  moonMs?: number;
   /** Turned to stone (the Gorgon's Stone Garden) until then. */
   stone?: number;
   /** Paladin: takes half his friends' wounds until then. */
   vow?: number;
   /** Druid: a treant until then (and the health she had added). */
-  tree?: { until: number; added: number };
+  tree?: { until: number; added: number; ms?: number };
   /** Barbarian: Blood Fury until then. */
   fury?: number;
   /** Warlock: draining a foe (Soul Siphon). */
@@ -87,6 +93,22 @@ export interface KitFx {
   harvest?: number;
   /** Time Witch's Rewind: where a hero stood, and how it was, the last few seconds (a snapshot each half second). */
   hist?: { t: number; hp: number; u: number; v: number }[];
+  /** The third skills (the skills overhaul's batch 4, `kits/third.ts`): */
+  /** Takes `mult` more from every blow and skill until then (from `by` alone, when set): the Barbarian's Reckless Swing on himself, the
+   *  Wanderer's Acid Flask, the Minotaur's Bellow, the Warlock's Curse of Weakness. */
+  exposed?: { until: number; mult: number; by?: number };
+  /** Queen Dragoon's Scale Ward: takes less until then, and a blow on her burns its striker. */
+  scales?: number;
+  /** Bound by the Paladin's Warding Bond until then: takes less, and part of every blow on it is his instead. */
+  bond?: { by: number; until: number };
+  /** Branded by the Demon Swordsman until then: his Cleave drinks double from it. */
+  brand?: number;
+  /** The High Priestess's Sacred Flame: its next blow misses. */
+  missNext?: boolean;
+  /** The lost techniques (`kits/lost.ts`): held up by the Hymn of the Long Dawn until then (it cannot fall below 1 health), and whether
+   *  its singer has sung it this fight (once a wave). */
+  dawn?: number;
+  hymned?: boolean;
 }
 
 /** Timed terrain a kit made (a flood, a rampart, a statue): the tile, what it was, and when it goes back. */
@@ -125,13 +147,17 @@ export const KIT = {
   CRIT_NEXT: 1.6,
   FURY_QUICK: 1.3,
   FURY_LEECH: 0.12,
-  HUNTER_QUICK: 1.25,
+  HUNTER_QUICK: 1.25, // (the joint rebalance: 1.25 to 1.35, with the bleed and the splash, Vuk's Shapechange lifted for his Old Hunger, docs/notes/joint-rebalance.md) (TACTICS: 1.35 back to 1.25, his Shapechange cast while held, parity under Advance together, docs/notes/tactics.md)
   SIEGE_QUICK: 1.25,
   SIEGE_RANGE: 2,
   TREE_DEF: 6,
   ANGEL_HEAL: 0.3,
-  HUNTER_BLEED: 0.12,
-  BRUTE_SPLASH: 0.4,
+  HUNTER_BLEED: 0.12, // (the joint rebalance: 0.12 to 0.18) (TACTICS: 0.18 back to 0.12, parity under Advance together, docs/notes/tactics.md)
+  BRUTE_SPLASH: 0.5, // (the joint rebalance: 0.4 to 0.5)
+  SCALE_GUARD: 0.3,
+  SCALE_BURN_MS: 2000,
+  BOND_GUARD: 0.1,
+  BOND_SHARE: 0.5,
 } as const;
 
 /** Whether a fighter stands within `reach` of a living fighter of kind `def` on `side` whose `test` holds. */
@@ -149,7 +175,14 @@ export function kitStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow
   const blow = src === 'blow';
   const bx = by.kx;
   const tx = to.kx;
-  if (blow && bx && on(bx.smoke, b) && roll(b) < KIT.SMOKE_MISS) {
+  // (smoke, ink and sand: a striker's perception, WIS, sees through a share of the misses, STATS batch 6)
+  if (blow && bx && on(bx.smoke, b) && roll(b) < KIT.SMOKE_MISS * (1 - perceptionOf(by))) {
+    out.push({ kind: 'dodge', to: to.id });
+    return null;
+  }
+  // (the High Priestess's Sacred Flame: the foe's next blow goes wide)
+  if (blow && bx?.missNext) {
+    bx.missNext = false;
     out.push({ kind: 'dodge', to: to.id });
     return null;
   }
@@ -184,6 +217,26 @@ export function kitStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow
     if (tx.bounty && on(tx.bounty.until, b) && by.side !== to.side) dmg *= KIT.BOUNTY_MULT;
     if (tx.condemned && on(tx.condemned.until, b) && by.side !== to.side) dmg *= KIT.CONDEMN_MULT;
     if (tx.wolf === 'brute' || on(tx.moon, b)) dmg *= 1 - KIT.BRUTE_GUARD;
+    // (the third skills' marks: one that takes more, the Dragoon's scales, the Paladin's bond)
+    if (tx.exposed && on(tx.exposed.until, b) && (tx.exposed.by === undefined || tx.exposed.by === by.id)) dmg *= 1 + tx.exposed.mult;
+    if (on(tx.scales, b)) {
+      dmg *= 1 - KIT.SCALE_GUARD;
+      if (blow && by.alive && by.side !== to.side) burnFor(b, to, by, KIT.SCALE_BURN_MS);
+    }
+    if (tx.bond && on(tx.bond.until, b) && by.side !== to.side && !redirecting) {
+      dmg *= 1 - KIT.BOND_GUARD;
+      const pal = b.units.find((x) => x.id === tx.bond!.by && x.alive && x !== to);
+      if (pal) {
+        const part = dmg * KIT.BOND_SHARE;
+        redirecting = true;
+        try {
+          hurt(b, by, pal, Math.max(1, Math.round(part)), false, true, out, 'skill');
+        } finally {
+          redirecting = false;
+        }
+        dmg -= part;
+      }
+    }
   }
   // (a standard on the field: the heroes within two of it take less and hit harder)
   if (b.kits.standards) {
@@ -245,7 +298,7 @@ export function kitBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg: numbe
 export function kitSpare(b: Battle, to: Unit, out: BattleEvent[]): boolean {
   const x = to.kx;
   if (!x) return false;
-  if (on(x.fury, b)) {
+  if (on(x.fury, b) || on(x.dawn, b)) {
     to.hp = 1;
     return true;
   }
@@ -380,9 +433,14 @@ export function kitTick(b: Battle, out: BattleEvent[]): void {
       mendUnit(u, u.maxHp * 0.15, out);
       setLook(u, undefined, out);
     }
+    // (SUMMON-TIMERS: the Werewolf's form runs out, and he is a man again until he changes)
+    if (x.wolf && x.wolfUntil !== undefined && b.t >= x.wolfUntil) {
+      x.wolf = x.wolfUntil = x.wolfMs = undefined;
+      if (!on(x.moon, b)) setLook(u, undefined, out);
+    }
     if (x.moon !== undefined && b.t >= x.moon) {
-      x.moon = undefined;
-      setLook(u, x.wolf === 'brute' ? 'werewolf_black' : undefined, out);
+      x.moon = x.moonMs = undefined;
+      setLook(u, x.wolf ? WOLF_LOOK[x.wolf] : undefined, out);
     }
     if (x.siphon) {
       const s = x.siphon;
@@ -439,7 +497,7 @@ export function kitTick(b: Battle, out: BattleEvent[]): void {
     for (const r of list) {
       const me = b.units.find((u) => u.id === r.by);
       const foe = b.units.find((u) => u.id === r.foe);
-      if (me && foe && me.alive) raiseWraith(b, me, foe, 5000, out);
+      if (me && foe && me.alive) raiseWraith(b, me, foe, TIMER.harvest, out);
     }
   }
 }
@@ -457,7 +515,7 @@ export function raiseWraith(b: Battle, me: Unit, foe: Unit, ms: number, out: Bat
   if (!spot) return false;
   kx(foe).spent = true;
   const w = addWraith(b, me, foe, spot, share);
-  w.expires = b.t + ms;
+  timeSummon(b, w, ms);
   out.push({ kind: 'look', by: w.id, sheet: w.look ?? null });
   out.push({ kind: 'heal', to: w.id, amount: 0, by: me.id });
   return true;

@@ -6,11 +6,10 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, keyOf, ULT_LEVEL } from '../src/sim/abilities';
-import { HERO_KITS, costOf, heroKitOf, RES, SKILL2_LEVEL } from '../src/sim/heroKits';
+import { HERO_KITS, costOf, heroKitOf, SKILL2_LEVEL, SKILL3_LEVEL, topOf } from '../src/sim/heroKits';
 import { REVIVE } from '../src/sim/kits/revive';
-import { TIER_SKILLS } from '../src/sim/tierSkills';
 import { ALL_HEROES } from '../src/sim/units';
-import { barNumbers, chipLine, chipOf, gapOf, hudLayout, sheetOf, ultOf, whichCast } from '../src/fightHudRules';
+import { barNumbers, chipLine, chipName, chipOf, gapOf, hudLayout, sheetOf, ultOf, whichCast } from '../src/fightHudRules';
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -33,7 +32,7 @@ test('every hero chip shows its own kit: the skill names, the cost this hero pay
       assert.equal(c.name, slot.skill.name, `${h} skill ${n}`);
       assert.equal(c.cost, Math.round(costOf(u, slot)), `${h} skill ${n}`);
       assert.equal(c.tag, hk.pool === 'mana' ? 'MP' : 'SP', h);
-      assert.equal(c.gap, slot.gap ?? (hk.pool === 'mana' ? RES.GAP_MANA_MS : RES.GAP_STAM_MS), h);
+      assert.equal(c.gap, slot.cd, h);
       assert.ok(c.open, `${h} skill ${n} is open at level ${ULT_LEVEL}`);
     }
     const v = ultOf(b, u);
@@ -54,15 +53,16 @@ test('an MP caster, a blood-cost hero, a monster hero and a summoner read right'
   // (the Barbarian's skill 2 is paid in blood too: the chip and the sheet say so)
   const b2 = chipOf(b, barb, 2)!;
   assert.equal(b2.blood, HERO_KITS().barbarian.s2.hpCost);
-  assert.equal(chipLine(b2), `${b2.cost} SP +10%HP`);
+  assert.equal(chipLine(b2), `${b2.cost} SP`);
   const sheet = sheetOf(b, barb, 2)!;
   assert.match(sheet.rows.find(([k]) => k === 'Cost')![1], /and 10% of max health/);
-  // (the monster hero's chips are its reworked moves, by name; the summoner's call keeps its own long gap, and its skill 2 is the pack's order)
+  // (the monster hero's chips are its reworked moves, by name; the summoner's call keeps its own long cooldown, a utility's 18 s since the skills
+  // overhaul's batch 2, 9 s before, and its skill 2 is the pack's order)
   assert.equal(chipOf(b, wolf, 1)!.name, heroKitOf(wolf)!.s1.skill.name);
   const s1 = chipOf(b, beast, 1)!;
   assert.equal(s1.name, heroKitOf(beast)!.s1.skill.name);
-  assert.equal(s1.gap, 9000);
-  assert.match(sheetOf(b, beast, 1)!.rows.find(([k]) => k === 'Cooldown')![1], /^9\.0s/);
+  assert.equal(s1.gap, 18000);
+  assert.match(sheetOf(b, beast, 1)!.rows.find(([k]) => k === 'Cooldown')![1], /^18\.0s/);
   assert.equal(chipOf(b, beast, 2)!.name, 'Pack Tactics');
 });
 
@@ -76,14 +76,16 @@ test('a chip cools from its last cast, greys while the pool cannot pay, and is s
   const c = chipOf(b, u, 1)!;
   assert.ok(c.short && c.pay === 0);
   assert.ok(Math.abs(c.cd - (1 - 1000 / gapOf(hk, hk.s1))) < 1e-9);
-  assert.match(chipLine(c), /· \d+\.\ds$/);
+  assert.match(chipLine(c), /^\d+ SP$/);
   u.charge = CHARGE_MAX;
   assert.ok(!chipOf(b, u, 1)!.short);
   const low = spawn(b, 'knight', 1, 5);
   const shut = chipOf(b, low, 2)!;
   assert.ok(!shut.open);
   assert.equal(chipLine(shut), `Lv ${SKILL2_LEVEL}`);
-  assert.equal(chipLine(shut, true), `Lv${SKILL2_LEVEL}`);
+  assert.equal(chipLine(shut, true), `L${SKILL2_LEVEL}`);
+  assert.equal(chipLine(chipOf(b, low, 3)!), `Lv ${SKILL3_LEVEL}`);
+  assert.equal(chipLine(chipOf(b, low, 3)!, true), `L${SKILL3_LEVEL}`);
   assert.equal(chipLine(chipOf(b, low, 1)!, true), String(Math.round(costOf(low, hk.s1))));
 });
 
@@ -123,16 +125,23 @@ test("the ultimate's sheet: locked below level 30, else its meter and how it fir
   assert.ok(ultOf(b, u).ready);
 });
 
-test("the tier lines: the skill a tier improves lists its tiers (the reached ones lit); the other gets cheaper at tier 3", () => {
+// (the skills overhaul's batch 3, the owner's rule: a rank gives health and attack only, so every sheet had one rank line, the same at every rank;
+// the tier lines, and the tier 3 discount's, went with the tier skills. Batch 5, the owner-approved design's section 7: a skill's sheet lists its
+// five levels by use in that line's place, its own marked, and shows its Level row; the ultimate, which does not level, keeps the rank line)
+test('the rank line on the ultimate; the skill levels on each skill, the one it fights at marked', () => {
   const b = arena();
-  const u = addUnit(b, 'samurai', 0, 0, { level: 12, grade: 3 });
-  const own = sheetOf(b, u, 1)!;
-  assert.equal(own.tiers.length, 3);
-  assert.equal(own.tiers[0].title, `Tier 2: ${TIER_SKILLS.samurai[0].name}`);
-  assert.deepEqual(own.tiers.map((t) => [t.on, t.now]), [[true, false], [true, true], [false, false]]);
-  const other = sheetOf(b, u, 2)!;
-  assert.equal(other.tiers.length, 1);
-  assert.ok(other.tiers[0].now);
+  const u = addUnit(b, 'samurai', 0, 0, { level: 30, grade: 3, skillLv: [3, 1, 1] });
+  const ult = sheetOf(b, u, 'ult')!;
+  assert.equal(ult.tiers.length, 1);
+  assert.equal(ult.tiers[0].title, 'Every rank');
+  assert.match(ult.tiers[0].text, /health and attack/);
+  const s1 = sheetOf(b, u, 1)!;
+  assert.deepEqual(s1.tiers.map((t) => t.title), ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']);
+  assert.deepEqual(s1.tiers.map((t) => t.now), [false, false, true, false, false]);
+  assert.equal(s1.rows.find(([k]) => k === 'Level')![1], 'Level 3');
+  assert.equal(sheetOf(b, u, 1, false, () => 812)!.rows.find(([k]) => k === 'Level')![1], 'Level 3 · 812 of 1,500 to Level 4');
+  // (a save's level that the fight does not use, in the spire or the Calamity)
+  assert.equal(sheetOf(b, u, 2, false, () => 812)!.rows.find(([k]) => k === 'Level')![1], 'Level 3 · 812 of 1,500 to Level 4 · Level 1 here');
 });
 
 test('the bars show health and the pool with their numbers', () => {
@@ -142,7 +151,10 @@ test('the bars show health and the pool with their numbers', () => {
   u.charge = CHARGE_MAX / 4;
   const n = barNumbers(u);
   assert.equal(n.hp, `${u.hp}/${u.maxHp}`);
-  assert.equal(n.pool, '25/100 MP');
+  // (a pool's top is the hero's own: the level-12 Wizard's INT +5 makes it 125 MP, STATS batch 6 counted from +0 by the joint rebalance)
+  const top = Math.floor(topOf(u));
+  assert.equal(top, 125);
+  assert.equal(n.pool, `${Math.floor(top / 4)}/${top} MP`);
   assert.equal(n.poolShare, 0.25);
 });
 
@@ -152,4 +164,22 @@ test('up to five heroes take a full row each; more (the Last Stand eight, a Cala
   assert.deepEqual(hudLayout(8), { pairs: true, rows: 4 });
   assert.deepEqual(hudLayout(10), { pairs: true, rows: 5 });
   assert.deepEqual(hudLayout(7), { pairs: true, rows: 4 });
+});
+
+test('every chip name is one word of at most 8 letters, unique within its hero kit (revive faces too), and a sheet gives the skill 3 class', () => {
+  const b = arena();
+  ALL_HEROES.forEach((h, i) => {
+    const hk = HERO_KITS()[h];
+    const skills = [...hk.slots.map((x) => x.skill), ...(hk.s2.revive ? [hk.s2.revive.skill] : [])];
+    const names = skills.map(chipName);
+    for (const n of names) assert.match(n, /^[A-Za-z]{1,8}$/, `${h}: ${n}`);
+    // (the revive face replaces skill 2 on the chip, so it only has to differ from skills 1 and 3)
+    const shown = [hk.s1.skill, hk.s3?.skill, hk.s2.skill].filter(Boolean).map((s) => chipName(s!));
+    assert.equal(new Set(shown).size, shown.length, `${h}: ${shown}`);
+    if (hk.s2.revive) assert.ok(![chipName(hk.s1.skill), ...(hk.s3 ? [chipName(hk.s3.skill)] : [])].includes(chipName(hk.s2.revive.skill)), h);
+    const u = spawn(b, h, ULT_LEVEL, i);
+    const rows = sheetOf(b, u, 3)!.rows;
+    assert.ok(rows.some(([k, v]) => k === 'Class' && v.length > 3), h);
+    assert.ok(rows.some(([k]) => k === 'Cooldown'), h);
+  });
 });

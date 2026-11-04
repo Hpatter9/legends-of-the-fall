@@ -7,8 +7,9 @@ import { fightXp } from '../src/sim/levels';
 import { CHARGE_MAX, BRITTLE_MULT } from '../src/sim/abilities';
 import {
   BLINK_HIDE_MS, BULWARK_MS, BULWARK_SHARE, castSpell, CLEANSE_HEAL, DEEPFREEZE_MS, HEX_MS, HEX_MULT, LANCE_POWER, MANA_MAX, METEOR_MS, RENEWAL_MS, RENEWAL_SHARE, SHOWER_GAP, SHOWER_POWER, SHOWER_SPOTS,
-  SPELL_IDS, SPELLS, STARTER_SPELLS, WARCRY_CHARGE, WOLVES, readLoadout, equipSpell, type SpellId,
+  SPELL_IDS, SPELLS, STARTER_SPELLS, WARCRY_CHARGE, WOLVES, readLoadout, type SpellId,
 } from '../src/sim/spells';
+import { equipSpell } from '../src/sim/schools';
 import { tileAt } from '../src/sim/board';
 import { startedMeta } from '../src/sim/meta';
 import { readyBattle } from './helpers';
@@ -36,7 +37,8 @@ const still = (b: Battle) => {
 };
 
 test('ten new spells: costs, cooldowns and power fit the rules, and the starters are unchanged', () => {
-  assert.equal(SPELL_IDS.length, 11 + NEW.length);
+  // (KING-SPELLS batch 4 added the schools' fourteen spells: test/king-spells-b4.test.ts)
+  assert.equal(SPELL_IDS.length, 11 + NEW.length + 14);
   assert.deepEqual([...STARTER_SPELLS], ['heal', 'meteor', 'haste']);
   for (const id of NEW) {
     const sp = SPELLS[id];
@@ -46,15 +48,15 @@ test('ten new spells: costs, cooldowns and power fit the rules, and the starters
   }
   // (the strongest costs the most mana, and nothing outdoes the existing top spells in power)
   assert.equal(Math.max(...NEW.map((id) => SPELLS[id].power)), 5);
-  // (three of the new ones that fit the base budget exist, and the biggest three never do)
+  // (KING-SPELLS batch 2: the power budget is gone; a school's three slots take its spells: the Rose Duchess's Hex, Poison and Cleanse)
   const m = startedMeta(1);
   m.spellbook.owned = [...SPELL_IDS];
   m.spellbook.equipped = [];
-  for (const id of ['hex', 'lance', 'renewal'] as const) assert.ok(equipSpell(m, id), id);
+  for (const id of ['hex', 'poison', 'cleanse'] as const) assert.ok(equipSpell(m.spellbook, id, 'rose_duchess'), id);
 });
 
 test('a saved loadout keeps the new spells', () => {
-  const l = readLoadout({ owned: ['cleanse', 'lance', 'nonsense'], equipped: ['lance', 'cleanse'] }, 9);
+  const l = readLoadout({ owned: ['cleanse', 'lance', 'nonsense'], equipped: ['lance', 'cleanse'] });
   assert.deepEqual(l.owned, [...STARTER_SPELLS, 'cleanse', 'lance']);
   assert.deepEqual(l.equipped, ['lance', 'cleanse']);
 });

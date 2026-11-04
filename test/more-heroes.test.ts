@@ -2,6 +2,7 @@ import { HERO_KITS } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { REST } from '../src/sim/statRest';
 import { existsSync } from 'node:fs';
 import { addUnit, apart, atkOf, hurt, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike, ULT_LEVEL, keyOf } from '../src/sim/abilities';
@@ -177,7 +178,10 @@ test('Grappling Hook drags the nearest shooter in beside the Buccaneer and holds
   assert.ok(archer.hp < archer.maxHp);
 });
 
-test('Dirge slows every foe within four tiles, and the bard\'s tune charges the friend with the least', () => {
+test('Dirge slows every foe within four tiles, and the bard\'s tune charges the friend with the least', (t) => {
+  // (the pools' written points: the pools by score, STATS batch 6, are held off here and staged in `stats-rest`)
+  REST.pools = false;
+  t.after(() => { REST.pools = true; });
   const b = arena();
   const me = spawn(b, 'wolfBard', 3, 6, CHARGE_MAX);
   const f = spawn(b, 'skeleton', 3, 3);
@@ -209,11 +213,12 @@ test('Call of the Wild brings two dire wolves, no more, that fight for the Beast
   const wolves = () => b.units.filter((x) => x.alive && x.def === 'wolf');
   assert.equal(wolves().length, 1);
   assert.equal(wolves()[0].owner, me.id);
-  // (a skill keeps a gap before it goes again, 9 s for Call of the Wild (COMBAT-002): the gap is taken as passed each time)
+  // (a skill keeps a gap before it goes again, 9 s for Call of the Wild (COMBAT-002; 18 s, a utility's, since the skills overhaul): the gap is
+  // taken as passed each time; the run is long enough for the cast and the breath after it, `RES.BREATH_MS`, which the overhaul's batch 2 added)
   const again = () => {
     me.charge = CHARGE_MAX;
     if (me.ks) me.ks.at1 = -1e9;
-    run(b, 1500);
+    run(b, 2500);
   };
   again();
   assert.equal(wolves().length, 2);
@@ -344,7 +349,10 @@ test('Earthquake holds every foe within three tiles', () => {
   assert.equal(far.stunUntil, undefined);
 });
 
-test('Starfall calls stars on up to three separate crowds, and Astral Convergence fills the allies\' meters', () => {
+test('Starfall calls stars on up to three separate crowds, and Astral Convergence fills the allies\' meters', (t) => {
+  // (the pools' written points: the pools by score, STATS batch 6, are held off here and staged in `stats-rest`)
+  REST.pools = false;
+  t.after(() => { REST.pools = true; });
   const b = arena();
   const me = spawn(b, 'sage', 3, 8, CHARGE_MAX);
   [[0, 4], [3, 4], [6, 4]].forEach(([u, v]) => spawn(b, 'skeleton', u, v));
@@ -379,10 +387,13 @@ test('Hellblade Sweep heals the Demon Swordsman, and Demon Form lifts his attack
   const before = dm.power ?? 1;
   run(c, 200);
   assert.ok(Math.abs((dm.power ?? 1) / before - FORM_MULT) < 1e-6, `in form: ${(dm.power ?? 1) / before}`);
-  // (and no second Demon Form while the first wears off: with ULT-CHARGE's quicker meter it would be full again before then; the form lasts
-  // 7 s times the square root of its tuned strength)
+  // (and no second Demon Form while the first wears off: with ULT-CHARGE's quicker meter it would be full again before then. A hero's form
+  // lasts SUMMON-TIMERS' `TIMER.demon` times the square root of its tuned strength, so he is kept standing until it has run out: until
+  // STATS-2 this ran 13 s, and the form was seen off only because he fell at 12.8 s)
   c.autoUlt = false;
-  run(c, 13000);
+  const until = dm.form!.until;
+  dm.hp = dm.maxHp = 1e6;
+  run(c, until - c.t + 500);
   assert.ok(Math.abs((dm.power ?? 1) / before - 1) < 1e-6, `worn off: ${(dm.power ?? 1) / before}, form ${JSON.stringify(dm.form)} at ${c.t}`);
   assert.equal(dm.form, undefined);
 });

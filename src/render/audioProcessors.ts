@@ -658,6 +658,23 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.scatter(t + 0.05, 0.6, 9, 0.1, 2400);
     s.clang(t + 0.04, 880, 1.2, 0.08);
   },
+  // (BOSS-BIG: a boss's signature. The windup, a low growl that swells under a dark scrape (the ultimate's slash an octave and more down);
+  // the blow, a sub-deep boom with a grinding crack and a long dark tail, heavier than the ultimate's)
+  bossSlash: (s, t) => {
+    s.note(t, 55, 0.85, 0.3, 'sawtooth', 82);
+    s.note(t, 58, 0.85, 0.22, 'square', 87);
+    s.hiss(t, 0.6, 320, 'bandpass', 0.38, 1400, 3);
+    s.thump(t + 0.05, 70, 0.5, 0.35, 30);
+    s.ring(t + 0.2, 392, 0.6, 0.05);
+  },
+  bossImpact: (s, t) => {
+    s.thump(t, 42, 1.5, 0.95, 12);
+    s.thump(t + 0.03, 85, 0.6, 0.5, 30);
+    s.snap(t, 0.55, 1200);
+    s.hiss(t, 1.1, 300, 'lowpass', 0.5, 60);
+    s.scatter(t + 0.06, 0.7, 10, 0.12, 1600);
+    s.note(t + 0.05, 49, 1.2, 0.18, 'sawtooth', 36);
+  },
   riseSummon: (s, t) => {
     [220, 277, 330, 440].forEach((f, i) => s.pad(t + i * 0.12, f, 2.2, 0.07, 'triangle', 1600, f * 1.5));
     s.hiss(t, 2.2, 550, 'bandpass', 0.08, 3800, 4);
@@ -757,6 +774,28 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     [523, 659, 784, 1047].forEach((f) => s.note(t + 0.7, f, 1.9, 0.14, 'triangle'));
     s.clang(t + 0.7, 2093, 1.8, 0.1);
     s.hiss(t + 0.7, 0.9, 6500, 'highpass', 0.06);
+  },
+  // the cinematics (CINE-001): a voice's blip is one soft tick in its register, a smash cut lands as a low hit, a whoosh sweeps
+  // through a flash, and a swell rises under a reveal
+  blipQuill: (s, t) => s.click(t, 0.05, 2400),
+  blipHero: (s, t) => s.note(t, 520, 0.045, 0.05, 'triangle', 500),
+  blipBoss: (s, t) => {
+    s.note(t, 92, 0.09, 0.09, 'sawtooth', 80);
+    s.hiss(t, 0.06, 260, 'lowpass', 0.04);
+  },
+  blipBeast: (s, t) => s.note(t, 160, 0.08, 0.07, 'square', 120),
+  blipKing: (s, t) => s.note(t, 330, 0.06, 0.05, 'triangle', 320),
+  blipGoat: (s, t) => s.note(t, 700, 0.1, 0.04, 'triangle', 620),
+  cineHit: (s, t) => {
+    s.thump(t, 70, 0.7, 0.5, 26);
+    s.hiss(t, 0.35, 420, 'lowpass', 0.25, 90);
+    s.clang(t + 0.01, 196, 0.8, 0.06);
+  },
+  cineWhoosh: (s, t) => s.hiss(t, 0.4, 600, 'bandpass', 0.18, 4200, 2),
+  cineSwell: (s, t) => {
+    s.pad(t, 147, 2.4, 0.12, 'sawtooth', 900, 220);
+    s.pad(t, 220, 2.4, 0.08, 'triangle', 1400, 330);
+    s.hiss(t + 0.6, 1.8, 900, 'bandpass', 0.06, 5200);
   },
   eliteSting: (s, t) => {
     s.thump(t, 55, 0.95, 0.45, 24);
@@ -988,8 +1027,8 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     if (track) this.setTrack(track);
   }
 
-  /** Starts a track's stems together on a new loop, fading in from nothing (null if it is already sounding). */
-  private begin(track: MusicId, baked: Baked): void {
+  /** Starts a track's stems together on a new loop, fading in from nothing over `fadeS` (null if it is already sounding). */
+  private begin(track: MusicId, baked: Baked, fadeS = FADE_S): void {
     if (this.loops.has(track)) return;
     const ac = this.ac;
     const t = ac.currentTime + 0.05;
@@ -997,7 +1036,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     const trim = info ? trackGain(track) : 1;
     const fade = new GainNode(ac, { gain: 0 });
     fade.gain.setValueAtTime(0, t);
-    fade.gain.setTargetAtTime(this.level * trim, t, FADE_S / 3);
+    fade.gain.setTargetAtTime(this.level * trim, t, fadeS / 3);
     fade.connect(this.lowpass);
     const loop: Loop = { fade, trim, stems: {} };
     const rules = info ? 'town' : SYNTH_OF[track];
@@ -1044,8 +1083,9 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
 
   /** Fades the old track out and the new one in, and starts the new one from the top (once it is baked: the first time a
    *  track is wanted it is a moment, and the old track plays on meanwhile). During a sting the new track waits for it.
-   *  `level` is how loud the track sits (1 is its full level); the same track at another level glides there and plays on. */
-  setTrack(track: MusicId, level = 1): void {
+   *  `level` is how loud the track sits (1 is its full level); the same track at another level glides there and plays on.
+   *  `fadeS` is the crossfade's length (the boss track's own: `crossfadeOf` in `battleMusic.ts`). */
+  setTrack(track: MusicId, level = 1, fadeS = FADE_S): void {
     if (track === this.current) {
       if (level !== this.level) {
         this.level = level;
@@ -1064,19 +1104,21 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     this.applyColour(true);
     this.startDrone();
     if (!this.enabled || this.holding) return;
-    this.play(track, prev);
+    this.play(track, prev, fadeS);
   }
 
-  private play(track: MusicId, prev: MusicId | null): void {
+  private play(track: MusicId, prev: MusicId | null, fadeS = FADE_S): void {
     void this.stems(track).then(
       (baked) => {
         // (the wanted track may have changed while it baked)
         if (this.current !== track || !this.enabled || this.holding) return;
-        if (prev && prev !== track) this.release(prev);
+        // (every other loop goes, not only `prev`: two changes asked for before the first track baked (the victory's results
+        // left for the deploy, then the camp at once) would otherwise leave the first loop playing under the new one)
+        for (const t of [...this.loops.keys()]) if (t !== track) this.release(t, fadeS);
         // (a scene's track is kept only while it plays: the many short scores would otherwise pile up in memory)
         for (const t of SCENE_TRACKS) if (t !== track && t !== prev) this.baked.delete(t);
         this.trimBaked();
-        this.begin(track, baked);
+        this.begin(track, baked, fadeS);
         this.applyColour(true);
         this.startDrone();
       },

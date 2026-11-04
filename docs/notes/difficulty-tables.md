@@ -1,5 +1,7 @@
 # The difficulty tables, every army
 
+> **SPELLS-RETUNE (0.292):** these tables were measured by a bot that never cast the king's spells. The game is now tuned so a player whose Auto casts them meets the same difficulty; `npm run balance` casts by default (`BOT_SPELLS=0` for the old bot), and the sampled cells in `docs/notes/spells-retune.md` are back on these figures.
+
 Mean tries to clear (a fresh save each try, at most 25; the % in brackets is the share of the 8 saves that cleared, left out when it is 100%). The recruits' party at the level shown, a maxed castle, gear dressed. Made with `npm run balance -- --no-tables --deep --levels 1,15,30,45,60,80,100 --attempts 8 --tiers-at <tier> [--talents]`. See `difficulty.md`.
 
 ## With talents (every row the level opens)

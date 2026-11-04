@@ -9,15 +9,16 @@ import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
 import type { DevGift } from './sim/devGrant';
+import { appUpdate } from './appUpdate';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
+import { DEFAULT_EVERY, EVERY_CHOICES } from './ultShowRules';
 
 const KEY = 'legends.settings';
 
 export interface Settings {
   /** The player's ruler; cosmetic, shared by every view. */
   ruler: RulerId;
-  /** Set once the player picks a ruler in the picker. Before The King (0.212.0) any saved setting carried the old default,
-   *  Iron Stag, so a saved Iron Stag without this is read as the old default and moves to The King, the owner's call. */
+  /** Set once the player picks a ruler in the picker (kept for old saves; the Iron Stag is the default again and stays whoever picked it). */
   rulerPicked?: boolean;
   /** Music volume, 0 to 100. */
   music: number;
@@ -40,11 +41,18 @@ export interface Settings {
   /** Whether a hero's ultimate plays its full moment (ULT-CUTIN, docs/notes/battle-hud.md): the fight pauses, a slash of the hero's art crosses
    *  the screen with the ultimate's name and the board dims round the caster. Off, the short one: a quick banner while the fight runs on. */
   ultFull: boolean;
+  /** ULT-SHOW (`ultShowRules.ts`): Shorter ultimates, never the long showcase (a hero's first use included); and how often the showcase comes
+   *  back after a hero's first use (every Nth use; 0: the first only). */
+  ultShort: boolean;
+  ultEvery: number;
+  /** Whether an Eidolon's call plays its full cinematic (EIDOLONS, `eidolonCall.ts`): the horn, the circle, the sky torn open, the figure, the
+   *  name and the attack in beats. Off, the short one (about two seconds). An Eidolon's first call always plays in full. */
+  eidolonFull: boolean;
   /** Duchess's equipped unlockable cosmetic accessory. */
   duchessHat: DuchessCosmeticId;
 }
 
-export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, duchessHat: 'none' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -59,7 +67,8 @@ export function parseSettings(raw: string | null): Settings {
   const flag = (x: unknown, d: boolean) => (typeof x === 'boolean' ? x : d);
   const validHat = (x: unknown): DuchessCosmeticId => (typeof x === 'string' && DUCHESS_COSMETICS.some((c) => c.id === x) ? (x as DuchessCosmeticId) : DEFAULTS.duchessHat);
   return {
-    ruler: saved.ruler === 'iron_stag' && saved.rulerPicked !== true ? DEFAULT_RULER : rulerOf(saved.ruler).id,
+    // (a saved `the_king` loads as the default, the Iron Stag, quietly: every other setting is kept)
+    ruler: rulerOf(saved.ruler).id,
     ...(saved.rulerPicked === true ? { rulerPicked: true } : {}),
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
@@ -71,6 +80,9 @@ export function parseSettings(raw: string | null): Settings {
     quips: flag(saved.quips, DEFAULTS.quips),
     cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
     ultFull: flag(saved.ultFull, DEFAULTS.ultFull),
+    ultShort: flag(saved.ultShort, DEFAULTS.ultShort),
+    ultEvery: EVERY_CHOICES.includes(saved.ultEvery as never) ? (saved.ultEvery as number) : DEFAULTS.ultEvery,
+    eidolonFull: flag(saved.eidolonFull, DEFAULTS.eidolonFull),
     duchessHat: validHat(saved.duchessHat),
   };
 }
@@ -144,6 +156,8 @@ export function openSettings(): void {
 export function closeSettings(): void {
   closePicker();
   $('settings').hidden = true;
+  // (CLOSE-SCREENS: closed, not kept under the page: each opening draws it afresh)
+  $('settingsBody').replaceChildren();
 }
 
 /** Shows a submenu (or the top list, for null) and scrolls back to the top. */
@@ -189,6 +203,9 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
         toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
         toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
         toggleRow('Full ultimate scenes', 'On, the fight pauses as an ultimate fires: the hero slashes across the screen, its name shows and the board dims round the caster. Off, a quick banner while the fight runs on. With Auto on, always the quick banner', 'ultFull', s.ultFull),
+        toggleRow('Shorter ultimates', 'On, a hero\'s ultimate never plays its long showcase (the hero seen doing what the ultimate says, about five seconds at x1). Off, the first time each hero\'s ultimate fires it plays the showcase, and again now and then (below)', 'ultShort', s.ultShort),
+        everyRow(s.ultEvery, s.ultShort),
+        toggleRow('Full Eidolon calls', 'On, an Eidolon called by the War Horn plays its whole scene: the horn, the summoning circle, the sky torn open and its attack in beats. Off, a short version of about two seconds. The first call of each Eidolon always plays in full', 'eidolonFull', s.eidolonFull),
         resetTipsRow(),
       ];
     case 'ruler':
@@ -327,7 +344,19 @@ function aboutRows(): HTMLElement[] {
     'Credits',
     'Art from free pixel-art packs (most from Craftpix, some from DawnLike and others) and some made for the game. Music from OpenGameArt composers and others. Most sound effects are made in the game, with a few recorded hits. Every source is named in the game’s credits list.',
   );
-  return [name, credits];
+  const rows = [name, credits];
+  const up = appUpdate(); // (the app only: a newer release was found at start)
+  if (up) {
+    const [r, text] = row('Update available', `Version ${up.version} is out. `);
+    const a = document.createElement('a');
+    a.href = up.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = 'Get the new version';
+    text.lastElementChild?.append(a);
+    rows.unshift(r);
+  }
+  return rows;
 }
 
 function row(title: string, hint: string): [HTMLElement, HTMLElement] {
@@ -395,12 +424,11 @@ function rulerRow(value: RulerId): HTMLElement {
   return r;
 }
 
-/** A ruler's portrait: the first frame of their sheet (The King's on his throne: his standing figure is the old, smaller pack sprite). */
+/** A ruler's portrait: the first frame of their sheet. */
 function rulerPortrait(id: RulerId): HTMLElement {
   const picture = document.createElement('span');
   picture.className = 'rulerPortrait';
   picture.style.backgroundImage = `url("${RULER_URLS[id]}")`;
-  if (id === 'the_king') picture.style.backgroundPosition = `0 ${(6 / 7) * 100}%`;
   picture.setAttribute('aria-hidden', 'true');
   return picture;
 }
@@ -442,7 +470,28 @@ function speedRow(value: 1 | 2): HTMLElement {
   return r;
 }
 
-function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics' | 'ultFull', value: boolean): HTMLElement {
+/** ULT-SHOW: how often an ultimate's long showcase comes back after the hero's first use. */
+function everyRow(value: number, off: boolean): HTMLElement {
+  const [r] = row('Showcase again', off ? 'Shorter ultimates is on: no showcases' : 'After a hero\'s first ultimate, its showcase plays again on every Nth use (First: only the first time)');
+  const pair = document.createElement('div');
+  pair.className = 'pair';
+  for (const n of EVERY_CHOICES) {
+    const b = document.createElement('button');
+    b.textContent = n === 0 ? 'First' : `${n}th`;
+    b.disabled = off;
+    b.setAttribute('aria-pressed', String(n === value));
+    b.classList.toggle('on', n === value);
+    b.addEventListener('click', () => {
+      setSetting('ultEvery', n);
+      draw();
+    });
+    pair.append(b);
+  }
+  r.append(pair);
+  return r;
+}
+
+function toggleRow(title: string, hint: string, key: 'shake' | 'numbers' | 'saver' | 'awake' | 'quips' | 'cinematics' | 'ultFull' | 'ultShort' | 'eidolonFull', value: boolean): HTMLElement {
   const [r] = row(title, hint);
   const b = document.createElement('button');
   b.className = value ? 'toggle on' : 'toggle';
@@ -551,9 +600,9 @@ function resetTipsRow(): HTMLElement {
 }
 
 /** The saves "Start over" wipes: the meta (heroes, crowns, castle, armies, gear, chests), every run in progress (the
- *  ordinary one, the spire's and the Calamity's own slots), the tips, the Calamity map's hint, the tavern's camera and what
+ *  ordinary one, the spire's, the Calamity's and a quest battle's own slots), the tips, the Calamity map's hint, the tavern's camera and what
  *  the achievements page has shown. The settings (volume, speed and the rest) and the sound switch are kept. */
-export const SAVE_KEYS = ['legends.meta', 'legends.run', 'legends.tower', 'legends.stand', 'legends.calamity', 'legends.tips', 'lotf-achievements-seen', 'lotf-cal-hint', 'lotf.tavern.cam', 'lotf-army-shown'];
+export const SAVE_KEYS = ['legends.meta', 'legends.run', 'legends.tower', 'legends.stand', 'legends.calamity', 'legends.questRun', 'legends.tips', 'lotf-achievements-seen', 'lotf-cal-hint', 'lotf.tavern.cam', 'lotf-army-shown'];
 
 /** Start over: wipe every save and reload to a fresh game. Two taps, the second within a few seconds, so it can't happen by a slip. */
 function startOverRow(): HTMLElement {

@@ -3,6 +3,8 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
+import { foundRow } from './foundRow';
+import { todayKey } from './modes';
 import { SanctuaryView } from './sanctuaryView';
 import { worldPicture } from './sanctuaryArt';
 import { expeditionOf, shiftDestinations, WORLDS } from './sim/sanctuary';
@@ -23,9 +25,10 @@ import { sideEliteAt } from './sim/elites';
 import { CalMap, dungeonIcon, dungeonName } from './calMap';
 import { saveSlot, squadLimit, type Run } from './sim/run';
 import { heroLevel } from './sim/climb';
-import { chooseAltar, COMMANDMENTS, corruptionText, OFFERINGS, PATRONS, pendingAltar, reforgeAltar, RIFT_BOSSES, riftRank } from './sim/rift';
+import { chooseAltar, COMMANDMENTS, OFFERINGS, PATRONS, pendingAltar, reforgeAltar, RIFT_BOSSES, riftRank, type Commandment, type Offering, type Patron } from './sim/rift';
+import { altarButtonLine, altarSummary, BLOCKED_LINE, commandmentLine, corruptionLines, evolutionLine, nextLine, offeringLine, patronGrowth, patronLine, sealChoices, STEP_INFO, stepLabel, STEPS } from './sim/altarWords';
+import { altarHelpButton, altarHelpSeen, sealTable, showAltarHelp, summaryBlock } from './altarHelp';
 import { CAL_MAPS } from './sim/calamity';
-import { ASC_MAX } from './sim/ascension';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { gearIcon, iconImg, relicIcon } from './render/items';
@@ -54,6 +57,7 @@ import { actLook, bossOfAct, calamityLook, type ActLook } from './towerTheme';
 import { BRICKS, buildBackdrop, Layout, torchEl } from './towerBack';
 import { confirmBox } from './calamityView';
 import { playTwist, twistBadge, twistLine } from './twistView';
+import { openScreen } from './screens';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -195,7 +199,21 @@ export class TowerView {
     else if (this.calamity && run.tower?.mapDone && !run.over) this.recapCard();
   }
 
+  /** The map gives way to another screen (the home screen, a fight, the Last Stand): saved as its own Home button saves it, and shut.
+   *  Left open it stayed over everything after it (z-index 5, over the home screen and the board), so the old map covered the new one. */
+  dismiss(): void {
+    if (this.root.hidden) return;
+    if (this.run) saveSlot(this.run);
+    this.close();
+  }
+
+  /** CLOSE-SCREENS: the run's summary is a flow screen: its closer in the screen stack while it is up. */
+  private summaryShut: (() => void) | null = null;
+
   close(): void {
+    const shut = this.summaryShut;
+    this.summaryShut = null;
+    shut?.();
     this.sanctuary?.release();
     this.cal?.release();
     this.endIntro();
@@ -627,7 +645,7 @@ export class TowerView {
     const bar = el('div', 'dmMenu');
     if (this.run.rift) {
       const r = this.run.rift;
-      const altar = el('button', '', pendingAltar(this.run) ? 'Altar · Evolve!' : `Altar · ${r.patron ? PATRONS[r.patron].name : 'dormant'}`);
+      const altar = el('button', '', altarButtonLine(r, pendingAltar(this.run)));
       altar.addEventListener('click', () => this.altarCard());
       bar.append(altar);
     }
@@ -849,7 +867,10 @@ export class TowerView {
     return card;
   }
 
-  /** The three choices persist in the run; a pending evolution cannot be skipped by reloading. */
+  /** The three choices persist in the run; a pending evolution cannot be skipped by reloading.
+   *  ALTAR-CLEAR: each choice is told in numbers from the rules (`sim/altarWords.ts`), consecrate and corrupt side by side,
+   *  what comes next and why the rift waits; with no choice due it is the "Your altar" summary; ⓘ explains the altar, and
+   *  does so by itself the first time. */
   private altarCard(reforge = false): void {
     const run = this.run;
     const r = run.rift;
@@ -857,6 +878,7 @@ export class TowerView {
     const slot = reforge ? 'patron' : pendingAltar(run);
     const card = this.cardShell(reforge ? 'Reforge your altar' : slot ? `Awaken your ${slot}` : 'Your altar', 'campfire');
     card.classList.add('riftAltar');
+    if (slot && !reforge) card.classList.add('altarDue');
     card.parentElement!.classList.add('dmAltarVeil');
     const scenery = el('div', 'altarScenery');
     scenery.setAttribute('aria-hidden', 'true');
@@ -866,21 +888,17 @@ export class TowerView {
     scenery.append(background);
     card.prepend(scenery);
     const heading = card.querySelector('h2')!;
-    const eyebrow = el('p', 'altarEyebrow', 'The Calamity · Altar of Ascension');
+    const eyebrow = el('p', 'altarEyebrow', slot && !reforge ? stepLabel(slot) : 'The Calamity · Altar of Ascension');
     heading.before(eyebrow);
+    card.append(altarHelpButton(() => card));
     const steps = el('div', 'altarSteps');
-    for (const [id, label] of [['patron', 'Patron'], ['offering', 'Offering'], ['commandment', 'Commandment']] as const) {
-      const step = el('span', id === slot ? 'active' : r[id] ? 'complete' : '', `◆ ${label}`);
+    for (const id of STEPS) {
+      const step = el('span', id === slot && !reforge ? 'active' : r[id] ? 'complete' : '', `${r[id] ? '◆' : '◇'} ${STEP_INFO[id].n} ${STEP_INFO[id].name}`);
       steps.append(step);
     }
     const scene = el('div', 'altarScene');
     scene.append(altarPicture(r.patron ? `${r.patron}-altar` : 'pedestal'));
     heading.after(steps, scene);
-    card.append(el('p', 'rtLead', 'Your starter grows with the altar. Each evolution grants +15% health and +20% attack.'));
-    if (r.patron) card.append(el('p', 'rtNote', `Patron: ${PATRONS[r.patron].name}`));
-    if (r.offering) card.append(el('p', 'rtLead', OFFERINGS[r.offering].text));
-    if (r.commandment) card.append(el('p', 'rtLead', COMMANDMENTS[r.commandment].text));
-    card.append(el('p', 'rtLead', corruptionText(r.corruption, r.patron)));
     const close = () => {
       this.card?.remove();
       this.card = null;
@@ -889,24 +907,33 @@ export class TowerView {
       else if (run.tower?.offer) this.offerCard();
       else if (run.tower?.mapDone) this.recapCard();
     };
+    // (the rank the starter will have once this step is chosen; a reforge keeps the rank it has)
+    const rank = reforge ? riftRank(r) : riftRank(r) + 1;
     if (slot) {
+      if (reforge) card.append(el('p', 'rtLead', 'Swap your patron for another. This uses the campfire instead of resting or training. Your evolutions and corruption stay as they are.'));
+      else card.append(el('p', 'rtLead altarWhat', `This step decides ${STEP_INFO[slot].what}. Whichever you pick, ${evolutionLine(rank).replace(/^Your starter/, 'your starter')}`));
       const options = slot === 'patron' ? PATRONS : slot === 'offering' ? OFFERINGS : COMMANDMENTS;
       const selected = el('p', 'rtNote', 'Choose one blessing below.');
-      const risk = el('p', 'rtLead riftRisk', `If corrupted: ${corruptionText(r.corruption + 1, r.patron)}`);
+      const seals = el('div');
       const actions = el('div', 'riftActions');
       const safe = el('button', 'primary', reforge ? 'Reforge' : 'Consecrate');
       const risky = el('button', 'danger', 'Corrupt');
       safe.disabled = risky.disabled = true;
       let choice = '';
       const buttons: HTMLButtonElement[] = [];
+      const words = (id: string): string[] =>
+        slot === 'patron' ? [patronLine(id as Patron, rank), patronGrowth(id as Patron, rank)]
+        : slot === 'offering' ? [offeringLine(id as Offering)]
+        : [commandmentLine(id as Commandment, r.patron, rank)];
       for (const [id, option] of Object.entries(options)) {
         if (reforge && id === r.patron) continue;
         const b = el('button', 'rtChoice');
         b.setAttribute('aria-pressed', 'false');
-        const words = el('span');
-        words.append(el('b', '', option.name), el('small', '', option.text));
+        const text = el('span');
+        text.append(el('b', '', option.name));
+        for (const line of words(id)) text.append(el('small', '', line));
         const motif: AltarPicture = slot === 'patron' ? `${id as keyof typeof PATRONS}-crest` : id === 'vitality' || id === 'together' ? 'bastion-crest' : id === 'fury' ? 'ember-crest' : 'echo-crest';
-        b.append(altarPicture(motif, 'altarChoiceArt'), words);
+        b.append(altarPicture(motif, 'altarChoiceArt'), text);
         b.addEventListener('click', () => {
           choice = id;
           const patron = slot === 'patron' ? id as keyof typeof PATRONS : r.patron;
@@ -914,8 +941,8 @@ export class TowerView {
           if (!reduced()) scene.animate([{ filter: 'brightness(1.4)' }, { filter: 'brightness(1)' }], { duration: 450 });
           for (const other of buttons) other.setAttribute('aria-pressed', String(other === b));
           safe.disabled = risky.disabled = false;
-          risk.textContent = `If corrupted: ${corruptionText(r.corruption + 1, slot === 'patron' ? id as keyof typeof PATRONS : r.patron)}`;
-          selected.textContent = `${option.name} selected. ${reforge ? 'Uses this campfire instead of resting or training.' : 'Consecrate safely, or corrupt for an additional +15% starter attack and +10% combat gold.'}`;
+          if (!reforge) seals.replaceChildren(sealTable(sealChoices(r, slot, id)));
+          selected.textContent = `${option.name} selected. ${reforge ? 'Uses this campfire instead of resting or training.' : 'Consecrate it safely, or corrupt it for more power at a price:'}`;
         });
         buttons.push(b);
         card.append(b);
@@ -936,17 +963,25 @@ export class TowerView {
       actions.append(safe);
       if (!reforge) actions.append(risky);
       card.append(selected);
-      if (!reforge) card.append(risk);
+      if (!reforge) {
+        seals.append(sealTable(sealChoices(r, slot)));
+        card.append(seals);
+        if (r.corruption) card.append(el('p', 'rtLead altarSoFar', `Corruption so far: ${r.corruption}. ${corruptionLines(r.corruption, r.patron).join(' ')}`));
+        card.append(el('p', 'rtLead altarNext', `${nextLine(slot)} ${BLOCKED_LINE}`));
+      }
       card.append(actions);
     } else {
-      card.append(el('p', 'rtLead', r.patron ? PATRONS[r.patron].text : 'Win your first main-route battle to discover a patron. Offerings unlock after the first guardian; commandments after the second.'));
+      card.append(summaryBlock(altarSummary(run)!));
+      if (!r.patron) card.append(el('p', 'rtLead', `Win a battle to wake the altar: ${stepLabel('patron')} comes ${STEP_INFO.patron.when}.`));
+      else if (r.commandment) card.append(el('p', 'rtLead', 'All three steps are chosen. At a campfire you can still reforge your patron.'));
     }
     if (!slot || reforge) {
       const back = el('button', '', 'Back');
       back.addEventListener('click', close);
       card.append(back);
     }
-    card.querySelector<HTMLButtonElement>('button')?.focus();
+    card.querySelector<HTMLButtonElement>('button:not(.altarInfo)')?.focus();
+    if (!altarHelpSeen()) showAltarHelp(card);
   }
 
   /** The recap of the map just cleared: what it paid and what it held. Shown once, over the new map. */
@@ -1180,6 +1215,7 @@ export class TowerView {
 
   /** The summary of a run that has ended: the floors climbed and what they paid. `then` runs when it is closed. */
   showSummary(run: Run, s: TowerSummary, then: () => void): void {
+    this.summaryShut = openScreen('towerSummary', () => this.close());
     this.root.hidden = false;
     document.body.classList.add('towerUp');
     tips.update();
@@ -1238,8 +1274,9 @@ export class TowerView {
     card.append(rewards);
     const line = chestLine(s);
     card.append(el('p', 'rtLead', line ? `${line} added to your stash.` : cal ? `Clear every ${unit} for a chest.` : 'No chests yet: climb further to earn them.'));
-    if (cal && s.cleared && (s.ascension ?? 0) < ASC_MAX) card.append(el('p', 'rtBest', `Ascension ${Math.max(s.ascension ?? 0, 0) + 1} is open.`));
-    // (RECAP-REVEAL: no list of the gear found: it leaves with the run, and each fight's card named it)
+    // (RUN-GEAR: the gear found is kept now, to the stash: the Found row)
+    const found = foundRow(this.hooks.meta(), run.foundHome, todayKey());
+    if (found) card.append(found);
     const go = el('button', 'primary', 'Back to camp');
     go.addEventListener('click', () => {
       this.close();

@@ -2,14 +2,21 @@
 // grid of cards; a tap opens the detail sheet, with the sprite on its idle. Unmet foes and unowned heroes are dark silhouettes.
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
 
+import { LEGEND_LIST } from './sim/equipBases';
+import { SLOT_NAMES } from './sim/equipment';
+import { nextVerseAt, versesOpen } from './sim/legends';
+import { ESCORT_CLUE, WEAKNESS, knownClues } from './sim/weakness';
+import { roomOpen } from './sim/rooms';
 import { KITS, type Kit } from './sim/abilities';
-import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
-import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, ENTRY_STONES, entriesWaiting, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
+import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
+import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 import { lockInfo } from './sim/contentHeroes';
+import { comboHint, isSecret, SECRET_NAME } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
 import { TRAITS, traitsOf } from './sim/traits';
 import type { Meta } from './sim/meta';
@@ -18,8 +25,8 @@ import { settings } from './settings';
 import { rulerWords } from './rulerRules';
 import { LAYOUT_LIST, TERRAIN_INFO } from './sim/terrainInfo';
 import { portrait, sprite, figureOf } from './render/sheets';
-import { TIER_SKILLS } from './sim/tierSkills';
 import { COMBOS, COMBO_NAME } from './sim/combos';
+import { slotBrief } from './fightHudRules';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -28,10 +35,10 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Tower elite', calamity: 'Calamity herald' };
+const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Calamity elite', calamity: 'Calamity herald' };
 
 /** The page's state that outlives a redraw: the tab it was on. */
-let tabNow: Collection | 'scenes' | 'combos' | 'terrain' = 'bestiary';
+let tabNow: Collection | 'scenes' | 'combos' | 'terrain' | 'legends' = 'bestiary';
 
 /** A speed word for a step time. */
 const paceOf = (ms: number): string => (ms >= 900 ? 'Slow' : ms >= 650 ? 'Steady' : ms >= 450 ? 'Quick' : 'Very quick');
@@ -70,16 +77,18 @@ function stat(box: HTMLElement, rows: readonly (readonly [string, string])[]): v
   box.append(g);
 }
 
-/** A kit's lines (a hero's too lists its tier 2, tier 3 and tier 4 skills, and the level its ultimate unlocks at). */
+/** A kit's lines (a hero's too lists the level its ultimate unlocks at; since the skills overhaul's batch 3 a rank no longer changes a skill). */
 function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
   if (!kit) return;
   // (a hero: its two skills and what they cost from its pool, COMBAT-002; a foe: its one skill)
   const hk = hero ? HERO_KITS()[hero] : undefined;
   const rows: [string, { name: string; text: string }, number?][] = hk
-    ? [[`Skill 1 (${hk.s1.cost} ${hk.pool})`, hk.s1.skill], [`Skill 2 (${hk.s2.cost} ${hk.pool})`, hk.s2.skill, SKILL2_LEVEL]]
+    ? [
+        [`Skill 1 (${slotBrief(hk, hk.s1)})`, hk.s1.skill],
+        [`Skill 2 (${slotBrief(hk, hk.s2)})`, hk.s2.skill, SKILL2_LEVEL],
+        ...(hk.s3 ? ([[`Skill 3 (${slotBrief(hk, hk.s3)})`, hk.s3.skill, SKILL3_LEVEL]] as [string, { name: string; text: string }, number][]) : []),
+      ]
     : [['Skill', kit.skill]];
-  const tiers = hero ? TIER_SKILLS[hero] : undefined;
-  if (tiers) rows.push(['Tier 2', tiers[0]], ['Tier 3', tiers[1]], ['Tier 4', tiers[2]]);
   if (kit.ultimate) rows.push(['Ultimate', kit.ultimate, hero ? kit.ultimate.unlock : undefined]);
   rows.push(['Passive', kit.passive]);
   for (const [label, a, unlock] of rows) {
@@ -99,6 +108,27 @@ const section = (box: HTMLElement, title: string, lines: readonly string[]): voi
   for (const l of lines) ul.append(el('li', '', l));
   box.append(ul);
 };
+
+/** A boss's Weakness block (DEPTH-BUILD, `weakness.ts`): its three clues, each written or a dark bar saying how to learn more, and the
+ *  five tiers' Hunter's marks as crack badges. With the Library's Archive any clue found is written in full. */
+function weakBlock(box: HTMLElement, m: Meta, id: string | undefined): void {
+  if (!id) return;
+  const rec = m.weak?.[id];
+  const { lines } = knownClues(id, rec, roomOpen(m.castle, 'archive'));
+  const wrap = el('div', 'cxWeak');
+  wrap.append(el('h4', '', 'Weakness'));
+  const dark = ['Meet it in battle to learn more', `Fell ${ESCORT_CLUE} of its escorts, or lose to it`, 'Lose to it again to learn the rest'];
+  lines.forEach((line, i) => wrap.append(line ? el('p', 'cxClue', line) : el('p', 'cxClue dark', dark[i])));
+  const marks = el('div', 'cxMarks');
+  ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic'].forEach((t, i) => {
+    const got = !!rec?.marks.includes(i);
+    const badge = el('span', `cxMark${got ? ' got' : ''}`, got ? '✦' : '◇');
+    badge.title = `Hunter's mark · ${t}${got ? '' : ': win with its weakness used'}`;
+    marks.append(badge);
+  });
+  wrap.append(el('small', '', 'Hunter\'s marks'), marks);
+  box.append(wrap);
+}
 
 /** The detail sheet over the page. Returns the function that closes it. */
 function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
@@ -121,12 +151,25 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
     box.append(el('p', 'hint', 'Base stats: foes grow stronger the deeper you go.'));
     kitLines(box, KITS[e.defs[0]]);
     section(box, 'Weaknesses and tips', tipsOf(def, KITS[e.defs[0]]));
+    weakBlock(box, m, e.defs.find((d) => WEAKNESS[d]));
     section(box, 'Where it is met', whereMet(e));
   }
   box.append(closeButton(close));
 }
 
 function openHero(root: HTMLElement, m: Meta, kind: string): void {
+  // (SECRET-HEROES: a secret hero's page is the dark figure, "???" and its vague hint, nothing more)
+  if (isSecret(m, kind)) {
+    const { box, close } = sheet(root);
+    const head = el('div', 'hhead');
+    const pic = el('div', 'cxPic');
+    pic.append(secretFigure(96));
+    const title = el('div');
+    title.append(el('h3', '', SECRET_NAME), el('em', '', 'a secret, for now'));
+    head.append(pic, title);
+    box.append(head, el('p', 'cxLore locked', `🔒 ${lockInfo(m, kind)!.line}.`), closeButton(close));
+    return;
+  }
   const def = UNITS[kind];
   const known = heroKnown(m, kind);
   const { box, close } = sheet(root);
@@ -179,12 +222,9 @@ const closeButton = (close: () => void): HTMLButtonElement => {
   return b;
 };
 
-/** What `claim` is called with to take the new entries' stones (a milestone's id otherwise). */
-export const ENTRIES_CLAIM = 'entries';
-
 /**
  * The Codex page: the progress with its milestone rewards, the two tabs, and the grid. `claim` is called with a milestone's id when
- * its Claim is tapped (or `ENTRIES_CLAIM` for the new entries' stones) (the home screen pays, saves, and draws the page again). `root` is the sub-page's box (the sheet opens over it).
+ * its Claim is tapped (the home screen pays, saves, and draws the page again). `root` is the sub-page's box (the sheet opens over it).
  * The third tab lists the cinematics (seen ones can be watched again with `watch`).
  */
 export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => void, root: HTMLElement = body.parentElement ?? body, watch?: (sceneId: string) => void): void {
@@ -202,7 +242,7 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
     bar.append(fill);
     block.append(bar);
     // (the rewards, one row each: what it pays, what it takes, and whether it is taken, ready or still to earn)
-    block.append(el('p', 'cxPays', `Each new entry pays ${ENTRY_STONES} summoning stone, and counts towards a reward. Paid ${crownsClaimed(m, c)} of ${crownsTotal(c)} crowns and ${stonesClaimed(m, c)} of ${stonesTotal(c)} summoning stones.`));
+    block.append(el('p', 'cxPays', `Each new entry counts towards a reward. Paid ${crownsClaimed(m, c)} of ${crownsTotal(c)} crowns and ${stonesClaimed(m, c)} of ${stonesTotal(c)} summoning stones.`));
     const list = el('div', 'cxRewards');
     for (const ms of milestonesOf(c)) {
       const done = milestoneClaimed(m, ms);
@@ -219,18 +259,15 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
     block.append(list);
     head.append(block);
   }
-  // (one button takes everything that waits: the milestones, and a stone for each new entry, named under it)
+  // (one button takes everything that waits: the milestones)
   const waiting = codexWaiting(m);
-  const fresh = entriesWaiting(m).length;
-  if (waiting.length || fresh) {
-    const stones = stonesWaiting(m) + fresh * ENTRY_STONES;
+  if (waiting.length) {
+    const stones = stonesWaiting(m);
     const crowns = crownsWaiting(m);
     const all = el('button', 'primary cxClaimAll', `Claim rewards: ${crowns ? `+${crowns} crowns, ` : ''}+${stones} stone${stones === 1 ? '' : 's'}`);
     all.addEventListener('click', () => {
-      if (fresh) claim(ENTRIES_CLAIM);
       waiting.forEach((ms) => claim(ms.id));
     });
-    if (fresh) head.prepend(el('p', 'cxPays cxNew', `${fresh} new entr${fresh === 1 ? 'y' : 'ies'} discovered: +${fresh * ENTRY_STONES} summoning stone${fresh * ENTRY_STONES === 1 ? '' : 's'} to claim.`));
     head.prepend(all);
   }
   body.append(head);
@@ -239,9 +276,26 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
   const grid = el('div', 'cxGrid');
   const fill = () => {
     grid.replaceChildren();
-    grid.classList.toggle('scList', tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain');
-    grid.classList.toggle('cxGrid', tabNow !== 'scenes' && tabNow !== 'combos' && tabNow !== 'terrain');
-    if (tabNow === 'terrain') {
+    const listed = tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain' || tabNow === 'legends';
+    grid.classList.toggle('scList', listed);
+    grid.classList.toggle('cxGrid', !listed);
+    if (tabNow === 'legends') {
+      // (SEVEN-SLOT GEAR: the named legends, with the verses their renown has opened; one not yet found shows where it waits)
+      for (const l of LEGEND_LIST) {
+        const id = m.legends?.[l.id];
+        const piece = id === undefined ? undefined : m.equipment?.find((x) => x.id === id);
+        const row = el('div', `scRow${id === undefined ? ' locked' : ''}`);
+        const text = el('div');
+        if (id === undefined) text.append(el('b', '', `${l.name} (${SLOT_NAMES[l.slot].toLowerCase()})`), el('small', '', `Waits in: ${l.legend!.source}`));
+        else {
+          const renown = piece?.renown ?? 0;
+          text.append(el('b', '', `${l.name} · ${l.legend!.powerName}`), el('small', '', `${l.legend!.text}. Renown ${Math.floor(renown)}${nextVerseAt(renown) !== null ? ` (the next verse at ${nextVerseAt(renown)})` : ''}`));
+          for (const verse of l.legend!.verses.slice(0, versesOpen(renown))) text.append(el('small', 'cxVerse', verse));
+        }
+        row.append(text);
+        grid.append(row);
+      }
+    } else if (tabNow === 'terrain') {
       // (the ground a battlefield can have, then the shapes it can take: what each does, always shown)
       for (const t of TERRAIN_INFO) {
         const row = el('div', 'scRow');
@@ -267,7 +321,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
         const row = el('div', `scRow${seen ? '' : ' locked'}`);
         const text = el('div');
         if (seen) text.append(el('b', '', `${c.name}: ${c.move}`), el('small', '', `${c.heroes.map((k) => UNITS[k].name).join(', ')}. ${c.text}.`));
-        else text.append(el('b', '', '???'), el('small', '', `Five heroes who belong together, one of them the ${UNITS[c.heroes[0]].name}. Fight with all five to see what they do.`));
+        // (SECRET-HEROES: the hint names its first hero only when that hero is no secret)
+        else text.append(el('b', '', '???'), el('small', '', comboHint(m, c.heroes)));
         row.append(text);
         grid.append(row);
       }
@@ -297,6 +352,13 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       for (const k of ALL_HEROES) {
         const known = heroKnown(m, k);
         const def = UNITS[k];
+        if (isSecret(m, k)) {
+          const c = el('button', 'cxCard secret');
+          c.append(secretFigure(52), el('b', '', SECRET_NAME), el('small', '', 'a secret'));
+          c.addEventListener('click', () => openHero(root, m, k));
+          grid.append(c);
+          continue;
+        }
         // (a hero met goes by its own name, its class under it)
         const c = card(def.sheet, 1, known ? heroName(k) : def.name, known ? def.name : 'locked', true);
         if (!known) c.classList.add('dark');
@@ -305,9 +367,9 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       }
     }
   };
-  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain', HTMLButtonElement>();
-  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const]) {
-    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : COLLECTION_NAMES[c]);
+  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain' | 'legends', HTMLButtonElement>();
+  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const, 'legends' as const]) {
+    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : c === 'legends' ? 'Legends' : COLLECTION_NAMES[c]);
     t.addEventListener('click', () => {
       tabNow = c;
       for (const [k, b] of buttons) b.classList.toggle('on', k === c);
