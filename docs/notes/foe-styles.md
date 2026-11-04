@@ -98,7 +98,9 @@ No randomness was added: every choice is a fixed order over the fight's state, t
 | Yamabushi Monk | Wind Gust | Mountain Breath | guard |
 | Stone, Crystal and Magma Golem | as before | as before | |
 | Iron Golem | Shield Wall | Iron Plate | guard |
-| Gorrak, Nyssa (now kites), the Iron Warden | as before | as before | |
+| Gorrak | Ground Slam | Bonebreaker Rage | |
+| Nyssa | Eldritch Blast | Venom | kite |
+| The Iron Warden | Ground Slam | Iron Plate | guard |
 | Ysolde | Ravage | Frenzy | hunt |
 | The Hollow Knight | Shield Wall | Hollow Plate | guard |
 | Sethra | Petrifying Gaze (and her ultimate) | Scaled Hide | kite |
@@ -114,7 +116,62 @@ The codex sheet of an entry that covers several kinds (the Minotaur's six, the G
 
 ## Rebalance
 
-MEASUREMENTS
+Built on main 0.340.0 (merged mid-work). "Main" below is 0.340.0's own code run side by side with this branch with the same seeded tools
+(`tools/foe-styles/suite.sh` on both trees); "styled, untuned" is this branch before its knobs moved.
+
+**The common foes** were brought back by their own numbers, measured on the field bands with the starting five at level 1 over 200 fights
+(`node tools/foe-styles/run.mjs bands40 200`): the styles first moved the werewolves from 47% to 24%, the gorgons 70% to 39%, the demons 42%
+to 30%; the riders were then made to grow with attack (a flat bleed of 3 was most of a level-1 wolf's bite) and a few foes trimmed:
+
+| Foe | Before | Now |
+| --- | --- | --- |
+| Black / Red / White Werewolf hp | 250 / 250 / 210 | 243 / 228 / 200 (Red atk 25 to 23) |
+| Minotaur (1) atk; Minotaur (2) hp, atk | 27; 330, 24 | 26; 300, 22 |
+| Gorgon (1) hp, atk; (2) hp, atk; (3) hp, atk | 300, 26; 300, 22; 250, 26 | 260, 25; 290, 20; 245, 25 |
+| Satyr (2) atk; (3) hp, atk | 26; 270, 25 | 25; 250, 24 |
+| Orc Archer hp, atk; Orc Brute hp, atk | 200, 24; 420, 30 | 192, 23; 395, 29 |
+| Demon hp, atk; Ogre atk | 410, 32; 30 | 395, 29; 31 |
+| Skeleton Archer hp | 200 | 195 |
+
+(The elites built on these sheets, `eliteFoes.ts`, take the same numbers.) The heroes' wins against each band, 200 fights, main / now:
+skeletons 64 / 67%, werewolves 47 / 51%, minotaurs 63 / 62%, gorgons 70 / 72%, satyrs 69 / 67%, mixed 68 / 68%, orcs 77 / 76%, demons 42 / 46%,
+ogres 63 / 61%. `foes.test`'s own fights (seeds 1 to 40) all sit inside its 8 to 32 (the ogres' 35 of 40 at first was what moved the Ogre's
+attack). The skeleton first had a spear that also struck the hero behind; that cost the lighter new-hero teams most (they stand in lines), so the
+spear pierces armour instead and the skeleton kept its stats (`new-heroes`' seeds: the lightest team 0.38 of the five's wins, the mean 0.51;
+over 180 seeds the five win 120 and the teams' mean is 0.47 of it, main 0.52).
+
+**Hero parity** (no hero changed; `node tools/kits/tune.mjs <none> <level> <stage> 12000`, the average team's wins and the spread):
+
+| | Main 0.331 | Now |
+| --- | --- | --- |
+| Level 1, stage 5 | 56.7%, 11.3, none beyond 6 | `hero-balance` passes (the Rifle Bot's +6.1 on the first styled read was brought back with the common foes' trims) |
+| Level 10, stage 27 | 40.5%, 11.4, none beyond 6 | 39.1%, 13.8, the Archer +6.8, Ranger +6.4, Kraken −7.0 (no test holds level 10; read before the last trims) |
+| Level 30, stage 90 | 62.5%, 9.1 | 62.1%, 12.0 (the Shambler +6.1 on the first read); `hero-balance-ultimates` passes on the final code |
+
+**The modes** (main 0.340.0 / styled, untuned / now):
+
+| What (tool) | Main | Styled, untuned | Now | Knob |
+| --- | --- | --- | --- | --- |
+| The realistic climb, mean tries: Undead / Beasts / Wildwood (`CLIMB_ARMIES=4 node tools/balance.mjs --no-tables --climb --saves 120`; the Orcs 2.0 throughout) | 2.5 / 4.4 / 2.0 | 2.8 / 3.7 / 2.1 | 2.8 / 3.7 / 2.1 | none (the first four's starts are pinned by `army-pace`) |
+| Single tries, 96 saves (`SAVES=96 node tools/merge-two/run.mjs`): Undead 8 | 2% | 1% | 1% | |
+| Beasts 15 | 51% | 50% | 50% | |
+| Wildwood 22 | 85% | 74% | 74% | none (its climb is on target) |
+| Labyrinth 30 | 28% | 22% | 27% | `start` 7.9 to 7.65 |
+| Ogres 38 | 19% | 11% | 19% | `start` 12.5 to 11.7 |
+| Golems 52 | 0% | 0% | 0% | |
+| Legendary Orcs 55 | 90% | 86% | 86% | |
+| Infernal at 55, tries (`SAVES=48 node tools/spells-retune/run.mjs cell infernal:55:0:tph`) | 4.7 | 6.5 | 4.5 | `start` 20.6 to 20.4 |
+| Yokai at 65 | 9.3 | 10.6 | 9.1 | `start` 23.3 to 22.3 |
+| Golems at 65 | 6.9 | 6.9 | 6.9 | |
+| Mythic at 100, 12 saves: Golems / Yokai / Infernal | 3.6 / 3.1 / 2.4 | 4.3 / 4.0 / 3.4 | 4.3 / 4.0 / 3.4 | none |
+| Daily, 120 dates, hearts / none (`node tools/dailyRate.mjs --days 120`) | 85% / 68% | 74% / 54% (before the merge) | 84% / 68% | `DAILY_START` 0.785 to 0.75 |
+| Last Stand, 40 runs, median wave (mean) at 1 / 10 / 30 / 100 | 4 / 9 / 15 / 25 (3.8 / 9.2 / 16.3 / 25.8) | 3 / 9 / 15 / 23 (3.5 / 8.8 / 15.1 / 24.8) | 4 / 10 / 15 / 25 (3.7 / 9.3 / 15.8 / 25.2) | `HALL_EASE` 1.2 to 1.15, `WAVE_GROWTH_DEEP` 0.22 to 0.21 |
+| Calamity, 100 runs: mean maps (past map 2 / cleared) | 1.77 (73 / 6) | 1.74 (69 / 8) | 1.74 (69 / 8) | none |
+| Spire, 96 climbs, mean floors, no castle / full | 85.3 / 89.2 | 85.0 / not read | 85.0 / 87.0 | none (0.045 a step read 84.2 / 87.3) |
+
+(The Ogres were first set to 12 against main 0.331's 9%; main 0.340 itself moved them to 19%, so they were set again. The Infernal Host's
+harder tiers were lifted with its Normal while that read 21.3, and put back when it settled under 20.6. The yokai's single 12-save Mythic
+reads are within their noise of the difficulty note's 3 to 4, the Golems' 4.3 just over.)
 
 ## Tests
 
@@ -127,7 +184,21 @@ MEASUREMENTS
   kit with no skill.
 - Moved because the skeleton now carries a shield: `levels` (the killing blow is twice its health) and `sim-001`'s two effective-blow tests
   (the skeleton is struck from behind).
-- Re-recorded: IDENTITY
+- Re-recorded: every identity scenario (`spells-identity` and `ailments-identical`, the hashes in their headers; every scenario meets foes, so
+  every one moved), and the Last Stand's twelve pinned fights (`stand-regression`: all twelve moved; the third, a close loss, is now won, and the
+  seventh, a close win, now lost).
+
+## Checks
+
+`npm run typecheck` clean. The full `npm test` on the final code (main 0.340.0 merged): **2,400 of 2,400 pass**. `npm run web` built. The page:
+`node tools/foe-styles/shots.mjs` at 393x852, 360x780 and 412x915 (`docs/samples/foe-styles-codex-*.png`): the Minotaur's sheet with its five other
+kinds, no page errors, nothing runs off the side. The fight's "Charge!" is the same floating label as a werewolf's "Frenzy", and a skill-less
+foe's bar simply has no charge strip under its health.
+
+## Determinism and saves
+
+Nothing draws from a stream: every style is a fixed order over the fight's state. A charger's run is a number on the unit for the fight only;
+nothing new is saved.
 
 ## Tools
 
@@ -138,4 +209,17 @@ and `cells` (merge-two's single tries and spells-retune's cells), each with `kno
 
 ## Questions for the owner
 
-QUESTIONS
+1. **The Last Stand's foes march** on the breaches by the stand's own mind, so they show their passives, skills and charges but not flank, kite,
+   hunt or guard. Recommended: keep (the stand is about holding the posts); the other way means teaching `standAi.ts` the four.
+2. **The Wildwood's single tries** fell from 85% to 74% at level 22 while its climb (the yardstick the first four armies are held to, and
+   `army-pace` pins their starts) stayed at 2.1 tries against 2.0. Recommended: leave it; to lift the single tries, `start` 2.8 to 2.68 read 81%
+   and 2.6 read 85%, and `army-pace`'s pinned starts would move with it. The Beasts' climb read 3.7 tries against main's 4.4 on both of this
+   branch's reads, with the single tries level (50% against 51%); left the same way.
+3. **The Ogre Clans' shape**: at the same 19% clear, a level-38 try now falls about wave 4 rather than 6 (the clan's sweeping ogres and charging
+   brutes hit the early waves, the bosses are unchanged). Recommended: keep (the troops are now the danger); the other way is a softer clan with
+   the old start.
+4. **The common foes have no skill** (no charge bar, no skill line): their style is their passive and their way of moving, and a skill is what
+   marks the stronger ones, as you put it. Recommended: keep.
+5. **Level-10 parity** (which no test holds) widened from 11.4 to 13.8 with three heroes beyond 6: the Archer and Ranger gain and the Kraken
+   loses (read before the common foes' last trims). Recommended: watch it; the owner's rule
+   keeps the heroes untouched here.

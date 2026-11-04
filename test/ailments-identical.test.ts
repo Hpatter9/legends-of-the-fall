@@ -80,6 +80,11 @@ import { WEAK } from '../src/sim/weakness';
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
+// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario: every scenario meets
+// foes, and every foe now has a passive and a way of moving, the common ones retuned, the armies' starts, the daily's and the Last Stand's
+// knobs with them; by the tests' own computation (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the test itself, whose put-back
+// strengths that tool does not know since main 0.339). The new hashes: field1 b8f53216, field30 ae661ebb, bosses 0a1001cb, armyFoes ca5e01f0, spells 2ac63939, lands 5d0ffb39, army 39b1020c, daily 379641dc, tower ab564ff1,
+// stand 7fa995b0, calamity 627e43ad)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

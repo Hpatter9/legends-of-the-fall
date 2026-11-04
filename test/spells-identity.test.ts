@@ -116,6 +116,12 @@ function recordedStrengths<T>(fn: () => T): T {
   }
 }
 
+// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario: every scenario meets
+// foes, and every foe now has a passive and a way of moving, the common ones retuned, the armies' starts, the daily's and the Last Stand's
+// knobs with them; by the tests' own computation (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the test itself, whose put-back
+// strengths that tool does not know since main 0.339). The new hashes: field1 463018a4, field30 8c9708dd, bosses 7c95dc7c, armyFoes b5226699, spells 7ccda236, lands b4179bad, army bdfc3bfe,
+// daily 6d11702f, tower 2e4e58c7, stand 131fe78c, calamity ac61461a, heroes1 b2007863, heroes10 8885dd5c, heroes30 2841a16d, field1Others e999ec94,
+// field30Others 0e3e94bd, heroes1Others cdb36c0f, heroes10Others 714d8801, heroes30Others d6dcc92d)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
