@@ -76,8 +76,77 @@ for (const [w, h] of sizes) {
     await shot(scene);
     await page.evaluate(() => document.querySelector('#marchCard .mcRow .primary')?.click());
     await page.waitForTimeout(1500);
-    await page.evaluate(() => document.getElementById('tipSkip')?.click());
+    await page.evaluate(() => { document.getElementById('home').hidden = true; document.getElementById('tipSkip')?.click(); });
+    await page.waitForTimeout(500);
     await shot(scene + '-run');
+  } else if (scene === 'bonds-sheet') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.bonds = { 'knight|peasant': 45, 'knight|paladin': 130, 'archer|knight': 12, 'cleric|knight': 3 };
+      window.__game.home.openSheet('knight');
+    });
+    await page.waitForTimeout(700);
+    await page.evaluate(() => document.querySelector('.dossierBonds')?.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(300);
+    await shot('bonds-sheet');
+  } else if (scene === 'bonds-deploy') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
+      m.unlocked = [...new Set([...m.unlocked, ...m.party])];
+      m.bonds = { 'knight|paladin': 130, 'cleric|paladin': 45 };
+      window.__game.home.hooks.onArmy('orcs', 0);
+    });
+    await page.waitForTimeout(800);
+    await page.evaluate(() => document.getElementById('ptGo')?.click());
+    await page.waitForTimeout(600);
+    await page.evaluate(() => document.querySelector('#marchCard .mcRow .primary')?.click());
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => {
+      document.getElementById('home').hidden = true;
+      const g = window.__game;
+      const p = ['archer', 'cleric', 'knight', 'paladin', 'warlock'];
+      g.run.bonds = {};
+      for (let i = 0; i < p.length; i++) for (let j = i + 1; j < p.length; j++) g.run.bonds[`${p[i]}|${p[j]}`] = p[i] === 'cleric' && p[j] === 'warlock' ? -1 : 1 + ((i + j) % 4);
+      g.run.gold = 400;
+      for (let k = 0; k < 4; k++) document.getElementById('summon')?.click();
+    });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => { window.__game.autoArrange(true); window.__game.refreshTraits(); });
+    await page.waitForTimeout(800);
+    await page.evaluate(() => document.querySelector('#traits .trait.bonds')?.click());
+    await page.waitForTimeout(400);
+    await shot('bonds-deploy');
+  } else if (scene === 'bond-scene') {
+    await page.evaluate(() => { const g = window.__game; void g.scenes.play('bond:knight|peasant:1', { party: g.meta.party }); });
+    await page.waitForTimeout(5500);
+    await shot('bond-scene');
+    await page.waitForTimeout(9000);
+    await shot('bond-scene-2');
+  } else if (scene === 'retire') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.castle.hall = 2;
+      m.xp.knight = 4e7;
+      window.__game.home.openSheet('knight');
+    });
+    await page.waitForTimeout(700);
+    await page.evaluate(() => document.querySelector('.dossierLegacy')?.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(300);
+    await shot('retire');
+  } else if (scene === 'hall') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.castle.hall = 2;
+      m.xp.knight = 4e7;
+      m.mentors = { martial: { kind: 'knight', since: 0 } };
+      m.party = m.party.filter((k) => k !== 'knight');
+      window.__game.home.show('castle');
+    });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => document.querySelector('.ctChamberCard[data-id="hall"]')?.click());
+    await page.waitForTimeout(600);
+    await shot('hall');
   } else if (scene.startsWith('card-')) {
     const site = scene.slice(5);
     await page.evaluate(() => window.__game.home.show('castle'));

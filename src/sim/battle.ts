@@ -26,6 +26,8 @@ import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
 import { tickWeakness, weakHurt } from './weakness';
 import { MARCH } from './march';
+import { ritesFall, tickRites } from './chapelRooms';
+import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bonds';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
@@ -122,6 +124,10 @@ export interface Unit {
   frost?: number[];
   /** Hasted (the king's spell) until then. */
   hasteUntil?: number;
+  /** DEPTH-BUILD (`bonds.ts`): a bond's attack and charge for where the hero stands now, and a rival's fury once the other has fallen. */
+  bondAtk?: number;
+  bondCd?: number;
+  bondFury?: number;
   /** Soaks this much damage until then (the king's Shield). */
   shield?: { hp: number; until: number };
   /** Stunned, held or frozen until then (only the look reads it; `busyUntil` is what holds the fighter). */
@@ -412,6 +418,11 @@ export interface Battle {
   relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks; hooks?: RelicHooks };
   /** Whether the relic's revive has been spent this fight. */
   revived?: boolean;
+  /** DEPTH-BUILD (`chapelRooms.ts`): the Chapel's Last Rites, ready in this fight: the hero it marked to rise, when, and whether it has. */
+  rites?: { id?: number; at?: number; done?: boolean };
+  /** DEPTH-BUILD (`bonds.ts`): the bonded and rival pairs on the board, fixed as the fight starts, and the snapshot they came from. */
+  bonds?: BondPair[];
+  bondSnap?: Record<string, number>;
   /** RELICS-2 (`relicFight.ts`): when this fight (or the Last Stand's wave) began, whether a hero has fallen in it, the Warden's Medal's last
    *  hero standing, the Harness's haste (until when, one a fall), and the tally the run adds to its own (rises, heroes fallen, elites felled). */
   relicT0?: number;
@@ -493,7 +504,7 @@ export interface Battle {
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
 /** A fighter's attack: its kind's, times its own multiplier. */
-export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u);
+export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u) * (u.bondAtk ?? 1) * (u.bondFury ?? 1);
 /** A fighter's defence: its kind's, plus what its equipment adds. */
 export const defenceOf = (u: Unit): number => UNITS[u.def].def + (u.eq?.def ?? 0) + (u.kx?.tree ? kitDefence(u) : 0);
 /** Per-fighter stat multipliers: hp and attack, and how much bigger it is drawn. */
@@ -558,6 +569,10 @@ export interface Stage {
   /** DEPTH-BUILD (`march.ts`): every foe's healing is multiplied by this, and a night march's reach rule. */
   foeHeal?: number;
   night?: boolean;
+  /** DEPTH-BUILD (`chapelRooms.ts`): the Chapel's Last Rites is ready in this fight. */
+  rites?: boolean;
+  /** DEPTH-BUILD (`bonds.ts`): the run's snapshot of the bonds (each pair's level, -1 rivals), read as the fight starts. */
+  bonds?: Record<string, number>;
   /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
@@ -631,6 +646,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
   if (stage.foeHeal && stage.foeHeal !== 1) b.foeHeal = stage.foeHeal;
   if (stage.night) b.night = true;
+  if (stage.rites) b.rites = {};
+  if (stage.bonds && Object.keys(stage.bonds).length) b.bondSnap = stage.bonds;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
@@ -799,6 +816,8 @@ export function fight(b: Battle): boolean {
   if (b.phase !== 'deploy' || !heroesPlaced(b) || !boardOk(b.board)) return false;
   b.phase = 'fight';
   applyTraits(b);
+  // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot)
+  startBonds(b, b.bondSnap);
   startCombo(b);
   startDuoCombos(b);
   startKits(b);
@@ -928,6 +947,8 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.rites?.id !== undefined) tickRites(b, out);
+  if (b.bonds) tickBonds(b);
   if (b.warnings) tickWeakness(b, out);
   if (b.warnings) tickSignatures(b, out);
   if (b.walls?.length || b.auras) tickToolkit(b, out);
@@ -1087,6 +1108,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     if (by.side !== to.side) ultOnDamage(by.owner !== undefined ? creditOf(b, by) : by, landed, false);
     ultOnDamage(to, landed, true);
   }
+  // (DEPTH-BUILD: a sworn partner's guard takes a share of a blow that would fell it, once a wave)
+  if (b.bonds && to.side === 'hero' && dmg >= to.hp) dmg = bondCover(b, to, dmg);
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   let killed = to.hp <= 0;
@@ -1163,6 +1186,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (killed && undying(to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
+    // (DEPTH-BUILD: the Chapel's Last Rites marks the first hero to fall in the wave to rise)
+    if (b.rites && to.side === 'hero') ritesFall(b, to);
+    if (b.bonds && to.side === 'hero') bondFall(b, to);
     if (credit) {
       by.kills = (by.kills ?? 0) + 1;
       by.slain = (by.slain ?? 0) + killXp(to);
