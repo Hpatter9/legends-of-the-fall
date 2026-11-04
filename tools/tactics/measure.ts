@@ -3,13 +3,14 @@
 // own functions and changes no rule. The `--hold` and `--pace` prototypes hold a hero by its `busyUntil` from outside the sim (a crude
 // stand-in for the designed rule, which would still let a held hero cast its buffs and heals): only for measuring.
 //
-//   node tools/tactics/run.mjs [--games 600] [--level 10 --stage 27] [--placed sensible|random] [--hold|--pace]
+//   node tools/tactics/run.mjs [--games 600] [--level 10 --stage 27] [--placed sensible|random] [--tactic advance|charge|hold] [--hold|--pace]
 import { DEPLOY_ROWS, standable, tileAt } from '../../src/sim/board';
 import { fight, place, startBattle, stepBattle, type Battle } from '../../src/sim/battle';
 import { FIELD_BANDS } from '../../src/sim/foes';
 import { mixSeed, Rng } from '../../src/sim/rng';
 import { roleOf, type PartyRole } from '../../src/sim/suggest';
 import { UNITS } from '../../src/sim/units';
+import { setTactic, type Tactic } from '../../src/sim/tactics';
 import { fieldBoost, pickTeam, sweepBoost } from '../heroSweep';
 
 const flag = (n: string, d: string) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : d);
@@ -17,6 +18,7 @@ const GAMES = Number(flag('--games', '600'));
 const LEVEL = Number(flag('--level', '10'));
 const STAGE = Number(flag('--stage', '27'));
 const PLACED = flag('--placed', 'sensible');
+const TACTIC = flag('--tactic', '') as Tactic | '';
 const MODE = process.argv.includes('--hold') ? 'hold' : process.argv.includes('--pace') ? 'pace' : 'none';
 /** Released when a foe comes this near (tiles), whatever the front line is doing. */
 const NEAR = 3;
@@ -80,6 +82,7 @@ interface Tally {
   byKind: Map<string, { n: number; early: number; lead: number }>;
 }
 
+const DIAG = new Map<string, number>();
 const BAND = new Map<string, { n: number; won: number }>();
 const LEN: number[] = [];
 const T: Tally = { fights: 0, won: 0, withFront: 0, early: 0, earlyStriker: 0, strikers: 0, strikerEarly: 0, strikerLead: [], strikerBlinkFirst: 0, strikerTakenEarly: 0, strikerHp: 0, strikerDiedBeforeFront: 0, strikerDied: 0, wonEarly: 0, wonNotEarly: 0, fightsEarly: 0, frontFirst: [], byKind: new Map() };
@@ -99,6 +102,7 @@ for (let g = 0; g < GAMES; g++) {
   const takenBefore = new Map<number, number>();
   const diedAt = new Map<number, number>();
   let frontAt = Infinity;
+  if (TACTIC) setTactic(b, TACTIC);
   fight(b);
   while (b.phase === 'fight') {
     // (the prototypes: hold the strikers and the back line until the front line is at the foe)
@@ -120,6 +124,10 @@ for (let g = 0; g < GAMES; g++) {
         for (const id of [e.by, e.to]) {
           if (!role.has(id) || contact.has(id)) continue;
           contact.set(id, b.t);
+          if (role.get(id) === 'striker' && frontAt === Infinity) {
+            const how = `${id === e.by ? 'dealt' : 'taken'} ${b.tactic?.metAt === undefined ? 'held' : 'let go'} ${e.src}${blinkFirst.has(id) || (moved.get(id) ?? -1e9) >= b.t - 1500 ? ' after-move' : ''}`;
+            DIAG.set(how, (DIAG.get(how) ?? 0) + 1);
+          }
           if ((moved.get(id) ?? -1e9) >= b.t - 1500) blinkFirst.add(id);
           if (fronts.includes(id)) frontAt = Math.min(frontAt, b.t);
         }
@@ -171,7 +179,7 @@ for (let g = 0; g < GAMES; g++) {
 
 const pc = (a: number, n: number) => `${((100 * a) / Math.max(1, n)).toFixed(1)}%`;
 const med = (xs: number[]) => (xs.length ? [...xs].sort((a, c) => a - c)[Math.floor(xs.length / 2)] : 0);
-console.log(`\nlevel ${LEVEL}, stage ${STAGE}, ${GAMES} field fights, random teams, placed ${PLACED}, prototype ${MODE}`);
+console.log(`\nlevel ${LEVEL}, stage ${STAGE}, ${GAMES} field fights, random teams, placed ${PLACED}, prototype ${MODE}, tactic ${TACTIC || 'the default'}`);
 console.log(`won ${pc(T.won, T.fights)}; with a front-liner that came to blows: ${T.withFront}`);
 console.log(`front line's first blow: median ${(med(T.frontFirst) / 1000).toFixed(1)} s`);
 console.log(`fights where a striker was at blows first: ${pc(T.fightsEarly, T.withFront)} (won ${pc(T.wonEarly, T.fightsEarly)}; the rest won ${pc(T.wonNotEarly, T.withFront - T.fightsEarly)})`);
@@ -181,3 +189,4 @@ const kinds = [...T.byKind].filter(([, k]) => k.n >= 15).sort((a, c) => c[1].ear
 console.log('strikers by kind (in fights, early %, mean lead s):');
 for (const [kind, k] of kinds) console.log(`  ${UNITS[kind].name.padEnd(20)} ${String(k.n).padStart(4)}  ${pc(k.early, k.n).padStart(6)}  ${(k.lead / Math.max(1, k.early) / 1000).toFixed(1)}`);
 console.log(`won fights' median length ${(med(LEN) / 1000).toFixed(1)} s; won by band: ${[...BAND].map(([k, v]) => `${k} ${pc(v.won, v.n)}`).join(', ')}`);
+if (process.argv.includes('--diag')) console.log([...DIAG].sort((a, c) => c[1] - a[1]).map(([k, v]) => `${k}: ${v}`).join('\n'));
