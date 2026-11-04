@@ -30,11 +30,23 @@ const full = metaWith({
   nextItem: 999,
   equipped: { knight: { head: 901, torso: 902, main: 903, off: 904, feet: 905, belt: 906, acc: 907 } },
 });
+// (batch 2: two legends found, one with renown, and a full Winter Court on the knight)
+const legends = metaWith({
+  gearV: 2,
+  equipment: [
+    ...['frostCirclet', 'silkenRobe', 'frostbrand', 'frostMirror', 'frostBoots', 'frostSash', 'sapphireRing'].map((base, i) => ({ id: 901 + i, base, rarity: 3, level: 6 })),
+    { id: 920, base: 'gravesong', rarity: 4, level: 12, renown: 31 },
+    { id: 921, base: 'crownLastKing', rarity: 4, level: 12 },
+  ],
+  nextItem: 999,
+  legends: { gravesong: 920, crownLastKing: 921 },
+  equipped: { knight: { head: 901, torso: 902, main: 903, off: 904, feet: 905, belt: 906, acc: 907 } },
+});
 const saveScript = ([m]) => { try { localStorage.setItem('legends.meta', JSON.stringify(m)); localStorage.setItem('legends.tips', JSON.stringify(['home', 'deploy', 'fight', 'mana', 'skill', 'summon', 'crowns'])); localStorage.setItem('legends.settings', JSON.stringify({ music: 0, effects: 0, cinematics: false, quips: false })); } catch {} };
 const errors = [];
 for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   const tag = `${w}x${h}`;
-  for (const [what, meta] of [['moved', old], ['doll', full]]) {
+  for (const [what, meta] of [['moved', old], ['doll', full], ['legend', legends]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, hasTouch: true });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => errors.push(e.message));
@@ -53,6 +65,20 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     await page.screenshot({ path: `docs/samples/gear-build-${what}-${tag}.png` });
     const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     console.log(tag, what, 'slots', await page.locator('.eqSlot').count(), 'side scroll', wide);
+    if (what === 'legend') {
+      await page.locator('.eqSlot.at-main').click();
+      await page.waitForTimeout(400);
+      await page.evaluate(() => [...document.querySelectorAll('.eqRow')].find((r) => r.textContent.includes('Gravesong'))?.scrollIntoView({ block: 'center' }));
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `docs/samples/gear-build-legend-card-${tag}.png` });
+      for (let i = 0; i < 3; i++) await page.locator('#hmSheet').getByRole('button', { name: 'Back', exact: true }).first().click({ timeout: 1500 }).catch(() => {});
+      await page.waitForTimeout(300);
+      await page.evaluate(() => window.__game.home.openCodex());
+      await page.waitForTimeout(600);
+      await page.getByRole('button', { name: 'Legends', exact: true }).click();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `docs/samples/gear-build-legends-codex-${tag}.png` });
+    }
     if (what === 'doll') {
       await page.locator('.eqSlot.at-off').click();
       await page.waitForTimeout(400);

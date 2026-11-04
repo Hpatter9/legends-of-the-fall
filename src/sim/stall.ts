@@ -178,7 +178,8 @@ export const sellAsks = (m: Meta, it: Equipment): boolean => it.rarity >= 3 || l
  *  changes, when it is worn by a hero or not owned). */
 export function sellPiece(m: Meta, id: number, day: number): number {
   const it = spareEquipment(m).find((x) => x.id === id);
-  if (!it) return 0;
+  // (SEVEN-SLOT GEAR: a named legend is never sold)
+  if (!it || EQUIP_BASES[it.base]?.legend) return 0;
   const price = sellPrice(it);
   m.equipment = m.equipment!.filter((x) => x.id !== id);
   m.crowns += price;

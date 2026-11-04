@@ -160,9 +160,32 @@ The house prompt and the style references are in [gear-art-prompt.md](gear-art-p
 - `thiefRing`: Thief's Ring
 
 
+## The 21 named legends: their own painting each, a little grander (no Mythic frame: a legend is always Legendary)
+
+- `crownLastKing`: Crown of the Last King (head)
+- `maskLaughingFox`: Mask of the Laughing Fox (head)
+- `helmSevenWinters`: Helm of Seven Winters (head)
+- `ferrymansCoat`: The Ferryman’s Coat (torso)
+- `wyrmhideVaelkhar`: Wyrmhide of Vaelkhar (torso)
+- `aegisOdile`: Aegis of Saint Odile (torso)
+- `lastLight`: Last Light (right hand)
+- `gravesong`: Gravesong (right hand)
+- `widowsBow`: The Widow’s Bow (right hand)
+- `shieldHundredNames`: Shield of a Hundred Names (left hand)
+- `unwrittenBook`: The Unwritten Book (left hand)
+- `bellOfEnding`: Bell of Ending (left hand)
+- `sevenLeagueBoots`: Seven-League Boots (feet)
+- `ashwalkerSabatons`: Ashwalker Sabatons (feet)
+- `moonSlippers`: Slippers of the Moon Court (feet)
+- `girdleGiantKing`: Girdle of the Giant-King (belt)
+- `rookBandolier`: Captain Rook’s Bandolier (belt)
+- `pilgrimsCord`: The Pilgrim’s Cord (belt)
+- `ringReturning`: Ring of Returning (accessory)
+- `timeHourglass`: Time Witch’s Hourglass (accessory)
+- `gorgonEye`: Eye of the Gorgon (accessory)
+
 ## Still to come in later batches
 
-- The 21 named legends (batch 2): their own painting each, a little grander.
 - The 8 rune stones, the 5 rune frames and the merge spark (batches 4 and 5).
 - The 5 remedies (batch 6).
 - The 14 set emblems, the 7 empty-slot outlines of the paper doll, the doll's backing and the 3 glyph stones (batches 1 to 3).

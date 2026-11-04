@@ -39,7 +39,7 @@ export const GEAR_SETS: readonly GearSet[] = [
     full: { name: 'Long Winter', power: 'longWinter', text: 'The first skill each fight freezes every foe within 2 tiles for 2s; a frozen foe struck by a crit shatters for 20% of its max hp (8% for a boss)' } },
   { id: 'storm', name: 'Stormcaller', colour: 'var(--p4)', pieces: ['stormHood', 'mageRobe', 'stormStaff', 'scryingOrb', 'stormBoots', 'stormGirdle', 'stormRing'],
     two: { text: '+10% skill charge', stats: { charge: 0.1 } }, four: { text: '+5% attack, and every 4th blow chains lightning', stats: { atk: 0.05 }, ability: { id: 'chainLightning', s: 0.55 } },
-    full: { name: 'Eye of the Storm', power: 'eyeOfStorm', text: 'Chains leap to three more foes, each leap gives 4 skill charge, and skills charge 20% faster' } },
+    full: { name: 'Eye of the Storm', power: 'eyeOfStorm', stats: { charge: 0.2 }, text: 'Every 4th blow, lightning leaps to three more foes, each leap gives 4 skill charge, and skills charge 20% faster' } },
   { id: 'vanguard', name: 'Vanguard', colour: 'var(--s13)', pieces: ['vanguardHelm', 'plateCuirass', 'spikedMace', 'stoneIdol', 'vanguardGreaves', 'vanguardBelt', 'vanguardSignet'],
     two: { text: '+1 defence, +4% hp', stats: { def: 1, hp: 0.04 } }, four: { text: '+6% hp, and foes struck may be taunted', stats: { hp: 0.06 }, ability: { id: 'idolsGaze', s: 0.7 } },
     full: { name: 'Last Wall', power: 'lastWall', text: 'Blows aimed at an ally beside the wearer are taken by the wearer instead, at 40% less' } },
@@ -54,7 +54,7 @@ export const GEAR_SETS: readonly GearSet[] = [
     full: { name: 'Shadow Dance', power: 'shadowDance', text: 'After a kill the wearer steps unseen behind the furthest foe within 4 tiles and strikes a crit' } },
   { id: 'samurai', name: 'Shogun', colour: 'var(--r4)', pieces: ['shogunKabuto', 'lamellar', 'katana', 'warDrum', 'shogunObi', 'shogunSeal'],
     two: { text: '+4% attack, +3% hp', stats: { atk: 0.04, hp: 0.03 } }, four: { text: '+3% crit chance, and a crit makes the foe bleed', stats: { crit: 0.03 }, ability: { id: 'iaijutsu', s: 0.7 } },
-    full: { name: 'Thousand Duels', power: 'thousandDuels', text: 'The wearer challenges the strongest foe it can reach and deals it 30% more' } },
+    full: { name: 'Thousand Duels', power: 'thousandDuels', text: 'The wearer challenges the strongest foe, which must come for it, and deals it 30% more' } },
   { id: 'grave', name: 'Gravewalker', colour: 'var(--g5)', pieces: ['boneArmour', 'reapersScythe', 'graveTotem', 'graveBoots', 'graveChain', 'rubyRing'],
     two: { text: '+4% attack, +4% resist', stats: { atk: 0.04, resist: 0.04 } }, four: { text: '+4% hp, and a kill heals', stats: { hp: 0.04 }, ability: { id: 'soulReaper', s: 0.7 } },
     full: { name: 'Army of the Dead', power: 'armyOfDead', text: 'A foe the wearer kills rises once as a skeleton fighting for the heroes for 8s (two at once at most)' } },
@@ -69,7 +69,7 @@ export const GEAR_SETS: readonly GearSet[] = [
     full: { name: 'Wild Hunt', power: 'wildHunt', text: 'The first shot each fight marks the strongest foe; every hero deals it 20% more, and the mark passes on when it dies' } },
   { id: 'wind', name: 'Windrunner', colour: 'var(--b5)', pieces: ['windCap', 'leatherJerkin', 'bootsOfHaste', 'windSash', 'windFeather'],
     two: { text: '+6% move speed, +3% attack speed', stats: { moveSpeed: 0.06, atkSpeed: 0.03 } }, four: { text: '+3% attack speed, and haste at the start', stats: { atkSpeed: 0.03 }, ability: { id: 'sprint', s: 0.7 } },
-    full: { name: 'Tailwind', power: 'tailwind', text: 'The wearer and allies beside it move 30% faster, and its first blow of a fight is a dash from up to 3 tiles away' } },
+    full: { name: 'Tailwind', power: 'tailwind', stats: { moveSpeed: 0.3 }, text: 'The wearer moves 30% faster, and it and the allies beside it are hastened' } },
   { id: 'tide', name: 'Tidecaller', colour: 'var(--b6)', pieces: ['tideCrown', 'tideTrident', 'shellBuckler', 'tideBoots', 'tideSash'],
     two: { text: '+6% hp, +3% resist', stats: { hp: 0.06, resist: 0.03 } }, four: { text: '+4% attack, and blows slow', stats: { atk: 0.04 }, ability: { id: 'undertowThrust', s: 0.7 } },
     full: { name: 'Undertow', power: 'undertow', text: 'Blows pull the foe a tile towards the wearer; on water the wearer mends 2% hp a second' } },
@@ -109,13 +109,15 @@ export function setPowers(bases: readonly string[]): string[] {
 export interface SetBonus {
   stats: Main;
   abilities: { id: string; name: string; s: number }[];
+  /** The full sets' powers (`setPowers.ts`), at strength 1. */
+  powers: { id: string; name: string; s: number }[];
   /** The sets that give something, with how many pieces are worn. */
   active: { set: GearSet; count: number }[];
 }
 
 /** What wearing these bases gives: the stats and abilities of every set tier switched on. */
 export function setBonus(bases: readonly string[]): SetBonus {
-  const out: SetBonus = { stats: {}, abilities: [], active: [] };
+  const out: SetBonus = { stats: {}, abilities: [], powers: [], active: [] };
   for (const [set, count] of setCounts(bases)) {
     const tiers = activeTiers(set, count);
     if (!tiers.length) continue;
@@ -124,6 +126,7 @@ export function setBonus(bases: readonly string[]): SetBonus {
       for (const [k, v] of Object.entries(t.stats ?? {}) as [keyof Main, number][]) out.stats[k] = (out.stats[k] ?? 0) + v;
       if (t.ability) out.abilities.push({ id: t.ability.id, name: (ABILITIES[t.ability.id] as Ability).name, s: t.ability.s });
     }
+    if (count >= set.pieces.length) out.powers.push({ id: set.full.power, name: set.full.name, s: 1 });
   }
   return out;
 }

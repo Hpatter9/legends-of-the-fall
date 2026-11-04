@@ -5,6 +5,7 @@
 // `equipFx.ts` runs the abilities through the sim's own hooks. Pure data: no Pixi, no DOM.
 
 import { NEW_BASES } from './equipBasesNew';
+import { LEGEND_LIST, type LegendDef } from './legendBases';
 
 /** SEVEN-SLOT GEAR (docs/notes/gear-runes-design.md): the head, the torso, the right hand (the weapon), the left hand (a shield, a tome,
  *  a quiver, an orb), the feet, the belt and an accessory. */
@@ -53,6 +54,8 @@ export interface EquipBase {
   ability: Ability;
   /** The ability score it gives (the new bases carry it here; the 60 kept bases are in `BASE_SCORE` below). */
   score?: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+  /** A named legend's story, power and source (`legendBases.ts`); missing for every other base. */
+  legend?: LegendDef;
 }
 
 const W = 'main' as const;
@@ -130,7 +133,10 @@ const OLD_LIST: readonly EquipBase[] = [
 /** The 60 bases from before seven slots: they keep their numbers as they were (`MAIN_SCALE` alone), so no owned piece is weakened. */
 export const OLD_BASES: ReadonlySet<string> = new Set(OLD_LIST.map((b) => b.id));
 export const EQUIP_LIST: readonly EquipBase[] = [...OLD_LIST, ...NEW_BASES];
-export const EQUIP_BASES: Readonly<Record<string, EquipBase>> = Object.fromEntries(EQUIP_LIST.map((b) => [b.id, b]));
+/** Every base by id, the 21 named legends among them (they are kept out of `EQUIP_LIST` and `EQUIP_BASE_IDS`, which the chests, the
+ *  stall and the combining draw from: a legend is never rolled, bought or made). */
+export const EQUIP_BASES: Readonly<Record<string, EquipBase>> = Object.fromEntries([...EQUIP_LIST, ...LEGEND_LIST].map((b) => [b.id, b]));
+export { LEGEND_LIST };
 export const EQUIP_BASE_IDS: readonly string[] = EQUIP_LIST.map((b) => b.id);
 
 /** The ability score each base gives (STATS batch 2; the design's section 6), by what it is: a sword, axe, mace, maul, spear or harness

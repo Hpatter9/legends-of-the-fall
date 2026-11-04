@@ -13,6 +13,7 @@ import { ALL_HEROES, UNITS } from './units';
 import { levelOfKind } from './levels';
 import type { Scores } from './stats';
 import { SET_OF_BASE, setBonus, type GearSet, type SetBonus } from './gearSets';
+import { legendStrength } from './legendRenown';
 
 import { ABILITIES, BASE_SCORE, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, OLD_BASES, RARITY_SCORE, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
 export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
@@ -93,6 +94,8 @@ export interface EquipStats {
   jump: number;
   /** The signature abilities of the worn Epic or better pieces (and a talent's, `talents.ts`). */
   abilities: ActiveAbility[];
+  /** SEVEN-SLOT GEAR: the full sets' powers and the worn legends' (`setPowers.ts`); missing is none. */
+  powers?: ActiveAbility[];
   /** The skill and passive modifiers the hero's talents add (`talents.ts` lists the keys; the skills in `abilities.ts` read them). */
   tal?: Record<string, number>;
   /** The two skills the hero kind has chosen for its slots, when not its own two in order (`books.ts`: 'own1', 'own2' or a learned
@@ -103,7 +106,7 @@ export interface EquipStats {
   /** Ability score points from the worn pieces (`BASE_SCORE`) and the talents' stat nodes (STATS batch 2; `statPower.ts` reads them). */
   scores?: Partial<Scores>;
 }
-export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal' | 'book' | 'skillLv' | 'scores'>;
+export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'powers' | 'tal' | 'book' | 'skillLv' | 'scores'>;
 export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist', 'jump'];
 export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, jump: 0, abilities: [] });
 
@@ -171,11 +174,13 @@ export interface Equipment {
   level: number;
   /** Durability points lost to wear (`wear.ts`); missing is a full piece (and every piece from before wear). */
   wear?: number;
+  /** A named legend's renown: the waves it has fought (`legends.ts`; halves under auto-replay). Missing is none. */
+  renown?: number;
   /** RUN-GEAR: found in the run of this id (the run's seed) and not yet home: fresh from the field, it gives its main stats times
    *  `FIELD_BOOST` in that run, and only such a piece takes a run's upgrades (`runGear.ts`). Cleared when the run ends. */
   found?: number;
 }
-export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found'>;
+export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found' | 'renown'>;
 
 /** Durability by grade before the item level is added (index 0 is unused): Common 30 to Mythic 90 (`wear.ts`). */
 export const DUR: readonly number[] = [0, 30, 40, 55, 70, 90];
@@ -206,7 +211,11 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
   if (!base) return out;
   const k = MAIN_SCALE * (OLD_BASES.has(base.id) ? 1 : SLOT_SCALE[base.slot]) * RARITY_SCALE[it.rarity] * (1 + LEVEL_STEP * (it.level - 1)) * (kind && base.calling && base.calling === callingOf(kind) ? CALLING_BONUS : 1);
   for (const [stat, v] of Object.entries(base.main) as [MainKey, number][]) out[stat] = stat === 'range' ? Math.floor((v * (it.rarity + 1)) / 3) : stat === 'jump' ? v : v * k;
-  if (hasAbility(it.rarity)) out.abilities.push({ id: base.ability.id, name: it.rarity >= 5 ? base.mythic : base.ability.name, s: abilityScale(it.rarity, it.level) });
+  if (base.legend) {
+    // (a named legend: its power at its renown's strength, and its flat stats as they are: `legends.ts`)
+    for (const [stat, v] of Object.entries(base.legend.flat ?? {}) as [MainKey, number][]) out[stat] += v;
+    out.powers = [{ id: base.legend.power, name: base.legend.powerName, s: legendStrength((it as Equipment).renown ?? 0) }];
+  } else if (hasAbility(it.rarity)) out.abilities.push({ id: base.ability.id, name: it.rarity >= 5 ? base.mythic : base.ability.name, s: abilityScale(it.rarity, it.level) });
   // (and its ability score, by its base and rarity: STATS batch 2)
   const score = BASE_SCORE[it.base];
   const points = RARITY_SCORE[it.rarity] ?? 0;
@@ -217,6 +226,7 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
 export function addStats(a: EquipStats, b: EquipStats): EquipStats {
   for (const k of STAT_KEYS) a[k] += b[k] ?? 0;
   a.abilities.push(...b.abilities);
+  if (b.powers?.length) a.powers = [...(a.powers ?? []), ...b.powers.filter((p) => !a.powers?.some((x) => x.id === p.id))];
   if (b.scores) {
     const s: Partial<Scores> = { ...a.scores };
     for (const [k, v] of Object.entries(b.scores) as [keyof Scores, number][]) s[k] = (s[k] ?? 0) + v;
@@ -245,6 +255,7 @@ export function equipStats(m: Meta, kind: string): EquipStats | undefined {
 export function addSetBonus(total: EquipStats, bases: readonly string[], bonus: SetBonus = setBonus(bases)): EquipStats {
   for (const [k, v] of Object.entries(bonus.stats) as [MainKey, number][]) total[k] += v;
   for (const a of bonus.abilities) if (!total.abilities.some((x) => x.id === a.id)) total.abilities.push({ id: a.id, name: a.name, s: a.s });
+  for (const p of bonus.powers) if (!total.powers?.some((x) => x.id === p.id)) (total.powers ??= []).push({ ...p });
   return total;
 }
 
@@ -350,7 +361,8 @@ export function sellPrice(it: Equipment): number {
 /** Turn a spare item into crowns. Returns the crowns (0, and nothing changes, when it is worn or not owned). */
 export function salvageItem(m: Meta, id: number): number {
   const i = spareEquipment(m).findIndex((x) => x.id === id);
-  if (i < 0) return 0;
+  // (a named legend is never sold: a save holds its one copy for good)
+  if (i < 0 || EQUIP_BASES[spareEquipment(m)[i].base]?.legend) return 0;
   const it = spareEquipment(m)[i];
   m.equipment = m.equipment!.filter((x) => x.id !== id);
   const n = sellPrice(it);
@@ -379,7 +391,7 @@ export interface CombineGroup {
 export function combineGroups(m: Meta): CombineGroup[] {
   const groups = new Map<string, CombineGroup>();
   for (const it of spareEquipment(m)) {
-    if (!canCombineGrade(it.rarity)) continue;
+    if (!canCombineGrade(it.rarity) || EQUIP_BASES[it.base]?.legend) continue;
     const key = `${it.base}:${it.rarity}`;
     const g = groups.get(key) ?? { base: it.base, rarity: it.rarity, items: [] };
     g.items.push(it);
@@ -502,6 +514,8 @@ export function readEquipment(raw: unknown): Equipment[] {
       // (wear from `wear.ts`: points lost, in quarters (the quiet slots wear at half), never more than the piece's durability; missing is full)
       const wear = Number(x.wear);
       if (Number.isFinite(wear) && wear > 0) made.wear = Math.min(maxDurability(made), Math.round(wear * 4) / 4);
+      const renown = Number(x.renown);
+      if (Number.isFinite(renown) && renown > 0) made.renown = Math.round(renown * 2) / 2;
       out.push(made);
     }
   return out;

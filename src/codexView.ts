@@ -2,6 +2,9 @@
 // grid of cards; a tap opens the detail sheet, with the sprite on its idle. Unmet foes and unowned heroes are dark silhouettes.
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
 
+import { LEGEND_LIST } from './sim/equipBases';
+import { SLOT_NAMES } from './sim/equipment';
+import { nextVerseAt, versesOpen } from './sim/legends';
 import { KITS, type Kit } from './sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
@@ -33,7 +36,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Calamity elite', calamity: 'Calamity herald' };
 
 /** The page's state that outlives a redraw: the tab it was on. */
-let tabNow: Collection | 'scenes' | 'combos' | 'terrain' = 'bestiary';
+let tabNow: Collection | 'scenes' | 'combos' | 'terrain' | 'legends' = 'bestiary';
 
 /** A speed word for a step time. */
 const paceOf = (ms: number): string => (ms >= 900 ? 'Slow' : ms >= 650 ? 'Steady' : ms >= 450 ? 'Quick' : 'Very quick');
@@ -249,9 +252,26 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
   const grid = el('div', 'cxGrid');
   const fill = () => {
     grid.replaceChildren();
-    grid.classList.toggle('scList', tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain');
-    grid.classList.toggle('cxGrid', tabNow !== 'scenes' && tabNow !== 'combos' && tabNow !== 'terrain');
-    if (tabNow === 'terrain') {
+    const listed = tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain' || tabNow === 'legends';
+    grid.classList.toggle('scList', listed);
+    grid.classList.toggle('cxGrid', !listed);
+    if (tabNow === 'legends') {
+      // (SEVEN-SLOT GEAR: the named legends, with the verses their renown has opened; one not yet found shows where it waits)
+      for (const l of LEGEND_LIST) {
+        const id = m.legends?.[l.id];
+        const piece = id === undefined ? undefined : m.equipment?.find((x) => x.id === id);
+        const row = el('div', `scRow${id === undefined ? ' locked' : ''}`);
+        const text = el('div');
+        if (id === undefined) text.append(el('b', '', `${l.name} (${SLOT_NAMES[l.slot].toLowerCase()})`), el('small', '', `Waits in: ${l.legend!.source}`));
+        else {
+          const renown = piece?.renown ?? 0;
+          text.append(el('b', '', `${l.name} · ${l.legend!.powerName}`), el('small', '', `${l.legend!.text}. Renown ${Math.floor(renown)}${nextVerseAt(renown) !== null ? ` (the next verse at ${nextVerseAt(renown)})` : ''}`));
+          for (const verse of l.legend!.verses.slice(0, versesOpen(renown))) text.append(el('small', 'cxVerse', verse));
+        }
+        row.append(text);
+        grid.append(row);
+      }
+    } else if (tabNow === 'terrain') {
       // (the ground a battlefield can have, then the shapes it can take: what each does, always shown)
       for (const t of TERRAIN_INFO) {
         const row = el('div', 'scRow');
@@ -323,9 +343,9 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       }
     }
   };
-  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain', HTMLButtonElement>();
-  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const]) {
-    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : COLLECTION_NAMES[c]);
+  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain' | 'legends', HTMLButtonElement>();
+  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const, 'legends' as const]) {
+    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : c === 'legends' ? 'Legends' : COLLECTION_NAMES[c]);
     t.addEventListener('click', () => {
       tabNow = c;
       for (const [k, b] of buttons) b.classList.toggle('on', k === c);

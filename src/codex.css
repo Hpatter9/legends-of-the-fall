@@ -44,3 +44,5 @@
 .cxReward.done { color: var(--g4); border-color: var(--g2); }
 .cxReward button { min-height: 32px; font-size: 12px; }
 .cxClaimAll { min-height: 44px; font-size: 12px; }
+/* SEVEN-SLOT GEAR batch 2: the Legends page's verses */
+.scRow small.cxVerse { display: block; margin-top: 2px; font-style: italic; opacity: 0.85; }

@@ -25,6 +25,7 @@ import { icon } from './menuArt';
 import { play } from './render/sound';
 import { portrait } from './render/sheets';
 import { takeGearNote } from './sim/gearMigrate';
+import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -134,7 +135,14 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt)
   const state = wearState(it);
   card.append(el('small', `eqDurLine ${state}`, `Durability ${Math.ceil(durabilityOf(it))}/${maxDurability(it)}${state === 'broken' ? ' · Broken: gives nothing until mended' : state === 'worn' ? ' · Worn' : ''}`));
   const sig = stats.abilities[0];
-  if (sig) card.append(el('p', 'eqAffix', `${sig.name}: ${describeAbility(base.ability, sig.s)}`));
+  if (base.legend) {
+    // (a named legend: its power at its renown, and how far its story has opened: `legends.ts`)
+    const renown = it.renown ?? 0;
+    const next = nextVerseAt(renown);
+    card.append(el('p', 'eqAffix', `Legend · ${base.legend.powerName}: ${base.legend.text}${renown || stats.powers?.[0]?.s !== 1 ? ` (x${Math.round((stats.powers?.[0]?.s ?? 1) * 100) / 100} by renown)` : ''}`));
+    card.append(el('small', 'eqDim', `Renown ${Math.floor(renown)} waves${next !== null ? ` · the next verse at ${next}` : ' · every verse told'}`));
+    card.append(el('small', 'eqVerse', base.legend.verses[versesOpen(renown) - 1]));
+  } else if (sig) card.append(el('p', 'eqAffix', `${sig.name}: ${describeAbility(base.ability, sig.s)}`));
   else if (!hasAbility(it.rarity)) card.append(el('small', 'eqDim', `Epic and up: ${base.ability.name}`));
   if (base.calling && base.calling === callingOf(kind)) card.append(el('p', 'eqSuit', `Suits ${CALLING_NAMES[base.calling]}: more of its stats`));
   else if (base.calling) card.append(el('small', 'eqDim', `Made for ${CALLING_NAMES[base.calling]}`));
@@ -190,6 +198,9 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       const it = meta.equipment?.find((x) => x.id === id);
       return it ? itemName(it) : 'a piece';
     });
+    // (and any named legend just found: `legends.ts`)
+    claimLegends(meta);
+    notes.push(...takeLegendNews(meta));
     if (notes.length) {
       for (const line of notes) panel.append(el('p', 'eqNote', line));
       saveMeta(meta);
@@ -382,7 +393,8 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
         commit();
         picker(slot);
       });
-      btns.append(on, sell);
+      // (a named legend is never sold: the save keeps its one copy)
+      btns.append(...(EQUIP_BASES[it.base].legend ? [on] : [on, sell]));
       if (it.wear) btns.append(repairButton(it, () => picker(slot)));
       row.append(btns);
       list.append(row);

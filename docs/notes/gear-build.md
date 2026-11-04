@@ -50,3 +50,39 @@ design's eight batches, each with its tests. This note says what each batch buil
   412x915; no sideways scroll and no page errors at any size.
 - **Tests:** `test/gear-slots.test.ts` (the catalogue, every migration case, the old bases unchanged, Equip best by set, jump), and the
   gear tests from before brought to seven slots.
+
+## Batch 2: sets and legends
+
+- **The full sets' powers** (`src/sim/setPowers.ts`): the fourteen of the design, each a rule of its own. A worn kit lists them
+  (`EquipStats.powers`, from `setBonus`), and they run on the gear's own hooks (`equipFx.ts` calls in after a blow, when struck, on a kill,
+  at the start and every tick) and on five one-line hooks: a damage step in `onStrike`, a skill cast in `powered` and a dodge in
+  `onDodged` (`abilities.ts`), and a fall in `hurt` (`battle.ts`). Each is guarded by `powersOn`, set only when a hero wearing a power
+  starts a fight, so every other fight plays out as before (the identity fixtures did not move). Chances use the fight's skill stream.
+- **Where the words changed to match what the fight can do:** Eye of the Storm leaps every 4th blow (its +20% skill charge is a stat of the
+  full tier); Thousand Duels makes the strongest foe come for the wearer (a long taunt) rather than walling the two off; Pyre Walker sets
+  what the wearer's skills strike burning rather than the tiles; Tailwind is +30% move for the wearer (a stat) and a haste for it and the
+  allies beside it, without the opening dash. Peakwarden's four-piece tier is "+5% hp, and every 5th blow stuns" (its full set is King of
+  the Hill, which needs the higher ground).
+- **The 21 named legends** (`legendBases.ts`: the pieces, their verses, powers and sources; `legends.ts`: the sources read from the save,
+  `claimLegends`; `legendRenown.ts`: renown). A legend is a Legendary piece (item level 12) that is never rolled, bought, combined or sold
+  (it is kept out of `EQUIP_LIST` and `EQUIP_BASE_IDS`; `salvageItem` and `sellPiece` refuse it, and the picker shows no Sell). A save holds
+  one copy of each (`Meta.legends`). The sources are read from the save, so no mode needed to change: `claimLegends` runs as a save loads,
+  as a run's finds come home and as the Equipment panel opens, and the panel says "A legend is yours: ..." once.
+- **Sources moved from the design's draft:** the Mask of the Laughing Fox comes from the quest "The Oni King's Mask" (there is no Kitsune
+  chain of lost techniques); the Unwritten Book from "Words of Unmaking, III: The Unwritten Library" (the Library has five levels, not
+  seven); Captain Rook's Bandolier and the Time Witch's Hourglass from the tales that bring those heroes; the Pilgrim's Cord from the first
+  hero to fight 100 waves (`Meta.wavesFought`, counted in `settleWear`); the Ashwalker Sabatons from a Calamity cleared whole with an
+  ascension. The others are as drafted.
+- **Renown** (`Equipment.renown`): the waves a worn legend fights, counted in `settleWear` (half under auto-replay, as wear is). Its power's
+  strength follows the design's steps, 0.45 found, then 0.6, 0.75 and 0.9 at 25, 100 and 300 waves; the numbers in a legend's line are at
+  0.6, so its power is x0.75 found, x1, x1.25 and x1.5. A verse of its story opens at each step.
+- **Legends' powers** that act between waves (the Ring of Returning, the Pilgrim's Cord) come with batch 6's wounds and remedies.
+  Where the fight has no Armour Class bonus to hand out, the Crown of the Last King's "+1 AC" is "allies within 2 tiles take 6% less from
+  blows", the Wyrmhide's "+3 AC" is +1.5 defence, and the Seven-League Boots give the +1 jump gear allows (not +2).
+- **The page:** a legend's card shows its power, its renown and the latest verse; the codex has a **Legends** page with every legend, its
+  verses so far, and for one not yet found where it waits. Legends show the placeholder until painted (listed in `gear-art-todo.md`).
+- **Tests:** `test/set-powers.test.ts` (every power fires in a small fight, a fight plays out the same twice, a full set switches its
+  power on and six of seven does not, a fight with no power never switches them on) and `test/legends.test.ts` (the catalogue, the
+  sources, one copy, never sold or combined, renown's steps, saves).
+- **Screenshots:** `docs/samples/gear-build-legend-*.png` (a full Winter Court on the doll), `gear-build-legend-card-*.png` and
+  `gear-build-legends-codex-*.png`, at the three sizes.

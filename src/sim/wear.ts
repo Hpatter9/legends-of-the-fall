@@ -5,7 +5,7 @@
 // and gives nothing at all until mended. Nothing is ever destroyed by wear. Kept as `Equipment.wear` (points lost; missing is a full
 // piece), so old saves are whole and the numbers can be retuned without touching saves. Pure rules: no Pixi, no DOM, no randomness.
 
-import { DUR, EQUIP_SLOTS, QUIET_SLOTS, itemName, maxDurability, wearerOf, wornIn, type EquipSlot, type Equipment } from './equipment';
+import { DUR, EQUIP_BASES, EQUIP_SLOTS, QUIET_SLOTS, itemName, maxDurability, wearerOf, wornIn, type EquipSlot, type Equipment } from './equipment';
 import type { Meta } from './meta';
 
 /** Crowns a point of repair costs by grade, at item level 1 (index 0 is unused). */
@@ -53,10 +53,14 @@ export function settleWear(m: Meta, fought: readonly Fought[], auto = false, ski
   for (const f of fought) {
     if (seen.has(f.kind)) continue;
     seen.add(f.kind);
+    // (SEVEN-SLOT GEAR: the waves each hero has fought, for the Pilgrim's Cord, `legends.ts`)
+    (m.wavesFought ??= {})[f.kind] = (m.wavesFought[f.kind] ?? 0) + share;
     for (const slot of EQUIP_SLOTS) {
       const it = wornIn(m, f.kind, slot);
       // (RUN-GEAR: a lasting piece a run's find sits in for this run is not worn: `skip`)
       if (!it || skip?.(f.kind, slot)) continue;
+      // (a named legend's renown: the waves it has fought, broken or not)
+      if (EQUIP_BASES[it.base]?.legend) it.renown = Math.round(((it.renown ?? 0) + share) * 2) / 2;
       const was = wearState(it);
       if (was === 'broken') continue;
       // (SEVEN-SLOT GEAR: the quiet slots wear at half; kept in quarters)
