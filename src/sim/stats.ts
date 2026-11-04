@@ -120,7 +120,7 @@ const COMING_ROWS: Readonly<Record<string, Row>> = {
   warDrummer: [13, 12, 15, 8, 10, 17, 'str', 'cha', 'medium', 'dex', 'cha', 'Bard (drummer)'],
   banneret: [15, 8, 13, 10, 12, 17, 'str', 'cha', 'heavy', 'str', 'cha', 'Fighter (standard-bearer)'],
   geomancer: [12, 8, 15, 13, 17, 10, 'wis', 'wis', 'medium', 'con', 'wis', 'Druid (stone)'],
-  bellWarden: [17, 8, 15, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Monk (bell guardian)'],
+  bellWarden: [17, 8, 15, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Fighter (bell guardian)'],
   falconer: [10, 17, 13, 8, 15, 12, 'dex', 'wis', 'light', 'str', 'dex', 'Ranger (falconer)'],
   astralSphinx: [13, 15, 12, 10, 17, 8, 'dex', 'wis', 'light', 'int', 'wis', 'Sphinx (riddler)'],
   mirageDancer: [8, 17, 12, 10, 13, 15, 'dex', 'dex', 'light', 'dex', 'cha', 'Rogue (dancer)'],
@@ -130,6 +130,7 @@ const COMING_ROWS: Readonly<Record<string, Row>> = {
   inquisitor: [10, 15, 13, 8, 17, 12, 'dex', 'wis', 'medium', 'wis', 'cha', 'Cleric (judgement)'],
   seraph: [15, 10, 13, 8, 12, 17, 'str', 'cha', 'heavy', 'wis', 'cha', 'Paladin (seraph)'],
   corsairSurgeon: [10, 15, 13, 12, 17, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Cleric (sawbones)'],
+  // (the Harpooner fights from range on STR: his harpoons are thrown, as a javelin is)
   harpooner: [17, 13, 15, 8, 12, 10, 'str', 'str', 'medium', 'str', 'con', 'Fighter (whaler)'],
   seaReaver: [17, 12, 15, 8, 10, 13, 'str', 'str', 'brute', 'str', 'con', 'Barbarian (reaver)'],
 };

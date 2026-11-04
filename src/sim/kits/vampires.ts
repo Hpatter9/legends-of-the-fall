@@ -398,7 +398,7 @@ export function vampireRows(): Record<string, Row> {
     bloodGargoyle: {
       pool: 'stamina',
       role: 'A stone sentinel: crashes down from the eaves, turns to granite and shields his friends',
-      passive: { name: 'Granite Hide', text: 'Takes a quarter less from shots', scales: 0.25 },
+      passive: { name: 'Granite Hide', text: 'Blows from the front lose 30%', block: 0.3 },
       s1: { cls: 'strike', cost: 26, cd: 7000, skill: sk('Gargoyle Crash', 'Leaps up to 4 tiles onto a crowd: the 3x3 is struck, the foe he lands on is stunned 0.8s, and the foes beside him are shoved a tile out', 600, 'attack', gargoyleCrash) },
       s2: { cls: 'utility', cost: 26, cd: 16000, skill: sk('Stone Slumber', 'Turns to living granite for 4s: takes half damage behind a shield of a quarter of his health, the foes within 3 must strike him, and stone dust slows the foes near him', 550, 'defend', stoneSlumber) },
       s3: { cls: 'guard', cost: 16, cd: 14000, more: { emergency: buffetNeeded }, skill: sk('Wing Buffet', 'When a friend within 3 falls under 40% with a foe beside it, his stone wings shove the foes within 2 two tiles back and he leaps beside the friend most at risk, shielding it', 400, 'attack2', (b, me, out) => buffetNeeded(b, me) && wingBuffet(b, me, out)) },

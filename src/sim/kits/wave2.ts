@@ -9,7 +9,7 @@ import { addRes } from '../heroKits';
 import { bleedFor, chillFor, shockFor, silenceFor, stunFor, ward, weakFor } from '../ailments';
 import { blinkTo, burrow, canLand, charge, chokeLine, launch, leapTo, mostAtRisk, moveMany, pull, raiseAura, raiseWall, safeTile, shieldLine, shove, swapPlaces } from '../toolkit';
 import { alliesOf, foesNear, freeNear, ms, nearestFoe, strike, strongest } from './common';
-import { bleedDot, friendInDanger, sk, ult, type Row } from './comingRow';
+import { friendInDanger, sk, ult, type Row } from './comingRow';
 
 const farthest = (me: Unit) => (x: Unit, y: Unit) => apart(me, y) - apart(me, x) || x.id - y.id;
 const ultDur = (me: Unit, n: number) => durOf(me, Math.round(n * Math.sqrt(castPower())));
@@ -318,7 +318,7 @@ export function wave2Rows(): Record<string, Row> {
     warDrummer: {
       pool: 'stamina',
       role: 'A taiko master: thunder-beats that shove foes and drive his friends forward',
-      passive: { name: 'Rhythm of War', text: 'Every 4s the ally with the least skill charge near him gains 16', tune: { every: 4000, charge: 16 } },
+      passive: { name: 'Rhythm of War', text: 'His blows land 6% harder for each friend beside his foe (up to 3): the line strikes on the beat', gang: 0.06 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Thunder Beat', 'Booms his taiko drum: the foes within 2 are struck, shocked and shoved a tile back, and the friends within 3 are hastened for 3s', 550, 'attack', thunderBeat) },
       s2: { cls: 'utility', cost: 26, cd: 16000, skill: sk('Marching Cadence', 'Beats a forward march: the friends within 3 gain a shield of 16% of his health for 4s, and those who fight up close dash up to 2 tiles at the foes', 550, 'attack2', marchingCadence) },
       s3: { cls: 'utility', cost: 22, cd: 18000, skill: sk('Resonant Leap', 'Leaps beside his friends and raises a Taiko Cadence round him for 6s: friends within 3 hit 15% harder and refill their pools, foes there are shocked', 550, 'attack2', resonantLeap) },
@@ -345,7 +345,7 @@ export function wave2Rows(): Record<string, Row> {
     bellWarden: {
       pool: 'stamina',
       role: 'A bronze keeper: slams his temple bell, tolls shockwaves and vaults to guard his friends',
-      passive: { name: 'Temple Bronze', text: 'Blows from the front lose a fifth', block: 0.2 },
+      passive: { name: 'Temple Bronze', text: '18% of his blows ring on into a second foe beside the first', arc: 0.18 },
       s1: { cls: 'strike', cost: 26, cd: 7000, skill: sk('Bronze Slam', 'Leaps up to 3 tiles and slams his bronze bell down: the foe he lands on is stunned for 1.2s and the 3x3 is struck', 650, 'attack', bronzeSlam) },
       s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Echoing Toll', 'Rings his temple bell: the foes within 2 are struck, silenced for 1.5s and shoved 2 tiles back, and the friends within 3 are warded for 4s', 550, 'attack2', echoingToll) },
       s3: { cls: 'guard', cost: 16, cd: 14000, more: { emergency: vaultNeeded }, skill: sk('Sanctuary Vault', 'When a friend within 4 falls under 40% with a foe beside it, he swaps places with it (or blinks beside it), takes a fifth less for 4s, shields it, and the foes beside him must strike him', 450, 'defend', (b, me, out) => vaultNeeded(b, me) && sanctuaryVault(b, me, out)) },
@@ -354,7 +354,7 @@ export function wave2Rows(): Record<string, Row> {
     falconer: {
       pool: 'stamina',
       role: 'A highland hawker: stoops her falcon on foes, gale-vaults to perches and pins her prey',
-      passive: { name: 'Wind-Borne Talons', text: '15% of blows crit for x1.6 and make the foe bleed', crit: { chance: 0.15, mult: 1.6, bleed: bleedDot } },
+      passive: { name: 'Wind-Borne Talons', text: 'Her shots leave the foe bleeding from the talons', rider: { dot: 'bleed', share: 0.12, ms: 3000 } },
       s1: { cls: 'strike', cost: 24, cd: 6000, skill: sk('Falcon Stoop', 'Her falcon dives on the farthest foe within 6: it is struck, weakened for 3.5s and flushed a tile towards her', 500, 'attack', falconStoop) },
       s2: { cls: 'guard', cost: 14, cd: 12000, more: { emergency: galeNeeded }, skill: sk('Gale Vault', 'When she falls under 35% with a foe within 2, a gust shoves the foes beside her a tile back and she vaults to the safest tile within 3, hastened for 3.5s', 450, 'attack2', (b, me, out) => galeNeeded(b, me) && galeVault(b, me, out)) },
       s3: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Talon Snare', 'Steps to the highest tile within 2 and sends her falcon at the strongest foe within 6: struck, pinned for 1.5s and bleeding', 500, 'attack2', talonSnare) },

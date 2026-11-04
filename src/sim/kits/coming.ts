@@ -47,7 +47,7 @@ export const COMING_ULT: Readonly<Record<string, { rate: number; power: number }
 export function scalePassive(p: Passive, k: number): Passive {
   if (k === 1) return p;
   const out: Passive = { ...p };
-  const share = ['dodge', 'block', 'pierce', 'arc', 'regen', 'leech', 'huddle', 'scales', 'blockHeal', 'aura', 'rage', 'thorns', 'far', 'through', 'halo', 'undying'] as const;
+  const share = ['dodge', 'block', 'pierce', 'arc', 'regen', 'leech', 'huddle', 'scales', 'blockHeal', 'aura', 'rage', 'thorns', 'far', 'through', 'halo', 'undying', 'gang'] as const;
   for (const key of share) if (typeof p[key] === 'number') out[key] = p[key]! * k;
   if (p.prey) out.prey = 1 + (p.prey - 1) * k;
   if (p.slow) out.slow = Math.round(p.slow * k);
@@ -55,6 +55,7 @@ export function scalePassive(p: Passive, k: number): Passive {
   if (p.mend) out.mend = { ...p.mend, share: p.mend.share * k };
   if (p.tune) out.tune = { ...p.tune, charge: p.tune.charge * k };
   if (p.ignite) out.ignite = { ...p.ignite, dmg: p.ignite.dmg * k };
+  if (p.rider) out.rider = { ...p.rider, share: p.rider.share * k };
   if (p.finish) out.finish = { ...p.finish, mult: 1 + (p.finish.mult - 1) * k };
   return out;
 }

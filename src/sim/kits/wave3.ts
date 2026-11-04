@@ -360,7 +360,7 @@ export function wave3Rows(): Record<string, Row> {
     astrologer: {
       pool: 'mana',
       role: 'A star-keeper: pulls foes into gravity wells, glides along orbits and bridges starlight',
-      passive: { name: 'Chart of the Heavens', text: 'Her starlight ignores 3 of the foe\'s defence', pierce: 3 },
+      passive: { name: 'Chart of the Heavens', text: 'Her starlight deals 25% more to foes 4 or more tiles away', far: 0.25 },
       s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Gravity Well', 'A star collapses on the thickest crowd within 5: the foes within 3 of it are dragged 2 tiles in and struck', 650, 'attack', gravityWell) },
       s2: { cls: 'guard', cost: 30, cd: 14000, more: { emergency: orbitNeeded }, skill: sk('Retrograde Orbit', 'When she falls under 35% with a foe within 2, she strikes the nearest foe, flings it 2 tiles back and slows it, and glides to the safest tile within 3', 450, 'attack2', (b, me, out) => orbitNeeded(b, me) && retrogradeOrbit(b, me, out)) },
       s3: { cls: 'utility', cost: 40, cd: 18000, skill: sk('Starlight Bridge', 'Trades places with a friend within 4 under 60% and raises a Starlight Bridge round her for 6s: friends within 3 refill their pools and hit 15% harder', 600, 'attack2', starlightBridge) },
