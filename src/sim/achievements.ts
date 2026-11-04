@@ -134,7 +134,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'tower20',
     name: 'Last Stand',
-    text: 'Reach wave 20 of the Last Stand (or clear 20 floors of the old tower).',
+    text: 'Reach wave 20 of the Last Stand.',
     crowns: 40,
     stones: BIG_STONES,
     earned: (c) => Math.max(c.meta.tower, c.meta.stand ?? 0) >= 20,
