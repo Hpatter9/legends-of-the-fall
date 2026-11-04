@@ -5,7 +5,9 @@
 // sim's own functions.
 
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
-import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
+import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
+import { roomsOf } from './sim/rooms';
+import { roomsStrip } from './castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
@@ -216,7 +218,7 @@ export class Home {
               ? this.show('battle')
               : this.openBuilding(id),
       (id) => {
-        const ok = id === 'chapel' ? startChapel(this.meta, Date.now()) : startBuild(this.meta, id, Date.now());
+        const ok = startSite(this.meta, id, Date.now());
         if (!ok) return false;
         saveMeta(this.meta);
         this.refresh();
@@ -265,7 +267,7 @@ export class Home {
       this.hooks.onBuilt?.(raised);
       this.refresh();
       // (an open card redraws with the new level)
-      if (this.cardOpen && this.cardFor) this.cardFor === 'chapel' ? this.openChapel() : this.openBuilding(this.cardFor);
+      if (this.cardOpen && this.cardFor) this.cardFor === 'chapel' && !chapelBuilt(this.meta) ? this.openChapel() : this.openBuilding(this.cardFor);
       return;
     }
     const left = clockText(worksLeft(m, Date.now()));
@@ -880,7 +882,7 @@ export class Home {
   }
 
   /** A building's upgrade card (over the courtyard): what it gives now and next, its cost, and the Build button. */
-  private openBuilding(id: BuildingId): void {
+  private openBuilding(id: SiteId): void {
     this.closeSheet();
     this.cardOpen = true;
     this.castle.stop();
@@ -918,8 +920,10 @@ export class Home {
     box.append(row);
   }
 
-  private drawBuildingCard(box: HTMLElement, id: BuildingId): void {
+  private drawBuildingCard(box: HTMLElement, id: SiteId): void {
     const m = this.meta;
+    // (DEPTH-BUILD: the card also serves the levelled Chapel and the three room buildings, which give rooms, not numbers)
+    if (id === 'chapel' || isRoomBuilding(id)) return this.drawRoomsCard(box, id);
     const b = BUILDINGS[id];
     const level = m.castle[id];
     const top = maxLevel(id);
@@ -943,8 +947,40 @@ export class Home {
       box.append(next);
     } else box.append(el('p', 'hint', 'Fully built.'));
     box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
+    const strip = roomsStrip(id, level);
+    if (strip) box.append(strip);
     this.cardFor = id;
     const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
+    const done = el('button', '', 'Close');
+    done.addEventListener('click', () => this.closeSheet());
+    const row = el('div', 'brow2');
+    row.append(buy, done);
+    box.append(row);
+  }
+
+  /** The card of a building that gives rooms rather than numbers (the Smithy, the Watchtower, the Hall of Legends, the Chapel past level 1). */
+  private drawRoomsCard(box: HTMLElement, id: SiteId): void {
+    const m = this.meta;
+    const level = siteLevel(m.castle, id, chapelBuilt(m));
+    const top = siteTop(id);
+    box.replaceChildren();
+    const head = el('div', 'bhead');
+    const pic = el('img', 'bpic');
+    pic.src = lookPicture(id, level);
+    pic.alt = '';
+    pic.draggable = false;
+    const title = el('div');
+    title.append(el('h3', '', siteName(id)), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`));
+    head.append(pic, title);
+    const blurb = id === 'chapel' ? 'A place to study the ruler\'s spells; its higher levels watch over the party when a heart burns.' : ROOM_BUILDINGS[id as keyof typeof ROOM_BUILDINGS].blurb;
+    box.append(head, el('p', 'hint', blurb));
+    const strip = roomsStrip(id, level);
+    if (strip) box.append(strip);
+    const cost = siteNextCost(m.castle, id, chapelBuilt(m));
+    const next = roomsOf(id).filter((r) => r.level === level + 1);
+    if (cost !== null && next.length) box.append(el('p', 'hint', `Level ${level + 1} opens the ${next.map((r) => r.name).join(' and ')}.`));
+    this.cardFor = id;
+    const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startSite(m, id, Date.now()));
     const done = el('button', '', 'Close');
     done.addEventListener('click', () => this.closeSheet());
     const row = el('div', 'brow2');
@@ -973,12 +1009,12 @@ export class Home {
       if (!start()) return;
       saveMeta(this.meta);
       this.refresh();
-      site === 'chapel' ? this.openChapel() : this.openBuilding(site);
+      site === 'chapel' && !chapelBuilt(this.meta) ? this.openChapel() : this.openBuilding(site);
     });
     wrap.append(buy);
     if (on === 'elsewhere') {
       const w = this.meta.works!;
-      const name = w.id === 'chapel' ? 'Chapel' : BUILDINGS[w.id].name;
+      const name = siteName(w.id);
       const hint = el('p', 'hint', `The builders are at the ${name}: `);
       hint.append(el('span', 'worksLeft', clockText(worksLeft(this.meta, Date.now()))), ' left.');
       wrap.append(hint);

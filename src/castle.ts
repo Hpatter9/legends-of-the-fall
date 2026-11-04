@@ -3,15 +3,19 @@
 
 import {
   BUILDING_IDS,
-  CHAPEL_COST,
+  ROOM_BUILDING_IDS,
   chapelBuilt,
-  canBuildChapel,
+  chapelLevel,
   clockText,
   maxLevel,
-  nextCost,
+  siteLevel,
+  siteNextCost,
+  siteTop,
   worksLeft,
   type BuildingId,
+  type SiteId,
 } from './sim/castle';
+import { roomsOf } from './sim/rooms';
 import type { Meta } from './sim/meta';
 import { strongest } from './menuHeroes';
 import { sheetInfo } from './render/sheets';
@@ -55,6 +59,10 @@ import spiralUrl from './art/castle/spiral.png';
 import stableUrl from './art/castle/stable.png';
 import manorUrl from './art/castle/manor.png';
 import chapelUrl from './art/castle/chapel.png';
+// (DEPTH-BUILD: the three room buildings, from the same isometric kits until their own pictures are made: docs/notes/depth-art-todo.md)
+import workshopUrl from './art/castle/workshop.png';
+import watchtowerUrl from './art/castle/watchtower.png';
+import longhouseUrl from './art/castle/longhouse.png';
 
 // Hall props & treasures that appear as you upgrade your kingdom
 import chestsUrl from './art/castle/chests.png';
@@ -111,7 +119,7 @@ async function ensureSceneArt(): Promise<Record<SceneArtKey, HTMLImageElement>> 
 }
 
 export interface ChamberDef {
-  id: BuildingId | 'chapel';
+  id: SiteId;
   name: string;
   relicName: string;
   edificeUrl: string;
@@ -200,7 +208,56 @@ export const CHAMBERS: ChamberDef[] = [
     perLevelShort: 'Unlocks Spells',
     lore: 'The consecrated cathedral of the Keep. Opens the Spells tab to equip and study royal magic.',
   },
+  {
+    id: 'smithy',
+    name: 'Smithy',
+    relicName: 'Road Anvil',
+    edificeUrl: workshopUrl,
+    icon: shieldUrl,
+    glow: '#f59e0b',
+    statName: 'Mending and wear',
+    perLevelShort: 'Opens rooms',
+    lore: 'A forge that travels with the army: gear mended at the camp, patched when it breaks.',
+  },
+  {
+    id: 'watchtower',
+    name: 'Watchtower',
+    relicName: 'Scout\'s Glass',
+    edificeUrl: watchtowerUrl,
+    icon: bootsUrl,
+    glow: '#93c5fd',
+    statName: 'March orders',
+    perLevelShort: 'Opens rooms',
+    lore: 'Lookouts on the walls: they open the march orders before a run, and in time the roads.',
+  },
+  {
+    id: 'hall',
+    name: 'Hall of Legends',
+    relicName: 'Mentor\'s Laurel',
+    edificeUrl: longhouseUrl,
+    icon: crownUrl,
+    glow: '#e9d5ff',
+    statName: 'Mentor seats',
+    perLevelShort: 'One seat / Lv',
+    lore: 'Where retired heroes stand and teach the young of their calling.',
+  },
 ];
+
+/** A building card's Rooms strip (DEPTH-BUILD): one row per room, lit once its level stands, else "Level 3" in stone grey. */
+export function roomsStrip(id: SiteId, level: number): HTMLElement | null {
+  const rooms = roomsOf(id);
+  if (!rooms.length) return null;
+  const strip = el('div', 'ctRooms');
+  for (const r of rooms) {
+    const open = level >= r.level;
+    const row = el('div', `ctRoom${open ? ' open' : ''}`);
+    const words = el('div', 'ctRoomWords');
+    words.append(el('b', '', r.name), el('small', '', r.line));
+    row.append(el('span', 'ctRoomIco', r.icon), words, el('em', 'ctRoomLv', open ? 'Open' : `Level ${r.level}`));
+    strip.append(row);
+  }
+  return strip;
+}
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -209,7 +266,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 }
 
-export function lookPicture(id: PlotId, _level: number): string {
+export function lookPicture(id: PlotId | SiteId, _level: number): string {
   const match = CHAMBERS.find((c) => c.id === id);
   return match ? match.edificeUrl : crownUrl;
 }
@@ -272,7 +329,7 @@ export class CastleScene {
 
   // Chamber Grid
   private grid = el('div', 'ctChamberGrid');
-  private chamberEls = new Map<BuildingId | 'chapel', HTMLElement>();
+  private chamberEls = new Map<SiteId, HTMLElement>();
 
   private raf = 0;
   private running = false;
@@ -294,8 +351,8 @@ export class CastleScene {
   private goatWas = '';
 
   constructor(
-    private onPick: (id: PlotId) => void,
-    private onDirectUpgrade?: (id: BuildingId | 'chapel') => boolean,
+    private onPick: (id: PlotId | SiteId) => void,
+    private onDirectUpgrade?: (id: SiteId) => boolean,
   ) {
     this.buildLayout();
     this.canvas.width = 800;
@@ -501,8 +558,8 @@ export class CastleScene {
     this.guardNames.textContent = `${names} · Duchess`;
 
     // 2. Compute total Citadel Tier & Kingdom Bonuses for the Royal Crest and Power Banner
-    const totalLevels = BUILDING_IDS.reduce((sum, id) => sum + (meta.castle[id] ?? 0), 0) + (chapelBuilt(meta) ? 1 : 0);
-    const maxTotalLevels = BUILDING_IDS.reduce((sum, id) => sum + maxLevel(id), 0) + 1;
+    const totalLevels = [...BUILDING_IDS, ...ROOM_BUILDING_IDS].reduce((sum, id) => sum + siteLevel(meta.castle, id), 0) + chapelLevel(meta);
+    const maxTotalLevels = [...BUILDING_IDS, ...ROOM_BUILDING_IDS, 'chapel' as const].reduce((sum, id) => sum + maxLevel(id), 0);
     this.crestSub.textContent = `Citadel Rank ${totalLevels} / ${maxTotalLevels} · ${meta.crowns.toLocaleString()} Crowns`;
 
     this.renderPowerBanner(meta);
@@ -514,11 +571,13 @@ export class CastleScene {
     for (const c of CHAMBERS) {
       const card = this.chamberEls.get(c.id);
       if (!card) continue;
-      const key = c.id === 'chapel' ? `${chapelBuilt(meta)}|${canBuildChapel(meta)}|${works}` : `${meta.castle[c.id as BuildingId] ?? 0}|${nextCost(meta.castle, c.id as BuildingId)}|${meta.crowns >= (nextCost(meta.castle, c.id as BuildingId) ?? Infinity)}|${works}`;
+      const lv = siteLevel(meta.castle, c.id, chapelBuilt(meta));
+      const cost = siteNextCost(meta.castle, c.id, chapelBuilt(meta));
+      const key = `${lv}|${cost}|${meta.crowns >= (cost ?? Infinity)}|${works}`;
       if (card.dataset.key === key) continue;
       card.dataset.key = key;
 
-      if (c.id === 'chapel') {
+      if (c.id === 'chapel' && !chapelBuilt(meta)) {
         this.renderChapelCard(card, c, meta);
       } else {
         this.renderBuildingCard(card, c, meta);
@@ -552,10 +611,11 @@ export class CastleScene {
   }
 
   private renderBuildingCard(card: HTMLElement, c: ChamberDef, meta: Meta): void {
-    const id = c.id as BuildingId;
-    const level = meta.castle[id] ?? 0;
-    const max = maxLevel(id);
-    const cost = nextCost(meta.castle, id);
+    // (DEPTH-BUILD: the same card serves the six buildings, the levelled Chapel and the three room buildings)
+    const id = c.id;
+    const level = siteLevel(meta.castle, id, chapelBuilt(meta));
+    const max = siteTop(id);
+    const cost = siteNextCost(meta.castle, id, chapelBuilt(meta));
     const going = meta.works?.id === id ? clockText(worksLeft(meta, Date.now())) : null;
     const buildersBusyElsewhere = !!meta.works && meta.works.id !== id;
     const ready = !going && !meta.works && cost !== null && meta.crowns >= cost;
@@ -587,7 +647,11 @@ export class CastleScene {
     const stat = el(
       'div',
       'ctStatLine',
-      level > 0 ? effectText(id, level) : `Unbuilt · Next: ${c.perLevelShort}`,
+      id === 'chapel'
+        ? 'Active: the Royal Spellbook is open'
+        : (BUILDING_IDS as string[]).includes(id)
+          ? level > 0 ? effectText(id as BuildingId, level) : `Unbuilt · Next: ${c.perLevelShort}`
+          : level > 0 ? `${c.statName} · ${roomsOf(id).filter((r) => r.level <= level).length} of ${roomsOf(id).length} rooms open` : `Unbuilt · ${c.lore}`,
     );
     const pips = el('div', 'ctPips');
     for (let i = 1; i <= max; i++) {
@@ -630,13 +694,14 @@ export class CastleScene {
       foot.append(btn);
     }
 
-    card.replaceChildren(diorama, head, body, foot);
+    const rooms = roomsStrip(id, level);
+    card.replaceChildren(diorama, head, body, ...(rooms ? [rooms] : []), foot);
   }
 
   private renderChapelCard(card: HTMLElement, c: ChamberDef, meta: Meta): void {
     const built = chapelBuilt(meta);
     const going = meta.works?.id === 'chapel' ? clockText(worksLeft(meta, Date.now())) : null;
-    const ready = !going && !meta.works && canBuildChapel(meta);
+    const ready = !going && !meta.works && meta.crowns >= (siteNextCost(meta.castle, 'chapel', built) ?? Infinity);
 
     card.className = `ctChamberCard chapel${built ? ' built maxed' : ''}${ready ? ' ready' : ''}${going ? ' working' : ''}`;
     card.style.setProperty('--chamber-glow', c.glow);
@@ -673,13 +738,9 @@ export class CastleScene {
       const tag = el('span', 'ctActionTag working');
       tag.append('⚒️ Sanctifying · ', el('span', 'worksLeft', going));
       foot.append(tag);
-    } else if (built) {
-      const btn = el('button', 'ctUpgradeBtn canAfford');
-      btn.append(el('span', 'ctBtnLabel', '📖 Open Royal Spellbook'), el('b', 'ctBtnCost', 'ENTER →'));
-      foot.append(btn);
     } else {
       const btn = el('button', `ctUpgradeBtn${ready ? ' canAfford' : ''}`);
-      btn.append(el('span', 'ctBtnLabel', '⛪ Consecrate Sanctum'), el('b', 'ctBtnCost', `${CHAPEL_COST} 👑`));
+      btn.append(el('span', 'ctBtnLabel', '⛪ Consecrate Sanctum'), el('b', 'ctBtnCost', `${siteNextCost(meta.castle, 'chapel', built)} 👑`));
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (ready && this.onDirectUpgrade) {
@@ -695,7 +756,8 @@ export class CastleScene {
       foot.append(btn);
     }
 
-    contentCol.append(head, body, foot);
+    const rooms = roomsStrip('chapel', 0);
+    contentCol.append(head, body, ...(rooms ? [rooms] : []), foot);
     card.replaceChildren(diorama, contentCol);
   }
 
