@@ -33,3 +33,12 @@ test('attack speed reads as blows a second, and equipment speeds it up', async (
   assert.equal(rateText(0.909), '0.91/s');
   assert.equal(rateText(1.25), '1.3/s');
 });
+
+test('a party\'s power is the sum of its heroes\' powers, and swapping a hero changes it', async () => {
+  const { partyPower } = await import('../src/sim/power');
+  const m = startedMeta(1);
+  const [a, b, c] = HEROES;
+  assert.equal(partyPower(m, []), 0);
+  assert.equal(partyPower(m, [a, b]), kindPower(m, a) + kindPower(m, b));
+  assert.equal(partyPower(m, [a, c]), kindPower(m, a) + kindPower(m, c));
+});

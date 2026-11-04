@@ -292,7 +292,7 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
   const e = entryOfDef(u.def);
   const cls: FoeClass = e?.class ?? (BOSS_IDS.includes(u.def) ? 'boss' : 'common');
   const kind: InfoKind = cls === 'elite' ? 'elite' : cls === 'boss' || cls === 'calamity' || (u.size ?? 1) > 1 || !!u.phase ? 'boss' : 'foe';
-  const label = kind === 'boss' ? (cls === 'calamity' ? 'Calamity herald' : 'Boss') : kind === 'elite' ? 'Tower elite' : 'Foe';
+  const label = kind === 'boss' ? (cls === 'calamity' ? 'Calamity herald' : 'Boss') : kind === 'elite' ? 'Calamity elite' : 'Foe';
   const pk = u.phase && !u.phase.done ? PHASE2[u.def] : undefined;
   return {
     ...base,

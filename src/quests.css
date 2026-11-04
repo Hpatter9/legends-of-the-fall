@@ -79,3 +79,4 @@
 @media (prefers-reduced-motion: reduce) {
   .qcCard { animation: none; }
 }
+.qlSide button.qlGoto { min-width: 96px; font-size: 13px; padding: 0 6px; }

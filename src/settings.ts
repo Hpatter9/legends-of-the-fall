@@ -149,6 +149,8 @@ export function openSettings(): void {
 export function closeSettings(): void {
   closePicker();
   $('settings').hidden = true;
+  // (CLOSE-SCREENS: closed, not kept under the page: each opening draws it afresh)
+  $('settingsBody').replaceChildren();
 }
 
 /** Shows a submenu (or the top list, for null) and scrolls back to the top. */
