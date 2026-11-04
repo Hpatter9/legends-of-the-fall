@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.347.0',
+    date: '2026-11-04',
+    title: 'Runes, remedies, new Eidolon art',
+    notes: ['Runes replace run finds: three per hero, merge them up. Fallen heroes stand again at half after a won wave; pack remedies in your satchel.', 'Repainted War Horn and quest givers on the quest board.'],
+  },
+  {
     version: '0.346.0',
     date: '2026-11-04',
     title: 'Cleaner hero art',
