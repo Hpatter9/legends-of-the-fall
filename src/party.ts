@@ -4,6 +4,7 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from './sim/remedies';
+import { REMEDY_ICON } from './gearUiArt';
 import { retired } from './sim/legacy';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
@@ -273,7 +274,10 @@ export class Party {
       };
       less.addEventListener('click', () => set(n - 1));
       more.addEventListener('click', () => set(n + 1));
-      row.append(el('span', '', `${r.name} · ${n} of ${m.satchel?.[r.id] ?? 0}`), less, more);
+      const pic = el('img', 'ptRemedyPic');
+      pic.src = REMEDY_ICON[r.id];
+      pic.alt = '';
+      row.append(pic, el('span', '', `${r.name} · ${n} of ${m.satchel?.[r.id] ?? 0}`), less, more);
       box.append(row);
     }
     const auto = el('button', 'ptAutoRemedy', `Auto may use remedies: ${m.autoRemedies ? 'On' : 'Off'}`);

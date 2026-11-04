@@ -409,7 +409,9 @@ export class CastleScene {
       if (this.meta) this.trophyModal.open(this.meta);
     });
 
-    quickNav.append(toTavern, toSpells, toArmies, toTrophies);
+    // (UX-FIXES: one door per place: the Tavern, Spells and March are the bottom tabs; only the boss trophy wall, which has no tab, stays)
+    void toTavern, toSpells, toArmies;
+    quickNav.append(toTrophies);
     sectionHeader.append(sectionTitle, quickNav);
 
     // 3. Chamber Grid (6 Sacred Chambers + High Chapel)

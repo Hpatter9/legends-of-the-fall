@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.357.0',
+    date: '2026-11-04',
+    title: 'Clearer ten-card summons',
+    notes: ['A ten-card summon shows new heroes large and repeats small, with crowns summed in one line. Hero quips no longer cover the HUD.'],
+  },
+  {
+    version: '0.356.0',
+    date: '2026-11-04',
+    title: 'Cleaner screens and a quicker start',
+    notes: ['A new game goes straight to wave 1. Bigger fight HUD, 44 px buttons, fewer badges, pop-ups that queue instead of stacking, clearer wave losses.', 'Sell asks twice; pages say Back and cards say Close; bigger films; tidier Castle, stall and hero pages.'],
+  },
+  {
+    version: '0.355.0',
+    date: '2026-11-04',
+    title: 'Calamity provisions, Sparring Yard',
+    notes: ['Calamity runs carry provisions: rest eats one, a hungry rest heals half; shops sell sacks. The Barracks\' Sparring Yard builds bonds between a pair.'],
+  },
+  {
+    version: '0.354.0',
+    date: '2026-11-04',
+    title: 'Painted gear, runes and legends',
+    notes: ['60 more gear pieces and all 21 legends painted; painted rune stones, remedies, set emblems and glyph stones.'],
+  },
+  {
     version: '0.353.0',
     date: '2026-11-04',
     title: 'Charge has an edge, stronger formations',

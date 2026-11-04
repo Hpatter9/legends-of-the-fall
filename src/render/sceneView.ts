@@ -35,10 +35,10 @@ import { FACES, GWEN } from '../questArt';
 import type { GiverId } from '../sim/questData';
 
 /** The bars of a film, as shares of the screen's height: thin at the top, deeper at the foot for the subtitles. */
-const BAR_TOP = 0.07;
-const BAR_FOOT = 0.2;
+const BAR_TOP = 0.05;
+const BAR_FOOT = 0.18;
 /** Held upright, the picture is this tall for its width. */
-const FRAME = 1.4;
+const FRAME = 1.8;
 /** A one-shot shake lasts this long (s), and a flash this long, at most this bright. */
 const SHAKE_S = 0.5;
 const FLASH_S = 0.12;
