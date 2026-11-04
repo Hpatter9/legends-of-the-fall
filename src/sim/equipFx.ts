@@ -11,6 +11,7 @@ import { ABILITIES, type Ability, type Kind } from './equipBases';
 import { TALENT_ABILITIES } from './talents';
 import { MANA_MAX } from './spells';
 import { AILMENT_SWITCH, chillFor, cleanse, dotOf, setDot, stunFor } from './ailments';
+import { powerBlow, powerKill, powerStart, powerStruck, powerTick } from './setPowers';
 
 const DIRS = [
   [1, 0],
@@ -180,6 +181,8 @@ export function fxBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg: number
     else if (a.trig === 'nth' && counted(by, a.id) % (a.n ?? 1) === 0) fire(b, by, a, s, to, dmg, out, true);
     else if (a.trig === 'crit' && crit && lucky(b, p)) fire(b, by, a, s, to, dmg, out, true);
   }
+  // (SEVEN-SLOT GEAR: the full sets' and legends' powers, `setPowers.ts`)
+  powerBlow(b, by, to, crit, dmg, out);
 }
 
 /** When a blow is about to land on `me` (`dmg` after guards): the `struck` abilities. `melee` is false for splash and the like. */
@@ -190,12 +193,14 @@ export function fxStruck(b: Battle, attacker: Unit, me: Unit, dmg: number, blow:
     const go = a.n ? counted(me, a.id) % a.n === 0 : lucky(b, nums(a, s).p);
     if (go) fire(b, me, a, s, attacker, dmg, out, true);
   }
+  powerStruck(b, attacker, me, out);
 }
 
 /** A kill: the killer's `kill` abilities (`victim` stands where it fell). */
 export function fxKill(b: Battle, by: Unit, victim: Unit, out: BattleEvent[]): void {
   if (!by.eq) return;
   for (const { a, s } of abilitiesOf(by)) if (a.trig === 'kill' && lucky(b, nums(a, s).p)) fire(b, by, a, s, victim, 0, out, true);
+  powerKill(b, by, victim, out);
 }
 
 /** The start of the fight: the `start` abilities. */
@@ -203,6 +208,7 @@ export function fxStart(b: Battle, u: Unit): void {
   if (!u.eq) return;
   const out: BattleEvent[] = [];
   for (const { a, s } of abilitiesOf(u)) if (a.trig === 'start') fire(b, u, a, s, undefined, 0, out, false);
+  powerStart(b, u);
 }
 
 /** Each tick: the wearer's regen, and the `tick` abilities (every `n` seconds). */
@@ -210,6 +216,7 @@ export function fxTick(b: Battle, u: Unit, out: BattleEvent[]): void {
   if (!u.eq) return;
   if (u.eq.regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * u.eq.regen, out);
   for (const { a, s } of abilitiesOf(u)) if (a.trig === 'tick' && b.t % ((a.n ?? 1) * 1000) === 0) fire(b, u, a, s, undefined, 0, out, !!a.show);
+  powerTick(b, u, out);
 }
 
 /** After the wearer took damage and still stands: the `low` abilities, once each. */

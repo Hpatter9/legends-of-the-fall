@@ -80,7 +80,7 @@ export function readsKind(kind: string): Exclude<BookKind, 'universal'> | undefi
 /** Fights (waves) a book takes to study, by rarity, before the library's cut. */
 export const STUDY: Readonly<Record<BookRarity, number>> = { common: 5, uncommon: 8, rare: 12, legendary: 20 };
 /** A book's base price on the stall at the first army (Common and Uncommon only: Rare and Legendary books are found, not sold). */
-export const BOOK_PRICE: Readonly<Partial<Record<BookRarity, number>>> = { common: 350, uncommon: 900 };
+export const BOOK_PRICE: Readonly<Partial<Record<BookRarity, number>>> = { common: 500, uncommon: 1300 };
 /** Crowns a spare book sells back for: a fifth of the shelf price for Common and Uncommon, a fixed sum for a Rare; Legendary never. */
 export const BOOK_SELL_SHARE = 0.2;
 export const RARE_BOOK_SELL = 400;
