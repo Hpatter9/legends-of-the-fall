@@ -19,6 +19,8 @@ import { castOf, questBattleById } from './sim/questBattles';
 import { battleWon } from './sim/questRun';
 import { heroName } from './sim/heroNames';
 import { play } from './render/sound';
+import { destinationOf, type Destination } from './sim/questGoto';
+import { takeMeThere } from './questGo';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -133,6 +135,8 @@ export interface ChainHooks {
   summoner?(): void;
   /** Play a chain's prologue again. */
   story?(chain: string): void;
+  /** "Take me there": where a part's goal is done (`sim/questGoto.ts`). */
+  goTo?(dest: Destination): void;
 }
 
 /** A chain's Eidolon as a picture: its card when bound, its silhouette with "?" otherwise. */
@@ -226,6 +230,11 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         const qb = questBattleById(p.goal.battle)!;
         const go = el('button', 'primary ecnGo', hooks.saved?.() === qb.id ? `Continue: ${qb.title}` : `Fight: ${qb.title}`);
         go.addEventListener('click', () => hooks.fight!(qb.id));
+        body.append(go);
+      } else if (p.goal.kind !== 'battle' && hooks.goTo) {
+        // (UI batch 1: a way to where the part's goal is done)
+        const go = takeMeThere(p.title, destinationOf(m, p.goal), hooks);
+        go.classList.add('ecnGo');
         body.append(go);
       }
     } else {

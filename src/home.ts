@@ -50,6 +50,7 @@ import { announceArmy } from './armyShown';
 import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
 import { questById } from './sim/questData';
 import { drawQuestLog, type LogTab } from './questLog';
+import type { Destination } from './sim/questGoto';
 import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } from './sim/eidolonChains';
 import { hornHeld } from './sim/warHorn';
 import { revealCard } from './sim/sceneReveal';
@@ -97,7 +98,7 @@ export interface HomeHooks {
   onScene?(): void;
   /** Play a cinematic again (the codex's Scenes list). */
   onWatchScene?(id: string): void;
-  /** A build was raised (the castle's cinematic): the building, or `chapel`. */
+  /** A build was raised (the page puts up its popup): the building, or `chapel`. */
   onBuilt?(site: BuildSite): void;
   /** The top bar was drawn (EIDOLONS: the War Horn's chip beside the stones follows the save). */
   onTopBar?(): void;
@@ -433,6 +434,7 @@ export class Home {
         fight: (id, auto) => this.questBattle(id, auto),
         saved: () => this.hooks.questSaved?.() ?? null,
         summoner: () => this.show('recruit'),
+        goTo: (dest) => this.questGoto(dest),
         story: (id) => {
           const scene = chainById(id)?.prologue;
           if (scene) void this.hooks.onStory?.(scene);
@@ -508,6 +510,27 @@ export class Home {
         if (c) void playBinding(c, true);
       },
     });
+  }
+
+  /** "Take me there" (UI batch 1): the log closes and the screen the goal is done on opens: a battle, an army's party screen, a mode, or the Armies. */
+  private questGoto(dest: Destination): void {
+    this.closeSheet();
+    this.show('battle');
+    switch (dest.to) {
+      case 'battle':
+        return this.questBattle(dest.battle);
+      case 'army':
+        return this.go(() => this.hooks.onArmy(dest.army, dest.tier));
+      case 'armies':
+        return this.openArmies(dest.army);
+      case 'daily':
+        return this.go(this.hooks.onDaily);
+      case 'stand':
+        // (shut until the stars open it: the camp's own rule)
+        return towerOpen(this.meta) || this.hooks.slotInfo?.('tower') ? this.go(this.hooks.onTower) : this.openArmies();
+      case 'calamity':
+        return modeOpen(this.meta, 'calamity') || this.hooks.slotInfo?.('calamity') ? this.enterCalamity() : this.openArmies();
+    }
   }
 
   /** A quest battle's Fight (batch 2): the sheet and the card close, and the page takes it from there (the party, the story, the deploy). */
@@ -722,11 +745,13 @@ export class Home {
       b.addEventListener('click', onTap);
       return b;
     };
-    // (the Daily board: a new daily wears the red dot; a cleared one a green check; the plate names the boss of the day and how it went)
+    // (the Daily: a small icon at the scene's right edge: a new daily wears the red dot, a cleared one a green check; the whole line "Today: Orc Warlord · not tried" is read aloud)
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
-    // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily', '', `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    daily.title = `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`;
+    daily.querySelector('small')?.remove();
+    daily.prepend(icon(ICONS.daily, 'ico cpDailyIcon'));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
