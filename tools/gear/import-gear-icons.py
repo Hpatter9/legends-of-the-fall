@@ -43,18 +43,30 @@ ALPHA = 8  # a pixel at or under this alpha counts as clear
 SOLID = 64  # over this, a pixel is solid paint rather than glow
 STRAY = 0.3  # an island at the edge under this share of the largest is a stray bit
 QUALITY = 80
-FOLDERS = {'weapon': 'weapons', 'armour': 'armour', 'trinket': 'trinkets'}
+# SEVEN-SLOT GEAR (docs/notes/gear-build.md): the 60 bases from before keep their paintings in weapons/, armour/ and trinkets/; the new
+# bases' go in a folder a slot (head/, torso/, main/, off/, feet/, belt/, acc/) and the 21 legends' in legends/. A new base needs only its
+# standard painting (its Mythic is the same painting in the Mythic glow frame); the 60 from before keep their Mythic paintings.
+OLD_FOLDERS = ('weapons', 'armour', 'trinkets')
+NEW_FOLDERS = ('head', 'torso', 'main', 'off', 'feet', 'belt', 'acc', 'legends')
+FOLDERS = {f: f for f in OLD_FOLDERS + NEW_FOLDERS}
 
 
 def base_ids():
-    """The equipment bases in their own order, as (id, slot)."""
+    """The equipment bases in their own order, as (id, folder, whether it needs a Mythic painting): the 60 from before, then the new
+    bases (`equipBasesNew.ts`), then the legends (`legendBases.ts`)."""
     text = (ROOT / 'src' / 'sim' / 'equipBases.ts').read_text()
-    slots = {'W': 'weapon', 'A': 'armour', 'T': 'trinket'}
-    consts = dict(re.findall(r"const (\w) = '(\w+)'", text))
+    old_slot = {'W': 'weapons', 'A': 'armour', 'main': 'weapons', 'off': 'trinkets', 'head': 'trinkets', 'feet': 'trinkets', 'belt': 'trinkets', 'acc': 'trinkets'}
     out = []
-    for m in re.finditer(r"\{ id: '(\w+)',[^\n]*?slot: (\w+)", text):
-        slot = consts.get(m.group(2), slots.get(m.group(2), m.group(2)))
-        out.append((m.group(1), slot))
+    for m in re.finditer(r"\{ id: '(\w+)',[^\n]*?slot: '?(\w+)'?", text):
+        # (the Grimoire was a weapon; its paintings are in weapons/)
+        folder = 'weapons' if m.group(1) == 'grimoire' else old_slot.get(m.group(2), 'trinkets')
+        out.append((m.group(1), folder, True))
+    new = (ROOT / 'src' / 'sim' / 'equipBasesNew.ts').read_text()
+    for m in re.finditer(r"^  b\('(\w+)', (?:'[^']*'|\"[^\"]*\"), (?:'[^']*'|\"[^\"]*\"), '(\w+)'", new, re.M):
+        out.append((m.group(1), m.group(2), False))
+    legends = (ROOT / 'src' / 'sim' / 'legendBases.ts').read_text()
+    for m in re.finditer(r"^  L\('(\w+)'", legends, re.M):
+        out.append((m.group(1), 'legends', False))
     return out
 
 
@@ -181,11 +193,11 @@ def main():
     contact = args[args.index('--contact') + 1] if '--contact' in args else None
     bases = base_ids()
     keys, pairs, missing, report = [], [], [], []
-    for bid, slot in bases:
-        std = SRC / FOLDERS[slot] / f'{bid}.png'
-        myth = SRC / FOLDERS[slot] / f'{bid}-mythic.png'
+    for bid, folder, needs_mythic in bases:
+        std = SRC / folder / f'{bid}.png'
+        myth = SRC / folder / f'{bid}-mythic.png'
         have = [p for p in (std, myth) if p.exists()]
-        missing += [str(p.relative_to(ROOT)) for p in (std, myth) if not p.exists()]
+        missing += [str(p.relative_to(ROOT)) for p in ((std, myth) if needs_mythic else (std,)) if not p.exists()]
         if not have:
             continue
         cleaned = []
@@ -203,8 +215,10 @@ def main():
         for stem, src, c, dropped in cleaned:
             keys.append(stem)
             pairs.append((stem, src, c, dropped, box))
-    known = {f'{b}{m}' for b, _ in bases for m in ('', '-mythic')}
+    known = {f'{b}{m}' for b, _, _ in bases for m in ('', '-mythic')}
     for f in FOLDERS.values():
+        if not (SRC / f).is_dir():
+            continue
         for p in sorted((SRC / f).glob('*.png')):
             if p.stem not in known:
                 print(f'note: {p.relative_to(ROOT)} is not an equipment base, left out')

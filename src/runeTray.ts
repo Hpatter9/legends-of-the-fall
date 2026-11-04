@@ -2,8 +2,8 @@
 // shows a row for each fielded hero (its portrait, name, three sockets and what its runes give), the bag's eight cells, Merge all and
 // Auto runes. Any rune with a twin (another of its kind and level, or a Keystone of its level) has a gold rim and a "2" badge. Tap a rune
 // and the places it can go light up (a hero's sockets, the bag, its twins); tap one to set, swap, take off or merge. Runes change between
-// waves only. The rules are all `sim/runes.ts`; this only draws them. The stones are drawn in their colour with the level as pips until
-// their paintings come (docs/notes/gear-art-todo.md).
+// waves only. The rules are all `sim/runes.ts`; this only draws them. The stones are the pack's rune discs (`runeArt.ts`) with the level as
+// pips; an empty socket is a dark diamond.
 
 import { BAG_MAX, RUNE_COLOUR, autoRunes, dropRune, mergeAll, mergesReady, runeName, runeTargets, runeText, runeTotals, socketsOf, twinIds, type Rune, type RuneState } from './sim/runes';
 import { heroName } from './sim/heroNames';
@@ -11,6 +11,7 @@ import { play } from './render/sound';
 import { REMEDY_LIST, packSatchel, remedyBlock, remedyBonus, useRemedy, type RemedyId } from './sim/remedies';
 import { hpShare } from './sim/health';
 import { REMEDY_ICON } from './remedyArt';
+import { RUNE_ICON } from './runeArt';
 import type { Run } from './sim/run';
 import type { Meta } from './sim/meta';
 
@@ -33,6 +34,12 @@ export function runeStone(r: Rune | undefined, twin = false, size: 'big' | 'smal
   const s = tag('rn-stone', `rnStone rn-${size}${r ? ` k-${r.kind}` : ' empty'}${twin ? ' twin' : ''}`);
   if (!r) return s;
   s.style.setProperty('--rc', RUNE_COLOUR[r.kind]);
+  const pic = document.createElement('img');
+  pic.src = RUNE_ICON[r.kind];
+  pic.alt = '';
+  pic.draggable = false;
+  pic.className = 'rnPic';
+  s.append(pic);
   s.title = `${runeName(r)}: ${runeText(r)}`;
   s.setAttribute('aria-label', runeName(r));
   const pips = tag('rn-pips', 'rnPips');

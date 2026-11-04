@@ -197,3 +197,15 @@ design's eight batches, each with its tests. This note says what each batch buil
 - **Tests:** `test/wounds.test.ts`, `test/remedies.test.ts`.
 - **Screenshots:** `docs/samples/gear-build-remedies-*.png` (the pocket, a Bandage Roll chosen, the wounded knight lit),
   `gear-build-satchel-*.png` (the party screen) and `gear-build-runes-bench-*.png` (the wounded knight's card).
+
+## Batch 7: art
+
+- **The rune stones** are the 16px rune discs of the 5000 Pixel Effects pack (`src/art/runes/`, `src/runeArt.ts`, `CREDITS.md`): Ember the
+  fire rune, Bulwark the wind's iron grey, Arcana the crystal's violet, Gale the forest's green, Hawk the light's gold, Wellspring the
+  water's blue, Warding the moon's white, the Keystone the dark rune. They are drawn upright and pixel-sharp with the level as pips under
+  them; an empty socket keeps its dark diamond. The twin's rim swells gently (reduced motion holds it still).
+- **The pack audit** found nothing in the paintings' style for the equipment (`docs/notes/gear-art-todo.md` says what was looked at), so
+  the 150 new pieces and the 21 legends keep their placeholders.
+- **The painting pipeline** is ready for when the image account has credits: `tools/gear/gen-icons.mjs` paints a slot at a time into
+  `art-source/gear/<slot>/`, and `tools/gear/import-gear-icons.py` now reads all 210 bases (new bases need only their standard painting).
+  Nothing has been generated yet.
