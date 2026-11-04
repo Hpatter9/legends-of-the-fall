@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.339.0',
+    date: '2026-11-04',
+    title: 'Rooms, bosses\' weaknesses, march orders',
+    notes: ['The castle gains rooms and three new buildings (Smithy, Watchtower, Hall) and a Chapel with levels.', 'Every boss has a weakness to find through clues, earning Hunter\'s marks. Before an army run, pick its march orders.'],
+  },
+  {
     version: '0.338.0',
     date: '2026-11-04',
     title: 'Seven gear slots',
