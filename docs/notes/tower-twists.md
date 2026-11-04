@@ -1,5 +1,7 @@
 # Tower twists and mystery events
 
+> **Status (0.332.0):** The endless tower is retired; floor twists and mystery events now belong to the Calamity's map only.
+
 The tower's map got two things: **floor twists** on its fights, and **eleven new mystery events**.
 
 ## Floor twists (`src/sim/twists.ts`, `src/twistView.ts`, `src/twists.css`)

@@ -39,6 +39,9 @@ export const kindPower = (m: Meta, kind: string): number => {
   return powerOf(kind, { ...gradeBoost(1, heroRank(m, kind), levelOfKind(m, kind)), ...(eq ? { equip: eq } : {}) });
 };
 
+/** A party's strength: the sum of its heroes' powers (`kindPower`, the number each hero's card shows). */
+export const partyPower = (m: Meta, kinds: readonly string[]): number => kinds.reduce((sum, k) => sum + kindPower(m, k), 0);
+
 /** How often a hero of `kind` swings, in blows a second, with the attack speed its equipment and talents give (`equip`). */
 export const blowsPerSecond = (kind: string, equip?: { atkSpeed: number }): number => (UNITS[kind] ? (1000 / UNITS[kind].atkMs) * (1 + (equip?.atkSpeed ?? 0)) : 0);
 /** How many level tiles a hero of `kind` walks a second, with its equipment's and talents' move speed. */

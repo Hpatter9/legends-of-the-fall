@@ -627,6 +627,12 @@ export const BLURB: Record<BuildingId, string> = {
   library: 'Shelves of old campaigns: every hero learns more from every fight. Duchess has eaten the index.',
 };
 
+/** A finished build's popup words (UI batch 1): the building and level raised, and what it gives (the Chapel opens the spellbook). */
+export function builtWords(site: BuildingId | 'chapel', level: number): { title: string; level: string; gives: string } {
+  if (site === 'chapel') return { title: 'Chapel', level: 'built', gives: 'The spellbook is open: study the ruler\'s spells.' };
+  return { title: BUILDINGS[site].name, level: `level ${level} of ${maxLevel(site)}`, gives: effectText(site, level) };
+}
+
 export const NAME_OF = (id: BuildingId): string => BUILDINGS[id].name;
 export { BUILDING_IDS };
 

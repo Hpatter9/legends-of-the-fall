@@ -6,6 +6,8 @@
 // The Eidolons tab (EIDOLON-CHAINS): the six Eidolons' chains, their pieces and the part going (`eidolonChainView.ts`); it shows once
 // the first chain has been offered.
 
+import { autoButton } from './autoAsk';
+import { canAutoQuest } from './sim/autoReplay';
 import { giverKeyOf, giverName, giverWords, offerFrom, questFace, rewardText } from './questCard';
 import { questById } from './sim/questData';
 import { ACTIVE_MAX, cannotTake, dropQuest, handIn, isDone, progressOf, takeQuest, timesDone, trackedQuest, trackQuest } from './sim/quests';
@@ -15,6 +17,8 @@ import { todayKey } from './modes';
 import { battleOfQuest, canFightBattle } from './sim/questRun';
 import { chainsShown, summonerWaiting } from './sim/eidolonChains';
 import { drawEidolonsTab } from './eidolonChainView';
+import { destinationOf, type Destination } from './sim/questGoto';
+import { takeMeThere } from './questGo';
 
 export type LogTab = 'active' | 'board' | 'eidolons' | 'done';
 
@@ -39,12 +43,14 @@ export interface LogHooks {
   changed(): void;
   close(): void;
   /** Begin (or carry on) a quest battle (batch 2): the page opens the party with its cast locked in. */
-  fight?(battle: string): void;
+  fight?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if there is one (its Fight reads Continue). */
   saved?(): string | null;
   /** EIDOLON-CHAINS: go to the Summoner in the Sanctum, and play a chain's prologue again. */
   summoner?(): void;
   story?(chain: string): void;
+  /** "Take me there": go where a goal is done (UI batch 1: `sim/questGoto.ts`; the page closes the log and opens the fight, the mode or the screen). */
+  goTo?(dest: Destination): void;
 }
 
 /** Draw the log on a tab into the sheet's box. */
@@ -160,6 +166,8 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
         redraw();
       });
       side.append(pin, drop);
+      // (UI batch 1: a way to where the goal is done: its battle, army, mode or screen)
+      if (hooks.goTo) side.prepend(takeMeThere(q.title, destinationOf(m, q.goal), hooks));
     }
     row.append(questFace(q), body, side);
     list.append(row);
@@ -215,6 +223,8 @@ function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
       again.title = 'Fight it again for practice: no reward';
       again.addEventListener('click', () => hooks.fight!(qb.id));
       side.append(again);
+      // (a battle already won can also be repeated on its own: Auto, within the day's tickets)
+      if (canAutoQuest(m, qb.id)) side.append(autoButton(m, qb.title, (n) => hooks.fight!(qb.id, n), 'qlReplay auto'));
       row.append(side);
     }
     list.append(row);
