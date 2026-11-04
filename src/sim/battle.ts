@@ -44,7 +44,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
-import { castGate, heldBy, heldStep, startTactic, tickTactic, type Tactic, type TacticState } from './tactics';
+import { castGate, heldBy, heldStep, startTactic, TACTICS, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
@@ -658,7 +658,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   ids.forEach((id, n) => {
     const def = UNITS[id];
     const boss = n === 0 ? stage.boss : undefined;
-    const boost = () => ({ hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
+    // (the foes' answer to the party's tactics, `TACTICS.answer`)
+    const boost = () => ({ hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1) * TACTICS.answer, size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
     if (mid) {
       const near = arenaSpots(board, (u, v) => !!unitAt(b, u, v), mid, !!def.shot, n === 0 ? null : bossAt);
       if (near.length) {
