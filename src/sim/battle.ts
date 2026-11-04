@@ -23,6 +23,7 @@ import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
+import { tickWeakness, weakHurt } from './weakness';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
@@ -275,6 +276,8 @@ export type HitSrc = 'blow' | 'skill' | 'dot';
 
 export type BattleEvent =
   | { kind: 'swing'; by: number; to: number }
+  /** DEPTH-BUILD: a boss's weakness was used (`weakness.ts`): the page's "Weakness!" over it. */
+  | { kind: 'weakness'; by: number; def: string }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
   | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; /** A glancing blow (STATS batch 4): the page shows its number smaller and grey. */ glance?: true; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true }
   /** An Eidolon answers the War Horn (`eidolons.ts`): its strike begins (`call`) and has struck, the rider laid (`done`). */
@@ -459,6 +462,9 @@ export interface Battle {
   warnings?: BossWarning[];
   sigs?: Record<number, SigState>;
   sigN?: number;
+  /** DEPTH-BUILD (`weakness.ts`): the uses of each boss's weakness this fight, by fighter id, and the blows counted towards a crack. */
+  exploited?: Record<string, number>;
+  weakState?: Record<number, { blows: number }>;
   /** EIDOLONS: the Eidolon this fight may call when the War Horn is full, and its call once made (`eidolons.ts`). Unset in almost every fight. */
   eidolon?: EidolonFight;
   /** STATS batch 4 (`blow.ts`): how much the placed heroes' to hit and AC have grown since level 1, fixed when the fight starts; the foes
@@ -887,6 +893,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.warnings) tickWeakness(b, out);
   if (b.warnings) tickSignatures(b, out);
   if (b.walls?.length || b.auras) tickToolkit(b, out);
   tickRift(b, out);
@@ -1008,6 +1015,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return false;
   dmg = left;
+  // (DEPTH-BUILD: a boss whose guard cracks to one calling's blows, `weakness.ts`)
+  if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)

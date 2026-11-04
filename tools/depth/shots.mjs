@@ -47,6 +47,19 @@ for (const [w, h] of sizes) {
     await page.evaluate(() => document.querySelector('.ctChamberCard[data-id="hall"]')?.scrollIntoView());
     await page.waitForTimeout(300);
     await shot('castle-new');
+  } else if (scene === 'codex-boss') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.bosses = [...new Set([...(m.bosses || []), 'lichKing', 'orcWarlord'])];
+      m.weak = { lichKing: { clues: 2, marks: [0, 1] }, orcWarlord: { clues: 3, marks: [0] } };
+      window.__game.home.openCodex();
+    });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => { const c = [...document.querySelectorAll('button')].find((b) => /Lich King/.test(b.textContent || '')); c?.click(); });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => document.querySelector('.cxWeak')?.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(300);
+    await shot('codex-boss');
   } else if (scene.startsWith('card-')) {
     const site = scene.slice(5);
     await page.evaluate(() => window.__game.home.show('castle'));

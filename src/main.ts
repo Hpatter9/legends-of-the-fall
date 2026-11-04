@@ -94,6 +94,8 @@ import { showBuilt } from './builtCard';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
+import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
+import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
 import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
@@ -956,6 +958,15 @@ class Game {
     nameEl.style.fontSize = `${px}px`;
     nameEl.style.letterSpacing = `${px >= 36 ? 4 : 2}px`;
     card.querySelector('span')!.textContent = named ? named.title : elite ? elite.epithet : titleOf(boss.def);
+    // (DEPTH-BUILD: the boss's weakness, once learnt in full or read with the Library's Archive)
+    card.querySelector('em.weakLine')?.remove();
+    const known = WEAKNESS[boss.def] ? knownClues(boss.def, this.meta.weak?.[boss.def], roomOpen(this.run.castle, 'archive')) : null;
+    if (known?.full) {
+      const line = document.createElement('em');
+      line.className = 'weakLine';
+      line.textContent = `Known weakness: ${known.lines[2]}`;
+      card.append(line);
+    }
     // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
     const old = card.querySelector('canvas')!;
@@ -3197,7 +3208,10 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
+      const earned = settleRun(this.meta, run, settled);
+      // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
+      toastLines(weakLines(settled.weak));
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
