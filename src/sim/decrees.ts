@@ -151,8 +151,9 @@ export function castDecree(b: Battle): boolean {
 }
 
 /**
- * Auto's rule for the Decree (with the Auto switch on): a Decree on the foes is cast on a boss below half its health, or on four foes or more
- * still worth fighting; one on the heroes when three heroes are below half (or one has fallen, for the Gilded Toll). Returns whether it cast.
+ * Auto's rule for the Decree (with the Auto switch on): a Decree on the foes is cast on a boss below half its health, or on three foes or more
+ * still worth fighting (two when only two are left); one on the heroes when three heroes are below half (or one has fallen, for the Gilded
+ * Toll). Returns whether it cast.
  */
 export function autoDecree(b: Battle): boolean {
   if (!decreeReady(b)) return false;
@@ -161,7 +162,7 @@ export function autoDecree(b: Battle): boolean {
   if (!fs.length) return false;
   const hs = heroes(b);
   let go: boolean;
-  if (dc.aim === 'foes') go = fs.some((x) => (x.size ?? 1) > 1 && x.hp < x.maxHp * 0.5) || fs.filter((x) => x.hp > x.maxHp * 0.25).length >= 4;
+  if (dc.aim === 'foes') go = fs.some((x) => (x.size ?? 1) > 1 && x.hp < x.maxHp * 0.5) || fs.filter((x) => x.hp > x.maxHp * 0.25).length >= Math.min(3, Math.max(2, fs.length));
   else if (dc.id === 'gildedToll') go = !b.stand && b.units.some((x) => !x.alive && x.side === 'hero' && !defOf(x).summon && x.owner === undefined);
   else go = hs.filter((x) => x.hp < x.maxHp * 0.5).length >= Math.min(3, hs.length);
   return go && castDecree(b);

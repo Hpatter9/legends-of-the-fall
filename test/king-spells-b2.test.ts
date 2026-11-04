@@ -109,17 +109,28 @@ test('a recorded fight replays its Decree from the log', () => {
   assert.equal(play(first.b.log!.filter((e) => e.kind === 'decree')).trace, first.trace);
 });
 
-test("Auto casts a Decree on the foes at a crowd of four, one on the heroes when three are below half, and never when not armed", () => {
+test("Auto casts a Decree on the foes at a crowd of three (two when only two are left), one on the heroes when three are below half, and never when not armed", () => {
   const b = arena();
   for (const u of [1, 2, 3]) addUnit(b, 'knight', u, 7);
-  for (const u of [1, 2, 3]) addUnit(b, 'skeleton', u, 3);
+  for (const u of [1, 2]) addUnit(b, 'skeleton', u, 3);
+  // (a third foe nearly done does not count, but keeps the bar at three)
+  const spent = addUnit(b, 'skeleton', 3, 3);
+  spent.hp = Math.round(spent.maxHp * 0.1);
   still(b);
   assert.equal(autoDecree(b), false);
   armDecree(b, 'redSky');
   b.spells.decree!.fill = DECREE_FULL;
-  assert.equal(autoDecree(b), false, 'three foes are not enough');
+  assert.equal(autoDecree(b), false, 'two foes worth it of three are not enough');
   addUnit(b, 'skeleton', 4, 3);
   assert.ok(autoDecree(b));
+  // (two foes, the only two left: worth the Decree)
+  const two = arena();
+  addUnit(two, 'knight', 2, 7);
+  for (const u of [1, 2]) addUnit(two, 'skeleton', u, 3);
+  still(two);
+  armDecree(two, 'tempest');
+  two.spells.decree!.fill = DECREE_FULL;
+  assert.ok(autoDecree(two));
   const c = arena();
   const hs = [1, 2, 3].map((u) => addUnit(c, 'knight', u, 7));
   addUnit(c, 'skeleton', 3, 1);

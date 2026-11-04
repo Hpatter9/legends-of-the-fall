@@ -189,9 +189,9 @@ export interface DecreeState {
   fill: number;
   used: boolean;
 }
-/** The Decree's meter: its top, and what feeds it (the spill one for one, half the mana spent on spells, and a trickle a second). */
-export const DECREE_FULL = 10;
-export const DECREE_PER_SPENT = 0.5;
+/** The Decree's meter: its top, and what feeds it (the spill one for one, three quarters of the mana spent on spells, and a trickle a second). */
+export const DECREE_FULL = 8;
+export const DECREE_PER_SPENT = 0.75;
 export const DECREE_PER_SEC = 0.1;
 /** Add to the meter (to its top); nothing when no Decree is armed or it was cast. */
 export function feedDecree(b: Battle, n: number): void {
