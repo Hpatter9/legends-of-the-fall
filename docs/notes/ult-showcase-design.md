@@ -14,7 +14,7 @@ built and playing in the game.
 
 An ultimate fires. Its **opening** is as before (ULT-CUTIN and ULT-EPIC: the band with the hero's art and the ultimate's name, the board
 dimmed round the caster, the camera leaning in; 1.15 s). On a **long** use the **showcase** follows: the fight stays held and the hero is
-seen doing what the ultimate's words say, with the real sprites on the real board, about 2.8 to 3.3 s. Then the **blow lands** (the
+seen doing what the ultimate's words say, with the real sprites on the real board, about 2.5 to 4 s. Then the **blow lands** (the
 ULT-EPIC freeze, burst, flash and shake), and the fight carries on as it does now. Opening, showcase and fade together run **4.6 to 6 s**
 (tested). A tap skips it, as a tap skips the moment now.
 
@@ -63,7 +63,48 @@ The same rule is there for any future special attack: it only has to say it is p
 Captures: `docs/samples/ult-showcase-*.mp4` (393 x 852, x1, the whole moment) and `docs/samples/ult-showcase-strip.jpg` (the three side
 by side). `tools/ult-show/shots.mjs` records them on a fixed clock.
 
-## Every hero, from its ultimate's own words (the plan for the other 42)
+## Batch 1 (built): the blades that move
+
+The owner approved the design and the director's answers to the questions (below). The plan became a **track of keys per fighter**
+(`Key`: a tile, an offset, a row and how far through it, seen or not, facing, gliding to the next key with an arc), so a style is a few
+lines of keys and each hero is data (`SHOWCASES`: its style, element, words and timings). New styles and what they read from the cast:
+
+| Style | Reads | Heroes | What we see |
+|---|---|---|---|
+| blinks | `blink` and the blow after each | Mercenary, Arc Blade | as Ayame's, in blood red and in lightning (Arc Blade's last hop takes him home) |
+| line | `dash` and the blows after each | Samurai, Lancer, Minotaur | the wind-up, the run along the line (a flash for the Samurai, a gallop for the Lancer, three charges for the Minotaur); the foes reel as it reaches them, or for the Samurai all split once he has sheathed |
+| leap | the caster's `launch` | Barbarian | a crouch, a high leap across the field, the crash: cracked ground, dust, the shake, the crowd thrown back |
+| blows | the blows on each foe, counted | Ninja Monk | a blur of blows on each foe in turn, a spark at every one, the last throwing it |
+| hooks | `arc` to a foe the cast moved | Buccaneer | the hook thrown out, the foe reeled in to his feet, the cut |
+
+A foe the cast moved (thrown, shoved, hooked) is staged where it stood and flies to where the sim put it (`launch` says from where; a hook
+or a shove is read from the foe's step begun on that tick). A showcase plays at least 2.5 s (its last pose held), and a long chain of hops
+is quickened to fit, so every one is 4 to 6 s with its opening and fade (tested for all eleven).
+When a cast has nothing of its style's shape but struck foes (the Minotaur's charge with a foe already beside him), the showcase is its
+blows on each foe in turn. When the ultimate itself ends the fight, its showcase still plays and the result waits for it (as an Eidolon's
+strike does). A foe the cast moved starts from where the page saw it before the tick.
+
+Captures: `docs/samples/ult-showcase-<hero>.mp4` for each of the eight and `docs/samples/ult-showcase-batch1.jpg`
+(`tools/ult-show/shots.mjs --picks ... [--stage 9]`: a fresh page for each hero).
+
+## Frames to generate (the OpenAI image account is out of credits until tomorrow)
+
+Everything above is built from what is in the game. These would make it read better, made as the art plan says:
+
+| For | Frames |
+|---|---|
+| Buccaneer | a six-sided die rolling and its six faces (to roll over each cut); a grappling hook and its rope |
+| Samurai | an iaido crouch (hand on the hilt) and a sheathe (the blade going home) |
+| Arc Blade | his body as lightning (a bright silhouette strip) for the hops |
+| Barbarian | a mid-air frame, axe overhead |
+| Ninja Monk | a flurry frame (many fists, after-images) |
+| Minotaur | a head-down charge |
+| Lancer | a lowered-lance gallop |
+| Wizard | a falling meteor with its trail (the pack's orb stands in) |
+| Beastmaster | the horn raised to his lips |
+| Kunoichi | a kneeling finish, blade sheathed |
+
+## Every hero, from its ultimate's own words (the plan for the other 34)
 
 Each takes one of a few **styles** (the staging code is shared, the beats per hero), so a batch is mostly data plus art.
 
@@ -129,7 +170,7 @@ a test that reads a real cast, captures at the three phone sizes, and the art be
   for Askel), copied into `src/art/`, credited in `CREDITS.md` as generated, and listed in the service worker if loaded by URL.
 - New sprite rows a hero lacks (a sheathe, a horn raised, a howl) are made the same way only where its sheet has nothing close.
 
-## The pilot's code
+## The code
 
 - `src/ultShowRules.ts` (pure, tested in `test/ult-show.test.ts`): `SHOWCASES`, `showDue`, `wantsShow`, `momentSpeed`, `readCast`,
   `planShow`, `posesAt`, `seenOf` / `noteSeen`.
@@ -141,10 +182,10 @@ a test that reads a real cast, captures at the three phone sizes, and the art be
 - `src/main.ts`, `src/standView.ts`: the x1 rule, the save's count. `src/eidolonCall.ts`: `long`.
 - `src/settings.ts`: Shorter ultimates, Showcase again. `src/sim/meta.ts`: `ultSeen`.
 
-## Questions for the owner
+## The owner's answers
 
-1. Is "every 10th" meant as the 1st, 11th, 21st... (as built), or the 1st, 10th, 20th?
-2. Should the first showcase of each hero be skippable by a tap (it is now), or play through once like an Eidolon's first call?
-3. Should a showcase play under Auto the first time (now Auto always gives the short one)?
-4. The Wizard's showcase hands over to the sim's meteors falling live at x1; would you rather the meteors fall inside the held showcase?
-5. Shall batch 1 go ahead as listed, and is the OpenAI image API the source you want for the frames no pack has?
+1. "Every 10th" is the 1st, 11th, 21st... (as built).
+2. A showcase is skippable by a tap, the first included.
+3. Auto keeps the short version.
+4. The Wizard's meteors keep falling live at x1 after the showcase.
+5. Batch 1 and then the rest go ahead; the OpenAI image API for frames no pack has (out of credits until tomorrow: the list above).

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.342.0',
+    date: '2026-11-04',
+    title: 'Eight more ultimate showcases',
+    notes: ['Eight more heroes show their ultimates the first time: Mercenary, Arc Blade, Samurai, Lancer, Minotaur, Barbarian, Ninja Monk and Buccaneer.'],
+  },
+  {
     version: '0.341.0',
     date: '2026-11-04',
     title: 'Spell ranks and school marks',
