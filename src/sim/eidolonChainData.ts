@@ -7,7 +7,7 @@
 // Every story here is plain data in the cinematics' shape (`sceneKit.ts`) or as lines, so the general shot layer can take them over.
 // The voice: wry and warm, in British spelling. Pure data: no Pixi, no DOM.
 
-import { close, say, tell, wide, type CastMember, type Scene } from './sceneKit';
+import { say, tell, wide, type CastMember, type Scene } from './sceneKit';
 import type { Goal, Need, Reward } from './questData';
 
 /** A piece of an Eidolon's pact: found by a chain's part, set on the altar at the binding. `art` names a painted gear icon the piece's
@@ -74,6 +74,15 @@ export interface ChainDef {
 
 const party = (i: number, x: number, more: Partial<CastMember> = {}): CastMember => ({ role: `party:${i}`, x, facing: 'right', ...more });
 
+
+/** The Summoner, standing at her altar in the Sanctum (a priestess's figure), and the two heroes who hear her out. One backdrop, the
+ *  Sanctum, carries every prologue from its first shot to its last (docs/notes/cine-eidolon.md): the giver walks in rather than the scene
+ *  cutting away, and everyone who speaks is on the stage or has a face in the picture. */
+const SUMMONER: CastMember = { role: 'unit:priestess', x: 118, facing: 'right', scale: 1.15, name: 'The Summoner' };
+const hearers = (): Record<string, CastMember> => ({ summoner: SUMMONER, a: party(0, 250, { facing: 'left' }), b: party(1, 214, { facing: 'left' }) });
+/** A still wide shot of the altar, the Summoner and the two heroes all in view, so each line shows who says it. */
+const altar = { angle: 'wide', move: 'still', cam: wide(185, 215) } as const;
+
 /** Askel's three pieces. */
 export const EMBER_HEART: PieceDef = {
   id: 'emberHeart',
@@ -99,16 +108,21 @@ export const KENNEL_BELL: PieceDef = {
 const HEARTH_BELOW: Scene = {
   id: 'eid-askel-prologue',
   title: 'The Hearth Below',
-  blurb: 'The Summoner tells of the first kings\' hound.',
+  blurb: "The Summoner tells of the first kings' hound.",
   moment: { kind: 'eidolon', chain: 'askel' },
   music: 'solemn',
-  cast: { summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: hearers(),
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn', 'glow'], cue: 'earthRumble', caption: 'The Summoning Sanctum', lines: [tell('The Warlord has fallen. Under the Sanctum\'s floor, something breathes, like a hearth banked for the night.')] },
-    { cam: close(['a', 'b']), lines: [say('summoner', 'Did you feel it, when the Warlord fell? Heat, under the stones. The keep has not felt that since the first kings.'), say('a', 'I thought that was the braziers.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'The braziers do not growl. The first kings kept a hound of living embers: Askel, the Cinderhound. He ran their hunts, and slept by their hearth.'), say('summoner', 'When the Calamity broke the old pacts, he ran into the fire under the hills. He has been running ever since.')] },
-    { cam: close('b'), lines: [say('b', 'And he wants to come home?')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'Every hound does. We call him the old way: the ember of his heart, his collar, and the bell that called him to supper. Find them, and I will bind him to the keep.'), tell("Askel's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    // (establish: the Sanctum, the floor warm underfoot)
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn', 'glow'], cue: 'earthRumble', caption: 'The Summoning Sanctum', lines: [tell('The Warlord is down. Under the Sanctum floor, something breathes slowly, like a hearth banked for the night.')] },
+    // (the characters: the Summoner dry, the heroes unimpressed)
+    { ...altar, lines: [say('summoner', 'Did you feel that when the Warlord fell? Heat, under the stones. This keep has not been so warm since the first kings.'), say('a', 'I assumed the braziers.'), say('summoner', 'The braziers do not growl.')] },
+    // (the turn: who it is)
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'Askel, the Cinderhound. He ran the first kings\' hunts and slept by their hearth. When the pacts broke, he ran into the fire under the hills.'), say('summoner', 'He has been running ever since.')] },
+    // (the payoff: why it matters)
+    { ...altar, lines: [say('b', 'And he wants to come home.'), say('summoner', 'Every hound does. He needs only to be called the old way.')] },
+    // (the handover)
+    { ...altar, lines: [say('summoner', 'The ember of his heart, his collar, and the bell that called him to supper. Find them, and I will bind him to the keep.'), say('a', 'Three errands for a dog. Fine.')] },
   ],
 };
 
@@ -164,18 +178,16 @@ const UNDER_THE_MERE: Scene = {
   blurb: 'A frost-bitten hunter tells why the pack ran south.',
   moment: { kind: 'eidolon', chain: 'nivra' },
   music: 'solemn',
-  cast: { hunter: HUNTER, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { hunter: HUNTER, ...hearers() },
   shots: [
-    { look: 'snow', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The northern meres', lines: [tell('Far to the north, a lake lies frozen like glass, a mile across. Under it, something has turned over in its sleep.')] },
-    { look: 'temple', cam: wide(260, 200), caption: 'The Summoning Sanctum', lines: [tell('Snow on the Sanctum steps, in spring. A hunter has walked down from the north, frost on the hood and two fingers short.')] },
-    // (the hunter speaks over wide shots: their face fills the picture, so it never sits over a hero's close-up)
-    { cam: wide(250, 200), lines: [say('hunter', 'You called the fire-dog home. Whole north heard it. Now call something else.')] },
-    { cam: close(['a', 'b']), lines: [say('a', 'Something bigger than a dog, I take it.')] },
-    { cam: wide(250, 200), lines: [say('hunter', 'The pack ran south this winter. Not hunting. Running. From the lake. From under the ice.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'Nivra. The Rime Wyrm. She lay under the northern meres and kept the passes shut, winter after winter, for the first kings.'), say('summoner', 'When the pacts broke she went down into the cold to sleep it off. Three hundred years is a long nap, even for a wyrm.')] },
-    { cam: close('b'), lines: [say('b', 'And if she wakes up cross?')] },
-    { cam: wide(250, 200), lines: [say('hunter', 'Then be her friend first. Quickly.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A scale she has shed, the pearl of her cold heart, and the breath she holds. Bring me those, and I will bind her.'), tell("Nivra's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    // (establish: the Sanctum, with the north's snow blowing in at the door)
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn'], weather: 'snow', caption: 'The Summoning Sanctum', lines: [tell('Snow on the Sanctum steps, in spring. A hunter has walked down from the north, frost on the hood and two fingers short.')] },
+    // (the hunter's face fills the picture as they speak)
+    { cam: wide(185, 215), lines: [say('hunter', 'You called the fire-dog home. The whole north heard it. Now call something else.'), say('hunter', 'The pack ran south this winter. Not hunting. Running. From the lake, and what is under the ice.')] },
+    { ...altar, lines: [say('a', 'Something bigger than a dog, I take it.'), say('summoner', 'Nivra, the Rime Wyrm. She lay under the northern meres and kept the passes shut, winter after winter, for the first kings.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'When the pacts broke she went down into the cold to sleep it off. Three hundred years is a long nap, even for a wyrm.'), say('b', 'And if she wakes up cross?')] },
+    { cam: wide(185, 215), lines: [say('hunter', 'Then be her friend first. Quickly.')] },
+    { ...altar, lines: [say('summoner', 'A scale she has shed, the pearl of her cold heart, and the breath she holds. Bring me those, and I will bind her.'), say('b', 'We will take cloaks.')] },
   ],
 };
 
@@ -225,16 +237,15 @@ const THE_LATE_DAWN: Scene = {
   blurb: 'Gwen Tallow brings word that the dawn is coming late.',
   moment: { kind: 'eidolon', chain: 'aurelan' },
   music: 'solemn',
-  cast: { gwen: GWEN, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { gwen: GWEN, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, before sunrise', lines: [tell('Grey light in the Sanctum windows. The tavern-keeper has left her bar, her dog and her slate, and walked up the hill in the dark.')] },
-    { cam: wide(250, 200), lines: [say('gwen', 'I do not leave the taproom. Ask anyone. Forty years I have not left the taproom.')] },
-    { cam: close(['a', 'b']), lines: [say('b', 'Then something is wrong.')] },
-    { cam: wide(250, 200), lines: [say('gwen', 'The lamps go out at dusk. All of them. Lit properly, trimmed, filled. And the dawn comes late. A little later each day. The cockerel has given up.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'The Wildwood is quiet, and the quiet has let you hear it. Aurelan, the Lion of Dawn. He walked ahead of the sun for the first kings, and roared it up over the hill each morning.'), say('summoner', 'When the pacts broke he lay down in the dark to wait. He has been waiting a long time. A lion can lose count of nights.')] },
-    { cam: close('a'), lines: [say('a', 'And if we wake him?')] },
-    { cam: wide(250, 200), lines: [say('gwen', 'Then I shall have lamps again, and I shall stop having to explain myself to the cockerel.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A thread of his mane, the crown he laid down, and a light that has not been put out. Bring me those, and I will bind him.'), tell("Aurelan's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn'], weather: 'motes', caption: 'The Summoning Sanctum, before sunrise', lines: [tell('Grey light in the Sanctum windows. The tavern-keeper has left her bar, her dog and her slate, and walked up the hill in the dark.')] },
+    { cam: wide(185, 215), lines: [say('gwen', 'I do not leave the taproom. Ask anyone. Forty years.'), say('gwen', 'But the lamps go out at dusk, every one, lit and trimmed and filled. And the dawn comes late. A little later each day. The cockerel has given up.')] },
+    { ...altar, lines: [say('b', 'Then something is wrong.'), say('summoner', 'The Wildwood is quiet, and the quiet lets you hear it. Aurelan, the Lion of Dawn.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'He walked ahead of the sun for the first kings and roared it up over the hill each morning. When the pacts broke he lay down in the dark to wait.'), say('summoner', 'A lion can lose count of nights.')] },
+    { ...altar, lines: [say('a', 'And if we wake him?')] },
+    { cam: wide(185, 215), lines: [say('gwen', 'Then I shall have lamps again, and I shall stop explaining myself to the cockerel.')] },
+    { ...altar, lines: [say('summoner', 'A thread of his mane, the crown he laid down, and a light that has not been put out. Bring me those, and I will bind him.'), say('b', 'We will be back by breakfast. Whenever that is.')] },
   ],
 };
 
@@ -283,16 +294,14 @@ const THE_DRY_STORM: Scene = {
   blurb: 'A royal courier brings word that the storm will not break.',
   moment: { kind: 'eidolon', chain: 'voltara' },
   music: 'solemn',
-  cast: { crown: CROWN, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { crown: CROWN, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, under a bruised sky', lines: [tell('Every weathercock on the keep has been spinning for a week. The air smells of struck flint. Not a drop of rain has fallen, and a royal courier has come up the hill with a sealed charge and a singed moustache.')] },
-    { cam: wide(250, 200), lines: [say('crown', 'By the Crown\'s seal, and the Crown\'s patience, which is thin. Lightning has struck the same tower of the keep seven nights running, and not once has it hit the rod.')] },
-    { cam: close(['a', 'b']), lines: [say('b', 'Seven? Then it is not weather.')] },
-    { cam: wide(250, 200), lines: [say('crown', 'The Crown\'s astronomers agree, and have gone to lie down. They say it is looking for something. Please, say it is not the Crown.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'It is looking for a house. Voltara, the Copper Goddess. She married the storm, and the storm kept the house, and she has been wandering the sky ever since, looking for the door.'), say('summoner', 'The Labyrinth held her wires down for three hundred years. Now it is quiet, and the sky is crowded with her.')] },
-    { cam: close('a'), lines: [say('a', 'And if we give her a door?')] },
-    { cam: wide(250, 200), lines: [say('crown', 'Then the Crown shall have a ceiling, and the courier shall have a moustache again.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A coil of her own wire, the face of the clock that stopped, and a storm kept in glass. Bring me those, and I will bind her.'), tell("Voltara's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn', 'darken'], weather: 'dust', caption: 'The Summoning Sanctum, under a bruised sky', lines: [tell('Every weathercock on the keep has spun for a week. The air smells of struck flint, and not a drop of rain has fallen. A royal courier has come up the hill with a sealed charge and a singed moustache.')] },
+    { cam: wide(185, 215), lines: [say('crown', 'By the Crown\'s seal, and the Crown\'s patience, which is thin: lightning has struck the same tower seven nights running, and never once the rod.'), say('crown', 'The astronomers say it is looking for something. They have gone to lie down.')] },
+    { ...altar, lines: [say('b', 'Seven? Then it is not weather.'), say('summoner', 'No. It is looking for a house. Voltara, the Copper Goddess.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'She married the storm, and the storm kept the house, and she has wandered the sky ever since, looking for the door. The Labyrinth held her wires down for three hundred years. Now the sky is crowded with her.'), say('a', 'And if we give her a door?')] },
+    { cam: wide(185, 215), lines: [say('crown', 'Then the Crown shall have a ceiling, and the courier a moustache.')] },
+    { ...altar, lines: [say('summoner', 'A coil of her own wire, the face of the clock that stopped, and a storm kept in glass. Bring me those, and I will bind her.'), say('b', 'Gloves, then.')] },
   ],
 };
 
@@ -329,8 +338,6 @@ export const KNOCKING_STONE: PieceDef = {
   art: 'ironRing',
 };
 
-/** Duchess, heard over the prologue: the goat's own portrait (`face:duchess`), speaking in bleats with her asides in brackets (as `quipData.ts` writes her). */
-const DUCHESS: CastMember = { role: 'face:duchess', x: 0, facing: 'right', hidden: true, name: 'Duchess' };
 
 /** The prologue of Gorm's chain: Duchess the goat leads the party out to the keep's own foundation stone once the Infernal Host has fallen.
  *  She has headbutted one stone at every dawn for a month, and it has started to answer; the Summoner names the Quarry Titan. */
@@ -340,16 +347,14 @@ const A_GOAT_OF_CONSEQUENCE: Scene = {
   blurb: 'Duchess shows the keep a stone that knocks back.',
   moment: { kind: 'eidolon', chain: 'gorm' },
   music: 'solemn',
-  cast: { duchess: DUCHESS, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { duchess: { role: 'duchess', x: 190, facing: 'left', hidden: true, name: 'Duchess' }, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, at the foot of the keep', lines: [tell('A goat has walked up the Sanctum steps with great purpose, and is standing on the altar. She does not appear to have been invited. She does not appear to need to be.')] },
-    { cam: wide(250, 200), lines: [say('duchess', 'Mehh. (She has been butting the keep. One stone, low down, at the corner. Every dawn, for a month.)')] },
-    { cam: close(['a', 'b']), lines: [say('b', 'That is not unusual, for her.'), say('a', 'She is not usually ahead of the schedule.')] },
-    { cam: wide(250, 200), lines: [say('duchess', 'MEHH. (It knocked back. She would like it noted that it knocked back. She has not been so insulted since the tavern cat.)')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'It is not a stone. Or it is, but a very large one, and it is only the part of him that is showing. Gorm, the Quarry Titan.'), say('summoner', 'He cut the hill for the first kings, and raised this keep out of it, block by block, and then, I believe, forgot to mention it. When the pacts broke he lay down in the quarry and let the grass come over. The hill under your walls is him.')] },
-    { cam: close('a'), lines: [say('a', 'We have been living on a person.'), say('b', 'We have been living on a very patient person.')] },
-    { cam: wide(250, 200), lines: [say('duchess', 'Meh. (She has found the rest of him. She is not saying where. She wants a cabbage.)')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A flake of his fire, the mark he cut in his first block, and the stone that knocked. Bring me those, and I will bind him.'), tell("Gorm's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn'], caption: 'The Summoning Sanctum, at the foot of the keep', acts: [{ who: 'duchess', enter: 190, from: 330 }], lines: [tell('A goat has walked up the Sanctum steps with great purpose. She does not appear to have been invited. She does not appear to need to be.')] },
+    { ...altar, lines: [say('duchess', 'Mehh.'), say('a', 'She says she has been butting one stone at the corner of the keep. Every dawn for a month.'), say('b', 'That is not unusual, for her.')] },
+    { ...altar, lines: [say('duchess', 'MEHH.'), say('a', 'She would like it noted that it knocked back.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'It is not a stone. Or it is, but only the part of him that shows. Gorm, the Quarry Titan.'), say('summoner', 'He cut the hill for the first kings and raised this keep out of it, block by block, and then forgot to mention it. The hill under your walls is him.')] },
+    { ...altar, lines: [say('a', 'We have been living on a person.'), say('b', 'A very patient person.')] },
+    { ...altar, lines: [say('summoner', 'A flake of his fire, the mark he cut in his first block, and the stone that knocked. Bring me those, and I will bind him.'), say('duchess', 'Meh.'), say('a', 'She wants a cabbage. For services.')] },
   ],
 };
 
@@ -397,17 +402,15 @@ const THE_GUESTS_THINGS: Scene = {
   blurb: 'A voice in the rift carries a message from a very large guest.',
   moment: { kind: 'eidolon', chain: 'vaelkhar' },
   music: 'solemn',
-  cast: { voice: RIFT_VOICE, summoner: party(0, 120, { hidden: true, name: 'The Summoner' }), a: party(0, 250), b: party(1, 214) },
+  cast: { voice: RIFT_VOICE, ...hearers() },
   shots: [
-    { look: 'temple', cam: wide(260, 200), fx: ['fadeIn'], caption: 'The Summoning Sanctum, after the Calamity', lines: [tell('A crack of violet light has opened in the Sanctum floor, about the size of a letterbox. The braziers lean away from it. A voice comes up out of it, from a long way down, and very politely.')] },
-    { cam: wide(250, 200), lines: [say('voice', 'you shut the last door. thank you. it was loud.')] },
-    { cam: close(['a', 'b']), lines: [say('a', 'Who is that?'), say('b', 'It sounds like the voice from the guardians\' floors.')] },
-    { cam: wide(250, 200), lines: [say('voice', 'i keep the rift. i am only the post. this one is not mine. it is from someone too large to come through, who has asked me to ask.')] },
-    { cam: wide(250, 200), lines: [say('voice', 'he came to your keep once. as a guest. one night. he left his things, and the doors shut behind him. he has wondered for three hundred years whether it is rude to ask for them back.')] },
-    { cam: wide(240, 196), fx: ['glow'], lines: [say('summoner', 'Vaelkhar. The Dragon King. He flew over the first kings\' walls as an invited guest, and the pacts broke while he was asleep in the east wing.'), say('summoner', 'He left a scale, a seal and a helm made for a rider. He also gave the first queen his heart, as a gift. On reflection, he would like it back. The keep may keep it, I think, if it gives him a receipt.')] },
-    { cam: close('a'), lines: [say('a', 'Is he angry?')] },
-    { cam: wide(250, 200), lines: [say('voice', 'he is a king. it comes out as the same thing. but if you bring him his things, he will answer your horn. he says it is lonely at the top.')] },
-    { cam: wide(260, 200), lines: [say('summoner', 'A scale from the last guardians\' floor, the letter that was never answered, and a tine of his crown. Bring me those, and I will bind him.'), tell("Vaelkhar's chain has begun: three pieces to find. The quest log's Eidolons tab keeps the trail.")] },
+    { look: 'temple', cam: wide(185, 215), fx: ['fadeIn', 'darken'], weather: 'embers', caption: 'The Summoning Sanctum, after the Calamity', lines: [tell('A crack of violet light has opened in the Sanctum floor, about the size of a letterbox. The braziers lean away from it. A voice comes up out of it, very politely, from a long way down.')] },
+    { cam: wide(185, 215), lines: [say('voice', 'you shut the last door. thank you. it was loud.'), say('voice', 'i am only the post. this is from someone too large to come through, who asked me to ask.')] },
+    { ...altar, lines: [say('a', 'Ask what?'), say('b', 'It sounds like the voice from the guardians\' floors.')] },
+    { cam: wide(185, 215), lines: [say('voice', 'he came to your keep once, as a guest, for one night. he left his things, and the doors shut behind him. he has wondered for three hundred years if it is rude to ask for them back.')] },
+    { ...altar, fx: ['glow'], lines: [say('summoner', 'Vaelkhar, the Dragon King. He flew over the first kings\' walls as an invited guest and fell asleep in the east wing as the pacts broke.'), say('a', 'Is he angry?')] },
+    { cam: wide(185, 215), lines: [say('voice', 'he is a king. it comes out the same. but bring him his things and he will answer your horn. he says it is lonely at the top.')] },
+    { ...altar, lines: [say('summoner', 'A scale from the last guardians\' floor, the letter never answered, and a tine of his crown. Bring me those, and I will bind him.'), say('b', 'We will write back. Politely.')] },
   ],
 };
 
@@ -425,6 +428,83 @@ const VAELKHAR_BINDING: readonly BindingBeat[] = [
 
 /** The six chains, easiest first. Askel's and Nivra's are written; the rest are the rails for their batches (the design's givers and
  *  openings, rewritten for the six chosen Eidolons when their chains are written). */
+/* ------------------------------------------------------------------ the harder chains' extra pieces (Q9, `docs/notes/eidolon-chains-hard.md`) */
+
+/** Each chain gained two parts after its old three (the old ones keep their places, so a chain in progress keeps its part); each part
+ *  gives a piece of its own, borrowing a painted gear icon like the rest. */
+export const HUNT_WHISTLE: PieceDef = {
+  id: 'huntWhistle',
+  name: "The Huntsman's Whistle",
+  lines: ['A whistle of bone, cut for a hound\'s ear and no one else\'s. It was found in the ashes of a war-camp that burned and did not stay burned.', 'You cannot hear it. Every dog in the keep can.'],
+  art: 'warDrum',
+};
+export const HEARTH_BRAND: PieceDef = {
+  id: 'hearthBrand',
+  name: 'The Hearth-Brand',
+  lines: ['A log from the first kings\' hearth, black outside and red in the grain. It was waiting at the end of the hardest run.', 'Put it on the fire and the fire sits up.'],
+  art: 'emberWand',
+};
+export const FROZEN_TEAR: PieceDef = {
+  id: 'frozenTear',
+  name: 'The Frozen Tear',
+  lines: ['One drop of the mere, caught before it fell and frozen as it hung. It was left for whoever came through the pack with every heart still in hand.', 'It is not sad. It is only very cold, and very exact.'],
+  art: 'sapphireRing',
+};
+export const WYRM_LULLABY: PieceDef = {
+  id: 'wyrmLullaby',
+  name: "The Wyrm's Lullaby",
+  lines: ['A scrap of old music, written on thin ice and folded up. It is the tune the first kings hummed so that she would sleep through the thaw.', 'You are meant to hum it quietly. Quietly.'],
+  art: 'healerLyre',
+};
+export const MORNING_RING: PieceDef = {
+  id: 'morningRing',
+  name: 'The Morning Ring',
+  lines: ['A ring of gold that was left on a stump at the grove\'s end. It has not been there overnight, because it has never been night where it lies.', 'It is warm. It is also, a little, smug.'],
+  art: 'rubyRing',
+};
+export const COCKS_SPUR: PieceDef = {
+  id: 'cocksSpur',
+  name: "The First Cock's Spur",
+  lines: ['A silver spur from the bird that crowed the first dawn, and every dawn after, until the pacts broke and it lost its nerve.', 'It would like to be asked back.'],
+  art: 'bootsOfHaste',
+};
+export const STORM_ROD: PieceDef = {
+  id: 'stormRod',
+  name: 'The Storm-Rod',
+  lines: ['A copper rod, struck once and left standing in the middle of the maze. The whole Labyrinth had grown crooked round it.', 'It hums when a party comes through with its purse unspent.'],
+  art: 'stormStaff',
+};
+export const LAST_SPARK: PieceDef = {
+  id: 'lastSpark',
+  name: 'The Last Spark',
+  lines: ['A bead of lightning, bottled by a glassmaker who refused to say how. It waits until two of the Labyrinth\'s lords have gone down in front of it.', 'It will not be rushed. It will, however, be delivered.'],
+  art: 'swiftElixir',
+};
+export const QUARRY_BELL: PieceDef = {
+  id: 'quarryBell',
+  name: "The Goat's Bell",
+  lines: ['A cracked bell on a leather strap, with a chew-mark in the leather. The pit-lords had it for a trophy. She wants it back, and says so, loudly.', 'It rings in a different key every time you pick it up.'],
+  art: 'silverBell',
+};
+export const PLUMB_LINE: PieceDef = {
+  id: 'plumbLine',
+  name: "The Mason's Plumb-Line",
+  lines: ['A lead weight on a waxed cord, dropped at the Host\'s last gate and found hanging dead straight in a hall where nothing else is.', 'It points down. It always has. It would like you to do the same.'],
+  art: 'emeraldBand',
+};
+export const VIOLET_SEAL: PieceDef = {
+  id: 'violetSeal',
+  name: 'The Violet Seal',
+  lines: ['A disc of violet wax the size of a coaster, with a crack through the crest. It sealed the Calamity\'s last gate and came away when the gate was cleared properly.', 'It is polite. It is also, now, evidence.'],
+  art: 'moonPendant',
+};
+export const OPEN_LEDGER: PieceDef = {
+  id: 'openLedger',
+  name: 'The Open Ledger',
+  lines: ['A page torn from the guest wing\'s ledger, the one that never closed. Three guardians had been sitting on it for three hundred years.', 'The last line says, in a very large hand: "paid in full, in kind".'],
+  art: 'scholarScroll',
+};
+
 export const CHAINS: readonly ChainDef[] = [
   {
     id: 'askel',
@@ -441,9 +521,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'askel1',
         title: 'Embers of the Warband',
-        text: 'Beat an Orc Warband boss: the Chieftain (wave 8) or the Warlord (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'orcs', boss: ['orcChieftain', 'orcWarlord'] },
-        begin: 'The heat rose when the Warlord fell. Whatever the orcs carry, they keep it by their war-fire. Beat one of their chiefs again, and look in the ashes.',
+        text: 'Beat the Orc Warlord (wave 15) on Hard, with no hero falling',
+        goal: { kind: 'bossDown', n: 1, army: 'orcs', boss: ['orcWarlord'], tier: 1, flawless: true },
+        begin: 'The heat rose when the Warlord fell. Whatever the orcs carry, they keep it by their war-fire. Make him fall again, on Hard this time, and bring everyone home. The ashes are particular.',
         piece: EMBER_HEART,
         reward: { chest: 'bronze' },
       },
@@ -459,10 +539,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'askel3',
         title: "The Kennel-Master's Bell",
-        text: 'Fell the Bone Captain (the Undead Legion\'s eighth wave)',
-        goal: { kind: 'bossDown', n: 1, army: 'undead', boss: ['boneCaptain'] },
-        begin: 'One thing more: the bell that called him to supper. The kennel-master was buried with it, and the Legion does not leave the buried alone.',
+        text: "Fell the Bone Captain (the Undead Legion's eighth wave) on Hard, with no hero hired in the run",
+        goal: { kind: 'bossDown', n: 1, army: 'undead', boss: ['boneCaptain'], tier: 1, noHires: true },
+        begin: 'One thing more: the bell that called him to supper. The kennel-master was buried with it, and the Legion does not leave the buried alone. On Hard, and with the party you came with: he was never one for hired hands.',
         piece: KENNEL_BELL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'askel4',
+        title: "The Long Run",
+        text: "Clear the Orc Warband whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'orcs', tier: 1, noHeart: true },
+        begin: "The bell is not the end of it. A hound does not come for a keep that gives up a wave at the first bite. Run the Warband from its first gate to its last, on Hard, and do not spend a heart on the way. He is counting.",
+        piece: HUNT_WHISTLE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'askel5',
+        title: "Run With the Hound",
+        text: "Win 6 army waves on Hard without firing an ultimate",
+        goal: { kind: 'wavesWon', n: 6, mode: 'army', tier: 1, noUlts: true },
+        begin: "Last, and I will be plain: he wants to see you run. Six fights on Hard, and no great strikes: just heroes, feet and teeth. A hound respects a pack that can hunt without a horn.",
+        piece: HEARTH_BRAND,
         reward: { chest: 'bronze' },
       },
     ],
@@ -485,9 +583,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'nivra1',
         title: 'The Pack That Ran',
-        text: 'Beat a Beast Packs boss: the Alpha Werewolf (wave 8) or the Boar King (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'beasts', boss: ['alphaWolf', 'boarKing'] },
-        begin: 'The big ones ran first. Ran from something. Beat one again and look in its fur. Whatever it rolled in, it rolled in up north.',
+        text: 'Beat a Beast Packs boss on Hard, with no hero falling: the Alpha Werewolf (wave 8) or the Boar King (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'beasts', boss: ['alphaWolf', 'boarKing'], tier: 1, flawless: true },
+        begin: 'The big ones ran first. Ran from something. Beat one again, on Hard, and bring your own home. Then look in its fur. Whatever it rolled in, it rolled in up north.',
         piece: RIME_SCALE,
         reward: { chest: 'bronze' },
       },
@@ -503,10 +601,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'nivra3',
         title: 'Hold Your Breath',
-        text: "Win 5 army waves without casting a king's spell",
-        goal: { kind: 'wavesWon', n: 5, mode: 'army', noSpells: true },
-        begin: "Last thing. She does not come to noise. My grandmother said: win quiet. No king's thunder, no king's fire. Five fights. Then breathe on a window.",
+        text: "Win 5 army waves without casting a king's spell or firing an ultimate",
+        goal: { kind: 'wavesWon', n: 5, mode: 'army', noSpells: true, noUlts: true },
+        begin: "Last thing. She does not come to noise. My grandmother said: win quiet. No king's thunder, no king's fire. Five fights, no great strikes either. Then breathe on a window.",
         piece: HELD_BREATH,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'nivra4',
+        title: "Through the Pack",
+        text: "Clear the Beast Packs whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'beasts', tier: 1, noHeart: true },
+        begin: "One tear, they say, and she lets it fall for a keep that crosses her whole country without once turning back. All of the Packs, then, on Hard. Do not spend a heart. She will know.",
+        piece: FROZEN_TEAR,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'nivra5',
+        title: "The Quiet Bosses",
+        text: "Beat 2 Beast Packs bosses on Hard without casting a king's spell",
+        goal: { kind: 'bossDown', n: 2, army: 'beasts', tier: 1, noSpells: true },
+        begin: "The last of it is a lullaby, and it goes to whoever can drop two of the Packs' lords without a word of thunder. Hard, mind. She sleeps lightly, but not as lightly as that.",
+        piece: WYRM_LULLABY,
         reward: { chest: 'bronze' },
       },
     ],
@@ -528,9 +644,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'aurelan1',
         title: 'Gold in the Grove',
-        text: 'Beat a Wildwood boss: the Thorn Warden (wave 5), the Wood Raider (wave 10) or the Grove Spearlord (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'wildwood', boss: ['forestBoss1', 'forestBoss2', 'forestBoss3'] },
-        begin: "The forest lords have been up before dawn for three hundred years, and they have not slept since. Beat one again. Look in its armour. Whatever it keeps, it keeps the way a magpie does.",
+        text: 'Beat a Wildwood boss on Hard, with no hero falling: the Thorn Warden (wave 5), the Wood Raider (wave 10) or the Grove Spearlord (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'wildwood', boss: ['forestBoss1', 'forestBoss2', 'forestBoss3'], tier: 1, flawless: true },
+        begin: "The forest lords have been up before dawn for three hundred years, and they have not slept since. Beat one again, on Hard, and lose no one doing it. Look in its armour. Whatever it keeps, it keeps the way a magpie does.",
         piece: DAWN_THREAD,
         reward: { chest: 'bronze' },
       },
@@ -546,10 +662,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'aurelan3',
         title: 'Not One on the Floor',
-        text: 'Win 4 waves with no hero falling',
-        goal: { kind: 'wavesWon', n: 4, flawless: true },
-        begin: "Last thing, and it is my lamp. Take it round with you. It only burns for a party that brings everyone home, and it has opinions. Four fights, and not one of yours on the floor.",
+        text: 'Win 4 army waves on Hard with no hero falling',
+        goal: { kind: 'wavesWon', n: 4, flawless: true, tier: 1, mode: 'army' },
+        begin: "Last thing, and it is my lamp. Take it round with you. It only burns for a party that brings everyone home, and it has opinions. Four fights on Hard, and not one of yours on the floor.",
         piece: DAWN_LAMP,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'aurelan4',
+        title: "The Whole Wood",
+        text: "Clear the Wildwood whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'wildwood', tier: 1, noHeart: true },
+        begin: "The lamp wants to see a whole night through, and a night in that wood is fifteen fights long. Take the Wildwood from end to end, on Hard, and do not spend a heart. If you do, the lamp goes out, and I will have to say I told you so.",
+        piece: MORNING_RING,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'aurelan5',
+        title: "Before the Cock Crows",
+        text: "Beat 2 Wildwood bosses on Hard with no hero hired in the run",
+        goal: { kind: 'bossDown', n: 2, army: 'wildwood', tier: 1, noHires: true },
+        begin: "He will not come till the first cock has been sent for, and the first cock has been sulking in the grove ever since. Bring two of the wood's lords down on Hard, with only the heroes you started with, and he may feel flattered enough to crow.",
+        piece: COCKS_SPUR,
         reward: { chest: 'bronze' },
       },
     ],
@@ -571,9 +705,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'voltara1',
         title: 'Wire in the Maze',
-        text: 'Beat a Labyrinth boss: the Gorgon Queen (wave 8) or the Minotaur Champion (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'labyrinth', boss: ['gorgonQueen', 'minotaurChampion'] },
-        begin: "The Labyrinth's lords kept her copper wire down there for three hundred years, and wore it like jewellery. Beat one again, and look in its horns, its hair, its hems.",
+        text: 'Beat a Labyrinth boss on Hard, with no hero falling: the Gorgon Queen (wave 8) or the Minotaur Champion (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'labyrinth', boss: ['gorgonQueen', 'minotaurChampion'], tier: 1, flawless: true },
+        begin: "The Labyrinth's lords kept her copper wire down there for three hundred years, and wore it like jewellery. Beat one again, on Hard, with everyone upright, and look in its horns, its hair, its hems.",
         piece: COPPER_COIL,
         reward: { chest: 'bronze' },
       },
@@ -589,10 +723,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'voltara3',
         title: 'Thunder on Demand',
-        text: 'Fire 6 ultimates',
-        goal: { kind: 'ults', n: 6 },
-        begin: "Last, a vessel. The Crown's glassmaker has blown a flask, and it wants to be filled with something that has been shouted. Six great strikes, and the glass will be satisfied.",
+        text: "Fire 6 ultimates in army fights where no king's spell is cast",
+        goal: { kind: 'ults', n: 6, mode: 'army', noSpells: true },
+        begin: "Last, a vessel. The Crown's glassmaker has blown a flask, and it wants to be filled with something that has been shouted. Six great strikes, and no borrowed thunder from the king: the glass is particular about its sources.",
         piece: STORM_GLASS,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'voltara4',
+        title: "The Straight Road",
+        text: "Clear the Labyrinth whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'labyrinth', tier: 1, noHeart: true },
+        begin: "The rod only hums for a party that walks the Labyrinth straight through: every turn, every gate, no going back for a heart. It is on Hard now, I am told. Even the walls are in a mood.",
+        piece: STORM_ROD,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'voltara5',
+        title: "Both Lords, One Storm",
+        text: "Beat 2 Labyrinth bosses on Hard with no hero falling and no hero hired in the run",
+        goal: { kind: 'bossDown', n: 2, army: 'labyrinth', tier: 1, flawless: true, noHires: true },
+        begin: "One spark more, and it comes out of the maze's lords. Two of them, on Hard, and your party exactly as it set out: no one fallen, no one hired. The glassmaker says the spark can tell.",
+        piece: LAST_SPARK,
         reward: { chest: 'bronze' },
       },
     ],
@@ -614,9 +766,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'gorm1',
         title: 'Fire in the Stone',
-        text: 'Beat an Infernal Host boss: the Devil Leader (wave 8) or the Demon Lord (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'infernal', boss: ['devilLeader', 'demonLord'] },
-        begin: "The pit-lords dug their hall under his quarry and wore a piece of him home. Mehh. (She means the horns. Beat one again, and look in them.)",
+        text: 'Beat an Infernal Host boss on Hard, with no hero falling: the Devil Leader (wave 8) or the Demon Lord (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'infernal', boss: ['devilLeader', 'demonLord'], tier: 1, flawless: true },
+        begin: "The pit-lords dug their hall under his quarry and wore a piece of him home. Mehh. (She means the horns. Beat one again, on Hard, and bring everyone home. Then look in them.)",
         piece: EMBER_CRACK,
         reward: { chest: 'bronze' },
       },
@@ -632,10 +784,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'gorm3',
         title: 'Stand Your Ground',
-        text: 'Take 25,000 damage across fights (and carry on standing)',
-        goal: { kind: 'tally', n: 25000, stat: 'taken' },
-        begin: "Last, the stone that knocked. It will only hum for a party that has been properly hit and has not moved house. Mehh. (Twenty-five thousand knocks. She will be supervising from the trough.)",
+        text: 'Take 25,000 damage across Hard army fights that you win with no hero falling',
+        goal: { kind: 'tally', n: 25000, stat: 'taken', tier: 1, flawless: true },
+        begin: "Last, the stone that knocked. It will only hum for a party that has been properly hit and has not moved house. Mehh. (Twenty-five thousand knocks, on Hard, and not one of you down. She will be supervising from the trough.)",
         piece: KNOCKING_STONE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'gorm4',
+        title: "The Pit, End to End",
+        text: "Clear the Infernal Host whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'infernal', tier: 1, noHeart: true },
+        begin: "Mehh. (Her bell is in the Host's hall, at the very back. She wants the whole of it cleared in one go, on Hard, and no hearts spent: a goat does not go back for a second try.)",
+        piece: QUARRY_BELL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'gorm5',
+        title: "Plumb and True",
+        text: "Win 5 army waves on Hard with no hero falling and no hero hired in the run",
+        goal: { kind: 'wavesWon', n: 5, mode: 'army', tier: 1, flawless: true, noHires: true },
+        begin: "Mehh. (The last piece is a plumb-line. She says the quarry only trusts a party that stands straight: five fights on Hard, nobody fallen, nobody hired. She will check it with her horns.)",
+        piece: PLUMB_LINE,
         reward: { chest: 'bronze' },
       },
     ],
@@ -657,9 +827,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'vaelkhar1',
         title: 'Under the Guardians',
-        text: 'Fell 2 Calamity guardians',
-        goal: { kind: 'calGuardian', n: 2 },
-        begin: 'he shed a scale on the floor of every map he flew over on his way in. the guardians sit on them. fell two, and look underneath. they will not like it.',
+        text: 'Fell 2 Calamity guardians with no hero falling',
+        goal: { kind: 'calGuardian', n: 2, flawless: true },
+        begin: 'he shed a scale on the floor of every map he flew over on his way in. the guardians sit on them. fell two, and lose no one doing it. then look underneath. they will not like it.',
         piece: BLACK_SCALE,
         reward: { chest: 'bronze' },
       },
@@ -675,10 +845,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'vaelkhar3',
         title: "A King's Ransom",
-        text: 'Deal 200,000 damage across fights',
-        goal: { kind: 'tally', n: 200000, stat: 'dealt' },
-        begin: "last, a tine of his crown. it was sent to the keep as a deposit and has been spent on something. it will be returned to a party that has dealt a king's ransom of damage. two hundred thousand, give or take a hero.",
+        text: "Deal 200,000 damage across Calamity fights, casting no king's spell in them",
+        goal: { kind: 'tally', n: 200000, stat: 'dealt', mode: 'calamity', noSpells: true },
+        begin: "last, a tine of his crown. it was sent to the keep as a deposit and has been spent on something. it will be returned to a party that has dealt a king's ransom of damage. two hundred thousand, in the Calamity, and no king's spell: he wants it paid in your own coin.",
         piece: CROWN_TINE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'vaelkhar4',
+        title: "The Gate, Properly",
+        text: "Clear the Calamity whole with no heart spent and no king's spell cast",
+        goal: { kind: 'calClear', n: 1, noHeart: true, noSpells: true },
+        begin: "the seal is on the last gate. it comes away when the gate is cleared properly: every map, no heart spent, and the king's own spells left in the cupboard. you have done it once with help. do it once more without.",
+        piece: VIOLET_SEAL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'vaelkhar5',
+        title: "Paid in Kind",
+        text: "Fell 3 Calamity guardians with no hero falling and no ultimate fired",
+        goal: { kind: 'calGuardian', n: 3, flawless: true, noUlts: true },
+        begin: "last page of the ledger. it asks for three more of the guardians, flawless, and no great strikes: a guest's account is settled in the quiet, he says. i think he means it kindly.",
+        piece: OPEN_LEDGER,
         reward: { chest: 'bronze' },
       },
     ],
@@ -693,6 +881,9 @@ export const chainOfEidolon = (eidolon: string): ChainDef | undefined => CHAINS.
 export const PIECES: ReadonlyMap<string, PieceDef> = new Map(CHAINS.flatMap((c) => c.parts.map((p) => [p.piece.id, p.piece] as const)));
 
 /* ------------------------------------------------------------------ the save */
+
+/** Every chain had three parts before the harder chains (Q9) appended two. */
+const LEGACY_PARTS = 3;
 
 /** A chain's lasting state (`Meta.quests.chains[id]`): there once begun. `part` is the part going (the parts' count: every piece found,
  *  ready to bind, or to face its trial first), `progress` its count, `trialWon` once its trial is won, `bound` once the binding is done. */
@@ -714,7 +905,10 @@ export function readChainState(raw: { chains?: unknown; pieces?: unknown }): { c
       const c = chainById(id);
       if (!c || !c.parts.length || !v || typeof v !== 'object') continue;
       const r = v as Partial<ChainState>;
-      const part = Math.max(0, Math.min(c.parts.length, Math.floor(Number(r.part) || 0)));
+      // (Q9: each chain gained two parts after its old three. A save that had already finished the old three (a trial won, or bound)
+      //  counts as finished; one that had only found the three pieces carries on at the first new part)
+      const was = Math.floor(Number(r.part) || 0);
+      const part = Math.max(0, Math.min(c.parts.length, (r.trialWon === true || r.bound) && was >= LEGACY_PARTS ? c.parts.length : was));
       const need = c.parts[part]?.goal.n ?? 0;
       const all = part >= c.parts.length;
       chains[id] = { part, progress: Math.max(0, Math.min(need, Math.floor(Number(r.progress) || 0))), ...(r.trialWon === true && all ? { trialWon: true } : {}), ...(r.bound && all ? { bound: true } : {}) };

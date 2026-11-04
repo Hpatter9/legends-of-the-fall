@@ -17,9 +17,11 @@ import { REPEAT_QUESTS } from './questData/repeat';
 import { BATTLE_QUESTS } from './questData/battles';
 import { TALE_QUESTS } from './questData/tales';
 import { LOST_QUESTS } from './questData/lost';
+import { RETUNE } from './questRetune';
+import { NEW_QUESTS } from './questData/newQuests';
 
 /** Who offers a quest and takes it back. A patron is one of the player's own heroes (the quest's `hero`). */
-export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith' | 'sexton' | 'pawnbroker' | 'lantern' | 'herald' | 'clock' | 'falconer' | 'archivist' | 'lost';
+export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith' | 'sexton' | 'pawnbroker' | 'lantern' | 'herald' | 'clock' | 'falconer' | 'archivist' | 'lost' | 'oswy' | 'teal' | 'pim' | 'widow' | 'sorrel';
 
 /**
  * Where a giver's offers come from. Gwen's own; the notices pinned to the board by strangers; the passersby (one a day, whoever
@@ -27,7 +29,7 @@ export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | '
  * after a fight, not with the day: spoils found on an army's boss, and the rift's voice when a Calamity guardian falls. And the tales
  * (SECRET-HEROES): the hero quests, each told by its own giver, on the board as soon as their story allows (`offerTales`).
  */
-export type GiverSlot = 'gwen' | 'passerby' | 'notice' | 'patron' | 'royal' | 'duchess' | 'spoils' | 'rift' | 'tale';
+export type GiverSlot = 'gwen' | 'passerby' | 'notice' | 'patron' | 'royal' | 'duchess' | 'spoils' | 'rift' | 'tale' | 'campaign';
 
 export interface Giver {
   id: GiverId;
@@ -64,11 +66,17 @@ export const GIVERS: Record<GiverId, Giver> = {
   falconer: { id: 'falconer', name: 'Wren Halloway', title: 'Falconer of the high crags', slot: 'tale' },
   archivist: { id: 'archivist', name: 'Ivy Penhallow', title: "Keeper of the keep's bestiary", slot: 'tale' },
   // (LOST-TECHNIQUES: the four chains that end in a Legendary book; a part with a `hero` is told in that hero's own face and name)
+  // (QUESTS-3: the new givers: the drillmaster's proving grounds, and the tellers of four of the long campaigns)
+  oswy: { id: 'oswy', name: 'Oswy Carne', title: 'Drillmaster, at the tavern\'s back table', slot: 'notice' },
+  teal: { id: 'teal', name: 'Mother Teal', title: 'A fisherwife from the lake shore', slot: 'campaign' },
+  pim: { id: 'pim', name: 'Pim Ashby', title: 'Mapmaker, with ink to the elbows', slot: 'campaign' },
+  widow: { id: 'widow', name: 'Maren Fold', title: 'A farmer\'s widow from the high pastures', slot: 'campaign' },
+  sorrel: { id: 'sorrel', name: 'Sorrel Vane', title: 'An alchemist of battlefield fruit', slot: 'campaign' },
   lost: { id: 'lost', name: 'A lost page', title: 'A technique nobody wrote down', slot: 'tale' },
 };
 
 /** The draws, in order: each slot is drawn from its own side stream (its index here is its salt), so a slot added at the end leaves the others' draws as they were. */
-export const SLOTS: readonly GiverSlot[] = ['gwen', 'passerby', 'notice', 'patron', 'royal', 'duchess', 'spoils', 'rift', 'tale'];
+export const SLOTS: readonly GiverSlot[] = ['gwen', 'passerby', 'notice', 'patron', 'royal', 'duchess', 'spoils', 'rift', 'tale', 'campaign'];
 
 /**
  * How many of a slot's offers the board holds at once, how many days each lasts before it is taken down, and how often a new one
@@ -93,6 +101,8 @@ export const SLOT_RULES: Record<GiverSlot, { cap: number; days: number; every?: 
   rift: { cap: 1, days: 5, after: true },
   // (SECRET-HEROES: a tale is never drawn with the day: its next part goes up as soon as the part before is handed in, and stays)
   tale: { cap: 10, days: 100_000, after: true },
+  // (QUESTS-3: a campaign's first part is drawn now and then, one or two on the board, kept a fortnight; its later parts go up as the part before is handed in, as a tale's do)
+  campaign: { cap: 2, days: 14, every: 4 },
 };
 
 /** When a quest may be offered. */
@@ -163,6 +173,20 @@ export interface Cond {
   noSpells?: boolean;
   /** One of these bosses felled in it. */
   boss?: readonly string[];
+  /** QUESTS-3: no ultimate fired in the fight. */
+  noUlts?: boolean;
+  /** QUESTS-3: no hero hired in the run so far (the run's gold not spent on summoning). */
+  noHires?: boolean;
+  /** QUESTS-3: no heart burnt in the run so far (no wave tried again). With `oneRun`, the whole run. */
+  noHeart?: boolean;
+  /** QUESTS-3: every hero fielded is at this level or lower. */
+  levelCap?: number;
+  /** QUESTS-3: the save's highest-level hero does not fight. */
+  benchBest?: boolean;
+  /** QUESTS-3: none of these heroes fielded. */
+  without?: readonly string[];
+  /** QUESTS-3: exactly this many heroes fielded (beside `most`, at most). */
+  exactly?: number;
 }
 
 /** The heroes' tallies a goal can add up across fights (`fightStats.ts`). */
@@ -255,10 +279,62 @@ export interface QuestDef {
   goal: Goal;
   reward: Reward;
   mood?: Mood;
+  /** QUESTS-3: the slot this quest is offered from, where it is not its giver's own (a campaign told by a giver who also has tales). */
+  slot?: GiverSlot;
+  /** QUESTS-3: more objectives beside `goal`: every one must be done, each with its own bar (the log shows a checklist). */
+  goals?: readonly Goal[];
+  /** QUESTS-3: a few words for each objective (`goal`, then `goals`), for the log's checklist. */
+  steps?: readonly string[];
+  /** QUESTS-3: the objectives (`goal`, then `goals`) must be done one after another. */
+  ordered?: boolean;
+  /** QUESTS-3: every count must come in one army run; a run ending without the quest done starts it again from nothing. */
+  oneRun?: boolean;
+  /** QUESTS-3: done within this many days of taking it, else it fails (it leaves the log and is back on the board after its cooldown). */
+  within?: number;
+  /** QUESTS-3: a count on this many days running (the goal's own count, once a day); its progress is the days in a row. */
+  streak?: number;
+  /** QUESTS-3 (Q4): a quest that was retuned harder keeps what it asked before, for quests taken before the retune (`defFor`). */
+  was?: Was;
+  /** QUESTS-3: the difficulty (1 to 5 stars) and the length tag; unset, `questStars.ts` reads its table. */
+  stars?: number;
+  length?: 'short' | 'long' | 'chain' | 'campaign';
+}
+
+/** What a retuned quest asked before (a quest already taken keeps it until it is handed in or dropped). */
+export interface Was {
+  goal: Goal;
+  text: string;
+}
+
+/** A retune of an existing quest (QUESTS-3, Q4; `questRetune/`): its new goal, riders, words and stars. Its story, giver, needs and ids stay. */
+export interface Retune {
+  stars: number;
+  length: 'short' | 'long' | 'chain' | 'campaign';
+  goal: Goal;
+  goals?: readonly Goal[];
+  steps?: readonly string[];
+  ordered?: boolean;
+  oneRun?: boolean;
+  within?: number;
+  streak?: number;
+  /** The goal in plain words, as `QuestDef.text`. */
+  text: string;
+  /** New lines where the old ones named the old count (a quest's own words are kept otherwise). */
+  offer?: readonly string[];
+  going?: string;
+  done?: readonly string[];
+}
+
+/** A quest with its retune laid over it (the original goal kept as `was`). */
+function retuned(q: QuestDef): QuestDef {
+  const r = RETUNE[q.id];
+  if (!r) return q;
+  const { stars, length, ...rest } = r;
+  return { ...q, ...rest, stars, length, was: { goal: q.goal, text: q.text } };
 }
 
 /** Every quest: each giver's uniques, then the repeatables. */
-export const QUESTS: readonly QuestDef[] = [
+const BASE_QUESTS: readonly QuestDef[] = [
   ...GWEN_QUESTS,
   ...NOTICE_QUESTS,
   ...ROAD_QUESTS,
@@ -274,7 +350,21 @@ export const QUESTS: readonly QuestDef[] = [
   ...TALE_QUESTS,
   // (LOST-TECHNIQUES: the four chains of the Legendary books)
   ...LOST_QUESTS,
+  // (QUESTS-3: the new quests, Q6 to Q8)
+  ...NEW_QUESTS,
 ];
+
+export const QUESTS: readonly QuestDef[] = BASE_QUESTS.map(retuned);
 
 const BY_ID = new Map(QUESTS.map((q) => [q.id, q]));
 export const questById = (id: string): QuestDef | undefined => BY_ID.get(id);
+
+/** For the tests and the tools: run `fn` with extra quests known to `questById` (and so to the log's rules), then forget them. */
+export function withQuests<T>(extra: readonly QuestDef[], fn: () => T): T {
+  for (const q of extra) BY_ID.set(q.id, q);
+  try {
+    return fn();
+  } finally {
+    for (const q of extra) if (!QUESTS.includes(q)) BY_ID.delete(q.id);
+  }
+}

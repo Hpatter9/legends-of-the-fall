@@ -10,7 +10,12 @@ import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { TICK_MS, type Battle, type BattleEvent, type Unit } from './sim/battle';
 import { autoSpellsFor } from './sim/autoCast';
 import { ARMIES, armyUnlocked } from './sim/armies';
-import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { castSpell, canAfford, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
+import { snapSpell } from './sim/spellAim';
+import { castList, schoolOf } from './sim/schools';
+import { armDecree } from './sim/decrees';
+import { fightRanks } from './sim/spellRanks';
+import { bindDecree, refreshDecree } from './decreeHud';
 import {
   autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine, holdPurse, purseLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
@@ -269,6 +274,7 @@ export class StandView {
     const spells = el('div', 'stSpells');
     const mana = el('div', 'stMana');
     mana.innerHTML = '<i><span></span></i><b></b>';
+    bindDecree(mana, () => this.s?.b, () => this.refreshSpells());
     const cards = el('div', 'stCards');
     spells.append(mana, cards);
     const heroes = el('div', 'stHeroes');
@@ -429,6 +435,9 @@ export class StandView {
     if (!s || !startFirstWave(s)) return;
     this.ultm.warm(s.b);
     this.eid.arm(s.b);
+    // (KING-SPELLS batch 2: the ruler's Decree, once a run: the Last Stand is one long fight)
+    armDecree(s.b, schoolOf(settings().ruler).decree);
+    s.b.spells.ranks = fightRanks(this.host.meta().spellbook);
     this.music(s.run.seed);
     this.picked = null;
     this.drawMarks();
@@ -976,7 +985,7 @@ export class StandView {
       const tile = this.tileAtScreen(x, e.clientY);
       if (!tile || !this.s) return;
       if (this.spell) {
-        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
+        if (castSpell(this.s.b, this.spell, ...snapSpell(this.s.b, this.spell, tile[0], tile[1]))) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
         this.spell = null;
         this.refreshSpells();
         return;
@@ -1626,7 +1635,7 @@ export class StandView {
   private buildSpells(): void {
     const cards = this.parts.cards;
     cards.replaceChildren();
-    for (const id of this.host.meta().spellbook.equipped) {
+    for (const id of castList(this.host.meta().spellbook)) {
       const sp = SPELLS[id];
       const card = el('button', 'stSpell');
       card.dataset.id = id;
@@ -1648,7 +1657,7 @@ export class StandView {
   private setAutoOn(b: Battle): void {
     const on = !!this.host.meta().ultAuto;
     b.autoUlt = on;
-    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, this.host.meta().spellbook.equipped);
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.host.meta().spellbook));
   }
 
   private refreshSpells(): void {
@@ -1657,7 +1666,8 @@ export class StandView {
     const b = s.b;
     if (this.spell && !canAfford(b, this.spell)) this.spell = null;
     ((this.parts.mana.querySelector('i span')) as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
-    this.text('mana', this.parts.mana.querySelector('b'), `${Math.floor(b.spells.mana)}/${MANA_MAX}`);
+    this.text('mana', this.parts.mana.querySelector('b'), manaText(b.spells));
+    refreshDecree(this.parts.mana, b);
     for (const card of this.parts.cards.children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
       // (Resurrect has nobody to lift in the Last Stand: the fallen stay down)
@@ -1707,7 +1717,7 @@ export class StandView {
     p.bar.hidden = s.phase === 'deploy';
     if (s.phase === 'deploy') this.drawTray();
     p.pause.hidden = s.phase !== 'wave' && s.phase !== 'break';
-    p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
+    p.spells.hidden = !castList(this.host.meta().spellbook).length || s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
     // (the orbs' row also holds the Auto switch: it shows while the hero rows do)
     p.orbs.hidden = s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
     p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';

@@ -1,5 +1,5 @@
-// The Spellbook: the king's loadout. Three slots, a power-budget meter, and every spell with its mana cost, power,
-// cooldown and text; one not yet known says where it comes from (the Mage Tower, a milestone, or a chest's scroll: spells
+// The Spellbook: the king's loadout under the Schools of the Crown (KING-SPELLS batch 2, `sim/schools.ts`): the ruler's school and its
+// Decree, three school slots and the open slot, and every spell with its mana cost, cooldown, text and schools; one not yet known says where it comes from (the Mage Tower, a milestone, or a chest's scroll: spells
 // are not bought; `sim/spellSources.ts`). Tap a spell to equip or unequip it. Self-contained:
 // `spellbookView()` builds the book's body (the Spells tab's library puts it on a lectern) and `openSpellbook()` still shows it as an overlay. `bindSpellbook` gives it the Meta once (and
 // a callback for when something changed, to save and refresh the page). All the rules are in `sim/spells.ts`.
@@ -7,7 +7,11 @@
 import { spellIconHtml } from './spellIcons';
 import type { Meta } from './sim/meta';
 import { spellLock } from './sim/spellSources';
-import { budgetOf, equipBlock, equipSpell, LOADOUT_SIZE, powerOf, SPELLS, SPELL_IDS, unequipSpell, type SpellId } from './sim/spells';
+import { SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
+import { castList, equipBlock, equipSpell, fitSchool, schoolOf, schoolsOfSpell, SCHOOL_SLOTS, unequipSpell } from './sim/schools';
+import { DECREES } from './sim/decrees';
+import { marksEarned, marksFree, rankBlock, rankIn, rankUp } from './sim/spellRanks';
+import { RANK_MAX, RIDERS } from './sim/spells';
 
 const CSS = `
 #spellbook { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgb(var(--s1-rgb) / 0.97); overflow-y: auto; touch-action: pan-y; color: var(--text); }
@@ -15,11 +19,20 @@ const CSS = `
 #spellbook header { display: flex; align-items: center; gap: 10px; }
 #spellbook h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold, var(--e7)); }
 .sbBody { display: flex; flex-direction: column; gap: 8px; max-width: 480px; width: 100%; margin: 0 auto; }
-.sbMeter { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.sbMeter i { flex: 1; height: 10px; background: var(--s3); border: 1px solid var(--s7); border-radius: 5px; overflow: hidden; }
-.sbMeter i span { display: block; height: 100%; background: linear-gradient(var(--e8), var(--e5)); }
-.sbMeter.full i span { background: linear-gradient(var(--e8), var(--r4)); }
-.sbSlots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.sbSchool { display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px solid var(--gold, var(--e7)); border-radius: 6px; background: var(--s3); font-size: 12px; }
+.sbSchool b { font-size: 14px; color: var(--gold, var(--e7)); }
+.sbSchool span { color: var(--text-dim); }
+.sbSlots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.sbSlot.open { border-color: var(--b4); }
+.sbSlot small { display: block; font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
+.sbCard .tags { color: var(--e8); font-size: 11px; }
+.sbMarks { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); }
+.sbMarks b { color: var(--gold, var(--e7)); font-size: 14px; }
+.sbCard .rank { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--b4); }
+.sbCard .rank i { font-style: normal; letter-spacing: 2px; color: var(--gold, var(--e7)); }
+.sbCard .rider { font-size: 11px; color: var(--text-dim); }
+.sbCard .rider.on { color: var(--e8); }
+.sbCard .acts { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .sbSlot { min-height: 44px; padding: 6px; border: 1px dashed var(--s7); border-radius: 6px; background: var(--s3); color: inherit; font: inherit; font-size: 12px; }
 .sbSlot.on { border-style: solid; border-color: var(--gold, var(--e7)); }
 .sbSlot em { display: block; font-style: normal; color: var(--b4); font-size: 11px; }
@@ -40,16 +53,17 @@ const CSS = `
 
 let meta: Meta | null = null;
 let changed: () => void = () => {};
+/** The chosen ruler's id (a page setting: the school follows it). */
+let rulerId: () => string = () => '';
 let root: HTMLElement | null = null;
 let styled = false;
 
-/** Give the spellbook the Meta to read and change, and what to call after a change (save, redraw the page). */
-export function bindSpellbook(m: Meta, onChange: () => void): void {
+/** Give the spellbook the Meta to read and change, what to call after a change (save, redraw the page), and the chosen ruler. */
+export function bindSpellbook(m: Meta, onChange: () => void, ruler: () => string = () => ''): void {
   meta = m;
   changed = onChange;
+  rulerId = ruler;
 }
-
-const pips = (n: number) => '●'.repeat(n) + '○'.repeat(5 - n);
 
 function addStyle(): void {
   if (styled) return;
@@ -81,47 +95,66 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
     const m = meta;
     const l = m.spellbook;
     body.replaceChildren();
-    const used = powerOf(l.equipped);
-    const budget = budgetOf(m);
-    body.append(el('div', `sbMeter${used >= budget ? ' full' : ''}`, `<span>Power</span><i><span style="width:${Math.min(100, (used / budget) * 100)}%"></span></i><b>${used}/${budget}</b>`));
+    const sc = schoolOf(rulerId());
+    fitSchool(l, sc.id);
+    const dc = DECREES[sc.decree];
+    body.append(el('div', 'sbSchool', `<b>School of ${sc.name}</b><span>Your ruler's school: three slots take its spells, the open slot any spell you know. Change ruler in Settings to change school.</span><span><b>Decree: ${dc.name}</b> · ${dc.text}. Once a fight, when its meter (under the mana) is full: tap the mana.</span>`));
 
     const slots = el('div', 'sbSlots');
-    for (let i = 0; i < LOADOUT_SIZE; i++) {
-      const id = l.equipped[i];
-      const slot = el('button', `sbSlot${id ? ' on' : ''}`, id ? `${spellIconHtml(id)}<b>${SPELLS[id].name}</b><em>${SPELLS[id].cost} mana · power ${SPELLS[id].power}</em>` : '<span>Empty</span>');
-      if (id) slot.addEventListener('click', () => act(() => unequipSpell(m, id), ''));
-      slots.append(slot);
-    }
+    const slot = (id: SpellId | undefined, label: string, open: boolean) => {
+      const b = el('button', `sbSlot${id ? ' on' : ''}${open ? ' open' : ''}`, `<small>${label}</small>${id ? `${spellIconHtml(id)}<b>${SPELLS[id].name}</b><em>${SPELLS[id].cost} mana</em>` : '<span>Empty</span>'}`);
+      if (id) b.addEventListener('click', () => act(() => unequipSpell(l, id), ''));
+      slots.append(b);
+    };
+    for (let i = 0; i < SCHOOL_SLOTS; i++) slot(l.equipped[i], sc.name, false);
+    slot(l.open, 'Open', true);
     body.append(slots, el('div', 'sbNote', note));
+    body.append(el('div', 'sbMarks', `<b>${marksFree(m)}</b><span>school marks free of ${marksEarned(m)} earned: one for each Mage Tower level and each army cleared. A mark raises a spell a rank (to ${RANK_MAX}).</span>`));
     if (l.owned.length < SPELL_IDS.length) body.append(el('div', 'sbHint', 'Spells are not bought: the Mage Tower teaches them as it rises, the grand ones are earned in battle, and a gold chest may hold a scroll of any you lack.'));
 
-    // equipped first, then the owned, then the ones not yet known (the Mage Tower's by level, then the milestones)
-    const rank = (id: SpellId) => (l.equipped.includes(id) ? 0 : l.owned.includes(id) ? 1 : 2);
+    // equipped first, then this school's known, the other known, then the ones not yet known (the Mage Tower's by level, then the milestones)
+    const on = castList(l);
+    const rank = (id: SpellId) => (on.includes(id) ? 0 : l.owned.includes(id) ? (sc.spells.includes(id) ? 1 : 2) : 3);
     const order = [...SPELL_IDS].sort((a, b) => rank(a) - rank(b) || (spellLock(m, a)?.rank ?? 0) - (spellLock(m, b)?.rank ?? 0));
     for (const id of order) {
       const sp = SPELLS[id];
       const owned = l.owned.includes(id);
-      const on = l.equipped.includes(id);
-      const card = el('div', `sbCard${on ? ' on' : ''}${owned ? '' : ' locked'}`);
-      card.append(el('div', 'top', `${spellIconHtml(id)}<b>${sp.name}</b><span>${pips(sp.power)}</span>`));
-      card.append(el('div', 'stats', `${sp.cost} mana · power ${sp.power} · ${sp.cooldownMs / 1000}s cooldown`));
+      const isOn = on.includes(id);
+      const card = el('div', `sbCard${isOn ? ' on' : ''}${owned ? '' : ' locked'}`);
+      card.append(el('div', 'top', `${spellIconHtml(id)}<b>${sp.name}</b>`));
+      card.append(el('div', 'stats', `${sp.cost} mana · ${sp.cooldownMs / 1000}s cooldown`));
       card.append(el('div', 'text', sp.text));
-      const lock = spellLock(m, id);
+      const rk = rankIn(l, id);
+      card.append(el('div', 'rank', `<span>Rank ${rk} of ${RANK_MAX}</span><i>${'◆'.repeat(rk)}${'◇'.repeat(RANK_MAX - rk)}</i>${rk > 1 ? `<span>${rk === 2 ? '20' : '40'}% stronger, ${rk === 2 ? '15' : '30'}% quicker to cool</span>` : ''}`));
+      card.append(el('div', `rider${rk >= RANK_MAX ? ' on' : ''}`, `Rank ${RANK_MAX}: ${RIDERS[id]}`));
+      const schools = schoolsOfSpell(id).map((x) => x.name);
+      card.append(el('div', 'tags', schools.length ? `School of ${schools.join(', ')}${sc.spells.includes(id) ? ' (yours)' : ''}` : 'No school yet: the open slot'));
+      const lock = owned ? undefined : spellLock(m, id);
       if (lock) {
         card.append(el('div', 'how', `${lock.line}${lock.need > 1 ? ` · ${lock.now}/${lock.need}` : ''}${lock.need > 1 ? `<i><span style="width:${(lock.now / lock.need) * 100}%"></span></i>` : ''}`));
         body.append(card);
         continue;
       }
       const btn = el('button') as HTMLButtonElement;
-      if (on) {
+      if (isOn) {
         btn.textContent = 'Unequip';
-        btn.addEventListener('click', () => act(() => unequipSpell(m, id), ''));
+        btn.addEventListener('click', () => act(() => unequipSpell(l, id), ''));
       } else {
-        btn.textContent = 'Equip';
-        const block = equipBlock(m, id);
-        btn.addEventListener('click', () => act(() => equipSpell(m, id), block ?? ''));
+        const block = equipBlock(l, id, sc.id);
+        btn.textContent = sc.spells.includes(id) && l.equipped.length < SCHOOL_SLOTS ? 'Equip' : 'Equip in the open slot';
+        btn.addEventListener('click', () => act(() => equipSpell(l, id, sc.id), block ?? ''));
       }
-      card.append(btn);
+      const acts = el('div', 'acts');
+      if (rk < RANK_MAX) {
+        const up = el('button', 'rankUp', 'Rank up · 1 mark') as HTMLButtonElement;
+        const why = rankBlock(m, id);
+        up.disabled = !!why;
+        if (why) up.title = why;
+        up.addEventListener('click', () => act(() => rankUp(m, id), why ?? ''));
+        acts.append(up);
+      }
+      acts.append(btn);
+      card.append(acts);
       body.append(card);
     }
     onDraw();

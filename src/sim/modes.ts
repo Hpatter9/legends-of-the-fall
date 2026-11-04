@@ -12,7 +12,7 @@ import { dailyBossName, dailyChestSeed, dailyWaveCrowns, DAILY_WAVES } from './d
 import { kindPower, powerOf } from './power';
 import { levelOfKind } from './levels';
 import { ULT_LEVEL } from './abilities';
-import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
+import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, tierOfRun, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { RIFT_ROWS } from './rift';
@@ -24,6 +24,7 @@ import { HEROES } from './units';
 import type { Meta } from './meta';
 import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
+import { noteWeakness, type WeakNote } from './weakness';
 import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
 import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
@@ -213,7 +214,7 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle } & FightExtra): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
@@ -226,6 +227,8 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   noteHeart(m, run.relics);
   // (the codex notes the foes this fight met and felled)
   if (fight.battle) noteFoes(m, fight.battle);
+  // (DEPTH-BUILD: the bosses' weaknesses: clues by meeting, escorts and losing; a Hunter's mark for a win with one used; not for a quest's stand-in)
+  if (fight.battle && !quest) fight.weak = noteWeakness(m, fight.battle, fight.won, tierOfRun(run));
   // (and a combo that went off is seen, for the codex)
   if (fight.battle) noteCombos(m, fight.battle);
   const ctx = { battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m };

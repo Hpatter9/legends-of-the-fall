@@ -119,16 +119,16 @@ test('fresh from the field: a found piece worn in an army run takes the lasting 
   const piece = itemStats({ base: 'claymore', rarity: 2, level: 5 }, 'knight');
   const s = runKitStats(m, run, 'knight', equipStats)!;
   assert.ok(Math.abs(s.atk - piece.atk * FIELD_BOOST.army) < 1e-9, 'the find, boosted; the Iron Sword sits out');
-  assert.equal(slotTaken(run, 'knight', 'weapon'), true);
+  assert.equal(slotTaken(run, 'knight', 'main'), true);
   // (the lasting piece a find sits in for does not wear; the find does)
   settleWear(m, [{ kind: 'knight', fell: false }], false, (k, slot) => slotTaken(run, k, slot));
   assert.equal(home.wear, undefined);
   settleRunWear(run, [{ kind: 'knight', fell: true }]);
-  assert.equal(foundIn(run, 'knight', 'weapon')!.wear, 1);
+  assert.equal(foundIn(run, 'knight', 'main')!.wear, 1);
   // (the run ends: the find stays worn for real, the old piece goes to the stash, and it is a plain piece now)
   const back = settleFinds(m, run)!;
   assert.equal(back.pieces.length, 1);
-  const worn = wornIn(m, 'knight', 'weapon')!;
+  const worn = wornIn(m, 'knight', 'main')!;
   assert.equal(worn.base, 'claymore');
   assert.equal(worn.wear, 1, 'its wear came home with it');
   assert.equal(worn.found, undefined);
@@ -161,8 +161,8 @@ test('Equip best in a run: a find goes on only when the whole kit scores better 
   found(run, 910, 'ironSword', 1, 1);
   found(run, 911, 'runedBlade', 2, 4);
   assert.equal(equipBestReal(run, m, ['knight', 'archer']), 1);
-  assert.equal(foundIn(run, 'knight', 'weapon'), undefined, 'the Legendary claymore stays');
-  assert.ok(foundIn(run, 'archer', 'weapon'), 'the archer takes the better find');
+  assert.equal(foundIn(run, 'knight', 'main'), undefined, 'the Legendary claymore stays');
+  assert.ok(foundIn(run, 'archer', 'main'), 'the archer takes the better find');
   assert.equal(equipBestReal(run, m, ['knight', 'archer']), 0, 'a second go changes nothing');
   const ids = Object.values(run.worn ?? {}).flatMap((s) => Object.values(s));
   assert.equal(new Set(ids).size, ids.length, 'no piece on two kinds');
@@ -174,7 +174,7 @@ test('merges and partings leave the finds where they are: worn by the kind, not 
   wearFound(run, 'knight', 920);
   merge(run, run.roster[0].id, run.roster[1].id);
   assert.equal(run.roster.length, 1);
-  assert.equal(foundIn(run, 'knight', 'weapon')?.id, 920);
+  assert.equal(foundIn(run, 'knight', 'main')?.id, 920);
   assert.equal(run.pack!.length, 1);
 });
 

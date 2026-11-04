@@ -4,7 +4,7 @@
 // raise the kind's rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM;
 // every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
 
-import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
+import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { DAILY_WAVES } from './daily';
 import { dailyStarsMax } from './dailyThemes';
@@ -14,6 +14,7 @@ import { readStarter, starterPacks, type Starter } from './starter';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
 import { readCart, readEquipment, readEquipped, type CartPiece, type EquipSlot, type Equipment } from './equipment';
+import { GEAR_V, migrateGear, type GearNote } from './gearMigrate';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTomes, type TomeCounts } from './tomes';
@@ -22,6 +23,7 @@ import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
 import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
+import { readWeak, type WeakRecord } from './weakness';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
 import { readTickets } from './autoReplay';
@@ -120,6 +122,10 @@ export interface Meta {
   equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** The next equipment id. */
   nextItem?: number;
+  /** SEVEN-SLOT GEAR: the gear version the save is on (`gearMigrate.ts`; missing is a save from before seven slots, moved over once). */
+  gearV?: number;
+  /** What moving to seven slots did, for the hero sheet's lines (each shown once; `gearMigrate.ts`). */
+  gearNote?: GearNote;
   /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
    *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
   cart?: CartPiece[];
@@ -135,6 +141,8 @@ export interface Meta {
   talents?: Record<string, KindTalents>;
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
   codex?: CodexRecord;
+  /** DEPTH-BUILD: what is known of each boss's weakness and the Hunter's marks won (`weakness.ts`); missing is nothing known. */
+  weak?: Record<string, WeakRecord>;
   codexClaimed?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
@@ -203,6 +211,10 @@ export interface StashChest {
   bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
   first?: boolean;
+  /** QUESTS-3: a chest that holds no summoning stones (a Last Stand re-climb's, a quest of one or two stars's). */
+  dry?: boolean;
+  /** QUESTS-3: a chest that holds half its stones, rounded up (a Calamity clear's). */
+  half?: boolean;
 }
 
 export interface DailyEntry {
@@ -238,7 +250,7 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the two starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {}, gearV: GEAR_V });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -446,8 +458,11 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.unlock = readUnlock(m.unlock, m.unlocked);
       m.unlockDry = Math.max(0, (m.unlockDry ?? 0) | 0);
       m.castle = readCastle(m.castle);
-      m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
+      m.spellbook = readLoadout(m.spellbook);
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
+      // (DEPTH-BUILD: the Chapel is levelled; the old flag reads as level 1, and a level keeps the flag set, which the spellbook reads)
+      if (m.chapel) m.castle.chapel = Math.max(1, m.castle.chapel ?? 0);
+      else if ((m.castle.chapel ?? 0) > 0) m.chapel = true;
       m.works = readWorks(m.works);
       // (saves from before shards have none)
       const shards: Record<string, number> = {};
@@ -474,11 +489,13 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.claimed = Array.isArray(m.claimed) ? m.claimed.filter((a) => typeof a === 'string' && m.achievements.includes(a)) : [...m.achievements];
       // (saves from before equipment have none)
       m.equipment = readEquipment(m.equipment);
-      m.equipped = readEquipped(m.equipped, m.equipment);
       m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
       // (RUN-GEAR: the cart's pieces; a save from before has none)
       m.cart = readCart(m.cart);
       if (!m.cart.length) delete m.cart;
+      // (SEVEN-SLOT GEAR: a save from before seven slots is moved over once: `gearMigrate.ts`)
+      if (m.gearV !== GEAR_V) migrateGear(m);
+      m.equipped = readEquipped(m.equipped, m.equipment);
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)
@@ -499,6 +516,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.opened = Array.isArray(m.opened) ? m.opened.filter((x) => typeof x === 'string') : grandfather(m);
       // (saves from before the codex have none)
       m.codex = readCodex(m.codex);
+      m.weak = readWeak(m.weak);
+      if (!m.weak) delete m.weak;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)
       delete (m as { codexPaid?: unknown }).codexPaid;

@@ -473,3 +473,36 @@ test('an old saved settings object with the summoning-scene switch is read witho
   assert.equal(s.cinematics, true);
   assert.equal('summonScene' in DEFAULTS, false);
 });
+
+// (CINE-STORY, docs/notes/cine-story.md: the story scenes follow the opening's rules)
+test('a story scene keeps one backdrop from its first shot to its last, and no foe is a silhouette', async () => {
+  const { QUEST_BATTLES, TALE_BATTLES, LOST_BATTLES } = await import('../src/sim/questBattles');
+  // (the lands a scene stands in, in order; a shot that names the land it is already on changes nothing)
+  const looksOf = (sc: Scene): (string | undefined)[] => sc.shots.reduce<(string | undefined)[]>((l, s) => (s.look && s.look !== l[l.length - 1] ? [...l, s.look] : l), []);
+  // (the functional cut-ins and the castle popup are not story scenes)
+  const functional = (sc: Scene): boolean => !!sc.short || sc.family === 'form' || sc.family === 'oath' || sc.family === 'oathcut' || sc.family === 'castle';
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    if (functional(sc)) continue;
+    assert.deepEqual(looksOf(sc), [sc.shots[0].look], `${id}: the backdrop changes mid-scene`);
+  }
+  const scenes: Scene[] = [];
+  for (const q of [...QUEST_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES]) {
+    const cast = q.cast.map((s) => s.heroes[0]);
+    scenes.push(q.before(cast), q.after(cast));
+  }
+  for (const sc of scenes) {
+    assert.deepEqual(looksOf(sc), [sc.shots[0].look], `${sc.id}: the backdrop changes mid-scene`);
+    // (a silhouette is allowed only on a hero a tale keeps secret: "The stranger")
+    for (const [k, m] of Object.entries(sc.cast)) if (m.shade) assert.equal(m.name, 'The stranger', `${sc.id}: ${k} is a silhouette`);
+  }
+});
+
+test('no story line speaks to the player', () => {
+  const fourth = /\b(tap|click|button|the player|you are the king|that is you)\b/i;
+  for (const id of SCENE_ORDER) {
+    const sc = SCENES[id];
+    if (id === 'opening') continue;
+    for (const s of sc.shots) for (const l of s.lines ?? []) assert.ok(!fourth.test(l.text), `${id}: ${l.text}`);
+  }
+});
