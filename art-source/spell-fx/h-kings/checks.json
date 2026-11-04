@@ -1,0 +1,632 @@
+{
+  "wallOfFire": {
+    "size": [
+      2048,
+      768
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          260340,
+          697495,
+          1147740,
+          1896722,
+          2325714,
+          1955689,
+          288053,
+          9762
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          2789317,
+          3701282,
+          3701643,
+          2992739,
+          1966105,
+          767292,
+          165227,
+          3533
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "stand",
+        "kind": "loop",
+        "frames": 6,
+        "alpha_mass": [
+          4037856,
+          3908613,
+          3922319,
+          3937069,
+          3928102,
+          3920252
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "4b11ffa431b02e67463112e431694de6ac1f3746bcdac59f60fcc6c17a452d66"
+  },
+  "iceWall": {
+    "size": [
+      2048,
+      768
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          925144,
+          1261067,
+          2189343,
+          2860766,
+          3043907,
+          1806666,
+          592851,
+          54872
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          3840169,
+          4065766,
+          3973150,
+          3503750,
+          2340926,
+          1100054,
+          301749,
+          33365
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "stand",
+        "kind": "loop",
+        "frames": 6,
+        "alpha_mass": [
+          3643633,
+          3682216,
+          3708227,
+          3630611,
+          3569415,
+          3530112
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "4d290bc4424712c69603833b2b3257b131d4ea37e29d64dec5e530a6e4af37cf"
+  },
+  "shatter": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          2153767,
+          2287544,
+          2468200,
+          2585002,
+          2326766,
+          1444763,
+          421581,
+          41871
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          2367002,
+          3010253,
+          3484803,
+          2693862,
+          1513894,
+          620088,
+          133133,
+          3209
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "48e53a6b25b2036c48d544a57cd1345bd7b9ae77b4c78376145fc5ccbb3a74df"
+  },
+  "gale": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          563482,
+          1049121,
+          1383572,
+          1926916,
+          2099354,
+          713548,
+          107043,
+          3951
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          1085574,
+          2408579,
+          3232435,
+          2288764,
+          1173404,
+          343355,
+          43735,
+          2143
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "07afd0b1f449b7252ddd15c478bce1104b45afdc47ceed4c51665f6f41ea292f"
+  },
+  "thunderclap": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          492241,
+          958247,
+          1863961,
+          2758991,
+          2826241,
+          1297260,
+          195802,
+          2575
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          907041,
+          1887569,
+          2342901,
+          2154140,
+          1282475,
+          487410,
+          74955,
+          1008
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "21a6b377991b097562d84c878a749c9155204eef0646c0d20e101cfa6322d36c"
+  },
+  "thornSnare": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          83956,
+          306434,
+          966447,
+          2093864,
+          1085153,
+          307353,
+          26046,
+          387
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          397041,
+          928376,
+          1808069,
+          2742719,
+          1336407,
+          271479,
+          24685,
+          138
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "ea334d5de40001aa24e8d2afa9dfc411beea93c9de0c11c17242bc698f65023a"
+  },
+  "charm": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          371132,
+          909230,
+          1835054,
+          3231810,
+          1897548,
+          764988,
+          174612,
+          9326
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          270598,
+          942045,
+          2088991,
+          3677560,
+          1709028,
+          495308,
+          37940,
+          195
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "30acfc081d81855641e2eda518d4d2b7c82364f38425d975513c6a931778b0d8"
+  },
+  "foresight": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          107386,
+          703199,
+          1479609,
+          2805024,
+          1885407,
+          763346,
+          210226,
+          7375
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          776260,
+          1703356,
+          2985846,
+          4365374,
+          3081997,
+          1457133,
+          284560,
+          1464
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "5e0d8f6e87e6bd4251a641527dd4326fd86f795bc4cd5f7cb8783bb1dd246058"
+  },
+  "sunbeam": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          43370,
+          370671,
+          1390946,
+          2646104,
+          1654204,
+          419215,
+          22453,
+          112
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          235089,
+          750181,
+          1440153,
+          2325230,
+          1133012,
+          272896,
+          19754,
+          440
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "4f394dfb07f596c8d65f4b95a374434b6cd57344837666433e81affc80fff4a2"
+  },
+  "venomFang": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          59642,
+          242827,
+          838040,
+          2317384,
+          1004637,
+          203103,
+          6806,
+          29
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          146310,
+          441558,
+          1051872,
+          2343399,
+          805720,
+          121283,
+          5312,
+          21
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "37a7f8f2058f1f65b9952fc296e3f6b740e13038c584dd51ecd90ebd3f1a863d"
+  },
+  "mirage": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          316173,
+          824779,
+          1503677,
+          2241950,
+          2657679,
+          1261008,
+          173891,
+          8306
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          2301967,
+          2219491,
+          1588477,
+          934216,
+          348594,
+          65492,
+          4942,
+          9461
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "aff00c95397ba8923bce57314a946d855e2f3feab34a17752cf81ab4bb170a53"
+  },
+  "drainLife": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          372056,
+          433988,
+          734765,
+          1143653,
+          1050752,
+          309075,
+          71242,
+          10202
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          871137,
+          1245114,
+          1106812,
+          685066,
+          274785,
+          82347,
+          25675,
+          2862
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "6a6054f1572d9601fb6b305d0bb6fcdb17282a73bba70f2f9eadca516ac0b3b9"
+  },
+  "boneWall": {
+    "size": [
+      2048,
+      768
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          701459,
+          1156880,
+          1797266,
+          2500107,
+          2636300,
+          1364696,
+          419760,
+          43250
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          3896991,
+          3722356,
+          2925793,
+          2592964,
+          1871993,
+          781673,
+          223274,
+          33815
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "stand",
+        "kind": "loop",
+        "frames": 6,
+        "alpha_mass": [
+          3223232,
+          3253421,
+          3279653,
+          3221652,
+          3212738,
+          3176079
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "d203a8ed7dd1d1563a13152b5f0b75f6c448af32ed416264ddb5ad203ea6f800"
+  },
+  "raiseDead": {
+    "size": [
+      2048,
+      512
+    ],
+    "rows": [
+      {
+        "part": "cast",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          395992,
+          440044,
+          663842,
+          957512,
+          1232134,
+          476385,
+          139086,
+          24699
+        ],
+        "clear_margin_px": 21
+      },
+      {
+        "part": "impact",
+        "kind": "once",
+        "frames": 8,
+        "alpha_mass": [
+          946146,
+          899773,
+          917864,
+          659672,
+          367615,
+          174149,
+          35553,
+          3702
+        ],
+        "clear_margin_px": 21
+      }
+    ],
+    "icon": "256x256 RGBA; transparent corners",
+    "sha256": "c3d3313b949a475b95b2bdb3a50e8b111eb8e931c5b47cb41fb6fc9395e062be"
+  }
+}

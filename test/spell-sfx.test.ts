@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { addUnit, startBattle, type Battle, type BattleEvent } from '../src/sim/battle';
-import { castSpell, METEOR_MS, SHOWER_GAP, SPELL_IDS, SPELLS, type SpellId } from '../src/sim/spells';
+import { castSpell, soundOf, METEOR_MS, SHOWER_GAP, SPELL_IDS, SPELL_SOUND, SPELLS, type SpellId } from '../src/sim/spells';
 import { CUES, cuesFor, spellCues } from '../src/render/soundRules';
 import { NO_TILE_SPELLS, panOfEvent } from '../src/render/audioRules';
 import { SPELL_SFX_FILES, type SpellSfxId } from '../src/render/spellSfxManifest';
@@ -27,12 +27,17 @@ function arena(): Battle {
     const f = addUnit(b, 'skeleton', u, v);
     f.hp = f.maxHp = 5000;
   }
+  // (a foe fallen at (5, 4), for Raise Dead: KING-SPELLS batch 4)
+  const dead = addUnit(b, 'skeleton', 5, 4);
+  dead.alive = false;
+  dead.hp = 0;
   return b;
 }
 
 /** Where to cast each: on the foes for harm, the heroes for help, the fallen for Resurrect, an empty tile for Blink and the wolves. */
 const TILE: Partial<Record<SpellId, [number, number]>> = {
   heal: [3, 6], shield: [3, 6], haste: [3, 6], cleanse: [3, 6], renewal: [3, 6], resurrect: [3, 5], blink: [6, 4], wolves: [6, 4],
+  foresight: [3, 6], mirage: [6, 4], icewall: [1, 4], bonewall: [1, 4], raisedead: [5, 4],
 };
 
 /** Casts `id` and returns the events it leaves for the next tick. */
@@ -65,8 +70,11 @@ test('every king\'s spell has its own cast and its own effect, and both files ex
     // (in the stereo field, never past the engine's limit)
     for (const p of parts) assert.ok(Math.abs(p.pan) <= 0.6, `${id} pan`);
   }
-  assert.equal(casts.size, SPELL_IDS.length, 'no two spells share a cast');
-  assert.equal(effects.size, SPELL_IDS.length, 'no two spells share an effect');
+  // (the first 21 have sounds of their own; the schools' new spells borrow theirs until batch 5, KING-SPELLS batch 4: an owner-approved change)
+  const borrowed = Object.keys(SPELL_SOUND).length;
+  assert.equal(casts.size, SPELL_IDS.length - borrowed, 'no two of the first spells share a cast');
+  assert.equal(effects.size, SPELL_IDS.length - borrowed, 'no two of the first spells share an effect');
+  for (const id of Object.keys(SPELL_SOUND) as SpellId[]) assert.equal(castOf(id), castOf(soundOf(id)), `${id} borrows its cast`);
 });
 
 test('the effects are timed to the spells: the meteor lands on its fall, each of the shower\'s five on its own', () => {

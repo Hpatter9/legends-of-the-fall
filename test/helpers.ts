@@ -3,6 +3,8 @@
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle, type Stage } from '../src/sim/battle';
 import { HEROES } from '../src/sim/units';
+import type { Run } from '../src/sim/run';
+import { allRunes } from '../src/sim/runes';
 
 /** A fight on the seed's board, against `band`, with all five heroes placed on the first free tiles of their rows, front row first. */
 export function readyBattle(seed: number, band?: string | readonly string[], stage?: Stage): Battle {
@@ -13,3 +15,6 @@ export function readyBattle(seed: number, band?: string | readonly string[], sta
   HEROES.forEach((id, i) => place(b, id, ...spots[(i * 3) % spots.length]));
   return b;
 }
+
+/** What a run has found, by id: its pieces (a run from before runes) and its runes, worn or in the bag (SEVEN-SLOT GEAR batch 4). */
+export const foundOf = (run: Run): number[] => [...(run.pack ?? []).map((x) => x.id), ...(run.runes ? allRunes(run.runes).map((r) => r.id) : [])];

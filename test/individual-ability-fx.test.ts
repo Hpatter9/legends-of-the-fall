@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cleanAtlasCell } from '../src/render/atlasCell';
-import { KITS, keyOf } from '../src/sim/abilities';
+import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
 import { SPELL_IDS } from '../src/sim/spells';
 import { SIGNATURES } from '../src/render/signatures';
 import { SPELL_SIGNATURES } from '../src/render/spellSignatures';
@@ -13,10 +13,12 @@ import type { Family } from '../src/render/fxRules';
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, number[]>;
 
 test('every actual hero, ultimate, enemy skill and king spell has individual authored artwork', () => {
-  const names = new Set(Object.values(KITS).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
+  // (FOE-STYLES: a common foe's kit has no skill)
+  const names = new Set(Object.values(KITS).filter(hasSkill).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
   assert.equal(names.size, 108);
   const expected = [...names].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
-  assert.equal(expected.length, 129);
+  // (108 skills and ultimates and the king's 35 spells: KING-SPELLS batch 5 painted the schools' fourteen, docs/notes/king-spells-b5.md)
+  assert.equal(expected.length, 143);
   assert.deepEqual(Object.keys(ABILITY_LOOKS).sort(), expected.sort());
   assert.equal(new Set(ABILITY_ART.map(row => row.id)).size, expected.length);
   assert.equal(new Set(ABILITY_ART.map(row => abilitySource(row.id))).size, expected.length, 'different names must resolve to different source cells');

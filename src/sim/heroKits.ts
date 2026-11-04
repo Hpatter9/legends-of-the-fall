@@ -17,6 +17,7 @@ import { skillShare, skillStatOf } from './statPower';
 import { UNITS } from './units';
 import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
+import { comingHeroKits } from './kits/vampires';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
 import { CLASS_RANGE, CLASS_WEIGHT, type SkillClass } from './skillRules';
@@ -157,7 +158,7 @@ export function heroKitOf(u: Unit): HeroKit | undefined {
   if (u.side !== 'hero' || u.owner !== undefined || u.kit) return undefined;
   if (UNITS[u.def]?.summon) return undefined;
   // (a hero with skills from books in its slots: its kit with those two, `books.ts`)
-  const kit = u.book ? kitWithLoadout(u.def, u.book) : HERO_KITS()[u.def];
+  const kit = u.book ? kitWithLoadout(u.def, u.book) : (HERO_KITS()[u.def] ?? comingHeroKits()[u.def]);
   // (and its skills at the levels they have reached by use, `skillLevels.ts`; looked up once a fighter, as this is read every tick)
   if (!kit || !u.skillLv) return kit;
   const had = levelled.get(u.skillLv);
@@ -183,7 +184,8 @@ let poolKinds: Record<Pool, string[]> | undefined;
 /** A hero kind's pool at a level, rank, grade and extra: which it is, its top in points and how much faster it fills, against the roster's
  *  mean for that pool at that level (the fight and the page read the same numbers). Undefined for a kind with no kit or no profile. */
 export function poolNumbers(kind: string, at: StatInput = {}): { pool: Pool; top: number; fill: number } | undefined {
-  const hk = HERO_KITS()[kind];
+  // (a hero still to join the roster reads its own kit; the roster's means below are the roster's)
+  const hk = HERO_KITS()[kind] ?? comingHeroKits()[kind];
   const p = profileOf(kind);
   if (!hk || !p) return undefined;
   const pool = hk.pool;
@@ -316,7 +318,8 @@ export function canPay(b: Battle, u: Unit, hk: HeroKit, n: number): boolean {
 /** A hero's cooldown on a skill: the slot's (its class's and its skill level's), 2% shorter a point of INT against the roster's mean, at most
  *  10% either way (STATS batch 6, `statRest.ts`), and never moved out of its class's range. */
 export function cdOf(u: Unit, slot: Slot): number {
-  const k = cooldownOf(u);
+  // (DEPTH-BUILD: a bond or a rivalry within two tiles, `bonds.ts`)
+  const k = cooldownOf(u) * (u.bondCd ?? 1);
   if (k === 1) return slot.cd;
   const [lo, hi] = CLASS_RANGE[slot.cls].cd;
   return Math.max(Math.min(lo, slot.cd), Math.min(Math.max(hi, slot.cd), slot.cd * k));

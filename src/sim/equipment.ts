@@ -50,7 +50,7 @@ export const MAIN_SCALE = 0.4;
 /** SEVEN-SLOT GEAR: each slot's share of `MAIN_SCALE` for the new bases, so a whole seven-piece kit stays modest (the quiet slots give
  *  less than the hands and the torso). The 60 bases from before keep `MAIN_SCALE` alone (`OLD_BASES`), so no owned piece is weakened.
  *  Tuned by the balance pass (`npm run gear-balance`). */
-export const SLOT_SCALE: Readonly<Record<EquipSlot, number>> = { main: 1, torso: 1, off: 0.6, head: 0.45, feet: 0.45, belt: 0.45, acc: 0.6 };
+export const SLOT_SCALE: Readonly<Record<EquipSlot, number>> = { main: 0.75, torso: 0.75, off: 0.45, head: 0.34, feet: 0.34, belt: 0.34, acc: 0.45 };
 /** Each item level above the first adds this share of the level-1 stat. */
 export const LEVEL_STEP = 0.04;
 /** A piece made for the wearer's calling gives this much more of its main stats. */

@@ -9,7 +9,8 @@ import { HERO_KITS, SLOT_LEVELS } from './sim/heroKits';
 import { heroName } from './sim/heroNames';
 import { levelOfKind } from './sim/levels';
 import { saveMeta, type Meta } from './sim/meta';
-import { OWN1, OWN2, OWN3, knownPicks, loadoutOf, pickName, readableNow, setSlot, slotFor, startStudy, stopStudy, studentCap, students, studyLeft, studyLength, type SkillPick } from './sim/books';
+import { crossBook, queueStudy, unqueueStudy, OWN1, OWN2, OWN3, knownPicks, loadoutOf, pickName, readableNow, setSlot, slotFor, startStudy, stopStudy, studentCap, students, studyLeft, studyLength, type SkillPick } from './sim/books';
+import { roomOpen } from './sim/rooms';
 import { keyOf } from './sim/abilities';
 import { levelLine, useOf } from './sim/skillLevels';
 
@@ -131,12 +132,29 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
     const full = reading.length >= cap && !meta.study?.[kind];
     panel.append(el('small', 'eqDim', full ? `The library has room for ${cap} student${cap === 1 ? '' : 's'}: ${reading.map(heroName).join(' and ')} ${reading.length === 1 ? 'is' : 'are'} reading. Build the Library up for more.` : `${reading.length + (meta.study?.[kind] ? 1 : 0)} of ${cap} studying. A book put down keeps its progress.`));
     const list = el('div', 'kbList');
+    // (DEPTH-BUILD: the Library's Reading Room queues the next book; the Scriptorium lets a hero take one book of another calling)
+    const queued = meta.studyNext?.[kind];
+    const canQueue = !!meta.study?.[kind] && !queued && roomOpen(meta.castle, 'readingRoom');
+    if (queued) {
+      const row = el('div', 'kbRow on');
+      const words = el('div', 'kbWords');
+      words.append(el('b', '', `Next: ${bookById(queued)?.title ?? queued}`), el('small', '', 'Queued in the Reading Room: it starts when the book in hand is learnt.'));
+      const off = el('button', '', 'Unqueue');
+      off.type = 'button';
+      off.addEventListener('click', () => {
+        if (unqueueStudy(meta, kind)) commit();
+      });
+      row.append(words, off);
+      list.append(row);
+    }
     for (const book of readableNow(meta, kind)) {
+      if (book.id === queued) continue;
       const row = el('div', 'kbRow');
       const words = el('div', 'kbWords');
       const len = studyLength(book, meta.castle.library);
       const kept = meta.studyKept?.[kind]?.[book.id] ?? 0;
       words.append(el('b', '', book.title), el('small', '', `Teaches ${pickName(kind, book.id)} · ${len - kept} fights${kept ? ` (${kept} done)` : ''}`), el('p', 'kbHistory', book.history));
+      if (crossBook(kind, book)) words.append(el('small', 'kbWarn', 'Another calling: the Scriptorium teaches it at three quarters of its strength, one such book a hero.'));
       const go = el('button', 'primary', 'Read');
       go.type = 'button';
       go.disabled = full;
@@ -144,6 +162,14 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
         if (startStudy(meta, kind, book.id)) commit();
       });
       row.append(bookIcon(book, 44), words, go);
+      if (canQueue) {
+        const q = el('button', '', 'Queue next');
+        q.type = 'button';
+        q.addEventListener('click', () => {
+          if (queueStudy(meta, kind, book.id)) commit();
+        });
+        row.append(q);
+      }
       list.append(row);
     }
     const back = el('button', '', 'Back');

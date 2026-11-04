@@ -352,15 +352,14 @@ test('winning waves moves on, the last boss wins the army and ends the run', () 
     assert.equal(run.cleared, undefined);
   }
   assert.equal(run.stage, n);
-  // (a boss wave drops gear)
-  // (RUN-GEAR: a real piece, in the pack)
-  const before = (run.pack ?? []).length;
+  // (a boss wave drops gear: SEVEN-SLOT GEAR batch 4, two runes, the boss's and the wave's, told on the wave card; the bag may be full by
+  // now, so they merge or break rather than adding up)
   finish(run, true, 2);
   assert.equal(run.cleared, true);
   assert.equal(run.over, true);
   assert.equal(run.stage, n);
   assert.equal(run.event, undefined);
-  assert.ok((run.pack ?? []).length > before);
+  assert.equal(run.found!.filter((l) => / rune [IV]+ \(/.test(l)).length, 2);
 });
 
 test('the first wave of the first army is won by a fresh party, every time', () => {

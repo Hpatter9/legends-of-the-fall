@@ -22,9 +22,15 @@ export type Tactic = 'advance' | 'charge' | 'hold';
 export const TACTICS_LIST: readonly Tactic[] = ['advance', 'charge', 'hold'];
 
 /** The switches: the tactic a fight takes when the page (or a tool) sets none (Charge plays every fight exactly as before the tactics), and
- *  the foes' answer to the party's tactics: every foe standing as a fight begins has this much more health and attack (the owner's answer:
- *  the foes are strengthened so each mode keeps its pace with Advance the default; the Last Stand is left as it was). */
-export const TACTICS = { fallback: 'charge' as Tactic, answer: 1 };
+ *  the foes' answer to the party's tactics: every foe of a fight's band strikes this much harder (`startBattle`; attack alone, so no health is rounded twice; the owner's
+ *  answer: the foes are strengthened so each mode keeps its pace with Advance the default; the Last Stand's waves, which come by their own
+ *  rules, are left as they were). */
+export const TACTICS = { fallback: 'advance' as Tactic, answer: 1.02, edge: true };
+
+/** Charge's edge (batch 6, the owner's answer: the counter to the bands that shoot): a charging party marches `MOVE` faster for its first
+ *  `MS`, and each hero's first landed blow on a foe that shoots is `BLOW` (from the fight's start under Charge, from the call under the
+ *  player's Charge!). `TACTICS.edge` off plays the old Charge. */
+export const CHARGE = { MOVE: 1.2, MS: 6000, BLOW: 1.6 };
 
 /** The fight's tactic, once it has begun: who is held, who the front line is, and when the line met the foe (then nobody is held). */
 export interface TacticState {
@@ -39,6 +45,9 @@ export interface TacticState {
   metAt?: number;
   /** Whether the player has called the charge (it may be called once). */
   charged?: boolean;
+  /** Charge's edge: when it began (battle time), and the heroes whose first blow has landed. */
+  edgeAt?: number;
+  struck?: number[];
 }
 
 /** A held hero is let go when a foe comes this near it (beside it). */
@@ -85,16 +94,11 @@ export function startTactic(b: Battle): void {
   const kind = tacticOf(b);
   b.tactic = undefined;
   if (b.stand) return;
-  // (the foes' answer, whatever the tactic: Charge is the old fight against stronger foes)
-  if (TACTICS.answer !== 1) {
-    for (const f of b.units) {
-      if (!f.alive || f.side !== 'foe') continue;
-      f.maxHp = Math.round(f.maxHp * TACTICS.answer);
-      f.hp = Math.round(f.hp * TACTICS.answer);
-      f.power = (f.power ?? 1) * TACTICS.answer;
-    }
+  if (kind === 'charge') {
+    // (Charge holds nobody; its edge, when on, is kept in the state: the line has met the foe from the start)
+    if (TACTICS.edge) b.tactic = { kind, held: [], front: [], hp: [], metAt: 0, edgeAt: 0, struck: [] };
+    return;
   }
-  if (kind === 'charge') return;
   const heroes = b.units.filter((u) => u.alive && u.side === 'hero' && UNITS[u.def]?.side === 'hero');
   const front = heroes.filter((u) => roleOf(u.def) === 'front').map((u) => u.id);
   if (kind === 'advance' && !front.length) return;
@@ -145,6 +149,10 @@ export function applyCharge(b: Battle, out: BattleEvent[]): void {
   if (!t || t.metAt !== undefined) return;
   t.charged = true;
   t.metAt = b.t;
+  if (TACTICS.edge) {
+    t.edgeAt = b.t;
+    t.struck = [];
+  }
   out.push({ kind: 'lineMet', how: 'charge' });
 }
 
@@ -195,4 +203,18 @@ export function heldStep(b: Battle, me: Unit, jump: number): number {
   }
   if (best === me.v * b.board.w + me.u) return -1;
   return firstStep(walk, best) ?? -1;
+}
+
+/** Charge's edge on a step: the heroes of a charging party march quicker in its first seconds. */
+export function chargeMove(b: Battle, me: Unit): number {
+  const t = b.tactic;
+  return t?.edgeAt !== undefined && me.side === 'hero' && b.t - t.edgeAt <= CHARGE.MS ? CHARGE.MOVE : 1;
+}
+
+/** Charge's edge on a blow: a charging hero's first landed blow on a foe that shoots (the call marks it landed). */
+export function chargeBlow(b: Battle, me: Unit, to: Unit): number {
+  const t = b.tactic;
+  if (t?.edgeAt === undefined || me.side !== 'hero' || !UNITS[to.def]?.shot || !t.struck || t.struck.includes(me.id)) return 1;
+  t.struck.push(me.id);
+  return CHARGE.BLOW;
 }

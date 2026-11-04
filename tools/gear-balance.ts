@@ -10,6 +10,7 @@ import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES } from '../src/sim/units';
 import { EQUIP_LIST, EQUIP_SLOTS, emptyStats, itemStats, type EquipStats, type NewEquipment } from '../src/sim/equipment';
 import { gradeBoost, stageBoost } from '../src/sim/run';
+import { OLD_BASES } from '../src/sim/equipBases';
 import { stepBattle } from '../src/sim/battle';
 
 const arg = (name: string, fallback: number): number => {
@@ -17,6 +18,8 @@ const arg = (name: string, fallback: number): number => {
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
 const GAMES = arg('--games', 600);
+const OLD_THREE = process.argv.includes('--old-three');
+const NEW_SEVEN = process.argv.includes('--new-seven');
 const STAGE = arg("--stage", 13);
 const LEVEL = arg("--level", 3);
 const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
@@ -80,8 +83,12 @@ for (const [army, lvl] of [[0, 1], [2, 7], [4, 13], [6, 19]] as const) {
   const row: string[] = [];
   for (const r of [1, 2, 3, 4, 5] as const) {
     const rng = new Rng(77 + r + lvl);
-    const kit = (kind: string) => sum(EQUIP_SLOTS.map((slot) => {
-      const pool = EQUIP_LIST.filter((b) => b.slot === slot);
+    // (SEVEN-SLOT GEAR: `--old-three` is the yardstick, the 60 bases from before in the old three slots; `--new-seven` a kit of the new bases
+    // in all seven slots, which `SLOT_SCALE` sizes; by default any base in all seven)
+    const old = EQUIP_LIST.filter((b) => OLD_BASES.has(b.id));
+    const OLD_POOLS = [old.filter((b) => b.slot === 'main' || b.id === 'grimoire'), old.filter((b) => b.slot === 'torso'), old.filter((b) => b.slot !== 'main' && b.slot !== 'torso' && b.id !== 'grimoire')];
+    const pools = OLD_THREE ? OLD_POOLS : EQUIP_SLOTS.map((slot) => EQUIP_LIST.filter((b) => b.slot === slot && (!NEW_SEVEN || !OLD_BASES.has(b.id))));
+    const kit = (kind: string) => sum(pools.map((pool) => {
       return { base: pool[rng.int(0, pool.length - 1)].id, rarity: r, level: lvl };
     }), kind);
     row.push(`${['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'][r - 1]} ${effective(kit)}`);
