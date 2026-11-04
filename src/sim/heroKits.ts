@@ -52,6 +52,10 @@ export const RES = {
   HOLD_MANA_MS: 3000,
   /** A skill that found nothing to do is not saved for until this long has passed. */
   IDLE_MS: 2000,
+  /** Once skill 3 is open (level 20): a skill not cast for this long goes before the others when it can be paid, is never held, and the
+   *  others are not cast while paying for them would leave it short (SKILLS-10, docs/notes/skills-10.md: skill 3 is the kit's big skill, and
+   *  without this its cost could keep a hero's skill 1 from ever coming round). A guard waits for its trigger as always. */
+  STALE_MS: 12000,
   /** A mana healer keeps its heal's cost in reserve while an ally is under this share of its health. */
   RESERVE_UNDER: 0.6,
   /** The pace of every gain above (the refill and the gains from blows): the tuning pass's one knob for how often skills come round, so their
@@ -61,10 +65,10 @@ export const RES = {
    *  well, so both skills come round in a fight. */
   SKILL2_PACE_MANA: 1.45,
   SKILL2_PACE_STAM: 1.05,
-  /** Once skill 3 is open (level 20), the pool comes back at this share again (the skills overhaul's `SKILL3_PACE`, batch 4). SKILLS-10
-   *  (docs/notes/skills-10.md): 1.1 to 0.65. Skill 3 became the kit's big skill (heavy, weighed first), and the slower well is what gives the
-   *  roster back the strength it gained: the pool goes to skill 3 before skills 1 and 2, so a level-30 team wins what it did. */
-  SKILL3_PACE: 0.65,
+  /** Once skill 3 is open (level 20), the pool comes back this much faster again (the skills overhaul's `SKILL3_PACE`, batch 4): a third skill
+   *  to feed, so the well deepens a little more. (SKILLS-10 tried it lower to answer the stronger skill 3, and skills 1 and 2 stopped coming
+   *  round; it stays, and `RES.STALE_MS` keeps every skill in use.) */
+  SKILL3_PACE: 1.1,
 } as const;
 
 /** The level skill 2 opens at (skill 1 is open from level 1; the ultimate at `ULT_LEVEL`). */
@@ -432,6 +436,23 @@ function reserve(b: Battle, me: Unit, hk: HeroKit, n: number): boolean {
   return resOf(me, hk.pool) - costOf(me, slot) < costOf(me, heal);
 }
 
+/** Once skill 3 is open, the open skills (not a guard) that have gone `RES.STALE_MS` without a cast (from the fight's start, for one never cast)
+ *  and have something to do, the longest idle first. */
+function staleSlots(b: Battle, me: Unit, hk: HeroKit, open: number[]): number[] {
+  if (!hk.s3 || !skill3Open(me)) return [];
+  const since = (n: number) => b.t - (lastAt(me, n) ?? 0);
+  return open.filter((n) => hk.slots[n - 1].cls !== 'guard' && since(n) >= RES.STALE_MS && hasWork(b, me, hk, n)).sort((x, y) => since(y) - since(x) || x - y);
+}
+
+/** Whether paying for slot `n` would leave a stale skill (off its cooldown, waiting on the pool) short. */
+function savingFor(b: Battle, me: Unit, hk: HeroKit, n: number, stale: number[]): boolean {
+  const res = resOf(me, hk.pool) - costOf(me, hk.slots[n - 1]);
+  return stale.some((m) => {
+    const at = lastAt(me, m);
+    return (at === undefined || b.t - at >= cdOf(me, hk.slots[m - 1])) && res < costOf(me, hk.slots[m - 1]);
+  });
+}
+
 /** The order a hero weighs its open skills in (the design's steps 4 and 6): heavy, then utility, then strike, then jab, then guard; among
  *  equals the one cast longest ago first (so two strikes take turns), then the higher slot. A fixed order over the fight's state. */
 function pickOrder(me: Unit, hk: HeroKit, open: number[]): number[] {
@@ -465,10 +486,11 @@ export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): 
     if (slot.emergency && canPay(b, me, hk, n) && slot.emergency(b, me) && fire(b, me, hk, n, out)) return true;
   }
   if (breath) return false;
-  for (const n of pickOrder(me, hk, open)) {
+  const stale = staleSlots(b, me, hk, open);
+  for (const n of [...stale, ...pickOrder(me, hk, open).filter((x) => !stale.includes(x))]) {
     if (!canPay(b, me, hk, n)) continue;
     if (castGate.held && isOpener(hk.slots[n - 1].skill)) continue;
-    if (holding(b, me, hk, n)) continue;
+    if (!stale.includes(n) && (holding(b, me, hk, n) || savingFor(b, me, hk, n, stale))) continue;
     if (reserve(b, me, hk, n)) continue;
     if (fire(b, me, hk, n, out)) return true;
     ks(me)[`idle${n}` as IdleKey] = b.t;

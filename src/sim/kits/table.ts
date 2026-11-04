@@ -235,51 +235,51 @@ export const COSTS: Readonly<Record<string, readonly [number, number, number, nu
  *  SKILLS-10 (docs/notes/skills-10.md, the owner: "the third skills we added should be better than the first 2"): every skill 3 lifted until it
  *  is worth more to its team than skill 1 or 2 (`tools/skills/worth.mjs`, the wins its team loses without it), the jabs made heavies. */
 export const TUNE3: Readonly<Record<string, number>> = {
-  knight: 4.081,
-  paladin: 5,
-  peasant: 3.96,
-  juggernaut: 3,
-  samurai: 4.928,
-  kunoichi: 1.269,
-  ninjaMonk: 3,
-  barbarian: 3.875,
-  mercenary: 3.245,
-  lancer: 2.376,
-  arcBlade: 5.008,
-  demonSwordsman: 2.676,
-  buccaneer: 3.326,
-  dragoon: 4.5,
-  samuraiCommander: 2.943,
-  wolfBard: 4,
-  tyrant: 6.881,
-  archer: 1.688,
-  ranger: 1.72,
-  gunslinger: 3.872, // (STATS batch 4: 0.807 to 0.968, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  rifleBot: 3.139,
-  siegeBot: 1.868,
-  dreadPirate: 2.374,
-  wizard: 5.22, // (STATS batch 4: 1.135 to 1.305, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  lightningMage: 4.363, // (STATS batch 4: 0.699 to 0.839, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  warlock: 5.5, // (STATS batch 4: 1.012 to 1.316, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  sage: 1.86,
-  timeWitch: 3.096, // (STATS batch 4: 0.553 to 0.774, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  illusionist: 6.268,
-  cleric: 7.744,
-  priestess: 18.704,
-  wanderer: 8,
-  druid: 6.989, // (STATS batch 4: 0.6 to 0.78, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  beastmaster: 6, // (STATS batch 4: 0.67 to 1.34, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  reaper: 2.108,
-  kitsune: 1.604,
-  karasu: 2.592,
-  yamabushi: 4.916,
-  werewolf: 2.684,
-  minotaur: 0.56, // (STATS batch 4: 0.701 to 0.28, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
-  satyr: 6.293,
-  gorgon: 3.7,
-  shambler: 2.158,
-  mummy: 8.709,
-  kraken: 1.555, // (STATS batch 4: 1.196 to 1.555, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  knight: 1.313,
+  paladin: 2.142,
+  peasant: 2.983,
+  juggernaut: 2.741,
+  samurai: 2.896,
+  kunoichi: 0.617,
+  ninjaMonk: 1.593,
+  barbarian: 1.903,
+  mercenary: 1.037,
+  lancer: 1.773,
+  arcBlade: 3.812,
+  demonSwordsman: 2.335,
+  buccaneer: 1.79,
+  dragoon: 1.75,
+  samuraiCommander: 2.012,
+  wolfBard: 1.245,
+  tyrant: 3.659,
+  archer: 0.754,
+  ranger: 1.033,
+  gunslinger: 2.442, // (STATS batch 4: 0.807 to 0.968, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  rifleBot: 1.264,
+  siegeBot: 1.084,
+  dreadPirate: 1.546,
+  wizard: 3.528, // (STATS batch 4: 1.135 to 1.305, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  lightningMage: 2.47, // (STATS batch 4: 0.699 to 0.839, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  warlock: 2.981, // (STATS batch 4: 1.012 to 1.316, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  sage: 1.819,
+  timeWitch: 2.065, // (STATS batch 4: 0.553 to 0.774, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  illusionist: 3.846,
+  cleric: 5.611,
+  priestess: 5.293,
+  wanderer: 7.05,
+  druid: 4.666, // (STATS batch 4: 0.6 to 0.78, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  beastmaster: 2.832, // (STATS batch 4: 0.67 to 1.34, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  reaper: 1.602,
+  kitsune: 1.512,
+  karasu: 1.009,
+  yamabushi: 2.647,
+  werewolf: 0.933,
+  minotaur: 0.395, // (STATS batch 4: 0.701 to 0.28, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  satyr: 3.232,
+  gorgon: 3.08,
+  shambler: 1.716,
+  mummy: 8.116,
+  kraken: 1.109, // (STATS batch 4: 1.196 to 1.555, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
 };
 
 /** Each hero's skill 3 (the design's section 2 table): its class, cost and cooldown (ms), and the skill. The guards' `emergency` is their trigger.
@@ -287,40 +287,40 @@ export const TUNE3: Readonly<Record<string, number>> = {
  *  or the dearest of its two, in the heavy range, cast in 0.5 s), the guards come round every 10 s and the utilities every 12 s (their classes'
  *  quickest), so skill 3 is the strongest skill a hero has from level 20. */
 const THIRD: Readonly<Record<string, { cls: SkillClass; cost: number; cd: number; skill: Skill; emergency?: Slot['emergency']; heals?: boolean; onHit?: Slot['onHit'] }>> = {
-  knight: { cls: 'guard', cost: 15, cd: 10000, emergency: GUARD.holdFast, heals: true, skill: sk('Hold Fast', 'When he falls under 40% with a foe beside him he plants his feet: four fifths of his health come back and he shakes off his ailments', 400, 'defend', T3.holdFast) },
-  paladin: { cls: 'guard', cost: 30, cd: 10000, emergency: GUARD.bond, skill: sk('Warding Bond', 'When a friend within 4 falls under 35% it is bound to him for 30s: it takes 10% less, and half of every blow on it comes to him instead', 400, 'defend', T3.wardingBond) },
+  knight: { cls: 'guard', cost: 15, cd: 10000, emergency: GUARD.holdFast, heals: true, skill: sk('Hold Fast', 'When he falls under 40% with a foe beside him he plants his feet: a quarter of his health comes back and he shakes off his ailments', 400, 'defend', T3.holdFast) },
+  paladin: { cls: 'guard', cost: 30, cd: 10000, emergency: GUARD.bond, skill: sk('Warding Bond', 'When a friend within 4 falls under 35% it is bound to him for 13s: it takes 10% less, and half of every blow on it comes to him instead', 400, 'defend', T3.wardingBond) },
   peasant: { cls: 'heavy', cost: 32, cd: 11000, skill: sk('Pitchfork Jab', 'A quick thrust at the foe before him that shoves it a tile back', 500, 'attack', T3.pitchforkJab) },
-  juggernaut: { cls: 'utility', cost: 26, cd: 12000, skill: sk('Wall of Stone', 'Three tiles of stone wall rise across the nearest foes\' way to his back line, for 18s', 600, 'attack2', T3.wallOfStone) },
+  juggernaut: { cls: 'utility', cost: 26, cd: 12000, skill: sk('Wall of Stone', 'Three tiles of stone wall rise across the nearest foes\' way to his back line, for 16s', 600, 'attack2', T3.wallOfStone) },
   samurai: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Kesa Cut', 'A fast diagonal cut on the foe before him; it bleeds 3s', 500, 'attack', T3.kesaCut) },
   // (STATS batch 6: the Kunoichi's Shuriken Fan 3500 to 3600 ms, so it asks less than her own income, CON 12)
   kunoichi: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Shuriken Fan', 'Three shuriken at the three nearest foes within 4; each is slowed 1s', 500, 'attack', T3.shurikenFan) },
-  ninjaMonk: { cls: 'guard', cost: 14, cd: 10000, emergency: GUARD.stepWind, skill: sk('Step of the Wind', 'With two or more foes on him he steps up to 3 tiles to the safest tile and slips every blow for 4.5s; two Flow are added for his palm', 300, 'attack2', T3.stepOfWind) },
+  ninjaMonk: { cls: 'guard', cost: 14, cd: 10000, emergency: GUARD.stepWind, skill: sk('Step of the Wind', 'With two or more foes on him he steps up to 3 tiles to the safest tile and slips every blow for 2.4s; two Flow are added for his palm', 300, 'attack2', T3.stepOfWind) },
   barbarian: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Reckless Swing', 'A wild overhead blow on the foe before him; he takes 10% more for 2s', 500, 'attack', T3.recklessSwing) },
   mercenary: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Dirty Trick', 'Sand in the eyes of the foe before him: it misses half its blows for 2s', 500, 'attack', T3.dirtyTrick) },
   lancer: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Lance Sweep', 'A sweep of the lance at the foes beside him, each shoved a tile; it gives him a step of Momentum', 500, 'attack', T3.lanceSweep) },
   arcBlade: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Static Edge', 'A crackling cut on the foe before him; it is shocked, and a tenth of the cut is stored for Thunderwave', 500, 'attack', T3.staticEdge) },
   demonSwordsman: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Infernal Brand', 'Brands the foe before him (it burns 3s); his Cleave drinks double from a branded foe', 500, 'attack', T3.infernalBrand) },
   buccaneer: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Pistol Shot', 'A flintlock shot at the nearest foe within 4; a shooter it hits is staggered 0.5s', 500, 'attack', T3.pistolShot) },
-  dragoon: { cls: 'guard', cost: 15, cd: 10000, emergency: GUARD.scales, skill: sk('Scale Ward', 'When she falls under 50% her scales harden: she takes 30% less for 18s, and whoever strikes her burns', 400, 'defend', T3.scaleWard) },
+  dragoon: { cls: 'guard', cost: 15, cd: 10000, emergency: GUARD.scales, skill: sk('Scale Ward', 'When she falls under 50% her scales harden: she takes 30% less for 7s, and whoever strikes her burns', 400, 'defend', T3.scaleWard) },
   samuraiCommander: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Command Strike', 'He and the friend nearest him each strike the foe before them at once', 500, 'attack', T3.commandStrike) },
-  wolfBard: { cls: 'guard', cost: 28, cd: 10000, emergency: GUARD.countercharm, skill: sk('Countercharm', 'When he or a friend near him carries an ailment, every friend within 3 is freed of its ailments and shrugs off new ones for 12s', 500, 'attack2', T3.countercharm) },
+  wolfBard: { cls: 'guard', cost: 28, cd: 10000, emergency: GUARD.countercharm, skill: sk('Countercharm', 'When he or a friend near him carries an ailment, every friend within 3 is freed of its ailments and shrugs off new ones for 4s', 500, 'attack2', T3.countercharm) },
   archer: { cls: 'heavy', cost: 34, cd: 11000, skill: sk('Double Shot', 'Two fast arrows at the nearest foe in reach', 500, 'attack', T3.doubleShot) },
   ranger: { cls: 'heavy', cost: 36, cd: 11000, skill: sk('Barbed Arrow', 'An arrow at the nearest foe in reach that bleeds 3s; a foe held by a snare, slowed or standing in caltrops takes double', 500, 'attack', T3.barbedArrow) },
   gunslinger: { cls: 'heavy', cost: 32, cd: 11000, skill: sk('Skip Shot', 'A shot that skips off the nearest foe in reach to a second within 2', 500, 'attack', T3.skipShot) },
-  rifleBot: { cls: 'guard', cost: 15, cd: 10000, emergency: T3.droneNeeded, skill: sk('Barrier Drone', 'When it or the friend nearest it falls under 40%, a drone shields both for 5s (three fifths of each one\'s health)', 500, 'defend', T3.barrierDrone) },
+  rifleBot: { cls: 'guard', cost: 15, cd: 10000, emergency: T3.droneNeeded, skill: sk('Barrier Drone', 'When it or the friend nearest it falls under 40%, a drone shields both for 5s (a quarter of each one\'s health)', 500, 'defend', T3.barrierDrone) },
   siegeBot: { cls: 'guard', cost: 12, cd: 10000, emergency: T3.flakNeeded, skill: sk('Flak Burst', 'With a foe beside it: a point-blank charge hurts the foes within 1 and shoves them 2 tiles back', 400, 'attack', T3.flakBurst) },
   dreadPirate: { cls: 'heavy', cost: 34, cd: 11000, skill: sk('Grapeshot', 'A blast of grapeshot over the three tiles before him; each foe hit is slowed 1s', 500, 'attack', T3.grapeshot) },
   wizard: { cls: 'heavy', cost: 48, cd: 11000, skill: sk('Fire Bolt', 'A quick bolt at the nearest foe; a burning foe takes half as much again', 500, 'attack', T3.fireBolt) },
   lightningMage: { cls: 'heavy', cost: 44, cd: 11000, skill: sk('Spark', 'A spark at the nearest foe, which is Charged (so Storm Surge can set it off)', 500, 'attack', T3.spark) },
-  warlock: { cls: 'utility', cost: 36, cd: 12000, skill: sk('Curse of Weakness', 'The three strongest foes within 6 are weakened for 6s, and take twice as much from him while it lasts', 600, 'attack2', T3.curseOfWeakness) },
-  sage: { cls: 'guard', cost: 28, cd: 10000, emergency: T3.wardNeeded, skill: sk('Arcane Ward', 'When a friend within 5 (or he) falls under 35%, it is warded for 5s (nearly two fifths of its health)', 400, 'defend', T3.arcaneWard) },
+  warlock: { cls: 'utility', cost: 36, cd: 12000, skill: sk('Curse of Weakness', 'The three strongest foes within 6 are weakened for 6s, and take 60% more from him while it lasts', 600, 'attack2', T3.curseOfWeakness) },
+  sage: { cls: 'guard', cost: 28, cd: 10000, emergency: T3.wardNeeded, skill: sk('Arcane Ward', 'When a friend within 5 (or he) falls under 35%, it is warded for 5s (over a third of its health)', 400, 'defend', T3.arcaneWard) },
   timeWitch: { cls: 'heavy', cost: 46, cd: 11000, skill: sk('Hourglass Bolt', 'A bolt of sand at the nearest foe: slowed 1.5s, and its skill meter loses a tenth', 500, 'attack', T3.hourglassBolt) },
   illusionist: { cls: 'heavy', cost: 44, cd: 11000, skill: sk('Phantasmal Blade', 'A blade of illusion at the nearest foe within 3, past its defence; for 1s it strikes at random', 500, 'attack', T3.phantasmalBlade) },
-  cleric: { cls: 'heavy', cost: 46, cd: 11000, heals: true, skill: sk('Healing Word', 'A quick word of healing: the most hurt friend within 6 heals three fifths of its health', 500, 'defend', T3.healingWord) },
+  cleric: { cls: 'heavy', cost: 46, cd: 11000, heals: true, skill: sk('Healing Word', 'A quick word of healing: the most hurt friend within 6 heals nearly half its health', 500, 'defend', T3.healingWord) },
   priestess: { cls: 'heavy', cost: 44, cd: 11000, skill: sk('Sacred Flame', 'A pillar of light on the nearest foe (the undead and fiends take half again); its next blow misses', 500, 'attack', T3.sacredFlame) },
   wanderer: { cls: 'heavy', cost: 46, cd: 11000, skill: sk('Acid Flask', 'A flask of acid at the nearest foe: its armour eaten, it takes a fifth more for 4s', 500, 'attack', T3.acidFlask) },
   druid: { cls: 'heavy', cost: 50, cd: 11000, skill: sk('Thorn Whip', 'A whip of thorns at the nearest foe within 4 drags it a tile towards her treant (towards her, with none)', 500, 'attack', T3.thornWhip) },
-  beastmaster: { cls: 'guard', cost: 14, cd: 10000, emergency: T3.packNeeded, heals: true, skill: sk('Mend the Pack', 'When a wolf of hers falls under 30%, every wolf is healed in full and shielded 3s; with none, she heals three fifths when hurt', 400, 'defend', T3.mendThePack) },
+  beastmaster: { cls: 'guard', cost: 14, cd: 10000, emergency: T3.packNeeded, heals: true, skill: sk('Mend the Pack', 'When a wolf of hers falls under 30%, every wolf heals nearly in full and is shielded 3s (over half its health); with none, she heals a quarter when hurt', 400, 'defend', T3.mendThePack) },
   // (STATS batch 6: the Reaper's Soul Snare 3500 to 3600 ms, so it asks less than his own income, CON 12)
   reaper: { cls: 'heavy', cost: 28, cd: 11000, skill: sk('Soul Snare', 'A spectral hook drags the weakest foe within 4 a tile towards him and cuts it; a foe under 30% is dragged into his reach', 500, 'attack', T3.soulSnare) },
   kitsune: { cls: 'heavy', cost: 50, cd: 11000, skill: sk('Fox Wisps', 'Three wisps of fox fire at the three nearest foes within 4, each burning 2s', 500, 'attack', T3.foxWisps) },
