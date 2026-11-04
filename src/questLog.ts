@@ -6,6 +6,8 @@
 // The Eidolons tab (EIDOLON-CHAINS): the six Eidolons' chains, their pieces and the part going (`eidolonChainView.ts`); it shows once
 // the first chain has been offered.
 
+import { autoButton } from './autoAsk';
+import { canAutoQuest } from './sim/autoReplay';
 import { giverKeyOf, giverName, giverWords, offerFrom, questFace, rewardText } from './questCard';
 import { questById } from './sim/questData';
 import { ACTIVE_MAX, cannotTake, dropQuest, handIn, isDone, progressOf, takeQuest, timesDone, trackedQuest, trackQuest } from './sim/quests';
@@ -39,7 +41,7 @@ export interface LogHooks {
   changed(): void;
   close(): void;
   /** Begin (or carry on) a quest battle (batch 2): the page opens the party with its cast locked in. */
-  fight?(battle: string): void;
+  fight?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if there is one (its Fight reads Continue). */
   saved?(): string | null;
   /** EIDOLON-CHAINS: go to the Summoner in the Sanctum, and play a chain's prologue again. */
@@ -215,6 +217,8 @@ function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
       again.title = 'Fight it again for practice: no reward';
       again.addEventListener('click', () => hooks.fight!(qb.id));
       side.append(again);
+      // (a battle already won can also be repeated on its own: Auto, within the day's tickets)
+      if (canAutoQuest(m, qb.id)) side.append(autoButton(m, qb.title, (n) => hooks.fight!(qb.id, n), 'qlReplay auto'));
       row.append(side);
     }
     list.append(row);
