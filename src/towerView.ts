@@ -341,7 +341,7 @@ export class TowerView {
     for (const id of this.run.relics ?? []) relics.append(relicButton(this.run, id, () => relicPopup(this.run, id, this.root)));
     if (!this.run.relics?.length) relics.append(el('p', 'rtLead', 'Relics are found in worlds, shops and guardian battles.'));
     card.append(relics, this.abandonRow());
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.addEventListener('click', () => { this.card?.remove(); this.card = null; });
     card.append(back);
   }
@@ -980,7 +980,7 @@ export class TowerView {
       else if (r.commandment) card.append(el('p', 'rtLead', 'All three steps are chosen. At a campfire you can still reforge your patron.'));
     }
     if (!slot || reforge) {
-      const back = el('button', '', 'Back');
+      const back = el('button', '', '‹ Back');
       back.addEventListener('click', close);
       card.append(back);
     }

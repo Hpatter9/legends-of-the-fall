@@ -118,7 +118,7 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
       list.append(row);
     }
     panel.append(list, el('small', 'eqDim', 'Swap skills at camp as often as you like: nothing learned is ever forgotten. A skill keeps its level wherever it sits. The ultimate stays as it is.'));
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     panel.append(back);
@@ -172,7 +172,7 @@ export function drawSkillBook(meta: Meta, kind: string, changed: () => void): HT
       }
       list.append(row);
     }
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     panel.append(list, back);

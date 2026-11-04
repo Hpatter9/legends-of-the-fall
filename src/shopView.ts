@@ -113,7 +113,7 @@ export function openShop(m: Meta, onChange: () => void): void {
     stones.append(icon(ICONS.stones, ''), `${stonesOf(m)} stones`);
     purse.append(crowns, stones);
     head.append(purse);
-    const close = el('button', 'shopClose', 'Back');
+    const close = el('button', 'shopClose', '‹ Back');
     close.addEventListener('click', () => {
       root.remove();
       onChange();
