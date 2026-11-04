@@ -40,6 +40,7 @@ import {
   type QuestFight,
 } from '../src/sim/quests';
 import { GIVERS, QUESTS, SLOTS, SLOT_RULES, questById, type Goal, type QuestDef } from '../src/sim/questData';
+import { NEW_QUESTS } from '../src/sim/questData/newQuests';
 import { GWEN_REMARKS } from '../src/sim/questData/gwen';
 
 const DAY = 20261030;
@@ -59,8 +60,10 @@ const after = (n: number): number => {
 
 test('a hundred unique quests and thirty repeatable ones, each with its own id, words, goal and pay', () => {
   // (batch 2 added eleven more uniques, one for each quest battle: the hundred of batch 1b are the rest)
-  assert.equal(uniques.filter((q) => q.goal.kind !== 'battle').length, 100);
-  assert.equal(uniques.filter((q) => q.goal.kind === 'battle').length, 11);
+  // (QUESTS-3: the new quests of Q6 to Q8 are counted by their own tests, `quest-new.test.ts`; these are the originals)
+  const original = uniques.filter((q) => !NEW_QUESTS.includes(q));
+  assert.equal(original.filter((q) => q.goal.kind !== 'battle').length, 100);
+  assert.equal(original.filter((q) => q.goal.kind === 'battle').length, 11);
   assert.equal(repeats.length, 30);
   assert.equal(new Set(QUESTS.map((q) => q.id)).size, QUESTS.length);
   for (const q of QUESTS) {

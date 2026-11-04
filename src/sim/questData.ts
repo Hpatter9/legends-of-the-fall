@@ -18,6 +18,7 @@ import { BATTLE_QUESTS } from './questData/battles';
 import { TALE_QUESTS } from './questData/tales';
 import { LOST_QUESTS } from './questData/lost';
 import { RETUNE } from './questRetune';
+import { NEW_QUESTS } from './questData/newQuests';
 
 /** Who offers a quest and takes it back. A patron is one of the player's own heroes (the quest's `hero`). */
 export type GiverId = 'gwen' | 'notice' | 'pedlar' | 'pilgrim' | 'messenger' | 'hunter' | 'patron' | 'ruler' | 'spoils' | 'rift' | 'duchess' | 'shepherd' | 'gaoler' | 'smith' | 'sexton' | 'pawnbroker' | 'lantern' | 'herald' | 'clock' | 'falconer' | 'archivist' | 'lost' | 'oswy' | 'teal' | 'pim' | 'widow' | 'sorrel';
@@ -349,6 +350,8 @@ const BASE_QUESTS: readonly QuestDef[] = [
   ...TALE_QUESTS,
   // (LOST-TECHNIQUES: the four chains of the Legendary books)
   ...LOST_QUESTS,
+  // (QUESTS-3: the new quests, Q6 to Q8)
+  ...NEW_QUESTS,
 ];
 
 export const QUESTS: readonly QuestDef[] = BASE_QUESTS.map(retuned);
