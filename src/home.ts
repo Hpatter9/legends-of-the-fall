@@ -719,11 +719,13 @@ export class Home {
       b.addEventListener('click', onTap);
       return b;
     };
-    // (the Daily board: a new daily wears the red dot; a cleared one a green check; the plate names the boss of the day and how it went)
+    // (the Daily: a small icon at the scene's right edge: a new daily wears the red dot, a cleared one a green check; the whole line "Today: Orc Warlord · not tried" is read aloud)
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
-    // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily', '', `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    daily.title = `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`;
+    daily.querySelector('small')?.remove();
+    daily.prepend(icon(ICONS.daily, 'ico cpDailyIcon'));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
