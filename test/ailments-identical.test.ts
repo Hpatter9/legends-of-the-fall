@@ -75,6 +75,8 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 // new hashes:
 // field1 4c43d569, field30 79b0a95f, bosses c0166803, armyFoes 3be4bc73, spells c281071e, lands 776aabc7, army 74abcbbd, daily fc542939, tower
 // 7f01a490, stand 49a206c8, calamity 6d82a760.)
+// (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
+// with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
