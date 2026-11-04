@@ -78,10 +78,10 @@ export function solarTribunal(b: Battle, me: Unit, out: BattleEvent[]): boolean 
 // 17. SERAPH (Gabriela) — holy · guardian
 // ============================================================================
 
-/** Skill 1 — Halo Dive: dives up to 4 tiles onto a foe, stunning it for 1.2s, splashing the 3x3, and shielding nearby allies. */
+/** Skill 1 — Halo Dive: dives up to 4 tiles onto a foe, stunning it for 0.8s, splashing the 3x3, and shielding the friends near her (8% of her health). */
 export function haloDive(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!charge(b, me, { tiles: reachOf(me, 4), route: 'leap', mult: 1.4, land: 0.65, stun: ms(me, 1200) }, out)) return false;
-  const sh = Math.round(me.maxHp * 0.15);
+  if (!charge(b, me, { tiles: reachOf(me, 4), route: 'leap', mult: 1.4, land: 0.65, stun: ms(me, 800) }, out)) return false;
+  const sh = Math.round(me.maxHp * 0.08);
   for (const a of alliesOf(b, me).filter((x) => apart(me, x) <= 2)) a.shield = { hp: sh, until: b.t + ms(me, 4000) };
   return true;
 }
@@ -300,7 +300,7 @@ export function wave4Rows(): Record<string, Row> {
       pool: 'mana',
       role: 'A winged guardian: dives on the wicked and holds the line with her wings',
       passive: { name: 'Grace of the Heights', text: 'Heals 1.5% of her health each second', regen: 0.015 },
-      s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Halo Dive', 'Dives up to 4 tiles onto a foe: it is stunned for 1.2s, the 3x3 is struck, and the friends within 2 of her are shielded for 4s', 550, 'attack', haloDive) },
+      s1: { cls: 'strike', cost: 36, cd: 7000, skill: sk('Halo Dive', 'Dives up to 4 tiles onto a foe: it is stunned for 0.8s, the 3x3 is struck, and the friends within 2 of her are shielded for 4s', 550, 'attack', haloDive) },
       s2: { cls: 'heavy', cost: 44, cd: 12000, skill: sk('Sanctuary Wings', 'Her wings beat: the foes within 2 are struck and shoved 2 tiles back', 550, 'attack2', sanctuaryWings) },
       s3: { cls: 'jab', cost: 13, cd: 3500, skill: sk('Radiant Thrust', 'A thrust of her spear at the foe before her, and light gathers on her: a shield of 6% of her health for 2s', 350, 'attack', radiantThrust) },
       ultimate: ult('Descent of the Host', "Crashes down on the thickest crowd within 6 tiles, throwing the foes round her 2 tiles out, and raises the Host's Halo round her for 7s: friends within 3 take a fifth less", 850, descentOfTheHost, { rate: 1.05, power: 1.3 }),

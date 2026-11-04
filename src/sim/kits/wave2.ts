@@ -334,7 +334,7 @@ export function wave2Rows(): Record<string, Row> {
     falconer: {
       pool: 'stamina',
       role: 'A highland hawker: stoops her falcon on foes, gale-vaults to perches and pins her prey',
-      passive: { name: 'Wind-Borne Talons', text: 'Her shots leave the foe bleeding from the talons', rider: { dot: 'bleed', share: 0.12, ms: 3000 } },
+      passive: { name: 'Wind-Borne Talons', text: 'Her shots leave the foe bleeding from the talons', rider: { dot: 'bleed', share: 0.04, ms: 3000 } },
       s1: { cls: 'strike', cost: 24, cd: 6000, skill: sk('Falcon Stoop', 'Her falcon dives on the farthest foe within 6: it is struck, weakened for 3.5s and flushed a tile towards her', 500, 'attack', falconStoop) },
       s2: { cls: 'heavy', cost: 30, cd: 11000, skill: sk('Talon Snare', 'Steps to the highest tile within 2 and sends her falcon at the strongest foe within 6: struck, pinned for 1.5s and bleeding', 500, 'attack2', talonSnare) },
       s3: { cls: 'guard', cost: 14, cd: 12000, more: { emergency: galeNeeded }, skill: sk('Gale Vault', 'When she falls under 35% with a foe within 2, a gust shoves the foes beside her a tile back and she vaults to the safest tile within 3, hastened for 3.5s', 450, 'attack2', (b, me, out) => galeNeeded(b, me) && galeVault(b, me, out)) },
