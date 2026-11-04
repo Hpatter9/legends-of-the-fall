@@ -63,6 +63,30 @@ an ultimate at level 30. The branch's own 3-skill engine is not used: main's is 
   each one's own income, a jab under its income; every skill and ultimate cast in a scene; a guard cast only in its case; the slots opening
   at 1, 10, 20 and 30; and four long fights of the five where every skill and ultimate comes round, the first played twice the same.
 
+## The art imported (PRs #344 to #349)
+
+ChatGPT's six art PRs (from [twenty-heroes-art-prompts.md](twenty-heroes-art-prompts.md)) are merged into this branch as they are (PNGs under
+`art-source/heroes-20/` only), and brought into the game's formats:
+
+- **Scenes, cutouts and awakened figures**, all twenty: `node tools/anime-heroes/pack.cjs --from art-source/heroes-20` (its new `--from`
+  mode) writes `src/art/heroes/<id>.webp` (the scene, 1024 x 1536), `<id>-portrait.webp` (the cutout, 640 x 960, as main's since 0.346.0)
+  and `awakened-<id>.webp` (596 x 560), the cutouts' and figures' soft interior matting made solid (alpha 145 or more to 255) as 0.346.0
+  cleaned the 45. The Vampire Lord's and the Hemomancer's scenes are the owner's own from the old branch, saved beside the others as PNG.
+  About 16 MB in all, 0.8 MB a hero (the 45 average 0.7 MB).
+- **Effects**: the eight cleaned sheets are the `v-vampire` session in `art-source/spell-fx/v-vampire/` (its rows in
+  `tools/spell-fx/spell-parts.json`, as the old branch had them), packed by `tools/spell-fx/import-spell-art.py` into
+  `src/art/fx/spells/v-vampire.webp` (14 parts, 163 KB; the ten atlases 3.97 MB of the 5 MB cap). The other atlases came out byte for byte
+  the same. **Sanguine Lance is left out**: its cleaned sheet has 5 frames a row and the brief asks 6 to 8, so the importer holds it back
+  (the game keeps its stand-in look for it) until ChatGPT adds a sixth frame to each row. `test/spell-fx.test.ts` counts the brief's sheets
+  and rows; the Vampires' eight sheets and sixteen rows move it from 158 and 302 to 166 and 318.
+- **Wired already**: the page finds a hero's art by its id (`heroes/<id>.webp`, `heroes/<id>-portrait.webp`, `heroes/awakened-<id>.webp`,
+  `heroArtwork.ts`, `heroFaceRules.ts`), and `build.mjs` copies every file in `src/art/heroes/` and `src/art/fx/spells/` and lists it in the
+  service worker, so the files are cached for offline play now and shown as soon as a hero joins. The spell parts are registered from
+  `index.json` (`spellLooks.ts`) and wait for the Vampires' looks to name them.
+- **Checked** at 393x852, 360x780 and 412x915 by `node tools/heroes-20/art-check.mjs` (after `npm run web`): the page's own roster cards,
+  awakened cards, dossier portrait and full artwork, pointed at the new files, each loading and fitting (`docs/samples/heroes-20/art-*.png`).
+- `CREDITS.md` credits both sets.
+
 ## Still to do for the Vampires to join
 
 Their art (the prompts), then in one change: the rows into the roster's tables and `ALL_HEROES`, the tuning, the page's words (names and

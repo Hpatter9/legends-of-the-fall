@@ -2451,5 +2451,135 @@
     1.2
    ]
   ]
+ },
+ "v-vampire": {
+  "vampire-bats": [
+   [
+    "travel",
+    "loop",
+    6,
+    8,
+    1.4
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.0
+   ]
+  ],
+  "blood-ritual": [
+   [
+    "ground",
+    "loop",
+    6,
+    8,
+    5.0
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.4
+   ]
+  ],
+  "sanguine-lance": [
+   [
+    "travel",
+    "loop",
+    6,
+    8,
+    1.4
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.2
+   ]
+  ],
+  "sonic-drum": [
+   [
+    "ground",
+    "loop",
+    6,
+    8,
+    5.0
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.2
+   ]
+  ],
+  "astral-star": [
+   [
+    "ground",
+    "loop",
+    6,
+    8,
+    5.0
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.4
+   ]
+  ],
+  "mirage-sand": [
+   [
+    "ground",
+    "loop",
+    6,
+    8,
+    4.0
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.2
+   ]
+  ],
+  "plague-cloud": [
+   [
+    "ground",
+    "loop",
+    6,
+    8,
+    4.5
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.2
+   ]
+  ],
+  "harpoon-anchor": [
+   [
+    "travel",
+    "loop",
+    6,
+    8,
+    1.2
+   ],
+   [
+    "impact",
+    "once",
+    6,
+    8,
+    2.4
+   ]
+  ]
  }
 }
