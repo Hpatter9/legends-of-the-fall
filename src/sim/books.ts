@@ -15,6 +15,7 @@ import { HERO_KITS, resMax, type HeroKit, type Pool, type Slot } from './heroKit
 import { CLASS_RANGE } from './skillRules';
 import { lostSlot } from './kits/lost';
 import type { Meta } from './meta';
+import { roomOpen } from './rooms';
 import { ALL_HEROES } from './units';
 
 /** What a slot holds: the hero's own skill 1, 2 or 3, or a learned book's skill (by the book's id). */
@@ -40,8 +41,49 @@ export const learnedOf = (m: Meta, kind: string): string[] => m.learned?.[kind] 
 export const knowsBook = (m: Meta, kind: string, book: BookDef): boolean => book.from.hero === kind || learnedOf(m, kind).includes(book.id);
 /** Whether a hero kind is of a calling that reads this kind of book. */
 export const suitedTo = (kind: string, book: BookDef): boolean => book.kind === 'universal' || readsKind(kind) === book.kind;
-/** Whether a hero kind could read a book: suited, and does not know it yet. */
-export const canRead = (m: Meta, kind: string, book: BookDef): boolean => suitedTo(kind, book) && !knowsBook(m, kind, book);
+/** Whether a hero kind could read a book: suited (or, with the Library's Scriptorium, its one book of another calling), and does not know it yet. */
+export const canRead = (m: Meta, kind: string, book: BookDef): boolean => (suitedTo(kind, book) || crossOk(m, kind, book)) && !knowsBook(m, kind, book);
+
+/* ---- the Library's rooms (DEPTH-BUILD, docs/notes/depth-build.md) ---- */
+
+/** The Scriptorium's share: a book of another calling teaches its skill at three quarters of its strength. */
+export const CROSS_TUNE = 0.75;
+/** Whether a book is of another calling than the hero's (never a universal book). */
+export const crossBook = (kind: string, book: BookDef): boolean => !suitedTo(kind, book);
+/** The book of another calling a hero has learned, is reading or has queued (one such book a hero), if any. */
+export function crossOf(m: Meta, kind: string): string | undefined {
+  const mine = [...learnedOf(m, kind), m.study?.[kind]?.book, m.studyNext?.[kind]].filter((x): x is string => !!x);
+  return mine.find((id) => {
+    const b = bookById(id);
+    return !!b && crossBook(kind, b);
+  });
+}
+/** With the Scriptorium, a hero may take one book of another calling (a lost technique stays with its own calling). */
+export function crossOk(m: Meta, kind: string, book: BookDef): boolean {
+  if (!crossBook(kind, book) || book.lost || !roomOpen(m.castle, 'scriptorium')) return false;
+  const had = crossOf(m, kind);
+  return !had || had === book.id;
+}
+
+/** The Reading Room: queue a hero's next book while it reads one (a copy leaves the bag now); it starts when the first is learnt. */
+export function queueStudy(m: Meta, kind: string, id: string): boolean {
+  const book = bookById(id);
+  const cur = m.study?.[kind];
+  if (!book || !cur || cur.book === id || m.studyNext?.[kind] || !roomOpen(m.castle, 'readingRoom')) return false;
+  if (copiesOf(m, id) <= 0 || !canRead(m, kind, book)) return false;
+  takeBook(m, id);
+  (m.studyNext ??= {})[kind] = id;
+  return true;
+}
+/** Take the queued book back to the bag. */
+export function unqueueStudy(m: Meta, kind: string): boolean {
+  const id = m.studyNext?.[kind];
+  if (!id) return false;
+  delete m.studyNext![kind];
+  if (!Object.keys(m.studyNext!).length) delete m.studyNext;
+  grantBook(m, id);
+  return true;
+}
 /** The owned heroes who could read a book. */
 export const readersOf = (m: Meta, book: BookDef): string[] => m.unlocked.filter((k) => canRead(m, k, book));
 /** Unread copies held of a book. */
@@ -71,7 +113,7 @@ export function whyNotRead(m: Meta, kind: string, id: string): string | null {
   const book = bookById(id);
   if (!book || !m.unlocked.includes(kind)) return 'Not yours';
   if (copiesOf(m, id) <= 0) return 'No copy in the bag';
-  if (!suitedTo(kind, book)) return 'Not of this calling';
+  if (!suitedTo(kind, book) && !crossOk(m, kind, book)) return 'Not of this calling';
   if (knowsBook(m, kind, book)) return 'Knows it';
   const cap = studentCap(m.castle.library);
   if (!m.study?.[kind] && students(m).length >= cap) return `The library has room for ${cap} student${cap === 1 ? '' : 's'}`;
@@ -131,6 +173,15 @@ export function settleStudy(m: Meta, fought: readonly string[]): StudyNote[] {
     if (left === 0) {
       delete m.study![kind];
       if (!knowsBook(m, kind, book)) ((m.learned ??= {})[kind] ??= []).push(book.id);
+      // (the Reading Room: the queued book starts now, its kept progress with it; its copy left the bag when it was queued)
+      const next = m.studyNext?.[kind];
+      if (next) {
+        delete m.studyNext![kind];
+        if (!Object.keys(m.studyNext!).length) delete m.studyNext;
+        const kept = m.studyKept?.[kind]?.[next] ?? 0;
+        if (m.studyKept?.[kind]) delete m.studyKept[kind][next];
+        (m.study ??= {})[kind] = { book: next, done: kept };
+      }
     }
     out.push({ kind, book: book.id, left, learned: left === 0 });
   }
@@ -236,7 +287,8 @@ export function slotFor(kind: string, pick: SkillPick): Slot | undefined {
   const src = book && HERO_KITS()[book.from.hero];
   const s = book && bookSource(book);
   if (!book || !src || !s) return undefined;
-  const slot: Slot = { ...s, cost: costForPool(s, src.pool, own.pool), tune: s.tune * (book.tune ?? 1) };
+  // (DEPTH-BUILD: a book of another calling, read in the Scriptorium, teaches at three quarters of its strength)
+  const slot: Slot = { ...s, cost: costForPool(s, src.pool, own.pool), tune: s.tune * (book.tune ?? 1) * (crossBook(kind, book) ? CROSS_TUNE : 1) };
   delete slot.revive;
   return slot;
 }

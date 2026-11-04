@@ -7,6 +7,7 @@
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomsOf } from './sim/rooms';
+import { CALLINGS, PERKS, recall } from './sim/legacy';
 import { roomsStrip } from './castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
@@ -26,6 +27,7 @@ import { play } from './render/sound';
 import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
 import { ALL_HEROES, UNITS } from './sim/units';
+import { levelOfKind } from './sim/levels';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
@@ -78,6 +80,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const reducedMotion = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export interface HomeHooks {
+  /** DEPTH-BUILD: the home screen has opened (the camp or the castle): a bond scene now due plays then. */
+  onOpened?: () => void;
   /** Whether a run is saved and not over. */
   hasRun(): boolean;
   /** The saved run's stage and gold, if there is one going: with the army it fights (none for a daily, tower or older run) and a line naming it. */
@@ -301,6 +305,7 @@ export class Home {
     if (note) tips.offer('crowns', $('hmTabs'));
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
     void revealUnseen(this.meta).then(() => this.refresh());
+    this.hooks.onOpened?.();
   }
 
   get isOpen(): boolean {
@@ -976,6 +981,8 @@ export class Home {
     box.append(head, el('p', 'hint', blurb));
     const strip = roomsStrip(id, level);
     if (strip) box.append(strip);
+    // (DEPTH-BUILD: the Hall of Legends' four plinths, one a calling: its mentor and perk, or what an empty one needs; Recall from here)
+    if (id === 'hall') box.append(this.hallPlinths(level));
     const cost = siteNextCost(m.castle, id, chapelBuilt(m));
     const next = roomsOf(id).filter((r) => r.level === level + 1);
     if (cost !== null && next.length) box.append(el('p', 'hint', `Level ${level + 1} opens the ${next.map((r) => r.name).join(' and ')}.`));
@@ -986,6 +993,37 @@ export class Home {
     const row = el('div', 'brow2');
     row.append(buy, done);
     box.append(row);
+  }
+
+  private hallPlinths(level: number): HTMLElement {
+    const m = this.meta;
+    const wrap = el('div', 'hallPlinths');
+    for (const c of CALLINGS) {
+      const row = el('div', 'hallPlinth');
+      const who = m.mentors?.[c];
+      const shut = (m.recalled?.[c] ?? 0) > Date.now();
+      if (who) {
+        const perk = PERKS[who.kind];
+        const words = el('div', '');
+        words.append(el('b', '', `${UNITS[who.kind]?.name ?? who.kind} · Lv ${levelOfKind(m, who.kind)}`), el('small', '', `${c} mentor${perk ? ` · ${perk.name}` : ''}`));
+        const back = el('button', '', 'Recall');
+        back.addEventListener('click', () => {
+          if (back.dataset.sure !== '1') {
+            back.dataset.sure = '1';
+            back.textContent = 'Sure? Seat shut 7 days';
+            return;
+          }
+          if (recall(m, c, Date.now())) {
+            saveMeta(m);
+            this.refresh();
+            this.openBuilding('hall');
+          }
+        });
+        row.append(words, back);
+      } else row.append(el('small', '', shut ? `The ${c} seat is empty for a while yet (recalled).` : level > 0 ? `Retire ${c === 'arcane' ? 'an' : 'a'} ${c} hero of level 60 or more (from the hero's sheet).` : `Build the Hall to seat ${c === 'arcane' ? 'an' : 'a'} ${c} mentor.`));
+      wrap.append(row);
+    }
+    return wrap;
   }
 
   /** A card's Build button: the price and how long it takes; "Building · 4:05" while it goes up; greyed while the builders are busy

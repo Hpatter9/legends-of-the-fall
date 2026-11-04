@@ -37,7 +37,8 @@ const still = (b: Battle) => {
 };
 
 test('ten new spells: costs, cooldowns and power fit the rules, and the starters are unchanged', () => {
-  assert.equal(SPELL_IDS.length, 11 + NEW.length);
+  // (KING-SPELLS batch 4 added the schools' fourteen spells: test/king-spells-b4.test.ts)
+  assert.equal(SPELL_IDS.length, 11 + NEW.length + 14);
   assert.deepEqual([...STARTER_SPELLS], ['heal', 'meteor', 'haste']);
   for (const id of NEW) {
     const sp = SPELLS[id];

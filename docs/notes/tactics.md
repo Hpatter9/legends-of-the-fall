@@ -59,3 +59,46 @@ and the front-liners' charges are not.
 - `tools/tactics/measure.ts` (`node tools/tactics/run.mjs`): the seeded measurement; `--tactic`, `--level`, `--stage`, `--placed`,
   `--diag` (how the early strikers came to blows).
 - `tools/tactics/openers.ts` (`node tools/tactics/run.mjs --openers`): the skills that carry their caster nearer the foe, read from seeded fights.
+
+## Batch 2: Advance the default, and the rebalance
+
+- **`TACTICS.fallback` is `advance`**: every fight the player (or a tool) does not set otherwise advances together. The Last Stand still
+  takes none.
+- **The foes' answer, `TACTICS.answer` 1.02**: every foe of a fight's band strikes 2% harder (`startBattle`'s band boost). Attack alone, so
+  no health is rounded twice (an answer on health too moved the corruption's and the Fortified twist's stated +% by a point of rounding).
+  The Last Stand's waves come by their own rules and are left as they were. Measured on random teams placed sensibly
+  (`node tools/tactics/run.mjs`, 1,500 fights a cell, on main at 0.340.0):
+
+  | Won | Level 1, stage 5 | Level 10, stage 27 | Level 30, stage 90 |
+  |---|---|---|---|
+  | Before the tactics (Charge, no answer) | 63.4% | 48.8% | 67.5% |
+  | Advance together, answer 1.02 (the default now) | 63.3% | 47.6% | 68.6% |
+  | Charge, answer 1.02 | | | 65.7% |
+
+  So a sensibly placed party plays at the old pace with Advance, and Charge costs about 2 points on average (more against brutes, less or
+  none against archers; batch 1's table by band).
+- **Parity** (the hero sweep, `tools/heroSweep.ts`: random teams placed at random, 12,000 fights). Random placings put strikers in front of
+  the line, so Advance lifts them more than it lifts a sensible party (the average rose 2 to 5 points), and it lifts most the heroes who
+  gain from waiting: those whose self skill is cast before contact (the Werewolf's Shapechange), whose aura reaches a party standing
+  together (the Samurai Commander's War Banner), and the front-liners the others now follow. Retuned by their own kits:
+  - the Werewolf's Hunter back to its numbers before the joint rebalance (`HUNTER_QUICK` 1.35 to 1.25, `HUNTER_BLEED` 0.18 to 0.12);
+  - the War Banner 6 s to 4 s (`BANNER_MS`; the Samurai Commander's alone);
+  - the Karasu's Pounce (`TUNE1`) 0.24 to 0.36 (his opener is held, so he lost most);
+  - the Siege Bot's Bombard (`TUNE1`) 0.27 to 0.38;
+  - the Knight's Hold Fast (`TUNE3`) 1.166 to 0.8 (his ultimate's power was the first lever, but it cost the Last Stand's strong party its
+    fourth room; Hold Fast does not);
+  - the Shambler's ultimate (`tuned.power`) 0.933 to 0.84.
+
+  | | Level 1, stage 5 | Level 10, stage 27 | Level 30, stage 92 |
+  |---|---|---|---|
+  | Average, spread | 58.5%, 10.7 | 44.4%, 13.5 | 62.2%, 10.4 |
+  | Beyond 6 | none | Kitsune +7.9, Werewolf +6.8, Shambler +6.6 | none |
+
+  The level-30 yardstick (`hero-balance-ultimates`) moved from stage 90 to 92, where the average team wins 62% as it did at 90 before (66%
+  at 90 now); its band is the same 6. Level 10 has no test; its three above 6 are watch items for the end's re-measure (their skill 2 is
+  a utility skill whose `tune` does nothing, and their timers barely moved them).
+- **Records**: `spells-identity` and `ailments-identical` re-recorded (every scenario but the spells proof's `stand`), `stand-regression`
+  re-pinned (the third fight now won, the seventh lost), the Calamity scenario back among those that play as recorded with the bosses'
+  signatures on (its greedy run ends before that boss again), and two tests re-staged (`boss-big`'s dodge on a charging party, as its
+  heroes packed behind the line left no tile to step to; the Vaelkhar trial on seed 2004, which shows his whole kit under Advance).
+- **Tools**: `TACTICS_OFF=1` (`tools/tactics/off.ts`, imported by `tools/balance.ts`) measures as before the tactics; `run.mjs --answer`.

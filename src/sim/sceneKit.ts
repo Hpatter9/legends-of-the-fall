@@ -173,7 +173,9 @@ export type Moment =
   /** A quest battle's story, before it or after a win (`questBattleData.ts`; played by the page, not kept in the Scenes list). */
   | { kind: 'questBattle'; battle: string }
   /** An Eidolon chain's story (`eidolonChainData.ts`: the giver's prologue; played by the page, not kept in the Scenes list). */
-  | { kind: 'eidolon'; chain: string };
+  | { kind: 'eidolon'; chain: string }
+  /** DEPTH-BUILD: a kindred pair's bond scene at bond level 1, 3 or 5 (`bondScenes.ts`), played at the camp or the castle. */
+  | { kind: 'bond'; pair: string; level: number };
 
 /** What a film can reveal at its end (REVEAL): a mode opening (the Calamity), the army after this one, the Calamity's Ascension levels, a
  *  castle building (the chapel: the spellbook), a hero's awakening, an Eidolon bound (for the quest chains' films). */
@@ -190,7 +192,7 @@ export type Reveal =
 /** A moment's key: its kind and what it is about (the map, the army, the hero ...). */
 export const momentKey = (m: Moment): string => {
   const o = m as Record<string, unknown>;
-  return [m.kind, o.map ?? o.army ?? o.hero ?? o.set ?? o.site ?? o.floor ?? o.boss ?? ''].join(':');
+  return [m.kind, o.map ?? o.army ?? o.hero ?? o.set ?? o.site ?? o.floor ?? o.boss ?? o.pair ?? '', ...(m.kind === 'bond' ? [m.level] : [])].join(':');
 };
 
 export interface Scene {
