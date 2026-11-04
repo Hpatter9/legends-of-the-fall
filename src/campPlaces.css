@@ -122,3 +122,14 @@
 .cpWrap.sgStill .sgVeil, .cpWrap.sgStill .sgVeil::after, .cpWrap.sgStill .sgCard { animation-duration: 0.35s; }
 .cpWrap.sgStill .sgCard { animation-name: sgCardStill; }
 @keyframes sgCardStill { from { opacity: 1; } to { opacity: 1; } }
+
+/* The Daily: a small icon button at the scene's right edge (its check or red dot on its corner); the boss and how it stands are its tooltip and spoken label */
+.hm-battle .cpDailySlot .cpPlace { border-radius: 6px; border: 1px solid #857044; background: linear-gradient(135deg, #202b2bf2, #10171df5); box-shadow: inset 0 0 0 3px #bda05f14, 0 2px 6px #0008; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.hm-battle .cpDailySlot .cpPlace:hover:not(:disabled) { border-color: #ead09a; }
+.hm-battle .cpDailySlot .cpDailyIcon { width: 30px; height: 30px; image-rendering: pixelated; pointer-events: none; }
+.hm-battle .cpDailySlot .cpTag { position: static; height: auto; width: auto; border: 0; background: none; box-shadow: none; padding: 0; }
+.hm-battle .cpDailySlot .cpTag b { font: 700 11px/1 var(--display); color: #e6c988; }
+.hm-battle .cpDailySlot .cpPlace.done { border-color: #5f9a5c; }
+.hm-battle .cpDailySlot .cpPlace.done .cpTag b { color: var(--g5); }
+.hm-battle .cpDailySlot .cpPlace i.badge { top: -4px; right: -4px; }
+.hm-battle .cpDailySlot .cpPlace i.dailyDone { top: -6px; right: -6px; }

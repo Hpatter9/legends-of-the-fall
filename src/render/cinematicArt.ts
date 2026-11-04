@@ -4,10 +4,10 @@ import { Rectangle, Sprite, Texture } from 'pixi.js';
 import { loadImage } from './loadImage';
 import atlasUrl from '../art/fx/cinematic/painted-atlas.png';
 import accentsUrl from '../art/fx/cinematic/accents-atlas.png';
-import { FORMS, PALETTE, formOf, paintedPose, type Form, type PaintedElement } from './cinematicRules';
+import { FORMS, PALETTE, formOf, paintedPose, type Form, type PaintedElement, type PaintedPose } from './cinematicRules';
 import type { Element, Family } from './fxRules';
 
-interface Material { family: Family }
+interface Material { family: Family; form?: Form }
 const materials = new WeakMap<Texture, Material>();
 const sources = new Map<string, Texture>();
 const strips = new Map<string, Texture[]>();
@@ -67,29 +67,37 @@ export function paintedStrip(el: PaintedElement, family: Family, form = formOf(e
   const existing = strips.get(key);
   if (existing) return existing;
   const base = surface(form, el);
-  const frames = materialFrames(base, family);
+  const frames = materialFrames(base, family, form);
   strips.set(key, frames);
   return frames;
 }
 
 /** Register a shared source with a logical 32px frame and continuous material motion. */
-export function materialFrames(base: Texture, family: Family): Texture[] {
+export function materialFrames(base: Texture, family: Family, form?: Form): Texture[] {
   base.source.style.scaleMode = 'linear';
   const texture = new Texture({ source: base.source, frame: new Rectangle(0, 0, base.source.width, base.source.height), orig: new Rectangle(0, 0, 32, 32) });
-  materials.set(texture, { family });
+  materials.set(texture, { family, form });
   return Array<Texture>(6).fill(texture);
 }
 
-/** Return false for ordinary fighter/prop textures, which retain their own animation and blending. */
-export function paintSprite(sp: Sprite, elapsed: number, life: number, scale: number, rotation: number, alpha: number, loop: boolean, calm: boolean): boolean {
+/** Pose a painted still for this moment (see `paintedPose`); false for ordinary fighter/prop textures, which keep their own animation and blending.
+ *  `flat`: it is drawn squashed on the ground, so it must not turn (a turned ellipse would spin its squash). The pose's `dx`/`dy` are for the
+ *  caller to apply (a particle keeps them off its own drift: `Particles`). */
+export function paintSprite(sp: Sprite, elapsed: number, life: number, scale: number, rotation: number, alpha: number, loop: boolean, calm: boolean, flat = false): PaintedPose | false {
   const material = materials.get(sp.texture);
   if (!material) return false;
-  const pose = paintedPose(material.family, elapsed / Math.max(1, life), elapsed, loop, calm);
+  const pose = paintedPose(material.family, elapsed / Math.max(1, life), elapsed, loop, calm, material.form);
+  if (flat) pose.turn = 0;
   sp.scale.set(scale * pose.x, scale * pose.y);
   sp.rotation = rotation + pose.turn;
   sp.alpha = alpha * pose.alpha;
   // Normal blending preserves coloured flames, smoky edges and crystal detail under overlapping spell layers.
   // Only the tiny sparks add light; large additive paintings would wash the fighters out.
   sp.blendMode = material.family === 'sparkle' || material.family === 'cross' ? 'add' : 'normal';
-  return true;
+  return pose;
+}
+
+/** Pose a painted still that is simply held for a while (a flame on the ground, a ward): all its motion, none of the fade-in and out. */
+export function paintHeld(sp: Sprite, elapsed: number, scale: number, rotation: number, alpha: number, calm: boolean, flat = false): PaintedPose | false {
+  return paintSprite(sp, elapsed, elapsed * 2 + 1, scale, rotation, alpha, true, calm, flat);
 }

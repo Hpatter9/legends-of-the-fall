@@ -1,5 +1,7 @@
 # Tower reset: a climb that levels its own heroes, and saved climbs
 
+> **Status (0.332.0):** The endless tower is retired (the Last Stand replaced it, `docs/notes/last-stand.md`); `towerRun` is kept for tools and tests, and `migrateOldClimb` settles a very old saved climb. `climb.ts` still levels the Calamity's heroes.
+
 **Rules** (`src/sim/climb.ts`, `modes.ts` `towerRun`, `tower.ts`):
 - A climb starts with the whole party (every kind in `meta.party`, one hero each, all in the squad), every hero at level 1
   with nothing worn and no talents, and no shard rank. `Run.local` marks a run whose heroes level within it; the meta's

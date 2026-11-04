@@ -13,6 +13,7 @@ import { portrait } from './render/sheets';
 import { heroFace } from './heroFace';
 import type { ComebackGo, ComebackTip } from './sim/comeback';
 import { playResults, type JrData } from './jrpgRecapView';
+import { openScreen } from './screens';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -51,6 +52,12 @@ export interface RecapAdvice {
 }
 
 export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, onClose: () => void, advice?: RecapAdvice): void {
+  // (CLOSE-SCREENS: the recap is one step of the run's end: the result card under it is finished, and is closed as it opens)
+  const close = openScreen('recap', () => {
+    player?.stop();
+    root.hidden = true;
+    root.replaceChildren();
+  });
   root.replaceChildren();
   const sheet = el('div', 'rcSheet');
   const jrHead = el('div');
@@ -61,11 +68,6 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   const player = head.results ? playResults({ head: jrHead, body: jrBody }, head.results) : null;
   // (a tap on the sheet hurries the count-ups to their end)
   if (player) sheet.addEventListener('click', (e) => void (!(e.target as HTMLElement).closest('button') && player.finish()));
-  const close = (): void => {
-    player?.stop();
-    root.hidden = true;
-    root.replaceChildren();
-  };
 
   // how to come back stronger (a lost run only): two to four pointers, each with its way there
   if (advice?.tips.length) {
