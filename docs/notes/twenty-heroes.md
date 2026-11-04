@@ -28,6 +28,8 @@ tavern, the shop, books and talents).
 
 ## Batch 0: the Vampire origin and the Crimson Court
 
+(As first brought over. Since the review the 5 tier is leech 15% and +10% attack, and the Oath is the Night Kin: see [The review's rework](#the-reviews-rework).)
+
 - **The Vampire origin** (`COMING_TRAITS.vampire`), tiers at two, four and five (the director's decision 2; every other trait keeps its
   rules): blows leech 6%; 12% and +6% attack; 18%, +14% attack and the bat swarm. The leech is a team bonus, as every trait's is: every
   hero's blows drink it (`TraitEffects.leech`, read in `afterBlow`; a foe's do not).
@@ -41,6 +43,8 @@ tavern, the shop, books and talents).
   blow, Vampires only, the same tile every time); the Court forms with all five, fills, lands, and the living foes bleed.
 
 ## Batch 1: the Vampires' kits
+
+(The batch tables below are the kits as first brought over; the kits now are in [The review's rework](#the-reviews-rework).)
 
 `src/sim/kits/vampires.ts` holds the five's casts and rows (`vampireRows`; `kits/comingRow.ts` is a row's shape, and `kits/coming.ts` builds every
 batch's rows into kits), brought from the branch's `kits/twentyNew.ts` (they compiled against main's toolkit and
@@ -126,6 +130,64 @@ twenty heroes wait as coming heroes. Changes to the branch:
 
 `test/wave4-kits.test.ts`: the roster's kit rules, the five waiting (and all twenty), their traits in a fight, and both revives raising
 the nearest fallen friend at 30% from level 10.
+
+## The review's rework
+
+The review ([twenty-heroes-review.md](twenty-heroes-review.md)) found the twenty stronger, faster and busier than the roster, short of
+jabs, and repeating a few moves; the director asked for its fixes to be folded in. What changed:
+
+- **Numbers inside their classes.** Each hero's health, attack, defence, walk, blow time and damage a second now sit inside the spread of
+  the roster heroes of its class (`test/coming-stats.test.ts`). The shooters walk at 650 to 700 ms, not 580 to 680. The Blood Gargoyle and
+  the Seraph walk (only the Strigoi and the Astral Sphinx keep their wings), the Geomancer holds the line in melee, and the Bell Warden is
+  a Fighter in his heavy bronze, not a Monk.
+- **One passive effect each, and none a roster passive over again** (the same test): the Gargoyle's front block 30%, the War Drummer's
+  beat (`gang`: 6% harder for each friend beside his foe), the Bell Warden's ringing blows (`arc` 18%), the Falconer's talon bleed and the
+  Inquisitor's searing shots (`rider`s, which grow with attack), the Astrologer's far reach 25%, the Seraph's mending grace (`regen`
+  1.5%) and the Harpooner's chilling barbs (`slow` 1.2 s). A mechanic may be shared with a roster hero, as the roster's own blocks and
+  dodges are, but not at the same numbers.
+- **Slot 3 follows the roster's mix**: thirteen jabs (a x0.8 to x0.9 poke with one small rider), five guards and two utilities, and no
+  heavy. The Banneret's, Falconer's and Harpooner's heavies moved to slot 2.
+- **The repeats cut.** Rescue guards on one trigger, five to two (the Bell Warden's swap and taunt, the Corsair Surgeon's hook and trap);
+  walls, eleven heroes to three (the Geomancer's stone, the Plague Doctor's thorns, the Bombardier's fire); teleport-slash ultimates, three
+  to one (the Mirage Dancer's); pull-in ultimates, five to two (the Astrologer's gravity well and the Harpooner's line, one foe at a time);
+  line-dash skill 1s, three to one (the Vampire Lord's). Ultimates keep one headline and at most one rider, and the Corsair Surgeon's fills
+  at a roster healer's rate (0.4).
+- **Three reworked heroes.** The *Strigoi* (the Nightstalker was a Dota 2 hero's name; his key stays `nightstalker` for the saves and the
+  art) swoops on the back line, abducts, shrieks, and carries his prey off with Belfry Swoop. The *Seraph* is a guardian, not a healer: no
+  revive and no heals; she dives, beats her wings and shields the line under the Host's Halo. The *Bell Warden* is sound and stillness
+  (Bronze Peal silences, Echoing Toll shoves and wards, Midnight Knell stuns and slows), while the Blood Gargoyle stays the leaping granite
+  sentinel.
+- **Renames**: Banquet of Blood (Red Eclipse), Blood Tithe (Exsanguinate, a World of Warcraft talent), Belfry Swoop (Midnight Hunt, a
+  Magic: The Gathering set), Silver Requiem (Judgement of Dusk), Ten Thousand Drums, The Last Riddle (Celestial Convergence), Shell Storm
+  (Carpet Bombardment), Rum Ration (the Surgeon's Crimson Dispensary).
+- **The Vampire origin's 5 tier** is leech 15% and +10% attack with the bat swarm (was 18% and +14%). **The Last Oath is the Night Kin**
+  (was the Crimson Court), its move the Blood Moon: the five drink back a tenth (was a quarter), with a tone of its own (`blood`, red
+  first) beside the Dread Court's dark.
+- **Held**: the review's point 6 (every trait reaching five heroes) waits on the owner. The traits stay data in `COMING_HERO_TRAITS`, so
+  either answer is a table edit.
+
+| Hero | Passive | Skill 1 | Skill 2 | Skill 3 | Ultimate |
+| --- | --- | --- | --- | --- | --- |
+| Vampire Lord (Vladislav) | Noble Thirst | Crimson Lunge (strike 24, 7 s) | Impaling Thrust (heavy 30, 11 s) | Mist Step (jab 10, 4 s) | Banquet of Blood |
+| Hemomancer (Carmilla) | Chalice Overflow | Sanguine Lash (strike 36, 7 s) | Blood Chalice (utility 42, 14 s) | Crimson Mist (guard 30, 15 s) | Blood Tithe |
+| Strigoi (Sorin) | Predator of the Crypt | Dusk Dive (strike 22, 6 s) | Abduct (heavy 30, 14 s) | Echolocation (jab 10, 4 s) | Belfry Swoop |
+| Blood Gargoyle (Gavril) | Granite Hide | Gargoyle Crash (strike 26, 7 s) | Stone Slumber (utility 26, 16 s) | Granite Fist (jab 10, 3.5 s) | Cathedral Perch |
+| Dhampir (Klara) | Half-Blood Hunter | Silver Stake (strike 24, 7 s) | Grapple Vault (guard 16, 14 s) | Silver Shot (jab 10, 3.5 s) | Silver Requiem |
+| War Drummer (Raiden) | Rhythm of War | Thunder Beat (strike 24, 7 s) | Marching Cadence (utility 26, 16 s) | Drum Strike (jab 10, 3.5 s) | Ten Thousand Drums |
+| Banneret (Isolde) | Shield-Sister | Standard Charge (strike 24, 7 s) | Phalanx Sweep (heavy 30, 12 s) | Banner Jab (jab 10, 3.5 s) | Oriflamme of the Keep |
+| Geomancer (Tenzin) | Jagged Bedrock | Tectonic Shove (strike 36, 7 s) | Lodestone Pull (utility 40, 14 s) | Crag Staff (jab 12, 3.5 s) | Mountain's Embrace |
+| Bell Warden (Kavi) | Temple Bronze | Bronze Peal (strike 24, 7 s) | Echoing Toll (heavy 30, 11 s) | Sanctuary Vault (guard 16, 14 s) | Midnight Knell |
+| Falconer (Aisling) | Wind-Borne Talons | Falcon Stoop (strike 24, 6 s) | Talon Snare (heavy 30, 11 s) | Gale Vault (guard 14, 12 s) | Sky Hunt |
+| Astral Sphinx (Nenet) | Starlit Wings | Rift Pounce (strike 36, 7 s) | Riddle of Repulsion (heavy 44, 11 s) | Riddling Glance (jab 14, 3.5 s) | The Last Riddle |
+| Mirage Dancer (Zahara) | Desert Shimmer | Whirling Veils (strike 24, 7 s) | Dune Swap (heavy 30, 11 s) | Veil Flick (jab 10, 3.5 s) | Dance of Seven Mirages |
+| Plague Doctor (Corvus) | Ash Apothecary | Censer Swing (strike 36, 7 s) | Crow Step (utility 40, 14 s) | Quarantine Line (utility 34, 16 s) | Black Miasma |
+| Bombardier (Soren) | Shrapnel Shells | Concussion Mortar (strike 24, 7 s) | Blast Jump (guard 16, 12 s) | Firebomb Line (utility 22, 16 s) | Shell Storm |
+| Astrologer (Cyra) | Chart of the Heavens | Gravity Well (strike 36, 7 s) | Retrograde Orbit (guard 30, 14 s) | Star Dart (jab 13, 3 s) | Supernova Alignment |
+| Inquisitor (Soraya) | Sun-Forged Verdict | Chains of Judgement (strike 36, 7 s) | Blazing Edict (utility 36, 16 s) | Purging Scales (guard 30, 15 s) | Solar Tribunal |
+| Seraph (Gabriela) | Grace of the Heights | Halo Dive (strike 36, 7 s) | Sanctuary Wings (heavy 44, 12 s) | Radiant Thrust (jab 13, 3.5 s) | Descent of the Host |
+| Corsair Surgeon (Tariq) | Field Sawbones | Boarding Swing (strike 36, 7 s) | Sawbones Triage (utility 40, 12 s; revive) | Grappling Extraction (guard 30, 15 s) | Rum Ration |
+| Harpooner (Siku) | Chill-Iron Barbs | Barbed Harpoon (strike 24, 7 s) | Whaler's Reel (heavy 30, 11 s) | Flensing Throw (jab 10, 3.5 s) | Leviathan Line |
+| Sea Reaver (Nakoa) | Rising Tide | Breaker Rush (strike 24, 7 s) | Anchor Slam (heavy 32, 12 s) | Gaff Hook (jab 10, 3.5 s) | Wrath of the Reef |
 
 ## The page-side rows, ready to move
 
