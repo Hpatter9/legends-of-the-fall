@@ -16,6 +16,7 @@ import { BOSS_IDS } from './foes';
 import { readCart, readEquipment, readEquipped, type CartPiece, type EquipSlot, type Equipment } from './equipment';
 import { GEAR_V, migrateGear, type GearNote } from './gearMigrate';
 import { claimLegends, readLegends } from './legends';
+import { readRemedies, type RemedyId } from './remedies';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTomes, type TomeCounts } from './tomes';
@@ -25,6 +26,9 @@ import { readAwakened } from './awaken';
 import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readWeak, type WeakRecord } from './weakness';
+import { readBonds } from './bonds';
+import { readMentors } from './legacy';
+import type { Calling } from './weakness';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
 import { readTickets } from './autoReplay';
@@ -136,6 +140,10 @@ export interface Meta {
   wavesFought?: Record<string, number>;
   /** The glyphs taken or cleared on each piece, by piece id (`enchant.ts`: its offers' stream moves on with each). Missing is none. */
   enchants?: Record<number, number>;
+  /** SEVEN-SLOT GEAR batch 6 (`remedies.ts`): the remedies owned, the satchel last chosen for a run, and whether Auto may use them (off). */
+  satchel?: Partial<Record<RemedyId, number>>;
+  satchelPick?: Partial<Record<RemedyId, number>>;
+  autoRemedies?: boolean;
   /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
    *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
   cart?: CartPiece[];
@@ -153,6 +161,13 @@ export interface Meta {
   codex?: CodexRecord;
   /** DEPTH-BUILD: what is known of each boss's weakness and the Hunter's marks won (`weakness.ts`); missing is nothing known. */
   weak?: Record<string, WeakRecord>;
+  /** DEPTH-BUILD: bond points by pair ("knight|peasant"), the rivalries settled, the bond scenes seen (`bonds.ts`); missing is none. */
+  bonds?: Record<string, number>;
+  bondSettled?: string[];
+  bondScenes?: string[];
+  /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
+  mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
+  recalled?: Partial<Record<Calling, number>>;
   codexClaimed?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
@@ -201,6 +216,8 @@ export interface Meta {
   books?: Record<string, number>;
   learned?: Record<string, string[]>;
   study?: Record<string, { book: string; done: number }>;
+  /** DEPTH-BUILD: the Library's Reading Room: each student's queued next book (its copy already out of the bag); missing is none. */
+  studyNext?: Record<string, string>;
   studyKept?: Record<string, Record<string, number>>;
   loadout?: Record<string, string[]>;
   /** Skill levels by use (the skills overhaul's batch 5, `skillLevels.ts`): the use points each hero kind has earned with each of its skills, under the
@@ -520,6 +537,11 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       else delete m.wavesFought;
       if (m.enchants && typeof m.enchants === 'object') m.enchants = Object.fromEntries(Object.entries(m.enchants).filter(([, n]) => typeof n === 'number' && Number.isInteger(n) && n > 0));
       else delete m.enchants;
+      m.satchel = readRemedies(m.satchel);
+      if (!m.satchel) delete m.satchel;
+      m.satchelPick = readRemedies(m.satchelPick);
+      if (!m.satchelPick) delete m.satchelPick;
+      if (m.autoRemedies !== true) delete m.autoRemedies;
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)
@@ -542,6 +564,13 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.codex = readCodex(m.codex);
       m.weak = readWeak(m.weak);
       if (!m.weak) delete m.weak;
+      m.bonds = readBonds(m.bonds);
+      if (!m.bonds) delete m.bonds;
+      if (!Array.isArray(m.bondSettled)) delete m.bondSettled;
+      if (!Array.isArray(m.bondScenes)) delete m.bondScenes;
+      m.mentors = readMentors(m.mentors);
+      if (!m.mentors) delete m.mentors;
+      if (!m.recalled || typeof m.recalled !== 'object') delete m.recalled;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)
       delete (m as { codexPaid?: unknown }).codexPaid;

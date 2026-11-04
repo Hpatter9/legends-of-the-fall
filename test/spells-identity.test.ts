@@ -78,6 +78,8 @@
 // f0b63f3f, heroes30Others 4b47763c.)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
 // foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
+// (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
+// fourteen. No other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
@@ -108,6 +110,8 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // either proof, `identityHashes`.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (f3dc7098): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower`, and batch 6 again over the tactics (calamity 1d879f22, daily 22ed0372, tower 2337ec08): a run started now finds runes, not pieces, and a won
+// wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));

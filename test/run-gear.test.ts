@@ -1,7 +1,7 @@
 // Real gear in runs (RUN-GEAR, docs/notes/run-gear.md): every source of run gear hands out a real piece, drawn at the same moment on its
 // stream as the simple gear was; found pieces are worn by kinds (merges leave them), boosted while fresh, upgraded only if found in the
 // run, and all kept at the end (worn for real, the stash, the cart, sold past it); an auto-replay run keeps half; old runs finish on
-// their simple gear, which comes home once as real pieces.
+// their simple gear, which comes home once as real pieces. (Since runes, these are the rules a run saved before them finishes on.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dropGear, makeGear } from '../src/sim/gear';
@@ -36,9 +36,15 @@ import {
   wearFound,
 } from '../src/sim/runGear';
 
+/** A run as one saved before runes finds it (SEVEN-SLOT GEAR batch 4): real pieces, not runes. The RUN-GEAR rules below are those such a
+ *  run finishes on; a run started now finds runes (`test/runes.test.ts`). */
+const pre = (run: Run): Run => {
+  delete run.runes;
+  return run;
+};
 /** An army run with a knight and an archer on the field. */
 function army(seed = 7, id = 'orcs', tier = 0): Run {
-  const run = armyRun(seed, id, undefined, undefined, tier);
+  const run = pre(armyRun(seed, id, undefined, undefined, tier));
   recruit(run, 'knight');
   recruit(run, 'archer');
   run.squad = run.roster.map((h) => h.id);
@@ -50,9 +56,9 @@ function found(run: Run, id: number, base: string, rarity: 1 | 2 | 3 | 4 = 1, le
 }
 
 test('a new run of every mode is a real-gear run; a find draws from its stream exactly what the simple gear drew', () => {
-  assert.equal(newRun(1).real, true);
-  assert.equal(armyRun(1, 'orcs').real, true);
-  assert.equal(towerRun(1, startedMeta(1)).real, true);
+  assert.equal(pre(newRun(1)).real, true);
+  assert.equal(pre(armyRun(1, 'orcs')).real, true);
+  assert.equal(pre(towerRun(1, startedMeta(1))).real, true);
   for (let seed = 1; seed <= 60; seed++)
     for (const stage of [1, 9, 17, 30]) {
       const run = army(seed);
@@ -91,7 +97,7 @@ test('the grade table: by step and difficulty, never Mythic; the item level foll
 });
 
 test('a boss wave drops a real piece into the pack, full, tagged as found in this run; an old run still drops simple gear', () => {
-  const run = newRun(11);
+  const run = pre(newRun(11));
   run.stage = 5;
   finish(run, true);
   assert.equal(run.pack?.length, 1);
@@ -100,7 +106,7 @@ test('a boss wave drops a real piece into the pack, full, tagged as found in thi
   assert.equal(it.wear, undefined, 'full durability');
   assert.ok(run.bossFinds?.includes(it.id));
   assert.equal(run.items, undefined, 'no simple gear');
-  const old = newRun(11);
+  const old = pre(newRun(11));
   delete old.real;
   old.stage = 5;
   finish(old, true);
@@ -139,7 +145,7 @@ test('fresh from the field: a found piece worn in an army run takes the lasting 
 
 test('in a run whose heroes start bare only the finds count, at the bare boost, and every one goes to the stash at the end', () => {
   const m = startedMeta(4);
-  const run = towerRun(4, m);
+  const run = pre(towerRun(4, m));
   const kind = run.roster[0].kind;
   assert.equal(bareKitStats(run, kind), undefined);
   found(run, 901, 'leatherJerkin', 1, 1);
@@ -169,7 +175,7 @@ test('Equip best in a run: a find goes on only when the whole kit scores better 
 });
 
 test('merges and partings leave the finds where they are: worn by the kind, not by one copy', () => {
-  const run = newRun(5, ['knight']);
+  const run = pre(newRun(5, ['knight']));
   found(run, 920, 'ironSword');
   wearFound(run, 'knight', 920);
   merge(run, run.roster[0].id, run.roster[1].id);
@@ -257,7 +263,7 @@ test('the merchant prices a real piece by its grade, and a mystery forge raises 
     assert.equal(ev.options[1].cost, [0, 40, 90, 200, 450][fx.gear.piece.rarity] + 2 * 2);
     break;
   }
-  const t = towerRun(3, startedMeta(1));
+  const t = pre(towerRun(3, startedMeta(1)));
   t.stage = 4;
   t.tower!.cur = { id: 0, kind: 'mystery' };
   t.gold = 500;

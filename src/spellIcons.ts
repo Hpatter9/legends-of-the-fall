@@ -5,9 +5,10 @@
 import atlasUrl from './art/fx/pack/atlas.png';
 import atlas from './art/fx/pack/atlas.json';
 import type { SpellId } from './sim/spells';
+import { withLooks } from './sim/spellLooks';
 
 /** The strip and frame (0 to 5) each spell shows. */
-export const SPELL_ICON: Record<SpellId, [strip: string, frame: number]> = {
+export const SPELL_ICON: Record<SpellId, [strip: string, frame: number]> = withLooks({
   heal: ['light-gather', 3],
   meteor: ['fire-orb', 2],
   haste: ['wind-vortex', 2],
@@ -29,7 +30,7 @@ export const SPELL_ICON: Record<SpellId, [strip: string, frame: number]> = {
   bulwark: ['earth-shield', 3],
   wolves: ['forest-gather', 3],
   starfall: ['fire-explosion', 3],
-};
+});
 
 const SCALE = 2;
 const SHEET = atlas as unknown as Record<string, [number, number, number]>;

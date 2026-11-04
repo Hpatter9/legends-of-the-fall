@@ -9,12 +9,17 @@ import type { Meta } from './meta';
 import { mixSeed, Rng } from './rng';
 import { SPELL_IDS, SPELLS, STARTER_SPELLS, type SpellId } from './spells';
 
-/** The Mage Tower level that teaches each everyday spell (three a level, the tower's four levels). */
+/** The Mage Tower level that teaches each everyday spell (three a level, the tower's four levels; and since KING-SPELLS batch 4 the schools'
+ *  new spells too, three or four more a level). */
 export const TOWER_SPELLS: Readonly<Partial<Record<SpellId, number>>> = {
   shield: 1, cleanse: 1, smite: 1,
   hex: 2, chain: 2, blink: 2,
   poison: 3, frost: 3, lance: 3,
   rally: 4, renewal: 4, warcry: 4,
+  icewall: 1, gale: 1, snare: 1, venom: 1,
+  shatter: 2, foresight: 2, sunbeam: 2, bonewall: 2,
+  firewall: 3, thunderclap: 3, mirage: 3, drain: 3,
+  charm: 4, raisedead: 4,
 };
 
 export interface SpellMilestone {

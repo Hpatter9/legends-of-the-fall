@@ -2,6 +2,8 @@
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { socketStrip } from './runeTray';
+import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
@@ -97,6 +99,11 @@ import { toastAchievements, toastLines, toastSpells, toastStones } from './achie
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
 import { showMarchCard } from './marchCard';
+import { applyVigil } from './sim/chapelRooms';
+import { landAt } from './sim/calJourney';
+import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
+import { bondScenesDue } from './sim/bondScenes';
+import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
@@ -479,6 +486,13 @@ class Game {
         if (!this.eid.camp.root.isConnected) $('hmStones').after(this.eid.camp.root);
         this.eid.refreshCamp();
       },
+      // (DEPTH-BUILD: a bond scene due plays when the camp or the castle opens, one at a time)
+      onOpened: () => {
+        if (!this.scenesOn()) return;
+        const id = bondScenesDue(this.meta, (x) => seenScene(this.meta, x))[0];
+        const sc = id ? SCENES[id] : undefined;
+        if (sc) void this.queueScene(sc.moment);
+      },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)
         const learnt = grantSpells(this.meta);
@@ -700,7 +714,7 @@ class Game {
     const out: Moment[] = [];
     const mode = run.mode?.kind;
     if (mode === 'calamity' && run.tower) {
-      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.tower.act });
+      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.rift ? landAt(run.tower.journey, run.tower.act) : run.tower.act });
       if ((run.mode as { ascension?: number }).ascension === 1) out.push({ kind: 'ascension' });
     }
     if (mode === 'tower' && [10, 25, 50].includes(run.stage)) out.push({ kind: 'spire', floor: run.stage });
@@ -2338,6 +2352,16 @@ class Game {
   }
 
   private startRun(run: Run): void {
+    // (DEPTH-BUILD: an army run keeps a snapshot of the bonds as it starts, so its fights replay)
+    if (run.mode?.kind === 'army' && !run.bonds) {
+      const snap = bondSnapshot(this.meta);
+      if (Object.keys(snap).length) run.bonds = snap;
+    }
+    // (and of the mentors' perks)
+    if (run.mode?.kind === 'army' && !run.legacy) {
+      const snap = legacySnapshot(this.meta, this.meta.party);
+      if (Object.keys(snap).length) run.legacy = snap;
+    }
     this.run = run;
     this.syncPool();
     this.placed.clear();
@@ -2360,7 +2384,8 @@ class Game {
     // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
-    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
+    // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
+    return legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) });
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -2599,6 +2624,8 @@ class Game {
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
+      // (DEPTH-BUILD: the Chapel's Vigil: how the party rises, chosen on the march card)
+      applyVigil(this.b, fallen, this.run.orders?.vigil);
       // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
       this.fx.undim();
       this.acc = 0;
@@ -3056,7 +3083,10 @@ class Game {
   private buildBench(): void {
     const bench = $('bench');
     const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
-    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    // (SEVEN-SLOT GEAR batch 5: the Pack button says how many rune merges are ready)
+    const merges = this.run.runes && this.b.phase === 'deploy' ? mergesReady(this.run.runes) : 0;
+    $('pack').textContent = merges ? `Pack · ${merges} merge${merges === 1 ? '' : 's'}` : 'Pack';
+    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};${this.run.runes ? JSON.stringify(this.run.runes.worn) + this.b.phase : ''};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -3112,6 +3142,8 @@ class Game {
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      // (SEVEN-SLOT GEAR batch 5: a rune run shows each hero's three sockets over its card, twins rimmed, on the deploy screen)
+      if (this.run.runes && !h.guest && this.b.phase === 'deploy') card.append(socketStrip(this.run.runes, h.kind));
       // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
       card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
@@ -3329,7 +3361,7 @@ class Game {
       const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
       const earned = settleRun(this.meta, run, settled);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
-      toastLines(weakLines(settled.weak));
+      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
@@ -3358,7 +3390,8 @@ class Game {
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
       if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
       // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
-      const ups = own ? own.ups : gainXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench });
+      // (DEPTH-BUILD: an apprentice below half its mentor's level earns half again, `legacy.ts`)
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)
@@ -3463,6 +3496,10 @@ class Game {
     const block = hireBlock(run);
     buy.textContent = block === 'bench' ? 'Bench full' : `Hire · ${summonCost(run)}`;
     buy.disabled = block !== null;
+    // (UX-FIXES: an empty deploy board says what to do: hire. Hire is the lit button until a hero is on the bench, then Fight! takes over)
+    const needHire = b.phase === 'deploy' && !run.roster.length && block === null && run.mode?.kind !== 'calamity';
+    $('hireHint').hidden = !needHire;
+    buy.classList.toggle('primary', needHire);
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
     // (DEPLOY-ZOOM: Auto merge is earned by beating the second army, Auto place the fourth, `featureUnlocks.ts`; each is told once)
@@ -3557,7 +3594,9 @@ class Game {
     // (a themed daily's featured trait leads the strip)
     const lead = this.theme()?.trait;
     const counts = countTraits(kindsOf(this.b.units)).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
-    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
+    // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot, as a Bonds chip at the end)
+    const pairs = placedPairs(this.run.bonds, kindsOf(this.b.units));
+    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join();
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
     const featured = lead;
@@ -3587,8 +3626,28 @@ class Game {
       });
       strip.append(pill);
     }
+    if (pairs.length) {
+      const pill = document.createElement('button');
+      pill.className = `trait bonds on${this.traitPick === 'bonds' ? ' picked' : ''}`;
+      const head = document.createElement('span');
+      head.className = 'thead';
+      head.textContent = `${pairs.some((p) => p.lv < 0) ? '⚔ ' : '❦ '}Bonds ${pairs.length}`;
+      const fx = document.createElement('small');
+      fx.textContent = pairs.map((p) => p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' & ')).join(', ');
+      pill.append(head, fx);
+      pill.addEventListener('click', () => {
+        this.traitPick = this.traitPick === 'bonds' ? undefined : 'bonds';
+        this.refreshTraits();
+      });
+      strip.append(pill);
+    }
     this.traitTiers = new Map(counts.map((c) => [c.trait.id, c.tier]));
     strip.dataset.drawn = '1';
+    if (this.traitPick === 'bonds' && pairs.length) {
+      hint.classList.remove('wake');
+      hint.textContent = pairs.map((p) => `${p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' and ')}, ${pairWords(p.lv)}`).join('; ');
+      return;
+    }
     const picked = counts.find((c) => c.trait.id === this.traitPick);
     const near = closestTrait(counts);
     hint.classList.toggle('wake', woke.length > 0);
@@ -3615,8 +3674,11 @@ class Game {
       card.classList.toggle('twinOn', !!twin && !(twin.tag !== undefined && canMerge(this.run, Number(id), twin.tag)));
       const mark = card.querySelector<HTMLElement>('.twinMark');
       if (mark) mark.textContent = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
-      const share = u ? u.hp / u.maxHp : 1;
+      // (SEVEN-SLOT GEAR batch 6: a hero risen at half shows its wound before the fight, with a bandage mark)
+      const wound = !u && !this.run.tower ? hpShare(this.run, Number(id)) : 1;
+      const share = u ? u.hp / u.maxHp : wound;
       (card.querySelector('i span') as HTMLElement).style.width = `${Math.round(share * 100)}%`;
+      card.classList.toggle('wounded', !u && wound < 1);
     }
   }
 

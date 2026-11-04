@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cleanAtlasCell } from '../src/render/atlasCell';
 import { KITS, keyOf } from '../src/sim/abilities';
-import { SPELL_IDS } from '../src/sim/spells';
+import { SPELL_IDS as ALL_SPELL_IDS } from '../src/sim/spells';
+import { lookOf, SPELL_LOOK } from '../src/sim/spellLooks';
+// (KING-SPELLS batch 4: the schools' fourteen new spells borrow a first spell's art until their own is painted in batch 5, on the director's
+// word "use existing spell art for now"; this proof holds the first 21 to their own art, and the last test holds the new ones to their
+// borrowed look, so batch 5 must lift them out of `SPELL_LOOK` to pass the first three)
+const SPELL_IDS = ALL_SPELL_IDS.filter((id) => !(id in SPELL_LOOK));
 import { SIGNATURES } from '../src/render/signatures';
 import { SPELL_SIGNATURES } from '../src/render/spellSignatures';
 import { ABILITY_ART, ABILITY_LOOKS, abilitySource, shapeFamily } from '../src/render/abilityLooks';
@@ -82,4 +87,11 @@ test('cell extraction removes a detached neighbour fragment while retaining cent
   assert.equal(pixels[(20 * w + 4) * 4 + 3], 0);
   assert.equal(pixels[(30 * w + 30) * 4 + 3], 255);
   assert.equal(pixels[(30 * w + 46) * 4 + 3], 255);
+});
+
+test('the schools\' new spells borrow a first spell\'s look until their own art is painted (KING-SPELLS batch 4)', () => {
+  for (const id of Object.keys(SPELL_LOOK) as (keyof typeof SPELL_LOOK)[]) {
+    assert.ok(SPELL_IDS.includes(lookOf(id)), id);
+    assert.equal(SPELL_SIGNATURES[id], SPELL_SIGNATURES[lookOf(id)], id);
+  }
 });

@@ -78,15 +78,21 @@ import { WEAK } from '../src/sim/weakness';
 // 7f01a490, stand 49a206c8, calamity 6d82a760.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower` (calamity 9ccdc275, daily bb34c5b1, tower bac9f09c): a run started now finds runes, not pieces, and a won
+// wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
 // (the tactics, docs/notes/tactics.md, re-recorded every scenario: Advance together, the default, holds the strikers and the back line until
 // the front line meets the foe, the foes of every band strike 2% harder in answer, and the Werewolf's Hunter, the Karasu's Pounce, the Siege
 // Bot's Bombard, the Knight's Hold Fast, the Shambler's ultimate and the War Banner were retuned for parity. The new hashes: field1 508646cc,
 // field30 2d8389e4, bosses d137df9b, armyFoes 38dfab07, spells 7c55b72f, lands 5c0935af, army e2b79f62, daily 4c6a7269, tower af158bbc, stand
 // 000d28c3 (its party's Knight), calamity 5270a261.)
+// (SEVEN-SLOT GEAR batches 4 and 6, merged over the tactics, re-recorded `calamity`, `daily` and `tower` (calamity 244264f2, daily 3e144113,
+// tower e5d59809): a run started now finds runes, a won wave adds one, and its fallen stand again at half; every other scenario keeps its hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again, now 81e830d7: it casts each king's spell once, and the
+// schools added fourteen. No other scenario moved.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
