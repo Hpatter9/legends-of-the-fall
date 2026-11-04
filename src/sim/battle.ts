@@ -36,6 +36,7 @@ import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
+import { powerFell, powerSpare, powersOn } from './setPowers';
 import { mergeEffects, type RelicHooks } from './relics';
 import { relicBlow, relicFall, relicHurt, relicRose, relicStart } from './relicFight';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
@@ -1182,6 +1183,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   // (a rising feather: the wearer comes back once a fight)
   if (killed && to.eq && fxRevive(to, out)) killed = false;
+  // (SEVEN-SLOT GEAR: the Ferryman's Coat, or an ally's Dawnbringer, `setPowers.ts`)
+  if (killed && powersOn(b) && powerSpare(b, to, out)) killed = false;
   // (a deathless pirate: the same, from its own passive)
   if (killed && undying(to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
@@ -1199,6 +1202,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.swing = undefined;
     // (RELICS-2: the run's tally, the Harness's haste and the Warden's Medal)
     relicFall(b, to, out, credit ? by : undefined);
+    if (powersOn(b)) powerFell(b, to, out);
     // (a hero's shape ends as it falls, so a hero raised again rises in its own: SUMMON-TIMERS)
     if (realHero(to) && shapesOf(to, b.t).length) endShapes(to);
   }

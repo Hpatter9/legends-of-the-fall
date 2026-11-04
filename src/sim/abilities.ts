@@ -12,6 +12,7 @@ import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
 import { ALL_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
+import { powerCast, powerDodged, powerStrike, powersOn } from './setPowers';
 import { heroUltimates } from './ultimates';
 import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
@@ -1727,6 +1728,7 @@ export function powered(b: Battle, me: Unit, s: Skill, more: number, out: Battle
   if (ok) skillRiders(b, me, keyOf(s), out, from);
   // (RELICS-3: the Wyrm's Breath Vial freezes what the fight's first skill struck)
   if (ok && me.side === 'hero' && b.relics?.hooks?.firstFreeze && !b.relicFroze) relicSkill(b, me, out, from);
+  if (ok && powersOn(b)) powerCast(b, me, s, out, from);
   return ok;
 }
 /** How strong the skill being cast is, as a multiple (1 unless a talent or an ultimate's `power` lifts it): an ultimate's engines scale what is not an attack (how long a stun or guard lasts, how much is shielded) by it. */
@@ -1818,6 +1820,12 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const kitted = kitStrike(b, by, to, dmg, src, splash, out);
   if (kitted === null) return null;
   dmg = kitted;
+  // (SEVEN-SLOT GEAR: the full sets' and legends' powers, in a fight where a hero wears one: `setPowers.ts`)
+  if (powersOn(b)) {
+    const p = powerStrike(b, by, to, dmg, src, splash, out);
+    if (p === null) return null;
+    dmg = p;
+  }
   const block = (kit?.passive.block ?? 0) + tal(to, 'block');
   if (blow && block && (wayTo(by, to) + 2) % 4 === to.facing) {
     const turned = dmg * block;
@@ -1882,6 +1890,7 @@ export function critOf(b: Battle, me: Unit): { chance: number; mult: number } {
  *  from a dodge, and a miss its dodge or cover turned calls up a yokai's spirit wisp. */
 export function onDodged(b: Battle, by: Unit, to: Unit, turned: boolean, out: BattleEvent[]): void {
   out.push({ kind: 'dodge', to: to.id });
+  if (powersOn(b)) powerDodged(to);
   if (by.alive) {
     if (poolOf(by)) poolOnDealt(by);
     else gain(by, kitOf(by)?.skill.dealt ?? 0);

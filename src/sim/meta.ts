@@ -15,6 +15,7 @@ import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
 import { readCart, readEquipment, readEquipped, type CartPiece, type EquipSlot, type Equipment } from './equipment';
 import { GEAR_V, migrateGear, type GearNote } from './gearMigrate';
+import { claimLegends, readLegends } from './legends';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTomes, type TomeCounts } from './tomes';
@@ -129,6 +130,14 @@ export interface Meta {
   gearV?: number;
   /** What moving to seven slots did, for the hero sheet's lines (each shown once; `gearMigrate.ts`). */
   gearNote?: GearNote;
+  /** The named legends given, by legend id to the piece's id (`legends.ts`: one copy each, for good). Missing is none. */
+  legends?: Record<string, number>;
+  /** The legends given since the page last said so (`takeLegendNews`). */
+  legendsNew?: string[];
+  /** Waves each hero kind has fought (halves under auto-replay; the Pilgrim's Cord's source). Missing is none counted. */
+  wavesFought?: Record<string, number>;
+  /** The glyphs taken or cleared on each piece, by piece id (`enchant.ts`: its offers' stream moves on with each). Missing is none. */
+  enchants?: Record<number, number>;
   /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
    *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
   cart?: CartPiece[];
@@ -508,6 +517,14 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (SEVEN-SLOT GEAR: a save from before seven slots is moved over once: `gearMigrate.ts`)
       if (m.gearV !== GEAR_V) migrateGear(m);
       m.equipped = readEquipped(m.equipped, m.equipment);
+      // (the named legends held, and the waves each hero has fought: SEVEN-SLOT GEAR batch 2)
+      m.legends = readLegends(m.legends);
+      if (!m.legends) delete m.legends;
+      if (!Array.isArray(m.legendsNew) || !m.legendsNew.length) delete m.legendsNew;
+      if (m.wavesFought && typeof m.wavesFought === 'object') m.wavesFought = Object.fromEntries(Object.entries(m.wavesFought).filter(([, n]) => typeof n === 'number' && Number.isFinite(n) && n > 0));
+      else delete m.wavesFought;
+      if (m.enchants && typeof m.enchants === 'object') m.enchants = Object.fromEntries(Object.entries(m.enchants).filter(([, n]) => typeof n === 'number' && Number.isInteger(n) && n > 0));
+      else delete m.enchants;
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)
@@ -581,6 +598,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!needsStarter(m)) grantContent(m);
       // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)
       grantSpells(m);
+      // (a legend whose source a save from before has already met is found now)
+      claimLegends(m);
       return m;
     }
   } catch {
