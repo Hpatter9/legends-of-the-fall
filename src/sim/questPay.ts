@@ -33,7 +33,7 @@ export const shareOf = (total: number, part: number, parts: number): number => {
 /** The reward a quest really pays (a hero tale's or lost technique's own, unchanged): its authored one, with the stones, the crowns (never less than the authored) and the shards set by its stars. */
 export function rewardOf(q: QuestDef): Reward {
   // (the hero tales and the lost techniques keep the pay they were written with: a hero joins, a book is found; the design leaves them as they are)
-  if (GIVERS[q.giver].slot === 'tale') return q.reward;
+  if (!q.slot && GIVERS[q.giver].slot === 'tale') return q.reward;
   const stars = starsOf(q);
   const len = lengthOf(q);
   // (a story is paid by its whole; a part is its share, the finale the most)

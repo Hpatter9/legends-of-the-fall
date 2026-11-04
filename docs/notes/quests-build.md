@@ -98,3 +98,16 @@ from before, has no `v` and counts `was` until it is handed in or dropped (`defF
 - **mutators**: `hasten` (foe speed), `noHeal` (the heroes' healing is 0), `noHearts` (the run's retries are spent at its start), `purse` (start gold times it).
 - The party screen's cast line lists the rules (`castWords`, `rulesWords`).
 Tests: `test/quest-battle-rules.test.ts`. No battle uses a rule yet (Q6 to Q8 do).
+
+## Q4: the retune (content)
+
+`src/sim/questRetune/{gwen,road,crown}.ts` retune 100 one-off quests (Gwen's and the notices, the passersby and patrons, the Royal charges, spoils, the
+rift and Duchess): bigger counts, riders (flawless, Hard and Elite tiers, no hearts, no ultimates, level caps, a smaller party), several objectives
+with checklists, one-run clears, time limits (from three stars) and streaks. Stories, ids, givers and needs are kept; lines that named the old count or
+the pay were rewritten. The hero tales, the lost techniques and the quest battles are not retuned (the battles' stars are set in the table: ★3,
+Karnok's Door ★4). The two tutorial quests, Fresh Bread, Kwame's shield practice and the first quests of four patrons stay ★1.
+Tests: `test/quest-retune.test.ts` (every retune names a quest and keeps `was`; an old save counts the old goal; the spread of stars and lengths;
+at every stage of a save three star counts and two lengths are open). `quests.test.ts` now plays the retuned Quiet Hands.
+Screenshots: `docs/samples/quest-stars-*` (the Active tab with a checklist, a "7 days left" chip and the rules line).
+Not done: the battles' `ease` have not been re-tuned to their star bands: the probe party is behind the game (design section 1), so a measured band
+needs the save-like probe, which was not built (see Q1).

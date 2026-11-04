@@ -93,11 +93,12 @@ function riders(c: Cond): number {
   return w;
 }
 
-/** A battle quest's weight: the quest battle's own ease (a harder fight, more stars). */
+/** A battle quest's weight: 2.5 for a battle, a half more for each rule it carries (protect, survive, race, spare, mutators) and for a cast of three. */
 function battleWeight(g: Goal): number {
   if (g.kind !== 'battle') return 0;
   const qb = questBattleById(g.battle);
-  return qb ? 2.5 : 2;
+  if (!qb) return 2;
+  return 2.5 + 0.5 * Object.keys(qb.rules ?? {}).length + (qb.cast.length >= 3 ? 0.5 : 0);
 }
 
 /**
