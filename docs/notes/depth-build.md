@@ -204,3 +204,19 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   eight hours for five bond points (a rivalry counts them towards settling). The Barracks' card shows the yard once its room stands: two
   pickers and Spar, or the pair sparring and its time left; it settles when the card opens.
 - Tests: `test/cal-journey.test.ts`, `test/bonds.test.ts`.
+
+## Batch 9: oaths and scars
+
+- **Oaths** (`calJourney.ts`, `TowerState.journey.oaths`): about one Calamity campfire in two offers one (`oathOffer`, its own side stream
+  `0x0a7b` by act and spot, never one already sworn). Swearing it takes the fire's turn (instead of resting or training). Three at most; a
+  fourth replaces the oldest (the card says which; the design's "ask which to drop" is left for a later pass). Four oaths:
+  - Iron: heroes +8% health; foes +5% health. Ember: heroes +6% attack; rests heal a quarter less.
+  - Coin: fights pay 30% more gold; foes +6% health. Vigil: rests heal a third more; heroes −4% attack.
+  The heroes' parts are laid on each hero's boost (`journeyBoost`, the page and the bot alike); the foes' in the Calamity's fight spec;
+  the gold in the tower's pay; the rest in `rest`.
+- **Scars:** at a Calamity campfire a hero may take a scar for 60 gold (−10% health for the rest of the run, each scar again;
+  `journey.scars` by roster id), also taking the fire's turn. (The design puts scars on mysteries; the campfire is where the choice
+  already sits, so it went there first.)
+- The campfire card lists the oaths sworn. Not yet: the pennant banner in the Sanctuary, travellers, act scenes.
+- Measured (`CAL_OATHS=1`, new switch: the bot swears every oath offered instead of resting or training; `npm run balance -- --no-tables --calamity --attempts 300`): guardians felled by 100 / 53 / 3% of runs with none, 100 / 53 / 5% with every oath, inside the design's two points.
+- Tests: `test/cal-journey.test.ts`.

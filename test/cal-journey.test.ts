@@ -91,3 +91,36 @@ test('a Calamity campfire rest eats a provision', () => {
   rest(run);
   assert.match((t.cur as { camp?: string }).camp ?? '', /hungry/);
 });
+
+import { OATHS, OATH_MAX, SCAR, journeyBoost, oathFoeHp, oathGold, oathOffer, swearOath, takeScar } from '../src/sim/calJourney';
+
+test('oaths: three at most, a fourth replaces the oldest; each rule applies', () => {
+  const j: Journey = {};
+  assert.equal(swearOath(j, 'iron'), undefined);
+  swearOath(j, 'ember');
+  swearOath(j, 'coin');
+  assert.equal(j.oaths!.length, OATH_MAX);
+  assert.equal(swearOath(j, 'vigil'), 'iron', 'the oldest goes');
+  assert.deepEqual(j.oaths, ['ember', 'coin', 'vigil']);
+  assert.equal(swearOath(j, 'coin'), undefined, 'not twice');
+  assert.ok(Math.abs(oathFoeHp(j) - OATHS.coin.foeHp!) < 1e-9);
+  assert.ok(Math.abs(oathGold(j) - 1.3) < 1e-9);
+  const b = journeyBoost(j, 1, { hp: 2, atk: 2 });
+  assert.ok(Math.abs(b.atk! - 2 * 1.06 * 0.96) < 1e-9);
+  assert.deepEqual(journeyBoost(undefined, 1, { hp: 2 }), { hp: 2 });
+  // (an offer is fixed by the seed and the spot, and never an oath already sworn)
+  assert.equal(oathOffer(5, 1, 3, j), oathOffer(5, 1, 3, j));
+  for (let n = 0; n < 40; n++) {
+    const o = oathOffer(5, 1, n, j);
+    if (o) assert.ok(!j.oaths!.includes(o));
+  }
+});
+
+test('a scar: gold now, −10% health on that hero for the rest of the run', () => {
+  const j: Journey = {};
+  const run = { gold: 10 };
+  takeScar(run, j, 4);
+  assert.equal(run.gold, 10 + SCAR.GOLD);
+  assert.ok(Math.abs(journeyBoost(j, 4, { hp: 1 }).hp! - SCAR.HP) < 1e-9);
+  assert.equal(journeyBoost(j, 5, { hp: 1 }).hp, 1, 'only the scarred hero');
+});

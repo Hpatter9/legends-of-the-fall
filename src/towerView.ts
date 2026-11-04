@@ -3,7 +3,7 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
-import { BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
+import { OATHS, OATH_MAX, SCAR, oathOffer, swearOath, takeScar, BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
 import { foundRow } from './foundRow';
 import { todayKey } from './modes';
 import { SanctuaryView } from './sanctuaryView';
@@ -1243,6 +1243,41 @@ export class TowerView {
       heroes.append(b);
     }
     card.append(heroes);
+    // (DEPTH-BUILD: in the Calamity a campfire may offer an oath, and always a scar for gold; either takes the fire's turn, `calJourney.ts`)
+    if (run.mode?.kind === 'calamity' && run.rift) {
+      const j = (run.tower!.journey ??= {});
+      const offer = oathOffer(run.seed, run.tower!.act, cur.id, j);
+      if (offer) {
+        const o = OATHS[offer];
+        const b = el('button', 'rtChoice');
+        const w = el('span');
+        const full = (j.oaths?.length ?? 0) >= OATH_MAX;
+        w.append(el('b', '', `Swear the ${o.name}`), el('small', '', `${o.gift} ${o.cost}${full ? ` Replaces the ${OATHS[j.oaths![0]].name}.` : ''} Lasts the run.`));
+        b.append(w);
+        b.addEventListener('click', () => {
+          swearOath(j, offer);
+          cur.camp = `The party swears the ${o.name}.`;
+          saveSlot(run);
+          this.campCard();
+        });
+        card.append(b);
+      }
+      card.append(el('p', 'rtLead', `Or take a scar for ${SCAR.GOLD} gold (that hero −10% health for the rest of the run):`));
+      const scars = el('div', 'rtTrain');
+      for (const h of run.roster) {
+        const b = el('button', 'rtTrainHero');
+        b.append(portrait(lookSheet(h.kind, heroRank(this.hooks.meta(), h.kind), h.grade), 40, h.grade), el('small', '', heroName(h.kind)), el('em', '', j.scars?.[h.id] ? `${j.scars[h.id]} scar${j.scars[h.id] > 1 ? 's' : ''}` : 'unscarred'));
+        b.addEventListener('click', () => {
+          takeScar(run, j, h.id);
+          cur.camp = `${heroName(h.kind)} takes a scar for ${SCAR.GOLD} gold.`;
+          saveSlot(run);
+          this.campCard();
+        });
+        scars.append(b);
+      }
+      card.append(scars);
+      if (j.oaths?.length) card.append(el('p', 'rtNote', `Oaths sworn: ${j.oaths.map((x) => OATHS[x].name).join(', ')}`));
+    }
   }
 
   private treasureCard(): void {

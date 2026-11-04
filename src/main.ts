@@ -100,7 +100,7 @@ import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
 import { showMarchCard } from './marchCard';
 import { applyVigil } from './sim/chapelRooms';
-import { landAt } from './sim/calJourney';
+import { journeyBoost, landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
 import { bondScenesDue } from './sim/bondScenes';
 import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
@@ -2417,7 +2417,7 @@ class Game {
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
     // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
-    return legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) });
+    return journeyBoost(this.run.tower?.journey, h.id, legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) }));
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */

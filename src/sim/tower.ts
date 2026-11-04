@@ -30,7 +30,7 @@ import { BOSS, canJoin, FOE_START, ownHeroes, relicCtx, reward, spendBuff, squad
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
-import { boonFoes, crossroadsAfter, eatProvision, landAt, type Journey } from './calJourney';
+import { boonFoes, crossroadsAfter, eatProvision, landAt, oathFoeHp, oathGold, oathRest, type Journey } from './calJourney';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel, hireable, hireHero, ownsKind, promoteByLevel, type Promotion } from './climb';
 import { xpRate } from './castle';
@@ -563,6 +563,8 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   if (run.mode?.kind !== 'calamity') return spec;
   // (a calamity's foes follow the party: fewer for a lone hero, stronger once it is more than five)
   const more = squadFoeMult(run.roster.length) * (run.rift ? [1, 1.35, 1.8][run.tower!.act - 1] : 1) * boonFoes(run.tower!.journey, run.tower!.act);
+  // (DEPTH-BUILD: the oaths sworn: some make the foes tougher, `calJourney.ts`)
+  const oathHp = oathFoeHp(run.tower!.journey);
   const rules = ascRules(ascOf(run));
   spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
   // (and the fight is on a bigger board)
@@ -572,7 +574,7 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   const bite = run.tower!.act > 1 ? 1 + CAL_SCALE.atkBias : 1;
   // (the last map's fights are harder still: `CAL_SCALE.final`)
   const last = run.tower!.act >= (run.tower!.maps ?? CAL_MAPS) && kind !== 'boss' ? 1 + CAL_SCALE.final : 1;
-  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease * last, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease * bite * last };
+  spec.stage.foes = { ...spec.stage.foes, hp: spec.stage.foes!.hp! * more * rules.foeHp * ease * last * oathHp, atk: spec.stage.foes!.atk! * more * rules.foeAtk * ease * bite * last };
   if (rules.heal !== 1) spec.stage.heal = rules.heal;
   return spec;
 }
@@ -913,7 +915,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   if (!t.cur?.side) healParty(run, kind === 'boss' ? BOSS_HEAL : WIN_HEAL);
   const bonus = (relicEffects(run.relics, relicCtx(run)).gold ?? 0) + (run.buff?.gold ?? 0);
   const twist = t.cur?.fight?.stage.twist;
-  const paid = Math.round((1 + (run.rift?.corruption ?? 0) * CORRUPT.gold) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1)) + bonus;
+  const paid = Math.round((1 + (run.rift?.corruption ?? 0) * CORRUPT.gold) * reward(floor) * (kind === 'elite' ? ELITE_GOLD : kind === 'boss' ? 1.2 : 1) * (twist?.gold ?? 1) * oathGold(run.tower?.journey)) + bonus;
   run.gold = Math.max(0, run.gold + paid);
   const recap = recapOf(run);
   if (recap) {
@@ -986,7 +988,7 @@ export function rest(run: Run): boolean {
   if (cur?.kind !== 'campfire' || cur.camp) return false;
   // (DEPTH-BUILD: in the Calamity a rest eats a provision; with none left the party rests at half, `calJourney.ts`)
   const share = run.mode?.kind === 'calamity' && run.rift ? eatProvision((run.tower!.journey ??= {})) : 1;
-  healParty(run, REST_HEAL * share);
+  healParty(run, Math.min(1, REST_HEAL * share * oathRest(run.tower!.journey)));
   cur.camp = share < 1 ? `No provisions left: the party rests hungry and is healed ${Math.round(REST_HEAL * share * 100)}%.` : `The party rests and is healed ${Math.round(REST_HEAL * 100)}%.`;
   return true;
 }
