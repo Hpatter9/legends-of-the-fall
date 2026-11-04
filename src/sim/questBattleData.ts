@@ -108,7 +108,7 @@ export const QUEST_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Ash Warden', title: 'Keeper of the Kiln Road' },
     before: () =>
-      story('kilnRoad', 'The Kiln Road', 'volcano', { pedlar: giver('pedlar', 'The pedlar'), ravi: hero('wizard', 230), warden: foe('devilLeader', 420, 1.3, { name: 'The Ash Warden', hidden: true, shade: true }) }, [
+      story('kilnRoad', 'The Kiln Road', 'volcano', { pedlar: giver('pedlar', 'The pedlar'), ravi: hero('wizard', 230), warden: foe('devilLeader', 420, 1.3, { name: 'The Ash Warden', hidden: true }) }, [
         { cam: wide(290, 200), ...shoot('wide', undefined, 'pan'), fx: ['fadeIn', 'glow'], caption: 'The old kiln road', lines: [say('pedlar', 'My lucky crown is made of cinders. It is still smoking. It came from down there.')] },
         { cam: close('ravi'), ...shoot('close', 'ravi', 'pushIn'), fx: ['glow'], lines: [say('ravi', 'I have chased fire my whole life. It is about time it led *somewhere*.')] },
         { cam: close('ravi'), ...shoot('extreme', 'ravi', 'still', 'match'), fx: ['glow'], lines: [say('ravi', 'Somewhere with fewer imps, ideally.', 'whisper')] },
@@ -167,19 +167,19 @@ export const QUEST_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Mortar Warden', title: 'Keystone of the Old Keep' },
     before: (c) =>
-      story('underCourtyard', 'Under the Courtyard', 'ruins', { a: hero(c[0] ?? 'knight', 236), b: hero(c[1] ?? 'minotaur', 196), duchess: { role: 'duchess', x: 280, facing: 'right' }, warden: foe('sapphireColossus', 430, 1.3, { name: 'The Mortar Warden', hidden: true, shade: true }) }, [
+      story('underCourtyard', 'Under the Courtyard', 'ruins', { a: hero(c[0] ?? 'knight', 236), b: hero(c[1] ?? 'minotaur', 196), duchess: { role: 'duchess', x: 280, facing: 'right' }, warden: foe('sapphireColossus', 430, 1.3, { name: 'The Mortar Warden', hidden: true }) }, [
         { cam: wide(280, 205), ...shoot('wide', undefined, 'pan'), caption: 'A large hole', lines: [tell('Duchess has dug a hole in the courtyard. It is a *large* hole. It goes down.')] },
         { cam: close('duchess', 2), ...shoot('low', 'duchess', 'pushIn'), lines: [say('duchess', 'Mehh.')] },
-        { cam: close('a'), ...shoot('close', 'a', 'pushIn'), lines: [say('a', 'Your Majesty, the goat has found a staircase.')] },
+        { cam: close('a'), ...shoot('close', 'a', 'pushIn'), lines: [say('a', 'Majesty, the goat has found a staircase.')] },
         { cam: close('b'), ...shoot('ots', 'b'), lines: [say('b', 'Tunnels. At last, somewhere that feels like home.')] },
         { cam: wide(430, 205), ...shoot('low', 'warden', 'pushIn', 'smash'), acts: [{ who: 'warden', enter: 430, from: 'right' }], cue: 'earthRumble', fx: ['rumble'], title: card('The Mortar Warden', 'Keystone of the Old Keep'), hold: 1.2 },
-        { cam: close('duchess', 2), ...shoot('close', 'duchess', 'still'), lines: [say('duchess', 'Mehh. (She is going first. Nobody argues.)')] },
+        { cam: close('duchess', 2), ...shoot('close', 'duchess', 'still'), lines: [say('duchess', 'Mehh.'), tell('She goes down first. Nobody argues.')] },
       ]),
     after: (c) =>
       story('underCourtyardAfter', 'Under the Courtyard', 'ruins', { a: hero(c[0] ?? 'knight', 250), duchess: { role: 'duchess', x: 290, facing: 'left' } }, [
         { cam: wide(270, 205), ...shoot('high', undefined, 'pullOut'), lines: [tell('Under the rubble: a fist of stone the size of a cart, carved with the keep\'s own crest.')] },
         { cam: close('a'), ...shoot('close', 'a', 'pushIn'), lines: [say('a', 'The keep was built on something. *Someone*, perhaps.')] },
-        { cam: close('duchess', 2), ...shoot('medium', 'duchess'), lines: [say('duchess', 'Mehh. (She is filling the hole back in. Badly.)')] },
+        { cam: close('duchess', 2), ...shoot('medium', 'duchess'), lines: [say('duchess', 'Mehh.'), tell('She fills the hole back in. Badly.')] },
       ]),
   },
   {
@@ -197,7 +197,7 @@ export const QUEST_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Cellar Tenant', title: 'Knocker in the Dark' },
     before: (c) =>
-      story('cellarTenant', 'What Knocks Below', 'dungeon', { gwen: giver('gwen', 'Gwen'), a: hero(c[0] ?? 'archer', 236), tenant: foe('boneCaptain', 420, 1.2, { name: 'The Cellar Tenant', hidden: true, shade: true }) }, [
+      story('cellarTenant', 'What Knocks Below', 'dungeon', { gwen: giver('gwen', 'Gwen'), a: hero(c[0] ?? 'archer', 236), tenant: foe('boneCaptain', 420, 1.2, { name: 'The Cellar Tenant', hidden: true }) }, [
         { cam: wide(300, 205), ...shoot('wide', undefined, 'pan'), fx: ['fadeIn', 'darken'], caption: 'Gwen\'s cellar', lines: [say('gwen', 'Three knocks, a wait, then one. I have stopped counting and started charging *rent*.')] },
         { cam: close('a'), ...shoot('close', 'a', 'pushIn'), fx: ['darken'], lines: [say('a', 'Room for two of us down here, and a candle. Mind the good barrels.')] },
         { cam: wide(330, 205), ...shoot('wide', undefined, 'still'), fx: ['darken'], hold: 1.3, lines: [] },
@@ -279,7 +279,7 @@ export const QUEST_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Conductor', title: 'Who Beats Time on Bones' },
     before: () =>
-      story('recitalNight', 'The Midnight Recital', 'graveyard', { lovell: hero('wolfBard', 230), conductor: foe('lichKing', 420, 1.3, { name: 'The Conductor', hidden: true, shade: true }) }, [
+      story('recitalNight', 'The Midnight Recital', 'graveyard', { lovell: hero('wolfBard', 230), conductor: foe('lichKing', 420, 1.3, { name: 'The Conductor', hidden: true }) }, [
         { cam: wide(300, 205), ...shoot('wide', undefined, 'pan'), fx: ['fadeIn', 'darken'], caption: 'Midnight, the chapel yard', lines: [tell('The audience has been dead for two hundred years. They are *very* attentive.')] },
         { cam: close('lovell'), ...shoot('close', 'lovell', 'pushIn'), fx: ['darken'], lines: [say('lovell', 'Soft, then. A lullaby. Nobody wakes, nobody gets up, nobody gets eaten.')] },
         { cam: wide(420, 205), ...shoot('low', 'conductor', 'pushIn', 'smash'), acts: [{ who: 'conductor', enter: 420, from: 'right' }], cue: 'eliteSting', title: card('The Conductor', 'Who Beats Time on Bones'), lines: [say('conductor', 'Too slow.', 'whisper')] },
@@ -309,7 +309,7 @@ export const QUEST_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Door That Was Karnok', title: 'What Is Left of the Last Door' },
     before: () =>
-      story('karnoksDoor', 'Karnok\'s Door', 'crystal', { vesper: hero('reaper', 230), door: foe('demonLord', 430, 1.4, { name: 'The Door', hidden: true, shade: true }) }, [
+      story('karnoksDoor', 'Karnok\'s Door', 'crystal', { vesper: hero('reaper', 230), door: foe('demonLord', 430, 1.4, { name: 'The Door', hidden: true }) }, [
         { cam: wide(300, 205), ...shoot('wide', undefined, 'pan'), fx: ['fadeIn', 'darken', 'rumble'], caption: 'The last door', lines: [tell('the voice came back. it said: one more. it said: bring the one who keeps the hour.')] },
         { cam: close('vesper'), ...shoot('close', 'vesper', 'pushIn'), fx: ['darken'], lines: [say('vesper', 'Every door closes at the last hour. I have come to close *this* one.')] },
         { cam: wide(430, 205), ...shoot('low', 'door', 'pushIn', 'smash'), acts: [{ who: 'door', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], title: card('The Door That Was Karnok', 'What Is Left of the Last Door'), lines: [tell('Karnok fell. His door did not get the message.')] },
