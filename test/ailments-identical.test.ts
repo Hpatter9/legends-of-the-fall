@@ -32,6 +32,7 @@ import { CAL_SCALE } from '../src/sim/calamity';
 import { DAILY_ANSWER } from '../src/sim/modes';
 import { KITS } from '../src/sim/abilities';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
+import { WEAK } from '../src/sim/weakness';
 
 // (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
 // by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
@@ -99,10 +100,13 @@ test('with the new ailments off, every mode plays as it did before the ailment m
   DAILY_ANSWER.ult = 0.17;
   plague.power = 0.99;
   BOSS_BIG.on = false;
+  // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
+  WEAK.on = false;
   try {
     assert.deepEqual(scenarioHashes(), recorded);
   } finally {
     BOSS_BIG.on = true;
+    WEAK.on = true;
     AILMENT_SWITCH.on = was;
     infernal.start = tuned.start;
     Object.assign(yokai, late.yokai);

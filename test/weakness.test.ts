@@ -75,15 +75,15 @@ test('devout blows crack the Lich King\'s guard after three, and only then does 
   assert.equal(out.length, 1, 'noted once');
 });
 
-test('heroes behind the Boar King, or in water beside the Demon Lord, are spared his great attacks', () => {
-  const { b, boss } = bossFight('boarKing');
+test('heroes behind the Gorgon Queen, or in water beside the Demon Lord, are spared his great attacks', () => {
+  const { b, boss } = bossFight('gorgonQueen');
   boss.facing = 0;
   const hero = b.units.find((u) => u.side === 'hero')!;
   const out: BattleEvent[] = [];
   assert.equal(spared(b, boss, { ...hero, u: boss.u - 1, v: boss.v }, out), true, 'behind');
   assert.equal(spared(b, boss, { ...hero, u: boss.u + 1, v: boss.v }, out), false, 'in front');
   assert.equal(spared(b, boss, { ...hero, u: boss.u, v: boss.v + 1 }, out), false, 'beside is not behind');
-  assert.equal(b.exploited?.boarKing, 1);
+  assert.equal(b.exploited?.gorgonQueen, 1);
   const d = bossFight('demonLord');
   const h = d.b.units.find((u) => u.side === 'hero')!;
   const tile = d.b.board.tiles[h.v * d.b.board.w + h.u];

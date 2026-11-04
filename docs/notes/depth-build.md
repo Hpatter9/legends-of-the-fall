@@ -28,7 +28,7 @@ each with its tests. This note says what each batch built, what it measured and 
     attack is marked breaks it: the attack is lost and the boss is dazed 2 s. (Noted as the windup begins: `BossWarning.stun0`.)
   - `cracks` (Bone Captain, Lich King, Shaman King and guardian 3 to devout heroes; the Grove Spearlord to arcane; the Nine-Tailed Fox to
     wild; Karnok to eight martial blows): so many blows from heroes of a calling crack its guard; it takes 15 to 25% more harm after.
-  - `shelter` (behind: Boar King, Gorgon Queen; water: Devil Leader, Demon Lord, guardian 1; high ground, two steps up: Alpha Werewolf;
+  - `shelter` (behind: Alpha Werewolf, Gorgon Queen; water: Devil Leader, Demon Lord, guardian 1; high ground, two steps up: Boar King;
     tall grass: Wood Raider): heroes standing there are untouched by its great attacks.
   - `sapped` (burn: Thorn Warden, Sapphire Colossus, guardian 2; chill: Horned Ogre, Forge Titan, guardian 5): while it suffers the
     ailment its great attacks land at half.
