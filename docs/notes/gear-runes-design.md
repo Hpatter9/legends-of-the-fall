@@ -4,7 +4,6 @@ The design is also published as a page for reading on the phone: https://claude.
 
 A design for the owner's approval. No game code changes until it is approved. It answers four asks in one plan:
 
-
 1. **The big gear update.** Lasting gear gets seven slots (head, torso, right hand, left hand, feet, belt, accessory) and 30 pieces
    a slot (210). Diablo-style sets give 2, 4 and full-set bonuses that change how a hero plays. Named legendary pieces have their
    own stories. Gear grows with use, and the player chooses between enchanting and repairing. Today's slots and owned pieces carry
