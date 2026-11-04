@@ -190,7 +190,7 @@ interface ArmyIntro {
 
 const INTROS: ArmyIntro[] = [
   { army: 'orcs', title: 'The Red Tusk Rides', epithet: 'Lord of the Red Tusk', setup: 'Smoke on the horizon. Drums. A great many boots, most of them on the wrong feet.', boast: 'I HAVE BURNED NINE KEEPS! YOURS WILL BE A *ROUND TEN*!', aside: 'It was eight, boss. One was a barn.', answer: 'Then we shall be the one that does not burn.', tail: 'The Orc Warband was on the road. It had brought its own kindling.' },
-  { army: 'undead', title: 'The Frozen Crown', epithet: 'The Frozen Crown', setup: 'The graves along the old road have been opened from the inside. Tidily, at least.', boast: 'THE LIVING ARE A *PASSING PHASE*. I HAVE COME TO PASS THEM.', aside: 'Rattle. (The skeleton agrees. It always agrees.)', answer: 'He is very cold for someone so keen on fire.', tail: 'The Undead Legion marched. It was in no hurry. It never is.' },
+  { army: 'undead', title: 'The Frozen Crown', epithet: 'The Frozen Crown', setup: 'The graves along the old road have been opened from the inside. Tidily, at least.', boast: 'THE LIVING ARE A *PASSING PHASE*. I HAVE COME TO PASS THEM.', aside: 'Clack. Clack-clack. (It always agrees.)', answer: 'He is very cold for someone so keen on fire.', tail: 'The Undead Legion marched. It was in no hurry. It never is.' },
   { army: 'beasts', title: 'The Thundering Herd', epithet: 'King of the Thundering Herd', setup: 'Out on the plains, the grass has been flattened in a line that points at the keep.', boast: 'THE HERD DOES NOT STOP. THE HERD DOES NOT *TURN*. THE HERD...', aside: 'Has stopped for clover again, sire.', answer: 'A very large pig with a very large grudge.', tail: 'The Beast Packs came on at a gallop, with stops for clover.' },
   { army: 'wildwood', title: 'The Wood Remembers', epithet: 'Spear of the Old Grove', setup: 'The forest has moved closer in the night. The rangers have measured it twice.', boast: 'EVERY AXE YOU EVER SWUNG, THE GROVE HAS *COUNTED*.', aside: 'He keeps a ledger on birch bark. It is very long.', answer: 'I have only ever chopped kindling. Mostly.', tail: 'The Wildwood advanced, one root at a time, holding every grudge.' },
   { army: 'labyrinth', title: 'The Maze Comes Calling', epithet: 'Champion of the Labyrinth', setup: 'A labyrinth has unfolded across the valley overnight. It has a gift shop.', boast: 'NONE WHO ENTER MY MAZE HAVE *EVER* FOUND THE WAY OUT!', aside: 'Because you keep moving the walls, boss.', answer: 'Then we shall walk straight through them.', tail: 'The Labyrinth marched on the keep. It took the scenic route.' },
@@ -218,13 +218,22 @@ const introScene = (i: ArmyIntro): Scene => {
       mate: { role: 'party:1', x: 212, facing: 'right', hidden: true },
     },
     shots: [
-      { look: c.area, cam: wide(330, 205), ...shoot('wide', undefined, 'pan'), fx: ['fadeIn', 'darken'], cue: 'earthRumble', caption: c.name, lines: [tell(i.setup)] },
+      // (CINE-STORY: one backdrop, the land the army marches from. The two defenders hold the road as the narrator sets the scene; the
+      // escort runs in first, the warlord arrives from below with his title card, and the exchange is one conversation the director cuts
+      // speaker by speaker, ending on the narrator's wide.)
+      {
+        look: c.area,
+        cam: wide(300, 205),
+        ...shoot('wide', undefined, 'pan'),
+        fx: ['fadeIn', 'darken'],
+        cue: 'earthRumble',
+        caption: c.name,
+        acts: [{ who: 'hero', enter: 250, from: 150 }, { who: 'mate', enter: 212, from: 110 }],
+        lines: [tell(i.setup)],
+      },
       { cam: close('escort'), ...shoot('medium', 'escort', 'track'), acts: [{ who: 'escort', enter: 470, from: 'right' }], hold: 0.6 },
       { cam: wide(400, 205), ...shoot('low', 'boss', 'pushIn', 'smash'), acts: [{ who: 'boss', enter: 400, from: 560 }], fx: ['shake', 'darken'], cue: 'boom', title: { over: i.epithet, name: UNITS[c.boss]?.name ?? c.boss }, hold: 1.8 },
-      { cam: close('boss'), ...shoot('dutch', 'boss', 'drift'), fx: ['darken'], lines: [say('boss', i.boast, 'shout')] },
-      { cam: close('escort'), ...shoot('close', 'escort', 'still'), lines: [say('escort', i.aside)] },
-      { cam: close(['hero', 'mate']), ...shoot('two', undefined, 'drift', 'dissolve'), acts: [{ who: 'hero', enter: 250, from: 150 }, { who: 'mate', enter: 212, from: 110 }], hold: 0.4 },
-      { cam: close('hero'), ...shoot('close', 'hero', 'pushIn'), lines: [say('hero', i.answer)] },
+      { cam: close(['hero', 'boss', 'escort'], 1), fx: ['darken'], lines: [say('boss', i.boast, 'shout'), say('escort', i.aside), say('hero', i.answer)] },
       { cam: wide(320, 205), ...shoot('high', undefined, 'pullOut'), fx: ['darken'], lines: [tell(i.tail)] },
     ],
   };
@@ -318,7 +327,7 @@ const awakenScene = (kind: string, i: number): Scene => ({
       cam: close(['hero', 'duchess'], 1.5),
       fx: ['glow'],
       acts: [{ who: 'hero', look: 1 }, { who: 'duchess', enter: 215, from: 130 }],
-      lines: [tell('{hero} has awakened. The heightened splendour is quite blinding.'), say('duchess', 'Mehh.')],
+      lines: [say('duchess', 'Mehh.'), tell('The light took a long moment to leave {hero}, as if it liked the company.')],
     },
   ],
 });
@@ -458,6 +467,14 @@ const STANDS: { wave: number; look: Area; title: string; blurb: string; lines: [
   { wave: 50, look: 'shrine', title: 'The Last Stand', blurb: 'Fifty waves round the throne, and the bards are already arguing over the song.', lines: ['Fifty waves round the throne. Out in the land, the bards have begun the song already.', 'They say no guard ever held a throne room this long.', 'They also say we are nine feet tall. Let them.', 'Whatever comes through that door, the Last Keep stands while you do.'] },
 ];
 
+const STAND_TAILS: Record<number, string> = {
+  10: 'Behind them, the last of the outer wall finished falling down.',
+  25: 'Beyond the doors, something began to drum.',
+  50: 'Far off in the land, a bard hit a wrong note and started the verse again.',
+};
+
+// (CINE-STORY: the ruler is on the stage from the second shot, so the guard's talk of him is said with him there; the three talk as one
+// conversation the director cuts speaker by speaker; a narrator button closes each.)
 const standScene = (f: (typeof STANDS)[number]): Scene => ({
   id: `spire:${f.wave}`,
   title: `Wave ${f.wave}: ${f.title}`,
@@ -482,16 +499,11 @@ const standScene = (f: (typeof STANDS)[number]): Scene => ({
       lines: [tell(f.lines[0])],
     },
     {
-      cam: close(['hero', 'mate'], 1.5),
-      lines: [say('hero', f.lines[1]), say('mate', f.lines[2])],
+      cam: close(['hero', 'mate', 'king'], 1),
+      acts: [{ who: 'king', enter: 195, from: 100, line: 1 }],
+      lines: [say('hero', f.lines[1]), say('mate', f.lines[2]), say('king', f.lines[3])],
     },
-    {
-      cam: close(['king', 'mate'], 1.5),
-      ...shoot('low', 'king', 'pushIn'),
-      rays: true,
-      acts: [{ who: 'king', enter: 195, from: 100 }],
-      lines: [say('king', f.lines[3])],
-    },
+    { cam: wide(240, 205), ...shoot('high', undefined, 'pullOut', 'dissolve'), fx: ['darken'], lines: [tell(STAND_TAILS[f.wave] ?? '')] },
   ],
 });
 

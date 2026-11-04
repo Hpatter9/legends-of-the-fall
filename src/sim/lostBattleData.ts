@@ -46,7 +46,7 @@ export const LOST_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Last Master', title: 'Of the Bridge School' },
     before: (c) =>
-      story('emptyDojo', 'The Empty Dojo', 'shrine', { kenji: hero(c[0] ?? 'samurai', 230), master: foe('boneCaptain', 440, 1.3, { name: 'The Last Master', hidden: true, shade: true }) }, [
+      story('emptyDojo', 'The Empty Dojo', 'shrine', { kenji: hero(c[0] ?? 'samurai', 230), master: foe('boneCaptain', 440, 1.3, { name: 'The Last Master', hidden: true }) }, [
         { cam: wide(300, 205), ...shoot('wide', undefined, 'pan'), rays: true, caption: 'The Bridge School, up the pilgrim road', lines: [tell('Every door is open. The floor is swept. Down both sides of the hall, rows of students stand with their heads bowed, and none of them has moved in some time.')] },
         { cam: close('kenji'), ...shoot('close', 'kenji', 'pushIn'), lines: [say('kenji', 'I was told it was empty. I think "empty" was a kindness.')] },
         { cam: wide(440, 205), ...shoot('low', 'master', 'pushIn', 'smash'), acts: [{ who: 'master', enter: 440, from: 'right' }], cue: 'boom', fx: ['shake'], title: card('The Last Master', 'Of the Bridge School'), lines: [say('master', 'A visitor. Nine hundred years, and a visitor. Draw, if you would. I have been so very patient.', 'shout')] },
@@ -74,7 +74,7 @@ export const LOST_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Index', title: 'Keeper of the Unwritten Library' },
     before: (c) =>
-      story('unwrittenLibrary', 'The Unwritten Library', 'crystal', { ravi: hero(c[0] ?? 'wizard', 230), index: foe('sapphireColossus', 450, 1.2, { name: 'The Index', hidden: true, shade: true }) }, [
+      story('unwrittenLibrary', 'The Unwritten Library', 'crystal', { ravi: hero(c[0] ?? 'wizard', 230), index: foe('sapphireColossus', 450, 1.2, { name: 'The Index', hidden: true }) }, [
         { cam: wide(300, 200), ...shoot('wide', undefined, 'pan'), weather: 'motes', caption: 'A library that was never built', lines: [tell('Shelves go up into the dark and do not come down. Not one of the books has a title. A few have been put back the wrong way round.')] },
         { cam: close('ravi'), ...shoot('close', 'ravi', 'pushIn'), fx: ['glow'], lines: [say('ravi', 'It is the first library I have walked into that I wanted to set fire to, and the first I am worried might be right.')] },
         { cam: wide(450, 205), ...shoot('low', 'index', 'pushIn', 'smash'), acts: [{ who: 'index', enter: 450, from: 'right' }], cue: 'earthRumble', fx: ['rumble'], title: card('The Index', 'Keeper of the Unwritten Library'), lines: [say('index', 'NOTHING MAY BE BORROWED. NOTHING MAY BE ENTERED. NOTHING IS FILED UNDER YOU.', 'shout')] },

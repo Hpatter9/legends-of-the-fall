@@ -613,6 +613,97 @@ export class Fx {
     this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE);
   }
 
+  /** ULT-SHOW (`ultShow.ts`): one beat of an ultimate's showcase, drawn on the moment's layer (it runs while the fight is held). (x, y) is a
+   *  fighter's feet or a tile's ground, `tall` its height; `to` the other end of a cut. The painted toolkit's parts when they are there, else
+   *  the pack's. */
+  showBeat(kind: 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish', x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element } = {}): void {
+    const m = this.moment;
+    const lift = (o.tall ?? 40) * 0.45;
+    const budget = particleBudget(settings().saver);
+    m.density = budget.density;
+    m.cap = budget.cap;
+    const smoke = (n: number, s: number) => {
+      for (let i = 0; i < n; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(14), y: y - lift + jitter(10), scale: s, life: 650, vy: -0.035, grow: 0.0009, alpha: 0.85, delay: i * 25 });
+    };
+    switch (kind) {
+      case 'vanish':
+        // (a puff of smoke where she stood, and the painted swirl she goes out in)
+        if (!this.paintOnce(PAINT.blinkOut, x, y - lift, { layer: m })) play(m, packKey('dark', 'smoke'), x, y - lift, { scale: 1.6, frameMs: 55 });
+        smoke(4, 1.5);
+        return;
+      case 'appear':
+        if (!this.paintOnce(PAINT.blinkIn, x, y - lift, { layer: m })) play(m, packKey('dark', 'puff'), x, y - lift, { scale: 1.6, frameMs: 55 });
+        smoke(2, 1.1);
+        return;
+      case 'cut': {
+        const to = o.to;
+        if (!to) return;
+        const ty = to.y - to.tall * 0.5;
+        // (the cut across the foe: the painted slash streak through it and the crossed slash on it, a spray, a jolt of the screen)
+        const dx = to.x - x;
+        if (!this.paintAlong(PAINT.slash, to.x - dx * 0.7, ty - 6, to.x + dx * 0.5, ty + 6, { layer: m })) play(m, packKey('dark', 'slash'), to.x, ty, { scale: 2.2, frameMs: 40 });
+        this.paintOnce(PAINT.slashHit, to.x, ty, { layer: m, delay: 50 });
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffBlood, x: to.x + jitter(8), y: ty + jitter(8), scale: 0.9, life: 380, vx: Math.sign(dx || 1) * 0.06, vy: -0.03, delay: 40 + i * 30 });
+        this.trauma = Math.min(1, this.trauma + 0.22);
+        return;
+      }
+      case 'gather':
+        // (a burning circle under the caster, and fire rising round him)
+        play(m, packKey('fire', 'circle'), x, y - 2, { scale: 2.6, frameMs: 80, life: 2400, loop: true, alpha: 0.9 });
+        play(m, packKey('fire', 'gather'), x, y - lift, { scale: 2.2, frameMs: 70, life: 1400, loop: true });
+        return;
+      case 'mark':
+        // (a crowd marked: a circle of fire on its ground, burning until the meteor falls, and the ground rumbling)
+        play(m, packKey('fire', 'circle'), x, y - 2, { scale: 4.4, frameMs: 90, life: 2600, loop: true });
+        play(m, packKey('fire', 'rune'), x, y - 4, { scale: 3, frameMs: 90, life: 2600, loop: true });
+        play(m, packKey('fire', 'pillar'), x, y - 10, { scale: 2.2, frameMs: 70 });
+        this.trauma = Math.min(1, this.trauma + 0.12);
+        return;
+      case 'sky': {
+        // (the meteors seen high in the clouds over each mark, burning as they come down; the sim's own fall takes over as the fight runs)
+        play(m, packKey('fire', 'orb'), x + 60, y - 170, { scale: 4.2, frameMs: 60, life: 900, loop: true, vx: -0.045, vy: 0.12 });
+        for (let i = 0; i < 6; i++) m.spawn({ frames: VFX.puffFire, x: x + 60 + jitter(10), y: y - 170 + jitter(10), scale: 1.5, life: 700, vx: -0.03, vy: 0.07, delay: i * 120 });
+        return;
+      }
+      case 'call':
+        // (the call goes out: a ring of the forest's green from where he stands)
+        play(m, packKey('forest', 'wave'), x, y, { scale: 5, frameMs: 80, add: false, alpha: 0.7 });
+        play(m, packKey('forest', 'nova'), x, y - lift, { scale: 2.4, frameMs: 70 });
+        return;
+      case 'land':
+        // (a beast lands at its place: dust, and a ring)
+        this.puffAtOn(m, x, y, 1.4);
+        play(m, packKey('forest', 'circle'), x, y - 2, { scale: 1.6, frameMs: 70, alpha: 0.8 });
+        this.trauma = Math.min(1, this.trauma + 0.08);
+        return;
+      case 'finish':
+        // (the last cut lands, or the last beast: a burst of the element on the caster)
+        play(m, packKey(o.el ?? 'dark', 'nova'), x, y - lift, { scale: 2.2, frameMs: 60, alpha: 0.8 });
+        if (kind === 'finish' && o.el === 'dark') smoke(5, 1.6);
+        return;
+    }
+  }
+
+  /** ULT-SHOW: the ordinary effects hidden while a showcase plays its own on the moment's layer (what the cast left, its numbers and its cuts,
+   *  shows as the showcase ends: the foes it cut all reel at once); then shown again as they were. */
+  hush(on: boolean): void {
+    if (on === this.hushOn) return;
+    this.hushOn = on;
+    if (on) {
+      for (const c of this.root.children) if (c !== this.moment.root && c.visible) this.hushed.push(c);
+      for (const c of this.hushed) c.visible = false;
+    } else {
+      for (const c of this.hushed) if (!c.destroyed) c.visible = true;
+      this.hushed = [];
+    }
+  }
+  private hushed: Container[] = [];
+  private hushOn = false;
+
+  private puffAtOn(p: Particles, x: number, y: number, scale: number): void {
+    p.spawn({ frames: VFX.puffWhite, x, y, scale, life: 420, vy: -0.02, grow: 0.0008, alpha: 0.9 });
+  }
+
   /** A blow is swung: a slash of the attacker's weapon across the one it aims at. */
   private slash(b: Battle, byId: number, toId: number): void {
     const by = this.sprites.get(byId);
@@ -1202,13 +1293,13 @@ export class Fx {
   // loop's first frame.
 
   /** A painted part played once at (x, y): its foot there when it stands on the ground, else its middle. */
-  private paintOnce(key: string, x: number, y: number, o: { mult?: number; delay?: number; rotation?: number; stretchX?: number; stretchY?: number } = {}): boolean {
+  private paintOnce(key: string, x: number, y: number, o: { mult?: number; delay?: number; rotation?: number; stretchX?: number; stretchY?: number; layer?: Particles } = {}): boolean {
     const frames = spellFrames(key);
     const p = spellPart(key);
     if (!frames.length || !p) return false;
     const scale = spellScale(key, o.mult);
     const drawn = p.cell * scale;
-    this.particles.spawn({
+    (o.layer ?? this.particles).spawn({
       frames,
       x,
       y: y + (0.5 - spellAnchorY(key)) * drawn,
@@ -1225,7 +1316,7 @@ export class Fx {
   }
 
   /** A painted streak (painted pointing right) laid along the line from (x0, y0) to (x1, y1), stretched to reach. */
-  private paintAlong(key: string, x0: number, y0: number, x1: number, y1: number, o: { delay?: number } = {}): boolean {
+  private paintAlong(key: string, x0: number, y0: number, x1: number, y1: number, o: { delay?: number; layer?: Particles } = {}): boolean {
     const p = spellPart(key);
     if (!p || !spellFrames(key).length) return false;
     const len = Math.hypot(x1 - x0, y1 - y0);
