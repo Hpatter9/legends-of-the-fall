@@ -97,6 +97,8 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // armies' Normal `start`. The `army` scenario plays the Undead Legion, the Infernal Host, the Golem Forge and the Yokai Night Parade on Normal:
 // their recorded strengths are put back for this proof, as the ailments' proof does, and the Calamity's `CAL_SCALE.start` (0.435) with them. The greedy players cast no spells in
 // either proof, `identityHashes`.)
+// (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (f3dc7098): its heroes start bare and wear the run's finds, and a
+// find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));

@@ -57,7 +57,7 @@ test('worn at a quarter, broken at nothing: a broken piece gives nothing, and Eq
   settleWear(m, [{ kind: 'knight', fell: false }]);
   assert.equal(sword.wear, 31, 'never past broken');
   const spare = grantEquipment(m, { base: 'ironSword', rarity: 1, level: 1 });
-  assert.equal(bestFor(m, 'knight').slots.weapon, spare.id, 'a whole sword replaces the broken one');
+  assert.equal(bestFor(m, 'knight').slots.main, spare.id, 'a whole sword replaces the broken one');
   spare.wear = 99;
   const read = readEquipment(m.equipment);
   assert.equal(read.find((x) => x.id === spare.id)!.wear, 31, 'saved wear is capped');
