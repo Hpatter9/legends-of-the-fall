@@ -131,7 +131,9 @@ export class UltMoments {
           };
           // (the foes it turned on itself without a blow: taunted round to face it)
           const touched = b.units.filter((x) => x.alive && x.side !== u.side && x.taunt?.to === u.id).map((x) => x.id);
-          const plan = planShow(u.def, readCast(u, events, born, tileOf, originOf, touched));
+          // (its allies standing: those its blessing may reach)
+          const allies = b.units.filter((x) => x.alive && x.side === u.side && x.id !== u.id).map((x) => x.id);
+          const plan = planShow(u.def, readCast(u, events, born, tileOf, originOf, touched, allies));
           if (plan) {
             m.show = plan.ms;
             this.plans.set(m, plan);

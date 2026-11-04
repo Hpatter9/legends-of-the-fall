@@ -136,7 +136,7 @@ const MARK_WORDS: Record<string, string> = {
 
 /** A small random offset (the renderer's own, not the sim's). */
 /** ULT-SHOW: the beats a showcase plays (`ultShowRules.ts`). */
-export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare' | 'stone' | 'smite' | 'taunt' | 'rise' | 'tunnel';
+export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare' | 'stone' | 'smite' | 'taunt' | 'rise' | 'tunnel' | 'bless' | 'transform';
 const jitter = (n: number) => (Math.random() * 2 - 1) * n;
 
 interface Item {
@@ -749,6 +749,21 @@ export class Fx {
         play(m, packKey(el, 'circle'), to.x, to.y - 2, { scale: 1.3, frameMs: 60, alpha: 0.85 });
         return;
       }
+      case 'bless': {
+        // (the blessing runs from the caster to an ally: a ribbon of the element, and sparkles rising off the ally)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.swapLink, x, y - lift, to.x, to.y - to.tall * 0.5, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 1.6, frameMs: 45 });
+        play(m, packKey(el, 'sparkle'), to.x, to.y - to.tall * 0.5, { scale: 1.8, frameMs: 60, delay: 120 });
+        play(m, packKey(el, 'circle'), to.x, to.y - 2, { scale: 1.4, frameMs: 70, alpha: 0.8, delay: 120 });
+        return;
+      }
+      case 'transform':
+        // (the change bursts out of him: the element's nova and explosion, smoke rolling off, a hard jolt)
+        play(m, packKey(el, 'explosion'), x, y - lift, { scale: 2.8, frameMs: 55 });
+        play(m, packKey(el, 'nova'), x, y - lift, { scale: 3, frameMs: 60, delay: 60 });
+        smoke(6, 1.8);
+        this.trauma = Math.min(1, this.trauma + 0.35);
+        return;
       case 'rise':
         // (a rock spire rising out of the ground)
         play(m, packKey('earth', 'spikes'), x, y - 4, { scale: 2.2, frameMs: 70 });

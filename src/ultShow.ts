@@ -39,6 +39,8 @@ const SOUND: Partial<Record<Beat['kind'], Sfx[]>> = {
   taunt: ['block'],
   rise: ['earthRumble'],
   tunnel: ['earthRumble'],
+  bless: ['heal'],
+  transform: ['fireBoom'],
   appear: [],
   finish: [],
 };
@@ -129,7 +131,8 @@ export class UltShow {
       case 'snare':
       case 'stone':
       case 'smite':
-      case 'taunt': {
+      case 'taunt':
+      case 'bless': {
         const to = b.foe !== undefined ? foeAt(b.foe) : null;
         if (to) fx.showBeat(b.kind, p[0], p[1], { tall, to, el, how: HOW[plan.kind] });
         if (b.kind === 'shot') play(HOW[plan.kind] === 'flame' ? 'fireWhoosh' : HOW[plan.kind] === 'bolt' ? 'thunder' : 'gun');

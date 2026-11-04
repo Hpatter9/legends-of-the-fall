@@ -6,7 +6,8 @@ import { bareBoard } from './bare';
 import { addUnit, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, ULT_LEVEL, keyOf, ultimateOf } from '../src/sim/abilities';
 import { ULT_MOMENT, UltQueue } from '../src/ultMomentRules';
-import { momentSpeed, noteSeen, planShow, posesAt, readCast, seenOf, SHOW, SHOWCASES, showDue, wantsShow, type ShowPlan } from '../src/ultShowRules';
+import { ALL_HEROES } from '../src/sim/units';
+import { hasShowcase, momentSpeed, noteSeen, planShow, posesAt, readCast, seenOf, SHOW, SHOWCASES, showDue, wantsShow, type ShowPlan } from '../src/ultShowRules';
 import { parseSettings } from '../src/settings';
 
 test('the long version plays on the first use and every Nth after it, never with Shorter ultimates', () => {
@@ -89,7 +90,8 @@ function fire(kind: string): { b: Battle; me: Unit; plan: ShowPlan; events: Batt
       const unit = (id: number) => b.units.find((u) => u.id === id);
       const origin = (id: number) => before.get(id);
       const touched = b.units.filter((x) => x.alive && x.side !== me.side && x.taunt?.to === me.id).map((x) => x.id);
-      const plan = planShow(kind, readCast(me, events, b.units.slice(born), unit, origin, touched));
+      const allies = b.units.filter((x) => x.alive && x.side === me.side && x.id !== me.id).map((x) => x.id);
+      const plan = planShow(kind, readCast(me, events, b.units.slice(born), unit, origin, touched, allies));
       assert.ok(plan, `${kind}: a plan`);
       return { b, me, plan, events };
     }
@@ -215,4 +217,24 @@ test('batch 3: each burst reaches every foe it struck or turned on itself, in tu
   assert.equal(sh.style, 'burrow');
   assert.equal(sh.beats.filter((x) => x.kind === 'tunnel').length, sh.cast.burrow!.path.length + 1);
   assert.equal(posesAt(sh, sh.ms).get(sh.cast.caster)!.alpha, 0, 'he is underground as the fight runs on');
+});
+
+test('batches 4 and 5: callers rise or run in, changers change, blessings reach each ally; every hero has a showcase that plays', () => {
+  for (const kind of ['druid', 'illusionist', 'priestess', 'werewolf', 'demonSwordsman', 'kitsune', 'karasu', 'timeWitch', 'wanderer', 'satyr', 'samuraiCommander', 'sage', 'cleric', 'peasant', 'wolfBard']) {
+    const { b, me, plan } = fire(kind);
+    const end = posesAt(plan, plan.ms);
+    assert.deepEqual(end.get(me.id)!.at, { u: me.u, v: me.v }, `${kind}: the caster ends on its tile`);
+    if (plan.style === 'bless') for (const id of plan.cast.helped) assert.ok(plan.beats.some((x) => x.kind === 'bless' && x.foe === id), `${kind}: ally ${id} blessed`);
+    if (plan.style === 'pack') for (const w of plan.cast.born) assert.equal(end.get(w.id)!.alpha, 1, `${kind}: ${w.id} is there at the end`);
+    if (plan.style === 'change') assert.ok(plan.beats.some((x) => x.kind === 'transform'), kind);
+    for (const [id, k] of end) {
+      const u = b.units.find((x) => x.id === id)!;
+      if (id !== me.id && (u.side !== me.side || plan.cast.born.some((w) => w.id === id))) assert.deepEqual(k.at, { u: u.u, v: u.v }, `${kind}: ${id} ends on its tile`);
+    }
+  }
+  // (the kitsune's foxes and the time witch's stopped foes are reached though they took no blow)
+  assert.ok(fire('kitsune').plan.cast.touched.length > 0);
+  assert.ok(fire('timeWitch').plan.cast.touched.length > 0);
+  // (all 45 heroes have one)
+  for (const kind of ALL_HEROES) assert.ok(hasShowcase(kind), kind);
 });
