@@ -416,8 +416,9 @@ test('the upgrade card words grow with the level', () => {
   assert.equal(effectText('barracks', 2), '+12% hp for every hero');
   // (the owner's decision: the Armoury also makes repairs 4% cheaper a level, docs/notes/shop-books-gear.md)
   assert.equal(effectText('armoury', 1), '+5% attack for every hero; repairs 4% cheaper');
-  assert.match(effectText('mageTower', 4), /48% faster, \+2 spell power/);
-  assert.match(effectText('mageTower', 0), /0% faster, \+0 spell power/);
+  // (KING-SPELLS batch 2: the power budget went with the Schools of the Crown, so the Mage Tower no longer adds spell power)
+  assert.match(effectText('mageTower', 4), /48% faster$/);
+  assert.match(effectText('mageTower', 0), /0% faster$/);
 });
 
 test('the tavern, the chapel and the Armies signpost are places, not upgrades: one look, a tag that says where they lead, and plots of their own', () => {

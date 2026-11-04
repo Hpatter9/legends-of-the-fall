@@ -340,6 +340,8 @@ export type BattleEvent =
   /** Duchess the goat has wandered on to fight for the heroes (`duchessFight.ts`). */
   | { kind: 'duchess'; by: number }
   | { kind: 'ultLapse'; by: number }
+  /** The ruler's Decree was cast (KING-SPELLS batch 2, `decrees.ts`): its name for the banner, the spell whose look it borrows. */
+  | { kind: 'decree'; id: string; look: SpellId }
   /** A fighter is drawn with another sheet (a form, a guise), or its own again (null). */
   | { kind: 'look'; by: number; sheet: string | null }
   /** Timed terrain from a kit is laid on a tile for `ms` (0: it is gone again). */
