@@ -3,7 +3,7 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
-import { BOONS, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
+import { BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
 import { foundRow } from './foundRow';
 import { todayKey } from './modes';
 import { SanctuaryView } from './sanctuaryView';
@@ -1093,6 +1093,21 @@ export class TowerView {
       list.append(el('h3', 'rtShopHead', name));
       for (const { it, i } of rows) list.append(this.shopRow(it, i));
     }
+    // (DEPTH-BUILD: the Calamity's provisions, sold by the sack, `calJourney.ts`)
+    if (run.mode?.kind === 'calamity' && run.rift) {
+      const j = (run.tower!.journey ??= {});
+      list.append(el('h3', 'rtShopHead', 'Provisions'));
+      const sack = el('button', 'rtItem');
+      const n = provisionsOf(j);
+      sack.disabled = n >= PROVISIONS.MAX || run.gold < PROVISIONS.COST;
+      sack.append(el('b', '', `A sack of provisions · ${PROVISIONS.COST} gold`), el('small', '', `${n} of ${PROVISIONS.MAX} carried: a campfire's rest eats one`));
+      sack.addEventListener('click', () => {
+        if (!buyProvision(run, j)) return;
+        saveSlot(run);
+        this.shopCard();
+      });
+      list.append(sack);
+    }
     card.append(list);
     if (this.note) card.append(el('p', 'rtNote', this.note));
     const out = el('button', 'primary', 'Leave the shop');
@@ -1189,7 +1204,8 @@ export class TowerView {
     const restBtn = el('button', 'rtChoice');
     restBtn.append(icon(heart, 'rtShopIco'));
     const words = el('span');
-    words.append(el('b', '', 'Rest'), el('small', '', `heal every hero ${Math.round(REST_HEAL * 100)}% of its hp, the fallen too`));
+    const food = run.mode?.kind === 'calamity' && run.rift ? provisionsOf(run.tower!.journey) : null;
+    words.append(el('b', '', 'Rest'), el('small', '', food === null ? `heal every hero ${Math.round(REST_HEAL * 100)}% of its hp, the fallen too` : food > 0 ? `eat a provision (${food} left) and heal every hero ${Math.round(REST_HEAL * 100)}%, the fallen too` : `no provisions left: rest hungry, healing ${Math.round(REST_HEAL * PROVISIONS.HUNGRY * 100)}%`));
     restBtn.append(words);
     restBtn.addEventListener('click', () => {
       rest(run);

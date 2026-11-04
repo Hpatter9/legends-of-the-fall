@@ -113,3 +113,6 @@
 /* UX-FIXES: seven tabs in two rows (four and three) with 13 px labels, not one row of 9 px ones */
 .hsTabs.many { grid-template-columns: repeat(4, 1fr); gap: 3px; }
 .hsTabs.many .hsTab { font-size: 13px; letter-spacing: 0; min-height: 48px; }
+.hsGlyph { color: var(--b3); display: flex; align-items: center; gap: 4px; }
+/* SEVEN-SLOT GEAR batch 7: the painted glyph stones and remedies are smooth paintings, not pixel art */
+.hsGlyphStone { width: 14px; height: 14px; flex: none; } .hsTome img.hsPainted { width: 86%; height: 86%; image-rendering: auto; }

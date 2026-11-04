@@ -241,3 +241,18 @@ final = this batch's value × the spells' ratio (beasts 2.3 × 1.025, daily 0.77
 
 **For the owner: the smith's upkeep.** `tools/econ/day.ts` models a day's crowns: keeping a full seven-piece kit repaired early on costs more
 than the daily's wave crowns bring in. Nothing was changed for it; the repair price (×1.6) is the owner's approved answer, so it is flagged here.
+
+## Batch 7, the owner's art
+
+The owner's art PRs (#329 head, #335 left hand, #336 runes and the rest, #338 legends) are in `art-source/gear/` and wired in:
+
+- **Equipment:** 60 new bases (all head, torso and right-hand pieces, 20 of 21 left-hand) and the 21 legends, packed into the gear atlas
+  by `tools/gear/import-gear-icons.py`, which now also looks for a new base's painting in `armour/`, `weapons/` and `trinkets/`, where the
+  PRs put them. A new base's Mythic shows its standard painting in the Mythic frame. 69 bases still wait (the Bladed Fan, feet, belts,
+  accessories) and keep their placeholders; `docs/notes/gear-art-todo.md` lists them, and a test checks that every new base is painted or on that list, never both.
+- **The rest** goes through `tools/gear/import-gear-ui.py` (96 px WebP, `src/art/gear/ui/`, 138 KB, bundled by `src/gearUiArt.ts`):
+  the painted rune stones replace the pack's discs (now removed, with their credit) and sit in their level's frame (copper, silver,
+  gold, gold with sapphires, gold with amethysts); the merge spark plays once over a rune a merge has just made (hidden with reduced
+  motion); the remedies show in the tray's pocket, the party's satchel and Hester's wares; the set emblems head each set card and each
+  set hint in the picker; the glyph stones mark a piece's first, second and third glyph, and the gold one is the Enchant tab's icon.
+- Checked at 393x852, 360x780 and 412x915 (`tools/gear-build/shots.mjs`, `rune-shots.mjs`: no side scroll, no page errors).

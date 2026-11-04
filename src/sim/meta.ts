@@ -165,6 +165,8 @@ export interface Meta {
   bonds?: Record<string, number>;
   bondSettled?: string[];
   bondScenes?: string[];
+  /** DEPTH-BUILD: the Barracks' Sparring Yard: the pair sparring and when they are done (`bonds.ts`). */
+  sparring?: { a: string; b: string; doneAt: number };
   /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
   mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
   recalled?: Partial<Record<Calling, number>>;
