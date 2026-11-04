@@ -94,6 +94,8 @@ import { WEAK } from '../src/sim/weakness';
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again, now 81e830d7: it casts each king's spell once, and the
 // schools added fourteen. No other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` (915214bc on main 0.347.0's code) and `stand` (3c117f1a) alone: `DAILY_START` 0.785 to
+// 0.83 and `HALL_EASE` 1.2 to 1.36, constants, retuned for the default ruler's player; every other scenario keeps its hash.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

@@ -38,7 +38,17 @@ export type Shape =
   | 'barrier' // `n` discs set round the caster
   | 'flare' // one big strip on the body
   | 'barrage' // `n` small pops scattered over a foe, one after another
-  | 'pop'; // one strip on the body (a struck foe's hit)
+  | 'pop' // one strip on the body (a struck foe's hit)
+  // (KING-SPELLS batch 5: the schools' fourteen spells' releases, each its own)
+  | 'wall' // `n` strips flare up one after another along a row across the line to the foes, left to right
+  | 'crystal' // `n` strips rise together in a row across the line to the foes, from below, and hold
+  | 'rise' // `n` strips climb out of the ground in a row, from the middle outward
+  | 'shards' // `n` bits burst outward from each foe and fall
+  | 'vines' // `n` strips grow up from the ground under each foe, swaying in
+  | 'hearts' // `n` strips float up from each foe, wobbling
+  | 'eye' // one big strip opens above the allies and slowly swells
+  | 'haze' // `n` strips shimmer in and drift beside each ally
+  | 'sigil'; // one strip spreads flat on the ground, then a second rises out of it
 
 /** Whom a step is drawn on: the caster (default), every foe, or every ally. */
 export type On = 'self' | 'foes' | 'allies' | 'target';
