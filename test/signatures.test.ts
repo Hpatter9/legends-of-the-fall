@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { KITS, keyOf } from '../src/sim/abilities';
+import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
 import { abilitySource } from '../src/render/abilityLooks';
 import { VFX_LOOKS } from '../src/render/cinematicRules';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
@@ -19,7 +19,8 @@ const heroSkills = () =>
 const all = (sig: (typeof SIGNATURES)[string]): Step[] => [...sig.wind, ...sig.cast, ...sig.hit];
 
 test('every hero skill and ultimate, and every foe skill, has a look of its own', () => {
-  for (const kit of Object.values(KITS)) {
+  // (FOE-STYLES: a common foe's kit has no skill)
+  for (const kit of Object.values(KITS).filter(hasSkill)) {
     for (const name of [keyOf(kit.skill), ...(kit.ultimate ? [keyOf(kit.ultimate)] : [])]) {
       const sig = SIGNATURES[name];
       assert.ok(sig, `no signature for ${name}`);

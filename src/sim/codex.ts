@@ -255,6 +255,13 @@ export function tipsOf(def: UnitDef, kit: Kit | undefined): string[] {
   if (p?.undying) t.push('Rises once from death: hold your best blow for the second life.');
   if (p?.frenzy) t.push('Quickens with every kill: do not feed it, and finish it fast.');
   if (p?.slow) t.push('Its blows slow heroes: keep fast heroes out of its reach.');
+  // (FOE-STYLES: its way of moving)
+  if (p?.move === 'flank') t.push('Goes round to the side of a hero busy with another: guard your line\'s flanks.');
+  if (p?.move === 'kite') t.push('Backs off from a blade to keep its reach: corner it, or catch it with a shot.');
+  if (p?.move === 'hunt') t.push('Makes for your shooters first: keep a guard beside them.');
+  if (p?.move === 'guard') t.push('Guards its friends: draw it off, or beat it before the ones it shields.');
+  if (p?.move === 'charge') t.push('Its first blow after a run lands hard: meet it with a tough hero, or close in before it gets going.');
+  if (p?.gang) t.push('Bites harder with its pack round the prey: do not let them surround one hero.');
   const s = skill?.text.toLowerCase() ?? '';
   if (/(calls|raises|summons)/.test(s)) t.push('Calls helpers to its side: kill the caller first.');
   if (/(stun|stone|freez|hold|stiffen)/.test(s)) t.push('Its skill holds heroes still: spread them, and keep your strongest back.');
