@@ -93,12 +93,12 @@ import { WEAK } from '../src/sim/weakness';
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again, now 81e830d7: it casts each king's spell once, and the
 // schools added fourteen. No other scenario moved.)
-// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario on main 0.345.0: every
-// scenario meets foes, and every foe now has a passive and a way of moving, the common ones retuned, the armies' starts, the daily's and the
-// Last Stand's knobs with them; by the tests' own computation (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the
-// test itself, whose put-back strengths that tool does not know since main 0.339). The new hashes: field1 c7059b92, field30 04a6615a, bosses
-// ecd833c5, armyFoes 5f7e4a12, spells 3dfbca82, lands 46c9f749, army 48ac2569, daily 84f515f6, tower 8fd8ad39, stand 7a091b9f, calamity
-// fb95d038)
+// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario on main 0.345.0, and
+// `daily`, `tower` and `calamity` again on 0.349.0 (its runes and remedies): every scenario meets foes, and every foe now has a passive and a
+// way of moving, the common ones retuned, the armies' starts, the daily's and the Last Stand's knobs with them; by the tests' own computation
+// (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the test itself, whose put-back strengths that tool does not know
+// since main 0.339). The new hashes: field1 c7059b92, field30 04a6615a, bosses ecd833c5, armyFoes 5f7e4a12, spells 3dfbca82, lands 46c9f749,
+// army 48ac2569, daily df7c9e8e, tower d64144f0, stand 7a091b9f, calamity e6d12f8d)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

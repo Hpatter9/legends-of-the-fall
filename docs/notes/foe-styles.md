@@ -189,14 +189,14 @@ the difficulty note's 3 to 4.)
   (the skeleton is struck from behind).
 - Re-staged on new seeds: `set-powers`' Shadow Dance (orcs, seed 2 to 7) and the Widow's Bow (skeletons, seed 1 to 5), whose fights no longer
   gave the Knight the kill or the first blow on the strongest foe they need; the test still asks each to fire.
-- Re-recorded: every identity scenario (on main 0.345.0) (`spells-identity` and `ailments-identical`, the hashes in their headers; every scenario meets foes, so
+- Re-recorded: every identity scenario (on main 0.345.0; `daily`, `tower` and `calamity` again on 0.349.0) (`spells-identity` and `ailments-identical`, the hashes in their headers; every scenario meets foes, so
   every one moved), and the Last Stand's twelve pinned fights (`stand-regression`: all twelve moved; the third, a close loss, is now won, and the
   seventh, a close win, now lost).
 
 ## Checks
 
-`npm run typecheck` clean. The full `npm test` on the final code (main 0.345.0 merged): **2,462 of 2,462 pass** (the 2,460 others on the full run, and `set-powers`' two after
-its seeds were moved). `npm run web` built. The page:
+`npm run typecheck` clean. The full `npm test` on the final code (main 0.349.0 merged): **2,484 of 2,484 pass** (the 2,482 others on the full run, and the two identity tests
+once `daily`, `tower` and `calamity` were re-recorded on 0.349's runes and remedies). `npm run web` built. The page:
 `node tools/foe-styles/shots.mjs` at 393x852, 360x780 and 412x915 (`docs/samples/foe-styles-codex-*.png`): the Minotaur's sheet with its five other
 kinds, no page errors, nothing runs off the side. The fight's "Charge!" is the same floating label as a werewolf's "Frenzy", and a skill-less
 foe's bar simply has no charge strip under its health.
