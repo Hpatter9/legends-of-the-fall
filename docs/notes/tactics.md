@@ -102,3 +102,18 @@ and the front-liners' charges are not.
   signatures on (its greedy run ends before that boss again), and two tests re-staged (`boss-big`'s dodge on a charging party, as its
   heroes packed behind the line left no tile to step to; the Vaelkhar trial on seed 2004, which shows his whole kit under Advance).
 - **Tools**: `TACTICS_OFF=1` (`tools/tactics/off.ts`, imported by `tools/balance.ts`) measures as before the tactics; `run.mjs --answer`.
+
+## Batch 3: the page
+
+- **The chip** (`src/tacticsView.ts`, `src/tactics.css`): on the prep screen between Auto and Home, a pennant and the tactic picked for this
+  run's mode or army ("Advance"). A tap opens a bottom sheet: the three tactics as large buttons with one line each, the picked one lit, and
+  Close (it is a screen in the page's stack, `openScreen`, so the back button closes it). A pick is kept in the save at once.
+- **The pick** (`src/sim/tacticPick.ts`, `Meta.tactics`): kept per army in the army runs (`army:<id>`, any tier) and per mode in the others
+  (`daily`, `calamity`, `quest`...); Advance together where none is. A save from before has none; an unknown tactic in a save is dropped on
+  load. `begin` sets it on the battle (`setTactic`) before `fight`, so Auto's replays and the page's own fights take it alike.
+- **Charge!** (`#chargeBtn`): at the right of the board, under the spell row and its Auto switch, while the party is held (`canCharge`); a tap
+  sends the sim's order (`orderCharge`) and the button goes. The status line says "The line advances" (or "Holding the line") until the
+  line meets the foe, then "Fight!" as before.
+- Shots (`node tools/tactics/shots.mjs` after `npm run web`): `docs/samples/tactics-{deploy,sheet,fight}-{393,360,412}.png`.
+- Tests: `test/tactic-pick.test.ts` (new, 3): the keys by army and mode and the default; saved and loaded, with an unknown tactic dropped and a
+  save from before having none; every tactic's words.

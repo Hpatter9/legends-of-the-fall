@@ -1,0 +1,16 @@
+/* The party's tactics (docs/notes/tactics.md, `tacticsView.ts`): the chip beside Auto, its sheet, and the fight's Charge! call. */
+#tactic { white-space: nowrap; }
+#tactic svg { margin-right: 4px; vertical-align: -1px; color: var(--gold); }
+#tacticSheet { position: fixed; inset: 0; z-index: 9; display: flex; align-items: flex-end; justify-content: center; background: rgb(var(--s0-rgb) / 0.72); padding: 0 0 env(safe-area-inset-bottom, 0px); }
+#tacticSheet[hidden] { display: none; }
+#tacticSheet .tacCard { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 16px; background: var(--wood); border-top: 2px solid var(--gold); border-radius: 12px 12px 0 0; box-shadow: 0 -6px 18px #0008; }
+#tacticSheet h2 { margin: 0 0 2px; font-family: var(--display); font-size: 18px; color: var(--gold-hi); text-align: center; }
+#tacticSheet .tacOpt { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; text-align: left; padding: 10px 12px; min-height: 56px; }
+#tacticSheet .tacOpt b { font-size: 16px; }
+#tacticSheet .tacOpt span { font-weight: normal; font-size: 14px; color: var(--dim); line-height: 1.25; }
+#tacticSheet .tacOpt.on { border-color: var(--gold); background: linear-gradient(var(--e4), var(--e1)); }
+#tacticSheet .tacOpt.on span { color: var(--ink); }
+#tacticSheet .tacClose { align-self: center; min-width: 120px; margin-top: 2px; }
+#chargeBtn { position: fixed; z-index: 4; right: max(10px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 150px); padding: 8px 14px; font-family: var(--display); font-size: 15px; color: var(--ink); background: linear-gradient(var(--r4), var(--e1)); border-color: var(--gold); box-shadow: 0 2px 8px #0009; }
+#chargeBtn[hidden] { display: none; }
+body:not([data-phase='fight']) #chargeBtn { display: none; }

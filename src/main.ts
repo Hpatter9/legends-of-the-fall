@@ -178,6 +178,9 @@ import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHo
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
+import { TacticsView } from './tacticsView';
+import { setTactic } from './sim/tactics';
+import { pickedTactic, pickTactic } from './sim/tacticPick';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -1058,6 +1061,8 @@ class Game {
   private begin(): void {
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
+    // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
+    setTactic(this.b, pickedTactic(this.meta.tactics, this.run.mode));
     if (!fight(this.b)) return;
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
     // in its own trial as a great being, EIDOLON-TRIAL)
@@ -1823,6 +1828,7 @@ class Game {
   private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
+  private tactics!: TacticsView;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
@@ -1879,6 +1885,15 @@ class Game {
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
+    // (the party's tactic: the chip beside Auto, and the Charge! call in the fight; docs/notes/tactics.md)
+    this.tactics = new TacticsView({
+      picked: () => pickedTactic(this.meta.tactics, this.run.mode),
+      pick: (t) => {
+        pickTactic(this.meta, this.run.mode, t);
+        saveMeta(this.meta);
+        this.refresh();
+      },
+    });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
       meta: () => this.meta,
@@ -3217,6 +3232,7 @@ class Game {
   private refresh(): void {
     const b = this.b;
     const run = this.run;
+    this.tactics.refresh(b);
     this.syncAct();
     this.syncScene();
     const n = heroesPlaced(b);
@@ -3405,7 +3421,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? (b.tactic && b.tactic.metAt === undefined ? `${stage} · ${b.tactic.kind === 'hold' ? 'Holding the line' : 'The line advances'}` : `${stage} · Fight!`) : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
