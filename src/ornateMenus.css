@@ -1710,3 +1710,6 @@ body #spellbook h2 {
 #settingsBody .newDot {
   font-size: 11px;
 }
+
+/* UX-FIXES: the toast lane sits under the top bar and its crest (it covered the crowns, the gear and the version line) */
+.toast { top: calc(env(safe-area-inset-top) + 118px); }
