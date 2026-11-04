@@ -80,7 +80,7 @@ ones in batch 4.
   - The Gilded Toll waits for a hero to fall.
   - The War Horn stays the player's. Both the Decree and the Eidolon may be used in one fight.
 - **The HUD** (`src/decreeHud.ts`): a 360 px phone has no room for a fifth orb as well as the horn and the Auto switch, so **the mana box
-  carries the Decree**. A thin gold bar under the mana shows the meter. Full, the box glows gold (no glow with reduced motion), reads DECREE
+  carries the Decree**. A thin gold bar under the mana shows the meter. Full, the box glows gold (a steady glow: the game allows no looping brightness), reads DECREE
   and casts it on a tap. The spell row may wrap the Auto switch underneath on a narrow phone that also shows the horn. The design suggested
   the ruler's face at the row's end; that comes back with the Decree's own art in batch 5 if there is room.
 
@@ -109,7 +109,7 @@ The short fights end before the meter fills. The re-measure in batch 6 will tune
   fight, only when full; every Decree does something; a recorded fight replays its Decree; Auto's rules.
 - `test/spellbook.test.ts` was rewritten for the new rules, an owner-approved change of requirement: the starting fit, the slots and open slot,
   the re-fit on a ruler change, an old save, saving and loading, a messy save.
-- `spells-more.test.ts` (Hex, Poison Cloud and Cleanse in the Rose Duchess's slots), `castleScene.test.ts` (the Mage Tower's words), and the
+- `spells-more.test.ts` (Hex, Poison Cloud and Cleanse in the Rose Duchess's slots), `castleScene.test.ts` (the Mage Tower's words), `docs/lines/new-lines.json` and the
   Chapel tip and quip, which no longer speak of a power budget, were updated to match.
 - Shots at 393x852, 360x780 and 412x915 (`docs/samples/king-spells-b2-*.png`): the fight's four orbs (`fight`), the Decree ready (`ready`),
   just cast (`cast`), and the spellbook (`spellbook`). The row fits with no sideways scroll at every size.

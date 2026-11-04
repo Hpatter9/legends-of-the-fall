@@ -285,14 +285,12 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 /* HUD-FACES (docs/notes/hud-faces.md): a painted face drawn smooth (the sprite portraits stay pixelated); same box as the sprite it replaces */
 :is(.fhPic, .uiCard, .stSheetHead) canvas.heroFace { image-rendering: auto; object-fit: cover; }
 
-/* ---- the ruler's Decree in the mana box (KING-SPELLS batch 2, `decreeHud.ts`): a thin gold bar under the mana; full, the box glows gold, reads
+/* ---- the ruler's Decree in the mana box (KING-SPELLS batch 2, `decreeHud.ts`): a thin gold bar under the mana; full, the box glows gold (a steady glow: no looping brightness), reads
    DECREE and casts it on a tap ---- */
 #hudSpells #mana .decreeBar, #stand .stOrbs .stMana .decreeBar { display: none; height: 4px; border: 1px solid #6e5a2c; border-radius: 2px; background: #1a140a; overflow: hidden; text-decoration: none; }
 #hudSpells #mana.hasDecree .decreeBar, #stand .stOrbs .stMana.hasDecree .decreeBar { display: block; }
 #hudSpells #mana .decreeBar span, #stand .stOrbs .stMana .decreeBar span { display: block; height: 100%; width: 0; background: linear-gradient(#ffe9a8, #d29a2e); }
-#hudSpells #mana.decreeReady, #stand .stOrbs .stMana.decreeReady { cursor: pointer; border-color: #ffe08a; box-shadow: 0 0 0 1px #bf9d53, 0 0 12px #eac56bcc; animation: decreeGlow 1.4s ease-in-out infinite alternate; }
+#hudSpells #mana.decreeReady, #stand .stOrbs .stMana.decreeReady { cursor: pointer; border-color: #ffe08a; box-shadow: 0 0 0 1px #ffe08a, 0 0 14px #eac56be6; }
 #hudSpells #mana.decreeReady::before { content: 'DECREE'; color: #ffe9a8; }
-@keyframes decreeGlow { from { box-shadow: 0 0 0 1px #bf9d53, 0 0 6px #eac56b88; } to { box-shadow: 0 0 0 1px #ffe08a, 0 0 16px #eac56bff; } }
-@media (prefers-reduced-motion: reduce) { #hudSpells #mana.decreeReady, #stand .stOrbs .stMana.decreeReady { animation: none; } }
 /* (a narrow phone with the War Horn as well: the Auto switch may drop under the row rather than push it off the screen) */
 #hudSpells { flex-wrap: wrap; }
