@@ -133,6 +133,8 @@ export interface Fall {
   at: number;
   u: number;
   v: number;
+  /** The rank's strength it lands with (1 when unset). */
+  mult?: number;
   /** The raw power it lands with (a meteor's own `METEOR_POWER` when unset). */
   power?: number;
 }
@@ -143,6 +145,8 @@ export interface Cloud {
   v: number;
   until: number;
   next: number;
+  /** The rank's strength it bites with (1 when unset). */
+  mult?: number;
 }
 
 /** The spell state a battle carries. */
@@ -161,6 +165,8 @@ export interface SpellState {
   spill?: number;
   /** The ruler's Decree on this fight (KING-SPELLS batch 2, `decrees.ts`); unset when none was armed. */
   decree?: DecreeState;
+  /** Each spell's rank, 1 to 3 (KING-SPELLS batch 3: the page copies the save's ranks onto the fight); unset is rank 1 for all. */
+  ranks?: Partial<Record<SpellId, number>>;
   /** When a spell was last cast on its own (AUTO-CAST, `autoCast.ts`); unset until one is. */
   autoAt?: number;
 }
@@ -227,6 +233,40 @@ export const kingMight = (b: Battle) => Math.max(1, ((b.foeBoost?.hp ?? 1) / MIG
 /** The mana bar's words: the mana, and the spill waiting behind it ("10/10 +4"). */
 export const manaText = (s: SpellState) => `${Math.floor(s.mana)}/${MANA_MAX}${(s.spill ?? 0) >= 1 ? ` +${Math.floor(s.spill!)}` : ''}`;
 
+/**
+ * A spell's rank (KING-SPELLS batch 3, `spellRanks.ts`): rank 2 strikes, heals and shields 20% harder and cools 15% sooner; rank 3 40% harder
+ * and 30% sooner, and adds the spell's rider (`RIDERS`). Durations do not grow, bar the riders that say so.
+ */
+export const RANK_MAX = 3;
+export const RANK_POWER = [1, 1, 1.2, 1.4] as const;
+export const RANK_COOL = [1, 1, 0.85, 0.7] as const;
+export const rankOf = (b: Battle, id: SpellId) => Math.max(1, Math.min(RANK_MAX, Math.floor(b.spells.ranks?.[id] ?? 1)));
+/** What rank 3 adds to each spell (the spellbook's words; the rules are in `castSpell`). */
+export const RIDERS: Record<SpellId, string> = {
+  heal: 'also lifts every ailment from those it heals',
+  meteor: 'a second, smaller meteor falls on the spot a moment later',
+  haste: 'also fills each hasted hero\'s skill meter by 20',
+  shield: 'the shield lasts 9s',
+  smite: 'the bolt also stuns for 1s',
+  chain: 'the lightning leaps once more',
+  poison: 'the cloud lingers 9s',
+  frost: 'the freeze lasts 3s',
+  rally: 'also heals every hero 10%',
+  quake: 'reaches foes one step higher',
+  resurrect: 'the hero rises with 75% of its health',
+  cleanse: 'also shields each hero for 15% of its health',
+  blink: 'the hero cannot be targeted for 3s',
+  hex: 'the hexed foes are also slowed',
+  lance: 'the beam sets its foes burning',
+  renewal: 'also lifts every ailment at once',
+  deepfreeze: 'freezes the second sturdiest foe in the area too',
+  warcry: 'the meters jump by 60',
+  bulwark: 'the shields last 9s',
+  wolves: 'three wolves come',
+  starfall: 'seven meteors fall',
+};
+export const RIDER_SPOTS: readonly (readonly [number, number])[] = [[-2, -2], [2, 2]];
+
 /** Milliseconds until a spell may be cast again (0 when ready). */
 export const cooldownLeft = (b: Battle, id: SpellId) => Math.max(0, b.spells.ready[id] - b.t);
 
@@ -267,7 +307,11 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
   const s = b.spells;
   s.mana -= spell.cost;
   feedDecree(b, spell.cost * DECREE_PER_SPENT);
-  s.ready[id] = b.t + spell.cooldownMs;
+  // (the rank: its strength, its cooldown, and at the top its rider)
+  const rk = rankOf(b, id);
+  const pot = RANK_POWER[rk];
+  const top = rk >= RANK_MAX;
+  s.ready[id] = b.t + Math.round(spell.cooldownMs * RANK_COOL[rk]);
   s.events.push({ kind: 'spell', id, u, v });
   // (kept in the fight's log with the heroes' ultimates, so a recorded fight replays whole: `orders.ts`)
   (b.log ??= []).push({ t: b.t, kind: 'spell', id, u, v });
@@ -275,8 +319,12 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
   const fx = (to: Unit) => ev.push({ kind: 'spellfx', id, to: to.id });
   switch (id) {
     case 'meteor':
-      s.falls.push({ at: b.t + METEOR_MS, u, v });
+      s.falls.push({ at: b.t + METEOR_MS, u, v, ...(pot !== 1 ? { mult: pot } : {}) });
       ev.push({ kind: 'area', by: 0, id: 'meteor', u, v, ms: METEOR_MS });
+      if (top) {
+        s.falls.push({ at: b.t + METEOR_MS + 600, u, v, power: METEOR_POWER / 2, mult: pot });
+        ev.push({ kind: 'area', by: 0, id: 'meteor', u, v, ms: METEOR_MS + 600 });
+      }
       break;
     case 'heal':
     case 'haste':
@@ -284,13 +332,15 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       for (const x of b.units) {
         if (!x.alive || x.side !== 'hero' || !inArea(x, u, v)) continue;
         if (id === 'heal') {
-          const amount = Math.min(x.maxHp - x.hp, Math.round(x.maxHp * HEAL_SHARE * (x.healMult ?? 1)));
+          const amount = Math.min(x.maxHp - x.hp, Math.round(x.maxHp * HEAL_SHARE * pot * (x.healMult ?? 1)));
           x.hp += amount;
           ev.push({ kind: 'heal', to: x.id, amount });
+          if (top) cleanse(b, x);
         } else if (id === 'haste') {
           x.hasteUntil = b.t + HASTE_MS;
           ev.push({ kind: 'haste', to: x.id, ms: HASTE_MS });
-        } else x.shield = { hp: Math.round(x.maxHp * SHIELD_SHARE), until: b.t + SHIELD_MS };
+          if (top) x.charge = Math.min(CHARGE_MAX, x.charge + 20);
+        } else x.shield = { hp: Math.round(x.maxHp * SHIELD_SHARE * pot), until: b.t + SHIELD_MS * (top ? 1.5 : 1) };
         fx(x);
       }
       break;
@@ -300,6 +350,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
         // (a second rally only lengthens the first: the attack is raised once)
         if (x.rallyUntil === undefined) x.power = (x.power ?? 1) * RALLY_MULT;
         x.rallyUntil = b.t + RALLY_MS;
+        if (top) mendUnit(x, x.maxHp * 0.1, ev);
         fx(x);
       }
       break;
@@ -307,22 +358,24 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       const target = foesIn(b, u, v).sort((x, y) => y.hp - x.hp || x.id - y.id)[0];
       if (target) {
         fx(target);
-        kingStrike(b, target, SMITE_POWER, true, ev);
+        kingStrike(b, target, SMITE_POWER * pot, true, ev);
+        if (top && target.alive && freezeFor(b, target, 1000, true)) target.step = undefined;
       }
       break;
     }
     case 'chain': {
       let at = foesIn(b, u, v).sort((x, y) => apart(x, { u, v }) - apart(y, { u, v }) || x.id - y.id)[0];
       const hit = new Set<number>();
-      let power = CHAIN_POWER;
-      for (let n = 0; at && n <= CHAIN_JUMPS; n++) {
+      let power = CHAIN_POWER * pot;
+      const jumps = CHAIN_JUMPS + (top ? 1 : 0);
+      for (let n = 0; at && n <= jumps; n++) {
         hit.add(at.id);
         fx(at);
         kingStrike(b, at, power, false, ev);
         shockFor(b, KING, at);
         power *= CHAIN_FALLOFF;
         const from: Unit = at;
-        if (n === CHAIN_JUMPS) break;
+        if (n === jumps) break;
         at = b.units.filter((x) => x.alive && x.side === 'foe' && !hit.has(x.id) && apart(x, from) <= CHAIN_REACH).sort((x, y) => apart(x, from) - apart(y, from) || x.id - y.id)[0];
         if (at) ev.push({ kind: 'arc', from: from.id, to: at.id });
       }
@@ -330,36 +383,36 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     }
     case 'frost':
       for (const x of foesIn(b, u, v)) {
-        if (freezeFor(b, x, FREEZE_MS, true)) x.step = undefined;
+        if (freezeFor(b, x, top ? 3000 : FREEZE_MS, true)) x.step = undefined;
         chillFor(b, x, SLOW_MS, true, true);
         fx(x);
       }
       break;
     case 'quake':
-      for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && tileAt(b.board, y.u, y.v)!.h <= QUAKE_LOW)) {
+      for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && tileAt(b.board, y.u, y.v)!.h <= QUAKE_LOW + (top ? 1 : 0))) {
         fx(x);
-        kingStrike(b, x, QUAKE_POWER, false, ev);
+        kingStrike(b, x, QUAKE_POWER * pot, false, ev);
       }
       break;
     case 'poison':
-      s.clouds.push({ u, v, until: b.t + POISON_MS, next: b.t + POISON_EVERY });
+      s.clouds.push({ u, v, until: b.t + POISON_MS + (top ? 3000 : 0), next: b.t + POISON_EVERY, ...(pot !== 1 ? { mult: pot } : {}) });
       break;
     case 'lance':
       for (const x of b.units.filter((y) => y.alive && y.side === 'foe' && y.u === u).sort((y, z) => y.v - z.v || y.id - z.id)) {
         fx(x);
-        kingStrike(b, x, LANCE_POWER, false, ev);
+        kingStrike(b, x, LANCE_POWER * pot, false, ev);
+        if (top && x.alive) burnFor(b, KING, x);
       }
       break;
     case 'bulwark':
       for (const x of b.units) {
         if (!x.alive || x.side !== 'hero') continue;
-        x.shield = { hp: Math.round(x.maxHp * BULWARK_SHARE), until: b.t + BULWARK_MS };
+        x.shield = { hp: Math.round(x.maxHp * BULWARK_SHARE * pot), until: b.t + BULWARK_MS * (top ? 1.5 : 1) };
         fx(x);
       }
       break;
     case 'deepfreeze': {
-      const x = foesIn(b, u, v).sort((y, z) => z.hp - y.hp || y.id - z.id)[0];
-      if (x) {
+      for (const x of foesIn(b, u, v).sort((y, z) => z.hp - y.hp || y.id - z.id).slice(0, top ? 2 : 1)) {
         if (freezeFor(b, x, DEEPFREEZE_MS, true)) x.step = undefined;
         // (with the ailments on, the freeze itself makes it brittle, as long as it holds)
         if (!AILMENT_SWITCH.on) x.brittleUntil = b.t + DEEPFREEZE_MS;
@@ -370,23 +423,23 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'warcry':
       for (const x of b.units) {
         if (!x.alive || x.side !== 'hero') continue;
-        x.charge = Math.min(CHARGE_MAX, x.charge + WARCRY_CHARGE);
+        x.charge = Math.min(CHARGE_MAX, x.charge + (top ? 60 : WARCRY_CHARGE));
         // (the cry steadies them: no hero stays afraid, STATUS-FX)
         unfear(x);
         fx(x);
       }
       break;
     case 'starfall':
-      SHOWER_SPOTS.forEach(([du, dv], i) => {
+      [...SHOWER_SPOTS, ...(top ? RIDER_SPOTS : [])].forEach(([du, dv], i) => {
         const at = { u: u + du, v: v + dv };
         if (!tileAt(b.board, at.u, at.v)) return;
         const ms = METEOR_MS + i * SHOWER_GAP;
-        s.falls.push({ at: b.t + ms, ...at, power: SHOWER_POWER });
+        s.falls.push({ at: b.t + ms, ...at, power: SHOWER_POWER, ...(pot !== 1 ? { mult: pot } : {}) });
         ev.push({ kind: 'area', by: 0, id: 'meteor', ...at, ms });
       });
       break;
     case 'wolves':
-      for (const at of room.slice(0, WOLVES)) fx(addUnit(b, 'wolf', at.u, at.v, WOLF_BOOST));
+      for (const at of room.slice(0, WOLVES + (top ? 1 : 0))) fx(addUnit(b, 'wolf', at.u, at.v, WOLF_BOOST));
       break;
     case 'cleanse':
       for (const x of b.units) {
@@ -398,9 +451,10 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
         // (a hold or freeze is broken: the hero is free to act on the next tick)
         if (x.stunUntil !== undefined && x.stunUntil > b.t) x.busyUntil = Math.min(x.busyUntil, b.t + TICK_MS);
         x.stunUntil = undefined;
-        mendUnit(x, x.maxHp * CLEANSE_HEAL, ev);
+        mendUnit(x, x.maxHp * CLEANSE_HEAL * pot, ev);
         // (and wards them a moment against the next: STATUS-FX)
         ward(b, x);
+        if (top) x.shield = { hp: Math.round(x.maxHp * 0.15), until: b.t + SHIELD_MS };
         fx(x);
       }
       break;
@@ -412,7 +466,7 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       x.step = undefined;
       x.swing = undefined;
       x.busyUntil = Math.max(x.busyUntil, b.t + TICK_MS * 2);
-      x.hideUntil = b.t + BLINK_HIDE_MS;
+      x.hideUntil = b.t + (top ? 3000 : BLINK_HIDE_MS);
       ev.push({ kind: 'blink', by: x.id, from, to: { u, v } });
       fx(x);
       break;
@@ -420,7 +474,8 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
     case 'renewal':
       for (const x of b.units) {
         if (!x.alive || x.side !== 'hero' || !inArea(x, u, v)) continue;
-        x.hot = { amount: x.maxHp * RENEWAL_SHARE, every: 1000, next: b.t + 1000, until: b.t + RENEWAL_MS + 1, by: x.id }; // (+1: the eighth second's mend still lands)
+        x.hot = { amount: x.maxHp * RENEWAL_SHARE * pot, every: 1000, next: b.t + 1000, until: b.t + RENEWAL_MS + 1, by: x.id }; // (+1: the eighth second's mend still lands)
+        if (top) cleanse(b, x);
         fx(x);
       }
       break;
@@ -431,13 +486,14 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
         x.weakUntil = b.t + HEX_MS;
         // (and its healing is turned to harm: STATUS-FX)
         curseFor(b, KING, x, HEX_MS);
+        if (top) chillFor(b, x, SLOW_MS, true, true);
         fx(x);
       }
       break;
     case 'resurrect': {
       const x = fallen!;
       x.alive = true;
-      x.hp = Math.max(1, Math.round(x.maxHp * RESURRECT_SHARE));
+      x.hp = Math.max(1, Math.round(x.maxHp * (top ? 0.75 : RESURRECT_SHARE)));
       x.diedAt = undefined;
       x.busyUntil = b.t + 500;
       x.charge = 0;
@@ -460,7 +516,7 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
     const might = kingMight(b);
     for (const x of b.units) {
       if (!x.alive || x.side !== 'foe' || !inArea(x, f.u, f.v)) continue;
-      hurt(b, KING, x, Math.max(1, Math.round((f.power ?? METEOR_POWER) * might) - defOf(x).def), true, false, out, 'skill');
+      hurt(b, KING, x, Math.max(1, Math.round((f.power ?? METEOR_POWER) * might * (f.mult ?? 1)) - defOf(x).def), true, false, out, 'skill');
       // (a meteor, not a shower's star, sets what it strikes burning: STATUS-FX)
       if (f.power === undefined) burnFor(b, KING, x);
     }
@@ -470,7 +526,7 @@ export function settleFalls(b: Battle, out: BattleEvent[]): void {
       c.next += POISON_EVERY;
       const might = kingMight(b);
       for (const x of foesIn(b, c.u, c.v)) {
-        tagged(out, 'poison', () => hurt(b, KING, x, Math.round(POISON_DMG * might), false, false, out, 'dot'));
+        tagged(out, 'poison', () => hurt(b, KING, x, Math.round(POISON_DMG * might * (c.mult ?? 1)), false, false, out, 'dot'));
         // (and each bite leaves a stack of poison: STATUS-FX)
         poisonFor(b, KING, x);
       }
@@ -500,6 +556,8 @@ export interface Loadout {
   open?: SpellId;
   /** The school the loadout was last fitted to (`fitSchool`); unset on a save from before the schools. */
   school?: string;
+  /** Each spell's rank above the first (KING-SPELLS batch 3, `spellRanks.ts`); a spell not listed is rank 1. */
+  ranks?: Partial<Record<SpellId, number>>;
 }
 
 /** A new save's: the starting three known and in the slots (the page fits them to the ruler's school when it loads: `fitSchool`). */
@@ -520,5 +578,11 @@ export function readLoadout(raw: unknown): Loadout {
   l.equipped = (Array.isArray(r.equipped) ? list(r.equipped).filter((id) => l.owned.includes(id)) : [...STARTER_SPELLS]).slice(0, LOADOUT_SIZE);
   if (typeof r.open === 'string' && l.owned.includes(r.open as SpellId) && !l.equipped.includes(r.open as SpellId)) l.open = r.open as SpellId;
   if (typeof r.school === 'string') l.school = r.school;
+  // (the ranks: whole numbers from 2 to the top, on real spells; a spell not yet known keeps its rank for when it is)
+  if (r.ranks && typeof r.ranks === 'object') {
+    const ranks: Partial<Record<SpellId, number>> = {};
+    for (const [id, n] of Object.entries(r.ranks as Record<string, unknown>)) if (id in SPELLS && typeof n === 'number' && n >= 2) ranks[id as SpellId] = Math.min(RANK_MAX, Math.floor(n));
+    if (Object.keys(ranks).length) l.ranks = ranks;
+  }
   return l;
 }

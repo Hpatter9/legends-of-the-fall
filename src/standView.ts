@@ -14,6 +14,7 @@ import { castSpell, canAfford, cooldownLeft, MANA_MAX, manaText, SPELLS, type Sp
 import { snapSpell } from './sim/spellAim';
 import { castList, schoolOf } from './sim/schools';
 import { armDecree } from './sim/decrees';
+import { fightRanks } from './sim/spellRanks';
 import { bindDecree, refreshDecree } from './decreeHud';
 import {
   autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine, holdPurse, purseLine,
@@ -436,6 +437,7 @@ export class StandView {
     this.eid.arm(s.b);
     // (KING-SPELLS batch 2: the ruler's Decree, once a run: the Last Stand is one long fight)
     armDecree(s.b, schoolOf(settings().ruler).decree);
+    s.b.spells.ranks = fightRanks(this.host.meta().spellbook);
     this.music(s.run.seed);
     this.picked = null;
     this.drawMarks();

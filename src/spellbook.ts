@@ -10,6 +10,8 @@ import { spellLock } from './sim/spellSources';
 import { SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
 import { castList, equipBlock, equipSpell, fitSchool, schoolOf, schoolsOfSpell, SCHOOL_SLOTS, unequipSpell } from './sim/schools';
 import { DECREES } from './sim/decrees';
+import { marksEarned, marksFree, rankBlock, rankIn, rankUp } from './sim/spellRanks';
+import { RANK_MAX, RIDERS } from './sim/spells';
 
 const CSS = `
 #spellbook { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgb(var(--s1-rgb) / 0.97); overflow-y: auto; touch-action: pan-y; color: var(--text); }
@@ -24,6 +26,13 @@ const CSS = `
 .sbSlot.open { border-color: var(--b4); }
 .sbSlot small { display: block; font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
 .sbCard .tags { color: var(--e8); font-size: 11px; }
+.sbMarks { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); }
+.sbMarks b { color: var(--gold, var(--e7)); font-size: 14px; }
+.sbCard .rank { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--b4); }
+.sbCard .rank i { font-style: normal; letter-spacing: 2px; color: var(--gold, var(--e7)); }
+.sbCard .rider { font-size: 11px; color: var(--text-dim); }
+.sbCard .rider.on { color: var(--e8); }
+.sbCard .acts { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .sbSlot { min-height: 44px; padding: 6px; border: 1px dashed var(--s7); border-radius: 6px; background: var(--s3); color: inherit; font: inherit; font-size: 12px; }
 .sbSlot.on { border-style: solid; border-color: var(--gold, var(--e7)); }
 .sbSlot em { display: block; font-style: normal; color: var(--b4); font-size: 11px; }
@@ -100,6 +109,7 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
     for (let i = 0; i < SCHOOL_SLOTS; i++) slot(l.equipped[i], sc.name, false);
     slot(l.open, 'Open', true);
     body.append(slots, el('div', 'sbNote', note));
+    body.append(el('div', 'sbMarks', `<b>${marksFree(m)}</b><span>school marks free of ${marksEarned(m)} earned: one for each Mage Tower level and each army cleared. A mark raises a spell a rank (to ${RANK_MAX}).</span>`));
     if (l.owned.length < SPELL_IDS.length) body.append(el('div', 'sbHint', 'Spells are not bought: the Mage Tower teaches them as it rises, the grand ones are earned in battle, and a gold chest may hold a scroll of any you lack.'));
 
     // equipped first, then this school's known, the other known, then the ones not yet known (the Mage Tower's by level, then the milestones)
@@ -114,6 +124,9 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
       card.append(el('div', 'top', `${spellIconHtml(id)}<b>${sp.name}</b>`));
       card.append(el('div', 'stats', `${sp.cost} mana · ${sp.cooldownMs / 1000}s cooldown`));
       card.append(el('div', 'text', sp.text));
+      const rk = rankIn(l, id);
+      card.append(el('div', 'rank', `<span>Rank ${rk} of ${RANK_MAX}</span><i>${'◆'.repeat(rk)}${'◇'.repeat(RANK_MAX - rk)}</i>${rk > 1 ? `<span>${rk === 2 ? '20' : '40'}% stronger, ${rk === 2 ? '15' : '30'}% quicker to cool</span>` : ''}`));
+      card.append(el('div', `rider${rk >= RANK_MAX ? ' on' : ''}`, `Rank ${RANK_MAX}: ${RIDERS[id]}`));
       const schools = schoolsOfSpell(id).map((x) => x.name);
       card.append(el('div', 'tags', schools.length ? `School of ${schools.join(', ')}${sc.spells.includes(id) ? ' (yours)' : ''}` : 'No school yet: the open slot'));
       const lock = owned ? undefined : spellLock(m, id);
@@ -131,7 +144,17 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
         btn.textContent = sc.spells.includes(id) && l.equipped.length < SCHOOL_SLOTS ? 'Equip' : 'Equip in the open slot';
         btn.addEventListener('click', () => act(() => equipSpell(l, id, sc.id), block ?? ''));
       }
-      card.append(btn);
+      const acts = el('div', 'acts');
+      if (rk < RANK_MAX) {
+        const up = el('button', 'rankUp', 'Rank up · 1 mark') as HTMLButtonElement;
+        const why = rankBlock(m, id);
+        up.disabled = !!why;
+        if (why) up.title = why;
+        up.addEventListener('click', () => act(() => rankUp(m, id), why ?? ''));
+        acts.append(up);
+      }
+      acts.append(btn);
+      card.append(acts);
       body.append(card);
     }
     onDraw();

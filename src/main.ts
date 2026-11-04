@@ -119,6 +119,7 @@ import { bindSpellbook } from './spellbook';
 import { snapSpell } from './sim/spellAim';
 import { castList, fitSchool, schoolOf } from './sim/schools';
 import { armDecree } from './sim/decrees';
+import { fightRanks } from './sim/spellRanks';
 import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
@@ -1041,6 +1042,8 @@ class Game {
     this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
     // (KING-SPELLS batch 2: the ruler's Decree, once a fight)
     armDecree(this.b, schoolOf(settings().ruler).decree);
+    // (KING-SPELLS batch 3: the save's spell ranks)
+    this.b.spells.ranks = fightRanks(this.meta.spellbook);
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
