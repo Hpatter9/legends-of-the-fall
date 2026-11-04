@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.343.0',
+    date: '2026-11-04',
+    title: 'Gear sets, legends and enchanting',
+    notes: ['Gear sets grant set powers, and named legendary pieces drop.', 'Season gear by using it, patch and reforge it, and enchant it in the new Enchant tab. Prices and chest odds are retuned.'],
+  },
+  {
     version: '0.342.0',
     date: '2026-11-04',
     title: 'Eight more ultimate showcases',
