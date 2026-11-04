@@ -31,13 +31,15 @@ const askel = chainById('askel')!;
 
 /** A won army fight, as the goals read it. */
 const win = (army: string, more: Partial<QuestFight> = {}): QuestFight => ({ won: true, waves: 1, boss: false, heroes: ['knight'], flawless: true, kills: [], dailyCleared: false, mode: 'army', army, spells: [], ...more });
-const bossWin = (army: string, boss: string): QuestFight => win(army, { boss: true, kills: [boss], bosses: [boss] });
+const bossWin = (army: string, boss: string, more: Partial<QuestFight> = {}): QuestFight => win(army, { boss: true, kills: [boss], bosses: [boss], ...more });
+/** Q9: the chains' parts ask for Hard (tier 1). */
+const HARD = { tier: 1 } as const;
 
 /** Askel's chain played to its binding at the Summoner, as the page does (the first binding: it gives the horn). */
 function bindAskel(m: Meta): void {
   clear(m, 'orcs');
   assert.ok(beginChain(m, 'askel'));
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = [...(m.quests!.pieces ?? []), 'emberHeart', 'kennelCollar', 'kennelBell'];
   assert.ok(bindChain(m, 'askel'));
 }
@@ -58,16 +60,16 @@ function winMere(m: Meta): void {
 
 /* ------------------------------------------------------------------ the data */
 
-test("Nivra's chain: three parts with their pieces, the hunter's prologue, and a binding with her line and no horn beats", () => {
+test("Nivra's chain: five parts with their pieces (Q9: the harder chain), the hunter's prologue, and a binding with her line and no horn beats", () => {
   assert.equal(nivra.order, 2);
   assert.deepEqual(nivra.opens, { kind: 'army', army: 'beasts' });
   assert.equal(nivra.giver.name, 'A frost-bitten hunter');
-  assert.equal(nivra.parts.length, 3);
+  assert.equal(nivra.parts.length, 5);
   for (const p of nivra.parts) assert.ok(p.title && p.text && p.begin && p.goal.n >= 1 && p.piece.lines.length === 2 && p.reward.chest === 'bronze', p.id);
-  assert.deepEqual(nivra.parts.map((p) => p.piece.name), ['The Rime Scale', 'The Mere-Pearl', 'The Held Breath']);
+  assert.deepEqual(nivra.parts.map((p) => p.piece.name), ['The Rime Scale', 'The Mere-Pearl', 'The Held Breath', 'The Frozen Tear', "The Wyrm's Lullaby"]);
   assert.ok(nivra.parts.every((p) => PIECES.get(p.piece.id) === p.piece));
-  // (one part beats an existing boss again, one is the chain's own battle, one a quiet goal)
-  assert.deepEqual(nivra.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'wavesWon']);
+  // (one part beats an existing boss again on Hard, one is the chain's own battle, one a quiet goal, then a whole army cleared with no heart, then two quiet bosses)
+  assert.deepEqual(nivra.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'wavesWon', 'clearArmy', 'bossDown']);
   // (the binding: beats in order, her line, ending on the seal; the horn was handed over at Askel's binding, so no horn beats)
   const at = nivra.binding!.map((b) => b.at);
   assert.deepEqual(at, [...at].sort((a, b) => a - b));
@@ -158,9 +160,12 @@ test('the parts go in order, each finding its piece and paying a bronze chest; t
   for (let i = 0; i < 6; i++) assert.deepEqual(noteChains(m, win('orcs')), []);
   assert.equal(canFightBattle(m, 'glassMere'), false, 'the battle waits for its part');
   // (part 1: a Beast Packs boss, not another army's, and a lost fight counts nothing)
-  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord')), []);
-  assert.deepEqual(noteChains(m, { ...bossWin('beasts', 'alphaWolf'), won: false }), []);
-  const found = noteChains(m, bossWin('beasts', 'boarKing'));
+  assert.deepEqual(noteChains(m, bossWin('orcs', 'orcWarlord', HARD)), []);
+  assert.deepEqual(noteChains(m, { ...bossWin('beasts', 'alphaWolf', HARD), won: false }), []);
+  // (Q9: on Normal it counts nothing, nor with a hero fallen)
+  assert.deepEqual(noteChains(m, bossWin('beasts', 'boarKing')), []);
+  assert.deepEqual(noteChains(m, bossWin('beasts', 'boarKing', { ...HARD, flawless: false })), []);
+  const found = noteChains(m, bossWin('beasts', 'boarKing', HARD));
   assert.deepEqual(found.map((f) => [f.chain, f.part, f.piece.id]), [['nivra', 0, 'rimeScale']]);
   assert.equal(m.stash.length, stash + 1);
   // (part 2: the Glass Mere, now open from the chain)
@@ -173,6 +178,7 @@ test('the parts go in order, each finding its piece and paying a bronze chest; t
   assert.ok(prac.mode?.kind === 'quest' && prac.mode.practice);
   // (part 3: army waves won with no king's spell; a spell cast, the Last Stand or a lost wave counts nothing)
   assert.deepEqual(noteChains(m, win('orcs', { spells: ['fireball'] })), []);
+  assert.deepEqual(noteChains(m, win('orcs', { ults: ['knight'] })), [], 'Q9: nor an ultimate');
   assert.deepEqual(noteChains(m, standFight(12, { best: 12 })), []);
   assert.deepEqual(noteChains(m, { ...win('orcs'), won: false }), []);
   assert.equal(currentPart(m)?.progress, 0);
@@ -180,11 +186,20 @@ test('the parts go in order, each finding its piece and paying a bronze chest; t
   assert.equal(currentPart(m)?.progress, 4);
   assert.equal(noteChains(m, win('wildwood'))[0].piece.id, 'heldBreath');
   assert.equal(m.stash.length, stash + 3);
+  // (Q9, part 4: the Beast Packs cleared on Hard with no heart spent; part 5: two quiet Hard bosses)
+  assert.equal(currentPart(m)?.part.id, 'nivra4');
+  assert.deepEqual(noteChains(m, win('beasts', { ...HARD, cleared: true, hearts: 1 })), [], 'a heart spent');
+  assert.deepEqual(noteChains(m, win('beasts', { cleared: true })), [], 'not on Normal');
+  assert.equal(noteChains(m, win('beasts', { ...HARD, cleared: true }))[0].piece.id, 'frozenTear');
+  assert.deepEqual(noteChains(m, bossWin('beasts', 'alphaWolf', { ...HARD, spells: ['fireball'] })), []);
+  assert.deepEqual(noteChains(m, bossWin('beasts', 'alphaWolf', HARD)), []);
+  assert.equal(noteChains(m, bossWin('beasts', 'boarKing', HARD))[0].piece.id, 'wyrmLullaby');
+  assert.equal(m.stash.length, stash + 5);
   // (EIDOLON-TRIAL, the owner's call: every piece in, Nivra's trial comes before the binding; `eidolon-trial.test.ts` plays it)
   assert.equal(readyToBind(m), undefined);
   assert.equal(trialDue(m)?.trial.id, 'nivraTrial');
   assert.equal(summonerWaiting(m), false);
-  assert.deepEqual(noteChains(m, bossWin('beasts', 'alphaWolf')), [], 'nothing more counts once every piece is in');
+  assert.deepEqual(noteChains(m, bossWin('beasts', 'alphaWolf', HARD)), [], 'nothing more counts once every piece is in');
 });
 
 /* ------------------------------------------------------------------ the binding */
@@ -195,8 +210,8 @@ test('binding: Nivra is bound and chosen over Askel, a gold chest is paid, the h
   clear(m, 'beasts');
   beginChain(m, 'nivra');
   assert.equal(bindChain(m, 'nivra'), false, 'not before every piece is in');
-  m.quests!.chains!.nivra = { part: 3, progress: 0 };
-  m.quests!.pieces!.push('rimeScale', 'merePearl', 'heldBreath');
+  m.quests!.chains!.nivra = { part: 5, progress: 0 };
+  m.quests!.pieces!.push('rimeScale', 'merePearl', 'heldBreath', 'frozenTear', 'wyrmLullaby');
   // (EIDOLON-TRIAL: and not before her trial is won)
   assert.equal(bindChain(m, 'nivra'), false, 'not before the trial is won');
   m.quests!.chains!.nivra.trialWon = true;
@@ -233,7 +248,7 @@ test("the same fights give the same chain, and the save keeps Nivra's (junk drop
     bindAskel(m);
     clear(m, 'beasts');
     beginChain(m, 'nivra');
-    noteChains(m, bossWin('beasts', 'alphaWolf'));
+    noteChains(m, bossWin('beasts', 'alphaWolf', HARD));
     return m;
   };
   assert.deepEqual(play(), play());

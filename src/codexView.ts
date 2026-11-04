@@ -2,6 +2,8 @@
 // grid of cards; a tap opens the detail sheet, with the sprite on its idle. Unmet foes and unowned heroes are dark silhouettes.
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
 
+import { ESCORT_CLUE, WEAKNESS, knownClues } from './sim/weakness';
+import { roomOpen } from './sim/rooms';
 import { KITS, type Kit } from './sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
@@ -104,6 +106,27 @@ const section = (box: HTMLElement, title: string, lines: readonly string[]): voi
   box.append(ul);
 };
 
+/** A boss's Weakness block (DEPTH-BUILD, `weakness.ts`): its three clues, each written or a dark bar saying how to learn more, and the
+ *  five tiers' Hunter's marks as crack badges. With the Library's Archive any clue found is written in full. */
+function weakBlock(box: HTMLElement, m: Meta, id: string | undefined): void {
+  if (!id) return;
+  const rec = m.weak?.[id];
+  const { lines } = knownClues(id, rec, roomOpen(m.castle, 'archive'));
+  const wrap = el('div', 'cxWeak');
+  wrap.append(el('h4', '', 'Weakness'));
+  const dark = ['Meet it in battle to learn more', `Fell ${ESCORT_CLUE} of its escorts, or lose to it`, 'Lose to it again to learn the rest'];
+  lines.forEach((line, i) => wrap.append(line ? el('p', 'cxClue', line) : el('p', 'cxClue dark', dark[i])));
+  const marks = el('div', 'cxMarks');
+  ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic'].forEach((t, i) => {
+    const got = !!rec?.marks.includes(i);
+    const badge = el('span', `cxMark${got ? ' got' : ''}`, got ? '✦' : '◇');
+    badge.title = `Hunter's mark · ${t}${got ? '' : ': win with its weakness used'}`;
+    marks.append(badge);
+  });
+  wrap.append(el('small', '', 'Hunter\'s marks'), marks);
+  box.append(wrap);
+}
+
 /** The detail sheet over the page. Returns the function that closes it. */
 function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
   const def = UNITS[e.defs[0]];
@@ -125,6 +148,7 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
     box.append(el('p', 'hint', 'Base stats: foes grow stronger the deeper you go.'));
     kitLines(box, KITS[e.defs[0]]);
     section(box, 'Weaknesses and tips', tipsOf(def, KITS[e.defs[0]]));
+    weakBlock(box, m, e.defs.find((d) => WEAKNESS[d]));
     section(box, 'Where it is met', whereMet(e));
   }
   box.append(closeButton(close));

@@ -85,3 +85,106 @@ Tests: `test/quest-rules.test.ts` (new, 10 tests).
 `src/sim/questRetune.ts` holds `RETUNE`, a record by quest id of `Retune`s (new stars, length, goal, riders, words); `questData.ts` lays each over its
 quest, keeping the old goal and text as `was`. A quest taken since (`QuestActive.v = 1`) counts the present goal; one taken before, or in a save
 from before, has no `v` and counts `was` until it is handed in or dropped (`defFor`, `activeDef`). The pay follows the new stars at hand-in.
+
+## Q5: quest battle rules
+
+`src/sim/questRules.ts`; a `QuestBattle` may carry `rules` (`QuestRules`), passed to the fight by `startStage` and applied by `startBattle` (`Stage.rules`,
+`Battle.rules`). Quest battles only: every other fight leaves them unset (a test plays a fight with and without an empty set tick for tick).
+
+- **protect** `{ kind, hp }`: a guest (new hero-side summons `guestCarter`, `guestPilgrim`, `guestBosun`, `guestEnvoy`, `guestPrisoner`, using the packs' own
+  looks; Duchess or the standard work too) joins as the fight begins (`Battle.guard`); the fight is lost the moment it falls.
+- **survive** `s`: won when the clock reaches s with a hero standing (lost if the heroes fall first). **race** `s`: lost unless every foe has fallen by s.
+- **spare** `kind`: those foes (`Battle.spared`) must not fall; won when every other foe has fallen.
+- **mutators**: `hasten` (foe speed), `noHeal` (the heroes' healing is 0), `noHearts` (the run's retries are spent at its start), `purse` (start gold times it).
+- The party screen's cast line lists the rules (`castWords`, `rulesWords`).
+Tests: `test/quest-battle-rules.test.ts`. No battle uses a rule yet (Q6 to Q8 do).
+
+## Q4: the retune (content)
+
+`src/sim/questRetune/{gwen,road,crown}.ts` retune 100 one-off quests (Gwen's and the notices, the passersby and patrons, the Royal charges, spoils, the
+rift and Duchess): bigger counts, riders (flawless, Hard and Elite tiers, no hearts, no ultimates, level caps, a smaller party), several objectives
+with checklists, one-run clears, time limits (from three stars) and streaks. Stories, ids, givers and needs are kept; lines that named the old count or
+the pay were rewritten. The hero tales, the lost techniques and the quest battles are not retuned (the battles' stars are set in the table: ★3,
+Karnok's Door ★4). The two tutorial quests, Fresh Bread, Kwame's shield practice and the first quests of four patrons stay ★1.
+Tests: `test/quest-retune.test.ts` (every retune names a quest and keeps `was`; an old save counts the old goal; the spread of stars and lengths;
+at every stage of a save three star counts and two lengths are open). `quests.test.ts` now plays the retuned Quiet Hands.
+Screenshots: `docs/samples/quest-stars-*` (the Active tab with a checklist, a "7 days left" chip and the rules line).
+Not done: the battles' `ease` have not been re-tuned to their star bands: the probe party is behind the game (design section 1), so a measured band
+needs the save-like probe, which was not built (see Q1).
+
+## Q6 to Q8: the new quests
+
+Written as new data files (no existing quest edited), gathered by `questData/newQuests.ts` and `questBattleData/newBattles.ts`; each carries its own `stars`
+and `length`, and a test keeps them within one of `starEstimate`. `starEstimate` now also weighs `goals` (0.8 each), `oneRun`, `within` and `streak`.
+~165 new quests in all, with 26 new quest battles using protect, survive, race, spare and mutators:
+
+- `proving.ts`, `wanted.ts` (Q6): the Proving Grounds (Oswy Carne, a new giver) and the wanted posters.
+- `roadnew.ts`, `modes.ts` (Q6/Q7): the passersby (with the Pilgrim's Escort, a Cart in the River and the Long Way Round), the Last Stand, the Calamity
+  (What Waits Under, a 5-part campaign) and the daily.
+- `heroesnew.ts` (Q7): the patrons (Edmund's 5-part campaign), Duchess (the Grand Goat Tour) and spoils.
+- `royalnew.ts`, `campaigns1.ts`, `campaigns2.ts` (Q8): the Crown's six stories (a campaign of 5 to 8 parts or a chain) and the twelve long campaigns by
+  new and old givers. Campaign parts have `slot: 'campaign'` (new slot: a first part drawn every 4 days, later parts as the part before is handed in;
+  `QuestDef.slot` overrides a giver's own). New givers: Oswy Carne, Mother Teal, Pim Ashby, Maren Fold, Sorrel Vane (faces borrowed from pack faces).
+- Guests of protect battles are the new hero-side summons `guestCarter/Pilgrim/Bosun/Envoy/Prisoner` (the packs' own sheets).
+- Tests: `test/quest-new.test.ts` (stars, campaign order, every battle opened by one quest, rules valid, every battle can be started and fought).
+  Updated for the owner-approved content: the shape and mood caps in `quests-content.test.ts` scale with the number of quests; `quest-battles.test.ts`
+  allows offers of battles whose cast the save owns.
+
+**Approximations the writers had to make (the sim has no exact rider):** "no ranged hero" is a `without` list; Ravi's "only ultimate" is `most: 2` + `ultsIn`;
+the Last Stand's `oneRun` cannot tell runs apart (stand fights carry no run id); "no spell in the Last Stand" and the daily's bonus stars are approximated
+by other riders; a few ★2 quests carry a time limit (the design table has them; the owner's rule says time limits start at ★3: decide).
+**Untuned:** every new battle's `ease` is copied from the nearest existing battle and has not been measured (the probe party is behind the game).
+`race` and `survive` run on each wave's own clock.
+
+## Q9: the Eidolon chains
+
+See [eidolon-chains-hard.md](eidolon-chains-hard.md): every chain is now five parts (the three old ones kept in place with riders added, two new parts
+with new pieces), the chain battles and trials raised, saves at the old end of a chain read as finished. The campaign-row crowns and stones of design
+section 5 are **not** attached to chain parts (the chain engine pays chests only); decide whether to add them.
+
+## Closing the open items (director's three)
+
+1. **The new battles' ease, tuned with a save-like probe** (`npm run quest-bands`, `tools/quest-battles/bands.ts`). The probe fields a party with every talent
+   row its level opens and the castle a climb has at that level (as `tools/army-pace`), at the level the quest opens (`openLevel`), and bisects the
+   `ease` whose win rate sits in the middle of the star band (three stars 45-70%, four 25-45%, five 10-25%). `--check` prints the rate at the eases written
+   down. Gear is not dressed, so it under-rates a real save a little (the band's middle was aimed at). Results, 20 tries each:
+
+| Battle | Stars | Opens at level | Ease | Win rate | Band |
+| --- | --- | --- | --- | --- | --- |
+| drownedBellTide | ★4 | 8 | 1.6 | 40% | 25-45% |
+| thirteenthDoor | ★4 | 35 | 0.4 | 40% | 25-45% |
+| harvestCubDen | ★4 | 45 | 0.4 | 10% | 25-45% |
+| ironFurnaceRace | ★4 | 74 | 0.9 | 35% | 25-45% |
+| borderFort | ★4 | 15 | 2.16 | 35% | 25-45% |
+| taxToll | ★3 | 22 | 2.4 | 50% | 45-70% |
+| winterStandard | ★4 | 45 | 4.99 | 20% | 25-45% |
+| embassyRoad | ★3 | 45 | 0.46 | 55% | 45-70% |
+| embassyGuard | ★4 | 45 | 0.85 | 30% | 25-45% |
+| usurperHall | ★5 | 65 | 0.7 | 25% | 10-25% |
+| unpaidCrew | ★4 | 15 | 0.66 | 35% | 25-45% |
+| finalVerdict | ★5 | 65 | 0.6 | 20% | 10-25% |
+| hayInspection | ★3 | 1 | 1.15 | 55% | 45-70% |
+| goatNotForSale | ★4 | 35 | 3.4 | 40% | 25-45% |
+| captiveRace | ★3 | 8 | 1.28 | 55% | 45-70% |
+| tickingBox | ★4 | 74 | 2.71 | 40% | 25-45% |
+| pilgrimEscort | ★3 | 22 | 0.7 | 50% | 45-70% |
+| cartInRiver | ★3 | 35 | 1.91 | 55% | 45-70% |
+| longWayFlood | ★4 | 35 | 4.29 | 45% | 25-45% |
+| whatWaitsUnder | ★5 | 94 | 1.1 | 20% | 10-25% |
+| weddingUninvited | ★4 | 45 | 0.35 | 30% | 25-45% |
+| marketLastStall | ★5 | 65 | 0.9 | 20% | 10-25% |
+| winterCourt | ★5 | 60 | 5.64 | 15% | 10-25% |
+| siegeMorning | ★5 | 50 | 2.93 | 20% | 10-25% |
+| ninthVigil | ★5 | 90 | 1.1 | 10% | 10-25% |
+| ninthKing | ★5 | 90 | 1.38 | 15% | 10-25% |
+
+   Caveats: **harvestCubDen** (spare) sits at 10% (a spared foe is now left alone by the heroes' own targeting, `Battle.spared`, but area attacks still
+   hit it); **winterStandard** was set a little easier than its measurement. Race, survive and protect battles ignore the foes' strength (a strong party
+   clears a small wave before any clock matters), so for the five that stayed won whatever the ease their rule's own number was tightened (taxToll 22 s,
+   longWayFlood 25 s per wave, winterCourt survive 290 s, winterStandard guest health x1) and the ease then tuned; the eases there run high (to 5.6).
+   Because that makes the foes' stats very large, a real play-through of those five is worth doing before release.
+   Also found and fixed: **whatWaitsUnder** used a Calamity boss that the army stat table does not know (its boss wave crashed the fight); it now uses the
+   Demon Lord, and a test makes every wave of every new battle.
+2. **Chain pay.** `chainPartReward` (questPay): every Eidolon chain part pays its share of the Campaign row (four stars: Askel, Nivra, Aurelan; five:
+   Voltara, Gorm, Vaelkhar), the finale the most, beside its bronze chest. Test in `quest-pay.test.ts`.
+3. **Time limits** removed from every quest of one or two stars (five quests; their words reworded); a test holds it.

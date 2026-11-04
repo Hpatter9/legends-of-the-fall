@@ -6,7 +6,7 @@ import * as esbuild from 'esbuild';
 import { spawnSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
 
-const outdir = 'out/questRate';
+const outdir = `out/questRate-${process.pid}`;
 rmSync(outdir, { recursive: true, force: true });
 await esbuild.build({
   entryPoints: ['tools/quest-battles/rate.ts'],

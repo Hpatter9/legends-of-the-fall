@@ -394,6 +394,8 @@ export class Fx {
       } else if (e.kind === 'arc') this.arc(e.from, e.to, e.ail === 'shock');
       // (STATUS-FX: an ailment shrugged off, and a frozen fighter's ice shattering)
       else if (e.kind === 'immune') this.immune(e.to, e.what);
+      // (DEPTH-BUILD: a boss's weakness used: a gold "Weakness!" over it, once a second and a half at most)
+      else if (e.kind === 'weakness') this.weakness(e.by);
       // (STATS batch 5: a saving throw halved it)
       else if (e.kind === 'saved') this.saved(e.to, e.what);
       else if (e.kind === 'shatter') this.shatter(e.to);
@@ -2625,6 +2627,19 @@ export class Fx {
     const chip = ailmentChip(what, undefined, true);
     chip.position.set(-txt.width / 2 - 8, -txt.height / 2);
     txt.addChild(chip);
+  }
+
+  private weakAt = new Map<number, number>();
+  /** A boss's weakness was used (DEPTH-BUILD, `weakness.ts`): the word "Weakness!" in gold over it and a gold sparkle; never more than one
+   *  every 1.5 s for the same boss (a shelter that spares several heroes at once shows one). */
+  private weakness(id: number): void {
+    const s = this.sprites.get(id);
+    if (!s) return;
+    const now = performance.now();
+    if (now - (this.weakAt.get(id) ?? -1e9) < 1500) return;
+    this.weakAt.set(id, now);
+    this.label('Weakness!', s.x, s.y - s.tall - 18, 0xffd24a, 14, 1100);
+    this.sparkles(s.x, s.y - s.tall * 0.5, 0xffd24a);
   }
 
   /** A saving throw halved an ailment, a charm, a shove or a blast (STATS batch 5): the "Immune" pop's look, the word "Saved", with the

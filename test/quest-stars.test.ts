@@ -10,7 +10,8 @@ test('every quest has stars from 1 to 5 and a known length, and the table names 
   for (const q of QUESTS) {
     assert.ok(Number.isInteger(starsOf(q)) && starsOf(q) >= 1 && starsOf(q) <= 5, q.id);
     assert.ok(LENGTHS.includes(lengthOf(q)), q.id);
-    assert.ok(STAR_TABLE[q.id], `${q.id} is in the table`);
+    // (a quest that carries its own stars and length, as the new ones do, needs no entry in the table)
+    assert.ok(STAR_TABLE[q.id] || (q.stars && q.length), `${q.id} has stars and a length`);
   }
   for (const id of Object.keys(STAR_TABLE)) assert.ok(questById(id), `${id} is a quest`);
 });

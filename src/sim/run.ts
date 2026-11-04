@@ -3,6 +3,7 @@
 // merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { heartsLost, marchFx, readOrders, shopShut, skipsWave, type Orders } from './march';
 import { keepSummons, keptBoost, type KeptForm, type KeptSummon } from './carry';
 import { duchessModeOk, type DuchessWish } from './duchessFight';
 import { startBattle, type Battle, type Boost, type Stage } from './battle';
@@ -144,6 +145,8 @@ export interface Run {
    *  is drawn from them. Set by the page; a run without it (an old save, the tools) draws from every hero as before. */
   hide?: string[];
   pool?: string[];
+  /** DEPTH-BUILD: the march orders the run took (`march.ts`); none is a plain march. */
+  orders?: Orders;
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;
   /** Relic ids held (`relics.ts`). */
@@ -370,7 +373,7 @@ export function recycle(run: Run, heroId: number): number | null {
 export const isCastHero = (run: Run, h: Owned): boolean => run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind) && run.roster.filter((x) => x.kind === h.kind).length <= 1;
 
 /** Retries left in the run. */
-export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - (run.retries ?? 0));
+export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - heartsLost(run.orders) - (run.retries ?? 0));
 /** The gold a retry pays to help the second go: one Hire at the price it stands at. */
 export const retryGold = (run: Run): number => summonCost(run);
 /** Whether a wave just lost may be tried again: the run is still going, has hearts (retries) left, and is not the tower or the calamity (which have their own way of failing). Armies and the daily lose hearts; with none left the loss is settled by `finish` and the run ends. */
@@ -480,6 +483,9 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   // (a floor of the tower brings its own band and strength, fixed when the node was entered)
   const node = run.tower?.cur?.fight;
   const base = node ? node.stage : army ? waveBoost(army, run.stage, tierOfRun(run)) : stageBoost(run.stage);
+  // (DEPTH-BUILD: the march orders, fixed for the run: a cursed run's tougher foes and its curse, a night march)
+  const march = marchFx(run.orders);
+  const marchBoss = march.secondForm && base.boss?.phase ? { boss: { ...base.boss, phase: march.secondForm } } : {};
   const castle = heroBoost(run.castle);
   const foes = run.buff?.foes ?? 1;
   // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs; the daily's answer the squad's lasting power, `dailyScale`)
@@ -492,10 +498,14 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
+    ...marchBoss,
+    ...(march.heroHeal !== 1 ? { heal: march.heroHeal } : {}),
+    ...(march.foeHeal !== 1 ? { foeHeal: march.foeHeal } : {}),
+    ...(march.night ? { night: true } : {}),
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board ?? base.board,
-    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed, prof: foeProfOf(run) },
+    foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin * march.foeHp, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed, prof: foeProfOf(run) },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),
     move: moveRate(run.castle) * (run.buff?.speed ?? 1),
@@ -503,6 +513,8 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
     // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
     ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
+    // (a quest battle's own rules, if it has any: `questRules.ts`)
+    ...(run.mode?.kind === 'quest' && questBattleById(run.mode.quest)?.rules ? { rules: questBattleById(run.mode.quest)!.rules } : {}),
     // (a quest battle has Duchess every time its story has her, and never otherwise: no roll)
     duchess: run.mode?.kind === 'quest' ? (questBattleById(run.mode.quest)?.duchess ? 'always' : 'never') : duchessModeOk(run.mode) ? duchess : 'never',
   });
@@ -537,8 +549,12 @@ export function finish(run: Run, won: boolean, stars = 0): void {
       run.event = undefined;
     } else {
       run.stage++;
+      // (DEPTH-BUILD: a forced march skips its waves; their gold is not paid)
+      while (skipsWave(run.orders, run.stage) && army && run.stage < army.waves.length) run.stage++;
       // (the endless tower has no events, nor a quest battle: its story is its own)
       run.event = run.mode?.kind !== 'tower' && run.mode?.kind !== 'quest' && eventAfter(run.stage - 1, boss) ? drawEvent(run, run.stage - 1) : undefined;
+      // (DEPTH-BUILD: the Empty Stalls curse: no passing cart stops for a cursed march)
+      if (shopShut(run.orders) && run.event?.kind === 'merchant') run.event = undefined;
     }
   } else run.over = true;
   spendBuff(run);
@@ -647,6 +663,12 @@ export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage
 export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(KEY) ?? 'null') as Run | null;
+    if (r && 'orders' in r) {
+      // (DEPTH-BUILD: odd orders read as a plain march)
+      const o = readOrders(r.orders);
+      if (o) r.orders = o;
+      else delete r.orders;
+    }
     return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? catalogueRun(r) : null;
   } catch {
     return null;

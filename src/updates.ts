@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.341.0',
+    date: '2026-11-04',
+    title: 'Spell ranks and school marks',
+    notes: ['Earn a mark for each Mage Tower level and army cleared; spend marks to rank spells up to 3. Rank 3 adds a rider to every spell.'],
+  },
+  {
+    version: '0.340.0',
+    date: '2026-11-04',
+    title: 'Quests rebuilt, Schools of the Crown',
+    notes: ['About 165 new quests and 26 new battles; the old quests are tougher; Eidolon chains become five-part campaigns.', 'Each ruler leads a school of spells and has a Decree, a great spell that fills from spare mana.'],
+  },
+  {
+    version: '0.339.0',
+    date: '2026-11-04',
+    title: 'Rooms, bosses\' weaknesses, march orders',
+    notes: ['The castle gains rooms and three new buildings (Smithy, Watchtower, Hall) and a Chapel with levels.', 'Every boss has a weakness to find through clues, earning Hunter\'s marks. Before an army run, pick its march orders.'],
+  },
+  {
     version: '0.338.0',
     date: '2026-11-04',
     title: 'Seven gear slots',

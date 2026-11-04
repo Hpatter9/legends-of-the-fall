@@ -40,7 +40,7 @@ test('every quest pays what its stars say: no stones at one or two stars (a Chai
   for (const q of QUESTS) {
     const r = rewardOf(q);
     // (the tales and lost techniques pay as written)
-    if (GIVERS[q.giver].slot === 'tale') {
+    if (!q.slot && GIVERS[q.giver].slot === 'tale') {
       assert.deepEqual(r, q.reward, q.id);
       continue;
     }
@@ -50,7 +50,7 @@ test('every quest pays what its stars say: no stones at one or two stars (a Chai
     assert.ok((r.crowns ?? 0) >= (q.reward.crowns ?? 0), `${q.id}: crowns are never cut`);
   }
   // (a story's parts add to its total)
-  const last = QUESTS.filter((q) => GIVERS[q.giver].slot !== 'tale' && lengthOf(q) === 'chain' && !QUESTS.some((x) => x.after === q.id) && starsOf(q) >= 2);
+  const last = QUESTS.filter((q) => (q.slot || GIVERS[q.giver].slot !== 'tale') && lengthOf(q) === 'chain' && !QUESTS.some((x) => x.after === q.id) && starsOf(q) >= 2);
   assert.ok(last.length > 0);
   for (const q of last) {
     const parts: typeof q[] = [];
@@ -110,4 +110,18 @@ test('the Last Stand pays stones only in the chests of a new best wave: a re-cli
   m.stash = [];
   const past = climb(m, 25);
   assert.ok(past.every((c) => !c.dry), 'past the record, stones again');
+});
+
+test("an Eidolon chain pays the Campaign row of the table over its parts: its totals add up, the finale paying the most", async () => {
+  const { CHAINS } = await import('../src/sim/eidolonChainData');
+  const { CHAIN_STARS, chainPartReward } = await import('../src/sim/questPay');
+  for (const c of CHAINS.filter((x) => x.parts.length)) {
+    const total = questPay(CHAIN_STARS[c.id], 'campaign');
+    const paid = c.parts.map((p, i) => chainPartReward(c.id, i, c.parts.length, p.reward));
+    assert.equal(paid.reduce((n, r) => n + (r.crowns ?? 0), 0), total.crowns, `${c.id} crowns`);
+    assert.equal(paid.reduce((n, r) => n + (r.stones ?? 0), 0), total.stones, `${c.id} stones`);
+    assert.ok((paid[paid.length - 1].stones ?? 0) >= (paid[0].stones ?? 0), c.id);
+    assert.ok(paid.every((r, i) => r.chest === c.parts[i].reward.chest), `${c.id}: the chests are as they were`);
+  }
+  assert.ok(CHAIN_STARS.vaelkhar === 5 && CHAIN_STARS.askel === 4);
 });

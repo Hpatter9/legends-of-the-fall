@@ -428,6 +428,83 @@ const VAELKHAR_BINDING: readonly BindingBeat[] = [
 
 /** The six chains, easiest first. Askel's and Nivra's are written; the rest are the rails for their batches (the design's givers and
  *  openings, rewritten for the six chosen Eidolons when their chains are written). */
+/* ------------------------------------------------------------------ the harder chains' extra pieces (Q9, `docs/notes/eidolon-chains-hard.md`) */
+
+/** Each chain gained two parts after its old three (the old ones keep their places, so a chain in progress keeps its part); each part
+ *  gives a piece of its own, borrowing a painted gear icon like the rest. */
+export const HUNT_WHISTLE: PieceDef = {
+  id: 'huntWhistle',
+  name: "The Huntsman's Whistle",
+  lines: ['A whistle of bone, cut for a hound\'s ear and no one else\'s. It was found in the ashes of a war-camp that burned and did not stay burned.', 'You cannot hear it. Every dog in the keep can.'],
+  art: 'warDrum',
+};
+export const HEARTH_BRAND: PieceDef = {
+  id: 'hearthBrand',
+  name: 'The Hearth-Brand',
+  lines: ['A log from the first kings\' hearth, black outside and red in the grain. It was waiting at the end of the hardest run.', 'Put it on the fire and the fire sits up.'],
+  art: 'emberWand',
+};
+export const FROZEN_TEAR: PieceDef = {
+  id: 'frozenTear',
+  name: 'The Frozen Tear',
+  lines: ['One drop of the mere, caught before it fell and frozen as it hung. It was left for whoever came through the pack with every heart still in hand.', 'It is not sad. It is only very cold, and very exact.'],
+  art: 'sapphireRing',
+};
+export const WYRM_LULLABY: PieceDef = {
+  id: 'wyrmLullaby',
+  name: "The Wyrm's Lullaby",
+  lines: ['A scrap of old music, written on thin ice and folded up. It is the tune the first kings hummed so that she would sleep through the thaw.', 'You are meant to hum it quietly. Quietly.'],
+  art: 'healerLyre',
+};
+export const MORNING_RING: PieceDef = {
+  id: 'morningRing',
+  name: 'The Morning Ring',
+  lines: ['A ring of gold that was left on a stump at the grove\'s end. It has not been there overnight, because it has never been night where it lies.', 'It is warm. It is also, a little, smug.'],
+  art: 'rubyRing',
+};
+export const COCKS_SPUR: PieceDef = {
+  id: 'cocksSpur',
+  name: "The First Cock's Spur",
+  lines: ['A silver spur from the bird that crowed the first dawn, and every dawn after, until the pacts broke and it lost its nerve.', 'It would like to be asked back.'],
+  art: 'bootsOfHaste',
+};
+export const STORM_ROD: PieceDef = {
+  id: 'stormRod',
+  name: 'The Storm-Rod',
+  lines: ['A copper rod, struck once and left standing in the middle of the maze. The whole Labyrinth had grown crooked round it.', 'It hums when a party comes through with its purse unspent.'],
+  art: 'stormStaff',
+};
+export const LAST_SPARK: PieceDef = {
+  id: 'lastSpark',
+  name: 'The Last Spark',
+  lines: ['A bead of lightning, bottled by a glassmaker who refused to say how. It waits until two of the Labyrinth\'s lords have gone down in front of it.', 'It will not be rushed. It will, however, be delivered.'],
+  art: 'swiftElixir',
+};
+export const QUARRY_BELL: PieceDef = {
+  id: 'quarryBell',
+  name: "The Goat's Bell",
+  lines: ['A cracked bell on a leather strap, with a chew-mark in the leather. The pit-lords had it for a trophy. She wants it back, and says so, loudly.', 'It rings in a different key every time you pick it up.'],
+  art: 'silverBell',
+};
+export const PLUMB_LINE: PieceDef = {
+  id: 'plumbLine',
+  name: "The Mason's Plumb-Line",
+  lines: ['A lead weight on a waxed cord, dropped at the Host\'s last gate and found hanging dead straight in a hall where nothing else is.', 'It points down. It always has. It would like you to do the same.'],
+  art: 'emeraldBand',
+};
+export const VIOLET_SEAL: PieceDef = {
+  id: 'violetSeal',
+  name: 'The Violet Seal',
+  lines: ['A disc of violet wax the size of a coaster, with a crack through the crest. It sealed the Calamity\'s last gate and came away when the gate was cleared properly.', 'It is polite. It is also, now, evidence.'],
+  art: 'moonPendant',
+};
+export const OPEN_LEDGER: PieceDef = {
+  id: 'openLedger',
+  name: 'The Open Ledger',
+  lines: ['A page torn from the guest wing\'s ledger, the one that never closed. Three guardians had been sitting on it for three hundred years.', 'The last line says, in a very large hand: "paid in full, in kind".'],
+  art: 'scholarScroll',
+};
+
 export const CHAINS: readonly ChainDef[] = [
   {
     id: 'askel',
@@ -444,9 +521,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'askel1',
         title: 'Embers of the Warband',
-        text: 'Beat an Orc Warband boss: the Chieftain (wave 8) or the Warlord (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'orcs', boss: ['orcChieftain', 'orcWarlord'] },
-        begin: 'The heat rose when the Warlord fell. Whatever the orcs carry, they keep it by their war-fire. Beat one of their chiefs again, and look in the ashes.',
+        text: 'Beat the Orc Warlord (wave 15) on Hard, with no hero falling',
+        goal: { kind: 'bossDown', n: 1, army: 'orcs', boss: ['orcWarlord'], tier: 1, flawless: true },
+        begin: 'The heat rose when the Warlord fell. Whatever the orcs carry, they keep it by their war-fire. Make him fall again, on Hard this time, and bring everyone home. The ashes are particular.',
         piece: EMBER_HEART,
         reward: { chest: 'bronze' },
       },
@@ -462,10 +539,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'askel3',
         title: "The Kennel-Master's Bell",
-        text: 'Fell the Bone Captain (the Undead Legion\'s eighth wave)',
-        goal: { kind: 'bossDown', n: 1, army: 'undead', boss: ['boneCaptain'] },
-        begin: 'One thing more: the bell that called him to supper. The kennel-master was buried with it, and the Legion does not leave the buried alone.',
+        text: "Fell the Bone Captain (the Undead Legion's eighth wave) on Hard, with no hero hired in the run",
+        goal: { kind: 'bossDown', n: 1, army: 'undead', boss: ['boneCaptain'], tier: 1, noHires: true },
+        begin: 'One thing more: the bell that called him to supper. The kennel-master was buried with it, and the Legion does not leave the buried alone. On Hard, and with the party you came with: he was never one for hired hands.',
         piece: KENNEL_BELL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'askel4',
+        title: "The Long Run",
+        text: "Clear the Orc Warband whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'orcs', tier: 1, noHeart: true },
+        begin: "The bell is not the end of it. A hound does not come for a keep that gives up a wave at the first bite. Run the Warband from its first gate to its last, on Hard, and do not spend a heart on the way. He is counting.",
+        piece: HUNT_WHISTLE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'askel5',
+        title: "Run With the Hound",
+        text: "Win 6 army waves on Hard without firing an ultimate",
+        goal: { kind: 'wavesWon', n: 6, mode: 'army', tier: 1, noUlts: true },
+        begin: "Last, and I will be plain: he wants to see you run. Six fights on Hard, and no great strikes: just heroes, feet and teeth. A hound respects a pack that can hunt without a horn.",
+        piece: HEARTH_BRAND,
         reward: { chest: 'bronze' },
       },
     ],
@@ -488,9 +583,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'nivra1',
         title: 'The Pack That Ran',
-        text: 'Beat a Beast Packs boss: the Alpha Werewolf (wave 8) or the Boar King (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'beasts', boss: ['alphaWolf', 'boarKing'] },
-        begin: 'The big ones ran first. Ran from something. Beat one again and look in its fur. Whatever it rolled in, it rolled in up north.',
+        text: 'Beat a Beast Packs boss on Hard, with no hero falling: the Alpha Werewolf (wave 8) or the Boar King (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'beasts', boss: ['alphaWolf', 'boarKing'], tier: 1, flawless: true },
+        begin: 'The big ones ran first. Ran from something. Beat one again, on Hard, and bring your own home. Then look in its fur. Whatever it rolled in, it rolled in up north.',
         piece: RIME_SCALE,
         reward: { chest: 'bronze' },
       },
@@ -506,10 +601,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'nivra3',
         title: 'Hold Your Breath',
-        text: "Win 5 army waves without casting a king's spell",
-        goal: { kind: 'wavesWon', n: 5, mode: 'army', noSpells: true },
-        begin: "Last thing. She does not come to noise. My grandmother said: win quiet. No king's thunder, no king's fire. Five fights. Then breathe on a window.",
+        text: "Win 5 army waves without casting a king's spell or firing an ultimate",
+        goal: { kind: 'wavesWon', n: 5, mode: 'army', noSpells: true, noUlts: true },
+        begin: "Last thing. She does not come to noise. My grandmother said: win quiet. No king's thunder, no king's fire. Five fights, no great strikes either. Then breathe on a window.",
         piece: HELD_BREATH,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'nivra4',
+        title: "Through the Pack",
+        text: "Clear the Beast Packs whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'beasts', tier: 1, noHeart: true },
+        begin: "One tear, they say, and she lets it fall for a keep that crosses her whole country without once turning back. All of the Packs, then, on Hard. Do not spend a heart. She will know.",
+        piece: FROZEN_TEAR,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'nivra5',
+        title: "The Quiet Bosses",
+        text: "Beat 2 Beast Packs bosses on Hard without casting a king's spell",
+        goal: { kind: 'bossDown', n: 2, army: 'beasts', tier: 1, noSpells: true },
+        begin: "The last of it is a lullaby, and it goes to whoever can drop two of the Packs' lords without a word of thunder. Hard, mind. She sleeps lightly, but not as lightly as that.",
+        piece: WYRM_LULLABY,
         reward: { chest: 'bronze' },
       },
     ],
@@ -531,9 +644,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'aurelan1',
         title: 'Gold in the Grove',
-        text: 'Beat a Wildwood boss: the Thorn Warden (wave 5), the Wood Raider (wave 10) or the Grove Spearlord (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'wildwood', boss: ['forestBoss1', 'forestBoss2', 'forestBoss3'] },
-        begin: "The forest lords have been up before dawn for three hundred years, and they have not slept since. Beat one again. Look in its armour. Whatever it keeps, it keeps the way a magpie does.",
+        text: 'Beat a Wildwood boss on Hard, with no hero falling: the Thorn Warden (wave 5), the Wood Raider (wave 10) or the Grove Spearlord (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'wildwood', boss: ['forestBoss1', 'forestBoss2', 'forestBoss3'], tier: 1, flawless: true },
+        begin: "The forest lords have been up before dawn for three hundred years, and they have not slept since. Beat one again, on Hard, and lose no one doing it. Look in its armour. Whatever it keeps, it keeps the way a magpie does.",
         piece: DAWN_THREAD,
         reward: { chest: 'bronze' },
       },
@@ -549,10 +662,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'aurelan3',
         title: 'Not One on the Floor',
-        text: 'Win 4 waves with no hero falling',
-        goal: { kind: 'wavesWon', n: 4, flawless: true },
-        begin: "Last thing, and it is my lamp. Take it round with you. It only burns for a party that brings everyone home, and it has opinions. Four fights, and not one of yours on the floor.",
+        text: 'Win 4 army waves on Hard with no hero falling',
+        goal: { kind: 'wavesWon', n: 4, flawless: true, tier: 1, mode: 'army' },
+        begin: "Last thing, and it is my lamp. Take it round with you. It only burns for a party that brings everyone home, and it has opinions. Four fights on Hard, and not one of yours on the floor.",
         piece: DAWN_LAMP,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'aurelan4',
+        title: "The Whole Wood",
+        text: "Clear the Wildwood whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'wildwood', tier: 1, noHeart: true },
+        begin: "The lamp wants to see a whole night through, and a night in that wood is fifteen fights long. Take the Wildwood from end to end, on Hard, and do not spend a heart. If you do, the lamp goes out, and I will have to say I told you so.",
+        piece: MORNING_RING,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'aurelan5',
+        title: "Before the Cock Crows",
+        text: "Beat 2 Wildwood bosses on Hard with no hero hired in the run",
+        goal: { kind: 'bossDown', n: 2, army: 'wildwood', tier: 1, noHires: true },
+        begin: "He will not come till the first cock has been sent for, and the first cock has been sulking in the grove ever since. Bring two of the wood's lords down on Hard, with only the heroes you started with, and he may feel flattered enough to crow.",
+        piece: COCKS_SPUR,
         reward: { chest: 'bronze' },
       },
     ],
@@ -574,9 +705,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'voltara1',
         title: 'Wire in the Maze',
-        text: 'Beat a Labyrinth boss: the Gorgon Queen (wave 8) or the Minotaur Champion (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'labyrinth', boss: ['gorgonQueen', 'minotaurChampion'] },
-        begin: "The Labyrinth's lords kept her copper wire down there for three hundred years, and wore it like jewellery. Beat one again, and look in its horns, its hair, its hems.",
+        text: 'Beat a Labyrinth boss on Hard, with no hero falling: the Gorgon Queen (wave 8) or the Minotaur Champion (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'labyrinth', boss: ['gorgonQueen', 'minotaurChampion'], tier: 1, flawless: true },
+        begin: "The Labyrinth's lords kept her copper wire down there for three hundred years, and wore it like jewellery. Beat one again, on Hard, with everyone upright, and look in its horns, its hair, its hems.",
         piece: COPPER_COIL,
         reward: { chest: 'bronze' },
       },
@@ -592,10 +723,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'voltara3',
         title: 'Thunder on Demand',
-        text: 'Fire 6 ultimates',
-        goal: { kind: 'ults', n: 6 },
-        begin: "Last, a vessel. The Crown's glassmaker has blown a flask, and it wants to be filled with something that has been shouted. Six great strikes, and the glass will be satisfied.",
+        text: "Fire 6 ultimates in army fights where no king's spell is cast",
+        goal: { kind: 'ults', n: 6, mode: 'army', noSpells: true },
+        begin: "Last, a vessel. The Crown's glassmaker has blown a flask, and it wants to be filled with something that has been shouted. Six great strikes, and no borrowed thunder from the king: the glass is particular about its sources.",
         piece: STORM_GLASS,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'voltara4',
+        title: "The Straight Road",
+        text: "Clear the Labyrinth whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'labyrinth', tier: 1, noHeart: true },
+        begin: "The rod only hums for a party that walks the Labyrinth straight through: every turn, every gate, no going back for a heart. It is on Hard now, I am told. Even the walls are in a mood.",
+        piece: STORM_ROD,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'voltara5',
+        title: "Both Lords, One Storm",
+        text: "Beat 2 Labyrinth bosses on Hard with no hero falling and no hero hired in the run",
+        goal: { kind: 'bossDown', n: 2, army: 'labyrinth', tier: 1, flawless: true, noHires: true },
+        begin: "One spark more, and it comes out of the maze's lords. Two of them, on Hard, and your party exactly as it set out: no one fallen, no one hired. The glassmaker says the spark can tell.",
+        piece: LAST_SPARK,
         reward: { chest: 'bronze' },
       },
     ],
@@ -617,9 +766,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'gorm1',
         title: 'Fire in the Stone',
-        text: 'Beat an Infernal Host boss: the Devil Leader (wave 8) or the Demon Lord (wave 15)',
-        goal: { kind: 'bossDown', n: 1, army: 'infernal', boss: ['devilLeader', 'demonLord'] },
-        begin: "The pit-lords dug their hall under his quarry and wore a piece of him home. Mehh. (She means the horns. Beat one again, and look in them.)",
+        text: 'Beat an Infernal Host boss on Hard, with no hero falling: the Devil Leader (wave 8) or the Demon Lord (wave 15)',
+        goal: { kind: 'bossDown', n: 1, army: 'infernal', boss: ['devilLeader', 'demonLord'], tier: 1, flawless: true },
+        begin: "The pit-lords dug their hall under his quarry and wore a piece of him home. Mehh. (She means the horns. Beat one again, on Hard, and bring everyone home. Then look in them.)",
         piece: EMBER_CRACK,
         reward: { chest: 'bronze' },
       },
@@ -635,10 +784,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'gorm3',
         title: 'Stand Your Ground',
-        text: 'Take 25,000 damage across fights (and carry on standing)',
-        goal: { kind: 'tally', n: 25000, stat: 'taken' },
-        begin: "Last, the stone that knocked. It will only hum for a party that has been properly hit and has not moved house. Mehh. (Twenty-five thousand knocks. She will be supervising from the trough.)",
+        text: 'Take 25,000 damage across Hard army fights that you win with no hero falling',
+        goal: { kind: 'tally', n: 25000, stat: 'taken', tier: 1, flawless: true },
+        begin: "Last, the stone that knocked. It will only hum for a party that has been properly hit and has not moved house. Mehh. (Twenty-five thousand knocks, on Hard, and not one of you down. She will be supervising from the trough.)",
         piece: KNOCKING_STONE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'gorm4',
+        title: "The Pit, End to End",
+        text: "Clear the Infernal Host whole on Hard with no heart spent",
+        goal: { kind: 'clearArmy', n: 1, army: 'infernal', tier: 1, noHeart: true },
+        begin: "Mehh. (Her bell is in the Host's hall, at the very back. She wants the whole of it cleared in one go, on Hard, and no hearts spent: a goat does not go back for a second try.)",
+        piece: QUARRY_BELL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'gorm5',
+        title: "Plumb and True",
+        text: "Win 5 army waves on Hard with no hero falling and no hero hired in the run",
+        goal: { kind: 'wavesWon', n: 5, mode: 'army', tier: 1, flawless: true, noHires: true },
+        begin: "Mehh. (The last piece is a plumb-line. She says the quarry only trusts a party that stands straight: five fights on Hard, nobody fallen, nobody hired. She will check it with her horns.)",
+        piece: PLUMB_LINE,
         reward: { chest: 'bronze' },
       },
     ],
@@ -660,9 +827,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'vaelkhar1',
         title: 'Under the Guardians',
-        text: 'Fell 2 Calamity guardians',
-        goal: { kind: 'calGuardian', n: 2 },
-        begin: 'he shed a scale on the floor of every map he flew over on his way in. the guardians sit on them. fell two, and look underneath. they will not like it.',
+        text: 'Fell 2 Calamity guardians with no hero falling',
+        goal: { kind: 'calGuardian', n: 2, flawless: true },
+        begin: 'he shed a scale on the floor of every map he flew over on his way in. the guardians sit on them. fell two, and lose no one doing it. then look underneath. they will not like it.',
         piece: BLACK_SCALE,
         reward: { chest: 'bronze' },
       },
@@ -678,10 +845,28 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'vaelkhar3',
         title: "A King's Ransom",
-        text: 'Deal 200,000 damage across fights',
-        goal: { kind: 'tally', n: 200000, stat: 'dealt' },
-        begin: "last, a tine of his crown. it was sent to the keep as a deposit and has been spent on something. it will be returned to a party that has dealt a king's ransom of damage. two hundred thousand, give or take a hero.",
+        text: "Deal 200,000 damage across Calamity fights, casting no king's spell in them",
+        goal: { kind: 'tally', n: 200000, stat: 'dealt', mode: 'calamity', noSpells: true },
+        begin: "last, a tine of his crown. it was sent to the keep as a deposit and has been spent on something. it will be returned to a party that has dealt a king's ransom of damage. two hundred thousand, in the Calamity, and no king's spell: he wants it paid in your own coin.",
         piece: CROWN_TINE,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'vaelkhar4',
+        title: "The Gate, Properly",
+        text: "Clear the Calamity whole with no heart spent and no king's spell cast",
+        goal: { kind: 'calClear', n: 1, noHeart: true, noSpells: true },
+        begin: "the seal is on the last gate. it comes away when the gate is cleared properly: every map, no heart spent, and the king's own spells left in the cupboard. you have done it once with help. do it once more without.",
+        piece: VIOLET_SEAL,
+        reward: { chest: 'bronze' },
+      },
+      {
+        id: 'vaelkhar5',
+        title: "Paid in Kind",
+        text: "Fell 3 Calamity guardians with no hero falling and no ultimate fired",
+        goal: { kind: 'calGuardian', n: 3, flawless: true, noUlts: true },
+        begin: "last page of the ledger. it asks for three more of the guardians, flawless, and no great strikes: a guest's account is settled in the quiet, he says. i think he means it kindly.",
+        piece: OPEN_LEDGER,
         reward: { chest: 'bronze' },
       },
     ],
@@ -696,6 +881,9 @@ export const chainOfEidolon = (eidolon: string): ChainDef | undefined => CHAINS.
 export const PIECES: ReadonlyMap<string, PieceDef> = new Map(CHAINS.flatMap((c) => c.parts.map((p) => [p.piece.id, p.piece] as const)));
 
 /* ------------------------------------------------------------------ the save */
+
+/** Every chain had three parts before the harder chains (Q9) appended two. */
+const LEGACY_PARTS = 3;
 
 /** A chain's lasting state (`Meta.quests.chains[id]`): there once begun. `part` is the part going (the parts' count: every piece found,
  *  ready to bind, or to face its trial first), `progress` its count, `trialWon` once its trial is won, `bound` once the binding is done. */
@@ -717,7 +905,10 @@ export function readChainState(raw: { chains?: unknown; pieces?: unknown }): { c
       const c = chainById(id);
       if (!c || !c.parts.length || !v || typeof v !== 'object') continue;
       const r = v as Partial<ChainState>;
-      const part = Math.max(0, Math.min(c.parts.length, Math.floor(Number(r.part) || 0)));
+      // (Q9: each chain gained two parts after its old three. A save that had already finished the old three (a trial won, or bound)
+      //  counts as finished; one that had only found the three pieces carries on at the first new part)
+      const was = Math.floor(Number(r.part) || 0);
+      const part = Math.max(0, Math.min(c.parts.length, (r.trialWon === true || r.bound) && was >= LEGACY_PARTS ? c.parts.length : was));
       const need = c.parts[part]?.goal.n ?? 0;
       const all = part >= c.parts.length;
       chains[id] = { part, progress: Math.max(0, Math.min(need, Math.floor(Number(r.progress) || 0))), ...(r.trialWon === true && all ? { trialWon: true } : {}), ...(r.bound && all ? { bound: true } : {}) };
