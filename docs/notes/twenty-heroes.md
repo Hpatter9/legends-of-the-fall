@@ -83,6 +83,26 @@ Vampires'.
 Not yet tuned, as the Vampires. `test/wave2-kits.test.ts`: the roster's kit rules (`test/comingKits.ts`), and that the five wait outside
 the roster while counting for their traits in a fight.
 
+## Batch 3: the Astral Sphinx, the Mirage Dancer, the Plague Doctor, the Bombardier and the Astrologer
+
+`src/sim/kits/wave3.ts`, as batch 2 (traits Arcane Beast, Frontier Trickster, Undead Arcanist, Machine Gunner, Royal Arcanist). Two
+changes to the branch: Constellation Swap shows its shields as wards (a heal of nothing), as Sanctuary Vault does; and the Bombardier's
+Blast Jump is his guard, not his skill 1. As a skill 1 it waited for a foe within 5, but he fights from range and leaps clear, so in four
+long fights it never came round; its job is the escape, so it fires when a foe comes within 2, and Concussion Mortar is his skill 1. The
+Astrologer is "Astrologer" (the branch's "Grand Astrologer"), the canon's Cyra; the Sphinx is the canon's Nenet, a lioness.
+
+| Hero | Pool | Skill 1 | Skill 2 | Skill 3 | Ultimate |
+| --- | --- | --- | --- | --- | --- |
+| Astral Sphinx (Nenet) | mana | Rift Pounce (strike 36, 7 s) | Riddle of Repulsion (heavy 44, 11 s) | Constellation Swap (guard 30, 15 s: a friend within 5 under 40% with a foe beside it) | Celestial Convergence |
+| Mirage Dancer (Zahara) | stamina | Whirling Veils (strike 24, 7 s) | Dune Swap (heavy 30, 11 s) | Sirocco Leap (utility 22, 16 s) | Dance of Seven Mirages |
+| Plague Doctor (Corvus) | mana | Censer Swing (strike 36, 7 s) | Crow Step (utility 40, 14 s; a heal, waits for a friend under 40%) | Quarantine Line (utility 34, 16 s) | Black Miasma |
+| Bombardier (Soren) | stamina | Concussion Mortar (strike 24, 7 s) | Blast Jump (guard 16, 12 s: a foe within 2) | Firebomb Line (utility 22, 16 s) | Carpet Bombardment |
+| Astrologer (Cyra) | mana | Gravity Well (strike 36, 7 s) | Retrograde Orbit (guard 30, 14 s: she under 35% with a foe within 2) | Starlight Bridge (utility 40, 18 s) | Supernova Alignment |
+
+**For the tuning when they join:** with the branch's knobs (rate 0.9) the Bombardier's Carpet Bombardment came round every 1.5 to 2.5 s in
+a long fight at level 30 (its four shells refill his meter), starving his skills of the turn. Its rate must come down in the tuning pass.
+`test/wave3-kits.test.ts`: the roster's kit rules, the five waiting, their traits in a fight, and the beasts still the roster's four.
+
 ## The art imported (PRs #344 to #349)
 
 ChatGPT's six art PRs (from [twenty-heroes-art-prompts.md](twenty-heroes-art-prompts.md)) are merged into this branch as they are (PNGs under

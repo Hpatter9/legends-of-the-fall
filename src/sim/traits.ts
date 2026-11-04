@@ -204,6 +204,11 @@ export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
   geomancer: ['mystic', 'bulwark'],
   bellWarden: ['yokai', 'bulwark'],
   falconer: ['wild', 'marksman'],
+  astralSphinx: ['arcane', 'beast'],
+  mirageDancer: ['frontier', 'trickster'],
+  plagueDoctor: ['undead', 'arcanist'],
+  bombardier: ['machine', 'gunner'],
+  astrologer: ['royal', 'arcanist'],
 };
 
 /** A trait by id, the coming ones included. */

@@ -119,6 +119,12 @@ export const UNITS: Record<string, UnitDef> = {
   geomancer: { id: 'geomancer', name: 'Geomancer', side: 'hero', sheet: 'hero_res_geomancer', scale: 0.520833, hp: 295, atk: 21, def: 8, range: 2, moveMs: 760, atkMs: 1350, jump: 2, shot: 'bolt', role: 'A crag-shaper: raises stone pillars, glides through the earth and pulls with lodestone' },
   bellWarden: { id: 'bellWarden', name: 'Bell Warden', side: 'hero', sheet: 'hero_res_bell_warden', scale: 0.625, hp: 332, atk: 20, def: 9, range: 1, moveMs: 820, atkMs: 1350, jump: 2, role: 'A bronze keeper: slams his temple bell, tolls shockwaves and vaults to guard his friends' },
   falconer: { id: 'falconer', name: 'Falconer', side: 'hero', sheet: 'hero_res_falconer', scale: 0.520833, hp: 174, atk: 29, def: 3, range: 5, moveMs: 600, atkMs: 1300, jump: 3, shot: 'arrow', heightReach: 1.2, role: 'A highland hawker: stoops her falcon on foes, gale-vaults to perches and pins her prey' },
+  // The twenty heroes' third batch, waiting as the others do
+  astralSphinx: { id: 'astralSphinx', name: 'Astral Sphinx', side: 'hero', sheet: 'hero_res_astral_sphinx', scale: 0.625, hp: 238, atk: 25, def: 6, range: 2, moveMs: 540, atkMs: 1050, jump: 9, flies: true, shot: 'holy', role: 'A star-lioness: pounces across rifts, flings foes away with riddles and trades places by starlight' },
+  mirageDancer: { id: 'mirageDancer', name: 'Mirage Dancer', side: 'hero', sheet: 'hero_res_mirage_dancer', scale: 0.520833, hp: 186, atk: 22, def: 4, range: 1, moveMs: 440, atkMs: 700, jump: 4, role: 'A dune-dancer: spins through foes, trades places with her mirages and leaps on the sirocco' },
+  plagueDoctor: { id: 'plagueDoctor', name: 'Plague Doctor', side: 'hero', sheet: 'hero_res_plague_doctor', scale: 0.520833, hp: 192, atk: 26, def: 4, range: 3, moveMs: 660, atkMs: 1450, jump: 2, shot: 'curse', role: 'An ash-apothecary: swings his censer, steps as crows to mend friends and raises thorn quarantines' },
+  bombardier: { id: 'bombardier', name: 'Bombardier', side: 'hero', sheet: 'hero_res_bombardier', scale: 0.520833, hp: 176, atk: 31, def: 4, range: 5, moveMs: 680, atkMs: 1650, jump: 3, shot: 'bullet', splash: true, role: 'An iron alchemist: rocket-jumps over the fray, lobs concussion shells and lays firebombs' },
+  astrologer: { id: 'astrologer', name: 'Astrologer', side: 'hero', sheet: 'hero_res_astrologer', scale: 0.520833, hp: 184, atk: 30, def: 3, range: 4, moveMs: 680, atkMs: 1550, jump: 2, shot: 'fire', role: 'A star-keeper: pulls foes into gravity wells, glides along orbits and bridges starlight' },
 
   // called up by Beastmaster
   wolf: { id: 'wolf', name: 'Wolf', side: 'hero', sheet: 'wolf_grey', scale: 0.55, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster', forms: ['wolf_grey', 'wolf_grey', 'wolf_black'] },
@@ -148,7 +154,7 @@ export const UNITS: Record<string, UnitDef> = {
 
 /** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
  *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */
-export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'banneret', 'geomancer', 'bellWarden', 'falconer'];
+export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'banneret', 'geomancer', 'bellWarden', 'falconer', 'astralSphinx', 'mirageDancer', 'plagueDoctor', 'bombardier', 'astrologer'];
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;
