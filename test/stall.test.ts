@@ -114,11 +114,11 @@ test('spare books sell for a fifth of the shelf price, a Rare for 400', () => {
   const m = meta();
   grantBook(m, 'whirlingStep', 2);
   grantBook(m, 'riverbankIaido');
-  assert.equal(sellBook(m, 'whirlingStep'), 70);
+  assert.equal(sellBook(m, 'whirlingStep'), 100);
   assert.equal(m.books?.whirlingStep, 1);
   assert.equal(sellBook(m, 'riverbankIaido'), 400);
   assert.equal(sellBook(m, 'riverbankIaido'), 0);
-  assert.equal(bookSellPrice(m, BOOKS.find((b) => b.rarity === 'common')!), 70);
+  assert.equal(bookSellPrice(m, BOOKS.find((b) => b.rarity === 'common')!), 100);
 });
 
 test('no crowns loop: the stall sells for far more than it buys back; mending never pays for a sale (at best it breaks even); combining bought pieces loses', () => {

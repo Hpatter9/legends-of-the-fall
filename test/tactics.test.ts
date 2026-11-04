@@ -29,14 +29,46 @@ function play(b: Battle, each: (ev: BattleEvent[]) => void = () => {}): void {
 /** A fight's outcome and every fighter's health and tile at its end, to tell two fights apart. */
 const ending = (b: Battle) => JSON.stringify({ phase: b.phase, t: b.t, units: b.units.map((u) => [u.def, u.hp, u.u, u.v]) });
 
-test('Charge plays a fight exactly as before the tactics (the fallback, no tactic set)', () => {
-  assert.equal(TACTICS.fallback, 'charge');
-  const a = field(undefined);
-  const c = field('charge');
-  play(a);
-  play(c);
+/** Run `fn` with the switches as they were before the tactics (no tactic set means Charge, and the foes have no answer). */
+function asBefore<T>(fn: () => T): T {
+  const was = { ...TACTICS };
+  TACTICS.fallback = 'charge';
+  TACTICS.answer = 1;
+  try {
+    return fn();
+  } finally {
+    Object.assign(TACTICS, was);
+  }
+}
+
+test('with the switches as before the tactics, a fight with Charge picked plays exactly as one with none', () => {
+  const [a, c] = asBefore(() => {
+    const a = field(undefined);
+    const c = field('charge');
+    play(a);
+    play(c);
+    return [a, c];
+  });
   assert.equal(ending(a), ending(c));
   assert.equal(c.tactic, undefined);
+});
+
+test('the default is Advance together, and the foes of a band answer it with TACTICS.answer more attack (their health as before)', () => {
+  assert.equal(TACTICS.fallback, 'advance');
+  assert.ok(TACTICS.answer > 1 && TACTICS.answer < 1.05);
+  const now = startBattle(11, 'skeletons');
+  const was = asBefore(() => startBattle(11, 'skeletons'));
+  const foes = (b: Battle) => b.units.filter((u) => u.side === 'foe');
+  foes(now).forEach((f, i) => {
+    const g = foes(was)[i];
+    assert.equal(f.def, g.def);
+    assert.equal(f.maxHp, g.maxHp, f.def);
+    assert.ok(Math.abs((f.power ?? 1) / (g.power ?? 1) - TACTICS.answer) < 1e-9);
+  });
+  // (a fight with no tactic set takes Advance)
+  const b = field(undefined);
+  fight(b);
+  assert.equal(b.tactic?.kind, 'advance');
 });
 
 test('Advance together: the Knight is the front line; the Kunoichi, Werewolf and Archer are held, behind it, until it meets the foe', () => {

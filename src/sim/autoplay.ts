@@ -3,6 +3,7 @@
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
 // same run and the same board always give the same formation.
 
+import { legacyBoost } from './legacy';
 import { CLASS_OF } from './starter';
 import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
@@ -28,7 +29,8 @@ export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
  *  run (RUN-GEAR) the equipment its kind fights in: the lasting pieces with the run's finds in their slots, fresh (`botKitStats`). */
 export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
   const awake = awakenStats(meta, h.kind);
-  return boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake);
+  // (DEPTH-BUILD: a mentor's legacy perk from the run's snapshot, `legacy.ts`)
+  return legacyBoost(run?.legacy, h.kind, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake));
 }
 
 /** Whether a kind fights from behind: it shoots, or reaches past the next tile. */

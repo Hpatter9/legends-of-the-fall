@@ -75,3 +75,6 @@ body[data-phase='deploy'] #bench .card.placed { border-color: #e1c582; }
 @media (prefers-reduced-motion: reduce) {
   #panel .card, #panel .spell { animation: none; }
 }
+/* UX-FIXES: the empty deploy board's "Hire to start" prompt, above the lit Hire button */
+#hireHint { order: -2; flex: 1 1 100%; padding: 6px 10px; font: 400 13px/1.3 var(--body); color: #f4e3b3; text-align: center; background: #1b231df5; border: 1px solid #ad8e50; border-radius: 3px; }
+#buttons #summon.primary { min-height: 44px; }

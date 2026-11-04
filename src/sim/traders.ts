@@ -25,7 +25,7 @@ export const TRADER_NAMES: Readonly<Record<Trader, { name: string; tab: string; 
 };
 
 /** A Rare book costs this at the first army, a quarter more for each army on, as Hester's books do (to 10). */
-export const RARE_BOOK_PRICE = 2400;
+export const RARE_BOOK_PRICE = 3400;
 /** The caravan prices Epic pieces a quarter above Hester's (he has carried them a long way). */
 export const CARAVAN_GEAR_MARKUP = 1.25;
 /** The Dealer's Legendary piece costs twice the stall's price. */

@@ -4,7 +4,7 @@
 // come from the Mage Tower, the milestones and the chests' scrolls as before. Changing ruler (free, in Settings) re-fits the loadout to the
 // new school. The ruler is a page setting, so the page passes its id in; these rules are pure and know nothing of the page.
 //
-// Batch 2 builds the schools from today's 21 spells; the new spells of each school come in batch 4.
+// Batch 2 built the schools from the first 21 spells; batch 4 added fourteen new ones, so every school has five or six.
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
@@ -27,13 +27,13 @@ const school = (id: SchoolId, name: string, spells: SpellId[], decree: DecreeId)
 
 export const SCHOOLS: Record<SchoolId, School> = {
   iron_stag: school('iron_stag', 'Steel', ['rally', 'shield', 'bulwark', 'lance', 'smite', 'quake'], 'standFast'),
-  ash_empress: school('ash_empress', 'Fire', ['meteor', 'warcry', 'starfall', 'smite'], 'redSky'),
-  frost_witch: school('frost_witch', 'Ice', ['frost', 'shield', 'deepfreeze'], 'longWinter'),
-  storm_corsair: school('storm_corsair', 'Storm', ['chain', 'haste', 'blink'], 'tempest'),
-  rose_duchess: school('rose_duchess', 'Thorns', ['hex', 'poison', 'cleanse'], 'rosePrice'),
-  moon_oracle: school('moon_oracle', 'Stars', ['haste', 'renewal', 'blink', 'starfall'], 'stopClock'),
-  sun_viper: school('sun_viper', 'Sun', ['heal', 'lance', 'cleanse'], 'highNoon'),
-  gilded_necromancer: school('gilded_necromancer', 'Death', ['hex', 'wolves', 'resurrect'], 'gildedToll'),
+  ash_empress: school('ash_empress', 'Fire', ['meteor', 'warcry', 'starfall', 'smite', 'firewall'], 'redSky'),
+  frost_witch: school('frost_witch', 'Ice', ['frost', 'shield', 'deepfreeze', 'icewall', 'shatter'], 'longWinter'),
+  storm_corsair: school('storm_corsair', 'Storm', ['chain', 'haste', 'blink', 'gale', 'thunderclap'], 'tempest'),
+  rose_duchess: school('rose_duchess', 'Thorns', ['hex', 'poison', 'cleanse', 'snare', 'charm'], 'rosePrice'),
+  moon_oracle: school('moon_oracle', 'Stars', ['haste', 'renewal', 'blink', 'starfall', 'foresight'], 'stopClock'),
+  sun_viper: school('sun_viper', 'Sun', ['heal', 'lance', 'cleanse', 'sunbeam', 'venom', 'mirage'], 'highNoon'),
+  gilded_necromancer: school('gilded_necromancer', 'Death', ['hex', 'wolves', 'resurrect', 'drain', 'bonewall', 'raisedead'], 'gildedToll'),
 };
 export const SCHOOL_IDS = Object.keys(SCHOOLS) as SchoolId[];
 /** The default ruler's school, and where an unknown id falls back. */

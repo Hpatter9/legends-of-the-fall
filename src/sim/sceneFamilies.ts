@@ -661,4 +661,5 @@ export const FAMILY_NAMES: Record<string, string> = {
   form: 'Bosses changing form',
   oath: 'The Last Oaths',
   oathcut: 'The Last Oaths, in short',
+  bond: 'Bonds between heroes',
 };

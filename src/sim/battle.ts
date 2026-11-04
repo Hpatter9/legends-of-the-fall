@@ -26,6 +26,8 @@ import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
 import { tickWeakness, weakHurt } from './weakness';
 import { MARCH } from './march';
+import { ritesFall, tickRites } from './chapelRooms';
+import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bonds';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { afterBlow, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
@@ -34,6 +36,7 @@ import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
 import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
+import { powerFell, powerSpare, powersOn } from './setPowers';
 import { mergeEffects, type RelicHooks } from './relics';
 import { relicBlow, relicFall, relicHurt, relicRose, relicStart } from './relicFight';
 import { landCombo, startCombo, tickCombo, type ComboState } from './combos';
@@ -41,7 +44,8 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
-import { castGate, heldBy, heldStep, startTactic, tickTactic, type Tactic, type TacticState } from './tactics';
+import { formationBlow, formationFacing, formationMove, formationSplash, startFormation, type FormationState } from './formations';
+import { castGate, heldBy, heldStep, startTactic, TACTICS, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
 import { endShapes, shapesOf, startKept, type Kept } from './carry';
@@ -121,6 +125,12 @@ export interface Unit {
   frost?: number[];
   /** Hasted (the king's spell) until then. */
   hasteUntil?: number;
+  /** DEPTH-BUILD (`bonds.ts`): a bond's attack and charge for where the hero stands now, and a rival's fury once the other has fallen. */
+  bondAtk?: number;
+  bondCd?: number;
+  /** DEPTH-BUILD: a comrade near: blows on this hero land this much lighter (`bonds.ts`). */
+  bondGuard?: number;
+  bondFury?: number;
   /** Soaks this much damage until then (the king's Shield). */
   shield?: { hp: number; until: number };
   /** Stunned, held or frozen until then (only the look reads it; `busyUntil` is what holds the fighter). */
@@ -411,6 +421,11 @@ export interface Battle {
   relics?: { team: TraitEffects; first?: number; revive?: boolean; set?: SetHooks; hooks?: RelicHooks };
   /** Whether the relic's revive has been spent this fight. */
   revived?: boolean;
+  /** DEPTH-BUILD (`chapelRooms.ts`): the Chapel's Last Rites, ready in this fight: the hero it marked to rise, when, and whether it has. */
+  rites?: { id?: number; at?: number; done?: boolean };
+  /** DEPTH-BUILD (`bonds.ts`): the bonded and rival pairs on the board, fixed as the fight starts, and the snapshot they came from. */
+  bonds?: BondPair[];
+  bondSnap?: Record<string, number>;
   /** RELICS-2 (`relicFight.ts`): when this fight (or the Last Stand's wave) began, whether a hero has fallen in it, the Warden's Medal's last
    *  hero standing, the Harness's haste (until when, one a fall), and the tally the run adds to its own (rises, heroes fallen, elites felled). */
   relicT0?: number;
@@ -457,6 +472,9 @@ export interface Battle {
   /** The party's tactic picked before the fight (`setTactic`), and the fight's own once it begins (`tactics.ts`). */
   tacticPick?: Tactic;
   tactic?: TacticState;
+  /** Whether the formations count in this fight (`setFormations`), and the shape the heroes stood in as it began (`formations.ts`). */
+  formationsOn?: boolean;
+  formation?: FormationState;
   /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
   /** Timed terrain the kits laid (a flood, a rampart, a statue), put back when it runs out. */
@@ -492,7 +510,7 @@ export interface Battle {
 
 export const defOf = (u: Unit): UnitDef => UNITS[u.def];
 /** A fighter's attack: its kind's, times its own multiplier. */
-export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u);
+export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u) * (u.bondAtk ?? 1) * (u.bondFury ?? 1);
 /** A fighter's defence: its kind's, plus what its equipment adds. */
 export const defenceOf = (u: Unit): number => UNITS[u.def].def + (u.eq?.def ?? 0) + (u.kx?.tree ? kitDefence(u) : 0);
 /** Per-fighter stat multipliers: hp and attack, and how much bigger it is drawn. */
@@ -557,6 +575,10 @@ export interface Stage {
   /** DEPTH-BUILD (`march.ts`): every foe's healing is multiplied by this, and a night march's reach rule. */
   foeHeal?: number;
   night?: boolean;
+  /** DEPTH-BUILD (`chapelRooms.ts`): the Chapel's Last Rites is ready in this fight. */
+  rites?: boolean;
+  /** DEPTH-BUILD (`bonds.ts`): the run's snapshot of the bonds (each pair's level, -1 rivals), read as the fight starts. */
+  bonds?: Record<string, number>;
   /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
@@ -630,6 +652,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.heal && stage.heal !== 1) b.heroHeal = stage.heal;
   if (stage.foeHeal && stage.foeHeal !== 1) b.foeHeal = stage.foeHeal;
   if (stage.night) b.night = true;
+  if (stage.rites) b.rites = {};
+  if (stage.bonds && Object.keys(stage.bonds).length) b.bondSnap = stage.bonds;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
@@ -640,7 +664,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   ids.forEach((id, n) => {
     const def = UNITS[id];
     const boss = n === 0 ? stage.boss : undefined;
-    const boost = () => ({ hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1), size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
+    // (the foes' answer to the party's tactics, `TACTICS.answer`)
+    const boost = () => ({ hp: (foes?.hp ?? 1) * (boss?.hp ?? 1), atk: (foes?.atk ?? 1) * (boss?.atk ?? 1) * TACTICS.answer, size: boss?.size, phase: boss?.phase, surge: boss?.surge, shield: boss?.shield });
     if (mid) {
       const near = arenaSpots(board, (u, v) => !!unitAt(b, u, v), mid, !!def.shot, n === 0 ? null : bossAt);
       if (near.length) {
@@ -798,6 +823,8 @@ export function fight(b: Battle): boolean {
   if (b.phase !== 'deploy' || !heroesPlaced(b) || !boardOk(b.board)) return false;
   b.phase = 'fight';
   applyTraits(b);
+  // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot)
+  startBonds(b, b.bondSnap);
   startCombo(b);
   startDuoCombos(b);
   startKits(b);
@@ -806,6 +833,8 @@ export function fight(b: Battle): boolean {
   startKept(b);
   // (the party's tactic: who is held until the line meets the foe, `tactics.ts`)
   startTactic(b);
+  // (the shape the heroes stand in, if the fight has the formations on)
+  startFormation(b);
   // (Duchess wanders on as the fight begins, in the rare fight that brings her)
   if (b.duchess) joinDuchess(b);
   // (a quest battle that asks the heroes to protect a guest: it stands beside them as the fight begins)
@@ -927,6 +956,8 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.rites?.id !== undefined) tickRites(b, out);
+  if (b.bonds) tickBonds(b);
   if (b.warnings) tickWeakness(b, out);
   if (b.warnings) tickSignatures(b, out);
   if (b.walls?.length || b.auras) tickToolkit(b, out);
@@ -1062,6 +1093,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
+  // (a formation takes splash differently: a skirmisher less, a square packed together more, `formations.ts`)
+  if (splash && b.formation) dmg = Math.max(1, Math.round(dmg * formationSplash(b, to)));
   // (a heavy blow on a frozen fighter shatters the ice: the extra lands after the blow, STATUS-FX)
   const shatter = shatterOf(b, by, to, dmg, heavy, src);
   if (to.shield) {
@@ -1086,6 +1119,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     if (by.side !== to.side) ultOnDamage(by.owner !== undefined ? creditOf(b, by) : by, landed, false);
     ultOnDamage(to, landed, true);
   }
+  // (DEPTH-BUILD: a sworn partner's guard takes a share of a blow that would fell it, once a wave)
+  if (b.bonds && to.side === 'hero' && to.bondGuard !== undefined && to.bondGuard < 1 && by !== to) dmg = Math.max(1, Math.round(dmg * to.bondGuard));
+  if (b.bonds && to.side === 'hero' && dmg >= to.hp) dmg = bondCover(b, to, dmg);
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   let killed = to.hp <= 0;
@@ -1156,10 +1192,15 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   // (a rising feather: the wearer comes back once a fight)
   if (killed && to.eq && fxRevive(to, out)) killed = false;
+  // (SEVEN-SLOT GEAR: the Ferryman's Coat, or an ally's Dawnbringer, `setPowers.ts`)
+  if (killed && powersOn(b) && powerSpare(b, to, out)) killed = false;
   // (a deathless pirate: the same, from its own passive)
   if (killed && undying(to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
+    // (DEPTH-BUILD: the Chapel's Last Rites marks the first hero to fall in the wave to rise)
+    if (b.rites && to.side === 'hero') ritesFall(b, to);
+    if (b.bonds && to.side === 'hero') bondFall(b, to);
     if (credit) {
       by.kills = (by.kills ?? 0) + 1;
       by.slain = (by.slain ?? 0) + killXp(to);
@@ -1170,6 +1211,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.swing = undefined;
     // (RELICS-2: the run's tally, the Harness's haste and the Warden's Medal)
     relicFall(b, to, out, credit ? by : undefined);
+    if (powersOn(b)) powerFell(b, to, out);
     // (a hero's shape ends as it falls, so a hero raised again rises in its own: SUMMON-TIMERS)
     if (realHero(to) && shapesOf(to, b.t).length) endShapes(to);
   }
@@ -1485,13 +1527,14 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   me.facing = way;
   const hMe = tileOf(b, me).h;
   const hTo = tileOf(b, to).h;
-  const mult = blowMult(hMe, hTo, way, to.facing);
+  // (a formation's ends and its square weigh where a blow comes from, `formations.ts`)
+  const mult = blowMult(hMe, hTo, way, b.formation ? formationFacing(b, me, to, way) : to.facing);
   // (STATS batch 4: a d20 + to hit against the target's Armour Class, with its cover; a natural 20 crits, a hit may crit from DEX and the
   // kit, a glance lands for half, and `BLOW_SCALE` puts the average blow back where it was)
   const c = critOf(b, me);
   const r = rollBlow(b, me, to, hMe, hTo, tileOf(b, to).ground === 'tall', c.chance, c.mult);
   const crit = r.crit;
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1) * blowStatsOf(b, me).quick;
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
@@ -1524,7 +1567,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
     me.kx.momentum = me.kx.lastWay === way ? Math.min(5, (me.kx.momentum ?? 0) + 1) : 1;
     me.kx.lastWay = way;
   }
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1)) * (b.walk ?? 1));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;
