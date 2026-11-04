@@ -3,14 +3,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, type Battle, type Unit } from '../src/sim/battle';
-import { castSpell, lookOf, MANA_MAX, RIDERS, SPELL_LOOK, SPELLS, type SpellId } from '../src/sim/spells';
+import { castSpell, soundOf, MANA_MAX, RIDERS, SPELL_SOUND, SPELLS, type SpellId } from '../src/sim/spells';
 import { SCHOOLS, SCHOOL_IDS } from '../src/sim/schools';
 import { TOWER_SPELLS } from '../src/sim/spellSources';
 import { chooseSpell } from '../src/sim/autoCast';
 import { snapSpell } from '../src/sim/spellAim';
 import { wallAt } from '../src/sim/toolkit/walls';
 
-const NEW = Object.keys(SPELL_LOOK) as SpellId[];
+const NEW = Object.keys(SPELL_SOUND) as SpellId[];
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -30,14 +30,14 @@ const foe = (b: Battle, u: number, v: number, hp = 5000): Unit => {
   return f;
 };
 
-test('fourteen new spells, every school has five or six, each new one is taught by the Mage Tower and has a look, a sound and a rider', () => {
+test('fourteen new spells, every school has five or six, each new one is taught by the Mage Tower and has a sound and a rider', () => {
   assert.equal(NEW.length, 14);
   for (const id of SCHOOL_IDS) assert.ok(SCHOOLS[id].spells.length >= 5 && SCHOOLS[id].spells.length <= 6, id);
   for (const id of NEW) {
     const sp = SPELLS[id];
     assert.ok(sp.cost >= 3 && sp.cost <= 5 && sp.cooldownMs >= 8000 && sp.text.length > 20, id);
     assert.ok((TOWER_SPELLS[id] ?? 0) >= 1, `${id} is taught`);
-    assert.ok(lookOf(id) !== id && lookOf(lookOf(id)) === lookOf(id), `${id} borrows a first spell's look`);
+    assert.ok(soundOf(id) !== id && soundOf(soundOf(id)) === soundOf(id), `${id} borrows a first spell's sound (its art is its own since batch 5)`);
     assert.ok(RIDERS[id].length > 8, id);
     assert.ok(SCHOOL_IDS.some((s) => SCHOOLS[s].spells.includes(id)), `${id} has a school`);
   }

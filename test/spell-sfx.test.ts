@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { addUnit, startBattle, type Battle, type BattleEvent } from '../src/sim/battle';
-import { castSpell, lookOf, METEOR_MS, SHOWER_GAP, SPELL_IDS, SPELL_LOOK, SPELLS, type SpellId } from '../src/sim/spells';
+import { castSpell, soundOf, METEOR_MS, SHOWER_GAP, SPELL_IDS, SPELL_SOUND, SPELLS, type SpellId } from '../src/sim/spells';
 import { CUES, cuesFor, spellCues } from '../src/render/soundRules';
 import { NO_TILE_SPELLS, panOfEvent } from '../src/render/audioRules';
 import { SPELL_SFX_FILES, type SpellSfxId } from '../src/render/spellSfxManifest';
@@ -71,10 +71,10 @@ test('every king\'s spell has its own cast and its own effect, and both files ex
     for (const p of parts) assert.ok(Math.abs(p.pan) <= 0.6, `${id} pan`);
   }
   // (the first 21 have sounds of their own; the schools' new spells borrow theirs until batch 5, KING-SPELLS batch 4: an owner-approved change)
-  const borrowed = Object.keys(SPELL_LOOK).length;
+  const borrowed = Object.keys(SPELL_SOUND).length;
   assert.equal(casts.size, SPELL_IDS.length - borrowed, 'no two of the first spells share a cast');
   assert.equal(effects.size, SPELL_IDS.length - borrowed, 'no two of the first spells share an effect');
-  for (const id of Object.keys(SPELL_LOOK) as SpellId[]) assert.equal(castOf(id), castOf(lookOf(id)), `${id} borrows its cast`);
+  for (const id of Object.keys(SPELL_SOUND) as SpellId[]) assert.equal(castOf(id), castOf(soundOf(id)), `${id} borrows its cast`);
 });
 
 test('the effects are timed to the spells: the meteor lands on its fall, each of the shower\'s five on its own', () => {
