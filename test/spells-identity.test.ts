@@ -124,12 +124,13 @@ function recordedStrengths<T>(fn: () => T): T {
   }
 }
 
-// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario: every scenario meets
-// foes, and every foe now has a passive and a way of moving, the common ones retuned, the armies' starts, the daily's and the Last Stand's
-// knobs with them; by the tests' own computation (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the test itself, whose put-back
-// strengths that tool does not know since main 0.339). The new hashes: field1 463018a4, field30 8c9708dd, bosses 7c95dc7c, armyFoes b5226699, spells 7ccda236, lands b4179bad, army bdfc3bfe,
-// daily 6d11702f, tower 2e4e58c7, stand 131fe78c, calamity ac61461a, heroes1 b2007863, heroes10 8885dd5c, heroes30 2841a16d, field1Others e999ec94,
-// field30Others 0e3e94bd, heroes1Others cdb36c0f, heroes10Others 714d8801, heroes30Others d6dcc92d)
+// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario on main 0.345.0: every
+// scenario meets foes, and every foe now has a passive and a way of moving, the common ones retuned, the armies' starts, the daily's and the
+// Last Stand's knobs with them; by the tests' own computation (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the
+// test itself, whose put-back strengths that tool does not know since main 0.339). The new hashes: field1 e1902c7e, field30 0805df76, bosses
+// c6f1850f, armyFoes 4098cb71, spells d89512c0, lands bae90a64, army fc40786d, daily 7c674393, tower cdd82e6a, stand 131fe78c, calamity
+// f45fe868, heroes1 d5321e5c, heroes10 97713696, heroes30 15a1bbf5, field1Others 433f0011, field30Others 760831e8, heroes1Others 7941ba32,
+// heroes10Others 563b72ce, heroes30Others fb2fb4a1)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
