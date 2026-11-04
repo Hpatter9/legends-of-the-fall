@@ -1,5 +1,7 @@
 # Tower look
 
+> **Status (0.332.0):** Retired look: the endless tower no longer exists. Its map art now serves the Calamity's map (`calMap.ts`).
+
 The roguelike tower's map was a flat brown page with square icons and dotted lines. It now reads as a tower being climbed. Only the look
 changed: the rules in `src/sim/tower.ts` are untouched.
 

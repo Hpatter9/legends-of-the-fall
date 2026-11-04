@@ -5,6 +5,8 @@
 // The pieces have no paintings of their own yet: a piece's sigil is the painted gear icon its data names (`PieceDef.art`, from
 // `src/art/gear/`), set in a ring of its Eidolon's colour. Unbound Eidolons show as their card's silhouette with a "?".
 
+import { autoButton } from './autoAsk';
+import { canAutoQuest } from './sim/autoReplay';
 import { showWhenPainted } from './paintReady';
 import gearIndex from './art/gear/index.json';
 import { cardUrl, figureUrl } from './eidolonCall';
@@ -17,6 +19,8 @@ import { castOf, questBattleById } from './sim/questBattles';
 import { battleWon } from './sim/questRun';
 import { heroName } from './sim/heroNames';
 import { play } from './render/sound';
+import { destinationOf, type Destination } from './sim/questGoto';
+import { takeMeThere } from './questGo';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -124,13 +128,15 @@ export function nextWords(m: Meta, found: PieceFound): string {
 
 export interface ChainHooks {
   /** Fight a chain's quest battle (the party with its cast locked in). */
-  fight?(battle: string): void;
+  fight?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if one is. */
   saved?(): string | null;
   /** Go to the Summoner (the Recruit tab's Sanctum). */
   summoner?(): void;
   /** Play a chain's prologue again. */
   story?(chain: string): void;
+  /** "Take me there": where a part's goal is done (`sim/questGoto.ts`). */
+  goTo?(dest: Destination): void;
 }
 
 /** A chain's Eidolon as a picture: its card when bound, its silhouette with "?" otherwise. */
@@ -225,6 +231,11 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         const go = el('button', 'primary ecnGo', hooks.saved?.() === qb.id ? `Continue: ${qb.title}` : `Fight: ${qb.title}`);
         go.addEventListener('click', () => hooks.fight!(qb.id));
         body.append(go);
+      } else if (p.goal.kind !== 'battle' && hooks.goTo) {
+        // (UI batch 1: a way to where the part's goal is done)
+        const go = takeMeThere(p.title, destinationOf(m, p.goal), hooks);
+        go.classList.add('ecnGo');
+        body.append(go);
       }
     } else {
       body.append(el('small', 'ecnState', `Opens with ${c.opensWords}${c.order > 1 ? ', once the Eidolon before it is bound' : ''}.`));
@@ -244,6 +255,7 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         again.title = 'Fight it again for practice: no reward';
         again.addEventListener('click', () => hooks.fight!(battle));
         more.append(again);
+        if (canAutoQuest(m, battle)) more.append(autoButton(m, questBattleById(battle)!.title, (n) => hooks.fight!(battle, n), 'ecnLink auto'));
       }
       // (EIDOLON-TRIAL: the trial too, once won, for practice)
       const t = trialOf(c);
@@ -252,6 +264,7 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
         again.title = 'Fight it again for practice: no reward';
         again.addEventListener('click', () => hooks.fight!(t.id));
         more.append(again);
+        if (canAutoQuest(m, t.id)) more.append(autoButton(m, questBattleById(t.id)!.title, (n) => hooks.fight!(t.id, n), 'ecnLink auto'));
       }
       if (more.childElementCount) body.append(more);
     }

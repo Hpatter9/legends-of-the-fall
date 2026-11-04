@@ -26,6 +26,7 @@ import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
 import targetIcon from './art/talent/target.png';
 import haloIcon from './art/talent/halo.png';
+import { openScreen } from './screens';
 
 /** The rows of the arcana atlas, by the Pixel Effects element. */
 const ELEMENTS = ['light', 'earth', 'blood', 'wind', 'lightning', 'crystal', 'star', 'fire', 'dark', 'moon', 'forest', 'sand'] as const;
@@ -231,6 +232,8 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const hint = el('small', 'trHint', 'Tap to skip');
   stage.append(charge, beam, halo, artwork, ring, impact, showcase.canvas, burst, sparks);
   root.append(rays, actor, heading, lead, stage, plate, flash, hint);
+  // (CLOSE-SCREENS: a moment, laid over whatever is up; it is the player's to dismiss)
+  const leave = openScreen('tarot', () => undefined, { kind: 'moment' });
   document.body.append(root);
   duck(true, 'reveal');
   let at = performance.now();
@@ -275,6 +278,7 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
       duck(false, 'reveal');
       showcase.stop();
       root.remove();
+      leave();
       done();
     });
   });
