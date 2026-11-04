@@ -9,13 +9,15 @@ import type { Battle, BattleEvent } from './battle';
 import { ultimateOf } from './abilities';
 import { heroKitOf, ultFull } from './heroKits';
 import { castSpell, type SpellId } from './spells';
+import { castDecree } from './decrees';
 import { isSilenced } from './ailments';
 import { canCallEidolon, strikeEidolon } from './eidolons';
+import { applyCharge, orderCharge } from './tactics';
 
 /** A tap waiting for the next tick. */
-export type Order = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'eidolon'; id: string };
+export type Order = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'eidolon'; id: string } | { t: number; kind: 'charge' };
 /** What a fight's log keeps: each ultimate ordered, each king's spell cast, and the War Horn blown (EIDOLONS), at the battle time it was asked for. */
-export type LogEntry = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'spell'; id: SpellId; u: number; v: number } | { t: number; kind: 'eidolon'; id: string };
+export type LogEntry = { t: number; kind: 'ult'; unit: number } | { t: number; kind: 'spell'; id: SpellId; u: number; v: number } | { t: number; kind: 'eidolon'; id: string } | { t: number; kind: 'charge' } | { t: number; kind: 'decree' };
 
 /** How long a queued ultimate waits for its hero to be free and to have something to hit, before the order lapses (the meter stays full). */
 export const ORDER_WAIT_MS = 3000;
@@ -55,6 +57,12 @@ export function applyOrders(b: Battle, out: BattleEvent[]): void {
       if (strikeEidolon(b, out)) (b.log ??= []).push({ t: o.t, kind: 'eidolon', id: o.id });
       continue;
     }
+    // (the player's Charge!: the held heroes go, `tactics.ts`)
+    if (o.kind === 'charge') {
+      applyCharge(b, out);
+      (b.log ??= []).push({ t: o.t, kind: 'charge' });
+      continue;
+    }
     const u = b.units.find((x) => x.id === o.unit);
     (b.log ??= []).push({ t: o.t, kind: 'ult', unit: o.unit });
     if (u && u.alive && ultFull(u)) u.ultOrder = b.t;
@@ -76,6 +84,8 @@ export function replayLog(b: Battle, log: readonly LogEntry[]): void {
     if (e.t !== b.t) continue;
     if (e.kind === 'ult') orderUltimate(b, e.unit);
     else if (e.kind === 'eidolon') orderEidolon(b, e.id);
+    else if (e.kind === 'decree') castDecree(b);
+    else if (e.kind === 'charge') orderCharge(b);
     else castSpell(b, e.id, e.u, e.v);
   }
 }

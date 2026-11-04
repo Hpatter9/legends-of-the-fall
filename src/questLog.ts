@@ -6,15 +6,21 @@
 // The Eidolons tab (EIDOLON-CHAINS): the six Eidolons' chains, their pieces and the part going (`eidolonChainView.ts`); it shows once
 // the first chain has been offered.
 
+import { autoButton } from './autoAsk';
+import { canAutoQuest } from './sim/autoReplay';
 import { giverKeyOf, giverName, giverWords, offerFrom, questFace, rewardText } from './questCard';
 import { questById } from './sim/questData';
-import { ACTIVE_MAX, cannotTake, dropQuest, handIn, isDone, progressOf, takeQuest, timesDone, trackedQuest, trackQuest } from './sim/quests';
+import { rewardOf } from './sim/questPay';
+import { LENGTHS, LENGTH_NAMES, lengthOf, starLine, starsOf, type QuestLength } from './sim/questStars';
+import { ACTIVE_MAX, activeDef, CAMPAIGN_MAX, FAIL_COOLDOWN, cannotTake, dayNumber, isCampaign, countOf, daysLeft, dropQuest, handIn, isDone, needOf, objectivesOf, progressOf, takeQuest, timesDone, trackedQuest, trackQuest } from './sim/quests';
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
 import { todayKey } from './modes';
 import { battleOfQuest, canFightBattle } from './sim/questRun';
 import { chainsShown, summonerWaiting } from './sim/eidolonChains';
 import { drawEidolonsTab } from './eidolonChainView';
+import { questPlace, ruleLines, type Destination } from './sim/questGoto';
+import { takeMeThere } from './questGo';
 
 export type LogTab = 'active' | 'board' | 'eidolons' | 'done';
 
@@ -39,12 +45,14 @@ export interface LogHooks {
   changed(): void;
   close(): void;
   /** Begin (or carry on) a quest battle (batch 2): the page opens the party with its cast locked in. */
-  fight?(battle: string): void;
+  fight?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if there is one (its Fight reads Continue). */
   saved?(): string | null;
   /** EIDOLON-CHAINS: go to the Summoner in the Sanctum, and play a chain's prologue again. */
   summoner?(): void;
   story?(chain: string): void;
+  /** "Take me there": go where a goal is done (UI batch 1: `sim/questGoto.ts`; the page closes the log and opens the fight, the mode or the screen). */
+  goTo?(dest: Destination): void;
 }
 
 /** Draw the log on a tab into the sheet's box. */
@@ -66,7 +74,11 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
     const b = el('button', `qlTab${t.id === tab ? ' on' : ''}`, t.label);
     b.setAttribute('role', 'tab');
     b.setAttribute('aria-selected', String(t.id === tab));
-    if (t.id === 'active') b.textContent = `Active ${count.active}/${ACTIVE_MAX}`;
+    if (t.id === 'active') {
+      // (QUESTS-3: three quests and one campaign: the campaign shows beside the count when one is taken)
+      const camps = (s?.active ?? []).filter((a) => isCampaign(questById(a.id)!)).length;
+      b.textContent = `Active ${(count.active ?? 0) - camps}/${ACTIVE_MAX}${camps ? ` + ${camps}/${CAMPAIGN_MAX}` : ''}`;
+    }
     if (t.id === 'board' && count.board) b.append(el('i', 'qlDot', String(count.board)));
     if (t.id === 'eidolons' && summonerWaiting(m)) b.append(el('i', 'qlDot', '!'));
     b.addEventListener('click', () => {
@@ -94,7 +106,7 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
   if (!act.length) return empty(list, 'No quests taken. Gwen keeps the board in the tavern: see the Board tab.');
   const pinned = trackedQuest(m)?.id;
   for (const a of [...act].reverse()) {
-    const q = questById(a.id)!;
+    const q = activeDef(a)!;
     const row = el('div', `qlRow${isDone(a) ? ' done' : ''}`);
     const body = el('div', 'qlBody');
     const p = progressOf(a);
@@ -102,7 +114,23 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
     const fill = el('span');
     fill.style.width = `${Math.round((p.now / p.need) * 100)}%`;
     bar.append(fill);
-    body.append(el('b', '', q.title), el('small', '', q.text), bar, el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(q.reward, m)}`));
+    body.append(el('b', '', q.title), el('small', 'qlStars', starLine(q)), el('small', '', q.text));
+    // (QUESTS-3: a checklist for several objectives, the rules asked, and the days left on a quest with a limit)
+    const objs = objectivesOf(q);
+    if (objs.length > 1) {
+      const lines = el('ul', 'qlSteps');
+      objs.forEach((_, i) => {
+        const now = Math.min(needOf(q, i), countOf(a, i));
+        const ok = now >= needOf(q, i);
+        lines.append(el('li', ok ? 'ok' : '', `${ok ? '✓' : '○'} ${q.steps?.[i] ?? `Objective ${i + 1}`} · ${now}/${needOf(q, i)}`));
+      });
+      body.append(lines);
+    } else body.append(bar);
+    const rules = ruleLines(q, q.goal).filter((r) => !/^Within \d+ day/.test(r));
+    if (rules.length) body.append(el('small', 'qlRules', rules.join(' · ')));
+    const left = daysLeft(a, todayKey());
+    if (left !== undefined && !isDone(a)) body.append(el('small', `qlLimit${left === 0 ? ' last' : ''}`, left === 0 ? 'Last day' : `${left} day${left === 1 ? '' : 's'} left`));
+    body.append(el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(rewardOf(q), m)}`));
     const side = el('div', 'qlSide');
     if (dropping === a.id) {
       // (the confirm: the row says what dropping costs, with Drop it and Keep)
@@ -160,21 +188,47 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
         redraw();
       });
       side.append(pin, drop);
+      // (UI batch 1: a way to where the goal is done: its battle, army, mode or screen)
+      if (hooks.goTo) side.prepend(takeMeThere(q.title, questPlace(m, q, a).dest, hooks));
     }
     row.append(questFace(q), body, side);
     list.append(row);
   }
 }
 
+/** The board's order (easiest first by default) and length filter; kept while the page is open. */
+let boardSort: 'easy' | 'hard' = 'easy';
+let boardLength: QuestLength | null = null;
+
 function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHooks): void {
-  const offers = m.quests?.offers ?? [];
-  if (!offers.length) return empty(list, 'Nothing on offer today. Gwen pins a new quest each day; passersby come and go.');
+  const all = m.quests?.offers ?? [];
+  if (!all.length) return empty(list, 'Nothing on offer today. Gwen pins a new quest each day; passersby come and go.');
+  // (QUESTS-3: sort by stars, and filter by length)
+  const bar = el('div', 'qlFilter');
+  const chip = (label: string, on: boolean, go: () => void, aria: string) => {
+    const b = el('button', `qlChip${on ? ' on' : ''}`, label);
+    b.setAttribute('aria-pressed', String(on));
+    b.setAttribute('aria-label', aria);
+    b.addEventListener('click', () => {
+      go();
+      redraw();
+    });
+    bar.append(b);
+  };
+  chip(boardSort === 'easy' ? '★ Easiest first' : '★ Hardest first', true, () => (boardSort = boardSort === 'easy' ? 'hard' : 'easy'), 'Change the order of the board');
+  chip('All', boardLength === null, () => (boardLength = null), 'Show every length');
+  for (const l of LENGTHS) chip(LENGTH_NAMES[l], boardLength === l, () => (boardLength = boardLength === l ? null : l), `Show ${LENGTH_NAMES[l]} quests only`);
+  list.append(bar);
+  const offers = all
+    .filter((o) => boardLength === null || lengthOf(questById(o.id)!) === boardLength)
+    .sort((a, b) => (starsOf(questById(a.id)!) - starsOf(questById(b.id)!)) * (boardSort === 'easy' ? 1 : -1));
+  if (!offers.length) list.append(el('p', 'qlEmpty', `No ${LENGTH_NAMES[boardLength!]} quests on the board.`));
   for (const o of offers) {
     const q = questById(o.id)!;
     const row = el('div', `qlRow${q.repeat ? ' rep' : ''}`);
     const body = el('div', 'qlBody');
     const n = timesDone(m, q.id);
-    body.append(el('b', '', q.title), el('small', 'qlGiver', offerFrom(q) + (q.repeat ? ` · repeatable${n ? `, done ${n}×` : ''}` : '')), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward, m)));
+    body.append(el('b', '', q.title), el('small', 'qlStars', starLine(q)), el('small', 'qlGiver', offerFrom(q) + (q.repeat ? ` · repeatable${n ? `, done ${n}×` : ''}` : '')), el('small', '', q.text), el('small', 'qlCount', rewardText(rewardOf(q), m)));
     const side = el('div', 'qlSide');
     const take = el('button', 'primary', 'Take');
     const why = cannotTake(m, q.id);
@@ -195,7 +249,19 @@ function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHoo
 
 function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
   const done = m.quests?.done ?? [];
-  if (!done.length) return empty(list, 'No quests handed in yet.');
+  // (QUESTS-3: the quests that failed, struck through, until they are back on the board)
+  const today = todayKey();
+  for (const [id, when] of Object.entries(m.quests?.failed ?? {})) {
+    const q = questById(id);
+    const back = FAIL_COOLDOWN - (dayNumber(today) - dayNumber(when));
+    if (!q || back <= 0) continue;
+    const row = el('div', 'qlRow failed');
+    const body = el('div', 'qlBody');
+    body.append(el('b', 'qlStruck', q.title), el('small', 'qlWarn', `Failed: back on the board in ${back} day${back === 1 ? '' : 's'}`));
+    row.append(questFace(q), body);
+    list.append(row);
+  }
+  if (!done.length) return list.children.length ? undefined : empty(list, 'No quests handed in yet.');
   for (const id of [...done].reverse()) {
     const q = questById(id)!;
     const row = el('div', 'qlRow done');
@@ -204,7 +270,7 @@ function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
     const n = timesDone(m, id);
     // (a repeatable's count: "×3")
     if (q.repeat) title.append(el('i', 'qlTimes', `×${n}`));
-    body.append(title, el('small', 'qlGiver', giverName(giverKeyOf(q)).name), el('small', 'qlWord', `“${giverWords(q, q.done[0])}”`));
+    body.append(title, el('small', 'qlStars', starLine(q)), el('small', 'qlGiver', giverName(giverKeyOf(q)).name), el('small', 'qlWord', `“${giverWords(q, q.done[0])}”`));
     if (q.reward.keepsake) body.append(el('small', 'qlKeep', `Keepsake: ${q.reward.keepsake}`));
     row.append(questFace(q), body);
     // (batch 2: a quest battle won can be fought again for practice; it pays nothing)
@@ -215,6 +281,8 @@ function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
       again.title = 'Fight it again for practice: no reward';
       again.addEventListener('click', () => hooks.fight!(qb.id));
       side.append(again);
+      // (a battle already won can also be repeated on its own: Auto, within the day's tickets)
+      if (canAutoQuest(m, qb.id)) side.append(autoButton(m, qb.title, (n) => hooks.fight!(qb.id, n), 'qlReplay auto'));
       row.append(side);
     }
     list.append(row);

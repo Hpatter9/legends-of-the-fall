@@ -27,6 +27,60 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.340.0',
+    date: '2026-11-04',
+    title: 'Quests rebuilt, Schools of the Crown',
+    notes: ['About 165 new quests and 26 new battles; the old quests are tougher; Eidolon chains become five-part campaigns.', 'Each ruler leads a school of spells and has a Decree, a great spell that fills from spare mana.'],
+  },
+  {
+    version: '0.339.0',
+    date: '2026-11-04',
+    title: 'Rooms, bosses\' weaknesses, march orders',
+    notes: ['The castle gains rooms and three new buildings (Smithy, Watchtower, Hall) and a Chapel with levels.', 'Every boss has a weakness to find through clues, earning Hunter\'s marks. Before an army run, pick its march orders.'],
+  },
+  {
+    version: '0.338.0',
+    date: '2026-11-04',
+    title: 'Seven gear slots',
+    notes: ['Heroes now wear gear in seven slots: head, torso, both hands, feet, belt and an accessory, shown on a paper doll. Your gear moves over, nothing is lost.'],
+  },
+  {
+    version: '0.337.0',
+    date: '2026-11-04',
+    title: 'Quest stars, rarer summons, tactics',
+    notes: ['Every quest shows a 1-5 star difficulty and its length; harder quests pay better and easy ones pay no stones. Summoning stones are much rarer.', 'Tactics arrive in fights (Advance together, Charge, Hold the line); the choice comes to the prep screen next.'],
+  },
+  {
+    version: '0.336.0',
+    date: '2026-11-04',
+    title: 'King\'s spells, first fixes',
+    notes: ['Spare mana is kept, not lost; damage spells grow with the foes; Auto casts spells sooner; bigger buttons; aiming slides to where it hits more foes.'],
+  },
+  {
+    version: '0.335.0',
+    date: '2026-11-04',
+    title: 'Ultimate showcases',
+    notes: ['A hero\'s first ultimate, and every 10th, plays a long showcase at normal speed: Ayame, the Wizard and the Beastmaster first. New settings to shorten it.'],
+  },
+  {
+    version: '0.334.0',
+    date: '2026-11-04',
+    title: 'Story scenes rewritten',
+    notes: ['Every story scene, from the Eidolon chains to the hero tales and quests, is rewritten in the new opening\'s style: one place, clear voices, no tutorial talk.'],
+  },
+  {
+    version: '0.333.0',
+    date: '2026-11-04',
+    title: 'Effects, auto and small fixes',
+    notes: ['Every battle effect now moves and animates: the meteor falls and bursts.', 'Auto-replay works on every beaten repeat run: quests, Eidolon trials, the daily.', 'Party power total, a daily icon with a check, \'Take me there\' on quests, a popup when a building finishes.', 'Codex stones only at milestones; the game\'s text brought up to date (no more spire or tower).'],
+  },
+  {
+    version: '0.332.0',
+    date: '2026-11-04',
+    title: 'Finished screens close',
+    notes: ['A screen you have left is now closed, not hidden behind the next one: no more old recaps under a chest, and less strain on the phone\'s memory.'],
+  },
+  {
     version: '0.331.0',
     date: '2026-11-01',
     title: 'Hero sheet fixed on the party screen',

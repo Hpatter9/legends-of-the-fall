@@ -154,7 +154,7 @@ const PILOTS: Record<string, Scene> = {
         acts: [{ who: 'gorvak', pose: 'strike' }],
         fx: ['flash', 'shake'],
         cue: 'slam',
-        lines: [say('gorvak', 'THEN I SHALL BURN YOU ALL MYSELF!', 'shout'), tell('Behold the first herald. He has had no tea break since the war.')],
+        lines: [say('gorvak', 'THEN I SHALL BURN YOU ALL MYSELF!', 'shout'), tell('The first herald had not had a tea break since the war began.')],
       },
     ],
   },

@@ -169,7 +169,7 @@ test('every book can be cast by every hero who reads it: a fight with it in eith
         bareBoard(b);
         const l = ownPicks(reader);
         l[slot - 1] = book.id;
-        const eq = { hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [], book: l };
+        const eq = { hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, jump: 0, abilities: [], book: l };
         place(b, reader, 3, 9, undefined, { level: 30, equip: eq });
         place(b, 'knight', 4, 9, undefined, { level: 30 });
         const u = b.units.find((x) => x.def === reader)!;
@@ -237,7 +237,7 @@ test('a learned book levels by use like any skill, under its own key for the rea
 test('a book in the third slot opens at level 20 and a levelled one fights', () => {
   const b = startBattle(9, 'orcs');
   bareBoard(b);
-  const eq = { hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, abilities: [], book: [OWN1, OWN2, 'whirlingStep'], skillLv: [1, 1, 4] };
+  const eq = { hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, jump: 0, abilities: [], book: [OWN1, OWN2, 'whirlingStep'], skillLv: [1, 1, 4] };
   place(b, 'knight', 3, 9, undefined, { level: 30, equip: eq });
   const u = b.units.find((x) => x.def === 'knight')!;
   assert.equal(heroKitOf(u)!.s3!.skill.name, 'Whirlwind');

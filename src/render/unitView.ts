@@ -146,6 +146,9 @@ export class UnitSprite {
   y = 0;
   /** How tall it's drawn. */
   tall = 40;
+  /** ULT-SHOW (`ultShow.ts`): a pose the page stages over what the sim says while an ultimate's showcase plays (world px, its depth, how
+   *  solid, a row and how far through it, the way it faces on the screen); null: drawn as the sim says. */
+  stage: { x: number; y: number; z: number; alpha: number; row: Row; p: number; face: 1 | -1 } | null = null;
 
   constructor(public unit: Unit, private readonly equipmentStep = unit.awaken ?? 0) {
     const def = defOf(unit);
@@ -394,12 +397,40 @@ export class UnitSprite {
     // (a burrower underground is not seen: the page draws its mound instead, RPG-SPELLS)
     if (u.under) this.root.alpha = 0;
     this.root.visible = this.root.alpha > 0;
+    if (this.stage) this.drawStaged(this.stage);
     this.drawBar(u.alive, t);
     this.drawClock(fighting ? t : -1);
     this.drawSparks(u.alive);
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
     else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
+  }
+
+  /** ULT-SHOW: drawn in the pose the showcase stages (its place, its row's frame, its facing, how solid), over the sim's. */
+  private drawStaged(st: NonNullable<UnitSprite['stage']>): void {
+    const row: Row = hasRow(this.sheet, st.row) ? st.row : st.row === 'attack2' ? 'attack' : st.row;
+    const list = rowFrames(this.sheet, row);
+    this.body.texture = list[Math.min(list.length - 1, Math.max(0, Math.floor(st.p * list.length)))];
+    const dx = st.face * (facesRightOf(this.sheet) ? 1 : -1);
+    this.body.scale.set(this.scaleNow * dx, this.scaleNow);
+    this.body.x = 0;
+    this.body.rotation = 0;
+    this.rim.x = 0;
+    this.rim.rotation = 0;
+    for (const r of this.rim.children as Sprite[]) {
+      r.texture = this.body.texture;
+      r.scale.copyFrom(this.body.scale);
+    }
+    // (a flinch flashes, as a blow does)
+    if (row === 'hurt' && st.p < 0.4) this.body.tint = 0xffb0b0;
+    else if (this.unit.alive) this.body.tint = ailmentTint(this.ail.shown) ?? 0xffffff;
+    else this.body.tint = 0xffffff;
+    this.root.position.set(st.x, st.y);
+    this.root.zIndex = st.z;
+    this.x = st.x;
+    this.y = st.y;
+    this.root.alpha = st.alpha * this.solid;
+    this.root.visible = st.alpha > 0;
   }
 
   /** Use this sprite for another fighter of the same kind and size (a crowd's foes are drawn from a pool, so a wave of fifty makes no new sprites). */

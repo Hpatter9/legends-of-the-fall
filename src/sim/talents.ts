@@ -109,6 +109,7 @@ const STAT_TEXT: Record<StatKey, (v: number) => string> = {
   charge: (v) => `+${pct(v)} faster pool refill`,
   regen: (v) => `mends ${Math.round(v * 1000) / 10}% hp a second`,
   resist: (v) => `+${pct(v)} resist to burning and bleeding`,
+  jump: (v) => `+${v} jump`,
 };
 export const statText = (stats: Partial<Record<StatKey, number>>): string => STAT_KEYS.filter((k) => stats[k]).map((k) => STAT_TEXT[k](stats[k]!)).join(', ');
 

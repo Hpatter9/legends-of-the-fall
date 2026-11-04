@@ -26,6 +26,7 @@ import {
   EQUIP_BASES,
   EQUIP_LIST,
   EQUIP_SLOTS,
+  QUIET_SLOTS,
   MAX_ITEM_LEVEL,
   addStats,
   bringHome,
@@ -40,12 +41,14 @@ import {
   STAT_KEYS,
   wornIn,
   addSetBonus,
+  bestWhole,
   type EquipSlot,
   type EquipStats,
   type Equipment,
   type Rarity,
 } from './equipment';
 import type { Meta } from './meta';
+import { OLD_BASES } from './equipBases';
 import { mixSeed, Rng } from './rng';
 import { armyIndex } from './armies';
 import { AUTO_WEAR, wearState, type Fought, type WearNote } from './wear';
@@ -105,15 +108,17 @@ export function fieldLevel(run: Run): number {
   return Math.max(1, Math.min(MAX_ITEM_LEVEL, 1 + 3 * army + Math.floor(Math.max(0, run.stage) / 4)));
 }
 
-const BASES_OF: Record<EquipSlot, readonly string[]> = { weapon: [], armour: [], trinket: [] };
-for (const b of EQUIP_LIST) (BASES_OF[b.slot] as string[]).push(b.id);
-/** The equipment slot of a run gear slot (a charm is a trinket). */
-export const equipSlotOf = (slot: Slot): EquipSlot => (slot === 'charm' ? 'trinket' : slot);
+/** The bases a run's find of each slot is drawn from: the 60 kept from before seven slots, in their old three groups (the weapons with
+ *  the Grimoire, the armour, the old trinkets), so every run's finds draw as they did. */
+const BASES_OF: Record<Slot, readonly string[]> = { weapon: [], armour: [], charm: [] };
+for (const b of EQUIP_LIST) if (OLD_BASES.has(b.id)) (BASES_OF[b.slot === 'main' || b.id === 'grimoire' ? 'weapon' : b.slot === 'torso' ? 'armour' : 'charm'] as string[]).push(b.id);
+/** The equipment slot of a run gear slot (a charm is an accessory). */
+export const equipSlotOf = (slot: Slot): EquipSlot => (slot === 'charm' ? 'acc' : slot === 'armour' ? 'torso' : 'main');
 
 /** A real piece for a real-gear run in `slot` at `step`, from its side stream. Carried as run gear (`Gear.piece`). */
 export function fieldPiece(run: Run, id: number, slot: Slot, step: number, stage: number, source: number): Gear {
   const rng = new Rng(mixSeed(run.seed, FIELD_SALT, stage, source, id));
-  const base = rng.pick(BASES_OF[equipSlotOf(slot)]);
+  const base = rng.pick(BASES_OF[slot]);
   const rarity = fieldGrade(rng, step, tierColumn(run));
   const piece: Equipment = { id, base, rarity, level: fieldLevel(run), found: runTag(run) };
   return pieceGear(piece);
@@ -306,14 +311,11 @@ export function equipBestReal(run: Run, meta: Meta | undefined, kinds: readonly 
     // (what the kind wore is the bar: it changes only for a better whole)
     const scoreOf = (pick: { it?: Equipment; score: number }[]) => pick.reduce((n, o) => n + o.score, 0) + setScore(pick.filter((o) => o.it).map((o) => o.it!.base), kind);
     const current = EQUIP_SLOTS.map((slot, i) => options[i].find((o) => o.found && o.it?.id === was[slot]) ?? options[i][0]);
-    let top = scoreOf(current);
-    let pick = current;
-    for (const w of options[0])
-      for (const a of options[1])
-        for (const t of options[2]) {
-          const total = scoreOf([w, a, t]);
-          if (total > top + 1e-9) (top = total), (pick = [w, a, t]);
-        }
+    // (seven slots: the search by set, with what the kind wore tried first: `bestWhole`)
+    const pick = bestWhole(
+      current.map((c, i) => [c, ...options[i].filter((o) => o !== c)]),
+      (p) => scoreOf(p as { it?: Equipment; found: boolean; score: number }[]),
+    ) as { it?: Equipment; found: boolean; score: number }[];
     EQUIP_SLOTS.forEach((slot, i) => {
       const o = pick[i];
       if (o.found && o.it) {
@@ -343,7 +345,7 @@ export function settleRunWear(run: Run, fought: readonly Fought[], auto = false)
       if (!it) continue;
       const was = wearState(it);
       if (was === 'broken') continue;
-      it.wear = Math.min(maxDurability(it), Math.round(((it.wear ?? 0) + share * (1 + (f.fell && slot === 'armour' ? 1 : 0))) * 2) / 2);
+      it.wear = Math.min(maxDurability(it), Math.round(((it.wear ?? 0) + share * (QUIET_SLOTS.includes(slot) ? 0.5 : 1 + (f.fell && slot === 'torso' ? 1 : 0))) * 4) / 4);
       const now = wearState(it);
       if (now !== was && now !== 'good') out.push({ kind: f.kind, id: it.id, name: itemName(it), state: now });
     }
@@ -377,7 +379,7 @@ export function carriedHome(run: Run): Equipment[] {
   const gear: Gear[] = [...(run.items ?? []), ...run.roster.flatMap((h: Owned) => SLOTS.flatMap((s) => (h.gear?.[s] ? [h.gear[s]!] : [])))];
   return gear.map((g) => {
     const rng = new Rng(mixSeed(run.seed, CARRY_SALT, g.id));
-    return { id: g.id, base: rng.pick(BASES_OF[equipSlotOf(g.slot)]), rarity: (g.tier >= 2 ? 2 : 1) as Rarity, level: fieldLevel(run) };
+    return { id: g.id, base: rng.pick(BASES_OF[g.slot]), rarity: (g.tier >= 2 ? 2 : 1) as Rarity, level: fieldLevel(run) };
   });
 }
 

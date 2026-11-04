@@ -36,18 +36,18 @@ const STARTERS = FIXED_PACKS.flatMap((p) => p.heroes);
 const nivra = chainById('nivra')!;
 const win = (army: string, more: Partial<QuestFight> = {}): QuestFight => ({ won: true, waves: 1, boss: false, heroes: ['knight'], flawless: true, kills: [], dailyCleared: false, mode: 'army', army, spells: [], ...more });
 
-/** A save with Askel bound and Nivra's chain begun, at part `part` (3: every piece in). */
+/** A save with Askel bound and Nivra's chain begun, at part `part` (5: every piece in). */
 function atPart(seed: number, pack: 0 | 1, part: number): Meta {
   const m = packSave(seed, pack);
   clear(m, 'orcs');
   assert.ok(beginChain(m, 'askel'));
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
   assert.ok(bindChain(m, 'askel'));
   clear(m, 'beasts');
   assert.ok(beginChain(m, 'nivra'));
   m.quests!.chains!.nivra = { part, progress: 0 };
-  m.quests!.pieces!.push(...['rimeScale', 'merePearl', 'heldBreath'].slice(0, part));
+  m.quests!.pieces!.push(...['rimeScale', 'merePearl', 'heldBreath', 'frozenTear', 'wyrmLullaby'].slice(0, part));
   return m;
 }
 
@@ -100,15 +100,15 @@ test("Nivra's trial is one entry: her fighter, kit, great attacks, second form a
   // (every chain after Askel's has its trial written; Askel's has none)
   for (const c of CHAINS.slice(1)) assert.ok(c.trial && trialOf(c), c.id);
   assert.equal(trialOf(chainById('askel')!), undefined);
-  assert.equal(stepsOf(nivra), 4);
-  assert.equal(stepsOf(chainById('askel')!), 3);
+  assert.equal(stepsOf(nivra), 6);
+  assert.equal(stepsOf(chainById('askel')!), 5);
   assert.equal(TRIALS.length, new Set(TRIALS.map((x) => x.chain)).size, 'one trial a chain');
 });
 
 /* ------------------------------------------------------------------ the rules */
 
-test('the trial comes only after the three pieces; winning it readies the binding, losing it changes nothing', () => {
-  for (const part of [0, 1, 2]) {
+test('the trial comes only after every piece (five, Q9); winning it readies the binding, losing it changes nothing', () => {
+  for (const part of [0, 1, 2, 3, 4]) {
     const m = atPart(20 + part, 1, part);
     assert.equal(trialDue(m), undefined, `part ${part}`);
     assert.equal(chainWantsBattle(m, 'nivraTrial'), false);
@@ -117,7 +117,7 @@ test('the trial comes only after the three pieces; winning it readies the bindin
     noteChains(m, win('beasts', { battle: 'nivraTrial' }));
     assert.equal(m.quests!.chains!.nivra.trialWon, undefined);
   }
-  const m = atPart(30, 0, 3);
+  const m = atPart(30, 0, 5);
   assert.equal(currentPart(m), undefined);
   assert.equal(trialDue(m)?.trial.id, 'nivraTrial');
   assert.ok(chainWantsBattle(m, 'nivraTrial') && canFightBattle(m, 'nivraTrial'));
@@ -158,8 +158,8 @@ test('old saves mid-chain still work: a save at any part loads and goes on; one 
   const mid = round(atPart(40, 1, 1));
   assert.equal(currentPart(mid)?.part.id, 'nivra2');
   // (saved with every piece in, before trials existed (it was ready to bind then): now its trial is due)
-  const all = round(atPart(41, 0, 3));
-  assert.deepEqual(all.quests!.chains!.nivra, { part: 3, progress: 0 });
+  const all = round(atPart(41, 0, 5));
+  assert.deepEqual(all.quests!.chains!.nivra, { part: 5, progress: 0 });
   assert.equal(activeChain(all), nivra);
   assert.equal(trialDue(all)?.trial.id, 'nivraTrial');
   // (the trial won survives the save)
@@ -167,14 +167,19 @@ test('old saves mid-chain still work: a save at any part loads and goes on; one 
   const won = round(all);
   assert.equal(readyToBind(won), nivra);
   // (bound before trials existed: still bound, nothing asked of it)
-  const bound = atPart(42, 1, 3);
+  const bound = atPart(42, 1, 5);
   bound.quests!.chains!.nivra.bound = true;
   const back = round(bound);
   assert.ok(chainDone(back, nivra) && !trialDue(back));
+  // (Q9: a save from before the chains gained two parts, with the old three done and its trial won or itself bound, counts as finished;
+  //  one that had only the three pieces carries on at the first new part)
+  assert.deepEqual(readChainState({ chains: { nivra: { part: 3, progress: 0, trialWon: true } } }), { chains: { nivra: { part: 5, progress: 0, trialWon: true } } });
+  assert.deepEqual(readChainState({ chains: { nivra: { part: 3, progress: 0, bound: true } } }), { chains: { nivra: { part: 5, progress: 0, bound: true } } });
+  assert.deepEqual(readChainState({ chains: { nivra: { part: 3, progress: 0 } } }), { chains: { nivra: { part: 3, progress: 0 } } });
   // (junk: a trial "won" before the pieces are in, or not `true`, is dropped)
   assert.deepEqual(readChainState({ chains: { nivra: { part: 2, progress: 0, trialWon: true } } }), { chains: { nivra: { part: 2, progress: 0 } } });
-  assert.deepEqual(readChainState({ chains: { nivra: { part: 3, progress: 0, trialWon: 'yes' } } }), { chains: { nivra: { part: 3, progress: 0 } } });
-  assert.deepEqual(readChainState({ chains: { nivra: { part: 3, progress: 0, trialWon: true } } }), { chains: { nivra: { part: 3, progress: 0, trialWon: true } } });
+  assert.deepEqual(readChainState({ chains: { nivra: { part: 5, progress: 0, trialWon: 'yes' } } }), { chains: { nivra: { part: 5, progress: 0 } } });
+  assert.deepEqual(readChainState({ chains: { nivra: { part: 5, progress: 0, trialWon: true } } }), { chains: { nivra: { part: 5, progress: 0, trialWon: true } } });
 });
 
 /* ------------------------------------------------------------------ the battle */

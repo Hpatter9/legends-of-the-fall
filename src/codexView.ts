@@ -2,9 +2,11 @@
 // grid of cards; a tap opens the detail sheet, with the sprite on its idle. Unmet foes and unowned heroes are dark silhouettes.
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
 
+import { ESCORT_CLUE, WEAKNESS, knownClues } from './sim/weakness';
+import { roomOpen } from './sim/rooms';
 import { hasSkill, KITS, type Kit } from './sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
-import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, ENTRY_STONES, entriesWaiting, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
+import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
@@ -30,7 +32,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Tower elite', calamity: 'Calamity herald' };
+const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Calamity elite', calamity: 'Calamity herald' };
 
 /** The page's state that outlives a redraw: the tab it was on. */
 let tabNow: Collection | 'scenes' | 'combos' | 'terrain' = 'bestiary';
@@ -112,6 +114,27 @@ const section = (box: HTMLElement, title: string, lines: readonly string[]): voi
   box.append(ul);
 };
 
+/** A boss's Weakness block (DEPTH-BUILD, `weakness.ts`): its three clues, each written or a dark bar saying how to learn more, and the
+ *  five tiers' Hunter's marks as crack badges. With the Library's Archive any clue found is written in full. */
+function weakBlock(box: HTMLElement, m: Meta, id: string | undefined): void {
+  if (!id) return;
+  const rec = m.weak?.[id];
+  const { lines } = knownClues(id, rec, roomOpen(m.castle, 'archive'));
+  const wrap = el('div', 'cxWeak');
+  wrap.append(el('h4', '', 'Weakness'));
+  const dark = ['Meet it in battle to learn more', `Fell ${ESCORT_CLUE} of its escorts, or lose to it`, 'Lose to it again to learn the rest'];
+  lines.forEach((line, i) => wrap.append(line ? el('p', 'cxClue', line) : el('p', 'cxClue dark', dark[i])));
+  const marks = el('div', 'cxMarks');
+  ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic'].forEach((t, i) => {
+    const got = !!rec?.marks.includes(i);
+    const badge = el('span', `cxMark${got ? ' got' : ''}`, got ? '✦' : '◇');
+    badge.title = `Hunter's mark · ${t}${got ? '' : ': win with its weakness used'}`;
+    marks.append(badge);
+  });
+  wrap.append(el('small', '', 'Hunter\'s marks'), marks);
+  box.append(wrap);
+}
+
 /** The detail sheet over the page. Returns the function that closes it. */
 function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
   const def = UNITS[e.defs[0]];
@@ -136,6 +159,7 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
     const kinds = e.defs.slice(1).filter((d) => KITS[d] && KITS[d] !== KITS[e.defs[0]]);
     if (kinds.length) section(box, 'Its other kinds', kinds.map((d) => kindLine(d)));
     section(box, 'Weaknesses and tips', tipsOf(def, KITS[e.defs[0]]));
+    weakBlock(box, m, e.defs.find((d) => WEAKNESS[d]));
     section(box, 'Where it is met', whereMet(e));
   }
   box.append(closeButton(close));
@@ -206,12 +230,9 @@ const closeButton = (close: () => void): HTMLButtonElement => {
   return b;
 };
 
-/** What `claim` is called with to take the new entries' stones (a milestone's id otherwise). */
-export const ENTRIES_CLAIM = 'entries';
-
 /**
  * The Codex page: the progress with its milestone rewards, the two tabs, and the grid. `claim` is called with a milestone's id when
- * its Claim is tapped (or `ENTRIES_CLAIM` for the new entries' stones) (the home screen pays, saves, and draws the page again). `root` is the sub-page's box (the sheet opens over it).
+ * its Claim is tapped (the home screen pays, saves, and draws the page again). `root` is the sub-page's box (the sheet opens over it).
  * The third tab lists the cinematics (seen ones can be watched again with `watch`).
  */
 export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => void, root: HTMLElement = body.parentElement ?? body, watch?: (sceneId: string) => void): void {
@@ -229,7 +250,7 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
     bar.append(fill);
     block.append(bar);
     // (the rewards, one row each: what it pays, what it takes, and whether it is taken, ready or still to earn)
-    block.append(el('p', 'cxPays', `Each new entry pays ${ENTRY_STONES} summoning stone, and counts towards a reward. Paid ${crownsClaimed(m, c)} of ${crownsTotal(c)} crowns and ${stonesClaimed(m, c)} of ${stonesTotal(c)} summoning stones.`));
+    block.append(el('p', 'cxPays', `Each new entry counts towards a reward. Paid ${crownsClaimed(m, c)} of ${crownsTotal(c)} crowns and ${stonesClaimed(m, c)} of ${stonesTotal(c)} summoning stones.`));
     const list = el('div', 'cxRewards');
     for (const ms of milestonesOf(c)) {
       const done = milestoneClaimed(m, ms);
@@ -246,18 +267,15 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
     block.append(list);
     head.append(block);
   }
-  // (one button takes everything that waits: the milestones, and a stone for each new entry, named under it)
+  // (one button takes everything that waits: the milestones)
   const waiting = codexWaiting(m);
-  const fresh = entriesWaiting(m).length;
-  if (waiting.length || fresh) {
-    const stones = stonesWaiting(m) + fresh * ENTRY_STONES;
+  if (waiting.length) {
+    const stones = stonesWaiting(m);
     const crowns = crownsWaiting(m);
     const all = el('button', 'primary cxClaimAll', `Claim rewards: ${crowns ? `+${crowns} crowns, ` : ''}+${stones} stone${stones === 1 ? '' : 's'}`);
     all.addEventListener('click', () => {
-      if (fresh) claim(ENTRIES_CLAIM);
       waiting.forEach((ms) => claim(ms.id));
     });
-    if (fresh) head.prepend(el('p', 'cxPays cxNew', `${fresh} new entr${fresh === 1 ? 'y' : 'ies'} discovered: +${fresh * ENTRY_STONES} summoning stone${fresh * ENTRY_STONES === 1 ? '' : 's'} to claim.`));
     head.prepend(all);
   }
   body.append(head);

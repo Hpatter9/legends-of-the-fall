@@ -353,6 +353,8 @@ export interface ArmyRecord {
   chests?: number[];
   /** The tiers the army has been cleared on, as a bitmask (bit per tier): each one's first clear pays a chest once (`armyStars.ts`). */
   first?: number;
+  /** DEPTH-BUILD: the tiers cleared on a cursed march (`march.ts`), for the laurel on the army card. Missing is none. */
+  cursed?: number[];
 }
 
 const blank = (): ArmyRecord => ({ waves: ARMY_WAVES, best: 0, won: 0, clears: 0, stars: {} });

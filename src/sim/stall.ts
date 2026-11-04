@@ -18,6 +18,8 @@ import { repairAll, repairItem } from './wear';
 
 const STALL_SALT = 0x57a11;
 const LINE_SALT = 0x57a12;
+/** The gear shelf's pieces a day (SEVEN-SLOT GEAR: four of the seven slots). */
+export const STALL_GEAR = 4;
 
 /** Standing with Hester: 1 a known face, 2 a valued customer, 3 a trusted friend, by the crowns spent at the stall. */
 export const STANDINGS = [
@@ -80,12 +82,15 @@ export function stockOf(m: Meta, day: number): Stock {
   };
   shelf('common', 2, [1, 1]);
   shelf('uncommon', 2, [2, 3]);
-  // (gear: one piece a slot, Common or Rare; one of the three Epic from standing 2, another Legendary from standing 3)
+  // (gear: SEVEN-SLOT GEAR's four pieces a day from four of the seven slots, Common or Rare; one of the four Epic from standing 2, another
+  // Legendary from standing 3)
   const level = stallLevel(m);
-  const grades: Rarity[] = EQUIP_SLOTS.map(() => (rng.chance(0.4) ? 2 : 1));
-  const epic = rng.int(0, 2);
-  const legend = (epic + 1 + rng.int(0, 1)) % 3;
-  const gear: Ware[] = EQUIP_SLOTS.map((slot, i) => {
+  const open = [...EQUIP_SLOTS];
+  const slots = Array.from({ length: STALL_GEAR }, () => open.splice(rng.int(0, open.length - 1), 1)[0]).sort((a, b) => EQUIP_SLOTS.indexOf(a) - EQUIP_SLOTS.indexOf(b));
+  const grades: Rarity[] = slots.map(() => (rng.chance(0.4) ? 2 : 1));
+  const epic = rng.int(0, STALL_GEAR - 1);
+  const legend = (epic + 1 + rng.int(0, STALL_GEAR - 2)) % STALL_GEAR;
+  const gear: Ware[] = slots.map((slot, i) => {
     const bases = EQUIP_BASE_IDS.filter((id) => EQUIP_BASES[id].slot === slot);
     const base = bases[rng.int(0, bases.length - 1)];
     const rarity: Rarity = i === legend ? 4 : i === epic ? 3 : grades[i];

@@ -60,7 +60,7 @@ import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene 
 import { onAwakened } from './awakenView';
 import { SCENES, SCENE_ORDER, type Moment, type Scene } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
-import { xpRate } from './sim/castle';
+import { siteLevel, xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { isReal, runKitStats, settleFinds, spareFinds, settleRunWear, slotTaken } from './sim/runGear';
 import { powerOf, powerText } from './sim/power';
@@ -74,7 +74,7 @@ import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDr
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
 import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, splitGuestXp } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
-import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
+import { afterFight, canAutoQuest, maxSpeed, spendTicket, startAuto, startAutoDaily, startAutoQuest, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
 import { Events } from './events';
@@ -90,9 +90,14 @@ import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
 import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
+import { showBuilt } from './builtCard';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
+import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
+import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
+import { showMarchCard } from './marchCard';
+import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
 import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
@@ -109,11 +114,17 @@ import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
 import { fullScene } from './ultMomentRules';
+import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
-import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
 import { autoSpellsFor } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
+import { snapSpell } from './sim/spellAim';
+import { castList, fitSchool, schoolOf } from './sim/schools';
+import { armDecree } from './sim/decrees';
+import { fightRanks } from './sim/spellRanks';
+import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { WeatherView } from './render/weatherView';
@@ -159,12 +170,14 @@ import heartUrl from './art/rogue/heart.png';
 import { EidolonCall } from './eidolonCall';
 import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
 import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
+import { chainById } from './sim/eidolonChainData';
 import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
 import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHorn';
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
+import { openScreen, openScreens } from './screens';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -274,6 +287,10 @@ class Game {
   /** JRPG-RECAP: the results screen's data once a fight is settled, and its player once the card is up. */
   private jrData: JrData | null = null;
   private jr: JrPlayer | null = null;
+  /** CLOSE-SCREENS: the result card has been left (the run's recap, the home screen, the next wave): it stays shut until the next fight
+   *  ends, and its closer in the screen stack while it is up. */
+  private resultDone = false;
+  private resultCloser: (() => void) | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -402,8 +419,16 @@ class Game {
         this.party.open('start', () => {
           const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
-          this.startRun(next);
-          if (auto) this.beginAuto(id, tier, auto);
+          const go = () => {
+            this.startRun(next);
+            if (auto) this.beginAuto({ army: id, tier }, auto);
+          };
+          // (DEPTH-BUILD: the March orders card, once any modifier is open; an auto replay marches plain)
+          if (auto) return go();
+          showMarchCard(this.meta, id, tier, next.seed, (orders) => {
+            if (orders) next.orders = orders;
+            go();
+          });
         }),
       onParty: () =>
         this.party.open('edit', () => {
@@ -417,7 +442,10 @@ class Game {
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
-        showDailyStart(this.meta, todayKey(), () => this.startRun(startDaily(this.meta, todayKey())), () => this.home.open());
+        showDailyStart(this.meta, todayKey(), (auto) => {
+          this.startRun(startDaily(this.meta, todayKey()));
+          if (auto) this.beginAuto({ daily: todayKey() }, auto);
+        }, () => this.home.open());
       },
       onTower: () => this.openStand(),
       onCalamity: () => this.openMode('calamity'),
@@ -433,7 +461,7 @@ class Game {
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
       // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
-      onQuestBattle: (id) => this.openQuestBattle(id),
+      onQuestBattle: (id, auto) => this.openQuestBattle(id, auto),
       // (EIDOLON-CHAINS: a chain's prologue, played over the home screen whatever the Cinematics setting: it is the chain's sense)
       onStory: (scene) => this.scenes.play(scene, this.players()),
       questSaved: () => {
@@ -453,7 +481,8 @@ class Game {
           saveMeta(this.meta);
           toastSpells(learnt);
         }
-        void this.queueScene({ kind: 'castle', site });
+        // (a popup, no cinematic: UI batch 1)
+        showBuilt(site, siteLevel(this.meta.castle, site, site === 'chapel'));
       },
     });
     this.towerView = new TowerView({
@@ -482,7 +511,17 @@ class Game {
     bindSpellbook(this.meta, () => {
       saveMeta(this.meta);
       this.home.refresh();
-    });
+    }, () => settings().ruler);
+    // (KING-SPELLS batch 2: the loadout follows the ruler's school, on load and whenever the ruler is changed)
+    let school = '';
+    const fit = () => {
+      if (school === settings().ruler && this.meta.spellbook.school === school) return;
+      school = settings().ruler;
+      fitSchool(this.meta.spellbook, school);
+      saveMeta(this.meta);
+    };
+    fit();
+    onSettings(fit);
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
@@ -536,6 +575,7 @@ class Game {
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    (window as unknown as { __screens: () => string[] }).__screens = openScreens;
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
@@ -574,7 +614,9 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
-    this.stopResults();
+    // (CLOSE-SCREENS: the last fight's card is closed; the new fight's comes up when it ends)
+    this.closeResult();
+    this.resultDone = false;
     this.placeSquad();
     this.acc = 0;
     this.chosen = null;
@@ -784,7 +826,7 @@ class Game {
   }
 
   /** A film made on the spot, by a preview key (CINE-001; for the Scenes previews and the screenshots): `quest:<battle>` and
-   *  `questAfter:<battle>` (its story before and after, with its first cast), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
+   *  `questAfter:<battle>` (its story before and after, with its first cast), `chain:<id>` (an Eidolon chain's prologue), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
    *  Last Stand's act card of act n, 1 to 3, with a line of the ruler's). */
   private filmOf(key: string): Scene | null {
     const [kind, arg = ''] = key.split(':');
@@ -794,6 +836,7 @@ class Game {
       const cast = qb.cast.map((x) => x.heroes[0]);
       return kind === 'quest' ? qb.before(cast) : qb.after(cast);
     }
+    if (kind === 'chain') return chainById(arg)?.prologue ?? null;
     if (kind === 'arrive' && UNITS[arg]) return arrivalScene(arg, UNITS[arg].name, titleOf(arg), 'volcano');
     if (kind === 'act') {
       const act = Math.max(1, Math.min(3, Number(arg) || 1));
@@ -941,6 +984,17 @@ class Game {
     nameEl.style.fontSize = `${px}px`;
     nameEl.style.letterSpacing = `${px >= 36 ? 4 : 2}px`;
     card.querySelector('span')!.textContent = named ? named.title : elite ? elite.epithet : titleOf(boss.def);
+    // (DEPTH-BUILD: the boss's weakness, once learnt in full or read with the Library's Archive)
+    card.querySelector('em.weakLine')?.remove();
+    // (a Scouted march knows the final boss's weakness for that run)
+    const scouted = this.run.orders?.mod === 'scouted';
+    const known = WEAKNESS[boss.def] ? knownClues(boss.def, scouted ? { clues: 3, marks: [] } : this.meta.weak?.[boss.def], roomOpen(this.run.castle, 'archive')) : null;
+    if (known?.full) {
+      const line = document.createElement('em');
+      line.className = 'weakLine';
+      line.textContent = `Known weakness: ${known.lines[2]}`;
+      card.append(line);
+    }
     // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
     const old = card.querySelector('canvas')!;
@@ -1009,6 +1063,10 @@ class Game {
     // in its own trial as a great being, EIDOLON-TRIAL)
     const qbNow = questBattleOfRun(this.run);
     this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
+    // (KING-SPELLS batch 2: the ruler's Decree, once a fight)
+    armDecree(this.b, schoolOf(settings().ruler).decree);
+    // (KING-SPELLS batch 3: the save's spell ranks)
+    this.b.spells.ranks = fightRanks(this.meta.spellbook);
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
@@ -1131,7 +1189,8 @@ class Game {
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
-      this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
+      // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed; the short versions keep it)
+      this.acc += Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale();
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       this.setAutoOn(b);
@@ -1203,6 +1262,8 @@ class Game {
     this.refreshBossBar();
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
+    // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
+    if (b.phase === 'fight') this.ultm.stage();
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
       else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
@@ -1770,10 +1831,12 @@ class Game {
   private setAutoOn(b: Battle): void {
     const on = this.ultAutoOn();
     b.autoUlt = on;
-    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, this.meta.spellbook.equipped);
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.meta.spellbook));
   }
 
   private wire(): void {
+    // (KING-SPELLS batch 2: the mana box casts the ruler's Decree once its meter is full)
+    bindDecree($('mana'), () => this.b, () => this.refreshSpells());
     // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
     this.hold = new HoldPress();
     this.info = new UnitInfoCard();
@@ -1802,6 +1865,17 @@ class Game {
       },
       art: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
       fx: this.fx,
+      // (ULT-SHOW: the showcase stages the real sprites, and the save counts the full moments seen)
+      sprite: (id) => this.sprites.get(id),
+      world: (u, v) => {
+        const t = tileAt(this.b.board, u, v);
+        return t ? at(u, v, t.h) : null;
+      },
+      seen: (kind) => seenOf(this.meta, kind),
+      saw: (kind) => {
+        noteSeen(this.meta, kind);
+        saveMeta(this.meta);
+      },
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
@@ -1982,8 +2056,9 @@ class Game {
   }
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
-  private beginAuto(army: string, tier: number, count: number): void {
-    const a = startAuto(this.meta, army, tier, count, todayKey());
+  private beginAuto(what: { army: string; tier: number } | { quest: string } | { daily: number }, count: number): void {
+    const day = todayKey();
+    const a = 'quest' in what ? startAutoQuest(this.meta, what.quest, count, day) : 'daily' in what ? startAutoDaily(this.meta, what.daily, count) : startAuto(this.meta, what.army, what.tier, count, day);
     if (!a || !spendTicket(this.meta, todayKey())) return;
     saveMeta(this.meta);
     this.auto = a;
@@ -2019,7 +2094,9 @@ class Game {
       // (each run spends a day's auto ticket; a new day mid-replay refills them)
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
-      const nextRun = armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      // (a quest battle's next try, or the daily's next practice run, or the army's next run)
+      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      if (!nextRun) return void this.endAuto('stopped');
       if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
       this.startRun(nextRun);
       this.autoPrep();
@@ -2034,9 +2111,11 @@ class Game {
     bar.hidden = !a;
     if (!a) return;
     const army = armyOfRun(this.run);
+    const fixed = waveArmyOf(this.run);
+    const name = a.kind === 'quest' ? questBattleById(a.quest!)?.title : a.kind === 'daily' ? 'Daily' : army?.name;
     bar.classList.toggle('paused', document.hidden);
     bar.querySelector('b')!.textContent = `Auto ${a.run}/${a.count}`;
-    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : army ? `${army.name} · wave ${Math.min(this.run.stage, army.waves.length)}/${army.waves.length}` : '';
+    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : name && fixed ? `${name} · wave ${Math.min(this.run.stage, fixed.waves.length)}/${fixed.waves.length}` : name ?? '';
   }
 
   /** The replay is over (the count ran out, a run was lost, or Stop was tapped): the banner goes and the summary card shows the totals. */
@@ -2048,8 +2127,16 @@ class Game {
     this.auto = null;
     this.autoNext = null;
     this.refreshAuto();
-    const army = armyById(a.army)!;
+    // (what was repeated, in words: "the Ashen Host", "Kenji's tale", "the daily")
+    const army = { name: a.kind === 'quest' ? questBattleById(a.quest!)?.title ?? 'battle' : a.kind === 'daily' ? 'daily' : armyById(a.army)!.name };
     const card = $('autoSum');
+    // (CLOSE-SCREENS: a flow screen: its rows and finds go as it closes; one already up is closed first)
+    this.autoSumCloser = openScreen('autoSum', () => {
+      this.autoSumCloser = null;
+      card.hidden = true;
+      card.querySelector('.asumRows')!.replaceChildren();
+      card.querySelector('.asumFinds')?.remove();
+    });
     card.querySelector('h2')!.textContent = why === 'done' ? 'Auto-replay done' : why === 'loss' ? 'Auto-replay stopped' : 'Auto-replay stopped';
     card.querySelector('.asumWhy')!.textContent =
       why === 'done'
@@ -2068,18 +2155,22 @@ class Game {
     card.querySelector('.asumFinds')?.remove();
     const finds = foundList(a.totals.finds ?? []);
     if (finds) rows.after(finds);
-    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
+    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : a.kind && a.kind !== 'army' ? 'Home' : 'To the armies';
     card.dataset.why = why;
+    card.dataset.kind = a.kind && a.kind !== 'army' ? 'other' : 'army';
     card.hidden = false;
     this.refresh();
   }
+  private autoSumCloser: (() => void) | null = null;
 
   private closeAutoSummary(): void {
     const card = $('autoSum');
-    card.hidden = true;
     const why = card.dataset.why;
+    if (this.autoSumCloser) this.autoSumCloser();
+    else card.hidden = true;
     // (a run that was stopped carries on by hand where it stands; a finished one goes on to the armies, a lost one home)
-    if (why === 'done') this.armyWon();
+    const army = !this.auto && card.dataset.kind !== 'other';
+    if (why === 'done') army ? void this.armyWon() : this.goHome();
     else if (why === 'loss') this.goHome();
   }
 
@@ -2094,7 +2185,12 @@ class Game {
   /* -------------------------------------------------------------- quest battles (QUEST-BATTLES, batch 2 of the quests) */
 
   /** A quest battle's Fight: the one saved part-way carries on; else the party screen with its cast locked in, then a new try. */
-  private openQuestBattle(id: string): void {
+  private openQuestBattle(id: string, auto?: number): void {
+    // (an auto-replay of a battle already won: a fresh try with the saved party, no picker; the cast is kept by the squad pick)
+    if (auto) {
+      if (!canAutoQuest(this.meta, id)) return this.home.open();
+      return this.beginQuestTry(id, this.meta.party, auto);
+    }
     const saved = loadSlot('quest');
     if (saved?.mode?.kind === 'quest' && saved.mode.quest === id) {
       this.run = saved;
@@ -2109,10 +2205,11 @@ class Game {
   }
 
   /** A new try of a quest battle with the party picked: its own seed and slot (an army run saved is not touched), then its story, the first time. */
-  private beginQuestTry(id: string, picked: readonly string[]): void {
+  private beginQuestTry(id: string, picked: readonly string[], auto?: number): void {
     const run = startQuestBattle(this.meta, id, picked);
     if (!run) return this.home.open();
     this.startRun(run);
+    if (auto) return this.beginAuto({ quest: id }, auto);
     void this.tellQuestStory(id);
   }
 
@@ -2151,7 +2248,7 @@ class Game {
     const run = this.run;
     const qb = questBattleOfRun(run);
     if (run.mode?.kind !== 'quest' || !qb) return this.goHome();
-    $('result').hidden = true;
+    this.closeResult();
     endVictory();
     if (!run.cleared) {
       const next = startQuestBattle(this.meta, qb.id, run.pool ?? run.mode.cast);
@@ -2185,7 +2282,7 @@ class Game {
 
   /** Leave a lost quest battle (the result card's Leave): back to the quest log, where its Fight waits. */
   private leaveQuest(): void {
-    $('result').hidden = true;
+    this.closeResult();
     endVictory();
     const qb = questBattleOfRun(this.run);
     this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
@@ -2337,6 +2434,21 @@ class Game {
   }
 
   /** JRPG-RECAP: the results screen is going (a new fight): its clock stops and its parts are emptied. */
+  /** CLOSE-SCREENS: the fight's result card is done with: hidden, emptied and its count-ups stopped, and kept shut while the battle
+   *  stays ended (`refresh` would otherwise put it back up under whatever opens next: the owner's chest over the last recap). */
+  private closeResult(): void {
+    const shut = this.resultCloser;
+    if (shut) shut();
+    else this.dropResult();
+  }
+  private dropResult(): void {
+    this.resultCloser = null;
+    this.resultDone = true;
+    $('result').hidden = true;
+    this.stopResults();
+    for (const id of ['banner', 'summary', 'joke', 'stars', 'armyStars', 'oreDrop', 'dayResult', 'waveNotes', 'xp', 'fightStats']) $(id).replaceChildren();
+  }
+
   private stopResults(): void {
     this.jr?.stop();
     this.jr = null;
@@ -2359,17 +2471,19 @@ class Game {
 
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
+    // (CLOSE-SCREENS: the result card is left, whichever way the game goes on)
+    this.closeResult();
     // (a won battle's victory music ends with its results)
     endVictory();
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
-      $('result').hidden = true;
+      this.closeResult();
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
     if (this.run.cleared && !this.run.tower) return void this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
-      $('result').hidden = true;
+      this.closeResult();
       saveRun(this.run);
       if (this.run.over) {
         const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in ${this.run.rift?.expedition ? 'region' : 'map'} ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
@@ -2469,13 +2583,14 @@ class Game {
     const left = retriesLeft(run);
     // (a fall with a heart left: the last full heart burns until the fight resumes and spends it)
     const burning = this.revive && !this.revive.swapped ? left - 1 : -1;
-    const key = `${left}:${burning}`;
+    const key = `${left}:${burning}:${run.orders?.mod ?? ''}`;
     if (box.dataset.key === key) return;
     box.dataset.key = key;
     box.replaceChildren();
     box.title = `${left} ${left === 1 ? 'life' : 'lives'} left`;
     box.setAttribute('aria-label', box.title);
-    for (let i = 0; i < MAX_RETRIES; i++) {
+    // (DEPTH-BUILD: a cursed march has one heart instead of two; the orders' badge sits beside them, a tap says what they are)
+    for (let i = 0; i < MAX_RETRIES - heartsLost(run.orders); i++) {
       const img = document.createElement('img');
       img.src = heartUrl;
       img.alt = '';
@@ -2487,6 +2602,19 @@ class Game {
         box.append(heart);
         burnHeart(heart, img, this.reviveTimes().swap);
       } else box.append(img);
+    }
+    const line = ordersLine(run.orders);
+    if (line && run.orders?.mod) {
+      const badge = document.createElement('button');
+      badge.className = 'marchBadge';
+      badge.textContent = marchDef(run.orders.mod).icon;
+      badge.title = line;
+      badge.setAttribute('aria-label', line);
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toastLines([line]);
+      });
+      box.append(badge);
     }
   }
 
@@ -2539,7 +2667,7 @@ class Game {
   private goHome(): void {
     const r = this.run;
     const army = armyOfRun(r);
-    $('result').hidden = true;
+    this.closeResult();
     this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
@@ -2547,7 +2675,7 @@ class Game {
    *  film already showed it), then the armies screen. */
   private async armyWon(): Promise<void> {
     const army = armyOfRun(this.run)!;
-    $('result').hidden = true;
+    this.closeResult();
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
@@ -2649,7 +2777,7 @@ class Game {
     // (a tap on the board with a spell chosen casts it there)
     if (this.b.phase === 'fight' && this.spell && !d.moved && (e.target as HTMLElement) === this.app.canvas) {
       const tile = this.tileAtScreen(e.clientX, e.clientY);
-      if (tile && castSpell(this.b, this.spell, ...tile)) this.spell = null;
+      if (tile && castSpell(this.b, this.spell, ...snapSpell(this.b, this.spell, ...tile))) this.spell = null;
       return this.endDrag();
     }
     if (this.b.phase !== 'deploy' || (d.pan && d.moved)) return this.endDrag();
@@ -2962,7 +3090,7 @@ class Game {
   private buildSpells(): void {
     const cards = $('spellCards');
     cards.replaceChildren();
-    for (const id of this.meta.spellbook.equipped) {
+    for (const id of castList(this.meta.spellbook)) {
       const sp = SPELLS[id];
       const card = document.createElement('button');
       card.className = 'spell';
@@ -3013,7 +3141,9 @@ class Game {
     this.spellGhost.hidden = false;
     this.spellGhost.style.left = `${e.clientX}px`;
     this.spellGhost.style.top = `${e.clientY - 40}px`;
-    this.hover = this.spellTile(e.clientX, e.clientY);
+    const at = this.spellTile(e.clientX, e.clientY);
+    // (the 3x3 shown is where the soft snap will put it: KING-SPELLS batch 1)
+    this.hover = at && snapSpell(this.b, d.id, ...at);
     this.markTiles();
     this.refreshSpells();
   }
@@ -3024,7 +3154,7 @@ class Game {
     if (!d) return;
     if (d.moved) {
       const tile = ok ? this.spellTile(e.clientX, e.clientY) : null;
-      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...tile);
+      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...snapSpell(this.b, d.id, ...tile));
       this.spell = null;
       this.hover = null;
       this.spellDragged = true;
@@ -3043,7 +3173,8 @@ class Game {
   /** While a spell is chosen, the finger or pointer shows the 3x3 it would hit. */
   private aim(e: PointerEvent): void {
     if (this.b.phase !== 'fight' || !this.spell) return;
-    this.hover = this.tileAtScreen(e.clientX, e.clientY);
+    const at = this.tileAtScreen(e.clientX, e.clientY);
+    this.hover = at && snapSpell(this.b, this.spell, ...at);
     this.markTiles();
   }
 
@@ -3053,7 +3184,8 @@ class Game {
     const dropped = this.spell && !canAfford(b, this.spell);
     if (dropped) this.spell = null;
     ($('mana').querySelector('i span') as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
-    $('mana').querySelector('b')!.textContent = `${Math.floor(b.spells.mana)}/${MANA_MAX}`;
+    $('mana').querySelector('b')!.textContent = manaText(b.spells);
+    refreshDecree($('mana'), b);
     for (const card of $('spellCards').children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
       card.classList.toggle('dim', !canAfford(b, id));
@@ -3064,7 +3196,8 @@ class Game {
     const caster = b.phase === 'fight' ? b.units.find((u) => u.side === 'hero' && u.alive && u.ks?.at1 !== undefined) : undefined;
     if (caster) tips.offer('skill', () => this.spriteBox(caster.id));
     if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('fightHud'));
-    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].text}: let go over the grid to cast, or back on the cards to cancel` : `${SPELLS[this.spell].text}: tap a tile, or drag a card onto the grid (tap the card again to cancel)`) : '';
+    // (one short line above the orbs, off the board; the spell's full words are on its orb's title and in the spellbook)
+    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].name}: let go on the grid · back here to cancel` : `${SPELLS[this.spell].name}: tap a tile · tap the orb to cancel`) : '';
     if (dropped) this.markTiles();
   }
 
@@ -3126,6 +3259,8 @@ class Game {
       const openBefore = army ? ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id) : [];
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
+      // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
+      if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
       // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)
@@ -3142,7 +3277,10 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired });
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
+      const earned = settleRun(this.meta, run, settled);
+      // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
+      toastLines(weakLines(settled.weak));
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
@@ -3165,7 +3303,7 @@ class Game {
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       // (a quest battle replayed for practice pays nothing, XP neither)
-      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
+      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) * marchPay(run.orders).xp : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.filter((h) => !h.guest).map((h) => h.kind));
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
@@ -3289,7 +3427,9 @@ class Game {
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0 || !!this.questBlock();
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    result.hidden = this.resultDone || !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    // (CLOSE-SCREENS: the card is one step of the fight's end: in the screen stack while it is up, so the next screen closes it)
+    if (!result.hidden && !this.resultCloser) this.resultCloser = openScreen('result', () => this.dropResult());
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       const cal = run.mode?.kind === 'calamity';

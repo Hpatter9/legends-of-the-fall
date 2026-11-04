@@ -2552,7 +2552,7 @@
   "Tip: the Library adds extra XP from every fight. The books stay unread, but the XP is real.",
   "Tip: Crowns buy chests, and chests hold summoning stones. Duchess has checked the stones. They are not edible.",
   "Tip: stars from clearing armies open the Castle, the Last Stand and the Calamity. Duchess has eaten two of hers.",
-  "Tip: the Chapel holds the king's spells. Pick three that fit the power budget, and cast them where it hurts.",
+  "Tip: three spells of your ruler's school, one of any: cast them where it hurts.",
   "Tip: in the Calamity you climb the maps with one hero, hiring more at camps and shops. Each map ends in a boss.",
   "Tip: tap Duchess and she will answer. She has opinions, and none of them are in words."
  ],
@@ -2981,7 +2981,7 @@
       },
       {
        "who": "narrator",
-       "text": "Behold the first herald. He has had no tea break since the war."
+       "text": "The first herald had not had a tea break since the war began."
       }
      ]
     }
@@ -3002,11 +3002,11 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "One quiet night, the sky over the keep ripped open like a cheap tent."
+       "text": "One quiet night, the sky over the Last Keep tore open like a cheap tent."
       },
       {
        "who": "narrator",
-       "text": "Through the tear: a portal. Beyond it, the void. Out of it, an invasion."
+       "text": "Through the tear: a portal, the void, and an invasion marching out."
       }
      ]
     },
@@ -3027,12 +3027,20 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "The king sends one hero through, and more may join beyond. That is you, choosing."
+       "who": "king",
+       "text": "One of you goes through. The rest hold this ground."
       },
       {
        "who": "hero",
        "text": "Into the void, then. I shall want a very long bath afterwards."
+      },
+      {
+       "who": "duchess",
+       "text": "Baaaah."
+      },
+      {
+       "who": "king",
+       "text": "Her Grace says dress warmly."
       }
      ]
     },
@@ -3041,11 +3049,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Beyond the portal, six heralds lead the invasion. Together they are the Calamity."
-      },
-      {
-       "who": "narrator",
-       "text": "It was not consulted on the name."
+       "text": "Six heralds wait in the void. Together they are the Calamity. Nobody consulted it on the name."
       }
      ]
     }
@@ -3066,7 +3070,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Deeper into the void, the way is all hedge, the grudge-holding sort."
+       "text": "Deeper in, the road is all hedge, and the hedge holds grudges."
       }
      ]
     },
@@ -3117,11 +3121,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Warden raised one bough, and the briar sighed."
-      },
-      {
-       "who": "narrator",
-       "text": "Behold the second herald. His ribbon is delayed in the post."
+       "text": "His ribbon of office was still in the post. He had noticed."
       }
      ]
     }
@@ -3142,7 +3142,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Further in, the void keeps a court, torches, and a long agenda."
+       "text": "Further in, the void keeps a court, a throne and a long agenda."
       }
      ]
     },
@@ -3168,11 +3168,11 @@
      "lines": [
       {
        "who": "imp",
-       "text": "Item two: the back door is brambles."
+       "text": "Item two: your nine divisions."
       },
       {
        "who": "malphas",
-       "text": "WHERE ARE MY NINE DIVISIONS?!"
+       "text": "WHERE ARE THEY?!"
       },
       {
        "who": "imp",
@@ -3201,7 +3201,7 @@
       },
       {
        "who": "narrator",
-       "text": "Behold the third herald. His ribbon is in purgatory."
+       "text": "His ribbon was still in purgatory, awaiting a signature."
       }
      ]
     }
@@ -3222,7 +3222,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "A pass through the void is blocked by a remarkably solid obstruction in iron plate."
+       "text": "A pass through the void is blocked by something remarkably solid, in iron plate."
       }
      ]
     },
@@ -3235,7 +3235,7 @@
       },
       {
        "who": "hrungar",
-       "text": "WAS THAT INTENDED TO BE A HOSTILE NUDGE?!"
+       "text": "WAS THAT INTENDED AS A HOSTILE NUDGE?!"
       }
      ]
     },
@@ -3244,11 +3244,11 @@
      "lines": [
       {
        "who": "hrungar",
-       "text": "IN FOUR CENTURIES, NEITHER WIND NOR SEVERE SIEGE HAS BUDGED ME!"
+       "text": "IN FOUR CENTURIES, NEITHER WIND NOR SIEGE HAS BUDGED ME!"
       },
       {
        "who": "ogre",
-       "text": "You slid twenty yards during the spring avalanche, boss."
+       "text": "You slid twenty yards in the spring avalanche, boss."
       },
       {
        "who": "hrungar",
@@ -3260,16 +3260,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "Hrungar cannot be shoved. The heroes have verified this with several bruised wrists."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
       },
       {
        "who": "narrator",
-       "text": "Behold the fourth herald. His commemorative ribbon is awaiting dispatch."
+       "text": "The Mountain could not be shoved. The hero checked, with a bruised wrist, to be sure."
       }
      ]
     }
@@ -3290,7 +3286,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The void's fifth reach is sulphur and cinder, with one small flame fiercely guarded."
+       "text": "The void's fifth reach is sulphur and cinder, with one small flame, fiercely guarded."
       }
      ]
     },
@@ -3303,11 +3299,11 @@
       },
       {
        "who": "hero",
-       "text": "That is an ordinary candle from the larder."
+       "text": "That is a candle from the larder."
       },
       {
        "who": "vorgrath",
-       "text": "IT CARRIES TREMENDOUS GRAVITAS!"
+       "text": "IT HAS GRAVITAS!"
       }
      ]
     },
@@ -3324,7 +3320,7 @@
       },
       {
        "who": "vorgrath",
-       "text": "THEN ERECT A WINDBREAK AT ONCE!"
+       "text": "THEN ERECT A WINDBREAK!"
       },
       {
        "who": "duchess",
@@ -3345,7 +3341,7 @@
       },
       {
        "who": "narrator",
-       "text": "Behold the fifth herald. His ribbon is in transit."
+       "text": "His ribbon was still in transit."
       }
      ]
     }
@@ -3366,7 +3362,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "At the heart of the void, the invasion's own gate. The clouds look bruised."
+       "text": "At the heart of the void stands the invasion's own gate."
       }
      ]
     },
@@ -3387,7 +3383,7 @@
       },
       {
        "who": "hero",
-       "text": "Even the lane to the confectioner's?"
+       "text": "The lane to the confectioner's?"
       }
      ]
     },
@@ -3425,7 +3421,7 @@
       },
       {
        "who": "narrator",
-       "text": "Behold the final herald. His ribbon was lost in transit."
+       "text": "His own ribbon had been lost in transit. He took it personally."
       }
      ]
     }
@@ -3457,7 +3453,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The final herald fell like a wardrobe: slowly, then crashingly."
+       "text": "The final herald fell like a wardrobe: slowly, then all at once."
       }
      ]
     },
@@ -3466,7 +3462,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Back home, the portal sighed and sealed shut. A finch piped up."
+       "text": "Behind them, the portal sighed and sealed itself. A finch piped up."
       },
       {
        "who": "second",
@@ -3479,11 +3475,7 @@
      "lines": [
       {
        "who": "hero",
-       "text": "What do we do now? My afternoon is clear."
-      },
-      {
-       "who": "second",
-       "text": "I had not planned past five o'clock."
+       "text": "What now? My afternoon is clear."
       },
       {
        "who": "grunt",
@@ -3491,7 +3483,7 @@
       },
       {
        "who": "duchess",
-       "text": "Mehh."
+       "text": "Baaaah."
       }
      ]
     },
@@ -3499,12 +3491,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "The king was thanked for placing everyone, then only watching."
+       "who": "king",
+       "text": "Her Grace says the grunt may have the cabbage plot. A meteor landed on it."
       },
       {
        "who": "narrator",
-       "text": "To celebrate, a meteor fell on an empty cabbage plot."
+       "text": "The Calamity was over. Somewhere, a very old road cleared its throat and began again."
       }
      ]
     }
@@ -3526,11 +3518,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Every legendary host has a first clumsy afternoon."
-      },
-      {
-       "who": "narrator",
-       "text": "This was the heroes' first. They bore it with dignity and bandages."
+       "text": "Every legendary host has a first clumsy afternoon. This was theirs. They bore it with bandages."
       }
      ]
     },
@@ -3539,15 +3527,15 @@
      "lines": [
       {
        "who": "front",
-       "text": "I trust nobody is vulgar enough to blame my placement."
+       "text": "I trust nobody is vulgar enough to blame my position."
       },
       {
        "who": "mid",
-       "text": "It was arguably thirty percent the placement, darling."
+       "text": "Thirty percent the position, darling."
       },
       {
        "who": "back",
-       "text": "I requested thirty paces to the rear. I was told that was the hedge."
+       "text": "I asked for thirty paces back. I was given a hedge."
       }
      ]
     },
@@ -3555,12 +3543,20 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "The king, who placed everyone and only watched, was quietly blamed."
+       "who": "king",
+       "text": "The line broke on the left. That is on me."
       },
       {
        "who": "mid",
-       "text": "Perhaps try the eastern flank tomorrow, majesty. Just a thought."
+       "text": "Gracious, majesty. We shall try the eastern flank tomorrow."
+      },
+      {
+       "who": "duchess",
+       "text": "Baaaah."
+      },
+      {
+       "who": "king",
+       "text": "Her Grace says the hedge was her idea."
       }
      ]
     },
@@ -3568,12 +3564,8 @@
      "caption": null,
      "lines": [
       {
-       "who": "duchess",
-       "text": "Mehh."
-      },
-      {
        "who": "narrator",
-       "text": "Tomorrow, they resolved, would be more dignified. Duchess was sceptical."
+       "text": "Tomorrow, they resolved, would be more dignified. Duchess, chewing the hedge, was sceptical."
       }
      ]
     }
@@ -3593,7 +3585,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Certain champions are sturdier than the rest, and insist on delivering an opening monologue."
+       "text": "Certain champions are sturdier than the rest. A few of them insist on an opening monologue."
       }
      ]
     },
@@ -3610,7 +3602,7 @@
       },
       {
        "who": "elite",
-       "text": "I am bloodthirsty! Excessively bloodthirsty! Try the roast mutton!"
+       "text": "I am bloodthirsty! Try the roast mutton!"
       }
      ]
     },
@@ -3619,7 +3611,7 @@
      "lines": [
       {
        "who": "elite",
-       "text": "Difficult room tonight. Very stiff. Ah, a four-legged ruminant in the stalls! Splendid!"
+       "text": "Difficult room tonight. Very stiff. Ah, a four-legged ruminant in the stalls!"
       },
       {
        "who": "duchess",
@@ -3636,7 +3628,7 @@
      "lines": [
       {
        "who": "elite",
-       "text": "Right then. Enough pleasant banter. Let me demonstrate my signature routine!"
+       "text": "Right then. Enough banter. Allow me to demonstrate my signature routine!"
       }
      ]
     }
@@ -3694,7 +3686,7 @@
       },
       {
        "who": "grunt",
-       "text": "We all admire the plume, boss. Please don't ask us to swear an oath to it."
+       "text": "We all admire the plume, boss. Please do not ask us to swear an oath to it."
       }
      ]
     },
@@ -3744,7 +3736,7 @@
       },
       {
        "who": "boss",
-       "text": "MY DISPATCH OFFICER SPECIFICALLY CONFIRMED A THURSDAY ENGAGEMENT!"
+       "text": "MY DISPATCH OFFICER CONFIRMED A THURSDAY ENGAGEMENT!"
       }
      ]
     },
@@ -3753,7 +3745,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "He attends every morning with commendable punctuality and his own commemorative tankard."
+       "text": "He attends every morning with commendable punctuality, and his own commemorative tankard."
       },
       {
        "who": "duchess",
@@ -3786,7 +3778,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "There exist strata of violence far above Legendary. They are felt chiefly in the teeth."
+       "text": "There are strata of violence far above Legendary. They are felt chiefly in the teeth."
       }
      ]
     },
@@ -3803,7 +3795,7 @@
       },
       {
        "who": "warlord",
-       "text": "I HAVE PRACTISED MY FEROCIOUS ROAR IN FRONT OF A LOOKING GLASS!"
+       "text": "I PRACTISED MY ROAR IN FRONT OF A LOOKING GLASS!"
       }
      ]
     },
@@ -3812,7 +3804,7 @@
      "lines": [
       {
        "who": "grunt",
-       "text": "He rehearsed in the cellar so the chickens wouldn't lose their nerve."
+       "text": "He rehearsed in the cellar so the chickens would not lose their nerve."
       },
       {
        "who": "warlord",
@@ -3849,7 +3841,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Right in the middle of a delicate tactical flanking manoeuvre, a white shape intervened."
+       "text": "Right in the middle of a delicate flanking manoeuvre, a white shape intervened."
       }
      ]
     },
@@ -3879,7 +3871,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "She fights exclusively for herself. Today her interests aligned with the winners."
+       "text": "She fights for herself alone. Today her interests happened to line up with the winners'."
       }
      ]
     }
@@ -3918,25 +3910,11 @@
       {
        "who": "boss",
        "text": "I HAVE BURNED NINE KEEPS! YOURS WILL BE A *ROUND TEN*!"
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "It was eight, boss. One was a barn."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "Then we shall be the one that does not burn."
@@ -3987,25 +3965,11 @@
       {
        "who": "boss",
        "text": "THE LIVING ARE A *PASSING PHASE*. I HAVE COME TO PASS THEM."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
-       "text": "Rattle. (The skeleton agrees. It always agrees.)"
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+       "text": "Clack. Clack-clack. (It always agrees.)"
+      },
       {
        "who": "hero",
        "text": "He is very cold for someone so keen on fire."
@@ -4056,25 +4020,11 @@
       {
        "who": "boss",
        "text": "THE HERD DOES NOT STOP. THE HERD DOES NOT *TURN*. THE HERD..."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "Has stopped for clover again, sire."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "A very large pig with a very large grudge."
@@ -4125,25 +4075,11 @@
       {
        "who": "boss",
        "text": "EVERY AXE YOU EVER SWUNG, THE GROVE HAS *COUNTED*."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "He keeps a ledger on birch bark. It is very long."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "I have only ever chopped kindling. Mostly."
@@ -4194,25 +4130,11 @@
       {
        "who": "boss",
        "text": "NONE WHO ENTER MY MAZE HAVE *EVER* FOUND THE WAY OUT!"
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "Because you keep moving the walls, boss."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "Then we shall walk straight through them."
@@ -4263,25 +4185,11 @@
       {
        "who": "boss",
        "text": "OGRE CLANS CRUSH! OGRE CLANS SMASH! OGRE CLANS... WHAT IS FOR *LUNCH*?"
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "Broth, chief. Again."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "If we hold until noon, they will stop to eat."
@@ -4332,25 +4240,11 @@
       {
        "who": "boss",
        "text": "SIGN OVER THE KEEP, AND I SHALL MAKE IT *QUICK*."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "There is a cooling-off period of six hundred years, sire."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "We do not sign. We read the small print and then we hit you."
@@ -4401,25 +4295,11 @@
       {
        "who": "boss",
        "text": "WHERE THE PARADE PASSES, NOTHING IS *EVER* THE SAME AGAIN."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "The last village did get very good at lantern-making."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "Then let it pass round us. We are staying the same."
@@ -4470,25 +4350,11 @@
       {
        "who": "boss",
        "text": "FORGE. HOT. KEEP. *FLAT*."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "escort",
        "text": "He means it in the nicest way. He means it literally."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
+      },
       {
        "who": "hero",
        "text": "I have never been hammered by a building before."
@@ -5130,12 +4996,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5171,12 +5037,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5212,12 +5078,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5253,12 +5119,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5294,12 +5160,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5335,12 +5201,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5376,12 +5242,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5417,12 +5283,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5458,12 +5324,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5499,12 +5365,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5540,12 +5406,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5581,12 +5447,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5622,12 +5488,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5663,12 +5529,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5704,12 +5570,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5745,12 +5611,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5786,12 +5652,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5827,12 +5693,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5868,12 +5734,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5909,12 +5775,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5950,12 +5816,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -5991,12 +5857,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6032,12 +5898,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6073,12 +5939,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6114,12 +5980,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6155,12 +6021,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6196,12 +6062,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6237,12 +6103,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6278,12 +6144,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6319,12 +6185,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6360,12 +6226,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6401,12 +6267,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6442,12 +6308,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6483,12 +6349,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6524,12 +6390,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6565,12 +6431,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6606,12 +6472,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6647,12 +6513,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6688,12 +6554,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6729,12 +6595,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6770,12 +6636,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6811,12 +6677,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6852,12 +6718,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6893,12 +6759,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -6934,12 +6800,12 @@
      "caption": null,
      "lines": [
       {
-       "who": "narrator",
-       "text": "{hero} has awakened. The heightened splendour is quite blinding."
-      },
-      {
        "who": "duchess",
        "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }
@@ -7351,6 +7217,10 @@
       {
        "who": "mate",
        "text": "Fall back to the inner yard. Bring the king, and the biscuits."
+      },
+      {
+       "who": "king",
+       "text": "I shall walk, thank you. Briskly. With dignity. Mostly briskly."
       }
      ]
     },
@@ -7358,8 +7228,8 @@
      "caption": null,
      "lines": [
       {
-       "who": "king",
-       "text": "I shall walk, thank you. Briskly. With dignity. Mostly briskly."
+       "who": "narrator",
+       "text": "Behind them, the last of the outer wall finished falling down."
       }
      ]
     }
@@ -7393,6 +7263,10 @@
       {
        "who": "mate",
        "text": "Majesty, do sit on the throne. It is the one spot we can defend."
+      },
+      {
+       "who": "king",
+       "text": "I have been sitting on it all along. You simply never noticed."
       }
      ]
     },
@@ -7400,8 +7274,8 @@
      "caption": null,
      "lines": [
       {
-       "who": "king",
-       "text": "I have been sitting on it all along. You simply never noticed."
+       "who": "narrator",
+       "text": "Beyond the doors, something began to drum."
       }
      ]
     }
@@ -7435,6 +7309,10 @@
       {
        "who": "mate",
        "text": "They also say we are nine feet tall. Let them."
+      },
+      {
+       "who": "king",
+       "text": "Whatever comes through that door, the Last Keep stands while you do."
       }
      ]
     },
@@ -7442,8 +7320,8 @@
      "caption": null,
      "lines": [
       {
-       "who": "king",
-       "text": "Whatever comes through that door, the Last Keep stands while you do."
+       "who": "narrator",
+       "text": "Far off in the land, a bard hit a wrong note and started the verse again."
       }
      ]
     }

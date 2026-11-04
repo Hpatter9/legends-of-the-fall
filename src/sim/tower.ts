@@ -1074,8 +1074,10 @@ export function settleTower(m: Meta, run: Run): TowerSummary | null {
   const armies = t.armies.filter((id) => armyById(id) && armyUnlocked(m, id));
   const army = armyById(armies[Math.min(Math.max(0, t.act - 1), armies.length - 1)] ?? ARMIES[0].id)!;
   let n = 0;
+  // (QUESTS-3: stones only in the chests of a new best floor)
+  const dry = floors <= t.prevBest;
   const give = (at: number, count: number) => {
-    for (let i = 0; i < count; i++) m.stash.push({ army: army.id, at, tier: 0, seed: mixSeed(run.seed, 0x70e7, ++n), tower: true });
+    for (let i = 0; i < count; i++) m.stash.push({ army: army.id, at, tier: 0, seed: mixSeed(run.seed, 0x70e7, ++n), tower: true, ...(dry ? { dry: true } : {}) });
   };
   give(3, c.bronze);
   give(5, c.silver);
@@ -1105,7 +1107,7 @@ function settleCalamity(m: Meta, run: Run): TowerSummary {
   const c = run.cleared ? { bronze: 0, silver: 0, gold: ascChests(level) } : { bronze: 0, silver: 0, gold: 0 };
   const armies = t.armies.filter((id) => armyById(id) && armyUnlocked(m, id));
   const army = armyById(armies[armies.length - 1] ?? ARMIES[0].id)!;
-  for (let i = 0; i < c.gold; i++) m.stash.push({ army: army.id, at: 10, tier: 0, seed: mixSeed(run.seed, 0xca1c, i + 1), tower: true });
+  for (let i = 0; i < c.gold; i++) m.stash.push({ army: army.id, at: 10, tier: 0, seed: mixSeed(run.seed, 0xca1c, i + 1), tower: true, half: true });
   noteGuardians(m, maps);
   const best = m.calamity ?? { best: 0, clears: 0 };
   const cleared = ascCleared(m);
