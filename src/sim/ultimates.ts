@@ -500,7 +500,7 @@ const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommand
  *  and a few heroes whose kits fall behind against the stronger foes a level-30 team now meets (the Samurai, Ninja Monk, Buccaneer, Demon Swordsman)
  *  fire theirs more than twice in a long fight. `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
-  knight: { rate: 1.46, power: 0.722 },
+  knight: { rate: 1.46, power: 0.57 }, // (SKILLS-10, on main 0.357: 0.722 to 0.57, he stood +6.8 at level 30 with the merged tactics)
   samurai: { rate: 2.33, power: 3.135 },
   kunoichi: { rate: 1.65, power: 2.712 },
   archer: { rate: 0.65, power: 1.288 },
