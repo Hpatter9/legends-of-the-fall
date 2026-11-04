@@ -10,6 +10,7 @@ import { autoButton } from './autoAsk';
 import { canAutoQuest } from './sim/autoReplay';
 import { giverKeyOf, giverName, giverWords, offerFrom, questFace, rewardText } from './questCard';
 import { questById } from './sim/questData';
+import { LENGTHS, LENGTH_NAMES, lengthOf, starLine, starsOf, type QuestLength } from './sim/questStars';
 import { ACTIVE_MAX, cannotTake, dropQuest, handIn, isDone, progressOf, takeQuest, timesDone, trackedQuest, trackQuest } from './sim/quests';
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
@@ -108,7 +109,7 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
     const fill = el('span');
     fill.style.width = `${Math.round((p.now / p.need) * 100)}%`;
     bar.append(fill);
-    body.append(el('b', '', q.title), el('small', '', q.text), bar, el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(q.reward, m)}`));
+    body.append(el('b', '', q.title), el('small', 'qlStars', starLine(q)), el('small', '', q.text), bar, el('small', 'qlCount', `${p.now}/${p.need} · ${rewardText(q.reward, m)}`));
     const side = el('div', 'qlSide');
     if (dropping === a.id) {
       // (the confirm: the row says what dropping costs, with Drop it and Keep)
@@ -174,15 +175,39 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
   }
 }
 
+/** The board's order (easiest first by default) and length filter; kept while the page is open. */
+let boardSort: 'easy' | 'hard' = 'easy';
+let boardLength: QuestLength | null = null;
+
 function drawBoard(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHooks): void {
-  const offers = m.quests?.offers ?? [];
-  if (!offers.length) return empty(list, 'Nothing on offer today. Gwen pins a new quest each day; passersby come and go.');
+  const all = m.quests?.offers ?? [];
+  if (!all.length) return empty(list, 'Nothing on offer today. Gwen pins a new quest each day; passersby come and go.');
+  // (QUESTS-3: sort by stars, and filter by length)
+  const bar = el('div', 'qlFilter');
+  const chip = (label: string, on: boolean, go: () => void, aria: string) => {
+    const b = el('button', `qlChip${on ? ' on' : ''}`, label);
+    b.setAttribute('aria-pressed', String(on));
+    b.setAttribute('aria-label', aria);
+    b.addEventListener('click', () => {
+      go();
+      redraw();
+    });
+    bar.append(b);
+  };
+  chip(boardSort === 'easy' ? '★ Easiest first' : '★ Hardest first', true, () => (boardSort = boardSort === 'easy' ? 'hard' : 'easy'), 'Change the order of the board');
+  chip('All', boardLength === null, () => (boardLength = null), 'Show every length');
+  for (const l of LENGTHS) chip(LENGTH_NAMES[l], boardLength === l, () => (boardLength = boardLength === l ? null : l), `Show ${LENGTH_NAMES[l]} quests only`);
+  list.append(bar);
+  const offers = all
+    .filter((o) => boardLength === null || lengthOf(questById(o.id)!) === boardLength)
+    .sort((a, b) => (starsOf(questById(a.id)!) - starsOf(questById(b.id)!)) * (boardSort === 'easy' ? 1 : -1));
+  if (!offers.length) list.append(el('p', 'qlEmpty', `No ${LENGTH_NAMES[boardLength!]} quests on the board.`));
   for (const o of offers) {
     const q = questById(o.id)!;
     const row = el('div', `qlRow${q.repeat ? ' rep' : ''}`);
     const body = el('div', 'qlBody');
     const n = timesDone(m, q.id);
-    body.append(el('b', '', q.title), el('small', 'qlGiver', offerFrom(q) + (q.repeat ? ` · repeatable${n ? `, done ${n}×` : ''}` : '')), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward, m)));
+    body.append(el('b', '', q.title), el('small', 'qlStars', starLine(q)), el('small', 'qlGiver', offerFrom(q) + (q.repeat ? ` · repeatable${n ? `, done ${n}×` : ''}` : '')), el('small', '', q.text), el('small', 'qlCount', rewardText(q.reward, m)));
     const side = el('div', 'qlSide');
     const take = el('button', 'primary', 'Take');
     const why = cannotTake(m, q.id);
@@ -212,7 +237,7 @@ function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
     const n = timesDone(m, id);
     // (a repeatable's count: "×3")
     if (q.repeat) title.append(el('i', 'qlTimes', `×${n}`));
-    body.append(title, el('small', 'qlGiver', giverName(giverKeyOf(q)).name), el('small', 'qlWord', `“${giverWords(q, q.done[0])}”`));
+    body.append(title, el('small', 'qlStars', starLine(q)), el('small', 'qlGiver', giverName(giverKeyOf(q)).name), el('small', 'qlWord', `“${giverWords(q, q.done[0])}”`));
     if (q.reward.keepsake) body.append(el('small', 'qlKeep', `Keepsake: ${q.reward.keepsake}`));
     row.append(questFace(q), body);
     // (batch 2: a quest battle won can be fought again for practice; it pays nothing)

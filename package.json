@@ -17,6 +17,7 @@
     "unlock-pace": "node tools/unlockPace.mjs",
     "daily-rate": "node tools/dailyRate.mjs",
     "quest-rate": "node tools/quest-battles/rate.mjs",
+    "quest-stars": "node tools/quest-stars/stars.mjs",
     "level-pace": "node tools/levelPace.mjs",
     "music": "node tools/epic-music/render.mjs && node tools/epic-music/manifest.mjs"
   },

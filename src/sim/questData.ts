@@ -255,6 +255,9 @@ export interface QuestDef {
   goal: Goal;
   reward: Reward;
   mood?: Mood;
+  /** QUESTS-3: the difficulty (1 to 5 stars) and the length tag; unset, `questStars.ts` reads its table. */
+  stars?: number;
+  length?: 'short' | 'long' | 'chain' | 'campaign';
 }
 
 /** Every quest: each giver's uniques, then the repeatables. */

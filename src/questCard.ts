@@ -9,6 +9,7 @@
 
 import { FACES } from './questArt';
 import { GIVERS, questById, type QuestDef, type Reward } from './sim/questData';
+import { starLine } from './sim/questStars';
 import { GWEN_REMARKS } from './sim/questData/gwen';
 import { ACTIVE_MAX, cannotTake, handIn, isDone, takeQuest } from './sim/quests';
 import { heroEpithet, heroName } from './sim/heroNames';
@@ -196,7 +197,7 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
     });
     btn('Not now', '', closeGiverCard);
   } else if (t.kind === 'offer') {
-    lines.append(el('h4', '', t.q.title), ...t.q.offer.map((l) => say(t.q, l)), el('p', 'qcGoal', t.q.text), el('p', 'qcPay', rewardText(t.q.reward, m)));
+    lines.append(el('h4', '', t.q.title), el('p', 'qcStars', starLine(t.q)), ...t.q.offer.map((l) => say(t.q, l)), el('p', 'qcGoal', t.q.text), el('p', 'qcPay', rewardText(t.q.reward, m)));
     const why = cannotTake(m, t.q.id);
     const take = btn('Take it on', 'primary', () => {
       if (!takeQuest(m, t.q.id, todayKey())) return;
@@ -211,7 +212,7 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
     btn('Not now', '', closeGiverCard);
   } else {
     const a = m.quests!.active.find((x) => x.id === t.q.id)!;
-    lines.append(el('h4', '', t.q.title), say(t.q, t.q.going), el('p', 'qcGoal', `${t.q.text} · ${Math.min(a.progress, t.q.goal.n)}/${t.q.goal.n}`));
+    lines.append(el('h4', '', t.q.title), el('p', 'qcStars', starLine(t.q)), say(t.q, t.q.going), el('p', 'qcGoal', `${t.q.text} · ${Math.min(a.progress, t.q.goal.n)}/${t.q.goal.n}`));
     btn('Quest log', '', () => {
       closeGiverCard();
       hooks.openLog();
