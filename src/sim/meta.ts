@@ -4,7 +4,7 @@
 // raise the kind's rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM;
 // every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
 
-import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
+import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { DAILY_WAVES } from './daily';
 import { dailyStarsMax } from './dailyThemes';
@@ -458,7 +458,7 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.unlock = readUnlock(m.unlock, m.unlocked);
       m.unlockDry = Math.max(0, (m.unlockDry ?? 0) | 0);
       m.castle = readCastle(m.castle);
-      m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
+      m.spellbook = readLoadout(m.spellbook);
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
       // (DEPTH-BUILD: the Chapel is levelled; the old flag reads as level 1, and a level keeps the flag set, which the spellbook reads)
       if (m.chapel) m.castle.chapel = Math.max(1, m.castle.chapel ?? 0);

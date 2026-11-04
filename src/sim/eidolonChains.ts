@@ -18,6 +18,7 @@
 // Pure rules: no Pixi, no DOM, no randomness (nothing is drawn: a chain's offer follows its rules alone).
 
 import type { Meta } from './meta';
+import { chainPartReward } from './questPay';
 import { blankQuests, goalGain, needMet, payReward, type QuestFight } from './quests';
 import { bindEidolon, boundOf, chooseEidolon } from './warHorn';
 import { castOf, questBattleById } from './questBattles';
@@ -118,7 +119,8 @@ export function noteChains(m: Meta, f: QuestFight): PieceFound[] {
   if (st.progress < cur.part.goal.n) return [];
   const s = stateOf(m);
   if (!(s.pieces ??= []).includes(cur.part.piece.id)) s.pieces.push(cur.part.piece.id);
-  payReward(m, cur.part.reward, `chain:${cur.part.id}`);
+  // (QUESTS-3: a part also pays its share of the chain's campaign crowns and stones, the finale the most)
+  payReward(m, chainPartReward(cur.chain.id, cur.index, cur.chain.parts.length, cur.part.reward), `chain:${cur.part.id}`);
   st.part += 1;
   st.progress = 0;
   return [{ chain: cur.chain.id, part: cur.index, piece: cur.part.piece }];

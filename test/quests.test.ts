@@ -162,8 +162,12 @@ test('the goals count what the fight did, with their riders', () => {
   assert.equal(goalGain(carter, { ...plain, army: 'orcs', heroes: ['wizard'] }), 0);
   assert.equal(goalGain(carter, { ...plain, army: 'orcs', won: false }), 0);
   const quiet = questById('quietHands')!.goal;
-  assert.equal(goalGain(quiet, { ...plain, boss: true }), 1);
-  assert.equal(goalGain(quiet, { ...plain, boss: true, flawless: false }), 0);
+  // (QUESTS-3, Q4: the retuned Quiet Hands asks for the Undead's boss on Hard, flawless)
+  const hardBoss = { ...plain, boss: true, army: 'undead', mode: 'army' as const, tier: 1 };
+  assert.equal(goalGain(quiet, hardBoss), 1);
+  assert.equal(goalGain(quiet, { ...hardBoss, flawless: false }), 0);
+  assert.equal(goalGain(quiet, { ...hardBoss, tier: 0 }), 0, 'Normal is not enough');
+  assert.equal(goalGain(quiet, { ...plain, boss: true }), 0);
   assert.equal(goalGain(quiet, plain), 0);
   const bones = questById('boneCollector')!.goal;
   assert.equal(goalGain(bones, { ...plain, won: false, kills: ['skeleton', 'spearman', 'boneArcher', 'orc', 'boneCaptain'] }), 3, 'lost fights count; the bosses do not');

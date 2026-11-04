@@ -16,7 +16,7 @@ import { castOf, questBattleById, questSeed, type QuestBattle } from './questBat
 import { questById } from './questData';
 import { blankQuests } from './quests';
 import { chainWantsBattle } from './eidolonChains';
-import { ARMY_START_GOLD, newRun, recruit, reward, SUMMON_BASE, type Run } from './run';
+import { ARMY_START_GOLD, MAX_RETRIES, newRun, recruit, reward, SUMMON_BASE, type Run } from './run';
 
 /**
  * The gold a try begins with: the armies' start (two hires), and what an army run would have been paid by the wave this battle's first
@@ -24,6 +24,9 @@ import { ARMY_START_GOLD, newRun, recruit, reward, SUMMON_BASE, type Run } from 
  * wave 11 meets a party as built up as a run at wave 9 would be, not a party of two.
  */
 export function questStartGold(qb: QuestBattle): number {
+  return Math.round(baseStartGold(qb) * (qb.rules?.purse ?? 1));
+}
+function baseStartGold(qb: QuestBattle): number {
   const first = Math.max(1, qb.like.wave - qb.waves.length + 1);
   let gold = ARMY_START_GOLD;
   for (let n = 1; n < first; n++) gold += reward(n);
@@ -79,6 +82,8 @@ export function startQuestBattle(m: Meta, id: string, party: readonly string[]):
   const run = newRun(questSeed(m.seed, id, n), pool, m.castle, 0, questStartGold(qb));
   run.mode = { kind: 'quest', quest: id, cast, ...(battleWon(m, id) ? { practice: true } : {}) };
   run.area = qb.land;
+  // (QUESTS-3, Q5: a battle with no hearts: the run's retries are all spent, so a lost wave ends the try)
+  if (qb.rules?.noHearts) run.retries = MAX_RETRIES;
   // (the required cast waits on the bench, free: they must fight, so they are not bought)
   for (const kind of cast) recruit(run, kind, SUMMON_BASE);
   return run;

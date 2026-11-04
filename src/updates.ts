@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.340.0',
+    date: '2026-11-04',
+    title: 'Quests rebuilt, Schools of the Crown',
+    notes: ['About 165 new quests and 26 new battles; the old quests are tougher; Eidolon chains become five-part campaigns.', 'Each ruler leads a school of spells and has a Decree, a great spell that fills from spare mana.'],
+  },
+  {
     version: '0.339.0',
     date: '2026-11-04',
     title: 'Rooms, bosses\' weaknesses, march orders',
