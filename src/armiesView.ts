@@ -402,7 +402,8 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
       info.append(cont);
     }
     // (a tier already cleared can be farmed: the Auto toggle beside Fight! repeats it for a count of runs)
-    const farm = open && !running && canAutoReplay(m, a.id, tier);
+    // (also with a run of this army going, on any tier: Auto then starts afresh, after a second tap to say the run in progress is lost)
+    const farm = open && canAutoReplay(m, a.id, tier);
     const auto = farm && autoPick.on;
     const go = el('button', open ? 'primary asFight' : 'asFight', !open ? 'Locked' : running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Fight again · ${t.name}` : 'Fight!');
     // (starting another army while a run is going would lose it: a second tap says yes)
@@ -412,6 +413,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     if (auto) go.textContent = count ? `Auto-fight ×${count}` : 'No auto runs left';
     const runs = auto ? count : undefined;
     if (!open || (auto && !count)) go.disabled = true;
+    else if (running && auto) twoTap(go, 'Lose the run in progress?', () => hooks.onFight(a.id, tier, runs));
     else if (running) go.addEventListener('click', () => hooks.onContinue());
     else if (hooks.running) twoTap(go, `Leave ${hooks.running.label}?`, () => hooks.onFight(a.id, tier, runs));
     else go.addEventListener('click', () => hooks.onFight(a.id, tier, runs));

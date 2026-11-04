@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, FRONT_ROW, cellX, cellY, decorAt, effectText, footprint, inBlock, isPaved, pavingAt, TOP_GAP, viewFor, VIEW_W, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, WALL_RISE, WALL_STEP, YARD } from '../src/render/castleSpots';
+import { BLURB, builtWords, FRONT_ROW, cellX, cellY, decorAt, effectText, footprint, inBlock, isPaved, pavingAt, TOP_GAP, viewFor, VIEW_W, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, WALL_RISE, WALL_STEP, YARD } from '../src/render/castleSpots';
 
 const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -446,4 +446,12 @@ test('the market and the garden: stalls along the square, and a garden of beds i
   const beds = YARD.props.filter((p) => p.sprite === 'field' || p.sprite === 'field2' || p.sprite === 'herb');
   assert.ok(beds.length >= 3, 'a garden of beds');
   for (const b of beds) assert.ok(b.u <= 1 && b.v <= 1, `bed at ${b.u},${b.v} is in the north corner`);
+});
+
+test('a finished build\'s popup names the building and what it gives', () => {
+  const b = builtWords('barracks', 2);
+  assert.equal(b.title, 'Barracks');
+  assert.equal(b.level, 'level 2 of 7');
+  assert.equal(b.gives, effectText('barracks', 2));
+  assert.match(builtWords('chapel', 1).gives, /spellbook/);
 });
