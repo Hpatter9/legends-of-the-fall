@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.338.0',
+    date: '2026-11-04',
+    title: 'Seven gear slots',
+    notes: ['Heroes now wear gear in seven slots: head, torso, both hands, feet, belt and an accessory, shown on a paper doll. Your gear moves over, nothing is lost.'],
+  },
+  {
     version: '0.337.0',
     date: '2026-11-04',
     title: 'Quest stars, rarer summons, tactics',
