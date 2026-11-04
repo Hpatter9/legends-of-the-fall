@@ -164,3 +164,11 @@ test('batch 1: each blade is seen to do it, every foe it struck reels, and every
   assert.ok(buc.plan.cast.hooks.length >= 1);
   for (const id of buc.plan.cast.hooks) assert.notDeepEqual(posesAt(buc.plan, 0).get(id)!.at, buc.plan.cast.tiles.get(id));
 });
+
+test('a cast with nothing of its style\'s shape but foes struck still gets a showcase: its blows on each in turn', () => {
+  const cast = readCast({ id: 1, u: 3, v: 2 }, [{ kind: 'hit', by: 1, to: 2, dmg: 10, heavy: true, splash: false, killed: false, src: 'skill' }], [], (id) => (id === 2 ? { u: 3, v: 3 } : undefined));
+  const plan = planShow('minotaur', cast)!;
+  assert.ok(plan);
+  assert.ok(plan.beats.some((x) => x.kind === 'cut' && x.foe === 2));
+  assert.equal(planShow('minotaur', readCast({ id: 1, u: 3, v: 2 }, [])), null, 'nothing struck, nothing to show');
+});

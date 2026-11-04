@@ -286,7 +286,9 @@ export function planShow(kind: string, cast: Cast): ShowPlan | null {
     : sc.style === 'leap' ? b.leapIn()
     : sc.style === 'blows' ? b.flurries()
     : b.hookIn();
-  if (!ok) return null;
+  // (the cast had nothing of its style's shape (a charge with a foe already beside it): its blows on each foe it struck, in turn; every style
+  // checks its shape before it adds a key, so the plan is still empty here)
+  if (!ok && !b.flurries()) return null;
   b.plan.ms = Math.max(b.plan.ms, SHOW.MIN);
   return b.plan;
 }

@@ -20,6 +20,8 @@ const [W, H] = opt('--size', '393x852').split('x').map(Number);
 const PICKS = opt('--picks', 'kunoichi,wizard,beastmaster').split(',');
 const EVERY = Number(opt('--every', '100'));
 const UNTIL = Number(opt('--until', '6400'));
+// (the army's wave: a later one has more foes, for an ultimate that needs them placed just so)
+const STAGE = Number(opt('--stage', '3'));
 const AT = [...Array(Math.floor(UNTIL / EVERY) + 1).keys()].map((i) => i * EVERY);
 const REDUCED = args.includes('--reduced');
 const SAVER = args.includes('--saver');
@@ -83,14 +85,14 @@ async function open() {
 }
 
 async function army(page, party) {
-  await page.evaluate((party) => {
+  await page.evaluate(([party, STAGE]) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'beasts' }, stage: 3, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'beasts' }, stage: STAGE, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
-  }, party);
+  }, [party, STAGE]);
   await page.waitForTimeout(700);
   await page.evaluate(() => document.getElementById('fight').click());
   await page.waitForFunction(() => {
@@ -114,7 +116,14 @@ for (const pick of PICKS) {
       u.charge2 = 100;
       document.querySelector(`.fhRow[data-unit="${u.id}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       // (on until the moment begins)
-      for (let i = 0; i < 400 && !g.ultm.queue.current; i++) window.__step(16);
+      // (an ultimate that needs its foes placed just so, a line for a charge, may wait: the meter kept full and the row tapped again)
+      for (let i = 0; i < 1600 && !g.ultm.queue.current && g.b.phase === 'fight'; i++) {
+        window.__step(16);
+        if (i % 200 === 199 && u.alive) {
+          u.charge2 = 100;
+          document.querySelector(`.fhRow[data-unit="${u.id}"]`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+      }
       return { moment: !!g.ultm.queue.current, show: g.ultm.queue.current?.show ?? 0, phase: g.b.phase, auto: g.ultAutoOn?.(), seen: JSON.stringify(g.meta.ultSeen ?? {}) };
     }, pick).then((r) => console.log(pick, JSON.stringify(r)));
     let t = 0;

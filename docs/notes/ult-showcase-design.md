@@ -80,6 +80,12 @@ lines of keys and each hero is data (`SHOWCASES`: its style, element, words and 
 A foe the cast moved (thrown, shoved, hooked) is staged where it stood and flies to where the sim put it (`launch` says from where; a hook
 or a shove is read from the foe's step begun on that tick). A showcase plays at least 2.5 s (its last pose held), and a long chain of hops
 is quickened to fit, so every one is 4 to 6 s with its opening and fade (tested for all eleven).
+When a cast has nothing of its style's shape but struck foes (the Minotaur's charge with a foe already beside him), the showcase is its
+blows on each foe in turn. When the ultimate itself ends the fight, its showcase still plays and the result waits for it (as an Eidolon's
+strike does). A foe the cast moved starts from where the page saw it before the tick.
+
+Captures: `docs/samples/ult-showcase-<hero>.mp4` for each of the eight and `docs/samples/ult-showcase-batch1.jpg`
+(`tools/ult-show/shots.mjs --picks ... [--stage 9]`: a fresh page for each hero).
 
 ## Frames to generate (the OpenAI image account is out of credits until tomorrow)
 
