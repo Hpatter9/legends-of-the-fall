@@ -84,7 +84,12 @@ function fire(kind: string): { b: Battle; me: Unit; plan: ShowPlan; events: Batt
     const events = stepBattle(b);
     const ult = ultimateOf(me)!;
     if (events.some((e) => e.kind === 'skill' && e.by === me.id && e.name === keyOf(ult))) {
-      const plan = planShow(kind, readCast(me, events, b.units.slice(born), (id) => b.units.find((u) => u.id === id)));
+      const unit = (id: number) => b.units.find((u) => u.id === id);
+      const origin = (id: number) => {
+        const st = unit(id)?.step;
+        return st && st.at >= b.t - 100 ? { u: st.u, v: st.v } : undefined;
+      };
+      const plan = planShow(kind, readCast(me, events, b.units.slice(born), unit, origin));
       assert.ok(plan, `${kind}: a plan`);
       return { b, me, plan, events };
     }
@@ -92,11 +97,12 @@ function fire(kind: string): { b: Battle; me: Unit; plan: ShowPlan; events: Batt
   throw new Error(`${kind}: the ultimate never fired`);
 }
 
-test('the pilot: every showcase runs 4 to 6 s with its opening and fade', () => {
+test('every showcase runs about 4 to 6 s with its opening and fade', () => {
   for (const kind of Object.keys(SHOWCASES)) {
     const { plan } = fire(kind);
     const total = ULT_MOMENT.OPEN_MS + plan.ms + ULT_MOMENT.FADE_MS;
     assert.ok(total >= 4000 && total <= 6000, `${kind}: ${total} ms`);
+    if (process.env.SHOW_MS) console.log(kind, total);
   }
 });
 
@@ -104,7 +110,7 @@ test("Ayame's showcase: she cuts each foe she struck, in turn, and ends where th
   const { me, plan } = fire('kunoichi');
   const struck = plan.cast.hops.flatMap((h) => (h.struck === undefined ? [] : [h.struck]));
   assert.ok(struck.length >= 3, 'she blinks to several foes');
-  const cuts = plan.beats.filter((b) => b.kind === 'cut').map((b) => (b.kind === 'cut' ? b.foe : -1));
+  const cuts = plan.beats.filter((b) => b.kind === 'cut').map((b) => b.foe);
   assert.deepEqual(cuts, struck);
   assert.equal(plan.beats.filter((b) => b.kind === 'vanish').length, plan.cast.hops.length, 'a puff of smoke at every hop');
   const end = posesAt(plan, plan.ms).get(me.id)!;
@@ -122,6 +128,7 @@ test("the Wizard's showcase marks each crowd his meteors fall on; the Beastmaste
   const wiz = fire('wizard');
   const aims = wiz.events.flatMap((e) => (e.kind === 'area' && e.by === wiz.me.id ? [`${e.u},${e.v}`] : []));
   const marks = wiz.plan.beats.flatMap((b) => (b.kind === 'mark' ? [`${b.where.u},${b.where.v}`] : []));
+  assert.ok(marks.length > 0);
   assert.deepEqual(marks, [...new Set(aims)]);
   const bm = fire('beastmaster');
   assert.equal(bm.plan.cast.born.length, 4);
@@ -131,6 +138,30 @@ test("the Wizard's showcase marks each crowd his meteors fall on; the Beastmaste
     const u = bm.b.units.find((x) => x.id === w.id)!;
     assert.deepEqual(end.at, { u: u.u, v: u.v });
     assert.equal(end.alpha, 1);
-    assert.equal(end.from, undefined);
+    assert.equal(end.to, undefined);
   }
+});
+
+test('batch 1: each blade is seen to do it, every foe it struck reels, and everyone ends where the sim put them', () => {
+  for (const kind of ['mercenary', 'arcBlade', 'samurai', 'lancer', 'minotaur', 'barbarian', 'ninjaMonk', 'buccaneer']) {
+    const { b, me, plan } = fire(kind);
+    const end = posesAt(plan, plan.ms);
+    assert.deepEqual(end.get(me.id)!.at, { u: me.u, v: me.v }, `${kind}: the caster ends on its tile`);
+    assert.equal(end.get(me.id)!.to, undefined);
+    for (const id of plan.cast.struck) {
+      const f = b.units.find((u) => u.id === id)!;
+      const track = plan.tracks.get(id);
+      assert.ok(track?.some((k) => k.row === 'hurt'), `${kind}: foe ${id} reels`);
+      assert.deepEqual(end.get(id)!.at, { u: f.u, v: f.v }, `${kind}: foe ${id} ends on its tile`);
+    }
+    assert.ok(plan.beats.some((x) => x.kind === 'cut' || x.kind === 'crash'), `${kind}: a blow lands`);
+  }
+  // (the one cut: the samurai's foes split only after he has sheathed, after the run)
+  const sam = fire('samurai').plan;
+  const dash = sam.beats.find((x) => x.kind === 'dash')!;
+  for (const c of sam.beats.filter((x) => x.kind === 'cut')) assert.ok(c.at > dash.at + 400);
+  // (the buccaneer's hooked foes start where they stood before the pull)
+  const buc = fire('buccaneer');
+  assert.ok(buc.plan.cast.hooks.length >= 1);
+  for (const id of buc.plan.cast.hooks) assert.notDeepEqual(posesAt(buc.plan, 0).get(id)!.at, buc.plan.cast.tiles.get(id));
 });

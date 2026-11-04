@@ -26,7 +26,7 @@ import { settings } from './settings';
 import { whichCast } from './fightHudRules';
 import { ULT_MOMENT, UltQueue, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
 import { burstSpots, KIT, KIT_SESSION, litPools, ultTargets, ultZoom, type Pt, type UltTargets } from './ultEpicRules';
-import { hasShowcase, planShow, readCast, SHOW, wantsShow, type ShowPlan } from './ultShowRules';
+import { hasShowcase, planShow, readCast, wantsShow, type ShowPlan } from './ultShowRules';
 import { UltShow } from './ultShow';
 import type { UnitSprite } from './render/unitView';
 
@@ -122,7 +122,12 @@ export class UltMoments {
         const s = settings();
         if (wantsShow(u.def, { full: true, short: s.ultShort, seen: this.opts.seen?.(u.def) ?? 0, every: s.ultEvery })) {
           const tileOf = (id: number) => b.units.find((x) => x.id === id);
-          const plan = planShow(u.def, readCast(u, events, born, tileOf));
+          // (where a fighter the cast moved stood before it: its step, begun on this tick)
+          const originOf = (id: number) => {
+            const st = b.units.find((x) => x.id === id)?.step;
+            return st && st.at >= b.t - 100 ? { u: st.u, v: st.v } : undefined;
+          };
+          const plan = planShow(u.def, readCast(u, events, born, tileOf, originOf));
           if (plan) {
             m.show = plan.ms;
             this.plans.set(m, plan);
@@ -158,7 +163,7 @@ export class UltMoments {
     const plan = q.current && this.plans.get(q.current);
     const t = q.showT;
     if (q.current && plan && t !== null) {
-      if (plan.style === 'sky' && t > SHOW.RAISE) return null;
+      if (t > plan.followMs) return null;
       const zoom = this.calm() ? 1 : plan.zoom;
       return zoom === 1 ? null : { unit: q.current.unit, zoom };
     }

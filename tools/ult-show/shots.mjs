@@ -35,7 +35,7 @@ const srv = createServer((q, r) => {
 }).listen(PORT);
 const browser = await chromium.launch({ ...(EXE ? { executablePath: EXE } : {}), args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
-const ALL = ['knight', 'cleric', 'wizard', 'archer', 'samurai', 'kunoichi', 'beastmaster', 'paladin', 'kraken', 'minotaur'];
+const ALL = [...new Set(['knight', 'cleric', 'wizard', 'archer', 'samurai', ...PICKS])];
 // (each pick fights beside four others, as the director's capture did)
 const PARTY_OF = (pick) => [pick, ...['knight', 'cleric', 'archer', 'wizard', 'samurai'].filter((k) => k !== pick)].slice(0, 5);
 let errors = 0;
