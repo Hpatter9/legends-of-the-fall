@@ -100,8 +100,9 @@ async function army(page, party) {
   await page.waitForTimeout(1200);
 }
 
-const { ctx, page } = await open();
+// (a fresh page for each pick, so one fight's end leaves nothing behind for the next)
 for (const pick of PICKS) {
+  const { ctx, page } = await open();
   try {
     await army(page, PARTY_OF(pick));
     await page.evaluate((pick) => {
@@ -114,7 +115,8 @@ for (const pick of PICKS) {
       document.querySelector(`.fhRow[data-unit="${u.id}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       // (on until the moment begins)
       for (let i = 0; i < 400 && !g.ultm.queue.current; i++) window.__step(16);
-    }, pick);
+      return { moment: !!g.ultm.queue.current, show: g.ultm.queue.current?.show ?? 0, phase: g.b.phase, auto: g.ultAutoOn?.(), seen: JSON.stringify(g.meta.ultSeen ?? {}) };
+    }, pick).then((r) => console.log(pick, JSON.stringify(r)));
     let t = 0;
     for (const ms of AT) {
       await page.evaluate((d) => window.__step(d), ms - t);
@@ -126,8 +128,8 @@ for (const pick of PICKS) {
   } catch (e) {
     console.log('FAILED', pick, String(e.message).split('\n')[0]);
   }
+  await ctx.close();
 }
-await ctx.close();
 console.log('page errors:', errors, '404s:', missing);
 await browser.close();
 srv.close();

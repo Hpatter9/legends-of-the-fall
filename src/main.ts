@@ -1130,7 +1130,8 @@ class Game {
     // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
     this.eid.see(b);
     this.eid.frame(dt, this.sceneHold > 0);
-    if (b.phase === 'fight') this.ultm.frame(b, dt, !!held);
+    // (ULT-SHOW: a showcase whose ultimate ended the fight still plays out, and the result waits for it)
+    if (b.phase === 'fight' || (b.phase !== 'deploy' && this.ultm.queue.current?.show)) this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
     // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
     if (b.phase === 'fight') this.bossm.frame(dt, !!held);
@@ -1205,9 +1206,9 @@ class Game {
     } else if (b.phase !== 'deploy') {
       // (the fallen finish falling after the end; the recap comes up once the wait is over)
       this.acc += dt;
-      this.fx.step(dt);
-      // (EIDOLONS: a strike that ended the fight plays out before the result comes up)
-      if (this.endWait < END_WAIT_MS && !this.eid.playing) {
+      if (!this.ultm.queue.current || this.ultm.queue.runsEffects) this.fx.step(dt);
+      // (EIDOLONS: a strike that ended the fight plays out before the result comes up; ULT-SHOW: so does a showcase)
+      if (this.endWait < END_WAIT_MS && !this.eid.playing && !this.ultm.queue.current) {
         this.endWait += dt;
         if (this.endWait >= END_WAIT_MS) this.refresh();
       }
@@ -1219,7 +1220,7 @@ class Game {
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
-    if (b.phase === 'fight') this.ultm.stage();
+    if (b.phase !== 'deploy') this.ultm.stage();
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
       else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
