@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.348.0',
+    date: '2026-11-04',
+    title: 'Tactic advice',
+    notes: ['The tactic sheet now gives advice that holds up: advance together, and a warning if you hold the line against archers.'],
+  },
+  {
     version: '0.347.0',
     date: '2026-11-04',
     title: 'Runes, remedies, new Eidolon art',

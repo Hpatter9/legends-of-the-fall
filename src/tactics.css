@@ -23,3 +23,5 @@ body:not([data-phase='fight']) #chargeBtn { display: none; }
 #tacticSheet .tacForm span { font-weight: normal; font-size: 12px; color: var(--dim); line-height: 1.2; }
 #tacticSheet .tacForm.on { border-color: var(--gold); background: linear-gradient(var(--e4), var(--e1)); }
 #tacticSheet .tacForm.on span { color: var(--ink); }
+#tacticSheet .tacAdvice { margin: -2px 0 2px; font-size: 13px; color: var(--dim); text-align: center; }
+#tacticSheet .tacWarn { margin: 0; font-size: 13px; color: var(--ink); background: rgb(var(--r4-rgb, 160 60 50) / 0.35); border: 1px solid var(--red); border-radius: 6px; padding: 6px 8px; }
