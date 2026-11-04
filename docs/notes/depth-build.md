@@ -191,3 +191,16 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
 - **Not built yet:** oaths, scars, travellers, provisions and the act scenes (the design's 6.3 to 6.5), and the greedy bot's choices for the
   Calamity measure (the bot takes no crossroads, so its numbers are the fixed order's).
 - Tests: `test/cal-journey.test.ts`.
+
+## Batch 8: provisions and the Sparring Yard
+
+- **Provisions** (`calJourney.ts`, `TowerState.journey.provisions`, missing is the start's three): a Calamity campfire's rest eats one
+  (`rest` in `tower.ts`); with none left the party rests hungry at half the healing. Six at most; a shop sells a sack for 25 gold (the
+  shop card's Provisions row); the campfire's Rest says how many are left. The greedy bot rests only while it has provisions.
+  - Measured: `npm run balance -- --no-tables --calamity --attempts 200` with and without (`--no-provisions`, new switch): identical, the
+    guardians felled by 100 / 55 / 5% of runs either way (the bot seldom rests three times before it falls or clears), so they add a choice
+    without moving the pace.
+- **The Sparring Yard** (Barracks 3; `bonds.ts`): `startSparring` / `settleSparring`, `Meta.sparring?` (optional): one pair at a time,
+  eight hours for five bond points (a rivalry counts them towards settling). The Barracks' card shows the yard once its room stands: two
+  pickers and Spar, or the pair sparring and its time left; it settles when the card opens.
+- Tests: `test/cal-journey.test.ts`, `test/bonds.test.ts`.

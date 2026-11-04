@@ -157,3 +157,16 @@ test('a hero takes its best bond only: bonds do not stack across partners', () =
   assert.equal(a.bondAtk, 1, 'a Comrade pair adds no attack');
   assert.ok(Math.abs(a.bondGuard! - (1 - BOND.GUARD2)) < 1e-9);
 });
+
+import { SPAR, settleSparring, startSparring } from '../src/sim/bonds';
+
+test('the Sparring Yard: one pair at a time, eight hours for five points, only with the room', () => {
+  const m = { unlocked: ['knight', 'peasant', 'archer'] } as { unlocked: string[]; bonds?: Record<string, number>; sparring?: { a: string; b: string; doneAt: number } };
+  assert.equal(startSparring(m, 'knight', 'peasant', 0, false), false, 'no room');
+  assert.ok(startSparring(m, 'knight', 'peasant', 0, true));
+  assert.equal(startSparring(m, 'knight', 'archer', 0, true), false, 'one pair at a time');
+  assert.equal(settleSparring(m, SPAR.MS - 1), null);
+  settleSparring(m, SPAR.MS);
+  assert.equal(m.bonds!['knight|peasant'], SPAR.POINTS);
+  assert.equal(m.sparring, undefined);
+});

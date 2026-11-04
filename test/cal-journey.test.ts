@@ -63,3 +63,31 @@ test('the second crossroads offers three boons; each gives what it says, once', 
   assert.equal(boonFoes({ boon: 'easier' }, 3), 0.9);
   assert.equal(crossroadsAfter(4, { route: [1, 2, 6] }, 2, 6), undefined, 'only a three-act Calamity');
 });
+
+import { PROVISIONS, buyProvision, eatProvision, provisionsOf } from '../src/sim/calJourney';
+import { rest } from '../src/sim/tower';
+
+test('provisions: three to start, six at most; a rest eats one, and with none the party rests at half', () => {
+  const j: Journey = {};
+  assert.equal(provisionsOf(j), PROVISIONS.START, 'a run saved before has the start\'s three');
+  for (let i = 0; i < PROVISIONS.START; i++) assert.equal(eatProvision(j), 1);
+  assert.equal(provisionsOf(j), 0);
+  assert.equal(eatProvision(j), PROVISIONS.HUNGRY);
+  const purse = { gold: 1000 };
+  for (let i = 0; i < 10; i++) buyProvision(purse, j);
+  assert.equal(provisionsOf(j), PROVISIONS.MAX);
+  assert.equal(purse.gold, 1000 - PROVISIONS.MAX * PROVISIONS.COST);
+  assert.equal(buyProvision({ gold: 0 }, { provisions: 1 }), false, 'too poor');
+});
+
+test('a Calamity campfire rest eats a provision', () => {
+  const run = calamityRun(3, startedMeta(1), 'knight');
+  const t = run.tower!;
+  t.cur = { id: 0, kind: 'campfire' } as never;
+  assert.ok(rest(run));
+  assert.equal(provisionsOf(t.journey), PROVISIONS.START - 1);
+  t.journey!.provisions = 0;
+  t.cur = { id: 0, kind: 'campfire' } as never;
+  rest(run);
+  assert.match((t.cur as { camp?: string }).camp ?? '', /hungry/);
+});

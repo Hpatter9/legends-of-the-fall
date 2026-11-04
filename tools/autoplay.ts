@@ -3,6 +3,7 @@
 // behind, on high ground; see `src/sim/autoplay.ts`, which the Auto button and the auto-replay share) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
 // XP goes into, the save's meta, as the page does.
 
+import { PROVISIONS, provisionsOf } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
@@ -361,7 +362,9 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     };
     if (cur.fight) fightIt();
     else if (cur.kind === 'campfire') {
-      if (squadHealth(run) < 0.75) rest(run);
+      // (DEPTH-BUILD: the greedy bot rests while it has provisions, and trains when it has none, `calJourney.ts`)
+      const fed = !(run.mode?.kind === 'calamity' && run.rift && PROVISIONS.on) || provisionsOf(run.tower!.journey) > 0;
+      if (squadHealth(run) < 0.75 && fed) rest(run);
       else {
         const hero = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a))[0];
         const t = train(run, hero.id);

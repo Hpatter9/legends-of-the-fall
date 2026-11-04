@@ -6,7 +6,8 @@
 
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
-import { roomsOf } from './sim/rooms';
+import { roomOpen, roomsOf } from './sim/rooms';
+import { SPAR, settleSparring, startSparring } from './sim/bonds';
 import { CALLINGS, PERKS, recall } from './sim/legacy';
 import { roomsStrip } from './castle';
 import { CastleScene, lookPicture } from './castle';
@@ -954,6 +955,8 @@ export class Home {
     box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
     const strip = roomsStrip(id, level);
     if (strip) box.append(strip);
+    // (DEPTH-BUILD: the Barracks' Sparring Yard: two heroes spar while you are away, for bond points)
+    if (id === 'barracks' && roomOpen(m.castle, 'sparringYard')) box.append(this.sparringYard());
     this.cardFor = id;
     const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
     const done = el('button', '', 'Close');
@@ -993,6 +996,42 @@ export class Home {
     const row = el('div', 'brow2');
     row.append(buy, done);
     box.append(row);
+  }
+
+  private sparringYard(): HTMLElement {
+    const m = this.meta;
+    const wrap = el('div', 'hallPlinths');
+    const note = settleSparring(m, Date.now());
+    if (note) saveMeta(m);
+    const s = m.sparring;
+    if (s) {
+      const row = el('div', 'hallPlinth');
+      row.append(el('small', '', `${UNITS[s.a]?.name ?? s.a} and ${UNITS[s.b]?.name ?? s.b} are sparring: `), el('span', 'worksLeft', clockText(Math.max(0, s.doneAt - Date.now()))));
+      wrap.append(row);
+      return wrap;
+    }
+    const row = el('div', 'hallPlinth');
+    const pick = (): HTMLSelectElement => {
+      const sel = el('select');
+      for (const k of m.unlocked) {
+        const o = el('option', '', UNITS[k]?.name ?? k);
+        o.value = k;
+        sel.append(o);
+      }
+      return sel;
+    };
+    const a = pick();
+    const b = pick();
+    if (b.options.length > 1) b.selectedIndex = 1;
+    const go = el('button', '', `Spar · ${SPAR.POINTS} bond points · 8h`);
+    go.addEventListener('click', () => {
+      if (!startSparring(m, a.value, b.value, Date.now(), roomOpen(m.castle, 'sparringYard'))) return;
+      saveMeta(m);
+      this.openBuilding('barracks');
+    });
+    row.append(a, b, go);
+    wrap.append(el('small', '', 'Sparring Yard: two heroes spar while you are away.'), row);
+    return wrap;
   }
 
   private hallPlinths(level: number): HTMLElement {
