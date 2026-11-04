@@ -231,11 +231,11 @@ export function gargoyleCrash(b: Battle, me: Unit, out: BattleEvent[]): boolean 
   return charge(b, me, { tiles: reachOf(me, 4), route: 'leap', mult: 1.45, land: 0.75, shove: 1, stun: ms(me, 800) }, out);
 }
 
-/** Skill 2 — Stone Slumber: turns to living granite for 4s: he takes half damage, and the foes within 3 must strike him. */
+/** Skill 2 — Stone Slumber: turns to living granite for 3s: he takes half damage, and the foes within 2 must strike him. */
 export function stoneSlumber(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const near = foesNear(b, me, 3);
+  const near = foesNear(b, me, 2);
   if (!near.length) return false;
-  const dur = ms(me, 4000);
+  const dur = ms(me, 3000);
   me.guardUntil = Math.max(me.guardUntil ?? 0, b.t + dur);
   for (const f of near) f.taunt = { to: me.id, until: b.t + dur };
   out.push({ kind: 'heal', to: me.id, amount: 0, by: me.id });
@@ -380,7 +380,7 @@ export function vampireRows(): Record<string, Row> {
       role: 'A stone sentinel: crashes down from the eaves, turns to granite and will not be moved',
       passive: { name: 'Granite Hide', text: 'Blows from the front lose 30%', block: 0.3 },
       s1: { cls: 'strike', cost: 26, cd: 7000, skill: sk('Gargoyle Crash', 'Leaps up to 4 tiles onto a crowd: the 3x3 is struck, the foe he lands on is stunned 0.8s, and the foes beside him are shoved a tile out', 600, 'attack', gargoyleCrash) },
-      s2: { cls: 'utility', cost: 26, cd: 16000, skill: sk('Stone Slumber', 'Turns to living granite for 4s: he takes half damage, and the foes within 3 must strike him', 550, 'defend', stoneSlumber) },
+      s2: { cls: 'utility', cost: 26, cd: 18000, skill: sk('Stone Slumber', 'Turns to living granite for 3s: he takes half damage, and the foes within 2 must strike him', 550, 'defend', stoneSlumber) },
       s3: { cls: 'jab', cost: 10, cd: 3500, skill: sk('Granite Fist', 'A stone blow on the foe before him; it is slowed 1.5s', 350, 'attack', graniteFist) },
       ultimate: ult('Cathedral Perch', 'Crashes down from on high on the thickest crowd within 6 tiles, stunning the 3x3 for 2s', 800, cathedralPerch, { rate: 1.25, power: 1.5 }),
     },
