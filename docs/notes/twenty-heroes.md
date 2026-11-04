@@ -247,9 +247,8 @@ ChatGPT's six art PRs (from [twenty-heroes-art-prompts.md](twenty-heroes-art-pro
   About 16 MB in all, 0.8 MB a hero (the 45 average 0.7 MB).
 - **Effects**: the eight cleaned sheets are the `v-vampire` session in `art-source/spell-fx/v-vampire/` (its rows in
   `tools/spell-fx/spell-parts.json`, as the old branch had them), packed by `tools/spell-fx/import-spell-art.py` into
-  `src/art/fx/spells/v-vampire.webp` (14 parts, 163 KB; the ten atlases 3.97 MB of the 5 MB cap). The other atlases came out byte for byte
-  the same. **Sanguine Lance is left out**: its cleaned sheet has 5 frames a row and the brief asks 6 to 8, so the importer holds it back
-  (the game keeps its stand-in look for it) until ChatGPT adds a sixth frame to each row. `test/spell-fx.test.ts` counts the brief's sheets
+  `src/art/fx/spells/v-vampire.webp`. The other atlases came out byte for byte
+  the same. **Sanguine Lance** first came with 5 frames a row (the brief asks 6 to 8), so the importer held it back; ChatGPT repainted it at six (PR #352) and it is in (16 parts, 184 KB; the ten atlases 3.99 MB of the 5 MB cap). `test/spell-fx.test.ts` counts the brief's sheets
   and rows; the Vampires' eight sheets and sixteen rows move it from 158 and 302 to 166 and 318.
 - **Wired already**: the page finds a hero's art by its id (`heroes/<id>.webp`, `heroes/<id>-portrait.webp`, `heroes/awakened-<id>.webp`,
   `heroArtwork.ts`, `heroFaceRules.ts`), and `build.mjs` copies every file in `src/art/heroes/` and `src/art/fx/spells/` and lists it in the
