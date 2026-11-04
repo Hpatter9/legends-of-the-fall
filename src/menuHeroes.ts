@@ -15,7 +15,7 @@ import { markReady, nextUpgradeKind, talentPointsReady } from './sim/upgradesRea
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
-import { progressOf, xpOf } from './sim/levels';
+import { levelOfKind, progressOf, xpOf } from './sim/levels';
 import { compactXp, levelBadge } from './levelBadge';
 import { drawEquipment } from './equipView';
 import { drawSkillBook } from './skillBookView';
@@ -44,9 +44,48 @@ import { tomeControl } from './tomeView';
 import { TOME_SIZES, tomesOf, tomeTotal } from './sim/tomes';
 import { TOME_ICON } from './tomeArt';
 import { BOND_NAMES, SETTLE_WINS, partnersOf } from './sim/bonds';
+import { LEGACY, PERKS, apprenticeCount, apprenticeXp, callingOf, perkFor, perkLine, retire, retired, whyNotRetire } from './sim/legacy';
+import { saveMeta } from './sim/meta';
 import { slotBrief } from './fightHudRules';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
+
+/** The hero sheet's legacy block (DEPTH-BUILD, `sim/legacy.ts`): who mentors this hero and what it gives; for a hero of level 60 or
+ *  more, the perk it would give and how many it would reach, and Retire with a confirm step; for a mentor, that it is in the Hall. */
+function legacyBlock(box: HTMLElement, meta: Meta, kind: string, redraw: () => void): void {
+  const calling = callingOf(kind);
+  if (!calling || !meta.unlocked.includes(kind)) return;
+  const wrap = el('div', 'dossierLegacy');
+  const p = perkFor(meta, kind);
+  if (p) {
+    const xp = apprenticeXp(meta, kind) > 1 ? ` · +50% XP to level ${Math.floor(levelOfKind(meta, p.mentor) / 2)}` : '';
+    wrap.append(el('p', 'legacyLine', `Mentored by the ${UNITS[p.mentor]?.name ?? p.mentor}${xp} · ${p.perk.name}: ${perkLine(p.perk, p.value)}${p.bonded ? ' (double, for a bonded partner)' : ''}`));
+  }
+  if (retired(meta, kind)) {
+    wrap.append(el('p', 'legacyLine', 'In the Hall of Legends, mentoring. Recall them from the Hall\'s card in the castle.'));
+  } else if (levelOfKind(meta, kind) >= LEGACY.RETIRE_LEVEL) {
+    const perk = PERKS[kind];
+    wrap.append(detailHeading('Retire to the Hall', `${calling === 'arcane' ? 'An' : 'A'} ${calling} mentor for ${apprenticeCount(calling)} ${calling} heroes`));
+    if (perk) wrap.append(el('p', 'legacyLine', `${perk.name}: ${perkLine(perk, perk.steps[0])} (more at levels 80 and 100); apprentices below half this hero's level earn +50% XP.`));
+    const why = whyNotRetire(meta, kind, Date.now());
+    const btn = el('button', 'dossierSkillsLink', why ?? 'Retire to the Hall  ›');
+    btn.type = 'button';
+    btn.disabled = !!why;
+    btn.addEventListener('click', () => {
+      if (btn.dataset.sure !== '1') {
+        btn.dataset.sure = '1';
+        btn.textContent = 'Retire? They leave the party; their gear goes to the stash. Tap again';
+        return;
+      }
+      if (retire(meta, kind, Date.now())) {
+        saveMeta(meta);
+        redraw();
+      }
+    });
+    wrap.append(btn);
+  }
+  if (wrap.childElementCount) box.append(wrap);
+}
 
 function detailHeading(title: string, subtitle: string): HTMLElement {
   const head = el('header', 'dossierHeading');
@@ -391,6 +430,8 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       }
       overview.append(bonds);
     }
+    // (DEPTH-BUILD: hero legacy: an apprentice's mentor line, and from level 60 the Retire button with a confirm on the sheet)
+    legacyBlock(overview, meta, kind, () => state.onPick?.(kind, 'overview'));
     const path = el('ol', 'dossierRanks');
     path.setAttribute('aria-label', 'Hero rank progression');
     for (let n = 1; n <= MAX_RANK; n++) {

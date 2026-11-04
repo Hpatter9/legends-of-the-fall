@@ -1250,3 +1250,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 .bondRow b { color: #f3e2a0; }
 .bondRow small { color: #c9bf9e; }
 .bondRow.rival b { color: #f08a7a; }
+
+/* DEPTH-BUILD: the hero sheet's legacy block, and the Hall of Legends' plinths on its card */
+.dossierLegacy { display: flex; flex-direction: column; gap: 6px; }
+.legacyLine { margin: 0; font-size: 13px; color: #e8dcb4; }
+.hallPlinths { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.hallPlinth { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(0, 0, 0, 0.28); box-shadow: inset 0 0 0 1px rgba(233, 213, 255, 0.18); }
+.hallPlinth div { display: flex; flex-direction: column; min-width: 0; }
+.hallPlinth small { color: #c9bf9e; overflow-wrap: anywhere; }

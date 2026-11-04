@@ -24,6 +24,8 @@ import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readWeak, type WeakRecord } from './weakness';
 import { readBonds } from './bonds';
+import { readMentors } from './legacy';
+import type { Calling } from './weakness';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
 import { readTickets } from './autoReplay';
@@ -143,6 +145,9 @@ export interface Meta {
   bonds?: Record<string, number>;
   bondSettled?: string[];
   bondScenes?: string[];
+  /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
+  mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
+  recalled?: Partial<Record<Calling, number>>;
   codexClaimed?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
@@ -518,6 +523,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!m.bonds) delete m.bonds;
       if (!Array.isArray(m.bondSettled)) delete m.bondSettled;
       if (!Array.isArray(m.bondScenes)) delete m.bondScenes;
+      m.mentors = readMentors(m.mentors);
+      if (!m.mentors) delete m.mentors;
+      if (!m.recalled || typeof m.recalled !== 'object') delete m.recalled;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)
       delete (m as { codexPaid?: unknown }).codexPaid;

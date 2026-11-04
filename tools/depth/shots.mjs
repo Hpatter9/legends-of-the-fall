@@ -123,6 +123,30 @@ for (const [w, h] of sizes) {
     await shot('bond-scene');
     await page.waitForTimeout(9000);
     await shot('bond-scene-2');
+  } else if (scene === 'retire') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.castle.hall = 2;
+      m.xp.knight = 4e7;
+      window.__game.home.openSheet('knight');
+    });
+    await page.waitForTimeout(700);
+    await page.evaluate(() => document.querySelector('.dossierLegacy')?.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(300);
+    await shot('retire');
+  } else if (scene === 'hall') {
+    await page.evaluate(() => {
+      const m = window.__game.meta;
+      m.castle.hall = 2;
+      m.xp.knight = 4e7;
+      m.mentors = { martial: { kind: 'knight', since: 0 } };
+      m.party = m.party.filter((k) => k !== 'knight');
+      window.__game.home.show('castle');
+    });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => document.querySelector('.ctChamberCard[data-id="hall"]')?.click());
+    await page.waitForTimeout(600);
+    await shot('hall');
   } else if (scene.startsWith('card-')) {
     const site = scene.slice(5);
     await page.evaluate(() => window.__game.home.show('castle'));

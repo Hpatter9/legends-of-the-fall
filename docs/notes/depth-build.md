@@ -128,3 +128,22 @@ crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by
   moment kind (`{ kind: 'bond', pair, level }`, its key carries the level), the family "Bonds between heroes" in the Scenes list. The
   page plays one due scene when the camp or the castle opens (`HomeHooks.onOpened`). Levels 3 and 5, the rest of the pairs and the
   settling scenes follow in batches of ten. Shot: `node tools/depth/shots.mjs bond-scene`.
+
+## Batch 6: hero legacy
+
+- **Rules** (`src/sim/legacy.ts`; the callings from `READS`, `legacyData.ts`): a hero of lasting level 60 or more retires to the Hall of
+  Legends (`retire`): one mentor a calling and one seat a Hall level (`whyNotRetire` says what is missing). It leaves the party (a hero
+  not in it takes its place when there is one), its worn gear goes back to the stash (`Meta.equipped[kind]` dropped). `recall` frees the
+  seat and shuts it for seven days (`Meta.recalled`). `Meta.mentors?` and `Meta.recalled?` are optional (`readMentors`).
+- **What a mentor gives** every other hero of its calling: +50% fight XP while the apprentice is below half the mentor's level
+  (`apprenticeXp`, `mentoredXp` on the page's lasting XP), and its **legacy perk** (`PERKS`, one a hero, 45): a shield at the start of each
+  wave (4 / 6 / 8%), attack (2 / 3 / 4%) or health (3 / 4.5 / 6%) by the mentor's band (60, 80, 100); a bonded partner of the mentor
+  (bond level 3 or more, so a kindred pair) has it at double strength (Q8.3). Perks are fixed into the run as it starts (`Run.legacy`,
+  `legacySnapshot`), laid on the hero's boost (`legacyBoost`, the page and the bot alike), in the armies only.
+- **Not built yet:** the taught talent row. The trees are each hero's own, so "the mentor's highest row's choice is free" has no direct
+  meaning for an apprentice of another kind; it needs the owner's word (the same tier's node at the same place in the apprentice's tree is
+  the nearest reading). The farewell scenes come with the scene batches.
+- **The page:** the hero sheet's legacy block (an apprentice's "Mentored by ..." line; from level 60 the perk it would give, how many
+  heroes it would reach and Retire, with a confirm tap); the party picker marks a mentor "In the Hall" and will not take it; the Hall of
+  Legends' card shows its four plinths (mentor, level, perk, Recall with a confirm tap, or what an empty seat needs).
+- Tests: `test/legacy.test.ts`. Shots: `node tools/depth/shots.mjs retire`, `hall`.

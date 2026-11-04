@@ -152,6 +152,8 @@ export interface Run {
   ritesUsed?: boolean;
   /** DEPTH-BUILD: the bonds' snapshot as the run began (`bonds.ts`: each pair's level, -1 rivals); none is no bonds. */
   bonds?: Record<string, number>;
+  /** DEPTH-BUILD: the mentors' perks for the party as the run began (`legacy.ts`); none is none. */
+  legacy?: Record<string, { hp?: number; atk?: number; shield?: number }>;
   /** The castle's levels when the run began (the fights keep them); none when unset. */
   castle?: Castle;
   /** Relic ids held (`relics.ts`). */

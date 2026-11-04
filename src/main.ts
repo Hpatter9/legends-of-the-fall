@@ -100,6 +100,7 @@ import { showMarchCard } from './marchCard';
 import { applyVigil } from './sim/chapelRooms';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
 import { bondScenesDue } from './sim/bondScenes';
+import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
@@ -2285,6 +2286,11 @@ class Game {
       const snap = bondSnapshot(this.meta);
       if (Object.keys(snap).length) run.bonds = snap;
     }
+    // (and of the mentors' perks)
+    if (run.mode?.kind === 'army' && !run.legacy) {
+      const snap = legacySnapshot(this.meta, this.meta.party);
+      if (Object.keys(snap).length) run.legacy = snap;
+    }
     this.run = run;
     this.syncPool();
     this.placed.clear();
@@ -2307,7 +2313,8 @@ class Game {
     // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
-    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
+    // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
+    return legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) });
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -3305,7 +3312,8 @@ class Game {
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
       if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
       // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
-      const ups = own ? own.ups : gainXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench });
+      // (DEPTH-BUILD: an apprentice below half its mentor's level earns half again, `legacy.ts`)
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)
