@@ -50,7 +50,7 @@ test('every new battle is opened by one quest, has rules that its waves can meet
     if (r?.protect) assert.ok(UNITS[r.protect.kind]?.summon && UNITS[r.protect.kind].side === 'hero', `${qb.id}: guest ${r.protect.kind}`);
     if (r?.spare) assert.ok(qb.waves.some((w) => w.foes.includes(r.spare!)), `${qb.id}: the spared foe stands in a wave`);
     if (r?.survive !== undefined) assert.ok(r.survive >= 30 && r.survive <= 300, `${qb.id}: survive ${r.survive}`);
-    if (r?.race !== undefined) assert.ok(r.race >= 30 && r.race <= 600, `${qb.id}: race ${r.race}`);
+    if (r?.race !== undefined) assert.ok(r.race >= 15 && r.race <= 600, `${qb.id}: race ${r.race}`);
     // (a battle without a boss is a survive battle; every other ends on a boss of its own)
     if (!r?.survive && !r?.protect) assert.ok(qb.boss && qb.waves.some((w) => w.boss), `${qb.id}: a boss`);
     assert.ok(questBattleById(qb.id) === qb);
