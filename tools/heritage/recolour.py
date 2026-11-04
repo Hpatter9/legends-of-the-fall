@@ -57,12 +57,21 @@ def hsv(a):
     return h * 60, np.where(mx > 0, d / np.maximum(mx, 1e-6), 0), mx
 
 
-def window(a, w):
+def mouth_mucosa(a):
+    """Open screaming mouths in hurt frames have saturated salmon/red tongues and lips that should not become skin."""
+    r, g, b = [a[..., i].astype(int) for i in range(3)]
+    return (r - g >= 95) & ((g - b) < (r - b) * 0.27)
+
+
+def window(a, w, exclude_mouth=False):
     """The pixels whose colour could be the part at all (a loose hue, saturation and value window)."""
     h, s, v = hsv(a)
     # (a window that starts below 0 wraps round: pink shades sit just under red's 360)
     hue = ((h >= w[0]) | (h >= 360 + w[0])) & (h <= w[1]) if w[0] < 0 else (h >= w[0]) & (h <= w[1])
-    return (a[..., 3] > 0) & hue & (s >= w[2]) & (s <= w[3]) & (v >= w[4]) & (v <= w[5])
+    m = (a[..., 3] > 0) & hue & (s >= w[2]) & (s <= w[3]) & (v >= w[4]) & (v <= w[5])
+    if exclude_mouth:
+        m &= ~mouth_mucosa(a)
+    return m
 
 
 def lab(rgb):
@@ -132,35 +141,40 @@ def grow(m, r):
     return out
 
 
-def classify(images, part, win, skip=None):
+def classify(images, part, win, skip=None, is_skin=False):
     """The part's pixels on every sheet of a hero: taught by its boxes, then tidied (see the file's head). Pixels near
     a box teach nothing either way (the box is drawn tight inside the part, whose edge it does not know), and `skip`
     (the skin, when the hair is taught) is left out of both."""
     pos, neg = [], []
     taught = {}
+    neg_frames = set(tuple(x) for x in part.get('negatives', []))
     for sheet, k, x0, y0, x1, y1 in part['boxes']:
         taught.setdefault((sheet, k), []).append((x0, y0, x1, y1))
+        if k == 0:
+            neg_frames.add((sheet, k))
     for sheet, k in part.get('negatives', []):
         taught.setdefault((sheet, k), [])
     for (sheet, k), boxes in taught.items():
         l = LAYOUT[sheet]
         fx, fy = frame_origin(l, k)
         f = images[sheet][fy:fy + l['h'], fx:fx + l['w']]
-        m = window(f, win)
+        m = window(f, win, exclude_mouth=is_skin)
         inside = np.zeros_like(m)
         for x0, y0, x1, y1 in boxes:
             inside[y0:y1, x0:x1] = True
         if skip is not None:
             m &= ~skip[sheet][fy:fy + l['h'], fx:fx + l['w']]
-        pos.append(f[m & inside][:, :3])
-        neg.append(f[m & ~grow(inside, part.get('margin', 6))][:, :3])
+        if boxes:
+            pos.append(f[m & inside][:, :3])
+        if (sheet, k) in neg_frames:
+            neg.append(f[m & ~grow(inside, part.get('margin', 6))][:, :3])
     P = lab(np.concatenate(pos).astype(float))
     N = lab(np.concatenate(neg).astype(float)) if sum(len(n) for n in neg) else np.zeros((1, 3)) + 1e6
     bias = part.get('bias', 1.0)
     masks = {}
     for sheet in part['sheets']:
         a = images[sheet]
-        loose = window(a, win)
+        loose = window(a, win, exclude_mouth=is_skin)
         cols, inv = np.unique(a[loose][:, :3], axis=0, return_inverse=True)
         L = lab(cols.astype(float))
         dp, dn = nearest(L, P), nearest(L, N)
@@ -177,6 +191,13 @@ def classify(images, part, win, skip=None):
         lab_, count = components(m)
         sizes = np.bincount(lab_.ravel(), minlength=count + 1)
         m &= sizes[lab_] >= part.get('minArea', 6)
+        for sheet_, k, x0, y0, x1, y1 in part.get('force', []):
+            if sheet_ == sheet:
+                fx, fy = frame_origin(LAYOUT[sheet], k)
+                sub = a[fy + y0:fy + y1, fx + x0:fx + x1]
+                _, _, v = hsv(sub)
+                fm = (sub[..., 3] > 200) & (v >= 0.35) & ~mouth_mucosa(sub)
+                m[fy + y0:fy + y1, fx + x0:fx + x1] |= fm
         for sheet_, k, x0, y0, x1, y1 in part.get('never', []):
             if sheet_ == sheet:
                 fx, fy = frame_origin(LAYOUT[sheet], k)
@@ -205,7 +226,8 @@ def recolour(a, m, ramp, lo, hi):
     return out
 
 
-SKIN_WINDOW = [-15, 36, 0.04, 0.7, 0.35, 1.0]
+SKIN_WINDOW = [-16, 38, 0.035, 0.7, 0.35, 1.0]
+SPREAD_WINDOW = [-20, 50, 0.02, 0.72, 0.35, 1.0]
 
 
 def run(hero, tones, hairs, looks, preview=None):
@@ -216,7 +238,7 @@ def run(hero, tones, hairs, looks, preview=None):
     out = {s: images[s].copy() for s in sheets}
     skin_part = dict(cfg['skin'], sheets=sheets)
     win = cfg['skin'].get('window', SKIN_WINDOW)
-    core = classify(images, skin_part, win)
+    core = classify(images, skin_part, win, is_skin=True)
     hairm = None
     if hair and 'hair' in cfg:
         hairm = classify(images, dict(cfg['hair'], sheets=sheets), cfg['hair']['window'], core)
@@ -224,12 +246,25 @@ def run(hero, tones, hairs, looks, preview=None):
     #  pixel or two into skin-like pixels that are not hair: the cheek's edge, the nostril, the neck's shadow)
     skin = {}
     for s in sheets:
-        room = window(images[s], win)
+        a = images[s]
+        room = window(a, cfg['skin'].get('window', SPREAD_WINDOW), exclude_mouth=True)
         if hairm is not None:
             room &= ~hairm[s]
-        m = core[s]
+        for sheet_, k, x0, y0, x1, y1 in skin_part.get('never', []):
+            if sheet_ == s:
+                fx, fy = frame_origin(LAYOUT[s], k)
+                room[fy + y0:fy + y1, fx + x0:fx + x1] = False
+        m = core[s].copy()
         for _ in range(cfg['skin'].get('spread', 3)):
             m = m | (room & (neighbours(m) > 0))
+        # Also absorb tiny enclosed specular highlight pinholes (1-4 px) ringed by skin (>= 5 skin neighbours)
+        _, s_ch, v_ch = hsv(a)
+        hi_room = (window(a, [-25, 52, 0.0, 0.75, 0.45, 1.0], exclude_mouth=True)
+                   | ((a[..., 3] > 200) & (s_ch <= 0.16) & (v_ch >= 0.45) & ~mouth_mucosa(a)))
+        if hairm is not None:
+            hi_room &= ~hairm[s]
+        for _ in range(2):
+            m = m | (hi_room & ~m & (neighbours(m) >= 5))
         skin[s] = m
     # (the lightness range of the taught skin sets where the ramp starts and ends, the same for every sheet of the hero)
     allpx = np.concatenate([images[s][core[s]][:, :3] for s in sheets]).astype(float)

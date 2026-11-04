@@ -293,6 +293,106 @@ export const TIER_SKILLS: Readonly<Record<string, readonly [TierSkill, TierSkill
     // stood +10.7 points over the roster at level 1: the judgements falling two tiles wider is the step past tier 3)
     t('The Iron Throne', 'The judgements fall two tiles wider, and a wave of dread holds the foes near', { extra: 2, reach: 2 }, [nova(3, 0.21, 200)]),
   ],
+  vampireLord: [
+    t('Sanguine Step', 'Crimson Lunge reaches a tile further and heals him more', { reach: 1, castHeal: 0.03 }),
+    t('Aristocrat\'s Thrust', 'Crimson Lunge reaches two tiles further, cuts harder and echoes a moment later', { reach: 2, pow: 0.14, castHeal: 0.04 }, [echo(800, 0.45)]),
+    t('Sovereign of Dusk', 'Crimson Lunge reaches two tiles further, cuts much harder, heals him well and echoes twice', { reach: 2, pow: 0.28, castHeal: 0.055 }, [echo(800, 0.6), echo(1500, 0.35)]),
+  ],
+  hemomancer: [
+    t('Arterial Lance', 'Blood Lance pierces a tile further and hits harder', { reach: 1, pow: 0.1 }),
+    t('Exsanguinate', 'Blood Lance pierces two tiles further, hits harder and mends allies near her', { reach: 2, pow: 0.18 }, [mend(3, 0.35)]),
+    t('Red Sacrament', 'Blood Lance pierces three tiles further, hits much harder, mends allies near her and wards them', { reach: 3, pow: 0.3 }, [mend(3, 0.5), ward(3, 0.025)]),
+  ],
+  nightstalker: [
+    t('Bat Step', 'Shadow Fang gives back some charge and hastens her', { refund: 25, castHaste: 700 }),
+    t('Vesper Strike', 'Shadow Fang cuts harder, hastens her longer and echoes onto another foe', { refund: 30, pow: 0.14, castHaste: 1050 }, [echo(750, 0.5)]),
+    t('Apex Nocturne', 'Shadow Fang cuts much harder, hastens her greatly and echoes twice across the dark', { refund: 40, pow: 0.26, castHaste: 1400 }, [echo(750, 0.65), echo(1400, 0.4)]),
+  ],
+  bloodGargoyle: [
+    t('Heavier Perch', 'Stone Dive reaches a tile further and shields him', { reach: 1, castShield: 0.04 }),
+    t('Cathedral Crash', 'Stone Dive reaches two tiles further, holds longer and shakes the ground round him', { reach: 2, dur: 0.18, castShield: 0.05 }, [nova(2, 0.2, 200)]),
+    t('Archfiend of the Spire', 'Stone Dive reaches three tiles further, holds much longer, shakes the ground hard and wards allies beside him', { reach: 3, dur: 0.3, pow: 0.15, castShield: 0.07 }, [nova(2.5, 0.32, 300), ward(2, 0.03)]),
+  ],
+  dhampir: [
+    t('Twin Stakes', 'Silver Bolt fires an extra bolt and hits harder', { extra: 1, pow: 0.08 }),
+    t('Vampire Hunter\'s Volley', 'Two more bolts, longer reach, and a second volley follows', { extra: 2, reach: 1, pow: 0.15 }, [echo(700, 0.4)]),
+    t('Daywalker\'s Verdict', 'Three more bolts, two tiles further reach, much harder hits and a stronger echo', { extra: 3, reach: 2, pow: 0.28 }, [echo(700, 0.6)]),
+  ],
+  warDrummer: [
+    t('Booming Skin', 'Thunder Beat reaches a tile further and charges allies', { reach: 1 }, [charge(3, 15)]),
+    t('War Taiko', 'Thunder Beat reaches two tiles further, hits harder, charges and hastens allies', { reach: 2, pow: 0.14 }, [charge(4, 22), haste(3, 700)]),
+    t('Thunder of Ten Thousand', 'Thunder Beat reaches three tiles further, hits much harder, charges, hastens and wards allies', { reach: 3, pow: 0.26 }, [charge(4, 30), haste(4, 1000), ward(3, 0.025)]),
+  ],
+  banneret: [
+    t('Planted Pennant', 'Rallying Standard reaches a tile further and lasts longer', { reach: 1, dur: 0.15 }),
+    t('Royal Pennant', 'Rallying Standard reaches two tiles further, lasts longer and mends allies', { reach: 2, dur: 0.28 }, [mend(3, 0.4)]),
+    t('Standard of the Keep', 'Rallying Standard reaches three tiles further, lasts much longer, mends and wards allies', { reach: 3, dur: 0.4, pow: 0.15 }, [mend(4, 0.55), ward(4, 0.03)]),
+  ],
+  geomancer: [
+    t('Jagged Spire', 'Stone Spike reaches a tile further and holds longer', { reach: 1, dur: 0.15 }),
+    t('Tectonic Ridge', 'Stone Spike reaches two tiles further, hits harder and shakes the ground round her', { reach: 2, dur: 0.25, pow: 0.15 }, [nova(2.5, 0.22, 180)]),
+    t('Wrath of the Bedrock', 'Stone Spike reaches three tiles further, hits much harder, shakes the ground and echoes', { reach: 3, dur: 0.35, pow: 0.28 }, [nova(3, 0.32, 250), echo(950, 0.5)]),
+  ],
+  bellWarden: [
+    t('Deep Toll', 'Resonant Toll reaches a tile further and shields him', { reach: 1, castShield: 0.04 }),
+    t('Sanctuary Bell', 'Resonant Toll reaches two tiles further, holds longer and wards allies near him', { reach: 2, dur: 0.2, castShield: 0.055 }, [ward(3, 0.025)]),
+    t('Great Bronze Vesper', 'Resonant Toll reaches three tiles further, holds much longer, wards and cleanses allies near him', { reach: 3, dur: 0.32, pow: 0.18, castShield: 0.07 }, [ward(3, 0.04), cleanse(3)]),
+  ],
+  falconer: [
+    t('Keen Talons', 'Hawk Strike reaches a tile further and hits harder', { reach: 1, pow: 0.1 }),
+    t('Double Stoop', 'Hawk Strike reaches two tiles further, hits harder and stoops a second time', { reach: 2, pow: 0.18 }, [echo(650, 0.45)]),
+    t('Sky Sovereign\'s Hunt', 'Hawk Strike reaches three tiles further, hits much harder, hastens her and stoops twice more', { reach: 3, pow: 0.3, castHaste: 1000 }, [echo(650, 0.65), echo(1300, 0.4)]),
+  ],
+  astralSphinx: [
+    t('Deeper Riddle', 'Star Pounce reaches a tile further and shields him', { reach: 1, castShield: 0.035 }),
+    t('Constellation Leap', 'Star Pounce reaches two tiles further, hits harder and charges allies near', { reach: 2, pow: 0.16, castShield: 0.05 }, [charge(3, 20)]),
+    t('Oracle of the Firmament', 'Star Pounce reaches three tiles further, hits much harder, charges and wards allies near', { reach: 3, pow: 0.28, castShield: 0.065 }, [charge(4, 30), ward(3, 0.03)]),
+  ],
+  mirageDancer: [
+    t('Shifting Veil', 'Veil Step hastens her and gives back some charge', { castHaste: 800, refund: 25 }),
+    t('Twin Mirage', 'Veil Step cuts harder, hastens her longer and leaves a decoy beside her', { pow: 0.15, castHaste: 1100, refund: 30 }, [{ kind: 'summon', unit: 'decoy', n: 1, cap: 2 }]),
+    t('Dance of Seven Sands', 'Veil Step cuts much harder, hastens her greatly, leaves two decoys and echoes', { pow: 0.28, castHaste: 1500, refund: 40 }, [{ kind: 'summon', unit: 'decoy', n: 2, cap: 3 }, echo(800, 0.5)]),
+  ],
+  plagueDoctor: [
+    t('Potent Tincture', 'Blight Vial reaches a tile further and lasts longer', { reach: 1, dur: 0.15 }),
+    t('Miasma Flask', 'Blight Vial reaches two tiles further, lasts longer and mends allies near him', { reach: 2, dur: 0.28, pow: 0.14 }, [mend(3, 0.35)]),
+    t('Grand Panacea', 'Blight Vial reaches three tiles further, lasts much longer, mends and cleanses allies near him', { reach: 3, dur: 0.4, pow: 0.25 }, [mend(4, 0.55), cleanse(4)]),
+  ],
+  bombardier: [
+    t('Extra Charge', 'Cluster Lob throws an extra bomb and hits harder', { extra: 1, pow: 0.08 }),
+    t('Rolling Barrage', 'Two more bombs, wider reach, and a second lob follows', { extra: 2, reach: 1, pow: 0.16 }, [echo(850, 0.45)]),
+    t('Carpet of Cinders', 'Three more bombs, two tiles wider reach, much harder hits and a heavier second lob', { extra: 3, reach: 2, pow: 0.28 }, [echo(850, 0.65)]),
+  ],
+  astrologer: [
+    t('Brighter Alignment', 'Falling Star reaches a tile further and hits harder', { reach: 1, pow: 0.1 }),
+    t('Twin Conjunction', 'Falling Star reaches two tiles further, hits harder and charges allies', { reach: 2, pow: 0.18, extra: 1 }, [charge(4, 20)]),
+    t('Grand Syzygy', 'Falling Star reaches three tiles further, drops two extra stars, charges and wards allies', { reach: 3, pow: 0.3, extra: 2 }, [charge(4, 30), ward(4, 0.025)]),
+  ],
+  inquisitor: [
+    t('Heavy Condemnation', 'Condemning Bolt reaches a tile further and holds longer', { reach: 1, dur: 0.15 }),
+    t('Silver Judgement', 'Condemning Bolt reaches two tiles further, hits harder and fires a second bolt', { reach: 2, dur: 0.25, pow: 0.16 }, [echo(700, 0.45)]),
+    t('Supreme Writ', 'Condemning Bolt reaches three tiles further, hits much harder, holds longer and fires two echoes', { reach: 3, dur: 0.35, pow: 0.3 }, [echo(700, 0.65), echo(1350, 0.4)]),
+  ],
+  seraph: [
+    t('Golden Pinions', 'Radiant Dive reaches a tile further and shields her', { reach: 1, castShield: 0.04 }),
+    t('Choir\'s Descent', 'Radiant Dive reaches two tiles further, hits harder and mends allies near her', { reach: 2, pow: 0.16, castShield: 0.05 }, [mend(3, 0.4)]),
+    t('Six-Winged Epiphany', 'Radiant Dive reaches three tiles further, hits much harder, mends, wards and cleanses allies near her', { reach: 3, pow: 0.3, castShield: 0.07 }, [mend(4, 0.6), ward(4, 0.03), cleanse(4)]),
+  ],
+  corsairSurgeon: [
+    t('Extra Tonic', 'Sawbones Tonic heals more and hastens him', { pow: 0.12, castHaste: 700 }),
+    t('Rum & Stitches', 'Sawbones Tonic heals much more, hastens allies near him and cleanses them', { pow: 0.24, castHaste: 1000 }, [haste(3, 800), cleanse(3)]),
+    t('Surgeon-General\'s Reserve', 'Sawbones Tonic heals greatly, hastens, cleanses and wards allies near him', { pow: 0.38, castHaste: 1300 }, [haste(4, 1100), cleanse(4), ward(4, 0.03)]),
+  ],
+  harpooner: [
+    t('Barbed Line', 'Whaler\'s Harpoon reaches a tile further and hits harder', { reach: 1, pow: 0.1 }),
+    t('Twin Gaff', 'Whaler\'s Harpoon reaches two tiles further, hits harder and hurls a second harpoon', { reach: 2, pow: 0.18 }, [echo(800, 0.45)]),
+    t('Leviathan\'s Bane', 'Whaler\'s Harpoon reaches three tiles further, hits much harder, holds longer and hurls a stronger second harpoon', { reach: 3, pow: 0.32, dur: 0.25 }, [echo(800, 0.7)]),
+  ],
+  seaReaver: [
+    t('Heavier Fluke', 'Anchor Swing reaches a tile further and shields him', { reach: 1, castShield: 0.035 }),
+    t('Riptide Haul', 'Anchor Swing reaches two tiles further, hits harder and slams the deck round him', { reach: 2, pow: 0.16, castShield: 0.05 }, [nova(2, 0.22, 200)]),
+    t('Dreadnought of the Deep', 'Anchor Swing reaches three tiles further, hits much harder, slams the deck hard and echoes', { reach: 3, pow: 0.3, castShield: 0.07 }, [nova(2.5, 0.35, 300), echo(850, 0.5)]),
+  ],
 };
 
 /** A hero's tier skill for a grade (2, 3, or 4 and above: read from the grade itself, whatever the run's top grade is); none at grade 1 or for a

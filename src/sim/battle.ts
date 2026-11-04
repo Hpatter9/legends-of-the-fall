@@ -190,6 +190,8 @@ export interface Unit {
   tricksterLogUsed?: boolean;
   /** Guardian emergency aegis shield spent once per fight. */
   guardianShieldUsed?: boolean;
+  /** Vampire emergency bat-swarm spent once per fight. */
+  vampireSwarmUsed?: boolean;
   /** The movement toolkit (`toolkit/`, RPG-SPELLS): in the air after a launch until then (melee cannot reach it); underground while it
    *  burrows (it cannot act, be targeted or be struck, and its tile is free); an aura's guard (a share less damage taken) and attack lift. */
   air?: number;
@@ -924,6 +926,39 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.guardianShieldUsed = true;
     to.shield = { hp: Math.round(to.maxHp * 0.15), until: b.t + 5000 };
     out.push({ kind: 'heal', to: to.id, amount: 0 });
+  }
+
+  // Vampire trait milestone (five Vampires): a Vampire brought below 30% health bursts into a bat-swarm, mends 15% of max health and slips away once a fight
+  if (b.traits?.vampireSwarm && traitsOf(to.def).includes('vampire') && !to.vampireSwarmUsed && !killed && to.hp < to.maxHp * 0.3) {
+    to.vampireSwarmUsed = true;
+    mendUnit(to, Math.round(to.maxHp * 0.15), out, to);
+    const oldU = to.u;
+    const oldV = to.v;
+    const cands = [
+      { u: oldU + 1, v: oldV },
+      { u: oldU - 1, v: oldV },
+      { u: oldU, v: oldV + 1 },
+      { u: oldU, v: oldV - 1 },
+      { u: oldU + 2, v: oldV },
+      { u: oldU - 2, v: oldV },
+      { u: oldU, v: oldV + 2 },
+      { u: oldU, v: oldV - 2 },
+    ].filter((at) => {
+      const t = tileAt(b.board, at.u, at.v);
+      return t && standable(t) && !unitAt(b, at.u, at.v);
+    });
+    if (cands.length > 0) {
+      const foes = b.units.filter((u) => u.alive && u.side !== to.side);
+      const best = cands.sort((a, bPos) => {
+        const distA = foes.length ? Math.min(...foes.map((f) => apart(a, f))) : 0;
+        const distB = foes.length ? Math.min(...foes.map((f) => apart(bPos, f))) : 0;
+        return distB - distA || a.v - bPos.v || a.u - bPos.u;
+      })[0];
+      to.u = best.u;
+      to.v = best.v;
+      to.step = undefined;
+      out.push({ kind: 'blink', by: to.id, from: { u: oldU, v: oldV }, to: { u: to.u, v: to.v } });
+    }
   }
 
   // Trickster trait milestone (three Tricksters): a blow that leaves a Trickster under 25% health (not a fatal one) leaves a decoy log

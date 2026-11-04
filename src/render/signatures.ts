@@ -639,6 +639,207 @@ export const SIGNATURES: Record<string, Signature> = {
     [s('cone', 'fire-aura', { n: 8, r: 210, z: 2, f: 70 }), s('ripple', 'fire-rune', { n: 3, z: 4.4 }), s('spray', 'fire-sparkle', { n: 16, r: 110, t: 0xffe0a0 })],
     [s('pop', 'fire-vortex', { z: 1.2 })],
   ),
+  // ---- the third wave of heroes and the Vampire Court
+  'Crimson Lunge': sig(
+    [s('inward', 'blood-sparkle', { n: 6, r: 28, t: 0xd82038 })],
+    [s('dash', 'blood-circle', { n: 7, r: 120, z: 1.6 }), s('ring', 'blood-wave', { z: 2.8, t: 0xd82038 })],
+    [s('pop', 'blood-hit', { z: 1.3 })],
+  ),
+  'Red Eclipse': sig(
+    [s('ring', 'blood-rune', { z: 3, loop: true, t: 0xc01830, a: 0.6 })],
+    [s('flare', 'blood-vortex', { z: 3.8 }), s('ripple', 'blood-wave', { n: 3, z: 4.2, t: 0xc01830 }), s('spray', 'blood-sparkle', { n: 14, t: 0xe03048 })],
+    [s('pop', 'blood-explosion', { z: 1.4 })],
+  ),
+  'Sanguine Lash': sig(
+    [s('orbit', 'blood-sparkle', { n: 6, r: 20, t: 0xe83850 })],
+    [s('pop', 'blood-gather', { z: 2.2, on: 'target' }), s('ring', 'blood-circle', { z: 2.4, t: 0xe83850 })],
+    [s('pop', 'blood-explosion', { z: 1.3 })],
+  ),
+  'Exsanguinate': sig(
+    [s('dome', 'blood-aura', { z: 2.6, t: 0xd82848, a: 0.7 })],
+    [s('ripple', 'blood-nova', { n: 3, z: 3.8 }), s('pillars', 'blood-pillar', { n: 6, r: 68, z: 2.2, t: 0xd82848 }), s('spray', 'blood-puff', { n: 12, t: 0xf04860 })],
+    [s('pop', 'blood-explosion', { z: 1.5 })],
+  ),
+  'Dusk Dive': sig(
+    [s('inward', 'dark-smoke', { n: 5, r: 24, t: 0xc82858 })],
+    [s('slashX', 'blood-strike', { z: 2.4 }), s('dash', 'dark-puff', { n: 6, r: 100, t: 0xc82858 })],
+    [s('pop', 'blood-slash', { z: 1.3 })],
+  ),
+  'Midnight Hunt': sig(
+    [s('orbit', 'moon-sparkle', { n: 8, r: 24, t: 0xe03868 })],
+    [s('pillar', 'blood-pillar', { z: 3.6, on: 'target' }), s('sweep', 'blood-slash', { n: 6, z: 2.2, r: 34, t: 0xe03868 }), s('ring', 'dark-circle', { z: 3.6, t: 0xb82850 })],
+    [s('pop', 'blood-hit', { z: 1.4 })],
+  ),
+  'Gargoyle Crash': sig(
+    [s('dome', 'earth-aura', { z: 2.2, t: 0x887898, a: 0.7 })],
+    [s('dome', 'earth-status', { z: 2.4 }), s('ring', 'earth-wave', { z: 2.8, t: 0x887898 })],
+    [s('pop', 'earth-hit', { z: 1.2 })],
+  ),
+  'Cathedral Perch': sig(
+    [s('ring', 'earth-rune', { z: 2.8, loop: true, t: 0x9888a8, a: 0.6 })],
+    [s('drop', 'earth-strike', { z: 3.6, on: 'target' }), s('ripple', 'earth-wave', { n: 3, z: 4.4, t: 0x9888a8 }), s('spray', 'earth-puff', { n: 12, t: 0x786888 })],
+    [s('pop', 'earth-explosion', { z: 1.5 })],
+  ),
+  'Silver Stake': sig(
+    [s('inward', 'light-sparkle', { n: 5, r: 22, t: 0xd8ecff })],
+    [s('beam', 'light-spikes', { n: 2, r: 120, z: 2.0 }), s('pop', 'light-cross', { z: 1.4, t: 0xd8ecff })],
+    [s('pop', 'light-hit', { z: 1.3 })],
+  ),
+  'Judgement of Dusk': sig(
+    [s('orbit', 'moon-sparkle', { n: 8, r: 24, t: 0xf05880 })],
+    [s('cleave', 'blood-spikes', { z: 3.6, on: 'target' }), s('ripple', 'moon-slash', { n: 3, z: 3.4, t: 0xf05880 }), s('spray', 'light-sparkle', { n: 12, t: 0xd04870 })],
+    [s('pop', 'blood-explosion', { z: 1.4 })],
+  ),
+  'Thunder Beat': sig(
+    [s('orbit', 'fire-sparkle', { n: 6, r: 20, t: 0xff9444 })],
+    [s('ripple', 'fire-shield', { n: 2, z: 2.4 }), s('ring', 'fire-wave', { z: 3.0, t: 0xff9444 })],
+    [s('pop', 'fire-hit', { z: 1.2 })],
+  ),
+  'Storm of Ten Thousand Drums': sig(
+    [s('ring', 'lightning-circle', { z: 3.0, loop: true, t: 0xffb444, a: 0.6 })],
+    [s('ripple', 'lightning-wave', { n: 3, z: 3.8 }), s('pillars', 'lightning-strike', { n: 6, r: 70, z: 2.0, t: 0xffb444 }), s('spray', 'fire-sparkle', { n: 14, t: 0xff8434 })],
+    [s('pop', 'lightning-explosion', { z: 1.4 })],
+  ),
+  'Standard Charge': sig(
+    [s('inward', 'light-sparkle', { n: 6, r: 24, t: 0xffe484 })],
+    [s('dash', 'light-flame', { n: 3, r: 110, z: 2.1 }), s('ring', 'light-wave', { z: 2.8, t: 0xffe484 })],
+    [s('pop', 'light-hit', { z: 1.3 })],
+  ),
+  'Oriflamme of the Keep': sig(
+    [s('dome', 'light-aura', { z: 2.6, t: 0xffec94, a: 0.7 })],
+    [s('beam', 'light-vortex', { n: 3, r: 150, z: 3.2 }), s('ripple', 'light-nova', { n: 3, z: 4.2, t: 0xffec94 }), s('barrier', 'banner', { n: 4, r: 38, z: 0.9, t: 0xffd464 })],
+    [s('pop', 'light-explosion', { z: 1.4 })],
+  ),
+  'Tectonic Shove': sig(
+    [s('inward', 'earth-puff', { n: 6, r: 26, t: 0xc49454 })],
+    [s('spikes', 'earth-cross', { n: 3, r: 100, z: 2.2 }), s('ring', 'earth-wave', { z: 2.8, t: 0xc49454 })],
+    [s('pop', 'earth-explosion', { z: 1.3 })],
+  ),
+  "Mountain's Embrace": sig(
+    [s('ring', 'earth-rune', { z: 3.0, loop: true, t: 0xd4a464, a: 0.6 })],
+    [s('spikes', 'earth-vortex', { n: 4, r: 140, z: 3.6 }), s('ripple', 'earth-nova', { n: 3, z: 4.6, t: 0xd4a464 }), s('spray', 'earth-orb', { n: 12, r: 90, t: 0xb48444 })],
+    [s('pop', 'earth-explosion', { z: 1.5 })],
+  ),
+  'Bronze Slam': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 22, t: 0x84b8f4 })],
+    [s('ring', 'dark-wave', { z: 2.5 }), s('ripple', 'ice-circle', { n: 2, z: 3.0, t: 0x84b8f4 })],
+    [s('pop', 'ice-hit', { z: 1.2 })],
+  ),
+  'Midnight Knell': sig(
+    [s('dome', 'dark-aura', { z: 2.8, t: 0x6498e4, a: 0.7 })],
+    [s('flare', 'dark-nova', { z: 3.8 }), s('ripple', 'dark-wave', { n: 3, z: 4.6, t: 0x6498e4 }), s('pillars', 'dark-pillar', { n: 6, r: 72, z: 2.2, t: 0x5488d4 })],
+    [s('pop', 'dark-explosion', { z: 1.4 })],
+  ),
+  'Falcon Stoop': sig(
+    [s('inward', 'wind-puff', { n: 5, r: 24, t: 0xb4ecfc })],
+    [s('meteor', 'wind-cross', { z: 2.3 }), s('dash', 'wind-puff', { n: 6, r: 90, t: 0xb4ecfc })],
+    [s('pop', 'wind-hit', { z: 1.3 })],
+  ),
+  'Sky Hunt': sig(
+    [s('dome', 'wind-aura', { z: 2.6, t: 0x94dcfc, a: 0.7 })],
+    [s('rain', 'wind-pillar', { n: 4, z: 2.8 }), s('spray', 'feather', { n: 16, z: 0.8, r: 120, t: 0x94dcfc }), s('ripple', 'wind-wave', { n: 3, z: 4.4, t: 0x74ccfc })],
+    [s('pop', 'wind-explosion', { z: 1.4 })],
+  ),
+  'Rift Pounce': sig(
+    [s('orbit', 'star-sparkle', { n: 6, r: 20, t: 0xd4a8fc })],
+    [s('beam', 'light-smoke', { n: 2, r: 130, z: 2.1 }), s('ring', 'light-rune', { z: 2.6, t: 0xd4a8fc })],
+    [s('pop', 'star-hit', { z: 1.3 })],
+  ),
+  'Celestial Convergence': sig(
+    [s('ring', 'light-rune', { z: 3.0, loop: true, t: 0xffe488, a: 0.6 })],
+    [s('flare', 'lightning-nova', { z: 4.0, on: 'target' }), s('ripple', 'light-nova', { n: 3, z: 4.6, t: 0xffe488 }), s('rain', 'star-orb', { n: 10, z: 1.6, t: 0xc498fc })],
+    [s('pop', 'star-explosion', { z: 1.5 })],
+  ),
+  'Whirling Veils': sig(
+    [s('orbit', 'wind-sparkle', { n: 6, r: 20, t: 0xf4d488 })],
+    [s('sweep', 'wind-status', { n: 3, r: 24, z: 2.2 }), s('dash', 'wind-slash', { n: 6, r: 100, t: 0xf4d488 })],
+    [s('pop', 'wind-hit', { z: 1.3 })],
+  ),
+  'Dance of Seven Mirages': sig(
+    [s('ring', 'wind-circle', { z: 3.0, loop: true, t: 0xe4bc74, a: 0.6 })],
+    [s('spiral', 'wind-smoke', { n: 4, r: 40, z: 3.4 }), s('ripple', 'wind-wave', { n: 3, z: 4.4, t: 0xe4bc74 }), s('spray', 'earth-puff', { n: 14, r: 110, t: 0xd4ac64 })],
+    [s('pop', 'wind-vortex', { z: 1.4 })],
+  ),
+  'Censer Swing': sig(
+    [s('inward', 'poison-smoke', { n: 5, r: 22, t: 0x74e474 })],
+    [s('drop', 'poison-gather', { z: 2.2, on: 'target' }), s('spray', 'poison-puff', { n: 8, r: 60, t: 0x74e474 })],
+    [s('pop', 'poison-explosion', { z: 1.3 })],
+  ),
+  'Black Miasma': sig(
+    [s('dome', 'poison-aura', { z: 2.6, t: 0x5cd45c, a: 0.7 })],
+    [s('ripple', 'poison-nova', { n: 3, z: 3.8 }), s('spray', 'poison-smoke', { n: 14, r: 100, t: 0x5cd45c }), s('pillars', 'poison-pillar', { n: 6, r: 68, z: 2.0, t: 0x4cc44c })],
+    [s('pop', 'poison-explosion', { z: 1.4 })],
+  ),
+  'Blast Jump': sig(
+    [s('inward', 'fire-smoke', { n: 4, r: 22, t: 0xff8c3c })],
+    [s('meteor', 'earth-orb', { z: 2.4 }), s('ring', 'fire-wave', { z: 2.8, t: 0xff8c3c })],
+    [s('pop', 'fire-explosion', { z: 1.3 })],
+  ),
+  'Carpet Bombardment': sig(
+    [s('ring', 'fire-rune', { z: 2.8, loop: true, t: 0xff7c2c, a: 0.6 })],
+    [s('rain', 'earth-flame', { n: 5, z: 3.0 }), s('ripple', 'fire-wave', { n: 3, z: 4.4, t: 0xff7c2c }), s('spray', 'fire-smoke', { n: 14, r: 100, t: 0xe86c1c })],
+    [s('pop', 'fire-explosion', { z: 1.5 })],
+  ),
+  'Gravity Well': sig(
+    [s('orbit', 'star-sparkle', { n: 6, r: 20, t: 0x9cccfc })],
+    [s('spiral', 'lightning-gather', { n: 3, r: 20, z: 2.0, on: 'allies' }), s('ring', 'light-circle', { z: 2.8, t: 0x9cccfc })],
+    [s('pop', 'star-sparkle', { z: 1.3, on: 'allies' })],
+  ),
+  'Supernova Alignment': sig(
+    [s('ring', 'light-rune', { z: 3.0, loop: true, t: 0xb4dcff, a: 0.6 })],
+    [s('inward', 'lightning-vortex', { n: 5, r: 60, z: 3.2 }), s('ripple', 'light-nova', { n: 3, z: 4.4, t: 0xb4dcff }), s('orbit', 'star-orb', { n: 10, r: 54, z: 1.2, t: 0x8cbcfc })],
+    [s('pop', 'star-explosion', { z: 1.4 })],
+  ),
+  'Chains of Judgement': sig(
+    [s('inward', 'fire-sparkle', { n: 5, r: 22, t: 0xffac4c })],
+    [s('drop', 'dark-flame', { z: 2.3, on: 'target' }), s('ring', 'fire-rune', { z: 2.4, on: 'foes', t: 0xffac4c })],
+    [s('pop', 'fire-hit', { z: 1.3 })],
+  ),
+  'Solar Tribunal': sig(
+    [s('dome', 'fire-aura', { z: 2.6, t: 0xff7c28, a: 0.7 })],
+    [s('pillars', 'blood-flame', { n: 4, r: 50, z: 3.2 }), s('ripple', 'fire-nova', { n: 3, z: 4.4, t: 0xff7c28 }), s('spray', 'fire-sparkle', { n: 14, t: 0xe85c18 })],
+    [s('pop', 'fire-flame', { z: 1.5 })],
+  ),
+  'Halo Dive': sig(
+    [s('orbit', 'light-sparkle', { n: 8, r: 22, t: 0xfff0ac })],
+    [s('meteor', 'wind-flame', { z: 2.5 }), s('ring', 'light-nova', { z: 3.0, t: 0xfff0ac })],
+    [s('pop', 'light-strike', { z: 1.4 })],
+  ),
+  'Descent of the Host': sig(
+    [s('dome', 'light-aura', { z: 2.8, t: 0xfff8bc, a: 0.7 })],
+    [s('pillar', 'forest-flame', { z: 3.8, on: 'allies' }), s('fan', 'light-pillar', { n: 6, r: 2.6, z: 2.0, t: 0xfff8bc }), s('ripple', 'light-wave', { n: 3, z: 4.6, t: 0xffe08c })],
+    [s('pop', 'light-nova', { z: 1.4, on: 'allies' })],
+  ),
+  'Boarding Swing': sig(
+    [s('inward', 'forest-gather', { n: 6, r: 22, t: 0x88eca0 })],
+    [s('flare', 'forest-shield', { z: 2.1, on: 'allies' }), s('spiral', 'forest-sparkle', { n: 10, r: 22, on: 'allies', t: 0x88eca0 })],
+    [s('pop', 'forest-hit', { z: 1.2, on: 'allies' })],
+  ),
+  "Crimson Dispensary": sig(
+    [s('ring', 'dark-rune', { z: 2.8, loop: true, t: 0x68d4ac, a: 0.6 })],
+    [s('ring', 'dark-spikes', { z: 3.6 }), s('spray', 'coin', { n: 14, z: 0.8, r: 100, t: 0x68d4ac }), s('ripple', 'poison-wave', { n: 3, z: 4.2, t: 0x58c49c })],
+    [s('pop', 'dark-explosion', { z: 1.4 })],
+  ),
+  "Barbed Harpoon": sig(
+    [s('inward', 'water-sparkle', { n: 5, r: 22, t: 0x6cc4fc })],
+    [s('beam', 'ice-cross', { n: 2, r: 120, z: 2.1 }), s('draw', 'water-orb', { n: 4, z: 1.0, t: 0x6cc4fc })],
+    [s('pop', 'water-hit', { z: 1.3 })],
+  ),
+  'Leviathan Line': sig(
+    [s('ring', 'ice-circle', { z: 3.0, loop: true, t: 0x4cb4ec, a: 0.6 })],
+    [s('pillar', 'ice-pillar', { z: 3.8, on: 'target' }), s('rain', 'anchor', { n: 8, z: 1.1, t: 0x4cb4ec }), s('ripple', 'ice-wave', { n: 3, z: 4.6, t: 0x3ca4dc })],
+    [s('pop', 'water-explosion', { z: 1.5 })],
+  ),
+  'Breaker Rush': sig(
+    [s('inward', 'water-sparkle', { n: 5, r: 22, t: 0x5cb4c4 })],
+    [s('sweep', 'water-slash', { n: 2, r: 24, z: 2.2 }), s('ring', 'ice-wave', { z: 2.8, t: 0x5cb4c4 })],
+    [s('pop', 'water-hit', { z: 1.3 })],
+  ),
+  'Wrath of the Reef': sig(
+    [s('dome', 'ice-aura', { z: 2.8, t: 0x3484b4, a: 0.7 })],
+    [s('flare', 'ice-nova', { z: 3.9, on: 'target' }), s('spiral', 'ice-vortex', { n: 6, r: 54, z: 2.4, t: 0x3484b4 }), s('ripple', 'ice-wave', { n: 3, z: 4.8, t: 0x2474a4 })],
+    [s('pop', 'water-explosion', { z: 1.5 })],
+  ),
 };
 
 // The original arrangements remain, but every release and corresponding hit has its own authored silhouette.

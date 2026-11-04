@@ -56,8 +56,8 @@ test('the manifest lists the brief: 144 sheets, 271 rows (with the ultimate\'s k
         assert.ok(size > 0 && size <= 8, `${key}.${part}: ${size} tiles`);
       }
     }
-  assert.equal(sheets, 144);
-  assert.equal(rows, 271);
+  assert.equal(sheets, 152);
+  assert.equal(rows, 287);
   assert.equal(SRC_CELL, 256);
 });
 

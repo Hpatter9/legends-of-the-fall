@@ -13,7 +13,7 @@ import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 
 const heroSkills = (kind: string): Skill[] => {
   const hk = HERO_KITS()[kind];
-  return [hk.s1.skill, hk.s2.skill, KITS[kind].ultimate!];
+  return [hk.s1.skill, hk.s2.skill, ...(hk.s3 ? [hk.s3.skill] : []), KITS[kind].ultimate!];
 };
 
 test('a skill with no key of its own is keyed by its name; a renamed skill keeps its old key (RPG-SPELLS batch 2: the healers)', () => {

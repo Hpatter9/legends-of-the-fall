@@ -14,9 +14,9 @@ const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as 
 
 test('every actual hero, ultimate, enemy skill and king spell has individual authored artwork', () => {
   const names = new Set(Object.values(KITS).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
-  assert.equal(names.size, 108);
+  assert.equal(names.size, 148);
   const expected = [...names].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
-  assert.equal(expected.length, 129);
+  assert.equal(expected.length, 169);
   assert.deepEqual(Object.keys(ABILITY_LOOKS).sort(), expected.sort());
   assert.equal(new Set(ABILITY_ART.map(row => row.id)).size, expected.length);
   assert.equal(new Set(ABILITY_ART.map(row => abilitySource(row.id))).size, expected.length, 'different names must resolve to different source cells');
@@ -51,11 +51,11 @@ test('the king spells have different release geometry as well as different paint
 test('the shipping source cells exist and use bounded transparent atlases', () => {
   for (const row of ABILITY_ART) {
     const png = readFileSync(`src/art/fx/abilities/atlas-${row.atlas}.png`);
-    const size = row.atlas === 8 ? 256 : 768;
+    const size = 768;
     assert.equal(png.readUInt32BE(16), size);
     assert.equal(png.readUInt32BE(20), size);
     assert.equal(png[25], 6);
-    assert.ok(row.cell >= 0 && row.cell < (row.atlas === 8 ? 1 : 16));
+    assert.ok(row.cell >= 0 && row.cell < 16);
   }
 });
 

@@ -115,6 +115,13 @@ export const SPOTS: Record<string, Spot> = {
   cleric: S(228, 258, -1, 'chair'),
   barbarian: S(164, 296, 1, 'stool'),
   ranger: S(216, 296, -1, 'stool'),
+  // standing by the bar and tables
+  warDrummer: S(180, 176, 1),
+  banneret: S(230, 176, 1),
+  falconer: S(280, 176, -1),
+  inquisitor: S(280, 258, 1, 'chair'),
+  seraph: S(330, 258, -1),
+  corsairSurgeon: S(276, 296, -1, 'stool'),
 
   // ---- the hearth hall ----
   // standing at the fire
@@ -122,9 +129,14 @@ export const SPOTS: Record<string, Spot> = {
   mummy: S(H + 172, 176, 1),
   buccaneer: S(H + 214, 178, -1),
   rifleBot: S(H + 260, 176, -1),
+  vampireLord: S(H + 52, 176, 1),
+  hemomancer: S(H + 314, 176, -1),
   // on the benches by the rug
   illusionist: S(H + 146, 214, 1, 'bench'),
   gunslinger: S(H + 238, 214, -1, 'bench'),
+  nightstalker: S(H + 42, 214, 1),
+  bloodGargoyle: S(H + 94, 214, 1),
+  dhampir: S(H + 292, 214, -1),
   // the round table on the left
   satyr: S(H + 32, 258, 1, 'chair'),
   druid: S(H + 88, 258, -1, 'chair'),
@@ -137,8 +149,16 @@ export const SPOTS: Record<string, Spot> = {
   werewolf: S(H + 138, 256, 1),
   karasu: S(H + 192, 250, -1),
   minotaur: S(H + 246, 250, -1),
+  geomancer: S(H + 132, 296, 1),
+  bellWarden: S(H + 220, 296, -1),
 
   // ---- the games room ----
+  // along the back gallery
+  astralSphinx: S(H * 2 + 60, 144, 1),
+  mirageDancer: S(H * 2 + 116, 144, 1),
+  plagueDoctor: S(H * 2 + 172, 144, -1),
+  bombardier: S(H * 2 + 228, 144, -1),
+  astrologer: S(H * 2 + 284, 144, -1),
   // darts at the board
   dragoon: S(H * 2 + 88, 184, -1),
   lancer: S(H * 2 + 136, 184, -1),
@@ -159,6 +179,8 @@ export const SPOTS: Record<string, Spot> = {
   reaper: S(H * 2 + 34, 230, 1),
   kraken: S(H * 2 + 80, 240, 1),
   beastmaster: S(H * 2 + 366, 266, -1),
+  harpooner: S(H * 2 + 44, 296, 1),
+  seaReaver: S(H * 2 + 96, 296, 1),
 };
 
 /** The look a hero has in the tavern from their rank: rank 2 wears the second form, the top rank the third. */

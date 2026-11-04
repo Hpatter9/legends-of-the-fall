@@ -14,8 +14,8 @@ function team(kinds: readonly string[], seed = 5, band = 'skeletons'): Battle {
   return b;
 }
 
-test('there are between five and eight combos, each five different heroes, and no hero is in two', () => {
-  assert.ok(COMBOS.length >= 5 && COMBOS.length <= 8);
+test('there are between five and nine combos, each five different heroes, and no hero is in two', () => {
+  assert.ok(COMBOS.length >= 5 && COMBOS.length <= 9);
   const seen = new Set<string>();
   for (const c of COMBOS) {
     assert.equal(new Set(c.heroes).size, 5, c.id);

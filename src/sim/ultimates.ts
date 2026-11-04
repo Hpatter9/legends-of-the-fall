@@ -52,6 +52,28 @@ import { chargeNearest, fissureSpires, knightsAura, thunderclap } from './kits/t
 import { ORBITAL_THROWS, SWARM_THROWS, jets, reaperDrag, type Throws } from './kits/ranged';
 import { CALL, CIRCLE, callLightning, circleOfDeath } from './kits/mages';
 import { berserkerLeap, burningLine, cavalryCharge, hellChains, lastBlowLaunch, lightningStorm } from './kits/melee';
+import {
+  blackMiasma,
+  carpetBombardment,
+  cathedralPerch,
+  celestialConvergence,
+  crimsonDispensary,
+  descentOfTheHost,
+  exsanguinate,
+  judgementOfDusk,
+  leviathanLine,
+  midnightHunt,
+  midnightKnell,
+  mountainsEmbrace,
+  oriflamme,
+  redEclipse,
+  sevenMirages,
+  skyHunt,
+  solarTribunal,
+  supernovaAlignment,
+  tenThousandDrums,
+  wrathOfTheReef,
+} from './kits/twentyNew';
 
 /** A duration in ms, as the caster's `dur` talent lengthens it, and the ultimate's strength: a stronger ultimate holds, guards and hastens a little longer (by the square root of its strength). */
 const dur = (me: Unit, ms: number): number => durOf(me, Math.round(ms * Math.sqrt(castPower())));
@@ -537,6 +559,26 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   sage: { rate: 1.7, power: 1.51 },
   demonSwordsman: { rate: 1.8, power: 3.07 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
   tyrant: { rate: 0.88, power: 1.82 },
+  vampireLord: { rate: 1.2, power: 1.8 },
+  hemomancer: { rate: 0.9, power: 1.4 },
+  nightstalker: { rate: 1.3, power: 1.9 },
+  bloodGargoyle: { rate: 1.25, power: 1.5 },
+  dhampir: { rate: 1.0, power: 1.6 },
+  warDrummer: { rate: 1.0, power: 1.3 },
+  banneret: { rate: 1.1, power: 1.3 },
+  geomancer: { rate: 1.15, power: 1.5 },
+  bellWarden: { rate: 1.2, power: 1.4 },
+  falconer: { rate: 0.95, power: 1.5 },
+  astralSphinx: { rate: 1.05, power: 1.5 },
+  mirageDancer: { rate: 1.25, power: 1.7 },
+  plagueDoctor: { rate: 0.95, power: 1.4 },
+  bombardier: { rate: 0.9, power: 1.6 },
+  astrologer: { rate: 0.95, power: 1.5 },
+  inquisitor: { rate: 1.0, power: 1.5 },
+  seraph: { rate: 1.05, power: 1.3 },
+  corsairSurgeon: { rate: 0.9, power: 1.2 },
+  harpooner: { rate: 1.1, power: 1.6 },
+  seaReaver: { rate: 1.25, power: 1.8 },
 };
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */
@@ -664,6 +706,27 @@ export function heroUltimates(first: (kind: string) => Skill | undefined): Recor
       if (line) raiseWall(b, me, line, 'thorns', dur(me, THORN_MS), out);
       return true;
     }, 'Heart of the Grove'),
+    // ---- the third wave: five Vampires and fifteen across the twelve origins ----
+    vampireLord: ult('Red Eclipse', 'Teleports in a crimson slash across up to five foes within 6 tiles, bleeding and cursing each, and raises a Blood Feast aura for 6s', 750, 'attack2', redEclipse),
+    hemomancer: ult('Exsanguinate', 'Drags every foe within 6 tiles towards the thickest crowd, curses and bleeds them all, and mends every ally for 22% of their health', 800, 'attack2', exsanguinate),
+    nightstalker: ult('Midnight Hunt', 'Vanishes into the dark and executes a four-hop teleport slash across the weakest foes, launching the final target into the air', 700, 'attack2', midnightHunt),
+    bloodGargoyle: ult('Cathedral Perch', 'Soars and crashes down on the thickest crowd within 6 tiles, stunning the 3x3 for 2s and raising a 3-tile Wall of Stone', 800, 'attack2', cathedralPerch),
+    dhampir: ult('Judgement of Dusk', 'Vaults to high ground and fires five consecrated silver stakes across the strongest foes, shoving and cursing each', 750, 'attack2', judgementOfDusk),
+    warDrummer: ult('Storm of Ten Thousand Drums', 'Booms a field-wide thunder cadence: shoves foes within 6 tiles 2 tiles back, hastens and rallies all allies, and sends melee allies charging', 800, 'attack2', tenThousandDrums),
+    banneret: ult('Oriflamme of the Keep', 'Leaps to the heart of the fight, heals all allies for 20% of their health, and raises a Royal Standard aura for 8s', 800, 'attack2', oriflamme),
+    geomancer: ult("Mountain's Embrace", 'Raises a 4-tile Wall of Stone across the foes\' approach, hurls crag-meteors on two crowds, and shields every ally', 850, 'attack2', mountainsEmbrace),
+    bellWarden: ult('Midnight Knell', 'Leaps into the thickest crowd, stuns foes within 3 tiles, and tolls a resonant bronze aura for 8s that shocks foes and guards allies', 850, 'attack2', midnightKnell),
+    falconer: ult('Sky Hunt', 'Vaults to high ground, hastens herself, and calls three kettle-dives of falcons down across separate crowds', 750, 'attack2', skyHunt),
+    astralSphinx: ult('Celestial Convergence', 'Drags every foe within 5 tiles into a star-vortex, stuns them for 1.8s, and calls down a salvo of starlight', 800, 'attack2', celestialConvergence),
+    mirageDancer: ult('Dance of Seven Mirages', 'Performs a five-hop teleport slash across foes within 6 tiles, stunning and bleeding each, and leaves two sand decoys behind', 700, 'attack2', sevenMirages),
+    plagueDoctor: ult('Black Miasma', 'Shoves adjacent foes back, poisons foes within 4 tiles, and raises a 4-tile Black Miasma aura for 8s that poisons foes and mends allies', 800, 'attack2', blackMiasma),
+    bombardier: ult('Carpet Bombardment', 'Rocket-jumps to high ground and rains four concussion mortar salvos across the battlefield', 850, 'attack2', carpetBombardment),
+    astrologer: ult('Supernova Alignment', 'Pulls foes within 6 tiles together into a gravity well, stuns them, and drops two twin supernovas on them', 850, 'attack2', supernovaAlignment),
+    inquisitor: ult('Solar Tribunal', 'Drags the three strongest foes within 6 tiles forward, sets them burning, and raises a 4-tile Solar Tribunal aura for 8s', 800, 'attack2', solarTribunal),
+    seraph: ult('Descent of the Host', 'Soars and crashes down on the thickest crowd, launching adjacent foes 2 tiles out, healing all allies, and raising a Reliquary Halo aura', 850, 'attack2', descentOfTheHost),
+    corsairSurgeon: ult('Crimson Dispensary', 'Cleanses and mends every ally for 24% of their health and raises a 3-tile Rum & Salt aura for 8s', 800, 'attack2', crimsonDispensary),
+    harpooner: ult('Leviathan Line', 'Harpoons up to three distant foes in turn, dragging each 3 tiles forward, chilling them, and raising a 3-tile Wall of Ice', 800, 'attack2', leviathanLine),
+    seaReaver: ult('Wrath of the Reef', 'Surfs a towering tsunami across a line of foes, launching adjacent foes 2 tiles aside and raising a 3-tile Wall of Ice', 750, 'attack2', wrathOfTheReef),
   };
   // the first eight heroes' ultimates are copied and gated at `ULT_LEVEL` like the rest (a foe's own copy of one, such as the Gorgon Queen's, stays as it was) and all forty-five take their balance
   for (const kind of FIRST_EIGHT) all[kind] = { ...first(kind)!, unlock: ULT_LEVEL };

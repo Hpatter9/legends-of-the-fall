@@ -100,6 +100,47 @@ import art97 from '../art/units/hero_res_treant_back.png';
 import art98 from '../art/units/hero_res_treant2_back.png';
 import art99 from '../art/units/hero_res_treant3_back.png';
 
+import art100 from '../art/units/hero_res_vampire_lord.png';
+import art101 from '../art/units/hero_res_vampire_lord_back.png';
+import art102 from '../art/units/hero_res_hemomancer.png';
+import art103 from '../art/units/hero_res_hemomancer_back.png';
+import art104 from '../art/units/hero_res_nightstalker.png';
+import art105 from '../art/units/hero_res_nightstalker_back.png';
+import art106 from '../art/units/hero_res_blood_gargoyle.png';
+import art107 from '../art/units/hero_res_blood_gargoyle_back.png';
+import art108 from '../art/units/hero_res_dhampir.png';
+import art109 from '../art/units/hero_res_dhampir_back.png';
+import art110 from '../art/units/hero_res_war_drummer.png';
+import art111 from '../art/units/hero_res_war_drummer_back.png';
+import art112 from '../art/units/hero_res_banneret.png';
+import art113 from '../art/units/hero_res_banneret_back.png';
+import art114 from '../art/units/hero_res_geomancer.png';
+import art115 from '../art/units/hero_res_geomancer_back.png';
+import art116 from '../art/units/hero_res_bell_warden.png';
+import art117 from '../art/units/hero_res_bell_warden_back.png';
+import art118 from '../art/units/hero_res_falconer.png';
+import art119 from '../art/units/hero_res_falconer_back.png';
+import art120 from '../art/units/hero_res_astral_sphinx.png';
+import art121 from '../art/units/hero_res_astral_sphinx_back.png';
+import art122 from '../art/units/hero_res_mirage_dancer.png';
+import art123 from '../art/units/hero_res_mirage_dancer_back.png';
+import art124 from '../art/units/hero_res_plague_doctor.png';
+import art125 from '../art/units/hero_res_plague_doctor_back.png';
+import art126 from '../art/units/hero_res_bombardier.png';
+import art127 from '../art/units/hero_res_bombardier_back.png';
+import art128 from '../art/units/hero_res_astrologer.png';
+import art129 from '../art/units/hero_res_astrologer_back.png';
+import art130 from '../art/units/hero_res_inquisitor.png';
+import art131 from '../art/units/hero_res_inquisitor_back.png';
+import art132 from '../art/units/hero_res_seraph.png';
+import art133 from '../art/units/hero_res_seraph_back.png';
+import art134 from '../art/units/hero_res_corsair_surgeon.png';
+import art135 from '../art/units/hero_res_corsair_surgeon_back.png';
+import art136 from '../art/units/hero_res_harpooner.png';
+import art137 from '../art/units/hero_res_harpooner_back.png';
+import art138 from '../art/units/hero_res_sea_reaver.png';
+import art139 from '../art/units/hero_res_sea_reaver_back.png';
+
 export const RESONANCE_URLS: Record<string, string> = {
   hero_soldier: art0,
   hero_samurai_archer: art1,
@@ -201,4 +242,45 @@ export const RESONANCE_URLS: Record<string, string> = {
   hero_res_treant_back: art97,
   hero_res_treant2_back: art98,
   hero_res_treant3_back: art99,
+
+  hero_res_vampire_lord: art100,
+  hero_res_hemomancer: art102,
+  hero_res_nightstalker: art104,
+  hero_res_blood_gargoyle: art106,
+  hero_res_dhampir: art108,
+  hero_res_war_drummer: art110,
+  hero_res_banneret: art112,
+  hero_res_geomancer: art114,
+  hero_res_bell_warden: art116,
+  hero_res_falconer: art118,
+  hero_res_astral_sphinx: art120,
+  hero_res_mirage_dancer: art122,
+  hero_res_plague_doctor: art124,
+  hero_res_bombardier: art126,
+  hero_res_astrologer: art128,
+  hero_res_inquisitor: art130,
+  hero_res_seraph: art132,
+  hero_res_corsair_surgeon: art134,
+  hero_res_harpooner: art136,
+  hero_res_sea_reaver: art138,
+  hero_res_vampire_lord_back: art101,
+  hero_res_hemomancer_back: art103,
+  hero_res_nightstalker_back: art105,
+  hero_res_blood_gargoyle_back: art107,
+  hero_res_dhampir_back: art109,
+  hero_res_war_drummer_back: art111,
+  hero_res_banneret_back: art113,
+  hero_res_geomancer_back: art115,
+  hero_res_bell_warden_back: art117,
+  hero_res_falconer_back: art119,
+  hero_res_astral_sphinx_back: art121,
+  hero_res_mirage_dancer_back: art123,
+  hero_res_plague_doctor_back: art125,
+  hero_res_bombardier_back: art127,
+  hero_res_astrologer_back: art129,
+  hero_res_inquisitor_back: art131,
+  hero_res_seraph_back: art133,
+  hero_res_corsair_surgeon_back: art135,
+  hero_res_harpooner_back: art137,
+  hero_res_sea_reaver_back: art139,
 };

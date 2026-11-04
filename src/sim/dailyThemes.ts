@@ -159,7 +159,7 @@ export function featuredExtra(trait: string, kinds: Iterable<string>): TraitEffe
 }
 
 /** A trait's name for many heroes: "Beasts", "Samurai", "Wild heroes". */
-const PLURALS: Readonly<Record<string, string>> = { samurai: 'Samurai', yokai: 'Yokai', undead: 'Undead', wild: 'Wild heroes', holy: 'Holy heroes', frontier: 'Frontier heroes', arcane: 'Arcane heroes', knightly: 'Knightly heroes' };
+const PLURALS: Readonly<Record<string, string>> = { samurai: 'Samurai', yokai: 'Yokai', undead: 'Undead', wild: 'Wild heroes', holy: 'Holy heroes', frontier: 'Frontier heroes', arcane: 'Arcane heroes', knightly: 'Knightly heroes', vampire: 'Vampires' };
 export const traitPlural = (trait: string): string => PLURALS[trait] ?? `${TRAITS[trait].name}s`;
 
 /** The goal in words: "Beat the boss with 4 Beasts on the field". */

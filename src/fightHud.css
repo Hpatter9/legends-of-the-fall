@@ -40,6 +40,7 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 /* (a skill chip: an element-coloured edge, its pack icon, the name and the cost; the cooldown sweeps off it, a thin line under it fills towards
    the cost; greyed while it cannot be paid, dim and grey while locked) */
 .fhChips { grid-column: 3; grid-row: 1 / span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; align-self: stretch; padding: 2px 0; }
+.fhChips.three { grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
 .fhChip { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 3px; overflow: hidden; min-width: 0; padding: 0 3px 1px 3px;
   background: linear-gradient(90deg, color-mix(in srgb, var(--el, #fff) 24%, rgb(8 14 11 / 0.82)), rgb(8 14 11 / 0.78) 60%); border: 1px solid rgb(255 255 255 / 0.2); border-left: 3px solid var(--el, #fff); }
 .fhIcon { display: block; flex: none; background-repeat: no-repeat; image-rendering: pixelated; }
@@ -84,6 +85,7 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 .pairs .fhPic { width: 30px; height: 36px; margin-top: 0; }
 .pairs .fhPortrait { height: 30px; margin-top: 3px; }
 .pairs .fhChips { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
+.pairs .fhChips.three { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 1px; }
 .pairs .fhChip { padding: 0 2px 1px 2px; border-left-width: 2px; column-gap: 2px; }
 .pairs .fhSk b { display: none; }
 .pairs .fhSk em { text-align: right; }
@@ -172,6 +174,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 .fsHead small { font: 400 12px/12px 'Pixelify Sans', var(--body); color: var(--text-dim, #b8ad94); }
 .fsClose { min-height: 32px; width: 32px; padding: 0; font-size: 16px; }
 .fsTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+.fsTabs.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .fsTabs button { min-height: 28px; padding: 2px 4px; font: 400 12px/12px var(--body); }
 .fsTabs button.on { border-color: var(--el); color: #fff; box-shadow: inset 0 -2px 0 var(--el); }
 .fsCard p { margin: 6px 0; }

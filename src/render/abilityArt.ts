@@ -14,6 +14,8 @@ import a5 from '../art/fx/abilities/atlas-5.png';
 import a6 from '../art/fx/abilities/atlas-6.png';
 import a7 from '../art/fx/abilities/atlas-7.png';
 import a8 from '../art/fx/abilities/atlas-8.png';
+import a9 from '../art/fx/abilities/atlas-9.png';
+import a10 from '../art/fx/abilities/atlas-10.png';
 
 const bases = new Map<string, Texture>();
 const frames = new Map<string, Texture[]>();
@@ -21,10 +23,10 @@ let loading: Promise<void> | undefined;
 
 export function loadAbilityArt(): Promise<void> {
   return loading ??= (async () => {
-    const images = await Promise.all([a0,a1,a2,a3,a4,a5,a6,a7,a8].map(loadImage));
+    const images = await Promise.all([a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10].map(loadImage));
     for (const row of ABILITY_ART) {
       const image = images[row.atlas];
-      const columns = row.atlas === 8 ? 1 : 4;
+      const columns = 4;
       const cell = image.width / columns;
       const canvas = document.createElement('canvas');
       canvas.width = canvas.height = 128;

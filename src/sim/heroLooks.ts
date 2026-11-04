@@ -37,4 +37,4 @@ export const HERO_LOOKS: Record<string, { tone: Tone; hair?: Hair }> = {
 };
 
 /** The heroes who are not people (spirits, beasts, the undead, machines): they keep their looks, and are never re-toned. */
-export const NOT_HUMAN: readonly string[] = ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'rifleBot', 'mummy', 'wolfBard', 'kraken', 'reaper', 'dreadPirate', 'siegeBot'];
+export const NOT_HUMAN: readonly string[] = ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'rifleBot', 'mummy', 'wolfBard', 'kraken', 'reaper', 'dreadPirate', 'siegeBot', 'juggernaut', 'tyrant', 'vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'geomancer', 'bellWarden', 'astralSphinx', 'plagueDoctor', 'bombardier', 'seraph', 'seaReaver'];

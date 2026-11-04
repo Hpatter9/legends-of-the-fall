@@ -22,7 +22,7 @@ const started = (kinds: string[]): Battle => {
 };
 const hero = (b: Battle, kind: string) => b.units.find((x) => x.def === kind)!;
 
-test('every hero has an origin and a class, and every trait has two to four heroes', () => {
+test('every hero has an origin and a class, and every trait has five heroes and a 5-hero tier', () => {
   for (const k of ALL_HEROES) {
     const [o, c] = HERO_TRAITS[k];
     assert.equal(TRAITS[o].kind, 'origin');
@@ -30,7 +30,8 @@ test('every hero has an origin and a class, and every trait has two to four hero
   }
   for (const t of Object.keys(TRAITS)) {
     const n = membersOf(t).length;
-    assert.ok(n >= 2 && n <= 4, `${t} has ${n}`);
+    assert.equal(n, 5, `${t} has ${n}`);
+    assert.equal(TRAITS[t].tiers[TRAITS[t].tiers.length - 1].need, 5, `${t} has a 5-piece tier`);
   }
 });
 

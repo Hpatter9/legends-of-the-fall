@@ -901,5 +901,285 @@
     "motif": "five small falling gold celestial stars forming a curved constellation with long silver tails",
     "atlas": 8,
     "cell": 0
+  },
+  {
+    "id": "skill:Crimson Lunge",
+    "name": "Crimson Lunge",
+    "motif": "a crimson bat-winged royal crest surging through a dark ruby mist halo",
+    "atlas": 8,
+    "cell": 1
+  },
+  {
+    "id": "skill:Red Eclipse",
+    "name": "Red Eclipse",
+    "motif": "a towering eclipse chalice overflowing with swirling crimson bat silhouettes",
+    "atlas": 8,
+    "cell": 2
+  },
+  {
+    "id": "skill:Sanguine Lash",
+    "name": "Sanguine Lash",
+    "motif": "three superheated scarlet blood droplets bursting from a dark arterial ring",
+    "atlas": 8,
+    "cell": 3
+  },
+  {
+    "id": "skill:Exsanguinate",
+    "name": "Exsanguinate",
+    "motif": "an ornate sanguine ritual circle erupting with six tall crimson blood geysers",
+    "atlas": 8,
+    "cell": 4
+  },
+  {
+    "id": "skill:Dusk Dive",
+    "name": "Dusk Dive",
+    "motif": "two crossed obsidian vampire fangs tearing through a diagonal scarlet slash",
+    "atlas": 8,
+    "cell": 5
+  },
+  {
+    "id": "skill:Midnight Hunt",
+    "name": "Midnight Hunt",
+    "motif": "a blazing blood moon framed by jagged crimson shadow claws and flying bats",
+    "atlas": 8,
+    "cell": 6
+  },
+  {
+    "id": "skill:Gargoyle Crash",
+    "name": "Gargoyle Crash",
+    "motif": "folded gargoyle stone wings locking around a dark amethyst fortress sigil",
+    "atlas": 8,
+    "cell": 7
+  },
+  {
+    "id": "skill:Cathedral Perch",
+    "name": "Cathedral Perch",
+    "motif": "a falling gothic spire gargoyle shattering an obsidian rose-window crater",
+    "atlas": 8,
+    "cell": 8
+  },
+  {
+    "id": "skill:Silver Stake",
+    "name": "Silver Stake",
+    "motif": "a consecrated silver stake and sanguine lance crossing in a white-red flash",
+    "atlas": 8,
+    "cell": 9
+  },
+  {
+    "id": "skill:Judgement of Dusk",
+    "name": "Judgement of Dusk",
+    "motif": "a half-silver half-crimson twilight cross cleaving a vampiric blood halo",
+    "atlas": 8,
+    "cell": 10
+  },
+  {
+    "id": "skill:Thunder Beat",
+    "name": "Thunder Beat",
+    "motif": "a bronze war drum skin rippling with concentric golden sonic shock-rings",
+    "atlas": 8,
+    "cell": 11
+  },
+  {
+    "id": "skill:Storm of Ten Thousand Drums",
+    "name": "Storm of Ten Thousand Drums",
+    "motif": "a tempest ring of thunderous taiko drums unleashing radial amber soundwaves",
+    "atlas": 8,
+    "cell": 12
+  },
+  {
+    "id": "skill:Standard Charge",
+    "name": "Standard Charge",
+    "motif": "a radiant golden knightly standard charging forward through a sunburst chevron",
+    "atlas": 8,
+    "cell": 13
+  },
+  {
+    "id": "skill:Oriflamme of the Keep",
+    "name": "Oriflamme of the Keep",
+    "motif": "four consecrated crusade banners planted in a blazing golden bastion circle",
+    "atlas": 8,
+    "cell": 14
+  },
+  {
+    "id": "skill:Tectonic Shove",
+    "name": "Tectonic Shove",
+    "motif": "a jagged basalt monolith rising through an amber fault-line shockwave",
+    "atlas": 8,
+    "cell": 15
+  },
+  {
+    "id": "skill:Mountain's Embrace",
+    "name": "Mountain's Embrace",
+    "motif": "colliding tectonic stone plates splitting open with molten golden fault fissures",
+    "atlas": 9,
+    "cell": 0
+  },
+  {
+    "id": "skill:Bronze Slam",
+    "name": "Bronze Slam",
+    "motif": "a heavy bronze temple bell swinging out a cold indigo soul-reaping chime ring",
+    "atlas": 9,
+    "cell": 1
+  },
+  {
+    "id": "skill:Midnight Knell",
+    "name": "Midnight Knell",
+    "motif": "a colossal sanctuary bell tolling three dark sapphire judgement shockfronts",
+    "atlas": 9,
+    "cell": 2
+  },
+  {
+    "id": "skill:Falcon Stoop",
+    "name": "Falcon Stoop",
+    "motif": "a stooped hunting falcon diving through a sharp turquoise wind-shear V-trail",
+    "atlas": 9,
+    "cell": 3
+  },
+  {
+    "id": "skill:Sky Hunt",
+    "name": "Sky Hunt",
+    "motif": "a giant golden-winged sovereign raptor descending in a cyclone of feathers",
+    "atlas": 9,
+    "cell": 4
+  },
+  {
+    "id": "skill:Rift Pounce",
+    "name": "Rift Pounce",
+    "motif": "a glowing violet sphinx eye inscribed inside a golden triangular star riddle",
+    "atlas": 9,
+    "cell": 5
+  },
+  {
+    "id": "skill:Celestial Convergence",
+    "name": "Celestial Convergence",
+    "motif": "a collapsing purple-gold astral supernova exploding through zodiac rings",
+    "atlas": 9,
+    "cell": 6
+  },
+  {
+    "id": "skill:Whirling Veils",
+    "name": "Whirling Veils",
+    "motif": "twin curved scimitars whirling inside a ribbon of golden desert mirage sand",
+    "atlas": 9,
+    "cell": 7
+  },
+  {
+    "id": "skill:Dance of Seven Mirages",
+    "name": "Dance of Seven Mirages",
+    "motif": "a howling golden desert sandstorm vortex laced with flashing scimitar arcs",
+    "atlas": 9,
+    "cell": 8
+  },
+  {
+    "id": "skill:Censer Swing",
+    "name": "Censer Swing",
+    "motif": "a shattered green alchemical beak-doctor flask venting noxious emerald vapour",
+    "atlas": 9,
+    "cell": 9
+  },
+  {
+    "id": "skill:Black Miasma",
+    "name": "Black Miasma",
+    "motif": "a billowing emerald-violet pandemic cloud crowned with glowing alchemical skulls",
+    "atlas": 9,
+    "cell": 10
+  },
+  {
+    "id": "skill:Blast Jump",
+    "name": "Blast Jump",
+    "motif": "a smoking brass siege mortar shell arcing into a jagged orange shrapnel burst",
+    "atlas": 9,
+    "cell": 11
+  },
+  {
+    "id": "skill:Carpet Bombardment",
+    "name": "Carpet Bombardment",
+    "motif": "a rolling barrage of five brass artillery shells blanketing the earth in fire",
+    "atlas": 9,
+    "cell": 12
+  },
+  {
+    "id": "skill:Gravity Well",
+    "name": "Gravity Well",
+    "motif": "three linked sapphire stars aligning along a silver astrolabe meridian arc",
+    "atlas": 9,
+    "cell": 13
+  },
+  {
+    "id": "skill:Supernova Alignment",
+    "name": "Supernova Alignment",
+    "motif": "a celestial twelve-spoked golden zodiac wheel radiating sapphire starlight",
+    "atlas": 9,
+    "cell": 14
+  },
+  {
+    "id": "skill:Chains of Judgement",
+    "name": "Chains of Judgement",
+    "motif": "a white-hot iron inquisitor brand stamping a fiery golden seal of silence",
+    "atlas": 9,
+    "cell": 15
+  },
+  {
+    "id": "skill:Solar Tribunal",
+    "name": "Solar Tribunal",
+    "motif": "four pillars of purifying golden-crimson inquisitorial flame enclosing a pyre",
+    "atlas": 10,
+    "cell": 0
+  },
+  {
+    "id": "skill:Halo Dive",
+    "name": "Halo Dive",
+    "motif": "six blazing seraphic feather wings diving in a blinding spear of sunlight",
+    "atlas": 10,
+    "cell": 1
+  },
+  {
+    "id": "skill:Descent of the Host",
+    "name": "Descent of the Host",
+    "motif": "a radiant solar choir halo with six golden wings and ascending sanctuary rays",
+    "atlas": 10,
+    "cell": 2
+  },
+  {
+    "id": "skill:Boarding Swing",
+    "name": "Boarding Swing",
+    "motif": "a pirate surgeon bone-saw and glowing emerald rum-tonic flask in a healing splash",
+    "atlas": 10,
+    "cell": 3
+  },
+  {
+    "id": "skill:Crimson Dispensary",
+    "name": "Crimson Dispensary",
+    "motif": "an iron-bound cursed sea chest bursting open with ghostly doubloons and green mist",
+    "atlas": 10,
+    "cell": 4
+  },
+  {
+    "id": "skill:Barbed Harpoon",
+    "name": "Barbed Harpoon",
+    "motif": "a barbed iron whaling harpoon trailing a taut rope and turquoise sea-foam wake",
+    "atlas": 10,
+    "cell": 5
+  },
+  {
+    "id": "skill:Leviathan Line",
+    "name": "Leviathan Line",
+    "motif": "three massive iron harpoons and chains pinning a deep-sea maelstrom",
+    "atlas": 10,
+    "cell": 6
+  },
+  {
+    "id": "skill:Breaker Rush",
+    "name": "Breaker Rush",
+    "motif": "a barnacle-encrusted abyssal anchor swinging through a dark brine shockwave",
+    "atlas": 10,
+    "cell": 7
+  },
+  {
+    "id": "skill:Wrath of the Reef",
+    "name": "Wrath of the Reef",
+    "motif": "a colossal abyssal trench whirlpoolimploding under a heavy iron ship anchor",
+    "atlas": 10,
+    "cell": 8
   }
 ]

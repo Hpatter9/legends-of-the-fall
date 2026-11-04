@@ -32,8 +32,8 @@ test('every hero has one pool: 17 mana and 28 stamina, and summons and foes have
   assert.equal(Object.keys(kits).length, ALL_HEROES.length);
   for (const h of ALL_HEROES) assert.ok(kits[h], h);
   const mana = ALL_HEROES.filter((h) => kits[h].pool === 'mana');
-  assert.equal(mana.length, 17, mana.join());
-  assert.equal(ALL_HEROES.length - mana.length, 28);
+  assert.equal(mana.length, 25, mana.join());
+  assert.equal(ALL_HEROES.length - mana.length, 40);
   const b = arena();
   assert.equal(poolOf(spawn(b, 'wolf', 1, 1)), undefined);
   assert.equal(poolOf(spawn(b, 'skeleton', 2, 2)), undefined);

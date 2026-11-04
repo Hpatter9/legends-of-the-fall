@@ -30,12 +30,14 @@ export interface ReviveFace {
   skill: Skill;
 }
 
-/** The four healers' revive faces. */
+/** The healers' revive faces. */
 export const REVIVE_FACES: Readonly<Record<string, ReviveFace>> = {
   cleric: face('Revivify', 'A fallen friend is called back: it rises at 30% health, cleansed (once every 30s; each friend once a wave)'),
   priestess: face('Resurrection', 'The nearest fallen friend is raised at 30% health, cleansed (once every 30s; each friend once a wave)'),
   wanderer: face('Elixir of Life', 'A vial poured on the nearest fallen friend: it rises at 30% health, cleansed (once every 30s; each friend once a wave)'),
   druid: face('Reincarnate', 'The nearest fallen friend rises again, wreathed in leaves, at 30% health (once every 30s; each friend once a wave)'),
+  seraph: face('Reliquary Grace', 'Golden wings enfold the nearest fallen friend: it rises at 30% health, cleansed (once every 30s; each friend once a wave)'),
+  corsairSurgeon: face('Smelling Salts', 'A sharp draught wakes the nearest fallen friend at 30% health, cleansed (once every 30s; each friend once a wave)'),
 };
 
 function face(name: string, text: string): ReviveFace {

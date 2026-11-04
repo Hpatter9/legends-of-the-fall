@@ -123,5 +123,13 @@ export const EQUIP_LIST: readonly EquipBase[] = [
 
 export const EQUIP_BASES: Readonly<Record<string, EquipBase>> = Object.fromEntries(EQUIP_LIST.map((b) => [b.id, b]));
 export const EQUIP_BASE_IDS: readonly string[] = EQUIP_LIST.map((b) => b.id);
+/** Awakened-only signature abilities so all 65 heroes in `awaken.ts` have a distinct passive ability in `ABILITIES`. */
+export const AWAKEN_EXTRA_ABILITIES: readonly Ability[] = [
+  ab('crimsonThirst', 'Crimson Thirst', 'crit', 'leech', { v: 0.22 }),
+  ab('sanguineWard', 'Sanguine Ward', 'hit', 'shield', { p: 0.2, v: 0.08, w: 3 }),
+  ab('duskShroud', 'Dusk Shroud', 'low', 'stealth', { w: 3 }),
+  ab('gargoyleHide', 'Gargoyle Hide', 'start', 'guard', { w: 5 }),
+  ab('silverPulse', 'Silver Pulse', 'nth', 'execute', { n: 4, v: 0.9 }),
+];
 /** Every ability, by id. */
-export const ABILITIES: Readonly<Record<string, Ability>> = Object.fromEntries(EQUIP_LIST.map((b) => [b.ability.id, b.ability]));
+export const ABILITIES: Readonly<Record<string, Ability>> = Object.fromEntries([...EQUIP_LIST.map((b) => [b.ability.id, b.ability]), ...AWAKEN_EXTRA_ABILITIES.map((a) => [a.id, a])]);

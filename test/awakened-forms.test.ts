@@ -44,7 +44,7 @@ test('upgraded werewolf and druid transformations retain four facings without ch
 
 test('every upgraded animation has production assets, matched views and complete eight-frame walking', () => {
   const layouts = art.layouts as Record<string, { w: number; h: number; figure: number; perRow: number; rear?: string; rows: string[]; counts: Record<string, number>; aliases?: Record<string, string> }>;
-  assert.equal(Object.keys(art.forms).length, 49, '45 heroes and four supporting transformations');
+  assert.equal(Object.keys(art.forms).length, 69, '65 heroes and four supporting transformations');
   for (const id of Object.values(art.forms)) {
     const front = layouts[id];
     assert.equal(front.rear, `${id}_back`);

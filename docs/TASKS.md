@@ -14,6 +14,20 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### EXPANSION-20 — 20 New Heroes, Vampire Origin & 3-Skill Engine
+
+- **Owner:** Antigravity worker.
+- **Goal:** Expand roster from 45 to 65 heroes. Round out all 12 existing Origins to 5 heroes each; introduce the all-new Vampire Origin with 5 heroes. Balance all 13 Classes to exactly 5 heroes each. Introduce the 3 Active Skills engine (`s1` Lv 1, `s2` Lv 10, `s3` Lv 20) + Ultimate (Lv 30) across the game, combat HUD, and Codex. Implement dynamic movement mechanics (charges, leaps, blinks, vaults, swaps, walls, tethers, burrows, auras) using `src/sim/toolkit/`.
+- **Scope:**
+  - `src/sim/units.ts`, `heroNames.ts`, `heroLooks.ts`, `starter.ts`: 20 new unit definitions, heritages, naming, and starting pool.
+  - `src/sim/heroKits.ts`, `src/sim/kits/twentyNew.ts`, `src/sim/kits/table.ts`: 3-skill engine unlock levels (`SKILL3_LEVEL = 20`, resource pace rules) and kits for all 20 heroes.
+  - `src/fightHudRules.ts`, `src/fightHud.ts`, `src/fightHud.css`, `src/menuHeroes.ts`, `src/codexView.ts`: 3rd active skill chip rendering, tabs, and level-locked dossier sheets.
+  - `src/sim/traits.ts`, `src/sim/combos.ts`, `src/sim/abilities.ts`, `src/sim/relics.ts`, `src/sim/battle.ts`: 5-piece Origin and Class trait tiers, Vampire Origin leech / swarm mechanics, and the 9th Last Oath combo `bloodCourt`.
+  - `src/sim/tierSkills.ts`, `src/sim/talentsDeep.ts`, `src/sim/talents.ts`, `src/sim/equipBases.ts`, `src/sim/awaken.ts`, `src/sim/codexLore.ts`, `src/quipData.ts`, `src/render/tavernSpots.ts`: Full progression, awakening, talents, lore, quips, and tavern spots.
+  - Art assets: 20 front & rear battle sprite sheets with 8-frame walk cycles (`hero_res_*.png`), 20 awakened front & rear battle sheets (`awakened_*.png`), 20 illustrations (`*.webp`), 20 portraits (`*-portrait.webp`), 20 awakened gear icons (`awakened-*.webp`), 3 painted ability atlases (`atlas-8.png`, `atlas-9.png`, `atlas-10.png`), and painted spell FX sheets (`v-vampire.webp`).
+- **Status:** Complete. 219/219 tests pass; `npm run web` and `npm run typecheck` clean. [Note](notes/twenty-heroes.md).
+
+
 ### BATTLE-HUD — The fight's hero rows and spell orbs; ULT-CUTIN — an ultimate's moment
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/battle-hud-final`, `/home/user/lotf-hud` (from main 0.254.0).

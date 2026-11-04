@@ -109,6 +109,11 @@ export const COMBOS: readonly Combo[] = [
     text: 'The court passes judgement: every foe is cursed for 5s and slowed, and the five drink back a little of their health',
     beats: [{ k: 'hurt', mult: 0.35 }, { k: 'burn', mult: 0.04, ms: 5000, kind: 'curse' }, { k: 'slow', ms: 2500 }, { k: 'mendFive', share: 0.05 }],
   },
+  {
+    id: 'bloodCourt', heroes: ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'], name: 'The Crimson Court', move: 'Eternal Eclipse', tone: 'dark',
+    text: 'A blood moon eclipses the field: every foe takes heavy damage and bleeds for 4s, while the five drink back a quarter of their health and are hastened',
+    beats: [{ k: 'hurt', mult: 0.65 }, { k: 'burn', mult: 0.055, ms: 4000, kind: 'bleed' }, { k: 'mendFive', share: 0.25 }, { k: 'haste', ms: 4000 }],
+  },
 ];
 
 export const comboById = (id: string): Combo | undefined => COMBOS.find((c) => c.id === id);

@@ -9,11 +9,16 @@ export type StarterClass = 'front' | 'striker' | 'shooter' | 'caster' | 'support
 /** What each hero is for, as the starter pick tells it. Every hero is in exactly one class. */
 export const CLASS_OF: Readonly<Record<string, StarterClass>> = {
   knight: 'front', paladin: 'front', juggernaut: 'front', minotaur: 'front', shambler: 'front', mummy: 'front', kraken: 'front', dreadPirate: 'front', yamabushi: 'front', peasant: 'front',
+  bloodGargoyle: 'front', banneret: 'front', geomancer: 'front', bellWarden: 'front', seraph: 'front',
   samurai: 'striker', kunoichi: 'striker', ninjaMonk: 'striker', kitsune: 'striker', karasu: 'striker', werewolf: 'striker', barbarian: 'striker', mercenary: 'striker', buccaneer: 'striker', lancer: 'striker',
   reaper: 'striker', arcBlade: 'striker', dragoon: 'striker', demonSwordsman: 'striker', illusionist: 'striker', beastmaster: 'striker', tyrant: 'striker', samuraiCommander: 'striker',
+  vampireLord: 'striker', nightstalker: 'striker', astralSphinx: 'striker', mirageDancer: 'striker', seaReaver: 'striker',
   archer: 'shooter', ranger: 'shooter', gunslinger: 'shooter', rifleBot: 'shooter', siegeBot: 'shooter', gorgon: 'shooter',
+  dhampir: 'shooter', falconer: 'shooter', bombardier: 'shooter', harpooner: 'shooter',
   wizard: 'caster', lightningMage: 'caster', warlock: 'caster', druid: 'caster', timeWitch: 'caster', sage: 'caster',
+  hemomancer: 'caster', plagueDoctor: 'caster', astrologer: 'caster', inquisitor: 'caster',
   cleric: 'support', priestess: 'support', wolfBard: 'support', wanderer: 'support', satyr: 'support',
+  warDrummer: 'support', corsairSurgeon: 'support',
 };
 
 export const CLASS_NAMES: Readonly<Record<StarterClass, string>> = { front: 'Front-liner', striker: 'Striker', shooter: 'Shooter', caster: 'Caster', support: 'Support' };

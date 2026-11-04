@@ -29,10 +29,10 @@ test('every spot lies on the floor inside the scene, and the scene can sort it f
   for (const g of GLOWS) assert.ok(g.x > 0 && g.x < SCENE_W && g.y >= 0 && g.y <= ROOM_H);
 });
 
-test('each room holds fifteen heroes, so none is crowded', () => {
+test('each room holds an even share of heroes, so none is crowded', () => {
   const per = [0, 0, 0];
   for (const s of Object.values(SPOTS)) per[Math.min(ROOMS - 1, Math.floor(s.x / ROOM_W))]++;
-  assert.deepEqual(per, [15, 15, 15]);
+  assert.deepEqual(per, [21, 22, 22]);
 });
 
 test('no two figures overlap: they are apart across, or far enough apart down that the one behind shows', () => {

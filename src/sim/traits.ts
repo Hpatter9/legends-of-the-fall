@@ -33,6 +33,10 @@ export interface TraitEffects {
   yokaiWisp?: boolean;
   /** Guardian milestone (three Guardians): an emergency Aegis shield the first time a hero drops below 30% health. */
   guardianShield?: boolean;
+  /** Share of blow damage healed back by the attacker. */
+  leech?: number;
+  /** Vampire milestone (five Vampires): a Vampire brought below 30% health bursts into a bat-swarm, mends and slips back once a fight. */
+  vampireSwarm?: boolean;
 }
 
 export interface TraitTier {
@@ -56,79 +60,136 @@ export const TRAITS: Record<string, Trait> = {
   samurai: { id: 'samurai', name: 'Samurai', kind: 'origin', short: 'Sa', tiers: [
     { need: 2, effects: { atk: 1.01 }, text: '+1% attack' },
     { need: 4, effects: { atk: 1.1 }, text: '+10% attack' },
+    { need: 5, effects: { atk: 1.18, crit: 0.08 }, text: '+18% attack and +8% crit chance' },
   ] },
   mystic: { id: 'mystic', name: 'Mystic', kind: 'origin', short: 'My', tiers: [
     { need: 2, effects: { mana: 1.3 }, text: "The king's mana fills 30% faster" },
     { need: 4, effects: { mana: 1.6 }, text: "The king's mana fills 60% faster" },
+    { need: 5, effects: { mana: 2.0, charge: 1.2 }, text: "The king's mana fills twice as fast, and pools refill 20% faster" },
   ] },
   yokai: { id: 'yokai', name: 'Yokai', kind: 'origin', short: 'Yo', tiers: [
     { need: 2, effects: { dodge: 0.06 }, text: 'Slip 6% of blows' },
     { need: 3, effects: { dodge: 0.06, yokaiWisp: true }, text: 'Slip 6% of blows, and a Yokai that slips one leaves a spirit wisp on its tile' },
+    { need: 5, effects: { dodge: 0.14, speed: 1.08, yokaiWisp: true }, text: 'Slip 14% of blows, act 8% faster, and dodging leaves a spirit wisp' },
   ] },
-  knightly: { id: 'knightly', name: 'Knightly', kind: 'origin', short: 'Kn', tiers: [{ need: 2, effects: { hp: 1.05 }, text: '+5% health' }] },
+  knightly: { id: 'knightly', name: 'Knightly', kind: 'origin', short: 'Kn', tiers: [
+    { need: 2, effects: { hp: 1.05 }, text: '+5% health' },
+    { need: 4, effects: { hp: 1.12, guard: 0.04 }, text: '+12% health, and all heroes take 4% less damage' },
+    { need: 5, effects: { hp: 1.2, guard: 0.08 }, text: '+20% health, and all heroes take 8% less damage' },
+  ] },
   guardian: { id: 'guardian', name: 'Guardian', kind: 'class', short: 'Gu', tiers: [
     { need: 2, effects: { guard: 0.05 }, text: 'All heroes take 5% less damage' },
     { need: 3, effects: { guard: 0.05, guardianShield: true }, text: 'All heroes take 5% less damage, and an Aegis shield covers each the first time it is badly hurt' },
+    { need: 5, effects: { guard: 0.12, hp: 1.1, guardianShield: true }, text: 'All heroes take 12% less damage, have +10% health, and gain an emergency Aegis shield' },
   ] },
-  blade: { id: 'blade', name: 'Blade', kind: 'class', short: 'Bl', tiers: [{ need: 2, effects: { crit: 0.1 }, text: '+10% crit chance for all' }] },
-  marksman: { id: 'marksman', name: 'Marksman', kind: 'class', short: 'Mk', tiers: [{ need: 2, effects: { reach: 0.5 }, text: 'Shooters reach much further from high ground' }] },
+  blade: { id: 'blade', name: 'Blade', kind: 'class', short: 'Bl', tiers: [
+    { need: 2, effects: { crit: 0.1 }, text: '+10% crit chance for all' },
+    { need: 4, effects: { crit: 0.18, atk: 1.06 }, text: '+18% crit chance and +6% attack' },
+    { need: 5, effects: { crit: 0.25, atk: 1.14 }, text: '+25% crit chance and +14% attack' },
+  ] },
+  marksman: { id: 'marksman', name: 'Marksman', kind: 'class', short: 'Mk', tiers: [
+    { need: 2, effects: { reach: 0.5 }, text: 'Shooters reach much further from high ground' },
+    { need: 4, effects: { reach: 0.8, crit: 0.08 }, text: 'Shooters reach further from high ground, and all heroes gain +8% crit chance' },
+    { need: 5, effects: { reach: 1.2, crit: 0.15, atk: 1.08 }, text: 'Command the heights: +15% crit chance, +8% attack, and great high-ground reach' },
+  ] },
   caster: { id: 'caster', name: 'Caster', kind: 'class', short: 'Ca', tiers: [
     { need: 2, effects: { charge: 1.3 }, text: 'Pools refill 30% faster over time' },
     { need: 4, effects: { charge: 1.5 }, text: 'Pools refill 50% faster over time' },
+    { need: 5, effects: { charge: 1.75, atk: 1.1 }, text: 'Pools refill 75% faster over time, and +10% attack' },
   ] },
-  holy: { id: 'holy', name: 'Holy', kind: 'origin', short: 'Ho', tiers: [{ need: 2, effects: { hp: 1.08 }, text: '+8% health' }] },
+  holy: { id: 'holy', name: 'Holy', kind: 'origin', short: 'Ho', tiers: [
+    { need: 2, effects: { hp: 1.08 }, text: '+8% health' },
+    { need: 4, effects: { hp: 1.16, guard: 0.05 }, text: '+16% health, and all heroes take 5% less damage' },
+    { need: 5, effects: { hp: 1.25, guard: 0.1 }, text: '+25% health, and all heroes take 10% less damage' },
+  ] },
   wild: { id: 'wild', name: 'Wild', kind: 'origin', short: 'Wi', tiers: [
     { need: 2, effects: { atk: 1.05 }, text: '+5% attack' },
     { need: 4, effects: { atk: 1.12 }, text: '+12% attack' },
+    { need: 5, effects: { atk: 1.2, speed: 1.08 }, text: '+20% attack, and all heroes act and walk 8% faster' },
   ] },
   arcane: { id: 'arcane', name: 'Arcane', kind: 'origin', short: 'Ar', tiers: [
     { need: 2, effects: { charge: 1.15 }, text: 'Pools refill 15% faster over time' },
     { need: 4, effects: { charge: 1.3 }, text: 'Pools refill 30% faster over time' },
+    { need: 5, effects: { charge: 1.5, mana: 1.3 }, text: "Pools refill 50% faster over time, and the king's mana fills 30% faster" },
   ] },
   frontier: { id: 'frontier', name: 'Frontier', kind: 'origin', short: 'Fr', tiers: [
     { need: 2, effects: { crit: 0.06 }, text: '+6% crit chance for all' },
     { need: 4, effects: { crit: 0.14 }, text: '+14% crit chance for all' },
+    { need: 5, effects: { crit: 0.22, speed: 1.08 }, text: '+22% crit chance, and all heroes act and walk 8% faster' },
   ] },
   warden: { id: 'warden', name: 'Warden', kind: 'class', short: 'Wa', tiers: [
     { need: 2, effects: { guard: 0.04 }, text: 'All heroes take 4% less damage' },
     { need: 4, effects: { guard: 0.1 }, text: 'All heroes take 10% less damage' },
+    { need: 5, effects: { guard: 0.16, hp: 1.1 }, text: 'All heroes take 16% less damage and have +10% health' },
   ] },
   trickster: { id: 'trickster', name: 'Trickster', kind: 'class', short: 'Tr', tiers: [
     { need: 2, effects: { speed: 1.05 }, text: 'All heroes act and walk 5% faster' },
     { need: 3, effects: { speed: 1.05, tricksterLog: true }, text: 'All heroes act and walk 5% faster, and a Trickster brought low leaves a decoy log and slips aside (once a fight)' },
+    { need: 5, effects: { speed: 1.12, dodge: 0.08, tricksterLog: true }, text: 'All heroes act and walk 12% faster, slip 8% of blows, and Tricksters leave a decoy log when brought low' },
   ] },
   beast: { id: 'beast', name: 'Beast', kind: 'class', short: 'Be', tiers: [
     { need: 2, effects: { atk: 1.03 }, text: '+3% attack' },
     { need: 4, effects: { atk: 1.08 }, text: '+8% attack' },
+    { need: 5, effects: { atk: 1.15, hp: 1.1 }, text: '+15% attack and +10% health' },
   ] },
   undead: { id: 'undead', name: 'Undead', kind: 'origin', short: 'Un', tiers: [
     { need: 2, effects: { hp: 1.06 }, text: '+6% health' },
     { need: 4, effects: { hp: 1.14 }, text: '+14% health' },
+    { need: 5, effects: { hp: 1.22, leech: 0.08 }, text: '+22% health, and blows leech 8% of damage dealt' },
   ] },
   machine: { id: 'machine', name: 'Machine', kind: 'origin', short: 'Ma', tiers: [
     { need: 2, effects: { atk: 1.03 }, text: '+3% attack' },
     { need: 4, effects: { atk: 1.1, guard: 0.03 }, text: '+10% attack, and all heroes take 3% less damage' },
+    { need: 5, effects: { atk: 1.18, guard: 0.08 }, text: '+18% attack, and all heroes take 8% less damage' },
   ] },
   royal: { id: 'royal', name: 'Royal', kind: 'origin', short: 'Ro', tiers: [
     { need: 2, effects: { atk: 1.02, hp: 1.03 }, text: '+2% attack and +3% health' },
     { need: 4, effects: { atk: 1.06, hp: 1.06 }, text: '+6% attack and +6% health' },
+    { need: 5, effects: { atk: 1.12, hp: 1.12, charge: 1.15 }, text: '+12% attack, +12% health, and pools refill 15% faster' },
   ] },
-  pirate: { id: 'pirate', name: 'Pirate', kind: 'origin', short: 'Pi', tiers: [{ need: 2, effects: { crit: 0.05, dodge: 0.03 }, text: '+5% crit chance and slip 3% of blows' }] },
-  gunner: { id: 'gunner', name: 'Gunner', kind: 'class', short: 'Gn', tiers: [{ need: 2, effects: { atk: 1.04 }, text: '+4% attack' }] },
+  pirate: { id: 'pirate', name: 'Pirate', kind: 'origin', short: 'Pi', tiers: [
+    { need: 2, effects: { crit: 0.05, dodge: 0.03 }, text: '+5% crit chance and slip 3% of blows' },
+    { need: 4, effects: { crit: 0.1, dodge: 0.06, atk: 1.05 }, text: '+10% crit chance, slip 6% of blows, and +5% attack' },
+    { need: 5, effects: { crit: 0.16, dodge: 0.1, atk: 1.12 }, text: '+16% crit chance, slip 10% of blows, and +12% attack' },
+  ] },
+  vampire: { id: 'vampire', name: 'Vampire', kind: 'origin', short: 'Vm', tiers: [
+    { need: 2, effects: { leech: 0.06 }, text: 'Blows leech 6% of damage dealt as health' },
+    { need: 4, effects: { leech: 0.12, atk: 1.06 }, text: 'Blows leech 12% of damage dealt, and +6% attack' },
+    { need: 5, effects: { leech: 0.18, atk: 1.14, vampireSwarm: true }, text: 'Blows leech 18%, +14% attack, and a Vampire brought low bursts into bats and mends once a fight' },
+  ] },
+  gunner: { id: 'gunner', name: 'Gunner', kind: 'class', short: 'Gn', tiers: [
+    { need: 2, effects: { atk: 1.04 }, text: '+4% attack' },
+    { need: 4, effects: { atk: 1.1, crit: 0.06 }, text: '+10% attack and +6% crit chance' },
+    { need: 5, effects: { atk: 1.18, crit: 0.12 }, text: '+18% attack and +12% crit chance' },
+  ] },
   assassin: { id: 'assassin', name: 'Assassin', kind: 'class', short: 'As', tiers: [
     { need: 2, effects: { crit: 0.08 }, text: '+8% crit chance for all' },
     { need: 4, effects: { crit: 0.16, speed: 1.03 }, text: '+16% crit chance, and all heroes act and walk 3% faster' },
+    { need: 5, effects: { crit: 0.24, speed: 1.08, dodge: 0.05 }, text: '+24% crit chance, act 8% faster, and slip 5% of blows' },
   ] },
-  support: { id: 'support', name: 'Support', kind: 'class', short: 'Su', tiers: [{ need: 2, effects: { hp: 1.04, charge: 1.1 }, text: '+4% health, and pools refill 10% faster over time' }] },
+  support: { id: 'support', name: 'Support', kind: 'class', short: 'Su', tiers: [
+    { need: 2, effects: { hp: 1.04, charge: 1.1 }, text: '+4% health, and pools refill 10% faster over time' },
+    { need: 4, effects: { hp: 1.1, charge: 1.2 }, text: '+10% health, and pools refill 20% faster over time' },
+    { need: 5, effects: { hp: 1.18, charge: 1.35, guard: 0.05 }, text: '+18% health, pools refill 35% faster, and 5% less damage taken' },
+  ] },
   vanguard: { id: 'vanguard', name: 'Vanguard', kind: 'class', short: 'Va', tiers: [
     { need: 2, effects: { speed: 1.04 }, text: 'All heroes act and walk 4% faster' },
     { need: 4, effects: { speed: 1.08, atk: 1.03 }, text: 'All heroes act and walk 8% faster, and hit 3% harder' },
+    { need: 5, effects: { speed: 1.14, atk: 1.1 }, text: 'All heroes act and walk 14% faster, and hit 10% harder' },
   ] },
-  arcanist: { id: 'arcanist', name: 'Arcanist', kind: 'class', short: 'Ac', tiers: [{ need: 2, effects: { mana: 1.15, charge: 1.1 }, text: "The king's mana fills 15% faster, and pools refill 10% faster" }] },
-  bulwark: { id: 'bulwark', name: 'Bulwark', kind: 'class', short: 'Bw', tiers: [{ need: 2, effects: { guard: 0.04, hp: 1.03 }, text: 'All heroes take 4% less damage, and have 3% more health' }] },
+  arcanist: { id: 'arcanist', name: 'Arcanist', kind: 'class', short: 'Ac', tiers: [
+    { need: 2, effects: { mana: 1.15, charge: 1.1 }, text: "The king's mana fills 15% faster, and pools refill 10% faster" },
+    { need: 4, effects: { mana: 1.3, charge: 1.2 }, text: "The king's mana fills 30% faster, and pools refill 20% faster" },
+    { need: 5, effects: { mana: 1.5, charge: 1.35, atk: 1.08 }, text: "The king's mana fills 50% faster, pools refill 35% faster, and +8% attack" },
+  ] },
+  bulwark: { id: 'bulwark', name: 'Bulwark', kind: 'class', short: 'Bw', tiers: [
+    { need: 2, effects: { guard: 0.04, hp: 1.03 }, text: 'All heroes take 4% less damage, and have 3% more health' },
+    { need: 4, effects: { guard: 0.09, hp: 1.08 }, text: 'All heroes take 9% less damage, and have 8% more health' },
+    { need: 5, effects: { guard: 0.15, hp: 1.15 }, text: 'All heroes take 15% less damage, and have 15% more health' },
+  ] },
 };
 
-/** Each hero's origin and class. Every trait has two to four heroes. */
+/** Each hero's origin and class. Every trait has five heroes. */
 export const HERO_TRAITS: Record<string, readonly [string, string]> = {
   samurai: ['samurai', 'blade'],
   kunoichi: ['samurai', 'trickster'],
@@ -175,6 +236,26 @@ export const HERO_TRAITS: Record<string, readonly [string, string]> = {
   sage: ['mystic', 'arcanist'],
   demonSwordsman: ['royal', 'vanguard'],
   tyrant: ['royal', 'caster'],
+  vampireLord: ['vampire', 'blade'],
+  hemomancer: ['vampire', 'caster'],
+  nightstalker: ['vampire', 'assassin'],
+  bloodGargoyle: ['vampire', 'bulwark'],
+  dhampir: ['vampire', 'gunner'],
+  warDrummer: ['samurai', 'support'],
+  banneret: ['knightly', 'warden'],
+  geomancer: ['mystic', 'bulwark'],
+  bellWarden: ['yokai', 'bulwark'],
+  falconer: ['wild', 'marksman'],
+  astralSphinx: ['arcane', 'beast'],
+  mirageDancer: ['frontier', 'trickster'],
+  plagueDoctor: ['undead', 'arcanist'],
+  bombardier: ['machine', 'gunner'],
+  astrologer: ['royal', 'arcanist'],
+  inquisitor: ['holy', 'arcanist'],
+  seraph: ['holy', 'guardian'],
+  corsairSurgeon: ['pirate', 'support'],
+  harpooner: ['pirate', 'gunner'],
+  seaReaver: ['pirate', 'vanguard'],
 };
 
 export const traitsOf = (kind: string): readonly string[] => HERO_TRAITS[kind] ?? [];
@@ -214,15 +295,16 @@ export function countTraits(kinds: Iterable<string>): TraitCount[] {
 export function traitEffects(kinds: Iterable<string>): TraitEffects {
   const fx: TraitEffects = {};
   const mult = (k: 'atk' | 'hp' | 'speed' | 'charge' | 'mana', v: number) => (fx[k] = (fx[k] ?? 1) * v);
-  const add = (k: 'guard' | 'dodge' | 'crit' | 'reach', v: number) => (fx[k] = (fx[k] ?? 0) + v);
+  const add = (k: 'guard' | 'dodge' | 'crit' | 'reach' | 'leech', v: number) => (fx[k] = (fx[k] ?? 0) + v);
   for (const c of countTraits(kinds)) {
     if (!c.active) continue;
     const e = c.trait.tiers[c.tier].effects;
     for (const k of ['atk', 'hp', 'speed', 'charge', 'mana'] as const) if (e[k]) mult(k, e[k]!);
-    for (const k of ['guard', 'dodge', 'crit', 'reach'] as const) if (e[k]) add(k, e[k]!);
+    for (const k of ['guard', 'dodge', 'crit', 'reach', 'leech'] as const) if (e[k]) add(k, e[k]!);
     if (e.tricksterLog) fx.tricksterLog = true;
     if (e.yokaiWisp) fx.yokaiWisp = true;
     if (e.guardianShield) fx.guardianShield = true;
+    if (e.vampireSwarm) fx.vampireSwarm = true;
   }
   return fx;
 }

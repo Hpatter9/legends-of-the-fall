@@ -23,6 +23,28 @@ import { divineSmite, seismicSlam } from './kits/tanks';
 import { BOMBARD_THROWS } from './kits/ranged';
 import { blastShoves } from './kits/mages';
 import { monsterKits } from './kits/monsters';
+import {
+  barbedHarpoon,
+  blastJump,
+  boardingSwing,
+  breakerRush,
+  bronzeSlam,
+  censerSwing,
+  chainsOfJudgement,
+  crimsonLunge,
+  duskDive,
+  falconStoop,
+  gargoyleCrash,
+  gravityWell,
+  haloDive,
+  riftPounce,
+  sanguineLash,
+  silverStake,
+  standardCharge,
+  tectonicShove,
+  thunderBeat,
+  whirlingVeils,
+} from './kits/twentyNew';
 import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
 import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
@@ -1463,6 +1485,87 @@ export const KITS: Record<string, Kit> = {
     ultimate: { name: 'Reign of Terror', text: 'Every foe within 6 tiles is hurt and slowed for 5s; every ally is rallied: attack up a quarter for 7s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 900, anim: 'attack2', cast: reignOfTerror },
     passive: { name: 'Iron Throne', text: 'Blows from the front lose a quarter, and he cannot be knocked back', block: 0.25, steady: true },
   },
+  // ---- the third wave: five Vampires and fifteen across the twelve origins ----
+  vampireLord: {
+    skill: { name: 'Crimson Lunge', text: 'Dashes up to 4 tiles through a line of foes, cutting and bleeding each, and drinks a quarter of what he deals', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 500, anim: 'attack', cast: crimsonLunge },
+    passive: { name: 'Noble Thirst', text: 'Heals for 18% of the damage his blows deal, and 15% of blows crit for x1.6 and bleed', leech: 0.18, crit: { chance: 0.15, mult: 1.6, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } } },
+  },
+  hemomancer: {
+    skill: { name: 'Sanguine Lash', text: 'Whips a blood tether between two foes within 4 tiles, yanking the farther one 2 tiles towards the nearer and bleeding both', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 600, anim: 'attack', cast: sanguineLash },
+    passive: { name: 'Chalice Overflow', text: 'Every 2.5s mends the most hurt ally, and blows leech 12% of damage dealt', mend: { every: 2500, share: 0.65 }, leech: 0.12 },
+  },
+  nightstalker: {
+    skill: { name: 'Dusk Dive', text: 'Swoops up to 5 tiles onto a back-line foe, cutting it and silencing it for 1.5s', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 450, anim: 'attack', cast: duskDive },
+    passive: { name: 'Predator of the Crypt', text: '25% of blows crit for x1.7, and blows deal 25% more to shooters', crit: { chance: 0.25, mult: 1.7, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } }, prey: 1.25 },
+  },
+  bloodGargoyle: {
+    skill: { name: 'Gargoyle Crash', text: 'Leaps up to 4 tiles onto a crowd, slamming the 3x3, stunning the target and shoving adjacent foes a tile out', need: CHARGE_MAX, dealt: 5, taken: 7, perSec: 2, castMs: 600, anim: 'attack', cast: gargoyleCrash },
+    passive: { name: 'Granite Hide', text: 'Blows from the front lose 30% (he heals 40% of what he blocks), and he takes a quarter less from shots', block: 0.3, blockHeal: 0.4, scales: 0.25 },
+  },
+  dhampir: {
+    skill: { name: 'Silver Stake', text: 'Fires a heavy silver bolt that shoves its target 2 tiles back and pins it for 1.8s if it hits a wall or fighter', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: silverStake },
+    passive: { name: 'Half-Blood Hunter', text: 'Bolts ignore 3 defence, deal 20% more at 4+ tiles, and leech 10%', pierce: 3, far: 0.2, leech: 0.1 },
+  },
+  warDrummer: {
+    skill: { name: 'Thunder Beat', text: 'Booms his taiko drum, shocking and shoving foes within 2 tiles a tile back and hastening allies within 3 tiles for 3s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 550, anim: 'attack', cast: thunderBeat },
+    passive: { name: 'Rhythm of War', text: 'Every 3s the ally with the least skill charge near him gains 18', tune: { every: 3000, charge: 18 } },
+  },
+  banneret: {
+    skill: { name: 'Standard Charge', text: 'Charges up to 3 tiles along a path to strike and shove a foe, rallying allies within 2 tiles (+25% attack for 4s)', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 550, anim: 'attack', cast: standardCharge },
+    passive: { name: 'Shield-Sister', text: 'Allies within 2 tiles take 10% less damage, and she takes 8% less for each ally beside her', halo: 0.1, huddle: 0.08 },
+  },
+  geomancer: {
+    skill: { name: 'Tectonic Shove', text: 'Erupts a stone pillar under a foe within 4 tiles, launching it 2 tiles and raising a stone wall on its tile for 5s', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 650, anim: 'attack', cast: tectonicShove },
+    passive: { name: 'Bedrock Stance', text: 'Cannot be knocked back, climbs at no extra cost, and sends back 15% of melee blows', steady: true, sure: true, thorns: 0.15 },
+  },
+  bellWarden: {
+    skill: { name: 'Bronze Slam', text: 'Leaps up to 3 tiles and slams his bronze bell down, stunning the target for 1.2s and splashing the 3x3', need: CHARGE_MAX, dealt: 5, taken: 7, perSec: 2, castMs: 650, anim: 'attack', cast: bronzeSlam },
+    passive: { name: 'Temple Bronze', text: 'Blows from the front lose 35%, and he heals for half of what he blocks', block: 0.35, blockHeal: 0.5 },
+  },
+  falconer: {
+    skill: { name: 'Falcon Stoop', text: 'Sends her falcon diving on the farthest foe in reach, weakening it and flushing it a tile towards her', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: falconStoop },
+    passive: { name: 'Wind-Borne Sight', text: 'Arrows deal 25% more at 4+ tiles, and 20% of blows crit for x1.6', far: 0.25, crit: { chance: 0.2, mult: 1.6, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } } },
+  },
+  astralSphinx: {
+    skill: { name: 'Rift Pounce', text: 'Blinks through a star-rift behind a foe within 4 tiles, striking it and shoving other adjacent foes a tile away', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 550, anim: 'attack', cast: riftPounce },
+    passive: { name: 'Starlit Wings', text: 'Slips 12% of blows, and allies within 2 tiles heal 2% of their health each second', dodge: 0.12, aura: 0.02 },
+  },
+  mirageDancer: {
+    skill: { name: 'Whirling Veils', text: 'Spins up to 4 tiles through a line of foes, cutting each and leaving a sand decoy on the tile she left', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 450, anim: 'attack', cast: whirlingVeils },
+    passive: { name: 'Desert Shimmer', text: 'Slips 18% of blows, and 20% of blows crit for x1.6 and bleed', dodge: 0.18, crit: { chance: 0.2, mult: 1.6, bleed: { kind: 'bleed', dmg: 4, every: 500, ms: 3000 } } },
+  },
+  plagueDoctor: {
+    skill: { name: 'Censer Swing', text: 'Swings his smoking censer to poison a 3x3 crowd of foes while shoving any adjacent foe 2 tiles back', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 600, anim: 'attack', cast: censerSwing },
+    passive: { name: 'Ash Apothecary', text: 'Every 3s mends the most hurt ally, and his shots curse the foe', mend: { every: 3000, share: 0.55 }, ignite: { kind: 'curse', dmg: 5, every: 500, ms: 3000 } },
+  },
+  bombardier: {
+    skill: { name: 'Blast Jump', text: 'Detonates an alchemical charge at his feet, scorching and shoving adjacent foes while rocket-jumping up to 3 tiles to safety', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 550, anim: 'attack', cast: blastJump },
+    passive: { name: 'Shrapnel Shells', text: 'Shells ignore 3 defence and set the target alight', pierce: 3, ignite: { kind: 'burn', dmg: 5, every: 500, ms: 2000 } },
+  },
+  astrologer: {
+    skill: { name: 'Gravity Well', text: 'Collapses a star on the thickest crowd within 5 tiles, dragging nearby foes 2 tiles in towards its centre', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 650, anim: 'attack', cast: gravityWell },
+    passive: { name: 'Chart of the Heavens', text: 'Every 3s gives 18 skill charge to an ally near her, and shots deal 15% more at 4+ tiles', tune: { every: 3000, charge: 18 }, far: 0.15 },
+  },
+  inquisitor: {
+    skill: { name: 'Chains of Judgement', text: 'Hurls solar chains at the strongest foe within 5 tiles, dragging it 2 tiles forward, stunning and burning it', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 600, anim: 'attack', cast: chainsOfJudgement },
+    passive: { name: 'Sun-Forged Verdict', text: 'Shots ignore 3 defence and set the target burning', pierce: 3, ignite: { kind: 'burn', dmg: 6, every: 500, ms: 2000 } },
+  },
+  seraph: {
+    skill: { name: 'Halo Dive', text: 'Dives up to 4 tiles onto a foe, stunning it for 1.2s, splashing the 3x3, and shielding nearby allies', need: CHARGE_MAX, dealt: 5, taken: 6, perSec: 2, castMs: 550, anim: 'attack', cast: haloDive },
+    passive: { name: 'Reliquary Halo', text: 'Allies within 2 tiles take 12% less damage and heal 1.5% of their health each second', halo: 0.12, aura: 0.015 },
+  },
+  corsairSurgeon: {
+    skill: { name: 'Boarding Swing', text: 'Swings on a rigging line up to 3 tiles to the most hurt ally, mending them and shoving the nearest foe back with a pistol shot', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 550, anim: 'attack', cast: boardingSwing },
+    passive: { name: 'Field Sawbones', text: 'Every 2.5s mends the most hurt ally, and slips 10% of blows', mend: { every: 2500, share: 0.7 }, dodge: 0.1 },
+  },
+  harpooner: {
+    skill: { name: 'Barbed Harpoon', text: 'Hurls a heavy whaling harpoon at a foe within 5 tiles, dragging it up to 3 tiles towards him and bleeding it', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 550, anim: 'attack', cast: barbedHarpoon },
+    passive: { name: 'Chill-Iron Barbs', text: 'Harpoons slow the foe for 1.5s, ignore 3 defence, and deal 25% more under half health', slow: 1500, pierce: 3, finish: { under: 0.5, mult: 1.25 } },
+  },
+  seaReaver: {
+    skill: { name: 'Breaker Rush', text: 'Surfs a cresting wave up to 4 tiles through a line of foes, striking each and shoving the last hit', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 500, anim: 'attack', cast: breakerRush },
+    passive: { name: 'Undying Tide', text: 'Once a fight, when he would fall he rises at 35% health; attack grows up to 45% as his health falls', undying: 0.35, rage: 0.45 },
+  },
   // the bosses' skills (their escorts and forest bosses have none); a boss charges as the heroes do, a little faster
   orcWarlord: {
     skill: { name: 'Ground Slam', text: 'Slams a 3x3 of tiles, hurting the heroes on it', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 700, anim: 'attack', cast: groundSlam },
@@ -1825,7 +1928,7 @@ export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
 
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
-  const leech = (p?.leech ?? 0) + tal(by, 'leech');
+  const leech = (p?.leech ?? 0) + (by.side === 'hero' ? b.traits?.leech ?? 0 : 0) + tal(by, 'leech');
   if (leech && by.alive) mendUnit(by, dmg * leech, out);
   fxBlow(b, by, to, crit, dmg, out);
   if (p?.through && dmg > 0) {

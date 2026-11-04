@@ -79,6 +79,6 @@ export function relicEffects(ids: readonly string[] = []): RelicEffects {
 export function mergeEffects(a: TraitEffects, b: TraitEffects): TraitEffects {
   const out: TraitEffects = { ...a };
   for (const k of ['atk', 'hp', 'mana', 'charge', 'speed'] as const) if (b[k]) out[k] = (out[k] ?? 1) * b[k]!;
-  for (const k of ['guard', 'dodge', 'crit', 'reach'] as const) if (b[k]) out[k] = (out[k] ?? 0) + b[k]!;
+  for (const k of ['guard', 'dodge', 'crit', 'reach', 'leech'] as const) if (b[k]) out[k] = (out[k] ?? 0) + b[k]!;
   return out;
 }

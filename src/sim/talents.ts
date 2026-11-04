@@ -670,6 +670,246 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: "Tyrant's Due", icon: 'ruby', text: 'Each kill gives back 40 charge, and +5% attack speed.', stats: { atkSpeed: 0.05 }, abilities: [ab('tl_tyrant_due', "Tyrant's Due", 'kill', 'charge', { v: 40 })] },
     ],
   ),
+  vampireLord: tree(
+    'vampireLord',
+    [['Noble Rapier', 'blade', { atk: ATK }], ['Velvet Mantle', 'shadowcloak', { dodge: 0.03 }], ['Ancient Blood', 'ruby', { hp: HP }], ['Courtly Poise', 'ring', { crit: 0.03 }]],
+    [
+      { name: 'Extended Lunge', icon: 'sword', text: 'Crimson Lunge dashes 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Ravenous Bite', icon: 'ruby', text: 'Crimson Lunge cuts 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Sanguine Sovereign', icon: 'circlet', text: 'Heals for a further 12% of the damage his blows deal.', tal: { leech: 0.12 } },
+      { name: 'Immortal Aristocrat', icon: 'feather', text: 'Once a fight, when he would fall he rises at 35% health.', abilities: [ab('tl_vampireLord_rise', 'Immortal Aristocrat', 'death', 'revive', { v: 0.35 })] },
+    ],
+  ),
+  hemomancer: tree(
+    'hemomancer',
+    [['Ruby Chalice', 'vial', { atk: ATK }], ['Silk Cassock', 'silk', { hp: 0.04 }], ['Pulse Chant', 'scroll', { charge: 0.1 }], ['Garnet Band', 'ring', { crit: 0.03 }]],
+    [
+      { name: 'Arterial Reach', icon: 'spear', text: 'Blood Lance pierces 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Boiling Vein', icon: 'ruby', text: 'Blood Lance hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Vital Transfusion', icon: 'vial', text: 'Every 7s the weakest ally is healed 16% of its health.', abilities: [ab('tl_hemomancer_transfuse', 'Vital Transfusion', 'tick', 'healAlly', { n: 7, v: 0.16, show: true })] },
+      { name: 'Blood Tithe', icon: 'amulet', text: 'Each kill heals her 12% of her health.', abilities: [ab('tl_hemomancer_tithe', 'Blood Tithe', 'kill', 'heal', { v: 0.12 })] },
+    ],
+  ),
+  nightstalker: tree(
+    'nightstalker',
+    [['Silent Wing', 'boots', { moveSpeed: 0.06 }], ['Curved Talons', 'dagger', { atk: ATK }], ['Dusk Hide', 'shadowcloak', { dodge: 0.03 }], ['Slit Pupils', 'spectacles', { crit: 0.03 }]],
+    [
+      { name: 'Dusk Dash', icon: 'boots', text: 'After Shadow Fang she is hasted for 2.5s.', tal: { castHaste: 2500 } },
+      { name: 'Jugular Rip', icon: 'dagger', text: 'Shadow Fang hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Vesper Shroud', icon: 'shadowcloak', text: 'Every 9s she cannot be targeted for 2s.', abilities: [ab('tl_nightstalker_shroud', 'Vesper Shroud', 'tick', 'stealth', { n: 9, w: 2, show: true })] },
+      { name: 'Serrated Fangs', icon: 'ruby', text: '35% of her blows make the foe bleed.', abilities: [ab('tl_nightstalker_fangs', 'Serrated Fangs', 'hit', 'bleed', { p: 0.35, v: 0.28 })] },
+    ],
+  ),
+  bloodGargoyle: tree(
+    'bloodGargoyle',
+    [['Carved Basalt', 'plate', { hp: HP }], ['Granite Claws', 'fist', { atk: ATK }], ['buttressed Wing', 'bastion', { def: 1 }], ['Mineral Marrow', 'vial', { regen: 0.004 }]],
+    [
+      { name: 'Cathedral Leap', icon: 'boots', text: 'Stone Dive reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Petrified Hold', icon: 'idol', text: 'Stone Dive holds foes 60% longer.', tal: { dur: 0.6 } },
+    ],
+    [
+      { name: 'Gargoyle Carapace', icon: 'bastion', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },
+      { name: 'Jagged Masonry', icon: 'thornplate', text: 'Sends back a further third of a melee blow.', tal: { thorns: 0.33 } },
+    ],
+  ),
+  dhampir: tree(
+    'dhampir',
+    [['Silver Quarrels', 'crossbow', { atk: ATK }], ['Half-Blood Grit', 'jerkin', { hp: 0.04 }], ['Quick Trigger', 'ring', { atkSpeed: 0.04 }], ['Hunter Sight', 'spectacles', { crit: 0.03 }]],
+    [
+      { name: 'Double Stake', icon: 'crossbow', text: 'Silver Bolt looses an extra bolt.', tal: { extra: 1 } },
+      { name: 'Blessed Tip', icon: 'spear', text: 'Silver Bolt hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Daywalker Focus', icon: 'spectacles', text: 'Every 4th shot hits twice as hard.', abilities: [ab('tl_dhampir_focus', 'Daywalker Focus', 'nth', 'smite', { n: 4, v: 1 })] },
+      { name: 'Twilight Cloak', icon: 'shadowcloak', text: 'Every 8s he is hasted for 3s, and +6% attack.', stats: { atk: 0.06 }, abilities: [ab('tl_dhampir_cloak', 'Twilight Cloak', 'tick', 'haste', { n: 8, w: 3, show: true })] },
+    ],
+  ),
+  warDrummer: tree(
+    'warDrummer',
+    [['Taut Oxhide', 'drum', { hp: HP }], ['Heavy Mallets', 'mace', { atk: ATK }], ['Iron Studs', 'plate', { def: 1 }], ['Steady Cadence', 'ring', { charge: 0.1 }]],
+    [
+      { name: 'Resonant Skin', icon: 'drum', text: 'Thunder Beat reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Crashing Cadence', icon: 'maul', text: 'Thunder Beat hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Warband Rhythm', icon: 'drum', text: 'Every 10s, allies within 3 tiles hit a quarter harder for 4s.', abilities: [ab('tl_warDrummer_rhythm', 'Warband Rhythm', 'tick', 'rally', { n: 10, w: 4, show: true })] },
+      { name: 'Thunderous Echo', icon: 'bell', text: 'Foes struck by Thunder Beat are held for 0.6s.', tal: { skillStun: 600 } },
+    ],
+  ),
+  banneret: tree(
+    'banneret',
+    [['Gilded Lance', 'spear', { atk: ATK }], ['Heraldic Mail', 'plate', { hp: HP }], ['Spurred Boots', 'boots', { moveSpeed: 0.06 }], ['Silk Guidon', 'charm', { charge: 0.1 }]],
+    [
+      { name: 'High Standard', icon: 'spear', text: 'Rallying Standard reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Unfurled Colours', icon: 'scroll', text: 'Rallying Standard lasts 50% longer.', tal: { dur: 0.5 } },
+    ],
+    [
+      { name: 'Knightly Accord', icon: 'aegis', text: 'Takes 6% less from each ally beside her (up to 3), and +5% hp.', tal: { huddle: 0.06 }, stats: { hp: 0.05 } },
+      { name: 'Trumpet Call', icon: 'drum', text: 'Every 9s the allies beside her heal 8% of their health.', abilities: [ab('tl_banneret_trumpet', 'Trumpet Call', 'tick', 'aura', { n: 9, v: 0.08, show: true })] },
+    ],
+  ),
+  geomancer: tree(
+    'geomancer',
+    [['Lodestone Staff', 'stormstaff', { atk: ATK }], ['Shale Mantle', 'robe', { def: 1 }], ['Deep Pulse', 'orb', { charge: 0.1 }], ['Crystal Core', 'emerald', { hp: HP }]],
+    [
+      { name: 'Tectonic Reach', icon: 'stormstaff', text: 'Stone Spike reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Shattering Spire', icon: 'maul', text: 'Stone Spike hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Bedrock Ward', icon: 'bastion', text: 'Stone Spike also shields her for 10% of max hp.', tal: { castShield: 0.1 } },
+      { name: 'Fault Line', icon: 'idol', text: '35% of her blows splash half again onto foes beside the target.', abilities: [ab('tl_geomancer_fault', 'Fault Line', 'hit', 'splash', { p: 0.35, v: 0.5 })] },
+    ],
+  ),
+  bellWarden: tree(
+    'bellWarden',
+    [['Bronze Yoke', 'plate', { hp: HP }], ['Heavy Clapper', 'maul', { atk: ATK }], ['Sanctuary Greaves', 'boots', { def: 1 }], ['Incense Burner', 'bell', { regen: 0.004 }]],
+    [
+      { name: 'Far Vesper', icon: 'bell', text: 'Resonant Toll reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Deafening Chime', icon: 'idol', text: 'Resonant Toll holds foes 60% longer.', tal: { dur: 0.6 } },
+    ],
+    [
+      { name: 'Belfry Aegis', icon: 'aegis', text: 'Blows from the front lose a further 15%, and +1 defence.', tal: { block: 0.15 }, stats: { def: 1 } },
+      { name: 'Ringing Retort', icon: 'bell', text: 'Every 3rd blow stunningly rings the foe for 0.8s.', abilities: [ab('tl_bellWarden_retort', 'Ringing Retort', 'nth', 'stun', { n: 3, w: 0.8 })] },
+    ],
+  ),
+  falconer: tree(
+    'falconer',
+    [['Hawking Glove', 'hide', { atk: ATK }], ['Wind Fletching', 'bow', { atkSpeed: 0.04 }], ['Keen Hood', 'spectacles', { crit: 0.03 }], ['Highland Cloak', 'cloak', { moveSpeed: 0.06 }]],
+    [
+      { name: 'Sky Stoop', icon: 'feather', text: 'Hawk Strike reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Raptor Talons', icon: 'dagger', text: 'Hawk Strike hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Circling Gyrfalcon', icon: 'feather', text: '30% of her shots make the foe bleed.', abilities: [ab('tl_falconer_bleed', 'Circling Gyrfalcon', 'hit', 'bleed', { p: 0.3, v: 0.25 })] },
+      { name: 'Tailwind', icon: 'boots', text: 'After Hawk Strike she is hasted for 2.5s.', tal: { castHaste: 2500 } },
+    ],
+  ),
+  astralSphinx: tree(
+    'astralSphinx',
+    [['Starlight Mane', 'circlet', { hp: HP }], ['Gilded Paws', 'fist', { atk: ATK }], ['Basalt Haunches', 'plate', { def: 1 }], ['Cosmic Breath', 'orb', { charge: 0.1 }]],
+    [
+      { name: 'Vault of Stars', icon: 'orb', text: 'Star Pounce reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Solar Weight', icon: 'idol', text: 'Star Pounce hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Aegis of the Riddle', icon: 'aegis', text: 'Star Pounce also shields him for 10% of max hp.', tal: { castShield: 0.1 } },
+      { name: 'Starlit Conduit', icon: 'sapphire', text: 'Every 8s allies within 3 tiles hit a quarter harder for 4s.', abilities: [ab('tl_astralSphinx_conduit', 'Starlit Conduit', 'tick', 'rally', { n: 8, w: 4, show: true })] },
+    ],
+  ),
+  mirageDancer: tree(
+    'mirageDancer',
+    [['Curved Scimitars', 'blade', { atk: ATK }], ['Desert Silk', 'silk', { dodge: 0.03 }], ['Dune Step', 'boots', { moveSpeed: 0.06 }], ['Gold Anklet', 'ring', { crit: 0.03 }]],
+    [
+      { name: 'Whirling Step', icon: 'boots', text: 'After Veil Step she is hasted for 2.5s.', tal: { castHaste: 2500 } },
+      { name: 'Flashing Twinblades', icon: 'katana', text: 'Veil Step cuts 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Shimmering Veil', icon: 'shadowcloak', text: 'Every 9s she cannot be targeted for 2s.', abilities: [ab('tl_mirageDancer_veil', 'Shimmering Veil', 'tick', 'stealth', { n: 9, w: 2, show: true })] },
+      { name: 'Sirocco Tempo', icon: 'ring', text: '+12% attack speed and +8% crit chance.', stats: { atkSpeed: 0.12, crit: 0.08 } },
+    ],
+  ),
+  plagueDoctor: tree(
+    'plagueDoctor',
+    [['Beaked Mask', 'spectacles', { hp: HP }], ['Acrid Satchel', 'vial', { atk: ATK }], ['Waxed Coat', 'cloak', { def: 1 }], ['Measured Dose', 'scroll', { charge: 0.1 }]],
+    [
+      { name: 'Fuming Flask', icon: 'vial', text: 'Blight Vial lasts 50% longer.', tal: { dur: 0.5 } },
+      { name: 'Wide Vapours', icon: 'orb', text: 'Blight Vial reaches 2 tiles further.', tal: { reach: 2 } },
+    ],
+    [
+      { name: 'Corrosive Tincture', icon: 'elixir', text: '35% of his blows lay a curse that eats at the foe.', abilities: [ab('tl_plagueDoctor_tincture', 'Corrosive Tincture', 'hit', 'curse', { p: 0.35, v: 0.28 })] },
+      { name: 'Physic Ward', icon: 'amulet', text: 'Every 7s the weakest ally is healed 16% of its health.', abilities: [ab('tl_plagueDoctor_physic', 'Physic Ward', 'tick', 'healAlly', { n: 7, v: 0.16, show: true })] },
+    ],
+  ),
+  bombardier: tree(
+    'bombardier',
+    [['Black Powder Keg', 'blunderbuss', { atk: ATK }], ['Blast Apron', 'hide', { hp: HP }], ['Quick Fuse', 'ring', { atkSpeed: 0.04 }], ['Brass Goggles', 'spectacles', { crit: 0.03 }]],
+    [
+      { name: 'Extra Grenade', icon: 'orb', text: 'Cluster Lob throws an extra bomb.', tal: { extra: 1 } },
+      { name: 'Packed Powder', icon: 'blunderbuss', text: 'Cluster Lob hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Shrapnel Scatter', icon: 'ruby', text: '40% of her shots burst: half again on the foes beside the target.', abilities: [ab('tl_bombardier_shrapnel', 'Shrapnel Scatter', 'hit', 'splash', { p: 0.4, v: 0.5 })] },
+      { name: 'Scorched Fuse', icon: 'emberrobe', text: '35% of her shots set the foe alight.', abilities: [ab('tl_bombardier_fuse', 'Scorched Fuse', 'hit', 'burn', { p: 0.35, v: 0.28 })] },
+    ],
+  ),
+  astrologer: tree(
+    'astrologer',
+    [['Brass Astrolabe', 'orb', { atk: ATK }], ['Star Chart', 'scroll', { charge: 0.1 }], ['Velvet Mantle', 'vestments', { hp: 0.04 }], ['Lens of Truth', 'spectacles', { crit: 0.03 }]],
+    [
+      { name: 'Twin Meteorites', icon: 'orb', text: 'Falling Star calls down an extra star.', tal: { extra: 1 } },
+      { name: 'Zenith Alignment', icon: 'sapphire', text: 'Falling Star hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Celestial Tide', icon: 'pendant', text: 'Each kill feeds the king 8 mana and gives back 20% of the pool.', abilities: [ab('tl_astrologer_tide', 'Celestial Tide', 'kill', 'mana', { v: 8 }), ab('tl_astrologer_tide2', 'Celestial Tide', 'kill', 'charge', { v: 40 })] },
+      { name: 'Stargazer Ward', icon: 'circlet', text: 'Every 6s the allies beside him heal 8% of their health.', abilities: [ab('tl_astrologer_ward', 'Stargazer Ward', 'tick', 'aura', { n: 6, v: 0.08, show: true })] },
+    ],
+  ),
+  inquisitor: tree(
+    'inquisitor',
+    [['Sanctified Arbalester', 'crossbow', { atk: ATK }], ['Witchfinder Coat', 'cloak', { hp: 0.04 }], ['Silver Sights', 'spectacles', { crit: 0.03 }], ['Inquisitorial Seal', 'scroll', { charge: 0.1 }]],
+    [
+      { name: 'Binding Stake', icon: 'crossbow', text: 'Condemning Bolt holds foes 60% longer.', tal: { dur: 0.6 } },
+      { name: 'Righteous Verdict', icon: 'tome', text: 'Condemning Bolt hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Purging Bolt', icon: 'ruby', text: 'Every 4th shot hits twice as hard.', abilities: [ab('tl_inquisitor_purge', 'Purging Bolt', 'nth', 'smite', { n: 4, v: 1 })] },
+      { name: 'Iron Writ', icon: 'bell', text: 'Foes struck by Condemning Bolt are slowed for 2s.', tal: { skillSlow: 2000 } },
+    ],
+  ),
+  seraph: tree(
+    'seraph',
+    [['Sunforged Halberd', 'spear', { atk: ATK }], ['Golden Pinions', 'feather', { moveSpeed: 0.06 }], ['Celestial Plate', 'aegis', { hp: HP }], ['Choir Halo', 'circlet', { charge: 0.1 }]],
+    [
+      { name: 'Soaring Grace', icon: 'feather', text: 'Radiant Dive reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Solar Blaze', icon: 'emerald', text: 'Radiant Dive hits and heals 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Immortal Chorus', icon: 'feather', text: 'Once a fight, when she would fall she rises at 40% health.', abilities: [ab('tl_seraph_chorus', 'Immortal Chorus', 'death', 'revive', { v: 0.4 })] },
+      { name: 'Sanctuary Wings', icon: 'aegis', text: 'Every 6s the allies beside her heal 8% of their health.', abilities: [ab('tl_seraph_wings', 'Sanctuary Wings', 'tick', 'aura', { n: 6, v: 0.08, show: true })] },
+    ],
+  ),
+  corsairSurgeon: tree(
+    'corsairSurgeon',
+    [['Bone Saw', 'dagger', { atk: ATK }], ['Rum Flask', 'vial', { hp: HP }], ['Tarred Apron', 'jerkin', { def: 1 }], ['Quick Stitch', 'ring', { charge: 0.1 }]],
+    [
+      { name: 'Double Tot', icon: 'vial', text: 'Sawbones Tonic heals half as much again.', tal: { pow: 0.5 } },
+      { name: 'Brisk Physic', icon: 'elixir', text: 'After Sawbones Tonic he is hasted for 2.5s.', tal: { castHaste: 2500 } },
+    ],
+    [
+      { name: 'Combat Triage', icon: 'emerald', text: 'Every 7s the weakest ally is healed 18% of its health.', abilities: [ab('tl_corsairSurgeon_triage', 'Combat Triage', 'tick', 'healAlly', { n: 7, v: 0.18, show: true })] },
+      { name: 'Dutch Courage', icon: 'drum', text: 'Every 10s, allies within 3 tiles hit a quarter harder for 4s.', abilities: [ab('tl_corsairSurgeon_courage', 'Dutch Courage', 'tick', 'rally', { n: 10, w: 4, show: true })] },
+    ],
+  ),
+  harpooner: tree(
+    'harpooner',
+    [['Barbed Iron', 'spear', { atk: ATK }], ['Coiled Hemp', 'ring', { atkSpeed: 0.04 }], ['Oilskin Coat', 'cloak', { hp: HP }], ['Whaler\'s Eye', 'spectacles', { crit: 0.03 }]],
+    [
+      { name: 'Longer Towline', icon: 'spear', text: 'Whaler\'s Harpoon reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Heavy Barb', icon: 'crossbow', text: 'Whaler\'s Harpoon hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Gaffed Quarry', icon: 'dagger', text: '35% of his throws make the foe bleed.', abilities: [ab('tl_harpooner_gaff', 'Gaffed Quarry', 'hit', 'bleed', { p: 0.35, v: 0.28 })] },
+      { name: 'Reel Them In', icon: 'boots', text: 'Foes struck by Whaler\'s Harpoon are slowed for 2s.', tal: { skillSlow: 2000 } },
+    ],
+  ),
+  seaReaver: tree(
+    'seaReaver',
+    [['Barnacled Fluke', 'maul', { atk: ATK }], ['Salt-Cured Hide', 'plate', { hp: HP }], ['Heavy Chain', 'boots', { def: 1 }], ['Bilge Draught', 'vial', { regen: 0.004 }]],
+    [
+      { name: 'Longer Chain', icon: 'maul', text: 'Anchor Swing reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Crushing Iron', icon: 'battleaxe', text: 'Anchor Swing hits 40% harder.', tal: { pow: 0.4 } },
+    ],
+    [
+      { name: 'Drowned Grit', icon: 'ruby', text: 'Heals for a further 12% of the damage his blows deal.', tal: { leech: 0.12 } },
+      { name: 'Hull Breaker', icon: 'idol', text: 'Every 4th blow stuns the foe for 0.8s.', abilities: [ab('tl_seaReaver_breaker', 'Hull Breaker', 'nth', 'stun', { n: 4, w: 0.8 })] },
+    ],
+  ),
 };
 
 // ---- the deep rows (tiers 4 to 7), added to every tree ----
