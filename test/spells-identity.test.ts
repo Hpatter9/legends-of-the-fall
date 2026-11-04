@@ -70,11 +70,14 @@
 // field1 81b0369e, field30 3f9b2a5e, bosses 11c33a36, armyFoes e3c7011a, spells 69b1d534, lands 99da4981, army d78fb13d, daily d00ddcc9, tower
 // d1468e2a, stand 69c8c642, calamity 18f58bc9, heroes1 58aac7f4, heroes10 9c513279, heroes30 526f4f47, field1Others f1bc7c9d, field30Others
 // dd370f3f, heroes1Others d75813fa, heroes10Others c7f3b928, heroes30Others 1e0ab73b.)
+// (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
+// foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
+import { WEAK } from '../src/sim/weakness';
 import { armyById } from '../src/sim/armies';
 import { CAL_SCALE } from '../src/sim/calamity';
 
@@ -97,6 +100,8 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // armies' Normal `start`. The `army` scenario plays the Undead Legion, the Infernal Host, the Golem Forge and the Yokai Night Parade on Normal:
 // their recorded strengths are put back for this proof, as the ailments' proof does, and the Calamity's `CAL_SCALE.start` (0.435) with them. The greedy players cast no spells in
 // either proof, `identityHashes`.)
+// (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (f3dc7098): its heroes start bare and wear the run's finds, and a
+// find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
@@ -113,10 +118,13 @@ function recordedStrengths<T>(fn: () => T): T {
 
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
+  // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
+  WEAK.on = false;
   try {
     assert.deepEqual(recordedStrengths(() => identityHashes()), recorded);
   } finally {
     BOSS_BIG.on = true;
+    WEAK.on = true;
   }
 });
 

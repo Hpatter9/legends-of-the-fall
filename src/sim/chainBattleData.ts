@@ -8,7 +8,7 @@
 // fight against its Eidolon before the binding, is built here from its data in `eidolonTrials.ts` (`trialBattle`). Pure data: no Pixi, no
 // DOM.
 
-import { close, say, tell, wide, type CastMember, type Scene, type Shot } from './sceneKit';
+import { say, tell, wide, type CastMember, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
 import type { QuestBattle } from './questBattles';
 import { heroName } from './heroNames';
@@ -45,15 +45,15 @@ export function trialBattle(t: TrialDef): QuestBattle {
     waves: t.waves,
     boss: { name: t.boss.name, title: t.boss.title },
     before: (c) =>
-      story(t.id, t.part.title, t.land, { a: hero(c[0] ?? lead, 230), e: foe(boss, 430, 1.5, { name: t.boss.name, hidden: true }) }, [
+      story(t.id, t.part.title, t.land, { a: hero(c[0] ?? lead, 230), e: foe(boss, 380, 1.5, { name: t.boss.name, hidden: true }) }, [
         { cam: wide(290, 200), fx: ['fadeIn'], caption: t.part.title, lines: [tell(t.lines.place)] },
-        { cam: wide(380, 205), acts: [{ who: 'e', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: t.lines.challenge.map((x) => say('e', x)) },
-        { cam: close('a'), lines: [say('a', t.lines.answer)] },
+        { cam: wide(310, 205), acts: [{ who: 'e', enter: 380, from: 460 }], cue: 'boom', fx: ['shake'], lines: t.lines.challenge.map((x) => say('e', x)) },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', t.lines.answer)] },
       ]),
     after: (c) =>
       story(`${t.id}After`, t.part.title, t.land, { a: hero(c[0] ?? lead, 230), e: foe(boss, 370, 1.5, { name: t.boss.name }) }, [
-        { cam: wide(300, 205), lines: [say('e', t.lines.after)] },
-        { cam: close('a'), lines: [say('a', t.lines.afterHero)] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('e', t.lines.after)] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [tell(t.lines.afterHero)] },
       ]),
   };
 }
@@ -76,15 +76,15 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Ash-Mane', title: 'Who Would Be the Kennel King' },
     before: (c) =>
-      story('kennelFires', 'The Kennel Fires', 'autumn', { a: hero(c[0] ?? 'wizard', 230), mane: foe('alphaWolf', 430, 1.3, { name: 'The Ash-Mane', hidden: true }) }, [
+      story('kennelFires', 'The Kennel Fires', 'autumn', { a: hero(c[0] ?? 'wizard', 230), mane: foe('alphaWolf', 380, 1.3, { name: 'The Ash-Mane', hidden: true }) }, [
         { cam: wide(290, 200), fx: ['fadeIn', 'glow'], caption: 'The old kennels', lines: [tell("The first kings' kennels: black timbers on the hill, and fires that have burned for three hundred years with nothing left to burn.")] },
-        { cam: close('a'), lines: [say('a', 'Someone has moved in.'), tell('Red wolves with ash in their fur, circling an iron collar as if it were a throne.')] },
-        { cam: wide(380, 205), acts: [{ who: 'mane', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('mane', "The fire's hound is gone. The fire's kennel is MINE.", 'shout')] },
-        { cam: close('a'), lines: [say('a', 'He wants to be the hound. He is going to be disappointed.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'Someone has moved in.'), tell('Red wolves with ash in their fur, circling an iron collar as if it were a throne.')] },
+        { cam: wide(310, 205), acts: [{ who: 'mane', enter: 380, from: 460 }], cue: 'boom', fx: ['shake'], lines: [say('mane', "The fire's hound is gone. The fire's kennel is MINE.", 'shout')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'He wants to be the hound. He is going to be disappointed.')] },
       ]),
     after: (c) =>
       story('kennelFiresAfter', 'The Kennel Fires', 'autumn', { a: hero(c[0] ?? 'wizard', 260) }, [
-        { cam: close('a'), lines: [tell("Where the Ash-Mane fell, an iron collar lies in the embers: the keep's crest on its buckle, warm as a hearth-stone."), say('a', 'Big neck. Very big neck.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [tell("Where the Ash-Mane fell, an iron collar lies in the embers: the keep's crest on its buckle, warm as a hearth-stone."), say('a', 'Big neck. Very big neck.')] },
       ]),
   },
   {
@@ -104,15 +104,15 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Hoarfrost Warden', title: 'Who Keeps the Sleeper Cold' },
     before: (c) =>
-      story('glassMere', 'The Glass Mere', 'snow', { a: hero(c[0] ?? 'kunoichi', 230), warden: foe('sapphireColossus', 430, 1.3, { name: 'The Hoarfrost Warden', hidden: true }) }, [
+      story('glassMere', 'The Glass Mere', 'snow', { a: hero(c[0] ?? 'kunoichi', 230), warden: foe('sapphireColossus', 380, 1.3, { name: 'The Hoarfrost Warden', hidden: true }) }, [
         { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Glass Mere', lines: [tell('A mere frozen so clear you can see the dark water under it. Far down, something long and pale lies coiled, and does not move.')] },
-        { cam: close('a'), lines: [say('a', 'The ice is walking.'), tell('Shapes of blue crystal step out of the frost, and white wolves run with them.')] },
-        { cam: wide(380, 205), acts: [{ who: 'warden', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('warden', 'The Wyrm SLEEPS. While she sleeps, the mere is MINE. Go home, little fires.', 'shout')] },
-        { cam: close('a'), lines: [say('a', 'We came a long way to be called little. Wake up, Nivra. You have a lodger.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'The ice is walking.'), tell('Shapes of blue crystal step out of the frost, and white wolves run with them.')] },
+        { cam: wide(310, 205), acts: [{ who: 'warden', enter: 380, from: 460 }], cue: 'boom', fx: ['shake'], lines: [say('warden', 'The Wyrm SLEEPS. While she sleeps, the mere is MINE. Go home, little fires.', 'shout')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'We came a long way to be called little. Wake up, Nivra. You have a lodger.')] },
       ]),
     after: (c) =>
       story('glassMereAfter', 'The Glass Mere', 'snow', { a: hero(c[0] ?? 'kunoichi', 260) }, [
-        { cam: close('a'), lines: [tell("Where the Warden broke apart, a pearl of black ice lies on the mere. Under the glass, the long pale shape stirs, once."), say('a', 'Sorry. Go back to sleep. We will knock properly.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [tell("Where the Warden broke apart, a pearl of black ice lies on the mere. Under the glass, the long pale shape stirs, once."), say('a', 'Sorry. Go back to sleep. We will knock properly.')] },
       ]),
   },
   {
@@ -122,7 +122,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: "The shrine where the Lion's crown was put away is shuttered against the sun, and gorgons keep its hall.",
     land: 'shrine',
     like: { army: 'wildwood', wave: 11 },
-    ease: 0.78,
+    ease: 0.82, // (Q9: 0.78; about 35% for the probe party, docs/notes/eidolon-chains-hard.md)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
@@ -132,15 +132,15 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Eclipse Queen', title: 'Who Keeps the Sun in Stone' },
     before: (c) =>
-      story('sunlessShrine', 'The Sunless Shrine', 'shrine', { a: hero(c[0] ?? 'knight', 230), queen: foe('gorgonQueen', 430, 1.3, { name: 'The Eclipse Queen', hidden: true }) }, [
+      story('sunlessShrine', 'The Sunless Shrine', 'shrine', { a: hero(c[0] ?? 'knight', 230), queen: foe('gorgonQueen', 380, 1.3, { name: 'The Eclipse Queen', hidden: true }) }, [
         { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Sunless Shrine', lines: [tell('A shrine with its shutters nailed down, and no light in it at noon. Statues stand in the dark, each caught mid-step, each facing the door.')] },
-        { cam: close('a'), lines: [say('a', 'Nobody has been in here for a long time. Nobody who left, anyway.'), tell('Something with a great many eyes opens its shutters one at a time.')] },
-        { cam: wide(380, 205), acts: [{ who: 'queen', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('queen', 'The sun is late. The sun is STONE. Kneel to the shade, little torches.', 'shout')] },
-        { cam: close('a'), lines: [say('a', 'We brought our own light. Mind your eyes.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'Nobody has been in here for a long time. Nobody who left, anyway.'), tell('Something with a great many eyes opens its shutters one at a time.')] },
+        { cam: wide(310, 205), acts: [{ who: 'queen', enter: 380, from: 460 }], cue: 'boom', fx: ['shake'], lines: [say('queen', 'The sun is late. The sun is STONE. Kneel to the shade, little torches.', 'shout')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'We brought our own light. Mind your eyes.')] },
       ]),
     after: (c) =>
       story('sunlessShrineAfter', 'The Sunless Shrine', 'shrine', { a: hero(c[0] ?? 'knight', 260) }, [
-        { cam: close('a'), lines: [tell('Where the Queen turned to rubble, the shutters burst open, and the first light in three hundred years falls on a plinth. A crown of beaten gold lies on it, spiked like rays.'), say('a', 'It is warm. Somebody has been keeping it warm for him.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [tell('Where the Queen turned to rubble, the shutters burst open, and the first light in three hundred years falls on a plinth. A crown of beaten gold lies on it, spiked like rays.'), say('a', 'It is warm. Somebody has been keeping it warm for him.')] },
       ]),
   },
   {
@@ -150,7 +150,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: 'The great clock stopped in the old copper works, and its golem warden still guards the face.',
     land: 'forge',
     like: { army: 'labyrinth', wave: 11 },
-    ease: 0.76,
+    ease: 0.97, // (Q9: 0.76 won two in three; about 30% now)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
@@ -160,15 +160,15 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Mint-Warden', title: 'Who Keeps the Last Spark' },
     before: (c) =>
-      story('copperWorks', 'The Copper Works', 'forge', { a: hero(c[0] ?? 'knight', 230), warden: foe('sapphireColossus', 430, 1.3, { name: 'The Mint-Warden', hidden: true }) }, [
+      story('copperWorks', 'The Copper Works', 'forge', { a: hero(c[0] ?? 'knight', 230), warden: foe('sapphireColossus', 380, 1.3, { name: 'The Mint-Warden', hidden: true }) }, [
         { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Copper Works', lines: [tell('Rows of cold furnaces and green copper pipes. High above the floor a great clock has stopped, its one hand hanging at the minute the pacts broke. Something huge and blue stands under it, quite still.')] },
-        { cam: close('a'), lines: [say('a', 'Nobody has wound that in three hundred years. And it is still humming.'), tell('A blue spark runs along a pipe and goes in at the Warden\'s chest.')] },
-        { cam: wide(380, 205), acts: [{ who: 'warden', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('warden', 'THE CLOCK IS NOT TO BE TOUCHED. THE SPARK IS NOT TO BE SPENT. WIND DOWN, LITTLE FUSES.', 'shout')] },
-        { cam: close('a'), lines: [say('a', 'We only want the face. We will bring it back. Probably.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'Nobody has wound that in three hundred years. And it is still humming.'), tell('A blue spark runs along a pipe and goes in at the Warden\'s chest.')] },
+        { cam: wide(310, 205), acts: [{ who: 'warden', enter: 380, from: 460 }], cue: 'boom', fx: ['shake'], lines: [say('warden', 'THE CLOCK IS NOT TO BE TOUCHED. THE SPARK IS NOT TO BE SPENT. WIND DOWN, LITTLE FUSES.', 'shout')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'We only want the face. We will bring it back. Probably.')] },
       ]),
     after: (c) =>
       story('copperWorksAfter', 'The Copper Works', 'forge', { a: hero(c[0] ?? 'knight', 260) }, [
-        { cam: close('a'), lines: [tell('The Warden goes down in a shower of copper filings, and the great clock ticks once. On the floor under it, a round face of white enamel with one copper hand.'), say('a', 'Still going. Somebody has been waiting for someone to pick it up.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [tell('The Warden goes down in a shower of copper filings, and the great clock ticks once. On the floor under it, a round face of white enamel with one copper hand.'), say('a', 'Still going. Somebody has been waiting for someone to pick it up.')] },
       ]),
   },
   {
@@ -178,7 +178,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: 'Under the keep lies the cellar of its first foundation, where a stone clerk of works is still checking the masonry.',
     land: 'dungeon',
     like: { army: 'infernal', wave: 11 },
-    ease: 0.24,
+    ease: 0.28, // (Q9: 0.24 won over half; about 35% now)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
@@ -188,15 +188,15 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Clerk of Works', title: 'Who Was Never Told It Was Over' },
     before: (c) =>
-      story('buriedFoundation', 'The Buried Foundation', 'dungeon', { a: hero(c[0] ?? 'knight', 230), clerk: foe('forgeTitan', 430, 1.3, { name: 'The Clerk of Works', hidden: true }) }, [
+      story('buriedFoundation', 'The Buried Foundation', 'dungeon', { a: hero(c[0] ?? 'knight', 230), clerk: foe('forgeTitan', 380, 1.3, { name: 'The Clerk of Works', hidden: true }) }, [
         { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Buried Foundation', lines: [tell('A cellar of great grey blocks, every one fitted so well that a knife would not go in the seams. Chalk marks on the walls, in a very large hand. Something enormous is standing in the corner, checking a clipboard of slate.')] },
-        { cam: close('a'), lines: [say('a', 'Nobody has been down here for three hundred years. And somebody is still inspecting the work.'), tell('A stone chisel ticks off a line on the slate.')] },
-        { cam: wide(380, 205), acts: [{ who: 'clerk', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('clerk', 'THE WORK IS NOT SIGNED OFF. THE WORK IS NOT COMPLETE. NO ONE HAS BEEN TOLD IT IS OVER. STAND CLEAR OF THE MASONRY.', 'shout')] },
-        { cam: close('a'), lines: [say('a', 'Nobody told you it was over? It has been three hundred years.'), say('a', 'Fine. We will tell you with a hammer. It is the local custom.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'Nobody has been down here for three hundred years. And somebody is still inspecting the work.'), tell('A stone chisel ticks off a line on the slate.')] },
+        { cam: wide(310, 205), acts: [{ who: 'clerk', enter: 380, from: 460 }], cue: 'boom', fx: ['shake'], lines: [say('clerk', 'THE WORK IS NOT SIGNED OFF. THE WORK IS NOT COMPLETE. NO ONE HAS BEEN TOLD IT IS OVER. STAND CLEAR OF THE MASONRY.', 'shout')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'Nobody told you it was over? It has been three hundred years.'), say('a', 'Fine. We will tell you with a hammer. It is the local custom.')] },
       ]),
     after: (c) =>
       story('buriedFoundationAfter', 'The Buried Foundation', 'dungeon', { a: hero(c[0] ?? 'knight', 260) }, [
-        { cam: close('a'), lines: [tell('The Clerk comes apart in a long slow slide of masonry, and the clipboard falls and does not break. Under it, on the lowest block of the keep, a mark cut deep: a very large G, and under it, smaller, "built this".'), say('a', 'Somebody was proud of it. And then forgot to say.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [tell('The Clerk comes apart in a long slow slide of masonry, and the clipboard falls and does not break. Under it, on the lowest block of the keep, a mark cut deep: a very large G, and under it, smaller, "built this".'), say('a', 'Somebody was proud of it. And then forgot to say.')] },
       ]),
   },
   {
@@ -206,7 +206,7 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     blurb: "The keep's oldest wing has kept a dragon's things for three hundred years, and its chamberlain has not been told the guest checked out.",
     land: 'graveyard',
     like: { army: 'golems', wave: 11 },
-    ease: 0.21,
+    ease: 0.22, // (Q9: 0.21; about a third)
     // (Kwame or Minh, one from each starter pack; if neither is owned, any starter hero takes the part)
     cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
     waves: [
@@ -216,15 +216,15 @@ export const CHAIN_BATTLES: readonly QuestBattle[] = [
     ],
     boss: { name: 'The Chamberlain', title: "Who Keeps the Guest's Things" },
     before: (c) =>
-      story('guestWing', 'The Guest Wing', 'graveyard', { a: hero(c[0] ?? 'knight', 230), chamberlain: foe('lichKing', 430, 1.3, { name: 'The Chamberlain', hidden: true }) }, [
+      story('guestWing', 'The Guest Wing', 'graveyard', { a: hero(c[0] ?? 'knight', 230), chamberlain: foe('lichKing', 380, 1.3, { name: 'The Chamberlain', hidden: true }) }, [
         { cam: wide(290, 200), fx: ['fadeIn'], caption: 'The Guest Wing', lines: [tell('A long corridor of shut doors in the oldest wing of the keep. Dust lies in one perfectly straight line down the middle, as though something very large had been carried out on a tray. At the last door, a chamberlain in rusted mail is polishing nothing.')] },
-        { cam: close('a'), lines: [say('a', 'Three hundred years, and the brass is still bright.'), tell('The chamberlain turns a page in a ledger as long as an arm. It is mostly one entry.')] },
-        { cam: wide(380, 205), acts: [{ who: 'chamberlain', enter: 430, from: 'right' }], cue: 'boom', fx: ['shake'], lines: [say('chamberlain', "THE GUEST HAS NOT CHECKED OUT. THE GUEST'S THINGS ARE NOT TO BE REMOVED. PLEASE REMAIN SEATED.", 'shout')] },
-        { cam: close('a'), lines: [say('a', 'He checked out three hundred years ago. He is asking after his things.'), say('a', '...Fine. We will conclude the stay.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'Three hundred years, and the brass is still bright.'), tell('The chamberlain turns a page in a ledger as long as an arm. It is mostly one entry.')] },
+        { cam: wide(310, 205), acts: [{ who: 'chamberlain', enter: 380, from: 460 }], cue: 'boom', fx: ['shake'], lines: [say('chamberlain', "THE GUEST HAS NOT CHECKED OUT. THE GUEST'S THINGS ARE NOT TO BE REMOVED. PLEASE REMAIN SEATED.", 'shout')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [say('a', 'He checked out three hundred years ago. He is asking after his things.'), say('a', '...Fine. We will conclude the stay.')] },
       ]),
     after: (c) =>
       story('guestWingAfter', 'The Guest Wing', 'graveyard', { a: hero(c[0] ?? 'knight', 260) }, [
-        { cam: close('a'), lines: [tell('The Chamberlain folds up like a deckchair, and the last door swings open on a velvet cushion. On it lies a letter in violet wax, addressed in a very large hand: "To the Keep. Re: my things."'), say('a', 'Somebody should have answered this. A few centuries ago.')] },
+        { angle: 'wide', move: 'still', cam: wide(300, 205), lines: [tell('The Chamberlain folds up like a deckchair, and the last door swings open on a velvet cushion. On it lies a letter in violet wax, addressed in a very large hand: "To the Keep. Re: my things."'), say('a', 'Somebody should have answered this. A few centuries ago.')] },
       ]),
   },
   // (EIDOLON-TRIAL: the trials, one a chain)

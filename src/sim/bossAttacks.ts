@@ -20,6 +20,7 @@ import { hidden } from './equipFx';
 import { burnFor, chillFor, curseFor, isSilenced, poisonFor, stunFor, bleedFor } from './ailments';
 import { airborne, moveMany, shove } from './toolkit/move';
 import { TRIALS } from './eidolonTrials';
+import { markWindup, sapShare, spared } from './weakness';
 
 /** The switch (tools and tests turn it off to measure the fights without it, or the dodge alone). */
 export const BOSS_BIG = { on: true, dodge: true };
@@ -160,6 +161,8 @@ export interface BossWarning {
   /** The tiles it will strike, by index. */
   tiles: number[];
   rage: boolean;
+  /** The boss's stun as it began (DEPTH-BUILD: a later stun breaks it, for a boss whose weakness that is: `weakness.ts`). */
+  stun0?: number;
 }
 
 /** What a boss keeps for its signatures: when it first acted, when the next is due, which comes next, the turns it has let go. */
@@ -289,6 +292,7 @@ export function trySignature(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const ms = rage ? SIG.RAGE_WARN_MS : SIG.WARN_MS;
   st.next = b.t + ms + Math.round(SIG.EVERY_MS * (rage ? SIG.RAGE_EVERY : 1));
   const w: BossWarning = { n: (b.sigN = (b.sigN ?? 0) + 1), by: me.id, key: s.key, from: b.t, at: b.t + ms, tiles, rage };
+  markWindup(w, me);
   (b.warnings ??= []).push(w);
   // (the boss faces its mark and gathers, standing, until it lands)
   const aim = heroes.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)[0];
@@ -323,13 +327,14 @@ export function tickSignatures(b: Battle, out: BattleEvent[]): void {
 function land(b: Battle, me: Unit, s: Signature, w: BossWarning, out: BattleEvent[]): void {
   out.push({ kind: 'bossSig', phase: 'land', by: me.id, n: w.n, key: s.key, name: w.rage ? s.rage : s.name, el: s.el, tiles: w.tiles, ms: 0, rage: w.rage });
   const on = new Set(w.tiles);
-  const k = (w.rage ? SIG.RAGE_POWER : 1) * (me.def.startsWith('calBoss') ? SIG.CALAMITY : 1);
+  // (DEPTH-BUILD: a boss sapped by its weakness's ailment strikes at half; heroes in its shelter are spared, `weakness.ts`)
+  const k = (w.rage ? SIG.RAGE_POWER : 1) * (me.def.startsWith('calBoss') ? SIG.CALAMITY : 1) * sapShare(b, me, out);
   const power = atkOf(me) * s.power * SIG.POWER * k;
   const struck = targetsOf(b, me)
     .filter((x) => on.has(idx(b, x)) && !hidden(b, x) && !airborne(b, x))
     .sort((x, y) => apart(me, y) - apart(me, x) || x.id - y.id);
   for (const x of struck) {
-    if (!x.alive) continue;
+    if (!x.alive || spared(b, me, x, out)) continue;
     const dmg = Math.max(1, Math.round(Math.max(power - defenceOf(x), x.maxHp * SIG.FLOOR * k)));
     if (!hurt(b, me, x, dmg, true, false, out, 'skill') || !x.alive) continue;
     rider(b, me, x, s.rider, out);

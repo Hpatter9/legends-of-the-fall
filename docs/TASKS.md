@@ -7,6 +7,8 @@ This is the shared handoff board for Codex and Claude. It records known assignme
 
 The manager maintains the integrated board. Workers propose their task updates in their own branches and return them in their handoff. Keep one owner per task; reconcile board changes when integrating work.
 
+> **Words in older entries:** entries below that name the "spire", the "tower" or "the endless tower" mean the retired endless climb. It is gone: the Last Stand (`src/sim/stand.ts`) took its place, and the engine that was its map (`src/sim/tower.ts`) now runs the Calamity. The entries stay as they were written.
+
 ## Current owner requirements
 
 - Intentional flashy effects are allowed. “No flashing” refers to textures disappearing or glitching off and on, not deliberate visual effects.
@@ -829,7 +831,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 ### SUMMON-002 — Summoning stones economy
 
-- **Goal:** crowns buy chests; chests (and every other shard source) give summoning stones; a stone is one shard, one in 100 a whole unowned hero; the roster grows about half as fast. Owner's follow-up: silver chests hold 8 stones and gold 15; codex milestones pay 1 stone and achievements 2 (3 or 5 for the big ones); each codex entry pays 1 stone the first time it is discovered (old saves only for entries discovered from now on); the late pace is fine as it is; the 10-stone gift, daily stock and rising price stay.
+- **Goal:** crowns buy chests; chests (and every other shard source) give summoning stones; a stone is one shard, one in 100 a whole unowned hero; the roster grows about half as fast. Owner's follow-up: silver chests hold 8 stones and gold 15; codex milestones pay 1 stone and achievements 2 (3 or 5 for the big ones); each codex entry paid 1 stone the first time it was discovered (dropped in 0.332.0: the codex pays stones at its milestones only); the late pace is fine as it is; the 10-stone gift, daily stock and rising price stay.
 - **Status:** done: owner accepted and authorised release 0.171.0.
 - **Owner:** Claude
 - **Branch / worktree / PR:** `claude/summon-stones`

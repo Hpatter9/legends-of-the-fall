@@ -5,6 +5,8 @@
 import { armyById, armyUnlocked, recordOf } from './armies';
 import type { Equipment } from './equipment';
 import type { Meta } from './meta';
+import { battleWon, canFightBattle } from './questRun';
+import { questBattleById } from './questBattles';
 
 /** The run counts on offer. */
 export const AUTO_COUNTS = [1, 3, 5, 10] as const;
@@ -41,6 +43,16 @@ export const canAutoReplay = (m: Meta, armyId: string, tier: number): boolean =>
 /** The fastest speed a fight may run at: ×3 only on a tier already cleared, or while auto-replaying one. */
 export const maxSpeed = (m: Meta, armyId: string | undefined, tier: number, auto: boolean): 2 | 3 => (auto || (!!armyId && tierCleared(m, armyId, tier)) ? 3 : 2);
 
+/** A quest battle (an ordinary quest's, a hero's tale, a lost technique's, an Eidolon chain's part or trial) may be auto-played once it has
+ * been won and its cast is owned: the replay is practice, so it can never skip a story or a first win. */
+export const canAutoQuest = (m: Meta, battleId: string): boolean => !!questBattleById(battleId) && battleWon(m, battleId) && canFightBattle(m, battleId);
+
+/** Today's daily may be auto-played once it has been cleared (the counted run); every run after is practice. */
+export const canAutoDaily = (m: Meta, date: number): boolean => !!m.daily[String(date)]?.cleared;
+
+/** What an auto-replay repeats: an army's tier, a quest battle already won, or the daily already cleared. */
+export type AutoKind = 'army' | 'quest' | 'daily';
+
 export interface AutoTotals {
   /** Runs cleared. */
   runs: number;
@@ -62,7 +74,14 @@ export const FINDS_KEPT = 60;
 export type AutoEnd = 'done' | 'loss' | 'stopped' | 'tickets';
 
 export interface AutoReplay {
+  /** What is repeated (missing is an army). */
+  kind?: AutoKind;
+  /** The army ('' for a quest battle or the daily). */
   army: string;
+  /** The quest battle replayed (kind 'quest'). */
+  quest?: string;
+  /** The daily's date, yyyymmdd (kind 'daily'). */
+  daily?: number;
   tier: number;
   /** The runs asked for. */
   count: number;
@@ -81,6 +100,21 @@ export function startAuto(m: Meta, armyId: string, tier: number, count: number, 
   if (!canAutoReplay(m, armyId, tier) || !(AUTO_COUNTS as readonly number[]).includes(count)) return null;
   if (date !== undefined && count > ticketsLeft(m, date)) return null;
   return { army: armyId, tier, count, run: 1, totals: { runs: 0, crowns: 0, xp: 0, chests: 0, gear: 0 } };
+}
+
+const fresh = (): AutoTotals => ({ runs: 0, crowns: 0, xp: 0, chests: 0, gear: 0 });
+const within = (m: Meta, count: number, date?: number): boolean => (AUTO_COUNTS as readonly number[]).includes(count) && (date === undefined || count <= ticketsLeft(m, date));
+
+/** Begins an auto-replay of a quest battle already won, or null (not won, cast not owned, a count not on offer or beyond the tickets). */
+export function startAutoQuest(m: Meta, battleId: string, count: number, date?: number): AutoReplay | null {
+  if (!canAutoQuest(m, battleId) || !within(m, count, date)) return null;
+  return { kind: 'quest', army: '', quest: battleId, tier: 0, count, run: 1, totals: fresh() };
+}
+
+/** Begins an auto-replay of today's daily, cleared already, or null. */
+export function startAutoDaily(m: Meta, date: number, count: number): AutoReplay | null {
+  if (!canAutoDaily(m, date) || !within(m, count, date)) return null;
+  return { kind: 'daily', army: '', daily: date, tier: 0, count, run: 1, totals: fresh() };
 }
 
 /** What a settled fight adds to the totals and what the replay does next: another `wave`, a new `run`, or `end` (see `ended`). */

@@ -9,8 +9,10 @@
 
 import { FACES } from './questArt';
 import { GIVERS, questById, type QuestDef, type Reward } from './sim/questData';
+import { starLine } from './sim/questStars';
+import { rewardOf } from './sim/questPay';
 import { GWEN_REMARKS } from './sim/questData/gwen';
-import { ACTIVE_MAX, cannotTake, handIn, isDone, takeQuest } from './sim/quests';
+import { ACTIVE_MAX, activeDef, cannotTake, handIn, isDone, progressOf, takeQuest } from './sim/quests';
 import { heroEpithet, heroName } from './sim/heroNames';
 import { rewardWords } from './sim/rewardWords';
 import type { Meta } from './sim/meta';
@@ -52,13 +54,14 @@ export const giverWords = (q: QuestDef, line: string): string => (q.giver === 'r
 /** The plain-words label of where an offer came from, for the board ("passing today", "a Royal charge"...). */
 export function offerFrom(q: QuestDef): string {
   const { name } = giverName(giverKeyOf(q));
-  const slot = GIVERS[q.giver].slot;
+  const slot = q.slot ?? GIVERS[q.giver].slot;
   if (slot === 'passerby') return `${name}, passing today`;
   if (slot === 'patron') return `${name}, in the tavern`;
   if (slot === 'royal') return `${name} · a Royal charge`;
   if (slot === 'spoils') return 'Spoils, found on a fallen boss';
   if (slot === 'rift') return 'A voice in the rift';
   if (slot === 'tale') return `${name}, by the tavern's fire`;
+  if (slot === 'campaign') return `${name} · a campaign`;
   return name;
 }
 
@@ -178,9 +181,9 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
     });
     btn('Close', 'primary', closeGiverCard);
   } else if (t.kind === 'handIn') {
-    lines.append(el('h4', '', t.q.title), el('p', '', 'Done! Hand it in for your reward.'), el('p', 'qcPay', rewardText(t.q.reward, m)));
+    lines.append(el('h4', '', t.q.title), el('p', '', 'Done! Hand it in for your reward.'), el('p', 'qcPay', rewardText(rewardOf(t.q), m)));
     // (the words before the hand-in: a hero quest's hero is still the tease, SECRET-HEROES; its reveal plays as the card closes)
-    const paid = rewardText(t.q.reward, m);
+    const paid = rewardText(rewardOf(t.q), m);
     btn('Hand in', 'primary', () => {
       if (!handIn(m, t.q.id, todayKey())) return;
       play('coinClaim');
@@ -196,7 +199,7 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
     });
     btn('Not now', '', closeGiverCard);
   } else if (t.kind === 'offer') {
-    lines.append(el('h4', '', t.q.title), ...t.q.offer.map((l) => say(t.q, l)), el('p', 'qcGoal', t.q.text), el('p', 'qcPay', rewardText(t.q.reward, m)));
+    lines.append(el('h4', '', t.q.title), el('p', 'qcStars', starLine(t.q)), ...t.q.offer.map((l) => say(t.q, l)), el('p', 'qcGoal', t.q.text), el('p', 'qcPay', rewardText(rewardOf(t.q), m)));
     const why = cannotTake(m, t.q.id);
     const take = btn('Take it on', 'primary', () => {
       if (!takeQuest(m, t.q.id, todayKey())) return;
@@ -211,7 +214,8 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
     btn('Not now', '', closeGiverCard);
   } else {
     const a = m.quests!.active.find((x) => x.id === t.q.id)!;
-    lines.append(el('h4', '', t.q.title), say(t.q, t.q.going), el('p', 'qcGoal', `${t.q.text} · ${Math.min(a.progress, t.q.goal.n)}/${t.q.goal.n}`));
+    const p = progressOf(a);
+    lines.append(el('h4', '', t.q.title), el('p', 'qcStars', starLine(t.q)), say(t.q, t.q.going), el('p', 'qcGoal', `${activeDef(a)?.text ?? t.q.text} · ${p.now}/${p.need}`));
     btn('Quest log', '', () => {
       closeGiverCard();
       hooks.openLog();

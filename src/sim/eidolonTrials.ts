@@ -226,7 +226,7 @@ const VOLTARA_TRIAL: TrialDef = {
     { foes: ['voltaraGoddess', 'mazeGorgon3', 'mazeMino3'], boss: 'final' },
   ],
   like: { army: 'labyrinth', wave: 13 },
-  ease: 0.6,
+  ease: 0.65, // (Q9: 0.6 won three in four; about 15 to 20% now)
   // (the joint rebalance: Voltara herself eased, so the level-40 party of the chain's test wins about 6 trials in 10 again, as before the D&D
   // scores; 2 in 10 after them, docs/notes/stats-2.md and docs/notes/joint-rebalance.md)
   lift: { hp: 0.88, atk: 0.88 },
@@ -290,7 +290,7 @@ const GORM_TRIAL: TrialDef = {
     { foes: ['gormTitan', 'stoneGolem', 'ironGolem'], boss: 'final' },
   ],
   like: { army: 'infernal', wave: 13 },
-  ease: 0.27,
+  ease: 0.285, // (Q9: 0.27; about a quarter)
   lift: { hp: 1, atk: 1 },
   // (Kwame or Minh, one from each starter pack; any starter hero stands in)
   cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],
@@ -354,7 +354,7 @@ const VAELKHAR_TRIAL: TrialDef = {
     { foes: ['vaelkharKing', 'hellDemon', 'hellImp', 'hellDemon'], boss: 'final' },
   ],
   like: { army: 'golems', wave: 13 },
-  ease: 0.215,
+  ease: 0.22, // (Q9: 0.215; the probe party is at the top of the range)
   lift: { hp: 1, atk: 1 },
   // (Kwame or Minh, one from each starter pack; any starter hero stands in)
   cast: [{ heroes: ['knight', 'peasant'], standIns: ['samurai', 'kunoichi', 'archer', 'wizard'] }],

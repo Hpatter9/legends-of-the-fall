@@ -396,6 +396,11 @@ export class EidolonCall {
   get playing(): boolean {
     return !!this.p;
   }
+  /** ULT-SHOW: the full cinematic is playing (the fight runs at x1 under it, whatever the speed; the short call keeps the speed). */
+  get long(): boolean {
+    return !!this.p && this.longCall;
+  }
+  private longCall = false;
   /** The strike's tick is due: the page steps the fight once. */
   get wantsTick(): boolean {
     return !!this.p?.releasing;
@@ -428,6 +433,7 @@ export class EidolonCall {
 
   private start(e: Eidolon, first: boolean): void {
     const m = momentOf(first, settings().eidolonFull);
+    this.longCall = !!m.BARS;
     const calls = this.opts.meta().eidolons?.calls ?? 0;
     const spec = PASS[e.id] ?? PASS.askel;
     const src = SOURCES[e.id] ?? SOURCES.askel;
