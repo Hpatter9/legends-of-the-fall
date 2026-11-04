@@ -55,7 +55,7 @@ export function lastRiddle(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foes.length) return false;
   for (const f of foes) {
     out.push({ kind: 'arc', from: me.id, to: f.id });
-    strike(b, me, f, 1.65, out, true);
+    strike(b, me, f, 2.75, out, true);
     if (f.alive) silenceFor(b, f, ultDur(me, 2500), me);
   }
   return true;

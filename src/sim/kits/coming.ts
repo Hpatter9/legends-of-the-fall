@@ -59,9 +59,9 @@ export const COMING_PASSIVE: Readonly<Record<string, number>> = {
 };
 /** Each coming hero's ultimate knobs (`tuned`: its meter's rate and its strength), tuned by the sweep at level 30, over the row's own. */
 export const COMING_ULT: Readonly<Record<string, { rate: number; power: number }>> = {
-  vampireLord: { rate: 1.267, power: 4.815 },
+  vampireLord: { rate: 1.267, power: 2.5 },
   hemomancer: { rate: 0.959, power: 1.204 },
-  nightstalker: { rate: 1.401, power: 7.761 },
+  nightstalker: { rate: 1.401, power: 2.5 },
   bloodGargoyle: { rate: 1.364, power: 2.671 },
   dhampir: { rate: 1.065, power: 1.897 },
   warDrummer: { rate: 1.137, power: 2.376 },
@@ -69,16 +69,16 @@ export const COMING_ULT: Readonly<Record<string, { rate: number; power: number }
   geomancer: { rate: 1.241, power: 2.109 },
   bellWarden: { rate: 1.522, power: 1.188 },
   falconer: { rate: 1.062, power: 1.099 },
-  astralSphinx: { rate: 1.001, power: 4.162 },
+  astralSphinx: { rate: 1.001, power: 2.5 },
   mirageDancer: { rate: 1.49, power: 1.035 },
   plagueDoctor: { rate: 0.904, power: 2.434 },
   bombardier: { rate: 0.836, power: 0.967 },
   astrologer: { rate: 1.014, power: 1.59 },
   inquisitor: { rate: 1.039, power: 1.263 },
-  seraph: { rate: 1.992, power: 5.749 },
+  seraph: { rate: 1.992, power: 2.5 },
   corsairSurgeon: { rate: 0.5, power: 2.345 },
   harpooner: { rate: 1.122, power: 1.944 },
-  seaReaver: { rate: 1.226, power: 5.463 },
+  seaReaver: { rate: 1.226, power: 2.5 },
 };
 
 /** A passive's numbers scaled by `k`: its shares and chances times `k`, its multipliers' part above 1 times `k`, its damage over time and

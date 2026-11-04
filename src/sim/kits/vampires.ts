@@ -84,7 +84,7 @@ export function banquetOfBlood(b: Battle, me: Unit, out: BattleEvent[]): boolean
   me.facing = wayTo(me, f);
   out.push({ kind: 'swing', by: me.id, to: f.id });
   const was = me.dealt ?? 0;
-  strike(b, me, f, 2.6, out, true);
+  strike(b, me, f, 5.0, out, true);
   const dealt = (me.dealt ?? 0) - was;
   if (dealt > 0) mendUnit(me, Math.max(1, Math.round(dealt * 0.5)), out, me);
   for (const x of foesOf(b, me)) if (x !== f && apart(x, f) <= 1) curseFor(b, me, x, ultDur(me, 4000));
@@ -214,7 +214,7 @@ export function belfrySwoop(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   }
   me.facing = wayTo(me, f);
   out.push({ kind: 'swing', by: me.id, to: f.id });
-  strike(b, me, f, 2.2, out, true);
+  strike(b, me, f, 6.8, out, true);
   if (!f.alive) return true;
   const ally = alliesOf(b, me).filter((a) => a !== me).sort((x, y) => apart(f, x) - apart(f, y) || x.id - y.id)[0];
   displace(b, me, f, ally ? wayTo(f, ally) : (wayTo(me, f) + 2) % 4, 4, 'launch', out);

@@ -246,10 +246,13 @@ The result, 20,000 fights a level, the knobs as written (every one of the twenty
 
 - **The Bombardier's ultimate** (Shell Storm, once Carpet Bombardment) no longer runs away: its rate is 0.836 (was the branch's 0.9 that
   came round every 2 s at level 30) and he is -0.6 at level 30.
-- **Ultimates with big power knobs**: the Strigoi's Belfry Swoop (7.76), the Seraph's Descent of the Host (5.75), the Sea Reaver's Wrath of
-  the Reef (5.46), the Vampire Lord's Banquet of Blood (4.82) and the Astral Sphinx's The Last Riddle (4.16) sit at or above the roster's
-  highest (5.63). Their casts are single-target or short (a carry-off, a crash, a drink), so the sweep needs a large multiplier for them to
-  pull their weight; the power also lengthens their stuns (by its square root). A design pass could raise their base strikes instead.
+- **Five ultimates' base strikes raised** (the director's call): the sweep first tuned the Strigoi's Belfry Swoop to power 7.76, the
+  Seraph's Descent of the Host to 5.75, the Sea Reaver's Wrath of the Reef to 5.46, the Vampire Lord's Banquet of Blood to 4.82 and the
+  Astral Sphinx's The Last Riddle to 4.16, at or above the roster's highest (5.63); an ultimate that only works on an outsized knob is not
+  the house style, and the power also stretches its stuns (by its square root). Their strikes now carry the weight (x6.8, x3.7, x4.6 with
+  a x2.0 landing, x5.0 and x2.75 of attack) and each power knob is 2.5, so the damage is as tuned and the stuns are at roster lengths.
+  The sweep after (20,000 fights a level): still every one of the twenty within 6 at levels 1, 10, 20 and 30 (at 30 the five are -2.8 to
+  +1.0).
 - The heroes' skill 1 strengths run from the floor (0.05: the Falconer, the Sphinx, the Mirage Dancer, the Seraph, the Harpooner, the Sea
   Reaver, whose skill 1s carry fixed riders) to 2.7 (the Geomancer's Tectonic Shove, now she fights in melee).
 

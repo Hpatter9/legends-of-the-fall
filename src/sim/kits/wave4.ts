@@ -113,7 +113,7 @@ export function descentOfTheHost(b: Battle, me: Unit, out: BattleEvent[]): boole
   const spot = freeNear(b, aim, 1)[0];
   if (spot) leapTo(b, me, spot, out);
   const near = foesNear(b, me, 2);
-  for (const f of near) strike(b, me, f, 1.6, out, true);
+  for (const f of near) strike(b, me, f, 3.7, out, true);
   if (near.length) moveMany(b, me, near.filter((f) => f.alive), 2, 'launch', out);
   raiseAura(b, me, { what: "Host's Halo", reach: 3, ms: ultDur(me, 7000), every: 1000, ally: { guard: 0.2 } }, out);
   return true;
@@ -259,8 +259,8 @@ export function gaffHook(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Ultimate — Wrath of the Reef: rides a towering wave across a line of foes, throwing the foes round him 2 tiles aside. */
 export function wrathOfTheReef(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  if (!charge(b, me, { tiles: reachOf(me, 6), route: 'line', through: true, mult: 2.1, launch: 2, land: 0.9 }, out)) {
-    if (!charge(b, me, { tiles: reachOf(me, 5), route: 'leap', mult: 2.1, launch: 2, land: 0.9 }, out)) return false;
+  if (!charge(b, me, { tiles: reachOf(me, 6), route: 'line', through: true, mult: 4.6, launch: 2, land: 2.0 }, out)) {
+    if (!charge(b, me, { tiles: reachOf(me, 5), route: 'leap', mult: 4.6, launch: 2, land: 2.0 }, out)) return false;
   }
   const adj = foesNear(b, me, 2);
   if (adj.length) moveMany(b, me, adj, 2, 'launch', out);
