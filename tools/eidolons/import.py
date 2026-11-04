@@ -6,6 +6,9 @@
 #   <name>-card.webp    the head and shoulders, CARD px square, the ground kept and darkened at the edges (the picker and the menus)
 #   horn-<state>.webp   the War Horn's four paintings, trimmed to their common box, HORN px wide (they still line up exactly)
 #   eid-circle.webp, eid-rift.webp   the calling's summoning circle and rift, the rows the cinematic plays (art-source/eidolons/call)
+# and the quests' painted faces (art-source/eidolons/givers, board; EIDOLONS-1B, docs/notes/int-326.md) into src/art/quests/:
+#   <giver>-face.png  the giver's bust, GIVER px square (the quests' cards draw it at 40 to 64 px; src/questArt.ts bundles it)
+#   notice-face.png   the pinned notice's paper for the notice-board "giver", fitted inside the same square
 #
 # The matte: the ground is a near-uniform grey with a soft gradient, so it is modelled first (the image with the figure masked out,
 # blurred wide and filled in), then each pixel's difference from it gives a soft alpha (glow, smoke, frost and embers fade out rather
@@ -22,6 +25,11 @@ SRC = os.path.join(ROOT, 'art-source', 'eidolons', 'dreamina-clean')
 HORN_SRC = os.path.join(ROOT, 'art-source', 'eidolons', 'horn')
 CALL_SRC = os.path.join(ROOT, 'art-source', 'eidolons', 'call')
 OUT = os.path.join(ROOT, 'src', 'art', 'eidolons')
+GIVER_SRC = os.path.join(ROOT, 'art-source', 'eidolons', 'givers')
+BOARD_SRC = os.path.join(ROOT, 'art-source', 'eidolons', 'board')
+QUEST_OUT = os.path.join(ROOT, 'src', 'art', 'quests')
+GIVER = 128          # a giver's face, square (drawn at 40 to 64 px, so 2x for a sharp phone screen)
+GIVER_FILES = {'gwen-tallow': 'gwen', 'pedlar': 'pedlar', 'pilgrim': 'pilgrim', 'messenger': 'messenger', 'hunter': 'hunter'}
 NAMES = ['askel', 'nivra', 'aurelan', 'voltara', 'gorm', 'vaelkhar']
 FIG_H = 900          # the figure's height in px (the cinematic draws it about 80% of a phone's height)
 CARD = 256           # the card's side
@@ -172,6 +180,25 @@ def calls():
     return outs
 
 
+def givers():
+    """The five painted givers' busts and the notice's paper, as square PNGs the quests' screens bundle under their old keys."""
+    outs = []
+    os.makedirs(QUEST_OUT, exist_ok=True)
+    for src, name in GIVER_FILES.items():
+        im = Image.open(os.path.join(GIVER_SRC, f'{src}.png')).convert('RGBA').resize((GIVER, GIVER), Image.LANCZOS)
+        out = os.path.join(QUEST_OUT, f'{name}-face.png')
+        im.save(out, 'PNG', optimize=True)
+        outs.append(out)
+    paper = Image.open(os.path.join(BOARD_SRC, 'notice.png')).convert('RGBA')
+    k = (GIVER - 4) / paper.height
+    paper = paper.resize((round(paper.width * k), GIVER - 4), Image.LANCZOS)
+    sq = Image.new('RGBA', (GIVER, GIVER), (0, 0, 0, 0))
+    sq.alpha_composite(paper, ((GIVER - paper.width) // 2, 2))
+    out = os.path.join(QUEST_OUT, 'notice-face.png')
+    sq.save(out, 'PNG', optimize=True)
+    return outs + [out]
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     total = 0
@@ -179,7 +206,7 @@ if __name__ == '__main__':
         for p in (figure(n), card(n)):
             total += os.path.getsize(p)
             print(os.path.relpath(p, ROOT), os.path.getsize(p) // 1024, 'KB')
-    for p in horns() + calls():
+    for p in horns() + calls() + givers():
         total += os.path.getsize(p)
         print(os.path.relpath(p, ROOT), os.path.getsize(p) // 1024, 'KB')
     print('total', total // 1024, 'KB')

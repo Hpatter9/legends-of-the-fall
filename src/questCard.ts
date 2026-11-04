@@ -7,7 +7,7 @@
 // name and portrait are the hero's own). The ruler's charges are spoken by the player's chosen ruler (name, portrait, and "the
 // queen" where the text says "the king").
 
-import { FACES } from './questArt';
+import { FACES, PAINTED } from './questArt';
 import { GIVERS, questById, type QuestDef, type Reward } from './sim/questData';
 import { starLine } from './sim/questStars';
 import { rewardOf } from './sim/questPay';
@@ -84,6 +84,7 @@ export function faceOf(key: string, cls = 'qFace'): HTMLElement {
     return box;
   } else {
     img.src = FACES[key as keyof typeof FACES] ?? FACES.gwen;
+    if (PAINTED.has(key)) img.classList.add('painted');
   }
   box.append(img);
   return box;
