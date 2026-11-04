@@ -119,8 +119,8 @@ export const UNITS: Record<string, UnitDef> = {
   standard: { id: 'standard', name: 'Standard', side: 'hero', sheet: 'samurai_commander', scale: 0.67, hp: 60, atk: 0, def: 6, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, still: true, role: 'The Samurai Commander\'s standard: friends near it fight harder' },
   decoy: { id: 'decoy', name: 'Decoy', side: 'hero', sheet: 'hero_res_illusionist', scale: 0.4375, hp: 80, atk: 5, def: 0, range: 1, moveMs: 700, atkMs: 1200, jump: 2, summon: true, role: 'A mirage that draws blows' },
 
-  skeleton: { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Sword and shield' },
-  spearman: { id: 'spearman', name: 'Skeleton Spearman', side: 'foe', sheet: 'skeleton_spearman', scale: 0.67, hp: 270, atk: 28, def: 5, range: 2, moveMs: 650, atkMs: 1250, jump: 2, role: 'Reaches two tiles' },
+  skeleton: { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Shield up, guards the archers' },
+  spearman: { id: 'spearman', name: 'Skeleton Spearman', side: 'foe', sheet: 'skeleton_spearman', scale: 0.67, hp: 270, atk: 28, def: 5, range: 2, moveMs: 650, atkMs: 1250, jump: 2, role: 'Long spear, keeps its distance' },
   // Duchess the court's goat, in the rare fight she joins (`duchessFight.ts`): her base before her level-100 gains
   duchess: { id: 'duchess', name: 'Duchess', side: 'hero', sheet: 'duchess_goat', scale: 0.66, hp: 220, atk: 20, def: 6, range: 1, moveMs: 520, atkMs: 900, jump: 4, summon: true, role: 'Her Grace the court goat: she fights for herself, and today that is you' },
   // (QUESTS-3, Q5: the guests of a quest battle's protect rule, `questRules.ts`: they fight on the heroes' side under the AI, and the fight is lost if one falls. Their looks are the packs' own)
@@ -131,7 +131,7 @@ export const UNITS: Record<string, UnitDef> = {
   guestPrisoner: { id: 'guestPrisoner', name: 'The Prisoner', side: 'hero', sheet: 'hero_res_druid', scale: 0.520833, hp: 200, atk: 4, def: 2, range: 1, moveMs: 800, atkMs: 1400, jump: 2, summon: true, role: 'A prisoner set free: keep them alive' },
   // The Last Stand's ruler defends the central dais in melee; their hp remains the run's objective.
   standKing: { id: 'standKing', name: 'The King', side: 'hero', sheet: 'stand_king', scale: 0.8, hp: 1000, atk: 24, def: 4, range: 1, moveMs: 1000, atkMs: 1500, jump: 1, summon: true, role: 'The ruler, defending the central dais' },
-  boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 200, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows' },
+  boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 195, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows, backs off' },
 };
 
 /** The heroes on the bench, in order. */

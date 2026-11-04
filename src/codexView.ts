@@ -7,7 +7,7 @@ import { SLOT_NAMES } from './sim/equipment';
 import { nextVerseAt, versesOpen } from './sim/legends';
 import { ESCORT_CLUE, WEAKNESS, knownClues } from './sim/weakness';
 import { roomOpen } from './sim/rooms';
-import { KITS, type Kit } from './sim/abilities';
+import { hasSkill, KITS, type Kit } from './sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
@@ -88,7 +88,9 @@ function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
         [`Skill 2 (${slotBrief(hk, hk.s2)})`, hk.s2.skill, SKILL2_LEVEL],
         ...(hk.s3 ? ([[`Skill 3 (${slotBrief(hk, hk.s3)})`, hk.s3.skill, SKILL3_LEVEL]] as [string, { name: string; text: string }, number][]) : []),
       ]
-    : [['Skill', kit.skill]];
+    : hasSkill(kit)
+      ? [['Skill', kit.skill]]
+      : [];
   if (kit.ultimate) rows.push(['Ultimate', kit.ultimate, hero ? kit.ultimate.unlock : undefined]);
   rows.push(['Passive', kit.passive]);
   for (const [label, a, unlock] of rows) {
@@ -97,6 +99,12 @@ function kitLines(box: HTMLElement, kit: Kit | undefined, hero?: string): void {
     if (unlock) p.append(el('span', 'ultLock', ` Unlocks at level ${unlock}.`));
     box.append(p);
   }
+}
+
+/** One kind of a foe entry in a line: its role, its skill (if it has one) and its passive (FOE-STYLES). */
+function kindLine(id: string): string {
+  const k = KITS[id];
+  return `${UNITS[id].role}. ${hasSkill(k) ? `${k.skill.name}: ${k.skill.text}. ` : ''}${k.passive.name}: ${k.passive.text}.`;
 }
 
 /** Whether the combo has been seen in a fight. */
@@ -150,6 +158,9 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
     stat(box, [['HP', String(def.hp)], ['Attack', String(def.atk)], ['Defence', String(def.def)], ['Range', String(def.range)], ['Walk', paceOf(def.moveMs)], ['Jump', def.flies ? 'Flies' : String(def.jump)], ['Blows', paceOf(def.atkMs * 0.8)]]);
     box.append(el('p', 'hint', 'Base stats: foes grow stronger the deeper you go.'));
     kitLines(box, KITS[e.defs[0]]);
+    // (FOE-STYLES: an entry's other kinds fight their own ways; one line each, the first being the kit above)
+    const kinds = e.defs.slice(1).filter((d) => KITS[d] && KITS[d] !== KITS[e.defs[0]]);
+    if (kinds.length) section(box, 'Its other kinds', kinds.map((d) => kindLine(d)));
     section(box, 'Weaknesses and tips', tipsOf(def, KITS[e.defs[0]]));
     weakBlock(box, m, e.defs.find((d) => WEAKNESS[d]));
     section(box, 'Where it is met', whereMet(e));

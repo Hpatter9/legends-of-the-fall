@@ -13,7 +13,8 @@ import type { Family } from '../src/render/fxRules';
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, number[]>;
 
 test('every actual hero, ultimate, enemy skill and king spell has individual authored artwork', () => {
-  const names = new Set(Object.values(KITS).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
+  // (FOE-STYLES: a common foe's kit has no skill)
+  const names = new Set(Object.values(KITS).filter(hasSkill).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
   assert.equal(names.size, 108);
   const expected = [...names].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
   // (108 skills and ultimates and the king's 35 spells: KING-SPELLS batch 5 painted the schools' fourteen, docs/notes/king-spells-b5.md)
