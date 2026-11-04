@@ -318,6 +318,10 @@ export class StandView {
         return t ? at(u, v, t.h) : null;
       },
       seen: (kind) => seenOf(this.host.meta(), kind),
+      toClient: (x, y) => {
+        const k = this.world.scale.x;
+        return { x: this.world.x + x * k, y: this.world.y + y * k };
+      },
       saw: (kind) => {
         noteSeen(this.host.meta(), kind);
         saveMeta(this.host.meta());

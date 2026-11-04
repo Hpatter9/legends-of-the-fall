@@ -40,20 +40,22 @@ export interface Showcase {
   rise?: boolean;
   /** pack: those called up rise out of the ground where they stand, rather than running in from the edge. */
   emerge?: boolean;
+  /** Painted poses the caster takes for a beat (`showArt.ts`): its wind-up, its run, its strike, its flight, its call, its finish. */
+  poses?: Partial<Record<'wind' | 'run' | 'strike' | 'fly' | 'call' | 'end', string>>;
 }
 
 /** The heroes whose ultimate has a showcase: the pilot (Ayame, the Wizard, the Beastmaster) and batch 1 (the blades that move). */
 export const SHOWCASES: Record<string, Showcase> = {
-  kunoichi: { style: 'blinks', el: 'dark', line: 'She vanishes in a puff of smoke, appears behind each foe in turn and cuts it down, then stands where the last fell' },
+  kunoichi: { style: 'blinks', el: 'dark', poses: { end: 'kunoichi-kneeling-finish' }, line: 'She vanishes in a puff of smoke, appears behind each foe in turn and cuts it down, then stands where the last fell' },
   wizard: { style: 'sky', el: 'fire', line: 'He raises his staff, the sky darkens, a burning circle marks each crowd and the meteors come down out of the clouds' },
-  beastmaster: { style: 'pack', el: 'forest', line: 'He sounds his horn and the wolves bound in from the edge of the field, one after another, to stand at his side' },
+  beastmaster: { style: 'pack', el: 'forest', poses: { call: 'beastmaster-horn' }, line: 'He sounds his horn and the wolves bound in from the edge of the field, one after another, to stand at his side' },
   mercenary: { style: 'blinks', el: 'blood', line: 'He steps out of nowhere beside each of the three hardest hitters in turn and cuts each hard' },
-  arcBlade: { style: 'blinks', el: 'lightning', line: 'He becomes lightning: a bolt that leaps from foe to foe, cutting each, then snaps back to where he started' },
-  samurai: { style: 'line', el: 'light', after: true, run: 160, wind: 1200, sheathe: 900, line: 'He crouches, the field goes still, one flash along the line; he sheathes his sword, and every foe he passed splits' },
-  lancer: { style: 'line', el: 'wind', run: 1100, wind: 1000, line: 'He rides the whole line at a gallop, each foe flung aside as he passes' },
-  minotaur: { style: 'line', el: 'earth', run: 420, line: 'He paws the ground and charges, again and again, each foe in his way thrown into the air' },
-  barbarian: { style: 'leap', el: 'blood', line: 'He leaps high over the field and comes down on the thickest crowd; the ground cracks and they are thrown back' },
-  ninjaMonk: { style: 'blows', el: 'wind', line: 'A blur of fists on each foe in turn, blow after blow, the last throwing it away' },
+  arcBlade: { style: 'blinks', el: 'lightning', poses: { strike: 'arc-blade' }, line: 'He becomes lightning: a bolt that leaps from foe to foe, cutting each, then snaps back to where he started' },
+  samurai: { style: 'line', el: 'light', after: true, run: 160, wind: 1200, sheathe: 900, poses: { wind: 'samurai-iaido-crouch', end: 'samurai-sheathe' }, line: 'He crouches, the field goes still, one flash along the line; he sheathes his sword, and every foe he passed splits' },
+  lancer: { style: 'line', el: 'wind', run: 1100, wind: 1000, poses: { run: 'lancer-gallop' }, line: 'He rides the whole line at a gallop, each foe flung aside as he passes' },
+  minotaur: { style: 'line', el: 'earth', run: 420, poses: { run: 'minotaur-charge' }, line: 'He paws the ground and charges, again and again, each foe in his way thrown into the air' },
+  barbarian: { style: 'leap', el: 'blood', poses: { fly: 'barbarian-mid-air' }, line: 'He leaps high over the field and comes down on the thickest crowd; the ground cracks and they are thrown back' },
+  ninjaMonk: { style: 'blows', el: 'wind', poses: { strike: 'ninja-monk-flurry' }, line: 'A blur of fists on each foe in turn, blow after blow, the last throwing it away' },
   buccaneer: { style: 'hooks', el: 'dark', line: 'He throws out his hooks and reels the foes in one by one, cutting each as it lands at his feet' },
   // (batch 2: from the sky and the guns)
   archer: { style: 'sky', el: 'wind', line: 'She looses high into the sky; a ring marks each crowd and the volleys come down on them' },
@@ -146,6 +148,8 @@ export interface Cast {
   born: { id: number; at: At }[];
   /** Every foe it struck on the tick, in the order first struck; the blows each took; the run each was struck on (0 before any). */
   struck: number[];
+  /** The foes a heavy blow landed on (the Buccaneer's high rolls). */
+  heavy: number[];
   blows: Map<number, number>;
   run: Map<number, number>;
   /** Where each foe it struck stands now (after the tick), and where it stood before, when it was moved (thrown, shoved, hooked in). */
@@ -183,6 +187,7 @@ export function readCast(
   const dashes: { from: At; to: At }[] = [];
   const aims: At[] = [];
   const struck: number[] = [];
+  const heavy: number[] = [];
   const blows = new Map<number, number>();
   const run = new Map<number, number>();
   const moved = new Map<number, At>();
@@ -218,6 +223,7 @@ export function readCast(
         run.set(e.to, Math.max(0, dashes.length - 1));
       }
       blows.set(e.to, (blows.get(e.to) ?? 0) + 1);
+      if (e.heavy && !heavy.includes(e.to)) heavy.push(e.to);
     } else if (e.kind === 'area' && e.by === me.id && !aims.some((a) => a.u === e.u && a.v === e.v)) aims.push({ u: e.u, v: e.v });
   }
   const tiles = new Map<number, At>();
@@ -235,7 +241,7 @@ export function readCast(
   }
   const hooks = arcs.filter((id) => moved.has(id) && struck.includes(id));
   const start = hops[0]?.from ?? dashes[0]?.from ?? leap?.from ?? { u: me.u, v: me.v };
-  return { caster: me.id, start, hops, dashes, leap, aims, born: born.filter((u) => u.owner === me.id).map((u) => ({ id: u.id, at: { u: u.u, v: u.v } })), struck, blows, run, tiles, moved, hooks, shots: shots.length ? shots : arcs.filter((id) => struck.includes(id)), ground, touched: quiet, burrow, helped: helped.length ? helped : allies.filter((id) => id !== me.id), raised, zone, changed };
+  return { caster: me.id, start, hops, dashes, leap, aims, born: born.filter((u) => u.owner === me.id).map((u) => ({ id: u.id, at: { u: u.u, v: u.v } })), struck, heavy, blows, run, tiles, moved, hooks, shots: shots.length ? shots : arcs.filter((id) => struck.includes(id)), ground, touched: quiet, burrow, helped: helped.length ? helped : allies.filter((id) => id !== me.id), raised, zone, changed };
 }
 
 /* ------------------------------------------------------------------ the plan: a track of keys for each fighter it stages */
@@ -259,6 +265,8 @@ export interface Key {
   glide?: boolean;
   arc?: number;
   fade?: boolean;
+  /** A painted pose (`showArt.ts`) drawn in place of its sprite's frame. */
+  pose?: string;
 }
 
 /** A fighter's pose at a moment: on `at` (+ `off`), or `k` of the way from there to `to`, `lift` px up; seen as `alpha`, in a row `p` through it. */
@@ -272,6 +280,7 @@ export interface Pose {
   row: PoseRow;
   p: number;
   look?: At;
+  pose?: string;
 }
 
 /** A one-off beat: an effect and its sound at a time (ms into the showcase). `where` a tile, `to` a second tile, `foe` a fighter. */
@@ -414,7 +423,7 @@ function poseOn(keys: readonly Key[], t: number): Pose {
   const row = k.row ?? 'idle';
   const p = k.cycle ? (f * k.cycle) % 1 : (k.p0 ?? 0) + ((k.p1 ?? k.p0 ?? 0) - (k.p0 ?? 0)) * f;
   const alpha = k.fade && next ? (k.alpha ?? 1) + ((next.alpha ?? 1) - (k.alpha ?? 1)) * f : k.alpha ?? 1;
-  const pose: Pose = { at: k.tile, alpha, row, p, ...(k.off ? { off: k.off } : {}), ...(k.look ? { look: k.look } : {}) };
+  const pose: Pose = { at: k.tile, alpha, row, p, ...(k.off ? { off: k.off } : {}), ...(k.look ? { look: k.look } : {}), ...(k.pose ? { pose: k.pose } : {}) };
   if (k.glide && next) {
     pose.to = { at: next.tile, ...(next.off ? { off: next.off } : {}) };
     pose.k = easeInOut(f);
@@ -429,6 +438,11 @@ class Builder {
   plan: ShowPlan;
   constructor(private sc: Showcase, private c: Cast) {
     this.plan = { kind: '', style: sc.style, el: sc.el, ms: 0, beats: [], tracks: new Map(), cast: c, zoom: 1.6, followMs: Infinity };
+  }
+  /** The caster's painted pose for a beat, if it has one. */
+  private pz(slot: 'wind' | 'run' | 'strike' | 'fly' | 'call' | 'end'): { pose?: string } {
+    const name = this.sc.poses?.[slot];
+    return name ? { pose: name } : {};
   }
   private key(id: number, k: Key): void {
     const t = this.plan.tracks.get(id) ?? [];
@@ -459,7 +473,7 @@ class Builder {
       const foeAt = h.struck !== undefined ? c.moved.get(h.struck) ?? c.tiles.get(h.struck) ?? h.to : h.to;
       this.key(c.caster, { at: s, tile: h.from, fade: true, look: h.to });
       this.key(c.caster, { at: s + SHOW.GONE_AT, tile: h.to, alpha: 0 });
-      this.key(c.caster, { at: s + SHOW.APPEAR_AT, tile: h.to, row: 'attack', p0: 0, p1: 1, look: foeAt });
+      this.key(c.caster, { at: s + SHOW.APPEAR_AT, tile: h.to, row: 'attack', p0: 0, p1: 1, look: foeAt, ...this.pz('strike') });
       this.key(c.caster, { at: s + SHOW.CUT_END, tile: h.to, row: 'attack', p0: 1, look: foeAt });
       this.beat({ at: s, kind: 'vanish', where: h.from });
       this.beat({ at: s + SHOW.APPEAR_AT, kind: 'appear', where: h.to });
@@ -470,7 +484,7 @@ class Builder {
     });
     const end = SHOW.LEAD + c.hops.length * hop;
     const last = c.hops[c.hops.length - 1];
-    this.key(c.caster, { at: end, tile: last.to, look: last.struck !== undefined ? c.tiles.get(last.struck) : undefined });
+    this.key(c.caster, { at: end, tile: last.to, look: last.struck !== undefined ? c.tiles.get(last.struck) : undefined, ...this.pz('end') });
     this.beat({ at: end, kind: 'finish', where: last.to });
     this.plan.ms = end + SHOW.OUTRO;
     return true;
@@ -496,8 +510,8 @@ class Builder {
   pack(): boolean {
     const c = this.c;
     if (!c.born.length) return false;
-    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1, look: c.born[0].at });
-    this.key(c.caster, { at: SHOW.CALL, tile: c.start, row: 'attack2', p0: 1, look: c.born[0].at });
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1, look: c.born[0].at, ...this.pz('call') });
+    this.key(c.caster, { at: SHOW.CALL, tile: c.start, row: 'attack2', p0: 1, look: c.born[0].at, ...this.pz('call') });
     this.beat({ at: 60, kind: 'call', where: c.start });
     c.born.forEach((w, i) => {
       const s = SHOW.CALL + i * SHOW.BEAST;
@@ -520,12 +534,12 @@ class Builder {
     const c = this.c;
     if (!c.dashes.length) return false;
     const run = this.sc.run ?? 300;
-    this.key(c.caster, { at: 0, tile: c.start, row: 'attack', p0: 0, p1: 0.25, look: c.dashes[0].to });
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack', p0: 0, p1: 0.25, look: c.dashes[0].to, ...this.pz('wind') });
     this.beat({ at: 80, kind: 'gather', where: c.start });
     let s = this.sc.wind ?? SHOW.WIND;
     const ends: number[] = [];
     c.dashes.forEach((d) => {
-      this.key(c.caster, { at: s, tile: d.from, row: 'walk', cycle: Math.max(1, Math.round(run / 140)), glide: true, look: d.to });
+      this.key(c.caster, { at: s, tile: d.from, row: 'walk', cycle: Math.max(1, Math.round(run / 140)), glide: true, look: d.to, ...this.pz('run') });
       this.key(c.caster, { at: s + run, tile: d.to, row: 'attack', p0: 0.5, p1: 1, look: d.to });
       this.beat({ at: s, kind: 'dash', where: d.from, to: d.to });
       ends.push(s);
@@ -544,7 +558,7 @@ class Builder {
       this.foe(id, when, d.from, SHOW.THROW);
     });
     const done = this.sc.after ? sheathed + c.struck.length * SHOW.SPLIT : s;
-    this.key(c.caster, { at: s - SHOW.PAUSE + 200, tile: last.to, look: last.to });
+    this.key(c.caster, { at: s - SHOW.PAUSE + 200, tile: last.to, look: last.to, ...this.pz('end') });
     this.beat({ at: done, kind: 'finish', where: last.to });
     this.plan.ms = done + SHOW.LINE_TAIL;
     this.plan.zoom = 1.4;
@@ -557,7 +571,7 @@ class Builder {
     if (!l) return false;
     const land = SHOW.CROUCH + SHOW.FLY;
     this.key(c.caster, { at: 0, tile: l.from, row: 'attack', p0: 0, p1: 0.2, look: l.land });
-    this.key(c.caster, { at: SHOW.CROUCH, tile: l.from, row: 'attack', p0: 0.2, p1: 0.5, glide: true, arc: SHOW.HIGH, look: l.land });
+    this.key(c.caster, { at: SHOW.CROUCH, tile: l.from, row: 'attack', p0: 0.2, p1: 0.5, glide: true, arc: SHOW.HIGH, look: l.land, ...this.pz('fly') });
     this.key(c.caster, { at: land, tile: l.land, row: 'attack', p0: 0.6, p1: 1, look: l.land });
     this.key(c.caster, { at: land + 300, tile: l.land });
     this.beat({ at: 60, kind: 'gather', where: l.from });
@@ -578,7 +592,7 @@ class Builder {
     for (const id of c.struck) {
       const n = Math.max(1, c.blows.get(id) ?? 1);
       const at = c.moved.get(id) ?? c.tiles.get(id) ?? c.start;
-      this.key(c.caster, { at: s, tile: c.start, row: 'attack', cycle: n, look: at });
+      this.key(c.caster, { at: s, tile: c.start, row: 'attack', cycle: n, look: at, ...this.pz('strike') });
       for (let b = 0; b < n; b++) this.beat({ at: s + (b + 0.6) * (SHOW.FLURRY / n), kind: b === n - 1 ? 'cut' : 'blow', where: c.start, foe: id });
       // (the foe reels from the first blow, and the last throws it)
       const now = c.tiles.get(id);
