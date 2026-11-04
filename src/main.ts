@@ -113,9 +113,10 @@ import { fullScene } from './ultMomentRules';
 import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
-import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
 import { autoSpellsFor } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
+import { snapSpell } from './sim/spellAim';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { WeatherView } from './render/weatherView';
@@ -2719,7 +2720,7 @@ class Game {
     // (a tap on the board with a spell chosen casts it there)
     if (this.b.phase === 'fight' && this.spell && !d.moved && (e.target as HTMLElement) === this.app.canvas) {
       const tile = this.tileAtScreen(e.clientX, e.clientY);
-      if (tile && castSpell(this.b, this.spell, ...tile)) this.spell = null;
+      if (tile && castSpell(this.b, this.spell, ...snapSpell(this.b, this.spell, ...tile))) this.spell = null;
       return this.endDrag();
     }
     if (this.b.phase !== 'deploy' || (d.pan && d.moved)) return this.endDrag();
@@ -3083,7 +3084,9 @@ class Game {
     this.spellGhost.hidden = false;
     this.spellGhost.style.left = `${e.clientX}px`;
     this.spellGhost.style.top = `${e.clientY - 40}px`;
-    this.hover = this.spellTile(e.clientX, e.clientY);
+    const at = this.spellTile(e.clientX, e.clientY);
+    // (the 3x3 shown is where the soft snap will put it: KING-SPELLS batch 1)
+    this.hover = at && snapSpell(this.b, d.id, ...at);
     this.markTiles();
     this.refreshSpells();
   }
@@ -3094,7 +3097,7 @@ class Game {
     if (!d) return;
     if (d.moved) {
       const tile = ok ? this.spellTile(e.clientX, e.clientY) : null;
-      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...tile);
+      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...snapSpell(this.b, d.id, ...tile));
       this.spell = null;
       this.hover = null;
       this.spellDragged = true;
@@ -3113,7 +3116,8 @@ class Game {
   /** While a spell is chosen, the finger or pointer shows the 3x3 it would hit. */
   private aim(e: PointerEvent): void {
     if (this.b.phase !== 'fight' || !this.spell) return;
-    this.hover = this.tileAtScreen(e.clientX, e.clientY);
+    const at = this.tileAtScreen(e.clientX, e.clientY);
+    this.hover = at && snapSpell(this.b, this.spell, ...at);
     this.markTiles();
   }
 
@@ -3123,7 +3127,7 @@ class Game {
     const dropped = this.spell && !canAfford(b, this.spell);
     if (dropped) this.spell = null;
     ($('mana').querySelector('i span') as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
-    $('mana').querySelector('b')!.textContent = `${Math.floor(b.spells.mana)}/${MANA_MAX}`;
+    $('mana').querySelector('b')!.textContent = manaText(b.spells);
     for (const card of $('spellCards').children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
       card.classList.toggle('dim', !canAfford(b, id));
@@ -3134,7 +3138,8 @@ class Game {
     const caster = b.phase === 'fight' ? b.units.find((u) => u.side === 'hero' && u.alive && u.ks?.at1 !== undefined) : undefined;
     if (caster) tips.offer('skill', () => this.spriteBox(caster.id));
     if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('fightHud'));
-    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].text}: let go over the grid to cast, or back on the cards to cancel` : `${SPELLS[this.spell].text}: tap a tile, or drag a card onto the grid (tap the card again to cancel)`) : '';
+    // (one short line above the orbs, off the board; the spell's full words are on its orb's title and in the spellbook)
+    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].name}: let go on the grid · back here to cancel` : `${SPELLS[this.spell].name}: tap a tile · tap the orb to cancel`) : '';
     if (dropped) this.markTiles();
   }
 
