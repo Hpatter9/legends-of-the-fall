@@ -1,5 +1,6 @@
 // The quests' pictures, by key, so the owner's painted art can take their place without touching the screens: the givers'
-// card portraits (`FACES`, to be the painted busts from `art-source/eidolons/givers/<id>.png`), Gwen's sprite behind the bar and
+// card portraits (`FACES`; the painted busts of Gwen, the pedlar, the pilgrim, the messenger and the hunter, and the notice's paper, come
+// from `art-source/eidolons/givers` and `board` by `tools/eidolons/import.py`, listed in `PAINTED`), Gwen's sprite behind the bar and
 // the quest board in the tavern (`BOARD`, to be pinned papers from `art-source/eidolons/board/*.png`). Until then each is a pack
 // placeholder cut by `tools/quests/cut.py` (see CREDITS.md). Bundled as data URLs, so nothing is added to the offline list.
 
@@ -24,13 +25,14 @@ import spoilsFace from './art/items/star_chart.png';
 import riftFace from './art/items/rift_shard.png';
 import gwenSheet from './art/quests/gwen.png';
 import boardUrl from './art/quests/board.png';
+import noticeFace from './art/quests/notice-face.png';
 
 /** A giver's portrait for their card and the log's rows (square; drawn at 64 px or less). A patron's is the hero's own and the ruler's
  *  the chosen ruler's (put in by `questCard.ts`); theirs here are fallbacks. Spoils and the rift show a thing, not a face: a found map
  *  and a rift shard, from the gear icons. */
 export const FACES: Record<GiverId, string> = {
   gwen: gwenFace,
-  notice: boardUrl,
+  notice: noticeFace,
   pedlar: pedlarFace,
   pilgrim: pilgrimFace,
   messenger: messengerFace,
@@ -67,3 +69,6 @@ export const GWEN = { url: gwenSheet, cell: 64, stand: 1, talk: 5 } as const;
 
 /** The quest board on the bar room's wall (one picture, 64 px across). */
 export const BOARD = boardUrl;
+
+/** The givers whose face is a painting (drawn smooth, not as the pixel placeholders are). */
+export const PAINTED = new Set(['gwen', 'pedlar', 'pilgrim', 'messenger', 'hunter', 'notice', 'patron', 'teal']);

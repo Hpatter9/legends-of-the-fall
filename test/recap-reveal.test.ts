@@ -74,9 +74,9 @@ test('a boss wave of an endless run lists the gear it settled', () => {
   const was = snapGains(m, run);
   finish(run, true, 3);
   const g = gainsSince(was, m, run);
-  // (RUN-GEAR: a new run's boss drops a real piece, listed as equipment)
-  assert.equal(g.filter((x) => x.kind === 'equip').length, run.pack?.length ? 1 : 0);
-  assert.equal(run.pack?.length, 1);
+  // (SEVEN-SLOT GEAR batch 4: a new run's boss drops a rune, and the won wave its own, both listed as its gear)
+  assert.equal(g.filter((x) => x.kind === 'gear').reduce((n, x) => n + x.n, 0), 2);
+  assert.equal(run.pack, undefined);
   assert.deepEqual(otherFinds(run.found ?? [], g), []);
 });
 
