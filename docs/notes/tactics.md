@@ -147,3 +147,57 @@ begins (`formationOf`, `startFormation`), from where the heroes stand; the first
 - Shots: `docs/samples/tactics-{deploy,sheet,arranged,fight}-{393,360,412}.png` (the save has Auto place open).
 - After merging main (0.343.0): `set-powers`' small fights (new on main) re-seeded nine powers to seed 7, where each fires under Advance
   together (the table records "where each power was seen to fire").
+
+## Batch 5: the advice, and the final re-measure
+
+### What the counters measured
+
+`node tools/tactics/run.mjs --tactic <t> [--formation <f>] --formations-on --games 5400` (random teams, about 600 fights a band; the
+formations set out by `formationSpots`, "none" placed with care; won %):
+
+| Band | Lv 1: Advance / Hold+Square / Advance+Skirmish / Hold+Wall | Lv 10 | Lv 30 |
+|---|---|---|---|
+| Skeletons | 51.7 / 53.8 / 55.3 / 51.8 | 45.2 / 42.2 / 39.0 / 42.0 | 67.7 / 71.5 / 65.7 / 70.3 |
+| Werewolves | 54.8 / 54.3 / 54.0 / 54.2 | 29.3 / 29.7 / 28.0 / 31.0 | 66.5 / 59.0 / 59.3 / 62.5 |
+| Minotaurs | 61.7 / 59.2 / 56.0 / 61.0 | 63.0 / 67.3 / 60.3 / 65.0 | 87.7 / 86.7 / 84.2 / 85.2 |
+| Gorgons | 68.3 / 56.0 / 69.0 / 50.8 | 42.7 / 33.2 / 44.5 / 31.0 | 59.0 / 55.7 / 56.5 / 50.3 |
+| Satyrs | 73.8 / 70.0 / 72.0 / 73.7 | 55.7 / 52.5 / 50.2 / 51.8 | 79.0 / 78.5 / 76.8 / 78.3 |
+| Mixed | 65.2 / 64.2 / 63.2 / 65.5 | 48.8 / 52.2 / 46.3 / 50.7 | 69.3 / 73.2 / 69.7 / 71.0 |
+| Orcs | 60.7 / 61.7 / 57.7 / 58.0 | 45.5 / 45.3 / 40.5 / 42.0 | 71.0 / 70.7 / 65.0 / 68.7 |
+| Demons | 44.7 / 44.0 / 41.5 / 43.8 | 25.3 / 25.5 / 21.7 / 24.5 | 47.7 / 48.5 / 46.8 / 47.7 |
+| Ogres | 75.2 / 73.2 / 68.0 / 72.3 | 61.5 / 62.0 / 54.8 / 60.2 | 74.5 / 71.0 / 67.2 / 70.7 |
+
+(Charge, at level 10, 200 fights a band, was never the best.) What holds at every level: **holding the line against a band that shoots
+loses** (the gorgons, 7 to 17 points); **Advance together placed with care is the best or within the noise of the best everywhere**; no
+formation beats a careful placing by more than 2 points at every level (the square against the mixed band gains 3 to 4 at levels 10 and
+30, loses 1 at level 1). The formations' bonuses, as designed, are too small to make counters; the design asked +3 to +5 for the right
+shape, and they do not reach it. That is a question for the owner (below).
+
+### What shipped
+
+- **The advice** (`src/sim/tacticAdvice.ts`): only what the fights bear out. The sheet shows a line against this wave's foes ("Advance
+  together...", or "They shoot: advance together and close on them." when two in five or more shoot), and a warning when the pick is Hold
+  against a band that shoots. Auto place lays the party out as before (`autoFormation`); the tools and the pace records keep the default,
+  Advance together placed with care, which is what a player who never opens the sheet plays.
+- The sheet's lines for Charge and Hold now say what was measured ("the quickest reach the foe first, often alone"; "Archers will shoot a
+  line that waits").
+- Test: `test/tactic-advice.test.ts` (new): Advance against every band, the warning only for Hold against a band that shoots.
+- `run.mjs --advice` plays the advice.
+
+### The final re-measure (main at 0.343.0 merged)
+
+- **Parity** (12,000 fights): level 1, stage 5: average 58.5%, spread 10.7, none beyond 6; level 30, stage 92: 62.2%, 10.4, none beyond
+  6; level 10, stage 27: 44.2%, 14.4, the **Kitsune +8.8 and the Werewolf +7.3** beyond 6 (watch items; main's later changes moved them a
+  little; their skill 2 is a utility skill whose `tune` does nothing, so their lever is in the kit's own numbers).
+- **Pace**: sensibly placed random teams win at the old rates with Advance (batch 2's table); every mode's pace bar in the tests (the
+  armies' pace, the daily, the Calamity, the Last Stand, the deep tiers) passes.
+
+### Questions for the owner
+
+1. **The formations' bonuses are too small to matter** (no shape beats a careful placing by 2 points at every level). Raise them so the
+   right shape is worth +3 to +5 against its armies (a tuning pass of its own, with new counters measured), or keep them small, as a
+   flavour? Recommended: a tuning pass, in its own batch, if formations are to carry the "party building with real trade-offs" idea.
+2. **Charge is never the best pick** now that the foes answer Advance. Leave it as the old way to fight, or give it an edge (say, the
+   first blows of a charge land harder)? Recommended: give it an edge against bands that shoot, so it is the counter the design meant.
+3. **Level 10's Kitsune and Werewolf** sit 7 to 9 points over the roster there (no test holds level 10). Trim them in their own kits now?
+   Recommended: yes, by their Alter Self's and Shapechange's own numbers, measured at levels 10 and 30.
