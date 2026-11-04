@@ -78,6 +78,8 @@ import { WEAK } from '../src/sim/weakness';
 // 7f01a490, stand 49a206c8, calamity 6d82a760.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower` (calamity 9ccdc275, daily bb34c5b1, tower bac9f09c): a run started now finds runes, not pieces, and a won
+// wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
 // (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone, now c143562c: its damage spells grow
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (314e1578): its heroes start bare and wear the run's finds, and a

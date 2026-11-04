@@ -102,6 +102,8 @@ import { CAL_SCALE } from '../src/sim/calamity';
 // either proof, `identityHashes`.)
 // (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (f3dc7098): its heroes start bare and wear the run's finds, and a
 // find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower` (calamity e3944281, daily ae09024b, tower f4b9d2b2): a run started now finds runes, not pieces, and a won
+// wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
 const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
 function recordedStrengths<T>(fn: () => T): T {
   const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
@@ -130,7 +132,8 @@ test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and w
 
 test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
   // (STATS batch 4: the Calamity's greedy run now reaches a boss whose signatures move it, so `calamity` joins the scenarios with a boss)
-  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand', 'calamity'];
+  // (SEVEN-SLOT GEAR batch 4: with runes in place of finds the Calamity's greedy run no longer reaches such a boss, so it is back with the rest)
+  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
   const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
   assert.deepEqual(recordedStrengths(() => identityHashes(rest)), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
   const now = recordedStrengths(() => identityHashes(moved));

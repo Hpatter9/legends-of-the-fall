@@ -27,7 +27,8 @@ import { drawEvent, eventAfter, type EventCard } from './events';
 import { gearBoost, type Gear, type Slot } from './gear';
 import type { EquipSlot, EquipStats, Equipment } from './equipment';
 import { migrateRunWorn } from './gearMigrate';
-import { findGear, foundLine, SOURCE, stow, type FoundHome } from './runGear';
+import { newRunes, readRunes, type RuneState } from './runes';
+import { findGear, foundLine, SOURCE, stow, waveRune, type FoundHome } from './runGear';
 import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
 import { noteGold, type RunRecap } from './runRecap';
 import type { TowerState } from './tower';
@@ -169,6 +170,11 @@ export interface Run {
   worn?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** RUN-GEAR: the pack ids a boss dropped (an auto-replay run always brings these home). */
   bossFinds?: number[];
+  /** SEVEN-SLOT GEAR batch 4: a run started since runes finds runes, not pieces (`runes.ts`): the bag, what each hero kind wears, the next
+   *  id. Absent in a run from before, which finishes on its finds. */
+  runes?: RuneState;
+  /** The lasting pieces a rune run's bosses left as trophies, each coming home a quarter of the time (always on a first clear of a tier). */
+  trophies?: Equipment[];
   /** RUN-GEAR: the army index the finds' item levels follow when the run has no army of its own (the furthest cleared). */
   findAt?: number;
   /** RUN-GEAR: the finds have been brought home (`settleFinds`), and what came, for the result card's Found row. */
@@ -214,7 +220,7 @@ export type QuestMode = { kind: 'quest'; quest: string; cast: string[]; practice
 
 /** A new run drawing from `party` (the hero kinds its summons and starting heroes come from). */
 export function newRun(seed: number, party: readonly string[] = HEROES, castle: Castle = newCastle(), free = 2, gold = START_GOLD): Run {
-  const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle }, real: true };
+  const run: Run = { seed, gold: gold + bonusGold(castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...party], castle: { ...castle }, real: true, runes: newRunes() };
   // (an ordinary run gets) two grade-1 heroes, drawn from the same stream as every summon but free
   // (a second of a kind waits on the bench: one of each hero on the field, ONE-OF-EACH)
   for (let i = 0; i < free; i++) {
@@ -536,6 +542,8 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
     // (RUN-GEAR: in a real-gear run each is a real piece, drawn at the same moment from the same stream: `runGear.ts`)
+    // (SEVEN-SLOT GEAR batch 4: a rune run's won wave gives a rune of its own, from its side stream)
+    if (run.runes) prizes.push(waveRune(run));
     if (boss) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1, SOURCE.boss));
     prizes.forEach((g, i) => {
       stow(run, g, boss && i === prizes.length - 1 ? SOURCE.boss : SOURCE.curse);
@@ -622,8 +630,9 @@ export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = local
  * any relic gets one line on its next prep screen. A run already in the new catalogue is left as it is.
  */
 export function catalogueRun(r: Run): Run {
-  // (SEVEN-SLOT GEAR: the finds a run from before wears move to the new slots)
+  // (SEVEN-SLOT GEAR: the finds a run from before wears move to the new slots, and a rune run's runes are read safely)
   migrateRunWorn(r);
+  if (r.runes) r.runes = readRunes(r.runes) ?? newRunes();
   if (r.relicBook === RELIC_BOOK) return r;
   // (RELICS-3: a run already in the second catalogue is only quietly moved on; the line is for the first conversion, or a relic that changed)
   const first = r.relicBook === undefined;

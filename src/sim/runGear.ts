@@ -19,11 +19,12 @@
 //
 // Pure rules: no Pixi, no DOM; every roll comes from a stream of the run's seed.
 
-import { MAX_TIER, SLOTS, makeGear, dropGear, gearText, pieceGear, type Gear, type Slot } from './gear';
+import { MAX_TIER, SLOTS, makeGear, dropGear, gearText, pieceGear, runeGear, type Gear, type Slot } from './gear';
 import { heroOf, type Owned, type Run } from './run';
 import {
   ABILITY_WORTH,
   EQUIP_BASES,
+  EQUIP_BASE_IDS,
   EQUIP_LIST,
   EQUIP_SLOTS,
   QUIET_SLOTS,
@@ -50,6 +51,7 @@ import {
 import type { Meta } from './meta';
 import { OLD_BASES } from './equipBases';
 import { claimLegends } from './legends';
+import { BREAK_GOLD, WAVE_SOURCE, addRune, allRunes, autoRunes, rollRune, runeName, runeStats, takeOffRune, whereRune, type Rune } from './runes';
 import { mixSeed, Rng } from './rng';
 import { armyIndex } from './armies';
 import { AUTO_WEAR, wearState, type Fought, type WearNote } from './wear';
@@ -130,22 +132,47 @@ export function fieldPiece(run: Run, id: number, slot: Slot, step: number, stage
 export function findGear(run: Run, rng: Rng, id: number, stage: number, bonusTier = 0, source: number = SOURCE.chest): Gear {
   if (!isReal(run)) return dropGear(rng, id, stage, bonusTier);
   const slot = SLOTS[rng.int(0, SLOTS.length - 1)];
+  // (SEVEN-SLOT GEAR batch 4: a rune run finds a rune, level I, II for a better source, from its side stream; the slot is still drawn)
+  if (run.runes) return runeGear(rollRune(run.runes, run.seed, stage, source, id, 1 + Math.min(1, bonusTier)), slot);
   return fieldPiece(run, id, slot, 1 + Math.floor((stage - 1) / 8) + bonusTier, stage, source);
 }
 
 /** A find of a given slot and tier (in place of `makeGear` for a fresh piece): nothing is drawn from the source's stream. */
 export function findSlotGear(run: Run, id: number, slot: Slot, tier: number, stage: number, source: number): Gear {
+  if (run.runes) return runeGear(rollRune(run.runes, run.seed, stage, source, id, Math.min(2, tier)), slot);
   return isReal(run) ? fieldPiece(run, id, slot, tier, stage, source) : makeGear(id, slot, tier);
 }
 
-/** What a piece sells for in run gold: a simple piece by its tier (the old merchant's 28 a tier), a real one by its grade; plus 2 a stage. */
-export const findPrice = (g: Gear, stage: number, perTier = 28): number => (g.piece ? FIELD_PRICE[g.piece.rarity] : perTier * g.tier) + 2 * stage;
+/** A rune run's won wave: one rune of level I, from its own side stream (`WAVE_SOURCE`). */
+export function waveRune(run: Run): Gear {
+  return runeGear(rollRune(run.runes!, run.seed, run.stage, WAVE_SOURCE, 0, 1), 'charm');
+}
+
+/** A rune's price in run gold: level I 25, II 60, and 60 more a level past it. */
+export const RUNE_PRICE: readonly number[] = [0, 25, 60, 120, 180, 240];
+/** What a piece sells for in run gold: a simple piece by its tier (the old merchant's 28 a tier), a real one by its grade, a rune by its
+ *  level; plus 2 a stage. */
+export const findPrice = (g: Gear, stage: number, perTier = 28): number => (g.rune ? RUNE_PRICE[g.rune.lv] : g.piece ? FIELD_PRICE[g.piece.rarity] : perTier * g.tier) + 2 * stage;
 
 /** The line a find gets on the result screen ("Frostbrand (weapon, Rare Lv 7: +6% attack)"). */
 export const foundLine = (g: Gear): string => `${g.name} (${g.slot}, ${gearText(g)})`;
 
 /** Put a find in the run's pack: a real piece in `run.pack`, simple gear in `run.items`. */
 export function stow(run: Run, g: Gear, source?: number): void {
+  if (g.rune && run.runes) {
+    // (a full bag merges the new rune with a twin, or breaks the lowest for a little gold)
+    const r = addRune(run.runes, g.rune);
+    if (r.broke) {
+      run.gold += BREAK_GOLD;
+      (run.found ??= []).push(`${runeName(r.broke)} broken for ${BREAK_GOLD} gold (the bag was full)`);
+    }
+    if (source === SOURCE.boss) {
+      const t = trophyPiece(run, g.id);
+      (run.trophies ??= []).push(t);
+      (run.bossFinds ??= []).push(t.id);
+    }
+    return;
+  }
   if (g.piece) {
     (run.pack ??= []).push({ ...g.piece, found: runTag(run) });
     if (source === SOURCE.boss) (run.bossFinds ??= []).push(g.piece.id);
@@ -171,7 +198,7 @@ export function spareFinds(run: Run, slot?: EquipSlot): Equipment[] {
   return (run.pack ?? []).filter((x) => finderOf(run, x.id) === undefined && (!slot || EQUIP_BASES[x.base]?.slot === slot));
 }
 /** Every found piece of the run as run gear (the road's smiths and the mystery forges work on these). */
-export const findsAsGear = (run: Run): Gear[] => (run.pack ?? []).map(pieceGear);
+export const findsAsGear = (run: Run): Gear[] => (run.runes ? allRunes(run.runes).map((r) => runeGear(r, 'charm')) : (run.pack ?? []).map(pieceGear));
 
 /** Put a found piece on a kind for the run (a kind wearing it already gives it up; the piece in that slot goes back to the pack). */
 export function wearFound(run: Run, kind: string, id: number): boolean {
@@ -194,6 +221,13 @@ export function takeOffFound(run: Run, kind: string, slot: EquipSlot): boolean {
 
 /** Raise a found piece of this run by item levels (at most 20), or by a grade (`grade`, at most Epic). False when it is not this run's. */
 export function upgradeFound(run: Run, id: number, levels: number, grade = false): boolean {
+  // (a rune: a level up, the rune-carver's work)
+  const r = run.runes && whereRune(run.runes, id)?.rune;
+  if (r) {
+    if (r.lv >= 5) return false;
+    r.lv = (r.lv + 1) as Rune['lv'];
+    return true;
+  }
   const it = packPiece(run, id);
   if (!it || it.found !== runTag(run)) return false;
   if (grade && it.rarity < 3) it.rarity = (it.rarity + 1) as Rarity;
@@ -202,6 +236,12 @@ export function upgradeFound(run: Run, id: number, levels: number, grade = false
 }
 /** Lose a found piece (a wager lost, a piece melted). */
 export function loseFound(run: Run, id: number): boolean {
+  if (run.runes && whereRune(run.runes, id)) {
+    const at = whereRune(run.runes, id)!;
+    if (at.kind) takeOffRune(run.runes, at.kind, id);
+    run.runes.bag = run.runes.bag.filter((x) => x.id !== id);
+    return true;
+  }
   const i = run.pack?.findIndex((x) => x.id === id) ?? -1;
   if (i < 0) return false;
   const kind = finderOf(run, id);
@@ -210,9 +250,9 @@ export function loseFound(run: Run, id: number): boolean {
   return true;
 }
 /** Whether a piece of run gear can be raised (simple gear below the top tier; a found piece below level 20). */
-export const canTemper = (g: Gear): boolean => (g.piece ? g.piece.level < MAX_ITEM_LEVEL : g.tier < MAX_TIER);
+export const canTemper = (g: Gear): boolean => (g.rune ? g.rune.lv < 5 && g.rune.kind !== 'keystone' : g.piece ? g.piece.level < MAX_ITEM_LEVEL : g.tier < MAX_TIER);
 /** What a temper makes of a piece (a preview): a simple piece a tier up, a found piece `UPGRADE_LEVELS` higher. */
-export const tempered = (g: Gear): Gear => (g.piece ? pieceGear({ ...g.piece, level: Math.min(MAX_ITEM_LEVEL, g.piece.level + UPGRADE_LEVELS) }) : makeGear(g.id, g.slot, g.tier + 1));
+export const tempered = (g: Gear): Gear => (g.rune ? runeGear({ ...g.rune, lv: Math.min(5, g.rune.lv + 1) as Rune['lv'] }, g.slot) : g.piece ? pieceGear({ ...g.piece, level: Math.min(MAX_ITEM_LEVEL, g.piece.level + UPGRADE_LEVELS) }) : makeGear(g.id, g.slot, g.tier + 1));
 
 // ---- strength in a fight --------------------------------------------------------------------------------------------------
 
@@ -253,6 +293,8 @@ function freshOf(run: Run, kind: string): EquipStats | undefined {
 /** A kind's stats for a fight of a real-gear run that brings the lasting kit: `base` (the page's `heroStats`, the bot's `equipStats`) read
  *  over the kit with its found pieces in their slots, and their fresh share on top, capped. A run on the old rules gets `base` as it is. */
 export function runKitStats(meta: Meta, run: Run, kind: string, base: (m: Meta, kind: string) => EquipStats | undefined): EquipStats | undefined {
+  // (SEVEN-SLOT GEAR batch 4: a rune run's heroes fight in their lasting kit with their runes on top)
+  if (run.runes && !run.local) return withRunes(base(meta, kind), run, kind);
   if (!isReal(run) || run.local) return base(meta, kind);
   const total = base(asWorn(meta, run, kind), kind);
   const fresh = freshOf(run, kind);
@@ -262,6 +304,7 @@ export function runKitStats(meta: Meta, run: Run, kind: string, base: (m: Meta, 
 
 /** A kind's stats in a run whose heroes start bare: only the found pieces it wears (and their sets), fresh. Undefined when it wears none. */
 export function bareKitStats(run: Run, kind: string): EquipStats | undefined {
+  if (run.runes) return withRunes(undefined, run, kind);
   if (!isReal(run)) return undefined;
   const worn = EQUIP_SLOTS.map((slot) => foundIn(run, kind, slot)).filter((x): x is Equipment => !!x && wearState(x) !== 'broken');
   if (!worn.length) return undefined;
@@ -270,6 +313,39 @@ export function bareKitStats(run: Run, kind: string): EquipStats | undefined {
   addSetBonus(total, worn.map((x) => x.base));
   const fresh = freshOf(run, kind);
   return capStats(fresh ? addStats(total, fresh) : total);
+}
+
+// ---- runes and trophies (SEVEN-SLOT GEAR batch 4) -------------------------------------------------------------------------------
+
+/** A kind's stats with its worn runes added on top of `kit` (its lasting kit, or nothing in a run whose heroes start bare), capped. */
+function withRunes(kit: EquipStats | undefined, run: Run, kind: string): EquipStats | undefined {
+  const r = runeStats(run.runes?.worn[kind]);
+  if (!r) return kit;
+  if (!kit) return capStats(r);
+  const total = addStats({ ...kit, abilities: [...kit.abilities] }, { ...r, abilities: r.abilities.filter((a) => !kit.abilities.some((x) => x.id === a.id)) });
+  if (r.tal) total.tal = { ...kit.tal, pow: (kit.tal?.pow ?? 0) + r.tal.pow };
+  return capStats(total);
+}
+
+/** The side stream of a boss's trophy: `mixSeed(run.seed, TROPHY_SALT, id)` (its base, grade and level; and whether it comes home). */
+export const TROPHY_SALT = 0x7a0f1;
+/** A trophy comes home this share of the time (always on an army's first clear of a tier). */
+export const TROPHY_SHARE = 0.25;
+/** A boss's trophy: a lasting piece of any base of the catalogue, its grade by the run's depth and difficulty, at the finds' item level. */
+export function trophyPiece(run: Run, id: number): Equipment {
+  const rng = new Rng(mixSeed(run.seed, TROPHY_SALT, id));
+  const base = rng.pick(EQUIP_BASE_IDS);
+  const rarity = fieldGrade(rng, 2 + Math.floor((run.stage - 1) / 8), tierColumn(run));
+  return { id: 100000 + id, base, rarity, level: fieldLevel(run), found: runTag(run) };
+}
+/** The trophies that come home: each a quarter of the time, every one on an army's first clear of its tier. */
+function keptTrophies(meta: Meta, run: Run): Equipment[] {
+  const mode = run.mode?.kind === 'army' ? run.mode : undefined;
+  const rec = mode ? meta.armies?.[mode.army] : undefined;
+  const tier = mode?.tier ?? 0;
+  const clears = !rec ? 0 : tier === 0 ? rec.clears : rec.hard?.[String(tier)]?.clears ?? 0;
+  const first = !!run.cleared && !!mode && clears <= 1;
+  return (run.trophies ?? []).filter((t) => first || new Rng(mixSeed(run.seed, TROPHY_SALT, t.id, 1)).chance(TROPHY_SHARE));
 }
 
 // ---- Equip best -----------------------------------------------------------------------------------------------------------
@@ -393,7 +469,8 @@ export function settleFinds(meta: Meta, run: Run, auto = false): FoundHome | nul
   run.findsHome = true;
   const out: FoundHome = { pieces: [], worn: {}, cart: 0, sold: 0, soldFor: 0, missed: 0 };
   const real = isReal(run);
-  const pieces = real ? [...(run.pack ?? [])] : carriedHome(run);
+  // (SEVEN-SLOT GEAR batch 4: a rune run's runes are gone; only its bosses' trophies may come home)
+  const pieces = run.runes ? keptTrophies(meta, run) : real ? [...(run.pack ?? [])] : carriedHome(run);
   const wornBy = new Map<number, string>();
   if (real && !run.local) for (const [kind, slots] of Object.entries(run.worn ?? {})) for (const id of Object.values(slots)) wornBy.set(id!, kind);
   const keep = pieces.filter((p) => {
@@ -433,6 +510,8 @@ export function equipBestRun(run: Run, heroIds: readonly number[], meta?: Meta):
     .map((id) => heroOf(run, id))
     .filter((h): h is Owned => !!h)
     .sort((a, b) => b.grade - a.grade || run.roster.indexOf(a) - run.roster.indexOf(b));
+  // (SEVEN-SLOT GEAR batch 4: a rune run's Equip best is Auto runes)
+  if (run.runes && isReal(run)) return autoRunes(run.runes, heroes.filter((h) => !h.guest).map((h) => h.kind));
   if (isReal(run)) return equipBestReal(run, meta, heroes.filter((h) => !h.guest).map((h) => h.kind));
   let changed = 0;
   const worth = (g: Gear) => g.hp + g.atk;

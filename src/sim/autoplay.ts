@@ -3,6 +3,7 @@
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
 // same run and the same board always give the same formation.
 
+import { autoRunes } from './runes';
 import { CLASS_OF } from './starter';
 import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
@@ -96,7 +97,9 @@ export function dressSquad(run: Run, meta?: Meta): void {
   if (isReal(run)) {
     const squad = run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !h.guest);
     if (meta) squad.sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
-    equipBestReal(run, meta, squad.map((h) => h.kind));
+    // (SEVEN-SLOT GEAR batch 4: a rune run's Auto runes, before every wave)
+    if (run.runes) autoRunes(run.runes, squad.map((h) => h.kind));
+    else equipBestReal(run, meta, squad.map((h) => h.kind));
     return;
   }
   for (let again = true; again; ) {

@@ -112,3 +112,39 @@ design's eight batches, each with its tests. This note says what each batch buil
   no-loop rules: patching then selling never beats selling, an enchanted piece sells for no more); `wear.test.ts` and `stall.test.ts`
   brought to the new prices.
 - **Screenshots:** `docs/samples/gear-build-upkeep-card-*.png`, `gear-build-stall-repair-*.png` and `gear-build-stall-enchant-*.png`.
+
+## Batch 4: runes, the rules
+
+- **`src/sim/runes.ts`**: the eight kinds (Ember +4% attack, Bulwark +1 defence and +5% hp, Arcana +5% skill power, Gale +4% attack and
+  move speed, Hawk crit, Wellspring mending, Warding resist, and the Keystone), levels I to V at x1, x2, x3.5, x5.5, x8 (`RUNE_LEVEL`), times
+  one knob, `RUNE_SCALE` (0.5 for now; see below). A level V rune adds a flourish, a signature ability the gear already runs.
+- **Where the words changed:** Hawk is crit chance alone (+4.5% at I: the fight has no gear-side crit damage to raise); Wellspring is
+  mending alone (0.3% hp a second); Warding is resist alone; Arcana's skill power is the talents' `pow` (it lifts the skills' blows and
+  heals), so no new stat was needed; the level V flourishes are the nearest signature abilities (Ember V burns, Gale V a haste at the start,
+  Bulwark V a ward at the start, Hawk V a crit feeds the skill...).
+- **Getting runes:** every source that handed out a run's gear hands out a rune instead (`findGear`, `findSlotGear`): it still draws the
+  slot from its own stream, so events, relics and foes play out the same, and the rune's kind from `mixSeed(run.seed, RUNE_SALT, stage,
+  source, n)`, one in fifteen a Keystone. A better source (a boss, an elite, a cursed path) gives a level II. Every won wave adds a level I of
+  its own (`waveRune`, its own source), so a boss wave gives two, one of them II. The merchant prices them 25 (I), 60 (II), and 60 a level
+  past that, plus 2 a stage. The road's smiths and the mystery forges (the rune-carver) raise a rune a level (`upgradeFound`); a lost wager
+  or a melt takes one (`loseFound`). The first clear's Keystone II is left for later.
+- **Wearing, the bag, merging:** three sockets a hero kind (`RuneState.worn`, so merges and partings keep them); a Keystone is never worn.
+  The bag holds eight: a ninth merges at once with a twin there, or the lowest is broken for 5 gold (the wave card says so). Two of a kind
+  and level, or one and a Keystone of that level, make the next level where the one dropped onto was; V is the top. `mergeAll` merges the
+  highest first, Keystones last, keeping the result on the hero that wore one.
+- **Auto** (`autoRunes`): merges everything, then hands the runes out best first to the heroes named (the strongest first), three each, to
+  the hero whose role wants it most (`RUNE_ROLE`: front-liners Bulwark, Ember, Warding; shooters Hawk, Gale, Ember; casters Arcana, Hawk;
+  healers Arcana, Wellspring); a rune stays put unless a place rates it a tenth higher. The bot and auto-replay run it before every wave
+  (`dressSquad`), and a rune run's Equip best is it.
+- **In the fight:** a kind's worn runes add on top of its lasting kit (`runKitStats`), or alone in a run whose heroes start bare
+  (`bareKitStats`), capped as the kit is.
+- **The run's end:** runes are gone. A boss leaves a trophy (`trophyPiece`: any base of the catalogue, its own stream), which comes home a
+  quarter of the time, every one on an army's first clear of its tier (`settleFinds`, read after the clear is recorded). Nothing else comes
+  home. A run saved before runes (no `run.runes`) finishes on its finds as before.
+- **`RUNE_SCALE` 0.5:** at 1 a fresh save cleared the daily's measured window 89% of the time (the test's bar is 50 to 85%); 0.5 reads
+  80% and 0.25 71%, against the joint rebalance's 79%. Batch 6's wounds make the late waves harder, and batch 8 re-measures every mode.
+- **Fixtures:** `calamity`, `daily` and `tower` re-recorded in `ailments-identical` and `spells-identity` (the run modes, as the design
+  said); the Calamity's greedy run no longer reaches a boss with signature attacks, so it left that test's moved list.
+- **Tests:** `test/runes.test.ts`; the RUN-GEAR tests now run on a run saved before runes (`pre` in `test/run-gear.test.ts`), the events,
+  mystery, Calamity and recap tests count runes (`foundOf` in `test/helpers.ts`), and the wave's gains list a run's new runes
+  (`waveGains.ts`).
