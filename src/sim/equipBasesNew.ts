@@ -1,0 +1,171 @@
+// SEVEN-SLOT GEAR's new bases (docs/notes/gear-runes-design.md, section 1): 129 item types beside the 60 of before, so that every slot
+// holds 30 with the named legends (`legends.ts`). In each slot: the pieces of the gear sets (`gearSets.ts` says which set each is in) and
+// the ordinary bases, which cover every calling and play style so a hero with no set still has real choices. Each has its own main-stat
+// profile (written at a slot's lean; `SLOT_SCALE` in `equipment.ts` sizes the quiet slots), a signature ability from Epic up (run by
+// `equipFx.ts`, from the kinds it already knows) and a Mythic name. Their paintings are still to come: each shows its slot's outline and
+// its name until then (`docs/notes/gear-art-todo.md`). Pure data: no Pixi, no DOM.
+
+import type { Ability, Calling, EquipBase, EquipSlot, Kind, Main, Trig } from './equipBases';
+
+type Score = NonNullable<EquipBase['score']>;
+const ab = (id: string, name: string, trig: Trig, kind: Kind, o: Partial<Ability> = {}): Ability => ({ id, name, trig, kind, ...o });
+const b = (id: string, name: string, mythic: string, slot: EquipSlot, calling: Calling | undefined, main: Main, ability: Ability, score: Score): EquipBase => ({
+  id,
+  name,
+  mythic,
+  slot,
+  icon: id,
+  ...(calling ? { calling } : {}),
+  main,
+  ability,
+  score,
+});
+const M = 'melee' as const;
+const S = 'shooter' as const;
+const C = 'caster' as const;
+const _ = undefined;
+
+export const NEW_BASES: readonly EquipBase[] = [
+  // ---- the right hand: two set pieces, six ordinary ----
+  b('tideTrident', "Tidecaller's Trident", 'Trident of the Deep', 'main', M, { atk: 0.08, range: 1 }, ab('undertowThrust', 'Undertow Thrust', 'hit', 'slow', { p: 0.3, w: 1.5 }), 'str'),
+  b('peakAxe', "Peakwarden's Ice Axe", 'Summit Cleaver', 'main', M, { atk: 0.09, hp: 0.03 }, ab('avalanche', 'Avalanche', 'nth', 'stun', { n: 5, w: 0.8 }), 'str'),
+  b('warHammer', 'War Hammer', 'Hammer of the Deep Forge', 'main', M, { atk: 0.1, def: 0.4 }, ab('crushingBlow', 'Crushing Blow', 'nth', 'splash', { n: 5, v: 0.7 }), 'str'),
+  b('falchion', 'Falchion', 'Crescent of Dusk', 'main', M, { atk: 0.08, atkSpeed: 0.04 }, ab('quickCut', 'Quick Cut', 'hit', 'bleed', { p: 0.2, v: 0.12 }), 'dex'),
+  b('handCannon', 'Hand Cannon', 'Thunder of Kings', 'main', S, { atk: 0.12, range: 1 }, ab('powderBlast', 'Powder Blast', 'nth', 'splash', { n: 4, v: 0.6 }), 'dex'),
+  b('shortbow', 'Shortbow', "Swallow's Flight", 'main', S, { atk: 0.05, atkSpeed: 0.06, range: 1 }, ab('quickNock', 'Quick Nock', 'nth', 'haste', { n: 4, w: 1.5 }), 'dex'),
+  b('boneWand', 'Bone Wand', 'Wand of the Ossuary', 'main', C, { atk: 0.06, charge: 0.08 }, ab('witherHex', 'Wither Hex', 'hit', 'curse', { p: 0.2, v: 0.12 }), 'int'),
+  b('oakStaff', 'Oak Staff', 'Staff of the First Grove', 'main', C, { atk: 0.05, charge: 0.06, regen: 0.002 }, ab('growthPulse', 'Growth Pulse', 'tick', 'healAlly', { n: 4, v: 0.06 }), 'wis'),
+
+  // ---- the left hand: seven set pieces, fourteen ordinary ----
+  b('frostMirror', 'Winter Court Mirror', 'Mirror of the Long Night', 'off', C, { charge: 0.08, resist: 0.04 }, ab('hoarfrost', 'Hoarfrost', 'struck', 'slow', { p: 0.25, w: 2 }), 'int'),
+  b('wyrmShield', 'Wyrmscale Shield', 'Shield of the Elder Wyrm', 'off', M, { def: 0.8, hp: 0.04 }, ab('scaleFlare', 'Scale Flare', 'struck', 'burn', { p: 0.2, v: 0.15 }), 'con'),
+  b('huntersQuiver', "Hunter's Quiver", 'Quiver of Endless Fletching', 'off', S, { atkSpeed: 0.05, crit: 0.02 }, ab('fletching', 'Fletching', 'nth', 'pierce', { n: 4, v: 0.6 }), 'dex'),
+  b('emberCenser', 'Ember Censer', 'Censer of the Pyre', 'off', C, { atk: 0.05, resist: 0.04 }, ab('censerSmoke', 'Censer Smoke', 'struck', 'burn', { p: 0.25, v: 0.15 }), 'cha'),
+  b('nightDirk', 'Night Dirk', 'Whisper of Knives', 'off', M, { atkSpeed: 0.04, dodge: 0.03 }, ab('backstab', 'Backstab', 'crit', 'bleed', { v: 0.15 }), 'dex'),
+  b('graveTotem', 'Grave Totem', 'Totem of the Barrow-King', 'off', _, { resist: 0.05, atk: 0.04 }, ab('deathKnell', 'Death Knell', 'kill', 'mana', { v: 0.4 }), 'wis'),
+  b('shellBuckler', 'Tideshell Buckler', 'Buckler of the Drowned', 'off', _, { def: 0.6, hp: 0.04 }, ab('riptide', 'Riptide', 'struck', 'slow', { p: 0.2, w: 2 }), 'con'),
+  b('buckler', 'Buckler', 'Buckler of the Last Guard', 'off', M, { def: 0.5, dodge: 0.03 }, ab('parryBlow', 'Parry', 'struck', 'guard', { n: 4, w: 1 }), 'dex'),
+  b('kiteShield', 'Kite Shield', "Swan Knight's Shield", 'off', M, { def: 0.8, hp: 0.03 }, ab('shieldWall', 'Shield Wall', 'struck', 'shield', { p: 0.15, v: 0.05, w: 3 }), 'con'),
+  b('towerShield', 'Tower Shield', 'Bulwark of Ages', 'off', M, { def: 1.1, hp: 0.04 }, ab('standFast', 'Stand Fast', 'low', 'guard', { w: 4 }), 'con'),
+  b('spikedTarge', 'Spiked Targe', 'Thornwall Targe', 'off', M, { def: 0.6, atk: 0.03 }, ab('targeSpikes', 'Targe Spikes', 'struck', 'reflect', { v: 0.2 }), 'str'),
+  b('quiverBarbs', 'Quiver of Barbs', 'Quiver of Thorns', 'off', S, { atk: 0.04, crit: 0.03 }, ab('barbedShot', 'Barbed Shot', 'hit', 'bleed', { p: 0.25, v: 0.12 }), 'dex'),
+  b('wardenLantern', 'Lantern of Wardens', 'Lantern of the Last Watch', 'off', _, { resist: 0.06, regen: 0.002 }, ab('lanternGlow', 'Lantern Glow', 'tick', 'aura', { n: 2, v: 0.008 }), 'wis'),
+  b('prayerBeads', 'Prayer Beads', 'Beads of the Hundred Prayers', 'off', C, { charge: 0.06, regen: 0.003 }, ab('prayer', 'Prayer', 'tick', 'healAlly', { n: 4, v: 0.06 }), 'wis'),
+  b('emberTome', 'Tome of Embers', 'Codex of the Burning Hand', 'off', C, { atk: 0.05, charge: 0.05 }, ab('fireWord', 'Word of Fire', 'nth', 'burn', { n: 3, v: 0.2 }), 'int'),
+  b('parryingDagger', 'Parrying Dagger', 'Riposte', 'off', M, { atkSpeed: 0.04, dodge: 0.02 }, ab('riposte', 'Riposte', 'struck', 'counter', { p: 0.2, v: 0.6 }), 'dex'),
+  b('boneFetish', 'Bone Fetish', 'Fetish of the Hollow God', 'off', C, { atk: 0.04, resist: 0.03 }, ab('fetishCurse', 'Fetish Curse', 'hit', 'curse', { p: 0.2, v: 0.12 }), 'wis'),
+  b('crystalFocus', 'Crystal Focus', 'Prism of the Magi', 'off', C, { charge: 0.12 }, ab('focusCharge', 'Focus', 'start', 'mana', { v: 2 }), 'int'),
+  b('signalHorn', 'Signal Horn', 'Horn of the Keep', 'off', _, { atk: 0.04, moveSpeed: 0.04 }, ab('hornCall', 'Horn Call', 'start', 'rally', { w: 6 }), 'cha'),
+  b('handMirror', 'Hand Mirror', 'Mirror of Returns', 'off', _, { resist: 0.05, dodge: 0.02 }, ab('mirrorFlash', 'Mirror Flash', 'struck', 'reflect', { p: 0.25, v: 0.3 }), 'cha'),
+  b('bladedFan', 'Bladed Fan', 'Fan of the Crane Court', 'off', _, { atkSpeed: 0.04, crit: 0.03 }, ab('fanSweep', 'Fan Sweep', 'hit', 'splash', { p: 0.2, v: 0.3 }), 'dex'),
+
+  // ---- the torso: seven ordinary (its twelve set pieces are all from before) ----
+  b('brigandine', 'Brigandine', 'Brigandine of the Free Company', 'torso', _, { hp: 0.08, def: 0.6, atk: 0.02 }, ab('rivetGuard', 'Rivet Guard', 'struck', 'shield', { p: 0.15, v: 0.05, w: 3 }), 'con'),
+  b('gambeson', 'Padded Gambeson', 'Quilt of the Old Guard', 'torso', _, { hp: 0.09, resist: 0.03 }, ab('padding', 'Padding', 'struck', 'guard', { n: 6, w: 1.5 }), 'con'),
+  b('wandererCoat', "Wanderer's Coat", 'Coat of the Endless Road', 'torso', _, { hp: 0.05, moveSpeed: 0.05, dodge: 0.02 }, ab('roadWise', 'Road-Wise', 'start', 'haste', { w: 3 }), 'dex'),
+  b('wyvernJerkin', 'Wyvernhide Jerkin', "Wyvernlord's Hide", 'torso', _, { hp: 0.07, resist: 0.05, dodge: 0.02 }, ab('wyvernSting', 'Wyvern Sting', 'struck', 'slow', { p: 0.2, w: 1.5 }), 'dex'),
+  b('inquisitorRobe', "Inquisitor's Robe", 'Robe of the High Inquest', 'torso', C, { hp: 0.05, charge: 0.07, resist: 0.04 }, ab('purge', 'Purge', 'low', 'cleanse', { v: 0.15 }), 'wis'),
+  b('coatOfPlates', 'Coat of Plates', 'Plates of the Iron Duke', 'torso', M, { hp: 0.1, def: 0.9 }, ab('ironHold', 'Iron Hold', 'low', 'shield', { v: 0.25, w: 6 }), 'con'),
+  b('battleKimono', 'Battle Kimono', 'Kimono of the Falling Petal', 'torso', M, { hp: 0.05, atk: 0.04, atkSpeed: 0.03 }, ab('petalStep', 'Petal Step', 'kill', 'haste', { w: 2 }), 'dex'),
+
+  // ---- the head: eleven set pieces, fourteen ordinary ----
+  b('frostCirclet', 'Circlet of the Winter Court', 'Crown of Rime', 'head', C, { charge: 0.08, resist: 0.04 }, ab('rimeThought', 'Rime Thought', 'start', 'mana', { v: 2 }), 'int'),
+  b('stormHood', "Stormcaller's Hood", 'Cowl of the Tempest', 'head', C, { charge: 0.08, atk: 0.03 }, ab('staticCrown', 'Static Crown', 'nth', 'chain', { n: 5, v: 0.5 }), 'int'),
+  b('vanguardHelm', 'Vanguard Helm', 'Helm of the Unbroken Line', 'head', M, { hp: 0.05, def: 0.6 }, ab('warHelm', 'War Helm', 'struck', 'taunt', { p: 0.15, w: 2 }), 'con'),
+  b('radiantHalo', 'Radiant Circlet', 'Halo of the Dawn', 'head', _, { regen: 0.003, hp: 0.04 }, ab('dawnLight', 'Dawnlight', 'tick', 'healAlly', { n: 5, v: 0.05 }), 'wis'),
+  b('wyrmHelm', 'Wyrmcrest Helm', 'Crest of the Elder Wyrm', 'head', _, { hp: 0.05, resist: 0.05 }, ab('wyrmGlare', 'Wyrm Glare', 'struck', 'burn', { p: 0.15, v: 0.15 }), 'con'),
+  b('peakHood', "Peakwarden's Hood", 'Hood of the High Pass', 'head', _, { hp: 0.04, dodge: 0.03 }, ab('thinAir', 'Thin Air', 'start', 'haste', { w: 3 }), 'wis'),
+  b('tideCrown', 'Coral Crown', 'Crown of the Tide-King', 'head', _, { regen: 0.003, resist: 0.04 }, ab('seaBreath', 'Sea Breath', 'tick', 'regen', { n: 2, v: 0.008 }), 'wis'),
+  b('windCap', "Windrunner's Cap", 'Cap of the Gale', 'head', _, { moveSpeed: 0.05, dodge: 0.02 }, ab('tailgust', 'Tailgust', 'start', 'haste', { w: 4 }), 'dex'),
+  b('ashMitre', 'Ashen Mitre', 'Mitre of the Burnt Library', 'head', C, { charge: 0.1, resist: 0.03 }, ab('ashThought', 'Ash Thought', 'tick', 'charge', { n: 2, v: 3 }), 'int'),
+  b('nightCowl', 'Nightblade Cowl', 'Cowl of No Face', 'head', _, { dodge: 0.04, crit: 0.02 }, ab('fadeOut', 'Fade Out', 'low', 'stealth', { w: 2 }), 'dex'),
+  b('shogunKabuto', "Shogun's Kabuto", 'Kabuto of the Thousand Duels', 'head', M, { hp: 0.04, atk: 0.04 }, ab('kabutoRoar', 'Kabuto Roar', 'start', 'rally', { w: 5 }), 'str'),
+  b('kettleHelm', 'Iron Kettle Helm', 'Helm of the Steadfast', 'head', _, { hp: 0.05, def: 0.4 }, ab('dentedGuard', 'Dented Guard', 'struck', 'guard', { n: 8, w: 1.5 }), 'con'),
+  b('rangerHood', "Ranger's Hood", 'Hood of the Green Watch', 'head', S, { crit: 0.03, dodge: 0.02 }, ab('keenEye', 'Keen Eye', 'crit', 'bleed', { v: 0.12 }), 'dex'),
+  b('sallet', 'Sallet of the Watch', 'Sallet of the Night Watch', 'head', M, { def: 0.5, hp: 0.03 }, ab('watchful', 'Watchful', 'start', 'shield', { v: 0.08, w: 10 }), 'con'),
+  b('oniMask', 'Oni Mask', 'Face of the Red Oni', 'head', M, { atk: 0.05, crit: 0.02 }, ab('oniDread', 'Oni Dread', 'crit', 'slow', { w: 1.5 }), 'cha'),
+  b('plagueBeak', "Plague Doctor's Beak", 'Beak of the Black Year', 'head', _, { resist: 0.08 }, ab('fumigate', 'Fumigate', 'low', 'cleanse', { v: 0.12 }), 'int'),
+  b('hornedHelm', 'Horned Helm', 'Helm of the Bull King', 'head', M, { atk: 0.04, hp: 0.03 }, ab('gore', 'Gore', 'nth', 'stun', { n: 6, w: 0.8 }), 'str'),
+  b('thornCrown', 'Crown of Thorns', 'Crown of the Martyr', 'head', _, { hp: 0.04, def: 0.3 }, ab('martyrThorns', "Martyr's Thorns", 'struck', 'reflect', { v: 0.2 }), 'wis'),
+  b('featherCap', 'Feathered Cap', "Cap of the Wind's Favour", 'head', _, { dodge: 0.04, moveSpeed: 0.02 }, ab('jaunty', 'Jaunty', 'struck', 'haste', { p: 0.15, w: 1.5 }), 'cha'),
+  b('monkHeadband', "Monk's Headband", 'Band of the Still Mind', 'head', M, { atkSpeed: 0.04, resist: 0.03 }, ab('stillMind', 'Still Mind', 'tick', 'charge', { n: 2, v: 2 }), 'wis'),
+  b('tinkerGoggles', "Tinker's Goggles", 'Lenses of the Clockmaker', 'head', S, { crit: 0.03, atk: 0.03 }, ab('sightline', 'Sightline', 'crit', 'smite', { v: 0.6 }), 'int'),
+  b('witchHat', "Witch's Hat", 'Hat of the Coven Mother', 'head', C, { charge: 0.06, atk: 0.03 }, ab('witchCurse', "Witch's Curse", 'hit', 'curse', { p: 0.2, v: 0.12 }), 'cha'),
+  b('greatHelm', 'Great Helm', 'Helm of the Iron Crusade', 'head', M, { def: 0.8, hp: 0.04 }, ab('helmBash', 'Helm Bash', 'struck', 'stun', { p: 0.08, w: 0.8 }), 'con'),
+  b('laurelWreath', 'Laurel Wreath', 'Wreath of the Victor', 'head', _, { atk: 0.03, hp: 0.03 }, ab('victorsCheer', "Victor's Cheer", 'kill', 'rally', { w: 3 }), 'cha'),
+  b('mourningVeil', 'Veil of Mourning', 'Veil of the Widow Queen', 'head', _, { dodge: 0.03, resist: 0.04 }, ab('veiled', 'Veiled', 'start', 'stealth', { w: 2 }), 'cha'),
+
+  // ---- the feet: eleven set pieces, fifteen ordinary ----
+  b('frostBoots', 'Rimewalker Boots', 'Boots of the Frozen March', 'feet', _, { moveSpeed: 0.04, resist: 0.04 }, ab('icyStep', 'Icy Step', 'struck', 'slow', { p: 0.15, w: 1.5 }), 'dex'),
+  b('stormBoots', 'Stormstrider Boots', 'Boots of the Thunderhead', 'feet', _, { moveSpeed: 0.05, charge: 0.04 }, ab('staticStep', 'Static Step', 'start', 'mana', { v: 1 }), 'int'),
+  b('vanguardGreaves', 'Vanguard Greaves', 'Greaves of the Shield Wall', 'feet', M, { def: 0.6, hp: 0.03 }, ab('holdTheLine', 'Hold the Line', 'low', 'guard', { w: 3 }), 'con'),
+  b('radiantSandals', 'Sandals of the Radiant Order', 'Sandals of Dawn', 'feet', _, { regen: 0.003, moveSpeed: 0.03 }, ab('sunstep', 'Sunstep', 'tick', 'regen', { n: 3, v: 0.01 }), 'wis'),
+  b('wyrmTalons', 'Wyrmclaw Boots', 'Talons of the Elder Wyrm', 'feet', _, { hp: 0.04, atk: 0.03 }, ab('clawRake', 'Claw Rake', 'hit', 'bleed', { p: 0.15, v: 0.12 }), 'str'),
+  b('peakCrampons', "Peakwarden's Crampons", 'Crampons of the Summit', 'feet', _, { moveSpeed: 0.03, hp: 0.03 }, ab('sureFoot', 'Sure Foot', 'struck', 'guard', { n: 8, w: 1 }), 'con'),
+  b('tideBoots', 'Tidewalker Boots', 'Boots of the Undertow', 'feet', _, { moveSpeed: 0.04, regen: 0.002 }, ab('wadeOn', 'Wade On', 'start', 'haste', { w: 2 }), 'wis'),
+  b('stalkerBoots', "Stalker's Boots", 'Boots of the Silent Stalk', 'feet', S, { moveSpeed: 0.04, crit: 0.02 }, ab('stalk', 'Stalk', 'start', 'stealth', { w: 2 }), 'dex'),
+  b('ashSlippers', 'Ashen Slippers', 'Slippers of the Burnt Scribe', 'feet', C, { charge: 0.06, moveSpeed: 0.03 }, ab('pacing', 'Pacing', 'tick', 'charge', { n: 3, v: 3 }), 'int'),
+  b('nightTabi', 'Nightblade Tabi', 'Tabi of the Silent Roof', 'feet', _, { dodge: 0.04, moveSpeed: 0.03 }, ab('shadowStep', 'Shadow Step', 'struck', 'stealth', { p: 0.1, w: 1 }), 'dex'),
+  b('graveBoots', 'Gravewalker Boots', 'Boots of the Barrow Road', 'feet', _, { resist: 0.04, hp: 0.03 }, ab('coldGround', 'Cold Ground', 'kill', 'heal', { v: 0.05 }), 'con'),
+  b('leatherBoots', 'Leather Boots', 'Boots of the Long Road', 'feet', _, { moveSpeed: 0.05, dodge: 0.02 }, ab('lightFoot', 'Light Foot', 'start', 'haste', { w: 2 }), 'dex'),
+  b('ironGreaves', 'Iron Greaves', 'Greaves of the Iron Legion', 'feet', _, { def: 0.7, hp: 0.02 }, ab('greaveKick', 'Greave Kick', 'struck', 'counter', { p: 0.15, v: 0.5 }), 'con'),
+  b('wadingBoots', 'Wading Boots', 'Boots of the Fen King', 'feet', _, { moveSpeed: 0.03, resist: 0.05 }, ab('wade', 'Wade', 'tick', 'regen', { n: 4, v: 0.008 }), 'con'),
+  b('climberBoots', "Climber's Boots", 'Boots of the Cliff Goat', 'feet', _, { jump: 1, moveSpeed: 0.02 }, ab('foothold', 'Foothold', 'struck', 'guard', { n: 8, w: 1 }), 'str'),
+  b('sabatons', 'Sabatons', 'Sabatons of the Iron Saint', 'feet', M, { def: 0.7, hp: 0.04 }, ab('steelStride', 'Steel Stride', 'low', 'guard', { w: 3 }), 'con'),
+  b('softSlippers', 'Soft Slippers', 'Slippers of the Sleeping Court', 'feet', C, { charge: 0.06, dodge: 0.02 }, ab('hush', 'Hush', 'start', 'stealth', { w: 1.5 }), 'cha'),
+  b('ironshodBoots', 'Ironshod Boots', 'Boots of the Stampede', 'feet', M, { atk: 0.03, def: 0.4 }, ab('stomp', 'Stomp', 'nth', 'stun', { n: 7, w: 0.6 }), 'str'),
+  b('roadSandals', 'Sandals of the Road', "Sandals of the Pilgrim's Way", 'feet', _, { moveSpeed: 0.06 }, ab('pilgrimPace', "Pilgrim's Pace", 'tick', 'regen', { n: 3, v: 0.008 }), 'wis'),
+  b('furBoots', 'Fur Boots', 'Boots of the Frost Bear', 'feet', _, { hp: 0.05, resist: 0.05 }, ab('warmFeet', 'Warm Feet', 'low', 'heal', { v: 0.15 }), 'con'),
+  b('spurredBoots', 'Spurred Boots', 'Boots of the Last Charge', 'feet', M, { moveSpeed: 0.05, atk: 0.03 }, ab('spurCharge', 'Spur Charge', 'start', 'haste', { w: 3 }), 'str'),
+  b('tabi', 'Tabi', 'Tabi of the Hidden Path', 'feet', _, { dodge: 0.04, atkSpeed: 0.02 }, ab('quietFoot', 'Quiet Foot', 'struck', 'haste', { p: 0.15, w: 1.5 }), 'dex'),
+  b('emberTreads', 'Ember Treads', 'Treads of the Burning Road', 'feet', _, { atk: 0.04, resist: 0.03 }, ab('burningPath', 'Burning Path', 'struck', 'burn', { p: 0.2, v: 0.15 }), 'cha'),
+  b('windSandals', 'Windborne Sandals', 'Sandals of the Four Winds', 'feet', _, { moveSpeed: 0.07, dodge: 0.02 }, ab('galeStride', 'Gale Stride', 'start', 'haste', { w: 4 }), 'dex'),
+  b('bogStriders', 'Bog Striders', 'Striders of the Sunken Fen', 'feet', _, { hp: 0.04, regen: 0.002 }, ab('mire', 'Mire', 'struck', 'slow', { p: 0.2, w: 1.5 }), 'wis'),
+  b('stiltBoots', 'Stilt Boots', 'Stilts of the Giant Walk', 'feet', M, { atk: 0.03, range: 1 }, ab('longStride', 'Long Stride', 'hit', 'pierce', { p: 0.2, v: 0.4 }), 'dex'),
+
+  // ---- the belt: eleven set pieces, thirteen ordinary ----
+  b('frostSash', 'Sash of the Winter Court', 'Sash of Hoarfrost', 'belt', _, { charge: 0.06, hp: 0.03 }, ab('coldBlood', 'Cold Blood', 'low', 'shield', { v: 0.2, w: 5 }), 'con'),
+  b('stormGirdle', "Stormcaller's Girdle", 'Girdle of the Thunderhead', 'belt', C, { charge: 0.06, atk: 0.03 }, ab('conduit', 'Conduit', 'kill', 'mana', { v: 0.3 }), 'int'),
+  b('vanguardBelt', 'Vanguard Girdle', 'Girdle of the Shield Wall', 'belt', _, { hp: 0.06, def: 0.3 }, ab('braced', 'Braced', 'struck', 'guard', { n: 7, w: 1.5 }), 'con'),
+  b('radiantCord', 'Cord of the Radiant Order', 'Cord of Dawn', 'belt', _, { hp: 0.05, regen: 0.002 }, ab('mendingKnot', 'Mending Knot', 'low', 'heal', { v: 0.2 }), 'wis'),
+  b('wyrmBelt', 'Wyrmhide Belt', 'Belt of the Elder Wyrm', 'belt', _, { hp: 0.06, resist: 0.03 }, ab('wyrmBlood', 'Wyrm Blood', 'low', 'berserk', { v: 0.2 }), 'con'),
+  b('tideSash', 'Kelp Sash', 'Sash of the Drowned King', 'belt', _, { hp: 0.04, regen: 0.003 }, ab('tidalMend', 'Tidal Mend', 'tick', 'regen', { n: 3, v: 0.01 }), 'con'),
+  b('peakRope', "Peakwarden's Rope", 'Rope of the Summit', 'belt', _, { hp: 0.05, def: 0.3 }, ab('anchor', 'Anchor', 'struck', 'guard', { n: 6, w: 1 }), 'str'),
+  b('windSash', "Windrunner's Sash", 'Sash of the Gale', 'belt', _, { moveSpeed: 0.04, atkSpeed: 0.03 }, ab('secondGust', 'Second Gust', 'low', 'haste', { w: 4 }), 'dex'),
+  b('emberGirdle', 'Emberforged Girdle', 'Girdle of the Forge', 'belt', _, { atk: 0.04, hp: 0.03 }, ab('stokedFire', 'Stoked Fire', 'kill', 'berserk', { v: 0.05 }), 'str'),
+  b('shogunObi', "Shogun's Obi", 'Obi of the Hundred Banners', 'belt', _, { atk: 0.03, hp: 0.04 }, ab('bannerKnot', 'Banner Knot', 'start', 'rally', { w: 4 }), 'str'),
+  b('graveChain', "Gravewalker's Chain", 'Chain of the Barrow-King', 'belt', _, { atk: 0.03, resist: 0.04 }, ab('boneRattle', 'Bone Rattle', 'kill', 'shield', { v: 0.06, w: 5 }), 'con'),
+  b('leatherBelt', 'Leather Belt', 'Belt of the Old Road', 'belt', _, { hp: 0.05, atk: 0.02 }, ab('tighten', 'Tighten', 'low', 'shield', { v: 0.15, w: 5 }), 'con'),
+  b('strengthGirdle', 'Girdle of Strength', 'Girdle of the Titan', 'belt', M, { atk: 0.05, hp: 0.03 }, ab('heave', 'Heave', 'nth', 'smite', { n: 6, v: 0.6 }), 'str'),
+  b('alchemistSash', "Alchemist's Sash", 'Sash of the Grand Alchemist', 'belt', _, { hp: 0.04, regen: 0.002 }, ab('quickDraught', 'Quick Draught', 'low', 'heal', { v: 0.25 }), 'int'),
+  b('bandolier', 'Bandolier', 'Bandolier of the Gunmaster', 'belt', S, { atkSpeed: 0.05, atk: 0.02 }, ab('reload', 'Reload', 'nth', 'haste', { n: 5, w: 1.5 }), 'dex'),
+  b('herbPouch', 'Herb Pouch', 'Pouch of the Green Witch', 'belt', _, { regen: 0.005 }, ab('herbalist', 'Herbalist', 'tick', 'regen', { n: 3, v: 0.01 }), 'wis'),
+  b('coinPurse', 'Coin Purse', 'Purse of the Merchant Prince', 'belt', _, { crit: 0.03, hp: 0.02 }, ab('bribe', 'Bribe', 'kill', 'charge', { v: 20 }), 'cha'),
+  b('championBelt', "Champion's Belt", 'Belt of the Undefeated', 'belt', M, { hp: 0.05, atk: 0.04 }, ab('champion', 'Champion', 'kill', 'heal', { v: 0.06 }), 'str'),
+  b('studdedGirdle', 'Studded Girdle', 'Girdle of Iron Studs', 'belt', _, { def: 0.5, hp: 0.04 }, ab('studs', 'Studs', 'struck', 'reflect', { v: 0.12 }), 'con'),
+  b('dancerSash', 'Sash of the Dancer', 'Sash of the Endless Dance', 'belt', _, { dodge: 0.04, atkSpeed: 0.03 }, ab('pirouette', 'Pirouette', 'struck', 'haste', { p: 0.15, w: 1.5 }), 'cha'),
+  b('flaskBelt', 'Flask Belt', 'Belt of a Hundred Flasks', 'belt', _, { hp: 0.06 }, ab('swig', 'Swig', 'low', 'heal', { v: 0.3 }), 'con'),
+  b('sapperBelt', "Sapper's Belt", 'Belt of the Mad Sapper', 'belt', _, { atk: 0.04, resist: 0.03 }, ab('sapperBlast', "Sapper's Blast", 'kill', 'burst', { v: 0.6 }), 'int'),
+  b('wolfBelt', 'Wolf-Pelt Belt', 'Pelt of the Wolf-Mother', 'belt', M, { atk: 0.04, moveSpeed: 0.03 }, ab('packHowl', 'Pack Howl', 'start', 'rally', { w: 4 }), 'str'),
+  b('gamblerBelt', "Gambler's Belt", 'Belt of the Last Wager', 'belt', _, { crit: 0.04 }, ab('luckyStrike', 'Lucky Strike', 'crit', 'charge', { v: 15 }), 'cha'),
+
+  // ---- the accessory: seven set pieces, eleven ordinary ----
+  b('stormRing', "Stormcaller's Ring", 'Ring of the Thunderhead', 'acc', _, { charge: 0.06, crit: 0.02 }, ab('sparkRing', 'Spark Ring', 'crit', 'chain', { v: 0.5 }), 'int'),
+  b('vanguardSignet', 'Vanguard Signet', 'Signet of the Unbroken Line', 'acc', _, { def: 0.4, hp: 0.04 }, ab('oathGuard', 'Oath Guard', 'low', 'guard', { w: 3 }), 'con'),
+  b('radiantAmulet', 'Radiant Amulet', 'Amulet of Dawn', 'acc', _, { regen: 0.003, resist: 0.03 }, ab('blessing', 'Blessing', 'start', 'shield', { v: 0.08, w: 10 }), 'wis'),
+  b('peakCharm', "Peakwarden's Charm", 'Charm of the High Cairn', 'acc', _, { hp: 0.04, dodge: 0.02 }, ab('cairnLuck', 'Cairn Luck', 'struck', 'guard', { n: 8, w: 1 }), 'wis'),
+  b('windFeather', "Windrunner's Feather", 'Feather of the Gale', 'acc', _, { moveSpeed: 0.04, crit: 0.02 }, ab('quickWind', 'Quick Wind', 'kill', 'haste', { w: 2 }), 'dex'),
+  b('ashQuill', 'Ashen Quill', 'Quill of the Burnt Library', 'acc', C, { charge: 0.08 }, ab('inkWell', 'Inkwell', 'nth', 'charge', { n: 5, v: 30 }), 'int'),
+  b('shogunSeal', "Shogun's Seal", 'Seal of the Thousand Duels', 'acc', _, { atk: 0.04, crit: 0.02 }, ab('dueling', 'Duelling', 'crit', 'haste', { w: 1.5 }), 'str'),
+  b('boneRing', 'Bone Ring', 'Ring of the Ossuary', 'acc', _, { atk: 0.04, resist: 0.02 }, ab('marrow', 'Marrow', 'kill', 'heal', { v: 0.05 }), 'con'),
+  b('sunBrooch', 'Sun Brooch', 'Brooch of High Summer', 'acc', _, { hp: 0.04, regen: 0.002 }, ab('sunGlint', 'Sun Glint', 'start', 'shield', { v: 0.06, w: 8 }), 'cha'),
+  b('keepSignet', 'Signet of the Keep', 'Seal of the Last Keep', 'acc', _, { hp: 0.03, def: 0.3, atk: 0.02 }, ab('keepsOath', "Keep's Oath", 'low', 'rally', { w: 4 }), 'cha'),
+  b('owlFeather', 'Owl Feather', 'Feather of the Night Owl', 'acc', _, { charge: 0.07, crit: 0.01 }, ab('owlSight', 'Owl Sight', 'crit', 'mana', { v: 0.3 }), 'wis'),
+  b('hagStone', 'Hag Stone', 'Stone of the Hollow Hag', 'acc', _, { resist: 0.07 }, ab('hagWard', 'Hag Ward', 'low', 'cleanse', { v: 0.1 }), 'wis'),
+  b('wishbone', 'Wishbone', 'Wishbone of the Lucky Prince', 'acc', _, { crit: 0.04 }, ab('wish', 'Wish', 'crit', 'heal', { v: 0.05 }), 'cha'),
+  b('locket', 'Locket', 'Locket of the Lost Love', 'acc', _, { hp: 0.05 }, ab('memory', 'Memory', 'death', 'revive', { v: 0.2 }), 'cha'),
+  b('blackPearl', 'Black Pearl', 'Pearl of the Abyss', 'acc', _, { charge: 0.05, resist: 0.03 }, ab('deepTide', 'Deep Tide', 'tick', 'charge', { n: 3, v: 2 }), 'int'),
+  b('toothNecklace', 'Tooth Necklace', 'Necklace of the Great Hunt', 'acc', M, { atk: 0.05 }, ab('trophy', 'Trophy', 'kill', 'berserk', { v: 0.04 }), 'str'),
+  b('opalEye', 'Opal Eye', 'Eye of the Seer-Queen', 'acc', _, { crit: 0.03, dodge: 0.02 }, ab('evilEye', 'Evil Eye', 'hit', 'slow', { p: 0.15, w: 1.5 }), 'int'),
+  b('thiefRing', "Thief's Ring", 'Ring of the Prince of Thieves', 'acc', _, { atkSpeed: 0.04, dodge: 0.02 }, ab('pilfer', 'Pilfer', 'kill', 'charge', { v: 20 }), 'dex'),
+];

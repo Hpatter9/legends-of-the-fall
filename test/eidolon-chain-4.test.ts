@@ -38,27 +38,29 @@ const packSave = (seed: number, pack: 0 | 1): Meta => {
 const STARTERS = FIXED_PACKS.flatMap((p) => p.heroes);
 const voltara = chainById('voltara')!;
 const win = (army: string, more: Partial<QuestFight> = {}): QuestFight => ({ won: true, waves: 1, boss: false, heroes: ['knight'], flawless: true, kills: [], dailyCleared: false, mode: 'army', army, spells: [], ...more });
-const bossWin = (army: string, boss: string): QuestFight => win(army, { boss: true, kills: [boss], bosses: [boss] });
+const bossWin = (army: string, boss: string, more: Partial<QuestFight> = {}): QuestFight => win(army, { boss: true, kills: [boss], bosses: [boss], ...more });
+/** Q9: the chains' parts ask for Hard (tier 1). */
+const HARD = { tier: 1 } as const;
 
-/** Askel, Nivra and Aurelan bound, the Labyrinth cleared, Voltara's chain begun at `part` (3: every piece in). */
+/** Askel, Nivra and Aurelan bound, the Labyrinth cleared, Voltara's chain begun at `part` (5: every piece in). */
 function atPart(seed: number, pack: 0 | 1, part: number): Meta {
   const m = packSave(seed, pack);
   clear(m, 'orcs', 'beasts', 'wildwood', 'labyrinth');
   assert.ok(beginChain(m, 'askel'));
-  m.quests!.chains!.askel = { part: 3, progress: 0 };
+  m.quests!.chains!.askel = { part: 5, progress: 0 };
   m.quests!.pieces = ['emberHeart', 'kennelCollar', 'kennelBell'];
   assert.ok(bindChain(m, 'askel'));
   assert.ok(beginChain(m, 'nivra'));
-  m.quests!.chains!.nivra = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.nivra = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('rimeScale', 'merePearl', 'heldBreath');
   assert.ok(bindChain(m, 'nivra'));
   assert.ok(beginChain(m, 'aurelan'));
-  m.quests!.chains!.aurelan = { part: 3, progress: 0, trialWon: true };
+  m.quests!.chains!.aurelan = { part: 5, progress: 0, trialWon: true };
   m.quests!.pieces.push('dawnThread', 'sunCrown', 'dawnLamp');
   assert.ok(bindChain(m, 'aurelan'));
   assert.ok(beginChain(m, 'voltara'));
   m.quests!.chains!.voltara = { part, progress: 0 };
-  m.quests!.pieces.push(...['copperCoil', 'clockFace', 'stormGlass'].slice(0, part));
+  m.quests!.pieces.push(...['copperCoil', 'clockFace', 'stormGlass', 'stormRod', 'lastSpark'].slice(0, part));
   return m;
 }
 
@@ -77,20 +79,20 @@ function playThrough(m: Meta, id: string, lose = false): void {
   }
 }
 
-test("the data: three parts and pieces, the Crown's courier at the Sanctum, a binding with no horn beats ending on the seal, a trial of its own", () => {
-  assert.equal(voltara.parts.length, 3);
+test("the data: five parts and pieces (Q9), the Crown's courier at the Sanctum, a binding with no horn beats ending on the seal, a trial of its own", () => {
+  assert.equal(voltara.parts.length, 5);
   assert.equal(voltara.giver.name, 'The Crown');
   assert.deepEqual(voltara.opens, { kind: 'army', army: 'labyrinth' });
-  assert.deepEqual(voltara.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'ults']);
+  assert.deepEqual(voltara.parts.map((p) => p.goal.kind), ['bossDown', 'battle', 'ults', 'clearArmy', 'bossDown']);
   assert.ok(voltara.parts.every((p) => p.reward.chest === 'bronze' && PIECES.has(p.piece.id)));
-  assert.equal(PIECES.size, 18);
+  assert.equal(PIECES.size, 30);
   assert.equal(voltara.binding!.at(-1)!.beat, 'bound');
   assert.ok(!voltara.binding!.some((b) => b.beat === 'horn' || b.beat === 'hornFull'));
   const lines = voltara.prologue!.shots.flatMap((s) => s.lines ?? []);
   assert.ok(lines.length >= 8 && lines.some((l) => 'who' in l && l.who === 'crown'));
   assert.ok(voltara.prologue!.shots.every((s) => s.lines?.every((l) => lineLen(l) > 0)));
   assert.ok(voltara.call && /courier/.test(voltara.call.title));
-  assert.equal(stepsOf(voltara), 4);
+  assert.equal(stepsOf(voltara), 6);
   assert.ok(trialOf(voltara));
 });
 
@@ -115,9 +117,11 @@ test('offered once Nivra is bound and the Labyrinth cleared, not before; the par
   const p = atPart(6, 1, 0);
   assert.equal(activeChain(p), voltara);
   assert.equal(chainWantsBattle(p, 'copperWorks'), false, 'the battle only on its part');
-  assert.deepEqual(noteChains(p, bossWin('orcs', 'orcWarlord')), []);
+  assert.deepEqual(noteChains(p, bossWin('orcs', 'orcWarlord', HARD)), []);
   const stash = p.stash.length;
-  const found = noteChains(p, bossWin('labyrinth', 'gorgonQueen'));
+  assert.deepEqual(noteChains(p, bossWin('labyrinth', 'gorgonQueen')), [], 'Q9: Hard only');
+  assert.deepEqual(noteChains(p, bossWin('labyrinth', 'gorgonQueen', { ...HARD, flawless: false })), [], 'Q9: no hero falling');
+  const found = noteChains(p, bossWin('labyrinth', 'gorgonQueen', HARD));
   assert.deepEqual(found.map((f) => f.piece.id), ['copperCoil']);
   assert.equal(p.stash.length, stash + 1);
   assert.ok(chainWantsBattle(p, 'copperWorks') && canFightBattle(p, 'copperWorks'));
@@ -125,10 +129,19 @@ test('offered once Nivra is bound and the Labyrinth cleared, not before; the par
   assert.equal(currentPart(p)?.index, 1, 'a loss counts nothing');
   playThrough(p, 'copperWorks');
   assert.equal(currentPart(p)?.index, 2);
-  // (part 3: six ultimates fired, won or lost)
+  // (part 3: six ultimates fired in army fights with no king's spell, won or lost)
+  noteChains(p, win('orcs', { ults: ['knight', 'knight', 'knight'], spells: ['fireball'] }));
+  assert.equal(p.quests!.chains!.voltara.progress, 0, 'Q9: a spell cast counts nothing');
   noteChains(p, win('orcs', { ults: ['knight', 'knight', 'knight'] }));
   assert.equal(p.quests!.chains!.voltara.progress, 3);
   noteChains(p, win('orcs', { ults: ['knight', 'knight', 'knight'] }));
+  // (Q9, part 4: the Labyrinth cleared on Hard, no heart; part 5: two Labyrinth bosses on Hard, flawless, no hires)
+  assert.equal(currentPart(p)?.part.id, 'voltara4');
+  assert.deepEqual(noteChains(p, win('labyrinth', { ...HARD, cleared: true, hearts: 1 })), []);
+  assert.equal(noteChains(p, win('labyrinth', { ...HARD, cleared: true }))[0].piece.id, 'stormRod');
+  assert.deepEqual(noteChains(p, bossWin('labyrinth', 'gorgonQueen', { ...HARD, hires: 1 })), []);
+  noteChains(p, bossWin('labyrinth', 'gorgonQueen', HARD));
+  assert.equal(noteChains(p, bossWin('labyrinth', 'minotaurChampion', HARD))[0].piece.id, 'lastSpark');
   assert.equal(currentPart(p), undefined);
   assert.ok(trialDue(p));
 });
@@ -138,7 +151,7 @@ test("the trial is one entry: Voltara's fighter, kit, great attacks, second form
   assert.equal(FOES[t.boss.id].sheet, 'eidolon_voltara');
   assert.deepEqual(SIGNATURES[t.boss.id].map((s) => [s.key, s.shape.kind, s.el, s.rider]), [['chainArc', 'line', 'lightning', 'stun'], ['stormMark', 'rain', 'lightning', 'burn']]);
   assert.ok(PHASE2[t.boss.id].shield! > 0 && KITS[t.boss.id].passive?.arc);
-  const m = atPart(30, 0, 3);
+  const m = atPart(30, 0, 5);
   assert.equal(bindChain(m, 'voltara'), false, 'not before the trial');
   assert.equal(trialDue(m)?.trial.id, 'voltaraTrial');
   playThrough(m, 'voltaraTrial');
@@ -146,7 +159,7 @@ test("the trial is one entry: Voltara's fighter, kit, great attacks, second form
 });
 
 test('the binding: Voltara is bound and chosen, a gold chest is paid, the horn is untouched, his Bound card shows', () => {
-  const m = atPart(31, 1, 3);
+  const m = atPart(31, 1, 5);
   m.quests!.chains!.voltara.trialWon = true;
   m.eidolons!.horn = 300;
   const stash = m.stash.length;
@@ -170,7 +183,7 @@ test('the save keeps the chain (junk dropped)', () => {
   const back = loadMeta(1, { getItem: (k) => map.get(k) ?? null });
   assert.deepEqual(back.quests!.chains!.voltara, { part: 2, progress: 0 });
   assert.deepEqual(readChainState({ chains: { voltara: { part: 2, progress: 0, trialWon: true } } }), { chains: { voltara: { part: 2, progress: 0 } } });
-  assert.deepEqual(readChainState({ chains: { voltara: { part: 9, progress: 9, bound: true } } }), { chains: { voltara: { part: 3, progress: 0, bound: true } } });
+  assert.deepEqual(readChainState({ chains: { voltara: { part: 9, progress: 9, bound: true } } }), { chains: { voltara: { part: 5, progress: 0, bound: true } } });
 });
 
 /** The trial fought as the rating tool fights it. */

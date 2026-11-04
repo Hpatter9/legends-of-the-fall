@@ -17,7 +17,7 @@ export const GLYPHS: Readonly<Record<string, string>> = {
 };
 
 const STAT_GLYPH: Readonly<Record<StatKey, string>> = {
-  hp: 'heart', atk: 'sword', def: 'armour', regen: 'cross', crit: 'eye', moveSpeed: 'boot', atkSpeed: 'parry', dodge: 'feather', range: 'target', charge: 'bolt', resist: 'shield',
+  hp: 'heart', atk: 'sword', def: 'armour', regen: 'cross', crit: 'eye', moveSpeed: 'boot', atkSpeed: 'parry', dodge: 'feather', range: 'target', charge: 'bolt', resist: 'shield', jump: 'wingboot',
 };
 const TAL_GLYPH: Readonly<Record<string, string>> = {
   pow: 'burst', ultPow: 'nova', ultRate: 'nova', dur: 'hourglass', reach: 'reach', extra: 'extra', castHeal: 'potion', castShield: 'bubble', castHaste: 'wingboot', refund: 'bolt',

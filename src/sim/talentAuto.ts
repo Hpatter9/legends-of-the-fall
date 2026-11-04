@@ -43,6 +43,7 @@ const STAT_LEAN: Readonly<Record<StatKey, [Lean, number]>> = {
   moveSpeed: ['aid', 0.06],
   range: ['aid', 1],
   charge: ['aid', 0.1],
+  jump: ['aid', 1],
 };
 /** The same for the skill and passive changes (`TAL_KEYS`). */
 const TAL_LEAN: Readonly<Record<string, [Lean, number]>> = {

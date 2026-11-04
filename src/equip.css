@@ -93,3 +93,16 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .kbRow > button { flex: none; min-height: 44px; }
 .eqStash { display: block; margin-top: 6px; text-align: center; font-size: 11px; color: var(--dim); }
 .eqStash.full { color: #ff8a80; font-weight: 700; }
+
+/* SEVEN-SLOT GEAR: the paper doll (the hero in the middle, its seven slots around it), a new base's placeholder (its slot's outline and
+   its name, until its painting comes: docs/notes/gear-art-todo.md), the sets' pips and the move's one-time lines. */
+.eqDoll { grid-template-areas: "acc head ." "main hero off" "belt torso feet"; align-items: start; }
+.eqDoll .at-head { grid-area: head; } .eqDoll .at-torso { grid-area: torso; } .eqDoll .at-main { grid-area: main; } .eqDoll .at-off { grid-area: off; }
+.eqDoll .at-feet { grid-area: feet; } .eqDoll .at-belt { grid-area: belt; } .eqDoll .at-acc { grid-area: acc; }
+.eqDoll .eqDollHero { grid-area: hero; justify-self: center; align-self: center; width: 88px; height: 88px; image-rendering: pixelated; opacity: 0.9; pointer-events: none; }
+.eqIcon.ph { position: relative; overflow: hidden; }
+.eqIcon.ph > .eqIcon { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: none; }
+.eqIcon.ph > .eqPh { position: relative; z-index: 2; max-width: 92%; padding: 1px 3px; font: 700 10px/1.1 var(--body); color: var(--white); text-align: center; overflow-wrap: anywhere; background: rgb(var(--black-rgb) / 0.6); border-radius: 3px; }
+.eqIcon.small.ph > .eqPh { font-size: 9px; }
+.eqPips { display: flex; gap: 2px; } .eqPips i { width: 6px; height: 6px; border-radius: 50%; background: var(--s5); } .eqPips i.on { background: var(--sc, var(--g4)); }
+.eqNote { margin: 0; font-size: 12px; color: var(--gold-hi); }

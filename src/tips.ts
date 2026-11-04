@@ -34,7 +34,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   tower: { text: 'Last Stand: guard your ruler on the keep as wave after wave comes in from every side. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
   castle: { text: 'Each build takes real time, and the builders do one at a time. It carries on while the game is closed.', page: 'home' },
-  spellbook: { text: 'The Chapel holds the ruler\'s spells. Pick three, within the power budget, to cast in a fight.', page: 'home' },
+  spellbook: { text: 'The Chapel holds your spells: three of your ruler\'s school and one of any. Spare mana fills your Decree.', page: 'home' },
   stash: { text: 'Chests from army stars wait on the cart. Tap one to open it.', page: 'home' },
   equipment: { text: 'Equip best puts the strongest spare gear on this hero. Chests drop more.', page: 'any' },
   recycle: { text: 'Drag a hero you do not need onto Recycle to turn it back into gold.', page: 'game', during: 'deploy' },
