@@ -18,7 +18,7 @@ import { EQUIP_ICONS } from './equipArt';
 import { paintGearIcon } from './gearIcons';
 import { shopArt } from './bookArt';
 import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
-import { sellAsks, sellPiece, stallRepair } from './sim/stall';
+import { sellPiece, stallRepair } from './sim/stall';
 import { sellPrice, stashCount, stashFull } from './sim/equipment';
 import { todayKey } from './modes';
 import { icon } from './menuArt';
@@ -412,7 +412,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       // second tap; the piece waits on the stall's Sold today shelf until midnight)
       const sell = el('button', 'eqSell', `Sell +${sellPrice(it)}`);
       sell.type = 'button';
-      let sure = !sellAsks(meta, it);
+      let sure = false; // (UX-FIXES: every Sell asks once; the sold piece also waits on the stall's Sold today shelf)
       sell.addEventListener('click', () => {
         if (!sure) {
           sure = true;

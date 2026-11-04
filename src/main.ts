@@ -379,11 +379,16 @@ class Game {
     saveMeta(this.meta);
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
+    let firstSession = false;
     if (needsStarter(this.meta)) {
+      // (UX-FIXES: a new save goes from the pick straight to wave 1's deploy: the opening is the one title sequence, so the Orc Warband's
+      // own intro film is marked seen and not played again behind it; the Scenes list still has it)
+      firstSession = !seed;
       // (the opening cinematic comes first, before the pick: the player has no heroes yet, so a fixed trio plays it; a test page with a seed has none)
       if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
+      if (firstSession) markSeen(this.meta, `intro:${ARMIES[0].id}`);
       saveMeta(this.meta);
     }
     // (a save from before the summoning stones was given a few, once: it says so)
@@ -544,7 +549,9 @@ class Game {
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
-    if (!seed) this.home.open(closed ?? undefined);
+    // (UX-FIXES: ... except a new save's first session, which starts on wave 1 of the first army: the run is saved, and Home is one tap away)
+    if (firstSession) saveRun(this.run);
+    else if (!seed) this.home.open(closed ?? undefined);
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
