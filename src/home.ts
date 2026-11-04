@@ -26,8 +26,8 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements } from './achievementsView';
-import { drawCodex, ENTRIES_CLAIM, stopCodex } from './codexView';
-import { claimCodex, claimEntries, codexAnyWaiting, gotOf, totalOf } from './sim/codex';
+import { drawCodex, stopCodex } from './codexView';
+import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
@@ -788,7 +788,7 @@ export class Home {
     const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
     const up = modeOpen(m, 'castle');
     // (MENU-GLITCH: the chips are built again only when what they show has changed, so a refresh replaces none of their icons)
-    const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexAnyWaiting(m)}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
+    const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexWaiting(m).length > 0}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
     if (bar.dataset.key === key) return;
     bar.dataset.key = key;
     bar.replaceChildren();
@@ -800,7 +800,7 @@ export class Home {
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
-    if (codexAnyWaiting(m)) cdx.append(el('i', 'badge'));
+    if (codexWaiting(m).length > 0) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
     const levelBtn = el('button', 'ctChip');
     levelBtn.append(el('b', '', '🏰 Build Town'));
@@ -1054,11 +1054,11 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
-  /** The codex page; a Claim takes a milestone's crowns and stone (or the new entries' stones), saves, and draws the page again. */
+  /** The codex page; a Claim takes a milestone's crowns and stone, saves, and draws the page again. */
   openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {
-        if (!(id === ENTRIES_CLAIM ? claimEntries(this.meta) : claimCodex(this.meta, id))) return;
+        if (!(claimCodex(this.meta, id))) return;
         saveMeta(this.meta);
         play('coinClaim');
         const keep = b.scrollTop;

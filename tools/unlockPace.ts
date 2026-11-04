@@ -29,7 +29,7 @@ import { settleArmyDrop, SHARD_CHANCE, TOME_CHANCE } from '../src/sim/armyDrops'
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
-import { claimEntries, crownsTotal, FOE_ENTRIES, stonesTotal } from '../src/sim/codex';
+import { crownsTotal, FOE_ENTRIES, stonesTotal } from '../src/sim/codex';
 import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
 const arg = (name: string, fallback: number): number => {
@@ -88,8 +88,6 @@ const EXTRA_CROWNS = 900;
 /** And the stones they pay beside those crowns: the same share of every achievement's and codex reward's stones as `EXTRA_CROWNS` is of their crowns. `--nobadges 1` leaves them out. */
 const BADGE_CROWNS = ACHIEVEMENTS.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
 const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
-/** `--noentries 1`: the codex entries pay no stone (the player is otherwise paid one for each foe entry met and each hero owned, claimed every day). */
-const NO_ENTRIES = arg('--noentries', 0) > 0;
 /** `--nodrops 1`: the army waves drop no shards or tomes (ARMY-DROPS: the pace before them). */
 const NO_DROPS = arg('--nodrops', 0) > 0;
 // `--droprate 0.5`: the drops' chances times this (shards and tomes alike), to try other rates without editing the rules.
@@ -97,7 +95,7 @@ const DROP_RATE = arg('--droprate', 1);
 for (const t of [SHARD_CHANCE, TOME_CHANCE] as Record<string, number>[]) for (const k of Object.keys(t)) t[k] *= DROP_RATE;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; entryStones: number; drops: { shards: number; tomes: number } }
+interface Report { aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
 /** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
 const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
@@ -114,7 +112,6 @@ function simulate(seed: number): Report {
   let income = 0;
   let castleLeft = CASTLE_TOTAL;
   let pulls = 0;
-  let entryStones = 0;
   const drops = { shards: 0, tomes: 0 };
   // (the best army and tier cleared, which the farm replays; and its crowns a run)
   const bestPick = (): { crowns: number; army?: string; tier: number } => {
@@ -231,8 +228,6 @@ function simulate(seed: number): Report {
     m.crowns -= toCastle;
     const budget = Math.floor(m.crowns * PULL_SHARE);
     let left = budget;
-    // the codex: a stone for each entry discovered since yesterday (the foes of the armies cleared, the heroes that joined)
-    if (!NO_ENTRIES) entryStones += claimEntries(m);
     // the chest shop: the dearest chest the budget reaches, again and again; every stone is then used (ten at a time, then singles)
     for (;;) {
       const c = [...SHOP].reverse().find((x) => shopPrice(m, x.kind) <= left && stockLeft(m, x.kind, 20260000 + day) > 0);
@@ -288,14 +283,14 @@ function simulate(seed: number): Report {
     spent += 0;
   }
   void spent;
-  return { aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, entryStones, drops };
+  return { aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, drops };
 }
 
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
-console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex's milestones, ${Math.round(mean(reports.map((r) => r.entryStones)))} from its entries)`);
+console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex's milestones)`);
 console.log(`Army drops in ${DAYS} days (mean): ${Math.round(mean(reports.map((r) => r.drops.shards)))} shard drops, ${Math.round(mean(reports.map((r) => r.drops.tomes)))} tomes${NO_DROPS ? ' (--nodrops: none)' : ''}`);
 console.log('\nheroes  day reached (median, earliest, latest)');
 for (const n of MARKS) {
