@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.351.0',
+    date: '2026-11-04',
+    title: 'Every foe fights its own way',
+    notes: ['Common foes flank, kite, hunt, guard or charge, with a passive each; elites and army kinds gain a skill. Armies retuned to match.'],
+  },
+  {
     version: '0.350.0',
     date: '2026-11-04',
     title: 'Painted king\'s spells, gear balance',
