@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.333.0',
+    date: '2026-11-04',
+    title: 'Effects, auto and small fixes',
+    notes: ['Every battle effect now moves and animates: the meteor falls and bursts.', 'Auto-replay works on every beaten repeat run: quests, Eidolon trials, the daily.', 'Party power total, a daily icon with a check, \'Take me there\' on quests, a popup when a building finishes.', 'Codex stones only at milestones; the game\'s text brought up to date (no more spire or tower).'],
+  },
+  {
+    version: '0.332.0',
+    date: '2026-11-04',
+    title: 'Finished screens close',
+    notes: ['A screen you have left is now closed, not hidden behind the next one: no more old recaps under a chest, and less strain on the phone\'s memory.'],
+  },
+  {
     version: '0.331.0',
     date: '2026-11-01',
     title: 'Hero sheet fixed on the party screen',

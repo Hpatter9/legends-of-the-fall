@@ -57,6 +57,7 @@ import { actLook, bossOfAct, calamityLook, type ActLook } from './towerTheme';
 import { BRICKS, buildBackdrop, Layout, torchEl } from './towerBack';
 import { confirmBox } from './calamityView';
 import { playTwist, twistBadge, twistLine } from './twistView';
+import { openScreen } from './screens';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -206,7 +207,13 @@ export class TowerView {
     this.close();
   }
 
+  /** CLOSE-SCREENS: the run's summary is a flow screen: its closer in the screen stack while it is up. */
+  private summaryShut: (() => void) | null = null;
+
   close(): void {
+    const shut = this.summaryShut;
+    this.summaryShut = null;
+    shut?.();
     this.sanctuary?.release();
     this.cal?.release();
     this.endIntro();
@@ -1208,6 +1215,7 @@ export class TowerView {
 
   /** The summary of a run that has ended: the floors climbed and what they paid. `then` runs when it is closed. */
   showSummary(run: Run, s: TowerSummary, then: () => void): void {
+    this.summaryShut = openScreen('towerSummary', () => this.close());
     this.root.hidden = false;
     document.body.classList.add('towerUp');
     tips.update();

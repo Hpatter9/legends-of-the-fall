@@ -113,7 +113,7 @@ export class CampScene {
   /** Earned chests rest by the supplies at the left of the ledge. */
   readonly stashMount = el('div', 'cpStash');
   /** The Daily board's plaque below the company, the Last Stand's watchtower on the left (OVERLOOK-STAND) and the distant Calamity landmark. */
-  readonly dailySlot = el('div', 'cpSlot');
+  readonly dailySlot = el('div', 'cpSlot cpDailySlot');
   readonly towerSlot = el('div', 'cpSlot cpTowerSlot');
   /** The watchtower's lights, embers and crows (OVERLOOK-STAND). */
   private towerLife = new TowerLife();
