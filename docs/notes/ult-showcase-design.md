@@ -60,7 +60,7 @@ The same rule is there for any future special attack: it only has to say it is p
 | **Ravi**, the Wizard (a caster) | Meteor Swarm: "three meteors fall on separate crowds" | He raises his staff in a burning circle; a circle of fire marks each crowd in turn with a rumble; the meteors are seen high in the clouds over each mark. The fight runs on at x1 under the dim and the sim's own meteors come down. | 2.8 s (and the fall) |
 | **Itzel**, the Beastmaster (a summoner) | Conjure Animals: "four wolves answer his call" | He sounds his horn and a ring of green goes out; one after another the four wolves bound in from the edge of the field to the tiles they stand on, dust where each lands. | 3.0 s |
 
-Captures: `docs/samples/ult-showcase-*.mp4` (393 x 852, x1, the whole moment) and `docs/samples/ult-showcase-strip.png` (the three side
+Captures: `docs/samples/ult-showcase-*.mp4` (393 x 852, x1, the whole moment) and `docs/samples/ult-showcase-strip.jpg` (the three side
 by side). `tools/ult-show/shots.mjs` records them on a fixed clock.
 
 ## Every hero, from its ultimate's own words (the plan for the other 42)
