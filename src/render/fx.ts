@@ -58,7 +58,9 @@ import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, im
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
+import { loadShowArt, showArt, type ShowArt } from './showArt';
 import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
+import { KING_SHEET, KING_WALL } from './kingArt';
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
@@ -108,6 +110,8 @@ export async function loadFx(): Promise<void> {
   await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
   // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
   void loadSpellArt();
+  // (ULT-SHOW: the showcases' painted poses and props, behind the game too)
+  void loadShowArt();
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
   const tex = async (url: string) => Texture.from(await loadImage(url));
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
@@ -135,6 +139,8 @@ const MARK_WORDS: Record<string, string> = {
 };
 
 /** A small random offset (the renderer's own, not the sim's). */
+/** ULT-SHOW: the beats a showcase plays (`ultShowRules.ts`). */
+export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare' | 'stone' | 'smite' | 'taunt' | 'rise' | 'tunnel' | 'bless' | 'transform';
 const jitter = (n: number) => (Math.random() * 2 - 1) * n;
 
 interface Item {
@@ -615,11 +621,13 @@ export class Fx {
     this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE);
   }
 
-  /** ULT-SHOW (`ultShow.ts`): one beat of an ultimate's showcase, drawn on the moment's layer (it runs while the fight is held). (x, y) is a
-   *  fighter's feet or a tile's ground, `tall` its height; `to` the other end of a cut. The painted toolkit's parts when they are there, else
-   *  the pack's. */
-  showBeat(kind: 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish', x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element } = {}): void {
+  /** ULT-SHOW (`ultShow.ts`): one beat of an ultimate's showcase, drawn on the moment's layer (it runs while the fight is held), in the
+   *  colours of its element (`el`). (x, y) is a fighter's feet or a tile's ground, `tall` its height; `to` a foe (a cut, a blow) or the far
+   *  end (a dash, a hook). The painted toolkit's parts when they are there, else the pack's. */
+  showBeat(kind: ShowBeat, x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element; how?: 'bolt' | 'flame' | 'bullet' } = {}): void {
     const m = this.moment;
+    const el = o.el ?? 'dark';
+    const tint = ULT_TINT[el];
     const lift = (o.tall ?? 40) * 0.45;
     const budget = particleBudget(settings().saver);
     m.density = budget.density;
@@ -627,63 +635,194 @@ export class Fx {
     const smoke = (n: number, s: number) => {
       for (let i = 0; i < n; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(14), y: y - lift + jitter(10), scale: s, life: 650, vy: -0.035, grow: 0.0009, alpha: 0.85, delay: i * 25 });
     };
+    const to = o.to;
     switch (kind) {
       case 'vanish':
-        // (a puff of smoke where she stood, and the painted swirl she goes out in)
-        if (!this.paintOnce(PAINT.blinkOut, x, y - lift, { layer: m })) play(m, packKey('dark', 'smoke'), x, y - lift, { scale: 1.6, frameMs: 55 });
-        smoke(4, 1.5);
+        // (a puff of smoke where she stood and the painted swirl she goes out in; a bolt's flash for lightning)
+        if (el === 'dark' || el === 'blood') {
+          if (!this.paintOnce(PAINT.blinkOut, x, y - lift, { layer: m })) play(m, packKey('dark', 'smoke'), x, y - lift, { scale: 1.6, frameMs: 55 });
+          smoke(4, 1.5);
+        } else {
+          play(m, packKey(el, 'nova'), x, y - lift, { scale: 1.8, frameMs: 50 });
+          play(m, packKey(el, 'puff'), x, y - lift, { scale: 1.6, frameMs: 55 });
+        }
         return;
       case 'appear':
-        if (!this.paintOnce(PAINT.blinkIn, x, y - lift, { layer: m })) play(m, packKey('dark', 'puff'), x, y - lift, { scale: 1.6, frameMs: 55 });
-        smoke(2, 1.1);
+        if (el === 'dark' || el === 'blood') {
+          if (!this.paintOnce(PAINT.blinkIn, x, y - lift, { layer: m })) play(m, packKey('dark', 'puff'), x, y - lift, { scale: 1.6, frameMs: 55 });
+          smoke(2, 1.1);
+        } else play(m, packKey(el, 'strike'), x, y - lift, { scale: 1.8, frameMs: 50 });
         return;
       case 'cut': {
-        const to = o.to;
         if (!to) return;
         const ty = to.y - to.tall * 0.5;
         // (the cut across the foe: the painted slash streak through it and the crossed slash on it, a spray, a jolt of the screen)
-        const dx = to.x - x;
-        if (!this.paintAlong(PAINT.slash, to.x - dx * 0.7, ty - 6, to.x + dx * 0.5, ty + 6, { layer: m })) play(m, packKey('dark', 'slash'), to.x, ty, { scale: 2.2, frameMs: 40 });
+        const dx = to.x - x || 1;
+        if (!this.paintAlong(PAINT.slash, to.x - dx * 0.7, ty - 6, to.x + dx * 0.5, ty + 6, { layer: m })) play(m, packKey(el, 'slash'), to.x, ty, { scale: 2.2, frameMs: 40 });
         this.paintOnce(PAINT.slashHit, to.x, ty, { layer: m, delay: 50 });
-        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffBlood, x: to.x + jitter(8), y: ty + jitter(8), scale: 0.9, life: 380, vx: Math.sign(dx || 1) * 0.06, vy: -0.03, delay: 40 + i * 30 });
+        play(m, packKey(el, 'hit'), to.x, ty, { scale: 1.8, frameMs: 45, delay: 40, tint });
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffBlood, x: to.x + jitter(8), y: ty + jitter(8), scale: 0.9, life: 380, vx: Math.sign(dx) * 0.06, vy: -0.03, delay: 40 + i * 30 });
         this.trauma = Math.min(1, this.trauma + 0.22);
         return;
       }
-      case 'gather':
-        // (a burning circle under the caster, and fire rising round him)
-        play(m, packKey('fire', 'circle'), x, y - 2, { scale: 2.6, frameMs: 80, life: 2400, loop: true, alpha: 0.9 });
-        play(m, packKey('fire', 'gather'), x, y - lift, { scale: 2.2, frameMs: 70, life: 1400, loop: true });
-        return;
-      case 'mark':
-        // (a crowd marked: a circle of fire on its ground, burning until the meteor falls, and the ground rumbling)
-        play(m, packKey('fire', 'circle'), x, y - 2, { scale: 4.4, frameMs: 90, life: 2600, loop: true });
-        play(m, packKey('fire', 'rune'), x, y - 4, { scale: 3, frameMs: 90, life: 2600, loop: true });
-        play(m, packKey('fire', 'pillar'), x, y - 10, { scale: 2.2, frameMs: 70 });
-        this.trauma = Math.min(1, this.trauma + 0.12);
-        return;
-      case 'sky': {
-        // (the meteors seen high in the clouds over each mark, burning as they come down; the sim's own fall takes over as the fight runs)
-        play(m, packKey('fire', 'orb'), x + 60, y - 170, { scale: 4.2, frameMs: 60, life: 900, loop: true, vx: -0.045, vy: 0.12 });
-        for (let i = 0; i < 6; i++) m.spawn({ frames: VFX.puffFire, x: x + 60 + jitter(10), y: y - 170 + jitter(10), scale: 1.5, life: 700, vx: -0.03, vy: 0.07, delay: i * 120 });
+      case 'blow': {
+        if (!to) return;
+        const ty = to.y - to.tall * 0.5;
+        play(m, packKey(el, 'hit'), to.x + jitter(6), ty + jitter(6), { scale: 1.3, frameMs: 40, tint });
+        this.puffAtOn(m, to.x + jitter(6), ty + jitter(6), 0.7);
+        this.trauma = Math.min(1, this.trauma + 0.06);
         return;
       }
+      case 'dash': {
+        // (a streak of speed along the run, after-images and the dust it kicks up)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.dash, x, y - lift, to.x, to.y - lift, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 2.6, frameMs: 40 });
+        for (let i = 0; i <= 4; i++) this.puffAtOn(m, x + ((to.x - x) * i) / 4, y + ((to.y - y) * i) / 4, 0.9);
+        return;
+      }
+      case 'crash':
+        // (a landing that cracks the ground: the element's explosion, the wave along the ground, dust, a hard shake)
+        play(m, packKey(el, 'explosion'), x, y - lift, { scale: 3.2, frameMs: 60 });
+        play(m, packKey('earth', 'wave'), x, y, { scale: 5.5, frameMs: 80, add: false, alpha: 0.8 });
+        for (let i = 0; i < 6; i++) this.puffAtOn(m, x + jitter(34), y + jitter(14), 1.3);
+        this.trauma = Math.min(1, this.trauma + 0.5);
+        return;
+      case 'hook': {
+        // (the hook's line thrown out to the foe, and its grip)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.tether, x, y - lift, to.x, to.y - lift, { layer: m })) play(m, packKey('dark', 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 2, frameMs: 40 });
+        this.paintOnce(PAINT.grip, to.x, to.y - lift, { layer: m, delay: 180 });
+        return;
+      }
+      case 'shot': {
+        // (a shot at a foe: a bolt down out of the cloud, a stream of flame along the line, or a muzzle's flash and a bullet's spark)
+        if (!to) return;
+        const ty = to.y - to.tall * 0.5;
+        if (o.how === 'bolt') {
+          play(m, packKey('lightning', 'strike'), to.x, to.y - 40, { scale: 3, frameMs: 45 });
+          play(m, packKey('lightning', 'hit'), to.x, ty, { scale: 2, frameMs: 45, delay: 60 });
+          this.trauma = Math.min(1, this.trauma + 0.2);
+        } else if (o.how === 'flame') {
+          for (let i = 1; i <= 6; i++) play(m, packKey('fire', 'flame'), x + ((to.x - x) * i) / 6, y - lift + ((ty - y + lift) * i) / 6, { scale: 1.6 + i * 0.12, frameMs: 55, delay: i * 35 });
+          play(m, packKey('fire', 'explosion'), to.x, ty, { scale: 1.8, frameMs: 55, delay: 220 });
+        } else {
+          play(m, packKey('fire', 'hit'), x + Math.sign(to.x - x || 1) * 10, y - lift, { scale: 1, frameMs: 35 });
+          play(m, packKey(el, 'hit'), to.x, ty, { scale: 1.5, frameMs: 40, delay: 70, tint });
+          this.puffAtOn(m, to.x, ty, 0.6);
+          this.trauma = Math.min(1, this.trauma + 0.1);
+        }
+        return;
+      }
+      case 'cloud':
+        // (a storm cloud gathers over the caster and flickers)
+        for (let i = 0; i < 6; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(40), y: y - 110 + jitter(12), scale: 2.4, life: 2600, grow: 0.0003, alpha: 0.9, delay: i * 90 });
+        play(m, packKey(el, 'vortex'), x, y - 110, { scale: 3.2, frameMs: 80, life: 2400, loop: true, alpha: 0.8 });
+        play(m, packKey(el, 'strike'), x + 18, y - 70, { scale: 2, frameMs: 45, delay: 500 });
+        return;
+      case 'burn':
+        // (a tile catching alight, burning on through the showcase)
+        play(m, packKey('fire', 'flame'), x, y - 8, { scale: 1.8, frameMs: 70, life: 2200, loop: true });
+        return;
+      case 'snare': {
+        // (vines snap tight round a foe)
+        if (!to) return;
+        play(m, packKey(el, 'spikes'), to.x, to.y - 4, { scale: 2, frameMs: 60 });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.4, frameMs: 45, delay: 60, tint });
+        return;
+      }
+      case 'stone': {
+        // (stone creeps up a foe: grey dust rising round it and a crack of earth at its feet)
+        if (!to) return;
+        play(m, packKey('earth', 'spikes'), to.x, to.y - 2, { scale: 1.6, frameMs: 70, tint: 0x9a9a92 });
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffSand, x: to.x + jitter(8), y: to.y - i * 10, scale: 1, life: 600, vy: -0.03, delay: i * 90, tint: 0xb8b8ae });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.3, frameMs: 50, delay: 150 });
+        return;
+      }
+      case 'smite': {
+        // (the element strikes a foe: a pillar of it and a burst)
+        if (!to) return;
+        play(m, packKey(el, 'pillar'), to.x, to.y - 10, { scale: 1.6, frameMs: 55 });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.8, frameMs: 45, delay: 40, tint });
+        this.trauma = Math.min(1, this.trauma + 0.07);
+        return;
+      }
+      case 'taunt': {
+        // (a foe dragged round to face him: a line of light from it to him, and a ring on it)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.tether, to.x, to.y - to.tall * 0.5, x, y - lift, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 1.6, frameMs: 45 });
+        play(m, packKey(el, 'circle'), to.x, to.y - 2, { scale: 1.3, frameMs: 60, alpha: 0.85 });
+        return;
+      }
+      case 'bless': {
+        // (the blessing runs from the caster to an ally: a ribbon of the element, and sparkles rising off the ally)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.swapLink, x, y - lift, to.x, to.y - to.tall * 0.5, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 1.6, frameMs: 45 });
+        play(m, packKey(el, 'sparkle'), to.x, to.y - to.tall * 0.5, { scale: 1.8, frameMs: 60, delay: 120 });
+        play(m, packKey(el, 'circle'), to.x, to.y - 2, { scale: 1.4, frameMs: 70, alpha: 0.8, delay: 120 });
+        return;
+      }
+      case 'transform':
+        // (the change bursts out of him: the element's nova and explosion, smoke rolling off, a hard jolt)
+        play(m, packKey(el, 'explosion'), x, y - lift, { scale: 2.8, frameMs: 55 });
+        play(m, packKey(el, 'nova'), x, y - lift, { scale: 3, frameMs: 60, delay: 60 });
+        smoke(6, 1.8);
+        this.trauma = Math.min(1, this.trauma + 0.35);
+        return;
+      case 'rise':
+        // (a rock spire rising out of the ground)
+        play(m, packKey('earth', 'spikes'), x, y - 4, { scale: 2.2, frameMs: 70 });
+        this.puffAtOn(m, x, y, 1.1);
+        this.trauma = Math.min(1, this.trauma + 0.05);
+        return;
+      case 'tunnel':
+        // (the ground heaving where he goes under it)
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffSand, x: x + jitter(10), y: y + jitter(4), scale: 1.2, life: 520, vy: -0.025, delay: i * 50 });
+        play(m, packKey(el, 'puff'), x, y - 4, { scale: 1.2, frameMs: 60, alpha: 0.8 });
+        this.trauma = Math.min(1, this.trauma + 0.04);
+        return;
+      case 'gather':
+        // (power gathers at the caster's feet: a circle of the element and its gathering)
+        play(m, packKey(el, 'circle'), x, y - 2, { scale: 2.6, frameMs: 80, life: 2400, loop: true, alpha: 0.9 });
+        play(m, packKey(el, 'gather'), x, y - lift, { scale: 2.2, frameMs: 70, life: 1400, loop: true });
+        return;
+      case 'mark':
+        // (a crowd marked: a circle of the element on its ground until the blow falls, and the ground rumbling)
+        play(m, packKey(el, 'circle'), x, y - 2, { scale: 4.4, frameMs: 90, life: 2600, loop: true });
+        play(m, packKey(el, 'rune'), x, y - 4, { scale: 3, frameMs: 90, life: 2600, loop: true });
+        play(m, packKey(el, 'pillar'), x, y - 10, { scale: 2.2, frameMs: 70 });
+        this.trauma = Math.min(1, this.trauma + 0.12);
+        return;
+      case 'sky':
+        // (what falls seen high in the clouds over each mark, burning as it comes down; the sim's own fall takes over as the fight runs)
+        play(m, packKey(el, 'orb'), x + 60, y - 170, { scale: 4.2, frameMs: 60, life: 900, loop: true, vx: -0.045, vy: 0.12 });
+        for (let i = 0; i < 6; i++) m.spawn({ frames: VFX.puffFire, x: x + 60 + jitter(10), y: y - 170 + jitter(10), scale: 1.5, life: 700, vx: -0.03, vy: 0.07, delay: i * 120 });
+        return;
       case 'call':
-        // (the call goes out: a ring of the forest's green from where he stands)
-        play(m, packKey('forest', 'wave'), x, y, { scale: 5, frameMs: 80, add: false, alpha: 0.7 });
-        play(m, packKey('forest', 'nova'), x, y - lift, { scale: 2.4, frameMs: 70 });
+        // (the call goes out: a ring of the element from where he stands)
+        play(m, packKey(el, 'wave'), x, y, { scale: 5, frameMs: 80, add: false, alpha: 0.7 });
+        play(m, packKey(el, 'nova'), x, y - lift, { scale: 2.4, frameMs: 70 });
         return;
       case 'land':
-        // (a beast lands at its place: dust, and a ring)
+        // (one called up lands at its place: dust, and a ring)
         this.puffAtOn(m, x, y, 1.4);
-        play(m, packKey('forest', 'circle'), x, y - 2, { scale: 1.6, frameMs: 70, alpha: 0.8 });
+        play(m, packKey(el, 'circle'), x, y - 2, { scale: 1.6, frameMs: 70, alpha: 0.8 });
         this.trauma = Math.min(1, this.trauma + 0.08);
         return;
       case 'finish':
-        // (the last cut lands, or the last beast: a burst of the element on the caster)
-        play(m, packKey(o.el ?? 'dark', 'nova'), x, y - lift, { scale: 2.2, frameMs: 60, alpha: 0.8 });
-        if (kind === 'finish' && o.el === 'dark') smoke(5, 1.6);
+        // (the last cut lands, or the last one called: a burst of the element on the caster)
+        play(m, packKey(el, 'nova'), x, y - lift, { scale: 2.2, frameMs: 60, alpha: 0.8 });
+        if (el === 'dark') smoke(5, 1.6);
         return;
     }
+  }
+
+  /** ULT-SHOW: a painted prop (`showArt.ts`) on the moment's layer, `h` px tall at (x, y), drifting, turning and lasting as asked. False
+   *  when it has not loaded (the pack's effect plays alone then). */
+  showProp(art: ShowArt, x: number, y: number, o: { h: number; life: number; vx?: number; vy?: number; spin?: number; rotation?: number; delay?: number; alpha?: number; add?: boolean }): boolean {
+    const t = showArt(art);
+    if (!t) return false;
+    this.moment.spawn({ frames: [t], x, y, scale: o.h / Math.max(1, t.height), frameMs: o.life, life: o.life, prio: true, ...(o.vx ? { vx: o.vx } : {}), ...(o.vy ? { vy: o.vy } : {}), ...(o.spin ? { spin: o.spin } : {}), ...(o.rotation ? { rotation: o.rotation } : {}), ...(o.delay ? { delay: o.delay } : {}), alpha: o.alpha ?? 1, add: o.add ?? false });
+    return true;
   }
 
   /** ULT-SHOW: the ordinary effects hidden while a showcase plays its own on the moment's layer (what the cast left, its numbers and its cuts,
@@ -1620,6 +1759,9 @@ export class Fx {
     const [x, y] = this.tilePos(b, u, v);
     const i = v * b.board.w + u;
     const live = () => !!b.walls?.some((w) => w.i === i && w.kind === kind && w.until > b.t);
+    // (KING-SPELLS batch 5: a wall the king raised, `by` 0, stands as its spell's own painted loop)
+    const king = b.walls?.find((w) => w.i === i && w.kind === kind && w.until > b.t)?.by === 0 ? KING_WALL[kind] : undefined;
+    if (king && this.paintWall(king, x, y + 2, live)) return;
     if (look.paint && this.paintWall(look.paint, x, y + 2, live)) return;
     this.lookOnce(look, x, y - 8, 1.6);
     if (look.prop && kitArt) {
@@ -2357,6 +2499,9 @@ export class Fx {
     const [svx, svy] = targetPt ? [targetPt.x - centre.x, (targetPt.y - targetPt.tall * 0.5) - (centre.y - 20)] : [0, -1];
     const slen = Math.hypot(svx, svy) || 1;
     playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: svx / slen, y: svy / slen }, ms: 700, size: 1 });
+    // (KING-SPELLS batch 5: the schools' fourteen spells' painted cast, where the spell lands)
+    const sheet = KING_SHEET[e.id];
+    if (sheet) this.paintOnce(`${sheet}.cast`, centre.x, centre.y);
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
@@ -2412,6 +2557,9 @@ export class Fx {
     if (!s || e.id === 'meteor') return;
     const spot = { x: s.x, y: s.y, tall: s.tall };
     playSteps(SPELL_SIGNATURES[e.id].hit, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: -1 }, ms: 500, size: 1 });
+    // (KING-SPELLS batch 5: the painted impact on each fighter the spell touches)
+    const sheet = KING_SHEET[e.id];
+    if (sheet) this.paintOnce(`${sheet}.impact`, s.x, s.y - s.tall * 0.4);
     if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
     if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
     if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);

@@ -318,6 +318,10 @@ export class StandView {
         return t ? at(u, v, t.h) : null;
       },
       seen: (kind) => seenOf(this.host.meta(), kind),
+      toClient: (x, y) => {
+        const k = this.world.scale.x;
+        return { x: this.world.x + x * k, y: this.world.y + y * k };
+      },
       saw: (kind) => {
         noteSeen(this.host.meta(), kind);
         saveMeta(this.host.meta());
@@ -1227,9 +1231,11 @@ export class StandView {
       while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = s.b.units.length;
+        // (ULT-SHOW: where everyone stood before the tick, for a showcase to start a moved foe from)
+        const before = new Map(s.b.units.map((u) => [u.id, { u: u.u, v: u.v }]));
         const events = stepStand(s);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
-        if (fullScene(settings().ultFull, !!this.host.meta().ultAuto) && this.ultm.note(s.b, events, s.b.units.slice(born))) this.acc = 0;
+        if (fullScene(settings().ultFull, !!this.host.meta().ultAuto) && this.ultm.note(s.b, events, s.b.units.slice(born), before)) this.acc = 0;
         if (this.eid.noteEvents(s.b, events)) this.acc = 0;
         this.hud.onEvents(s.b, events);
         for (const e of events) {

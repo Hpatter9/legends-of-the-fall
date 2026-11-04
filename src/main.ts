@@ -2,6 +2,8 @@
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { socketStrip } from './runeTray';
+import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
@@ -97,6 +99,11 @@ import { toastAchievements, toastLines, toastSpells, toastStones } from './achie
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
 import { showMarchCard } from './marchCard';
+import { applyVigil } from './sim/chapelRooms';
+import { landAt } from './sim/calJourney';
+import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
+import { bondScenesDue } from './sim/bondScenes';
+import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
@@ -178,6 +185,11 @@ import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHo
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
+import { TacticsView } from './tacticsView';
+import { setTactic } from './sim/tactics';
+import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
+import { pickedTactic, pickTactic } from './sim/tacticPick';
+import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
@@ -474,6 +486,13 @@ class Game {
         if (!this.eid.camp.root.isConnected) $('hmStones').after(this.eid.camp.root);
         this.eid.refreshCamp();
       },
+      // (DEPTH-BUILD: a bond scene due plays when the camp or the castle opens, one at a time)
+      onOpened: () => {
+        if (!this.scenesOn()) return;
+        const id = bondScenesDue(this.meta, (x) => seenScene(this.meta, x))[0];
+        const sc = id ? SCENES[id] : undefined;
+        if (sc) void this.queueScene(sc.moment);
+      },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)
         const learnt = grantSpells(this.meta);
@@ -695,7 +714,7 @@ class Game {
     const out: Moment[] = [];
     const mode = run.mode?.kind;
     if (mode === 'calamity' && run.tower) {
-      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.tower.act });
+      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.rift ? landAt(run.tower.journey, run.tower.act) : run.tower.act });
       if ((run.mode as { ascension?: number }).ascension === 1) out.push({ kind: 'ascension' });
     }
     if (mode === 'tower' && [10, 25, 50].includes(run.stage)) out.push({ kind: 'spire', floor: run.stage });
@@ -1058,6 +1077,9 @@ class Game {
   private begin(): void {
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
+    // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
+    setTactic(this.b, pickedTactic(this.meta.tactics, this.run.mode));
+    setFormations(this.b, autoPlaceOpen(this.meta));
     if (!fight(this.b)) return;
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
     // in its own trial as a great being, EIDOLON-TRIAL)
@@ -1174,7 +1196,8 @@ class Game {
     // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
     this.eid.see(b);
     this.eid.frame(dt, this.sceneHold > 0);
-    if (b.phase === 'fight') this.ultm.frame(b, dt, !!held);
+    // (ULT-SHOW: a showcase whose ultimate ended the fight still plays out, and the result waits for it)
+    if (b.phase === 'fight' || (b.phase !== 'deploy' && this.ultm.queue.current?.show)) this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
     // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
     if (b.phase === 'fight') this.bossm.frame(dt, !!held);
@@ -1197,9 +1220,11 @@ class Game {
       while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
+        // (ULT-SHOW: where everyone stood before the tick, for a showcase to start a moved foe from)
+        const before = new Map(b.units.map((u) => [u.id, { u: u.u, v: u.v }]));
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
-        if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
+        if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born), before)) this.acc = 0;
         this.bossm.note(b, events);
         if (this.eid.noteEvents(b, events)) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
@@ -1249,9 +1274,9 @@ class Game {
     } else if (b.phase !== 'deploy') {
       // (the fallen finish falling after the end; the recap comes up once the wait is over)
       this.acc += dt;
-      this.fx.step(dt);
-      // (EIDOLONS: a strike that ended the fight plays out before the result comes up)
-      if (this.endWait < END_WAIT_MS && !this.eid.playing) {
+      if (!this.ultm.queue.current || this.ultm.queue.runsEffects) this.fx.step(dt);
+      // (EIDOLONS: a strike that ended the fight plays out before the result comes up; ULT-SHOW: so does a showcase)
+      if (this.endWait < END_WAIT_MS && !this.eid.playing && !this.ultm.queue.current) {
         this.endWait += dt;
         if (this.endWait >= END_WAIT_MS) this.refresh();
       }
@@ -1263,7 +1288,7 @@ class Game {
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
-    if (b.phase === 'fight') this.ultm.stage();
+    if (b.phase !== 'deploy') this.ultm.stage();
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
       else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
@@ -1823,6 +1848,7 @@ class Game {
   private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
+  private tactics!: TacticsView;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
@@ -1872,6 +1898,7 @@ class Game {
         return t ? at(u, v, t.h) : null;
       },
       seen: (kind) => seenOf(this.meta, kind),
+      toClient: (x, y) => this.toClient(x, y),
       saw: (kind) => {
         noteSeen(this.meta, kind);
         saveMeta(this.meta);
@@ -1879,6 +1906,20 @@ class Game {
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
+    // (the party's tactic: the chip beside Auto, and the Charge! call in the fight; docs/notes/tactics.md)
+    this.tactics = new TacticsView({
+      picked: () => pickedTactic(this.meta.tactics, this.run.mode),
+      pick: (t) => {
+        pickTactic(this.meta, this.run.mode, t);
+        saveMeta(this.meta);
+        this.refresh();
+      },
+      // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
+      formationsOpen: () => autoPlaceOpen(this.meta),
+      formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
+      arrange: (f) => this.arrangeFormation(f),
+      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
+    });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
       meta: () => this.meta,
@@ -2032,6 +2073,28 @@ class Game {
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
   /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
+  /** Set the placed heroes out in a formation's shape (the tactic sheet's Arrange): each taken back and placed again at its tile of the shape
+   *  (`formationSpots`), or where it stood if that tile will not take it. */
+  private arrangeFormation(shape: Formation): void {
+    const b = this.b;
+    if (b.phase !== 'deploy') return;
+    const heroes = b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !UNITS[u.def].summon).map((u) => ({ def: u.def, tag: u.tag!, was: [u.u, u.v] as [number, number], h: this.run.roster.find((r) => r.id === u.tag) }));
+    if (!heroes.length) return;
+    const spots = formationSpots(b.board, heroes.map((x) => x.def), shape);
+    for (const x of heroes) unplace(b, x.def, x.tag);
+    heroes.forEach((x, i) => {
+      const boost = x.h ? this.boostFor(x.h) : undefined;
+      const s = spots[i];
+      const at: [number, number] = s && place(b, x.def, s.u, s.v, x.tag, boost) ? [s.u, s.v] : x.was;
+      if (at === x.was) place(b, x.def, at[0], at[1], x.tag, boost);
+      this.placed.set(String(x.tag), at);
+    });
+    saveRun(this.run);
+    this.syncSprites();
+    play('summon');
+    this.refresh();
+  }
+
   private autoArrange(manual = false): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;
@@ -2290,6 +2353,16 @@ class Game {
   }
 
   private startRun(run: Run): void {
+    // (DEPTH-BUILD: an army run keeps a snapshot of the bonds as it starts, so its fights replay)
+    if (run.mode?.kind === 'army' && !run.bonds) {
+      const snap = bondSnapshot(this.meta);
+      if (Object.keys(snap).length) run.bonds = snap;
+    }
+    // (and of the mentors' perks)
+    if (run.mode?.kind === 'army' && !run.legacy) {
+      const snap = legacySnapshot(this.meta, this.meta.party);
+      if (Object.keys(snap).length) run.legacy = snap;
+    }
     this.run = run;
     this.syncPool();
     this.placed.clear();
@@ -2312,7 +2385,8 @@ class Game {
     // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
-    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
+    // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
+    return legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) });
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -2551,6 +2625,8 @@ class Game {
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
+      // (DEPTH-BUILD: the Chapel's Vigil: how the party rises, chosen on the march card)
+      applyVigil(this.b, fallen, this.run.orders?.vigil);
       // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
       this.fx.undim();
       this.acc = 0;
@@ -3008,7 +3084,10 @@ class Game {
   private buildBench(): void {
     const bench = $('bench');
     const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
-    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    // (SEVEN-SLOT GEAR batch 5: the Pack button says how many rune merges are ready)
+    const merges = this.run.runes && this.b.phase === 'deploy' ? mergesReady(this.run.runes) : 0;
+    $('pack').textContent = merges ? `Pack · ${merges} merge${merges === 1 ? '' : 's'}` : 'Pack';
+    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};${this.run.runes ? JSON.stringify(this.run.runes.worn) + this.b.phase : ''};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -3064,6 +3143,8 @@ class Game {
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      // (SEVEN-SLOT GEAR batch 5: a rune run shows each hero's three sockets over its card, twins rimmed, on the deploy screen)
+      if (this.run.runes && !h.guest && this.b.phase === 'deploy') card.append(socketStrip(this.run.runes, h.kind));
       // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
       card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
@@ -3217,6 +3298,7 @@ class Game {
   private refresh(): void {
     const b = this.b;
     const run = this.run;
+    this.tactics.refresh(b);
     this.syncAct();
     this.syncScene();
     const n = heroesPlaced(b);
@@ -3280,7 +3362,7 @@ class Game {
       const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
       const earned = settleRun(this.meta, run, settled);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
-      toastLines(weakLines(settled.weak));
+      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
@@ -3309,7 +3391,8 @@ class Game {
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
       if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
       // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
-      const ups = own ? own.ups : gainXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench });
+      // (DEPTH-BUILD: an apprentice below half its mentor's level earns half again, `legacy.ts`)
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)
@@ -3405,7 +3488,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? (b.tactic && b.tactic.metAt === undefined ? `${stage} · ${b.tactic.kind === 'hold' ? 'Holding the line' : 'The line advances'}` : `${stage} · Fight!`) : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
@@ -3414,6 +3497,10 @@ class Game {
     const block = hireBlock(run);
     buy.textContent = block === 'bench' ? 'Bench full' : `Hire · ${summonCost(run)}`;
     buy.disabled = block !== null;
+    // (UX-FIXES: an empty deploy board says what to do: hire. Hire is the lit button until a hero is on the bench, then Fight! takes over)
+    const needHire = b.phase === 'deploy' && !run.roster.length && block === null && run.mode?.kind !== 'calamity';
+    $('hireHint').hidden = !needHire;
+    buy.classList.toggle('primary', needHire);
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
     // (DEPLOY-ZOOM: Auto merge is earned by beating the second army, Auto place the fourth, `featureUnlocks.ts`; each is told once)
@@ -3508,7 +3595,9 @@ class Game {
     // (a themed daily's featured trait leads the strip)
     const lead = this.theme()?.trait;
     const counts = countTraits(kindsOf(this.b.units)).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
-    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
+    // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot, as a Bonds chip at the end)
+    const pairs = placedPairs(this.run.bonds, kindsOf(this.b.units));
+    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join();
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
     const featured = lead;
@@ -3538,8 +3627,28 @@ class Game {
       });
       strip.append(pill);
     }
+    if (pairs.length) {
+      const pill = document.createElement('button');
+      pill.className = `trait bonds on${this.traitPick === 'bonds' ? ' picked' : ''}`;
+      const head = document.createElement('span');
+      head.className = 'thead';
+      head.textContent = `${pairs.some((p) => p.lv < 0) ? '⚔ ' : '❦ '}Bonds ${pairs.length}`;
+      const fx = document.createElement('small');
+      fx.textContent = pairs.map((p) => p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' & ')).join(', ');
+      pill.append(head, fx);
+      pill.addEventListener('click', () => {
+        this.traitPick = this.traitPick === 'bonds' ? undefined : 'bonds';
+        this.refreshTraits();
+      });
+      strip.append(pill);
+    }
     this.traitTiers = new Map(counts.map((c) => [c.trait.id, c.tier]));
     strip.dataset.drawn = '1';
+    if (this.traitPick === 'bonds' && pairs.length) {
+      hint.classList.remove('wake');
+      hint.textContent = pairs.map((p) => `${p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' and ')}, ${pairWords(p.lv)}`).join('; ');
+      return;
+    }
     const picked = counts.find((c) => c.trait.id === this.traitPick);
     const near = closestTrait(counts);
     hint.classList.toggle('wake', woke.length > 0);
@@ -3566,8 +3675,11 @@ class Game {
       card.classList.toggle('twinOn', !!twin && !(twin.tag !== undefined && canMerge(this.run, Number(id), twin.tag)));
       const mark = card.querySelector<HTMLElement>('.twinMark');
       if (mark) mark.textContent = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
-      const share = u ? u.hp / u.maxHp : 1;
+      // (SEVEN-SLOT GEAR batch 6: a hero risen at half shows its wound before the fight, with a bandage mark)
+      const wound = !u && !this.run.tower ? hpShare(this.run, Number(id)) : 1;
+      const share = u ? u.hp / u.maxHp : wound;
       (card.querySelector('i span') as HTMLElement).style.width = `${Math.round(share * 100)}%`;
+      card.classList.toggle('wounded', !u && wound < 1);
     }
   }
 

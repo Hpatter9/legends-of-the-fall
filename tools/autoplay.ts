@@ -9,7 +9,7 @@ import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { startedMeta, type Meta } from '../src/sim/meta';
-import { armyById } from '../src/sim/armies';
+import { ARMIES, armyById, armyCleared } from '../src/sim/armies';
 import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
 import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
@@ -26,7 +26,10 @@ import { squadHealth } from '../src/sim/health';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
 import { armEidolon } from '../src/sim/eidolons';
 import { orderEidolon } from '../src/sim/orders';
-import { STARTER_SPELLS, type SpellId } from '../src/sim/spells';
+import { RANK_MAX, STARTER_SPELLS, type SpellId } from '../src/sim/spells';
+import { castList, DEFAULT_SCHOOL, fitSchool, schoolOf } from '../src/sim/schools';
+import { armDecree } from '../src/sim/decrees';
+import { TOWER_SPELLS } from '../src/sim/spellSources';
 import { giveMastery, MASTERY_AUTO } from './skills/mastery';
 
 export { strengthOf };
@@ -41,17 +44,35 @@ export const botSpells: { on: boolean; loadout?: SpellId[] } = {
   loadout: typeof process !== 'undefined' && process.env?.BOT_LOADOUT ? (process.env.BOT_LOADOUT.split(',') as SpellId[]) : undefined,
 };
 /**
- * The three spells the balance tools cast at a stage of the game (the castle stands for it: what a player owns and can afford then,
- * `spell-sources.md`, `spellbook.md`). A fresh save owns only the starting three (Heal, Meteor, Haste: 8 of the 9 power), and they stay the
- * bot's choice later too: with the Mage Tower at its top (11 power, Rally taught, Resurrect and Meteor Shower earned) Heal, Meteor and
- * Resurrect, Rally or Meteor Shower measured no stronger (`docs/notes/spells-retune.md`), so a player who keeps the three is the measure.
+ * The spells the balance tools cast at a stage of the game (KING-SPELLS batch 6, `docs/notes/king-spells-b6.md`): what a player of the
+ * default ruler, the Iron Stag, has then. That is the school of Steel's slots filled from the spells known (the starting three, the school's
+ * first two, and what the castle's Mage Tower has taught), with Heal in the open slot, as `fitSchool` fits a save. (Before the schools it was
+ * Heal, Meteor and Haste at every stage: `docs/notes/spells-retune.md`.) `BOT_LOADOUT` fixes the list instead.
  */
-export function botLoadout(_castle: Castle = newCastle()): SpellId[] {
-  return [...(botSpells.loadout ?? STARTER_SPELLS)];
+export function botLoadout(castle: Castle = newCastle(), meta?: Meta): SpellId[] {
+  if (botSpells.loadout) return [...botSpells.loadout];
+  const owned = new Set<SpellId>([...STARTER_SPELLS, ...(meta?.spellbook.owned ?? [])]);
+  for (const [id, lvl] of Object.entries(TOWER_SPELLS)) if ((lvl ?? 9) <= castle.mageTower) owned.add(id as SpellId);
+  return castList(fitSchool({ owned: [...owned], equipped: [] }, DEFAULT_SCHOOL));
 }
-/** Set a fight just begun to cast the stage's spells on its own, when `botSpells` is on (the castle is the run's: it sets the stage). */
-export function maybeSpells(b: Battle, _meta: Meta, castle: Castle = newCastle()): void {
-  if (botSpells.on) b.autoSpells = botLoadout(castle);
+/** The ranks the bot's marks buy (KING-SPELLS batch 6): a mark for each Mage Tower level and each army cleared, spent a rank at a time round
+ *  the spells it casts, in order (each to rank 2, then each to rank 3). */
+export function botRanks(ids: readonly SpellId[], castle: Castle, meta?: Meta): Partial<Record<SpellId, number>> | undefined {
+  if (botSpells.loadout || !ids.length) return undefined;
+  let marks = castle.mageTower + (meta ? ARMIES.filter((a) => armyCleared(meta, a.id)).length : 0);
+  const ranks: Partial<Record<SpellId, number>> = {};
+  for (let rank = 2; rank <= RANK_MAX && marks > 0; rank++) for (const id of ids) if (marks > 0) (ranks[id] = rank), marks--;
+  return Object.keys(ranks).length ? ranks : undefined;
+}
+/** Set a fight just begun to cast the stage's spells on its own, when `botSpells` is on (the castle is the run's: it sets the stage); and,
+ *  as the page does (KING-SPELLS batches 2 and 3), arm the default ruler's Decree and put the stage's ranks on the fight. */
+export function maybeSpells(b: Battle, meta: Meta | undefined, castle: Castle = newCastle()): void {
+  if (!botSpells.on) return;
+  b.autoSpells = botLoadout(castle, meta);
+  if (botSpells.loadout) return;
+  // (BOT_DECREE=0: no Decree, to measure what it is worth)
+  if (typeof process === 'undefined' || process.env?.BOT_DECREE !== '0') armDecree(b, schoolOf(DEFAULT_SCHOOL).decree);
+  b.spells.ranks = botRanks(b.autoSpells, castle, meta);
 }
 
 /** EIDOLONS: the balance tool's `--eidolon <wave>[:<id>]` calls an Eidolon as the fight at that wave of every army attempt begins (0, the

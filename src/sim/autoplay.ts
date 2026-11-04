@@ -3,6 +3,10 @@
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
 // same run and the same board always give the same formation.
 
+import { autoRunes } from './runes';
+import { autoRemedy, packSatchel, remedyBonus } from './remedies';
+import { hpShare } from './health';
+import { legacyBoost } from './legacy';
 import { CLASS_OF } from './starter';
 import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
@@ -10,7 +14,7 @@ import { chooseOption, leaveEvent, type EventOption } from './events';
 import { levelOfKind } from './levels';
 import { heroRank, type Meta } from './meta';
 import { awakenStats } from './awaken';
-import { boostOf, equip, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
+import { boostOf, equip, isBossRun, sitsOut, squadLimit, summon, type Owned, type Run } from './run';
 import { localBoost } from './climb';
 import { guestBoost } from './guest';
 import { autoMerge } from './merge';
@@ -28,7 +32,11 @@ export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
  *  run (RUN-GEAR) the equipment its kind fights in: the lasting pieces with the run's finds in their slots, fresh (`botKitStats`). */
 export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
   const awake = awakenStats(meta, h.kind);
-  return boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake);
+  // (DEPTH-BUILD: a mentor's legacy perk from the run's snapshot, `legacy.ts`)
+  const boost = legacyBoost(run?.legacy, h.kind, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake));
+  // (SEVEN-SLOT GEAR batch 6: a hero risen at half after a won wave starts the next so, as the page's does)
+  const share = run && !run.tower ? hpShare(run, h.id) : 1;
+  return share < 1 ? { ...boost, carry: share } : boost;
 }
 
 /** Whether a kind fights from behind: it shoots, or reaches past the next tile. */
@@ -96,7 +104,9 @@ export function dressSquad(run: Run, meta?: Meta): void {
   if (isReal(run)) {
     const squad = run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !h.guest);
     if (meta) squad.sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
-    equipBestReal(run, meta, squad.map((h) => h.kind));
+    // (SEVEN-SLOT GEAR batch 4: a rune run's Auto runes, before every wave)
+    if (run.runes) autoRunes(run.runes, squad.map((h) => h.kind));
+    else equipBestReal(run, meta, squad.map((h) => h.kind));
     return;
   }
   for (let again = true; again; ) {
@@ -120,6 +130,11 @@ export function autoRound(run: Run, meta: Meta, gear = true): void {
   while (summon(run)) autoMerge(run);
   run.squad = pickSquad(run, meta).map((h) => h.id);
   if (gear) dressSquad(run, meta);
+  // (SEVEN-SLOT GEAR batch 6: with the switch on, Auto heals the wounded from the satchel: `remedies.ts`)
+  if (meta.autoRemedies && !run.over) {
+    packSatchel(meta, run);
+    autoRemedy(run, isBossRun(run), (k) => remedyBonus(meta, k));
+  }
 }
 
 /** The tiles the heroes may stand on, as `[u, v]`. Boulders are out; water and lava are left for last (`avoidTile`). */

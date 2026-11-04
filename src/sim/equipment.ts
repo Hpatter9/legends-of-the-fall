@@ -13,6 +13,8 @@ import { ALL_HEROES, UNITS } from './units';
 import { levelOfKind } from './levels';
 import type { Scores } from './stats';
 import { SET_OF_BASE, setBonus, type GearSet, type SetBonus } from './gearSets';
+import { legendStrength } from './legendRenown';
+import { GLYPHS, MAX_GLYPHS } from './glyphs';
 
 import { ABILITIES, BASE_SCORE, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, OLD_BASES, RARITY_SCORE, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
 export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
@@ -36,8 +38,9 @@ export type Quality = 'bronze' | 'silver' | 'gold';
 /** Chance of each rarity (Common to Mythic) in percent, by chest quality. */
 export const QUALITY_WEIGHTS: Readonly<Record<Quality, Readonly<Record<Rarity, number>>>> = {
   bronze: { 1: 70, 2: 25, 3: 5, 4: 0, 5: 0 },
-  silver: { 1: 30, 2: 40, 3: 22, 4: 7, 5: 1 },
-  gold: { 1: 5, 2: 25, 3: 40, 4: 24, 5: 6 },
+  // (SEVEN-SLOT GEAR's economy: gear harder to get, silver Legendary 5% and no Mythic, gold Legendary 16% and Mythic 3%)
+  silver: { 1: 30, 2: 42, 3: 23, 4: 5, 5: 0 },
+  gold: { 1: 5, 2: 28, 3: 48, 4: 16, 5: 3 },
 };
 export const MAX_ITEM_LEVEL = 20;
 /** What a main stat of each rarity is worth against a Common one (index 0 is unused). */
@@ -47,7 +50,7 @@ export const MAIN_SCALE = 0.4;
 /** SEVEN-SLOT GEAR: each slot's share of `MAIN_SCALE` for the new bases, so a whole seven-piece kit stays modest (the quiet slots give
  *  less than the hands and the torso). The 60 bases from before keep `MAIN_SCALE` alone (`OLD_BASES`), so no owned piece is weakened.
  *  Tuned by the balance pass (`npm run gear-balance`). */
-export const SLOT_SCALE: Readonly<Record<EquipSlot, number>> = { main: 1, torso: 1, off: 0.6, head: 0.45, feet: 0.45, belt: 0.45, acc: 0.6 };
+export const SLOT_SCALE: Readonly<Record<EquipSlot, number>> = { main: 0.75, torso: 0.75, off: 0.45, head: 0.34, feet: 0.34, belt: 0.34, acc: 0.45 };
 /** Each item level above the first adds this share of the level-1 stat. */
 export const LEVEL_STEP = 0.04;
 /** A piece made for the wearer's calling gives this much more of its main stats. */
@@ -93,6 +96,8 @@ export interface EquipStats {
   jump: number;
   /** The signature abilities of the worn Epic or better pieces (and a talent's, `talents.ts`). */
   abilities: ActiveAbility[];
+  /** SEVEN-SLOT GEAR: the full sets' powers and the worn legends' (`setPowers.ts`); missing is none. */
+  powers?: ActiveAbility[];
   /** The skill and passive modifiers the hero's talents add (`talents.ts` lists the keys; the skills in `abilities.ts` read them). */
   tal?: Record<string, number>;
   /** The two skills the hero kind has chosen for its slots, when not its own two in order (`books.ts`: 'own1', 'own2' or a learned
@@ -103,7 +108,7 @@ export interface EquipStats {
   /** Ability score points from the worn pieces (`BASE_SCORE`) and the talents' stat nodes (STATS batch 2; `statPower.ts` reads them). */
   scores?: Partial<Scores>;
 }
-export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'tal' | 'book' | 'skillLv' | 'scores'>;
+export type StatKey = Exclude<keyof EquipStats, 'abilities' | 'powers' | 'tal' | 'book' | 'skillLv' | 'scores'>;
 export const STAT_KEYS: readonly StatKey[] = ['atk', 'hp', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist', 'jump'];
 export const emptyStats = (): EquipStats => ({ hp: 0, atk: 0, def: 0, atkSpeed: 0, moveSpeed: 0, crit: 0, range: 0, dodge: 0, charge: 0, regen: 0, resist: 0, jump: 0, abilities: [] });
 
@@ -171,16 +176,24 @@ export interface Equipment {
   level: number;
   /** Durability points lost to wear (`wear.ts`); missing is a full piece (and every piece from before wear). */
   wear?: number;
+  /** A named legend's renown: the waves it has fought (`legends.ts`; halves under auto-replay). Missing is none. */
+  renown?: number;
+  /** SEVEN-SLOT GEAR batch 3: seasoning, the waves fought towards its next item level (`wear.ts` `seasonNeed`; halves under auto-replay). */
+  xp?: number;
+  /** Points of maximum durability lost to patches for good (`enchant.ts`; a reforge clears them). */
+  scars?: number;
+  /** The enchanting glyphs on it, up to three (`enchant.ts`). */
+  glyphs?: string[];
   /** RUN-GEAR: found in the run of this id (the run's seed) and not yet home: fresh from the field, it gives its main stats times
    *  `FIELD_BOOST` in that run, and only such a piece takes a run's upgrades (`runGear.ts`). Cleared when the run ends. */
   found?: number;
 }
-export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found'>;
+export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found' | 'renown' | 'xp' | 'scars' | 'glyphs'>;
 
 /** Durability by grade before the item level is added (index 0 is unused): Common 30 to Mythic 90 (`wear.ts`). */
 export const DUR: readonly number[] = [0, 30, 40, 55, 70, 90];
 /** A piece's full durability: its grade's and its item level. */
-export const maxDurability = (it: Pick<Equipment, 'rarity' | 'level'>): number => DUR[it.rarity] + it.level;
+export const maxDurability = (it: Pick<Equipment, 'rarity' | 'level' | 'scars'>): number => DUR[it.rarity] + it.level - (it.scars ?? 0);
 /** A piece worn to nothing is broken: it gives nothing (no stats, no ability, no set count) until it is mended (`wear.ts`). */
 export const brokenPiece = (it: Equipment): boolean => (it.wear ?? 0) >= maxDurability(it);
 
@@ -206,7 +219,13 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
   if (!base) return out;
   const k = MAIN_SCALE * (OLD_BASES.has(base.id) ? 1 : SLOT_SCALE[base.slot]) * RARITY_SCALE[it.rarity] * (1 + LEVEL_STEP * (it.level - 1)) * (kind && base.calling && base.calling === callingOf(kind) ? CALLING_BONUS : 1);
   for (const [stat, v] of Object.entries(base.main) as [MainKey, number][]) out[stat] = stat === 'range' ? Math.floor((v * (it.rarity + 1)) / 3) : stat === 'jump' ? v : v * k;
-  if (hasAbility(it.rarity)) out.abilities.push({ id: base.ability.id, name: it.rarity >= 5 ? base.mythic : base.ability.name, s: abilityScale(it.rarity, it.level) });
+  if (base.legend) {
+    // (a named legend: its power at its renown's strength, and its flat stats as they are: `legends.ts`)
+    for (const [stat, v] of Object.entries(base.legend.flat ?? {}) as [MainKey, number][]) out[stat] += v;
+    out.powers = [{ id: base.legend.power, name: base.legend.powerName, s: legendStrength((it as Equipment).renown ?? 0) }];
+  } else if (hasAbility(it.rarity)) out.abilities.push({ id: base.ability.id, name: it.rarity >= 5 ? base.mythic : base.ability.name, s: abilityScale(it.rarity, it.level) });
+  // (SEVEN-SLOT GEAR batch 3: its enchanting glyphs, each a small line of its own, not scaled by grade or level)
+  for (const g of (it as Equipment).glyphs ?? []) for (const [stat, v] of Object.entries(GLYPHS[g]?.main ?? {}) as [MainKey, number][]) out[stat] += v;
   // (and its ability score, by its base and rarity: STATS batch 2)
   const score = BASE_SCORE[it.base];
   const points = RARITY_SCORE[it.rarity] ?? 0;
@@ -217,6 +236,7 @@ export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipSta
 export function addStats(a: EquipStats, b: EquipStats): EquipStats {
   for (const k of STAT_KEYS) a[k] += b[k] ?? 0;
   a.abilities.push(...b.abilities);
+  if (b.powers?.length) a.powers = [...(a.powers ?? []), ...b.powers.filter((p) => !a.powers?.some((x) => x.id === p.id))];
   if (b.scores) {
     const s: Partial<Scores> = { ...a.scores };
     for (const [k, v] of Object.entries(b.scores) as [keyof Scores, number][]) s[k] = (s[k] ?? 0) + v;
@@ -245,6 +265,7 @@ export function equipStats(m: Meta, kind: string): EquipStats | undefined {
 export function addSetBonus(total: EquipStats, bases: readonly string[], bonus: SetBonus = setBonus(bases)): EquipStats {
   for (const [k, v] of Object.entries(bonus.stats) as [MainKey, number][]) total[k] += v;
   for (const a of bonus.abilities) if (!total.abilities.some((x) => x.id === a.id)) total.abilities.push({ id: a.id, name: a.name, s: a.s });
+  for (const p of bonus.powers) if (!total.powers?.some((x) => x.id === p.id)) (total.powers ??= []).push({ ...p });
   return total;
 }
 
@@ -350,7 +371,8 @@ export function sellPrice(it: Equipment): number {
 /** Turn a spare item into crowns. Returns the crowns (0, and nothing changes, when it is worn or not owned). */
 export function salvageItem(m: Meta, id: number): number {
   const i = spareEquipment(m).findIndex((x) => x.id === id);
-  if (i < 0) return 0;
+  // (a named legend is never sold: a save holds its one copy for good)
+  if (i < 0 || EQUIP_BASES[spareEquipment(m)[i].base]?.legend) return 0;
   const it = spareEquipment(m)[i];
   m.equipment = m.equipment!.filter((x) => x.id !== id);
   const n = sellPrice(it);
@@ -379,7 +401,7 @@ export interface CombineGroup {
 export function combineGroups(m: Meta): CombineGroup[] {
   const groups = new Map<string, CombineGroup>();
   for (const it of spareEquipment(m)) {
-    if (!canCombineGrade(it.rarity)) continue;
+    if (!canCombineGrade(it.rarity) || EQUIP_BASES[it.base]?.legend) continue;
     const key = `${it.base}:${it.rarity}`;
     const g = groups.get(key) ?? { base: it.base, rarity: it.rarity, items: [] };
     g.items.push(it);
@@ -502,6 +524,18 @@ export function readEquipment(raw: unknown): Equipment[] {
       // (wear from `wear.ts`: points lost, in quarters (the quiet slots wear at half), never more than the piece's durability; missing is full)
       const wear = Number(x.wear);
       if (Number.isFinite(wear) && wear > 0) made.wear = Math.min(maxDurability(made), Math.round(wear * 4) / 4);
+      const renown = Number(x.renown);
+      if (Number.isFinite(renown) && renown > 0) made.renown = Math.round(renown * 2) / 2;
+      // (SEVEN-SLOT GEAR batch 3: seasoning, scars and glyphs; a save from before has none)
+      const xp = Number(x.xp);
+      if (Number.isFinite(xp) && xp > 0) made.xp = Math.round(xp * 2) / 2;
+      const scars = Math.floor(Number(x.scars));
+      if (Number.isFinite(scars) && scars > 0) made.scars = Math.min(scars, Math.floor((DUR[rarity] + level) / 3));
+      if (Array.isArray(x.glyphs)) {
+        const glyphs = x.glyphs.filter((g): g is string => typeof g === 'string' && !!GLYPHS[g]).slice(0, MAX_GLYPHS);
+        if (glyphs.length) made.glyphs = glyphs;
+      }
+      if (made.wear !== undefined) made.wear = Math.min(maxDurability(made), made.wear);
       out.push(made);
     }
   return out;

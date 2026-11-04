@@ -19,7 +19,7 @@
 
 import { standable, tileAt } from './board';
 import { apart, defOf, unitAt, type Battle, type Unit } from './battle';
-import { canAfford, castSpell, cooldownLeft, fallenIn, HEAL_SHARE, kingMight, MANA_MAX, RENEWAL_MS, RENEWAL_SHARE, SHOWER_SPOTS, SMITE_POWER, SPELLS, type SpellId } from './spells';
+import { canAfford, castSpell, cooldownLeft, fallenFoesIn, fallenIn, HEAL_SHARE, kingMight, MANA_MAX, RENEWAL_MS, RENEWAL_SHARE, SHOWER_SPOTS, SMITE_POWER, SPELLS, type SpellId } from './spells';
 import { CHARGE_MAX } from './abilities';
 import { hasAil, isFrozen } from './ailments';
 import { ELITE_FOES } from './eliteFoes';
@@ -49,7 +49,7 @@ export const BUFF_HEROES = 3;
 export const CRY_BELOW = 0.5;
 
 /** The spells that save a hero; the others hurt the foes or raise the heroes. */
-const HELP: ReadonlySet<SpellId> = new Set(['heal', 'renewal', 'shield', 'bulwark', 'cleanse', 'resurrect', 'blink']);
+const HELP: ReadonlySet<SpellId> = new Set(['heal', 'renewal', 'shield', 'bulwark', 'cleanse', 'resurrect', 'blink', 'foresight', 'drain']);
 
 /** A spell to cast, and where. */
 export interface AutoPick {
@@ -226,6 +226,77 @@ function pickFor(b: Battle, id: SpellId, heroes: Unit[], foes: Unit[]): AutoPick
         for (let dv = -1; dv <= 1; dv++) for (let du = -1; du <= 1; du++) if (standable(tileAt(b.board, p.u + du, p.v + dv)) && !unitAt(b, p.u + du, p.v + dv)) room++;
         return room ? worthy.filter((f) => apart(f, p) <= 3).length * 10 + Math.min(room, 2) : 0;
       });
+      return top && { id, u: top.u, v: top.v };
+    }
+    // (KING-SPELLS batch 4: the schools' new spells)
+    case 'shatter':
+    case 'firewall': {
+      // (on the thickest pack at the heroes; Shatter likes its foes frozen or chilled, counted twice)
+      const top = best(centres(b, worthy), (p) => {
+        const hit = worthy.filter((f) => at3(f, p.u, p.v) && engaged(f, heroes));
+        const n = crowd(hit.length, hit.some(isBig), hit.some(isElite));
+        return n && id === 'shatter' ? n + hit.filter((f) => isFrozen(b, f) || hasAil(f, 'chill', b.t)).length : n;
+      });
+      return top && { id, u: top.u, v: top.v };
+    }
+    case 'gale':
+    case 'snare': {
+      const top = area((f) => engaged(f, heroes));
+      return top && { id, u: top.u, v: top.v };
+    }
+    case 'icewall':
+    case 'bonewall': {
+      // (a wall across the way of two foes or more still on their way: halfway between them and the nearest hero)
+      const coming = worthy.filter((f) => !engaged(f, heroes) && heroes.some((h) => apart(f, h) <= 5));
+      if (coming.length < AREA_CROWD) return;
+      const fu = Math.round(coming.reduce((n, f) => n + f.u, 0) / coming.length);
+      const fv = Math.round(coming.reduce((n, f) => n + f.v, 0) / coming.length);
+      const h = [...heroes].sort((x, y) => apart(x, { u: fu, v: fv }) - apart(y, { u: fu, v: fv }) || x.id - y.id)[0];
+      const at = { u: Math.round((fu + h.u) / 2), v: Math.round((fv + h.v) / 2) };
+      return tileAt(b.board, at.u, at.v) ? { id, u: at.u, v: at.v } : undefined;
+    }
+    case 'thunderclap': {
+      const beside = worthy.filter((f) => heroes.some((h) => apart(h, f) <= 1));
+      return crowd(beside.length, beside.some(isBig), beside.some(isElite)) ? { id, u: 0, v: 0 } : undefined;
+    }
+    case 'sunbeam': {
+      let row: { u: number; v: number; s: number } | undefined;
+      for (let v = 0; v < b.board.d; v++) {
+        const hit = worthy.filter((f) => f.v === v);
+        const s = crowd(hit.length, hit.some(isBig), hit.some(isElite));
+        if (s > 0 && (!row || s > row.s)) row = { u: hit[0].u, v, s };
+      }
+      return row && { id, u: row.u, v: row.v };
+    }
+    case 'charm':
+    case 'venom': {
+      const pool = worthy.filter((f) => engaged(f, heroes) && (id !== 'charm' || (!isBig(f) && share(f) > 0.5)));
+      const x = pool.sort((f, g) => Number(isBig(g)) - Number(isBig(f)) || g.hp - f.hp || f.id - g.id)[0];
+      return x && { id, u: x.u, v: x.v };
+    }
+    case 'drain': {
+      // (a help spell: when a hero is hurt and a foe worth the bite is at the heroes)
+      if (!heroes.some((h) => share(h) < hurtLine(b, h))) return;
+      const x = worthy.filter((f) => engaged(f, heroes)).sort((f, g) => g.hp - f.hp || f.id - g.id)[0];
+      return x && { id, u: x.u, v: x.v };
+    }
+    case 'foresight': {
+      const top = best(centres(b, heroes), (p) => heroes.filter((x) => at3(x, p.u, p.v) && share(x) < DYING && engaged(x, foes)).length);
+      return top && { id, u: top.u, v: top.v };
+    }
+    case 'mirage': {
+      if (worthy.length < CROWD && !boss) return;
+      const top = best(centres(b, inFight), (p) => {
+        let room = 0;
+        for (let dv = -1; dv <= 1; dv++) for (let du = -1; du <= 1; du++) if (standable(tileAt(b.board, p.u + du, p.v + dv)) && !unitAt(b, p.u + du, p.v + dv)) room++;
+        return room ? worthy.filter((f) => apart(f, p) <= 2).length * 10 + Math.min(room, 2) : 0;
+      });
+      return top && top.s >= 20 ? { id, u: top.u, v: top.v } : undefined;
+    }
+    case 'raisedead': {
+      if (!worthy.length) return;
+      const dead = b.units.filter((x) => !x.alive && x.side === 'foe');
+      const top = best(centres(b, dead), (p) => fallenFoesIn(b, p.u, p.v).length);
       return top && { id, u: top.u, v: top.v };
     }
     case 'haste':

@@ -60,6 +60,43 @@ async function pack(spec) {
     for (const p of points) { const x = p % info.width, y = Math.floor(p / info.width); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
     const w = x1 - x0 + 1, h = y1 - y0 + 1, raw = Buffer.alloc(w * h * 4);
     for (const p of points) { const d = ((Math.floor(p / info.width) - y0) * w + p % info.width - x0) * 4; data.copy(raw, d, p * 4, p * 4 + 3); raw[d + 3] = 255; }
+    // Restore tiny enclosed interior pinholes (<= 8 px) keyed out by background removal
+    const ext = new Uint8Array(w * h), q = [];
+    for (let x = 0; x < w; x++) {
+      if (!raw[x * 4 + 3]) { ext[x] = 1; q.push(x); }
+      const b = (h - 1) * w + x;
+      if (!raw[b * 4 + 3]) { ext[b] = 1; q.push(b); }
+    }
+    for (let y = 0; y < h; y++) {
+      const l = y * w, r = y * w + w - 1;
+      if (!raw[l * 4 + 3] && !ext[l]) { ext[l] = 1; q.push(l); }
+      if (!raw[r * 4 + 3] && !ext[r]) { ext[r] = 1; q.push(r); }
+    }
+    while (q.length) {
+      const at = q.pop(), cx = at % w, cy = Math.floor(at / w);
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        const nx = cx + dx, ny = cy + dy, next = ny * w + nx;
+        if (nx >= 0 && nx < w && ny >= 0 && ny < h && !raw[next * 4 + 3] && !ext[next]) { ext[next] = 1; q.push(next); }
+      }
+    }
+    const vis = new Uint8Array(w * h);
+    for (let s = 0; s < w * h; s++) {
+      if (raw[s * 4 + 3] || ext[s] || vis[s]) continue;
+      const hole = [s]; vis[s] = 1;
+      for (let k = 0; k < hole.length; k++) {
+        const cx = hole[k] % w, cy = Math.floor(hole[k] / w);
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          const nx = cx + dx, ny = cy + dy, next = ny * w + nx;
+          if (nx >= 0 && nx < w && ny >= 0 && ny < h && !raw[next * 4 + 3] && !ext[next] && !vis[next]) { vis[next] = 1; hole.push(next); }
+        }
+      }
+      if (hole.length <= 8) {
+        for (const idx of hole) {
+          const sx = x0 + idx % w, sy = y0 + Math.floor(idx / w), sp = (sy * info.width + sx) * 4;
+          data.copy(raw, idx * 4, sp, sp + 3); raw[idx * 4 + 3] = 255;
+        }
+      }
+    }
     return { raw, w, h, x0, y0, row: Math.floor(i / 8), col: i % 8 };
   });
   if (extra) {

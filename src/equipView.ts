@@ -25,6 +25,9 @@ import { icon } from './menuArt';
 import { play } from './render/sound';
 import { portrait } from './render/sheets';
 import { takeGearNote } from './sim/gearMigrate';
+import { GLYPHS, patchBlock, patchCost, patchItem } from './sim/enchant';
+import { SEASON_CAP, seasonNeed } from './sim/wear';
+import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -133,8 +136,30 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt)
   // (its durability: SHOP-BOOKS-GEAR, `wear.ts`)
   const state = wearState(it);
   card.append(el('small', `eqDurLine ${state}`, `Durability ${Math.ceil(durabilityOf(it))}/${maxDurability(it)}${state === 'broken' ? ' · Broken: gives nothing until mended' : state === 'worn' ? ' · Worn' : ''}`));
+  // (SEVEN-SLOT GEAR batch 3: its seasoning towards the next item level, its patches' scars and its glyphs)
+  if (!base.legend) {
+    const cap = SEASON_CAP[it.rarity];
+    const line = el('small', 'eqSeason', it.level >= cap ? `Seasoned to its cap: Lv ${cap}` : `Seasoning ${Math.floor(it.xp ?? 0)}/${seasonNeed(it.level)} waves · Lv ${it.level} (cap ${cap})`);
+    if (it.level < cap) {
+      const bar = el('i', 'eqSeasonBar');
+      const fill = el('b');
+      fill.style.width = `${Math.round(((it.xp ?? 0) / seasonNeed(it.level)) * 100)}%`;
+      bar.append(fill);
+      line.prepend(bar);
+    }
+    card.append(line);
+  }
+  if (it.scars) card.append(el('small', 'eqDim', `Patched: ${it.scars} durability lost for good (a reforge at Hester's clears it)`));
+  for (const g of it.glyphs ?? []) card.append(el('small', 'eqGlyph', `${GLYPHS[g].name} glyph: ${GLYPHS[g].text}`));
   const sig = stats.abilities[0];
-  if (sig) card.append(el('p', 'eqAffix', `${sig.name}: ${describeAbility(base.ability, sig.s)}`));
+  if (base.legend) {
+    // (a named legend: its power at its renown, and how far its story has opened: `legends.ts`)
+    const renown = it.renown ?? 0;
+    const next = nextVerseAt(renown);
+    card.append(el('p', 'eqAffix', `Legend · ${base.legend.powerName}: ${base.legend.text}${renown || stats.powers?.[0]?.s !== 1 ? ` (x${Math.round((stats.powers?.[0]?.s ?? 1) * 100) / 100} by renown)` : ''}`));
+    card.append(el('small', 'eqDim', `Renown ${Math.floor(renown)} waves${next !== null ? ` · the next verse at ${next}` : ' · every verse told'}`));
+    card.append(el('small', 'eqVerse', base.legend.verses[versesOpen(renown) - 1]));
+  } else if (sig) card.append(el('p', 'eqAffix', `${sig.name}: ${describeAbility(base.ability, sig.s)}`));
   else if (!hasAbility(it.rarity)) card.append(el('small', 'eqDim', `Epic and up: ${base.ability.name}`));
   if (base.calling && base.calling === callingOf(kind)) card.append(el('p', 'eqSuit', `Suits ${CALLING_NAMES[base.calling]}: more of its stats`));
   else if (base.calling) card.append(el('small', 'eqDim', `Made for ${CALLING_NAMES[base.calling]}`));
@@ -190,6 +215,9 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       const it = meta.equipment?.find((x) => x.id === id);
       return it ? itemName(it) : 'a piece';
     });
+    // (and any named legend just found: `legends.ts`)
+    claimLegends(meta);
+    notes.push(...takeLegendNews(meta));
     if (notes.length) {
       for (const line of notes) panel.append(el('p', 'eqNote', line));
       saveMeta(meta);
@@ -311,7 +339,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
   };
 
   /** Mend a piece here, at the stall's price (it counts for standing as a repair at the stall does). */
-  const repairButton = (it: Equipment, then: () => void): HTMLButtonElement => {
+  const repairButton = (it: Equipment, then: () => void): HTMLElement => {
     const cost = repairCost(it, meta.castle.armoury);
     const b = el('button', 'eqRepair');
     b.type = 'button';
@@ -323,7 +351,22 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       commit();
       then();
     });
-    return b;
+    // (SEVEN-SLOT GEAR batch 3: or a patch, here at camp: cheaper, but it scars the piece for good)
+    if (patchBlock(it)) return b;
+    const pc = patchCost(it, meta.castle.armoury);
+    const p = el('button', 'eqRepair');
+    p.type = 'button';
+    p.append(`Patch · ${pc}`);
+    p.disabled = meta.crowns < pc;
+    p.addEventListener('click', () => {
+      if (!patchItem(meta, it.id)) return;
+      play('coin');
+      commit();
+      then();
+    });
+    const both = el('div', 'eqMend');
+    both.append(b, p, el('small', 'eqDim', 'A patch mends to 60% for less, but costs 2 durability for good.'));
+    return both;
   };
 
   const picker = (slot: EquipSlot) => {
@@ -367,7 +410,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       });
       // (Sell took Salvage's place: the same crowns for a full piece, less for a worn one; an Epic or the last of a base asks first, by a
       // second tap; the piece waits on the stall's Sold today shelf until midnight)
-      const sell = el('button', '', `Sell +${sellPrice(it)}`);
+      const sell = el('button', 'eqSell', `Sell +${sellPrice(it)}`);
       sell.type = 'button';
       let sure = !sellAsks(meta, it);
       sell.addEventListener('click', () => {
@@ -382,16 +425,18 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
         commit();
         picker(slot);
       });
-      btns.append(on, sell);
+      // (a named legend is never sold: the save keeps its one copy)
+      btns.append(...(EQUIP_BASES[it.base].legend ? [on] : [on, sell]));
       if (it.wear) btns.append(repairButton(it, () => picker(slot)));
       row.append(btns);
       list.append(row);
     }
     panel.append(list);
-    const back = el('button', '', 'Back');
+    // (UX-FIXES: the way back from a slot's pieces is "‹ Back" at the top, so the sheet's own Back below is the only one at the foot)
+    const back = el('button', 'eqBack', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
-    panel.append(back);
+    panel.querySelector('h4')?.before(back);
   };
 
   overview();

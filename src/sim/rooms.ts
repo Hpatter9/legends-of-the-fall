@@ -46,7 +46,7 @@ export const ROOMS: readonly Room[] = [
   R('archive', 'library', 4, 'Archive', 'Every boss weakness clue you find is written in full at once.', '📜'),
   R('scriptorium', 'library', 5, 'Scriptorium', 'Read a book to a hero of another calling, at three quarters of its strength.', '🖋'),
   R('vigil', 'chapel', 2, 'Vigil', 'Choose how the party rises when a heart burns: Shielded, Swift or Cleansed.', '🕯'),
-  R('lastRites', 'chapel', 3, 'Last Rites', 'Once a run, the first hero to fall in a wave rises at a quarter of health.', '✝'),
+  R('lastRites', 'chapel', 3, 'Last Rites', 'Once a run, the first hero to fall in a wave rises at 15% of health after 10 s.', '✝'),
   R('lookout', 'watchtower', 1, 'Lookout', 'Opens the Scouted march: see the final boss and every wave\'s foes before they come.', '👁'),
   R('nightWatch', 'watchtower', 2, 'Night Watch', 'Opens the Night march: shorter shots below the heights, a moonlit chest.', '🌙'),
   R('farSight', 'watchtower', 3, 'Far Sight', 'Opens the roads on the march card; the card after each wave names the next foes.', '🧭'),

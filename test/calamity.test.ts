@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { foundOf } from './helpers';
 import { autoMerge, canMerge, mergeReady } from '../src/sim/merge';
 import assert from 'node:assert/strict';
 import { fight, place, playOut, type Battle } from '../src/sim/battle';
@@ -158,7 +159,7 @@ test('a climb finds gear in its plain fights (from its own stream), more than an
       enterNode(run, choices(run)[0].id);
       const b = playNode(run);
       finishTower(run, b, true);
-      n += (run.items?.length ?? 0) + (run.pack?.length ?? 0);
+      n += (run.items?.length ?? 0) + foundOf(run).length;
     }
     return n;
   };
@@ -596,7 +597,7 @@ test('a mini-boss pays a relic to choose, gear, and double gold', () => {
   const floor = run.stage;
   finishTower(run, playNode(run), true);
   assert.ok(run.tower!.offer && run.tower!.offer.length >= 1, 'a relic to choose');
-  assert.ok((run.pack?.length ?? 0) >= 1, 'gear');
+  assert.ok(foundOf(run).length >= 1, 'gear');
   assert.ok(run.gold - gold >= 2 * (20 + 6 * floor) * 0.9, 'double gold');
 });
 
@@ -855,7 +856,7 @@ test('the whispering void well: drink deep for attack buff or toss gold for reli
   const cost = run2.event.options[1].cost;
   chooseOption(run2, 1);
   assert.equal(run2.gold, 60 - cost);
-  assert.equal(run2.pack?.length, 1);
+  assert.equal(foundOf(run2).length, 1);
 });
 
 test('an event\'s blessing waits for the next fight: clearing the mystery floor does not spend it, the fight does', () => {

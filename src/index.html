@@ -829,7 +829,7 @@
   <div id="traits"></div><div id="traitHint"></div>
   <div id="relics" hidden></div>
   <div id="benchWrap"><button id="mergeAll" hidden>Auto merge</button><div id="bench"></div><div id="recycleZone" hidden><svg viewBox="0 0 12 14" width="18" height="21" aria-hidden="true"><path d="M1 3h10v1H1zM4 0h4v2H4zM2 5h8l-1 9H3z" fill="currentColor"/></svg><b>Recycle</b><span id="recycleGold"></span></div></div>
-  <div id="buttons"><button id="summon">Hire</button><button id="pack">Pack</button><button id="auto" title="Place the heroes for me"><svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" fill="currentColor"/></svg>Auto</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="buttons"><div id="hireHint" hidden role="status">Hire to start: your five are the pool you hire from. Tap Hire below to put two on the board.</div><button id="summon">Hire</button><button id="pack">Pack</button><button id="auto" title="Place the heroes for me"><svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" fill="currentColor"/></svg>Auto</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
@@ -847,8 +847,8 @@
   <div class="row"><button id="qbLeave" hidden>Leave</button><button id="next" class="primary">Next stage</button></div>
 </div>
 <div id="recap" hidden></div>
-<div id="ask" hidden><div class="asumCard"><p id="askText"></p><div class="row"><button id="askNo">Keep</button><button id="askYes" class="primary">Recycle</button></div></div></div>
-<div id="autoSum" hidden><div class="asumCard"><h2></h2><p class="asumWhy"></p><div class="asumRows"></div><button id="asumOk" class="primary">To the armies</button></div></div>
+<div id="ask" hidden><div class="asumCard askCard"><div class="cardHeader"><span class="cardEyebrow">ROYAL DISPATCH</span><h2 class="cardTitle">Dismiss from Ranks</h2></div><div class="cardDivider" aria-hidden="true"></div><div class="cardContent"><p id="askText"></p></div><div class="row dialogActions"><button id="askNo" type="button">Retain Hero</button><button id="askYes" type="button" class="primary btnDanger">Recycle for Gold</button></div></div></div>
+<div id="autoSum" hidden><div class="asumCard autoSumCard"><div class="cardHeader"><span class="cardEyebrow">CAMPAIGN DISPATCH</span><h2></h2><p class="asumWhy"></p></div><div class="cardDivider" aria-hidden="true"></div><div class="asumRows"></div><button id="asumOk" type="button" class="primary">Return to Armies</button></div></div>
 <div id="gacha" hidden>
   <header><div class="summonHeading"><small>THE SUMMONING SANCTUM</small><h2>Summoning Sanctum</h2></div><span id="crowns"></span></header>
   <div class="gachaBody">
@@ -896,10 +896,10 @@
   <div id="ptSheet" hidden><div id="ptSheetBox"></div></div>
 </div>
 <div id="settings" hidden>
-  <header><h2>Settings</h2><button id="settingsClose">Close</button></header>
+  <header><div class="settingsTitleWrap"><small class="settingsEyebrow">ROYAL DECREES &amp; ARCHIVES</small><h2>Settings</h2></div><button id="settingsClose">Close</button></header>
   <div id="settingsBody"></div>
 </div>
-<div id="tip" hidden><p id="tipText"></p><div class="tipRow"><button id="tipSkip">Skip tutorial</button><button id="tipGot" class="primary">Got it</button></div><i></i></div>
+<div id="tip" hidden><div class="tipCrest"><span class="tipEyebrow">✦ ROYAL COUNSEL ✦</span></div><p id="tipText"></p><div class="tipRow"><button id="tipSkip">Skip tutorial</button><button id="tipGot" class="primary">Got it</button></div><i></i></div>
 <div id="loading" role="status" aria-label="Preparing the keep" aria-live="polite">
   <div class="ldScene" aria-hidden="true"><div class="ldArt"></div><div class="ldBeacon"></div><div class="ldMist far"></div><div class="ldMist"></div></div>
   <div class="ldShade" aria-hidden="true"></div>
@@ -907,7 +907,7 @@
   <h1 class="ldTitle">Legends<small>of the Last Keep</small></h1>
   <div class="ldFooter"><p class="ldLine">Preparing the keep&hellip;</p><div class="ldBar" aria-hidden="true"><i></i></div><p class="ldTip">Your heroes are gathering. The keep awaits.</p></div>
 </div>
-<div id="turnUp"><b>Turn your phone upright</b><span>Legends of the Last Keep is played upright.</span></div>
+<div id="turnUp"><div class="turnUpMedallion" aria-hidden="true"><div class="turnUpIcon"></div></div><b>Stand Upright</b><span>Legends of the Last Keep demands portrait orientation.</span></div>
 <div id="version">Version __VERSION__</div>
 <script src="game.js"></script>
 </body>

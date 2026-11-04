@@ -30,6 +30,7 @@ import { BOSS, canJoin, FOE_START, ownHeroes, relicCtx, reward, spendBuff, squad
 import { UNITS } from './units';
 import { CAL_BOARD, CAL_MAPS, CAL_OPENING, CAL_SCALE, calBossBoost, fitBand, squadFoeMult } from './calamity';
 import { calBossBand } from './calamityBosses';
+import { boonFoes, crossroadsAfter, landAt, type Journey } from './calJourney';
 import { ascChests, ascCrowns, ascOf, ascRules, ascCleared } from './ascension';
 import { CALAMITY_XP, CLIMB_XP, calXpShare, fightXpByHero, gainRunXp, heroLevel, hireable, hireHero, ownsKind, promoteByLevel, type Promotion } from './climb';
 import { xpRate } from './castle';
@@ -232,6 +233,8 @@ export interface TowerState {
   rows?: number[];
   /** A finite climb (a calamity): the number of maps; the last boss's fall clears the run. The endless tower has none. */
   maps?: number;
+  /** DEPTH-BUILD: the Calamity's journey (`calJourney.ts`): the route chosen at the crossroads, a crossroads waiting, the boon taken. */
+  journey?: Journey;
   /** Foes' strength on a floor: `start` x (1 + `growth` x (floor - 1)); the tower's own when absent. */
   scale?: { start: number; growth: number; step?: number };
   /** The player ended the run by starting over (it was not lost). */
@@ -559,7 +562,7 @@ function plainSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fi
   const spec = baseSpec(run, kind, floor, nodeId);
   if (run.mode?.kind !== 'calamity') return spec;
   // (a calamity's foes follow the party: fewer for a lone hero, stronger once it is more than five)
-  const more = squadFoeMult(run.roster.length) * (run.rift ? [1, 1.35, 1.8][run.tower!.act - 1] : 1);
+  const more = squadFoeMult(run.roster.length) * (run.rift ? [1, 1.35, 1.8][run.tower!.act - 1] : 1) * boonFoes(run.tower!.journey, run.tower!.act);
   const rules = ascRules(ascOf(run));
   spec.band = fitBand(spec.band, run.roster.length, kind === 'boss');
   // (and the fight is on a bigger board)
@@ -581,7 +584,8 @@ function baseSpec(run: Run, kind: NodeKind, floor: number, nodeId?: number): Fig
   if (kind === 'boss' && run.tower?.maps) {
     // (a calamity's bosses: one of its own per map, each bigger than the last; the map's twist adds a mechanic from the second on)
     const map = run.rift ? RIFT_BOSSES[run.tower.act - 1] : run.tower.act;
-    return { band: calBossBand(map), stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map, ascRules(ascOf(run)).phaseAt, ascRules(ascOf(run)).bossShield), area } };
+    // (DEPTH-BUILD: the guardian is the journey's at this act, `calJourney.ts`; its strength stays the act's)
+    return { band: calBossBand(run.rift ? landAt(run.tower.journey, run.tower.act) : map), stage: { foes: { hp: k, atk: k }, boss: calBossBoost(map, ascRules(ascOf(run)).phaseAt, ascRules(ascOf(run)).bossShield), area } };
   }
   if (kind === 'boss') return { band: [...FOE_BANDS[BOSS_BANDS[((run.tower?.act ?? actOf(floor)) - 1) % BOSS_BANDS.length]]], stage: { foes: { hp: k, atk: k }, boss: BOSS, area } };
   // (a named elite waits at an elite node; a call without a node keeps the plain elite band)
@@ -811,6 +815,11 @@ export function clearNode(run: Run): void {
     return;
   }
   if (cur.kind === 'boss') {
+    // (DEPTH-BUILD: after Acts I and II of a Calamity, the crossroads: a land to cross next, then a boon)
+    if (run.mode?.kind === 'calamity' && run.rift && t.maps) {
+      const cross = crossroadsAfter(run.seed, t.journey, t.act, t.maps);
+      if (cross) (t.journey ??= {}).cross = cross;
+    }
     t.act++;
     t.bosses++;
     t.map = mapFor(run, t.act);

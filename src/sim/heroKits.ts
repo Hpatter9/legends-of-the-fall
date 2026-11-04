@@ -321,7 +321,8 @@ export function canPay(b: Battle, u: Unit, hk: HeroKit, n: number): boolean {
 /** A hero's cooldown on a skill: the slot's (its class's and its skill level's), 2% shorter a point of INT against the roster's mean, at most
  *  10% either way (STATS batch 6, `statRest.ts`), and never moved out of its class's range. */
 export function cdOf(u: Unit, slot: Slot): number {
-  const k = cooldownOf(u);
+  // (DEPTH-BUILD: a bond or a rivalry within two tiles, `bonds.ts`)
+  const k = cooldownOf(u) * (u.bondCd ?? 1);
   if (k === 1) return slot.cd;
   const [lo, hi] = CLASS_RANGE[slot.cls].cd;
   return Math.max(Math.min(lo, slot.cd), Math.min(Math.max(hi, slot.cd), slot.cd * k));

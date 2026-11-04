@@ -20,11 +20,14 @@ import { heroName } from './sim/heroNames';
 import { saveMeta, type Meta } from './sim/meta';
 import {
   STANDINGS, STANDING_LINES, bookSellPrice, bulkCommons, buyBack, buyWare, copiesLeft, hesterLine, markSeen, sellAllCommons, sellAsks, sellBook, sellPiece, soldToday, stallRepair,
-  stallRepairAll, standingOf, stockOf, toNextStanding, whyNotBuy, type StallTab, type Ware,
+  stallRepairAll, stallReforge, stallEnchant, standingOf, stockOf, toNextStanding, whyNotBuy, type StallTab, type Ware,
 } from './sim/stall';
 import { TOMES } from './sim/tomes';
 import { TRADER_NAMES, buyFromTrader, caravanHere, gloamingHere, oreWareName, stockOfTrader, tradeLeft, traderLine, whyNotBuyFrom, type TradeWare, type Trader } from './sim/traders';
 import { durabilityOf, maxDurability, needingRepair, repairAllCost, repairCost, wearState } from './sim/wear';
+import { REMEDIES } from './sim/remedies';
+import { REMEDY_ICON } from './remedyArt';
+import { GLYPHS, REFORGE_STANDING, clearGlyphs, enchantOffers, glyphPrice, patchBlock, patchCost, patchItem, reforgeCost } from './sim/enchant';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -41,7 +44,7 @@ const img = (src: string, cls = '', alt = ''): HTMLImageElement => {
 };
 
 type AnyTab = StallTab | Trader;
-const TAB_NAMES: Record<AnyTab, string> = { books: 'Books', gear: 'Gear', tomes: 'Tomes', chests: 'Chests', sell: 'Sell', repair: 'Repair', caravan: TRADER_NAMES.caravan.tab, gloaming: TRADER_NAMES.gloaming.tab };
+const TAB_NAMES: Record<AnyTab, string> = { books: 'Books', gear: 'Gear', tomes: 'Tomes', chests: 'Chests', sell: 'Sell', repair: 'Repair', enchant: 'Enchant', caravan: TRADER_NAMES.caravan.tab, gloaming: TRADER_NAMES.gloaming.tab };
 const TAB_ICON: Record<AnyTab, () => string> = {
   caravan: () => shopArt('caravan-master'),
   gloaming: () => shopArt('gloaming-dealer'),
@@ -51,11 +54,13 @@ const TAB_ICON: Record<AnyTab, () => string> = {
   chests: () => shopArt('coin-purse'),
   sell: () => shopArt('sell'),
   repair: () => shopArt('repair'),
+  // (until the glyph stones are painted: docs/notes/gear-art-todo.md)
+  enchant: () => shopArt('book-universal-rare'),
 };
 /** Repair all asks first above this many crowns. */
 const ASK_OVER = 500;
 
-const STALL_TAB_LIST: readonly StallTab[] = ['books', 'gear', 'tomes', 'chests', 'sell', 'repair'];
+const STALL_TAB_LIST: readonly StallTab[] = ['books', 'gear', 'tomes', 'chests', 'sell', 'repair', 'enchant'];
 const KIND_PLURAL: Record<BookDef['kind'], string> = { manual: 'Manuals', grimoire: 'Grimoires', hymnal: 'Hymnals', bestiary: 'Bestiaries', universal: 'Universal books' };
 
 type SellFilter = 'all' | 'common' | 'rare' | 'epic' | 'books';
@@ -146,6 +151,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     else if (tab === 'books' || tab === 'gear' || tab === 'tomes') shelfTab(body, day);
     else if (tab === 'chests') body.append(...chestShopCards(m, changed, draw));
     else if (tab === 'sell') sellTab(body, day);
+    else if (tab === 'enchant') enchantTab(body, day);
     else repairTab(body, day);
     root.replaceChildren(head, scene, tabs, body);
   };
@@ -166,11 +172,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       return i;
     }
     const box = el('span', 'hsTome');
-    box.append(img(TOME_ICON[w.size]));
+    box.append(img(w.type === 'remedy' ? REMEDY_ICON[w.remedy] : TOME_ICON[w.size]));
     box.style.width = box.style.height = `${px}px`;
     return box;
   };
-  const wareName = (w: Ware | TradeWare): string => (w.type === 'ore' ? oreWareName(w) : w.type === 'book' ? bookById(w.book)!.title : w.type === 'gear' ? itemName(w.item) : TOMES[w.size].name);
+  const wareName = (w: Ware | TradeWare): string => (w.type === 'ore' ? oreWareName(w) : w.type === 'book' ? bookById(w.book)!.title : w.type === 'gear' ? itemName(w.item) : w.type === 'remedy' ? REMEDIES[w.remedy].name : TOMES[w.size].name);
 
   const shelfTab = (body: HTMLElement, day: number): void => {
     const st = stockOf(m, day);
@@ -256,6 +262,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       sheet.append(el('p', 'hsLine', hasAbility(it.rarity) ? `${stats.abilities[0]?.name}: ${describeAbility(base.ability, stats.abilities[0]?.s ?? 1)}` : `Epic and up: ${base.ability.name}`));
       sheet.append(el('p', 'hsLine', `Durability ${maxDurability(it)}: it loses a point for each wave it is worn in.`));
     } else if (w.type === 'tome') sheet.append(el('p', 'hsLine', `${TOMES[w.size].xp.toLocaleString('en-GB')} XP for one hero, read from its page.`));
+    else if (w.type === 'remedy') sheet.append(el('p', 'hsLine', `A remedy: ${REMEDIES[w.remedy].text}, used between waves from the run's pack. You own ${m.satchel?.[w.remedy] ?? 0}; a run takes up to five (one Elixir), chosen on the party screen.`));
     const why = trader ? whyNotBuyFrom(m, trader, w as TradeWare, todayKey()) : whyNotBuy(m, w as Ware, todayKey());
     const buy = el('button', 'hsBuy');
     buy.append(icon(ICONS.crowns, ''), `Buy · ${w.price}`);
@@ -273,7 +280,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       if (!got) return;
       play('coin');
       close();
-      after(got.type === 'book' ? 'Mind the spine. It bites.' : got.type === 'gear' ? 'Sharp end goes at the enemy. You’d be amazed.' : 'Don’t read it all at once.');
+      after(got.type === 'book' ? 'Mind the spine. It bites.' : got.type === 'gear' ? 'Sharp end goes at the enemy. You’d be amazed.' : got.type === 'remedy' ? 'Tastes awful. Works, though.' : 'Don’t read it all at once.');
     });
     const shut = el('button', 'hsShut', 'Close');
     shut.addEventListener('click', close);
@@ -454,7 +461,85 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
         play('coin');
         after(hesterLine(m, day + it.id, 'repair'));
       });
-      row.append(face, itemIcon(it, EQUIP_BASES[it.base].slot, 'small'), words, b);
+      // (SEVEN-SLOT GEAR batch 3: or a patch, cheaper but scarring; and the scars reforged away from standing 2)
+      const btns = el('div', 'hsBtns');
+      btns.append(b);
+      if (!patchBlock(it)) {
+        const p = el('button', 'hsSell');
+        const pc = patchCost(it, m.castle.armoury);
+        p.append(`Patch · ${pc}`);
+        p.title = 'Back to 60%, but 2 points of durability lost for good';
+        p.disabled = m.crowns < pc;
+        p.addEventListener('click', () => {
+          if (!patchItem(m, it.id)) return;
+          play('coin');
+          after('A patch. It’ll hold. Mostly.');
+        });
+        btns.append(p);
+      }
+      if (it.scars) words.append(el('small', 'hsCond worn', `Scarred: ${it.scars} durability lost to patches`));
+      if (it.scars && standingOf(m) >= REFORGE_STANDING) {
+        const r = el('button', 'hsSell');
+        const rc = reforgeCost(it, m.castle.armoury);
+        r.append(`Reforge · ${rc}`);
+        r.disabled = m.crowns < rc;
+        r.addEventListener('click', () => {
+          if (!stallReforge(m, it.id, day)) return;
+          play('coin');
+          after('Melted, hammered, quenched. Not a stitch left.');
+        });
+        btns.append(r);
+      }
+      row.append(face, itemIcon(it, EQUIP_BASES[it.base].slot, 'small'), words, btns);
+      list.append(row);
+    }
+    body.append(list);
+  };
+
+  /** SEVEN-SLOT GEAR batch 3: the Enchant tab. Each piece (the heroes' first, then the spares, the best first) with its glyphs, the three
+   *  glyphs offered for its next and their price, and Clear; each glyph wears the piece faster and makes its repairs dearer. */
+  const enchantTab = (body: HTMLElement, day: number): void => {
+    body.append(el('p', 'hsNote', 'A glyph adds a small line. Up to three a piece; each wears it a fifth faster and makes its repairs a quarter dearer. Clearing is free; the crowns are not returned.'));
+    const pieces = (m.equipment ?? [])
+      .filter((x) => !EQUIP_BASES[x.base]?.legend)
+      .sort((a, b) => Number(wearerOf(m, b.id) !== undefined) - Number(wearerOf(m, a.id) !== undefined) || b.rarity - a.rarity || b.level - a.level || a.id - b.id)
+      .slice(0, 40);
+    if (!pieces.length) {
+      body.append(el('p', 'hsEmpty', '“Bring me something worth the ink.”'));
+      return;
+    }
+    const list = el('div', 'hsList');
+    for (const it of pieces) {
+      const who = wearerOf(m, it.id);
+      const row = el('div', `hsRow hsEnchant r${it.rarity}`);
+      const words = el('div', 'hsRowWords');
+      words.append(el('b', '', itemName(it)), el('small', '', `${who ? `${heroName(who)} · ` : 'spare · '}${RARITY_NAMES[it.rarity]} Lv ${it.level}`));
+      for (const g of it.glyphs ?? []) words.append(el('small', 'hsGlyph', `${GLYPHS[g].name}: ${GLYPHS[g].text}`));
+      const btns = el('div', 'hsBtns');
+      const price = glyphPrice(it);
+      if (price !== null)
+        for (const g of enchantOffers(m, it)) {
+          const b = el('button', 'hsSell');
+          b.append(`${g.name} · ${price}`);
+          b.title = g.text;
+          b.disabled = m.crowns < price;
+          b.addEventListener('click', () => {
+            if (!stallEnchant(m, it.id, g.id, day)) return;
+            play('coin');
+            after(hesterLine(m, day + it.id, 'enchant'));
+          });
+          btns.append(b);
+        }
+      if (it.glyphs?.length) {
+        const c = el('button', 'hsSell');
+        c.append('Clear');
+        c.addEventListener('click', () => {
+          if (!clearGlyphs(m, it.id)) return;
+          after('Wiped clean. You paid for the ink, mind.');
+        });
+        btns.append(c);
+      }
+      row.append(itemIcon(it, EQUIP_BASES[it.base].slot, 'small'), words, btns);
       list.append(row);
     }
     body.append(list);

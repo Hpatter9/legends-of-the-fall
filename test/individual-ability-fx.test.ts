@@ -16,7 +16,8 @@ test('every actual hero, ultimate, enemy skill and king spell has individual aut
   const names = new Set(Object.values(KITS).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
   assert.equal(names.size, 108);
   const expected = [...names].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
-  assert.equal(expected.length, 129);
+  // (108 skills and ultimates and the king's 35 spells: KING-SPELLS batch 5 painted the schools' fourteen, docs/notes/king-spells-b5.md)
+  assert.equal(expected.length, 143);
   assert.deepEqual(Object.keys(ABILITY_LOOKS).sort(), expected.sort());
   assert.equal(new Set(ABILITY_ART.map(row => row.id)).size, expected.length);
   assert.equal(new Set(ABILITY_ART.map(row => abilitySource(row.id))).size, expected.length, 'different names must resolve to different source cells');
