@@ -47,3 +47,12 @@ The owner's calls: #1 one title sequence, then straight into wave 1; #12 one clo
 - #21 The Last Stand picker shows the eight as a strip of portraits above the pool, with portraits and a tick on the picked. (Not screenshotted: the picker would not open in my harness.)
 
 Not done: #19 (the ten-card summon grouping), the quips off the HUD and headings, a defeat card with Retry / Change party, #17's three-up headline (it stacks).
+
+## Batch 3
+
+- #19 The ten-card summon: a new hero is a large card (two to a row, 120 px art) at the top; the repeats follow as small cards in the grid below; when two or
+  more repeats turned into crowns, one line under the cards says "N × already at top rank → M crowns" and their cards carry no text of their own.
+  Bar labels are 11 px.
+- Quips (`quipView.ts`): a bubble that would cover the top bar, the fight's hero rows or the starter pick's heading is moved to the nearest clear spot
+  (below the bar, or above the rows). Not screenshotted: a bubble is random and short-lived.
+- The Last Stand picker's screenshot (`after-laststand-393.png`): the strip of eight portraits, the pool with portraits and ticks.

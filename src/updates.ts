@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.357.0',
+    date: '2026-11-04',
+    title: 'Clearer ten-card summons',
+    notes: ['A ten-card summon shows new heroes large and repeats small, with crowns summed in one line. Hero quips no longer cover the HUD.'],
+  },
+  {
     version: '0.356.0',
     date: '2026-11-04',
     title: 'Cleaner screens and a quicker start',
