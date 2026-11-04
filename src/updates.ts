@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.356.0',
+    date: '2026-11-04',
+    title: 'Cleaner screens and a quicker start',
+    notes: ['A new game goes straight to wave 1. Bigger fight HUD, 44 px buttons, fewer badges, pop-ups that queue instead of stacking, clearer wave losses.', 'Sell asks twice; pages say Back and cards say Close; bigger films; tidier Castle, stall and hero pages.'],
+  },
+  {
     version: '0.355.0',
     date: '2026-11-04',
     title: 'Calamity provisions, Sparring Yard',
