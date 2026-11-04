@@ -31,10 +31,10 @@ export interface Tier {
 
 export const TIERS: readonly Tier[] = [
   { id: 'normal', name: 'Normal', need: 0, stars: 3, hp: 1, atk: 1, speed: 1, pay: 1, xp: 1 },
-  { id: 'hard', name: 'Hard', need: 3, stars: 3, hp: 1.75, atk: 1.45, speed: 1.05, answer: 1.18, pay: 1.6, xp: 1.5 }, // (SPELLS-RETUNE: answer 1.18, new, for the king's spells Auto casts, `docs/notes/spells-retune.md`; its XP is taken back out)
-  { id: 'elite', name: 'Elite', need: 6, stars: 3, hp: 2.6, atk: 1.95, speed: 1.1, extra: 1, answer: 1.18, pay: 2.5, xp: 2.2 }, // (SPELLS-RETUNE: answer 1.18, new)
-  { id: 'legendary', name: 'Legendary', need: 9, stars: 1, hp: 3.4, atk: 2.5, speed: 1.15, extra: 1, answer: 3.3, pay: 4, xp: 3.5 }, // (SPELLS-RETUNE: answer 2.8 to 3.3, x1.18 for the spells Auto casts)
-  { id: 'mythic', name: 'Mythic', need: 10, stars: 1, hp: 4.6, atk: 3.2, speed: 1.2, extra: 2, phaseAt: 0.6, surge: 1.2, answer: 3.26, pay: 7, xp: 6 }, // (SPELLS-RETUNE: answer 2.76 to 3.26, x1.18 for the spells Auto casts, `docs/notes/spells-retune.md`; LATE-RETUNE: answer 2.6 until two of a kind merged, MERGE-TWO, and every army's Mythic came sooner; its XP is taken back out as before)
+  { id: 'hard', name: 'Hard', need: 3, stars: 3, hp: 1.75, atk: 1.45, speed: 1.05, answer: 1.3, pay: 1.6, xp: 1.5 }, // (KING-SPELLS batch 6: answer 1.18 to 1.3, x1.1 on every tier above Normal for the default ruler's player, `docs/notes/king-spells-b6.md`) (SPELLS-RETUNE: answer 1.18, new, for the king's spells Auto casts, `docs/notes/spells-retune.md`; its XP is taken back out)
+  { id: 'elite', name: 'Elite', need: 6, stars: 3, hp: 2.6, atk: 1.95, speed: 1.1, extra: 1, answer: 1.3, pay: 2.5, xp: 2.2 }, // (SPELLS-RETUNE: answer 1.18, new)
+  { id: 'legendary', name: 'Legendary', need: 9, stars: 1, hp: 3.4, atk: 2.5, speed: 1.15, extra: 1, answer: 3.63, pay: 4, xp: 3.5 }, // (SPELLS-RETUNE: answer 2.8 to 3.3, x1.18 for the spells Auto casts)
+  { id: 'mythic', name: 'Mythic', need: 10, stars: 1, hp: 4.6, atk: 3.2, speed: 1.2, extra: 2, phaseAt: 0.6, surge: 1.2, answer: 3.59, pay: 7, xp: 6 }, // (SPELLS-RETUNE: answer 2.76 to 3.26, x1.18 for the spells Auto casts, `docs/notes/spells-retune.md`; LATE-RETUNE: answer 2.6 until two of a kind merged, MERGE-TWO, and every army's Mythic came sooner; its XP is taken back out as before)
 ];
 /** The most stars an army holds. */
 export const ARMY_STARS = TIERS.reduce((n, t) => n + t.stars, 0);

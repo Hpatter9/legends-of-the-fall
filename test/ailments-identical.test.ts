@@ -82,6 +82,8 @@ import { WEAK } from '../src/sim/weakness';
 // with the foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
 // (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again, now 81e830d7: it casts each king's spell once, and the
 // schools added fourteen. No other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` (e9ae0ef6) and `stand` (601f2e37) alone: `DAILY_START` 0.785 to 0.8
+// and `HALL_EASE` 1.2 to 1.3, constants, retuned for the default ruler's player; every other scenario keeps its hash.)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };
