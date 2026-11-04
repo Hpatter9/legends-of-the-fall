@@ -69,7 +69,8 @@ test('a killing blow adds the foe\'s worth to the killer\'s XP', () => {
   const b = startBattle(3);
   const h = addUnit(b, 'knight', 0, 8, {}, 1);
   const foe = addUnit(b, 'skeleton', 0, 7, {});
-  hurt(b, h, foe, foe.hp, false, false, []);
+  // (a blow twice its health: the skeleton's Bone Shield turns an eighth of a blow from the front, FOE-STYLES)
+  hurt(b, h, foe, foe.hp * 2, false, false, []);
   assert.equal(foe.alive, false);
   assert.equal(h.kills, 1);
   assert.ok(Math.abs((h.slain ?? 0) - killXp(foe)) < 1e-9);

@@ -42,7 +42,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   kitsune: 0.586,
   karasu: 0.36, // (RPG-SPELLS batch 7: 0.4 before; striking from behind made Swoop +4 at level 1) (TACTICS: 0.24 to 0.36, his held opener, parity under Advance together, docs/notes/tactics.md)
   yamabushi: 0.431,
-  werewolf: 0.85, // (the joint rebalance: 0.787 to 0.85, Vuk's own kit lifted so the Old Hunger is less of a lift for him, his ultimate trimmed to keep his level-30 parity, docs/notes/joint-rebalance.md)
+  werewolf: 0.65, // (the joint rebalance: 0.787 to 0.85, Vuk's own kit lifted so the Old Hunger is less of a lift for him, his ultimate trimmed to keep his level-30 parity, docs/notes/joint-rebalance.md) (TACTICS batch 6: 0.85 to 0.65, his held Pounce, docs/notes/tactics.md)
   minotaur: 0.438, // (RPG-SPELLS batch 7: 0.45 before; he was -5.7 at level 10 on main)
   satyr: 0.096,
   gorgon: 0.55, // (the joint rebalance: 0.343 to 0.55, level-1 and level-10 parity, docs/notes/joint-rebalance.md)
@@ -373,10 +373,10 @@ export function HERO_TABLE(): Record<string, HeroKit> {
       role: 'An alchemist: draughts for friends, firebrew for foes, an elixir for the fallen',
     },
     lightningMage: M('lightningMage', sk('Storm Surge', 'With a foe beside her she first blinks to the safest tile within 3; then every Charged foe discharges: hurt, stunned for 0.8s, and the bolt arcs to a foe beside it', 700, 'attack', stormSurge, 'Overload'), 'A storm marker: lightning that marks, then sets the marks off', { onHit: charge }),
-    kitsune: M('kitsune', sk('Alter Self', 'She blinks in fox-fire beside the strongest foe in sight and takes its shape for 15s (it carries into the next wave): its looks, reach and attack; foes pick her last', 600, 'attack', alterSelf, 'Fox Guise'), 'A shapeshifter: charms a foe, or wears its shape', {}, {}),
+    kitsune: M('kitsune', sk('Alter Self', 'She blinks in fox-fire beside the strongest foe in sight and takes its shape for 6s (it carries into the next wave): its looks, reach and attack; foes pick her last', 600, 'attack', alterSelf, 'Fox Guise'), 'A shapeshifter: charms a foe, or wears its shape', {}, {}),
     karasu: S('karasu', sk('Pilfer', 'Dives on the foe with the fullest skill meter, steals half its charge and any shield, and silences it for 1.5s; friends near him gain pool', 450, 'attack', pilfer), 'A thief: dives on the back line and robs it'),
     yamabushi: S('yamabushi', sk('Wind Wall', 'A wall of wind 3 tiles long in front of the friends a shooter is aiming at, for 4s: shots through it fly back at the shooter for half', 500, 'attack', windWall, 'Turning Wind'), 'A reflector: wind that shoves foes and turns arrows'),
-    werewolf: S('werewolf', sk('Shapechange', 'Changes form for 40s, wave to wave: the Hunter (quicker, bites bleed) or the Brute (takes a quarter less, blows splash); Brute when badly hurt or crowded', 400, 'attack', shift, 'Shift'), 'A shapeshifter: a hunting wolf and a great brute'),
+    werewolf: S('werewolf', sk('Shapechange', 'Changes form for 25s, wave to wave: the Hunter (quicker, bites bleed) or the Brute (takes a quarter less, blows splash); Brute when badly hurt or crowded', 400, 'attack', shift, 'Shift'), 'A shapeshifter: a hunting wolf and a great brute'),
     minotaur: S('minotaur', sk('Bull Rush', 'Every foe beside him is struck and shoved two tiles; one that hits something is stunned for 1.5s', 550, 'attack', bullRush), 'A bulldozer: slams foes into walls and each other'),
     satyr: M('satyr', sk('Irresistible Dance', 'The foes within 4 dance towards one spot ahead of him for 2s, bunched and not striking', 600, 'attack', piedPiper, 'Pied Piper'), 'A lure: pipes that hasten friends and gather foes', {}),
     gorgon: M('gorgon', sk('Flesh to Stone', 'Every stunned or slowed foe within 5 turns to stone for 3s; one that dies as stone stays as a statue', 700, 'attack', stoneGarden, 'Stone Garden'), 'A petrifier: stone foes that stay as statues'),

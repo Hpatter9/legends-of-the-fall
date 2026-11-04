@@ -408,6 +408,10 @@ export class Fx {
       else if (e.kind === 'frenzy') {
         const by = this.sprites.get(e.by);
         if (by) this.label(`Frenzy x${e.n}`, by.x, by.y - by.tall - 20, 0xff6b4a, 12, 700);
+      } else if (e.kind === 'style') {
+        // (FOE-STYLES: a foe's way of fighting showing, a charge's blow)
+        const by = this.sprites.get(e.by);
+        if (by) this.label(e.what, by.x, by.y - by.tall - 20, 0xffb070, 12, 700);
       } else if (e.kind === 'gaze') {
         const to = this.sprites.get(e.to);
         if (to) {

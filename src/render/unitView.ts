@@ -20,7 +20,7 @@ function lookScale(sheet: string, own: number): number {
   }
   return lookScales.get(sheet)!;
 }
-import { CHARGE_MAX, kitOf, ultimateOf } from '../sim/abilities';
+import { CHARGE_MAX, hasSkill, kitOf, ultimateOf } from '../sim/abilities';
 import { poolOf } from '../sim/heroKits';
 import { RENEW_AT, timerOf } from '../sim/carry';
 import { at, depth, facesRight, facesAway, HH } from './iso';
@@ -619,7 +619,7 @@ export class UnitSprite {
     const u = this.unit;
     const g = this.bar;
     const share = u.hp / u.maxHp;
-    if (!kitOf(u)) {
+    if (!hasSkill(kitOf(u)) && !poolOf(u)) {
       const key = alive ? `${Math.round(share * BAR_W)}${u.side === 'hero' && share <= 0.35 ? 'l' : ''}` : '';
       if (key === this.barKey) return;
       this.barKey = key;
@@ -646,7 +646,8 @@ export class UnitSprite {
     }
     // the skill's charge, a thin bar under it (gold and pulsing when full)
     const kit = kitOf(u);
-    if (kit) {
+    // (a common foe's kit has no skill, only its passive and its way of moving: no charge to show, FOE-STYLES)
+    if (kit && hasSkill(kit)) {
       const full = u.charge >= kit.skill.need;
       const c = Math.min(1, u.charge / CHARGE_MAX);
       g.rect(-BAR_W / 2 - 1, top + 5, BAR_W + 2, 4).fill({ color: 0x1a1410, alpha: 0.85 });

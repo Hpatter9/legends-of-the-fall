@@ -201,3 +201,76 @@ shape, and they do not reach it. That is a question for the owner (below).
    first blows of a charge land harder)? Recommended: give it an edge against bands that shoot, so it is the counter the design meant.
 3. **Level 10's Kitsune and Werewolf** sit 7 to 9 points over the roster there (no test holds level 10). Trim them in their own kits now?
    Recommended: yes, by their Alter Self's and Shapechange's own numbers, measured at levels 10 and 30.
+
+## Batch 6: Charge's edge, the formations' tuning, and the level-10 trims (the owner's answers)
+
+The owner took the three recommendations of batch 5: a tuning pass for the formations, a real edge for Charge, and the level-10 Kitsune and
+Werewolf trimmed by their own kits. Built on main 0.347.0 (runes, the half-health return). Every figure below: `node tools/tactics/run.mjs`,
+random teams placed with care, about 600 fights a band (5,400 a cell); the parity rows the hero sweep, 12,000 fights.
+
+### Charge's edge (`CHARGE` in `tactics.ts`)
+
+A charging party marches 20% faster for its first 6 s, and each hero's first landed blow **on a foe that shoots** is +60% (`chargeMove`,
+`chargeBlow`; from the fight's start under Charge, from the call under the player's Charge!, which now carries the edge too). `TACTICS.edge`
+off plays the old Charge (the "as before the tactics" proofs). A first cut, +30% on any foe and 25% faster, made Charge the best pick
+overall (+4 at level 1), so the blow was narrowed to shooters and raised:
+
+| Won: Advance / Charge | Level 1 | Level 10 | Level 30 |
+|---|---|---|---|
+| Overall | 62.1 / 62.9 | 46.8 / 46.6 | 69.4 / 67.4 |
+| Gorgons (they shoot) | 68.3 / **78.0** | 43.7 / **54.2** | 59.8 / **63.5** |
+| Ogres (slow brutes) | 74.2 / 69.7 | 61.7 / 55.8 | 76.3 / 69.5 |
+| Minotaurs | 62.8 / 59.5 | 64.3 / 62.3 | 88.8 / 84.3 |
+
+So Charge is now the counter the design meant: about level overall, +4 to +10 against a band that shoots, -2 to -7 against slow brutes.
+
+### The formations, tuned (`FORM` in `formations.ts`)
+
+| | Batch 4 | Now |
+|---|---|---|
+| Shield Wall | +1 AC | +1 AC and a fifth less from melee blows (`WALL_MELEE`), while a friend of the wall stands beside |
+| Spearhead | march +15%, the tip's first blow +20% | march +30% for 6 s, the first blow of the tip and of each wing +50% |
+| Hollow Square | the back-liner's guard | and +2 AC for the square's heroes while two friends stand round them |
+| Skirmish | splash -20% | splash halved, and the foes' skills -30% |
+
+Won, level 10, Advance and the shape against loose (formations off, placed with care): Shield Wall 47.8% against 46.8% (minotaurs +4.0,
+the mixed band +3.7, ogres +0.1); Hollow Square 48.5% (minotaurs +4.0, orcs +3.8); Skirmish 43.1% (worse against every field band: they
+bring few blasts; it is for the bosses and armies that do); Spearhead with Charge 44.3% against Charge loose 46.6% (it adds nothing over
+Charge's own edge). At level 1 the wall and square are +1.8 overall, at level 30 -0.8 and +0.7. So the wall and the square are now small
+real gains, a counter to the minotaurs worth about +4 at level 10, but **not the +3 to +5 against every army the design asked for**: a
+careful placing already stands the front-liners side by side, so the baseline has most of a wall, and the arranged shapes lose the
+placing's own sense. The bonuses were left here rather than raised until a shape is a must; the formations count only where Auto place is
+open, so no pace record moved.
+
+### The advice (`tacticAdvice.ts`)
+
+Two in five or more shoot: **Charge** (a warning on Hold). Three in five or more are slow brutes (400 health or more, a step of 900 ms or
+more: the minotaurs, the ogres): **Advance behind a Shield Wall** (no wall without two front-liners; a warning on Charge). Else Advance. The
+sheet's words for Charge and the formations say their new numbers.
+
+### The level-10 trims
+
+| | Before | Now |
+|---|---|---|
+| The Kitsune's Alter Self | 15 s, the copied attack up to x1.3 | 6 s, up to x1.1 (`TIMER.alterSelf`, `GUISE_CAP`) |
+| The Werewolf's Shapechange | 40 s | 25 s (`TIMER.wolfForm`) |
+| The Werewolf's Pounce (`TUNE1`) | 0.85 | 0.65 |
+
+(The Hunter's quickness did not move him at level 10; his lift was his Pounce, held, and the form he takes before he meets the foe.)
+
+| Parity | Level 1, stage 5 | Level 10, stage 27 | Level 30, stage 92 |
+|---|---|---|---|
+| Average, spread | 58.2%, 10.6 | 43.6%, 11.3 | 61.6%, 11.0 |
+| Kitsune, Werewolf | -0.9, +1.0 | +5.8, +5.1 | +0.8, +2.2 |
+| Beyond 6 | none | none | none |
+
+### Records and tests
+
+- `ailments-identical` (field1, field30, bosses, spells) and `spells-identity` (field1, field30, bosses, spells, heroes1, heroes10, heroes30)
+  re-recorded: the Kitsune's and Werewolf's kits, and Charge's edge where a scenario charges.
+- `test/tactics.test.ts`: Charge's edge (the march, the first blow on a shooter once, none on a foe that does not shoot, none for the foes,
+  none with the switch off) and the player's Charge! carrying it; `test/formations.test.ts`: the wall's melee guard, the square's AC, the
+  skirmish's guard against skills, the wings' first blow; `test/tactic-advice.test.ts`: the three cases and the two warnings.
+- **Merged over FOE-STYLES (main 0.351.0)**: the blow keeps main's `rush` and `gangOf` with Charge's edge. The Great Sage fell to -6.6 at
+  level 30 (stage 92); his Arcane Surge (pools and shields, so its `power` moves nothing) now fills faster, `rate` 1.7 to 2.1: -5.2, and no
+  hero beyond 6 (average 63.2%, spread 11.1). `ailment-logs` and `spells-identity` re-recorded from the tests' own output.

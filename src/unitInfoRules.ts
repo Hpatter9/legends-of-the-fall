@@ -8,7 +8,7 @@
 
 import { timerOf } from './sim/carry';
 import { addUnit, atkOf, defenceOf, type Battle, type Boost, type Unit } from './sim/battle';
-import { kitOf, KITS, type Kit, type Passive, type Skill } from './sim/abilities';
+import { hasSkill, kitOf, KITS, type Kit, type Passive, type Skill } from './sim/abilities';
 import { heroKitOf, resOf, topOf, ULT_FILL } from './sim/heroKits';
 import { PHASE2, PHASE_AT, type PhaseKit } from './sim/bossPhases';
 import { BOSS_IDS } from './sim/foes';
@@ -159,7 +159,8 @@ function kitMoves(kit: Kit | undefined): MoveInfo[] {
     ],
     tiers: [],
   });
-  const out = [one('Skill', kit.skill)];
+  // (a common foe has no skill, only its passive and its way of moving, FOE-STYLES)
+  const out = hasSkill(kit) ? [one('Skill', kit.skill)] : [];
   if (kit.ultimate) out.push(one('Ultimate', kit.ultimate));
   out.push(passiveMove(kit.passive));
   return out;

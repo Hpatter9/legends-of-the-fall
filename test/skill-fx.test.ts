@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { KITS, keyOf } from '../src/sim/abilities';
+import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
 import { SKILL_FX, SPELL_FX } from '../src/render/skillFx';
 
 test('every hero and foe skill has an effect of its own', () => {
-  for (const kit of Object.values(KITS)) {
+  // (FOE-STYLES: a common foe's kit has no skill)
+  for (const kit of Object.values(KITS).filter(hasSkill)) {
     const fx = SKILL_FX[keyOf(kit.skill)];
     assert.ok(fx, `no effect for ${keyOf(kit.skill)}`);
     assert.ok(fx.cast || fx.hit, `${keyOf(kit.skill)} shows nothing`);
