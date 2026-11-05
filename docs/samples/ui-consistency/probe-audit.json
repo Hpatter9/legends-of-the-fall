@@ -1,0 +1,35 @@
+{
+ "card-hall": {
+  "small": [],
+  "tiny": [
+   "p.hint \"Where retired heroes sta\" 10px",
+   "p.hint \"Level 3 opens the Third \" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "stall-books": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "card-barracks": {
+  "small": [
+   "select \"KnightSamuraiKunoichiArc\" 149x19",
+   "select \"KnightSamuraiKunoichiArc\" 149x19"
+  ],
+  "tiny": [
+   "p.hint \"Beds and a training yard\" 10px",
+   "p.hint \"Each level: +6% hp for e\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ }
+}

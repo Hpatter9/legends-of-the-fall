@@ -1991,3 +1991,68 @@ body #spellbook h2 {
 .twTitleBox { flex: 1 1 auto; min-width: 0; }
 .twCloseBtn { flex: none; }
 
+/* UI-CONSISTENCY batch 3: the march card (and the Lectern and Anvil, which share it) as the sheet's ornate card, its orders as rows
+   with the gilded choice; the daily's theme block rimmed like the other cards; the pack's section labels in brass; the hero sheet's foot
+   Back the plain secondary every other Back is; and the last small print and short buttons up to 11 px and 44 px. */
+body #marchCard { background: radial-gradient(circle at 50% 80%, rgba(16, 20, 15, 0.7), rgba(5, 7, 5, 0.9)); }
+body #marchCard .mcBox {
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  border: var(--ornate-border-double);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: var(--ornate-shadow);
+}
+body #marchCard h3 {
+  font: 400 22px var(--display);
+  color: var(--ornate-brass);
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(219, 193, 139, 0.25);
+}
+body #marchCard .mcSub { color: #c4ba9f; }
+body #marchCard .mcVigilHead, body #marchCard .mcSub + .mcGrid { position: relative; }
+body #marchCard .mcVigilHead { padding-top: 10px; border-top: 1px solid rgba(156, 132, 84, 0.45); font-family: var(--display); color: var(--ornate-brass); font-size: 13px; }
+body #marchCard .mcTile {
+  border: 1px solid #6b5c40;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+body #marchCard .mcTile b { font-family: var(--display); color: var(--ornate-brass); font-size: 14px; }
+body #marchCard .mcTile small { color: #c4ba9f; }
+body #marchCard .mcTile small.mcPay { color: #9fe39a; }
+body #marchCard .mcTile.on {
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 12px rgba(219, 193, 139, 0.3);
+}
+body #marchCard .mcTile.on b { color: var(--ornate-brass-hi); }
+body #marchCard .mcNote { color: #e6dcc4; }
+body #marchCard .mcReport { border: 1px solid #4a3e29; border-radius: 4px; background: #0f130ecc; box-shadow: var(--ornate-well); }
+body #marchCard .mcReport .mcWeak { color: var(--ornate-brass-hi); }
+
+/* the daily's theme block: the double brass rim; the day's heroes in brass frames */
+.dayTheme {
+  border: var(--ornate-border-double);
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  box-shadow: var(--ornate-shadow);
+}
+.dtHead b { color: var(--ornate-brass); }
+.dtHero { border: 1px solid var(--ornate-brass-mid); border-radius: 3px; }
+.dtHero.feat { border-color: var(--ornate-brass-hi); box-shadow: 0 0 8px rgba(219, 193, 139, 0.45); }
+.dayPrize { border-radius: 6px; }
+
+/* the pack: its section labels ("The bag", "Remedies") as brass headings */
+.rnHead, .evcard.pack .rmHead { font: 400 14px var(--display); color: var(--ornate-brass); letter-spacing: 0.04em; margin-top: 4px; }
+.rnWords small { font-size: 11px; }
+
+/* the hero sheet's foot: Back as the plain secondary button, full width */
+.heroFootBack { width: 100%; min-height: 48px; font-size: 15px; border: 1px solid var(--ornate-brass-mid); }
+
+/* the hero sheet's toolbar: Next upgrade and Use tome at 44 px */
+.heroNextUp, .tomeUse { min-height: 44px; }
+/* the War Council's eyebrow and its heroes' info marks: 11 px (the info mark keeps its round shape, its tap area the hero's card) */
+#party .ptEyebrow, #party header small, .ptHead small { font-size: 11px; }
+#party .ptInfo { width: 20px; height: 20px; font-size: 13px; line-height: 20px; }
+/* the army picker's small labels ("Rift ores") at 11 px */
+.asOres small, .asOre small { font-size: 11px; }
