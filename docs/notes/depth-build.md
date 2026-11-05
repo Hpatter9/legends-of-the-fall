@@ -243,3 +243,13 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   Highlands" (`routesOf`, `Orders.route`); the run is then fought on that land (`Run.area`, which `chainOf` already honoured). Without a road
   the seed picks the land as before. The land changes the ground (water, grass, lava ...) and the weather, not the foes.
 - Tests: `test/march.test.ts`. Shot: `node tools/depth/shots.mjs march` (now with the Vigil and the road rows).
+
+## Batch 12: the Spell Lectern
+
+- **Spell Lectern** (Mage Tower 3; `src/sim/lectern.ts`): the march card offers the spells the save knows and has not equipped
+  (`spareChoices`); the one taken is the run's spare (`Orders.spare`). After the mid-boss's wave is won, the Lectern sheet offers to swap it
+  in for one equipped spell (`lecternSwap`, which keeps the loadout's own rules: a school's spell in a school slot or the open slot, any
+  other in the open slot), or to keep the loadout; once a run (`Orders.spareUsed`). The swap changes the save's loadout, as the spellbook
+  does. The design's "within the power budget": the budget went when the schools came, so the slot rules stand in for it. Not in an auto
+  replay.
+- Tests: `test/lectern.test.ts`.

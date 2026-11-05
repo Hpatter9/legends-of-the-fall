@@ -98,7 +98,8 @@ import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
-import { showMarchCard } from './marchCard';
+import { showLectern, showMarchCard } from './marchCard';
+import { lecternDue, lecternSwap } from './sim/lectern';
 import { applyVigil } from './sim/chapelRooms';
 import { journeyBoost, landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
@@ -3392,6 +3393,15 @@ class Game {
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
       if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
+      // (DEPTH-BUILD: the Mage Tower's Spell Lectern, at the camp after the mid-boss: swap the run's spare spell in, once)
+      const spare = run.orders?.spare as SpellId | undefined;
+      if (won && army && army.waves[stage - 1]?.boss === 'mid' && !this.auto && lecternDue(spare, run.orders?.spareUsed, true) && roomOpen(run.castle, 'spellLectern'))
+        showLectern(this.meta, spare!, (out) => {
+          run.orders!.spareUsed = true;
+          if (out) lecternSwap(this.meta.spellbook, spare!, out, this.meta.spellbook.school);
+          saveMeta(this.meta);
+          saveRun(run);
+        });
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
       // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)

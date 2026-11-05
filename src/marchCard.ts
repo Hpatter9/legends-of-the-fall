@@ -11,6 +11,9 @@ import { SIGNATURES } from './sim/bossAttacks';
 import { bossName, cluesOf, WEAKNESS } from './sim/weakness';
 import type { Meta } from './sim/meta';
 import { roomOpen } from './sim/rooms';
+import { spareChoices } from './sim/lectern';
+import { castList } from './sim/schools';
+import { SPELLS, type SpellId } from './sim/spells';
 import { VIGILS, VIGIL_IDS, type VigilId } from './sim/chapelRooms';
 
 const CSS = `
@@ -43,13 +46,15 @@ let styled = false;
 
 /** Whether the card has anything to choose: some modifier other than the plain march is open. */
 export function marchChoice(meta: Meta, army: string, tier: number): boolean {
-  return vigilOpen(meta) || roadsOf(meta, army).length > 0 || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
+  return vigilOpen(meta) || spares(meta).length > 0 || roadsOf(meta, army).length > 0 || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
 }
 /** The Watchtower's Far Sight: the army's roads, one a land. */
 const roadsOf = (meta: Meta, army: string): Area[] => {
   const a = armyById(army);
   return a ? routesOf(landsOf(a), meta.castle) : [];
 };
+/** The Mage Tower's Spell Lectern: the spells the run could carry spare. */
+const spares = (meta: Meta): SpellId[] => (roomOpen(meta.castle, 'spellLectern') ? spareChoices(meta.spellbook) : []);
 /** The Chapel's Vigil is chosen on the card too, once its room stands. */
 const vigilOpen = (meta: Meta): boolean => roomOpen(meta.castle, 'vigil', meta.chapel);
 
@@ -83,9 +88,11 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
   let vigil: VigilId | undefined = vigilOpen(meta) ? 'shielded' : undefined;
   const roads = roadsOf(meta, army);
   let road: Area | undefined = roads[0];
+  const spareList = spares(meta);
+  let spare: SpellId | undefined = spareList[0];
   const done = (orders: Orders | undefined) => {
     wrap.remove();
-    const o = { ...(orders ?? {}), ...(vigil ? { vigil } : {}), ...(road ? { route: road } : {}) };
+    const o = { ...(orders ?? {}), ...(vigil ? { vigil } : {}), ...(road ? { route: road } : {}), ...(spare ? { spare } : {}) };
     go(Object.keys(o).length ? o : undefined);
   };
 
@@ -149,6 +156,21 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
         rt.push(t);
       }
     }
+    // (the Mage Tower's Spell Lectern: a spare spell to swap in at the camp after the mid-boss)
+    if (spareList.length) {
+      add(box, 'p', 'mcSub mcVigilHead', 'The Spell Lectern · a spare spell for the camp after the mid-boss');
+      const sg = add(box, 'div', 'mcGrid mcVigil');
+      const st: HTMLButtonElement[] = [];
+      for (const id of spareList.slice(0, 6)) {
+        const t = add(sg, 'button', `mcTile${id === spare ? ' on' : ''}`);
+        add(t, 'b', '', SPELLS[id].name);
+        t.addEventListener('click', () => {
+          spare = id;
+          for (const x of st) x.classList.toggle('on', x === t);
+        });
+        st.push(t);
+      }
+    }
     const row = add(box, 'div', 'mcRow');
     const march = add(row, 'button', 'primary', 'March');
     march.addEventListener('click', () => (chosen === 'scouted' ? drawReport() : done(ordersFor(chosen, seed))));
@@ -173,5 +195,47 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
   };
 
   drawPick();
+  document.body.append(wrap);
+}
+
+/** The Spell Lectern at the camp after the mid-boss: swap the spare in for one equipped spell, or keep the loadout. */
+export function showLectern(meta: Meta, spare: SpellId, done: (out: SpellId | null) => void): void {
+  if (!styled) {
+    styled = true;
+    const style = document.createElement('style');
+    style.textContent = CSS;
+    document.head.append(style);
+  }
+  document.getElementById('marchCard')?.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'marchCard';
+  wrap.setAttribute('role', 'dialog');
+  const box = document.createElement('div');
+  box.className = 'mcBox';
+  wrap.append(box);
+  const add = <K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, cls: string, text = ''): HTMLElementTagNameMap[K] => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text) e.textContent = text;
+    parent.append(e);
+    return e;
+  };
+  add(box, 'h3', '', 'The Spell Lectern');
+  add(box, 'p', 'mcSub', `Swap ${SPELLS[spare].name} in for one of your spells, for the rest of the run and after.`);
+  const grid = add(box, 'div', 'mcGrid');
+  for (const id of castList(meta.spellbook)) {
+    const t = add(grid, 'button', 'mcTile');
+    add(t, 'b', '', `Out: ${SPELLS[id].name}`);
+    t.addEventListener('click', () => {
+      wrap.remove();
+      done(id);
+    });
+  }
+  const row = add(box, 'div', 'mcRow');
+  const keep = add(row, 'button', '', 'Keep the loadout');
+  keep.addEventListener('click', () => {
+    wrap.remove();
+    done(null);
+  });
   document.body.append(wrap);
 }

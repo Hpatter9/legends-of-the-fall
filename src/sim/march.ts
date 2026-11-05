@@ -21,6 +21,9 @@ export interface Orders {
   /** The Chapel's Vigil (`chapelRooms.ts`): how the party rises when a heart burns. */
   vigil?: VigilId;
   marked?: string;
+  /** The Mage Tower's Spell Lectern (`lectern.ts`): the spare spell carried, and whether it has been swapped in. */
+  spare?: string;
+  spareUsed?: boolean;
 }
 
 export interface MarchDef {
@@ -138,7 +141,8 @@ export function readOrders(raw: unknown): Orders | undefined {
   const out: Orders = {};
   if (mod) out.mod = mod;
   if (mod === 'cursed') out.curse = CURSE_IDS.includes(o.curse as CurseId) ? o.curse : 'healHalf';
-  for (const k of ['route', 'marked'] as const) if (typeof o[k] === 'string') out[k] = o[k];
+  for (const k of ['route', 'marked', 'spare'] as const) if (typeof o[k] === 'string') out[k] = o[k];
+  if (o.spareUsed === true) out.spareUsed = true;
   if (isVigil(o.vigil)) out.vigil = o.vigil;
   return Object.keys(out).length ? out : undefined;
 }
