@@ -316,12 +316,15 @@ and bisected again on the final code once the ultimates had moved (the cells' pa
 | --- | --- | --- |
 | Infernal Host | 21.15 to **24.75** (4.7 tries at 24.75, 5.0 at 24.99) | 4.448, 3.325, 0.933, 1.05 to 4.851, 3.626, 1.018, 1.05 |
 | Yokai Night Parade | 24.65 to **26.9** (10.3 at 26.78, 13.3 at 26.98) | 5.404, 4.039, 1.133, 0.901 to 5.663, 4.233, 1.189, 0.944 |
-| Golem Forge | 28.2 to **34.0** (7.4 at 34.51, 6.5 at 33.75 on the final code) | 5.926, 4.429, 1.242, 0.988 to 6.626, 4.952, 1.391, 1.105 |
+| Golem Forge | 28.2 to **33.5** (5.5 tries there; the bisection's 34.0, 7.4 at 34.51 and 6.5 at 33.75, is held back by `army-pace`, below) | 5.926, 4.429, 1.242, 0.988 to 6.529, 4.88, 1.37, 1.088 |
 
 Each harder tier is raised just enough that its last wave stays half a per cent over the one below in health and attack (`armyStars`' order
 rule, as the joint rebalance kept it). Each army keeps its `xpStart`, so a run pays the XP it did. `test/army-pace.test.ts`'s parties now
 fight with the skill levels of their hero level (`giveMastery`, every skill mastered at 45 and 80, the owner's answer): the late armies are
-still out of reach at level 45, and the strong party still clears the Golem Forge at level 80.
+still out of reach at level 45, and the strong party still clears the Golem Forge at level 80. That last test caps the Golem Forge: at 34.0 the
+strong party (its skills mastered) no longer cleared it in its two saves' three tries once the idle-skill rule was eased, so its start is 33.5,
+the highest that passes, and it reads 5.5 tries with mastered skills against the target's 6.6 to 8 (the king's-spells batch held it under
+its target for the same test). A question for the owner: lift the test's party (its gear, its castle), or keep the Forge a little easy.
 
 ### Identity hashes (from the tests' own output)
 
@@ -347,5 +350,5 @@ test bars are as they were.
 
 ### Checks on 0.357
 
-`npm run typecheck` clean; `npm run web` built; the full `npm test` (below in the reply's figures). Stray files: an earlier shell slip wrote
+`npm run typecheck` clean; `npm run web` built; the full `npm test` on the final code: **2,508 of 2,508 pass, 0 fail**. Stray files: an earlier shell slip wrote
 four scratch outputs to the container's root (`/f-cal.txt`, `/f-gol.txt`, `/f-stand.txt`, `/f-yok.txt`); they are outside the repo.
