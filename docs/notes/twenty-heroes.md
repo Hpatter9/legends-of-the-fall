@@ -282,6 +282,31 @@ ChatGPT's six art PRs (from [twenty-heroes-art-prompts.md](twenty-heroes-art-pro
   awakened cards, dossier portrait and full artwork, pointed at the new files, each loading and fitting (`docs/samples/heroes-20/art-*.png`).
 - `CREDITS.md` credits both sets.
 
+## Battle sprites by the sheet, and joining without awakened sheets
+
+The owner gets about 100 image generations a day, so painting one image a frame (112 a hero, four forms of 28) does not fit. The plan:
+
+- **One reference sheet a view.** Each hero's front and back views are one image each: all 28 poses in seven rows of four
+  ([twenty-heroes-art-prompts.md](twenty-heroes-art-prompts.md), "Sheet prompts"); two images a hero, forty for the twenty. If a sheet
+  does not read, the view is painted as three strips instead ("Strip prompts"; six images a hero).
+- **The packer reads them** (`tools/heroes-20/pack-sheets.py`): each figure found as a connected shape, rows by where the feet stand,
+  read left to right; each image scaled so its idle figures (or a strip's standing reference figure) are 96 px, front and back alike;
+  each figure's feet on its cell's centre and bottom row; a plain or checked backdrop keyed out. `--check` prints what it found, row by
+  row, and `--found <dir>` draws it boxed and named. Frames painted one by one already (Sorin, Siku, Nakoa, Soraya, Vladislav) fill or
+  override a sheet's poses, so they are kept. `tools/heroes-20/check-sheet-mode.py` round-trips main's own sheets through it (the
+  Tyrant front and back, on clear, white and checked grounds, and as strips; the Wizard; the Werewolf): the packed figures come back
+  within 0 to 4 px of the originals' heights, in order, the falls lying flat.
+- **The code-drawn sets are not used.** The six 112-frame sets on the art/heroes-20-sprites-{hemomancer, bloodGargoyle, dhampir,
+  banneret, geomancer, bellWarden} branches were drawn by code (11 to 34 colours each); the director's call is that those heroes get
+  painted sheets. The packer ignores those heroes' single frames (`CODE_DRAWN`).
+- **Joining without awakened sheets** (the owner's deferral). The heroes join with their plain sprites only. A hero listed in
+  `AWAKENED_SHEETS_LATER` (`src/render/awakenLook.ts`, empty until a batch joins) has no awakened form in the manifest, so once
+  awakened it keeps its plain sprite (`awakenedSheet` already falls back to a hero's own sheet), with its class aura from its combat
+  grade as every hero has (`awakenAura.ts`) and its awakened figure in the menus (`src/art/heroes/awakened-<id>.webp`, already
+  imported). `test/awakened-forms.test.ts` holds the roster to its awakened sheets as before, and a listed hero to its plain sprite,
+  its menu figure, and leaving the list once its awakened sheets are packed. No other test asks for awakened sheets. When a batch
+  joins, its heroes go on the list; awakened sheets can follow with the same sheet prompts later.
+
 ## Still to do for a batch to join
 
 Their art (the prompts), then in one change: the rows into the roster's tables and `ALL_HEROES`, the tuning, the page's words (names and
