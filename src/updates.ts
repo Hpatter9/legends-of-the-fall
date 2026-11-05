@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.369.0',
+    date: '2026-11-05',
+    title: 'March orders on the War Council',
+    notes: ['March orders are now a button on the War Council, in one standard ornate menu.', 'The camp fixes meant for 0.368.0 land now: the Daily button, Hester\'s mark, no wave line.'],
+  },
+  {
     version: '0.368.0',
     date: '2026-11-05',
     title: 'A tidier camp',
