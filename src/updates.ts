@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.371.0',
+    date: '2026-11-05',
+    title: 'A cleaner war camp',
+    notes: ['The Party button is gone from the war camp: the party screen opens when you start a run anyway.'],
+  },
+  {
     version: '0.370.0',
     date: '2026-11-05',
     title: 'A gilded tactics button',
