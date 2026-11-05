@@ -14,3 +14,5 @@ stands in now and what should be made.
 | Provisions sack | words only | A sack icon from the item sheets |
 
 The first four lines are done: see `docs/notes/int-330.md` (the pictures in `art-source/castle/`, cut by `tools/castle/import-room-art.py`).
+
+**Done (PR #330, on main from 0.360.0):** the Smithy, the grand Watchtower and the Hall of Legends pictures (`src/art/castle/`) and the room icons (`src/art/rooms/`, `src/roomIcons.ts`).
