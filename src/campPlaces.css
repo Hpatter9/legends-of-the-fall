@@ -82,11 +82,12 @@
   .hm-battle .cpHeading::before { margin-bottom: 5px; }
 }
 /* Hester's Stall on the ledge (SHOP-BOOKS-GEAR): the stall's painting over a short plate */
-.hm-battle .cpStallSlot { --plateH: 34px; }
-.cpStallSlot .cpStallPic { position: absolute; left: 50%; bottom: calc(var(--plateH) - 6px); width: 96%; transform: translateX(-50%); image-rendering: auto; filter: drop-shadow(0 3px 4px #000a); pointer-events: none; }
-.hm-battle .cpStallSlot .cpTag { height: var(--plateH); border: 1px solid #857044; border-image: none; border-radius: 3px; background: linear-gradient(135deg, #2b3a22f2, #141d14f5); box-shadow: 0 2px 6px #0008; padding: 0 2px; }
-.hm-battle .cpStallSlot .cpTag b { font-size: 12px; line-height: 1.1; white-space: nowrap; }
-.hm-battle .cpStallSlot .cpTag small { font-size: 12px; line-height: 1.1; white-space: nowrap; color: #e9d48f; }
+.hm-battle .cpStallSlot { --plateH: 52px; }
+.cpStallSlot .cpStallPic { position: absolute; left: 50%; bottom: calc(var(--plateH) - 14px); width: 96%; transform: translateX(-50%); image-rendering: auto; filter: drop-shadow(0 3px 4px #000a); pointer-events: none; }
+/* (Hester's painted sign over the stall's foot; the whole stall stays one tap box) */
+.cpStallSlot .cpStallSign { position: absolute; left: 50%; bottom: 0; width: 100%; transform: translateX(-50%); image-rendering: auto; filter: drop-shadow(0 3px 4px #000a); pointer-events: none; }
+/* (the visitor pill: only while a trader is here) */
+.hm-battle .cpStallSlot .cpVisitor { position: absolute; left: 4px; top: 2px; padding: 1px 7px; border: 1px solid #857044; border-radius: 9px; background: linear-gradient(135deg, #2b3a22f2, #141d14f5); box-shadow: 0 2px 6px #0008; font: 400 11px/1.3 var(--body); white-space: nowrap; color: #e9d48f; pointer-events: none; }
 .hm-battle .cpStallSlot .cpPlace i.badge { top: 2px; right: 2px; }
 /* OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left (its lights, embers and crows are drawn on the
    canvas, `render/standTowerLife.ts`); its plate hangs under the tower's foot, an ember-warm ribbon as the Calamity's is a violet one. */

@@ -6,6 +6,7 @@
 import { mixSeed } from './rng';
 import { roomOpen, type RoomId } from './rooms';
 import type { Castle } from './castle';
+import type { Area } from './board';
 import { isVigil, type VigilId } from './chapelRooms';
 
 export type MarchMod = 'cursed' | 'scouted' | 'night' | 'forced';
@@ -158,3 +159,15 @@ export function marchCrowns(m: { crowns: number }, pay: { crowns: number }, o: O
   pay.crowns += extra;
   return extra;
 }
+
+/* ------------------------------------------------------------------ routes (the Watchtower's Far Sight) */
+
+/** The roads an army can march by (Far Sight): one for each of its lands; the run is fought on the land of the road taken. The armies'
+ *  battlefields are hand-shaped by their scenarios now, so a road picks the land, not the shapes the design's routes were to draw. */
+export function routesOf(lands: readonly Area[], castle: Castle | undefined): Area[] {
+  return roomOpen(castle, 'farSight') && lands.length > 1 ? [...lands] : [];
+}
+/** The land a run's orders send it by, if a road was taken and it is one of the army's. */
+export const routeLand = (o: Orders | undefined, lands: readonly Area[]): Area | undefined => (o?.route && (lands as readonly string[]).includes(o.route) ? (o.route as Area) : undefined);
+/** Far Sight: the short card after each wave names the next wave's foes. */
+export const farSight = (castle: Castle | undefined): boolean => roomOpen(castle, 'farSight');
