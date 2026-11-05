@@ -29,7 +29,7 @@ import { showRecap } from './recapView';
 import { foundList, foundRow } from './foundRow';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
-import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
+import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, landsOf, settleWave, waveFoes, type ArmyPay } from './sim/armies';
 import { drawRunStars } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
@@ -97,7 +97,7 @@ import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
-import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
+import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
 import { showMarchCard } from './marchCard';
 import { applyVigil } from './sim/chapelRooms';
 import { journeyBoost, landAt } from './sim/calJourney';
@@ -192,6 +192,14 @@ import { pickedTactic, pickTactic } from './sim/tacticPick';
 import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
+/** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
+function farSightLine(run: Run, army: ReturnType<typeof waveArmyOf>, stage: number): string[] {
+  // (only after a win, when the run has moved on: to the wave it goes to, past any a forced march skips)
+  const next = run.stage;
+  if (!army || run.over || !farSight(run.castle) || next <= stage || next > army.waves.length) return [];
+  const names = [...new Set(waveFoes(army, next, tierOfRun(run)).map((id) => UNITS[id]?.name ?? id))];
+  return [`Far Sight · next wave: ${names.join(', ')}`];
+}
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
 /** A toast for a quest a fight has turned up (QUESTS-1b: spoils on a boss, the rift's voice): it waits on the quest board. */
 const toastFound = (ids: readonly string[]): void =>
@@ -444,6 +452,10 @@ class Game {
           if (auto) return go();
           showMarchCard(this.meta, id, tier, next.seed, (orders) => {
             if (orders) next.orders = orders;
+            // (DEPTH-BUILD: Far Sight's road: the run is fought on that land of the army's)
+            const army = armyById(id);
+            const road = army ? routeLand(orders, landsOf(army)) : undefined;
+            if (road) next.area = road;
             go();
           });
         }),
@@ -3462,7 +3474,7 @@ class Game {
       // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
       const waveGains = gainsSince(held, this.meta, run);
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));

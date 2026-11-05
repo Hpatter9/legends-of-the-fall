@@ -232,3 +232,14 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   measure is unchanged. Travellers are written and shown on the campfire card; their sprites are on the art list.
 - Not yet: the act scenes.
 - Tests: `test/cal-journey.test.ts`.
+
+## Batch 11: Far Sight and the roads
+
+- **Far Sight** (Watchtower 3; `march.ts`): the card after a won wave names the next wave's foes ("Far Sight · next wave: ..."; past any
+  wave a forced march skips).
+- **The roads:** the armies' battlefields are hand-shaped by their scenarios now (`scenarioForArmy`, every army), so a road cannot pick the
+  layouts the design's routes were to draw from. A road picks the **land** instead: each army has two (`landsOf`: the Orc Warband's War Camp
+  and Highlands, the Undead Legion's Graveyard and Dungeon ...), and with Far Sight the march card offers "By the War Camp" / "By the
+  Highlands" (`routesOf`, `Orders.route`); the run is then fought on that land (`Run.area`, which `chainOf` already honoured). Without a road
+  the seed picks the land as before. The land changes the ground (water, grass, lava ...) and the weather, not the foes.
+- Tests: `test/march.test.ts`. Shot: `node tools/depth/shots.mjs march` (now with the Vigil and the road rows).

@@ -119,3 +119,22 @@ test('the modifiers open with the Watchtower and with the army cleared at the ti
   m.armies.orcs.hard = { 1: { clears: 2 } };
   assert.equal(marchOpen(m, 'orcs', 1, 'forced').open, true);
 });
+
+import { farSight, routeLand, routesOf } from '../src/sim/march';
+import { landsOf } from '../src/sim/armies';
+
+test('Far Sight opens the roads (one a land of the army) and the next wave\'s foes; a road sets the land of every wave', () => {
+  const lands = landsOf(ARMIES[0]);
+  const castle = newCastle();
+  assert.deepEqual(routesOf(lands, castle), []);
+  assert.equal(farSight(castle), false);
+  castle.watchtower = 3;
+  assert.deepEqual(routesOf(lands, castle), [...lands]);
+  assert.equal(farSight(castle), true);
+  assert.equal(routeLand({ route: lands[1] }, lands), lands[1]);
+  assert.equal(routeLand({ route: 'oasis' }, lands), undefined, 'not this army\'s land');
+  const r = run();
+  r.area = lands[1];
+  assert.equal(startStage(r).board.area, lands[1]);
+  assert.deepEqual(readOrders({ route: lands[1] }), { route: lands[1] });
+});

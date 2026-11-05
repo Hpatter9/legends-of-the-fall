@@ -3,8 +3,10 @@
 // shows what opens it. March starts the run with the orders chosen; a Scouted march first shows the scouts' report on the final boss.
 // Skipped while no modifier is open yet, so a new player never sees it. Reads the rules only (`sim/march.ts`); the page starts the run.
 
-import { armyById, bossOf } from './sim/armies';
-import { MARCHES, CURSES, curseFor, marchOpen, ordersFor, type MarchMod, type Orders } from './sim/march';
+import { armyById, bossOf, landsOf } from './sim/armies';
+import { AREA_NAMES } from './menuArt';
+import type { Area } from './sim/board';
+import { MARCHES, CURSES, curseFor, marchOpen, ordersFor, routesOf, type MarchMod, type Orders } from './sim/march';
 import { SIGNATURES } from './sim/bossAttacks';
 import { bossName, cluesOf, WEAKNESS } from './sim/weakness';
 import type { Meta } from './sim/meta';
@@ -41,8 +43,13 @@ let styled = false;
 
 /** Whether the card has anything to choose: some modifier other than the plain march is open. */
 export function marchChoice(meta: Meta, army: string, tier: number): boolean {
-  return vigilOpen(meta) || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
+  return vigilOpen(meta) || roadsOf(meta, army).length > 0 || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
 }
+/** The Watchtower's Far Sight: the army's roads, one a land. */
+const roadsOf = (meta: Meta, army: string): Area[] => {
+  const a = armyById(army);
+  return a ? routesOf(landsOf(a), meta.castle) : [];
+};
 /** The Chapel's Vigil is chosen on the card too, once its room stands. */
 const vigilOpen = (meta: Meta): boolean => roomOpen(meta.castle, 'vigil', meta.chapel);
 
@@ -74,10 +81,12 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
   const tierName = ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic'][tier] ?? 'Normal';
   let chosen: MarchMod | 'plain' = 'plain';
   let vigil: VigilId | undefined = vigilOpen(meta) ? 'shielded' : undefined;
+  const roads = roadsOf(meta, army);
+  let road: Area | undefined = roads[0];
   const done = (orders: Orders | undefined) => {
     wrap.remove();
-    const o = vigil ? { ...(orders ?? {}), vigil } : orders;
-    go(o);
+    const o = { ...(orders ?? {}), ...(vigil ? { vigil } : {}), ...(road ? { route: road } : {}) };
+    go(Object.keys(o).length ? o : undefined);
   };
 
   const drawPick = () => {
@@ -122,6 +131,22 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
           for (const x of vt) x.classList.toggle('on', x === t);
         });
         vt.push(t);
+      }
+    }
+    // (the Watchtower's Far Sight: the road the army is met on, one a land)
+    if (roads.length) {
+      add(box, 'p', 'mcSub mcVigilHead', 'The road · Far Sight');
+      const rg = add(box, 'div', 'mcGrid mcVigil');
+      const rt: HTMLButtonElement[] = [];
+      for (const land of roads) {
+        const t = add(rg, 'button', `mcTile${land === road ? ' on' : ''}`);
+        add(t, 'b', '', `By the ${AREA_NAMES[land]}`);
+        add(t, 'small', '', 'Every wave is fought on this land.');
+        t.addEventListener('click', () => {
+          road = land;
+          for (const x of rt) x.classList.toggle('on', x === t);
+        });
+        rt.push(t);
       }
     }
     const row = add(box, 'div', 'mcRow');
