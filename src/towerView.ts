@@ -4,6 +4,7 @@
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
 import { healParty, hurtParty } from './sim/health';
+import bannerUrl from './art/items/banner.png';
 import { TRAVELLERS, TRAVEL, meetTraveller, travellerAt, travellerBack, travellerReturns, OATHS, OATH_MAX, SCAR, oathOffer, swearOath, takeScar, BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
 import { foundRow } from './foundRow';
 import { todayKey } from './modes';
@@ -315,7 +316,8 @@ export class TowerView {
     const head = el('header', 'rtHead dmHead');
     const top = el('div', 'dmTop');
     const words = el('div');
-    words.append(el('p', 'dmEyebrow', `The Calamity · Region ${t.act} / ${t.maps ?? CAL_MAPS}`), el('h2', '', dungeonName(t.act)));
+    // (DEPTH-BUILD: the journey's act, `calJourney.ts`)
+    words.append(el('p', 'dmEyebrow', run.rift ? `The Calamity · ${actLine(t.act)}` : `The Calamity · Region ${t.act} / ${t.maps ?? CAL_MAPS}`), el('h2', '', dungeonName(t.act)));
     const home = el('button', 'dmClose', '×');
     home.setAttribute('aria-label', 'Return home');
     home.addEventListener('click', () => { saveSlot(run); this.close(); this.hooks.onHome(); });
@@ -333,6 +335,19 @@ export class TowerView {
     const gold = el('span', 'rtGold');
     gold.append(icon(ICONS.gold), el('b', '', String(run.gold)));
     status.append(gold);
+    // (DEPTH-BUILD: the provisions carried, and the oaths sworn as pennants; a tap on one says its words)
+    if (run.rift) {
+      const j = t.journey;
+      status.append(el('span', 'dmChip', `${provisionsOf(j)} provisions`));
+      for (const o of j?.oaths ?? []) {
+        const p = el('button', 'dmPennant');
+        p.append(icon(bannerUrl));
+        p.title = `${OATHS[o].name}: ${OATHS[o].gift} ${OATHS[o].cost}`;
+        p.setAttribute('aria-label', p.title);
+        p.addEventListener('click', () => this.sayNode(el('p', '', p.title)));
+        status.append(p);
+      }
+    }
     head.append(top, status);
     return head;
   }

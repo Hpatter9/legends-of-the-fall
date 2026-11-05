@@ -121,10 +121,10 @@ import { BOND_SCENES, bondScenesDue, bondSceneId } from '../src/sim/bondScenes';
 import { SCENES } from '../src/sim/sceneScripts';
 import { dueScene } from '../src/sim/sceneRules';
 
-test('the first two batches of bond scenes: twenty kindred pairs at level 1, real heroes and backdrops, due once the pair reaches it', () => {
-  assert.equal(BOND_SCENES.length, 20);
+test('the bond scenes: twenty kindred pairs at level 1 and ten rivalries settled, real heroes and backdrops, due once the pair reaches it', () => {
+  assert.equal(BOND_SCENES.length, 30);
   for (const s of BOND_SCENES) {
-    assert.ok(s.moment.kind === 'bond' && KINDRED.includes(s.moment.pair) && s.moment.level === 1, s.id);
+    assert.ok(s.moment.kind === 'bond' && (KINDRED.includes(s.moment.pair) || RIVALS.includes(s.moment.pair)) && s.moment.level === 1, s.id);
     assert.ok(SCENES[s.id], 'in the scenes list');
     const lines = s.shots.flatMap((x) => x.lines ?? []);
     assert.ok(lines.length >= 3 && lines.length <= 6, s.id);
@@ -169,4 +169,12 @@ test('the Sparring Yard: one pair at a time, eight hours for five points, only w
   settleSparring(m, SPAR.MS);
   assert.equal(m.bonds!['knight|peasant'], SPAR.POINTS);
   assert.equal(m.sparring, undefined);
+});
+
+test('a rivalry\'s scene waits until it settles, then is due', () => {
+  const key = bondKey('wizard', 'warlock');
+  const m = { ...newMeta(1), bonds: { [key]: 9 } } as ReturnType<typeof newMeta> & { bonds: Record<string, number> };
+  assert.deepEqual(bondScenesDue(m, () => false).filter((id) => id.includes(key)), [], 'rivals still');
+  noteBonds(m, won(['wizard', 'warlock']), true);
+  assert.deepEqual(bondScenesDue(m, () => false).filter((id) => id.includes(key)), [bondSceneId(key, 1)], 'settled: its scene is due');
 });

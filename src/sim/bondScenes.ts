@@ -147,6 +147,67 @@ const DRAFTS: readonly BondDraft[] = [
     ['a', 'Mine makes them laugh. They surrender anyway, and offer tea.'],
     ['b', 'Tea. I may need a new flag.'],
   ]),
+  // (batch 3: rivalries settled. A rival pair reaches bond level 1 only when it settles, so its level-1 scene is the settling scene)
+  D('samuraiCommander', 'mercenary', 1, 'Paid in Respect', 'warcamp', 'The commander and the sellsword, after ten battles side by side.', [
+    ['a', 'You fight for coin. I have said it before, and with less kindness.'],
+    ['b', 'And you fight for a banner that burned. We are both fools.'],
+    ['a', 'Ten battles. You never once broke the line.'],
+    ['b', 'Nobody paid me to. Call that one free.'],
+  ]),
+  D('wizard', 'warlock', 1, 'Two Kinds of Fire', 'crystal', 'The scholar and the pact-maker, out of arguments at last.', [
+    ['a', 'I still say your power is borrowed.'],
+    ['b', 'And yours is copied out of books. Borrowed from the dead.'],
+    ['a', '...That is fair, actually.'],
+    ['b', 'Ten fights, and we are still alive. Let us call it a draw.'],
+  ]),
+  D('paladin', 'demonSwordsman', 1, 'The Sword Remembers', 'volcano', 'A holy knight and a cursed blade, with nothing left to prove.', [
+    ['a', 'I watched your blade. It hungers.'],
+    ['b', 'It does. I have not fed it once since we met.'],
+    ['a', 'Ten battles, and you held it back each time.'],
+    ['b', 'Stand beside me and I will keep holding.'],
+  ]),
+  D('priestess', 'reaper', 1, 'The Last Rites', 'graveyard', 'The priestess of the living and the reaper of the dead, sharing a vigil.', [
+    ['b', 'You pray over every one I take.'],
+    ['a', 'Someone ought to.'],
+    ['b', 'Then pray loudly. I would like them to hear it on the way.'],
+    ['a', 'I will. And you will take them gently.'],
+  ]),
+  D('knight', 'tyrant', 1, 'An Oath and a Crown', 'ruins', 'The knight of a dead king and a would-be king, after ten fights.', [
+    ['b', 'Kneel, and you could have a place at my court.'],
+    ['a', 'I knelt once. The king is dust.'],
+    ['b', 'Then stand. I find I prefer you standing, beside me.'],
+    ['a', 'For now. Watch your crown.'],
+  ]),
+  D('ranger', 'werewolf', 1, 'The Hunter and the Hunted', 'forest', 'The ranger once hunted wolves for coin.', [
+    ['a', 'I hunted your kind once. For a silver a pelt.'],
+    ['b', 'I know. I followed you for a week. You never saw me.'],
+    ['a', 'Why did you not strike?'],
+    ['b', 'You left the cubs. I remembered that.'],
+  ]),
+  D('dreadPirate', 'lancer', 1, 'Boarding the Charge', 'oasis', 'A pirate and a cavalry lancer find they like the same thing: speed.', [
+    ['a', 'You charge like a ship running before a gale.'],
+    ['b', 'And you board like cavalry. No manners, all momentum.'],
+    ['a', 'Ten fights. I have not once had to save you.'],
+    ['b', 'Nine. I counted the bridge.'],
+  ]),
+  D('gunslinger', 'arcBlade', 1, 'Quickest Draw', 'desert', 'Two duellists, done with counting who is faster.', [
+    ['a', 'I am still faster.'],
+    ['b', 'You are louder. That is not the same.'],
+    ['a', 'Ten fights, and neither of us dead.'],
+    ['b', 'Then we draw together, and the foe can count.'],
+  ]),
+  D('cleric', 'mummy', 1, 'Unquiet Rest', 'dungeon', 'The cleric who lays the dead to rest, and a dead man who would not stay laid.', [
+    ['a', 'Every prayer I know says you should be in the ground.'],
+    ['b', 'I tried it. It was very dull.'],
+    ['a', 'Ten fights. You saved me twice.'],
+    ['b', 'Then pray for me once. I would like to hear how it goes.'],
+  ]),
+  D('timeWitch', 'illusionist', 1, 'Seen It Before', 'temple', 'One sees what will be; the other, what is not there.', [
+    ['a', 'I saw this conversation coming.'],
+    ['b', 'Did you? Or did I make you think you did?'],
+    ['a', '...I hate that I cannot tell.'],
+    ['b', 'Good. Ten fights, and I finally have you guessing.'],
+  ]),
 ];
 
 /** A scene's id: "bond:knight|peasant:1". */
