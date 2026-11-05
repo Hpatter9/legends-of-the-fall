@@ -7,6 +7,7 @@
 // same boost the levels and grades use (`Boost.equip`, read by `addUnit` in battle.ts). Pure rules: no Pixi, no DOM;
 // the roll draws only from the stream it is given.
 
+import { roomOpen } from './rooms';
 import type { Meta } from './meta';
 import type { Rng } from './rng';
 import { ALL_HEROES, UNITS } from './units';
@@ -251,13 +252,22 @@ export function wornIn(m: Meta, kind: string, slot: EquipSlot): Equipment | unde
   return id === undefined ? undefined : m.equipment?.find((x) => x.id === id);
 }
 
+/** The share of its numbers a broken piece keeps with the Smithy's Patchwork. */
+export const PATCH_SHARE = 0.5;
+
 /** What a hero kind's equipment adds in a fight; undefined when it wears nothing (so the fight is exactly as before). */
 export function equipStats(m: Meta, kind: string): EquipStats | undefined {
   // (a broken piece gives nothing at all until mended: `wear.ts`)
   const worn = EQUIP_SLOTS.map((slot) => wornIn(m, kind, slot)).filter((x): x is Equipment => !!x && !brokenPiece(x));
-  if (!worn.length) return undefined;
+  // (DEPTH-BUILD: the Smithy's Patchwork: a broken piece keeps half its numbers, no ability and no set count, until mended)
+  const patched = roomOpen(m.castle, 'patchwork') ? EQUIP_SLOTS.map((slot) => wornIn(m, kind, slot)).filter((x): x is Equipment => !!x && brokenPiece(x)) : [];
+  if (!worn.length && !patched.length) return undefined;
   const total = emptyStats();
   for (const it of worn) addStats(total, itemStats(it, kind));
+  for (const it of patched) {
+    const half = itemStats(it, kind);
+    for (const k of STAT_KEYS) total[k] += (half[k] ?? 0) * PATCH_SHARE;
+  }
   return capStats(addSetBonus(total, worn.map((x) => x.base)));
 }
 
