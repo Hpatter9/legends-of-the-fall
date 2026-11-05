@@ -94,6 +94,7 @@ const deploy = async (page) => {
 const scrollIn = (p, sel, by = 99999) => ev(p, ([sel, by]) => document.querySelectorAll(sel).forEach((e) => { const s = getComputedStyle(e); if (e.scrollHeight > e.clientHeight + 40 && /auto|scroll/.test(s.overflowY)) e.scrollTop = by; }), [sel, by]).then(() => wait(p, 400));
 const SCENES = {
   'home-battle': (p) => home(p, 'battle'),
+  'home-battle-dealer': async (p) => { await ev(p, () => { const m = window.__game.meta; m.stall = { day: 0, sold: {}, spent: 0, ...(m.stall ?? {}), dealerDue: true }; }); await home(p, 'battle'); await ev(p, () => window.__game.home.refresh()); await wait(p, 600); },
   'home-heroes': (p) => home(p, 'heroes'),
   'home-recruit': (p) => home(p, 'recruit'),
   'home-castle': (p) => home(p, 'castle'),

@@ -103,3 +103,20 @@ Shots: after-march, -march-foot, -daily, -pack, -hero-overview, -hero-overview-f
 Each batch: `npm run typecheck` clean, `npm test` 2527 pass, 0 fail, 0 skipped, `npm run web` built; every changed screen looked at in
 the shots at 393x852, 360x780 and 412x915. Reduced motion: nothing here animates (no new animation, no glow that changes over time). The
 shots are a script's, in headless Chromium, not a real phone.
+
+## Batch 4: the camp's Battle overlook (the owner's three notes, after 0.367.0)
+
+- **"The caravan word doesn't need to be on Hester's stall."** The visitor pill ("Caravan", "Dealer") is gone from the stall's picture. A
+  trader in camp is now a small gilded mark on the stall's top-left corner: warm gold for the caravan, dusk violet for the Gloaming
+  Dealer, steady (no pulse). The stall button's spoken label still names him. (`home.ts`, `campPlaces.css`)
+- **"The army below thing can move down since there's room below it."** The "The enemy below" plate sat just under the party with about
+  60 px of clear ground beneath it at all three sizes. It now sits 10 px above the scene's foot (never higher than its old spot), clear of
+  the stash on the left and the Daily on the right. (`camp.ts` `layPlate`)
+- **"The daily button needs a redo. The icon is cut off and the label feels wrong."** The old label's box (a camp plate rule, 48 px tall)
+  covered the lower half of the 16 px pixel hourglass, and that sprite is a lopsided half-glass anyway. The Daily is now a gilded button
+  with the double brass rim: the painted hourglass (the relic's own, `relics/hourglass.webp`, already served and cached) whole in a brass
+  medallion, and "Daily" in brass on its own line. It is 58 x 66 px, with the red dot or the green check on its corner as before.
+
+Shots: `camp-before-home-battle-dealer-<w>.png` and `camp-after-home-battle-dealer-<w>.png` (a save with the Dealer in camp), and
+`camp-after-home-battle-<w>.png`, at 393, 360 and 412. Checks: `npm run typecheck` clean, `npm test` 2527 pass, 0 fail, 0 skipped,
+`npm run web` built. Cinzel and the violet panels are untouched, still waiting on the owner.
