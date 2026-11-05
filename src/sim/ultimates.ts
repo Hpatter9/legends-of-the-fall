@@ -500,53 +500,53 @@ const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommand
  *  and a few heroes whose kits fall behind against the stronger foes a level-30 team now meets (the Samurai, Ninja Monk, Buccaneer, Demon Swordsman)
  *  fire theirs more than twice in a long fight. `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
-  knight: { rate: 1.46, power: 0.57 }, // (SKILLS-10, on main 0.357: 0.722 to 0.57, he stood +6.8 at level 30 with the merged tactics)
-  samurai: { rate: 2.33, power: 3.135 },
-  kunoichi: { rate: 1.65, power: 2.712 },
-  archer: { rate: 0.65, power: 1.288 },
-  wizard: { rate: 0.51, power: 1.647 }, // (RPG-SPELLS batch 6: 1.44 before; it carries the Wall of Fire's lighter skill 2 at level 30)
-  peasant: { rate: 1.11, power: 0.782 },
-  ninjaMonk: { rate: 2.41, power: 3.269 },
-  wanderer: { rate: 0.37, power: 1.24 },
-  lightningMage: { rate: 0.92, power: 1.402 },
-  kitsune: { rate: 0.8, power: 2.041 }, // (the joint rebalance: 2.953 to 2.169, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
-  karasu: { rate: 0.77, power: 5.482 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
-  yamabushi: { rate: 1.85, power: 3.224 },
-  werewolf: { rate: 0.73, power: 0.95 }, // (the joint rebalance: 2.208 to 1.1, as his own two skills rose for Vuk's Old Hunger, docs/notes/joint-rebalance.md; RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
-  minotaur: { rate: 1.51, power: 2.436 }, // (STATS batch 5: 2.983 before; with the saves he sat at +6.0 at level 30. STATS batch 6: 2.7 before; with Athletics he climbed to +6.3)
-  satyr: { rate: 0.69, power: 0.802 },
-  gorgon: { rate: 1.29, power: 2.068 },
+  knight: { rate: 1.46, power: 0.512 }, // (SKILLS-10, on main 0.357: 0.722 to 0.57, he stood +6.8 at level 30 with the merged tactics)
+  samurai: { rate: 2.33, power: 3.109 },
+  kunoichi: { rate: 1.65, power: 2.64 },
+  archer: { rate: 0.65, power: 1.544 }, // (SKILLS-10, on main 0.357: 1.288 to 1.61, she stood -6.4 at level 30, stage 92)
+  wizard: { rate: 0.51, power: 1.666 }, // (RPG-SPELLS batch 6: 1.44 before; it carries the Wall of Fire's lighter skill 2 at level 30)
+  peasant: { rate: 1.11, power: 0.723 },
+  ninjaMonk: { rate: 2.41, power: 3.314 },
+  wanderer: { rate: 0.37, power: 1.244 },
+  lightningMage: { rate: 0.92, power: 1.373 },
+  kitsune: { rate: 0.8, power: 1.953 }, // (the joint rebalance: 2.953 to 2.169, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
+  karasu: { rate: 0.77, power: 5.069 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
+  yamabushi: { rate: 1.85, power: 3.208 },
+  werewolf: { rate: 0.73, power: 0.893 }, // (the joint rebalance: 2.208 to 1.1, as his own two skills rose for Vuk's Old Hunger, docs/notes/joint-rebalance.md; RPG-SPELLS batch 7: 3.05 before; the howl's fear made Full Moon +6.6 at level 30)
+  minotaur: { rate: 1.51, power: 2.316 }, // (STATS batch 5: 2.983 before; with the saves he sat at +6.0 at level 30. STATS batch 6: 2.7 before; with Athletics he climbed to +6.3)
+  satyr: { rate: 0.69, power: 0.771 },
+  gorgon: { rate: 1.29, power: 1.956 },
   // (the skills overhaul's batch 4: rate 1.1 before; with Command Strike he stood +6.2 at level 30, and Rally Cry's banner does not scale with power.
   // STATS batch 6: 0.95 before; CHA 17 fills his meter sooner, and he stood +6.2 again)
-  samuraiCommander: { rate: 0.85, power: 1.2 },
-  paladin: { rate: 1.31, power: 0.732 },
-  cleric: { rate: 1.0, power: 0.99 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
-  druid: { rate: 1.19, power: 0.326 },
-  barbarian: { rate: 0.9, power: 1.788 },
-  ranger: { rate: 0.84, power: 1.169 },
-  warlock: { rate: 0.5, power: 0.981 }, // (RPG-SPELLS batch 6: 1.07 before, then 0.929; STATS batch 5 lifted it back to 1.0: with the saves he fell to -6.5 at level 30)
-  illusionist: { rate: 1.08, power: 0.49 },
-  gunslinger: { rate: 0.37, power: 1.605 },
-  shambler: { rate: 1.04, power: 0.785 }, // (the joint rebalance: 0.709 to 0.933, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
-  rifleBot: { rate: 1.01, power: 1.932 },
-  mercenary: { rate: 1.21, power: 2.705 },
-  mummy: { rate: 0.99, power: 0.453 },
-  buccaneer: { rate: 3.11, power: 3.357 },
-  wolfBard: { rate: 0.93, power: 0.477 },
-  beastmaster: { rate: 0.7, power: 0.633 },
-  kraken: { rate: 1.37, power: 1.379 }, // (STATS batch 6: 1.079 before; with a WIS caster's slow fill (CHA 12) he fell to -6.6 at level 30)
+  samuraiCommander: { rate: 0.85, power: 1.122 },
+  paladin: { rate: 1.31, power: 0.682 },
+  cleric: { rate: 1.0, power: 0.931 }, // (RPG-SPELLS batch 2: Spirit Guardians, an aura round her, in place of Divine Intervention's team-wide heal: 0.58 and 1.12 before)
+  druid: { rate: 1.19, power: 0.316 },
+  barbarian: { rate: 0.9, power: 1.746 },
+  ranger: { rate: 0.84, power: 1.164 },
+  warlock: { rate: 0.5, power: 0.955 }, // (RPG-SPELLS batch 6: 1.07 before, then 0.929; STATS batch 5 lifted it back to 1.0: with the saves he fell to -6.5 at level 30)
+  illusionist: { rate: 1.08, power: 0.445 },
+  gunslinger: { rate: 0.37, power: 1.544 },
+  shambler: { rate: 1.04, power: 0.723 }, // (the joint rebalance: 0.709 to 0.933, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: 0.9 before; the burrow and its launch) // (0.99 until STATUS-FX: Plague Tide's curse now also turns the foes' healing to harm)
+  rifleBot: { rate: 1.01, power: 1.812 },
+  mercenary: { rate: 1.21, power: 2.633 },
+  mummy: { rate: 0.99, power: 0.433 },
+  buccaneer: { rate: 3.11, power: 3.251 },
+  wolfBard: { rate: 0.93, power: 0.459 },
+  beastmaster: { rate: 0.7, power: 0.618 },
+  kraken: { rate: 1.37, power: 1.346 }, // (STATS batch 6: 1.079 before; with a WIS caster's slow fill (CHA 12) he fell to -6.6 at level 30)
   lancer: { rate: 2.3, power: 3.194 }, // (RPG-SPELLS batch 4: Cavalry Charge through a line; 1.61 for one charge at one foe)
-  reaper: { rate: 1.79, power: 2.56 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
-  timeWitch: { rate: 1.09, power: 0.946 }, // (STATS batch 5: 0.735 before; with the saves she fell to -6.8 at level 30. STATS batch 6: 0.85 before; -5.9)
-  arcBlade: { rate: 0.59, power: 2.198 }, // (the joint rebalance: 1.878 to 2.403, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
-  dreadPirate: { rate: 1.06, power: 1.739 }, // (the joint rebalance: 1.376 to 1.86, level-30 parity, docs/notes/joint-rebalance.md)
-  siegeBot: { rate: 0.5, power: 2.372 },
-  priestess: { rate: 0.38, power: 0.382 },
-  dragoon: { rate: 1.1, power: 2.844 },
-  juggernaut: { rate: 1.55, power: 1.63 },
-  sage: { rate: 2.1, power: 1.71 }, // (TACTICS, merged over FOE-STYLES: rate 1.7 to 2.1, level-30 parity; his Arcane Surge fills pools and shields, so its power is no lever, docs/notes/tactics.md)
-  demonSwordsman: { rate: 1.8, power: 2.718 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
-  tyrant: { rate: 0.88, power: 1.322 },
+  reaper: { rate: 1.79, power: 2.421 }, // (RPG-SPELLS batch 5: power 2.6, was 3.07; the drag made the sweep +4.8 at level 30)
+  timeWitch: { rate: 1.09, power: 0.913 }, // (STATS batch 5: 0.735 before; with the saves she fell to -6.8 at level 30. STATS batch 6: 0.85 before; -5.9)
+  arcBlade: { rate: 0.59, power: 2.04 }, // (the joint rebalance: 1.878 to 2.403, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
+  dreadPirate: { rate: 1.06, power: 1.699 }, // (the joint rebalance: 1.376 to 1.86, level-30 parity, docs/notes/joint-rebalance.md)
+  siegeBot: { rate: 0.5, power: 2.341 },
+  priestess: { rate: 0.38, power: 0.371 },
+  dragoon: { rate: 1.1, power: 2.838 },
+  juggernaut: { rate: 1.55, power: 1.55 },
+  sage: { rate: 2.1, power: 1.677 }, // (TACTICS, merged over FOE-STYLES: rate 1.7 to 2.1, level-30 parity; his Arcane Surge fills pools and shields, so its power is no lever, docs/notes/tactics.md)
+  demonSwordsman: { rate: 1.8, power: 2.704 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
+  tyrant: { rate: 0.88, power: 1.187 },
 };
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */

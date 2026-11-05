@@ -257,3 +257,84 @@ so no screens were taken. Measured: every table above, main's column in a second
    sweep's fights however strong) in a later batch, and leave the Priestess's heal as her core.
 5. **The guards' words now give their numbers at their strength** ("for 13s", "a quarter of his health"). The design's numbers were at
    strength 1, which no guard had. Recommended: keep the true numbers.
+
+## Re-measured on main 0.357.0, and the owner's answers applied
+
+The branch was merged with main 0.350.0 and then 0.357.0 (tactics batches 5 and 6, runes, foe styles, the king's spells retune, the gear
+balance). Main's own tuning on the way that touched these tables was taken in or answered: the Knight's skill 3 strength (main 1.166 to 0.8)
+and the Shambler's ultimate (0.933 to 0.84) are superseded by this batch's retuned tables, the Sage's meter (rate 1.7 to 2.1) is kept, and the
+Calamity's `start` is main's 0.7 plus this batch's step. Everything below is measured side by side with a clean tree of 0.357.0.
+
+**The owner's answers (through the director): go with the recommendations on all five.** So question 1's re-tune is applied (below, as it
+still held on the merged code), the idle-skill rule stays, the old jabs keep their names as heavies, the three stragglers are left for a later
+redesign (the Priestess's heal stays her core), and the guards' words keep their true numbers.
+
+### Skill 3's worth (level 30, stage 90, 600 fights a hero)
+
+| | Skill 1 | Skill 2 | Skill 3 | Skill 3 leads its kit |
+| --- | --- | --- | --- | --- |
+| On 0.357 | 0.57 | 0.53 | **1.59** | 22 of 45 outright; 4 tied; most of the rest within the noise |
+
+Clearly behind (by 2.5 or more): the High Priestess (−6.7; her Healing Light is worth 7.3 alone), the Wanderer (−4.0), the Warlock and the
+Beastmaster (−3.5), the Paladin and the Wolf Bard (−3.2), the Kitsune (−2.8). The roster's tactics shifted some kits' shares; the left-for-later
+list grows by these, for the same later batch.
+
+### Parity
+
+| Level, stage | Main 0.357 | Now |
+| --- | --- | --- |
+| 20, stage 40 | 36.0%, spread 14.7; Werewolf +9.3 beyond 6, 8 beyond 4 | 37.3%, spread 10.0; none beyond 6, 5 beyond 4 |
+| 30, stage 90 | 67.7%, spread 11.2; Wizard −6.6 beyond 6, 7 beyond 4 | 68.7%, spread 9.6; none beyond 6, 5 beyond 4 (before the ultimates' step below) |
+| 30, stage 92 (`hero-balance-ultimates`' own stage on 0.357) | 63.2%, spread 11.1; none beyond 6, 8 beyond 4 | **62.9%, spread 7.6; none beyond 6, 1 beyond 4** |
+| 30, stage 90, every skill at Level 5 | 81.7%, spread 10.9; none beyond 6, 9 beyond 4 | 84.3%, spread 8.2; none beyond 6, 1 beyond 4 |
+
+The Knight came out +6.8 at level 30 once the tactics were in; his ultimate's power 0.722 to **0.57** (his own late lever) brought him to +5.3.
+At stage 92, the level-30 test's own stage on 0.357, the Archer read −6.4 and the average team 65.8% (the test asks under 65): her ultimate's
+power 1.288 to 1.61, then every ultimate one gentle step toward main's 63.2% (`TARGET=63.2 KEY=up STEP=0.015 node tools/kits/tune.mjs ... 30 92
+12000 --apply`, once; no power under its floor) gives 62.9%, spread 7.6.
+Levels 1 and 10 cannot move (nothing here opens below level 20).
+
+### The modes
+
+| What | Main 0.357 | Now |
+| --- | --- | --- |
+| Last Stand, median wave at 30 / 100 | 15 / 25 | 15 / 26 (final code) |
+| Infernal at 55 / Yokai at 65 / Golems at 65, hearts, 24 saves, no skill levels | 3.9 / 12.2 / 7.1 | 3.6 / 14.2 / 5.9 (before the re-tune) |
+| The same with `--mastery auto` (the levels a player there has) | 1.9 / 7.2 / 3.2 | 1.9 / 6.0 / 2.2 before the re-tune; after it, re-bisected on the final code: Infernal 4.7 at its start, Yokai 10.3 and 13.3 either side of its start, Golems 7.4 and 6.5 either side |
+| Legendary Orcs at 55, 96 saves | 88% | 84% |
+| Voltara's trial, 20 seeds | 4 of 20 | 5 of 20 |
+| Spire, 48 climbs, mean floors, no castle / full | 78.6 / 90.0 | 80.8 / 89.7 |
+| Calamity, 100 runs: mean maps (past map 2 / cleared) | 1.53 (53 / 3) | 1.62 (59 / 6) at main's 0.7; 1.43 at 0.72; **1.57 (55 / 4) at 0.71** |
+
+### Question 1 applied: the late armies tuned for mastered skills
+
+Bisected with `MASTERY=auto SAVES=24 STEPS=5 node tools/spells-retune/run.mjs tune <cell>` on the merged code, to the middle of each target,
+and bisected again on the final code once the ultimates had moved (the cells' party has the Archer):
+
+| Army | Normal `start` | Tier lifts (Hard, Elite, Legendary, Mythic) |
+| --- | --- | --- |
+| Infernal Host | 21.15 to **24.75** (4.7 tries at 24.75, 5.0 at 24.99) | 4.448, 3.325, 0.933, 1.05 to 4.851, 3.626, 1.018, 1.05 |
+| Yokai Night Parade | 24.65 to **26.9** (10.3 at 26.78, 13.3 at 26.98) | 5.404, 4.039, 1.133, 0.901 to 5.663, 4.233, 1.189, 0.944 |
+| Golem Forge | 28.2 to **34.0** (7.4 at 34.51, 6.5 at 33.75 on the final code) | 5.926, 4.429, 1.242, 0.988 to 6.626, 4.952, 1.391, 1.105 |
+
+Each harder tier is raised just enough that its last wave stays half a per cent over the one below in health and attack (`armyStars`' order
+rule, as the joint rebalance kept it). Each army keeps its `xpStart`, so a run pays the XP it did. `test/army-pace.test.ts`'s parties now
+fight with the skill levels of their hero level (`giveMastery`, every skill mastered at 45 and 80, the owner's answer): the late armies are
+still out of reach at level 45, and the strong party still clears the Golem Forge at level 80.
+
+### Identity hashes (from the tests' own output)
+
+`spells-identity`: field30, field30Others, heroes30, heroes30Others, bosses, armyFoes, spells, army, stand. `ailment-logs`: field30, bosses,
+armyFoes, spells, army, stand. Every other scenario (level 1 and 10, lands, daily, tower, the Calamity, whose strength the test pins) is
+main's hash unchanged.
+
+### `ult-charge`'s long fights
+
+`test/ult-charge.test.ts` asks that a long fight (35 s or more) sees a second ultimate. At its stage 65, main 0.357's 80 fights had only 2 that
+long and the branch none, though the fights end in the same time (median 16.1 s against 16.2 s). Its yardstick moved to stage 75 (4 of 80
+long), as the joint rebalance moved it from 56 to 65 for the same reason; the bars are as they were.
+
+### Checks on 0.357
+
+`npm run typecheck` clean; `npm run web` built; the full `npm test` (below in the reply's figures). Stray files: an earlier shell slip wrote
+four scratch outputs to the container's root (`/f-cal.txt`, `/f-gol.txt`, `/f-stand.txt`, `/f-yok.txt`); they are outside the repo.
