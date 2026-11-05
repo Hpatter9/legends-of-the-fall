@@ -61,6 +61,8 @@ export class Party {
   /** A quest battle's party (batch 2 of the quests): its required cast, locked in their slots, its title and rule, and where the
    *  picks go (they are the battle's own: the saved party is not changed). Null for the ordinary party screen. */
   private quest: { cast: readonly string[]; title: string; rule: string; fits: (kind: string) => boolean; then: (picked: string[]) => void } | null = null;
+  /** UI-STANDARD: the March orders button (an army's start, once any order is open): its line, and what a tap opens with the picks so far. */
+  private orders: { line: () => string; open: (party: readonly string[], redraw: () => void) => void } | null = null;
 
   constructor(
     private meta: Meta,
@@ -90,6 +92,7 @@ export class Party {
     this.note = '';
     this.focus = undefined;
     this.onDone = then;
+    this.orders = null;
     this.filter = 'all';
     this.search = '';
     $<HTMLInputElement>('ptSearch').value = '';
@@ -108,6 +111,33 @@ export class Party {
     this.picked = [...cast, ...this.meta.party.filter((k) => !cast.includes(k) && fits(k))].slice(0, this.slots);
     $('ptGo').textContent = '⚔  To the quest';
     this.draw();
+  }
+
+  /** UI-STANDARD: show the March orders button above March (`null` takes it away). Set after `open`, which clears it. */
+  setOrders(o: { line: () => string; open: (party: readonly string[], redraw: () => void) => void } | null): void {
+    this.orders = o;
+    this.drawOrders();
+  }
+
+  /** The March orders button: a gilded row over the start button naming the orders set; a tap opens them in the standard menu. */
+  private drawOrders(): void {
+    let b = document.getElementById('ptOrders') as HTMLButtonElement | null;
+    if (!b) {
+      b = el('button', 'ptOrders');
+      b.id = 'ptOrders';
+      b.type = 'button';
+      $('ptGo').before(b);
+    }
+    const o = this.orders;
+    b.hidden = !o || !!this.quest;
+    if (!o || b.hidden) return;
+    const line = o.line();
+    if (b.dataset.line !== line) {
+      b.dataset.line = line;
+      b.replaceChildren(el('small', '', 'March orders'), el('b', '', line), el('i', 'ptOrdersGo', '›'));
+    }
+    b.setAttribute('aria-label', `March orders: ${line}. Change them`);
+    b.onclick = () => o.open([...this.picked], () => this.drawOrders());
   }
 
   private get slots(): number {
@@ -341,6 +371,7 @@ export class Party {
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     this.drawWear();
     this.drawSatchel();
+    this.drawOrders();
     const key = this.picked.join('|');
     if (this.sceneKey !== key || !$('ptTableau').firstChild) {
       $('ptTableau').replaceChildren(partyTableau(this.picked, (k) => awakenedStep(this.meta, k)));

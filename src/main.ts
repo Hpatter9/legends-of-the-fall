@@ -98,7 +98,7 @@ import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
-import { showAnvil, showLectern, showMarchCard } from './marchCard';
+import { defaultPicks, marchChoice, marchLine, openMarchOrders, ordersOf, showAnvil, showLectern } from './marchCard';
 import { markedHero } from './sim/march';
 import { repairAll, repairAllCost } from './sim/wear';
 import { lecternDue, lecternSwap } from './sim/lectern';
@@ -442,25 +442,36 @@ class Game {
       },
       onContinue: () => this.resume(),
       // (an army starts from wave 1 once its party is picked)
-      onArmy: (id, tier, auto) =>
+      onArmy: (id, tier, auto) => {
+        // (the run's seed is fixed as the War Council opens, so the March orders it shows (a Cursed march's curse) are the run's own)
+        const runSeed = seed && isScenario(scenario) ? seed : clockSeed();
+        // (UI-STANDARD: the March orders are a button on the War Council, once any order is open; March starts with them as set.
+        //  An auto replay marches plain)
+        const marching = !auto && marchChoice(this.meta, id, tier);
+        let picks = defaultPicks(this.meta, id, this.meta.party);
         this.party.open('start', () => {
-          const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
+          const next = armyRun(runSeed, id, this.meta.party, this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
-          const go = () => {
-            this.startRun(next);
-            if (auto) this.beginAuto({ army: id, tier }, auto);
-          };
-          // (DEPTH-BUILD: the March orders card, once any modifier is open; an auto replay marches plain)
-          if (auto) return go();
-          showMarchCard(this.meta, id, tier, next.seed, (orders) => {
+          if (marching) {
+            const orders = ordersOf(picks, next.seed, this.meta.party);
             if (orders) next.orders = orders;
             // (DEPTH-BUILD: Far Sight's road: the run is fought on that land of the army's)
             const army = armyById(id);
             const road = army ? routeLand(orders, landsOf(army)) : undefined;
             if (road) next.area = road;
-            go();
+          }
+          this.startRun(next);
+          if (auto) this.beginAuto({ army: id, tier }, auto);
+        });
+        if (marching)
+          this.party.setOrders({
+            line: () => marchLine(picks),
+            open: (party, redraw) => openMarchOrders(this.meta, id, tier, runSeed, party, picks, (p) => {
+              picks = p;
+              redraw();
+            }),
           });
-        }),
+      },
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
