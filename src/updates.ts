@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.363.0',
+    date: '2026-11-05',
+    title: 'More bond scenes, Calamity act scenes',
+    notes: ['Ten more bond scenes between heroes, and two Calamity act scenes that play as each crossroads opens.'],
+  },
+  {
     version: '0.362.0',
     date: '2026-11-05',
     title: 'Smithy rooms',
