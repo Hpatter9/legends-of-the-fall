@@ -2266,3 +2266,11 @@ body #spellbook h2 {
 #hudSpells .fhTactic small { font: 700 11px/1.1 var(--display); letter-spacing: 0.04em; color: var(--ornate-brass); opacity: 1; text-shadow: 0 1px 2px #000; }
 #hudSpells .fhTactic:active:not(:disabled) { transform: translateY(1px); }
 #hudSpells .fhTacticWord { top: 126px; min-width: 58px; }
+
+/* The Battle page's bar without its Party button (the owner's call): Choose your battle alone, with Continue centred under it while a run
+   is going; with no run the second row goes and the bar closes up */
+.hm-battle .hmGo { grid-template-columns: 1fr; }
+.hm-battle .hmGo .hmCont { grid-column: 1; justify-self: center; min-width: 220px; }
+.hm-battle .hmGo:not(:has(.hmCont)) { grid-template-rows: 48px; }
+.hmPage.hm-battle:not(:has(.hmCont)) { --hmBar: 83px; }
+.hmPage.hm-battle:not(:has(.hmBanner)):not(:has(.hmCont)) { --hmBar: 61px; }

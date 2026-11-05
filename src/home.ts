@@ -719,16 +719,14 @@ export class Home {
     if (!info && announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
-    const party2 = el('button', 'hmLink hmSide', 'Party');
-    party2.id = 'hmParty';
-    party2.addEventListener('click', () => this.go(this.hooks.onParty));
     const battle = el('button', 'hmBattle');
     battle.id = 'hmBattle';
     battle.append(el('span', '', 'Choose your battle'));
     battle.setAttribute('aria-label', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'Battle! A new army marches. Choose an army' : 'Battle! Choose an army');
     // (UX-FIXES: the main Battle button carries no badge)
     battle.addEventListener('click', () => this.openArmies());
-    go.append(party2, battle);
+    // (the owner's call: no Party button here: the party screen comes up as a run starts, and the war table's plate opens it too)
+    go.append(battle);
     if (has) {
       const cont = el('button', 'hmLink hmSide hmCont');
       cont.append(el('b', '', 'Continue'), el('small', '', army && info ? `wave ${info.stage}/${army.waves.length}` : info ? info.label.replace(/^tower · /, '') : 'run'));
@@ -740,7 +738,7 @@ export class Home {
       }
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
-    } else go.append(el('span', 'hmSpacer'));
+    }
     // (QUESTS: the tracked quest's chip above the command bar; a tap opens the log)
     const tracked = trackedQuest(m);
     const tq = tracked && questById(tracked.id);
