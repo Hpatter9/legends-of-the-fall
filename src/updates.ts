@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.360.0',
+    date: '2026-11-05',
+    title: 'Hester\'s sign, castle rooms, Far Sight',
+    notes: ['Hester\'s painted sign on her cart; painted Smithy, grand Watchtower, Hall of Legends and room icons.', 'Far Sight names the next wave\'s foes, and roads let you choose which land a run is fought on.'],
+  },
+  {
+    version: '0.359.0',
+    date: '2026-11-04',
+    title: 'Calamity travellers',
+    notes: ['Meet a traveller at the Calamity\'s first campfire: help them for 40 gold or wrong them for 40. They return later to repay you, or with a trap.'],
+  },
+  {
     version: '0.358.0',
     date: '2026-11-04',
     title: 'Calamity oaths and scars',

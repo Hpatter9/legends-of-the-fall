@@ -161,7 +161,8 @@ export class CampScene {
     private onParty: () => void,
   ) {
     this.plate.addEventListener('click', () => this.onParty());
-    this.heading.append(el('span', 'cpEyebrow', 'THE WAR COUNCIL'), el('h2', '', 'Battle Overlook'), el('p', '', 'Scout the approaching army'));
+    // (camp-declutter: the heading is its name alone; the small eyebrow and the strapline are gone)
+    this.heading.append(el('h2', '', 'Battle Overlook'));
     this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Last Stand’s watchtower on the left and the Calamity citadel on the horizon.');
     this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.stallSlot, this.plate, this.heading);
