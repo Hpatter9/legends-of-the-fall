@@ -1,0 +1,909 @@
+{
+ "home-battle": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "home-heroes": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "home-recruit": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "home-castle": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 5,
+   "Georgia": 3
+  }
+ },
+ "home-castle-rooms": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "em.ctRoomLv \"Open\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 10,
+   "Georgia": 6
+  }
+ },
+ "home-castle-foot": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "em.ctRoomLv \"Open\" 10px",
+   "em.ctRoomLv \"Level 3\" 10px",
+   "em.ctRoomLv \"Level 4\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 8,
+   "Georgia": 4
+  }
+ },
+ "spellbook": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Steel\" 10px",
+   "em \"4 mana\" 10px",
+   "em \"3 mana\" 10px",
+   "small \"Open\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "spellbook-foot": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Steel\" 10px",
+   "em \"4 mana\" 10px",
+   "em \"3 mana\" 10px",
+   "small \"Open\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "card-hall": {
+  "small": [],
+  "tiny": [
+   "p.hint \"Where retired heroes sta\" 10px",
+   "p.hint \"Level 3 opens the Third \" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "card-smithy": {
+  "small": [],
+  "tiny": [
+   "p.hint \"A forge for the road: me\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "card-barracks": {
+  "small": [
+   "select \"KnightSamuraiKunoichiArc\" 149x19",
+   "select \"KnightSamuraiKunoichiArc\" 149x19"
+  ],
+  "tiny": [
+   "p.hint \"Beds and a training yard\" 10px",
+   "p.hint \"Each level: +6% hp for e\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "card-chapel": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Steel\" 10px",
+   "em \"4 mana\" 10px",
+   "em \"3 mana\" 10px",
+   "small \"Open\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "card-watchtower": {
+  "small": [],
+  "tiny": [
+   "p.hint \"Scouts and lookouts: ope\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "roster": {
+  "small": [],
+  "tiny": [
+   "span \"Guardian\" 10px",
+   "small.heroCardKind \"Knight\" 10px",
+   "small \"Power\" 10px",
+   "span \"Fighter\" 10px",
+   "small.heroCardKind \"Samurai\" 10px",
+   "small.heroCardKind \"Kunoichi\" 10px",
+   "span \"Shooter\" 10px",
+   "small.heroCardKind \"Archer\" 10px",
+   "span \"Mage\" 10px",
+   "small.heroCardKind \"Fire Wizard\" 10px",
+   "small.heroCardKind \"Peasant\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "hero-overview": {
+  "small": [
+   "button.tomeUse \"Use tome\" 73x36"
+  ],
+  "tiny": [
+   "small \"STR\" 10px",
+   "small \"DEX\" 10px",
+   "small \"CON\" 10px",
+   "small \"INT\" 10px",
+   "small \"WIS\" 10px",
+   "small \"CHA\" 10px",
+   "small \"AC\" 10px",
+   "small \"To hit\" 10px",
+   "small \"Skill DC\" 10px",
+   "small \"Crit\" 10px",
+   "small \"Initiative\" 10px",
+   "small \"Proficiency\" 10px",
+   "small \"SP\" 10px",
+   "small \"Ultimate\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "hero-overview-foot": {
+  "small": [
+   "button.heroNextUp \"Next upgrade›\" 122x36",
+   "button.tomeUse \"Use tome\" 73x36"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "hero-progression": {
+  "small": [
+   "button.tomeUse \"Use tome\" 73x36"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 3,
+   "Georgia": 2
+  }
+ },
+ "hero-equipment": {
+  "small": [
+   "button.tomeUse \"Use tome\" 73x36"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 2
+  }
+ },
+ "hero-skills": {
+  "small": [
+   "button.tomeUse \"Use tome\" 73x36"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 2
+  }
+ },
+ "hero-talents": {
+  "small": [
+   "button.tomeUse \"Use tome\" 73x36"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 3,
+   "Georgia": 2
+  }
+ },
+ "upgrades": {
+  "small": [
+   "button.ulClose \"×\" 40x40"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "quests": {
+  "small": [
+   "button.qlTab.on \"Active 0/3\" 82x40",
+   "button.qlTab \"Board18\" 82x40",
+   "button.qlTab \"Eidolons!\" 82x40"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "quests-tab2": {
+  "small": [
+   "button.qlTab \"Active 0/3\" 82x40",
+   "button.qlTab.on \"Board18\" 82x40",
+   "button.qlTab \"Eidolons!\" 82x40",
+   "button.qlChip.on \"★ Easiest first\" 95x36",
+   "button.qlChip.on \"All\" 36x36",
+   "button.qlChip \"Short\" 49x36",
+   "button.qlChip \"Long\" 46x36",
+   "button.qlChip \"Chain\" 51x36",
+   "button.qlChip \"Campaign\" 73x36",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "gallery": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "codex": {
+  "small": [
+   "button.primary \"Claim\" 72x34",
+   "button.primary \"Claim\" 72x34"
+  ],
+  "tiny": [
+   "small \"not met\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1,
+   "\"Alegreya Sans\"": 1
+  }
+ },
+ "achievements": {
+  "small": [],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "settings": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "settings-sound": {
+  "small": [
+   "button.setBack \"‹ Back\" 96x40",
+   "input \"Music volume\" 315x8",
+   "input \"Effects volume\" 315x8"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "settings-updates": {
+  "small": [
+   "button.setBack \"‹ Back\" 96x40"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "armies": {
+  "small": [
+   "button.asDot \"Orc Warband\" 10x10",
+   "button.asDot \"Undead Legion\" 10x10",
+   "button.asDot \"Beast Packs\" 10x10",
+   "button.asDot \"The Wildwood\" 10x10",
+   "button.asDot \"The Labyrinth\" 10x10",
+   "button.asDot \"Ogre Clans\" 10x10",
+   "button.asDot \"Infernal Host\" 10x10",
+   "button.asDot \"Yokai Night Parade\" 10x10",
+   "button.asDot.on \"Golem Forge\" 10x10"
+  ],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Rift ores\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "party": {
+  "small": [],
+  "tiny": [
+   "small \"THE LAST KEEP\" 9px",
+   "span \"YOUR COMPANY\" 8px",
+   "span.ptSlotNumber \"1\" 10px",
+   "span.ptSlotNumber \"2\" 10px",
+   "span.ptSlotNumber \"3\" 10px",
+   "span.ptSlotNumber \"4\" 10px",
+   "span.ptSlotNumber \"5\" 10px",
+   "span.pips \"●○\" 10px",
+   "span.stars \"★★★★ ◇◇\" 9px"
+  ],
+  "headingFonts": {
+   "Georgia": 3
+  }
+ },
+ "march": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1,
+   "\"Alegreya Sans\"": 3
+  }
+ },
+ "stall-books": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "stall-gear": {
+  "small": [],
+  "tiny": [
+   "b.eqPh \"Boots\" 10px",
+   "b.eqPh \"Pearl\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "stall-tomes": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "stall-chests": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 4
+  }
+ },
+ "stall-sell": {
+  "small": [
+   "button.hsPill.on \"All\" 41x36",
+   "button.hsPill \"Common\" 75x36",
+   "button.hsPill \"Rare\" 51x36",
+   "button.hsPill \"Epic+\" 55x36",
+   "button.hsPill \"Books\" 58x36"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "stall-repair": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "stall-enchant": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "summon-1": {
+  "small": [],
+  "tiny": [
+   "small \"THE SUMMONING SANCTUM\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "summon-10": {
+  "small": [],
+  "tiny": [
+   "small \"THE SUMMONING SANCTUM\" 10px",
+   "span.tarotNum \"XXII\" 5.99344px",
+   "span.tarotTrait \"Marksman\" 5.3275px",
+   "span.tarotNum \"XXIII\" 5.99344px",
+   "span.tarotTrait \"Caster\" 5.3275px",
+   "span.tarotNum \"XXI\" 5.99484px",
+   "span.tarotTrait \"Blade\" 5.32875px",
+   "span.tarotNum \"X\" 5.99344px",
+   "span.tarotTrait \"Trickster\" 5.3275px",
+   "span.tarotNum \"XIII\" 5.99344px",
+   "span.tarotTrait \"Beast\" 5.3275px",
+   "span.tarotNum \"XI\" 5.99344px",
+   "span.tarotNum \"III\" 5.99344px",
+   "span.tarotNum \"III\" 5.99484px",
+   "span.tarotTrait \"Trickster\" 5.32875px",
+   "b \"Kwame\" 10px",
+   "span.rank \"Rank 4\" 10px",
+   "b \"Kenji\" 10px",
+   "b \"Ayame\" 10px",
+   "b \"Natsu\" 10px",
+   "b \"Malia\" 10px",
+   "b \"Kohaku\" 10px",
+   "b \"Kurogane\" 10px",
+   "b \"Kazan\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "deploy": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40",
+   "button#summon \"Hire · 30\" 90x40",
+   "button#pack \"Pack\" 90x40",
+   "button#auto \"Auto\" 90x40",
+   "button#homeBtn \"Home\" 90x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "deploy-formations": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "deploy-traits": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40",
+   "button#summon \"Hire · 30\" 90x40",
+   "button#pack \"Pack\" 90x40",
+   "button#auto \"Auto\" 90x40",
+   "button#homeBtn \"Home\" 90x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "fight": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"ULT+SPELL\" 9px",
+   "small \"TACTIC\" 9px"
+  ],
+  "headingFonts": {}
+ },
+ "fight-paused": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"ULT+SPELL\" 9px",
+   "small \"TACTIC\" 9px"
+  ],
+  "headingFonts": {}
+ },
+ "result": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {}
+ },
+ "lost": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {}
+ },
+ "recap": {
+  "small": [],
+  "tiny": [
+   "small \"Waves cleared\" 9px",
+   "small \"Time fought\" 9px",
+   "small \"Gold spent\" 9px",
+   "h3.jrHeading \"The company\" 10px",
+   "span.lvb.b0 \"Lv 33\" 10px",
+   "em.jrTag.mvp \"MVP\" 9px",
+   "small.jrXp \"+38 XP\" 9.16667px",
+   "small.jrNext \"Next 56k\" 9.16667px",
+   "span.lvb.b0 \"Lv 31\" 10px",
+   "small.jrXp \"+25 XP\" 9.16667px",
+   "small.jrNext \"Next 15k\" 9.16667px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 2
+  }
+ },
+ "calamity": {
+  "small": [
+   "button.cvStep \"‹\" 38x34",
+   "button.cvStep \"›\" 38x34",
+   "button.cvHero.on \"Knight\" 79x32",
+   "button.cvHero \"Samurai\" 79x32",
+   "button.cvHero \"Kunoichi\" 79x32",
+   "button.cvHero \"Archer\" 79x32",
+   "button.cvHero \"Fire Wizard\" 79x32",
+   "button.cvHero \"Peasant\" 79x32",
+   "button.cvHero \"Ninja Monk\" 79x32",
+   "button.cvHero \"Wanderer\" 79x32",
+   "button.cvHero \"Lightning Mage\" 79x32",
+   "button.cvHero \"Kitsune\" 79x32",
+   "button.cvHero \"Karasu Tengu\" 79x32",
+   "button.cvHero \"Yamabushi Tengu\" 79x32",
+   "button.cvHero \"Werewolf\" 79x33",
+   "button.cvHero \"Minotaur\" 79x33",
+   "button.cvHero \"Satyr\" 79x33",
+   "button.cvHero \"Gorgon\" 79x33",
+   "button.cvHero \"Samurai Commander\" 79x33",
+   "button.cvHero \"Paladin\" 79x33",
+   "button.cvHero \"Cleric\" 79x33",
+   "button.cvHero \"Druid\" 79x33",
+   "button.cvHero \"Barbarian\" 79x33",
+   "button.cvHero \"Ranger\" 79x33",
+   "button.cvHero \"Warlock\" 79x33",
+   "button.cvHero \"Illusionist\" 79x33",
+   "button.cvHero \"Gunslinger\" 79x33"
+  ],
+  "tiny": [
+   "small \"Ranger\" 10px",
+   "small \"Warlock\" 10px",
+   "small \"Illusionist\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1,
+   "\"Alegreya Sans\"": 1
+  }
+ },
+ "daily": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "calamity-pick": {
+  "small": [
+   "button.cvStep \"‹\" 38x34",
+   "button.cvStep \"›\" 38x34",
+   "button.cvHero.on \"Knight\" 79x32",
+   "button.cvHero \"Samurai\" 79x32",
+   "button.cvHero \"Kunoichi\" 79x32",
+   "button.cvHero \"Archer\" 79x32",
+   "button.cvHero \"Fire Wizard\" 79x32",
+   "button.cvHero \"Peasant\" 79x32",
+   "button.cvHero \"Ninja Monk\" 79x32",
+   "button.cvHero \"Wanderer\" 79x32",
+   "button.cvHero \"Lightning Mage\" 79x32",
+   "button.cvHero \"Kitsune\" 79x32",
+   "button.cvHero \"Karasu Tengu\" 79x32",
+   "button.cvHero \"Yamabushi Tengu\" 79x32",
+   "button.cvHero \"Werewolf\" 79x33",
+   "button.cvHero \"Minotaur\" 79x33",
+   "button.cvHero \"Satyr\" 79x33",
+   "button.cvHero \"Gorgon\" 79x33",
+   "button.cvHero \"Samurai Commander\" 79x33",
+   "button.cvHero \"Paladin\" 79x33",
+   "button.cvHero \"Cleric\" 79x33",
+   "button.cvHero \"Druid\" 79x33",
+   "button.cvHero \"Barbarian\" 79x33",
+   "button.cvHero \"Ranger\" 79x33",
+   "button.cvHero \"Warlock\" 79x33",
+   "button.cvHero \"Illusionist\" 79x33",
+   "button.cvHero \"Gunslinger\" 79x33"
+  ],
+  "tiny": [
+   "small \"Ranger\" 10px",
+   "small \"Warlock\" 10px",
+   "small \"Illusionist\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1,
+   "\"Alegreya Sans\"": 1
+  }
+ },
+ "calamity-map": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40",
+   "button#pack \"Pack\" 122x40",
+   "button#auto \"Auto\" 122x40",
+   "button#homeBtn \"Home\" 122x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "calamity-camp": {
+  "small": [],
+  "tiny": [
+   "p.rsEyebrow \"Frostwatch\" 9px",
+   "small.rtLv \"Lv 1\" 10px",
+   "small \"100%\" 10px",
+   "small \"Kwame\" 10px",
+   "em \"Lv 1\" 10px",
+   "em \"unscarred\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "calamity-mapview": {
+  "small": [],
+  "tiny": [
+   "p.rsEyebrow \"CALAMITY · REGION 1 / 3\" 9px",
+   "button.rsAltar \"✦ Altar · wakes after yo\" 10px",
+   "p.rsGrowth \"Starter Lv 1 · Tier 1 · \" 10px",
+   "button.rsShift \"Reshape · 20 gold\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 2
+  }
+ },
+ "stand": {
+  "small": [
+   "button.stSlot \"Knight: tap to drop\" 36x48",
+   "button.stSlot \"Cleric: tap to drop\" 36x48",
+   "button.stSlot \"Fire Wizard: tap to drop\" 36x48",
+   "button.stSlot \"Archer: tap to drop\" 36x48",
+   "button.stSlot \"Samurai: tap to drop\" 36x48",
+   "button.stSlot \"Kunoichi: tap to drop\" 36x48",
+   "button.stSlot \"Peasant: tap to drop\" 36x48",
+   "button.stSlot \"Ninja Monk: tap to drop\" 36x48"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "auto-ask": {
+  "small": [
+   "button.asDot \"Orc Warband\" 10x10",
+   "button.asDot \"Undead Legion\" 10x10",
+   "button.asDot \"Beast Packs\" 10x10",
+   "button.asDot \"The Wildwood\" 10x10",
+   "button.asDot \"The Labyrinth\" 10x10",
+   "button.asDot \"Ogre Clans\" 10x10",
+   "button.asDot \"Infernal Host\" 10x10",
+   "button.asDot \"Yokai Night Parade\" 10x10",
+   "button.asDot.on \"Golem Forge\" 10x10"
+  ],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Rift ores\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "pack": {
+  "small": [],
+  "tiny": [
+   "small \"No runes\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1,
+   "\"Alegreya Sans\"": 2
+  }
+ },
+ "pack-foot": {
+  "small": [],
+  "tiny": [
+   "small \"No runes\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1,
+   "\"Alegreya Sans\"": 2
+  }
+ },
+ "trophies": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 5,
+   "Georgia": 3
+  }
+ },
+ "bonds-sheet": {
+  "small": [],
+  "tiny": [
+   "small \"STR\" 10px",
+   "small \"DEX\" 10px",
+   "small \"CON\" 10px",
+   "small \"INT\" 10px",
+   "small \"WIS\" 10px",
+   "small \"CHA\" 10px",
+   "small \"Crit\" 10px",
+   "small \"Initiative\" 10px",
+   "small \"Proficiency\" 10px",
+   "small \"SP\" 10px",
+   "small \"Ultimate\" 10px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 2
+  }
+ },
+ "retire": {
+  "small": [],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 3,
+   "Georgia": 3
+  }
+ },
+ "rankup": {
+  "small": [
+   "button.heroNextUp \"Next upgrade›\" 122x36",
+   "button.tomeUse \"Use tome\" 73x36"
+  ],
+  "tiny": [
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "march-foot": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 4
+  }
+ },
+ "party-foot": {
+  "small": [],
+  "tiny": [
+   "small \"THE LAST KEEP\" 9px",
+   "span.ptInfo \"i\" 9px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "overlook-sheet": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "span \"HOLD THE KEEP\" 9px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ },
+ "toast": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px",
+   "small \"Formation\" 10px"
+  ],
+  "headingFonts": {}
+ }
+}

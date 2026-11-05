@@ -1,31 +1,29 @@
-// The party's tactics on the page (docs/notes/tactics.md; the rules are `sim/tactics.ts`, the pick `sim/tacticPick.ts`). Two parts:
+// The party's tactics on the page (docs/notes/tactics.md, docs/notes/tactics-overview.md; the rules are `sim/tactics.ts`, the pick
+// `sim/tacticPick.ts`). Two parts:
 //
-// - **The chip** on the prep screen, beside Auto: the tactic picked for this mode or army ("Advance"). A tap opens the sheet: the three
-//   tactics as large buttons, each with its one line, the picked one lit. A pick is kept in the save at once.
-// - **The Charge! button** in the fight, while the party is held (Advance or Hold, before the line meets the foe): a tap lets everyone go,
-//   once a fight, through the sim's own order (`orderCharge`).
+// - **The tactic button** in the fight, at the side under the Auto switch: the tactic's icon. A tap cycles to the next tactic (Advance
+//   together, Hold the line, Charge, and back) and it takes effect in the running fight, through the sim's own order (`orderTactic`). A small
+//   word pops up under it with the mode's name ("Advance", "Hold", "Charge") and fades. The pick is kept in the save for this mode or army,
+//   so the next fight begins with it. (It took the place of the prep screen's tactic chip and the fight's Charge! call: TACTICS-OVERVIEW.)
+// - **The Formation button** on the prep screen, at the side of the board, once the formations are open (with Auto place): the shape the
+//   heroes stand in, and a tap opens a sheet of the four shapes; a tap on one sets the placed heroes out in it.
 //
-// It never changes the battle except through `setTactic` (before the fight, from the page) and `orderCharge`.
+// It never changes the battle except through `setTactic` (before the fight, from the page), `orderTactic` and the page's Arrange.
 
 import type { Battle } from './sim/battle';
-import { canCharge, orderCharge, TACTICS_LIST, type Tactic } from './sim/tactics';
+import { canChangeTactic, fightTactic, nextTactic, orderTactic, type Tactic } from './sim/tactics';
 import { FORMATION_WORDS, TACTIC_WORDS } from './sim/tacticPick';
 import { FORMATIONS_LIST, type Formation } from './sim/formations';
-import type { Advice } from './sim/tacticAdvice';
 import { openScreen } from './screens';
 
 export interface TacticsViewOpts {
-  /** The tactic picked for the run's mode (or army). */
-  picked: () => Tactic;
-  /** A new pick: the page keeps it in the save. */
+  /** A new pick in the fight: the page keeps it in the save for the run's mode (or army). */
   pick: (t: Tactic) => void;
   /** Whether the formations are open (with Auto place), and the shape the heroes stand in now (undefined: Loose). */
   formationsOpen: () => boolean;
   formation: () => Formation | undefined;
   /** Set the placed heroes out in a shape. */
   arrange: (f: Formation) => void;
-  /** The advice against this wave's foes for the tactic picked (`tacticAdvice.ts`). */
-  advice: () => Advice;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -35,21 +33,52 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
+/** Each tactic's small icon, drawn as the Auto button's star is: a pennant flying forward, a shield, two crossed blades. */
+const ICONS: Record<Tactic, string> = {
+  advance: '<path d="M1.5 0.5h1v9h-1zM2.5 1h6.5l-2 2.2 2 2.3h-6.5z" fill="currentColor"/>',
+  hold: '<path d="M5 0.6l3.8 1.4v3c0 2.3-1.6 3.7-3.8 4.5-2.2-0.8-3.8-2.2-3.8-4.5v-3z" fill="currentColor"/><path d="M5 2v6.2" stroke="#0008" stroke-width="0.9"/>',
+  charge: '<path d="M1 1.2l1.1-0.7 6.9 7.1-0.8 0.9zM9 1.2l-1.1-0.7-6.9 7.1 0.8 0.9z" fill="currentColor"/><path d="M0.6 8.1l1.3 1.3M9.4 8.1l-1.3 1.3" stroke="currentColor" stroke-width="1.2"/>',
+};
+/** The tactics with a painted icon in the build (UI-STANDARD: ui/tactics/<id>.png, docs/notes/ui-standard.md); the drawn icon stands in for any
+ *  not painted yet. (A build without the list, as the tests', has none.) */
+const PAINTED: readonly string[] = typeof __TACTIC_ART__ !== 'undefined' ? __TACTIC_ART__ : [];
+const icon = (t: Tactic) =>
+  PAINTED.includes(t) ? `<img class="fhTacticArt" src="ui/tactics/${t}.png" alt="" draggable="false">` : `<svg viewBox="0 0 10 10" width="22" height="22" aria-hidden="true">${ICONS[t]}</svg>`;
+
+/** How long the mode's word stays under the button (ms), fading over its last part. */
+const WORD_MS = 1600;
+
 export class TacticsView {
-  readonly chip: HTMLButtonElement;
-  readonly charge: HTMLButtonElement;
+  readonly button: HTMLButtonElement;
+  readonly word: HTMLDivElement;
+  readonly formBtn: HTMLButtonElement;
   private sheet: HTMLDivElement;
   private closer?: () => void;
   private b?: Battle;
+  private shown?: Tactic;
+  private wordTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private opts: TacticsViewOpts) {
-    this.chip = el('button');
-    this.chip.id = 'tactic';
-    this.chip.type = 'button';
-    this.chip.title = 'The party’s tactic';
-    this.chip.addEventListener('click', () => this.open());
-    const buttons = document.getElementById('buttons')!;
-    buttons.insertBefore(this.chip, document.getElementById('homeBtn'));
+    // (the fight's tactic button, in the spell row under the Auto switch at its right end)
+    this.button = el('button', 'fhTactic');
+    this.button.id = 'tacticBtn';
+    this.button.type = 'button';
+    this.button.addEventListener('click', () => this.cycle());
+    this.word = el('div', 'fhTacticWord');
+    this.word.id = 'tacticWord';
+    this.word.setAttribute('role', 'status');
+    this.word.setAttribute('aria-live', 'polite');
+    const row = document.getElementById('hudSpells')!;
+    row.append(this.button, this.word);
+
+    // (the prep screen's Formation button, at the side of the board)
+    this.formBtn = el('button');
+    this.formBtn.id = 'formBtn';
+    this.formBtn.type = 'button';
+    this.formBtn.hidden = true;
+    this.formBtn.title = 'Set the heroes out in a formation';
+    this.formBtn.addEventListener('click', () => this.openForms());
+    document.body.appendChild(this.formBtn);
 
     this.sheet = el('div');
     this.sheet.id = 'tacticSheet';
@@ -58,73 +87,78 @@ export class TacticsView {
       if (e.target === this.sheet) this.close();
     });
     document.body.appendChild(this.sheet);
-
-    this.charge = el('button', '', 'Charge!');
-    this.charge.id = 'chargeBtn';
-    this.charge.type = 'button';
-    this.charge.hidden = true;
-    this.charge.title = 'Let everyone go at once (once a fight)';
-    this.charge.addEventListener('click', () => {
-      if (this.b && orderCharge(this.b)) this.charge.hidden = true;
-    });
-    document.body.appendChild(this.charge);
   }
 
-  /** Each refresh of the page: the chip's words, and the Charge! button while the party is held. */
+  /** Each refresh of the page: the fight's button shows the tactic playing (or waiting for the next tick), and the prep screen's Formation
+   *  button the shape the heroes stand in. */
   refresh(b: Battle): void {
     this.b = b;
-    const shape = this.opts.formationsOpen() ? this.opts.formation() : undefined;
-    const words = `${TACTIC_WORDS[this.opts.picked()].short}|${shape ? FORMATION_WORDS[shape].short : ''}`;
-    if (this.chip.dataset.words !== words) {
-      this.chip.dataset.words = words;
-      // (a small pennant, drawn as the Auto button's star is; the formation the heroes stand in, if any, a small line under the tactic)
-      this.chip.innerHTML = '<svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M1.5 0.5h1v9h-1zM2.5 1h6.5l-2 2.2 2 2.3h-6.5z" fill="currentColor"/></svg>';
-      const text = el('span', 'tacWords');
-      text.append(el('b', '', TACTIC_WORDS[this.opts.picked()].short));
-      if (shape) text.append(el('small', '', FORMATION_WORDS[shape].short));
-      this.chip.append(text);
+    const on = canChangeTactic(b);
+    this.button.hidden = !on;
+    if (on) this.show(fightTactic(b));
+    if (!on) this.word.classList.remove('up');
+    const forms = b.phase === 'deploy' && this.opts.formationsOpen();
+    this.formBtn.hidden = !forms;
+    if (forms) {
+      const shape = this.opts.formation();
+      const words = shape ? FORMATION_WORDS[shape].short : 'Loose';
+      if (this.formBtn.dataset.words !== words) {
+        this.formBtn.dataset.words = words;
+        this.formBtn.replaceChildren(el('small', '', 'Formation'), el('b', '', words));
+      }
     }
-    this.charge.hidden = !canCharge(b);
   }
 
-  private open(): void {
-    if (!this.sheet.hidden) return;
+  private show(t: Tactic): void {
+    if (this.shown === t) return;
+    this.shown = t;
+    const w = TACTIC_WORDS[t];
+    this.button.innerHTML = `<span class="fhTacticFace">${icon(t)}</span><small>${w.short}</small>`;
+    this.button.dataset.tactic = t;
+    this.button.setAttribute('aria-label', `Tactic: ${w.name}. Tap for the next`);
+    this.button.title = `${w.name}: ${w.line} Tap for the next tactic.`;
+  }
+
+  /** A tap: the next tactic, ordered in the fight, kept in the save, and its word shown under the button. */
+  private cycle(): void {
+    const b = this.b;
+    if (!b || !canChangeTactic(b)) return;
+    const to = nextTactic(fightTactic(b));
+    if (!orderTactic(b, to)) return;
+    this.opts.pick(to);
+    this.show(to);
+    this.flash(TACTIC_WORDS[to].short);
+  }
+
+  /** The mode's word under the button: it pops up, stays readable, then fades (with reduced motion it shows and goes, no movement). */
+  private flash(text: string): void {
+    this.word.textContent = text;
+    this.word.classList.remove('up');
+    void this.word.offsetWidth;
+    this.word.classList.add('up');
+    if (this.wordTimer) clearTimeout(this.wordTimer);
+    this.wordTimer = setTimeout(() => this.word.classList.remove('up'), WORD_MS);
+  }
+
+  private openForms(): void {
+    if (!this.sheet.hidden || !this.opts.formationsOpen()) return;
     const card = el('div', 'tacCard');
-    card.append(el('h2', '', 'Party tactic'));
-    const now = this.opts.picked();
-    // (the advice against this wave's foes, and a warning when the pick is the one that loses to them)
-    const advice = this.opts.advice();
-    card.append(el('p', 'tacAdvice', advice.line));
-    if (advice.warn) card.append(el('p', 'tacWarn', advice.warn));
-    for (const t of TACTICS_LIST) {
-      const w = TACTIC_WORDS[t];
-      const b = el('button', `tacOpt${t === now ? ' on' : ''}`);
+    const shape = this.opts.formation();
+    card.append(el('h2', '', 'Formation'));
+    card.append(el('p', 'tacAdvice', shape ? `The heroes stand in a ${FORMATION_WORDS[shape].name}. Tap a shape to set them out in it.` : 'The heroes stand in no shape. Tap one to set them out in it.'));
+    const grid = el('div', 'tacForms');
+    for (const f of FORMATIONS_LIST) {
+      const w = FORMATION_WORDS[f];
+      const b = el('button', `tacForm${f === shape ? ' on' : ''}`);
       b.type = 'button';
       b.append(el('b', '', w.name), el('span', '', w.line));
       b.addEventListener('click', () => {
-        this.opts.pick(t);
+        this.opts.arrange(f);
         this.close();
       });
-      card.append(b);
+      grid.append(b);
     }
-    // (the formations, once Auto place is open: the shape the heroes stand in, and a tap sets them out in another)
-    if (this.opts.formationsOpen()) {
-      const shape = this.opts.formation();
-      card.append(el('h3', '', shape ? `Formation: ${FORMATION_WORDS[shape].name}` : 'Formation: none (place the heroes in a shape)'));
-      const grid = el('div', 'tacForms');
-      for (const f of FORMATIONS_LIST) {
-        const w = FORMATION_WORDS[f];
-        const b = el('button', `tacForm${f === shape ? ' on' : ''}`);
-        b.type = 'button';
-        b.append(el('b', '', w.name), el('span', '', w.line));
-        b.addEventListener('click', () => {
-          this.opts.arrange(f);
-          this.close();
-        });
-        grid.append(b);
-      }
-      card.append(grid);
-    }
+    card.append(grid);
     const shut = el('button', 'tacClose', 'Close');
     shut.type = 'button';
     shut.addEventListener('click', () => this.close());

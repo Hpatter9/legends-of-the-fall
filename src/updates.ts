@@ -27,6 +27,54 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.371.0',
+    date: '2026-11-05',
+    title: 'A cleaner war camp',
+    notes: ['The Party button is gone from the war camp: the party screen opens when you start a run anyway.'],
+  },
+  {
+    version: '0.370.0',
+    date: '2026-11-05',
+    title: 'A gilded tactics button',
+    notes: ['The tactics button is a gilded medallion naming its mode, and the spells\' Auto switch sits beside the spell orbs.'],
+  },
+  {
+    version: '0.369.0',
+    date: '2026-11-05',
+    title: 'March orders on the War Council',
+    notes: ['March orders are now a button on the War Council, in one standard ornate menu.', 'The camp fixes meant for 0.368.0 land now: the Daily button, Hester\'s mark, no wave line.'],
+  },
+  {
+    version: '0.368.0',
+    date: '2026-11-05',
+    title: 'A tidier camp',
+    notes: ['A gilded Daily button, a small mark on Hester\'s stall when a trader visits, and no wave line behind Choose your battle.'],
+  },
+  {
+    version: '0.367.0',
+    date: '2026-11-05',
+    title: 'Ornate everywhere',
+    notes: ['Every menu, card and page now wears the ornate Keep and Kingdom look: castle cards, the march card, the stall, quests, the campfire, trait chips and more.'],
+  },
+  {
+    version: '0.366.0',
+    date: '2026-11-05',
+    title: 'Third skills come into their own',
+    notes: ['Third skills are now the strongest of a hero\'s three. Late armies retuned for mastered skills, and heroes kept within 6 points of each other at every level.'],
+  },
+  {
+    version: '0.365.0',
+    date: '2026-11-05',
+    title: 'Tactics button, true hero stats',
+    notes: ['A tactics button under Auto cycles Advance, Hold and Charge mid-fight, with a word to show the mode.', 'The hero Overview now shows real Health, Attack and Armour with gear and runes.'],
+  },
+  {
+    version: '0.364.0',
+    date: '2026-11-05',
+    title: 'Rivals settle, Calamity header',
+    notes: ['Ten scenes for rivals who settle their quarrel. The Calamity\'s header shows the act, your provisions and an oath pennant for each oath.'],
+  },
+  {
     version: '0.363.0',
     date: '2026-11-05',
     title: 'More bond scenes, Calamity act scenes',

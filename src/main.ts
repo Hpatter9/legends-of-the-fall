@@ -98,7 +98,7 @@ import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
-import { showAnvil, showLectern, showMarchCard } from './marchCard';
+import { defaultPicks, marchChoice, marchLine, openMarchOrders, ordersOf, showAnvil, showLectern } from './marchCard';
 import { markedHero } from './sim/march';
 import { repairAll, repairAllCost } from './sim/wear';
 import { lecternDue, lecternSwap } from './sim/lectern';
@@ -192,7 +192,6 @@ import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
 import { pickedTactic, pickTactic } from './sim/tacticPick';
-import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 /** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
@@ -443,25 +442,36 @@ class Game {
       },
       onContinue: () => this.resume(),
       // (an army starts from wave 1 once its party is picked)
-      onArmy: (id, tier, auto) =>
+      onArmy: (id, tier, auto) => {
+        // (the run's seed is fixed as the War Council opens, so the March orders it shows (a Cursed march's curse) are the run's own)
+        const runSeed = seed && isScenario(scenario) ? seed : clockSeed();
+        // (UI-STANDARD: the March orders are a button on the War Council, once any order is open; March starts with them as set.
+        //  An auto replay marches plain)
+        const marching = !auto && marchChoice(this.meta, id, tier);
+        let picks = defaultPicks(this.meta, id, this.meta.party);
         this.party.open('start', () => {
-          const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
+          const next = armyRun(runSeed, id, this.meta.party, this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
-          const go = () => {
-            this.startRun(next);
-            if (auto) this.beginAuto({ army: id, tier }, auto);
-          };
-          // (DEPTH-BUILD: the March orders card, once any modifier is open; an auto replay marches plain)
-          if (auto) return go();
-          showMarchCard(this.meta, id, tier, next.seed, (orders) => {
+          if (marching) {
+            const orders = ordersOf(picks, next.seed, this.meta.party);
             if (orders) next.orders = orders;
             // (DEPTH-BUILD: Far Sight's road: the run is fought on that land of the army's)
             const army = armyById(id);
             const road = army ? routeLand(orders, landsOf(army)) : undefined;
             if (road) next.area = road;
-            go();
+          }
+          this.startRun(next);
+          if (auto) this.beginAuto({ army: id, tier }, auto);
+        });
+        if (marching)
+          this.party.setOrders({
+            line: () => marchLine(picks),
+            open: (party, redraw) => openMarchOrders(this.meta, id, tier, runSeed, party, picks, (p) => {
+              picks = p;
+              redraw();
+            }),
           });
-        }),
+      },
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
@@ -1954,19 +1964,17 @@ class Game {
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
-    // (the party's tactic: the chip beside Auto, and the Charge! call in the fight; docs/notes/tactics.md)
+    // (the party's tactic: the button under Auto in the fight, which cycles the tactic mid-fight, and the prep screen's Formation button;
+    // docs/notes/tactics.md, docs/notes/tactics-overview.md)
     this.tactics = new TacticsView({
-      picked: () => pickedTactic(this.meta.tactics, this.run.mode),
       pick: (t) => {
         pickTactic(this.meta, this.run.mode, t);
         saveMeta(this.meta);
-        this.refresh();
       },
       // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       arrange: (f) => this.arrangeFormation(f),
-      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
@@ -2121,7 +2129,7 @@ class Game {
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
   /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
-  /** Set the placed heroes out in a formation's shape (the tactic sheet's Arrange): each taken back and placed again at its tile of the shape
+  /** Set the placed heroes out in a formation's shape (the prep screen's Formation sheet, `tacticsView.ts`): each taken back and placed again at its tile of the shape
    *  (`formationSpots`), or where it stood if that tile will not take it. */
   private arrangeFormation(shape: Formation): void {
     const b = this.b;

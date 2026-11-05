@@ -1,8 +1,9 @@
 // The tactics' screenshots (docs/notes/tactics.md), on the BATTLE-HUD shots' set-up. After `npm run web`:
 //   node tools/tactics/shots.mjs
-// Scenes: deploy (the chip beside Auto), sheet (the tactic's sheet open, with the formations), arranged (set out in a Shield Wall), fight (the
-// party held, Charge! up), at 393x852, 360x780 and 412x915. The save has the first four armies cleared, so Auto place and the formations are open.
-// Writes docs/samples/tactics-<scene>-<w>.png.
+// Scenes (TACTICS-OVERVIEW): deploy (the Formation button at the side of the board), forms (its sheet open), arranged (set out in a Shield
+// Wall), fight (the fight's start: the tactic button under Auto), cycled (a tap: Hold, its word showing), mid (mid-fight, a second tap: Charge),
+// at 393x852, 360x780 and 412x915. The save has the first four armies cleared, so Auto place and the formations are open.
+// Writes docs/samples/tactics-overview/tactics-<scene>-<w>.png and prints the button's box and the word.
 //
 // Scenes: deploy, fight (mid-fight, one hero's ultimate full), sheet (a skill's sheet open, the fight paused), ult (the ultimate's sheet), cast (a
 // cast moment frozen part way), spells (a king's spell armed on its orb), daily, calamity (ten heroes), stand (the Last Stand's eight), kits (a
@@ -11,7 +12,7 @@
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
-const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
+const { chromium } = createRequire(import.meta.url)('playwright');
 const PORT = Number(process.env.PORT ?? 8653);
 const root = 'out/web';
 const args = process.argv.slice(2);
@@ -19,7 +20,7 @@ const args = process.argv.slice(2);
 const ULT_SCENES = ['slash', 'name', 'dim', 'linger', 'short'];
 const prefix = 'tactics';
 const want = args.length ? args : SCENES();
-function SCENES() { return ['deploy', 'sheet', 'arranged', 'fight']; }
+function SCENES() { return ['deploy', 'forms', 'arranged', 'fight', 'cycled', 'mid']; }
 const SIZES = (process.env.SIZES ?? '393,360,412').split(',').map((w) => ({ 393: [393, 852], 360: [360, 780], 412: [412, 915] })[w]);
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
 const srv = createServer((q, r) => {
@@ -29,7 +30,8 @@ const srv = createServer((q, r) => {
   r.end(readFileSync(p));
 }).listen(PORT);
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-mkdirSync('docs/samples', { recursive: true });
+const OUT = 'docs/samples/tactics-overview';
+mkdirSync(OUT, { recursive: true });
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
 let errors = 0;
 const PARTY = ['knight', 'cleric', 'wizard', 'archer', 'samurai'];
@@ -77,25 +79,34 @@ for (const [w, h] of SIZES) {
     const cleared = { waves: 15, best: 15, won: 15, clears: 1, stars: {} };
     const { ctx, page } = await open(w, h, { armies: { orcs: cleared, undead: cleared, beasts: cleared, wildwood: cleared }, featuresTold: ['autoMerge', 'autoPlace'] });
     await army(page);
-    if (scene === 'arranged') {
-      await page.evaluate(() => document.getElementById('tactic').click());
+    if (scene === 'arranged' || scene === 'forms') {
+      await page.evaluate(() => document.getElementById('formBtn').click());
       await page.waitForTimeout(300);
-      await page.evaluate(() => document.querySelector('#tacticSheet .tacForm').click());
-      await page.waitForTimeout(500);
+      if (scene === 'arranged') {
+        await page.evaluate(() => document.querySelector('#tacticSheet .tacForm').click());
+        await page.waitForTimeout(500);
+      }
     }
-    if (scene === 'sheet') {
-      await page.evaluate(() => document.getElementById('tactic').click());
-      await page.waitForTimeout(300);
-    }
-    if (scene === 'fight') {
+    if (scene === 'fight' || scene === 'cycled' || scene === 'mid') {
       await page.evaluate(() => document.getElementById('fight').click());
       await page.waitForTimeout(1600);
-      const shown = await page.evaluate(() => !document.getElementById('chargeBtn').hidden);
-      console.log(`${w}: Charge! shown ${shown}`);
+      if (scene !== 'fight') {
+        await page.tap('#tacticBtn');
+        await page.waitForTimeout(scene === 'mid' ? 4000 : 300);
+      }
+      if (scene === 'mid') {
+        await page.tap('#tacticBtn');
+        await page.waitForTimeout(300);
+      }
+      const info = await page.evaluate(() => {
+        const r = document.getElementById('tacticBtn').getBoundingClientRect();
+        const a = document.querySelector('#hudSpells .fhAuto').getBoundingClientRect();
+        return { btn: [r.left, r.top, r.width, r.height].map(Math.round), auto: [a.left, a.top, a.width, a.height].map(Math.round), word: document.getElementById('tacticWord').textContent, tactic: window.__game.b.tactic?.kind, saved: JSON.stringify(window.__game.meta.tactics ?? {}) };
+      });
+      console.log(`${w} ${scene}:`, JSON.stringify(info));
     }
-    const chip = await page.evaluate(() => document.getElementById('tactic')?.textContent);
-    console.log(`${w} ${scene}: chip "${chip}"`);
-    await page.screenshot({ path: `docs/samples/${prefix}-${scene}-${w}.png` });
+    if (scene === 'deploy') console.log(`${w} deploy: Formation "${await page.evaluate(() => document.getElementById('formBtn').textContent)}", old chip ${await page.evaluate(() => !!document.getElementById('tactic'))}`);
+    await page.screenshot({ path: `${OUT}/${prefix}-${scene}-${w}.png` });
     await ctx.close();
   }
 }

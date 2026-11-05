@@ -273,7 +273,7 @@ export class TrophyWallModal {
     const sub = el('p', 'twSub', 'Caricatures & spoils of the Calamity Heralds and Spire Champions');
     titleBox.append(crest, title, sub);
 
-    const closeBtn = el('button', 'twCloseBtn', '✕');
+    const closeBtn = el('button', 'twCloseBtn', '‹ Back');
     closeBtn.title = 'Close Trophy Wall (Esc)';
     closeBtn.addEventListener('click', () => this.close());
     header.append(titleBox, closeBtn);

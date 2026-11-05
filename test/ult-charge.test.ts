@@ -14,7 +14,9 @@ import { deploySpots, fieldBoost, pickTeam } from '../tools/heroSweep';
 /** A battle with five heroes placed at a level, as the hero sweep places them (deploy, not yet fought). */
 // (stage 65: 56 until the joint rebalance, docs/notes/joint-rebalance.md, when the field's foes fought at the Normal tier's +2 where they were
 // matched to the heroes' growth, so level-30 teams won as quickly as no fight lasted 35 s; the parity table moved by the same share, 78 to 90)
-function placed(seed: number, level: number, stage = 65): Battle {
+// (stage 75: 65 until SKILLS-10, docs/notes/skills-10.md: with skill 3 the kit's heavy the fights end in the same time (median 16.1 s against
+// main's 16.2), but at 65 only 2 of the 80 lasted 35 s on main and none on the branch, too thin a sample for "a long fight"; at 75, 4 do)
+function placed(seed: number, level: number, stage = 75): Battle {
   const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
   const b = startBattle(seed, FIELD_BANDS[seed % FIELD_BANDS.length], fieldBoost(stage));
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));

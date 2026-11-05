@@ -307,7 +307,8 @@ const CASES: Record<string, Case> = {
     w.hp = Math.round(w.maxHp * 0.2);
     const was = w.hp;
     return () => {
-      assert.ok(w.hp >= was + w.maxHp * 0.32 * HERO_KITS().beastmaster.s3!.tune, 'the wolf heals a third (at its strength)');
+      // (SKILLS-10: at its strength the heal can make the wolf whole)
+      assert.ok(w.hp >= Math.min(w.maxHp, was + w.maxHp * 0.32 * HERO_KITS().beastmaster.s3!.tune), 'the wolf heals a third (at its strength)');
       assert.ok(w.shield && w.shield.until > b.t, 'and is shielded');
     };
   },
@@ -431,19 +432,52 @@ test('the AI casts skill 3 in its case: open, paid, its cooldown run (skills 1 a
   }
 });
 
-test('a jab is held for a heavier skill coming round when paying would leave it short, and jabs freely otherwise (batch 4\'s hold rule)', () => {
-  // (the Archer: Aimed Shot, a heavy of 34 stamina; Double Shot, a jab of 8; Volley cooling)
+// (SKILLS-10: the jabs are heavies now, so batch 4's hold rule is read on a lighter skill held for skill 3: the Archer's Volley, a strike of
+// 24 stamina, and Double Shot, a heavy of 34; Aimed Shot cooling)
+test('a lighter skill is held for skill 3 coming round when paying would leave it short, and goes freely otherwise (the hold rule)', () => {
   const setup = (heavyAgo: number, sp: number) => {
     const b = arena();
     const me = at(b, 'archer', 3, 6);
     foe(b, 3, 3);
     me.charge = (sp / 60) * CHARGE_MAX;
-    me.ks = { at1: b.t, at2: b.t - heavyAgo };
+    me.ks = { at2: b.t, at3: b.t - heavyAgo };
     const out: BattleEvent[] = [];
     castHero(b, me, HERO_KITS().archer, out);
     return out.find((e) => e.kind === 'skill')?.name;
   };
-  assert.equal(setup(12000, 30), undefined, 'Aimed Shot is ready but unpaid: the jab waits');
-  assert.equal(setup(12000, 40), 'Pinning Shot', 'paid: the heavy goes first');
-  assert.equal(setup(2000, 30), 'Double Shot', 'the heavy is far off: she jabs');
+  assert.equal(HERO_KITS().archer.s3!.cls, 'heavy');
+  assert.equal(setup(11500, 30), undefined, 'Double Shot is ready but unpaid: Volley waits');
+  assert.equal(setup(11500, 40), 'Double Shot', 'paid: skill 3 goes first');
+  assert.equal(setup(2000, 30), 'Volley', 'skill 3 is far off: she looses the volley');
+});
+
+// (SKILLS-10, `RES.STALE_MS`: once skill 3 is open, a skill unused for 12 s goes first and is not held)
+test('once skill 3 is open, a skill left unused for 12 s comes round before the others', () => {
+  const setup = (level: number, volleyAgo: number, sp: number) => {
+    const b = arena();
+    const me = at(b, 'archer', 3, 6, level);
+    foe(b, 3, 3);
+    me.charge = (sp / 60) * CHARGE_MAX;
+    me.ks = { at1: b.t - volleyAgo, at2: b.t, at3: b.t - 11500 };
+    const out: BattleEvent[] = [];
+    castHero(b, me, HERO_KITS().archer, out);
+    return out.find((e) => e.kind === 'skill')?.name;
+  };
+  assert.equal(setup(SKILL3_LEVEL, 13000, 40), 'Volley', 'Volley has waited 13 s: it goes before the ready heavy');
+  assert.equal(setup(SKILL3_LEVEL, 6000, 40), 'Double Shot', 'Volley was cast 6 s ago: the heavy goes first');
+  // (unpaid, it is passed over like any skill: the others are not held back for it)
+  assert.equal(setup(SKILL3_LEVEL, 13000, 20), undefined, 'Volley cannot be paid, and nothing else is ready to pay for');
+  // (Aimed Shot ready but unpaid, both unused for 13 s: from level 20 the volley goes; below it the hold rule keeps it for the heavy)
+  const both = (level: number) => {
+    const b = arena();
+    const me = at(b, 'archer', 3, 6, level);
+    foe(b, 3, 3);
+    me.charge = (30 / 60) * CHARGE_MAX;
+    me.ks = { at1: b.t - 13000, at2: b.t - 13000 };
+    const out: BattleEvent[] = [];
+    castHero(b, me, HERO_KITS().archer, out);
+    return out.find((e) => e.kind === 'skill')?.name;
+  };
+  assert.equal(both(SKILL3_LEVEL), 'Volley');
+  assert.equal(both(SKILL3_LEVEL - 1), undefined, 'below level 20 there is no such rule');
 });

@@ -10,9 +10,10 @@ import { keyOf, tal } from '../src/sim/abilities';
 import { HERO_KITS, castHero, heroKitOf, SKILL2_LEVEL, SKILL3_LEVEL } from '../src/sim/heroKits';
 import {
   AUTO_SHARE, castModsOf, castPoints, CONJURE_TREANT, FIELD_POINTS, fightLevels, fightUse, LEVEL_STEPS, levelLine, levelOfUse, levelUpWords, MAX_USE, readSkillUse,
-  settleSkillUse, slotKeysOf, SUMMON_BEAST, USE_AT, useOf, useShare,
+  kitWithLevels, levelSlot, settleSkillUse, slotKeysOf, SUMMON_BEAST, USE_AT, useOf, useShare,
 } from '../src/sim/skillLevels';
 import { LV5 } from '../src/sim/kits/lv5';
+import { LV5_TUNE } from '../src/sim/kits/lv5Tune';
 import { lv5Table } from '../tools/skills/lv5';
 import { gradeBoost, boostOf } from '../src/sim/run';
 import { heroStats } from '../src/sim/talents';
@@ -106,7 +107,8 @@ test("each level's numbers: stronger, then cheaper from Level 3, then quicker an
     const st = LEVEL_STEPS[lv - 1];
     hk.slots.forEach((s, i) => {
       const was = base.slots[i];
-      const pow = st.pow + (lv === 5 && LV5[keyOf(s.skill)] === 'pow' ? 0.08 : 0);
+      // (SKILLS-10: and at Level 5 the hero's own tune, `LV5_TUNE`, the Knight's 0.9)
+      const pow = (st.pow + (lv === 5 && LV5[keyOf(s.skill)] === 'pow' ? 0.08 : 0)) * (lv === 5 ? (LV5_TUNE.knight ?? 1) : 1);
       assert.ok(Math.abs(s.tune - was.tune * pow) < 1e-9, `level ${lv} strength`);
       assert.equal(s.cost, Math.round(was.cost * st.cost * 10) / 10, `level ${lv} cost`);
       assert.equal(s.cd, Math.round(was.cd * st.cd), `level ${lv} cooldown`);
@@ -265,4 +267,20 @@ test('a fight built at Level 1 still earns use toward the lasting levels when it
   assert.ok((gain.knight?.[k1] ?? 0) >= FIELD_POINTS, 'its casts and the wave counted');
   settleSkillUse(m, gain, useShare({ kind: 'army' }, false));
   assert.equal(useOf(m, 'knight', k1), 1500 + gain.knight[k1], 'into the lasting points');
+});
+
+// (SKILLS-10, docs/notes/skills-10.md: a hero's own Level 5 tune, beside the rule's step and the levels' x1.3)
+test("a hero's own Level 5 tune moves only its Level 5 skills, and only its own", () => {
+  const kit = HERO_KITS().beastmaster;
+  const s = kit.s1;
+  assert.ok(LV5_TUNE.beastmaster < 1, 'the Beastmaster has one');
+  for (const lv of [2, 3, 4]) assert.equal(levelSlot(s, lv, 'beastmaster').tune, levelSlot(s, lv).tune, `Level ${lv} is the rule's alone`);
+  assert.ok(Math.abs(levelSlot(s, 5, 'beastmaster').tune - levelSlot(s, 5).tune * LV5_TUNE.beastmaster) < 1e-9, 'Level 5 carries her tune');
+  // (a hero the table does not name keeps the rule alone)
+  assert.equal(LV5_TUNE.cleric, undefined);
+  assert.equal(levelSlot(HERO_KITS().cleric.s1, 5, 'cleric').tune, levelSlot(HERO_KITS().cleric.s1, 5).tune);
+  // (and the kit built from a fighter's levels reads its kind)
+  const built = kitWithLevels(kit, 'beastmaster', [5, 5, 5]);
+  assert.ok(Math.abs(built.s1.tune - levelSlot(s, 5, 'beastmaster').tune) < 1e-9);
+  assert.ok(Math.abs(kitWithLevels(kit, 'beastmaster|book', [5, 1, 1]).s1.tune - levelSlot(s, 5, 'beastmaster').tune) < 1e-9, 'a loadout\'s id keeps its kind');
 });
