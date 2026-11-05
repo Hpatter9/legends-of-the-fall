@@ -135,6 +135,12 @@ for (const f of readdirSync('src/art/shop').filter((f) => f.endsWith('.webp'))) 
   copyFileSync(`src/art/shop/${f}`, `${out}/shop/${f}`);
   GEAR_ART_FILES.push(`shop/${f}`);
 }
+// (INT-341: the relics' painted icons (tools/relics/import-relic-icons.py), by URL and kept for offline play)
+mkdirSync(`${out}/relics`, { recursive: true });
+for (const f of readdirSync('src/art/relics').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/relics/${f}`, `${out}/relics/${f}`);
+  GEAR_ART_FILES.push(`relics/${f}`);
+}
 // (the loading illustration is embedded in the cached page, so it appears before game.js and works offline)
 const dataUrl = (f) => `data:image/${f.endsWith('.webp') ? 'webp' : 'png'};base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KEEP__: 'src/art/loading/last-keep.webp' };

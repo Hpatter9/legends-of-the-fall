@@ -32,3 +32,6 @@
 .rlClose { align-self: center; margin-top: 4px; min-width: 120px; }
 /* the strip on the prep screen: a converted run's one line */
 #relics .relicNote { flex: 1 1 100%; font-size: 11px; color: var(--gold); }
+
+/* INT-341: a painted relic icon scales smooth, not nearest-neighbour like the 16 x 16 tiles (the rules above set pixelated for the tiles) */
+img.icon.painted, .rlHead img.painted, .rlPiece img.painted { image-rendering: auto !important; }
