@@ -39,7 +39,11 @@ const ICONS: Record<Tactic, string> = {
   hold: '<path d="M5 0.6l3.8 1.4v3c0 2.3-1.6 3.7-3.8 4.5-2.2-0.8-3.8-2.2-3.8-4.5v-3z" fill="currentColor"/><path d="M5 2v6.2" stroke="#0008" stroke-width="0.9"/>',
   charge: '<path d="M1 1.2l1.1-0.7 6.9 7.1-0.8 0.9zM9 1.2l-1.1-0.7-6.9 7.1 0.8 0.9z" fill="currentColor"/><path d="M0.6 8.1l1.3 1.3M9.4 8.1l-1.3 1.3" stroke="currentColor" stroke-width="1.2"/>',
 };
-const icon = (t: Tactic) => `<svg viewBox="0 0 10 10" width="22" height="22" aria-hidden="true">${ICONS[t]}</svg>`;
+/** The tactics with a painted icon in the build (UI-STANDARD: ui/tactics/<id>.png, docs/notes/ui-standard.md); the drawn icon stands in for any
+ *  not painted yet. (A build without the list, as the tests', has none.) */
+const PAINTED: readonly string[] = typeof __TACTIC_ART__ !== 'undefined' ? __TACTIC_ART__ : [];
+const icon = (t: Tactic) =>
+  PAINTED.includes(t) ? `<img class="fhTacticArt" src="ui/tactics/${t}.png" alt="" draggable="false">` : `<svg viewBox="0 0 10 10" width="22" height="22" aria-hidden="true">${ICONS[t]}</svg>`;
 
 /** How long the mode's word stays under the button (ms), fading over its last part. */
 const WORD_MS = 1600;
@@ -109,7 +113,7 @@ export class TacticsView {
     if (this.shown === t) return;
     this.shown = t;
     const w = TACTIC_WORDS[t];
-    this.button.innerHTML = `<small>TACTIC</small>${icon(t)}`;
+    this.button.innerHTML = `<span class="fhTacticFace">${icon(t)}</span><small>${w.short}</small>`;
     this.button.dataset.tactic = t;
     this.button.setAttribute('aria-label', `Tactic: ${w.name}. Tap for the next`);
     this.button.title = `${w.name}: ${w.line} Tap for the next tactic.`;

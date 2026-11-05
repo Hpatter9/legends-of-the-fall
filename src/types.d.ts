@@ -9,5 +9,7 @@ declare module '*.webp' {
 }
 
 declare const __GAME_VERSION__: string;
+/** The tactics whose painted icon is in the build (`build.mjs`: ui/tactics/<id>.png); none until they are drawn. */
+declare const __TACTIC_ART__: string[];
 /** The usual board's size as "8x11", set by the build (`node build.mjs --board 7x9`); the sim reads it with `typeof` so tests, which do not define it, get the default. */
 declare const __BOARD__: string | undefined;
