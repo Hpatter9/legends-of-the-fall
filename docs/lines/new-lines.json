@@ -9114,6 +9114,382 @@
      ]
     }
    ]
+  },
+  "bond:ninjaMonk|yamabushi:1": {
+   "title": "The Mountain Path",
+   "blurb": "Two who train on mountains argue about which mountain.",
+   "shots": [
+    {
+     "caption": "The Mountain Path",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You walk the path as if the stones owe you money."
+      },
+      {
+       "who": "a",
+       "text": "They do. I climbed them every morning for twelve years."
+      },
+      {
+       "who": "b",
+       "text": "I was born on mine. It still pushes me off."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Then we have both been taught by rocks. Shall we teach these orcs?"
+      }
+     ]
+    }
+   ]
+  },
+  "bond:samurai|samuraiCommander:1": {
+   "title": "The Old Banner",
+   "blurb": "A swordsman and the commander whose banner he once followed.",
+   "shots": [
+    {
+     "caption": "The Old Banner",
+     "lines": [
+      {
+       "who": "b",
+       "text": "I know that guard. You stood in my third rank at the river."
+      },
+      {
+       "who": "a",
+       "text": "Second rank, my lord. The third ran."
+      },
+      {
+       "who": "b",
+       "text": "Then stand in my first, if you will have it."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I will have it. Mind you keep up."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:cleric|priestess:1": {
+   "title": "Two Prayers",
+   "blurb": "A village cleric and a temple priestess find they pray to the same dawn.",
+   "shots": [
+    {
+     "caption": "Two Prayers",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You pray quickly. In the temple we take an hour."
+      },
+      {
+       "who": "a",
+       "text": "In the village we have about a minute before the roof leaks."
+      },
+      {
+       "who": "b",
+       "text": "Then teach me the minute, and I will teach you the hour."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Agreed. The hour first, though. My knees need the rest."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:druid|satyr:1": {
+   "title": "The Grove Song",
+   "blurb": "The druid tends the grove; the satyr plays to it.",
+   "shots": [
+    {
+     "caption": "The Grove Song",
+     "lines": [
+      {
+       "who": "b",
+       "text": "The trees grow better when I play."
+      },
+      {
+       "who": "a",
+       "text": "The trees grow better when you stop stepping on the saplings."
+      },
+      {
+       "who": "b",
+       "text": "Both can be true."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Play, then. Softly. And off the seedbed."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:druid|wolfBard:1": {
+   "title": "A Song for the Wood",
+   "blurb": "A bard writes a ballad; the druid has notes.",
+   "shots": [
+    {
+     "caption": "A Song for the Wood",
+     "lines": [
+      {
+       "who": "b",
+       "text": "I have written a song about you. Forty verses."
+      },
+      {
+       "who": "a",
+       "text": "I have only done three things worth singing."
+      },
+      {
+       "who": "b",
+       "text": "The other thirty-seven are about your beard."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Sing the three. The beard can speak for itself."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:werewolf|wolfBard:1": {
+   "title": "Full Moon Ballad",
+   "blurb": "The bard wants the true story of the howling; the werewolf would rather not.",
+   "shots": [
+    {
+     "caption": "Full Moon Ballad",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Is it true the moon calls to you?"
+      },
+      {
+       "who": "a",
+       "text": "It calls. I do not always answer."
+      },
+      {
+       "who": "b",
+       "text": "May I put that in a song?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "If it rhymes with anything, I will howl at you."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:beastmaster|minotaur:1": {
+   "title": "Not a Pet",
+   "blurb": "The beastmaster offers the minotaur a treat. A mistake, nearly.",
+   "shots": [
+    {
+     "caption": "Not a Pet",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Easy, big fellow. I have a carrot."
+      },
+      {
+       "who": "b",
+       "text": "I am not a fellow you feed carrots."
+      },
+      {
+       "who": "a",
+       "text": "My apologies. Would you like the bread?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "...The bread, yes. Thank you."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:gorgon|minotaur:1": {
+   "title": "The Labyrinth Remembers",
+   "blurb": "Two exiles of the old labyrinth meet by daylight.",
+   "shots": [
+    {
+     "caption": "The Labyrinth Remembers",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You were the one in the east wing. The one who wept at night."
+      },
+      {
+       "who": "b",
+       "text": "And you sang to the statues. I heard you through the walls."
+      },
+      {
+       "who": "a",
+       "text": "They were good listeners."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "So am I. And I do not turn to stone."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:buccaneer|kraken:1": {
+   "title": "Old Sea Debts",
+   "blurb": "The buccaneer once sank a ship. The kraken was under it.",
+   "shots": [
+    {
+     "caption": "Old Sea Debts",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You look like a beastie that ate my second ship."
+      },
+      {
+       "who": "a",
+       "text": "I did not eat it. I sat on it. You were in my bay."
+      },
+      {
+       "who": "b",
+       "text": "Fair. The bay is lovely."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is. Fight beside me and I will show you the wrecks."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:buccaneer|dreadPirate:1": {
+   "title": "Two Flags",
+   "blurb": "A buccaneer and a dread pirate compare the trade.",
+   "shots": [
+    {
+     "caption": "Two Flags",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You hang a black flag. I hang a cheerful one."
+      },
+      {
+       "who": "b",
+       "text": "Mine makes merchants surrender."
+      },
+      {
+       "who": "a",
+       "text": "Mine makes them laugh. They surrender anyway, and offer tea."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Tea. I may need a new flag."
+      }
+     ]
+    }
+   ]
+  },
+  "calAct1": {
+   "title": "The Road Forks",
+   "blurb": "The first guardian falls, and the rift splits three ways.",
+   "shots": [
+    {
+     "caption": "End of Act I",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The first guardian is ash. Ahead, the rift tears open in three places, each to a different land."
+      },
+      {
+       "who": "hero",
+       "text": "Three roads, and every one of them ends in something that wants us dead."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Well. At least we get to choose which."
+      }
+     ]
+    }
+   ]
+  },
+  "calAct2": {
+   "title": "The Hollow Heart Calls",
+   "blurb": "The second guardian falls; only the Hollow Heart is left.",
+   "shots": [
+    {
+     "caption": "End of Act II",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Two guardians down. Every rift now bends one way: towards the Hollow Heart, and Karnok."
+      },
+      {
+       "who": "hero",
+       "text": "Can you feel that? The ground is pulling us forward."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Then let it. We were going that way anyway."
+      }
+     ]
+    }
+   ]
   }
  },
  "king": {

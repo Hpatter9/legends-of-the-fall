@@ -267,3 +267,15 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   has not mended.
 - Tests: `test/smithy-rooms.test.ts`.
 - The march card, with every room open, is now taller than the phone and scrolls inside its sheet; a later pass could fold the room rows (Vigil, road, spare, mark) behind a 'Camp orders' row.
+
+## Batch 14: scenes
+
+- **Bond scenes, batch 2** (`bondScenes.ts`): ten more kindred pairs' level-1 scenes (Ninja Monk and Yamabushi, Samurai and Samurai
+  Commander, Cleric and Priestess, Druid and Satyr, Druid and Wolf Bard, Werewolf and Wolf Bard, Beastmaster and Minotaur, Gorgon and
+  Minotaur, Kraken and Buccaneer, Buccaneer and Dread Pirate): twenty in all, drafted for the owner to read.
+- **The Calamity's act scenes** (`src/sim/actScenes.ts`): "The Road Forks" (end of Act I) and "The Hollow Heart Calls" (end of Act II),
+  the run's lead hero on the road, a narrator line and two of the hero's; a new moment (`{ kind: 'calAct', map }`), Calamity scenes (they wait
+  for it to open). The page plays each once as its crossroads card opens (`TowerHooks.onActEnd`).
+- `docs/lines/new-lines.json` carries every new scene's words (its test checks them); `scene-fixes.test.ts`'s list of the Calamity's scenes
+  gains the two act scenes.
+- Still to write: bond levels 3 and 5, the other twenty pairs, the settling scenes, the farewell scenes.

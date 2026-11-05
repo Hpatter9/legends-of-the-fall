@@ -527,6 +527,8 @@ class Game {
     this.towerView = new TowerView({
       meta: () => this.meta,
       events: this.events,
+      // (DEPTH-BUILD: the Calamity's act scene, once, as its crossroads opens)
+      onActEnd: (act) => void this.queueScene({ kind: 'calAct', map: act }),
       onFight: () => {
         saveRun(this.run);
         this.newBattle();

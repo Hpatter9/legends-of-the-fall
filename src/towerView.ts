@@ -78,6 +78,8 @@ export interface TowerHooks {
   onHome(): void;
   /** The player chose to start over (after the confirm): end the run and show what it earned. */
   onAbandon(): void;
+  /** DEPTH-BUILD: a Calamity act has ended (its crossroads opens): the page plays the act's scene. */
+  onActEnd?(act: number): void;
 }
 
 /** Each kind of node: its icon, and what it is, in a line. */
@@ -1016,6 +1018,7 @@ export class TowerView {
     const j = run.tower!.journey!;
     const cross = j.cross;
     if (!cross) return;
+    this.hooks.onActEnd?.(cross.after);
     const card = this.cardShell(cross.after === 1 ? 'The crossroads' : 'The last crossroads', 'boss');
     card.append(el('p', 'rtLead', cross.after === 1 ? 'Three rifts open where the road forks. Each leads to a land not yet crossed, and to its guardian. A guardian is as strong as its place on the road, whichever you meet.' : 'Only the Hollow Heart is left. The rift offers a gift for the last road.'));
     const list = el('div', 'rtShop');
