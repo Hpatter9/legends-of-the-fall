@@ -65,3 +65,40 @@ to 23), but they do not share the builder: `altarHelp`, `autoAsk`, `builtCard`, 
 
 Shots: `docs/samples/ui-consistency/std-before-<screen>-<w>.png` (the old pop-up on March: march, march-foot, party) and
 `std-after-<screen>-<w>.png` (party-orders, march-orders, march-orders-foot, march-orders-scouted, march-orders-set) at 393, 360 and 412.
+
+## The fight's Auto switch and tactic button (the owner's two HUD notes)
+
+- **"Move the auto cast button up next to the spells. Right now it's behind the tactic button."** The Auto switch (ultimates and spells)
+  now sits straight after the spell orbs on their row, not pushed to the far right where the tactic button hangs under it. The tactic button
+  has its own spot at the right edge under the row, clear of the switch. Measured at 393, 360 and 412, at the fight's start, mid-fight and
+  after a tap (with the mode's word showing): no two of mana, orbs, Auto, the tactic button and its word overlap.
+- **"Make the tactic button more ornate."** It is now a gilded medallion, like the camp's Daily: the double brass rim, the tactic's icon in a
+  brass ring (ember for Charge, steel for Hold, brass for Advance), and the mode's name under it ("Advance", "Hold", "Charge") in brass. It
+  is 58 x 66 px. The light is steady, with no pulse.
+- **Painted icons, once drawn.** `build.mjs` looks for `src/art/ui/tactics/<id>.png` (or the art branch's `art-source/ui/tactics/<id>.png`)
+  for `advance`, `hold` and `charge`. Each one found is served as `ui/tactics/<id>.png`, listed in the service worker's files (so it plays
+  offline), and named to the page (`__TACTIC_ART__`). The button then shows the painting in the ring in place of its drawn icon. A tactic
+  not painted yet keeps the drawn icon, so the three can arrive one at a time.
+
+Shots: `docs/samples/ui-consistency/hud-before-<scene>-<w>.png` and `hud-after-<scene>-<w>.png` for fight-start, fight-mid and fight-tap at
+393, 360 and 412.
+
+### The ChatGPT prompt for the three tactic icons
+
+Ask for each icon on its own, 256 x 256, transparent PNG, and save it as `art-source/ui/tactics/<id>.png` on the branch
+`art/tactic-icons` (`advance.png`, `hold.png`, `charge.png`). The shared part follows the gear icons' house style
+(`tools/gear/gen-icons.mjs`), so the three sit beside the game's other painted icons:
+
+> A single fantasy RPG icon, painted in a rich hand-painted style with soft rim light and gentle texture, like a premium mobile RPG item
+> icon. The subject alone, centred, front view, filling most of the square, on a fully transparent background, with no frame, no circle
+> behind it, no text, no shadow on the ground and nothing else in the picture. Warm brass and gold metal, dark steel, deep green and crimson
+> cloth, as in a gothic medieval keep. 256 x 256 pixels, transparent PNG. It must read clearly when shown at 32 pixels.
+
+Then add the subject:
+
+- **advance** (Advance together): "The subject: a war banner on a short spear, its swallow-tailed green pennant with a gold edge streaming
+  forward to the right, as if carried at a steady march."
+- **hold** (Hold the line): "The subject: a tall heater shield, dark steel with a gold rim and a gold boss, standing upright and planted,
+  a short sword laid flat across its foot."
+- **charge** (Charge): "The subject: two crossed longswords, blades up, steel with gold hilts, with a burst of ember-orange sparks where
+  the blades cross."
