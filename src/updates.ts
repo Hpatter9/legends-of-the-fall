@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.368.0',
+    date: '2026-11-05',
+    title: 'A tidier camp',
+    notes: ['A gilded Daily button, a small mark on Hester\'s stall when a trader visits, and no wave line behind Choose your battle.'],
+  },
+  {
     version: '0.367.0',
     date: '2026-11-05',
     title: 'Ornate everywhere',
