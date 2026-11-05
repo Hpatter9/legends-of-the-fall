@@ -273,20 +273,21 @@ redesign (the Priestess's heal stays her core), and the guards' words keep their
 
 | | Skill 1 | Skill 2 | Skill 3 | Skill 3 leads its kit |
 | --- | --- | --- | --- | --- |
-| On 0.357 | 0.57 | 0.53 | **1.59** | 22 of 45 outright; 4 tied; most of the rest within the noise |
+| On 0.357, before the last two steps below | 0.57 | 0.53 | 1.59 | 22 of 45 outright; 4 tied |
+| **On 0.357, final code** | 0.87 | 0.87 | **1.86** | 21 of 45 outright; most of the rest within the noise |
 
-Clearly behind (by 2.5 or more): the High Priestess (−6.7; her Healing Light is worth 7.3 alone), the Wanderer (−4.0), the Warlock and the
-Beastmaster (−3.5), the Paladin and the Wolf Bard (−3.2), the Kitsune (−2.8). The roster's tactics shifted some kits' shares; the left-for-later
+Clearly behind on the final code (by 2.5 or more): the High Priestess (−9.7; her Healing Light is worth 10.8 alone), the Juggernaut (−5.5),
+the Warlock (−4.3), the Wanderer (−3.7), the Beastmaster (−3.0), the Ninja Monk (−2.8), the Wolf Bard (−2.7). The roster's tactics shifted some kits' shares; the left-for-later
 list grows by these, for the same later batch.
 
 ### Parity
 
 | Level, stage | Main 0.357 | Now |
 | --- | --- | --- |
-| 20, stage 40 | 36.0%, spread 14.7; Werewolf +9.3 beyond 6, 8 beyond 4 | 37.3%, spread 10.0; none beyond 6, 5 beyond 4 |
+| 20, stage 40 | 36.0%, spread 14.7; Werewolf +9.3 beyond 6, 8 beyond 4 | 37.2%, spread 9.8; none beyond 6, 5 beyond 4 (final code) |
 | 30, stage 90 | 67.7%, spread 11.2; Wizard −6.6 beyond 6, 7 beyond 4 | 68.7%, spread 9.6; none beyond 6, 5 beyond 4 (before the ultimates' step below) |
-| 30, stage 92 (`hero-balance-ultimates`' own stage on 0.357) | 63.2%, spread 11.1; none beyond 6, 8 beyond 4 | **62.9%, spread 7.6; none beyond 6, 1 beyond 4** |
-| 30, stage 90, every skill at Level 5 | 81.7%, spread 10.9; none beyond 6, 9 beyond 4 | 84.3%, spread 8.2; none beyond 6, 1 beyond 4 |
+| 30, stage 92 (`hero-balance-ultimates`' own stage on 0.357) | 63.2%, spread 11.1; none beyond 6, 8 beyond 4 | **62.8%, spread 7.6; none beyond 6, 2 beyond 4** (final code) |
+| 30, stage 90, every skill at Level 5 | 81.7%, spread 10.9; none beyond 6, 9 beyond 4 | 83.4%, spread 8.4; none beyond 6, 1 beyond 4 (final code) |
 
 The Knight came out +6.8 at level 30 once the tactics were in; his ultimate's power 0.722 to **0.57** (his own late lever) brought him to +5.3.
 At stage 92, the level-30 test's own stage on 0.357, the Archer read −6.4 and the average team 65.8% (the test asks under 65): her ultimate's
@@ -298,7 +299,7 @@ Levels 1 and 10 cannot move (nothing here opens below level 20).
 
 | What | Main 0.357 | Now |
 | --- | --- | --- |
-| Last Stand, median wave at 30 / 100 | 15 / 25 | 15 / 26 (final code) |
+| Last Stand, median wave at 30 / 100 | 15 / 25 | 15 / 24 (final code) |
 | Infernal at 55 / Yokai at 65 / Golems at 65, hearts, 24 saves, no skill levels | 3.9 / 12.2 / 7.1 | 3.6 / 14.2 / 5.9 (before the re-tune) |
 | The same with `--mastery auto` (the levels a player there has) | 1.9 / 7.2 / 3.2 | 1.9 / 6.0 / 2.2 before the re-tune; after it, re-bisected on the final code: Infernal 4.7 at its start, Yokai 10.3 and 13.3 either side of its start, Golems 7.4 and 6.5 either side |
 | Legendary Orcs at 55, 96 saves | 88% | 84% |
@@ -333,6 +334,16 @@ main's hash unchanged.
 `test/ult-charge.test.ts` asks that a long fight (35 s or more) sees a second ultimate. At its stage 65, main 0.357's 80 fights had only 2 that
 long and the branch none, though the fights end in the same time (median 16.1 s against 16.2 s). Its yardstick moved to stage 75 (4 of 80
 long), as the joint rebalance moved it from 56 to 65 for the same reason; the bars are as they were.
+
+### The idle-skill rule, eased
+
+`test/stand-retreat.test.ts`'s pinned run (a level-100 eight that spends nothing, falling back room by room) stopped short of the fourth room.
+Over seeds 1 to 12 the branch reached it 4 times against main's 12. The Last Stand's balance tool, whose buyer spends between waves, read
+main's medians all along, so the gap was the waves' length: in the stand's long waves the idle-skill rule decided the order almost all the
+time, and its hold (the others not cast while paying for them would leave the idle skill short) left heroes waiting on the pool. The hold is
+gone (`RES.STALE_MS` still puts an idle skill first, never held): 10 of 12 reach the fourth room (with the rule off entirely, also 10), the
+pinned seed among them, and the long-fight test still passes. The two short of main are the new kits' cost in very long waves; the stand's
+test bars are as they were.
 
 ### Checks on 0.357
 
