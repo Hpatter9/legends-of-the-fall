@@ -267,6 +267,7 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   has not mended.
 - Tests: `test/smithy-rooms.test.ts`.
 - The march card, with every room open, is now taller than the phone and scrolls inside its sheet; a later pass could fold the room rows (Vigil, road, spare, mark) behind a 'Camp orders' row.
+<<<<<<< /tmp/claude-0/mrg3/o
 
 ## Batch 14: scenes
 
@@ -279,3 +280,5 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
 - `docs/lines/new-lines.json` carries every new scene's words (its test checks them); `scene-fixes.test.ts`'s list of the Calamity's scenes
   gains the two act scenes.
 - Still to write: bond levels 3 and 5, the other twenty pairs, the settling scenes, the farewell scenes.
+=======
+>>>>>>> /tmp/claude-0/mrg3/t

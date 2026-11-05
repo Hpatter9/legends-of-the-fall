@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.361.0',
+    date: '2026-11-05',
+    title: 'Painted relics, the Spell Lectern',
+    notes: ['All 48 relics have painted icons. The Mage Tower\'s Spell Lectern lets you swap one spell mid-run, once a run.'],
+  },
+  {
     version: '0.360.0',
     date: '2026-11-05',
     title: 'Hester\'s sign, castle rooms, Far Sight',
