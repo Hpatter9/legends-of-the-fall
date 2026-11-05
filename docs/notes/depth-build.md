@@ -253,3 +253,17 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   does. The design's "within the power budget": the budget went when the schools came, so the slot rules stand in for it. Not in an auto
   replay.
 - Tests: `test/lectern.test.ts`.
+
+## Batch 13: the Smithy's rooms
+
+- **Field Anvil** (Smithy 1): after the mid-boss's wave is won (after the Lectern, when both are due), a sheet offers to mend every worn
+  piece the run's heroes wear, as one payment at the stall's price (`repairAllCost` / `repairAll`, the Armoury's cut included). No new
+  prices: the gear build's own.
+- **Patchwork** (Smithy 2; `equipStats`): a broken piece keeps `PATCH_SHARE` (half) of its numbers until mended, with no ability, power or
+  set count; without the room a broken piece gives nothing, as before. (A real-gear run's own finds keep the old rule.)
+- **Master's Mark** (Smithy 3): the march card picks one hero of the party (`Orders.marked`) whose lasting gear does not wear this run
+  (`markedHero`, the page's `settleWear` skip).
+- Balance: the army pace tool dresses fresh gear, so none of these moves its numbers; Patchwork only softens a broken piece the player
+  has not mended.
+- Tests: `test/smithy-rooms.test.ts`.
+- The march card, with every room open, is now taller than the phone and scrolls inside its sheet; a later pass could fold the room rows (Vigil, road, spare, mark) behind a 'Camp orders' row.

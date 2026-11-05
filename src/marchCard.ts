@@ -14,6 +14,7 @@ import { roomOpen } from './sim/rooms';
 import { spareChoices } from './sim/lectern';
 import { castList } from './sim/schools';
 import { SPELLS, type SpellId } from './sim/spells';
+import { UNITS } from './sim/units';
 import { VIGILS, VIGIL_IDS, type VigilId } from './sim/chapelRooms';
 
 const CSS = `
@@ -46,7 +47,7 @@ let styled = false;
 
 /** Whether the card has anything to choose: some modifier other than the plain march is open. */
 export function marchChoice(meta: Meta, army: string, tier: number): boolean {
-  return vigilOpen(meta) || spares(meta).length > 0 || roadsOf(meta, army).length > 0 || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
+  return vigilOpen(meta) || spares(meta).length > 0 || roomOpen(meta.castle, 'mastersMark') || roadsOf(meta, army).length > 0 || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
 }
 /** The Watchtower's Far Sight: the army's roads, one a land. */
 const roadsOf = (meta: Meta, army: string): Area[] => {
@@ -90,9 +91,11 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
   let road: Area | undefined = roads[0];
   const spareList = spares(meta);
   let spare: SpellId | undefined = spareList[0];
+  const markable = roomOpen(meta.castle, 'mastersMark') ? meta.party : [];
+  let marked: string | undefined = markable[0];
   const done = (orders: Orders | undefined) => {
     wrap.remove();
-    const o = { ...(orders ?? {}), ...(vigil ? { vigil } : {}), ...(road ? { route: road } : {}), ...(spare ? { spare } : {}) };
+    const o = { ...(orders ?? {}), ...(vigil ? { vigil } : {}), ...(road ? { route: road } : {}), ...(spare ? { spare } : {}), ...(marked ? { marked } : {}) };
     go(Object.keys(o).length ? o : undefined);
   };
 
@@ -171,6 +174,21 @@ export function showMarchCard(meta: Meta, army: string, tier: number, seed: numb
         st.push(t);
       }
     }
+    // (the Smithy's Master's Mark: one hero whose gear does not wear this run)
+    if (markable.length) {
+      add(box, 'p', 'mcSub mcVigilHead', "The Master's Mark · this hero's gear does not wear this run");
+      const mg = add(box, 'div', 'mcGrid mcVigil');
+      const mt: HTMLButtonElement[] = [];
+      for (const k of markable) {
+        const t = add(mg, 'button', `mcTile${k === marked ? ' on' : ''}`);
+        add(t, 'b', '', UNITS[k]?.name ?? k);
+        t.addEventListener('click', () => {
+          marked = k;
+          for (const x of mt) x.classList.toggle('on', x === t);
+        });
+        mt.push(t);
+      }
+    }
     const row = add(box, 'div', 'mcRow');
     const march = add(row, 'button', 'primary', 'March');
     march.addEventListener('click', () => (chosen === 'scouted' ? drawReport() : done(ordersFor(chosen, seed))));
@@ -237,5 +255,43 @@ export function showLectern(meta: Meta, spare: SpellId, done: (out: SpellId | nu
     wrap.remove();
     done(null);
   });
+  document.body.append(wrap);
+}
+
+/** The Smithy's Field Anvil at the camp after the mid-boss: mend the party's worn gear now, at the stall's price. */
+export function showAnvil(n: number, cost: number, afford: boolean, mend: () => void): void {
+  if (!styled) {
+    styled = true;
+    const style = document.createElement('style');
+    style.textContent = CSS;
+    document.head.append(style);
+  }
+  document.getElementById('marchCard')?.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'marchCard';
+  wrap.setAttribute('role', 'dialog');
+  const box = document.createElement('div');
+  box.className = 'mcBox';
+  wrap.append(box);
+  const h = document.createElement('h3');
+  h.textContent = 'The Field Anvil';
+  const p = document.createElement('p');
+  p.className = 'mcSub';
+  p.textContent = `${n} worn piece${n === 1 ? '' : 's'} in the party: mend ${n === 1 ? 'it' : 'them all'} for ${cost} crowns, the stall's price.`;
+  const row = document.createElement('div');
+  row.className = 'mcRow';
+  const no = document.createElement('button');
+  no.textContent = 'Not now';
+  const yes = document.createElement('button');
+  yes.className = 'primary';
+  yes.textContent = afford ? `Mend · ${cost}` : `Mend · ${cost} (too few crowns)`;
+  yes.disabled = !afford;
+  no.addEventListener('click', () => wrap.remove());
+  yes.addEventListener('click', () => {
+    wrap.remove();
+    mend();
+  });
+  row.append(no, yes);
+  box.append(h, p, row);
   document.body.append(wrap);
 }

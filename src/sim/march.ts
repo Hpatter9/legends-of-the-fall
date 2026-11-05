@@ -175,3 +175,6 @@ export function routesOf(lands: readonly Area[], castle: Castle | undefined): Ar
 export const routeLand = (o: Orders | undefined, lands: readonly Area[]): Area | undefined => (o?.route && (lands as readonly string[]).includes(o.route) ? (o.route as Area) : undefined);
 /** Far Sight: the short card after each wave names the next wave's foes. */
 export const farSight = (castle: Castle | undefined): boolean => roomOpen(castle, 'farSight');
+
+/** The Smithy's Master's Mark: the hero the run marked, whose gear does not wear (only with the room). */
+export const markedHero = (run: { orders?: Orders; castle?: Castle }, kind: string): boolean => !!run.orders?.marked && run.orders.marked === kind && roomOpen(run.castle, 'mastersMark');

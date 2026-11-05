@@ -98,7 +98,9 @@ import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
-import { showLectern, showMarchCard } from './marchCard';
+import { showAnvil, showLectern, showMarchCard } from './marchCard';
+import { markedHero } from './sim/march';
+import { repairAll, repairAllCost } from './sim/wear';
 import { lecternDue, lecternSwap } from './sim/lectern';
 import { applyVigil } from './sim/chapelRooms';
 import { journeyBoost, landAt } from './sim/calJourney';
@@ -3395,13 +3397,26 @@ class Game {
       if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
       // (DEPTH-BUILD: the Mage Tower's Spell Lectern, at the camp after the mid-boss: swap the run's spare spell in, once)
       const spare = run.orders?.spare as SpellId | undefined;
-      if (won && army && army.waves[stage - 1]?.boss === 'mid' && !this.auto && lecternDue(spare, run.orders?.spareUsed, true) && roomOpen(run.castle, 'spellLectern'))
+      const midWon = won && !!army && army.waves[stage - 1]?.boss === 'mid' && !this.auto;
+      // (and the Smithy's Field Anvil there: mend the party's worn gear at the stall's price)
+      const anvil = () => {
+        if (!midWon || !roomOpen(run.castle, 'fieldAnvil')) return;
+        const kinds = run.roster.map((h) => h.kind);
+        const { items, cost } = repairAllCost(this.meta, kinds);
+        if (items.length) showAnvil(items.length, cost, this.meta.crowns >= cost, () => {
+          repairAll(this.meta, kinds);
+          saveMeta(this.meta);
+        });
+      };
+      if (midWon && lecternDue(spare, run.orders?.spareUsed, true) && roomOpen(run.castle, 'spellLectern'))
         showLectern(this.meta, spare!, (out) => {
           run.orders!.spareUsed = true;
           if (out) lecternSwap(this.meta.spellbook, spare!, out, this.meta.spellbook.school);
           saveMeta(this.meta);
           saveRun(run);
+          anvil();
         });
+      else anvil();
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
       // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)
@@ -3463,7 +3478,7 @@ class Game {
       const skillUps = useCut > 0 ? levelUpWords(settleSkillUse(this.meta, fightUse(b, this.meta.unlocked), useCut)) : [];
       // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
       const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
-      const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
+      const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot) || markedHero(run, kind)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
       noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
