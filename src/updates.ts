@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.370.0',
+    date: '2026-11-05',
+    title: 'A gilded tactics button',
+    notes: ['The tactics button is a gilded medallion naming its mode, and the spells\' Auto switch sits beside the spell orbs.'],
+  },
+  {
     version: '0.369.0',
     date: '2026-11-05',
     title: 'March orders on the War Council',
