@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.362.0',
+    date: '2026-11-05',
+    title: 'Smithy rooms',
+    notes: ['Field Anvil mends worn gear after the mid-boss; Patchwork keeps a broken piece at half; Master\'s Mark spares one hero\'s gear from wear for a run.'],
+  },
+  {
     version: '0.361.0',
     date: '2026-11-05',
     title: 'Painted relics, the Spell Lectern',
