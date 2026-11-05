@@ -1,0 +1,267 @@
+{
+ "home-recruit": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "home-heroes": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px"
+  ],
+  "headingFonts": {}
+ },
+ "deploy": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40",
+   "button#summon \"Hire · 30\" 90x40",
+   "button#pack \"Pack\" 90x40",
+   "button#auto \"Auto\" 90x40",
+   "button#homeBtn \"Home\" 90x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px"
+  ],
+  "headingFonts": {}
+ },
+ "deploy-formations": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "card-hall": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "card-barracks": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "card-smithy": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "stall-books": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "stand": {
+  "small": [
+   "button.stSlot \"Knight: tap to drop\" 36x48",
+   "button.stSlot \"Cleric: tap to drop\" 36x48",
+   "button.stSlot \"Fire Wizard: tap to drop\" 36x48",
+   "button.stSlot \"Archer: tap to drop\" 36x48",
+   "button.stSlot \"Samurai: tap to drop\" 36x48",
+   "button.stSlot \"Kunoichi: tap to drop\" 36x48",
+   "button.stSlot \"Peasant: tap to drop\" 36x48",
+   "button.stSlot \"Ninja Monk: tap to drop\" 36x48"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "result": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {}
+ },
+ "quests": {
+  "small": [
+   "button.qlTab.on \"Active 0/3\" 82x40",
+   "button.qlTab \"Board18\" 82x40",
+   "button.qlTab \"Eidolons!\" 82x40",
+   "button.qlTab \"Done\" 82x40"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "quests-tab2": {
+  "small": [
+   "button.qlTab \"Active 0/3\" 82x40",
+   "button.qlTab.on \"Board18\" 82x40",
+   "button.qlTab \"Eidolons!\" 82x40",
+   "button.qlTab \"Done\" 82x40",
+   "button.qlChip.on \"All\" 42x44",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41",
+   "button.primary \"Take\" 72x41"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "upgrades": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "gallery": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 1
+  }
+ },
+ "trophies": {
+  "small": [],
+  "tiny": [
+   "h4.twBossName \"Gorvak the Ashen\" 10px",
+   "span.twBossTitle \"First Herald of the Cala\" 9px",
+   "span.twStamp.mounted \"EXTINGUISHED & MOUNTED\" 7px",
+   "h4.twBossName \"The Thorn Warden\" 10px",
+   "span.twBossTitle \"The Bramble That Remembe\" 9px",
+   "span.twStamp.mounted \"PRUNED & DRIED\" 7px",
+   "h4.twBossName \"Malphas\" 10px",
+   "span.twBossTitle \"He Who Calls the Hordes\" 9px",
+   "span.twStamp.mounted \"GROUNDED & PINNED\" 7px",
+   "h4.twBossName \"Hrungar the Mountain\" 10px",
+   "span.twBossTitle \"The Wall That Walks\" 9px",
+   "span.twStamp.mounted \"QUARRIED & HUNG\" 7px",
+   "h4.twBossName \"Vorgrath the Hellbringer\" 10px",
+   "span.twBossTitle \"Bringer of the Last Flam\" 9px",
+   "span.twStamp.mounted \"SNUFFED & CURED\" 7px",
+   "h4.twBossName \"Karnok the Calamity\" 10px",
+   "span.twBossTitle \"The End of All Roads\" 9px",
+   "span.twStamp.mounted \"TUSKS DISPLAYED\" 7px",
+   "h4.twBossName \"The Lich King\" 10px",
+   "span.twBossTitle \"Lord of Cold Tombs\" 9px",
+   "span.twStamp.mounted \"SKELETON BAGGED\" 7px",
+   "h4.twBossName \"Unknown Threat\" 10px",
+   "span.twBossTitle \"Deep Spire\" 9px",
+   "span.twStamp.loose \"STILL AT LARGE\" 7px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 10,
+   "\"Cinzel Decorative\"": 9
+  }
+ },
+ "stall-sell": {
+  "small": [
+   "button.hsPill.on \"All\" 42x44"
+  ],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "calamity-camp": {
+  "small": [],
+  "tiny": [
+   "p.rsEyebrow \"Hollow Court\" 9px"
+  ],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "march": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 3
+  }
+ },
+ "march-foot": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 4
+  }
+ },
+ "daily": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "pack": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 3
+  }
+ },
+ "hero-overview-foot": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "Georgia": 1
+  }
+ },
+ "hero-overview": {
+  "small": [],
+  "tiny": [
+   "small \"STR\" 10px",
+   "small \"DEX\" 10px",
+   "small \"CON\" 10px",
+   "small \"INT\" 10px",
+   "small \"WIS\" 10px",
+   "small \"CHA\" 10px",
+   "small \"AC\" 10px",
+   "small \"To hit\" 10px",
+   "small \"Skill DC\" 10px",
+   "small \"Crit\" 10px",
+   "small \"Initiative\" 10px",
+   "small \"Proficiency\" 10px",
+   "small \"SP\" 10px",
+   "small \"Ultimate\" 10px"
+  ],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 2,
+   "Georgia": 1
+  }
+ },
+ "party": {
+  "small": [],
+  "tiny": [
+   "span \"YOUR COMPANY\" 8px",
+   "span.ptSlotNumber \"1\" 10px",
+   "span.ptSlotNumber \"2\" 10px",
+   "span.ptSlotNumber \"3\" 10px",
+   "span.ptSlotNumber \"4\" 10px",
+   "span.ptSlotNumber \"5\" 10px",
+   "span.pips \"●○\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 3
+  }
+ }
+}

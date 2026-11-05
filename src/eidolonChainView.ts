@@ -297,7 +297,7 @@ export function openPactGallery(m: Meta, hooks: GalleryHooks): void {
   box.setAttribute('role', 'dialog');
   box.setAttribute('aria-label', 'The Pact Gallery');
   const head = el('div', 'ecnGHead');
-  const shut = el('button', 'ecnShut', '✕');
+  const shut = el('button', 'ecnShut', '‹ Back');
   shut.setAttribute('aria-label', 'Close the Pact Gallery');
   shut.addEventListener('click', closePactGallery);
   head.append(el('h3', '', 'Pact Gallery'), shut);
