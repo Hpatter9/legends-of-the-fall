@@ -17,6 +17,7 @@ import { keyOf } from './abilities';
 import { HERO_KITS, slotOpen, type HeroKit, type Slot } from './heroKits';
 import { fightLoadout, kitWithLoadout } from './books';
 import { LV5 } from './kits/lv5';
+import { LV5_TUNE } from './kits/lv5Tune';
 import type { Meta } from './meta';
 import { ALL_HEROES, UNITS } from './units';
 
@@ -115,24 +116,27 @@ export function castModsOf(key: string, lv: number): Record<string, number> | un
 }
 
 /** A slot at a level: its strength, cost and cooldown by the level's step (and a `pow` Level 5 step's strength), what it adds while cast, and
- *  its Level 1 cooldown kept for the points a cast earns. Level 1 is the slot itself. */
-export function levelSlot(s: Slot, lv: number): Slot {
+ *  its Level 1 cooldown kept for the points a cast earns. Level 1 is the slot itself. At Level 5 the hero `kind`'s own tune (`LV5_TUNE`) is on
+ *  its strength too. */
+export function levelSlot(s: Slot, lv: number, kind?: string): Slot {
   if (lv <= 1) return s;
   const step = LEVEL_STEPS[Math.min(MAX_LEVEL, lv) - 1];
   const key = keyOf(s.skill);
-  const pow = step.pow + (lv >= MAX_LEVEL && LV5[key] === 'pow' && key !== SUMMON_BEAST ? LV5_POW : 0);
+  const own = lv >= MAX_LEVEL && kind ? (LV5_TUNE[kind] ?? 1) : 1;
+  const pow = (step.pow + (lv >= MAX_LEVEL && LV5[key] === 'pow' && key !== SUMMON_BEAST ? LV5_POW : 0)) * own;
   const mods = castModsOf(key, lv);
   return { ...s, tune: s.tune * pow, cost: Math.round(s.cost * step.cost * 10) / 10, cd: Math.round(s.cd * step.cd), lv, baseCd: s.baseCd ?? s.cd, ...(mods ? { mods } : {}) };
 }
 
 const built = new Map<string, HeroKit>();
-/** A kit with its slots at these levels (built once and kept; `id` names the kit: its kind and loadout). */
+/** A kit with its slots at these levels (built once and kept; `id` names the kit: its kind, then its loadout after a "|"). */
 export function kitWithLevels(kit: HeroKit, id: string, lv: readonly number[]): HeroKit {
   if (!lv.some((x) => x > 1)) return kit;
   const k = `${id}|${lv.join('.')}`;
   let out = built.get(k);
   if (!out) {
-    const slots = kit.slots.map((s, i) => levelSlot(s, lv[i] ?? 1));
+    const kind = id.split('|')[0];
+    const slots = kit.slots.map((s, i) => levelSlot(s, lv[i] ?? 1, kind));
     out = { ...kit, slots, s1: slots[0], s2: slots[1], ...(slots[2] ? { s3: slots[2] } : {}) };
     built.set(k, out);
   }
