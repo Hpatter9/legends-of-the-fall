@@ -10,15 +10,15 @@ import { tileAt, type Board } from '../sim/board';
 import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
 import { RELICS } from '../sim/relics';
-import { relicIcon } from './items';
-/** The relics' icons as textures, kept once loaded (crisp: the 16x16 tiles are scaled up with nearest-neighbour). */
+import { isPainted, relicIcon } from './items';
+/** The relics' icons as textures, kept once loaded (the 16x16 tiles are scaled up crisp with nearest-neighbour, the paintings smooth). */
 const relicTextures = new Map<string, Promise<Texture>>();
 const relicTexture = (src: string): Promise<Texture> => {
   let p = relicTextures.get(src);
   if (!p) {
     p = loadImage(src).then((img) => {
       const t = Texture.from(img);
-      t.source.scaleMode = 'nearest';
+      t.source.scaleMode = isPainted(src) ? 'linear' : 'nearest';
       return t;
     });
     relicTextures.set(src, p);
@@ -1403,7 +1403,7 @@ export class Fx {
       if (!icon.destroyed) icon.texture = tex;
     });
     icon.anchor.set(0.5, 1);
-    icon.scale.set(1.5);
+    icon.scale.set(isPainted(src) ? 0.19 : 1.5);
     icon.position.set(sp.x, sp.y - sp.tall - 24);
     this.root.addChild(icon);
     let t = 0;
