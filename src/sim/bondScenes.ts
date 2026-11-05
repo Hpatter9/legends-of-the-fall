@@ -1,7 +1,7 @@
 // The bond scenes (DEPTH-BUILD, docs/notes/depth-design.md section 4): a kindred pair's short scene at bond levels 1, 3 and 5, played the
 // next time the player is at the camp or the castle. Drafted in batches of ten for the owner to read (Q4.2), in the cinematic style of the
 // opening (docs/notes/opening-v2.md): a held wide shot on one backdrop, the two walking on, three to six lines in their own voices, and a
-// closer framing for the last word. Batch 1: the first ten pairs' first scenes (bond level 1, "Acquainted"). Pure data: no Pixi, no DOM.
+// closer framing for the last word. Batches 1 and 2: twenty pairs' first scenes (bond level 1, "Acquainted"). Pure data: no Pixi, no DOM.
 
 import { shoot, wide, say, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
@@ -85,6 +85,67 @@ const DRAFTS: readonly BondDraft[] = [
     ['b', 'Here. Try one of mine. Hawk.'],
     ['a', 'It flies straight. Annoyingly straight.'],
     ['b', 'Keep it. I want to see you miss with it.'],
+  ]),
+  // (batch 2: the next ten pairs, bond level 1)
+  D('ninjaMonk', 'yamabushi', 1, 'The Mountain Path', 'highlands', 'Two who train on mountains argue about which mountain.', [
+    ['b', 'You walk the path as if the stones owe you money.'],
+    ['a', 'They do. I climbed them every morning for twelve years.'],
+    ['b', 'I was born on mine. It still pushes me off.'],
+    ['a', 'Then we have both been taught by rocks. Shall we teach these orcs?'],
+  ]),
+  D('samurai', 'samuraiCommander', 1, 'The Old Banner', 'warcamp', 'A swordsman and the commander whose banner he once followed.', [
+    ['b', 'I know that guard. You stood in my third rank at the river.'],
+    ['a', 'Second rank, my lord. The third ran.'],
+    ['b', 'Then stand in my first, if you will have it.'],
+    ['a', 'I will have it. Mind you keep up.'],
+  ]),
+  D('cleric', 'priestess', 1, 'Two Prayers', 'temple', 'A village cleric and a temple priestess find they pray to the same dawn.', [
+    ['b', 'You pray quickly. In the temple we take an hour.'],
+    ['a', 'In the village we have about a minute before the roof leaks.'],
+    ['b', 'Then teach me the minute, and I will teach you the hour.'],
+    ['a', 'Agreed. The hour first, though. My knees need the rest.'],
+  ]),
+  D('druid', 'satyr', 1, 'The Grove Song', 'forest', 'The druid tends the grove; the satyr plays to it.', [
+    ['b', 'The trees grow better when I play.'],
+    ['a', 'The trees grow better when you stop stepping on the saplings.'],
+    ['b', 'Both can be true.'],
+    ['a', 'Play, then. Softly. And off the seedbed.'],
+  ]),
+  D('druid', 'wolfBard', 1, 'A Song for the Wood', 'autumn', 'A bard writes a ballad; the druid has notes.', [
+    ['b', 'I have written a song about you. Forty verses.'],
+    ['a', 'I have only done three things worth singing.'],
+    ['b', 'The other thirty-seven are about your beard.'],
+    ['a', 'Sing the three. The beard can speak for itself.'],
+  ]),
+  D('werewolf', 'wolfBard', 1, 'Full Moon Ballad', 'graveyard', 'The bard wants the true story of the howling; the werewolf would rather not.', [
+    ['b', 'Is it true the moon calls to you?'],
+    ['a', 'It calls. I do not always answer.'],
+    ['b', 'May I put that in a song?'],
+    ['a', 'If it rhymes with anything, I will howl at you.'],
+  ]),
+  D('beastmaster', 'minotaur', 1, 'Not a Pet', 'ruins', 'The beastmaster offers the minotaur a treat. A mistake, nearly.', [
+    ['a', 'Easy, big fellow. I have a carrot.'],
+    ['b', 'I am not a fellow you feed carrots.'],
+    ['a', 'My apologies. Would you like the bread?'],
+    ['b', '...The bread, yes. Thank you.'],
+  ]),
+  D('gorgon', 'minotaur', 1, 'The Labyrinth Remembers', 'temple', 'Two exiles of the old labyrinth meet by daylight.', [
+    ['a', 'You were the one in the east wing. The one who wept at night.'],
+    ['b', 'And you sang to the statues. I heard you through the walls.'],
+    ['a', 'They were good listeners.'],
+    ['b', 'So am I. And I do not turn to stone.'],
+  ]),
+  D('kraken', 'buccaneer', 1, 'Old Sea Debts', 'oasis', 'The buccaneer once sank a ship. The kraken was under it.', [
+    ['b', 'You look like a beastie that ate my second ship.'],
+    ['a', 'I did not eat it. I sat on it. You were in my bay.'],
+    ['b', 'Fair. The bay is lovely.'],
+    ['a', 'It is. Fight beside me and I will show you the wrecks.'],
+  ]),
+  D('buccaneer', 'dreadPirate', 1, 'Two Flags', 'desert', 'A buccaneer and a dread pirate compare the trade.', [
+    ['a', 'You hang a black flag. I hang a cheerful one.'],
+    ['b', 'Mine makes merchants surrender.'],
+    ['a', 'Mine makes them laugh. They surrender anyway, and offer tea.'],
+    ['b', 'Tea. I may need a new flag.'],
   ]),
 ];
 

@@ -96,7 +96,7 @@ test('the king is the player: a shot about the king shows the king, never Duches
 test('the Calamity’s scenes wait for it to open; the opening has no Calamity in it; the reveal comes when it opens', () => {
   const m = picked();
   const cal = SCENE_ORDER.filter((id) => SCENES[id].calamity);
-  assert.deepEqual(cal, ['gorvak', 'calamityOpens', 'thornWarden', 'malphas', 'hrungar', 'vorgrath', 'karnok', 'calamityEnds', 'ascensionOne']);
+  assert.deepEqual(cal, ['gorvak', 'calamityOpens', 'thornWarden', 'malphas', 'hrungar', 'vorgrath', 'karnok', 'calamityEnds', 'ascensionOne', 'calAct1', 'calAct2']);
   for (const id of cal) assert.equal(dueScene(m, SCENES[id].moment), null, `${id} waits for the Calamity`);
   for (const t of linesOf('opening')) assert.ok(!/calamity|herald|portal/i.test(t), t);
   assert.ok(!Object.values(SCENES.opening.cast).some((c) => c.role.startsWith('unit:calBoss')), 'no herald in the opening');

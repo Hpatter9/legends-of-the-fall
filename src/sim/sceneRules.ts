@@ -132,6 +132,8 @@ export function momentText(mo: Moment): string {
       return 'The first Ascension.';
     case 'dailyBoss':
       return "The first daily's boss.";
+    case 'calAct':
+      return `The end of the Calamity's Act ${mo.map === 1 ? 'I' : 'II'}, as its crossroads opens.`;
     case 'bond':
       return `Two heroes reach bond level ${mo.level} together; it plays at the camp or the castle.`;
     case 'armyIntro':
