@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.367.0',
+    date: '2026-11-05',
+    title: 'Ornate everywhere',
+    notes: ['Every menu, card and page now wears the ornate Keep and Kingdom look: castle cards, the march card, the stall, quests, the campfire, trait chips and more.'],
+  },
+  {
     version: '0.366.0',
     date: '2026-11-05',
     title: 'Third skills come into their own',
