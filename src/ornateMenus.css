@@ -1740,3 +1740,143 @@ body #spellbook h2 {
 .hm-battle .hmGo { grid-template-rows: 48px 44px; }
 .hm-battle .hmLink.hmSide { min-height: 44px; min-width: 120px; justify-self: center; border: 1px solid #ad8e50; border-radius: 3px; background: #1b231dd8; color: #e8cb86; font-size: 14px; }
 .hm-battle .hmLink.hmSide b, .hm-battle .hmLink.hmSide small { font-size: 14px; }
+
+/* --------------------------------------------------------------------------
+   23. UI-CONSISTENCY (docs/notes/ui-consistency.md): the screens that came in after the restyle, brought into it with this
+   sheet's own tokens: the double brass rim, the gilded selection, the slate wells. Batch 1: the most visible.
+   -------------------------------------------------------------------------- */
+/* The prep screen's Formation button: under every layer laid over the board (the home screen, the party, Settings, a card), where it
+   used to float over them all (it came after #home in the page at the same z-index); and gilded, as the HUD's own buttons are. */
+#formBtn {
+  z-index: 3;
+  border: 1px solid var(--ornate-brass-mid);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #3a3d31 0%, #1f221b 100%);
+  box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.22), 0 3px 8px rgba(0, 0, 0, 0.7);
+}
+#formBtn small { font-size: 11px; color: var(--ornate-brass-mid); letter-spacing: 0.08em; text-transform: uppercase; }
+#formBtn b { font-family: var(--display); color: var(--ornate-brass-hi); text-shadow: 0 1px 2px #000; }
+
+/* The Formation sheet: the ornate card, and the chosen shape gilded (it was the old ember orange) */
+#tacticSheet { background: radial-gradient(circle at 50% 80%, rgba(16, 20, 15, 0.7), rgba(5, 7, 5, 0.9)); }
+#tacticSheet .tacCard {
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  border: var(--ornate-border-double);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: var(--ornate-shadow);
+}
+#tacticSheet h2 { color: var(--ornate-brass); font-size: 22px; letter-spacing: 0.05em; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(219, 193, 139, 0.25); }
+#tacticSheet h2::after { content: ''; display: block; width: 140px; height: 1px; margin: 6px auto 0; background: linear-gradient(90deg, transparent, var(--ornate-brass-mid), transparent); }
+#tacticSheet .tacForm {
+  border: 1px solid #6b5c40;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+#tacticSheet .tacForm b { font-family: var(--display); color: var(--ornate-brass); }
+#tacticSheet .tacForm span { color: #c4ba9f; }
+#tacticSheet .tacForm.on {
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 12px rgba(219, 193, 139, 0.3);
+}
+#tacticSheet .tacForm.on b { color: var(--ornate-brass-hi); }
+#tacticSheet .tacForm.on span { color: #e6dcc4; }
+
+/* The "Unlocked" end card and the new-army card: a gilded banner and a brass bezel in place of the old pixel ribbon's slate and orange */
+.unlockRib {
+  min-height: 56px;
+  padding: 0 34px;
+  border-image: none;
+  border: var(--ornate-border-double);
+  border-width: 3px 0;
+  background: linear-gradient(90deg, transparent 0, #1a1e16 14%, #2c3325 50%, #1a1e16 86%, transparent 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  position: relative;
+  image-rendering: auto;
+}
+.unlockRib::before,
+.unlockRib::after {
+  content: '✦';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ornate-brass);
+  font-size: 16px;
+  text-shadow: 0 0 8px rgba(219, 193, 139, 0.5);
+}
+.unlockRib::before { left: 10px; }
+.unlockRib::after { right: 10px; }
+.rvArt {
+  border: 3px solid var(--ornate-brass);
+  border-radius: 8px;
+  background: radial-gradient(circle at center, #3d4635, #141810);
+  box-shadow: inset 0 0 0 1px #11140e, inset 0 0 14px rgba(0, 0, 0, 0.85), 0 0 20px rgba(219, 193, 139, 0.35);
+}
+.rvWhere { font-size: 13px; color: #c9bfab; }
+.rvWhere i { color: var(--ornate-brass); }
+
+/* The castle's building cards (the levelled buildings and the room buildings): the double brass rim of the other cards, rooms and
+   seats in slate wells, the Sparring Yard's two pickers as the game's own fields (they were the browser's), its button on a row of its
+   own (it ran off the card), and the small print at 11 px (it was 10) */
+.bcard {
+  border: var(--ornate-border-double);
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  box-shadow: var(--ornate-shadow);
+}
+.bcard .bhead { border-bottom: 0; position: relative; padding-bottom: 12px; }
+.bcard .bhead::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--ornate-brass-mid), transparent); }
+.bcard h3 { color: var(--ornate-brass); letter-spacing: 0.04em; }
+.bcard p i { color: var(--ornate-brass); }
+.hsheet .hint { font-size: 11px; color: #b8af9a; }
+.bcard .ctRooms, .bcard .hallPlinths {
+  padding: 6px;
+  border: 1px solid #4a3e29;
+  border-radius: 4px;
+  background: #0f130ecc;
+  box-shadow: var(--ornate-well);
+}
+.bcard .hallPlinths > small { color: var(--ornate-brass); font-family: var(--display); font-size: 14px; padding: 2px 2px 0; }
+.bcard .hallPlinth { border-radius: 4px; background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%); box-shadow: inset 0 0 0 1px #6b5c40; }
+.bcard .hallPlinth:has(> select) { flex-wrap: wrap; }
+.bcard .hallPlinth > select {
+  flex: 1 1 40%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 28px 0 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  font: 700 14px var(--body);
+  color: #f1ead9;
+  border: 1px solid var(--ornate-brass-mid);
+  border-radius: 4px;
+  background: linear-gradient(45deg, transparent 50%, var(--ornate-brass) 50%) right 14px center / 6px 6px no-repeat,
+              linear-gradient(-45deg, transparent 50%, var(--ornate-brass) 50%) right 9px center / 6px 6px no-repeat,
+              linear-gradient(180deg, #373a30 0%, #20231c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+.bcard .hallPlinth > select + select + button { flex: 1 1 100%; }
+
+/* Hester's Stall: the header's Back the size of every other page's (it was a 30 px glyph) */
+.hsHead .hsBack {
+  min-width: 64px;
+  padding: 0 12px;
+  font: 700 14px var(--body);
+  letter-spacing: 0.03em;
+  color: #f1ead9;
+  border: 1px solid var(--ornate-brass-mid);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #373a30 0%, #20231c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.6), 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+/* The Last Stand's pick: the chosen eight gilded (they were the old ember orange) */
+.stGrid button.on {
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 10px rgba(219, 193, 139, 0.3);
+}
+.stGrid button.on em { color: #e6dcc4; }
+
