@@ -124,3 +124,26 @@ test('a scar: gold now, −10% health on that hero for the rest of the run', () 
   assert.ok(Math.abs(journeyBoost(j, 4, { hp: 1 }).hp! - SCAR.HP) < 1e-9);
   assert.equal(journeyBoost(j, 5, { hp: 1 }).hp, 1, 'only the scarred hero');
 });
+
+import { TRAVEL, meetTraveller, travellerAt, travellerBack, travellerReturns } from '../src/sim/calJourney';
+
+test('a traveller is met once in Act I and returns at most once, in Act II or III, as helped or wronged', () => {
+  const j: Journey = {};
+  assert.equal(travellerAt(3, 2, j), undefined, 'only in Act I');
+  const who = travellerAt(3, 1, j)!;
+  assert.equal(travellerAt(3, 1, j), who, 'fixed by the seed');
+  assert.equal(travellerReturns(j, 2), false, 'not met, no return');
+  const run = { gold: 100 };
+  assert.ok(meetTraveller(run, j, who, true));
+  assert.equal(run.gold, 100 - TRAVEL.GOLD);
+  assert.equal(travellerAt(3, 1, j), undefined, 'once');
+  assert.equal(meetTraveller(run, j, who, false), false);
+  assert.equal(travellerReturns(j, 1), false, 'not in Act I');
+  assert.ok(travellerReturns(j, 2));
+  const back = travellerBack(j);
+  assert.equal(back.hurt, 0, 'a helped traveller thanks the party');
+  assert.equal(travellerReturns(j, 3), false, 'at most once');
+  const w: Journey = {};
+  meetTraveller({ gold: 0 }, w, 'deserter', false);
+  assert.equal(travellerBack(w).hurt, TRAVEL.TRAP, 'a wronged one sets a trap');
+});

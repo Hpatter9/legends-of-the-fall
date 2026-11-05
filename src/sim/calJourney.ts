@@ -42,6 +42,8 @@ export interface Journey {
   /** The oaths sworn (three at most) and the scars taken, by roster id (each −10% health). */
   oaths?: OathId[];
   scars?: Record<number, number>;
+  /** The traveller met in Act I, whether helped, and whether it has come back. */
+  met?: { who: TravellerId; help: boolean; back?: boolean };
 }
 
 /** Provisions: a run starts with three and carries six at most; a campfire's rest costs one, and with none the party rests at half. A shop
@@ -147,4 +149,41 @@ export function journeyBoost<B extends { hp?: number; atk?: number }>(j: Journey
   if (!j?.oaths?.length && !j?.scars?.[heroId]) return base;
   const scar = SCAR.HP ** (j.scars?.[heroId] ?? 0);
   return { ...base, hp: (base.hp ?? 1) * prod(j, 'heroHp') * scar, atk: (base.atk ?? 1) * prod(j, 'heroAtk') };
+}
+
+/* ------------------------------------------------------------------ travellers (a small story through the run) */
+
+export type TravellerId = 'pilgrim' | 'deserter' | 'cartographer';
+export const TRAVELLERS: Readonly<Record<TravellerId, { name: string; meet: string; help: string; wrong: string; thanks: string; trap: string }>> = {
+  pilgrim: { name: 'The Pilgrim', meet: 'A pilgrim sits by the fire, her feet bleeding through her sandals.', help: 'Share bandages and bread (40 gold)', wrong: 'Take her alms bowl (+40 gold)', thanks: 'The pilgrim prays over the party: every hero is mended to full.', trap: 'The pilgrim\'s curse finds you: every hero loses 15% of their health.' },
+  deserter: { name: 'The Deserter', meet: 'A deserter from the Calamity\'s host begs a place by the fire.', help: 'Hide him and feed him (40 gold)', wrong: 'Turn him in for the bounty (+40 gold)', thanks: 'The deserter returns with a stolen paymaster\'s purse: +100 gold.', trap: 'The deserter\'s old company remembers you: every hero loses 15% of their health.' },
+  cartographer: { name: 'The Cartographer', meet: 'A cartographer has lost her maps to the wind and her mule to wolves.', help: 'Buy her a new mule (40 gold)', wrong: 'Sell her a lame one (+40 gold)', thanks: 'The cartographer leaves two sacks of provisions and a sketch of the road ahead.', trap: 'The cartographer\'s map was false: every hero loses 15% of their health.' },
+};
+export const TRAVEL = { GOLD: 40, THANKS_GOLD: 100, PROVISIONS: 2, TRAP: 0.15 };
+
+/** The traveller a campfire of Act I meets, if any: one at the first such campfire, chosen by the run's seed (its own side stream). */
+export function travellerAt(seed: number, act: number, j: Journey | undefined): TravellerId | undefined {
+  if (act !== 1 || j?.met) return undefined;
+  const ids = Object.keys(TRAVELLERS) as TravellerId[];
+  return ids[new Rng(mixSeed(seed, 0x7a7e)).int(0, ids.length - 1)];
+}
+/** Help or wrong the traveller met (the gold moves now). */
+export function meetTraveller(run: { gold: number }, j: Journey, who: TravellerId, help: boolean): boolean {
+  if (j.met || (help && run.gold < TRAVEL.GOLD)) return false;
+  j.met = { who, help };
+  run.gold += help ? -TRAVEL.GOLD : TRAVEL.GOLD;
+  return true;
+}
+/** Whether the traveller returns at this campfire: once, at the first campfire of Act II or III after the meeting. */
+export const travellerReturns = (j: Journey | undefined, act: number): boolean => !!j?.met && !j.met.back && act >= 2;
+/** The return: a thanks for a helped traveller (a mend, gold or provisions), a trap for a wronged one. Marks it back. */
+export function travellerBack(j: Journey): { line: string; gold: number; mend: boolean; provisions: number; hurt: number } {
+  const m = j.met!;
+  m.back = true;
+  const t = TRAVELLERS[m.who];
+  if (!m.help) return { line: t.trap, gold: 0, mend: false, provisions: 0, hurt: TRAVEL.TRAP };
+  if (m.who === 'pilgrim') return { line: t.thanks, gold: 0, mend: true, provisions: 0, hurt: 0 };
+  if (m.who === 'deserter') return { line: t.thanks, gold: TRAVEL.THANKS_GOLD, mend: false, provisions: 0, hurt: 0 };
+  j.provisions = Math.min(PROVISIONS.MAX, provisionsOf(j) + TRAVEL.PROVISIONS);
+  return { line: t.thanks, gold: 0, mend: false, provisions: TRAVEL.PROVISIONS, hurt: 0 };
 }
