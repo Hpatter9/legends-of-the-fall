@@ -94,6 +94,9 @@ const deploy = async (page) => {
 const scrollIn = (p, sel, by = 99999) => ev(p, ([sel, by]) => document.querySelectorAll(sel).forEach((e) => { const s = getComputedStyle(e); if (e.scrollHeight > e.clientHeight + 40 && /auto|scroll/.test(s.overflowY)) e.scrollTop = by; }), [sel, by]).then(() => wait(p, 400));
 const SCENES = {
   'home-battle': (p) => home(p, 'battle'),
+  'home-battle-dealer': async (p) => { await ev(p, () => { const m = window.__game.meta; m.stall = { day: 0, sold: {}, spent: 0, ...(m.stall ?? {}), dealerDue: true }; }); await home(p, 'battle'); await ev(p, () => window.__game.home.refresh()); await wait(p, 600); },
+  'home-mid-run': async (p) => { await deploy(p); await ev(p, () => document.getElementById('homeBtn')?.click()); await wait(p, 1500); },
+  'home-mid-fight': async (p) => { await deploy(p); await ev(p, () => document.getElementById('fight')?.click()); await wait(p, 2500); await ev(p, () => document.getElementById('homeBtn')?.click()); await wait(p, 1500); },
   'home-heroes': (p) => home(p, 'heroes'),
   'home-recruit': (p) => home(p, 'recruit'),
   'home-castle': (p) => home(p, 'castle'),
@@ -125,6 +128,12 @@ const SCENES = {
   'armies': async (p) => { await home(p); await ev(p, () => window.__game.home.openArmies()); await wait(p, 900); },
   'party': async (p) => { await home(p); await ev(p, () => window.__game.home.hooks.onArmy('orcs', 0)); await wait(p, 900); },
   'march': async (p) => { await home(p); await ev(p, () => window.__game.home.hooks.onArmy('orcs', 0)); await wait(p, 900); await ev(p, () => document.getElementById('ptGo')?.click()); await wait(p, 700); },
+  'party-orders': async (p) => { await SCENES.party(p); await ev(p, () => document.getElementById('ptOrders')?.scrollIntoView({ block: 'center' })); await wait(p, 300); },
+  'march-orders': async (p) => { await SCENES.party(p); await ev(p, () => document.getElementById('ptOrders')?.click()); await wait(p, 700); },
+  'march-orders-foot': async (p) => { await SCENES['march-orders'](p); await scrollIn(p, '.omBody'); },
+  'march-orders-scouted': async (p) => { await SCENES['march-orders'](p); await clickText(p, '.omChoice', 'Scouted'); await wait(p, 400); await ev(p, () => document.querySelector('.omWell:not([hidden])')?.scrollIntoView({ block: 'center' })); await wait(p, 300); },
+  'march-orders-set': async (p) => { await SCENES['march-orders'](p); await clickText(p, '.omChoice', 'Cursed'); await clickText(p, '.omPrimary', 'Set orders'); await wait(p, 500); await ev(p, () => document.getElementById('ptOrders')?.scrollIntoView({ block: 'center' })); await wait(p, 300); },
+  'march-go': async (p) => { await SCENES['march-orders-set'](p); await ev(p, () => document.getElementById('ptGo')?.click()); await wait(p, 1500); },
   'stall-books': async (p) => { await home(p, 'heroes'); await ev(p, () => document.getElementById('hmStall')?.click()); await wait(p, 900); },
   ...Object.fromEntries(['Gear', 'Tomes', 'Chests', 'Sell', 'Repair', 'Enchant'].map((t) => [`stall-${t.toLowerCase()}`, async (p) => { await home(p, 'heroes'); await ev(p, () => document.getElementById('hmStall')?.click()); await wait(p, 700); await clickText(p, '#stall button', `^\\s*${t}`); await wait(p, 700); }])),
   'summon-1': async (p) => { await home(p, 'recruit'); await ev(p, () => window.__game.home.summon(1)); await wait(p, 4000); },

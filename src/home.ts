@@ -715,7 +715,8 @@ export class Home {
     }
     // Keep the new-army announcement quiet on later launches; Continue still shows the wave.
     const progress = armyStars(m, next);
-    if (announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', info ? (army ? `Wave ${info.stage}/${army.waves.length} · ★ ${progress.got}/${progress.max}` : info.label) : `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
+    // (the owner's call: with a run going there is no wave line over the bar: Continue already says the wave; only a new army is named)
+    if (!info && announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
     const party2 = el('button', 'hmLink hmSide', 'Party');
@@ -771,7 +772,8 @@ export class Home {
     const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily', '', `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
     daily.title = `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`;
     daily.querySelector('small')?.remove();
-    daily.prepend(icon(ICONS.daily, 'ico cpDailyIcon'));
+    // (the painted hourglass, whole, in place of the small pixel one, which read as cut off; already served and cached for the relics)
+    daily.prepend(icon('relics/hourglass.webp', 'ico cpDailyIcon'));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
@@ -812,14 +814,15 @@ export class Home {
       pic.src = shopArt('stall');
       pic.alt = '';
       pic.draggable = false;
-      // (Hester's painted sign hangs over the stall's foot in place of the name plate; a visiting trader shows as a small pill, only while he is here)
+      // (Hester's painted sign hangs over the stall's foot in place of the name plate; a visiting trader shows as a small mark, only while he is here)
       const sign = el('img', 'cpStallSign');
       sign.src = shopArt('hester-sign');
       sign.alt = '';
       sign.draggable = false;
       stall.querySelector('.cpTag')?.remove();
       stall.prepend(pic, sign);
-      if (visitor) stall.append(el('span', 'cpVisitor', visitor === 'Caravan today' ? 'Caravan' : 'Dealer'));
+      // (the owner's call: no word on the stall's picture; a small gilded mark says a trader is in camp, and the button's spoken label names him)
+      if (visitor) stall.append(el('i', `cpVisitor ${visitor === 'Caravan today' ? 'caravan' : 'dealer'}`));
       if (fresh) stall.append(el('i', 'badge'));
       swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
     }

@@ -359,7 +359,11 @@ export class CampScene {
     this.root.dataset.area = n.army.area;
     this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Last Stand’s watchtower stands on the left; the Calamity citadel looms on the horizon.`);
     this.plate.setAttribute('aria-label', `War council: ${n.army.name}, led by ${n.boss}. Opens your party.`);
-    Object.assign(this.plate.style, this.at(camp.table.x, camp.table.y + 1));
+    // (the owner's call: the plate sits low in the scene, in the clear ground above the bottom bar, rather than just under the party:
+    //  never higher than the table's own spot, and 10 px above the scene's foot)
+    const spot = this.at(camp.table.x, camp.table.y + 1);
+    const room = this.root.clientHeight - (this.plate.offsetHeight || 60) - 10;
+    Object.assign(this.plate.style, { left: spot.left, top: `${Math.max(parseFloat(spot.top), room)}px` });
   }
 
   /** The shared cliff and horizon surround a different painted base for each army. */
