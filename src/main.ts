@@ -192,7 +192,6 @@ import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
 import { pickedTactic, pickTactic } from './sim/tacticPick';
-import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 /** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
@@ -1954,19 +1953,17 @@ class Game {
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
-    // (the party's tactic: the chip beside Auto, and the Charge! call in the fight; docs/notes/tactics.md)
+    // (the party's tactic: the button under Auto in the fight, which cycles the tactic mid-fight, and the prep screen's Formation button;
+    // docs/notes/tactics.md, docs/notes/tactics-overview.md)
     this.tactics = new TacticsView({
-      picked: () => pickedTactic(this.meta.tactics, this.run.mode),
       pick: (t) => {
         pickTactic(this.meta, this.run.mode, t);
         saveMeta(this.meta);
-        this.refresh();
       },
       // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       arrange: (f) => this.arrangeFormation(f),
-      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
@@ -2121,7 +2118,7 @@ class Game {
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
   /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
-  /** Set the placed heroes out in a formation's shape (the tactic sheet's Arrange): each taken back and placed again at its tile of the shape
+  /** Set the placed heroes out in a formation's shape (the prep screen's Formation sheet, `tacticsView.ts`): each taken back and placed again at its tile of the shape
    *  (`formationSpots`), or where it stood if that tile will not take it. */
   private arrangeFormation(shape: Formation): void {
     const b = this.b;

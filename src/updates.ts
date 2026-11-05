@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.365.0',
+    date: '2026-11-05',
+    title: 'Tactics button, true hero stats',
+    notes: ['A tactics button under Auto cycles Advance, Hold and Charge mid-fight, with a word to show the mode.', 'The hero Overview now shows real Health, Attack and Armour with gear and runes.'],
+  },
+  {
     version: '0.364.0',
     date: '2026-11-05',
     title: 'Rivals settle, Calamity header',
