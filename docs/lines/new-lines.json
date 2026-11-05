@@ -9810,6 +9810,1134 @@
      ]
     }
    ]
+  },
+  "bond:mummy|shambler:1": {
+   "title": "Old Bones",
+   "blurb": "Two who should be dead compare notes on not being.",
+   "shots": [
+    {
+     "caption": "Old Bones",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You are falling apart."
+      },
+      {
+       "who": "b",
+       "text": "You are held together with bandages."
+      },
+      {
+       "who": "a",
+       "text": "Linen. Very good linen. Three thousand years old."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Lend me a strip. My arm keeps wandering off."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:demonSwordsman|reaper:1": {
+   "title": "Two Edges",
+   "blurb": "The reaper and the cursed swordsman, both carrying blades that want more.",
+   "shots": [
+    {
+     "caption": "Two Edges",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Your scythe sings too."
+      },
+      {
+       "who": "a",
+       "text": "It hums. Only when someone is close to the end."
+      },
+      {
+       "who": "b",
+       "text": "Mine screams. All the time."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Then stand by me. Mine is quieter company."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:sage|timeWitch:1": {
+   "title": "The Long View",
+   "blurb": "The witch who sees ahead and the sage who has seen a great deal behind.",
+   "shots": [
+    {
+     "caption": "The Long View",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I have seen how this war ends."
+      },
+      {
+       "who": "b",
+       "text": "And?"
+      },
+      {
+       "who": "a",
+       "text": "I am not allowed to say. It would spoil it."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "At my age, nothing spoils. Tell me over tea."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:illusionist|wizard:1": {
+   "title": "Real Fire",
+   "blurb": "The wizard wants to know whether the illusionist's fire is real.",
+   "shots": [
+    {
+     "caption": "Real Fire",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Your fireball. Was it real?"
+      },
+      {
+       "who": "a",
+       "text": "The orc thought so. He ran into a river."
+      },
+      {
+       "who": "b",
+       "text": "That is not an answer."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is the only one that matters."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:tyrant|warlock:1": {
+   "title": "Terms of Service",
+   "blurb": "Two who know the price of power haggle over it.",
+   "shots": [
+    {
+     "caption": "Terms of Service",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Your patron. What does it ask of you?"
+      },
+      {
+       "who": "a",
+       "text": "A tithe. A little of my shadow each year."
+      },
+      {
+       "who": "b",
+       "text": "Mine asks for a kingdom."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Then you have a worse contract than I do."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:gunslinger|rifleBot:1": {
+   "title": "Trick Shots",
+   "blurb": "A gunslinger and a machine that never misses.",
+   "shots": [
+    {
+     "caption": "Trick Shots",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Bet you cannot shoot a coin out of the air."
+      },
+      {
+       "who": "b",
+       "text": "Query: which face of the coin?"
+      },
+      {
+       "who": "a",
+       "text": "...You are no fun at all."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Fun: not calibrated. Accuracy: one hundred percent."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:dragoon|lancer:1": {
+   "title": "Up and Through",
+   "blurb": "One charges along the ground, the other comes down from the sky.",
+   "shots": [
+    {
+     "caption": "Up and Through",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I go through them."
+      },
+      {
+       "who": "b",
+       "text": "I go over them, then down on them."
+      },
+      {
+       "who": "a",
+       "text": "Then they will not know which way to look."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Exactly. Count to three, then charge."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:juggernaut|siegeBot:1": {
+   "title": "Walls",
+   "blurb": "Two who knock down walls for a living.",
+   "shots": [
+    {
+     "caption": "Walls",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I knocked down a wall today."
+      },
+      {
+       "who": "b",
+       "text": "Walls flattened today: four."
+      },
+      {
+       "who": "a",
+       "text": "Mine was a big wall."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we share the record. Proposal: more walls."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:kunoichi|ninjaMonk:1": {
+   "title": "Quiet Feet",
+   "blurb": "Two who move without a sound, trying to catch each other out.",
+   "shots": [
+    {
+     "caption": "Quiet Feet",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You were behind me just now."
+      },
+      {
+       "who": "a",
+       "text": "I was. You turned before I reached you."
+      },
+      {
+       "who": "b",
+       "text": "Your breath. You hold it before you strike."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Then I will learn to breathe. Teach me."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:peasant|ranger:1": {
+   "title": "Snares and Supper",
+   "blurb": "The peasant and the ranger set snares and swap recipes.",
+   "shots": [
+    {
+     "caption": "Snares and Supper",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You set a snare like my old dad."
+      },
+      {
+       "who": "b",
+       "text": "He knew his work, then."
+      },
+      {
+       "who": "a",
+       "text": "He caught the bailiff once. By the ankle."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then he knew it very well indeed."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:priestess|sage:1": {
+   "title": "The Old Texts",
+   "blurb": "The sage reads the temple's oldest scrolls to the priestess.",
+   "shots": [
+    {
+     "caption": "The Old Texts",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You read that prayer as if you wrote it."
+      },
+      {
+       "who": "a",
+       "text": "I copied it, when I was a boy. Badly."
+      },
+      {
+       "who": "b",
+       "text": "There is a mistake in the third line. We sing it every morning."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Keep it. It sounds better wrong."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:kitsune|yamabushi:1": {
+   "title": "Fox on the Mountain",
+   "blurb": "The tengu once chased the fox off his mountain.",
+   "shots": [
+    {
+     "caption": "Fox on the Mountain",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You stole my rice cakes. Every winter."
+      },
+      {
+       "who": "a",
+       "text": "You left them out. On a rock. In the snow."
+      },
+      {
+       "who": "b",
+       "text": "For the mountain spirits!"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I am a mountain spirit. Ask anyone."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:arcBlade|lightningMage:1": {
+   "title": "Spark",
+   "blurb": "A blade that carries lightning, and the mage who throws it.",
+   "shots": [
+    {
+     "caption": "Spark",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Your sword crackles. Who taught you?"
+      },
+      {
+       "who": "a",
+       "text": "Nobody. I was struck while holding it."
+      },
+      {
+       "who": "b",
+       "text": "That is how I learnt too."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Then we were taught by the same storm."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:gunslinger|mercenary:1": {
+   "title": "Rates",
+   "blurb": "Two hired hands compare what they charge.",
+   "shots": [
+    {
+     "caption": "Rates",
+     "lines": [
+      {
+       "who": "a",
+       "text": "What does the crown pay you?"
+      },
+      {
+       "who": "b",
+       "text": "Two crowns a day and all the beans I can eat."
+      },
+      {
+       "who": "a",
+       "text": "I get three, and no beans."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then the beans are worth a crown. Good to know."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:lancer|paladin:1": {
+   "title": "The Charge",
+   "blurb": "The paladin and the lancer, side by side before a charge.",
+   "shots": [
+    {
+     "caption": "The Charge",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You ride well, for a man in that much armour."
+      },
+      {
+       "who": "a",
+       "text": "The horse is blessed. Mostly with patience."
+      },
+      {
+       "who": "b",
+       "text": "On my mark, then. Light and lance."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Light and lance. I like that."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:barbarian|juggernaut:1": {
+   "title": "Bigger",
+   "blurb": "Two very large people meet. Measuring follows.",
+   "shots": [
+    {
+     "caption": "Bigger",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I am bigger than you."
+      },
+      {
+       "who": "b",
+       "text": "You are not."
+      },
+      {
+       "who": "a",
+       "text": "Stand back to back. Duchess will judge."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "...The goat has eaten the measuring string."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:sage|wanderer:1": {
+   "title": "Roads and Books",
+   "blurb": "The wanderer has walked every road the sage has only read about.",
+   "shots": [
+    {
+     "caption": "Roads and Books",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Is it true the eastern road ends in a sea of glass?"
+      },
+      {
+       "who": "a",
+       "text": "It ends in a puddle. A large, shiny puddle."
+      },
+      {
+       "who": "b",
+       "text": "Three books say a sea."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "The people who wrote them never walked there."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:beastmaster|ranger:1": {
+   "title": "Tracks",
+   "blurb": "Two who read the forest floor disagree about what passed.",
+   "shots": [
+    {
+     "caption": "Tracks",
+     "lines": [
+      {
+       "who": "a",
+       "text": "A bear. Three days ago."
+      },
+      {
+       "who": "b",
+       "text": "A badger. Yesterday. A very confident badger."
+      },
+      {
+       "who": "a",
+       "text": "Badgers do not walk like that."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "This one does. I have met it."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:karasu|yamabushi:1": {
+   "title": "Two Tengu",
+   "blurb": "A crow tengu and a mountain monk who follows the tengu way.",
+   "shots": [
+    {
+     "caption": "Two Tengu",
+     "lines": [
+      {
+       "who": "b",
+       "text": "I have studied the tengu way for twenty years."
+      },
+      {
+       "who": "a",
+       "text": "And you still cannot fly."
+      },
+      {
+       "who": "b",
+       "text": "The way is not about flying."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is a little bit about flying."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:druid|kitsune:1": {
+   "title": "The Fox in the Grove",
+   "blurb": "The druid finds the fox spirit napping in the sacred grove.",
+   "shots": [
+    {
+     "caption": "The Fox in the Grove",
+     "lines": [
+      {
+       "who": "a",
+       "text": "This grove is sacred."
+      },
+      {
+       "who": "b",
+       "text": "So am I. We get on very well."
+      },
+      {
+       "who": "a",
+       "text": "You are sleeping on the altar."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "It is a very comfortable altar."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:dragoon|kraken:1": {
+   "title": "Sky and Sea",
+   "blurb": "The dragoon falls from the sky; the kraken rises from the deep.",
+   "shots": [
+    {
+     "caption": "Sky and Sea",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You pulled me under, the first time we met."
+      },
+      {
+       "who": "b",
+       "text": "You landed on my head."
+      },
+      {
+       "who": "a",
+       "text": "Ten fights since. Not once on your head."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Not once under. We are learning."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:ninjaMonk|samurai:1": {
+   "title": "The Open Hand",
+   "blurb": "The swordsman and the monk who fights unarmed.",
+   "shots": [
+    {
+     "caption": "The Open Hand",
+     "lines": [
+      {
+       "who": "a",
+       "text": "A sword is a promise. You carry none."
+      },
+      {
+       "who": "b",
+       "text": "My hands are my promise. They are always with me."
+      },
+      {
+       "who": "a",
+       "text": "Ten fights, and you never once fell behind."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Nor you. Shall we call it an even match?"
+      }
+     ]
+    }
+   ]
+  },
+  "bond:barbarian|minotaur:1": {
+   "title": "Horns and Axes",
+   "blurb": "Two charging brutes, at last on the same side of the charge.",
+   "shots": [
+    {
+     "caption": "Horns and Axes",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I still say I hit harder."
+      },
+      {
+       "who": "b",
+       "text": "And I still say you hit the wall."
+      },
+      {
+       "who": "a",
+       "text": "Ten fights, and you never once trampled me."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "You never once axed me. A friendship, then."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:satyr|shambler:1": {
+   "title": "The Dance",
+   "blurb": "The satyr has been trying to teach the shambler to dance.",
+   "shots": [
+    {
+     "caption": "The Dance",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Left foot. No, the other left foot."
+      },
+      {
+       "who": "b",
+       "text": "It fell off."
+      },
+      {
+       "who": "a",
+       "text": "Then hop. Ten fights, and you never missed a beat in battle."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Battle has a better rhythm."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:juggernaut|rifleBot:1": {
+   "title": "Covering Fire",
+   "blurb": "The juggernaut walks in front; the rifle bot shoots past him.",
+   "shots": [
+    {
+     "caption": "Covering Fire",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Shots that passed within an inch of you: three hundred."
+      },
+      {
+       "who": "a",
+       "text": "And hit me?"
+      },
+      {
+       "who": "b",
+       "text": "None. Trust: increasing."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Then keep shooting. I will keep walking."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:knight|peasant:3": {
+   "title": "Squire Margaret",
+   "blurb": "The knight offers the peasant a title. The peasant has questions.",
+   "shots": [
+    {
+     "caption": "Squire Margaret",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Kneel. I mean to make you my squire."
+      },
+      {
+       "who": "b",
+       "text": "Do I get a horse?"
+      },
+      {
+       "who": "a",
+       "text": "You get a shield, a duty, and my trust."
+      },
+      {
+       "who": "b",
+       "text": "And Margaret? Does she get a title?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Dame Margaret. Rise, both of you."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:kunoichi|samurai:3": {
+   "title": "The Shadow at His Back",
+   "blurb": "The samurai asks the kunoichi to guard the one place he cannot see.",
+   "shots": [
+    {
+     "caption": "The Shadow at His Back",
+     "lines": [
+      {
+       "who": "a",
+       "text": "In every duel I face forward. My back is always open."
+      },
+      {
+       "who": "b",
+       "text": "I had noticed. So had three assassins."
+      },
+      {
+       "who": "a",
+       "text": "Then guard it. I ask it as a friend."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Already done. They will not try a fourth time."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:archer|lightningMage:3": {
+   "title": "Storm Arrow",
+   "blurb": "The archer and the mage make one shot together.",
+   "shots": [
+    {
+     "caption": "Storm Arrow",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Hold still. I will put a spark in the arrowhead."
+      },
+      {
+       "who": "a",
+       "text": "If this explodes in my hand, I am haunting you."
+      },
+      {
+       "who": "b",
+       "text": "It will explode in the ogre. Probably."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Probably. Fine. Loose on three."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:wanderer|wizard:3": {
+   "title": "The Last Page",
+   "blurb": "The wizard has started writing down the wanderer's roads.",
+   "shots": [
+    {
+     "caption": "The Last Page",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You are writing a book about me?"
+      },
+      {
+       "who": "a",
+       "text": "About the roads. You are only in the margins."
+      },
+      {
+       "who": "b",
+       "text": "Leave room at the end. I am not done walking."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I left a hundred blank pages. Do not make me need more."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:cleric|paladin:3": {
+   "title": "One Shield, One Prayer",
+   "blurb": "The paladin and the cleric swear to hold the line together.",
+   "shots": [
+    {
+     "caption": "One Shield, One Prayer",
+     "lines": [
+      {
+       "who": "b",
+       "text": "When you fall, I will be there to raise you."
+      },
+      {
+       "who": "a",
+       "text": "And when you are struck, I will be there first."
+      },
+      {
+       "who": "b",
+       "text": "Then we are sworn. Shield and prayer."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Shield and prayer. Sing it off key, for luck."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:barbarian|werewolf:3": {
+   "title": "The Pack of Two",
+   "blurb": "The werewolf asks the barbarian to run with him under the full moon.",
+   "shots": [
+    {
+     "caption": "The Pack of Two",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Tonight is a full moon. I lose myself."
+      },
+      {
+       "who": "b",
+       "text": "Then I will be there to find you."
+      },
+      {
+       "who": "a",
+       "text": "I might bite."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "I bite back. That is what a pack is."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:rifleBot|siegeBot:3": {
+   "title": "Linked Systems",
+   "blurb": "Two machines share their targeting.",
+   "shots": [
+    {
+     "caption": "Linked Systems",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Proposal: link our targeting."
+      },
+      {
+       "who": "b",
+       "text": "Risk: you would see what I see."
+      },
+      {
+       "who": "a",
+       "text": "Acceptable. You would see what I see."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Linked. Warning: you see a great many walls."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:karasu|kitsune:3": {
+   "title": "A Feather Returned",
+   "blurb": "The fox finally gives back the crow's real feathers.",
+   "shots": [
+    {
+     "caption": "A Feather Returned",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Here. Your feathers. The real ones. I kept them."
+      },
+      {
+       "who": "b",
+       "text": "For seventy years?"
+      },
+      {
+       "who": "a",
+       "text": "Eighty. I was waiting for you to forgive me."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "I forgave you in the first week. I just liked the new ones."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:knight|paladin:3": {
+   "title": "A New Oath",
+   "blurb": "The knight swears himself to the Keep, with the paladin as witness.",
+   "shots": [
+    {
+     "caption": "A New Oath",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You said you swore to a king who is dust."
+      },
+      {
+       "who": "a",
+       "text": "I did. Tonight I swear again, to the Keep and those inside it."
+      },
+      {
+       "who": "b",
+       "text": "Then I witness it, under the light."
+      },
+      {
+       "who": "a",
+       "text": "And if I break it?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then I will be there to help you mend it."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:archer|ranger:3": {
+   "title": "The Shared Quiver",
+   "blurb": "The two bow hands start filling one quiver.",
+   "shots": [
+    {
+     "caption": "The Shared Quiver",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You are using my hawk-feathered arrows."
+      },
+      {
+       "who": "a",
+       "text": "You said to miss with them. I have not missed yet."
+      },
+      {
+       "who": "b",
+       "text": "Then keep them. We will share one quiver."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Half duck, half hawk. They will never know what hit them."
+      }
+     ]
+    }
+   ]
   }
  },
  "king": {
