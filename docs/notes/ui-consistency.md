@@ -33,16 +33,17 @@ The style it is judged against: `ornateMenus.css`'s card (`--ornate-border-doubl
 | 4 | The Formation sheet on the deploy board (0.365) | The old wood panel; the chosen shape is the old ember orange | `before-deploy-formations-393.png` | 1 (fixed) |
 | 5 | Hester's Stall header | Its Back is a 30 px glyph, twice every other page's | `before-stall-books-393.png` | 1 (fixed) |
 | 6 | The Last Stand's pick | The chosen eight are flat bright orange tiles | `before-stand-393.png` | 1 (fixed) |
-| 7 | Quests, Upgrades, the Pact Gallery, the trophy wall | Full pages closed by "×" / "✕", against the rule (pages "‹ Back"); headings in plain serif with no rule under them | `before-quests-393.png`, `before-upgrades-393.png`, `before-gallery-393.png` | 2 |
-| 8 | Deploy board's trait chips | Flat coloured chips (orange, blue) in the old style, under the ornate HUD | `before-deploy-393.png` | 2 |
-| 9 | Hester's Stall body (every tab) and Quests filters | A flat brown page with no wells; the filter pills (All, Common, Rare...; Easiest first, Short, Long...) are round default pills | `before-stall-sell-393.png`, `before-quests-tab2-393.png` | 2 |
-| 10 | Calamity campfire (oaths, scars, travellers, provisions) | The traveller's choices and Rest are plain left-aligned buttons; the oath has no gilded mark; the hero tiles are bare | `before-calamity-camp-393.png` | 2 |
-| 11 | Summon result's folds ("How summoning works", "Hero collection") | Navy bars, the one blue in the Sanctum | `before-summon-10-393.png` | 2 |
-| 12 | The daily card's chest panel, the hero sheet's Awakening steps | Purple boxes with a purple rim, off the brass palette | `before-daily-393.png`, `before-hero-progression-393.png` | 3 |
-| 13 | The march card | Plain heading and tiles, no rim; a long page with no frame | `before-march-393.png`, `before-march-foot-393.png` | 3 |
-| 14 | The pack (relics, runes, remedies) | Already a rimmed card; its "The bag" and "Remedies" labels are 11 px plain text where the rest of the game heads a section in brass | `before-pack-393.png` | 3 |
-| 15 | The hero sheet's foot | "‹ Back" is the big green primary there, where every other Back is the plain secondary button | `before-bonds-sheet-393.png` | 3 |
-| 16 | Small text and taps the measure found | "No runes" 10 px (rune tray), the War Council's "THE LAST KEEP" 9 px and its "i" 9 px, "Rift ores" 10 px (army picker), the hero sheet's "Next upgrade" and "Use tome" 36 px tall | `before-audit.json` | 3 |
+| 7 | Quests, Upgrades, the Pact Gallery, the trophy wall | Full pages closed by "×" / "✕", against the rule (pages "‹ Back"); headings in plain serif with no rule under them | `before-quests-393.png`, `before-upgrades-393.png`, `before-gallery-393.png`, `before-trophies-393.png` | 2 (fixed) |
+| 8 | Deploy board's trait chips | Flat coloured chips (orange, blue) in the old style, under the ornate HUD | `before-deploy-393.png` | 2 (fixed) |
+| 9 | Hester's Stall body (every tab) and Quests filters | A flat brown page with no wells; the filter pills (All, Common, Rare...; Easiest first, Short, Long...) are round default pills | `before-stall-sell-393.png`, `before-quests-tab2-393.png` | 2 (fixed) |
+| 10 | Calamity campfire (oaths, scars, travellers, provisions) | The traveller's choices and Rest are plain left-aligned buttons; the oath has no gilded mark; the hero tiles are bare | `before-calamity-camp-393.png` | 2 (fixed) |
+| 11 | Summon result's folds ("How summoning works", "Hero collection") | Navy-violet bars. On a second look this is the plan's own: section 7 gives the Sanctum an arcane violet tint. Left as it is. | `before-summon-10-393.png` | — |
+| 12 | The daily card's chest panel, the hero sheet's Awakening steps | Purple boxes with a purple rim. The daily's chest plate is the daily chest's own violet (`daily.css`, its rays are the same colour), and the Awakening steps take the rift's violet: both kept. The theme block above the boss, which had a plain cream rim, now has the double brass rim. | `before-daily-393.png`, `before-hero-progression-393.png` | 3 (theme block fixed; see question 2) |
+| 13 | The march card | Plain heading and tiles, no rim; a long page with no frame | `before-march-393.png`, `before-march-foot-393.png` | 3 (fixed) |
+| 14 | The pack (relics, runes, remedies) | Already a rimmed card; its "The bag" and "Remedies" labels are 11 px plain text where the rest of the game heads a section in brass | `before-pack-393.png` | 3 (fixed) |
+| 15 | The hero sheet's foot | "‹ Back" is the big green primary there, where every other Back is the plain secondary button | `before-bonds-sheet-393.png` | 3 (fixed) |
+| 16 | Small text and taps the measure found | "No runes" 10 px (rune tray), the War Council's "THE LAST KEEP" 9 px and its "i" 9 px, "Rift ores" 10 px (army picker), the hero sheet's "Next upgrade" and "Use tome" 36 px tall | `before-audit.json` | 3 (fixed) |
+| 16b | The version line (top right) | On a full-screen layer inside the home screen (the trophy wall, the Calamity's cards) it sits over the layer's own top right; on the trophy wall it covered the new Back | `after-trophies-393.png` | 2 (the trophy wall's Back moved clear; the line itself stays, the owner's ask) |
 | 17 | The spellbook | Matches the plan: its cool slate-blue is section 15's own arcane tint. Left as it is. | `before-spellbook-393.png` | — |
 | 18 | The fight HUD (rows, chips, orbs, the tactic button) | Matches: the HUD has its own battle skin (`fightHud.css`), already checked by the UX fixes; the tactic button is gilded | `before-fight-393.png` | — |
 
@@ -53,6 +54,9 @@ The style it is judged against: `ornateMenus.css`'s card (`--ornate-border-doubl
    sheet uses `var(--display)`. Cinzel Decorative is already in the build (the trophy wall uses it). *Recommendation:* use it for the large
    titles only (page and card titles, 20 px and up), and keep Georgia for the small headings, where Cinzel Decorative's swashes are hard to
    read on a phone. Not changed until the owner says.
+2. **Violet panels.** The Summoning Sanctum's folds, the daily chest's plate and the hero sheet's Awakening steps are violet: the restyle
+   (and the features) chose it for the arcane things. *Recommendation:* keep them; they read as a deliberate accent, not a leftover.
+   Say if they should go brass too.
 
 ## Batch 1 (the most visible)
 
@@ -67,3 +71,35 @@ The style it is judged against: `ornateMenus.css`'s card (`--ornate-border-doubl
 
 All CSS, at the end of `ornateMenus.css` (section 23), with its own tokens; no rules, no sim. Shots: `after-<screen>-<width>.png` for
 home-recruit, home-heroes, deploy, deploy-formations, card-hall, card-barracks, card-smithy, stall-books, stand and result.
+
+## Batch 2
+
+- Quests, Upgrades, the Pact Gallery and the trophy wall are full pages: their "×" / "✕" is now "‹ Back" (the plain secondary, 44 px),
+  under a brass heading with a filigree rule. The trophy wall's Back sits at the foot of its heading, clear of the version line.
+- The filter chips (Quests' sort and length, the Stall's Sell filter) are the sheet's rows, the chosen one gilded, 44 px tall (they were
+  36 px round pills).
+- The deploy board's trait chips: the sheet's rows, an active trait gilded, their small line 11 px (it was 9).
+- Hester's Stall's rows (Sell, Repair, Enchant): the sheet's rows. The shelf itself stays wood: it is Hester's shop, drawn as a place.
+- The Calamity's cards (campfire, shop, treasure): the choices and the traveller's offers as rows with brass headings, the heroes to train
+  in wells, the small print 11 px.
+
+Text changes only in the render code (`questLog.ts`, `eidolonChainView.ts`, `rankUpList.ts`, `trophyWall.ts`: the button's word); the
+rest is CSS. Shots: after-quests, -quests-tab2, -upgrades, -gallery, -trophies, -deploy, -stall-sell, -calamity-camp at the three sizes.
+
+## Batch 3
+
+- The march card (and the Spell Lectern and the Anvil, which share its frame): the ornate card, its orders as the sheet's rows with the
+  gilded choice, the section heads in brass with a rule.
+- The daily's theme block: the double brass rim; the day's heroes in brass frames.
+- The pack: "The bag" and "Remedies" as brass headings; "No runes" 11 px (it was 10).
+- The hero sheet's foot "‹ Back" is the plain secondary button (`heroFootBack`), as every other Back; it was the green primary.
+- Taps and text: the hero sheet's Next upgrade and Use tome 44 px (they were 36); the War Council's eyebrow and info marks and the army
+  picker's "Rift ores" 11 px.
+
+Shots: after-march, -march-foot, -daily, -pack, -hero-overview, -hero-overview-foot, -party at the three sizes.
+
+## Checks
+
+Each batch: `npm run typecheck` clean, `npm test` 2527 pass, 0 fail, 0 skipped, `npm run web` built; every changed screen looked at in
+the shots at 393x852, 360x780 and 412x915. Reduced motion: nothing here animates (no new animation, no glow that changes over time). The
+shots are a script's, in headless Chromium, not a real phone.
