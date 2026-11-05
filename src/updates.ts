@@ -27,6 +27,72 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.366.0',
+    date: '2026-11-05',
+    title: 'Third skills come into their own',
+    notes: ['Third skills are now the strongest of a hero\'s three. Late armies retuned for mastered skills, and heroes kept within 6 points of each other at every level.'],
+  },
+  {
+    version: '0.365.0',
+    date: '2026-11-05',
+    title: 'Tactics button, true hero stats',
+    notes: ['A tactics button under Auto cycles Advance, Hold and Charge mid-fight, with a word to show the mode.', 'The hero Overview now shows real Health, Attack and Armour with gear and runes.'],
+  },
+  {
+    version: '0.364.0',
+    date: '2026-11-05',
+    title: 'Rivals settle, Calamity header',
+    notes: ['Ten scenes for rivals who settle their quarrel. The Calamity\'s header shows the act, your provisions and an oath pennant for each oath.'],
+  },
+  {
+    version: '0.363.0',
+    date: '2026-11-05',
+    title: 'More bond scenes, Calamity act scenes',
+    notes: ['Ten more bond scenes between heroes, and two Calamity act scenes that play as each crossroads opens.'],
+  },
+  {
+    version: '0.362.0',
+    date: '2026-11-05',
+    title: 'Smithy rooms',
+    notes: ['Field Anvil mends worn gear after the mid-boss; Patchwork keeps a broken piece at half; Master\'s Mark spares one hero\'s gear from wear for a run.'],
+  },
+  {
+    version: '0.361.0',
+    date: '2026-11-05',
+    title: 'Painted relics, the Spell Lectern',
+    notes: ['All 48 relics have painted icons. The Mage Tower\'s Spell Lectern lets you swap one spell mid-run, once a run.'],
+  },
+  {
+    version: '0.360.0',
+    date: '2026-11-05',
+    title: 'Hester\'s sign, castle rooms, Far Sight',
+    notes: ['Hester\'s painted sign on her cart; painted Smithy, grand Watchtower, Hall of Legends and room icons.', 'Far Sight names the next wave\'s foes, and roads let you choose which land a run is fought on.'],
+  },
+  {
+    version: '0.359.0',
+    date: '2026-11-04',
+    title: 'Calamity travellers',
+    notes: ['Meet a traveller at the Calamity\'s first campfire: help them for 40 gold or wrong them for 40. They return later to repay you, or with a trap.'],
+  },
+  {
+    version: '0.358.0',
+    date: '2026-11-04',
+    title: 'Calamity oaths and scars',
+    notes: ['Campfires in the Calamity may offer an oath (keep up to three) or a scar: 60 gold for a hero who fights on at 10% less health.'],
+  },
+  {
+    version: '0.357.0',
+    date: '2026-11-04',
+    title: 'Clearer ten-card summons',
+    notes: ['A ten-card summon shows new heroes large and repeats small, with crowns summed in one line. Hero quips no longer cover the HUD.'],
+  },
+  {
+    version: '0.356.0',
+    date: '2026-11-04',
+    title: 'Cleaner screens and a quicker start',
+    notes: ['A new game goes straight to wave 1. Bigger fight HUD, 44 px buttons, fewer badges, pop-ups that queue instead of stacking, clearer wave losses.', 'Sell asks twice; pages say Back and cards say Close; bigger films; tidier Castle, stall and hero pages.'],
+  },
+  {
     version: '0.355.0',
     date: '2026-11-04',
     title: 'Calamity provisions, Sparring Yard',

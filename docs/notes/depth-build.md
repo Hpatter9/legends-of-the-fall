@@ -204,3 +204,88 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   eight hours for five bond points (a rivalry counts them towards settling). The Barracks' card shows the yard once its room stands: two
   pickers and Spar, or the pair sparring and its time left; it settles when the card opens.
 - Tests: `test/cal-journey.test.ts`, `test/bonds.test.ts`.
+
+## Batch 9: oaths and scars
+
+- **Oaths** (`calJourney.ts`, `TowerState.journey.oaths`): about one Calamity campfire in two offers one (`oathOffer`, its own side stream
+  `0x0a7b` by act and spot, never one already sworn). Swearing it takes the fire's turn (instead of resting or training). Three at most; a
+  fourth replaces the oldest (the card says which; the design's "ask which to drop" is left for a later pass). Four oaths:
+  - Iron: heroes +8% health; foes +5% health. Ember: heroes +6% attack; rests heal a quarter less.
+  - Coin: fights pay 30% more gold; foes +6% health. Vigil: rests heal a third more; heroes −4% attack.
+  The heroes' parts are laid on each hero's boost (`journeyBoost`, the page and the bot alike); the foes' in the Calamity's fight spec;
+  the gold in the tower's pay; the rest in `rest`.
+- **Scars:** at a Calamity campfire a hero may take a scar for 60 gold (−10% health for the rest of the run, each scar again;
+  `journey.scars` by roster id), also taking the fire's turn. (The design puts scars on mysteries; the campfire is where the choice
+  already sits, so it went there first.)
+- The campfire card lists the oaths sworn. Not yet: the pennant banner in the Sanctuary, travellers, act scenes.
+- Measured (`CAL_OATHS=1`, new switch: the bot swears every oath offered instead of resting or training; `npm run balance -- --no-tables --calamity --attempts 300`): guardians felled by 100 / 53 / 3% of runs with none, 100 / 53 / 5% with every oath, inside the design's two points.
+- Tests: `test/cal-journey.test.ts`.
+
+## Batch 10: travellers
+
+- **Travellers** (`calJourney.ts`, `journey.met`): the Pilgrim, the Deserter and the Cartographer. One of them (by the run's seed, side
+  stream `0x7a7e`) sits at the first campfire of Act I: help them (40 gold) or wrong them (+40 gold); neither takes the fire's turn. They
+  come back once, at the first campfire of Act II or III: helped, the Pilgrim mends every hero, the Deserter brings 100 gold, the
+  Cartographer two sacks of provisions; wronged, any of them springs a trap (every hero loses 15% of their health).
+- The design's return gifts were a free hire, a map with its fog lifted, or a trap; the hire and the fog need the recruit and fog code to
+  take a gift from outside, so the first pass gives a mend, gold and provisions instead. The bot meets no traveller, so the Calamity's
+  measure is unchanged. Travellers are written and shown on the campfire card; their sprites are on the art list.
+- Not yet: the act scenes.
+- Tests: `test/cal-journey.test.ts`.
+
+## Batch 11: Far Sight and the roads
+
+- **Far Sight** (Watchtower 3; `march.ts`): the card after a won wave names the next wave's foes ("Far Sight · next wave: ..."; past any
+  wave a forced march skips).
+- **The roads:** the armies' battlefields are hand-shaped by their scenarios now (`scenarioForArmy`, every army), so a road cannot pick the
+  layouts the design's routes were to draw from. A road picks the **land** instead: each army has two (`landsOf`: the Orc Warband's War Camp
+  and Highlands, the Undead Legion's Graveyard and Dungeon ...), and with Far Sight the march card offers "By the War Camp" / "By the
+  Highlands" (`routesOf`, `Orders.route`); the run is then fought on that land (`Run.area`, which `chainOf` already honoured). Without a road
+  the seed picks the land as before. The land changes the ground (water, grass, lava ...) and the weather, not the foes.
+- Tests: `test/march.test.ts`. Shot: `node tools/depth/shots.mjs march` (now with the Vigil and the road rows).
+
+## Batch 12: the Spell Lectern
+
+- **Spell Lectern** (Mage Tower 3; `src/sim/lectern.ts`): the march card offers the spells the save knows and has not equipped
+  (`spareChoices`); the one taken is the run's spare (`Orders.spare`). After the mid-boss's wave is won, the Lectern sheet offers to swap it
+  in for one equipped spell (`lecternSwap`, which keeps the loadout's own rules: a school's spell in a school slot or the open slot, any
+  other in the open slot), or to keep the loadout; once a run (`Orders.spareUsed`). The swap changes the save's loadout, as the spellbook
+  does. The design's "within the power budget": the budget went when the schools came, so the slot rules stand in for it. Not in an auto
+  replay.
+- Tests: `test/lectern.test.ts`.
+
+## Batch 13: the Smithy's rooms
+
+- **Field Anvil** (Smithy 1): after the mid-boss's wave is won (after the Lectern, when both are due), a sheet offers to mend every worn
+  piece the run's heroes wear, as one payment at the stall's price (`repairAllCost` / `repairAll`, the Armoury's cut included). No new
+  prices: the gear build's own.
+- **Patchwork** (Smithy 2; `equipStats`): a broken piece keeps `PATCH_SHARE` (half) of its numbers until mended, with no ability, power or
+  set count; without the room a broken piece gives nothing, as before. (A real-gear run's own finds keep the old rule.)
+- **Master's Mark** (Smithy 3): the march card picks one hero of the party (`Orders.marked`) whose lasting gear does not wear this run
+  (`markedHero`, the page's `settleWear` skip).
+- Balance: the army pace tool dresses fresh gear, so none of these moves its numbers; Patchwork only softens a broken piece the player
+  has not mended.
+- Tests: `test/smithy-rooms.test.ts`.
+- The march card, with every room open, is now taller than the phone and scrolls inside its sheet; a later pass could fold the room rows (Vigil, road, spare, mark) behind a 'Camp orders' row.
+
+## Batch 14: scenes
+
+- **Bond scenes, batch 2** (`bondScenes.ts`): ten more kindred pairs' level-1 scenes (Ninja Monk and Yamabushi, Samurai and Samurai
+  Commander, Cleric and Priestess, Druid and Satyr, Druid and Wolf Bard, Werewolf and Wolf Bard, Beastmaster and Minotaur, Gorgon and
+  Minotaur, Kraken and Buccaneer, Buccaneer and Dread Pirate): twenty in all, drafted for the owner to read.
+- **The Calamity's act scenes** (`src/sim/actScenes.ts`): "The Road Forks" (end of Act I) and "The Hollow Heart Calls" (end of Act II),
+  the run's lead hero on the road, a narrator line and two of the hero's; a new moment (`{ kind: 'calAct', map }`), Calamity scenes (they wait
+  for it to open). The page plays each once as its crossroads card opens (`TowerHooks.onActEnd`).
+- `docs/lines/new-lines.json` carries every new scene's words (its test checks them); `scene-fixes.test.ts`'s list of the Calamity's scenes
+  gains the two act scenes.
+- Still to write: bond levels 3 and 5, the other twenty pairs, the settling scenes, the farewell scenes.
+
+## Batch 15: settling scenes, the Calamity's header
+
+- **Rivalries settled** (`bondScenes.ts`, batch 3): ten settling scenes, one each for ten of the fifteen rival pairs. A rival pair reaches
+  bond level 1 only when it settles, so its level-1 scene is its settling scene and plays the next time the camp or the castle opens
+  (a test). Thirty bond scenes in all; every word is in `docs/lines/new-lines.json`.
+- **The Calamity's header** (`dungeonHeader` in `towerView.ts`, the header the Calamity actually uses; batch 7's act line had gone to the
+  old map header): "The Calamity · Act II of III", a chip with the provisions carried, and one pennant (the packs' banner) for each oath
+  sworn, a tap for its words. Not shot: it needs a save part-way through a Calamity.
+- Art: what the copied packs have is used (the banner); the sack, the travellers and coloured pennants are on `depth-art-todo.md`.

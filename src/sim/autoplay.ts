@@ -7,6 +7,7 @@ import { autoRunes } from './runes';
 import { autoRemedy, packSatchel, remedyBonus } from './remedies';
 import { hpShare } from './health';
 import { legacyBoost } from './legacy';
+import { journeyBoost } from './calJourney';
 import { CLASS_OF } from './starter';
 import { DEPLOY_ROWS, standable, tileAt, type Board } from './board';
 import { place, unplace, type Battle, type Boost } from './battle';
@@ -33,7 +34,7 @@ export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
 export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
   const awake = awakenStats(meta, h.kind);
   // (DEPTH-BUILD: a mentor's legacy perk from the run's snapshot, `legacy.ts`)
-  const boost = legacyBoost(run?.legacy, h.kind, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake));
+  const boost = journeyBoost(run?.tower?.journey, h.id, legacyBoost(run?.legacy, h.kind, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake)));
   // (SEVEN-SLOT GEAR batch 6: a hero risen at half after a won wave starts the next so, as the page's does)
   const share = run && !run.tower ? hpShare(run, h.id) : 1;
   return share < 1 ? { ...boost, carry: share } : boost;

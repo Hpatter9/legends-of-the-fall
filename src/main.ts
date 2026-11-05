@@ -29,7 +29,7 @@ import { showRecap } from './recapView';
 import { foundList, foundRow } from './foundRow';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
-import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
+import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, landsOf, settleWave, waveFoes, type ArmyPay } from './sim/armies';
 import { drawRunStars } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
@@ -97,10 +97,13 @@ import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
-import { heartsLost, marchCrowns, marchDef, marchPay, ordersLine } from './sim/march';
-import { showMarchCard } from './marchCard';
+import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
+import { showAnvil, showLectern, showMarchCard } from './marchCard';
+import { markedHero } from './sim/march';
+import { repairAll, repairAllCost } from './sim/wear';
+import { lecternDue, lecternSwap } from './sim/lectern';
 import { applyVigil } from './sim/chapelRooms';
-import { landAt } from './sim/calJourney';
+import { journeyBoost, landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
 import { bondScenesDue } from './sim/bondScenes';
 import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
@@ -189,9 +192,16 @@ import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
 import { pickedTactic, pickTactic } from './sim/tacticPick';
-import { adviseTactic } from './sim/tacticAdvice';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
+/** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
+function farSightLine(run: Run, army: ReturnType<typeof waveArmyOf>, stage: number): string[] {
+  // (only after a win, when the run has moved on: to the wave it goes to, past any a forced march skips)
+  const next = run.stage;
+  if (!army || run.over || !farSight(run.castle) || next <= stage || next > army.waves.length) return [];
+  const names = [...new Set(waveFoes(army, next, tierOfRun(run)).map((id) => UNITS[id]?.name ?? id))];
+  return [`Far Sight · next wave: ${names.join(', ')}`];
+}
 const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
 /** A toast for a quest a fight has turned up (QUESTS-1b: spoils on a boss, the rift's voice): it waits on the quest board. */
 const toastFound = (ids: readonly string[]): void =>
@@ -379,11 +389,16 @@ class Game {
     saveMeta(this.meta);
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
+    let firstSession = false;
     if (needsStarter(this.meta)) {
+      // (UX-FIXES: a new save goes from the pick straight to wave 1's deploy: the opening is the one title sequence, so the Orc Warband's
+      // own intro film is marked seen and not played again behind it; the Scenes list still has it)
+      firstSession = !seed;
       // (the opening cinematic comes first, before the pick: the player has no heroes yet, so a fixed trio plays it; a test page with a seed has none)
       if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
+      if (firstSession) markSeen(this.meta, `intro:${ARMIES[0].id}`);
       saveMeta(this.meta);
     }
     // (a save from before the summoning stones was given a few, once: it says so)
@@ -439,6 +454,10 @@ class Game {
           if (auto) return go();
           showMarchCard(this.meta, id, tier, next.seed, (orders) => {
             if (orders) next.orders = orders;
+            // (DEPTH-BUILD: Far Sight's road: the run is fought on that land of the army's)
+            const army = armyById(id);
+            const road = army ? routeLand(orders, landsOf(army)) : undefined;
+            if (road) next.area = road;
             go();
           });
         }),
@@ -507,6 +526,8 @@ class Game {
     this.towerView = new TowerView({
       meta: () => this.meta,
       events: this.events,
+      // (DEPTH-BUILD: the Calamity's act scene, once, as its crossroads opens)
+      onActEnd: (act) => void this.queueScene({ kind: 'calAct', map: act }),
       onFight: () => {
         saveRun(this.run);
         this.newBattle();
@@ -544,7 +565,15 @@ class Game {
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
-    if (!seed) this.home.open(closed ?? undefined);
+    // (UX-FIXES: ... except a new save's first session, which starts on wave 1 of the first army: the run is saved, and Home is one tap away)
+    // (UX-FIXES: the home screen's opening tells the unlock cards held back during a run)
+    const homeOpen = this.home.open.bind(this.home);
+    this.home.open = (...a: Parameters<Home['open']>) => {
+      homeOpen(...a);
+      if (this.heldReveals.length) setTimeout(() => this.flushReveals(), 400);
+    };
+    if (firstSession) saveRun(this.run);
+    else if (!seed) this.home.open(closed ?? undefined);
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
@@ -808,10 +837,28 @@ class Game {
     if (!tellsByCard(unlockOfReveal(r))) return false;
     const card = revealCard(r, this.meta);
     if (!card || this.revealed.has(card.key)) return false;
+    // (UX-FIXES: an unlock card never lands over a wave result in the middle of a run: it waits for the home screen and shows then)
+    if (!this.home.isOpen && $('home').hidden && !this.run.over && !this.run.cleared) {
+      this.heldReveals.push([r, mayGo]);
+      return false;
+    }
     this.revealed.add(card.key);
     const to = card.go?.to;
     const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
     return showEndCard(card, go);
+  }
+
+  /** UX-FIXES: a road event's card waits until the wave result card is gone, so two cards never fight for focus. */
+  private openEventWhenClear(open: () => void): void {
+    const go = () => ($('result').hidden && !document.querySelector('.rvCard, .unlock') ? open() : setTimeout(go, 300));
+    go();
+  }
+
+  /** Unlock cards held back while a run was going (UX-FIXES): told, one at a time, once the home screen is open. */
+  private heldReveals: [Reveal, boolean][] = [];
+  private flushReveals(): void {
+    const held = this.heldReveals.splice(0);
+    void held.reduce((p, [r, go]) => p.then(() => this.tellUnlock(r, go).then(() => undefined)), Promise.resolve());
   }
 
   /** A film's end card, if it revealed something (REVEAL, `sim/sceneReveal.ts`): its button goes there only from the home screen (never
@@ -1906,19 +1953,17 @@ class Game {
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
-    // (the party's tactic: the chip beside Auto, and the Charge! call in the fight; docs/notes/tactics.md)
+    // (the party's tactic: the button under Auto in the fight, which cycles the tactic mid-fight, and the prep screen's Formation button;
+    // docs/notes/tactics.md, docs/notes/tactics-overview.md)
     this.tactics = new TacticsView({
-      picked: () => pickedTactic(this.meta.tactics, this.run.mode),
       pick: (t) => {
         pickTactic(this.meta, this.run.mode, t);
         saveMeta(this.meta);
-        this.refresh();
       },
       // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       arrange: (f) => this.arrangeFormation(f),
-      advice: () => adviseTactic(this.b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.def), this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), pickedTactic(this.meta.tactics, this.run.mode)),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
     this.eid = new EidolonCall({
@@ -2073,7 +2118,7 @@ class Game {
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
   /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
-  /** Set the placed heroes out in a formation's shape (the tactic sheet's Arrange): each taken back and placed again at its tile of the shape
+  /** Set the placed heroes out in a formation's shape (the prep screen's Formation sheet, `tacticsView.ts`): each taken back and placed again at its tile of the shape
    *  (`formationSpots`), or where it stood if that tile will not take it. */
   private arrangeFormation(shape: Formation): void {
     const b = this.b;
@@ -2386,7 +2431,7 @@ class Game {
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
     // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
     // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
-    return legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) });
+    return journeyBoost(this.run.tower?.journey, h.id, legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) }));
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -2441,7 +2486,7 @@ class Game {
     this.newBattle();
     if (this.run.event) {
       const buffWas = JSON.stringify(this.run.buff ?? null);
-      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+      this.openEventWhenClear(() => this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh())));
     }
   }
 
@@ -2580,7 +2625,7 @@ class Game {
     // (an event waits between two fights: its card opens over the new stage's board)
     if (this.run.event) {
       const buffWas = JSON.stringify(this.run.buff ?? null);
-      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+      this.openEventWhenClear(() => this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh())));
     }
   }
 
@@ -2591,9 +2636,15 @@ class Game {
 
   /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the fight resumes by itself. */
   private beginRevive(): void {
-    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
+    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine(this.reviveWords(), this.reviveTimes().end) };
     play('sparkle');
     this.drawLives(this.run);
+  }
+
+  /** UX-FIXES: what a lost wave says: which wave, and how many hearts (your lives) are left once this one is spent. */
+  private reviveWords(): string {
+    const left = Math.max(0, retriesLeft(this.run) - 1);
+    return `Wave ${this.run.stage} lost · a heart burns, ${left} ${left === 1 ? 'heart (life)' : 'hearts (lives)'} left. The party rises.`;
   }
 
   /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (and sends the line away). */
@@ -3343,6 +3394,28 @@ class Game {
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
       if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
+      // (DEPTH-BUILD: the Mage Tower's Spell Lectern, at the camp after the mid-boss: swap the run's spare spell in, once)
+      const spare = run.orders?.spare as SpellId | undefined;
+      const midWon = won && !!army && army.waves[stage - 1]?.boss === 'mid' && !this.auto;
+      // (and the Smithy's Field Anvil there: mend the party's worn gear at the stall's price)
+      const anvil = () => {
+        if (!midWon || !roomOpen(run.castle, 'fieldAnvil')) return;
+        const kinds = run.roster.map((h) => h.kind);
+        const { items, cost } = repairAllCost(this.meta, kinds);
+        if (items.length) showAnvil(items.length, cost, this.meta.crowns >= cost, () => {
+          repairAll(this.meta, kinds);
+          saveMeta(this.meta);
+        });
+      };
+      if (midWon && lecternDue(spare, run.orders?.spareUsed, true) && roomOpen(run.castle, 'spellLectern'))
+        showLectern(this.meta, spare!, (out) => {
+          run.orders!.spareUsed = true;
+          if (out) lecternSwap(this.meta.spellbook, spare!, out, this.meta.spellbook.school);
+          saveMeta(this.meta);
+          saveRun(run);
+          anvil();
+        });
+      else anvil();
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
       // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)
@@ -3404,7 +3477,7 @@ class Game {
       const skillUps = useCut > 0 ? levelUpWords(settleSkillUse(this.meta, fightUse(b, this.meta.unlocked), useCut)) : [];
       // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
       const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
-      const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
+      const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot) || markedHero(run, kind)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
       noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
@@ -3425,7 +3498,7 @@ class Game {
       // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
       const waveGains = gainsSince(held, this.meta, run);
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));

@@ -19,7 +19,7 @@ import { EQUIP_ICONS } from './equipArt';
 import { paintGearIcon } from './gearIcons';
 import { shopArt } from './bookArt';
 import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
-import { sellAsks, sellPiece, stallRepair } from './sim/stall';
+import { sellPiece, stallRepair } from './sim/stall';
 import { sellPrice, stashCount, stashFull } from './sim/equipment';
 import { todayKey } from './modes';
 import { icon } from './menuArt';
@@ -274,8 +274,11 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       overview();
       panel.append(el('small', 'eqUp', what));
     };
-    auto.append(best, all, toggle);
-    panel.append(auto, note);
+    // (UX-FIXES: "Equip best" is the one button in view; the rest of the choices are folded under "More")
+    const moreFold = el('details', 'eqMore');
+    moreFold.append(el('summary', '', 'More'), all, toggle, note);
+    auto.append(best, moreFold);
+    panel.append(auto);
     // the gear sets: the ones this hero wears a piece of, with how far each is
     const worn = new Set(wornBases(meta, kind));
     const mine = [...setCounts([...worn]).keys()];
@@ -291,7 +294,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     sets.addEventListener('click', allSets);
     comb.addEventListener('click', () => combineView());
     more.append(sets, comb);
-    panel.append(more);
+    moreFold.append(more);
     // (RUN-GEAR-2: the stash's count; red once it is full and finds wait on the cart)
     panel.append(el('small', `eqStash${stashFull(meta) ? ' full' : ''}`, `Stash ${stashCount(meta)}${stashFull(meta) ? ' · full' : ''}`));
   };
@@ -303,7 +306,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const list = el('div', 'eqList');
     for (const set of GEAR_SETS) list.append(setCard(set, worn));
     panel.append(list);
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     panel.append(back);
@@ -347,7 +350,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       commit();
       combineView(made.length ? `Made ${made.length} piece(s)` : '');
     });
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     btns.append(everything, back);
@@ -431,7 +434,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       // second tap; the piece waits on the stall's Sold today shelf until midnight)
       const sell = el('button', 'eqSell', `Sell +${sellPrice(it)}`);
       sell.type = 'button';
-      let sure = !sellAsks(meta, it);
+      let sure = false; // (UX-FIXES: every Sell asks once; the sold piece also waits on the stall's Sold today shelf)
       sell.addEventListener('click', () => {
         if (!sure) {
           sure = true;

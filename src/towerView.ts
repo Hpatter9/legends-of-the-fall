@@ -3,7 +3,9 @@
 // treasure chest, then the summary of a run that has ended. Like events.ts it reads and changes the Run only through the sim's own functions
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
-import { BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
+import { healParty, hurtParty } from './sim/health';
+import bannerUrl from './art/items/banner.png';
+import { TRAVELLERS, TRAVEL, meetTraveller, travellerAt, travellerBack, travellerReturns, OATHS, OATH_MAX, SCAR, oathOffer, swearOath, takeScar, BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
 import { foundRow } from './foundRow';
 import { todayKey } from './modes';
 import { SanctuaryView } from './sanctuaryView';
@@ -77,6 +79,8 @@ export interface TowerHooks {
   onHome(): void;
   /** The player chose to start over (after the confirm): end the run and show what it earned. */
   onAbandon(): void;
+  /** DEPTH-BUILD: a Calamity act has ended (its crossroads opens): the page plays the act's scene. */
+  onActEnd?(act: number): void;
 }
 
 /** Each kind of node: its icon, and what it is, in a line. */
@@ -312,7 +316,8 @@ export class TowerView {
     const head = el('header', 'rtHead dmHead');
     const top = el('div', 'dmTop');
     const words = el('div');
-    words.append(el('p', 'dmEyebrow', `The Calamity · Region ${t.act} / ${t.maps ?? CAL_MAPS}`), el('h2', '', dungeonName(t.act)));
+    // (DEPTH-BUILD: the journey's act, `calJourney.ts`)
+    words.append(el('p', 'dmEyebrow', run.rift ? `The Calamity · ${actLine(t.act)}` : `The Calamity · Region ${t.act} / ${t.maps ?? CAL_MAPS}`), el('h2', '', dungeonName(t.act)));
     const home = el('button', 'dmClose', '×');
     home.setAttribute('aria-label', 'Return home');
     home.addEventListener('click', () => { saveSlot(run); this.close(); this.hooks.onHome(); });
@@ -330,6 +335,19 @@ export class TowerView {
     const gold = el('span', 'rtGold');
     gold.append(icon(ICONS.gold), el('b', '', String(run.gold)));
     status.append(gold);
+    // (DEPTH-BUILD: the provisions carried, and the oaths sworn as pennants; a tap on one says its words)
+    if (run.rift) {
+      const j = t.journey;
+      status.append(el('span', 'dmChip', `${provisionsOf(j)} provisions`));
+      for (const o of j?.oaths ?? []) {
+        const p = el('button', 'dmPennant');
+        p.append(icon(bannerUrl));
+        p.title = `${OATHS[o].name}: ${OATHS[o].gift} ${OATHS[o].cost}`;
+        p.setAttribute('aria-label', p.title);
+        p.addEventListener('click', () => this.sayNode(el('p', '', p.title)));
+        status.append(p);
+      }
+    }
     head.append(top, status);
     return head;
   }
@@ -341,7 +359,7 @@ export class TowerView {
     for (const id of this.run.relics ?? []) relics.append(relicButton(this.run, id, () => relicPopup(this.run, id, this.root)));
     if (!this.run.relics?.length) relics.append(el('p', 'rtLead', 'Relics are found in worlds, shops and guardian battles.'));
     card.append(relics, this.abandonRow());
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.addEventListener('click', () => { this.card?.remove(); this.card = null; });
     card.append(back);
   }
@@ -980,7 +998,7 @@ export class TowerView {
       else if (r.commandment) card.append(el('p', 'rtLead', 'All three steps are chosen. At a campfire you can still reforge your patron.'));
     }
     if (!slot || reforge) {
-      const back = el('button', '', 'Back');
+      const back = el('button', '', '‹ Back');
       back.addEventListener('click', close);
       card.append(back);
     }
@@ -1015,6 +1033,7 @@ export class TowerView {
     const j = run.tower!.journey!;
     const cross = j.cross;
     if (!cross) return;
+    this.hooks.onActEnd?.(cross.after);
     const card = this.cardShell(cross.after === 1 ? 'The crossroads' : 'The last crossroads', 'boss');
     card.append(el('p', 'rtLead', cross.after === 1 ? 'Three rifts open where the road forks. Each leads to a land not yet crossed, and to its guardian. A guardian is as strong as its place on the road, whichever you meet.' : 'Only the Hollow Heart is left. The rift offers a gift for the last road.'));
     const list = el('div', 'rtShop');
@@ -1193,7 +1212,35 @@ export class TowerView {
     const cur = run.tower!.cur!;
     const card = this.cardShell('The campfire', 'campfire');
     const flame = icon(fire, 'rtFlame');
-    card.append(flame, el('p', 'rtLead', 'A fire crackles in a ring of stones. The heroes bind their wounds.'), this.partyBars());
+    card.append(flame, el('p', 'rtLead', 'A fire crackles in a ring of stones. The heroes bind their wounds.'));
+    // (DEPTH-BUILD: a traveller met by the fire in Act I, and its return in Act II or III, `calJourney.ts`; neither takes the fire's turn)
+    if (run.mode?.kind === 'calamity' && run.rift) {
+      const j = (run.tower!.journey ??= {});
+      if (travellerReturns(j, run.tower!.act)) {
+        const back = travellerBack(j);
+        run.gold += back.gold;
+        if (back.mend) healParty(run, 1, true);
+        if (back.hurt) hurtParty(run, back.hurt);
+        saveSlot(run);
+        card.append(el('p', 'rtNote', back.line));
+      }
+      const who = cur.camp ? undefined : travellerAt(run.seed, run.tower!.act, j);
+      if (who) {
+        const t = TRAVELLERS[who];
+        card.append(el('p', 'rtLead', `${t.name}: ${t.meet}`));
+        for (const help of [true, false]) {
+          const b = el('button', 'rtChoice', help ? t.help : t.wrong);
+          b.disabled = help && run.gold < TRAVEL.GOLD;
+          b.addEventListener('click', () => {
+            if (!meetTraveller(run, j, who, help)) return;
+            saveSlot(run);
+            this.campCard();
+          });
+          card.append(b);
+        }
+      }
+    }
+    card.append(this.partyBars());
     if (cur.camp) {
       card.append(el('p', 'rtNote', cur.camp));
       const go = el('button', 'primary', 'Break camp');
@@ -1243,6 +1290,41 @@ export class TowerView {
       heroes.append(b);
     }
     card.append(heroes);
+    // (DEPTH-BUILD: in the Calamity a campfire may offer an oath, and always a scar for gold; either takes the fire's turn, `calJourney.ts`)
+    if (run.mode?.kind === 'calamity' && run.rift) {
+      const j = (run.tower!.journey ??= {});
+      const offer = oathOffer(run.seed, run.tower!.act, cur.id, j);
+      if (offer) {
+        const o = OATHS[offer];
+        const b = el('button', 'rtChoice');
+        const w = el('span');
+        const full = (j.oaths?.length ?? 0) >= OATH_MAX;
+        w.append(el('b', '', `Swear the ${o.name}`), el('small', '', `${o.gift} ${o.cost}${full ? ` Replaces the ${OATHS[j.oaths![0]].name}.` : ''} Lasts the run.`));
+        b.append(w);
+        b.addEventListener('click', () => {
+          swearOath(j, offer);
+          cur.camp = `The party swears the ${o.name}.`;
+          saveSlot(run);
+          this.campCard();
+        });
+        card.append(b);
+      }
+      card.append(el('p', 'rtLead', `Or take a scar for ${SCAR.GOLD} gold (that hero −10% health for the rest of the run):`));
+      const scars = el('div', 'rtTrain');
+      for (const h of run.roster) {
+        const b = el('button', 'rtTrainHero');
+        b.append(portrait(lookSheet(h.kind, heroRank(this.hooks.meta(), h.kind), h.grade), 40, h.grade), el('small', '', heroName(h.kind)), el('em', '', j.scars?.[h.id] ? `${j.scars[h.id]} scar${j.scars[h.id] > 1 ? 's' : ''}` : 'unscarred'));
+        b.addEventListener('click', () => {
+          takeScar(run, j, h.id);
+          cur.camp = `${heroName(h.kind)} takes a scar for ${SCAR.GOLD} gold.`;
+          saveSlot(run);
+          this.campCard();
+        });
+        scars.append(b);
+      }
+      card.append(scars);
+      if (j.oaths?.length) card.append(el('p', 'rtNote', `Oaths sworn: ${j.oaths.map((x) => OATHS[x].name).join(', ')}`));
+    }
   }
 
   private treasureCard(): void {

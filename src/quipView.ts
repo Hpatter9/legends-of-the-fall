@@ -44,6 +44,22 @@ function ensure(): HTMLElement {
   return box;
 }
 
+/** UX-FIXES: pieces of the page a bubble must not sit on: the top bar, the fight's hero rows and a heading. A bubble that would cover one is moved
+ *  to the nearest clear spot (the top bar's bottom edge, or above the hero rows). */
+const KEEP_CLEAR = ['#top', '#hmTop', '#fightHud', '#starter h1', '#starter .stSub'];
+function keepClear(top: number, h: number): number {
+  let y = top;
+  for (const sel of KEEP_CLEAR) {
+    const e = document.querySelector<HTMLElement>(sel);
+    if (!e || e.closest('[hidden]')) continue;
+    const b = e.getBoundingClientRect();
+    if (b.width === 0 || b.height === 0 || y + h <= b.top || y >= b.bottom) continue;
+    // (the bubble overlaps it: below it when it is in the top half of the page, above it otherwise)
+    y = b.top + b.height / 2 < innerHeight / 2 ? b.bottom + 4 : b.top - h - 4;
+  }
+  return Math.max(4, y);
+}
+
 /** Show `text` over `at` (replacing any bubble already up). `who` names the speaker in small type above it; `goat` is Duchess's cream bubble. */
 export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: boolean; hold?: number } = {}): void {
   const el = ensure();
@@ -62,7 +78,7 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
   const above = at.y - r.height - 10 >= 4;
   el.classList.toggle('below', !above);
   el.style.left = `${Math.round(left)}px`;
-  el.style.top = `${Math.round(above ? at.y - r.height - 10 : at.y + 14)}px`;
+  el.style.top = `${Math.round(keepClear(above ? at.y - r.height - 10 : at.y + 14, r.height))}px`;
   el.style.setProperty('--tail', `${Math.round(Math.min(r.width - 12, Math.max(12, at.x - left)))}px`);
   void el.offsetWidth;
   el.classList.add('on');

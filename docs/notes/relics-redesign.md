@@ -265,7 +265,7 @@ spend, Ember of the Great Hall for a party with no healer).
 Today's icons are 16x16 DawnLike tiles (`src/art/items/`), most chosen for the old gear names (a boot for Swift Boots, a shield for Iron
 Shield), and many relics share a tile.
 
-- **Recommended: paint them**, as the equipment was painted (`art-source/gear/`, `docs/notes/gear-icons.md`): 48 paintings, 256 x 256,
+- **Done (int-341, `docs/notes/int-341.md`).** **Recommended: paint them**, as the equipment was painted (`art-source/gear/`, `docs/notes/gear-icons.md`): 48 paintings, 256 x 256,
   imported with a copy of `tools/gear/import-gear-icons.py` into `src/art/relics/relics-128.webp` and `-64.webp` (loaded by URL, added
   to `build.mjs`'s `FILES` for offline play). The DawnLike tiles stay as the fallback, as they do for gear.
 - **The look**: the gear icons' painted style (glossy, rich colour, a single object centred on a clean background), but **old**: worn

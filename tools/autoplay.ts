@@ -3,7 +3,7 @@
 // behind, on high ground; see `src/sim/autoplay.ts`, which the Auto button and the auto-replay share) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
 // XP goes into, the save's meta, as the page does.
 
-import { PROVISIONS, provisionsOf } from '../src/sim/calJourney';
+import { PROVISIONS, oathOffer, provisionsOf, swearOath } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { chooseOption, leaveEvent } from '../src/sim/events';
@@ -31,6 +31,7 @@ import { RANK_MAX, STARTER_SPELLS, type SpellId } from '../src/sim/spells';
 import { castList, DEFAULT_SCHOOL, fitSchool, schoolOf } from '../src/sim/schools';
 import { armDecree } from '../src/sim/decrees';
 import { TOWER_SPELLS } from '../src/sim/spellSources';
+import { giveMastery, MASTERY_AUTO } from './skills/mastery';
 
 export { strengthOf };
 
@@ -174,6 +175,8 @@ export function playFinal(meta: Meta, armyId: string, seed: number, party: reado
 export function savedAt(level: number, party: readonly string[], seed: number): Meta {
   const m = startedMeta(seed);
   for (const k of party) m.xp[k] = xpFor(level);
+  // (`--mastery auto`: the skill levels a player of that hero level has, SKILLS-10)
+  if (MASTERY_AUTO) giveMastery(m, party, level);
   return m;
 }
 
@@ -364,7 +367,12 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     else if (cur.kind === 'campfire') {
       // (DEPTH-BUILD: the greedy bot rests while it has provisions, and trains when it has none, `calJourney.ts`)
       const fed = !(run.mode?.kind === 'calamity' && run.rift && PROVISIONS.on) || provisionsOf(run.tower!.journey) > 0;
-      if (squadHealth(run) < 0.75 && fed) rest(run);
+      // (DEPTH-BUILD: CAL_OATHS=1 has the bot swear every oath a campfire offers, in place of its rest or training, to measure them)
+      const oath = process.env.CAL_OATHS === '1' && run.mode?.kind === 'calamity' && run.rift ? oathOffer(run.seed, run.tower!.act, cur.id, run.tower!.journey) : undefined;
+      if (oath) {
+        swearOath((run.tower!.journey ??= {}), oath);
+        cur.camp = 'oath';
+      } else if (squadHealth(run) < 0.75 && fed) rest(run);
       else {
         const hero = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a))[0];
         const t = train(run, hero.id);

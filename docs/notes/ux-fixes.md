@@ -17,4 +17,42 @@ are left out on the owner's word: Developer stays as it is, and the deploy board
   so the sheet's Back is the only one at the foot.
 - #8 (the owner's variant) The empty deploy board shows "Hire to start..." above a lit Hire button (`#hireHint`); Fight! stays dim until a hero is placed.
 
-Left for later batches: #1's flow (straight into wave 1, one title sequence), the rest of #12 (every page's close button), #13's undo toast.
+
+## Batch 2: the rest of the report (on 0.353.0, the ornate restyle)
+
+The owner's calls: #1 one title sequence, then straight into wave 1; #12 one close button everywhere; #13 a confirm on Sell, no undo toast; #2 untouched.
+
+- #1 A new save goes from the starter pick straight to wave 1's deploy (the board and the deploy tip, with the hire prompt). The opening is the one
+  title sequence: the Orc Warband's intro film is marked seen for a new save and does not play behind it (the Scenes list still has it). Home is one tap away.
+- #13 Every Sell now asks for a second tap ("Sell for N? Tap again"); before, only Epic pieces and a base's last copy asked.
+- #3 Fight HUD: rows are 46 px with 44 px skill chips and 13 px HP/SP numbers for a party of five or fewer (a party over five keeps its compact two-column rows,
+  where there is no room); the in-row skill-name overlay is gone (the cut-in banner above the rows already names the skill) and the row flashes its edge instead;
+  the spell orbs start at 112 px, below the crest; the AUTO label is 9 px (was 7).
+- #9 A lost wave says "Wave N lost · a heart burns, M hearts (lives) left. The party rises." in 20 px, wrapped. (A full defeat card with the first faller and
+  Retry / Change party was not built: the revive is automatic and the sim does not record who fell first.)
+- #5 Toasts queue (one at a time) in one lane under the top bar (118 px). A road event's card waits for the wave result card to go. An unlock card told in the
+  middle of a run is held and told when the home screen opens. Hero quips are not moved (they were already hidden under a film).
+- #4 Badges: none on the Battle tab or the main Battle button, "fresh" castle news no longer lights the Castle tab, and the Heroes tab shows the count of heroes
+  with an upgrade ready instead of a bare dot.
+- #6, #10 Tap targets and text: the Party link is a 44 px button, army tiers, arrows and Back 44 px, dots have a 44 px hit area, Spells' "To the Castle" 44 px;
+  small labels on the Overlook, Castle and army picker are 11 px or more. The ornate restyle's own tap floor already covered much of the rest.
+- #11 One door per place: the Castle's Tavern/Spells/March shortcuts, the Achievements chip and Reset tips chip are gone (the boss trophy wall button stays: it has no tab).
+- #12 Full pages say "‹ Back" (Settings, Achievements and the other home sub-pages, the hero sheet, Hester's Stall, the army picker, War Council, the equipment
+  picker, talents, skill books, daily, Calamity, Last Stand). Cards and pop-ups keep "Close". A deviation from the report (which said "×" for sheets): kept as words so the
+  one rule is "pages Back, cards Close".
+- #7 Films: the picture band is 1.8 x the width (was 1.4), the top bar thinner, the foot 18 % of the height; subtitles are 15 px and the title name 28 px.
+- #17 Hero Overview leads with power, health, attack and armour; scores, figures and speeds fold under "Details". The Equipment tab shows "Equip best" and a "More" fold.
+- #18 The Spells tab is dimmed with a lock until the Chapel is built; a tap goes to its page, which says why.
+- #20 Hester's Stall with visiting traders (seven or eight tabs) shows two rows of 13 px labels.
+- #21 The Last Stand picker shows the eight as a strip of portraits above the pool, with portraits and a tick on the picked. (Not screenshotted: the picker would not open in my harness.)
+
+Not done: #19 (the ten-card summon grouping), the quips off the HUD and headings, a defeat card with Retry / Change party, #17's three-up headline (it stacks).
+
+## Batch 3
+
+- #19 The ten-card summon: a new hero is a large card (two to a row, 120 px art) at the top; the repeats follow as small cards in the grid below; when two or
+  more repeats turned into crowns, one line under the cards says "N × already at top rank → M crowns" and their cards carry no text of their own.
+  Bar labels are 11 px.
+- Quips (`quipView.ts`): a bubble that would cover the top bar, the fight's hero rows or the starter pick's heading is moved to the nearest clear spot
+  (below the bar, or above the rows). Not screenshotted: a bubble is random and short-lived.
+- The Last Stand picker's screenshot (`after-laststand-393.png`): the strip of eight portraits, the pool with portraits and ticks.

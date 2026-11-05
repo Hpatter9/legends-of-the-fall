@@ -23,9 +23,8 @@ import { fightLoadout, kitWithLoadout } from './sim/books';
 import { drawTalents } from './talentView';
 import { drawStatsPanel } from './statsPanel';
 import { TREES } from './sim/talents';
-import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
+import { blowsPerSecond, heroFigures, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
-import { fightFigures } from './sim/rankStep';
 import { heroArtwork, openHeroArtwork } from './heroArtwork';
 import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
@@ -199,7 +198,7 @@ function paintSecret(box: HTMLElement, close: () => void, line: string): () => v
   const title = el('div', 'dossierIdentity');
   title.append(el('h3', '', SECRET_NAME), el('em', '', 'a secret, for now'), el('span', 'lv', line));
   head.append(pic, title);
-  const done = el('button', 'primary', 'Back');
+  const done = el('button', 'primary', '‹ Back');
   done.addEventListener('click', close);
   box.append(bar, head, done);
   return () => undefined;
@@ -361,15 +360,21 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     skills.append(detailHeading('Arts of war', 'Every hero has a way to turn the tide.'));
     if (open) skills.append(drawSkillBook(meta, kind, () => redraw()));
     box.append(tabs, ...panels);
-    // (health and attack as a fight has them, with the score steps; the Rank up card reads the same: `sim/rankStep.ts`)
-    const fig = fightFigures(kind, x.level, full, heroStats(meta, kind)?.scores);
+    // (health, attack and armour as a fight has them: the level, rank and score steps, and what the gear, runes and talents add
+    // (`heroFigures`); TACTICS-OVERVIEW: the sheet once left the gear out, so a geared hero read as a bare one)
+    const figs = () => heroFigures(meta, kind);
+    // (gear's armour comes in fractions: shown to a tenth)
+    const figText = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
     const stat = el('div', 'hstats four');
     // (STATS batch 3: health, attack and armour sit at the head of the Stats panel; range and the speeds stay here)
     const lead: HTMLElement[] = [];
-    for (const [name, v] of [['Health', fig.hp], ['Attack', fig.atk], ['Armour', def.def]] as const) {
+    const leadVals: [HTMLElement, () => number][] = [];
+    for (const [name, v] of [['Health', () => figs().hp], ['Attack', () => figs().atk], ['Armour', () => figs().def]] as const) {
       const cell = el('div');
-      cell.append(el('b', '', String(v)), el('small', '', name));
+      const b = el('b', '', figText(v()));
+      cell.append(b, el('small', '', name));
       lead.push(cell);
+      leadVals.push([b, v]);
     }
     const range = el('div', 'hspeed');
     range.append(el('b', '', String(def.range)), el('small', '', 'Range'));
@@ -390,9 +395,17 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     const repower = () => {
       pv.textContent = powerText(kindPower(meta, kind));
       for (const [v, rate] of speeds) v.textContent = rate();
+      for (const [v, n] of leadVals) v.textContent = figText(n());
     };
     const scores = drawStatsPanel(kind, { level: x.level, rank: full, grade: 1 }, lead, heroStats(meta, kind)?.scores);
-    overview.append(power, ...(scores ? [scores] : []), stat);
+    // (TACTICS-OVERVIEW: the Overview leads with the power, then health, attack and armour at the head of the ability scores, AC, to hit
+    // and saves, up front as they were before UX-FIXES folded them away; only the range and the speeds fold under "Details")
+    let head: HTMLElement = el('div', 'hstats three');
+    if (scores) head = scores;
+    else head.append(...lead);
+    const fold = el('details', 'dossierFold');
+    fold.append(el('summary', '', 'Details: range and speeds'), stat);
+    overview.append(power, head, fold);
     const profile = el('div', 'dossierProfile');
     profile.append(detailHeading('Combat profile', def.role));
     const traits = el('div', 'dossierTraits');
@@ -484,7 +497,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     equipment.append(el('p', 'hint', 'Equipment is kept for good, and wears a little with each wave it is fought in: mend it here or at Hester’s Stall. Gear found in a run lasts that run only.'));
   }
   if (show && show.what !== 'cache') playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined, show.what === 'awaken' ? kind : undefined);
-  const done = el('button', 'primary', 'Back');
+  const done = el('button', 'primary', '‹ Back');
   done.addEventListener('click', close);
   box.append(done);
   return () => closeArtwork?.();

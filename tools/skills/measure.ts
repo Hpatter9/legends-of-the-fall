@@ -4,7 +4,7 @@
 // is cast (a minute of standing), the mean fight length, and the sim's time per fight.
 //
 //   node tools/skills/measure.mjs <level>:<stage> [<level>:<stage> ...]     GAMES fights a cell (default 2000)
-//   PER=1 adds each hero's income and casts a minute. --skill-level <1-5> fights every skill at that level (`tools/heroSweep.ts`).
+//   PER=1 adds each hero's income and casts a minute; KNOBS=state.json plays with the tuner's knobs. --skill-level <1-5> fights every skill at that level (`tools/heroSweep.ts`).
 //
 // Income is the sum of each tick's rise in a hero's pool (a cast's tick, where the pool falls, is left out: one tick of refill lost a cast).
 
@@ -15,8 +15,12 @@ import { ALL_HEROES, UNITS } from '../../src/sim/units';
 import { keyOf } from '../../src/sim/abilities';
 import { HERO_KITS, resMax } from '../../src/sim/heroKits';
 import { deploySpots, fieldBoost, pickTeam, sweepBoost } from '../heroSweep';
+import { applyKnobs } from '../kits/knobs';
+import { readFileSync } from 'node:fs';
 
 const GAMES = Number(process.env.GAMES ?? 2000);
+// (KNOBS=state.json plays with the tuner's knobs, `tools/kits/knobs.ts`)
+if (process.env.KNOBS) applyKnobs(JSON.parse(readFileSync(process.env.KNOBS, 'utf8')));
 
 interface Tally { gain: number; alive: number; casts: number[] }
 

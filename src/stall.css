@@ -2,7 +2,7 @@
    shelf of the tab, which scrolls; a ware's page comes up from the bottom. Upright phones only: 360 to 412 across. */
 .stallView { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); background: #0c120f; color: #e8e5d4; overflow: hidden; overscroll-behavior: contain; }
 .hsHead { flex: none; display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 10px; border-bottom: 1px solid #aa8745; background: linear-gradient(#1d2a22, #111a16); }
-.hsBack { flex: none; width: 44px; min-height: 44px; padding: 0; font: 400 30px/1 var(--display); color: #ffe0a1; background: none; border: 1px solid #8e733e; border-radius: 3px; }
+.hsBack { flex: none; width: auto; min-width: 72px; padding: 0 8px; min-height: 44px; padding: 0; font: 400 30px/1 var(--display); color: #ffe0a1; background: none; border: 1px solid #8e733e; border-radius: 3px; }
 .hsTitle { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .hsTitle h2 { margin: 0; font: 400 22px/1.1 var(--display); color: #ffe0a1; white-space: nowrap; }
 .hsTitle small { font: 400 12px/1.2 var(--body); color: #c8b98f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -109,6 +109,10 @@
 /* SEVEN-SLOT GEAR batch 3: the Enchant tab, and Repair, Patch and Reforge side by side */
 .hsBtns { display: flex; flex-direction: column; gap: 4px; flex: none; }
 .hsRow.hsEnchant { align-items: flex-start; }
+.hsGlyph { color: var(--b3); }
+/* UX-FIXES: seven tabs in two rows (four and three) with 13 px labels, not one row of 9 px ones */
+.hsTabs.many { grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.hsTabs.many .hsTab { font-size: 13px; letter-spacing: 0; min-height: 48px; }
 .hsGlyph { color: var(--b3); display: flex; align-items: center; gap: 4px; }
 /* SEVEN-SLOT GEAR batch 7: the painted glyph stones and remedies are smooth paintings, not pixel art */
 .hsGlyphStone { width: 14px; height: 14px; flex: none; } .hsTome img.hsPainted { width: 86%; height: 86%; image-rendering: auto; }

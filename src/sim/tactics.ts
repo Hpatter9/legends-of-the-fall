@@ -48,6 +48,10 @@ export interface TacticState {
   /** Charge's edge: when it began (battle time), and the heroes whose first blow has landed. */
   edgeAt?: number;
   struck?: number[];
+  /** TACTICS-OVERVIEW: when the tactic was changed in the fight (battle time; the caps count from it), and whether Charge's edge has
+   *  ended because the party was set to Advance or Hold after charging. Unset in a fight never changed. */
+  since?: number;
+  edgeOff?: boolean;
 }
 
 /** A held hero is let go when a foe comes this near it (beside it). */
@@ -116,7 +120,7 @@ export function tickTactic(b: Battle, out: BattleEvent[]): void {
   if (!t || t.metAt !== undefined) return;
   const foes = foesOf(b);
   const cap = t.kind === 'hold' ? HOLD_CAP : ADVANCE_CAP;
-  let met = b.t >= cap;
+  let met = b.t - (t.since ?? 0) >= cap;
   if (t.kind === 'hold') {
     // (Hold: a foe has come up to the line)
     const line = b.units.filter((u) => u.alive && t.held.includes(u.id));
@@ -208,13 +212,63 @@ export function heldStep(b: Battle, me: Unit, jump: number): number {
 /** Charge's edge on a step: the heroes of a charging party march quicker in its first seconds. */
 export function chargeMove(b: Battle, me: Unit): number {
   const t = b.tactic;
-  return t?.edgeAt !== undefined && me.side === 'hero' && b.t - t.edgeAt <= CHARGE.MS ? CHARGE.MOVE : 1;
+  return t?.edgeAt !== undefined && !t.edgeOff && me.side === 'hero' && b.t - t.edgeAt <= CHARGE.MS ? CHARGE.MOVE : 1;
 }
 
 /** Charge's edge on a blow: a charging hero's first landed blow on a foe that shoots (the call marks it landed). */
 export function chargeBlow(b: Battle, me: Unit, to: Unit): number {
   const t = b.tactic;
-  if (t?.edgeAt === undefined || me.side !== 'hero' || !UNITS[to.def]?.shot || !t.struck || t.struck.includes(me.id)) return 1;
+  if (t?.edgeAt === undefined || t.edgeOff || me.side !== 'hero' || !UNITS[to.def]?.shot || !t.struck || t.struck.includes(me.id)) return 1;
   t.struck.push(me.id);
   return CHARGE.BLOW;
+}
+
+// ---- TACTICS-OVERVIEW: the tactic changed in the fight ----
+
+/** The cycle the fight's tactic button steps through: Advance together, Hold the line, Charge, and back. */
+export const TACTIC_CYCLE: readonly Tactic[] = ['advance', 'hold', 'charge'];
+export const nextTactic = (t: Tactic): Tactic => TACTIC_CYCLE[(TACTIC_CYCLE.indexOf(t) + 1) % TACTIC_CYCLE.length];
+
+/** The fight's tactic as the player sees it: the last change waiting for the next tick, else the one the fight is playing. */
+export function fightTactic(b: Battle): Tactic {
+  const due = b.orders?.filter((o): o is { t: number; kind: 'tactic'; to: Tactic } => o.kind === 'tactic');
+  return due?.length ? due[due.length - 1].to : b.tactic?.kind ?? tacticOf(b);
+}
+
+/** Whether the tactic can be changed now: in a fight, and not in the Last Stand (which takes none). */
+export const canChangeTactic = (b: Battle): boolean => b.phase === 'fight' && !b.stand;
+
+/** The player's tap on the fight's tactic button: change the party's tactic mid-fight. Like every tap it is queued and applied at the start
+ *  of the next tick (`applyOrders`, then `applyTactic`) and kept in the fight's log, so the fight replays. False, and nothing changes, when
+ *  it cannot be changed now (`canChangeTactic`) or it is the tactic already. */
+export function orderTactic(b: Battle, to: Tactic): boolean {
+  if (!canChangeTactic(b) || !TACTICS_LIST.includes(to) || fightTactic(b) === to) return false;
+  (b.orders ??= []).push({ t: b.t, kind: 'tactic', to });
+  return true;
+}
+
+/** The change applied at the start of a tick. The heroes are read where they stand now:
+ *  - **Charge** lets everyone go. Its edge (the quick march, the first blow on a shooter) comes once a fight, and only when the charge lets a
+ *    held party go before the line met the foe, as the old Charge! call did (or from the start, under Charge): a charge called once the
+ *    fight is joined only unleashes the party.
+ *  - **Advance together** and **Hold the line** form the line again from the living heroes: the front-liners are the line, the others (under
+ *    Hold, everyone) held behind it until it meets the foe, a foe comes beside them, or the cap passes, counted from the change. A held hero
+ *    already past its row waits where it stands. Charge's edge, if it was running, ends. */
+export function applyTactic(b: Battle, to: Tactic, out: BattleEvent[]): void {
+  const was = b.tactic;
+  b.tacticPick = to;
+  if (to === 'charge') {
+    const held = !!was && was.metAt === undefined && was.held.length > 0;
+    const edge = TACTICS.edge && held && was!.edgeAt === undefined;
+    b.tactic = { kind: 'charge', held: [], front: [], hp: [], metAt: b.t, since: b.t, ...(was?.charged ? { charged: true } : {}), ...(edge ? { edgeAt: b.t, struck: [] } : was?.edgeAt !== undefined ? { edgeAt: was.edgeAt, struck: was.struck ?? [], edgeOff: true } : {}) };
+    if (held) out.push({ kind: 'lineMet', how: 'charge' });
+    return;
+  }
+  const heroes = b.units.filter((u) => u.alive && u.side === 'hero' && UNITS[u.def]?.side === 'hero');
+  const front = heroes.filter((u) => roleOf(u.def) === 'front').map((u) => u.id);
+  const held = to === 'hold' ? heroes.map((u) => u.id) : front.length ? heroes.filter((u) => !front.includes(u.id)).map((u) => u.id) : [];
+  // (the edge, once given, is kept as spent: its struck list stays, so a later Charge gives no second edge)
+  const edge = was?.edgeAt !== undefined ? { edgeAt: was.edgeAt, struck: was.struck ?? [], edgeOff: true } : {};
+  b.tactic = { kind: to, held, front, hp: front.map((id) => b.units.find((u) => u.id === id)!.hp), since: b.t, ...(was?.charged ? { charged: true } : {}), ...edge };
+  if (!held.length) b.tactic.metAt = b.t;
 }

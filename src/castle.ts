@@ -59,10 +59,12 @@ import spiralUrl from './art/castle/spiral.png';
 import stableUrl from './art/castle/stable.png';
 import manorUrl from './art/castle/manor.png';
 import chapelUrl from './art/castle/chapel.png';
-// (DEPTH-BUILD: the three room buildings, from the same isometric kits until their own pictures are made: docs/notes/depth-art-todo.md)
-import workshopUrl from './art/castle/workshop.png';
+// (DEPTH-BUILD: the three room buildings' own pictures, halved to the castle pictures' size by tools/castle/import-room-art.py: docs/notes/int-330.md)
+import smithyUrl from './art/castle/smithy.png';
+import { roomIcon } from './roomIcons';
 import watchtowerUrl from './art/castle/watchtower.png';
-import longhouseUrl from './art/castle/longhouse.png';
+import watchtowerGrandUrl from './art/castle/watchtower_grand.png';
+import hallUrl from './art/castle/hall_of_legends.png';
 
 // Hall props & treasures that appear as you upgrade your kingdom
 import chestsUrl from './art/castle/chests.png';
@@ -212,7 +214,7 @@ export const CHAMBERS: ChamberDef[] = [
     id: 'smithy',
     name: 'Smithy',
     relicName: 'Road Anvil',
-    edificeUrl: workshopUrl,
+    edificeUrl: smithyUrl,
     icon: shieldUrl,
     glow: '#f59e0b',
     statName: 'Mending and wear',
@@ -234,7 +236,7 @@ export const CHAMBERS: ChamberDef[] = [
     id: 'hall',
     name: 'Hall of Legends',
     relicName: 'Mentor\'s Laurel',
-    edificeUrl: longhouseUrl,
+    edificeUrl: hallUrl,
     icon: crownUrl,
     glow: '#e9d5ff',
     statName: 'Mentor seats',
@@ -253,7 +255,7 @@ export function roomsStrip(id: SiteId, level: number): HTMLElement | null {
     const row = el('div', `ctRoom${open ? ' open' : ''}`);
     const words = el('div', 'ctRoomWords');
     words.append(el('b', '', r.name), el('small', '', r.line));
-    row.append(el('span', 'ctRoomIco', r.icon), words, el('em', 'ctRoomLv', open ? 'Open' : `Level ${r.level}`));
+    row.append(roomIcon(r.icon), words, el('em', 'ctRoomLv', open ? 'Open' : `Level ${r.level}`));
     strip.append(row);
   }
   return strip;
@@ -266,7 +268,9 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 }
 
-export function lookPicture(id: PlotId | SiteId, _level: number): string {
+export function lookPicture(id: PlotId | SiteId, level: number): string {
+  // (the Watchtower stands grander at its top level, 3)
+  if (id === 'watchtower' && level >= siteTop('watchtower')) return watchtowerGrandUrl;
   const match = CHAMBERS.find((c) => c.id === id);
   return match ? match.edificeUrl : crownUrl;
 }
@@ -409,7 +413,9 @@ export class CastleScene {
       if (this.meta) this.trophyModal.open(this.meta);
     });
 
-    quickNav.append(toTavern, toSpells, toArmies, toTrophies);
+    // (UX-FIXES: one door per place: the Tavern, Spells and March are the bottom tabs; only the boss trophy wall, which has no tab, stays)
+    void toTavern, toSpells, toArmies;
+    quickNav.append(toTrophies);
     sectionHeader.append(sectionTitle, quickNav);
 
     // 3. Chamber Grid (6 Sacred Chambers + High Chapel)
