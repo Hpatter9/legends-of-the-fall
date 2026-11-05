@@ -17,6 +17,7 @@ PICKS = [
     ('books-shop/people/caravan-master.png', 'caravan-master', 360),
     ('books-shop/people/gloaming-dealer.png', 'gloaming-dealer', 360),
     ('books-shop/stall/shop-stall.png', 'stall', 200),
+    ('books-shop/stall/hester-sign.png', 'hester-sign', 360),
     ('books-shop/study/studying.png', 'studying', 96),
     ('books-shop/study/learned.png', 'learned', 128),
     ('books-shop/ui/coin-purse.png', 'coin-purse', 96),
@@ -39,6 +40,8 @@ OUT.mkdir(parents=True, exist_ok=True)
 for src, name, side in PICKS:
     im = Image.open(ROOT / 'art-source' / src)
     im = im.convert('RGBA') if im.mode in ('RGBA', 'LA', 'P') else im.convert('RGB')
+    if name == 'hester-sign':  # (cut to the board's own edges: the picture has clear margins)
+        im = im.crop(im.getchannel('A').getbbox())
     k = side / max(im.size)
     if k < 1:
         im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)

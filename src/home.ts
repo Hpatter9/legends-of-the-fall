@@ -812,7 +812,14 @@ export class Home {
       pic.src = shopArt('stall');
       pic.alt = '';
       pic.draggable = false;
-      stall.prepend(pic);
+      // (Hester's painted sign hangs over the stall's foot in place of the name plate; a visiting trader shows as a small pill, only while he is here)
+      const sign = el('img', 'cpStallSign');
+      sign.src = shopArt('hester-sign');
+      sign.alt = '';
+      sign.draggable = false;
+      stall.querySelector('.cpTag')?.remove();
+      stall.prepend(pic, sign);
+      if (visitor) stall.append(el('span', 'cpVisitor', visitor === 'Caravan today' ? 'Caravan' : 'Dealer'));
       if (fresh) stall.append(el('i', 'badge'));
       swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
     }
