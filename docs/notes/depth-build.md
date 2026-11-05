@@ -279,3 +279,13 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
 - `docs/lines/new-lines.json` carries every new scene's words (its test checks them); `scene-fixes.test.ts`'s list of the Calamity's scenes
   gains the two act scenes.
 - Still to write: bond levels 3 and 5, the other twenty pairs, the settling scenes, the farewell scenes.
+
+## Batch 15: settling scenes, the Calamity's header
+
+- **Rivalries settled** (`bondScenes.ts`, batch 3): ten settling scenes, one each for ten of the fifteen rival pairs. A rival pair reaches
+  bond level 1 only when it settles, so its level-1 scene is its settling scene and plays the next time the camp or the castle opens
+  (a test). Thirty bond scenes in all; every word is in `docs/lines/new-lines.json`.
+- **The Calamity's header** (`dungeonHeader` in `towerView.ts`, the header the Calamity actually uses; batch 7's act line had gone to the
+  old map header): "The Calamity · Act II of III", a chip with the provisions carried, and one pennant (the packs' banner) for each oath
+  sworn, a tap for its words. Not shot: it needs a save part-way through a Calamity.
+- Art: what the copied packs have is used (the banner); the sack, the travellers and coloured pennants are on `depth-art-todo.md`.

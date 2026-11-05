@@ -9490,6 +9490,326 @@
      ]
     }
    ]
+  },
+  "bond:mercenary|samuraiCommander:1": {
+   "title": "Paid in Respect",
+   "blurb": "The commander and the sellsword, after ten battles side by side.",
+   "shots": [
+    {
+     "caption": "Paid in Respect",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You fight for coin. I have said it before, and with less kindness."
+      },
+      {
+       "who": "b",
+       "text": "And you fight for a banner that burned. We are both fools."
+      },
+      {
+       "who": "a",
+       "text": "Ten battles. You never once broke the line."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Nobody paid me to. Call that one free."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:warlock|wizard:1": {
+   "title": "Two Kinds of Fire",
+   "blurb": "The scholar and the pact-maker, out of arguments at last.",
+   "shots": [
+    {
+     "caption": "Two Kinds of Fire",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I still say your power is borrowed."
+      },
+      {
+       "who": "b",
+       "text": "And yours is copied out of books. Borrowed from the dead."
+      },
+      {
+       "who": "a",
+       "text": "...That is fair, actually."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Ten fights, and we are still alive. Let us call it a draw."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:demonSwordsman|paladin:1": {
+   "title": "The Sword Remembers",
+   "blurb": "A holy knight and a cursed blade, with nothing left to prove.",
+   "shots": [
+    {
+     "caption": "The Sword Remembers",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I watched your blade. It hungers."
+      },
+      {
+       "who": "b",
+       "text": "It does. I have not fed it once since we met."
+      },
+      {
+       "who": "a",
+       "text": "Ten battles, and you held it back each time."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Stand beside me and I will keep holding."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:priestess|reaper:1": {
+   "title": "The Last Rites",
+   "blurb": "The priestess of the living and the reaper of the dead, sharing a vigil.",
+   "shots": [
+    {
+     "caption": "The Last Rites",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You pray over every one I take."
+      },
+      {
+       "who": "a",
+       "text": "Someone ought to."
+      },
+      {
+       "who": "b",
+       "text": "Then pray loudly. I would like them to hear it on the way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I will. And you will take them gently."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:knight|tyrant:1": {
+   "title": "An Oath and a Crown",
+   "blurb": "The knight of a dead king and a would-be king, after ten fights.",
+   "shots": [
+    {
+     "caption": "An Oath and a Crown",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Kneel, and you could have a place at my court."
+      },
+      {
+       "who": "a",
+       "text": "I knelt once. The king is dust."
+      },
+      {
+       "who": "b",
+       "text": "Then stand. I find I prefer you standing, beside me."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "For now. Watch your crown."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:ranger|werewolf:1": {
+   "title": "The Hunter and the Hunted",
+   "blurb": "The ranger once hunted wolves for coin.",
+   "shots": [
+    {
+     "caption": "The Hunter and the Hunted",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I hunted your kind once. For a silver a pelt."
+      },
+      {
+       "who": "b",
+       "text": "I know. I followed you for a week. You never saw me."
+      },
+      {
+       "who": "a",
+       "text": "Why did you not strike?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "You left the cubs. I remembered that."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:dreadPirate|lancer:1": {
+   "title": "Boarding the Charge",
+   "blurb": "A pirate and a cavalry lancer find they like the same thing: speed.",
+   "shots": [
+    {
+     "caption": "Boarding the Charge",
+     "lines": [
+      {
+       "who": "a",
+       "text": "You charge like a ship running before a gale."
+      },
+      {
+       "who": "b",
+       "text": "And you board like cavalry. No manners, all momentum."
+      },
+      {
+       "who": "a",
+       "text": "Ten fights. I have not once had to save you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Nine. I counted the bridge."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:arcBlade|gunslinger:1": {
+   "title": "Quickest Draw",
+   "blurb": "Two duellists, done with counting who is faster.",
+   "shots": [
+    {
+     "caption": "Quickest Draw",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I am still faster."
+      },
+      {
+       "who": "b",
+       "text": "You are louder. That is not the same."
+      },
+      {
+       "who": "a",
+       "text": "Ten fights, and neither of us dead."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we draw together, and the foe can count."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:cleric|mummy:1": {
+   "title": "Unquiet Rest",
+   "blurb": "The cleric who lays the dead to rest, and a dead man who would not stay laid.",
+   "shots": [
+    {
+     "caption": "Unquiet Rest",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Every prayer I know says you should be in the ground."
+      },
+      {
+       "who": "b",
+       "text": "I tried it. It was very dull."
+      },
+      {
+       "who": "a",
+       "text": "Ten fights. You saved me twice."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then pray for me once. I would like to hear how it goes."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:illusionist|timeWitch:1": {
+   "title": "Seen It Before",
+   "blurb": "One sees what will be; the other, what is not there.",
+   "shots": [
+    {
+     "caption": "Seen It Before",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I saw this conversation coming."
+      },
+      {
+       "who": "b",
+       "text": "Did you? Or did I make you think you did?"
+      },
+      {
+       "who": "a",
+       "text": "...I hate that I cannot tell."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Ten fights, and I finally have you guessing."
+      }
+     ]
+    }
+   ]
   }
  },
  "king": {
