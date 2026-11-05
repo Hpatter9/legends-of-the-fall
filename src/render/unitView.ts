@@ -627,11 +627,23 @@ export class UnitSprite {
     g.clear();
     if (!alive) return;
     const top = -this.tall - 8;
+    // COMBAT-HUD: a hero's meters (health, its pool and its ultimate's sliver) used to sit on a dark plate 12 px deep and wider than the
+    // fighter, which read from afar as a little flag over each head (the owner: "Why are there flags on the characters?"). The rows below
+    // show every number, so over the head they are now one slim strip: health 3 px, the pool 1 px, the ultimate 1 px, on a faint plate
+    // the width of the bar. A foe keeps its plain red bar.
+    const pool = poolOf(u);
+    if (pool && u.side === 'hero') {
+      const ult = ultimateOf(u);
+      g.rect(-BAR_W / 2, top - 1, BAR_W, ult ? 7 : 6).fill({ color: 0x1a1410, alpha: 0.5 });
+      g.rect(-BAR_W / 2, top, BAR_W * share, 3).fill(share > 0.35 ? 0x5fd35f : 0xe0c040);
+      g.rect(-BAR_W / 2, top + 3, BAR_W * Math.min(1, u.charge / CHARGE_MAX), 1).fill(pool === 'mana' ? 0x4a90e8 : 0xf0b83a);
+      if (ult) g.rect(-BAR_W / 2, top + 4, BAR_W * Math.min(1, (u.charge2 ?? 0) / CHARGE_MAX), 1).fill((u.charge2 ?? 0) >= ult.need ? ULT_READY : ULT_FILL);
+      return;
+    }
     g.rect(-BAR_W / 2 - 1, top - 1, BAR_W + 2, 5).fill({ color: 0x1a1410, alpha: 0.85 });
     g.rect(-BAR_W / 2, top, BAR_W * share, 3).fill(u.side === 'hero' ? (share > 0.35 ? 0x5fd35f : 0xe0c040) : 0xe04a3a);
 
-    // a hero's pool (COMBAT-002): blue for mana, gold for stamina, and its ultimate's violet sliver (gold, steady, when ready)
-    const pool = poolOf(u);
+    // a pool on any other fighter (COMBAT-002): blue for mana, gold for stamina, and its ultimate's violet sliver (gold, steady, when ready)
     if (pool) {
       const c = Math.min(1, u.charge / CHARGE_MAX);
       g.rect(-BAR_W / 2 - 1, top + 5, BAR_W + 2, 4).fill({ color: 0x1a1410, alpha: 0.85 });

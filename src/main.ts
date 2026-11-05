@@ -173,7 +173,7 @@ import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
-import { hideQuip, showQuip, type Anchor } from './quipView';
+import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
@@ -191,7 +191,7 @@ import { openScreen, openScreens } from './screens';
 import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
-import { pickedTactic, pickTactic } from './sim/tacticPick';
+import { pickedFormation, pickedTactic, pickFormation, pickTactic } from './sim/tacticPick';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 /** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
@@ -1119,7 +1119,10 @@ class Game {
     const bar = $('bossBar');
     const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
     const show = this.b.phase === 'fight' && !!boss?.alive;
-    if (bar.hidden === show) bar.hidden = !show;
+    if (bar.hidden === show) {
+      bar.hidden = !show;
+      if (show) reclearQuip();
+    }
     if (!boss || !show) return;
     bar.querySelector('b')!.textContent = this.questBossName(boss.def) ?? UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
@@ -1177,6 +1180,7 @@ class Game {
       this.place();
     }
     this.refresh();
+    reclearQuip();
   }
 
   /** Where to point a speech bubble at a hero of this kind on the board: above the head of one of their sprites (page pixels), or null. */
@@ -1594,7 +1598,8 @@ class Game {
     // them, while the board's own room (its fit) is reckoned as it was, from the top bar)
     $('hudSpells').style.top = `${below + 6}px`;
     const orbs = ORBS_ROW;
-    bar.style.top = `${below + orbs + 4}px`;
+    // (COMBAT-HUD: the bar starts under the spell row's own bottom (its 6 px drop and its height), not 2 px inside it)
+    bar.style.top = `${below + 6 + orbs + 4}px`;
     const barBottom = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
     // (the row of active synergies sits under the bars during a fight)
     placeSynergies(bar.hidden ? below + orbs : barBottom);
@@ -1974,6 +1979,7 @@ class Game {
       // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
+      picked: () => pickedFormation(this.meta.formations, this.run.mode),
       arrange: (f) => this.arrangeFormation(f),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
@@ -2128,12 +2134,15 @@ class Game {
 
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
-  /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
   /** Set the placed heroes out in a formation's shape (the prep screen's Formation sheet, `tacticsView.ts`): each taken back and placed again at its tile of the shape
    *  (`formationSpots`), or where it stood if that tile will not take it. */
-  private arrangeFormation(shape: Formation): void {
+  private arrangeFormation(shape: Formation | undefined): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;
+    // (the pick is kept for this mode or army, so Auto place sets the heroes out in it from now on; Loose forgets it: COMBAT-HUD)
+    pickFormation(this.meta, this.run.mode, shape);
+    saveMeta(this.meta);
+    if (!shape) return this.refresh();
     const heroes = b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !UNITS[u.def].summon).map((u) => ({ def: u.def, tag: u.tag!, was: [u.u, u.v] as [number, number], h: this.run.roster.find((r) => r.id === u.tag) }));
     if (!heroes.length) return;
     const spots = formationSpots(b.board, heroes.map((x) => x.def), shape);
@@ -2151,13 +2160,17 @@ class Game {
     this.refresh();
   }
 
+  /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out in the formation picked
+   *  on the Formation sheet for this mode or army, or by `autoFormation` when none is (`deploySpots`, COMBAT-HUD). The player can still move
+   *  anyone by hand after. */
   private autoArrange(manual = false): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;
     const keep = manual ? this.run.squad : [];
     this.run.squad = pickSquad(this.run, this.meta, keep).map((h) => h.id);
     this.placed.clear();
-    for (const s of autoDeploy(b, this.run, this.meta, (h) => this.boostFor(h))) this.placed.set(String(s.id), [s.u, s.v]);
+    const shape = autoPlaceOpen(this.meta) ? pickedFormation(this.meta.formations, this.run.mode) : undefined;
+    for (const s of autoDeploy(b, this.run, this.meta, (h) => this.boostFor(h), shape)) this.placed.set(String(s.id), [s.u, s.v]);
     this.chosen = null;
     saveRun(this.run);
     this.syncSprites();
