@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.364.0',
+    date: '2026-11-05',
+    title: 'Rivals settle, Calamity header',
+    notes: ['Ten scenes for rivals who settle their quarrel. The Calamity\'s header shows the act, your provisions and an oath pennant for each oath.'],
+  },
+  {
     version: '0.363.0',
     date: '2026-11-05',
     title: 'More bond scenes, Calamity act scenes',
