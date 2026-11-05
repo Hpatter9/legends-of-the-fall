@@ -68,8 +68,8 @@ export const GUARD = {
   stepWind: (b: Battle, me: Unit) => foesNear(b, me, 1).length >= 2,
   /** Queen Dragoon, Scale Ward: under half her health with a foe within 2. */
   scales: (b: Battle, me: Unit) => me.hp < me.maxHp * 0.5 && foesNear(b, me, 2).length > 0 && !on(me.kx?.scales, b),
-  /** Wolf Bard, Countercharm: two friends within 3 (or he and one) carry an ailment. */
-  countercharm: (b: Battle, me: Unit) => [me, ...friends(b, me, 3)].filter((a) => harmed(a)).length >= 2,
+  /** Wolf Bard, Countercharm: a friend within 3 (or he) carries an ailment (SKILLS-10: one, not two; with two it all but never came). */
+  countercharm: (b: Battle, me: Unit) => [me, ...friends(b, me, 3)].some((a) => harmed(a)),
 } as const;
 
 // ---- group 1: the tanks, the melee and the supports ----
@@ -88,7 +88,8 @@ export const BOND = { REACH: 4, MS: 6000 } as const;
 export function wardingBond(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const a = friends(b, me, BOND.REACH).find((x) => x.hp < x.maxHp * 0.35 && !(x.kx?.bond && on(x.kx.bond.until, b)));
   if (!a) return false;
-  const t = ms(me, BOND.MS);
+  // (SKILLS-10: its time is scaled by its strength, as Scale Ward's is, so `TUNE3` moves it)
+  const t = ms(me, BOND.MS * castPower());
   kx(a).bond = { by: me.id, until: b.t + t };
   mark(out, me, a, 'bond', t);
   return true;
@@ -108,7 +109,8 @@ export const STONE = { LEN: 3, MS: 6000 } as const;
 export function wallOfStone(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const line = chokeLine(b, me, STONE.LEN);
   if (!line) return false;
-  return raiseWall(b, me, line, 'stone', ms(me, STONE.MS), out).length > 0;
+  // (SKILLS-10: the wall's time is scaled by its strength)
+  return raiseWall(b, me, line, 'stone', ms(me, STONE.MS * castPower()), out).length > 0;
 }
 
 /** Samurai, Kesa Cut: a fast diagonal cut on the foe before him; it bleeds 3s. */
@@ -139,7 +141,8 @@ export function stepOfWind(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const to = safeTile(b, me, STEP_WIND.TILES);
   if (!to) return false;
   blinkTo(b, me, to, out);
-  me.hideUntil = Math.max(me.hideUntil ?? 0, b.t + ms(me, STEP_WIND.HIDE_MS));
+  // (SKILLS-10: the time he cannot be struck is scaled by its strength)
+  me.hideUntil = Math.max(me.hideUntil ?? 0, b.t + ms(me, STEP_WIND.HIDE_MS * castPower()));
   const f = me.kx?.flow;
   if (f) kx(me).flow = { to: f.to, n: Math.min(5, f.n + STEP_WIND.FLOW) };
   return true;
@@ -242,10 +245,12 @@ export function commandStrike(b: Battle, me: Unit, out: BattleEvent[]): boolean 
 export const COUNTER = { REACH: 3, MS: 3000 } as const;
 export function countercharm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!GUARD.countercharm(b, me)) return false;
+  // (SKILLS-10: the ward's time is scaled by its strength)
+  const t = ms(me, COUNTER.MS * castPower());
   for (const a of [me, ...friends(b, me, COUNTER.REACH)]) {
     shake(b, a);
-    ward(b, a, ms(me, COUNTER.MS));
-    mark(out, me, a, 'ward', ms(me, COUNTER.MS));
+    ward(b, a, t);
+    mark(out, me, a, 'ward', t);
   }
   return true;
 }
@@ -378,9 +383,11 @@ export function curseOfWeakness(b: Battle, me: Unit, out: BattleEvent[]): boolea
   const fs = saveAware(b, me, curseable(b, me), atkOf, 'weak').slice(0, CURSE_WEAK.N);
   if (!fs.length) return false;
   const t = ms(me, CURSE_WEAK.MS);
+  // (SKILLS-10: how much more they take from him is scaled by its strength)
+  const more = CURSE_WEAK.MORE * castPower();
   for (const f of fs) {
     weakFor(b, f, t, me);
-    kx(f).exposed = { until: b.t + t, mult: CURSE_WEAK.MORE, by: me.id };
+    kx(f).exposed = { until: b.t + t, mult: more, by: me.id };
     out.push({ kind: 'arc', from: me.id, to: f.id });
     mark(out, me, f, 'weak', t);
   }
@@ -484,7 +491,8 @@ export function mendThePack(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const wolves = ownSummons(b, me, WOLVES);
   for (const w of wolves) {
     mendUnit(w, w.maxHp * PACK_MEND.HEAL * castPower(), out, me);
-    shieldOf(b, w, PACK_MEND.SHIELD, ms(me, PACK_MEND.MS));
+    // (SKILLS-10: the shield is scaled by its strength, as the heal is)
+    shieldOf(b, w, PACK_MEND.SHIELD * castPower(), ms(me, PACK_MEND.MS));
   }
   if (!wolves.length) mendUnit(me, me.maxHp * PACK_MEND.SELF * castPower(), out, me);
   return true;

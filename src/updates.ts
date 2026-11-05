@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.366.0',
+    date: '2026-11-05',
+    title: 'Third skills come into their own',
+    notes: ['Third skills are now the strongest of a hero\'s three. Late armies retuned for mastered skills, and heroes kept within 6 points of each other at every level.'],
+  },
+  {
     version: '0.365.0',
     date: '2026-11-05',
     title: 'Tactics button, true hero stats',
