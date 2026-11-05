@@ -10610,6 +10610,334 @@
      ]
     }
    ]
+  },
+  "bond:knight|peasant:3": {
+   "title": "Squire Margaret",
+   "blurb": "The knight offers the peasant a title. The peasant has questions.",
+   "shots": [
+    {
+     "caption": "Squire Margaret",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Kneel. I mean to make you my squire."
+      },
+      {
+       "who": "b",
+       "text": "Do I get a horse?"
+      },
+      {
+       "who": "a",
+       "text": "You get a shield, a duty, and my trust."
+      },
+      {
+       "who": "b",
+       "text": "And Margaret? Does she get a title?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Dame Margaret. Rise, both of you."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:kunoichi|samurai:3": {
+   "title": "The Shadow at His Back",
+   "blurb": "The samurai asks the kunoichi to guard the one place he cannot see.",
+   "shots": [
+    {
+     "caption": "The Shadow at His Back",
+     "lines": [
+      {
+       "who": "a",
+       "text": "In every duel I face forward. My back is always open."
+      },
+      {
+       "who": "b",
+       "text": "I had noticed. So had three assassins."
+      },
+      {
+       "who": "a",
+       "text": "Then guard it. I ask it as a friend."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Already done. They will not try a fourth time."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:archer|lightningMage:3": {
+   "title": "Storm Arrow",
+   "blurb": "The archer and the mage make one shot together.",
+   "shots": [
+    {
+     "caption": "Storm Arrow",
+     "lines": [
+      {
+       "who": "b",
+       "text": "Hold still. I will put a spark in the arrowhead."
+      },
+      {
+       "who": "a",
+       "text": "If this explodes in my hand, I am haunting you."
+      },
+      {
+       "who": "b",
+       "text": "It will explode in the ogre. Probably."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Probably. Fine. Loose on three."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:wanderer|wizard:3": {
+   "title": "The Last Page",
+   "blurb": "The wizard has started writing down the wanderer's roads.",
+   "shots": [
+    {
+     "caption": "The Last Page",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You are writing a book about me?"
+      },
+      {
+       "who": "a",
+       "text": "About the roads. You are only in the margins."
+      },
+      {
+       "who": "b",
+       "text": "Leave room at the end. I am not done walking."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I left a hundred blank pages. Do not make me need more."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:cleric|paladin:3": {
+   "title": "One Shield, One Prayer",
+   "blurb": "The paladin and the cleric swear to hold the line together.",
+   "shots": [
+    {
+     "caption": "One Shield, One Prayer",
+     "lines": [
+      {
+       "who": "b",
+       "text": "When you fall, I will be there to raise you."
+      },
+      {
+       "who": "a",
+       "text": "And when you are struck, I will be there first."
+      },
+      {
+       "who": "b",
+       "text": "Then we are sworn. Shield and prayer."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Shield and prayer. Sing it off key, for luck."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:barbarian|werewolf:3": {
+   "title": "The Pack of Two",
+   "blurb": "The werewolf asks the barbarian to run with him under the full moon.",
+   "shots": [
+    {
+     "caption": "The Pack of Two",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Tonight is a full moon. I lose myself."
+      },
+      {
+       "who": "b",
+       "text": "Then I will be there to find you."
+      },
+      {
+       "who": "a",
+       "text": "I might bite."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "I bite back. That is what a pack is."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:rifleBot|siegeBot:3": {
+   "title": "Linked Systems",
+   "blurb": "Two machines share their targeting.",
+   "shots": [
+    {
+     "caption": "Linked Systems",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Proposal: link our targeting."
+      },
+      {
+       "who": "b",
+       "text": "Risk: you would see what I see."
+      },
+      {
+       "who": "a",
+       "text": "Acceptable. You would see what I see."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Linked. Warning: you see a great many walls."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:karasu|kitsune:3": {
+   "title": "A Feather Returned",
+   "blurb": "The fox finally gives back the crow's real feathers.",
+   "shots": [
+    {
+     "caption": "A Feather Returned",
+     "lines": [
+      {
+       "who": "a",
+       "text": "Here. Your feathers. The real ones. I kept them."
+      },
+      {
+       "who": "b",
+       "text": "For seventy years?"
+      },
+      {
+       "who": "a",
+       "text": "Eighty. I was waiting for you to forgive me."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "I forgave you in the first week. I just liked the new ones."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:knight|paladin:3": {
+   "title": "A New Oath",
+   "blurb": "The knight swears himself to the Keep, with the paladin as witness.",
+   "shots": [
+    {
+     "caption": "A New Oath",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You said you swore to a king who is dust."
+      },
+      {
+       "who": "a",
+       "text": "I did. Tonight I swear again, to the Keep and those inside it."
+      },
+      {
+       "who": "b",
+       "text": "Then I witness it, under the light."
+      },
+      {
+       "who": "a",
+       "text": "And if I break it?"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then I will be there to help you mend it."
+      }
+     ]
+    }
+   ]
+  },
+  "bond:archer|ranger:3": {
+   "title": "The Shared Quiver",
+   "blurb": "The two bow hands start filling one quiver.",
+   "shots": [
+    {
+     "caption": "The Shared Quiver",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You are using my hawk-feathered arrows."
+      },
+      {
+       "who": "a",
+       "text": "You said to miss with them. I have not missed yet."
+      },
+      {
+       "who": "b",
+       "text": "Then keep them. We will share one quiver."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Half duck, half hawk. They will never know what hit them."
+      }
+     ]
+    }
+   ]
   }
  },
  "king": {

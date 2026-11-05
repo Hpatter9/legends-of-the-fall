@@ -122,11 +122,11 @@ import { SCENES } from '../src/sim/sceneScripts';
 import { dueScene } from '../src/sim/sceneRules';
 
 test('the bond scenes: every kindred pair at level 1 and every rivalry settled, real heroes and backdrops, due once the pair reaches it', () => {
-  assert.equal(BOND_SCENES.length, 55);
+  assert.equal(BOND_SCENES.length, 65);
   // (every kindred pair and every rivalry has its first scene)
   for (const k of [...KINDRED, ...RIVALS]) assert.ok(BOND_SCENES.some((x) => x.moment.kind === 'bond' && x.moment.pair === k && x.moment.level === 1), k);
   for (const s of BOND_SCENES) {
-    assert.ok(s.moment.kind === 'bond' && (KINDRED.includes(s.moment.pair) || RIVALS.includes(s.moment.pair)) && s.moment.level === 1, s.id);
+    assert.ok(s.moment.kind === 'bond' && (KINDRED.includes(s.moment.pair) || (RIVALS.includes(s.moment.pair) && s.moment.level === 1)), s.id);
     assert.ok(SCENES[s.id], 'in the scenes list');
     const lines = s.shots.flatMap((x) => x.lines ?? []);
     assert.ok(lines.length >= 3 && lines.length <= 6, s.id);
@@ -179,4 +179,12 @@ test('a rivalry\'s scene waits until it settles, then is due', () => {
   assert.deepEqual(bondScenesDue(m, () => false).filter((id) => id.includes(key)), [], 'rivals still');
   noteBonds(m, won(['wizard', 'warlock']), true);
   assert.deepEqual(bondScenesDue(m, () => false).filter((id) => id.includes(key)), [bondSceneId(key, 1)], 'settled: its scene is due');
+});
+
+test('a pair\'s level-3 scene comes once it is Sworn, and only for a kindred pair', () => {
+  const m = { ...newMeta(1), bonds: { 'knight|peasant': 119 } } as ReturnType<typeof newMeta> & { bonds: Record<string, number> };
+  const seen = new Set([bondSceneId('knight|peasant', 1)]);
+  assert.deepEqual(bondScenesDue(m, (x) => seen.has(x)).filter((x) => x.includes('knight|peasant')), []);
+  m.bonds['knight|peasant'] = 120;
+  assert.deepEqual(bondScenesDue(m, (x) => seen.has(x)).filter((x) => x.includes('knight|peasant')), [bondSceneId('knight|peasant', 3)]);
 });

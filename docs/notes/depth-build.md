@@ -296,3 +296,9 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   Every one of the forty kindred pairs and fifteen rivalries now has its first scene (55 in all; a test checks each pair has one). All
   words in `docs/lines/new-lines.json`, drafted for the owner to read.
 - Still to write: the kindred pairs' level-3 and level-5 scenes, and the farewell scenes.
+
+## Batch 17: the first Sworn scenes
+
+- **Bond scenes, batch 5:** level 3 ("Sworn") for the first ten kindred pairs (the eight duo pairs, Knight and Paladin, Archer and Ranger),
+  65 bond scenes in all. A level-3 scene is due once the pair is Sworn (a test). The other thirty pairs' level 3 and every pair's level 5
+  follow in batches of ten.

@@ -360,6 +360,69 @@ const DRAFTS: readonly BondDraft[] = [
     ['b', 'None. Trust: increasing.'],
     ['a', 'Then keep shooting. I will keep walking.'],
   ]),
+  // (batch 5: bond level 3, "Sworn", for the first ten kindred pairs)
+  D('knight', 'peasant', 3, 'Squire Margaret', 'plains', 'The knight offers the peasant a title. The peasant has questions.', [
+    ['a', 'Kneel. I mean to make you my squire.'],
+    ['b', 'Do I get a horse?'],
+    ['a', 'You get a shield, a duty, and my trust.'],
+    ['b', 'And Margaret? Does she get a title?'],
+    ['a', 'Dame Margaret. Rise, both of you.'],
+  ]),
+  D('samurai', 'kunoichi', 3, 'The Shadow at His Back', 'shrine', 'The samurai asks the kunoichi to guard the one place he cannot see.', [
+    ['a', 'In every duel I face forward. My back is always open.'],
+    ['b', 'I had noticed. So had three assassins.'],
+    ['a', 'Then guard it. I ask it as a friend.'],
+    ['b', 'Already done. They will not try a fourth time.'],
+  ]),
+  D('archer', 'lightningMage', 3, 'Storm Arrow', 'highlands', 'The archer and the mage make one shot together.', [
+    ['b', 'Hold still. I will put a spark in the arrowhead.'],
+    ['a', 'If this explodes in my hand, I am haunting you.'],
+    ['b', 'It will explode in the ogre. Probably.'],
+    ['a', 'Probably. Fine. Loose on three.'],
+  ]),
+  D('wizard', 'wanderer', 3, 'The Last Page', 'autumn', 'The wizard has started writing down the wanderer\'s roads.', [
+    ['b', 'You are writing a book about me?'],
+    ['a', 'About the roads. You are only in the margins.'],
+    ['b', 'Leave room at the end. I am not done walking.'],
+    ['a', 'I left a hundred blank pages. Do not make me need more.'],
+  ]),
+  D('paladin', 'cleric', 3, 'One Shield, One Prayer', 'temple', 'The paladin and the cleric swear to hold the line together.', [
+    ['b', 'When you fall, I will be there to raise you.'],
+    ['a', 'And when you are struck, I will be there first.'],
+    ['b', 'Then we are sworn. Shield and prayer.'],
+    ['a', 'Shield and prayer. Sing it off key, for luck.'],
+  ]),
+  D('werewolf', 'barbarian', 3, 'The Pack of Two', 'forest', 'The werewolf asks the barbarian to run with him under the full moon.', [
+    ['a', 'Tonight is a full moon. I lose myself.'],
+    ['b', 'Then I will be there to find you.'],
+    ['a', 'I might bite.'],
+    ['b', 'I bite back. That is what a pack is.'],
+  ]),
+  D('rifleBot', 'siegeBot', 3, 'Linked Systems', 'forge', 'Two machines share their targeting.', [
+    ['a', 'Proposal: link our targeting.'],
+    ['b', 'Risk: you would see what I see.'],
+    ['a', 'Acceptable. You would see what I see.'],
+    ['b', 'Linked. Warning: you see a great many walls.'],
+  ]),
+  D('kitsune', 'karasu', 3, 'A Feather Returned', 'shrine', 'The fox finally gives back the crow\'s real feathers.', [
+    ['a', 'Here. Your feathers. The real ones. I kept them.'],
+    ['b', 'For seventy years?'],
+    ['a', 'Eighty. I was waiting for you to forgive me.'],
+    ['b', 'I forgave you in the first week. I just liked the new ones.'],
+  ]),
+  D('knight', 'paladin', 3, 'A New Oath', 'warcamp', 'The knight swears himself to the Keep, with the paladin as witness.', [
+    ['b', 'You said you swore to a king who is dust.'],
+    ['a', 'I did. Tonight I swear again, to the Keep and those inside it.'],
+    ['b', 'Then I witness it, under the light.'],
+    ['a', 'And if I break it?'],
+    ['b', 'Then I will be there to help you mend it.'],
+  ]),
+  D('archer', 'ranger', 3, 'The Shared Quiver', 'forest', 'The two bow hands start filling one quiver.', [
+    ['b', 'You are using my hawk-feathered arrows.'],
+    ['a', 'You said to miss with them. I have not missed yet.'],
+    ['b', 'Then keep them. We will share one quiver.'],
+    ['a', 'Half duck, half hawk. They will never know what hit them.'],
+  ]),
 ];
 
 /** A scene's id: "bond:knight|peasant:1". */
