@@ -244,6 +244,9 @@ The result, 20,000 fights a level, the knobs as written (every one of the twenty
 | 20 (30) | 92.6% | Bell Warden +2.7 |
 | 30 (92) | 62.3% | Blood Gargoyle -2.5 |
 
+- **Re-checked on main 0.366.0** (skills-10's stronger third skills and retuned ultimates, and the tactic orders), 20,000 fights a level,
+  no knob changed: every one of the twenty still within 6 (roster averages 58.7%, 71.1%, 93.2% and 61.0%; the widest the Sea Reaver
+  +5.4 at level 1, the Falconer +5.3 at level 10 and the Strigoi -4.0 at level 30).
 - **The Bombardier's ultimate** (Shell Storm, once Carpet Bombardment) no longer runs away: its rate is 0.836 (was the branch's 0.9 that
   came round every 2 s at level 30) and he is -0.6 at level 30.
 - **Five ultimates' base strikes raised** (the director's call): the sweep first tuned the Strigoi's Belfry Swoop to power 7.76, the
