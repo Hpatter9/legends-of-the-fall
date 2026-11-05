@@ -32,7 +32,8 @@ though so it's clear what mode you're in."
 
 ### The page (`src/tacticsView.ts`, `src/tactics.css`, `src/main.ts`)
 
-- **The button** (`#tacticBtn`): in the spell row, directly under the Auto switch at its right end, 52 x 52 px. It shows "TACTIC" and the
+- **The button** (`#tacticBtn`): in the spell row, directly under the Auto switch at its right end, 52 x 52 px. (Since COMBAT-HUD it sits at
+  the right just above the hero rows, its word to its left: [combat-hud.md](combat-hud.md).) It shows "TACTIC" and the
   tactic's icon (a pennant for Advance, a shield for Hold, crossed blades for Charge; Charge's is red, Hold's blue). Each tap sends
   `orderTactic` for the next tactic in the cycle. It is in every fight but the Last Stand.
 - **The word** (`#tacticWord`): under the button after each tap, the mode's short name ("Advance", "Hold", "Charge") in light text on a

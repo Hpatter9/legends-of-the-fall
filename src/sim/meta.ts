@@ -44,7 +44,7 @@ import { readSkillUse } from './skillLevels';
 import { readCards, readScenes } from './sceneRules';
 import { readQuests, type QuestState } from './quests';
 import { readEidolons, type EidolonMeta } from './warHorn';
-import { readTactics } from './tacticPick';
+import { readFormations, readTactics } from './tacticPick';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -198,6 +198,8 @@ export interface Meta {
   ultSeen?: Record<string, number>;
   /** The party's tactic picked, by mode and by army (`tacticPick.ts`, docs/notes/tactics.md); Advance together where none is. Saves from before have none. */
   tactics?: Record<string, string>;
+  /** The formation picked on the prep screen, by mode and by army (`tacticPick.ts`), which Auto place sets the heroes out in; none: Auto places as before. */
+  formations?: Record<string, string>;
   /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
   bossCards?: string[];
   /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
@@ -513,6 +515,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       const tactics = readTactics(m.tactics);
       if (tactics) m.tactics = tactics;
       else delete m.tactics;
+      const formations = readFormations(m.formations);
+      if (formations) m.formations = formations;
+      else delete m.formations;
       m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_IDS.includes(b)) : [];
       // (saves from before the armies have their furthest stage mapped onto them, and the armies it opens are not new)
       const fresh = !m.armies || typeof m.armies !== 'object';
