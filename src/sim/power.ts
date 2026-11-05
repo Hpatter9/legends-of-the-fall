@@ -53,3 +53,19 @@ export const rateText = (r: number): string => `${r >= 1 ? r.toFixed(1) : r.toFi
 
 /** A power for the page: 1,234. */
 export const powerText = (p: number): string => p.toLocaleString('en-GB');
+
+/** A hero's health, attack and armour as a fight outside a run gives them (`addUnit`, `defenceOf`): its level's and rank's boost, the six
+ *  scores' shares, and the shares and armour its equipment, runes and talents add (`heroStats`). The hero sheet's Overview shows these.
+ *  (A run's own boosts, the castle's and a wave's, come on top in the fight; they are not the hero's own.) */
+export function heroFigures(m: Meta, kind: string): { hp: number; atk: number; def: number } {
+  const def = UNITS[kind];
+  if (!def) return { hp: 0, atk: 0, def: 0 };
+  const eq = heroStats(m, kind);
+  const boost: Boost = { ...gradeBoost(1, heroRank(m, kind), levelOfKind(m, kind)), ...(eq ? { equip: eq } : {}) };
+  const st = statMults(kind, boost);
+  return {
+    hp: Math.round(def.hp * boost.hp! * (1 + (eq?.hp ?? 0)) * st.hp),
+    atk: Math.round(def.atk * boost.atk! * (1 + (eq?.atk ?? 0)) * st.blow),
+    def: def.def + (eq?.def ?? 0),
+  };
+}
