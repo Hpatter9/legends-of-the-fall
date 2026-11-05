@@ -125,3 +125,13 @@ Shots: `camp-before-home-battle-dealer-<w>.png` and `camp-after-home-battle-deal
   fight's HUD shows through: the probe found no layer of the battle over the button. The Continue button already says the wave, so the
   banner is now left out while a run is going; the one-time "Next army" line for a new army is kept. (`home.ts`) Shots:
   `camp-before-home-mid-run-<w>.png` and `camp-after-home-mid-run-<w>.png` at 393, 360 and 412; `npm test` 2527 pass, 0 fail.
+
+## The Party button off the Battle page (after 0.370.0)
+
+The owner: "The party button on the war camp screen doesn't need to be there since the party screen automatically comes up when starting
+a run." The Battle page's bar now holds Choose your battle alone, with Continue centred under it while a run is saved. With no run, the
+second row goes and the bar closes up, so the scene above it is about 47 px taller. The party is still one tap away: the War Council comes
+up as an army is chosen, the war table's "The enemy below" plate opens it, and the run recap's "Party" pointer goes there through the
+same hook. No tip or tutorial step names the button (`tips.ts`, `systemTips.ts` checked). Some older tool scripts still tap `#hmParty`
+(`tools/menu-glitch/scan.mjs`); they now find nothing there. Shots: `np-before-<screen>-<w>.png` and `np-after-<screen>-<w>.png` for
+home-battle and home-mid-run at 393, 360 and 412. (`home.ts`, `ornateMenus.css`)
