@@ -451,7 +451,7 @@ test('a lighter skill is held for skill 3 coming round when paying would leave i
   assert.equal(setup(2000, 30), 'Volley', 'skill 3 is far off: she looses the volley');
 });
 
-// (SKILLS-10, `RES.STALE_MS`: once skill 3 is open, a skill unused for 12 s goes first, is not held, and the others wait for it)
+// (SKILLS-10, `RES.STALE_MS`: once skill 3 is open, a skill unused for 12 s goes first and is not held)
 test('once skill 3 is open, a skill left unused for 12 s comes round before the others', () => {
   const setup = (level: number, volleyAgo: number, sp: number) => {
     const b = arena();
@@ -465,7 +465,8 @@ test('once skill 3 is open, a skill left unused for 12 s comes round before the 
   };
   assert.equal(setup(SKILL3_LEVEL, 13000, 40), 'Volley', 'Volley has waited 13 s: it goes before the ready heavy');
   assert.equal(setup(SKILL3_LEVEL, 6000, 40), 'Double Shot', 'Volley was cast 6 s ago: the heavy goes first');
-  assert.equal(setup(SKILL3_LEVEL, 13000, 20), undefined, 'Volley waits on the pool, and Double Shot is not cast in its way');
+  // (unpaid, it is passed over like any skill: the others are not held back for it)
+  assert.equal(setup(SKILL3_LEVEL, 13000, 20), undefined, 'Volley cannot be paid, and nothing else is ready to pay for');
   // (Aimed Shot ready but unpaid, both unused for 13 s: from level 20 the volley goes; below it the hold rule keeps it for the heavy)
   const both = (level: number) => {
     const b = arena();
