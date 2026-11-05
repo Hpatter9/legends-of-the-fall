@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.373.0',
+    date: '2026-11-05',
+    title: 'Formations in Auto, a clear fight screen',
+    notes: ['Auto place follows your chosen formation. The tactics button sits above the hero bars, nothing overlaps in a fight, and overhead bars are slimmer.'],
+  },
+  {
     version: '0.372.0',
     date: '2026-11-05',
     title: 'Every pair has its scene',
