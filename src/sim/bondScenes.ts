@@ -1,7 +1,7 @@
 // The bond scenes (DEPTH-BUILD, docs/notes/depth-design.md section 4): a kindred pair's short scene at bond levels 1, 3 and 5, played the
 // next time the player is at the camp or the castle. Drafted in batches of ten for the owner to read (Q4.2), in the cinematic style of the
 // opening (docs/notes/opening-v2.md): a held wide shot on one backdrop, the two walking on, three to six lines in their own voices, and a
-// closer framing for the last word. Batches 1 and 2: twenty pairs' first scenes (bond level 1, "Acquainted"). Pure data: no Pixi, no DOM.
+// closer framing for the last word. Batches 1 to 4: every kindred pair's and every rivalry's first scene (bond level 1). Pure data: no Pixi, no DOM.
 
 import { shoot, wide, say, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
@@ -207,6 +207,158 @@ const DRAFTS: readonly BondDraft[] = [
     ['b', 'Did you? Or did I make you think you did?'],
     ['a', '...I hate that I cannot tell.'],
     ['b', 'Good. Ten fights, and I finally have you guessing.'],
+  ]),
+  // (batch 4: the last twenty kindred pairs, bond level 1)
+  D('mummy', 'shambler', 1, 'Old Bones', 'graveyard', 'Two who should be dead compare notes on not being.', [
+    ['a', 'You are falling apart.'],
+    ['b', 'You are held together with bandages.'],
+    ['a', 'Linen. Very good linen. Three thousand years old.'],
+    ['b', 'Lend me a strip. My arm keeps wandering off.'],
+  ]),
+  D('reaper', 'demonSwordsman', 1, 'Two Edges', 'volcano', 'The reaper and the cursed swordsman, both carrying blades that want more.', [
+    ['b', 'Your scythe sings too.'],
+    ['a', 'It hums. Only when someone is close to the end.'],
+    ['b', 'Mine screams. All the time.'],
+    ['a', 'Then stand by me. Mine is quieter company.'],
+  ]),
+  D('timeWitch', 'sage', 1, 'The Long View', 'temple', 'The witch who sees ahead and the sage who has seen a great deal behind.', [
+    ['a', 'I have seen how this war ends.'],
+    ['b', 'And?'],
+    ['a', 'I am not allowed to say. It would spoil it.'],
+    ['b', 'At my age, nothing spoils. Tell me over tea.'],
+  ]),
+  D('illusionist', 'wizard', 1, 'Real Fire', 'crystal', 'The wizard wants to know whether the illusionist\'s fire is real.', [
+    ['b', 'Your fireball. Was it real?'],
+    ['a', 'The orc thought so. He ran into a river.'],
+    ['b', 'That is not an answer.'],
+    ['a', 'It is the only one that matters.'],
+  ]),
+  D('warlock', 'tyrant', 1, 'Terms of Service', 'ruins', 'Two who know the price of power haggle over it.', [
+    ['b', 'Your patron. What does it ask of you?'],
+    ['a', 'A tithe. A little of my shadow each year.'],
+    ['b', 'Mine asks for a kingdom.'],
+    ['a', 'Then you have a worse contract than I do.'],
+  ]),
+  D('gunslinger', 'rifleBot', 1, 'Trick Shots', 'desert', 'A gunslinger and a machine that never misses.', [
+    ['a', 'Bet you cannot shoot a coin out of the air.'],
+    ['b', 'Query: which face of the coin?'],
+    ['a', '...You are no fun at all.'],
+    ['b', 'Fun: not calibrated. Accuracy: one hundred percent.'],
+  ]),
+  D('lancer', 'dragoon', 1, 'Up and Through', 'highlands', 'One charges along the ground, the other comes down from the sky.', [
+    ['a', 'I go through them.'],
+    ['b', 'I go over them, then down on them.'],
+    ['a', 'Then they will not know which way to look.'],
+    ['b', 'Exactly. Count to three, then charge.'],
+  ]),
+  D('juggernaut', 'siegeBot', 1, 'Walls', 'forge', 'Two who knock down walls for a living.', [
+    ['a', 'I knocked down a wall today.'],
+    ['b', 'Walls flattened today: four.'],
+    ['a', 'Mine was a big wall.'],
+    ['b', 'Then we share the record. Proposal: more walls.'],
+  ]),
+  D('kunoichi', 'ninjaMonk', 1, 'Quiet Feet', 'shrine', 'Two who move without a sound, trying to catch each other out.', [
+    ['b', 'You were behind me just now.'],
+    ['a', 'I was. You turned before I reached you.'],
+    ['b', 'Your breath. You hold it before you strike.'],
+    ['a', 'Then I will learn to breathe. Teach me.'],
+  ]),
+  D('peasant', 'ranger', 1, 'Snares and Supper', 'plains', 'The peasant and the ranger set snares and swap recipes.', [
+    ['a', 'You set a snare like my old dad.'],
+    ['b', 'He knew his work, then.'],
+    ['a', 'He caught the bailiff once. By the ankle.'],
+    ['b', 'Then he knew it very well indeed.'],
+  ]),
+  D('sage', 'priestess', 1, 'The Old Texts', 'temple', 'The sage reads the temple\'s oldest scrolls to the priestess.', [
+    ['b', 'You read that prayer as if you wrote it.'],
+    ['a', 'I copied it, when I was a boy. Badly.'],
+    ['b', 'There is a mistake in the third line. We sing it every morning.'],
+    ['a', 'Keep it. It sounds better wrong.'],
+  ]),
+  D('kitsune', 'yamabushi', 1, 'Fox on the Mountain', 'snow', 'The tengu once chased the fox off his mountain.', [
+    ['b', 'You stole my rice cakes. Every winter.'],
+    ['a', 'You left them out. On a rock. In the snow.'],
+    ['b', 'For the mountain spirits!'],
+    ['a', 'I am a mountain spirit. Ask anyone.'],
+  ]),
+  D('arcBlade', 'lightningMage', 1, 'Spark', 'crystal', 'A blade that carries lightning, and the mage who throws it.', [
+    ['b', 'Your sword crackles. Who taught you?'],
+    ['a', 'Nobody. I was struck while holding it.'],
+    ['b', 'That is how I learnt too.'],
+    ['a', 'Then we were taught by the same storm.'],
+  ]),
+  D('mercenary', 'gunslinger', 1, 'Rates', 'warcamp', 'Two hired hands compare what they charge.', [
+    ['a', 'What does the crown pay you?'],
+    ['b', 'Two crowns a day and all the beans I can eat.'],
+    ['a', 'I get three, and no beans.'],
+    ['b', 'Then the beans are worth a crown. Good to know.'],
+  ]),
+  D('paladin', 'lancer', 1, 'The Charge', 'plains', 'The paladin and the lancer, side by side before a charge.', [
+    ['b', 'You ride well, for a man in that much armour.'],
+    ['a', 'The horse is blessed. Mostly with patience.'],
+    ['b', 'On my mark, then. Light and lance.'],
+    ['a', 'Light and lance. I like that.'],
+  ]),
+  D('barbarian', 'juggernaut', 1, 'Bigger', 'snow', 'Two very large people meet. Measuring follows.', [
+    ['a', 'I am bigger than you.'],
+    ['b', 'You are not.'],
+    ['a', 'Stand back to back. Duchess will judge.'],
+    ['b', '...The goat has eaten the measuring string.'],
+  ]),
+  D('wanderer', 'sage', 1, 'Roads and Books', 'autumn', 'The wanderer has walked every road the sage has only read about.', [
+    ['b', 'Is it true the eastern road ends in a sea of glass?'],
+    ['a', 'It ends in a puddle. A large, shiny puddle.'],
+    ['b', 'Three books say a sea.'],
+    ['a', 'The people who wrote them never walked there.'],
+  ]),
+  D('beastmaster', 'ranger', 1, 'Tracks', 'forest', 'Two who read the forest floor disagree about what passed.', [
+    ['a', 'A bear. Three days ago.'],
+    ['b', 'A badger. Yesterday. A very confident badger.'],
+    ['a', 'Badgers do not walk like that.'],
+    ['b', 'This one does. I have met it.'],
+  ]),
+  D('karasu', 'yamabushi', 1, 'Two Tengu', 'snow', 'A crow tengu and a mountain monk who follows the tengu way.', [
+    ['b', 'I have studied the tengu way for twenty years.'],
+    ['a', 'And you still cannot fly.'],
+    ['b', 'The way is not about flying.'],
+    ['a', 'It is a little bit about flying.'],
+  ]),
+  D('druid', 'kitsune', 1, 'The Fox in the Grove', 'forest', 'The druid finds the fox spirit napping in the sacred grove.', [
+    ['a', 'This grove is sacred.'],
+    ['b', 'So am I. We get on very well.'],
+    ['a', 'You are sleeping on the altar.'],
+    ['b', 'It is a very comfortable altar.'],
+  ]),
+  // (batch 4: the last five rivalries settled)
+  D('dragoon', 'kraken', 1, 'Sky and Sea', 'oasis', 'The dragoon falls from the sky; the kraken rises from the deep.', [
+    ['a', 'You pulled me under, the first time we met.'],
+    ['b', 'You landed on my head.'],
+    ['a', 'Ten fights since. Not once on your head.'],
+    ['b', 'Not once under. We are learning.'],
+  ]),
+  D('samurai', 'ninjaMonk', 1, 'The Open Hand', 'shrine', 'The swordsman and the monk who fights unarmed.', [
+    ['a', 'A sword is a promise. You carry none.'],
+    ['b', 'My hands are my promise. They are always with me.'],
+    ['a', 'Ten fights, and you never once fell behind.'],
+    ['b', 'Nor you. Shall we call it an even match?'],
+  ]),
+  D('barbarian', 'minotaur', 1, 'Horns and Axes', 'ruins', 'Two charging brutes, at last on the same side of the charge.', [
+    ['a', 'I still say I hit harder.'],
+    ['b', 'And I still say you hit the wall.'],
+    ['a', 'Ten fights, and you never once trampled me.'],
+    ['b', 'You never once axed me. A friendship, then.'],
+  ]),
+  D('satyr', 'shambler', 1, 'The Dance', 'swamp', 'The satyr has been trying to teach the shambler to dance.', [
+    ['a', 'Left foot. No, the other left foot.'],
+    ['b', 'It fell off.'],
+    ['a', 'Then hop. Ten fights, and you never missed a beat in battle.'],
+    ['b', 'Battle has a better rhythm.'],
+  ]),
+  D('juggernaut', 'rifleBot', 1, 'Covering Fire', 'forge', 'The juggernaut walks in front; the rifle bot shoots past him.', [
+    ['b', 'Shots that passed within an inch of you: three hundred.'],
+    ['a', 'And hit me?'],
+    ['b', 'None. Trust: increasing.'],
+    ['a', 'Then keep shooting. I will keep walking.'],
   ]),
 ];
 

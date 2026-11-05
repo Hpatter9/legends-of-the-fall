@@ -289,3 +289,10 @@ and Paladin, Paladin and Cleric) at level n and every other pair Comrades at mos
   old map header): "The Calamity · Act II of III", a chip with the provisions carried, and one pennant (the packs' banner) for each oath
   sworn, a tap for its words. Not shot: it needs a save part-way through a Calamity.
 - Art: what the copied packs have is used (the banner); the sack, the travellers and coloured pennants are on `depth-art-todo.md`.
+
+## Batch 16: every pair's first scene
+
+- **Bond scenes, batch 4** (`bondScenes.ts`): the last twenty kindred pairs' level-1 scenes and the last five rivalries' settling scenes.
+  Every one of the forty kindred pairs and fifteen rivalries now has its first scene (55 in all; a test checks each pair has one). All
+  words in `docs/lines/new-lines.json`, drafted for the owner to read.
+- Still to write: the kindred pairs' level-3 and level-5 scenes, and the farewell scenes.
