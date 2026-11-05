@@ -87,7 +87,7 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
   const title = el('h3', '', 'Upgrades ready');
   title.id = 'ulTitle';
   const count = el('small', 'ulCount');
-  const x = el('button', 'ulClose', '×');
+  const x = el('button', 'ulClose', '‹ Back');
   x.type = 'button';
   x.setAttribute('aria-label', 'Close');
   head.append(title, count, x);

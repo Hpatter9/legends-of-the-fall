@@ -44,6 +44,9 @@ Chronos later, so keep its conventions.
 - **It must play offline** (the owner plays on planes). The service worker (`build.mjs` writes `out/web/sw.js`) caches
   every file the game needs on the first visit. A new file the page loads by URL (backdrops, music, anything not
   bundled into game.js as a data URL) must be added to its `FILES` list, or the game breaks offline.
+- **Every menu is built with the standard ornate menu** (the owner's standing instruction): a new card, sheet or menu uses
+  `src/ornateMenu.ts` (`ornateMenu`, `menuSection`, `menuPick`, `menuWell`, `menuFoot`) and its classes in `ornateMenus.css`, never a
+  card drawn by hand. Full pages say "‹ Back", cards "Close". See `docs/notes/ui-standard.md`; `test/ui-standard.test.ts` checks it.
 - **When unsure what the owner wants, ask.**
 
 ## Layout

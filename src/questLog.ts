@@ -62,7 +62,7 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
   const redraw = (t: LogTab = tab) => drawQuestLog(box, m, t, hooks);
   const head = el('div', 'qlHead');
   head.append(el('h3', '', 'Quests'));
-  const shut = el('button', 'qlShut', '✕');
+  const shut = el('button', 'qlShut', '‹ Back');
   shut.setAttribute('aria-label', 'Close the quest log');
   shut.addEventListener('click', hooks.close);
   head.append(shut);

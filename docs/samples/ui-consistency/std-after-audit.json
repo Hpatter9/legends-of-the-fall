@@ -1,0 +1,54 @@
+{
+ "party-orders": {
+  "small": [],
+  "tiny": [
+   "span \"YOUR COMPANY\" 8px",
+   "span.ptSlotNumber \"1\" 10px",
+   "span.ptSlotNumber \"2\" 10px",
+   "span.ptSlotNumber \"3\" 10px",
+   "span.ptSlotNumber \"4\" 10px",
+   "span.ptSlotNumber \"5\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 3
+  }
+ },
+ "march-orders": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 3
+  }
+ },
+ "march-orders-foot": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 4
+  }
+ },
+ "march-orders-scouted": {
+  "small": [],
+  "tiny": [],
+  "headingFonts": {
+   "\"Alegreya Sans\"": 1,
+   "Georgia": 3
+  }
+ },
+ "march-orders-set": {
+  "small": [],
+  "tiny": [
+   "span \"YOUR COMPANY\" 8px",
+   "span.ptSlotNumber \"1\" 10px",
+   "span.ptSlotNumber \"2\" 10px",
+   "span.ptSlotNumber \"3\" 10px",
+   "span.ptSlotNumber \"4\" 10px",
+   "span.ptSlotNumber \"5\" 10px"
+  ],
+  "headingFonts": {
+   "Georgia": 3
+  }
+ }
+}

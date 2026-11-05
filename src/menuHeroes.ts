@@ -497,7 +497,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     equipment.append(el('p', 'hint', 'Equipment is kept for good, and wears a little with each wave it is fought in: mend it here or at Hester’s Stall. Gear found in a run lasts that run only.'));
   }
   if (show && show.what !== 'cache') playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined, show.what === 'awaken' ? kind : undefined);
-  const done = el('button', 'primary', '‹ Back');
+  const done = el('button', 'heroFootBack', '‹ Back');
   done.addEventListener('click', close);
   box.append(done);
   return () => closeArtwork?.();
