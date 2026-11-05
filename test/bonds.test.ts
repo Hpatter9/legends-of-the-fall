@@ -121,8 +121,8 @@ import { BOND_SCENES, bondScenesDue, bondSceneId } from '../src/sim/bondScenes';
 import { SCENES } from '../src/sim/sceneScripts';
 import { dueScene } from '../src/sim/sceneRules';
 
-test('the first batch of bond scenes: ten kindred pairs at level 1, real heroes and backdrops, due once the pair reaches it', () => {
-  assert.equal(BOND_SCENES.length, 10);
+test('the first two batches of bond scenes: twenty kindred pairs at level 1, real heroes and backdrops, due once the pair reaches it', () => {
+  assert.equal(BOND_SCENES.length, 20);
   for (const s of BOND_SCENES) {
     assert.ok(s.moment.kind === 'bond' && KINDRED.includes(s.moment.pair) && s.moment.level === 1, s.id);
     assert.ok(SCENES[s.id], 'in the scenes list');
