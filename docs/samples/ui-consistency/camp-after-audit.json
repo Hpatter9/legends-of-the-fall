@@ -14,5 +14,13 @@
    "button#hmGear.round.hasNews \"⚙\" 0px"
   ],
   "headingFonts": {}
+ },
+ "home-mid-run": {
+  "small": [],
+  "tiny": [
+   "button#hmTrophy.round.new \"🏆\" 0px",
+   "button#hmGear.round.hasNews \"⚙\" 0px"
+  ],
+  "headingFonts": {}
  }
 }

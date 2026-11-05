@@ -120,3 +120,8 @@ shots are a script's, in headless Chromium, not a real phone.
 Shots: `camp-before-home-battle-dealer-<w>.png` and `camp-after-home-battle-dealer-<w>.png` (a save with the Dealer in camp), and
 `camp-after-home-battle-<w>.png`, at 393, 360 and 412. Checks: `npm run typecheck` clean, `npm test` 2527 pass, 0 fail, 0 skipped,
 `npm run web` built. Cinzel and the violet panels are untouched, still waiting on the owner.
+- **"There is something behind the Choose your battle button. I think it's the current wave label."** It was the bar's banner line,
+  "Wave 3/15 · ★ 8/11", drawn over the button whenever a run was saved (opening home from the deploy board or a fight). Nothing from the
+  fight's HUD shows through: the probe found no layer of the battle over the button. The Continue button already says the wave, so the
+  banner is now left out while a run is going; the one-time "Next army" line for a new army is kept. (`home.ts`) Shots:
+  `camp-before-home-mid-run-<w>.png` and `camp-after-home-mid-run-<w>.png` at 393, 360 and 412; `npm test` 2527 pass, 0 fail.

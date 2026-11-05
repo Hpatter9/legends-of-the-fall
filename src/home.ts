@@ -715,7 +715,8 @@ export class Home {
     }
     // Keep the new-army announcement quiet on later launches; Continue still shows the wave.
     const progress = armyStars(m, next);
-    if (announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', info ? (army ? `Wave ${info.stage}/${army.waves.length} · ★ ${progress.got}/${progress.max}` : info.label) : `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
+    // (the owner's call: with a run going there is no wave line over the bar: Continue already says the wave; only a new army is named)
+    if (!info && announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
     const party2 = el('button', 'hmLink hmSide', 'Party');

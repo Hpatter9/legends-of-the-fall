@@ -95,6 +95,8 @@ const scrollIn = (p, sel, by = 99999) => ev(p, ([sel, by]) => document.querySele
 const SCENES = {
   'home-battle': (p) => home(p, 'battle'),
   'home-battle-dealer': async (p) => { await ev(p, () => { const m = window.__game.meta; m.stall = { day: 0, sold: {}, spent: 0, ...(m.stall ?? {}), dealerDue: true }; }); await home(p, 'battle'); await ev(p, () => window.__game.home.refresh()); await wait(p, 600); },
+  'home-mid-run': async (p) => { await deploy(p); await ev(p, () => document.getElementById('homeBtn')?.click()); await wait(p, 1500); },
+  'home-mid-fight': async (p) => { await deploy(p); await ev(p, () => document.getElementById('fight')?.click()); await wait(p, 2500); await ev(p, () => document.getElementById('homeBtn')?.click()); await wait(p, 1500); },
   'home-heroes': (p) => home(p, 'heroes'),
   'home-recruit': (p) => home(p, 'recruit'),
   'home-castle': (p) => home(p, 'castle'),
