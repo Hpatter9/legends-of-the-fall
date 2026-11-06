@@ -91,32 +91,33 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 .pairs .fhPay { height: 1px; }
 .pairs .fhBar b { letter-spacing: -0.5px; }
 
-/* ---- the Auto switch, beside the orbs ---- */
-.fhAuto { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex: none; width: 50px; height: 48px; min-height: 0; padding: 2px;
+/* ---- the Auto switch, beside the orbs: upright and slim, "AUTO" over its switch (AUTO-RIGHT: it stays on the orbs' line, right of the last) ---- */
+.fhAuto { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; flex: none; width: 44px; height: 48px; min-height: 0; padding: 2px;
   border: 1px solid #a28a58; border-radius: 4px; background: radial-gradient(ellipse at top, #83945b33, transparent 75%), linear-gradient(#2b372a, #111d17);
   box-shadow: inset 0 0 0 2px #0c1712, 0 2px 5px #0007; color: rgb(255 255 255 / 0.8); font: 400 12px/12px var(--body); cursor: pointer; }
 .fhAuto .sw { position: relative; display: block; width: 26px; height: 14px; border-radius: 7px; background: var(--s1); border: 1px solid rgb(255 255 255 / 0.3); }
 .fhAuto .sw b { position: absolute; left: 1px; top: 1px; width: 12px; height: 12px; border-radius: 50%; background: #9aa0a8; transition: left 0.15s; }
 .fhAuto.on { color: #fff3d0; background: linear-gradient(#9d8e4e, #655930); border-color: #f6db91; }
 .fhAuto.on .sw b { left: 13px; background: #fff3b0; }
-/* (AUTO-CAST: what the switch covers, the ultimates and the spells) */
-.fhAuto small { font: 700 9px/9px var(--body); letter-spacing: 0.2px; white-space: nowrap; opacity: 0.85; }
+/* (AUTO-CAST: what the switch covers, the ultimates and the spells, is in its title and label; the 9 px "ULT+SPELL" under it went in AUTO-RIGHT) */
+.fhAuto span { letter-spacing: 0.04em; }
 
 /* ---- the king's spells as orbs under the top bar (the main fight screen) ---- */
-#hudSpells { position: fixed; z-index: 3; left: 8px; right: 8px; top: 96px; display: none; align-items: flex-start; gap: 4px; pointer-events: none; }
+#hudSpells { position: fixed; z-index: 3; left: 8px; right: 8px; top: 96px; display: none; flex-wrap: nowrap; align-items: flex-start; gap: 3px; pointer-events: none; }
 body[data-phase='fight'] #hudSpells { display: flex; }
-#hudSpells > * { pointer-events: auto; }
+#hudSpells > * { flex: none; pointer-events: auto; }
 #hudSpells .fhAuto { margin-left: auto; }
-#hudSpells #spells { position: relative; flex-direction: row; align-items: center; gap: 4px; }
-#hudSpells #mana { width: 62px; height: 48px; box-sizing: border-box; min-height: 0; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; padding: 3px 4px;
+#hudSpells #spells { position: relative; flex-direction: row; align-items: center; gap: 3px; }
+/* (AUTO-RIGHT: one line at 360 across with the War Horn, the mana, four orbs and Auto: the mana 54 px, the orbs 44 px with 3 px between) */
+#hudSpells #mana { width: 54px; height: 48px; box-sizing: border-box; min-height: 0; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; padding: 3px 4px;
   background: rgb(var(--black-rgb) / 0.62); border: 1px solid #a28a58; border-radius: 4px; }
 #hudSpells #mana::before { font: 400 12px/12px var(--body); letter-spacing: 0.05em; text-align: center; }
 #hudSpells #mana i { flex: none; width: 100%; height: 6px; border-width: 1px; }
 #hudSpells #mana b { min-width: 0; text-align: center; font: 400 12px/12px 'Pixelify Sans', var(--body); }
-#hudSpells #spellCards { display: flex; gap: 4px; }
-body[data-phase='fight'] #hudSpells #spellCards .spell { position: relative; width: 48px; height: 48px; min-height: 0; padding: 0; border-radius: 50%; overflow: visible;
+#hudSpells #spellCards { display: flex; gap: 3px; }
+body[data-phase='fight'] #hudSpells #spellCards .spell { position: relative; width: 44px; height: 44px; min-height: 0; padding: 0; border-radius: 50%; overflow: visible;
   border: 2px solid var(--gold, #f5c542); display: grid; place-items: center; background: radial-gradient(var(--s6), var(--s1)); box-shadow: 0 2px 5px #0009; }
-body[data-phase='fight'] #hudSpells #spellCards .spell .spIcon { zoom: 0.6; margin: 0; filter: drop-shadow(0 0 4px var(--spell-light)); }
+body[data-phase='fight'] #hudSpells #spellCards .spell .spIcon { zoom: 0.55; margin: 0; filter: drop-shadow(0 0 4px var(--spell-light)); }
 body[data-phase='fight'] #hudSpells #spellCards .spell b, body[data-phase='fight'] #hudSpells #spellCards .spell em { display: none; }
 body[data-phase='fight'] #hudSpells #spellCards .spell .cool { border-radius: 50%; top: auto; }
 body[data-phase='fight'] #hudSpells #spellCards .spell::after { content: attr(data-cost); position: absolute; right: -4px; bottom: -4px; min-width: 14px; padding: 0 2px; font: 400 12px/13px var(--body);
@@ -292,8 +293,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 #hudSpells #mana .decreeBar span, #stand .stOrbs .stMana .decreeBar span { display: block; height: 100%; width: 0; background: linear-gradient(#ffe9a8, #d29a2e); }
 #hudSpells #mana.decreeReady, #stand .stOrbs .stMana.decreeReady { cursor: pointer; border-color: #ffe08a; box-shadow: 0 0 0 1px #ffe08a, 0 0 14px #eac56be6; }
 #hudSpells #mana.decreeReady::before { content: 'DECREE'; color: #ffe9a8; }
-/* (a narrow phone with the War Horn as well: the Auto switch may drop under the row rather than push it off the screen) */
-#hudSpells { flex-wrap: wrap; }
+/* (AUTO-RIGHT: the row no longer wraps; every part is sized so the War Horn, the mana, four orbs and Auto fit one line at 360 across) */
 
 /* ---- UX-FIXES (the audit's #3): bigger rows for a party of five or fewer, and the skill name no longer covers the casting hero's own row ----
    Skill chips are 44px, the HP and SP numbers 13px in 14px bars; the cut-in banner (above the rows) names the skill, and the row only flashes its edge.
@@ -306,7 +306,6 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 .fightHud:not(.pairs) .fhChip { min-height: 44px; }
 .fhRow .fhCast { display: none !important; }
 .fhRow.casting { box-shadow: inset 0 0 0 2px var(--cast, #fff), 0 0 8px var(--cast, #fff); }
-.fhAuto small { font-size: 9px; line-height: 9px; }
 /* (the crest under the top bar hangs to about 110px: the spell orbs start below it) */
 #hudSpells { top: 112px; }
-#hudSpells #spells button { min-width: 48px; min-height: 48px; }
+#hudSpells #spells button { min-width: 44px; min-height: 44px; }

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.379.0',
+    date: '2026-11-06',
+    title: 'Auto beside the spells, boss bar higher',
+    notes: ['Auto sits on the spell row, right of the last spell, so the boss\'s health bar stays one row up. Speech bubbles keep clear of buttons and bars.'],
+  },
+  {
     version: '0.378.0',
     date: '2026-11-06',
     title: 'The Nemesis War begins',
