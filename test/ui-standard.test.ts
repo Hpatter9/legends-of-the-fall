@@ -68,6 +68,26 @@ test('the dialogs PR #386 restyled are standard menus (INT-386)', () => {
   }
 });
 
+test('the standard has a bottom drawer, its veil is light, and a ware at the stall opens in it (MENU-POLISH)', () => {
+  const css = readFileSync('src/ornateMenus.css', 'utf8');
+  const src = readFileSync('src/ornateMenu.ts', 'utf8');
+  assert.match(src, /kind\?: 'card' \| 'sheet' \| 'drawer'/);
+  assert.match(src, /o\.kind === 'drawer' \? ' omDrawer'/);
+  // (the drawer slides up, and stands still under reduced motion)
+  assert.match(css, /\.omDrawer \.om \{[^}]*animation: omDrawerUp/);
+  assert.match(css, /prefers-reduced-motion: reduce\) \{[^}]*\.omDrawer \.om/);
+  // (the veil dims lightly and does not blur: the page reads through it)
+  const veil = css.slice(css.indexOf('.omVeil {'), css.indexOf('}', css.indexOf('.omVeil {')));
+  assert.doesNotMatch(veil, /backdrop-filter/);
+  for (const a of [...veil.matchAll(/rgba\([^)]*,\s*([\d.]+)\)/g)].map((m) => Number(m[1]))) assert.ok(a <= 0.6, `the veil's dim ${a} is no more than 0.6`);
+  // (the standard's body text is a step up from 13 px)
+  const text = Number(/--om-text:\s*([\d.]+)px/.exec(css)?.[1]);
+  assert.ok(text >= 14, `body text ${text}px`);
+  const stall = readFileSync('src/stallView.ts', 'utf8');
+  const ware = stall.slice(stall.indexOf('const warePage = '));
+  assert.match(ware.slice(0, ware.indexOf('\n  };\n')), /ornateMenu\(\{[^}]*kind: 'drawer'/);
+});
+
 test('March orders: a plain march with nothing open gives no orders; the picks become the run orders', () => {
   const m = newMeta(7);
   const party = ['knight', 'cleric', 'archer'];
