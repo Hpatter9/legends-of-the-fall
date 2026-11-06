@@ -30,6 +30,8 @@ export interface UnitNem {
   stood?: true;
   /** When its Dread hero's ultimate last staggered it. */
   staggered?: number;
+  /** The hero kind it is Vengeful against (phase 2: its blood-oath brother fell to that hero): +20% damage to it, and it goes for it first. */
+  veng?: string;
 }
 
 /** A trait: its words, the epithet it gives a nemesis whose first trait it is, and what immunities it grants. */
@@ -117,18 +119,22 @@ export function weakWords(w: string, heroName: (kind: string) => string): { name
     return { name: `Fears ${e?.word ?? 'fire'}`, text: `Takes 25% more while it suffers ${e?.word ?? 'fire'}` };
   }
   if (w === 'hatesHeights') return { name: 'Hates heights', text: 'Deals 15% less while lower than its target' };
+  if (w === 'glutton') return { name: 'Glutton', text: 'Gains Might from the Council’s feasts, but walks 10% slower' };
   return { name: w, text: '' };
 }
 
 /** The hero kind a nemesis dreads (its first weakness), if any. */
 export const dreadOf = (weak: readonly string[]): string | undefined => weak.find((w) => w.startsWith('dread:'))?.slice(6);
 
-/** The second weakness's pool (drawn at Might 5, weighted by its history in `nemesis.ts`): never an element it is immune to. The design's
- *  Craven, Vain and Glutton come with the phases that give them meaning (fleeing, duels, feasts). */
+/** The second weakness's pool (drawn at Might 5, weighted by its history in `nemesis.ts`): never an element it is immune to. Glutton came
+ *  with the Council's feasts (phase 2); the design's Craven and Vain come with the phases that give them meaning (fleeing, duels). */
 export function secondWeakPool(traits: readonly string[]): string[] {
   const immune = new Set(traits.flatMap((t) => TRAITS[t]?.immune ?? []));
-  return [...Object.entries(FEAR_ELEMENTS).filter(([, e]) => !immune.has(e.ail)).map(([k]) => `fears:${k}`), 'hatesHeights'];
+  return [...Object.entries(FEAR_ELEMENTS).filter(([, e]) => !immune.has(e.ail)).map(([k]) => `fears:${k}`), 'hatesHeights', 'glutton'];
 }
+
+/** The Vengeful's share: +20% damage to the hero it swore vengeance on. */
+export const VENGEFUL = 0.2;
 
 // ---- the hooks the fight reads -----------------------------------------------------------------------------------------------
 
@@ -187,6 +193,7 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
     if (has(by, 'hillKing') && height(b, by) > height(b, to)) k *= 1.1;
     if (has(by, 'loneWolf') && !allyNear(b, by, 3)) k *= 1.25;
     if (by.nem.weak.includes('hatesHeights') && height(b, by) < height(b, to)) k *= 0.85;
+    if (by.nem.veng && to.def === by.nem.veng) k *= 1 + VENGEFUL;
   }
   return k === 1 ? dmg : Math.max(1, Math.round(dmg * k));
 }
@@ -200,11 +207,16 @@ export function nemSpare(to: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Its healer-hunting: the healers in reach first (the rest keep their order). */
-export const nemPrey = (me: Unit, inReach: Unit[]): Unit[] => (has(me, 'healerHunter') ? [...inReach].sort((x, y) => Number(healer(y)) - Number(healer(x))) : inReach);
+/** Its healer-hunting: the healers in reach first (the rest keep their order); a Vengeful nemesis goes for its hero before any. */
+export function nemPrey(me: Unit, inReach: Unit[]): Unit[] {
+  let out = has(me, 'healerHunter') ? [...inReach].sort((x, y) => Number(healer(y)) - Number(healer(x))) : inReach;
+  const v = me.nem?.veng;
+  if (v && out.some((x) => x.def === v)) out = [...out].sort((x, y) => Number(y.def === v) - Number(x.def === v));
+  return out;
+}
 
-/** Its walk's pace: Elusive walks 20% quicker. */
-export const nemMove = (u: Unit): number => (has(u, 'elusive') ? 1.2 : 1);
+/** Its walk's pace: Elusive walks 20% quicker; a Glutton 10% slower. */
+export const nemMove = (u: Unit): number => (has(u, 'elusive') ? 1.2 : 1) * (u.nem?.weak.includes('glutton') ? 0.9 : 1);
 
 /** The jump it walks with: a Hill-king's is one more. */
 export const nemJump = (u: Unit, jump: number): number => (has(u, 'hillKing') ? jump + 1 : jump);

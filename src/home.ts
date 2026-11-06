@@ -67,7 +67,9 @@ import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
 import { portrait, warmPortraits } from './render/sheets';
-import { councilLine, openNemesisBoard } from './nemesisView';
+import { councilLine, councilPlate, openNemesisBoard } from './nemesisView';
+import { councilTurn } from './sim/council';
+import { musterOpen, warchiefOf } from './sim/muster';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -113,6 +115,10 @@ export interface HomeHooks {
   onQuestBattle?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if one is (its Fight reads Continue). */
   questSaved?(): string | null;
+  /** The Nemesis War: call the Warchief's Muster, or carry on the one saved (the board's gilded button). */
+  onMuster?(): void;
+  /** A Muster is saved part-way. */
+  musterSaved?(): boolean;
   /** EIDOLON-CHAINS: play a chain's story (its giver's prologue) over the home screen; resolves when it ends. */
   onStory?(scene: Scene): Promise<unknown>;
 }
@@ -308,9 +314,17 @@ export class Home {
     tips.offer('home', $('hmBattle'));
     // (a run has just ended: the crowns are there to spend)
     if (note) tips.offer('crowns', $('hmTabs'));
+    // (the Nemesis War: the Dark Council takes its turn on the day's first visit, phase 2)
+    if (this.meta.war && councilTurn(this.meta, 'visit', todayKey())) saveMeta(this.meta);
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
     void revealUnseen(this.meta).then(() => this.refresh());
     this.hooks.onOpened?.();
+  }
+
+  /** The Dark Council's board (the Nemesis War): its Hunt opens an army, its Muster calls the page's. */
+  openCouncil(tab?: 'council' | 'news' | 'fallen' | 'spoils'): void {
+    const m = this.meta;
+    openNemesisBoard(m, { hunt: (army) => this.openArmies(army), ...(this.hooks.onMuster ? { muster: () => this.go(this.hooks.onMuster!) } : {}), musterSaved: !!this.hooks.musterSaved?.(), day: todayKey(), save: () => (saveMeta(m), this.refresh()) }, tab);
   }
 
   get isOpen(): boolean {
@@ -806,20 +820,22 @@ export class Home {
     const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);
-    // (the Nemesis War's Dark Council, over the Daily once the War is open: the mightiest member's face, and how many are named)
+    // (the Nemesis War's Dark Council, over the Daily once the War is open: the warchief's face once there is one (the mightiest member's
+    // until then), the seats filled on its plate, and the Muster's mark when it is open)
     const war = m.war;
     this.camp.councilSlot.hidden = !war;
-    const top = war?.members.slice().sort((a, b) => b.might - a.might || a.id - b.id)[0];
-    const councilKey = war ? `${war.members.length}|${top?.id ?? 0}|${top?.might ?? 0}` : '';
+    const top = war ? warchiefOf(war) ?? war.members.slice().sort((a, b) => b.might - a.might || a.id - b.id)[0] : undefined;
+    const muster = musterOpen(war);
+    const councilKey = war ? `${war.members.length}|${top?.id ?? 0}|${top?.might ?? 0}|${top?.rank ?? ''}|${muster}` : '';
     if (war && this.camp.councilSlot.dataset.key !== councilKey) {
       this.camp.councilSlot.dataset.key = councilKey;
       const named = war.members.length;
-      const council = place('hmCouncil', 'council', 'Council', '', `The Dark Council: ${named ? `${named} ${named === 1 ? 'foe remembers' : 'foes remember'} you` : 'no foe remembers you yet'}. ${councilLine(m)}`, () => openNemesisBoard(m, (army) => this.openArmies(army)));
+      const council = place('hmCouncil', 'council', 'Council', '', `${councilPlate(m)}${muster ? '. The Warchief’s Muster is open' : ''}. ${councilLine(m)}`, () => this.openCouncil());
       council.querySelector('small')?.remove();
       const pic = el('span', 'cpCouncilFace');
       if (top && UNITS[top.base]) pic.append(portrait(UNITS[top.base].sheet, 30));
       council.prepend(pic);
-      if (named) council.append(el('i', 'cpCount', String(named)));
+      if (named) council.append(el('i', `cpCount${muster ? ' muster' : ''}`, String(named)));
       swapIn(this.camp.councilSlot, this.camp.councilSlot.querySelector('.cpPlace'), council);
     }
     // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)

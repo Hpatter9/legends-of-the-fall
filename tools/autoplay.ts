@@ -6,14 +6,15 @@
 import { PROVISIONS, oathOffer, provisionsOf, swearOath } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
-import { noteNemesis, planNemeses } from '../src/sim/nemesis';
+import { planNemeses } from '../src/sim/nemesis';
+import { noteWar } from '../src/sim/council';
 import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { ARMIES, armyById, armyCleared } from '../src/sim/armies';
-import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, waveArmyOf, type Owned, type Run } from '../src/sim/run';
 import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
@@ -109,6 +110,14 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   const run: Run = armyRun(seed, armyId, party, castle, tier);
   // (the Nemesis War: a save with a War meets its army's nemeses, frozen as the run starts; `WAR_BOT.settle` also names and promotes them)
   if (meta.war) run.nemesis = planNemeses(meta.war, run);
+  const won = playWaves(meta, run, castle, gear, boostFor);
+  const cleared = !!run.cleared && won === army.waves.length;
+  return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
+}
+
+/** Play a run of fixed waves to its end as the greedy player (an army's, or the Nemesis War's Muster): returns the last wave won. */
+export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? newCastle(), gear = false, boostFor?: (h: Owned) => Boost): number {
+  const army = waveArmyOf(run)!;
   let won = 0;
   while (!run.over) {
     autoRound(run, meta, gear);
@@ -120,7 +129,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     const tally = WAR_BOT.settle && meta.war ? playOutTallied(b) : (playOut(b), undefined);
     const ok = b.phase === 'won';
     if (ok) won = run.stage;
-    if (tally) noteNemesis(meta, run, b, tally, ok, run.stage);
+    if (tally) noteWar(meta, run, b, tally, ok, run.stage);
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(castle)));
@@ -128,8 +137,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   // (RUN-GEAR: what the run found comes home, worn or to the stash, so the save's later runs fight in it; `RUN_GEAR_KEEP=0`, a tuning
   // switch, leaves it in the run, to see what keeping it does)
   if (typeof process === 'undefined' || process.env?.RUN_GEAR_KEEP !== '0') settleFinds(meta, run);
-  const cleared = !!run.cleared && won === army.waves.length;
-  return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
+  return won;
 }
 
 /**

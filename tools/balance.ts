@@ -611,7 +611,9 @@ function nemesisTable(): void {
     }
     return c;
   };
-  const war = mode === 'full' ? fullCouncil(process.argv.includes('--might') ? Number(flag('--might')) : 3) : growWar(runs, 1, party, talents, castleAt);
+  // (phase 2: the Council takes its turns between the runs that grow it, unless `--no-council` asks for phase 1's War)
+  const council = !process.argv.includes('--no-council');
+  const war = mode === 'full' ? fullCouncil(process.argv.includes('--might') ? Number(flag('--might')) : 3) : growWar(runs, 1, party, talents, castleAt, council);
   if (mode === 'harsh') harshen(war);
   // (the late armies are out of the greedy bot's reach at their own level, which was tuned for a player with hearts: `--late-plus N` fights them N levels on)
   const latePlus = process.argv.includes('--late-plus') ? Number(flag('--late-plus')) : 0;
@@ -619,6 +621,7 @@ function nemesisTable(): void {
   const might = war.members.map((n) => n.might);
   console.log(`\n5g. THE NEMESIS WAR  (${mode}: ${war.members.length} members ${mode === 'full' ? 'set, four to each army' : `grown over ${runs} runs an army`}, Might mean ${(might.reduce((a, b) => a + b, 0) / Math.max(1, might.length)).toFixed(1)}, top ${Math.max(0, ...might)}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries${talents ? ', talents learned' : ''}; mean tries (clear %))\n`);
   for (const n of war.members) console.log(`  ${pad(n.army, 10)} ${pad(n.rank, 11)} Might ${pad(String(n.might), 3)} ${pad(n.base, 18)} ${n.traits.join(', ')} | ${n.weak.join(', ')}`);
+  if (mode !== 'full') console.log(`  (${council ? `the Council took ${war.turn} turns between the runs` : 'no Council turns: phase 1’s War'})`);
   const dress = (meta: Meta): void => {
     if (!talents) return;
     for (const k of party) for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const node of tierNodes(k, t)) learn(meta, k, node.id);

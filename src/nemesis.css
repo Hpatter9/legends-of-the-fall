@@ -39,3 +39,47 @@
 .card .dreadMark { position: absolute; left: 3px; top: 3px; z-index: 1; width: 18px; height: 18px; font: 700 12px/18px var(--body, sans-serif); text-align: center; color: #f6e8ff; background: #6b3a80; border: 1px solid #d6b3e6; border-radius: 50%; box-shadow: 0 1px 3px #000a; }
 /* The board's rows stand one to a line: a name, its Might and army, and its pay read whole at 360 px. */
 .nmBoard .omGrid { grid-template-columns: minmax(0, 1fr); }
+/* Phase 2 (docs/notes/nemesis-2.md): the board's tabs, the pyramid and its seats, the News, the Fallen and the Spoils. The seats are the
+   standard gilded choice rows made compact: a face over a short name and Might. Steady colours only: nothing glows or pulses. */
+.nmBoard .omGrid.nmTabs, .nmBoard .omGrid.nmRow4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.nmBoard .nmTabs .omChoice { min-height: 44px; padding: 6px 2px; justify-content: center; text-align: center; }
+.nmBoard .nmTabs .omChoice b { font-size: 14px; }
+.nmBoard .omGrid.nmChief { grid-template-columns: minmax(0, 1fr); }
+.nmPane { display: flex; flex-direction: column; gap: 8px; }
+.omChoice.nmSeat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 6px 2px 5px; text-align: center; overflow: visible; }
+.omChoice.nmSeat > b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.15; }
+.omChoice.nmSeat > small { font-size: 11px; line-height: 1.1; }
+.omChoice.nmSeat.nmBig { flex-direction: row; justify-content: flex-start; gap: 12px; padding: 8px 10px; text-align: left; }
+.omChoice.nmSeat.nmBig > b { white-space: normal; font-size: 16px; }
+.omChoice.nmSeat.nmBig > small { font-size: 13px; letter-spacing: 1px; color: #e6c37a; }
+.omChoice.nmSeat.nmBig { display: grid; grid-template-columns: 76px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 12px; align-items: center; }
+.omChoice.nmSeat.nmBig .nmFace { grid-row: 1 / span 2; }
+.omChoice.nmSeat.nmBig > b, .omChoice.nmSeat.nmBig > small { grid-column: 2; }
+.omChoice.nmSeat.nmBig .nmInsignia { position: absolute; left: 4px; top: 4px; z-index: 2; width: 22px; height: 22px; image-rendering: pixelated; }
+.omChoice.nmSeat.nmVacant { opacity: 0.55; border-style: dashed; justify-content: center; min-height: 64px; }
+.omChoice.nmSeat.nmVacant > b { color: #8f8574; }
+.omChoice.nmSeat.nmVacant > small { white-space: normal; color: #8f8574; }
+.omChoice.nmSeat.nmBig.nmVacant { display: flex; flex-direction: column; min-height: 88px; text-align: center; }
+/* (the brass line from a sworn lieutenant up to its captain, through the gap above it) */
+.nmLts .omChoice.nmSeat.sworn::before { content: ''; position: absolute; left: 50%; top: -8px; width: 2px; height: 8px; margin-left: -1px; background: #c9a35a; }
+.nmLts { position: relative; }
+.nmBoard .omSection:has(.nmLts) { margin-top: -2px; }
+.nmOath { position: absolute; right: 3px; top: 2px; font: 700 12px/1 var(--body, sans-serif); font-style: normal; color: #e0503c; text-shadow: 0 1px 0 #000; }
+.nmOathLine { margin: 0; padding: 2px 6px; color: #f0c2b8; border-left: 2px solid #b03a2e; }
+.nmMusterOpen { margin: 0; padding: 4px 6px; color: #f3dc9a; border-left: 2px solid #e0a830; }
+.nmIcon { width: 24px; height: 24px; flex: none; image-rendering: pixelated; }
+.nmNews, .nmFallen { display: flex; align-items: center; gap: 8px; margin: 0; padding: 3px 4px; border-bottom: 1px solid #ffffff10; }
+.nmNewsWords { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.nmNewsWords small { color: #b9ad95; font-size: 11px; }
+.nmNewsWords span, .nmNewsWords b { color: #e9dcc2; font-size: 13px; line-height: 1.25; }
+.nmNewsWords b { font: 400 14px/1.2 var(--display, serif); color: var(--ornate-brass, #e2c27a); }
+.nmNews.slain .nmNewsWords span { color: #f0c2b8; }
+.nmNews.crowned .nmNewsWords span, .nmNews.muster .nmNewsWords span { color: #f3dc9a; }
+.nmTrophies { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 10px; align-items: center; }
+.nmTrophies .nmToken { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; }
+.nmTrophies b { font: 400 17px/1.2 var(--display, serif); color: #f3dc9a; }
+.nmTrophies small { color: #d8ccb2; }
+.nmScouted { color: #f3dc9a; }
+.omPrimary.nmMuster { background: linear-gradient(180deg, #d9a63c, #8a5a14); border-color: #f3dc9a; color: #1a1006; }
+/* (the camp's Council place when the Muster is open: its count in the warchief's gold, steady) */
+.hm-battle .cpCouncilSlot .cpPlace i.cpCount.muster { color: #1a1006; background: #d9a63c; border-color: #f3dc9a; }

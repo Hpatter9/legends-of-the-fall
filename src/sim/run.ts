@@ -19,6 +19,7 @@ import { armyById, armyIndex, armyWaveBand, landOf, waveBoost, waveFoes, type Ar
 import { readRunNemesis, type RunNemesis } from './nemesis';
 import { dailyArmy } from './daily';
 import { questArmy, questBattleById } from './questBattles';
+import { musterArmy } from './muster';
 import { SWARM_HP, themeById, themeFx, themeGoalMet, type DailyTheme } from './dailyThemes';
 import { kindsOf } from './traits';
 import { bonusGold, foeAnswer, heroBoost, manaRate, moveRate, newCastle, type Castle } from './castle';
@@ -233,7 +234,10 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | MusterMode | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+/** The Nemesis War's Warchief's Muster (`muster.ts`): three waves on the warchief's army's land; `chief` is the warchief's id and `base`
+ *  his fighter, fixed as it began. */
+export type MusterMode = { kind: 'muster'; army: string; tier?: number; chief: number; base: string };
 /** A quest battle (`questBattles.ts`): the battle, the heroes of its required cast who came (slot by slot), and `practice` for a
  *  replay of one already won (it pays nothing). */
 export type QuestMode = { kind: 'quest'; quest: string; cast: string[]; practice?: boolean };
@@ -260,7 +264,7 @@ export function armyRun(seed: number, army: string, party: readonly string[] = H
   return run;
 }
 /** The difficulty tier an army run is fought on (0 Normal, for any other run too). */
-export const tierOfRun = (run: Run): number => (run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0);
+export const tierOfRun = (run: Run): number => (run.mode?.kind === 'army' || run.mode?.kind === 'muster' ? run.mode.tier ?? 0 : 0);
 
 /** The foes' proficiency in a run's fight (the joint rebalance, `Boost.prof`): the spire's and the Calamity's by the act or map (the design's
  *  "by their depth"), an army's by its tier (the daily and the quests fight the Normal tier's). */
@@ -313,7 +317,7 @@ export const relicCtx = (run: { relicMarks?: RelicMarks; gold?: number }): Relic
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
 /** The fixed run of waves a run is fighting: an army's, or a date's daily (`daily.ts`, an army in shape that is in no list and keeps no army record). */
 export const waveArmyOf = (run: Run): Army | undefined =>
-  run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : run.mode?.kind === 'quest' ? questArmy(run.mode.quest) : armyOfRun(run);
+  run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : run.mode?.kind === 'quest' ? questArmy(run.mode.quest) : run.mode?.kind === 'muster' ? musterArmy(run.mode.army, run.mode.base) : armyOfRun(run);
 /** A themed daily run's theme (DAILY-BUILDS: named in its mode when it began), or null for any other run, a daily before the themes among them. */
 export const runTheme = (run: Run): DailyTheme | null => (run.mode?.kind === 'daily' ? themeById(run.mode.theme) : null);
 /** Whether stage n of the run (its current one by default) has a boss. */
@@ -527,7 +531,7 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   const theme = runTheme(run);
   const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
   // (the Nemesis War: an army run's nemeses take their places in the wave's band, from the run's snapshot)
-  const named = !node && army && run.mode?.kind === 'army' ? armyWaveBand(army, run.stage, tierOfRun(run), run.nemesis) : undefined;
+  const named = !node && army && (run.mode?.kind === 'army' || run.mode?.kind === 'muster') ? armyWaveBand(army, run.stage, tierOfRun(run), run.nemesis) : undefined;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : named ? named.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
     ...marchBoss,
@@ -647,10 +651,10 @@ export function setSquad(run: Run, id: number, on: boolean): boolean {
 
 const KEY = 'legends.run';
 /** The tower, the calamity and a quest battle each keep their own save, so a climb (or a quest battle) survives the armies' runs and a reload (`saveSlot`). */
-export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity', quest: 'legends.questRun' } as const;
+export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity', quest: 'legends.questRun', muster: 'legends.muster' } as const;
 export type SlotKind = keyof typeof SLOT_KEYS;
 /** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
-export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => (run.relicBook = RELIC_BOOK) && store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
+export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => (run.relicBook = RELIC_BOOK) && store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' || run.mode?.kind === 'muster' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
 /** The run saved in a mode's slot, if it is still going (a lost or cleared one is no run to carry on). */
 export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
