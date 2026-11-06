@@ -137,17 +137,22 @@ async function calamity(page, inset = 0, kit = PLAIN, boss = false) {
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Enter the Rift')?.click());
   await page.waitForTimeout(3500);
   if (boss) {
-    // (the map's own boss, as the run reaches it: its fight made the way the map makes a node's fight)
+    // (the map's own boss: the crossings before it taken as cleared, the party at the boss's row, and the boss's spot entered through the
+    // map's own view, as a tap on it and Travel do)
     await page.evaluate(() => {
       const g = window.__game;
-      for (let s = 1; s <= 40; s++) {
-        if (g.b.units.some((u) => u.side === 'foe' && (u.size ?? 1) > 1)) break;
-        g.run.stage = s;
-        g.newBattle();
-      }
-      g.endIntro?.();
+      const t = g.run.tower;
+      const boss = t.map.find((n) => n.kind === 'boss');
+      t.cur = undefined;
+      t.path = t.map.filter((n) => n.id !== boss.id).map((n) => n.id);
+      t.row = boss.row;
+      g.towerView.open(g.run);
     });
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => { const g = window.__game; const id = g.run.tower.map.find((n) => n.kind === 'boss').id; g.towerView.picked = id; g.towerView.goTo(id); });
+    await page.waitForTimeout(5000);
+    await page.evaluate(() => { window.__game.endIntro?.(); document.getElementById('bossCard')?.click(); });
+    await page.waitForTimeout(500);
   }
   await page.evaluate(() => document.getElementById('auto').click());
   await page.waitForTimeout(500);
@@ -157,33 +162,19 @@ async function calamity(page, inset = 0, kit = PLAIN, boss = false) {
 /** An Eidolon's trial (Nivra's, the chain's fourth part, as tools/eidolon-trial plays it): the party suggested, the story skipped, placed by
  *  Auto, up to the boss's wave. The save holds Askel bound, so the War Horn is in the row. */
 async function trial(page, inset = 0, kit = PLAIN) {
-  await page.evaluate(([party, xp, spells, n]) => {
+  // (the save as tools/eidolon-trial has it: three armies cleared, Askel bound, every piece of Nivra's chain found, and the trial once won
+  // so it may be fought again whatever the chain's state (the same fight, as practice); put in the page's own
+  // meta, as a reload would have the page save its own over it)
+  await page.evaluate(() => {
+    const m = window.__game.meta;
     const cleared = { waves: 15, best: 15, won: 15, clears: 1, stars: { 15: 3 } };
-    const m = JSON.parse(localStorage.getItem('legends.meta'));
-    Object.assign(m, { armies: { orcs: cleared, undead: cleared, beasts: cleared }, armySeen: ['orcs', 'undead', 'beasts', 'wildwood'], scenes: ['opening'], heroesSeen: party,
-      quests: { active: [], offers: [], done: [], won: ['glassMere'], told: ['glassMere'], chains: { askel: { part: 3, progress: 0, bound: true }, nivra: { part: 3, progress: 0 } }, pieces: ['emberHeart', 'kennelCollar', 'kennelBell', 'rimeScale', 'merePearl', 'heldBreath'] },
+    Object.assign(m, { armies: { orcs: cleared, undead: cleared, beasts: cleared }, armySeen: ['orcs', 'undead', 'beasts', 'wildwood'],
+      quests: { active: [], offers: [], done: [], won: ['glassMere', 'nivraTrial'], told: ['glassMere', 'nivraTrial'], chains: { askel: { part: 3, progress: 0, bound: true }, nivra: { part: 3, progress: 0 } }, pieces: ['emberHeart', 'kennelCollar', 'kennelBell', 'rimeScale', 'merePearl', 'heldBreath'] },
       eidolons: { horn: 400, bound: ['askel'], chosen: 'askel', seen: ['askel'], confirmed: true } });
-    m.spellbook = { owned: [...spells, 'frost', 'chain'], equipped: spells.slice(0, Math.min(3, n)), ...(n > 3 ? { open: spells[3] } : {}) };
-    localStorage.setItem('legends.meta', JSON.stringify(m));
-    localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, quips: false, speed: 1 }));
-  }, [PARTY, xpAt(32), SPELLS, kit.n]);
-  await page.reload();
-  await page.waitForFunction(() => !!window.__game?.home && document.getElementById('hmBattle'), null, { timeout: 60000 });
-  await page.waitForTimeout(1500);
-  await page.evaluate(() => document.getElementById('tipSkip')?.click());
-  for (let i = 0; i < 16 && (await page.$('.earnedArrival')); i++) {
-    await page.evaluate(() => document.querySelector('.earnedArrival')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
-    await page.waitForTimeout(500);
-  }
-  await page.addStyleTag({ content: '#tip { display: none !important; }' + insetCss(inset) });
+  });
   await forceKit(page, kit);
-  await page.evaluate(() => window.__game.home.openQuests('eidolons'));
-  await page.waitForTimeout(800);
-  await page.evaluate(() => document.querySelector('.ecnChain.going .ecnGo').click());
-  await page.waitForTimeout(1000);
-  await page.evaluate(() => document.getElementById('ptSuggest').click());
-  await page.waitForTimeout(500);
-  await page.evaluate(() => document.getElementById('ptGo').click());
+  // (the trial begun as its party sheet's Go begins it, with the probe's party (the Samurai is its cast))
+  await page.evaluate((party) => { document.getElementById('home').hidden = true; window.__game.beginQuestTry('nivraTrial', party); }, PARTY);
   await page.waitForTimeout(2500);
   for (let i = 0; i < 40 && (await page.evaluate(() => window.__game.scenes.playing)); i++) {
     await page.keyboard.press('Escape');
