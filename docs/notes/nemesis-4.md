@@ -293,7 +293,7 @@ npm run balance -- --no-tables --duel --duel-seeds 4 --only orcs,undead,beasts,w
   - it gains a **duel** case (`SCENES=duel` runs it alone): a nemesis Vengeful against a placed hero planned into the wave;
   - it is measured twice, the challenge's cut-in over the deploy, and the duel's fight in its ring with its bar;
   - the sizes are 393x852, 360x780, 412x915, 360x640 and 393x852 with a 24 px top inset;
-  - **0 overlaps**, there and in every other case (PROBE_TOTAL);
+  - **0 overlaps**, there and in every other case (100 measurements over the five sizes; the run was split in two after a page-load timeout at 360x780 while the balance tools held the machine, and the second run took the four sizes left);
   - shots in `docs/samples/combat-hud/nemesis4-*`.
 - **Screens** at 393x852, 360x780 and 412x915: `docs/samples/nemesis-4/` (`node tools/nemesis/shots4.mjs`, saves in
   `tools/nemesis/saves4.ts`):
