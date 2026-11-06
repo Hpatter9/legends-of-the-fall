@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.376.0',
+    date: '2026-11-06',
+    title: 'Lighter menus, Hester\'s wares in a drawer',
+    notes: ['Menus dim the screen instead of blacking it out, text is bigger, talent pictures are larger, and Hester\'s wares slide up from the bottom so she stays in view.'],
+  },
+  {
     version: '0.375.0',
     date: '2026-11-06',
     title: 'Ten pop-ups in the ornate style',
