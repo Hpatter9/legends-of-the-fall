@@ -37,6 +37,8 @@ import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type Buildin
 import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
 import { CAL_TIER } from '../src/sim/calamity';
 import { boostOf, GRADE_BOOST, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { legacyBoost, PERKS } from '../src/sim/legacy';
+import type { Boost } from '../src/sim/battle';
 // (GB=1,1.35,1.75,2.65 tries other grade steps for the run: a tuning knob, nothing is written)
 if (process.env.GB) (GRADE_BOOST as number[]).splice(0, 4, ...process.env.GB.split(',').map(Number));
 // (CALTIER=1.28 tries another Calamity tier step, `CAL_TIER.mult`)
@@ -550,6 +552,7 @@ function tiers(): void {
  * talent row its level opens (the first of each pair), against each army on `--tiers-at` (default Elite and Legendary): the mean tries to clear it (a fresh save
  * each time, at most `MAX_TRIES`) and the share that cleared. Heroes at 100 should find the top tiers easier, but not trivial.
  */
+const BIRTHRIGHT = process.argv.includes('--birthright');
 function deepLevels(): void {
   const maxed = newCastle();
   for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
@@ -564,7 +567,7 @@ function deepLevels(): void {
       for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, t)) learn(meta, k, n.id);
     }
   };
-  console.log(`\n5f. THE DEEP LEVELS  (${party.map((k) => UNITS[k].name).join(', ')}; every hero at the level shown, a maxed castle, gear dressed${talents ? ', talents learned' : ', no talents'}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries; mean tries (clear %))\n`);
+  console.log(`\n5f. THE DEEP LEVELS  (${party.map((k) => UNITS[k].name).join(', ')}; every hero at the level shown, a maxed castle, gear dressed${talents ? ', talents learned' : ', no talents'}${BIRTHRIGHT ? ', every hero a birthright' : ''}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries; mean tries (clear %))\n`);
   for (const t of tiersAt) {
     console.log(`${TIERS[t].name}`);
     console.log([pad('  army', 22), ...LEVELS.map((L) => rpad(`Lv ${L}`, 16))].join(''));
@@ -575,11 +578,14 @@ function deepLevels(): void {
         for (let save = 1; save <= ATTEMPTS; save++) {
           const meta = savedAt(L, party, save);
           dress(meta);
-          const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
+          // (`--birthright`, Dynasties phase 6: every hero of the party an heir with a birthright, its own House's perk at its first band, laid on
+          //  as the run's snapshot lays it, `legacyBoost`)
+          const birth = (h: Owned, b: Boost): Boost => (BIRTHRIGHT && PERKS[h.kind] ? legacyBoost({ [h.kind]: { [PERKS[h.kind].kind]: PERKS[h.kind].steps[0] } }, h.kind, b) : b);
+          const boostFor = (h: Owned) => birth(h, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind)));
           let n = 0;
           let ok = false;
           while (n < MAX_TRIES && !ok) {
-            ok = playArmy(meta, army.id, mixSeed(save, 0xd33b, ARMIES.indexOf(army) * 100 + t * 10 + n), party, maxed, true, t, talents ? boostFor : undefined).cleared;
+            ok = playArmy(meta, army.id, mixSeed(save, 0xd33b, ARMIES.indexOf(army) * 100 + t * 10 + n), party, maxed, true, t, talents || BIRTHRIGHT ? boostFor : undefined).cleared;
             n++;
           }
           tries += n;

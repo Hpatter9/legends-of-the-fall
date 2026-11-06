@@ -74,7 +74,7 @@ import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
-import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, splitGuestXp } from './sim/guest';
+import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, guestsHere, splitGuestXp, takeGuest } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
 import { afterFight, canAutoQuest, maxSpeed, spendTicket, startAuto, startAutoDaily, startAutoQuest, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
@@ -120,7 +120,9 @@ import { dreadOf } from './sim/nemesisTraits';
 import { startNemesisTally, tallyNemesis, type NemesisTally } from './sim/nemesisLog';
 import { bondScenesDue } from './sim/bondScenes';
 import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
-import { counselXp, noteServed, stageOfKind } from './sim/dynasty';
+import { counselXp, fieldedOf, noteServed, stageOfKind } from './sim/dynasty';
+import { addSnapshots, birthrightSnapshot, lapsedLegacy, promiseXp, regularOf, takeRide } from './sim/heirs';
+import { heirSceneId } from './sim/heirScenes';
 import { agedLines } from './housesView';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
@@ -388,7 +390,7 @@ class Game {
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
     // (Dynasties: a Veteran's or an Elder's sprite wears the touch of the years; looks only)
-    setAgeLooks((kind) => stageOfKind(this.meta, kind));
+    setAgeLooks((kind) => stageOfKind(this.meta, kind), (kind) => fieldedOf(this.meta, kind)?.look);
     this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
     // (FIXES-4: the effects lay their tile marks on the tiles' own ground, under the fighters)
     this.fx.groundAt = (u, v) => this.boardView.groundAt(u, v);
@@ -557,6 +559,14 @@ class Game {
           if (!this.meta.war!.vengeance.length) delete this.meta.war!.vengeance;
           saveMeta(this.meta);
           void this.queueScene({ kind: 'vengeance', pair });
+        }
+        // (Dynasties, phase 6: a pair that named an heir plays its heir scene, once)
+        const heirPair = this.meta.dynasty?.scenes?.[0];
+        if (heirPair && !pair) {
+          this.meta.dynasty!.scenes = this.meta.dynasty!.scenes!.slice(1);
+          if (!this.meta.dynasty!.scenes.length) delete this.meta.dynasty!.scenes;
+          saveMeta(this.meta);
+          if (SCENES[heirSceneId(heirPair)]) void this.queueScene({ kind: 'heir', pair: heirPair });
         }
       },
       onBuilt: (site) => {
@@ -2647,10 +2657,16 @@ class Game {
       // (a trophy on a name plate is drawn from the gear atlas: it starts loading now)
       if (named?.members.some((x) => x.trophies?.length)) warmGearTextures();
     }
-    // (and of the mentors' perks)
+    // (and of the mentors' perks; Dynasties, phase 6: with the fielded bearers' birthrights, and without the perk of a mentor the banner
+    //  fields in its heir's place, whose honour lapses for the run)
     if (run.mode?.kind === 'army' && !run.legacy) {
-      const snap = legacySnapshot(this.meta, this.meta.party);
+      const snap = addSnapshots(legacySnapshot(lapsedLegacy(this.meta), this.meta.party), birthrightSnapshot(this.meta, this.meta.party));
       if (Object.keys(snap).length) run.legacy = snap;
+    }
+    // (Dynasties, phase 6: an elder of the Elders' table asked to ride today joins as the guest, free, if its heir is not in the run)
+    if (!run.over && run.stage <= 1 && !guestOf(run)) {
+      const ride = takeRide(this.meta, [...(run.pool ?? []), ...run.roster.map((h) => h.kind), ...this.meta.party], guestsHere(run), todayKey());
+      if (ride && takeGuest(run, ride, 0)) toastLines([`${regularOf(this.meta, ride)?.bearer.name ?? heroName(ride)} rides with the march as your guest`]);
     }
     this.run = run;
     this.syncPool();
@@ -3735,7 +3751,8 @@ class Game {
       // (DEPTH-BUILD: an apprentice below half its mentor's level earns half again, `legacy.ts`)
       // (Dynasties, phase 5: an Elder on the field gives the rest of the party Elder's Counsel, +5% XP)
       const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
-      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, counselXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }, fielded)));
+      // (Dynasties, phase 6: an heir in its first season has the Heir's Promise, +25% XP)
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, promiseXp(this.meta, counselXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }, fielded), todayKey())));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)

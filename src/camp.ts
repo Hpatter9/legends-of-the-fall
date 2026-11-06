@@ -8,7 +8,9 @@ import { drawAura, drawAuraGlow } from './render/auraCanvas';
 import { auraParts, type AuraPart } from './render/auraStyles';
 import type { Army } from './sim/armies';
 import { sheetInfo } from './render/sheets';
-import { canvasOf, ROWS, shrinkRig, type Small } from './render/smallRig';
+import { canvasOf, gradeSmall, ROWS, shrinkRig, type Small } from './render/smallRig';
+import { lookMatrix } from './sim/heroLooks';
+import { fieldedOf, stageOfKind } from './sim/dynasty';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { EMOTE_NAMES, EMOTES } from './tavern';
@@ -214,7 +216,9 @@ export class CampScene {
   private dress(meta: Meta): void {
     const camp = this.camp!;
     this.party.forEach((kind, i) => {
-      const sheet = lookKey(meta, kind);
+      // (Dynasties: the roaming hero wears its bearer's look, the touch of the years and an heir's tint, cut in once; a new look re-cuts it)
+      const look = lookMatrix(kind, stageOfKind(meta, kind), fieldedOf(meta, kind)?.look);
+      const sheet = `${lookKey(meta, kind)}|${look ? look.map((x) => x.toFixed(3)).join(',') : ''}`;
       const rig = heroRig(meta, kind);
       const spot = camp.heroes[i];
       if (!rig || !spot) return;
@@ -239,7 +243,7 @@ export class CampScene {
         }
         a.spot = spot;
         if (a.cut !== sheet) {
-          a.small = shrinkRig(rig, 46);
+          a.small = gradeSmall(shrinkRig(rig, 46), look);
           a.cut = sheet;
         }
         return;
@@ -248,7 +252,7 @@ export class CampScene {
         kind,
         spot,
         in: camp,
-        small: shrinkRig(rig, 46),
+        small: gradeSmall(shrinkRig(rig, 46), look),
         cut: sheet,
         x: spot.x,
         y: spot.y,

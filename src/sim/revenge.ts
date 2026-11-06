@@ -14,6 +14,7 @@
 import { armyById } from './armies';
 import type { Battle } from './battle';
 import { bondKey, levelOf } from './bonds';
+import { bloodOn } from './dynasty';
 import type { EquipSlot } from './equipment';
 import { fieldedHero } from './fightStats';
 import { heroName } from './heroNames';
@@ -90,12 +91,15 @@ export function decorate(m: Meta, s: NemSnap, n: Nemesis): NemSnap {
   const g = grudgesOn(m, n.id);
   const grudge = Object.fromEntries(Object.entries(g).map(([k, steps]) => [k, Math.round(steps * GRUDGE_SHARE * 100) / 100]));
   const avengers = avengersOf(m, n.id);
+  // (Dynasties, phase 6: the heirs fielded with a Blood Grudge on it)
+  const blood = bloodOn(m, n.id);
   return {
     ...s,
     army: n.army,
     ...(n.trophies?.length ? { trophies: n.trophies.map((t) => ({ ...t })) } : {}),
     ...(Object.keys(grudge).length ? { grudge } : {}),
     ...(Object.keys(avengers).length ? { avengers } : {}),
+    ...(blood.length ? { blood } : {}),
     ...(n.stitched ? { stitched: true as const } : {}),
     ...(Object.keys(g).length ? { slew: Object.keys(g).sort() } : {}),
     ...(n.maimed?.length ? { maimed: [...n.maimed] } : {}),

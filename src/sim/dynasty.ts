@@ -15,9 +15,10 @@
 // the day key, yyyymmdd).
 
 import { HERO_NAMES } from './heroNames';
-import { retired } from './legacy';
+import { PERKS, retired, seatedMentor } from './legacy';
 import type { Meta } from './meta';
 import { AGELESS, BASE_AGE, BEAST_LOOK, ELDER_LOOK, VETERAN_LOOK } from './dynastyWords';
+import { HEIR_LOOK_IDS } from './heroLooks';
 
 /** The numbers (one place to tune them). */
 export const DYNASTY = {
@@ -61,11 +62,41 @@ export interface Bearer {
   fate?: Fate;
   /** Up to 8 short lines, already worded ("Became a Veteran · Year 2, Autumn"). */
   memory?: string[];
+  // (phase 6, `heirs.ts`: an heir's makings)
+  /** Its parents' names (this line's elder first, then the Sworn partner's bearer). */
+  parents?: [string, string];
+  /** The Sworn partner's kind (the other parent's House, for the tree's gold thread). */
+  partner?: string;
+  /** Its look: a steady tint of the kind's sprite (`HEIR_LOOKS` in `heroLooks.ts`). */
+  look?: string;
+  /** Its birthright: the legacy perk (`PERKS` in `legacy.ts`) of this kind, at its first band, for this bearer alone. */
+  birthright?: string;
+  /** The heirloom handed to it: the equipment's id. */
+  heirloom?: number;
+  /** Its Blood Grudge: the id of the living nemesis that slew a parent (+15% against it). */
+  grudge?: number;
+  /** A passed-over candidate: the cadet line, which visits the tavern (and leads hero parties in the Calamity Rises, later). */
+  cadet?: true;
+  /** The Heir's Promise: +25% XP until this day (a day number, `dayNumber`), the heir's first season. */
+  promise?: number;
+  /** When its honour may next be changed (ms; a 7-day cooldown, as recall works). */
+  honourAt?: number;
 }
 /** A kind's House: its bearers, oldest first, and which of them holds the slot. */
 export interface Line {
   bearers: Bearer[];
   current: number;
+  /** Phase 6: an heir named and in training (`heirs.ts`): when it is done (ms), the Sworn partner, and the two candidates once drawn. */
+  heir?: { doneAt: number; partner: string; picks?: HeirPick[] };
+  /** Phase 6: the bearer fielded in the heir's place (an honoured elder: the party picker's banner); missing is the current bearer. */
+  field?: number;
+}
+/** One of an heir's two candidates. */
+export interface HeirPick {
+  name: string;
+  look: string;
+  /** The kind whose legacy perk is the birthright: the partner's for one candidate, the parent's own for the other. */
+  birthright: string;
 }
 export interface Dynasty {
   v: 1;
@@ -73,9 +104,22 @@ export interface Dynasty {
   start: number;
   lines: Record<string, Line>;
   /** This season's waves for the current bearers, by kind (the season's index with them, so a season past is settled when next read). */
-  served?: Record<string, { season: number; waves: number }>;
+  served?: Record<string, { season: number; waves: number; at?: number }>;
   /** The last season whose turn the page has told ("Spring has come"), so it is told once. */
   told?: number;
+  // (phase 6, `heirs.ts`)
+  /** The Elders' table's order: the kinds whose elder sits as a tavern regular (six seats; more take turns, one a day). */
+  regulars?: string[];
+  /** The day key the Elders' table last told its story (once a day). */
+  story?: number;
+  /** A regular asked to ride with the next march as its guest (once a day): the kind and the day key it was asked. */
+  guest?: { kind: string; day: number };
+  /** The day key a regular last rode as a guest. */
+  guestDay?: number;
+  /** The one-time note that the Hall's mentors may name an heir has been told. */
+  heirNote?: 1;
+  /** Heir scenes waiting to play at the camp (the pairs' keys). */
+  scenes?: string[];
 }
 
 /** A day key as a count of days (UTC, so a key is the same day everywhere). */
@@ -132,8 +176,26 @@ export const bearerOf = (m: Pick<Meta, 'dynasty'>, kind: string): Bearer | undef
   const l = lineOf(m, kind);
   return l?.bearers[l.current];
 };
-/** The current bearer's stage (a Youth when the kind has no line yet). */
-export const stageOfKind = (m: Pick<Meta, 'dynasty'>, kind: string): Stage => stageOf(bearerOf(m, kind)?.served ?? 0);
+/** The bearer who takes the field for a kind: an honoured elder the banner has chosen, else the current bearer (phase 6). */
+export const fieldedOf = (m: Pick<Meta, 'dynasty'>, kind: string): Bearer | undefined => {
+  const l = lineOf(m, kind);
+  if (!l) return undefined;
+  const f = l.field;
+  return (f !== undefined && f !== l.current ? l.bearers[f] : undefined) ?? l.bearers[l.current];
+};
+/** Whether the banner fields an elder in the heir's place. */
+export const fieldsElder = (m: Pick<Meta, 'dynasty'>, kind: string): boolean => {
+  const l = lineOf(m, kind);
+  return !!l && l.field !== undefined && l.field !== l.current && !!l.bearers[l.field];
+};
+/** Phase 6: the kinds whose fielded bearer bears a Blood Grudge on this nemesis (`heirs.ts`), for the run's snapshot of it. */
+export function bloodOn(m: Pick<Meta, 'dynasty'>, id: number): string[] {
+  return Object.keys(m.dynasty?.lines ?? {})
+    .filter((k) => fieldedOf(m, k)?.grudge === id)
+    .sort();
+}
+/** The fielded bearer's stage (a Youth when the kind has no line yet): its looks and its Counsel. */
+export const stageOfKind = (m: Pick<Meta, 'dynasty'>, kind: string): Stage => stageOf(fieldedOf(m, kind)?.served ?? 0);
 /** This season's waves the current bearer has fought, of the 20 it needs. */
 export function wavesThisSeason(m: Pick<Meta, 'dynasty'>, kind: string, day: number): number {
   const d = m.dynasty;
@@ -166,12 +228,15 @@ export function openDynasty(m: Meta, day: number): Aged[] {
     const credit = Math.min(DYNASTY.CREDIT_CAP, Math.floor((m.wavesFought?.[kind] ?? 0) / DYNASTY.CREDIT_WAVES));
     d.lines[kind] = { bearers: [firstBearer(kind, credit)], current: 0 };
   }
-  // (a hero mentoring in the Hall of Legends is bearer I with the mentor's fate; recalled, the fate is cleared)
+  // (a hero mentoring in the Hall of Legends is bearer I with the mentor's fate; recalled, the fate is cleared. Phase 6: a mentor whose
+  //  line has an heir is the elder before it, and its kind stays in the party through the heir, so only the elder's fate follows the Hall)
   for (const [kind, line] of Object.entries(d.lines)) {
     const b = line.bearers[line.current];
     if (!b) continue;
     if (retired(m, kind)) b.fate = 'mentor';
     else if (b.fate === 'mentor') delete b.fate;
+    if (!seatedMentor(m, kind))
+      for (const [i, e] of line.bearers.entries()) if (i !== line.current && e.fate === 'mentor') (delete e.fate, delete e.honourAt);
   }
   return settleSeasons(m, day);
 }
@@ -187,7 +252,9 @@ export function settleSeasons(m: Meta, day: number): Aged[] {
     if (s.season >= now) continue;
     delete d.served[kind];
     if (s.waves < DYNASTY.SEASON_WAVES) continue;
-    const b = bearerOf(m, kind);
+    // (phase 6: the waves are the bearer's who fought them: the heir, or an elder the banner fielded)
+    const l = lineOf(m, kind);
+    const b = s.at !== undefined && l?.bearers[s.at] ? l.bearers[s.at] : bearerOf(m, kind);
     if (!b) continue;
     const from = stageOf(b.served);
     b.served = Math.min(DYNASTY.MAX_SERVED, b.served + 1);
@@ -212,8 +279,11 @@ export function noteServed(m: Meta, kinds: readonly string[], share: number, day
     if (!isHero(kind) || !m.unlocked.includes(kind)) continue;
     if (!d.lines[kind]) d.lines[kind] = { bearers: [firstBearer(kind, 0)], current: 0 };
     const s = d.served?.[kind];
-    const waves = (s && s.season === now ? s.waves : 0) + share;
-    (d.served ??= {})[kind] = { season: now, waves: Math.round(waves * 2) / 2 };
+    // (phase 6: a season's waves are one bearer's; the banner changed mid-season starts the count again for the one now fielded)
+    const l = d.lines[kind];
+    const at = l.field !== undefined && l.field !== l.current && l.bearers[l.field] ? l.field : undefined;
+    const waves = (s && s.season === now && s.at === at ? s.waves : 0) + share;
+    (d.served ??= {})[kind] = { season: now, waves: Math.round(waves * 2) / 2, ...(at !== undefined ? { at } : {}) };
   }
   return aged;
 }
@@ -290,18 +360,53 @@ export function readDynasty(raw: unknown): Dynasty | undefined {
       if (FATES.includes(y.fate as Fate)) b.fate = y.fate;
       const mem = Array.isArray(y.memory) ? y.memory.filter((l): l is string => typeof l === 'string').map((l) => l.slice(0, 120)).slice(-DYNASTY.MAX_MEMORY) : [];
       if (mem.length) b.memory = mem;
+      // (phase 6: an heir's makings; an unknown kind, look or perk is dropped)
+      if (Array.isArray(y.parents) && y.parents.length === 2 && y.parents.every((p) => typeof p === 'string')) b.parents = [y.parents[0].slice(0, 40), y.parents[1].slice(0, 40)];
+      if (typeof y.partner === 'string' && isHero(y.partner)) b.partner = y.partner;
+      if (typeof y.look === 'string' && HEIR_LOOK_IDS.includes(y.look)) b.look = y.look;
+      if (typeof y.birthright === 'string' && PERKS[y.birthright]) b.birthright = y.birthright;
+      if (typeof y.heirloom === 'number' && Number.isInteger(y.heirloom) && y.heirloom >= 0) b.heirloom = y.heirloom;
+      if (typeof y.grudge === 'number' && Number.isInteger(y.grudge) && y.grudge >= 0) b.grudge = y.grudge;
+      if (y.cadet === true) b.cadet = true;
+      if (typeof y.promise === 'number' && Number.isFinite(y.promise) && y.promise > 0) b.promise = Math.floor(y.promise);
+      if (typeof y.honourAt === 'number' && Number.isFinite(y.honourAt) && y.honourAt > 0) b.honourAt = y.honourAt;
       bearers.push(b);
     }
     if (!bearers.length) continue;
-    d.lines[kind] = { bearers, current: int(x.current, 0, bearers.length - 1, bearers.length - 1) };
+    const line: Line = { bearers, current: int(x.current, 0, bearers.length - 1, bearers.length - 1) };
+    // (a cadet never holds the slot)
+    if (line.bearers[line.current].cadet) delete line.bearers[line.current].cadet;
+    const h = x.heir as Line['heir'] | undefined;
+    if (h && typeof h === 'object' && typeof h.doneAt === 'number' && Number.isFinite(h.doneAt) && typeof h.partner === 'string' && isHero(h.partner) && h.partner !== kind) {
+      line.heir = { doneAt: h.doneAt, partner: h.partner };
+      const picks = Array.isArray(h.picks) ? h.picks.filter((p) => p && typeof p.name === 'string' && p.name.trim() && typeof p.look === 'string' && HEIR_LOOK_IDS.includes(p.look) && typeof p.birthright === 'string' && !!PERKS[p.birthright]) : [];
+      if (picks.length === 2) line.heir.picks = picks.map((p) => ({ name: p.name.slice(0, 40), look: p.look, birthright: p.birthright }));
+    }
+    if (typeof x.field === 'number') {
+      const f = int(x.field, 0, bearers.length - 1, line.current);
+      const fb = bearers[f];
+      // (only an honoured elder before the current bearer can be fielded in its place, never a cadet or one fallen)
+      if (f < line.current && fb && !fb.cadet && fb.fate && fb.fate !== 'fallen') line.field = f;
+    }
+    d.lines[kind] = line;
   }
   for (const [kind, s] of Object.entries(r.served && typeof r.served === 'object' ? r.served : {})) {
     if (!d.lines[kind] || !s || typeof s !== 'object') continue;
     const waves = Number(s.waves);
     if (!Number.isFinite(waves) || waves <= 0) continue;
-    (d.served ??= {})[kind] = { season: int(s.season, 0, 1e6, 0), waves: Math.min(1e4, Math.round(waves * 2) / 2) };
+    const at = typeof s.at === 'number' && Number.isInteger(s.at) && d.lines[kind].bearers[s.at] ? s.at : undefined;
+    (d.served ??= {})[kind] = { season: int(s.season, 0, 1e6, 0), waves: Math.min(1e4, Math.round(waves * 2) / 2), ...(at !== undefined ? { at } : {}) };
   }
   if (typeof r.told === 'number' && Number.isFinite(r.told) && r.told > 0) d.told = int(r.told, 0, 1e6, 0);
+  // (phase 6: the Elders' table, the day's story and guest, the one-time note and the heir scenes waiting)
+  const regs = Array.isArray(r.regulars) ? [...new Set(r.regulars.filter((k): k is string => typeof k === 'string' && !!d.lines[k]))] : [];
+  if (regs.length) d.regulars = regs.slice(0, 60);
+  if (typeof r.story === 'number' && Number.isInteger(r.story) && r.story > 0) d.story = r.story;
+  if (r.guest && typeof r.guest === 'object' && typeof r.guest.kind === 'string' && d.lines[r.guest.kind] && typeof r.guest.day === 'number') d.guest = { kind: r.guest.kind, day: Math.floor(r.guest.day) };
+  if (typeof r.guestDay === 'number' && Number.isInteger(r.guestDay) && r.guestDay > 0) d.guestDay = r.guestDay;
+  if (r.heirNote === 1) d.heirNote = 1;
+  const sc = Array.isArray(r.scenes) ? r.scenes.filter((k): k is string => typeof k === 'string' && k.length < 60) : [];
+  if (sc.length) d.scenes = sc.slice(0, 40);
   return d;
 }
 

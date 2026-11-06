@@ -361,8 +361,11 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
   // (phase 3: the heroes with a Grudge on it, and their Avengers)
   const grudges = Object.entries(grudgesOn(m, n.id));
   const avengers = Object.entries(avengersOf(m, n.id));
-  if (grudges.length || avengers.length) {
+  // (Dynasties, phase 6: the heirs who bear a Blood Grudge on it, a parent slain, marked with the pair)
+  const blood = Object.entries(m.dynasty?.lines ?? {}).flatMap(([k, l]) => l.bearers.filter((b) => b.grudge === n.id && !b.cadet).map((b) => [k, b] as const));
+  if (grudges.length || avengers.length || blood.length) {
     const well = sectionWell(menu.body, 'Grudges', 'the heroes with a score to settle');
+    for (const [k, b] of blood) well.append(heroLine(k, `Blood Grudge · ${b.name}, heir of ${b.parents?.[0] ?? '?'} and ${b.parents?.[1] ?? '?'}: +15% against it`));
     for (const [k, steps] of grudges) well.append(heroLine(k, `Grudge · +${steps * 10}% against it (it slew ${heroName(k)}${steps > 1 ? ` ${steps} times` : ''})`));
     for (const [k, fallen] of avengers) well.append(heroLine(k, `Avenger of ${heroName(fallen)} · +15% attack on it, skills 10% quicker; a killing blow is Vengeance`));
   }

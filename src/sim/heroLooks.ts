@@ -51,3 +51,65 @@ export const AGE_LOOKS_NOT_HUMAN: Record<'veteran' | 'elder', { grey: number; li
   veteran: { grey: 0.14, lift: 0.01, cool: 0 },
   elder: { grey: 0.28, lift: 0.03, cool: 0.01 },
 };
+
+/** Dynasties, phase 6 (`heirs.ts`, docs/notes/dynasty-6.md): an heir's look, a steady tint of its kind's existing sheet (no new art), so
+ *  the heir and its parent are told apart on the board and in the Houses. Each is a gentle weight on the three colour channels and a
+ *  little more or less colour (`sat`, a share): the House's cloth and steel take a new cast, as a child's colours are its own. The
+ *  battle sprite, the camp's roaming heroes and the Houses' portraits all wear it. */
+export const HEIR_LOOKS: Record<string, { label: string; r: number; g: number; b: number; sat: number }> = {
+  ember: { label: 'ember', r: 1.16, g: 0.95, b: 0.8, sat: 0.12 },
+  moss: { label: 'moss', r: 0.86, g: 1.12, b: 0.84, sat: 0.04 },
+  dusk: { label: 'dusk', r: 1.06, g: 0.84, b: 1.18, sat: 0.04 },
+  tide: { label: 'tide', r: 0.82, g: 1.0, b: 1.2, sat: 0.08 },
+  gilt: { label: 'gilt', r: 1.14, g: 1.07, b: 0.76, sat: 0.14 },
+  ash: { label: 'ash', r: 0.97, g: 0.97, b: 1.03, sat: -0.32 },
+};
+export const HEIR_LOOK_IDS: readonly string[] = Object.keys(HEIR_LOOKS);
+
+/** A 4x5 colour matrix (rows r, g, b, a; the fifth column an offset in 0 to 1), as Pixi's ColorMatrixFilter and SVG's feColorMatrix
+ *  take it. */
+export type LookMatrix = number[];
+const IDENT: LookMatrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
+/** Saturation by `amount` (-1 grey to +1 twice), as Pixi's `saturate` builds it. */
+const satMatrix = (amount: number): LookMatrix => {
+  const x = (amount * 2) / 3 + 1;
+  const y = (x - 1) * -0.5;
+  return [x, y, y, 0, 0, y, x, y, 0, 0, y, y, x, 0, 0, 0, 0, 0, 1, 0];
+};
+/** `b` after `a`: the colour `a` makes, then `b` applied to it. */
+export function chainLooks(a: LookMatrix, b: LookMatrix): LookMatrix {
+  const out = new Array<number>(20).fill(0);
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) for (let k = 0; k < 4; k++) out[r * 5 + c] += b[r * 5 + k] * a[k * 5 + c];
+    out[r * 5 + 4] = b[r * 5 + 4] + [0, 1, 2, 3].reduce((n, k) => n + b[r * 5 + k] * a[k * 5 + 4], 0);
+  }
+  return out;
+}
+/** A bearer's whole look as one steady matrix: the touch of the years for a Veteran or an Elder (`AGE_LOOKS`), then its heir's tint
+ *  (`HEIR_LOOKS`). Null for a plain look (a Youth or a Prime with no tint). */
+export function lookMatrix(kind: string, stage: string | undefined, look: string | undefined): LookMatrix | null {
+  let m: LookMatrix | null = null;
+  if (stage === 'veteran' || stage === 'elder') {
+    const a = (NOT_HUMAN.includes(kind) ? AGE_LOOKS_NOT_HUMAN : AGE_LOOKS)[stage];
+    m = satMatrix(-a.grey);
+    const keep = 1 - a.lift;
+    for (const r of [0, 1, 2]) for (const c of [0, 1, 2]) m[r * 5 + c] *= keep;
+    m[4] += a.lift;
+    m[9] += a.lift;
+    m[14] += a.lift + a.cool;
+  }
+  const t = look ? HEIR_LOOKS[look] : undefined;
+  if (t) {
+    const tint = satMatrix(t.sat);
+    [t.r, t.g, t.b].forEach((w, r) => {
+      for (let c = 0; c < 5; c++) tint[r * 5 + c] *= w;
+    });
+    m = chainLooks(m ?? IDENT, tint);
+  }
+  return m;
+}
+/** A matrix laid on one pixel (0 to 255 channels; the alpha is kept). */
+export function lookPixel(m: LookMatrix, r: number, g: number, b: number): [number, number, number] {
+  const ch = (row: number) => Math.max(0, Math.min(255, Math.round(m[row * 5] * r + m[row * 5 + 1] * g + m[row * 5 + 2] * b + m[row * 5 + 4] * 255)));
+  return [ch(0), ch(1), ch(2)];
+}

@@ -129,6 +129,13 @@ export interface TavernShop {
   onStall(): void;
 }
 
+/** Dynasties, phase 6: the Elders' table in the Hearth Hall (`housesView.ts`): its button shows while an elder sits there or a cadet
+ *  line exists. */
+export interface TavernElders {
+  onElders(): void;
+  shown(meta: Meta): boolean;
+}
+
 /** What the tavern's upgrade pieces open (TAVERN-RANKUP). */
 export interface TavernUpgrades {
   /** The Upgrades button: the quick list of every hero with a step ready. */
@@ -223,6 +230,7 @@ export class Tavern {
   private rise = new Set<string>();
   private upBtn = el('button', 'tvUpgrades');
   private upCount = el('b', 'tvUpN');
+  private eldersBtn = el('button', 'tvRoster tvElders', 'Elders’ table');
   private riseHits = new Map<string, { x: number; y: number }>();
   /** CLIFF-ROAM: what Hester's corner shows (worked out on each update): new stock, and a visiting trader. */
   private news: ReturnType<typeof hesterNews> = { fresh: false, visitor: null };
@@ -233,6 +241,7 @@ export class Tavern {
     private quests?: TavernQuests,
     private upgrades?: TavernUpgrades,
     private shop?: TavernShop,
+    private elders?: TavernElders,
   ) {
     const roster = el('button', 'tvRoster', 'All heroes');
     roster.addEventListener('click', onRoster);
@@ -258,7 +267,10 @@ export class Tavern {
     this.upBtn.append(upMark('tvUpMark'), 'Upgrades', this.upCount);
     this.upBtn.hidden = true;
     this.upBtn.addEventListener('click', () => this.upgrades?.onUpgrades());
-    btns.append(this.questBtn, this.upBtn, trophies, roster);
+    // (Dynasties, phase 6: the Elders' table, while anyone sits at it)
+    this.eldersBtn.hidden = true;
+    this.eldersBtn.addEventListener('click', () => this.elders?.onElders());
+    btns.append(this.questBtn, this.upBtn, this.eldersBtn, trophies, roster);
     if (!this.quests) this.questBtn.hidden = true;
     this.root.append(this.canvas, this.count, btns, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
     this.ctx.imageSmoothingEnabled = false;
@@ -337,6 +349,7 @@ export class Tavern {
     // (TALENT-ARROWS: talent points to spend mark a hero too)
     this.rise = new Set(have.filter((k) => markReady(meta, k)));
     this.upBtn.hidden = !this.upgrades || !this.rise.size;
+    this.eldersBtn.hidden = !this.elders?.shown(meta);
     this.upCount.textContent = String(this.rise.size);
     this.upBtn.setAttribute('aria-label', `Upgrades: ${this.rise.size} ${this.rise.size === 1 ? 'hero has' : 'heroes have'} a rank, an awakening or talent points ready`);
     this.news = hesterNews(meta, todayKey());
