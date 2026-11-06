@@ -365,6 +365,18 @@
   i.badge { display: block; }
   .hmTab:not(.new) i.badge { display: none; }
   #hmBest { flex: 1 1 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+  /* TOPBAR-FIT: the top row (crowns, stones, the War Horn, the season, the trophy and the gear) stays one line on every phone: the trophy and
+     the gear are 44 px rounds side by side, the gaps 4 px, and the money chips no wider than their numbers */
+  #hmTop { column-gap: 4px; }
+  #hmTop > .chip { min-width: 0; padding-right: 6px; }
+  #hmTop #hmTrophy, #hmTop #hmGear { width: 44px; height: 44px; flex: none; }
+  #hmTop #hmTrophy::before, #hmTop #hmGear::before { width: 28px; height: 28px; background-size: 28px 28px; }
+  #hmTop #hmGear { margin-left: 0; }
+  #hmTop #hmBest { align-items: center; justify-content: flex-start; gap: 8px; min-height: 24px; }
+  @media (max-width: 380px) {
+    #hmTop > .chip { gap: 3px; padding-left: 3px; font-size: 10px; }
+    #hmTop > .chip img { width: 18px; height: 18px; }
+  }
   #hmPages { grid-area: pages; position: relative; overflow: hidden; }
   /* (MENU-GLITCH: the pages ride one strip, moved as one by home.ts; a page not on screen or sliding is hidden) */
   .hmTrack { position: absolute; inset: 0; }
