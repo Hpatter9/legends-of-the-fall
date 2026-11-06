@@ -28,7 +28,9 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
-import { drawAchievements } from './achievementsView';
+import { drawAchievements, toastLines } from './achievementsView';
+import { openDynasty, takeSeasonNews, SEASON_WORDS, seasonOf } from './sim/dynasty';
+import { agedLines, openHouses, openSeasonCard, seasonChip } from './housesView';
 import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
@@ -302,6 +304,9 @@ export class Home {
     this.note = note;
     // (CLOSE-SCREENS: back to a place: any flow screen still open (a result card, a recap, a summary) is closed, not left under it)
     closeFinished();
+    // (Dynasties, phase 5: the seasons open with the save's heroes, every owned kind has its line, and a season ended since is settled;
+    // a new season, and a stage reached at its turn, are told once)
+    this.openSeasons();
     // (coming back to the home screen it is simply there, on the Battle page: nothing slides)
     if ($('home').hidden) this.snapNext = true;
     $('home').hidden = false;
@@ -319,6 +324,21 @@ export class Home {
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
     void revealUnseen(this.meta).then(() => this.refresh());
     this.hooks.onOpened?.();
+  }
+
+  /** Dynasties: open the seasons (and the lines of heroes joined since), settle a season that has turned, and tell it. */
+  private openSeasons(): void {
+    const m = this.meta;
+    const before = JSON.stringify(m.dynasty ?? null);
+    const aged = openDynasty(m, todayKey());
+    const news = takeSeasonNews(m, todayKey());
+    if (JSON.stringify(m.dynasty ?? null) !== before) saveMeta(m);
+    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged)]);
+  }
+
+  /** The Houses (Dynasties): the family tree, on a line when one is given. */
+  openHouses(kind?: string): void {
+    openHouses(this.meta, todayKey(), kind);
   }
 
   /** The Dark Council's board (the Nemesis War): its Hunt opens an army, its Muster calls the page's. */
@@ -590,6 +610,19 @@ export class Home {
     chipCount('hmCrowns', ICONS.crowns, m.crowns);
     chipCount('hmStones', ICONS.stones, stonesOf(m));
     this.hooks.onTopBar?.();
+    // (Dynasties: the season's chip in the top bar, beside the stones; redrawn only when the season changes, so its icon never blinks)
+    if (m.dynasty) {
+      const key = String(seasonOf(m.dynasty, todayKey()).index);
+      const had = document.getElementById('hmSeason');
+      if (had?.dataset.key !== key) {
+        const chip = seasonChip(m, todayKey(), () => openSeasonCard(m, todayKey(), () => this.openHouses()));
+        if (chip) {
+          chip.dataset.key = key;
+          if (had) had.replaceWith(chip);
+          else $('hmTop').querySelector('.grow')!.before(chip);
+        }
+      }
+    }
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;

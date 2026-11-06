@@ -102,3 +102,14 @@ test('March orders: a plain march with nothing open gives no orders; the picks b
   // (a marked hero taken out of the party since falls to the party's first)
   assert.equal(ordersOf({ chosen: 'plain', marked: 'wizard' }, 5, party)?.marked, 'knight');
 });
+
+test('the Houses, a line, a bearer and the Seasons are standard menus (Dynasties, phase 5)', () => {
+  const src = readFileSync('src/housesView.ts', 'utf8');
+  assert.match(src, /from '\.\/ornateMenu'/);
+  for (const [fn, way] of [['openHouses', 'back'], ['openLine', 'back'], ['openBearer', 'close'], ['openSeasonCard', 'close']] as const) {
+    const body = src.slice(src.indexOf(`export function ${fn}`));
+    const own = body.slice(0, body.indexOf('\n}\n'));
+    assert.match(own, /ornateMenu\(/, `${fn} builds its page with ornateMenu`);
+    assert.match(own, new RegExp(`back: \\{ word: '${way}' \\}`), `${fn} says ${way === 'back' ? '‹ Back' : 'Close'}`);
+  }
+});

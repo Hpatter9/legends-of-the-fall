@@ -29,6 +29,7 @@ import { readWeak, type WeakRecord } from './weakness';
 import { readBonds } from './bonds';
 import { openWar, readGrudges, readWar, type Grudges, type War } from './nemesis';
 import { readMentors } from './legacy';
+import { readDynasty, type Dynasty } from './dynasty';
 import type { Calling } from './weakness';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
@@ -172,6 +173,9 @@ export interface Meta {
   war?: War;
   /** The Nemesis War, phase 3: each hero's Grudges, by the nemeses that slew it (`revenge.ts`). */
   grudges?: Grudges;
+  /** Dynasties (`dynasty.ts`): the seasons' start, each owned kind's line of bearers, and this season's waves; missing until the page first
+   *  opens them (a save from before is seeded then, with nobody made old). */
+  dynasty?: Dynasty;
   /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
   mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
   recalled?: Partial<Record<Calling, number>>;
@@ -588,6 +592,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       openWar(m);
       m.grudges = readGrudges(m.grudges);
       if (!m.grudges) delete m.grudges;
+      // (Dynasties: read as saved; a save from before has none until the page opens them, seasons counting from that day)
+      m.dynasty = readDynasty(m.dynasty);
+      if (!m.dynasty) delete m.dynasty;
       if (!m.recalled || typeof m.recalled !== 'object') delete m.recalled;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)
