@@ -74,4 +74,4 @@ of the fourth orb, the bar at 148 px).
 - `npm test -- hud boss fight` (62 pass), `npm test -- hud boss fight quip toast ui-standard` after the merge of `claude/boss-bar-auto`
   (111 pass), and the full `npm test` (2537 pass).
 - `KITS=boss node tools/combat-hud/probe.mjs --shots autoright`: every boss case at all five sizes, 0 overlaps, Auto on the line.
-- The full probe: see the hand-off.
+- The full probe (`node tools/combat-hud/probe.mjs`, after the merge): every case at all five sizes (85), 0 overlaps.
