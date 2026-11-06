@@ -4,7 +4,7 @@
 // between the screen's top and bottom parts, measured as it opens, so it never covers the HUD (`tools/combat-hud/probe.mjs` checks it). A
 // tap skips it once 0.6 s have played. Reduced motion: the portraits fade in, held still. It never touches the battle.
 //
-// Placeholder art until the cut-in's own panel is made (the prompt is in the note): the boss card's ribbon behind the band, the hero cards'
+// Art: the commissioned banners behind the two bands (expansionArt.ts), the hero cards'
 // brass frame round the faces, and the trophy drawn with the piece's own gear icon.
 
 import { paintGearIcon } from './gearIcons';
@@ -15,6 +15,7 @@ import { canSkip, cutLength, plateWords, TAUNT_CUT, type CutMode, type Taunt } f
 import { heroName } from './sim/heroNames';
 import { trophyWords } from './sim/revenge';
 import { UNITS } from './sim/units';
+import { TAUNT_FOE, TAUNT_HERO } from './expansionArt';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -116,6 +117,7 @@ export class TauntCuts {
     cut.setAttribute('aria-live', 'polite');
     cut.setAttribute('aria-label', `${t.name}, ${plateWords(t)}: “${t.line}”${t.reply && t.hero ? ` ${heroName(t.hero)}: “${t.reply}”` : ''}`);
     const band = el('div', 'tcBand');
+    band.style.setProperty('--tc-art', `url(${TAUNT_FOE})`);
     // (the nemesis: its sprite's portrait in its rank's frame, its scars on the frame)
     const foe = el('span', 'tcFace tcFoe');
     const sheet = UNITS[t.base]?.sheet;
@@ -136,6 +138,7 @@ export class TauntCuts {
     // (the hero it names answers from the right)
     if (full && t.hero && t.reply) {
       const ans = el('div', 'tcAnswer');
+      ans.style.setProperty('--tc-art', `url(${TAUNT_HERO})`);
       const face = el('span', 'tcFace tcHero');
       const hs = UNITS[t.hero]?.sheet;
       if (hs) face.append(heroFace(t.hero, 0, 96, portrait(hs, 96)));

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.386.0',
+    date: '2026-11-06',
+    title: 'Painted tactic icons and nemesis art',
+    notes: ['The tactic button shows painted Advance, Hold and Charge medallions. Nemeses wear rank badges, and the duel card and taunts get painted banners.'],
+  },
+  {
     version: '0.385.0',
     date: '2026-11-06',
     title: 'The camp\'s top bar fits on one line',

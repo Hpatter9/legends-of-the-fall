@@ -4,6 +4,7 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { COUNCIL_BADGE } from './expansionArt';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
@@ -70,7 +71,7 @@ import { heartHeld, noteSavedHeart, withHeart } from './sim/vaelkharHeart';
 import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
-import { portrait, warmPortraits } from './render/sheets';
+import { warmPortraits } from './render/sheets';
 import { councilLine, councilPlate, openNemesisBoard } from './nemesisView';
 import { councilTurn } from './sim/council';
 import { musterOpen, warchiefOf } from './sim/muster';
@@ -882,9 +883,11 @@ export class Home {
       const named = war.members.length;
       const council = place('hmCouncil', 'council', 'Council', '', `${councilPlate(m)}${muster ? '. The Warchief’s Muster is open' : ''}. ${councilLine(m)}`, () => this.openCouncil());
       council.querySelector('small')?.remove();
-      const pic = el('span', 'cpCouncilFace');
-      if (top && UNITS[top.base]) pic.append(portrait(UNITS[top.base].sheet, 30));
-      council.prepend(pic);
+      const medal = el('img', 'cpCouncilBadge');
+      medal.src = COUNCIL_BADGE;
+      medal.alt = '';
+      medal.setAttribute('aria-hidden', 'true');
+      council.prepend(medal);
       if (named) council.append(el('i', `cpCount${muster ? ' muster' : ''}`, String(named)));
       swapIn(this.camp.councilSlot, this.camp.councilSlot.querySelector('.cpPlace'), council);
     }
