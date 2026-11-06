@@ -6,8 +6,11 @@ with its own card, rim and buttons is not to be added again. `test/ui-standard.t
 
 ## What it draws
 
-- **The veil** (`.omVeil`): the dimmed, blurred page under the menu. `kind: 'card'` (the default) centres the card; `kind: 'sheet'`
-  (`.omSheet`) rises from the foot of the screen.
+- **The veil** (`.omVeil`): a light dim over the page under the menu, with no blur, so the page still reads through it (MENU-POLISH,
+  `docs/notes/menu-polish.md`). `kind: 'card'` (the default) centres the card; `kind: 'sheet'` (`.omSheet`) rises from the foot of the
+  screen, up to nine tenths of it; `kind: 'drawer'` (`.omDrawer`) slides up from the foot, stops at two thirds of the screen and dims only
+  the lower part, for a sheet over a page that should stay in sight (a ware at Hester's Stall). Text in the body is `--om-text` (14.5 px)
+  and `--om-small` (13 px).
 - **The card** (`.om`): the double brass rim (`--ornate-border-double`), slate and parchment (`ui/page.png`), `--ornate-shadow`, and a brass
   stud in each top corner.
 - **The header** (`.omHead`): the battle crest (`ui/battle-crest.png`), an eyebrow in small capitals ("The War Council"), the title in brass
@@ -19,7 +22,7 @@ with its own card, rim and buttons is not to be added again. `test/ui-standard.t
 - **The footer** (`.omFoot`): the way out on the left, the primary button on the right. A full page says "‹ Back", a card says "Close"
   (the UX rule), or a word of its own where the way out is itself a choice ("Keep the loadout", "Not now"). Buttons are 48 px tall.
 
-Escape closes a menu; `onClose` runs once however it went. Reduced motion: the veil does not fade in. Nothing glows in a loop.
+Escape closes a menu; `onClose` runs once however it went. Reduced motion: the veil does not fade in and the drawer does not slide. Nothing glows in a loop.
 
 ## How to build one
 
@@ -47,7 +50,7 @@ menuFoot(menu, { back: { word: 'close' }, primary: { label: 'Set orders', onClic
 - **The Spell Lectern** and **the Field Anvil** at the mid-boss camp.
 - **From PR #386 (INT-386, `docs/notes/int-386.md`):** the Auto card (`autoAsk.ts`; the counts are a row of four gilded choices),
   "How the altar works" (`altarHelp.ts`), a finished build's card (`builtCard.ts`), the tome sheet (`tomeView.ts`), the relic card
-  (`relicCard.ts`), the talent box and its Auto-spend confirm (`talentView.ts`) and a ware's sheet at Hester's Stall (`stallView.ts`; the
+  (`relicCard.ts`), the talent box and its Auto-spend confirm (`talentView.ts`) and a ware's drawer at Hester's Stall (`stallView.ts`; the
   stall page itself is still its own).
 
 ## Not on it yet (the list in the test)

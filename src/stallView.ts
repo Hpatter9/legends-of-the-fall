@@ -230,7 +230,8 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     body.append(el('p', 'hsNote', trader === 'caravan' ? 'The caravan comes one day a week, with one of each and no more. Hester’s regulars may buy the better wares (her standing).' : 'The Dealer stands here for the rest of the day a Calamity guardian falls. What he sells is dear, and what is bought here does not count towards Hester’s standing.'));
   };
 
-  /** A ware's page, up from the bottom: the art large, what it is, and Buy. A standard ornate sheet (INT-386). */
+  /** A ware's page, up from the bottom: the art large, what it is, and Buy. A standard ornate drawer (INT-386, MENU-POLISH): Hester and
+   *  her shelf stay in sight above it. */
   const warePage = (w: Ware | TradeWare, trader?: Trader): void => {
     play('tap');
     let kindLine = '';
@@ -238,7 +239,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       const b = bookById(w.book)!;
       kindLine = `${RARITY_WORDS[b.rarity]} ${KIND_NAMES[b.kind]}`;
     } else if (w.type === 'gear') kindLine = `${RARITY_NAMES[w.item.rarity]} ${EQUIP_BASES[w.item.base].slot} · Lv ${w.item.level}`;
-    const menu = ornateMenu({ id: 'stallSheet', kind: 'sheet', eyebrow: trader ? 'A trader’s ware' : 'Hester’s Stall', title: wareName(w), sub: kindLine || undefined });
+    const menu = ornateMenu({ id: 'stallSheet', kind: 'drawer', eyebrow: trader ? 'A trader’s ware' : 'Hester’s Stall', title: wareName(w), sub: kindLine || undefined });
     const close = (): void => menu.close();
     menu.root.addEventListener('click', (e) => e.target === menu.root && close());
     const sheet = menu.body;
