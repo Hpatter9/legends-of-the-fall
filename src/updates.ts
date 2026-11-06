@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.385.0',
+    date: '2026-11-06',
+    title: 'The camp\'s top bar fits on one line',
+    notes: ['The settings gear sits beside the trophy again on every phone. The season moves down beside the armies line, and big counts show as 999k.'],
+  },
+  {
     version: '0.384.0',
     date: '2026-11-06',
     title: 'Heirs and the Mantle',
