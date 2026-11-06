@@ -12,8 +12,8 @@ import { newMeta } from '../src/sim/meta';
 
 /** The dialogs built before the standard: each still draws its own card. Move one onto `ornateMenu` and take it off this list; never add one. */
 const BEFORE_THE_STANDARD = [
-  'altarHelp.ts', 'autoAsk.ts', 'builtCard.ts', 'chestStash.ts', 'dailyView.ts', 'earnedArrival.ts', 'eidolonBinding.ts', 'eidolonChainView.ts',
-  'questCard.ts', 'rankUpList.ts', 'revealCard.ts', 'settingsPicker.ts', 'shopView.ts', 'stallView.ts', 'summonTarot.ts', 'tomeView.ts', 'unitInfo.ts',
+  'chestStash.ts', 'dailyView.ts', 'earnedArrival.ts', 'eidolonBinding.ts', 'eidolonChainView.ts',
+  'questCard.ts', 'rankUpList.ts', 'revealCard.ts', 'settingsPicker.ts', 'shopView.ts', 'stallView.ts', 'summonTarot.ts', 'unitInfo.ts',
 ];
 
 const sources = (dir: string): string[] =>
@@ -49,6 +49,22 @@ test('the March orders, the Spell Lectern and the Field Anvil are standard menus
   for (const fn of ['openMarchOrders', 'showLectern', 'showAnvil']) {
     const body = src.slice(src.indexOf(`export function ${fn}`));
     assert.match(body.slice(0, body.indexOf('\n}\n')), /ornateMenu\(/, `${fn} builds its card with ornateMenu`);
+  }
+});
+
+test('the dialogs PR #386 restyled are standard menus (INT-386)', () => {
+  for (const [file, fns] of [['autoAsk.ts', ['askAuto']], ['altarHelp.ts', ['showAltarHelp']], ['builtCard.ts', ['showBuilt']], ['tomeView.ts', ['openTomeSheet']], ['relicCard.ts', ['openRelicCard']]] as const) {
+    const src = readFileSync(`src/${file}`, 'utf8');
+    for (const fn of fns) {
+      const body = src.slice(src.indexOf(`export function ${fn}`));
+      assert.match(body.slice(0, body.indexOf('\n}\n')), /ornateMenu\(/, `${fn} (${file}) builds its card with ornateMenu`);
+    }
+  }
+  // (the talent box and its Auto-spend confirm, and a ware's sheet at the stall, inside their pages)
+  for (const [file, inner] of [['talentView.ts', 'const ask = '], ['talentView.ts', 'const autoAsk = '], ['stallView.ts', 'const warePage = ']] as const) {
+    const src = readFileSync(`src/${file}`, 'utf8');
+    const body = src.slice(src.indexOf(inner));
+    assert.match(body.slice(0, body.indexOf('\n  };\n')), /ornateMenu\(/, `${inner.trim()} (${file}) builds its card with ornateMenu`);
   }
 });
 

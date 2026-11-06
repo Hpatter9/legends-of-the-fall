@@ -23,13 +23,6 @@
 .altarSeal li.cost::before { content:'−'; color:#ff9378; }
 
 /* "How the altar works" */
-.riftAltar .altarHelp { position:absolute; inset:0; z-index:6; display:flex; align-items:center; justify-content:center; padding:12px; background:#030b07e6; }
-.altarHelpBox { display:grid; gap:10px; padding:16px 14px; border:1px solid #d1b06b; border-radius:3px; background:linear-gradient(#10261bf8,#07150ef8); box-shadow:0 0 24px #000c,inset 0 0 0 2px #0a1714; max-height:100%; overflow:auto; }
-.altarHelpBox h3 { margin:0; text-align:center; font:700 18px/1.2 var(--display); color:#ffe0a0; }
-.altarHelpBox ul { margin:0; padding-left:16px; display:grid; gap:7px; }
-.altarHelpBox li { font-size:12.5px; line-height:1.35; color:#dcd8bf; }
-.altarHelpBox li::marker { color:#e9bc52; }
-.altarHelpBox button { min-height:46px; }
 
 /* "Your altar" */
 .altarSummary { display:grid; gap:6px; }

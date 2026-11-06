@@ -22,7 +22,7 @@ export function openHeroArtwork(kind: string, trigger: HTMLElement, awakened = 0
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'heroArtClose';
-  close.textContent = '× Close';
+  close.textContent = 'Close';
   close.setAttribute('aria-label', 'Close full artwork');
   const title = document.createElement('h2');
   const illustration = heroArtwork(kind, true);
