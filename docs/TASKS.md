@@ -985,3 +985,9 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Completion: 640×320 RGBA; low grey menhirs on a hollow 5×5 isometric square perimeter, brass bands and moss, no ground or text; submit to Expansion art PR.
 - Status: ready for review. Final image visually inspected; dimensions, RGBA and transparent centre/exterior checked with ImageMagick. Runtime checks not run: executable code unchanged.
 - Handoff: [duel ring source art](notes/expansion-duel-ring-art.md). Renderer integration is outside this task.
+### EXPANSION-BADGES — Nemesis badges and duel banner
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** two source PNGs under `art-source/expansion`, handoff and this task entry.
+- **Completion:** four centred badges in a 1024×256 transparent strip and one 512×256 transparent duel emblem; dimensions and alpha checked, visually reviewed. No runtime changes.
+- **Status:** ready for review. [Handoff](notes/expansion-art.md). Requested prior branch/PR were absent; branch recreated from main.
