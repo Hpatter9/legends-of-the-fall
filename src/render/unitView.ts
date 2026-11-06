@@ -34,6 +34,7 @@ import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
 import { AilmentFx, ailmentTint } from './ailmentLayer';
+import { gearTexture } from './gearTex';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -218,12 +219,12 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0);
+    if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0, unit.nem.trophies ?? []);
     this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []));
   }
 
   /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
-  private dressNemesis(rank: string, name: string, scars: number): void {
+  private dressNemesis(rank: string, name: string, scars: number, trophies: readonly { base: string; rarity: number }[]): void {
     const col = NEM_COLOURS[rank] ?? NEM_COLOURS.lieutenant;
     if (!this.rim.children.length)
       for (const [dx, dy] of [[-1.4, 0], [1.4, 0], [0, -1.4], [0, 1.4]]) {
@@ -245,10 +246,30 @@ export class UnitSprite {
     back.roundRect(-w / 2, -words.height - 1, w, words.height + 2, 2).fill({ color: 0x1a1008, alpha: 0.78 }).stroke({ color: col, width: 1, alpha: 0.95 });
     skull.position.set(w / 2 + 1, 0);
     plate.addChild(back, words, skull);
+    // (phase 3: the trophies it carries, each drawn small with the piece's own gear icon, left of the plate; added once the atlas is in)
+    this.plateTrophies = trophies.length ? { list: trophies, x: -w / 2 - 1, size: words.height + 2 } : null;
+    this.hangTrophies();
     plate.position.set(0, -this.tall - 11);
     plate.scale.set(1 / this.baseSize);
     this.plate = plate;
     this.plateSkull = skull;
+  }
+
+  /** A nemesis's trophies still to be hung by its plate (the gear atlas loads by URL). */
+  private plateTrophies: { list: readonly { base: string; rarity: number }[]; x: number; size: number } | null = null;
+  private hangTrophies(): void {
+    const t = this.plateTrophies;
+    if (!t || !this.plate) return;
+    const tex = t.list.map((x) => gearTexture(x.base, x.rarity));
+    if (tex.some((x) => !x)) return;
+    tex.forEach((x, i) => {
+      const ic = new Sprite(x!);
+      ic.anchor.set(1, 1);
+      ic.width = ic.height = t.size;
+      ic.position.set(t.x - i * (t.size + 1), 1);
+      this.plate!.addChild(ic);
+    });
+    this.plateTrophies = null;
   }
 
   /** Whether the hero this nemesis dreads is on the field (the plate's skull shows it). */
@@ -259,6 +280,7 @@ export class UnitSprite {
   /** Draw it at the time `t` of the fight (ms), on the board. */
   update(b: Board, t: number, fighting: boolean, victory = false, victoryMs = 0): void {
     const u = this.unit;
+    if (this.plateTrophies) this.hangTrophies();
     const def = defOf(u);
     // (a kit lends it another look for a while: a werewolf's form, a treant, a foe's guise, a wraith's shape; drawn at that shape's own scale)
     // (a summon keeps its own look: the wraith is a spirit, not the foe it was)

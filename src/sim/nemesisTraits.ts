@@ -12,6 +12,7 @@ import type { Kit } from './abilities';
 import { hasAil } from './ailments';
 import { tileAt } from './board';
 import { callingOf, type Calling } from './weakness';
+import { mixSeed } from './rng';
 import { UNITS } from './units';
 
 /** A nemesis's rank on the Council (phase 1 fills the captains and lieutenants; the warchief's seat comes with the Council's turns). */
@@ -30,8 +31,20 @@ export interface UnitNem {
   stood?: true;
   /** When its Dread hero's ultimate last staggered it. */
   staggered?: number;
-  /** The hero kind it is Vengeful against (phase 2: its blood-oath brother fell to that hero): +20% damage to it, and it goes for it first. */
+  /** The hero kind it is Vengeful against (phase 2: its blood-oath brother fell to that hero; phase 3: that hero humiliated it): +20% damage to
+   *  it, and it goes for it first while that hero is within 6 tiles. */
   veng?: string;
+  /** Phase 3 (`revenge.ts`): the heroes with a Grudge on it (it slew them), by kind: the extra share of damage they deal it (+10% a step, to 30%). */
+  grudge?: Readonly<Record<string, number>>;
+  /** The Avengers: the Sworn partners of the heroes it slew, by kind (+15% attack on it, their skills 10% quicker while it stands). */
+  avengers?: readonly string[];
+  /** Stitched (it cheated death): once, at 0 hp it stands again at 20% (the old Survivor's effect), spent when it does. */
+  stitched?: true;
+  /** The trophies it carries, for the page's name plate only (their +5% attack is in its stats already). */
+  trophies?: readonly { base: string; rarity: number }[];
+  /** Fleeing: the hash has been asked (once a fight), and when it broke off and ran, if it did. */
+  fleeAsked?: true;
+  fleeing?: number;
 }
 
 /** A trait: its words, the epithet it gives a nemesis whose first trait it is, and what immunities it grants. */
@@ -120,6 +133,8 @@ export function weakWords(w: string, heroName: (kind: string) => string): { name
   }
   if (w === 'hatesHeights') return { name: 'Hates heights', text: 'Deals 15% less while lower than its target' };
   if (w === 'glutton') return { name: 'Glutton', text: 'Gains Might from the Council’s feasts, but walks 10% slower' };
+  if (w === 'craven') return { name: 'Craven', text: 'Breaks and runs at 30% health' };
+  if (w === 'vain') return { name: 'Vain', text: 'Must be seen: always taunts in full, and will always accept a duel' };
   return { name: w, text: '' };
 }
 
@@ -127,14 +142,23 @@ export function weakWords(w: string, heroName: (kind: string) => string): { name
 export const dreadOf = (weak: readonly string[]): string | undefined => weak.find((w) => w.startsWith('dread:'))?.slice(6);
 
 /** The second weakness's pool (drawn at Might 5, weighted by its history in `nemesis.ts`): never an element it is immune to. Glutton came
- *  with the Council's feasts (phase 2); the design's Craven and Vain come with the phases that give them meaning (fleeing, duels). */
+ *  with the Council's feasts (phase 2); Craven and Vain with phase 3 (fleeing, and the duels' challenge). They go at the pool's end, so a
+ *  draw that fell on one of the old ones still does. */
 export function secondWeakPool(traits: readonly string[]): string[] {
   const immune = new Set(traits.flatMap((t) => TRAITS[t]?.immune ?? []));
-  return [...Object.entries(FEAR_ELEMENTS).filter(([, e]) => !immune.has(e.ail)).map(([k]) => `fears:${k}`), 'hatesHeights', 'glutton'];
+  return [...Object.entries(FEAR_ELEMENTS).filter(([, e]) => !immune.has(e.ail)).map(([k]) => `fears:${k}`), 'hatesHeights', 'glutton', 'craven', 'vain'];
 }
 
-/** The Vengeful's share: +20% damage to the hero it swore vengeance on. */
+/** Craven flees at this share of its health, for certain; Elusive at the usual 20%, for certain. Vain takes this much more in a duel (phase 4). */
+export const CRAVEN_AT = 0.3;
+export const VAIN_DUEL = 0.1;
+
+/** The Vengeful's share: +20% damage to the hero it swore vengeance on, whom it goes for first while within this many tiles. */
 export const VENGEFUL = 0.2;
+export const VENGEFUL_REACH = 6;
+/** The Avenger's share of attack on its partner's slayer, and how much quicker its skills come round while the slayer stands. */
+export const AVENGER_ATK = 0.15;
+export const AVENGER_CHARGE = 0.1;
 
 // ---- the hooks the fight reads -----------------------------------------------------------------------------------------------
 
@@ -184,6 +208,10 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
       }
     }
     for (const w of n.weak) if (w.startsWith('fears:') && hasAil(to, FEAR_ELEMENTS[w.slice(6)]?.ail ?? 'burn', b.t)) k *= 1.25;
+    // (phase 3: a hero it slew bears a Grudge, and that hero's Sworn partner is its Avenger)
+    const g = n.grudge?.[real.def];
+    if (g) k *= 1 + g;
+    if (n.avengers?.includes(real.def)) k *= 1 + AVENGER_ATK;
   }
   if (by.nem && to.side === 'hero') {
     const c = callingOf(to.def);
@@ -198,9 +226,9 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
   return k === 1 ? dmg : Math.max(1, Math.round(dmg * k));
 }
 
-/** A fatal blow on a Survivor: once a fight it stands again at 20%. Returns whether it was spared. */
+/** A fatal blow on a Survivor (or a Stitched nemesis, phase 3): once a fight it stands again at 20%. Returns whether it was spared. */
 export function nemSpare(to: Unit, out: BattleEvent[]): boolean {
-  if (!to.nem || to.nem.stood || !has(to, 'survivor')) return false;
+  if (!to.nem || to.nem.stood || !(has(to, 'survivor') || to.nem.stitched)) return false;
   to.nem.stood = true;
   to.hp = Math.max(1, Math.round(to.maxHp * 0.2));
   out.push({ kind: 'heal', to: to.id, amount: to.hp });
@@ -213,6 +241,15 @@ export function nemPrey(me: Unit, inReach: Unit[]): Unit[] {
   const v = me.nem?.veng;
   if (v && out.some((x) => x.def === v)) out = [...out].sort((x, y) => Number(y.def === v) - Number(x.def === v));
   return out;
+}
+
+/** A Vengeful nemesis's walk (phase 3, the design's 2.7): while its hero is within 6 tiles, that hero is the first it closes on. The rest keep
+ *  their order; a list without that hero near is returned as it was. */
+export function nemHunt(me: Unit, byDistance: Unit[]): Unit[] {
+  const v = me.nem?.veng;
+  if (!v) return byDistance;
+  const near = (x: Unit) => x.def === v && Math.abs(x.u - me.u) + Math.abs(x.v - me.v) <= VENGEFUL_REACH;
+  return byDistance.some(near) ? [...byDistance].sort((x, y) => Number(near(y)) - Number(near(x))) : byDistance;
 }
 
 /** Its walk's pace: Elusive walks 20% quicker; a Glutton 10% slower. */
@@ -228,4 +265,37 @@ export const nemStrike = (u: Unit, share: number): number => (has(u, 'hornDeaf')
 export function nemStart(u: Unit, kit: Kit | undefined): void {
   if (has(u, 'ambusher')) u.hasteUntil = 4000;
   if (has(u, 'sureFooted') && kit) u.kit = { ...kit, passive: { ...kit.passive, steady: true } };
+}
+
+// ---- fleeing (phase 3, the design's 2.6) ---------------------------------------------------------------------------------------
+
+/** Fleeing's own salt: the choice is a hash of the fight's seed, the moment and the fighter, never a draw from `b.rng`. */
+export const FLEE_SALT = 0xf1ee;
+/** A lieutenant or captain under 20% health may break off and run for the far edge (the warchief never does): this often. Elusive at 20%
+ *  for certain, Craven at 30% for certain. It walks for its own back row (row 0) and leaves the board there, or once it has run this long. */
+export const FLEE: Readonly<{ lieutenant: number; captain: number; warchief: number; at: number; ms: number }> = { lieutenant: 0.3, captain: 0.15, warchief: 0, at: 0.2, ms: 8000 };
+
+/** The share of its health under which a nemesis is asked whether it flees, and the chance it does (0: it never flees). */
+export function fleeOdds(n: Pick<UnitNem, 'rank' | 'traits' | 'weak'>): { at: number; chance: number } {
+  if (n.rank === 'warchief') return { at: 0, chance: 0 };
+  if (n.weak.includes('craven')) return { at: CRAVEN_AT, chance: 1 };
+  if (n.traits.includes('elusive')) return { at: FLEE.at, chance: 1 };
+  return { at: FLEE.at, chance: FLEE[n.rank] };
+}
+
+/**
+ * Whether a nemesis is fleeing now: asked once a fight, the first time it acts under its share of health, by a hash of the moment. Only a
+ * fighter with `nem` is ever asked, so a fight with no nemesis plays as before. A fight of the Last Stand or a duel never asks.
+ */
+export function nemFlees(b: Battle, u: Unit): boolean {
+  const n = u.nem;
+  if (!n || b.stand) return false;
+  if (n.fleeing !== undefined) return true;
+  if (n.fleeAsked) return false;
+  const o = fleeOdds(n);
+  if (!o.chance || u.hp >= u.maxHp * o.at) return false;
+  n.fleeAsked = true;
+  if ((mixSeed(b.seed, FLEE_SALT, b.t, u.id) >>> 0) / 4294967296 >= o.chance) return false;
+  n.fleeing = b.t;
+  return true;
 }

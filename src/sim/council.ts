@@ -22,6 +22,7 @@ import type { NemesisTally } from './nemesisLog';
 import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
 import type { Run } from './run';
+import { avengersNow, settleRevenge } from './revenge';
 import { giveShards, owns, type Given } from './unlock';
 import { isContent, PULL_HEROES } from './unlockRules';
 import { UNITS } from './units';
@@ -70,7 +71,7 @@ export const SCOUT_PRICE = 2;
 /** The traits a recruit may come with (what a fighter brings to the Council, not what it learned from the heroes: no immunity). */
 export const RECRUIT_TRAITS: readonly string[] = ['bane:martial', 'bane:arcane', 'bane:devout', 'bane:wild', 'ambusher', 'loneWolf', 'hillKing', 'scarred', 'arrowCatcher', 'executioner', 'healerHunter', 'elusive'];
 
-const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster' };
+const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed' };
 /** A News kind's word ("Feud"). */
 export const newsWord = (k: NewsKind): string => EVENT_WORD[k];
 
@@ -463,16 +464,24 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   const war0 = m.war;
   const openBefore = musterOpen(war0);
   const was = new Map((war0?.members ?? []).map((n) => [n.id, n]));
+  // (phase 3: each member's Avengers as the fight began, for Vengeance)
+  const avengers = avengersNow(m);
   const note = noteNemesis(m, run, b, tally, won, wave);
   const war = m.war;
   if (!war || !war0) return note;
   const lines: string[] = [];
   const muster = run.mode?.kind === 'muster';
-  if (CHEAT_DEATH.on && !muster) lines.push(...cheatDeath(war, m, run, wave, note, was));
+  // (an Avenger's killing blow is Vengeance: the slayer cannot cheat death)
+  const avenged = new Set(note.slain.filter((x) => x.by && avengers.get(x.id)?.[x.by]).map((x) => x.id));
+  const cheated = new Map<number, string>();
+  if (CHEAT_DEATH.on && !muster) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
+  // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`)
+  const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave);
+  lines.push(...rev.lines);
   for (const x of note.born) news(war, 'named', `${fullName(x)} is named a ${rankWord(x.rank).toLowerCase()}: ${x.deed === 'slew' ? 'it slew a hero' : x.deed === 'maimed' ? 'it maimed a hero' : 'it escaped you'}`);
   let trophies = 0;
   for (const x of note.slain) {
-    trophies += TROPHIES[x.rank];
+    trophies += TROPHIES[x.rank] * (rev.doubled.has(x.id) ? 2 : 1);
     const by = x.by ? ` by ${heroName(x.by)}` : '';
     news(war, 'slain', `${fullName(x)}, ${rankWord(x.rank).toLowerCase()}, is slain${by}${muster ? ' at the Muster' : ''}`);
     // (its blood-oath brother swears vengeance on the hero who struck the blow)
@@ -531,11 +540,11 @@ const CHEAT_SALT = 0xc4ea7;
  * they were): each is back on its seat with a scar more (three at most) and, by the run's rule, a Might more; what its fall paid is taken back
  * and its fallen line is struck. The design's Stitched, humiliation and the runs it sits out come with phase 3. Returns the page's lines.
  */
-function cheatDeath(war: War, m: Meta, run: Run, wave: number, note: NemNote, was: Map<number, Nemesis>): string[] {
+function cheatDeath(war: War, m: Meta, run: Run, wave: number, note: NemNote, was: Map<number, Nemesis>, avenged: ReadonlySet<number> = new Set(), cheated: Map<number, string> = new Map()): string[] {
   const out: string[] = [];
   note.slain = note.slain.filter((x) => {
     const n = was.get(x.id);
-    if (!n) return true;
+    if (!n || avenged.has(x.id)) return true;
     const chance = CHEAT[x.rank] + (n.traits.includes('survivor') || n.scars > 0 ? CHEAT_EXTRA : 0);
     if (new Rng(mixSeed(run.seed, CHEAT_SALT, wave, x.id)).next() >= chance) return true;
     m.crowns -= x.crowns;
@@ -548,6 +557,7 @@ function cheatDeath(war: War, m: Meta, run: Run, wave: number, note: NemNote, wa
     }
     remember(n, `Dragged from the field, scarred · ${armyById(n.army)?.name ?? n.army}`);
     war.members.push(n);
+    cheated.set(n.id, x.by);
     news(war, 'cheated', `${fullName(n)} is dragged from the field and lives, scarred`);
     out.push(`${fullName(n)} cheats death: dragged from the field, scarred`);
     return false;

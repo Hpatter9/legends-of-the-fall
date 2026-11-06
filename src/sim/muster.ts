@@ -13,6 +13,7 @@ import type { Meta } from './meta';
 import { snapOf, type Nemesis, type RunNemesis, type War } from './nemesis';
 import { ARMY_START_GOLD, newRun, reward, type Run } from './run';
 import { TIERS } from './tiers';
+import { decorate } from './revenge';
 
 /** Captains slain since the last Muster that open the next. */
 export const MUSTER_NEED = 2;
@@ -85,8 +86,10 @@ export function musterPlan(war: War): RunNemesis | undefined {
   const chief = warchiefOf(war);
   if (!chief) return undefined;
   const byMight = (a: Nemesis, b: Nemesis) => b.might - a.might || a.id - b.id;
-  const lts = war.members.filter((n) => n.rank === 'lieutenant' && !n.boss).sort(byMight).slice(0, MUSTER_LIEUTENANTS);
-  const caps = war.members.filter((n) => n.rank === 'captain' && !n.boss).sort(byMight).slice(0, MUSTER_CAPTAINS);
+  // (a member away licking its wounds, phase 3, does not answer the Muster)
+  const here = (n: Nemesis) => !n.boss && !war.away?.[String(n.id)];
+  const lts = war.members.filter((n) => n.rank === 'lieutenant' && here(n)).sort(byMight).slice(0, MUSTER_LIEUTENANTS);
+  const caps = war.members.filter((n) => n.rank === 'captain' && here(n)).sort(byMight).slice(0, MUSTER_CAPTAINS);
   const waves: Record<string, number[]> = { '3': [chief.id] };
   if (lts.length) waves['1'] = lts.map((n) => n.id);
   if (caps.length) waves['2'] = caps.map((n) => n.id);
@@ -119,6 +122,7 @@ export function startMuster(m: Meta, party: readonly string[], seed: number): Ru
   run.mode = { kind: 'muster', army: a.id, chief: chief.id, base: chief.base, ...(tier ? { tier } : {}) };
   run.area = landOf(a, seed);
   const plan = musterPlan(war);
-  if (plan) run.nemesis = plan;
+  // (phase 3: each member's Grudges, Avengers, trophies and taunts' makings, as an army run's are, `revenge.ts`)
+  if (plan) run.nemesis = { ...plan, members: plan.members.map((s) => decorate(m, s, war.members.find((n) => n.id === s.id)!)) };
   return run;
 }

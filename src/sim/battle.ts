@@ -25,7 +25,7 @@ import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2, PHASE_AT } from './bossPhases';
 import { tickWeakness, weakHurt } from './weakness';
-import { nemHurt, nemJump, nemMove, nemPrey, nemSpare, nemStart, type UnitNem } from './nemesisTraits';
+import { AVENGER_CHARGE, FLEE, nemFlees, nemHunt, nemHurt, nemJump, nemMove, nemPrey, nemSpare, nemStart, type UnitNem } from './nemesisTraits';
 import type { NemPlace } from './nemesis';
 import { MARCH } from './march';
 import { ritesFall, tickRites } from './chapelRooms';
@@ -171,6 +171,10 @@ export interface Unit {
   diedAt?: number;
   /** The Nemesis War (`nemesis.ts`): this foe is a named nemesis, with its traits and weaknesses (fixed from the run's snapshot); none for every other fighter. */
   nem?: UnitNem;
+  /** The Nemesis War, phase 3: a nemesis that fled the board (it is gone from the fight, not slain). */
+  fled?: true;
+  /** Phase 3: an Avenger's skills come round quicker while the nemesis that slew its partner stands (that nemesis's unit id, and the cut). */
+  avenge?: { of: number; cd: number };
   /** Multiplies the kind's attack (grade, stage); absent is x1. */
   power?: number;
   /** What a hero's six scores multiply (STATS batch 2, `statPower.ts`): its health and blows are already in `maxHp` and `power`; a skill's
@@ -866,6 +870,8 @@ export function fight(b: Battle): boolean {
   applyTraits(b);
   // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot)
   startBonds(b, b.bondSnap);
+  // (the Nemesis War, phase 3: an Avenger on the field against its partner's slayer)
+  if (b.units.some((x) => x.nem?.avengers)) startAvengers(b);
   startCombo(b);
   startDuoCombos(b);
   startKits(b);
@@ -885,6 +891,18 @@ export function fight(b: Battle): boolean {
   matchOf(b);
   rollInitiative(b);
   return true;
+}
+
+/** Phase 3: each hero that is an Avenger of a nemesis on the field takes its quicker skills while that nemesis stands. */
+function startAvengers(b: Battle): void {
+  for (const n of b.units) {
+    if (!n.nem?.avengers) continue;
+    for (const h of b.units) if (h.side === 'hero' && h.owner === undefined && !h.avenge && n.nem.avengers.includes(h.def)) h.avenge = { of: n.id, cd: 1 / (1 + AVENGER_CHARGE) };
+  }
+}
+/** A nemesis has left the fight (slain or fled): its Avengers' skills come round as usual again. */
+function endAvengers(b: Battle, n: Unit): void {
+  for (const h of b.units) if (h.avenge?.of === n.id) h.avenge = undefined;
 }
 
 /** The hero kits' fight-long state: set when a hero with a kit is on the field (a fight without one reads as before). */
@@ -1281,6 +1299,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.diedAt = b.t;
     to.step = undefined;
     to.swing = undefined;
+    if (to.nem?.avengers) endAvengers(b, to);
     // (RELICS-2: the run's tally, the Harness's haste and the Warden's Medal)
     relicFall(b, to, out, credit ? by : undefined);
     if (powersOn(b)) powerFell(b, to, out);
@@ -1472,6 +1491,8 @@ export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
+  // (the Nemesis War, phase 3: a nemesis under a fifth of its health may break off and run for its own back row, `nemFlees`)
+  if (me.nem && nemFlees(b, me)) return runOff(b, me, out);
   // (a feared fighter runs from the nearest foe and strikes nobody, STATUS-FX)
   if (isFeared(b, me)) return flee(b, me, out);
   // (BOSS-BIG: a boss's great attack is marked on the ground before it lands; a fighter standing in it steps out first, and walks round it)
@@ -1490,6 +1511,11 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // (QUESTS-3, Q5: a foe the battle asks to be spared is not struck by the heroes' own mind: they go for the others)
   if (b.spared?.length && me.side === 'hero') {
     const rest = foes.filter((x) => !b.spared!.includes(x.id));
+    if (rest.length) foes = rest;
+  }
+  // (the Nemesis War, phase 3: a nemesis running for the edge is let go; the heroes turn to the foes still fighting, while any are)
+  if (me.side === 'hero' && foes.some((x) => x.nem?.fleeing !== undefined)) {
+    const rest = foes.filter((x) => x.nem?.fleeing === undefined);
     if (rest.length) foes = rest;
   }
   // (a hero wearing a foe's guise is picked last: the foes go for any other first)
@@ -1562,7 +1588,9 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     for (let i = 0; i < walk.cost.length; i++) if (b.board.tiles[i].ground === 'shrine' && walk.cost[i] > 0 && walk.cost[i] <= SHRINE_RUN && (shrine < 0 || walk.cost[i] < walk.cost[shrine])) shrine = i;
     if (shrine >= 0) return stepTo(b, me, firstStep(walk, shrine)!, out);
   }
-  const byDistance = walkOrder(b, me, mv, [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id));
+  let byDistance = walkOrder(b, me, mv, [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id));
+  // (a Vengeful nemesis closes on its hero first while that hero is within six tiles, phase 3)
+  if (me.nem?.veng) byDistance = nemHunt(me, byDistance);
   const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
   // (STATS batch 6: a quick melee hero, DEX +3 or more, goes round to a foe's side or back)
   const flank = !def.shot && ((REST.flank && quickHero(me)) || mv === 'flank');
@@ -1679,6 +1707,39 @@ function flee(b: Battle, me: Unit, out: BattleEvent[]): void {
   }
   const i = fleeTile(b, me, steps);
   if (i >= 0) return stepTo(b, me, i, out);
+  me.busyUntil = b.t + WAIT_MS;
+}
+
+/** A fleeing nemesis (phase 3, `nemFlees`): it walks for its own back row by the cheapest way round the others, and leaves the board when it
+ *  gets there (or once it has run `FLEE.ms`), with the summons' own `fade`. It is not slain: the War reads it as escaped (`Unit.fled`). */
+function runOff(b: Battle, me: Unit, out: BattleEvent[]): void {
+  me.step = undefined;
+  me.swing = undefined;
+  const since = me.nem!.fleeing!;
+  if (since === b.t) out.push({ kind: 'style', by: me.id, what: 'Flees!' });
+  if (me.v <= 0 || b.t - since >= FLEE.ms) {
+    me.alive = false;
+    me.fled = true;
+    me.diedAt = b.t;
+    if (me.nem?.avengers) endAvengers(b, me);
+    // (it left no body: nothing raises it or feeds on it)
+    (me.kx ??= {}).spent = true;
+    (b.spells.risen ??= []).push(me.id);
+    out.push({ kind: 'fade', to: me.id });
+    return;
+  }
+  const def = defOf(me);
+  const blocked = new Set<number>();
+  for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
+  let goal = -1;
+  // (row 0's tiles are the first `w` of the board)
+  for (let i = 0; i < b.board.w; i++) {
+    if (walk.cost[i] === Infinity || walk.cost[i] === 0 || blocked.has(i)) continue;
+    if (goal < 0 || walk.cost[i] < walk.cost[goal]) goal = i;
+  }
+  const next = goal >= 0 ? firstStep(walk, goal) : null;
+  if (next !== null && !blocked.has(next)) return stepTo(b, me, next, out);
   me.busyUntil = b.t + WAIT_MS;
 }
 
