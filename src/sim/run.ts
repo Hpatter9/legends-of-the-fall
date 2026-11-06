@@ -17,6 +17,7 @@ import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './sc
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, armyWaveBand, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { readRunNemesis, type RunNemesis } from './nemesis';
+import { readRunDuel, type RunDuel } from './duel';
 import { dailyArmy } from './daily';
 import { questArmy, questBattleById } from './questBattles';
 import { musterArmy } from './muster';
@@ -161,6 +162,8 @@ export interface Run {
   bonds?: Record<string, number>;
   /** The Nemesis War (`nemesis.ts`): the nemeses this army run meets, frozen as it began, and the waves they stand in; none is none. */
   nemesis?: RunNemesis;
+  /** The Nemesis War, phase 4 (`duel.ts`): the run's one challenge, once a nemesis has made it: whom, and what became of it. */
+  duel?: RunDuel;
   /** DEPTH-BUILD: the mentors' perks for the party as the run began (`legacy.ts`); none is none. */
   legacy?: Record<string, { hp?: number; atk?: number; shield?: number }>;
   /** The castle's levels when the run began (the fights keep them); none when unset. */
@@ -275,6 +278,8 @@ export const foeProfOf = (run: Run): number => (run.tower ? depthProficiency(run
 export function keepCharges(run: Run, b: Battle): void {
   for (const h of run.roster) {
     const u = b.units.find((x) => x.side === 'hero' && x.tag === h.id);
+    // (phase 4: a hero who stood out of a duel keeps what it had)
+    if (!u && b.duel) continue;
     const alive = !!u && u.alive;
     h.charge = alive && u.charge > 0 ? u.charge : undefined;
     h.charge2 = alive && (u.charge2 ?? 0) > 0 ? u.charge2 : undefined;
@@ -723,6 +728,12 @@ export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | n
       const n = readRunNemesis(r.nemesis);
       if (n) r.nemesis = n;
       else delete r.nemesis;
+    }
+    // (phase 4: the run's one challenge, only what reads as one)
+    if (r && 'duel' in r) {
+      const d = readRunDuel(r.duel);
+      if (d) r.duel = d;
+      else delete r.duel;
     }
     return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? catalogueRun(r) : null;
   } catch {

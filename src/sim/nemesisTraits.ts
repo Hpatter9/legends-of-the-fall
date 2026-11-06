@@ -134,7 +134,7 @@ export function weakWords(w: string, heroName: (kind: string) => string): { name
   if (w === 'hatesHeights') return { name: 'Hates heights', text: 'Deals 15% less while lower than its target' };
   if (w === 'glutton') return { name: 'Glutton', text: 'Gains Might from the Council’s feasts, but walks 10% slower' };
   if (w === 'craven') return { name: 'Craven', text: 'Breaks and runs at 30% health' };
-  if (w === 'vain') return { name: 'Vain', text: 'Must be seen: always taunts in full, and will always accept a duel' };
+  if (w === 'vain') return { name: 'Vain', text: 'Must be seen: always taunts in full, always calls out a champion, and takes 10% more in a duel' };
   return { name: w, text: '' };
 }
 
@@ -149,7 +149,8 @@ export function secondWeakPool(traits: readonly string[]): string[] {
   return [...Object.entries(FEAR_ELEMENTS).filter(([, e]) => !immune.has(e.ail)).map(([k]) => `fears:${k}`), 'hatesHeights', 'glutton', 'craven', 'vain'];
 }
 
-/** Craven flees at this share of its health, for certain; Elusive at the usual 20%, for certain. Vain takes this much more in a duel (phase 4). */
+/** Craven flees at this share of its health, for certain; Elusive at the usual 20%, for certain. Vain takes this much more in a duel (phase 4,
+ *  `duel.ts`; read in `battle.ts`'s `hurt`). */
 export const CRAVEN_AT = 0.3;
 export const VAIN_DUEL = 0.1;
 

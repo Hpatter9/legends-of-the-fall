@@ -15,7 +15,7 @@ import { councilTurn } from '../../src/sim/council';
 import { MUSTER_NEED, musterOpen, startMuster, warchiefOf } from '../../src/sim/muster';
 import { newWar, type Nemesis, type War } from '../../src/sim/nemesis';
 import { mixSeed } from '../../src/sim/rng';
-import { playArmy, playWaves, savedAt, WAR_BOT } from '../autoplay';
+import { duelLog, playArmy, playWaves, savedAt, WAR_BOT } from '../autoplay';
 
 const arg = (name: string, d: number): number => {
   const i = process.argv.indexOf(name);
@@ -54,6 +54,9 @@ function main(): void {
   const around60: number[] = [];
   const at: Record<number, { mean: number; top: number; n: number }> = {};
   WAR_BOT.settle = true;
+  // (phase 4: the bot takes every duel it is offered, its champion the hero named or else its strongest; `--no-duels` as phase 3)
+  WAR_BOT.duels = !process.argv.includes('--no-duels');
+  duelLog.length = 0;
   const t0 = Date.now();
   for (let day = 0; day < DAYS; day++) {
     const level = levelOn(day);
@@ -130,6 +133,7 @@ function main(): void {
     if ([30, 45, 60, 90, 119].includes(day)) at[day] = { mean: m.length ? m.reduce((a, b) => a + b, 0) / m.length : 0, top: Math.max(0, ...m), n: m.length };
   }
   WAR_BOT.settle = false;
+  WAR_BOT.duels = false;
   console.log(`\nTHE WAR SIMULATOR  (${DAYS} days, ${RUNS} army runs a day, seed ${SEED}; ${((Date.now() - t0) / 1000).toFixed(0)} s; ${war.turn} Council turns)\n`);
   console.log('  week  seat changes (the Council\'s own)  lost to infighting  Might mean  top  empty seats (mean)  Musters  warchiefs slain');
   weeks.forEach((w, i) => {
@@ -147,6 +151,9 @@ function main(): void {
   // (phase 3: fleeing and humiliation, read from the News)
   const sum = (k: string) => weeks.reduce((s, w) => s + (w.kinds[k] ?? 0), 0);
   console.log(`  phase 3: ${sum('fled')} fled the board, ${sum('shamed')} humiliated (by fleeing or cheating death), ${sum('took')} trophies taken, ${sum('reclaimed')} brought home, ${sum('vengeance')} Vengeances (the bot's saves have no Sworn pairs)`);
+  const dn = (f: (d: (typeof duelLog)[number]) => boolean) => duelLog.filter(f).length;
+  const whys = [...new Set(duelLog.map((d) => d.why))].map((w) => `${w} ${dn((d) => d.why === w)}`).join(', ');
+  console.log(`  phase 4: ${duelLog.length} duels (${whys || 'none'}): ${dn((d) => d.out === 'won')} won, ${dn((d) => d.out === 'lost')} lost, ${dn((d) => d.out === 'timeout')} out of time (${duelLog.length ? ((100 * dn((d) => d.out === 'won')) / duelLog.length).toFixed(0) : 0}% won; captains ${dn((d) => d.rank === 'captain' && d.out === 'won')} of ${dn((d) => d.rank === 'captain')}, lieutenants ${dn((d) => d.rank === 'lieutenant' && d.out === 'won')} of ${dn((d) => d.rank === 'lieutenant')}, warchiefs ${dn((d) => d.rank === 'warchief' && d.out === 'won')} of ${dn((d) => d.rank === 'warchief')})${WAR_BOT.duels ? '' : ''}`);
   console.log(`  warchiefs: ${chiefs.length ? chiefs.map((c) => `${c.name} days ${c.from}-${c.to ?? 'now'}${c.how ? ` (${c.how})` : ''}`).join('; ') : 'none'} (target: at least 2 weeks unless the player kills him)`);
   console.log(`  the Muster opens at ${MUSTER_NEED} captains slain; final: ${war.members.length} members, ${war.fallen.length} fallen kept, ${war.heads?.length ?? 0} Warchief's Heads, ${war.trophies} War Trophies\n`);
 }

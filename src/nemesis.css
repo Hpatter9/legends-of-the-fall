@@ -144,3 +144,23 @@
 .nmCorner { position: absolute; right: 2px; top: 2px; width: 18px; height: 18px; }
 .nmCorner canvas { width: 16px; height: 16px; }
 .nmSeat.nmAway { opacity: 0.62; }
+
+/* The Nemesis War, phase 4: the challenge's card (duelView.ts) and the duel in the fight (docs/notes/nemesis-4.md) */
+.dcTop { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.dcSide { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; text-align: center; }
+.dcSide b { font: 400 15px/1.15 var(--display); color: var(--ornate-brass-hi, #f2dc9f); overflow-wrap: anywhere; }
+.dcSide small { font: 12px/1.25 var(--body); color: #d8ccb2; }
+.dcVs { font: 400 18px/1 var(--display); color: #c9a24a; letter-spacing: 1px; }
+.nmFace.dcHero { border-color: #c9a24a; background: radial-gradient(circle at 50% 40%, #2c3324, #0c100a); width: 64px; height: 64px; }
+.nmFace.dcOpen { font: 400 30px/1 var(--display); color: #e6c37a; }
+.dcStake { display: grid; grid-template-columns: 58px 1fr; column-gap: 8px; margin: 5px 0; align-items: baseline; }
+.dcStake b { font: 400 14px/1.2 var(--display); color: var(--ornate-brass, #e6c37a); }
+.dcStake small { font: 12.5px/1.35 var(--body); color: #e0d4bb; }
+.omChoice .dcChip { display: inline-flex; width: 32px; height: 32px; border-radius: 3px; overflow: hidden; box-shadow: inset 0 0 0 1px #c9a24a88; margin-bottom: 2px; }
+.omChoice .dcChip canvas { display: block; image-rendering: pixelated; }
+/* (in a duel the king's spells, his Decree and the War Horn are held: their row is put away, steady) */
+body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hidden; }
+/* (an open challenge's champions: one row, however many the squad holds) */
+.omGrid.dcStrip { grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 6px; }
+.omGrid.dcStrip .omChoice { align-items: center; justify-content: center; text-align: center; padding: 6px 2px; min-height: 64px; }
+.omGrid.dcStrip .omChoice b { font-size: 13px; }

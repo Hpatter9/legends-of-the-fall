@@ -156,6 +156,8 @@ export function keptOf(b: Battle, u: Unit): Kept {
  *  fell, or that sat the wave out, keeps none: what it had is dismissed. */
 export function keepSummons(run: Run, b: Battle): void {
   for (const h of run.roster) {
+    // (phase 4: a hero who stood out of a duel keeps what it had)
+    if (b.duel && !b.units.some((x) => x.side === 'hero' && x.tag === h.id)) continue;
     h.summons = undefined;
     h.form = undefined;
     if (!CARRY.on) continue;

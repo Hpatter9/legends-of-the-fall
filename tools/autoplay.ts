@@ -8,6 +8,7 @@ import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { planRun } from '../src/sim/revenge';
 import { noteWar } from '../src/sim/council';
+import { acceptDuel, championFor, duelOffer, settleDuelRun, startDuel } from '../src/sim/duel';
 import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, xpFor } from '../src/sim/levels';
@@ -99,7 +100,11 @@ export function frontSpots(b: Battle): [number, number][] {
 
 /** The Nemesis War in the bot's runs: off, a save's War is met but never changed (the balance tool's frozen Council); on, each wave is
  *  settled for the War as the page settles it (`tools/nemesis/warBot.ts` grows a Council this way). */
-export const WAR_BOT = { settle: false };
+export const WAR_BOT = { settle: false, duels: false };
+
+/** Phase 4: the duels the bot fought (with `WAR_BOT.duels` on, it accepts every challenge, its champion the hero named or else its
+ *  strongest), for the war simulator's report. */
+export const duelLog: { army: string; kind: string; why: string; rank: string; out: 'won' | 'lost' | 'timeout' }[] = [];
 
 /**
  * One attempt at an army from wave 1, as a greedy player: returns the waves won and whether the army fell. Gains XP into `meta`.
@@ -121,6 +126,26 @@ export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? n
   let won = 0;
   while (!run.over) {
     autoRound(run, meta, gear);
+    // (phase 4: a challenge on the wave, accepted when the bot takes duels; a duel won is the wave won)
+    const offer = WAR_BOT.duels ? duelOffer(run) : undefined;
+    if (offer) {
+      const id = championFor(run, offer)!;
+      const h = run.roster.find((x) => x.id === id)!;
+      acceptDuel(run, offer, id);
+      const d = startDuel(run, offer, id, boostFor?.(h) ?? botBoost(meta, h, run));
+      fight(d);
+      const dt = WAR_BOT.settle && meta.war ? playOutTallied(d) : (playOut(d), undefined);
+      const out = settleDuelRun(run, d)!;
+      duelLog.push({ army: army.id, kind: h.kind, why: offer.why, rank: run.nemesis?.members.find((x) => x.id === offer.id)?.rank ?? '', out });
+      if (dt) noteWar(meta, run, d, dt, out === 'won', run.stage);
+      if (out === 'won') {
+        won = run.stage;
+        noteFight(run, d);
+        finish(run, true, ratingOf(d, isBossRun(run)).stars);
+        gainXp(meta, fightXp(d, xpRate(castle)));
+        continue;
+      }
+    }
     const b = startStage(run);
     autoDeploy(b, run, meta, boostFor);
     fight(b);

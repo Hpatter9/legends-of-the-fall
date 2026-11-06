@@ -236,6 +236,39 @@ async function taunt(page) {
   return page.waitForFunction(() => document.querySelector('.tcLayer:not([hidden]) .tcAnswer'), null, { timeout: 6000 }).then(() => true, () => false);
 }
 
+/** NEMESIS-4: a duel wave. A nemesis Vengeful against a placed hero is planned into the wave, so the wave opens with its challenge: the
+ *  challenge's cut-in is measured over the deploy (the taunt's skipped first), then the card is accepted and the duel's fight measured in
+ *  its ring with the nemesis's bar and its seconds (its health raised so it is still on at the moment measured). Returns whether each showed. */
+async function duelCut(page) {
+  await page.evaluate(() => {
+    const g = window.__game;
+    const kind = g.b.units.find((u) => u.side === 'hero' && u.owner === undefined)?.def ?? 'knight';
+    const s = { id: 78, base: 'packRed', name: 'Ember-Eye', epithet: 'the Uncaught', rank: 'captain', might: 6, scars: 1, traits: ['elusive'], weak: ['dread:samurai'], vengeful: kind, army: 'beasts', met: 2, seen: true };
+    g.run.nemesis = { members: [s], waves: { [String(g.run.stage)]: [78] } };
+    delete g.run.duel;
+    g.newBattle();
+    g.endIntro?.();
+    g.autoArrange(true);
+  });
+  // (the taunt's cut-in first, then the challenge's: it names the hero, who answers)
+  await page.waitForFunction(() => document.querySelector('.tcLayer:not([hidden]) .tcCut'), null, { timeout: 6000 }).catch(() => {});
+  await page.evaluate(() => { const t = window.__game.taunts; if (t.queue.length) t.end(); });
+  return page.waitForFunction(() => document.querySelector('.tcLayer:not([hidden]) .tcAnswer') && window.__game.duelWait, null, { timeout: 6000 }).then(() => true, () => false);
+}
+async function duelFight(page) {
+  await page.evaluate(() => window.__game.taunts.end());
+  const card = await page.waitForSelector('#duelCard .omPrimary', { timeout: 6000 }).then(() => true, () => false);
+  if (!card) return false;
+  await page.click('#duelCard .omPrimary');
+  await page.evaluate(() => {
+    const b = window.__game.b;
+    const n = b.units.find((u) => u.id === b.duel?.nem);
+    if (n) { n.maxHp *= 20; n.hp = n.maxHp; }
+  });
+  await page.waitForTimeout(2500);
+  return page.evaluate(() => !!window.__game.b.duel && window.__game.b.phase === 'fight');
+}
+
 const fight = (page) => page.evaluate(() => { window.__game.endIntro?.(); document.getElementById('fight').click(); });
 
 /** Every part's boxes, and every pair of them that intersects (a part inside another, as a chip in its row, is not an overlap). */
@@ -289,7 +322,7 @@ const KITS = [kitOf(2, false), kitOf(4, false), kitOf(2, true), kitOf(3, true), 
 function casesAt() {
   const out = [];
   if (!ONLY_BOSS) {
-    for (const scene of ['start', 'mid', 'boss', 'tap', 'ult', 'taunt']) out.push({ where: 'army', party: 5, scene, kit: PLAIN });
+    for (const scene of ['start', 'mid', 'boss', 'tap', 'ult', 'taunt', 'duel']) out.push({ where: 'army', party: 5, scene, kit: PLAIN });
     for (const scene of ['start', 'mid', 'tap']) out.push({ where: 'calamity', party: 8, scene, kit: PLAIN });
   }
   for (const kit of ONLY_BOSS ? [PLAIN, ...KITS] : KITS) out.push({ where: 'army', party: 5, scene: 'boss', kit });
@@ -319,6 +352,23 @@ for (const [w, h, inset = 0] of SIZES) {
       total += r.hits.length;
       console.log(`${sizeName} party ${party} army taunt (deploy)${shown ? '' : ', NO CUT-IN'}: ${r.parts} parts, ${r.hits.length} overlaps${r.hits.length ? '\n    ' + r.hits.join('\n    ') : ''}`);
       if (shots) await page.screenshot({ path: `docs/samples/combat-hud/${shots}-${party}-taunt-${w}${h !== SIZE_OF[w]?.[1] ? `x${h}` : ''}${inset ? 's' : ''}.png` });
+      await ctx.close();
+      continue;
+    }
+    // (NEMESIS-4: the challenge's cut-in over the deploy, then the duel's fight in its ring; a case where either never showed is a failure)
+    if (scene === 'duel') {
+      const cut = await duelCut(page);
+      await page.waitForTimeout(400);
+      const a = await probe(page);
+      if (shots) await page.screenshot({ path: `docs/samples/combat-hud/${shots}-${party}-duel-cut-${w}${h !== SIZE_OF[w]?.[1] ? `x${h}` : ''}${inset ? 's' : ''}.png` });
+      const on = cut && (await duelFight(page));
+      await page.evaluate(() => document.fonts.ready);
+      const b = await probe(page);
+      const missed = (cut ? 0 : 1) + (on ? 0 : 1) + (on && !b.boss ? 1 : 0);
+      total += a.hits.length + b.hits.length + b.row.length + missed;
+      console.log(`${sizeName} party ${party} army duel (challenge)${cut ? '' : ', NO CUT-IN'}: ${a.parts} parts, ${a.hits.length} overlaps${a.hits.length ? '\n    ' + a.hits.join('\n    ') : ''}`);
+      console.log(`${sizeName} party ${party} army duel (fight)${on ? '' : ', NO DUEL'}${on && !b.boss ? ', NO DUEL BAR' : ''}: ${b.parts} parts, ${b.hits.length} overlaps${b.bossTop !== undefined ? `, duel bar at ${Math.round(b.bossTop)} px` : ''}${[...b.hits, ...b.row].length ? '\n    ' + [...b.hits, ...b.row].join('\n    ') : ''}`);
+      if (shots) await page.screenshot({ path: `docs/samples/combat-hud/${shots}-${party}-duel-fight-${w}${h !== SIZE_OF[w]?.[1] ? `x${h}` : ''}${inset ? 's' : ''}.png` });
       await ctx.close();
       continue;
     }
