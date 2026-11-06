@@ -277,7 +277,7 @@ Each would be credited in `CREDITS.md` when it is made.
 ## Checks
 
 - `npm run typecheck`: clean. `npm run web`: built.
-- **The full `npm test`:** 2,636 tests (2,621 at phase 5, with 14 new and 1 more in `ui-standard`). The run before the scene lines were added to `docs/lines/new-lines.json` gave 2,635 passing and that test failing; with them, `npm test -- new-lines ui-standard scene heirs dynasty` passes.
+- **The full `npm test`:** 2,636 tests, all passing (2,621 at phase 5, with 14 new in `heirs.test.ts` and 1 more in `ui-standard`), the identity and regression fixtures among them.
   - `test/heirs.test.ts` (14 new tests) covers:
     - naming (the stage, the level and the Sworn partner) and the 7 days of training;
     - the candidates (their stream, their names, one birthright each);
