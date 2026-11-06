@@ -114,6 +114,7 @@ import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
 import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
+import { startMuster } from './sim/muster';
 import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
 import { secretsOf } from './sim/secretHeroes';
@@ -517,6 +518,9 @@ class Game {
         const r = loadSlot('quest');
         return r?.mode?.kind === 'quest' ? r.mode.quest : null;
       },
+      // (the Nemesis War: the Warchief's Muster, from the Dark Council's board; a Muster saved part-way carries on)
+      onMuster: () => this.openMuster(),
+      musterSaved: () => !!loadSlot('muster'),
       // (EIDOLONS: the War Horn's chip beside the stones, put in once and kept to the save)
       onTopBar: () => {
         if (!this.eid) return;
@@ -2388,6 +2392,23 @@ class Game {
     this.party.openQuest(cast, qb.title, castWords(qb, cast), (k) => mayFight(qb, k), (picked) => this.beginQuestTry(id, picked));
   }
 
+  /** The Warchief's Muster (the Nemesis War, `muster.ts`): the one saved part-way carries on; else the party is picked and it begins, in its
+   *  own slot (an army run saved is not touched). */
+  private openMuster(): void {
+    const saved = loadSlot('muster');
+    if (saved) {
+      this.run = saved;
+      this.syncPool();
+      this.placed.clear();
+      return this.newBattle();
+    }
+    this.party.open('start', () => {
+      const run = startMuster(this.meta, this.meta.party, clockSeed());
+      if (!run) return this.home.open('The Muster is not open.');
+      this.startRun(run);
+    });
+  }
+
   /** A new try of a quest battle with the party picked: its own seed and slot (an army run saved is not touched), then its story, the first time. */
   private beginQuestTry(id: string, picked: readonly string[], auto?: number): void {
     const run = startQuestBattle(this.meta, id, picked);
@@ -2680,6 +2701,11 @@ class Game {
       this.closeResult();
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
+    // (the Warchief's Muster won: home, and the Dark Council's Fallen, where his Head now hangs)
+    if (this.run.cleared && this.run.mode?.kind === 'muster') {
+      this.home.open('The Warchief has fallen: the Dark Council reshuffles.');
+      return this.home.openCouncil('fallen');
+    }
     if (this.run.cleared && !this.run.tower) return void this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
@@ -2854,7 +2880,12 @@ class Game {
     const army = armyOfRun(run);
     const won = !!run.cleared;
     const daily = run.mode?.kind === 'daily' ? run.mode.date : 0;
-    const head = daily
+    const muster = run.mode?.kind === 'muster';
+    const head = muster
+      ? won
+        ? { title: 'The Warchief falls!', tone: 'won' as const, line: `The Dark Council’s Muster is broken in ${run.recap?.fights ?? 0} fights` }
+        : { title: 'The Muster holds', tone: 'lost' as const, line: `The Warchief’s Council stopped you at wave ${run.best} of 3. Losing costs nothing: call the Muster again.` }
+      : daily
       ? won
         ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${this.dailyBossOf(run)} has fallen in ${run.recap?.fights ?? 0} fights` }
         : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${this.dailyBossOf(run)} was not reached: ${dailyCleared(run)} waves cleared` }
@@ -2876,7 +2907,7 @@ class Game {
     const r = this.run;
     const army = armyOfRun(r);
     this.closeResult();
-    this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+    this.home.open(r.mode?.kind === 'muster' ? (r.cleared ? 'The Warchief has fallen: the Dark Council reshuffles.' : 'The Warchief’s Muster holds. Call it again from the Dark Council.') : r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
   /** An army's last boss has fallen: if that opens the next army, its end card comes first (UNLOCK-ONCE: unless the army's last-stand
@@ -3516,7 +3547,7 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally };
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey() };
       const earned = settleRun(this.meta, run, settled);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
       toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
@@ -3684,7 +3715,7 @@ class Game {
       const daily = run.mode?.kind === 'daily';
       const practice = run.mode?.kind === 'daily' && run.mode.practice;
       const qrun = run.mode?.kind === 'quest';
-      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : run.mode?.kind === 'muster' ? 'The Warchief falls!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
       // (WAVE-RECAP: a short card's heading names the wave and how it went, "Wave 4 of 15 won", bar the end of a cleared run)

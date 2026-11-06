@@ -7,6 +7,9 @@
 //
 // Randomness: births and fates at settle draw from `new Rng(mixSeed(run.seed, NEMESIS_SALT, wave))`, and where nemeses stand in a run from
 // `mixSeed(run.seed, PLACE_SALT)`: side streams, never the fight's. Pure rules: no Pixi, no DOM.
+//
+// Phase 2 (`docs/notes/nemesis-2.md`): the Council's turns between runs, loyalty, the warchief's seat, the War News, the Fallen, the War
+// Trophies and the Warchief's Muster live in `council.ts` and `muster.ts`; this file keeps the members, their meetings and the save.
 
 import type { Battle, Unit } from './battle';
 import { ARMIES, armyById, recordOf } from './armies';
@@ -28,7 +31,7 @@ import { fieldedHero } from './fightStats';
 export const NEMESIS_SALT = 0x4e3e51;
 export const PLACE_SALT = 0x4e3e52;
 
-/** The seats (phase 1: the captains and lieutenants; the warchief's comes with the Council's turns). */
+/** The seats: one warchief, four captains, eight lieutenants (the warchief's seat is filled by the Council's turns, `council.ts`). */
 export const SEATS: Readonly<Record<NemRank, number>> = { warchief: 1, captain: 4, lieutenant: 8 };
 /** Might runs from 1 to 10. */
 export const MIGHT_MAX = 10;
@@ -45,7 +48,7 @@ export const PAY: Readonly<Record<NemRank, number>> = { warchief: 200, captain: 
 /** How strong a nemesis is in its wave, on top of the army's own wave strength and tier: a lieutenant or captain from its base foe's stats
  *  (raised to a named fighter's level: the design's starting x2.0 / x1.3 and x3.5 / x1.5, tuned in phase 1 so that a run of one army holding
  *  four nemeses at Might 3 stays within a try of a run with none, `docs/notes/nemesis-1.md`), and per Might; a boss nemesis per Might on its boss's own wall. Normal takes half the Might. */
-export const RANK_STATS: Readonly<Record<'lieutenant' | 'captain', { hp: number; atk: number }>> = { lieutenant: { hp: 1.75, atk: 1.25 }, captain: { hp: 2.5, atk: 1.35 } };
+export const RANK_STATS: Readonly<Record<NemRank, { hp: number; atk: number }>> = { lieutenant: { hp: 1.75, atk: 1.25 }, captain: { hp: 2.5, atk: 1.35 }, warchief: { hp: 2.5, atk: 1.35 } };
 export const PER_MIGHT = { named: { hp: 0.06, atk: 0.035 }, boss: { hp: 0.03, atk: 0.02 } };
 export const SCAR_HP = 0.03;
 /** Normal's share of a nemesis's Might (the owner's answer: the War touches Normal, at half Might). */
@@ -82,6 +85,14 @@ export interface Nemesis {
   born: number;
   /** The seed of the run it last gained Might in (+1 a run at most). */
   grew?: number;
+  /** The captain a lieutenant is sworn to (phase 2: the Council's lines; none while no captain has room). */
+  sworn?: number;
+  /** Its blood-oath brother's id (a Council turn's Blood-oath). */
+  oath?: number;
+  /** The hero kind it is Vengeful against (its blood-oath brother fell to that hero): +20% damage to that hero, which it goes for first. */
+  vengeful?: string;
+  /** Its meetings in a row: won (it lived and the heroes lost) counts up, lost counts down. */
+  streak?: number;
 }
 
 export interface FallenNemesis {
@@ -94,21 +105,63 @@ export interface FallenNemesis {
   might: number;
   /** The hero kind that struck the last blow ('' when none did). */
   by: string;
-  /** How it fell: slain in a wave (the later phases add a duel, Vengeance, the Muster). */
-  how: 'slain';
+  /** How it fell: slain in a wave, at the Warchief's Muster, or by a rival of the Council (a feud, a trial, a betrayal; `foe` names the
+   *  rival). The later phases add a duel and Vengeance. */
+  how: 'slain' | 'muster' | 'council';
   tier: number;
+  /** The Council member who slew it (`how: 'council'`). */
+  foe?: string;
+  /** The war turn it fell on. */
+  turn?: number;
+}
+
+/** A line of the War News (`council.ts`): the turn, what happened and its words. */
+export type NewsKind = 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'claim' | 'crowned' | 'named' | 'slain' | 'muster';
+export interface WarNews {
+  turn: number;
+  kind: NewsKind;
+  text: string;
+}
+
+/** A Warchief's Head: a slain warchief's trophy for the castle (one per warchief). */
+export interface WarHead {
+  name: string;
+  base: string;
+  army: string;
+  might: number;
+  turn: number;
 }
 
 export interface War {
   v: 1;
-  /** Council turns taken (phase 2 counts them; 0 until then). */
+  /** Council turns taken (the COUNCIL_SALT counter, `council.ts`). */
   turn: number;
   members: Nemesis[];
   fallen: FallenNemesis[];
   nextId: number;
+  /** The War News: the last `NEWS_MAX` lines, newest first. */
+  news: WarNews[];
+  /** Captains slain since the last Muster (the Muster opens at two, `muster.ts`). */
+  musterSince: number;
+  /** War Trophies held (spent in the Spoils). */
+  trophies: number;
+  /** The trophies won on a day (the cap of twelve). */
+  trophyDay?: { key: number; got: number };
+  /** The unlock shards bought in a week (the cap of two). */
+  shardWeek?: { key: number; got: number };
+  /** The Council's turns counted on a day: after runs (at most four) and the day's first visit (one). */
+  day?: { key: number; turns: number; visit?: true };
+  /** The captain who has claimed the empty warchief's seat (he takes it on the next turn unless challenged). */
+  claim?: number;
+  /** The Warchief's Heads taken. */
+  heads?: WarHead[];
 }
 
-export const newWar = (): War => ({ v: 1, turn: 0, members: [], fallen: [], nextId: 1 });
+/** The War News keeps this many lines, and the War this many Warchief's Heads. */
+export const NEWS_MAX = 40;
+export const HEADS_MAX = 30;
+
+export const newWar = (): War => ({ v: 1, turn: 0, members: [], fallen: [], nextId: 1, news: [], musterSince: 0, trophies: 0 });
 
 /** The War opens on the save's first Normal clear of the Undead Legion. */
 export const warGate = (m: Pick<Meta, 'armies'>): boolean => recordOf(m as Meta, 'undead').clears > 0;
@@ -153,6 +206,8 @@ export interface NemSnap {
   scars: number;
   traits: string[];
   weak: string[];
+  /** The hero kind it is Vengeful against. */
+  vengeful?: string;
 }
 
 /** `Run.nemesis`: the members met this run and the waves they stand in (wave number -> member ids). */
@@ -161,7 +216,7 @@ export interface RunNemesis {
   waves: Record<string, number[]>;
 }
 
-const snapOf = (n: Nemesis): NemSnap => ({ id: n.id, base: n.base, name: n.name, epithet: n.epithet, rank: n.rank, ...(n.boss ? { boss: true as const } : {}), might: n.might, scars: n.scars, traits: [...n.traits], weak: [...n.weak] });
+export const snapOf = (n: Nemesis): NemSnap => ({ id: n.id, base: n.base, name: n.name, epithet: n.epithet, rank: n.rank, ...(n.boss ? { boss: true as const } : {}), might: n.might, scars: n.scars, traits: [...n.traits], weak: [...n.weak], ...(n.vengeful ? { vengeful: n.vengeful } : {}) });
 
 /**
  * Where the War's members of a run's army stand in it, fixed as the run begins: a boss nemesis at its own boss's wave; a captain born an
@@ -184,9 +239,13 @@ export function planNemeses(war: War | undefined, run: Run): RunNemesis | undefi
       if (w.boss && w.foes[0] === n.base) put(i + 1, n.id);
     });
   }
+  // (a warchief of no boss's look stands beside his army's last boss: the final boss of its own army's runs, phase 2)
+  const chief = mine.find((x) => !x.boss && x.rank === 'warchief');
+  const last = army.waves.length;
+  if (chief && army.waves[last - 1]?.boss === 'final') put(last, chief.id);
   // (a captain of no boss's look stands beside the mid-boss: one to a mid-boss wave, the mightiest first)
   const mids = army.waves.map((w, i) => (w.boss === 'mid' ? i + 1 : 0)).filter((i) => i && !waves[String(i)]?.length);
-  const captains = mine.filter((x) => !x.boss && x.rank !== 'lieutenant').sort(byMight);
+  const captains = mine.filter((x) => !x.boss && x.rank === 'captain').sort(byMight);
   captains.slice(0, mids.length).forEach((n, i) => put(mids[i], n.id));
   // (the lieutenants: an ordinary wave from wave 3 now and then)
   const lieutenants = mine.filter((x) => !x.boss && x.rank === 'lieutenant').sort(byMight);
@@ -206,13 +265,15 @@ export interface NemPlace {
   nem: UnitNem;
   hp: number;
   atk: number;
+  /** A warchief standing as his wave's boss (the Muster): he changes form at half health (`bossPhases.ts`, `CHIEF_PHASE`). */
+  chief?: true;
 }
 
 /** A nemesis's hp and attack multipliers on top of its place in the wave (its rank, Might and scars; Normal at half Might). */
 export function nemStats(s: Pick<NemSnap, 'rank' | 'boss' | 'might' | 'scars'>, tier: number): { hp: number; atk: number } {
   const m = Math.max(1, Math.min(MIGHT_MAX, s.might)) * (tier > 0 ? 1 : NORMAL_MIGHT);
   const per = s.boss ? PER_MIGHT.boss : PER_MIGHT.named;
-  const rank = s.boss ? { hp: 1, atk: 1 } : RANK_STATS[s.rank === 'lieutenant' ? 'lieutenant' : 'captain'];
+  const rank = s.boss ? { hp: 1, atk: 1 } : RANK_STATS[s.rank];
   return { hp: rank.hp * (1 + per.hp * m) * (1 + SCAR_HP * s.scars), atk: rank.atk * (1 + per.atk * m) };
 }
 
@@ -230,7 +291,9 @@ export function nemesisBand(rn: RunNemesis | undefined, wave: number, band: read
     const s = rn.members.find((x) => x.id === id);
     if (!s) continue;
     let at: number;
-    if (s.boss && out[0] === s.base) at = 0;
+    // (a boss nemesis is its own boss; a warchief stands as the boss of a wave whose leader is his kind, the Muster's last)
+    const lead = (s.boss || s.rank === 'warchief') && out[0] === s.base;
+    if (lead) at = 0;
     else {
       // (never the boss's own place)
       while (back > 0 && place.some((p) => p.at === back)) back--;
@@ -238,7 +301,7 @@ export function nemesisBand(rn: RunNemesis | undefined, wave: number, band: read
       at = back > 0 ? back : out.length;
       out[at] = s.base;
     }
-    place.push({ at, nem: { id: s.id, name: fullName(s), rank: s.rank, ...(s.scars ? { scars: s.scars } : {}), traits: [...s.traits], weak: [...s.weak] }, ...nemStats(s, tier) });
+    place.push({ at, nem: { id: s.id, name: fullName(s), rank: s.rank, ...(s.scars ? { scars: s.scars } : {}), traits: [...s.traits], weak: [...s.weak], ...(s.vengeful ? { veng: s.vengeful } : {}) }, ...nemStats(lead ? { ...s, boss: true } : s, tier), ...(lead && s.rank === 'warchief' && !s.boss ? { chief: true as const } : {}) });
   }
   return { band: out, place };
 }
@@ -249,7 +312,13 @@ export function nemesisBand(rn: RunNemesis | undefined, wave: number, band: read
 export interface NemNote {
   born: { id: number; name: string; epithet: string; base: string; rank: NemRank; deed: Deed }[];
   grew: { id: number; name: string; epithet: string; might: number }[];
-  slain: { id: number; name: string; epithet: string; crowns: number; by: string }[];
+  slain: { id: number; name: string; epithet: string; crowns: number; by: string; rank: NemRank; might: number; base: string; army: string }[];
+  /** The nemeses who stood in the fight and lived while the heroes lost (their underlings' loyalty rises, `council.ts`). */
+  held: number[];
+  /** What the War did besides (`council.ts`: trophies, a Council turn's news, the Muster opening), for the page's lines. */
+  council?: string[];
+  /** War Trophies won by the fight. */
+  trophies?: number;
   /** A secret learned of a nemesis met ("Morrow the Unburnt: Fireproof"). */
   learned: string[];
   /** The War opened with this fight. */
@@ -324,13 +393,13 @@ const memoryLine = (deed: Deed, f: FoeLog, b: Battle, army: string, tier: number
   }
   return `Escaped the heroes · ${where}`;
 };
-const remember = (n: Nemesis, line: string) => {
+export const remember = (n: Nemesis, line: string): void => {
   n.memory.unshift(line);
   n.memory.length = Math.min(n.memory.length, MEMORY_MAX);
 };
 
 /** The name a newborn takes: one its army's bank has not given to a member or a fallen nemesis yet. */
-function nameFor(war: War, army: string, rng: Rng): string {
+export function nameFor(war: War, army: string, rng: Rng): string {
   const bank = NEMESIS_NAMES[army] ?? NEMESIS_NAMES.orcs;
   const used = new Set([...war.members.map((n) => n.name), ...war.fallen.map((n) => n.name)]);
   const free = bank.filter((x) => !used.has(x));
@@ -354,7 +423,7 @@ function seatFor(war: War, cls: 'boss' | 'elite' | 'escort'): { rank: NemRank; d
 }
 
 /** Reveal one secret of a nemesis (the first not yet known). Returns its words, if one was. */
-function reveal(n: Nemesis): string | undefined {
+export function reveal(n: Nemesis): string | undefined {
   const s = [...n.traits, ...n.weak].find((x) => !n.known.includes(x));
   if (!s) return undefined;
   n.known.push(s);
@@ -388,18 +457,19 @@ function grow(n: Nemesis, run: Run, rng: Rng, f: FoeLog | undefined): boolean {
  * and only once the War is open; the War opens on the Undead Legion's first Normal clear. Returns what happened, for the page.
  */
 export function noteNemesis(m: Meta, run: Run, b: Battle, tally: NemesisTally | undefined, won: boolean, wave: number): NemNote {
-  const note: NemNote = { born: [], grew: [], slain: [], learned: [], crowns: 0 };
+  const note: NemNote = { born: [], grew: [], slain: [], learned: [], held: [], crowns: 0 };
   const war = m.war;
   const kind = run.mode?.kind;
-  if (war && (kind === 'army' || kind === 'calamity') && b.phase !== 'deploy') settle(war, m, run, b, tally ?? { foes: {}, healed: {}, had: {} }, won, wave, note);
+  if (war && (kind === 'army' || kind === 'calamity' || kind === 'muster') && b.phase !== 'deploy') settle(war, m, run, b, tally ?? { foes: {}, healed: {}, had: {} }, won, wave, note);
   if (openWar(m)) note.opened = true;
   return note;
 }
 
 function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won: boolean, wave: number, note: NemNote): void {
   const rng = new Rng(mixSeed(run.seed, NEMESIS_SALT, wave));
-  const tier = run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0;
-  const army = run.mode?.kind === 'army' ? run.mode.army : undefined;
+  const tier = run.mode?.kind === 'army' || run.mode?.kind === 'muster' ? run.mode.tier ?? 0 : 0;
+  const army = run.mode?.kind === 'army' || run.mode?.kind === 'muster' ? run.mode.army : undefined;
+  const how: FallenNemesis['how'] = run.mode?.kind === 'muster' ? 'muster' : 'slain';
   const foes = b.units.filter((u) => foeClass(u)).sort((a, c) => a.id - c.id);
   // (the nemeses who stood in the fight)
   for (const u of foes.filter((x) => x.nem)) {
@@ -416,12 +486,17 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
       const crowns = PAY[n.rank] * n.might;
       m.crowns += crowns;
       note.crowns += crowns;
-      note.slain.push({ id: n.id, name: n.name, epithet: n.epithet, crowns, by: killer });
+      note.slain.push({ id: n.id, name: n.name, epithet: n.epithet, crowns, by: killer, rank: n.rank, might: n.might, base: n.base, army: n.army });
       war.members = war.members.filter((x) => x !== n);
-      war.fallen.unshift({ id: n.id, name: n.name, epithet: n.epithet, base: n.base, army: n.army, rank: n.rank, might: n.might, by: killer, how: 'slain', tier });
+      war.fallen.unshift({ id: n.id, name: n.name, epithet: n.epithet, base: n.base, army: n.army, rank: n.rank, might: n.might, by: killer, how, tier, turn: war.turn });
       war.fallen.length = Math.min(war.fallen.length, FALLEN_MAX);
       continue;
     }
+    // (it lived: a meeting won when the heroes lost, else lost; phase 2's streak, for the fat and lazy and for Desertion)
+    if (!won) {
+      n.streak = Math.max(0, n.streak ?? 0) + 1;
+      note.held.push(n.id);
+    } else n.streak = Math.min(0, n.streak ?? 0) - 1;
     // (it lived: each deed promotes it, +1 Might a run at most, a new trait from this fight, a memory line)
     const deeds = f ? deedsOf(f, u, b, won) : !won ? (['escaped'] as Deed[]) : [];
     if (!deeds.length) continue;
@@ -496,7 +571,14 @@ function birth(war: War, u: Unit, f: FoeLog, b: Battle, tally: NemesisTally, won
 const str = (x: unknown, max = 80): string | undefined => (typeof x === 'string' && x.length <= max ? x : undefined);
 const int = (x: unknown, lo: number, hi: number, d: number): number => (typeof x === 'number' && Number.isFinite(x) ? Math.max(lo, Math.min(hi, Math.round(x))) : d);
 const RANKS: readonly NemRank[] = ['warchief', 'captain', 'lieutenant'];
-const secret = (s: unknown): s is string => typeof s === 'string' && (!!TRAITS[s] || s.startsWith('dread:') || s.startsWith('fears:') || s === 'hatesHeights');
+const secret = (s: unknown): s is string => typeof s === 'string' && (!!TRAITS[s] || s.startsWith('dread:') || s.startsWith('fears:') || s === 'hatesHeights' || s === 'glutton');
+const NEWS_KINDS: readonly NewsKind[] = ['recruit', 'promotion', 'feud', 'betrayal', 'feast', 'trial', 'oath', 'desertion', 'claim', 'crowned', 'named', 'slain', 'muster'];
+const dayRec = <T extends object>(x: unknown, extra: (r: Record<string, unknown>) => T): ({ key: number } & T) | undefined => {
+  if (!x || typeof x !== 'object') return undefined;
+  const r = x as Record<string, unknown>;
+  const key = int(r.key, 0, 1e9, 0);
+  return key ? { key, ...extra(r) } : undefined;
+};
 
 /** Read a saved War: unknown fields and fighters are dropped, numbers clamped, lists cut to their caps (`Meta.war`). Undefined: none. */
 export function readWar(raw: unknown): War | undefined {
@@ -540,7 +622,17 @@ export function readWar(raw: unknown): War | undefined {
       lost: int(n.lost, 0, 1e6, 0),
       born: int(n.born, 0, 1e9, 0),
       ...(typeof n.grew === 'number' && Number.isFinite(n.grew) ? { grew: n.grew } : {}),
+      ...(typeof n.sworn === 'number' && Number.isFinite(n.sworn) ? { sworn: n.sworn } : {}),
+      ...(typeof n.oath === 'number' && Number.isFinite(n.oath) ? { oath: n.oath } : {}),
+      ...(str(n.vengeful) && UNITS[n.vengeful!] ? { vengeful: n.vengeful } : {}),
+      ...(typeof n.streak === 'number' && Number.isFinite(n.streak) && n.streak ? { streak: int(n.streak, -99, 99, 0) } : {}),
     });
+  }
+  // (a sworn captain or an oath brother who is no longer a member is forgotten; an oath is kept only both ways)
+  const ids = new Set(war.members.map((n) => n.id));
+  for (const n of war.members) {
+    if (n.sworn !== undefined && (n.rank !== 'lieutenant' || war.members.find((x) => x.id === n.sworn)?.rank !== 'captain')) delete n.sworn;
+    if (n.oath !== undefined && (!ids.has(n.oath) || n.oath === n.id || war.members.find((x) => x.id === n.oath)?.oath !== n.id)) delete n.oath;
   }
   for (const x of Array.isArray(r.fallen) ? r.fallen : []) {
     if (!x || typeof x !== 'object' || war.fallen.length >= FALLEN_MAX) continue;
@@ -548,8 +640,30 @@ export function readWar(raw: unknown): War | undefined {
     const name = str(n.name);
     const base = str(n.base);
     if (!name || !base || !UNITS[base]) continue;
-    war.fallen.push({ id: int(n.id, 0, 1e9, 0), name, epithet: str(n.epithet) ?? '', base, army: str(n.army) ?? '', rank: RANKS.includes(n.rank as NemRank) ? (n.rank as NemRank) : 'lieutenant', might: int(n.might, 1, MIGHT_MAX, 1), by: str(n.by) ?? '', how: 'slain', tier: int(n.tier, 0, TIERS.length - 1, 0) });
+    const how = n.how === 'muster' || n.how === 'council' ? n.how : 'slain';
+    war.fallen.push({ id: int(n.id, 0, 1e9, 0), name, epithet: str(n.epithet) ?? '', base, army: str(n.army) ?? '', rank: RANKS.includes(n.rank as NemRank) ? (n.rank as NemRank) : 'lieutenant', might: int(n.might, 1, MIGHT_MAX, 1), by: str(n.by) ?? '', how, tier: int(n.tier, 0, TIERS.length - 1, 0), ...(str(n.foe) ? { foe: n.foe } : {}), ...(typeof n.turn === 'number' ? { turn: int(n.turn, 0, 1e9, 0) } : {}) });
   }
+  for (const x of Array.isArray(r.news) ? r.news : []) {
+    if (!x || typeof x !== 'object' || war.news.length >= NEWS_MAX) continue;
+    const l = x as Partial<WarNews>;
+    const text = str(l.text, 200);
+    if (text && NEWS_KINDS.includes(l.kind as NewsKind)) war.news.push({ turn: int(l.turn, 0, 1e9, 0), kind: l.kind as NewsKind, text });
+  }
+  for (const x of Array.isArray(r.heads) ? r.heads : []) {
+    if (!x || typeof x !== 'object' || (war.heads?.length ?? 0) >= HEADS_MAX) continue;
+    const h = x as Partial<WarHead>;
+    const name = str(h.name);
+    if (name && str(h.base) && UNITS[h.base!]) (war.heads ??= []).push({ name, base: h.base!, army: str(h.army) ?? '', might: int(h.might, 1, MIGHT_MAX, 1), turn: int(h.turn, 0, 1e9, 0) });
+  }
+  war.musterSince = int(r.musterSince, 0, 99, 0);
+  war.trophies = int(r.trophies, 0, 9999, 0);
+  const td = dayRec(r.trophyDay, (d) => ({ got: int(d.got, 0, 99, 0) }));
+  if (td) war.trophyDay = td;
+  const sw = dayRec(r.shardWeek, (d) => ({ got: int(d.got, 0, 99, 0) }));
+  if (sw) war.shardWeek = sw;
+  const dy = dayRec(r.day, (d) => ({ turns: int(d.turns, 0, 99, 0), ...(d.visit === true ? { visit: true as const } : {}) }));
+  if (dy) war.day = dy;
+  if (typeof r.claim === 'number' && war.members.some((n) => n.id === r.claim && n.rank === 'captain')) war.claim = r.claim;
   const top = Math.max(0, ...war.members.map((n) => n.id), ...war.fallen.map((n) => n.id));
   war.nextId = Math.max(top + 1, int(r.nextId, 1, 1e9, 1));
   return war;
@@ -585,6 +699,8 @@ export function nemesisLines(n: NemNote | undefined): string[] {
   for (const x of n.born) out.push(`Remembered: ${fullName(x)}, ${rankWord(x.rank).toLowerCase()}, ${DEED_WORD[x.deed]}`);
   for (const x of n.grew) out.push(`${fullName(x)} grows stronger · Might ${x.might}`);
   for (const l of n.learned) out.push(`Learned of ${l}`);
+  if (n.trophies) out.push(`War Trophies +${n.trophies}`);
+  for (const l of n.council ?? []) out.push(l);
   return out;
 }
 

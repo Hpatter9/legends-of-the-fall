@@ -23,7 +23,7 @@ import { applyRules, endBy, joinGuest, ruleEnd, spareIds, type QuestRules } from
 import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
-import { enterPhase, PHASE2 } from './bossPhases';
+import { enterPhase, PHASE2, PHASE_AT } from './bossPhases';
 import { tickWeakness, weakHurt } from './weakness';
 import { nemHurt, nemJump, nemMove, nemPrey, nemSpare, nemStart, type UnitNem } from './nemesisTraits';
 import type { NemPlace } from './nemesis';
@@ -734,6 +734,8 @@ function makeNemesis(unit: Unit, p: NemPlace): void {
   unit.hp = unit.maxHp = Math.max(1, Math.round(unit.maxHp * p.hp));
   unit.power = (unit.power ?? 1) * p.atk;
   unit.nem = { ...p.nem, traits: [...p.nem.traits], weak: [...p.nem.weak] };
+  // (a warchief standing as the Muster's last boss changes form at half health, whatever his kind: `CHIEF_PHASE`)
+  if (p.chief && !unit.phase) unit.phase = { at: PHASE_AT, done: false };
   nemStart(unit, kitOf(unit));
 }
 

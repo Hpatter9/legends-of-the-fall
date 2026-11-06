@@ -7,6 +7,7 @@
 import type { Boost, Stage } from './battle';
 import type { Area } from './board';
 import { FOES, isBoss } from './foes';
+import { UNITS } from './units';
 import { PHASE_AT } from './bossPhases';
 import type { Meta } from './meta';
 import { mixSeed } from './rng';
@@ -295,7 +296,8 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
   let boss: Boost | undefined;
   if (w?.boss) {
     const want = w.boss === 'final' ? a.last : a.mid;
-    const def = FOES[w.foes[0]];
+    // (a Muster's warchief may be any fighter: an elite or a Calamity boss is not in `FOES`, `muster.ts`)
+    const def = FOES[w.foes[0]] ?? UNITS[w.foes[0]];
     boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: t.phaseAt ?? PHASE_AT, ...(t.surge ? { surge: t.surge } : {}) } : {}) };
   }
   const lift = (tier > 0 ? a.tierLift?.[tier] ?? 1 : 1) * (t.answer ?? 1);
