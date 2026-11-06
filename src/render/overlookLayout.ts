@@ -54,10 +54,11 @@ function standPlace(h: number): Place {
   return { x: x + STAND.w / 2, foot, box: { x, y: top, w: STAND.w, h: foot + STAND.plate - top }, plate: { x, y: foot, w: STAND.w, h: STAND.plate } };
 }
 
-/** Hester's Stall's place on the overlook: the stall's picture on the ledge at the left edge, its plate under it, the tap box over both. */
-export const STALL = { w: 108, pic: 100, plate: 34 };
+/** Hester's Stall's place on the overlook: the stall's picture on the ledge at the left edge, its plate under it, the tap box over both.
+ *  CAMP-DEPTH: set a little further back up the ledge and a touch smaller than the heroes' ground, which is drawn in front of it (`camp.ts`). */
+export const STALL = { w: 100, pic: 92, plate: 32 };
 function stallPlace(h: number, heroY: number): Place {
-  const foot = Math.round(heroY - h * 0.075);
+  const foot = Math.round(heroY - h * 0.105);
   const x = 2;
   return { x: x + STALL.w / 2, foot, box: { x, y: foot - STALL.pic, w: STALL.w, h: STALL.pic + STALL.plate }, plate: { x, y: foot, w: STALL.w, h: STALL.plate } };
 }

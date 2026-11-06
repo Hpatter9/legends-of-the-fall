@@ -75,3 +75,15 @@ test('the Last Stand’s place covers the painted watchtower and its plate hangs
     assert.ok(daily.box.x + daily.box.w <= w && daily.box.x > w / 2 && daily.box.w >= 44 && daily.box.w <= 64, 'the Daily icon at the right edge');
   }
 });
+
+test('Hester’s Stall stands set back behind the heroes’ ground, on the ledge (CAMP-DEPTH)', () => {
+  for (const [w, h] of [[360, 535], [393, 607], [412, 670]]) {
+    const camp = overlookLayout(w, h);
+    const stall = camp.places.stall!;
+    // (every hero's feet are nearer than the stall's foot, so each is drawn in front of it; the fire too)
+    assert.ok(camp.heroes.every((s) => s.y > stall.foot), `heroes in front at ${w}`);
+    assert.ok(camp.fire.y > stall.foot, `the fire in front at ${w}`);
+    // (still on the ledge: its foot below the far rim, and its whole tap box inside the scene)
+    assert.ok(stall.foot > h * 0.55 && stall.box.y > 0 && stall.box.x >= 0 && stall.box.x + stall.box.w < w / 2, `on the ledge at ${w}`);
+  }
+});

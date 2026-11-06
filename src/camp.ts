@@ -129,6 +129,13 @@ export class CampScene {
   private plate = el('button', 'cpPlate');
   private canvas = el('canvas', 'cpRoom');
   private ctx = this.canvas.getContext('2d')!;
+  /** CAMP-DEPTH: the ground in front of Hester's Stall. Whoever stands nearer than the stall's foot (the heroes, the fire, Duchess) is drawn
+   *  here, over the stall's picture, so the stall reads as set back on the same cliff; it never takes a tap (they fall through to the
+   *  stall or the scene below). */
+  private front = el('canvas', 'cpRoom cpFront');
+  private fctx = this.front.getContext('2d')!;
+  /** A scratch canvas for the fire's glow on the front layer, cut to the shapes of what is drawn there. */
+  private lit: HTMLCanvasElement | null = null;
   private camp: Camp | null = null;
   /** Css pixels per scene pixel: a whole number of device pixels each (`k`) over the device pixel ratio, so it stays crisp. */
   private unit = 1;
@@ -165,8 +172,23 @@ export class CampScene {
     this.heading.append(el('h2', '', 'Battle Overlook'));
     this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Last Stand’s watchtower on the left and the Calamity citadel on the horizon.');
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.stallSlot, this.plate, this.heading);
+    // (CAMP-DEPTH: the stall sits between the scene and its front ground, and every other place, the plate and the heading stay over both)
+    this.front.setAttribute('aria-hidden', 'true');
+    this.root.append(this.canvas, this.stallSlot, this.front, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
+    // (a tap on a hero standing in front of the stall is that hero's, as a tap on him anywhere else is; the rest of the stall stays the stall's)
+    this.stallSlot.addEventListener(
+      'click',
+      (e) => {
+        if (!e.detail) return;
+        const kind = this.heroAt(e.clientX, e.clientY, true);
+        if (!kind) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.onPick(kind);
+      },
+      true,
+    );
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
     this.canvas.addEventListener('pointerdown', (e) => (this.down = { x: e.clientX, y: e.clientY, t: performance.now() }));
@@ -302,7 +324,12 @@ export class CampScene {
     this.canvas.style.width = `${w * this.unit}px`;
     this.canvas.style.height = `${h * this.unit}px`;
     this.canvas.style.left = `${(bw - w * this.unit) / 2}px`;
+    this.front.width = w;
+    this.front.height = h;
+    Object.assign(this.front.style, { width: this.canvas.style.width, height: this.canvas.style.height, left: this.canvas.style.left });
+    this.lit = null;
     this.ctx.imageSmoothingEnabled = false;
+    this.fctx.imageSmoothingEnabled = false;
     this.paintBack(art, camp);
     this.glow = this.paintGlow(camp);
     this.flame = this.cutFlame(art);
@@ -670,13 +697,14 @@ export class CampScene {
     this.army(g, camp);
     this.mist(g, camp);
     this.towerLife.draw(g, camp.w, camp.h, this.now, !this.towerSlot.classList.contains('shut'), this.reduced);
-    const list: { depth: number; paint: () => void }[] = [];
-    list.push({ depth: camp.fire.y, paint: () => this.fire(g, camp) });
-    for (const actor of this.actors.values()) list.push({ depth: actor.spot.y, paint: () => this.hero(g, actor) });
-    if (this.goat && this.goatArt) list.push({ depth: this.goatGround(camp).y, paint: () => this.duchess(g, camp) });
+    const list: { depth: number; paint: (c: CanvasRenderingContext2D) => void }[] = [];
+    list.push({ depth: camp.fire.y, paint: (c) => this.fire(c, camp) });
+    for (const actor of this.actors.values()) list.push({ depth: actor.spot.y, paint: (c) => this.hero(c, actor) });
+    if (this.goat && this.goatArt) list.push({ depth: this.goatGround(camp).y, paint: (c) => this.duchess(c, camp) });
     list.sort((p, q) => p.depth - q.depth);
-    for (const e of list) e.paint();
-    this.sparksDraw(g);
+    // (CAMP-DEPTH: what stands behind the stall's foot is painted into the scene, under the stall; the rest onto the front ground, over it)
+    const line = this.stallLine();
+    for (const e of list) if (e.depth <= line) e.paint(g);
     g.globalCompositeOperation = 'lighter';
     if (this.glow) {
       g.globalAlpha = 0.8;
@@ -684,8 +712,37 @@ export class CampScene {
     }
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;
-    // (the emote bubbles stay clear of the dusk)
-    for (const actor of this.actors.values()) if (actor.emote) this.bubble(g, actor);
+    const f = this.fctx;
+    f.clearRect(0, 0, camp.w, camp.h);
+    const ahead = list.filter((e) => e.depth > line);
+    for (const e of ahead) e.paint(f);
+    this.sparksDraw(f);
+    // (the fire still lights those in front: its glow, cut to their shapes, so it never lights the stall twice)
+    if (this.glow && ahead.length) this.lightFront(camp);
+    // (the emote bubbles stay clear of the dusk, over the stall too)
+    for (const actor of this.actors.values()) if (actor.emote) this.bubble(f, actor);
+  }
+
+  /** The ground line of Hester's Stall in scene pixels: anything whose feet are lower on the page stands in front of it. */
+  private stallLine(): number {
+    const stall = this.camp?.places.stall;
+    return stall && !this.stallSlot.hidden ? stall.foot : -Infinity;
+  }
+
+  /** The fire's glow over the front ground, only where something is drawn there. */
+  private lightFront(camp: Camp): void {
+    const lit = (this.lit ??= canvasOf(camp.w, camp.h));
+    const l = lit.getContext('2d')!;
+    l.globalCompositeOperation = 'copy';
+    l.drawImage(this.glow!, 0, 0);
+    l.globalCompositeOperation = 'destination-in';
+    l.drawImage(this.front, 0, 0);
+    const f = this.fctx;
+    f.globalCompositeOperation = 'lighter';
+    f.globalAlpha = 0.8;
+    f.drawImage(lit, 0, 0);
+    f.globalCompositeOperation = 'source-over';
+    f.globalAlpha = 1;
   }
 
   /** The campfire: its logs, then its flame leaning slowly side to side (no flicker: the height holds still). */
@@ -829,18 +886,32 @@ export class CampScene {
         return;
       }
     }
-    // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body)
+    const kind = this.heroAt(e.clientX, e.clientY, false);
+    if (kind) return this.onPick(kind);
+    // The painted war table at the left of the ledge also opens the party.
+    if (rx < camp.w * 0.2 && ry > camp.h * 0.62 && ry < camp.h * 0.75) this.onParty();
+  }
+
+  /** The hero a finger at this point on the page picks. In the scene the reach is generous: the hero whose body is nearest the finger wins,
+   *  within a reach a little wider and taller than the body. Over Hester's Stall (`overStall`) only a hero standing in front of the stall
+   *  counts, and only on his body itself, so the rest of the stall stays the stall's to tap (CAMP-DEPTH). */
+  private heroAt(clientX: number, clientY: number, overStall: boolean): string | null {
+    if (!this.camp) return null;
+    const box = this.canvas.getBoundingClientRect();
+    const rx = (clientX - box.left) / this.unit;
+    const ry = (clientY - box.top) / this.unit;
+    const line = this.stallLine();
     let best: { kind: string; d: number; y: number } | null = null;
     for (const a of this.actors.values()) {
-      const half = Math.max(16, a.small.fw / 4) + 10;
-      const tall = a.small.fh + 8;
-      if (rx < a.x - half || rx > a.x + half || ry < a.spot.y - tall || ry > a.spot.y + 12) continue;
+      if (overStall && a.spot.y <= line) continue;
+      const half = overStall ? Math.max(8, Math.round(a.small.figure * 0.3)) : Math.max(16, a.small.fw / 4) + 10;
+      const tall = overStall ? a.small.figure : a.small.fh + 8;
+      const below = overStall ? 2 : 12;
+      if (rx < a.x - half || rx > a.x + half || ry < a.spot.y - tall || ry > a.spot.y + below) continue;
       const d = Math.hypot((rx - a.x) / half, (ry - (a.spot.y - tall / 2)) / (tall / 2));
       if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && a.spot.y > best.y)) best = { kind: a.kind, d, y: a.spot.y };
     }
-    if (best) return this.onPick(best.kind);
-    // The painted war table at the left of the ledge also opens the party.
-    if (rx < camp.w * 0.2 && ry > camp.h * 0.62 && ry < camp.h * 0.75) this.onParty();
+    return best?.kind ?? null;
   }
 
   private claimHaystackTreat(): void {

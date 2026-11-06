@@ -91,6 +91,10 @@
 .hm-battle .cpStallSlot .cpVisitor { position: absolute; left: 6px; top: 4px; width: 16px; height: 16px; box-sizing: border-box; border: 1px solid #f5e4ba; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1c4, #d8b062 45%, #7a5a22); box-shadow: 0 0 0 1px #3a2c12, 0 0 8px #e9c77a99, 0 2px 4px #000a; pointer-events: none; }
 .hm-battle .cpStallSlot .cpVisitor.dealer { border-color: #e3d2ff; background: radial-gradient(circle at 35% 30%, #f1e6ff, #9b7ad6 45%, #3c2a62); box-shadow: 0 0 0 1px #20152f, 0 0 8px #b79ae699, 0 2px 4px #000a; }
 .hm-battle .cpStallSlot .cpPlace i.badge { top: 2px; right: 2px; }
+/* CAMP-DEPTH: the ground in front of the stall (`camp.ts`): heroes, the fire and Duchess nearer than the stall's foot are drawn over it, so the
+   stall stands set back on the same cliff; it never takes a tap. The army's plate stays over it. */
+.cpFront { pointer-events: none; z-index: 2; }
+.hm-battle .cpPlate { z-index: 2; }
 /* OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left (its lights, embers and crows are drawn on the
    canvas, `render/standTowerLife.ts`); its plate hangs under the tower's foot, an ember-warm ribbon as the Calamity's is a violet one. */
 .hm-battle .cpSlot.cpTowerSlot .cpTag { height: var(--plateH, 40px); border: 0; border-image: none; border-radius: 3px; background: linear-gradient(90deg, #1d0f0a00, #22120ce8 12%, #22120ce8 88%, #1d0f0a00); box-shadow: none; padding: 3px; }
