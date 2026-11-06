@@ -445,6 +445,15 @@
   .tvNav .tvRoom1 { min-height: 36px; padding: 0 10px; font: inherit; color: var(--s11); background: none; border: 0; }
   .tvNav .tvRoom1.on { color: var(--gold-hi); }
   .tvNav .tvDot { color: var(--s8); }
+  /* CLIFF-ROAM: Hester's stall is in the tavern's hearth hall. While her stock is new or a trader visits, a small gilded coin sits on the
+     Heroes tab (the way to the tavern) and a dot on the Hearth's name; the caravan's is warm gold, the Gloaming Dealer's dusk violet.
+     Steady: no pulse. */
+  .hmTab i.sbadge { position: absolute; top: 24px; right: 24%; display: none; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #f5e4ba; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1c4, #d8b062 45%, #7a5a22); box-shadow: 0 0 0 1px #3a2c12, 0 0 6px #e9c77a99; pointer-events: none; }
+  .hmTab.shop i.sbadge { display: block; }
+  .hmTab.dealer i.sbadge, .tvNav .tvRoom1.shop.dealer .tvShopDot { border-color: #e3d2ff; background: radial-gradient(circle at 35% 30%, #f1e6ff, #9b7ad6 45%, #3c2a62); box-shadow: 0 0 0 1px #20152f, 0 0 6px #b79ae699; }
+  .tvNav .tvRoom1 { position: relative; }
+  .tvNav .tvRoom1 .tvShopDot { position: absolute; top: 3px; right: 1px; display: none; width: 8px; height: 8px; box-sizing: border-box; border: 1px solid #f5e4ba; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1c4, #d8b062 45%, #7a5a22); box-shadow: 0 0 0 1px #3a2c12; }
+  .tvNav .tvRoom1.shop .tvShopDot { display: block; }
   .tvEdge { position: absolute; top: 50%; width: 0; height: 0; margin-top: -9px; border: 9px solid transparent; opacity: 0; transition: opacity 0.4s; pointer-events: none; }
   .tvEdge.on { opacity: 0.55; }
   .tvEdgeL { left: 4px; border-right-color: var(--gold-hi); border-left-width: 0; }

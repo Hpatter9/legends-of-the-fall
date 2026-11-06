@@ -28,3 +28,5 @@ wizard over the stall picks the wizard; taps on the stall's picture and its sign
 **Checks.** `test/overlook.test.ts` checks every hero and the fire stand in front of the stall's foot and that the stall stays on the
 ledge. Shots (`tools/camp/depth-shots.mjs`, `TAG=before|after`, `VISITOR=1` for a trader in camp) are in `docs/samples/camp-depth/` at
 393x852, 360x780 and 412x915, with five heroes, with and without the Gloaming Dealer.
+
+> **Superseded (CLIFF-ROAM):** the stall left the overlook for the tavern, and the camp is one canvas again; see `docs/notes/cliff-roam.md`.

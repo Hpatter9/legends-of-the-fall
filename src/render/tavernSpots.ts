@@ -3,7 +3,9 @@
 // own pixels, across from its left edge; `y` is where the hero's feet stand and what the scene sorts by, front to back (a bigger
 // `depth` is drawn later, so nearer).
 
-import { MAX_RANK } from '../sim/meta';
+import { MAX_RANK, type Meta } from '../sim/meta';
+import { newStock } from '../sim/stall';
+import { caravanHere, gloamingHere } from '../sim/traders';
 import { formOf, UNITS } from '../sim/units';
 import sheets from '../art/units/sheets.json';
 
@@ -65,6 +67,8 @@ export const PROPS: readonly Prop[] = [
   { sprite: 'table', x: H + 60, y: 280 },
   { sprite: 'table', x: H + 324, y: 280 },
   { sprite: 'crates', x: H + 366, y: 232 },
+  // (CLIFF-ROAM: Hester's crate of wares, in front of her at her stall's corner)
+  { sprite: 'crates', x: H + 292, y: 232 },
   { sprite: 'barrels', x: H + 18, y: 232 },
   // the games room: two card tables, the bard's stage, barrels
   { sprite: 'table', x: H * 2 + 150, y: 280 },
@@ -90,6 +94,25 @@ export const GLOWS: readonly { x: number; y: number; r: number; al: number }[] =
   { x: H * 2 + 97, y: 50, r: 44, al: 0.16 },
   { x: H * 2 + 287, y: 50, r: 44, al: 0.16 },
 ];
+
+/**
+ * Hester's corner (CLIFF-ROAM, docs/notes/cliff-roam.md): her stall came in off the cliff and stands against the hearth hall's right
+ * wall, by the doorway to the back room. `stall` is her stall's picture (centre across, its foot), `hester` where she stands at its
+ * left, her crate in front of her (in PROPS), and `visitor` where a visiting trader stands at its right, behind the crates there.
+ * `box` is the tap box over the whole corner: it opens her stall.
+ */
+export const HESTER = {
+  stall: { x: H + 324, foot: 206 },
+  hester: { x: H + 292, foot: 222 },
+  visitor: { x: H + 360, foot: 222 },
+  box: { x0: H + 280, x1: H + 382, y0: 128, y1: 224 },
+} as const;
+
+/** What Hester's corner has to tell (the tavern's marks and the Heroes tab's): the day's stock is new and unseen, and which trader
+ *  visits, if one does (the Gloaming Dealer before the caravan, as the stall's page shows them). */
+export function hesterNews(m: Meta, day: number): { fresh: boolean; visitor: 'dealer' | 'caravan' | null } {
+  return { fresh: newStock(m, day), visitor: gloamingHere(m, day) ? 'dealer' : caravanHere(m, day) ? 'caravan' : null };
+}
 
 const S = (x: number, y: number, facing: 1 | -1, seat: SeatKind = 'none', depth = y): Spot => ({ x, y, depth, facing, seat });
 

@@ -1,6 +1,6 @@
-// Hester's Stall on the page (SHOP-BOOKS-GEAR, docs/notes/shop-books-gear.md): a full-screen view that opens from the stall at the
-// camp. At the top the close-up, Hester at her shelf with her line of the day; under it the tabs (Books, Gear, Tomes, Chests, Sell,
-// Repair) and the shelf of the tab chosen. A tap on a ware brings its page up from the bottom, with Buy. The rules are in
+// Hester's Stall on the page (SHOP-BOOKS-GEAR, docs/notes/shop-books-gear.md): a full-screen view that opens from Hester's corner in
+// the tavern's hearth hall (CLIFF-ROAM: it stood on the cliff at the camp before) and the summoning hall's Chest shop. At the top the
+// close-up, Hester at her shelf with her line of the day; under it the tabs (Books, Gear, Tomes, Chests, Sell, Repair) and the shelf of the tab chosen. A tap on a ware brings its page up from the bottom, with Buy. The rules are in
 // `src/sim/stall.ts`, `books.ts` and `wear.ts`; this only reads and changes the meta through them.
 
 import { bookIcon, shopArt } from './bookArt';
@@ -102,7 +102,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     // (the head: back, the name, the standing's seal, the purse)
     const head = el('div', 'hsHead');
     const back = el('button', 'hsBack', '‹ Back');
-    back.setAttribute('aria-label', 'Back to the camp');
+    back.setAttribute('aria-label', 'Back');
     back.addEventListener('click', () => {
       root.remove();
       onChange();

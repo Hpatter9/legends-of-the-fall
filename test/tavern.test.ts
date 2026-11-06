@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
-import { DOORWAYS, figureBox, GLOWS, gradeOfRank, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, SCENE_W, SPOTS, WALL_H } from '../src/render/tavernSpots';
+import { DOORWAYS, figureBox, GLOWS, gradeOfRank, HESTER, hesterNews, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, SCENE_W, SPOTS, WALL_H } from '../src/render/tavernSpots';
 
 test('every hero has a spot of their own, and no spot belongs to a stranger', () => {
   assert.deepEqual(Object.keys(SPOTS).sort(), [...ALL_HEROES].sort());
@@ -55,4 +55,34 @@ test('the starting five sit in the first room, along the bar, so a young tavern 
 
 test('a hero looks upgraded from rank 2 and fully evolved at the top rank', () => {
   assert.deepEqual([0, 1, 2, 3, 4].map(gradeOfRank), [1, 1, 2, 2, 3]);
+});
+
+test('Hester’s corner stands in the hearth hall, on the floor by the back room’s doorway, clear of every hero (CLIFF-ROAM)', () => {
+  const hall = ROOM_NAMES.find((r) => r.id === 'hearth')!;
+  const { stall, hester, visitor, box } = HESTER;
+  for (const p of [stall, hester, visitor]) {
+    assert.ok(p.x > hall.x && p.x < hall.x + ROOM_W, 'in the hearth hall');
+    assert.ok(p.foot > WALL_H && p.foot <= ROOM_H, 'on the floor');
+  }
+  // (Hester and the trader stand in front of the stall, either side of it; her crate stands in front of her)
+  assert.ok(hester.foot > stall.foot && visitor.foot > stall.foot && hester.x < stall.x && visitor.x > stall.x);
+  assert.ok(PROPS.some((p) => p.sprite === 'crates' && Math.abs(p.x - hester.x) < 6 && p.y > hester.foot), 'her crate in front of her');
+  // (the corner's tap box holds the three of them, and no hero stands in it, so a tap there is always the stall's)
+  for (const p of [stall, hester, visitor]) assert.ok(p.x >= box.x0 && p.x <= box.x1 && p.foot <= box.y1 + 2);
+  assert.ok(box.x1 < DOORWAYS[1], 'short of the doorway');
+  for (const [kind, s] of Object.entries(SPOTS)) {
+    const b = figureBox(kind);
+    const hitsAcross = s.x + b.w / 2 > box.x0 && s.x - b.w / 2 < box.x1;
+    const hitsDown = s.y > box.y0 && s.y - b.h < box.y1;
+    assert.ok(!(hitsAcross && hitsDown && s.y <= box.y1 + 4), `${kind} stands in Hester's corner`);
+  }
+});
+
+test('Hester’s news: new stock until the stall is looked at today, and the visiting trader (CLIFF-ROAM)', () => {
+  const day = 20261106;
+  const m = { seed: 7, stall: { day, sold: {}, spent: 0 } } as unknown as Parameters<typeof hesterNews>[0];
+  assert.equal(hesterNews(m, day).fresh, true);
+  (m.stall as { seen?: number }).seen = day;
+  assert.equal(hesterNews(m, day).fresh, false);
+  assert.ok([null, 'caravan', 'dealer'].includes(hesterNews(m, day).visitor));
 });

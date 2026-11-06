@@ -7,9 +7,10 @@ for later is at the end. Every new save field is optional; the save version is n
 
 ## Hester's Stall
 
-- **Where:** a new place on the camp's overlook (`overlookLayout.ts` `places.stall`, `STALL`): the painted stall on the ledge at the
-  left, over the fire and the chests, with a plate ("Hester's Stall" / "new stock"), and a dot while the day's stock is unseen
-  (`newStock`, `markSeen`). The Recruit tab's **Chest shop** button stays as a shortcut: it opens the stall on its Chests tab.
+- **Where:** Hester's corner in the tavern's hearth hall (CLIFF-ROAM, `docs/notes/cliff-roam.md`: it stood on the camp's overlook
+  until then): her stall against the wall, Hester at it and a visiting trader beside it; a gold coin over her and on the Heroes tab
+  while the day's stock is unseen (`newStock`, `markSeen`). The Recruit tab's **Chest shop** button stays as a shortcut: it opens
+  the stall on its Chests tab.
 - **The page** (`src/stallView.ts`, `src/stall.css`, classes `hs*`): a full-screen view. The head (back, the name, the standing and
   crowns to the next, the standing's seal, the purse); the close-up (the shelf painting, the better shelf from standing 2, Hester's
   bust and her line in a speech card); six tabs (Books, Gear, Tomes, Chests, Sell, Repair); the tab's shelf, three wares a row on
