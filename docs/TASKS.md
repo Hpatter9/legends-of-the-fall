@@ -984,3 +984,10 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - **Scope:** two source PNGs under `art-source/expansion`, handoff and this task entry.
 - **Completion:** four centred badges in a 1024×256 transparent strip and one 512×256 transparent duel emblem; dimensions and alpha checked, visually reviewed. No runtime changes.
 - **Status:** ready for review. [Handoff](notes/expansion-art.md). Requested prior branch/PR were absent; branch recreated from main.
+
+### EXPANSION-HOUSES — Houses menu backdrop
+
+- **Owner:** Codex. **Target branch/PR:** `art/expansion`, #399. **Worktree:** `/workspace/houses-backdrop`.
+- **Allowed scope:** `art-source/expansion/houses-backdrop.png`, this entry and the expansion-art handoff.
+- **Completion:** one 1024×1536 upright painterly pixel-art tapestry backdrop, empty shields, amber sconces, dark centre and edges; no people or text.
+- **Status:** ready for review. PNG decode, exact dimensions and visual composition checked; no executable changes. [Handoff](notes/expansion-art.md).
