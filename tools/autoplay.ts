@@ -6,7 +6,7 @@
 import { PROVISIONS, oathOffer, provisionsOf, swearOath } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
-import { planNemeses } from '../src/sim/nemesis';
+import { planRun } from '../src/sim/revenge';
 import { noteWar } from '../src/sim/council';
 import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
@@ -109,7 +109,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   const army = armyById(armyId)!;
   const run: Run = armyRun(seed, armyId, party, castle, tier);
   // (the Nemesis War: a save with a War meets its army's nemeses, frozen as the run starts; `WAR_BOT.settle` also names and promotes them)
-  if (meta.war) run.nemesis = planNemeses(meta.war, run);
+  if (meta.war) run.nemesis = planRun(meta, run);
   const won = playWaves(meta, run, castle, gear, boostFor);
   const cleared = !!run.cleared && won === army.waves.length;
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };

@@ -17,6 +17,8 @@ import type { Meta } from './sim/meta';
 import { musterLine, musterOpen, warchiefOf } from './sim/muster';
 import { fullName, MIGHT_MAX, payOf, rankWord, SEATS, type FallenNemesis, type Nemesis, type NewsKind, type War } from './sim/nemesis';
 import { TRAITS, weakWords } from './sim/nemesisTraits';
+import { avengersOf, awayRuns, grudgesOn, trophyWords } from './sim/revenge';
+import { paintGearIcon } from './gearIcons';
 import { UNITS } from './sim/units';
 import bannerIcon from './art/items/banner.png';
 import bandIcon from './art/items/gold_band.png';
@@ -33,9 +35,13 @@ import toothIcon from './art/items/ash_tooth.png';
 import drumIcon from './art/items/war_drum.png';
 import sigilIcon from './art/items/dragon_sigil.png';
 import phoenixIcon from './art/items/phoenix.png';
+import cloakIcon from './art/items/shadow_cloak.png';
+import vialIcon from './art/items/blood_vial.png';
+import brandIcon from './art/items/ember_brand.png';
+import weaponIcon from './art/items/weapon2.png';
 
 /** The News's event icons (placeholders from the item art until the Council's own ten are made). */
-export const NEWS_ICON: Readonly<Record<NewsKind, string>> = { cheated: phoenixIcon, recruit: bannerIcon, promotion: bandIcon, feud: bladeIcon, betrayal: fangIcon, feast: chaliceIcon, trial: shieldIcon, oath: ringIcon, desertion: bootsIcon, claim: sunCrownIcon, crowned: crownIcon, named: namesIcon, slain: toothIcon, muster: drumIcon };
+export const NEWS_ICON: Readonly<Record<NewsKind, string>> = { cheated: phoenixIcon, recruit: bannerIcon, promotion: bandIcon, feud: bladeIcon, betrayal: fangIcon, feast: chaliceIcon, trial: shieldIcon, oath: ringIcon, desertion: bootsIcon, claim: sunCrownIcon, crowned: crownIcon, named: namesIcon, slain: toothIcon, muster: drumIcon, fled: cloakIcon, humiliated: vialIcon, vengeance: brandIcon, reclaimed: weaponIcon };
 /** The War Trophy token (a placeholder: the dragon sigil). */
 export const TROPHY_ICON = sigilIcon;
 
@@ -64,6 +70,19 @@ function face(n: Pick<Nemesis, 'base' | 'rank' | 'scars'>, size: number): HTMLEl
   if (n.scars > 0) box.append(el('i', 'nmScars', '✕'.repeat(Math.min(3, n.scars))));
   box.setAttribute('aria-hidden', 'true');
   return box;
+}
+
+/** A hero's line on the card: its face and words. */
+function heroLine(kind: string, text: string): HTMLElement {
+  const p = el('p', 'nmHeroLine');
+  const sheet = UNITS[kind]?.sheet;
+  if (sheet) {
+    const f = el('span', 'nmChip');
+    f.append(portrait(sheet, 32));
+    p.append(f);
+  }
+  p.append(el('b', '', heroName(kind)), el('small', '', text));
+  return p;
 }
 
 /** A section whose body is a slate well (a list of words, not choices). */
@@ -147,8 +166,15 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
   b.prepend(face(n, size));
   if (n.oath !== undefined) b.append(el('i', 'nmOath', '⚭'));
   if (n.rank === 'warchief') b.prepend(icon(crownIcon, 'nmInsignia'));
-  b.setAttribute('aria-label', `${rankWord(n.rank)} ${fullName(n)}, Might ${n.might}, of the ${army}${n.oath !== undefined ? ', sworn in blood' : ''}. Open its card`);
-  void war;
+  // (phase 3: an Avenger's or a Grudge holder's face on the card's corner; a member away licking its wounds is dimmed)
+  const settler = Object.keys(avengersOf(m, n.id))[0] ?? Object.keys(grudgesOn(m, n.id))[0];
+  if (settler && UNITS[settler]?.sheet) {
+    const chip = el('span', 'nmChip nmCorner');
+    chip.append(portrait(UNITS[settler].sheet, 24));
+    b.append(chip);
+  }
+  if (awayRuns(war, n.id)) b.classList.add('nmAway');
+  b.setAttribute('aria-label', `${rankWord(n.rank)} ${fullName(n)}, Might ${n.might}, of the ${army}${n.oath !== undefined ? ', sworn in blood' : ''}${awayRuns(war, n.id) ? ', licking its wounds' : ''}${settler ? `, ${heroName(settler)} has a score to settle` : ''}. Open its card`);
   return b;
 }
 
@@ -220,7 +246,8 @@ function drawNews(war: War | undefined, pane: HTMLElement): void {
 export function fallWords(f: FallenNemesis): string {
   if (f.how === 'council') return `slain by ${f.foe ?? 'a rival'} in the Council`;
   const by = f.by ? ` by ${heroName(f.by)}` : '';
-  return f.how === 'muster' ? `slain at the Muster${by}` : `slain${by}`;
+  const how = f.how === 'muster' ? `slain at the Muster${by}` : f.vengeance ? `slain${by} in Vengeance` : `slain${by}`;
+  return f.reclaimed ? `${how}; ${f.reclaimed === 1 ? 'a trophy' : 'its trophies'} brought home` : how;
 }
 
 /** The Fallen tab: the Warchief's Heads, then the slain (the last thirty). */
@@ -297,7 +324,7 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
   top.classList.add('nmTop');
   top.append(face(n, 72));
   const facts = el('div', 'nmFacts');
-  facts.append(el('b', 'nmPips', mightPips(n.might)), el('small', '', `Met ${n.met} ${n.met === 1 ? 'time' : 'times'}`), el('small', 'omPay', `Slay: ${payOf(n)} crowns`));
+  facts.append(el('b', 'nmPips', mightPips(n.might)), el('small', '', `Met ${n.met} ${n.met === 1 ? 'time' : 'times'}`), el('small', 'omPay', `Slay: ${payOf(n) * (n.trophies?.length ? 2 : 1)} crowns${n.trophies?.length ? ', doubled for the trophy' : ''}`));
   top.append(facts);
   // (its place on the Council: whom it serves, how loyal, its blood-oath, its vengeance)
   const war = m.war;
@@ -313,6 +340,29 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
     const brother = n.oath !== undefined ? war.members.find((x) => x.id === n.oath) : undefined;
     if (brother) well.append(el('p', 'nmOathLine', `⚭ Sworn in blood to ${fullName(brother)}`));
     if (n.vengeful) well.append(el('p', 'nmOathLine', `Vengeful against ${heroName(n.vengeful)}: +20% damage to ${heroName(n.vengeful)}, whom it goes for first`));
+    // (phase 3: away licking its wounds, and Stitched)
+    const away = awayRuns(war, n.id);
+    if (away) well.append(el('p', 'nmOathLine', `Licking its wounds: it sits out ${away === 1 ? 'the next run' : `the next ${away} runs`} of its army`));
+    if (n.stitched) well.append(el('p', 'nmMemory', 'Stitched: it cheated death, and once more at 0 health it will stand again at 20%'));
+  }
+  // (phase 3: the trophies it took, drawn with each piece's own gear icon)
+  if (n.trophies?.length) {
+    const well = sectionWell(menu.body, 'Trophies', 'slay it to bring them home, for double pay');
+    for (const t of n.trophies) {
+      const p = el('p', 'nmTrophyRow');
+      const ic = el('span', 'eqIcon nmTrophy');
+      paintGearIcon(ic, t.base, t.rarity, 28);
+      p.append(ic, el('b', '', trophyWords(t)), el('small', '', '+5% attack while it carries it'));
+      well.append(p);
+    }
+  }
+  // (phase 3: the heroes with a Grudge on it, and their Avengers)
+  const grudges = Object.entries(grudgesOn(m, n.id));
+  const avengers = Object.entries(avengersOf(m, n.id));
+  if (grudges.length || avengers.length) {
+    const well = sectionWell(menu.body, 'Grudges', 'the heroes with a score to settle');
+    for (const [k, steps] of grudges) well.append(heroLine(k, `Grudge · +${steps * 10}% against it (it slew ${heroName(k)}${steps > 1 ? ` ${steps} times` : ''})`));
+    for (const [k, fallen] of avengers) well.append(heroLine(k, `Avenger of ${heroName(fallen)} · +15% attack on it, skills 10% quicker; a killing blow is Vengeance`));
   }
   // (its secrets: a trait or weakness not yet learned shows as "?")
   const secrets = (title: string, list: readonly string[], words: (s: string) => { name: string; text: string }) => {

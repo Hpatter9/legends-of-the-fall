@@ -105,7 +105,11 @@ import { lecternDue, lecternSwap } from './sim/lectern';
 import { applyVigil } from './sim/chapelRooms';
 import { journeyBoost, landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
-import { nemesisLines, planNemeses, type NemNote } from './sim/nemesis';
+import { nemesisLines, type NemNote } from './sim/nemesis';
+import { markSeen as markTaunted, planRun } from './sim/revenge';
+import { TauntCuts } from './tauntCut';
+import { warmGearTextures } from './render/gearTex';
+import { tauntFor, wavesTaunts } from './tauntCutRules';
 import { dreadOf } from './sim/nemesisTraits';
 import { startNemesisTally, tallyNemesis, type NemesisTally } from './sim/nemesisLog';
 import { bondScenesDue } from './sim/bondScenes';
@@ -533,6 +537,14 @@ class Game {
         const id = bondScenesDue(this.meta, (x) => seenScene(this.meta, x))[0];
         const sc = id ? SCENES[id] : undefined;
         if (sc) void this.queueScene(sc.moment);
+        // (the Nemesis War, phase 3: an Avenger's Vengeance plays its scene, once a pair)
+        const pair = this.meta.war?.vengeance?.[0];
+        if (pair) {
+          this.meta.war!.vengeance = this.meta.war!.vengeance!.slice(1);
+          if (!this.meta.war!.vengeance.length) delete this.meta.war!.vengeance;
+          saveMeta(this.meta);
+          void this.queueScene({ kind: 'vengeance', pair });
+        }
       },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)
@@ -718,6 +730,27 @@ class Game {
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro(true));
     else this.startIntro();
+    this.queueTaunts();
+  }
+
+  /** The Nemesis War, phase 3: the cut-ins of the nemeses this wave brings that the run has not met yet (none under auto-replay). */
+  private queueTaunts(): void {
+    this.taunts.clear();
+    const rn = this.run.nemesis;
+    if (rn?.members.some((x) => x.trophies?.length)) warmGearTextures();
+    if (!rn || this.auto || this.b.phase !== 'deploy') return;
+    const shown = this.taunted.get(this.run.seed) ?? new Set<number>();
+    this.taunted.set(this.run.seed, shown);
+    const field = [...new Set([...this.run.roster.map((h) => h.kind), ...this.b.units.filter((u) => u.side === 'hero' && u.owner === undefined).map((u) => u.def)])];
+    const snaps = wavesTaunts(rn, this.run.stage, shown);
+    this.taunts.onOpen = (t) => void shown.add(t.id);
+    // (a first meeting, once played, is kept on the nemesis: later ones follow the setting)
+    this.taunts.onShown = (t) => {
+      if (!t.first || !this.meta.war) return;
+      markTaunted(this.meta.war, t.id);
+      saveMeta(this.meta);
+    };
+    this.taunts.add(snaps.map((s) => tauntFor(s, field, this.run.seed)), settings().nemesisCut);
   }
 
   /** The squad onto the deploy rows, each where it stood last when it still can. */
@@ -1176,6 +1209,7 @@ class Game {
     this.ultm.warm(this.b);
     this.evolved = new Set();
     this.endIntro();
+    this.taunts.clear();
     newQuipScene();
     // (the opening grumble belongs to a new fight)
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
@@ -1283,6 +1317,9 @@ class Game {
     // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
     if (b.phase === 'fight') this.bossm.frame(dt, !!held);
     else this.bossm.clear();
+    // (the Nemesis War: a taunt cut-in plays over the deploy, after the boss's card or a scene has had the screen)
+    if (b.phase === 'deploy') this.taunts.frame(dt, !!held || !!this.intro);
+    else if (this.taunts.busy) this.taunts.clear();
     if (b.phase === 'fight' && held) {
       // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
     } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.eid.holds)) {
@@ -1965,6 +2002,10 @@ class Game {
   private ultm!: UltMoments;
   /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
   private bossm = new BossMoments();
+  /** The Nemesis War, phase 3: the taunt cut-ins before a nemesis's first wave of a run (`tauntCut.ts`), and the nemeses each run (by its
+   *  seed) has already been shown. */
+  private taunts = new TauntCuts();
+  private taunted = new Map<number, Set<number>>();
   /** EIDOLON-CHAINS: a piece a quest battle's win found, shown once its beat after has played. */
   private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
@@ -2504,8 +2545,10 @@ class Game {
     }
     // (the Nemesis War: the army's nemeses this run meets, and the waves they stand in, frozen as it starts)
     if (run.mode?.kind === 'army' && !run.nemesis) {
-      const named = planNemeses(this.meta.war, run);
+      const named = planRun(this.meta, run);
       if (named) run.nemesis = named;
+      // (a trophy on a name plate is drawn from the gear atlas: it starts loading now)
+      if (named?.members.some((x) => x.trophies?.length)) warmGearTextures();
     }
     // (and of the mentors' perks)
     if (run.mode?.kind === 'army' && !run.legacy) {

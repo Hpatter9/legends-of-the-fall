@@ -44,7 +44,7 @@ const PARTS = [
   ['bossBar', '#bossBar'], ['twist', '#twistBanner'], ['combo', '#comboBar'], ['synergies', '#synCol'], ['autoBar', '#autoBar'], ['phase', '#phaseBanner'],
   ['heroRow', '.fhRow'], ['heroName', '.fhRow .fhName', 'text'], ['heroBar', '.fhRow .fhBar'], ['chip', '.fhRow .fhChip'], ['portrait', '.fhRow .fhPic'],
   ['bench', '#panel #benchWrap'], ['panel', '#panel'],
-  ['toast', '.toast.show'], ['cutIn', '.fhCutIn'], ['ultWords', '.umWords'], ['bossWords', '.bmWords'], ['quip', '#quip'], ['bossCard', '#bossCard'],
+  ['toast', '.toast.show'], ['cutIn', '.fhCutIn'], ['taunt', '.tcLayer .tcBand'], ['tauntAnswer', '.tcLayer .tcAnswer'], ['ultWords', '.umWords'], ['bossWords', '.bmWords'], ['quip', '#quip'], ['bossCard', '#bossCard'],
 ];
 
 /** The spells a kit casts (the three slots, then the open slot) and whether it holds the War Horn. */
@@ -220,6 +220,22 @@ async function trial(page, inset = 0, kit = PLAIN) {
   return page.evaluate(() => window.__game.b.units.some((u) => u.side === 'foe' && (u.size ?? 1) > 1));
 }
 
+/** NEMESIS-3: the taunt cut-in over the deploy, a nemesis (wearing a hero's trophy, so the hero answers) planned into the wave and the wave
+ *  made again, as a run's first meeting with it plays. Returns whether the cut-in showed. */
+async function taunt(page) {
+  await page.evaluate(() => {
+    const g = window.__game;
+    const kind = g.b.units.find((u) => u.side === 'hero' && u.owner === undefined)?.def ?? 'knight';
+    const s = { id: 77, base: 'packRed', name: 'Ember-Eye', epithet: 'the Uncaught', rank: 'captain', might: 6, scars: 2, traits: ['elusive'], weak: ['dread:archer'], army: 'beasts', met: 1,
+      trophies: [{ kind, slot: 'main', item: 1, base: 'ironSword', rarity: 3 }] };
+    g.run.nemesis = { members: [s], waves: { [String(g.run.stage)]: [77] } };
+    g.newBattle();
+    g.endIntro?.();
+    g.autoArrange(true);
+  });
+  return page.waitForFunction(() => document.querySelector('.tcLayer:not([hidden]) .tcAnswer'), null, { timeout: 6000 }).then(() => true, () => false);
+}
+
 const fight = (page) => page.evaluate(() => { window.__game.endIntro?.(); document.getElementById('fight').click(); });
 
 /** Every part's boxes, and every pair of them that intersects (a part inside another, as a chip in its row, is not an overlap). */
@@ -273,7 +289,7 @@ const KITS = [kitOf(2, false), kitOf(4, false), kitOf(2, true), kitOf(3, true), 
 function casesAt() {
   const out = [];
   if (!ONLY_BOSS) {
-    for (const scene of ['start', 'mid', 'boss', 'tap', 'ult']) out.push({ where: 'army', party: 5, scene, kit: PLAIN });
+    for (const scene of ['start', 'mid', 'boss', 'tap', 'ult', 'taunt']) out.push({ where: 'army', party: 5, scene, kit: PLAIN });
     for (const scene of ['start', 'mid', 'tap']) out.push({ where: 'calamity', party: 8, scene, kit: PLAIN });
   }
   for (const kit of ONLY_BOSS ? [PLAIN, ...KITS] : KITS) out.push({ where: 'army', party: 5, scene: 'boss', kit });
@@ -281,17 +297,31 @@ function casesAt() {
   for (const kit of [kitOf(2, true), kitOf(4, true)]) out.push({ where: 'trial', party: 5, scene: 'boss', kit });
   return out;
 }
+/** `SCENES=taunt,boss` runs only the cases of those moments (every case by default). */
+const ONLY_SCENES = process.env.SCENES?.split(',');
 const kitName = (k) => (k === PLAIN ? '' : `-${k.n}sp${k.horn ? '-horn' : ''}`);
 
 let total = 0;
 for (const [w, h, inset = 0] of SIZES) {
   const sizeName = `${w}x${h}${inset ? ` inset ${inset}` : ''}`;
-  for (const { where, party, scene, kit } of casesAt()) {
+  for (const { where, party, scene, kit } of casesAt().filter((c) => !ONLY_SCENES || ONLY_SCENES.includes(c.scene))) {
     const { ctx, page } = await open(w, h, inset, kit);
     let note = '';
     if (where === 'army') await army(page, scene === 'boss');
     else if (where === 'calamity') note = ` (calamity placed ${await calamity(page, inset, kit, scene === 'boss')})`;
     else note = (await trial(page, inset, kit)) ? '' : ' (NO BOSS FOUND)';
+    // (NEMESIS-3: the taunt cut-in is measured over the deploy it plays on, its answer in; a case where it never showed is a failure)
+    if (scene === 'taunt') {
+      const shown = await taunt(page);
+      if (!shown) total++;
+      await page.waitForTimeout(500);
+      const r = await probe(page);
+      total += r.hits.length;
+      console.log(`${sizeName} party ${party} army taunt (deploy)${shown ? '' : ', NO CUT-IN'}: ${r.parts} parts, ${r.hits.length} overlaps${r.hits.length ? '\n    ' + r.hits.join('\n    ') : ''}`);
+      if (shots) await page.screenshot({ path: `docs/samples/combat-hud/${shots}-${party}-taunt-${w}${h !== SIZE_OF[w]?.[1] ? `x${h}` : ''}${inset ? 's' : ''}.png` });
+      await ctx.close();
+      continue;
+    }
     await fight(page);
     if (scene === 'start') await page.waitForTimeout(700);
     else await page.waitForTimeout(scene === 'boss' ? 2500 : 4500);

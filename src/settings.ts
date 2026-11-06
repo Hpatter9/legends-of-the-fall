@@ -12,6 +12,7 @@ import type { DevGift } from './sim/devGrant';
 import { appUpdate } from './appUpdate';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 import { DEFAULT_EVERY, EVERY_CHOICES } from './ultShowRules';
+import { CUT_MODES, type CutMode } from './tauntCutRules';
 
 const KEY = 'legends.settings';
 
@@ -50,9 +51,12 @@ export interface Settings {
   eidolonFull: boolean;
   /** Duchess's equipped unlockable cosmetic accessory. */
   duchessHat: DuchessCosmeticId;
+  /** The Nemesis War's taunt cut-ins (`tauntCutRules.ts`): full, short (the name plate only) or off. A nemesis's first meeting plays in full
+   *  unless they are off. */
+  nemesisCut: CutMode;
 }
 
-export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -84,6 +88,7 @@ export function parseSettings(raw: string | null): Settings {
     ultEvery: EVERY_CHOICES.includes(saved.ultEvery as never) ? (saved.ultEvery as number) : DEFAULTS.ultEvery,
     eidolonFull: flag(saved.eidolonFull, DEFAULTS.eidolonFull),
     duchessHat: validHat(saved.duchessHat),
+    nemesisCut: CUT_MODES.includes(saved.nemesisCut as CutMode) ? (saved.nemesisCut as CutMode) : DEFAULTS.nemesisCut,
   };
 }
 
@@ -207,6 +212,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
         toggleRow('Full ultimate scenes', 'On, the fight pauses as an ultimate fires: the hero slashes across the screen, its name shows and the board dims round the caster. Off, a quick banner while the fight runs on. With Auto on, always the quick banner', 'ultFull', s.ultFull),
         toggleRow('Shorter ultimates', 'On, a hero\'s ultimate never plays its long showcase (the hero seen doing what the ultimate says, about five seconds at x1). Off, the first time each hero\'s ultimate fires it plays the showcase, and again now and then (below)', 'ultShort', s.ultShort),
         everyRow(s.ultEvery, s.ultShort),
+        cutRow(s.nemesisCut),
         toggleRow('Full Eidolon calls', 'On, an Eidolon called by the War Horn plays its whole scene: the horn, the summoning circle, the sky torn open and its attack in beats. Off, a short version of about two seconds. The first call of each Eidolon always plays in full', 'eidolonFull', s.eidolonFull),
         resetTipsRow(),
       ];
@@ -464,6 +470,26 @@ function speedRow(value: 1 | 2): HTMLElement {
     b.classList.toggle('on', n === value);
     b.addEventListener('click', () => {
       setSetting('speed', n);
+      draw();
+    });
+    pair.append(b);
+  }
+  r.append(pair);
+  return r;
+}
+
+/** The Nemesis War: the taunt cut-ins, full, short or off. */
+function cutRow(value: CutMode): HTMLElement {
+  const [r] = row('Nemesis cut-ins', 'Full: a named foe taunts your heroes before its wave, and the hero it names answers. Short: its name plate only. A nemesis’s first meeting always plays in full unless they are off');
+  const pair = document.createElement('div');
+  pair.className = 'pair';
+  for (const n of CUT_MODES) {
+    const b = document.createElement('button');
+    b.textContent = n === 'full' ? 'Full' : n === 'short' ? 'Short' : 'Off';
+    b.setAttribute('aria-pressed', String(n === value));
+    b.classList.toggle('on', n === value);
+    b.addEventListener('click', () => {
+      setSetting('nemesisCut', n);
       draw();
     });
     pair.append(b);

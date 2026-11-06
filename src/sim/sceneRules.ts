@@ -142,6 +142,8 @@ export function momentText(mo: Moment): string {
       return 'A quest battle, before it begins and after it is won.';
     case 'eidolon':
       return "An Eidolon's chain, as its giver tells it.";
+    case 'vengeance':
+      return 'A hero slays the nemesis that slew its Sworn partner; it plays at the camp.';
   }
 }
 

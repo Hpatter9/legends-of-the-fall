@@ -29,6 +29,7 @@ import { takeGearNote } from './sim/gearMigrate';
 import { GLYPHS, patchBlock, patchCost, patchItem } from './sim/enchant';
 import { SEASON_CAP, seasonNeed } from './sim/wear';
 import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
+import { reclaimed } from './sim/revenge';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -125,12 +126,13 @@ function compareRows(next: EquipStats, cur: EquipStats | undefined): HTMLElement
 }
 
 /** What the picker shows for one item: its icon and name, the stat rows (against `against` when given), the affixes. */
-function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt): HTMLElement {
+function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt, home = false): HTMLElement {
   const base = EQUIP_BASES[it.base];
   const card = el('div', 'eqCard');
   const head = el('div', 'eqHead');
   const title = el('div');
-  title.append(el('b', '', itemName(it)), el('small', '', `${RARITY_NAMES[it.rarity]} · Lv ${it.level}`));
+  // (the Nemesis War, phase 3: a piece a slain nemesis carried as a trophy, brought home)
+  title.append(el('b', '', itemName(it)), el('small', '', `${RARITY_NAMES[it.rarity]} · Lv ${it.level}${home ? ' · Reclaimed' : ''}`));
   head.append(itemIcon(it, base.slot, 'small'), title);
   card.append(head);
   const stats = itemStats(it, kind);
@@ -395,7 +397,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     panel.replaceChildren(el('h4', '', `${SLOT_NAMES[slot]} · ${UNITS[kind].name}`));
     if (cur) {
       const worn = el('div', `eqRow worn r${cur.rarity}`);
-      worn.append(el('small', 'eqTag', 'Worn'), itemCard(cur, kind));
+      worn.append(el('small', 'eqTag', 'Worn'), itemCard(cur, kind, undefined, undefined, reclaimed(meta, cur.id)));
       const off = el('button', '', 'Unequip');
       off.type = 'button';
       off.addEventListener('click', () => {
@@ -412,7 +414,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const list = el('div', 'eqList');
     for (const it of spare) {
       const row = el('div', `eqRow r${it.rarity}`);
-      row.append(itemCard(it, kind, cur, at));
+      row.append(itemCard(it, kind, cur, at, reclaimed(meta, it.id)));
       const set = SET_OF_BASE[it.base];
       if (set) {
         const before = set.pieces.filter((p) => wornBases(meta, kind).includes(p)).length;

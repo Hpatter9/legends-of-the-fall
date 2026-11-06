@@ -27,7 +27,7 @@ import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readWeak, type WeakRecord } from './weakness';
 import { readBonds } from './bonds';
-import { openWar, readWar, type War } from './nemesis';
+import { openWar, readGrudges, readWar, type Grudges, type War } from './nemesis';
 import { readMentors } from './legacy';
 import type { Calling } from './weakness';
 import { readCombosSeen } from './combos';
@@ -170,6 +170,8 @@ export interface Meta {
   sparring?: { a: string; b: string; doneAt: number };
   /** The Nemesis War (`nemesis.ts`): the named foes, the fallen, and the next id; missing until the War opens (the Undead Legion's first Normal clear). */
   war?: War;
+  /** The Nemesis War, phase 3: each hero's Grudges, by the nemeses that slew it (`revenge.ts`). */
+  grudges?: Grudges;
   /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
   mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
   recalled?: Partial<Record<Calling, number>>;
@@ -584,6 +586,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.war = readWar(m.war);
       if (!m.war) delete m.war;
       openWar(m);
+      m.grudges = readGrudges(m.grudges);
+      if (!m.grudges) delete m.grudges;
       if (!m.recalled || typeof m.recalled !== 'object') delete m.recalled;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)

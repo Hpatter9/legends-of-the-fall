@@ -50,6 +50,8 @@ function main(): void {
   };
   const chiefs: { name: string; from: number; to?: number; how?: string }[] = [];
   let firstTen: number | undefined;
+  let tenth: Nemesis | undefined;
+  const around60: number[] = [];
   const at: Record<number, { mean: number; top: number; n: number }> = {};
   WAR_BOT.settle = true;
   const t0 = Date.now();
@@ -94,6 +96,9 @@ function main(): void {
     for (const x of war.news) {
       if (x === newsBefore) break;
       week.kinds[x.kind] = (week.kinds[x.kind] ?? 0) + 1;
+      // (phase 3: a humiliation is told on its own line, or on its cheat's)
+      if (/humiliated/.test(x.text) && !/returns$/.test(x.text)) week.kinds.shamed = (week.kinds.shamed ?? 0) + 1;
+      if (/humiliated.*, and took /.test(x.text)) week.kinds.took = (week.kinds.took ?? 0) + 1;
     }
     const after = seatsOf(war);
     for (const [id, rank] of after) if (before.get(id) !== rank) week.changes++;
@@ -116,7 +121,12 @@ function main(): void {
     const m = war.members.map((n: Nemesis) => n.might);
     week.might.push(...m);
     week.empty += 13 - war.members.length;
-    if (firstTen === undefined && m.some((x) => x >= 10)) firstTen = day;
+    if (firstTen === undefined && m.some((x) => x >= 10)) {
+      firstTen = day;
+      tenth = war.members.find((n) => n.might >= 10);
+    }
+    // (phase 3: the Might around day 60 as two weeks' mean of the day's means, a steadier measure than the one day)
+    if (day >= 53 && day <= 67 && m.length) around60.push(m.reduce((a, b) => a + b, 0) / m.length);
     if ([30, 45, 60, 90, 119].includes(day)) at[day] = { mean: m.length ? m.reduce((a, b) => a + b, 0) / m.length : 0, top: Math.max(0, ...m), n: m.length };
   }
   WAR_BOT.settle = false;
@@ -132,7 +142,11 @@ function main(): void {
   const avg = (f: (w: (typeof weeks)[number]) => number) => (full.length ? full.reduce((s, w) => s + f(w), 0) / full.length : 0);
   console.log(`\n  from week 3: ${avg((w) => w.changes).toFixed(1)} seat changes a week, ${avg((w) => w.council).toFixed(1)} of them the Council's own turns (target 3 to 5), ${avg((w) => w.infight).toFixed(1)} lost to infighting a week (target about 1)`);
   for (const [d, x] of Object.entries(at)) console.log(`  day ${d}: Might mean ${x.mean.toFixed(1)}, top ${x.top}, ${x.n} members${d === '60' ? ' (target: mean 3 to 5)' : ''}`);
-  console.log(`  first member at Might 10: ${firstTen === undefined ? 'none' : `day ${firstTen}`} (target: not before day 45)`);
+  if (around60.length) console.log(`  days 53 to 67: Might mean ${(around60.reduce((a, b) => a + b, 0) / around60.length).toFixed(1)} (the day's means, averaged)`);
+  console.log(`  first member at Might 10: ${firstTen === undefined ? 'none' : `day ${firstTen}`}${tenth ? ` (${tenth.name}, ${tenth.rank}${tenth.boss ? ', born a boss' : ''}: ${tenth.met} meetings, ${tenth.lost} lost, ${tenth.scars} scars)` : ''} (target: not before day 45)`);
+  // (phase 3: fleeing and humiliation, read from the News)
+  const sum = (k: string) => weeks.reduce((s, w) => s + (w.kinds[k] ?? 0), 0);
+  console.log(`  phase 3: ${sum('fled')} fled the board, ${sum('shamed')} humiliated (by fleeing or cheating death), ${sum('took')} trophies taken, ${sum('reclaimed')} brought home, ${sum('vengeance')} Vengeances (the bot's saves have no Sworn pairs)`);
   console.log(`  warchiefs: ${chiefs.length ? chiefs.map((c) => `${c.name} days ${c.from}-${c.to ?? 'now'}${c.how ? ` (${c.how})` : ''}`).join('; ') : 'none'} (target: at least 2 weeks unless the player kills him)`);
   console.log(`  the Muster opens at ${MUSTER_NEED} captains slain; final: ${war.members.length} members, ${war.fallen.length} fallen kept, ${war.heads?.length ?? 0} Warchief's Heads, ${war.trophies} War Trophies\n`);
 }

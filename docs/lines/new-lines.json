@@ -10938,6 +10938,3526 @@
      ]
     }
    ]
+  },
+  "vengeance:knight>peasant": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Kwame avenges Minh.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Kwame. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:peasant>knight": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Minh avenges Kwame.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Minh. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:kunoichi>samurai": {
+   "title": "Vengeance: For You",
+   "blurb": "Ayame avenges Kenji.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kenji."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:samurai>kunoichi": {
+   "title": "Vengeance: For You",
+   "blurb": "Kenji avenges Ayame.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Ayame."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:archer>lightningMage": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Natsu avenges Malia.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Malia."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:lightningMage>archer": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Malia avenges Natsu.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Natsu."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:wanderer>wizard": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Rhys avenges Ravi.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Ravi."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:wizard>wanderer": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Ravi avenges Rhys.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Ravi. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:cleric>paladin": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Selam avenges Karim.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Karim."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:paladin>cleric": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Karim avenges Selam.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Karim. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:barbarian>werewolf": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Eirik avenges Vuk.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Eirik. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:werewolf>barbarian": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Vuk avenges Eirik.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Vuk. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:rifleBot>siegeBot": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Rook-7 avenges Bastion.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Rook-7. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:siegeBot>rifleBot": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Bastion avenges Rook-7.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Rook-7."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:karasu>kitsune": {
+   "title": "Vengeance: For You",
+   "blurb": "Kurogane avenges Kohaku.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kohaku."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:kitsune>karasu": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Kohaku avenges Kurogane.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Kurogane. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Kohaku."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:knight>paladin": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Kwame avenges Karim.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Karim. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Kwame."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:paladin>knight": {
+   "title": "Vengeance: For You",
+   "blurb": "Karim avenges Kwame.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kwame."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:archer>ranger": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Natsu avenges Inti.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Inti. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Natsu."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:ranger>archer": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Inti avenges Natsu.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Natsu. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Inti."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:ninjaMonk>yamabushi": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Jiro avenges Kazan.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Kazan. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Jiro."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:yamabushi>ninjaMonk": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Kazan avenges Jiro.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Jiro. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Kazan."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:samurai>samuraiCommander": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Kenji avenges Hideo.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Hideo. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Kenji."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:samuraiCommander>samurai": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Hideo avenges Kenji.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Kenji. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Hideo."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:cleric>priestess": {
+   "title": "Vengeance: For You",
+   "blurb": "Selam avenges Linnea.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Linnea."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:priestess>cleric": {
+   "title": "Vengeance: For You",
+   "blurb": "Linnea avenges Selam.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Selam."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:druid>satyr": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Isla avenges Dorion.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Dorion."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:satyr>druid": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Dorion avenges Isla.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Isla."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:druid>wolfBard": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Isla avenges Lovell.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Isla. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:wolfBard>druid": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Lovell avenges Isla.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Lovell. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:werewolf>wolfBard": {
+   "title": "Vengeance: For You",
+   "blurb": "Vuk avenges Lovell.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Lovell."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:wolfBard>werewolf": {
+   "title": "Vengeance: For You",
+   "blurb": "Lovell avenges Vuk.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Vuk."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:beastmaster>minotaur": {
+   "title": "Vengeance: For You",
+   "blurb": "Itzel avenges Asterion.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Asterion."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:minotaur>beastmaster": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Asterion avenges Itzel.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Itzel. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Asterion."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:gorgon>minotaur": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Xanthe avenges Asterion.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Xanthe. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:minotaur>gorgon": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Asterion avenges Xanthe.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Xanthe."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:buccaneer>kraken": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Tiago avenges Skerry.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Skerry. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Tiago."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:kraken>buccaneer": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Skerry avenges Tiago.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Tiago. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Skerry."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:buccaneer>dreadPirate": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Tiago avenges Harrow.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Harrow."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:dreadPirate>buccaneer": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Harrow avenges Tiago.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Tiago."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:mummy>shambler": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Seneb avenges Hobb.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Hobb."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:shambler>mummy": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Hobb avenges Seneb.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Hobb. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:demonSwordsman>reaper": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Aram avenges Vesper.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Vesper. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Aram."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:reaper>demonSwordsman": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Vesper avenges Aram.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Aram. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Vesper."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:sage>timeWitch": {
+   "title": "Vengeance: For You",
+   "blurb": "Seydou avenges Adaeze.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Adaeze."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:timeWitch>sage": {
+   "title": "Vengeance: For You",
+   "blurb": "Adaeze avenges Seydou.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Seydou."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:illusionist>wizard": {
+   "title": "Vengeance: For You",
+   "blurb": "Luana avenges Ravi.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Ravi."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:wizard>illusionist": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Ravi avenges Luana.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Luana. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Ravi."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:tyrant>warlock": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Edmund avenges Zofia.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Edmund. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:warlock>tyrant": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Zofia avenges Edmund.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Edmund."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:gunslinger>rifleBot": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Maeve avenges Rook-7.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Rook-7."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:rifleBot>gunslinger": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Rook-7 avenges Maeve.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Rook-7. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:dragoon>lancer": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Tiziri avenges Bataar.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Tiziri. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:lancer>dragoon": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Bataar avenges Tiziri.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Bataar. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:juggernaut>siegeBot": {
+   "title": "Vengeance: For You",
+   "blurb": "Kerem avenges Bastion.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Bastion."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:siegeBot>juggernaut": {
+   "title": "Vengeance: For You",
+   "blurb": "Bastion avenges Kerem.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kerem."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:kunoichi>ninjaMonk": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Ayame avenges Jiro.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Jiro."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:ninjaMonk>kunoichi": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Jiro avenges Ayame.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Jiro. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:peasant>ranger": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Minh avenges Inti.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Minh. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:ranger>peasant": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Inti avenges Minh.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Inti. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:priestess>sage": {
+   "title": "Vengeance: For You",
+   "blurb": "Linnea avenges Seydou.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Seydou."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:sage>priestess": {
+   "title": "Vengeance: For You",
+   "blurb": "Seydou avenges Linnea.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Linnea."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:kitsune>yamabushi": {
+   "title": "Vengeance: For You",
+   "blurb": "Kohaku avenges Kazan.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kazan."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:yamabushi>kitsune": {
+   "title": "Vengeance: For You",
+   "blurb": "Kazan avenges Kohaku.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kohaku."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:arcBlade>lightningMage": {
+   "title": "Vengeance: For You",
+   "blurb": "Minjun avenges Malia.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Malia."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:lightningMage>arcBlade": {
+   "title": "Vengeance: For You",
+   "blurb": "Malia avenges Minjun.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Minjun."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:gunslinger>mercenary": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Maeve avenges Kian.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Kian. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Maeve."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:mercenary>gunslinger": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Kian avenges Maeve.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Maeve. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Kian."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:lancer>paladin": {
+   "title": "Vengeance: For You",
+   "blurb": "Bataar avenges Karim.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Karim."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:paladin>lancer": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Karim avenges Bataar.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Bataar. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Karim."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:barbarian>juggernaut": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Eirik avenges Kerem.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Kerem. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Eirik."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:juggernaut>barbarian": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Kerem avenges Eirik.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Eirik. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Kerem."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:sage>wanderer": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Seydou avenges Rhys.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Rhys. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Seydou."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:wanderer>sage": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Rhys avenges Seydou.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Seydou. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Rhys."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:beastmaster>ranger": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Itzel avenges Inti.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Inti. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Itzel."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:ranger>beastmaster": {
+   "title": "Vengeance: For You",
+   "blurb": "Inti avenges Itzel.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Itzel."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:karasu>yamabushi": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Kurogane avenges Kazan.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Kazan. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Kurogane."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:yamabushi>karasu": {
+   "title": "Vengeance: For You",
+   "blurb": "Kazan avenges Kurogane.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kurogane."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:druid>kitsune": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Isla avenges Kohaku.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Kohaku."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:kitsune>druid": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Kohaku avenges Isla.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Isla."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:mercenary>samuraiCommander": {
+   "title": "Vengeance: For You",
+   "blurb": "Kian avenges Hideo.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Hideo."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:samuraiCommander>mercenary": {
+   "title": "Vengeance: For You",
+   "blurb": "Hideo avenges Kian.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Kian."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:warlock>wizard": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Zofia avenges Ravi.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Ravi. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Zofia."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:wizard>warlock": {
+   "title": "Vengeance: For You",
+   "blurb": "Ravi avenges Zofia.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Zofia."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:demonSwordsman>paladin": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Aram avenges Karim.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Karim. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Aram."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:paladin>demonSwordsman": {
+   "title": "Vengeance: For You",
+   "blurb": "Karim avenges Aram.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Aram."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:priestess>reaper": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Linnea avenges Vesper.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Linnea. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:reaper>priestess": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Vesper avenges Linnea.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Vesper. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:knight>tyrant": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Kwame avenges Edmund.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Edmund."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:tyrant>knight": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Edmund avenges Kwame.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Edmund. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:ranger>werewolf": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Inti avenges Vuk.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Vuk. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Inti."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:werewolf>ranger": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Vuk avenges Inti.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Inti. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Vuk."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:dreadPirate>lancer": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Harrow avenges Bataar.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Bataar. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Harrow."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:lancer>dreadPirate": {
+   "title": "Vengeance: For You",
+   "blurb": "Bataar avenges Harrow.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Harrow."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:arcBlade>gunslinger": {
+   "title": "Vengeance: For You",
+   "blurb": "Minjun avenges Maeve.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Maeve."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:gunslinger>arcBlade": {
+   "title": "Vengeance: For You",
+   "blurb": "Maeve avenges Minjun.",
+   "shots": [
+    {
+     "caption": "Vengeance: For You",
+     "lines": [
+      {
+       "who": "b",
+       "text": "You did not have to do that for me."
+      },
+      {
+       "who": "a",
+       "text": "I did, Minjun."
+      },
+      {
+       "who": "b",
+       "text": "...I would have done the same for you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I know. That is why I did it."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:cleric>mummy": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Selam avenges Seneb.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Selam. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:mummy>cleric": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Seneb avenges Selam.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Selam."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:illusionist>timeWitch": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Luana avenges Adaeze.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Luana. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:timeWitch>illusionist": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Adaeze avenges Luana.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Adaeze. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:dragoon>kraken": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Tiziri avenges Skerry.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Skerry. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Tiziri."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:kraken>dragoon": {
+   "title": "Vengeance: A Debt Paid",
+   "blurb": "Skerry avenges Tiziri.",
+   "shots": [
+    {
+     "caption": "Vengeance: A Debt Paid",
+     "lines": [
+      {
+       "who": "b",
+       "text": "They say you were the one who brought it down."
+      },
+      {
+       "who": "a",
+       "text": "It put you in the dirt, Tiziri. I could not let that stand."
+      },
+      {
+       "who": "b",
+       "text": "Thank you, Skerry."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "Do not thank me. Just stay on your feet next time."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:ninjaMonk>samurai": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Jiro avenges Kenji.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Kenji."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:samurai>ninjaMonk": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Kenji avenges Jiro.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Jiro."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:barbarian>minotaur": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Eirik avenges Asterion.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Eirik. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:minotaur>barbarian": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Asterion avenges Eirik.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Asterion. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:satyr>shambler": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Dorion avenges Hobb.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Dorion. I will keep watch."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:shambler>satyr": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Hobb avenges Dorion.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Dorion."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:juggernaut>rifleBot": {
+   "title": "Vengeance: It Is Done",
+   "blurb": "Kerem avenges Rook-7.",
+   "shots": [
+    {
+     "caption": "Vengeance: It Is Done",
+     "lines": [
+      {
+       "who": "a",
+       "text": "It is done, Rook-7."
+      },
+      {
+       "who": "b",
+       "text": "You went after it alone?"
+      },
+      {
+       "who": "a",
+       "text": "Not alone. You were with me the whole way."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Then we finished it together."
+      }
+     ]
+    }
+   ]
+  },
+  "vengeance:rifleBot>juggernaut": {
+   "title": "Vengeance: Quiet Now",
+   "blurb": "Rook-7 avenges Kerem.",
+   "shots": [
+    {
+     "caption": "Vengeance: Quiet Now",
+     "lines": [
+      {
+       "who": "a",
+       "text": "I kept seeing you fall. Every night."
+      },
+      {
+       "who": "b",
+       "text": "And now?"
+      },
+      {
+       "who": "a",
+       "text": "Now it is quiet."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Good. Sleep, Rook-7. I will keep watch."
+      }
+     ]
+    }
+   ]
   }
  },
  "king": {

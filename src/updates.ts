@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.381.0',
+    date: '2026-11-06',
+    title: 'Revenge, trophies and taunts',
+    notes: ['Grudges and Avengers against the nemesis who slew a hero, trophies taken and reclaimed, nemeses who flee and return, and taunts before the fight.'],
+  },
+  {
     version: '0.380.0',
     date: '2026-11-06',
     title: 'The Dark Council rises',

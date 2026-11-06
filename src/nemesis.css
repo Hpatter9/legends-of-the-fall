@@ -83,3 +83,64 @@
 .omPrimary.nmMuster { background: linear-gradient(180deg, #d9a63c, #8a5a14); border-color: #f3dc9a; color: #1a1006; }
 /* (the camp's Council place when the Muster is open: its count in the warchief's gold, steady) */
 .hm-battle .cpCouncilSlot .cpPlace i.cpCount.muster { color: #1a1006; background: #d9a63c; border-color: #f3dc9a; }
+
+/* Phase 3 (tauntCut.ts, docs/notes/nemesis-3.md): the taunt cut-in. A band across the board between the top bar and the bench (placed in
+   the free gap as it opens), the nemesis sliding in from the left and the hero it names answering from the right. Placeholder art: the
+   boss card's ribbon behind the band, the hero cards' brass frame round the faces. It slides and settles; nothing loops or flashes. */
+.tcLayer { position: fixed; inset: 0; z-index: 27; pointer-events: none; overflow: hidden; }
+.tcLayer[hidden] { display: none; }
+.tcLayer:not([hidden]) { pointer-events: auto; }
+.tcCut { position: absolute; left: 0; right: 0; top: 30%; display: flex; flex-direction: column; gap: 4px; padding: 0 8px; max-width: 640px; margin: 0 auto; }
+.tcBand, .tcAnswer { position: relative; display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 6px 10px; border-radius: 4px;
+  background: linear-gradient(90deg, rgb(10 6 8 / 0.94), rgb(40 12 14 / 0.9) 60%, rgb(10 6 8 / 0.6)), url(ui/ribbon.png) center / 100% 100% no-repeat;
+  border-top: 2px solid #c0443a; border-bottom: 2px solid #1a0806; box-shadow: 0 4px 14px rgb(0 0 0 / 0.55); }
+.tcCut.captain .tcBand { border-top-color: #9a55d0; }
+.tcCut.warchief .tcBand { border-top-color: #e0a830; }
+.tcBand { margin-right: 12%; animation: tcLeft 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.tcAnswer { margin-left: 18%; justify-content: flex-end; text-align: right; border-top-color: #c9a45a;
+  background: linear-gradient(270deg, rgb(8 12 10 / 0.94), rgb(18 32 24 / 0.9) 60%, rgb(8 12 10 / 0.6)), url(ui/ribbon.png) center / 100% 100% no-repeat;
+  animation: tcRight 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) 0.9s both; }
+.tcFace { position: relative; flex: none; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; padding: 3px;
+  background: #18251a url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; border-radius: 4px; }
+.tcFace canvas { width: 46px; height: 46px; image-rendering: pixelated; }
+/* (the nemesis in its rank's tone: a little darker and redder, as on the board) */
+.tcFoe canvas { filter: saturate(1.15) sepia(0.12) hue-rotate(-8deg) brightness(0.92); }
+.tcFoe { outline: 2px solid #c0443a; outline-offset: -2px; }
+.tcCut.captain .tcFoe { outline-color: #9a55d0; }
+.tcCut.warchief .tcFoe { outline-color: #e0a830; }
+.tcScars { position: absolute; right: 1px; bottom: -1px; font: 700 10px/1 var(--body); color: #ff8a70; text-shadow: 0 1px 0 #000, 1px 0 0 #000; letter-spacing: -1px; }
+.tcTrophy { position: absolute; left: -6px; top: -6px; width: 22px; height: 22px; border-radius: 3px; }
+.tcWords, .tcSaid { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tcName { font: 400 clamp(15px, 4.4vw, 19px)/1.1 var(--display, var(--body)); color: #fbe9d0; text-shadow: 0 2px 0 #000, 0 0 8px rgb(192 68 58 / 0.5); }
+.tcRank { font: 700 11px/1.2 var(--body); color: #e0b090; letter-spacing: 0.5px; text-transform: uppercase; }
+.tcLine, .tcReply { font: italic 500 13px/1.25 var(--body); color: #f4e4cc; quotes: '“' '”'; }
+.tcWho { font: 700 12px/1.1 var(--body); color: #e8d29a; }
+.tcReply { color: #e8f0e0; }
+.tcCut.short .tcBand { min-height: 0; padding: 4px 10px; }
+.tcCut.short .tcFace { width: 40px; height: 40px; }
+.tcCut.short .tcFace canvas { width: 34px; height: 34px; }
+.tcCut.out .tcBand, .tcCut.out .tcAnswer { animation: tcOut 0.24s ease-in both; }
+@keyframes tcLeft { 0% { transform: translateX(-70%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+@keyframes tcRight { 0% { transform: translateX(70%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+@keyframes tcOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes tcFade { 0% { opacity: 0; } 100% { opacity: 1; } }
+/* (reduced motion: held still, faded in and out) */
+.tcCut.still .tcBand { animation: tcFade 0.3s ease-out both; }
+.tcCut.still .tcAnswer { animation: tcFade 0.3s ease-out 0.6s both; }
+@media (prefers-reduced-motion: reduce) {
+  .tcBand { animation: tcFade 0.3s ease-out both; }
+  .tcAnswer { animation: tcFade 0.3s ease-out 0.6s both; }
+}
+
+/* Phase 3 on the board: the trophies, the Grudge holders and Avengers, a member away licking its wounds (all steady). */
+.nmTrophyRow, .nmHeroLine { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; margin: 4px 0; }
+.nmTrophyRow b, .nmHeroLine b { grid-column: 2; font: 700 13px/1.2 var(--body); color: #f0dfc0; }
+.nmTrophyRow small, .nmHeroLine small { grid-column: 2; font: 12px/1.3 var(--body); color: #cdbb9c; }
+.nmTrophyRow .nmTrophy, .nmHeroLine .nmChip { grid-row: span 2; }
+.nmTrophy { position: relative; display: inline-block; width: 28px; height: 28px; }
+.nmChip { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; border: 1px solid #c9a45a; background: #18251a; align-items: center; justify-content: center; }
+.nmChip canvas { width: 26px; height: 26px; image-rendering: pixelated; }
+.nmSeat { position: relative; }
+.nmCorner { position: absolute; right: 2px; top: 2px; width: 18px; height: 18px; }
+.nmCorner canvas { width: 16px; height: 16px; }
+.nmSeat.nmAway { opacity: 0.62; }
