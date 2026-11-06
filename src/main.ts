@@ -174,6 +174,7 @@ import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
+import { fightToastTop } from './hudClear';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
@@ -1623,6 +1624,11 @@ class Game {
       if (busy) return;
       busy = true;
       this.placeTopHud();
+      // (a toast in the lane goes under the parts as they now stand, and a quip's bubble is set clear of them all: the spell row coming in
+      // as the fight begins, the bar moving down under a wrapped row)
+      const lane = fightToastTop();
+      if (lane !== undefined) for (const t of document.querySelectorAll<HTMLElement>('.toast.lane')) t.style.top = `${Math.round(lane)}px`;
+      reclearQuip();
       busy = false;
     });
     for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar']) watch.observe($(id));

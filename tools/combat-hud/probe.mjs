@@ -73,13 +73,34 @@ async function open(w, h, inset = 0, kit = PLAIN) {
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   // (the tutorial's counsel card is a lesson laid over the screen on purpose, not a part of the HUD)
-  await page.addStyleTag({ content: '#tip { display: none !important; }' + insetCss(inset) });
+  await page.addStyleTag({ content: '#tip { display: none !important; }' });
+  await setInset(page, inset);
   await forceKit(page, kit);
   return { ctx, page };
 }
 
-/** A phone's top safe-area inset, put in by hand (a desktop browser's env() is 0): the top bar's padding, as index.html has it. */
-const insetCss = (inset) => (inset ? ` #top { padding-top: ${inset + 6}px !important; }` : '');
+/** A phone's top safe-area inset, put in by hand (a desktop browser's env() is 0): every rule of the page's sheets that reads
+ *  env(safe-area-inset-top) is given the inset in its place, as a phone with a notch would have it. */
+const setInset = (page, inset) =>
+  inset &&
+  page.evaluate((inset) => {
+    const walk = (rules) => {
+      for (const r of rules) {
+        if (r.cssRules) walk(r.cssRules);
+        if (!r.style) continue;
+        for (const prop of [...r.style]) {
+          const v = r.style.getPropertyValue(prop);
+          if (v.includes('safe-area-inset-top')) r.style.setProperty(prop, v.replace(/env\(\s*safe-area-inset-top\s*(,[^)]*)?\)/g, `${inset}px`), r.style.getPropertyPriority(prop));
+        }
+      }
+    };
+    for (const sh of document.styleSheets) {
+      try {
+        walk(sh.cssRules);
+      } catch {}
+    }
+    window.dispatchEvent(new Event('resize'));
+  }, inset);
 
 /** The kit's spells in the slots (the page fits the slots to the ruler's school as it loads; a probe wants the count it asked for). */
 const forceKit = (page, kit) =>
@@ -126,7 +147,8 @@ async function calamity(page, inset = 0, kit = PLAIN, boss = false) {
   await page.waitForFunction(() => document.getElementById('hmCalamity'), {}, { timeout: 60000 });
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
-  await page.addStyleTag({ content: '#tip { display: none !important; }' + insetCss(inset) });
+  await page.addStyleTag({ content: '#tip { display: none !important; }' });
+  await setInset(page, inset);
   await forceKit(page, kit);
   await page.evaluate(() => document.getElementById('hmCalamity').click());
   await page.waitForTimeout(1500);
