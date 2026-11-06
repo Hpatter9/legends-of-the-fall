@@ -28,6 +28,7 @@ import chaliceIcon from './art/items/holy_chalice.png';
 import shieldIcon from './art/items/iron_shield.png';
 import ringIcon from './art/items/oath_ring.png';
 import bootsIcon from './art/items/swift_boots.png';
+import { RANK_BADGE } from './expansionArt';
 import crownIcon from './art/items/jewel_crown.png';
 import sunCrownIcon from './art/items/sun_crown.png';
 import namesIcon from './art/items/book_of_names.png';
@@ -166,7 +167,7 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
   b.classList.add('nmSeat', cls, n.rank);
   b.prepend(face(n, size));
   if (n.oath !== undefined) b.append(el('i', 'nmOath', '⚭'));
-  if (n.rank === 'warchief') b.prepend(icon(crownIcon, 'nmInsignia'));
+  if (RANK_BADGE[n.rank]) b.prepend(icon(RANK_BADGE[n.rank], 'nmRankBadge'));
   // (phase 3: an Avenger's or a Grudge holder's face on the card's corner; a member away licking its wounds is dimmed)
   const settler = Object.keys(avengersOf(m, n.id))[0] ?? Object.keys(grudgesOn(m, n.id))[0];
   if (settler && UNITS[settler]?.sheet) {
@@ -313,6 +314,7 @@ function drawSpoils(m: Meta, pane: HTMLElement, hooks: BoardHooks, redraw: () =>
     } });
     b.classList.add('nmRow');
     b.prepend(face(n, 40));
+    if (RANK_BADGE[n.rank]) b.prepend(icon(RANK_BADGE[n.rank], 'nmRankBadge'));
   }
   menuNote(pane, 'A relic choice for your next army run, and the warchiefs’ name plates, come to the Spoils later in the War.');
 }

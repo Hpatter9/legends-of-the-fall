@@ -3,7 +3,7 @@
 // challenge, a one-row strip of the squad to pick from), what winning, losing, the time and refusing each mean, and Refuse and Accept. It
 // changes nothing itself: the page acts on the answer.
 //
-// Placeholder art until the duel's own banner is made (the prompt is in the note): the sprites' portraits in the Council's frames.
+// Art: the commissioned duel banner as the crest above the two (expansionArt.ts), the sprites' portraits in the Council's frames.
 
 import { face } from './nemesisView';
 import { menuFoot, menuPick, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
@@ -13,6 +13,7 @@ import type { DuelOffer } from './sim/duel';
 import { heroName } from './sim/heroNames';
 import { rankWord, type NemSnap } from './sim/nemesis';
 import { UNITS } from './sim/units';
+import { DUEL_CREST } from './expansionArt';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -33,6 +34,11 @@ export function openDuelCard(o: DuelOffer, s: NemSnap, squad: readonly { id: num
   const menu = ornateMenu({ id: 'duelCard', eyebrow: 'Single combat · The Nemesis War', title: w.title, sub: w.why, label: `${w.title}. ${w.why}.`, onClose: () => tell(null) });
   menu.card.classList.add('nmCard', 'dcCard');
   // (the two: the nemesis on the left, the champion it names on the right)
+  const crest = el('img', 'dcCrest');
+  crest.src = DUEL_CREST;
+  crest.alt = '';
+  crest.setAttribute('aria-hidden', 'true');
+  menu.body.append(crest);
   const top = menuWell(menu.body);
   top.classList.add('dcTop');
   const foe = el('div', 'dcSide');
