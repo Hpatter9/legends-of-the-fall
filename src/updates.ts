@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.374.0',
+    date: '2026-11-06',
+    title: 'The stall on the cliff, a clear boss bar',
+    notes: ['Hester\'s Stall stands behind the heroes on the cliff, Auto no longer covers the boss\'s health bar, and the Daily sits low by the enemy banner.'],
+  },
+  {
     version: '0.373.0',
     date: '2026-11-05',
     title: 'Formations in Auto, a clear fight screen',
