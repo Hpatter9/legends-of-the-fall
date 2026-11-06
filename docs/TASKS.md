@@ -978,6 +978,13 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Direction: owner approved current appearance with idle, summoning, and shielding eyes against the bright hero arrival.
 - Completion: three poses integrated with reveal timing and reduced motion. Typecheck/build, four affected test files and browser checks at all three portrait sizes plus reduced motion passed. Status: ready for owner review. [Handoff](notes/animated-summoner.md).
 
+## ART-EXPANSION-TAUNT — Taunt cut-in banners
+
+- Owner: Codex; branch `art/expansion`, worktree `/workspace/legends-of-the-fall`.
+- Scope: `art-source/expansion/taunt-banners.png` and task/handoff documentation.
+- Goal: one transparent 1280×384 source sheet; nemesis black/red banner above a mirrored green/brass hero banner, each in a 1280×192 row; no text or figures.
+- Status: ready for review. Inspected ribbon reference; generated and visually reviewed the source sheet; verified 1280×384 RGBA with transparent pixels. Runtime integration excluded. Handoff: [taunt banners](notes/expansion-taunt-banners.md).
+
 ### EXPANSION-ART-SEASONS — Seasons and fates source sheet
 
 - Owner: Codex. Branch/worktree: `art/expansion`, `/workspace/legends-of-the-fall`.
