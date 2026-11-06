@@ -94,7 +94,10 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
   const above = at.y - r.height - 10 >= 4;
   el.classList.toggle('below', !above);
   const spot = keepClear(left, above ? at.y - r.height - 10 : at.y + 14, r.width, r.height);
-  if (!spot) return;
+  if (!spot) {
+    el.classList.remove('on');
+    return;
+  }
   el.style.left = `${Math.round(spot.left)}px`;
   el.style.top = `${Math.round(spot.top)}px`;
   el.style.setProperty('--tail', `${Math.round(Math.min(r.width - 12, Math.max(12, at.x - spot.left)))}px`);
@@ -106,14 +109,19 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
   }, opts.hold ?? HOLD_MS);
 }
 
-/** COMBAT-HUD: the bubble showing, set clear again of the HUD as it now stands (a line said at the deploy stays up as the fight's spell row
+/** COMBAT-HUD: the bubble showing (or fading), set clear again of the HUD as it now stands (a line said at the deploy stays up as the fight's spell row
  *  and boss bar come in). Nothing moves when it already is clear. */
 export function reclearQuip(): void {
-  if (!box?.classList.contains('on')) return;
+  // (a bubble fading out is set clear too: a toast coming into the lane would otherwise lie under it for the fade, BOSS-BAR)
+  if (!box || !(box.classList.contains('on') || box.classList.contains('off'))) return;
   const r = box.getBoundingClientRect();
   const spot = keepClear(r.left, r.top, r.width, r.height);
-  // (nowhere clear: the bubble goes rather than stay on the HUD)
-  if (!spot) return hideQuip();
+  // (no clear spot: the bubble goes at once rather than lie over the HUD while it fades)
+  if (!spot) {
+    box.classList.remove('on');
+    box.style.top = '-999px';
+    return;
+  }
   if (Math.round(spot.top) !== Math.round(r.top)) box.style.top = `${Math.round(spot.top)}px`;
   if (Math.round(spot.left) !== Math.round(r.left)) {
     // (moved sideways: its tail keeps pointing at the speaker, as far as the bubble reaches)

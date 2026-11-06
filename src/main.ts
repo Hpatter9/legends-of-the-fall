@@ -1616,7 +1616,7 @@ class Game {
   }
 
   /** Lay the top parts out again whenever the spell row or the boss's bar changes size (the War Horn given, a spell added, the
-   *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs. */
+   *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs; and set a toast and a quip clear again. */
   private watchTopHud(): void {
     if (typeof ResizeObserver !== 'function') return;
     let busy = false;
@@ -1631,8 +1631,8 @@ class Game {
       reclearQuip();
       busy = false;
     });
-    // (AUTO-RIGHT: the hero panel and the tactic button too: on a short phone the button rides the panel's top edge, and a bubble set clear
-    // of it at the deploy was left on it when the panel changed size or the button came in as the fight began)
+    // (the panel and the tactic button too: its fight rows and the button over them come in as the fight begins, and a quip
+    // said at the deploy must clear them)
     for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn']) watch.observe($(id));
   }
 
