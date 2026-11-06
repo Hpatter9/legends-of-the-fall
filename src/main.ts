@@ -99,6 +99,7 @@ import { toastAchievements, toastLines, toastSpells, toastStones } from './achie
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
 import { defaultPicks, marchChoice, marchLine, openMarchOrders, ordersOf, showAnvil, showLectern } from './marchCard';
+import { armyParty, noteOathFalls, oathCrowns, oathPay, swearOath } from './sim/oath';
 import { markedHero } from './sim/march';
 import { repairAll, repairAllCost } from './sim/wear';
 import { lecternDue, lecternSwap } from './sim/lectern';
@@ -477,9 +478,12 @@ class Game {
         const marching = !auto && marchChoice(this.meta, id, tier);
         let picks = defaultPicks(this.meta, id, this.meta.party);
         this.party.open('start', () => {
-          const next = armyRun(runSeed, id, this.meta.party, this.meta.castle, tier);
+          // (Dynasties, phase 7: a line in mourning cannot march with the armies)
+          const next = armyRun(runSeed, id, armyParty(this.meta, todayKey()), this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
           if (marching) {
+            // (and the Legend Oath, sworn for this run on the March orders)
+            if (picks.oath) swearOath(this.meta, next);
             const orders = ordersOf(picks, next.seed, this.meta.party);
             if (orders) next.orders = orders;
             // (DEPTH-BUILD: Far Sight's road: the run is fought on that land of the army's)
@@ -2433,7 +2437,7 @@ class Game {
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
       // (a quest battle's next try, or the daily's next practice run, or the army's next run)
-      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, armyParty(this.meta, todayKey()), this.meta.castle, a.tier);
       if (!nextRun) return void this.endAuto('stopped');
       if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
       this.startRun(nextRun);
@@ -2940,6 +2944,8 @@ class Game {
       saveRun(this.run);
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
+      // (Dynasties, phase 7: under the Legend Oath each of them has fallen once; the wave's end decides who is slain)
+      noteOathFalls(this.run, this.b);
       reviveParty(this.b);
       // (DEPTH-BUILD: the Chapel's Vigil: how the party rises, chosen on the march card)
       applyVigil(this.b, fallen, this.run.orders?.vigil);
@@ -3674,6 +3680,8 @@ class Game {
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
       if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
+      // (Dynasties, phase 7: the Legend Oath pays half again)
+      if (this.pay) oathCrowns(this.meta, this.pay, run);
       // (DEPTH-BUILD: the Mage Tower's Spell Lectern, at the camp after the mid-boss: swap the run's spare spell in, once)
       const spare = run.orders?.spare as SpellId | undefined;
       const midWon = won && !!army && army.waves[stage - 1]?.boss === 'mid' && !this.auto;
@@ -3712,12 +3720,14 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey() };
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey(), now: Date.now() };
       const earned = settleRun(this.meta, run, settled);
+      // (Dynasties, phase 7: the slain under the Oath, its trophy and renown, on the wave card with the War's lines)
+      if (settled.oath?.lines.length) this.nemNote = { ...(settled.war ?? { born: [], grew: [], slain: [], held: [], learned: [], crowns: 0 }), council: [...(settled.war?.council ?? []), ...settled.oath.lines] };
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
       toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
       // (the Nemesis War's lines go on the wave card below)
-      this.nemNote = settled.war;
+      if (!settled.oath?.lines.length) this.nemNote = settled.war;
       // (and what slaying a nemesis paid counts in the wave's crowns)
       if (settled.war?.crowns) this.crownGain += settled.war.crowns;
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
@@ -3742,7 +3752,7 @@ class Game {
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       // (a quest battle replayed for practice pays nothing, XP neither)
-      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) * marchPay(run.orders).xp : 1));
+      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) * marchPay(run.orders).xp * oathPay(run) : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.filter((h) => !h.guest).map((h) => h.kind));
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)

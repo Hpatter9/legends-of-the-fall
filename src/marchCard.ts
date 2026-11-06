@@ -19,11 +19,13 @@ import { SPELLS, type SpellId } from './sim/spells';
 import { UNITS } from './sim/units';
 import { menuFoot, menuNote, menuPick, menuSection, menuChoice, menuWell, ornateMenu } from './ornateMenu';
 import { VIGILS, VIGIL_IDS, type VigilId } from './sim/chapelRooms';
+import { OATH, oathOpen, whyNoOath } from './sim/oath';
 
 
 /** Whether the card has anything to choose: some modifier other than the plain march is open. */
 export function marchChoice(meta: Meta, army: string, tier: number): boolean {
-  return vigilOpen(meta) || spares(meta).length > 0 || roomOpen(meta.castle, 'mastersMark') || roadsOf(meta, army).length > 0 || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
+  // (Dynasties, phase 7: the Legend Oath is on the card once it is open, so a Normal run shows it locked)
+  return oathOpen(meta) || vigilOpen(meta) || spares(meta).length > 0 || roomOpen(meta.castle, 'mastersMark') || roadsOf(meta, army).length > 0 || MARCHES.some((d) => d.id !== 'plain' && marchOpen(meta, army, tier, d.id).open);
 }
 /** The Watchtower's Far Sight: the army's roads, one a land. */
 const roadsOf = (meta: Meta, army: string): Area[] => {
@@ -42,6 +44,8 @@ export interface MarchPicks {
   road?: Area;
   spare?: SpellId;
   marked?: string;
+  /** Dynasties, phase 7: the Legend Oath sworn for the run (Hard or harder, `oath.ts`). */
+  oath?: boolean;
 }
 
 /** The orders a run starts with when none are changed: a plain march, the Shielded Vigil, the first road, spare and hero (as the old card's). */
@@ -68,6 +72,7 @@ export function marchLine(picks: MarchPicks): string {
   if (picks.vigil) parts.push(VIGILS[picks.vigil].name);
   if (picks.road) parts.push(`by the ${AREA_NAMES[picks.road]}`);
   if (picks.spare) parts.push(SPELLS[picks.spare].name);
+  if (picks.oath) parts.push('the Legend Oath');
   return parts.join(' · ');
 }
 
@@ -109,6 +114,19 @@ export function openMarchOrders(meta: Meta, army: string, tier: number, seed: nu
     tell();
   });
   tell();
+  // (Dynasties, phase 7: the Legend Oath, per run, on Hard or harder: the bearers can truly die, the progress never)
+  if (oathOpen(meta)) {
+    const why = whyNoOath(meta, tier);
+    if (why) p.oath = false;
+    const g = menuSection(body, 'The Legend Oath', 'this run only', 2);
+    const paid = `×${OATH.PAY} crowns and XP · +${OATH.TROPHY} War Trophy a wave · Legend renown`;
+    menuPick(g, [false, true], !!p.oath, (on) => ({
+      icon: on ? '✠' : '⚑',
+      title: on ? 'Swear the Oath' : 'No Oath',
+      disabled: on && !!why,
+      lines: on ? (why ? [[why, 'lock']] : ['A hero who falls twice, or in a wave lost, is slain: the heir carries on with every level', [paid, 'pay']]) : ['The heroes fall and rise as ever'],
+    }), (on) => (p.oath = on));
+  }
   // (the Chapel's Vigil, once its room stands: how the party rises when a heart burns)
   if (p.vigil) menuPick(menuSection(body, 'The Vigil', 'when a heart burns, the party rises'), VIGIL_IDS, p.vigil, (id) => ({ icon: VIGILS[id].icon, title: VIGILS[id].name, lines: [VIGILS[id].line] }), (id) => (p.vigil = id));
   // (the Watchtower's Far Sight: the road the army is met on, one a land)

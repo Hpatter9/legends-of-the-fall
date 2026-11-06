@@ -4,6 +4,7 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { settleMourning } from './sim/oath';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
@@ -336,12 +337,14 @@ export class Home {
     const m = this.meta;
     const before = JSON.stringify(m.dynasty ?? null);
     const aged = openDynasty(m, todayKey());
+    // (phase 7: a mourning that has ended: the trained heir, or a foundling, takes up the mantle)
+    const mourned = settleMourning(m, Date.now(), todayKey());
     const news = takeSeasonNews(m, todayKey());
     if (JSON.stringify(m.dynasty ?? null) !== before) saveMeta(m);
     // (phase 6: a save whose Hall had mentors before the heirs is told once that they may name one)
     const note = takeHeirNote(m);
     if (note) saveMeta(m);
-    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged), ...(note ? [HEIR_NOTE] : [])]);
+    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged), ...(note ? [HEIR_NOTE] : []), ...mourned]);
   }
 
   /** The Houses (Dynasties): the family tree, on a line when one is given. */

@@ -47,6 +47,9 @@ import { questsWaiting } from './sim/quests';
 // (TAVERN-RANKUP: the gold chevron over a hero with a rank or an awakening ready, and the quick Upgrades list's button)
 import { markReady } from './sim/upgradesReady';
 import { upMark } from './rankUpList';
+// (Dynasties, phase 7: the ghosts of bearers slain under the Oath, pale at their seats, then in a corner of the Hearth Hall)
+import { cornerGhosts, ghostOf } from './sim/oath';
+import candleUrl from './art/items/ember_brand.png';
 // (TAVERN LIFE: what each hero does at their spot, `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`)
 import { LIFE } from './render/tavernLife';
 import { drawGwenPainted, drawGwenWipe, drawLifeFront, drawPainted, hasPainted, hipsAt, HIP, lifePose, loadLife, seatInFront, sitDrop, sits, type Body, type LifeCtx } from './tavernLifeDraw';
@@ -179,7 +182,18 @@ interface Actor {
   aura: readonly AuraPart[];
   /** (TAVERN LIFE) where and how it was drawn this frame, for its props drawn after it (and after the seat in front of it). */
   body?: Body;
+  /** (Dynasties, phase 7) the bearer here was slain under the Oath and its House mourns: drawn pale and translucent, a candle by it. */
+  ghost?: boolean;
 }
+
+/** (Dynasties, phase 7) the corner seats of the Hearth Hall where the fallen elders' ghosts sit once their Houses have a bearer again. */
+const GHOST_CORNER: readonly { x: number; y: number }[] = [
+  { x: ROOM_W + 60, y: 172 },
+  { x: ROOM_W + 92, y: 175 },
+  { x: ROOM_W + 40, y: 190 },
+];
+/** How opaque a ghost is drawn (steady: it never flickers). */
+const GHOST_ALPHA = 0.42;
 
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -196,6 +210,9 @@ export class Tavern {
   private still: HTMLCanvasElement | null = null;
   private glows = new Map<string, HTMLCanvasElement>();
   private actors = new Map<string, Actor>();
+  /** (Dynasties, phase 7) the fallen elders whose ghosts sit in the Hearth Hall's corner, and the candle at a mourning seat. */
+  private corner: { kind: string; rig: Rig; k: number }[] = [];
+  private candle: HTMLImageElement | null = null;
   /** Duchess, who wanders the hearth hall's floor (`render/duchessRules.ts`). */
   private goat: Goat | null = null;
   private goatArt: HTMLImageElement | null = null;
@@ -368,11 +385,13 @@ export class Tavern {
       const step = menuAuraStep(meta, kind);
       const aura = auraParts(kind, step, this.saver);
       const a = this.actors.get(kind);
+      const ghost = !!ghostOf(meta, kind);
       if (a) {
         a.rig = rig;
         a.k = k;
         a.step = step;
         a.aura = aura;
+        a.ghost = ghost;
         continue;
       }
       this.actors.set(kind, {
@@ -391,7 +410,19 @@ export class Tavern {
         phase: rand(0, 6),
         step,
         aura,
+        ghost,
       });
+    }
+    // (the fallen elders of Houses with a bearer again: up to three ghosts in the Hearth Hall's corner)
+    this.corner = cornerGhosts(meta)
+      .slice(0, GHOST_CORNER.length)
+      .flatMap((c) => {
+        const rig = heroRig(meta, c.kind);
+        return rig ? [{ kind: c.kind, rig, k: figureHeight(rig.figure, UNITS[c.kind].scale) / rig.figure }] : [];
+      });
+    if ((this.corner.length || [...this.actors.values()].some((x) => x.ghost)) && !this.candle) {
+      this.candle = new Image();
+      this.candle.src = candleUrl;
     }
   }
 
@@ -743,9 +774,17 @@ export class Tavern {
       if (spot.seat !== 'none' && (!actor || Math.abs(actor.x - spot.x) > 3)) list.push({ depth: spot.depth - 0.5, paint: () => this.seat(a, spot) });
       // (TAVERN LIFE: a sitter's seat: a stool or bench in front hiding where the legs join, a chair behind; a painted sheet has its own)
       else if (actor && sits(kind, spot) && !hasPainted(kind)) list.push({ depth: spot.depth + (seatInFront(spot) ? 0.25 : -0.5), paint: () => this.seat(a, spot) });
-      if (actor) list.push({ depth: spot.depth, paint: () => this.hero(actor) });
-      if (actor && LIFE[kind]) list.push({ depth: spot.depth + 0.3, paint: () => this.lifeFront(actor) });
+      if (actor) list.push({ depth: spot.depth, paint: () => this.ghostly(actor.ghost, () => this.hero(actor)) });
+      if (actor && LIFE[kind]) list.push({ depth: spot.depth + 0.3, paint: () => this.ghostly(actor.ghost, () => this.lifeFront(actor)) });
+      // (a candle burns at a mourning seat, steadily)
+      if (actor?.ghost && this.candle?.complete) list.push({ depth: spot.depth + 1, paint: () => g.drawImage(this.candle!, Math.round(spot.x + 9), spot.y - 11, 14, 14) });
     }
+    // (Dynasties, phase 7: the ghosts in the Hearth Hall's corner, standing still and pale)
+    this.corner.forEach((c, i) => {
+      const at = GHOST_CORNER[i];
+      if (at.x < left || at.x > right) return;
+      list.push({ depth: at.y, paint: () => this.ghostly(true, () => this.cornerGhost(c, at)) });
+    });
     if (this.goat && this.goatArt && Tavern.GOAT.min - 30 < right && Tavern.GOAT.max + 30 > left) list.push({ depth: Tavern.GOAT.y, paint: () => this.duchess() });
     // (QUESTS: the board leans on the wall, and Gwen stands behind the bar, drawn before it so the bar hides her legs)
     if (this.quests && BOARD_SPOT.x - 40 < right && BOARD_SPOT.x + 40 > left) list.push({ depth: BOARD_SPOT.foot, paint: () => this.board(a) });
@@ -868,6 +907,31 @@ export class Tavern {
   /** (TAVERN LIFE) what the life drawer needs from the frame. */
   private lifeCtx(): LifeCtx {
     return { g: this.ctx, now: this.now, s: this.scale, reduced: this.reduced, saver: this.saver };
+  }
+
+  /** (Dynasties, phase 7) draw a ghost: the same figure at a steady low alpha, greyed where the canvas can (no flicker). */
+  private ghostly(on: boolean | undefined, paint: () => void): void {
+    if (!on) return paint();
+    const g = this.ctx;
+    g.globalAlpha = GHOST_ALPHA;
+    if ('filter' in g) g.filter = 'grayscale(0.8) brightness(1.3)';
+    paint();
+    if ('filter' in g) g.filter = 'none';
+    g.globalAlpha = 1;
+  }
+
+  /** (Dynasties, phase 7) a fallen elder's ghost in the Hearth Hall's corner: its first idle frame, still, facing into the room. */
+  private cornerGhost(c: { rig: Rig; k: number }, at: { x: number; y: number }): void {
+    const g = this.ctx;
+    const { rig, k } = c;
+    const r = Math.max(0, rig.rows.indexOf('idle'));
+    const dw = rig.w * k;
+    const dh = rig.h * k;
+    if (!rig.facesRight) {
+      g.transform(-1, 0, 0, 1, at.x * 2, 0);
+      g.drawImage(rig.img, 0, r * rig.h, rig.w, rig.h, at.x - dw / 2, at.y - dh, dw, dh);
+      this.reset(this.scale);
+    } else g.drawImage(rig.img, 0, r * rig.h, rig.w, rig.h, at.x - dw / 2, at.y - dh, dw, dh);
   }
 
   private hero(a: Actor): void {
