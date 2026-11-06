@@ -120,6 +120,8 @@ import { dreadOf } from './sim/nemesisTraits';
 import { startNemesisTally, tallyNemesis, type NemesisTally } from './sim/nemesisLog';
 import { bondScenesDue } from './sim/bondScenes';
 import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
+import { counselXp, noteServed, stageOfKind } from './sim/dynasty';
+import { agedLines } from './housesView';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
@@ -161,7 +163,7 @@ import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } fr
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
-import { RISE_MS, UnitSprite } from './render/unitView';
+import { RISE_MS, setAgeLooks, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
@@ -385,6 +387,8 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
+    // (Dynasties: a Veteran's or an Elder's sprite wears the touch of the years; looks only)
+    setAgeLooks((kind) => stageOfKind(this.meta, kind));
     this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
     // (FIXES-4: the effects lay their tile marks on the tiles' own ground, under the fighters)
     this.fx.groundAt = (u, v) => this.boardView.groundAt(u, v);
@@ -3729,7 +3733,9 @@ class Game {
       if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
       // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
       // (DEPTH-BUILD: an apprentice below half its mentor's level earns half again, `legacy.ts`)
-      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }));
+      // (Dynasties, phase 5: an Elder on the field gives the rest of the party Elder's Counsel, +5% XP)
+      const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, counselXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }, fielded)));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)
@@ -3742,6 +3748,9 @@ class Game {
       // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
       const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
       const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot) || markedHero(run, kind)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
+      // (Dynasties, phase 5: the heroes who fought count the wave towards their season, half under auto-replay, where the waves fought count;
+      // the bench never ages. A season that ended since is settled first, and a stage reached is told)
+      if (!run.local) toastLines(agedLines(noteServed(this.meta, fought.map((f) => f.kind), this.auto ? 0.5 : 1, todayKey())));
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
       noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
