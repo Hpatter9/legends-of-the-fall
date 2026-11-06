@@ -67,6 +67,13 @@ export const PHASE2: Record<string, PhaseKit> = {
   ...Object.fromEntries(TRIALS.map((t) => [t.boss.id, t.phase])),
 };
 
+/** The Nemesis War's warchief, standing as the Muster's last boss on a fighter of no boss's look (`muster.ts`): his second form, the
+ *  same for every kind (a boss born to the seat changes as its own boss does, `PHASE2`). */
+export const CHIEF_PHASE: PhaseKit = { line: 'The Warchief does not kneel! To me, my Council!', atk: 1.25, shield: 0.12, haste: 4000 };
+
+/** What a fighter becomes in its second form: its own (`PHASE2`), else a warchief's. Undefined: none. */
+export const phaseKitOf = (u: Pick<Unit, 'def' | 'nem'>): PhaseKit | undefined => PHASE2[u.def] ?? (u.nem?.rank === 'warchief' ? CHIEF_PHASE : undefined);
+
 /** Whether this fighter will change form (armed at the start of the fight, and not yet changed). */
 export const awaiting = (u: Unit): boolean => !!u.phase && !u.phase.done;
 
@@ -115,7 +122,7 @@ function leap(b: Battle, me: Unit, out: BattleEvent[]): void {
 export function enterPhase(b: Battle, me: Unit, out: BattleEvent[]): void {
   const p = me.phase!;
   p.done = true;
-  const k = PHASE2[me.def];
+  const k = phaseKitOf(me);
   if (!k) return;
   b.pause = PHASE_PAUSE_MS;
   me.power = (me.power ?? 1) * k.atk * (p.surge ?? 1);

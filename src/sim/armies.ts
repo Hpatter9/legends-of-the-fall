@@ -7,9 +7,11 @@
 import type { Boost, Stage } from './battle';
 import type { Area } from './board';
 import { FOES, isBoss } from './foes';
+import { UNITS } from './units';
 import { PHASE_AT } from './bossPhases';
 import type { Meta } from './meta';
 import { mixSeed } from './rng';
+import { nemesisBand, type NemPlace, type RunNemesis } from './nemesis';
 import { starCrowns } from './stars';
 import { ARMY_STARS, MILESTONES, tierOf, TIERS } from './tiers';
 
@@ -294,7 +296,8 @@ export function waveBoost(a: Army, n: number, tier = 0): Stage {
   let boss: Boost | undefined;
   if (w?.boss) {
     const want = w.boss === 'final' ? a.last : a.mid;
-    const def = FOES[w.foes[0]];
+    // (a Muster's warchief may be any fighter: an elite or a Calamity boss is not in `FOES`, `muster.ts`)
+    const def = FOES[w.foes[0]] ?? UNITS[w.foes[0]];
     boss = { size: w.boss === 'final' ? 1.5 : 1.3, hp: want.hp / def.hp, atk: want.atk / def.atk, ...(w.boss === 'final' ? { phase: t.phaseAt ?? PHASE_AT, ...(t.surge ? { surge: t.surge } : {}) } : {}) };
   }
   const lift = (tier > 0 ? a.tierLift?.[tier] ?? 1 : 1) * (t.answer ?? 1);
@@ -315,6 +318,12 @@ export function waveFoes(a: Army, n: number, tier = 0): readonly string[] {
   if (!w || !extra) return w?.foes ?? [];
   const pool = w.boss ? w.foes.slice(1) : w.foes;
   return pool.length ? [...w.foes, ...Array.from({ length: extra }, (_, i) => pool[i % pool.length])] : w.foes;
+}
+
+/** The foes of wave n on a tier with the run's nemeses in their places (the Nemesis War, `nemesis.ts`): the band, and each nemesis's place,
+ *  its traits and its strength on top of the wave's. A run with no nemesis in the wave gets `waveFoes` as it was, and no places. */
+export function armyWaveBand(a: Army, n: number, tier: number, rn: RunNemesis | undefined): { band: readonly string[]; place: NemPlace[] } {
+  return nemesisBand(rn, n, waveFoes(a, n, tier), tier);
 }
 
 // ---- rewards -----------------------------------------------------------------------------------------------------------

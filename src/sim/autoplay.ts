@@ -21,6 +21,7 @@ import { guestBoost } from './guest';
 import { autoMerge } from './merge';
 import { botKitStats, equipBestReal, isReal } from './runGear';
 import { UNITS } from './units';
+import { formationSpots, type Formation } from './formations';
 
 /** How strong a hero is for the squad: its base hp times attack, times its boosts (grade, rank, level, gear, bumps). */
 export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
@@ -207,13 +208,28 @@ export function autoFormation(board: Board, heroes: readonly { id: number; kind:
   return taken;
 }
 
-/** Arranges the run's squad (`boostFor` gives a hero's whole boost, as the page places it; the plain grade, rank and level when unset) on the battle's deploy rows by `autoFormation` (taking back any hero already placed first). Returns the spots. */
-export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned) => Boost): Spot[] {
+/** Where Auto place sets `heroes` out: in `shape`'s tiles (`formationSpots`) when a formation was picked on the prep screen (COMBAT-HUD),
+ *  any hero the shape has no tile for taking `autoFormation`'s nearest free tile; with no shape, `autoFormation` as before. Deterministic. */
+export function deploySpots(board: Board, heroes: readonly { id: number; kind: string }[], shape?: Formation): Spot[] {
+  if (!shape) return autoFormation(board, heroes);
+  const tiles = formationSpots(board, heroes.map((h) => h.kind), shape);
+  const out: Spot[] = [];
+  heroes.forEach((h, i) => tiles[i] && out.push({ id: h.id, u: tiles[i].u, v: tiles[i].v }));
+  const rest = heroes.filter((_, i) => !tiles[i]);
+  if (rest.length) {
+    const free = deployTiles(board).filter(([u, v]) => !out.some((s) => s.u === u && s.v === v));
+    rest.forEach((h, i) => free[i] && out.push({ id: h.id, u: free[i][0], v: free[i][1] }));
+  }
+  return out;
+}
+
+/** Arranges the run's squad (`boostFor` gives a hero's whole boost, as the page places it; the plain grade, rank and level when unset) on the battle's deploy rows by `autoFormation`, or in `shape` when the player picked one (`deploySpots`), taking back any hero already placed first. Returns the spots. */
+export function autoDeploy(b: Battle, run: Run, meta: Meta, boostFor?: (h: Owned) => Boost, shape?: Formation): Spot[] {
   for (const u of [...b.units]) if (u.side === 'hero') unplace(b, u.def, u.tag);
   // (one of each kind on the field: a squad from an older save with two of a kind sends the later one back to the bench, ONE-OF-EACH)
   const squad = oneOfEach(run.squad.map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h));
   run.squad = squad.map((h) => h.id);
-  const spots = autoFormation(b.board, squad);
+  const spots = deploySpots(b.board, squad, shape);
   for (const s of spots) {
     const h = squad.find((x) => x.id === s.id)!;
     place(b, h.kind, s.u, s.v, h.id, boostFor?.(h) ?? (h.guest && !run.local ? guestBoost(run, meta, h) : run.local ? localBoost(h, run) : botBoost(meta, h, run)));

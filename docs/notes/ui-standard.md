@@ -6,8 +6,11 @@ with its own card, rim and buttons is not to be added again. `test/ui-standard.t
 
 ## What it draws
 
-- **The veil** (`.omVeil`): the dimmed, blurred page under the menu. `kind: 'card'` (the default) centres the card; `kind: 'sheet'`
-  (`.omSheet`) rises from the foot of the screen.
+- **The veil** (`.omVeil`): a light dim over the page under the menu, with no blur, so the page still reads through it (MENU-POLISH,
+  `docs/notes/menu-polish.md`). `kind: 'card'` (the default) centres the card; `kind: 'sheet'` (`.omSheet`) rises from the foot of the
+  screen, up to nine tenths of it; `kind: 'drawer'` (`.omDrawer`) slides up from the foot, stops at two thirds of the screen and dims only
+  the lower part, for a sheet over a page that should stay in sight (a ware at Hester's Stall). Text in the body is `--om-text` (14.5 px)
+  and `--om-small` (13 px).
 - **The card** (`.om`): the double brass rim (`--ornate-border-double`), slate and parchment (`ui/page.png`), `--ornate-shadow`, and a brass
   stud in each top corner.
 - **The header** (`.omHead`): the battle crest (`ui/battle-crest.png`), an eyebrow in small capitals ("The War Council"), the title in brass
@@ -19,7 +22,7 @@ with its own card, rim and buttons is not to be added again. `test/ui-standard.t
 - **The footer** (`.omFoot`): the way out on the left, the primary button on the right. A full page says "‹ Back", a card says "Close"
   (the UX rule), or a word of its own where the way out is itself a choice ("Keep the loadout", "Not now"). Buttons are 48 px tall.
 
-Escape closes a menu; `onClose` runs once however it went. Reduced motion: the veil does not fade in. Nothing glows in a loop.
+Escape closes a menu; `onClose` runs once however it went. Reduced motion: the veil does not fade in and the drawer does not slide. Nothing glows in a loop.
 
 ## How to build one
 
@@ -32,7 +35,7 @@ menuPick(grid, MARCHES, current, (d) => ({ icon: d.icon, title: d.name, lines: [
 menuFoot(menu, { back: { word: 'close' }, primary: { label: 'Set orders', onClick: () => { menu.close(); set(picked); } } });
 ```
 
-`menuChoice` is a single row. `menuPick` makes a set with one chosen (it moves the gilt itself). `menuWell` and `menuNote` are for words.
+`menuSection`'s `cols` is 2 or 3 (3 from 380 px), or 4 for short rows such as counts. `menuChoice` is a single row. `menuPick` makes a set with one chosen (it moves the gilt itself). `menuWell` and `menuNote` are for words.
 `menuTitle` retitles a second step. The builder is plain DOM, with no Pixi and no rules, so a module the tests import can use it.
 
 ## On it now
@@ -45,13 +48,17 @@ menuFoot(menu, { back: { word: 'close' }, primary: { label: 'Set orders', onClic
   defaults as the old card); the run's seed is fixed as the War Council opens, so a Cursed march's named curse is the run's. The button is
   left out while no order is open (a new player never sees it), for an auto replay (it marches plain, as before) and for quest battles.
 - **The Spell Lectern** and **the Field Anvil** at the mid-boss camp.
+- **From PR #386 (INT-386, `docs/notes/int-386.md`):** the Auto card (`autoAsk.ts`; the counts are a row of four gilded choices),
+  "How the altar works" (`altarHelp.ts`), a finished build's card (`builtCard.ts`), the tome sheet (`tomeView.ts`), the relic card
+  (`relicCard.ts`), the talent box and its Auto-spend confirm (`talentView.ts`) and a ware's drawer at Hester's Stall (`stallView.ts`; the
+  stall page itself is still its own).
 
 ## Not on it yet (the list in the test)
 
 These dialogs were drawn before the standard, each with its own card. Most already wear the ornate look (`ornateMenus.css` sections 1
-to 23), but they do not share the builder: `altarHelp`, `autoAsk`, `builtCard`, `chestStash`, `dailyView`, `earnedArrival`,
-`eidolonBinding`, `eidolonChainView`, `questCard`, `rankUpList`, `revealCard`, `settingsPicker`, `shopView`, `stallView`, `summonTarot`,
-`tomeView` and `unitInfo`. When one is touched, move it onto `ornateMenu` and take it off the list in `test/ui-standard.test.ts`.
+to 23), but they do not share the builder: `chestStash`, `dailyView`, `earnedArrival`, `eidolonBinding`, `eidolonChainView`,
+`questCard`, `rankUpList`, `revealCard`, `settingsPicker`, `shopView`, `stallView` (the stall page; its ware sheet is standard),
+`summonTarot` and `unitInfo`. When one is touched, move it onto `ornateMenu` and take it off the list in `test/ui-standard.test.ts`.
 
 ## The test
 
@@ -59,7 +66,7 @@ to 23), but they do not share the builder: `altarHelp`, `autoAsk`, `builtCard`, 
 - every class the builder names is styled in `ornateMenus.css`, and it names no class it does not list (`OM_CLASSES`);
 - any file in `src/` that sets `role="dialog"` is built with `ornateMenu`, unless it is on the list of menus from before the standard. The
   list may only shrink: a file on it that no longer draws its own dialog must come off;
-- the March orders, the Lectern and the Anvil are built with it;
+- the March orders, the Lectern and the Anvil are built with it, and so are the dialogs moved from PR #386;
 - the March orders' picks become the run's orders as before (a plain march with nothing open gives none, a Cursed march carries the
   seed's curse, a marked hero no longer in the party falls to the party's first).
 

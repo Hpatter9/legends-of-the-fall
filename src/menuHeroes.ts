@@ -45,6 +45,10 @@ import { TOME_ICON } from './tomeArt';
 import { BOND_NAMES, SETTLE_WINS, partnersOf } from './sim/bonds';
 import { LEGACY, PERKS, apprenticeCount, apprenticeXp, callingOf, perkFor, perkLine, retire, retired, whyNotRetire } from './sim/legacy';
 import { saveMeta } from './sim/meta';
+import { bearerOf, DYNASTY, fieldedOf, lineOf, lineWords, lookWords, stageAge, stageOf, wavesThisSeason } from './sim/dynasty';
+import { birthrightWords, heirState } from './sim/heirs';
+import { heirRowFor, openBearer, openHouses } from './housesView';
+import { todayKey } from './modes';
 import { slotBrief } from './fightHudRules';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
@@ -84,6 +88,39 @@ function legacyBlock(box: HTMLElement, meta: Meta, kind: string, redraw: () => v
     wrap.append(btn);
   }
   if (wrap.childElementCount) box.append(wrap);
+}
+
+/** The hero sheet's Line row (Dynasties, `sim/dynasty.ts`): the House, its bearer's stage and age, the season's waves, and the way to
+ *  the family tree. */
+function lineBlock(box: HTMLElement, meta: Meta, kind: string): void {
+  const b = bearerOf(meta, kind);
+  if (!b || !meta.dynasty) return;
+  const day = todayKey();
+  const wrap = el('div', 'dossierLine');
+  wrap.append(detailHeading('The House', lineWords(meta, kind)));
+  const look = lookWords(kind, stageOf(b.served));
+  wrap.append(el('p', 'legacyLine', `${stageAge(kind, b.served)} · ${b.served} ${b.served === 1 ? 'season' : 'seasons'} served · ${wavesThisSeason(meta, kind, day)} of ${DYNASTY.SEASON_WAVES} waves this season${look ? ` · ${look}` : ''}${stageOf(b.served) === 'elder' ? ' · Elder’s Counsel: +5% XP to the party' : ''}`));
+  // (Dynasties, phase 6: the heir's training, or the mantle ready to pass, with the way to the bearer's card; the elder fielded in its place)
+  const f = fieldedOf(meta, kind);
+  if (f && f !== b) wrap.append(el('p', 'legacyLine', `${f.name} takes the field in ${b.name}’s place (the party picker’s banner)`));
+  if (b.birthright) wrap.append(el('p', 'legacyLine', `Birthright · ${birthrightWords(b)}`));
+  const heir = heirRowFor(meta, kind, Date.now());
+  if (heir) {
+    wrap.append(el('p', 'legacyLine', heir.line));
+    const go = el('button', 'dossierSkillsLink', heir.ready ? 'Pass the Mantle  ›' : heirState(meta, kind, Date.now()).state === 'none' ? 'Name an heir  ›' : 'The heir  ›');
+    go.type = 'button';
+    go.addEventListener('click', () => {
+      openHouses(meta, day, kind);
+      const line = lineOf(meta, kind);
+      if (line) openBearer(meta, kind, line.current, day);
+    });
+    wrap.append(go);
+  }
+  const btn = el('button', 'dossierSkillsLink', 'Open the House  ›');
+  btn.type = 'button';
+  btn.addEventListener('click', () => openHouses(meta, day, kind));
+  wrap.append(btn);
+  box.append(wrap);
 }
 
 function detailHeading(title: string, subtitle: string): HTMLElement {
@@ -445,6 +482,8 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     }
     // (DEPTH-BUILD: hero legacy: an apprentice's mentor line, and from level 60 the Retire button with a confirm on the sheet)
     legacyBlock(overview, meta, kind, () => state.onPick?.(kind, 'overview'));
+    // (Dynasties, phase 5: the hero's House, its stage and age, and the way to the family tree)
+    lineBlock(overview, meta, kind);
     const path = el('ol', 'dossierRanks');
     path.setAttribute('aria-label', 'Hero rank progression');
     for (let n = 1; n <= MAX_RANK; n++) {

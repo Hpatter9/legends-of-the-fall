@@ -6,6 +6,9 @@
 import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from './sim/remedies';
 import { REMEDY_ICON } from './gearUiArt';
 import { retired } from './sim/legacy';
+import { fieldedOf, fieldsElder } from './sim/dynasty';
+import { bannerChoices, fieldName } from './sim/heirs';
+import { openBanner } from './housesView';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { heroClassLabel, heroName } from './sim/heroNames';
@@ -349,7 +352,8 @@ export class Party {
       if (locked) remove.innerHTML = PADLOCK;
       const number = el('span', 'ptSlotNumber', String(i + 1));
       number.dataset.number = String(i + 1);
-      b.append(number, el('small', '', heroName(kind)), remove);
+      // (Dynasties, phase 6: the bearer who takes the field, the heir or an elder the banner chose)
+      b.append(number, el('small', '', fieldName(this.meta, kind)), remove);
       if (locked) b.append(el('span', 'ptQuestRibbon', 'Quest'));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
@@ -418,18 +422,32 @@ export class Party {
       if (this.filter !== 'all' && (secret || roleOf(kind) !== this.filter)) continue;
       // Unknown locked names stay unknown, including through search.
       const known = m.unlocked.includes(kind) || lockInfo(m, kind)?.named;
-      if (this.search.trim() && (!known || !`${heroName(kind)} ${def.name}`.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
+      if (this.search.trim() && (!known || !`${heroName(kind)} ${fieldName(m, kind)} ${def.name}`.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
       const open = m.unlocked.includes(kind);
       const on = this.picked.includes(kind);
       const hit = !!this.focus && traitsOf(kind).includes(this.focus);
       const card = el('button', `hcard ptCard${open ? '' : ' locked'}${on ? ' picked' : ''}${hit ? ' hit' : ''}${this.focus && !hit ? ' faded' : ''}`);
       card.setAttribute('aria-pressed', String(on));
       card.append(secret ? secretFigure(56) : portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 56));
+      // (Dynasties, phase 6: a line with an honoured elder has a banner, the bearer who takes the field; a tap chooses, the heir by default)
+      let bannerChip: HTMLElement | null = null;
+      if (open && bannerChoices(m, kind).length > 1) {
+        const f = fieldedOf(m, kind);
+        const banner = el('span', `ptBanner${fieldsElder(m, kind) ? ' elder' : ''}`, `⚑ ${f?.name ?? heroName(kind)}`);
+        banner.setAttribute('role', 'button');
+        banner.setAttribute('aria-label', `${f?.name ?? heroName(kind)} takes the field. Choose who bears the banner`);
+        banner.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openBanner(m, kind, () => this.draw());
+        });
+        bannerChip = banner;
+      }
       if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
       else if (open && retired(m, kind)) card.append(el('span', 'ptPickedFlag', 'In the Hall'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);
-      card.append(el('b', '', open || lock?.named ? heroName(kind) : '???'));
+      card.append(el('b', '', open ? fieldName(m, kind) : lock?.named ? heroName(kind) : '???'));
+      if (bannerChip) card.append(bannerChip);
       if (open) {
         const p = progressOf(xpOf(m, kind));
         const tags = el('span', 'ptTags');

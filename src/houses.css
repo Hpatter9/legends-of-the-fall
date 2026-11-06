@@ -1,0 +1,68 @@
+/* Dynasties' Houses and Seasons (housesView.ts, docs/notes/dynasty-5.md): the standard ornate menu's sections and wells, with a bearer's
+   face in a gold frame, its generation on the corner. A Veteran's and an Elder's portrait wear the same steady silver grade as their
+   sprites (an honour, never a loss). Steady colours only: nothing glows or pulses. */
+.hsFace { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; border: 2px solid #bda16c; border-radius: 4px; background: radial-gradient(circle at 50% 40%, #3a3020, #120e08); box-shadow: inset 0 0 0 1px #0008; overflow: hidden; }
+.hsFace canvas { display: block; image-rendering: pixelated; }
+.hsFace.veteran { border-color: #c9c3b4; }
+.hsFace.veteran canvas { filter: saturate(0.82) brightness(1.03); }
+.hsFace.elder { border-color: #e8e4da; background: radial-gradient(circle at 50% 40%, #3c3a36, #12110f); }
+.hsFace.elder canvas { filter: saturate(0.64) brightness(1.06); }
+.hsGen { position: absolute; right: 1px; bottom: 0; padding: 0 3px; border-radius: 3px; font: 700 10px/1.3 var(--display, serif); font-style: normal; color: #f3e2b0; background: #1a1208d0; text-shadow: 0 1px 0 #000; }
+.hsFate { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; image-rendering: pixelated; }
+/* The line picker: four across, a face over its name and stage. */
+.hsLines .omChoice.hsLine { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 96px; padding: 6px 2px; text-align: center; }
+.hsLines .omChoice.hsLine > b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.hsLines .omChoice.hsLine > small { font-size: 11px; }
+.hsLines .omChoice.hsLine.elder > small { color: #ece6d6; }
+/* A bearer, a kindred House, a season's row: a face at the left, the words beside it, one to a line. */
+.omGrid.hsGenRow, .omGrid.hsKin { grid-template-columns: minmax(0, 1fr); }
+.omChoice.hsBearer, .omChoice.hsRow { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; row-gap: 1px; align-items: start; text-align: left; }
+.omChoice.hsBearer .hsFace, .omChoice.hsRow .hsFace { grid-row: 1 / span 4; align-self: center; }
+.omChoice.hsBearer > b, .omChoice.hsBearer > small, .omChoice.hsRow > b, .omChoice.hsRow > small { grid-column: 2; }
+.omChoice.hsRow:disabled, .omChoice.hsBearer:disabled { opacity: 1; }
+.omChoice.hsThread { border-left: 3px solid #d9b45a; }
+.omChoice.hsThread:disabled { opacity: 0.6; }
+.hsYears .omChoice:disabled { opacity: 0.55; }
+.omChoice.hsFact:disabled { opacity: 1; }
+.hsBearerWell .hsFace canvas { width: 96px; height: 96px; }
+/* The Seasons' card and the bearer's card. */
+.hsSeasonWell { display: flex; align-items: center; gap: 12px; }
+.hsSeasonWell p { margin: 0; color: #e4d8bc; }
+.hsSeasonBig { width: 48px; height: 48px; flex: none; image-rendering: pixelated; }
+.hsBearerWell { display: flex; align-items: center; gap: 12px; }
+.hsWords { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hsWords b { font: 400 16px/1.2 var(--display, serif); color: var(--ornate-brass, #e2c27a); }
+.hsWords small { color: #d8ccb2; }
+.hsMemory { display: flex; flex-direction: column; gap: 6px; }
+.hsMemory p { margin: 0; padding: 2px 6px; color: #efe2c2; border-left: 2px solid #8a7340; }
+/* The top bar's season chip, in its second row before the armies line (TOPBAR-FIT: the top row keeps the gear beside the trophy). It shows
+   its icon and the season's name; its tap reaches 44 px tall through an invisible margin round it. */
+#hmTop .hsSeasonChip { position: relative; display: inline-flex; align-items: center; gap: 3px; flex: none; min-width: 0; min-height: 0; width: auto; height: 26px; padding: 0 7px 0 3px; cursor: pointer; font: inherit; font-size: 11px; }
+#hmTop .hsSeasonChip::after { content: ''; position: absolute; inset: -10px -4px; }
+#hmTop .hsSeasonChip .hsSeasonIco { width: 18px; height: 18px; image-rendering: pixelated; }
+.omGrid.hsTabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.omGrid.hsTabs .omChoice { padding-left: 2px; padding-right: 2px; }
+.omGrid.hsTabs .omChoice > b { font-size: 12px; white-space: nowrap; }
+
+/* Phase 6 (docs/notes/dynasty-6.md): heirs and the Mantle. A line with a trained heir wears a steady gold frame (no glow, no pulse); a
+   cadet passed over is grey; the partner who shared an heir sits between the generations on a gold thread; an heirloom is a small chip. */
+.omChoice.hsReady { border-color: #e9c45c; box-shadow: inset 0 0 0 1px #e9c45c99; }
+.hsLines .omChoice.hsLine.hsReady > small { color: #f2d47a; }
+.omGrid.hsThreadRow { grid-template-columns: minmax(0, 1fr); margin: -4px 18px; }
+.omChoice.hsPartner { border-left: 3px solid #d9b45a; background: linear-gradient(90deg, #d9b45a1f, transparent 70%); }
+.omChoice.hsCadet { filter: grayscale(0.85); opacity: 0.82; margin-left: 22px; }
+.omChoice.hsCadet:disabled { opacity: 0.82; }
+.omChoice.hsCadet.hsVisit { margin-left: 0; }
+.hsHeirloomChip { grid-column: 2; display: inline-flex; align-items: center; gap: 4px; color: #e8cf8a; }
+.hsChipIco { width: 16px; height: 16px; image-rendering: pixelated; }
+.hsFounders { display: flex; flex-direction: column; gap: 4px; }
+.hsFounders p { margin: 0; color: #d8ccb2; }
+.hsFarewellWell { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.hsFarewellIco { width: 32px; height: 32px; image-rendering: pixelated; }
+.hsFarewell p b { color: var(--ornate-brass, #e2c27a); font-weight: 700; }
+.hsFarewell p.hsHeirSays { border-left-color: #d9b45a; }
+.omChoice.hsFact.hsRow:disabled { opacity: 1; }
+/* The party picker's banner: who of a line takes the field (an honoured elder in the heir's place). */
+.ptBanner { align-self: center; max-width: calc(100% - 20px); padding: 1px 5px; border: 1px solid #bda16c; border-radius: 3px; font: 700 10px/1.3 var(--display, serif); color: #f3e2b0; background: #1a1208e6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.ptBanner.elder { border-color: #e8e4da; }
+.hsCard .omChoice { position: relative; }

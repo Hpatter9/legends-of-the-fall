@@ -7,6 +7,7 @@
 // (`remedies.ts`). Pure rules: no Pixi, no DOM, no randomness.
 
 import type { Battle } from './battle';
+import { duelHeal } from './duel';
 import { powerOf } from './setPowers';
 import { UNITS } from './units';
 import type { Run } from './run';
@@ -18,6 +19,16 @@ export const REVIVE_SHARE = 0.5;
  *  lost one leaves everyone whole. The heroes risen at half are kept for the wave card's line (`Run.risen`). A tower run keeps its own. */
 export function settleWounds(run: Run, b: Battle): void {
   if (run.tower || !run.runes) return;
+  // (the Nemesis War, phase 4: a duel won heals every hero a fifth, `duel.ts`; a duel lost or timed out is settled by `settleDuelRun`)
+  if (b.duel) {
+    delete run.risen;
+    if (b.phase === 'won') {
+      const healed = duelHeal(run.wounds);
+      if (healed) run.wounds = healed;
+      else delete run.wounds;
+    }
+    return;
+  }
   delete run.wounds;
   delete run.risen;
   if (b.phase !== 'won') return;

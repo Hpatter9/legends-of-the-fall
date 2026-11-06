@@ -834,49 +834,11 @@ button.danger:active:not(:disabled) {
   width: 100%;
 }
 
-/* Talents Inspection Modal (.tModal, .tBox) */
-.tModal {
-  background: radial-gradient(circle at center, rgba(16, 20, 15, 0.78), rgba(5, 7, 5, 0.94));
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  z-index: 100;
-}
-
-.tBox {
-  width: min(380px, calc(100vw - 32px));
-  max-width: 100%;
-  padding: 18px 16px 14px;
-  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
-              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
-              url(ui/page.png);
-  border: var(--ornate-border-double);
-  border-radius: 6px;
-  box-shadow: var(--ornate-shadow);
-  box-sizing: border-box;
-}
-
-.tBox .tTitle b {
-  font-family: var(--display);
-  font-size: 18px;
-  color: var(--ornate-brass);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
-}
-
+/* the talent box's picture (now in a standard ornate menu, INT-386) */
 .tBig {
   border: 2px solid var(--ornate-brass-mid);
   border-radius: 6px;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8), 0 0 10px rgba(219, 193, 139, 0.3);
-}
-
-.tBox p {
-  color: #ede5d3;
-  line-height: 1.45;
-  font-size: 13px;
-}
-
-.tBtns button {
-  min-height: 46px;
-  font-size: 14px;
 }
 
 /* Equipment Picker & Comparison Rows */
@@ -1657,7 +1619,6 @@ body #spellbook h2 {
   #autoSum,
   .spOverlay,
   .ruBack,
-  .tModal,
   .cxOverlay,
   .cvVeil,
   .turnUpMedallion {
@@ -1713,6 +1674,11 @@ body #spellbook h2 {
 
 /* UX-FIXES: the toast lane sits under the top bar and its crest (it covered the crowns, the gear and the version line) */
 .toast { top: calc(env(safe-area-inset-top) + 118px); }
+/* COMBAT-HUD: in a fight the lane is under the spell row and the boss's bar (`hudClear.ts` sets its top); there the toast fades in and out
+   in place rather than sliding down over the orbs */
+.toast.lane { transform: translate(-50%, 0); opacity: 0; transition: opacity 0.3s ease-out; }
+.toast.lane.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .toast.lane { transition: none; } }
 
 /* --------------------------------------------------------------------------
    UX-FIXES (the audit's #6 and #10): tap targets of 44 px and a text floor of 11 px
@@ -2026,7 +1992,9 @@ body #spellbook h2 {
    24. THE STANDARD ORNATE MENU (src/ornateMenu.ts, docs/notes/ui-standard.md): every new card, sheet and menu is built with it.
    The veil; the card on the double brass rim over slate and parchment; a header with the battle crest, an eyebrow, the title and a
    filigree rule; sections with brass headings; gilded choice rows; slate wells; a footer with the way out and the primary button.
+   MENU-POLISH (docs/notes/menu-polish.md): a light veil, so the page still reads through it; the drawer; text a step larger.
    -------------------------------------------------------------------------- */
+.om { --om-text: 14.5px; --om-small: 13px; }
 .omVeil {
   position: fixed;
   inset: 0;
@@ -2035,12 +2003,13 @@ body #spellbook h2 {
   align-items: center;
   justify-content: center;
   padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
-  background: radial-gradient(circle at center, rgba(16, 20, 15, 0.78), rgba(5, 7, 5, 0.94));
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  /* (a light dim, no blur: the page under the menu still reads, and the card's own shadow holds it in front) */
+  background: radial-gradient(circle at center, rgba(10, 13, 9, 0.42), rgba(5, 7, 5, 0.6));
   animation: ornateFadeIn 0.2s ease-out;
 }
-.omVeil.omSheet { align-items: flex-end; padding-bottom: 0; }
+.omVeil.omSheet, .omVeil.omDrawer { align-items: flex-end; padding-bottom: 0; }
+/* the drawer: a lighter veil still, and only on the foot of the screen, so the page above stays in sight */
+.omVeil.omDrawer { background: linear-gradient(180deg, rgba(5, 7, 5, 0.12) 0%, rgba(5, 7, 5, 0.3) 45%, rgba(5, 7, 5, 0.55) 100%); animation: none; }
 .om {
   position: relative;
   width: min(420px, 100%);
@@ -2051,10 +2020,13 @@ body #spellbook h2 {
   background: radial-gradient(ellipse at 50% 0%, #3e483540 0%, transparent 70%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
   border: var(--ornate-border-double);
   border-radius: 8px;
-  box-shadow: var(--ornate-shadow);
+  box-shadow: var(--ornate-shadow), 0 0 0 1px #0a0c08, 0 14px 40px rgba(0, 0, 0, 0.75);
   color: #f1ead9;
 }
-.omSheet .om { width: min(480px, 100%); max-height: 92%; border-bottom: 0; border-radius: 10px 10px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+.omSheet .om, .omDrawer .om { width: min(480px, 100%); max-height: 92%; border-bottom: 0; border-radius: 10px 10px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+/* the drawer stops at two thirds of the screen (its body scrolls) and slides up into place */
+.omDrawer .om { max-height: 66%; box-shadow: var(--ornate-shadow), 0 -10px 30px rgba(0, 0, 0, 0.7); animation: omDrawerUp 0.26s cubic-bezier(0.2, 0.8, 0.25, 1); }
+@keyframes omDrawerUp { from { transform: translateY(100%); } to { transform: none; } }
 /* the four brass corner studs */
 .om::before, .om::after {
   content: '';
@@ -2097,7 +2069,7 @@ body #spellbook h2 {
   color: var(--ornate-brass);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 12px rgba(219, 193, 139, 0.3);
 }
-.omSub { margin: 2px 0 0; font: 400 13px/1.35 var(--body); color: #c4ba9f; }
+.omSub { margin: 2px 0 0; font: 400 var(--om-text)/1.35 var(--body); color: #c4ba9f; }
 /* the filigree rule: a brass line fading out each way, a diamond at its heart */
 .omRule {
   position: relative;
@@ -2143,9 +2115,12 @@ body #spellbook h2 {
   border-bottom: 1px solid rgba(156, 132, 84, 0.4);
 }
 .omSectionHead::before { content: '◆'; font-size: 9px; color: var(--ornate-brass-mid); align-self: center; }
-.omSectionHead small { font: 400 12px var(--body); letter-spacing: 0; color: #b8af9a; }
+.omSectionHead small { font: 400 var(--om-small) var(--body); letter-spacing: 0; color: #b8af9a; }
 .omGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 @media (min-width: 380px) { .omGrid[data-cols='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* four short rows across at every width (the Auto card's 1, 3, 5, 10) */
+.omGrid[data-cols='4'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.omGrid[data-cols='4'] .omChoice { align-items: center; justify-content: center; min-height: 48px; }
 .omChoice {
   min-width: 0;
   min-height: 52px;
@@ -2163,9 +2138,9 @@ body #spellbook h2 {
   background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
 }
-.omChoice b { font: 400 14px/1.2 var(--display); color: var(--ornate-brass); overflow-wrap: anywhere; }
+.omChoice b { font: 400 15px/1.2 var(--display); color: var(--ornate-brass); overflow-wrap: anywhere; }
 .omChoice .omIco { font-size: 20px; line-height: 1; margin-bottom: 2px; }
-.omLine { font: 400 12px/1.3 var(--body); color: #c4ba9f; overflow-wrap: anywhere; }
+.omLine { font: 400 var(--om-small)/1.3 var(--body); color: #c4ba9f; overflow-wrap: anywhere; }
 .omLine.omPay { color: #9fe39a; }
 .omLine.omLock { color: #9a9a8e; font-style: italic; }
 .omChoice.on {
@@ -2183,11 +2158,11 @@ body #spellbook h2 {
   border-radius: 4px;
   background: #0f130ecc;
   box-shadow: var(--ornate-well);
-  font: 400 13px/1.4 var(--body);
+  font: 400 var(--om-text)/1.4 var(--body);
   color: #dfd7c5;
 }
 .omWell p { margin: 4px 0; }
-.omNote { margin: 0; min-height: 1.3em; font: 400 13px/1.35 var(--body); color: #e6dcc4; }
+.omNote { margin: 0; min-height: 1.3em; font: 400 var(--om-text)/1.35 var(--body); color: #e6dcc4; }
 .omFoot {
   flex: none;
   display: flex;
@@ -2200,7 +2175,7 @@ body #spellbook h2 {
 .omBack { flex: 0 1 auto; min-width: 96px; min-height: 48px; font-size: 15px; border: 1px solid var(--ornate-brass-mid); }
 .omPrimary { flex: 1 1 auto; min-height: 48px; font: 400 18px var(--display); letter-spacing: 0.04em; }
 .omBack:only-child { flex: 1 1 auto; }
-@media (prefers-reduced-motion: reduce) { .omVeil { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .omVeil, .omDrawer .om { animation: none; } }
 
 /* the War Council's March orders button (UI-STANDARD): a gilded row over March naming the orders set; a tap opens the orders menu */
 #party .ptOrders {
@@ -2227,13 +2202,12 @@ body #spellbook h2 {
 /* --------------------------------------------------------------------------
    25. THE FIGHT'S AUTO SWITCH AND TACTIC BUTTON (the owner: "Move the auto cast button up next to the spells", "Make the tactic button
    more ornate"). The Auto switch sits straight after the spell orbs on their row; the tactic button has its own spot at the right edge
-   under that row, a gilded medallion as the camp's Daily is: the double brass rim, the tactic's icon (painted once drawn, ui/tactics/<id>.png)
-   in a brass ring, its name under it. Its word pops up below. Steady light; no pulse.
+   just above the hero rows (COMBAT-HUD: "down on the right side, above the heroes' bars"), a gilded medallion as the camp's Daily is: the double brass rim, the tactic's icon (painted once drawn, ui/tactics/<id>.png)
+   in a brass ring, its name under it. Its word pops up to its left. Steady light; no pulse.
    -------------------------------------------------------------------------- */
-#hudSpells .fhAuto { margin-left: 2px; }
-#hudSpells .fhTactic {
-  right: 0;
-  top: 56px;
+#hudSpells .fhAuto { margin-left: 0; }
+#panel .fhTactic {
+  right: 8px;
   width: 58px;
   height: 66px;
   padding: 4px 2px 3px;
@@ -2245,8 +2219,8 @@ body #spellbook h2 {
   background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%);
   box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.22), 0 3px 10px #000c, 0 0 10px rgba(219, 193, 139, 0.18);
 }
-#hudSpells .fhTactic[data-tactic='charge'], #hudSpells .fhTactic[data-tactic='hold'] { background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%); }
-#hudSpells .fhTactic .fhTacticFace {
+#panel .fhTactic[data-tactic='charge'], #panel .fhTactic[data-tactic='hold'] { background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%); }
+#panel .fhTactic .fhTacticFace {
   flex: none;
   width: 36px;
   height: 36px;
@@ -2259,13 +2233,13 @@ body #spellbook h2 {
   box-shadow: inset 0 0 6px #000, 0 0 6px rgba(219, 193, 139, 0.25);
 }
 /* (each tactic's ring takes a little of its colour: Charge ember, Hold steel; Advance the brass) */
-#hudSpells .fhTactic[data-tactic='charge'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #6a2a1c, #1d0c08 75%); border-color: #e3a36b; }
-#hudSpells .fhTactic[data-tactic='hold'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #2d3a4a, #10161f 75%); border-color: #a9bed3; }
-#hudSpells .fhTactic svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 1px #000); }
-#hudSpells .fhTactic .fhTacticArt { width: 32px; height: 32px; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 1px 2px #000); pointer-events: none; }
-#hudSpells .fhTactic small { font: 700 11px/1.1 var(--display); letter-spacing: 0.04em; color: var(--ornate-brass); opacity: 1; text-shadow: 0 1px 2px #000; }
-#hudSpells .fhTactic:active:not(:disabled) { transform: translateY(1px); }
-#hudSpells .fhTacticWord { top: 126px; min-width: 58px; }
+#panel .fhTactic[data-tactic='charge'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #6a2a1c, #1d0c08 75%); border-color: #e3a36b; }
+#panel .fhTactic[data-tactic='hold'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #2d3a4a, #10161f 75%); border-color: #a9bed3; }
+#panel .fhTactic svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 1px #000); }
+#panel .fhTactic .fhTacticArt { width: 32px; height: 32px; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 1px 2px #000); pointer-events: none; }
+#panel .fhTactic small { font: 700 11px/1.1 var(--display); letter-spacing: 0.04em; color: var(--ornate-brass); opacity: 1; text-shadow: 0 1px 2px #000; }
+#panel .fhTactic:active:not(:disabled) { transform: translateY(1px); }
+#panel .fhTacticWord { min-width: 58px; }
 
 /* The Battle page's bar without its Party button (the owner's call): Choose your battle alone, with Continue centred under it while a run
    is going; with no run the second row goes and the bar closes up */
@@ -2274,3 +2248,44 @@ body #spellbook h2 {
 .hm-battle .hmGo:not(:has(.hmCont)) { grid-template-rows: 48px; }
 .hmPage.hm-battle:not(:has(.hmCont)) { --hmBar: 83px; }
 .hmPage.hm-battle:not(:has(.hmBanner)):not(:has(.hmCont)) { --hmBar: 61px; }
+
+/* --------------------------------------------------------------------------
+   26. INT-386 (docs/notes/int-386.md): the bodies of the dialogs PR #386 restyled, now standard ornate menus. Only what a body of its own
+   needs: the card, rim, header, wells and footer are section 24's.
+   -------------------------------------------------------------------------- */
+/* notes in a standard body that say yes or no (a talent learned, one not yet open) */
+.omNote.tGood { color: #9fe39a; }
+.omNote.tBad, .omNote.hsWhy { color: #9a9a8e; font-style: italic; }
+/* the talent box: the talent's picture beside what it does, in a well */
+.om .tAskWell { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
+.om .tAskWell .tBig { width: 88px; height: 88px; padding: 5px; image-rendering: pixelated; background: #141712; }
+.om .tAskWell p { margin: 0; font-size: 15px; }
+/* "How the altar works": its five lines, brass markers */
+.om .altarHelpList { margin: 0; padding-left: 18px; display: grid; gap: 7px; }
+.om .altarHelpList li::marker { color: var(--ornate-brass); }
+/* a finished build: its picture over what it gives */
+.om .bpWell { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.om .bpPic { width: 72px; height: 72px; object-fit: contain; image-rendering: pixelated; }
+/* the relic card's body sits on the menu's slate: its own frame goes (the rarity still names itself in colour) */
+.om .rlCard { width: 100%; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.om .rlPiece small, .om .rlRarity { font-size: 12px; }
+/* MENU-POLISH: the bodies' own words a step larger too, as the standard's (--om-text, --om-small) */
+.om .rlCard p, .om .rlSet h3 { font-size: var(--om-text); }
+/* (relicCard.css sets these two with !important, so only !important lifts them) */
+.om .rlCard .rlStory, .om .rlCard .rlTier { font-size: var(--om-small) !important; }
+.om .hsLine, .om .hsStat { font-size: var(--om-text); }
+.om .hsHistory { font-size: 15.5px; }
+.om .hsSmall { font-size: var(--om-small); }
+.om .tomeName, .om .tomeXp, .om .tomeBtnName, .om .tomeHint, .om .tomeRow small { font-size: var(--om-small); }
+/* a ware's sheet at Hester's Stall: the art centred, the price on the primary button */
+.om .hsSheetArt { display: flex; justify-content: center; }
+.om .hsStat:last-child { border-bottom: 0; }
+.omPrimary.hsBuy { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+/* the tome sheet's hero row on the slate */
+#tomeSheet .tomeRow { border-color: #4a3e29; box-shadow: var(--ornate-well); }
+
+/* Not standard menus yet (still on the list in test/ui-standard.test.ts), but PR #386's two fixes kept as plain rules: */
+/* the fight's unit card says "Close" (cards say Close), a 44 px tap */
+.uiCard .fsClose { width: auto; min-width: 64px; min-height: 44px; padding: 0 10px; font: 700 13px var(--body); }
+/* the full artwork viewer on the standard double brass rim and shadow */
+dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--ornate-shadow); }

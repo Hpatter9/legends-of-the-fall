@@ -75,8 +75,8 @@ try {
         const note = await page.evaluate(() => document.querySelector('.hmDispatch')?.textContent ?? '');
         check(/stopped you at wave/.test(note), `${tag}: the loss's last word shows on the overlook ("${note.slice(0, 48)}…")`);
         await page.screenshot({ path: `${OUT}-loss-after-${w}.png` });
-        const now = await tappable(page, ['hmDaily', 'hmTower', 'hmCalamity', 'hmStall']);
-        check(now.every((r) => r === 'ok'), `${tag}: right after the loss, the Daily, Last Stand, Calamity and stall places are tappable (${now.join('; ')})`);
+        const now = await tappable(page, ['hmDaily', 'hmTower', 'hmCalamity']);
+        check(now.every((r) => r === 'ok'), `${tag}: right after the loss, the Daily, Last Stand and Calamity places are tappable (CLIFF-ROAM: the stall is in the tavern now) (${now.join('; ')})`);
         const clear = await page.evaluate(() => {
           const n = document.querySelector('.hmDispatch').getBoundingClientRect();
           return [...document.querySelectorAll('.cpPlace, .cpPlate, #hmBattle')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && !(r.right <= n.left || r.left >= n.right || r.bottom <= n.top || r.top >= n.bottom); }).map((e) => e.id || e.className);

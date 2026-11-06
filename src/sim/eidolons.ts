@@ -14,6 +14,7 @@
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
+import { nemStrike } from './nemesisTraits';
 import type { Battle, BattleEvent, Unit } from './battle';
 import { isBoss } from './foes';
 import { ELITE_FOES } from './eliteFoes';
@@ -216,7 +217,7 @@ export function strikeEidolon(b: Battle, out: BattleEvent[]): boolean {
   const foes = b.units.filter((x) => x.alive && x.side === 'foe').sort((x, y) => x.id - y.id);
   for (const f of foes) {
     const as = struckAs(b, f);
-    rend(b, f, Math.max(1, Math.round(f.maxHp * SHARE[as])), out);
+    rend(b, f, Math.max(1, Math.round(f.maxHp * (f.nem ? nemStrike(f, SHARE[as]) : SHARE[as]))), out);
   }
   rider(b, e, foes, out);
   out.push({ kind: 'eidolon', id: e.id, phase: 'done' });

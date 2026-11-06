@@ -6,7 +6,7 @@
 // here (`OM_CLASSES`; test/ui-standard.test.ts checks it, and that new dialogs are built with this).
 
 /** Every class this module puts on the page: each is styled in `ornateMenus.css` (section 24). */
-export const OM_CLASSES = ['omVeil', 'omSheet', 'om', 'omHead', 'omCrest', 'omEyebrow', 'omTitle', 'omSub', 'omRule', 'omBody', 'omSection', 'omSectionHead', 'omGrid', 'omChoice', 'omIco', 'omLine', 'omPay', 'omLock', 'omWell', 'omNote', 'omFoot', 'omBack', 'omPrimary'] as const;
+export const OM_CLASSES = ['omVeil', 'omSheet', 'omDrawer', 'om', 'omHead', 'omCrest', 'omEyebrow', 'omTitle', 'omSub', 'omRule', 'omBody', 'omSection', 'omSectionHead', 'omGrid', 'omChoice', 'omIco', 'omLine', 'omPay', 'omLock', 'omWell', 'omNote', 'omFoot', 'omBack', 'omPrimary'] as const;
 
 export interface MenuOptions {
   /** The page id of the veil (one menu of a kind at a time: an open one with the same id is closed first). */
@@ -16,8 +16,9 @@ export interface MenuOptions {
   eyebrow?: string;
   /** A line under the title. */
   sub?: string;
-  /** 'card' (default): centred, a pop-up over the page. 'sheet': rises from the foot of the screen. */
-  kind?: 'card' | 'sheet';
+  /** 'card' (default): centred, a pop-up over the page. 'sheet': rises from the foot of the screen, tall. 'drawer': slides up from the
+   *  foot of the screen and stops short, so the page above it (Hester and her shelf) stays in sight; the full dress all the same. */
+  kind?: 'card' | 'sheet' | 'drawer';
   /** Spoken name of the dialog (the title if left out). */
   label?: string;
   /** Called once the menu has gone, however it went (its own buttons, Escape, or `close`). */
@@ -48,7 +49,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 export function ornateMenu(o: MenuOptions): OrnateMenu {
   document.getElementById(o.id)?.dispatchEvent(new Event('omclose'));
   document.getElementById(o.id)?.remove();
-  const root = el('div', `omVeil${o.kind === 'sheet' ? ' omSheet' : ''}`);
+  const root = el('div', `omVeil${o.kind === 'sheet' ? ' omSheet' : o.kind === 'drawer' ? ' omDrawer' : ''}`);
   root.id = o.id;
   const card = el('div', 'om');
   card.setAttribute('role', 'dialog');
@@ -88,8 +89,9 @@ export function menuTitle(menu: OrnateMenu, title: string, sub?: string): void {
   if (s) s.textContent = sub ?? '';
 }
 
-/** A section of the body: a brass heading with its line, then a grid for the section's choices. Returns the grid. */
-export function menuSection(parent: HTMLElement, title?: string, line?: string, cols: 2 | 3 = 3): HTMLElement {
+/** A section of the body: a brass heading with its line, then a grid for the section's choices (`cols` across: 4 is for short rows, as
+ *  the Auto card's counts, and holds at every phone width). Returns the grid. */
+export function menuSection(parent: HTMLElement, title?: string, line?: string, cols: 2 | 3 | 4 = 3): HTMLElement {
   const sec = el('section', 'omSection');
   if (title) {
     const h = el('h3', 'omSectionHead', title);

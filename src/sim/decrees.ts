@@ -58,7 +58,8 @@ const foes = (b: Battle) => b.units.filter((x) => x.alive && x.side === 'foe');
 
 /** Cast the armed Decree. False (and nothing changed) unless the fight is on and the meter is full and unspent. */
 export function castDecree(b: Battle): boolean {
-  if (!decreeReady(b)) return false;
+  // (a duel has no Decree: the king stays out of it, phase 4)
+  if (!decreeReady(b) || b.duel) return false;
   const s = b.spells.decree!;
   s.used = true;
   const dc = DECREES[s.id as DecreeId];
@@ -156,7 +157,8 @@ export function castDecree(b: Battle): boolean {
  * Toll). Returns whether it cast.
  */
 export function autoDecree(b: Battle): boolean {
-  if (!decreeReady(b)) return false;
+  // (a duel has no Decree: the king stays out of it, phase 4)
+  if (!decreeReady(b) || b.duel) return false;
   const dc = DECREES[b.spells.decree!.id as DecreeId];
   const fs = foes(b);
   if (!fs.length) return false;

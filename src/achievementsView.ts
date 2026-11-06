@@ -5,6 +5,8 @@ import { AWARD_JOKES } from './quipData';
 import { ACHIEVEMENTS, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
 import { SPELLS, type SpellId } from './sim/spells';
+import { fightToastTop } from './hudClear';
+import { reclearQuip } from './quipView';
 
 /** The Achievements page: every achievement, the earned ones marked, the counting ones with a bar. One earned and not yet
  *  claimed has a Claim button (they come first), and `claim` takes its crowns and stones (or every waiting one's, for Claim all). */
@@ -105,7 +107,16 @@ function next(): void {
   el.className = 'toast';
   el.setAttribute('role', 'status');
   el.textContent = line;
+  // (COMBAT-HUD: in a fight the lane is under the spell row and the boss's bar, and the toast fades in there rather than sliding down
+  // over them)
+  const lane = fightToastTop();
+  if (lane !== undefined) {
+    el.classList.add('lane');
+    el.style.top = `${Math.round(lane)}px`;
+  }
   document.body.append(el);
+  // (a quip's bubble already up steps out of the toast's lane)
+  if (lane !== undefined) reclearQuip();
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => {
     el.classList.remove('show');

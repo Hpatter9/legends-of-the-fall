@@ -74,7 +74,7 @@ import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
-import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, splitGuestXp } from './sim/guest';
+import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, guestsHere, splitGuestXp, takeGuest } from './sim/guest';
 import { sitOutWords, twinNote, twinWords } from './oneEachNote';
 import { afterFight, canAutoQuest, maxSpeed, spendTicket, startAuto, startAutoDaily, startAutoQuest, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
@@ -105,12 +105,30 @@ import { lecternDue, lecternSwap } from './sim/lectern';
 import { applyVigil } from './sim/chapelRooms';
 import { journeyBoost, landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
+import { nemesisLines, type NemNote } from './sim/nemesis';
+import { markSeen as markTaunted, planRun } from './sim/revenge';
+import { TauntCuts } from './tauntCut';
+import { acceptDuel, contenders, duelOffer, offerSnap, refuseDuel, settleDuelRun, startDuel, type DuelOffer } from './sim/duel';
+import { DUEL_MS } from './sim/duelRing';
+import { duelAhead, duelBar, duelTaunt } from './duelRules';
+import { openDuelCard } from './duelView';
+import { noteWar } from './sim/council';
+import type { OrnateMenu } from './ornateMenu';
+import { warmGearTextures } from './render/gearTex';
+import { tauntFor, wavesTaunts } from './tauntCutRules';
+import { dreadOf } from './sim/nemesisTraits';
+import { startNemesisTally, tallyNemesis, type NemesisTally } from './sim/nemesisLog';
 import { bondScenesDue } from './sim/bondScenes';
 import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
+import { counselXp, fieldedOf, noteServed, stageOfKind } from './sim/dynasty';
+import { addSnapshots, birthrightSnapshot, lapsedLegacy, promiseXp, regularOf, takeRide } from './sim/heirs';
+import { heirSceneId } from './sim/heirScenes';
+import { agedLines } from './housesView';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
 import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
+import { startMuster } from './sim/muster';
 import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
 import { secretsOf } from './sim/secretHeroes';
@@ -147,7 +165,7 @@ import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } fr
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
-import { RISE_MS, UnitSprite } from './render/unitView';
+import { RISE_MS, setAgeLooks, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
@@ -173,7 +191,8 @@ import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
-import { hideQuip, showQuip, type Anchor } from './quipView';
+import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
+import { fightToastTop } from './hudClear';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
@@ -191,7 +210,7 @@ import { openScreen, openScreens } from './screens';
 import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
-import { pickedTactic, pickTactic } from './sim/tacticPick';
+import { pickedFormation, pickedTactic, pickFormation, pickTactic } from './sim/tacticPick';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 /** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
@@ -293,6 +312,9 @@ class Game {
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
   private settled = false;
+  /** The Nemesis War, phase 4: the challenge this wave opens with, waiting for its cut-in to play before its card opens; the card while up. */
+  private duelWait: DuelOffer | null = null;
+  private duelCard: OrnateMenu | null = null;
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
   /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the fallen heroes rise, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
@@ -342,6 +364,9 @@ class Game {
   private spellGhost = document.createElement('div');
   /** The fight's numbers for each hero, tallied as the ticks come in. */
   private stats: FightStats = [];
+  /** The Nemesis War's tally of the fight going (`nemesisLog.ts`), and what the last settled fight meant for the War. */
+  private nemTally: NemesisTally = startNemesisTally();
+  private nemNote: NemNote | undefined;
   /** The ultimates fired this fight, one hero kind each (QUESTS-1b: the quests' goals read them when the fight settles). */
   private ultsFired: string[] = [];
   /** A boss's title card: how long it has been on, and the boss it is about. */
@@ -364,6 +389,8 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
+    // (Dynasties: a Veteran's or an Elder's sprite wears the touch of the years; looks only)
+    setAgeLooks((kind) => stageOfKind(this.meta, kind), (kind) => fieldedOf(this.meta, kind)?.look);
     this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
     // (FIXES-4: the effects lay their tile marks on the tiles' own ground, under the fighters)
     this.fx.groundAt = (u, v) => this.boardView.groundAt(u, v);
@@ -510,6 +537,9 @@ class Game {
         const r = loadSlot('quest');
         return r?.mode?.kind === 'quest' ? r.mode.quest : null;
       },
+      // (the Nemesis War: the Warchief's Muster, from the Dark Council's board; a Muster saved part-way carries on)
+      onMuster: () => this.openMuster(),
+      musterSaved: () => !!loadSlot('muster'),
       // (EIDOLONS: the War Horn's chip beside the stones, put in once and kept to the save)
       onTopBar: () => {
         if (!this.eid) return;
@@ -522,6 +552,22 @@ class Game {
         const id = bondScenesDue(this.meta, (x) => seenScene(this.meta, x))[0];
         const sc = id ? SCENES[id] : undefined;
         if (sc) void this.queueScene(sc.moment);
+        // (the Nemesis War, phase 3: an Avenger's Vengeance plays its scene, once a pair)
+        const pair = this.meta.war?.vengeance?.[0];
+        if (pair) {
+          this.meta.war!.vengeance = this.meta.war!.vengeance!.slice(1);
+          if (!this.meta.war!.vengeance.length) delete this.meta.war!.vengeance;
+          saveMeta(this.meta);
+          void this.queueScene({ kind: 'vengeance', pair });
+        }
+        // (Dynasties, phase 6: a pair that named an heir plays its heir scene, once)
+        const heirPair = this.meta.dynasty?.scenes?.[0];
+        if (heirPair && !pair) {
+          this.meta.dynasty!.scenes = this.meta.dynasty!.scenes!.slice(1);
+          if (!this.meta.dynasty!.scenes.length) delete this.meta.dynasty!.scenes;
+          saveMeta(this.meta);
+          if (SCENES[heirSceneId(heirPair)]) void this.queueScene({ kind: 'heir', pair: heirPair });
+        }
       },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)
@@ -606,6 +652,7 @@ class Game {
       return said;
     });
     window.addEventListener('resize', () => this.layout());
+    this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
     const home = $('home');
     const sync = () => {
@@ -706,6 +753,103 @@ class Game {
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro(true));
     else this.startIntro();
+    this.queueTaunts();
+    this.queueDuel();
+  }
+
+  /** The Nemesis War, phase 4: a challenge on this wave (`duel.ts`): its cut-in queued after the taunts, its card when the screen is free.
+   *  None under auto-replay. A card still up from a wave before is put away without answering it. */
+  private queueDuel(): void {
+    this.duelWait = null;
+    const card = this.duelCard;
+    this.duelCard = null;
+    card?.close();
+    document.body.classList.toggle('inDuel', !!this.b.duel);
+    if (this.auto || this.b.phase !== 'deploy' || this.b.duel) return;
+    const o = duelOffer(this.run);
+    const s = o && offerSnap(this.run, o);
+    if (!o || !s) return;
+    this.duelWait = o;
+    this.taunts.add([duelTaunt(o, s, this.run.seed)], settings().nemesisCut);
+  }
+
+  /** The challenge's card (`duelView.ts`), once its cut-in has played. */
+  private openDuel(): void {
+    const o = this.duelWait;
+    const s = o && offerSnap(this.run, o);
+    if (!o || !s || this.duelCard) return;
+    this.taunts.clear();
+    this.duelCard = openDuelCard(o, s, contenders(this.run), (id) => this.answerDuel(o, id));
+  }
+
+  /** The player's answer: a champion (Accept: the duel's fight begins at once) or none (Refuse: the wave as usual, the nemesis Mocking). */
+  private answerDuel(o: DuelOffer, heroId: number | null): void {
+    if (this.duelWait !== o || this.b.phase !== 'deploy') return;
+    this.duelWait = null;
+    this.duelCard = null;
+    const s = offerSnap(this.run, o);
+    if (heroId === null) {
+      refuseDuel(this.run, o);
+      saveRun(this.run);
+      if (s) toastLines([`${s.name} is Mocking: +5% attack for the rest of the run`]);
+      // (the wave's fight is made again with the nemesis Mocking, the squad put back where it stood)
+      this.b = startStage(this.run, this.duchessWish());
+      this.placeSquad();
+      const section = chainOf(this.run)?.[this.run.stage - 1];
+      this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+      this.syncChain();
+      this.syncSprites(true);
+      this.layout();
+      this.refresh();
+      return;
+    }
+    const h = heroOf(this.run, heroId);
+    if (!h) return;
+    acceptDuel(this.run, o, heroId);
+    saveRun(this.run);
+    // (the duel's own fight: the wave's board with the two in its middle ring, `startDuel`)
+    this.b = startDuel(this.run, o, heroId, this.boostFor(h));
+    const section = chainOf(this.run)?.[this.run.stage - 1];
+    this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.boardView.ring(this.b.duel!);
+    document.body.classList.add('inDuel');
+    this.syncChain();
+    this.syncSprites(true);
+    this.layout();
+    this.refresh();
+    this.begin();
+  }
+
+  /** A duel lost or run out of time (`duel.ts`): the War reads it (the nemesis's deed, its escape), the run takes its outcome (the champion
+   *  at half, the nemesis a Might stronger, or gone from the wave), and the wave's own fight is set up. A duel won is settled as the wave. */
+  private endDuel(): void {
+    const b = this.b;
+    const note = noteWar(this.meta, this.run, b, this.nemTally, false, this.run.stage, todayKey());
+    settleDuelRun(this.run, b);
+    saveMeta(this.meta);
+    saveRun(this.run);
+    toastLines(note.council ?? []);
+    this.newBattle();
+  }
+
+  /** The Nemesis War, phase 3: the cut-ins of the nemeses this wave brings that the run has not met yet (none under auto-replay). */
+  private queueTaunts(): void {
+    this.taunts.clear();
+    const rn = this.run.nemesis;
+    if (rn?.members.some((x) => x.trophies?.length)) warmGearTextures();
+    if (!rn || this.auto || this.b.phase !== 'deploy') return;
+    const shown = this.taunted.get(this.run.seed) ?? new Set<number>();
+    this.taunted.set(this.run.seed, shown);
+    const field = [...new Set([...this.run.roster.map((h) => h.kind), ...this.b.units.filter((u) => u.side === 'hero' && u.owner === undefined).map((u) => u.def)])];
+    const snaps = wavesTaunts(rn, this.run.stage, shown);
+    this.taunts.onOpen = (t) => void shown.add(t.id);
+    // (a first meeting, once played, is kept on the nemesis: later ones follow the setting)
+    this.taunts.onShown = (t) => {
+      if (!t.first || !this.meta.war) return;
+      markTaunted(this.meta.war, t.id);
+      saveMeta(this.meta);
+    };
+    this.taunts.add(snaps.map((s) => tauntFor(s, field, this.run.seed)), settings().nemesisCut);
   }
 
   /** The squad onto the deploy rows, each where it stood last when it still can. */
@@ -1117,11 +1261,22 @@ class Game {
   /** The boss's name and health across the top, during the fight (none once it has fallen). */
   private refreshBossBar(): void {
     const bar = $('bossBar');
-    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    // (phase 4: in a duel the bar is the nemesis's, with the seconds left)
+    const duel = this.b.duel;
+    const boss = duel ? this.b.units.find((u) => u.id === duel.nem) : this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
     const show = this.b.phase === 'fight' && !!boss?.alive;
-    if (bar.hidden === show) bar.hidden = !show;
+    if (bar.hidden === show) {
+      bar.hidden = !show;
+      // (COMBAT-HUD: the bar is placed under the spell row as it is drawn now, before the quip is set clear of it)
+      if (show) {
+        bar.querySelector('b')!.textContent = boss!.nem?.name ?? this.questBossName(boss!.def) ?? UNITS[boss!.def].name;
+        this.placeTopHud();
+        reclearQuip();
+      }
+    }
     if (!boss || !show) return;
-    bar.querySelector('b')!.textContent = this.questBossName(boss.def) ?? UNITS[boss.def].name;
+    // (the Nemesis War: a boss that is a nemesis goes by its own name)
+    bar.querySelector('b')!.textContent = duel ? duelBar(boss.nem?.name ?? UNITS[boss.def].name, (this.b.timeLimit ?? DUEL_MS) - this.b.t) : boss.nem?.name ?? this.questBossName(boss.def) ?? UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
   }
 
@@ -1133,6 +1288,8 @@ class Game {
   }
 
   private begin(): void {
+    // (the Nemesis War, phase 4: a challenge waiting for its answer is answered first)
+    if (this.duelWait && this.b.phase === 'deploy') return this.openDuel();
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
     // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
@@ -1142,9 +1299,10 @@ class Game {
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
     // in its own trial as a great being, EIDOLON-TRIAL)
     const qbNow = questBattleOfRun(this.run);
-    this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
+    // (phase 4: a duel has no War Horn and no Decree: the king stays out of it)
+    if (!this.b.duel) this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
     // (KING-SPELLS batch 2: the ruler's Decree, once a fight)
-    armDecree(this.b, schoolOf(settings().ruler).decree);
+    if (!this.b.duel) armDecree(this.b, schoolOf(settings().ruler).decree);
     // (KING-SPELLS batch 3: the save's spell ranks)
     this.b.spells.ranks = fightRanks(this.meta.spellbook);
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
@@ -1155,10 +1313,12 @@ class Game {
     this.ultm.warm(this.b);
     this.evolved = new Set();
     this.endIntro();
+    this.taunts.clear();
     newQuipScene();
     // (the opening grumble belongs to a new fight)
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
+    this.nemTally = startNemesisTally();
     this.ultsFired = [];
     // (the music: the battle's one track, the same for every wave of an army or a daily, `battleMusic.ts`)
     startFight(trackOfRun(this.run));
@@ -1177,6 +1337,7 @@ class Game {
       this.place();
     }
     this.refresh();
+    reclearQuip();
   }
 
   /** Where to point a speech bubble at a hero of this kind on the board: above the head of one of their sprites (page pixels), or null. */
@@ -1260,6 +1421,11 @@ class Game {
     // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
     if (b.phase === 'fight') this.bossm.frame(dt, !!held);
     else this.bossm.clear();
+    // (the Nemesis War: a taunt cut-in plays over the deploy, after the boss's card or a scene has had the screen)
+    if (b.phase === 'deploy') this.taunts.frame(dt, !!held || !!this.intro);
+    else if (this.taunts.busy) this.taunts.clear();
+    // (phase 4: the challenge's card, once its cut-in and anything else has had the screen)
+    if (this.duelWait && b.phase === 'deploy' && !this.taunts.busy && !held && !this.intro && !this.duelCard) this.openDuel();
     if (b.phase === 'fight' && held) {
       // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
     } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.eid.holds)) {
@@ -1288,6 +1454,7 @@ class Game {
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
+        tallyNemesis(this.nemTally, events, b.units, b.t);
         this.ultsFired.push(...ultsIn(events, b.units));
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
@@ -1296,7 +1463,8 @@ class Game {
         playEvents(b, events, this.speed);
         // (the battle's music: on through a wave won with more to come or a fall a heart revives; the victory music at a battle won, the defeat sting at one lost)
         const end = events.find((e) => e.kind === 'end');
-        if (end) endWave(endOfFight(this.run, end.won));
+        // (phase 4: a duel lost or run out of time has the wave still to fight: the battle music plays on)
+        if (end) endWave(b.duel && !end.won ? 'none' : endOfFight(this.run, end.won));
         // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
         if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
         if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
@@ -1530,6 +1698,11 @@ class Game {
         if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
         else if (this.b.phase === 'fight') this.fx.summoned(this.b, u);
       }
+    // (the Nemesis War: a nemesis's plate wears a skull while the hero it dreads stands on the field)
+    for (const u of this.b.units) {
+      const dread = u.nem ? dreadOf(u.nem.weak) : undefined;
+      if (dread) this.sprites.get(u.id)?.setDread(this.b.units.some((h) => h.alive && h.side === 'hero' && h.owner === undefined && h.def === dread));
+    }
   }
 
   /* -------------------------------------------------------------- the camera */
@@ -1577,28 +1750,62 @@ class Game {
     return Math.min(1, (this.area.w - 20) / (x1 - x0) / this.scale);
   }
 
-  /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
-  private layout(): void {
-    this.fx.fitScreen(viewW(), viewH());
-    this.weather.resize(this.app.screen.width, this.app.screen.height);
+  /** The fight's top parts, each under the measured bottom of the ones above it (COMBAT-HUD, docs/notes/combat-hud.md): a twist's banner
+   *  under the top bar, the spell row under that, then the boss's bar under the whole spell row as it is drawn now (one line: since
+   *  AUTO-RIGHT the row never wraps, Auto staying right of the last orb), and the synergies under the lowest. Run by `layout` and
+   *  again whenever the spell row or the boss's bar changes size or shows (`watchTopHud`). Returns the bottom of the parts over the board
+   *  before the boss's bar, and the boss's bar's bottom (with its gap). */
+  private placeTopHud(): { below: number; barBottom: number } {
     const top = $('top').getBoundingClientRect();
-    const panel = $('panel').getBoundingClientRect();
     const bar = $('bossBar');
-    bar.style.top = `${top.bottom + 4}px`;
     bar.style.right = '12px';
     // (a floor's twist banner sits under the top bar; the bar for a boss goes below it)
     const twist = $('twistBanner');
     twist.style.top = `${top.bottom + 2}px`;
     const below = twist.hidden ? top.bottom : twist.getBoundingClientRect().bottom + 2;
-    // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky: the boss's bar and the combo bar go under
-    // them, while the board's own room (its fit) is reckoned as it was, from the top bar)
-    $('hudSpells').style.top = `${below + 6}px`;
-    const orbs = ORBS_ROW;
-    bar.style.top = `${below + orbs + 4}px`;
+    // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky)
+    const row = $('hudSpells');
+    row.style.top = `${below + 6}px`;
+    // (the row's real bottom when it shows (the War Horn, the mana, the orbs and Auto, on one line); before the fight, when it is not drawn, a
+    // single row's height)
+    const drawn = row.getBoundingClientRect();
+    const rowBottom = drawn.height > 0 ? Math.max(drawn.bottom, below + 6 + ORBS_ROW) : below + 6 + ORBS_ROW;
+    bar.style.top = `${rowBottom + 4}px`;
     const barBottom = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
-    // (the row of active synergies sits under the bars during a fight)
-    placeSynergies(bar.hidden ? below + orbs : barBottom);
-    const head = bar.hidden ? below : barBottom - orbs;
+    // (the row of active synergies and the combo bar sit under the bars during a fight)
+    placeSynergies(bar.hidden ? rowBottom : barBottom);
+    return { below, barBottom };
+  }
+
+  /** Lay the top parts out again whenever the spell row or the boss's bar changes size (the War Horn given, a spell added, the
+   *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs; and set a toast and a quip clear again. */
+  private watchTopHud(): void {
+    if (typeof ResizeObserver !== 'function') return;
+    let busy = false;
+    const watch = new ResizeObserver(() => {
+      if (busy) return;
+      busy = true;
+      this.placeTopHud();
+      // (a toast in the lane goes under the parts as they now stand, and a quip's bubble is set clear of them all: the spell row coming in
+      // as the fight begins, the bar moving as the row changes)
+      const lane = fightToastTop();
+      if (lane !== undefined) for (const t of document.querySelectorAll<HTMLElement>('.toast.lane')) t.style.top = `${Math.round(lane)}px`;
+      reclearQuip();
+      busy = false;
+    });
+    // (the panel and the tactic button too: its fight rows and the button over them come in as the fight begins, and a quip
+    // said at the deploy must clear them)
+    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn']) watch.observe($(id));
+  }
+
+  /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
+  private layout(): void {
+    this.fx.fitScreen(viewW(), viewH());
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
+    const panel = $('panel').getBoundingClientRect();
+    const { below, barBottom } = this.placeTopHud();
+    const bar = $('bossBar');
+    const head = bar.hidden ? below : barBottom - ORBS_ROW;
     const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
@@ -1902,6 +2109,10 @@ class Game {
   private ultm!: UltMoments;
   /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
   private bossm = new BossMoments();
+  /** The Nemesis War, phase 3: the taunt cut-ins before a nemesis's first wave of a run (`tauntCut.ts`), and the nemeses each run (by its
+   *  seed) has already been shown. */
+  private taunts = new TauntCuts();
+  private taunted = new Map<number, Set<number>>();
   /** EIDOLON-CHAINS: a piece a quest battle's win found, shown once its beat after has played. */
   private pendingPiece: PieceFound | null = null;
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
@@ -1974,6 +2185,7 @@ class Game {
       // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
+      picked: () => pickedFormation(this.meta.formations, this.run.mode),
       arrange: (f) => this.arrangeFormation(f),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
@@ -2128,12 +2340,15 @@ class Game {
 
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
-  /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
   /** Set the placed heroes out in a formation's shape (the prep screen's Formation sheet, `tacticsView.ts`): each taken back and placed again at its tile of the shape
    *  (`formationSpots`), or where it stood if that tile will not take it. */
-  private arrangeFormation(shape: Formation): void {
+  private arrangeFormation(shape: Formation | undefined): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;
+    // (the pick is kept for this mode or army, so Auto place sets the heroes out in it from now on; Loose forgets it: COMBAT-HUD)
+    pickFormation(this.meta, this.run.mode, shape);
+    saveMeta(this.meta);
+    if (!shape) return this.refresh();
     const heroes = b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !UNITS[u.def].summon).map((u) => ({ def: u.def, tag: u.tag!, was: [u.u, u.v] as [number, number], h: this.run.roster.find((r) => r.id === u.tag) }));
     if (!heroes.length) return;
     const spots = formationSpots(b.board, heroes.map((x) => x.def), shape);
@@ -2151,13 +2366,17 @@ class Game {
     this.refresh();
   }
 
+  /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out in the formation picked
+   *  on the Formation sheet for this mode or army, or by `autoFormation` when none is (`deploySpots`, COMBAT-HUD). The player can still move
+   *  anyone by hand after. */
   private autoArrange(manual = false): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;
     const keep = manual ? this.run.squad : [];
     this.run.squad = pickSquad(this.run, this.meta, keep).map((h) => h.id);
     this.placed.clear();
-    for (const s of autoDeploy(b, this.run, this.meta, (h) => this.boostFor(h))) this.placed.set(String(s.id), [s.u, s.v]);
+    const shape = autoPlaceOpen(this.meta) ? pickedFormation(this.meta.formations, this.run.mode) : undefined;
+    for (const s of autoDeploy(b, this.run, this.meta, (h) => this.boostFor(h), shape)) this.placed.set(String(s.id), [s.u, s.v]);
     this.chosen = null;
     saveRun(this.run);
     this.syncSprites();
@@ -2323,6 +2542,23 @@ class Game {
     this.party.openQuest(cast, qb.title, castWords(qb, cast), (k) => mayFight(qb, k), (picked) => this.beginQuestTry(id, picked));
   }
 
+  /** The Warchief's Muster (the Nemesis War, `muster.ts`): the one saved part-way carries on; else the party is picked and it begins, in its
+   *  own slot (an army run saved is not touched). */
+  private openMuster(): void {
+    const saved = loadSlot('muster');
+    if (saved) {
+      this.run = saved;
+      this.syncPool();
+      this.placed.clear();
+      return this.newBattle();
+    }
+    this.party.open('start', () => {
+      const run = startMuster(this.meta, this.meta.party, clockSeed());
+      if (!run) return this.home.open('The Muster is not open.');
+      this.startRun(run);
+    });
+  }
+
   /** A new try of a quest battle with the party picked: its own seed and slot (an army run saved is not touched), then its story, the first time. */
   private beginQuestTry(id: string, picked: readonly string[], auto?: number): void {
     const run = startQuestBattle(this.meta, id, picked);
@@ -2414,10 +2650,23 @@ class Game {
       const snap = bondSnapshot(this.meta);
       if (Object.keys(snap).length) run.bonds = snap;
     }
-    // (and of the mentors' perks)
+    // (the Nemesis War: the army's nemeses this run meets, and the waves they stand in, frozen as it starts)
+    if (run.mode?.kind === 'army' && !run.nemesis) {
+      const named = planRun(this.meta, run);
+      if (named) run.nemesis = named;
+      // (a trophy on a name plate is drawn from the gear atlas: it starts loading now)
+      if (named?.members.some((x) => x.trophies?.length)) warmGearTextures();
+    }
+    // (and of the mentors' perks; Dynasties, phase 6: with the fielded bearers' birthrights, and without the perk of a mentor the banner
+    //  fields in its heir's place, whose honour lapses for the run)
     if (run.mode?.kind === 'army' && !run.legacy) {
-      const snap = legacySnapshot(this.meta, this.meta.party);
+      const snap = addSnapshots(legacySnapshot(lapsedLegacy(this.meta), this.meta.party), birthrightSnapshot(this.meta, this.meta.party));
       if (Object.keys(snap).length) run.legacy = snap;
+    }
+    // (Dynasties, phase 6: an elder of the Elders' table asked to ride today joins as the guest, free, if its heir is not in the run)
+    if (!run.over && run.stage <= 1 && !guestOf(run)) {
+      const ride = takeRide(this.meta, [...(run.pool ?? []), ...run.roster.map((h) => h.kind), ...this.meta.party], guestsHere(run), todayKey());
+      if (ride && takeGuest(run, ride, 0)) toastLines([`${regularOf(this.meta, ride)?.bearer.name ?? heroName(ride)} rides with the march as your guest`]);
     }
     this.run = run;
     this.syncPool();
@@ -2610,6 +2859,11 @@ class Game {
       this.closeResult();
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
+    // (the Warchief's Muster won: home, and the Dark Council's Fallen, where his Head now hangs)
+    if (this.run.cleared && this.run.mode?.kind === 'muster') {
+      this.home.open('The Warchief has fallen: the Dark Council reshuffles.');
+      return this.home.openCouncil('fallen');
+    }
     if (this.run.cleared && !this.run.tower) return void this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
@@ -2784,7 +3038,12 @@ class Game {
     const army = armyOfRun(run);
     const won = !!run.cleared;
     const daily = run.mode?.kind === 'daily' ? run.mode.date : 0;
-    const head = daily
+    const muster = run.mode?.kind === 'muster';
+    const head = muster
+      ? won
+        ? { title: 'The Warchief falls!', tone: 'won' as const, line: `The Dark Council’s Muster is broken in ${run.recap?.fights ?? 0} fights` }
+        : { title: 'The Muster holds', tone: 'lost' as const, line: `The Warchief’s Council stopped you at wave ${run.best} of 3. Losing costs nothing: call the Muster again.` }
+      : daily
       ? won
         ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${this.dailyBossOf(run)} has fallen in ${run.recap?.fights ?? 0} fights` }
         : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${this.dailyBossOf(run)} was not reached: ${dailyCleared(run)} waves cleared` }
@@ -2806,7 +3065,7 @@ class Game {
     const r = this.run;
     const army = armyOfRun(r);
     this.closeResult();
-    this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+    this.home.open(r.mode?.kind === 'muster' ? (r.cleared ? 'The Warchief has fallen: the Dark Council reshuffles.' : 'The Warchief’s Muster holds. Call it again from the Dark Council.') : r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
   /** An army's last boss has fallen: if that opens the next army, its end card comes first (UNLOCK-ONCE: unless the army's last-stand
@@ -3209,6 +3468,9 @@ class Game {
       if (this.run.runes && !h.guest && this.b.phase === 'deploy') card.append(socketStrip(this.run.runes, h.kind));
       // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
       card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
+      // (the Nemesis War: a skull on the hero a nemesis in this wave dreads, so the player sees the answer)
+      const dreads = this.b.units.filter((u) => u.alive && u.nem && dreadOf(u.nem.weak) === h.kind);
+      if (dreads.length) card.append(Object.assign(document.createElement('span'), { className: 'dreadMark', textContent: '☠', title: `${dreads.map((u) => u.nem!.name).join(' and ')} ${dreads.length > 1 ? 'dread' : 'dreads'} ${heroName(h.kind)}` }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
@@ -3366,6 +3628,11 @@ class Game {
     const n = heroesPlaced(b);
     const ended = b.phase === 'won' || b.phase === 'lost';
     const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
+    // (the Nemesis War, phase 4: a duel lost or run out of time is not the wave lost: its own settle, then the wave's fight)
+    if (ready && b.duel && b.phase === 'lost' && !this.settled) {
+      this.settled = true;
+      return this.endDuel();
+    }
     // (the first defeat has its cinematic as the loss shows, but only a real one: a fall a heart revives is not a defeat)
     // (checked before a heart burns: with one left the moments are none, and the check waits for the next fall)
     if (ready && b.phase === 'lost' && !this.lossScened && !this.auto && !this.revive) {
@@ -3387,6 +3654,8 @@ class Game {
       // (RECAP-REVEAL: what the save and run held before the wave is settled, so the card can list everything it brought in)
       const held = snapGains(this.meta, run);
       noteFight(run, b);
+      // (phase 4: a duel won is this wave won: the run keeps its outcome)
+      if (b.duel) settleDuelRun(run, b);
       // (the heroes' skills keep their charge for the next wave)
       if (won) keepCharges(run, b);
       this.bossDown = !!run.tower && run.tower.cur?.kind === 'boss' && won;
@@ -3443,10 +3712,14 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey() };
       const earned = settleRun(this.meta, run, settled);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
       toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
+      // (the Nemesis War's lines go on the wave card below)
+      this.nemNote = settled.war;
+      // (and what slaying a nemesis paid counts in the wave's crowns)
+      if (settled.war?.crowns) this.crownGain += settled.war.crowns;
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
@@ -3476,7 +3749,10 @@ class Game {
       if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
       // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
       // (DEPTH-BUILD: an apprentice below half its mentor's level earns half again, `legacy.ts`)
-      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }));
+      // (Dynasties, phase 5: an Elder on the field gives the rest of the party Elder's Counsel, +5% XP)
+      const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
+      // (Dynasties, phase 6: an heir in its first season has the Heir's Promise, +25% XP)
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, promiseXp(this.meta, counselXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }, fielded), todayKey())));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)
@@ -3489,6 +3765,9 @@ class Game {
       // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
       const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
       const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot) || markedHero(run, kind)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
+      // (Dynasties, phase 5: the heroes who fought count the wave towards their season, half under auto-replay, where the waves fought count;
+      // the bench never ages. A season that ended since is settled first, and a stage reached is told)
+      if (!run.local) toastLines(agedLines(noteServed(this.meta, fought.map((f) => f.kind), this.auto ? 0.5 : 1, todayKey())));
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
       noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
@@ -3508,8 +3787,12 @@ class Game {
       const questMoved = questsMoved(this.meta, questsBefore, questsDone, questsFound);
       // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
       const waveGains = gainsSince(held, this.meta, run);
+      // (phase 4: a challenge the next wave opens with is told on this wave's card)
+      const next = won && !run.over && !this.auto ? duelOffer(run) : undefined;
+      const nextSnap = next && offerSnap(run, next);
+      const ahead = next && nextSnap ? duelAhead(next, nextSnap) : undefined;
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -3607,7 +3890,7 @@ class Game {
       const daily = run.mode?.kind === 'daily';
       const practice = run.mode?.kind === 'daily' && run.mode.practice;
       const qrun = run.mode?.kind === 'quest';
-      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : run.mode?.kind === 'muster' ? 'The Warchief falls!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
       // (WAVE-RECAP: a short card's heading names the wave and how it went, "Wave 4 of 15 won", bar the end of a cleared run)

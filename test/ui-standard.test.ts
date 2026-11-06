@@ -12,8 +12,8 @@ import { newMeta } from '../src/sim/meta';
 
 /** The dialogs built before the standard: each still draws its own card. Move one onto `ornateMenu` and take it off this list; never add one. */
 const BEFORE_THE_STANDARD = [
-  'altarHelp.ts', 'autoAsk.ts', 'builtCard.ts', 'chestStash.ts', 'dailyView.ts', 'earnedArrival.ts', 'eidolonBinding.ts', 'eidolonChainView.ts',
-  'questCard.ts', 'rankUpList.ts', 'revealCard.ts', 'settingsPicker.ts', 'shopView.ts', 'stallView.ts', 'summonTarot.ts', 'tomeView.ts', 'unitInfo.ts',
+  'chestStash.ts', 'dailyView.ts', 'earnedArrival.ts', 'eidolonBinding.ts', 'eidolonChainView.ts',
+  'questCard.ts', 'rankUpList.ts', 'revealCard.ts', 'settingsPicker.ts', 'shopView.ts', 'stallView.ts', 'summonTarot.ts', 'unitInfo.ts',
 ];
 
 const sources = (dir: string): string[] =>
@@ -52,6 +52,42 @@ test('the March orders, the Spell Lectern and the Field Anvil are standard menus
   }
 });
 
+test('the dialogs PR #386 restyled are standard menus (INT-386)', () => {
+  for (const [file, fns] of [['autoAsk.ts', ['askAuto']], ['altarHelp.ts', ['showAltarHelp']], ['builtCard.ts', ['showBuilt']], ['tomeView.ts', ['openTomeSheet']], ['relicCard.ts', ['openRelicCard']]] as const) {
+    const src = readFileSync(`src/${file}`, 'utf8');
+    for (const fn of fns) {
+      const body = src.slice(src.indexOf(`export function ${fn}`));
+      assert.match(body.slice(0, body.indexOf('\n}\n')), /ornateMenu\(/, `${fn} (${file}) builds its card with ornateMenu`);
+    }
+  }
+  // (the talent box and its Auto-spend confirm, and a ware's sheet at the stall, inside their pages)
+  for (const [file, inner] of [['talentView.ts', 'const ask = '], ['talentView.ts', 'const autoAsk = '], ['stallView.ts', 'const warePage = ']] as const) {
+    const src = readFileSync(`src/${file}`, 'utf8');
+    const body = src.slice(src.indexOf(inner));
+    assert.match(body.slice(0, body.indexOf('\n  };\n')), /ornateMenu\(/, `${inner.trim()} (${file}) builds its card with ornateMenu`);
+  }
+});
+
+test('the standard has a bottom drawer, its veil is light, and a ware at the stall opens in it (MENU-POLISH)', () => {
+  const css = readFileSync('src/ornateMenus.css', 'utf8');
+  const src = readFileSync('src/ornateMenu.ts', 'utf8');
+  assert.match(src, /kind\?: 'card' \| 'sheet' \| 'drawer'/);
+  assert.match(src, /o\.kind === 'drawer' \? ' omDrawer'/);
+  // (the drawer slides up, and stands still under reduced motion)
+  assert.match(css, /\.omDrawer \.om \{[^}]*animation: omDrawerUp/);
+  assert.match(css, /prefers-reduced-motion: reduce\) \{[^}]*\.omDrawer \.om/);
+  // (the veil dims lightly and does not blur: the page reads through it)
+  const veil = css.slice(css.indexOf('.omVeil {'), css.indexOf('}', css.indexOf('.omVeil {')));
+  assert.doesNotMatch(veil, /backdrop-filter/);
+  for (const a of [...veil.matchAll(/rgba\([^)]*,\s*([\d.]+)\)/g)].map((m) => Number(m[1]))) assert.ok(a <= 0.6, `the veil's dim ${a} is no more than 0.6`);
+  // (the standard's body text is a step up from 13 px)
+  const text = Number(/--om-text:\s*([\d.]+)px/.exec(css)?.[1]);
+  assert.ok(text >= 14, `body text ${text}px`);
+  const stall = readFileSync('src/stallView.ts', 'utf8');
+  const ware = stall.slice(stall.indexOf('const warePage = '));
+  assert.match(ware.slice(0, ware.indexOf('\n  };\n')), /ornateMenu\(\{[^}]*kind: 'drawer'/);
+});
+
 test('March orders: a plain march with nothing open gives no orders; the picks become the run orders', () => {
   const m = newMeta(7);
   const party = ['knight', 'cleric', 'archer'];
@@ -65,4 +101,25 @@ test('March orders: a plain march with nothing open gives no orders; the picks b
   assert.deepEqual(ordersOf({ chosen: 'scouted', vigil: 'swift', road: 'snow', spare: 'meteor', marked: 'cleric' }, 5, party), { mod: 'scouted', vigil: 'swift', route: 'snow', spare: 'meteor', marked: 'cleric' });
   // (a marked hero taken out of the party since falls to the party's first)
   assert.equal(ordersOf({ chosen: 'plain', marked: 'wizard' }, 5, party)?.marked, 'knight');
+});
+
+test('the Houses, a line, a bearer and the Seasons are standard menus (Dynasties, phase 5)', () => {
+  const src = readFileSync('src/housesView.ts', 'utf8');
+  assert.match(src, /from '\.\/ornateMenu'/);
+  for (const [fn, way] of [['openHouses', 'back'], ['openLine', 'back'], ['openBearer', 'close'], ['openSeasonCard', 'close']] as const) {
+    const body = src.slice(src.indexOf(`export function ${fn}`));
+    const own = body.slice(0, body.indexOf('\n}\n'));
+    assert.match(own, /ornateMenu\(/, `${fn} builds its page with ornateMenu`);
+    assert.match(own, new RegExp(`back: \\{ word: '${way}' \\}`), `${fn} says ${way === 'back' ? '‹ Back' : 'Close'}`);
+  }
+});
+
+test('the heirs\' cards are standard menus that say Close (Dynasties, phase 6)', () => {
+  const src = readFileSync('src/housesView.ts', 'utf8');
+  for (const fn of ['openNameHeir', 'openMantle', 'openFarewell', 'openHonour', 'openBanner', 'openEldersTable']) {
+    const body = src.slice(src.indexOf(`export function ${fn}`));
+    const own = body.slice(0, body.indexOf('\n}\n'));
+    assert.match(own, /ornateMenu\(/, `${fn} builds its card with ornateMenu`);
+    assert.match(own, /back: \{ word: 'close'/, `${fn} says Close`);
+  }
 });

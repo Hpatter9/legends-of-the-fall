@@ -20,6 +20,7 @@ const arg = (name: string, fallback: number): number => {
 const GAMES = arg('--games', 600);
 const OLD_THREE = process.argv.includes('--old-three');
 const NEW_SEVEN = process.argv.includes('--new-seven');
+const HEIRLOOM = process.argv.includes('--heirloom');
 const STAGE = arg("--stage", 13);
 const LEVEL = arg("--level", 3);
 const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
@@ -88,8 +89,9 @@ for (const [army, lvl] of [[0, 1], [2, 7], [4, 13], [6, 19]] as const) {
     const old = EQUIP_LIST.filter((b) => OLD_BASES.has(b.id));
     const OLD_POOLS = [old.filter((b) => b.slot === 'main' || b.id === 'grimoire'), old.filter((b) => b.slot === 'torso'), old.filter((b) => b.slot !== 'main' && b.slot !== 'torso' && b.id !== 'grimoire')];
     const pools = OLD_THREE ? OLD_POOLS : EQUIP_SLOTS.map((slot) => EQUIP_LIST.filter((b) => b.slot === slot && (!NEW_SEVEN || !OLD_BASES.has(b.id))));
-    const kit = (kind: string) => sum(pools.map((pool) => {
-      return { base: pool[rng.int(0, pool.length - 1)].id, rarity: r, level: lvl };
+    // (`--heirloom`, Dynasties phase 6: every hero's first piece an heirloom at its cap, three generation marks, +9% of its main stats)
+    const kit = (kind: string) => sum(pools.map((pool, i) => {
+      return { base: pool[rng.int(0, pool.length - 1)].id, rarity: r, level: lvl, ...(HEIRLOOM && i === 0 ? { heirloom: { marks: 3, house: kind, bearer: 'heir' } } : {}) } as NewEquipment;
     }), kind);
     row.push(`${['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'][r - 1]} ${effective(kit)}`);
   }

@@ -435,7 +435,7 @@ const CHANGES = [
   ['quests-open', home, () => page.evaluate(() => window.__game.home.openQuests('active'))],
   ['quests-tab', null, () => tap('#hmSheetBox [role=tab]:nth-child(2)')],
   ['quests-close', null, () => page.evaluate(() => window.__game.home.closeSheet())],
-  ['stall-open', home, () => tap('#hmStall')],
+  ['stall-open', home, () => page.evaluate(() => window.__game.home.tavern.shop?.onStall())],
   ['stall-tab', null, () => tap('#stall .hsTabs button:nth-child(2)')],
   ['stall-close', null, () => tap('#stall .hsBack')],
   ['gallery-open', async () => { await home(); await tap(tabBtn(1)); }, () => page.evaluate(() => window.__game.home.openGallery())],

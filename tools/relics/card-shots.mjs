@@ -45,12 +45,12 @@ try {
       await page.evaluate((i) => document.querySelectorAll('#relics .relic')[i].click(), i);
       await page.waitForTimeout(700);
       cards[name] = await page.evaluate(() => {
-        const c = document.querySelector('.rlWrap .rlCard');
+        const c = document.querySelector('#relicCard .rlCard');
         const r = c?.getBoundingClientRect();
         return c ? { op: getComputedStyle(c.parentElement).opacity, z: getComputedStyle(c.parentElement).zIndex, top: document.elementFromPoint(innerWidth / 2, r.top + r.height / 2)?.className, lore: !!c.querySelector('.rlLore'), price: c.querySelector('.rlPrice')?.textContent ?? null, grow: c.querySelector('.rlGrow')?.textContent ?? null, set: c.querySelector('.rlSet h3')?.textContent ?? null, fits: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight } : null;
       });
       if (w === 393 || name === 'banner') await page.screenshot({ path: `docs/samples/relics-2-card-${name}-${tag}.png` });
-      await page.evaluate(() => document.querySelector('.rlWrap')?.click());
+      await page.evaluate(() => document.querySelector('#relicCard')?.click());
       await page.waitForTimeout(150);
     }
     await page.evaluate(() => document.getElementById('fight').click());

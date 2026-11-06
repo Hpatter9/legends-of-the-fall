@@ -5,7 +5,7 @@
 
 import type { RunMode } from './run';
 import { TACTICS, TACTICS_LIST, type Tactic } from './tactics';
-import type { Formation } from './formations';
+import { FORMATIONS_LIST, type Formation } from './formations';
 
 /** The words for each tactic: its name, a short label for the chip, and one line for the sheet. */
 export const TACTIC_WORDS: Record<Tactic, { name: string; short: string; line: string }> = {
@@ -43,5 +43,32 @@ export function readTactics(raw: unknown): Record<string, Tactic> | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const out: Record<string, Tactic> = {};
   for (const [k, t] of Object.entries(raw as Record<string, unknown>)) if (isTactic(t)) out[k] = t;
+  return Object.keys(out).length ? out : undefined;
+}
+
+const isFormation = (f: unknown): f is Formation => typeof f === 'string' && (FORMATIONS_LIST as readonly string[]).includes(f);
+
+/** The formation picked on the prep screen's Formation sheet for this mode (or army), which Auto place sets the heroes out in (COMBAT-HUD,
+ *  docs/notes/combat-hud.md); undefined when none was picked, and Auto place sets them out as it always has. */
+export function pickedFormation(formations: Readonly<Record<string, string>> | undefined, mode?: RunMode): Formation | undefined {
+  const f = formations?.[tacticKey(mode)];
+  return isFormation(f) ? f : undefined;
+}
+
+/** Keep the formation picked for this mode (or army); undefined forgets it (Loose). */
+export function pickFormation(meta: { formations?: Record<string, string> }, mode: RunMode | undefined, f: Formation | undefined): void {
+  const k = tacticKey(mode);
+  if (f) (meta.formations ??= {})[k] = f;
+  else if (meta.formations) {
+    delete meta.formations[k];
+    if (!Object.keys(meta.formations).length) delete meta.formations;
+  }
+}
+
+/** A save's formation picks as read back: only known shapes under string keys (undefined when there are none). */
+export function readFormations(raw: unknown): Record<string, Formation> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const out: Record<string, Formation> = {};
+  for (const [k, f] of Object.entries(raw as Record<string, unknown>)) if (isFormation(f)) out[k] = f;
   return Object.keys(out).length ? out : undefined;
 }

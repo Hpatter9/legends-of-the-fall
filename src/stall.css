@@ -43,12 +43,6 @@
 .hsNote.hsFull { color: #ef8f7a; font-weight: 700; } /* RUN-GEAR: the cart waits for room */
 .hsEmpty { margin: 24px 8px; font: italic 400 15px/1.4 var(--body); color: #e8d6ad; text-align: center; }
 
-.hsVeil { position: absolute; inset: 0; z-index: 5; display: flex; align-items: flex-end; background: #0009; }
-.hsSheet { width: 100%; max-height: 72%; overflow: hidden auto; box-sizing: border-box; padding: 14px 14px calc(env(safe-area-inset-bottom) + 14px); display: flex; flex-direction: column; gap: 8px; background: linear-gradient(#2a2017, #17110c); border-top: 2px solid #c49a4f; border-radius: 10px 10px 0 0; animation: hsUp 0.22s ease-out; }
-@keyframes hsUp { from { transform: translateY(40%); opacity: 0.4; } }
-.hsSheetTop { display: flex; align-items: center; gap: 12px; }
-.hsSheetTop h3 { margin: 0; font: 400 22px/1.15 var(--display); color: #ffe0a1; }
-.hsSheetTop small { font: 400 12px var(--body); color: #cdb98b; text-transform: capitalize; }
 .hsHistory { margin: 0; font: italic 400 14px/1.4 var(--body); color: #e8d6ad; }
 .hsLine { margin: 0; font: 400 13px/1.4 var(--body); color: #e3dccb; }
 .hsSmall { font: 400 12px var(--body); color: #c3b99f; }
@@ -66,7 +60,6 @@
 .hsBuy:disabled, .hsBulk:disabled, .hsSell:disabled, .hsBack1:disabled { filter: saturate(0.35); opacity: 0.72; }
 .hsBulk { font-size: 16px; }
 .hsBulk.sure, .hsSell.sure { border-color: #e3a43c; background: linear-gradient(135deg, #6b4a17, #3e2a0e); }
-.hsShut { min-height: 44px; font: 400 16px var(--display); color: #e8dcc0; background: none; border: 1px solid #6b5636; border-radius: 3px; }
 .hsBtnIco { width: 26px; height: 26px; image-rendering: auto; flex: none; }
 
 .hsPills { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -99,7 +92,6 @@
   .hsSay { top: 12px; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hsSheet { animation: none; }
 }
 
 /* the party screen's worn-gear strip above the start button (src/party.ts) */

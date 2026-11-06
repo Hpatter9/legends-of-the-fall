@@ -7,6 +7,7 @@
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
+import { chipNumber } from './topbarRules';
 import { SPAR, settleSparring, startSparring } from './sim/bonds';
 import { CALLINGS, PERKS, recall } from './sim/legacy';
 import { roomsStrip } from './castle';
@@ -15,9 +16,6 @@ import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openStall } from './stallView';
 import { closeFinished } from './screens';
-import { newStock } from './sim/stall';
-import { caravanHere, gloamingHere } from './sim/traders';
-import { shopArt } from './bookArt';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
@@ -31,7 +29,10 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
-import { drawAchievements } from './achievementsView';
+import { drawAchievements, toastLines } from './achievementsView';
+import { openDynasty, takeSeasonNews, SEASON_WORDS, seasonOf } from './sim/dynasty';
+import { agedLines, openEldersTable, openHouses, openSeasonCard, seasonChip } from './housesView';
+import { cadetsOf, HEIR_NOTE, regularsOf, takeHeirNote } from './sim/heirs';
 import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
@@ -41,6 +42,7 @@ import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
+import { hesterNews } from './render/tavernSpots';
 import { openUpgrades } from './rankUpList';
 import { upgradeReady } from './sim/upgradesReady';
 import { openRankUp } from './rankUpView';
@@ -68,7 +70,10 @@ import { heartHeld, noteSavedHeart, withHeart } from './sim/vaelkharHeart';
 import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
-import { warmPortraits } from './render/sheets';
+import { portrait, warmPortraits } from './render/sheets';
+import { councilLine, councilPlate, openNemesisBoard } from './nemesisView';
+import { councilTurn } from './sim/council';
+import { musterOpen, warchiefOf } from './sim/muster';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -114,6 +119,10 @@ export interface HomeHooks {
   onQuestBattle?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if one is (its Fight reads Continue). */
   questSaved?(): string | null;
+  /** The Nemesis War: call the Warchief's Muster, or carry on the one saved (the board's gilded button). */
+  onMuster?(): void;
+  /** A Muster is saved part-way. */
+  musterSaved?(): boolean;
   /** EIDOLON-CHAINS: play a chain's story (its giver's prologue) over the home screen; resolves when it ends. */
   onStory?(scene: Scene): Promise<unknown>;
 }
@@ -197,6 +206,13 @@ export class Home {
           if (t.what === 'awaken') tellAwakened(kind, t.n);
           this.refresh();
         }),
+    }, {
+      // (CLIFF-ROAM: Hester's corner in the hearth hall opens her stall, as the stall on the cliff did, SHOP-BOOKS-GEAR)
+      onStall: () => openStall(this.meta, () => this.refresh()),
+    }, {
+      // (Dynasties, phase 6: the Elders' table, its regulars, the day's story and ride, and a cadet visiting)
+      onElders: () => void openEldersTable(this.meta, todayKey(), () => this.refresh()),
+      shown: (m) => regularsOf(m).length > 0 || cadetsOf(m).length > 0,
     });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
@@ -241,6 +257,8 @@ export class Home {
       b.append(icon(ICONS[t.id]), el('span', '', t.label), el('i', 'badge'));
       // (QUESTS: the Heroes tab's gold "!" while a quest waits at the tavern to be taken or handed in)
       if (t.id === 'heroes') b.append(el('i', 'qbadge', '!'));
+      // (CLIFF-ROAM: Hester's coin on the Heroes tab, the way to the tavern, while her stock is new or a trader visits)
+      if (t.id === 'heroes') b.append(el('i', 'sbadge'));
       b.addEventListener('click', () => this.show(t.id));
       bar.append(b);
       this.tabBtns.set(t.id, b);
@@ -292,6 +310,9 @@ export class Home {
     this.note = note;
     // (CLOSE-SCREENS: back to a place: any flow screen still open (a result card, a recap, a summary) is closed, not left under it)
     closeFinished();
+    // (Dynasties, phase 5: the seasons open with the save's heroes, every owned kind has its line, and a season ended since is settled;
+    // a new season, and a stage reached at its turn, are told once)
+    this.openSeasons();
     // (coming back to the home screen it is simply there, on the Battle page: nothing slides)
     if ($('home').hidden) this.snapNext = true;
     $('home').hidden = false;
@@ -304,9 +325,35 @@ export class Home {
     tips.offer('home', $('hmBattle'));
     // (a run has just ended: the crowns are there to spend)
     if (note) tips.offer('crowns', $('hmTabs'));
+    // (the Nemesis War: the Dark Council takes its turn on the day's first visit, phase 2)
+    if (this.meta.war && councilTurn(this.meta, 'visit', todayKey())) saveMeta(this.meta);
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
     void revealUnseen(this.meta).then(() => this.refresh());
     this.hooks.onOpened?.();
+  }
+
+  /** Dynasties: open the seasons (and the lines of heroes joined since), settle a season that has turned, and tell it. */
+  private openSeasons(): void {
+    const m = this.meta;
+    const before = JSON.stringify(m.dynasty ?? null);
+    const aged = openDynasty(m, todayKey());
+    const news = takeSeasonNews(m, todayKey());
+    if (JSON.stringify(m.dynasty ?? null) !== before) saveMeta(m);
+    // (phase 6: a save whose Hall had mentors before the heirs is told once that they may name one)
+    const note = takeHeirNote(m);
+    if (note) saveMeta(m);
+    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged), ...(note ? [HEIR_NOTE] : [])]);
+  }
+
+  /** The Houses (Dynasties): the family tree, on a line when one is given. */
+  openHouses(kind?: string): void {
+    openHouses(this.meta, todayKey(), kind);
+  }
+
+  /** The Dark Council's board (the Nemesis War): its Hunt opens an army, its Muster calls the page's. */
+  openCouncil(tab?: 'council' | 'news' | 'fallen' | 'spoils'): void {
+    const m = this.meta;
+    openNemesisBoard(m, { hunt: (army) => this.openArmies(army), ...(this.hooks.onMuster ? { muster: () => this.go(this.hooks.onMuster!) } : {}), musterSaved: !!this.hooks.musterSaved?.(), day: todayKey(), save: () => (saveMeta(m), this.refresh()) }, tab);
   }
 
   get isOpen(): boolean {
@@ -561,19 +608,40 @@ export class Home {
     }
     // top bar (the run's gold stays in the run: the owner's call)
     // (the crowns and stones chips keep their icons: only the number is written, and only when it changed, so the picture never blinks)
+    // (TOPBAR-FIT: from 100,000 up a count is shown short, "999k" or "1.2M", so the top row keeps the gear beside the trophy; the full
+    //  number is still the chip's title and spoken label)
     const chipCount = (id: string, pic: string, n: number): void => {
       const chip = $(id);
+      const shown = chipNumber(n);
+      chip.title = n.toLocaleString('en-GB');
+      chip.setAttribute('aria-label', `${chip.id === 'hmStones' ? 'Summoning stones' : 'Crowns'}: ${chip.title}`);
       const count = chip.querySelector('b');
-      if (!count) chip.replaceChildren(icon(pic), el('b', '', String(n)));
-      else if (count.textContent !== String(n)) count.textContent = String(n);
+      if (!count) chip.replaceChildren(icon(pic), el('b', '', shown));
+      else if (count.textContent !== shown) count.textContent = shown;
     };
     // (QUESTS: the day's offers are drawn the first time a date is seen, and kept; old ones come down)
     if (refreshOffers(m, todayKey())) saveMeta(m);
     chipCount('hmCrowns', ICONS.crowns, m.crowns);
     chipCount('hmStones', ICONS.stones, stonesOf(m));
     this.hooks.onTopBar?.();
+    // (Dynasties: the season's chip in the top bar's second row; redrawn only when the season changes, so its icon never blinks)
+    if (m.dynasty) {
+      const key = String(seasonOf(m.dynasty, todayKey()).index);
+      const had = document.getElementById('hmSeason');
+      if (had?.dataset.key !== key) {
+        const chip = seasonChip(m, todayKey(), () => openSeasonCard(m, todayKey(), () => this.openHouses()));
+        if (chip) {
+          chip.dataset.key = key;
+          // (TOPBAR-FIT: in the second row, before the armies line, so the top row keeps the gear beside the trophy)
+          if (had) had.replaceWith(chip);
+          else $('hmBest').prepend(chip);
+        }
+      }
+    }
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
-    $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
+    const best = $('hmBest');
+    const bestText = best.querySelector('.hbText') ?? best.appendChild(el('span', 'hbText'));
+    bestText.textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
     $('hmTrophy').classList.toggle('new', fresh);
     // tabs
@@ -597,6 +665,13 @@ export class Home {
     const heroBadge = this.tabBtns.get('heroes')!.querySelector('i.badge');
     if (heroBadge) heroBadge.textContent = readyN > 0 ? String(Math.min(readyN, 99)) : '';
     this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));
+    // (CLIFF-ROAM: Hester's stall is in the tavern now: her coin on the tab while the day's stock is unseen, a trader's colour while one visits)
+    const shop = hesterNews(m, todayKey());
+    const heroesTab = this.tabBtns.get('heroes')!;
+    heroesTab.classList.toggle('shop', shop.fresh || !!shop.visitor);
+    heroesTab.classList.toggle('dealer', shop.visitor === 'dealer');
+    heroesTab.classList.toggle('caravan', shop.visitor === 'caravan');
+    heroesTab.setAttribute('aria-label', `Heroes${readyN ? `, ${readyN} ready to upgrade` : ''}${shop.visitor ? `; ${shop.visitor === 'dealer' ? 'the Gloaming Dealer' : 'Rustam Saffar’s caravan'} is at Hester’s stall in the tavern` : shop.fresh ? '; new stock at Hester’s stall in the tavern' : ''}`);
     this.tabBtns.get('battle')!.classList.remove('new');
     // (UX-FIXES: the Spells tab is dimmed with a lock until the Chapel is built; a tap says why on its page)
     const spellsTab = this.tabBtns.get('spells')!;
@@ -795,35 +870,29 @@ export class Home {
     const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);
+    // (the Nemesis War's Dark Council, over the Daily once the War is open: the warchief's face once there is one (the mightiest member's
+    // until then), the seats filled on its plate, and the Muster's mark when it is open)
+    const war = m.war;
+    this.camp.councilSlot.hidden = !war;
+    const top = war ? warchiefOf(war) ?? war.members.slice().sort((a, b) => b.might - a.might || a.id - b.id)[0] : undefined;
+    const muster = musterOpen(war);
+    const councilKey = war ? `${war.members.length}|${top?.id ?? 0}|${top?.might ?? 0}|${top?.rank ?? ''}|${muster}` : '';
+    if (war && this.camp.councilSlot.dataset.key !== councilKey) {
+      this.camp.councilSlot.dataset.key = councilKey;
+      const named = war.members.length;
+      const council = place('hmCouncil', 'council', 'Council', '', `${councilPlate(m)}${muster ? '. The Warchief’s Muster is open' : ''}. ${councilLine(m)}`, () => this.openCouncil());
+      council.querySelector('small')?.remove();
+      const pic = el('span', 'cpCouncilFace');
+      if (top && UNITS[top.base]) pic.append(portrait(UNITS[top.base].sheet, 30));
+      council.prepend(pic);
+      if (named) council.append(el('i', `cpCount${muster ? ' muster' : ''}`, String(named)));
+      swapIn(this.camp.councilSlot, this.camp.councilSlot.querySelector('.cpPlace'), council);
+    }
     // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)
     swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
     swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
     swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
-    // (Hester's Stall, SHOP-BOOKS-GEAR: the stall's picture over its plate; a gold dot while the day's stock is new and unseen)
-    // (MENU-GLITCH: built only when its state changes: a new picture made on every refresh only to be thrown away still had to be decoded)
-    const fresh = newStock(m, todayKey());
-    // (a visiting trader puts his name on the plate: the Dealer after a guardian falls, the caravan on its day)
-    const visitor = gloamingHere(m, todayKey()) ? 'Gloaming Dealer' : caravanHere(m, todayKey()) ? 'Caravan today' : '';
-    const stallKey = `${fresh}|${visitor}`;
-    if (this.camp.stallSlot.dataset.key !== stallKey || !this.camp.stallSlot.querySelector('.cpPlace')) {
-      this.camp.stallSlot.dataset.key = stallKey;
-      const stall = place('hmStall', 'stall', 'Hester’s Stall', visitor || (fresh ? 'new stock' : 'books · gear'), `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}${visitor ? `; ${visitor === 'Caravan today' ? 'Rustam Saffar’s caravan is here today' : 'the Gloaming Dealer is here'}` : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
-      const pic = el('img', 'cpStallPic');
-      pic.src = shopArt('stall');
-      pic.alt = '';
-      pic.draggable = false;
-      // (Hester's painted sign hangs over the stall's foot in place of the name plate; a visiting trader shows as a small mark, only while he is here)
-      const sign = el('img', 'cpStallSign');
-      sign.src = shopArt('hester-sign');
-      sign.alt = '';
-      sign.draggable = false;
-      stall.querySelector('.cpTag')?.remove();
-      stall.prepend(pic, sign);
-      // (the owner's call: no word on the stall's picture; a small gilded mark says a trader is in camp, and the button's spoken label names him)
-      if (visitor) stall.append(el('i', `cpVisitor ${visitor === 'Caravan today' ? 'caravan' : 'dealer'}`));
-      if (fresh) stall.append(el('i', 'badge'));
-      swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
-    }
+    // (CLIFF-ROAM: Hester's Stall left the cliff for a corner of the tavern's hearth hall; its marks moved to the Heroes tab and the tavern)
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     // Earned chests rest by the overlook's supplies.
     const stash = el('div', 'csStash');
@@ -1281,3 +1350,4 @@ function showDispatch(page: HTMLElement, text: string): void {
   setTimeout(gone, 8000);
   page.append(d);
 }
+

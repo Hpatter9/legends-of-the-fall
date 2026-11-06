@@ -27,6 +27,90 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.385.0',
+    date: '2026-11-06',
+    title: 'The camp\'s top bar fits on one line',
+    notes: ['The settings gear sits beside the trophy again on every phone. The season moves down beside the armies line, and big counts show as 999k.'],
+  },
+  {
+    version: '0.384.0',
+    date: '2026-11-06',
+    title: 'Heirs and the Mantle',
+    notes: ['Sworn pairs name an heir with a birthright, an heirloom and a Blood Grudge. The heir takes up the Mantle with all progress; the elder takes an honour.'],
+  },
+  {
+    version: '0.383.0',
+    date: '2026-11-06',
+    title: 'Seasons and the Houses',
+    notes: ['The years turn in 14-day seasons. Heroes who fight age from Youth to Elder with honour, never losing power, and each founds a House.'],
+  },
+  {
+    version: '0.382.0',
+    date: '2026-11-06',
+    title: 'Duels: single combat with a nemesis',
+    notes: ['A nemesis with a grudge may call out one of your heroes to single combat in a ring: win for double spoils, or refuse and face its mockery.'],
+  },
+  {
+    version: '0.381.0',
+    date: '2026-11-06',
+    title: 'Revenge, trophies and taunts',
+    notes: ['Grudges and Avengers against the nemesis who slew a hero, trophies taken and reclaimed, nemeses who flee and return, and taunts before the fight.'],
+  },
+  {
+    version: '0.380.0',
+    date: '2026-11-06',
+    title: 'The Dark Council rises',
+    notes: ['The Council fills to 13 seats under a Warchief: feuds, betrayals and blood-oaths between runs, War Trophies to spend, and the Warchief\'s Muster.'],
+  },
+  {
+    version: '0.379.0',
+    date: '2026-11-06',
+    title: 'Auto beside the spells, boss bar higher',
+    notes: ['Auto sits on the spell row, right of the last spell, so the boss\'s health bar stays one row up. Speech bubbles keep clear of buttons and bars.'],
+  },
+  {
+    version: '0.378.0',
+    date: '2026-11-06',
+    title: 'The Nemesis War begins',
+    notes: ['Bosses and elites who kill, maim or escape your heroes now return named, stronger and scarred, with traits from that fight. See them on the Dark Council.'],
+  },
+  {
+    version: '0.377.0',
+    date: '2026-11-06',
+    title: 'Heroes roam the cliff, Hester in the tavern',
+    notes: ['The party wanders the whole cliff at the camp. Hester\'s shop has moved into the tavern\'s hearth hall; a coin on Heroes shows new stock or a visitor.'],
+  },
+  {
+    version: '0.376.0',
+    date: '2026-11-06',
+    title: 'Lighter menus, Hester\'s wares in a drawer',
+    notes: ['Menus dim the screen instead of blacking it out, text is bigger, talent pictures are larger, and Hester\'s wares slide up from the bottom so she stays in view.'],
+  },
+  {
+    version: '0.375.0',
+    date: '2026-11-06',
+    title: 'Ten pop-ups in the ornate style',
+    notes: ['The Auto prompt, talents, tomes, relics, the altar, the built card and Hester\'s wares now use the standard ornate menu, with bigger taps and text.'],
+  },
+  {
+    version: '0.374.0',
+    date: '2026-11-06',
+    title: 'The stall on the cliff, a clear boss bar',
+    notes: ['Hester\'s Stall stands behind the heroes on the cliff, Auto no longer covers the boss\'s health bar, and the Daily sits low by the enemy banner.'],
+  },
+  {
+    version: '0.373.0',
+    date: '2026-11-05',
+    title: 'Formations in Auto, a clear fight screen',
+    notes: ['Auto place follows your chosen formation. The tactics button sits above the hero bars, nothing overlaps in a fight, and overhead bars are slimmer.'],
+  },
+  {
+    version: '0.372.0',
+    date: '2026-11-05',
+    title: 'Every pair has its scene',
+    notes: ['All 55 hero pairs now have their first scene, and the first ten Sworn pairs (bond level 3) have theirs.'],
+  },
+  {
     version: '0.371.0',
     date: '2026-11-05',
     title: 'A cleaner war camp',
