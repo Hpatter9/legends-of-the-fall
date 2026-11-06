@@ -98,7 +98,7 @@ export class FightHud {
     this.autoEl.type = 'button';
     this.autoEl.className = 'fhAuto';
     // (AUTO-CAST: one switch for both, the heroes' ultimates and the king's spells; its small line says so)
-    this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i><small>ULT+SPELL</small>';
+    this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i>';
     this.autoEl.title = 'Auto: ultimates + spells. Every ultimate fires when it is ready, and your spells are cast where they are worth it';
     this.autoEl.setAttribute('aria-label', 'Auto: ultimates + spells');
     this.autoEl.addEventListener('click', (e) => {

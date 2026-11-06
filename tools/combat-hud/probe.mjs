@@ -10,6 +10,8 @@
 // one: no save casts more), with and without the War Horn (held once an Eidolon is bound, it widens the row until Auto wraps under the orbs
 // on a narrow phone), in an army, the Calamity's guardian and an Eidolon's trial, and also at 360x640 and at 393x852 with a 24 px top
 // safe-area inset (`393s`: the top bar's inset put in by hand, as a phone's notch would). `KITS=boss` runs only those cases.
+// AUTO-RIGHT (docs/notes/auto-right.md): each case also fails when Auto is not on the orbs' line right of the last orb, runs past the
+// screen's edge, or a tap in the row (Auto, the horn, an orb) is under 44 px; a boss case prints its bar's top.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -250,7 +252,19 @@ async function probe(page) {
         if (w >= 1 && h >= 1) hits.push(`${a.name} x ${b.name} (${Math.round(w)}x${Math.round(h)} px)`);
       }
     const box = (n) => seen.find((s) => s.name === n)?.r;
-    return { parts: seen.length, hits, tactic: box('tactic'), word: box('tacticWord'), panelTop: box('panel')?.t, boss: box('bossBar'), horn: !!box('horn'), spells: seen.filter((s) => s.name.startsWith('orb')).length };
+    // (AUTO-RIGHT: Auto on the orbs' own line, right of the last orb and inside the screen, and every tap in the row 44 px or more)
+    const orbs = seen.filter((s) => s.name.startsWith('orb')).map((s) => s.r);
+    const auto = box('auto');
+    const row = [];
+    if (auto && orbs.length) {
+      const last = orbs.reduce((a, b) => (b.r > a.r ? b : a));
+      const mid = (r) => (r.t + r.b) / 2;
+      if (Math.abs(mid(auto) - mid(last)) > 6 || auto.l < last.r) row.push(`auto off the orbs' line (auto ${Math.round(auto.l)},${Math.round(auto.t)}; last orb ${Math.round(last.r)},${Math.round(last.t)})`);
+      if (auto.r > innerWidth - 4) row.push(`auto past the screen's edge (${Math.round(auto.r)} of ${innerWidth})`);
+    }
+    for (const [n, r] of [['auto', auto], ['horn', box('horn')], ...orbs.map((r, i) => [`orb[${i}]`, r])])
+      if (r && (r.r - r.l < 43.5 || r.b - r.t < 43.5)) row.push(`${n} under 44 px (${Math.round(r.r - r.l)}x${Math.round(r.b - r.t)})`);
+    return { row, bossTop: box('bossBar')?.t, parts: seen.length, hits, tactic: box('tactic'), word: box('tacticWord'), panelTop: box('panel')?.t, boss: box('bossBar'), horn: !!box('horn'), spells: seen.filter((s) => s.name.startsWith('orb')).length };
   }, PARTS);
 }
 
@@ -305,12 +319,12 @@ for (const [w, h, inset = 0] of SIZES) {
       await page.waitForTimeout(500);
     }
     const r = await probe(page);
-    total += r.hits.length;
+    total += r.hits.length + r.row.length;
     // (a boss case with no boss's bar on the screen measured nothing it was meant to: that is a failure of the probe, counted)
     const missed = scene === 'boss' && !r.boss;
     if (missed) total++;
     const what = `${where}${kitName(kit)} ${scene}`;
-    console.log(`${sizeName} party ${party} ${what}${note}: ${r.parts} parts, ${r.spells} spells${r.horn ? ' + horn' : ''}, ${r.hits.length} overlaps${missed ? ', NO BOSS BAR' : ''}${r.hits.length ? '\n    ' + r.hits.join('\n    ') : ''}`);
+    console.log(`${sizeName} party ${party} ${what}${note}: ${r.parts} parts, ${r.spells} spells${r.horn ? ' + horn' : ''}, ${r.hits.length} overlaps${missed ? ', NO BOSS BAR' : ''}${r.bossTop !== undefined ? `, boss bar at ${Math.round(r.bossTop)} px` : ''}${[...r.hits, ...r.row].length ? '\n    ' + [...r.hits, ...r.row].join('\n    ') : ''}`);
     if (shots) await page.screenshot({ path: `docs/samples/combat-hud/${shots}-${where === 'trial' ? 'trial' : party}${kitName(kit)}-${scene}-${w}${h !== SIZE_OF[w]?.[1] ? `x${h}` : ''}${inset ? 's' : ''}.png` });
     await ctx.close();
   }
