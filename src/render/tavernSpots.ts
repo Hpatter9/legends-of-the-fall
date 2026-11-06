@@ -188,7 +188,7 @@ export const SPOTS: Record<string, Spot> = {
   bloodGargoyle: S(20, 230, 1),
   dhampir: S(352, 270, -1),
   vampireLord: S(416, 200, 1),
-  hemomancer: S(734, 200, -1),
+  hemomancer: S(674, 290, -1),
   geomancer: S(584, 280, 1),
   warDrummer: S(1068, 230, -1),
   falconer: S(990, 274, 1),

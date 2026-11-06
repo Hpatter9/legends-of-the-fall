@@ -102,7 +102,7 @@ export const SHOWCASES: Record<string, Showcase> = {
   bloodGargoyle: { style: 'burst', el: 'earth', hit: 'smite', line: 'He drops from the spire; the shock ring stuns every foe near him and a stone shell closes over his friends' },
   dhampir: { style: 'shots', el: 'light', draw: 800, line: 'At twilight she raises the crossbow; a fan of five silver stakes pins the foes one after another' },
   warDrummer: { style: 'burst', el: 'lightning', hit: 'smite', line: 'Ten thousand drums answer his beat; lightning runs out through the storm cloud and strikes each foe near him' },
-  geomancer: { style: 'burst', el: 'earth', hit: 'smite', rise: true, line: 'Crags rise from the ground round him like a closing hand; each foe in reach is struck and his friends are walled in stone' },
+  geomancer: { style: 'bless', el: 'earth', line: 'Crags rise from the ground like a closing hand and a wall of stone goes up across the foes\' way; a stone shell closes over each friend in turn' },
   bellWarden: { style: 'burst', el: 'dark', hit: 'stone', line: 'The great bell tolls midnight; the foes near him stop where they stand, one after another, their colour drained' },
   falconer: { style: 'sky', el: 'wind', line: 'She sends the flock up; the falcons mark each crowd and spiral down on it out of the sky' },
 };

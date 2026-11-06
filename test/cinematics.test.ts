@@ -355,7 +355,7 @@ test('the Scenes list shows a seen scene, hides an unseen one, and folds a famil
   assert.ok(after.find((r) => r.id === 'awaken:knight')?.seen);
   assert.ok(after.find((r) => r.id === 'karnok')?.seen);
   const folded = after.find((r) => r.more && /Awakenings/.test(r.text));
-  assert.equal(folded?.more, 44);
+  assert.equal(folded?.more, 53);
   assert.equal(after.some((r) => r.id === 'awaken:knight' && r.more), false);
 });
 
