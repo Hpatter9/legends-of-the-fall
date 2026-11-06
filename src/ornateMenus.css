@@ -2199,7 +2199,7 @@ body #spellbook h2 {
    just above the hero rows (COMBAT-HUD: "down on the right side, above the heroes' bars"), a gilded medallion as the camp's Daily is: the double brass rim, the tactic's icon (painted once drawn, ui/tactics/<id>.png)
    in a brass ring, its name under it. Its word pops up to its left. Steady light; no pulse.
    -------------------------------------------------------------------------- */
-#hudSpells .fhAuto { margin-left: 2px; }
+#hudSpells .fhAuto { margin-left: 0; }
 #panel .fhTactic {
   right: 8px;
   width: 58px;

@@ -1589,8 +1589,8 @@ class Game {
   }
 
   /** The fight's top parts, each under the measured bottom of the ones above it (COMBAT-HUD, docs/notes/combat-hud.md): a twist's banner
-   *  under the top bar, the spell row under that, then the boss's bar under the whole spell row as it is drawn now (the row wraps, Auto
-   *  dropping under the orbs, on a narrow phone with the War Horn and four spells), and the synergies under the lowest. Run by `layout` and
+   *  under the top bar, the spell row under that, then the boss's bar under the whole spell row as it is drawn now (one line: since
+   *  AUTO-RIGHT the row never wraps, Auto staying right of the last orb), and the synergies under the lowest. Run by `layout` and
    *  again whenever the spell row or the boss's bar changes size or shows (`watchTopHud`). Returns the bottom of the parts over the board
    *  before the boss's bar, and the boss's bar's bottom (with its gap). */
   private placeTopHud(): { below: number; barBottom: number } {
@@ -1604,7 +1604,7 @@ class Game {
     // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky)
     const row = $('hudSpells');
     row.style.top = `${below + 6}px`;
-    // (the row's real bottom when it shows (the orbs, Auto and the War Horn, wrapped or not); before the fight, when it is not drawn, a
+    // (the row's real bottom when it shows (the War Horn, the mana, the orbs and Auto, on one line); before the fight, when it is not drawn, a
     // single row's height)
     const drawn = row.getBoundingClientRect();
     const rowBottom = drawn.height > 0 ? Math.max(drawn.bottom, below + 6 + ORBS_ROW) : below + 6 + ORBS_ROW;
@@ -1615,7 +1615,7 @@ class Game {
     return { below, barBottom };
   }
 
-  /** Lay the top parts out again whenever the spell row or the boss's bar changes size (a wrap, the War Horn given, a spell added, the
+  /** Lay the top parts out again whenever the spell row or the boss's bar changes size (the War Horn given, a spell added, the
    *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs. */
   private watchTopHud(): void {
     if (typeof ResizeObserver !== 'function') return;
@@ -1625,7 +1625,7 @@ class Game {
       busy = true;
       this.placeTopHud();
       // (a toast in the lane goes under the parts as they now stand, and a quip's bubble is set clear of them all: the spell row coming in
-      // as the fight begins, the bar moving down under a wrapped row)
+      // as the fight begins, the bar moving as the row changes)
       const lane = fightToastTop();
       if (lane !== undefined) for (const t of document.querySelectorAll<HTMLElement>('.toast.lane')) t.style.top = `${Math.round(lane)}px`;
       reclearQuip();
