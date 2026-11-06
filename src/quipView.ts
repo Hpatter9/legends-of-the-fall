@@ -51,8 +51,15 @@ function ensure(): HTMLElement {
  *  nearest clear spot (below it in the top half of the page, above it in the bottom half), again until it covers none. */
 const KEEP_CLEAR = [...FIGHT_HUD, '.toast.lane', '#hmTop', '#starter h1', '#starter .stSub'];
 function keepClear(left: number, top: number, w: number, h: number): number {
-  let y = top;
   const boxes = hudBoxes(KEEP_CLEAR);
+  const covers = (y: number) => boxes.some((b) => left < b.right && left + w > b.left && y < b.bottom && y + h > b.top);
+  if (!covers(top)) return Math.max(4, top);
+  // (BOSS-BAR: the nearest spot just above or below one of them that covers none and stays on the screen; on a short phone the tactic
+  // button sits above the middle, and the old step (below a part in the top half, above it in the bottom half) sent a bubble back and forth
+  // between it and the hero rows)
+  const spots = boxes.flatMap((b) => [b.bottom + 4, b.top - h - 4]).filter((y) => y >= 4 && y + h <= innerHeight - 4 && !covers(y));
+  if (spots.length) return spots.reduce((a, b) => (Math.abs(b - top) < Math.abs(a - top) ? b : a));
+  let y = top;
   for (let pass = 0; pass <= boxes.length; pass++) {
     const b = boxes.find((b) => left < b.right && left + w > b.left && y < b.bottom && y + h > b.top);
     if (!b) break;

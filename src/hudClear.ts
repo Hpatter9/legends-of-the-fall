@@ -8,12 +8,13 @@ export const FIGHT_HUD = ['#top', '#hudSpells', '#bossBar', '#twistBanner', '#co
 /** The boxes of those parts that show now (none hidden or empty). */
 export function hudBoxes(sels: readonly string[] = FIGHT_HUD): DOMRect[] {
   const out: DOMRect[] = [];
-  for (const sel of sels) {
-    const e = document.querySelector<HTMLElement>(sel);
-    if (!e || e.hidden || e.closest('[hidden]')) continue;
-    const r = e.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0 && getComputedStyle(e).display !== 'none') out.push(r);
-  }
+  // (every match, not the first: a toast fading out of the lane and the next coming in are both there for a moment, BOSS-BAR)
+  for (const sel of sels)
+    for (const e of document.querySelectorAll<HTMLElement>(sel)) {
+      if (e.hidden || e.closest('[hidden]')) continue;
+      const r = e.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && getComputedStyle(e).display !== 'none') out.push(r);
+    }
   return out;
 }
 
