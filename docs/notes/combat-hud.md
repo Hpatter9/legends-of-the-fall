@@ -133,7 +133,9 @@ bars on the board and has no bar to cover). The 0.373 probe missed it because it
   between the button and the hero rows, ending on the button. A bubble now goes to the nearest spot just above or below a part that covers
   none and stays on the screen (the old step only when there is none). And the parts kept clear are every match, not the first, so a
   toast fading out of the lane and the next coming in are both kept clear. A bubble said at the deploy is set clear again as the spell
-  row comes in.
+  row and the hero rows come in, and a bubble fading out is set clear too when a toast comes into the lane. Where there is no clear spot
+  at all (360x640 with the boss's bar, a toast and the tactic button up) the bubble is not shown, or steps off at once: a line missed is
+  better than the HUD covered.
 
 ### The probe
 
@@ -146,5 +148,13 @@ Calamity's map boss (the map's boss spot entered through its own view) and in Ni
 - Before (main at 0.373.0, the boss cases, `KITS=boss`): 17 overlaps. `auto x bossBar (48x34 px)` 12 times: four spells and the horn at
   393x852, 360x780, 360x640 and 393 with the inset, in the army, the Calamity and the trial (never at 412). `tactic x quip` 4 times and
   `toast x quip` once, all at 360x640.
-- After: see the checks below. Shots: `docs/samples/combat-hud/bossbar-before-<case>-<w>.png` and `bossbar-after-<case>-<w>.png`
-  (`<w>x640` for the short phone, `<w>s` for the inset).
+- After: every case, 0.373's moments and the boss cases at all five sizes (85 in all), 0 overlaps.
+- Shots (2x, 256 colours), the boss cases: `docs/samples/combat-hud/bossbar-before-<case>-boss-<w>.png` and `bossbar-after-...`
+  (`<case>` is `5` for the army, `8` for the Calamity, `trial`, with `-<n>sp[-horn]` for the kit; `<w>x640` the short phone, `<w>s` the
+  inset). The owner's case: `bossbar-before-5-4sp-horn-boss-393.png` against `bossbar-after-5-4sp-horn-boss-393.png`.
+
+### Checks (BOSS-BAR)
+
+- `npm run typecheck`, `npm run web`.
+- `npm test -- fight-hud ui-standard quip toast`: 57 pass.
+- The probe on main's build (`ROOT=out/web-before KITS=boss`): 17 overlaps; on this branch, every case: 0.
