@@ -977,3 +977,10 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Scope: chamber artwork, separate summoner actor with idle/cast/eye-shield poses, new-recruit chamber reveal, relevant checks and credits. Shard tarot rewards, simulation and saves preserved.
 - Direction: owner approved current appearance with idle, summoning, and shielding eyes against the bright hero arrival.
 - Completion: three poses integrated with reveal timing and reduced motion. Typecheck/build, four affected test files and browser checks at all three portrait sizes plus reduced motion passed. Status: ready for owner review. [Handoff](notes/animated-summoner.md).
+
+### EXPANSION-BADGES — Nemesis badges and duel banner
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** two source PNGs under `art-source/expansion`, handoff and this task entry.
+- **Completion:** four centred badges in a 1024×256 transparent strip and one 512×256 transparent duel emblem; dimensions and alpha checked, visually reviewed. No runtime changes.
+- **Status:** ready for review. [Handoff](notes/expansion-art.md). Requested prior branch/PR were absent; branch recreated from main.
