@@ -212,8 +212,10 @@ export interface RevengeNote {
  * fled a fight in which no hero fell); the slain who carried trophies bring them home; an Avenger's killing blow is Vengeance. `avengers` are
  * each member's Avengers as the fight began.
  */
-export function settleRevenge(m: Meta, run: Run, b: Battle, tally: NemesisTally | undefined, note: NemNote, was: ReadonlyMap<number, Nemesis>, cheated: ReadonlyMap<number, string>, avengers: ReadonlyMap<number, Record<string, string>>, wave: number): RevengeNote {
+export function settleRevenge(m: Meta, run: Run, b: Battle, tally: NemesisTally | undefined, note: NemNote, was: ReadonlyMap<number, Nemesis>, cheated: ReadonlyMap<number, string>, avengers: ReadonlyMap<number, Record<string, string>>, wave: number, duelWon?: number): RevengeNote {
   const out: RevengeNote = { lines: [], doubled: new Set() };
+  // (phase 4: a nemesis slain in a duel pays double, `duel.ts`)
+  if (duelWin(note, duelWon)) out.doubled.add(duelWon!);
   const war = m.war;
   if (!war) return out;
   const member = (id: number | undefined) => (id === undefined ? undefined : war.members.find((n) => n.id === id));
@@ -285,6 +287,8 @@ export function settleRevenge(m: Meta, run: Run, b: Battle, tally: NemesisTally 
   tidyGrudges(m);
   return out;
 }
+
+const duelWin = (note: NemNote, id: number | undefined): boolean => id !== undefined && note.slain.some((x) => x.id === id);
 
 /** The Avengers of every member, as a fight begins (for Vengeance at its settle). */
 export const avengersNow = (m: Meta): Map<number, Record<string, string>> => new Map((m.war?.members ?? []).map((n) => [n.id, avengersOf(m, n.id)]));

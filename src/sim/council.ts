@@ -22,7 +22,8 @@ import type { NemesisTally } from './nemesisLog';
 import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
 import type { Run } from './run';
-import { avengersNow, settleRevenge } from './revenge';
+import { avengersNow, humiliate, settleRevenge } from './revenge';
+import { DUEL_SHAMED } from './duel';
 import { giveShards, owns, type Given } from './unlock';
 import { isContent, PULL_HEROES } from './unlockRules';
 import { UNITS } from './units';
@@ -71,7 +72,7 @@ export const SCOUT_PRICE = 2;
 /** The traits a recruit may come with (what a fighter brings to the Council, not what it learned from the heroes: no immunity). */
 export const RECRUIT_TRAITS: readonly string[] = ['bane:martial', 'bane:arcane', 'bane:devout', 'bane:wild', 'ambusher', 'loneWolf', 'hillKing', 'scarred', 'arrowCatcher', 'executioner', 'healerHunter', 'elusive'];
 
-const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed' };
+const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed', duel: 'Single combat' };
 /** A News kind's word ("Feud"). */
 export const newsWord = (k: NewsKind): string => EVENT_WORD[k];
 
@@ -474,11 +475,16 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   const muster = run.mode?.kind === 'muster';
   // (an Avenger's killing blow is Vengeance: the slayer cannot cheat death)
   const avenged = new Set(note.slain.filter((x) => x.by && avengers.get(x.id)?.[x.by]).map((x) => x.id));
+  // (phase 4: a nemesis slain in a duel cannot cheat death either, and a warchief beaten in one is humiliated instead and flees to his Muster)
+  const duel = duelSettle(war, m, note, was, b);
+  if (duel.won !== undefined) avenged.add(duel.won);
   const cheated = new Map<number, string>();
   if (CHEAT_DEATH.on && !muster) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
-  // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`)
-  const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave);
+  // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`; phase 4: a duel won pays double)
+  const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave, duel.won);
   lines.push(...rev.lines);
+  if (duel.shamed) lines.push(humiliate(m, war, duel.shamed.n, duel.shamed.by, run, wave, false));
+  lines.push(...duel.lines);
   for (const x of note.born) news(war, 'named', `${fullName(x)} is named a ${rankWord(x.rank).toLowerCase()}: ${x.deed === 'slew' ? 'it slew a hero' : x.deed === 'maimed' ? 'it maimed a hero' : 'it escaped you'}`);
   let trophies = 0;
   for (const x of note.slain) {
@@ -526,6 +532,55 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   if (!openBefore && musterOpen(war)) lines.push('The Warchief’s Muster is open: see the Dark Council');
   if (lines.length) note.council = [...(note.council ?? []), ...lines];
   return note;
+}
+
+/**
+ * Phase 4: what a duel's fight means for the War, beside `noteNemesis`'s reading of it. Won: the nemesis is slain for good (`won`, kept from
+ * cheating death and paid double), and its wave breaks and runs; a warchief is not slain but humiliated, and flees to his Muster (`shamed`).
+ * Lost: it bested the champion (its Might and the champion's Grudge come from its deed, as in any fight). Time: it escaped, humiliated if it
+ * was under a quarter of its health. Each says so in the News and in its memory.
+ */
+function duelSettle(war: War, m: Meta, note: NemNote, was: ReadonlyMap<number, Nemesis>, b: Battle): { won?: number; shamed?: { n: Nemesis; by: string | undefined }; lines: string[] } {
+  const d = b.duel;
+  const out: { won?: number; shamed?: { n: Nemesis; by: string | undefined }; lines: string[] } = { lines: [] };
+  if (!d?.ended) return out;
+  const hero = b.units.find((u) => u.id === d.hero)?.def;
+  const champ = hero ? heroName(hero) : 'your champion';
+  const nu = b.units.find((u) => u.id === d.nem);
+  const slain = note.slain.find((x) => x.id === d.id);
+  if (d.ended === 'won' && slain) {
+    const n = was.get(d.id);
+    if (slain.rank === 'warchief' && n) {
+      // (a warchief beaten in single combat lives: his fall is struck, and he is humiliated and flees to his Muster)
+      note.slain = note.slain.filter((x) => x !== slain);
+      m.crowns -= slain.crowns;
+      note.crowns -= slain.crowns;
+      war.fallen = war.fallen.filter((f) => !(f.id === d.id && f.how === 'duel'));
+      war.members.push(n);
+      remember(n, `Beaten in single combat by ${champ}, and fled to his Muster`);
+      news(war, 'duel', `${fullName(n)} is beaten in single combat by ${champ}, and flees to his Muster`);
+      out.shamed = { n, by: hero };
+      out.lines.push(`${fullName(n)} is beaten in single combat, and flees to his Muster: the wave breaks and runs`);
+      return out;
+    }
+    out.won = d.id;
+    news(war, 'duel', `${fullName(slain)} falls in single combat to ${champ}`);
+    out.lines.push(`${fullName(slain)} falls in single combat: the wave breaks and runs`);
+    return out;
+  }
+  const n = war.members.find((x) => x.id === d.id);
+  if (!n) return out;
+  if (d.ended === 'lost') {
+    remember(n, `Bested ${champ} in single combat · ${armyById(n.army)?.name ?? n.army}`);
+    news(war, 'duel', `${fullName(n)} bests ${champ} in single combat`);
+    out.lines.push(`${fullName(n)} bests ${champ} in single combat, and fights on stronger`);
+  } else if (d.ended === 'timeout') {
+    remember(n, `Outlasted ${champ} in single combat · ${armyById(n.army)?.name ?? n.army}`);
+    news(war, 'duel', `${fullName(n)} outlasts ${champ} in single combat, and slips away`);
+    out.lines.push(`${fullName(n)} slips away from the duel: the wave fights on without it`);
+    if (nu && nu.hp < nu.maxHp * DUEL_SHAMED) out.shamed = { n, by: hero };
+  }
+  return out;
 }
 
 /** Phase 3's cheating death, brought forward (the design's 2.6): a member brought to 0 hp in an ordinary wave may turn out to have been

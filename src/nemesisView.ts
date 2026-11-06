@@ -39,9 +39,10 @@ import cloakIcon from './art/items/shadow_cloak.png';
 import vialIcon from './art/items/blood_vial.png';
 import brandIcon from './art/items/ember_brand.png';
 import weaponIcon from './art/items/weapon2.png';
+import duelIcon from './art/items/weapon3.png';
 
 /** The News's event icons (placeholders from the item art until the Council's own ten are made). */
-export const NEWS_ICON: Readonly<Record<NewsKind, string>> = { cheated: phoenixIcon, recruit: bannerIcon, promotion: bandIcon, feud: bladeIcon, betrayal: fangIcon, feast: chaliceIcon, trial: shieldIcon, oath: ringIcon, desertion: bootsIcon, claim: sunCrownIcon, crowned: crownIcon, named: namesIcon, slain: toothIcon, muster: drumIcon, fled: cloakIcon, humiliated: vialIcon, vengeance: brandIcon, reclaimed: weaponIcon };
+export const NEWS_ICON: Readonly<Record<NewsKind, string>> = { cheated: phoenixIcon, recruit: bannerIcon, promotion: bandIcon, feud: bladeIcon, betrayal: fangIcon, feast: chaliceIcon, trial: shieldIcon, oath: ringIcon, desertion: bootsIcon, claim: sunCrownIcon, crowned: crownIcon, named: namesIcon, slain: toothIcon, muster: drumIcon, fled: cloakIcon, humiliated: vialIcon, vengeance: brandIcon, reclaimed: weaponIcon, duel: duelIcon };
 /** The War Trophy token (a placeholder: the dragon sigil). */
 export const TROPHY_ICON = sigilIcon;
 
@@ -63,7 +64,7 @@ const icon = (src: string, cls = 'nmIcon'): HTMLImageElement => {
 export const mightPips = (might: number): string => '●'.repeat(Math.max(0, Math.min(MIGHT_MAX, might))) + '○'.repeat(Math.max(0, MIGHT_MAX - might));
 
 /** A nemesis's face: its kind's portrait in its rank's frame (CSS), the scars beside it. */
-function face(n: Pick<Nemesis, 'base' | 'rank' | 'scars'>, size: number): HTMLElement {
+export function face(n: Pick<Nemesis, 'base' | 'rank' | 'scars'>, size: number): HTMLElement {
   const box = el('span', `nmFace ${n.rank}`);
   const sheet = UNITS[n.base]?.sheet;
   if (sheet) box.append(portrait(sheet, size));
@@ -73,7 +74,7 @@ function face(n: Pick<Nemesis, 'base' | 'rank' | 'scars'>, size: number): HTMLEl
 }
 
 /** A hero's line on the card: its face and words. */
-function heroLine(kind: string, text: string): HTMLElement {
+export function heroLine(kind: string, text: string): HTMLElement {
   const p = el('p', 'nmHeroLine');
   const sheet = UNITS[kind]?.sheet;
   if (sheet) {
@@ -242,11 +243,12 @@ function drawNews(war: War | undefined, pane: HTMLElement): void {
   }
 }
 
-/** How a fallen nemesis fell, in words ("slain by Ravi", "slain by Gash in the Council", "slain at the Muster by Kwame"). */
+/** How a fallen nemesis fell, in words ("slain by Ravi", "slain by Gash in the Council", "slain at the Muster by Kwame", "slain by Asha in
+ *  single combat"). */
 export function fallWords(f: FallenNemesis): string {
   if (f.how === 'council') return `slain by ${f.foe ?? 'a rival'} in the Council`;
   const by = f.by ? ` by ${heroName(f.by)}` : '';
-  const how = f.how === 'muster' ? `slain at the Muster${by}` : f.vengeance ? `slain${by} in Vengeance` : `slain${by}`;
+  const how = f.how === 'muster' ? `slain at the Muster${by}` : f.how === 'duel' ? `slain${by} in single combat${f.vengeance ? ', in Vengeance' : ''}` : f.vengeance ? `slain${by} in Vengeance` : `slain${by}`;
   return f.reclaimed ? `${how}; ${f.reclaimed === 1 ? 'a trophy' : 'its trophies'} brought home` : how;
 }
 

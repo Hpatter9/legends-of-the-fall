@@ -132,7 +132,7 @@ export interface FallenNemesis {
   by: string;
   /** How it fell: slain in a wave, at the Warchief's Muster, or by a rival of the Council (a feud, a trial, a betrayal; `foe` names the
    *  rival). The later phases add a duel and Vengeance. */
-  how: 'slain' | 'muster' | 'council';
+  how: 'slain' | 'muster' | 'council' | 'duel';
   /** Phase 3: it fell to an Avenger's blow (Vengeance), and the trophies it carried came home. */
   vengeance?: true;
   reclaimed?: number;
@@ -144,7 +144,7 @@ export interface FallenNemesis {
 }
 
 /** A line of the War News (`council.ts`): the turn, what happened and its words. */
-export type NewsKind = 'cheated' | 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'claim' | 'crowned' | 'named' | 'slain' | 'muster' | 'fled' | 'humiliated' | 'vengeance' | 'reclaimed';
+export type NewsKind = 'cheated' | 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'claim' | 'crowned' | 'named' | 'slain' | 'muster' | 'fled' | 'humiliated' | 'vengeance' | 'reclaimed' | 'duel';
 export interface WarNews {
   turn: number;
   kind: NewsKind;
@@ -260,6 +260,8 @@ export interface NemSnap {
   fled?: number;
   met?: number;
   seen?: true;
+  /** Phase 4 (`duel.ts`): its challenge was refused this run, so it is Mocking: +5% attack for the rest of the run. */
+  mocking?: true;
 }
 
 /** `Run.nemesis`: the members met this run and the waves they stand in (wave number -> member ids). */
@@ -323,15 +325,17 @@ export interface NemPlace {
 
 /** Each trophy a nemesis carries gives it this much more attack (phase 3), and it carries at most this many. */
 export const TROPHY_ATK = 0.05;
+/** A nemesis whose duel was refused is Mocking for the rest of the run: this much more attack (phase 4). */
+export const MOCKING_ATK = 0.05;
 export const TROPHIES_MAX = 2;
 
 /** A nemesis's hp and attack multipliers on top of its place in the wave (its rank, Might and scars, its trophies; Normal at half Might). */
-export function nemStats(s: Pick<NemSnap, 'rank' | 'boss' | 'might' | 'scars' | 'trophies'>, tier: number): { hp: number; atk: number } {
+export function nemStats(s: Pick<NemSnap, 'rank' | 'boss' | 'might' | 'scars' | 'trophies' | 'mocking'>, tier: number): { hp: number; atk: number } {
   const m = Math.max(1, Math.min(MIGHT_MAX, s.might)) * (tier > 0 ? 1 : NORMAL_MIGHT);
   const per = s.boss ? PER_MIGHT.boss : PER_MIGHT.named;
   const rank = s.boss ? { hp: 1, atk: 1 } : RANK_STATS[s.rank];
   const kept = Math.min(TROPHIES_MAX, s.trophies?.length ?? 0);
-  return { hp: rank.hp * (1 + per.hp * m) * (1 + SCAR_HP * s.scars), atk: rank.atk * (1 + per.atk * m) * (1 + TROPHY_ATK * kept) };
+  return { hp: rank.hp * (1 + per.hp * m) * (1 + SCAR_HP * s.scars), atk: rank.atk * (1 + per.atk * m) * (1 + TROPHY_ATK * kept) * (s.mocking ? 1 + MOCKING_ATK : 1) };
 }
 
 /**
@@ -530,7 +534,8 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
   const rng = new Rng(mixSeed(run.seed, NEMESIS_SALT, wave));
   const tier = run.mode?.kind === 'army' || run.mode?.kind === 'muster' ? run.mode.tier ?? 0 : 0;
   const army = run.mode?.kind === 'army' || run.mode?.kind === 'muster' ? run.mode.army : undefined;
-  const how: FallenNemesis['how'] = run.mode?.kind === 'muster' ? 'muster' : 'slain';
+  // (phase 4: one slain in single combat fell in a duel)
+  const how: FallenNemesis['how'] = run.mode?.kind === 'muster' ? 'muster' : b.duel ? 'duel' : 'slain';
   const foes = b.units.filter((u) => foeClass(u)).sort((a, c) => a.id - c.id);
   // (the nemeses who stood in the fight)
   for (const u of foes.filter((x) => x.nem)) {
@@ -661,7 +666,7 @@ export function readTrophy(x: unknown): NemTrophy | undefined {
   return { kind, slot, item: Math.round(t.item), base, rarity: int(t.rarity, 1, 5, 1) };
 }
 const kinds = (x: unknown, max: number): string[] => (Array.isArray(x) ? [...new Set(x.filter((k): k is string => typeof k === 'string' && !!UNITS[k]))].slice(0, max) : []);
-const NEWS_KINDS: readonly NewsKind[] = ['cheated', 'recruit', 'promotion', 'feud', 'betrayal', 'feast', 'trial', 'oath', 'desertion', 'claim', 'crowned', 'named', 'slain', 'muster', 'fled', 'humiliated', 'vengeance', 'reclaimed'];
+const NEWS_KINDS: readonly NewsKind[] = ['cheated', 'recruit', 'promotion', 'feud', 'betrayal', 'feast', 'trial', 'oath', 'desertion', 'claim', 'crowned', 'named', 'slain', 'muster', 'fled', 'humiliated', 'vengeance', 'reclaimed', 'duel'];
 const dayRec = <T extends object>(x: unknown, extra: (r: Record<string, unknown>) => T): ({ key: number } & T) | undefined => {
   if (!x || typeof x !== 'object') return undefined;
   const r = x as Record<string, unknown>;
@@ -739,7 +744,7 @@ export function readWar(raw: unknown): War | undefined {
     const name = str(n.name);
     const base = str(n.base);
     if (!name || !base || !UNITS[base]) continue;
-    const how = n.how === 'muster' || n.how === 'council' ? n.how : 'slain';
+    const how = n.how === 'muster' || n.how === 'council' || n.how === 'duel' ? n.how : 'slain';
     war.fallen.push({ id: int(n.id, 0, 1e9, 0), name, epithet: str(n.epithet) ?? '', base, army: str(n.army) ?? '', rank: RANKS.includes(n.rank as NemRank) ? (n.rank as NemRank) : 'lieutenant', might: int(n.might, 1, MIGHT_MAX, 1), by: str(n.by) ?? '', how, tier: int(n.tier, 0, TIERS.length - 1, 0), ...(str(n.foe) ? { foe: n.foe } : {}), ...(typeof n.turn === 'number' ? { turn: int(n.turn, 0, 1e9, 0) } : {}), ...(n.vengeance === true ? { vengeance: true as const } : {}), ...(typeof n.reclaimed === 'number' && n.reclaimed > 0 ? { reclaimed: int(n.reclaimed, 1, TROPHIES_MAX, 1) } : {}) });
   }
   for (const x of Array.isArray(r.news) ? r.news : []) {

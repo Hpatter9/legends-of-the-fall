@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.382.0',
+    date: '2026-11-06',
+    title: 'Duels: single combat with a nemesis',
+    notes: ['A nemesis with a grudge may call out one of your heroes to single combat in a ring: win for double spoils, or refuse and face its mockery.'],
+  },
+  {
     version: '0.381.0',
     date: '2026-11-06',
     title: 'Revenge, trophies and taunts',

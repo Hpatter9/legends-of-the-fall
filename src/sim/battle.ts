@@ -27,6 +27,9 @@ import { enterPhase, PHASE2, PHASE_AT } from './bossPhases';
 import { tickWeakness, weakHurt } from './weakness';
 import { AVENGER_CHARGE, FLEE, nemFlees, nemHunt, nemHurt, nemJump, nemMove, nemPrey, nemSpare, nemStart, type UnitNem } from './nemesisTraits';
 import type { NemPlace } from './nemesis';
+import { VAIN_DUEL } from './nemesisTraits';
+import type { DuelRing } from './duelRing';
+import { duelEnd, fenceRing, inRing } from './duelRing';
 import { MARCH } from './march';
 import { ritesFall, tickRites } from './chapelRooms';
 import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bonds';
@@ -521,6 +524,9 @@ export interface Battle {
   /** STATS batch 4 (`blow.ts`): how much the placed heroes' to hit and AC have grown since level 1, fixed when the fight starts; the foes
    *  answer it. */
   blowMatch?: BlowMatch;
+  /** The Nemesis War, phase 4 (`duel.ts`): a duel wave, one hero against one nemesis in the board's middle 5x5 (its ring): who, where, and
+   *  how it ended. Unset in every other fight, so every hook it adds is a no-op there. */
+  duel?: DuelRing;
 }
 
 export const defOf = (u: Unit): UnitDef => (u.nem ? nemDef(u) : UNITS[u.def]);
@@ -817,7 +823,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
  *  ONE-OF-EACH, `docs/notes/one-of-each.md`). */
 export type PlaceBlock = 'phase' | 'side' | 'tile' | 'taken' | 'twin';
 export function placeBlock(b: Battle, defId: string, u: number, v: number, tag?: number): PlaceBlock | null {
-  if (b.phase !== 'deploy') return 'phase';
+  if (b.phase !== 'deploy' || b.duel) return 'phase';
   if (UNITS[defId]?.side !== 'hero') return 'side';
   if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) return 'tile';
   const there = unitAt(b, u, v);
@@ -924,7 +930,8 @@ function startKits(b: Battle): void {
 
 /** Raise the fallen party in the same fight. Enemies, charges and spent abilities stay as they were. */
 export function reviveParty(b: Battle): boolean {
-  if (b.phase !== 'lost' || !heroesPlaced(b)) return false;
+  // (a duel lost is not fought again: the champion falls, `duel.ts`)
+  if (b.phase !== 'lost' || !heroesPlaced(b) || b.duel) return false;
   for (const u of b.units) {
     if (u.side !== 'hero' || defOf(u).summon || u.alive) continue;
     u.alive = true;
@@ -1035,6 +1042,11 @@ function stepOnce(b: Battle): BattleEvent[] {
       b.pending = [];
       out.push({ kind: 'end', won: false });
     }
+    return out;
+  }
+  // (the Nemesis War, phase 4: a duel ends with the champion's fall, the nemesis's, or its sixty seconds, `duelRing.ts`)
+  if (b.duel) {
+    if (duelEnd(b)) out.push({ kind: 'end', won: (b.phase as Phase) === 'won' });
     return out;
   }
   const heroes = b.units.some((x) => x.alive && realHero(x));
@@ -1154,6 +1166,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if ((to.nem || by.nem) && by !== to) {
     dmg = nemHurt(b, by, to, creditOf(b, by), dmg, src, splash, out);
     if (dmg <= 0) return false;
+    // (phase 4: a Vain nemesis takes a tenth more in a duel)
+    if (b.duel && to.nem?.weak.includes('vain')) dmg = Math.max(1, Math.round(dmg * (1 + VAIN_DUEL)));
   }
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
@@ -1392,6 +1406,7 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
   if (!higher) return -1;
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(board, me, def.jump, blocked, me.side);
   const ht = tileOf(b, target).h;
   const wound = 1 - me.hp / me.maxHp;
@@ -1440,6 +1455,7 @@ export function flankStep(b: Battle, me: Unit, def: UnitDef, target: Unit, style
   if (me.flankAt !== undefined && b.t - me.flankAt < KITE_MS) return -1;
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   let goal = -1;
   let best = 0;
@@ -1469,6 +1485,7 @@ export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[
   if (!brutes.length) return -1;
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   let goal = -1;
   let best = -Infinity;
@@ -1492,7 +1509,8 @@ export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // (the Nemesis War, phase 3: a nemesis under a fifth of its health may break off and run for its own back row, `nemFlees`)
-  if (me.nem && nemFlees(b, me)) return runOff(b, me, out);
+  // (never in a duel: its timeout is the nemesis's escape, phase 4)
+  if (me.nem && !b.duel && nemFlees(b, me)) return runOff(b, me, out);
   // (a feared fighter runs from the nearest foe and strikes nobody, STATUS-FX)
   if (isFeared(b, me)) return flee(b, me, out);
   // (BOSS-BIG: a boss's great attack is marked on the ground before it lands; a fighter standing in it steps out first, and walks round it)
@@ -1580,6 +1598,8 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
   // (round a boss's marked ground, BOSS-BIG)
   if (danger) for (const i of danger) blocked.add(i);
+  // (a duel's two keep to its ring, phase 4)
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   const wound = 1 - me.hp / me.maxHp;
   // a badly hurt fighter with nobody to strike makes for a shrine close by
@@ -1655,12 +1675,17 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
 export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const def = defOf(me);
   let next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
+  // (phase 4: no step leaves a duel's ring, whatever chose it)
+  if (b.duel && inRing(b.duel, me) && !inRing(b.duel, next)) {
+    me.busyUntil = b.t + WAIT_MS;
+    return;
+  }
   const from = tileOf(b, me);
   let to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
   let cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0);
   // (ice: a walker who steps onto it may slide one tile on, if that tile is free and no higher, and not lava; a hash of the moment says, so no stream moves)
-  if (to.ground === 'ice' && !def.flies && !(b.stand && me.post) && (mixSeed(b.seed, 0x1ce, b.t, me.id) >>> 0) / 4294967296 < ICE_SLIDE) {
+  if (to.ground === 'ice' && !def.flies && !(b.stand && me.post) && !b.duel && (mixSeed(b.seed, 0x1ce, b.t, me.id) >>> 0) / 4294967296 < ICE_SLIDE) {
     const on = { u: next.u + next.u - me.u, v: next.v + next.v - me.v };
     const t2 = tileAt(b.board, on.u, on.v);
     if (standable(t2) && !unitAt(b, on.u, on.v) && t2.h <= to.h && t2.ground !== 'lava') {
@@ -1695,6 +1720,7 @@ function flee(b: Battle, me: Unit, out: BattleEvent[]): void {
   const def = defOf(me);
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   const steps: { i: number; u: number; v: number }[] = [];
   for (let i = 0; i < walk.cost.length; i++) {
@@ -1731,6 +1757,7 @@ function runOff(b: Battle, me: Unit, out: BattleEvent[]): void {
   const def = defOf(me);
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   let goal = -1;
   // (row 0's tiles are the first `w` of the board)
