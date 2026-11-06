@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.377.0',
+    date: '2026-11-06',
+    title: 'Heroes roam the cliff, Hester in the tavern',
+    notes: ['The party wanders the whole cliff at the camp. Hester\'s shop has moved into the tavern\'s hearth hall; a coin on Heroes shows new stock or a visitor.'],
+  },
+  {
     version: '0.376.0',
     date: '2026-11-06',
     title: 'Lighter menus, Hester\'s wares in a drawer',
