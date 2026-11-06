@@ -1011,3 +1011,9 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - **Scope:** `art-source/expansion/nemesis-icons.png` and this handoff; existing badge/banner work preserved.
 - **Completion:** one 1536×640 transparent PNG, 12×5 cells of 128×128; 29 ordered icons and 31 empty cells. Dimensions, binary alpha, occupancy, padding and 24px preview checked.
 - **Status:** ready for review in [PR #399](https://github.com/Hpatter9/legends-of-the-fall/pull/399). [Handoff](notes/expansion-art.md). Source art only; no runtime checks required.
+
+### ART-EXPANSION-TABLES — Hester and Elders source props
+
+- **Owner:** Codex tavern art chat. **Branch/worktree:** `art/expansion`, `/workspace/expansion-art`.
+- **Scope:** Hester's merchant table and optional Elders' table source PNGs, plus handoff.
+- **Status:** complete; exact 384×256 and 320×112 dimensions, binary transparency, clear corners and visual inspection passed. Added to Expansion art PR #399. Runtime integration remains with director. [Handoff](notes/expansion-tavern-tables.md).
