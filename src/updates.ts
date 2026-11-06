@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.375.0',
+    date: '2026-11-06',
+    title: 'Ten pop-ups in the ornate style',
+    notes: ['The Auto prompt, talents, tomes, relics, the altar, the built card and Hester\'s wares now use the standard ornate menu, with bigger taps and text.'],
+  },
+  {
     version: '0.374.0',
     date: '2026-11-06',
     title: 'The stall on the cliff, a clear boss bar',

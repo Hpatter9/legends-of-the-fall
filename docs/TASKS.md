@@ -16,6 +16,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### UI-POPUP-UNIFORM — Uniform Keep & Kingdom fortress aesthetic across all menus, popups, sheets, and dialogs
+
+- **Owner:** Claude worker / Antigravity. **Branch/worktree:** `uniform_menu_popup_ui` (from `origin/main` 0.368.0).
+- **Goal:** the owner's request to make every menu and popup uniform using the dark-fantasy fortress gothic theme (chiseled slate backdrops, double brass filigree borders, forged iron brackets with square pyramid castle bolts, tactile velvet buttons, min 44px tap targets, min 11px font size floor, standardized "‹ Back" on pages and "Close" on modals/popups/sheets).
+- **Scope:** `src/ornateMenus.css` (Section 24), `src/autoAsk.ts`, `src/talentView.ts`, `src/unitInfo.ts`, `docs/notes/uniform-menu-popup-ui.md`. No sim, save or version change.
+- **Status:** ready for review; [PR #386](https://github.com/Hpatter9/legends-of-the-fall/pull/386). [Note](notes/uniform-menu-popup-ui.md).
+
 ### RELICS-2 — The relics redone as the keep's lost artefacts (step 1: the six Chapters and the Storied relics)
 
 - **Owner:** Claude worker. **Branch/worktree:** `claude/relics-2`, `/home/user/lotf-relics` (from `claude/relics`, with main 0.296.0 merged).
