@@ -132,7 +132,7 @@ test('shards come from stones and the armies\' rare drop: no other source calls 
   // (ARMY-DROPS, the owner's later ask: an army wave's rare drop also gives shards, `armyDrops.ts`; its rates are tested in `army-drops.test.ts`)
   // (QUESTS-1b, the owner's ask for quest rewards: a few quests pay a fitting hero's shards at their hand-in, `quests.ts` `payReward`; which
   // quests, and how many, is tested in `quests-content.test.ts`)
-  // (the Nemesis War's Spoils, the owner-approved expansion design (2.11): an unlock shard for six War Trophies, two a week at most,
+  // (the Nemesis War's Spoils, the owner-approved expansion design (2.11): an unlock shard for six War Trophies, one a week at most,
   // `council.ts` `buyShard`; the cap is tested in `council.test.ts`)
   assert.deepEqual(callers.sort(), ['src/sim/armyDrops.ts', 'src/sim/council.ts', 'src/sim/devGrant.ts', 'src/sim/meta.ts', 'src/sim/quests.ts'], 'only pullOnce (the stone draw), the armies\' rare drop, a few quests\' rewards and the War\'s Spoils give shards in play');
 });

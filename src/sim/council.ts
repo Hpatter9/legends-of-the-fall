@@ -28,8 +28,9 @@ import { UNITS } from './units';
 
 /** The Council's own stream: a turn's draws are `mixSeed(meta.seed, COUNCIL_SALT, war.turn)`. */
 export const COUNCIL_SALT = 0x4e3e53;
-/** A turn has no event, one or two this often. */
-export const TURN_SHAPE = { none: 0.1, one: 0.6, two: 0.3 } as const;
+/** A turn has no event, one or two this often. The design's start was 10%, 60% and 30%; tuned with the war simulator to its churn targets
+ *  (`docs/notes/nemesis-2.md`): at four turns a day, that many events turned the Council over far faster than a player could follow. */
+export const TURN_SHAPE = { none: 0.65, one: 0.3, two: 0.05 } as const;
 /** The events and their weights (the design's table). */
 export type CouncilEvent = 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion';
 export const EVENT_WEIGHT: Readonly<Record<CouncilEvent, number>> = { recruit: 3, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 };
@@ -49,8 +50,8 @@ export const LOYALTY = { start: 60, feast: 15, held: 10, brother: -10, beaten: -
 export const BETRAY_BELOW = 30;
 export const BETRAY_WIN = 0.5;
 export const BETRAY_SLAYS = 0.5;
-/** A feud's loser is slain this often. */
-export const FEUD_SLAYS = 0.3;
+/** A feud's loser is slain this often (the design's start was 30%; tuned with the war simulator to about one lost to infighting a week). */
+export const FEUD_SLAYS = 0.1;
 /** A lieutenant at this Might may put its captain to a Trial of Strength. */
 export const TRIAL_MIGHT = 4;
 /** A captain within a Might of the claimant challenges for the empty warchief's seat this often. */
@@ -61,15 +62,15 @@ export const DESERT_STREAK = 3;
 /** War Trophies a slaying pays (2.11), and the most a day brings. */
 export const TROPHIES: Readonly<Record<Nemesis['rank'], number>> = { lieutenant: 1, captain: 2, warchief: 5 };
 export const TROPHY_DAY = 12;
-/** The Spoils: an unlock shard of a hero not yet owned (at most two a week), a scout (reveal one secret of a member). */
+/** The Spoils: an unlock shard of a hero not yet owned (at most one a week, measured with `npm run unlock-pace -- --war 1`; the design's two brought the 15th hero 16% sooner), a scout (reveal one secret of a member). */
 export const SHARD_PRICE = 6;
-export const SHARD_WEEK = 2;
+export const SHARD_WEEK = 1;
 export const SCOUT_PRICE = 2;
 
 /** The traits a recruit may come with (what a fighter brings to the Council, not what it learned from the heroes: no immunity). */
 export const RECRUIT_TRAITS: readonly string[] = ['bane:martial', 'bane:arcane', 'bane:devout', 'bane:wild', 'ambusher', 'loneWolf', 'hillKing', 'scarred', 'arrowCatcher', 'executioner', 'healerHunter', 'elusive'];
 
-const EVENT_WORD: Readonly<Record<NewsKind, string>> = { recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster' };
+const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster' };
 /** A News kind's word ("Feud"). */
 export const newsWord = (k: NewsKind): string => EVENT_WORD[k];
 
@@ -461,11 +462,13 @@ export const turnLines = (t: readonly WarNews[] | null): string[] => (t ?? []).s
 export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | undefined, won: boolean, wave: number, day?: number): NemNote {
   const war0 = m.war;
   const openBefore = musterOpen(war0);
+  const was = new Map((war0?.members ?? []).map((n) => [n.id, n]));
   const note = noteNemesis(m, run, b, tally, won, wave);
   const war = m.war;
   if (!war || !war0) return note;
   const lines: string[] = [];
   const muster = run.mode?.kind === 'muster';
+  if (CHEAT_DEATH.on && !muster) lines.push(...cheatDeath(war, m, run, wave, note, was));
   for (const x of note.born) news(war, 'named', `${fullName(x)} is named a ${rankWord(x.rank).toLowerCase()}: ${x.deed === 'slew' ? 'it slew a hero' : x.deed === 'maimed' ? 'it maimed a hero' : 'it escaped you'}`);
   let trophies = 0;
   for (const x of note.slain) {
@@ -515,6 +518,43 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   return note;
 }
 
+/** Phase 3's cheating death, brought forward (the design's 2.6): a member brought to 0 hp in an ordinary wave may turn out to have been
+ *  dragged off the field. Off for a test that needs its slaying certain. */
+export const CHEAT_DEATH = { on: true };
+/** The chance by rank, and the extra with Survivor or a scar. Never at the Muster: it is the warchief's last stand. */
+export const CHEAT: Readonly<Record<Nemesis['rank'], number>> = { lieutenant: 0.15, captain: 0.25, warchief: 0.35 };
+export const CHEAT_EXTRA = 0.2;
+const CHEAT_SALT = 0xc4ea7;
+
+/**
+ * The members slain in a fight who cheat death (their own stream: `mixSeed(run.seed, CHEAT_SALT, wave, id)`, so the settle's draws are as
+ * they were): each is back on its seat with a scar more (three at most) and, by the run's rule, a Might more; what its fall paid is taken back
+ * and its fallen line is struck. The design's Stitched, humiliation and the runs it sits out come with phase 3. Returns the page's lines.
+ */
+function cheatDeath(war: War, m: Meta, run: Run, wave: number, note: NemNote, was: Map<number, Nemesis>): string[] {
+  const out: string[] = [];
+  note.slain = note.slain.filter((x) => {
+    const n = was.get(x.id);
+    if (!n) return true;
+    const chance = CHEAT[x.rank] + (n.traits.includes('survivor') || n.scars > 0 ? CHEAT_EXTRA : 0);
+    if (new Rng(mixSeed(run.seed, CHEAT_SALT, wave, x.id)).next() >= chance) return true;
+    m.crowns -= x.crowns;
+    note.crowns -= x.crowns;
+    war.fallen = war.fallen.filter((f) => !(f.id === x.id && f.how !== 'council'));
+    n.scars = Math.min(3, n.scars + 1);
+    if (n.grew !== run.seed && n.might < MIGHT_MAX) {
+      n.might++;
+      n.grew = run.seed;
+    }
+    remember(n, `Dragged from the field, scarred · ${armyById(n.army)?.name ?? n.army}`);
+    war.members.push(n);
+    news(war, 'cheated', `${fullName(n)} is dragged from the field and lives, scarred`);
+    out.push(`${fullName(n)} cheats death: dragged from the field, scarred`);
+    return false;
+  });
+  return out;
+}
+
 /** A warchief has fallen: two Promotions at once, the mightiest captain to the seat and the mightiest lieutenant to captain. */
 function reshuffle(war: War): string[] {
   const out: string[] = [];
@@ -544,7 +584,7 @@ export const shardsLeft = (war: War, day: number): number => SHARD_WEEK - (war.s
 /** The heroes whose unlock shards the Spoils sell: pullable heroes not yet owned. */
 export const shardHeroes = (m: Meta): string[] => PULL_HEROES.filter((k) => !owns(m, k) && !isContent(k));
 
-/** Buy an unlock shard of a hero not yet owned (six War Trophies, two a week). Null when it cannot be bought. */
+/** Buy an unlock shard of a hero not yet owned (six War Trophies, one a week). Null when it cannot be bought. */
 export function buyShard(m: Meta, kind: string, day: number): Given | null {
   const war = m.war;
   if (!war || war.trophies < SHARD_PRICE || shardsLeft(war, day) <= 0 || !shardHeroes(m).includes(kind)) return null;

@@ -4,8 +4,9 @@ Phase 2 of the expansion in `docs/design/legends-expansion.md` (section 9, "Phas
 7 and 8 of the design on top of phase 1 (`docs/notes/nemesis-1.md`). Phase 2's list: the 1-4-8 pyramid, sworn captains, loyalty, the
 Council's turns (Recruit, Promotion, Feud, Betrayal, Feast, Trial of Strength, Blood-oath, Desertion), the War News, the Fallen tab, the
 Warchief's Muster, the camp's war-table figurine and the war simulator. With it come the warchief's seat, the War Trophies and the Spoils,
-which phase 1's note left to the Council. Revenge, trophies taken from heroes, fleeing, cheating death, humiliation, the taunt cut-ins and
-duels are phases 3 and 4 and are not here.
+which phase 1's note left to the Council, and (tuned with the director, below) phase 3's cheating death, brought forward at settle so a
+nemesis lives long enough to be remembered. Revenge, trophies taken from heroes, fleeing, humiliation, the taunt cut-ins and duels are
+phases 3 and 4 and are not here.
 
 ## What it plays as
 
@@ -18,13 +19,13 @@ duels are phases 3 and 4 and are not here.
   1. **The warchief's seat.** Empty, the mightiest captain **claims** it; on the next turn he takes it, unless a captain within a Might of
      him **challenges** (half the time): a feud for the seat, whose winner takes it.
   2. **Ambition**: a lieutenant as mighty as its captain, or mightier, loses 2 loyalty.
-  3. **No event 10%, one 60%, two 30%**, each drawn by the design's weights from the events whose conditions hold now (`eventOpen`):
+  3. **No event 65%, one 30%, two 5%** (the design's start was 10%, 60% and 30%; tuned, below), each drawn by the design's weights from the events whose conditions hold now (`eventOpen`):
 
      | Event | Weight | When | What happens |
      |---|---|---|---|
      | Recruit | 3 | a lieutenant's seat is free | an elite of an army the player has opened (one not already on the Council), else an escort of one, takes the seat at Might 1 or 2, with a trait of its own (`RECRUIT_TRAITS`, never an immunity), the Dread of a hero of the party, and no secret known |
      | Promotion | 4 | a captain's seat is free | the mightiest lieutenant rises (ties to loyalty) |
-     | Feud | 2 | two of a rank | Might plus a d6 each; the winner +1 Might, the loser -1, slain 30% of the time |
+     | Feud | 2 | two of a rank | Might plus a d6 each; the winner +1 Might, the loser -1, slain 10% of the time (the design's start: 30%; tuned, below) |
      | Betrayal | 1 | a lieutenant under 30 loyalty, within a Might of its captain | 50%: they swap seats, the old captain slain or cast down (half each); else the traitor is slain |
      | Feast | 1 | a captain sits | the captain and its lieutenants +15 loyalty; a Glutton among them +1 Might |
      | Trial of Strength | 1 | a lieutenant at Might 4+ | a feud with its captain; the winner takes the higher seat |
@@ -60,10 +61,20 @@ duels are phases 3 and 4 and are not here.
   captain takes the seat there and then, and the mightiest lieutenant rises to captain. The result screen says "The Warchief falls!", and
   the board opens on the Fallen.
 
+## Cheating death, brought forward from phase 3
+
+A member brought to 0 hp in an ordinary wave (an army's or the Calamity's, never the Muster: it is the warchief's last stand) may turn out
+to have been dragged off the field (`noteWar`, `cheatDeath`; the design's 2.6): a lieutenant 15%, a captain 25%, a warchief 35%, 20% more
+with Survivor or a scar, from its own stream (`mixSeed(run.seed, CHEAT_SALT, wave, id)`). It keeps its seat with a scar more (three at most)
+and, by the run's rule, a Might more; what its fall paid (crowns, trophies) is taken back, its fallen line struck, and the News and the wave
+card say "Hask cheats death: dragged from the field, scarred". It lives in the Council's layer, so phase 1's `noteNemesis` and its tests are
+unchanged; `CHEAT_DEATH.on` turns it off for a test that needs its slaying certain. The rest of the design's rule (Stitched, humiliation,
+the one to three runs it sits out, the trophy it takes) comes with phase 3.
+
 ## The War Trophies and the Spoils
 
 Slaying a nemesis now also pays **War Trophies** (`TROPHIES`): a lieutenant 1, a captain 2, a warchief 5, at most 12 a day (`trophyDay`).
-The **Spoils** tab spends them: an **unlock shard** of a hero not yet owned for 6 (two a week, `shardWeek`; `giveShards`), or a **scout** for
+The **Spoils** tab spends them: an **unlock shard** of a hero not yet owned for 6 (**one a week**, `shardWeek`; `giveShards`; the design's two a week brought heroes too soon, below), or a **scout** for
 2, which reveals one secret of a member. The design's relic choice for the next army run (3 trophies) needs a run-start offer the army runs
 do not have yet, and the cosmetic name plates are phase 10's; the tab says both come later.
 
@@ -142,49 +153,61 @@ Each would be credited in `CREDITS.md` when made; the backdrop, if loaded by URL
 - **A seat change from the field** (a birth that displaces a Might-1 lieutenant, a member slain by the heroes) is counted in the war
   simulator's seat changes beside the Council's own.
 
-## The war simulator (`npm run war-sim`, `tools/nemesis/warSim.ts`)
+## The war simulator (`npm run war-sim`, `tools/nemesis/warSim.ts`), and the tuning
 
-A player's days as the greedy bot (`tools/nemesis/warSim.ts`): each day the first visit's turn, then a few army runs at the player's level
-(about 60 by day 80, 100 by day 164; the newest army that level reaches, every third run the one before it, on Hard past day 40), every
-wave settled for the War as the page settles it, the Council's turn after each run (four a day at most), and the Muster answered once a
-day when it is open. 120 days, seed 1:
+A player's days as the greedy bot: each day the first visit's turn, then three army runs at the player's level (about 60 by day 80, 100 by
+day 164; the newest army that level reaches, every third run the one before it, on Hard past day 40), every wave settled for the War as the
+page settles it, the Council's turn after each run, and the Muster answered once a day when it is open. 120 days, seed 1. It counts the
+seat changes of the whole War (a member in, out, or its rank changed) and, apart, those made during the Council's own turns.
 
-| | 3 runs a day (28 turns a week) | 1 run a day (14 turns a week) | The design's target |
+| 3 runs a day (28 turns a week) | The design's numbers (10/60/30, feud 30%) | Tuned (65/30/5, feud 10%, cheating death) | Target |
 |---|---|---|---|
-| Seat changes a week, from week 3 (a member in, out, or its rank changed; the field's births and slayings included) | 35.0 | 17.8 (7 to 19 once the Council is full, from week 8) | 3 to 5 |
-| Lost to infighting a week (slain by a rival, or deserted) | 3.9 | 2.4 | about 1 |
-| Might mean at day 60 / 90 / 119 | 1.7 / 2.8 / 2.8 | 2.2 / 2.5 / 3.3 | 3 to 5 at day 60 |
-| First member at Might 10 | day 66 | day 83 | not before day 45 |
-| Warchiefs | 30 taken by the player; from day 45 each held 3 to 17 days, and the last from day 79 to the end | 10 taken by the player; the last held from day 45 to the end | at least 2 weeks unless the player kills him |
-| Lost to the Council's own turns | none (the warchief never is) | none | never |
+| Lost to infighting a week, from week 3 | 3.9 | **0.9** | about 1 |
+| Seat changes a week, the whole War | 35.0 | 28.8 | |
+| ... of them in the Council's own turns | (not counted then) | 14.1 on average; 29 to 35 a week while the bot slays 30 to 40 members a week (weeks 2 to 7), **1 to 6 a week once the field is quiet** (weeks 13 to 18) | 3 to 5 |
+| Might mean at day 60 / 90 / 119 | 1.7 / 2.8 / 2.8 | 1.9 / 2.1 / 2.8 | 3 to 5 at day 60 |
+| First member at Might 10 | day 66 | day 73 | not before day 45 |
+| Warchiefs | all taken by the player | all taken by the player; from day 47 each held 10 to 15 days, the last from day 81 to the end | at least 2 weeks unless the player kills him |
 
-What it shows, for the owner:
+**The bot's slayings on first meeting are still the main driver** of the churn and the low Might. While it outclasses the armies it plays
+(to about week 12; it plays the newest army its level reaches, at full hero level, with every wave settled), it slays 30 to 40 members a
+week, 15 to 35% of them cheat death, and the Council's turns spend their Recruits and Promotions refilling the seats: those refills are
+most of the Council's own seat changes (Recruits 19 to 31 a week then; 1 to 3 a week once the bot meets armies it cannot beat). A real
+player clears more slowly than the bot, meets fewer members a day, and leaves them to grow. Mean Might reaches 2.8 by day 119; reaching 3 to
+5 by day 60 against this bot would need members to survive their meetings far more often (phase 3's fleeing, at 30% for a lieutenant and
+15% for a captain, is the next lever) or to meet the heroes less often.
 
-- **The warchief** is only ever taken by the player, as the design wants. Early on he falls every day or two: the bot replays armies it has
-  outgrown, and a warchief stands in his army's last wave as well as at his Muster.
-- **The churn is well above the design's 3 to 5 a week**, and most of it comes from the field: while the bot can win its waves (to about week
-  11) it slays four to eight members a day, a member it meets in a won wave always falls (fleeing and cheating death are phase 3), and the
-  Council refills the seats with Recruits and Promotions. Once the bot reaches armies it cannot beat (week 12 on), the field quietens and the
-  Council's own events dominate: feuds 5 to 15 a week, betrayals 1 to 4.
-- **The Council's own rate** is the design's table at the design's turns: a turn has an event 90% of the time and a full Council's events
-  are mostly Feuds (30% lethal), so a member is lost to infighting about once every six or seven turns. Bringing it to one a week at four turns a day would need
-  far fewer events a turn (no event about 70% of the time) or a Feud's loser slain about 10% of the time. **Neither is changed here**: the
-  numbers are the design's, and the choice is the owner's.
-- **Might stays low until phase 3**: a member grows only by living through meetings, and in phase 2 a member met in a won wave falls. Mean
-  Might reaches 3 by day 105 or so with one run a day.
+The tuning, by the least change that gets infighting to its target: no event 65% of turns (one 30%, two 5%), a feud's loser slain 10% of
+the time, and cheating death brought forward. The weights, the conditions and every other number are the design's.
 
 ```bash
 npm run war-sim                  # 120 days, 3 runs a day
 npm run war-sim -- --runs 1      # 1 run a day
 ```
 
+## The Spoils' shards and the unlock pace
+
+`npm run unlock-pace -- --seeds 80 [--war 1]`: with `--war 1` the player buys the week's whole cap of shards from the War's opening (day 4),
+each on the hero nearest joining, as if War Trophies never ran short (the worst case). The day each pullable hero count is reached (median):
+
+| Heroes owned | No War | 2 a week (the design's) | **1 a week (shipped)** |
+|---|---|---|---|
+| 10 | 25 | 19 (-24%) | 21 (-16%, 4 days) |
+| 15 | 77 | 65 (-16%) | 70 (-9%) |
+| 20 | 127 | 113 (-11%) | 117 (-8%) |
+| 30 | 237 | 220 (-7%) | 222 (-6%) |
+| All 35 | 301 | 277 (-8%) | 285 (-5%) |
+
+Two a week sped the middle of the collection up by 11 to 16%, so the cap is **one a week** (`SHARD_WEEK`). The 10th hero still comes 4
+days sooner (16%) at the very start, when a hero needs few shards; from the 15th on it is within 10%.
+
 ## Checks
 
 - `npm run typecheck`: clean. `npm run web`: built.
-- **The full `npm test`**: 2,574 tests, 2,573 passing on the full run; the one that failed was a guard whose list needed widening, and it passes since (re-run with the council tests): `summon-stones.test.ts` names every source of
+- **The full `npm test`**: 2,575 tests, all passing (after the tuning). One guard needed its list widened: `summon-stones.test.ts` names every source of
   shards in play, and the Spoils are a new one the design adds (2.11); `council.ts` is added with its reason, and its weekly cap is tested.
   No test was loosened or removed; phase 1's tests pass unchanged (an early "fat and lazy" rule broke one, so it was taken out, above).
-- **`test/council.test.ts`** (20 tests): the turns a day (four after runs, one on the first visit, afresh the next day); only an ended army
+- **`test/council.test.ts`** (21 tests; the last is cheating death: its 15% for a lieutenant, its pay taken back, never at the Muster): the turns a day (four after runs, one on the first visit, afresh the next day); only an ended army
   run gives a turn, and `settleRun` takes it only when the page gives the day; a turn replays from the turn counter and the seed; the weights
   are the design's table and each event is drawn as often as its weight when all are open; each event waits for its conditions; Recruit,
   Promotion, Feud (the 30%), Betrayal (the 50% and the 50%), Feast, Trial, Blood-oath (vengeance on the hero, +20% and first target; loyalty
@@ -200,16 +223,17 @@ npm run war-sim -- --runs 1      # 1 run a day
 
   | Army (Normal, its level) | no War | typical | harsh | full, Might 3 |
   |---|---|---|---|---|
-  | Orc Warband (1) | 1.8 | 2.4 (+0.6) | 2.6 (+0.8) | 2.1 (+0.3) |
-  | Undead Legion (8) | 2.1 | 2.1 (+0.0) | 2.1 (+0.0) | 2.2 (+0.1) |
+  | Orc Warband (1) | 1.8 | 2.6 (+0.8) | 2.7 (+0.9) | 2.1 (+0.3) |
+  | Undead Legion (8) | 2.1 | 2.4 (+0.3) | 2.5 (+0.4) | 2.2 (+0.1) |
   | Beast Packs (15) | 1.4 | 1.4 (+0.0) | 1.4 (+0.0) | 1.4 (+0.0) |
   | The Wildwood (22) | 1.1 | 1.1 (+0.0) | 1.1 (+0.0) | 1.4 (+0.3) |
-  | The Labyrinth (35) | 3.3 | 2.9 (-0.4) | 3.0 (-0.3) | 2.9 (-0.4) |
+  | The Labyrinth (35) | 3.3 | 3.3 (+0.0) | 3.3 (+0.0) | 2.9 (-0.4) |
   | Ogre Clans (45) | 3.3 | 3.3 (+0.0) | 3.3 (+0.0) | 4.1 (+0.8) |
-  | **The largest rise** | | **+0.63** | **+0.75** | **+0.75** |
+  | **The largest rise** | | **+0.81** | **+0.88** | **+0.75** |
 
-  All under the +1 bar. The typical Council: 13 members, Might mean 3.4, an Orc Warlord warchief at Might 10 who stands as the Orc
-  Warband's last boss (its +0.6); harsh: the same five Might up, mean 7.7.
-- **Not measured**: the Spoils' shards in `npm run unlock-pace` (the design's farming check: at most two a week, so at most two shards a
-  week sooner); the Muster's win rate (the war simulator's bot answers it, but no table measures it).
+  All under the +1 bar, with the tuning and cheating death in. The typical Council: 13 members, Might mean 2.4 (seven of them in the Orc
+  Warband and the Undead Legion, which the tried armies meet); harsh: the same five Might up, mean 7.0. (Before the tuning: +0.63, +0.75,
+  +0.75.)
+- **The unlock pace** with the Spoils' shards: above (`npm run unlock-pace -- --seeds 80 --war 1`).
+- **Not measured**: the Muster's win rate (the war simulator's bot answers it, but no table measures it).
 - Screens: `docs/samples/nemesis-2/` at 393x852, 360x780 and 412x915.

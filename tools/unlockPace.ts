@@ -27,6 +27,8 @@ import { AWAKEN_SHARDS } from '../src/sim/awakenRules';
 import { ownedWeight, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { settleArmyDrop, SHARD_CHANCE, TOME_CHANCE } from '../src/sim/armyDrops';
+import { closest, giveShards } from '../src/sim/unlock';
+import { SHARD_WEEK } from '../src/sim/council';
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
@@ -97,6 +99,9 @@ const NO_DROPS = arg('--nodrops', 0) > 0;
 // `--droprate 0.5`: the drops' chances times this (shards and tomes alike), to try other rates without editing the rules.
 const DROP_RATE = arg('--droprate', 1);
 for (const t of [SHARD_CHANCE, TOME_CHANCE] as Record<string, number>[]) for (const k of Object.keys(t)) t[k] *= DROP_RATE;
+/** `--war 1`: the Nemesis War's Spoils (`council.ts`): from the War's opening (the Undead Legion's first Normal clear) the player buys the
+ *  week's whole cap of unlock shards, `SHARD_WEEK`, each on the hero nearest joining: the worst case, as if War Trophies never ran short. */
+const WAR_SHARDS = arg('--war', 0) > 0;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
 interface Report { ledger: Record<string, number>; aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
@@ -247,6 +252,12 @@ function simulate(seed: number): Report {
     }
     aw.src.chest += held() - before;
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
+    // (the Nemesis War's Spoils: the week's unlock shards, once the War is open)
+    if (WAR_SHARDS && day >= NORMAL_DAY[1] && (day - NORMAL_DAY[1]) % 7 === 0)
+      for (let i = 0; i < SHARD_WEEK; i++) {
+        const k = closest(m);
+        if (k) giveShards(m, k, 1);
+      }
     // the castle first, then the pulls
     const toCastle = Math.min(castleLeft, Math.floor(m.crowns * CASTLE_SHARE));
     castleLeft -= toCastle;

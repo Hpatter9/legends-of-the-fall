@@ -32,9 +32,10 @@ import namesIcon from './art/items/book_of_names.png';
 import toothIcon from './art/items/ash_tooth.png';
 import drumIcon from './art/items/war_drum.png';
 import sigilIcon from './art/items/dragon_sigil.png';
+import phoenixIcon from './art/items/phoenix.png';
 
 /** The News's event icons (placeholders from the item art until the Council's own ten are made). */
-export const NEWS_ICON: Readonly<Record<NewsKind, string>> = { recruit: bannerIcon, promotion: bandIcon, feud: bladeIcon, betrayal: fangIcon, feast: chaliceIcon, trial: shieldIcon, oath: ringIcon, desertion: bootsIcon, claim: sunCrownIcon, crowned: crownIcon, named: namesIcon, slain: toothIcon, muster: drumIcon };
+export const NEWS_ICON: Readonly<Record<NewsKind, string>> = { cheated: phoenixIcon, recruit: bannerIcon, promotion: bandIcon, feud: bladeIcon, betrayal: fangIcon, feast: chaliceIcon, trial: shieldIcon, oath: ringIcon, desertion: bootsIcon, claim: sunCrownIcon, crowned: crownIcon, named: namesIcon, slain: toothIcon, muster: drumIcon };
 /** The War Trophy token (a placeholder: the dragon sigil). */
 export const TROPHY_ICON = sigilIcon;
 
@@ -249,7 +250,7 @@ function drawFallen(war: War | undefined, pane: HTMLElement): void {
   }
 }
 
-/** The Spoils tab: the War Trophies held, unlock shards (six, two a week) and scouts (two). */
+/** The Spoils tab: the War Trophies held, unlock shards (six, one a week) and scouts (two). */
 function drawSpoils(m: Meta, pane: HTMLElement, hooks: BoardHooks, redraw: () => void): void {
   const war = m.war;
   const held = menuWell(pane);
@@ -261,7 +262,7 @@ function drawSpoils(m: Meta, pane: HTMLElement, hooks: BoardHooks, redraw: () =>
   const shardGrid = menuSection(pane, 'Unlock shards', `${SHARD_PRICE} trophies each · ${left} of ${SHARD_WEEK} left this week`, 2);
   if (!heroes.length) menuNote(shardGrid.parentElement!, 'Every hero is yours: there is no shard to buy.');
   for (const k of heroes) {
-    const b = menuChoice(shardGrid, { title: heroName(k), lines: [UNITS[k]?.name ?? k, left > 0 ? [`${SHARD_PRICE} War Trophies`, 'pay'] : ['Two a week: more next week', 'lock']], disabled: war.trophies < SHARD_PRICE || left <= 0, onPick: () => {
+    const b = menuChoice(shardGrid, { title: heroName(k), lines: [UNITS[k]?.name ?? k, left > 0 ? [`${SHARD_PRICE} War Trophies`, 'pay'] : ['One a week: another next week', 'lock']], disabled: war.trophies < SHARD_PRICE || left <= 0, onPick: () => {
       const got = buyShard(m, k, hooks.day);
       if (!got) return;
       hooks.save();

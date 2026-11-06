@@ -39,7 +39,15 @@ const seatsOf = (war: War): Map<number, string> => new Map(war.members.map((n) =
 function main(): void {
   const war: War = newWar();
   let opened = false;
-  const weeks: { changes: number; infight: number; might: number[]; empty: number; musters: number; chiefFell: number; kinds: Record<string, number>; deserted?: number }[] = [];
+  const weeks: { changes: number; infight: number; might: number[]; empty: number; musters: number; chiefFell: number; kinds: Record<string, number>; deserted?: number; council: number }[] = [];
+  /** A Council turn, its own seat changes counted (a member in, out, or its rank changed while the turn was taken). */
+  const turn = (meta: Parameters<typeof councilTurn>[0], why: 'run' | 'visit', key: number, week: { council: number }) => {
+    const before = seatsOf(war);
+    councilTurn(meta, why, key);
+    const after = seatsOf(war);
+    for (const [id, rank] of after) if (before.get(id) !== rank) week.council++;
+    for (const id of before.keys()) if (!after.has(id)) week.council++;
+  };
   const chiefs: { name: string; from: number; to?: number; how?: string }[] = [];
   let firstTen: number | undefined;
   const at: Record<number, { mean: number; top: number; n: number }> = {};
@@ -56,13 +64,13 @@ function main(): void {
     // (the War opens with the Undead Legion's first Normal clear)
     if (!opened && armyUnlocked(meta, 'undead') && meta.armies.undead?.clears) opened = true;
     if (opened) meta.war = war;
-    const week = (weeks[Math.floor(day / 7)] ??= { changes: 0, infight: 0, might: [], empty: 0, musters: 0, chiefFell: 0, kinds: {} });
+    const week = (weeks[Math.floor(day / 7)] ??= { changes: 0, infight: 0, might: [], empty: 0, musters: 0, chiefFell: 0, kinds: {}, council: 0 });
     const newsBefore = war.news[0];
     const before = seatsOf(war);
     const fallenIds = new Set(war.fallen.map((f) => f.id));
     const chiefBefore = warchiefOf(war);
     const key = dayKey(day);
-    if (opened) councilTurn(meta, 'visit', key);
+    if (opened) turn(meta, 'visit', key, week);
     for (let r = 0; r < RUNS; r++) {
       const pool = reach.length ? reach : [ARMIES[0]];
       // (mostly the newest army, now and then an older one)
@@ -71,7 +79,7 @@ function main(): void {
       const army = older ? pool[pool.length - 2] : pool[pool.length - 1];
       const hard = older && day > 40;
       playArmy(meta, army.id, mixSeed(SEED, day, r), PARTY, meta.castle, true, hard ? 1 : 0);
-      if (opened) councilTurn(meta, 'run', key);
+      if (opened) turn(meta, 'run', key, week);
       if (!opened && meta.armies.undead?.clears) opened = true;
     }
     // (the Muster, once a day when it is open)
@@ -113,16 +121,16 @@ function main(): void {
   }
   WAR_BOT.settle = false;
   console.log(`\nTHE WAR SIMULATOR  (${DAYS} days, ${RUNS} army runs a day, seed ${SEED}; ${((Date.now() - t0) / 1000).toFixed(0)} s; ${war.turn} Council turns)\n`);
-  console.log('  week  seat changes  lost to infighting  Might mean  top  empty seats (mean)  Musters  warchiefs slain');
+  console.log('  week  seat changes (the Council\'s own)  lost to infighting  Might mean  top  empty seats (mean)  Musters  warchiefs slain');
   weeks.forEach((w, i) => {
     const mean = w.might.length ? w.might.reduce((a, b) => a + b, 0) / w.might.length : 0;
-    console.log(`  ${String(i + 1).padStart(4)}  ${String(w.changes).padStart(12)}  ${String(w.infight).padStart(18)}  ${mean.toFixed(1).padStart(10)}  ${String(w.might.length ? Math.max(...w.might) : 0).padStart(3)}  ${(w.empty / 7).toFixed(1).padStart(18)}  ${String(w.musters).padStart(7)}  ${String(w.chiefFell).padStart(15)}`);
+    console.log(`  ${String(i + 1).padStart(4)}  ${String(w.changes).padStart(12)} ${`(${w.council})`.padStart(16)}  ${String(w.infight).padStart(18)}  ${mean.toFixed(1).padStart(10)}  ${String(w.might.length ? Math.max(...w.might) : 0).padStart(3)}  ${(w.empty / 7).toFixed(1).padStart(18)}  ${String(w.musters).padStart(7)}  ${String(w.chiefFell).padStart(15)}`);
   });
   console.log('\n  the News by week (Council: recruit, promotion, claim, crowned, feud, betrayal, trial, feast, oath, desertion; the field: named, slain)');
   weeks.forEach((w, i) => console.log(`  ${String(i + 1).padStart(4)}  ${Object.entries(w.kinds).map(([k, n]) => `${k} ${n}`).join(', ')}`));
   const full = weeks.slice(2);
   const avg = (f: (w: (typeof weeks)[number]) => number) => (full.length ? full.reduce((s, w) => s + f(w), 0) / full.length : 0);
-  console.log(`\n  from week 3: ${avg((w) => w.changes).toFixed(1)} seat changes a week (target 3 to 5), ${avg((w) => w.infight).toFixed(1)} lost to infighting a week (target about 1)`);
+  console.log(`\n  from week 3: ${avg((w) => w.changes).toFixed(1)} seat changes a week, ${avg((w) => w.council).toFixed(1)} of them the Council's own turns (target 3 to 5), ${avg((w) => w.infight).toFixed(1)} lost to infighting a week (target about 1)`);
   for (const [d, x] of Object.entries(at)) console.log(`  day ${d}: Might mean ${x.mean.toFixed(1)}, top ${x.top}, ${x.n} members${d === '60' ? ' (target: mean 3 to 5)' : ''}`);
   console.log(`  first member at Might 10: ${firstTen === undefined ? 'none' : `day ${firstTen}`} (target: not before day 45)`);
   console.log(`  warchiefs: ${chiefs.length ? chiefs.map((c) => `${c.name} days ${c.from}-${c.to ?? 'now'}${c.how ? ` (${c.how})` : ''}`).join('; ') : 'none'} (target: at least 2 weeks unless the player kills him)`);

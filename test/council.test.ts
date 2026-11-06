@@ -13,11 +13,14 @@ import { mixSeed, Rng } from '../src/sim/rng';
 import { newWar, readWar, SEATS, type Nemesis, type War } from '../src/sim/nemesis';
 import { startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
 import { nemHurt, nemMove } from '../src/sim/nemesisTraits';
-import { buyScout, buyShard, COUNCIL_SALT, councilTurn, drawEvent, endOfRun, EVENT_WEIGHT, eventOpen, happen, LOYALTY, MIN_LIEUTENANTS, noteWar, RUN_TURNS, SHARD_PRICE, SHARD_WEEK, shardHeroes, swear, swornTo, takeTurn, TROPHY_DAY, type CouncilEvent } from '../src/sim/council';
+import { buyScout, buyShard, CHEAT, CHEAT_DEATH, COUNCIL_SALT, FEUD_SLAYS, councilTurn, drawEvent, endOfRun, EVENT_WEIGHT, eventOpen, happen, LOYALTY, MIN_LIEUTENANTS, noteWar, RUN_TURNS, SHARD_PRICE, SHARD_WEEK, shardHeroes, swear, swornTo, takeTurn, TROPHY_DAY, type CouncilEvent } from '../src/sim/council';
 import { MUSTER_NEED, musterArmy, musterOpen, musterPlan, startMuster, warchiefOf } from '../src/sim/muster';
 import { CHIEF_PHASE, phaseKitOf } from '../src/sim/bossPhases';
 import { ARMIES } from '../src/sim/armies';
 import { settleRun } from '../src/sim/modes';
+
+// (a slaying here is a slaying: cheating death is switched off, and switched on for its own test)
+CHEAT_DEATH.on = false;
 
 /** A started save with the War open, the first three armies opened and a party picked. */
 function warMeta(seed = 3): Meta {
@@ -205,7 +208,7 @@ test('a Promotion raises the mightiest lieutenant (ties to loyalty) to a free ca
   assert.equal(b.sworn, undefined);
 });
 
-test('a Feud: the winner gains a Might, the loser loses one and is slain 30% of the time; the warchief is never in one', () => {
+test('a Feud: the winner gains a Might, the loser loses one and is slain now and then (FEUD_SLAYS); the warchief is never in one', () => {
   let slain = 0;
   const N = 400;
   for (let s = 0; s < N; s++) {
@@ -222,7 +225,7 @@ test('a Feud: the winner gains a Might, the loser loses one and is slain 30% of 
     } else assert.equal(l.might, 3);
     assert.equal(warchiefOf(war)?.might, 6, 'the warchief is untouched');
   }
-  assert.ok(Math.abs(slain / N - 0.3) < 0.07, `slain ${slain} of ${N}`);
+  assert.ok(Math.abs(slain / N - FEUD_SLAYS) < 0.05, `slain ${slain} of ${N}`);
 });
 
 test('a Betrayal succeeds half the time: the traitor takes the seat, the old captain is slain or cast down; a failed one is slain', () => {
@@ -265,6 +268,7 @@ test('loyalty: a feast lifts a captain’s table, ambition wears at a strong lie
   // (ambition: a lieutenant as mighty as its captain loses 2 a turn; one weaker does not)
   cap.might = 3;
   a.might = 3;
+  b.might = 1;
   const was = a.loyalty;
   const bWas = b.loyalty;
   m.war!.members = m.war!.members.filter((n) => n === cap || n === a || n === b);
@@ -400,7 +404,7 @@ test('the Council keeps at least three lieutenants once the War is open, and eve
   }
 });
 
-test('slaying pays War Trophies (twelve a day at most); the Spoils sell unlock shards (two a week) and scouts', () => {
+test('slaying pays War Trophies (twelve a day at most); the Spoils sell unlock shards (one a week) and scouts', () => {
   const m = warMeta();
   const war = council(m, 0, 4, 4);
   for (const n of war.members.slice()) slay(m, n, 7, 20270105);
@@ -417,7 +421,7 @@ test('slaying pays War Trophies (twelve a day at most); the Spoils sell unlock s
   assert.equal(m.unlock?.[kind] ?? (m.unlocked.includes(kind) ? had + 1 : 0), had + 1);
   war.trophies = 99;
   for (let i = 1; i < SHARD_WEEK; i++) assert.ok(buyShard(m, kind, 20270106));
-  assert.equal(buyShard(m, kind, 20270106), null, 'two a week');
+  assert.equal(buyShard(m, kind, 20270106), null, 'one a week');
   assert.ok(buyShard(m, kind, 20270118), 'a new week');
   assert.equal(buyShard(m, m.unlocked[0], 20270118), null, 'never an owned hero');
   // (a scout reveals one secret)
@@ -508,4 +512,41 @@ test('the save keeps the Council’s new fields and drops what does not hold', (
   // (a phase 1 War reads with the new fields at rest)
   const old = readWar({ v: 1, turn: 0, members: [], fallen: [], nextId: 1 })!;
   assert.deepEqual(old, newWar());
+});
+
+test('cheating death (phase 3’s, brought forward): a member slain in an ordinary wave is sometimes dragged off, scarred; never at the Muster', () => {
+  CHEAT_DEATH.on = true;
+  try {
+    let cheated = 0;
+    const N = 400;
+    for (let s = 0; s < N; s++) {
+      const m = warMeta(s);
+      const war = council(m, 0, 0, 1);
+      const n = war.members[0];
+      const crowns = m.crowns;
+      const note = slay(m, n, s + 1);
+      if (war.members.includes(n)) {
+        cheated++;
+        assert.equal(n.scars, 1);
+        assert.equal(n.might, 3, 'a Might more, by the run’s rule');
+        assert.equal(note.slain.length, 0);
+        assert.equal(m.crowns, crowns, 'its pay is taken back');
+        assert.ok(!war.fallen.some((f) => f.id === n.id));
+        assert.equal(war.trophies, 0);
+        assert.equal(war.news[0].kind, 'cheated');
+      } else assert.equal(war.fallen[0].id, n.id);
+    }
+    assert.ok(Math.abs(cheated / N - CHEAT.lieutenant) < 0.05, `cheated ${cheated} of ${N}`);
+    // (the Muster is the warchief's last stand: no one cheats death there)
+    for (let s = 0; s < 40; s++) {
+      const m = warMeta(s);
+      const war = council(m, 1, 0, 3);
+      war.musterSince = 2;
+      const chief = warchiefOf(war)!;
+      slay(m, chief, s + 1, undefined, startMuster(m, m.party, s + 3)!);
+      assert.ok(!war.members.includes(chief));
+    }
+  } finally {
+    CHEAT_DEATH.on = false;
+  }
 });
