@@ -280,6 +280,8 @@ export class UnitSprite {
       plate.addChild(badge);
       const img = new Image();
       img.onload = () => {
+        // (the plate may be gone by the time the picture loads, a boss slain or the fight left: then there is nothing to dress)
+        if (badge.destroyed || !badge.parent) return;
         badge.texture = Texture.from(img);
         badge.height = 15;
         badge.scale.x = badge.scale.y;
