@@ -33,7 +33,7 @@ The row is sized to fit on one line at 360 across with everything in it (336 px)
 
 ## Quips on a short phone
 
-The probe's 360x640 cases found a quip's bubble on the tactic button, on main as well (8 on main at 0.375.0, 2 left after the row change):
+The probe's 360x640 cases found a quip's bubble on the tactic button, on main as well (8 on main at 0.375.0, 2 left after the row change; `claude/boss-bar-auto`, merged here, had its own fixes for these too: a fading bubble set clear, and a bubble with no clear spot steps off):
 with a toast in the lane there is no row between the lane and the button tall enough for a bubble. Two changes in `quipView.ts` and
 `main.ts`:
 
@@ -63,10 +63,15 @@ The boss bar's top, in px from the top of the screen:
 So the bar sits 52 px higher wherever the row used to wrap, and right under one line everywhere. The old build, measured by the new probe,
 fails 12 cases with Auto off the orbs' line (and has a quip on the tactic button at 360x640); the new one fails none.
 
-Shots: `docs/samples/combat-hud/autoright-before-<case>-393.png` (0.375.0) and `autoright-<case>-<w>.png` (after; `<w>x640` for the
-short phone, `<w>s` for the inset), e.g. `autoright-before-5-4sp-horn-boss-393.png` against `autoright-5-4sp-horn-boss-393.png`.
+Shots (2x, 256 colours): before is BOSS-BAR's `docs/samples/combat-hud/bossbar-after-<case>-boss-<w>.png` (the row as 0.375.0 draws
+it), after is `autoright-<case>-boss-<w>.png` (`<w>x640` for the short phone, `<w>s` for the inset). The owner's case:
+`bossbar-after-5-4sp-horn-boss-393.png` (Auto under the horn, the bar at 200 px) against `autoright-5-4sp-horn-boss-393.png` (Auto right
+of the fourth orb, the bar at 148 px).
 
 ## Checks
 
-See the hand-off: `npm run typecheck`, `npm run web`, `npm test -- hud boss fight` and `npm test -- quip hud boss fight`, the full
-`npm test`, `KITS=boss node tools/combat-hud/probe.mjs --shots autoright` and the full probe.
+- `npm run typecheck`, `npm run web`.
+- `npm test -- hud boss fight` (62 pass), `npm test -- hud boss fight quip toast ui-standard` after the merge of `claude/boss-bar-auto`
+  (111 pass), and the full `npm test` (2537 pass).
+- `KITS=boss node tools/combat-hud/probe.mjs --shots autoright`: every boss case at all five sizes, 0 overlaps, Auto on the line.
+- The full probe: see the hand-off.
