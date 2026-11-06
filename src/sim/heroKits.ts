@@ -9,6 +9,7 @@
 //
 // Randomness: none here. The skills that roll (the Buccaneer's dice) use the battle's skill stream (`roll`), as every skill does.
 
+import { NEM_CTX } from './nemesisTraits';
 import type { Battle, BattleEvent, Unit } from './battle';
 import { CHARGE_MAX, keyOf, kitOf, KITS, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
 import { derivedOf, JOINT, PER_POINT, profileOf, STAM_BASE, MANA_BASE, type Ability, type StatInput, type StatProfile } from './stats';
@@ -464,7 +465,11 @@ export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): 
   const ult = ultimateOf(me);
   // (a hero held by the party's tactic saves an ultimate that would carry it into the foe, `tactics.ts`)
   if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false) && !(castGate.held && isOpener(ult))) {
-    if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out, statShare(me, ult))) {
+    // (the Nemesis War: an ultimate's blows on the nemesis that dreads this hero stagger it, `nemesisTraits.ts`)
+    NEM_CTX.ult = me.id;
+    const cast = powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out, statShare(me, ult));
+    NEM_CTX.ult = 0;
+    if (cast) {
       me.charge2 = (me.charge2 ?? 0) - ult.need;
       delete me.ultOrder;
       return began(b, me, ult, out, 'ult');

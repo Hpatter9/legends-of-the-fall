@@ -6,6 +6,8 @@
 import { PROVISIONS, oathOffer, provisionsOf, swearOath } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
+import { noteNemesis, planNemeses } from '../src/sim/nemesis';
+import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
@@ -94,6 +96,10 @@ export function frontSpots(b: Battle): [number, number][] {
   return spots.sort((a, c) => a[1] - c[1] || Math.abs(a[0] - mid) - Math.abs(c[0] - mid) || a[0] - c[0]);
 }
 
+/** The Nemesis War in the bot's runs: off, a save's War is met but never changed (the balance tool's frozen Council); on, each wave is
+ *  settled for the War as the page settles it (`tools/nemesis/warBot.ts` grows a Council this way). */
+export const WAR_BOT = { settle: false };
+
 /**
  * One attempt at an army from wave 1, as a greedy player: returns the waves won and whether the army fell. Gains XP into `meta`.
  * With `castle` the run takes its buildings (and the library's share of XP); `gear` dresses the squad with the pieces the run finds.
@@ -101,6 +107,8 @@ export function frontSpots(b: Battle): [number, number][] {
 export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false, tier = 0, boostFor?: (h: Owned) => Boost): { won: number; cleared: boolean; stars: number } {
   const army = armyById(armyId)!;
   const run: Run = armyRun(seed, armyId, party, castle, tier);
+  // (the Nemesis War: a save with a War meets its army's nemeses, frozen as the run starts; `WAR_BOT.settle` also names and promotes them)
+  if (meta.war) run.nemesis = planNemeses(meta.war, run);
   let won = 0;
   while (!run.over) {
     autoRound(run, meta, gear);
@@ -109,9 +117,10 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
     fight(b);
     maybeSpells(b, meta, castle);
     maybeEidolon(b, run.stage, army.waves[run.stage - 1]?.boss === 'mid');
-    playOut(b);
+    const tally = WAR_BOT.settle && meta.war ? playOutTallied(b) : (playOut(b), undefined);
     const ok = b.phase === 'won';
     if (ok) won = run.stage;
+    if (tally) noteNemesis(meta, run, b, tally, ok, run.stage);
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(castle)));

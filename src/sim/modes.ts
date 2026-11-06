@@ -28,6 +28,8 @@ import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
 import { noteWeakness, type WeakNote } from './weakness';
 import { noteBonds, type BondNote } from './bonds';
+import { noteNemesis, openWar, type NemNote } from './nemesis';
+import type { NemesisTally } from './nemesisLog';
 import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
 import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
@@ -220,7 +222,7 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote } & FightExtra): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
@@ -237,6 +239,10 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   if (fight.battle && !quest) fight.weak = noteWeakness(m, fight.battle, fight.won, tierOfRun(run));
   // (DEPTH-BUILD: bond points, in the armies only: a won wave gives every pair placed together one)
   if (fight.battle && run.mode?.kind === 'army' && fixed) fight.bonds = noteBonds(m, fight.battle, fight.won);
+  // (the Nemesis War: the nemeses met are slain or promoted, and the foes who slew, maimed or escaped are named; the War opens on the
+  // Undead Legion's first Normal clear, `nemesis.ts`)
+  if (fight.battle && !quest) fight.war = noteNemesis(m, run, fight.battle, fight.nemesis, fight.won, fight.stage);
+  else openWar(m);
   // (and a combo that went off is seen, for the codex)
   if (fight.battle) noteCombos(m, fight.battle);
   const ctx = { battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m };

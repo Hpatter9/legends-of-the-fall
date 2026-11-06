@@ -15,7 +15,8 @@ import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './scenario';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
-import { armyById, armyIndex, landOf, waveBoost, waveFoes, type Army } from './armies';
+import { armyById, armyIndex, armyWaveBand, landOf, waveBoost, waveFoes, type Army } from './armies';
+import { readRunNemesis, type RunNemesis } from './nemesis';
 import { dailyArmy } from './daily';
 import { questArmy, questBattleById } from './questBattles';
 import { SWARM_HP, themeById, themeFx, themeGoalMet, type DailyTheme } from './dailyThemes';
@@ -157,6 +158,8 @@ export interface Run {
   ritesUsed?: boolean;
   /** DEPTH-BUILD: the bonds' snapshot as the run began (`bonds.ts`: each pair's level, -1 rivals); none is no bonds. */
   bonds?: Record<string, number>;
+  /** The Nemesis War (`nemesis.ts`): the nemeses this army run meets, frozen as it began, and the waves they stand in; none is none. */
+  nemesis?: RunNemesis;
   /** DEPTH-BUILD: the mentors' perks for the party as the run began (`legacy.ts`); none is none. */
   legacy?: Record<string, { hp?: number; atk?: number; shield?: number }>;
   /** The castle's levels when the run began (the fights keep them); none when unset. */
@@ -523,7 +526,9 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   // (a themed daily: its twist on every wave, its featured trait, and a swarm's thin foes)
   const theme = runTheme(run);
   const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
-  return startBattle(boardSeedOf(run, run.stage), node ? node.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
+  // (the Nemesis War: an army run's nemeses take their places in the wave's band, from the run's snapshot)
+  const named = !node && army && run.mode?.kind === 'army' ? armyWaveBand(army, run.stage, tierOfRun(run), run.nemesis) : undefined;
+  return startBattle(boardSeedOf(run, run.stage), node ? node.band : named ? named.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
     ...marchBoss,
     ...(march.heroHeal !== 1 ? { heal: march.heroHeal } : {}),
@@ -531,6 +536,7 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(march.night ? { night: true } : {}),
     // (DEPTH-BUILD: the bonds, in an army run, from its snapshot)
     ...(run.mode?.kind === 'army' && run.bonds ? { bonds: run.bonds } : {}),
+    ...(named?.place.length ? { nemesis: named.place } : {}),
     // (DEPTH-BUILD: the Chapel's Last Rites, in an army run that has not spent it)
     ...(army && run.mode?.kind === 'army' && !run.ritesUsed && roomOpen(run.castle, 'lastRites') ? { rites: true } : {}),
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
@@ -707,6 +713,12 @@ export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | n
       const o = readOrders(r.orders);
       if (o) r.orders = o;
       else delete r.orders;
+    }
+    // (the Nemesis War's snapshot: only what reads as one)
+    if (r && 'nemesis' in r) {
+      const n = readRunNemesis(r.nemesis);
+      if (n) r.nemesis = n;
+      else delete r.nemesis;
     }
     return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? catalogueRun(r) : null;
   } catch {
