@@ -251,6 +251,7 @@ function crown(war: War, n: Nemesis): void {
   for (const x of swornTo(war, n)) delete x.sworn;
   n.rank = 'warchief';
   delete n.sworn;
+  delete n.chiefStitch;
   delete war.claim;
   remember(n, `Took the Warchief’s seat of the Dark Council`);
   news(war, 'crowned', `${fullName(n)} takes the Warchief’s seat`);
@@ -478,6 +479,10 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`)
   const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave);
   lines.push(...rev.lines);
+  for (const id of note.lazy ?? []) {
+    const n = war.members.find((x) => x.id === id);
+    if (n) news(war, 'feast', `${fullName(n)} feasts on its victories, and grows fat and lazy`);
+  }
   for (const x of note.born) news(war, 'named', `${fullName(x)} is named a ${rankWord(x.rank).toLowerCase()}: ${x.deed === 'slew' ? 'it slew a hero' : x.deed === 'maimed' ? 'it maimed a hero' : 'it escaped you'}`);
   let trophies = 0;
   for (const x of note.slain) {

@@ -106,6 +106,8 @@ export interface Nemesis {
   stitched?: true;
   /** Its taunt cut-in has played in full once (the first meeting always does). */
   seen?: true;
+  /** A warchief made Stitched while he holds the seat: once a seat holding (it is cleared when he is crowned). */
+  chiefStitch?: true;
 }
 
 /** A trophy a humiliated nemesis took: the hero's piece in the first filled slot of weapon, shield, helm or charm, drawn with that piece's own
@@ -370,6 +372,8 @@ export interface NemNote {
   born: { id: number; name: string; epithet: string; base: string; rank: NemRank; deed: Deed; uid?: number }[];
   /** Phase 3: the nemeses who fled the board (escaped, not slain). */
   fled?: number[];
+  /** The nemeses who feasted on a run of wins instead of growing (the death-spiral guard). */
+  lazy?: number[];
   grew: { id: number; name: string; epithet: string; might: number }[];
   slain: { id: number; name: string; epithet: string; crowns: number; by: string; rank: NemRank; might: number; base: string; army: string }[];
   /** The nemeses who stood in the fight and lived while the heroes lost (their underlings' loyalty rises, `council.ts`). */
@@ -493,6 +497,19 @@ export const secretName = (s: string): string => (TRAITS[s] ? TRAITS[s].name : s
 /** The name and epithet together ("Morrow the Unburnt", "Gash, Kwame's Bane"). */
 export const fullName = (n: Pick<Nemesis, 'name' | 'epithet'>): string => (!n.epithet ? n.name : n.epithet.startsWith('the ') || n.epithet.startsWith('of ') ? `${n.name} ${n.epithet}` : `${n.name}, ${n.epithet}`);
 
+/** The death-spiral guard (the design's section 8): a nemesis that has won this many meetings in a row grows fat and lazy this often, a
+ *  Feast (+15 loyalty) in place of its promotion. Its own stream, so the settle's other draws are as they were. */
+export const LAZY: Readonly<{ streak: number; chance: number }> = { streak: 3, chance: 0.5 };
+export const LAZY_SALT = 0x4e3e55;
+function fatAndLazy(n: Nemesis, run: Run, wave: number): boolean {
+  if ((n.streak ?? 0) < LAZY.streak || n.grew === run.seed || n.might >= MIGHT_MAX) return false;
+  if (new Rng(mixSeed(run.seed, LAZY_SALT, wave, n.id)).next() >= LAZY.chance) return false;
+  n.grew = run.seed;
+  n.loyalty = Math.min(100, n.loyalty + 15);
+  remember(n, 'Feasted on its victories, and grew fat and lazy');
+  return true;
+}
+
 /** Add Might for a deed (+1 a run at most); a second weakness comes with Might 5. */
 function grow(n: Nemesis, run: Run, rng: Rng, f: FoeLog | undefined): boolean {
   if (n.grew === run.seed || n.might >= MIGHT_MAX) return false;
@@ -565,7 +582,9 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
     if (deeds.includes('escaped')) n.fled = Math.min(999, (n.fled ?? 0) + 1);
     const hurt = deeds.includes('maimed') && f ? maimedKind(f, b) : undefined;
     if (hurt) n.maimed = [hurt, ...(n.maimed ?? []).filter((k) => k !== hurt)].slice(0, 4);
-    if (grow(n, run, rng, f)) note.grew.push({ id: n.id, name: n.name, epithet: n.epithet, might: n.might });
+    // (the death-spiral guard, the design's section 8: one that has won three meetings in a row feasts instead of growing, half the time)
+    if (fatAndLazy(n, run, wave)) (note.lazy ??= []).push(n.id);
+    else if (grow(n, run, rng, f)) note.grew.push({ id: n.id, name: n.name, epithet: n.epithet, might: n.might });
     const open = f ? traitsEarned(f, u, b, tally, won).filter((t) => canAdd(n.traits, t)) : [];
     // (one that fled the board learns Elusive from it, phase 3: the design's "escaped by timeout or by fleeing")
     const fresh = u.fled && canAdd(n.traits, 'elusive') ? 'elusive' : open.length ? rng.pick(open) : undefined;
@@ -722,6 +741,7 @@ export function readWar(raw: unknown): War | undefined {
       ...(typeof n.fled === 'number' && n.fled > 0 ? { fled: int(n.fled, 0, 999, 0) } : {}),
       ...(n.stitched === true ? { stitched: true as const } : {}),
       ...(n.seen === true ? { seen: true as const } : {}),
+      ...(n.chiefStitch === true ? { chiefStitch: true as const } : {}),
     });
   }
   // (a sworn captain or an oath brother who is no longer a member is forgotten; an oath is kept only both ways)

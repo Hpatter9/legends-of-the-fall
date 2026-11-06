@@ -174,7 +174,11 @@ export function humiliate(m: Meta, war: War, n: Nemesis, hero: string | undefine
   const rng = new Rng(mixSeed(run.seed, REVENGE_SALT, wave, n.id));
   (war.away ??= {})[String(n.id)] = rng.int(AWAY.min, AWAY.max);
   if (!cheated) n.scars = Math.min(3, n.scars + 1);
-  if (cheated) n.stitched = true;
+  // (a warchief is Stitched once a seat holding, so his cheats do not stack: `crown` clears it)
+  if (cheated && !(n.rank === 'warchief' && n.chiefStitch)) {
+    n.stitched = true;
+    if (n.rank === 'warchief') n.chiefStitch = true;
+  }
   for (const x of underlings(war, n)) loyal(x, HUMBLED_LOYALTY);
   let took = '';
   if (hero && UNITS[hero]) {
