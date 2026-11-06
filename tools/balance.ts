@@ -617,7 +617,7 @@ function nemesisTable(): void {
   const latePlus = process.argv.includes('--late-plus') ? Number(flag('--late-plus')) : 0;
   const hardAt = process.argv.includes('--nemesis-hard') ? Number(flag('--nemesis-hard')) : 0;
   const might = war.members.map((n) => n.might);
-  console.log(`\n5g. THE NEMESIS WAR  (${mode}: ${war.members.length} members grown over ${runs} runs an army, Might mean ${(might.reduce((a, b) => a + b, 0) / Math.max(1, might.length)).toFixed(1)}, top ${Math.max(0, ...might)}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries${talents ? ', talents learned' : ''}; mean tries (clear %))\n`);
+  console.log(`\n5g. THE NEMESIS WAR  (${mode}: ${war.members.length} members ${mode === 'full' ? 'set, four to each army' : `grown over ${runs} runs an army`}, Might mean ${(might.reduce((a, b) => a + b, 0) / Math.max(1, might.length)).toFixed(1)}, top ${Math.max(0, ...might)}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries${talents ? ', talents learned' : ''}; mean tries (clear %))\n`);
   for (const n of war.members) console.log(`  ${pad(n.army, 10)} ${pad(n.rank, 11)} Might ${pad(String(n.might), 3)} ${pad(n.base, 18)} ${n.traits.join(', ')} | ${n.weak.join(', ')}`);
   const dress = (meta: Meta): void => {
     if (!talents) return;

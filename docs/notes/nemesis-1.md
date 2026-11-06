@@ -130,7 +130,37 @@ Each would be credited in `CREDITS.md` when made; none is loaded by URL, so the 
   thousand generated nemeses; Might +1 a run, never past 10, Normal at half; slaying pays and moves it to the fallen; where a run's nemeses
   stand and the fight they make; the hooks (immunity, Dread, Bane, and nothing for a fighter with no `nem`); the save's round trip, an old
   save, the migration past the gate and the reader's caps; forty names to each army.
-- Balance: `npm run balance -- --no-tables --nemesis typical --talents --war-runs 10 --late-plus 15` (`tools/balance.ts`, table 5g, and
-  `tools/nemesis/warBot.ts`): see below.
+- Balance: `npm run balance -- --no-tables --nemesis typical|harsh|full` (`tools/balance.ts`, table 5g, and `tools/nemesis/warBot.ts`): below.
 
-BALANCE_RESULTS
+Table 5g fights each army on Normal at its own level (the recruits' party, talents learned, gear dressed, a castle of the level's size),
+16 fresh saves a cell, at most 25 tries, the same seeds with and without the War (a paired comparison: the fights differ only where a
+nemesis stands). Three Councils:
+
+- **typical**: grown by real fights (`growWar`, 10 runs of each army, every third on Hard ten levels on): 12 members, Might mean 2.4 (the
+  Orc Warlord, who kept escaping the bot, reached 10).
+- **harsh**: the same members five Might up (mean 7.0) with three traits each.
+- **full**: the stress test, four nemeses in every army's run at once (its last boss, a captain at the mid-boss, two lieutenants), Might 3.
+
+| Army (Normal, its level) | no War | typical | harsh | full, Might 3 |
+|---|---|---|---|---|
+| Orc Warband (1) | 1.8 | 2.7 (+0.9) | 2.7 (+0.9) | 2.1 (+0.3) |
+| Undead Legion (8) | 2.1 | 2.3 (+0.1) | 2.4 (+0.3) | 2.2 (+0.1) |
+| Beast Packs (15) | 1.4 | 1.4 (no member) | 1.4 (no member) | 1.4 (+0.0) |
+| The Wildwood (22) | 1.1 | 1.3 (+0.1) | 1.3 (+0.1) | 1.4 (+0.3) |
+| The Labyrinth (35) | 3.3 | 2.6 (-0.7) | 2.5 (-0.8) | 2.9 (-0.4) |
+| Ogre Clans (45) | 3.3 | 3.3 (no member) | 3.3 (no member) | 4.1 (+0.8) |
+
+**No army's mean tries rises by more than 1** (the largest +0.88, the Orcs against a Might-10 Warlord, which is Might 5 on Normal). The
+design's starting strengths for a named escort (x2.0 / x1.3 a lieutenant, x3.5 / x1.5 a captain) put the full test's Ogre Clans at +2.1 and,
+at Might 8, +7.4; they are tuned to x1.75 / x1.25 and x2.5 / x1.35, which bring it to +0.8. A fall in tries (the Labyrinth) is the paired
+seeds' noise: a nemesis changes the fights after it, and a few saves then clear sooner.
+
+The last three armies (the Infernal Host, the Yokai and the Golem Forge) are out of the greedy bot's reach at their own level (they are tuned
+for a player with hearts and mastered skills: 24 to 25 tries with or without the War, `--late-plus 15` included), so this table cannot
+measure them; their nemeses follow the same numbers. Commands:
+
+```bash
+npm run balance -- --no-tables --nemesis typical --talents --attempts 16 --war-runs 10 --only orcs,undead,beasts,wildwood,labyrinth,ogres
+npm run balance -- --no-tables --nemesis harsh --talents --attempts 16 --war-runs 10 --only orcs,undead,beasts,wildwood,labyrinth,ogres
+npm run balance -- --no-tables --nemesis full --might 3 --talents --attempts 16 --only orcs,undead,beasts,wildwood,labyrinth,ogres
+```
