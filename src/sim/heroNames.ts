@@ -61,7 +61,7 @@ export const HERO_NAMES: Record<string, HeroName> = {
   sage: { name: 'Seydou', title: 'Reader of the Stars', heritage: 'Malian' },
   demonSwordsman: { name: 'Aram', title: 'Host of the Hungry Steel', heritage: 'Armenian' },
   tyrant: { name: 'Edmund', title: 'the Unbending Verdict', heritage: 'English' },
-  vampireLord: { name: 'Vladislav', title: 'Voivode of the Red Keep', heritage: 'Romanian (Wallachian)' },
+  vampireLord: { name: 'Vladislav', title: 'Red Keep Voivode', heritage: 'Romanian (Wallachian)' },
   hemomancer: { name: 'Carmilla', title: 'Countess of the Chalice', heritage: 'Austrian (Styrian)' },
   nightstalker: { name: 'Sorin', title: 'Wing of the Crypt', heritage: 'a Transylvanian strigoi' },
   bloodGargoyle: { name: 'Gavril', title: 'Stone Sentinel of the Fane', heritage: 'a cathedral gargoyle' },

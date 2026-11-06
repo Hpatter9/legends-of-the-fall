@@ -174,7 +174,7 @@ jabs, and repeating a few moves; the director asked for its fixes to be folded i
 | Hemomancer (Carmilla) | Chalice Overflow | Sanguine Lash (strike 36, 7 s) | Blood Chalice (utility 42, 14 s) | Crimson Mist (guard 30, 15 s) | Blood Tithe |
 | Strigoi (Sorin) | Predator of the Crypt | Dusk Dive (strike 22, 6 s) | Abduct (heavy 30, 14 s) | Echolocation (jab 10, 4 s) | Belfry Swoop |
 | Blood Gargoyle (Gavril) | Granite Hide | Gargoyle Crash (strike 26, 7 s) | Stone Slumber (utility 26, 18 s) | Granite Fist (jab 10, 3.5 s) | Cathedral Perch |
-| Dhampir (Klara) | Half-Blood Hunter | Silver Stake (strike 24, 7 s) | Grapple Vault (guard 16, 14 s) | Silver Shot (jab 10, 3.5 s) | Silver Requiem |
+| Dhampir (Klara) | Half-Blood Hunter | Silver Stake (strike 24, 7 s) | Grapple Vault (guard 16, 14 s) | Quick Bolt (jab 10, 3.5 s) | Silver Requiem |
 | War Drummer (Raiden) | Rhythm of War | Thunder Beat (strike 24, 7 s) | Marching Cadence (utility 26, 16 s) | Drum Strike (jab 10, 3.5 s) | Ten Thousand Drums |
 | Banneret (Isolde) | Shield-Sister | Standard Charge (strike 24, 7 s) | Phalanx Sweep (heavy 30, 12 s) | Banner Jab (jab 10, 3.5 s) | Oriflamme of the Keep |
 | Geomancer (Tenzin) | Jagged Bedrock | Tectonic Shove (strike 36, 7 s) | Lodestone Pull (utility 40, 14 s) | Crag Staff (jab 12, 3.5 s) | Mountain's Embrace |

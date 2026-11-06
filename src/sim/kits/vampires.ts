@@ -301,7 +301,7 @@ export function grappleVault(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return true;
 }
 
-/** Skill 3 — Silver Shot (a jab): a quick silver bolt at the nearest foe in reach; a foe under half its health takes half as much again. */
+/** Skill 3 — Quick Bolt (a jab): a quick silver bolt at the nearest foe in reach; a foe under half its health takes half as much again. */
 export function silverShot(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const f = nearest(b, me, reachOf(me, 5))[0];
   if (!f) return false;
@@ -390,7 +390,7 @@ export function vampireRows(): Record<string, Row> {
       passive: { name: 'Half-Blood Hunter', text: 'Bolts deal 20% more to foes 4 or more tiles away', far: 0.2 },
       s1: { cls: 'strike', cost: 24, cd: 7000, skill: sk('Silver Stake', 'A heavy silver bolt at the strongest foe within 5 shoves it 2 tiles back; if it slams into a wall or a fighter it is pinned for 1.8s', 500, 'attack', silverStake) },
       s2: { cls: 'guard', cost: 16, cd: 14000, more: { emergency: vaultNeeded }, skill: sk('Grapple Vault', 'With a foe within 2, she hooks a grapple to the safest tile within 3 and vaults there, then looses two silver bolts at the nearest foes, each bleeding', 450, 'attack', (b, me, out) => vaultNeeded(b, me) && grappleVault(b, me, out)) },
-      s3: { cls: 'jab', cost: 10, cd: 3500, skill: sk('Silver Shot', 'A quick silver bolt at the nearest foe in reach; a foe under half its health takes half as much again', 350, 'attack', silverShot) },
+      s3: { cls: 'jab', cost: 10, cd: 3500, skill: sk('Quick Bolt', 'A quick silver bolt at the nearest foe in reach; a foe under half its health takes half as much again', 350, 'attack', silverShot) },
       ultimate: ult('Silver Requiem', 'Vaults to the safest tile within 3 and fires five silver stakes across the strongest foes within 7 tiles, shoving each', 750, silverRequiem, { rate: 1.0, power: 1.6 }),
     },
   };
