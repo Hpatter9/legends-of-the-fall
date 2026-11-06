@@ -978,6 +978,19 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Direction: owner approved current appearance with idle, summoning, and shielding eyes against the bright hero arrival.
 - Completion: three poses integrated with reveal timing and reduced motion. Typecheck/build, four affected test files and browser checks at all three portrait sizes plus reduced motion passed. Status: ready for owner review. [Handoff](notes/animated-summoner.md).
 
+### EXPANSION-ART-SEASONS — Seasons and fates source sheet
+
+- Owner: Codex. Branch/worktree: `art/expansion`, `/workspace/legends-of-the-fall`.
+- Scope: `art-source/expansion/seasons-fates.png` and task/handoff documentation.
+- Goal: nine painted icons in the requested order, transparent 1152×256 sheet, each centred in the upper 128×128 of its 128×256 cell.
+- Status: complete; dimensions, alpha, per-cell centring, empty lower half and content checked. [Handoff](notes/expansion-art-seasons-fates.md). No runtime integration.
+## EXP-ART-006 — Duel ring of stones
+
+- Owner: Codex art chat. Branch/worktree: `art/expansion`, `/workspace/legends-of-the-fall`.
+- Scope: one transparent source image at `art-source/expansion/duel-ring.png`, task record and handoff.
+- Completion: 640×320 RGBA; low grey menhirs on a hollow 5×5 isometric square perimeter, brass bands and moss, no ground or text; submit to Expansion art PR.
+- Status: ready for review. Final image visually inspected; dimensions, RGBA and transparent centre/exterior checked with ImageMagick. Runtime checks not run: executable code unchanged.
+- Handoff: [duel ring source art](notes/expansion-duel-ring-art.md). Renderer integration is outside this task.
 ### EXPANSION-BADGES — Nemesis badges and duel banner
 
 - **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
@@ -991,3 +1004,15 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - **Allowed scope:** `art-source/expansion/houses-backdrop.png`, this entry and the expansion-art handoff.
 - **Completion:** one 1024×1536 upright painterly pixel-art tapestry backdrop, empty shields, amber sconces, dark centre and edges; no people or text.
 - **Status:** ready for review. PNG decode, exact dimensions and visual composition checked; no executable changes. [Handoff](notes/expansion-art.md).
+### EXPANSION-ICONS — Nemesis icon atlas
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** `art-source/expansion/nemesis-icons.png` and this handoff; existing badge/banner work preserved.
+- **Completion:** one 1536×640 transparent PNG, 12×5 cells of 128×128; 29 ordered icons and 31 empty cells. Dimensions, binary alpha, occupancy, padding and 24px preview checked.
+- **Status:** ready for review in [PR #399](https://github.com/Hpatter9/legends-of-the-fall/pull/399). [Handoff](notes/expansion-art.md). Source art only; no runtime checks required.
+
+### ART-EXPANSION-TABLES — Hester and Elders source props
+
+- **Owner:** Codex tavern art chat. **Branch/worktree:** `art/expansion`, `/workspace/expansion-art`.
+- **Scope:** Hester's merchant table and optional Elders' table source PNGs, plus handoff.
+- **Status:** complete; exact 384×256 and 320×112 dimensions, binary transparency, clear corners and visual inspection passed. Added to Expansion art PR #399. Runtime integration remains with director. [Handoff](notes/expansion-tavern-tables.md).
