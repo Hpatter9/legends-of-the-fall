@@ -148,3 +148,8 @@ Calamity's map boss (the map's boss spot entered through its own view) and in Ni
   `toast x quip` once, all at 360x640.
 - After: see the checks below. Shots: `docs/samples/combat-hud/bossbar-before-<case>-<w>.png` and `bossbar-after-<case>-<w>.png`
   (`<w>x640` for the short phone, `<w>s` for the inset).
+
+### Since: AUTO-RIGHT
+
+The spell row no longer wraps: Auto stays on the orbs' line, right of the last orb, at every size, and the boss's bar sits right under one
+line (52 px higher where the row used to wrap). See `docs/notes/auto-right.md`.

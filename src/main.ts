@@ -1631,7 +1631,9 @@ class Game {
       reclearQuip();
       busy = false;
     });
-    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar']) watch.observe($(id));
+    // (AUTO-RIGHT: the hero panel and the tactic button too: on a short phone the button rides the panel's top edge, and a bubble set clear
+    // of it at the deploy was left on it when the panel changed size or the button came in as the fight began)
+    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn']) watch.observe($(id));
   }
 
   /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */

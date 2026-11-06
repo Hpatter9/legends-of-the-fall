@@ -50,22 +50,30 @@ function ensure(): HTMLElement {
  *  fight's HUD: the spell row, the boss's, twist's and combo bars, the tactic button and a toast in its lane. A bubble that would cover one is moved to the
  *  nearest clear spot (below it in the top half of the page, above it in the bottom half), again until it covers none. */
 const KEEP_CLEAR = [...FIGHT_HUD, '.toast.lane', '#hmTop', '#starter h1', '#starter .stSub'];
-function keepClear(left: number, top: number, w: number, h: number): number {
+/** Where a bubble `w` x `h` meant for (`left`, `top`) can sit covering none of them: where it is; else the nearest spot just above or
+ *  below one of them; else (AUTO-RIGHT) the same moved sideways just clear of one of them (on a short phone with a toast in the lane there
+ *  is no row between the lane and the tactic button tall enough, but there is room beside the button); else nowhere (`null`: the line is
+ *  let go rather than laid on the HUD). */
+function keepClear(left: number, top: number, w: number, h: number): { left: number; top: number } | null {
   const boxes = hudBoxes(KEEP_CLEAR);
-  const covers = (y: number) => boxes.some((b) => left < b.right && left + w > b.left && y < b.bottom && y + h > b.top);
-  if (!covers(top)) return Math.max(4, top);
+  const vw = document.documentElement.clientWidth;
+  const covers = (x: number, y: number) => boxes.some((b) => x < b.right && x + w > b.left && y < b.bottom && y + h > b.top);
+  if (!covers(left, top)) return { left, top: Math.max(4, top) };
   // (BOSS-BAR: the nearest spot just above or below one of them that covers none and stays on the screen; on a short phone the tactic
   // button sits above the middle, and the old step (below a part in the top half, above it in the bottom half) sent a bubble back and forth
   // between it and the hero rows)
-  const spots = boxes.flatMap((b) => [b.bottom + 4, b.top - h - 4]).filter((y) => y >= 4 && y + h <= innerHeight - 4 && !covers(y));
-  if (spots.length) return spots.reduce((a, b) => (Math.abs(b - top) < Math.abs(a - top) ? b : a));
-  let y = top;
-  for (let pass = 0; pass <= boxes.length; pass++) {
-    const b = boxes.find((b) => left < b.right && left + w > b.left && y < b.bottom && y + h > b.top);
-    if (!b) break;
-    y = b.top + b.height / 2 < innerHeight / 2 ? b.bottom + 4 : b.top - h - 4;
-  }
-  return Math.max(4, y);
+  const ys = [top, ...boxes.flatMap((b) => [b.bottom + 4, b.top - h - 4])].filter((y) => y >= 4 && y + h <= innerHeight - 4);
+  const xs = [left, ...boxes.flatMap((b) => [b.left - w - 4, b.right + 4])].filter((x) => x >= 8 && x + w <= vw - 8);
+  let best: { left: number; top: number } | null = null;
+  let far = Infinity;
+  // (a move up or down first, as before: a sideways move only when no row is clear, and the shortest of those)
+  for (const x of xs)
+    for (const y of ys) {
+      if (covers(x, y)) continue;
+      const d = Math.abs(y - top) + (x === left ? 0 : 10000 + Math.abs(x - left));
+      if (d < far) [best, far] = [{ left: x, top: y }, d];
+    }
+  return best;
 }
 
 /** Show `text` over `at` (replacing any bubble already up). `who` names the speaker in small type above it; `goat` is Duchess's cream bubble. */
@@ -85,9 +93,11 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
   const left = Math.min(vw - r.width - 8, Math.max(8, at.x - r.width / 2));
   const above = at.y - r.height - 10 >= 4;
   el.classList.toggle('below', !above);
-  el.style.left = `${Math.round(left)}px`;
-  el.style.top = `${Math.round(keepClear(left, above ? at.y - r.height - 10 : at.y + 14, r.width, r.height))}px`;
-  el.style.setProperty('--tail', `${Math.round(Math.min(r.width - 12, Math.max(12, at.x - left)))}px`);
+  const spot = keepClear(left, above ? at.y - r.height - 10 : at.y + 14, r.width, r.height);
+  if (!spot) return;
+  el.style.left = `${Math.round(spot.left)}px`;
+  el.style.top = `${Math.round(spot.top)}px`;
+  el.style.setProperty('--tail', `${Math.round(Math.min(r.width - 12, Math.max(12, at.x - spot.left)))}px`);
   void el.offsetWidth;
   el.classList.add('on');
   hideTimer = window.setTimeout(() => {
@@ -101,8 +111,16 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
 export function reclearQuip(): void {
   if (!box?.classList.contains('on')) return;
   const r = box.getBoundingClientRect();
-  const y = keepClear(r.left, r.top, r.width, r.height);
-  if (Math.round(y) !== Math.round(r.top)) box.style.top = `${Math.round(y)}px`;
+  const spot = keepClear(r.left, r.top, r.width, r.height);
+  // (nowhere clear: the bubble goes rather than stay on the HUD)
+  if (!spot) return hideQuip();
+  if (Math.round(spot.top) !== Math.round(r.top)) box.style.top = `${Math.round(spot.top)}px`;
+  if (Math.round(spot.left) !== Math.round(r.left)) {
+    // (moved sideways: its tail keeps pointing at the speaker, as far as the bubble reaches)
+    const tail = parseFloat(box.style.getPropertyValue('--tail')) || r.width / 2;
+    box.style.left = `${Math.round(spot.left)}px`;
+    box.style.setProperty('--tail', `${Math.round(Math.min(r.width - 12, Math.max(12, r.left + tail - spot.left)))}px`);
+  }
 }
 
 /** Clear the bubble now (a screen closing, a new fight). */
