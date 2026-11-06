@@ -25,13 +25,15 @@ import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
 import { enterPhase, PHASE2 } from './bossPhases';
 import { tickWeakness, weakHurt } from './weakness';
+import { nemHurt, nemJump, nemMove, nemPrey, nemSpare, nemStart, type UnitNem } from './nemesisTraits';
+import type { NemPlace } from './nemesis';
 import { MARCH } from './march';
 import { ritesFall, tickRites } from './chapelRooms';
 import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bonds';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { chargeOf, noteStep, preyOrder, walkOrder, moveOf } from './foeStyles';
-import { afterBlow, gangOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, gangOf, kitOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
@@ -167,6 +169,8 @@ export interface Unit {
   /** Its once-a-fight rising from death has been spent. */
   undyingUsed?: boolean;
   diedAt?: number;
+  /** The Nemesis War (`nemesis.ts`): this foe is a named nemesis, with its traits and weaknesses (fixed from the run's snapshot); none for every other fighter. */
+  nem?: UnitNem;
   /** Multiplies the kind's attack (grade, stage); absent is x1. */
   power?: number;
   /** What a hero's six scores multiply (STATS batch 2, `statPower.ts`): its health and blows are already in `maxHp` and `power`; a skill's
@@ -515,7 +519,18 @@ export interface Battle {
   blowMatch?: BlowMatch;
 }
 
-export const defOf = (u: Unit): UnitDef => UNITS[u.def];
+export const defOf = (u: Unit): UnitDef => (u.nem ? nemDef(u) : UNITS[u.def]);
+/** A nemesis's own def: its kind's, with a Hill-king's extra jump (`nemesisTraits.ts`). */
+const nemDefs = new Map<string, UnitDef>();
+function nemDef(u: Unit): UnitDef {
+  const def = UNITS[u.def];
+  const jump = nemJump(u, def.jump);
+  if (jump === def.jump) return def;
+  const key = `${u.def}:${jump}`;
+  let d = nemDefs.get(key);
+  if (!d) nemDefs.set(key, (d = { ...def, jump }));
+  return d;
+}
 /** A fighter's attack: its kind's, times its own multiplier. */
 export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u) * (u.bondAtk ?? 1) * (u.bondFury ?? 1);
 /** A fighter's defence: its kind's, plus what its equipment adds. */
@@ -594,6 +609,8 @@ export interface Stage {
   featured?: string;
   /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`). */
   rules?: QuestRules;
+  /** The Nemesis War (`nemesis.ts`): the nemeses in this wave, by their place in the band, with their hp and attack on top of the wave's. */
+  nemesis?: readonly NemPlace[];
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -668,6 +685,13 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   const ids = typeof band === 'string' ? FOE_BANDS[band] : band;
   const mid = board.arenaMid && isBoss(ids[0] ?? '') ? board.arenaMid : null;
   let bossAt: At | null = null;
+  // (the Nemesis War: a nemesis's place in the band is made a nemesis as it is added; a band with none adds as it always did)
+  const named = stage.nemesis?.length ? stage.nemesis : undefined;
+  const put = (id: string, n: number, u: number, v: number, boost: Boost): void => {
+    const unit = addUnit(b, id, u, v, boost);
+    const p = named?.find((x) => x.at === n);
+    if (p) makeNemesis(unit, p);
+  };
   ids.forEach((id, n) => {
     const def = UNITS[id];
     const boss = n === 0 ? stage.boss : undefined;
@@ -678,7 +702,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
       if (near.length) {
         const at = rng.pick(near);
         if (n === 0) bossAt = at;
-        addUnit(b, id, at.u, at.v, boost());
+        put(id, n, at.u, at.v, boost());
         return;
       }
     }
@@ -697,12 +721,20 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
     const top = Math.max(...spots.map((x) => x.score));
     const at = rng.pick(spots.filter((x) => x.score === top));
     if (n === 0) bossAt = at;
-    addUnit(b, id, at.u, at.v, boost());
+    put(id, n, at.u, at.v, boost());
   });
   if (tw?.ambush) ambush(b);
   if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;
   if (stage.rules) applyRules(b, stage.rules);
   return b;
+}
+
+/** Make a foe a nemesis (`nemesis.ts`): its hp and attack on top of the wave's, and what the fight knows of its traits. */
+function makeNemesis(unit: Unit, p: NemPlace): void {
+  unit.hp = unit.maxHp = Math.max(1, Math.round(unit.maxHp * p.hp));
+  unit.power = (unit.power ?? 1) * p.atk;
+  unit.nem = { ...p.nem, traits: [...p.nem.traits], weak: [...p.nem.weak] };
+  nemStart(unit, kitOf(unit));
 }
 
 /** Note what the board holds that acts during the fight: the powder barrels standing, and ground that acts each second (a shrine, lava). Called when a fight starts; a test that changes the board's tiles calls it again. */
@@ -1098,6 +1130,11 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   dmg = left;
   // (DEPTH-BUILD: a boss whose guard cracks to one calling's blows, `weakness.ts`)
   if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
+  // (the Nemesis War: a nemesis's traits and weaknesses, on a blow it deals or takes, `nemesisTraits.ts`)
+  if ((to.nem || by.nem) && by !== to) {
+    dmg = nemHurt(b, by, to, creditOf(b, by), dmg, src, splash, out);
+    if (dmg <= 0) return false;
+  }
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a formation takes splash differently, a skirmisher less, a square packed together more, and a skirmisher the foes' skills less, `formations.ts`)
@@ -1227,6 +1264,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (killed && powersOn(b) && powerSpare(b, to, out)) killed = false;
   // (a deathless pirate: the same, from its own passive)
   if (killed && undying(to, out)) killed = false;
+  // (a nemesis that is a Survivor stands again once a fight)
+  if (killed && to.nem && nemSpare(to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
     // (DEPTH-BUILD: the Chapel's Last Rites marks the first hero to fall in the wave to rise)
@@ -1491,6 +1530,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   }
   if (inReach.length) {
     if (mv) inReach = preyOrder(b, me, mv, inReach);
+    if (me.nem) inReach = nemPrey(me, inReach);
     // (STATS batch 6: a quick shooter steps back from a brute beside it, when it can still shoot from there; FOE-STYLES: so does a kiting foe, a
     // spear too)
     const back = def.shot || mv === 'kite' ? kiteStep(b, me, def, foes, mv === 'kite') : -1;
@@ -1605,7 +1645,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
     me.kx.momentum = me.kx.lastWay === way ? Math.min(5, (me.kx.momentum ?? 0) + 1) : 1;
     me.kx.lastWay = way;
   }
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1) * (b.tactic?.edgeAt !== undefined ? chargeMove(b, me) : 1)) * (b.walk ?? 1));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1) * (b.tactic?.edgeAt !== undefined ? chargeMove(b, me) : 1) * (me.nem ? nemMove(me) : 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;

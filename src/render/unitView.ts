@@ -1,7 +1,7 @@
 // The fighters drawn: an animated sprite from the unit's sheet, mirrored to face the way it's going, a shadow under it
 // and a health bar over its head. A step is drawn as a glide between the two tiles with a hop (higher for a climb).
 
-import { ColorMatrixFilter, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
@@ -87,6 +87,19 @@ function flatFilter(color: number): ColorMatrixFilter {
   return f;
 }
 
+/** The Nemesis War (`sim/nemesis.ts`): each rank's colour, for its name plate and the rim round its body (a steady tint, never a pulse). */
+export const NEM_COLOURS: Readonly<Record<string, number>> = { lieutenant: 0xc0443a, captain: 0x9a55d0, warchief: 0xe0a830 };
+/** A nemesis's body: a little darker and redder than its kind, so it stands out from its escorts without a sheet of its own. */
+function nemFilter(): ColorMatrixFilter {
+  const f = new ColorMatrixFilter();
+  f.saturate(0.15, false);
+  const m = f.matrix;
+  m[0] *= 1.08;
+  m[6] *= 0.9;
+  m[12] *= 0.92;
+  return f;
+}
+
 /** A colour between two (k from 0 to 1). */
 function mixTint(a: number, b: number, k: number): number {
   const ch = (shift: number) => Math.round(((a >> shift) & 255) * (1 - k) + ((b >> shift) & 255) * k);
@@ -110,6 +123,9 @@ export class UnitSprite {
   /** The loops of the buffs on it (up to three, made as needed); `stars` only marks where they go in the drawing order. */
   private overlays: Sprite[] = [];
   private stars = new Graphics();
+  /** The Nemesis War: a nemesis's name plate over its health bar (its rank's colour, its name, its scars, a skull while its Dread hero is on the field). */
+  private plate: Container | null = null;
+  private plateSkull: Text | null = null;
   /** Its ailments' look: body parts behind and in front of it, and the chips over its head (STATUS-FX). */
   private ail = new AilmentFx();
   /** A knock from a blow, in px (it eases back to nothing). */
@@ -202,7 +218,42 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front);
+    if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0);
+    this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []));
+  }
+
+  /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
+  private dressNemesis(rank: string, name: string, scars: number): void {
+    const col = NEM_COLOURS[rank] ?? NEM_COLOURS.lieutenant;
+    if (!this.rim.children.length)
+      for (const [dx, dy] of [[-1.4, 0], [1.4, 0], [0, -1.4], [0, 1.4]]) {
+        const r = new Sprite();
+        r.anchor.set(0.5, 1);
+        r.position.set(dx, dy);
+        this.rim.addChild(r);
+      }
+    this.rim.filters = [flatFilter(col)];
+    this.body.filters = [...(this.body.filters ?? []), nemFilter()];
+    const plate = new Container();
+    const words = new Text({ text: `${name}${scars > 0 ? ` ${'✕'.repeat(Math.min(3, scars))}` : ''}`, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: 8, fill: 0xfbe9d0, stroke: { color: 0x1a1008, width: 2 } }, resolution: 3 });
+    words.anchor.set(0.5, 1);
+    const skull = new Text({ text: '☠', style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontSize: 8, fill: 0xf2e2b0, stroke: { color: 0x1a1008, width: 2 } }, resolution: 3 });
+    skull.anchor.set(0, 1);
+    skull.visible = false;
+    const w = words.width + 8;
+    const back = new Graphics();
+    back.roundRect(-w / 2, -words.height - 1, w, words.height + 2, 2).fill({ color: 0x1a1008, alpha: 0.78 }).stroke({ color: col, width: 1, alpha: 0.95 });
+    skull.position.set(w / 2 + 1, 0);
+    plate.addChild(back, words, skull);
+    plate.position.set(0, -this.tall - 11);
+    plate.scale.set(1 / this.baseSize);
+    this.plate = plate;
+    this.plateSkull = skull;
+  }
+
+  /** Whether the hero this nemesis dreads is on the field (the plate's skull shows it). */
+  setDread(on: boolean): void {
+    if (this.plateSkull) this.plateSkull.visible = on;
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
@@ -399,6 +450,7 @@ export class UnitSprite {
     this.root.visible = this.root.alpha > 0;
     if (this.stage) this.drawStaged(this.stage);
     this.drawBar(u.alive, t);
+    if (this.plate) this.plate.visible = u.alive;
     this.drawClock(fighting ? t : -1);
     this.drawSparks(u.alive);
     this.drawPillar(u.alive);

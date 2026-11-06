@@ -10,6 +10,7 @@ import { FOES, isBoss } from './foes';
 import { PHASE_AT } from './bossPhases';
 import type { Meta } from './meta';
 import { mixSeed } from './rng';
+import { nemesisBand, type NemPlace, type RunNemesis } from './nemesis';
 import { starCrowns } from './stars';
 import { ARMY_STARS, MILESTONES, tierOf, TIERS } from './tiers';
 
@@ -315,6 +316,12 @@ export function waveFoes(a: Army, n: number, tier = 0): readonly string[] {
   if (!w || !extra) return w?.foes ?? [];
   const pool = w.boss ? w.foes.slice(1) : w.foes;
   return pool.length ? [...w.foes, ...Array.from({ length: extra }, (_, i) => pool[i % pool.length])] : w.foes;
+}
+
+/** The foes of wave n on a tier with the run's nemeses in their places (the Nemesis War, `nemesis.ts`): the band, and each nemesis's place,
+ *  its traits and its strength on top of the wave's. A run with no nemesis in the wave gets `waveFoes` as it was, and no places. */
+export function armyWaveBand(a: Army, n: number, tier: number, rn: RunNemesis | undefined): { band: readonly string[]; place: NemPlace[] } {
+  return nemesisBand(rn, n, waveFoes(a, n, tier), tier);
 }
 
 // ---- rewards -----------------------------------------------------------------------------------------------------------

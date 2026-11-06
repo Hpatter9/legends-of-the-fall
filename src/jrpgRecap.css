@@ -117,6 +117,8 @@
 .jrBody .jrLine.quest > span { color: #a8e0bb; }
 .jrBody .jrLine.bench > span { color: #b7d2e6; }
 .jrBody .jrLine.fell { border-left-color: #a8705f; color: #e2c7b8; }
+.jrBody .jrLine.nemesis { border-left-color: #8a4fa0; color: #e6d0ee; }
+.jrBody .jrLine.nemesis > span { color: #c98fe0; }
 .jrBody .jrLine:is(.fell, .heart) > span { color: #e2917d; }
 .jrBody .jrLine.heart { border-left-color: #c75f53; }
 .jrBody .jrHint { margin: 2px 0 0; color: #c6b180; font: 700 12px var(--body); letter-spacing: .1em; text-align: center; text-transform: uppercase; }

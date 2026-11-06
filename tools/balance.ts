@@ -46,6 +46,7 @@ import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
 import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
+import { fullCouncil, growWar, harshen } from './nemesis/warBot';
 import { calamityTable } from './tower-balance';
 import { equipAll } from '../src/sim/equipment';
 import { FIELD_BOOST, GRADE_TABLE } from '../src/sim/runGear';
@@ -586,6 +587,79 @@ function deepLevels(): void {
   }
 }
 
+/**
+ * 5g. THE NEMESIS WAR (`--nemesis typical` or `harsh`, docs/notes/nemesis-1.md): the recruits' party at each army's own level on Normal (and
+ * `--nemesis-hard L`: Hard at level L), with gear dressed and, with `--talents`, every talent row its level opens; the mean tries to clear
+ * each army (at most `MAX_TRIES`, a fresh save each time) with no War, and with a Council grown by real fights (`tools/nemesis/warBot.ts`:
+ * `--war-runs` runs of each army; `harsh` then five Might up and three traits each) met but never changed. The bar: no army's mean tries
+ * rises by more than 1.
+ */
+function nemesisTable(): void {
+  const mode = flag('--nemesis');
+  const party = PARTIES.recruits;
+  const talents = process.argv.includes('--talents');
+  const runs = process.argv.includes('--war-runs') ? Number(flag('--war-runs')) : 4;
+  // (a castle of the size a player of that level has: 17 levels at about hero level 45, every one at 80, as `test/army-pace.test.ts`)
+  const castleAt = (level: number): Castle => {
+    const c = newCastle();
+    const ids = Object.keys(BUILDINGS) as BuildingId[];
+    const all = ids.reduce((n, id) => n + maxLevel(id), 0);
+    const want = Math.min(all, Math.round((level * 17) / 45));
+    for (let i = 0; i < want; i++) {
+      const open = ids.filter((id) => c[id] < maxLevel(id)).sort((a, b) => c[a] - c[b]);
+      if (open.length) c[open[0]]++;
+    }
+    return c;
+  };
+  const war = mode === 'full' ? fullCouncil(process.argv.includes('--might') ? Number(flag('--might')) : 3) : growWar(runs, 1, party, talents, castleAt);
+  if (mode === 'harsh') harshen(war);
+  // (the late armies are out of the greedy bot's reach at their own level, which was tuned for a player with hearts: `--late-plus N` fights them N levels on)
+  const latePlus = process.argv.includes('--late-plus') ? Number(flag('--late-plus')) : 0;
+  const hardAt = process.argv.includes('--nemesis-hard') ? Number(flag('--nemesis-hard')) : 0;
+  const might = war.members.map((n) => n.might);
+  console.log(`\n5g. THE NEMESIS WAR  (${mode}: ${war.members.length} members ${mode === 'full' ? 'set, four to each army' : `grown over ${runs} runs an army`}, Might mean ${(might.reduce((a, b) => a + b, 0) / Math.max(1, might.length)).toFixed(1)}, top ${Math.max(0, ...might)}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries${talents ? ', talents learned' : ''}; mean tries (clear %))\n`);
+  for (const n of war.members) console.log(`  ${pad(n.army, 10)} ${pad(n.rank, 11)} Might ${pad(String(n.might), 3)} ${pad(n.base, 18)} ${n.traits.join(', ')} | ${n.weak.join(', ')}`);
+  const dress = (meta: Meta): void => {
+    if (!talents) return;
+    for (const k of party) for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const node of tierNodes(k, t)) learn(meta, k, node.id);
+  };
+  const cell = (army: (typeof ARMIES)[number], level: number, tier: number, withWar: boolean): { tries: number; clear: number } => {
+    let tries = 0;
+    let cleared = 0;
+    for (let save = 1; save <= ATTEMPTS; save++) {
+      const meta = savedAt(level, party, save);
+      dress(meta);
+      if (withWar) meta.war = war;
+      const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
+      let n = 0;
+      let ok = false;
+      while (n < MAX_TRIES && !ok) {
+        ok = playArmy(meta, army.id, mixSeed(save, 0x4e3e, ARMIES.indexOf(army) * 100 + tier * 10 + n), party, castleAt(level), true, tier, talents ? boostFor : undefined).cleared;
+        n++;
+      }
+      tries += n;
+      if (ok) cleared++;
+    }
+    return { tries: tries / ATTEMPTS, clear: pct(cleared, ATTEMPTS) };
+  };
+  const rows: [string, number, number][] = [];
+  for (const army of ARMIES.filter((a) => !ONLY || ONLY.includes(a.id))) {
+    rows.push([army.id, army.level + (ARMIES.indexOf(army) >= 6 ? latePlus : 0), 0]);
+    if (hardAt) rows.push([army.id, hardAt, 1]);
+  }
+  console.log(['  army'.padEnd(22), rpad('tier', 8), rpad('level', 7), rpad('no War', 16), rpad('with War', 16), rpad('change', 8), rpad('members', 8)].join(''));
+  let worst = 0;
+  for (const [id, level, tier] of rows) {
+    const army = armyById(id)!;
+    const a = cell(army, level, tier, false);
+    const b = cell(army, level, tier, true);
+    const met = war.members.filter((n) => n.army === id).length;
+    worst = Math.max(worst, b.tries - a.tries);
+    console.log([pad(`  ${army.name}`, 22), rpad(TIERS[tier].name, 8), rpad(String(level), 7), rpad(`${a.tries.toFixed(1)} (${f1(a.clear).trim()}%)`, 16), rpad(`${b.tries.toFixed(1)} (${f1(b.clear).trim()}%)`, 16), rpad(`${b.tries - a.tries >= 0 ? '+' : ''}${(b.tries - a.tries).toFixed(1)}`, 8), rpad(String(met), 8)].join(''));
+  }
+  console.log(`\n  the largest rise in mean tries: ${worst >= 0 ? '+' : ''}${worst.toFixed(2)} (the bar: no more than +1)`);
+}
+
 if (process.argv.includes('--no-tables')) {
   // (only the climbs asked for below)
 } else if (HEROES_ONLY) {
@@ -609,4 +683,5 @@ if (process.argv.includes('--climb')) realClimb();
 if (process.argv.includes('--maxed')) maxedCastle();
 if (process.argv.includes('--tiers')) tiers();
 if (process.argv.includes('--deep')) deepLevels();
+if (process.argv.includes('--nemesis')) nemesisTable();
 console.log('');

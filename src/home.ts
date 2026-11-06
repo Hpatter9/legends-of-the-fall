@@ -66,7 +66,8 @@ import { heartHeld, noteSavedHeart, withHeart } from './sim/vaelkharHeart';
 import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
-import { warmPortraits } from './render/sheets';
+import { portrait, warmPortraits } from './render/sheets';
+import { councilLine, openNemesisBoard } from './nemesisView';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -805,6 +806,22 @@ export class Home {
     const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);
+    // (the Nemesis War's Dark Council, over the Daily once the War is open: the mightiest member's face, and how many are named)
+    const war = m.war;
+    this.camp.councilSlot.hidden = !war;
+    const top = war?.members.slice().sort((a, b) => b.might - a.might || a.id - b.id)[0];
+    const councilKey = war ? `${war.members.length}|${top?.id ?? 0}|${top?.might ?? 0}` : '';
+    if (war && this.camp.councilSlot.dataset.key !== councilKey) {
+      this.camp.councilSlot.dataset.key = councilKey;
+      const named = war.members.length;
+      const council = place('hmCouncil', 'council', 'Council', '', `The Dark Council: ${named ? `${named} ${named === 1 ? 'foe remembers' : 'foes remember'} you` : 'no foe remembers you yet'}. ${councilLine(m)}`, () => openNemesisBoard(m, (army) => this.openArmies(army)));
+      council.querySelector('small')?.remove();
+      const pic = el('span', 'cpCouncilFace');
+      if (top && UNITS[top.base]) pic.append(portrait(UNITS[top.base].sheet, 30));
+      council.prepend(pic);
+      if (named) council.append(el('i', 'cpCount', String(named)));
+      swapIn(this.camp.councilSlot, this.camp.councilSlot.querySelector('.cpPlace'), council);
+    }
     // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)
     swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
     swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
