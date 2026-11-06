@@ -61,20 +61,20 @@ export const HERO_NAMES: Record<string, HeroName> = {
   sage: { name: 'Seydou', title: 'Reader of the Stars', heritage: 'Malian' },
   demonSwordsman: { name: 'Aram', title: 'Host of the Hungry Steel', heritage: 'Armenian' },
   tyrant: { name: 'Edmund', title: 'the Unbending Verdict', heritage: 'English' },
-};
-
-/** The twenty coming heroes' names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). The canon: docs/notes/twenty-heroes-audit.md. */
-export const COMING_NAMES: Record<string, HeroName> = {
   vampireLord: { name: 'Vladislav', title: 'Voivode of the Red Keep', heritage: 'Romanian (Wallachian)' },
   hemomancer: { name: 'Carmilla', title: 'Countess of the Chalice', heritage: 'Austrian (Styrian)' },
   nightstalker: { name: 'Sorin', title: 'Wing of the Crypt', heritage: 'a Transylvanian strigoi' },
   bloodGargoyle: { name: 'Gavril', title: 'Stone Sentinel of the Fane', heritage: 'a cathedral gargoyle' },
   dhampir: { name: 'Klara', title: 'Silver-Bolt Hunter', heritage: 'Czech (Bohemian)' },
   warDrummer: { name: 'Raiden', title: 'Thunder of the Keep', heritage: 'Japanese' },
-  banneret: { name: 'Isolde', title: 'Voice of the Rampart', heritage: 'Norman French' },
   geomancer: { name: 'Tenzin', title: 'Shaper of Crags', heritage: 'Tibetan' },
   bellWarden: { name: 'Kavi', title: 'Keeper of the Bronze Toll', heritage: 'a yokai temple-bell guardian' },
   falconer: { name: 'Aisling', title: 'Wing of the Glen', heritage: 'Scottish Gaelic' },
+};
+
+/** The twenty coming heroes' names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). The canon: docs/notes/twenty-heroes-audit.md. */
+export const COMING_NAMES: Record<string, HeroName> = {
+  banneret: { name: 'Isolde', title: 'Voice of the Rampart', heritage: 'Norman French' },
   astralSphinx: { name: 'Nenet', title: 'Riddle of the Stars', heritage: 'Egyptian myth' },
   mirageDancer: { name: 'Zahara', title: 'Veil of the Dunes', heritage: 'Nubian (Sudanese-Egyptian)' },
   plagueDoctor: { name: 'Corvus', title: 'Censer of Ash', heritage: 'Venetian undead lore' },

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { ALL_HEROES, COMING_HEROES, formOf, UNITS } from '../src/sim/units';
+import { ALL_HEROES, TWENTY_HEROES, formOf, UNITS } from '../src/sim/units';
 import { AWAKENED_SHEETS_LATER, awakenedSheet, battleSheet, combatAuraStep, lookSheet } from '../src/render/awakenLook';
 import { heroLook, rearView } from '../src/render/heroFacing';
 import { auraParts } from '../src/render/auraStyles';
@@ -74,7 +74,7 @@ test('every upgraded animation has production assets, matched views and complete
 test('the heroes whose awakened sheets come later are new heroes with none yet, each with its awakened menu figure', () => {
   const forms = art.forms as Record<string, string>;
   for (const kind of AWAKENED_SHEETS_LATER) {
-    assert.ok(COMING_HEROES.includes(kind), `${kind}: only the twenty may wait`);
+    assert.ok(TWENTY_HEROES.includes(kind), `${kind}: only the twenty may wait`);
     assert.equal(forms[UNITS[kind].sheet], undefined, `${kind}: its awakened sheets are in, so it leaves the list`);
     assert.ok(existsSync(`src/art/heroes/awakened-${kind}.webp`), `${kind}: its awakened figure for the menus`);
   }

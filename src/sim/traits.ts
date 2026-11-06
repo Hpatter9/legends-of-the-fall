@@ -130,6 +130,11 @@ export const TRAITS: Record<string, Trait> = {
   ] },
   arcanist: { id: 'arcanist', name: 'Arcanist', kind: 'class', short: 'Ac', tiers: [{ need: 2, effects: { mana: 1.15, charge: 1.1 }, text: "The king's mana fills 15% faster, and pools refill 10% faster" }] },
   bulwark: { id: 'bulwark', name: 'Bulwark', kind: 'class', short: 'Bw', tiers: [{ need: 2, effects: { guard: 0.04, hp: 1.03 }, text: 'All heroes take 4% less damage, and have 3% more health' }] },
+  vampire: { id: 'vampire', name: 'Vampire', kind: 'origin', short: 'Vm', tiers: [
+    { need: 2, effects: { leech: 0.06 }, text: 'Blows leech 6% of the damage dealt as health' },
+    { need: 4, effects: { leech: 0.12, atk: 1.06 }, text: 'Blows leech 12% of the damage dealt, and +6% attack' },
+    { need: 5, effects: { leech: 0.15, atk: 1.1, vampireSwarm: true }, text: 'Blows leech 15%, +10% attack; once a fight a Vampire brought low bursts into bats' },
+  ] },
 };
 
 /** Each hero's origin and class. Every trait has two to four heroes. */
@@ -179,31 +184,26 @@ export const HERO_TRAITS: Record<string, readonly [string, string]> = {
   sage: ['mystic', 'arcanist'],
   demonSwordsman: ['royal', 'vanguard'],
   tyrant: ['royal', 'caster'],
-};
-
-/** The traits still to join the roster: the Vampire origin, whose five heroes have their kits but wait for their battle sheets
- *  (docs/notes/twenty-heroes.md). A fight reads them like any other trait; the page's lists and the roster's rules (every trait two to
- *  four heroes) do not, until the five join `ALL_HEROES` and the trait moves into `TRAITS`. */
-export const COMING_TRAITS: Record<string, Trait> = {
-  vampire: { id: 'vampire', name: 'Vampire', kind: 'origin', short: 'Vm', tiers: [
-    { need: 2, effects: { leech: 0.06 }, text: 'Blows leech 6% of the damage dealt as health' },
-    { need: 4, effects: { leech: 0.12, atk: 1.06 }, text: 'Blows leech 12% of the damage dealt, and +6% attack' },
-    { need: 5, effects: { leech: 0.15, atk: 1.1, vampireSwarm: true }, text: 'Blows leech 15%, +10% attack; once a fight a Vampire brought low bursts into bats' },
-  ] },
-};
-
-/** The waiting heroes' origin and class (as `HERO_TRAITS`), until they join the roster. */
-export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
   vampireLord: ['vampire', 'blade'],
   hemomancer: ['vampire', 'caster'],
   nightstalker: ['vampire', 'assassin'],
   bloodGargoyle: ['vampire', 'bulwark'],
   dhampir: ['vampire', 'gunner'],
   warDrummer: ['samurai', 'support'],
-  banneret: ['knightly', 'warden'],
   geomancer: ['mystic', 'bulwark'],
   bellWarden: ['yokai', 'bulwark'],
   falconer: ['wild', 'marksman'],
+};
+
+/** The traits still to join the roster: the Vampire origin, whose five heroes have their kits but wait for their battle sheets
+ *  (docs/notes/twenty-heroes.md). A fight reads them like any other trait; the page's lists and the roster's rules (every trait two to
+ *  four heroes) do not, until the five join `ALL_HEROES` and the trait moves into `TRAITS`. */
+export const COMING_TRAITS: Record<string, Trait> = {
+};
+
+/** The waiting heroes' origin and class (as `HERO_TRAITS`), until they join the roster. */
+export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
+  banneret: ['knightly', 'warden'],
   astralSphinx: ['arcane', 'beast'],
   mirageDancer: ['frontier', 'trickster'],
   plagueDoctor: ['undead', 'arcanist'],

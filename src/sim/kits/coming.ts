@@ -1,11 +1,14 @@
 // The coming heroes' kits (docs/notes/twenty-heroes.md): the heroes whose kits are in but who wait for their battle sheets before they join
 // `ALL_HEROES`. Each batch's file writes its heroes' rows (`kits/comingRow.ts`); this builds them, on first use, into the two shapes the
 // roster's kits have: `KITS`'s (skill 1, passive, ultimate), read through `kitOf`, and `HERO_KITS`'s (the pool and three slots), read through
-// `heroKitOf`. A hero that joins the roster moves out of here.
+// `heroKitOf`. A hero that joins the roster moves out of here: its kit is then handed to `KITS` and `HERO_KITS` (`joinedKits`, read by
+// `abilities.ts` once its table is made). This module and `abilities.ts` import each other, so abilities must load first (everything that
+// reads a kit imports it before this).
 
 import type { Kit, Passive } from '../abilities';
 import type { HeroKit, Slot } from '../heroKits';
 import type { Row, RowSlot } from './comingRow';
+import { ALL_HEROES } from '../units';
 import { vampireRows } from './vampires';
 import { wave2Rows } from './wave2';
 import { wave3Rows } from './wave3';
@@ -102,7 +105,7 @@ export function scalePassive(p: Passive, k: number): Passive {
 const rowsOf = (): Record<string, Row> => ({ ...vampireRows(), ...wave2Rows(), ...wave3Rows(), ...wave4Rows() });
 /** Set a coming hero's passive strength in its built kit (the tuner's `p` knob). */
 export function setComingPassive(kind: string, k: number): void {
-  const kit = comingKits()[kind];
+  const kit = build().kits[kind];
   const row = rowsOf()[kind];
   if (kit && row) kit.passive = scalePassive(row.passive, k);
 }
@@ -125,7 +128,19 @@ function build() {
   return (built = { kits, heroKits });
 }
 
+/** The heroes of the twenty that have joined the roster (`ALL_HEROES`): their kits are built from the same rows, and `KITS` and `HERO_KITS` take them. */
+const joined = (kind: string): boolean => ALL_HEROES.includes(kind);
+const only = <T>(all: Record<string, T>, want: boolean): Record<string, T> =>
+  Object.fromEntries(Object.entries(all).filter(([k]) => joined(k) === want));
+let waiting: Record<string, Kit> | undefined;
+let waitingHero: Record<string, HeroKit> | undefined;
 /** The coming heroes' kits as `KITS` holds the roster's (skill 1, passive, ultimate). */
-export const comingKits = (): Record<string, Kit> => build().kits;
+export const comingKits = (): Record<string, Kit> => (waiting ??= only(build().kits, false));
 /** The coming heroes' three-slot kits as `HERO_KITS` holds the roster's. */
-export const comingHeroKits = (): Record<string, HeroKit> => build().heroKits;
+export const comingHeroKits = (): Record<string, HeroKit> => (waitingHero ??= only(build().heroKits, false));
+/** The joined heroes' kits, for `KITS` (built by `abilities.ts` once its table is made) and for `HERO_KITS`. */
+export const joinedKits = (): Record<string, Kit> => only(build().kits, true);
+export const joinedHeroKits = (): Record<string, HeroKit> => only(build().heroKits, true);
+/** All twenty heroes' kits, joined or still coming (for the tuner and the batch tests). */
+export const twentyKits = (): Record<string, Kit> => build().kits;
+export const twentyHeroKits = (): Record<string, HeroKit> => build().heroKits;

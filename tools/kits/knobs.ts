@@ -6,7 +6,7 @@ import { KITS } from '../../src/sim/abilities';
 import { HERO_KITS, RES } from '../../src/sim/heroKits';
 import type { SkillClass } from '../../src/sim/skillRules';
 import { LV5_TUNE } from '../../src/sim/kits/lv5Tune';
-import { comingHeroKits, comingKits, setComingPassive } from '../../src/sim/kits/coming';
+import { twentyHeroKits as comingHeroKits, twentyKits as comingKits, setComingPassive } from '../../src/sim/kits/coming';
 
 /** `p` is a coming hero's passive strength (docs/notes/twenty-heroes.md). */
 export interface Knobs { p?: number; t1?: number; t2?: number; t3?: number; up?: number; ur?: number; c1?: number; c2?: number; c3?: number; d1?: number; d2?: number; d3?: number; l5?: number; k3?: SkillClass; m3?: number }

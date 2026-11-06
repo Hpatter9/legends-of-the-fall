@@ -13,7 +13,7 @@ import { mixSeed, Rng } from '../../src/sim/rng';
 import { ALL_HEROES, COMING_HEROES } from '../../src/sim/units';
 import { KITS } from '../../src/sim/abilities';
 import { HERO_KITS } from '../../src/sim/heroKits';
-import { comingHeroKits, comingKits, COMING_PASSIVE } from '../../src/sim/kits/coming';
+import { twentyHeroKits as comingHeroKits, twentyKits as comingKits, COMING_PASSIVE } from '../../src/sim/kits/coming';
 import { fieldBoost, pickTeam, play } from '../heroSweep';
 import { applyKnobs, type Knobs } from './knobs';
 /** The knobs the tuner steps (every one but skill 3's class). */

@@ -14,7 +14,7 @@ import { ALL_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { powerCast, powerDodged, powerStrike, powersOn } from './setPowers';
 import { heroUltimates } from './ultimates';
-import { comingKits } from './kits/coming';
+import { comingKits, joinedKits } from './kits/coming';
 import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
@@ -1643,6 +1643,8 @@ KITS.forgeTitan = {
 // (FOE-STYLES: the common foes' and the armies' kinds' own kits, each its own way of fighting, `foeKits.ts`; the yokai witch and seer, the iron
 // golem above are its starting points)
 Object.assign(KITS, foeKits(KITS));
+// (the heroes that joined from the twenty: their kits are built from their rows, `kits/coming.ts`, docs/notes/heroes-join.md)
+Object.assign(KITS, joinedKits());
 
 // Every other hero's ultimate (`ultimates.ts`), unlocked at `ULT_LEVEL`; the first eight's are retuned there.
 const OWN_ULTIMATES = new Map<string, Skill>(Object.entries(KITS).filter(([, k]) => k.ultimate).map(([kind, k]) => [kind, k.ultimate!]));

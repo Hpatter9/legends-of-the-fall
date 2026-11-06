@@ -27,9 +27,9 @@ test('batch 4 waits outside the roster: units, traits and scores, not ALL_HEROES
     assert.ok(!HERO_TRAITS[k], `${k} is not yet in HERO_TRAITS`);
     for (const t of traits) assert.ok(!membersOf(t).includes(k), `${k} is not yet a member of ${t}`);
   }
-  // (all twenty wait now)
-  assert.equal(COMING_HEROES.length, 20);
-  assert.equal(new Set(COMING_HEROES).size, 20);
+  // (eleven wait now: nine of the twenty have joined)
+  assert.equal(COMING_HEROES.length, 11);
+  assert.equal(new Set(COMING_HEROES).size, 11);
 });
 
 test('in a fight a batch-4 hero counts for its origin and class as a roster hero does', () => {

@@ -3,7 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Passive } from '../src/sim/abilities';
-import { COMING_PASSIVE, comingKits, scalePassive, setComingPassive } from '../src/sim/kits/coming';
+import '../src/sim/abilities'; // (first: the kits module and abilities load each other, and abilities goes first)
+import { COMING_PASSIVE, twentyKits as comingKits, scalePassive, setComingPassive } from '../src/sim/kits/coming';
 import { SWEEP_POOL } from '../tools/heroSweep';
 import { ALL_HEROES } from '../src/sim/units';
 

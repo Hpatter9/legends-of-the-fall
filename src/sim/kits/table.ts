@@ -16,6 +16,7 @@ import { fontOfMagic, stormSurge, transposition, wallOfFire } from './mages';
 import { alterSelf, tidalWave, windWall } from './monsters';
 import { plantStandard, sicEm } from './callers';
 import { REVIVE_FACES } from './revive';
+import { joinedHeroKits } from './coming';
 import { auraOfProtection, bane, shieldRush, spearWall, tunnelStrike } from './tanks';
 import * as T3 from './third';
 import { GUARD } from './third';
@@ -429,5 +430,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     k.s3 = s3;
     k.slots.push(s3);
   }
+  // (the heroes that joined from the twenty keep their kits in their own rows, `kits/coming.ts`)
+  Object.assign(kits, joinedHeroKits());
   return kits;
 }

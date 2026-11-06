@@ -23,7 +23,7 @@ export const CALLING_NAMES: Readonly<Record<Calling, string>> = {
 };
 
 /** Each hero's calling, and the names of its skill and ultimate (the test checks them against the kits). */
-export const DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string }>> = {
+export const DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string; plain?: true }>> = {
   knight: { calling: 'bulwark', skill: 'Shield Wall', ult: 'Indomitable' },
   samurai: { calling: 'duelist', skill: 'Iaido', ult: 'Issen' },
   kunoichi: { calling: 'duelist', skill: 'Sneak Attack', ult: 'Assassinate' },
@@ -69,20 +69,20 @@ export const DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: strin
   sage: { calling: 'archmage', skill: 'Magic Missile', ult: 'Arcane Surge' },
   demonSwordsman: { calling: 'berserker', skill: 'Cleave', ult: 'Metamorphosis' },
   tyrant: { calling: 'berserker', skill: 'Judgement', ult: 'Reign of Terror' },
-};
-
-/** The twenty coming heroes' callings and skill names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`); the test checks the names against their kits (`kits/coming.ts`). `plain`: their casts make no "one more" of anything (they do not read `extra`), so the deep rows give them strength instead. */
-export const COMING_DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string; plain: true }>> = {
   vampireLord: { calling: 'duelist', skill: 'Crimson Lunge', ult: 'Banquet of Blood', plain: true },
   hemomancer: { calling: 'archmage', skill: 'Sanguine Lash', ult: 'Blood Tithe', plain: true },
   nightstalker: { calling: 'duelist', skill: 'Dusk Dive', ult: 'Belfry Swoop', plain: true },
   bloodGargoyle: { calling: 'bulwark', skill: 'Gargoyle Crash', ult: 'Cathedral Perch', plain: true },
   dhampir: { calling: 'marksman', skill: 'Silver Stake', ult: 'Silver Requiem', plain: true },
   warDrummer: { calling: 'support', skill: 'Thunder Beat', ult: 'Ten Thousand Drums', plain: true },
-  banneret: { calling: 'support', skill: 'Standard Charge', ult: 'Oriflamme of the Keep', plain: true },
   geomancer: { calling: 'archmage', skill: 'Tectonic Shove', ult: "Mountain's Embrace", plain: true },
   bellWarden: { calling: 'bulwark', skill: 'Bronze Peal', ult: 'Midnight Knell', plain: true },
   falconer: { calling: 'marksman', skill: 'Falcon Stoop', ult: 'Sky Hunt', plain: true },
+};
+
+/** The twenty coming heroes' callings and skill names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`); the test checks the names against their kits (`kits/coming.ts`). `plain`: their casts make no "one more" of anything (they do not read `extra`), so the deep rows give them strength instead. */
+export const COMING_DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string; plain: true }>> = {
+  banneret: { calling: 'support', skill: 'Standard Charge', ult: 'Oriflamme of the Keep', plain: true },
   astralSphinx: { calling: 'duelist', skill: 'Rift Pounce', ult: 'The Last Riddle', plain: true },
   mirageDancer: { calling: 'duelist', skill: 'Whirling Veils', ult: 'Dance of Seven Mirages', plain: true },
   plagueDoctor: { calling: 'archmage', skill: 'Censer Swing', ult: 'Black Miasma', plain: true },

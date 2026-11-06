@@ -15,7 +15,7 @@ import { COMING_TREES, TAL_KEYS, TALENT_ABILITIES } from '../src/sim/talents';
 import { COMING_PASSIVES, PASSIVES } from '../src/sim/awaken';
 import { ABILITIES } from '../src/sim/equipBases';
 import { EQUIP_ICONS } from '../src/equipArt';
-import { comingHeroKits, comingKits } from '../src/sim/kits/coming';
+import { twentyHeroKits as comingHeroKits, twentyKits as comingKits } from '../src/sim/kits/coming';
 import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
 
 const sorted = (o: object) => Object.keys(o).sort();

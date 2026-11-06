@@ -701,13 +701,6 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
       { name: "Tyrant's Due", icon: 'ruby', text: 'Each kill gives back 40 charge, and +5% attack speed.', stats: { atkSpeed: 0.05 }, abilities: [ab('tl_tyrant_due', "Tyrant's Due", 'kill', 'charge', { v: 40 })] },
     ],
   ),
-};
-
-// ---- the deep rows (tiers 4 to 7), added to every tree ----
-for (const [kind, t] of Object.entries(TREES)) t.nodes.push(...deepNodes(kind, t.nodes.filter((n) => n.tier === 2), ALL_HEROES.indexOf(kind), ab, statText));
-
-/** The twenty coming heroes' trees (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`), with their deep rows as theirs will be once they join (each one's place after the 45). */
-export const COMING_TREES: Readonly<Record<string, TalentTree>> = {
   vampireLord: tree(
     'vampireLord',
     [['Noble Rapier', 'blade', { atk: ATK }], ['Velvet Mantle', 'shadowcloak', { dodge: 0.03 }], ['Ancient Blood', 'ruby', { hp: HP }], ['Courtly Poise', 'ring', { crit: 0.03 }]],
@@ -780,18 +773,6 @@ export const COMING_TREES: Readonly<Record<string, TalentTree>> = {
       { name: 'Thunderous Echo', icon: 'bell', text: 'Thunder Beat also shields him for 10% of max hp.', tal: { castShield: 0.1 } },
     ],
   ),
-  banneret: tree(
-    'banneret',
-    [['Gilded Lance', 'spear', { atk: ATK }], ['Heraldic Mail', 'plate', { hp: HP }], ['Spurred Boots', 'boots', { moveSpeed: 0.06 }], ['Silk Guidon', 'charm', { charge: 0.1 }]],
-    [
-      { name: 'High Standard', icon: 'spear', text: 'Standard Charge reaches 2 tiles further.', tal: { reach: 2 } },
-      { name: 'Unfurled Colours', icon: 'scroll', text: 'The rally of Standard Charge lasts 50% longer.', tal: { dur: 0.5 } },
-    ],
-    [
-      { name: 'Knightly Accord', icon: 'aegis', text: 'Takes 6% less from each ally beside her (up to 3), and +5% hp.', tal: { huddle: 0.06 }, stats: { hp: 0.05 } },
-      { name: 'Trumpet Call', icon: 'drum', text: 'Every 9s the allies beside her heal 8% of their health.', abilities: [ab('tl_banneret_trumpet', 'Trumpet Call', 'tick', 'aura', { n: 9, v: 0.08, show: true })] },
-    ],
-  ),
   geomancer: tree(
     'geomancer',
     [['Lodestone Staff', 'stormstaff', { atk: ATK }], ['Shale Mantle', 'robe', { def: 1 }], ['Deep Pulse', 'orb', { charge: 0.1 }], ['Crystal Core', 'emerald', { hp: HP }]],
@@ -826,6 +807,25 @@ export const COMING_TREES: Readonly<Record<string, TalentTree>> = {
     [
       { name: 'Circling Gyrfalcon', icon: 'feather', text: '30% of her shots make the foe bleed.', abilities: [ab('tl_falconer_bleed', 'Circling Gyrfalcon', 'hit', 'bleed', { p: 0.3, v: 0.25 })] },
       { name: 'Tailwind', icon: 'boots', text: 'After Falcon Stoop she is hasted for 2.5s.', tal: { castHaste: 2500 } },
+    ],
+  ),
+};
+
+// ---- the deep rows (tiers 4 to 7), added to every tree ----
+for (const [kind, t] of Object.entries(TREES)) t.nodes.push(...deepNodes(kind, t.nodes.filter((n) => n.tier === 2), ALL_HEROES.indexOf(kind), ab, statText));
+
+/** The twenty coming heroes' trees (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`), with their deep rows as theirs will be once they join (each one's place after the 45). */
+export const COMING_TREES: Readonly<Record<string, TalentTree>> = {
+  banneret: tree(
+    'banneret',
+    [['Gilded Lance', 'spear', { atk: ATK }], ['Heraldic Mail', 'plate', { hp: HP }], ['Spurred Boots', 'boots', { moveSpeed: 0.06 }], ['Silk Guidon', 'charm', { charge: 0.1 }]],
+    [
+      { name: 'High Standard', icon: 'spear', text: 'Standard Charge reaches 2 tiles further.', tal: { reach: 2 } },
+      { name: 'Unfurled Colours', icon: 'scroll', text: 'The rally of Standard Charge lasts 50% longer.', tal: { dur: 0.5 } },
+    ],
+    [
+      { name: 'Knightly Accord', icon: 'aegis', text: 'Takes 6% less from each ally beside her (up to 3), and +5% hp.', tal: { huddle: 0.06 }, stats: { hp: 0.05 } },
+      { name: 'Trumpet Call', icon: 'drum', text: 'Every 9s the allies beside her heal 8% of their health.', abilities: [ab('tl_banneret_trumpet', 'Trumpet Call', 'tick', 'aura', { n: 9, v: 0.08, show: true })] },
     ],
   ),
   astralSphinx: tree(

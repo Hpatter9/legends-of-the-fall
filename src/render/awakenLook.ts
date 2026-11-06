@@ -11,7 +11,7 @@ const forms: Readonly<Record<string, string>> = art.forms;
  *  docs/notes/twenty-heroes.md): awakened, such a hero keeps its plain sprite (no form in the manifest, so `awakenedSheet` returns its
  *  own sheet), with its class aura from its combat grade as every hero has, and its awakened figure in the menus. A hero leaves this
  *  list when its awakened sheets are packed. */
-export const AWAKENED_SHEETS_LATER: ReadonlySet<string> = new Set<string>();
+export const AWAKENED_SHEETS_LATER: ReadonlySet<string> = new Set<string>(['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'geomancer', 'bellWarden', 'falconer']);
 
 /** Resolve a permanent upgraded form, including borrowed druid/werewolf shapes.
  * Enemy disguises and sheets without an upgraded counterpart keep their art. */

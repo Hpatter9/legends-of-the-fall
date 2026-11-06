@@ -476,10 +476,6 @@ export const HERO_QUIPS: Record<string, HeroQuips> = {
     revived: ['Long live me! Again!', 'The dynasty continues! Right where it left off!', 'Did you think a mere fatal wound could dethrone me?!'],
     lowHp: ['Assassination attempt in progress! Guards! Where are my guards?!', 'Royal blood is being spilled! Surely that is a hanging offence!', 'My reign is looking perilously brief right now!'],
   },
-};
-
-/** The twenty coming heroes' lines (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
-export const COMING_QUIPS: Record<string, HeroQuips> = {
   vampireLord: {
     hired: ['I never drink... cheap claret. Only the finest frontline vintage.', 'Do draw the velvet curtains. The midday glare is terribly vulgar.', 'Three centuries of nobility, and I still must queue for deployment.'],
     placed: ['Point me towards someone with a lively pulse and poor footwork.', 'Mind the silk lining on the cape. It is dry-clean only.', 'A delightful evening for a lunge and a light refreshment.'],
@@ -540,16 +536,6 @@ export const COMING_QUIPS: Record<string, HeroQuips> = {
     revived: ['Count me back in! One, two, three, four!', 'The rhythm never dies! It only takes a rest!', 'Picked up the sticks and ready to roll!'],
     lowHp: ['My drum frame is splintering here!', 'Hard to keep time when five brutes are thumping you!', 'Protect the percussion section, lads!'],
   },
-  banneret: {
-    hired: ['The keep\'s colours never touch the mud while I draw breath.', 'Lance couched, guidon ironed, horse brushed. Ready for duty.', 'Follow the silk standard and try to look heroic, everyone.'],
-    placed: ['Planting the colours right here! Form up around me!', 'A brisk canter first, then we plant the pole in their toes.', 'Eyes on the pennant! Backs straight!'],
-    won: ['The banner flies proud over a thoroughly tidy field!', 'A textbook charge! Even the squires kept formation!', 'Not a speck of mud on the royal silk. Splendid.'],
-    lost: ['Hold the pole up! Do not let the colours trail!', 'Unhorsed! By a common footpad! The shame of it!', 'We shall mend the silk and ride again at dawn.'],
-    levelUp: ['Gold fringe on the banner! Finer steel on the lance!', 'Promoted in the field! Wait till the chapter hears!', 'Our standard shines like a beacon on the hill!'],
-    ultimate: ['GRAND CRUSADE! FOR THE KEEP AND THE CROWN!', 'RALLY TO THE COLOURS! CHARGE!', 'NO STEP BACKWARD!'],
-    revived: ['Standard raised once more! The fight is not over!', 'Back in the stirrups! Form on me!', 'You cannot haul down these colours so easily!'],
-    lowHp: ['The flagpole is taking an awful lot of arrows!', 'Shield arm is numb, but the banner stays high!', 'Rally to me quickly, or the silk hits the turf!'],
-  },
   geomancer: {
     hired: ['The earth is not stubborn; you simply haven\'t asked it in granite.', 'Mind where you stand. I may need that turf for a spire shortly.', 'Stone remembers everything, especially who stepped on it.'],
     placed: ['Good solid bedrock under this tile. Very cooperative.', 'Feel that rumble? The fault line is waking up.', 'Staff planted. Let us rearrange the local topography.'],
@@ -579,6 +565,20 @@ export const COMING_QUIPS: Record<string, HeroQuips> = {
     ultimate: ['SKY HUNT! TALONS FROM THE CLOUDS!', 'ZEPHYR, STRIKE THEM DOWN!', 'THE HEAVENS HAVE CLAWS TODAY!'],
     revived: ['Heard my hawk whistling overhead and couldn\'t stay down!', 'Back in the heather! Glove up, bird ready!', 'A quick gust of wind and I am on my feet!'],
     lowHp: ['They are crowding the falconer! Shoo! Off with you!', 'My leather gauntlet is not a tower shield!', 'Need some space and a plaster over here!'],
+  },
+};
+
+/** The twenty coming heroes' lines (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
+export const COMING_QUIPS: Record<string, HeroQuips> = {
+  banneret: {
+    hired: ['The keep\'s colours never touch the mud while I draw breath.', 'Lance couched, guidon ironed, horse brushed. Ready for duty.', 'Follow the silk standard and try to look heroic, everyone.'],
+    placed: ['Planting the colours right here! Form up around me!', 'A brisk canter first, then we plant the pole in their toes.', 'Eyes on the pennant! Backs straight!'],
+    won: ['The banner flies proud over a thoroughly tidy field!', 'A textbook charge! Even the squires kept formation!', 'Not a speck of mud on the royal silk. Splendid.'],
+    lost: ['Hold the pole up! Do not let the colours trail!', 'Unhorsed! By a common footpad! The shame of it!', 'We shall mend the silk and ride again at dawn.'],
+    levelUp: ['Gold fringe on the banner! Finer steel on the lance!', 'Promoted in the field! Wait till the chapter hears!', 'Our standard shines like a beacon on the hill!'],
+    ultimate: ['GRAND CRUSADE! FOR THE KEEP AND THE CROWN!', 'RALLY TO THE COLOURS! CHARGE!', 'NO STEP BACKWARD!'],
+    revived: ['Standard raised once more! The fight is not over!', 'Back in the stirrups! Form on me!', 'You cannot haul down these colours so easily!'],
+    lowHp: ['The flagpole is taking an awful lot of arrows!', 'Shield arm is numb, but the banner stays high!', 'Rally to me quickly, or the silk hits the turf!'],
   },
   astralSphinx: {
     hired: ['What walks on four paws and flattens warlords? Me. Riddle solved.', 'I have watched ten empires rise and fall. Yours has nice snacks.', 'Do not scratch behind my ears unless you mean to keep doing it.'],

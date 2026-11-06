@@ -100,6 +100,15 @@ const ROWS: Readonly<Record<string, Row>> = {
   sage: [8, 10, 12, 17, 15, 13, 'int', 'int', 'robes', 'int', 'wis', 'Wizard (sage)'],
   demonSwordsman: [13, 12, 15, 8, 10, 17, 'cha', 'cha', 'medium', 'wis', 'cha', 'Warlock (hexblade)'],
   tyrant: [13, 8, 15, 12, 10, 17, 'str', 'cha', 'heavy', 'wis', 'cha', 'Warlock (tyrant)'],
+  vampireLord: [12, 17, 13, 10, 8, 15, 'dex', 'cha', 'medium', 'dex', 'cha', 'Fighter (duellist), vampire'],
+  hemomancer: [8, 13, 12, 15, 10, 17, 'cha', 'cha', 'robes', 'con', 'cha', 'Sorcerer (blood)'],
+  nightstalker: [12, 17, 13, 8, 15, 10, 'dex', 'dex', 'light', 'dex', 'int', 'Rogue (strigoi)'],
+  bloodGargoyle: [15, 8, 17, 10, 13, 12, 'str', 'str', 'heavy', 'str', 'con', 'Gargoyle (sentinel)'],
+  dhampir: [10, 17, 13, 12, 15, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Ranger (hunter)'],
+  warDrummer: [13, 12, 15, 8, 10, 17, 'str', 'cha', 'medium', 'dex', 'cha', 'Bard (drummer)'],
+  geomancer: [12, 8, 15, 13, 17, 10, 'wis', 'wis', 'medium', 'con', 'wis', 'Druid (stone)'],
+  bellWarden: [17, 8, 15, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Fighter (bell guardian)'],
+  falconer: [10, 17, 13, 8, 15, 12, 'dex', 'wis', 'light', 'str', 'dex', 'Ranger (falconer)'],
 };
 
 const toScores = (r: readonly number[]): Scores => ({ str: r[0], dex: r[1], con: r[2], int: r[3], wis: r[4], cha: r[5] });
@@ -112,16 +121,7 @@ export const STAT_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromE
 /** The heroes still to join the roster (`COMING_HEROES`, docs/notes/twenty-heroes.md): their rows, in the same array, until they join and move
  *  into the table above. */
 const COMING_ROWS: Readonly<Record<string, Row>> = {
-  vampireLord: [12, 17, 13, 10, 8, 15, 'dex', 'cha', 'medium', 'dex', 'cha', 'Fighter (duellist), vampire'],
-  hemomancer: [8, 13, 12, 15, 10, 17, 'cha', 'cha', 'robes', 'con', 'cha', 'Sorcerer (blood)'],
-  nightstalker: [12, 17, 13, 8, 15, 10, 'dex', 'dex', 'light', 'dex', 'int', 'Rogue (strigoi)'],
-  bloodGargoyle: [15, 8, 17, 10, 13, 12, 'str', 'str', 'heavy', 'str', 'con', 'Gargoyle (sentinel)'],
-  dhampir: [10, 17, 13, 12, 15, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Ranger (hunter)'],
-  warDrummer: [13, 12, 15, 8, 10, 17, 'str', 'cha', 'medium', 'dex', 'cha', 'Bard (drummer)'],
   banneret: [15, 8, 13, 10, 12, 17, 'str', 'cha', 'heavy', 'str', 'cha', 'Fighter (standard-bearer)'],
-  geomancer: [12, 8, 15, 13, 17, 10, 'wis', 'wis', 'medium', 'con', 'wis', 'Druid (stone)'],
-  bellWarden: [17, 8, 15, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Fighter (bell guardian)'],
-  falconer: [10, 17, 13, 8, 15, 12, 'dex', 'wis', 'light', 'str', 'dex', 'Ranger (falconer)'],
   astralSphinx: [13, 15, 12, 10, 17, 8, 'dex', 'wis', 'light', 'int', 'wis', 'Sphinx (riddler)'],
   mirageDancer: [8, 17, 12, 10, 13, 15, 'dex', 'dex', 'light', 'dex', 'cha', 'Rogue (dancer)'],
   plagueDoctor: [8, 12, 15, 17, 13, 10, 'int', 'int', 'medium', 'con', 'int', 'Wizard (plague doctor)'],

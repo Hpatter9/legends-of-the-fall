@@ -8,18 +8,18 @@ import { addUnit, fight, place, startBattle, stepBattle, type Battle, type Battl
 import { KITS, keyOf, kitOf, powered, ULT_LEVEL, ultimateOf } from '../src/sim/abilities';
 import { HERO_KITS, heroKitOf, skill2Open, skill3Open, SKILL2_LEVEL, SKILL3_LEVEL } from '../src/sim/heroKits';
 import { CAST_EXEMPT, CLASS_RANGE, heroIncome, kitDemand, slotDemand } from '../src/sim/skillRules';
-import { comingHeroKits, comingKits } from '../src/sim/kits/coming';
+import { twentyHeroKits as comingHeroKits, twentyKits as comingKits } from '../src/sim/kits/coming';
 import { gradeBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { profileOf } from '../src/sim/stats';
-import { ALL_HEROES } from '../src/sim/units';
+import { ALL_HEROES, TWENTY_HEROES } from '../src/sim/units';
 import { deploySpots } from '../tools/heroSweep';
 
 
 /** Register the kit tests for `heroes` (five coming heroes, fielded together in the long fights), named for `who`. */
 export function comingKitTests(who: string, heroes: readonly string[]): void {
-  test(`${who}: each hero has a pool, three skills and an ultimate, its own profile, and none of it is in the roster's tables yet`, () => {
-    const roster = new Set(ALL_HEROES.flatMap((h) => [...HERO_KITS()[h].slots.map((s) => keyOf(s.skill)), keyOf(KITS[h].ultimate!)]));
+  test(`${who}: each hero has a pool, three skills and an ultimate, its own profile, and none of it is another roster hero's`, () => {
+    const roster = new Set(ALL_HEROES.filter((h) => !TWENTY_HEROES.includes(h)).flatMap((h) => [...HERO_KITS()[h].slots.map((s) => keyOf(s.skill)), keyOf(KITS[h].ultimate!)]));
     const mine: string[] = [];
     for (const h of heroes) {
       const hk = comingHeroKits()[h];
@@ -28,7 +28,7 @@ export function comingKitTests(who: string, heroes: readonly string[]): void {
       assert.ok(comingKits()[h].ultimate?.unlock === ULT_LEVEL && comingKits()[h].ultimate?.tuned, `${h}: its ultimate opens at level 30, tuned`);
       assert.equal(comingKits()[h].skill, hk.s1.skill, `${h}: skill 1 is its kit's own skill`);
       assert.ok(profileOf(h), `${h} has scores`);
-      assert.ok(!HERO_KITS()[h] && !KITS[h], `${h} is not in the roster's kits`);
+      assert.equal(!!HERO_KITS()[h] && !!KITS[h], ALL_HEROES.includes(h), `${h} is in the roster's kits exactly when it has joined`);
       mine.push(...hk.slots.map((s) => keyOf(s.skill)), keyOf(comingKits()[h].ultimate!));
     }
     assert.equal(new Set(mine).size, mine.length, 'every name is its own');

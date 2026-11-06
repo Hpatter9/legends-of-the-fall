@@ -71,21 +71,21 @@ export const PASSIVES: Readonly<Record<string, AwakenPassive>> = {
   sage: { name: 'Starlit Mind', ability: 'clairvoyance', text: 'Every fifth blow gives the king mana' },
   demonSwordsman: { name: 'Executioner', ability: 'headsman', text: 'Deals far more to a foe below 30% hp' },
   tyrant: { name: 'Gaze of Judgement', ability: 'idolsGaze', text: 'Blows taken now and then draw the attacker onto it' },
-};
-
-/** The twenty coming heroes' awakened passives (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table
- *  above when its hero joins `ALL_HEROES`). Each takes an ability no roster hero has. */
-export const COMING_PASSIVES: Readonly<Record<string, AwakenPassive>> = {
   vampireLord: { name: 'Crimson Aristocrat', ability: 'coldBlood', text: 'Below a third hp his blood hardens into a shield' },
   hemomancer: { name: 'Blood Ward', ability: 'shieldWall', text: 'Blows taken now and then wrap her in a blood shield' },
   nightstalker: { name: 'Vesper Cloak', ability: 'fadeOut', text: 'Below a third hp he slips into the dark' },
   bloodGargoyle: { name: 'Cathedral Stone', ability: 'watchful', text: 'Starts each fight behind a stone shield' },
   dhampir: { name: 'Daywalker Step', ability: 'shadowStep', text: 'Blows taken now and then let her slip out of sight' },
   warDrummer: { name: 'Taiko Cadence', ability: 'warCry', text: 'Raises the attack of friends beside him' },
-  banneret: { name: 'Royal Spoils', ability: 'spoilsOfWar', text: 'A kill mends the weakest friend' },
   geomancer: { name: 'Shale Ripple', ability: 'mithrilRipple', text: 'Blows taken now and then stun the attacker' },
   bellWarden: { name: 'Sanctuary Counter', ability: 'ironPalm', text: 'Blows taken now and then are answered at once' },
   falconer: { name: 'Stooping Talons', ability: 'pinpoint', text: 'Shots now and then make the foe bleed' },
+};
+
+/** The twenty coming heroes' awakened passives (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table
+ *  above when its hero joins `ALL_HEROES`). Each takes an ability no roster hero has. */
+export const COMING_PASSIVES: Readonly<Record<string, AwakenPassive>> = {
+  banneret: { name: 'Royal Spoils', ability: 'spoilsOfWar', text: 'A kill mends the weakest friend' },
   astralSphinx: { name: 'Starlit Aegis', ability: 'secondWind', text: 'Below a third hp a great shield forms round her' },
   mirageDancer: { name: 'Desert Rush', ability: 'adrenaline', text: 'Below a third hp she is hastened for a while' },
   plagueDoctor: { name: 'Emergency Tincture', ability: 'emergencyDraught', text: 'Below a third hp he drinks a draught and heals' },

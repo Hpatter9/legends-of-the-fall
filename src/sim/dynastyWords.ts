@@ -10,6 +10,7 @@ export const BASE_AGE: Readonly<Record<string, number>> = {
   cleric: 25, druid: 34, barbarian: 27, ranger: 26, warlock: 31, illusionist: 24, gunslinger: 27, shambler: 44, rifleBot: 7,
   mercenary: 32, mummy: 3000, buccaneer: 30, wolfBard: 26, beastmaster: 28, kraken: 9, lancer: 24, reaper: 1000, timeWitch: 35,
   arcBlade: 22, dreadPirate: 41, siegeBot: 11, priestess: 26, dragoon: 23, juggernaut: 36, sage: 50, demonSwordsman: 29, tyrant: 45,
+  vampireLord: 400, hemomancer: 300, nightstalker: 150, bloodGargoyle: 600, dhampir: 27, warDrummer: 33, geomancer: 48, bellWarden: 200, falconer: 25,
 };
 
 /** The ageless kinds: how a season served is told ("in its sixth year of service"), and the veteran's and the elder's touch in its own

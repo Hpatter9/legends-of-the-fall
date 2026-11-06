@@ -53,12 +53,12 @@ export const PERKS: Readonly<Record<string, Perk>> = {
   wolfBard: hp('Marching Song'), beastmaster: at('Kennel Lore'), kraken: hp('Deep Pressure'), lancer: at('Couched Lance'), reaper: at('Last Harvest'),
   timeWitch: sh('Borrowed Second'), arcBlade: at('Arc Edge'), dreadPirate: at('Black Flag'), siegeBot: sh('Plated Hull'), priestess: sh('Sanctuary'),
   dragoon: at('High Jump'), juggernaut: hp('Unstoppable'), sage: sh('Patient Mind'), demonSwordsman: at('Hellforged Edge'), tyrant: at('Iron Decree'),
+  vampireLord: at('Old Blood'), hemomancer: sh('Blood Ward'), nightstalker: at('Night Wings'), bloodGargoyle: sh('Granite Skin'), dhampir: at('Silver Edge'), warDrummer: hp('War Cadence'), geomancer: hp('Bedrock'), bellWarden: sh('Bronze Toll'), falconer: at('Falcon\'s Eye'),
 };
 
 /** The twenty coming heroes' legacy perks (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
 export const COMING_PERKS: Readonly<Record<string, Perk>> = {
-  vampireLord: at('Old Blood'), hemomancer: sh('Blood Ward'), nightstalker: at('Night Wings'), bloodGargoyle: sh('Granite Skin'), dhampir: at('Silver Edge'),
-  warDrummer: hp('War Cadence'), banneret: sh('Under the Standard'), geomancer: hp('Bedrock'), bellWarden: sh('Bronze Toll'), falconer: at('Falcon\'s Eye'),
+  banneret: sh('Under the Standard'),
   astralSphinx: sh('Starlit Riddle'), mirageDancer: at('Shifting Sands'), plagueDoctor: hp('Bitter Tonic'), bombardier: at('Short Fuse'), astrologer: sh('Fixed Stars'),
   inquisitor: at('Burning Writ'), seraph: sh('Golden Wings'), corsairSurgeon: hp('Ship\'s Surgeon'), harpooner: at('Barbed Line'), seaReaver: hp('Salt Hide'),
 };
