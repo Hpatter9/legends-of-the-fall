@@ -32,6 +32,10 @@ const arg = (name: string, fallback: number): number => {
   return i >= 0 && Number(process.argv[i + 1]) > 0 ? Number(process.argv[i + 1]) : fallback;
 };
 const SEEDS = arg('--seeds', 20);
+/** `--counsel <day>` (Dynasties, `sim/dynasty.ts`): from that day an Elder fights beside the hero, whose XP takes Elder's Counsel (+5%, and
+ *  the bench's share too). 140 is the day a first favourite becomes an Elder, so this is the pace of the heroes that march with it. */
+const COUNSEL = arg('--counsel', 0);
+const COUNSEL_XP = 0.05;
 const DAYS = arg('--days', 365);
 /** Real runs played for each army and tier, for the table of what a run pays. */
 const SAMPLES = arg('--samples', 6);
@@ -143,8 +147,9 @@ function simulate(seed: number, table: number[][][]): Report {
     const lib = newCastle();
     lib.library = libraryAt(day);
     const mean = samples[pick] * TIERS[t].xp * xpRate(lib);
-    benched += BENCH_SHARE * mean;
-    return mean * FAV;
+    const counsel = COUNSEL && day >= COUNSEL ? 1 + COUNSEL_XP : 1;
+    benched += BENCH_SHARE * mean * counsel;
+    return mean * FAV * counsel;
   };
   for (let d = 1; d <= DAYS; d++) {
     let fresh: [number, number][] = [];
@@ -176,7 +181,7 @@ function simulate(seed: number, table: number[][][]): Report {
 }
 
 const table = measure();
-console.log(`Level pace for a daily player's favourite hero${TOMES_ARG ? ', every XP tome read to it (and, in the bench table, to the benched hero)' : ''} (${SEEDS} seeds, ${DAYS} days; ${FARM_RUNS} army runs a day on the best tier cleared; the favourite takes ${FAV}x the party mean and is in ${FAV_PLAYS * 100}% of the runs; Library by the day)`);
+console.log(`Level pace for a daily player's favourite hero${COUNSEL ? `, with Elder's Counsel (+${COUNSEL_XP * 100}% XP) from day ${COUNSEL}` : ''}${TOMES_ARG ? ', every XP tome read to it (and, in the bench table, to the benched hero)' : ''} (${SEEDS} seeds, ${DAYS} days; ${FARM_RUNS} army runs a day on the best tier cleared; the favourite takes ${FAV}x the party mean and is in ${FAV_PLAYS * 100}% of the runs; Library by the day)`);
 console.log('\nXP a run pays the party mean, before the tier and Library multipliers (mean of the sample runs; Normal / Hard / Elite / Legendary):');
 ARMIES.forEach((a, i) => console.log(`  ${a.name.padEnd(20)} ${table[i].map((s) => String(Math.round(s.reduce((n, x) => n + x, 0) / s.length)).padStart(7)).join(' ')}`));
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13, table));

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.383.0',
+    date: '2026-11-06',
+    title: 'Seasons and the Houses',
+    notes: ['The years turn in 14-day seasons. Heroes who fight age from Youth to Elder with honour, never losing power, and each founds a House.'],
+  },
+  {
     version: '0.382.0',
     date: '2026-11-06',
     title: 'Duels: single combat with a nemesis',

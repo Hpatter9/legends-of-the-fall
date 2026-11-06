@@ -35,6 +35,7 @@ import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
 import { AilmentFx, ailmentTint } from './ailmentLayer';
 import { gearTexture } from './gearTex';
+import { AGE_LOOKS, AGE_LOOKS_NOT_HUMAN, NOT_HUMAN } from '../sim/heroLooks';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -98,6 +99,28 @@ function nemFilter(): ColorMatrixFilter {
   m[0] *= 1.08;
   m[6] *= 0.9;
   m[12] *= 0.92;
+  return f;
+}
+
+/** Dynasties (`sim/dynasty.ts`): the page tells the sprites each hero kind's stage, so a Veteran or an Elder wears the touch of the years
+ *  (`AGE_LOOKS` in `sim/heroLooks.ts`). Looks only: the battle never reads it. */
+let ageOf: (kind: string) => string | undefined = () => undefined;
+export function setAgeLooks(f: (kind: string) => string | undefined): void {
+  ageOf = f;
+}
+/** The age grade: some of the colour taken out towards silver, the darks lifted a little, a touch of cool. Steady: it never moves. */
+export function ageFilter(kind: string, stage: string | undefined): ColorMatrixFilter | null {
+  if (stage !== 'veteran' && stage !== 'elder') return null;
+  const look = (NOT_HUMAN.includes(kind) ? AGE_LOOKS_NOT_HUMAN : AGE_LOOKS)[stage];
+  // (drawn at the screen's own resolution, so the pixel art stays as sharp as the sheets drawn plain)
+  const f = new ColorMatrixFilter({ resolution: 'inherit' });
+  f.saturate(-look.grey, false);
+  const m = f.matrix;
+  const keep = 1 - look.lift;
+  for (const r of [0, 1, 2]) for (const c of [0, 1, 2]) m[r * 5 + c] *= keep;
+  m[4] += look.lift;
+  m[9] += look.lift;
+  m[14] += look.lift + look.cool;
   return f;
 }
 
@@ -219,6 +242,9 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
+    // (Dynasties: a Veteran's or an Elder's touch of the years, on the player's own heroes, never a summon)
+    const aged = unit.side === 'hero' && unit.owner === undefined && !summon ? ageFilter(unit.def, ageOf(unit.def)) : null;
+    if (aged) this.body.filters = [...(this.body.filters ?? []), aged];
     if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0, unit.nem.trophies ?? []);
     this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []));
   }
