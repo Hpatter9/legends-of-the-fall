@@ -187,16 +187,22 @@ up, mean 7.4; full has four to each army, Might 3.
 
 | Army (Normal, its level) | no War | typical | harsh | full, Might 3 |
 |---|---|---|---|---|
-| Orc Warband (1) | 1.8 | 2.7 (+0.9) | 2.5 (+0.7) | 2.1 (+0.3) |
-| Undead Legion (8) | 2.1 | 2.1 (+0.0) | 2.1 (+0.0) | 2.3 (+0.2) |
-| Beast Packs (15) | 1.4 | 1.4 (+0.0) | 1.5 (+0.1) | 1.5 (+0.1) |
+| Orc Warband (1) | 1.8 | 2.8 (+1.0) | 2.8 (+0.9) | 2.1 (+0.3) |
+| Undead Legion (8) | 2.1 | 2.3 (+0.1) | 2.3 (+0.1) | 2.3 (+0.2) |
+| Beast Packs (15) | 1.4 | 1.4 (+0.0) | 1.4 (+0.0) | 1.5 (+0.1) |
 | The Wildwood (22) | 1.1 | 1.1 (+0.0) | 1.1 (+0.0) | 1.4 (+0.3) |
-| The Labyrinth (35) | 3.3 | 2.9 (-0.4) | 2.4 (-0.9) | 2.9 (-0.4) |
-| Ogre Clans (45) | 3.3 | 3.2 (-0.1) | 3.9 (+0.6) | 4.1 (+0.8) |
-| **The largest rise** | | **+0.88** | **+0.69** | **+0.75** |
+| The Labyrinth (35) | 3.3 | 2.8 (-0.5) | 2.9 (-0.4) | 2.9 (-0.4) |
+| Ogre Clans (45) | 3.3 | 4.1 (+0.8) | 3.6 (+0.3) | 4.1 (+0.8) |
+| **The largest rise** | | **+1.00** | **+0.94** | **+0.75** |
 
-**All are under the +1 bar.** Phase 2 measured +0.81, +0.88 and +0.75. A fall in tries (the Labyrinth) is the paired seeds' noise, as
-before.
+Measured as shipped (a cheat with no Might, a warchief's flat 35%). The typical Council has 13 members at Might mean 2.9; harsh has the
+same five Might up, mean 7.5; full has four to each army, Might 3. Phase 2 measured +0.81, +0.88 and +0.75, and phase 3 as first built
++0.88, +0.69 and +0.75.
+
+**The typical Council's Orc Warband sits exactly on the bar.** A cell's tries come in sixteenths, so +1.00 is exactly 16 more tries over 16
+saves. The tool's bar is "no more than +1", so it passes, but it is not under it. The cause is the grown Council's Might-10 Orc Warlord
+(Might 5 on Normal) against the level-1 party, as in phases 1 and 2 (+0.81 to +0.88 there). The paired seeds' noise moves this cell by a
+sixteenth or two. A fall in tries (the Labyrinth) is the same noise.
 
 ## The war simulator (`npm run war-sim`), and fleeing's second job
 
@@ -253,7 +259,7 @@ npm run war-sim -- --seed 2
 ## Checks
 
 - `npm run typecheck`: clean. `npm run web`: built.
-- **The full `npm test`:** 2,588 tests, all passing.
+- **The full `npm test`:** 2,590 tests, all passing.
   - `test/revenge.test.ts` (15 tests): the Grudge's steps and its fight hook; the Avenger only at Sworn (never at Comrades), its +15% and its
     quicker skills; Vengeance (never cheated over 60 saves, double crowns and trophies, +30 bond points, its scene due); humiliation (1 to 3
     runs away and counted off, Vengeful, Stitched, the shield before the helm, -20 loyalty); trophies (two at most, +5% each, brought home as
