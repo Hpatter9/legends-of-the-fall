@@ -62,13 +62,13 @@ export const HERO_NAMES: Record<string, HeroName> = {
   demonSwordsman: { name: 'Aram', title: 'Host of the Hungry Steel', heritage: 'Armenian' },
   tyrant: { name: 'Edmund', title: 'the Unbending Verdict', heritage: 'English' },
   vampireLord: { name: 'Vladislav', title: 'Red Keep Voivode', heritage: 'Romanian (Wallachian)' },
-  hemomancer: { name: 'Carmilla', title: 'Countess of the Chalice', heritage: 'Austrian (Styrian)' },
+  hemomancer: { name: 'Carmilla', title: 'Chalice Countess', heritage: 'Austrian (Styrian)' },
   nightstalker: { name: 'Sorin', title: 'Wing of the Crypt', heritage: 'a Transylvanian strigoi' },
-  bloodGargoyle: { name: 'Gavril', title: 'Stone Sentinel of the Fane', heritage: 'a cathedral gargoyle' },
+  bloodGargoyle: { name: 'Gavril', title: 'Sentinel of the Fane', heritage: 'a cathedral gargoyle' },
   dhampir: { name: 'Klara', title: 'Silver-Bolt Hunter', heritage: 'Czech (Bohemian)' },
   warDrummer: { name: 'Raiden', title: 'Thunder of the Keep', heritage: 'Japanese' },
   geomancer: { name: 'Tenzin', title: 'Shaper of Crags', heritage: 'Tibetan' },
-  bellWarden: { name: 'Kavi', title: 'Keeper of the Bronze Toll', heritage: 'a yokai temple-bell guardian' },
+  bellWarden: { name: 'Kavi', title: 'Keeper of the Toll', heritage: 'a yokai temple-bell guardian' },
   falconer: { name: 'Aisling', title: 'Wing of the Glen', heritage: 'Scottish Gaelic' },
 };
 

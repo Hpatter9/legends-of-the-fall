@@ -183,6 +183,16 @@ export const SPOTS: Record<string, Spot> = {
   reaper: S(H * 2 + 34, 230, 1),
   kraken: S(H * 2 + 80, 240, 1),
   beastmaster: S(H * 2 + 366, 266, -1),
+  // ---- the nine that joined from the twenty (docs/notes/heroes-join.md): three more in each room, standing
+  nightstalker: S(330, 188, -1),
+  bloodGargoyle: S(20, 230, 1),
+  dhampir: S(352, 270, -1),
+  vampireLord: S(416, 200, 1),
+  hemomancer: S(734, 200, -1),
+  geomancer: S(584, 280, 1),
+  warDrummer: S(1068, 230, -1),
+  falconer: S(990, 274, 1),
+  bellWarden: S(800, 270, 1),
 };
 
 /** The look a hero has in the tavern from their rank: rank 2 wears the second form, the top rank the third. */

@@ -602,6 +602,9 @@ const OATHS: Oath[] = [
   { set: 'dreadCourt', name: 'The Dread Court', area: 'dungeon', cap: 'Dread Court · Oath', blurb: 'The tyrants and denizens of the crypt swear their final, binding court verdict.',
     oaths: ['I swear! The sentence is passed without appeal!', 'I swear! The harvest is long overdue on this field!', 'I swear! Purgatory is shockingly overbooked today!', 'Hrrngh. Sworn upon my spare tibia. Hrrngh.', 'I swore this covenant three dynasties ago. Still applies.'],
     shared: 'The court convenes, the ledgers open, and the sentence falls!' },
+  { set: 'bloodCourt', name: 'The Night Kin', area: 'dungeon', cap: 'Night Kin · Oath', blurb: 'The five of the blood swear their Last Oath beneath a rising blood moon.',
+    oaths: ['I swear upon four centuries of red wine and older grudges.', 'I swear! Do mind the chalice; it spills on its own.', 'I swear from the rafters. You will not see me say it.', 'Sworn in stone. I shall be here at dawn, and long after.', 'I swear with silver on the string. They did say I was half the problem.'],
+    shared: 'One blood, one night, and a moon that answers us!' },
 ];
 
 /** The five, in a line-up: the cast of both versions (the page fills them with the five who cast the move). */
