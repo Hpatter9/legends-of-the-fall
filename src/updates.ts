@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.378.0',
+    date: '2026-11-06',
+    title: 'The Nemesis War begins',
+    notes: ['Bosses and elites who kill, maim or escape your heroes now return named, stronger and scarred, with traits from that fight. See them on the Dark Council.'],
+  },
+  {
     version: '0.377.0',
     date: '2026-11-06',
     title: 'Heroes roam the cliff, Hester in the tavern',
