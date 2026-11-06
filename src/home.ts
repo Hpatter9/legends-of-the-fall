@@ -15,9 +15,6 @@ import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openStall } from './stallView';
 import { closeFinished } from './screens';
-import { newStock } from './sim/stall';
-import { caravanHere, gloamingHere } from './sim/traders';
-import { shopArt } from './bookArt';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
@@ -41,6 +38,7 @@ import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
 import { Tavern } from './tavern';
+import { hesterNews } from './render/tavernSpots';
 import { openUpgrades } from './rankUpList';
 import { upgradeReady } from './sim/upgradesReady';
 import { openRankUp } from './rankUpView';
@@ -197,6 +195,9 @@ export class Home {
           if (t.what === 'awaken') tellAwakened(kind, t.n);
           this.refresh();
         }),
+    }, {
+      // (CLIFF-ROAM: Hester's corner in the hearth hall opens her stall, as the stall on the cliff did, SHOP-BOOKS-GEAR)
+      onStall: () => openStall(this.meta, () => this.refresh()),
     });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
@@ -241,6 +242,8 @@ export class Home {
       b.append(icon(ICONS[t.id]), el('span', '', t.label), el('i', 'badge'));
       // (QUESTS: the Heroes tab's gold "!" while a quest waits at the tavern to be taken or handed in)
       if (t.id === 'heroes') b.append(el('i', 'qbadge', '!'));
+      // (CLIFF-ROAM: Hester's coin on the Heroes tab, the way to the tavern, while her stock is new or a trader visits)
+      if (t.id === 'heroes') b.append(el('i', 'sbadge'));
       b.addEventListener('click', () => this.show(t.id));
       bar.append(b);
       this.tabBtns.set(t.id, b);
@@ -597,6 +600,13 @@ export class Home {
     const heroBadge = this.tabBtns.get('heroes')!.querySelector('i.badge');
     if (heroBadge) heroBadge.textContent = readyN > 0 ? String(Math.min(readyN, 99)) : '';
     this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));
+    // (CLIFF-ROAM: Hester's stall is in the tavern now: her coin on the tab while the day's stock is unseen, a trader's colour while one visits)
+    const shop = hesterNews(m, todayKey());
+    const heroesTab = this.tabBtns.get('heroes')!;
+    heroesTab.classList.toggle('shop', shop.fresh || !!shop.visitor);
+    heroesTab.classList.toggle('dealer', shop.visitor === 'dealer');
+    heroesTab.classList.toggle('caravan', shop.visitor === 'caravan');
+    heroesTab.setAttribute('aria-label', `Heroes${readyN ? `, ${readyN} ready to upgrade` : ''}${shop.visitor ? `; ${shop.visitor === 'dealer' ? 'the Gloaming Dealer' : 'Rustam Saffar’s caravan'} is at Hester’s stall in the tavern` : shop.fresh ? '; new stock at Hester’s stall in the tavern' : ''}`);
     this.tabBtns.get('battle')!.classList.remove('new');
     // (UX-FIXES: the Spells tab is dimmed with a lock until the Chapel is built; a tap says why on its page)
     const spellsTab = this.tabBtns.get('spells')!;
@@ -799,31 +809,7 @@ export class Home {
     swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
     swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
     swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
-    // (Hester's Stall, SHOP-BOOKS-GEAR: the stall's picture over its plate; a gold dot while the day's stock is new and unseen)
-    // (MENU-GLITCH: built only when its state changes: a new picture made on every refresh only to be thrown away still had to be decoded)
-    const fresh = newStock(m, todayKey());
-    // (a visiting trader puts his name on the plate: the Dealer after a guardian falls, the caravan on its day)
-    const visitor = gloamingHere(m, todayKey()) ? 'Gloaming Dealer' : caravanHere(m, todayKey()) ? 'Caravan today' : '';
-    const stallKey = `${fresh}|${visitor}`;
-    if (this.camp.stallSlot.dataset.key !== stallKey || !this.camp.stallSlot.querySelector('.cpPlace')) {
-      this.camp.stallSlot.dataset.key = stallKey;
-      const stall = place('hmStall', 'stall', 'Hester’s Stall', visitor || (fresh ? 'new stock' : 'books · gear'), `Hester’s Stall: skill books, gear and tomes${fresh ? ', new stock today' : ''}${visitor ? `; ${visitor === 'Caravan today' ? 'Rustam Saffar’s caravan is here today' : 'the Gloaming Dealer is here'}` : ''}; sell and mend gear`, () => openStall(m, () => this.refresh()));
-      const pic = el('img', 'cpStallPic');
-      pic.src = shopArt('stall');
-      pic.alt = '';
-      pic.draggable = false;
-      // (Hester's painted sign hangs over the stall's foot in place of the name plate; a visiting trader shows as a small mark, only while he is here)
-      const sign = el('img', 'cpStallSign');
-      sign.src = shopArt('hester-sign');
-      sign.alt = '';
-      sign.draggable = false;
-      stall.querySelector('.cpTag')?.remove();
-      stall.prepend(pic, sign);
-      // (the owner's call: no word on the stall's picture; a small gilded mark says a trader is in camp, and the button's spoken label names him)
-      if (visitor) stall.append(el('i', `cpVisitor ${visitor === 'Caravan today' ? 'caravan' : 'dealer'}`));
-      if (fresh) stall.append(el('i', 'badge'));
-      swapIn(this.camp.stallSlot, this.camp.stallSlot.querySelector('.cpPlace'), stall);
-    }
+    // (CLIFF-ROAM: Hester's Stall left the cliff for a corner of the tavern's hearth hall; its marks moved to the Heroes tab and the tavern)
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     // Earned chests rest by the overlook's supplies.
     const stash = el('div', 'csStash');

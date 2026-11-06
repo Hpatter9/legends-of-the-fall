@@ -43,7 +43,7 @@ for (const [w, h] of SIZES) {
   const out = (n) => `docs/samples/shop-${n}${tag}.png`;
   const { ctx, page, errors } = await boot(browser, port, w, h, extra);
   await page.screenshot({ path: out('camp') });
-  await click(page, '#hmStall');
+  await page.evaluate(() => window.__game.home.tavern.shop?.onStall());
   await page.waitForTimeout(800);
   await page.screenshot({ path: out('books') });
   if (w === 393) {

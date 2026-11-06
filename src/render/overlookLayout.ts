@@ -1,4 +1,5 @@
-// Positions on the painted overlook, in the same scene pixels as the party rigs.
+// Positions on the painted overlook, in the same scene pixels as the party rigs. The five hero spots are where the party stands as the
+// camp opens (and stays, with motion reduced); from there they wander the ledge (`cliffRoam.ts`).
 // Relative positions keep the distant army and foreground feet on their own ground
 // when the portrait changes height. Mode buttons occupy a separate strip at the foot.
 import type { Camp, Place } from './campSpots';
@@ -28,8 +29,7 @@ export function overlookLayout(w: number, h: number): Camp {
       // (the Last Stand's place is the watchtower painted on the left of the overlook, as the Calamity's is the citadel on the right)
       tower: standPlace(h),
       calamity: place(w - 116, 4, 108, Math.max(112, Math.round(h * 0.23))),
-      // (Hester's Stall, SHOP-BOOKS-GEAR: on the ledge at the left, above the fire and the chests; its picture over a short plate)
-      stall: stallPlace(h, heroY),
+      // (CLIFF-ROAM: Hester's Stall has left the ledge for the tavern, so the heroes have its ground to wander; `cliffRoam.ts`)
     },
     buttonTop: h - 60,
   };
@@ -55,15 +55,6 @@ function standPlace(h: number): Place {
   const top = Math.round(h * (STAND_TOWER.top - 0.02));
   const foot = Math.round(h * STAND_TOWER.base) + 2;
   return { x: x + STAND.w / 2, foot, box: { x, y: top, w: STAND.w, h: foot + STAND.plate - top }, plate: { x, y: foot, w: STAND.w, h: STAND.plate } };
-}
-
-/** Hester's Stall's place on the overlook: the stall's picture on the ledge at the left edge, its plate under it, the tap box over both.
- *  CAMP-DEPTH: set a little further back up the ledge and a touch smaller than the heroes' ground, which is drawn in front of it (`camp.ts`). */
-export const STALL = { w: 100, pic: 92, plate: 32 };
-function stallPlace(h: number, heroY: number): Place {
-  const foot = Math.round(heroY - h * 0.105);
-  const x = 2;
-  return { x: x + STALL.w / 2, foot, box: { x, y: foot - STALL.pic, w: STALL.w, h: STALL.pic + STALL.plate }, plate: { x, y: foot, w: STALL.w, h: STALL.plate } };
 }
 
 /** The actual army's field troops, excluding its bosses, in first-seen order. */
