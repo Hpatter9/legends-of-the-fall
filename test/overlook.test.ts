@@ -73,6 +73,9 @@ test('the Last Stand’s place covers the painted watchtower and its plate hangs
     assert.ok(!stall || tower.box.y + tower.box.h < stall.box.y, 'clear of the stall');
     // (UI batch 1: the Daily is a small icon at the right edge, a thumb wide, clear of the tower)
     assert.ok(daily.box.x + daily.box.w <= w && daily.box.x > w / 2 && daily.box.w >= 44 && daily.box.w <= 64, 'the Daily icon at the right edge');
+    // (DAILY-LOW: down in the scene's bottom corner beside the enemy banner, not floating halfway up the cliff)
+    const gap = h - (daily.box.y + daily.box.h);
+    assert.ok(gap >= 4 && gap <= 20, `the Daily low in the corner at ${w}`);
   }
 });
 

@@ -22,8 +22,9 @@ export function overlookLayout(w: number, h: number): Camp {
     cart: { x: Math.round(w * 0.17), y: h - 65 },
     stash: { x: 8, y: h - 114, w: 58, h: 54 },
     places: {
-      // (the Daily is a small icon at the right edge, above the Battle bar, so it no longer takes a plaque's room across the scene)
-      daily: place(w - DAILY_ICON - 8, h - 68 - DAILY_ICON, DAILY_ICON, DAILY_ICON),
+      // (the Daily is a small icon at the right edge, so it no longer takes a plaque's room across the scene; DAILY-LOW: it sits down in
+      //  the scene's bottom corner, its foot level with the enemy banner's beside it, not floating over the cliff)
+      daily: place(w - DAILY_ICON - 8, h - DAILY_FOOT - DAILY_ICON, DAILY_ICON, DAILY_ICON),
       // (the Last Stand's place is the watchtower painted on the left of the overlook, as the Calamity's is the citadel on the right)
       tower: standPlace(h),
       calamity: place(w - 116, 4, 108, Math.max(112, Math.round(h * 0.23))),
@@ -36,6 +37,8 @@ export function overlookLayout(w: number, h: number): Camp {
 
 /** The Daily's icon button at the scene's right edge: a thumb's width, square. */
 export const DAILY_ICON = 56;
+/** The gap under the Daily's icon to the scene's foot (DAILY-LOW: was 68, which left it floating halfway up the cliff). */
+export const DAILY_FOOT = 12;
 
 /** The watchtower in the overlook painting (`art/camp/overlook.png`, drawn over the whole scene), as fractions of the scene: its body,
  *  its lit window, its doorway and the lamp at its foot. The Last Stand's place sits over it; its life is drawn at these points. */
