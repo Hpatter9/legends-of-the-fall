@@ -102,7 +102,12 @@ export function reclearQuip(): void {
   if (!box || !(box.classList.contains('on') || box.classList.contains('off'))) return;
   const r = box.getBoundingClientRect();
   const y = keepClear(r.left, r.top, r.width, r.height);
-  if (y === null) return void box.classList.remove('on');
+  // (no clear spot: the bubble goes at once rather than lie over the HUD while it fades)
+  if (y === null) {
+    box.classList.remove('on');
+    box.style.top = '-999px';
+    return;
+  }
   if (Math.round(y) !== Math.round(r.top)) box.style.top = `${Math.round(y)}px`;
 }
 
