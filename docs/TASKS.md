@@ -984,3 +984,10 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Scope: `art-source/expansion/taunt-banners.png` and task/handoff documentation.
 - Goal: one transparent 1280×384 source sheet; nemesis black/red banner above a mirrored green/brass hero banner, each in a 1280×192 row; no text or figures.
 - Status: ready for review. Inspected ribbon reference; generated and visually reviewed the source sheet; verified 1280×384 RGBA with transparent pixels. Runtime integration excluded. Handoff: [taunt banners](notes/expansion-taunt-banners.md).
+
+### EXPANSION-BADGES — Nemesis badges and duel banner
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** two source PNGs under `art-source/expansion`, handoff and this task entry.
+- **Completion:** four centred badges in a 1024×256 transparent strip and one 512×256 transparent duel emblem; dimensions and alpha checked, visually reviewed. No runtime changes.
+- **Status:** ready for review. [Handoff](notes/expansion-art.md). Requested prior branch/PR were absent; branch recreated from main.

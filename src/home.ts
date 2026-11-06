@@ -7,6 +7,7 @@
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
+import { chipNumber } from './topbarRules';
 import { SPAR, settleSparring, startSparring } from './sim/bonds';
 import { CALLINGS, PERKS, recall } from './sim/legacy';
 import { roomsStrip } from './castle';
@@ -607,18 +608,23 @@ export class Home {
     }
     // top bar (the run's gold stays in the run: the owner's call)
     // (the crowns and stones chips keep their icons: only the number is written, and only when it changed, so the picture never blinks)
+    // (TOPBAR-FIT: from 100,000 up a count is shown short, "999k" or "1.2M", so the top row keeps the gear beside the trophy; the full
+    //  number is still the chip's title and spoken label)
     const chipCount = (id: string, pic: string, n: number): void => {
       const chip = $(id);
+      const shown = chipNumber(n);
+      chip.title = n.toLocaleString('en-GB');
+      chip.setAttribute('aria-label', `${chip.id === 'hmStones' ? 'Summoning stones' : 'Crowns'}: ${chip.title}`);
       const count = chip.querySelector('b');
-      if (!count) chip.replaceChildren(icon(pic), el('b', '', String(n)));
-      else if (count.textContent !== String(n)) count.textContent = String(n);
+      if (!count) chip.replaceChildren(icon(pic), el('b', '', shown));
+      else if (count.textContent !== shown) count.textContent = shown;
     };
     // (QUESTS: the day's offers are drawn the first time a date is seen, and kept; old ones come down)
     if (refreshOffers(m, todayKey())) saveMeta(m);
     chipCount('hmCrowns', ICONS.crowns, m.crowns);
     chipCount('hmStones', ICONS.stones, stonesOf(m));
     this.hooks.onTopBar?.();
-    // (Dynasties: the season's chip in the top bar, beside the stones; redrawn only when the season changes, so its icon never blinks)
+    // (Dynasties: the season's chip in the top bar's second row; redrawn only when the season changes, so its icon never blinks)
     if (m.dynasty) {
       const key = String(seasonOf(m.dynasty, todayKey()).index);
       const had = document.getElementById('hmSeason');
@@ -626,13 +632,16 @@ export class Home {
         const chip = seasonChip(m, todayKey(), () => openSeasonCard(m, todayKey(), () => this.openHouses()));
         if (chip) {
           chip.dataset.key = key;
+          // (TOPBAR-FIT: in the second row, before the armies line, so the top row keeps the gear beside the trophy)
           if (had) had.replaceWith(chip);
-          else $('hmTop').querySelector('.grow')!.before(chip);
+          else $('hmBest').prepend(chip);
         }
       }
     }
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
-    $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
+    const best = $('hmBest');
+    const bestText = best.querySelector('.hbText') ?? best.appendChild(el('span', 'hbText'));
+    bestText.textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
     $('hmTrophy').classList.toggle('new', fresh);
     // tabs
@@ -1341,3 +1350,4 @@ function showDispatch(page: HTMLElement, text: string): void {
   setTimeout(gone, 8000);
   page.append(d);
 }
+
