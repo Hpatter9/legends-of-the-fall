@@ -1,9 +1,9 @@
 // The party's tactics on the page (docs/notes/tactics.md, docs/notes/tactics-overview.md; the rules are `sim/tactics.ts`, the pick
 // `sim/tacticPick.ts`). Two parts:
 //
-// - **The tactic button** in the fight, at the side under the Auto switch: the tactic's icon. A tap cycles to the next tactic (Advance
+// - **The tactic button** in the fight, at the right just above the hero rows (COMBAT-HUD): the tactic's icon. A tap cycles to the next tactic (Advance
 //   together, Hold the line, Charge, and back) and it takes effect in the running fight, through the sim's own order (`orderTactic`). A small
-//   word pops up under it with the mode's name ("Advance", "Hold", "Charge") and fades. The pick is kept in the save for this mode or army,
+//   word pops up beside it with the mode's name ("Advance", "Hold", "Charge") and fades. The pick is kept in the save for this mode or army,
 //   so the next fight begins with it. (It took the place of the prep screen's tactic chip and the fight's Charge! call: TACTICS-OVERVIEW.)
 // - **The Formation button** on the prep screen, at the side of the board, once the formations are open (with Auto place): the shape the
 //   heroes stand in, and a tap opens a sheet of the four shapes; a tap on one sets the placed heroes out in it.
@@ -22,8 +22,10 @@ export interface TacticsViewOpts {
   /** Whether the formations are open (with Auto place), and the shape the heroes stand in now (undefined: Loose). */
   formationsOpen: () => boolean;
   formation: () => Formation | undefined;
-  /** Set the placed heroes out in a shape. */
-  arrange: (f: Formation) => void;
+  /** The shape picked on the sheet for this mode or army, which Auto place sets the heroes out in (undefined: none, Auto places as before). */
+  picked: () => Formation | undefined;
+  /** Set the placed heroes out in a shape and keep it as the pick; undefined (Loose) forgets the pick and moves nobody. */
+  arrange: (f: Formation | undefined) => void;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -45,7 +47,7 @@ const PAINTED: readonly string[] = typeof __TACTIC_ART__ !== 'undefined' ? __TAC
 const icon = (t: Tactic) =>
   PAINTED.includes(t) ? `<img class="fhTacticArt" src="ui/tactics/${t}.png" alt="" draggable="false">` : `<svg viewBox="0 0 10 10" width="22" height="22" aria-hidden="true">${ICONS[t]}</svg>`;
 
-/** How long the mode's word stays under the button (ms), fading over its last part. */
+/** How long the mode's word stays beside the button (ms), fading over its last part. */
 const WORD_MS = 1600;
 
 export class TacticsView {
@@ -59,7 +61,8 @@ export class TacticsView {
   private wordTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private opts: TacticsViewOpts) {
-    // (the fight's tactic button, in the spell row under the Auto switch at its right end)
+    // (the fight's tactic button: at the right, just above the hero rows (COMBAT-HUD, the owner: "down on the right side, above the heroes'
+    // bars, not at the top"); it rides on the panel's top edge, so it stays just above the rows however many heroes there are)
     this.button = el('button', 'fhTactic');
     this.button.id = 'tacticBtn';
     this.button.type = 'button';
@@ -68,8 +71,7 @@ export class TacticsView {
     this.word.id = 'tacticWord';
     this.word.setAttribute('role', 'status');
     this.word.setAttribute('aria-live', 'polite');
-    const row = document.getElementById('hudSpells')!;
-    row.append(this.button, this.word);
+    document.getElementById('panel')!.append(this.button, this.word);
 
     // (the prep screen's Formation button, at the side of the board)
     this.formBtn = el('button');
@@ -119,7 +121,7 @@ export class TacticsView {
     this.button.title = `${w.name}: ${w.line} Tap for the next tactic.`;
   }
 
-  /** A tap: the next tactic, ordered in the fight, kept in the save, and its word shown under the button. */
+  /** A tap: the next tactic, ordered in the fight, kept in the save, and its word shown beside the button. */
   private cycle(): void {
     const b = this.b;
     if (!b || !canChangeTactic(b)) return;
@@ -130,7 +132,7 @@ export class TacticsView {
     this.flash(TACTIC_WORDS[to].short);
   }
 
-  /** The mode's word under the button: it pops up, stays readable, then fades (with reduced motion it shows and goes, no movement). */
+  /** The mode's word beside the button: it pops up, stays readable, then fades (with reduced motion it shows and goes, no movement). */
   private flash(text: string): void {
     this.word.textContent = text;
     this.word.classList.remove('up');
@@ -145,11 +147,13 @@ export class TacticsView {
     const card = el('div', 'tacCard');
     const shape = this.opts.formation();
     card.append(el('h2', '', 'Formation'));
+    const picked = this.opts.picked();
     card.append(el('p', 'tacAdvice', shape ? `The heroes stand in a ${FORMATION_WORDS[shape].name}. Tap a shape to set them out in it.` : 'The heroes stand in no shape. Tap one to set them out in it.'));
+    card.append(el('p', 'tacAdvice', picked ? `Auto place sets them out in a ${FORMATION_WORDS[picked].name}.` : 'Auto place sets them out by their roles. Pick a shape and it uses that.'));
     const grid = el('div', 'tacForms');
     for (const f of FORMATIONS_LIST) {
       const w = FORMATION_WORDS[f];
-      const b = el('button', `tacForm${f === shape ? ' on' : ''}`);
+      const b = el('button', `tacForm${f === picked ? ' on' : ''}`);
       b.type = 'button';
       b.append(el('b', '', w.name), el('span', '', w.line));
       b.addEventListener('click', () => {
@@ -158,6 +162,15 @@ export class TacticsView {
       });
       grid.append(b);
     }
+    // (Loose: forget the pick, so Auto place sets the heroes out by their roles again; nobody moves)
+    const loose = el('button', `tacForm${!picked ? ' on' : ''}`);
+    loose.type = 'button';
+    loose.append(el('b', '', 'Loose'), el('span', '', 'No shape: Auto place sets them out by their roles.'));
+    loose.addEventListener('click', () => {
+      this.opts.arrange(undefined);
+      this.close();
+    });
+    grid.append(loose);
     card.append(grid);
     const shut = el('button', 'tacClose', 'Close');
     shut.type = 'button';

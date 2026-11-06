@@ -3,6 +3,8 @@
 // itself after a moment. A banter reply follows the first line. Only the page uses this; the rules for when to speak are in
 // `render/quipRules.ts`.
 
+import { FIGHT_HUD, hudBoxes } from './hudClear';
+
 const CSS = `
 #quip { position: fixed; z-index: 60; max-width: min(232px, calc(100vw - 24px)); box-sizing: border-box; padding: 6px 9px; pointer-events: none; opacity: 0; transition: opacity 0.18s ease-out;
   background: var(--s14); color: var(--s1); border: 2px solid var(--s1); border-radius: 6px; box-shadow: 0 2px 0 rgb(var(--black-rgb) / 0.5);
@@ -44,17 +46,16 @@ function ensure(): HTMLElement {
   return box;
 }
 
-/** UX-FIXES: pieces of the page a bubble must not sit on: the top bar, the fight's hero rows and a heading. A bubble that would cover one is moved
- *  to the nearest clear spot (the top bar's bottom edge, or above the hero rows). */
-const KEEP_CLEAR = ['#top', '#hmTop', '#fightHud', '#starter h1', '#starter .stSub'];
-function keepClear(top: number, h: number): number {
+/** UX-FIXES: pieces of the page a bubble must not sit on: the top bar, the fight's hero rows and a heading; and (COMBAT-HUD) the rest of the
+ *  fight's HUD: the spell row, the boss's, twist's and combo bars, the tactic button and a toast in its lane. A bubble that would cover one is moved to the
+ *  nearest clear spot (below it in the top half of the page, above it in the bottom half), again until it covers none. */
+const KEEP_CLEAR = [...FIGHT_HUD, '.toast.lane', '#hmTop', '#starter h1', '#starter .stSub'];
+function keepClear(left: number, top: number, w: number, h: number): number {
   let y = top;
-  for (const sel of KEEP_CLEAR) {
-    const e = document.querySelector<HTMLElement>(sel);
-    if (!e || e.closest('[hidden]')) continue;
-    const b = e.getBoundingClientRect();
-    if (b.width === 0 || b.height === 0 || y + h <= b.top || y >= b.bottom) continue;
-    // (the bubble overlaps it: below it when it is in the top half of the page, above it otherwise)
+  const boxes = hudBoxes(KEEP_CLEAR);
+  for (let pass = 0; pass <= boxes.length; pass++) {
+    const b = boxes.find((b) => left < b.right && left + w > b.left && y < b.bottom && y + h > b.top);
+    if (!b) break;
     y = b.top + b.height / 2 < innerHeight / 2 ? b.bottom + 4 : b.top - h - 4;
   }
   return Math.max(4, y);
@@ -78,7 +79,7 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
   const above = at.y - r.height - 10 >= 4;
   el.classList.toggle('below', !above);
   el.style.left = `${Math.round(left)}px`;
-  el.style.top = `${Math.round(keepClear(above ? at.y - r.height - 10 : at.y + 14, r.height))}px`;
+  el.style.top = `${Math.round(keepClear(left, above ? at.y - r.height - 10 : at.y + 14, r.width, r.height))}px`;
   el.style.setProperty('--tail', `${Math.round(Math.min(r.width - 12, Math.max(12, at.x - left)))}px`);
   void el.offsetWidth;
   el.classList.add('on');
@@ -86,6 +87,15 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
     el.classList.remove('on');
     el.classList.add('off');
   }, opts.hold ?? HOLD_MS);
+}
+
+/** COMBAT-HUD: the bubble showing, set clear again of the HUD as it now stands (a line said at the deploy stays up as the fight's spell row
+ *  and boss bar come in). Nothing moves when it already is clear. */
+export function reclearQuip(): void {
+  if (!box?.classList.contains('on')) return;
+  const r = box.getBoundingClientRect();
+  const y = keepClear(r.left, r.top, r.width, r.height);
+  if (Math.round(y) !== Math.round(r.top)) box.style.top = `${Math.round(y)}px`;
 }
 
 /** Clear the bubble now (a screen closing, a new fight). */
