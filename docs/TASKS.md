@@ -985,9 +985,29 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Goal: one transparent 1280×384 source sheet; nemesis black/red banner above a mirrored green/brass hero banner, each in a 1280×192 row; no text or figures.
 - Status: ready for review. Inspected ribbon reference; generated and visually reviewed the source sheet; verified 1280×384 RGBA with transparent pixels. Runtime integration excluded. Handoff: [taunt banners](notes/expansion-taunt-banners.md).
 
+### EXPANSION-ART-SEASONS — Seasons and fates source sheet
+
+- Owner: Codex. Branch/worktree: `art/expansion`, `/workspace/legends-of-the-fall`.
+- Scope: `art-source/expansion/seasons-fates.png` and task/handoff documentation.
+- Goal: nine painted icons in the requested order, transparent 1152×256 sheet, each centred in the upper 128×128 of its 128×256 cell.
+- Status: complete; dimensions, alpha, per-cell centring, empty lower half and content checked. [Handoff](notes/expansion-art-seasons-fates.md). No runtime integration.
+## EXP-ART-006 — Duel ring of stones
+
+- Owner: Codex art chat. Branch/worktree: `art/expansion`, `/workspace/legends-of-the-fall`.
+- Scope: one transparent source image at `art-source/expansion/duel-ring.png`, task record and handoff.
+- Completion: 640×320 RGBA; low grey menhirs on a hollow 5×5 isometric square perimeter, brass bands and moss, no ground or text; submit to Expansion art PR.
+- Status: ready for review. Final image visually inspected; dimensions, RGBA and transparent centre/exterior checked with ImageMagick. Runtime checks not run: executable code unchanged.
+- Handoff: [duel ring source art](notes/expansion-duel-ring-art.md). Renderer integration is outside this task.
 ### EXPANSION-BADGES — Nemesis badges and duel banner
 
 - **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
 - **Scope:** two source PNGs under `art-source/expansion`, handoff and this task entry.
 - **Completion:** four centred badges in a 1024×256 transparent strip and one 512×256 transparent duel emblem; dimensions and alpha checked, visually reviewed. No runtime changes.
 - **Status:** ready for review. [Handoff](notes/expansion-art.md). Requested prior branch/PR were absent; branch recreated from main.
+
+### EXPANSION-ICONS — Nemesis icon atlas
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** `art-source/expansion/nemesis-icons.png` and this handoff; existing badge/banner work preserved.
+- **Completion:** one 1536×640 transparent PNG, 12×5 cells of 128×128; 29 ordered icons and 31 empty cells. Dimensions, binary alpha, occupancy, padding and 24px preview checked.
+- **Status:** ready for review in [PR #399](https://github.com/Hpatter9/legends-of-the-fall/pull/399). [Handoff](notes/expansion-art.md). Source art only; no runtime checks required.
