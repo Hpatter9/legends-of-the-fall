@@ -88,8 +88,9 @@ export function menuTitle(menu: OrnateMenu, title: string, sub?: string): void {
   if (s) s.textContent = sub ?? '';
 }
 
-/** A section of the body: a brass heading with its line, then a grid for the section's choices. Returns the grid. */
-export function menuSection(parent: HTMLElement, title?: string, line?: string, cols: 2 | 3 = 3): HTMLElement {
+/** A section of the body: a brass heading with its line, then a grid for the section's choices (`cols` across: 4 is for short rows, as
+ *  the Auto card's counts, and holds at every phone width). Returns the grid. */
+export function menuSection(parent: HTMLElement, title?: string, line?: string, cols: 2 | 3 | 4 = 3): HTMLElement {
   const sec = el('section', 'omSection');
   if (title) {
     const h = el('h3', 'omSectionHead', title);
