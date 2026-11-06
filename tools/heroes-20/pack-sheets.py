@@ -259,14 +259,14 @@ def keyed(px: np.ndarray) -> tuple[np.ndarray, list[str]]:
     return a, notes
 
 
-def figures(solid: np.ndarray) -> list[np.ndarray]:
+def figures(solid: np.ndarray, join: float = 0.012) -> list[np.ndarray]:
     """The figures in a sheet: its solid shapes, those a little apart joined (a dilation of about 1.2% of the sheet's height), and the
     flecks too small to be a figure (under a twentieth of the middle figure's area) given to the figure nearest them or dropped. Each
     is returned as a full-size mask."""
     h, w = solid.shape
     H, W = h // COARSE, w // COARSE
     cs = solid[: H * COARSE, : W * COARSE].reshape(H, COARSE, W, COARSE).any(axis=(1, 3))
-    r = max(1, round(0.012 * h / COARSE))
+    r = round(join * h / COARSE)
     grown = cs.copy()
     for _ in range(r):
         g = grown.copy()
@@ -315,6 +315,22 @@ def figures(solid: np.ndarray) -> list[np.ndarray]:
     return [full == i for i in big]
 
 
+# How far apart a figure's own pieces may be and still be one figure, as a share of the sheet's height, tried in turn until the sheet
+# reads as the poses it should hold: none first (the reference sheets pack their poses close, so any joining runs neighbours together),
+# then wider (a falcon or a thrown blade a little apart from its hero, or a strip's loose figures).
+JOINS = (0.0, 0.003, 0.006, 0.012)
+
+
+def found_rows(a: np.ndarray, want: int) -> list[list[np.ndarray]]:
+    """The sheet's figures in rows, read with the narrowest join that finds `want` of them (else the widest's reading)."""
+    rows: list[list[np.ndarray]] = []
+    for j in JOINS:
+        rows = in_rows(figures(a >= ALPHA_CUT, j))
+        if sum(len(r) for r in rows) == want:
+            break
+    return rows
+
+
 def in_rows(masks: list[np.ndarray]) -> list[list[np.ndarray]]:
     """The figures in rows, top to bottom, each left to right: a figure joins a row when its lowest point is within a third of the middle
     figure's height of the row's (the poses of a row stand on one ground line, a fallen one lying on it)."""
@@ -340,7 +356,7 @@ def sheet_frames(path: Path, wanted: list[tuple[str, int]]) -> tuple[dict, list[
     height)}, and the notes and faults. A count that does not match is a fault, and nothing is taken from the sheet."""
     px = np.array(Image.open(path).convert('RGBA'))
     a, notes = keyed(px)
-    rows = in_rows(figures(a >= ALPHA_CUT))
+    rows = found_rows(a, len(wanted))
     found = [m for r in rows for m in r]
     notes.append(f'{len(found)} figures in {len(rows)} rows ({", ".join(str(len(r)) for r in rows)})')
     if len(found) != len(wanted):
@@ -374,7 +390,7 @@ def draw_found(path: Path, wanted: list[tuple[str, int]], out: Path) -> None:
     """The sheet with each found figure boxed and labelled with the pose it was taken as, for checking the order by eye."""
     px = np.array(Image.open(path).convert('RGBA'))
     a, _ = keyed(px)
-    rows = in_rows(figures(a >= ALPHA_CUT))
+    rows = found_rows(a, len(wanted))
     im = Image.new('RGBA', (px.shape[1], px.shape[0]), (74, 74, 86, 255))
     shown = px.copy()
     shown[..., 3] = np.where(a >= ALPHA_CUT, 255, 0)
