@@ -103,3 +103,48 @@ board show every number. The foes' bars are unchanged.
 - `npm run typecheck`, `npm run web`.
 - `npm test -- auto-formation tactic formations autoplay ui-standard quip no-flicker fight-hud`: 105 pass.
 - The probe before and after, all three sizes (above); the shots in `docs/samples/combat-hud/`.
+
+## 5. The boss's bar under Auto (BOSS-BAR)
+
+The owner's words, on 0.373.0: "The Auto button covers the boss health bar."
+
+### When it happened
+
+The spell row (`#hudSpells`: the War Horn, the mana, the orbs, Auto) may wrap (`flex-wrap: wrap`, so a narrow phone's Auto drops under the
+row rather than off the screen). With the War Horn in the row (held once an Eidolon is bound) and four spells (three slots and the open
+one; no save casts more, so there is no six-spell row), the row is too wide at 393 and 360 across: Auto drops to a second line, 148 to
+196 px down. `layout` (`main.ts`) put the boss's bar under a row it took to be always one line high (`ORBS_ROW`, 48 px), at 148 px: Auto
+lay on the bar's left end, 48 x 34 px. At 412 across the row fits on one line. The phone's height does not matter (360x640 the same). It
+happened in every mode with a boss's bar: an army's boss, the Calamity's map boss and an Eidolon's trial (the Last Stand draws its foes'
+bars on the board and has no bar to cover). The 0.373 probe missed it because its save had no Eidolon bound (no horn) and three spells.
+
+### The fix
+
+- **Laid out from what is drawn** (`placeTopHud`, `main.ts`): a twist's banner under the top bar, the spell row under that, then the
+  boss's bar under the spell row's measured bottom (at least one row's height, as before the fight when the row is not drawn), and the
+  synergies and the combo bar under the lowest of them. `layout` calls it.
+- **Laid out again when anything up there changes size** (`watchTopHud`): a `ResizeObserver` on the top bar, the twist banner, the spell
+  row and the boss's bar runs it again when the row wraps or unwraps, the War Horn or a spell comes in, the fonts load or the bar shows.
+  The bar is also placed (its name set first) the moment it shows (`refreshBossBar`). When the bar moves, a toast in its lane and a quip's
+  bubble are set clear of it again.
+- The board's fit is reckoned as before.
+- **Quips** (`quipView.ts`, `hudClear.ts`), which the new cases caught on main as well: on a short phone (360x640) the tactic button sits
+  above the screen's middle, and a bubble's old step (below a part in the top half, above it in the bottom half) sent it back and forth
+  between the button and the hero rows, ending on the button. A bubble now goes to the nearest spot just above or below a part that covers
+  none and stays on the screen (the old step only when there is none). And the parts kept clear are every match, not the first, so a
+  toast fading out of the lane and the next coming in are both kept clear. A bubble said at the deploy is set clear again as the spell
+  row comes in.
+
+### The probe
+
+`tools/combat-hud/probe.mjs` now also plays boss waves with 2, 3 and 4 spells, with and without the War Horn, in an army, at the
+Calamity's map boss (the map's boss spot entered through its own view) and in Nivra's trial (as practice, the same fight), at
+393x852, 360x780, 412x915, 360x640 and 393x852 with a 24 px top safe-area inset (put on the top bar by hand: a desktop browser's inset is
+0: every rule of the page's sheets that reads `env(safe-area-inset-top)` is given 24 px). It waits for the fonts. A boss case with no boss's bar on the screen counts as a failure, so the probe cannot pass by missing the bar.
+`KITS=boss` runs only the boss cases; `SIZES=393,360640,393s` picks sizes.
+
+- Before (main at 0.373.0, the boss cases, `KITS=boss`): 17 overlaps. `auto x bossBar (48x34 px)` 12 times: four spells and the horn at
+  393x852, 360x780, 360x640 and 393 with the inset, in the army, the Calamity and the trial (never at 412). `tactic x quip` 4 times and
+  `toast x quip` once, all at 360x640.
+- After: see the checks below. Shots: `docs/samples/combat-hud/bossbar-before-<case>-<w>.png` and `bossbar-after-<case>-<w>.png`
+  (`<w>x640` for the short phone, `<w>s` for the inset).

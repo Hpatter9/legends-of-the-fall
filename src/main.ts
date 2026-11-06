@@ -174,6 +174,7 @@ import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
+import { fightToastTop } from './hudClear';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/rogue/heart.png';
@@ -606,6 +607,7 @@ class Game {
       return said;
     });
     window.addEventListener('resize', () => this.layout());
+    this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
     const home = $('home');
     const sync = () => {
@@ -1121,7 +1123,12 @@ class Game {
     const show = this.b.phase === 'fight' && !!boss?.alive;
     if (bar.hidden === show) {
       bar.hidden = !show;
-      if (show) reclearQuip();
+      // (COMBAT-HUD: the bar is placed under the spell row as it is drawn now, before the quip is set clear of it)
+      if (show) {
+        bar.querySelector('b')!.textContent = this.questBossName(boss!.def) ?? UNITS[boss!.def].name;
+        this.placeTopHud();
+        reclearQuip();
+      }
     }
     if (!boss || !show) return;
     bar.querySelector('b')!.textContent = this.questBossName(boss.def) ?? UNITS[boss.def].name;
@@ -1581,29 +1588,60 @@ class Game {
     return Math.min(1, (this.area.w - 20) / (x1 - x0) / this.scale);
   }
 
-  /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
-  private layout(): void {
-    this.fx.fitScreen(viewW(), viewH());
-    this.weather.resize(this.app.screen.width, this.app.screen.height);
+  /** The fight's top parts, each under the measured bottom of the ones above it (COMBAT-HUD, docs/notes/combat-hud.md): a twist's banner
+   *  under the top bar, the spell row under that, then the boss's bar under the whole spell row as it is drawn now (the row wraps, Auto
+   *  dropping under the orbs, on a narrow phone with the War Horn and four spells), and the synergies under the lowest. Run by `layout` and
+   *  again whenever the spell row or the boss's bar changes size or shows (`watchTopHud`). Returns the bottom of the parts over the board
+   *  before the boss's bar, and the boss's bar's bottom (with its gap). */
+  private placeTopHud(): { below: number; barBottom: number } {
     const top = $('top').getBoundingClientRect();
-    const panel = $('panel').getBoundingClientRect();
     const bar = $('bossBar');
-    bar.style.top = `${top.bottom + 4}px`;
     bar.style.right = '12px';
     // (a floor's twist banner sits under the top bar; the bar for a boss goes below it)
     const twist = $('twistBanner');
     twist.style.top = `${top.bottom + 2}px`;
     const below = twist.hidden ? top.bottom : twist.getBoundingClientRect().bottom + 2;
-    // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky: the boss's bar and the combo bar go under
-    // them, while the board's own room (its fit) is reckoned as it was, from the top bar)
-    $('hudSpells').style.top = `${below + 6}px`;
-    const orbs = ORBS_ROW;
-    // (COMBAT-HUD: the bar starts under the spell row's own bottom (its 6 px drop and its height), not 2 px inside it)
-    bar.style.top = `${below + 6 + orbs + 4}px`;
+    // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky)
+    const row = $('hudSpells');
+    row.style.top = `${below + 6}px`;
+    // (the row's real bottom when it shows (the orbs, Auto and the War Horn, wrapped or not); before the fight, when it is not drawn, a
+    // single row's height)
+    const drawn = row.getBoundingClientRect();
+    const rowBottom = drawn.height > 0 ? Math.max(drawn.bottom, below + 6 + ORBS_ROW) : below + 6 + ORBS_ROW;
+    bar.style.top = `${rowBottom + 4}px`;
     const barBottom = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
-    // (the row of active synergies sits under the bars during a fight)
-    placeSynergies(bar.hidden ? below + orbs : barBottom);
-    const head = bar.hidden ? below : barBottom - orbs;
+    // (the row of active synergies and the combo bar sit under the bars during a fight)
+    placeSynergies(bar.hidden ? rowBottom : barBottom);
+    return { below, barBottom };
+  }
+
+  /** Lay the top parts out again whenever the spell row or the boss's bar changes size (a wrap, the War Horn given, a spell added, the
+   *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs. */
+  private watchTopHud(): void {
+    if (typeof ResizeObserver !== 'function') return;
+    let busy = false;
+    const watch = new ResizeObserver(() => {
+      if (busy) return;
+      busy = true;
+      this.placeTopHud();
+      // (a toast in the lane goes under the parts as they now stand, and a quip's bubble is set clear of them all: the spell row coming in
+      // as the fight begins, the bar moving down under a wrapped row)
+      const lane = fightToastTop();
+      if (lane !== undefined) for (const t of document.querySelectorAll<HTMLElement>('.toast.lane')) t.style.top = `${Math.round(lane)}px`;
+      reclearQuip();
+      busy = false;
+    });
+    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar']) watch.observe($(id));
+  }
+
+  /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
+  private layout(): void {
+    this.fx.fitScreen(viewW(), viewH());
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
+    const panel = $('panel').getBoundingClientRect();
+    const { below, barBottom } = this.placeTopHud();
+    const bar = $('bossBar');
+    const head = bar.hidden ? below : barBottom - ORBS_ROW;
     const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
