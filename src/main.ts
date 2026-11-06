@@ -105,6 +105,9 @@ import { lecternDue, lecternSwap } from './sim/lectern';
 import { applyVigil } from './sim/chapelRooms';
 import { journeyBoost, landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
+import { nemesisLines, planNemeses, type NemNote } from './sim/nemesis';
+import { dreadOf } from './sim/nemesisTraits';
+import { startNemesisTally, tallyNemesis, type NemesisTally } from './sim/nemesisLog';
 import { bondScenesDue } from './sim/bondScenes';
 import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
 import { roomOpen } from './sim/rooms';
@@ -343,6 +346,9 @@ class Game {
   private spellGhost = document.createElement('div');
   /** The fight's numbers for each hero, tallied as the ticks come in. */
   private stats: FightStats = [];
+  /** The Nemesis War's tally of the fight going (`nemesisLog.ts`), and what the last settled fight meant for the War. */
+  private nemTally: NemesisTally = startNemesisTally();
+  private nemNote: NemNote | undefined;
   /** The ultimates fired this fight, one hero kind each (QUESTS-1b: the quests' goals read them when the fight settles). */
   private ultsFired: string[] = [];
   /** A boss's title card: how long it has been on, and the boss it is about. */
@@ -1125,13 +1131,14 @@ class Game {
       bar.hidden = !show;
       // (COMBAT-HUD: the bar is placed under the spell row as it is drawn now, before the quip is set clear of it)
       if (show) {
-        bar.querySelector('b')!.textContent = this.questBossName(boss!.def) ?? UNITS[boss!.def].name;
+        bar.querySelector('b')!.textContent = boss!.nem?.name ?? this.questBossName(boss!.def) ?? UNITS[boss!.def].name;
         this.placeTopHud();
         reclearQuip();
       }
     }
     if (!boss || !show) return;
-    bar.querySelector('b')!.textContent = this.questBossName(boss.def) ?? UNITS[boss.def].name;
+    // (the Nemesis War: a boss that is a nemesis goes by its own name)
+    bar.querySelector('b')!.textContent = boss.nem?.name ?? this.questBossName(boss.def) ?? UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
   }
 
@@ -1169,6 +1176,7 @@ class Game {
     // (the opening grumble belongs to a new fight)
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
+    this.nemTally = startNemesisTally();
     this.ultsFired = [];
     // (the music: the battle's one track, the same for every wave of an army or a daily, `battleMusic.ts`)
     startFight(trackOfRun(this.run));
@@ -1299,6 +1307,7 @@ class Game {
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
+        tallyNemesis(this.nemTally, events, b.units, b.t);
         this.ultsFired.push(...ultsIn(events, b.units));
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
@@ -1541,6 +1550,11 @@ class Game {
         if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
         else if (this.b.phase === 'fight') this.fx.summoned(this.b, u);
       }
+    // (the Nemesis War: a nemesis's plate wears a skull while the hero it dreads stands on the field)
+    for (const u of this.b.units) {
+      const dread = u.nem ? dreadOf(u.nem.weak) : undefined;
+      if (dread) this.sprites.get(u.id)?.setDread(this.b.units.some((h) => h.alive && h.side === 'hero' && h.owner === undefined && h.def === dread));
+    }
   }
 
   /* -------------------------------------------------------------- the camera */
@@ -2465,6 +2479,11 @@ class Game {
       const snap = bondSnapshot(this.meta);
       if (Object.keys(snap).length) run.bonds = snap;
     }
+    // (the Nemesis War: the army's nemeses this run meets, and the waves they stand in, frozen as it starts)
+    if (run.mode?.kind === 'army' && !run.nemesis) {
+      const named = planNemeses(this.meta.war, run);
+      if (named) run.nemesis = named;
+    }
     // (and of the mentors' perks)
     if (run.mode?.kind === 'army' && !run.legacy) {
       const snap = legacySnapshot(this.meta, this.meta.party);
@@ -3260,6 +3279,9 @@ class Game {
       if (this.run.runes && !h.guest && this.b.phase === 'deploy') card.append(socketStrip(this.run.runes, h.kind));
       // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
       card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
+      // (the Nemesis War: a skull on the hero a nemesis in this wave dreads, so the player sees the answer)
+      const dreads = this.b.units.filter((u) => u.alive && u.nem && dreadOf(u.nem.weak) === h.kind);
+      if (dreads.length) card.append(Object.assign(document.createElement('span'), { className: 'dreadMark', textContent: '☠', title: `${dreads.map((u) => u.nem!.name).join(' and ')} ${dreads.length > 1 ? 'dread' : 'dreads'} ${heroName(h.kind)}` }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
@@ -3494,10 +3516,14 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired };
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally };
       const earned = settleRun(this.meta, run, settled);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
       toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
+      // (the Nemesis War's lines go on the wave card below)
+      this.nemNote = settled.war;
+      // (and what slaying a nemesis paid counts in the wave's crowns)
+      if (settled.war?.crowns) this.crownGain += settled.war.crowns;
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
       // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
       const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
@@ -3560,7 +3586,7 @@ class Game {
       // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
       const waveGains = gainsSince(held, this.meta, run);
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length ? { nemesis: nemesisLines(this.nemNote) } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));

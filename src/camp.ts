@@ -122,6 +122,8 @@ export class CampScene {
   /** The Daily board's plaque below the company, the Last Stand's watchtower on the left (OVERLOOK-STAND) and the distant Calamity landmark. */
   readonly dailySlot = el('div', 'cpSlot cpDailySlot');
   readonly towerSlot = el('div', 'cpSlot cpTowerSlot');
+  /** The Nemesis War's Dark Council (`nemesisView.ts`): above the Daily, once the War is open. */
+  readonly councilSlot = el('div', 'cpSlot cpCouncilSlot');
   /** The watchtower's lights, embers and crows (OVERLOOK-STAND). */
   private towerLife = new TowerLife();
   readonly calamitySlot = el('div', 'cpSlot cpPortalSlot');
@@ -173,7 +175,7 @@ export class CampScene {
     this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Last Stand’s watchtower on the left and the Calamity citadel on the horizon.');
     // (CLIFF-ROAM: Hester's Stall, and the front ground drawn over it, left the ledge for the tavern; one canvas holds the whole scene again)
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
+    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.councilSlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -358,6 +360,9 @@ export class CampScene {
     const box = (e: HTMLElement, r: { x: number; y: number; w: number; h: number }) => Object.assign(e.style, this.at(r.x, r.y), { width: `${r.w * u}px`, height: `${r.h * u}px` });
     box(this.stashMount, camp.stash);
     box(this.dailySlot, camp.places.daily.box);
+    // (the Dark Council stands over the Daily, the same size, a little gap between)
+    const d = camp.places.daily.box;
+    box(this.councilSlot, { ...d, y: d.y - d.h - 14 });
     box(this.towerSlot, camp.places.tower.box);
     box(this.calamitySlot, camp.places.calamity.box);
     for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', `${e === this.towerSlot ? camp.places.tower.plate.h : 44}px`);
