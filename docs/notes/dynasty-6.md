@@ -195,11 +195,24 @@ See "Checks" for the commands. The balance bar is no army's mean tries rising by
 - **The fights.** `npm run balance -- --no-tables --deep --levels 30,60 --attempts 6 --only orcs,undead,beasts --talents` gives phase 5's
   table digit for digit. On Legendary at level 30: Orc Warband 1.7, Undead Legion 2.0, Beast Packs 5.3. Everything on Elite is 1.0.
 - **The birthright** (the new `--birthright` flag: every hero of the party an heir with its own House's perk at its first band, the
-  strongest a party can be by birthrights): BIRTHRIGHT_TABLE
+  strongest a party can be by birthrights). The mean tries, 6 fresh saves a cell:
+
+  | | Lv 30, without | Lv 30, with | Lv 60, without | Lv 60, with |
+  |---|---|---|---|---|
+  | Legendary: Orc Warband | 1.7 | 1.3 | 1.0 | 1.0 |
+  | Legendary: Undead Legion | 2.0 | 2.5 | 1.0 | 1.0 |
+  | Legendary: Beast Packs | 5.3 | 4.7 | 1.3 | 1.2 |
+  | Elite: all three | 1.0 | 1.0 | 1.0 | 1.0 |
+
+  Within the bar. The Undead Legion's +0.5 is the noise of six saves (the same tries but a different fight once the hp moves); the
+  table as a whole is a little easier, as a +2% to +4% perk should be.
 - **The heirloom** (the new `--heirloom` flag of `npm run gear-balance -- --kits-only`: every hero's first piece an heirloom at its cap,
-  +9%): HEIRLOOM_TABLE
+  +9%). A whole kit's effective strength moves by at most one point: Mythic at army 3 is +40% → +41%, at army 5 +44% → +45%, at
+  army 7 +50% → +50%. Every Common to Legendary cell is the same.
 - **The Heir's Promise against the level pace** (`npm run level-pace -- --seeds 10`, and the new `--promise 91`: the mantle passes on day
-  91, the earliest a favourite can, a Veteran on day 84 with 7 days of training): PACE_TABLE
+  91, the earliest a favourite can, a Veteran on day 84 with 7 days of training). The favourite reaches level 70 on day 89 either way, level 80 on day 121 → **118**, level 90 on day
+  150 → **147**, and level 100 on day 177 → **176**. The days before 91 are unchanged, and the bench's pace is the same (the Promise is
+  the heir's alone).
 
 ## Art: placeholders and the images to make
 
@@ -264,7 +277,7 @@ Each would be credited in `CREDITS.md` when it is made.
 ## Checks
 
 - `npm run typecheck`: clean. `npm run web`: built.
-- **The full `npm test`:** FULL_TESTS
+- **The full `npm test`:** 2,636 tests (2,621 at phase 5, with 14 new and 1 more in `ui-standard`). The run before the scene lines were added to `docs/lines/new-lines.json` gave 2,635 passing and that test failing; with them, `npm test -- new-lines ui-standard scene heirs dynasty` passes.
   - `test/heirs.test.ts` (14 new tests) covers:
     - naming (the stage, the level and the Sworn partner) and the 7 days of training;
     - the candidates (their stream, their names, one birthright each);
@@ -281,5 +294,5 @@ Each would be credited in `CREDITS.md` when it is made.
     - the names, the scenes and the looks;
     - no fight file reading the heirs.
   - `test/ui-standard.test.ts` gains a test that the heirs' six cards are standard menus that say Close.
-- **The screenshots:** `docs/samples/dynasty-6/`, SHOT_COUNT shots at 393x852, 360x780 and 412x915, with no page scrolling sideways.
+- **The screenshots:** `docs/samples/dynasty-6/`, 69 shots at 393x852, 360x780 and 412x915, with no page scrolling sideways.
 - **The balance:** above.
