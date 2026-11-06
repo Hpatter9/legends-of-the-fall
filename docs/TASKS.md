@@ -984,3 +984,10 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - **Scope:** two source PNGs under `art-source/expansion`, handoff and this task entry.
 - **Completion:** four centred badges in a 1024×256 transparent strip and one 512×256 transparent duel emblem; dimensions and alpha checked, visually reviewed. No runtime changes.
 - **Status:** ready for review. [Handoff](notes/expansion-art.md). Requested prior branch/PR were absent; branch recreated from main.
+
+### EXPANSION-ICONS — Nemesis icon atlas
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** `art-source/expansion/nemesis-icons.png` and this handoff; existing badge/banner work preserved.
+- **Completion:** one 1536×640 transparent PNG, 12×5 cells of 128×128; 29 ordered icons and 31 empty cells. Dimensions, binary alpha, occupancy, padding and 24px preview checked.
+- **Status:** ready for review in [PR #399](https://github.com/Hpatter9/legends-of-the-fall/pull/399). [Handoff](notes/expansion-art.md). Source art only; no runtime checks required.
