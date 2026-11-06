@@ -242,7 +242,7 @@ npm run war-sim -- --seed 2
 ## Checks
 
 - `npm run typecheck`: clean. `npm run web`: built.
-- **The full `npm test`:** all passing (counts in the hand-off).
+- **The full `npm test`:** 2,588 tests, all passing.
   - `test/revenge.test.ts` (13 tests): the Grudge's steps and its fight hook; the Avenger only at Sworn (never at Comrades), its +15% and its
     quicker skills; Vengeance (never cheated over 60 saves, double crowns and trophies, +30 bond points, its scene due); humiliation (1 to 3
     runs away and counted off, Vengeful, Stitched, the shield before the helm, -20 loyalty); trophies (two at most, +5% each, brought home as
