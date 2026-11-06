@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.380.0',
+    date: '2026-11-06',
+    title: 'The Dark Council rises',
+    notes: ['The Council fills to 13 seats under a Warchief: feuds, betrayals and blood-oaths between runs, War Trophies to spend, and the Warchief\'s Muster.'],
+  },
+  {
     version: '0.379.0',
     date: '2026-11-06',
     title: 'Auto beside the spells, boss bar higher',

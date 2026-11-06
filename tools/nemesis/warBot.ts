@@ -5,6 +5,7 @@
 
 import { ARMIES } from '../../src/sim/armies';
 import { newWar, type War } from '../../src/sim/nemesis';
+import { takeTurn } from '../../src/sim/council';
 import { addTrait, TRAITS } from '../../src/sim/nemesisTraits';
 import { mixSeed } from '../../src/sim/rng';
 import { playArmy, savedAt, WAR_BOT } from '../autoplay';
@@ -16,8 +17,9 @@ import { heroStats, learn, tierNodes } from '../../src/sim/talents';
 
 const PARTY = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 
-/** A War grown by `runs` runs of each army (Normal at its level, every third on Hard ten levels on), from one seed. */
-export function growWar(runs: number, seed = 1, party: readonly string[] = PARTY, talents = false, castleAt: (level: number) => Castle = () => newCastle()): War {
+/** A War grown by `runs` runs of each army (Normal at its level, every third on Hard ten levels on), from one seed. With `council` (phase 2)
+ *  the Dark Council takes its turn after each run, as the page's does, the armies fought so far open for its recruits. */
+export function growWar(runs: number, seed = 1, party: readonly string[] = PARTY, talents = false, castleAt: (level: number) => Castle = () => newCastle(), council = false): War {
   const war = newWar();
   WAR_BOT.settle = true;
   try {
@@ -29,6 +31,11 @@ export function growWar(runs: number, seed = 1, party: readonly string[] = PARTY
         meta.war = war;
         const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
         playArmy(meta, a.id, mixSeed(seed, 0x4e3, i * 100 + r), party, castleAt(a.level + (hard ? 10 : 0)), true, hard ? 1 : 0, talents ? boostFor : undefined);
+        if (council) {
+          meta.opened = ARMIES.slice(0, i + 1).map((x) => x.id);
+          meta.party = [...party];
+          takeTurn(war, meta);
+        }
       }
     });
   } finally {

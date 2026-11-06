@@ -28,7 +28,8 @@ import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
 import { noteWeakness, type WeakNote } from './weakness';
 import { noteBonds, type BondNote } from './bonds';
-import { noteNemesis, openWar, type NemNote } from './nemesis';
+import { openWar, type NemNote } from './nemesis';
+import { endOfRun, noteWar, turnLines } from './council';
 import type { NemesisTally } from './nemesisLog';
 import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
@@ -222,14 +223,15 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote } & FightExtra): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote; /** The page's day key (the Council's turn after a run, and the War Trophies' daily cap); the tools leave it out, and no turn is taken. */ day?: number } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
   const boss = fixed ? (isBossRun(run, fight.stage) ? fixed.waves[fight.stage - 1].foes[0] : '') : run.tower ? run.tower.lastBoss ?? '' : isBossStage(fight.stage) ? bandFor(fight.stage) : '';
   // (a quest battle's boss is a named stand-in on a boss's look: it is not that boss beaten)
   const quest = run.mode?.kind === 'quest';
-  if (fight.won && boss && !quest && !m.bosses.includes(boss)) m.bosses.push(boss);
+  // (nor is the Warchief's Muster's last: its boss is the warchief, any fighter at the head of his army's last band)
+  if (fight.won && boss && !quest && run.mode?.kind !== 'muster' && !m.bosses.includes(boss)) m.bosses.push(boss);
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));
   // (VAELKHAR-HEART: a run that holds his Heart is noted in the save)
   noteHeart(m, run.relics);
@@ -241,8 +243,13 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   if (fight.battle && run.mode?.kind === 'army' && fixed) fight.bonds = noteBonds(m, fight.battle, fight.won);
   // (the Nemesis War: the nemeses met are slain or promoted, and the foes who slew, maimed or escaped are named; the War opens on the
   // Undead Legion's first Normal clear, `nemesis.ts`)
-  if (fight.battle && !quest) fight.war = noteNemesis(m, run, fight.battle, fight.nemesis, fight.won, fight.stage);
+  // (phase 2: and what it means for the Dark Council, `council.ts`; an army run that has ended gives the Council its turn)
+  if (fight.battle && !quest) fight.war = noteWar(m, run, fight.battle, fight.nemesis, fight.won, fight.stage, fight.day);
   else openWar(m);
+  if (fight.day !== undefined && run.over) {
+    const turn = endOfRun(m, run, fight.day);
+    if (turn?.length && fight.war) fight.war.council = [...(fight.war.council ?? []), ...turnLines(turn)];
+  }
   // (and a combo that went off is seen, for the codex)
   if (fight.battle) noteCombos(m, fight.battle);
   const ctx = { battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m };
