@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.384.0',
+    date: '2026-11-06',
+    title: 'Heirs and the Mantle',
+    notes: ['Sworn pairs name an heir with a birthright, an heirloom and a Blood Grudge. The heir takes up the Mantle with all progress; the elder takes an honour.'],
+  },
+  {
     version: '0.383.0',
     date: '2026-11-06',
     title: 'Seasons and the Houses',

@@ -252,6 +252,8 @@ export interface NemSnap {
   grudge?: Record<string, number>;
   /** Its Avengers, by kind: the Sworn partner -> the hero it slew. */
   avengers?: Record<string, string>;
+  /** Dynasties, phase 6 (`heirs.ts`): the kinds whose fielded bearer bears a Blood Grudge on it (a parent was slain by it): +15% against it. */
+  blood?: string[];
   stitched?: true;
   /** What its taunts are made from: the heroes it slew and maimed, who humiliated it, how often it escaped, its meetings. */
   slew?: string[];
@@ -363,7 +365,7 @@ export function nemesisBand(rn: RunNemesis | undefined, wave: number, band: read
       out[at] = s.base;
     }
     const avengers = s.avengers ? Object.keys(s.avengers) : [];
-    place.push({ at, nem: { id: s.id, name: fullName(s), rank: s.rank, ...(s.scars ? { scars: s.scars } : {}), traits: [...s.traits], weak: [...s.weak], ...(s.vengeful ? { veng: s.vengeful } : {}), ...(s.grudge && Object.keys(s.grudge).length ? { grudge: { ...s.grudge } } : {}), ...(avengers.length ? { avengers } : {}), ...(s.stitched ? { stitched: true as const } : {}), ...(s.trophies?.length ? { trophies: s.trophies.slice(0, TROPHIES_MAX).map((t) => ({ base: t.base, rarity: t.rarity })) } : {}) }, ...nemStats(lead ? { ...s, boss: true } : s, tier), ...(lead && s.rank === 'warchief' && !s.boss ? { chief: true as const } : {}) });
+    place.push({ at, nem: { id: s.id, name: fullName(s), rank: s.rank, ...(s.scars ? { scars: s.scars } : {}), traits: [...s.traits], weak: [...s.weak], ...(s.vengeful ? { veng: s.vengeful } : {}), ...(s.grudge && Object.keys(s.grudge).length ? { grudge: { ...s.grudge } } : {}), ...(avengers.length ? { avengers } : {}), ...(s.blood?.length ? { blood: [...s.blood] } : {}), ...(s.stitched ? { stitched: true as const } : {}), ...(s.trophies?.length ? { trophies: s.trophies.slice(0, TROPHIES_MAX).map((t) => ({ base: t.base, rarity: t.rarity })) } : {}) }, ...nemStats(lead ? { ...s, boss: true } : s, tier), ...(lead && s.rank === 'warchief' && !s.boss ? { chief: true as const } : {}) });
   }
   return { band: out, place };
 }

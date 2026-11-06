@@ -38,6 +38,8 @@ export interface UnitNem {
   grudge?: Readonly<Record<string, number>>;
   /** The Avengers: the Sworn partners of the heroes it slew, by kind (+15% attack on it, their skills 10% quicker while it stands). */
   avengers?: readonly string[];
+  /** Dynasties, phase 6: the kinds whose heir bears a Blood Grudge on it (it slew a parent): +15% damage to it. */
+  blood?: readonly string[];
   /** Stitched (it cheated death): once, at 0 hp it stands again at 20% (the old Survivor's effect), spent when it does. */
   stitched?: true;
   /** The trophies it carries, for the page's name plate only (their +5% attack is in its stats already). */
@@ -159,6 +161,8 @@ export const VENGEFUL = 0.2;
 export const VENGEFUL_REACH = 6;
 /** The Avenger's share of attack on its partner's slayer, and how much quicker its skills come round while the slayer stands. */
 export const AVENGER_ATK = 0.15;
+/** Dynasties, phase 6 (`heirs.ts`): an heir's Blood Grudge, its extra share of damage against the nemesis that slew a parent. */
+export const BLOOD_GRUDGE = 0.15;
 export const AVENGER_CHARGE = 0.1;
 
 // ---- the hooks the fight reads -----------------------------------------------------------------------------------------------
@@ -213,6 +217,8 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
     const g = n.grudge?.[real.def];
     if (g) k *= 1 + g;
     if (n.avengers?.includes(real.def)) k *= 1 + AVENGER_ATK;
+    // (Dynasties, phase 6: an heir's Blood Grudge on the nemesis that slew a parent)
+    if (n.blood?.includes(real.def)) k *= 1 + BLOOD_GRUDGE;
   }
   if (by.nem && to.side === 'hero') {
     const c = callingOf(to.def);

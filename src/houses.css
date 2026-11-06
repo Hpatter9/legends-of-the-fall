@@ -39,4 +39,29 @@
 #hmTop .hsSeasonChip { display: inline-flex; align-items: center; justify-content: center; min-width: 0; width: 38px; height: 34px; padding: 0; cursor: pointer; font: inherit; }
 #hmTop .hsSeasonChip .hsSeasonIco { width: 24px; height: 24px; image-rendering: pixelated; }
 #hmTop .hsSeasonChip b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.omGrid.hsTabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.omGrid.hsTabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.omGrid.hsTabs .omChoice { padding-left: 2px; padding-right: 2px; }
+.omGrid.hsTabs .omChoice > b { font-size: 12px; white-space: nowrap; }
+
+/* Phase 6 (docs/notes/dynasty-6.md): heirs and the Mantle. A line with a trained heir wears a steady gold frame (no glow, no pulse); a
+   cadet passed over is grey; the partner who shared an heir sits between the generations on a gold thread; an heirloom is a small chip. */
+.omChoice.hsReady { border-color: #e9c45c; box-shadow: inset 0 0 0 1px #e9c45c99; }
+.hsLines .omChoice.hsLine.hsReady > small { color: #f2d47a; }
+.omGrid.hsThreadRow { grid-template-columns: minmax(0, 1fr); margin: -4px 18px; }
+.omChoice.hsPartner { border-left: 3px solid #d9b45a; background: linear-gradient(90deg, #d9b45a1f, transparent 70%); }
+.omChoice.hsCadet { filter: grayscale(0.85); opacity: 0.82; margin-left: 22px; }
+.omChoice.hsCadet:disabled { opacity: 0.82; }
+.omChoice.hsCadet.hsVisit { margin-left: 0; }
+.hsHeirloomChip { grid-column: 2; display: inline-flex; align-items: center; gap: 4px; color: #e8cf8a; }
+.hsChipIco { width: 16px; height: 16px; image-rendering: pixelated; }
+.hsFounders { display: flex; flex-direction: column; gap: 4px; }
+.hsFounders p { margin: 0; color: #d8ccb2; }
+.hsFarewellWell { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.hsFarewellIco { width: 32px; height: 32px; image-rendering: pixelated; }
+.hsFarewell p b { color: var(--ornate-brass, #e2c27a); font-weight: 700; }
+.hsFarewell p.hsHeirSays { border-left-color: #d9b45a; }
+.omChoice.hsFact.hsRow:disabled { opacity: 1; }
+/* The party picker's banner: who of a line takes the field (an honoured elder in the heir's place). */
+.ptBanner { align-self: center; max-width: calc(100% - 20px); padding: 1px 5px; border: 1px solid #bda16c; border-radius: 3px; font: 700 10px/1.3 var(--display, serif); color: #f3e2b0; background: #1a1208e6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.ptBanner.elder { border-color: #e8e4da; }
+.hsCard .omChoice { position: relative; }

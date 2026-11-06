@@ -2,6 +2,7 @@
 // art), for the scenes that draw heroes small in a fixed pixel scale: the war camp (`camp.ts`) and the Calamity's map (`calMap.ts`).
 
 import { sheetInfo } from './sheets';
+import { lookPixel, type LookMatrix } from '../sim/heroLooks';
 
 export const canvasOf = (w: number, h: number): HTMLCanvasElement => {
   const c = document.createElement('canvas');
@@ -77,3 +78,22 @@ export function shrinkRig(rig: NonNullable<ReturnType<typeof sheetInfo>>, px = H
   return { c: out, fw: fw * up, fh: fh * up, counts: Object.fromEntries(ROWS.map((r, i) => [r, counts[i]])), rows: ROWS, facesRight: rig.facesRight, figure: Math.round((rig.figure * up) / n) };
 }
 
+
+/** Dynasties (`sim/heroLooks.ts` `lookMatrix`): a shrunk rig with a bearer's look laid on its pixels once, as it is cut (never in a frame):
+ *  the touch of the years and an heir's tint, the same grade the battle sprite wears. The rig is changed in place and returned. */
+export function gradeSmall(small: Small, m: LookMatrix | null): Small {
+  if (!m) return small;
+  const g = small.c.getContext('2d', { willReadFrequently: true });
+  if (!g || !small.c.width || !small.c.height) return small;
+  const img = g.getImageData(0, 0, small.c.width, small.c.height);
+  const p = img.data;
+  for (let i = 0; i < p.length; i += 4) {
+    if (!p[i + 3]) continue;
+    const [r, gg, b] = lookPixel(m, p[i], p[i + 1], p[i + 2]);
+    p[i] = r;
+    p[i + 1] = gg;
+    p[i + 2] = b;
+  }
+  g.putImageData(img, 0, 0);
+  return small;
+}

@@ -179,7 +179,9 @@ export type Moment =
   /** DEPTH-BUILD: the end of a Calamity act (`actScenes.ts`), as its crossroads opens. */
   | { kind: 'calAct'; map: number }
   /** The Nemesis War, phase 3: an Avenger's Vengeance (`vengeanceScenes.ts`), "avenger>avenged", played at the camp. */
-  | { kind: 'vengeance'; pair: string };
+  | { kind: 'vengeance'; pair: string }
+  /** Dynasties, phase 6: a kindred pair names an heir (`heirScenes.ts`), played at the camp. */
+  | { kind: 'heir'; pair: string };
 
 /** What a film can reveal at its end (REVEAL): a mode opening (the Calamity), the army after this one, the Calamity's Ascension levels, a
  *  castle building (the chapel: the spellbook), a hero's awakening, an Eidolon bound (for the quest chains' films). */

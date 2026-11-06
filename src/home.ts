@@ -30,7 +30,8 @@ import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
 import { drawAchievements, toastLines } from './achievementsView';
 import { openDynasty, takeSeasonNews, SEASON_WORDS, seasonOf } from './sim/dynasty';
-import { agedLines, openHouses, openSeasonCard, seasonChip } from './housesView';
+import { agedLines, openEldersTable, openHouses, openSeasonCard, seasonChip } from './housesView';
+import { cadetsOf, HEIR_NOTE, regularsOf, takeHeirNote } from './sim/heirs';
 import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
@@ -207,6 +208,10 @@ export class Home {
     }, {
       // (CLIFF-ROAM: Hester's corner in the hearth hall opens her stall, as the stall on the cliff did, SHOP-BOOKS-GEAR)
       onStall: () => openStall(this.meta, () => this.refresh()),
+    }, {
+      // (Dynasties, phase 6: the Elders' table, its regulars, the day's story and ride, and a cadet visiting)
+      onElders: () => void openEldersTable(this.meta, todayKey(), () => this.refresh()),
+      shown: (m) => regularsOf(m).length > 0 || cadetsOf(m).length > 0,
     });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
@@ -333,7 +338,10 @@ export class Home {
     const aged = openDynasty(m, todayKey());
     const news = takeSeasonNews(m, todayKey());
     if (JSON.stringify(m.dynasty ?? null) !== before) saveMeta(m);
-    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged)]);
+    // (phase 6: a save whose Hall had mentors before the heirs is told once that they may name one)
+    const note = takeHeirNote(m);
+    if (note) saveMeta(m);
+    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged), ...(note ? [HEIR_NOTE] : [])]);
   }
 
   /** The Houses (Dynasties): the family tree, on a line when one is given. */

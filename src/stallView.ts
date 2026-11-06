@@ -325,7 +325,8 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       pills.append(p);
     }
     body.append(pills);
-    const spare = spareEquipment(m).sort((a, b) => a.rarity - b.rarity || a.level - b.level || a.id - b.id);
+    // (Dynasties, phase 6: an heirloom is never sold, so it is never offered)
+    const spare = spareEquipment(m).filter((x) => !x.heirloom).sort((a, b) => a.rarity - b.rarity || a.level - b.level || a.id - b.id);
     // (RUN-GEAR: the stash holds STASH_MAX; pieces brought home to a full one wait on the cart, and move in as room is made)
     body.append(el('p', 'hsNote', `Spare gear: ${spare.length} / ${STASH_MAX}. What a hero wears is never offered.`));
     if (m.cart?.length) body.append(el('p', 'hsNote hsFull', `Your stash is full: ${m.cart.length} piece${m.cart.length === 1 ? ' waits' : 's wait'} on the cart.`));

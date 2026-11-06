@@ -113,3 +113,13 @@ test('the Houses, a line, a bearer and the Seasons are standard menus (Dynasties
     assert.match(own, new RegExp(`back: \\{ word: '${way}' \\}`), `${fn} says ${way === 'back' ? '‹ Back' : 'Close'}`);
   }
 });
+
+test('the heirs\' cards are standard menus that say Close (Dynasties, phase 6)', () => {
+  const src = readFileSync('src/housesView.ts', 'utf8');
+  for (const fn of ['openNameHeir', 'openMantle', 'openFarewell', 'openHonour', 'openBanner', 'openEldersTable']) {
+    const body = src.slice(src.indexOf(`export function ${fn}`));
+    const own = body.slice(0, body.indexOf('\n}\n'));
+    assert.match(own, /ornateMenu\(/, `${fn} builds its card with ornateMenu`);
+    assert.match(own, /back: \{ word: 'close'/, `${fn} says Close`);
+  }
+});

@@ -177,7 +177,7 @@ export interface Meta {
    *  opens them (a save from before is seeded then, with nobody made old). */
   dynasty?: Dynasty;
   /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
-  mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
+  mentors?: Partial<Record<Calling, { kind: string; since: number; heir?: true }>>;
   recalled?: Partial<Record<Calling, number>>;
   codexClaimed?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */

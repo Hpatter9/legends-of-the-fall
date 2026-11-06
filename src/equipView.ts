@@ -20,7 +20,7 @@ import { paintGearIcon } from './gearIcons';
 import { shopArt } from './bookArt';
 import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
 import { sellPiece, stallRepair } from './sim/stall';
-import { sellPrice, stashCount, stashFull } from './sim/equipment';
+import { heirloomLine, keptForGood, sellPrice, stashCount, stashFull } from './sim/equipment';
 import { todayKey } from './modes';
 import { icon } from './menuArt';
 import { play } from './render/sound';
@@ -160,6 +160,8 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt,
     }
     card.append(line);
   }
+  // (Dynasties, phase 6: an heirloom's House and its generation marks)
+  if (it.heirloom) card.append(el('p', 'eqAffix eqHeirloom', heirloomLine(it)));
   if (it.scars) card.append(el('small', 'eqDim', `Patched: ${it.scars} durability lost for good (a reforge at Hester's clears it)`));
   (it.glyphs ?? []).forEach((g, i) => {
     const line = el('small', 'eqGlyph');
@@ -449,8 +451,8 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
         commit();
         picker(slot);
       });
-      // (a named legend is never sold: the save keeps its one copy)
-      btns.append(...(EQUIP_BASES[it.base].legend ? [on] : [on, sell]));
+      // (a named legend is never sold: the save keeps its one copy; nor is an heirloom, Dynasties phase 6)
+      btns.append(...(keptForGood(it) ? [on] : [on, sell]));
       if (it.wear) btns.append(repairButton(it, () => picker(slot)));
       row.append(btns);
       list.append(row);

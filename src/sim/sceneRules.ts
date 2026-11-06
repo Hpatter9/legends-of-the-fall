@@ -144,6 +144,8 @@ export function momentText(mo: Moment): string {
       return "An Eidolon's chain, as its giver tells it.";
     case 'vengeance':
       return 'A hero slays the nemesis that slew its Sworn partner; it plays at the camp.';
+    case 'heir':
+      return 'Two Sworn heroes name an heir; it plays at the camp.';
   }
 }
 
