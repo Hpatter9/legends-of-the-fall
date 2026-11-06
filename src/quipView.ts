@@ -50,22 +50,16 @@ function ensure(): HTMLElement {
  *  fight's HUD: the spell row, the boss's, twist's and combo bars, the tactic button and a toast in its lane. A bubble that would cover one is moved to the
  *  nearest clear spot (below it in the top half of the page, above it in the bottom half), again until it covers none. */
 const KEEP_CLEAR = [...FIGHT_HUD, '.toast.lane', '#hmTop', '#starter h1', '#starter .stSub'];
-function keepClear(left: number, top: number, w: number, h: number): number {
+function keepClear(left: number, top: number, w: number, h: number): number | null {
   const boxes = hudBoxes(KEEP_CLEAR);
   const covers = (y: number) => boxes.some((b) => left < b.right && left + w > b.left && y < b.bottom && y + h > b.top);
   if (!covers(top)) return Math.max(4, top);
   // (BOSS-BAR: the nearest spot just above or below one of them that covers none and stays on the screen; on a short phone the tactic
   // button sits above the middle, and the old step (below a part in the top half, above it in the bottom half) sent a bubble back and forth
-  // between it and the hero rows)
+  // between it and the hero rows. With no such spot (a short phone with the boss's bar, a toast and the tactic button all up) the bubble
+  // is not shown: a line missed is better than the HUD covered)
   const spots = boxes.flatMap((b) => [b.bottom + 4, b.top - h - 4]).filter((y) => y >= 4 && y + h <= innerHeight - 4 && !covers(y));
-  if (spots.length) return spots.reduce((a, b) => (Math.abs(b - top) < Math.abs(a - top) ? b : a));
-  let y = top;
-  for (let pass = 0; pass <= boxes.length; pass++) {
-    const b = boxes.find((b) => left < b.right && left + w > b.left && y < b.bottom && y + h > b.top);
-    if (!b) break;
-    y = b.top + b.height / 2 < innerHeight / 2 ? b.bottom + 4 : b.top - h - 4;
-  }
-  return Math.max(4, y);
+  return spots.length ? spots.reduce((a, b) => (Math.abs(b - top) < Math.abs(a - top) ? b : a)) : null;
 }
 
 /** Show `text` over `at` (replacing any bubble already up). `who` names the speaker in small type above it; `goat` is Duchess's cream bubble. */
@@ -86,7 +80,12 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
   const above = at.y - r.height - 10 >= 4;
   el.classList.toggle('below', !above);
   el.style.left = `${Math.round(left)}px`;
-  el.style.top = `${Math.round(keepClear(left, above ? at.y - r.height - 10 : at.y + 14, r.width, r.height))}px`;
+  const y = keepClear(left, above ? at.y - r.height - 10 : at.y + 14, r.width, r.height);
+  if (y === null) {
+    el.classList.remove('on');
+    return;
+  }
+  el.style.top = `${Math.round(y)}px`;
   el.style.setProperty('--tail', `${Math.round(Math.min(r.width - 12, Math.max(12, at.x - left)))}px`);
   void el.offsetWidth;
   el.classList.add('on');
@@ -96,12 +95,14 @@ export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: 
   }, opts.hold ?? HOLD_MS);
 }
 
-/** COMBAT-HUD: the bubble showing, set clear again of the HUD as it now stands (a line said at the deploy stays up as the fight's spell row
+/** COMBAT-HUD: the bubble showing (or fading), set clear again of the HUD as it now stands (a line said at the deploy stays up as the fight's spell row
  *  and boss bar come in). Nothing moves when it already is clear. */
 export function reclearQuip(): void {
-  if (!box?.classList.contains('on')) return;
+  // (a bubble fading out is set clear too: a toast coming into the lane would otherwise lie under it for the fade, BOSS-BAR)
+  if (!box || !(box.classList.contains('on') || box.classList.contains('off'))) return;
   const r = box.getBoundingClientRect();
   const y = keepClear(r.left, r.top, r.width, r.height);
+  if (y === null) return void box.classList.remove('on');
   if (Math.round(y) !== Math.round(r.top)) box.style.top = `${Math.round(y)}px`;
 }
 

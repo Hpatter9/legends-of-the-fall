@@ -1616,7 +1616,7 @@ class Game {
   }
 
   /** Lay the top parts out again whenever the spell row or the boss's bar changes size (a wrap, the War Horn given, a spell added, the
-   *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs. */
+   *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs; and set a toast and a quip clear again. */
   private watchTopHud(): void {
     if (typeof ResizeObserver !== 'function') return;
     let busy = false;
@@ -1631,7 +1631,8 @@ class Game {
       reclearQuip();
       busy = false;
     });
-    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar']) watch.observe($(id));
+    // (the panel too: its fight rows and the tactic button over them come in as the fight begins, and a quip said at the deploy must clear them)
+    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel']) watch.observe($(id));
   }
 
   /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
