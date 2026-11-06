@@ -528,7 +528,7 @@ test('cheating death (phase 3’s, brought forward): a member slain in an ordina
       if (war.members.includes(n)) {
         cheated++;
         assert.equal(n.scars, 1);
-        assert.equal(n.might, 3, 'a Might more, by the run’s rule');
+        assert.equal(n.might, 2, 'phase 3, the director’s call: a cheat gives no Might of its own');
         assert.equal(note.slain.length, 0);
         assert.equal(m.crowns, crowns, 'its pay is taken back');
         assert.ok(!war.fallen.some((f) => f.id === n.id));

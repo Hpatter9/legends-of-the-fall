@@ -479,10 +479,6 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`)
   const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave);
   lines.push(...rev.lines);
-  for (const id of note.lazy ?? []) {
-    const n = war.members.find((x) => x.id === id);
-    if (n) news(war, 'feast', `${fullName(n)} feasts on its victories, and grows fat and lazy`);
-  }
   for (const x of note.born) news(war, 'named', `${fullName(x)} is named a ${rankWord(x.rank).toLowerCase()}: ${x.deed === 'slew' ? 'it slew a hero' : x.deed === 'maimed' ? 'it maimed a hero' : 'it escaped you'}`);
   let trophies = 0;
   for (const x of note.slain) {
@@ -550,16 +546,14 @@ function cheatDeath(war: War, m: Meta, run: Run, wave: number, note: NemNote, wa
   note.slain = note.slain.filter((x) => {
     const n = was.get(x.id);
     if (!n || avenged.has(x.id)) return true;
-    const chance = CHEAT[x.rank] + (n.traits.includes('survivor') || n.scars > 0 ? CHEAT_EXTRA : 0);
+    // (phase 3: a warchief's chance is a flat 35%, his scars and Survivor adding nothing, so his cheats do not feed each other)
+    const chance = CHEAT[x.rank] + (x.rank !== 'warchief' && (n.traits.includes('survivor') || n.scars > 0) ? CHEAT_EXTRA : 0);
     if (new Rng(mixSeed(run.seed, CHEAT_SALT, wave, x.id)).next() >= chance) return true;
     m.crowns -= x.crowns;
     note.crowns -= x.crowns;
     war.fallen = war.fallen.filter((f) => !(f.id === x.id && f.how !== 'council'));
+    // (phase 3: a cheat gives no Might of its own; the humiliated nemesis's promotion comes from its next deed, +1 a run as ever)
     n.scars = Math.min(3, n.scars + 1);
-    if (n.grew !== run.seed && n.might < MIGHT_MAX) {
-      n.might++;
-      n.grew = run.seed;
-    }
     remember(n, `Dragged from the field, scarred · ${armyById(n.army)?.name ?? n.army}`);
     war.members.push(n);
     cheated.set(n.id, x.by);

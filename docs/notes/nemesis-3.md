@@ -27,15 +27,15 @@ Vain weaknesses that phase 1 left for later. Duels are phase 4; the heir's Blood
 
 ### Revenge, the foes' side
 
-- **Humiliation** (`humiliate`). A nemesis is humiliated when it **cheats death** (phase 2's rule) or **flees a fight in which no hero
-  fell**. It then:
+- **Humiliation** (`humiliate`). A nemesis is humiliated when it **cheats death** or **flees a fight in which no hero fell**. Phase 2's
+  cheat rule changes here: a cheat gives no Might of its own, and a warchief cheats at a flat 35% (below). It then:
   - sits out 1 to 3 of its army's runs (`War.away`, drawn from `REVENGE_SALT`; `planRun` counts one off each time its army marches, and
     the last brings it back, with a line in the News). An away member does not answer the Muster either.
   - comes back **Vengeful** against the hero who humiliated it: the killing blow's hero for a cheat, the hero who hurt it most for a flight.
     That is +20% damage to that hero, whom it closes on first while the hero is within 6 tiles (`nemHunt`, the walk; `nemPrey`, the blow).
   - takes a **trophy** from that hero (below);
   - gains a scar (a cheat's scar is already given) and, after a cheat, the trait **Stitched**: once, at 0 hp, it stands again at 20% (the
-    old Survivor effect), spent when it does;
+    old Survivor effect), spent when it does. A warchief is Stitched once a seat holding;
   - costs its underlings 20 loyalty (`HUMBLED_LOYALTY`; phase 2 left this for now).
   - The promotion the design gives a returning nemesis is its Might for the deed, still +1 a run at most.
 - **Trophies** (`trophyFrom`). The hero's piece in the first filled slot of weapon, shield, helm or charm (`main`, `off`, `head`, `acc`). The
@@ -148,7 +148,7 @@ All of these are optional fields, read by `readWar` and `readGrudges`, which dro
 - **Doubled once.** The design's "doubled by a duel, a trophy brought home, Vengeance" is read as doubled once, however many apply.
 - **Not here:**
   - the warchief's fall's long cut-in (the result screen's "The Warchief falls!" stands for it);
-  - the design's death-spiral guard (below);
+  - the design's death-spiral guard (built, measured and left out, below);
   - the hero's memory line for a trophy brought home.
 
 ## Images (none new yet)
@@ -208,28 +208,39 @@ before.
 
 Two seeds, 120 days, 3 runs a day:
 
-| | phase 2 (seed 1 / seed 2) | **phase 3** (seed 1 / seed 2) | Target |
-|---|---|---|---|
-| Might mean at day 60 | 1.9 / 1.4 | **2.5 / 1.7** | 3 to 5 |
-| ... days 53 to 67 | | 2.3 / 1.7 | |
-| Might mean at day 90 / 119 | 2.1 / 2.8 (seed 1) | 2.1 / 2.2 (seed 1) | |
-| Fled the board, humiliated (120 days) | | 28, 53 / 21, 58 | |
-| Lost to infighting a week, from week 3 | 0.9 | 0.9 / 0.8 | about 1 |
-| The Council's own seat changes a week | 14.1 | 10.3 / 11.3 | 3 to 5 |
-| First member at Might 10 | day 73 / day 84 | **day 36 / day 35** | not before day 45 |
+| | phase 2 (seed 1 / seed 2) | phase 3 as first built | **phase 3 as shipped** | Target |
+|---|---|---|---|---|
+| Might mean at day 60 | 1.9 / 1.4 | 2.5 / 1.7 | **1.6 / 1.4** | 3 to 5 |
+| ... days 53 to 67 | | 2.3 / 1.7 | **2.3 / 1.5** | |
+| Might mean at day 90 / 119 | 2.1 / 2.8 (seed 1) | 2.1 / 2.2 (seed 1) | **2.3 / 3.3, and 2.8 / 3.6** | |
+| Fled the board, humiliated (120 days) | | 28, 53 / 21, 58 | **39, 55 / 23, 66** | |
+| Lost to infighting a week, from week 3 | 0.9 | 0.9 / 0.8 | **0.8 / 0.8** | about 1 |
+| The Council's own seat changes a week | 14.1 | 10.3 / 11.3 | **12.1 / 8.3** | 3 to 5 |
+| First member at Might 10 | day 73 / day 84 | day 36 / day 35 | **day 65 / day 102** | not before day 45 |
 
-**Fleeing lifts the day-60 mean, but not to 3.** It goes from 1.9 to 2.5 on seed 1 and from 1.4 to 1.7 on seed 2. The bot still slays 20 to
-30 members a week while it outclasses the armies it plays (to about week 12), and fleeing at 30% (15% for a captain) saves only those it
-catches near death on their own turn. With the design's odds, the next levers would be the death-spiral guard (below) or meeting the
-heroes less often. Neither is phase 3's to pull.
+**What changed between the two.** Phase 3 as first built let a member reach Might 10 by day 35 on both seeds. Each time it was a warchief born
+a boss, with 3 scars, who had cheated death about five times. He alternated every run: he beat the bot's retries, then cheated death at 55%
+(35% for a warchief and 20% for his scars), and gained +1 Might either way. The cheats came back Stitched and Vengeful, which fed the next
+win. The director's call, now in:
 
-**A new risk: a member at Might 10 by day 35.** On both seeds it is a warchief born a boss, with 3 scars, who cheated death five times. Each
-cheat now makes him Stitched (an extra life in the next fight) and Vengeful against the hero who struck him down. The bot replays the army
-he blocks two runs in three, so he wins a meeting a run, and +1 a run takes him from 5 to 10 in about five days. This is the death spiral the
-design's section 8 guards against with **"a nemesis that wins 3 meetings in a row has a 50% chance of a Feast instead of a promotion"**.
-Phase 2 left that guard for the owner, because it changes phase 1's Might rule and one of its tests, and phase 3 leaves it too.
-`Nemesis.streak` already counts the meetings for it. **Recommended for the owner's call:** that guard, or no Stitched for a warchief
-(already at a 35% cheat).
+- **A cheat gives no Might of its own** (`cheatDeath`). The humiliated nemesis's promotion comes from its next deed, +1 a run as ever.
+- **A warchief cheats at a flat 35%:** his scars and Survivor add nothing.
+- **A warchief is Stitched once a seat holding** (`Nemesis.chiefStitch`, cleared by `crown`).
+
+**The death-spiral guard** (section 8's "a nemesis that wins 3 meetings in a row has a 50% chance of a Feast instead of a promotion") was
+built and measured both ways with the three changes above in:
+
+- With the guard: Might 10 first on day 66 and day 77; mean at day 60 1.6 and 1.4.
+- Without it: day 65 and day 102; the same means.
+
+Both seeds clear day 45 without the guard, and with the guard the day-60 mean was no higher, so by the director's rule **it is not shipped**.
+It remains the next lever if a spiral shows again.
+
+**Fleeing's second job, honestly.** The day-60 mean is still short of 3. Measured over the two weeks round day 60 it is 2.3 and 1.5 against
+phase 2's single days of 1.9 and 1.4. By day 90 to 119 it reaches 2.3 to 3.6. The bot still slays 20 to 30 members a week while it
+outclasses the armies it plays (to about week 12), and fleeing at the design's odds (30% for a lieutenant, 15% for a captain) saves only
+those it catches near death on their own turn. Taking a cheat's Might away costs some of what fleeing added; that is the price of the
+day-45 target.
 
 **Not measured by the simulator:** Vengeance and trophies. Its bot's saves have no Sworn pairs and wear only the gear a run finds, so it
 shows 0 of each. `test/revenge.test.ts` covers both.
@@ -243,17 +254,18 @@ npm run war-sim -- --seed 2
 
 - `npm run typecheck`: clean. `npm run web`: built.
 - **The full `npm test`:** 2,588 tests, all passing.
-  - `test/revenge.test.ts` (13 tests): the Grudge's steps and its fight hook; the Avenger only at Sworn (never at Comrades), its +15% and its
+  - `test/revenge.test.ts` (15 tests): the Grudge's steps and its fight hook; the Avenger only at Sworn (never at Comrades), its +15% and its
     quicker skills; Vengeance (never cheated over 60 saves, double crowns and trophies, +30 bond points, its scene due); humiliation (1 to 3
     runs away and counted off, Vengeful, Stitched, the shield before the helm, -20 loyalty); trophies (two at most, +5% each, brought home as
     Reclaimed for double pay); fleeing by the hash (the fight's stream untouched, asked once, the same moment the same answer, about 30%
     for a lieutenant over 600 fights, the warchief never, Elusive and Craven certain); a real flight to the edge, escaped and humiliated;
     Craven and Vain; every taunt template filled from a real memory in every voice, every line coming up, and every hero's two replies; the
-    cut-in's lengths and reduced motion; the snapshot; Stitched spent; the save's round trip and caps.
+    cut-in's lengths and reduced motion; the snapshot; Stitched spent; a warchief Stitched once a seat holding; a cheat with no Might and a warchief's flat 35%; the save's round trip and caps.
   - `docs/lines/new-lines.json`, the lines file every scene is checked against (`test/new-lines.test.ts`), has the 110 Vengeance scenes'
     words added.
-  - Phases 1 and 2's tests pass unchanged. One phase 2 test reads the News's newest line after a cheat, so a cheat's humiliation is told on
-    that line. No test was loosened or removed.
+  - Phase 1's tests pass unchanged. One phase 2 test reads the News's newest line after a cheat, so a cheat's humiliation is told on that
+    line. The same test's "a Might more, by the run's rule" now asserts the director's changed rule: a cheat gives no Might of its own. No
+    test was loosened or removed.
 - **The pinned fights:** `nemesis-regression`, `stand-regression` and `ailments-identical` hold.
 - **The fight HUD** (`node tools/combat-hud/probe.mjs`):
   - it gains a **taunt** case (`SCENES=taunt` runs it alone): a nemesis wearing a hero's trophy planned into the wave, its cut-in and the

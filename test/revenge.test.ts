@@ -12,7 +12,7 @@ import { fight, hurt, place, startBattle, stepBattle, type Battle, type BattleEv
 import { bondKey, levelOf } from '../src/sim/bonds';
 import { armyRun } from '../src/sim/run';
 import { loadMeta, saveMeta, startedMeta, type Meta } from '../src/sim/meta';
-import { LAZY, newWar, readGrudges, readWar, SEATS, TROPHY_ATK, nemStats, nemesisBand, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
+import { newWar, readGrudges, readWar, SEATS, TROPHY_ATK, nemStats, nemesisBand, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
 import { startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
 import { CRAVEN_AT, FLEE, fleeOdds, nemFlees, nemHurt, secondWeakPool, weakWords, type UnitNem } from '../src/sim/nemesisTraits';
 import { CHEAT_DEATH, noteWar, swear } from '../src/sim/council';
@@ -453,29 +453,6 @@ test('the save: trophies, the members away, the pieces reclaimed, the Vengeance 
   void UNITS;
 });
 
-test('the death-spiral guard: a nemesis that has won three meetings in a row feasts instead of growing, about half the time', () => {
-  let lazy = 0;
-  const N = 200;
-  for (let s = 0; s < N; s++) {
-    const m = warMeta(s);
-    const n = member(m.war!, 'lieutenant', 4, { streak: 2 });
-    const might = n.might;
-    const note = slew(m, n, s + 1);
-    assert.equal(n.streak, 3);
-    if (note.lazy?.includes(n.id)) {
-      lazy++;
-      assert.equal(n.might, might, 'no promotion');
-      assert.equal(n.loyalty, 75, 'a Feast');
-      assert.match(n.memory[0], /fat and lazy/);
-    } else assert.equal(n.might, might + 1);
-  }
-  assert.ok(Math.abs(lazy / N - LAZY.chance) < 0.08, `${lazy} of ${N}`);
-  // (two wins in a row: it grows as ever)
-  const m = warMeta(1);
-  const n = member(m.war!, 'lieutenant', 4, { streak: 1 });
-  slew(m, n, 9);
-  assert.equal(n.might, 5);
-});
 
 test('a warchief is Stitched once a seat holding: a second cheat does not stitch him again until he is crowned anew', () => {
   CHEAT_DEATH.on = true;
@@ -497,6 +474,25 @@ test('a warchief is Stitched once a seat holding: a second cheat does not stitch
       }
     }
     assert.ok(twice > 0, 'a second cheat was seen');
+  } finally {
+    CHEAT_DEATH.on = false;
+  }
+});
+
+test('cheating death gives no Might of its own, and a warchief cheats at a flat 35% whatever his scars', () => {
+  CHEAT_DEATH.on = true;
+  try {
+    let cheats = 0;
+    const N = 600;
+    for (let s = 0; s < N; s++) {
+      const m = warMeta(s);
+      const chief = member(m.war!, 'warchief', 5, { scars: 3, traits: ['survivor'] });
+      slay(m, chief, s + 1);
+      if (!m.war!.members.includes(chief)) continue;
+      cheats++;
+      assert.equal(chief.might, 5, 'no Might for the cheat');
+    }
+    assert.ok(Math.abs(cheats / N - 0.35) < 0.05, `${cheats} of ${N}`);
   } finally {
     CHEAT_DEATH.on = false;
   }
