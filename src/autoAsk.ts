@@ -13,7 +13,7 @@ export function askAuto(m: Meta, title: string, go: (count: number) => void): vo
   const best = Math.max(...AUTO_COUNTS.filter((n) => n <= left), 0);
   let pick = Math.min(3, best);
   const root = el('div', 'autoAsk');
-  const card = el('div', 'asumCard');
+  const card = el('div', 'asumCard autoAskCard');
   card.setAttribute('role', 'dialog');
   card.append(el('h2', '', 'Auto-fight'), el('p', 'asumWhy', title));
   const counts = el('div', 'asCounts', 'Runs');
@@ -31,7 +31,7 @@ export function askAuto(m: Meta, title: string, go: (count: number) => void): vo
   };
   draw();
   start.addEventListener('click', () => (root.remove(), go(pick)));
-  const back = el('button', '', '‹ Back');
+  const back = el('button', 'asumClose', 'Close');
   back.addEventListener('click', () => root.remove());
   card.append(counts, el('p', 'asHint', `Auto runs left today: ${left}/${AUTO_TICKETS} · more at midnight`), start, back);
   root.append(card);

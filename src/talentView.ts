@@ -147,7 +147,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
       });
       row.append(go);
     } else box.append(el('small', 'tBad', whyNot(meta, kind, n.id) ?? ''));
-    const no = button('Back');
+    const no = button('Close');
     no.addEventListener('click', close);
     row.append(no);
     box.append(row);

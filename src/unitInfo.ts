@@ -113,7 +113,7 @@ export class UnitInfoCard {
     words.append(name);
     if (v.title) words.append(el('em', 'uiTitle', v.title));
     words.append(el('small', '', v.sub));
-    const close = el('button', 'fsClose', '×');
+    const close = el('button', 'fsClose', 'Close');
     close.type = 'button';
     close.setAttribute('aria-label', 'Close');
     head.append(pic, words, close);

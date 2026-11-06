@@ -2278,3 +2278,451 @@ body #spellbook h2 {
 .hm-battle .hmGo:not(:has(.hmCont)) { grid-template-rows: 48px; }
 .hmPage.hm-battle:not(:has(.hmCont)) { --hmBar: 83px; }
 .hmPage.hm-battle:not(:has(.hmBanner)):not(:has(.hmCont)) { --hmBar: 61px; }
+
+/* --------------------------------------------------------------------------
+   24. FORTRESS GOTHIC UNIFORMITY PASS: POPUPS, MODALS, SHEETS & PROMPTS
+   -------------------------------------------------------------------------- */
+
+/* 1. Auto-Fight Runs Selector (.autoAsk, .autoAskCard) */
+.autoAskCard {
+  border: var(--ornate-border-double) !important;
+  border-radius: 8px !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 18px 16px 14px !important;
+}
+.autoAskCard h2 {
+  font-family: var(--display) !important;
+  font-size: 22px !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+  margin: 0 !important;
+}
+.autoAskCard .asumWhy {
+  color: #c4ba9f !important;
+  font-size: 13px !important;
+}
+.autoAskCard .asCounts {
+  background: #0f130ecc !important;
+  box-shadow: var(--ornate-well) !important;
+  border: 1px solid #362f22 !important;
+  border-radius: 6px !important;
+  padding: 8px 10px !important;
+  gap: 6px !important;
+  font-size: 13px !important;
+  color: var(--ornate-brass) !important;
+}
+.autoAskCard .asCounts button {
+  min-height: 44px !important;
+  min-width: 44px !important;
+  border: 1px solid #6b5c40 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%) !important;
+  color: #c4ba9f !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+}
+.autoAskCard .asCounts button.on {
+  border: 2px solid #f2dc9f !important;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%) !important;
+  color: var(--ornate-brass-hi) !important;
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 12px rgba(219, 193, 139, 0.35) !important;
+}
+.autoAskCard .asHint {
+  font-size: 11px !important;
+  color: #9aa38f !important;
+}
+.autoAskCard button.primary {
+  min-height: 46px !important;
+  font-size: 14px !important;
+  letter-spacing: 0.03em !important;
+}
+.autoAskCard .asumClose {
+  min-height: 44px !important;
+  font-size: 13px !important;
+}
+
+/* 2. Talents Inspection & Auto-Spend Modals (.tModal, .tBox) */
+.tModal {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.tBox {
+  border: var(--ornate-border-double) !important;
+  border-radius: 8px !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 16px !important;
+}
+.tBox .tTitle b {
+  font: 700 16px/1.2 var(--display) !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+}
+.tBox .tTitle small {
+  font-size: 11px !important;
+  color: #c4ba9f !important;
+}
+.tBox .tBig {
+  border: 2px solid #bda16c !important;
+  border-radius: 6px !important;
+  background: #0f130ecc !important;
+  box-shadow: var(--ornate-well) !important;
+}
+.tBox p {
+  color: #ede5d3 !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  background: #0f130ecc !important;
+  border: 1px solid #362f22 !important;
+  box-shadow: var(--ornate-well) !important;
+  border-radius: 4px !important;
+  padding: 8px 10px !important;
+}
+.tBox small {
+  font-size: 11px !important;
+}
+.tBox .tBtns button {
+  min-height: 44px !important;
+  font-size: 13px !important;
+}
+.tBox .tAutoHead {
+  font: 700 16px/1.2 var(--display) !important;
+  color: var(--ornate-brass) !important;
+}
+.tPlan li {
+  min-height: 38px !important;
+  border-color: #483922 !important;
+  background: #0f130ecc !important;
+  border-radius: 3px !important;
+}
+.tPlan li b {
+  font-size: 12px !important;
+  color: #f1ead9 !important;
+}
+.tPlan li small {
+  font-size: 11px !important;
+  color: #c4ba9f !important;
+}
+
+/* 3. In-Combat Unit Info Card (.uiCard, .fsCard) */
+.fsCard.uiCard {
+  border: var(--ornate-border-double) !important;
+  border-image: none !important;
+  border-radius: 8px !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 12px 14px 14px !important;
+}
+.uiCard .fsHead b {
+  font-family: var(--display) !important;
+  font-size: 16px !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+.uiCard .fsHead small,
+.uiCard .fsHead em.uiTitle {
+  font-size: 11px !important;
+  color: #c4ba9f !important;
+}
+.uiCard .fsClose {
+  min-height: 44px !important;
+  min-width: 64px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  font-family: var(--body) !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--ornate-brass-mid) !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #373a30 0%, #20231c 100%) !important;
+  color: #f1ead9 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 5px rgba(0, 0, 0, 0.45) !important;
+}
+.uiCard .fsTabs {
+  gap: 6px !important;
+  margin-top: 8px !important;
+}
+.uiCard .fsTabs button {
+  min-height: 44px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border: 1px solid #6b5c40 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%) !important;
+  color: #c4ba9f !important;
+}
+.uiCard .fsTabs button.on {
+  border: 2px solid #f2dc9f !important;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%) !important;
+  color: var(--ornate-brass-hi) !important;
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 10px rgba(219, 193, 139, 0.3) !important;
+}
+.uiCard .uiPic {
+  border: 2px solid #bda16c !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+}
+.uiCard .uiTags span {
+  font-size: 11px !important;
+  border: 1px solid #483922 !important;
+  background: #0f130ecc !important;
+  box-shadow: var(--ornate-well) !important;
+  border-radius: 3px !important;
+  color: #dcd8bf !important;
+}
+.uiCard dl.uiStats {
+  background: #0f130ecc !important;
+  border: 1px solid #362f22 !important;
+  box-shadow: var(--ornate-well) !important;
+  border-radius: 4px !important;
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+.uiCard dt {
+  color: var(--ornate-brass) !important;
+}
+.uiCard .uiList li {
+  background: #0f130ecc !important;
+  border: 1px solid #362f22 !important;
+  border-radius: 3px !important;
+  padding: 4px 8px !important;
+  margin-bottom: 2px !important;
+}
+
+/* 4. XP Tome Reader Modal (#tomeSheet, .tomeCard) */
+#tomeSheet .tomeCard {
+  border: var(--ornate-border-double) !important;
+  border-radius: 8px !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 16px !important;
+}
+#tomeSheet .tomeCard h3 {
+  font-family: var(--display) !important;
+  font-size: 22px !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+  margin-bottom: 6px !important;
+}
+#tomeSheet .tomeRow {
+  background: #0f130ecc !important;
+  box-shadow: var(--ornate-well) !important;
+  border: 1px solid #483922 !important;
+  border-radius: 6px !important;
+  padding: 10px !important;
+}
+#tomeSheet .tomeFace {
+  border: 2px solid #bda16c !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+  background: #141712 !important;
+}
+#tomeSheet .tomeName {
+  font-family: var(--display) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--ornate-brass) !important;
+}
+#tomeSheet .tomeXp {
+  font-size: 11px !important;
+  color: #c4ba9f !important;
+}
+#tomeSheet .tomeBtns button {
+  min-height: 44px !important;
+  border: 1px solid #6b5c40 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%) !important;
+  color: #f1ead9 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+#tomeSheet .tomeClose {
+  min-height: 44px !important;
+}
+
+/* 5. Relic Lore & Chapter Inspect Card (.rlWrap, .rlCard) */
+.rlCard {
+  border: var(--ornate-border-double) !important;
+  border-radius: 8px !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 16px !important;
+}
+.rlHead b {
+  font-family: var(--display) !important;
+  font-size: 18px !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+.rlRarity {
+  font-size: 11px !important;
+  letter-spacing: 1px !important;
+}
+.rlPiece small {
+  font-size: 11px !important;
+}
+.rlClose {
+  min-height: 44px !important;
+  min-width: 140px !important;
+  font-size: 13px !important;
+}
+.rlSet {
+  border-top: 1px solid rgba(184, 147, 74, 0.35) !important;
+  padding-top: 8px !important;
+}
+.rlSet h3 {
+  font-family: var(--display) !important;
+  font-size: 14px !important;
+}
+
+/* 6. Hester's Stall Ware Inspect Drawer (.hsSheet, .hsVeil) */
+.hsSheet {
+  border-top: var(--ornate-border-double) !important;
+  border-left: 1px solid #4a3a1f !important;
+  border-right: 1px solid #4a3a1f !important;
+  border-radius: 10px 10px 0 0 !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 16px 16px calc(env(safe-area-inset-bottom) + 16px) !important;
+}
+.hsSheetTop h3 {
+  font-family: var(--display) !important;
+  font-size: 22px !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+.hsSheetTop small {
+  font-size: 12px !important;
+  color: #c4ba9f !important;
+}
+.hsStat {
+  background: #0f130ecc !important;
+  box-shadow: var(--ornate-well) !important;
+  border: 1px solid #362f22 !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  margin-bottom: 3px !important;
+  font-size: 13px !important;
+}
+.hsStat b {
+  color: #9fe39a !important;
+}
+.hsBuy {
+  min-height: 48px !important;
+  font-family: var(--display) !important;
+  font-size: 18px !important;
+}
+.hsShut {
+  min-height: 44px !important;
+  font-family: var(--body) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  border: 1px solid var(--ornate-brass-mid) !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #373a30 0%, #20231c 100%) !important;
+  color: #f1ead9 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 5px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 7. Altar Explainer Popover (.altarHelp, .altarHelpBox) */
+.altarHelpBox {
+  border: var(--ornate-border-double) !important;
+  border-radius: 8px !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 18px 16px !important;
+}
+.altarHelpBox h3 {
+  font-family: var(--display) !important;
+  font-size: 22px !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+  margin-bottom: 10px !important;
+}
+.altarHelpBox li {
+  font-size: 13px !important;
+  color: #ede5d3 !important;
+  line-height: 1.45 !important;
+}
+.altarHelpBox button {
+  min-height: 46px !important;
+  font-family: var(--display) !important;
+}
+
+/* 8. Castle Building Finished Popup (#builtPop, .bpCard) */
+#builtPop .bpCard {
+  border: var(--ornate-border-double) !important;
+  border-radius: 8px !important;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
+              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+  padding: 16px !important;
+}
+#builtPop .bpEyebrow {
+  font-size: 11px !important;
+  letter-spacing: 2px !important;
+  color: var(--ornate-brass) !important;
+  font-weight: 700 !important;
+}
+#builtPop h3 {
+  font-family: var(--display) !important;
+  font-size: 20px !important;
+  color: var(--ornate-brass-hi) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* 9. Upgrades List Confirmation Well (.ulAsk) */
+.ulAsk {
+  background: #0f130ecc !important;
+  box-shadow: var(--ornate-well) !important;
+  border: 1px solid #483922 !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+}
+.ulAsk p {
+  color: #ede5d3 !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+.ulAskBtns button {
+  min-height: 44px !important;
+  font-size: 13px !important;
+}
+
+/* 10. Hero Full Artwork Viewer (dialog.heroArtViewer) */
+dialog.heroArtViewer {
+  border: var(--ornate-border-double) !important;
+  border-radius: 10px !important;
+  background: radial-gradient(ellipse at 50% 40%, #293026fa, #12160ff5 75%),
+              url(ui/page.png) !important;
+  box-shadow: var(--ornate-shadow) !important;
+}
+dialog.heroArtViewer > h2 {
+  font-family: var(--display) !important;
+  color: var(--ornate-brass) !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95) !important;
+}
+dialog.heroArtViewer > .heroArtClose {
+  min-height: 44px !important;
+  border: 1px solid var(--ornate-brass-mid) !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #373a30 0%, #20231c 100%) !important;
+  color: #f1ead9 !important;
+  font-weight: 700 !important;
+}
