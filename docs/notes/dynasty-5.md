@@ -182,6 +182,43 @@ about 60 in all.
   Youths (`looks-<w>.png`).
 - **`npm run level-pace -- --counsel 140`** (new flag): the pace of a hero who marches beside an Elder from day 140 (below).
 
+## The numbers
+
+- **The pace** (`test/dynasty.test.ts`): a favourite fighting 4 waves a day is a Veteran on **day 84** and an Elder on **day 140**,
+  the design's numbers. The migration's credit stops at 5 seasons, so a favourite of many months is a Veteran one season later.
+- **Elder's Counsel against the level pace.** `npm run level-pace -- --seeds 10` against the same with `--counsel 140` (an Elder beside
+  the hero from day 140, the earliest a first Elder can be):
+
+  | | Without Counsel | With Counsel from day 140 |
+  |---|---|---|
+  | Level 90 | day 150 | day 149 |
+  | Level 100 | day 177 | day 176 |
+  | A benched hero, level 50 / 60 | day 245 / 355 | day 241 / 346 |
+
+  The days before 140 are unchanged. The favourite itself (the Elder) gains nothing from its own Counsel: these rows are a hero that
+  marches beside it.
+- **The fights are unchanged.** `npm run balance -- --no-tables --deep --levels 30,60 --attempts 6 --only orcs,undead,beasts --talents`
+  gives the same table, digit for digit, on this branch and on phase 4's head (`a8a363e2`). For example, on Legendary at level 30: Orc
+  Warband 1.7, Undead Legion 2.0, Beast Packs 5.3; everything on Elite is 1.0.
+
 ## Checks
 
-The results are filled in below as they run.
+- `npm run typecheck`: clean. `npm run web`: built.
+- **The full `npm test`:** 2,621 tests, all passing, the identity and regression fixtures among them.
+  - `test/dynasty.test.ts` (12 new tests) covers:
+    - the season clock across a month's and a year's end;
+    - a season counting only at 20 waves, with auto-replays at half, and each season's waves its own;
+    - the bench never ageing;
+    - the stages and the ages;
+    - the day 84 and day 140 pace;
+    - the migration credit capped at 5, with nobody made old and no ageing told;
+    - mentors' fates;
+    - lasting progress untouched by ageing;
+    - Elder's Counsel and its non-stacking;
+    - the season told once;
+    - the save's round trip, an old save, and the reader's caps;
+    - that no fight file reads the Dynasties.
+  - `test/ui-standard.test.ts` gains a test that the Houses, a line, a bearer and the Seasons' card are standard menus, with the right way
+    out.
+- **The screenshots:** `docs/samples/dynasty-5/`, 33 shots at 393x852, 360x780 and 412x915, with no page scrolling sideways.
+- **The balance:** above (identical), and `level-pace` with and without `--counsel`.
