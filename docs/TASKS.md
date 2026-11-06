@@ -977,3 +977,9 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Scope: chamber artwork, separate summoner actor with idle/cast/eye-shield poses, new-recruit chamber reveal, relevant checks and credits. Shard tarot rewards, simulation and saves preserved.
 - Direction: owner approved current appearance with idle, summoning, and shielding eyes against the bright hero arrival.
 - Completion: three poses integrated with reveal timing and reduced motion. Typecheck/build, four affected test files and browser checks at all three portrait sizes plus reduced motion passed. Status: ready for owner review. [Handoff](notes/animated-summoner.md).
+
+### ART-EXPANSION — Tavern source props
+
+- **Owner:** Codex art chat. **Branch/worktree:** `art/expansion`, `/workspace/expansion-art`.
+- **Scope:** Hester's merchant table and optional Elders' table source PNGs only, plus handoff.
+- **Completion/status:** painted and visually inspected; exact sizes and binary transparency verified. Ready for review in Expansion art PR; runtime integration remains with director. [Handoff](notes/expansion-art.md).
