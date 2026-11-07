@@ -24,7 +24,7 @@ import { awaken, awakenedOf } from '../src/sim/awaken';
 import { canRankUp, rankUp } from '../src/sim/rankUp';
 import { bossesOf } from '../src/sim/armies';
 import { AWAKEN_SHARDS } from '../src/sim/awakenRules';
-import { ownedWeight, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
+import { PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { settleArmyDrop, SHARD_CHANCE, TOME_CHANCE } from '../src/sim/armyDrops';
 import { closest, giveShards } from '../src/sim/unlock';
@@ -356,7 +356,7 @@ for (const c of CONTENT_HEROES) {
   console.log(`${c.kind.padEnd(20)}  ${Number.isFinite(med(ds)) ? med(ds) : `>${DAYS}`}`);
 }
 console.log('\nowned (pullable)  shards to unlock the next  odds that a pull is a new hero shard (nothing begun)');
-for (const n of [3, 4, 5, 6, 8, 10, 14, 18, 22, 26, 30, 34]) console.log(`${String(n).padStart(8)}  ${String(unlockNeed(n)).padStart(8)}  ${(((PULL_HEROES.length - n) / (PULL_HEROES.length - n + n * ownedWeight(n))) * 100).toFixed(1).padStart(8)}%`);
+for (const n of [3, 4, 5, 6, 8, 10, 14, 18, 22, 26, 30, 34]) console.log(`${String(n).padStart(8)}  ${String(unlockNeed(n)).padStart(8)}  ${(((PULL_HEROES.length - n) / PULL_HEROES.length) * 100).toFixed(1).padStart(8)}%`);
 console.log('\nday   XP tomes collected, as XP (median; `npm run level-pace -- --tomes "<day>:<xp>,..."` reads this line)');
 for (const d of CHECKS) if (d <= DAYS) console.log(`${String(d).padStart(3)}   ${med(reports.map((r) => r.tomeXp[d] ?? 0))}`);
 console.log(`--tomes "${CHECKS.filter((d) => d <= DAYS).map((d) => `${d}:${med(reports.map((r) => r.tomeXp[d] ?? 0))}`).join(',')}"`);
