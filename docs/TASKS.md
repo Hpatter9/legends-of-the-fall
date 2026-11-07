@@ -16,6 +16,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ART-RELEASE — Release the completed art passes as 0.389.0
+
+- **Owner:** Codex director. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall`.
+- **Scope:** integrate current main, release version/Updates entry, relevant checks, PR and owner-authorised merge.
+- **Status:** main 0.388.0 integrated cleanly; release validation in progress. [Note](notes/art-release.md).
+
+
 ### ART-FINISH — Travellers, expedition details, empty gear slots, treants and painted spell clips
 
 - **Owner:** Codex. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall` (includes the completed gear and enemy passes).
