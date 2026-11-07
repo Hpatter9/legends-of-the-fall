@@ -34,6 +34,7 @@ import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
+import { idleFrame } from './enemyMotion';
 import { AilmentFx, ailmentTint } from './ailmentLayer';
 import { gearTexture } from './gearTex';
 import { lookMatrix } from '../sim/heroLooks';
@@ -340,7 +341,7 @@ export class UnitSprite {
     let z = depth(u.u, u.v) + 5;
     let anim: Anim = 'idle';
     let row: Row | undefined;
-    let frame = Math.floor(t / 110);
+    let frame = idleFrame(this.sheet, t, u.id, !!this.reduced?.matches);
     const step = u.step;
     let arcLift = 0;
     if (fighting && u.alive && step && t < step.at + step.ms) {

@@ -45,6 +45,39 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion:** actual combat HUD reviewed at 393×852, 360×780 and 412×915, including larger parties, skills, spell states and reduced motion; typecheck/build, affected tests and offline asset check. No merge or deployment.
 - **Status:** first combat HUD pass ready for owner review. Typecheck/build, 21 affected tests and 63 browser checks passed across all three portrait sizes, including reduced motion, control interactions, ten-hero presentation fixture and real offline reload; zero page errors. [Handoff](notes/painted-combat-hud.md). Popup and report materials are covered by PAINTED-BATTLE-POPUPS and PAINTED-BATTLE-REPORTS; deployment and current skill icon coverage are completed by PAINTED-DEPLOY-ICONS. No merge or deployment.
 
+### ART-RELEASE — Release the completed art passes as 0.389.0
+
+- **Owner:** Codex director. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall`.
+- **Scope:** integrate current main, release version/Updates entry, relevant checks, PR and owner-authorised merge.
+- **Status:** 0.389.0 validated for release through owner-authorised [PR #424](https://github.com/Hpatter9/legends-of-the-fall/pull/424). Main 0.388.0 integrated cleanly; 77 focused tests, typecheck, web build and post-integration browser check passed. [Note](notes/art-release.md).
+
+
+### ART-FINISH — Travellers, expedition details, empty gear slots, treants and painted spell clips
+
+- **Owner:** Codex. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall` (includes the completed gear and enemy passes).
+- **Scope:** three traveller portraits and campfire presentation; four oath pennants and provisions icon; seven empty-slot paintings and paper-doll backing; hurt rows for three treant summons; animated flame, smoke and energy materials. Asset import/preview tools, focused validation, credits and handoff. Preserve game rules, saves, offline play and reduced motion; no version change.
+- **Direction:** owner approved the traveller portraits; other menu art retains the approved painted style and treant motion follows the approved enemy recoil direction.
+- **Completion:** all five groups implemented, checked at three portrait sizes and reduced motion where relevant, focused tests/typecheck/build pass, sources and handoff retained.
+- **Status:** in progress.
+
+
+### ENEMY-MOTION — Breathing idles and dedicated recoil for nine enemy sheets
+
+- **Owner:** Codex. **Branch/worktree:** `art/enemy-motion`, `/workspace/legends-of-the-fall`.
+- **Scope:** nine existing orc/demon/imp/ogre sheets and their layout entries; retained motion sources, packing/preview tools, focused asset validation, credits and handoff. Preserve existing walk/attack/dead pixels and simulation rules. No version change.
+- **Direction:** owner approved the Orc Grunt breathing/recoil proposal.
+- **Completion:** a four-frame idle loop and three readable hurt poses per sheet, no clipped frames or identity jumps at battle size, unchanged existing action rows, focused tests/typecheck/web build and portrait battle previews including reduced motion.
+- **Status:** complete, ready for review. Nine sheets packed; existing action pixels verified unchanged. All 12 focused tests, typecheck, web build, three portrait checks and reduced motion passed. [Handoff](notes/enemy-motion.md). No merge or deployment.
+
+### GEAR-PAINT — Complete the 69 missing equipment paintings
+
+- **Owner:** Codex. **Branch/worktree:** `art/gear-completion`, `/workspace/legends-of-the-fall`.
+- **Scope:** missing gear sources, gear atlases, backlog, credits and handoff. No simulation or version changes.
+- **Direction:** owner approved the four-item painted proposal.
+- **Completion:** all 69 missing bases painted and imported, contact sheets reviewed, equipment checks, typecheck, web build and portrait previews. Enemy animation and travellers follow as separate passes.
+- **Status:** complete, ready for review. All 69 bases painted and imported; 16 equipment tests, typecheck, web build and three portrait checks passed. [Handoff](notes/gear-paint-completion.md). No merge or deployment.
+
+
 ### UI-POPUP-UNIFORM — Uniform Keep & Kingdom fortress aesthetic across all menus, popups, sheets, and dialogs
 
 - **Owner:** Claude worker / Antigravity. **Branch/worktree:** `uniform_menu_popup_ui` (from `origin/main` 0.368.0).

@@ -1,0 +1,45 @@
+{
+  "cases": [
+    {
+      "width": 393,
+      "height": 852,
+      "portraits": 3,
+      "returnedPortrait": true,
+      "distinctPennants": 3,
+      "emptySlots": 7,
+      "treants": 3,
+      "hurtFrames": 3,
+      "spellForms": 3,
+      "spellFrames": 6,
+      "simulationUnchanged": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "portraits": 3,
+      "returnedPortrait": true,
+      "distinctPennants": 3,
+      "emptySlots": 7,
+      "treants": 3,
+      "hurtFrames": 3,
+      "spellForms": 3,
+      "spellFrames": 6,
+      "simulationUnchanged": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "portraits": 3,
+      "returnedPortrait": true,
+      "distinctPennants": 3,
+      "emptySlots": 7,
+      "treants": 3,
+      "hurtFrames": 3,
+      "spellForms": 3,
+      "spellFrames": 6,
+      "simulationUnchanged": true
+    }
+  ],
+  "reducedMotion": true,
+  "errors": []
+}

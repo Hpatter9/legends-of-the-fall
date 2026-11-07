@@ -666,13 +666,15 @@
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 64,
   "facesRight": true,
@@ -680,19 +682,21 @@
  },
  "hk_orc_archer": {
   "w": 74,
-  "h": 68,
+  "h": 69,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 67,
   "facesRight": true,
@@ -700,19 +704,21 @@
  },
  "hk_orc_brute": {
   "w": 98,
-  "h": 93,
+  "h": 95,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 91,
   "facesRight": true,
@@ -726,13 +732,15 @@
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 101,
   "facesRight": true,
@@ -746,33 +754,37 @@
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 118,
   "facesRight": true,
   "lies": true
  },
  "hk_demon_lord": {
-  "w": 128,
-  "h": 125,
+  "w": 134,
+  "h": 126,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 123,
   "facesRight": true,
@@ -780,19 +792,21 @@
  },
  "hk_imp": {
   "w": 74,
-  "h": 63,
+  "h": 65,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 61,
   "facesRight": true,
@@ -800,19 +814,21 @@
  },
  "hk_ogre": {
   "w": 136,
-  "h": 121,
+  "h": 122,
   "perRow": 8,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 8,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 118,
   "facesRight": true,
@@ -820,19 +836,21 @@
  },
  "hk_ogre_horned": {
   "w": 124,
-  "h": 123,
+  "h": 124,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
-   "idle": 1,
-   "dead": 5
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 120,
   "facesRight": true,
@@ -1458,19 +1476,21 @@
  },
  "cls_treant": {
   "w": 100,
-  "h": 96,
+  "h": 102,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
    "idle": 4,
-   "dead": 5
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 96,
   "facesRight": true,
@@ -1502,19 +1522,21 @@
  },
  "cls_treant_2": {
   "w": 134,
-  "h": 127,
+  "h": 130,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
    "idle": 4,
-   "dead": 5
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 125,
   "facesRight": true,
@@ -1522,19 +1544,21 @@
  },
  "cls_treant_3": {
   "w": 126,
-  "h": 125,
+  "h": 128,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
    "idle": 4,
-   "dead": 5
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 122,
   "facesRight": true,

@@ -100,6 +100,8 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .eqDoll .at-head { grid-area: head; } .eqDoll .at-torso { grid-area: torso; } .eqDoll .at-main { grid-area: main; } .eqDoll .at-off { grid-area: off; }
 .eqDoll .at-feet { grid-area: feet; } .eqDoll .at-belt { grid-area: belt; } .eqDoll .at-acc { grid-area: acc; }
 .eqDoll .eqDollHero { grid-area: hero; justify-self: center; align-self: center; width: 88px; height: 88px; image-rendering: pixelated; opacity: 0.9; pointer-events: none; }
+.eqDoll .eqDollPortrait { grid-area: hero; justify-self: center; align-self: center; display: flex; align-items: center; justify-content: center; width: min(96px, 100%); height: 136px; background-size: 100% 100%; background-position: center; pointer-events: none; }
+.eqIcon.painted.empty .eqEmptyArt { opacity: 0.5; }
 .eqIcon.ph { position: relative; overflow: hidden; }
 .eqIcon.ph > .eqIcon { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: none; }
 .eqIcon.ph > .eqPh { position: relative; z-index: 2; max-width: 92%; padding: 1px 3px; font: 700 10px/1.1 var(--body); color: var(--white); text-align: center; overflow-wrap: anywhere; background: rgb(var(--black-rgb) / 0.6); border-radius: 3px; }
