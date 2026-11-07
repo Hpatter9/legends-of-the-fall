@@ -543,3 +543,11 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Nemesis War and tactic art (`src/art/expansion/`, `src/art/ui/tactics/`, from `art-source/expansion/` and `art-source/ui/tactics/`, PRs #399 and #400)
 
 - **Rank badges, Council medallion, duel banner and the two taunt banners**, and the **tactic icons** (Advance, Hold, Charge): original commissioned art for this project. The sheets were cut and sized with ImageMagick (see `docs/notes/art-in.md`) and are bundled into game.js (the tactic icons are served as files and cached by the service worker).
+
+## Painted combat HUD (`src/art/ui/combat-*.png`)
+
+- Original brass-and-leather panel, spell socket, ruby heart, portrait frame, skill inset and twelve skill icons generated for this game with OpenAI image generation. Sources: `art-source/ui/painted-combat/`. Runtime assets are trimmed and resized from the sources with ImageMagick; dynamic labels, meters and cooldowns are rendered by the game.
+
+- **Crimson combat panel** (`src/art/ui/combat-crimson.png`): original generated oxblood-leather variant of the painted combat panel, used for boss signature bands and defeat headings. Source: `art-source/ui/painted-combat/crimson-source.png`; resized by the same import script and precached by the existing UI asset build loop.
+
+- **Expanded painted combat motifs** (`src/art/ui/combat-icon-*.png`): the martial, magic, utility and special sheets in `art-source/ui/painted-combat/` are original artwork generated for this game with OpenAI image generation. `tools/painted-combat/icons.mjs` slices the four regular sheets and normalises their icons; the initial twelve motifs are normalised by the existing import script. The same credited motifs are shared by related skills, king spells, deployment controls and battle synergy badges. Existing painted school emblems, War Horn art and repair artwork retain their earlier credits.
