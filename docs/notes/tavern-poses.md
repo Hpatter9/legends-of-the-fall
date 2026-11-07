@@ -35,3 +35,5 @@ Owner requested merging. Integrated current main 0.390.0 (`60244c86`), resolving
 Release validation passed on the integrated 0.391.0 build: typecheck, production web build and six focused test files (including release notes); all 21 fresh 393px release browser checks passed, with zero page errors, all 108 paintings decoded/precached and offline room/guest loading confirmed. Original three-size/reduced-motion coverage remains the 55-check pass above.
 
 PR #426 reached main during release preparation, taking 0.391.0. Integrated `c0c9d244`, retaining all ten hero remakes and their release notes; only the competing Updates entry needed resolution. Tavern release advances to 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427).
+
+Final 0.392.0 validation after integrating the hero remakes: typecheck and web build pass; all seven focused test files pass, including hero art and Updates; all 21 repeated release browser/offline checks pass with zero page errors. Release PR: [#427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), owner-authorised for merge.

@@ -31,7 +31,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### TAVERN-POSES — Relaxed hero paintings for the tavern
 
-- **Release:** owner authorised merging. PR #426 reached main during preparation, so the tavern release is 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), preserving the integrated ten hero remakes. Final integration validation in progress.
+- **Release:** owner authorised merging. PR #426 reached main during preparation, so the tavern release is 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), preserving the integrated ten hero remakes. Final typecheck/build, seven focused test files and all 21 repeated release browser/offline checks passed. Owner-authorised for merge.
 
 - **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall`; preserves the completed uncommitted tavern implementation.
 - **Scope:** paint two relaxed variants for all 54 heroes, integrate compatible five-seat composition, validate and then refine the tavern UI. Preserve simulation, full roster and version.
