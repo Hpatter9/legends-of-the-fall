@@ -18,6 +18,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### TAVERN-POSES — Relaxed hero paintings for the tavern
 
+- **Release:** owner authorised merging as 0.391.0. Main 0.390.0 integrated; release typecheck/build, six focused test files and all 21 fresh release browser/offline checks passed.
+
 - **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall`; preserves the completed uncommitted tavern implementation.
 - **Scope:** paint two relaxed variants for all 54 heroes, integrate compatible five-seat composition, validate and then refine the tavern UI. Preserve simulation, full roster and version.
 - **Direction:** owner requested new tavern-specific hero art, approximately two spots per hero, matching the cozy concept. Proposed two reusable inward-facing seated poses across five compatible positions to avoid seat conflicts for arbitrary strongest-five combinations.

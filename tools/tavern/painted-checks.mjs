@@ -20,7 +20,8 @@ let checks = 0;
 const check = (name, result) => { checks++; console.log(result ? 'ok' : 'FAIL', name); if (!result) failures.push(name); };
 mkdirSync('docs/samples', { recursive: true });
 try {
-  for (const [width, height] of [[393, 852], [360, 780], [412, 915]]) {
+  const sizes = process.argv.includes('--release') ? [[393, 852]] : [[393, 852], [360, 780], [412, 915]];
+  for (const [width, height] of sizes) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: true, reducedMotion: width === 412 ? 'reduce' : 'no-preference' });
     const page = await context.newPage();
     const errors = [];

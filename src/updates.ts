@@ -27,6 +27,16 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.391.0',
+    date: '2026-11-07',
+    title: 'A cozy home for your heroes',
+    notes: [
+      'Your five strongest heroes relax around a painted tavern hearth, with two new seated paintings for every hero.',
+      'Tap a guest to manage them, or switch between Your heroes and Tavern services for upgrades, quests and the shop.',
+      'The company updates as your heroes grow stronger, and the new art is available offline.',
+    ],
+  },
+  {
     version: '0.390.0',
     date: '2026-11-07',
     title: 'Painted battle screens',

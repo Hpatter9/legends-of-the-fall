@@ -26,3 +26,10 @@ Owner approved the proposal, requested building the scene then working on the UI
 Validation: production build and typecheck pass; all five focused test files pass (`tavern-company`, power callers and `ui-standard`). Export validation passes for all 108 paintings. The browser pass before the final UI refinements passed all 49 checks at 393×852, 360×780 and 412×915, including reduced motion, offline, dynamic strength changes, fewer-than-five ownership, all 108 decoded/precached assets, five-seat creature composition, roster, dossiers and service interactions. The final UI pass passed all 55 browser checks at the three portrait sizes, including keyboard tab selection, services-panel visibility and the earlier interaction/art/offline coverage. Final human and creature compositions, both UI sections and the three phone sizes were visually reviewed. No page errors or horizontal overflow observed.
 
 Actual implementation screenshots use isolated sample saves, not the owner's live heroes: `docs/samples/painted-tavern-{393,360,412}.png`, `painted-tavern-creatures-393.png` and `painted-tavern-services-393.png`. No merge, deployment or version change. No remaining known art coverage gap; future newly added heroes need two tavern paintings, and the coverage test will flag missing files.
+
+
+## Authorised release
+
+Owner requested merging. Integrated current main 0.390.0 (`60244c86`), resolving only duplicated build CSS and task-board context while retaining the tavern additions. Prepared release 0.391.0 with matching Updates entry. The existing Pages workflow publishes main; release validation and PR result follow.
+
+Release validation passed on the integrated 0.391.0 build: typecheck, production web build and six focused test files (including release notes); all 21 fresh 393px release browser checks passed, with zero page errors, all 108 paintings decoded/precached and offline room/guest loading confirmed. Original three-size/reduced-motion coverage remains the 55-check pass above.
