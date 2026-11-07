@@ -29,6 +29,37 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### PAINTED-DEPLOY-ICONS — Complete deployment chrome and battle icon coverage
+
+- **Release:** owner authorised main integration before tavern work; [PR #425](https://github.com/Hpatter9/legends-of-the-fall/pull/425), version 0.390.0. Integrated main 0.389.0; typecheck/build, 88 relevant tests and a fresh 40-check 393px interaction/reduced-motion/offline pass succeeded.
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** deployment header/panel/buttons, bench/selection/recycle indicators; painted icon coverage across current hero skills/ultimates/revives, king spells and wave-note marks. Reuse credited painted art where suitable and add missing motifs. Preserve roster layout, simulation, saves, labels, touch/drag and unlock behavior; no version change, merge or deployment.
+- **Completion:** explicit icon coverage checked against real kit/spell data; typecheck/build, affected tests; deployment/combat and icon-sheet browser checks at three portrait sizes, keyboard/touch states, reduced motion and offline new assets. Handoff and any exceptions recorded.
+- **Status:** complete and ready for owner review. Typecheck/build and 60 relevant tests passed. All 116 browser checks passed at 393×852, 360×780 and 412×915, with zero page errors/overflow; keyboard/touch, real deployment interactions, reduced motion, all 76 motifs and offline artwork passed. All 54 current hero kits and 35 king spells have painted coverage. [Handoff](notes/painted-deployment-icons.md). No merge or deployment.
+
+### PAINTED-BATTLE-REPORTS — Painted boss/cast announcements and result screens
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** boss signature and small hero cast banners, short victory/defeat cards, results/rewards and run recaps, replay/route/Last Stand end report surfaces; painted materials and focused review tools. Preserve existing animation timing, non-blocking boss announcements, live rewards, navigation, saves, simulation and version.
+- **Completion:** typecheck/build, relevant report/boss tests, browser interaction and visual checks at 393×852, 360×780 and 412×915, long reports, reduced motion and offline artwork verification. No merge or deployment.
+- **Status:** complete and ready for owner review. Typecheck/build and 35 relevant tests passed. All 146 browser checks passed at the three portrait sizes, with zero page errors/overflow, non-blocking boss warnings, onward navigation, report scrolling, reduced motion and offline crimson artwork. [Handoff](notes/painted-battle-reports.md). No merge or deployment.
+
+### PAINTED-BATTLE-POPUPS — Continue the accepted painted battle UI
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** skin existing skill details, formations, Last Stand pause, between-wave event/equipment choices, March orders and relic sheets using the approved combat paintings. Preserve their existing components and handlers; no new menu component, simulation, save or version changes.
+- **Completion:** typecheck/build, relevant UI tests, real popup interactions and screenshots at 393×852, 360×780 and 412×915; reduced motion and long-content scrolling. Handoff and remaining limitations recorded. No merge or deployment.
+- **Status:** complete and ready for owner review. Typecheck/build and 24 relevant tests passed. All 132 browser checks passed across the three portrait sizes, including real controls, disabled choices, scrolling, pause/resume and reduced motion; zero page errors or horizontal overflow. [Handoff](notes/painted-battle-popups.md). Earlier HUD work remains in this branch. Boss/cast banners and result materials are now covered by PAINTED-BATTLE-REPORTS; no merge or deployment.
+
+### PAINTED-COMBAT-HUD — Approved painted battle controls, first working pass
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Goal:** implement the owner-approved painted combat HUD concept with reusable textured frames and sockets while preserving battlefield space and live controls.
+- **Allowed scope:** combat HUD styles, necessary HUD art/build wiring, credits, focused browser evidence and handoff. Existing shared menu component retained. Roster, simulation, saves, version, result screens and broader popup redesign excluded from this first pass.
+- **Completion:** actual combat HUD reviewed at 393×852, 360×780 and 412×915, including larger parties, skills, spell states and reduced motion; typecheck/build, affected tests and offline asset check. No merge or deployment.
+- **Status:** first combat HUD pass ready for owner review. Typecheck/build, 21 affected tests and 63 browser checks passed across all three portrait sizes, including reduced motion, control interactions, ten-hero presentation fixture and real offline reload; zero page errors. [Handoff](notes/painted-combat-hud.md). Popup and report materials are covered by PAINTED-BATTLE-POPUPS and PAINTED-BATTLE-REPORTS; deployment and current skill icon coverage are completed by PAINTED-DEPLOY-ICONS. No merge or deployment.
+
 ### ART-RELEASE — Release the completed art passes as 0.389.0
 
 - **Owner:** Codex director. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall`.

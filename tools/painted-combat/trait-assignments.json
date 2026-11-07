@@ -1,0 +1,9 @@
+{
+  "samurai":"slash", "mystic":"arcane", "yokai":"fox", "knightly":"helmet",
+  "guardian":"shield", "blade":"swords", "marksman":"aim", "caster":"book",
+  "holy":"angel", "wild":"treant", "arcane":"arcane", "frontier":"pistol",
+  "warden":"roots", "trickster":"dice", "beast":"paw", "undead":"skull",
+  "machine":"drone", "royal":"star", "pirate":"ship", "gunner":"cannon",
+  "assassin":"hood", "support":"prayer", "vanguard":"spear", "arcanist":"book",
+  "bulwark":"formation", "vampire":"fangs"
+}
