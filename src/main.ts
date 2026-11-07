@@ -160,7 +160,7 @@ import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
-import { traitBadge } from './traitBadge';
+import { battleTraitBadge } from './battleTraitArt';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
@@ -195,7 +195,8 @@ import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
 import { fightToastTop } from './hudClear';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
-import heartUrl from './art/rogue/heart.png';
+import heartUrl from './art/ui/combat-heart.png';
+import { COMBAT_ART } from './combatArtAssets';
 import { EidolonCall } from './eidolonCall';
 import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
 import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
@@ -3422,7 +3423,15 @@ class Game {
       card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}${h.guest ? ' guest' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
-      stars.textContent = '★'.repeat(h.grade);
+      stars.className = 'benchGrade';
+      stars.setAttribute('aria-label', `Rank ${h.grade}`);
+      for (let i = 0; i < h.grade; i++) {
+        const mark = document.createElement('img');
+        mark.src = COMBAT_ART.star;
+        mark.alt = '';
+        mark.draggable = false;
+        stars.append(mark);
+      }
       const name = document.createElement('b');
       name.textContent = heroName(h.kind);
       const bar = document.createElement('i');
@@ -3981,7 +3990,7 @@ class Game {
       const next = c.trait.tiers[c.tier + 1];
       const head = document.createElement('span');
       head.className = 'thead';
-      head.append(traitBadge(c.trait.id, { small: true }), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
+      head.append(battleTraitBadge(c.trait.id), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
       pill.append(head);
       if (next) {
         const fx = document.createElement('small');
@@ -3999,7 +4008,7 @@ class Game {
       pill.className = `trait bonds on${this.traitPick === 'bonds' ? ' picked' : ''}`;
       const head = document.createElement('span');
       head.className = 'thead';
-      head.textContent = `${pairs.some((p) => p.lv < 0) ? '⚔ ' : '❦ '}Bonds ${pairs.length}`;
+      head.append(battleTraitBadge(pairs.some((p) => p.lv < 0) ? 'rival' : 'bonds'), document.createTextNode(`Bonds ${pairs.length}`));
       const fx = document.createElement('small');
       fx.textContent = pairs.map((p) => p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' & ')).join(', ');
       pill.append(head, fx);

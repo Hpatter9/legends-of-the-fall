@@ -1,0 +1,97 @@
+/* Painted report and announcement materials. Counts, fills, timings and actions
+   still come from the existing views; the simulation is not involved here. */
+#result:not(.passing), #recap { background: #08150ff5; }
+#recap .rcSheet {
+  border: 5px solid transparent;
+  border-image: url(ui/combat-panel.png) 24 fill / 7px / 0 stretch;
+}
+#result #banner,
+#recap .rcTitle,
+:is(#result, #recap, #stand) .jrHead {
+  border: 3px solid transparent;
+  border-image: url(ui/combat-panel.png) 24 fill / 7px / 0 stretch;
+  border-radius: 0;
+  background: #0b1b12;
+  color: #f3d89f;
+}
+#result #banner.lost,
+#recap .rcTitle.lost,
+:is(#result, #recap, #stand) .jrHead.lost {
+  border-image-source: url(ui/combat-crimson.png);
+  background: #240b0b;
+}
+:is(#result, #recap, #stand) .jrHead { padding: 16px 10px 12px; }
+:is(#result, #recap, #stand) .jrHead .jrFacts small { font-size: 11px; letter-spacing: .05em; }
+:is(#result, #recap, #stand) .jrHead .jrSkip { min-height: 44px; }
+#result :is(#armyStars, #fightStats, .xprow, .star, .dayResult),
+:is(#result, #recap, #stand) .jrBody :is(.jrRow, .jrMvp, .jrSpoils),
+:is(#recap, .rcDetail) :is(.rcFig, .rcHero, .rcXpRow, .rcAdvice),
+#autoSum .asumCard,
+#towerMap .rtCard:is(.summary, .ccCard),
+#stand .stEndCard {
+  border: 3px solid transparent;
+  border-image: url(ui/combat-panel.png) 24 fill / 5px / 0 stretch;
+  border-radius: 0;
+  background: #0b1b12;
+  color: #f1e7cf;
+}
+#stand .stEndCard:has(.jrHead.lost) { border-image-source: url(ui/combat-crimson.png); }
+#autoSum .asumRows { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 16px; }
+#autoSum .asumRows > b { text-align: right; }
+:is(#result, #recap, #stand) .jrBody .jrRow { padding: 8px; }
+:is(#result, #recap, #stand) .jrBody .jrFace,
+:is(#recap, .rcDetail) .rcFace,
+#result .xpFace {
+  border-radius: 0;
+  background: #0b1710 url(ui/combat-portrait.png) center / 100% 100% no-repeat;
+}
+:is(#result, #recap, #stand) .jrBody .jrHeading,
+#recap .rcSheet > h3 { font-size: 13px; letter-spacing: .08em; }
+:is(#result, #recap, #stand) .jrBody .jrHint { font-size: 13px; }
+:is(#result, #recap, #stand) .jrBody .jrBar,
+:is(#recap, .rcDetail) .rcBar i { border: 1px solid #8f7746; border-radius: 2px; }
+:is(#result, #recap, #stand) .jrBody .jrRow.up { box-shadow: inset 0 0 0 1px #f2d18a, 0 0 9px #cba84c55; }
+:is(#result, #recap, #stand) .jrHead button,
+#result > .row button,
+#recap .rcFoot button,
+#recap .rcTip button,
+#autoSum .asumCard button,
+#towerMap .rtCard:is(.summary, .ccCard) button,
+#stand .stEndCard button {
+  border: 2px solid transparent;
+  border-image: url(ui/combat-skill.png) 28 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: #24170f;
+  color: #f5e6c7;
+  min-height: 44px;
+  text-shadow: none;
+}
+#result > .row button:focus-visible,
+#recap :is(.rcFoot, .rcTip) button:focus-visible {
+  outline: 2px solid #ffe4a5; outline-offset: 2px;
+}
+/* Passing cards retain their transparent overlay and automatic onward flow. */
+body #result.passing #banner {
+  border: 2px solid transparent;
+  border-image: url(ui/combat-panel.png) 24 fill / 5px / 0 stretch;
+  background: #0b1b12;
+}
+
+/* Replace the procedural bands and racing stripes with a painted metal rim.
+   Existing transforms, entrance/exit motion and reduced-motion fades stay intact. */
+.bmCut { top: max(20%, 196px); }
+.bmBand, .bmCut.rage .bmBand {
+  border: 3px solid transparent;
+  border-image: url(ui/combat-crimson.png) 24 fill / 6px / 0 stretch;
+  background: #240b0b;
+}
+.bmLines, .bmEdges { display: none; }
+.bmWords small { color: #e8c3a0; letter-spacing: .04em; }
+.bmWords b { color: #fff0d3; text-shadow: 0 2px 3px #000, 0 0 8px #000; }
+.bmCut.rage .bmBand { box-shadow: 0 0 18px #d7392477, inset 0 0 14px #9c291522; }
+.fhCutIn {
+  border: 2px solid transparent;
+  border-image: url(ui/combat-panel.png) 24 fill / 4px / 0 stretch;
+  background: #0b1b12;
+  clip-path: none;
+}

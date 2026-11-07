@@ -27,6 +27,15 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.390.0',
+    date: '2026-11-07',
+    title: 'Painted battle screens',
+    notes: [
+      'Battle controls, deployment, popups and reports now share painted brass and leather frames.',
+      'Hero skills, king spells and battle notes use painted icons, with clearer deployment controls.',
+    ],
+  },
+  {
     version: '0.389.0',
     date: '2026-11-07',
     title: 'Painted gear, travellers and livelier battle art',
