@@ -18,6 +18,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### PAINTED-DEPLOY-ICONS — Complete deployment chrome and battle icon coverage
 
+- **Release:** owner authorised main integration before tavern work; [PR #425](https://github.com/Hpatter9/legends-of-the-fall/pull/425), version 0.390.0. Integrated main 0.389.0; typecheck/build, 88 relevant tests and a fresh 40-check 393px interaction/reduced-motion/offline pass succeeded.
+
 - **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
 - **Scope:** deployment header/panel/buttons, bench/selection/recycle indicators; painted icon coverage across current hero skills/ultimates/revives, king spells and wave-note marks. Reuse credited painted art where suitable and add missing motifs. Preserve roster layout, simulation, saves, labels, touch/drag and unlock behavior; no version change, merge or deployment.
 - **Completion:** explicit icon coverage checked against real kit/spell data; typecheck/build, affected tests; deployment/combat and icon-sheet browser checks at three portrait sizes, keyboard/touch states, reduced motion and offline new assets. Handoff and any exceptions recorded.

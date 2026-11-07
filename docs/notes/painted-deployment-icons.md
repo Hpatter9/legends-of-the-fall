@@ -26,3 +26,5 @@ No merge, PR or deployment performed. The agreed remaining deployment/icon scope
 ## Authorised main integration
 
 Owner requested merging the completed battle UI into main before tavern work. Integrated main 0.389.0, preserving its equipment, traveller and battle animation artwork. Release metadata is 0.390.0 with matching player-facing Updates notes. Shared painted materials and motifs are in `src/art/ui/combat-*.png`; source/import mappings remain under `art-source/ui/painted-combat/` and `tools/painted-combat/`. Standard ornate menus remain the basis for future tavern menus.
+
+Integrated-release validation: typecheck, web build and 88 relevant tests passed. All 40 focused browser checks passed again at 393×852 with zero page errors, including the integrated artwork, real deployment interactions, reduced motion and offline access. Evidence: `docs/samples/painted-release-*`. Owner-authorised main merge: [PR #425](https://github.com/Hpatter9/legends-of-the-fall/pull/425), version 0.390.0.
