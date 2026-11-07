@@ -42,7 +42,7 @@ import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
 import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
-import { Tavern } from './tavern';
+import { PaintedTavern } from './paintedTavern';
 import { hesterNews } from './render/tavernSpots';
 import { openUpgrades } from './rankUpList';
 import { upgradeReady } from './sim/upgradesReady';
@@ -170,7 +170,7 @@ export class Home {
   private tabBtns = new Map<Tab, HTMLButtonElement>();
   private camp: CampScene;
   private stopSheet: (() => void) | null = null;
-  private tavern: Tavern;
+  private tavern: PaintedTavern;
   private castle: CastleScene;
   private hall: SummoningHall;
   private library = new Library(() => this.show('castle'));
@@ -193,7 +193,7 @@ export class Home {
     // (the Battle page is the war camp: tapping a hero opens their sheet, the war table opens the party)
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
     // (QUESTS: Gwen behind the bar opens her card, the board opens the log's Board tab, the Quests button its Active tab)
-    this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster(), {
+    this.tavern = new PaintedTavern((kind) => this.openSheet(kind), () => this.openRoster(), {
       onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
       onBoard: () => this.openQuests('board'),
       onQuests: () => this.openQuests('active'),
