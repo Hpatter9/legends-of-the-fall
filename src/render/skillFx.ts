@@ -175,7 +175,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
   'Tectonic Shove': { cast: { sheet: 'earthBurst', scale: 1.6 }, hit: { sheet: 'earthExplosion', scale: 1.0 } },
   "Mountain's Embrace": { cast: { sheet: 'earthShield', scale: 2.6 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
   'Bronze Peal': { cast: { sheet: 'lightNova', scale: 1.6 }, hit: { sheet: 'lightNova', scale: 0.9 } },
-  'Midnight Knell': { cast: { sheet: 'darkCircle', scale: 3.2 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
+  'Midnight Knell': { cast: { sheet: 'darkCircle', scale: 3 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
   'Falcon Stoop': { cast: { sheet: 'windBurst', scale: 1.6 }, hit: { sheet: 'windBurst', scale: 1.0 } },
   'Sky Hunt': { cast: { sheet: 'windVortex', scale: 3 }, hit: { sheet: 'windBurst', scale: 1.3 } },
 };
