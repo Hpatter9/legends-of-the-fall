@@ -20,6 +20,8 @@ export const TONE_ELEMENTS: Readonly<Record<ComboTone, readonly [Element, Elemen
   spirit: ['poison', 'dark', 'ice'],
   earth: ['earth', 'fire', 'wind'],
   dark: ['dark', 'blood', 'poison'],
+  // (the Night Kin's: blood first, so its banner and bar are its own red, not the Dread Court's dark)
+  blood: ['blood', 'dark', 'wind'],
 };
 /** The colour of a combo's glow (its banner and its bar). */
 export const toneColour = (tone: ComboTone): number => GLOW[TONE_ELEMENTS[tone][0]];

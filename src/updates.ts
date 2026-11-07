@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.387.0',
+    date: '2026-11-07',
+    title: 'Nine new heroes join',
+    notes: ['The Vampires (Vladislav, Carmilla, Sorin, Gavril, Klara) join with Raiden, Kavi, Aisling and Tenzin: 54 heroes to collect.'],
+  },
+  {
     version: '0.386.0',
     date: '2026-11-06',
     title: 'Painted tactic icons and nemesis art',

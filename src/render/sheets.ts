@@ -131,6 +131,25 @@ import heroMummy from '../art/units/hero_mummy.png';
 import heroJuggernaut from '../art/units/hero_juggernaut.png';
 import heroTyrant from '../art/units/hero_tyrant.png';
 import heroShambler from '../art/units/hero_shambler.png';
+// The nine heroes that joined from the twenty (docs/notes/heroes-join.md): packed by tools/heroes-20/pack-sheets.py.
+import HeroResVampireLord from '../art/units/hero_res_vampire_lord.png';
+import HeroResVampireLordBack from '../art/units/hero_res_vampire_lord_back.png';
+import HeroResHemomancer from '../art/units/hero_res_hemomancer.png';
+import HeroResHemomancerBack from '../art/units/hero_res_hemomancer_back.png';
+import HeroResNightstalker from '../art/units/hero_res_nightstalker.png';
+import HeroResNightstalkerBack from '../art/units/hero_res_nightstalker_back.png';
+import HeroResBloodGargoyle from '../art/units/hero_res_blood_gargoyle.png';
+import HeroResBloodGargoyleBack from '../art/units/hero_res_blood_gargoyle_back.png';
+import HeroResDhampir from '../art/units/hero_res_dhampir.png';
+import HeroResDhampirBack from '../art/units/hero_res_dhampir_back.png';
+import HeroResWarDrummer from '../art/units/hero_res_war_drummer.png';
+import HeroResWarDrummerBack from '../art/units/hero_res_war_drummer_back.png';
+import HeroResBellWarden from '../art/units/hero_res_bell_warden.png';
+import HeroResBellWardenBack from '../art/units/hero_res_bell_warden_back.png';
+import HeroResFalconer from '../art/units/hero_res_falconer.png';
+import HeroResFalconerBack from '../art/units/hero_res_falconer_back.png';
+import HeroResGeomancer from '../art/units/hero_res_geomancer.png';
+import HeroResGeomancerBack from '../art/units/hero_res_geomancer_back.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -266,6 +285,24 @@ const URLS: Record<string, string> = {
   hero_juggernaut: heroJuggernaut,
   hero_tyrant: heroTyrant,
   hero_shambler: heroShambler,
+  hero_res_vampire_lord: HeroResVampireLord,
+  hero_res_vampire_lord_back: HeroResVampireLordBack,
+  hero_res_hemomancer: HeroResHemomancer,
+  hero_res_hemomancer_back: HeroResHemomancerBack,
+  hero_res_nightstalker: HeroResNightstalker,
+  hero_res_nightstalker_back: HeroResNightstalkerBack,
+  hero_res_blood_gargoyle: HeroResBloodGargoyle,
+  hero_res_blood_gargoyle_back: HeroResBloodGargoyleBack,
+  hero_res_dhampir: HeroResDhampir,
+  hero_res_dhampir_back: HeroResDhampirBack,
+  hero_res_war_drummer: HeroResWarDrummer,
+  hero_res_war_drummer_back: HeroResWarDrummerBack,
+  hero_res_bell_warden: HeroResBellWarden,
+  hero_res_bell_warden_back: HeroResBellWardenBack,
+  hero_res_falconer: HeroResFalconer,
+  hero_res_falconer_back: HeroResFalconerBack,
+  hero_res_geomancer: HeroResGeomancer,
+  hero_res_geomancer_back: HeroResGeomancerBack,
 };
 
 const LAYOUT: Record<string, Layout> = { ...layout, ...awakened.layouts };

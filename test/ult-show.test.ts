@@ -235,6 +235,6 @@ test('batches 4 and 5: callers rise or run in, changers change, blessings reach 
   // (the kitsune's foxes and the time witch's stopped foes are reached though they took no blow)
   assert.ok(fire('kitsune').plan.cast.touched.length > 0);
   assert.ok(fire('timeWitch').plan.cast.touched.length > 0);
-  // (all 45 heroes have one)
+  // (all 54 heroes have one)
   for (const kind of ALL_HEROES) assert.ok(hasShowcase(kind), kind);
 });

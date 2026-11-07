@@ -1889,6 +1889,384 @@
     "Royal blood is being spilled! Surely that is a hanging offence!",
     "My reign is looking perilously brief right now!"
    ]
+  },
+  "vampireLord": {
+   "hired": [
+    "I never drink... cheap claret. Only the finest frontline vintage.",
+    "Do draw the velvet curtains. The midday glare is terribly vulgar.",
+    "Three centuries of nobility, and I still must queue for deployment."
+   ],
+   "placed": [
+    "Point me towards someone with a lively pulse and poor footwork.",
+    "Mind the silk lining on the cape. It is dry-clean only.",
+    "A delightful evening for a lunge and a light refreshment."
+   ],
+   "won": [
+    "Exquisite bouquet! Though the orc had a rather earthy aftertaste.",
+    "Victory, and not a single drop spilled on my lace cravat.",
+    "The night belongs to us. The spoils belong to my chateau."
+   ],
+   "lost": [
+    "Retreating into a cloud of bats! Purely for dramatic effect!",
+    "Someone left a garlic clove in the baggage cart! Sabotage!",
+    "I shall return to my coffin and sulk until next century."
+   ],
+   "levelUp": [
+    "Aged like a fine burgundy! Sharper fangs, silkier cape!",
+    "My noble bloodline grows ever more intoxicating!",
+    "Stronger! Faster! And forty percent more gothic!"
+   ],
+   "ultimate": [
+    "BEHOLD THE BLOOD MOON, PEASANTS!",
+    "FEAST UPON THE NIGHT, MY COURT!",
+    "YOUR VITALITY IS HEREBY REQUISITIONED!"
+   ],
+   "revived": [
+    "You forgot the wooden stake, amateurs! Up I rise!",
+    "A brief nap in the crypt. Did I miss the second course?",
+    "Immortality is terribly convenient on a Tuesday afternoon."
+   ],
+   "lowHp": [
+    "I am feeling distinctly anaemic! Somebody lend me a neck!",
+    "My velvet collar is frayed! This is an outrage!",
+    "A little transfusion would not go amiss right now!"
+   ]
+  },
+  "hemomancer": {
+   "hired": [
+    "Hold still, darling. I am only taking a tiny sample.",
+    "Blood is thicker than water, and much better for spellcasting.",
+    "I do both donations and withdrawals. Mostly withdrawals."
+   ],
+   "placed": [
+    "Let us see what sort of vintage these ruffians are carrying.",
+    "Stand near me if you fancy a top-up from the enemy.",
+    "Chalice polished, rubies gleaming, arteries located."
+   ],
+   "won": [
+    "Everyone is topped up and looking wonderfully rosy!",
+    "A clean transfusion. They gave everything they had.",
+    "Not a drop wasted. I am a very thrifty countess."
+   ],
+   "lost": [
+    "Spilled the chalice! Do you know how hard that stains silk?!",
+    "My circulation has been rudely interrupted!",
+    "Fainting on the lawn. How dreadfully melodramatic."
+   ],
+   "levelUp": [
+    "Richer crimson! Deeper pulse! Finer control!",
+    "I can hear a heartbeat from three parishes away!",
+    "More potency in every single drop!"
+   ],
+   "ultimate": [
+    "CRIMSON DELUGE! DRINK DEEP, MY FRIENDS!",
+    "EVERY VEIN ANSWERS MY CALL!",
+    "POUR FORTH THE SCARLET TIDE!"
+   ],
+   "revived": [
+    "Pulse restored! Back to the crimson arts!",
+    "A countess never leaves before the final toast!",
+    "Heart beating nicely again! Well, metaphorically!"
+   ],
+   "lowHp": [
+    "My own reserves are running perilously low here!",
+    "Somebody fetch a donor, and quickly!",
+    "Pale as a sheet, and not in the fashionable way!"
+   ]
+  },
+  "nightstalker": {
+   "hired": [
+    "I hang from the rafters. Do not mind the occasional squeak.",
+    "Point me at the archers at the back. They never look up.",
+    "Wings folded, fangs bared, ready for the midnight shift."
+   ],
+   "placed": [
+    "Nice dark shadow right here. Nobody say a word.",
+    "I spy a straggler at the back with nobody minding him.",
+    "Ears twitching. The breeze carries their heartbeat."
+   ],
+   "won": [
+    "Swooped in, bit the lot, back on the perch before supper.",
+    "Did they even see me? Of course they didn't.",
+    "Clean wings, full belly, quiet field. Lovely."
+   ],
+   "lost": [
+    "Clipped mid-swoop! Who brought a lantern to a night fight?!",
+    "Grounded! My leathery wings are all twisted!",
+    "Hissing from the floor. Do not come near me."
+   ],
+   "levelUp": [
+    "Wider wingspan! Quieter flutter! Meaner bite!",
+    "I can see in pitch dark and twice as far in twilight!",
+    "Apex predator of the belfry!"
+   ],
+   "ultimate": [
+    "MIDNIGHT FEAST! LIGHTS OUT, EVERYONE!",
+    "WINGS OF THE NIGHT, TEAR THEM APART!",
+    "NO ESCAPE FROM THE DARK!"
+   ],
+   "revived": [
+    "Back on the wing! You cannot swat the night!",
+    "Shook the dust off my ears and ready to pounce!",
+    "Thought I was down? Just roosting for a second!"
+   ],
+   "lowHp": [
+    "Wing membrane is torn! Losing altitude fast!",
+    "Too bright out here! Need a shadow and a bandage!",
+    "Hissing loudly for a healer right now!"
+   ]
+  },
+  "bloodGargoyle": {
+   "hired": [
+    "Sat on a cathedral roof for centuries. My knees need a stretch.",
+    "I am half granite, half bat, and entirely bad-tempered.",
+    "Rainspouts are dull. Crushing helmets is much livelier."
+   ],
+   "placed": [
+    "Perching right here. Try shifting six hundredweight of basalt.",
+    "If I hold very still, they think I am garden masonry.",
+    "Claws in the turf. Wings ready to fold."
+   ],
+   "won": [
+    "Smashed them flat and didn't even chip a talon.",
+    "Back to the pedestal. Wake me when the next wave arrives.",
+    "Stone beats bone every single day of the week."
+   ],
+   "lost": [
+    "Cracked right across the plinth! Call a stonemason!",
+    "Toppled off the perch! Mind the falling rubble!",
+    "Reduced to gravel. Deeply embarrassing for a gargoyle."
+   ],
+   "levelUp": [
+    "Harder basalt! Heavier wings! Scarier grimace!",
+    "Moss scraped off and claws freshly chiselled!",
+    "Built like a flying buttress now!"
+   ],
+   "ultimate": [
+    "OBSIDIAN SPIRE! CRUSH THEM TO DUST!",
+    "STONE FROM THE SKY! LOOK OUT BELOW!",
+    "THE CATHEDRAL FALLS ON YOU!"
+   ],
+   "revived": [
+    "Mortared back together and ready to drop on someone!",
+    "You cannot break dark basalt twice!",
+    "Back on my talons! Who chipped my horn?!"
+   ],
+   "lowHp": [
+    "Chunks of masonry falling off me here!",
+    "My stone hide is cracking at the seams!",
+    "Need a sculptor or a very strong ward!"
+   ]
+  },
+  "dhampir": {
+   "hired": [
+    "Half vampire, all hunter. And a hundred percent cross.",
+    "Silver bolts for the monsters, iron bolts for the rest.",
+    "I walk in the sun, though I still appreciate a wide-brimmed hat."
+   ],
+   "placed": [
+    "Crossbow cocked. Stakes in the belt. Let them come.",
+    "Good sightline for a vault if the brutes get too friendly.",
+    "Smells like trouble. My favourite kind of afternoon."
+   ],
+   "won": [
+    "Pinned, staked, and accounted for. Who is next on the list?",
+    "Another night shift cleared without a bite mark.",
+    "Collect the silver quarrels. Those things cost crowns."
+   ],
+   "lost": [
+    "Outflanked! And my repeating mechanism jammed!",
+    "Should have brought more silver and a bigger hat.",
+    "Down in the dirt. The vampires will never let me hear the end of it."
+   ],
+   "levelUp": [
+    "Tighter draw on the arbalest! Quicker vault on the boots!",
+    "Half-blood vigour kicking in nicely!",
+    "Sharper stakes and steadier aim!"
+   ],
+   "ultimate": [
+    "ECLIPSE VOLLEY! SILVER FOR EVERYONE!",
+    "NO MONSTER LEAVES THIS FIELD STANDING!",
+    "BLOT OUT THE DUSK!"
+   ],
+   "revived": [
+    "Vampire blood knits fast. Do not mention it to the church.",
+    "Back on my boots and reloading the drum!",
+    "Takes more than that to put a daywalker down!"
+   ],
+   "lowHp": [
+    "Thirst is creeping up on me! Keep them back!",
+    "Trench coat is shredded and I am out of bandages!",
+    "Need a breather before I lose my temper!"
+   ]
+  },
+  "warDrummer": {
+   "hired": [
+    "I brought the big oxhide taiko! Hope your neighbours like bass!",
+    "March to the beat, swing to the beat, win to the beat!",
+    "Two mallets, one drum, and zero indoor voice!"
+   ],
+   "placed": [
+    "Setting the stand right here! Prepare for percussion!",
+    "When I hit the rim, everybody charges! Got it?!",
+    "Acoustics on this ridge are proper booming!"
+   ],
+   "won": [
+    "Did you feel that rhythm?! Even the trees were tapping along!",
+    "Not a single missed beat! Best concert of the campaign!",
+    "Drumskin intact, enemies flattened! Encore!"
+   ],
+   "lost": [
+    "Someone poked a hole in the oxhide! That is sacrilege!",
+    "Lost the tempo in the third bar! My apologies, lads!",
+    "Dropped my mallet. The silence is deafening."
+   ],
+   "levelUp": [
+    "Bigger drum! Thicker mallets! Louder boom!",
+    "You can hear this cadence in the next county now!",
+    "My forearms are officially forged from oak!"
+   ],
+   "ultimate": [
+    "STORM TAIKO! SHAKE THE EARTH!",
+    "FEEL THE THUNDER IN YOUR BONES!",
+    "FULL PERCUSSION BARRAGE!"
+   ],
+   "revived": [
+    "Count me back in! One, two, three, four!",
+    "The rhythm never dies! It only takes a rest!",
+    "Picked up the sticks and ready to roll!"
+   ],
+   "lowHp": [
+    "My drum frame is splintering here!",
+    "Hard to keep time when five brutes are thumping you!",
+    "Protect the percussion section, lads!"
+   ]
+  },
+  "geomancer": {
+   "hired": [
+    "The earth is not stubborn; you simply haven't asked it in granite.",
+    "Mind where you stand. I may need that turf for a spire shortly.",
+    "Stone remembers everything, especially who stepped on it."
+   ],
+   "placed": [
+    "Good solid bedrock under this tile. Very cooperative.",
+    "Feel that rumble? The fault line is waking up.",
+    "Staff planted. Let us rearrange the local topography."
+   ],
+   "won": [
+    "New hills where the enemy used to be. Much nicer view.",
+    "The mountain always wins the argument in the end.",
+    "Dust settles, stone remains. Simple geology, really."
+   ],
+   "lost": [
+    "Landslide went the wrong way! My calculations were off!",
+    "Buried under my own rubble. How professionally awkward.",
+    "Even granite cracks under enough clubs, apparently."
+   ],
+   "levelUp": [
+    "Deeper roots in the mantle! Taller spires on call!",
+    "I can feel every pebble on the board now!",
+    "Harder shale, sharper quartz, heavier quakes!"
+   ],
+   "ultimate": [
+    "CONTINENTAL RIFT! SPLIT THE FIELD!",
+    "THE MOUNTAIN RISES AT MY WORD!",
+    "SHATTER THE BEDROCK!"
+   ],
+   "revived": [
+    "Pushed the boulders aside and stood back up!",
+    "Like a mountain peak through the clouds!",
+    "You cannot keep the earth down! Wait, it is already down!"
+   ],
+   "lowHp": [
+    "My stone ward is crumbling to sand here!",
+    "Chipping away at the geomancer! Rude!",
+    "Need a solid wall between me and those brutes!"
+   ]
+  },
+  "bellWarden": {
+   "hired": [
+    "Mind your ears when the bronze swings. It rings for a week.",
+    "Two tons of sanctuary bell on my back, and I never miss vespers.",
+    "When I toll the hour, the wicked sit down very quickly."
+   ],
+   "placed": [
+    "Yoke squared on the shoulders. Stand clear of the swing.",
+    "One ring for defence, two rings for a concussion.",
+    "The belfry has arrived at the front line."
+   ],
+   "won": [
+    "Service concluded. The congregation has been thoroughly flattened.",
+    "Listen to that hum. Finest bronze in the diocese.",
+    "Peace and quiet, right after the deafening clang."
+   ],
+   "lost": [
+    "The clapper came loose! And the yoke pinned me flat!",
+    "Cracked the bronze! The bishop is going to be livid!",
+    "Rung my own bell, I am afraid. Everything is spinning."
+   ],
+   "levelUp": [
+    "Thicker bronze! Deeper resonance! Sturdier shoulders!",
+    "This chime could rattle the teeth out of a dragon!",
+    "Blessed by the foundry and the church alike!"
+   ],
+   "ultimate": [
+    "DOOMSDAY CHIME! HEAR THE FINAL HOUR!",
+    "TOLL THE GREAT BELL! KNEEL!",
+    "LET THE BRONZE RING OUT!"
+   ],
+   "revived": [
+    "Sound the matins! I am back on my feet!",
+    "The bell still rings, and so do I!",
+    "Hoisted the yoke again! Who wants another verse?!"
+   ],
+   "lowHp": [
+    "My ears are ringing, and not from the bell!",
+    "Two tons of bronze feels very heavy at ten percent health!",
+    "A little mending for the bell-ringer, please!"
+   ]
+  },
+  "falconer": {
+   "hired": [
+    "Keep fingers inside your gauntlets. Zephyr mistakes thumbs for mice.",
+    "One whistle from me, and the sky drops talons on their heads.",
+    "We hunt from the high heather. The view is much better up there."
+   ],
+   "placed": [
+    "Hood off, Zephyr. Up into the sun you go.",
+    "Wind is rising nicely. Mind the hawk when she stoops.",
+    "Bow ready, gauntlet strapped, eyes on the clouds."
+   ],
+   "won": [
+    "Good bird! Come get your piece of venison!",
+    "Between my arrows and her talons, they hadn't a prayer.",
+    "Feathers preened and quiver half full. Tidy work."
+   ],
+   "lost": [
+    "Zephyr, fly back to the mews! I shall walk it off!",
+    "Bowstring fouled in the heather! Rotten luck!",
+    "Grounded. Do not let the hawk see me like this."
+   ],
+   "levelUp": [
+    "Keener eyes! Swifter stoop! Stronger wingbeat!",
+    "Zephyr just moulted into gleaming silver plumage!",
+    "We can spot a field mouse through a blizzard now!"
+   ],
+   "ultimate": [
+    "SKY HUNT! TALONS FROM THE CLOUDS!",
+    "ZEPHYR, STRIKE THEM DOWN!",
+    "THE HEAVENS HAVE CLAWS TODAY!"
+   ],
+   "revived": [
+    "Heard my hawk whistling overhead and couldn't stay down!",
+    "Back in the heather! Glove up, bird ready!",
+    "A quick gust of wind and I am on my feet!"
+   ],
+   "lowHp": [
+    "They are crowding the falconer! Shoo! Off with you!",
+    "My leather gauntlet is not a tower shield!",
+    "Need some space and a plaster over here!"
+   ]
   }
  },
  "banter": {
@@ -2726,7 +3104,16 @@
   "juggernaut": "A fortress wall that grew tired of standing still and learned to march. When its granite foot stamps down, every living thing in the parish reconsiders its purpose.",
   "sage": "He studied the heavens so intensely that the constellations began studying him back. He calls down stellar fire on three crowds, replenishing his allies' skill meters as he watches.",
   "demonSwordsman": "He feeds upon the lifeblood he cleaves, while the demon slumbering in the steel drains him. The longer the battle drags, the fuzzier the distinction between them.",
-  "tyrant": "He reigns through ruthless decree, crushing the mutinous and rallying the loyal with a glare. In forty years on the magistrate's bench, he has never lost a verdict."
+  "tyrant": "He reigns through ruthless decree, crushing the mutinous and rallying the loyal with a glare. In forty years on the magistrate's bench, he has never lost a verdict.",
+  "vampireLord": "Voivode Vladislav ruled the high crags for three centuries before taking an interest in border politics. He lunges through the battle line in a swirl of crimson velvet, drinking back whatever vigour his blade spills.",
+  "hemomancer": "Countess Carmilla regards the circulatory system as a needlessly closed loop. Her blood-lash binds whole ranks together, and the chalice she pours puts the colour back in her flagging companions.",
+  "nightstalker": "Sorin roosts in the belfry rafters until the lanterns dim and the stragglers drift apart. A flutter of leathery wings and a flash of fangs are the only warning the enemy rear guard ever receives.",
+  "bloodGargoyle": "Gavril was chiselled from dark cathedral basalt to ward off evil, then grew peckish and joined the fray himself. When he turns to granite, blades simply bounce off the masonry.",
+  "dhampir": "Born between dusk and daybreak, Klara hunts her noisier cousins with a repeating crossbow and a pocketful of silver stakes. She vaults clear of charging brutes before pinning them neatly to the turf.",
+  "warDrummer": "Raiden hauls a great oxhide taiko onto the ridge and beats a cadence that rattles enemy teeth loose. Every thunderous strike rolls a wave of sound across the grass and puts fresh wind into friendly lungs.",
+  "geomancer": "Tenzin listens to the slow grumbling of the bedrock and turns its complaints into jagged granite spires. With a sharp stamp of her staff, whole enemy files are tossed skyward or fenced behind fresh stone.",
+  "bellWarden": "Kavi marches into battle with a two-ton bronze temple bell upon his shoulders. One swing of the striker knocks the front rank flat and wraps his neighbours in a soothing golden chime.",
+  "falconer": "Aisling whistles from the heather, and her gyrfalcon drops out of the sun like a feathered thunderbolt. Between stoops, a gale from its wings blows encroaching swordsmen back down the slope."
  },
  "foe_lore": {
   "skeleton": "Bound to a long-dead king, he still hoists his rusted rim for an impact that never arrived.",
@@ -6811,6 +7198,375 @@
     }
    ]
   },
+  "awaken:vampireLord": {
+   "title": "Vampire Lord: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:vampireLord",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Vladislav has held his red keep for four centuries, and has not once been late to a feast."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The blood runs thicker, and the cloak somehow longer. I approve of both."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:hemomancer": {
+   "title": "Hemomancer: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:hemomancer",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Carmilla pours a vintage no cellar has ever stocked, and never spills a drop."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The chalice brims over. Do not worry, darling; it is only slightly yours."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:nightstalker": {
+   "title": "Strigoi: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:nightstalker",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Sorin keeps to the rafters of the crypt, and has never once been seen arriving."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Wings wider, eyes redder. You may now scream; I shall wait."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:bloodGargoyle": {
+   "title": "Blood Gargoyle: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:bloodGargoyle",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Gavril watched a cathedral rise from its first stone, and has opinions on the mortar."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The stone cracks and settles. I feel remarkably, unfashionably heavy."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:dhampir": {
+   "title": "Dhampir: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:dhampir",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Klara was born between the grave and the daylight, and has chosen her side."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Silver on the string, sun on my back. They should have run sooner."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:warDrummer": {
+   "title": "War Drummer: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:warDrummer",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Raiden strikes the great drum before dawn, and the whole keep wakes ready."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The drum hums in my bones now. Louder, I think; louder!"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:geomancer": {
+   "title": "Geomancer: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:geomancer",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Tenzin listens to the crags until they tell him where they would like to move."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The mountain nods. I shall try not to take it as permission to be smug."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:bellWarden": {
+   "title": "Bell Warden: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:bellWarden",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Kavi guards the bronze bell that tolls only for the guilty, and sleeps beside it."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "It rings in the marrow now. Even the hills have gone quiet to listen."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:falconer": {
+   "title": "Falconer: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:falconer",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Aisling reads the glen by the flight of a single bird, and has never once been lost."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Wing and bow as one. Mind your hats; she stoops from a great height."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
   "castle:treasury": {
    "title": "The Vault Arises",
    "blurb": "The master builders complete the Treasury and enter into an intricate debate concerning the rafters.",
@@ -7717,6 +8473,44 @@
     }
    ]
   },
+  "form:gormTitan": {
+   "title": "Gorm: Second Form",
+   "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
+   "shots": [
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "I WAS THE HILL. I AM STILL THE HILL. MIND YOUR FEET!"
+      }
+     ]
+    }
+   ]
+  },
+  "form:vaelkharKing": {
+   "title": "Vaelkhar: Second Form",
+   "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
+   "shots": [
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "KNEEL, LITTLE KING. THEN STAND, AND WATCH!"
+      }
+     ]
+    }
+   ]
+  },
   "oath:holyOrder": {
    "title": "The Holy Order: Last Oath",
    "blurb": "The five holy champions unleash their ultimate covenant, each swearing in solemn unison.",
@@ -8213,6 +9007,68 @@
     }
    ]
   },
+  "oath:bloodCourt": {
+   "title": "The Night Kin: Last Oath",
+   "blurb": "The five of the blood swear their Last Oath beneath a rising blood moon.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Night Kin · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "a",
+       "text": "I swear upon four centuries of red wine and older grudges."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "I swear! Do mind the chalice; it spills on its own."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "I swear from the rafters. You will not see me say it."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "d",
+       "text": "Sworn in stone. I shall be here at dawn, and long after."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "e",
+       "text": "I swear with silver on the string. They did say I was half the problem."
+      }
+     ]
+    }
+   ]
+  },
   "oathcut:holyOrder": {
    "title": "The Holy Order: Last Oath (short)",
    "blurb": "The five swear their Last Oath as one, in a few seconds.",
@@ -8416,6 +9272,32 @@
       {
        "who": "c",
        "text": "The court convenes, the ledgers open, and the sentence falls!"
+      }
+     ]
+    }
+   ]
+  },
+  "oathcut:bloodCourt": {
+   "title": "The Night Kin: Last Oath (short)",
+   "blurb": "The five swear their Last Oath as one, in a few seconds.",
+   "cast": {
+    "a": "party:0",
+    "b": "party:1",
+    "c": "party:2",
+    "d": "party:3",
+    "e": "party:4"
+   },
+   "shots": [
+    {
+     "caption": "Night Kin · Oath",
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "c",
+       "text": "One blood, one night, and a moon that answers us!"
       }
      ]
     }
@@ -8736,44 +9618,6 @@
       {
        "who": "narrator",
        "text": "{hero} joins you."
-      }
-     ]
-    }
-   ]
-  },
-  "form:gormTitan": {
-   "title": "Gorm: Second Form",
-   "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
-   "shots": [
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "boss",
-       "text": "I WAS THE HILL. I AM STILL THE HILL. MIND YOUR FEET!"
-      }
-     ]
-    }
-   ]
-  },
-  "form:vaelkharKing": {
-   "title": "Vaelkhar: Second Form",
-   "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
-   "shots": [
-    {
-     "caption": null,
-     "lines": []
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "boss",
-       "text": "KNEEL, LITTLE KING. THEN STAND, AND WATCH!"
       }
      ]
     }
@@ -9430,62 +10274,6 @@
       {
        "who": "b",
        "text": "Tea. I may need a new flag."
-      }
-     ]
-    }
-   ]
-  },
-  "calAct1": {
-   "title": "The Road Forks",
-   "blurb": "The first guardian falls, and the rift splits three ways.",
-   "shots": [
-    {
-     "caption": "End of Act I",
-     "lines": [
-      {
-       "who": "narrator",
-       "text": "The first guardian is ash. Ahead, the rift tears open in three places, each to a different land."
-      },
-      {
-       "who": "hero",
-       "text": "Three roads, and every one of them ends in something that wants us dead."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "hero",
-       "text": "Well. At least we get to choose which."
-      }
-     ]
-    }
-   ]
-  },
-  "calAct2": {
-   "title": "The Hollow Heart Calls",
-   "blurb": "The second guardian falls; only the Hollow Heart is left.",
-   "shots": [
-    {
-     "caption": "End of Act II",
-     "lines": [
-      {
-       "who": "narrator",
-       "text": "Two guardians down. Every rift now bends one way: towards the Hollow Heart, and Karnok."
-      },
-      {
-       "who": "hero",
-       "text": "Can you feel that? The ground is pulling us forward."
-      }
-     ]
-    },
-    {
-     "caption": null,
-     "lines": [
-      {
-       "who": "hero",
-       "text": "Then let it. We were going that way anyway."
       }
      ]
     }
@@ -14818,6 +15606,62 @@
       {
        "who": "b",
        "text": "And your eye, Natsu. I saw her squint. Our heir, then."
+      }
+     ]
+    }
+   ]
+  },
+  "calAct1": {
+   "title": "The Road Forks",
+   "blurb": "The first guardian falls, and the rift splits three ways.",
+   "shots": [
+    {
+     "caption": "End of Act I",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The first guardian is ash. Ahead, the rift tears open in three places, each to a different land."
+      },
+      {
+       "who": "hero",
+       "text": "Three roads, and every one of them ends in something that wants us dead."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Well. At least we get to choose which."
+      }
+     ]
+    }
+   ]
+  },
+  "calAct2": {
+   "title": "The Hollow Heart Calls",
+   "blurb": "The second guardian falls; only the Hollow Heart is left.",
+   "shots": [
+    {
+     "caption": "End of Act II",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Two guardians down. Every rift now bends one way: towards the Hollow Heart, and Karnok."
+      },
+      {
+       "who": "hero",
+       "text": "Can you feel that? The ground is pulling us forward."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Then let it. We were going that way anyway."
       }
      ]
     }

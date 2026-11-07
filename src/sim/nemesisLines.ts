@@ -167,4 +167,13 @@ export const REPLIES: Readonly<Record<string, readonly [string, string]>> = {
   sage: ['The stars did not mention you, {name}.', 'Your star goes out tonight, {name}.'],
   demonSwordsman: ['My steel is hungry, {name}.', 'The blade asked for you by name, {name}.'],
   tyrant: ['I sentence you, {name}.', 'Your verdict was written long ago, {name}.'],
+  vampireLord: ['Your blood is already mine, {name}.', 'I have outlived better than you, {name}.'],
+  hemomancer: ['Drink deep, {name}. It is your own.', 'The chalice is thirsty, {name}.'],
+  nightstalker: ['Look up, {name}.', 'The dark has been behind you all along, {name}.'],
+  bloodGargoyle: ['Stone does not tire, {name}.', 'I have watched you coming for an hour, {name}.'],
+  dhampir: ['Silver for you, {name}.', 'I was raised to hunt your kind, {name}.'],
+  warDrummer: ['Hear that, {name}? That is your last beat.', 'The drum calls, {name}, and you answer.'],
+  geomancer: ['The ground remembers you, {name}.', 'The mountain has decided, {name}.'],
+  bellWarden: ['The bell tolls for you, {name}.', 'Be still, {name}, and be sanctified.'],
+  falconer: ['She has your scent, {name}.', 'Run, {name}. The falcon enjoys a chase.'],
 };

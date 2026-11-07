@@ -44,14 +44,14 @@ test('pulls are deterministic', () => {
 test('every hero is as likely as any other in a pull (no tiers, no rates)', () => {
   const m = startedMeta(5);
   m.unlocked = [...ALL_HEROES];
-  const N = 45000;
+  const N = 54000;
   const seen = new Map<string, number>();
   for (let i = 0; i < N; i++) {
     const p = pullOnce(m);
     assert.equal('rarity' in p, false, 'a pull has no rarity');
     seen.set(p.kind, (seen.get(p.kind) ?? 0) + 1);
   }
-  // (45 heroes, 45000 pulls: about 1000 each, and 4 standard deviations is about 125)
+  // (54 heroes, 54000 pulls: about 1000 each, and 4 standard deviations is about 125)
   assert.equal(seen.size, ALL_HEROES.length);
   for (const [k, n] of seen) assert.ok(Math.abs(n - 1000) < 130, `${k} came up ${n} times`);
 });

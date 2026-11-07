@@ -1,6 +1,7 @@
 // The hero kits' balance tuner (COMBAT-002): plays the hero sweep (`tools/heroSweep.ts`, the same seeded fights `test/hero-balance*.test.ts` hold)
 // with a set of per-hero knobs, in several processes at once, prints each hero's lift, and suggests the next knobs (a damped step toward the average).
 //   node tools/kits/tune.mjs <state.json> <level> <stage> [games] [--apply]     state: { "<hero>": { "t1": 0.5, "t2": 1, "t3": 0.8, "up": 0.5, "ur": 1 } }
+// COMING=1 in the environment tunes the coming heroes (and KEY=p their passives' strength) (docs/notes/twenty-heroes.md) against the roster's average, the roster's knobs untouched.
 // --skill-level <1-5> fights every hero's skills at that level (`tools/heroSweep.ts`; the children inherit it). t1, t2 and t3 are the skills' `tune`, up and ur the ultimate's `tuned.power` and `.rate`. With --apply the suggestion is written back to the file:
 // at level 1 to t1 (only skill 1 is open), at 10 to t2, at 20 to t3 (the skills overhaul's batch 4), at level 30 to up (the ultimate is the late lever).
 
@@ -9,9 +10,10 @@ import { fork } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { FIELD_BANDS } from '../../src/sim/foes';
 import { mixSeed, Rng } from '../../src/sim/rng';
-import { ALL_HEROES } from '../../src/sim/units';
+import { ALL_HEROES, COMING_HEROES } from '../../src/sim/units';
 import { KITS } from '../../src/sim/abilities';
 import { HERO_KITS } from '../../src/sim/heroKits';
+import { twentyHeroKits as comingHeroKits, twentyKits as comingKits, COMING_PASSIVE } from '../../src/sim/kits/coming';
 import { fieldBoost, pickTeam, play } from '../heroSweep';
 import { applyKnobs, type Knobs } from './knobs';
 /** The knobs the tuner steps (every one but skill 3's class). */
@@ -52,13 +54,18 @@ if (args[0] === '--child') {
     });
   });
   void Promise.all(runs).then((rs) => {
-    const win = ALL_HEROES.map((h) => {
+    // (COMING=1: the coming heroes are in the teams too, docs/notes/twenty-heroes.md; they are measured against the roster's average and only
+    // their knobs are stepped, so the roster's own tuning is left as it is)
+    const coming = process.env.COMING === '1';
+    const pool = coming ? [...ALL_HEROES, ...COMING_HEROES] : [...ALL_HEROES];
+    const winOf = new Map(pool.map((h) => {
       const N = rs.reduce((a, r) => a + (r.inN[h] ?? 0), 0);
       const W = rs.reduce((a, r) => a + (r.inW[h] ?? 0), 0);
-      return (100 * W) / Math.max(1, N);
-    });
+      return [h, (100 * W) / Math.max(1, N)];
+    }));
+    const win = ALL_HEROES.map((h) => winOf.get(h)!);
     const avg = win.reduce((a, b) => a + b, 0) / win.length;
-    const lifts = ALL_HEROES.map((h, i) => ({ h, lift: win[i] - avg }));
+    const lifts = (coming ? [...COMING_HEROES] : [...ALL_HEROES]).map((h) => ({ h, lift: winOf.get(h)! - avg }));
     console.log(`level ${level} stage ${stage}, ${n} fights: average ${avg.toFixed(1)}%, spread ${(Math.max(...win) - Math.min(...win)).toFixed(1)}, beyond 6: ${lifts.filter((x) => Math.abs(x.lift) > 6).map((x) => x.h).join(' ') || 'none'}, beyond 4: ${lifts.filter((x) => Math.abs(x.lift) > 4).length}`);
     console.log(lifts.map((x) => `${x.h} ${x.lift.toFixed(1)}`).join(', '));
     if (!process.argv.includes('--apply')) return;
@@ -70,14 +77,18 @@ if (args[0] === '--child') {
     if (target !== undefined) for (const x of lifts) x.lift = x.lift + avg - target;
     for (const { h, lift } of lifts) {
       const k = (state[h] ??= {});
-      const now = k[key] ?? (key === 'up' ? KITS[h].ultimate!.tuned!.power : key === 'ur' ? KITS[h].ultimate!.tuned!.rate : key === 't1' ? HERO_KITS()[h].s1.tune : key === 't3' ? HERO_KITS()[h].s3!.tune : key === 'l5' ? (LV5_TUNE[h] ?? 1) : HERO_KITS()[h].s2.tune);
+      // (a coming hero's kit is in `comingKits()`, docs/notes/twenty-heroes.md)
+      const kit = KITS[h] ?? comingKits()[h];
+      const hk = HERO_KITS()[h] ?? comingHeroKits()[h];
+      const now = k[key] ?? (key === 'p' ? COMING_PASSIVE[h] ?? 1 : key === 'up' ? kit.ultimate!.tuned!.power : key === 'ur' ? kit.ultimate!.tuned!.rate : key === 't1' ? hk.s1.tune : key === 't3' ? hk.s3!.tune : key === 'l5' ? (LV5_TUNE[h] ?? 1) : hk.s2.tune);
       prev[h] = now;
       // (a damped multiplicative step: a hero 4 points over the average loses about 13% of its strength)
-      const next = Math.max(0.05, Math.min(10, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));
+      // (a passive is never more than as written: its knob stays at 1 or under)
+      const next = Math.max(0.05, Math.min(key === 'p' ? 1 : 10, now * Math.exp(-step * Math.max(-8, Math.min(8, lift)))));
       k[key] = Math.round(next * 1000) / 1000;
     }
     // (the step moves heroes against each other, not the roster as a whole: the knob's geometric mean is held where it was)
-    if (process.env.NORM !== '0' && target === undefined) {
+    if (process.env.NORM !== '0' && target === undefined && !coming) {
       const before = lifts.map(({ h }) => Math.log(prev[h]));
       const after = lifts.map(({ h }) => Math.log(state[h][key]!));
       const drift = after.reduce((a, x) => a + x, 0) / after.length - before.reduce((a, x) => a + x, 0) / before.length;
@@ -87,9 +98,9 @@ if (args[0] === '--child') {
     if (key === 'up')
       for (const { h, lift } of lifts) {
         const k = state[h];
-        if (k.up! >= OLD_POWER[h]) continue;
+        if (OLD_POWER[h] === undefined || k.up! >= OLD_POWER[h]) continue;
         k.up = OLD_POWER[h];
-        if (lift > 0) k.ur = Math.round((k.ur ?? KITS[h].ultimate!.tuned!.rate) * Math.exp(-step * Math.min(8, lift)) * 1000) / 1000;
+        if (lift > 0) k.ur = Math.round((k.ur ?? (KITS[h] ?? comingKits()[h]).ultimate!.tuned!.rate) * Math.exp(-step * Math.min(8, lift)) * 1000) / 1000;
       }
     writeFileSync(file, JSON.stringify(state, null, 1));
   });

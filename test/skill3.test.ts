@@ -8,7 +8,9 @@ import { CHARGE_MAX, keyOf, powered } from '../src/sim/abilities';
 import { bleedFor, chillFor, hasAil } from '../src/sim/ailments';
 import { HERO_KITS, SKILL3_LEVEL, castHero, type HeroKit } from '../src/sim/heroKits';
 import { THIRD_KINDS } from '../src/sim/kits/table';
-import { ALL_HEROES } from '../src/sim/units';
+import { ALL_HEROES as JOINED, TWENTY_HEROES } from '../src/sim/units';
+// (the first 45: the twenty's skill 3s are in their own rows, `kits/coming.ts`, and their tests)
+const ALL_HEROES = JOINED.filter((h) => !TWENTY_HEROES.includes(h));
 import { SAVES } from '../src/sim/saves';
 import { REST } from '../src/sim/statRest';
 

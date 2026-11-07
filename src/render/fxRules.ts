@@ -193,6 +193,25 @@ export const SKILL_ELEMENT: Record<string, Element> = {
   Bacchanal: 'forest',
   'Hunt of the Pack': 'forest',
   'Heart of the Grove': 'forest',
+  // ---- the nine heroes that joined from the twenty: skill 1 and ultimate (docs/notes/heroes-join.md)
+  'Crimson Lunge': 'blood',
+  'Banquet of Blood': 'blood',
+  'Sanguine Lash': 'blood',
+  'Blood Tithe': 'blood',
+  'Dusk Dive': 'dark',
+  'Belfry Swoop': 'dark',
+  'Gargoyle Crash': 'earth',
+  'Cathedral Perch': 'earth',
+  'Silver Stake': 'light',
+  'Silver Requiem': 'light',
+  'Thunder Beat': 'lightning',
+  'Ten Thousand Drums': 'lightning',
+  'Tectonic Shove': 'earth',
+  "Mountain's Embrace": 'earth',
+  'Bronze Peal': 'light',
+  'Midnight Knell': 'dark',
+  'Falcon Stoop': 'wind',
+  'Sky Hunt': 'wind',
 };
 
 export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? kitElement(name) ?? 'light';

@@ -57,7 +57,8 @@ test('a hero\'s called-up fighters count as its own kills, and a summon takes no
 });
 
 test('the split moves XP between the heroes but the fight pays about the same in all', () => {
-  for (const seed of [4, 7, 11]) {
+  // (HEROES-JOIN, docs/notes/heroes-join.md: seed 4 became seed 1, where every hero of the five gets a share)
+  for (const seed of [1, 7, 11]) {
     const b = readyBattle(seed);
     fight(b);
     playOut(b);

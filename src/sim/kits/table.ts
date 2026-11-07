@@ -16,6 +16,7 @@ import { fontOfMagic, stormSurge, transposition, wallOfFire } from './mages';
 import { alterSelf, tidalWave, windWall } from './monsters';
 import { plantStandard, sicEm } from './callers';
 import { REVIVE_FACES } from './revive';
+import { joinedHeroKits } from './coming';
 import { auraOfProtection, bane, shieldRush, spearWall, tunnelStrike } from './tanks';
 import * as T3 from './third';
 import { GUARD } from './third';
@@ -31,7 +32,7 @@ export const MANA_TUNE = 0.7;
  *  whose worth is mostly what it does rather than what it deals (a guard, a banner, decoys, a yank) carries little attack, and keeps a longer gap. */
 export const TUNE1: Readonly<Record<string, number>> = {
   knight: 0.172,
-  samurai: 0.57, // (STATS batch 4: 0.671 to 0.57, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  samurai: 0.4, // (STATS batch 4: 0.671 to 0.57, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit; 0.57 to 0.4 when nine heroes joined and the roster average moved, docs/notes/heroes-join.md)
   kunoichi: 0.285,
   archer: 0.77,
   wizard: 0.317, // (STATS batch 4: 0.211 to 0.317, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
@@ -56,7 +57,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   illusionist: 0.096,
   gunslinger: 0.366,
   shambler: 2.17, // (the joint rebalance: 2.713 to 2.17, level-10 parity, docs/notes/joint-rebalance.md) // (STATS batch 4: 2.087 to 2.713, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 7: Contagion's rot; 0.78 was Rotting Touch's)
-  rifleBot: 0.708,
+  rifleBot: 0.5, // (0.708 to 0.5 when nine heroes joined and the roster average moved, docs/notes/heroes-join.md)
   mercenary: 0.595,
   mummy: 1.003, // (STATS batch 4: 0.59 to 1.003, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   buccaneer: 0.486,
@@ -429,5 +430,7 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     k.s3 = s3;
     k.slots.push(s3);
   }
+  // (the heroes that joined from the twenty keep their kits in their own rows, `kits/coming.ts`)
+  Object.assign(kits, joinedHeroKits());
   return kits;
 }
