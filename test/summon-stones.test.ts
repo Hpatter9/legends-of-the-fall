@@ -258,7 +258,9 @@ test('the pace holds its shape: stones a day from the shop and the chests are bo
     while (useStones(m, 1, { lucky: false })) if (m.unlocked.length >= 5) break;
     if (ownedCount(m) >= 5) five++;
   }
-  assert.ok(five >= 20, `${five} of 40`);
+  // (HEROES-JOIN, docs/notes/heroes-join.md: with nine more heroes in the pool, 18 of 40 saves have a fifth hero on the first day (it was 20 or more
+  // of 45 heroes); the bar moves with the pool, no other pace rule does)
+  assert.ok(five >= 18, `${five} of 40`);
   assert.ok(needOf(fresh(1)) <= 3);
   void ALL_HEROES;
 });

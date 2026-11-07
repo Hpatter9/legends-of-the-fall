@@ -61,7 +61,9 @@ test('the acts: the courtyard for waves 1-5, the library 6-10, the chapel 11-15,
 
 test('a strong party falls back room by room, in order, and each new room is laid out with the heroes at the ring plan\'s posts', () => {
   // (FOE-STYLES on 0.350: re-staged from seed 21, which now falls in wave 15, to seed 1; 11 of seeds 1 to 12 reach the fourth room)
-  const s = startStand(newStandRun(1, EIGHT, armies), setupAt(100));
+  // (HEROES-JOIN, docs/notes/heroes-join.md: nine more heroes move the roster means every hero's numbers are sized against, so the party falls
+  // sooner; re-staged to seed 2, where 3 of seeds 1 to 14 reach the fourth room)
+  const s = startStand(newStandRun(2, EIGHT, armies), setupAt(100));
   startFirstWave(s);
   const rooms: { hall: HallKind; wave: number }[] = [];
   const notes: StandNote[] = [];
