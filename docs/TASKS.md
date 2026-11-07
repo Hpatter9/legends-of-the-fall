@@ -16,6 +16,22 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### TAVERN-POSES — Relaxed hero paintings for the tavern
+
+- **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall`; preserves the completed uncommitted tavern implementation.
+- **Scope:** paint two relaxed variants for all 54 heroes, integrate compatible five-seat composition, validate and then refine the tavern UI. Preserve simulation, full roster and version.
+- **Direction:** owner requested new tavern-specific hero art, approximately two spots per hero, matching the cozy concept. Proposed two reusable inward-facing seated poses across five compatible positions to avoid seat conflicts for arbitrary strongest-five combinations.
+- **Completion:** reviewed two-pose samples and room proposal; then approved pose coverage, deterministic seating, three-size/offline validation and handoff.
+- **Status:** complete, ready for review. All 54 heroes have two seated paintings; layered cozy room and subsequent hero/services UI are integrated. Export validation, typecheck/build, five focused test files and all 55 final browser checks pass across three portrait sizes, reduced motion and offline. Sources retained in `art-source/tavern/`. [Handoff](notes/tavern-poses.md). No merge or deployment.
+
+### TAVERN-PAINT — Painted tavern with the five strongest heroes
+
+- **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall` (from merged PR #425).
+- **Scope:** painted room artwork, dynamic hero presentation, existing tavern actions and shared painted UI materials; selection by existing dossier power. Preserve roster, saves and game rules.
+- **Direction:** owner approved painted tavern concept, shared PR #425 styling and the five strongest owned heroes at the time.
+- **Completion:** dynamic top-five updates, working hero/actions, focused tests/typecheck/build and three portrait previews including reduced motion/offline.
+- **Status:** complete, ready for review. Typecheck/web build and five focused test files pass; all 40 browser checks pass across three portrait sizes, reduced motion and offline. [Handoff](notes/painted-tavern.md). No merge or deployment.
+
 ### PAINTED-DEPLOY-ICONS — Complete deployment chrome and battle icon coverage
 
 - **Release:** owner authorised main integration before tavern work; [PR #425](https://github.com/Hpatter9/legends-of-the-fall/pull/425), version 0.390.0. Integrated main 0.389.0; typecheck/build, 88 relevant tests and a fresh 40-check 393px interaction/reduced-motion/offline pass succeeded.
