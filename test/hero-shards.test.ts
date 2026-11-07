@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadMeta, newMeta, pickStarter, pullOnce, useStones, startedMeta, saveMeta, type Meta } from '../src/sim/meta';
 import { closest, giveShards, haveOf, needOf, ownedCount, toCollect } from '../src/sim/unlock';
-import { CONTENT_KINDS, isContent, NEED_FIRST, NEED_LAST, PITY_PULLS, PULL_HEROES, unlockNeed } from '../src/sim/unlockRules';
+import { CONTENT_KINDS, isContent, NEED_FIRST, NEED_LAST, PITY_PULLS, PULL_HEROES, unlockNeed, WELCOME } from '../src/sim/unlockRules';
 import { CONTENT_HEROES, contentOf, grantContent, lockInfo } from '../src/sim/contentHeroes';
 import { ARMIES, armyById } from '../src/sim/armies';
 import { chestSeed, openChest, peekChest } from '../src/sim/armyStars';
 import { ALL_HEROES, HEROES } from '../src/sim/units';
 import { starterPacks } from '../src/sim/starter';
-import { OWNED_BOOST, ownedWeight, pityAt } from '../src/sim/unlockRules';
+import { pityAt } from '../src/sim/unlockRules';
 
 const store = () => {
   const data: Record<string, string> = {};
@@ -34,17 +34,20 @@ test('ten heroes are earned by content, the rest are pulled', () => {
 });
 
 test('the shards a new hero needs rise with the heroes owned: few at first, many at the end', () => {
-  assert.equal(unlockNeed(3), NEED_FIRST);
+  // (FAIR-SUMMONS: the party's fourth and fifth heroes join on one shard, then the slope starts at NEED_FIRST)
+  assert.equal(unlockNeed(3), 1);
+  assert.equal(unlockNeed(3 + WELCOME - 1), 1);
+  assert.equal(unlockNeed(3 + WELCOME), NEED_FIRST);
   assert.equal(unlockNeed(PULL_HEROES.length - 1), NEED_LAST);
   let last = 0;
   for (let n = 3; n < PULL_HEROES.length; n++) {
     assert.ok(unlockNeed(n) >= last, `${n}`);
     last = unlockNeed(n);
   }
-  assert.ok(unlockNeed(4) <= 3 && unlockNeed(10) <= 12 && unlockNeed(30) >= 50);
+  assert.ok(unlockNeed(6) <= 3 && unlockNeed(10) <= 12 && unlockNeed(30) >= 50);
   const m = fresh(1);
   assert.equal(ownedCount(m), 3);
-  assert.equal(needOf(m), NEED_FIRST);
+  assert.equal(needOf(m), 1);
 });
 
 test('shards of a hero not owned fill its bar, and it joins at rank 0 when the bar is full', () => {
@@ -117,7 +120,10 @@ test('the pity: after PITY_PULLS pulls without unlock shards, the pull is shards
   m.unlocked = [...PULL_HEROES.filter((k) => !missing.includes(k)), ...CONTENT_KINDS];
   m.unlock = { [missing[1]]: 3, [missing[0]]: 1 };
   assert.equal(closest(m), missing[1]);
-  let dry = 0;
+  // (FAIR-SUMMONS: with every hero as likely, a late roster's plain pulls give unlock shards often enough that the pity seldom comes on its own;
+  //  a dry run one short of the wait is set, so the very next pull is the pity's)
+  m.unlockDry = pityAt(ownedCount(m)) - 1;
+  let dry = m.unlockDry;
   let pities = 0;
   for (let i = 0; i < 300 && toCollect(m).length; i++) {
     const wait = pityAt(ownedCount(m));
@@ -259,6 +265,8 @@ test('a hero not owned says how to get it: a secret hint for one earned in play,
   m.stand = 22;
   assert.equal(lockInfo(m, 'tyrant')!.need, 0, 'no bar to give it away');
   assert.equal(lockInfo(m, 'werewolf')!.line, 'A hero waits for a tale to be told in the tavern');
+  // (past the party's first two, whose single shard brings them in whole, so a bar shows)
+  m.unlocked.push(...toCollect(m).slice(0, WELCOME));
   const kind = toCollect(m)[0];
   assert.equal(lockInfo(m, kind)!.named, false, 'a hero with no shards yet stays a shadow');
   giveShards(m, kind, 1);
@@ -276,10 +284,27 @@ test('a stone costs a stone whatever the roster: ten stones are ten pulls', () =
   assert.equal(rich.stones, 14);
 });
 
-test('the odds fade: a pull is a new hero less and less often as the roster grows, and the pity waits longer', () => {
-  assert.equal(ownedWeight(3), 1, 'with the starter alone, every hero is as likely as any other');
-  assert.ok(ownedWeight(30) > 100 * ownedWeight(6));
-  assert.ok(OWNED_BOOST > 0);
+test('FAIR-SUMMONS: every pullable hero is as likely as any other in a pull, owned or not, begun or not (the owner\'s call)', () => {
+  // (a roster with a third owned and one hero well begun: over many pulls every hero turns up about as often as any other)
+  const m = fresh(41);
+  m.unlocked = [...PULL_HEROES.slice(0, Math.floor(PULL_HEROES.length / 3))];
+  const begun = toCollect(m)[0];
+  (m.unlock ??= {})[begun] = 5;
+  const count: Record<string, number> = {};
+  const N = PULL_HEROES.length * 400;
+  for (let i = 0; i < N; i++) {
+    const copy = JSON.parse(JSON.stringify(m)) as Meta;
+    copy.pulls = i;
+    copy.unlockDry = 0;
+    const k = pullOnce(copy, NO_LUCK).kind;
+    count[k] = (count[k] ?? 0) + 1;
+  }
+  const each = N / PULL_HEROES.length;
+  for (const k of PULL_HEROES) assert.ok(Math.abs((count[k] ?? 0) - each) < each * 0.25, `${k}: ${count[k] ?? 0} of about ${Math.round(each)}`);
+  assert.ok((count[begun] ?? 0) < each * 1.25, 'a begun hero is no likelier');
+});
+
+test('a pull is a new hero\'s shard as often as there are heroes left to collect, and the pity waits longer as the roster grows', () => {
   const share = (owned: number) => {
     const m = fresh(43);
     m.unlocked = [...PULL_HEROES.slice(0, owned)];
@@ -295,8 +320,10 @@ test('the odds fade: a pull is a new hero less and less often as the roster grow
   };
   const early = share(6);
   const late = share(28);
-  assert.ok(early > 0.1, `${early}`);
-  assert.ok(late < 0.25 && late < early / 1.5, `early ${early} late ${late}`);
+  // (with every hero as likely, the share is about the heroes left over all of them)
+  const left = (owned: number) => (PULL_HEROES.length - owned) / PULL_HEROES.length;
+  assert.ok(Math.abs(early - left(6)) < 0.05, `early ${early} vs ${left(6)}`);
+  assert.ok(Math.abs(late - left(28)) < 0.05 && late < early, `late ${late} vs ${left(28)}`);
   assert.ok(pityAt(30) > pityAt(5) + 100);
   assert.equal(pityAt(3), PITY_PULLS);
 });

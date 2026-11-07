@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.388.0',
+    date: '2026-11-07',
+    title: 'Fair summons: every hero as likely',
+    notes: ['Every hero is equally likely in a summon and a chest\'s shards. Your fourth and fifth heroes join on a single shard.'],
+  },
+  {
     version: '0.387.0',
     date: '2026-11-07',
     title: 'Nine new heroes join',
