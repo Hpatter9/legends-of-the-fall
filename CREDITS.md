@@ -543,3 +543,19 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Nemesis War and tactic art (`src/art/expansion/`, `src/art/ui/tactics/`, from `art-source/expansion/` and `art-source/ui/tactics/`, PRs #399 and #400)
 
 - **Rank badges, Council medallion, duel banner and the two taunt banners**, and the **tactic icons** (Advance, Hold, Charge): original commissioned art for this project. The sheets were cut and sized with ImageMagick (see `docs/notes/art-in.md`) and are bundled into game.js (the tactic icons are served as files and cached by the service worker).
+
+## Equipment painting completion
+
+- The remaining 69 equipment paintings (Bladed Fan, 26 footwear pieces, 24 belts and 18 accessories) are original artwork generated with OpenAI image generation for the owner-approved equipment style. Sources are retained in `art-source/gear/completion/` with their item mapping; individual icons are in `art-source/gear/off/`, `feet/`, `belt/` and `acc/`. `tools/gear/cut-completion.py` crops, centres and downsamples the paintings, and the existing gear importer cleans and packs them into the offline-cached gear atlases. No third-party source art was used for this batch.
+
+- Enemy motion proposal only (`docs/samples/enemy-animation-proposal/`): an OpenAI-generated pose study using the already credited Orc Grunt sprite as reference. It is not included in the game build and does not replace the original pack credit.
+
+## Enemy idle and recoil expansion
+
+- Nine existing enemy sheets (`src/art/units/hk_orc_grunt.png`, `hk_orc_archer.png`, `hk_orc_brute.png`, `hk_orc_warlord.png`, `hk_demon.png`, `hk_demon_lord.png`, `hk_imp.png`, `hk_ogre.png`, `hk_ogre_horned.png`) have owner-approved idle and hurt pose extensions generated with OpenAI image generation, using their original credited sprites as references. Original pack credits remain in force. Original walk, attack and death pixels are preserved. Originals, reference crops and generated clips are retained in `art-source/enemy-motion/`. `tools/enemy-motion/pack.py` cuts the clips, applies the original palettes and packs them with nearest-neighbour sampling and hard alpha.
+
+## Art finishing pass
+
+- Traveller portraits (the Pilgrim, Deserter and Cartographer), four oath pennants, provisions sack, seven empty equipment-slot paintings and armoury backing (`src/art/finishing/`): original artwork generated with OpenAI image generation in the owner's approved painted style. Source sheets and mappings are retained in `art-source/finishing-pass/`.
+- Three existing treant summon sheets (`src/art/units/cls_treant*.png`): owner-approved hurt pose extensions generated using the original credited sprites as references. All original idle, walk, attack and death pixels are preserved; original pack credits remain in force. Original sheets and layouts are retained in `art-source/finishing-pass/treant-originals/`.
+- Painted flame, smoke and electrical motion (`src/art/finishing/spell-motion.webp`): six generated drawing frames per material, referenced from the game's existing painted materials. `tools/art-finish/pack.py` cuts and packs all finishing-pass assets. New menu art and the motion atlas are bundled for offline play.

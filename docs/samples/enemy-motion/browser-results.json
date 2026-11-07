@@ -1,0 +1,42 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "reduced": false,
+    "enemies": 9,
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "simulationUnchanged": true,
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "reduced": false,
+    "enemies": 9,
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "simulationUnchanged": true,
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "reduced": false,
+    "enemies": 9,
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "simulationUnchanged": true,
+    "errors": []
+  },
+  {
+    "width": 393,
+    "height": 852,
+    "reduced": true,
+    "enemies": 9,
+    "idleFrames": 1,
+    "hurtFrames": 3,
+    "simulationUnchanged": true,
+    "errors": []
+  }
+]

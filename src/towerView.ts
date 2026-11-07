@@ -4,7 +4,9 @@
 // (`enterNode`, `buy`, `rest`, ...); a battle node hands over to the page (`onFight`), a mystery floor to the event card.
 
 import { healParty, hurtParty } from './sim/health';
-import bannerUrl from './art/items/banner.png';
+import { TRAVELLER_ART, OATH_ART, PROVISIONS_ART } from './finishingArt';
+import type { OathId, TravellerId } from './sim/calJourney';
+import { ornateMenu, menuWell, menuFoot } from './ornateMenu';
 import { TRAVELLERS, TRAVEL, meetTraveller, travellerAt, travellerBack, travellerReturns, OATHS, OATH_MAX, SCAR, oathOffer, swearOath, takeScar, BOONS, PROVISIONS, buyProvision, provisionsOf, actLine, boonNow, chooseBoon, chooseLand, landAt } from './sim/calJourney';
 import { foundRow } from './foundRow';
 import { todayKey } from './modes';
@@ -246,6 +248,7 @@ export class TowerView {
       const sanctuary = (this.sanctuary ??= new SanctuaryView({
         enter: (id) => { if (!this.moving && !this.card && !pendingAltar(this.run)) this.goTo(id); },
         altar: () => this.altarCard(), company: () => this.companyCard(), pack: () => this.hooks.onPack(),
+        oath: (id) => this.oathInfo(id),
         home: () => { saveSlot(this.run); this.close(); this.hooks.onHome(); },
         shift: () => { if (pendingAltar(this.run) || this.card) return; if (shiftDestinations(this.run)) {saveSlot(this.run);this.draw();} },
       }));
@@ -338,10 +341,12 @@ export class TowerView {
     // (DEPTH-BUILD: the provisions carried, and the oaths sworn as pennants; a tap on one says its words)
     if (run.rift) {
       const j = t.journey;
-      status.append(el('span', 'dmChip', `${provisionsOf(j)} provisions`));
+      const food = el('span', 'dmChip dmProvisions');
+      food.append(icon(PROVISIONS_ART, 'rtProvisionIcon'), el('span', '', `${provisionsOf(j)} provisions`));
+      status.append(food);
       for (const o of j?.oaths ?? []) {
         const p = el('button', 'dmPennant');
-        p.append(icon(bannerUrl));
+        p.append(icon(OATH_ART[o], 'rtOathIcon'));
         p.title = `${OATHS[o].name}: ${OATHS[o].gift} ${OATHS[o].cost}`;
         p.setAttribute('aria-label', p.title);
         p.addEventListener('click', () => this.sayNode(el('p', '', p.title)));
@@ -1119,7 +1124,9 @@ export class TowerView {
       const sack = el('button', 'rtItem');
       const n = provisionsOf(j);
       sack.disabled = n >= PROVISIONS.MAX || run.gold < PROVISIONS.COST;
-      sack.append(el('b', '', `A sack of provisions · ${PROVISIONS.COST} gold`), el('small', '', `${n} of ${PROVISIONS.MAX} carried: a campfire's rest eats one`));
+      const words = el('span');
+      words.append(el('b', '', `A sack of provisions · ${PROVISIONS.COST} gold`), el('small', '', `${n} of ${PROVISIONS.MAX} carried: a campfire's rest eats one`));
+      sack.append(icon(PROVISIONS_ART, 'rtProvisionShop'), words);
       sack.addEventListener('click', () => {
         if (!buyProvision(run, j)) return;
         saveSlot(run);
@@ -1207,6 +1214,26 @@ export class TowerView {
     return row;
   }
 
+  private oathInfo(id: OathId): void {
+    const oath = OATHS[id];
+    const menu = ornateMenu({ id: 'expeditionOath', title: oath.name, sub: 'Sworn for this expedition' });
+    const picture = icon(OATH_ART[id], 'rtOathOffer');
+    picture.style.alignSelf = 'center';
+    menu.body.append(picture);
+    const well = menuWell(menu.body);
+    well.append(el('p', '', oath.gift), el('p', '', oath.cost));
+    menuFoot(menu, { back: { word: 'close' } });
+  }
+
+  private travellerPicture(who: TravellerId, line: string): HTMLDivElement {
+    const row = el('div', 'rtTraveller');
+    const picture = icon(TRAVELLER_ART[who], 'rtTravellerPortrait');
+    const words = el('div', 'rtTravellerWords');
+    words.append(el('b', 'rtTravellerName', TRAVELLERS[who].name), el('p', 'rtLead', line));
+    row.append(picture, words);
+    return row;
+  }
+
   private campCard(): void {
     const run = this.run;
     const cur = run.tower!.cur!;
@@ -1222,12 +1249,12 @@ export class TowerView {
         if (back.mend) healParty(run, 1, true);
         if (back.hurt) hurtParty(run, back.hurt);
         saveSlot(run);
-        card.append(el('p', 'rtNote', back.line));
+        card.append(this.travellerPicture(j.met!.who, back.line));
       }
       const who = cur.camp ? undefined : travellerAt(run.seed, run.tower!.act, j);
       if (who) {
         const t = TRAVELLERS[who];
-        card.append(el('p', 'rtLead', `${t.name}: ${t.meet}`));
+        card.append(this.travellerPicture(who, t.meet));
         for (const help of [true, false]) {
           const b = el('button', 'rtChoice', help ? t.help : t.wrong);
           b.disabled = help && run.gold < TRAVEL.GOLD;
@@ -1300,7 +1327,7 @@ export class TowerView {
         const w = el('span');
         const full = (j.oaths?.length ?? 0) >= OATH_MAX;
         w.append(el('b', '', `Swear the ${o.name}`), el('small', '', `${o.gift} ${o.cost}${full ? ` Replaces the ${OATHS[j.oaths![0]].name}.` : ''} Lasts the run.`));
-        b.append(w);
+        b.append(icon(OATH_ART[offer], 'rtOathOffer'), w);
         b.addEventListener('click', () => {
           swearOath(j, offer);
           cur.camp = `The party swears the ${o.name}.`;

@@ -5,6 +5,9 @@
 // the battle. Back from a crossing, the party steps out of the rift it went in by while the cards rise one by one.
 // The numbers are in `hubMotion.ts`; one animation frame loop draws everything, and stops when the room is left.
 import type { Run } from './sim/run';
+import { OATHS, provisionsOf, type OathId } from './sim/calJourney';
+import { OATH_ART, PROVISIONS_ART } from './finishingArt';
+import { icon } from './menuArt';
 import { choices, fightSpec, spotFloor, NODE_NAMES, rowsIn, type MapNode } from './sim/tower';
 import { destinationWorld, expeditionOf, SHIFT_COST, WORLDS, type RiftWorld } from './sim/sanctuary';
 import { TWISTS } from './sim/twists';
@@ -33,7 +36,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = '') 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** The room's clock: the page's own, unless a check holds it still to take frames (`window.__hubTime`, `tools/calamity/hub-shots.mjs`). */
 const clock = (): number => { const t = (window as { __hubTime?: number }).__hubTime; return typeof t === 'number' ? t : performance.now(); };
-interface Hooks { enter(id: number): void; altar(): void; company(): void; pack(): void; home(): void; shift(): void }
+interface Hooks { enter(id: number): void; altar(): void; company(): void; pack(): void; home(): void; shift(): void; oath(id: OathId): void }
 const REWARDS = { fight:'Gold · starter growth', elite:'Relic choice · gold', boss:'Region unlocked · evolution', recruit:'Choose a free companion', shop:'Trade gold for supplies', campfire:'Recover · train · reforge', treasure:'Gold · relic or equipment', mystery:'A choice with a price or prize' };
 /** Each world's light: its rift's glow, its card's edge and the motes that drift out of it. */
 export const WORLD_GLOW: Record<RiftWorld, string> = { ashen: '#ff8a4c', rootbound: '#7ee08c', caravan: '#f3c56b', prism: '#bb8cff', hollow: '#9fd6ff', frost: '#c8f4ff' };
@@ -128,6 +131,16 @@ export class SanctuaryView {
     const close=el('button','dmClose','×');close.setAttribute('aria-label','Return home');close.onclick=()=>this.hooks.home();
     const line=el('div','rsStats');line.append(el('span','',`Crossing ${Math.min(t.row+1,rowsIn(t,t.act))} / ${rowsIn(t,t.act)}`),el('span','',`Corruption ${r.corruption}`),el('b','',`${run.gold} gold`));
     head.append(title,close,line);
+    const supplies=el('div','rsSupplies'), food=el('span','dmProvisions');
+    food.append(icon(PROVISIONS_ART,'rtProvisionIcon'),el('span','',`${provisionsOf(t.journey)} provisions`));
+    supplies.append(food);
+    for(const oath of t.journey?.oaths??[]){
+      const button=el('button','dmPennant');button.type='button';
+      button.title=`${OATHS[oath].name}: ${OATHS[oath].gift} ${OATHS[oath].cost}`;
+      button.setAttribute('aria-label',button.title);button.append(icon(OATH_ART[oath],'rtOathIcon'));
+      button.onclick=()=>this.hooks.oath(oath);supplies.append(button);
+    }
+    head.append(supplies);
     const scene=this.scene=el('div','rsScene');
     // (the camera: the stage holds every layer of the room, and zooms; the room slides behind the ring as it turns)
     this.stage=el('div','rsStage');this.room=el('div','rsRoom');

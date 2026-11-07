@@ -27,6 +27,17 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.389.0',
+    date: '2026-11-07',
+    title: 'Painted gear, travellers and livelier battle art',
+    notes: [
+      'All 69 remaining equipment pieces now have paintings, with new empty-slot icons and an armoury backing.',
+      'The Pilgrim, Deserter and Cartographer have portraits; oath pennants and provisions have their own art.',
+      'Nine enemies breathe between attacks and recoil when struck; all three treant forms have hurt animations.',
+      'Painted flame, smoke and electrical effects have richer animation, with still poses for reduced motion.',
+    ],
+  },
+  {
     version: '0.388.0',
     date: '2026-11-07',
     title: 'Fair summons: every hero as likely',
