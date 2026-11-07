@@ -1,0 +1,817 @@
+{
+  "hero": "sage",
+  "source": "art-source/hero-remakes/sage.png",
+  "sha256": "0caf53579910c1002b724d5f82fed71f032118fe9a588ce588f490b275d12d75",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {
+    "24": 48,
+    "25": 49,
+    "26": 50,
+    "27": 51,
+    "28": 52,
+    "29": 53,
+    "30": 54,
+    "31": 55
+  },
+  "extraClip": null,
+  "scale": 0.6153846153846154,
+  "cell": [
+    160,
+    120
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_sage",
+      "row": "idle",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        42,
+        4,
+        154,
+        160
+      ],
+      "pixels": 11214
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "idle",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        211,
+        4,
+        322,
+        160
+      ],
+      "pixels": 11105
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "idle",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        380,
+        3,
+        490,
+        160
+      ],
+      "pixels": 11054
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "idle",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        549,
+        5,
+        659,
+        160
+      ],
+      "pixels": 10846
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "walk",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        36,
+        172,
+        151,
+        326
+      ],
+      "pixels": 11383
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "walk",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        210,
+        173,
+        320,
+        326
+      ],
+      "pixels": 10757
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "walk",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        381,
+        172,
+        488,
+        326
+      ],
+      "pixels": 10173
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "walk",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        551,
+        172,
+        655,
+        324
+      ],
+      "pixels": 9654
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "_walk",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        41,
+        341,
+        154,
+        491
+      ],
+      "pixels": 10806
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "_walk",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        212,
+        340,
+        322,
+        490
+      ],
+      "pixels": 10671
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "_walk",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        380,
+        341,
+        490,
+        491
+      ],
+      "pixels": 10008
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "_walk",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        552,
+        340,
+        655,
+        485
+      ],
+      "pixels": 9255
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        30,
+        1000,
+        150,
+        1148
+      ],
+      "pixels": 10948
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        192,
+        986,
+        315,
+        1148
+      ],
+      "pixels": 11778
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        359,
+        979,
+        476,
+        1149
+      ],
+      "pixels": 12090
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        539,
+        1003,
+        649,
+        1148
+      ],
+      "pixels": 10584
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "hurt",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        31,
+        675,
+        144,
+        812
+      ],
+      "pixels": 10447
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "hurt",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        197,
+        680,
+        321,
+        813
+      ],
+      "pixels": 11288
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "hurt",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        359,
+        679,
+        483,
+        813
+      ],
+      "pixels": 10601
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "hurt",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        537,
+        675,
+        650,
+        814
+      ],
+      "pixels": 10168
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "dead",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        23,
+        830,
+        138,
+        966
+      ],
+      "pixels": 9586
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "dead",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        179,
+        842,
+        314,
+        965
+      ],
+      "pixels": 9594
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "dead",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        331,
+        873,
+        487,
+        965
+      ],
+      "pixels": 8883
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "dead",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        489,
+        902,
+        667,
+        964
+      ],
+      "pixels": 7608
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack2",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        30,
+        1000,
+        150,
+        1148
+      ],
+      "pixels": 10948
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack2",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        192,
+        986,
+        315,
+        1148
+      ],
+      "pixels": 11778
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack2",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        359,
+        979,
+        476,
+        1149
+      ],
+      "pixels": 12090
+    },
+    {
+      "sheet": "hero_res_sage",
+      "row": "attack2",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        539,
+        1003,
+        649,
+        1148
+      ],
+      "pixels": 10584
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "idle",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        716,
+        5,
+        827,
+        159
+      ],
+      "pixels": 10476
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "idle",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        881,
+        5,
+        994,
+        159
+      ],
+      "pixels": 10353
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "idle",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1051,
+        5,
+        1162,
+        159
+      ],
+      "pixels": 10549
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "idle",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1220,
+        5,
+        1330,
+        159
+      ],
+      "pixels": 10347
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "walk",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        716,
+        175,
+        823,
+        326
+      ],
+      "pixels": 9510
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "walk",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        885,
+        175,
+        992,
+        326
+      ],
+      "pixels": 9103
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "walk",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1051,
+        175,
+        1159,
+        326
+      ],
+      "pixels": 9163
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "walk",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1217,
+        173,
+        1326,
+        320
+      ],
+      "pixels": 8821
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        713,
+        343,
+        826,
+        488
+      ],
+      "pixels": 9459
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        883,
+        343,
+        992,
+        492
+      ],
+      "pixels": 9242
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1049,
+        340,
+        1161,
+        492
+      ],
+      "pixels": 9343
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1215,
+        343,
+        1329,
+        487
+      ],
+      "pixels": 8641
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        706,
+        1006,
+        814,
+        1148
+      ],
+      "pixels": 10231
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        865,
+        986,
+        981,
+        1148
+      ],
+      "pixels": 10612
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1030,
+        976,
+        1140,
+        1148
+      ],
+      "pixels": 11171
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1215,
+        1006,
+        1317,
+        1148
+      ],
+      "pixels": 9634
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        704,
+        672,
+        819,
+        811
+      ],
+      "pixels": 10230
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        864,
+        686,
+        998,
+        812
+      ],
+      "pixels": 11185
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1037,
+        689,
+        1162,
+        814
+      ],
+      "pixels": 9606
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1207,
+        672,
+        1313,
+        813
+      ],
+      "pixels": 9687
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "dead",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        701,
+        829,
+        813,
+        963
+      ],
+      "pixels": 9361
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "dead",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        854,
+        849,
+        991,
+        964
+      ],
+      "pixels": 8202
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "dead",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1006,
+        879,
+        1157,
+        964
+      ],
+      "pixels": 7703
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "dead",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1162,
+        912,
+        1335,
+        965
+      ],
+      "pixels": 6348
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "sage.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        706,
+        1006,
+        814,
+        1148
+      ],
+      "pixels": 10231
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "sage.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        865,
+        986,
+        981,
+        1148
+      ],
+      "pixels": 10612
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "sage.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1030,
+        976,
+        1140,
+        1148
+      ],
+      "pixels": 11171
+    },
+    {
+      "sheet": "hero_res_sage_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "sage.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1215,
+        1006,
+        1317,
+        1148
+      ],
+      "pixels": 9634
+    }
+  ]
+}

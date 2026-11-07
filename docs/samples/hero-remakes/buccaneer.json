@@ -1,0 +1,808 @@
+{
+  "hero": "buccaneer",
+  "source": "art-source/hero-remakes/buccaneer.png",
+  "sha256": "59deace61dc92b5c379224fd8c726b7649b6a612bf37b85d236fe668aae6419f",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {},
+  "extraClip": null,
+  "scale": 0.676056338028169,
+  "cell": [
+    160,
+    120
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "idle",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        34,
+        17,
+        139,
+        159
+      ],
+      "pixels": 8662
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "idle",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        201,
+        17,
+        305,
+        159
+      ],
+      "pixels": 8574
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "idle",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        369,
+        16,
+        471,
+        159
+      ],
+      "pixels": 8507
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "idle",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        537,
+        16,
+        640,
+        158
+      ],
+      "pixels": 8255
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "walk",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        32,
+        180,
+        141,
+        322
+      ],
+      "pixels": 8497
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "walk",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        201,
+        183,
+        309,
+        322
+      ],
+      "pixels": 8357
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "walk",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        369,
+        181,
+        476,
+        322
+      ],
+      "pixels": 7822
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "walk",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        534,
+        178,
+        644,
+        319
+      ],
+      "pixels": 7609
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "_walk",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        35,
+        343,
+        145,
+        485
+      ],
+      "pixels": 8822
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "_walk",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        204,
+        346,
+        305,
+        487
+      ],
+      "pixels": 8557
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "_walk",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        372,
+        345,
+        477,
+        486
+      ],
+      "pixels": 8125
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "_walk",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        538,
+        340,
+        641,
+        485
+      ],
+      "pixels": 7968
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 24,
+      "sourceBox": [
+        34,
+        509,
+        142,
+        651
+      ],
+      "pixels": 9454
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 25,
+      "sourceBox": [
+        200,
+        514,
+        311,
+        650
+      ],
+      "pixels": 9242
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 26,
+      "sourceBox": [
+        366,
+        511,
+        485,
+        653
+      ],
+      "pixels": 8273
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 27,
+      "sourceBox": [
+        528,
+        512,
+        625,
+        653
+      ],
+      "pixels": 8214
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "hurt",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        22,
+        670,
+        143,
+        808
+      ],
+      "pixels": 9526
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "hurt",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        189,
+        673,
+        313,
+        807
+      ],
+      "pixels": 9676
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "hurt",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        356,
+        683,
+        470,
+        807
+      ],
+      "pixels": 8043
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "hurt",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        527,
+        673,
+        635,
+        808
+      ],
+      "pixels": 8526
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "dead",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        20,
+        829,
+        143,
+        966
+      ],
+      "pixels": 8999
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "dead",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        180,
+        844,
+        305,
+        964
+      ],
+      "pixels": 9284
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "dead",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        338,
+        873,
+        484,
+        966
+      ],
+      "pixels": 8211
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "dead",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        507,
+        907,
+        658,
+        968
+      ],
+      "pixels": 5886
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack2",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        21,
+        988,
+        135,
+        1141
+      ],
+      "pixels": 10017
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack2",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        181,
+        993,
+        318,
+        1142
+      ],
+      "pixels": 10774
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack2",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        354,
+        994,
+        497,
+        1141
+      ],
+      "pixels": 9905
+    },
+    {
+      "sheet": "hero_res_buccaneer",
+      "row": "attack2",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        530,
+        991,
+        634,
+        1140
+      ],
+      "pixels": 9583
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "idle",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        713,
+        17,
+        808,
+        159
+      ],
+      "pixels": 7784
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "idle",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        880,
+        17,
+        976,
+        157
+      ],
+      "pixels": 7580
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "idle",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1049,
+        16,
+        1143,
+        159
+      ],
+      "pixels": 7774
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "idle",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1216,
+        17,
+        1310,
+        159
+      ],
+      "pixels": 7334
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "walk",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        708,
+        184,
+        814,
+        321
+      ],
+      "pixels": 7724
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "walk",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        880,
+        185,
+        983,
+        322
+      ],
+      "pixels": 7612
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "walk",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1043,
+        185,
+        1150,
+        322
+      ],
+      "pixels": 7143
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "walk",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1211,
+        184,
+        1319,
+        321
+      ],
+      "pixels": 7151
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        708,
+        347,
+        815,
+        487
+      ],
+      "pixels": 8257
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        880,
+        348,
+        984,
+        487
+      ],
+      "pixels": 7701
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1044,
+        348,
+        1152,
+        487
+      ],
+      "pixels": 7385
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1213,
+        348,
+        1312,
+        485
+      ],
+      "pixels": 7237
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 28,
+      "sourceBox": [
+        704,
+        511,
+        811,
+        653
+      ],
+      "pixels": 8702
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 29,
+      "sourceBox": [
+        874,
+        512,
+        985,
+        653
+      ],
+      "pixels": 8252
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 30,
+      "sourceBox": [
+        1038,
+        512,
+        1170,
+        653
+      ],
+      "pixels": 8088
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 31,
+      "sourceBox": [
+        1200,
+        513,
+        1310,
+        649
+      ],
+      "pixels": 7948
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        697,
+        672,
+        818,
+        807
+      ],
+      "pixels": 8649
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        862,
+        674,
+        981,
+        809
+      ],
+      "pixels": 8597
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1034,
+        685,
+        1143,
+        809
+      ],
+      "pixels": 7611
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1199,
+        677,
+        1308,
+        807
+      ],
+      "pixels": 8261
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "dead",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        692,
+        832,
+        816,
+        961
+      ],
+      "pixels": 8478
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "dead",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        856,
+        854,
+        983,
+        960
+      ],
+      "pixels": 7670
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "dead",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1008,
+        883,
+        1148,
+        963
+      ],
+      "pixels": 6701
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "dead",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1174,
+        910,
+        1336,
+        964
+      ],
+      "pixels": 5662
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "buccaneer.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        701,
+        995,
+        806,
+        1141
+      ],
+      "pixels": 8779
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "buccaneer.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        860,
+        995,
+        988,
+        1144
+      ],
+      "pixels": 8783
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "buccaneer.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1024,
+        1000,
+        1169,
+        1144
+      ],
+      "pixels": 8656
+    },
+    {
+      "sheet": "hero_res_buccaneer_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "buccaneer.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1206,
+        994,
+        1305,
+        1141
+      ],
+      "pixels": 8617
+    }
+  ]
+}

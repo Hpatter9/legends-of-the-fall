@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-07",
+  "direction": "Owner-approved Selam concept; full portrait-led remakes of all ten automatic repaints.",
+  "layout": "PRODUCTION pixel-art battle animation atlas, strict EIGHT COLUMNS by SEVEN ROWS, 56 full-body separate poses, transparent background with generous empty gutters, no text, borders, floor shadows, FX or grid. Reference 1 is the canonical hero portrait: preserve identity, skin tone and signature clothes/weapons. Reference 2 is approved Selam SPRITE STYLE: match compact adult tactical RPG proportions, crisp dark outlines and coherent pixel shading. Draw skin naturally with a consistent small palette, clear eyes/nose/mouth, no pale facial blotches. Same character, face, costume, weapons and scale across EVERY pose. Cols 1-4 front three-quarter facing RIGHT. Cols 5-8 rear three-quarter facing AWAY and RIGHT. Each four-col group is a four-frame sequence. ROW1 idle breath. ROW2 walk first half: left foot contact, weight down, right leg passing, right leg lifted. ROW3 walk second half: right foot contact, weight down, left leg passing, left leg lifted; real alternating eight-frame stride. ROW4 attack windup/strike/followthrough/recover. ROW5 hurt recoil/strong recoil/settle/recover. ROW6 death stagger/fall/land/FULLY LYING HORIZONTAL ON SIDE; show entire body/weapon within each cell. ROW7 ability preparation/cast/hold/recover. Ground line consistent, do not crop weapons or let actors touch. Entire sheet 8x7, exactly 56 sprites. ",
+  "heroes": [
+    {
+      "id": "cleric",
+      "design": "Selam, Ethiopian woman, deep brown skin, dark braids, ivory hood and teal/gold priest robes, gold censer mace and book at belt."
+    },
+    {
+      "id": "buccaneer",
+      "design": "Tiago: Cape Verdean adult male, medium brown skin, dark short hair and small goatee; brown tricorn over red bandana, brown pirate coat with blue lining, open ivory shirt, red sash, dark trousers, tall brown boots. Steel cutlass and iron grappling hook. Attack cutlass slash right. Ability swing grappling hook right."
+    },
+    {
+      "id": "wizard",
+      "design": "Ravi: Indian Tamil adult male, warm brown skin, dark wavy hair, red pointed wizard hat, red/gold robe over charcoal tunic, brown boots, gold staff with orange flame-shaped crystal. Attack point staff right. Ability raise staff with free palm extended. Crystal solid with no glow particles."
+    },
+    {
+      "id": "illusionist",
+      "design": "Luana: Afro-Brazilian adult WOMAN, medium brown skin, long dark brown CURLY hair, violet feathered tricorn, purple/gold theatrical coat and practical dress, ivory cuffs, dark purple boots. Slender wand and small hand mirror at belt. Readable confident face, no mask. Attack thrust wand right; ability raise hand mirror and sweep wand."
+    },
+    {
+      "id": "timeWitch",
+      "design": "Adaeze: Nigerian Igbo adult WOMAN, deep brown skin, long silver-white hair, indigo crooked pointed witch hat with little gold clock, indigo/gold robe with ivory lining, brown boots, golden hourglass staff and clock amulet. Clear dark eyes and facial contours on deep skin. Attack point hourglass staff right. Ability raise staff and turn free palm."
+    },
+    {
+      "id": "peasant",
+      "design": "Minh: Vietnamese adult MAN, warm tan skin, short straight black hair, broad straw conical hat, mustard yellow plain tunic with rolled ivory sleeves, rope belt, dark navy loose trousers, ivory shin wraps, brown practical boots. Wooden spear with steel point and short red cloth tied below spearhead. Attack forward SPEAR THRUST right, not sword swing. Ability brace spear and rally with free hand. Keep whole spear within cell, angle it diagonally to fit."
+    },
+    {
+      "id": "ranger",
+      "design": "Inti: Quechua Peruvian Andes adult WOMAN, brown skin, dark brown braided hair, green woodland cloak with small patterned red/cream woven trim, brown leather breastplate/bracers, cream trousers, tall brown boots, wooden bow and back quiver. Attack draw bow, release arrow right, followthrough, recover. Ability kneel to place snare then rise."
+    },
+    {
+      "id": "dragoon",
+      "design": "Tiziri: Amazigh Moroccan adult WOMAN, olive skin, teal long braided hair, teal-and-gold dragon-scale armour, small dragon shoulder motifs, purple waist cape, two compact dragon wings attached to back, armoured boots, steel spear/lance. Human face visible, match portrait. Attack lance thrust right. Ability spread wings and raise lance. Keep wings and lance wholly within each cell."
+    },
+    {
+      "id": "lightningMage",
+      "design": "Malia: Samoan adult WOMAN, rich medium brown skin, long white hair, violet pointed hat with tiny white flower, clear blue eyes, violet/gold/ivory mage robe, dark boots, gold staff topped with blue faceted crystal. Attack point crystal staff right. Ability raise staff and extend free hand. No lightning FX; crystal is solid."
+    },
+    {
+      "id": "sage",
+      "design": "Seydou: Malian elderly MAN, deep brown skin, kindly readable eyes, long white beard and white hair, blue pointed wizard hat with gold star pattern, deep blue robe with ivory/gold woven trims, brown boots, gnarled wooden staff with gold celestial orb, leather book at belt. Attack point staff right; ability lift orb staff and open free palm. Solid orb without glow or FX."
+    }
+  ]
+}
