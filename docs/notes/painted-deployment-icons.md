@@ -22,3 +22,7 @@ Browser command: `node tools/battle-hud/shots.mjs painted-finish finish`. The is
 ## Handoff
 
 No merge, PR or deployment performed. The agreed remaining deployment/icon scope is complete and ready for owner review; shared motifs are deliberate, and this does not claim a unique illustration for each skill or a replacement of battlefield/cinematic artwork. The roster keeps the owner's preferred earlier presentation.
+
+## Authorised main integration
+
+Owner requested merging the completed battle UI into main before tavern work. Integrated main 0.389.0, preserving its equipment, traveller and battle animation artwork. Release metadata is 0.390.0 with matching player-facing Updates notes. Shared painted materials and motifs are in `src/art/ui/combat-*.png`; source/import mappings remain under `art-source/ui/painted-combat/` and `tools/painted-combat/`. Standard ornate menus remain the basis for future tavern menus.
