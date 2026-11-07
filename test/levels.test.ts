@@ -27,7 +27,7 @@ test('a fight gives every hero that fought XP, and a win pays more', () => {
   const lost = fightXp({ ...b, phase: 'lost' });
   for (const k of HEROES) assert.ok(won[k] > lost[k], `${k}: a win pays more`);
   // and the counters are the same every time the seed plays out
-  const again = readyBattle(4);
+  const again = readyBattle(1);
   fight(again);
   playOut(again);
   assert.deepEqual(fightXp(again), gains);
