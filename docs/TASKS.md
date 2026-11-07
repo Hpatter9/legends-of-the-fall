@@ -20,7 +20,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 - **Owner:** Codex director. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall`.
 - **Scope:** integrate current main, release version/Updates entry, relevant checks, PR and owner-authorised merge.
-- **Status:** main 0.388.0 integrated cleanly; release validation in progress. [Note](notes/art-release.md).
+- **Status:** 0.389.0 validated for release through owner-authorised [PR #424](https://github.com/Hpatter9/legends-of-the-fall/pull/424). Main 0.388.0 integrated cleanly; 77 focused tests, typecheck, web build and post-integration browser check passed. [Note](notes/art-release.md).
 
 
 ### ART-FINISH — Travellers, expedition details, empty gear slots, treants and painted spell clips
