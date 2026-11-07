@@ -142,6 +142,8 @@ function recordedStrengths<T>(fn: () => T): T {
 // since main 0.339). The new hashes: field1 e1902c7e, field30 0805df76, bosses c6f1850f, armyFoes 4098cb71, spells d89512c0, lands bae90a64,
 // army fc40786d, daily 4f70a194, tower 94d881d8, stand 131fe78c, calamity d9c9bc8a, heroes1 d5321e5c, heroes10 97713696, heroes30 15a1bbf5,
 // field1Others 433f0011, field30Others 760831e8, heroes1Others 7941ba32, heroes10Others 563b72ce, heroes30Others fb2fb4a1)
+// (HEROES-JOIN, the owner's ask that nine of the twenty new heroes join the roster, docs/notes/heroes-join.md, re-recorded every scenario from the
+// tests' own output: the roster's pool means move every hero's pools, and the new heroes join the pool the fights draw on.)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)

@@ -6,8 +6,10 @@ import { KITS } from '../../src/sim/abilities';
 import { HERO_KITS, RES } from '../../src/sim/heroKits';
 import type { SkillClass } from '../../src/sim/skillRules';
 import { LV5_TUNE } from '../../src/sim/kits/lv5Tune';
+import { twentyHeroKits as comingHeroKits, twentyKits as comingKits, setComingPassive } from '../../src/sim/kits/coming';
 
-export interface Knobs { t1?: number; t2?: number; t3?: number; up?: number; ur?: number; c1?: number; c2?: number; c3?: number; d1?: number; d2?: number; d3?: number; l5?: number; k3?: SkillClass; m3?: number }
+/** `p` is a coming hero's passive strength (docs/notes/twenty-heroes.md). */
+export interface Knobs { p?: number; t1?: number; t2?: number; t3?: number; up?: number; ur?: number; c1?: number; c2?: number; c3?: number; d1?: number; d2?: number; d3?: number; l5?: number; k3?: SkillClass; m3?: number }
 
 export function applyKnobs(state: Record<string, Knobs>): void {
   // (a "$pace3" entry is the global `RES.SKILL3_PACE`, the pool's refill once skill 3 is open)
@@ -15,7 +17,8 @@ export function applyKnobs(state: Record<string, Knobs>): void {
   if (typeof pace === 'number') (RES as { SKILL3_PACE: number }).SKILL3_PACE = pace;
   for (const [h, k] of Object.entries(state)) {
     if (h.startsWith('$')) continue;
-    const kit = HERO_KITS()[h];
+    // (a coming hero's kit is in `comingHeroKits()`, docs/notes/twenty-heroes.md)
+    const kit = HERO_KITS()[h] ?? comingHeroKits()[h];
     if (!kit) continue;
     if (k.t1 !== undefined) kit.s1.tune = k.t1;
     if (k.t2 !== undefined) kit.s2.tune = k.t2;
@@ -31,7 +34,8 @@ export function applyKnobs(state: Record<string, Knobs>): void {
     if (k.k3 !== undefined && kit.s3) kit.s3.cls = k.k3;
     if (k.m3 !== undefined && kit.s3) kit.s3.skill.castMs = k.m3;
     if (k.l5 !== undefined) (LV5_TUNE as Record<string, number>)[h] = k.l5;
-    const u = KITS[h].ultimate?.tuned;
+    if (k.p !== undefined && comingKits()[h]) setComingPassive(h, k.p);
+    const u = (KITS[h] ?? comingKits()[h]).ultimate?.tuned;
     if (u && k.up !== undefined) u.power = k.up;
     if (u && k.ur !== undefined) u.rate = k.ur;
   }

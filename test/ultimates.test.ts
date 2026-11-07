@@ -42,7 +42,7 @@ const cast = (b: Battle, me: Unit): BattleEvent[] => {
 };
 
 test('every hero has an ultimate, and it charges slower than the skill', () => {
-  assert.equal(ALL_HEROES.length, 45);
+  assert.equal(ALL_HEROES.length, 54);
   for (const k of ALL_HEROES) assert.ok(KITS[k].ultimate, `${k} has an ultimate`);
   // (no two heroes share one)
   const names = ALL_HEROES.map((k) => keyOf(KITS[k].ultimate!));
@@ -57,7 +57,7 @@ test('every hero has an ultimate, and it charges slower than the skill', () => {
   assert.equal(ultimateReady(u), false);
 });
 
-test('all 45 ultimates unlock at level 30, the first eight\'s too', () => {
+test('all 54 ultimates unlock at level 30, the first eight\'s too', () => {
   for (const k of ALL_HEROES) assert.equal(KITS[k].ultimate!.unlock, ULT_LEVEL, k);
   assert.equal(ULT_LEVEL, 30);
   const b = arena();

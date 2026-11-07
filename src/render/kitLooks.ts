@@ -7,6 +7,25 @@ import type { Element } from './fxRules';
 
 /** Each new skill: the existing skill whose signature it plays, a tint for it (none keeps the painting's own colours), and its element. */
 export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el: Element }>> = {
+  // (the nine of the twenty that joined: borrowed looks until their own are painted, docs/notes/heroes-join.md)
+  'Impaling Thrust': { as: 'Ravage', tint: 0xff5060, el: 'dark' },
+  'Mist Step': { as: 'Shadow Step', tint: 0xd04060, el: 'dark' },
+  'Blood Chalice': { as: 'Sanctuary', tint: 0xff6070, el: 'dark' },
+  'Crimson Mist': { as: 'Shadow Step', tint: 0xff5070, el: 'dark' },
+  Abduct: { as: 'Grappling Hook', tint: 0xb090d0, el: 'dark' },
+  Echolocation: { as: 'Wind Gust', tint: 0xb090d0, el: 'wind' },
+  'Stone Slumber': { as: 'Stone Curse', tint: 0xc0b8c8, el: 'earth' },
+  'Granite Fist': { as: 'Thousand Fists', tint: 0xc8c0b0, el: 'earth' },
+  'Grapple Vault': { as: 'Grappling Hook', tint: 0xe8f0ff, el: 'wind' },
+  'Quick Bolt': { as: 'Burst Fire', tint: 0xe8f0ff, el: 'light' },
+  'Marching Cadence': { as: 'War Banner', tint: 0xffa860, el: 'fire' },
+  'Drum Strike': { as: 'Thousand Fists', tint: 0xffb070, el: 'fire' },
+  'Lodestone Pull': { as: 'Grappling Hook', tint: 0xc8c0a0, el: 'earth' },
+  'Crag Staff': { as: 'Thousand Fists', tint: 0xd0b890, el: 'earth' },
+  'Echoing Toll': { as: 'Judgement', tint: 0xffd070, el: 'light' },
+  'Sanctuary Vault': { as: 'Holy Challenge', tint: 0xffd890, el: 'light' },
+  'Talon Snare': { as: 'Snare Trap', tint: 0xe0c890, el: 'wind' },
+  'Gale Vault': { as: 'Wind Gust', tint: 0xe8f0c0, el: 'wind' },
   'Shield Rush': { as: 'Shield Wall', tint: 0xffd27a, el: 'earth' },
   'Parry Stance': { as: 'Iaido', tint: 0xe8f4ff, el: 'wind' },
   'Smoke Bomb': { as: 'Shadow Step', tint: 0x9a9aa8, el: 'dark' },

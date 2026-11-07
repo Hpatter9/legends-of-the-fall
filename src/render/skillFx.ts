@@ -159,6 +159,25 @@ export const SKILL_FX: Record<string, SkillFx> = {
   Bacchanal: { cast: { sheet: 'lightGather', scale: 2.4, tint: 0xffd27a } },
   'Hunt of the Pack': { cast: { sheet: 'earthBurst', scale: 2.4, tint: 0xffb07a } },
   'Heart of the Grove': { cast: { sheet: 'earthBurst', scale: 2.4, tint: 0x8aff5a } },
+  // ---- the nine heroes that joined from the twenty: skill 1 and ultimate (docs/notes/heroes-join.md)
+  'Crimson Lunge': { cast: { sheet: 'bloodExplosion', scale: 1.5 }, hit: { sheet: 'bloodExplosion', scale: 0.9 } },
+  'Banquet of Blood': { cast: { sheet: 'bloodExplosion', scale: 3 }, hit: { sheet: 'bloodExplosion', scale: 1.3 } },
+  'Sanguine Lash': { cast: { sheet: 'bloodExplosion', scale: 1.4 }, hit: { sheet: 'bloodExplosion', scale: 0.9 } },
+  'Blood Tithe': { cast: { sheet: 'bloodExplosion', scale: 2.8 }, hit: { sheet: 'bloodExplosion', scale: 1.1 } },
+  'Dusk Dive': { cast: { sheet: 'darkSlash', scale: 1.6 }, hit: { sheet: 'darkSlash', scale: 1.0 } },
+  'Belfry Swoop': { cast: { sheet: 'darkCircle', scale: 3 }, hit: { sheet: 'darkSlash', scale: 1.3 } },
+  'Gargoyle Crash': { cast: { sheet: 'earthExplosion', scale: 1.6 }, hit: { sheet: 'earthBurst', scale: 1.0 } },
+  'Cathedral Perch': { cast: { sheet: 'earthWave', scale: 3 }, hit: { sheet: 'earthExplosion', scale: 1.3 } },
+  'Silver Stake': { cast: { sheet: 'whiteBurst', scale: 1.4 }, hit: { sheet: 'whiteBurst', scale: 0.9 } },
+  'Silver Requiem': { cast: { sheet: 'lightNova', scale: 3 }, hit: { sheet: 'whiteBurst', scale: 1.3 } },
+  'Thunder Beat': { cast: { sheet: 'lightningBurst', scale: 1.6 }, hit: { sheet: 'lightningStrike', scale: 1.0 } },
+  'Ten Thousand Drums': { cast: { sheet: 'lightningBurst', scale: 3 }, hit: { sheet: 'lightningStrike', scale: 1.3 } },
+  'Tectonic Shove': { cast: { sheet: 'earthBurst', scale: 1.6 }, hit: { sheet: 'earthExplosion', scale: 1.0 } },
+  "Mountain's Embrace": { cast: { sheet: 'earthShield', scale: 2.6 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
+  'Bronze Peal': { cast: { sheet: 'lightNova', scale: 1.6 }, hit: { sheet: 'lightNova', scale: 0.9 } },
+  'Midnight Knell': { cast: { sheet: 'darkCircle', scale: 3 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
+  'Falcon Stoop': { cast: { sheet: 'windBurst', scale: 1.6 }, hit: { sheet: 'windBurst', scale: 1.0 } },
+  'Sky Hunt': { cast: { sheet: 'windVortex', scale: 3 }, hit: { sheet: 'windBurst', scale: 1.3 } },
 };
 
 /** The king's spells: a sheet on each fighter the spell touches (the meteor's is its landing). */

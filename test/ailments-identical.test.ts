@@ -22,6 +22,8 @@
 // (STATS batch 6, docs/notes/stats-6.md, re-recorded every scenario: the pools, cooldowns and ultimate fill by score, the quick heroes' flank
 // and kite and the weakest-save picks move every fight with a hero. The new hashes: field1 0fbf64a7, field30 e9196ebf, bosses 85bc0f6e,
 // armyFoes 29d733d0, spells b4a3a947, lands 0a1bce75, army d7da8ae8, daily be916c2e, tower 7874beb1, stand fb295e70, calamity 8638915a.)
+// (HEROES-JOIN, the owner's ask that nine of the twenty new heroes join the roster, docs/notes/heroes-join.md, re-recorded every scenario from the
+// tests' own output: the roster's pool means move every hero's pools, and the new heroes join the pool the fights draw on.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

@@ -36,8 +36,8 @@ export const HERO_LOOKS: Record<string, { tone: Tone; hair?: Hair }> = {
   lightningMage: { tone: 'brown' },
 };
 
-/** The heroes who are not people (spirits, beasts, the undead, machines): they keep their looks, and are never re-toned. */
-export const NOT_HUMAN: readonly string[] = ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'rifleBot', 'mummy', 'wolfBard', 'kraken', 'reaper', 'dreadPirate', 'siegeBot'];
+/** The heroes who are not people (spirits, beasts, the undead, machines, a gargoyle, a strigoi, a temple-bell yokai): they keep their looks, and are never re-toned. */
+export const NOT_HUMAN: readonly string[] = ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'rifleBot', 'mummy', 'wolfBard', 'kraken', 'reaper', 'dreadPirate', 'siegeBot', 'bloodGargoyle', 'nightstalker', 'bellWarden'];
 
 /** Dynasties (`dynasty.ts`, docs/notes/dynasty-5.md): the touch of the years on a Veteran's and an Elder's battle sprite, laid on by the
  *  renderer as a steady colour grade of the existing sheets (no new art): `grey` is how far the colours go towards silver (a share of

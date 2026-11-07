@@ -49,4 +49,13 @@ export const HEIR_NAMES: Readonly<Record<string, readonly string[]>> = {
   sage: ['Aminata', 'Boubacar', 'Fanta', 'Moussa', 'Kadiatou', 'Ousmane'],
   demonSwordsman: ['Ani', 'Tigran', 'Nare', 'Vahan', 'Lusine', 'Gor'],
   tyrant: ['Edith', 'Godwin', 'Aldith', 'Harold', 'Mildred', 'Osric'],
+  vampireLord: ['Mircea', 'Radu', 'Elisabeta', 'Vlad', 'Ileana', 'Dragos'],
+  hemomancer: ['Wilhelmine', 'Anselm', 'Katharina', 'Leopold', 'Ottilie', 'Konrad'],
+  nightstalker: ['Bogdan', 'Ioana', 'Costin', 'Zamfira', 'Lupu', 'Magda'],
+  bloodGargoyle: ['Stefan', 'Marta', 'Ivan', 'Zora', 'Anton', 'Vesna'],
+  dhampir: ['Tereza', 'Jakub', 'Marketa', 'Vaclav', 'Eliska', 'Ondrej'],
+  warDrummer: ['Haruki', 'Mio', 'Daichi', 'Sakura', 'Ren', 'Hana'],
+  geomancer: ['Tashi', 'Dolma', 'Pema', 'Norbu', 'Yangchen', 'Sonam'],
+  bellWarden: ['Anand', 'Meera', 'Dev', 'Lakshmi', 'Ravi', 'Sita'],
+  falconer: ['Fergus', 'Mairead', 'Callum', 'Eilidh', 'Ruaridh', 'Isla'],
 };

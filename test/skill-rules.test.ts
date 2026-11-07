@@ -14,7 +14,7 @@ import { REST } from '../src/sim/statRest';
 // staged in `test/stats-rest.test.ts`; rules 2 and 3 read each hero's own income)
 REST.pools = false;
 REST.cooldown = false;
-import { ALL_HEROES } from '../src/sim/units';
+import { ALL_HEROES, TWENTY_HEROES } from '../src/sim/units';
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -30,12 +30,13 @@ test('every hero kit lists its skills in slots, the first two the same as s1 and
   for (const h of ALL_HEROES) {
     const hk = HERO_KITS()[h];
     // (the skills overhaul's batch 4: a third skill for each hero)
-    assert.equal(hk.slots.length, THIRD_KINDS.includes(h) ? 3 : 2, h);
+    // (the twenty's kits are built from their own rows, `kits/coming.ts`: every one has three skills)
+    assert.equal(hk.slots.length, THIRD_KINDS.includes(h) || TWENTY_HEROES.includes(h) ? 3 : 2, h);
     assert.equal(hk.slots[0], hk.s1, h);
     assert.equal(hk.slots[1], hk.s2, h);
     assert.equal(hk.slots[2], hk.s3, h);
     hk.slots.forEach((s, i) => {
-      if (i < 2) assert.equal(s.cls, CLASSES[h][i], `${h} skill ${i + 1}`);
+      if (i < 2 && CLASSES[h]) assert.equal(s.cls, CLASSES[h][i], `${h} skill ${i + 1}`);
       assert.ok(CLASS_RANGE[s.cls], `${h} skill ${i + 1}`);
       assert.ok(s.cd > 0, `${h} skill ${i + 1} has a cooldown`);
     });
