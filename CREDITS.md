@@ -550,3 +550,9 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Enemy idle and recoil expansion
 
 - Nine existing enemy sheets (`src/art/units/hk_orc_grunt.png`, `hk_orc_archer.png`, `hk_orc_brute.png`, `hk_orc_warlord.png`, `hk_demon.png`, `hk_demon_lord.png`, `hk_imp.png`, `hk_ogre.png`, `hk_ogre_horned.png`) have owner-approved idle and hurt pose extensions generated with OpenAI image generation, using their original credited sprites as references. Original pack credits remain in force. Original walk, attack and death pixels are preserved. Originals, reference crops and generated clips are retained in `art-source/enemy-motion/`. `tools/enemy-motion/pack.py` cuts the clips, applies the original palettes and packs them with nearest-neighbour sampling and hard alpha.
+
+## Art finishing pass
+
+- Traveller portraits (the Pilgrim, Deserter and Cartographer), four oath pennants, provisions sack, seven empty equipment-slot paintings and armoury backing (`src/art/finishing/`): original artwork generated with OpenAI image generation in the owner's approved painted style. Source sheets and mappings are retained in `art-source/finishing-pass/`.
+- Three existing treant summon sheets (`src/art/units/cls_treant*.png`): owner-approved hurt pose extensions generated using the original credited sprites as references. All original idle, walk, attack and death pixels are preserved; original pack credits remain in force. Original sheets and layouts are retained in `art-source/finishing-pass/treant-originals/`.
+- Painted flame, smoke and electrical motion (`src/art/finishing/spell-motion.webp`): six generated drawing frames per material, referenced from the game's existing painted materials. `tools/art-finish/pack.py` cuts and packs all finishing-pass assets. New menu art and the motion atlas are bundled for offline play.

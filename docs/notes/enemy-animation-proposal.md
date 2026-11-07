@@ -16,4 +16,4 @@ walk, attack and death rows should stay intact. Preserve reduced-motion handling
 simulation behaviour. No production sprite or manifest has been changed by this proposal.
 
 The owner approved this visual direction and the nine-enemy expansion is now implemented; see [the handoff](enemy-motion.md).
-The next art priority is portraits for the Pilgrim, Deserter and Cartographer on the Calamity campfire card.
+Portraits for the Pilgrim, Deserter and Cartographer are implemented in the subsequent [finishing pass](art-finishing-pass.md).

@@ -37,5 +37,5 @@ not a full campaign playthrough. No full test suite or balance sweep was require
 ## Handoff
 
 Complete locally; no merge, push, deployment or version bump. The preceding gear-art commit is included in this branch.
-The three campfire travellers remain the next art pass. Treant hurt clips, older unused class sheets, expedition pennants,
-provisions art and richer painted spell sequences remain separate backlog work.
+The subsequent [finishing pass](art-finishing-pass.md) completes the traveller portraits, treant hurt clips, expedition pennants,
+provisions art and selected painted spell sequences. Older unused class sheets were not part of these passes.

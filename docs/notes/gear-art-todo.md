@@ -26,6 +26,7 @@ The owner's art PRs brought in, and taken off this list: 60 new bases (#329, the
 pieces; #335, 20 of the 21 left-hand pieces), the 21 named legends (#338), and (#336) the 8 rune stones in place of the pack's discs, the 5
 rune frames, the merge spark, the 5 remedies, the 14 set emblems and the 3 glyph stones (the Enchant tab's icon is the gold one).
 
-## Still to come
+## Empty-slot art complete
 
-- The 7 empty-slot outlines of the paper doll and the doll's backing (the empty slots show a faint painting of a base of that slot).
+The seven dedicated empty-slot outlines and painted paper-doll backing are implemented in the finishing pass.
+See [the handoff](art-finishing-pass.md).

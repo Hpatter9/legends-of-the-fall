@@ -1476,19 +1476,21 @@
  },
  "cls_treant": {
   "w": 100,
-  "h": 96,
+  "h": 102,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
    "idle": 4,
-   "dead": 5
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 96,
   "facesRight": true,
@@ -1520,19 +1522,21 @@
  },
  "cls_treant_2": {
   "w": 134,
-  "h": 127,
+  "h": 130,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
    "idle": 4,
-   "dead": 5
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 125,
   "facesRight": true,
@@ -1540,19 +1544,21 @@
  },
  "cls_treant_3": {
   "w": 126,
-  "h": 125,
+  "h": 128,
   "perRow": 5,
   "rows": [
    "walk",
    "attack",
    "idle",
-   "dead"
+   "dead",
+   "hurt"
   ],
   "counts": {
    "walk": 5,
    "attack": 5,
    "idle": 4,
-   "dead": 5
+   "dead": 5,
+   "hurt": 3
   },
   "figure": 122,
   "facesRight": true,

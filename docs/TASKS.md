@@ -16,6 +16,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ART-FINISH — Travellers, expedition details, empty gear slots, treants and painted spell clips
+
+- **Owner:** Codex. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall` (includes the completed gear and enemy passes).
+- **Scope:** three traveller portraits and campfire presentation; four oath pennants and provisions icon; seven empty-slot paintings and paper-doll backing; hurt rows for three treant summons; animated flame, smoke and energy materials. Asset import/preview tools, focused validation, credits and handoff. Preserve game rules, saves, offline play and reduced motion; no version change.
+- **Direction:** owner approved the traveller portraits; other menu art retains the approved painted style and treant motion follows the approved enemy recoil direction.
+- **Completion:** all five groups implemented, checked at three portrait sizes and reduced motion where relevant, focused tests/typecheck/build pass, sources and handoff retained.
+- **Status:** in progress.
+
+
 ### ENEMY-MOTION — Breathing idles and dedicated recoil for nine enemy sheets
 
 - **Owner:** Codex. **Branch/worktree:** `art/enemy-motion`, `/workspace/legends-of-the-fall`.

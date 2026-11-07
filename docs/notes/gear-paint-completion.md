@@ -4,7 +4,7 @@ Owner approved the four-item painted proposal before production. Branch: `art/ge
 
 All 69 missing equipment bases now have individual 256px paintings: the Bladed Fan, 26 footwear pieces, 24 belts and 18 accessories.
 The existing item renderer uses these through the gear atlas, including its existing rarity frames and Mythic glow. No simulation,
-saves, version or item statistics changed. Dedicated empty-slot outlines and the paper-doll backing remain on the separate art backlog.
+saves, version or item statistics changed. Dedicated empty-slot outlines and the paper-doll backing were completed in the subsequent [finishing pass](art-finishing-pass.md).
 
 Eight original production sheets and their exact item mapping are retained in `art-source/gear/completion/`. The last sheet's
 bottom row contains three unused props; these are not imported. The approved proposal and rejected background takes remain outside
