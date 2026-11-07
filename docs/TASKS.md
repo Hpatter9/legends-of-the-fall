@@ -16,12 +16,13 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
-### ENEMY-MOTION — Idle and recoil expansion proposal
+### ENEMY-MOTION — Breathing idles and dedicated recoil for nine enemy sheets
 
-- **Owner:** Codex. **Branch/worktree:** `art/gear-completion`, `/workspace/legends-of-the-fall`.
-- **Scope:** proposal images only. Production enemy sheets, simulation and renderer unchanged.
-- **Status:** Orc Grunt motion concept prepared for owner review. [Note](notes/enemy-animation-proposal.md). Production scope and completion criteria will be recorded after visual direction is confirmed.
-
+- **Owner:** Codex. **Branch/worktree:** `art/enemy-motion`, `/workspace/legends-of-the-fall`.
+- **Scope:** nine existing orc/demon/imp/ogre sheets and their layout entries; retained motion sources, packing/preview tools, focused asset validation, credits and handoff. Preserve existing walk/attack/dead pixels and simulation rules. No version change.
+- **Direction:** owner approved the Orc Grunt breathing/recoil proposal.
+- **Completion:** a four-frame idle loop and three readable hurt poses per sheet, no clipped frames or identity jumps at battle size, unchanged existing action rows, focused tests/typecheck/web build and portrait battle previews including reduced motion.
+- **Status:** complete, ready for review. Nine sheets packed; existing action pixels verified unchanged. All 12 focused tests, typecheck, web build, three portrait checks and reduced motion passed. [Handoff](notes/enemy-motion.md). No merge or deployment.
 
 ### GEAR-PAINT — Complete the 69 missing equipment paintings
 

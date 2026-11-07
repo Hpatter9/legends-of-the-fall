@@ -15,5 +15,5 @@ beside the original idle and attack art for identity drift and consistent pixel 
 walk, attack and death rows should stay intact. Preserve reduced-motion handling, texture stability, sheet frame counts, and
 simulation behaviour. No production sprite or manifest has been changed by this proposal.
 
-Awaiting the owner's visual direction as required by AGENTS.md before expanding the clips across the roster. After that pass,
-the third priority is portraits for the Pilgrim, Deserter and Cartographer on the Calamity campfire card.
+The owner approved this visual direction and the nine-enemy expansion is now implemented; see [the handoff](enemy-motion.md).
+The next art priority is portraits for the Pilgrim, Deserter and Cartographer on the Calamity campfire card.

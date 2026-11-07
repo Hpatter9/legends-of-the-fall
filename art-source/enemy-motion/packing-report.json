@@ -1,0 +1,137 @@
+[
+  {
+    "sheet": "hk_orc_grunt",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      0
+    ],
+    "scale": 0.20447284345047922
+  },
+  {
+    "sheet": "hk_orc_archer",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      1
+    ],
+    "scale": 0.1830601092896175
+  },
+  {
+    "sheet": "hk_orc_brute",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      2
+    ],
+    "scale": 0.24266666666666667
+  },
+  {
+    "sheet": "hk_orc_warlord",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      0
+    ],
+    "scale": 0.2623376623376623
+  },
+  {
+    "sheet": "hk_demon",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      0
+    ],
+    "scale": 0.3010204081632653
+  },
+  {
+    "sheet": "hk_demon_lord",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      3,
+      1
+    ],
+    "scale": 0.3271276595744681
+  },
+  {
+    "sheet": "hk_imp",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      2
+    ],
+    "scale": 0.1752873563218391
+  },
+  {
+    "sheet": "hk_ogre",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      1
+    ],
+    "scale": 0.3155080213903743
+  },
+  {
+    "sheet": "hk_ogre_horned",
+    "idleFrames": 4,
+    "hurtFrames": 3,
+    "preserved": [
+      "walk",
+      "attack",
+      "dead"
+    ],
+    "padding": [
+      0,
+      1
+    ],
+    "scale": 0.32085561497326204
+  }
+]
