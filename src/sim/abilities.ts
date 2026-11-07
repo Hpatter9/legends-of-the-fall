@@ -10,7 +10,7 @@ import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef,
 import { eliteKits } from './eliteFoes';
 import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
-import { ALL_HEROES } from './units';
+import { ALL_HEROES, TWENTY_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
 import { powerCast, powerDodged, powerStrike, powersOn } from './setPowers';
 import { heroUltimates } from './ultimates';
@@ -1643,8 +1643,6 @@ KITS.forgeTitan = {
 // (FOE-STYLES: the common foes' and the armies' kinds' own kits, each its own way of fighting, `foeKits.ts`; the yokai witch and seer, the iron
 // golem above are its starting points)
 Object.assign(KITS, foeKits(KITS));
-// (the heroes that joined from the twenty: their kits are built from their rows, `kits/coming.ts`, docs/notes/heroes-join.md)
-Object.assign(KITS, joinedKits());
 
 // Every other hero's ultimate (`ultimates.ts`), unlocked at `ULT_LEVEL`; the first eight's are retuned there.
 const OWN_ULTIMATES = new Map<string, Skill>(Object.entries(KITS).filter(([, k]) => k.ultimate).map(([kind, k]) => [kind, k.ultimate!]));
@@ -1671,6 +1669,8 @@ for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ulti
   const heroOwned = new Set<Skill>();
   for (const kind of ALL_HEROES) {
     const k = KITS[kind];
+    // (the heroes that joined from the twenty are not in KITS yet: see the end of this file)
+    if (!k) continue;
     heroOwned.add(k.skill);
     if (k.ultimate) heroOwned.add(k.ultimate);
   }
@@ -1693,6 +1693,18 @@ for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ulti
 // (RPG-SPELLS batch 7: the monster heroes' reworked skill 1s and ultimates go on their own kits only, now the foes that borrow them have their
 // own copies: `kits/monsters.ts`)
 monsterKits(KITS, (me) => tal(me, 'extra'));
+
+// (the heroes that joined from the twenty, docs/notes/heroes-join.md: their kits are built from their rows (`kits/coming.ts`), which import this
+// module, so they are built on first use and `KITS` holds them as getters: nothing here reads the rows while this module is still loading)
+for (const kind of TWENTY_HEROES) {
+  if (!ALL_HEROES.includes(kind)) continue;
+  Object.defineProperty(KITS, kind, {
+    get: () => joinedKits()[kind],
+    set: (v: Kit) => void Object.defineProperty(KITS, kind, { value: v, writable: true, enumerable: true, configurable: true }),
+    enumerable: true,
+    configurable: true,
+  });
+}
 
 // (a hero still to join the roster has its kit in `kits/vampires.ts` until it does, docs/notes/twenty-heroes.md)
 export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def] ?? comingKits()[u.def];

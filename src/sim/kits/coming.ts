@@ -2,8 +2,8 @@
 // `ALL_HEROES`. Each batch's file writes its heroes' rows (`kits/comingRow.ts`); this builds them, on first use, into the two shapes the
 // roster's kits have: `KITS`'s (skill 1, passive, ultimate), read through `kitOf`, and `HERO_KITS`'s (the pool and three slots), read through
 // `heroKitOf`. A hero that joins the roster moves out of here: its kit is then handed to `KITS` and `HERO_KITS` (`joinedKits`, read by
-// `abilities.ts` once its table is made). This module and `abilities.ts` import each other, so abilities must load first (everything that
-// reads a kit imports it before this).
+// `abilities.ts` once its table is made). This module's rows import `abilities.ts`, which holds the joined kits as getters over `joinedKits`, built on first use, so either
+// module may load first.
 
 import type { Kit, Passive } from '../abilities';
 import type { HeroKit, Slot } from '../heroKits';

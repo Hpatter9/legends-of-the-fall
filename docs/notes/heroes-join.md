@@ -34,5 +34,7 @@ deleted or loosened beyond these counts.
 
 ## Load order
 
-`kits/coming.ts` and `abilities.ts` import each other; `abilities.ts` must load first (anything that reads a kit already does). A test that
-imports `kits/coming` first needs `import '../src/sim/abilities'` before it (`coming-tune.test.ts` does).
+`kits/coming.ts` (the rows) imports `abilities.ts`, and `abilities.ts` imports `joinedKits` back. So `abilities.ts` does not read the rows while
+it loads: the nine joined heroes' entries in `KITS` are getters over `joinedKits()`, installed at the end of the file and built on first use
+(`HERO_KITS` takes `joinedHeroKits()` the same way, when it is first built). Either module may be loaded first; `coming-tune.test.ts` imports
+the kits module first to prove it.
