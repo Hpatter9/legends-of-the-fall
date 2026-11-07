@@ -1,5 +1,18 @@
 # Shared task board
 
+### HERO-SPRITE-REMAKES — Completely remake the ten automatic repaints
+
+- **Owner / branch / worktree:** Codex; `audit/hero-repaint-faces`; `/workspace/legends-of-the-fall`.
+- **Scope:** full portrait-led sprite and animation remakes for Cleric, Buccaneer, Fire Wizard, Illusionist, Time Witch, Peasant, Ranger, Queen Dragoon, Lightning Mage and Great Sage; preserve identities, kits and intended skin tones.
+- **Completion:** visual direction approved, consistent front/rear animations, production asset/layout integration and affected tests, typecheck/build and portrait-size game review.
+- **Status:** owner approved the direction; all ten complete remakes implemented in 20 front/rear sheets (560 frames). Original skin colours retained, compatibility copies identical, and the legacy recolouring command skips all remakes. Typecheck/build, 45 affected tests and pixel validation passed. Browser review passed at all three phone sizes: 30 dossiers, 960 walk/facing checks, combat/reduced motion and offline reload at 393; no page errors. Owner requested merge; latest main integrated and release 0.391.0 validated: typecheck/build, 52 tests, frame validation and repeated three-size browser/offline checks passed. Owner-authorised merge: [PR #426](https://github.com/Hpatter9/legends-of-the-fall/pull/426). [Handoff](notes/hero-sprite-remakes.md), [production lineup](samples/hero-remakes/lineup.png).
+
+### HERO-REPAINT-AUDIT — Identify blotchy faces after skin repainting
+
+- **Owner / branch / worktree:** Codex; `audit/hero-repaint-faces`; `/workspace/legends-of-the-fall`.
+- **Scope / completion:** audit the twelve heritage heroes, inspect current source/repaint frames and show comparisons before repairs; no production sprite changes.
+- **Status:** audit complete. Highest priorities: Cleric, Buccaneer and Fire Wizard; Illusionist, Time Witch and Peasant need secondary review. All 24 source/repaint pairs preserve dimensions/alpha across 672 declared frames; seven relevant asset tests passed. Initial audit completed; the subsequently approved full remakes are implemented under HERO-SPRITE-REMAKES. [Handoff](notes/hero-repaint-audit.md), [comparisons](samples/hero-repaint-audit/comparisons.png), [Cleric walk](samples/hero-repaint-audit/cleric-walk.gif).
+
 Project: **Legend of the Last Keep**  
 Initial coordination snapshot: 2026-10-26
 
@@ -18,7 +31,7 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### TAVERN-POSES — Relaxed hero paintings for the tavern
 
-- **Release:** owner authorised merging as 0.391.0. Main 0.390.0 integrated; release typecheck/build, six focused test files and all 21 fresh release browser/offline checks passed.
+- **Release:** owner authorised merging. PR #426 reached main during preparation, so the tavern release is 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), preserving the integrated ten hero remakes. Final integration validation in progress.
 
 - **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall`; preserves the completed uncommitted tavern implementation.
 - **Scope:** paint two relaxed variants for all 54 heroes, integrate compatible five-seat composition, validate and then refine the tavern UI. Preserve simulation, full roster and version.

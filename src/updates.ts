@@ -27,13 +27,22 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
-    version: '0.391.0',
+    version: '0.392.0',
     date: '2026-11-07',
     title: 'A cozy home for your heroes',
     notes: [
       'Your five strongest heroes relax around a painted tavern hearth, with two new seated paintings for every hero.',
       'Tap a guest to manage them, or switch between Your heroes and Tavern services for upgrades, quests and the shop.',
       'The company updates as your heroes grow stronger, and the new art is available offline.',
+    ],
+  },
+  {
+    version: '0.391.0',
+    date: '2026-11-07',
+    title: 'Ten heroes, completely remade',
+    notes: [
+      'Ten heroes have new battle sprites inspired by their portraits, with clearer faces and consistent skin tones.',
+      'New front and rear animations cover walking, attacks, abilities, hurt and falling, with each hero’s own clothes and weapons.',
     ],
   },
   {

@@ -1,0 +1,808 @@
+{
+  "hero": "illusionist",
+  "source": "art-source/hero-remakes/illusionist.png",
+  "sha256": "d613cc38e505c75484bbf82769873d9a79f0ac6ab0dc1b134b78d800d83c6fb8",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {},
+  "extraClip": null,
+  "scale": 0.6193548387096774,
+  "cell": [
+    160,
+    120
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "idle",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        33,
+        14,
+        146,
+        169
+      ],
+      "pixels": 10070
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "idle",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        201,
+        14,
+        313,
+        169
+      ],
+      "pixels": 9992
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "idle",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        371,
+        14,
+        479,
+        168
+      ],
+      "pixels": 9898
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "idle",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        540,
+        14,
+        646,
+        168
+      ],
+      "pixels": 9927
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "walk",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        29,
+        185,
+        145,
+        339
+      ],
+      "pixels": 9881
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "walk",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        200,
+        187,
+        314,
+        341
+      ],
+      "pixels": 9610
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "walk",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        368,
+        188,
+        481,
+        341
+      ],
+      "pixels": 9532
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "walk",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        535,
+        187,
+        648,
+        342
+      ],
+      "pixels": 9146
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "_walk",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        29,
+        357,
+        147,
+        511
+      ],
+      "pixels": 9510
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "_walk",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        201,
+        361,
+        316,
+        510
+      ],
+      "pixels": 9356
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "_walk",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        368,
+        360,
+        482,
+        511
+      ],
+      "pixels": 8736
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "_walk",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        537,
+        358,
+        649,
+        511
+      ],
+      "pixels": 8716
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 24,
+      "sourceBox": [
+        29,
+        526,
+        147,
+        672
+      ],
+      "pixels": 10095
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 25,
+      "sourceBox": [
+        192,
+        538,
+        335,
+        672
+      ],
+      "pixels": 9521
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 26,
+      "sourceBox": [
+        361,
+        533,
+        510,
+        673
+      ],
+      "pixels": 9565
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 27,
+      "sourceBox": [
+        541,
+        528,
+        646,
+        674
+      ],
+      "pixels": 9302
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "hurt",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        19,
+        687,
+        144,
+        834
+      ],
+      "pixels": 9969
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "hurt",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        184,
+        690,
+        314,
+        835
+      ],
+      "pixels": 10742
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "hurt",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        352,
+        704,
+        480,
+        833
+      ],
+      "pixels": 9530
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "hurt",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        525,
+        695,
+        642,
+        833
+      ],
+      "pixels": 9111
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "dead",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        24,
+        850,
+        135,
+        989
+      ],
+      "pixels": 9269
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "dead",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        185,
+        866,
+        300,
+        988
+      ],
+      "pixels": 8508
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "dead",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        325,
+        898,
+        474,
+        986
+      ],
+      "pixels": 7636
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "dead",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        489,
+        919,
+        661,
+        979
+      ],
+      "pixels": 6878
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack2",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        22,
+        1011,
+        139,
+        1162
+      ],
+      "pixels": 10408
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack2",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        182,
+        1010,
+        307,
+        1162
+      ],
+      "pixels": 10389
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack2",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        352,
+        1008,
+        481,
+        1162
+      ],
+      "pixels": 10848
+    },
+    {
+      "sheet": "hero_res_illusionist",
+      "row": "attack2",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        519,
+        1010,
+        649,
+        1162
+      ],
+      "pixels": 10101
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "idle",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        710,
+        14,
+        816,
+        168
+      ],
+      "pixels": 9429
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "idle",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        879,
+        14,
+        983,
+        168
+      ],
+      "pixels": 9262
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "idle",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1047,
+        14,
+        1150,
+        167
+      ],
+      "pixels": 9220
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "idle",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1216,
+        14,
+        1317,
+        167
+      ],
+      "pixels": 9060
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "walk",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        707,
+        186,
+        815,
+        341
+      ],
+      "pixels": 9080
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "walk",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        877,
+        187,
+        983,
+        341
+      ],
+      "pixels": 8776
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "walk",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1038,
+        187,
+        1150,
+        341
+      ],
+      "pixels": 8911
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "walk",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1200,
+        187,
+        1318,
+        337
+      ],
+      "pixels": 8786
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        705,
+        359,
+        814,
+        511
+      ],
+      "pixels": 8706
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        877,
+        360,
+        981,
+        512
+      ],
+      "pixels": 8690
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1047,
+        362,
+        1149,
+        512
+      ],
+      "pixels": 8473
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1214,
+        361,
+        1317,
+        508
+      ],
+      "pixels": 8768
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 28,
+      "sourceBox": [
+        705,
+        529,
+        815,
+        671
+      ],
+      "pixels": 8943
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 29,
+      "sourceBox": [
+        873,
+        533,
+        1013,
+        673
+      ],
+      "pixels": 9458
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 30,
+      "sourceBox": [
+        1044,
+        537,
+        1179,
+        670
+      ],
+      "pixels": 8559
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 31,
+      "sourceBox": [
+        1216,
+        526,
+        1315,
+        672
+      ],
+      "pixels": 8956
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        707,
+        691,
+        811,
+        834
+      ],
+      "pixels": 8720
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        859,
+        696,
+        993,
+        834
+      ],
+      "pixels": 10044
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1023,
+        703,
+        1153,
+        833
+      ],
+      "pixels": 9465
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1208,
+        695,
+        1317,
+        833
+      ],
+      "pixels": 9000
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "dead",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        706,
+        848,
+        814,
+        987
+      ],
+      "pixels": 8656
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "dead",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        855,
+        867,
+        983,
+        987
+      ],
+      "pixels": 8543
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "dead",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1007,
+        910,
+        1150,
+        979
+      ],
+      "pixels": 6145
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "dead",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1164,
+        922,
+        1331,
+        977
+      ],
+      "pixels": 6365
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "illusionist.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        703,
+        1014,
+        819,
+        1162
+      ],
+      "pixels": 9939
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "illusionist.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        859,
+        1016,
+        980,
+        1162
+      ],
+      "pixels": 10476
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "illusionist.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1027,
+        1013,
+        1156,
+        1162
+      ],
+      "pixels": 10686
+    },
+    {
+      "sheet": "hero_res_illusionist_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "illusionist.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1204,
+        1012,
+        1324,
+        1162
+      ],
+      "pixels": 9941
+    }
+  ]
+}
