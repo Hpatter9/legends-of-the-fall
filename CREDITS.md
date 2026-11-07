@@ -540,3 +540,9 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Nemesis War and tactic art (`src/art/expansion/`, `src/art/ui/tactics/`, from `art-source/expansion/` and `art-source/ui/tactics/`, PRs #399 and #400)
 
 - **Rank badges, Council medallion, duel banner and the two taunt banners**, and the **tactic icons** (Advance, Hold, Charge): original commissioned art for this project. The sheets were cut and sized with ImageMagick (see `docs/notes/art-in.md`) and are bundled into game.js (the tactic icons are served as files and cached by the service worker).
+
+## Equipment painting completion
+
+- The remaining 69 equipment paintings (Bladed Fan, 26 footwear pieces, 24 belts and 18 accessories) are original artwork generated with OpenAI image generation for the owner-approved equipment style. Sources are retained in `art-source/gear/completion/` with their item mapping; individual icons are in `art-source/gear/off/`, `feet/`, `belt/` and `acc/`. `tools/gear/cut-completion.py` crops, centres and downsamples the paintings, and the existing gear importer cleans and packs them into the offline-cached gear atlases. No third-party source art was used for this batch.
+
+- Enemy motion proposal only (`docs/samples/enemy-animation-proposal/`): an OpenAI-generated pose study using the already credited Orc Grunt sprite as reference. It is not included in the game build and does not replace the original pack credit.

@@ -16,6 +16,22 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ENEMY-MOTION — Idle and recoil expansion proposal
+
+- **Owner:** Codex. **Branch/worktree:** `art/gear-completion`, `/workspace/legends-of-the-fall`.
+- **Scope:** proposal images only. Production enemy sheets, simulation and renderer unchanged.
+- **Status:** Orc Grunt motion concept prepared for owner review. [Note](notes/enemy-animation-proposal.md). Production scope and completion criteria will be recorded after visual direction is confirmed.
+
+
+### GEAR-PAINT — Complete the 69 missing equipment paintings
+
+- **Owner:** Codex. **Branch/worktree:** `art/gear-completion`, `/workspace/legends-of-the-fall`.
+- **Scope:** missing gear sources, gear atlases, backlog, credits and handoff. No simulation or version changes.
+- **Direction:** owner approved the four-item painted proposal.
+- **Completion:** all 69 missing bases painted and imported, contact sheets reviewed, equipment checks, typecheck, web build and portrait previews. Enemy animation and travellers follow as separate passes.
+- **Status:** complete, ready for review. All 69 bases painted and imported; 16 equipment tests, typecheck, web build and three portrait checks passed. [Handoff](notes/gear-paint-completion.md). No merge or deployment.
+
+
 ### UI-POPUP-UNIFORM — Uniform Keep & Kingdom fortress aesthetic across all menus, popups, sheets, and dialogs
 
 - **Owner:** Claude worker / Antigravity. **Branch/worktree:** `uniform_menu_popup_ui` (from `origin/main` 0.368.0).
