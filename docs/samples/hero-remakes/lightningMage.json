@@ -1,0 +1,818 @@
+{
+  "hero": "lightningMage",
+  "source": "art-source/hero-remakes/lightningMage.png",
+  "sha256": "7b429608dff2f1f0c8a57364b99b02c3b9dcb80c9f5d21ea13750e136ae462be",
+  "sourceRows": 8,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    7
+  ],
+  "poseSelections": {
+    "24": 56,
+    "25": 57,
+    "26": 58,
+    "27": 59,
+    "28": 60,
+    "29": 61,
+    "30": 62,
+    "31": 63,
+    "47": 46
+  },
+  "extraClip": null,
+  "scale": 0.7007299270072993,
+  "cell": [
+    160,
+    120
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "idle",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        51,
+        6,
+        141,
+        143
+      ],
+      "pixels": 8741
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "idle",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        218,
+        9,
+        308,
+        143
+      ],
+      "pixels": 8447
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "idle",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        385,
+        6,
+        479,
+        143
+      ],
+      "pixels": 8658
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "idle",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        551,
+        6,
+        647,
+        143
+      ],
+      "pixels": 8689
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "walk",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        44,
+        157,
+        134,
+        292
+      ],
+      "pixels": 8105
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "walk",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        212,
+        159,
+        306,
+        293
+      ],
+      "pixels": 8066
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "walk",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        383,
+        159,
+        476,
+        292
+      ],
+      "pixels": 7979
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "walk",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        552,
+        158,
+        645,
+        288
+      ],
+      "pixels": 7736
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "_walk",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        50,
+        301,
+        137,
+        436
+      ],
+      "pixels": 8175
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "_walk",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        224,
+        302,
+        307,
+        436
+      ],
+      "pixels": 7747
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "_walk",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        389,
+        304,
+        477,
+        436
+      ],
+      "pixels": 7850
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "_walk",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        557,
+        303,
+        646,
+        428
+      ],
+      "pixels": 7426
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 56,
+      "sourceBox": [
+        51,
+        1037,
+        139,
+        1165
+      ],
+      "pixels": 7946
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 57,
+      "sourceBox": [
+        210,
+        1031,
+        302,
+        1165
+      ],
+      "pixels": 8047
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 58,
+      "sourceBox": [
+        372,
+        1028,
+        479,
+        1166
+      ],
+      "pixels": 8730
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 59,
+      "sourceBox": [
+        541,
+        1034,
+        640,
+        1165
+      ],
+      "pixels": 8659
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "hurt",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        46,
+        602,
+        149,
+        731
+      ],
+      "pixels": 9070
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "hurt",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        210,
+        597,
+        327,
+        730
+      ],
+      "pixels": 9304
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "hurt",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        383,
+        608,
+        486,
+        732
+      ],
+      "pixels": 8312
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "hurt",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        544,
+        602,
+        646,
+        729
+      ],
+      "pixels": 8696
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "dead",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        43,
+        748,
+        139,
+        884
+      ],
+      "pixels": 9039
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "dead",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        208,
+        764,
+        314,
+        883
+      ],
+      "pixels": 8327
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "dead",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        358,
+        791,
+        486,
+        885
+      ],
+      "pixels": 7238
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "dead",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        506,
+        831,
+        663,
+        885
+      ],
+      "pixels": 5725
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack2",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 56,
+      "sourceBox": [
+        51,
+        1037,
+        139,
+        1165
+      ],
+      "pixels": 7946
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack2",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 57,
+      "sourceBox": [
+        210,
+        1031,
+        302,
+        1165
+      ],
+      "pixels": 8047
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack2",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 58,
+      "sourceBox": [
+        372,
+        1028,
+        479,
+        1166
+      ],
+      "pixels": 8730
+    },
+    {
+      "sheet": "hero_res_lightning_mage",
+      "row": "attack2",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 59,
+      "sourceBox": [
+        541,
+        1034,
+        640,
+        1165
+      ],
+      "pixels": 8659
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "idle",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        717,
+        9,
+        817,
+        142
+      ],
+      "pixels": 8934
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "idle",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        888,
+        9,
+        983,
+        142
+      ],
+      "pixels": 8662
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "idle",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1053,
+        9,
+        1152,
+        142
+      ],
+      "pixels": 8871
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "idle",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1220,
+        9,
+        1320,
+        142
+      ],
+      "pixels": 9009
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "walk",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        717,
+        161,
+        816,
+        289
+      ],
+      "pixels": 8101
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "walk",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        882,
+        162,
+        985,
+        289
+      ],
+      "pixels": 8227
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "walk",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1049,
+        163,
+        1153,
+        289
+      ],
+      "pixels": 8146
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "walk",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1220,
+        162,
+        1320,
+        289
+      ],
+      "pixels": 7835
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        718,
+        304,
+        817,
+        435
+      ],
+      "pixels": 8062
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        887,
+        305,
+        985,
+        435
+      ],
+      "pixels": 8073
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1051,
+        305,
+        1154,
+        433
+      ],
+      "pixels": 8102
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1219,
+        305,
+        1322,
+        435
+      ],
+      "pixels": 8008
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 60,
+      "sourceBox": [
+        712,
+        1038,
+        808,
+        1165
+      ],
+      "pixels": 7873
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 61,
+      "sourceBox": [
+        875,
+        1021,
+        974,
+        1165
+      ],
+      "pixels": 8253
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 62,
+      "sourceBox": [
+        1037,
+        1018,
+        1149,
+        1165
+      ],
+      "pixels": 8259
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 63,
+      "sourceBox": [
+        1211,
+        1034,
+        1305,
+        1164
+      ],
+      "pixels": 8043
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        719,
+        605,
+        825,
+        730
+      ],
+      "pixels": 8203
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        877,
+        604,
+        987,
+        730
+      ],
+      "pixels": 8206
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1039,
+        608,
+        1156,
+        730
+      ],
+      "pixels": 7642
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1220,
+        605,
+        1318,
+        730
+      ],
+      "pixels": 8192
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "dead",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        708,
+        748,
+        818,
+        881
+      ],
+      "pixels": 8553
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "dead",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        866,
+        780,
+        992,
+        885
+      ],
+      "pixels": 7380
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "dead",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1005,
+        813,
+        1158,
+        883
+      ],
+      "pixels": 6305
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "dead",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1005,
+        813,
+        1158,
+        883
+      ],
+      "pixels": 6305
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "lightningMage.png",
+      "sourceSlot": 60,
+      "sourceBox": [
+        712,
+        1038,
+        808,
+        1165
+      ],
+      "pixels": 7873
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "lightningMage.png",
+      "sourceSlot": 61,
+      "sourceBox": [
+        875,
+        1021,
+        974,
+        1165
+      ],
+      "pixels": 8253
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "lightningMage.png",
+      "sourceSlot": 62,
+      "sourceBox": [
+        1037,
+        1018,
+        1149,
+        1165
+      ],
+      "pixels": 8259
+    },
+    {
+      "sheet": "hero_res_lightning_mage_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "lightningMage.png",
+      "sourceSlot": 63,
+      "sourceBox": [
+        1211,
+        1034,
+        1305,
+        1164
+      ],
+      "pixels": 8043
+    }
+  ]
+}

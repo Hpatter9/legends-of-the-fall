@@ -28,6 +28,11 @@ LAYOUT = json.load(open(os.path.join(UNITS, 'sheets.json')))
 CONFIG = json.load(open(os.path.join(os.path.dirname(__file__), 'heroes.json')))
 # Heroes whose sheets are made already in their tone, by another tool, and must not be re-toned here.
 DRAWN_IN_TONE = {'knight': 'tools/knight/plain.py', 'paladin': 'tools/paladin/plain.py'}
+# These full remakes are painted in their intended tones from the start. A
+# second skin filter would damage their deliberately shaded faces again.
+DRAWN_IN_TONE.update({hero: 'tools/hero-remakes/pack.py' for hero in
+                     ['cleric', 'buccaneer', 'wizard', 'illusionist', 'timeWitch',
+                      'peasant', 'ranger', 'dragoon', 'lightningMage', 'sage']})
 
 
 def read_table():
@@ -313,8 +318,8 @@ def main():
     tones, hairs, looks = read_table()
     for hero in args or [h for h in CONFIG if looks.get(h) and looks[h][0] != 'source']:
         if hero in DRAWN_IN_TONE:
-            # (his sheets are made from his awakened ones, already drawn in his tone: re-toning them again would darken
-            #  his skin twice. tools/knight/plain.py writes both the source and the re-toned copy; docs/notes/knight-sprite.md)
+            # The packer writes source and compatibility copies in the intended
+            # tone already; never apply another skin mask to these faces.
             print(f'{hero}: drawn in its tone already ({DRAWN_IN_TONE[hero]}); skipped')
             continue
         run(hero, tones, hairs, looks, preview)

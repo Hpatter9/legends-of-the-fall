@@ -55,7 +55,7 @@ import art52 from '../art/units/hero_res_samurai_back.png';
 import art53 from '../art/units/hero_res_kunoichi_back.png';
 import art54 from '../art/units/hero_res_wizard_back_brown.png';
 import art55 from '../art/units/hero_res_paladin_back_olive.png';
-import art56 from '../art/units/hero_res_cleric_back.png';
+import art56 from '../art/units/hero_res_cleric_back_deep.png';
 import art57 from '../art/units/hero_res_minotaur_back.png';
 import art58 from '../art/units/hero_res_peasant_back_tan.png';
 import art59 from '../art/units/hero_res_ninja_monk_back.png';

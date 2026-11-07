@@ -1,0 +1,817 @@
+{
+  "hero": "timeWitch",
+  "source": "art-source/hero-remakes/timeWitch.png",
+  "sha256": "e00fc6c11dd0618d4bf5e8f8bad59fcb5188eb4b50b3dc00b4004c34a478ad87",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {
+    "24": 48,
+    "25": 49,
+    "26": 50,
+    "27": 51,
+    "28": 52,
+    "29": 53,
+    "30": 54,
+    "31": 55
+  },
+  "extraClip": null,
+  "scale": 0.676056338028169,
+  "cell": [
+    160,
+    146
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "idle",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        57,
+        12,
+        155,
+        154
+      ],
+      "pixels": 10030
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "idle",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        226,
+        11,
+        322,
+        153
+      ],
+      "pixels": 9832
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "idle",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        394,
+        11,
+        491,
+        154
+      ],
+      "pixels": 9752
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "idle",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        561,
+        13,
+        656,
+        154
+      ],
+      "pixels": 9647
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "walk",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        58,
+        169,
+        155,
+        312
+      ],
+      "pixels": 9543
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "walk",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        225,
+        171,
+        318,
+        311
+      ],
+      "pixels": 9425
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "walk",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        392,
+        170,
+        484,
+        311
+      ],
+      "pixels": 9236
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "walk",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        561,
+        170,
+        653,
+        310
+      ],
+      "pixels": 8835
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "_walk",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        55,
+        328,
+        151,
+        472
+      ],
+      "pixels": 9626
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "_walk",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        224,
+        331,
+        316,
+        471
+      ],
+      "pixels": 9193
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "_walk",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        391,
+        331,
+        485,
+        471
+      ],
+      "pixels": 8668
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "_walk",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        556,
+        330,
+        651,
+        467
+      ],
+      "pixels": 8111
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        45,
+        976,
+        145,
+        1135
+      ],
+      "pixels": 11241
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        205,
+        953,
+        328,
+        1135
+      ],
+      "pixels": 12666
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        356,
+        937,
+        490,
+        1135
+      ],
+      "pixels": 13976
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        543,
+        977,
+        648,
+        1135
+      ],
+      "pixels": 11251
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "hurt",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        41,
+        637,
+        150,
+        775
+      ],
+      "pixels": 10010
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "hurt",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        200,
+        644,
+        325,
+        775
+      ],
+      "pixels": 10667
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "hurt",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        376,
+        647,
+        481,
+        775
+      ],
+      "pixels": 9647
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "hurt",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        547,
+        644,
+        649,
+        776
+      ],
+      "pixels": 9569
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "dead",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        41,
+        793,
+        141,
+        941
+      ],
+      "pixels": 10183
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "dead",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        207,
+        815,
+        318,
+        942
+      ],
+      "pixels": 9139
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "dead",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        363,
+        846,
+        484,
+        942
+      ],
+      "pixels": 7524
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "dead",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        510,
+        876,
+        675,
+        943
+      ],
+      "pixels": 6942
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack2",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        45,
+        976,
+        145,
+        1135
+      ],
+      "pixels": 11241
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack2",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        205,
+        953,
+        328,
+        1135
+      ],
+      "pixels": 12666
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack2",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        356,
+        937,
+        490,
+        1135
+      ],
+      "pixels": 13976
+    },
+    {
+      "sheet": "hero_res_time_witch",
+      "row": "attack2",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        543,
+        977,
+        648,
+        1135
+      ],
+      "pixels": 11251
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "idle",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        729,
+        12,
+        821,
+        154
+      ],
+      "pixels": 8792
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "idle",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        898,
+        12,
+        988,
+        153
+      ],
+      "pixels": 8698
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "idle",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1065,
+        13,
+        1155,
+        153
+      ],
+      "pixels": 8559
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "idle",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1233,
+        13,
+        1323,
+        154
+      ],
+      "pixels": 8375
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "walk",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        732,
+        170,
+        824,
+        310
+      ],
+      "pixels": 8602
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "walk",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        899,
+        170,
+        990,
+        311
+      ],
+      "pixels": 8229
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "walk",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1068,
+        170,
+        1156,
+        311
+      ],
+      "pixels": 8003
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "walk",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1235,
+        170,
+        1324,
+        310
+      ],
+      "pixels": 7884
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        730,
+        331,
+        826,
+        470
+      ],
+      "pixels": 8999
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        898,
+        332,
+        991,
+        471
+      ],
+      "pixels": 8664
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1065,
+        331,
+        1158,
+        471
+      ],
+      "pixels": 8346
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1233,
+        332,
+        1324,
+        469
+      ],
+      "pixels": 7417
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        712,
+        966,
+        812,
+        1132
+      ],
+      "pixels": 11686
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        875,
+        950,
+        969,
+        1135
+      ],
+      "pixels": 10883
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1029,
+        948,
+        1139,
+        1132
+      ],
+      "pixels": 11111
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1192,
+        966,
+        1289,
+        1135
+      ],
+      "pixels": 10700
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        721,
+        645,
+        829,
+        774
+      ],
+      "pixels": 9152
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        878,
+        642,
+        998,
+        778
+      ],
+      "pixels": 10022
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1053,
+        646,
+        1156,
+        778
+      ],
+      "pixels": 8836
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1220,
+        646,
+        1318,
+        775
+      ],
+      "pixels": 8569
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "dead",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        713,
+        793,
+        809,
+        939
+      ],
+      "pixels": 8838
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "dead",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        885,
+        818,
+        985,
+        939
+      ],
+      "pixels": 8629
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "dead",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1023,
+        845,
+        1150,
+        942
+      ],
+      "pixels": 7617
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "dead",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1167,
+        888,
+        1337,
+        944
+      ],
+      "pixels": 6373
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "timeWitch.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        712,
+        966,
+        812,
+        1132
+      ],
+      "pixels": 11686
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "timeWitch.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        875,
+        950,
+        969,
+        1135
+      ],
+      "pixels": 10883
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "timeWitch.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1029,
+        948,
+        1139,
+        1132
+      ],
+      "pixels": 11111
+    },
+    {
+      "sheet": "hero_res_time_witch_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "timeWitch.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1192,
+        966,
+        1289,
+        1135
+      ],
+      "pixels": 10700
+    }
+  ]
+}
