@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.418.0',
+    date: '2026-11-08',
+    title: 'Tidier bench stars and Heroes tab',
+    notes: ['Rank stars stay small on the bench cards after a wave, and the Heroes tab shows one mark, only when there is something to do.'],
+  },
+  {
     version: '0.417.0',
     date: '2026-11-08',
     title: 'Assault: trebuchets, kegs and breaches',
