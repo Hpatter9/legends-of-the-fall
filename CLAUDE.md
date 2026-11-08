@@ -65,6 +65,7 @@ Chronos later, so keep its conventions.
   `blowMult`, `shotReach`, `canStrike`.
 - `src/sim/path.ts`: `walkFrom` (cheapest walks round the others), `firstStep`; `walkNear` (the same walk in a 16 x 16 window, with a heap: the Assault's field only).
 - `src/sim/assault/`: the Assault's engine (phase 0 of `docs/design/assault-mode.md` on `claude/assault-design`): `field.ts` (`Battle.field`: the occupancy grid and 8 x 8 buckets), `sectors.ts` (the 25 x 25 sector graph, split into regions, for long walks), `stencil.ts` (the zone stencil and the 100 x 100 field it lays), `spike.ts` (the 55 against 200 bench fight). `src/render/fieldView.ts` draws the field in chunks at three levels of detail; `?bench=assault` (`src/assaultBench.ts`) and `npm run assault-bench` measure it (`docs/notes/assault-0.md`).
+- `src/render/ambient.ts` / `ambientScenes.ts` / `ambientPaint.ts` / `ambientLayer.ts`: ALIVE, the life of every painted scene (flicker, sway, ripple, embers, motes, birds; each painting's masks as data; drawn on a scene's own canvas or by a layer over a DOM painting, paused when hidden, still for reduced motion; `docs/notes/alive.md`).
 - `src/render/`: `iso.ts` (projection), `boardView.ts` (columns, tile marks), `unitView.ts` (animated fighters),
   `fx.ts` (shots, sparks, numbers, shake), `sheets.ts` (frames and portraits).
 - `src/render/sound.ts`: the page's sound (the API: `play`, `playEvents`, `duck`, `setAct`); `audioProcessors.ts` (the audiorective

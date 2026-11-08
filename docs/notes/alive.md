@@ -78,7 +78,7 @@ What was painted still and should move, screen by screen. Done means it moves in
 | | the banners | done: stir |
 | | the green gems, the shaft of light from above | done: breathe; dust turns in the shaft |
 | Hester's stall (`stallView.ts`) | her shelf is plain wood: nothing painted moves | done: her lamp's light breathes over it, dust drifts |
-| The castle's rooms (the small building pictures on the chamber cards) | forge fire, braziers, banners | batch 3 |
+| The castle's chamber cards (the small building pictures) | the glow in each card's diorama (steady) | done: it breathes in the chamber's colour, out of step card to card, with motes rising |
 | Hero cards (the roster) | the motes round each hero (only the casters' moved) | done: every class's drift, out of step card to card |
 | A hero's sheet | the halo behind the hero, its motes | done: the halo's rays turn slowly, the motes rise |
 | The Houses' and the Dark Council's painted menus (`menuBackdrops.ts`) | candelabras; braziers and violet light | done: light only (the paintings lie under the card's veil): they gutter, embers and wisps rise |
@@ -94,14 +94,14 @@ What was painted still and should move, screen by screen. Done means it moves in
 Measured with `node tools/alive/perf.mjs <scene ...>` (a copy of `tools/audit/perf.mjs` on the alive helpers' Chromium: CPU slowed
 4x, 393x852, two device pixels a css pixel, software GL, 8 seconds), against main's build (`ROOT=<main's out/web>`):
 
-| Scene | main: frames, mean ms | this branch: frames, mean ms |
+| Scene | main: frames in 8 s | this branch, after all three batches |
 | --- | --- | --- |
-| tavern | 463, 17.2 | 440, 18.1 |
-| camp (Battle tab) | 442, 18.1 | 436, 18.2 |
-| fight (software GL: only the comparison means anything) | 9, 648 | 9, 657 |
-| recruit (Summoning Sanctum) | 432, 18.5 | 421, 19.0 |
-| spells (study) | 459 to 467, 17.1 to 17.3 | 417 to 442, 18.0 to 19.1 |
-| castle | 424 to 465, 17.2 to 18.9 | 443, 17.9 |
+| tavern | 463 | 456 |
+| camp (Battle tab) | 385 to 442 | 448 |
+| recruit (Summoning Sanctum) | 432 | 421 |
+| spells (study) | 459 to 467 | 429 to 438 |
+| castle | 424 to 465 | 411 to 426 |
+| fight (software GL: only the comparison means anything) | 9 | 9 |
 
 (Runs differ by a few per cent from one to the next.)
 
@@ -137,5 +137,16 @@ CSS only, transform, opacity, background and box-shadow animations on small elem
 the hero cards' motes and the sheet's halo (its rays turned by a registered `--haloTurn` angle, as the halo is arched and cannot
 spin); the taunt's embers and smouldering frame; the loading beacon's gutter. All are stilled for reduced motion and on a battery
 saver (`main.ts` sets `html.lowPower` from the setting). The Houses' and the Council's painted menus take an `AmbientLayer` of
-light alone, under the card's content (`.paintedMenu` is isolated, the layer at `z-index: -1`). The altar is not sampled: it is reached only in a
+light alone, under the card's content (`.paintedMenu` is isolated, the layer at `z-index: -1`). The castle's chamber cards' dioramas
+breathe and send up motes (two pseudo-elements a card). A home page not on show pauses its cards' animations (CSS runs on a page
+hidden by `visibility`): without that the study lost a tenth of its frames to the castle's and the roster's cards behind it.
+
+Samples: `menu-houses`, `hero-sheet` and `castle-chamber` in `docs/samples/alive/`.
+
+## Not done
+
+- The small building pictures themselves (a forge's fire, a chapel's candles) are a few dozen pixels high: their dioramas breathe
+  instead of the pictures being cut up.
+- The Calamity's map, the daily's and the armies' screens were not audited picture by picture in this pass.
+- The cut-ins that already move (the ultimate's showcase, a boss's arrival, the duel) were left as they are. The altar is not sampled: it is reached only in a
 Calamity run; its masks were placed with `tools/alive/masks.mjs`.
