@@ -123,6 +123,29 @@ const PROPS: Record<string, Partial<Record<Beat['kind'], Prop>>> = {
     gather: (fx, at) => void fx.showProp('satyr-music-notes', at.x, at.y - at.tall - 10, { h: 40, life: 1200, vy: -0.03 }),
     bless: (fx, _at, to) => void (to && fx.showProp('satyr-music-notes', to.x, to.y - to.tall - 6, { h: 30, life: 900, vy: -0.04 })),
   },
+  // (the five Mythics' painted props, layered from the spell sheets: docs/notes/mythics-finish.md)
+  vael: {
+    // (the black sun swells over him and eclipses, and stays up through the sweep)
+    gather: (fx, at) => void fx.showProp('mythic-black-sun', at.x, at.y - at.tall - 46, { h: 108, life: 2200, spin: 0.0004, alpha: 0.95, add: true }),
+    cut: (fx, _at, to) => void (to && fx.showProp('mythic-black-sun', to.x, to.y - to.tall * 0.5, { h: 34, life: 420, spin: 0.004, alpha: 0.8, add: true })),
+  },
+  astrax: {
+    gather: (fx, at) => void fx.showProp('mythic-star-chart', at.x, at.y - at.tall - 60, { h: 120, life: 1900, spin: 0.0003, alpha: 0.9, add: true }),
+    sky: (fx, at) => void fx.showProp('mythic-star-chart', at.x, at.y - 120, { h: 70, life: 900, vy: 0.08, alpha: 0.95, add: true }),
+  },
+  ilyra: {
+    gather: (fx, at) => void fx.showProp('mythic-saint-halo', at.x, at.y - at.tall - 22, { h: 86, life: 2000, alpha: 0.95, add: true }),
+    bless: (fx, _at, to) => void (to && fx.showProp('mythic-saint-halo', to.x, to.y - to.tall - 8, { h: 40, life: 1100, vy: 0.01, alpha: 0.9, add: true })),
+  },
+  orrun: {
+    gather: (fx, at) => void fx.showProp('mythic-world-tree', at.x, at.y - 40, { h: 130, life: 2200, vy: -0.012, alpha: 0.95 }),
+    bless: (fx, _at, to) => void (to && fx.showProp('mythic-world-tree', to.x, to.y - 14, { h: 40, life: 1000, vy: -0.02, alpha: 0.9 })),
+  },
+  nyxara: {
+    // (the clock of fate on the ground under her, turning backwards)
+    gather: (fx, at) => void fx.showProp('mythic-fate-clock', at.x, at.y - 6, { h: 110, life: 2400, spin: -0.0016, alpha: 0.9, add: true }),
+    bless: (fx, _at, to) => void (to && fx.showProp('mythic-fate-clock', to.x, to.y - to.tall - 10, { h: 34, life: 900, spin: -0.006, alpha: 0.9, add: true })),
+  },
   wolfBard: {
     gather: (fx, at) => void fx.showProp('satyr-music-notes', at.x, at.y - at.tall - 10, { h: 40, life: 1200, vy: -0.03 }),
     bless: (fx, _at, to) => void (to && fx.showProp('satyr-music-notes', to.x, to.y - to.tall - 6, { h: 30, life: 900, vy: -0.04 })),

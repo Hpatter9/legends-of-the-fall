@@ -46,11 +46,13 @@ export interface Showcase {
 
 /** The heroes whose ultimate has a showcase: the pilot (Ayame, the Wizard, the Beastmaster) and batch 1 (the blades that move). */
 export const SHOWCASES: Record<string, Showcase> = {
-  vael: { style: 'burst', el: 'dark', line: 'A black sun rises behind his crown; the field kneels beneath one golden sweep' },
-  astrax: { style: 'sky', el: 'light', line: 'The stellar core opens and burning constellations fall across the battlefield' },
-  ilyra: { style: 'bless', el: 'light', line: 'Her broken halo closes around the living; for a moment death cannot cross it' },
-  orrun: { style: 'bless', el: 'forest', line: 'The oldest roots clasp the squad, and an emerald sanctuary rises around them' },
-  nyxara: { style: 'bless', el: 'lightning', line: 'The queen breaks a possible future and returns her allies to the moment before the wound' },
+  // (the five Mythics: each its own words, hits and painted props, `ultShow.ts`, and its own cut-in before it, `mythicCutRules.ts`;
+  // docs/notes/mythics-finish.md)
+  vael: { style: 'burst', el: 'dark', hit: 'cut', line: 'The black sun rises and eclipses behind his crown; one golden sweep cuts down every foe it reaches, and the field kneels' },
+  astrax: { style: 'sky', el: 'light', line: 'The star chart opens over the dragon; a constellation burns over each crowd, and the stars fall out of it' },
+  ilyra: { style: 'bless', el: 'light', line: 'Her broken halo rises over her and closes; a halo settles over each of the living in turn, and for a moment death cannot cross it' },
+  orrun: { style: 'bless', el: 'forest', line: 'The world tree climbs out of the ground behind him; its roots run to each of his friends in turn, and an emerald sanctuary rises round them' },
+  nyxara: { style: 'bless', el: 'lightning', line: 'The clock of fate turns backwards under her; each ally is drawn back to the moment before the wound, one after another' },
   kunoichi: { style: 'blinks', el: 'dark', poses: { end: 'kunoichi-kneeling-finish' }, line: 'She vanishes in a puff of smoke, appears behind each foe in turn and cuts it down, then stands where the last fell' },
   wizard: { style: 'sky', el: 'fire', line: 'He raises his staff, the sky darkens, a burning circle marks each crowd and the meteors come down out of the clouds' },
   beastmaster: { style: 'pack', el: 'forest', poses: { call: 'beastmaster-horn' }, line: 'He sounds his horn and the wolves bound in from the edge of the field, one after another, to stand at his side' },

@@ -7,16 +7,6 @@ import type { Element } from './fxRules';
 
 /** Each new skill: the existing skill whose signature it plays, a tint for it (none keeps the painting's own colours), and its element. */
 export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el: Element }>> = {
-  "Solar Aegis": { as: "Holy Challenge", el: "light", tint: 0xffdc87 },
-  "Crownfall": { as: "Earthquake", el: "earth", tint: 0xffdc87 },
-  "Star Hunger": { as: "Hex", el: "dark", tint: 0x9bc9ff },
-  "Comet Lance": { as: "Meteor", el: "light", tint: 0x9bc9ff },
-  "Unburied Mercy": { as: "Sanctuary", el: "light", tint: 0xfff0d6 },
-  "Broken Halo": { as: "Holy Light", el: "light", tint: 0xfff0d6 },
-  "Living Sanctuary": { as: "Heart of the Grove", el: "forest", tint: 0x94d998 },
-  "Heartwood": { as: "Call Treant", el: "forest", tint: 0x94d998 },
-  "Stolen Tomorrow": { as: "Temporal Surge", el: "lightning", tint: 0xbda2ff },
-  "Unmake": { as: "Temporal Surge", el: "lightning", tint: 0xbda2ff },
   // (the nine of the twenty that joined: borrowed looks until their own are painted, docs/notes/heroes-join.md)
   'Impaling Thrust': { as: 'Ravage', tint: 0xff5060, el: 'dark' },
   'Mist Step': { as: 'Shadow Step', tint: 0xd04060, el: 'dark' },

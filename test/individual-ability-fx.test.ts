@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { cleanAtlasCell } from '../src/render/atlasCell';
 import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
 import { SPELL_IDS } from '../src/sim/spells';
+import { HERO_KITS } from '../src/sim/heroKits';
+import { MYTHIC_KINDS } from '../src/sim/mythicRules';
 import { SIGNATURES } from '../src/render/signatures';
 import { SPELL_SIGNATURES } from '../src/render/spellSignatures';
 import { ABILITY_ART, ABILITY_LOOKS, abilitySource, shapeFamily } from '../src/render/abilityLooks';
@@ -16,10 +18,13 @@ test('every actual hero, ultimate, enemy skill and king spell has individual aut
   // (FOE-STYLES: a common foe's kit has no skill)
   const names = new Set(Object.values(KITS).filter(hasSkill).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
   assert.equal(names.size, 136);
-  const expected = [...names].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
+  // (the five Mythics' skills 2 and 3 are painted too, atlas-12: every move a Mythic has is its own, docs/notes/mythics-finish.md)
+  const mythicMoves = MYTHIC_KINDS.flatMap(k => HERO_KITS()[k].slots.map(s => keyOf(s.skill))).filter(n => !names.has(n));
+  assert.equal(mythicMoves.length, 10);
+  const expected = [...names, ...mythicMoves].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
   // (136 skills and ultimates and the king's 35 spells: KING-SPELLS batch 5 painted the schools' fourteen, docs/notes/king-spells-b5.md;
-  // the five Mythics' skill 1 and ultimate took ten more, atlas-11, docs/notes/fix-main-mythics.md)
-  assert.equal(expected.length, 171);
+  // the five Mythics' skill 1 and ultimate took ten more, atlas-11, docs/notes/fix-main-mythics.md; their skills 2 and 3 ten more, atlas-12)
+  assert.equal(expected.length, 181);
   assert.deepEqual(Object.keys(ABILITY_LOOKS).sort(), expected.sort());
   assert.equal(new Set(ABILITY_ART.map(row => row.id)).size, expected.length);
   assert.equal(new Set(ABILITY_ART.map(row => abilitySource(row.id))).size, expected.length, 'different names must resolve to different source cells');

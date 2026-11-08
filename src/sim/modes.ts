@@ -35,6 +35,7 @@ import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
 import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
 import { noteBattleWon } from './questRun';
+import { payTrialShards } from './mythicEcho';
 import { noteChains } from './eidolonChains';
 import { shopArmyIndex } from './chestShop';
 
@@ -223,7 +224,7 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote; /** The page's day key (the Council's turn after a run, and the War Trophies' daily cap); the tools leave it out, and no turn is taken. */ day?: number } & FightExtra): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote; /** The page's day key (the Council's turn after a run, and the War Trophies' daily cap); the tools leave it out, and no turn is taken. */ day?: number; /** Filled in: a Mythic's rank shards for its trial replayed and won (`mythicEcho.ts`). */ trialShards?: { kind: string; n: number } } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
@@ -262,6 +263,8 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
     // (EIDOLON-CHAINS: and the Eidolon chain's part going; the page sees a piece found in `Meta.quests.pieces`)
     noteChains(m, qf);
   }
+  // (a Mythic's trial replayed and won: a few rank shards for that Mythic, once a day, `mythicEcho.ts`; checked before the win is noted)
+  if (fight.won && fight.battle) fight.trialShards = payTrialShards(m, run, fight.day) ?? undefined;
   // (a quest battle's last wave won: remembered, so a replay after is practice)
   if (fight.won && fight.battle) noteBattleWon(m, run);
   if (fight.battle) offerAfterFight(m, qf, run.seed, fight.stage);

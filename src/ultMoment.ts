@@ -29,6 +29,9 @@ import { ULT_MOMENT, UltQueue, ultShape, type UltMoment, type UltPhase } from '.
 import { burstSpots, KIT, KIT_SESSION, litPools, ultTargets, ultZoom, type Pt, type UltTargets } from './ultEpicRules';
 import { hasShowcase, planShow, readCast, wantsShow, type ShowPlan } from './ultShowRules';
 import { UltShow } from './ultShow';
+import { mythicCut, mythicPainting } from './mythicCutRules';
+import { showArtUrl } from './render/showArt';
+import { heroEpithet } from './sim/heroNames';
 import type { UnitSprite } from './render/unitView';
 
 export interface UltMomentOpts {
@@ -99,13 +102,16 @@ export class UltMoments {
   warm(b: Battle): void {
     for (const u of b.units) {
       if (u.side !== 'hero' || !ultimateOf(u)) continue;
-      const url = this.opts.art(u);
-      if (this.warmed.has(url)) continue;
-      this.warmed.add(url);
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = url;
-      this.keep.push(img);
+      // (a Mythic's cut-in shows its whole painting and its sigil as well)
+      const cut = mythicCut(u.def);
+      for (const url of [this.opts.art(u), ...(cut ? [mythicPainting(u.def), showArtUrl(cut.sigil)] : [])]) {
+        if (this.warmed.has(url)) continue;
+        this.warmed.add(url);
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = url;
+        this.keep.push(img);
+      }
     }
   }
 
@@ -319,6 +325,8 @@ export class UltMoments {
     this.shown = this.queue.seq;
     this.slashT = 0;
     this.layer.querySelector('.umSlash')?.remove();
+    const cut = mythicCut(u.def);
+    if (cut) return this.legend(u, name, cut);
     const ult = ultimateOf(u);
     const colour = hex(GLOW[skillElement(ult ? keyOf(ult) : '')]);
     const el = document.createElement('div');
@@ -357,6 +365,53 @@ export class UltMoments {
     const edges = document.createElement('i');
     edges.className = 'umEdges';
     el.append(streak, band, edges);
+    this.layer.append(el);
+  }
+
+  /** A Mythic's own cut-in (`mythicCutRules.ts`): its whole painting in a gilded frame with its sigil turning behind, the word "Mythic", its
+   *  name, title and motto and the ultimate's name beside it, coming in its own way. It leaves as the shared slash does (`.out`). */
+  private legend(u: Unit, name: string, cut: NonNullable<ReturnType<typeof mythicCut>>): void {
+    this.kitCanvas = null;
+    const el = document.createElement('div');
+    el.className = `umSlash umMythic um-${cut.entry}`;
+    el.dataset.myth = u.def;
+    el.style.setProperty('--el', cut.glow);
+    el.style.setProperty('--gild', cut.gild);
+    el.style.setProperty('--wash', cut.wash);
+    el.style.setProperty('--spin', String(cut.spin));
+    el.style.setProperty('--open', `${ULT_MOMENT.OPEN_MS}ms`);
+    const veil = document.createElement('i');
+    veil.className = 'umVeil';
+    const sigil = document.createElement('img');
+    sigil.className = 'umSigil';
+    sigil.alt = '';
+    sigil.decoding = 'async';
+    sigil.src = showArtUrl(cut.sigil);
+    const frame = document.createElement('div');
+    frame.className = 'umFrame';
+    const art = document.createElement('img');
+    art.className = 'umPainting';
+    art.alt = '';
+    art.decoding = 'async';
+    art.src = mythicPainting(u.def);
+    // (the portrait is the fallback: a painting that will not load leaves no empty frame)
+    art.onerror = () => {
+      art.onerror = null;
+      art.src = this.opts.art(u);
+    };
+    frame.append(art);
+    const words = document.createElement('div');
+    words.className = 'umWords umLegend';
+    const crest = document.createElement('em');
+    crest.textContent = 'Mythic';
+    const who = document.createElement('small');
+    who.textContent = `${heroName(u.def)}, ${heroEpithet(u.def)}`;
+    const title = document.createElement('b');
+    title.textContent = name;
+    const motto = document.createElement('i');
+    motto.textContent = cut.motto;
+    words.append(crest, who, title, motto);
+    el.append(veil, sigil, frame, words);
     this.layer.append(el);
   }
 

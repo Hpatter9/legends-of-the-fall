@@ -41,6 +41,7 @@ import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
+import { trialShardsLine } from './sim/mythicEcho';
 import { settleStudy, studyWords } from './sim/books';
 import { fightUse, levelUpWords, settleSkillUse, useOf, useShare } from './sim/skillLevels';
 import { settleWear, wearWords } from './sim/wear';
@@ -3725,7 +3726,7 @@ class Game {
       const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey() };
       const earned = settleRun(this.meta, run, settled);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
-      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
+      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k), ...(settled.trialShards ? [trialShardsLine(heroName(settled.trialShards.kind), settled.trialShards.n)] : [])]);
       // (the Nemesis War's lines go on the wave card below)
       this.nemNote = settled.war;
       // (and what slaying a nemesis paid counts in the wave's crowns)
