@@ -78,3 +78,31 @@
 @keyframes heroMotesRise { 0% { transform: translateY(8px); opacity: 0; } 30% { opacity: .7; } 100% { transform: translateY(-14px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .heroDetail .hpic .heroCardHalo, .heroDetail .hpic .heroCardMotes, .heroRoster .hcard .heroCardMotes { animation: none !important; } }
 .lowPower .heroDetail .hpic .heroCardHalo, .lowPower .heroDetail .hpic .heroCardMotes, .lowPower .heroRoster .hcard .heroCardMotes { animation: none; }
+
+/* ALIVE: the castle's chamber cards: the glow in each diorama breathes in its chamber's colour, out of step from card to card, and a
+   few motes rise in it. */
+.ctCardDiorama::before, .ctCardDiorama::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
+.ctCardDiorama::before {
+  background: radial-gradient(ellipse at 50% 80%, color-mix(in srgb, var(--chamber-glow, #ffd700) 40%, transparent), transparent 65%);
+  opacity: 0.35;
+  animation: ctBreathe 4.2s ease-in-out infinite;
+}
+.ctCardDiorama::after {
+  background:
+    radial-gradient(circle at 22% 85%, var(--chamber-glow, #ffd700) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 64% 70%, var(--chamber-glow, #ffd700) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 81% 92%, var(--chamber-glow, #ffd700) 0 1px, transparent 1.5px);
+  opacity: 0;
+  animation: ctMotes 5.5s ease-in-out infinite;
+}
+.ctChamberCard:nth-child(2n) .ctCardDiorama::before { animation-delay: -1.6s; animation-duration: 5s; }
+.ctChamberCard:nth-child(3n) .ctCardDiorama::before { animation-delay: -2.9s; animation-duration: 3.7s; }
+.ctChamberCard:nth-child(2n) .ctCardDiorama::after { animation-delay: -2.2s; }
+.ctChamberCard:nth-child(3n) .ctCardDiorama::after { animation-delay: -3.8s; }
+@keyframes ctBreathe { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.6; } }
+@keyframes ctMotes { 0% { transform: translateY(6px); opacity: 0; } 35% { opacity: 0.8; } 100% { transform: translateY(-30px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ctCardDiorama::before, .ctCardDiorama::after { animation: none; } }
+.lowPower .ctCardDiorama::before, .lowPower .ctCardDiorama::after { animation: none; }
+
+/* (a home page not on show keeps its life paused: its cards' glows and motes run only while it can be seen) */
+.hmPage:not(.on) .ctCardDiorama::before, .hmPage:not(.on) .ctCardDiorama::after, .hmPage:not(.on) .heroCardMotes, .hmPage:not(.on) .heroCardHalo { animation-play-state: paused; }
