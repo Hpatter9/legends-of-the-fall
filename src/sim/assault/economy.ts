@@ -9,7 +9,6 @@ import type { Meta } from '../meta';
 import { armyById, armyIndex, armyStars, ARMIES } from '../armies';
 import type { Castle } from '../castle';
 import { roomOpen } from '../rooms';
-import { RANKS } from './troops';
 
 /** The most marks a soldier keeps (6.3). */
 export const MARKS_MAX = 99;
@@ -122,8 +121,10 @@ export const troopsOf = (m: Meta, hero: string): number[] => (m.assault?.troops[
 /** What filling a platoon's empty places costs. */
 export const fillCost = (m: Meta, hero: string): number => (PLATOON_SIZE - troopsOf(m, hero).length) * ASSAULT_PRICES.recruit;
 
-/** The marks a new recruit joins with: the castle's Drill Yard (phase 3) drills them Blooded at its first level, Veterans at its second. */
-export const recruitMarks = (castle: Castle | undefined): number => (roomOpen(castle, 'veteranDrill') ? RANKS[2].marks : roomOpen(castle, 'bloodedDrill') ? RANKS[1].marks : 0);
+/** The marks a new recruit joins with: the castle's Drill Yard (phase 3) drills them Blooded (1 mark) at its first level, Veterans (3) at
+ *  its second, the ranks' own thresholds (`RANKS` in `troops.ts`; `assault-drill` checks they agree). The numbers stay here, not imported:
+ *  importing `troops.ts` adds the Assault's fighters to `UNITS`, and this module loads with the save, before the codex reads its foes. */
+export const recruitMarks = (castle: Castle | undefined): number => (roomOpen(castle, 'veteranDrill') ? 3 : roomOpen(castle, 'bloodedDrill') ? 1 : 0);
 
 /** Buy one recruit for a platoon (at the Drill Yard's rank): false when it is full or the crowns run short. */
 export function buyRecruit(m: Meta, hero: string): boolean {
