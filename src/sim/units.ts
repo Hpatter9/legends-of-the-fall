@@ -167,7 +167,8 @@ export const UNITS: Record<string, UnitDef> = {
   boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 195, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows, backs off' },
 };
 
-for (const kind of MYTHIC_KINDS) UNITS[`trial_${kind}`] = { ...UNITS[kind], id: `trial_${kind}`, side: 'foe' };
+const MYTHIC_ASPECTS: Record<string, string> = { vael: 'Crown Without Dawn', astrax: 'Heart of the Fallen Sky', ilyra: 'Unfinished Farewell', orrun: 'Heart Beneath the Roots', nyxara: 'Unwritten Presence' };
+for (const kind of MYTHIC_KINDS) UNITS[`trial_${kind}`] = { ...UNITS[kind], id: `trial_${kind}`, name: MYTHIC_ASPECTS[kind], side: 'foe' };
 
 /** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
  *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */

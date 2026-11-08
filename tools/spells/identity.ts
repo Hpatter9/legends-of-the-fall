@@ -8,7 +8,10 @@ import { battleTap, fight, place, startBattle, stepBattle, type Battle, type Bat
 import { FIELD_BANDS } from '../../src/sim/foes';
 import { gradeBoost, stageBoost } from '../../src/sim/run';
 import { mixSeed, Rng } from '../../src/sim/rng';
-import { ALL_HEROES } from '../../src/sim/units';
+import { ALL_HEROES as LIVE_HEROES } from '../../src/sim/units';
+import { isMythic } from '../../src/sim/mythicRules';
+// Keep the historical ordinary-hero scenarios unchanged; Mythics have their own tests.
+const ALL_HEROES = LIVE_HEROES.filter(k => !isMythic(k));
 import { deploySpots, fieldBoost, pickTeam, play } from '../heroSweep';
 import { SCENARIOS } from '../status-fx/logs';
 import { botSpells } from '../autoplay';

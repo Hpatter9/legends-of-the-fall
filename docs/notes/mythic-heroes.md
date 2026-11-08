@@ -1,6 +1,6 @@
 # Five Mythic heroes
 
-Owner approved Vael, Astrax, Ilyra, Orrun and Nyxara, their portraits and secret Legendary-Pokémon-like acquisition, then explicitly required battle sprites to match the current game. Branch: `feature/mythic-heroes`; worktree: `/workspace/legends-of-the-fall`. No release/version change or deployment.
+Owner approved Vael, Astrax, Ilyra, Orrun and Nyxara, their portraits and secret Legendary-Pokémon-like acquisition, then explicitly required battle sprites to match the current game. Branch: `feature/mythic-heroes`; worktree: `/workspace/legends-of-the-fall`. Owner subsequently authorised release integration as 0.395.0.
 
 ## Playable result
 
@@ -44,3 +44,11 @@ Portraits and tavern variants are automatically copied and precached by the exis
 Scope limits: no new overworld interaction engine or custom musical compositions; effects, audio and ornate menus reuse the game's existing systems. Awakening passives/stats work, but Mythics keep their approved base portraits/sprites and normal combat-grade auras at both awakening steps; separate upgraded equipment paintings are not part of this pass. Trial difficulty needs real-player feedback across more squads and gear combinations.
 
 Status: ready for owner review. Local changes remain on the feature branch; owner/director handles release integration.
+
+## Owner-authorised release
+
+Owner requested merge. Main 0.394.0 (`dd312e0c`) is integrated, preserving its portraits, trophies, encounter art and Nemesis symbols. The only conflict was appended credits; both sets are retained. Preparing release 0.395.0 with a matching Updates entry. Integrated typecheck/build, all 173 focused tests (including release notes), sprite validation and the refreshed three-size browser review are required before the requested merge.
+
+Release compatibility review also filled the codex stories/anonymous trial entries, earned reveal scenes, ultimate showcases/cast effects and legacy tavern spots. The ordinary-hero balancing pool and stat-average budget now explicitly exclude Mythics, preserving both historical battle fingerprint suites unchanged; Mythics retain their separately tested power budget and squad limit. Catalogue assertions and legacy room capacity account for 59 heroes; deferred awakening tests exercise the real base-art fallback for Mythics.
+
+Final compatibility validation: 218 selected catalogue/art/awakening/quest/ultimate/stat tests passed, including `ailments-identical` and `spells-identity`, with zero failures. The earlier 173 release-focused checks passed after main integration. An exploratory all-file run was stopped when it reached expensive balance sweeps and superseded pre-fix fixtures; it is not claimed as a full-suite pass. Targeted catalogues and unchanged-fight fingerprints were rerun successfully after the fixes. Main's workflow runs its full suite before publishing.

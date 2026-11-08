@@ -1,3 +1,5 @@
+import { isMythic } from '../src/sim/mythicRules';
+import { faceUrl } from '../src/heroFaceRules';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -22,7 +24,7 @@ test('permanent equipment and combat aura strength progress independently for ev
       assert.equal(parts.length === 0, grade === 1, `${kind}: tier one has no combat aura`);
       assert.deepEqual(parts, auraParts(kind, Math.min(2, grade - 1)), `${kind}: existing aura artwork reused`);
     }
-    assert.ok(existsSync(`src/art/heroes/awakened-${kind}.webp`), `${kind}: matching menu gear`);
+    assert.ok(existsSync(`src/art/${faceUrl(kind, 1)}`), `${kind}: matching menu gear`);
   }
   assert.deepEqual([0, 1, 2, 3, 4].map(combatAuraStep), [0, 0, 1, 2, 2]);
 });
@@ -74,8 +76,8 @@ test('every upgraded animation has production assets, matched views and complete
 test('the heroes whose awakened sheets come later are new heroes with none yet, each with its awakened menu figure', () => {
   const forms = art.forms as Record<string, string>;
   for (const kind of AWAKENED_SHEETS_LATER) {
-    assert.ok(TWENTY_HEROES.includes(kind), `${kind}: only the twenty may wait`);
+    assert.ok(TWENTY_HEROES.includes(kind) || isMythic(kind), `${kind}: an explicitly deferred equipment form`);
     assert.equal(forms[UNITS[kind].sheet], undefined, `${kind}: its awakened sheets are in, so it leaves the list`);
-    assert.ok(existsSync(`src/art/heroes/awakened-${kind}.webp`), `${kind}: its awakened figure for the menus`);
+    assert.ok(existsSync(`src/art/${faceUrl(kind, 1)}`), `${kind}: its awakened figure for the menus`);
   }
 });

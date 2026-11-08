@@ -2,6 +2,12 @@
 // the game's voice (British spelling). The foes are keyed by their codex entry's id (`codex.ts`), the heroes by their kind.
 
 export const FOE_LORE: Record<string, string> = {
+  trial_vael: 'An empty throne casts a shadow towards dawn. Its keeper tests those who would refuse a crown.',
+  trial_astrax: 'A constellation has gathered itself into a living shape. Its light is an invitation and a warning.',
+  trial_ilyra: 'A broken halo guards an unfinished rite. The living must prove they can bring one another home.',
+  trial_orrun: 'Stone and roots protect a heart older than the oldest shrine. Stand firm until the forest recognises you.',
+  trial_nyxara: 'The reflection moves a moment before you do. Somewhere behind it, an unwritten ending waits.',
+
   skeleton: 'Bound to a long-dead king, he still hoists his rusted rim for an impact that never arrived.',
   spearman: 'The extended reach of an ancient pledge. He jabs from two tiles off, convinced he is still on shift.',
   boneArcher: 'Whatever quarry he chased in life is dust, so he shoots heroes instead. Being dead hasn\'t hurt his eye.',
@@ -73,6 +79,12 @@ export const FOE_LORE: Record<string, string> = {
 };
 
 export const HERO_STORY: Record<string, string> = {
+  vael: 'Vael ruled a kingdom whose last sunrise never ended. He carries its eclipse above his crown, and offers his sword only to those who can refuse a throne.',
+  astrax: 'Astrax swallowed the final spark of a dying constellation and taught it to burn again. The star within its chest answers no astronomer, but it recognises courage.',
+  ilyra: 'Ilyra was buried beneath the names of everyone she failed to save. She returned with a broken halo and an unfinished vow: this time, everyone comes home.',
+  orrun: 'The first forest grew in Orrun’s antlers, long before anyone thought to name a tree. Beneath his stone ribs, an emerald heart still remembers every root.',
+  nyxara: 'Nyxara once ruled a future that the world chose to forget. Each of her spectral hands holds another ending, and she is becoming remarkably selective.',
+
   knight: 'Sir Aldric guarded the gate for forty winters without once inquiring why. They say a blow that falls upon his oak shield vibrates through the castle foundations, rattling every kettle.',
   samurai: 'He crossed the eastern ocean carrying one blade and an unspoken oath. No soul has dared ask what he promised, largely because he looks like a man who dislikes small talk.',
   kunoichi: 'Moonlit slates and a brisk breeze are all she requires. She was already crouching behind your left shoulder before you even had the bright idea to look behind you.',

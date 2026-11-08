@@ -30,6 +30,7 @@ try {
   for (const [width, height] of [[393, 852], [360, 780], [412, 915]]) {
     const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, serviceWorkers: 'allow' });
     const page = await context.newPage(), errors = [];
+    page.setDefaultNavigationTimeout(120000);
     page.on('response', response => { if (response.status() >= 400) console.log('HTTP', response.status(), response.url()); });
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 400)); });
