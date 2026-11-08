@@ -1,4 +1,4 @@
-﻿// What's new: the releases the Updates and notes page in Settings lists, newest first, in plain words for the player (no
+// What's new: the releases the Updates and notes page in Settings lists, newest first, in plain words for the player (no
 // code talk). Pure data, so the tests can check it. Whoever merges a release adds its entry at the top of UPDATES with the
 // same version as package.json (a test fails if the newest entry and package.json disagree), a date and two to five short
 // lines of what changed. Older history is summed up a range at a time in EARLIER.
@@ -53,7 +53,7 @@ export const UPDATES: readonly Update[] = [
     title: 'Straighter steel and sturdier spears',
     notes: [
       'Painted hero illustrations have clearer weapon shapes, with a straighter Peasant spear and an aligned Mercenary sword grip.',
-      'Samurai artwork has cleaner sword grips and scabbards, and the Ranger's drawn bowstring connects correctly.',
+      'Samurai artwork has cleaner sword grips and scabbards, and the Ranger’s drawn bowstring connects correctly.',
       'The revised paintings and matching menu portraits remain available offline.',
     ],
   },
