@@ -42,6 +42,10 @@ import {
 import { GIVERS, QUESTS, SLOTS, SLOT_RULES, questById, type Goal, type QuestDef } from '../src/sim/questData';
 import { NEW_QUESTS } from '../src/sim/questData/newQuests';
 import { GWEN_REMARKS } from '../src/sim/questData/gwen';
+import { setModesHidden } from '../src/sim/hiddenModes';
+
+// (the Last Stand and the Calamity are hidden in the game for now; this file tests their own rules, which stay, so it shows them: docs/notes/hide-modes.md)
+setModesHidden(false);
 
 const DAY = 20261030;
 const clear = (m: Meta, ...ids: string[]) => ids.forEach((id) => (m.armies[id] = { ...recordOf(m, id), clears: 1 }));

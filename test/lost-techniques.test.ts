@@ -20,6 +20,10 @@ import { rewardWords } from '../src/sim/rewardWords';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { bareBoard } from './bare';
 import { emptyStats } from '../src/sim/equipment';
+import { setModesHidden } from '../src/sim/hiddenModes';
+
+// (the Last Stand and the Calamity are hidden in the game for now; this file tests their own rules, which stay, so it shows them: docs/notes/hide-modes.md)
+setModesHidden(false);
 
 const DAY = 20260301;
 const LOST_IDS = ['ninefoldCut', 'wordsOfUnmaking', 'longDawn', 'oldHunger'];

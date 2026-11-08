@@ -98,4 +98,4 @@ export const MYTHIC_BATTLES: readonly QuestBattle[] = legends.map(l => ({
 }));
 
 /** Whether a quest is a part of a Mythic's hidden chain (paid as written, like the tales). */
-export const isMythicQuest = (q: QuestDef): boolean => MYTHIC_QUESTS.includes(q);
+export const isMythicQuest = (q: QuestDef): boolean => MYTHIC_QUESTS.some((m) => m.id === q.id);

@@ -4,6 +4,8 @@
 // Pure data: the rules that offer, count and pay them are in `quests.ts`. A new quest is a new entry in its giver's file; the goal
 // kinds are shared.
 
+import { modesHidden, onModesHiddenChange } from './hiddenModes';
+import { HIDDEN_PATCH } from './questRetune/hiddenModes';
 import type { TomeCounts } from './tomes';
 import { GWEN_QUESTS } from './questData/gwen';
 import { NOTICE_QUESTS } from './questData/notices';
@@ -356,9 +358,23 @@ const BASE_QUESTS: readonly QuestDef[] = [
   ...NEW_QUESTS,
 ];
 
-export const QUESTS: readonly QuestDef[] = BASE_QUESTS.map(retuned);
+/** A quest as the page sees it: retuned, and, while the Last Stand and the Calamity are hidden, a hero chain that ran through them is pointed at army runs and the dailies (`questRetune/hiddenModes.ts`). */
+function shownQuest(q: QuestDef): QuestDef {
+  const r = retuned(q);
+  const patch = modesHidden() ? HIDDEN_PATCH[q.id] : undefined;
+  return patch ? { ...r, ...patch } : r;
+}
+
+const QUEST_LIST: QuestDef[] = BASE_QUESTS.map(shownQuest);
+export const QUESTS: readonly QuestDef[] = QUEST_LIST;
 
 const BY_ID = new Map(QUESTS.map((q) => [q.id, q]));
+// (the flag turns the patches on and off: the list is rebuilt in place, so everything holding it sees the change)
+onModesHiddenChange(() => {
+  QUEST_LIST.splice(0, QUEST_LIST.length, ...BASE_QUESTS.map(shownQuest));
+  BY_ID.clear();
+  for (const q of QUEST_LIST) BY_ID.set(q.id, q);
+});
 export const questById = (id: string): QuestDef | undefined => BY_ID.get(id);
 
 /** For the tests and the tools: run `fn` with extra quests known to `questById` (and so to the log's rules), then forget them. */

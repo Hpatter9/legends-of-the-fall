@@ -2,7 +2,7 @@
 // the achievement list; the rules are in `src/sim/achievements.ts`.
 
 import { AWARD_JOKES } from './quipData';
-import { ACHIEVEMENTS, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
+import { shownAchievements, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
 import { SPELLS, type SpellId } from './sim/spells';
 import { fightToastTop } from './hudClear';
@@ -11,10 +11,11 @@ import { reclearQuip } from './quipView';
 /** The Achievements page: every achievement, the earned ones marked, the counting ones with a bar. One earned and not yet
  *  claimed has a Claim button (they come first), and `claim` takes its crowns and stones (or every waiting one's, for Claim all). */
 export function drawAchievements(body: HTMLElement, m: Meta, claim: (ids: string[]) => void = () => {}): void {
-  const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
+  const shown = shownAchievements(m);
+  const got = shown.filter((a) => m.achievements.includes(a.id)).length;
   const count = document.createElement('p');
   count.className = 'hint';
-  count.textContent = `${got} of ${ACHIEVEMENTS.length} achievements. Each one pays crowns and summoning stones once: tap Claim to take them.`;
+  count.textContent = `${got} of ${shown.length} achievements. Each one pays crowns and summoning stones once: tap Claim to take them.`;
   body.append(count);
   const waiting = unclaimed(m);
   if (waiting.length > 1) {
@@ -24,7 +25,7 @@ export function drawAchievements(body: HTMLElement, m: Meta, claim: (ids: string
     all.addEventListener('click', () => claim(waiting.map((a) => a.id)));
     body.append(all);
   }
-  const order = [...waiting, ...ACHIEVEMENTS.filter((a) => !claimable(m, a.id))];
+  const order = [...waiting, ...shown.filter((a) => !claimable(m, a.id))];
   for (const a of order) body.append(row(a, m, claim));
 }
 

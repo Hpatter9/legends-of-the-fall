@@ -1,3 +1,4 @@
+import { questShown } from './hiddenModes';
 import { welcomeMythic } from './mythicProgression';
 // Quests (batch 1 of the quests and Eidolons design, `docs/notes/quests-summons-design.md`, and batch 1b: repeats, drops, the hundred
 // and thirty quests and their givers): the givers' offers, taking one, dropping one, the goals counted after each settled fight, and
@@ -254,6 +255,8 @@ export function canOffer(m: Meta, q: QuestDef, date?: number): boolean {
   if (s && (s.active.some((a) => a.id === q.id) || s.offers.some((o) => o.id === q.id))) return false;
   if (!isRepeat(q) && s?.done.includes(q.id)) return false;
   if (q.after && !s?.done.includes(q.after)) return false;
+  // (the Last Stand and the Calamity are hidden for now: a quest that needs either is never offered)
+  if (!questShown(q)) return false;
   // (QUESTS-3: a quest that failed waits out its cooldown)
   const failed = s?.failed?.[q.id];
   if (failed && date !== undefined && dayNumber(date) - dayNumber(failed) < FAIL_COOLDOWN) return false;
@@ -284,7 +287,7 @@ export function refreshOffers(m: Meta, date: number, pool: readonly QuestDef[] =
   const before = s.offers.length;
   s.offers = s.offers.filter((o) => {
     const q = pool.find((d) => d.id === o.id);
-    return !!q && today - dayNumber(o.day) < SLOT_RULES[slotOf(q)].days && today >= dayNumber(o.day) && heroesOwnedFor(m, q);
+    return !!q && today - dayNumber(o.day) < SLOT_RULES[slotOf(q)].days && today >= dayNumber(o.day) && heroesOwnedFor(m, q) && questShown(q);
   });
   let changed = s.offers.length !== before || ticked;
   // (SECRET-HEROES: a hero quest's next part goes up whenever its story allows, not with the day's draw)

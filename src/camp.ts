@@ -1,6 +1,7 @@
 // The Battle tab: the company scouts its current enemy army from a cliffside command post.
 // All troop ranks, animation and atmosphere are decorative; they never step the battle.
 
+import { modeShown } from './sim/hiddenModes';
 import { tok } from './render/tok';
 import type { Meta } from './sim/meta';
 import { menuAuraStep, heroRig, lookKey } from './render/awakenRig';
@@ -175,7 +176,7 @@ export class CampScene {
     // (camp-declutter: the heading is its name alone; the small eyebrow and the strapline are gone)
     this.heading.append(el('h2', '', 'Battle Overlook'));
     this.canvas.setAttribute('role', 'img');
-    this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Last Stand’s watchtower on the left and the Calamity citadel on the horizon.');
+    this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army.');
     // (CLIFF-ROAM: Hester's Stall, and the front ground drawn over it, left the ledge for the tavern; one canvas holds the whole scene again)
     this.root.append(this.canvas, this.stashMount, this.dailySlot, this.councilSlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
@@ -387,7 +388,7 @@ export class CampScene {
     }
     this.root.dataset.army = n.army.id;
     this.root.dataset.area = n.army.area;
-    this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Last Stand’s watchtower stands on the left; the Calamity citadel looms on the horizon.`);
+    this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}.${modeShown('tower') ? ' The Last Stand’s watchtower stands on the left; the Calamity citadel looms on the horizon.' : ''}`);
     this.plate.setAttribute('aria-label', `War council: ${n.army.name}, led by ${n.boss}. Opens your party.`);
     // (the owner's call: the plate sits low in the scene, in the clear ground above the bottom bar, rather than just under the party:
     //  never higher than the table's own spot, and 10 px above the scene's foot)
