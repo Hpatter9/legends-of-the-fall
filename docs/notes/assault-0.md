@@ -203,3 +203,35 @@ The 360 x 780 and 412 x 915 layouts were checked by screenshot: the readout wrap
 The existing fights are untouched: `nemesis-regression`, `stand-regression`, `spells-identity` and `ailments-identical` pass. The full
 suite has the same 33 failures as `main` had before this branch, all in hero and skill content tests and none in the battle engine; no new
 failure.
+
+## The render fix (after the owner's phone run)
+
+On the owner's Android phone (about 411 css px wide, a device pixel ratio near 2.6), the bench ran at 59–60 fps with the sim at about
+0.6 ms a tick. But the map did not draw all the way: whole chunks were missing at Near and Mid in a stepped pattern on the right, and the
+followed fight sat high on the screen, under the readout.
+
+- **The cause, one line in the bench.** The bench gave the view `app.renderer.width / app.renderer.resolution`. In Pixi v8
+  `renderer.width` is already in CSS pixels, so the screen was divided by the pixel ratio a second time.
+  - At 2.6 the field believed its screen was a 2.6th of the real one, in the top-left corner.
+  - Chunks to the right of and below that small rectangle were culled.
+  - The camera's point was drawn at that small rectangle's middle, high and left.
+  - Chromium at a pixel ratio of 1 (where phase 0 was measured) cannot show it. At 411 x 915 with a ratio of 2.6 it shows at once.
+- **The fix.**
+  - The bench passes `app.screen` (CSS pixels).
+  - The culling moved into `src/render/fieldCull.ts`, a module with no Pixi in it:
+    - `focusOnScreen` and `screenRect` give where the focus sits and what the screen shows;
+    - `viewRect` adds the margins;
+    - `chunksInView` tests each chunk as its diamond, swept up by its highest ground and down to the lowest a side face reaches.
+  - **The camera's focus** is drawn halfway down the play area, between the readout and the button row. `FieldView.update` takes a
+    `play` area; the bench measures it from its panels.
+  - **The chunk cache** now holds all 100 chunks, about 28 MB at half resolution. A tall phone at Mid really sees about 70 chunks, so
+    the old 36 would have thrashed.
+  - `FieldView.wanted` and the bench's `wanted` give the chunks in view, so a page can check they are all drawn (`chunks == wanted`).
+- **The test** (`test/assault-render.test.ts`): on 411 x 915, 393 x 852, 360 x 780 and 412 x 915, at five zooms across Near and Mid,
+  with and without a play area, from 36 camera points over the field, every tile whose pixels show on the screen has its chunk wanted
+  (over 100,000 tiles checked). It also checks the screen rectangle and the focus's place.
+- **Screenshots** in `docs/samples/assault-render/` (411 x 915 at a ratio of 2.6, and 393 x 852 at 2): Near (21 and 19 chunks, all
+  drawn), Mid (67 and 52, all drawn) and Far. The dark below the fight at the start is past the map's south corner: the Landing lies at
+  its edge.
+- **Something to watch on the phone.** Mid now draws its true 50 to 70 chunks where the bug drew about 24, so it fills more pixels.
+  Re-read the fps at Mid.
