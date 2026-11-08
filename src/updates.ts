@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.416.0',
+    date: '2026-11-08',
+    title: 'Menus, cards and halls come alive',
+    notes: ['Ornate menus catch the light, hero cards drift with motes, halos turn, castle chambers glow, and the loading beacon gutters.'],
+  },
+  {
     version: '0.415.0',
     date: '2026-11-08',
     title: 'Assault battles run smoother',
