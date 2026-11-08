@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.411.0',
+    date: '2026-11-08',
+    title: 'The hold\'s river and grass, refined',
+    notes: ['The Redwater\'s banks curve with shingle, foam and reeds, the tall grass settles into the land, and embers rise off the hold\'s fires.'],
+  },
+  {
     version: '0.410.0',
     date: '2026-11-08',
     title: 'Bloodtusk Hold, polished',

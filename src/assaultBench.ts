@@ -51,6 +51,8 @@ export interface BenchStats {
   frameMean: number;
   frameP95: number;
   workMean: number;
+  /** The longest a frame spent baking chunks so far (ms). */
+  bakeWorst?: number;
   detail: Detail;
   zoom: number;
   fighters: number;
@@ -118,6 +120,7 @@ export async function startAssaultBench(): Promise<void> {
   const frameMs: number[] = [];
   const workMs: number[] = [];
   let simWorst = 0;
+  let bakeWorst = 0;
   // (the blows of the last three seconds, by bucket: the camera's "fiercest fight")
   let heat: { t: number; k: number }[] = [];
   const cam = { x: 0, y: 0, zoom: Number(query.get('zoom')) || ZOOM[(query.get('lod') as Detail) in ZOOM ? (query.get('lod') as Detail) : 'near'] };
@@ -295,6 +298,7 @@ export async function startAssaultBench(): Promise<void> {
     const hostTop = host.getBoundingClientRect().top;
     const play = { top: hud.getBoundingClientRect().bottom - hostTop, bottom: bar.getBoundingClientRect().top - hostTop };
     view.update(cam, app.screen.width, app.screen.height, b.t + Math.min(acc, TICK_MS), events, play);
+    bakeWorst = Math.max(bakeWorst, view.drawn.bakeMs);
     app.render();
     workMs.push(performance.now() - w0);
     if (workMs.length > FRAME_WINDOW) workMs.shift();
@@ -303,7 +307,7 @@ export async function startAssaultBench(): Promise<void> {
       shown = now;
       const alive = b.units.filter((x) => x.alive);
       Object.assign(stats, {
-        seed, run, ticks: b.field!.stats.ticks, simMean: mean(simMs), simP95: p95(simMs), simWorst, fps, frameMean: mean(frameMs), frameP95: p95(frameMs), workMean: mean(workMs),
+        seed, run, ticks: b.field!.stats.ticks, simMean: mean(simMs), simP95: p95(simMs), simWorst, fps, frameMean: mean(frameMs), frameP95: p95(frameMs), workMean: mean(workMs), bakeWorst,
         detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, wanted: view.wanted.length, alive: alive.length,
       });
       const ours = alive.filter((x) => x.side === 'hero').length;
@@ -311,7 +315,7 @@ export async function startAssaultBench(): Promise<void> {
       hud.textContent =
         `Assault bench · fight ${run} (seed ${seed}) · ${clock}${speed > 1 ? ` · x${speed}` : ''}${b.phase !== 'fight' ? ` · ${b.phase === 'won' ? 'won' : 'over'}` : ''}\n` +
         `Sim: ${stats.simMean.toFixed(2)} ms a tick (p95 ${stats.simP95.toFixed(2)}, worst ${simWorst.toFixed(1)})  budget 3 ms\n` +
-        `Frames: ${fps.toFixed(0)} fps · ${stats.frameMean.toFixed(1)} ms (p95 ${stats.frameP95.toFixed(1)}) · work ${stats.workMean.toFixed(1)} ms\n` +
+        `Frames: ${fps.toFixed(0)} fps · ${stats.frameMean.toFixed(1)} ms (p95 ${stats.frameP95.toFixed(1)}) · work ${stats.workMean.toFixed(1)} ms · bake worst ${bakeWorst.toFixed(1)} ms\n` +
         `${view.detail[0].toUpperCase()}${view.detail.slice(1)} (zoom ${cam.zoom.toFixed(2)}; Near ≥ ${NEAR_AT}, Far < ${MID_AT}) · ${view.drawn.fighters} drawn · ${view.drawn.chunks} chunks\n` +
         `Ours ${ours}/55 · theirs ${alive.length - ours}/200`;
     }

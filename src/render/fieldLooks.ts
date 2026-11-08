@@ -35,7 +35,7 @@ const RANK: Record<number, number> = {
 };
 /** The edge overlay (`EDGES`, without "Corner") a material lays over a lower neighbour. */
 const EDGE: Record<number, string | undefined> = {
-  [MAT.trampled]: 'path', [MAT.campDirt]: 'path', [MAT.mud1]: 'mud', [MAT.mud2]: 'mud', [MAT.wetMud]: 'mud', [MAT.scorched]: 'scorch', [MAT.ash]: 'scorch',
+  [MAT.heath]: 'grass', [MAT.trampled]: 'path', [MAT.campDirt]: 'path', [MAT.mud1]: 'mud', [MAT.mud2]: 'mud', [MAT.wetMud]: 'mud', [MAT.scorched]: 'scorch', [MAT.ash]: 'scorch',
   [MAT.shingle]: 'shingle', [MAT.cobbles]: 'road', [MAT.flagstones]: 'flags', [MAT.wallWalk]: 'flags',
 };
 
@@ -93,6 +93,7 @@ export function materialsOf(b: Board, zone: Uint8Array, bp: Blueprint): Uint8Arr
       else if (z === Z('S')) m = MAT.wallWalk;
       else if (t.paved) m = z === Z('I') || z === Z('M') || t.ramp || t.ground === 'shrine' ? MAT.flagstones : MAT.cobbles;
       else if (t.ground === 'shrine') m = MAT.flagstones;
+      else if (t.ground === 'tall') m = MAT.heath;
       else if (z === Z('R') || z === Z('F') || wet(u, v)) m = MAT.shingle;
       else if (z === Z('D')) m = MAT.wetMud;
       else if (z === Z('E')) m = n < 0.5 ? MAT.mud1 : MAT.mud2;
@@ -140,14 +141,16 @@ export function fringesOf(b: Board, mats: Uint8Array, u: number, v: number): Fri
   const m = mats[i];
   const h = b.tiles[i].h;
   const out: Fringe[] = [];
+  const water = m === MAT.shallows || m === DEEP;
+  // (a neighbour at this tile's height; for the water, the bank above it too, so the foam and the wet stones follow every bank)
   const at = (du: number, dv: number) => {
     const x = u + du;
     const y = v + dv;
     if (x < 0 || y < 0 || x >= w || y >= d) return -1;
     const j = y * w + x;
-    return Math.abs(b.tiles[j].h - h) < 1 ? j : -1;
+    const dh = b.tiles[j].h - h;
+    return Math.abs(dh) < 1 || (water && dh > 0 && dh <= 4) ? j : -1;
   };
-  const water = m === MAT.shallows || m === DEEP;
   const over = new Set<number>();
   SIDES.forEach(([du, dv], turn) => {
     const j = at(du, dv);
@@ -155,8 +158,9 @@ export function fringesOf(b: Board, mats: Uint8Array, u: number, v: number): Fri
     const n = mats[j];
     // (the water's foam line lies on the water, facing the land)
     if (water) {
+      // (the bank bites into the water: its shingle laid over the water's edge, then the foam line, so the shore is not a stair of diamonds)
       if (n !== MAT.shallows && n !== DEEP) {
-        out.push({ edge: 'water', turn });
+        out.push({ edge: 'shingle', turn }, { edge: 'water', turn });
         over.add(turn);
       }
       return;
@@ -170,7 +174,15 @@ export function fringesOf(b: Board, mats: Uint8Array, u: number, v: number): Fri
       over.add(turn);
     }
   });
-  if (water) return out;
+  if (water) {
+    // (the water's corners: where only the diagonal is land, a rounded corner of foam, so the bank curves)
+    CORNERS.forEach(([du, dv], turn) => {
+      if (over.has(turn) || over.has((turn + 3) % 4)) return;
+      const j = at(du, dv);
+      if (j >= 0 && mats[j] !== MAT.shallows && mats[j] !== DEEP) out.push({ edge: 'shingleCorner', turn }, { edge: 'waterCorner', turn });
+    });
+    return out;
+  }
   CORNERS.forEach(([du, dv], turn) => {
     // (a corner only where neither side next to it already took an edge)
     if (over.has(turn) || over.has((turn + 3) % 4)) return;
@@ -267,11 +279,13 @@ export function clutterOf(b: Board, zone: Uint8Array, mats: Uint8Array, u: numbe
   if ((u + v) % 2 || u % 3 === 0) return null;
   const i = v * b.w + u;
   const t = b.tiles[i];
-  if (t.wall || t.rock || isWater(t) || t.ramp || t.paved || t.bush || t.ground === 'tall') return null;
-  const z = zone[i];
   const r = hash(u, v, 21);
   const any = (names: readonly string[]) => names[Math.floor(hash(u, v, 22) * names.length)];
-  if (mats[i] === MAT.shingle) return r < 0.25 ? any(['reeds1', 'reeds2', 'pebbles']) : null;
+  // (the fords' stepping stones in the shallows)
+  if (t.ground === 'water') return r < 0.22 ? 'fordStones' : null;
+  if (t.wall || t.rock || isWater(t) || t.ramp || t.paved || t.bush || t.ground === 'tall') return null;
+  const z = zone[i];
+  if (mats[i] === MAT.shingle) return r < 0.4 ? any(['reeds1', 'reeds2', 'reeds1', 'pebbles', 'wetBoulders']) : null;
   if (z === Z('K') || z === Z('T') || z === Z('L')) return r < (z === Z('T') ? 0.28 : 0.16) ? any(['flowers1', 'flowers2', 'pebbles', 'fern', 'bones1', 'stump1', 'stump2', 'shrub1']) : null;
   if (z === Z('V')) return r < 0.25 ? any(['bones1', 'pebbles', 'stump1']) : null;
   if (z === Z('N')) return r < 0.15 ? any(['bones1', 'bones2', 'pebbles']) : null;
