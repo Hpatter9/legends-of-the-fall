@@ -1,7 +1,9 @@
+import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
 import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
@@ -161,7 +163,7 @@ import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
-import { traitBadge } from './traitBadge';
+import { battleTraitBadge } from './battleTraitArt';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
@@ -196,7 +198,8 @@ import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
 import { fightToastTop } from './hudClear';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
-import heartUrl from './art/rogue/heart.png';
+import heartUrl from './art/ui/combat-heart.png';
+import { COMBAT_ART } from './combatArtAssets';
 import { EidolonCall } from './eidolonCall';
 import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
 import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
@@ -1222,9 +1225,9 @@ class Game {
     }
     // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
-    const old = card.querySelector('canvas')!;
+    const old = card.querySelector('canvas, .heraldIntro')!;
     // (the sheets face right; a boss that faces left looks the other way, mirrored in the drawing so the slide-in keeps it)
-    const face = wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
+    const face = heraldPortrait(boss.def, 'heraldIntro') ?? wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
     old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
@@ -3428,7 +3431,15 @@ class Game {
       card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}${h.guest ? ' guest' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
-      stars.textContent = '★'.repeat(h.grade);
+      stars.className = 'benchGrade';
+      stars.setAttribute('aria-label', `Rank ${h.grade}`);
+      for (let i = 0; i < h.grade; i++) {
+        const mark = document.createElement('img');
+        mark.src = COMBAT_ART.star;
+        mark.alt = '';
+        mark.draggable = false;
+        stars.append(mark);
+      }
       const name = document.createElement('b');
       name.textContent = heroName(h.kind);
       const bar = document.createElement('i');
@@ -3991,7 +4002,7 @@ class Game {
       const next = c.trait.tiers[c.tier + 1];
       const head = document.createElement('span');
       head.className = 'thead';
-      head.append(traitBadge(c.trait.id, { small: true }), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
+      head.append(battleTraitBadge(c.trait.id), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
       pill.append(head);
       if (next) {
         const fx = document.createElement('small');
@@ -4009,7 +4020,7 @@ class Game {
       pill.className = `trait bonds on${this.traitPick === 'bonds' ? ' picked' : ''}`;
       const head = document.createElement('span');
       head.className = 'thead';
-      head.textContent = `${pairs.some((p) => p.lv < 0) ? '⚔ ' : '❦ '}Bonds ${pairs.length}`;
+      head.append(battleTraitBadge(pairs.some((p) => p.lv < 0) ? 'rival' : 'bonds'), document.createTextNode(`Bonds ${pairs.length}`));
       const fx = document.createElement('small');
       fx.textContent = pairs.map((p) => p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' & ')).join(', ');
       pill.append(head, fx);
@@ -4120,9 +4131,15 @@ function overBench(x: number, y: number): boolean {
 
 // (MENU-GLITCH: a tap that opens a panel does not also press what of it is under the finger)
 installTapGuard();
-new Game().start().catch((err) => {
-  $('loading').textContent = `Could not start: ${err}`;
-});
+// (ASSAULT-0: `?bench=assault` is the Assault's engine bench, `assaultBench.ts`; it plays instead of the game and touches no save)
+if (isAssaultBench())
+  startAssaultBench().catch((err) => {
+    $('loading').textContent = `Could not start the bench: ${err}`;
+  });
+else
+  new Game().start().catch((err) => {
+    $('loading').textContent = `Could not start: ${err}`;
+  });
 
 // (the app bundles every file itself, so its page skips the service worker; the web page keeps it)
 checkAppUpdate(__GAME_VERSION__);

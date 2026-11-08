@@ -34,13 +34,14 @@ const run = (b: Battle, ms: number): BattleEvent[] => {
   return out;
 };
 
-test('every hero has one pool: 17 mana and 28 stamina, and summons and foes have none', () => {
+test('every hero has one pool: 19 mana and 35 stamina, and summons and foes have none', () => {
   const kits = HERO_KITS();
   assert.equal(Object.keys(kits).length, ALL_HEROES.length);
   for (const h of ALL_HEROES) assert.ok(kits[h], h);
   const mana = ALL_HEROES.filter((h) => kits[h].pool === 'mana');
-  assert.equal(mana.length, 17, mana.join());
-  assert.equal(ALL_HEROES.length - mana.length, 28);
+  // (19 mana and 35 stamina among the 54; the five Mythics add two of mana, Astrax and Nyxara, and three of stamina, docs/notes/mythic-heroes.md)
+  assert.equal(mana.length, 21, mana.join());
+  assert.equal(ALL_HEROES.length - mana.length, 38);
   const b = arena();
   assert.equal(poolOf(spawn(b, 'wolf', 1, 1)), undefined);
   assert.equal(poolOf(spawn(b, 'skeleton', 2, 2)), undefined);

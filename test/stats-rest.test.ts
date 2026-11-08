@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
@@ -51,7 +52,7 @@ test('pools by score: a CON 17 stamina hero has a deeper pool that fills faster 
   assert.ok(Math.abs(fillOf(knight) - (1 + 3 * PER_POINT.REFILL)) < 1e-9 && Math.abs(fillOf(kunoichi) - (1 + PER_POINT.REFILL)) < 1e-9);
   assert.ok(Math.abs(fillOf(knight) / fillOf(kunoichi) - (1 + 3 * PER_POINT.REFILL) / (1 + PER_POINT.REFILL)) < 1e-9);
   // (a hero's pool grows with its CON by level: the roster's mean is above the written pool, more so at 60 than at 1)
-  const stam = Object.keys(HERO_KITS()).filter((k) => STAT_PROFILES[k] && HERO_KITS()[k].pool === 'stamina');
+  const stam = Object.keys(HERO_KITS()).filter((k) => !isMythic(k) && STAT_PROFILES[k] && HERO_KITS()[k].pool === 'stamina');
   const mean = (level: number) => stam.reduce((n, k) => n + poolNumbers(k, { level })!.top, 0) / stam.length;
   assert.ok(RES.STAM_MAX < mean(1) && mean(1) < mean(20) && mean(20) < mean(60), `${mean(1)} ${mean(20)} ${mean(60)}`);
   // (with the switch off, batch 6's rule: the roster's mean is the written pool at every level)
@@ -71,7 +72,7 @@ test("pools by score: a mana hero's pool follows its casting ability, and its po
   assert.equal(topOf(wizard), n.top);
   // (INT 17 is +3; the Satyr casts with CHA 17, +3 too: the same top; the Druid with WIS 17 as well)
   assert.equal(poolNumbers('satyr')!.top, n.top);
-  const mana = Object.keys(HERO_KITS()).filter((k) => STAT_PROFILES[k] && HERO_KITS()[k].pool === 'mana');
+  const mana = Object.keys(HERO_KITS()).filter((k) => !isMythic(k) && STAT_PROFILES[k] && HERO_KITS()[k].pool === 'mana');
   assert.equal(n.top, RES.MANA_MAX + 3 * PER_POINT.MANA_TOP, 'INT +3 is 15 MP over the written 100');
   assert.ok(mana.reduce((x, k) => x + poolNumbers(k)!.top, 0) / mana.length > RES.MANA_MAX, 'the mean mana hero has more than 100');
   startPool(wizard);

@@ -55,6 +55,11 @@ type Row = [number, number, number, number, number, number, Ability, Ability, Ar
 
 // The design's section 4, "The scores at level 1" (owner-approved, 31 October 2026). The primary is the 17, the weakness the 8.
 const ROWS: Readonly<Record<string, Row>> = {
+  vael: [17, 10, 15, 8, 12, 13, 'str', 'cha', 'heavy', 'wis', 'cha', 'Mythic sovereign'],
+  astrax: [13, 8, 15, 17, 12, 10, 'int', 'int', 'heavy', 'con', 'int', 'Mythic star dragon'],
+  ilyra: [13, 10, 15, 8, 17, 12, 'str', 'wis', 'heavy', 'wis', 'cha', 'Mythic warrior saint'],
+  orrun: [15, 8, 17, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Mythic world guardian'],
+  nyxara: [8, 15, 12, 17, 13, 10, 'int', 'int', 'robes', 'int', 'wis', 'Mythic fateweaver'],
   knight: [15, 8, 17, 10, 13, 12, 'str', 'str', 'heavy', 'str', 'con', 'Fighter (defender)'],
   samurai: [15, 17, 13, 10, 12, 8, 'dex', 'dex', 'medium', 'dex', 'wis', 'Fighter (kensei)'],
   kunoichi: [8, 17, 12, 13, 10, 15, 'dex', 'dex', 'light', 'dex', 'int', 'Rogue (shadow)'],
@@ -100,6 +105,15 @@ const ROWS: Readonly<Record<string, Row>> = {
   sage: [8, 10, 12, 17, 15, 13, 'int', 'int', 'robes', 'int', 'wis', 'Wizard (sage)'],
   demonSwordsman: [13, 12, 15, 8, 10, 17, 'cha', 'cha', 'medium', 'wis', 'cha', 'Warlock (hexblade)'],
   tyrant: [13, 8, 15, 12, 10, 17, 'str', 'cha', 'heavy', 'wis', 'cha', 'Warlock (tyrant)'],
+  vampireLord: [12, 17, 13, 10, 8, 15, 'dex', 'cha', 'medium', 'dex', 'cha', 'Fighter (duellist), vampire'],
+  hemomancer: [8, 13, 12, 15, 10, 17, 'cha', 'cha', 'robes', 'con', 'cha', 'Sorcerer (blood)'],
+  nightstalker: [12, 17, 13, 8, 15, 10, 'dex', 'dex', 'light', 'dex', 'int', 'Rogue (strigoi)'],
+  bloodGargoyle: [15, 8, 17, 10, 13, 12, 'str', 'str', 'heavy', 'str', 'con', 'Gargoyle (sentinel)'],
+  dhampir: [10, 17, 13, 12, 15, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Ranger (hunter)'],
+  warDrummer: [13, 12, 15, 8, 10, 17, 'str', 'cha', 'medium', 'dex', 'cha', 'Bard (drummer)'],
+  geomancer: [12, 8, 15, 13, 17, 10, 'wis', 'wis', 'medium', 'con', 'wis', 'Druid (stone)'],
+  bellWarden: [17, 8, 15, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Fighter (bell guardian)'],
+  falconer: [10, 17, 13, 8, 15, 12, 'dex', 'wis', 'light', 'str', 'dex', 'Ranger (falconer)'],
 };
 
 const toScores = (r: readonly number[]): Scores => ({ str: r[0], dex: r[1], con: r[2], int: r[3], wis: r[4], cha: r[5] });
@@ -112,11 +126,18 @@ export const STAT_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromE
 /** The heroes still to join the roster (`COMING_HEROES`, docs/notes/twenty-heroes.md): their rows, in the same array, until they join and move
  *  into the table above. */
 const COMING_ROWS: Readonly<Record<string, Row>> = {
-  vampireLord: [12, 17, 13, 10, 8, 15, 'dex', 'cha', 'medium', 'dex', 'cha', 'Fighter (duellist), vampire'],
-  hemomancer: [8, 13, 12, 15, 10, 17, 'cha', 'cha', 'robes', 'con', 'cha', 'Sorcerer (blood)'],
-  nightstalker: [12, 17, 13, 8, 15, 10, 'dex', 'dex', 'light', 'dex', 'int', 'Rogue (strigoi)'],
-  bloodGargoyle: [15, 8, 17, 10, 13, 12, 'str', 'str', 'heavy', 'str', 'con', 'Gargoyle (sentinel)'],
-  dhampir: [10, 17, 13, 12, 15, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Ranger (hunter)'],
+  banneret: [15, 8, 13, 10, 12, 17, 'str', 'cha', 'heavy', 'str', 'cha', 'Fighter (standard-bearer)'],
+  astralSphinx: [13, 15, 12, 10, 17, 8, 'dex', 'wis', 'light', 'int', 'wis', 'Sphinx (riddler)'],
+  mirageDancer: [8, 17, 12, 10, 13, 15, 'dex', 'dex', 'light', 'dex', 'cha', 'Rogue (dancer)'],
+  plagueDoctor: [8, 12, 15, 17, 13, 10, 'int', 'int', 'medium', 'con', 'int', 'Wizard (plague doctor)'],
+  bombardier: [12, 15, 17, 13, 10, 8, 'dex', 'int', 'medium', 'dex', 'con', 'Artificer (bombardier)'],
+  astrologer: [8, 12, 13, 17, 15, 10, 'int', 'int', 'robes', 'int', 'wis', 'Wizard (astrologer)'],
+  inquisitor: [10, 15, 13, 8, 17, 12, 'dex', 'wis', 'medium', 'wis', 'cha', 'Cleric (judgement)'],
+  seraph: [15, 10, 13, 8, 12, 17, 'str', 'cha', 'heavy', 'wis', 'cha', 'Paladin (seraph)'],
+  corsairSurgeon: [10, 15, 13, 12, 17, 8, 'dex', 'wis', 'light', 'dex', 'wis', 'Cleric (sawbones)'],
+  // (the Harpooner fights from range on STR: his harpoons are thrown, as a javelin is)
+  harpooner: [17, 13, 15, 8, 12, 10, 'str', 'str', 'medium', 'str', 'con', 'Fighter (whaler)'],
+  seaReaver: [17, 12, 15, 8, 10, 13, 'str', 'str', 'brute', 'str', 'con', 'Barbarian (reaver)'],
 };
 const COMING_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromEntries(
   Object.entries(COMING_ROWS).map(([kind, r]) => [kind, { base: toScores(r.slice(0, 6) as number[]), blow: r[6], cast: r[7], armour: r[8], saves: [r[9], r[10]], calling: r[11] }]),

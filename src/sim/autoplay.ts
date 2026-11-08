@@ -1,3 +1,4 @@
+import { mythicFits, oneMythic } from './mythicRules';
 // The greedy player, shared by the Auto button, the auto-replay of cleared armies, the balance tool and the tests: it
 // picks the squad, summons while the gold lasts (merging every pair, as the Auto merge button does), takes the safe picks of an event, dresses the squad in the pack's gear
 // and arranges the heroes on the deploy rows. Everything here is pure and deterministic (no random numbers, no DOM): the
@@ -54,9 +55,9 @@ export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): O
   const must = run.mode?.kind === 'quest' ? run.roster.filter((h) => !h.guest && !sitsOut(run, h.id) && run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind)).map((h) => h.id) : [];
   const kept = [...must, ...keep.filter((id) => !must.includes(id))].map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
   const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
-  const five = oneOfEach([...kept, ...rest]).slice(0, squadLimit(run));
+  const five = oneMythic(oneOfEach([...kept, ...rest]), h => h.kind).slice(0, squadLimit(run));
   const guest = run.roster.find((h) => h.guest);
-  return guest && !five.some((h) => h.kind === guest.kind) ? [...five, guest] : five;
+  return guest && mythicFits(five.map(h => h.kind), guest.kind) && !five.some((h) => h.kind === guest.kind) ? [...five, guest] : five;
 }
 
 /** The heroes in order with every later hero of a kind already listed left out (ONE-OF-EACH). */

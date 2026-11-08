@@ -323,8 +323,9 @@ cleaned rather than leaving a hard edge. Do not change the motifs or colours.
 
 ## Prompt 7: one painted icon a move (after the kits are settled)
 
-Paste this only once the twenty kits are on main (step 2 of the audit's plan): the move names below are the branch's, and some may
-change when the kits are rebuilt on main's skill system. Update the lists from main's `kits/table.ts` and `ultimates.ts` first.
+The move list below is the kits as reworked after the review ([twenty-heroes-review.md](twenty-heroes-review.md)) and tuned
+(`kits/vampires.ts`, `wave2.ts`, `wave3.ts`, `wave4.ts` on `claude/twenty-heroes`); an earlier version of this prompt listed the
+branch's moves, many since renamed or replaced.
 
 ```text
 You are painting ability art for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
@@ -344,48 +345,2365 @@ Rules for this task:
 
 The moves (hero: skill 1, skill 2, skill 3, ultimate; each with what it does, for the motif):
 1. Vampire Lord: Crimson Lunge (a dash through a line of foes in a red arc), Impaling Thrust (a rapier impaling and lifting), Mist
-   Step (a blink in crimson mist), Red Eclipse (a blood moon eclipsing, a slash across five foes).
+   Step (a short step through a wisp of crimson mist, a quick cut), Banquet of Blood (a noble's goblet overflowing as blood is drawn
+   from a seized foe).
 2. Hemomancer: Sanguine Lash (a blood whip tethering two foes), Blood Chalice (a gold chalice pouring healing blood), Crimson Mist
-   (a gliding blood mist leaving a boiling pool), Exsanguinate (veins of blood drawn out of many foes into one point).
-3. Nightstalker: Dusk Dive (a winged swoop from above), Abduct (claws snatching a foe into the air), Echolocation (rings of a bat
-   shriek), Midnight Hunt (a storm of bat silhouettes over a moonlit field).
+   (a gliding blood mist leaving a boiling pool), Blood Tithe (drops of blood rising from many points into a dark offering bowl).
+3. Strigoi: Dusk Dive (a winged swoop from above), Abduct (claws snatching a foe into the air), Echolocation (rings of a bat
+   shriek striking one point), Belfry Swoop (great bat wings carrying a captive up past a bell tower).
 4. Blood Gargoyle: Gargoyle Crash (a stone body slamming down, rubble burst), Stone Slumber (turning to granite, a stone shell),
-   Wing Buffet (stone wings beating a gust), Cathedral Perch (a gothic spire rising, the gargoyle atop).
-5. Dhampir: Silver Stake (a silver crossbow bolt pinning to stone), Grapple Vault (a grapple line and a backward vault), Consecrated
-   Trap (a silver snare circle with holy sparks), Judgement of Dusk (a rain of silver bolts at twilight).
-6. War Drummer: Thunder Beat (a taiko strike, a ring of sound), Marching Cadence (rhythm lines urging forward), Resonant Leap (a leap
-   landing in a sound wave), Storm of Ten Thousand Drums (a storm cloud of drum strikes and lightning).
-7. Banneret: Standard Charge (a lance charge with a streaming guidon), Rampart Drop (a stone rampart wall dropping), Phalanx Sweep (a
-   sweep of shield edges), Oriflamme of the Keep (a great flame-red banner over the field).
-8. Geomancer: Tectonic Shove (a stone pillar erupting), Earthglide (a burrow trail through earth), Lodestone Pull (a magnetic stone
-   dragging iron), Mountain's Embrace (a ring of crags and falling rocks).
-9. Bell Warden: Bronze Slam (a bell slammed down, cracked ground), Echoing Toll (bronze sound rings), Sanctuary Vault (a golden dome
-   of chimes), Midnight Knell (a huge dark bell tolling, a shock ring).
-10. Falconer: Falcon Stoop (a falcon diving in a streak), Gale Vault (a whirl of wind lifting), Talon Snare (talons and a cord snare),
-    Sky Hunt (a flock of hunting falcons spiralling).
-11. Astral Sphinx: Rift Pounce (a lion paw through a star rift), Riddle of Repulsion (a glowing glyph ring pushing out), Constellation
-    Swap (two stars linked, trading places), Celestial Convergence (constellations collapsing to one point).
-12. Mirage Dancer: Whirling Veils (a spin of silk and blades), Dune Swap (a sand mirage switching places), Sirocco Leap (a leap on a
-    hot desert wind), Dance of Seven Mirages (seven shimmering dancer silhouettes in a ring, no faces).
+   Granite Fist (a cracked stone fist striking), Cathedral Perch (a gargoyle dropping from a gothic spire, a stunning shock ring).
+5. Dhampir: Silver Stake (a silver crossbow bolt pinning to stone), Grapple Vault (a grapple line and a backward vault), Silver
+   Shot (a quick silver bolt with a bright glint), Silver Requiem (a fan of five silver stakes at twilight).
+6. War Drummer: Thunder Beat (a taiko strike, a ring of sound), Marching Cadence (rhythm lines urging forward), Drum Strike (a
+   drumstick crack with a spark), Ten Thousand Drums (a storm cloud of drum strikes and lightning).
+7. Banneret: Standard Charge (a lance charge with a streaming guidon), Phalanx Sweep (a sweep of shield edges round a lance), Banner
+   Jab (a banner-lance point thrusting), Oriflamme of the Keep (a great flame-red banner over a shining shield ring).
+8. Geomancer: Tectonic Shove (a stone pillar erupting), Lodestone Pull (a magnetic stone dragging foes in), Crag Staff (a stone-headed
+   staff striking, a flying shard), Mountain's Embrace (a wall of crags rising before a shield of stone).
+9. Bell Warden: Bronze Peal (a bronze bell ringing a silencing ring), Echoing Toll (bronze sound rings pushing out), Sanctuary Vault
+   (a golden dome of chimes), Midnight Knell (a huge dark bell tolling, everything round it frozen still).
+10. Falconer: Falcon Stoop (a falcon diving in a streak), Talon Snare (talons and a cord snare), Gale Vault (a whirl of wind
+    lifting), Sky Hunt (a flock of hunting falcons spiralling down).
+11. Astral Sphinx: Rift Pounce (a lion paw through a star rift), Riddle of Repulsion (a glowing glyph ring pushing out), Riddling
+    Glance (a starlit eye with a spiral of confusion), The Last Riddle (a vast glyph-sealed mouth, silence falling over many).
+12. Mirage Dancer: Whirling Veils (a spin on the spot of silk and blades), Dune Swap (a sand mirage switching places), Veil Flick (a
+    flick of a sand-heavy veil), Dance of Seven Mirages (seven shimmering dancer silhouettes in a ring, no faces).
 13. Plague Doctor: Censer Swing (a swinging censer, green smoke), Crow Step (a burst of black feathers), Quarantine Line (a line of
-    green miasma), Black Miasma (a towering black and green plague cloud).
-14. Bombardier: Blast Jump (a rocket blast launching upward), Concussion Mortar (a mortar shell and shock ring), Firebomb Line (a row
-    of fire bombs), Carpet Bombardment (a rain of shells over a field).
-15. Astrologer: Gravity Well (a collapsing star pulling inward), Retrograde Orbit (a planet looping backward on its orbit), Starlight
-    Bridge (a bridge of starlight), Supernova Alignment (planets aligning into a supernova).
-16. Inquisitor: Chains of Judgement (solar chains), Blazing Edict (a sealed scroll bursting into flame, no writing), Purging Scales
-    (golden balance scales with fire), Solar Tribunal (a ring of sun discs judging the field).
-17. Seraph: Halo Dive (a diving halo of light), Sanctuary Wings (golden wings folding round as a shield), Mercy's Ascent (a rising
-    column of feathers and light), Descent of the Host (a host of golden wings from the sky).
-18. Corsair Surgeon: Boarding Swing (a rope swing and a pistol flash), Sawbones Triage (a bone saw and bandages, green heal), Grappling
-    Extraction (a grapple hook pulling free), Crimson Dispensary (a burst of red tonic bottles).
-19. Harpooner: Barbed Harpoon (a barbed harpoon on a line), Floe Slide (sliding ice floes), Whaler's Reel (a coiled line reeling in),
-    Leviathan Line (a vast sea serpent's shadow on a taut line).
-20. Sea Reaver: Breaker Rush (a cresting wave charge), Anchor Slam (an anchor smashing down), Riptide Undertow (a swirling undertow),
-    Wrath of the Reef (coral and surf erupting round an anchor).
+    thorny brambles in green miasma), Black Miasma (a towering black and green plague cloud).
+14. Bombardier: Concussion Mortar (a mortar shell and shock ring), Blast Jump (a rocket blast launching upward), Firebomb Line (a row
+    of fire bombs), Shell Storm (a rain of shells over a field).
+15. Astrologer: Gravity Well (a collapsing star pulling inward), Retrograde Orbit (a planet looping backward on its orbit), Star
+    Dart (a small mote of starlight with a cold trail), Supernova Alignment (planets aligning into a supernova).
+16. Inquisitor: Chains of Judgement (solar chains), Blazing Edict (a burning sun-seal branded on a target, no writing), Purging
+    Scales (golden balance scales with fire), Solar Tribunal (a ring of sun discs judging the field).
+17. Seraph: Halo Dive (a diving halo of light), Sanctuary Wings (golden wings beating foes back), Radiant Thrust (a spear of light
+    thrusting, a glint of shield), Descent of the Host (a host of golden wings from the sky over a shining halo).
+18. Corsair Surgeon: Boarding Swing (a rope swing and a pistol flash), Sawbones Triage (a bone saw and bandages, green heal),
+    Grappling Extraction (a grapple hook pulling free), Rum Ration (a ship's rum cask and tin cups, healing spray).
+19. Harpooner: Barbed Harpoon (a barbed harpoon on a line), Whaler's Reel (a coiled line reeling in), Flensing Throw (a short
+    flensing harpoon in flight), Leviathan Line (a vast sea serpent's shadow on a taut line).
+20. Sea Reaver: Breaker Rush (a breaker bursting in a ring round a figure), Anchor Slam (an anchor smashing down), Gaff Hook (a hooked
+    gaff pulling), Wrath of the Reef (surf erupting round an anchor).
+```
+
+## Sheet prompts: one image a view (the owner's daily budget)
+
+The owner gets about 100 image generations a day, so one image a frame (the battle prompts below: 56 images a hero for the plain views)
+does not fit. Instead each view is **one reference sheet**: every pose of the view in one image, in rows, in order. Two images a hero
+(front and back). `tools/heroes-20/pack-sheets.py` finds each figure as a connected shape, reads the rows top to bottom and each row left
+to right, scales the view so its idle figures are 96 px, stands each figure's feet on its cell's ground line, and packs main's grid.
+Loose spacing is fine; touching figures are not (the packer would read two poses as one).
+
+- The sheet: `art-source/heroes-20/sheets/<id>/front.png` and `back.png`, 1024 x 1536 (upright), seven rows of four poses: idle 1-4,
+  walk 1-4, walk 5-8, attack 1-4, hurt 1-4, dead 1-4, attack2 1-4.
+- Frames already painted one by one (Sorin, Siku, Nakoa, Soraya and Vladislav have some, on their `art/heroes-20-sprites-<id>`
+  branches) fill or override a sheet's poses one by one when the packer runs, so nothing done is lost. The six code-drawn sets on the
+  Carmilla, Gavril, Klara, Isolde, Tenzin and Kavi branches are not used: those heroes are painted from these prompts.
+- **Awakened forms are deferred**: the heroes join with their plain sprites only (docs/notes/twenty-heroes.md, "Joining without
+  awakened sheets").
+- After a sheet lands: `python3 tools/heroes-20/pack-sheets.py --check <id>` says what it found row by row, and
+  `--found <dir>` draws each found figure boxed and named, to check the order by eye. If a sheet does not read (figures touching, a
+  pose missing), paint the **strip prompts** for that view instead (three images a view, fewer figures each).
+
+The prompts are in the order to paste them, the Vampires first; Vladislav's is the first to try.
+
+### Sheet prompt 1: Vladislav (`vampireLord`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Vladislav, Voivode of the Red Keep (Vampire, Blade). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-vampireLord. Add exactly two PNG files: art-source/heroes-20/sheets/vampireLord/front.png and
+  art-source/heroes-20/sheets/vampireLord/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Vladislav". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The cape fills most of the back view; his silver hair falls over it; the sword arm is seen from behind.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a fencer's lunge: draw back, thrust the sword far forward to the right, hold, recover.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a sweeping crimson slash: the sword raised high, cut down and across, the cape whirling.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a tall pale vampire nobleman, long silver-white hair, red eyes; black and gold filigree plate under a high-collared crimson cape; a long rapier-like sword with a red edge.
+- Match the hero's finished art first: its cutout src/art/heroes/vampireLord-portrait.webp and its scene src/art/heroes/vampireLord.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/vampireLord-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the character, use its finished painting on the branch feat/twenty-heroes-vampire, scene src/art/heroes/vampireLord.webp (git show origin/feat/twenty-heroes-vampire:src/art/heroes/vampireLord.webp > ref.webp). For the family look of the new heroes, see the two finished Vampire paintings on that branch: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/vampireLord-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 2: Carmilla (`hemomancer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Carmilla, Countess of the Chalice (Vampire, Caster). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-hemomancer. Add exactly two PNG files: art-source/heroes-20/sheets/hemomancer/front.png and
+  art-source/heroes-20/sheets/hemomancer/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Carmilla". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The back of the piled hair and its red pins, the gown's laced back and train; the chalice just visible at her side.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a cast: she raises her free hand and flings a ball of blood magic to the right, the chalice held close.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a ritual: the chalice lifted high, ribbons of blood magic spiralling up round her.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a pale vampire countess, black hair piled high with red pins, red eyes; a crimson and black brocade gown with gold trim; a gold chalice in her left hand.
+- Match the hero's finished art first: its cutout src/art/heroes/hemomancer-portrait.webp and its scene src/art/heroes/hemomancer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/hemomancer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the character, use its finished painting on the branch feat/twenty-heroes-vampire, scene src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:src/art/heroes/hemomancer.webp > ref.webp). For the family look of the new heroes, see the two finished Vampire paintings on that branch: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/hemomancer-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 3: Sorin (`nightstalker`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Sorin, Wing of the Crypt (Vampire, Assassin). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-nightstalker. Add exactly two PNG files: art-source/heroes-20/sheets/nightstalker/front.png and
+  art-source/heroes-20/sheets/nightstalker/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Sorin". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The bat wings dominate the back view, their bony struts and membranes; the spine and straps between them.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a claw rake: crouch, spring and slash both claws to the right, land.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a swoop: wings spread wide, a rising lunge with the claws forward.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a lean winged strigoi with violet-grey skin, white spiky hair, large bat wings, red claws and fangs, dark leather straps.
+- Match the hero's finished art first: its cutout src/art/heroes/nightstalker-portrait.webp and its scene src/art/heroes/nightstalker.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/nightstalker-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/nightstalker-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 4: Gavril (`bloodGargoyle`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Gavril, Stone Sentinel of the Fane (Vampire, Bulwark). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-bloodGargoyle. Add exactly two PNG files: art-source/heroes-20/sheets/bloodGargoyle/front.png and
+  art-source/heroes-20/sheets/bloodGargoyle/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Gavril". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The folded stone wings and the ridged stone spine; the horns from behind.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a two-handed stone smash: raise both fists, slam them down in front to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a wing buffet: wings swept forward hard in a gust, body braced.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a hulking gargoyle of dark basalt with thin red veins, stone bat wings, curled horns, a cracked crimson heart-gem in the chest.
+- Match the hero's finished art first: its cutout src/art/heroes/bloodGargoyle-portrait.webp and its scene src/art/heroes/bloodGargoyle.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/bloodGargoyle-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/bloodGargoyle-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 5: Klara (`dhampir`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Klara, Silver-Bolt Hunter (Vampire, Gunner). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-dhampir. Add exactly two PNG files: art-source/heroes-20/sheets/dhampir/front.png and
+  art-source/heroes-20/sheets/dhampir/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Klara". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The long coat and its silver buckles from behind, the braid down her back, the hat brim.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a crossbow shot: raise the crossbow, aim right, loose (a small recoil), lower.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a stake throw: draw a silver stake from the belt and hurl it to the right.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a young Czech woman, half vampire: pale, one red eye and one grey, dark hair in a long braid; a long black hunter's coat with silver buckles, a wide-brimmed hat; a repeating crossbow, silver stakes at her belt.
+- Match the hero's finished art first: its cutout src/art/heroes/dhampir-portrait.webp and its scene src/art/heroes/dhampir.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/dhampir-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/dhampir-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 6: Raiden (`warDrummer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Raiden, Thunder of the Keep (Samurai, Support). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-warDrummer. Add exactly two PNG files: art-source/heroes-20/sheets/warDrummer/front.png and
+  art-source/heroes-20/sheets/warDrummer/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Raiden". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The great taiko drum and its frame cover his back; the topknot above it.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a stick strike: swing a bachi stick down hard in front to the right like a club.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a drum beat: swing the drum round to his front and strike it with both sticks, a burst of sound.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a broad-shouldered Japanese man with a topknot and a headband; an open dark-blue happi coat over lacquered red samurai shoulder guards; a great oxhide taiko drum on a wooden frame on his back, two heavy bachi sticks.
+- Match the hero's finished art first: its cutout src/art/heroes/warDrummer-portrait.webp and its scene src/art/heroes/warDrummer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/warDrummer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/warDrummer-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 7: Isolde (`banneret`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Isolde, Voice of the Rampart (Knightly, Warden). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-banneret. Add exactly two PNG files: art-source/heroes-20/sheets/banneret/front.png and
+  art-source/heroes-20/sheets/banneret/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Isolde". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The blue and gold surcoat's back, the shield on her arm seen edge-on, the braid under the helm.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a lance thrust: couch the lance and drive it forward to the right behind the shield.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: planting the standard: raise the lance high and drive its butt into the ground, the guidon streaming.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Norman French woman knight, short fair braid, open-faced helm; steel plate with a blue and gold surcoat; a lance carrying a long silk guidon of the keep, and a kite shield.
+- Match the hero's finished art first: its cutout src/art/heroes/banneret-portrait.webp and its scene src/art/heroes/banneret.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/banneret-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/banneret-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 8: Tenzin (`geomancer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Tenzin, Shaper of Crags (Mystic, Bulwark). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-geomancer. Add exactly two PNG files: art-source/heroes-20/sheets/geomancer/front.png and
+  art-source/heroes-20/sheets/geomancer/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Tenzin". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The layered robes and the beaded braids from behind, the staff held upright.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a staff strike: swing the slate staff down and forward to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a stamp: raise the staff and strike its foot on the ground, rocks jumping up round her.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Tibetan woman with a calm weathered face and long black braids with turquoise and coral beads; layered maroon and saffron robes over stone-plated bracers; a staff of carved slate with a ring of rock floating round its head.
+- Match the hero's finished art first: its cutout src/art/heroes/geomancer-portrait.webp and its scene src/art/heroes/geomancer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/geomancer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/geomancer-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 9: Kavi (`bellWarden`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Kavi, Keeper of the Bronze Toll (Yokai, Bulwark). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-bellWarden. Add exactly two PNG files: art-source/heroes-20/sheets/bellWarden/front.png and
+  art-source/heroes-20/sheets/bellWarden/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Kavi". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The bronze bell on his shoulders from behind, the rope belt and broad back.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a beam strike: swing the striker beam forward to the right like a ram.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a bell slam: lift the bell off his shoulders and slam it down in front of him.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a towering bronze-skinned guardian spirit with small horns and green patina markings, a monk's straw rope belt; a great bronze temple bell carried on his shoulders, its wooden striker beam in his hands.
+- Match the hero's finished art first: its cutout src/art/heroes/bellWarden-portrait.webp and its scene src/art/heroes/bellWarden.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/bellWarden-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/bellWarden-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 10: Aisling (`falconer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Aisling, Wing of the Glen (Wild, Marksman). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-falconer. Add exactly two PNG files: art-source/heroes-20/sheets/falconer/front.png and
+  art-source/heroes-20/sheets/falconer/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Aisling". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The tartan plaid over her back, the quiver, the falcon on her arm seen from behind.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a bow shot: draw the recurve bow and loose to the right (the falcon flaps on her arm).
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a falcon launch: thrust the gauntlet forward and the falcon flies off to the right, wings wide.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Scottish woman with wind-tossed copper hair and freckles; green and brown tartan plaid over a leather jerkin, a falconer's gauntlet on her left arm; a white gyrfalcon perched on the gauntlet, a recurve bow.
+- Match the hero's finished art first: its cutout src/art/heroes/falconer-portrait.webp and its scene src/art/heroes/falconer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/falconer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/falconer-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 11: Nenet (`astralSphinx`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Nenet, Riddle of the Stars (Arcane, Beast). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-astralSphinx. Add exactly two PNG files: art-source/heroes-20/sheets/astralSphinx/front.png and
+  art-source/heroes-20/sheets/astralSphinx/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Nenet". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The wings folded over her back, the headdress's back, the tail.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a pounce: crouch, leap forward to the right with the forepaws out, land.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a star cast: rear up on her hind legs, wings wide, a ring of stars round her.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a winged lioness sphinx with a woman's serene face, deep blue star-flecked fur, a gold and lapis nemes headdress and collar, feathered wings like the night sky; she walks on four paws, side-on, facing right.
+- Match the hero's finished art first: its cutout src/art/heroes/astralSphinx-portrait.webp and its scene src/art/heroes/astralSphinx.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/astralSphinx-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/astralSphinx-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 12: Zahara (`mirageDancer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Zahara, Veil of the Dunes (Frontier, Trickster). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-mirageDancer. Add exactly two PNG files: art-source/heroes-20/sheets/mirageDancer/front.png and
+  art-source/heroes-20/sheets/mirageDancer/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Zahara". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The braids and veils trailing down her back, the scimitars at her sides.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a twin-blade slash: both scimitars cut across to the right in turn.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a spin: a full whirling turn, veils and blades flying out round her.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Nubian woman with deep brown skin and long black braids with gold cuffs; flowing sand-gold and white silk veils over a fitted dancer's top, many bangles; twin curved scimitars.
+- Match the hero's finished art first: its cutout src/art/heroes/mirageDancer-portrait.webp and its scene src/art/heroes/mirageDancer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/mirageDancer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/mirageDancer-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 13: Corvus (`plagueDoctor`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Corvus, Censer of Ash (Undead, Arcanist). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-plagueDoctor. Add exactly two PNG files: art-source/heroes-20/sheets/plagueDoctor/front.png and
+  art-source/heroes-20/sheets/plagueDoctor/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Corvus". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The hat and the waxed coat from behind, the beak's tip past the hat brim, the bandolier's straps.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a vial throw: hurl a green vial forward to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a censer swing: swing the smoking censer round on its chain, green smoke trailing.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: an undead physician, grey skin at the wrists, a long black beaked plague mask with glowing green lenses, a wide-brimmed hat, a waxed black coat; a smoking brass censer on a chain, green vials on a bandolier.
+- Match the hero's finished art first: its cutout src/art/heroes/plagueDoctor-portrait.webp and its scene src/art/heroes/plagueDoctor.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/plagueDoctor-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/plagueDoctor-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 14: Soren (`bombardier`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Soren, Iron Alchemist (Machine, Gunner). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-bombardier. Add exactly two PNG files: art-source/heroes-20/sheets/bombardier/front.png and
+  art-source/heroes-20/sheets/bombardier/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Soren". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The backpack of fuses and the rocket pack fill his back; the apron strings.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a mortar shot: brace and fire the mortar-gun up and to the right (recoil, a puff of smoke).
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a bomb toss: light a round bomb and lob it to the right.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Danish man with a singed blond beard and soot-smudged goggles pushed up; a leather apron over riveted iron armour, a backpack of fuses with a small rocket pack; a short iron mortar-gun.
+- Match the hero's finished art first: its cutout src/art/heroes/bombardier-portrait.webp and its scene src/art/heroes/bombardier.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/bombardier-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/bombardier-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 15: Cyra (`astrologer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Cyra, Keeper of the Astrolabe (Royal, Arcanist). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-astrologer. Add exactly two PNG files: art-source/heroes-20/sheets/astrologer/front.png and
+  art-source/heroes-20/sheets/astrologer/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Cyra". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The starry mantle over her back, the diadem's back, the astrolabe held at her side.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a cast: point the quill to the right and a small star darts from it.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a star call: raise the astrolabe overhead, its rings spinning.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Greek woman of old Alexandria with dark curled hair bound in a gold star diadem; a deep violet and white chiton with gold meander borders and a starry mantle; a large brass astrolabe and a long quill.
+- Match the hero's finished art first: its cutout src/art/heroes/astrologer-portrait.webp and its scene src/art/heroes/astrologer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/astrologer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/astrologer-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 16: Soraya (`inquisitor`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Soraya, Scales of the Sun (Holy, Arcanist). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-inquisitor. Add exactly two PNG files: art-source/heroes-20/sheets/inquisitor/front.png and
+  art-source/heroes-20/sheets/inquisitor/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Soraya". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The hood and the ivory robe's back with a sun embroidered on it, the scales at her belt.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: an arbalest shot: level the arbalest and loose to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a judgement: raise one hand high, chains of light uncoiling from it.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Persian woman with dark eyes and black hair under a white and gold hood; ivory robes embroidered with suns over a gold breastplate; balance scales at her belt and a sun-blazoned arbalest.
+- Match the hero's finished art first: its cutout src/art/heroes/inquisitor-portrait.webp and its scene src/art/heroes/inquisitor.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/inquisitor-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/inquisitor-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 17: Gabriela (`seraph`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Gabriela, Wing of the Reliquary (Holy, Guardian). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-seraph. Add exactly two PNG files: art-source/heroes-20/sheets/seraph/front.png and
+  art-source/heroes-20/sheets/seraph/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Gabriela". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The six golden wings from behind, folded or half spread, the halo seen from the back.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a halberd sweep: a wide cut to the right with the halberd.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a dive: wings spread, she drops into a downward halberd strike.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Castilian woman with dark wavy hair and a golden halo; six golden wings; white and gold reliquary armour with red enamel; a gleaming halberd.
+- Match the hero's finished art first: its cutout src/art/heroes/seraph-portrait.webp and its scene src/art/heroes/seraph.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/seraph-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/seraph-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 18: Tariq (`corsairSurgeon`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Tariq, Sawbones of the Reef (Pirate, Support). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-corsairSurgeon. Add exactly two PNG files: art-source/heroes-20/sheets/corsairSurgeon/front.png and
+  art-source/heroes-20/sheets/corsairSurgeon/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Tariq". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The surgeon's coat's back, the head-wrap's knot, the bandolier across his back.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a pistol shot: draw the flintlock and fire to the right (a puff of smoke).
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a tonic toss: throw a tonic bottle up and to the right.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a Moroccan man with a trimmed black beard and a red head-wrap; a stained surgeon's coat over a zellige-patterned striped sash, sleeves rolled; a bone saw, a bandolier of tonic bottles and a flintlock pistol.
+- Match the hero's finished art first: its cutout src/art/heroes/corsairSurgeon-portrait.webp and its scene src/art/heroes/corsairSurgeon.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/corsairSurgeon-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/corsairSurgeon-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 19: Siku (`harpooner`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Siku, Whaler of the Floes (Pirate, Gunner). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-harpooner. Add exactly two PNG files: art-source/heroes-20/sheets/harpooner/front.png and
+  art-source/heroes-20/sheets/harpooner/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Siku". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The parka's hood and fur trim from behind, the coiled line over his shoulder.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a harpoon throw: draw back and hurl the harpoon to the right, the line paying out.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a haul: brace and haul the line in hand over hand.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: an Inuit man from Greenland with a broad wind-burnt face and short black hair; a sealskin parka with fur trim and carved bone toggles; a heavy barbed iron harpoon on a coiled hemp line.
+- Match the hero's finished art first: its cutout src/art/heroes/harpooner-portrait.webp and its scene src/art/heroes/harpooner.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/harpooner-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/harpooner-cutout.png is on main, match it as well.
+```
+
+### Sheet prompt 20: Nakoa (`seaReaver`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Nakoa, Breaker of Hulls (Pirate, Vanguard). You will paint two reference sheets: every battle pose of the
+hero in one image from the front, and the same poses in a second image from the back. A script cuts the poses out and packs them into
+the game's sprite sheet, so you do NOT need an exact grid, only clear spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-seaReaver. Add exactly two PNG files: art-source/heroes-20/sheets/seaReaver/front.png and
+  art-source/heroes-20/sheets/seaReaver/back.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle sheets: Nakoa". In its body list the seven rows of each image.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each image:
+- 1024 x 1536 px (upright), seven rows of four poses, read left to right, top to bottom:
+  row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8; row 4 attack 1-4; row 5 hurt 1-4; row 6 dead 1-4; row 7 attack2 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The tattooed broad back and the harness straps, the topknot, the anchor chain over his shoulder.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint the front image's first idle pose first and keep it as the reference for every other pose and for the back image, so the
+  hero stays the same person with the same outfit, colours and proportions throughout.
+
+The poses, in order:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: an anchor swing: swing the anchor round and forward to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: an anchor slam: heave the anchor overhead and slam it down in front.
+The back image holds the same 28 poses in the same order, seen from behind.
+
+The hero:
+- Look: a big Hawaiian man with long black hair in a topknot and Polynesian tattoos on his arms and chest; a sailcloth wrap and a barnacled leather harness; a huge barnacle-crusted ship's anchor on a chain.
+- Match the hero's finished art first: its cutout src/art/heroes/seaReaver-portrait.webp and its scene src/art/heroes/seaReaver.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/seaReaver-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/seaReaver-cutout.png is on main, match it as well.
+```
+
+## Strip prompts: the fallback, three images a view
+
+If a hero's sheet does not read (figures touching, a pose missing or out of order), paint that view as three strips instead: fewer
+figures an image, so each is larger and easier to keep apart. Six images a hero for both views. The packer takes them as they are
+named; a view with a sheet uses the sheet.
+
+- `art-source/heroes-20/sheets/<id>/<view>-idle-walk.png`: idle 1-4, walk 1-8 (three rows of four).
+- `<view>-attacks.png`: one plain standing figure (the idle pose, for size), then attack 1-4 in the first row; attack2 1-4 in the second.
+- `<view>-hurt-dead.png`: one plain standing figure (for size), then hurt 1-4 in the first row; dead 1-4 in the second.
+- The standing figure in the second and third strips is measured for the strip's scale and then dropped, so each strip may be painted at
+  its own size.
+
+### Strip prompt 1: Vladislav (`vampireLord`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Vladislav, Voivode of the Red Keep (Vampire, Blade). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-vampireLord (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/vampireLord/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Vladislav". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The cape fills most of the back view; his silver hair falls over it; the sword arm is seen from behind.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a fencer's lunge: draw back, thrust the sword far forward to the right, hold, recover.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a sweeping crimson slash: the sword raised high, cut down and across, the cape whirling.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a tall pale vampire nobleman, long silver-white hair, red eyes; black and gold filigree plate under a high-collared crimson cape; a long rapier-like sword with a red edge.
+- Match the hero's finished art first: its cutout src/art/heroes/vampireLord-portrait.webp and its scene src/art/heroes/vampireLord.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/vampireLord-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the character, use its finished painting on the branch feat/twenty-heroes-vampire, scene src/art/heroes/vampireLord.webp (git show origin/feat/twenty-heroes-vampire:src/art/heroes/vampireLord.webp > ref.webp). For the family look of the new heroes, see the two finished Vampire paintings on that branch: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/vampireLord-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 2: Carmilla (`hemomancer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Carmilla, Countess of the Chalice (Vampire, Caster). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-hemomancer (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/hemomancer/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Carmilla". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The back of the piled hair and its red pins, the gown's laced back and train; the chalice just visible at her side.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a cast: she raises her free hand and flings a ball of blood magic to the right, the chalice held close.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a ritual: the chalice lifted high, ribbons of blood magic spiralling up round her.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a pale vampire countess, black hair piled high with red pins, red eyes; a crimson and black brocade gown with gold trim; a gold chalice in her left hand.
+- Match the hero's finished art first: its cutout src/art/heroes/hemomancer-portrait.webp and its scene src/art/heroes/hemomancer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/hemomancer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the character, use its finished painting on the branch feat/twenty-heroes-vampire, scene src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:src/art/heroes/hemomancer.webp > ref.webp). For the family look of the new heroes, see the two finished Vampire paintings on that branch: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/hemomancer-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 3: Sorin (`nightstalker`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Sorin, Wing of the Crypt (Vampire, Assassin). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-nightstalker (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/nightstalker/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Sorin". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The bat wings dominate the back view, their bony struts and membranes; the spine and straps between them.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a claw rake: crouch, spring and slash both claws to the right, land.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a swoop: wings spread wide, a rising lunge with the claws forward.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a lean winged strigoi with violet-grey skin, white spiky hair, large bat wings, red claws and fangs, dark leather straps.
+- Match the hero's finished art first: its cutout src/art/heroes/nightstalker-portrait.webp and its scene src/art/heroes/nightstalker.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/nightstalker-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/nightstalker-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 4: Gavril (`bloodGargoyle`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Gavril, Stone Sentinel of the Fane (Vampire, Bulwark). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-bloodGargoyle (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/bloodGargoyle/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Gavril". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The folded stone wings and the ridged stone spine; the horns from behind.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a two-handed stone smash: raise both fists, slam them down in front to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a wing buffet: wings swept forward hard in a gust, body braced.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a hulking gargoyle of dark basalt with thin red veins, stone bat wings, curled horns, a cracked crimson heart-gem in the chest.
+- Match the hero's finished art first: its cutout src/art/heroes/bloodGargoyle-portrait.webp and its scene src/art/heroes/bloodGargoyle.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/bloodGargoyle-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/bloodGargoyle-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 5: Klara (`dhampir`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Klara, Silver-Bolt Hunter (Vampire, Gunner). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-dhampir (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/dhampir/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Klara". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The long coat and its silver buckles from behind, the braid down her back, the hat brim.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a crossbow shot: raise the crossbow, aim right, loose (a small recoil), lower.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a stake throw: draw a silver stake from the belt and hurl it to the right.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a young Czech woman, half vampire: pale, one red eye and one grey, dark hair in a long braid; a long black hunter's coat with silver buckles, a wide-brimmed hat; a repeating crossbow, silver stakes at her belt.
+- Match the hero's finished art first: its cutout src/art/heroes/dhampir-portrait.webp and its scene src/art/heroes/dhampir.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/dhampir-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/dhampir-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 6: Raiden (`warDrummer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Raiden, Thunder of the Keep (Samurai, Support). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-warDrummer (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/warDrummer/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Raiden". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The great taiko drum and its frame cover his back; the topknot above it.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a stick strike: swing a bachi stick down hard in front to the right like a club.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a drum beat: swing the drum round to his front and strike it with both sticks, a burst of sound.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a broad-shouldered Japanese man with a topknot and a headband; an open dark-blue happi coat over lacquered red samurai shoulder guards; a great oxhide taiko drum on a wooden frame on his back, two heavy bachi sticks.
+- Match the hero's finished art first: its cutout src/art/heroes/warDrummer-portrait.webp and its scene src/art/heroes/warDrummer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/warDrummer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/warDrummer-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 7: Isolde (`banneret`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Isolde, Voice of the Rampart (Knightly, Warden). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-banneret (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/banneret/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Isolde". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The blue and gold surcoat's back, the shield on her arm seen edge-on, the braid under the helm.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a lance thrust: couch the lance and drive it forward to the right behind the shield.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: planting the standard: raise the lance high and drive its butt into the ground, the guidon streaming.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Norman French woman knight, short fair braid, open-faced helm; steel plate with a blue and gold surcoat; a lance carrying a long silk guidon of the keep, and a kite shield.
+- Match the hero's finished art first: its cutout src/art/heroes/banneret-portrait.webp and its scene src/art/heroes/banneret.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/banneret-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/banneret-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 8: Tenzin (`geomancer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Tenzin, Shaper of Crags (Mystic, Bulwark). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-geomancer (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/geomancer/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Tenzin". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The layered robes and the beaded braids from behind, the staff held upright.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a staff strike: swing the slate staff down and forward to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a stamp: raise the staff and strike its foot on the ground, rocks jumping up round her.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Tibetan woman with a calm weathered face and long black braids with turquoise and coral beads; layered maroon and saffron robes over stone-plated bracers; a staff of carved slate with a ring of rock floating round its head.
+- Match the hero's finished art first: its cutout src/art/heroes/geomancer-portrait.webp and its scene src/art/heroes/geomancer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/geomancer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/geomancer-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 9: Kavi (`bellWarden`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Kavi, Keeper of the Bronze Toll (Yokai, Bulwark). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-bellWarden (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/bellWarden/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Kavi". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The bronze bell on his shoulders from behind, the rope belt and broad back.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a beam strike: swing the striker beam forward to the right like a ram.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a bell slam: lift the bell off his shoulders and slam it down in front of him.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a towering bronze-skinned guardian spirit with small horns and green patina markings, a monk's straw rope belt; a great bronze temple bell carried on his shoulders, its wooden striker beam in his hands.
+- Match the hero's finished art first: its cutout src/art/heroes/bellWarden-portrait.webp and its scene src/art/heroes/bellWarden.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/bellWarden-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/bellWarden-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 10: Aisling (`falconer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Aisling, Wing of the Glen (Wild, Marksman). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-falconer (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/falconer/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Aisling". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The tartan plaid over her back, the quiver, the falcon on her arm seen from behind.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a bow shot: draw the recurve bow and loose to the right (the falcon flaps on her arm).
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a falcon launch: thrust the gauntlet forward and the falcon flies off to the right, wings wide.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Scottish woman with wind-tossed copper hair and freckles; green and brown tartan plaid over a leather jerkin, a falconer's gauntlet on her left arm; a white gyrfalcon perched on the gauntlet, a recurve bow.
+- Match the hero's finished art first: its cutout src/art/heroes/falconer-portrait.webp and its scene src/art/heroes/falconer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/falconer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/falconer-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 11: Nenet (`astralSphinx`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Nenet, Riddle of the Stars (Arcane, Beast). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-astralSphinx (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/astralSphinx/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Nenet". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The wings folded over her back, the headdress's back, the tail.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a pounce: crouch, leap forward to the right with the forepaws out, land.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a star cast: rear up on her hind legs, wings wide, a ring of stars round her.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: a winged lioness sphinx with a woman's serene face, deep blue star-flecked fur, a gold and lapis nemes headdress and collar, feathered wings like the night sky; she walks on four paws, side-on, facing right.
+- Match the hero's finished art first: its cutout src/art/heroes/astralSphinx-portrait.webp and its scene src/art/heroes/astralSphinx.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/astralSphinx-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/astralSphinx-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 12: Zahara (`mirageDancer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Zahara, Veil of the Dunes (Frontier, Trickster). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-mirageDancer (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/mirageDancer/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Zahara". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The braids and veils trailing down her back, the scimitars at her sides.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a twin-blade slash: both scimitars cut across to the right in turn.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a spin: a full whirling turn, veils and blades flying out round her.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Nubian woman with deep brown skin and long black braids with gold cuffs; flowing sand-gold and white silk veils over a fitted dancer's top, many bangles; twin curved scimitars.
+- Match the hero's finished art first: its cutout src/art/heroes/mirageDancer-portrait.webp and its scene src/art/heroes/mirageDancer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/mirageDancer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/mirageDancer-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 13: Corvus (`plagueDoctor`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Corvus, Censer of Ash (Undead, Arcanist). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-plagueDoctor (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/plagueDoctor/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Corvus". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The hat and the waxed coat from behind, the beak's tip past the hat brim, the bandolier's straps.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a vial throw: hurl a green vial forward to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a censer swing: swing the smoking censer round on its chain, green smoke trailing.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: not human: an undead physician, grey skin at the wrists, a long black beaked plague mask with glowing green lenses, a wide-brimmed hat, a waxed black coat; a smoking brass censer on a chain, green vials on a bandolier.
+- Match the hero's finished art first: its cutout src/art/heroes/plagueDoctor-portrait.webp and its scene src/art/heroes/plagueDoctor.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/plagueDoctor-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/plagueDoctor-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 14: Soren (`bombardier`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Soren, Iron Alchemist (Machine, Gunner). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-bombardier (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/bombardier/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Soren". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The backpack of fuses and the rocket pack fill his back; the apron strings.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a mortar shot: brace and fire the mortar-gun up and to the right (recoil, a puff of smoke).
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a bomb toss: light a round bomb and lob it to the right.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Danish man with a singed blond beard and soot-smudged goggles pushed up; a leather apron over riveted iron armour, a backpack of fuses with a small rocket pack; a short iron mortar-gun.
+- Match the hero's finished art first: its cutout src/art/heroes/bombardier-portrait.webp and its scene src/art/heroes/bombardier.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/bombardier-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/bombardier-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 15: Cyra (`astrologer`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Cyra, Keeper of the Astrolabe (Royal, Arcanist). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-astrologer (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/astrologer/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Cyra". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The starry mantle over her back, the diadem's back, the astrolabe held at her side.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a cast: point the quill to the right and a small star darts from it.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a star call: raise the astrolabe overhead, its rings spinning.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Greek woman of old Alexandria with dark curled hair bound in a gold star diadem; a deep violet and white chiton with gold meander borders and a starry mantle; a large brass astrolabe and a long quill.
+- Match the hero's finished art first: its cutout src/art/heroes/astrologer-portrait.webp and its scene src/art/heroes/astrologer.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/astrologer-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/astrologer-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 16: Soraya (`inquisitor`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Soraya, Scales of the Sun (Holy, Arcanist). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-inquisitor (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/inquisitor/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Soraya". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The hood and the ivory robe's back with a sun embroidered on it, the scales at her belt.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: an arbalest shot: level the arbalest and loose to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a judgement: raise one hand high, chains of light uncoiling from it.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Persian woman with dark eyes and black hair under a white and gold hood; ivory robes embroidered with suns over a gold breastplate; balance scales at her belt and a sun-blazoned arbalest.
+- Match the hero's finished art first: its cutout src/art/heroes/inquisitor-portrait.webp and its scene src/art/heroes/inquisitor.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/inquisitor-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/inquisitor-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 17: Gabriela (`seraph`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Gabriela, Wing of the Reliquary (Holy, Guardian). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-seraph (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/seraph/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Gabriela". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The six golden wings from behind, folded or half spread, the halo seen from the back.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a halberd sweep: a wide cut to the right with the halberd.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a dive: wings spread, she drops into a downward halberd strike.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Castilian woman with dark wavy hair and a golden halo; six golden wings; white and gold reliquary armour with red enamel; a gleaming halberd.
+- Match the hero's finished art first: its cutout src/art/heroes/seraph-portrait.webp and its scene src/art/heroes/seraph.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/seraph-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/seraph-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 18: Tariq (`corsairSurgeon`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Tariq, Sawbones of the Reef (Pirate, Support). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-corsairSurgeon (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/corsairSurgeon/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Tariq". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The surgeon's coat's back, the head-wrap's knot, the bandolier across his back.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a pistol shot: draw the flintlock and fire to the right (a puff of smoke).
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a tonic toss: throw a tonic bottle up and to the right.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a Moroccan man with a trimmed black beard and a red head-wrap; a stained surgeon's coat over a zellige-patterned striped sash, sleeves rolled; a bone saw, a bandolier of tonic bottles and a flintlock pistol.
+- Match the hero's finished art first: its cutout src/art/heroes/corsairSurgeon-portrait.webp and its scene src/art/heroes/corsairSurgeon.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/corsairSurgeon-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/corsairSurgeon-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 19: Siku (`harpooner`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Siku, Whaler of the Floes (Pirate, Gunner). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-harpooner (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/harpooner/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Siku". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The parka's hood and fur trim from behind, the coiled line over his shoulder.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: a harpoon throw: draw back and hurl the harpoon to the right, the line paying out.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: a haul: brace and haul the line in hand over hand.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: an Inuit man from Greenland with a broad wind-burnt face and short black hair; a sealskin parka with fur trim and carved bone toggles; a heavy barbed iron harpoon on a coiled hemp line.
+- Match the hero's finished art first: its cutout src/art/heroes/harpooner-portrait.webp and its scene src/art/heroes/harpooner.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/harpooner-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/harpooner-cutout.png is on main, match it as well.
+```
+
+### Strip prompt 20: Nakoa (`seaReaver`)
+
+```text
+You are painting battle sprites for Legends of the Last Keep, a fantasy auto-battler played as a phone web app (repository
+hpatter9/legends-of-the-fall). This task is one new hero: Nakoa, Breaker of Hulls (Pirate, Vanguard). You will paint six strips: three from the front and three from
+the back. A script cuts the poses out and packs them into the game's sprite sheet, so you do NOT need an exact grid, only clear
+spacing and the order below.
+
+Rules for this task:
+- Branch from main as art/heroes-20-sheets-seaReaver (or continue it if it exists). Add only these PNG files, under
+  art-source/heroes-20/sheets/seaReaver/: front-idle-walk.png, front-attacks.png, front-hurt-dead.png, back-idle-walk.png,
+  back-attacks.png, back-hurt-dead.png. Change no other file.
+- Open one pull request into main titled "Twenty heroes battle strips: Nakoa". In its body list each strip's rows.
+- No text, logos, watermarks or signatures. Original work only.
+
+Each strip, 1536 x 1024 px (wide), its figures read left to right, top to bottom:
+- <view>-idle-walk.png: row 1 idle 1-4; row 2 walk 1-4; row 3 walk 5-8.
+- <view>-attacks.png: row 1 a plain standing figure (the idle pose, for size), then attack 1-4; row 2 attack2 1-4.
+- <view>-hurt-dead.png: row 1 a plain standing figure (for size), then hurt 1-4; row 2 dead 1-4.
+- RGBA PNG with a fully transparent background: no ground, no floor, no shadow, no backdrop, no checkerboard, no glow cloud, no
+  border, no grid lines, no labels, no numbers, no text anywhere.
+- Every figure is the same hero at the same size: standing upright, every standing figure is the same height from the soles to the
+  top of the head (wings, weapons and hair may go higher). Do not zoom in or out between figures.
+- Leave clear transparent space round every figure: no figure touches or overlaps another, nothing of one pose (a sword, a cape, a
+  wing, a trail) reaches into the next, and no figure touches the image's edge. Keep each pose within its own share of its row.
+- Each row's figures stand on one shared, invisible ground line: the soles of every standing or walking figure on it, a falling
+  figure low on it, and the last dead pose lying flat along it.
+- Facing right, every figure.
+- The front image is a three-quarter view from the front: we see the face and chest, turned to the right.
+- The back image is a true back three-quarter view: we see the back of the head and body, turned away from us towards the right, as
+  if the camera stood behind the hero's left shoulder. A mirrored front view is not a back view.
+  The tattooed broad back and the harness straps, the topknot, the anchor chain over his shoulder.
+- Style: crisp game-sprite rendering that survives being shrunk to about 96 px tall: a bold dark outline, clean cel shading in two
+  or three tones, strong colour, no soft airbrushed glow, no motion blur, no speed lines, no blurry edges, no detached sparks,
+  particles or effects floating free of the figure. Look at src/art/units/hero_res_tyrant.png and hero_res_tyrant_back.png and
+  src/art/units/hero_res_wizard.png on main (the game's own sheets): the figures should shrink to that look.
+- Paint front-idle-walk.png first and keep its first idle pose as the reference for every other strip, so the hero stays the same
+  person with the same outfit, colours and proportions throughout.
+
+The poses:
+- idle (4): standing ready, a gentle breathing loop (the fourth flows back into the first).
+- walk (8): one full walk cycle to the right, in place, legs clearly alternating, the body bobbing (the eighth flows back into the
+  first).
+- attack (4): the basic attack: an anchor swing: swing the anchor round and forward to the right.
+- hurt (4): struck: recoil backwards (to the left), wince, recover towards the idle pose.
+- dead (4): dying: stagger, collapse, fall backwards (to the left), and in the fourth lie flat on the back along the ground line,
+  head to the left, completely still.
+- attack2 (4): the skill cast: an anchor slam: heave the anchor overhead and slam it down in front.
+The back strips hold the same poses in the same order, seen from behind.
+
+The hero:
+- Look: a big Hawaiian man with long black hair in a topknot and Polynesian tattoos on his arms and chest; a sailcloth wrap and a barnacled leather harness; a huge barnacle-crusted ship's anchor on a chain.
+- Match the hero's finished art first: its cutout src/art/heroes/seaReaver-portrait.webp and its scene src/art/heroes/seaReaver.webp on
+  the branch claude/twenty-heroes (git show origin/claude/twenty-heroes:src/art/heroes/seaReaver-portrait.webp > ref.webp). Same face,
+  outfit, colours and proportions.
+- For the family look of the new heroes, see the two finished Vampire paintings on the branch feat/twenty-heroes-vampire: src/art/heroes/vampireLord.webp and src/art/heroes/hemomancer.webp (git show origin/feat/twenty-heroes-vampire:<path> > ref.webp). If art-source/heroes-20/seaReaver-cutout.png is on main, match it as well.
 ```
 
 ## Battle sheets: one prompt a hero (frames for the packer)
+
+(Superseded by the sheet prompts above for new work: one image a frame is too many for the owner's daily budget. Frames
+already painted from these prompts are kept: the packer lays them over a sheet's poses.)
 
 The owner chose ChatGPT for the battle sheets. Because ChatGPT does not keep an exact pixel grid, each prompt asks for every
 animation frame as its own transparent 1024 x 1024 PNG, with the feet on a fixed ground line (y = 900), the figure centred (x = 512)

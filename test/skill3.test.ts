@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 // The third skills (the skills overhaul's batch 4, docs/notes/skills-overhaul-design.md section 2, docs/notes/skills-4.md): every hero's skill 3
 // opens at level 20 and does what its row says; and the AI casts it in its case (its cooldown run, the others cooling, or a guard's trigger).
 import { test } from 'node:test';
@@ -8,7 +9,9 @@ import { CHARGE_MAX, keyOf, powered } from '../src/sim/abilities';
 import { bleedFor, chillFor, hasAil } from '../src/sim/ailments';
 import { HERO_KITS, SKILL3_LEVEL, castHero, type HeroKit } from '../src/sim/heroKits';
 import { THIRD_KINDS } from '../src/sim/kits/table';
-import { ALL_HEROES } from '../src/sim/units';
+import { ALL_HEROES as JOINED, TWENTY_HEROES } from '../src/sim/units';
+// (the first 45: the twenty's skill 3s are in their own rows, `kits/coming.ts`, and their tests)
+const ALL_HEROES = JOINED.filter((h) => !TWENTY_HEROES.includes(h) && !isMythic(h));
 import { SAVES } from '../src/sim/saves';
 import { REST } from '../src/sim/statRest';
 

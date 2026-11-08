@@ -1,0 +1,1982 @@
+{
+  "knight-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      12,
+      60,
+      310,
+      402
+    ]
+  },
+  "knight-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      12,
+      76,
+      296,
+      402
+    ]
+  },
+  "samurai-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      12,
+      57,
+      289,
+      406
+    ]
+  },
+  "samurai-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      8,
+      63,
+      285,
+      402
+    ]
+  },
+  "kunoichi-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      20,
+      31,
+      314,
+      376
+    ]
+  },
+  "kunoichi-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      8,
+      31,
+      288,
+      371
+    ]
+  },
+  "archer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      7,
+      15,
+      301,
+      368
+    ]
+  },
+  "archer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      6,
+      24,
+      290,
+      371
+    ]
+  },
+  "wizard-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      20,
+      0,
+      314,
+      367
+    ]
+  },
+  "wizard-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      0,
+      0,
+      289,
+      372
+    ]
+  },
+  "peasant-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      4,
+      0,
+      300,
+      378
+    ]
+  },
+  "peasant-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      13,
+      0,
+      292,
+      368
+    ]
+  },
+  "ninjaMonk-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      24,
+      53,
+      293,
+      383
+    ]
+  },
+  "ninjaMonk-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      25,
+      49,
+      290,
+      385
+    ]
+  },
+  "wanderer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      22,
+      55,
+      303,
+      384
+    ]
+  },
+  "wanderer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      13,
+      49,
+      289,
+      386
+    ]
+  },
+  "lightningMage-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      27,
+      29,
+      307,
+      381
+    ]
+  },
+  "lightningMage-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      23,
+      32,
+      292,
+      382
+    ]
+  },
+  "kitsune-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      14,
+      26,
+      291,
+      386
+    ]
+  },
+  "kitsune-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      16,
+      27,
+      294,
+      386
+    ]
+  },
+  "karasu-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      22,
+      35,
+      299,
+      382
+    ]
+  },
+  "karasu-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      22,
+      34,
+      292,
+      383
+    ]
+  },
+  "yamabushi-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      19,
+      24,
+      288,
+      388
+    ]
+  },
+  "yamabushi-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      21,
+      30,
+      281,
+      388
+    ]
+  },
+  "werewolf-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      22,
+      58,
+      304,
+      370
+    ]
+  },
+  "werewolf-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      18,
+      57,
+      291,
+      366
+    ]
+  },
+  "minotaur-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      6,
+      47,
+      287,
+      365
+    ]
+  },
+  "minotaur-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      24,
+      54,
+      300,
+      365
+    ]
+  },
+  "satyr-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      21,
+      36,
+      295,
+      379
+    ]
+  },
+  "satyr-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      17,
+      36,
+      284,
+      370
+    ]
+  },
+  "gorgon-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      21,
+      37,
+      286,
+      369
+    ]
+  },
+  "gorgon-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      17,
+      40,
+      290,
+      370
+    ]
+  },
+  "samuraiCommander-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      16,
+      25,
+      302,
+      372
+    ]
+  },
+  "samuraiCommander-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      18,
+      25,
+      290,
+      373
+    ]
+  },
+  "paladin-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      0,
+      45,
+      285,
+      373
+    ]
+  },
+  "paladin-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      20,
+      46,
+      305,
+      368
+    ]
+  },
+  "cleric-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      23,
+      75,
+      308,
+      402
+    ]
+  },
+  "cleric-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      47,
+      79,
+      288,
+      402
+    ]
+  },
+  "druid-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      1,
+      66,
+      283,
+      402
+    ]
+  },
+  "druid-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      15,
+      71,
+      293,
+      402
+    ]
+  },
+  "barbarian-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      27,
+      41,
+      314,
+      381
+    ]
+  },
+  "barbarian-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      40,
+      48,
+      298,
+      381
+    ]
+  },
+  "ranger-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      13,
+      50,
+      283,
+      379
+    ]
+  },
+  "ranger-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      17,
+      47,
+      286,
+      379
+    ]
+  },
+  "warlock-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      37,
+      19,
+      314,
+      370
+    ]
+  },
+  "warlock-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      40,
+      18,
+      285,
+      366
+    ]
+  },
+  "illusionist-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      17,
+      11,
+      283,
+      368
+    ]
+  },
+  "illusionist-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      25,
+      8,
+      279,
+      371
+    ]
+  },
+  "gunslinger-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      36,
+      64,
+      308,
+      408
+    ]
+  },
+  "gunslinger-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      17,
+      68,
+      282,
+      401
+    ]
+  },
+  "shambler-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      19,
+      71,
+      291,
+      398
+    ]
+  },
+  "shambler-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      17,
+      71,
+      283,
+      401
+    ]
+  },
+  "rifleBot-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      35,
+      39,
+      302,
+      369
+    ]
+  },
+  "rifleBot-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      39,
+      47,
+      290,
+      369
+    ]
+  },
+  "mercenary-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      13,
+      40,
+      284,
+      376
+    ]
+  },
+  "mercenary-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      12,
+      47,
+      285,
+      375
+    ]
+  },
+  "mummy-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      33,
+      25,
+      314,
+      372
+    ]
+  },
+  "mummy-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      30,
+      25,
+      287,
+      370
+    ]
+  },
+  "buccaneer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      12,
+      13,
+      310,
+      373
+    ]
+  },
+  "buccaneer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      23,
+      17,
+      285,
+      374
+    ]
+  },
+  "wolfBard-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      35,
+      72,
+      314,
+      389
+    ]
+  },
+  "wolfBard-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      36,
+      66,
+      283,
+      390
+    ]
+  },
+  "beastmaster-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      7,
+      75,
+      299,
+      390
+    ]
+  },
+  "beastmaster-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      17,
+      76,
+      288,
+      390
+    ]
+  },
+  "kraken-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      24,
+      56,
+      308,
+      377
+    ]
+  },
+  "kraken-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      16,
+      57,
+      288,
+      372
+    ]
+  },
+  "lancer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      16,
+      33,
+      304,
+      377
+    ]
+  },
+  "lancer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      19,
+      39,
+      289,
+      373
+    ]
+  },
+  "reaper-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      23,
+      30,
+      306,
+      378
+    ]
+  },
+  "reaper-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      8,
+      31,
+      290,
+      376
+    ]
+  },
+  "timeWitch-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      14,
+      26,
+      295,
+      382
+    ]
+  },
+  "timeWitch-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      7,
+      32,
+      291,
+      381
+    ]
+  },
+  "arcBlade-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      37,
+      54,
+      314,
+      390
+    ]
+  },
+  "arcBlade-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      26,
+      55,
+      282,
+      391
+    ]
+  },
+  "dreadPirate-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      887,
+      887
+    ],
+    "opaqueBounds": [
+      63,
+      10,
+      849,
+      878
+    ]
+  },
+  "dreadPirate-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      887,
+      0,
+      1774,
+      887
+    ],
+    "opaqueBounds": [
+      91,
+      12,
+      802,
+      862
+    ]
+  },
+  "siegeBot-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      28,
+      26,
+      305,
+      368
+    ]
+  },
+  "siegeBot-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      21,
+      29,
+      286,
+      368
+    ]
+  },
+  "priestess-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      20,
+      34,
+      289,
+      372
+    ]
+  },
+  "priestess-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      10,
+      38,
+      277,
+      371
+    ]
+  },
+  "dragoon-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      30,
+      27,
+      314,
+      360
+    ]
+  },
+  "dragoon-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      22,
+      30,
+      288,
+      360
+    ]
+  },
+  "juggernaut-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      12,
+      37,
+      291,
+      355
+    ]
+  },
+  "juggernaut-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      8,
+      33,
+      283,
+      355
+    ]
+  },
+  "sage-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      34,
+      55,
+      305,
+      383
+    ]
+  },
+  "sage-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      21,
+      56,
+      276,
+      384
+    ]
+  },
+  "demonSwordsman-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      15,
+      49,
+      304,
+      390
+    ]
+  },
+  "demonSwordsman-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      12,
+      49,
+      279,
+      393
+    ]
+  },
+  "tyrant-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      31,
+      31,
+      305,
+      375
+    ]
+  },
+  "tyrant-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      8,
+      32,
+      283,
+      372
+    ]
+  },
+  "vampireLord-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      19,
+      48,
+      306,
+      375
+    ]
+  },
+  "vampireLord-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      10,
+      51,
+      277,
+      370
+    ]
+  },
+  "hemomancer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      33,
+      27,
+      310,
+      377
+    ]
+  },
+  "hemomancer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      5,
+      20,
+      275,
+      376
+    ]
+  },
+  "nightstalker-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      0,
+      23,
+      306,
+      385
+    ]
+  },
+  "nightstalker-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      11,
+      25,
+      285,
+      382
+    ]
+  },
+  "bloodGargoyle-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      314,
+      418
+    ],
+    "opaqueBounds": [
+      27,
+      72,
+      311,
+      395
+    ]
+  },
+  "bloodGargoyle-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      0,
+      627,
+      418
+    ],
+    "opaqueBounds": [
+      13,
+      65,
+      293,
+      396
+    ]
+  },
+  "dhampir-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      0,
+      940,
+      418
+    ],
+    "opaqueBounds": [
+      24,
+      72,
+      290,
+      393
+    ]
+  },
+  "dhampir-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      0,
+      1254,
+      418
+    ],
+    "opaqueBounds": [
+      8,
+      72,
+      277,
+      393
+    ]
+  },
+  "warDrummer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      418,
+      314,
+      836
+    ],
+    "opaqueBounds": [
+      35,
+      41,
+      314,
+      370
+    ]
+  },
+  "warDrummer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      418,
+      627,
+      836
+    ],
+    "opaqueBounds": [
+      22,
+      39,
+      298,
+      370
+    ]
+  },
+  "geomancer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      418,
+      940,
+      836
+    ],
+    "opaqueBounds": [
+      13,
+      37,
+      287,
+      369
+    ]
+  },
+  "geomancer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      418,
+      1254,
+      836
+    ],
+    "opaqueBounds": [
+      22,
+      34,
+      282,
+      370
+    ]
+  },
+  "bellWarden-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      836,
+      314,
+      1254
+    ],
+    "opaqueBounds": [
+      14,
+      12,
+      314,
+      349
+    ]
+  },
+  "bellWarden-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      314,
+      836,
+      627,
+      1254
+    ],
+    "opaqueBounds": [
+      24,
+      16,
+      312,
+      348
+    ]
+  },
+  "falconer-right": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      627,
+      836,
+      940,
+      1254
+    ],
+    "opaqueBounds": [
+      27,
+      8,
+      308,
+      340
+    ]
+  },
+  "falconer-left": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      940,
+      836,
+      1254,
+      1254
+    ],
+    "opaqueBounds": [
+      15,
+      8,
+      282,
+      342
+    ]
+  },
+  "table-rear": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      1029,
+      887
+    ],
+    "opaqueBounds": [
+      27,
+      26,
+      948,
+      854
+    ]
+  },
+  "table-front": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1029,
+      0,
+      1774,
+      887
+    ],
+    "opaqueBounds": [
+      55,
+      91,
+      690,
+      842
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+import { mythicFits } from './mythicRules';
 // A run, King God Castle style: gold, a stage number and a roster of owned heroes. Gold buys a random hero (grade 1, now and then grade 2)
 // (`summon`); two of a kind and grade merge into one of the next grade when the player merges them (`merge.ts`: by hand, or the Auto
 // merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
@@ -648,7 +649,7 @@ export function canJoin(run: Run, id: number): boolean {
   const h = heroOf(run, id);
   // (Dynasties, phase 7: a kind slain under the Oath sits out the rest of the run)
   if (h && run.slain?.some((x) => heroOf(run, x)?.kind === h.kind)) return false;
-  return !!h && !run.squad.includes(id) && (h.guest || squadUsed(run) < squadLimit(run)) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
+  return !!h && mythicFits(run.squad.map(id => heroOf(run, id)?.kind ?? ''), h.kind) && !run.squad.includes(id) && (h.guest || squadUsed(run) < squadLimit(run)) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
 }
 
 /** Choose or release a hero for the fight. Returns whether the squad changed. A second hero of a kind already chosen is refused (ONE-OF-EACH). */

@@ -296,7 +296,7 @@ test('every hero has an awakening scene (their own sheet, their new look), and t
     // (the new look is switched on in the scene, once the light comes)
     assert.ok(sc.shots.some((s) => s.acts?.some((a) => 'look' in a && a.look === 1)), k);
   }
-  assert.equal(ALL_HEROES.filter((k) => dueScene(m, { kind: 'awaken', hero: k })).length, 45);
+  assert.equal(ALL_HEROES.filter((k) => dueScene(m, { kind: 'awaken', hero: k })).length, 59);
   for (const c of CONTENT_HEROES) assert.equal(dueScene(m, { kind: 'earned', hero: c.kind }), `earned:${c.kind}`);
   assert.equal(dueScene(m, { kind: 'earned', hero: 'knight' }), null, 'a hero not earned by play has no arrival');
 });
@@ -355,7 +355,7 @@ test('the Scenes list shows a seen scene, hides an unseen one, and folds a famil
   assert.ok(after.find((r) => r.id === 'awaken:knight')?.seen);
   assert.ok(after.find((r) => r.id === 'karnok')?.seen);
   const folded = after.find((r) => r.more && /Awakenings/.test(r.text));
-  assert.equal(folded?.more, 44);
+  assert.equal(folded?.more, ALL_HEROES.length - 1);
   assert.equal(after.some((r) => r.id === 'awaken:knight' && r.more), false);
 });
 

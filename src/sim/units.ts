@@ -5,6 +5,7 @@
 import { ELITE_FOES } from './eliteFoes';
 import { CAL_BOSS_FOES } from './calamityBosses';
 import { FOES } from './foes';
+import { MYTHIC_KINDS } from './mythicRules';
 
 export type Side = 'hero' | 'foe';
 export type Shot = 'arrow' | 'bone' | 'fire' | 'bolt' | 'holy' | 'leaf' | 'curse' | 'bullet';
@@ -52,6 +53,11 @@ export const SPLASH_SHARE = 0.5;
 
 export const UNITS: Record<string, UnitDef> = {
   ...FOES,
+  vael: { id: 'vael', name: 'Eclipse Sovereign', side: 'hero', sheet: 'mythic_vael', scale: 0.625, hp: 370, atk: 37, def: 11, range: 1, moveMs: 670, atkMs: 1150, jump: 2, role: 'Mythic commander: builds an eclipse, sunders armour and shields the squad' },
+  astrax: { id: 'astrax', name: 'Last Star', side: 'hero', sheet: 'mythic_astrax', scale: 0.535714, hp: 340, atk: 43, def: 7, range: 4, moveMs: 850, atkMs: 1900, jump: 9, flies: true, shot: 'fire', splash: true, role: 'Mythic dragon: consumes shields and burns clustered foes with starfire' },
+  ilyra: { id: 'ilyra', name: 'Unburied Saint', side: 'hero', sheet: 'mythic_ilyra', scale: 0.625, hp: 330, atk: 31, def: 9, range: 2, moveMs: 640, atkMs: 1100, jump: 2, role: 'Mythic healer: earns mercy through combat and denies death once a battle' },
+  orrun: { id: 'orrun', name: 'Worldroot', side: 'hero', sheet: 'mythic_orrun', scale: 0.535714, hp: 530, atk: 26, def: 14, range: 1, moveMs: 1100, atkMs: 1600, jump: 2, role: 'Mythic guardian: roots a sanctuary, stores wounds and shelters the squad' },
+  nyxara: { id: 'nyxara', name: 'Fateweaver', side: 'hero', sheet: 'mythic_nyxara', scale: 0.625, hp: 250, atk: 29, def: 5, range: 4, moveMs: 660, atkMs: 1500, jump: 3, shot: 'curse', role: 'Mythic tactician: steals tomorrow and rewrites allies’ health and positions' },
   ...ELITE_FOES,
   ...CAL_BOSS_FOES,
   knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'hero_soldier', scale: 0.521, hp: 300, atk: 11, def: 10, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'A wall of a man: draws the foes and bashes them back' },
@@ -108,11 +114,32 @@ export const UNITS: Record<string, UnitDef> = {
   demonSwordsman: { id: 'demonSwordsman', name: 'Demon Swordsman', side: 'hero', sheet: 'hero_res_demon_swordsman', scale: 0.520833, hp: 220, atk: 22, def: 7, range: 1, moveMs: 560, atkMs: 950, jump: 3, role: 'A blood pact: pays health for power' },
   tyrant: { id: 'tyrant', name: 'Tyrant', side: 'hero', sheet: 'hero_res_tyrant', scale: 0.625, hp: 262, atk: 20, def: 6, range: 2, moveMs: 800, atkMs: 1250, jump: 2, role: 'A condemner: names a foe for the whole party', },
   // The Vampires (docs/notes/twenty-heroes.md): their kits are in, but they wait for their battle sheets before they join `ALL_HEROES`
-  vampireLord: { id: 'vampireLord', name: 'Vampire Lord', side: 'hero', sheet: 'hero_res_vampire_lord', scale: 0.520833, hp: 236, atk: 26, def: 6, range: 1, moveMs: 520, atkMs: 900, jump: 3, role: 'A blood-duellist: lunges through lines, impales and drinks' },
-  hemomancer: { id: 'hemomancer', name: 'Hemomancer', side: 'hero', sheet: 'hero_res_hemomancer', scale: 0.520833, hp: 178, atk: 30, def: 3, range: 3, moveMs: 680, atkMs: 1450, jump: 2, shot: 'curse', role: 'A blood weaver: tethers foes together and glides in mist' },
-  nightstalker: { id: 'nightstalker', name: 'Nightstalker', side: 'hero', sheet: 'hero_res_nightstalker', scale: 0.520833, hp: 188, atk: 28, def: 4, range: 1, moveMs: 380, atkMs: 700, jump: 9, flies: true, role: 'A winged strigoi: swoops from the dark and drags prey aloft' },
-  bloodGargoyle: { id: 'bloodGargoyle', name: 'Blood Gargoyle', side: 'hero', sheet: 'hero_res_blood_gargoyle', scale: 0.625, hp: 325, atk: 20, def: 9, range: 1, moveMs: 720, atkMs: 1250, jump: 9, flies: true, role: 'A stone sentinel: crashes down from the eaves and turns to granite' },
-  dhampir: { id: 'dhampir', name: 'Dhampir', side: 'hero', sheet: 'hero_res_dhampir', scale: 0.520833, hp: 168, atk: 32, def: 3, range: 5, moveMs: 580, atkMs: 1350, jump: 3, shot: 'arrow', role: 'A silver-bolt hunter: vaults clear and pins foes to stone' },
+  // (each of the twenty's numbers sits inside its class's roster spread, docs/notes/twenty-heroes-review.md: health, attack, defence, walk,
+  // blow time and damage a second; the Strigoi and the Astral Sphinx keep their wings, a hunter of the night sky and a star-lioness)
+  vampireLord: { id: 'vampireLord', name: 'Vampire Lord', side: 'hero', sheet: 'hero_res_vampire_lord', scale: 0.520833, hp: 236, atk: 26, def: 6, range: 1, moveMs: 520, atkMs: 950, jump: 3, role: 'A blood-duellist: lunges through lines, impales and drinks' },
+  hemomancer: { id: 'hemomancer', name: 'Hemomancer', side: 'hero', sheet: 'hero_res_hemomancer', scale: 0.520833, hp: 178, atk: 28, def: 3, range: 3, moveMs: 700, atkMs: 1450, jump: 2, shot: 'curse', role: 'A blood weaver: tethers foes together and glides in mist' },
+  // (the Strigoi's key is still `nightstalker`, as the saves and the art have it)
+  nightstalker: { id: 'nightstalker', name: 'Strigoi', side: 'hero', sheet: 'hero_res_nightstalker', scale: 0.520833, hp: 188, atk: 25, def: 4, range: 1, moveMs: 420, atkMs: 800, jump: 9, flies: true, role: 'A winged night-hunter: swoops from the dark and carries his prey off' },
+  bloodGargoyle: { id: 'bloodGargoyle', name: 'Blood Gargoyle', side: 'hero', sheet: 'hero_res_blood_gargoyle', scale: 0.625, hp: 325, atk: 19, def: 9, range: 1, moveMs: 720, atkMs: 1250, jump: 2, role: 'A stone sentinel: crashes down from the eaves and turns to granite' },
+  dhampir: { id: 'dhampir', name: 'Dhampir', side: 'hero', sheet: 'hero_res_dhampir', scale: 0.520833, hp: 168, atk: 28, def: 3, range: 5, moveMs: 700, atkMs: 1350, jump: 3, shot: 'arrow', role: 'A silver-bolt hunter: vaults clear and pins foes to stone' },
+  // The twenty heroes' second batch (docs/notes/twenty-heroes.md), waiting as the Vampires do
+  warDrummer: { id: 'warDrummer', name: 'War Drummer', side: 'hero', sheet: 'hero_res_war_drummer', scale: 0.520833, hp: 247, atk: 19, def: 5, range: 2, moveMs: 620, atkMs: 1100, jump: 2, role: 'A taiko master: thunder-beats that shove foes and drive his friends forward' },
+  banneret: { id: 'banneret', name: 'Banneret', side: 'hero', sheet: 'hero_res_banneret', scale: 0.520833, hp: 282, atk: 18, def: 7, range: 2, moveMs: 700, atkMs: 1150, jump: 2, role: 'A rampart warden: charges with the standard, drops ramparts and sweeps the line' },
+  geomancer: { id: 'geomancer', name: 'Geomancer', side: 'hero', sheet: 'hero_res_geomancer', scale: 0.520833, hp: 297, atk: 19, def: 8, range: 1, moveMs: 760, atkMs: 1350, jump: 2, role: 'A crag-shaper: raises stone pillars, glides through the earth and pulls with lodestone' },
+  bellWarden: { id: 'bellWarden', name: 'Bell Warden', side: 'hero', sheet: 'hero_res_bell_warden', scale: 0.625, hp: 332, atk: 19, def: 9, range: 1, moveMs: 820, atkMs: 1350, jump: 2, role: 'A bronze keeper: slams his temple bell, tolls shockwaves and vaults to guard his friends' },
+  falconer: { id: 'falconer', name: 'Falconer', side: 'hero', sheet: 'hero_res_falconer', scale: 0.520833, hp: 174, atk: 29, def: 3, range: 5, moveMs: 700, atkMs: 1300, jump: 3, shot: 'arrow', heightReach: 1.2, role: 'A highland hawker: stoops her falcon on foes, gale-vaults to perches and pins her prey' },
+  // The twenty heroes' third batch, waiting as the others do
+  astralSphinx: { id: 'astralSphinx', name: 'Astral Sphinx', side: 'hero', sheet: 'hero_res_astral_sphinx', scale: 0.625, hp: 238, atk: 25, def: 6, range: 2, moveMs: 540, atkMs: 1050, jump: 9, flies: true, shot: 'holy', role: 'A star-lioness: pounces across rifts, flings foes away with riddles and trades places by starlight' },
+  mirageDancer: { id: 'mirageDancer', name: 'Mirage Dancer', side: 'hero', sheet: 'hero_res_mirage_dancer', scale: 0.520833, hp: 186, atk: 22, def: 4, range: 1, moveMs: 440, atkMs: 700, jump: 4, role: 'A dune-dancer: spins through foes, trades places with her mirages and leaps on the sirocco' },
+  plagueDoctor: { id: 'plagueDoctor', name: 'Plague Doctor', side: 'hero', sheet: 'hero_res_plague_doctor', scale: 0.520833, hp: 192, atk: 28, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'curse', role: 'An ash-apothecary: swings his censer, steps as crows to mend friends and raises thorn quarantines' },
+  bombardier: { id: 'bombardier', name: 'Bombardier', side: 'hero', sheet: 'hero_res_bombardier', scale: 0.520833, hp: 176, atk: 31, def: 4, range: 5, moveMs: 700, atkMs: 1650, jump: 3, shot: 'bullet', splash: true, role: 'An iron alchemist: rocket-jumps over the fray, lobs concussion shells and lays firebombs' },
+  astrologer: { id: 'astrologer', name: 'Astrologer', side: 'hero', sheet: 'hero_res_astrologer', scale: 0.520833, hp: 188, atk: 28, def: 3, range: 4, moveMs: 700, atkMs: 1500, jump: 2, shot: 'fire', role: 'A star-keeper: pulls foes into gravity wells, glides along orbits and bridges starlight' },
+  // The twenty heroes' fourth batch, waiting as the others do
+  inquisitor: { id: 'inquisitor', name: 'Inquisitor', side: 'hero', sheet: 'hero_res_inquisitor', scale: 0.520833, hp: 202, atk: 28, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'holy', role: 'A sun-judge: chains the wicked in place, raises blazing edicts and tips the scales' },
+  seraph: { id: 'seraph', name: 'Seraph', side: 'hero', sheet: 'hero_res_seraph', scale: 0.625, hp: 288, atk: 15, def: 8, range: 1, moveMs: 700, atkMs: 1100, jump: 2, role: 'A winged guardian: dives on the wicked, lifts her friends up and raises the fallen' },
+  corsairSurgeon: { id: 'corsairSurgeon', name: 'Corsair Surgeon', side: 'hero', sheet: 'hero_res_corsair_surgeon', scale: 0.520833, hp: 218, atk: 18, def: 5, range: 2, moveMs: 620, atkMs: 1150, jump: 3, shot: 'bullet', role: 'A reef sawbones: swings in by rope to mend friends, stitches wounds and hooks his friends clear' },
+  harpooner: { id: 'harpooner', name: 'Harpooner', side: 'hero', sheet: 'hero_res_harpooner', scale: 0.520833, hp: 196, atk: 29, def: 4, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'arrow', role: 'A floe whaler: reels distant prey in on a barbed line, slides on the ice and slams his catch' },
+  seaReaver: { id: 'seaReaver', name: 'Sea Reaver', side: 'hero', sheet: 'hero_res_sea_reaver', scale: 0.625, hp: 246, atk: 24, def: 6, range: 1, moveMs: 500, atkMs: 900, jump: 3, role: 'A hull-breaker: rides a cresting wave into the line, slams his anchor and drags foes in' },
 
   // called up by Beastmaster
   wolf: { id: 'wolf', name: 'Wolf', side: 'hero', sheet: 'wolf_grey', scale: 0.55, hp: 120, atk: 14, def: 2, range: 1, moveMs: 360, atkMs: 700, jump: 3, summon: true, role: 'A wolf called by the Beastmaster', forms: ['wolf_grey', 'wolf_grey', 'wolf_black'] },
@@ -140,11 +167,17 @@ export const UNITS: Record<string, UnitDef> = {
   boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 195, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows, backs off' },
 };
 
+const MYTHIC_ASPECTS: Record<string, string> = { vael: 'Crown Without Dawn', astrax: 'Heart of the Fallen Sky', ilyra: 'Unfinished Farewell', orrun: 'Heart Beneath the Roots', nyxara: 'Unwritten Presence' };
+for (const kind of MYTHIC_KINDS) UNITS[`trial_${kind}`] = { ...UNITS[kind], id: `trial_${kind}`, name: MYTHIC_ASPECTS[kind], side: 'foe' };
+
 /** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
  *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */
-export const COMING_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'];
+export const COMING_HEROES: readonly string[] = ['banneret', 'astralSphinx', 'mirageDancer', 'plagueDoctor', 'bombardier', 'astrologer', 'inquisitor', 'seraph', 'corsairSurgeon', 'harpooner', 'seaReaver'];
+
+/** The twenty new heroes (docs/notes/twenty-heroes.md), joined or still coming: the ones in `ALL_HEROES` are the nine whose battle sheets are painted. */
+export const TWENTY_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'banneret', 'geomancer', 'bellWarden', 'falconer', 'astralSphinx', 'mirageDancer', 'plagueDoctor', 'bombardier', 'astrologer', 'inquisitor', 'seraph', 'corsairSurgeon', 'harpooner', 'seaReaver'];
 
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;
 /** Every hero there is (the old starting five first; a new save unlocks a starter pack of three, and more come from recruiting). */
-export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander', 'paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock', 'illusionist', 'gunslinger', 'shambler', 'rifleBot', 'mercenary', 'mummy', 'buccaneer', 'wolfBard', 'beastmaster', 'kraken', 'lancer', 'reaper', 'timeWitch', 'arcBlade', 'dreadPirate', 'siegeBot', 'priestess', 'dragoon', 'juggernaut', 'sage', 'demonSwordsman', 'tyrant'];
+export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander', 'paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock', 'illusionist', 'gunslinger', 'shambler', 'rifleBot', 'mercenary', 'mummy', 'buccaneer', 'wolfBard', 'beastmaster', 'kraken', 'lancer', 'reaper', 'timeWitch', 'arcBlade', 'dreadPirate', 'siegeBot', 'priestess', 'dragoon', 'juggernaut', 'sage', 'demonSwordsman', 'tyrant', 'vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'geomancer', 'bellWarden', 'falconer', ...MYTHIC_KINDS];

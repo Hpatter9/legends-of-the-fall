@@ -137,6 +137,21 @@ export const LIFE: Record<string, Life> = {
   beastmaster: { act: 'dance', why: 'Itzel by the stage: the caller of the grey pack dances like the pack runs' },
   reaper: { act: 'lean', why: 'Vesper in the far corner: the keeper of the last hour leans and waits, as reapers do' },
   kraken: { act: 'drink', why: 'Skerry by the wall: a child of the undertow drinks like the sea' },
+  // (the nine that joined from the twenty: standing, with the activities already painted)
+  nightstalker: { act: 'lean', why: 'Sorin in the shadow by the bar: the wing of the crypt leans where the lamplight stops and watches the door' },
+  bloodGargoyle: { act: 'lean', why: 'Gavril against the far wall: a stone sentinel who stands as still as the masonry' },
+  dhampir: { act: 'sharpen', why: 'Klara by the bar\'s end: the silver-bolt hunter cleans her crossbow before anything else' },
+  vampireLord: { act: 'lean', why: 'Vladislav beside the hearth hall\'s door: the voivode of the red keep lets the room come to him' },
+  hemomancer: { act: 'drink', why: 'Carmilla at the hall\'s far end: the countess sips a vintage nobody else is poured' },
+  geomancer: { act: 'coin', why: 'Tenzin on the hearth hall\'s floor: the shaper of crags flips a smooth river stone as if it were a coin' },
+  warDrummer: { act: 'cheer', why: 'Raiden by the stage: the thunder of the keep beats time on his thigh and cheers the bard' },
+  falconer: { act: 'sharpen', why: 'Aisling in the games room: she oils her bowstring while the falcon watches the room' },
+  bellWarden: { act: 'tea', why: 'Kavi by the games room door: the keeper of the toll takes a quiet cup under the temple bell\'s calm' },
+  vael: { act: 'lean', why: 'Vael stands in contemplation: the edge of totality rests in quiet thought' },
+  astrax: { act: 'lean', why: 'Astrax watches the room: the celestial dragon keeps vigil over the keep' },
+  ilyra: { act: 'conjure', tint: 'star', why: 'Ilyra stands in gentle luminescence: a radiant sanctuary in the warm room' },
+  orrun: { act: 'lean', why: 'Orrun rests against the timber pillar: the earth bastion stands unwavering' },
+  nyxara: { act: 'coin', why: 'Nyxara flips a fateful silver token: the weaver watches the threads align' },
 };
 
 /** The fixtures the activities face: the two hearths, the dartboard on the games room's wall, the bard's stage. */

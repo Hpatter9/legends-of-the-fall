@@ -76,7 +76,9 @@ function arena(): Battle {
 function fire(kind: string): { b: Battle; me: Unit; plan: ShowPlan; events: BattleEvent[] } {
   const b = arena();
   const me = addUnit(b, kind, 3, 2, { level: ULT_LEVEL });
-  addUnit(b, 'knight', 2, 2, { level: ULT_LEVEL });
+  const ally = addUnit(b, 'knight', 2, 2, { level: ULT_LEVEL });
+  if (kind === 'ilyra' || kind === 'nyxara') ally.hp = Math.round(ally.maxHp * 0.4);
+  if (kind === 'nyxara') me.mythic = { memories: [{ at: -4000, allies: [{ id: ally.id, hp: ally.maxHp, u: ally.u, v: ally.v }] }] };
   for (const [u, v] of [[3, 5], [4, 5], [2, 6], [5, 6], [1, 8]]) addUnit(b, 'skeleton', u, v);
   b.autoUlt = true;
   for (let i = 0; i < 400 && b.phase === 'fight'; i++) {
@@ -235,6 +237,6 @@ test('batches 4 and 5: callers rise or run in, changers change, blessings reach 
   // (the kitsune's foxes and the time witch's stopped foes are reached though they took no blow)
   assert.ok(fire('kitsune').plan.cast.touched.length > 0);
   assert.ok(fire('timeWitch').plan.cast.touched.length > 0);
-  // (all 45 heroes have one)
+  // (all 54 heroes have one)
   for (const kind of ALL_HEROES) assert.ok(hasShowcase(kind), kind);
 });

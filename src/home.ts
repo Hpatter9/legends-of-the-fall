@@ -4,10 +4,12 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { COUNCIL_BADGE } from './expansionArt';
 import { settleMourning } from './sim/oath';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
+import { chipNumber } from './topbarRules';
 import { SPAR, settleSparring, startSparring } from './sim/bonds';
 import { CALLINGS, PERKS, recall } from './sim/legacy';
 import { roomsStrip } from './castle';
@@ -41,7 +43,7 @@ import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
 import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
-import { Tavern } from './tavern';
+import { PaintedTavern } from './paintedTavern';
 import { hesterNews } from './render/tavernSpots';
 import { openUpgrades } from './rankUpList';
 import { upgradeReady } from './sim/upgradesReady';
@@ -70,7 +72,7 @@ import { heartHeld, noteSavedHeart, withHeart } from './sim/vaelkharHeart';
 import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
-import { portrait, warmPortraits } from './render/sheets';
+import { warmPortraits } from './render/sheets';
 import { councilLine, councilPlate, openNemesisBoard } from './nemesisView';
 import { councilTurn } from './sim/council';
 import { musterOpen, warchiefOf } from './sim/muster';
@@ -169,7 +171,7 @@ export class Home {
   private tabBtns = new Map<Tab, HTMLButtonElement>();
   private camp: CampScene;
   private stopSheet: (() => void) | null = null;
-  private tavern: Tavern;
+  private tavern: PaintedTavern;
   private castle: CastleScene;
   private hall: SummoningHall;
   private library = new Library(() => this.show('castle'));
@@ -192,7 +194,7 @@ export class Home {
     // (the Battle page is the war camp: tapping a hero opens their sheet, the war table opens the party)
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
     // (QUESTS: Gwen behind the bar opens her card, the board opens the log's Board tab, the Quests button its Active tab)
-    this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster(), {
+    this.tavern = new PaintedTavern((kind) => this.openSheet(kind), () => this.openRoster(), {
       onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
       onBoard: () => this.openQuests('board'),
       onQuests: () => this.openQuests('active'),
@@ -610,18 +612,23 @@ export class Home {
     }
     // top bar (the run's gold stays in the run: the owner's call)
     // (the crowns and stones chips keep their icons: only the number is written, and only when it changed, so the picture never blinks)
+    // (TOPBAR-FIT: from 100,000 up a count is shown short, "999k" or "1.2M", so the top row keeps the gear beside the trophy; the full
+    //  number is still the chip's title and spoken label)
     const chipCount = (id: string, pic: string, n: number): void => {
       const chip = $(id);
+      const shown = chipNumber(n);
+      chip.title = n.toLocaleString('en-GB');
+      chip.setAttribute('aria-label', `${chip.id === 'hmStones' ? 'Summoning stones' : 'Crowns'}: ${chip.title}`);
       const count = chip.querySelector('b');
-      if (!count) chip.replaceChildren(icon(pic), el('b', '', String(n)));
-      else if (count.textContent !== String(n)) count.textContent = String(n);
+      if (!count) chip.replaceChildren(icon(pic), el('b', '', shown));
+      else if (count.textContent !== shown) count.textContent = shown;
     };
     // (QUESTS: the day's offers are drawn the first time a date is seen, and kept; old ones come down)
     if (refreshOffers(m, todayKey())) saveMeta(m);
     chipCount('hmCrowns', ICONS.crowns, m.crowns);
     chipCount('hmStones', ICONS.stones, stonesOf(m));
     this.hooks.onTopBar?.();
-    // (Dynasties: the season's chip in the top bar, beside the stones; redrawn only when the season changes, so its icon never blinks)
+    // (Dynasties: the season's chip in the top bar's second row; redrawn only when the season changes, so its icon never blinks)
     if (m.dynasty) {
       const key = String(seasonOf(m.dynasty, todayKey()).index);
       const had = document.getElementById('hmSeason');
@@ -629,13 +636,16 @@ export class Home {
         const chip = seasonChip(m, todayKey(), () => openSeasonCard(m, todayKey(), () => this.openHouses()));
         if (chip) {
           chip.dataset.key = key;
+          // (TOPBAR-FIT: in the second row, before the armies line, so the top row keeps the gear beside the trophy)
           if (had) had.replaceWith(chip);
-          else $('hmTop').querySelector('.grow')!.before(chip);
+          else $('hmBest').prepend(chip);
         }
       }
     }
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
-    $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
+    const best = $('hmBest');
+    const bestText = best.querySelector('.hbText') ?? best.appendChild(el('span', 'hbText'));
+    bestText.textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
     $('hmTrophy').classList.toggle('new', fresh);
     // tabs
@@ -876,9 +886,11 @@ export class Home {
       const named = war.members.length;
       const council = place('hmCouncil', 'council', 'Council', '', `${councilPlate(m)}${muster ? '. The Warchief’s Muster is open' : ''}. ${councilLine(m)}`, () => this.openCouncil());
       council.querySelector('small')?.remove();
-      const pic = el('span', 'cpCouncilFace');
-      if (top && UNITS[top.base]) pic.append(portrait(UNITS[top.base].sheet, 30));
-      council.prepend(pic);
+      const medal = el('img', 'cpCouncilBadge');
+      medal.src = COUNCIL_BADGE;
+      medal.alt = '';
+      medal.setAttribute('aria-hidden', 'true');
+      council.prepend(medal);
       if (named) council.append(el('i', `cpCount${muster ? ' muster' : ''}`, String(named)));
       swapIn(this.camp.councilSlot, this.camp.councilSlot.querySelector('.cpPlace'), council);
     }
@@ -1344,3 +1356,4 @@ function showDispatch(page: HTMLElement, text: string): void {
   setTimeout(gone, 8000);
   page.append(d);
 }
+

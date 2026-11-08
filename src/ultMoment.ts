@@ -1,3 +1,4 @@
+import { isMythic } from './sim/mythicRules';
 // The ultimate's moment on the page (ULT-CUTIN, docs/notes/battle-hud.md; the rules and timings are `ultMomentRules.ts`). The owner's ask: an
 // ultimate should feel special. In full (the default setting), as it fires the fight is held: a slash crosses the screen carrying the hero's
 // painted art and the ultimate's name pops up, and the rest of the screen darkens but for what the ultimate touches, where its effect
@@ -50,7 +51,7 @@ export interface UltMomentOpts {
 }
 
 /** A hero's painted art: the awakened art once awakened, else the portrait (every one of the 45 has both, cached for offline play). */
-export const heroArtUrl = (kind: string, awakened: number): string => (awakened > 0 ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
+export const heroArtUrl = (kind: string, awakened: number): string => (awakened > 0 && !isMythic(kind) ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
 
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 const NONE: UltTargets = { struck: [], helped: [], tiles: [] };

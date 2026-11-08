@@ -1,3 +1,4 @@
+import { oneMythic, validMythicSquad } from './mythicRules';
 // Lasting progress across runs, and the recruiting draw (the usual gacha). Crowns are earned for each stage won and at
 // a run's end; they buy chests (`chestShop.ts`), and chests hold summoning stones. Using a stone is the pull: one shard
 // of a hero (and, one time in `LUCKY_ODDS`, a whole hero not yet owned). A repeat of a kind gives a shard of it; shards
@@ -337,7 +338,7 @@ export const partySlots = (m: Meta): number => Math.min(PARTY_SIZE, m.unlocked.l
 
 /** Set the party to these hero kinds: exactly `partySlots` different unlocked kinds. Returns false (and changes nothing) otherwise. */
 export function setParty(m: Meta, kinds: readonly string[]): boolean {
-  const ok = kinds.length === partySlots(m) && new Set(kinds).size === kinds.length && kinds.every((k) => m.unlocked.includes(k));
+  const ok = validMythicSquad(kinds) && kinds.length === partySlots(m) && new Set(kinds).size === kinds.length && kinds.every((k) => m.unlocked.includes(k));
   if (ok) m.party = [...kinds];
   return ok;
 }
@@ -365,7 +366,7 @@ function readRanked(raw: unknown, m: Meta): Record<string, number> {
 /** Saved party that is sane: unlocked kinds, no repeats, at most five. Missing or empty means the first unlocked. */
 function readParty(raw: unknown, unlocked: readonly string[]): string[] {
   const kept = Array.isArray(raw) ? [...new Set(raw)].filter((k): k is string => typeof k === 'string' && unlocked.includes(k)).slice(0, PARTY_SIZE) : [];
-  return kept.length ? kept : unlocked.slice(0, PARTY_SIZE);
+  return oneMythic(kept.length ? kept : unlocked.slice(0, PARTY_SIZE), k => k);
 }
 
 /** Saved XP that is sane: a hero kind in the game and a number of XP. Anything else is dropped. */

@@ -49,7 +49,8 @@ import { markReady } from './sim/upgradesReady';
 import { upMark } from './rankUpList';
 // (Dynasties, phase 7: the ghosts of bearers slain under the Oath, pale at their seats, then in a corner of the Hearth Hall)
 import { cornerGhosts, ghostOf } from './sim/oath';
-import candleUrl from './art/items/ember_brand.png';
+import { FATE_ICON } from './dynastyArt';
+const candleUrl = FATE_ICON.fallen;
 // (TAVERN LIFE: what each hero does at their spot, `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`)
 import { LIFE } from './render/tavernLife';
 import { drawGwenPainted, drawGwenWipe, drawLifeFront, drawPainted, hasPainted, hipsAt, HIP, lifePose, loadLife, seatInFront, sitDrop, sits, type Body, type LifeCtx } from './tavernLifeDraw';

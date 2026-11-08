@@ -1,0 +1,808 @@
+{
+  "hero": "dragoon",
+  "source": "art-source/hero-remakes/dragoon.png",
+  "sha256": "4d1cb26f75cea14b6f4ad7433842cda1293c88ff3f6c791c5877ead4e95ff4dd",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {},
+  "extraClip": null,
+  "scale": 0.6442953020134228,
+  "cell": [
+    166,
+    136
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "idle",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        56,
+        6,
+        160,
+        155
+      ],
+      "pixels": 9147
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "idle",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        228,
+        7,
+        332,
+        155
+      ],
+      "pixels": 9242
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "idle",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        389,
+        6,
+        495,
+        155
+      ],
+      "pixels": 9357
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "idle",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        553,
+        9,
+        656,
+        155
+      ],
+      "pixels": 9052
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "walk",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        46,
+        165,
+        152,
+        312
+      ],
+      "pixels": 8781
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "walk",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        220,
+        163,
+        328,
+        312
+      ],
+      "pixels": 9004
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "walk",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        386,
+        164,
+        488,
+        312
+      ],
+      "pixels": 8391
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "walk",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        548,
+        162,
+        652,
+        312
+      ],
+      "pixels": 8025
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "_walk",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        42,
+        321,
+        151,
+        466
+      ],
+      "pixels": 8533
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "_walk",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        215,
+        321,
+        323,
+        466
+      ],
+      "pixels": 8488
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "_walk",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        380,
+        323,
+        483,
+        466
+      ],
+      "pixels": 7691
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "_walk",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        537,
+        324,
+        648,
+        464
+      ],
+      "pixels": 7775
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 24,
+      "sourceBox": [
+        32,
+        484,
+        143,
+        616
+      ],
+      "pixels": 8516
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 25,
+      "sourceBox": [
+        202,
+        490,
+        318,
+        616
+      ],
+      "pixels": 8733
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 26,
+      "sourceBox": [
+        366,
+        492,
+        529,
+        617
+      ],
+      "pixels": 8770
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 27,
+      "sourceBox": [
+        544,
+        477,
+        651,
+        617
+      ],
+      "pixels": 8183
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "hurt",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        35,
+        633,
+        144,
+        771
+      ],
+      "pixels": 8642
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "hurt",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        193,
+        626,
+        320,
+        771
+      ],
+      "pixels": 9702
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "hurt",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        369,
+        632,
+        471,
+        770
+      ],
+      "pixels": 8134
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "hurt",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        535,
+        629,
+        637,
+        771
+      ],
+      "pixels": 8443
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "dead",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        31,
+        780,
+        138,
+        921
+      ],
+      "pixels": 8831
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "dead",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        195,
+        796,
+        301,
+        921
+      ],
+      "pixels": 8024
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "dead",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        345,
+        818,
+        465,
+        921
+      ],
+      "pixels": 6932
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "dead",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        502,
+        861,
+        664,
+        920
+      ],
+      "pixels": 5739
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack2",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        32,
+        973,
+        156,
+        1124
+      ],
+      "pixels": 10351
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack2",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        186,
+        934,
+        328,
+        1124
+      ],
+      "pixels": 12268
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack2",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        341,
+        930,
+        513,
+        1123
+      ],
+      "pixels": 13284
+    },
+    {
+      "sheet": "hero_res_dragoon",
+      "row": "attack2",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        529,
+        963,
+        649,
+        1124
+      ],
+      "pixels": 10514
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "idle",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        706,
+        6,
+        803,
+        154
+      ],
+      "pixels": 7761
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "idle",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        862,
+        6,
+        968,
+        154
+      ],
+      "pixels": 8083
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "idle",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1026,
+        6,
+        1133,
+        153
+      ],
+      "pixels": 8116
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "idle",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1185,
+        7,
+        1297,
+        154
+      ],
+      "pixels": 8286
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "walk",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        698,
+        170,
+        810,
+        313
+      ],
+      "pixels": 8045
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "walk",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        856,
+        173,
+        971,
+        312
+      ],
+      "pixels": 7992
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "walk",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1025,
+        170,
+        1129,
+        312
+      ],
+      "pixels": 7568
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "walk",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1189,
+        171,
+        1295,
+        312
+      ],
+      "pixels": 7435
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        699,
+        327,
+        804,
+        466
+      ],
+      "pixels": 7720
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        860,
+        331,
+        968,
+        465
+      ],
+      "pixels": 7429
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1024,
+        329,
+        1129,
+        465
+      ],
+      "pixels": 6942
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1188,
+        329,
+        1303,
+        466
+      ],
+      "pixels": 7110
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 28,
+      "sourceBox": [
+        687,
+        482,
+        798,
+        617
+      ],
+      "pixels": 7671
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 29,
+      "sourceBox": [
+        850,
+        499,
+        1000,
+        617
+      ],
+      "pixels": 7322
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 30,
+      "sourceBox": [
+        1008,
+        503,
+        1180,
+        617
+      ],
+      "pixels": 7335
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 31,
+      "sourceBox": [
+        1196,
+        480,
+        1302,
+        616
+      ],
+      "pixels": 8122
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        694,
+        644,
+        795,
+        770
+      ],
+      "pixels": 7206
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        833,
+        631,
+        964,
+        770
+      ],
+      "pixels": 7969
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1012,
+        631,
+        1130,
+        770
+      ],
+      "pixels": 8142
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1191,
+        631,
+        1292,
+        770
+      ],
+      "pixels": 7266
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "dead",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        704,
+        781,
+        811,
+        921
+      ],
+      "pixels": 7918
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "dead",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        857,
+        797,
+        961,
+        920
+      ],
+      "pixels": 7092
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "dead",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1003,
+        841,
+        1144,
+        921
+      ],
+      "pixels": 6009
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "dead",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1154,
+        862,
+        1331,
+        920
+      ],
+      "pixels": 5225
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "dragoon.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        699,
+        962,
+        828,
+        1123
+      ],
+      "pixels": 9854
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "dragoon.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        838,
+        943,
+        1000,
+        1123
+      ],
+      "pixels": 11503
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "dragoon.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1011,
+        942,
+        1165,
+        1122
+      ],
+      "pixels": 10960
+    },
+    {
+      "sheet": "hero_res_dragoon_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "dragoon.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1188,
+        964,
+        1308,
+        1122
+      ],
+      "pixels": 9559
+    }
+  ]
+}

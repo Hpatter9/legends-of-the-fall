@@ -1,0 +1,817 @@
+{
+  "hero": "wizard",
+  "source": "art-source/hero-remakes/wizard.png",
+  "sha256": "98e19d4a200e6e98398560e7cf99ca57e3a84b39041e9ec563e9445bdaa451ce",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {
+    "24": 48,
+    "25": 49,
+    "26": 50,
+    "27": 51,
+    "28": 52,
+    "29": 53,
+    "30": 54,
+    "31": 55
+  },
+  "extraClip": null,
+  "scale": 0.6906474820143885,
+  "cell": [
+    160,
+    129
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_wizard",
+      "row": "idle",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        48,
+        19,
+        139,
+        158
+      ],
+      "pixels": 7782
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "idle",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        217,
+        19,
+        305,
+        158
+      ],
+      "pixels": 7758
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "idle",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        386,
+        19,
+        474,
+        158
+      ],
+      "pixels": 7703
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "idle",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        553,
+        21,
+        642,
+        158
+      ],
+      "pixels": 7476
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "walk",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        43,
+        178,
+        139,
+        316
+      ],
+      "pixels": 8007
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "walk",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        212,
+        180,
+        300,
+        317
+      ],
+      "pixels": 7642
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "walk",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        381,
+        182,
+        466,
+        317
+      ],
+      "pixels": 7189
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "walk",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        550,
+        180,
+        633,
+        317
+      ],
+      "pixels": 6748
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "_walk",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        39,
+        338,
+        140,
+        477
+      ],
+      "pixels": 8251
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "_walk",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        207,
+        339,
+        301,
+        478
+      ],
+      "pixels": 7654
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "_walk",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        379,
+        341,
+        469,
+        478
+      ],
+      "pixels": 7407
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "_walk",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        551,
+        339,
+        638,
+        473
+      ],
+      "pixels": 6482
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        45,
+        981,
+        140,
+        1131
+      ],
+      "pixels": 9065
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        198,
+        964,
+        324,
+        1133
+      ],
+      "pixels": 9735
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        361,
+        964,
+        488,
+        1132
+      ],
+      "pixels": 10315
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        530,
+        983,
+        637,
+        1133
+      ],
+      "pixels": 9387
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "hurt",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        34,
+        657,
+        135,
+        790
+      ],
+      "pixels": 7924
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "hurt",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        181,
+        662,
+        309,
+        791
+      ],
+      "pixels": 8802
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "hurt",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        368,
+        666,
+        464,
+        790
+      ],
+      "pixels": 7711
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "hurt",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        534,
+        659,
+        632,
+        790
+      ],
+      "pixels": 8148
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "dead",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        33,
+        811,
+        132,
+        946
+      ],
+      "pixels": 8469
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "dead",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        190,
+        821,
+        302,
+        946
+      ],
+      "pixels": 7872
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "dead",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        347,
+        846,
+        477,
+        946
+      ],
+      "pixels": 7527
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "dead",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        497,
+        888,
+        675,
+        946
+      ],
+      "pixels": 6011
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack2",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        45,
+        981,
+        140,
+        1131
+      ],
+      "pixels": 9065
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack2",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        198,
+        964,
+        324,
+        1133
+      ],
+      "pixels": 9735
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack2",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        361,
+        964,
+        488,
+        1132
+      ],
+      "pixels": 10315
+    },
+    {
+      "sheet": "hero_res_wizard",
+      "row": "attack2",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        530,
+        983,
+        637,
+        1133
+      ],
+      "pixels": 9387
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "idle",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        721,
+        19,
+        807,
+        158
+      ],
+      "pixels": 7505
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "idle",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        888,
+        20,
+        973,
+        158
+      ],
+      "pixels": 7340
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "idle",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1055,
+        19,
+        1140,
+        158
+      ],
+      "pixels": 7380
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "idle",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1223,
+        19,
+        1308,
+        158
+      ],
+      "pixels": 7391
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "walk",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        718,
+        180,
+        804,
+        317
+      ],
+      "pixels": 7765
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "walk",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        886,
+        182,
+        972,
+        317
+      ],
+      "pixels": 6878
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "walk",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1053,
+        182,
+        1142,
+        318
+      ],
+      "pixels": 6903
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "walk",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1221,
+        180,
+        1314,
+        318
+      ],
+      "pixels": 6663
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        716,
+        341,
+        808,
+        478
+      ],
+      "pixels": 8003
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        885,
+        341,
+        978,
+        478
+      ],
+      "pixels": 7279
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1052,
+        341,
+        1149,
+        476
+      ],
+      "pixels": 7086
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1220,
+        338,
+        1315,
+        468
+      ],
+      "pixels": 6296
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        707,
+        983,
+        804,
+        1132
+      ],
+      "pixels": 9315
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        862,
+        964,
+        987,
+        1133
+      ],
+      "pixels": 9955
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1029,
+        965,
+        1153,
+        1131
+      ],
+      "pixels": 9632
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1202,
+        983,
+        1299,
+        1133
+      ],
+      "pixels": 8697
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        701,
+        659,
+        806,
+        790
+      ],
+      "pixels": 7841
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        864,
+        673,
+        985,
+        790
+      ],
+      "pixels": 8084
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1035,
+        670,
+        1131,
+        789
+      ],
+      "pixels": 7391
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1205,
+        658,
+        1295,
+        790
+      ],
+      "pixels": 7670
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "dead",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        708,
+        810,
+        810,
+        946
+      ],
+      "pixels": 7976
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "dead",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        867,
+        826,
+        977,
+        944
+      ],
+      "pixels": 7115
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "dead",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1009,
+        855,
+        1157,
+        947
+      ],
+      "pixels": 7038
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "dead",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1166,
+        892,
+        1336,
+        944
+      ],
+      "pixels": 5487
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "wizard.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        707,
+        983,
+        804,
+        1132
+      ],
+      "pixels": 9315
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "wizard.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        862,
+        964,
+        987,
+        1133
+      ],
+      "pixels": 9955
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "wizard.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1029,
+        965,
+        1153,
+        1131
+      ],
+      "pixels": 9632
+    },
+    {
+      "sheet": "hero_res_wizard_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "wizard.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1202,
+        983,
+        1299,
+        1133
+      ],
+      "pixels": 8697
+    }
+  ]
+}

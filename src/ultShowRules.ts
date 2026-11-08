@@ -46,6 +46,11 @@ export interface Showcase {
 
 /** The heroes whose ultimate has a showcase: the pilot (Ayame, the Wizard, the Beastmaster) and batch 1 (the blades that move). */
 export const SHOWCASES: Record<string, Showcase> = {
+  vael: { style: 'burst', el: 'dark', line: 'A black sun rises behind his crown; the field kneels beneath one golden sweep' },
+  astrax: { style: 'sky', el: 'light', line: 'The stellar core opens and burning constellations fall across the battlefield' },
+  ilyra: { style: 'bless', el: 'light', line: 'Her broken halo closes around the living; for a moment death cannot cross it' },
+  orrun: { style: 'bless', el: 'forest', line: 'The oldest roots clasp the squad, and an emerald sanctuary rises around them' },
+  nyxara: { style: 'bless', el: 'lightning', line: 'The queen breaks a possible future and returns her allies to the moment before the wound' },
   kunoichi: { style: 'blinks', el: 'dark', poses: { end: 'kunoichi-kneeling-finish' }, line: 'She vanishes in a puff of smoke, appears behind each foe in turn and cuts it down, then stands where the last fell' },
   wizard: { style: 'sky', el: 'fire', line: 'He raises his staff, the sky darkens, a burning circle marks each crowd and the meteors come down out of the clouds' },
   beastmaster: { style: 'pack', el: 'forest', poses: { call: 'beastmaster-horn' }, line: 'He sounds his horn and the wolves bound in from the edge of the field, one after another, to stand at his side' },
@@ -95,6 +100,16 @@ export const SHOWCASES: Record<string, Showcase> = {
   cleric: { style: 'bless', el: 'light', line: 'The spirits come one by one and circle her, and their light reaches her friends near by' },
   peasant: { style: 'bless', el: 'earth', line: 'The allies close ranks round him at his call, and he leads the charge at the nearest foe' },
   wolfBard: { style: 'bless', el: 'wind', line: 'The opening chord throws the foes near him back; then the hymn carries to every ally' },
+  // (the nine heroes that joined from the twenty, docs/notes/heroes-join.md: the generic styles, with their own words)
+  vampireLord: { style: 'burst', el: 'blood', hit: 'smite', line: 'A black eclipse opens over him; blood is drawn from every foe near him into his goblet, and he mends as he drinks' },
+  hemomancer: { style: 'burst', el: 'blood', hit: 'smite', line: 'Drops of blood rise from every foe near her into a dark bowl, and the offering is poured out to her friends' },
+  nightstalker: { style: 'blinks', el: 'dark', line: 'A cloud of bats lifts him into the dark; he drops beside each foe in turn and snatches it up past the bell tower' },
+  bloodGargoyle: { style: 'burst', el: 'earth', hit: 'smite', line: 'He drops from the spire; the shock ring stuns every foe near him and a stone shell closes over his friends' },
+  dhampir: { style: 'shots', el: 'light', draw: 800, line: 'At twilight she raises the crossbow; a fan of five silver stakes pins the foes one after another' },
+  warDrummer: { style: 'burst', el: 'lightning', hit: 'smite', line: 'Ten thousand drums answer his beat; lightning runs out through the storm cloud and strikes each foe near him' },
+  geomancer: { style: 'bless', el: 'earth', line: 'Crags rise from the ground like a closing hand and a wall of stone goes up across the foes\' way; a stone shell closes over each friend in turn' },
+  bellWarden: { style: 'burst', el: 'dark', hit: 'stone', line: 'The great bell tolls midnight; the foes near him stop where they stand, one after another, their colour drained' },
+  falconer: { style: 'sky', el: 'wind', line: 'She sends the flock up; the falcons mark each crowd and spiral down on it out of the sky' },
 };
 
 export const hasShowcase = (kind: string): boolean => kind in SHOWCASES;

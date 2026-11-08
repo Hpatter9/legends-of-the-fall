@@ -6,7 +6,7 @@
 // "?" until learned, its memory, its oath and loyalty, and what slaying it pays), whose Hunt opens its army. When the Muster is open, the
 // footer's gilded button calls it. Built with the standard ornate menu (UI-STANDARD); nothing glows or pulses.
 //
-// The icons are placeholders from the item art until the Council's own are made (the prompts are in `docs/notes/nemesis-2.md`).
+// Commissioned Council symbols and existing paintings are mapped by councilArt.ts.
 
 import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
 import { portrait } from './render/sheets';
@@ -15,36 +15,16 @@ import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHAR
 import { heroName } from './sim/heroNames';
 import type { Meta } from './sim/meta';
 import { musterLine, musterOpen, warchiefOf } from './sim/muster';
-import { fullName, MIGHT_MAX, payOf, rankWord, SEATS, type FallenNemesis, type Nemesis, type NewsKind, type War } from './sim/nemesis';
+import { fullName, MIGHT_MAX, payOf, rankWord, SEATS, type FallenNemesis, type Nemesis, type War } from './sim/nemesis';
 import { TRAITS, weakWords } from './sim/nemesisTraits';
 import { avengersOf, awayRuns, grudgesOn, trophyWords } from './sim/revenge';
 import { paintGearIcon } from './gearIcons';
 import { UNITS } from './sim/units';
-import bannerIcon from './art/items/banner.png';
-import bandIcon from './art/items/gold_band.png';
-import bladeIcon from './art/items/weapon1.png';
-import fangIcon from './art/items/viper_fang.png';
-import chaliceIcon from './art/items/holy_chalice.png';
-import shieldIcon from './art/items/iron_shield.png';
-import ringIcon from './art/items/oath_ring.png';
-import bootsIcon from './art/items/swift_boots.png';
-import crownIcon from './art/items/jewel_crown.png';
-import sunCrownIcon from './art/items/sun_crown.png';
-import namesIcon from './art/items/book_of_names.png';
-import toothIcon from './art/items/ash_tooth.png';
-import drumIcon from './art/items/war_drum.png';
-import sigilIcon from './art/items/dragon_sigil.png';
-import phoenixIcon from './art/items/phoenix.png';
-import cloakIcon from './art/items/shadow_cloak.png';
-import vialIcon from './art/items/blood_vial.png';
-import brandIcon from './art/items/ember_brand.png';
-import weaponIcon from './art/items/weapon2.png';
-import duelIcon from './art/items/weapon3.png';
-
-/** The News's event icons (placeholders from the item art until the Council's own ten are made). */
-export const NEWS_ICON: Readonly<Record<NewsKind, string>> = { cheated: phoenixIcon, recruit: bannerIcon, promotion: bandIcon, feud: bladeIcon, betrayal: fangIcon, feast: chaliceIcon, trial: shieldIcon, oath: ringIcon, desertion: bootsIcon, claim: sunCrownIcon, crowned: crownIcon, named: namesIcon, slain: toothIcon, muster: drumIcon, fled: cloakIcon, humiliated: vialIcon, vengeance: brandIcon, reclaimed: weaponIcon, duel: duelIcon };
-/** The War Trophy token (a placeholder: the dragon sigil). */
-export const TROPHY_ICON = sigilIcon;
+import { menuBackdrop } from './menuBackdrops';
+import { NEMESIS_TRAIT_ICON } from './nemesisTraitArt';
+import { RANK_BADGE } from './expansionArt';
+import { NEWS_ICON, TROPHY_ICON, SMOOTH_COUNCIL_ART } from './councilArt';
+export { NEWS_ICON, TROPHY_ICON } from './councilArt';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -55,6 +35,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const icon = (src: string, cls = 'nmIcon'): HTMLImageElement => {
   const i = el('img', cls);
   i.src = src;
+  if (SMOOTH_COUNCIL_ART.has(src)) i.classList.add('nmPainted');
   i.alt = '';
   i.setAttribute('aria-hidden', 'true');
   return i;
@@ -124,6 +105,7 @@ const TAB_WORD: Readonly<Record<Tab, string>> = { council: 'Council', news: 'New
 export function openNemesisBoard(m: Meta, hooks: BoardHooks, tab: Tab = 'council'): void {
   const menu = ornateMenu({ id: 'nemesisBoard', eyebrow: 'The Nemesis War', title: 'The Dark Council', sub: councilLine(m), kind: 'sheet', label: 'The Dark Council: the nemeses who remember you' });
   menu.card.classList.add('nmBoard');
+  menuBackdrop(menu.card, 'council');
   const tabs = menuSection(menu.body, undefined, undefined, 4);
   tabs.classList.add('nmTabs');
   const pane = el('div', 'nmPane');
@@ -166,7 +148,7 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
   b.classList.add('nmSeat', cls, n.rank);
   b.prepend(face(n, size));
   if (n.oath !== undefined) b.append(el('i', 'nmOath', '⚭'));
-  if (n.rank === 'warchief') b.prepend(icon(crownIcon, 'nmInsignia'));
+  if (RANK_BADGE[n.rank]) b.prepend(icon(RANK_BADGE[n.rank], 'nmRankBadge'));
   // (phase 3: an Avenger's or a Grudge holder's face on the card's corner; a member away licking its wounds is dimmed)
   const settler = Object.keys(avengersOf(m, n.id))[0] ?? Object.keys(grudgesOn(m, n.id))[0];
   if (settler && UNITS[settler]?.sheet) {
@@ -313,6 +295,7 @@ function drawSpoils(m: Meta, pane: HTMLElement, hooks: BoardHooks, redraw: () =>
     } });
     b.classList.add('nmRow');
     b.prepend(face(n, 40));
+    if (RANK_BADGE[n.rank]) b.prepend(icon(RANK_BADGE[n.rank], 'nmRankBadge'));
   }
   menuNote(pane, 'A relic choice for your next army run, and the warchiefs’ name plates, come to the Spoils later in the War.');
 }
@@ -370,13 +353,17 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
     for (const [k, fallen] of avengers) well.append(heroLine(k, `Avenger of ${heroName(fallen)} · +15% attack on it, skills 10% quicker; a killing blow is Vengeance`));
   }
   // (its secrets: a trait or weakness not yet learned shows as "?")
-  const secrets = (title: string, list: readonly string[], words: (s: string) => { name: string; text: string }) => {
+  const secrets = (title: string, list: readonly string[], words: (s: string) => { name: string; text: string }, art?: Readonly<Record<string, string>>) => {
     const well = sectionWell(menu.body, title, `${list.filter((s) => n.known.includes(s)).length} of ${list.length} known`);
     for (const s of list) {
       const p = el('p', 'nmSecret');
       if (n.known.includes(s)) {
         const w = words(s);
         p.append(el('b', '', w.name), el('small', '', w.text));
+        if (art?.[s]) {
+          p.classList.add('nmWithTrait');
+          p.prepend(icon(art[s], 'nmTraitIcon'));
+        }
       } else {
         p.classList.add('hidden');
         p.append(el('b', '', '?'), el('small', '', 'Meet it again, or send a scout, to learn more'));
@@ -384,7 +371,7 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
       well.append(p);
     }
   };
-  secrets('Traits', n.traits, (t) => ({ name: TRAITS[t]?.name ?? t, text: TRAITS[t]?.text ?? '' }));
+  secrets('Traits', n.traits, (t) => ({ name: TRAITS[t]?.name ?? t, text: TRAITS[t]?.text ?? '' }), NEMESIS_TRAIT_ICON);
   secrets('Weaknesses', n.weak, (w) => weakWords(w, heroName));
   if (n.memory.length) {
     const well = sectionWell(menu.body, 'Memory', 'what it remembers');

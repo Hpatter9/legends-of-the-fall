@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 // SECRET-HEROES: the heroes earned in play are secrets until they join (no screen's words name them), and the hero quests, each a
 // tale in two or three parts ending in a quest battle of its own, bring them in: three at first, all ten since HERO-TALES-2. See
 // docs/notes/secret-heroes.md.
@@ -238,7 +239,7 @@ const farOn = (seed: number): Meta => {
 test('all ten tales play through: closed on a new save, open far on, each part after the one before, and the hero joins at the end', () => {
   const tales = talesByGiver();
   assert.equal(tales.length, 10);
-  assert.deepEqual(tales.map((t) => t[t.length - 1].reward.hero!.kind).sort(), [...CONTENT_KINDS].sort(), 'one tale for each of the ten');
+  assert.deepEqual(tales.map((t) => t[t.length - 1].reward.hero!.kind).sort(), CONTENT_KINDS.filter(k => !isMythic(k)).sort(), 'one tale for each of the ten');
   const fresh = startedMeta(61);
   refreshOffers(fresh, DAY);
   for (const parts of tales) assert.ok(!canOffer(fresh, parts[0]), `${parts[0].id}: not on a new save`);

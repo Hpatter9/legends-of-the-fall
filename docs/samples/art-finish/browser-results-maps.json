@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {
+      "width": 412,
+      "height": 915,
+      "distinctPennants": 3,
+      "provisions": true
+    }
+  ],
+  "reducedMotion": true,
+  "errors": []
+}

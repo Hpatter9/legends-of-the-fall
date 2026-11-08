@@ -999,5 +999,201 @@
     "motif": "a flattened necromantic sigil and a rising skeletal hand",
     "atlas": 9,
     "cell": 13
+  },
+  {
+    "id": "skill:Crimson Lunge",
+    "name": "Crimson Lunge",
+    "motif": "a long curved crimson blade-arc of blood trailing red droplets",
+    "atlas": 10,
+    "cell": 0
+  },
+  {
+    "id": "skill:Banquet of Blood",
+    "name": "Banquet of Blood",
+    "motif": "a black eclipse disc ringed by blood-red corona flames and four small arrows",
+    "atlas": 10,
+    "cell": 1
+  },
+  {
+    "id": "skill:Sanguine Lash",
+    "name": "Sanguine Lash",
+    "motif": "an S-shaped blood whip tether dripping dark red drops at both ends",
+    "atlas": 10,
+    "cell": 2
+  },
+  {
+    "id": "skill:Blood Tithe",
+    "name": "Blood Tithe",
+    "motif": "a bright red star of branching blood-vessel lines bursting from one core",
+    "atlas": 10,
+    "cell": 3
+  },
+  {
+    "id": "skill:Dusk Dive",
+    "name": "Dusk Dive",
+    "motif": "a purple-veined bat wing as a swooping spear, violet streaks trailing",
+    "atlas": 10,
+    "cell": 4
+  },
+  {
+    "id": "skill:Belfry Swoop",
+    "name": "Belfry Swoop",
+    "motif": "a pale crescent moon wrapped in a ring of dark bats in violet mist",
+    "atlas": 10,
+    "cell": 5
+  },
+  {
+    "id": "skill:Gargoyle Crash",
+    "name": "Gargoyle Crash",
+    "motif": "a grey stone block slamming down in a red-lit rubble burst",
+    "atlas": 10,
+    "cell": 6
+  },
+  {
+    "id": "skill:Cathedral Perch",
+    "name": "Cathedral Perch",
+    "motif": "a gothic cathedral spire with a perched stone gargoyle in rose mist",
+    "atlas": 10,
+    "cell": 7
+  },
+  {
+    "id": "skill:Silver Stake",
+    "name": "Silver Stake",
+    "motif": "a silver arrow bolt pinned into cracked grey stone with a white glint",
+    "atlas": 10,
+    "cell": 8
+  },
+  {
+    "id": "skill:Silver Requiem",
+    "name": "Silver Requiem",
+    "motif": "a fan of five long silver stakes with violet twilight streaks",
+    "atlas": 10,
+    "cell": 9
+  },
+  {
+    "id": "skill:Thunder Beat",
+    "name": "Thunder Beat",
+    "motif": "a red lacquered gold-trimmed taiko drum struck by a stick in a golden ring",
+    "atlas": 10,
+    "cell": 10
+  },
+  {
+    "id": "skill:Ten Thousand Drums",
+    "name": "Ten Thousand Drums",
+    "motif": "five red drums in a blue storm cloud split by white lightning",
+    "atlas": 10,
+    "cell": 11
+  },
+  {
+    "id": "skill:Tectonic Shove",
+    "name": "Tectonic Shove",
+    "motif": "a tall cracked stone pillar erupting from glowing amber fissures",
+    "atlas": 10,
+    "cell": 12
+  },
+  {
+    "id": "skill:Mountain's Embrace",
+    "name": "Mountain's Embrace",
+    "motif": "a ring of amber-lit jagged crags rising round a glowing core",
+    "atlas": 10,
+    "cell": 13
+  },
+  {
+    "id": "skill:Bronze Peal",
+    "name": "Bronze Peal",
+    "motif": "a bronze temple bell ringing on cracked ground, gold sparks flaring",
+    "atlas": 10,
+    "cell": 14
+  },
+  {
+    "id": "skill:Midnight Knell",
+    "name": "Midnight Knell",
+    "motif": "a huge dark chained bell over a violet rune ring",
+    "atlas": 10,
+    "cell": 15
+  },
+  {
+    "id": "skill:Falcon Stoop",
+    "name": "Falcon Stoop",
+    "motif": "a diving falcon in a cyan streak, wings swept back",
+    "atlas": 9,
+    "cell": 14
+  },
+  {
+    "id": "skill:Sky Hunt",
+    "name": "Sky Hunt",
+    "motif": "a flock of falcons spiralling down two blue ribbons of wind",
+    "atlas": 9,
+    "cell": 15
+  },
+  {
+    "id": "skill:Eclipse Cleave",
+    "name": "Eclipse Cleave",
+    "motif": "a dark eclipse ring of a sword stroke edged with ember sparks",
+    "atlas": 11,
+    "cell": 0
+  },
+  {
+    "id": "skill:Kneel Before Night",
+    "name": "Kneel Before Night",
+    "motif": "a crimson crown of flame rising round a black hollow",
+    "atlas": 11,
+    "cell": 1
+  },
+  {
+    "id": "skill:Starbreath",
+    "name": "Starbreath",
+    "motif": "a burning orange star of breath bursting from a white core",
+    "atlas": 11,
+    "cell": 2
+  },
+  {
+    "id": "skill:Heavenfall",
+    "name": "Heavenfall",
+    "motif": "a cold blue-white shaft of starlight falling to the ground",
+    "atlas": 11,
+    "cell": 3
+  },
+  {
+    "id": "skill:Saint\u2019s Spear",
+    "name": "Saint\u2019s Spear",
+    "motif": "a golden spear of light streaming a feathered trail",
+    "atlas": 11,
+    "cell": 4
+  },
+  {
+    "id": "skill:Death Denied",
+    "name": "Death Denied",
+    "motif": "a glass dome of holy light sheltering a golden ankh",
+    "atlas": 11,
+    "cell": 5
+  },
+  {
+    "id": "skill:Rootquake",
+    "name": "Rootquake",
+    "motif": "a knot of roots tearing outward round a green glow",
+    "atlas": 11,
+    "cell": 6
+  },
+  {
+    "id": "skill:The World Stands",
+    "name": "The World Stands",
+    "motif": "a grove of young trunks rising in a green crown",
+    "atlas": 11,
+    "cell": 7
+  },
+  {
+    "id": "skill:Fate Shard",
+    "name": "Fate Shard",
+    "motif": "a violet starburst of a shattered future",
+    "atlas": 11,
+    "cell": 8
+  },
+  {
+    "id": "skill:Rewrite Fate",
+    "name": "Rewrite Fate",
+    "motif": "a violet dome of frozen time marked with clock hands",
+    "atlas": 11,
+    "cell": 9
   }
 ]

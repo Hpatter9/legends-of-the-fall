@@ -1,3 +1,4 @@
+import { isMythic } from './mythicRules';
 // What the six ability scores do to a hero's power in a fight (STATS batch 2, docs/notes/stats-2.md; the design is
 // docs/notes/rpg-stats-design.md, sections 3.4, 5, 6 and 7). Health grows with CON, blows with the hero's blow ability, and each skill with
 // its own ability: a weapon skill with the blow ability, a spell, heal, summon or song with the casting ability, a breath or bile with CON.
@@ -46,7 +47,7 @@ const trims = new Map<number, StatMults>();
 export function trimOf(level = 1): StatMults {
   let t = trims.get(level);
   if (!t) {
-    const all = Object.values(STAT_PROFILES).map((p) => ownMults(p, { level }));
+    const all = Object.entries(STAT_PROFILES).filter(([kind]) => !isMythic(kind)).map(([, p]) => ownMults(p, { level }));
     const mean = (k: keyof StatMults) => all.reduce((n, m) => n + m[k], 0) / all.length;
     t = { hp: mean('hp'), blow: mean('blow'), cast: mean('cast'), con: mean('con') };
     trims.set(level, t);

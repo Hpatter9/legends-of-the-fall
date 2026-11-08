@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 import { HERO_KITS } from '../src/sim/heroKits';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
@@ -55,8 +56,8 @@ test('twenty heroes join, each with a kit, a tree, traits, a tavern spot and a s
     assert.ok(d.role.length > 10, id);
   }
   assert.equal(new Set(NEW).size, NEW.length);
-  assert.equal(ALL_HEROES.length, 45);
-  assert.equal(new Set(ALL_HEROES).size, 45);
+  assert.equal(ALL_HEROES.length, 59);
+  assert.equal(new Set(ALL_HEROES).size, 59);
 });
 
 test('every new hero has art: a sheet for each grade with walk, attack, idle, hurt and death rows, drawn at a sensible size', () => {
@@ -79,10 +80,10 @@ test('every new hero has art: a sheet for each grade with walk, attack, idle, hu
   }
 });
 
-test('the traits: every one has two to four heroes, and every tier can be reached', () => {
+test('the traits: every one has two to five heroes (owner call for the twenty), and every tier can be reached', () => {
   for (const [id, t] of Object.entries(TRAITS)) {
-    const n = membersOf(id).length;
-    assert.ok(n >= 2 && n <= 4, `${id} ${n}`);
+    const n = membersOf(id).filter(k => !isMythic(k)).length;
+    assert.ok(n >= 2 && n <= 5, `${id} ${n}`);
     for (const tier of t.tiers) assert.ok(tier.need <= n, `${id} tier ${tier.need} with ${n} members`);
   }
   // (the new four-piece bonuses)

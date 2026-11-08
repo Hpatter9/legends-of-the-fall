@@ -1,0 +1,39 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "release": "0.393.0",
+      "quest": true,
+      "manuscript": true,
+      "news": 19,
+      "trophies": 18,
+      "dynasty": true,
+      "unknownTraitsHidden": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "release": "0.393.0",
+      "quest": true,
+      "manuscript": true,
+      "news": 19,
+      "trophies": 18,
+      "dynasty": true,
+      "unknownTraitsHidden": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "release": "0.393.0",
+      "quest": true,
+      "manuscript": true,
+      "news": 19,
+      "trophies": 18,
+      "dynasty": true,
+      "unknownTraitsHidden": true
+    }
+  ],
+  "reducedMotion": true,
+  "errors": []
+}

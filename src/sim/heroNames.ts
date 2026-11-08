@@ -16,6 +16,11 @@ export interface HeroName {
 }
 
 export const HERO_NAMES: Record<string, HeroName> = {
+  vael: { name: 'Vael', title: 'the Eclipse Sovereign', heritage: 'an ancient eclipsed kingdom' },
+  astrax: { name: 'Astrax', title: 'the Last Star', heritage: 'a celestial dragon' },
+  ilyra: { name: 'Ilyra', title: 'the Unburied Saint', heritage: 'the forgotten battlefields' },
+  orrun: { name: 'Orrun', title: 'the Worldroot', heritage: 'the forest beneath the world' },
+  nyxara: { name: 'Nyxara', title: 'Queen of the Unwritten', heritage: 'the unwritten futures' },
   knight: { name: 'Kwame', title: 'Shield of the Dawn', heritage: 'Ghanaian (Akan)' },
   samurai: { name: 'Kenji', title: 'Sword of the Eastern Sea', heritage: 'Japanese' },
   kunoichi: { name: 'Ayame', title: 'Smoke on the Rooftops', heritage: 'Japanese' },
@@ -61,6 +66,30 @@ export const HERO_NAMES: Record<string, HeroName> = {
   sage: { name: 'Seydou', title: 'Reader of the Stars', heritage: 'Malian' },
   demonSwordsman: { name: 'Aram', title: 'Host of the Hungry Steel', heritage: 'Armenian' },
   tyrant: { name: 'Edmund', title: 'the Unbending Verdict', heritage: 'English' },
+  vampireLord: { name: 'Vladislav', title: 'Red Keep Voivode', heritage: 'Romanian (Wallachian)' },
+  hemomancer: { name: 'Carmilla', title: 'Chalice Countess', heritage: 'Austrian (Styrian)' },
+  nightstalker: { name: 'Sorin', title: 'Wing of the Crypt', heritage: 'a Transylvanian strigoi' },
+  bloodGargoyle: { name: 'Gavril', title: 'Sentinel of the Fane', heritage: 'a cathedral gargoyle' },
+  dhampir: { name: 'Klara', title: 'Silver-Bolt Hunter', heritage: 'Czech (Bohemian)' },
+  warDrummer: { name: 'Raiden', title: 'Thunder of the Keep', heritage: 'Japanese' },
+  geomancer: { name: 'Tenzin', title: 'Shaper of Crags', heritage: 'Tibetan' },
+  bellWarden: { name: 'Kavi', title: 'Keeper of the Toll', heritage: 'a yokai temple-bell guardian' },
+  falconer: { name: 'Aisling', title: 'Wing of the Glen', heritage: 'Scottish Gaelic' },
+};
+
+/** The twenty coming heroes' names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). The canon: docs/notes/twenty-heroes-audit.md. */
+export const COMING_NAMES: Record<string, HeroName> = {
+  banneret: { name: 'Isolde', title: 'Voice of the Rampart', heritage: 'Norman French' },
+  astralSphinx: { name: 'Nenet', title: 'Riddle of the Stars', heritage: 'Egyptian myth' },
+  mirageDancer: { name: 'Zahara', title: 'Veil of the Dunes', heritage: 'Nubian (Sudanese-Egyptian)' },
+  plagueDoctor: { name: 'Corvus', title: 'Censer of Ash', heritage: 'Venetian undead lore' },
+  bombardier: { name: 'Soren', title: 'Iron Alchemist', heritage: 'Danish' },
+  astrologer: { name: 'Cyra', title: 'Keeper of the Astrolabe', heritage: 'Alexandrian Greek' },
+  inquisitor: { name: 'Soraya', title: 'Scales of the Sun', heritage: 'Persian (Iranian)' },
+  seraph: { name: 'Gabriela', title: 'Wing of the Reliquary', heritage: 'Castilian Spanish' },
+  corsairSurgeon: { name: 'Tariq', title: 'Sawbones of the Reef', heritage: 'Moroccan' },
+  harpooner: { name: 'Siku', title: 'Whaler of the Floes', heritage: 'Inuit (Greenlandic)' },
+  seaReaver: { name: 'Nakoa', title: 'Breaker of Hulls', heritage: 'Hawaiian (Polynesian)' },
 };
 
 /** A fighter's own name: a hero's personal name, or the unit's name for anything else (foes, summons). */

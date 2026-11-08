@@ -229,7 +229,7 @@ export const DIRS: readonly [number, number][] = [
 export const tileAt = (b: Board, u: number, v: number): Tile | null => (u >= 0 && v >= 0 && u < b.w && v < b.d ? b.tiles[v * b.w + u] : null);
 
 /** Smooth noise in [0, 1) by the seed: bilinear over a lattice three tiles apart. */
-function relief(seed: number, x: number, y: number): number {
+export function relief(seed: number, x: number, y: number): number {
   const at = (cx: number, cy: number) => (mixSeed(seed, 0x7ac, cx, cy) >>> 0) / 4294967296;
   const fx = x / 3;
   const fy = y / 3;

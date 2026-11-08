@@ -1,0 +1,23 @@
+{
+  "screens": [
+    {
+      "width": 393,
+      "height": 852,
+      "scenes": 2,
+      "errors": []
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "scenes": 2,
+      "errors": []
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "scenes": 2,
+      "errors": []
+    }
+  ],
+  "offline": true
+}

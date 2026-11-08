@@ -1,0 +1,68 @@
+[
+  {
+    "asset": "src/art/heroes/peasant.webp",
+    "generatedSource": "/workspace/generated_images/exec-fed41d7c-b6e7-47eb-987e-f226cc871ae3.png",
+    "width": 1024,
+    "height": 1536,
+    "generatedSha256": "fba2859a34ec29c7706f80e510810315a07c0046c7980c3f84672f6df4f37dee",
+    "packedSha256": "cb7e247135a50f8a4b3c507fe6a31279a6f87ed590ae9e8333e48d39ef0c1b0b",
+    "previousGeneratedSource": "/workspace/generated_images/exec-484bfd38-adb1-4996-bf46-48c93c1f92a3.png"
+  },
+  {
+    "asset": "src/art/heroes/mercenary.webp",
+    "generatedSource": "/workspace/generated_images/exec-e046c33f-043a-4dcd-a250-eb87fcca6bba.png",
+    "width": 1024,
+    "height": 1536,
+    "generatedSha256": "9d8d5d9d4ff3b5f8f5f18ed4acb6c5c08ac5ce54d5c152a7435068d2d6e53ca7",
+    "packedSha256": "f6c5e4c0e51a54761c3d48077fdd4cfe2c34be597293cfb33ce4208ef2b48af0",
+    "previousGeneratedSource": "/workspace/generated_images/exec-b614b824-39f4-465b-be20-61c267a6a510.png"
+  },
+  {
+    "asset": "src/art/heroes/harpooner.webp",
+    "generatedSource": "/workspace/generated_images/exec-157881aa-5cc6-431c-8c57-50dbd40b6bb2.png",
+    "width": 1024,
+    "height": 1536,
+    "generatedSha256": "9fb602bc38d54ae6b8e96d6084b18d90aace8a1c425b2b3dd7041be36b840a27",
+    "packedSha256": "54ed613077a9fd6e00a5bf07c4a1fa8e32e17f9df3e0964ba8914a5fcba6251e"
+  },
+  {
+    "asset": "src/art/heroes/samuraiCommander.webp",
+    "generatedSource": "/workspace/generated_images/exec-1044a632-12a3-4b1a-a181-49bc40519023.png",
+    "width": 512,
+    "height": 1024,
+    "generatedSha256": "65d80919caa1f1efdb0c5654ccbfa093b2362d1b626deb9f596c8649ae3b05b4",
+    "packedSha256": "c4a3a688747350c1e9440fa2c54658370fa973bd5e28dcd34f583fb1e966e913"
+  },
+  {
+    "asset": "src/art/heroes/samurai.webp",
+    "generatedSource": "/workspace/generated_images/exec-d14c0fa3-d2c5-4ded-bf86-771c99864a59.png",
+    "width": 512,
+    "height": 1024,
+    "generatedSha256": "0ce912b89c945f3dd1c5c3d494894d09fd7eafe549e78088cf3b52b0e771bf92",
+    "packedSha256": "e0d3a500b05ce628ab99afa9183d5f6227726e4a660c9251af390c116e04f290"
+  },
+  {
+    "asset": "src/art/heroes/ranger.webp",
+    "generatedSource": "/workspace/generated_images/exec-6170991a-57a8-4b40-9a12-dff479726bce.png",
+    "width": 1024,
+    "height": 1536,
+    "generatedSha256": "1cf497f29d952607c9e129b9ab45c0a30ab58eff1bab1188e0f2aecdd91ddd1f",
+    "packedSha256": "9a3fe23132f236834c10265e8bf196152bc402f4c74e526f487dc27ba81e7758"
+  },
+  {
+    "asset": "src/art/heroes/samurai-portrait.webp",
+    "generatedSource": "/workspace/generated_images/exec-e825a1d8-b7b1-4e1b-91dc-10c089c06623.png",
+    "width": 480,
+    "height": 960,
+    "generatedSha256": "d011c4a4e73f87503c29632eaa4ef7c09f3d8cea155c89dc65d5337c5379f16d",
+    "packedSha256": "81102e8562b14d8d53492acc0fdb5d6defd042b86c4ea346b30a192f3066a4af"
+  },
+  {
+    "asset": "src/art/heroes/samuraiCommander-portrait.webp",
+    "generatedSource": "/workspace/generated_images/exec-c937c937-3e08-432a-9faa-81b760bb30bd.png",
+    "width": 480,
+    "height": 960,
+    "generatedSha256": "fd5463b9e6e96e6ddd5d75609c3e1629b3c62e7c557a4cbc0de5a5940f7da854",
+    "packedSha256": "d223cc3c3128079597f6523dda9d871733ea835a1fc2841989c9e7d211fc4526"
+  }
+]

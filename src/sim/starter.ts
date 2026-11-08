@@ -8,12 +8,19 @@ export type StarterClass = 'front' | 'striker' | 'shooter' | 'caster' | 'support
 
 /** What each hero is for, as the starter pick tells it. Every hero is in exactly one class. */
 export const CLASS_OF: Readonly<Record<string, StarterClass>> = {
+  vael: 'striker', astrax: 'caster', ilyra: 'support', orrun: 'front', nyxara: 'caster',
   knight: 'front', paladin: 'front', juggernaut: 'front', minotaur: 'front', shambler: 'front', mummy: 'front', kraken: 'front', dreadPirate: 'front', yamabushi: 'front', peasant: 'front',
   samurai: 'striker', kunoichi: 'striker', ninjaMonk: 'striker', kitsune: 'striker', karasu: 'striker', werewolf: 'striker', barbarian: 'striker', mercenary: 'striker', buccaneer: 'striker', lancer: 'striker',
   reaper: 'striker', arcBlade: 'striker', dragoon: 'striker', demonSwordsman: 'striker', illusionist: 'striker', beastmaster: 'striker', tyrant: 'striker', samuraiCommander: 'striker',
   archer: 'shooter', ranger: 'shooter', gunslinger: 'shooter', rifleBot: 'shooter', siegeBot: 'shooter', gorgon: 'shooter',
   wizard: 'caster', lightningMage: 'caster', warlock: 'caster', druid: 'caster', timeWitch: 'caster', sage: 'caster',
   cleric: 'support', priestess: 'support', wolfBard: 'support', wanderer: 'support', satyr: 'support',
+  vampireLord: 'striker', hemomancer: 'caster', nightstalker: 'striker', bloodGargoyle: 'front', dhampir: 'shooter', warDrummer: 'support', geomancer: 'front', bellWarden: 'front', falconer: 'shooter',
+};
+
+/** The twenty coming heroes' starter classes (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
+export const COMING_CLASS_OF: Readonly<Record<string, StarterClass>> = {
+  banneret: 'front', seraph: 'front', astralSphinx: 'striker', mirageDancer: 'striker', seaReaver: 'striker', bombardier: 'shooter', harpooner: 'shooter', plagueDoctor: 'caster', astrologer: 'caster', inquisitor: 'caster', corsairSurgeon: 'support',
 };
 
 export const CLASS_NAMES: Readonly<Record<StarterClass, string>> = { front: 'Front-liner', striker: 'Striker', shooter: 'Shooter', caster: 'Caster', support: 'Support' };

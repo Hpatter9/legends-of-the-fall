@@ -1,0 +1,356 @@
+{
+  "knight": {
+    "place": "dice-left",
+    "motion": "play",
+    "label": "Rolling dice",
+    "facing": "right"
+  },
+  "samurai": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Polishing a scabbard",
+    "facing": "right"
+  },
+  "kunoichi": {
+    "place": "bar",
+    "motion": "talk",
+    "label": "Chatting over wine",
+    "facing": "left"
+  },
+  "archer": {
+    "place": "supper",
+    "motion": "eat",
+    "label": "Eating supper",
+    "facing": "left"
+  },
+  "wizard": {
+    "place": "dice-right",
+    "motion": "read",
+    "label": "Reading a spellbook",
+    "facing": "left"
+  },
+  "peasant": {
+    "place": "supper",
+    "motion": "eat",
+    "label": "Sharing bread",
+    "facing": "right"
+  },
+  "ninjaMonk": {
+    "place": "hearth",
+    "motion": "breathe",
+    "label": "Meditating",
+    "facing": "right"
+  },
+  "wanderer": {
+    "place": "supper",
+    "motion": "tend",
+    "label": "Mending a cloak",
+    "facing": "left"
+  },
+  "lightningMage": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Playing with a spark",
+    "facing": "right"
+  },
+  "kitsune": {
+    "place": "bar",
+    "motion": "talk",
+    "label": "Fanning herself",
+    "facing": "left"
+  },
+  "karasu": {
+    "place": "dice-right",
+    "motion": "play",
+    "label": "Studying cards",
+    "facing": "left"
+  },
+  "yamabushi": {
+    "place": "bar",
+    "motion": "tend",
+    "label": "Tending prayer beads",
+    "facing": "right"
+  },
+  "werewolf": {
+    "place": "supper",
+    "motion": "eat",
+    "label": "Enjoying a roast",
+    "facing": "left"
+  },
+  "minotaur": {
+    "place": "bar",
+    "motion": "drink",
+    "label": "Drinking ale",
+    "facing": "right"
+  },
+  "satyr": {
+    "place": "hearth",
+    "motion": "music",
+    "label": "Playing panpipes",
+    "facing": "right"
+  },
+  "gorgon": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Tending her snakes",
+    "facing": "left"
+  },
+  "samuraiCommander": {
+    "place": "dice-right",
+    "motion": "read",
+    "label": "Studying a map",
+    "facing": "left"
+  },
+  "paladin": {
+    "place": "hearth",
+    "motion": "breathe",
+    "label": "Praying",
+    "facing": "right"
+  },
+  "cleric": {
+    "place": "dice-right",
+    "motion": "tend",
+    "label": "Wrapping a bandage",
+    "facing": "left"
+  },
+  "druid": {
+    "place": "supper",
+    "motion": "tend",
+    "label": "Grinding herbs",
+    "facing": "right"
+  },
+  "barbarian": {
+    "place": "dice-left",
+    "motion": "play",
+    "label": "Shaking dice",
+    "facing": "right"
+  },
+  "ranger": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Fletching arrows",
+    "facing": "left"
+  },
+  "warlock": {
+    "place": "dice-right",
+    "motion": "read",
+    "label": "Reading a grimoire",
+    "facing": "left"
+  },
+  "illusionist": {
+    "place": "bar",
+    "motion": "play",
+    "label": "Performing a coin trick",
+    "facing": "right"
+  },
+  "gunslinger": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Cleaning a pistol",
+    "facing": "left"
+  },
+  "shambler": {
+    "place": "hearth",
+    "motion": "sleep",
+    "label": "Dozing",
+    "facing": "left"
+  },
+  "rifleBot": {
+    "place": "dice-right",
+    "motion": "tend",
+    "label": "Repairing a gear",
+    "facing": "right"
+  },
+  "mercenary": {
+    "place": "bar",
+    "motion": "tend",
+    "label": "Counting coins",
+    "facing": "left"
+  },
+  "mummy": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Rewrapping linen",
+    "facing": "right"
+  },
+  "buccaneer": {
+    "place": "dice-right",
+    "motion": "play",
+    "label": "Playing cards",
+    "facing": "left"
+  },
+  "wolfBard": {
+    "place": "hearth",
+    "motion": "music",
+    "label": "Singing with a lute",
+    "facing": "right"
+  },
+  "beastmaster": {
+    "place": "supper",
+    "motion": "tend",
+    "label": "Feeding her wolf",
+    "facing": "left"
+  },
+  "kraken": {
+    "place": "bar",
+    "motion": "drink",
+    "label": "Having tea",
+    "facing": "right"
+  },
+  "lancer": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Adjusting gloves",
+    "facing": "left"
+  },
+  "reaper": {
+    "place": "hearth",
+    "motion": "read",
+    "label": "Reading poetry",
+    "facing": "right"
+  },
+  "timeWitch": {
+    "place": "dice-right",
+    "motion": "tend",
+    "label": "Watching an hourglass",
+    "facing": "left"
+  },
+  "arcBlade": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Inspecting a crystal",
+    "facing": "right"
+  },
+  "dreadPirate": {
+    "place": "bar",
+    "motion": "talk",
+    "label": "Telling a sea story",
+    "facing": "left"
+  },
+  "siegeBot": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Polishing armour",
+    "facing": "right"
+  },
+  "priestess": {
+    "place": "supper",
+    "motion": "tend",
+    "label": "Weaving flowers",
+    "facing": "left"
+  },
+  "dragoon": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Stretching a wing",
+    "facing": "left"
+  },
+  "juggernaut": {
+    "place": "supper",
+    "motion": "eat",
+    "label": "Having soup",
+    "facing": "left"
+  },
+  "sage": {
+    "place": "dice-right",
+    "motion": "read",
+    "label": "Writing a journal",
+    "facing": "left"
+  },
+  "demonSwordsman": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Using a whetstone",
+    "facing": "right"
+  },
+  "tyrant": {
+    "place": "dice-left",
+    "motion": "play",
+    "label": "Pondering chess",
+    "facing": "right"
+  },
+  "vampireLord": {
+    "place": "bar",
+    "motion": "drink",
+    "label": "Swirling wine",
+    "facing": "left"
+  },
+  "hemomancer": {
+    "place": "supper",
+    "motion": "tend",
+    "label": "Pressing a flower",
+    "facing": "left"
+  },
+  "nightstalker": {
+    "place": "hearth",
+    "motion": "sleep",
+    "label": "Napping",
+    "facing": "left"
+  },
+  "bloodGargoyle": {
+    "place": "hearth",
+    "motion": "breathe",
+    "label": "Stretching",
+    "facing": "right"
+  },
+  "dhampir": {
+    "place": "dice-right",
+    "motion": "play",
+    "label": "Shuffling cards",
+    "facing": "left"
+  },
+  "warDrummer": {
+    "place": "hearth",
+    "motion": "music",
+    "label": "Tapping a drum",
+    "facing": "right"
+  },
+  "geomancer": {
+    "place": "dice-right",
+    "motion": "tend",
+    "label": "Balancing pebbles",
+    "facing": "left"
+  },
+  "bellWarden": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Polishing a bell",
+    "facing": "left"
+  },
+  "falconer": {
+    "place": "bar",
+    "motion": "tend",
+    "label": "Feeding a falcon",
+    "facing": "right"
+  },
+  "vael": {
+    "place": "bar",
+    "motion": "tend",
+    "label": "Contemplating totality",
+    "facing": "right"
+  },
+  "astrax": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Tracing constellations",
+    "facing": "right"
+  },
+  "ilyra": {
+    "place": "supper",
+    "motion": "read",
+    "label": "Offering a silent prayer",
+    "facing": "left"
+  },
+  "orrun": {
+    "place": "dice-left",
+    "motion": "play",
+    "label": "Carving a stone talisman",
+    "facing": "right"
+  },
+  "nyxara": {
+    "place": "dice-right",
+    "motion": "read",
+    "label": "Reading threads of fate",
+    "facing": "left"
+  }
+}

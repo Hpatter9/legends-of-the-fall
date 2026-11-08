@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 // The hero sweep: random five-hero teams on the field bands, played headless with the sim. `tools/balance.ts` prints it as
 // table 1 (hero value) and `test/hero-balance.test.ts` holds every hero to the roster average. Every fight is seeded, so the
 // same numbers come out again on the same code.
@@ -7,7 +8,7 @@ import { fight, place, startBattle, stepBattle, type Battle, type Boost, type St
 import { FIELD_BANDS } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
-import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
 import { masteryAt, MASTERY_AUTO } from './skills/mastery';
 
 export const TEAM = 5;
@@ -28,9 +29,15 @@ export function sweepBoost(grade: number, level: number): Boost {
 /** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
 export const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
 
+/** The heroes the sweep draws teams from: the roster, and with `COMING=1` in the environment (which the tools' forked children inherit)
+ *  the coming heroes too (docs/notes/twenty-heroes.md), so the tuner can tune them against the roster before they join. */
+// Mythics have a separate power budget and cannot be stacked. Their trials and
+// composition are tested separately; this preserves ordinary hero parity.
+export const SWEEP_POOL: readonly string[] = (process.env.COMING === '1' ? [...ALL_HEROES, ...COMING_HEROES] : ALL_HEROES).filter(k => !isMythic(k));
+
 /** A random team of `TEAM` different hero kinds (from every hero there is). */
 export function pickTeam(rng: Rng): string[] {
-  const pool = [...ALL_HEROES];
+  const pool = [...SWEEP_POOL];
   const team: string[] = [];
   for (let i = 0; i < TEAM; i++) team.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   return team;
@@ -81,8 +88,8 @@ export function play(seed: number, band: string, foes: Stage, team: string[], gr
 
 /** How many of the random teams (over `games` fights at `stage`, from seed `seedOffset` + 1) each hero was in, and how many of those won. */
 export function heroTally(games: number, stage: number, seedOffset = 0, level = 1): { inN: Map<string, number>; inW: Map<string, number> } {
-  const inN = new Map<string, number>(ALL_HEROES.map((h) => [h, 0]));
-  const inW = new Map<string, number>(ALL_HEROES.map((h) => [h, 0]));
+  const inN = new Map<string, number>(SWEEP_POOL.map((h) => [h, 0]));
+  const inW = new Map<string, number>(SWEEP_POOL.map((h) => [h, 0]));
   for (let g = 0; g < games; g++) {
     const seed = g + 1 + seedOffset;
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
@@ -98,7 +105,7 @@ export function heroTally(games: number, stage: number, seedOffset = 0, level = 
 /** Each hero's win rate (percent) in the random teams it was in, over `games` fights at `stage` (every hero at `level`), and its lift over the roster average. */
 export function heroLifts(games: number, stage: number, seedOffset = 0, level = 1): { kind: string; win: number; lift: number }[] {
   const { inN, inW } = heroTally(games, stage, seedOffset, level);
-  const win = ALL_HEROES.map((h) => (100 * inW.get(h)!) / Math.max(1, inN.get(h)!));
+  const win = SWEEP_POOL.map((h) => (100 * inW.get(h)!) / Math.max(1, inN.get(h)!));
   const average = win.reduce((a, b) => a + b, 0) / win.length;
-  return ALL_HEROES.map((kind, i) => ({ kind, win: win[i], lift: win[i] - average }));
+  return SWEEP_POOL.map((kind, i) => ({ kind, win: win[i], lift: win[i] - average }));
 }

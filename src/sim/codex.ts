@@ -167,6 +167,7 @@ export const readCodexClaimed = (raw: unknown): string[] | undefined => (Array.i
 
 /** Where an entry is met, in plain words. */
 export function whereMet(e: FoeEntry): string[] {
+  if (e.id.startsWith('trial_')) return ['Beyond the veil of an ancient rumour'];
   const out: string[] = [];
   if (e.class === 'elite') {
     const el = ELITES.find((x) => x.def === e.id)!;

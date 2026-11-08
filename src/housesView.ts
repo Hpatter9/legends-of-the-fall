@@ -7,13 +7,13 @@
 // Built with the standard ornate menu (UI-STANDARD): full pages say "‹ Back", cards "Close". Nothing glows or pulses; a bearer's portrait
 // wears the same steady grade as its sprite (the years, and an heir's tint).
 //
-// The icons are placeholders from the item art until Dynasties' own are made (the prompts are in docs/notes/dynasty-5.md and dynasty-6.md).
+// Commissioned season/fate art and the approved dynasty paintings are mapped by dynastyArt.ts.
 
 import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
 import { portrait } from './render/sheets';
 import { toastLines } from './achievementsView';
 import { BOND_NAMES, bondKey, KINDRED, levelOf as bondLevelOf } from './sim/bonds';
-import { agingAtTurn, ageWords, isAgeless, bearerOf, DYNASTY, fieldedOf, lineOf, lookWords, romanGen, seasonLine, seasonOf, SEASON_WORDS, stageAge, stageOf, STAGE_FROM, STAGE_WORDS, STAGES, toNextStage, wavesThisSeason, type Aged, type Bearer, type SeasonName, type Stage } from './sim/dynasty';
+import { agingAtTurn, ageWords, isAgeless, bearerOf, DYNASTY, fieldedOf, lineOf, lookWords, romanGen, seasonLine, seasonOf, SEASON_WORDS, stageAge, stageOf, STAGE_FROM, STAGE_WORDS, STAGES, toNextStage, wavesThisSeason, type Aged, type Bearer, type Stage } from './sim/dynasty';
 import { SEASON_LINES } from './sim/dynastyWords';
 import { HERO_NAMES, heroName } from './sim/heroNames';
 import { saveMeta, type Meta } from './sim/meta';
@@ -26,28 +26,13 @@ import {
   HONOUR_LINES, HONOUR_WORDS, HONOURS, honourLock, nameHeir, passMantle, promiseLeft, regularOf, seatedToday, storyOf, storyteller, storyWaits, trainWords, whyNoHeir, whyNoMantle, whyNoRide, whyNotHonour, type Honour, type Mantle,
 } from './sim/heirs';
 import { todayKey } from './modes';
-import springIcon from './art/items/moss_bell.png';
-import summerIcon from './art/items/sun_crown.png';
-import autumnIcon from './art/items/copper_torc.png';
-import winterIcon from './art/items/rime_pearl.png';
-import mentorIcon from './art/items/scholar_scroll.png';
-import regularIcon from './art/items/holy_chalice.png';
-import shadeIcon from './art/items/shadow_cloak.png';
-import houseIcon from './art/items/founders_ledger.png';
-import heirloomIcon from './art/items/gold_band.png';
-import fallenIcon from './art/items/ember_brand.png';
-import legendIcon from './art/items/saint_medal.png';
+import { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON } from './dynastyArt';
+import { menuBackdrop } from './menuBackdrops';
+export { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON, LEGEND_ICON } from './dynastyArt';
 import { hasFallen, isLegend, mourningLeft, OATH, whyShadeHonour } from './sim/oath';
 import { openNemesisCard } from './nemesisView';
-
-/** The season icons (placeholders from the item art until the four are made). */
-export const SEASON_ICON: Readonly<Record<SeasonName, string>> = { spring: springIcon, summer: summerIcon, autumn: autumnIcon, winter: winterIcon };
-/** The fate icons (placeholders from the item art: the scroll, the chalice, the cloak, the ember brand for the fallen's candle; the Legend's
- *  laurel is the saint's medal). */
-export const FATE_ICON: Readonly<Record<string, string>> = { mentor: mentorIcon, regular: regularIcon, shade: shadeIcon, fallen: fallenIcon };
-export const LEGEND_ICON = legendIcon;
-export const HOUSE_ICON = houseIcon;
-export const HEIRLOOM_ICON = heirloomIcon;
+/** Phase 7: the fallen's candle (the painted fate icon). */
+const fallenIcon = FATE_ICON.fallen;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -59,6 +44,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const icon = (src: string, cls: string): HTMLImageElement => {
   const i = el('img', cls);
   i.src = src;
+  i.classList.add('hsPainted');
   i.alt = '';
   i.setAttribute('aria-hidden', 'true');
   return i;
@@ -189,6 +175,9 @@ export function openHouses(m: Meta, day: number, focus?: string): OrnateMenu | n
   if (!d) return null;
   const menu = ornateMenu({ id: 'housesPage', eyebrow: 'Dynasties', title: 'The Houses', sub: seasonLine(d, day), kind: 'sheet', label: 'The Houses: your heroes’ lines' });
   menu.card.classList.add('hsPage');
+  menuBackdrop(menu.card, 'houses');
+  const crest = menu.card.querySelector('.omCrest');
+  crest?.replaceChildren(icon(HOUSE_ICON, 'hsHouseCrest'));
   const tabs = menuSection(menu.body, undefined, undefined, 3);
   tabs.classList.add('hsTabs');
   const pane = el('div', 'hsPane');
@@ -251,6 +240,9 @@ export function openLine(m: Meta, kind: string, day: number): OrnateMenu | null 
   const now = Date.now();
   const menu = ornateMenu({ id: 'houseLine', eyebrow: 'The Houses', title: `The House of ${first.name}`, sub: `${kindName(kind)} · Gen ${romanGen(cur.gen)} · ${line.bearers.filter((b) => !b.cadet).length} ${line.bearers.filter((b) => !b.cadet).length === 1 ? 'bearer' : 'bearers'}`, kind: 'sheet' });
   menu.card.classList.add('hsPage');
+  menuBackdrop(menu.card, 'houses');
+  const crest = menu.card.querySelector('.omCrest');
+  crest?.replaceChildren(icon(HOUSE_ICON, 'hsHouseCrest'));
   const reopen = () => {
     menu.close();
     openLine(m, kind, day);
@@ -312,7 +304,7 @@ export function openLine(m: Meta, kind: string, day: number): OrnateMenu | null 
         const it = (m.equipment ?? []).find((x) => x.id === b.heirloom);
         if (it) {
           const chip = el('small', 'omLine hsHeirloomChip');
-          chip.append(icon(heirloomIcon, 'hsChipIco'), `Heirloom: ${itemName(it)}`);
+          chip.append(icon(HEIRLOOM_ICON, 'hsChipIco'), `Heirloom: ${itemName(it)}`);
           row.append(chip);
         }
       }

@@ -3,6 +3,7 @@
 
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
+import { trophyPicture } from './trophyArt';
 
 export interface BossTrophy {
   id: string;
@@ -268,7 +269,8 @@ export class TrophyWallModal {
     // Plaque Header with wood/brass trim
     const header = el('div', 'twHeader');
     const titleBox = el('div', 'twTitleBox');
-    const crest = el('span', 'twCrest', '🏆');
+    const crest = el('span', 'twCrest');
+    crest.append(trophyPicture('forgeTitan', true));
     const title = el('h2', 'twTitle', 'DEFEATED BOSS TROPHY WALL');
     const sub = el('p', 'twSub', 'Caricatures & spoils of the Calamity Heralds and Spire Champions');
     titleBox.append(crest, title, sub);
@@ -305,7 +307,7 @@ export class TrophyWallModal {
 
     // Footer with Stats and Legend
     const footer = el('div', 'twFooter');
-    const hint = el('span', 'twHint', '💡 Tap any mounted plaque to view their humorous defeat account.');
+    const hint = el('span', 'twHint', 'Tap a mounted trophy to read its defeat account.');
     footer.append(hint);
 
     this.card.append(header, filters, rackFrame, footer);
@@ -344,6 +346,7 @@ export class TrophyWallModal {
       const plaque = el('div', `twPlaque ${unlocked ? 'unlocked' : 'locked'}`);
       plaque.setAttribute('role', 'button');
       plaque.setAttribute('tabindex', '0');
+      plaque.setAttribute('aria-label', unlocked ? `${trophy.name}: ${trophy.defeatTag}` : 'Unknown threat: still at large');
 
       // Decorative brass rivets in four corners
       const rTL = el('span', 'twRivet tl');
@@ -355,7 +358,7 @@ export class TrophyWallModal {
       const medallion = el('div', 'twMedallion');
       medallion.style.borderColor = unlocked ? trophy.accentColor : '#525252';
 
-      const icon = el('span', 'twIcon', unlocked ? trophy.badgeIcon : '❓');
+      const icon = trophyPicture(trophy.id, unlocked);
       medallion.append(icon);
 
       // Brass Nameplate
@@ -391,7 +394,7 @@ export class TrophyWallModal {
     const box = el('div', 'twDetailBox');
     box.style.borderTopColor = trophy.accentColor;
 
-    const closeBtn = el('button', 'twDetailClose', '✕');
+    const closeBtn = el('button', 'twDetailClose', 'Close');
     closeBtn.addEventListener('click', () => {
       play('tap');
       detailOverlay.remove();
@@ -400,7 +403,7 @@ export class TrophyWallModal {
 
     const top = el('div', 'twDetailTop');
     const badge = el('div', 'twDetailBadge');
-    badge.textContent = unlocked ? trophy.badgeIcon : '🔒';
+    badge.append(trophyPicture(trophy.id, unlocked));
     badge.style.borderColor = trophy.accentColor;
 
     const titles = el('div', 'twDetailTitles');
@@ -413,7 +416,7 @@ export class TrophyWallModal {
     const body = el('div', 'twDetailBody');
     if (unlocked) {
       const quote = el('blockquote', 'twQuote', `"${trophy.blurb}"`);
-      const loreTitle = el('div', 'twLoreHead', '📜 AFTERMATH & INCIDENT REPORT:');
+      const loreTitle = el('div', 'twLoreHead', 'AFTERMATH & INCIDENT REPORT:');
       const lore = el('p', 'twLoreText', trophy.humorousLore);
       body.append(quote, loreTitle, lore);
     } else {

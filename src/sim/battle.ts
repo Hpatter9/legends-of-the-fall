@@ -1,3 +1,5 @@
+import { isMythic } from './mythicRules';
+import { mythicBlow, mythicDamage, mythicSpare, mythicWound, tickMythics, type MythicState } from './mythicCombat';
 // One fight, King God Castle style: the heroes are placed on the near rows while the foes wait on the far ones, then
 // both sides fight on their own in real time. Time moves in fixed ticks (`TICK_MS`), so the same board and the same
 // placing always play out the same. Each fighter, when free, strikes the weakest foe it can reach from where it
@@ -234,6 +236,8 @@ export interface Unit {
   ultOrder?: number;
   /** A hero kit's pool bookkeeping (`heroKits.ts`): when each skill was last cast, focus, winded. */
   ks?: KitState;
+  /** Mythic meters and memories, local to this battle. */
+  mythic?: MythicState;
   /** What the hero kits leave on a fighter (`kits/effects.ts`): parries, marks, forms, stances. */
   kx?: KitFx;
   /** A sheet the fighter is drawn with instead of its own for a while (a form, a guise, a wraith's borrowed shape). Only the look reads it. */
@@ -399,6 +403,9 @@ export type BattleEvent =
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
+  /** The Assault's big field (`src/sim/assault/field.ts`, `docs/notes/assault-0.md`): its occupancy grid, buckets and sector graph.
+   *  Absent on every other fight; nothing outside `src/sim/assault/` reads it, so no existing fight changes. */
+  field?: import('./assault/field').FieldState;
   rift?: Rift;
   riftBoss?: boolean;
   /** GUARDIAN-PULSE: the corrupted guardian's own unit id, fixed as the fight starts; its Calamity pulse comes from it alone (`riftBattle.ts`). */
@@ -821,13 +828,14 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
 /** Why a hero may not be put on a tile, or null when it may: the fight has begun (`phase`), it is not a hero (`side`), the tile is off
  *  the heroes' rows or not ground (`tile`), another stands there (`taken`), or another of its kind is on the field already (`twin`:
  *  ONE-OF-EACH, `docs/notes/one-of-each.md`). */
-export type PlaceBlock = 'phase' | 'side' | 'tile' | 'taken' | 'twin';
+export type PlaceBlock = 'phase' | 'side' | 'tile' | 'taken' | 'twin' | 'mythic';
 export function placeBlock(b: Battle, defId: string, u: number, v: number, tag?: number): PlaceBlock | null {
   if (b.phase !== 'deploy' || b.duel) return 'phase';
   if (UNITS[defId]?.side !== 'hero') return 'side';
   if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) return 'tile';
   const there = unitAt(b, u, v);
   if (there && !(tag === undefined ? there.def === defId : there.tag === tag)) return 'taken';
+  if (isMythic(defId) && b.units.some(x => x.alive && x.side === 'hero' && isMythic(x.def) && (tag === undefined ? x.def !== defId : x.tag !== tag))) return 'mythic';
   return twinOf(b, defId, tag) ? 'twin' : null;
 }
 
@@ -1022,6 +1030,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  tickMythics(b, out);
   if (b.rites?.id !== undefined) tickRites(b, out);
   if (b.bonds) tickBonds(b);
   if (b.warnings) tickWeakness(b, out);
@@ -1136,6 +1145,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   if (reached) {
     afterBlow(b, by, target, !!p.crit, p.dmg, out);
     kitBlow(b, by, target, !!p.crit, p.dmg, out);
+    if (isMythic(by.def)) mythicBlow(b, by, out);
     if (by.electrifiedUntil && by.electrifiedUntil > b.t) {
       const chainTargets = b.units
         .filter((u) => u.alive && u.side === target.side && u.id !== target.id && apart(target, u) <= 2)
@@ -1160,6 +1170,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return false;
   dmg = left;
+  const mythicMult = mythicDamage(b, by, to);
+  if (mythicMult !== 1) dmg = Math.max(1, Math.round(dmg * mythicMult));
   // (DEPTH-BUILD: a boss whose guard cracks to one calling's blows, `weakness.ts`)
   if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
   // (the Nemesis War: a nemesis's traits and weaknesses, on a blow it deals or takes, `nemesisTraits.ts`)
@@ -1201,6 +1213,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   // (DEPTH-BUILD: a sworn partner's guard takes a share of a blow that would fell it, once a wave)
   if (b.bonds && to.side === 'hero' && to.bondGuard !== undefined && to.bondGuard < 1 && by !== to) dmg = Math.max(1, Math.round(dmg * to.bondGuard));
   if (b.bonds && to.side === 'hero' && dmg >= to.hp) dmg = bondCover(b, to, dmg);
+  mythicWound(to, Math.min(to.hp, dmg));
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
   let killed = to.hp <= 0;
@@ -1283,6 +1296,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     }
   }
   // (a kit holds it up: Blood Fury, a guardian angel)
+  if (killed && mythicSpare(b, to)) killed = false;
   if (killed && to.kx && kitSpare(b, to, out)) killed = false;
   // (a phoenix feather: the first hero to fall rises at a third of its health, RELICS-2)
   if (killed && to.side === 'hero' && b.relics?.revive && !b.revived) {

@@ -77,7 +77,7 @@ test('bosses drop more than plain waves, and harder tiers a little more', () => 
   }
 });
 
-test('shards go to a hero being collected (a begun one likelier), as unlock shards', () => {
+test('shards go to a hero being collected (each as likely, a begun one no likelier: FAIR-SUMMONS), as unlock shards', () => {
   const m = fresh(4);
   const begun = toCollect(m)[5];
   (m.unlock ??= {})[begun] = 1;
@@ -90,8 +90,9 @@ test('shards go to a hero being collected (a begun one likelier), as unlock shar
     if (d.shards!.kind === begun) toBegun++;
     n++;
   }
-  // (one begun hero of about 30 left, weighted 7 to 1: about a fifth of the drops)
-  assert.ok(toBegun / n > 0.1, `${toBegun} of ${n}`);
+  // (one begun hero of the many left, each as likely: about one drop in that many, never the fifth it was when begun heroes were favoured)
+  const fair = 1 / toCollect(m).length;
+  assert.ok(toBegun / n < fair * 2.5, `${toBegun} of ${n}, a fair share is ${fair.toFixed(3)}`);
   const before = haveOf(m, begun);
   const paid = settleArmyDrop(m, true, 'final', 0, 7, 15, 'shards')!;
   assert.ok(paid.drop.shards!.n >= 3 && paid.drop.shards!.n <= 4, 'a boss drops 3 or 4');

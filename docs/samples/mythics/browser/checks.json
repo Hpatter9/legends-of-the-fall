@@ -1,0 +1,32 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "portraits": 5,
+    "frameChecks": 800,
+    "forms": [],
+    "reducedMotion": true,
+    "offline": true,
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "portraits": 5,
+    "frameChecks": 800,
+    "forms": [],
+    "reducedMotion": true,
+    "offline": false,
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "portraits": 5,
+    "frameChecks": 800,
+    "forms": [],
+    "reducedMotion": true,
+    "offline": false,
+    "errors": []
+  }
+]

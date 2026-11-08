@@ -27,6 +27,139 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.399.0',
+    date: '2026-11-08',
+    title: 'Assault engine test page',
+    notes: ['A test of the coming Assault mode: 55 against 200 on a 100x100 map. Open the game with ?bench=assault to see how smoothly your phone runs it.'],
+  },
+  {
+    version: '0.398.0',
+    date: '2026-11-08',
+    title: 'Mythic heroes completed',
+    notes: ['The five Mythic heroes get their own skill art, books, perks, lines and quest words. Mythics never come from summons, and the game publishes again.'],
+  },
+  {
+    version: '0.397.0',
+    date: '2026-11-08',
+    title: 'Five legends beyond the veil',
+    notes: [
+      'Five Mythic heroes wait behind hidden endgame quest chains and difficult trials. They never appear in ordinary summons.',
+      'Each brings powerful abilities, painted portraits, matching pixel battle animations and resting tavern artwork.',
+      'Only one Mythic may fight in a squad, including Last Stand. Earned Mythics arrive at level 30 with their full kit ready.',
+      'Secret progress and all new artwork remain available offline.',
+    ],
+  },
+  {
+    version: '0.396.0',
+    date: '2026-11-08',
+    title: 'A livelier tavern',
+    notes: [
+      'Your strongest heroes now gather around the bar, games table and hearth, each with their own activity: music, meals, crafts, cards and more.',
+      'Gentle movement, rolling dice, steam and warm firelight bring the room to life, with quieter options for reduced motion and battery saver.',
+      'Gwen stands behind the counter, guests stay clear to tap, and stray rectangular shadows around the heroes are gone.',
+    ],
+  },
+  {
+    version: '0.395.0',
+    date: '2026-11-07',
+    title: 'Straighter steel and sturdier spears',
+    notes: [
+      'Painted hero illustrations have clearer weapon shapes, with a straighter Peasant spear and an aligned Mercenary sword grip.',
+      'Samurai artwork has cleaner sword grips and scabbards, and the Ranger’s drawn bowstring connects correctly.',
+      'The revised paintings and matching menu portraits remain available offline.',
+    ],
+  },
+  {
+    version: '0.394.0',
+    date: '2026-11-07',
+    title: 'Painted roads and the six heralds',
+    notes: [
+      'Eight road encounters now have painted scenes, from the Pale Lady’s shrine to the refugee caravan, with every choice and price kept clear.',
+      'The six Calamity heralds have painted portraits matching their battle appearances, shown on introduction cards and once discovered in the codex.',
+      'Twelve new Nemesis symbols complete all twenty-four traits. Unknown traits keep their symbols hidden until learned.',
+    ],
+  },
+  {
+    version: '0.393.0',
+    date: '2026-11-07',
+    title: 'Painted faces, trophies and the Houses',
+    notes: [
+      'Fifteen quest-givers now have their own painted portraits, and Lost Techniques has a weathered manuscript.',
+      'All eighteen boss trophies are painted keepsakes on oak plaques, with empty mounts waiting for bosses still at large.',
+      'The Houses and Dark Council have painted backdrops, with new season, honour, House, heirloom and War Trophy symbols.',
+      'Council news uses its own artwork, and twelve learned Nemesis traits now show their symbols. Unknown traits keep their secrets.',
+    ],
+  },
+  {
+    version: '0.392.0',
+    date: '2026-11-07',
+    title: 'A cozy home for your heroes',
+    notes: [
+      'Your five strongest heroes relax around a painted tavern hearth, with two new seated paintings for every hero.',
+      'Tap a guest to manage them, or switch between Your heroes and Tavern services for upgrades, quests and the shop.',
+      'The company updates as your heroes grow stronger, and the new art is available offline.',
+    ],
+  },
+  {
+    version: '0.391.0',
+    date: '2026-11-07',
+    title: 'Ten heroes, completely remade',
+    notes: [
+      'Ten heroes have new battle sprites inspired by their portraits, with clearer faces and consistent skin tones.',
+      'New front and rear animations cover walking, attacks, abilities, hurt and falling, with each hero’s own clothes and weapons.',
+    ],
+  },
+  {
+    version: '0.390.0',
+    date: '2026-11-07',
+    title: 'Painted battle screens',
+    notes: [
+      'Battle controls, deployment, popups and reports now share painted brass and leather frames.',
+      'Hero skills, king spells and battle notes use painted icons, with clearer deployment controls.',
+    ],
+  },
+  {
+    version: '0.389.0',
+    date: '2026-11-07',
+    title: 'Painted gear, travellers and livelier battle art',
+    notes: [
+      'All 69 remaining equipment pieces now have paintings, with new empty-slot icons and an armoury backing.',
+      'The Pilgrim, Deserter and Cartographer have portraits; oath pennants and provisions have their own art.',
+      'Nine enemies breathe between attacks and recoil when struck; all three treant forms have hurt animations.',
+      'Painted flame, smoke and electrical effects have richer animation, with still poses for reduced motion.',
+    ],
+  },
+  {
+    version: '0.388.0',
+    date: '2026-11-07',
+    title: 'Fair summons: every hero as likely',
+    notes: ['Every hero is equally likely in a summon and a chest\'s shards. Your fourth and fifth heroes join on a single shard.'],
+  },
+  {
+    version: '0.387.0',
+    date: '2026-11-07',
+    title: 'Nine new heroes join',
+    notes: ['The Vampires (Vladislav, Carmilla, Sorin, Gavril, Klara) join with Raiden, Kavi, Aisling and Tenzin: 54 heroes to collect.'],
+  },
+  {
+    version: '0.386.0',
+    date: '2026-11-06',
+    title: 'Painted tactic icons and nemesis art',
+    notes: ['The tactic button shows painted Advance, Hold and Charge medallions. Nemeses wear rank badges, and the duel card and taunts get painted banners.'],
+  },
+  {
+    version: '0.385.0',
+    date: '2026-11-06',
+    title: 'The camp\'s top bar fits on one line',
+    notes: ['The settings gear sits beside the trophy again on every phone. The season moves down beside the armies line, and big counts show as 999k.'],
+  },
+  {
+    version: '0.384.0',
+    date: '2026-11-06',
+    title: 'Heirs and the Mantle',
+    notes: ['Sworn pairs name an heir with a birthright, an heirloom and a Blood Grudge. The heir takes up the Mantle with all progress; the elder takes an honour.'],
+  },
+  {
     version: '0.383.0',
     date: '2026-11-06',
     title: 'Seasons and the Houses',

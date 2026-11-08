@@ -1,0 +1,380 @@
+{
+  "knight": {
+    "place": "dice-left",
+    "motion": "play",
+    "brief": "Seated on a plain backless wooden stool facing RIGHT, leaning forward laughing, rolling three dice from his right hand, left hand on knee. No mug.",
+    "label": "Rolling dice",
+    "facing": "right"
+  },
+  "samurai": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Standing side-on facing RIGHT, calmly polishing his sheathed katana scabbard with a small cloth, eyes down. No mug.",
+    "label": "Polishing a scabbard",
+    "facing": "right"
+  },
+  "kunoichi": {
+    "place": "bar",
+    "motion": "talk",
+    "brief": "Standing casually facing LEFT, resting weight on one hip, holding a small wine cup at waist, laughing towards barkeeper, spare hand on belt.",
+    "label": "Chatting over wine",
+    "facing": "left"
+  },
+  "archer": {
+    "place": "supper",
+    "motion": "eat",
+    "brief": "Sitting sideways on a small plain stool facing LEFT, eating bread and stew from a small wooden bowl in lap with a spoon, bow slung on back.",
+    "label": "Eating supper",
+    "facing": "left"
+  },
+  "wizard": {
+    "place": "dice-right",
+    "motion": "read",
+    "brief": "Perched on a plain stool facing LEFT, absorbed in an open red spellbook on lap, fingertip following a line, tiny warm magical light above page. No mug.",
+    "label": "Reading a spellbook",
+    "facing": "left"
+  },
+  "peasant": {
+    "place": "supper",
+    "motion": "eat",
+    "brief": "Standing facing RIGHT, tearing a loaf of bread in half with both hands and smiling, straw hat, spear safely slung.",
+    "label": "Sharing bread",
+    "facing": "right"
+  },
+  "ninjaMonk": {
+    "place": "hearth",
+    "motion": "breathe",
+    "brief": "Cross-legged on a small plain cushion, eyes closed meditating, hands relaxed on knees, shoulders loose, no book or cup.",
+    "label": "Meditating",
+    "facing": "right"
+  },
+  "wanderer": {
+    "place": "supper",
+    "motion": "tend",
+    "brief": "Sitting on a plain stool facing LEFT, mending green cloak with needle and thread held between hands, small cloth draped across knee.",
+    "label": "Mending a cloak",
+    "facing": "left"
+  },
+  "lightningMage": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, amusing herself with a tiny contained blue lightning spark dancing between fingertips held near chest, gentle smile, no combat casting.",
+    "label": "Playing with a spark",
+    "facing": "right"
+  },
+  "kitsune": {
+    "place": "bar",
+    "motion": "talk",
+    "brief": "Standing facing LEFT, coy smile, fanning face with a red folding fan, fluffy multiple fox tails resting, no mug.",
+    "label": "Fanning herself",
+    "facing": "left"
+  },
+  "karasu": {
+    "place": "dice-right",
+    "motion": "play",
+    "brief": "Perched on a simple stool facing LEFT, raven-headed monk arranging a fan of playing cards held in feathered hands, eyes on cards, no mug.",
+    "label": "Studying cards",
+    "facing": "left"
+  },
+  "yamabushi": {
+    "place": "bar",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, threading and inspecting a long strand of wooden prayer beads in both hands, gentle contemplative smile.",
+    "label": "Tending prayer beads",
+    "facing": "right"
+  },
+  "werewolf": {
+    "place": "supper",
+    "motion": "eat",
+    "brief": "Sitting on a sturdy plain stool facing LEFT, gleefully gnawing a large roast meat joint held in clawed hands, lupine head and paws intact.",
+    "label": "Enjoying a roast",
+    "facing": "left"
+  },
+  "minotaur": {
+    "place": "bar",
+    "motion": "drink",
+    "brief": "Standing three-quarter facing RIGHT, huge bull-headed warrior slowly drinking from an oversized pewter tankard, other hand on hip, hoof feet, horns.",
+    "label": "Drinking ale",
+    "facing": "right"
+  },
+  "satyr": {
+    "place": "hearth",
+    "motion": "music",
+    "brief": "Standing relaxed facing RIGHT on goat legs, playing a small set of panpipes held to lips, eyes half closed enjoying melody.",
+    "label": "Playing panpipes",
+    "facing": "right"
+  },
+  "gorgon": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Coiled snake lower body at rest, facing LEFT, gently combing and tending one living hair snake with a small ivory comb, affectionate smile, no cup.",
+    "label": "Tending her snakes",
+    "facing": "left"
+  },
+  "samuraiCommander": {
+    "place": "dice-right",
+    "motion": "read",
+    "brief": "Sitting on simple stool facing LEFT studying a rolled-open parchment battle map held in hands, off-duty thoughtful expression, weapons sheathed.",
+    "label": "Studying a map",
+    "facing": "left"
+  },
+  "paladin": {
+    "place": "hearth",
+    "motion": "breathe",
+    "brief": "Standing facing RIGHT, eyes closed in peaceful prayer, clasped hands at chest, shield resting against boot, no weapon raised.",
+    "label": "Praying",
+    "facing": "right"
+  },
+  "cleric": {
+    "place": "dice-right",
+    "motion": "tend",
+    "brief": "Sitting on a plain stool facing LEFT carefully wrapping a clean bandage around own forearm, small rolled bandage held in free hand, gentle restful smile.",
+    "label": "Wrapping a bandage",
+    "facing": "left"
+  },
+  "druid": {
+    "place": "supper",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, crushing medicinal herbs in a small stone mortar held in one hand with pestle in other, leaves visible, no magic combat pose.",
+    "label": "Grinding herbs",
+    "facing": "right"
+  },
+  "barbarian": {
+    "place": "dice-left",
+    "motion": "play",
+    "brief": "Sitting on a sturdy plain stool facing RIGHT, laughing heartily while shaking a leather dice cup over open palm, fur cloak draped behind, no drink.",
+    "label": "Shaking dice",
+    "facing": "right"
+  },
+  "ranger": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Sitting on a plain stool facing LEFT, carefully fletching an arrow with a white feather and binding thread in lap, bow safely slung.",
+    "label": "Fletching arrows",
+    "facing": "left"
+  },
+  "warlock": {
+    "place": "dice-right",
+    "motion": "read",
+    "brief": "Standing facing LEFT hunched slightly over a tiny purple glowing grimoire held open at chest, tracing an inscription with finger, calm scholar.",
+    "label": "Reading a grimoire",
+    "facing": "left"
+  },
+  "illusionist": {
+    "place": "bar",
+    "motion": "play",
+    "brief": "Standing facing RIGHT, smiling and performing a small floating golden coin trick between fingers for tavern company, only three tiny coins, no battle magic.",
+    "label": "Performing a coin trick",
+    "facing": "right"
+  },
+  "gunslinger": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Sitting on simple stool facing LEFT, carefully cleaning an antique unloaded pistol with a cloth across lap, muzzle down, relaxed safe posture, no cup.",
+    "label": "Cleaning a pistol",
+    "facing": "left"
+  },
+  "shambler": {
+    "place": "hearth",
+    "motion": "sleep",
+    "brief": "Zombie dozing on a plain stool facing LEFT, chin slumped to chest, arms loosely folded, heavy drooping eyelids, comic peaceful nap.",
+    "label": "Dozing",
+    "facing": "left"
+  },
+  "rifleBot": {
+    "place": "dice-right",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, brass steampunk automaton adjusting a small loose brass gear with a screwdriver in its hands, rifle safely stowed.",
+    "label": "Repairing a gear",
+    "facing": "right"
+  },
+  "mercenary": {
+    "place": "bar",
+    "motion": "tend",
+    "brief": "Standing facing LEFT counting a small handful of copper coins into a leather purse, eyes on coins, dark cloak resting, sword sheathed.",
+    "label": "Counting coins",
+    "facing": "left"
+  },
+  "mummy": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, ancient mummy patiently rewrapping a loose linen strip around wrist, long trailing bandage in other hand, no cup.",
+    "label": "Rewrapping linen",
+    "facing": "right"
+  },
+  "buccaneer": {
+    "place": "dice-right",
+    "motion": "play",
+    "brief": "Sitting on plain stool facing LEFT, grinning at a fan of worn playing cards, one card extended ready to lay down, sword stowed.",
+    "label": "Playing cards",
+    "facing": "left"
+  },
+  "wolfBard": {
+    "place": "hearth",
+    "motion": "music",
+    "brief": "Standing facing RIGHT, white wolf bard strumming a small wooden lute with both paws, mouth open softly singing, feathered red hat, tail visible.",
+    "label": "Singing with a lute",
+    "facing": "right"
+  },
+  "beastmaster": {
+    "place": "supper",
+    "motion": "tend",
+    "brief": "Kneeling facing LEFT, feeding a small friendly wolf at her knee a morsel from her hand, smiling down at companion, no cup.",
+    "label": "Feeding her wolf",
+    "facing": "left"
+  },
+  "kraken": {
+    "place": "bar",
+    "motion": "drink",
+    "brief": "Standing facing RIGHT, purple tentacle-faced gentleman delicately tasting a small tea cup with one curled facial tentacle while hands hold saucer, playful calm expression.",
+    "label": "Having tea",
+    "facing": "right"
+  },
+  "lancer": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Standing facing LEFT, blue-haired knight tightening leather glove straps with other hand, long lance resting upright safely at side, no mug.",
+    "label": "Adjusting gloves",
+    "facing": "left"
+  },
+  "reaper": {
+    "place": "hearth",
+    "motion": "read",
+    "brief": "Standing facing RIGHT, purple skeletal hooded reaper reading a tiny pocket poetry book with delicate skeletal fingers, scythe stowed, peaceful and whimsical.",
+    "label": "Reading poetry",
+    "facing": "right"
+  },
+  "timeWitch": {
+    "place": "dice-right",
+    "motion": "tend",
+    "brief": "Sitting on plain stool facing LEFT, turning a small brass hourglass between hands, watching grains of sand with curious smile, no mug.",
+    "label": "Watching an hourglass",
+    "facing": "left"
+  },
+  "arcBlade": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, helmeted blue-gold swordsman inspecting a small glowing blue crystal removed from hilt, sword sheathed, hands at waist.",
+    "label": "Inspecting a crystal",
+    "facing": "right"
+  },
+  "dreadPirate": {
+    "place": "bar",
+    "motion": "talk",
+    "brief": "SKELETON pirate, exposed ivory skull and bones, no living flesh. Standing facing LEFT with one bony hand gesturing in a tall sea story, other hand holding rolled sea chart, feathered tricorn.",
+    "label": "Telling a sea story",
+    "facing": "left"
+  },
+  "siegeBot": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Heavy brass red siege automaton standing facing RIGHT, polishing chest plate with small cloth, shoulder cannon stowed upward, relaxed and friendly.",
+    "label": "Polishing armour",
+    "facing": "right"
+  },
+  "priestess": {
+    "place": "supper",
+    "motion": "tend",
+    "brief": "Sitting on plain stool facing LEFT, weaving a small wreath of wildflowers in hands, serene gold-clad priestess, flowers across lap, no mug.",
+    "label": "Weaving flowers",
+    "facing": "left"
+  },
+  "dragoon": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Standing facing LEFT, blue-haired winged dragoon gently stretching one small membranous wing by hand, lance safely stowed, restful expression.",
+    "label": "Stretching a wing",
+    "facing": "left"
+  },
+  "juggernaut": {
+    "place": "supper",
+    "motion": "eat",
+    "brief": "Massive closed-helmet armoured warrior sitting on sturdy plain stool facing LEFT, holding a tiny wooden soup bowl and spoon, comically oversized gauntlets, visor slightly lifted enough for spoon.",
+    "label": "Having soup",
+    "facing": "left"
+  },
+  "sage": {
+    "place": "dice-right",
+    "motion": "read",
+    "brief": "White-bearded blue-hatted sage standing facing LEFT writing a note with quill in small journal balanced in palm, thoughtful eyes, no cup.",
+    "label": "Writing a journal",
+    "facing": "left"
+  },
+  "demonSwordsman": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, red horned swordsman rubbing a small whetstone along a short utility knife held low, long sword sheathed, calm off-duty expression.",
+    "label": "Using a whetstone",
+    "facing": "right"
+  },
+  "tyrant": {
+    "place": "dice-left",
+    "motion": "play",
+    "brief": "Crowned red-gold king sitting on a plain stool facing RIGHT, pondering a carved chess knight held in fingers, other hand thoughtfully stroking beard, no grand throne or mug.",
+    "label": "Pondering chess",
+    "facing": "right"
+  },
+  "vampireLord": {
+    "place": "bar",
+    "motion": "drink",
+    "brief": "Silver-haired vampire noble standing facing LEFT, delicately swirling ruby wine in stemmed goblet, one hand behind back, relaxed amused smile.",
+    "label": "Swirling wine",
+    "facing": "left"
+  },
+  "hemomancer": {
+    "place": "supper",
+    "motion": "tend",
+    "brief": "Dark-haired red-black sorceress sitting on plain stool facing LEFT, gently pressing a crimson flower between pages of a small notebook in lap, peaceful smile, no cup.",
+    "label": "Pressing a flower",
+    "facing": "left"
+  },
+  "nightstalker": {
+    "place": "hearth",
+    "motion": "sleep",
+    "brief": "Pink winged bat-like humanoid resting perched on low wooden stool facing LEFT, wings loosely wrapped around shoulders, eyes closed, head resting against one hand.",
+    "label": "Napping",
+    "facing": "left"
+  },
+  "bloodGargoyle": {
+    "place": "hearth",
+    "motion": "breathe",
+    "brief": "Stocky red stone gargoyle standing at rest facing RIGHT, broad wings folded, gently stretching shoulders with hands linked behind head, clawed feet grounded.",
+    "label": "Stretching",
+    "facing": "right"
+  },
+  "dhampir": {
+    "place": "dice-right",
+    "motion": "play",
+    "brief": "Dark-hatted vampire hunter sitting on plain stool facing LEFT, practising shuffling a deck of cards between both hands, faint smile, crossbow slung.",
+    "label": "Shuffling cards",
+    "facing": "left"
+  },
+  "warDrummer": {
+    "place": "hearth",
+    "motion": "music",
+    "brief": "Standing facing RIGHT with small waist-strapped hand drum, tapping a quiet rhythm with fingertips rather than battle sticks, relaxed smiling expression.",
+    "label": "Tapping a drum",
+    "facing": "right"
+  },
+  "geomancer": {
+    "place": "dice-right",
+    "motion": "tend",
+    "brief": "Standing facing LEFT, dark-skinned gold-magenta earth mage carefully balancing three small smooth pebbles in a tiny stack on open palm, fascinated smile, no combat magic.",
+    "label": "Balancing pebbles",
+    "facing": "left"
+  },
+  "bellWarden": {
+    "place": "hearth",
+    "motion": "tend",
+    "brief": "Long-haired gold-armoured bell warden sitting on plain stool facing LEFT, polishing a small handbell with cloth in lap, large ceremonial bells stowed.",
+    "label": "Polishing a bell",
+    "facing": "left"
+  },
+  "falconer": {
+    "place": "bar",
+    "motion": "tend",
+    "brief": "Standing facing RIGHT, red-haired green-cloaked falconer feeding a small falcon perched on gloved forearm, bird leaning in for morsel from other hand, soft smile.",
+    "label": "Feeding a falcon",
+    "facing": "right"
+  }
+}

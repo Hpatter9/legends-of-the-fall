@@ -202,3 +202,15 @@ body.towerUp #version { z-index: 7; }
 .riftActions { display: flex; gap: 8px; }
 .riftActions button { flex: 1; min-height: 44px; }
 .riftAltar .riftRisk { color: var(--gold-hi); line-height: 1.4; }
+
+/* Painted expedition details; the existing cards, choices and words keep their layout. */
+.rtTraveller { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; align-items: center; }
+.rtTraveller .rtTravellerPortrait { width: 92px; height: 112px; object-fit: contain; image-rendering: auto; }
+.rtTravellerWords { min-width: 0; }
+.rtTravellerName { display: block; margin-bottom: 4px; color: var(--gold-hi); font: 700 16px var(--display); }
+.rtCard .rtTraveller .rtLead { text-align: left; line-height: 1.4; }
+.dmProvisions { display: inline-flex; align-items: center; gap: 4px; }
+.rtProvisionIcon { width: 24px; height: 24px; object-fit: contain; image-rendering: auto; }
+.dmPennant img.rtOathIcon { width: 22px; height: 22px; object-fit: contain; image-rendering: auto; }
+.rtOathOffer { width: 38px; height: 48px; flex: none; object-fit: contain; image-rendering: auto; }
+.rtProvisionShop { float: left; width: 48px; height: 48px; margin-right: 8px; object-fit: contain; image-rendering: auto; }

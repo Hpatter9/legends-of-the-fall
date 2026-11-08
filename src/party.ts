@@ -1,3 +1,4 @@
+import { mythicFits, MYTHIC_LIMIT_WORDS } from './sim/mythicRules';
 // The party screen: a cinematic tableau of the draft, its removable hero selectors, role coverage and trait bonds.
 // The searchable hero grid below lets the player add or take out heroes from the summons pool (a
 // long press, or the small i, opens the hero's role and skill), and the locked heroes shaded at the end. A draft is kept
@@ -200,6 +201,10 @@ export class Party {
     // (DEPTH-BUILD: a hero mentoring in the Hall of Legends does not march; recall it from the Hall first)
     if (!this.picked.includes(kind) && retired(this.meta, kind)) {
       this.note = `${heroName(kind)} is in the Hall of Legends: recall them there first.`;
+      return this.draw();
+    }
+    if (!this.picked.includes(kind) && !mythicFits(this.picked, kind)) {
+      this.note = MYTHIC_LIMIT_WORDS;
       return this.draw();
     }
     if (this.picked.includes(kind)) {

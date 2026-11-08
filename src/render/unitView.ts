@@ -5,6 +5,7 @@ import { type ColorMatrix, ColorMatrixFilter, Container, Graphics, Sprite, Text,
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
+import { RANK_BADGE } from '../expansionArt';
 import { AwakenAura } from './awakenAura';
 import { auraOf } from './auraStyles';
 import { awakenedSheet, battleSheet, combatAuraStep } from './awakenLook';
@@ -33,6 +34,7 @@ import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
+import { idleFrame } from './enemyMotion';
 import { AilmentFx, ailmentTint } from './ailmentLayer';
 import { gearTexture } from './gearTex';
 import { lookMatrix } from '../sim/heroLooks';
@@ -270,6 +272,23 @@ export class UnitSprite {
     back.roundRect(-w / 2, -words.height - 1, w, words.height + 2, 2).fill({ color: 0x1a1008, alpha: 0.78 }).stroke({ color: col, width: 1, alpha: 0.95 });
     skull.position.set(w / 2 + 1, 0);
     plate.addChild(back, words, skull);
+    // (the rank's commissioned badge above the plate, once its picture has loaded)
+    const badgeUrl = RANK_BADGE[rank];
+    if (badgeUrl) {
+      const badge = new Sprite();
+      badge.anchor.set(0.5, 1);
+      badge.position.set(0, -words.height - 2);
+      plate.addChild(badge);
+      const img = new Image();
+      img.onload = () => {
+        // (the plate may be gone by the time the picture loads, a boss slain or the fight left: then there is nothing to dress)
+        if (badge.destroyed || !badge.parent) return;
+        badge.texture = Texture.from(img);
+        badge.height = 15;
+        badge.scale.x = badge.scale.y;
+      };
+      img.src = badgeUrl;
+    }
     // (phase 3: the trophies it carries, each drawn small with the piece's own gear icon, left of the plate; added once the atlas is in)
     this.plateTrophies = trophies.length ? { list: trophies, x: -w / 2 - 1, size: words.height + 2 } : null;
     this.hangTrophies();
@@ -322,7 +341,7 @@ export class UnitSprite {
     let z = depth(u.u, u.v) + 5;
     let anim: Anim = 'idle';
     let row: Row | undefined;
-    let frame = Math.floor(t / 110);
+    let frame = idleFrame(this.sheet, t, u.id, !!this.reduced?.matches);
     const step = u.step;
     let arcLift = 0;
     if (fighting && u.alive && step && t < step.at + step.ms) {

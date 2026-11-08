@@ -16,7 +16,8 @@ import { ABILITIES } from './sim/stats';
 import { gearScores, scoreCompare, type HeroAt } from './sim/statLines';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
-import { paintGearIcon } from './gearIcons';
+import { paintGearIcon, paintGradeFrame } from './gearIcons';
+import { EMPTY_SLOT_ART, DOLL_BACKING } from './finishingArt';
 import { shopArt } from './bookArt';
 import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
 import { sellPiece, stallRepair } from './sim/stall';
@@ -50,15 +51,22 @@ const paint = (src: string, cls: string): HTMLImageElement => {
  *  frame for a base the painted atlas does not hold. */
 export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big' | 'small' = 'big'): HTMLElement {
   const frame = el('span', `eqIcon ${size}${it ? ` r${it.rarity}` : ' empty'}`);
-  const base = it ? it.base : SLOT_FACE[slot];
   const px = size === 'big' ? 64 : 44;
-  if (paintGearIcon(frame, base, it ? it.rarity : 0, px)) return wearMarks(frame, it);
+  if (!it) {
+    const outline = el('i', 'eqEmptyArt');
+    outline.style.backgroundImage = `url(${EMPTY_SLOT_ART[slot]})`;
+    outline.style.backgroundSize = 'contain';
+    outline.style.backgroundPosition = 'center';
+    paintGradeFrame(frame, 0, px, outline);
+    return frame;
+  }
+  const base = it.base;
+  if (paintGearIcon(frame, base, it.rarity, px)) return wearMarks(frame, it);
   const file = EQUIP_ICONS[EQUIP_BASES[base]?.icon ?? ''];
-  if (!file && it) {
+  if (!file) {
     // (SEVEN-SLOT GEAR: a new base still waiting for its painting shows its slot's outline and its name: docs/notes/gear-art-todo.md)
     frame.classList.add('ph');
-    const outline = el('span', 'eqIcon empty');
-    paintGearIcon(outline, SLOT_FACE[slot], 0, px);
+    const outline = itemIcon(undefined, slot, size);
     frame.append(outline, el('b', 'eqPh', EQUIP_BASES[base]?.name.split(' ').filter((w) => w.length > 2 && !/^(of|the)$/i.test(w)).pop() ?? ''));
     return wearMarks(frame, it);
   }
@@ -66,13 +74,10 @@ export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big'
   img.alt = '';
   img.draggable = false;
   img.decoding = 'sync';
-  img.src = file ?? EQUIP_ICONS[EQUIP_BASES[SLOT_FACE[slot]].icon];
+  img.src = file;
   frame.append(img);
   return wearMarks(frame, it);
 }
-
-/** The painting an empty slot shows faintly (a base of that slot with a painting), and the slots' places on the paper doll. */
-const SLOT_FACE: Readonly<Record<EquipSlot, string>> = { head: 'circlet', torso: 'plateCuirass', main: 'ironSword', off: 'scryingOrb', feet: 'bootsOfHaste', belt: 'vialOfVigor', acc: 'ironRing' };
 
 /** A piece that has lost durability shows it (SHOP-BOOKS-GEAR, `wear.ts`): a slim bar along the foot (green, amber when worn, red
  *  when broken), the worn or broken badge, and a broken piece greyed under its cracks. A full piece shows nothing new. */
@@ -245,7 +250,10 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const slots = el('div', 'eqSlots eqDoll');
     const face = portrait(UNITS[kind].sheet, 96);
     face.classList.add('eqDollHero');
-    slots.append(face);
+    const backing = el('div', 'eqDollPortrait');
+    backing.style.backgroundImage = `url(${DOLL_BACKING})`;
+    backing.append(face);
+    slots.append(backing);
     for (const slot of EQUIP_SLOTS) {
       const it = wornIn(meta, kind, slot);
       const b = el('button', `eqSlot at-${slot}`);

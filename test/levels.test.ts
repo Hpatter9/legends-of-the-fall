@@ -11,7 +11,8 @@ import { HEROES, UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 
 test('a fight gives every hero that fought XP, and a win pays more', () => {
-  const b = readyBattle(4);
+  // (HEROES-JOIN, docs/notes/heroes-join.md: re-staged from seed 4, where the five no longer make a kill, to seed 1; 28 of seeds 1 to 30 do)
+  const b = readyBattle(1);
   fight(b);
   playOut(b);
   const gains = fightXp(b);
@@ -26,7 +27,7 @@ test('a fight gives every hero that fought XP, and a win pays more', () => {
   const lost = fightXp({ ...b, phase: 'lost' });
   for (const k of HEROES) assert.ok(won[k] > lost[k], `${k}: a win pays more`);
   // and the counters are the same every time the seed plays out
-  const again = readyBattle(4);
+  const again = readyBattle(1);
   fight(again);
   playOut(again);
   assert.deepEqual(fightXp(again), gains);

@@ -198,28 +198,26 @@ The balance bar is no army's mean tries rising by more than 1.
   first opens, the bot almost never loses a hero, so the Oath is its full pay: 1.31× (1.306), the bar itself: the extra is each wave’s crowns
   rounded to a whole crown.
 
-## Art: placeholders and the images to make
+## Art
 
 Phase 7 uses existing art only, bundled into game.js, so the service worker's list does not change:
 
-- the fallen's candle: the **ember brand** item icon (`FATE_ICON.fallen`, the tavern's candle, the slayer's chip);
-- the Legend's laurel: the **saint's medal** item icon (`LEGEND_ICON`, ready for the tree);
+- the fallen's candle: main's painted **fallen** fate icon (`FATE_ICON.fallen` in `dynastyArt.ts`), on the Houses, the slayer's chip and
+  the tavern's mourning seat. (The branch first used the ember brand item icon; the painted set arrived on main and replaced it in the
+  merge.)
+- the Legend: a steady gold frame. Main's painted **legend** symbol (`LEGEND_ICON`) is re-exported from `housesView.ts`, ready for the
+  tree, but not drawn yet;
 - the Oath on the March orders: the "✠" glyph, as the other orders use glyphs;
 - a Shade's look: the hero's own portrait (the call) and sprite (the tavern) with a spectral tint and fade, as the design asks.
 
-The images that would replace them, as ChatGPT prompts (the design's row 12 counts the fallen and Legend fate icons):
+Images that could still be made, as ChatGPT prompts:
 
-1. **The fallen's candle** (a fate icon): "A 24x24 pixel-art icon on a transparent background for a dark fantasy game: a single short
-   white candle in a small iron holder, its flame steady and warm, a drip of wax down one side, 1 px dark outline, muted gold and parchment
-   palette, no text."
-2. **The Legend's laurel** (a fate icon): "A 24x24 pixel-art icon on a transparent background for a dark fantasy game: a gold laurel
-   wreath tied with a small red ribbon at the bottom, 1 px dark outline, muted gold palette, no text."
-3. **The Legend Oath's seal** (for the March orders' row): "A 32x32 pixel-art icon on a transparent background for a dark fantasy game:
+1. **The Legend Oath's seal** (for the March orders' row): "A 32x32 pixel-art icon on a transparent background for a dark fantasy game:
    a wax seal pressed with a skull over crossed swords, deep red wax with a gold rim, a short torn ribbon beneath, 1 px dark outline, no
    text."
-4. **The Shade's mark** (for the Shades' card and the horn): "A 24x24 pixel-art icon on a transparent background for a dark fantasy
+2. **The Shade's mark** (for the Shades' card and the horn): "A 24x24 pixel-art icon on a transparent background for a dark fantasy
    game: a pale spectral hooded figure fading into wisps at the bottom, cold blue-white glow inside the hood, 1 px dark outline, no text."
-5. **A Legend's gold frame for the family tree's portraits** (if the owner wants more than the steady gold border): "A square ornate
+3. **A Legend's gold frame for the family tree's portraits** (if the owner wants more than the steady gold border): "A square ornate
    portrait frame for a dark fantasy pixel-art game, 72x72 pixels, transparent centre 64x64, bright gold filigree with a small laurel at
    the top, 1 px dark outline, no text."
 

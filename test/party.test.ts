@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { MYTHIC_KINDS, isMythic } from '../src/sim/mythicRules';
 import assert from 'node:assert/strict';
 import { loadMeta, startedMeta, partySlots, saveMeta, setParty, type Meta } from '../src/sim/meta';
 import { newRun, summon, START_GOLD } from '../src/sim/run';
@@ -72,5 +73,9 @@ test('a saved party keeps only kinds still unlocked, unique, at most five', () =
 test('every hero in the game can be put in a party once unlocked', () => {
   const m = startedMeta(2);
   m.unlocked = [...ALL_HEROES];
-  assert.equal(setParty(m, ALL_HEROES.slice(-5)), true);
+  // (only one Mythic a squad, docs/notes/mythic-heroes.md: each joins a party with four ordinary heroes, and two together are refused)
+  const ordinary = ALL_HEROES.filter((k) => !isMythic(k));
+  assert.equal(setParty(m, ordinary.slice(-5)), true);
+  for (const k of MYTHIC_KINDS) assert.equal(setParty(m, [k, ...ordinary.slice(-4)]), true, k);
+  assert.equal(setParty(m, [...MYTHIC_KINDS.slice(0, 2), ...ordinary.slice(-3)]), false, 'two Mythics');
 });

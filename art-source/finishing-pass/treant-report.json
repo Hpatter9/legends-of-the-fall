@@ -1,0 +1,29 @@
+[
+  {
+    "sheet": "cls_treant",
+    "hurtFrames": 3,
+    "allOriginalRowsPreserved": true,
+    "padding": [
+      0,
+      6
+    ]
+  },
+  {
+    "sheet": "cls_treant_2",
+    "hurtFrames": 3,
+    "allOriginalRowsPreserved": true,
+    "padding": [
+      0,
+      3
+    ]
+  },
+  {
+    "sheet": "cls_treant_3",
+    "hurtFrames": 3,
+    "allOriginalRowsPreserved": true,
+    "padding": [
+      0,
+      3
+    ]
+  }
+]
