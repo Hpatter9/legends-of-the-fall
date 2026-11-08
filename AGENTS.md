@@ -36,7 +36,7 @@ Separate worktrees prevent local overwrites, but do not prevent merge conflicts.
 
 Follow CLAUDE.md: run type checks and the web build for implementation work, and select tests for the changed behaviour and affected callers. Full test suites and unrelated balance sweeps are not required. Add regression coverage for new simulation rules and inspect the affected screens at the specified portrait sizes for visual changes. Preserve deterministic simulation, existing save keys, offline caching, and asset credits.
 
-Intentional flashy effects, glows, pulses and flourishes are allowed. The owner’s “no flashing” note refers to textures disappearing completely or flashing off and on in a glitchy way, not deliberate visual effects. Preserve reduced-motion support.
+Flashy effects, glows, pulses, flicker and flourishes are all allowed; there is no “no flashing” rule (the owner withdrew it, 2026-11-08). Preserve reduced-motion support.
 
 For documentation-only changes, inspect the diff, links, and consistency; report runtime checks as not run because executable code is unchanged. Never imply checks passed unless they ran.
 
