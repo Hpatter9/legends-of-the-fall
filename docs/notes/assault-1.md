@@ -395,3 +395,29 @@ style of the war camp land: a transparent background, a dark outline, and a ligh
    targets). Is that right?
 5. **Music:** the assault plays the battle arrangement, then the boss arrangement once the throne's guard wakes. The design's own
    **siege** arrangement is not rendered yet (`npm run music`).
+
+## The owner's confirmations (for later phases)
+
+1. **The Beasts' hold** is an autumn moor that climbs to a snowbound den.
+2. **The holds' working names are approved:**
+
+   | Army | Hold |
+   | --- | --- |
+   | Undead | Barrow Necropolis |
+   | Beasts | Howling Den |
+   | Wildwood | Elder Root |
+   | Labyrinth | Heart of the Maze |
+   | Ogres | Bonefire Crag |
+   | Infernal | Brimstone Gate |
+   | Yokai | Moonlit Shrine |
+   | Golems | Iron Foundry |
+
+3. **The renderer work for the Orc art goes into 1b**, after 1a ships, so the owner's 13 sheets (on `art/assault-orc`) drop straight in. It
+   is listed in section 1.2 of `docs/notes/assault-art-plan.md` on `claude/assault-art-plan`:
+   - ground materials (256 px textures, each sampling a 4 x 4 block of tiles);
+   - an edge and corner fringe pass for transitions;
+   - a decal pass;
+   - cliff faces drawn as lip, body and foot;
+   - structure states;
+   - a sheet cutter, `tools/assault/cut-sheets.py`;
+   - about 45 Orc pieces from Chronos's iso kits (`little-town`, `src/renderer/art/iso/kits/orcs` and others), as the plan lists them.
