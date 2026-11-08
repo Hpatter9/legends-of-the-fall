@@ -29,6 +29,47 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ART-393-RELEASE — Merge completed artwork and plan the next original paintings
+
+- **Owner:** Codex director. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`.
+- **Scope:** release all four completed art batches, integrate main through 0.392.0, release metadata/checks, create PR and owner-authorised merge; preserve a concrete next-artwork plan.
+- **Status:** 0.393.0 ready for owner-authorised merge. Integrated main; typecheck/build, 100 focused tests, all three release browser sizes and reduced motion passed with no browser errors. [Release handoff](notes/art-release-393.md).
+- **Plan:** [next original artwork](notes/new-artwork-plan.md): twelve remaining trait symbols, eight road encounters, six Calamity herald portraits. No new generation in this release.
+
+
+### DYNASTY-ART — Seasons, fates, backdrops, traits and dynasty symbols
+
+- **Owner:** Codex. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`; previous art batches preserved.
+- **Scope:** import nine existing season/fate symbols, two existing backdrops and twelve existing Nemesis trait symbols; approved House/heirloom paintings; menu integration, tools, credits and handoff. No game rules, saves or version changes.
+- **Direction:** owner approved the source artwork and House/heirloom proposal; subdued readable backdrops; only learned traits reveal icons.
+- **Completion:** required art displayed in existing menus, hidden secrets preserved, focused tests/typecheck/build and three phone viewport checks.
+- **Status:** complete locally, ready for review. Four season/four modelled fate icons, House/heirloom paintings, two backdrops and twelve learned-trait symbols integrated. Typecheck/build, 68 focused tests and all three phone viewport checks passed, with no browser errors. Legend artwork reserved: no corresponding fate state exists. [Handoff](notes/dynasty-art-finish.md). No push, merge or deployment.
+
+### COUNCIL-ART — Council event icons and Lost Techniques manuscript
+
+- **Owner:** Codex. **Branch/worktree:** `art/council-manuscript`, `/workspace/legends-of-the-fall` (preserves the completed quest portraits and trophies).
+- **Scope:** import existing Council event source art, replace remaining News/token placeholders with dedicated or existing painted artwork, add approved manuscript to shared quest portraits, tooling, credits and validation. No simulation/save/version changes.
+- **Direction:** owner approved the existing Council icon sheet and painted manuscript proposal.
+- **Completion:** all 19 News types mapped, dedicated War Trophy token and manuscript displayed, typecheck/build, focused tests and three portrait viewport checks.
+- **Status:** complete locally, ready for review. All 19 News types, dedicated trophy token and manuscript card/log passed at three phone sizes; typecheck/build and 42 focused tests passed, no browser errors. [Handoff](notes/council-manuscript-art.md). No push, merge or deployment.
+
+### TROPHY-PAINT — Eighteen painted boss trophies
+
+- **Owner:** Codex. **Branch/worktree:** `art/boss-trophy-paintings`, `/workspace/legends-of-the-fall` (retains completed quest portraits).
+- **Scope:** eighteen trophy paintings and a blank locked mount, source/import tooling, wall/detail art integration, credits and handoff. Existing unlock rules and saves preserved; no version change.
+- **Direction:** owner approved the wood-and-brass Thorn Warden, Karnok and Forge Titan proposal.
+- **Completion:** distinct trophy art for every boss, painted locked plaque, readable wall/detail views at three phone sizes, focused tests/typecheck/build and reduced-motion check.
+- **Status:** complete locally, ready for review. Eighteen paintings and empty mount imported; typecheck/build, 13 focused tests, all 54 detail checks across three phone sizes, filters, locked states and reduced motion passed with no browser errors. [Handoff](notes/painted-boss-trophies.md). No push, merge or deployment.
+
+### QUEST-PORTRAITS — Painted faces for fifteen quest-givers
+
+- **Owner:** Codex. **Branch/worktree:** `art/quest-giver-portraits`, `/workspace/legends-of-the-fall`.
+- **Scope:** fifteen source portraits, importer, quest face mapping, credits, browser previews and handoff. No simulation, save or version changes.
+- **Direction:** owner approved the Oswy, Mother Teal and Pim painted proposal on 2026-11-07.
+- **Completion:** fifteen distinct paintings integrated in shared quest cards/log, small-size visual review, typecheck/build and three portrait viewport checks.
+- **Status:** complete locally, ready for review. Fifteen portraits integrated; typecheck/build and 45 card captures plus three quest-log checks passed at all three portrait sizes, with no browser errors. [Handoff](notes/quest-giver-portraits.md). No push, merge or deployment.
+
+
 ### TAVERN-POSES — Relaxed hero paintings for the tavern
 
 - **Release:** owner authorised merging. PR #426 reached main during preparation, so the tavern release is 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), preserving the integrated ten hero remakes. Final typecheck/build, seven focused test files and all 21 repeated release browser/offline checks passed. Owner-authorised for merge.

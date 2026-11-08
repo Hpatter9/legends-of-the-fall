@@ -505,3 +505,39 @@
     font-size: 9px;
   }
 }
+
+/* Painted mounted keepsakes: show the complete oak plaque instead of a circular emoji token. */
+.twPainting {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+.twCrest { display: block; width: 40px; height: 40px; }
+.twMedallion, .twDetailBadge {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.twMedallion, .twPlaque.unlocked .twMedallion {
+  width: 108px;
+  height: 108px;
+  background: none;
+}
+.twPlaque { min-width: 0; }
+.twBossName { white-space: normal; font-size: 11px; }
+.twBossTitle { white-space: normal; font-size: 11px; }
+.twStamp { white-space: normal; line-height: 1.6; overflow-wrap: anywhere; }
+.twHeader { gap: 8px; }
+.twTitleBox { min-width: 0; }
+.twCloseBtn { width: auto; min-width: 64px; min-height: 44px; flex-shrink: 0; }
+.twFilterChip { min-height: 44px; }
+.twRackFrame { min-height: 0; }
+.twDetailBox { box-sizing: border-box; max-height: 100%; overflow-y: auto; padding-top: 60px; }
+.twDetailClose { width: auto; min-width: 64px; min-height: 44px; }
+.twDetailTop { flex-direction: column; align-items: center; text-align: center; }
+.twDetailBadge { width: 160px; height: 160px; }
+.twDetailTitles { min-width: 0; align-items: center; }
+.twDetailOverlay { box-sizing: border-box; }

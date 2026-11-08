@@ -569,6 +569,24 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - Three existing treant summon sheets (`src/art/units/cls_treant*.png`): owner-approved hurt pose extensions generated using the original credited sprites as references. All original idle, walk, attack and death pixels are preserved; original pack credits remain in force. Original sheets and layouts are retained in `art-source/finishing-pass/treant-originals/`.
 - Painted flame, smoke and electrical motion (`src/art/finishing/spell-motion.webp`): six generated drawing frames per material, referenced from the game's existing painted materials. `tools/art-finish/pack.py` cuts and packs all finishing-pass assets. New menu art and the motion atlas are bundled for offline play.
 
+## Painted quest-giver portraits
+
+- Fifteen original quest-giver portraits generated with OpenAI image generation in the owner-approved painted style: Oswy Carne, Mother Teal, Pim Ashby, Maren Fold, Sorrel Vane, Old Maud, Brannock, Edda Coalbrook, Sexton Pell, Ottilie Marsh, Kiku, Master Fenwick, Hesper Tock, Wren Halloway and Ivy Penhallow. Sources and approved concept are retained in `art-source/quest-givers/`; `tools/quest-givers/import.py` crops and downsamples their quest portraits. Existing painted Gwen artwork served as the initial style reference. Original LPC sprite and world-art credits remain in force.
+
+## Painted boss trophy wall
+
+- Eighteen mounted boss keepsakes and the empty locked trophy plaque (`src/art/trophies/`) are original artwork generated with OpenAI image generation in the owner-approved oak-and-brass painted style. Sources and approved proposal are retained in `art-source/trophies/`; `tools/trophies/import.py` crops and downsamples the sheets. Trophy subjects follow the game's existing boss defeat stories. Images are bundled for offline play.
+
+## Council symbols and Lost Techniques manuscript
+
+- The Lost Techniques manuscript (`src/art/quests/lost-face.png`) is original artwork generated with OpenAI image generation, retained in `art-source/council-manuscript/manuscript.png` and approved by the owner.
+- Council news symbols and War Trophy token (`src/art/council/`) are unchanged crops from the previously credited `art-source/expansion/nemesis-icons.png`. Existing commissioned rank insignia and painted Book of Names / war drum are reused with their original credits. `tools/council-art/import.py` reproduces the imports. New imports are bundled for offline play.
+
+## Dynasty symbols, menu backdrops and Nemesis traits
+
+- House shield and heirloom keepsake (`src/art/dynasty/{house,heirloom}.webp`) are original OpenAI-generated paintings in the owner-approved style, retained in `art-source/dynasty-finish/house-heirloom.png`.
+- Season/fate symbols, twelve Nemesis trait symbols, and Houses/Council backdrops reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` crops symbols and downsamples the backdrops; original source art remains unchanged. All new imports are bundled for offline play.
+
 ### Painted tavern hearth
 
 The tavern background (`src/art/ui/tavern-hearth.png`) is original AI-generated artwork made with OpenAI image generation for this game. Sources: `art-source/tavern/hearth-source.png` (first study) and `art-source/tavern/cozy-room-source.png` (current seated scene). Heroes remain the existing credited character illustrations; panel, button, portrait and service icons reuse the shared painted combat UI assets.
