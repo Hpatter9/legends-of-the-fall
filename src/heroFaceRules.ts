@@ -1,4 +1,3 @@
-import { isMythic } from './sim/mythicRules';
 // HUD-FACES (docs/notes/hud-faces.md): where each hero's face sits in its painted art, so the fight's stat views (the hero rows, the unit
 // info card, the Last Stand's paused sheet) can show the painting cropped to the face instead of the pixel sprite. Pure data and maths: no
 // DOM, so the tests read it. The crops were framed by eye against a contact sheet (docs/samples/hud-faces-sheet.png).
@@ -83,7 +82,7 @@ export const HUD_FACES: Readonly<Record<string, { art: FaceBox; awakened: FaceBo
 };
 
 /** The painting a hero's face is cut from: the awakened form's once it has awakened, else the plain art's half-length portrait. */
-export const faceUrl = (kind: string, awakened: number): string => (awakened > 0 && !isMythic(kind) ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
+export const faceUrl = (kind: string, awakened: number): string => (awakened > 0 ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
 
 /** The face's box for `kind` in the painting `faceUrl` names, or none (a summon, a guest, a foe, a hero without a painting: they keep their sprite). */
 export function faceBox(kind: string, awakened: number): FaceBox | undefined {

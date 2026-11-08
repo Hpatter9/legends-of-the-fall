@@ -1,11 +1,9 @@
-import { isMythic } from './sim/mythicRules';
 // Menu illustrations are separate from the battle animation sheets.
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 
 export function heroArtwork(kind: string, full = false, awakened = 0): HTMLImageElement {
-  if (isMythic(kind)) awakened = 0;
   if (!ALL_HEROES.includes(kind)) throw new Error(`Unknown hero artwork: ${kind}`);
   const image = document.createElement('img');
   image.className = `heroAnimeArt${awakened ? ' heroAwakenedArt' : ''}`;
@@ -31,7 +29,7 @@ export function openHeroArtwork(kind: string, trigger: HTMLElement, awakened = 0
   title.append(titleLine(kind, 'span', '', true), Object.assign(document.createElement('small'), { textContent: UNITS[kind]?.name ?? '' }));
   dialog.append(close, illustration, title);
   const controls: HTMLButtonElement[] = [close];
-  if (awakened && !isMythic(kind)) {
+  if (awakened) {
     const toggle = document.createElement('button');
     toggle.type = 'button';
     toggle.className = 'heroArtForm';

@@ -48,11 +48,11 @@ export interface Showcase {
 export const SHOWCASES: Record<string, Showcase> = {
   // (the five Mythics: each its own words, hits and painted props, `ultShow.ts`, and its own cut-in before it, `mythicCutRules.ts`;
   // docs/notes/mythics-finish.md)
-  vael: { style: 'burst', el: 'dark', hit: 'cut', line: 'The black sun rises and eclipses behind his crown; one golden sweep cuts down every foe it reaches, and the field kneels' },
-  astrax: { style: 'sky', el: 'light', line: 'The star chart opens over the dragon; a constellation burns over each crowd, and the stars fall out of it' },
-  ilyra: { style: 'bless', el: 'light', line: 'Her broken halo rises over her and closes; a halo settles over each of the living in turn, and for a moment death cannot cross it' },
-  orrun: { style: 'bless', el: 'forest', line: 'The world tree climbs out of the ground behind him; its roots run to each of his friends in turn, and an emerald sanctuary rises round them' },
-  nyxara: { style: 'bless', el: 'lightning', line: 'The clock of fate turns backwards under her; each ally is drawn back to the moment before the wound, one after another' },
+  vael: { style: 'burst', el: 'dark', hit: 'cut', poses: { call: 'mythic-pose-vael' }, line: 'The black sun rises and eclipses behind his crown; one golden sweep cuts down every foe it reaches, and the field kneels' },
+  astrax: { style: 'sky', el: 'light', poses: { call: 'mythic-pose-astrax' }, line: 'The star chart opens over the dragon; a constellation burns over each crowd, and the stars fall out of it' },
+  ilyra: { style: 'bless', el: 'light', poses: { call: 'mythic-pose-ilyra' }, line: 'Her broken halo rises over her and closes; a halo settles over each of the living in turn, and for a moment death cannot cross it' },
+  orrun: { style: 'bless', el: 'forest', poses: { call: 'mythic-pose-orrun' }, line: 'The world tree climbs out of the ground behind him; its roots run to each of his friends in turn, and an emerald sanctuary rises round them' },
+  nyxara: { style: 'bless', el: 'lightning', poses: { call: 'mythic-pose-nyxara' }, line: 'The clock of fate turns backwards under her; each ally is drawn back to the moment before the wound, one after another' },
   kunoichi: { style: 'blinks', el: 'dark', poses: { end: 'kunoichi-kneeling-finish' }, line: 'She vanishes in a puff of smoke, appears behind each foe in turn and cuts it down, then stands where the last fell' },
   wizard: { style: 'sky', el: 'fire', line: 'He raises his staff, the sky darkens, a burning circle marks each crowd and the meteors come down out of the clouds' },
   beastmaster: { style: 'pack', el: 'forest', poses: { call: 'beastmaster-horn' }, line: 'He sounds his horn and the wolves bound in from the edge of the field, one after another, to stand at his side' },
@@ -523,8 +523,8 @@ class Builder {
     // (a zone set on the field stands for an aim: the cloud of feathers)
     if (!c.aims.length && c.zone) c.aims.push(c.zone);
     if (!c.aims.length) return false;
-    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 0.6, look: c.aims[0] });
-    this.key(c.caster, { at: SHOW.RAISE, tile: c.start, row: 'attack2', p0: 0.6, look: c.aims[0] });
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 0.6, look: c.aims[0], ...this.pz('call') });
+    this.key(c.caster, { at: SHOW.RAISE, tile: c.start, row: 'attack2', p0: 0.6, look: c.aims[0], ...this.pz('call') });
     this.beat({ at: 80, kind: 'gather', where: c.start });
     c.aims.forEach((a, i) => this.beat({ at: SHOW.RAISE + i * SHOW.MARK, kind: 'mark', where: a }));
     const sky = SHOW.RAISE + c.aims.length * SHOW.MARK + SHOW.SKY;
@@ -710,8 +710,8 @@ class Builder {
     const c = this.c;
     const all = [...c.struck, ...c.touched];
     if (!all.length) return false;
-    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1, look: c.tiles.get(all[0]) });
-    this.key(c.caster, { at: SHOW.BURST_RAISE, tile: c.start, row: 'attack2', p0: 1 });
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1, look: c.tiles.get(all[0]), ...this.pz('call') });
+    this.key(c.caster, { at: SHOW.BURST_RAISE, tile: c.start, row: 'attack2', p0: 1, ...this.pz('call') });
     this.beat({ at: 80, kind: 'gather', where: c.start });
     this.beat({ at: SHOW.BURST_RAISE - 120, kind: 'call', where: c.start });
     // (each foe in turn, the nearest first, as the ring reaches it)
@@ -759,8 +759,8 @@ class Builder {
   bless(): boolean {
     const c = this.c;
     if (!c.helped.length && !c.raised.length && !c.struck.length) return false;
-    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1 });
-    this.key(c.caster, { at: SHOW.BURST_RAISE, tile: c.start, row: 'attack2', p0: 1 });
+    this.key(c.caster, { at: 0, tile: c.start, row: 'attack2', p0: 0, p1: 1, ...this.pz('call') });
+    this.key(c.caster, { at: SHOW.BURST_RAISE, tile: c.start, row: 'attack2', p0: 1, ...this.pz('call') });
     this.beat({ at: 80, kind: 'gather', where: c.start });
     this.beat({ at: SHOW.BURST_RAISE - 120, kind: 'call', where: c.start });
     // (the opening chord throws the foes near him back first)

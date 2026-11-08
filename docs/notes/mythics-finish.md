@@ -81,7 +81,7 @@ five days of replays and the last awakening thirteen at the soonest, each a hard
 
 ## Art that does not exist yet: prompts
 
-The awakened Mythics keep their base portrait and sprites (no art exists). For the owner to make with ChatGPT image generation, then cut with
+(Done: see mythic-art-in.md. The awakened paintings and showcase poses are in; the awakened Mythics still keep their base battle sprites.) The awakened Mythics keep their base portrait and sprites (no art existed then). For the owner to make with ChatGPT image generation, then cut with
 the existing awakening tools; until then the code keeps the base art (`heroArtwork.ts`, `AWAKENED_SHEETS_LATER`).
 
 Prompt (one per Mythic; the same frame and rules as the other awakened paintings in `src/art/heroes/awakened-*.webp`):

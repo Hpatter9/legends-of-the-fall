@@ -41,5 +41,6 @@ export const MYTHIC_CUTS: Readonly<Record<string, MythicCut>> = {
 /** A Mythic's cut-in, or null for every other hero (it opens with the shared slash). */
 export const mythicCut = (kind: string): MythicCut | null => (isMythic(kind) ? MYTHIC_CUTS[kind] ?? null : null);
 
-/** The painting a Mythic's frame shows: its whole painting, not the portrait's crop (both are copied and kept for offline play). */
-export const mythicPainting = (kind: string): string => `heroes/${kind}.webp`;
+/** The painting a Mythic's frame shows: its whole painting, not the portrait's crop; once awakened, its awakened painting (all are copied and
+ *  kept for offline play). */
+export const mythicPainting = (kind: string, awakened = 0): string => (awakened > 0 ? `heroes/awakened-${kind}.webp` : `heroes/${kind}.webp`);

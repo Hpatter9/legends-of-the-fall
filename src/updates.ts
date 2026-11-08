@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.405.0',
+    date: '2026-11-08',
+    title: 'Awakened Mythic paintings',
+    notes: ['An awakened Mythic now shows its new painting everywhere, its cut-in included, and each Mythic\'s ultimate shows its own painted pose.'],
+  },
+  {
     version: '0.404.0',
     date: '2026-11-08',
     title: 'The Mythics in full glory',
