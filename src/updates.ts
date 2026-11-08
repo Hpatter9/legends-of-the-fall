@@ -27,6 +27,16 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.395.0',
+    date: '2026-11-07',
+    title: 'Straighter steel and sturdier spears',
+    notes: [
+      'Painted hero illustrations have clearer weapon shapes, with a straighter Peasant spear and an aligned Mercenary sword grip.',
+      'Samurai artwork has cleaner sword grips and scabbards, and the Ranger’s drawn bowstring connects correctly.',
+      'The revised paintings and matching menu portraits remain available offline.',
+    ],
+  },
+  {
     version: '0.394.0',
     date: '2026-11-07',
     title: 'Painted roads and the six heralds',

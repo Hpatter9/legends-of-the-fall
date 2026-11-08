@@ -499,6 +499,8 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 ## Anime hero gallery
 
+- Painted weapon repairs (November 2026): Peasant, Mercenary, Harpooner, Samurai Commander, Samurai and Ranger full scenes, plus Samurai and Samurai Commander transparent menu cutouts, edited from the game's existing original artwork with OpenAI image generation at the owner's request. Corrected rigid weapon geometry, grips, scabbard support and bowstring connections while retaining character designs and scenes. See `docs/notes/hero-weapon-fixes.md`.
+
 - `src/art/heroes/*.webp`: 45 original anime hero scenes and 45 transparent menu cutouts generated with OpenAI image generation in October 2026 for the owner's hero overview request. Each full illustration has an individual pose and situation. Kitsune, Gorgon, Illusionist and Time Witch follow the owner's supplied redesign concept; the other heroes draw on their established game identities and colours.
 - `tools/anime-heroes/catalogue.json` and `scenes.json` record the character directions and scene briefs. Generated production atlases are split into individual assets and transcoded for the offline gallery by `extract.cjs` and `pack.cjs`. Battle animation artwork and its existing credits remain separate.
 
