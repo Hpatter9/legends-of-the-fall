@@ -6,6 +6,7 @@ import { Rng } from './rng';
 import { OVERFLOW_CROWNS, SHARD_CAP } from './awakenRules';
 import type { Meta } from './meta';
 import { DUPLICATE_SHARDS, isContent, pityAt, PULL_HEROES, unlockNeed } from './unlockRules';
+import { isMythic } from './mythicRules';
 
 export { DUPLICATE_SHARDS };
 
@@ -76,10 +77,11 @@ export function giveShards(m: Meta, kind: string, n: number): Given {
   return out;
 }
 
-/** The kind a pull draws: any pullable hero or owned content hero, each as likely as any other (FAIR-SUMMONS); every `PITY_PULLS` pulls without unlock shards, the hero closest to joining. */
+/** The kind a pull draws: any pullable hero or owned content hero, each as likely as any other (FAIR-SUMMONS); every `PITY_PULLS` pulls without unlock shards, the hero closest to joining.
+ *  A Mythic never comes from a pull, owned or not (docs/notes/mythic-heroes.md). */
 export function drawKind(m: Meta, rng: Rng): { kind: string; pity: boolean } {
   const near = (m.unlockDry ?? 0) + 1 >= pityAt(ownedCount(m)) ? closest(m, Rng.from(m.seed, PITY_SALT, m.pulls)) : undefined;
   if (near) return { kind: near, pity: true };
-  const pool = [...PULL_HEROES, ...m.unlocked.filter(isContent)];
+  const pool = [...PULL_HEROES, ...m.unlocked.filter((k) => isContent(k) && !isMythic(k))];
   return { kind: pool[Math.min(pool.length - 1, Math.floor(rng.next() * pool.length))], pity: false };
 }

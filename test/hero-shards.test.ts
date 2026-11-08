@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { MYTHIC_KINDS, isMythic } from '../src/sim/mythicRules';
 import assert from 'node:assert/strict';
 import { loadMeta, newMeta, pickStarter, pullOnce, useStones, startedMeta, saveMeta, type Meta } from '../src/sim/meta';
 import { closest, giveShards, haveOf, needOf, ownedCount, toCollect } from '../src/sim/unlock';
@@ -24,8 +25,10 @@ const fresh = (seed: number): Meta => {
 };
 
 test('ten heroes are earned by content, the rest are pulled', () => {
-  assert.equal(CONTENT_KINDS.length, 10);
-  assert.equal(PULL_HEROES.length, ALL_HEROES.length - 10);
+  // (and the five Mythics, earned by their own hidden quest chains, never pulled: docs/notes/mythic-heroes.md)
+  assert.equal(CONTENT_KINDS.filter((k) => !isMythic(k)).length, 10);
+  for (const k of MYTHIC_KINDS) assert.ok(isContent(k) && !PULL_HEROES.includes(k), k);
+  assert.equal(PULL_HEROES.length, ALL_HEROES.length - 10 - MYTHIC_KINDS.length);
   for (const k of CONTENT_KINDS) assert.ok(ALL_HEROES.includes(k) && isContent(k), k);
   assert.deepEqual(CONTENT_HEROES.map((c) => c.kind), [...CONTENT_KINDS]);
   for (const c of CONTENT_HEROES) assert.ok(c.line.length > 0 && !c.met(newMeta(1)), c.kind);

@@ -1125,5 +1125,75 @@
     "motif": "a flock of falcons spiralling down two blue ribbons of wind",
     "atlas": 9,
     "cell": 15
+  },
+  {
+    "id": "skill:Eclipse Cleave",
+    "name": "Eclipse Cleave",
+    "motif": "a dark eclipse ring of a sword stroke edged with ember sparks",
+    "atlas": 11,
+    "cell": 0
+  },
+  {
+    "id": "skill:Kneel Before Night",
+    "name": "Kneel Before Night",
+    "motif": "a crimson crown of flame rising round a black hollow",
+    "atlas": 11,
+    "cell": 1
+  },
+  {
+    "id": "skill:Starbreath",
+    "name": "Starbreath",
+    "motif": "a burning orange star of breath bursting from a white core",
+    "atlas": 11,
+    "cell": 2
+  },
+  {
+    "id": "skill:Heavenfall",
+    "name": "Heavenfall",
+    "motif": "a cold blue-white shaft of starlight falling to the ground",
+    "atlas": 11,
+    "cell": 3
+  },
+  {
+    "id": "skill:Saint\u2019s Spear",
+    "name": "Saint\u2019s Spear",
+    "motif": "a golden spear of light streaming a feathered trail",
+    "atlas": 11,
+    "cell": 4
+  },
+  {
+    "id": "skill:Death Denied",
+    "name": "Death Denied",
+    "motif": "a glass dome of holy light sheltering a golden ankh",
+    "atlas": 11,
+    "cell": 5
+  },
+  {
+    "id": "skill:Rootquake",
+    "name": "Rootquake",
+    "motif": "a knot of roots tearing outward round a green glow",
+    "atlas": 11,
+    "cell": 6
+  },
+  {
+    "id": "skill:The World Stands",
+    "name": "The World Stands",
+    "motif": "a grove of young trunks rising in a green crown",
+    "atlas": 11,
+    "cell": 7
+  },
+  {
+    "id": "skill:Fate Shard",
+    "name": "Fate Shard",
+    "motif": "a violet starburst of a shattered future",
+    "atlas": 11,
+    "cell": 8
+  },
+  {
+    "id": "skill:Rewrite Fate",
+    "name": "Rewrite Fate",
+    "motif": "a violet dome of frozen time marked with clock hands",
+    "atlas": 11,
+    "cell": 9
   }
 ]

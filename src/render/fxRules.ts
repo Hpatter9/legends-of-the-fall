@@ -83,6 +83,7 @@ export const impactElement = (m: Missile): Element => (m.look === 'orb' ? m.el :
 
 /** The element of each skill (the glow under the caster as it winds up, and an extra burst where it lands). */
 export const SKILL_ELEMENT: Record<string, Element> = {
+  'Eclipse Cleave': 'dark', Starbreath: 'fire', 'Saint’s Spear': 'light', Rootquake: 'earth', 'Fate Shard': 'dark',
   'Kneel Before Night': 'dark', Heavenfall: 'light', 'Death Denied': 'light', 'The World Stands': 'forest', 'Rewrite Fate': 'lightning',
   'Shield Wall': 'earth',
   Iaido: 'wind',

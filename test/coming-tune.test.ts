@@ -1,6 +1,7 @@
 // The coming heroes' balance knobs (docs/notes/twenty-heroes.md): a passive's strength (`scalePassive`, the tuner's `p`), and the sweep that
 // can field them (`SWEEP_POOL` with COMING=1) while the roster's own sweep is left as it was.
 import { test } from 'node:test';
+import { isMythic } from '../src/sim/mythicRules';
 import assert from 'node:assert/strict';
 import type { Passive } from '../src/sim/abilities';
 import { COMING_PASSIVE, twentyKits as comingKits, scalePassive, setComingPassive } from '../src/sim/kits/coming';
@@ -35,5 +36,6 @@ test('the tuner can set a coming hero\'s passive strength in its kit, and back',
 
 test('without COMING=1 the sweep draws from the roster alone, as the balance tests hold it', () => {
   assert.equal(process.env.COMING, undefined);
-  assert.deepEqual([...SWEEP_POOL], [...ALL_HEROES]);
+  // (less the Mythics: a random team of five could hold two, and only one may fight in a squad, docs/notes/mythic-heroes.md)
+  assert.deepEqual([...SWEEP_POOL], ALL_HEROES.filter((k) => !isMythic(k)));
 });

@@ -28,6 +28,10 @@ export const EVERY_RANK = { title: 'Every rank', text: 'The same at every rank: 
 /** The one-word name a chip shows (the skills overhaul's batch 7): a chip has room for about 8 letters at 360 px. A name that is one short word
  *  stays whole; the rest are listed here, one word and unique within a hero's kit (a test checks both). The skill's full name is on its sheet. */
 export const CHIP_NAMES: Readonly<Record<string, string>> = {
+  // (the five Mythics, docs/notes/mythic-heroes.md)
+  'Eclipse Cleave': 'Cleave', 'Solar Aegis': 'Aegis', Crownfall: 'Crown', Starbreath: 'Breath', 'Star Hunger': 'Hunger', 'Comet Lance': 'Comet',
+  'Saint’s Spear': 'Spear', 'Unburied Mercy': 'Mercy', 'Broken Halo': 'Halo', Rootquake: 'Quake', 'Living Sanctuary': 'Haven', Heartwood: 'Heart',
+  'Fate Shard': 'Shard', 'Stolen Tomorrow': 'Tomorrow', Unmake: 'Unmake',
   'Shield Wall': 'Wall', 'Shield Rush': 'Rush', 'Hold Fast': 'Hold', 'Kesa Cut': 'Kesa', 'Sneak Attack': 'Sneak', 'Smoke Bomb': 'Smoke', 'Shuriken Fan': 'Shuriken',
   'Aimed Shot': 'Aimed', 'Double Shot': 'Double', 'Wall of Fire': 'Wall', 'Fire Bolt': 'Bolt', 'Spear Wall': 'Spear', 'Pitchfork Jab': 'Fork', 'Flurry of Blows': 'Flurry',
   'Quivering Palm': 'Palm', 'Step of the Wind': 'Step', 'Healing Draught': 'Draught', 'Healing Mist': 'Mist', 'Elixir of Life': 'Elixir', 'Acid Flask': 'Acid',

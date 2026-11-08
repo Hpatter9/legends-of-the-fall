@@ -17,6 +17,7 @@ import { RELIC_IDS } from '../src/sim/relics';
 import { SQUAD } from '../src/sim/run';
 import { CONTENT_KINDS } from '../src/sim/unlockRules';
 import { TALE_HEROES } from '../src/sim/secretHeroes';
+import { MYTHIC_KINDS, isMythic } from '../src/sim/mythicRules';
 import { ACT_HALLS } from '../src/sim/standActs';
 import { HERO_TRAITS, membersOf, TRAITS } from '../src/sim/traits';
 import { FOES } from '../src/sim/foes';
@@ -140,8 +141,11 @@ test('the achievements that lean on the rules still can be met', () => {
   assert.ok(RELIC_IDS.length >= 5);
   // (Yokai Only: a hero or more, all of them Yokai)
   assert.ok(membersOf('yokai').length >= 1);
-  // (Full Roster counts the secret heroes, who are earned in the tavern's tales)
-  assert.equal(TALE_HEROES.length, CONTENT_KINDS.length);
+  // (Full Roster counts the secret heroes, who are earned in the tavern's tales; the five Mythics are earned instead at the end of their
+  // own hidden three-part chains, each ending in its trial quest, docs/notes/mythic-heroes.md)
+  assert.equal(TALE_HEROES.length + MYTHIC_KINDS.length, CONTENT_KINDS.length);
+  for (const k of CONTENT_KINDS) assert.ok(TALE_HEROES.includes(k) || isMythic(k), `${k} is earned by a tale or a Mythic chain`);
+  for (const k of MYTHIC_KINDS) assert.ok(QUESTS.some((q) => q.id === `mythic-${k}-trial`), `${k}'s trial quest is on the board`);
   for (const a of ACHIEVEMENTS) assert.ok(a.crowns > 0, a.id);
   for (const id of Object.keys(TRAITS)) assert.ok(membersOf(id).length >= 1, `trait ${id} has a member`);
 });

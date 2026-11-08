@@ -176,4 +176,10 @@ export const REPLIES: Readonly<Record<string, readonly [string, string]>> = {
   geomancer: ['The ground remembers you, {name}.', 'The mountain has decided, {name}.'],
   bellWarden: ['The bell tolls for you, {name}.', 'Be still, {name}, and be sanctified.'],
   falconer: ['She has your scent, {name}.', 'Run, {name}. The falcon enjoys a chase.'],
+  // (the five Mythics, docs/notes/mythic-heroes.md)
+  vael: ['Kneel, {name}. Or be made to.', 'I have outlasted kingdoms, {name}. I shall outlast you.'],
+  astrax: ['Look up, {name}. That light is the last thing you will see.', 'I swallowed a dying star, {name}. You are a smaller meal.'],
+  ilyra: ['Not one of mine falls to you, {name}.', 'I came back from the grave for this, {name}. You will not send me back.'],
+  orrun: ['Strike the roots, {name}. They have weathered worse.', 'I stood before the first forest, {name}. I will stand after you.'],
+  nyxara: ['I have read your ending, {name}. It is short.', 'Every future I keep has you losing, {name}.'],
 };

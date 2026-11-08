@@ -54,6 +54,8 @@ export const PERKS: Readonly<Record<string, Perk>> = {
   timeWitch: sh('Borrowed Second'), arcBlade: at('Arc Edge'), dreadPirate: at('Black Flag'), siegeBot: sh('Plated Hull'), priestess: sh('Sanctuary'),
   dragoon: at('High Jump'), juggernaut: hp('Unstoppable'), sage: sh('Patient Mind'), demonSwordsman: at('Hellforged Edge'), tyrant: at('Iron Decree'),
   vampireLord: at('Old Blood'), hemomancer: sh('Blood Ward'), nightstalker: at('Night Wings'), bloodGargoyle: sh('Granite Skin'), dhampir: at('Silver Edge'), warDrummer: hp('War Cadence'), geomancer: hp('Bedrock'), bellWarden: sh('Bronze Toll'), falconer: at('Falcon\'s Eye'),
+  // (the five Mythics, docs/notes/mythic-heroes.md)
+  vael: at('Black Sun'), astrax: at('Stellar Core'), ilyra: hp('Unburied Mercy'), orrun: sh('Emerald Heart'), nyxara: sh('Unwritten Hour'),
 };
 
 /** The twenty coming heroes' legacy perks (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */

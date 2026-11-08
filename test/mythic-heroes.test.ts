@@ -25,6 +25,7 @@ import { mayFight, notReady, questArmy } from '../src/sim/questBattles';
 import { FOE_ENTRIES } from '../src/sim/codex';
 import { COMBAT_SKILL_MOTIFS } from '../src/combatIconRules';
 import { KIT_LOOKS, kitSignature } from '../src/render/kitLooks';
+import { SIGNATURES } from '../src/render/signatures';
 import { HUD_FACES } from '../src/heroFaceRules';
 import { bareBoard } from './bare';
 
@@ -56,7 +57,9 @@ test('five Mythics are secret, fully equipped recruits outside random acquisitio
     for (const suffix of ['', '-portrait']) assert.ok(existsSync(`src/art/heroes/${k}${suffix}.webp`));
     for (const suffix of ['', '_back']) assert.ok(existsSync(`src/art/units/mythic_${k}${suffix}.png`));
     for (const skill of [...HERO_KITS()[k].slots.map(s => s.skill), KITS[k].ultimate!]) {
-      assert.ok(COMBAT_SKILL_MOTIFS[skill.name], skill.name); assert.ok(KIT_LOOKS[skill.name]); assert.ok(kitSignature(skill.name), skill.name);
+      assert.ok(COMBAT_SKILL_MOTIFS[skill.name], skill.name);
+      // (skill 1 and the ultimate have looks of their own, atlas-11; skills 2 and 3 borrow one, recoloured: docs/notes/fix-main-mythics.md)
+      assert.ok(SIGNATURES[skill.name] || KIT_LOOKS[skill.name], skill.name); assert.ok(kitSignature(skill.name), skill.name);
     }
   }
 });
