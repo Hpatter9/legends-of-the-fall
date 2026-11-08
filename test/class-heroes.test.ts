@@ -1,4 +1,5 @@
 import { SKILL2_LEVEL } from '../src/sim/heroKits';
+import { acAgainst } from '../src/sim/blow';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -47,10 +48,10 @@ test('the eight class heroes are registered, drawn at a sensible size, with a fo
   assert.equal(ALL_HEROES.length, new Set(ALL_HEROES).size);
 });
 
-test('the new traits have two to four heroes, one origin and one class each', () => {
+test('the new traits have two to five heroes (owner call for the twenty), one origin and one class each', () => {
   for (const t of ['holy', 'wild', 'arcane', 'frontier', 'warden']) {
     const n = membersOf(t).length;
-    assert.ok(TRAITS[t] && n >= 2 && n <= 4, `${t} ${n}`);
+    assert.ok(TRAITS[t] && n >= 2 && n <= 5, `${t} ${n}`);
   }
   for (const id of CLASSES) assert.equal(TRAITS[HERO_TRAITS[id][0]].kind, 'origin');
 });
@@ -98,8 +99,12 @@ test('Benediction cleanses every ally and heals them over time; Grace heals thos
   assert.equal(dotOf(a), undefined);
   assert.ok(a.hot);
   const before = a.hp;
+  // (each mend is the Cleric's attack x1.2 while she casts, so it follows Benediction's strength, `TUNE2.cleric`: the skills overhaul's batch 2
+  // lowered it, 0.94 to 0.59, as the prayer grew cheaper; the rule held here is two mends in two seconds)
+  const mend = a.hot!.amount;
+  assert.ok(mend > 0);
   run(b, 2100);
-  assert.ok(a.hp >= before + 2 * Math.round(UNITS.cleric.atk * 1.2) - 1, `${a.hp} ${before}`);
+  assert.ok(a.hp >= before + 2 * Math.round(mend) - 1, `${a.hp} ${before} ${mend}`);
   assert.ok(c.healed! > 0);
   // Grace: an ally beside her heals 1.5% a second with no skill at all
   const b2 = arena();
@@ -259,7 +264,7 @@ test('Long Shot adds damage only against foes 4 or more tiles away', async () =>
   const near = spawn(b, 'skeleton', 3, 4);
   const far = spawn(b, 'skeleton', 3, 1);
   assert.equal(farOf(r, near), 1);
-  assert.equal(farOf(r, far), 1.35);
+  assert.equal(farOf(r, far), 1.15); // (the joint rebalance trimmed Long Shot from 35% to 15%, docs/notes/joint-rebalance.md)
 });
 
 test('Hex curses the three toughest foes in reach, and the Warlock drinks part of the burn', () => {
@@ -332,10 +337,11 @@ test('a team of class heroes fights a whole battle to its end, the same way twic
   assert.ok(defOf(startBattle(1).units[0]));
 });
 
-test('a kitless summon can slip a blow from a team dodge bonus without a crash', () => {
+test('a kitless summon takes a team dodge bonus as Armour Class without a crash (STATS batch 4)', () => {
   const b = arena();
   b.traits = { dodge: 1 };
   const t = spawn(b, 'treant', 3, 5);
   const s = spawn(b, 'skeleton', 3, 4);
-  assert.equal(onStrike(b, s, t, 50, 'blow', false, []), null);
+  assert.ok(Math.abs(acAgainst(b, t, 0, 0, false).cover - 1 / 0.07) < 1e-5);
+  assert.equal(onStrike(b, s, t, 50, 'blow', false, []), 50, 'a blow its d20 let through lands');
 });

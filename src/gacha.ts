@@ -6,7 +6,9 @@ import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
 import { LUCKY_ODDS, MAX_RANK, RANK_MULT, RANK_SHARDS, rankOf, saveMeta, stoneCost, stonesOf, takenRank, useStones, type Meta, type Pull } from './sim/meta';
 import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
-import { isContent, pityAt } from './sim/unlockRules';
+import { pityAt } from './sim/unlockRules';
+import { isSecret } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import { portrait } from './render/sheets';
 import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } from './summonTarot';
 
@@ -51,6 +53,10 @@ export class Gacha {
   close(): void {
     this.clearReveal();
     $('gacha').hidden = true;
+    // (CLOSE-SCREENS: the pull's cards go with the screen; each opening starts empty, as `open` has it)
+    $('reveal').replaceChildren();
+    $('gacha').classList.remove('hasResults');
+    $('resultIntro').hidden = true;
     this.onClose();
     // (a join whose cards were closed before its reveal came, by a quick tap on Continue, still has it: over the hall)
     void revealUnseen(this.meta);
@@ -77,10 +83,12 @@ export class Gacha {
       cell.className = `hero${owned ? '' : ' locked'}`;
       const name = document.createElement('b');
       name.textContent = owned || begun ? heroName(kind) : '???';
-      cell.append(portrait(def.sheet, 72), name);
+      // (SECRET-HEROES: a hero earned in play is a dark figure until it joins)
+      const secret = isSecret(m, kind);
+      cell.append(secret ? secretFigure(72) : portrait(def.sheet, 72), name);
       if (owned) cell.append(this.rankLine(kind));
       else if (begun) cell.append(unlockBar(m, kind));
-      else if (isContent(kind)) cell.append(small('Earned in play'));
+      else if (secret) cell.append(small('A secret'));
       list.append(cell);
     }
   }
@@ -161,11 +169,13 @@ export class Gacha {
     ($('summonRules') as HTMLDetailsElement).open = false;
     box.replaceChildren();
     box.className = got.length === 1 ? 'tarotSingle' : 'tarotSpread';
-    const px = got.length === 1 ? 230 : 70;
+    // (UX-FIXES: a new hero gets a large card of its own; a repeat turned to crowns is a small bare card, and the repeats are told as one line below)
+    const pxOf = (p: Pull): number => (got.length === 1 ? 230 : p.isNew ? 120 : 70);
     let turned = 0;
     got.forEach((p) => {
+      const px = pxOf(p);
       const res = document.createElement('div');
-      res.className = `tarotResult${p.isNew ? ' joined' : ''}${p.lucky ? ' lucky' : ''}`;
+      res.className = `tarotResult${p.isNew ? ' joined' : ''}${p.lucky ? ' lucky' : ''}${got.length > 1 && !p.isNew && p.crowns ? ' dupe' : ''}`;
       res.dataset.kind = p.kind;
       const turn = document.createElement('div');
       turn.className = 'tarotTurn';
@@ -206,6 +216,14 @@ export class Gacha {
       box.append(res);
       this.revealCards.push(turn);
     });
+    const dupes = got.filter((p) => got.length > 1 && !p.isNew && p.crowns);
+    if (dupes.length > 1) {
+      const total = dupes.reduce((n, p) => n + (p.crowns ?? 0), 0);
+      const line = document.createElement('p');
+      line.className = 'tarotDupes';
+      line.textContent = `${dupes.length} × already at top rank → ${total} crowns`;
+      box.append(line);
+    }
     // (the cards turn by themselves, left to right)
     let at = 260;
     for (const card of this.revealCards) {
@@ -217,9 +235,9 @@ export class Gacha {
 
   /** Every join of the batch plays its first-time reveal in turn; then its card shows the hero, and the screen is free again. */
   private async playJoins(got: Pull[], batch: number): Promise<void> {
-    const px = got.length === 1 ? 230 : 70;
     for (const p of got) {
       if (!p.isNew) continue;
+      const px = got.length === 1 ? 230 : 120;
       await queueReveal(this.meta, p.kind, { lucky: p.lucky, force: true });
       if (batch !== this.batch) return;
       const res = $('reveal').querySelector<HTMLElement>(`.tarotResult.joined[data-kind="${p.kind}"]`);

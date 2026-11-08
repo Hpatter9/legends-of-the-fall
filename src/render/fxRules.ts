@@ -72,6 +72,8 @@ export function missileOf(shot: Shot, shooter: string): Missile {
     case 'curse':
       return orb('dark', 1);
   }
+  // (a shot with no missile of its own: the Kitsune wearing the shape of a foe that reaches but throws nothing; a plain orb, so nothing breaks)
+  return orb('wind', 0.8);
 }
 
 /** The element an arrow's or bullet's landing spark is drawn in (wind for arrows reads as a white scatter). */
@@ -191,6 +193,25 @@ export const SKILL_ELEMENT: Record<string, Element> = {
   Bacchanal: 'forest',
   'Hunt of the Pack': 'forest',
   'Heart of the Grove': 'forest',
+  // ---- the nine heroes that joined from the twenty: skill 1 and ultimate (docs/notes/heroes-join.md)
+  'Crimson Lunge': 'blood',
+  'Banquet of Blood': 'blood',
+  'Sanguine Lash': 'blood',
+  'Blood Tithe': 'blood',
+  'Dusk Dive': 'dark',
+  'Belfry Swoop': 'dark',
+  'Gargoyle Crash': 'earth',
+  'Cathedral Perch': 'earth',
+  'Silver Stake': 'light',
+  'Silver Requiem': 'light',
+  'Thunder Beat': 'lightning',
+  'Ten Thousand Drums': 'lightning',
+  'Tectonic Shove': 'earth',
+  "Mountain's Embrace": 'earth',
+  'Bronze Peal': 'light',
+  'Midnight Knell': 'dark',
+  'Falcon Stoop': 'wind',
+  'Sky Hunt': 'wind',
 };
 
 export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? kitElement(name) ?? 'light';
@@ -218,6 +239,21 @@ export const SPELL_ELEMENT: Record<SpellId, Element> = {
   bulwark: 'earth',
   wolves: 'forest',
   starfall: 'fire',
+  // (KING-SPELLS batch 5: the schools' fourteen spells' own looks)
+  firewall: 'fire',
+  icewall: 'ice',
+  shatter: 'ice',
+  gale: 'wind',
+  thunderclap: 'lightning',
+  snare: 'forest',
+  charm: 'light',
+  foresight: 'light',
+  sunbeam: 'light',
+  venom: 'poison',
+  mirage: 'wind',
+  drain: 'blood',
+  bonewall: 'dark',
+  raisedead: 'dark',
 };
 
 /* ------------------------------------------------------------------ deaths */
@@ -337,6 +373,21 @@ export const SPELL_CAST: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; scal
   bulwark: [{ key: 'earth-shield', scale: 3 }],
   wolves: [{ key: 'forest-circle', scale: 2.8 }, { key: 'forest-gather', scale: 3 }],
   starfall: [{ key: 'fire-circle', scale: 3.2 }],
+  // (KING-SPELLS batch 5: the schools' fourteen spells' own looks)
+  firewall: [{ key: 'fire-circle', scale: 2.8 }, { key: 'fire-flame', scale: 3 }],
+  icewall: [{ key: 'ice-circle', scale: 2.8 }, { key: 'ice-spikes', scale: 3 }],
+  shatter: [{ key: 'ice-circle', scale: 2.8 }, { key: 'ice-explosion', scale: 3 }],
+  gale: [{ key: 'wind-circle', scale: 2.8 }, { key: 'wind-wave', scale: 3.2 }],
+  thunderclap: [{ key: 'lightning-circle', scale: 2.8 }, { key: 'lightning-explosion', scale: 3.2 }],
+  snare: [{ key: 'forest-circle', scale: 2.8 }, { key: 'forest-spikes', scale: 3 }],
+  charm: [{ key: 'light-circle', scale: 2.8 }, { key: 'light-gather', scale: 2.6 }],
+  foresight: [{ key: 'light-circle', scale: 2.8 }, { key: 'light-rune', scale: 2.6 }],
+  sunbeam: [{ key: 'light-circle', scale: 2.8 }, { key: 'light-pillar', scale: 3.4 }],
+  venom: [{ key: 'poison-circle', scale: 2.6 }, { key: 'poison-slash', scale: 2.6 }],
+  mirage: [{ key: 'wind-circle', scale: 2.6 }, { key: 'wind-smoke', scale: 2.8 }],
+  drain: [{ key: 'blood-circle', scale: 2.8 }, { key: 'blood-gather', scale: 2.6 }],
+  bonewall: [{ key: 'dark-circle', scale: 2.8 }, { key: 'dark-spikes', scale: 3 }],
+  raisedead: [{ key: 'dark-circle', scale: 3 }, { key: 'dark-rune', scale: 2.8 }],
 };
 
 /** What a spell plays on each fighter it touches: a strip, its size as a share of the fighter's height, and where up the body. */
@@ -361,6 +412,21 @@ export const SPELL_TOUCH: Record<Exclude<SpellId, 'meteor'>, { key: PackKey; siz
   bulwark: { key: 'earth-shield', size: 1.3, at: 0.5 },
   wolves: { key: 'forest-nova', size: 1.4, at: 0.3 },
   starfall: undefined,
+  // (KING-SPELLS batch 5: the schools' fourteen spells' own looks)
+  firewall: { key: 'fire-hit', size: 1.2, at: 0.5 },
+  icewall: { key: 'ice-hit', size: 1.2, at: 0.5 },
+  shatter: { key: 'ice-explosion', size: 1.3, at: 0.5 },
+  gale: { key: 'wind-hit', size: 1.2, at: 0.5 },
+  thunderclap: { key: 'lightning-strike', size: 2, at: 0.3 },
+  snare: { key: 'forest-spikes', size: 1.3, at: 0.8 },
+  charm: { key: 'light-sparkle', size: 1.2, at: 0.4 },
+  foresight: { key: 'light-aura', size: 1.3, at: 0.5 },
+  sunbeam: { key: 'light-strike', size: 1.6, at: 0.3 },
+  venom: { key: 'poison-hit', size: 1.2, at: 0.5 },
+  mirage: { key: 'wind-puff', size: 1.2, at: 0.5 },
+  drain: { key: 'blood-hit', size: 1.2, at: 0.5 },
+  bonewall: { key: 'dark-hit', size: 1.2, at: 0.5 },
+  raisedead: { key: 'dark-gather', size: 1.3, at: 0.6 },
 };
 
 /* ------------------------------------------------------------------ keeping big effects readable */

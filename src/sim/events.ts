@@ -23,14 +23,17 @@
 // `drawEvent`) are used only inside its functions, never as the modules load.
 
 import { mixSeed, Rng } from './rng';
-import { dropGear, gearText, type Gear } from './gear';
-import { RELIC_IDS, RELICS } from './relics';
+import { gearText, type Gear } from './gear';
+import { findGear, findPrice, SOURCE, stow } from './runGear';
+import { pickRelic, pricedFor, RELIC_IDS, relicPriceOf, RELICS, relicText, theRelic } from './relics';
 import { healParty, hurtParty } from './health';
 import { UNITS } from './units';
 import { applyMystery, drawMystery, type MysteryAct } from './mystery';
 import { applyRoad, drawRoad, faceOf, noteRoad, pickRoadKind, roadRun, type RoadAct, type RoadKind } from './midEvents';
 import { isWare, MARKET_BUYS, marketOptions, stockMarket } from './market';
 import { recruit, benchFull, type Run } from './run';
+import { guestBlock, takeGuest } from './guest';
+import { heroName } from './heroNames';
 
 export type EventKind =
   | 'shrine'
@@ -114,7 +117,9 @@ export type Effect =
   // (the passing cart's sellsword and rummage, and the road's events: MID-EVENTS)
   | { t: 'hire'; kind: string }
   | { t: 'reroll' }
-  | { t: 'road'; act: RoadAct };
+  | { t: 'road'; act: RoadAct }
+  // (the passing cart's guest hero, for this run only: GUEST-HERO, `guest.ts`)
+  | { t: 'guest'; kind: string };
 
 export interface EventOption {
   label: string;
@@ -151,7 +156,7 @@ const gearId = (run: Run) => (run.nextGear = (run.nextGear ?? 1) + 1) - 1;
 const unownedRelics = (run: Run) => RELIC_IDS.filter((id) => !run.relics?.includes(id));
 const pick = <T>(rng: Rng, xs: readonly T[]): T => xs[rng.int(0, xs.length - 1)];
 const leave = (): EventOption => ({ label: 'Leave', text: 'Move on.', cost: 0, effect: { t: 'leave' } });
-const relicOption = (id: string, cost: number): EventOption => ({ label: RELICS[id].name, text: RELICS[id].text, cost, effect: { t: 'relic', id } });
+const relicOption = (id: string, cost: number): EventOption => ({ label: RELICS[id].name, text: relicText(id), cost, effect: { t: 'relic', id } });
 const gearOption = (g: Gear, cost: number): EventOption => ({ label: g.name, text: `${g.slot}: ${gearText(g)}`, cost, effect: { t: 'gear', gear: g } });
 
 /** The event card of a stage, made from the run's seed (it draws gear ids from the run); `kinds` is what it may be. */
@@ -162,11 +167,18 @@ export function drawEvent(run: Run, stage: number, kinds: readonly EventKind[] =
     // (the old draw first, from the card's stream as ever, so a shrine or a chest falls where it always did)
     const card = drawRoadCard(run, stage, pickRoadKind(run, stage, pick(rng, EVENT_KINDS)), rng);
     noteRoad(run, card);
-    return card;
+    return priced(run, card);
   }
   const kind = kindOf(run, stage, kinds, rng);
-  if (MYSTERY_KINDS.includes(kind)) return drawMystery(run, stage, kind, rng);
-  return drawPlain(run, stage, kind, rng);
+  if (MYSTERY_KINDS.includes(kind)) return priced(run, drawMystery(run, stage, kind, rng));
+  return priced(run, drawPlain(run, stage, kind, rng));
+}
+
+/** RELICS-2: a card's prices as the run's relics have them (the Tax Ingot's 10% more). The cart's wares are priced as they are stocked. */
+function priced(run: Run, card: EventCard): EventCard {
+  if (card.buys !== undefined) return card;
+  for (const o of card.options) if (o.cost > 0) o.cost = pricedFor(run.relics, o.cost);
+  return card;
 }
 
 /** A road run's card: the passing cart is a market, a road kind is `midEvents.ts`'s, the other old kinds are drawn as ever. */
@@ -194,28 +206,29 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
         ],
       };
     case 'merchant': {
-      const second = relics.length ? pick(rng, relics) : '';
-      const g = dropGear(rng, gearId(run), stage);
+      const second = relics.length ? pickRelic(() => rng.next(), relics) : '';
+      // (RUN-GEAR: a real piece in a real-gear run, priced by its grade)
+      const g = findGear(run, rng, gearId(run), stage, 0, SOURCE.merchant);
       return {
         kind, stage, title: 'A travelling merchant', text: 'A cart creaks out of the mist, hung with trinkets. The merchant says everything is a bargain. He says it to the goat, too.',
         options: [
-          second ? relicOption(second, 70 + 4 * stage) : { label: 'A sack of coin', text: 'Nothing else to sell.', cost: 0, effect: { t: 'gold', n: 20 } },
-          gearOption(g, 28 * g.tier + 2 * stage),
+          second ? relicOption(second, relicPriceOf(second, 70 + 4 * stage)) : { label: 'A sack of coin', text: 'Nothing else to sell.', cost: 0, effect: { t: 'gold', n: 20 } },
+          gearOption(g, findPrice(g, stage)),
           leave(),
         ],
       };
     }
     case 'chest': {
       const roll = rng.int(0, 2);
-      const id = relics.length ? pick(rng, relics) : '';
-      const effect: Effect = roll === 0 && id ? { t: 'relic', id } : roll === 1 ? { t: 'gear', gear: dropGear(rng, gearId(run), stage) } : { t: 'gold', n: 50 + 8 * stage };
+      const id = relics.length ? pickRelic(() => rng.next(), relics) : '';
+      const effect: Effect = roll === 0 && id ? { t: 'relic', id } : roll === 1 ? { t: 'gear', gear: findGear(run, rng, gearId(run), stage, 0, SOURCE.chest) } : { t: 'gold', n: 50 + 8 * stage };
       return {
         kind, stage, title: 'A mystery chest', text: 'It sits in the road, locked by nothing but luck. Someone has already licked it.',
         options: [{ label: 'Open it', text: 'A relic, gear or gold.', cost: 0, effect }, leave()],
       };
     }
     case 'cursed': {
-      const gear = dropGear(rng, gearId(run), stage, 1);
+      const gear = findGear(run, rng, gearId(run), stage, 1, SOURCE.curse);
       const gold = 40 + 8 * stage;
       return {
         kind, stage, title: 'A cursed path', text: 'The way ahead is dark. Whatever waits there guards something good, and is probably short of staff.',
@@ -239,10 +252,10 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
       };
     }
     case 'altar': {
-      const id = relics.length ? pick(rng, relics) : '';
+      const id = relics.length ? pickRelic(() => rng.next(), relics) : '';
       return {
         kind, stage, title: 'A blood altar', text: 'A cracked altar hums. It wants something of the heroes, and offers something back. Please read the small print on the side.',
-        options: [id ? { label: `Give blood for the ${RELICS[id].name}`, text: `every hero loses ${ALTAR_COST * 100}% of its hp; ${RELICS[id].text}`, cost: 0, effect: { t: 'altar', frac: ALTAR_COST, id } } : { label: 'A sack of coin', text: 'The altar has nothing else to give.', cost: 0, effect: { t: 'gold', n: 25 } }, leave()],
+        options: [id ? { label: `Give blood for ${theRelic(id)}`, text: `every hero loses ${ALTAR_COST * 100}% of its hp; ${relicText(id)}`, cost: 0, effect: { t: 'altar', frac: ALTAR_COST, id } } : { label: 'A sack of coin', text: 'The altar has nothing else to give.', cost: 0, effect: { t: 'gold', n: 25 } }, leave()],
       };
     }
     default: {
@@ -283,10 +296,10 @@ export function chooseOption(run: Run, i: number): string | null {
       if (!run.relics) run.relics = [];
       if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
       run.tower?.recap?.relics.push(fx.id);
-      line = `Found the ${RELICS[fx.id].name}: ${RELICS[fx.id].text}.`;
+      line = `Found ${theRelic(fx.id)}: ${relicText(fx.id)}.`;
       break;
     case 'gear':
-      (run.items ??= []).push(fx.gear);
+      stow(run, fx.gear);
       run.tower?.recap?.gear.push(fx.gear.name);
       line = `Got the ${fx.gear.name} (${fx.gear.slot}, ${gearText(fx.gear)}).`;
       break;
@@ -321,7 +334,7 @@ export function chooseOption(run: Run, i: number): string | null {
       if (!run.relics) run.relics = [];
       if (!run.relics.includes(fx.id)) run.relics.push(fx.id);
       run.tower?.recap?.relics.push(fx.id);
-      line = `The altar drinks deep and gives the ${RELICS[fx.id].name}.`;
+      line = `The altar drinks deep and gives ${theRelic(fx.id)}.`;
       break;
     case 'mystery':
       line = applyMystery(run, fx.act);
@@ -334,11 +347,19 @@ export function chooseOption(run: Run, i: number): string | null {
       recruit(run, fx.kind, o.cost);
       line = `The ${UNITS[fx.kind]?.name ?? 'sellsword'} climbs down off the cart and joins the bench.`;
       break;
+    case 'guest':
+      if (guestBlock(run) || !takeGuest(run, fx.kind, o.cost)) {
+        run.gold += o.cost;
+        return 'The party has a guest already: one at a time.';
+      }
+      line = `${heroName(fx.kind)} climbs down off the cart and joins you as a guest: a sixth hero on the field, for this run only.`;
+      break;
     case 'reroll': {
       // (the unsold wares go back under the cloth and others come out; what was bought stays sold)
       const fresh = stockMarket(run, ev.stage, 1);
       let k = 0;
-      ev.options = ev.options.map((x) => (isWare(x) && !x.done && k < fresh.length ? fresh[k++] : x));
+      // (a guest on offer stays where it is: it is not the cart's stock, GUEST-HERO)
+      ev.options = ev.options.map((x) => (isWare(x) && !x.done && x.effect.t !== 'guest' && k < fresh.length ? fresh[k++] : x));
       for (; k < fresh.length; k++) ev.options.splice(ev.options.length - 2, 0, fresh[k]);
       line = 'The pedlar grumbles, and drags out another crate.';
       break;

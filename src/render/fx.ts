@@ -3,11 +3,28 @@
 // so a faster fight is faster here too.
 
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
+import { RELICS } from '../sim/relics';
+import { isPainted, relicIcon } from './items';
+/** The relics' icons as textures, kept once loaded (the 16x16 tiles are scaled up crisp with nearest-neighbour, the paintings smooth). */
+const relicTextures = new Map<string, Promise<Texture>>();
+const relicTexture = (src: string): Promise<Texture> => {
+  let p = relicTextures.get(src);
+  if (!p) {
+    p = loadImage(src).then((img) => {
+      const t = Texture.from(img);
+      t.source.scaleMode = isPainted(src) ? 'linear' : 'nearest';
+      return t;
+    });
+    relicTextures.set(src, p);
+  }
+  return p;
+};
 import { keyOfKit, ultKeyOf } from '../sim/abilities';
 import { skillShown } from '../sim/heroKits';
 import { abilityHeading } from './abilityLooks';
@@ -37,19 +54,22 @@ import { comboById, COMBO_NAME } from '../sim/combos';
 import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { tierSkillOf } from '../sim/tierSkills';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
+import { loadShowArt, showArt, type ShowArt } from './showArt';
 import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
+import { KING_SHEET, KING_WALL } from './kingArt';
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
-import { loadPaintedArt, paintedStrip, paintSprite } from './cinematicArt';
+import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinematicArt';
+import { flicker } from './cinematicRules';
 import { coverAlpha, overFighter } from './overFighter';
+import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
 /** Shapes for the legacy named skill cues; their scale and release timing remain the skill's own. */
@@ -90,6 +110,8 @@ export async function loadFx(): Promise<void> {
   await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
   // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
   void loadSpellArt();
+  // (ULT-SHOW: the showcases' painted poses and props, behind the game too)
+  void loadShowArt();
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
   const tex = async (url: string) => Texture.from(await loadImage(url));
   kitArt = { walls: await Promise.all(TERRAIN_URLS.walls.map(tex)), barrel: await tex(TERRAIN_URLS.barrel) };
@@ -117,16 +139,26 @@ const MARK_WORDS: Record<string, string> = {
 };
 
 /** A small random offset (the renderer's own, not the sim's). */
+/** ULT-SHOW: the beats a showcase plays (`ultShowRules.ts`). */
+export type ShowBeat = 'vanish' | 'appear' | 'cut' | 'gather' | 'mark' | 'sky' | 'call' | 'land' | 'finish' | 'dash' | 'crash' | 'blow' | 'hook' | 'shot' | 'cloud' | 'burn' | 'snare' | 'stone' | 'smite' | 'taunt' | 'rise' | 'tunnel' | 'bless' | 'transform';
 const jitter = (n: number) => (Math.random() * 2 - 1) * n;
 
 interface Item {
   /** Advance by `dt` ms; false when done. */
   step(dt: number): boolean;
-  view: Container;
+  /** What it shows: a view on the effects' layer, or pieces on the tiles' ground (`groundMarks.ts`). */
+  view: { destroyed: boolean; destroy(o?: { children: boolean }): void };
 }
 
 export class Fx {
   readonly root = new Container();
+  /** FIXES-4: a tile's ground layer (over its top, under its props and every fighter: `BoardView.groundAt`), where the tile marks are laid
+   *  so the fighters standing in them show; null off the board. Unset (the Last Stand's baked hall), marks go on `ground`. */
+  groundAt: (u: number, v: number) => Container | null = () => null;
+  /** The layer just over a diagonal row of tiles (`BoardView.groundRow`), for the painted ground loops; null where there are no rows. */
+  groundRow: (depth: number) => Container | null = () => null;
+  /** The marks' layer where there are no tile layers: the page that owns this Fx puts it under its fighters (the Last Stand does). */
+  readonly ground = new Container();
   private items: Item[] = [];
   /** The auras drawn now (by caster and name), so a refreshed aura is not drawn twice (RPG-SPELLS). */
   private auraShown = new Set<string>();
@@ -189,7 +221,20 @@ export class Fx {
   private lava: [number, number][] = [];
   private water: [number, number][] = [];
 
+  /** BOSS-BIG: a boss's signature attack's marks and blow (`bossFx.ts`). */
+  private bossFx: BossFx;
+
   constructor(private sprites: Map<number, UnitSprite>) {
+    this.bossFx = new BossFx({
+      root: this.root,
+      groundOf: (u, v) => this.groundOf(u, v),
+      particles: this.particles,
+      calm: () => this.calm(),
+      label: (text, x, y, fill, size, life) => void this.label(text, x, y, fill, size, life),
+      impact: (b, el, spots) => this.ultImpact(b, el, spots),
+      stop: (ms) => (this.stopLeft = Math.max(this.stopLeft, ms)),
+      shake: (level) => (this.trauma = Math.max(this.trauma, level)),
+    });
     this.root.zIndex = 1e7;
     this.flashLayer.visible = false;
     this.dimLayer.rect(-3000, -3000, 6000, 6000).fill(0x07040f);
@@ -216,6 +261,7 @@ export class Fx {
     this.gusts.clear();
     this.particles.clear();
     this.moment.clear();
+    this.bossFx.clear();
     this.epic = new Set();
     this.setEpic(false);
   }
@@ -325,8 +371,10 @@ export class Fx {
           // (a whoosh of wind across the one that dodged)
           this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true, stretchX: facesRight(to.unit.facing) ? 1 : -1 });
         }
-      } else if (e.kind === 'boom') this.boom(b, e.u, e.v);
+      } else if (e.kind === 'relic') this.relicMark(e.to, e.id);
+      else if (e.kind === 'boom') this.boom(b, e.u, e.v);
       else if (e.kind === 'hazard') this.hazard(b, e);
+      else if (e.kind === 'bossSig') this.bossFx.show(b, e);
       else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e, slashes.get(e));
       else if (e.kind === 'phase') this.phaseShock(e.by);
       else if (e.kind === 'comboCast') this.comboCast(e);
@@ -352,10 +400,18 @@ export class Fx {
       } else if (e.kind === 'arc') this.arc(e.from, e.to, e.ail === 'shock');
       // (STATUS-FX: an ailment shrugged off, and a frozen fighter's ice shattering)
       else if (e.kind === 'immune') this.immune(e.to, e.what);
+      // (DEPTH-BUILD: a boss's weakness used: a gold "Weakness!" over it, once a second and a half at most)
+      else if (e.kind === 'weakness') this.weakness(e.by);
+      // (STATS batch 5: a saving throw halved it)
+      else if (e.kind === 'saved') this.saved(e.to, e.what);
       else if (e.kind === 'shatter') this.shatter(e.to);
       else if (e.kind === 'frenzy') {
         const by = this.sprites.get(e.by);
         if (by) this.label(`Frenzy x${e.n}`, by.x, by.y - by.tall - 20, 0xff6b4a, 12, 700);
+      } else if (e.kind === 'style') {
+        // (FOE-STYLES: a foe's way of fighting showing, a charge's blow)
+        const by = this.sprites.get(e.by);
+        if (by) this.label(e.what, by.x, by.y - by.tall - 20, 0xffb070, 12, 700);
       } else if (e.kind === 'gaze') {
         const to = this.sprites.get(e.to);
         if (to) {
@@ -450,7 +506,9 @@ export class Fx {
         } else this.anim(impact, hx, hy, 0.9 * spark, 45);
         if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
-        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail);
+        // (a glancing blow, STATS batch 4: the word, and a smaller grey number)
+        if (e.glance) this.label('Glance', to.x, to.y - to.tall - 22, 0xb4b4b4, 10, 600);
+        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail, e.glance);
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
         const share = e.dmg / target.maxHp;
@@ -565,6 +623,230 @@ export class Fx {
       play(this.moment, packKey(el, 'wave'), x, y, { scale: 5, frameMs: 80, add: false, alpha: 0.7, tint });
     }
     this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE);
+  }
+
+  /** ULT-SHOW (`ultShow.ts`): one beat of an ultimate's showcase, drawn on the moment's layer (it runs while the fight is held), in the
+   *  colours of its element (`el`). (x, y) is a fighter's feet or a tile's ground, `tall` its height; `to` a foe (a cut, a blow) or the far
+   *  end (a dash, a hook). The painted toolkit's parts when they are there, else the pack's. */
+  showBeat(kind: ShowBeat, x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element; how?: 'bolt' | 'flame' | 'bullet' } = {}): void {
+    const m = this.moment;
+    const el = o.el ?? 'dark';
+    const tint = ULT_TINT[el];
+    const lift = (o.tall ?? 40) * 0.45;
+    const budget = particleBudget(settings().saver);
+    m.density = budget.density;
+    m.cap = budget.cap;
+    const smoke = (n: number, s: number) => {
+      for (let i = 0; i < n; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(14), y: y - lift + jitter(10), scale: s, life: 650, vy: -0.035, grow: 0.0009, alpha: 0.85, delay: i * 25 });
+    };
+    const to = o.to;
+    switch (kind) {
+      case 'vanish':
+        // (a puff of smoke where she stood and the painted swirl she goes out in; a bolt's flash for lightning)
+        if (el === 'dark' || el === 'blood') {
+          if (!this.paintOnce(PAINT.blinkOut, x, y - lift, { layer: m })) play(m, packKey('dark', 'smoke'), x, y - lift, { scale: 1.6, frameMs: 55 });
+          smoke(4, 1.5);
+        } else {
+          play(m, packKey(el, 'nova'), x, y - lift, { scale: 1.8, frameMs: 50 });
+          play(m, packKey(el, 'puff'), x, y - lift, { scale: 1.6, frameMs: 55 });
+        }
+        return;
+      case 'appear':
+        if (el === 'dark' || el === 'blood') {
+          if (!this.paintOnce(PAINT.blinkIn, x, y - lift, { layer: m })) play(m, packKey('dark', 'puff'), x, y - lift, { scale: 1.6, frameMs: 55 });
+          smoke(2, 1.1);
+        } else play(m, packKey(el, 'strike'), x, y - lift, { scale: 1.8, frameMs: 50 });
+        return;
+      case 'cut': {
+        if (!to) return;
+        const ty = to.y - to.tall * 0.5;
+        // (the cut across the foe: the painted slash streak through it and the crossed slash on it, a spray, a jolt of the screen)
+        const dx = to.x - x || 1;
+        if (!this.paintAlong(PAINT.slash, to.x - dx * 0.7, ty - 6, to.x + dx * 0.5, ty + 6, { layer: m })) play(m, packKey(el, 'slash'), to.x, ty, { scale: 2.2, frameMs: 40 });
+        this.paintOnce(PAINT.slashHit, to.x, ty, { layer: m, delay: 50 });
+        play(m, packKey(el, 'hit'), to.x, ty, { scale: 1.8, frameMs: 45, delay: 40, tint });
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffBlood, x: to.x + jitter(8), y: ty + jitter(8), scale: 0.9, life: 380, vx: Math.sign(dx) * 0.06, vy: -0.03, delay: 40 + i * 30 });
+        this.trauma = Math.min(1, this.trauma + 0.22);
+        return;
+      }
+      case 'blow': {
+        if (!to) return;
+        const ty = to.y - to.tall * 0.5;
+        play(m, packKey(el, 'hit'), to.x + jitter(6), ty + jitter(6), { scale: 1.3, frameMs: 40, tint });
+        this.puffAtOn(m, to.x + jitter(6), ty + jitter(6), 0.7);
+        this.trauma = Math.min(1, this.trauma + 0.06);
+        return;
+      }
+      case 'dash': {
+        // (a streak of speed along the run, after-images and the dust it kicks up)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.dash, x, y - lift, to.x, to.y - lift, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 2.6, frameMs: 40 });
+        for (let i = 0; i <= 4; i++) this.puffAtOn(m, x + ((to.x - x) * i) / 4, y + ((to.y - y) * i) / 4, 0.9);
+        return;
+      }
+      case 'crash':
+        // (a landing that cracks the ground: the element's explosion, the wave along the ground, dust, a hard shake)
+        play(m, packKey(el, 'explosion'), x, y - lift, { scale: 3.2, frameMs: 60 });
+        play(m, packKey('earth', 'wave'), x, y, { scale: 5.5, frameMs: 80, add: false, alpha: 0.8 });
+        for (let i = 0; i < 6; i++) this.puffAtOn(m, x + jitter(34), y + jitter(14), 1.3);
+        this.trauma = Math.min(1, this.trauma + 0.5);
+        return;
+      case 'hook': {
+        // (the hook's line thrown out to the foe, and its grip)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.tether, x, y - lift, to.x, to.y - lift, { layer: m })) play(m, packKey('dark', 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 2, frameMs: 40 });
+        this.paintOnce(PAINT.grip, to.x, to.y - lift, { layer: m, delay: 180 });
+        return;
+      }
+      case 'shot': {
+        // (a shot at a foe: a bolt down out of the cloud, a stream of flame along the line, or a muzzle's flash and a bullet's spark)
+        if (!to) return;
+        const ty = to.y - to.tall * 0.5;
+        if (o.how === 'bolt') {
+          play(m, packKey('lightning', 'strike'), to.x, to.y - 40, { scale: 3, frameMs: 45 });
+          play(m, packKey('lightning', 'hit'), to.x, ty, { scale: 2, frameMs: 45, delay: 60 });
+          this.trauma = Math.min(1, this.trauma + 0.2);
+        } else if (o.how === 'flame') {
+          for (let i = 1; i <= 6; i++) play(m, packKey('fire', 'flame'), x + ((to.x - x) * i) / 6, y - lift + ((ty - y + lift) * i) / 6, { scale: 1.6 + i * 0.12, frameMs: 55, delay: i * 35 });
+          play(m, packKey('fire', 'explosion'), to.x, ty, { scale: 1.8, frameMs: 55, delay: 220 });
+        } else {
+          play(m, packKey('fire', 'hit'), x + Math.sign(to.x - x || 1) * 10, y - lift, { scale: 1, frameMs: 35 });
+          play(m, packKey(el, 'hit'), to.x, ty, { scale: 1.5, frameMs: 40, delay: 70, tint });
+          this.puffAtOn(m, to.x, ty, 0.6);
+          this.trauma = Math.min(1, this.trauma + 0.1);
+        }
+        return;
+      }
+      case 'cloud':
+        // (a storm cloud gathers over the caster and flickers)
+        for (let i = 0; i < 6; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(40), y: y - 110 + jitter(12), scale: 2.4, life: 2600, grow: 0.0003, alpha: 0.9, delay: i * 90 });
+        play(m, packKey(el, 'vortex'), x, y - 110, { scale: 3.2, frameMs: 80, life: 2400, loop: true, alpha: 0.8 });
+        play(m, packKey(el, 'strike'), x + 18, y - 70, { scale: 2, frameMs: 45, delay: 500 });
+        return;
+      case 'burn':
+        // (a tile catching alight, burning on through the showcase)
+        play(m, packKey('fire', 'flame'), x, y - 8, { scale: 1.8, frameMs: 70, life: 2200, loop: true });
+        return;
+      case 'snare': {
+        // (vines snap tight round a foe)
+        if (!to) return;
+        play(m, packKey(el, 'spikes'), to.x, to.y - 4, { scale: 2, frameMs: 60 });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.4, frameMs: 45, delay: 60, tint });
+        return;
+      }
+      case 'stone': {
+        // (stone creeps up a foe: grey dust rising round it and a crack of earth at its feet)
+        if (!to) return;
+        play(m, packKey('earth', 'spikes'), to.x, to.y - 2, { scale: 1.6, frameMs: 70, tint: 0x9a9a92 });
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffSand, x: to.x + jitter(8), y: to.y - i * 10, scale: 1, life: 600, vy: -0.03, delay: i * 90, tint: 0xb8b8ae });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.3, frameMs: 50, delay: 150 });
+        return;
+      }
+      case 'smite': {
+        // (the element strikes a foe: a pillar of it and a burst)
+        if (!to) return;
+        play(m, packKey(el, 'pillar'), to.x, to.y - 10, { scale: 1.6, frameMs: 55 });
+        play(m, packKey(el, 'hit'), to.x, to.y - to.tall * 0.5, { scale: 1.8, frameMs: 45, delay: 40, tint });
+        this.trauma = Math.min(1, this.trauma + 0.07);
+        return;
+      }
+      case 'taunt': {
+        // (a foe dragged round to face him: a line of light from it to him, and a ring on it)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.tether, to.x, to.y - to.tall * 0.5, x, y - lift, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 1.6, frameMs: 45 });
+        play(m, packKey(el, 'circle'), to.x, to.y - 2, { scale: 1.3, frameMs: 60, alpha: 0.85 });
+        return;
+      }
+      case 'bless': {
+        // (the blessing runs from the caster to an ally: a ribbon of the element, and sparkles rising off the ally)
+        if (!to) return;
+        if (!this.paintAlong(PAINT.swapLink, x, y - lift, to.x, to.y - to.tall * 0.5, { layer: m })) play(m, packKey(el, 'slash'), (x + to.x) / 2, (y + to.y) / 2 - lift, { scale: 1.6, frameMs: 45 });
+        play(m, packKey(el, 'sparkle'), to.x, to.y - to.tall * 0.5, { scale: 1.8, frameMs: 60, delay: 120 });
+        play(m, packKey(el, 'circle'), to.x, to.y - 2, { scale: 1.4, frameMs: 70, alpha: 0.8, delay: 120 });
+        return;
+      }
+      case 'transform':
+        // (the change bursts out of him: the element's nova and explosion, smoke rolling off, a hard jolt)
+        play(m, packKey(el, 'explosion'), x, y - lift, { scale: 2.8, frameMs: 55 });
+        play(m, packKey(el, 'nova'), x, y - lift, { scale: 3, frameMs: 60, delay: 60 });
+        smoke(6, 1.8);
+        this.trauma = Math.min(1, this.trauma + 0.35);
+        return;
+      case 'rise':
+        // (a rock spire rising out of the ground)
+        play(m, packKey('earth', 'spikes'), x, y - 4, { scale: 2.2, frameMs: 70 });
+        this.puffAtOn(m, x, y, 1.1);
+        this.trauma = Math.min(1, this.trauma + 0.05);
+        return;
+      case 'tunnel':
+        // (the ground heaving where he goes under it)
+        for (let i = 0; i < 3; i++) m.spawn({ frames: VFX.puffSand, x: x + jitter(10), y: y + jitter(4), scale: 1.2, life: 520, vy: -0.025, delay: i * 50 });
+        play(m, packKey(el, 'puff'), x, y - 4, { scale: 1.2, frameMs: 60, alpha: 0.8 });
+        this.trauma = Math.min(1, this.trauma + 0.04);
+        return;
+      case 'gather':
+        // (power gathers at the caster's feet: a circle of the element and its gathering)
+        play(m, packKey(el, 'circle'), x, y - 2, { scale: 2.6, frameMs: 80, life: 2400, loop: true, alpha: 0.9 });
+        play(m, packKey(el, 'gather'), x, y - lift, { scale: 2.2, frameMs: 70, life: 1400, loop: true });
+        return;
+      case 'mark':
+        // (a crowd marked: a circle of the element on its ground until the blow falls, and the ground rumbling)
+        play(m, packKey(el, 'circle'), x, y - 2, { scale: 4.4, frameMs: 90, life: 2600, loop: true });
+        play(m, packKey(el, 'rune'), x, y - 4, { scale: 3, frameMs: 90, life: 2600, loop: true });
+        play(m, packKey(el, 'pillar'), x, y - 10, { scale: 2.2, frameMs: 70 });
+        this.trauma = Math.min(1, this.trauma + 0.12);
+        return;
+      case 'sky':
+        // (what falls seen high in the clouds over each mark, burning as it comes down; the sim's own fall takes over as the fight runs)
+        play(m, packKey(el, 'orb'), x + 60, y - 170, { scale: 4.2, frameMs: 60, life: 900, loop: true, vx: -0.045, vy: 0.12 });
+        for (let i = 0; i < 6; i++) m.spawn({ frames: VFX.puffFire, x: x + 60 + jitter(10), y: y - 170 + jitter(10), scale: 1.5, life: 700, vx: -0.03, vy: 0.07, delay: i * 120 });
+        return;
+      case 'call':
+        // (the call goes out: a ring of the element from where he stands)
+        play(m, packKey(el, 'wave'), x, y, { scale: 5, frameMs: 80, add: false, alpha: 0.7 });
+        play(m, packKey(el, 'nova'), x, y - lift, { scale: 2.4, frameMs: 70 });
+        return;
+      case 'land':
+        // (one called up lands at its place: dust, and a ring)
+        this.puffAtOn(m, x, y, 1.4);
+        play(m, packKey(el, 'circle'), x, y - 2, { scale: 1.6, frameMs: 70, alpha: 0.8 });
+        this.trauma = Math.min(1, this.trauma + 0.08);
+        return;
+      case 'finish':
+        // (the last cut lands, or the last one called: a burst of the element on the caster)
+        play(m, packKey(el, 'nova'), x, y - lift, { scale: 2.2, frameMs: 60, alpha: 0.8 });
+        if (el === 'dark') smoke(5, 1.6);
+        return;
+    }
+  }
+
+  /** ULT-SHOW: a painted prop (`showArt.ts`) on the moment's layer, `h` px tall at (x, y), drifting, turning and lasting as asked. False
+   *  when it has not loaded (the pack's effect plays alone then). */
+  showProp(art: ShowArt, x: number, y: number, o: { h: number; life: number; vx?: number; vy?: number; spin?: number; rotation?: number; delay?: number; alpha?: number; add?: boolean }): boolean {
+    const t = showArt(art);
+    if (!t) return false;
+    this.moment.spawn({ frames: [t], x, y, scale: o.h / Math.max(1, t.height), frameMs: o.life, life: o.life, prio: true, ...(o.vx ? { vx: o.vx } : {}), ...(o.vy ? { vy: o.vy } : {}), ...(o.spin ? { spin: o.spin } : {}), ...(o.rotation ? { rotation: o.rotation } : {}), ...(o.delay ? { delay: o.delay } : {}), alpha: o.alpha ?? 1, add: o.add ?? false });
+    return true;
+  }
+
+  /** ULT-SHOW: the ordinary effects hidden while a showcase plays its own on the moment's layer (what the cast left, its numbers and its cuts,
+   *  shows as the showcase ends: the foes it cut all reel at once); then shown again as they were. */
+  hush(on: boolean): void {
+    if (on === this.hushOn) return;
+    this.hushOn = on;
+    if (on) {
+      for (const c of this.root.children) if (c !== this.moment.root && c.visible) this.hushed.push(c);
+      for (const c of this.hushed) c.visible = false;
+    } else {
+      for (const c of this.hushed) if (!c.destroyed) c.visible = true;
+      this.hushed = [];
+    }
+  }
+  private hushed: Container[] = [];
+  private hushOn = false;
+
+  private puffAtOn(p: Particles, x: number, y: number, scale: number): void {
+    p.spawn({ frames: VFX.puffWhite, x, y, scale, life: 420, vy: -0.02, grow: 0.0008, alpha: 0.9 });
   }
 
   /** A blow is swung: a slash of the attacker's weapon across the one it aims at. */
@@ -765,6 +1047,11 @@ export class Fx {
     this.flash(0.35, 110);
   }
 
+  /** EIDOLONS: a freeze on a blow (real ms) for a moment the page plays (an Eidolon's strike); none with the screen kept still. */
+  hitStop(ms: number): void {
+    if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, ms);
+  }
+
   /** Shake at least this hard for now (a boss walking in); it fades as usual once the rumble stops. */
   rumble(level: number): void {
     this.trauma = Math.max(this.trauma, level);
@@ -801,10 +1088,13 @@ export class Fx {
     const was = this.items;
     this.items = [];
     for (const it of was) {
+      // (a mark on a board rebuilt under it went with its tiles)
+      if (it.view.destroyed) continue;
       if (it.step(dt)) this.items.push(it);
       else it.view.destroy({ children: true });
     }
     this.clock += dt;
+    this.bossFx.step(dt);
     this.trauma = fadeTrauma(this.trauma, dt / 1000);
     const s = this.calm() || this.still ? 0 : shakeOf(this.trauma);
     if (this.thudLeft > 0 && !this.still) {
@@ -1077,18 +1367,18 @@ export class Fx {
     showDuoToast(e.banner, e.harmonic);
   }
 
-  /** A hero is promoted to `grade` (2 to 4; rank 4 is violet, MERGE-TWO): the one call both ways in take, the page's merge after a hire and a sim `promote` event (the Calamity's tier by level). The hero rises in light and scales up a beat; tier 3 adds a pillar of light, a nova, a flash, a short slow-motion, a camera push and a banner with its name and its new skill's. */
+  /** A hero is promoted to `grade` (2 to 4; rank 4 is violet, MERGE-TWO): the one call both ways in take, the page's merge after a hire and a sim `promote` event (the Calamity's tier by level). The hero rises in light and scales up a beat; tier 3 adds a pillar of light, a nova, a flash, a short slow-motion, a camera push and a banner with its name and the step the rank brings. */
   promote(unitId: number, grade: number, quiet = false): void {
     const sp = this.sprites.get(unitId);
     if (!sp || grade < 2) return;
     sp.promote(grade);
     promoteBurst(this.particles, grade, sp.x, sp.y, sp.tall);
     const def = defOf(sp.unit);
-    const skill = tierSkillOf(sp.unit.def, grade);
-    // (the banner: the name and the tier's skill small, the tier big over them)
+    // (the banner: the name and the step the rank brings small, the rank big over them; since the skills overhaul's batch 3 a rank gives
+    // health and attack only, so the banner names that, not a skill)
     const life = grade > 2 ? 2200 : 1500;
-    this.label(skill ? `${def.name} · ${skill.name}` : def.name, sp.x, sp.y - sp.tall - 8, 0xfff2a0, 12, life, true);
-    this.label(`Tier ${grade}`, sp.x, sp.y - sp.tall - 22, grade > 3 ? 0xd49aff : grade > 2 ? 0xffe27a : 0xdce8ff, grade > 3 ? 28 : grade > 2 ? 24 : 12, life, true);
+    this.label(`${def.name} · more health and attack`, sp.x, sp.y - sp.tall - 8, 0xfff2a0, 12, life, true);
+    this.label(`Rank ${grade}`, sp.x, sp.y - sp.tall - 22, grade > 3 ? 0xd49aff : grade > 2 ? 0xffe27a : 0xdce8ff, grade > 3 ? 28 : grade > 2 ? 24 : 12, life, true);
     this.trauma = Math.max(this.trauma, grade > 2 ? 0.35 : 0.12);
     if (grade < 3) return;
     this.flash(0.35, 110);
@@ -1097,6 +1387,36 @@ export class Fx {
     if (quiet) return;
     this.slowMo(500);
     this.push(sp.x, sp.y - sp.tall * 0.5, 1.3, 1100);
+  }
+
+  /** A relic's rule has fired on a hero (RELICS-2: the Phoenix's rise, the Warden's Medal, the Harness): its icon rises over the hero for a
+   *  moment, with its name, then fades. The relics are not on the fight's screen otherwise (the owner's ask). */
+  relicMark(unitId: number, id: string): void {
+    const sp = this.sprites.get(unitId);
+    const src = relicIcon(id);
+    if (!sp) return;
+    this.label(RELICS[id]?.name ?? '', sp.x, sp.y - sp.tall - 8, 0xffe9b0, 11, 1400, true);
+    if (!src) return;
+    const icon = new Sprite();
+    // (the icon's image is loaded once and kept; it is a small data URL, so it is there at once after the first time)
+    void relicTexture(src).then((tex) => {
+      if (!icon.destroyed) icon.texture = tex;
+    });
+    icon.anchor.set(0.5, 1);
+    icon.scale.set(isPainted(src) ? 0.19 : 1.5);
+    icon.position.set(sp.x, sp.y - sp.tall - 24);
+    this.root.addChild(icon);
+    let t = 0;
+    const life = 1400;
+    this.items.push({
+      view: icon,
+      step: (dt) => {
+        t += dt;
+        if (!this.calm()) icon.y -= dt * 0.015;
+        icon.alpha = t > life * 0.6 ? 1 - (t - life * 0.6) / (life * 0.4) : 1;
+        return t < life;
+      },
+    });
   }
 
   /** A hero gains a level in the middle of a fight (the Last Stand): a one-shot burst of light round it, a small pop, and "Lv N" over its head. */
@@ -1118,13 +1438,13 @@ export class Fx {
   // loop's first frame.
 
   /** A painted part played once at (x, y): its foot there when it stands on the ground, else its middle. */
-  private paintOnce(key: string, x: number, y: number, o: { mult?: number; delay?: number; rotation?: number; stretchX?: number; stretchY?: number } = {}): boolean {
+  private paintOnce(key: string, x: number, y: number, o: { mult?: number; delay?: number; rotation?: number; stretchX?: number; stretchY?: number; layer?: Particles } = {}): boolean {
     const frames = spellFrames(key);
     const p = spellPart(key);
     if (!frames.length || !p) return false;
     const scale = spellScale(key, o.mult);
     const drawn = p.cell * scale;
-    this.particles.spawn({
+    (o.layer ?? this.particles).spawn({
       frames,
       x,
       y: y + (0.5 - spellAnchorY(key)) * drawn,
@@ -1141,7 +1461,7 @@ export class Fx {
   }
 
   /** A painted streak (painted pointing right) laid along the line from (x0, y0) to (x1, y1), stretched to reach. */
-  private paintAlong(key: string, x0: number, y0: number, x1: number, y1: number, o: { delay?: number } = {}): boolean {
+  private paintAlong(key: string, x0: number, y0: number, x1: number, y1: number, o: { delay?: number; layer?: Particles } = {}): boolean {
     const p = spellPart(key);
     if (!p || !spellFrames(key).length) return false;
     const len = Math.hypot(x1 - x0, y1 - y0);
@@ -1157,9 +1477,10 @@ export class Fx {
   }
 
   /** A painted loop following `where` while `live` holds, then fading out. */
-  private paintLoop(key: string, where: () => [number, number], live: () => boolean, o: { mult?: number; depthOf?: () => number; alpha?: number; onGone?: () => void; tint?: number } = {}): boolean {
+  private paintLoop(key: string, where: () => [number, number], live: () => boolean, o: { mult?: number; depthOf?: () => number; alpha?: number; onGone?: () => void; tint?: number; ground?: { b: Battle; tile: () => { u: number; v: number } | null } } = {}): boolean {
     const frames = spellFrames(key);
     if (!frames.length) return false;
+    if (o.ground && this.paintGround(key, frames, where, live, o, o.ground)) return true;
     const sp = new Sprite(frames[0]);
     if (o.tint !== undefined) sp.tint = o.tint;
     sp.anchor.set(0.5, spellAnchorY(key));
@@ -1185,6 +1506,42 @@ export class Fx {
         }
         // (in over 150 ms, so it does not pop)
         sp.alpha = Math.min(full, sp.alpha + (full * dt) / 150);
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** FIXES-4: `paintLoop` lying on the ground (`GroundPaint`): a copy on each tile it covers, under the fighters standing in it. */
+  private paintGround(key: string, frames: Texture[], where: () => [number, number], live: () => boolean, o: { mult?: number; alpha?: number; onGone?: () => void; tint?: number }, g: { b: Battle; tile: () => { u: number; v: number } | null }): boolean {
+    const scale = spellScale(key, o.mult);
+    const p = spellPart(key);
+    const look = (sp: Sprite) => {
+      sp.anchor.set(0.5, spellAnchorY(key));
+      sp.scale.set(scale);
+      if (o.tint !== undefined) sp.tint = o.tint;
+    };
+    const paint = this.groundPaint(g.b, look);
+    if (!paint || !p) return false;
+    const reach = reachOfWidth(p.cell * scale);
+    const full = o.alpha ?? 1;
+    let t = 0;
+    let gone = false;
+    let tile = g.tile();
+    this.items.push({
+      view: paint,
+      step: (dt) => {
+        t += dt;
+        tile = g.tile() ?? tile;
+        const [x, y] = where();
+        if (tile) paint.place(tile.u, tile.v, reach, x, y, this.reduced ? frames[0] : frames[Math.floor(t / 90) % frames.length]);
+        if (!gone && !live()) gone = true;
+        if (gone) {
+          paint.alpha = Math.max(0, paint.alpha - dt / 300);
+          if (paint.alpha <= 0) o.onGone?.();
+          return paint.alpha > 0;
+        }
+        paint.alpha = Math.min(full, paint.alpha + (full * dt) / 150);
         return true;
       },
     });
@@ -1310,14 +1667,14 @@ export class Fx {
   /** A painted aura (session B): its ground loop, sized to the reach's diamond, and a few motes circling it; a sheet with a strike in
    *  place of motes (the storm cloud's bolt, the spikes' jab, the circle of death's flare) strikes a spot in its reach now and then.
    *  `hang`: the painting hangs over the centre at its own size (the storm cloud) and its bolts fall from it. `tint`: the Dirge's notes. */
-  private paintAura(sheet: string, reach: number, centre: () => [number, number], live: () => boolean, onGone: () => void, o: { hang?: boolean; tint?: number } = {}): boolean {
+  private paintAura(sheet: string, reach: number, centre: () => [number, number], live: () => boolean, onGone: () => void, o: { hang?: boolean; tint?: number; ground?: { b: Battle; tile: () => { u: number; v: number } | null } } = {}): boolean {
     const ground = spellPart(`${sheet}.ground`);
     if (!ground || !spellFrames(`${sheet}.ground`).length) return false;
     const lift = o.hang ? TW * 1.6 : 0;
     const shown = this.paintLoop(`${sheet}.ground`, () => {
       const [x, y] = centre();
       return [x, y - lift];
-    }, live, { mult: o.hang ? HANG_MULT : ((reach + 0.5) * 2) / ground.size, depthOf: () => (o.hang ? 9999 : -1), alpha: AURA_ALPHA_OF[sheet] ?? AURA_ALPHA, onGone, tint: o.tint });
+    }, live, { mult: o.hang ? HANG_MULT : ((reach + 0.5) * 2) / ground.size, depthOf: () => (o.hang ? 9999 : -1), alpha: AURA_ALPHA_OF[sheet] ?? AURA_ALPHA, onGone, tint: o.tint, ground: o.hang ? undefined : o.ground });
     if (!shown) return false;
     if (spellFrames(`${sheet}.impact`).length && !this.reduced) {
       // (a strike in the reach every so often while it lasts: from the cloud's belly when it hangs, else on the ground)
@@ -1388,6 +1745,13 @@ export class Fx {
           sp.alpha = Math.max(0, sp.alpha - dt / 300);
           return sp.alpha > 0;
         }
+        // (a pack loop is one painted still, so it is posed: a flame leans and licks, a ward breathes and turns)
+        const pose = paintHeld(sp, t, scale, 0, l.alpha ?? 0.9, this.reduced);
+        if (pose) {
+          sp.blendMode = 'add';
+          sp.alpha = Math.min(1, t / 150) * (l.alpha ?? 0.9);
+          sp.position.set(x + pose.dx * 32 * scale, y + pose.dy * 32 * scale);
+        }
         return true;
       },
     });
@@ -1399,6 +1763,9 @@ export class Fx {
     const [x, y] = this.tilePos(b, u, v);
     const i = v * b.board.w + u;
     const live = () => !!b.walls?.some((w) => w.i === i && w.kind === kind && w.until > b.t);
+    // (KING-SPELLS batch 5: a wall the king raised, `by` 0, stands as its spell's own painted loop)
+    const king = b.walls?.find((w) => w.i === i && w.kind === kind && w.until > b.t)?.by === 0 ? KING_WALL[kind] : undefined;
+    if (king && this.paintWall(king, x, y + 2, live)) return;
     if (look.paint && this.paintWall(look.paint, x, y + 2, live)) return;
     this.lookOnce(look, x, y - 8, 1.6);
     if (look.prop && kitArt) {
@@ -1407,8 +1774,8 @@ export class Fx {
       sp.scale.set(TW / Math.max(1, sp.texture.width));
       if (look.tint) sp.tint = look.tint;
       sp.position.set(x, y);
-      sp.zIndex = 0;
-      this.root.addChild(sp);
+      // (standing on its tile's ground, so it sorts with the fighters by depth)
+      this.groundOf(u, v).addChild(sp);
       let t = 0;
       this.items.push({ view: sp, step: (dt) => ((t += dt), live() || t < 200 ? true : ((sp.alpha = Math.max(0, sp.alpha - dt / 300)), sp.alpha > 0)) });
     }
@@ -1529,28 +1896,48 @@ export class Fx {
       const c = e.at ?? me ?? { u: 0, v: 0 };
       return this.tilePos(b, c.u, c.v);
     };
-    if (look.paint && this.paintAura(look.paint, e.reach, centre, live, () => this.auraShown.delete(`${e.by}:${e.what}`), { hang: look.hang })) return;
-    const g = new Graphics();
-    const r = e.reach + 0.5;
-    g.poly([0, (-TH / 2) * r * 2, (TW / 2) * r * 2, 0, 0, (TH / 2) * r * 2, (-TW / 2) * r * 2, 0]).fill({ color: look.ring, alpha: 0.1 }).stroke({ color: look.ring, width: 2, alpha: 0.7 });
-    g.zIndex = -1;
-    this.root.addChild(g);
+    const tile = () => e.at ?? (me ? { u: me.u, v: me.v } : null);
+    if (look.paint && this.paintAura(look.paint, e.reach, centre, live, () => this.auraShown.delete(`${e.by}:${e.what}`), { hang: look.hang, ground: { b, tile } })) return;
+    // (FIXES-4: the reach's tiles tinted, a rim round them, each on its tile's ground under whoever stands in it; laid again as it moves)
+    let g = new GroundSet();
+    let at = '';
+    const lay = (c: { u: number; v: number }) => {
+      g.destroy();
+      g = new GroundSet();
+      const tiles: { u: number; v: number; h: number }[] = [];
+      for (let du = -e.reach; du <= e.reach; du++)
+        for (let dv = -e.reach; dv <= e.reach; dv++) {
+          const tl = tileAt(b.board, c.u + du, c.v + dv);
+          if (tl) tiles.push({ u: c.u + du, v: c.v + dv, h: tl.h });
+        }
+      const rimOf = patchRims(tiles);
+      for (const tl of tiles) {
+        const [x, y] = this.tilePos(b, tl.u, tl.v);
+        g.add(patchTile(new Graphics(), x, y, rimOf(tl.u, tl.v), { colour: look.ring, fill: 0.14, edge: 0.75, width: 2, inset: 0 }), this.groundOf(tl.u, tl.v));
+      }
+    };
+    const view = { get destroyed() { return g.destroyed; }, destroy: () => g.destroy() };
     let t = 0;
     let gone = false;
+    let alpha = 1;
     this.items.push({
-      view: g,
+      view,
       step: (dt) => {
         t += dt;
-        const [x, y] = centre();
-        g.position.set(x, y);
-        if (!this.reduced) g.alpha = 0.8 + 0.2 * Math.sin(t / 350);
-        if (!gone && !live()) gone = true;
-        if (gone) {
-          g.alpha = Math.max(0, g.alpha - dt / 300);
-          if (g.alpha <= 0) this.auraShown.delete(`${e.by}:${e.what}`);
-          return g.alpha > 0;
+        const c = tile() ?? { u: 0, v: 0 };
+        if (`${c.u},${c.v}` !== at) {
+          at = `${c.u},${c.v}`;
+          lay(c);
         }
-        return true;
+        if (!gone && !live()) gone = true;
+        // (it breathes while it lasts, then fades out)
+        if (!gone && !this.reduced) alpha = 0.8 + 0.2 * Math.sin(t / 350);
+        if (gone) {
+          alpha = Math.max(0, alpha - dt / 300);
+          if (alpha <= 0) this.auraShown.delete(`${e.by}:${e.what}`);
+        }
+        g.alpha = alpha;
+        return alpha > 0;
       },
     });
     this.lookLoop(look, () => {
@@ -1604,7 +1991,7 @@ export class Fx {
         const key = `song:${e.by}`;
         if (by && !this.standShown.has(key)) {
           this.standShown.add(key);
-          this.paintAura(SONG_SHEET, SONG_REACH, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key), { tint: e.what === 'dirge' ? DIRGE_TINT : undefined });
+          this.paintAura(SONG_SHEET, SONG_REACH, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key), { tint: e.what === 'dirge' ? DIRGE_TINT : undefined, ground: { b, tile: () => by.unit } });
         }
         continue;
       }
@@ -1644,7 +2031,7 @@ export class Fx {
         const key = `field:${e.by}`;
         if (!this.standShown.has(key)) {
           this.standShown.add(key);
-          this.paintAura(f.sheet, f.reach, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key));
+          this.paintAura(f.sheet, f.reach, () => [by.x, by.y], () => b.t < until && by.unit.alive, () => this.standShown.delete(key), { ground: { b, tile: () => by.unit } });
         }
       }
       const targets = struck.map((id) => this.sprites.get(id)).filter((s): s is UnitSprite => !!s);
@@ -1653,7 +2040,7 @@ export class Fx {
         const gr = m.ground;
         const until = b.t + gr.ms;
         const on = gr.at === 'self' ? [by] : gr.at === 'first' ? targets.slice(0, 1) : targets.slice(0, 4);
-        for (const s of on) this.paintLoop(gr.part, () => [s.x, s.y], () => b.t < until, { depthOf: () => -1, alpha: AURA_ALPHA });
+        for (const s of on) this.paintLoop(gr.part, () => [s.x, s.y], () => b.t < until, { depthOf: () => -1, alpha: AURA_ALPHA, ground: { b, tile: () => s.unit } });
       }
       if (m.streak) for (const to of targets) this.paintAlong(m.streak, by.x, by.y - by.tall * 0.45, to.x, to.y - to.tall * 0.45, { delay: 40 });
       if (m.chain && m.beam) {
@@ -1802,6 +2189,21 @@ export class Fx {
     return at(u, v, tileAt(b.board, u, v)?.h ?? 0);
   }
 
+  /** FIXES-4: the layer a mark on tile (u, v) goes on: the tile's own ground, else `ground` when its page shows it, else the effects' own. */
+  groundOf(u: number, v: number): Container {
+    return this.groundAt(u, v) ?? (this.ground.parent ? this.ground : this.root);
+  }
+
+  /** A painted ground loop lying on the tiles round (u, v) (`GroundPaint`), when the board gives rows to lay it on; null where it has none. */
+  private groundPaint(b: Battle, look: (sp: Sprite) => void): GroundPaint | null {
+    if (!this.groundAt(0, 0)) return null;
+    return new GroundPaint((u, v) => {
+      if (!tileAt(b.board, u, v)) return null;
+      const [x, y] = this.tilePos(b, u, v);
+      return { depth: depth(u, v), x, y };
+    }, (d) => this.groundRow(d), look);
+  }
+
   /** A dash leaves a streak between the tiles; a blink a puff of smoke at each end. */
   private streak(b: Battle, e: Extract<BattleEvent, { kind: 'dash' | 'blink' }>, slash?: Slash): void {
     const by = this.sprites.get(e.by);
@@ -1944,7 +2346,9 @@ export class Fx {
       step: (dt) => {
         t += dt;
         g.clear();
-        const pulse = 0.2;
+        // (the marked tiles breathe, quicker as it nears; never fading right out, and steady with reduced motion)
+        const k = Math.min(1, t / e.ms);
+        const pulse = this.calm() ? 0.2 : 0.2 + 0.07 * Math.sin((t / (320 - 190 * k)) * Math.PI);
         for (const [x, y] of tiles) g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha: pulse }).stroke({ color, width: 1.5, alpha: 0.7 });
         for (const a of arrows) {
           const f = (t - a.at) / 260;
@@ -1962,6 +2366,12 @@ export class Fx {
           ball.visible = f < 1;
           ball.position.set(cx + 150 * (1 - f), cy - 360 * (1 - f));
           ball.texture = orbFrames[Math.floor(t / 60) % orbFrames.length];
+          // (it swells as it comes down, sputters as it burns, and its tail lashes either side of the fall)
+          if (!this.calm()) {
+            const fl = flicker(t);
+            ball.scale.set(1.5 + 1.7 * f * f + 0.18 * fl, 1.5 + 1.7 * f * f - 0.12 * fl);
+            ball.rotation = Math.atan2(360, -150) - abilityHeading(skyArt) + 0.08 * flicker(t, 2.3);
+          }
           // (its shadow on the ground swells as it comes, and a tail of flame and smoke streams behind it)
           g.ellipse(cx, cy, 10 + 34 * f, 5 + 17 * f).fill({ color: 0x000000, alpha: 0.35 * f });
           if (f < 1 && t - trailAt >= 35) {
@@ -1987,16 +2397,14 @@ export class Fx {
     const spots = e.tiles.map((i) => this.tilePos(b, i % w, Math.floor(i / w)));
     if (!spots.length) return;
     if (e.phase === 'tell') {
-      const view = new Container();
-      this.root.addChildAt(view, 0);
-      for (const [x, y] of spots) {
-        const g = new Graphics();
-        g.poly([0, -TH / 2 + 3, TW / 2 - 5, 0, 0, TH / 2 - 3, -TW / 2 + 5, 0])
-          .fill({ color: look.colour, alpha: 0.45 })
-          .stroke({ color: look.colour, alpha: 1, width: 2.5 });
-        g.position.set(x, y);
-        view.addChild(g);
-      }
+      // (FIXES-4: tinted tiles with a rim round the patch, each on its tile's ground, so those standing in it show over it)
+      const view = new GroundSet();
+      const tiles = e.tiles.map((i) => ({ u: i % w, v: Math.floor(i / w), h: tileAt(b.board, i % w, Math.floor(i / w))?.h ?? 0 }));
+      const rimOf = patchRims(tiles);
+      tiles.forEach((t, k) => {
+        const [x, y] = spots[k];
+        view.add(patchTile(new Graphics(), x, y, rimOf(t.u, t.v), { colour: look.colour, fill: 0.45, width: 3 }), this.groundOf(t.u, t.v));
+      });
       if (look.word) {
         const mx = spots.reduce((a, s) => a + s[0], 0) / spots.length;
         const my = Math.min(...spots.map((s) => s[1]));
@@ -2050,18 +2458,30 @@ export class Fx {
     this.trauma = Math.min(1, this.trauma + 0.6);
   }
 
-  /** The crater a fiery landing leaves: a scorched ellipse that glows, then cools and fades. */
+  /** The crater a fiery landing leaves: a scorched ellipse whose embers glow and flicker, shedding sparks and smoke, then cools and fades. */
   private scorch(cx: number, cy: number): void {
     const crater = new Graphics();
-    crater.ellipse(cx, cy, 36, 18).fill({ color: 0x1a0c06, alpha: 0.7 });
-    crater.ellipse(cx, cy, 24, 12).fill({ color: 0xff7a2a, alpha: 0.6 });
     this.root.addChildAt(crater, 0);
     let t = 0;
+    let sparkAt = 0;
+    const calm = this.calm();
     this.items.push({
       view: crater,
       step: (dt) => {
         t += dt;
+        // (the glow cools over the first second or so; until then it wavers like embers)
+        const heat = Math.max(0.25, 1 - t / 1800);
+        const fl = calm ? 0 : flicker(t);
+        crater.clear();
+        crater.ellipse(cx, cy, 36, 18).fill({ color: 0x1a0c06, alpha: 0.7 });
+        crater.ellipse(cx, cy, 24 + 3 * fl, 12 + 1.5 * fl).fill({ color: 0xff7a2a, alpha: 0.6 * heat + 0.08 * fl * heat });
+        crater.ellipse(cx + 3 * flicker(t, 1.1), cy, 12 + 3 * flicker(t, 2.2), 6 + 1.5 * fl).fill({ color: 0xffc060, alpha: 0.5 * heat });
         crater.alpha = Math.min(1, (2200 - t) / 1200);
+        if (!calm && t - sparkAt >= 140 && t < 1700) {
+          sparkAt = t;
+          this.particles.spawn({ frames: PACK['fire-sparkle'], x: cx + jitter(24), y: cy + jitter(6), scale: 0.45, life: 650, vy: -0.05, vx: jitter(0.02), alpha: 0.9, add: true });
+          if (Math.random() < 0.5) this.particles.spawn({ frames: PACK['fire-smoke'], x: cx + jitter(20), y: cy - 6, scale: 0.8, life: 1000, vy: -0.03, grow: 0.0004, alpha: 0.35 });
+        }
         return t < 2200;
       },
     });
@@ -2083,6 +2503,9 @@ export class Fx {
     const [svx, svy] = targetPt ? [targetPt.x - centre.x, (targetPt.y - targetPt.tall * 0.5) - (centre.y - 20)] : [0, -1];
     const slen = Math.hypot(svx, svy) || 1;
     playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: svx / slen, y: svy / slen }, ms: 700, size: 1 });
+    // (KING-SPELLS batch 5: the schools' fourteen spells' painted cast, where the spell lands)
+    const sheet = KING_SHEET[e.id];
+    if (sheet) this.paintOnce(`${sheet}.cast`, centre.x, centre.y);
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
@@ -2138,6 +2561,9 @@ export class Fx {
     if (!s || e.id === 'meteor') return;
     const spot = { x: s.x, y: s.y, tall: s.tall };
     playSteps(SPELL_SIGNATURES[e.id].hit, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: -1 }, ms: 500, size: 1 });
+    // (KING-SPELLS batch 5: the painted impact on each fighter the spell touches)
+    const sheet = KING_SHEET[e.id];
+    if (sheet) this.paintOnce(`${sheet}.impact`, s.x, s.y - s.tall * 0.4);
     if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
     if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
     if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);
@@ -2147,8 +2573,8 @@ export class Fx {
 
   /** Burning ground: flames over a 3x3 of tiles for `ms`. */
   private zone(b: Battle, u: number, v: number, ms: number): void {
-    const view = new Container();
-    this.root.addChild(view);
+    // (each flame stands on its own tile's ground: under whoever stands in the fire, behind whoever stands in front of it)
+    const view = new GroundSet();
     const flames: Sprite[] = [];
     for (let du = -1; du <= 1; du++)
       for (let dv = -1; dv <= 1; dv++) {
@@ -2159,16 +2585,31 @@ export class Fx {
         sp.scale.set(1.1);
         sp.blendMode = 'add';
         sp.position.set(x, y);
-        view.addChild(sp);
+        view.add(sp, this.groundOf(u + du, v + dv));
         flames.push(sp);
       }
+    const bases = flames.map((sp) => [sp.x, sp.y] as const);
     let t = 0;
+    let emberAt = 0;
     this.items.push({
       view,
       step: (dt) => {
         t += dt;
-        flames.forEach((sp, i) => (sp.texture = fire.frames[(Math.floor(t / 90) + i) % fire.frames.length]));
+        // (every flame is the same painted still, so each leans, stretches and sways to its own beat: the fire flickers and licks instead of sitting)
+        flames.forEach((sp, i) => {
+          if (sp.destroyed) return;
+          const pose = paintHeld(sp, t + i * 233, 1.1, 0, 1, this.calm());
+          sp.blendMode = 'add';
+          if (pose) sp.position.set(bases[i][0] + pose.dx * 35, bases[i][1] + pose.dy * 35);
+        });
         view.alpha = t > ms - 600 ? Math.max(0, (ms - t) / 600) : 1;
+        // (sparks and smoke lift off it)
+        if (!this.calm() && t - emberAt >= 160 && t < ms - 400) {
+          emberAt = t;
+          const [bx, by] = bases[Math.floor(Math.random() * bases.length)];
+          this.particles.spawn({ frames: PACK['fire-sparkle'], x: bx + jitter(14), y: by - 12, scale: 0.5, life: 700, vy: -0.05, vx: jitter(0.02), alpha: 0.9, add: true });
+          if (Math.random() < 0.4) this.particles.spawn({ frames: PACK['fire-smoke'], x: bx + jitter(10), y: by - 22, scale: 0.7, life: 900, vy: -0.03, grow: 0.0004, alpha: 0.35 });
+        }
         return t < ms;
       },
     });
@@ -2179,10 +2620,11 @@ export class Fx {
     // (painted, session B: the bristling patch over the 3x3, thorns jabbing up in it now and then)
     const [px, py] = this.tilePos(b, u, v);
     const until = b.t + ms;
-    if (this.paintAura(SPIKES_SHEET, 1, () => [px, py], () => b.t < until, () => undefined)) return;
-    const view = new Container();
-    this.root.addChild(view);
+    if (this.paintAura(SPIKES_SHEET, 1, () => [px, py], () => b.t < until, () => undefined, { ground: { b, tile: () => ({ u, v }) } })) return;
+    // (each rune on its own tile's ground, under whoever stands on it)
+    const view = new GroundSet();
     const rune = paintedStrip('earth', 'rune', 'snare')[0];
+    const caltrops: Sprite[] = [];
     for (let du = -1; du <= 1; du++)
       for (let dv = -1; dv <= 1; dv++) {
         if (!tileAt(b.board, u + du, v + dv)) continue;
@@ -2193,10 +2635,20 @@ export class Fx {
         sp.tint = 0xd0b890;
         sp.alpha = 0.7;
         sp.position.set(x, y);
-        view.addChild(sp);
+        view.add(sp, this.groundOf(u + du, v + dv));
+        caltrops.push(sp);
       }
     let t = 0;
-    this.items.push({ view, step: (dt) => ((t += dt), (view.alpha = t > ms - 500 ? Math.max(0, (ms - t) / 500) : 1), t < ms) });
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        // (the patch bristles: each rune jabs up and settles on its own beat)
+        if (!this.calm()) caltrops.forEach((sp, i) => sp.scale.set(((TW * 0.36) / 32) * (1 + 0.1 * Math.sin(t / 220 + i * 1.3)), ((TW * 0.36) / 32) * (1 + 0.1 * Math.sin(t / 220 + i * 1.3 + 2))));
+        view.alpha = t > ms - 500 ? Math.max(0, (ms - t) / 500) : 1;
+        return t < ms;
+      },
+    });
   }
 
   /** Timed terrain from a kit: a rampart's wall, a statue, a flood's water on a tile, until it goes back (a terrain event of 0 ms, or the battle no longer has it). */
@@ -2223,9 +2675,8 @@ export class Fx {
       view = sp;
       this.anim(magic.earthBurst, x, y - 6, 1.1, 60);
     }
-    // (the walls and statues stand among the fighters: sorted by depth with them)
-    view.zIndex = 0;
-    this.root.addChild(view);
+    // (the flood lies on the tile's top, the walls and statues stand on it: on its ground, so they sort with the fighters by depth)
+    this.groundOf(e.u, e.v).addChild(view);
     let t = 0;
     this.items.push({
       view,
@@ -2261,7 +2712,7 @@ export class Fx {
       const [x, y] = this.tilePos(b, u, v);
       const born = b.t;
       const live = () => b.t - born < ms && (b.t - born < 200 || !!b.traps?.some((tr) => tr.u === u && tr.v === v));
-      this.paintLoop(SNARE.ground, () => [x, y], live, { depthOf: () => -1, alpha: 0.9, onGone: () => b.t - born < ms - 150 && this.paintOnce(SNARE.impact, x, y - 8) });
+      this.paintLoop(SNARE.ground, () => [x, y], live, { depthOf: () => -1, alpha: 0.9, onGone: () => b.t - born < ms - 150 && this.paintOnce(SNARE.impact, x, y - 8), ground: { b, tile: () => ({ u, v }) } });
       return;
     }
     const view = new Sprite(paintedStrip('earth', 'rune', 'snare')[0]);
@@ -2269,7 +2720,7 @@ export class Fx {
     view.scale.set(TW * 0.6 / 32);
     const [x, y] = this.tilePos(b, u, v);
     view.position.set(x, y);
-    this.root.addChild(view);
+    this.groundOf(u, v).addChild(view);
     this.anim(magic.earthBurst, x, y - 6, 0.9, 60);
     let t = 0;
     this.items.push({
@@ -2330,6 +2781,31 @@ export class Fx {
     txt.addChild(chip);
   }
 
+  private weakAt = new Map<number, number>();
+  /** A boss's weakness was used (DEPTH-BUILD, `weakness.ts`): the word "Weakness!" in gold over it and a gold sparkle; never more than one
+   *  every 1.5 s for the same boss (a shelter that spares several heroes at once shows one). */
+  private weakness(id: number): void {
+    const s = this.sprites.get(id);
+    if (!s) return;
+    const now = performance.now();
+    if (now - (this.weakAt.get(id) ?? -1e9) < 1500) return;
+    this.weakAt.set(id, now);
+    this.label('Weakness!', s.x, s.y - s.tall - 18, 0xffd24a, 14, 1100);
+    this.sparkles(s.x, s.y - s.tall * 0.5, 0xffd24a);
+  }
+
+  /** A saving throw halved an ailment, a charm, a shove or a blast (STATS batch 5): the "Immune" pop's look, the word "Saved", with the
+   *  ailment's chip (not crossed out: it still takes hold, for half as long). */
+  private saved(id: number, what: AilmentKey | 'charm' | 'shove' | 'blast'): void {
+    const s = this.sprites.get(id);
+    if (!s || !settings().numbers) return;
+    const { txt } = this.label('Saved', s.x + 6, s.y - s.tall - 12, IMMUNE_COLOUR, 9, 800);
+    if (txt.children.length || what === 'charm' || what === 'shove' || what === 'blast') return;
+    const chip = ailmentChip(what, undefined, false);
+    chip.position.set(-txt.width / 2 - 8, -txt.height / 2);
+    txt.addChild(chip);
+  }
+
   /** A frozen fighter's ice shatters: the burst of shards, once, and the word (the extra blow's number follows, ice-white and big). */
   private shatter(id: number): void {
     const s = this.sprites.get(id);
@@ -2350,7 +2826,7 @@ export class Fx {
 
   /** A damage number: white (gold for a heavy blow, red on a hero), or an ailment's colour for its ticks and riders (STATUS-FX), and
    *  bigger and ice-white for a shatter. */
-  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean, high = false, ail?: AilmentKey | 'shatter'): void {
+  private number(n: number, x: number, y: number, heavy: boolean, onHero: boolean, high = false, ail?: AilmentKey | 'shatter', glance = false): void {
     if (!settings().numbers) return;
     // (numbers over the same fighter within half a second step up a row each, and to alternate sides, so they never sit on each other)
     const key = `${Math.round(x / 16)},${Math.round(y / 16)}`;
@@ -2361,7 +2837,7 @@ export class Fx {
     if (this.stacks.size > 64) for (const [s, v] of this.stacks) if (now - v.at > 1000) this.stacks.delete(s);
     const txt = new Text({
       text: String(n),
-      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: ail === 'shatter' ? 13 : heavy ? 12 : 9, fill: numberColour(ail) ?? (onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff), stroke: { color: 0x1a1008, width: 3 } },
+      style: { fontFamily: "'Press Start 2P', monospace", fontWeight: 'normal', fontSize: ail === 'shatter' ? 13 : glance ? 8 : heavy ? 12 : 9, fill: numberColour(ail) ?? (glance ? 0xa8a8a8 : onHero ? 0xff7a6a : heavy ? 0xffd34a : 0xffffff), stroke: { color: 0x1a1008, width: 3 } },
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);

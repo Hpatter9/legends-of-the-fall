@@ -44,7 +44,9 @@ MANIFEST = json.loads((ROOT / 'tools/spell-fx/spell-parts.json').read_text())
 SRC_CELL = MANIFEST['cell']
 FIXES = json.loads((ROOT / 'tools/spell-fx/spell-fixes.json').read_text()) if (ROOT / 'tools/spell-fx/spell-fixes.json').exists() else {}
 FIXES = {k: v for k, v in FIXES.items() if k != '_'}
-SESSIONS = {k: v for k, v in MANIFEST.items() if k not in ('_', 'cell')}
+SESSIONS = {k: v for k, v in MANIFEST.items() if k not in ('_', 'cell', 'prefix')}
+# (KING-SPELLS batch 5: a session's keys may take a prefix, so the king's `charm` does not overwrite the heroes' `charm`)
+PREFIX = MANIFEST.get('prefix', {})
 OUT = ROOT / 'src/art/fx/spells'
 COLS = 16
 CAP = 5 * 1024 * 1024
@@ -125,7 +127,7 @@ for session, keys in SESSIONS.items():
             continue
         ok += 1
         for (part, kind, lo, hi, size), fr in zip(rows, frames):
-            fix = FIXES.get(f'{key}.{part}')
+            fix = FIXES.get(f'{PREFIX.get(session, "")}{key}.{part}')
             if fix and 'frames' in fix:
                 order = fix['frames']
                 if any(i >= len(fr) for i in order) or not lo <= len(order) <= hi:
@@ -141,7 +143,7 @@ for session, keys in SESSIONS.items():
                     fr = fr + [f]
                 if len(fr) > hi:
                     raise SystemExit(f'spell-fixes.json: {key}.{part} fades to {len(fr)} frames ({hi} allowed)')
-            strips.append((f'{key}.{part}', fr, size, kind == 'loop'))
+            strips.append((f'{PREFIX.get(session, "")}{key}.{part}', fr, size, kind == 'loop'))
     bad = sum(1 for f in failed if f.startswith(session + '/'))
     print(f'{session}: {ok} of {len(keys)} sheets pass' + (f'; {bad} left out' if bad else ''))
     if missing:

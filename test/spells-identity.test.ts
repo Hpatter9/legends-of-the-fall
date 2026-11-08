@@ -26,11 +26,142 @@
 // heroes30: each has one of the ten. The `...Others` scenarios now leave the ten out of every team (recorded on main's code before the batch)
 // and did not move; nor did daily, tower, stand or calamity. (The foes that borrow their moves, the wolf packs, the maze minotaurs and gorgons,
 // the grove satyrs, the yokai and the Nine-Tailed Fox, keep the old ones: `monsterKits` puts the new ones on the heroes' own kits only.)
+// SUMMON-TIMERS (the owner's ask: summons and shapeshifts on a timer, kept from wave to wave; docs/notes/summon-timers.md) re-recorded field30,
+// bosses, spells, heroes10 and heroes30: each has the Druid, Beastmaster, Reaper, Samurai Commander, Werewolf, Kitsune or Demon Swordsman at
+// level 10 or more, whose wraith, standard and shapes now last longer. The `...Others` scenarios now leave those seven out of every team
+// (recorded on main's code before this work) and did not move; nor did field1, armyFoes, lands, army, daily, tower, stand, calamity or heroes1.
+// RELICS-2 (the owner's approved relic redesign, docs/notes/relics-2.md) re-recorded army, daily and stand: the greedy player finds and buys the
+// new relics on the way. Only those moved.
+// (SKILLS-1, the owner-approved skills overhaul's batch 2, docs/notes/skills-1.md, re-recorded every scenario: field1, field30, bosses, armyFoes,
+// spells, lands, army, daily, tower, stand, calamity, heroes1, heroes10, heroes30 and the five `...Others`. Every hero's skills now cost and cool by
+// their class, a breath follows each cast and the AI saves for its heavier skill, so every fight with a hero in it moves; batch 1, the rules as
+// data, moved none of them.)
+// (SKILLS-1 batch 3, the owner's rule that a rank gives health and attack only, docs/notes/skills-1.md, re-recorded army (also for the Undead
+// Legion's new start), daily, tower, heroes1,
+// heroes10, heroes30 and the three `heroes...Others`: each fields merged heroes (the hero scenarios place grades 1 to 3), whose tier skills went;
+// every scenario of grade-1 heroes kept its hash)
+// (SKILLS-4, the skills overhaul's batch 4, docs/notes/skills-4.md: every hero's skill 3, open from level 20, re-recorded the scenarios with heroes at
+// level 20 or more: field30, field30Others, heroes30, heroes30Others, bosses, armyFoes, spells (each at level 30), army (saves at 30 to 70) and stand
+// (a party at 30). field1, field1Others, heroes1, heroes1Others, heroes10, heroes10Others, lands (level 10), daily and tower (fresh saves) and
+// calamity kept their hashes)
+// (STATS-2, the D&D stats design's batch 2, docs/notes/stats-2.md: the scores move a fight once a hero is above level 1, rank 1 or grade 1 (health by
+// CON, blows and skills by their ability, the level curve trimmed by the roster's mean, score steps from ranks, grades, talents and gear).
+// Re-recorded field30, bosses, armyFoes, spells, lands, army, daily, tower, stand, heroes1, heroes10, heroes30, field30Others, heroes1Others,
+// heroes10Others and heroes30Others, each by the test's own hash (heroes1 and heroes1Others place grades 1 to 3; daily and tower merge). field1,
+// field1Others and calamity, whose heroes fight at level 1, grade 1, kept their hashes.)
+// (STATS batch 4, "AC and the blow", docs/notes/stats-4.md, re-recorded every scenario: every ordinary blow now rolls a d20 against Armour
+// Class (hit, glance, miss, a natural 20's crit), every fighter rolls initiative, and the dodges and tall grass are Armour Class, so every
+// fight moves. The new hashes: field1 f4056537, field30 7d034326, bosses 9e2b65c5, armyFoes e89121a1, spells f4717b49, lands adc0c56e, army
+// 4786e20f, daily 91719bb0, tower ea2146ad, stand 253f3102, calamity c67b2edc, heroes1 3b09182f, heroes10 37137eda, heroes30 5999677b,
+// field1Others 09784271, field30Others d8cc41cd, heroes1Others 0b1df526, heroes10Others 86849ad8, heroes30Others 3f22ac1d.)
+// (STATS batch 5, "Saves", docs/notes/stats-5.md, re-recorded every scenario: a saving throw rolls in every fight with an ailment, a shove or
+// a blast (the shoves' contest of STR too), and the Warlock's, Time Witch's and Minotaur's ultimates moved. The new hashes: field1 ef2178ff,
+// field30 0e8052fa, bosses ffdc9d19, armyFoes 8a538bb0, spells fcfa8d15, lands ddce5cb5, army 4086d614, daily b6406a38, tower c73d90f1, stand
+// cc337df3, calamity 5285c952, heroes1 2513606a, heroes10 c8342037, heroes30 d9b039e5, field1Others 90440262, field30Others dc95ac94,
+// heroes1Others 032e5e9a, heroes10Others 6c1a3232, heroes30Others f444d8e4.)
+// (STATS batch 6, "The rest", docs/notes/stats-6.md, re-recorded every scenario: every hero's pool now follows its CON or casting score, its
+// cooldowns its INT and its ultimate's fill its CHA, the quick heroes flank and kite, and the control skills pick the weakest save, so every
+// fight with a hero moves. The new hashes: field1 392597b5, field30 12598187, bosses dae9a64f, armyFoes f36c8b82, spells 0445658a, lands
+// ca4f1ce0, army f76ccfc3, daily 4254748f, tower 07522e4a, stand 1e9391a7, calamity 3aa3b446, heroes1 923e83d2, heroes10 260564c4, heroes30
+// 24a11513, field1Others 5828b6e0, field30Others c96281c2, heroes1Others 4718f845, heroes10Others 17eed86d, heroes30Others 46987872.)
+// (the joint rebalance, the D&D stats design's batch 7 with the skills overhaul's batch 8, docs/notes/joint-rebalance.md, re-recorded every
+// scenario: the foes fight at their tier's or depth's proficiency, the bosses with their blocks and saves, the families and the saves show,
+// a hero's pool, cooldowns and fill count from +0, every mode is retuned and seventeen heroes' kits moved, so every fight moves. The new hashes:
+// field1 81b0369e, field30 3f9b2a5e, bosses 11c33a36, armyFoes e3c7011a, spells 69b1d534, lands 99da4981, army d78fb13d, daily d00ddcc9, tower
+// d1468e2a, stand 69c8c642, calamity 18f58bc9, heroes1 58aac7f4, heroes10 9c513279, heroes30 526f4f47, field1Others f1bc7c9d, field30Others
+// dd370f3f, heroes1Others d75813fa, heroes10Others c7f3b928, heroes30Others 1e0ab73b.)
+// (the tactics, docs/notes/tactics.md, re-recorded every scenario but `stand`, which kept its hash (the Last Stand takes no tactic and no
+// answer): Advance together, the default, holds the strikers and the back line until the front line meets the foe, the foes of
+// every band strike 2% harder in answer, and six heroes' kits were retuned for parity. The new hashes: field1 c4c76edd, field30 cf333734,
+// bosses 017421d4, armyFoes 88cd9831, spells d961099b, lands aceefe84, army f4b8c46b, daily 5db72448, tower ff21fdcb, calamity 2e1e9aed, heroes1
+// 63c68ffd, heroes10 04f5f766, heroes30 18918923, field1Others 0f677ef4, field30Others 6dcf91f2, heroes1Others 92b9bcd8, heroes10Others
+// f0b63f3f, heroes30Others 4b47763c.)
+// (the tactics' batch 6, docs/notes/tactics.md, re-recorded field1, field30, bosses, spells, heroes1, heroes10 and heroes30: Charge's edge, and
+// the Kitsune's Alter Self and the Werewolf's Shapechange and Pounce trimmed for level-10 parity. The new hashes: field1 18bd549d, field30
+// d624b730, bosses 1d33b673, spells 271f368b, heroes1 4034a1fa, heroes10 533e38b8, heroes30 d5449c96; every other scenario keeps its hash)
+// (the tactics' batch 6 merged over FOE-STYLES, with the Great Sage's Arcane Surge filling faster for level-30 parity, re-recorded field1
+// ccfaec2c, field30 a13ea4ae, bosses 1d6f9a2d, armyFoes a260d80f, spells 699db651, heroes1 5340f148, heroes10 375d0e79, heroes30 866d2923,
+// field30Others 013dd38b and heroes30Others d17d85f6; every other scenario keeps main's hash)
+// (KING-SPELLS batch 1, the owner-approved spell revamp, docs/notes/king-spells-b1.md, re-recorded `spells` alone: its damage spells now grow with the
+// foes' health boost (`kingMight`). No other scenario casts a spell, and none moved.)
+// (KING-SPELLS batch 4, docs/notes/king-spells-b4.md, re-recorded `spells` alone again: it casts each king's spell once, and the schools added
+// fourteen. No other scenario moved.)
+// (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` and `stand` alone: `DAILY_START` 0.785 to 0.83 and `HALL_EASE` 1.2 to
+// 1.36, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';
 import recorded from './fixtures/spells-identity.json';
+import { BOSS_BIG } from '../src/sim/bossAttacks';
+import { WEAK } from '../src/sim/weakness';
+import { armyById } from '../src/sim/armies';
+import { CAL_SCALE } from '../src/sim/calamity';
 
+// (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
+// fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
+// scenario keeps its hash)
+// (SPELLS-RETUNE, the owner's call to tune the game for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, re-recorded
+// `daily` and `stand` alone: the daily's foes start stronger (`DAILY_START` 0.565 to 0.76) and the Last Stand's waves are eased less (`HALL_EASE`
+// 0.88 to 1.2). The armies' and the Calamity's raised strengths are put back for this proof, and its greedy players cast no spells; every other
+// scenario keeps its hash)
+// (BOSS-BIG, the owner's ask for bosses with huge attacks, docs/notes/boss-big-attacks.md: the bosses' signature attacks, and the heroes'
+// stepping out of their marks, are meant to move every fight with a boss in it. With them switched off every scenario plays as recorded;
+// with them on, the scenarios with no boss (every field fight, every hero alone, the tower's and the Calamity's early floors) still do, so
+// the dodge changes nothing where no boss has marked the ground. Only bosses, armyFoes, army, daily and stand move.)
+// (XP-SPLIT, the owner's ask for a fight's kill XP to be shared, docs/notes/xp-split.md, re-recorded `daily`: its greedy player levels its
+// heroes from the XP of each fight as it goes, and the split moves which hero levels when, so its later fights move; every other scenario
+// keeps its hash, the fights themselves are unchanged; then `tower` too, when the spire and the Calamity took the same split: its heroes level
+// from their own run XP fight by fight. `calamity` did not move)
+// (SPELLS-RETUNE, the owner's call to tune the armies for a player whose Auto casts the king's spells, docs/notes/spells-retune.md, raised the
+// armies' Normal `start`. The `army` scenario plays the Undead Legion, the Infernal Host, the Golem Forge and the Yokai Night Parade on Normal:
+// their recorded strengths are put back for this proof, as the ailments' proof does, and the Calamity's `CAL_SCALE.start` (0.435) with them. The greedy players cast no spells in
+// either proof, `identityHashes`.)
+// (SEVEN-SLOT GEAR, docs/notes/gear-build.md, re-recorded `calamity` alone (f3dc7098): its heroes start bare and wear the run's finds, and a
+// find from the old trinkets now goes to its own slot of the seven, so a hero can wear more of them; every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 4 re-recorded `calamity`, `daily` and `tower`, and batch 6 again over the tactics (calamity 1d879f22, daily 22ed0372, tower 2337ec08): a run started now finds runes, not pieces, and a won
+// wave adds a rune of its own; the fights' own streams draw as before, but the heroes fight in other kit. Every other scenario keeps its hash)
+// (SEVEN-SLOT GEAR batch 8, the balance, re-recorded `daily` alone (6992282b): DAILY_START 0.785 to 0.77 and runes at 0.7; every other scenario keeps its hash)
+const RECORDED_START: Record<string, number> = { undead: 1.48, infernal: 12.5, yokai: 14.2, golems: 14.6 };
+function recordedStrengths<T>(fn: () => T): T {
+  const was = Object.fromEntries(Object.keys(RECORDED_START).map((id) => [id, armyById(id)!.start]));
+  const calStart = CAL_SCALE.start;
+  for (const [id, v] of Object.entries(RECORDED_START)) (armyById(id) as unknown as { start: number }).start = v;
+  CAL_SCALE.start = 0.435;
+  try {
+    return fn();
+  } finally {
+    for (const [id, v] of Object.entries(was)) (armyById(id) as unknown as { start: number }).start = v;
+    CAL_SCALE.start = calStart;
+  }
+}
+
+// (FOE-STYLES, the owner's ask that every foe fight its own way, docs/notes/foe-styles.md, re-recorded every scenario on main 0.345.0, and
+// `daily`, `tower` and `calamity` again on 0.349.0 (its runes and remedies): every scenario meets foes, and every foe now has a passive and a
+// way of moving, the common ones retuned, the armies' starts, the daily's and the Last Stand's knobs with them; by the tests' own computation
+// (`node tools/joint/run.mjs record --write`, and `army` and `bosses` from the test itself, whose put-back strengths that tool does not know
+// since main 0.339). The new hashes: field1 e1902c7e, field30 0805df76, bosses c6f1850f, armyFoes 4098cb71, spells d89512c0, lands bae90a64,
+// army fc40786d, daily 4f70a194, tower 94d881d8, stand 131fe78c, calamity d9c9bc8a, heroes1 d5321e5c, heroes10 97713696, heroes30 15a1bbf5,
+// field1Others 433f0011, field30Others 760831e8, heroes1Others 7941ba32, heroes10Others 563b72ce, heroes30Others fb2fb4a1)
+// (HEROES-JOIN, the owner's ask that nine of the twenty new heroes join the roster, docs/notes/heroes-join.md, re-recorded every scenario from the
+// tests' own output: the roster's pool means move every hero's pools, and the new heroes join the pool the fights draw on.)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
-  assert.deepEqual(identityHashes(), recorded);
+  BOSS_BIG.on = false;
+  // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
+  WEAK.on = false;
+  try {
+    assert.deepEqual(recordedStrengths(() => identityHashes()), recorded);
+  } finally {
+    BOSS_BIG.on = true;
+    WEAK.on = true;
+  }
+});
+
+test('with the bosses\u2019 signature attacks on, every scenario without a boss still plays as recorded', () => {
+  // (STATS batch 4: the Calamity's greedy run now reaches a boss whose signatures move it, so `calamity` joined the scenarios with a boss;
+  // since the tactics, docs/notes/tactics.md, its run ends before that boss again, so it plays as recorded with them on, as it did before)
+  const moved = ['bosses', 'armyFoes', 'army', 'daily', 'stand'];
+  const rest = Object.keys(recorded).filter((k) => !moved.includes(k));
+  assert.deepEqual(recordedStrengths(() => identityHashes(rest)), Object.fromEntries(rest.map((k) => [k, (recorded as Record<string, string>)[k]])));
+  const now = recordedStrengths(() => identityHashes(moved));
+  for (const k of moved) assert.notEqual(now[k], (recorded as Record<string, string>)[k], `${k} has a boss whose signatures move it`);
 });

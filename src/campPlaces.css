@@ -81,3 +81,60 @@
   .hm-battle .cpHeading p { font-size: 12px; }
   .hm-battle .cpHeading::before { margin-bottom: 5px; }
 }
+/* (CLIFF-ROAM: Hester's Stall and the front ground drawn over it left the ledge for the tavern; the army's plate stays over the scene) */
+.hm-battle .cpPlate { z-index: 2; }
+/* OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left (its lights, embers and crows are drawn on the
+   canvas, `render/standTowerLife.ts`); its plate hangs under the tower's foot, an ember-warm ribbon as the Calamity's is a violet one. */
+.hm-battle .cpSlot.cpTowerSlot .cpTag { height: var(--plateH, 40px); border: 0; border-image: none; border-radius: 3px; background: linear-gradient(90deg, #1d0f0a00, #22120ce8 12%, #22120ce8 88%, #1d0f0a00); box-shadow: none; padding: 3px; }
+.hm-battle .cpSlot.cpTowerSlot .cpTag b { color: #f6d39a; font-size: 12px; }
+.hm-battle .cpSlot.cpTowerSlot .cpTag small { color: #dcc3a4; }
+.hm-battle .cpTowerSlot .cpPlace:hover:not(:disabled) .cpTag b { color: #ffe6b8; }
+/* shut: the tower greys and darkens, as the Calamity's citadel does */
+.hm-battle .cpTowerSlot.shut::before { content: ''; position: absolute; inset: 0 0 var(--plateH, 40px); backdrop-filter: grayscale(1) brightness(0.5); mask-image: radial-gradient(ellipse 45% 60% at 30% 55%, #000 40%, transparent 75%); pointer-events: none; }
+.hm-battle .cpTowerSlot.shut .cpTag b { color: #b9b1a6; }
+.hm-battle .cpTowerSlot .cpPlace i.badge { top: 2px; right: 2px; }
+
+/* a run's last word: a dispatch over the enemy's camp, below the heading and clear of every place; it never takes a tap and fades away */
+.hm-battle > .hmDispatch { position: absolute; left: 16px; right: 16px; top: 30%; z-index: 3; margin: 0 auto; max-width: 340px; box-sizing: border-box; padding: 6px 10px; text-align: center; font: 400 12px/1.25 var(--body); pointer-events: none; animation: hmDispatch 7s ease forwards; }
+@keyframes hmDispatch { 0% { opacity: 0; transform: translateY(6px); } 6% { opacity: 1; transform: none; } 82% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hm-battle > .hmDispatch { animation-name: hmDispatchStill; } }
+@keyframes hmDispatchStill { 0%, 82% { opacity: 1; } 100% { opacity: 0; } }
+
+/* the way in (`standGate.ts`): the scene leans in to the tower as the dusk closes round it, the Stand's name rises, then dark */
+/* (scaled about the tower, then carried towards the middle of the scene, so the camera flies to it; never so far an edge of the painting shows) */
+.cpWrap.sgGo .cpRoom { transform-origin: var(--sgX) var(--sgY); transform: translate(min(calc(var(--sgW) / 2 - var(--sgX)), calc(var(--sgX) * 1.8)), min(calc(var(--sgH) * 0.4 - var(--sgY)), calc(var(--sgY) * 1.8))) scale(2.8); transition: transform 1s cubic-bezier(0.5, 0, 0.75, 0.2); }
+.cpWrap.sgGo .cpSlot, .cpWrap.sgGo .cpPlate, .cpWrap.sgGo .cpHeading, .cpWrap.sgGo .cpStash { opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.sgVeil { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at var(--sgX) var(--sgY), #ffb45a2e 0, #3a140a55 18%, #0b0605f2 62%); animation: sgVeil 1s ease-in forwards; }
+.sgVeil::after { content: ''; position: absolute; inset: 0; background: #070404; opacity: 0; animation: sgDark 1s ease-in forwards; }
+.sgCard { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; color: #f6d39a; text-shadow: 0 2px 3px #000, 0 0 14px #000; opacity: 0; animation: sgCard 1s ease-out forwards; }
+.sgCard span { font: 400 9px/1.4 var(--body); letter-spacing: 3px; color: #d9a866; }
+.sgCard b { font: 700 26px/1.2 var(--display); color: #ffe2a8; }
+.sgCard small { font: 400 12px/1.2 var(--body); color: #e4cfae; }
+@keyframes sgVeil { 0% { opacity: 0; } 45% { opacity: 1; } 100% { opacity: 1; } }
+@keyframes sgDark { 0%, 70% { opacity: 0; } 100% { opacity: 0.9; } }
+@keyframes sgCard { 0%, 18% { opacity: 0; transform: translateY(8px) scale(0.96); } 45%, 85% { opacity: 1; transform: none; } 100% { opacity: 0.85; transform: scale(1.04); } }
+.cpWrap.sgStill .cpRoom { transform: none; transition: none; }
+.cpWrap.sgStill .sgVeil, .cpWrap.sgStill .sgVeil::after, .cpWrap.sgStill .sgCard { animation-duration: 0.35s; }
+.cpWrap.sgStill .sgCard { animation-name: sgCardStill; }
+@keyframes sgCardStill { from { opacity: 1; } to { opacity: 1; } }
+
+/* The Daily (redone at the owner's word): a gilded button on the scene's right edge, the hourglass whole in a brass medallion and "Daily"
+   on its own line under it (the old label's box covered half the icon); a check or red dot on its corner; the boss and how it stands are
+   its tooltip and spoken label. At least 56 x 64, steady light (no pulse). */
+.hm-battle .cpDailySlot .cpPlace { position: absolute; right: 0; bottom: 0; width: max(100%, 58px); height: auto; min-height: 66px; padding: 5px 4px 4px; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px;
+  border: var(--ornate-border-double, 3px double #bda16c); border-image: none; border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%);
+  box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.22), 0 3px 10px #000c, 0 0 10px rgba(219, 193, 139, 0.18); }
+.hm-battle .cpDailySlot .cpPlace:hover:not(:disabled) { border-color: #f5e4ba; }
+.hm-battle .cpDailySlot .cpPlace::before { content: ''; position: absolute; left: 50%; top: 4px; width: 34px; height: 34px; transform: translateX(-50%); border-radius: 50%;
+  border: 1px solid #c9ad72; background: radial-gradient(circle at 50% 40%, #3a4130, #12150e 75%); box-shadow: inset 0 0 6px #000, 0 0 6px rgba(219, 193, 139, 0.25); pointer-events: none; }
+.hm-battle .cpDailySlot .cpDailyIcon { position: relative; z-index: 1; flex: none; width: 30px; height: 30px; margin-top: 2px; object-fit: contain; image-rendering: auto; pointer-events: none; filter: drop-shadow(0 1px 2px #000); }
+.hm-battle .cpSlot.cpDailySlot .cpTag { position: static; z-index: 1; height: auto; width: auto; min-width: 0; margin: 2px 0 0; padding: 0; border: 0; border-image: none; background: none; box-shadow: none; transform: none; }
+.hm-battle .cpSlot.cpDailySlot .cpTag b { display: block; font: 700 12px/1.1 var(--display); letter-spacing: 0.06em; color: var(--ornate-brass, #dbc18b); text-shadow: 0 1px 2px #000; }
+.hm-battle .cpDailySlot .cpPlace.done { border-color: #8fbf7c; }
+.hm-battle .cpSlot.cpDailySlot .cpPlace.done .cpTag b { color: #b9e3a4; }
+.hm-battle .cpDailySlot .cpPlace i.badge { top: -5px; right: -5px; z-index: 2; }
+.hm-battle .cpDailySlot .cpPlace i.dailyDone { top: -7px; right: -7px; z-index: 2; }
+/* UX-FIXES: "Open all" fits inside the stash box (it ran 7 px off the left edge at every phone size) and is a full-size tap target */
+.hm-battle .cpStash .csAll { width: 100%; min-width: 0; min-height: 44px; margin: 4px 0 0; padding: 2px 4px; }

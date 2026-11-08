@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "modelledTraits": 24,
+      "uniqueIcons": 24,
+      "learnedIcons": 24,
+      "hiddenIcons": 0,
+      "displaySize": 28,
+      "metaUnchanged": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "modelledTraits": 24,
+      "uniqueIcons": 24,
+      "learnedIcons": 24,
+      "hiddenIcons": 0,
+      "displaySize": 28,
+      "metaUnchanged": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "modelledTraits": 24,
+      "uniqueIcons": 24,
+      "learnedIcons": 24,
+      "hiddenIcons": 0,
+      "displaySize": 28,
+      "metaUnchanged": true
+    }
+  ],
+  "errors": []
+}

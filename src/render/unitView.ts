@@ -1,20 +1,16 @@
 // The fighters drawn: an animated sprite from the unit's sheet, mirrored to face the way it's going, a shadow under it
 // and a health bar over its head. A step is drawn as a glide between the two tiles with a hop (higher for a climb).
 
-import { ColorMatrixFilter, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { type ColorMatrix, ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
+import { RANK_BADGE } from '../expansionArt';
 import { AwakenAura } from './awakenAura';
 import { auraOf } from './auraStyles';
 import { awakenedSheet, battleSheet, combatAuraStep } from './awakenLook';
-import { loadImage } from './loadImage';
-import bannerUrl from '../art/castle/banner.png';
+import { summonLook, summonMark, summonSheet } from './summonArt';
 import { facesRightOf, framesOf, figureOf, hasSheet, type Anim } from './sheets';
-
-/** The standard's look: the castle courtyard's banner (from the packs, already in the game; credited in CREDITS.md). */
-let bannerTex: Texture | null = null;
-if (typeof Image !== 'undefined') void loadImage(bannerUrl).then((img) => (bannerTex = Texture.from(img))).catch(() => {});
 
 /** The scale a borrowed sheet is drawn at: that of a kind whose own sheet (or form) it is, else the fighter's own. */
 const lookScales = new Map<string, number>();
@@ -25,8 +21,9 @@ function lookScale(sheet: string, own: number): number {
   }
   return lookScales.get(sheet)!;
 }
-import { CHARGE_MAX, kitOf, ultimateOf } from '../sim/abilities';
+import { CHARGE_MAX, hasSkill, kitOf, ultimateOf } from '../sim/abilities';
 import { poolOf } from '../sim/heroKits';
+import { RENEW_AT, timerOf } from '../sim/carry';
 import { at, depth, facesRight, facesAway, HH } from './iso';
 import { heroLook, rearView, formScale } from './heroFacing';
 import { VFX } from './vfxArt';
@@ -37,7 +34,10 @@ import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
 import { attackMotion } from './motionRules';
+import { idleFrame } from './enemyMotion';
 import { AilmentFx, ailmentTint } from './ailmentLayer';
+import { gearTexture } from './gearTex';
+import { lookMatrix } from '../sim/heroLooks';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -91,6 +91,39 @@ function flatFilter(color: number): ColorMatrixFilter {
   return f;
 }
 
+/** The Nemesis War (`sim/nemesis.ts`): each rank's colour, for its name plate and the rim round its body (a steady tint, never a pulse). */
+export const NEM_COLOURS: Readonly<Record<string, number>> = { lieutenant: 0xc0443a, captain: 0x9a55d0, warchief: 0xe0a830 };
+/** A nemesis's body: a little darker and redder than its kind, so it stands out from its escorts without a sheet of its own. */
+function nemFilter(): ColorMatrixFilter {
+  const f = new ColorMatrixFilter();
+  f.saturate(0.15, false);
+  const m = f.matrix;
+  m[0] *= 1.08;
+  m[6] *= 0.9;
+  m[12] *= 0.92;
+  return f;
+}
+
+/** Dynasties (`sim/dynasty.ts`): the page tells the sprites each hero kind's stage, so a Veteran or an Elder wears the touch of the years
+ *  (`AGE_LOOKS` in `sim/heroLooks.ts`). Looks only: the battle never reads it. */
+let ageOf: (kind: string) => string | undefined = () => undefined;
+/** Phase 6 (`sim/heirs.ts`): each kind's fielded bearer's heir look, a steady tint of the sheet (`HEIR_LOOKS`). */
+let heirLookOf: (kind: string) => string | undefined = () => undefined;
+export function setAgeLooks(f: (kind: string) => string | undefined, look?: (kind: string) => string | undefined): void {
+  ageOf = f;
+  if (look) heirLookOf = look;
+}
+/** The age grade (some of the colour taken out towards silver, the darks lifted a little, a touch of cool) and an heir's tint, as one
+ *  steady matrix (`lookMatrix`). Steady: it never moves. */
+export function ageFilter(kind: string, stage: string | undefined, look?: string): ColorMatrixFilter | null {
+  const m = lookMatrix(kind, stage, look);
+  if (!m) return null;
+  // (drawn at the screen's own resolution, so the pixel art stays as sharp as the sheets drawn plain)
+  const f = new ColorMatrixFilter({ resolution: 'inherit' });
+  f.matrix = m as ColorMatrix;
+  return f;
+}
+
 /** A colour between two (k from 0 to 1). */
 function mixTint(a: number, b: number, k: number): number {
   const ch = (shift: number) => Math.round(((a >> shift) & 255) * (1 - k) + ((b >> shift) & 255) * k);
@@ -101,7 +134,12 @@ export class UnitSprite {
   readonly root = new Container();
   private body = new Sprite();
   private shadow = new Graphics();
+  /** SUMMON-ART: a summon's ring under its feet, in its caller's element colour (empty for the rest). */
+  private mark = new Graphics();
   private bar = new Graphics();
+  /** SUMMON-TIMERS: a small ring by the health bar of a summon or a shifted hero, emptying as its timer runs out (`timerOf`, carry.ts). */
+  private clock = new Graphics();
+  private clockKey = '';
   /** The shield's ring round a raised guard, the status icon over the head, and the light pillar of an evolve. */
   private shield = new Sprite();
   private badge = new Sprite();
@@ -109,6 +147,9 @@ export class UnitSprite {
   /** The loops of the buffs on it (up to three, made as needed); `stars` only marks where they go in the drawing order. */
   private overlays: Sprite[] = [];
   private stars = new Graphics();
+  /** The Nemesis War: a nemesis's name plate over its health bar (its rank's colour, its name, its scars, a skull while its Dread hero is on the field). */
+  private plate: Container | null = null;
+  private plateSkull: Text | null = null;
   /** Its ailments' look: body parts behind and in front of it, and the chips over its head (STATUS-FX). */
   private ail = new AilmentFx();
   /** A knock from a blow, in px (it eases back to nothing). */
@@ -130,6 +171,9 @@ export class UnitSprite {
   private sheet: string;
   /** Its own sheet, and the scale it is drawn at, when no kit lends it another look (`Unit.look`: a form, a guise, a wraith's shape). */
   private readonly ownSheet: string;
+  private readonly ownScale: number;
+  /** How solid its body is drawn (a summon's spirit or mirage is a little see-through). */
+  private readonly solid: number;
   private scaleNow = 1;
   private sizeNow = 1;
   /** What its root is scaled to when it stands still, and when and how big (0.25 steps) its promotion's pop began. */
@@ -142,18 +186,26 @@ export class UnitSprite {
   y = 0;
   /** How tall it's drawn. */
   tall = 40;
+  /** ULT-SHOW (`ultShow.ts`): a pose the page stages over what the sim says while an ultimate's showcase plays (world px, its depth, how
+   *  solid, a row and how far through it, the way it faces on the screen); null: drawn as the sim says. */
+  stage: { x: number; y: number; z: number; alpha: number; row: Row; p: number; face: 1 | -1; art?: Texture } | null = null;
 
   constructor(public unit: Unit, private readonly equipmentStep = unit.awaken ?? 0) {
     const def = defOf(unit);
     this.grade = unit.side === 'hero' ? (unit.grade ?? 1) : 1;
     const awake = unit.side === 'hero' ? this.equipmentStep : 0;
-    this.sheet = unit.side === 'hero' ? battleSheet(unit.def, awake, this.grade) : formOf(def, this.grade);
-    const auraStep = unit.side === 'hero' ? combatAuraStep(this.grade) : 0;
+    // (a summon wears its own sheet, at its own scale: summonArt.ts)
+    const summon = unit.side === 'hero' ? summonLook(unit.def) : undefined;
+    this.sheet = summon ? summonSheet(unit.def, this.grade)! : unit.side === 'hero' ? battleSheet(unit.def, awake, this.grade) : formOf(def, this.grade);
+    this.ownScale = summon?.scale ?? def.scale;
+    this.solid = summon?.alpha ?? 1;
+    // (a summon wears no class aura: its caller's ring under it says whose it is)
+    const auraStep = unit.side === 'hero' && !summon ? combatAuraStep(this.grade) : 0;
     this.awakenAura = auraStep ? new AwakenAura(unit.def, auraStep, settings().saver) : null;
     const size = (unit.size ?? 1) * (this.grade > 3 ? GRADE4_SIZE : this.grade > 2 ? GRADE3_SIZE : 1);
-    this.tall = figureOf(this.sheet) * def.scale * size;
+    this.tall = figureOf(this.sheet) * this.ownScale * size;
     this.ownSheet = this.sheet;
-    this.scaleNow = def.scale;
+    this.scaleNow = this.ownScale;
     this.sizeNow = size;
     this.root.scale.set(size);
     this.baseSize = size;
@@ -173,6 +225,8 @@ export class UnitSprite {
       if (tone.length) this.body.filters = tone;
     }
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
+    const markColour = summon ? summonMark(unit.def) : undefined;
+    if (markColour !== undefined) this.mark.ellipse(0, 0, 12, 4.6).fill({ color: markColour, alpha: 0.16 }).stroke({ color: markColour, width: 1.2, alpha: 0.75 });
     // a hero past a deep milestone (lasting level 40 and up) stands in steady rings of the badge's colour
     const tier = unit.side === 'hero' ? badgeOf(unit.level ?? 1) : 0;
     if (tier) {
@@ -188,21 +242,98 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    this.root.addChild(this.shadow, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.badge, this.ail.front);
+    // (Dynasties: a Veteran's or an Elder's touch of the years, on the player's own heroes, never a summon)
+    const aged = unit.side === 'hero' && unit.owner === undefined && !summon ? ageFilter(unit.def, ageOf(unit.def), heirLookOf(unit.def)) : null;
+    if (aged) this.body.filters = [...(this.body.filters ?? []), aged];
+    if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0, unit.nem.trophies ?? []);
+    this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []));
+  }
+
+  /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
+  private dressNemesis(rank: string, name: string, scars: number, trophies: readonly { base: string; rarity: number }[]): void {
+    const col = NEM_COLOURS[rank] ?? NEM_COLOURS.lieutenant;
+    if (!this.rim.children.length)
+      for (const [dx, dy] of [[-1.4, 0], [1.4, 0], [0, -1.4], [0, 1.4]]) {
+        const r = new Sprite();
+        r.anchor.set(0.5, 1);
+        r.position.set(dx, dy);
+        this.rim.addChild(r);
+      }
+    this.rim.filters = [flatFilter(col)];
+    this.body.filters = [...(this.body.filters ?? []), nemFilter()];
+    const plate = new Container();
+    const words = new Text({ text: `${name}${scars > 0 ? ` ${'✕'.repeat(Math.min(3, scars))}` : ''}`, style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: 8, fill: 0xfbe9d0, stroke: { color: 0x1a1008, width: 2 } }, resolution: 3 });
+    words.anchor.set(0.5, 1);
+    const skull = new Text({ text: '☠', style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontSize: 8, fill: 0xf2e2b0, stroke: { color: 0x1a1008, width: 2 } }, resolution: 3 });
+    skull.anchor.set(0, 1);
+    skull.visible = false;
+    const w = words.width + 8;
+    const back = new Graphics();
+    back.roundRect(-w / 2, -words.height - 1, w, words.height + 2, 2).fill({ color: 0x1a1008, alpha: 0.78 }).stroke({ color: col, width: 1, alpha: 0.95 });
+    skull.position.set(w / 2 + 1, 0);
+    plate.addChild(back, words, skull);
+    // (the rank's commissioned badge above the plate, once its picture has loaded)
+    const badgeUrl = RANK_BADGE[rank];
+    if (badgeUrl) {
+      const badge = new Sprite();
+      badge.anchor.set(0.5, 1);
+      badge.position.set(0, -words.height - 2);
+      plate.addChild(badge);
+      const img = new Image();
+      img.onload = () => {
+        // (the plate may be gone by the time the picture loads, a boss slain or the fight left: then there is nothing to dress)
+        if (badge.destroyed || !badge.parent) return;
+        badge.texture = Texture.from(img);
+        badge.height = 15;
+        badge.scale.x = badge.scale.y;
+      };
+      img.src = badgeUrl;
+    }
+    // (phase 3: the trophies it carries, each drawn small with the piece's own gear icon, left of the plate; added once the atlas is in)
+    this.plateTrophies = trophies.length ? { list: trophies, x: -w / 2 - 1, size: words.height + 2 } : null;
+    this.hangTrophies();
+    plate.position.set(0, -this.tall - 11);
+    plate.scale.set(1 / this.baseSize);
+    this.plate = plate;
+    this.plateSkull = skull;
+  }
+
+  /** A nemesis's trophies still to be hung by its plate (the gear atlas loads by URL). */
+  private plateTrophies: { list: readonly { base: string; rarity: number }[]; x: number; size: number } | null = null;
+  private hangTrophies(): void {
+    const t = this.plateTrophies;
+    if (!t || !this.plate) return;
+    const tex = t.list.map((x) => gearTexture(x.base, x.rarity));
+    if (tex.some((x) => !x)) return;
+    tex.forEach((x, i) => {
+      const ic = new Sprite(x!);
+      ic.anchor.set(1, 1);
+      ic.width = ic.height = t.size;
+      ic.position.set(t.x - i * (t.size + 1), 1);
+      this.plate!.addChild(ic);
+    });
+    this.plateTrophies = null;
+  }
+
+  /** Whether the hero this nemesis dreads is on the field (the plate's skull shows it). */
+  setDread(on: boolean): void {
+    if (this.plateSkull) this.plateSkull.visible = on;
   }
 
   /** Draw it at the time `t` of the fight (ms), on the board. */
   update(b: Board, t: number, fighting: boolean, victory = false, victoryMs = 0): void {
     const u = this.unit;
+    if (this.plateTrophies) this.hangTrophies();
     const def = defOf(u);
     // (a kit lends it another look for a while: a werewolf's form, a treant, a foe's guise, a wraith's shape; drawn at that shape's own scale)
-    const borrowed = u.look ? awakenedSheet(heroLook(u.def, u.look), u.side === 'hero' ? this.equipmentStep : 0) : undefined;
+    // (a summon keeps its own look: the wraith is a spirit, not the foe it was)
+    const borrowed = u.look && !(u.side === 'hero' && summonLook(u.def)) ? awakenedSheet(heroLook(u.def, u.look), u.side === 'hero' ? this.equipmentStep : 0) : undefined;
     const base = borrowed && hasSheet(borrowed) ? borrowed : this.ownSheet;
     const facing = facesAway(u.facing) ? rearView(base) : base;
     const want = hasSheet(facing) ? facing : base;
     if (want !== this.sheet) {
       this.sheet = want;
-      this.scaleNow = base === this.ownSheet ? def.scale : formScale(base) ?? lookScale(base, def.scale);
+      this.scaleNow = base === this.ownSheet ? this.ownScale : formScale(base) ?? lookScale(base, def.scale);
       this.tall = figureOf(want) * this.scaleNow * this.sizeNow;
     }
     const tile = tileAt(b, u.u, u.v)!;
@@ -210,7 +341,7 @@ export class UnitSprite {
     let z = depth(u.u, u.v) + 5;
     let anim: Anim = 'idle';
     let row: Row | undefined;
-    let frame = Math.floor(t / 110);
+    let frame = idleFrame(this.sheet, t, u.id, !!this.reduced?.matches);
     const step = u.step;
     let arcLift = 0;
     if (fighting && u.alive && step && t < step.at + step.ms) {
@@ -313,8 +444,6 @@ export class UnitSprite {
     }
     const list = rowFrames(this.sheet, row ?? anim);
     this.body.texture = row || anim === 'dead' || anim === 'attack' || anim === 'hurt' ? list[Math.min(list.length - 1, Math.max(0, frame))] : list[frame % list.length];
-    // (the Samurai Commander's standard is the castle's banner, planted)
-    if (u.def === 'standard' && bannerTex) this.body.texture = bannerTex;
     // a raised guard is wrapped in the earth shield's ring; a status shows as a small icon over the left shoulder
     this.shield.visible = guarded;
     if (guarded) {
@@ -349,6 +478,7 @@ export class UnitSprite {
     this.shadow.alpha = def.flies ? 0.5 : 1;
     // (in a launch's arc the shadow stays on the ground)
     this.shadow.y = arcLift;
+    this.mark.visible = u.alive;
     for (const r of this.rim.children as Sprite[]) {
       r.texture = this.body.texture;
       r.scale.copyFrom(this.body.scale);
@@ -358,9 +488,8 @@ export class UnitSprite {
     // (its ailments: their parts and chips, and the tint of the latest that has one (burning orange, frozen ice blue...); a flash wins over it)
     this.ail.update(u, this.tall, t, this.reduced?.matches ?? false, settings().saver);
     this.body.tint = this.flash > 0 ? 0xffb0b0 : ailmentTint(this.ail.shown) ?? 0xffffff;
-    // (the kits' looks: a wraith is a pale ghost of the foe it was; a foe turned to stone is grey)
-    if (u.def === 'wraith') this.body.tint = 0x9fd0ff;
-    else if (u.alive && u.kx?.stone !== undefined && t < u.kx.stone) this.body.tint = 0x9a9a92;
+    // (a foe turned to stone is grey)
+    if (u.alive && u.kx?.stone !== undefined && t < u.kx.stone) this.body.tint = 0x9a9a92;
     // (the fallen go dark as they burn away, or grey as they turn to stone)
     if (!u.alive || rising < 1) {
       const kind = deathKind(def.name, u.side);
@@ -380,15 +509,52 @@ export class UnitSprite {
     this.y = y;
     // Fallen heroes stay where they fell so a heart can raise them; foes fade away.
     const dead = u.alive || (u.side === 'hero' && !def.summon) ? 0 : t - (u.diedAt ?? 0);
-    this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : u.def === 'wraith' ? 0.78 : 1;
+    this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : this.solid;
     // (a burrower underground is not seen: the page draws its mound instead, RPG-SPELLS)
     if (u.under) this.root.alpha = 0;
     this.root.visible = this.root.alpha > 0;
+    if (this.stage) this.drawStaged(this.stage);
     this.drawBar(u.alive, t);
+    if (this.plate) this.plate.visible = u.alive;
+    this.drawClock(fighting ? t : -1);
     this.drawSparks(u.alive);
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
     else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
+  }
+
+  /** ULT-SHOW: drawn in the pose the showcase stages (its place, its row's frame, its facing, how solid), over the sim's. */
+  private drawStaged(st: NonNullable<UnitSprite['stage']>): void {
+    const row: Row = hasRow(this.sheet, st.row) ? st.row : st.row === 'attack2' ? 'attack' : st.row;
+    if (st.art) {
+      // (a painted pose: drawn a little taller than the fighter so it reads, facing as staged; every pose faces right)
+      this.body.texture = st.art;
+      const k = (this.tall * 1.35) / this.sizeNow / Math.max(1, st.art.height);
+      this.body.scale.set(k * st.face, k);
+    } else {
+      const list = rowFrames(this.sheet, row);
+      this.body.texture = list[Math.min(list.length - 1, Math.max(0, Math.floor(st.p * list.length)))];
+      const dx = st.face * (facesRightOf(this.sheet) ? 1 : -1);
+      this.body.scale.set(this.scaleNow * dx, this.scaleNow);
+    }
+    this.body.x = 0;
+    this.body.rotation = 0;
+    this.rim.x = 0;
+    this.rim.rotation = 0;
+    for (const r of this.rim.children as Sprite[]) {
+      r.texture = this.body.texture;
+      r.scale.copyFrom(this.body.scale);
+    }
+    // (a flinch flashes, as a blow does)
+    if (row === 'hurt' && st.p < 0.4) this.body.tint = 0xffb0b0;
+    else if (this.unit.alive) this.body.tint = ailmentTint(this.ail.shown) ?? 0xffffff;
+    else this.body.tint = 0xffffff;
+    this.root.position.set(st.x, st.y);
+    this.root.zIndex = st.z;
+    this.x = st.x;
+    this.y = st.y;
+    this.root.alpha = st.alpha * this.solid;
+    this.root.visible = st.alpha > 0;
   }
 
   /** Use this sprite for another fighter of the same kind and size (a crowd's foes are drawn from a pool, so a wave of fifty makes no new sprites). */
@@ -400,6 +566,8 @@ export class UnitSprite {
     this.root.alpha = 1;
     this.root.visible = true;
     this.bar.clear();
+    this.clockKey = '';
+    this.clock.clear();
   }
 
   /** A blow pushes it a little way along (dx, dy), and it eases back. */
@@ -537,6 +705,30 @@ export class UnitSprite {
     }
   }
 
+  /** The timer's ring (SUMMON-TIMERS): left of the health bar, a dark disc with an arc that empties clockwise from the top; teal on a summon,
+   *  gold on a shape, and ember once a quarter or less is left (the time at which a call may renew it). Redrawn only when its step changes. */
+  private drawClock(t: number): void {
+    const timer = t >= 0 ? timerOf(this.unit, t) : null;
+    const share = timer ? Math.max(0, Math.min(1, timer.left / timer.full)) : 0;
+    const low = share <= RENEW_AT;
+    const key = timer && share > 0 ? `${Math.ceil(share * 32)}${timer.shape ? 's' : 'c'}${low ? 'l' : ''}${Math.round(this.tall)}` : '';
+    if (key === this.clockKey) return;
+    this.clockKey = key;
+    const g = this.clock;
+    g.clear();
+    if (!key) return;
+    const r = 3.6;
+    const x = -BAR_W / 2 - r - 2.5;
+    const y = -this.tall - 8 + 1.5;
+    g.circle(x, y, r + 1.4).fill({ color: 0x1a1410, alpha: 0.85 });
+    g.circle(x, y, r).stroke({ color: 0xffffff, width: 1.6, alpha: 0.18 });
+    const from = -Math.PI / 2;
+    const to = from + Math.PI * 2 * share;
+    g.moveTo(x + Math.cos(from) * r, y + Math.sin(from) * r)
+      .arc(x, y, r, from, to)
+      .stroke({ color: low ? 0xff7a4a : timer!.shape ? 0xffc861 : 0x6fd8c8, width: 1.8, cap: 'round' });
+  }
+
   /** What the health bar last showed (a fighter with no skill meter, which is most of a crowd's foes, redraws it only when this changes). */
   private barKey = '';
 
@@ -544,7 +736,7 @@ export class UnitSprite {
     const u = this.unit;
     const g = this.bar;
     const share = u.hp / u.maxHp;
-    if (!kitOf(u)) {
+    if (!hasSkill(kitOf(u)) && !poolOf(u)) {
       const key = alive ? `${Math.round(share * BAR_W)}${u.side === 'hero' && share <= 0.35 ? 'l' : ''}` : '';
       if (key === this.barKey) return;
       this.barKey = key;
@@ -552,11 +744,23 @@ export class UnitSprite {
     g.clear();
     if (!alive) return;
     const top = -this.tall - 8;
+    // COMBAT-HUD: a hero's meters (health, its pool and its ultimate's sliver) used to sit on a dark plate 12 px deep and wider than the
+    // fighter, which read from afar as a little flag over each head (the owner: "Why are there flags on the characters?"). The rows below
+    // show every number, so over the head they are now one slim strip: health 3 px, the pool 1 px, the ultimate 1 px, on a faint plate
+    // the width of the bar. A foe keeps its plain red bar.
+    const pool = poolOf(u);
+    if (pool && u.side === 'hero') {
+      const ult = ultimateOf(u);
+      g.rect(-BAR_W / 2, top - 1, BAR_W, ult ? 7 : 6).fill({ color: 0x1a1410, alpha: 0.5 });
+      g.rect(-BAR_W / 2, top, BAR_W * share, 3).fill(share > 0.35 ? 0x5fd35f : 0xe0c040);
+      g.rect(-BAR_W / 2, top + 3, BAR_W * Math.min(1, u.charge / CHARGE_MAX), 1).fill(pool === 'mana' ? 0x4a90e8 : 0xf0b83a);
+      if (ult) g.rect(-BAR_W / 2, top + 4, BAR_W * Math.min(1, (u.charge2 ?? 0) / CHARGE_MAX), 1).fill((u.charge2 ?? 0) >= ult.need ? ULT_READY : ULT_FILL);
+      return;
+    }
     g.rect(-BAR_W / 2 - 1, top - 1, BAR_W + 2, 5).fill({ color: 0x1a1410, alpha: 0.85 });
     g.rect(-BAR_W / 2, top, BAR_W * share, 3).fill(u.side === 'hero' ? (share > 0.35 ? 0x5fd35f : 0xe0c040) : 0xe04a3a);
 
-    // a hero's pool (COMBAT-002): blue for mana, gold for stamina, and its ultimate's violet sliver (gold, steady, when ready)
-    const pool = poolOf(u);
+    // a pool on any other fighter (COMBAT-002): blue for mana, gold for stamina, and its ultimate's violet sliver (gold, steady, when ready)
     if (pool) {
       const c = Math.min(1, u.charge / CHARGE_MAX);
       g.rect(-BAR_W / 2 - 1, top + 5, BAR_W + 2, 4).fill({ color: 0x1a1410, alpha: 0.85 });
@@ -571,7 +775,8 @@ export class UnitSprite {
     }
     // the skill's charge, a thin bar under it (gold and pulsing when full)
     const kit = kitOf(u);
-    if (kit) {
+    // (a common foe's kit has no skill, only its passive and its way of moving: no charge to show, FOE-STYLES)
+    if (kit && hasSkill(kit)) {
       const full = u.charge >= kit.skill.need;
       const c = Math.min(1, u.charge / CHARGE_MAX);
       g.rect(-BAR_W / 2 - 1, top + 5, BAR_W + 2, 4).fill({ color: 0x1a1410, alpha: 0.85 });

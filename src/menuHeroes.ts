@@ -2,41 +2,126 @@
 // skills. Reads the meta only.
 
 import { ALL_HEROES, UNITS } from './sim/units';
-import { KITS } from './sim/abilities';
-import { HERO_KITS, SKILL2_LEVEL } from './sim/heroKits';
-import { TIER_SKILLS } from './sim/tierSkills';
+import { keyOf, KITS, type Skill } from './sim/abilities';
+import { levelLine as skillLevelLine, levelShare, useOf } from './sim/skillLevels';
+import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
 import { traitsOf, TRAITS } from './sim/traits';
-import { MAX_RANK, RANK_SHARDS, heroRank, rankMult, rankOf, takenRank, type Meta } from './sim/meta';
+import { MAX_RANK, RANK_SHARDS, heroRank, rankOf, takenRank, type Meta } from './sim/meta';
 import { readyToRise } from './sim/rankUp';
 import { openRankUp, type Taken } from './rankUpView';
+// (TAVERN-RANKUP: the gold chevron on a hero with an upgrade ready, and the sheet's hop to the next such hero)
+import { upMark } from './rankUpList';
+import { markReady, nextUpgradeKind, talentPointsReady } from './sim/upgradesReady';
 import { AWAKEN_SHARDS, awakenedOf, awakenPlan } from './sim/awaken';
 import { drawAwaken, gems, playAwakenShow } from './awakenView';
 import { CLASS_NAMES, CLASS_OF } from './sim/starter';
-import { lastingBoost, progressOf, xpOf } from './sim/levels';
+import { levelOfKind, progressOf, xpOf } from './sim/levels';
 import { compactXp, levelBadge } from './levelBadge';
 import { drawEquipment } from './equipView';
+import { drawSkillBook } from './skillBookView';
+import { fightLoadout, kitWithLoadout } from './sim/books';
 import { drawTalents } from './talentView';
+import { drawStatsPanel } from './statsPanel';
 import { TREES } from './sim/talents';
-import { blowsPerSecond, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
+import { blowsPerSecond, heroFigures, jumpText, kindPower, powerText, rateText, tilesPerSecond } from './sim/power';
 import { heroStats } from './sim/talents';
 import { heroArtwork, openHeroArtwork } from './heroArtwork';
 import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
 import { CONTENT_HEROES, lockInfo } from './sim/contentHeroes';
 import { haveOf, toCollect } from './sim/unlock';
+import { isSecret, secretsOf, SECRET_NAME } from './sim/secretHeroes';
+import { secretFigure } from './secretView';
 import swordIcon from './art/talent/sword.png';
 import shieldIcon from './art/talent/shield.png';
 import flameIcon from './art/talent/blast.png';
 import targetIcon from './art/talent/target.png';
 import haloIcon from './art/talent/halo.png';
-import heartIcon from './art/talent/heart.png';
 import crystalIcon from './art/talent/crystal.png';
 import { warmIcon } from './menuArt';
 import { tomeControl } from './tomeView';
 import { TOME_SIZES, tomesOf, tomeTotal } from './sim/tomes';
 import { TOME_ICON } from './tomeArt';
+import { BOND_NAMES, SETTLE_WINS, partnersOf } from './sim/bonds';
+import { LEGACY, PERKS, apprenticeCount, apprenticeXp, callingOf, perkFor, perkLine, retire, retired, whyNotRetire } from './sim/legacy';
+import { saveMeta } from './sim/meta';
+import { bearerOf, DYNASTY, fieldedOf, lineOf, lineWords, lookWords, stageAge, stageOf, wavesThisSeason } from './sim/dynasty';
+import { birthrightWords, heirState } from './sim/heirs';
+import { heirRowFor, openBearer, openHouses } from './housesView';
+import { todayKey } from './modes';
+import { slotBrief } from './fightHudRules';
 
 const DETAIL_TABS = ['overview', 'progression', 'equipment', 'skills'];
+
+/** The hero sheet's legacy block (DEPTH-BUILD, `sim/legacy.ts`): who mentors this hero and what it gives; for a hero of level 60 or
+ *  more, the perk it would give and how many it would reach, and Retire with a confirm step; for a mentor, that it is in the Hall. */
+function legacyBlock(box: HTMLElement, meta: Meta, kind: string, redraw: () => void): void {
+  const calling = callingOf(kind);
+  if (!calling || !meta.unlocked.includes(kind)) return;
+  const wrap = el('div', 'dossierLegacy');
+  const p = perkFor(meta, kind);
+  if (p) {
+    const xp = apprenticeXp(meta, kind) > 1 ? ` · +50% XP to level ${Math.floor(levelOfKind(meta, p.mentor) / 2)}` : '';
+    wrap.append(el('p', 'legacyLine', `Mentored by the ${UNITS[p.mentor]?.name ?? p.mentor}${xp} · ${p.perk.name}: ${perkLine(p.perk, p.value)}${p.bonded ? ' (double, for a bonded partner)' : ''}`));
+  }
+  if (retired(meta, kind)) {
+    wrap.append(el('p', 'legacyLine', 'In the Hall of Legends, mentoring. Recall them from the Hall\'s card in the castle.'));
+  } else if (levelOfKind(meta, kind) >= LEGACY.RETIRE_LEVEL) {
+    const perk = PERKS[kind];
+    wrap.append(detailHeading('Retire to the Hall', `${calling === 'arcane' ? 'An' : 'A'} ${calling} mentor for ${apprenticeCount(calling)} ${calling} heroes`));
+    if (perk) wrap.append(el('p', 'legacyLine', `${perk.name}: ${perkLine(perk, perk.steps[0])} (more at levels 80 and 100); apprentices below half this hero's level earn +50% XP.`));
+    const why = whyNotRetire(meta, kind, Date.now());
+    const btn = el('button', 'dossierSkillsLink', why ?? 'Retire to the Hall  ›');
+    btn.type = 'button';
+    btn.disabled = !!why;
+    btn.addEventListener('click', () => {
+      if (btn.dataset.sure !== '1') {
+        btn.dataset.sure = '1';
+        btn.textContent = 'Retire? They leave the party; their gear goes to the stash. Tap again';
+        return;
+      }
+      if (retire(meta, kind, Date.now())) {
+        saveMeta(meta);
+        redraw();
+      }
+    });
+    wrap.append(btn);
+  }
+  if (wrap.childElementCount) box.append(wrap);
+}
+
+/** The hero sheet's Line row (Dynasties, `sim/dynasty.ts`): the House, its bearer's stage and age, the season's waves, and the way to
+ *  the family tree. */
+function lineBlock(box: HTMLElement, meta: Meta, kind: string): void {
+  const b = bearerOf(meta, kind);
+  if (!b || !meta.dynasty) return;
+  const day = todayKey();
+  const wrap = el('div', 'dossierLine');
+  wrap.append(detailHeading('The House', lineWords(meta, kind)));
+  const look = lookWords(kind, stageOf(b.served));
+  wrap.append(el('p', 'legacyLine', `${stageAge(kind, b.served)} · ${b.served} ${b.served === 1 ? 'season' : 'seasons'} served · ${wavesThisSeason(meta, kind, day)} of ${DYNASTY.SEASON_WAVES} waves this season${look ? ` · ${look}` : ''}${stageOf(b.served) === 'elder' ? ' · Elder’s Counsel: +5% XP to the party' : ''}`));
+  // (Dynasties, phase 6: the heir's training, or the mantle ready to pass, with the way to the bearer's card; the elder fielded in its place)
+  const f = fieldedOf(meta, kind);
+  if (f && f !== b) wrap.append(el('p', 'legacyLine', `${f.name} takes the field in ${b.name}’s place (the party picker’s banner)`));
+  if (b.birthright) wrap.append(el('p', 'legacyLine', `Birthright · ${birthrightWords(b)}`));
+  const heir = heirRowFor(meta, kind, Date.now());
+  if (heir) {
+    wrap.append(el('p', 'legacyLine', heir.line));
+    const go = el('button', 'dossierSkillsLink', heir.ready ? 'Pass the Mantle  ›' : heirState(meta, kind, Date.now()).state === 'none' ? 'Name an heir  ›' : 'The heir  ›');
+    go.type = 'button';
+    go.addEventListener('click', () => {
+      openHouses(meta, day, kind);
+      const line = lineOf(meta, kind);
+      if (line) openBearer(meta, kind, line.current, day);
+    });
+    wrap.append(go);
+  }
+  const btn = el('button', 'dossierSkillsLink', 'Open the House  ›');
+  btn.type = 'button';
+  btn.addEventListener('click', () => openHouses(meta, day, kind));
+  wrap.append(btn);
+  box.append(wrap);
+}
 
 function detailHeading(title: string, subtitle: string): HTMLElement {
   const head = el('header', 'dossierHeading');
@@ -90,6 +175,9 @@ function xpBar(meta: Meta, kind: string): { level: number; bar: HTMLElement; tex
   return { level: p.level, bar, text: p.need ? `${compactXp(p.into)} / ${compactXp(p.need)} XP` : 'max level' };
 }
 
+/** (TAVERN-RANKUP) the sheet's badge says which step waits. */
+const canRankUpWord = (meta: Meta, kind: string): string => (takenRank(meta, kind) < rankOf(meta, kind) ? 'Rank up' : 'Awaken');
+
 /** The strongest unlocked heroes (level, then rank), best first. */
 export function strongest(meta: Meta, n: number): string[] {
   const score = (k: string) => progressOf(xpOf(meta, k)).level * 100 + takenRank(meta, k) * 10;
@@ -98,22 +186,70 @@ export function strongest(meta: Meta, n: number): string[] {
 
 /** Fill the detail sheet for a hero; returns a function that stops its idle animation. */
 export function drawHeroSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, onPick?: (kind: string, tab: string) => void, initialTab = 'overview'): () => void {
-  const state = { tab: initialTab, onPick };
-  let stop = paintSheet(box, meta, kind, close, again, state);
+  // (TAVERN-RANKUP: "Next upgrade" goes through the page's own pick where there is one, so it remembers the hero; else this sheet
+  // draws the next hero itself)
+  let cur = kind;
+  // (TALENT-ARROWS: 'talents' opens the Progression tab with the hero's talent tree already open)
+  const talents = initialTab === 'talents';
+  const state: SheetState = {
+    talents,
+    tab: talents ? 'progression' : initialTab,
+    onPick,
+    hop: (next) => {
+      if (onPick) return onPick(next, state.tab);
+      cur = next;
+      again();
+    },
+  };
+  let stop = paintSheet(box, meta, cur, close, again, state);
   // (an awakening draws the sheet again, with the show on the new look)
   function again(taken?: Taken): void {
     stop();
-    stop = paintSheet(box, meta, kind, close, again, state, taken);
+    stop = paintSheet(box, meta, cur, close, again, state, taken);
   }
   return () => stop();
 }
 
-function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, state: { tab: string; onPick?: (kind: string, tab: string) => void }, show?: Taken): () => void {
+interface SheetState {
+  tab: string;
+  /** (TALENT-ARROWS) open the talent tree at once, the first time the sheet is drawn. */
+  talents?: boolean;
+  onPick?: (kind: string, tab: string) => void;
+  /** (TAVERN-RANKUP) open another hero's sheet: the "Next upgrade" hop. */
+  hop: (kind: string) => void;
+}
+
+/** SECRET-HEROES: a secret hero's sheet: the dark figure, "???" and its vague hint; nothing of its name, art, class or kit. */
+function paintSecret(box: HTMLElement, close: () => void, line: string): () => void {
+  box.className = 'hsheet heroDetail secretSheet';
+  delete box.dataset.class;
+  box.replaceChildren();
+  const bar = el('div', 'heroToolbar');
+  const back = el('button', 'heroBack', '‹ Back');
+  back.type = 'button';
+  back.addEventListener('click', close);
+  bar.append(back, el('span', '', 'YOUR COMPANY'));
+  const head = el('div', 'hhead');
+  const pic = el('div', 'hpic');
+  pic.append(secretFigure());
+  const title = el('div', 'dossierIdentity');
+  title.append(el('h3', '', SECRET_NAME), el('em', '', 'a secret, for now'), el('span', 'lv', line));
+  head.append(pic, title);
+  const done = el('button', 'primary', '‹ Back');
+  done.addEventListener('click', close);
+  box.append(bar, head, done);
+  return () => undefined;
+}
+
+function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => void, redraw: (taken?: Taken) => void, state: SheetState, show?: Taken): () => void {
+  if (isSecret(meta, kind)) return paintSecret(box, close, lockInfo(meta, kind)!.line);
   const def = UNITS[kind];
   const rank = takenRank(meta, kind);
   const open = meta.unlocked.includes(kind);
   const kit = KITS[kind];
-  const hk = HERO_KITS()[kind];
+  // (SHOP-BOOKS-GEAR: the skill cards follow the two skills the hero has chosen, its own or learned from books)
+  const chosen = open ? fightLoadout(meta, kind) : undefined;
+  const hk = chosen ? kitWithLoadout(kind, chosen) : HERO_KITS()[kind];
   box.className = 'hsheet heroDetail';
   box.dataset.class = CLASS_OF[kind];
   box.replaceChildren();
@@ -122,6 +258,17 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   back.type = 'button';
   back.addEventListener('click', close);
   bar.append(back, el('span', '', 'YOUR COMPANY'));
+  // (TAVERN-RANKUP: straight to the next hero with a rank or an awakening ready, round the roster; none when no other has one)
+  const owned = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
+  const nextUp = nextUpgradeKind(meta, owned, kind);
+  if (nextUp) {
+    const hop = el('button', 'heroNextUp');
+    hop.type = 'button';
+    hop.setAttribute('aria-label', `Next hero with an upgrade: ${heroName(nextUp)}`);
+    hop.append(upMark(), el('span', '', 'Next upgrade'), el('b', '', '›'));
+    hop.addEventListener('click', () => state.hop(nextUp));
+    bar.append(hop);
+  }
   box.append(bar);
   if (state.onPick) {
     const strip = el('nav', 'heroStrip');
@@ -131,6 +278,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
       button.type = 'button';
       button.setAttribute('aria-current', other === kind ? 'true' : 'false');
       button.append(heroArtwork(other, false, awakenedOf(meta, other)), el('small', '', heroName(other)));
+      if (markReady(meta, other)) button.append(upMark('upCorner'));
       button.addEventListener('click', () => state.onPick?.(other, state.tab));
       strip.append(button);
     }
@@ -188,8 +336,9 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     if (tomes) title.append(tomes);
     // (a rank earned, or an awakening paid for, waits for the player's tap)
     if (readyToRise(meta, kind)) {
-      const badge = el('button', 'rankBadge', 'Rank up');
+      const badge = el('button', 'rankBadge');
       badge.type = 'button';
+      badge.append(upMark('upInline'), canRankUpWord(meta, kind));
       badge.addEventListener('click', () => openRankUp(meta, kind, redraw));
       title.append(badge);
     }
@@ -246,15 +395,27 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     progression.append(detailHeading('Path of ascension', 'From a new recruit to a legend of the Keep.'));
     equipment.append(detailHeading('The armoury', 'Steel, craft and a little good fortune.'));
     skills.append(detailHeading('Arts of war', 'Every hero has a way to turn the tide.'));
+    if (open) skills.append(drawSkillBook(meta, kind, () => redraw()));
     box.append(tabs, ...panels);
-    const b = lastingBoost(x.level);
-    const m = rankMult(full);
-    const stat = el('div', 'hstats');
-    for (const [name, v] of [['HP', Math.round(def.hp * b.hp * m)], ['Attack', Math.round(def.atk * b.atk * m)], ['Defence', def.def], ['Range', def.range]] as const) {
+    // (health, attack and armour as a fight has them: the level, rank and score steps, and what the gear, runes and talents add
+    // (`heroFigures`); TACTICS-OVERVIEW: the sheet once left the gear out, so a geared hero read as a bare one)
+    const figs = () => heroFigures(meta, kind);
+    // (gear's armour comes in fractions: shown to a tenth)
+    const figText = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+    const stat = el('div', 'hstats four');
+    // (STATS batch 3: health, attack and armour sit at the head of the Stats panel; range and the speeds stay here)
+    const lead: HTMLElement[] = [];
+    const leadVals: [HTMLElement, () => number][] = [];
+    for (const [name, v] of [['Health', () => figs().hp], ['Attack', () => figs().atk], ['Armour', () => figs().def]] as const) {
       const cell = el('div');
-      cell.append(detailIcon(({ HP: heartIcon, Attack: swordIcon, Defence: shieldIcon, Range: targetIcon })[name]), el('b', '', String(v)), el('small', '', name));
-      stat.append(cell);
+      const b = el('b', '', figText(v()));
+      cell.append(b, el('small', '', name));
+      lead.push(cell);
+      leadVals.push([b, v]);
     }
+    const range = el('div', 'hspeed');
+    range.append(el('b', '', String(def.range)), el('small', '', 'Range'));
+    stat.append(range);
     // (how often it swings and how fast it walks, with what its equipment and talents add; they follow an equip or a talent learned)
     const speeds: [HTMLElement, () => string][] = [];
     for (const [name, rate] of [['Attack speed', () => rateText(blowsPerSecond(kind, heroStats(meta, kind)))], ['Walk', () => rateText(tilesPerSecond(kind, heroStats(meta, kind)))], ['Jump', () => jumpText(kind)]] as const) {
@@ -271,8 +432,17 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     const repower = () => {
       pv.textContent = powerText(kindPower(meta, kind));
       for (const [v, rate] of speeds) v.textContent = rate();
+      for (const [v, n] of leadVals) v.textContent = figText(n());
     };
-    overview.append(power, stat);
+    const scores = drawStatsPanel(kind, { level: x.level, rank: full, grade: 1 }, lead, heroStats(meta, kind)?.scores);
+    // (TACTICS-OVERVIEW: the Overview leads with the power, then health, attack and armour at the head of the ability scores, AC, to hit
+    // and saves, up front as they were before UX-FIXES folded them away; only the range and the speeds fold under "Details")
+    let head: HTMLElement = el('div', 'hstats three');
+    if (scores) head = scores;
+    else head.append(...lead);
+    const fold = el('details', 'dossierFold');
+    fold.append(el('summary', '', 'Details: range and speeds'), stat);
+    overview.append(power, head, fold);
     const profile = el('div', 'dossierProfile');
     profile.append(detailHeading('Combat profile', def.role));
     const traits = el('div', 'dossierTraits');
@@ -283,6 +453,37 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     arts.addEventListener('click', () => { select(3); buttons[3].focus(); });
     profile.append(arts);
     overview.append(profile);
+    // (DEPTH-BUILD: the hero's bonds: its three strongest partners and its rivals, a tap for them all)
+    const partners = partnersOf(meta, kind);
+    if (partners.length) {
+      const bonds = el('div', 'dossierBonds');
+      bonds.append(detailHeading('Bonds', 'Won waves together, side by side'));
+      const list = el('div', 'bondList');
+      const draw = (all: boolean) => {
+        list.replaceChildren();
+        for (const p of all ? partners : partners.slice(0, 3)) {
+          const row = el('div', `bondRow${p.rival ? ' rival' : ''}`);
+          row.append(el('b', '', `${p.rival ? '⚔ ' : p.kindred ? '❦ ' : ''}${UNITS[p.kind]?.name ?? p.kind}`), el('small', '', p.rival ? `Rivals · ${p.points}/${SETTLE_WINS} wins together to settle it` : `${BOND_NAMES[p.lv] || 'Strangers'} · ${p.points}${p.next ? `/${p.next}` : ''} points${p.kindred ? '' : ' · comrades at most'}`));
+          list.append(row);
+        }
+      };
+      draw(false);
+      bonds.append(list);
+      if (partners.length > 3) {
+        const more = el('button', 'dossierSkillsLink', `All bonds (${partners.length})  ›`);
+        more.type = 'button';
+        more.addEventListener('click', () => {
+          draw(true);
+          more.remove();
+        });
+        bonds.append(more);
+      }
+      overview.append(bonds);
+    }
+    // (DEPTH-BUILD: hero legacy: an apprentice's mentor line, and from level 60 the Retire button with a confirm on the sheet)
+    legacyBlock(overview, meta, kind, () => state.onPick?.(kind, 'overview'));
+    // (Dynasties, phase 5: the hero's House, its stage and age, and the way to the family tree)
+    lineBlock(overview, meta, kind);
     const path = el('ol', 'dossierRanks');
     path.setAttribute('aria-label', 'Hero rank progression');
     for (let n = 1; n <= MAX_RANK; n++) {
@@ -293,11 +494,12 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
     }
     progression.append(path);
     if (kit)
-      // (COMBAT-002: two skills paid from the hero's pool, skill 2 from level 10; the tier skills improve the hero's first skill as before)
+      // (COMBAT-002: two skills paid from the hero's pool, skill 2 from level 10; since the skills overhaul's batch 3 a rank no longer changes them)
       for (const [label, a, cost, opens] of [
-        ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? `${hk.s1.cost} ${hk.pool}` : '', 1],
-        ...(hk ? ([['Skill 2', hk.s2.skill, `${hk.s2.cost} ${hk.pool}${hk.s2.hpCost ? ' and blood' : ''}`, SKILL2_LEVEL]] as const) : []),
-        ...(TIER_SKILLS[kind] ? ([['Tier 2', TIER_SKILLS[kind][0], '', 1], ['Tier 3', TIER_SKILLS[kind][1], '', 1], ['Tier 4', TIER_SKILLS[kind][2], '', 1]] as const) : []),
+        ['Skill 1', hk?.s1.skill ?? kit.skill, hk ? slotBrief(hk, hk.s1) : '', 1],
+        ...(hk ? ([['Skill 2', hk.s2.skill, slotBrief(hk, hk.s2), SKILL2_LEVEL]] as const) : []),
+        // (the skills overhaul's batch 4: skill 3, from level 20)
+        ...(hk?.s3 ? ([['Skill 3', hk.s3.skill, slotBrief(hk, hk.s3), SKILL3_LEVEL]] as const) : []),
         ...(kit.ultimate ? [['Ultimate', kit.ultimate, 'tap its portrait', kit.ultimate.unlock ?? 1] as const] : []),
         ['Passive', kit.passive, '', 1],
       ] as const) {
@@ -309,27 +511,44 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
         const body = el('div');
         body.append(el('small', 'dossierAbilityLabel', cost ? `${label} · ${cost}` : label), el('h5', '', a.name), el('p', '', a.text));
         if (locked) body.append(el('span', 'ultLock', `Unlocks at level ${opens}`));
+        // (the skills overhaul's batch 5: each skill's level by use, and a thin bar to the next; the ultimate and the passive do not level)
+        if (open && label.startsWith('Skill')) {
+          const pts = useOf(meta, kind, keyOf(a as Skill));
+          const lvRow = el('div', 'skillLv');
+          const barEl = el('i', 'skillLvBar');
+          const fill = el('span');
+          fill.style.width = `${Math.round(levelShare(pts) * 100)}%`;
+          barEl.append(fill);
+          lvRow.append(el('small', '', skillLevelLine(pts)), barEl);
+          body.append(lvRow);
+        }
         card.append(detailIcon(icon), body);
         skills.append(card);
       }
     progression.append(drawAwaken(meta, kind, redraw));
-    if (TREES[kind]) progression.append(drawTalents(meta, kind, repower));
+    if (TREES[kind]) {
+      const tree = drawTalents(meta, kind, repower, !!state.talents);
+      progression.append(tree);
+      if (state.talents) requestAnimationFrame(() => tree.scrollIntoView({ block: 'start' }));
+      state.talents = false;
+    }
     equipment.append(drawEquipment(meta, kind, repower));
-    equipment.append(el('p', 'hint', 'Equipment is kept for good. Gear found in a run lasts that run only.'));
+    equipment.append(el('p', 'hint', 'Equipment is kept for good, and wears a little with each wave it is fought in: mend it here or at Hester’s Stall. Gear found in a run lasts that run only.'));
   }
   if (show && show.what !== 'cache') playAwakenShow(pic, show.what === 'awaken' ? show.n : 1, show.what === 'rank' ? `Rank ${show.n}` : undefined, show.what === 'awaken' ? kind : undefined);
-  const done = el('button', 'primary', 'Back');
+  const done = el('button', 'heroFootBack', '‹ Back');
   done.addEventListener('click', close);
   box.append(done);
   return () => closeArtwork?.();
 }
 
-/** The roster page of the Heroes tab: the heroes owned in a grid, then the ones earned in play with the line "Joins when you …" and their progress, then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
+/** The roster page of the Heroes tab: the heroes owned in a grid, then the secret heroes (SECRET-HEROES: earned in play, each a dark figure, "???" and a vague hint), then the ones being collected by shards with their bars. A tap on a hero opens its sheet. */
 export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) => void, close: () => void, lastViewed?: string): void {
   box.className = 'hsheet heroRoster';
   box.replaceChildren();
   const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
   const earned = CONTENT_HEROES.filter((c) => meta.unlocked.includes(c.kind)).length;
+  // (SECRET-HEROES: the heroes earned in play are secrets until they join, counted but not named)
   const head = el('div');
   head.className = 'rosterHeading';
   head.append(el('small', 'rosterEyebrow', 'THE LAST KEEP'), el('h3', '', 'Your company'), el('em', '', `${have.length} of ${ALL_HEROES.length} heroes · ${earned} of ${CONTENT_HEROES.length} earned in play`));
@@ -401,7 +620,9 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       card.append(seal);
       card.setAttribute('aria-description', 'Last viewed hero');
     }
-    if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'));
+    if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'), upMark('upCorner'));
+    // (TALENT-ARROWS: talent points to spend wear the chevron too)
+    else if (talentPointsReady(meta, kind)) card.append(el('small', 'rankTag', 'Talents'), upMark('upCorner'));
     card.addEventListener('click', () => pick(kind));
     remember(card, kind);
     grid.append(card);
@@ -419,8 +640,15 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       bar.append(fill);
       text.append(bar, el('span', 'lv', `${lock.now} / ${lock.need}`));
     }
-    const pic = heroArtwork(kind, false, awakenedOf(meta, kind));
-    pic.classList.add('dim');
+    // (SECRET-HEROES: a secret hero shows the dark figure, not its own picture, even darkened)
+    let pic: HTMLElement;
+    if (isSecret(meta, kind)) {
+      pic = secretFigure();
+      r.classList.add('secret');
+    } else {
+      pic = heroArtwork(kind, false, awakenedOf(meta, kind));
+      pic.classList.add('dim');
+    }
     r.append(pic, text);
     r.addEventListener('click', () => pick(kind));
     remember(r, kind, lock.named);
@@ -432,7 +660,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     for (const k of kinds) box.append(row(k));
     if (note) box.append(el('p', 'hint', note));
   };
-  section('Earned in play', CONTENT_HEROES.filter((c) => !meta.unlocked.includes(c.kind)).map((c) => c.kind));
+  section('Secret heroes', secretsOf(meta));
   const begun = toCollect(meta).filter((k) => haveOf(meta, k) > 0).sort((a, b) => haveOf(meta, b) - haveOf(meta, a));
   const rest = toCollect(meta).length - begun.length;
   section('Gathering shards', begun, rest ? `${rest} more to find: summoning stones give their shards.` : '');

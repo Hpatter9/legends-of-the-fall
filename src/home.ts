@@ -4,12 +4,19 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { COUNCIL_BADGE } from './expansionArt';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
-import { BUILDING_IDS, BUILDINGS, buildMs, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, maxLevel, nextCost, settleWorks, startBuild, startChapel, worksLeft, type BuildingId, type BuildSite } from './sim/castle';
+import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
+import { roomOpen, roomsOf } from './sim/rooms';
+import { chipNumber } from './topbarRules';
+import { SPAR, settleSparring, startSparring } from './sim/bonds';
+import { CALLINGS, PERKS, recall } from './sim/legacy';
+import { roomsStrip } from './castle';
 import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
-import { openShop } from './shopView';
+import { openStall } from './stallView';
+import { closeFinished } from './screens';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
@@ -17,20 +24,30 @@ import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
+import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
-import { UNITS } from './sim/units';
+import { ALL_HEROES, UNITS } from './sim/units';
+import { levelOfKind } from './sim/levels';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
-import { drawAchievements } from './achievementsView';
-import { drawCodex, ENTRIES_CLAIM, stopCodex } from './codexView';
-import { claimCodex, claimEntries, codexAnyWaiting, gotOf, totalOf } from './sim/codex';
+import { drawAchievements, toastLines } from './achievementsView';
+import { openDynasty, takeSeasonNews, SEASON_WORDS, seasonOf } from './sim/dynasty';
+import { agedLines, openEldersTable, openHouses, openSeasonCard, seasonChip } from './housesView';
+import { cadetsOf, HEIR_NOTE, regularsOf, takeHeirNote } from './sim/heirs';
+import { drawCodex, stopCodex } from './codexView';
+import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
-import { resetTipsButton, tips } from './tips';
+import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
-import { Tavern } from './tavern';
+import { PaintedTavern } from './paintedTavern';
+import { hesterNews } from './render/tavernSpots';
+import { openUpgrades } from './rankUpList';
+import { upgradeReady } from './sim/upgradesReady';
+import { openRankUp } from './rankUpView';
+import { tellAwakened } from './awakenView';
 import { SummoningHall } from './hall';
 import { revealUnseen } from './summonTarot';
 import { Library } from './library';
@@ -38,6 +55,26 @@ import { CampScene } from './camp';
 import { readyKinds } from './sim/rankUp';
 import type { ComebackGo } from './sim/comeback';
 import { announceArmy } from './armyShown';
+import { starsOf } from './sim/questStars';
+import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
+import { questById } from './sim/questData';
+import { drawQuestLog, type LogTab } from './questLog';
+import type { Destination } from './sim/questGoto';
+import { beginChain, bindChain, offeredChain, readyToBind, summonerWaiting } from './sim/eidolonChains';
+import { hornHeld } from './sim/warHorn';
+import { revealCard } from './sim/sceneReveal';
+import { showEndCard } from './revealCard';
+import { chainById, type ChainDef } from './sim/eidolonChainData';
+import { openPactGallery } from './eidolonChainView';
+import { playBinding } from './eidolonBinding';
+import { heartHeld, noteSavedHeart, withHeart } from './sim/vaelkharHeart';
+import type { Scene } from './sim/sceneKit';
+import { closeGiverCard, openGiverCard } from './questCard';
+import { showWhenPainted } from './paintReady';
+import { warmPortraits } from './render/sheets';
+import { councilLine, councilPlate, openNemesisBoard } from './nemesisView';
+import { councilTurn } from './sim/council';
+import { musterOpen, warchiefOf } from './sim/muster';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -47,7 +84,11 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
+const reducedMotion = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
 export interface HomeHooks {
+  /** DEPTH-BUILD: the home screen has opened (the camp or the castle): a bond scene now due plays then. */
+  onOpened?: () => void;
   /** Whether a run is saved and not over. */
   hasRun(): boolean;
   /** The saved run's stage and gold, if there is one going: with the army it fights (none for a daily, tower or older run) and a line naming it. */
@@ -71,8 +112,20 @@ export interface HomeHooks {
   onScene?(): void;
   /** Play a cinematic again (the codex's Scenes list). */
   onWatchScene?(id: string): void;
-  /** A build was raised (the castle's cinematic): the building, or `chapel`. */
+  /** A build was raised (the page puts up its popup): the building, or `chapel`. */
   onBuilt?(site: BuildSite): void;
+  /** The top bar was drawn (EIDOLONS: the War Horn's chip beside the stones follows the save). */
+  onTopBar?(): void;
+  /** Begin or carry on a quest battle (batch 2 of the quests: the log's Fight, a giver's card, the Done tab's Replay). */
+  onQuestBattle?(battle: string, auto?: number): void;
+  /** The quest battle saved part-way, if one is (its Fight reads Continue). */
+  questSaved?(): string | null;
+  /** The Nemesis War: call the Warchief's Muster, or carry on the one saved (the board's gilded button). */
+  onMuster?(): void;
+  /** A Muster is saved part-way. */
+  musterSaved?(): boolean;
+  /** EIDOLON-CHAINS: play a chain's story (its giver's prologue) over the home screen; resolves when it ends. */
+  onStory?(scene: Scene): Promise<unknown>;
 }
 
 type Tab = 'recruit' | 'heroes' | 'battle' | 'castle' | 'spells';
@@ -117,7 +170,7 @@ export class Home {
   private tabBtns = new Map<Tab, HTMLButtonElement>();
   private camp: CampScene;
   private stopSheet: (() => void) | null = null;
-  private tavern: Tavern;
+  private tavern: PaintedTavern;
   private castle: CastleScene;
   private hall: SummoningHall;
   private library = new Library(() => this.show('castle'));
@@ -125,6 +178,13 @@ export class Home {
   private castleShut = el('div', 'ctShut');
   private cardOpen = false;
   private lastViewedHero?: string;
+  // (MENU-GLITCH: the pages ride one strip; `shown` is the page the strip rests on, `slide` the move under way)
+  private track = el('div', 'hmTrack');
+  private shown: Tab = 'battle';
+  private slide: { to: Tab; from: Tab; anim: Animation | null } | null = null;
+  private slideToken = 0;
+  private snapNext = true;
+  private primed = false;
 
   constructor(
     private meta: Meta,
@@ -132,15 +192,41 @@ export class Home {
   ) {
     // (the Battle page is the war camp: tapping a hero opens their sheet, the war table opens the party)
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
-    this.tavern = new Tavern((kind) => this.openSheet(kind), () => this.openRoster());
+    // (QUESTS: Gwen behind the bar opens her card, the board opens the log's Board tab, the Quests button its Active tab)
+    this.tavern = new PaintedTavern((kind) => this.openSheet(kind), () => this.openRoster(), {
+      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
+      onBoard: () => this.openQuests('board'),
+      onQuests: () => this.openQuests('active'),
+      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
+    }, {
+      // (TAVERN-RANKUP: the Upgrades button's quick list, and a hero's gold chevron straight to their Rank up card)
+      // (TALENT-ARROWS: a talent row's Spend, and a chevron that marks only talent points, open that hero's talent tree)
+      onUpgrades: () => openUpgrades(this.meta, ALL_HEROES, () => this.refresh(), (kind) => this.openSheet(kind), (kind) => this.openSheet(kind, false, 'talents')),
+      onRise: (kind) =>
+        !upgradeReady(this.meta, kind) ? this.openSheet(kind, false, 'talents') : openRankUp(this.meta, kind, (t) => {
+          if (t.what === 'awaken') tellAwakened(kind, t.n);
+          this.refresh();
+        }),
+    }, {
+      // (CLIFF-ROAM: Hester's corner in the hearth hall opens her stall, as the stall on the cliff did, SHOP-BOOKS-GEAR)
+      onStall: () => openStall(this.meta, () => this.refresh()),
+    }, {
+      // (Dynasties, phase 6: the Elders' table, its regulars, the day's story and ride, and a cadet visiting)
+      onElders: () => void openEldersTable(this.meta, todayKey(), () => this.refresh()),
+      shown: (m) => regularsOf(m).length > 0 || cadetsOf(m).length > 0,
+    });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
       onSummon: (n) => this.summon(n),
-      onShop: () => openShop(this.meta, () => this.refresh()),
+      // (the Chest shop button stays as a shortcut: it opens Hester's Stall on its Chests tab, SHOP-BOOKS-GEAR)
+      onShop: () => openStall(this.meta, () => this.refresh(), 'chests'),
       onCollection: () => {
         this.hall.stop();
         this.hooks.onRecruit();
       },
+      // (EIDOLON-CHAINS: the Summoner's plaque and the Pact Gallery)
+      onChain: () => void this.summonerTap(),
+      onGallery: () => this.openGallery(),
     });
     this.castle = new CastleScene(
       (id) =>
@@ -154,7 +240,7 @@ export class Home {
               ? this.show('battle')
               : this.openBuilding(id),
       (id) => {
-        const ok = id === 'chapel' ? startChapel(this.meta, Date.now()) : startBuild(this.meta, id, Date.now());
+        const ok = startSite(this.meta, id, Date.now());
         if (!ok) return false;
         saveMeta(this.meta);
         this.refresh();
@@ -163,12 +249,17 @@ export class Home {
     );
     const pages = $('hmPages');
     const bar = $('hmTabs');
+    pages.append(this.track);
     for (const t of TABS) {
-      const page = el('section', `hmPage hm-${t.id}`);
-      pages.append(page);
+      const page = el('section', `hmPage hm-${t.id}${t.id === this.shown ? ' on' : ''}`);
+      this.track.append(page);
       this.pages.set(t.id, page);
       const b = el('button', `hmTab${t.id === 'battle' ? ' hero' : ''}`);
       b.append(icon(ICONS[t.id]), el('span', '', t.label), el('i', 'badge'));
+      // (QUESTS: the Heroes tab's gold "!" while a quest waits at the tavern to be taken or handed in)
+      if (t.id === 'heroes') b.append(el('i', 'qbadge', '!'));
+      // (CLIFF-ROAM: Hester's coin on the Heroes tab, the way to the tavern, while her stock is new or a trader visits)
+      if (t.id === 'heroes') b.append(el('i', 'sbadge'));
       b.addEventListener('click', () => this.show(t.id));
       bar.append(b);
       this.tabBtns.set(t.id, b);
@@ -200,7 +291,7 @@ export class Home {
       this.hooks.onBuilt?.(raised);
       this.refresh();
       // (an open card redraws with the new level)
-      if (this.cardOpen && this.cardFor) this.cardFor === 'chapel' ? this.openChapel() : this.openBuilding(this.cardFor);
+      if (this.cardOpen && this.cardFor) this.cardFor === 'chapel' && !chapelBuilt(this.meta) ? this.openChapel() : this.openBuilding(this.cardFor);
       return;
     }
     const left = clockText(worksLeft(m, Date.now()));
@@ -218,15 +309,52 @@ export class Home {
   /** Open the home screen; `note` is a line shown on the Battle page (the last run's end). */
   open(note = this.note): void {
     this.note = note;
+    // (CLOSE-SCREENS: back to a place: any flow screen still open (a result card, a recap, a summary) is closed, not left under it)
+    closeFinished();
+    // (Dynasties, phase 5: the seasons open with the save's heroes, every owned kind has its line, and a season ended since is settled;
+    // a new season, and a stage reached at its turn, are told once)
+    this.openSeasons();
+    // (coming back to the home screen it is simply there, on the Battle page: nothing slides)
+    if ($('home').hidden) this.snapNext = true;
     $('home').hidden = false;
+    this.handToken++;
+    $('home').classList.remove('handoff', 'handoffQuiet');
     this.closeSub();
     this.closeSheet();
     this.show('battle');
+    this.primeScenes();
     tips.offer('home', $('hmBattle'));
     // (a run has just ended: the crowns are there to spend)
     if (note) tips.offer('crowns', $('hmTabs'));
+    // (the Nemesis War: the Dark Council takes its turn on the day's first visit, phase 2)
+    if (this.meta.war && councilTurn(this.meta, 'visit', todayKey())) saveMeta(this.meta);
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
     void revealUnseen(this.meta).then(() => this.refresh());
+    this.hooks.onOpened?.();
+  }
+
+  /** Dynasties: open the seasons (and the lines of heroes joined since), settle a season that has turned, and tell it. */
+  private openSeasons(): void {
+    const m = this.meta;
+    const before = JSON.stringify(m.dynasty ?? null);
+    const aged = openDynasty(m, todayKey());
+    const news = takeSeasonNews(m, todayKey());
+    if (JSON.stringify(m.dynasty ?? null) !== before) saveMeta(m);
+    // (phase 6: a save whose Hall had mentors before the heirs is told once that they may name one)
+    const note = takeHeirNote(m);
+    if (note) saveMeta(m);
+    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged), ...(note ? [HEIR_NOTE] : [])]);
+  }
+
+  /** The Houses (Dynasties): the family tree, on a line when one is given. */
+  openHouses(kind?: string): void {
+    openHouses(this.meta, todayKey(), kind);
+  }
+
+  /** The Dark Council's board (the Nemesis War): its Hunt opens an army, its Muster calls the page's. */
+  openCouncil(tab?: 'council' | 'news' | 'fallen' | 'spoils'): void {
+    const m = this.meta;
+    openNemesisBoard(m, { hunt: (army) => this.openArmies(army), ...(this.hooks.onMuster ? { muster: () => this.go(this.hooks.onMuster!) } : {}), musterSaved: !!this.hooks.musterSaved?.(), day: todayKey(), save: () => (saveMeta(m), this.refresh()) }, tab);
   }
 
   get isOpen(): boolean {
@@ -250,7 +378,11 @@ export class Home {
   }
 
   private go(then: () => void): void {
+    closeGiverCard();
     $('home').hidden = true;
+    // (MENU-GLITCH: the home screen is closed, but stays drawn, still and untouchable, under the screen `then` puts up, until that
+    //  screen is gone again or covers it: see `handOff`)
+    $('home').classList.add('handoff');
     this.camp.stop();
     this.tavern.stop();
     this.castle.stop();
@@ -259,6 +391,63 @@ export class Home {
     this.note = '';
     this.hooks.onScene?.();
     then();
+    this.handOff();
+  }
+
+  /** MENU-GLITCH: a screen opened from the home screen and laid over it (the party, the Calamity's pick, the daily's card, the Last
+   *  Stand) fades in. With the home screen gone at once, the fade showed the last fight's board behind it (stale and out of place);
+   *  now the home screen stays drawn under it, so the new screen fades in over where the player was, and goes (in the same frame)
+   *  once nothing covers it any more: a fight's board shows, or the home screen opens again. A screen that is the board itself
+   *  (the deploy) covers nothing, so the home screen goes at once, as before. */
+  private handToken = 0;
+  private handOff(): void {
+    const home = $('home');
+    const token = ++this.handToken;
+    const drop = (): void => {
+      watch.disconnect();
+      if (token === this.handToken) home.classList.remove('handoff', 'handoffQuiet');
+    };
+    const watch = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        if (token !== this.handToken || !home.hidden || !this.coveredHome()) drop();
+      });
+    });
+    let queued = false;
+    if (!home.hidden || !this.coveredHome()) return drop();
+    // (from here it takes no taps: they belong to the screen over it)
+    home.classList.add('handoffQuiet');
+    watch.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+  }
+
+  /** Whether a screen is laid over the home screen at the middle of the view (one of the page's own layers above it). */
+  private coveredHome(): boolean {
+    const home = $('home');
+    let e = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+    while (e && e.parentElement && e.parentElement !== document.body) e = e.parentElement;
+    if (!e || e === home || e === document.body || e === document.documentElement) return false;
+    const z = Number.parseInt(getComputedStyle(e).zIndex, 10) || 0;
+    const zHome = Number.parseInt(getComputedStyle(home).zIndex, 10) || 0;
+    return z > zHome || (z === zHome && !!(home.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING));
+  }
+
+  private gating = false;
+  /** Into the Last Stand from its watchtower: the tower's moment (`standGate.ts`), then the Stand as before (OVERLOOK-STAND). */
+  private async enterStand(line: string): Promise<void> {
+    if (this.gating) return;
+    this.gating = true;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const done = await playStandGate(this.camp.root, this.camp.standFocus(), { line }, still);
+    this.gating = false;
+    this.go(this.hooks.onTower);
+    done();
+  }
+
+  /** Into the Calamity from the home screen, as its place on the Battle tab does (REVEAL: the end card's button). */
+  enterCalamity(): void {
+    this.go(this.hooks.onCalamity);
   }
 
   show(tab: Tab): void {
@@ -266,8 +455,146 @@ export class Home {
     this.tab = tab;
     // (the tab bar stays under the armies: a tap on it leaves them)
     if ($('hmSub').classList.contains('armies')) this.closeSub();
+    // (the Heroes tab opens the tavern itself: its All heroes button opens the list; QUESTS)
+    closeGiverCard();
     this.refresh();
-    if (tab === 'heroes') this.openRoster();
+  }
+
+  /** The quests' state changed (taken, handed in, pinned): save, and redraw the home screen. */
+  private questsChanged(): void {
+    saveMeta(this.meta);
+    this.refresh();
+  }
+
+  /** SECRET-HEROES: a hero quest handed in has brought its hero: its first reveal plays now (after the giver's last words). */
+  private revealJoined(): void {
+    void revealUnseen(this.meta).then(() => this.refresh());
+  }
+
+  /** The quest log, over the home screen (the hero sheet's place). */
+  openQuests(tab: LogTab = 'active'): void {
+    closeGiverCard();
+    this.closeSheet();
+    this.sheetUp();
+    this.tavern.stop();
+    this.tavern.paintOnce();
+    this.camp.stop();
+    const draw = (t: LogTab) =>
+      drawQuestLog($('hmSheetBox'), this.meta, t, {
+        changed: () => {
+          saveMeta(this.meta);
+          this.refresh();
+          // (SECRET-HEROES: a hero quest handed in from the log brings its hero in: its reveal plays over the log)
+          this.revealJoined();
+        },
+        close: () => this.closeSheet(),
+        fight: (id, auto) => this.questBattle(id, auto),
+        saved: () => this.hooks.questSaved?.() ?? null,
+        summoner: () => this.show('recruit'),
+        goTo: (dest) => this.questGoto(dest),
+        story: (id) => {
+          const scene = chainById(id)?.prologue;
+          if (scene) void this.hooks.onStory?.(scene);
+        },
+      });
+    draw(tab);
+  }
+
+  /** EIDOLON-CHAINS: the Summoner's plaque in the Sanctum. A chain on offer: its prologue plays and the chain begins (the log's Eidolons
+   *  tab opens on it). A chain ready: the binding plays, the Eidolon is bound and chosen, and the Pact Gallery opens on it. A chain going:
+   *  the log's Eidolons tab. */
+  private busyChain = false;
+  private async summonerTap(): Promise<void> {
+    if (this.busyChain) return;
+    const m = this.meta;
+    const offer = offeredChain(m);
+    const ready = readyToBind(m);
+    this.busyChain = true;
+    try {
+      if (offer) {
+        this.hall.stop();
+        if (offer.prologue) await this.hooks.onStory?.(offer.prologue);
+        if (beginChain(m, offer.id)) saveMeta(m);
+        this.refresh();
+        this.openQuests('eidolons');
+      } else if (ready) await this.bind(ready);
+      else this.openQuests('eidolons');
+    } finally {
+      this.busyChain = false;
+    }
+  }
+
+  /** The binding of a chain whose pieces are all in: the ceremony plays, the Eidolon is bound and chosen, its card, then the Pact Gallery. */
+  private async bind(ready: ChainDef): Promise<void> {
+    const m = this.meta;
+    this.hall.stop();
+    // (VAELKHAR-HEART: bound with his Heart held, he takes it back in the ceremony; a run still going is looked in first)
+    if (ready.eidolon === 'vaelkhar') noteSavedHeart(m, localStorage);
+    await playBinding(ready, false, ready.eidolon === 'vaelkhar' && heartHeld(m) && ready.binding ? withHeart(ready.binding) : undefined);
+    // (HORN-GIFT: the first binding hands over the War Horn, full; its end card says what it does and where it is)
+    const hadHorn = hornHeld(m);
+    if (bindChain(m, ready.id)) saveMeta(m);
+    this.refresh();
+    // (EIDOLON-CHAIN-2: a later binding, the horn already held, ends on the Eidolon's own "Bound" card)
+    const gift = !hadHorn && hornHeld(m) ? revealCard({ kind: 'horn' }, m) : revealCard({ kind: 'eidolon', id: ready.eidolon }, m);
+    if (gift) await showEndCard(gift);
+    this.openGallery();
+  }
+
+  /** EIDOLON-TRIAL: a trial won leads straight to the binding (the page calls this as the trial's beat after ends). False when no chain is
+   *  ready to bind. */
+  async bindAfterTrial(): Promise<boolean> {
+    const ready = readyToBind(this.meta);
+    if (!ready || this.busyChain) return false;
+    this.busyChain = true;
+    try {
+      await this.bind(ready);
+    } finally {
+      this.busyChain = false;
+    }
+    return true;
+  }
+
+  /** EIDOLON-CHAINS: the Pact Gallery (from the Sanctum, and the War Horn's card at the camp). */
+  openGallery(): void {
+    openPactGallery(this.meta, {
+      save: () => {
+        saveMeta(this.meta);
+        this.refresh();
+      },
+      watch: (id) => {
+        const c = chainById(id);
+        if (c) void playBinding(c, true);
+      },
+    });
+  }
+
+  /** "Take me there" (UI batch 1): the log closes and the screen the goal is done on opens: a battle, an army's party screen, a mode, or the Armies. */
+  private questGoto(dest: Destination): void {
+    this.closeSheet();
+    this.show('battle');
+    switch (dest.to) {
+      case 'battle':
+        return this.questBattle(dest.battle);
+      case 'army':
+        return this.go(() => this.hooks.onArmy(dest.army, dest.tier));
+      case 'armies':
+        return this.openArmies(dest.army);
+      case 'daily':
+        return this.go(this.hooks.onDaily);
+      case 'stand':
+        // (shut until the stars open it: the camp's own rule)
+        return towerOpen(this.meta) || this.hooks.slotInfo?.('tower') ? this.go(this.hooks.onTower) : this.openArmies();
+      case 'calamity':
+        return modeOpen(this.meta, 'calamity') || this.hooks.slotInfo?.('calamity') ? this.enterCalamity() : this.openArmies();
+    }
+  }
+
+  /** A quest battle's Fight (batch 2): the sheet and the card close, and the page takes it from there (the party, the story, the deploy). */
+  private questBattle(id: string, auto?: number): void {
+    if (!this.hooks.onQuestBattle) return;
+    this.closeSheet();
+    this.go(() => this.hooks.onQuestBattle!(id, auto));
   }
 
   /** Redraw the page that is showing (after crowns or unlocks change elsewhere). */
@@ -282,36 +609,76 @@ export class Home {
     }
     // top bar (the run's gold stays in the run: the owner's call)
     // (the crowns and stones chips keep their icons: only the number is written, and only when it changed, so the picture never blinks)
+    // (TOPBAR-FIT: from 100,000 up a count is shown short, "999k" or "1.2M", so the top row keeps the gear beside the trophy; the full
+    //  number is still the chip's title and spoken label)
     const chipCount = (id: string, pic: string, n: number): void => {
       const chip = $(id);
+      const shown = chipNumber(n);
+      chip.title = n.toLocaleString('en-GB');
+      chip.setAttribute('aria-label', `${chip.id === 'hmStones' ? 'Summoning stones' : 'Crowns'}: ${chip.title}`);
       const count = chip.querySelector('b');
-      if (!count) chip.replaceChildren(icon(pic), el('b', '', String(n)));
-      else if (count.textContent !== String(n)) count.textContent = String(n);
+      if (!count) chip.replaceChildren(icon(pic), el('b', '', shown));
+      else if (count.textContent !== shown) count.textContent = shown;
     };
+    // (QUESTS: the day's offers are drawn the first time a date is seen, and kept; old ones come down)
+    if (refreshOffers(m, todayKey())) saveMeta(m);
     chipCount('hmCrowns', ICONS.crowns, m.crowns);
     chipCount('hmStones', ICONS.stones, stonesOf(m));
+    this.hooks.onTopBar?.();
+    // (Dynasties: the season's chip in the top bar's second row; redrawn only when the season changes, so its icon never blinks)
+    if (m.dynasty) {
+      const key = String(seasonOf(m.dynasty, todayKey()).index);
+      const had = document.getElementById('hmSeason');
+      if (had?.dataset.key !== key) {
+        const chip = seasonChip(m, todayKey(), () => openSeasonCard(m, todayKey(), () => this.openHouses()));
+        if (chip) {
+          chip.dataset.key = key;
+          // (TOPBAR-FIT: in the second row, before the armies line, so the top row keeps the gear beside the trophy)
+          if (had) had.replaceWith(chip);
+          else $('hmBest').prepend(chip);
+        }
+      }
+    }
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
-    $('hmBest').textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
+    const best = $('hmBest');
+    const bestText = best.querySelector('.hbText') ?? best.appendChild(el('span', 'hbText'));
+    bestText.textContent = `Armies ${clearedCount(m)}/${ARMIES.length} · ★ ${stars}`;
     const fresh = m.achievements.length > seenCount() || unclaimed(m).length > 0;
     $('hmTrophy').classList.toggle('new', fresh);
     // tabs
     const order = TABS.map((t) => t.id);
     const cur = order.indexOf(this.tab);
-    order.forEach((id, i) => {
-      // (a page more than one tab away waits just off screen: a switch slides only the two pages it is between, never a hidden one across the view, which showed as an empty band)
-      this.pages.get(id)!.style.transform = `translateX(${Math.max(-1, Math.min(1, i - cur)) * 100}%)`;
-      this.pages.get(id)!.classList.toggle('on', id === this.tab);
-      this.tabBtns.get(id)!.classList.toggle('on', id === this.tab);
-    });
+    for (const id of order) this.tabBtns.get(id)!.classList.toggle('on', id === this.tab);
+    this.placePages(order, cur);
     const affordable = BUILDING_IDS.some((id) => {
       const c = nextCost(m.castle, id);
       return c !== null && m.crowns >= c;
     });
-    this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m) || fresh);
-    this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0);
+    // (UX-FIXES: a badge only for what the player can act on now; "fresh" building news no longer lights the tab, and the Battle tab has none)
+    void fresh;
+    this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m));
+    // (EIDOLON-CHAINS: the Summoner has a chain to tell, or one to bind)
+    this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0 || summonerWaiting(m));
     // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
-    this.tabBtns.get('heroes')!.classList.toggle('new', readyKinds(m, m.unlocked).length > 0);
-    this.tabBtns.get('battle')!.classList.toggle('new', !m.daily[String(todayKey())] || ARMIES.some((a) => armyIsNew(m, a.id)));
+    // (a number, not a bare dot: how many heroes have an upgrade ready)
+    const readyN = readyKinds(m, m.unlocked).length;
+    this.tabBtns.get('heroes')!.classList.toggle('new', readyN > 0);
+    const heroBadge = this.tabBtns.get('heroes')!.querySelector('i.badge');
+    if (heroBadge) heroBadge.textContent = readyN > 0 ? String(Math.min(readyN, 99)) : '';
+    this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));
+    // (CLIFF-ROAM: Hester's stall is in the tavern now: her coin on the tab while the day's stock is unseen, a trader's colour while one visits)
+    const shop = hesterNews(m, todayKey());
+    const heroesTab = this.tabBtns.get('heroes')!;
+    heroesTab.classList.toggle('shop', shop.fresh || !!shop.visitor);
+    heroesTab.classList.toggle('dealer', shop.visitor === 'dealer');
+    heroesTab.classList.toggle('caravan', shop.visitor === 'caravan');
+    heroesTab.setAttribute('aria-label', `Heroes${readyN ? `, ${readyN} ready to upgrade` : ''}${shop.visitor ? `; ${shop.visitor === 'dealer' ? 'the Gloaming Dealer' : 'Rustam Saffar’s caravan'} is at Hester’s stall in the tavern` : shop.fresh ? '; new stock at Hester’s stall in the tavern' : ''}`);
+    this.tabBtns.get('battle')!.classList.remove('new');
+    // (UX-FIXES: the Spells tab is dimmed with a lock until the Chapel is built; a tap says why on its page)
+    const spellsTab = this.tabBtns.get('spells')!;
+    const shut = !chapelBuilt(m);
+    spellsTab.classList.toggle('locked', shut);
+    spellsTab.setAttribute('aria-label', shut ? 'Spells (locked: build the Chapel in the Castle)' : 'Spells');
     this.drawBattle();
     this.tavern.update(m);
     this.drawCastle();
@@ -335,6 +702,73 @@ export class Home {
     else this.castle.stop();
   }
 
+  /** MENU-GLITCH: the pages are one strip. The page showing rests in place; on a tab change the page it goes to is laid beside it (on
+   *  the side its tab is), given two frames to be drawn, and then the strip carries the two across together as one move, so they can
+   *  never drift apart (an empty band or one page over the other, when each page slid on its own clock) and the new page never slides
+   *  in half drawn. A change made while one is sliding finishes that one first. Reduced motion, or the home screen just opened: no slide. */
+  private placePages(order: Tab[], cur: number): void {
+    const to = this.tab;
+    if (this.slide?.to === to) return;
+    if (this.slide) this.endSlide();
+    const from = this.shown;
+    const snap = this.snapNext || from === to || reducedMotion() || document.hidden;
+    this.snapNext = false;
+    if (snap) {
+      this.shown = to;
+      for (const id of order) {
+        const page = this.pages.get(id)!;
+        page.style.transform = '';
+        page.classList.toggle('on', id === to);
+      }
+      return;
+    }
+    const dir = cur > order.indexOf(from) ? 1 : -1;
+    const next = this.pages.get(to)!;
+    next.style.transform = `translateX(${dir * 100}%)`;
+    next.classList.add('on');
+    this.shown = to;
+    const token = ++this.slideToken;
+    this.slide = { from, to, anim: null };
+    this.track.classList.add('sliding');
+    // (two frames: the first draws the page beside the view, the second shows it drawn; then it moves)
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (token !== this.slideToken || !this.slide) return;
+        const anim = this.track.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-dir * 100}%)` }], { duration: 320, easing: 'cubic-bezier(0.3, 0.8, 0.3, 1)', fill: 'forwards' });
+        this.slide.anim = anim;
+        anim.onfinish = () => token === this.slideToken && this.endSlide();
+      }),
+    );
+  }
+
+  /** The slide is over (or cut short): the new page rests in place and the old one is put away, in the one step, so no frame shows between. */
+  private endSlide(): void {
+    const s = this.slide;
+    if (!s) return;
+    this.slide = null;
+    this.slideToken++;
+    s.anim?.cancel();
+    this.track.classList.remove('sliding');
+    const next = this.pages.get(s.to)!;
+    next.style.transform = '';
+    if (s.from !== s.to) this.pages.get(s.from)!.classList.remove('on');
+  }
+
+  /** MENU-GLITCH: once the home screen is up, each page's scene paints one still picture while the page is idle, so no page ever
+   *  slides in as an empty canvas the first time its tab is opened. */
+  private primeScenes(): void {
+    if (this.primed) return;
+    this.primed = true;
+    const idle = (f: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(() => f(), { timeout: 1500 }) : setTimeout(f, 300));
+    idle(() => {
+      if (this.tab !== 'heroes') this.tavern.paintOnce();
+      if (this.tab !== 'recruit') this.hall.paintOnce();
+      if (this.tab !== 'spells') this.library.paintOnce();
+      if (this.tab !== 'battle') this.camp.paintOnce();
+      warmPortraits();
+    });
+  }
+
   private drawBattle(): void {
     const m = this.meta;
     const page = this.pages.get('battle')!;
@@ -349,22 +783,26 @@ export class Home {
     const boss = UNITS[bossOf(next)];
     // (the bottom bar, below the camp's picture so it covers none of it: what the next fight is, then Party, Battle! and Continue)
     const fr = el('div', 'hmFront');
-    if (this.note) fr.append(el('div', 'hmNote', this.note));
+    // (the last run's end: a dispatch over the enemy's camp, clear of every place, that fades by itself and lets taps through. It once sat
+    //  on the bar's top edge, over the Daily and Last Stand plates, until the next mode was entered: OVERLOOK-STAND)
+    if (this.note) {
+      showDispatch(page, this.note);
+      this.note = '';
+    }
     // Keep the new-army announcement quiet on later launches; Continue still shows the wave.
     const progress = armyStars(m, next);
-    if (announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', info ? (army ? `Wave ${info.stage}/${army.waves.length} · ★ ${progress.got}/${progress.max}` : info.label) : `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
+    // (the owner's call: with a run going there is no wave line over the bar: Continue already says the wave; only a new army is named)
+    if (!info && announceArmy(next.id, storage())) fr.append(el('div', 'hmBanner', `Next army · Lv ${next.level} · ★ ${progress.got}/${progress.max}`));
     const go = el('div', 'hmGo');
     const has = this.hooks.hasRun();
-    const party2 = el('button', 'hmLink hmSide', 'Party');
-    party2.id = 'hmParty';
-    party2.addEventListener('click', () => this.go(this.hooks.onParty));
     const battle = el('button', 'hmBattle');
     battle.id = 'hmBattle';
     battle.append(el('span', '', 'Choose your battle'));
     battle.setAttribute('aria-label', ARMIES.some((a) => armyIsNew(m, a.id)) ? 'Battle! A new army marches. Choose an army' : 'Battle! Choose an army');
-    if (ARMIES.some((a) => armyIsNew(m, a.id))) battle.append(el('i', 'badge'));
+    // (UX-FIXES: the main Battle button carries no badge)
     battle.addEventListener('click', () => this.openArmies());
-    go.append(party2, battle);
+    // (the owner's call: no Party button here: the party screen comes up as a run starts, and the war table's plate opens it too)
+    go.append(battle);
     if (has) {
       const cont = el('button', 'hmLink hmSide hmCont');
       cont.append(el('b', '', 'Continue'), el('small', '', army && info ? `wave ${info.stage}/${army.waves.length}` : info ? info.label.replace(/^tower · /, '') : 'run'));
@@ -376,7 +814,20 @@ export class Home {
       }
       cont.addEventListener('click', () => this.go(this.hooks.onContinue));
       go.append(cont);
-    } else go.append(el('span', 'hmSpacer'));
+    }
+    // (QUESTS: the tracked quest's chip above the command bar; a tap opens the log)
+    const tracked = trackedQuest(m);
+    const tq = tracked && questById(tracked.id);
+    if (tracked && tq) {
+      const p = progressOf(tracked);
+      const chip = el('button', `hmQuest${isDone(tracked) ? ' done' : ''}`);
+      chip.id = 'hmQuest';
+      chip.append(el('b', '', tq.title), el('span', 'hmQStars', `★${starsOf(tq)}`), el('span', '', isDone(tracked) ? 'Done: hand it in' : `${p.now}/${p.need}`));
+      chip.setAttribute('aria-label', `Quest: ${tq.title}, ${isDone(tracked) ? 'done, hand it in at the tavern' : `${p.now} of ${p.need}`}. Open the quest log`);
+      chip.addEventListener('click', () => this.openQuests('active'));
+      fr.classList.add('withQuest');
+      fr.append(chip);
+    }
     fr.append(go);
     // (the camp's places, each tapped in the scene: a picture with its name plate under it)
     const place = (id: string, cls: string, title: string, line: string, label: string, onTap: () => void): HTMLButtonElement => {
@@ -389,11 +840,14 @@ export class Home {
       b.addEventListener('click', onTap);
       return b;
     };
-    // (the Daily board: a new daily wears the red dot; a cleared one a green check; the plate names the boss of the day and how it went)
+    // (the Daily: a small icon at the scene's right edge: a new daily wears the red dot, a cleared one a green check; the whole line "Today: Orc Warlord · not tried" is read aloud)
     const today = m.daily[String(todayKey())];
     const cleared = !!today?.cleared;
-    // (the plate names the boss of the day, with how it stands under it: the whole line "Today: Orc Warlord · not tried" is read aloud)
-    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily challenge', `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`, `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    const daily = place('hmDaily', cleared ? 'daily done' : 'daily', 'Daily', '', `Daily challenge. ${dailyLine(m, todayKey())}`, () => this.go(this.hooks.onDaily));
+    daily.title = `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`;
+    daily.querySelector('small')?.remove();
+    // (the painted hourglass, whole, in place of the small pixel one, which read as cut off; already served and cached for the relics)
+    daily.prepend(icon('relics/hourglass.webp', 'ico cpDailyIcon'));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
@@ -406,8 +860,10 @@ export class Home {
     // (with the furthest room of the retreat reached: the throne room is the Last Stand's badge, STAND-RETREAT)
     const room = m.standAct !== undefined ? ` · ${m.standAct >= 3 ? '♛ ' : ''}${ROOM_NAMES[ACT_HALLS[m.standAct]].short}` : '';
     const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}${room}` : 'not tried yet') : opensAt(MODE_NEED.tower));
-    const tower = place('hmTower', towerUp ? '' : 'locked', 'Last Stand', towerLine2, `Last Stand: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => this.go(this.hooks.onTower));
+    // (OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left, entered with its own moment)
+    const tower = place('hmTower', towerUp ? 'stand' : 'stand locked', 'Last Stand', towerLine2, `The Last Stand's watchtower: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => void this.enterStand(towerLine2));
     tower.disabled = !towerUp;
+    this.camp.towerSlot.classList.toggle('shut', !towerUp);
     // The distant Calamity citadel carries the saved map or the unlock requirement.
     const going = this.hooks.slotInfo?.('calamity');
     const calUp = modeOpen(m, 'calamity') || !!going;
@@ -415,10 +871,31 @@ export class Home {
     const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
     calamity.disabled = !calUp;
     this.camp.calamitySlot.classList.toggle('shut', !calUp);
+    // (the Nemesis War's Dark Council, over the Daily once the War is open: the warchief's face once there is one (the mightiest member's
+    // until then), the seats filled on its plate, and the Muster's mark when it is open)
+    const war = m.war;
+    this.camp.councilSlot.hidden = !war;
+    const top = war ? warchiefOf(war) ?? war.members.slice().sort((a, b) => b.might - a.might || a.id - b.id)[0] : undefined;
+    const muster = musterOpen(war);
+    const councilKey = war ? `${war.members.length}|${top?.id ?? 0}|${top?.might ?? 0}|${top?.rank ?? ''}|${muster}` : '';
+    if (war && this.camp.councilSlot.dataset.key !== councilKey) {
+      this.camp.councilSlot.dataset.key = councilKey;
+      const named = war.members.length;
+      const council = place('hmCouncil', 'council', 'Council', '', `${councilPlate(m)}${muster ? '. The Warchief’s Muster is open' : ''}. ${councilLine(m)}`, () => this.openCouncil());
+      council.querySelector('small')?.remove();
+      const medal = el('img', 'cpCouncilBadge');
+      medal.src = COUNCIL_BADGE;
+      medal.alt = '';
+      medal.setAttribute('aria-hidden', 'true');
+      council.prepend(medal);
+      if (named) council.append(el('i', `cpCount${muster ? ' muster' : ''}`, String(named)));
+      swapIn(this.camp.councilSlot, this.camp.councilSlot.querySelector('.cpPlace'), council);
+    }
     // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)
     swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
     swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
     swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
+    // (CLIFF-ROAM: Hester's Stall left the cliff for a corner of the tavern's hearth hall; its marks moved to the Heroes tab and the tavern)
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     // Earned chests rest by the overlook's supplies.
     const stash = el('div', 'csStash');
@@ -436,9 +913,14 @@ export class Home {
   private drawCastle(): void {
     const m = this.meta;
     const bar = this.castleBar;
+    const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
+    const up = modeOpen(m, 'castle');
+    // (MENU-GLITCH: the chips are built again only when what they show has changed, so a refresh replaces none of their icons)
+    const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexWaiting(m).length > 0}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
+    if (bar.dataset.key === key) return;
+    bar.dataset.key = key;
     bar.replaceChildren();
     const row = el('div', 'ctChips');
-    const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
     const ach = el('button', 'ctChip');
     ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got}/${ACHIEVEMENTS.length}`));
     if (m.achievements.length > seenCount() || unclaimed(m).length) ach.append(el('i', 'badge'));
@@ -446,7 +928,7 @@ export class Home {
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
     cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
-    if (codexAnyWaiting(m)) cdx.append(el('i', 'badge'));
+    if (codexWaiting(m).length > 0) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
     const levelBtn = el('button', 'ctChip');
     levelBtn.append(el('b', '', '🏰 Build Town'));
@@ -461,10 +943,11 @@ export class Home {
       saveMeta(m);
       this.refresh();
     });
-    row.append(ach, cdx, levelBtn, resetTipsButton());
+    // (UX-FIXES: Achievements is the trophy in the top bar and Reset tips is in Settings: one door each)
+    void ach;
+    row.append(cdx, levelBtn);
     bar.append(row, el('div', 'ctHelp', 'tap heroes to salute · tap any chamber to upgrade or inspect'));
     // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
-    const up = modeOpen(m, 'castle');
     this.castle.root.hidden = !up;
     this.castleShut.hidden = up;
     if (!up) {
@@ -498,11 +981,11 @@ export class Home {
   }
 
   /** A building's upgrade card (over the courtyard): what it gives now and next, its cost, and the Build button. */
-  private openBuilding(id: BuildingId): void {
+  private openBuilding(id: SiteId): void {
     this.closeSheet();
     this.cardOpen = true;
     this.castle.stop();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     const box = $('hmSheetBox');
     box.className = 'hsheet bcard';
     this.drawBuildingCard(box, id);
@@ -513,7 +996,7 @@ export class Home {
     this.closeSheet();
     this.cardOpen = true;
     this.castle.stop();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     const box = $('hmSheetBox');
     box.className = 'hsheet bcard';
     const m = this.meta;
@@ -536,8 +1019,10 @@ export class Home {
     box.append(row);
   }
 
-  private drawBuildingCard(box: HTMLElement, id: BuildingId): void {
+  private drawBuildingCard(box: HTMLElement, id: SiteId): void {
     const m = this.meta;
+    // (DEPTH-BUILD: the card also serves the levelled Chapel and the three room buildings, which give rooms, not numbers)
+    if (id === 'chapel' || isRoomBuilding(id)) return this.drawRoomsCard(box, id);
     const b = BUILDINGS[id];
     const level = m.castle[id];
     const top = maxLevel(id);
@@ -561,6 +1046,10 @@ export class Home {
       box.append(next);
     } else box.append(el('p', 'hint', 'Fully built.'));
     box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
+    const strip = roomsStrip(id, level);
+    if (strip) box.append(strip);
+    // (DEPTH-BUILD: the Barracks' Sparring Yard: two heroes spar while you are away, for bond points)
+    if (id === 'barracks' && roomOpen(m.castle, 'sparringYard')) box.append(this.sparringYard());
     this.cardFor = id;
     const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
     const done = el('button', '', 'Close');
@@ -568,6 +1057,105 @@ export class Home {
     const row = el('div', 'brow2');
     row.append(buy, done);
     box.append(row);
+  }
+
+  /** The card of a building that gives rooms rather than numbers (the Smithy, the Watchtower, the Hall of Legends, the Chapel past level 1). */
+  private drawRoomsCard(box: HTMLElement, id: SiteId): void {
+    const m = this.meta;
+    const level = siteLevel(m.castle, id, chapelBuilt(m));
+    const top = siteTop(id);
+    box.replaceChildren();
+    const head = el('div', 'bhead');
+    const pic = el('img', 'bpic');
+    pic.src = lookPicture(id, level);
+    pic.alt = '';
+    pic.draggable = false;
+    const title = el('div');
+    title.append(el('h3', '', siteName(id)), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`));
+    head.append(pic, title);
+    const blurb = id === 'chapel' ? 'A place to study the ruler\'s spells; its higher levels watch over the party when a heart burns.' : ROOM_BUILDINGS[id as keyof typeof ROOM_BUILDINGS].blurb;
+    box.append(head, el('p', 'hint', blurb));
+    const strip = roomsStrip(id, level);
+    if (strip) box.append(strip);
+    // (DEPTH-BUILD: the Hall of Legends' four plinths, one a calling: its mentor and perk, or what an empty one needs; Recall from here)
+    if (id === 'hall') box.append(this.hallPlinths(level));
+    const cost = siteNextCost(m.castle, id, chapelBuilt(m));
+    const next = roomsOf(id).filter((r) => r.level === level + 1);
+    if (cost !== null && next.length) box.append(el('p', 'hint', `Level ${level + 1} opens the ${next.map((r) => r.name).join(' and ')}.`));
+    this.cardFor = id;
+    const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startSite(m, id, Date.now()));
+    const done = el('button', '', 'Close');
+    done.addEventListener('click', () => this.closeSheet());
+    const row = el('div', 'brow2');
+    row.append(buy, done);
+    box.append(row);
+  }
+
+  private sparringYard(): HTMLElement {
+    const m = this.meta;
+    const wrap = el('div', 'hallPlinths');
+    const note = settleSparring(m, Date.now());
+    if (note) saveMeta(m);
+    const s = m.sparring;
+    if (s) {
+      const row = el('div', 'hallPlinth');
+      row.append(el('small', '', `${UNITS[s.a]?.name ?? s.a} and ${UNITS[s.b]?.name ?? s.b} are sparring: `), el('span', 'worksLeft', clockText(Math.max(0, s.doneAt - Date.now()))));
+      wrap.append(row);
+      return wrap;
+    }
+    const row = el('div', 'hallPlinth');
+    const pick = (): HTMLSelectElement => {
+      const sel = el('select');
+      for (const k of m.unlocked) {
+        const o = el('option', '', UNITS[k]?.name ?? k);
+        o.value = k;
+        sel.append(o);
+      }
+      return sel;
+    };
+    const a = pick();
+    const b = pick();
+    if (b.options.length > 1) b.selectedIndex = 1;
+    const go = el('button', '', `Spar · ${SPAR.POINTS} bond points · 8h`);
+    go.addEventListener('click', () => {
+      if (!startSparring(m, a.value, b.value, Date.now(), roomOpen(m.castle, 'sparringYard'))) return;
+      saveMeta(m);
+      this.openBuilding('barracks');
+    });
+    row.append(a, b, go);
+    wrap.append(el('small', '', 'Sparring Yard: two heroes spar while you are away.'), row);
+    return wrap;
+  }
+
+  private hallPlinths(level: number): HTMLElement {
+    const m = this.meta;
+    const wrap = el('div', 'hallPlinths');
+    for (const c of CALLINGS) {
+      const row = el('div', 'hallPlinth');
+      const who = m.mentors?.[c];
+      const shut = (m.recalled?.[c] ?? 0) > Date.now();
+      if (who) {
+        const perk = PERKS[who.kind];
+        const words = el('div', '');
+        words.append(el('b', '', `${UNITS[who.kind]?.name ?? who.kind} · Lv ${levelOfKind(m, who.kind)}`), el('small', '', `${c} mentor${perk ? ` · ${perk.name}` : ''}`));
+        const back = el('button', '', 'Recall');
+        back.addEventListener('click', () => {
+          if (back.dataset.sure !== '1') {
+            back.dataset.sure = '1';
+            back.textContent = 'Sure? Seat shut 7 days';
+            return;
+          }
+          if (recall(m, c, Date.now())) {
+            saveMeta(m);
+            this.refresh();
+            this.openBuilding('hall');
+          }
+        });
+        row.append(words, back);
+      } else row.append(el('small', '', shut ? `The ${c} seat is empty for a while yet (recalled).` : level > 0 ? `Retire ${c === 'arcane' ? 'an' : 'a'} ${c} hero of level 60 or more (from the hero's sheet).` : `Build the Hall to seat ${c === 'arcane' ? 'an' : 'a'} ${c} mentor.`));
+      wrap.append(row);
+    }
+    return wrap;
   }
 
   /** A card's Build button: the price and how long it takes; "Building · 4:05" while it goes up; greyed while the builders are busy
@@ -591,12 +1179,12 @@ export class Home {
       if (!start()) return;
       saveMeta(this.meta);
       this.refresh();
-      site === 'chapel' ? this.openChapel() : this.openBuilding(site);
+      site === 'chapel' && !chapelBuilt(this.meta) ? this.openChapel() : this.openBuilding(site);
     });
     wrap.append(buy);
     if (on === 'elsewhere') {
       const w = this.meta.works!;
-      const name = w.id === 'chapel' ? 'Chapel' : BUILDINGS[w.id].name;
+      const name = siteName(w.id);
       const hint = el('p', 'hint', `The builders are at the ${name}: `);
       hint.append(el('span', 'worksLeft', clockText(worksLeft(this.meta, Date.now()))), ' left.');
       wrap.append(hint);
@@ -607,7 +1195,7 @@ export class Home {
   /** The roster page: every hero, the locked ones with how to get them. */
   private openRoster(): void {
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     // (the tavern holds a picture under the roster, so its page never slides past empty as the tab changes)
     this.tavern.paintOnce();
@@ -618,7 +1206,7 @@ export class Home {
   private openSheet(kind: string, fromRoster = false, tab = 'overview'): void {
     if (this.meta.unlocked.includes(kind)) this.lastViewedHero = kind;
     this.closeSheet();
-    $('hmSheet').hidden = false;
+    this.sheetUp();
     this.tavern.stop();
     this.camp.stop();
     this.stopSheet = drawHeroSheet(
@@ -628,10 +1216,28 @@ export class Home {
     );
   }
 
+  /** Put the sheet layer up (its content is drawn straight after). MENU-GLITCH: a sheet coming up fresh shows once its pictures
+   *  are decoded; one already up and drawn again (a tab, the next hero) stays in view as it is redrawn. */
+  private sheetUp(): void {
+    const sheet = $('hmSheet');
+    const fresh = sheet.hidden && !this.sheetWasUp;
+    sheet.hidden = false;
+    if (fresh) queueMicrotask(() => void showWhenPainted(sheet));
+  }
+  /** Whether the sheet was up a moment ago (a redraw closes it and puts it up again in the one step). */
+  private sheetWasUp = false;
+
   private closeSheet(): void {
     this.stopSheet?.();
     this.stopSheet = null;
+    // (a redraw shuts the sheet and puts it straight back: remembered until the page next draws, so it is not taken for a fresh one)
+    if (!$('hmSheet').hidden) {
+      this.sheetWasUp = true;
+      queueMicrotask(() => (this.sheetWasUp = false));
+    }
     $('hmSheet').hidden = true;
+    // (CLOSE-SCREENS: the sheet left is emptied, not kept under the page; each opening draws it afresh)
+    $('hmSheetBox').replaceChildren();
     this.cardOpen = false;
     this.cardFor = null;
     if (this.isOpen && this.tab === 'heroes') this.tavern.start();
@@ -685,11 +1291,11 @@ export class Home {
     this.openSub('Achievements', draw);
   }
 
-  /** The codex page; a Claim takes a milestone's crowns and stone (or the new entries' stones), saves, and draws the page again. */
+  /** The codex page; a Claim takes a milestone's crowns and stone, saves, and draws the page again. */
   openCodex(): void {
     const draw = (b: HTMLElement) =>
       drawCodex(b, this.meta, (id) => {
-        if (!(id === ENTRIES_CLAIM ? claimEntries(this.meta) : claimCodex(this.meta, id))) return;
+        if (!(claimCodex(this.meta, id))) return;
         saveMeta(this.meta);
         play('coinClaim');
         const keep = b.scrollTop;
@@ -713,6 +1319,8 @@ export class Home {
     const body = $('hmSubBody');
     body.replaceChildren();
     draw(body);
+    // (MENU-GLITCH: the page shows once its pictures (the armies' lands, say) are decoded, not dark and then filled in)
+    void showWhenPainted($('hmSub'));
     // (looking at the achievements clears the badge)
     if (achievements)
       try {
@@ -726,6 +1334,23 @@ export class Home {
   private closeSub(): void {
     stopCodex();
     $('hmSub').hidden = true;
+    // (CLOSE-SCREENS: the armies, codex or achievements page left is emptied (a codex entry's sheet with it))
+    $('hmSubBody').replaceChildren();
+    $('hmSub').querySelector('.cxOverlay')?.remove();
     this.hooks.onScene?.();
   }
 }
+
+/** OVERLOOK-STAND: a run's last word on the overlook, over the enemy's camp below the heading (clear of the watchtower, the Calamity, the
+ *  stall, the party and the plates). It never takes a tap, and fades by itself; a new one replaces the one showing. */
+function showDispatch(page: HTMLElement, text: string): void {
+  page.querySelector(':scope > .hmDispatch')?.remove();
+  const d = el('div', 'hmNote hmDispatch', text);
+  d.setAttribute('role', 'status');
+  const gone = () => d.remove();
+  d.addEventListener('animationend', gone);
+  // (the fade's end, or a few seconds when animations do not run)
+  setTimeout(gone, 8000);
+  page.append(d);
+}
+

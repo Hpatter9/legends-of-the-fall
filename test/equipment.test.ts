@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { statMults } from '../src/sim/statPower';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
@@ -11,7 +12,8 @@ import {
   grantSampleEquipment, hasAbility, itemName, itemStats, rollEquipment, salvageItem, spareEquipment, unequipItem, wearerOf, wornIn, type EquipStats, type NewEquipment,
 } from '../src/sim/equipment';
 import { firedCount } from '../src/sim/equipFx';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { BASE_SCORE, LEGEND_LIST, OLD_BASES } from '../src/sim/equipBases';
 import { readyBattle } from './helpers';
 
 const sword = (rarity: 1 | 2 | 3 | 4 | 5 = 1, level = 1): NewEquipment => ({ base: 'ironSword', rarity, level });
@@ -92,7 +94,7 @@ test('equip, swap, unequip and salvage follow the rules', () => {
   assert.notEqual(a.id, b.id);
   assert.deepEqual(spareEquipment(m).map((x) => x.id), [a.id, b.id]);
   assert.ok(equipItem(m, 'knight', a.id));
-  assert.equal(wornIn(m, 'knight', 'weapon')?.id, a.id);
+  assert.equal(wornIn(m, 'knight', 'main')?.id, a.id);
   assert.equal(wearerOf(m, a.id), 'knight');
   assert.deepEqual(spareEquipment(m).map((x) => x.id), [b.id]);
   // (one item is never on two heroes: a worn one is not spare)
@@ -101,7 +103,7 @@ test('equip, swap, unequip and salvage follow the rules', () => {
   assert.equal(equipItem(m, 'gunslinger', b.id), false, 'a hero not unlocked cannot wear it');
   // (a swap returns the old piece)
   assert.ok(equipItem(m, 'knight', b.id));
-  assert.equal(wornIn(m, 'knight', 'weapon')?.id, b.id);
+  assert.equal(wornIn(m, 'knight', 'main')?.id, b.id);
   assert.deepEqual(spareEquipment(m).map((x) => x.id), [a.id]);
   // (a worn piece can't be salvaged; a spare one pays crowns)
   assert.equal(salvageItem(m, b.id), 0);
@@ -110,8 +112,8 @@ test('equip, swap, unequip and salvage follow the rules', () => {
   assert.equal(m.crowns, SALVAGE_CROWNS[1]);
   assert.equal(m.equipment!.length, 1);
   assert.equal(salvageItem(m, a.id), 0);
-  assert.ok(unequipItem(m, 'knight', 'weapon'));
-  assert.equal(unequipItem(m, 'knight', 'weapon'), false);
+  assert.ok(unequipItem(m, 'knight', 'main'));
+  assert.equal(unequipItem(m, 'knight', 'main'), false);
   assert.equal(spareEquipment(m).length, 1);
   // (ids are never reused, even after a salvage)
   assert.ok(grantEquipment(m, sword(1)).id > b.id);
@@ -125,9 +127,9 @@ test('a slot holds one piece, by the base\'s slot', () => {
   const ar = grantEquipment(m, { base: 'chainMail', rarity: 2, level: 1 });
   equipItem(m, 'knight', w.id);
   equipItem(m, 'knight', ar.id);
-  assert.equal(wornIn(m, 'knight', 'weapon')?.id, w.id);
-  assert.equal(wornIn(m, 'knight', 'armour')?.id, ar.id);
-  assert.equal(wornIn(m, 'knight', 'trinket'), undefined);
+  assert.equal(wornIn(m, 'knight', 'main')?.id, w.id);
+  assert.equal(wornIn(m, 'knight', 'torso')?.id, ar.id);
+  assert.equal(wornIn(m, 'knight', 'acc'), undefined);
   const total = equipStats(m, 'knight')!;
   assert.ok(total.atk > 0 && total.hp > 0 && total.def > 0);
   assert.equal(equipStats(m, 'samurai'), undefined);
@@ -155,12 +157,12 @@ test('equipment survives a save, and an old save loads with none', () => {
   // (nonsense is dropped: unknown bases, an item on two heroes, the wrong slot)
   const bad = JSON.parse(JSON.stringify(m));
   bad.equipment.push({ id: 77, base: 'nope', rarity: 3, level: 2 }, { id: 78, base: 'ironSword', rarity: 9, level: 999 });
-  bad.equipped = { knight: { weapon: bad.equipment[1].id, armour: 78 }, samurai: { weapon: bad.equipment[1].id }, ghost: { weapon: 78 } };
+  bad.equipped = { knight: { main: bad.equipment[1].id, torso: 78 }, samurai: { main: bad.equipment[1].id }, ghost: { main: 78 } };
   const fixed = loadMeta(8, { getItem: () => JSON.stringify(bad) });
   assert.ok(!fixed.equipment!.some((x) => x.id === 77));
   const clamped = fixed.equipment!.find((x) => x.id === 78)!;
   assert.deepEqual([clamped.rarity, clamped.level], [5, MAX_ITEM_LEVEL]);
-  assert.deepEqual(fixed.equipped, { knight: { weapon: bad.equipment[1].id } });
+  assert.deepEqual(fixed.equipped, { knight: { main: bad.equipment[1].id } });
 });
 
 test('a sword raises the damage dealt, armour cuts the damage taken', () => {
@@ -184,7 +186,8 @@ test('faster blows, crits and longer reach change the fight', () => {
   assert.ok(swings(stats({ atkSpeed: 0.5 })) > swings());
   const b = startBattle(3);
   place(b, 'archer', 3, D - 1, 1, { equip: stats({ range: 2 }) });
-  place(b, 'archer', 4, D - 1, 2);
+  // (another kind beside it: one of each hero on the field, ONE-OF-EACH)
+  place(b, 'ranger', 4, D - 1, 2);
   fight(b);
   const [x, y] = [b.units.find((u) => u.tag === 1)!, b.units.find((u) => u.tag === 2)!];
   assert.equal(x.eq!.range, 2);
@@ -195,22 +198,34 @@ test('faster blows, crits and longer reach change the fight', () => {
 
 // ---- the catalogue ----
 
-test('60 item types, twenty a slot, each with its own look, stats, ability and Mythic name', () => {
-  assert.equal(EQUIP_LIST.length, 60);
-  for (const slot of EQUIP_SLOTS) assert.equal(EQUIP_LIST.filter((b) => b.slot === slot).length, 20, slot);
-  assert.equal(new Set(EQUIP_BASE_IDS).size, 60);
-  for (const pick of [(b: (typeof EQUIP_LIST)[number]) => b.name, (b: (typeof EQUIP_LIST)[number]) => b.mythic, (b: (typeof EQUIP_LIST)[number]) => b.icon, (b: (typeof EQUIP_LIST)[number]) => b.ability.id, (b: (typeof EQUIP_LIST)[number]) => b.ability.name, (b: (typeof EQUIP_LIST)[number]) => JSON.stringify(b.main)])
-    assert.equal(new Set(EQUIP_LIST.map(pick)).size, 60);
+test('SEVEN-SLOT GEAR: 189 item types (the 21 legends come apart), 27 a slot, each with its own name, stats, ability and Mythic name', () => {
+  assert.equal(EQUIP_LIST.length, 189);
+  for (const slot of EQUIP_SLOTS) assert.equal(EQUIP_LIST.filter((b) => b.slot === slot).length, 27, slot);
+  assert.equal(new Set(EQUIP_BASE_IDS).size, 189);
+  for (const pick of [(b: (typeof EQUIP_LIST)[number]) => b.name, (b: (typeof EQUIP_LIST)[number]) => b.mythic, (b: (typeof EQUIP_LIST)[number]) => b.icon, (b: (typeof EQUIP_LIST)[number]) => b.ability.id, (b: (typeof EQUIP_LIST)[number]) => b.ability.name])
+    assert.equal(new Set(EQUIP_LIST.map(pick)).size, 189);
+  // (each has its own profile within its slot)
+  for (const slot of EQUIP_SLOTS) {
+    const list = EQUIP_LIST.filter((b) => b.slot === slot);
+    assert.equal(new Set(list.map((b) => JSON.stringify(b.main))).size, list.length, slot);
+  }
+  const todo = readFileSync('docs/notes/gear-art-todo.md', 'utf8');
+  // (batch 7: the owner's paintings are in the gear atlas, `src/art/gear/index.json`; a painted base is off the art list)
+  const painted = new Set(Object.keys(JSON.parse(readFileSync('src/art/gear/index.json', 'utf8')).items));
+  for (const l of LEGEND_LIST) assert.ok(painted.has(l.id), `${l.id} the legend is painted`);
   for (const b of EQUIP_LIST) {
-    assert.ok(existsSync(`src/art/equip/${b.icon}.png`), `icon ${b.icon}`);
+    // (the 60 from before keep their icons; a new base still to be painted is on the art list, and one painted is not)
+    if (OLD_BASES.has(b.id)) assert.ok(existsSync(`src/art/equip/${b.icon}.png`), `icon ${b.icon}`);
+    else assert.ok(painted.has(b.id) !== todo.includes(`\`${b.id}\``), `${b.id} is painted or on the art list, not both`);
     assert.ok(Object.keys(b.main).length >= 1);
     assert.equal(ABILITIES[b.ability.id], b.ability);
     assert.ok(describeAbility(b.ability, 1).length > 10);
+    assert.ok(BASE_SCORE[b.id], `${b.id} gives an ability score`);
   }
-  // (every calling has weapons, and the main stats vary: speed, crit, range, dodge, charge, regen and resist all appear)
-  for (const c of ['melee', 'shooter', 'caster']) assert.ok(EQUIP_LIST.some((b) => b.slot === 'weapon' && b.calling === c), c);
+  // (every calling has weapons, and the main stats vary: speed, crit, range, dodge, charge, regen, resist and jump all appear)
+  for (const c of ['melee', 'shooter', 'caster']) assert.ok(EQUIP_LIST.some((b) => b.slot === 'main' && b.calling === c), c);
   const used = new Set(EQUIP_LIST.flatMap((b) => Object.keys(b.main)));
-  for (const k of ['hp', 'atk', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist']) assert.ok(used.has(k), k);
+  for (const k of ['hp', 'atk', 'def', 'atkSpeed', 'moveSpeed', 'crit', 'range', 'dodge', 'charge', 'regen', 'resist', 'jump']) assert.ok(used.has(k), k);
   // (a Mythic piece has its own name)
   assert.equal(itemName({ base: 'stormStaff', rarity: 5, level: 1 }), "Thunderlord's Reach");
   assert.equal(itemName({ base: 'stormStaff', rarity: 4, level: 1 }), 'Stormcaller Staff');
@@ -361,5 +376,7 @@ test('worn equipment reaches the boost a run places its hero with', () => {
   const b = startBattle(2);
   place(b, 'knight', 3, D - 1, 1, boostOf({ id: 1, kind: 'knight', grade: 1 }, 0, 1, eq));
   const k = b.units[b.units.length - 1];
-  assert.ok(Math.abs(k.power! - (1 + eq!.atk)) < 1e-9);
+  // (and the piece's score, STATS batch 2: a Legendary sword is STR +2, which the Knight's blows carry)
+  assert.deepEqual(eq!.scores, { str: 2 });
+  assert.ok(Math.abs(k.power! - (1 + eq!.atk) * statMults('knight', { level: 1, equip: eq }).blow) < 1e-9);
 });

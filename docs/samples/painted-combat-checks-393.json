@@ -1,0 +1,36 @@
+{
+  "width": 393,
+  "checks": [
+    "painted panel active",
+    "no horizontal page overflow",
+    "at least 350px between command bar and panel",
+    "skill buttons retain 44px height",
+    "mana, orbs and Auto do not overlap",
+    "skill sheet holds combat",
+    "ultimate tab opens",
+    "closing sheet releases combat",
+    "Auto toggles",
+    "tactic changes",
+    "spell arms",
+    "spell cancels",
+    "reduced motion stops pearl animation",
+    "ten-hero fixture uses compact two-column layout",
+    "compact layout stays inside viewport",
+    "combat-panel loads",
+    "combat-orb loads",
+    "combat-portrait loads",
+    "combat-skill loads",
+    "combat-heart loads",
+    "painted assets cached for offline use",
+    "game reloads offline under service worker",
+    "painted frame available offline"
+  ],
+  "geometry": {
+    "overflow": false,
+    "room": 518.203125,
+    "chips": 15,
+    "touch": true,
+    "overlap": false,
+    "skin": true
+  }
+}

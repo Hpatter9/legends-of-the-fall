@@ -10,10 +10,11 @@ import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef,
 import { eliteKits } from './eliteFoes';
 import { calBossKits } from './calamityBosses';
 import { Rng } from './rng';
-import { ALL_HEROES } from './units';
+import { ALL_HEROES, TWENTY_HEROES } from './units';
 import { fxBlow, fxStruck, fxTick, hidden } from './equipFx';
+import { powerCast, powerDodged, powerStrike, powersOn } from './setPowers';
 import { heroUltimates } from './ultimates';
-import { runRiders } from './tierSkills';
+import { comingKits, joinedKits } from './kits/coming';
 import { traitsOf } from './traits';
 import { triggerDuoComboOnUlt } from './duoCombos';
 import { addRes, castHero, CHARGE_TO_POOL, heroKitOf, poolOf, poolOnDealt, poolOnTaken, resMax, tickPool, ultOnDamage } from './heroKits';
@@ -23,9 +24,14 @@ import { divineSmite, seismicSlam } from './kits/tanks';
 import { BOMBARD_THROWS } from './kits/ranged';
 import { blastShoves } from './kits/mages';
 import { monsterKits } from './kits/monsters';
+import { foeKits } from './foeKits';
 import { displace } from './toolkit';
 import { skillRiders } from './ailmentSources';
-import { AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
+import { DEX_SAVES, rollSave, saveAware } from './saves';
+import { ailBoss, ailCtx, AILMENT_SWITCH, blowRiders, charmFor, chillFor, cleanse, freezeFor, harmed, healThrough, isSilenced, setDot, stunFor, tickAilments } from './ailments';
+import { renewable, timeSummon, TIMER } from './carry';
+import { relicCharge, relicEcho, relicSkill, relicStruck, relicTaken } from './relicFight';
+import { TRIALS, type TrialSummon } from './eidolonTrials';
 
 /** A skill fires at this much charge. */
 export const CHARGE_MAX = 100;
@@ -134,7 +140,24 @@ export interface Passive {
   halo?: number;
   /** Once a fight, when it would fall it rises with this share of its health. */
   undying?: number;
+  /** A foe's way of moving and picking its prey (FOE-STYLES, `foeStyles.ts`): round to a hero's side, back off from a blade, after the
+   *  shooters, by its hurt friends, or a charge whose first blow lands hard. Read for foes only, and not in the Last Stand (its foes march). */
+  move?: FoeMove;
+  /** Its blows deal this much more for each other ally of its own beside the target (up to three): a pack's bite. */
+  gang?: number;
+  /** Its blows leave a bleed, a burn or poison of `share` of its attack every half second for `ms` (FOE-STYLES: grows with the foe, where
+   *  `ignite`'s is fixed). */
+  rider?: { dot: 'bleed' | 'burn' | 'poison'; share: number; ms: number };
 }
+
+/** A foe's way of moving (FOE-STYLES): see `Passive.move`. */
+export type FoeMove = 'flank' | 'kite' | 'hunt' | 'guard' | 'charge';
+
+/** The skill of a foe that has none, only a passive and a way of moving (FOE-STYLES: the common foes; the stronger ones have a skill): it never
+ *  charges and never fires, and the page shows no charge bar or skill line for it. */
+export const NO_SKILL: Skill = { name: '', text: '', need: Infinity, dealt: 0, taken: 0, perSec: 0, castMs: 0, anim: 'attack', cast: () => false };
+/** Whether a kit has a skill to fire (every kit but a common foe's). */
+export const hasSkill = (k: Kit | undefined): boolean => !!k && Number.isFinite(k.skill.need);
 
 export interface Skill {
   /** What the player reads. */
@@ -181,7 +204,7 @@ export const foesOf = (b: Battle, me: Unit) => b.units.filter((x) => x.alive && 
 const near3x3 = (a: At, c: At) => Math.abs(a.u - c.u) <= 1 && Math.abs(a.v - c.v) <= 1;
 
 /** A talent modifier a hero has (`talents.ts` lists the keys; 0 for a hero without it, and for every foe). */
-export const tal = (u: Unit, key: string): number => u.eq?.tal?.[key] ?? 0;
+export const tal = (u: Unit, key: string): number => (u.eq?.tal?.[key] ?? 0) + (u.castMods?.[key] ?? 0);
 /** A skill's duration in ms, lengthened by the caster's `dur` talent. */
 const durOf = (me: Unit, ms: number): number => Math.round(ms * (1 + tal(me, 'dur')));
 /** A skill's reach in tiles, lengthened by the caster's `reach` talent. */
@@ -412,9 +435,11 @@ function chainLightning(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const CHARM_MS = 3500;
 function charm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
-  const f = foes
+  const cands = foes
     .filter((x) => apart(me, x) <= reachOf(me, 5) && !(x.charmUntil !== undefined && x.charmUntil > b.t) && foes.some((o) => o !== x))
-    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id);
+  // (STATS batch 6: among the foes she values the same, the one with the weakest WIS save)
+  const f = saveAware(b, me, cands, atkOf, 'charm')[0];
   if (!f) return false;
   charmFor(b, f, durOf(me, CHARM_MS));
   f.taunt = undefined;
@@ -593,9 +618,10 @@ export const sureFooted = (u: Unit): boolean => !!kitOf(u)?.passive.sure;
 const GAZE_REACH = 5;
 const PETRIFY_MS = 3000;
 function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
-  const f = foesOf(b, me)
+  // (STATS batch 6: among the foes it values the same, the one with the weakest CON save)
+  const f = saveAware(b, me, foesOf(b, me)
     .filter((x) => apart(me, x) <= reachOf(me, GAZE_REACH) && sightClear(b.board, me, x))
-    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)[0];
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id), atkOf, 'stun')[0];
   if (!f) return false;
   me.facing = wayTo(me, f);
   hurt(b, me, f, net(atkOf(me), f), false, false, out, 'skill');
@@ -610,9 +636,10 @@ function gaze(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 const DREAM_MS = 4000;
 function nineTails(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const foes = foesOf(b, me);
-  const prey = foes
+  // (STATS batch 6: among the foes she values the same, the weakest WIS saves first)
+  const prey = saveAware(b, me, foes
     .filter((x) => apart(me, x) <= 7 && !(x.charmUntil !== undefined && x.charmUntil > b.t))
-    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id)
+    .sort((x, y) => atkOf(y) - atkOf(x) || x.id - y.id), atkOf, 'charm')
     .slice(0, Math.min(3, foes.length - 1));
   if (!prey.length) return false;
   for (const f of prey) {
@@ -668,7 +695,7 @@ function rallyCry(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 
 /** Samurai Commander: a war banner raises the attack of the allies within three tiles (itself too) for a while. */
 export const BANNER_MULT = 1.25;
-const BANNER_MS = 6000;
+const BANNER_MS = 4000; // (TACTICS: 6 s to 4 s, level-1 parity: the banner reaches a party standing together, docs/notes/tactics.md)
 function banner(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const near = b.units.filter((a) => a.alive && a.side === me.side && apart(me, a) <= reachOf(me, 3));
   if (!near.some((a) => a !== me)) return false;
@@ -733,6 +760,32 @@ function raiseDead(b: Battle, me: Unit): boolean {
     me.raised = (me.raised ?? 0) + 1;
   }
   return true;
+}
+
+/** EIDOLON-TRIAL: an Eidolon in its trial calls fighters of a kind to its side (`eidolonTrials.ts` `TrialSummon`): `n` a cast on the free
+ *  tiles nearest it (a fixed order), while fewer than `most` of them stand and until it has called `limit` in the fight. */
+function callPack(spec: TrialSummon): Skill['cast'] {
+  return (b, me) => {
+    const standing = b.units.filter((x) => x.alive && x.side === me.side && x.def === spec.kind && x.owner === me.id).length;
+    const room = Math.min(spec.n, spec.most - standing, spec.limit - (me.raised ?? 0));
+    if (room <= 0) return false;
+    const jump = defOf(me).jump;
+    const h = tileOf(b, me).h;
+    const spots: At[] = [];
+    for (let dv = -2; dv <= 2; dv++)
+      for (let du = -2; du <= 2; du++) {
+        const at = { u: me.u + du, v: me.v + dv };
+        const t = tileAt(b.board, at.u, at.v);
+        if (apart(me, at) >= 1 && t && standable(t) && !unitAt(b, at.u, at.v) && Math.abs(t.h - h) <= jump) spots.push(at);
+      }
+    if (!spots.length) return false;
+    spots.sort((x, y) => apart(me, x) - apart(me, y) || x.v - y.v || x.u - y.u);
+    for (const at of spots.slice(0, room)) {
+      addUnit(b, spec.kind, at.u, at.v, { hp: b.foeBoost?.hp, atk: b.foeBoost?.atk }).owner = me.id;
+      me.raised = (me.raised ?? 0) + 1;
+    }
+    return true;
+  };
 }
 
 /** Lich King's ultimate, Soul Nova: a ring of cold soul fire hurts every foe within four tiles and freezes it where it stands. */
@@ -800,10 +853,23 @@ function benediction(b: Battle, me: Unit, out: BattleEvent[]): boolean {
 /** Druid: a treant rises beside her (one at a time) and fights for her side. */
 const callTreant = (b: Battle, me: Unit) => callSummon(b, me, 'treant', tal(me, 'extra'));
 /** Beastmaster: wolves (two at a time) come at his call. */
-const callWolves = (b: Battle, me: Unit) => callSummon(b, me, 'wolf', 1 + tal(me, 'extra'));
-/** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already. */
-function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
-  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === kind).length > more) return false;
+const callWolves = (b: Battle, me: Unit) => {
+  if (!callSummon(b, me, 'wolf', 1 + tal(me, 'extra'))) return false;
+  // (Summon Beast at Level 5: a dire wolf answers beside the wolf, one at a time, `skillLevels.ts`)
+  if (tal(me, 'dire')) callSummon(b, me, 'direWolf', 0);
+  return true;
+};
+/** A fighter of `kind` rises on the free tile beside the caster that is nearest the nearest foe, unless more than `more` of its kind stand already.
+ *  A hero's summon lasts `ms` of fighting time (SUMMON-TIMERS, `carry.ts`: a minute, half that from an ultimate) and carries into the next
+ *  wave; with the summons at their cap, a call renews the one of the caster's nearest its end once it has a quarter of its time left. */
+function callSummon(b: Battle, me: Unit, kind: string, more: number, ms: number = TIMER.beast): boolean {
+  const time = me.side === 'hero' ? durOf(me, ms) : 0;
+  if (b.units.filter((x) => x.alive && x.side === me.side && x.def === kind).length > more) {
+    const old = time ? renewable(b, me, [kind]) : undefined;
+    if (!old) return false;
+    timeSummon(b, old, time);
+    return true;
+  }
   const foes = foesOf(b, me);
   if (!foes.length) return false;
   const near = sorted([...foes]).sort((x, y) => apart(me, x) - apart(me, y))[0];
@@ -821,6 +887,7 @@ function callSummon(b: Battle, me: Unit, kind: string, more: number): boolean {
   const t = addUnit(b, kind, to.u, to.v, { atk: me.power ?? 1, hp: me.maxHp / defOf(me).hp, grade: me.grade });
   t.owner = me.id;
   t.facing = wayTo(t, near);
+  if (time) timeSummon(b, t, time);
   return true;
 }
 
@@ -975,7 +1042,7 @@ function drag(b: Battle, f: Unit, to: At): boolean {
 }
 
 /** The ms a foe is slowed for, taken on to any slow it has already. */
-const slowFor = (b: Battle, f: Unit, ms: number): void => void chillFor(b, f, ms);
+const slowFor = (b: Battle, f: Unit, ms: number, by?: Unit): void => void chillFor(b, f, ms, false, false, by);
 
 /** Shambler: every foe within two tiles starts to rot, and the Shambler drinks part of what it costs them. */
 const ROT_MS = 4000;
@@ -1187,7 +1254,8 @@ function dragonBreath(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const ms = durOf(me, 3000);
   for (const f of best.sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id)) {
     out.push({ kind: 'shot', by: me.id, to: f.id, shot: 'fire', ms: 120 + apart(me, f) * 40 });
-    hurt(b, me, f, net(atkOf(me) * 1.4, f), true, false, out, 'skill');
+    // (STATS batch 6: a breath is a blast, halved on a DEX save)
+    hurt(b, me, f, Math.max(1, Math.round(net(atkOf(me) * 1.4, f) * (DEX_SAVES.breath ? blastSave(b, me, f, out) : 1))), true, false, out, 'skill');
     if (f.alive) setDot(b, f, { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(me) * 0.12)), every: 500, ms, by: me.id, next: b.t + 500, until: b.t + ms });
   }
   return true;
@@ -1231,9 +1299,16 @@ const SWEEP_DRINK = 0.25;
 function hellbladeSweep(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const near = foesOf(b, me).filter((f) => apart(me, f) <= reachOf(me, 2));
   if (!near.length) return false;
+  // (a foe under his Infernal Brand, skill 3, gives twice what it was dealt to the drink)
   const before = me.dealt ?? 0;
-  for (const f of near) hurt(b, me, f, net(atkOf(me) * 1.3, f), false, false, out, 'skill');
-  mendUnit(me, ((me.dealt ?? 0) - before) * SWEEP_DRINK, out);
+  let extra = 0;
+  for (const f of near) {
+    const was = me.dealt ?? 0;
+    const branded = f.kx?.brand !== undefined && f.kx.brand > b.t;
+    hurt(b, me, f, net(atkOf(me) * 1.3, f), false, false, out, 'skill');
+    if (branded) extra += (me.dealt ?? 0) - was;
+  }
+  mendUnit(me, ((me.dealt ?? 0) - before + extra) * SWEEP_DRINK, out);
   return true;
 }
 
@@ -1245,7 +1320,9 @@ function demonForm(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (!foesOf(b, me).some((f) => apart(me, f) <= 7)) return false;
   if (me.form === undefined) me.power = (me.power ?? 1) * FORM_MULT;
   // (its tuned strength lengthens the form and deepens the heal, as the other ultimates' stuns and heals scale: ULT-CHARGE)
-  me.form = { until: b.t + durOf(me, Math.round(FORM_MS * Math.sqrt(castPower()))) };
+  // (a hero's lasts 15s instead, and carries into the next wave: SUMMON-TIMERS, `carry.ts`)
+  const time = durOf(me, Math.round((me.side === 'hero' ? TIMER.demon : FORM_MS) * Math.sqrt(castPower())));
+  me.form = { until: b.t + time, ...(me.side === 'hero' ? { ms: time } : {}) };
   mendUnit(me, me.maxHp * FORM_HEAL * castPower(), out);
   out.push({ kind: 'frenzy', by: me.id, n: 3 });
   return true;
@@ -1355,7 +1432,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Grace', text: 'Allies within 2 tiles heal 1.5% of their health each second', aura: 0.015 },
   },
   druid: {
-    skill: { name: 'Conjure Treant', key: 'Call Treant', text: 'A treant rises beside her and fights for her (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
+    skill: { name: 'Conjure Treant', key: 'Call Treant', text: 'A treant rises beside her and fights for her for 60s of fighting, wave to wave (one at a time)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 800, anim: 'attack2', cast: callTreant },
     passive: { name: 'Thorn Skin', text: 'A third of the damage of a melee blow she takes is sent back', thorns: 0.33 },
   },
   barbarian: {
@@ -1364,7 +1441,7 @@ export const KITS: Record<string, Kit> = {
   },
   ranger: {
     skill: { name: 'Snare', key: 'Snare Trap', text: 'Lays two traps on the tiles foes will step on; the first to spring one is hurt and held for 2s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: snareTrap },
-    passive: { name: 'Long Shot', text: 'Arrows deal 35% more to foes 4 or more tiles away', far: 0.35 },
+    passive: { name: 'Long Shot', text: 'Arrows deal 15% more to foes 4 or more tiles away', far: 0.15 }, // (the joint rebalance: 35% to 15%, the Ranger trimmed by his kit at level 10, docs/notes/joint-rebalance.md)
   },
   warlock: {
     skill: { name: 'Eldritch Blast', key: 'Hex', text: 'Three beams of dark force at the three toughest foes in reach: each is hexed (burns for 5s, and he drinks 60% of it) and shoved a tile back', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 700, anim: 'attack2', cast: eldritchBlast },
@@ -1372,7 +1449,8 @@ export const KITS: Record<string, Kit> = {
   },
   illusionist: {
     skill: { name: 'Mirror Image', text: 'Slips away, leaving two decoys that draw the foes nearby for 3s', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 400, anim: 'attack2', cast: mirrorImage },
-    passive: { name: 'Sleight of Hand', text: 'Slips 25% of blows', dodge: 0.25 },
+    // (STATS batch 4, the owner's answer: 25% to 35%, so that once robes showed she is back in the roster's band; it is Armour Class now)
+    passive: { name: 'Sleight of Hand', text: 'Slips 35% of blows', dodge: 0.35 },
   },
   gunslinger: {
     skill: { name: 'Piercing Shot', key: 'Dead Eye', text: 'One slug through every foe in a line, for more than double', need: CHARGE_MAX, dealt: 14, taken: 4, perSec: 1.5, castMs: 500, anim: 'attack', cast: deadEye },
@@ -1405,7 +1483,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Catchy Tune', text: 'Every 3.5s the ally with the least skill charge near him gains 16', tune: { every: 3500, charge: 16 } },
   },
   beastmaster: {
-    skill: { name: 'Summon Beast', key: 'Call of the Wild', text: 'A wolf answers his call and fights for him (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
+    skill: { name: 'Summon Beast', key: 'Call of the Wild', text: 'A wolf answers his call and fights for him for 60s of fighting, wave to wave (two at most stand at once)', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: callWolves },
     passive: { name: 'Whip Crack', text: 'His blows slow the foe for 1.5s', slow: 1500 },
   },
   kraken: {
@@ -1414,19 +1492,22 @@ export const KITS: Record<string, Kit> = {
   },
   lancer: {
     skill: { name: 'Charge', key: 'Lance Charge', text: 'Charges up to 5 tiles at a foe for more than double, then rides faster for 3s', need: CHARGE_MAX, dealt: 6, taken: 4, perSec: 2, castMs: 500, anim: 'attack', cast: lanceCharge },
-    passive: { name: 'Couched Lance', text: 'Blows deal 40% more to shooters', prey: 1.4 },
+    // (STATS batch 4, the owner's answer: 1.4 to 1.1; in plate and sure of hand from level 1 he stood above the roster's band)
+    passive: { name: 'Couched Lance', text: 'Blows deal 10% more to shooters', prey: 1.1 },
   },
   reaper: {
     skill: { name: 'Reap', text: 'Cuts every foe within 3 tiles; a foe under 30% health takes nearly triple', need: CHARGE_MAX, dealt: 6, taken: 3, perSec: 2, castMs: 500, anim: 'attack2', cast: reap },
-    passive: { name: 'Wraith Form', text: 'Slips 20% of blows', dodge: 0.2 },
+    passive: { name: 'Wraith Form', text: 'Slips 12% of blows', dodge: 0.12 }, // (the joint rebalance: 20% to 12%, the Reaper trimmed by his kit at level 10, docs/notes/joint-rebalance.md)
   },
   timeWitch: {
     skill: { name: 'Slow', key: 'Temporal Surge', text: 'A slowing field round her for 4s: foes within 4 tiles are slowed, and her friends within 3 hastened', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: temporalSurge },
-    passive: { name: 'Stutter', text: 'Slips 20% of blows', dodge: 0.2 },
+    // (STATS batch 4, the owner's answer: 20% to 30%, so that once robes showed she is back in the roster's band; it is Armour Class now)
+    passive: { name: 'Stutter', text: 'Slips 30% of blows', dodge: 0.3 },
   },
   arcBlade: {
     skill: { name: 'Thunder Step', key: 'Voltage Blink', text: 'Blinks beside the thickest knot of foes and discharges: the 3x3 is hurt and held for 1s', need: CHARGE_MAX, dealt: 8, taken: 4, perSec: 2, castMs: 450, anim: 'attack2', cast: voltageBlink },
-    passive: { name: 'Static Discharge', text: '25% of blows arc to a second foe nearby', arc: 0.25 },
+    // (STATS batch 4, the owner's answer: 25% to 10%; with his DEX 17 aim from level 1 he stood above the roster's band)
+    passive: { name: 'Static Discharge', text: '10% of blows arc to a second foe nearby', arc: 0.1 },
   },
   dreadPirate: {
     skill: { name: 'Cannonade', key: 'Broadside', text: 'A ghost ship\'s broadside falls on a 3x3 of tiles', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 700, anim: 'attack2', cast: broadside },
@@ -1434,7 +1515,7 @@ export const KITS: Record<string, Kit> = {
   },
   siegeBot: {
     skill: { name: 'Bombard', key: 'Shell Barrage', text: 'A heavy shell bursts on the thickest crowd within 7 tiles: the foe at its heart is thrown 2 tiles and the rest shoved a tile out', need: CHARGE_MAX, dealt: 9, taken: 4, perSec: 2, castMs: 800, anim: 'attack2', cast: shellBarrage },
-    passive: { name: 'Reinforced Chassis', text: 'Blows from the front lose a fifth, and it cannot be knocked back', block: 0.2, steady: true },
+    passive: { name: 'Reinforced Chassis', text: 'Blows from the front lose 35%, and it cannot be knocked back', block: 0.35, steady: true }, // (the joint rebalance: a fifth to 35%, the Siege Bot lifted by its kit at level 10, docs/notes/joint-rebalance.md)
   },
   priestess: {
     skill: { name: 'Cure Wounds', key: 'Holy Light', text: 'A great light heals the worst hurt ally and cleanses it; allies near it are healed too', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 700, anim: 'attack2', cast: holyLight },
@@ -1455,7 +1536,7 @@ export const KITS: Record<string, Kit> = {
   },
   demonSwordsman: {
     skill: { name: 'Cleave', key: 'Hellblade Sweep', text: 'Cuts every foe within 2 tiles, and he drinks a third of what it deals', need: CHARGE_MAX, dealt: 7, taken: 5, perSec: 2, castMs: 550, anim: 'attack2', cast: hellbladeSweep },
-    ultimate: { name: 'Demon Form', text: 'For 7s he hits half as hard again, and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
+    ultimate: { name: 'Demon Form', text: 'For 15s he hits half as hard again (it carries into the next wave), and a fifth of his health comes back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 800, anim: 'attack2', cast: demonForm },
     passive: { name: 'Soul Pact', text: 'Heals for 8% of the damage his blows deal, and hits up to 25% harder as his health falls', leech: 0.08, rage: 0.25 },
   },
   tyrant: {
@@ -1490,7 +1571,9 @@ export const KITS: Record<string, Kit> = {
   },
   minotaur: {
     skill: { name: 'Gore Charge', text: 'Charges up to 4 tiles in a line at a foe, hits it for double, knocks it back and stuns it for 1.5s', need: CHARGE_MAX, dealt: 6, taken: 5, perSec: 2, castMs: 550, anim: 'attack', cast: goreCharge },
-    passive: { name: 'Trample', text: 'Blows deal a quarter more to a foe under half health', finish: { under: 0.5, mult: 1.25 } },
+    // (STATS batch 4, the owner's answer: a quarter to 15%; in plate and sure of hand he stood far above the roster's band at level 30. The
+    // maze minotaurs, foes, keep a quarter)
+    passive: { name: 'Trample', text: 'Blows deal 15% more to a foe under half health', finish: { under: 0.5, mult: 1.15 } },
   },
   satyr: {
     skill: { name: 'Pipes of Pan', text: 'Hastens the allies within 3 tiles, and him, for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 3, castMs: 500, anim: 'attack', cast: pipes },
@@ -1502,7 +1585,7 @@ export const KITS: Record<string, Kit> = {
     passive: { name: 'Scaled Hide', text: 'Takes a fifth less from shots', scales: 0.2 },
   },
   samuraiCommander: {
-    skill: { name: 'War Banner', text: 'Raises the attack of the allies within 3 tiles by a quarter for 6s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 600, anim: 'attack2', cast: banner },
+    skill: { name: 'War Banner', text: 'Raises the attack of the allies within 3 tiles by a quarter for 4s', need: CHARGE_MAX, dealt: 5, taken: 5, perSec: 2, castMs: 600, anim: 'attack2', cast: banner },
     ultimate: { name: 'Rally Cry', text: 'The war banner flies over every ally: attack up a quarter for 9s and a quarter of their health back', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 700, anim: 'attack2', cast: rallyCry },
     passive: { name: 'Stand Firm', text: 'Cannot be knocked back', steady: true },
   },
@@ -1518,14 +1601,6 @@ KITS.lichKing = {
   ultimate: { name: 'Soul Nova', text: 'A ring of cold soul fire hurts every hero within 4 tiles and freezes them for 1.8s', need: CHARGE_MAX, dealt: 0, taken: 0, perSec: 0, castMs: 900, anim: 'attack2', cast: soulNova },
   passive: { name: 'Soul Drain', text: 'Heals for a sixth of the damage his blows deal', leech: 0.16 },
 };
-KITS.boneVolley = { skill: KITS.archer.skill, passive: { name: 'Dead Aim', text: 'Arrows ignore 2 defence', pierce: 2 } };
-for (const id of ['packBlack', 'packRed', 'packWhite']) KITS[id] = KITS.werewolf;
-for (const id of ['groveSatyr1', 'groveSatyr2', 'groveSatyr3']) KITS[id] = KITS.satyr;
-for (const id of ['mazeMino1', 'mazeMino2', 'mazeMino3']) KITS[id] = KITS.minotaur;
-for (const id of ['mazeGorgon1', 'mazeGorgon2', 'mazeGorgon3']) KITS[id] = { skill: KITS.gorgon.skill, passive: KITS.gorgon.passive };
-for (const id of ['clanOgre', 'clanBrute']) KITS[id] = KITS.hornedOgre;
-KITS.hellImp = { skill: KITS.boarKing.skill, passive: KITS.devilLeader.passive };
-KITS.hellDemon = { skill: KITS.devilLeader.skill, passive: KITS.devilLeader.passive };
 KITS.orcChieftain = { skill: KITS.samuraiCommander.skill, passive: { name: 'Thick Hide', text: 'Blows from the front lose a fifth', block: 0.2 } };
 KITS.boneCaptain = { skill: KITS.samuraiCommander.skill, passive: { name: 'Bone Plate', text: 'Blows from the front lose a quarter', block: 0.25 } };
 KITS.alphaWolf = KITS.werewolf;
@@ -1533,12 +1608,9 @@ KITS.gorgonQueen = { skill: KITS.gorgon.skill, ultimate: KITS.gorgon.ultimate, p
 KITS.minotaurChampion = { skill: KITS.minotaur.skill, passive: { name: 'Unyielding', text: 'Blows from the front lose a fifth, and he cannot be knocked back', block: 0.2, steady: true } };
 
 // The Yokai Night Parade (`foes.ts`): fox spirits trick and curse, crows dive and possess, the tengu monk blows heroes about.
-KITS.yokaiFox = { skill: KITS.illusionist.skill, passive: { name: 'Fox Guile', text: 'Slips 20% of blows', dodge: 0.2 } };
 // (the old Hex, as before the Warlock's became Eldritch Blast in RPG-SPELLS batch 6)
 KITS.yokaiWitch = { skill: { name: 'Hex', text: 'Curses the three toughest foes in reach: they burn for 5s and he drinks 60% of it', need: CHARGE_MAX, dealt: 7, taken: 4, perSec: 2, castMs: 700, anim: 'attack2', cast: hex }, passive: { name: 'Black Curse', text: 'Heals for a sixth of the damage its blows deal', leech: 0.16 } };
-KITS.yokaiCrow = { skill: KITS.karasu.skill, passive: KITS.karasu.passive };
 KITS.yokaiSeer = { skill: { ...KITS.kitsune.skill, name: 'Possession', text: 'The strongest hero nearby is possessed and fights its own side for 3.5s' }, passive: { name: 'Evil Eye', text: 'Blows deal 30% more to shooters', prey: 1.3 } };
-KITS.yokaiMonk = { skill: KITS.yamabushi.skill, passive: KITS.yamabushi.passive };
 KITS.nineTails = {
   skill: { name: 'Foxfire', text: 'A fireball blasts a 3x3 of heroes and leaves it burning', need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: meteor },
   ultimate: KITS.kitsune.ultimate,
@@ -1568,6 +1640,10 @@ KITS.forgeTitan = {
   passive: { name: 'Adamant Plate', text: 'Blows from the front lose a third, it cannot be knocked back and it mends 1% of its health a second', block: 0.33, steady: true, regen: 0.01 },
 };
 
+// (FOE-STYLES: the common foes' and the armies' kinds' own kits, each its own way of fighting, `foeKits.ts`; the yokai witch and seer, the iron
+// golem above are its starting points)
+Object.assign(KITS, foeKits(KITS));
+
 // Every other hero's ultimate (`ultimates.ts`), unlocked at `ULT_LEVEL`; the first eight's are retuned there.
 const OWN_ULTIMATES = new Map<string, Skill>(Object.entries(KITS).filter(([, k]) => k.ultimate).map(([kind, k]) => [kind, k.ultimate!]));
 const GATED = new Map<Skill, Skill>();
@@ -1578,6 +1654,12 @@ for (const [kind, ult] of Object.entries(heroUltimates((kind) => KITS[kind].ulti
 
 // The named elites of the tower (`elites.ts`) borrow the foes' skills and heroes' skills too.
 Object.assign(KITS, eliteKits(KITS), calBossKits(KITS));
+// (EIDOLON-TRIAL: each Eidolon in its trial: its summoning and its passive, `eidolonTrials.ts`. Its summoning wears the Beastmaster's
+// Call of the Wild (its key: its painting, look and sound), under its own name)
+for (const t of TRIALS) {
+  const k = t.kit.skill;
+  KITS[t.boss.id] = { skill: { name: k.name, key: 'Call of the Wild', text: k.text, need: CHARGE_MAX, dealt: 4, taken: 4, perSec: 3, castMs: 800, anim: 'attack', cast: callPack(k) }, passive: t.kit.passive };
+}
 // (a foe that shares one of the first eight's kits, such as the elites Sethra and Kuro, keeps the ultimate as it was: only the hero's copy waits for its level)
 for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ultimate) && OWN_ULTIMATES.get(name) !== GATED.get(k.ultimate)) KITS[name] = { ...k, ultimate: GATED.get(k.ultimate) };
 
@@ -1587,6 +1669,8 @@ for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ulti
   const heroOwned = new Set<Skill>();
   for (const kind of ALL_HEROES) {
     const k = KITS[kind];
+    // (the heroes that joined from the twenty are not in KITS yet: see the end of this file)
+    if (!k) continue;
     heroOwned.add(k.skill);
     if (k.ultimate) heroOwned.add(k.ultimate);
   }
@@ -1610,7 +1694,20 @@ for (const [name, k] of Object.entries(KITS)) if (k.ultimate && GATED.has(k.ulti
 // own copies: `kits/monsters.ts`)
 monsterKits(KITS, (me) => tal(me, 'extra'));
 
-export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def];
+// (the heroes that joined from the twenty, docs/notes/heroes-join.md: their kits are built from their rows (`kits/coming.ts`), which import this
+// module, so they are built on first use and `KITS` holds them as getters: nothing here reads the rows while this module is still loading)
+for (const kind of TWENTY_HEROES) {
+  if (!ALL_HEROES.includes(kind)) continue;
+  Object.defineProperty(KITS, kind, {
+    get: () => joinedKits()[kind],
+    set: (v: Kit) => void Object.defineProperty(KITS, kind, { value: v, writable: true, enumerable: true, configurable: true }),
+    enumerable: true,
+    configurable: true,
+  });
+}
+
+// (a hero still to join the roster has its kit in `kits/vampires.ts` until it does, docs/notes/twenty-heroes.md)
+export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def] ?? comingKits()[u.def];
 /** The key of a fighter's kit skill, and of its kit's ultimate (the page looks a cast's look and sound up by these). */
 export const keyOfKit = (u: Unit): string => { const k = kitOf(u); return k ? keyOf(k.skill) : ''; };
 export const ultKeyOf = (u: Unit): string | undefined => { const k = kitOf(u)?.ultimate; return k ? keyOf(k) : undefined; };
@@ -1635,21 +1732,30 @@ export function tryCast(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   return began(b, me, k.skill, out);
 }
 
-/** Cast a skill with the caster's `pow` talent (and `more`, an ultimate's) lifting its attack while it runs: the blows, the volleys and meteors, the healing and what is called up all take it. */
-export function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[]): boolean {
+/** Cast a skill with the caster's `pow` talent (and `more`, an ultimate's) lifting its attack while it runs: the blows, the volleys and meteors, the healing and what is called up all take it.
+ *  `stat` is the skill's own ability's share over the hero's blows (STATS batch 2, `statShare` in `heroKits.ts`): it lifts the attack the skill
+ *  carries, but not `castPower`, so what a skill lasts is not stretched by a score. */
+export function powered(b: Battle, me: Unit, s: Skill, more: number, out: BattleEvent[], stat = 1): boolean {
   const from = out.length;
   const k = 1 + tal(me, 'pow') + more;
   let ok: boolean;
-  if (k === 1) ok = s.cast(b, me, out);
+  // (what the skill lays is saved against the caster's DC, STATS batch 5)
+  const outer = ailCtx.by;
+  ailCtx.by = me;
+  if (k === 1 && stat === 1) ok = s.cast(b, me, out);
   else {
-    me.power = (me.power ?? 1) * k;
+    me.power = (me.power ?? 1) * k * stat;
     castK = k;
     ok = s.cast(b, me, out);
     castK = 1;
-    me.power = (me.power ?? 1) / k;
+    me.power = (me.power ?? 1) / (k * stat);
   }
+  ailCtx.by = outer;
   // (what the skill leaves on the foes it struck: a burn, a shock, a bleed... `ailmentSources.ts`, STATUS-FX)
   if (ok) skillRiders(b, me, keyOf(s), out, from);
+  // (RELICS-3: the Wyrm's Breath Vial freezes what the fight's first skill struck)
+  if (ok && me.side === 'hero' && b.relics?.hooks?.firstFreeze && !b.relicFroze) relicSkill(b, me, out, from);
+  if (ok && powersOn(b)) powerCast(b, me, s, out, from);
   return ok;
 }
 /** How strong the skill being cast is, as a multiple (1 unless a talent or an ultimate's `power` lifts it): an ultimate's engines scale what is not an attack (how long a stun or guard lasts, how much is shielded) by it. */
@@ -1675,13 +1781,11 @@ export function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[], slot: '
   me.busyUntil = b.t + s.castMs;
   out.push({ kind: 'skill', by: me.id, name: keyOf(s), ms: s.castMs });
   if (slot === 'ult') triggerDuoComboOnUlt(b, me, out);
-  // (a hero merged up adds its tier skill's riders to the ordinary skill; the ultimate is the same at every grade)
-  if (me.grade && s === kitOf(me)?.skill)
-    runRiders(b, me, out, (ms, share) => b.pending.push({ at: b.t + ms, kind: 'echo', by: me.id, to: me.id, dmg: share, heavy: false }));
   return true;
 }
 
-/** A tier skill's echo: the hero's skill goes off again at `share` of its strength (nothing happens if it has nothing to hit, or the hero has fallen). It is not a cast: no charge, no busy time, and no riders of its own. */
+/** A tier skill's echo: the hero's skill goes off again at `share` of its strength (nothing happens if it has nothing to hit, or the hero has fallen). It is not a cast: no charge, no busy time, and no riders of its own.
+ *  (The tier skills went with the skills overhaul's batch 3, so nothing schedules an echo now; it stays for a battle saved with one pending.) */
 export function echoSkill(b: Battle, me: Unit, share: number, out: BattleEvent[]): void {
   const s = kitOf(me)?.skill;
   if (!s || !me.alive) return;
@@ -1738,20 +1842,17 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   const blow = src === 'blow';
   const kit = kitOf(to);
   const team = to.side === 'hero' ? b.traits : undefined;
-  const dodge = (kit?.passive.dodge ?? 0) + (team?.dodge ?? 0) + (to.eq?.dodge ?? 0);
-  if (blow && dodge && roll(b) < dodge) {
-    out.push({ kind: 'dodge', to: to.id });
-    if (b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) {
-      spawnSpiritWisp(b, to, out);
-    }
-    if (poolOf(to)) poolOnTaken(b, to, true);
-    else gain(to, (kit?.skill.taken ?? 0) * 0.5);
-    return null;
-  }
+  // (the old dodge shares are Armour Class now, STATS batch 4: a blow that misses never comes here, `blow.ts` and `settle`)
   // (what the hero kits leave on fighters: a parry, a guise, smoke, marks, a standard, a song, a vow...; null when the blow is turned aside)
   const kitted = kitStrike(b, by, to, dmg, src, splash, out);
   if (kitted === null) return null;
   dmg = kitted;
+  // (SEVEN-SLOT GEAR: the full sets' and legends' powers, in a fight where a hero wears one: `setPowers.ts`)
+  if (powersOn(b)) {
+    const p = powerStrike(b, by, to, dmg, src, splash, out);
+    if (p === null) return null;
+    dmg = p;
+  }
   const block = (kit?.passive.block ?? 0) + tal(to, 'block');
   if (blow && block && (wayTo(by, to) + 2) % 4 === to.facing) {
     const turned = dmg * block;
@@ -1771,6 +1872,8 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
   if (to.guardUntil !== undefined && to.guardUntil > b.t) dmg *= GUARD_SHARE;
   if (to.brittleUntil !== undefined && to.brittleUntil > b.t) dmg *= BRITTLE_MULT;
   if (team?.guard) dmg *= 1 - team.guard;
+  // (RELICS-2: the Scorched Scale against a boss, the Warden's Medal on the last one standing)
+  if (team && b.relics?.hooks) dmg *= relicTaken(b, to, by);
   if (src === 'dot' && to.eq?.resist) dmg *= 1 - to.eq.resist;
   if (src !== 'dot') {
     if (blow && !splash) {
@@ -1781,11 +1884,13 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
     else gain(to, kit?.skill.taken ?? 0);
   }
   const left = Math.max(1, Math.round(dmg));
+  // (RELICS-3: the Rime Pearl slows the foe that struck a hero)
+  if (blow && to.side === 'hero' && by.side === 'foe' && b.relics?.hooks?.foeSlow) relicStruck(b, by);
   // (a talent's rider on a skill: what it hits is slowed or held)
   if (src === 'skill' && by.eq?.tal && by.side !== to.side) {
-    if (by.eq.tal.skillSlow) chillFor(b, to, by.eq.tal.skillSlow);
+    if (by.eq.tal.skillSlow) chillFor(b, to, by.eq.tal.skillSlow, false, false, by);
     if (by.eq.tal.skillStun) {
-      stunFor(b, to, by.eq.tal.skillStun);
+      stunFor(b, to, by.eq.tal.skillStun, false, 'stun', by);
     }
   }
   fxStruck(b, by, to, left, blow && !splash, out);
@@ -1797,9 +1902,29 @@ export function onStrike(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blow'
 
 /** A blow's own odds at swing time: a crit, with its extra damage. */
 export function rollCrit(b: Battle, me: Unit): number {
+  const { chance, mult } = critOf(b, me);
+  return chance && roll(b) < chance ? mult : 1;
+}
+
+/** A fighter's crit beside the d20's (STATS batch 4): its kit's, its side's traits' and its gear's chance, and how big its crit is. */
+export function critOf(b: Battle, me: Unit): { chance: number; mult: number } {
   const c = kitOf(me)?.passive.crit;
-  const chance = (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0);
-  return chance && roll(b) < chance ? c?.mult ?? 1.5 : 1;
+  return { chance: (c?.chance ?? 0) + (me.side === 'hero' ? b.traits?.crit ?? 0 : 0) + (me.eq?.crit ?? 0), mult: c?.mult ?? 1.5 };
+}
+
+/** A blow that missed its target (STATS batch 4; the old dodge's book-keeping): the striker's pool or charge still gains as from a blow
+ *  (the swing is part of the fight's rhythm: without it every skill came round a fifth slower once blows could miss), the target's gains as
+ *  from a dodge, and a miss its dodge or cover turned calls up a yokai's spirit wisp. */
+export function onDodged(b: Battle, by: Unit, to: Unit, turned: boolean, out: BattleEvent[]): void {
+  out.push({ kind: 'dodge', to: to.id });
+  if (powersOn(b)) powerDodged(to);
+  if (by.alive) {
+    if (poolOf(by)) poolOnDealt(by);
+    else gain(by, kitOf(by)?.skill.dealt ?? 0);
+  }
+  if (turned && b.traits?.yokaiWisp && traitsOf(to.def).includes('yokai')) spawnSpiritWisp(b, to, out);
+  if (poolOf(to)) poolOnTaken(b, to, true);
+  else gain(to, (kitOf(to)?.skill.taken ?? 0) * 0.5);
 }
 
 /** After a blow has landed: a crit makes the foe bleed, and a flame blow sets it alight. */
@@ -1822,10 +1947,19 @@ export const rageOf = (u: Unit): number => {
   return r ? 1 + r * (1 - u.hp / u.maxHp) : 1;
 };
 export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
+/** How much more a pack's blow deals (FOE-STYLES' `gang`): a share for each other ally of the striker's beside the target, up to three. */
+export function gangOf(b: Battle, by: Unit, to: Unit): number {
+  const g = kitOf(by)?.passive.gang;
+  if (!g) return 1;
+  let n = 0;
+  for (const x of b.units) if (x.alive && x !== by && x.side === by.side && apart(x, to) === 1) n++;
+  return 1 + g * Math.min(3, n);
+}
 
 export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0, out: BattleEvent[] = []): void {
   const p = kitOf(by)?.passive;
-  const leech = (p?.leech ?? 0) + tal(by, 'leech');
+  // (the Vampire origin's leech is a team bonus: every hero's blows drink it, as the other traits' bonuses reach every hero)
+  const leech = (p?.leech ?? 0) + tal(by, 'leech') + (by.side === 'hero' ? (b.traits?.leech ?? 0) : 0);
   if (leech && by.alive) mendUnit(by, dmg * leech, out);
   fxBlow(b, by, to, crit, dmg, out);
   if (p?.through && dmg > 0) {
@@ -1840,8 +1974,10 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
       hurt(b, by, second, net(dmg * ARC_SHARE + defenceOf(second), second), false, true, out, 'skill');
     }
   }
+  // (RELICS-3: the Tempest Ring's tenth blow strikes a second foe nearby)
+  if (dmg > 0 && by.side === 'hero' && b.relics?.hooks?.echoEvery) relicEcho(b, by, to, dmg, out);
   if (!to.alive) return;
-  if (p?.slow) chillFor(b, to, p.slow);
+  if (p?.slow) chillFor(b, to, p.slow, false, false, by);
   // (the relic sets: a hero's blows burn the foe, its first blow chills it, its crits make it bleed)
   const set = by.side === 'hero' ? b.relics?.set : undefined;
   if (set?.chill && !to.chilled) {
@@ -1849,18 +1985,34 @@ export function afterBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg = 0,
     chillFor(b, to, set.chill, false, true, by);
   }
   const share = set && (crit ? set.bleed : set.burn);
-  const relicDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : undefined;
-  const dot = (crit ? p?.crit?.bleed : p?.ignite) ?? relicDot;
+  // (RELICS-3: Ember Brand's crits leave the foe burning)
+  const brand = crit && by.side === 'hero' ? b.relics?.hooks?.critBurn : undefined;
+  const relicDot: Dot | undefined = share ? { kind: crit ? 'bleed' : 'burn', dmg: Math.max(1, Math.round(atkOf(by) * share)), every: 500, ms: crit ? 3000 : 2000 } : brand ? { kind: 'burn', dmg: Math.max(1, Math.round(atkOf(by) * brand)), every: 500, ms: 3000 } : undefined;
+  const rider: Dot | undefined = p?.rider ? { kind: p.rider.dot, dmg: Math.max(1, Math.round(atkOf(by) * p.rider.share)), every: 500, ms: p.rider.ms } : undefined;
+  const dot = (crit ? p?.crit?.bleed : p?.ignite ?? rider) ?? relicDot;
   // (with the ailments on, a venomous foe's blows poison rather than curse: Nyssa and the Calamity's Blight, STATUS-FX)
   const venom = AILMENT_SWITCH.on && dot?.kind === 'curse' && (by.def === 'eliteNyssa' || by.def === 'calBoss5' || by.def === 'calBoss6');
   if (dot) setDot(b, to, { ...dot, ...(venom ? { kind: 'poison' as const } : {}), by: by.id, next: b.t + dot.every, until: b.t + dot.ms });
   blowRiders(b, by, to);
 }
 
-/** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck (`r` tiles wider each way for a widened one). */
+/** A blast's DEX save (STATS batch 5 and 6): `f` saves against `by`'s DC, a save halving it ("Saved"; a boss does not save). What the blast's
+ *  damage is multiplied by. */
+export function blastSave(b: Battle, by: Unit, f: Unit, out: BattleEvent[]): number {
+  const save = rollSave(b, by, f, 'blast', ailBoss(f));
+  if (save.saved) out.push({ kind: 'saved', to: f.id, what: 'blast' });
+  return save.mult;
+}
+
+/** Land a volley or a meteor: everything of the caster's foes in the 3x3 is struck (`r` tiles wider each way for a widened one). Each makes
+ *  a DEX save against the caster's DC, a save halving it ("Saved"; a boss does not save; STATS batch 5, `saves.ts`). */
 export function landArea(b: Battle, kind: 'rain' | 'meteor', by: Unit, u: number, v: number, power: number, out: BattleEvent[], r = 0): void {
   for (const f of b.units)
-    if (f.alive && f.side !== by.side && Math.abs(f.u - u) <= 1 + r && Math.abs(f.v - v) <= 1 + r) hurt(b, by, f, net(power, f), kind === 'meteor', false, out, 'skill');
+    if (f.alive && f.side !== by.side && Math.abs(f.u - u) <= 1 + r && Math.abs(f.v - v) <= 1 + r) {
+      const save = rollSave(b, by, f, 'blast', ailBoss(f));
+      if (save.saved) out.push({ kind: 'saved', to: f.id, what: 'blast' });
+      hurt(b, by, f, Math.max(1, Math.round(net(power, f) * save.mult)), kind === 'meteor', false, out, 'skill');
+    }
   if (kind === 'meteor') {
     const ms = durOf(by, BURN_MS);
     b.zones.push({ u, v, side: by.side, by: by.id, until: b.t + ms, next: b.t + BURN_EVERY, dmg: 6 });
@@ -1874,7 +2026,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
     if (!u.alive) continue;
     const k = kitOf(u);
     if (poolOf(u)) tickPool(b, u, 100);
-    else if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) : 1));
+    else if (k) gain(u, ((k.skill.perSec * 100) / 1000) * (u.side === 'hero' ? (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) * relicCharge(b, u) : 1));
     if (u.form && b.t >= u.form.until) {
       u.power = (u.power ?? 1) / FORM_MULT;
       u.form = undefined;
@@ -1893,7 +2045,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
         mendUnit(u, u.hot.amount, out, b.units.find((x) => x.id === u.hot!.by) ?? u);
       }
     }
-    const regen = (p?.regen ?? 0) + (u.side === 'hero' ? b.relics?.set?.regen ?? 0 : 0);
+    const regen = (p?.regen ?? 0) + (u.side === 'hero' ? (b.relics?.set?.regen ?? 0) + (b.relics?.hooks?.regen ?? 0) : 0);
     if (regen && b.t % 1000 === 0) mendUnit(u, u.maxHp * regen, out);
     if (p?.tune) {
       u.tuneAt ??= b.t + p.tune.every;
@@ -1926,7 +2078,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       for (const f of b.units)
         if (f.alive && f.side !== z.side && near3x3(f, z)) {
           hurt(b, by, f, z.dmg, false, false, out, 'dot');
-          if (z.slow && f.alive) slowFor(b, f, z.slow);
+          if (z.slow && f.alive) slowFor(b, f, z.slow, by);
         }
     }
   }
@@ -1941,7 +2093,7 @@ export function tickStatus(b: Battle, out: BattleEvent[]): void {
       const layer = b.units.find((x) => x.id === tr.by)!;
       hurt(b, layer, f, net(tr.dmg, f), true, false, out, 'skill');
       if (f.alive) {
-        stunFor(b, f, durOf(layer, tr.hold ?? ROOT_MS), true);
+        stunFor(b, f, durOf(layer, tr.hold ?? ROOT_MS), true, 'stun', layer);
       }
     }
     b.traps = b.traps.filter((tr) => tr.until > b.t);

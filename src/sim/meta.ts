@@ -4,7 +4,7 @@
 // raise the kind's rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM;
 // every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
 
-import { newCastle, readCastle, readChapel, readWorks, spellBudget, type Castle, type Works } from './castle';
+import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { DAILY_WAVES } from './daily';
 import { dailyStarsMax } from './dailyThemes';
@@ -13,7 +13,10 @@ import { ALL_HEROES, HEROES } from './units';
 import { readStarter, starterPacks, type Starter } from './starter';
 import { MAX_STARS, starCrowns } from './stars';
 import { BOSS_IDS } from './foes';
-import { readEquipment, readEquipped, type EquipSlot, type Equipment } from './equipment';
+import { readCart, readEquipment, readEquipped, type CartPiece, type EquipSlot, type Equipment } from './equipment';
+import { GEAR_V, migrateGear, type GearNote } from './gearMigrate';
+import { claimLegends, readLegends } from './legends';
+import { readRemedies, type RemedyId } from './remedies';
 import { migrateArmies, readSeen, seenFor, type ArmyRecord } from './armies';
 import { readStash } from './armyStars';
 import { readTomes, type TomeCounts } from './tomes';
@@ -21,7 +24,13 @@ import { readTalents, type KindTalents } from './talents';
 import { AWAKEN_MULT } from './awakenRules';
 import { readAwakened } from './awaken';
 import { readCaches, readOres } from './awakenMats';
-import { readCodex, readCodexClaimed, readCodexPaid, type CodexRecord } from './codex';
+import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
+import { readWeak, type WeakRecord } from './weakness';
+import { readBonds } from './bonds';
+import { openWar, readGrudges, readWar, type Grudges, type War } from './nemesis';
+import { readMentors } from './legacy';
+import { readDynasty, type Dynasty } from './dynasty';
+import type { Calling } from './weakness';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
 import { readTickets } from './autoReplay';
@@ -31,7 +40,13 @@ import { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS, PULL_HEROES, STONES_GI
 import { grantContent } from './contentHeroes';
 import { grantSpells } from './spellSources';
 import { readShop } from './chestShop';
+import { readStall } from './stall';
+import { readBooks } from './books';
+import { readSkillUse } from './skillLevels';
 import { readCards, readScenes } from './sceneRules';
+import { readQuests, type QuestState } from './quests';
+import { readEidolons, type EidolonMeta } from './warHorn';
+import { readFormations, readTactics } from './tacticPick';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -115,6 +130,25 @@ export interface Meta {
   equipped?: Record<string, Partial<Record<EquipSlot, number>>>;
   /** The next equipment id. */
   nextItem?: number;
+  /** SEVEN-SLOT GEAR: the gear version the save is on (`gearMigrate.ts`; missing is a save from before seven slots, moved over once). */
+  gearV?: number;
+  /** What moving to seven slots did, for the hero sheet's lines (each shown once; `gearMigrate.ts`). */
+  gearNote?: GearNote;
+  /** The named legends given, by legend id to the piece's id (`legends.ts`: one copy each, for good). Missing is none. */
+  legends?: Record<string, number>;
+  /** The legends given since the page last said so (`takeLegendNews`). */
+  legendsNew?: string[];
+  /** Waves each hero kind has fought (halves under auto-replay; the Pilgrim's Cord's source). Missing is none counted. */
+  wavesFought?: Record<string, number>;
+  /** The glyphs taken or cleared on each piece, by piece id (`enchant.ts`: its offers' stream moves on with each). Missing is none. */
+  enchants?: Record<number, number>;
+  /** SEVEN-SLOT GEAR batch 6 (`remedies.ts`): the remedies owned, the satchel last chosen for a run, and whether Auto may use them (off). */
+  satchel?: Partial<Record<RemedyId, number>>;
+  satchelPick?: Partial<Record<RemedyId, number>>;
+  autoRemedies?: boolean;
+  /** RUN-GEAR: pieces brought home to a full stash (`STASH_MAX`), waiting on the camp's cart (at most `CART_MAX`) until room is made
+   *  (`runGear.ts` `unloadCart`). They have no id until they move in. Missing is none. */
+  cart?: CartPiece[];
   /** The rank the player has taken for each hero kind (`rankUp.ts`): shards earn a rank, a tap on "Rank up" takes it. Missing means every earned rank counts (the tests' and tools' saves); a save from before is read with the ranks it had. */
   ranked?: Record<string, number>;
   /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
@@ -127,9 +161,25 @@ export interface Meta {
   talents?: Record<string, KindTalents>;
   /** The codex: the foe kinds met and the kills per kind (`codex.ts`; saves from before have none), and the milestone rewards claimed. */
   codex?: CodexRecord;
+  /** DEPTH-BUILD: what is known of each boss's weakness and the Hunter's marks won (`weakness.ts`); missing is nothing known. */
+  weak?: Record<string, WeakRecord>;
+  /** DEPTH-BUILD: bond points by pair ("knight|peasant"), the rivalries settled, the bond scenes seen (`bonds.ts`); missing is none. */
+  bonds?: Record<string, number>;
+  bondSettled?: string[];
+  bondScenes?: string[];
+  /** DEPTH-BUILD: the Barracks' Sparring Yard: the pair sparring and when they are done (`bonds.ts`). */
+  sparring?: { a: string; b: string; doneAt: number };
+  /** The Nemesis War (`nemesis.ts`): the named foes, the fallen, and the next id; missing until the War opens (the Undead Legion's first Normal clear). */
+  war?: War;
+  /** The Nemesis War, phase 3: each hero's Grudges, by the nemeses that slew it (`revenge.ts`). */
+  grudges?: Grudges;
+  /** Dynasties (`dynasty.ts`): the seasons' start, each owned kind's line of bearers, and this season's waves; missing until the page first
+   *  opens them (a save from before is seeded then, with nobody made old). */
+  dynasty?: Dynasty;
+  /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
+  mentors?: Partial<Record<Calling, { kind: string; since: number; heir?: true }>>;
+  recalled?: Partial<Record<Calling, number>>;
   codexClaimed?: string[];
-  /** The codex entries whose stone is taken (`codex.ts`, `claimEntries`): `foe:<entry>` and `hero:<kind>`. A save from before has every entry it had discovered counted as paid. */
-  codexPaid?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
   combosSeen?: string[];
   /** The heroes whose first-time reveal has played (`heroesSeen.ts`): one owned and not listed still has its reveal due. Saves from before count every hero they own. */
@@ -152,10 +202,40 @@ export interface Meta {
   duchessTreat?: number;
   /** Whether the heroes' ultimates fire on their own in a fight (the hero bar's Auto switch, COMBAT-002); off (the player taps) when unset. Auto-replay always fires them. */
   ultAuto?: boolean;
+  /** ULT-SHOW: how many full moments of each hero kind's ultimate the player has seen (only heroes with a showcase are counted; the first
+   *  and every Nth play the long showcase: `ultShowRules.ts`). Saves from before have none: every showcase still to see. */
+  ultSeen?: Record<string, number>;
+  /** The party's tactic picked, by mode and by army (`tacticPick.ts`, docs/notes/tactics.md); Advance together where none is. Saves from before have none. */
+  tactics?: Record<string, string>;
+  /** The formation picked on the prep screen, by mode and by army (`tacticPick.ts`), which Auto place sets the heroes out in; none: Auto places as before. */
+  formations?: Record<string, string>;
   /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
   bossCards?: string[];
   /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
   featuresTold?: string[];
+  /** The quests: the offers on the board, the ones taken and their counts, the ones handed in (`quests.ts`). Saves from before have none: nothing begun. */
+  quests?: QuestState;
+  /** EIDOLONS: the War Horn's fill, the Eidolons bound and the one chosen to answer it (`warHorn.ts`). Saves from before have none: an empty horn. */
+  eidolons?: EidolonMeta;
+  /** Hester's Stall (`stall.ts`): the day's sales by ware, the crowns ever spent there (standing), the day it was last looked at, and the
+   *  pieces sold today (to buy back). Saves from before have none: standing 1, nothing bought. */
+  stall?: {
+    day: number; sold: Record<string, number>; spent: number; seen?: number; soldToday?: { item: Equipment; price: number }[];
+    /** The visiting traders (`traders.ts`): Calamity guardians felled, the day the Gloaming Dealer stands at the stall, a Dealer due on the page's next look, and each trader's sales for the visit (the caravan's week, the Dealer's guardian count). */
+    guardians?: number; gloaming?: number; dealerDue?: boolean; trade?: { caravan?: { visit: number; sold: Record<string, number> }; gloaming?: { visit: number; sold: Record<string, number> } };
+  };
+  /** Skill books (`books.ts`): unread copies by book, the books each hero kind has learned, the book each is studying (fights done),
+   *  the progress of books put down, and the skills each kind has chosen for its three slots (a two-slot save is made whole when read). Saves from before have none. */
+  books?: Record<string, number>;
+  learned?: Record<string, string[]>;
+  study?: Record<string, { book: string; done: number }>;
+  /** DEPTH-BUILD: the Library's Reading Room: each student's queued next book (its copy already out of the bag); missing is none. */
+  studyNext?: Record<string, string>;
+  studyKept?: Record<string, Record<string, number>>;
+  loadout?: Record<string, string[]>;
+  /** Skill levels by use (the skills overhaul's batch 5, `skillLevels.ts`): the use points each hero kind has earned with each of its skills, under the
+   *  skill's fixed key (its own three and the learned ones alike). Saves from before have none: every skill at Level 1. */
+  skillUse?: Record<string, Record<string, number>>;
 }
 
 /** An earned, unopened chest: where it came from, and the seed its contents are rolled from (fixed when it was earned). */
@@ -173,6 +253,10 @@ export interface StashChest {
   bonus?: number;
   /** Paid for an army's first clear on a tier (one per army and tier, told apart by its seed; `at` only sets the chest's size). */
   first?: boolean;
+  /** QUESTS-3: a chest that holds no summoning stones (a Last Stand re-climb's, a quest of one or two stars's). */
+  dry?: boolean;
+  /** QUESTS-3: a chest that holds half its stones, rounded up (a Calamity clear's). */
+  half?: boolean;
 }
 
 export interface DailyEntry {
@@ -208,7 +292,7 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the two starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], codexPaid: [], stash: [], ranked: {} });
+export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {}, gearV: GEAR_V });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -416,8 +500,11 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.unlock = readUnlock(m.unlock, m.unlocked);
       m.unlockDry = Math.max(0, (m.unlockDry ?? 0) | 0);
       m.castle = readCastle(m.castle);
-      m.spellbook = readLoadout(m.spellbook, spellBudget(m.castle));
+      m.spellbook = readLoadout(m.spellbook);
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
+      // (DEPTH-BUILD: the Chapel is levelled; the old flag reads as level 1, and a level keeps the flag set, which the spellbook reads)
+      if (m.chapel) m.castle.chapel = Math.max(1, m.castle.chapel ?? 0);
+      else if ((m.castle.chapel ?? 0) > 0) m.chapel = true;
       m.works = readWorks(m.works);
       // (saves from before shards have none)
       const shards: Record<string, number> = {};
@@ -433,6 +520,13 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.stand = Math.max(0, (m.stand ?? 0) | 0);
       if (m.standAct !== undefined) m.standAct = Math.max(0, Math.min(3, m.standAct | 0));
       m.daily = readDaily(m.daily);
+      // (the party's tactics: saves from before have none)
+      const tactics = readTactics(m.tactics);
+      if (tactics) m.tactics = tactics;
+      else delete m.tactics;
+      const formations = readFormations(m.formations);
+      if (formations) m.formations = formations;
+      else delete m.formations;
       m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_IDS.includes(b)) : [];
       // (saves from before the armies have their furthest stage mapped onto them, and the armies it opens are not new)
       const fresh = !m.armies || typeof m.armies !== 'object';
@@ -444,8 +538,26 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.claimed = Array.isArray(m.claimed) ? m.claimed.filter((a) => typeof a === 'string' && m.achievements.includes(a)) : [...m.achievements];
       // (saves from before equipment have none)
       m.equipment = readEquipment(m.equipment);
-      m.equipped = readEquipped(m.equipped, m.equipment);
       m.nextItem = Math.max((m.nextItem ?? 1) | 0, 1, ...m.equipment.map((x) => x.id + 1));
+      // (RUN-GEAR: the cart's pieces; a save from before has none)
+      m.cart = readCart(m.cart);
+      if (!m.cart.length) delete m.cart;
+      // (SEVEN-SLOT GEAR: a save from before seven slots is moved over once: `gearMigrate.ts`)
+      if (m.gearV !== GEAR_V) migrateGear(m);
+      m.equipped = readEquipped(m.equipped, m.equipment);
+      // (the named legends held, and the waves each hero has fought: SEVEN-SLOT GEAR batch 2)
+      m.legends = readLegends(m.legends);
+      if (!m.legends) delete m.legends;
+      if (!Array.isArray(m.legendsNew) || !m.legendsNew.length) delete m.legendsNew;
+      if (m.wavesFought && typeof m.wavesFought === 'object') m.wavesFought = Object.fromEntries(Object.entries(m.wavesFought).filter(([, n]) => typeof n === 'number' && Number.isFinite(n) && n > 0));
+      else delete m.wavesFought;
+      if (m.enchants && typeof m.enchants === 'object') m.enchants = Object.fromEntries(Object.entries(m.enchants).filter(([, n]) => typeof n === 'number' && Number.isInteger(n) && n > 0));
+      else delete m.enchants;
+      m.satchel = readRemedies(m.satchel);
+      if (!m.satchel) delete m.satchel;
+      m.satchelPick = readRemedies(m.satchelPick);
+      if (!m.satchelPick) delete m.satchelPick;
+      if (m.autoRemedies !== true) delete m.autoRemedies;
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
       // (saves from before awakening have none)
@@ -466,9 +578,27 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.opened = Array.isArray(m.opened) ? m.opened.filter((x) => typeof x === 'string') : grandfather(m);
       // (saves from before the codex have none)
       m.codex = readCodex(m.codex);
+      m.weak = readWeak(m.weak);
+      if (!m.weak) delete m.weak;
+      m.bonds = readBonds(m.bonds);
+      if (!m.bonds) delete m.bonds;
+      if (!Array.isArray(m.bondSettled)) delete m.bondSettled;
+      if (!Array.isArray(m.bondScenes)) delete m.bondScenes;
+      m.mentors = readMentors(m.mentors);
+      if (!m.mentors) delete m.mentors;
+      // (the Nemesis War: read as saved; a save already past the Undead Legion's first Normal clear opens it now, its Council empty)
+      m.war = readWar(m.war);
+      if (!m.war) delete m.war;
+      openWar(m);
+      m.grudges = readGrudges(m.grudges);
+      if (!m.grudges) delete m.grudges;
+      // (Dynasties: read as saved; a save from before has none until the page opens them, seasons counting from that day)
+      m.dynasty = readDynasty(m.dynasty);
+      if (!m.dynasty) delete m.dynasty;
+      if (!m.recalled || typeof m.recalled !== 'object') delete m.recalled;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
-      // (saves from before the entry stones: what they had discovered counts as paid, so only new entries pay)
-      m.codexPaid = readCodexPaid(m.codexPaid, m);
+      // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)
+      delete (m as { codexPaid?: unknown }).codexPaid;
       // (saves from before the combos have none seen)
       m.combosSeen = readCombosSeen(m.combosSeen);
       // (saves from before the first-time reveals count every hero they own as seen)
@@ -488,13 +618,30 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (typeof m.duchessTreat === 'number' && Number.isFinite(m.duchessTreat)) m.duchessTreat = m.duchessTreat | 0;
       else delete m.duchessTreat;
       if (!m.bossCards.length) delete m.bossCards;
+      // (saves from before the showcases have seen none)
+      if (m.ultSeen && typeof m.ultSeen === 'object' && !Array.isArray(m.ultSeen))
+        m.ultSeen = Object.fromEntries(Object.entries(m.ultSeen).filter(([, n]) => typeof n === 'number' && Number.isFinite(n) && n > 0).map(([k, n]) => [k, Math.floor(n)]));
+      else delete m.ultSeen;
       // (saves from before the earned deploy helpers have told none: `featureUnlocks.ts`)
       if (Array.isArray(m.featuresTold)) m.featuresTold = m.featuresTold.filter((x) => typeof x === 'string');
       else delete m.featuresTold;
+      // (saves from before the quests have none: nothing begun, and the day's offers are drawn when the page next looks)
+      m.quests = readQuests(m.quests);
+      if (!m.quests) delete m.quests;
+      // (saves from before the Eidolons have none: an empty horn, no Eidolon bound)
+      m.eidolons = readEidolons(m.eidolons);
+      if (!m.eidolons) delete m.eidolons;
+      // (saves from before Hester's Stall and the skill books have none: standing 1, nothing read)
+      m.stall = readStall(m.stall);
+      if (!m.stall) delete m.stall;
+      readBooks(m);
+      readSkillUse(m);
       // (a content hero whose milestone a save from before has already reached joins now)
       if (!needsStarter(m)) grantContent(m);
       // (spells are no longer bought: those bought before are kept, and any whose tower level or milestone a save has already reached are learnt now)
       grantSpells(m);
+      // (a legend whose source a save from before has already met is found now)
+      claimLegends(m);
       return m;
     }
   } catch {

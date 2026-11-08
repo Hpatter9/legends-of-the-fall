@@ -46,28 +46,28 @@ const bestLevel = (m: Meta) => Math.max(1, ...ALL_HEROES.map((k) => levelOfKind(
 
 /** The summoning stones an achievement pays beside its crowns (the owner's ask: "a stone or two"). A save that claimed one before is not paid again. */
 export const ACHIEVEMENT_STONES = 2;
-/** The stones the big milestones pay instead: the thirtieth stage, level 50, every boss, wave 20 of the Last Stand, every hero; and level 100, the longest of all. */
+/** The stones the big milestones pay instead: the thirtieth wave, level 50, every boss, wave 20 of the Last Stand, every hero; and level 100, the longest of all. */
 export const BIG_STONES = 3;
 export const CENTURION_STONES = 5;
 export const stonesOfAchievement = (a: Achievement): number => a.stones ?? ACHIEVEMENT_STONES;
 
 export const ACHIEVEMENTS: readonly Achievement[] = [
-  { id: 'firstWin', name: 'First Blood', text: 'Win a stage.', crowns: 5, earned: (c) => c.won },
+  { id: 'firstWin', name: 'First Blood', text: 'Win a wave.', crowns: 5, earned: (c) => c.won },
   {
     id: 'flawless',
     name: 'Not a Scratch',
-    text: 'Win a stage with no hero lost.',
+    text: 'Win a wave with no hero lost.',
     crowns: 10,
     earned: (c) => c.won && heroesIn(c.battle).length > 0 && heroesIn(c.battle).every((u) => u.alive),
   },
-  { id: 'perfect', name: 'Three Stars', text: 'Win a stage with three stars.', crowns: 15, earned: (c) => c.won && c.stars === 3 },
-  { id: 'stage10', name: 'Tenth Stage', text: 'Win stage 10.', crowns: 10, earned: (c) => c.won && c.stage >= 10 },
-  { id: 'stage20', name: 'Twentieth Stage', text: 'Win stage 20.', crowns: 20, earned: (c) => c.won && c.stage >= 20 },
-  { id: 'stage30', name: 'Thirtieth Stage', text: 'Win stage 30.', crowns: 40, stones: BIG_STONES, earned: (c) => c.won && c.stage >= 30 },
+  { id: 'perfect', name: 'Three Stars', text: 'Win a wave with three stars.', crowns: 15, earned: (c) => c.won && c.stars === 3 },
+  { id: 'stage10', name: 'Ten Waves', text: 'Win wave 10.', crowns: 10, earned: (c) => c.won && c.stage >= 10 },
+  { id: 'stage20', name: 'Twenty Waves', text: 'Win wave 20.', crowns: 20, earned: (c) => c.won && c.stage >= 20 },
+  { id: 'stage30', name: 'Thirty Waves', text: 'Win wave 30.', crowns: 40, stones: BIG_STONES, earned: (c) => c.won && c.stage >= 30 },
   {
     id: 'yokaiOnly',
     name: 'Yokai Only',
-    text: 'Win a stage with only Yokai heroes.',
+    text: 'Win a wave with only Yokai heroes.',
     crowns: 20,
     earned: (c) => {
       const heroes = heroesIn(c.battle);
@@ -134,7 +134,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'tower20',
     name: 'Last Stand',
-    text: 'Reach wave 20 of the Last Stand (or clear 20 floors of the old tower).',
+    text: 'Reach wave 20 of the Last Stand.',
     crowns: 40,
     stones: BIG_STONES,
     earned: (c) => Math.max(c.meta.tower, c.meta.stand ?? 0) >= 20,

@@ -8,9 +8,16 @@ import { CHARGE_MAX, KITS, ULT_LEVEL, keyOf, onStrike, tickStatus, ultimateOf } 
 import { HERO_KITS, RES, SKILL2_LEVEL, ULT_FILL, canPay, castHero, costOf, heroKitOf, poolOf, regenOf, resMax, resOf } from '../src/sim/heroKits';
 import { ORDER_WAIT_MS, canOrderUltimate, orderUltimate, replayLog, type LogEntry } from '../src/sim/orders';
 import { gradeBoost } from '../src/sim/run';
+import { REST } from '../src/sim/statRest';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES } from '../src/sim/units';
 import { deploySpots } from '../tools/heroSweep';
+
+// (these stage the pools' written numbers and the ultimate's written fill: the pools, cooldowns and fill by score, STATS batch 6, are held off
+// here and staged in `test/stats-rest.test.ts`)
+REST.pools = false;
+REST.cooldown = false;
+REST.ultFill = false;
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -27,13 +34,13 @@ const run = (b: Battle, ms: number): BattleEvent[] => {
   return out;
 };
 
-test('every hero has one pool: 17 mana and 28 stamina, and summons and foes have none', () => {
+test('every hero has one pool: 19 mana and 35 stamina, and summons and foes have none', () => {
   const kits = HERO_KITS();
   assert.equal(Object.keys(kits).length, ALL_HEROES.length);
   for (const h of ALL_HEROES) assert.ok(kits[h], h);
   const mana = ALL_HEROES.filter((h) => kits[h].pool === 'mana');
-  assert.equal(mana.length, 17, mana.join());
-  assert.equal(ALL_HEROES.length - mana.length, 28);
+  assert.equal(mana.length, 19, mana.join());
+  assert.equal(ALL_HEROES.length - mana.length, 35);
   const b = arena();
   assert.equal(poolOf(spawn(b, 'wolf', 1, 1)), undefined);
   assert.equal(poolOf(spawn(b, 'skeleton', 2, 2)), undefined);
@@ -103,7 +110,7 @@ test('a skill costs its pool, keeps a gap before it goes again, and waits until 
   assert.ok(out.some((e) => e.kind === 'skill' && e.name === 'Shield Wall'));
   assert.ok(Math.abs(resOf(k) - (RES.STAM_MAX - costOf(k, hk.s1))) < 1e-9, 'paid');
   assert.ok(!canPay(b, k, hk, 1), 'the gap holds it back');
-  const gap = hk.s1.gap ?? RES.GAP_STAM_MS;
+  const gap = hk.s1.cd;
   b.t += gap - 100;
   assert.ok(!canPay(b, k, hk, 1), 'still within the gap');
   b.t += 100;
@@ -133,7 +140,7 @@ test('skill 2 opens at level 10, and goes before skill 1 when both can be paid',
   castHero(high, c, heroKitOf(c)!, out2);
   assert.ok(out2.some((e) => e.kind === 'skill' && e.name === 'Shield Rush'), 'from 10, skill 2 first');
   // (with skill 2 just cast and the pool too low for it, skill 1 still goes)
-  high.t += RES.GAP_STAM_MS;
+  high.t += 2000; // (past Shield Rush's cast and the breath after it)
   c.charge = (costOf(c, heroKitOf(c)!.s1) / RES.STAM_MAX) * CHARGE_MAX + 1;
   const out3: BattleEvent[] = [];
   castHero(high, c, heroKitOf(c)!, out3);

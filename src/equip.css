@@ -1,5 +1,6 @@
-/* ===== Equipment: the hero sheet's panel and picker (`equipView.ts`). Inlined after pixel.css by build.mjs. Icons are 16px tiles
-   drawn at whole-number scales (4x on a slot, 3x in a list), never smoothed; rarity colours come from --rc (.r1 to .r5). ===== */
+/* ===== Equipment: the hero sheet's panel and picker (`equipView.ts`). Inlined after pixel.css by build.mjs. Icons are the painted
+   ones (`gearIcons.ts`, `.painted`); a base without a painting keeps its 16px tile, drawn at whole-number scales (4x on a slot,
+   3x in a list), never smoothed; rarity colours come from --rc (.r1 to .r5). ===== */
 .eqPanel { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s1); }
 .eqPanel h4 { margin: 0; font: 700 14px var(--display); color: var(--gold-hi); }
 .eqSlots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -10,6 +11,15 @@
 .eqIcon img { image-rendering: pixelated; display: block; }
 .eqIcon.big img { width: 48px; height: 48px; } .eqIcon.small img { width: 32px; height: 32px; }
 .eqIcon.empty { border-style: dashed; border-color: var(--s8); } .eqIcon.empty img { opacity: 0.25; filter: grayscale(1); }
+/* The painted icons (`gearIcons.ts`): the grade's glow, the painting and the grade's painted frame, stacked in the box and smoothed
+   (paintings, not pixel art). The box's own border and fill give way to the painted frame; the painting sits inside its band. */
+span.eqIcon.painted { position: relative; border: 0; background: radial-gradient(circle at 50% 42%, #2a2f38 0%, #14171c 75%); box-shadow: none; border-radius: 9%; image-rendering: auto; overflow: hidden; }
+.eqIcon.painted > i { position: absolute; background-repeat: no-repeat; pointer-events: none; }
+.eqIcon.painted .eqFrame { inset: 0; }
+.eqIcon.painted .eqGlow { inset: 4%; opacity: 0.78; }
+.eqIcon.painted .eqArt { inset: 9%; }
+.eqIcon.painted.r5 .eqArt { inset: 7%; }
+span.eqIcon.painted.empty { border: 0; } .eqIcon.painted.empty .eqArt { opacity: 0.22; filter: grayscale(1); } .eqIcon.painted.empty .eqFrame { opacity: 0.55; }
 .eqSum { margin: 0; font-size: 11px; color: var(--dim); text-align: center; }
 .eqList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
 .eqRow { display: flex; flex-direction: column; gap: 4px; padding: 4px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--rc, var(--s8)); }
@@ -38,3 +48,149 @@
 .eqSetPieces { display: flex; flex-wrap: wrap; gap: 3px 8px; font-size: 10px; color: var(--s10); } .eqSetPieces .got { color: var(--white); }
 .eqTier { font-size: 10px; color: var(--s10); } .eqTier.on { color: var(--g4); }
 .eqSetHint { font-size: 10px; color: var(--dim); } .eqSetHint.up { color: var(--g4); } .eqSetHint.down { color: var(--r6); }
+
+/* SHOP-BOOKS-GEAR: wear on a piece (`wear.ts`): a slim durability bar along the foot, the worn or broken badge, a broken piece greyed
+   under its cracks; the durability line, the Repair button and a sale's second tap in the picker */
+.eqIcon { position: relative; }
+.eqIcon > i.eqDur { position: absolute; left: 8%; right: 8%; bottom: 5%; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; z-index: 3; pointer-events: none; }
+.eqIcon > i.eqDur b { display: block; height: 100%; background: #6fc46a; }
+.eqIcon.wear-worn > i.eqDur b { background: #e3a43c; }
+.eqIcon.wear-broken > i.eqDur b { background: #d0473a; }
+.eqIcon.wear-broken .eqArt, .eqIcon.wear-broken > img:not(.eqBadge) { filter: grayscale(0.85) brightness(0.7); }
+.eqIcon > i.eqCracks { position: absolute; inset: 6%; background: center / contain no-repeat; z-index: 2; pointer-events: none; opacity: 0.9; }
+.eqIcon > img.eqBadge { position: absolute; right: -2px; top: -2px; width: 40%; height: 40%; z-index: 4; image-rendering: auto; pointer-events: none; }
+.eqIcon > img.eqBadge.field { right: auto; left: -2px; }
+/* RUN-GEAR: the pack's fresh-from-the-field line under a find (docs/notes/run-gear.md) */
+.evcard.pack small.fresh { color: #f0b860; }
+.eqDurLine { display: block; font: 400 12px var(--body); color: var(--dim); }
+.eqDurLine.worn { color: #e8b55a; }
+.eqDurLine.broken { color: #ec7b6c; }
+button.eqRepair { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+button.eqRepair img.eqRepairIco { width: 22px; height: 22px; image-rendering: auto; }
+button.eqSure { border-color: #e3a43c; color: #ffd98a; }
+
+/* SHOP-BOOKS-GEAR: the hero sheet's Skill book panel (src/skillBookView.ts) */
+.kbPanel { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 12px; padding: 10px; border: 1px solid #7d6538; border-radius: 4px; background: linear-gradient(#1d1810e6, #120e09e6); }
+.kbPanel h4 { margin: 0; font: 400 16px var(--display); color: #ffe0a1; }
+.kbSlots { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.kbSlot { min-height: 64px; display: flex; align-items: center; gap: 8px; padding: 6px; text-align: left; background: #241c13; border: 1px solid #8e733e; border-radius: 4px; color: #f2e6c8; }
+.kbOwn { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font: 400 20px var(--display); color: #ffe0a1; border: 1px solid #8e733e; border-radius: 50%; background: #3a2c18; }
+.kbWords { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kbWords b { font: 400 14px/1.2 var(--body); color: #f2e6c8; }
+.kbWords small { font: 400 12px/1.25 var(--body); color: #bfb294; }
+.kbWords p { margin: 0; font: 400 12px/1.35 var(--body); color: #d8d0bb; }
+.kbWords .kbIn { color: #9fe39a; }
+.kbWords .kbWarn { color: #e8b55a; }
+.kbWords .kbHistory { font-style: italic; color: #cbbf9f; }
+.kbStudy { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid #5f4d2c; border-radius: 4px; background: #1a1610; }
+.kbStudyIco { width: 40px; height: 40px; flex: none; image-rendering: auto; }
+.kbBar { display: block; height: 5px; margin-top: 3px; border-radius: 3px; background: #0008; overflow: hidden; }
+.kbBar b { display: block; height: 100%; background: linear-gradient(90deg, #c99a43, #ffe0a1); }
+.kbRead { min-height: 44px; }
+.kbList { display: flex; flex-direction: column; gap: 6px; }
+.kbRow { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid #4c3d28; border-radius: 4px; background: #1e1711; }
+.kbRow.on { border-color: #c49a4f; }
+.kbRow > button { flex: none; min-height: 44px; }
+.eqStash { display: block; margin-top: 6px; text-align: center; font-size: 11px; color: var(--dim); }
+.eqStash.full { color: #ff8a80; font-weight: 700; }
+
+/* SEVEN-SLOT GEAR: the paper doll (the hero in the middle, its seven slots around it), a new base's placeholder (its slot's outline and
+   its name, until its painting comes: docs/notes/gear-art-todo.md), the sets' pips and the move's one-time lines. */
+.eqDoll { grid-template-areas: "acc head ." "main hero off" "belt torso feet"; align-items: start; }
+.eqDoll .at-head { grid-area: head; } .eqDoll .at-torso { grid-area: torso; } .eqDoll .at-main { grid-area: main; } .eqDoll .at-off { grid-area: off; }
+.eqDoll .at-feet { grid-area: feet; } .eqDoll .at-belt { grid-area: belt; } .eqDoll .at-acc { grid-area: acc; }
+.eqDoll .eqDollHero { grid-area: hero; justify-self: center; align-self: center; width: 88px; height: 88px; image-rendering: pixelated; opacity: 0.9; pointer-events: none; }
+.eqDoll .eqDollPortrait { grid-area: hero; justify-self: center; align-self: center; display: flex; align-items: center; justify-content: center; width: min(96px, 100%); height: 136px; background-size: 100% 100%; background-position: center; pointer-events: none; }
+.eqIcon.painted.empty .eqEmptyArt { opacity: 0.5; }
+.eqIcon.ph { position: relative; overflow: hidden; }
+.eqIcon.ph > .eqIcon { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: none; }
+.eqIcon.ph > .eqPh { position: relative; z-index: 2; max-width: 92%; padding: 1px 3px; font: 700 10px/1.1 var(--body); color: var(--white); text-align: center; overflow-wrap: anywhere; background: rgb(var(--black-rgb) / 0.6); border-radius: 3px; }
+.eqIcon.small.ph > .eqPh { font-size: 9px; }
+.eqPips { display: flex; gap: 2px; } .eqPips i { width: 6px; height: 6px; border-radius: 50%; background: var(--s5); } .eqPips i.on { background: var(--sc, var(--g4)); }
+.eqNote { margin: 0; font-size: 12px; color: var(--gold-hi); }
+/* SEVEN-SLOT GEAR batch 2: a legend's verse in its card, and in the codex's Legends page */
+.eqVerse { font-size: 11px; font-style: italic; color: var(--s10); }
+/* SEVEN-SLOT GEAR batch 3: seasoning's thin gold bar, glyph lines, and Repair beside Patch */
+.eqSeason { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--gold-hi); }
+.eqSeasonBar { display: inline-block; flex: none; width: 48px; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; }
+.eqSeasonBar b { display: block; height: 100%; background: #d9b44a; }
+.eqGlyph { font-size: 10px; color: var(--b3); display: flex; align-items: center; gap: 4px; }
+/* SEVEN-SLOT GEAR batch 7: the owner's painted set emblems and glyph stones, set in a line of words */
+.eqGlyphStone { width: 14px; height: 14px; flex: none; image-rendering: auto; }
+.eqEmblem { width: 18px; height: 18px; flex: none; vertical-align: -4px; margin-right: 4px; image-rendering: auto; }
+.eqSetHead b { display: inline-flex; align-items: center; }
+.eqMend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; grid-column: 1 / -1; } .eqMend small { grid-column: 1 / -1; }
+
+/* SEVEN-SLOT GEAR batch 5: runes (`runeTray.ts`). A stone is its kind's colour (--rc) with its level as pips, until the painted stones
+   come; a rune with a twin has a gold rim and a "2" badge (it swells gently, a steady glow, and holds still with reduced motion). */
+.rnStone { position: relative; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; transform: rotate(45deg); border: 2px solid #0008; background: var(--rc, transparent); box-shadow: inset 0 0 0 2px #fff3; }
+.rnStone.rn-big { width: 30px; height: 30px; margin: 6px; } .rnStone.rn-small { width: 14px; height: 14px; margin: 2px; border-width: 1px; }
+.rnStone.empty { background: #0006; border: 2px dashed var(--s8); box-shadow: none; } .rnStone.rn-small.empty { border-width: 1px; }
+.rnStone.k-keystone { border-color: #e0b545; }
+.rnStone .rnPips { display: flex; gap: 1px; transform: rotate(-45deg); } .rnStone .rnPip { display: block; width: 3px; height: 3px; border-radius: 50%; background: #000c; }
+.rnStone.k-keystone .rnPip { background: #e0b545; } .rnStone.rn-small .rnPip { width: 2px; height: 2px; }
+.rnStone.twin { border-color: #ffd24a; box-shadow: 0 0 6px #ffd24a, inset 0 0 0 2px #fff5; animation: rnTwin 1.6s ease-in-out infinite; }
+.rnStone .rnTwin { display: block; position: absolute; top: -8px; right: -8px; transform: rotate(-45deg); font: 700 9px/1 var(--body); color: #1b1408; background: #ffd24a; border-radius: 6px; padding: 1px 3px; font-style: normal; }
+.rnStone.rn-small .rnTwin { display: none; }
+@keyframes rnTwin { 50% { transform: rotate(45deg) scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .rnStone.twin { animation: none; } }
+.rnStrip { display: flex; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); display: flex; gap: 1px; z-index: 3; pointer-events: none; }
+.rnTray { display: flex; flex-direction: column; gap: 6px; }
+.rnHero { display: flex; align-items: center; gap: 6px; padding: 4px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); }
+.rnHero.can { border-color: #ffd24a; }
+.rnWords { flex: 1; min-width: 0; display: flex; flex-direction: column; } .rnWords b { font-size: 13px; } .rnWords small { font-size: 10px; color: var(--dim); }
+.rnSockets, .rnBag { display: flex; gap: 2px; flex-wrap: wrap; }
+.rnBag { padding: 4px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s5); justify-content: center; }
+.rnBag.can { border-color: #ffd24a; }
+.rnCell { min-height: 0; padding: 0; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 2px solid transparent; }
+.rnCell.sel { border-color: var(--white); } .rnCell.can { border-color: #ffd24a; background: #ffd24a22; }
+.rnHead { font-size: 11px; color: var(--gold-hi); }
+.rnBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.rnPick { margin: 0; font-size: 11px; color: var(--e8); }
+#bench .card .rnStrip { top: 3px; gap: 3px; }
+#bench .card .rnStrip .rnStone.rn-small { width: 9px; height: 9px; margin: 2px; }
+
+/* SEVEN-SLOT GEAR batch 6: the party screen's satchel, the tray's remedies pocket, and a wounded hero's bench card */
+.ptSatchel { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; padding: 6px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); font-size: 12px; }
+.ptSatchel > b { color: var(--gold-hi); font-size: 12px; }
+.ptRemedy { display: flex; align-items: center; gap: 6px; } .ptRemedy span { flex: 1; } .ptRemedyPic { width: 26px; height: 26px; flex: none; }
+.ptRemedy button { min-height: 32px; min-width: 36px; padding: 0 8px; }
+.ptAutoRemedy { min-height: 34px; font-size: 12px; }
+.rmPocket { display: flex; flex-direction: column; gap: 4px; }
+.rmRow { display: flex; flex-wrap: wrap; gap: 4px; }
+.rmBtn { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 2px 8px; font-size: 12px; }
+.rmBtn img { width: 28px; height: 28px; } .rmBtn.sel { border-color: #ffd24a; }
+.rmHeroes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.rmHero { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-height: 40px; padding: 3px 6px; font-size: 11px; } .rmHero.can { border-color: #ffd24a; }
+.rmBar { display: block; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; } .rmBar b { display: block; height: 100%; background: #6fc46a; }
+#bench .card.wounded i span { background: #d9a23c; }
+#bench .card.wounded::after { content: '✚'; position: absolute; right: 4px; top: 18px; font-size: 13px; line-height: 1; color: #f2e9d8; text-shadow: 0 0 2px #000, 0 0 2px #000; pointer-events: none; }
+/* UX-FIXES: Sell is a small plain button under the big Equip (they sat side by side at one size, a slip sold the piece) */
+.eqBtns:has(.eqSell) { grid-template-columns: 1fr; }
+.eqBtns .eqSell { justify-self: end; min-height: 44px; min-width: 120px; padding: 0 12px; font-size: 13px; background: none; border: 1px solid #6b6454; color: #cfc6ad; box-shadow: none; }
+.eqBack { align-self: flex-start; min-height: 44px; min-width: 88px; margin-bottom: 4px; }
+
+/* SEVEN-SLOT GEAR batch 7: a rune is the owner's painted stone inside its level's painted frame, upright, its pips below; an empty socket
+   keeps the diamond. A merge's new rune plays the six-frame merge spark once over it (not at all with reduced motion). */
+.rnStone:not(.empty) { transform: none; background: none; border: 0; box-shadow: none; border-radius: 50%; }
+.rnStone:not(.empty) .rnPic { position: absolute; inset: 16%; width: 68%; height: 68%; display: block; }
+.rnStone:not(.empty) .rnFrame { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.rnStone:not(.empty) .rnPips { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); gap: 2px; z-index: 1; }
+.rnStone:not(.empty) .rnPip { background: #ffe9a8; box-shadow: 0 0 0 1px #000a; }
+.rnStone.rn-big:not(.empty) { width: 34px; height: 34px; margin: 4px; }
+.rnStone.rn-small:not(.empty) .rnPic { inset: 0; width: 100%; height: 100%; } .rnStone.rn-small:not(.empty) .rnFrame { display: none; }
+.rnStone.twin:not(.empty) { box-shadow: 0 0 0 2px #ffd24a, 0 0 8px #ffd24a; animation-name: rnTwinUp; }
+@keyframes rnTwinUp { 50% { transform: scale(1.1); } }
+.rnStone:not(.empty) .rnTwin { transform: none; top: -6px; right: -8px; z-index: 2; }
+#bench .card .rnStrip .rnStone.rn-small:not(.empty) { width: 12px; height: 12px; }
+@media (prefers-reduced-motion: reduce) { .rnStone.twin:not(.empty) { animation: none; } }
+/* UX-FIXES: the equipment tab's "More" fold (Equip all heroes, the bag switch, All sets, Combine) */
+.eqMore > summary { min-height: 44px; display: flex; align-items: center; padding: 0 10px; cursor: pointer; font: 400 14px var(--body); color: var(--gold-hi); border: 1px solid #6b5a38; border-radius: 3px; background: #1b231d; list-style: none; }
+.eqMore > summary::-webkit-details-marker { display: none; }
+.eqMore[open] > * + * { margin-top: 6px; }
+.eqMore { grid-column: 1 / -1; }
+.eqAuto > button.primary { grid-column: 1 / -1; }
+.rnSpark { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; z-index: 3; pointer-events: none;
+  background-size: 600% 100%; background-repeat: no-repeat; animation: rnSpark 0.6s steps(6) 1 forwards; }
+@keyframes rnSpark { from { background-position: 0 0; } to { background-position: 120% 0; } }
+@media (prefers-reduced-motion: reduce) { .rnStone.twin:not(.empty) { animation: none; } .rnSpark { display: none; } }

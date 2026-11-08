@@ -11,6 +11,7 @@ import { mixSeed, Rng } from '../../src/sim/rng';
 import { ALL_HEROES } from '../../src/sim/units';
 import { deploySpots, fieldBoost, pickTeam, play } from '../heroSweep';
 import { SCENARIOS } from '../status-fx/logs';
+import { botSpells } from '../autoplay';
 
 let h = 0x811c9dc5;
 const feed = (s: string) => {
@@ -32,10 +33,10 @@ function tap(b: Battle, events: BattleEvent[]): void {
   if (b.phase !== 'fight') feed(endState(b));
 }
 
-/** The heroes the batch under way reworks (batch 7: the monster heroes; 6 was the casters, 5 the ranged heroes and the summoners, 4 the melee
- *  heroes, 3 the tanks and supports, 2 the healers). The `...Others` scenarios leave them out of every team, so they prove that nothing outside the batch's heroes changed: their hashes
+/** The heroes the batch under way reworks (SUMMON-TIMERS: the summoners and shapeshifters, whose summons and shapes now run on a timer; batch 7
+ *  was the monster heroes, 6 the casters, 5 the ranged heroes and the summoners, 4 the melee heroes, 3 the tanks and supports, 2 the healers). The `...Others` scenarios leave them out of every team, so they prove that nothing outside the batch's heroes changed: their hashes
  *  are the ones recorded before the batch. */
-export const REWORKED: readonly string[] = ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'mummy', 'kraken'];
+export const REWORKED: readonly string[] = ['druid', 'beastmaster', 'reaper', 'samuraiCommander', 'werewolf', 'kitsune', 'demonSwordsman'];
 const others = (team: string[], rng: Rng): string[] => {
   const pool = ALL_HEROES.filter((k) => !REWORKED.includes(k) && !team.includes(k));
   return team.map((k) => (REWORKED.includes(k) ? pool.splice(rng.int(0, pool.length - 1), 1)[0] : k));
@@ -69,11 +70,14 @@ const ALL: Record<string, () => void> = {
   heroes30Others: () => ALL_HEROES.filter((k) => !REWORKED.includes(k)).forEach((k, i) => heroFight(k, 900 + i, 30, true)),
 };
 
-/** Play every scenario and give each one's hash. */
+/** Play every scenario and give each one's hash. The greedy players cast no spells here (SPELLS-RETUNE turned the balance tools' spells on
+ *  by default; the fixture was recorded by a player that never cast, and this proof is about the fights, not the bot). */
 export function identityHashes(only?: readonly string[]): Record<string, string> {
   const out: Record<string, string> = {};
   const was = battleTap.fn;
+  const spells = botSpells.on;
   battleTap.fn = tap;
+  botSpells.on = false;
   try {
     for (const [name, run] of Object.entries(ALL)) {
       if (only && !only.includes(name)) continue;
@@ -83,6 +87,7 @@ export function identityHashes(only?: readonly string[]): Record<string, string>
     }
   } finally {
     battleTap.fn = was;
+    botSpells.on = spells;
   }
   return out;
 }

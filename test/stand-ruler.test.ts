@@ -33,7 +33,8 @@ function ticks(s: Stand, n: number): BattleEvent[] {
 test('the ruler damages a foe on the dais without moving or touching an ally', () => {
   const s = heldFight();
   const foe = s.b.units.find(u => u.side === 'foe' && u.alive)!;
-  const events = ticks(s, 8);
+  // (long enough for a few blows: each rolls its d20 against the foe's Armour Class, STATS batch 4, and may miss)
+  const events = ticks(s, 40);
   assert.ok(events.some(e => e.kind === 'swing' && e.by === s.king.id && e.to === foe.id));
   assert.ok(events.some(e => e.kind === 'hit' && e.by === s.king.id && e.to === foe.id && e.dmg > 1));
   assert.ok(foe.hp < foe.maxHp);
@@ -87,7 +88,8 @@ test('a ruler finishing blow counts towards the run and pays only once', () => {
   const foe = s.b.units.find(u => u.side === 'foe' && u.alive)!;
   foe.hp = 1;
   const before = s.run.gold;
-  ticks(s, 8);
+  // (long enough for a blow to land past its d20, STATS batch 4)
+  ticks(s, 40);
   assert.equal(foe.alive, false);
   assert.equal(s.run.kills, 1);
   assert.ok(s.run.gold >= before + killGold(1));

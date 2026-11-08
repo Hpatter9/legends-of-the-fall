@@ -1,11 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { KITS, keyOf } from '../src/sim/abilities';
+import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
 import { abilitySource } from '../src/render/abilityLooks';
 import { VFX_LOOKS } from '../src/render/cinematicRules';
-import { UNITS } from '../src/sim/units';
-import { TIER_SKILLS } from '../src/sim/tierSkills';
+import { ALL_HEROES, UNITS } from '../src/sim/units';
 import { PROPS, SIGNATURES, SPECIAL_STRIPS, tierRing, type Step } from '../src/render/signatures';
 
 const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as Record<string, number[]>;
@@ -20,7 +19,8 @@ const heroSkills = () =>
 const all = (sig: (typeof SIGNATURES)[string]): Step[] => [...sig.wind, ...sig.cast, ...sig.hit];
 
 test('every hero skill and ultimate, and every foe skill, has a look of its own', () => {
-  for (const kit of Object.values(KITS)) {
+  // (FOE-STYLES: a common foe's kit has no skill)
+  for (const kit of Object.values(KITS).filter(hasSkill)) {
     for (const name of [keyOf(kit.skill), ...(kit.ultimate ? [keyOf(kit.ultimate)] : [])]) {
       const sig = SIGNATURES[name];
       assert.ok(sig, `no signature for ${name}`);
@@ -98,7 +98,8 @@ test('a hero\'s skill and its ultimate look different, and the ultimate is the b
 });
 
 test('a tier ring is the lead of its hero\'s skill', () => {
-  for (const id of Object.keys(TIER_SKILLS)) {
+  // (the tier skills went with the skills overhaul's batch 3; the ring is still each hero skill's look)
+  for (const id of ALL_HEROES) {
     const k = KITS[id];
     if (!k) continue;
     const ring = tierRing(keyOf(k.skill), 192, true);

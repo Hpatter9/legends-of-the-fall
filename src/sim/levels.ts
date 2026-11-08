@@ -1,5 +1,6 @@
-// Levels for the hero kinds. Each fight gives every hero that fought some XP, and most of it is for what the hero killed:
-// a kill is worth a tenth of the foe's max hp (a boss kill, several times that), so the XP grows with the foes' strength.
+// Levels for the hero kinds. Each fight gives every hero that fought some XP, and most of it is for the kills: a kill is
+// worth a tenth of the foe's max hp (a boss kill, several times that), so the XP grows with the foes' strength. The killer
+// keeps half of a kill's XP and the other half is shared by everyone who fought (`KILL_KEEP`).
 // A smaller share is for the damage it dealt and the healing it did, and a little for taking part (and for a win). A
 // fallen hero keeps all it earned. The XP is kept per kind in the meta, and the level is read from it. Each level above
 // the first adds to the kind's hp and attack, up to `MAX_LEVEL`, and the curve rises so each level takes more XP than the
@@ -121,18 +122,40 @@ export function levelGain(from: number, to: number, lasting = true): { hp: numbe
 export const xpOf = (m: Meta, kind: string): number => m.xp[kind] ?? 0;
 export const levelOfKind = (m: Meta, kind: string): number => levelOf(xpOf(m, kind));
 
-/** The XP each hero kind earns from a finished fight, by kind: every hero that fought counts once, and a win pays more. `rate` is the castle's Library
- *  (1 without it); it multiplies each hero's pay. */
-export function fightXp(b: Battle, rate = 1): Record<string, number> {
+/** The share of a kill's XP the killing hero keeps for itself. The rest (`1 - KILL_KEEP`) goes into the fight's kill pool, shared evenly by
+ *  every hero that fought, the killer among them (so a killer in a party of five keeps 50% + 10% = 60% of its kill, and each of the
+ *  others gets 10%). A weak hero fighting beside a strong one then levels faster, the killer still earns the most, and the XP the fight
+ *  gives in all stays the same (only who gets it moves). The damage, healing, taking-part and win XP are each hero's own as before. */
+export const KILL_KEEP = 0.5;
+
+/** The heroes a fight's XP is paid to: every hero placed that fought (a fallen one too), not a fighter a skill or a spell called up. */
+const fighters = (b: Battle): Unit[] => b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def]?.summon);
+
+/** The kill XP each fighter (by unit id) is paid from a finished fight: `KILL_KEEP` of its own kills (and those of the fighters its skills
+ *  called up), and an even share of the pool the rest of every fighter's kills make. A lone hero gets all of its own. `keep` is for the
+ *  pace tools (1 is the old rule, every kill to the killer). */
+export function killShares(b: Battle, keep = KILL_KEEP): Map<number, number> {
+  const heroes = fighters(b);
+  const own = new Map<number, number>();
+  for (const u of heroes) own.set(u.id, (u.slain ?? 0) + b.units.filter((x) => x.owner === u.id).reduce((n, x) => n + (x.slain ?? 0), 0));
+  const pool = [...own.values()].reduce((n, x) => n + x, 0) * (1 - keep);
+  const each = heroes.length ? pool / heroes.length : 0;
+  return new Map(heroes.map((u) => [u.id, keep * own.get(u.id)! + each]));
+}
+
+/** The XP each hero kind earns from a finished fight, by kind: every hero that fought counts once, and a win pays more. Its kills are
+ *  split (`KILL_KEEP`, `killShares`). `rate` is the castle's Library (1 without it); it multiplies each hero's pay. `keep` is `killShares`'. */
+export function fightXp(b: Battle, rate = 1, keep = KILL_KEEP): Record<string, number> {
   const out: Record<string, number> = {};
   const won = b.phase === 'won';
-  const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING + (u.slain ?? 0);
-  for (const u of b.units) {
-    // (a fighter the king's own spell called up (Call the Wolves) has no caller and earns no XP of its own)
-    if (u.side !== 'hero' || u.owner !== undefined || UNITS[u.def]?.summon) continue;
+  const kills = killShares(b, keep);
+  // (what a fighter earns by its own hand: damage and healing; the kills are paid from `kills`)
+  const shareOf = (u: Unit) => (u.dealt ?? 0) / XP_PER_DAMAGE + (u.healed ?? 0) / XP_PER_HEALING;
+  // (a fighter the king's own spell called up (Call the Wolves) has no caller and earns no XP of its own)
+  for (const u of fighters(b)) {
     // (what the fighters its skills called up did counts as its own)
     const called = b.units.filter((x) => x.owner === u.id).reduce((n, x) => n + shareOf(x), 0);
-    const xp = Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called) * rate);
+    const xp = Math.round((XP_TAKE_PART + (won ? XP_WIN : 0) + shareOf(u) + called + (kills.get(u.id) ?? 0)) * rate);
     out[u.def] = (out[u.def] ?? 0) + xp;
   }
   return out;

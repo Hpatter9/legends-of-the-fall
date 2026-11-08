@@ -1,13 +1,14 @@
 // The balance report: plays many headless fights with the sim and prints how strong each hero, foe band and stage is,
 // and how a greedy player fares over whole runs. Run it with `npm run balance` (tools/balance.mjs bundles this file with
 // esbuild, as test.mjs does for the tests).
+// The greedy players cast the king's spells as the page's Auto does (SPELLS-RETUNE, `docs/notes/spells-retune.md`); `BOT_SPELLS=0 npm run balance ...`
+// plays the old spell-less bot, `BOT_LOADOUT=heal,meteor,haste` fixes the loadout.
 //
 //   npm run balance                    the default number of fights (4000 for the heroes; a quarter of that per cell)
 //   npm run balance -- --games 800     fewer fights, quicker and noisier
 //   npm run balance -- --hero-stage 1  play the hero table at another stage (default 5)
 //   npm run balance -- --heroes-only --hero-level 100 --hero-stage 60   the same with every hero at a level (pick a stage where the average team wins about half)
-//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2, 3 or 4: the tier skills, `tierSkills.ts`)
-//   npm run balance -- --heroes-only --hero-grade 4 --tier-cap 3 ...   the same, every hero casting no higher than its tier 3 skill (to set tier 4 against it; `tools/rank4/` measures each hero's step)
+//   npm run balance -- --heroes-only --hero-grade 3 --hero-stage 14   the same with every hero merged up (grade 2, 3 or 4: more health and attack, `GRADE_BOOST`)
 //   npm run balance -- --saves 200     fresh saves in the whole-run table (default 400)
 //   npm run balance -- --heroes-only  only the hero value table (table 1); --json file.json also writes each hero's win rate and lift; --seed-offset n plays other fights
 //   npm run balance -- --runs-only     only the whole-run table (quicker when tuning the levels)
@@ -17,6 +18,7 @@
 //   npm run balance -- --no-tables --tiers --levels 8,14,20   table 5e: each army on each difficulty tier (recruits, maxed castle, gear)
 //   npm run balance -- --no-tables --deep --levels 30,40,60,100 --attempts 10 [--talents] [--tiers-at 2,3]   table 5f: mean tries to clear each army on the top tiers at deep hero levels
 //   npm run balance -- --no-tables --stand --levels 1,10,20 --attempts 30   the Last Stand held by a greedy player (`tools/stand-balance.ts`; `--tower` is the same, the Tower's old name)
+//   npm run balance -- --eidolon 15[:nivra] ...   any of the above with an Eidolon called at that wave of every army attempt (EIDOLONS)
 //   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
@@ -24,19 +26,49 @@
 // runs (a greedy player on fresh saves, carrying the hero levels from run to run). Every fight is seeded, so the same
 // numbers come out again on the same code.
 
+import { PROVISIONS } from '../src/sim/calJourney';
+import './joint/off';
+import './tactics/off';
 import { fight, place, playOut } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
 import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
-import { boostOf, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { CAL_TIER } from '../src/sim/calamity';
+import { boostOf, GRADE_BOOST, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
+import { legacyBoost, PERKS } from '../src/sim/legacy';
+import type { Boost } from '../src/sim/battle';
+// (GB=1,1.35,1.75,2.65 tries other grade steps for the run: a tuning knob, nothing is written)
+if (process.env.GB) (GRADE_BOOST as number[]).splice(0, 4, ...process.env.GB.split(',').map(Number));
+// (CALTIER=1.28 tries another Calamity tier step, `CAL_TIER.mult`)
+if (process.env.CALTIER) CAL_TIER.mult = Number(process.env.CALTIER);
 import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
-import { playArmy, savedAt } from './autoplay';
+import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
+import { fullCouncil, growWar, harshen } from './nemesis/warBot';
+import { WAR_BOT } from './autoplay';
+import { DUEL_ARMY, DUEL_BOSS, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
+import { roleOf, type PartyRole } from '../src/sim/suggest';
+import { armyRun, recruit } from '../src/sim/run';
+import { snapOf, type Nemesis } from '../src/sim/nemesis';
 import { calamityTable } from './tower-balance';
+import { equipAll } from '../src/sim/equipment';
+import { FIELD_BOOST, GRADE_TABLE } from '../src/sim/runGear';
+// (RUN-GEAR: `--normal 1:0,1:0,1:0.33,2:0` tries another Normal column of the finds' grade table, steps 1 to 4 as grade:chance-up)
+if (process.argv.includes('--normal'))
+  process.argv[process.argv.indexOf('--normal') + 1].split(',').forEach((cell, i) => {
+    const [g, up] = cell.split(':').map(Number);
+    GRADE_TABLE[i + 1][0] = [g, up || 0];
+  });
+// (RUN-GEAR: `--field 1.5,3` tries another fresh-from-the-field boost for army runs and bare runs; a tuning run, nothing is written)
+if (process.argv.includes('--field')) {
+  const [a, b] = process.argv[process.argv.indexOf('--field') + 1].split(',').map(Number);
+  if (a > 0) FIELD_BOOST.army = a;
+  if (b > 0) FIELD_BOOST.bare = b;
+}
 import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
@@ -45,7 +77,6 @@ import { deploySpots, fieldBoost, pickTeam, play } from './heroSweep';
 import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
 import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { writeFileSync } from 'node:fs';
-import { capTiers } from './rank4/cap';
 
 const arg = (name: string, fallback: number): number => {
   const i = process.argv.indexOf(name);
@@ -62,7 +93,12 @@ const HERO_STAGE = arg('--hero-stage', 5);
 const HERO_LEVEL = arg('--hero-level', 1);
 const HERO_GRADE = arg('--hero-grade', 1);
 // (`--tier-cap 3`: every hero casts its tier 3 skill at grade 4, as it did before tier 4 was added)
-if (process.argv.includes('--tier-cap')) capTiers(ALL_HEROES, arg('--tier-cap', 4));
+// (EIDOLONS: `--eidolon <wave>[:<id>]` calls an Eidolon at that wave of every army attempt, to see the walls with and without one)
+if (process.argv.includes('--eidolon')) {
+  const [w, id] = (process.argv[process.argv.indexOf('--eidolon') + 1] ?? '').split(':');
+  eidolonAt.wave = Number(w) | 0;
+  if (id) eidolonAt.id = id;
+}
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');
@@ -227,6 +263,7 @@ function playRun(meta: Meta, seed: number): number {
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a, run.stage)));
     squad.forEach((h, i) => place(b, h.kind, spots[i][0], spots[i][1], h.id, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), awakenStats(meta, h.kind))));
     fight(b);
+    maybeSpells(b, meta, CASTLE);
     playOut(b);
     finish(run, b.phase === 'won', ratingOf(b, isBossStage(run.stage)).stars);
     gainXp(meta, fightXp(b, xpRate(CASTLE)));
@@ -323,7 +360,8 @@ function armies(): void {
   const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, first: 0, lv: 0, seen: 0, crowns: 0 }));
   for (let save = 1; save <= SAVES; save++) {
     const meta = startedMeta(save);
-    for (let i = 0; i < ARMIES.length; i++) {
+    // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
+    for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];
       let tries = 0;
       let cleared = false;
@@ -408,22 +446,28 @@ function spendCrowns(meta: Meta): void {
 
 function realClimb(): void {
   console.log(`\n5c. THE REALISTIC CLIMB  (${SAVES} fresh saves; recruits, a castle grown from the crowns each try pays (${CASTLE_SHARE * 100}% of what it has), gear, levels carried; at most ${MAX_TRIES} tries an army)\n`);
-  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14)].join(''));
-  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0 }));
+  console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14), rpad('pieces', 8), rpad('Legendary %', 12)].join(''));
+  const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0, pieces: 0, legend: 0 }));
   for (let save = 1; save <= SAVES; save++) {
     const meta = startedMeta(save);
-    for (let i = 0; i < ARMIES.length; i++) {
+    // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
+    for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];
       let tries = 0;
       let cleared = false;
       const st = stats[i];
       while (tries < MAX_TRIES && !cleared) {
         spendCrowns(meta);
+        // (RUN-GEAR: the pieces its runs found and brought home are put on at camp, Equip all, before each try)
+        equipAll(meta);
         const party = bestParty(meta);
         if (tries === 0) {
           st.lv += party.reduce((n, k) => n + levelOfKind(meta, k), 0) / party.length;
           st.castle += Object.values(meta.castle).reduce((n, v) => n + v, 0);
           st.owned += meta.unlocked.length;
+          // (RUN-GEAR: the pieces the save's runs have brought home so far, and whether any is Legendary)
+          st.pieces += meta.equipment?.length ?? 0;
+          if ((meta.equipment ?? []).some((x) => x.rarity >= 4)) st.legend++;
           st.seen++;
         }
         const r = playArmy(meta, army.id, mixSeed(save, 0xc11c, i * 100 + tries), party, { ...meta.castle }, true);
@@ -450,6 +494,8 @@ function realClimb(): void {
         rpad((st.lv / n).toFixed(1), 13),
         rpad((st.castle / n).toFixed(1), 13),
         rpad((st.owned / n).toFixed(1), 14),
+        rpad((st.pieces / n).toFixed(1), 8),
+        rpad(f1(pct(st.legend, n)).trim(), 12),
       ].join(''),
     );
   });
@@ -506,6 +552,7 @@ function tiers(): void {
  * talent row its level opens (the first of each pair), against each army on `--tiers-at` (default Elite and Legendary): the mean tries to clear it (a fresh save
  * each time, at most `MAX_TRIES`) and the share that cleared. Heroes at 100 should find the top tiers easier, but not trivial.
  */
+const BIRTHRIGHT = process.argv.includes('--birthright');
 function deepLevels(): void {
   const maxed = newCastle();
   for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
@@ -520,7 +567,7 @@ function deepLevels(): void {
       for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, t)) learn(meta, k, n.id);
     }
   };
-  console.log(`\n5f. THE DEEP LEVELS  (${party.map((k) => UNITS[k].name).join(', ')}; every hero at the level shown, a maxed castle, gear dressed${talents ? ', talents learned' : ', no talents'}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries; mean tries (clear %))\n`);
+  console.log(`\n5f. THE DEEP LEVELS  (${party.map((k) => UNITS[k].name).join(', ')}; every hero at the level shown, a maxed castle, gear dressed${talents ? ', talents learned' : ', no talents'}${BIRTHRIGHT ? ', every hero a birthright' : ''}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries; mean tries (clear %))\n`);
   for (const t of tiersAt) {
     console.log(`${TIERS[t].name}`);
     console.log([pad('  army', 22), ...LEVELS.map((L) => rpad(`Lv ${L}`, 16))].join(''));
@@ -531,11 +578,14 @@ function deepLevels(): void {
         for (let save = 1; save <= ATTEMPTS; save++) {
           const meta = savedAt(L, party, save);
           dress(meta);
-          const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
+          // (`--birthright`, Dynasties phase 6: every hero of the party an heir with a birthright, its own House's perk at its first band, laid on
+          //  as the run's snapshot lays it, `legacyBoost`)
+          const birth = (h: Owned, b: Boost): Boost => (BIRTHRIGHT && PERKS[h.kind] ? legacyBoost({ [h.kind]: { [PERKS[h.kind].kind]: PERKS[h.kind].steps[0] } }, h.kind, b) : b);
+          const boostFor = (h: Owned) => birth(h, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind)));
           let n = 0;
           let ok = false;
           while (n < MAX_TRIES && !ok) {
-            ok = playArmy(meta, army.id, mixSeed(save, 0xd33b, ARMIES.indexOf(army) * 100 + t * 10 + n), party, maxed, true, t, talents ? boostFor : undefined).cleared;
+            ok = playArmy(meta, army.id, mixSeed(save, 0xd33b, ARMIES.indexOf(army) * 100 + t * 10 + n), party, maxed, true, t, talents || BIRTHRIGHT ? boostFor : undefined).cleared;
             n++;
           }
           tries += n;
@@ -546,6 +596,207 @@ function deepLevels(): void {
       console.log([pad(`  ${army.name}`, 22), ...cells].join(''));
     }
   }
+}
+
+/**
+ * 5g. THE NEMESIS WAR (`--nemesis typical` or `harsh`, docs/notes/nemesis-1.md): the recruits' party at each army's own level on Normal (and
+ * `--nemesis-hard L`: Hard at level L), with gear dressed and, with `--talents`, every talent row its level opens; the mean tries to clear
+ * each army (at most `MAX_TRIES`, a fresh save each time) with no War, and with a Council grown by real fights (`tools/nemesis/warBot.ts`:
+ * `--war-runs` runs of each army; `harsh` then five Might up and three traits each) met but never changed. The bar: no army's mean tries
+ * rises by more than 1.
+ */
+function nemesisTable(): void {
+  const mode = flag('--nemesis');
+  const party = PARTIES.recruits;
+  const talents = process.argv.includes('--talents');
+  const runs = process.argv.includes('--war-runs') ? Number(flag('--war-runs')) : 4;
+  // (a castle of the size a player of that level has: 17 levels at about hero level 45, every one at 80, as `test/army-pace.test.ts`)
+  const castleAt = (level: number): Castle => {
+    const c = newCastle();
+    const ids = Object.keys(BUILDINGS) as BuildingId[];
+    const all = ids.reduce((n, id) => n + maxLevel(id), 0);
+    const want = Math.min(all, Math.round((level * 17) / 45));
+    for (let i = 0; i < want; i++) {
+      const open = ids.filter((id) => c[id] < maxLevel(id)).sort((a, b) => c[a] - c[b]);
+      if (open.length) c[open[0]]++;
+    }
+    return c;
+  };
+  // (phase 2: the Council takes its turns between the runs that grow it, unless `--no-council` asks for phase 1's War)
+  const council = !process.argv.includes('--no-council');
+  const war = mode === 'full' ? fullCouncil(process.argv.includes('--might') ? Number(flag('--might')) : 3) : growWar(runs, 1, party, talents, castleAt, council);
+  if (mode === 'harsh') harshen(war);
+  // (the late armies are out of the greedy bot's reach at their own level, which was tuned for a player with hearts: `--late-plus N` fights them N levels on)
+  const latePlus = process.argv.includes('--late-plus') ? Number(flag('--late-plus')) : 0;
+  const hardAt = process.argv.includes('--nemesis-hard') ? Number(flag('--nemesis-hard')) : 0;
+  const might = war.members.map((n) => n.might);
+  console.log(`\n5g. THE NEMESIS WAR  (${mode}: ${war.members.length} members ${mode === 'full' ? 'set, four to each army' : `grown over ${runs} runs an army`}, Might mean ${(might.reduce((a, b) => a + b, 0) / Math.max(1, might.length)).toFixed(1)}, top ${Math.max(0, ...might)}; ${ATTEMPTS} fresh saves a cell, at most ${MAX_TRIES} tries${talents ? ', talents learned' : ''}; mean tries (clear %))\n`);
+  for (const n of war.members) console.log(`  ${pad(n.army, 10)} ${pad(n.rank, 11)} Might ${pad(String(n.might), 3)} ${pad(n.base, 18)} ${n.traits.join(', ')} | ${n.weak.join(', ')}`);
+  if (mode !== 'full') console.log(`  (${council ? `the Council took ${war.turn} turns between the runs` : 'no Council turns: phase 1’s War'})`);
+  const dress = (meta: Meta): void => {
+    if (!talents) return;
+    for (const k of party) for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const node of tierNodes(k, t)) learn(meta, k, node.id);
+  };
+  const cell = (army: (typeof ARMIES)[number], level: number, tier: number, withWar: boolean): { tries: number; clear: number } => {
+    let tries = 0;
+    let cleared = 0;
+    for (let save = 1; save <= ATTEMPTS; save++) {
+      const meta = savedAt(level, party, save);
+      dress(meta);
+      if (withWar) meta.war = war;
+      const boostFor = (h: Owned) => boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), heroStats(meta, h.kind));
+      let n = 0;
+      let ok = false;
+      while (n < MAX_TRIES && !ok) {
+        ok = playArmy(meta, army.id, mixSeed(save, 0x4e3e, ARMIES.indexOf(army) * 100 + tier * 10 + n), party, castleAt(level), true, tier, talents ? boostFor : undefined).cleared;
+        n++;
+      }
+      tries += n;
+      if (ok) cleared++;
+    }
+    return { tries: tries / ATTEMPTS, clear: pct(cleared, ATTEMPTS) };
+  };
+  const rows: [string, number, number][] = [];
+  for (const army of ARMIES.filter((a) => !ONLY || ONLY.includes(a.id))) {
+    rows.push([army.id, army.level + (ARMIES.indexOf(army) >= 6 ? latePlus : 0), 0]);
+    if (hardAt) rows.push([army.id, hardAt, 1]);
+  }
+  console.log(['  army'.padEnd(22), rpad('tier', 8), rpad('level', 7), rpad('no War', 16), rpad('with War', 16), rpad('change', 8), rpad('members', 8)].join(''));
+  let worst = 0;
+  for (const [id, level, tier] of rows) {
+    const army = armyById(id)!;
+    const a = cell(army, level, tier, false);
+    const b = cell(army, level, tier, true);
+    const met = war.members.filter((n) => n.army === id).length;
+    worst = Math.max(worst, b.tries - a.tries);
+    console.log([pad(`  ${army.name}`, 22), rpad(TIERS[tier].name, 8), rpad(String(level), 7), rpad(`${a.tries.toFixed(1)} (${f1(a.clear).trim()}%)`, 16), rpad(`${b.tries.toFixed(1)} (${f1(b.clear).trim()}%)`, 16), rpad(`${b.tries - a.tries >= 0 ? '+' : ''}${(b.tries - a.tries).toFixed(1)}`, 8), rpad(String(met), 8)].join(''));
+  }
+  console.log(`\n  the largest rise in mean tries: ${worst >= 0 ? '+' : ''}${worst.toFixed(2)} (the bar: no more than +1)`);
+}
+
+/**
+ * 5h. DUELS (`--duel`, docs/notes/nemesis-4.md): every hero kind alone, at its army's own level on Normal (talents learned, a castle of the
+ * level's size), in a duel against each army's captain (an escort risen to captain, at its mid-boss wave) and its boss nemesis (its last boss),
+ * at Might 1, 5 and 10, `--duel-seeds` duels a cell; plain, and with the hero the nemesis's Dread. The design's band: the challenged hero at
+ * the army's level wins 55 to 65% (about 70% with a Grudge or its Dread); kinds outside 40 to 75% have their role's multiplier set
+ * (`DUEL_ROLE`). `--duel-kinds a,b` narrows the kinds.
+ */
+function duelTable(): void {
+  // (tuning: `--duel-share hp,atk`, `--duel-boss hp,atk`, `--duel-role front:hp:atk,...`)
+  if (process.argv.includes('--duel-share')) [DUEL_SHARE.hp, DUEL_SHARE.atk] = flag('--duel-share')!.split(',').map(Number);
+  if (process.argv.includes('--duel-boss')) [DUEL_BOSS.hp, DUEL_BOSS.atk] = flag('--duel-boss')!.split(',').map(Number);
+  if (process.argv.includes('--duel-army'))
+    for (const r of flag('--duel-army')!.split(',')) {
+      const [id, f] = r.split(':');
+      DUEL_ARMY[id] = Number(f);
+    }
+  if (process.argv.includes('--duel-role'))
+    for (const r of flag('--duel-role')!.split(',')) {
+      const [role, hp, atk] = r.split(':');
+      DUEL_ROLE[role as PartyRole] = { hp: Number(hp), atk: Number(atk) };
+    }
+  const seeds = process.argv.includes('--duel-seeds') ? Number(flag('--duel-seeds')) : 6;
+  const kinds = process.argv.includes('--duel-kinds') ? flag('--duel-kinds')!.split(',') : [...ALL_HEROES];
+  const mights = [1, 5, 10];
+  const armies = ARMIES.filter((a) => !ONLY || ONLY.includes(a.id));
+  const castleAt = (level: number): Castle => {
+    const c = newCastle();
+    const ids = Object.keys(BUILDINGS) as BuildingId[];
+    const all = ids.reduce((n, id) => n + maxLevel(id), 0);
+    const want = Math.min(all, Math.round((level * 17) / 45));
+    for (let i = 0; i < want; i++) {
+      const open = ids.filter((id) => c[id] < maxLevel(id)).sort((a, b) => c[a] - c[b]);
+      if (open.length) c[open[0]]++;
+    }
+    return c;
+  };
+  console.log(`\n5h. DUELS  (every kind at its army's level on Normal, talents learned; ${armies.length} armies x captain and boss x Might ${mights.join(', ')} x ${seeds} seeds; the nemesis at ${DUEL_SHARE.hp * 100}% health and ${DUEL_SHARE.atk * 100}% attack; a boss x${DUEL_BOSS.hp}/${DUEL_BOSS.atk}; armies ${JSON.stringify(DUEL_ARMY)}; roles ${JSON.stringify(DUEL_ROLE)})\n`);
+  const t0 = Date.now();
+  const byKind = new Map<string, { won: number; n: number; dread: number; dn: number; out: number }>();
+  const byArmy = new Map<string, { won: number; n: number }>();
+  const byMight = new Map<number, { won: number; n: number }>();
+  const byTarget = new Map<string, { won: number; n: number }>();
+  for (const kind of kinds) {
+    const k = { won: 0, n: 0, dread: 0, dn: 0, out: 0 };
+    for (const army of armies) {
+      const a = byArmy.get(army.id) ?? { won: 0, n: 0 };
+      const troops = army.waves.filter((w) => !w.boss).flatMap((w) => w.foes);
+      const mid = army.waves.findIndex((w) => w.boss === 'mid') + 1;
+      const last = army.waves.length;
+      const targets: [string, number, Partial<Nemesis>][] = [
+        ['captain', mid || Math.ceil(last / 2), { base: troops[0], rank: 'captain' }],
+        ['boss', last, { base: army.waves[last - 1].foes[0], rank: 'captain', boss: true }],
+      ];
+      for (const [tname, wave, shape] of targets) {
+        for (const might of mights) {
+          for (const dread of [false, true]) {
+            for (let seed = 1; seed <= seeds; seed++) {
+              const meta = savedAt(army.level, [kind], mixSeed(seed, 0xd0e1));
+              for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const node of tierNodes(kind, t)) learn(meta, kind, node.id);
+              const run = armyRun(mixSeed(seed, 0xd0e1, ARMIES.indexOf(army), might, wave), army.id, [kind], castleAt(army.level), 0);
+              run.roster = [];
+              const h = recruit(run, kind);
+              run.squad = [h.id];
+              run.stage = wave;
+              const n: Nemesis = { id: 1, base: shape.base!, army: army.id, name: 'Duellist', epithet: '', rank: shape.rank!, ...(shape.boss ? { boss: true as const } : {}), loyalty: 60, might, scars: 0, traits: ['scarred'], weak: dread ? [`dread:${kind}`] : ['dread:knight'], known: [], memory: [], met: 1, lost: 0, born: 0 };
+              run.nemesis = { members: [snapOf(n)], waves: { [String(wave)]: [1] } };
+              const b = startDuel(run, { id: 1 }, h.id, boostOf(h, heroRank(meta, kind), levelOfKind(meta, kind), heroStats(meta, kind)));
+              fight(b);
+              playOut(b);
+              const won = duelOutcome(b) === 'won' ? 1 : 0;
+              if (dread) {
+                k.dread += won;
+                k.dn++;
+                continue;
+              }
+              k.won += won;
+              k.n++;
+              if (duelOutcome(b) === 'timeout') k.out++;
+              a.won += won;
+              a.n++;
+              const mm = byMight.get(might) ?? { won: 0, n: 0 };
+              mm.won += won;
+              mm.n++;
+              byMight.set(might, mm);
+              const tt = byTarget.get(tname) ?? { won: 0, n: 0 };
+              tt.won += won;
+              tt.n++;
+              byTarget.set(tname, tt);
+            }
+          }
+        }
+      }
+      byArmy.set(army.id, a);
+    }
+    byKind.set(kind, k);
+  }
+  const roles = new Map<PartyRole, { won: number; n: number; dread: number; dn: number }>();
+  console.log(['  kind'.padEnd(20), rpad('role', 9), rpad('win %', 8), rpad('Dread %', 9), rpad('timeouts', 9)].join(''));
+  const outside: string[] = [];
+  for (const [kind, k] of byKind) {
+    const r = roleOf(kind);
+    const rr = roles.get(r) ?? { won: 0, n: 0, dread: 0, dn: 0 };
+    rr.won += k.won;
+    rr.n += k.n;
+    rr.dread += k.dread;
+    rr.dn += k.dn;
+    roles.set(r, rr);
+    const w = pct(k.won, k.n);
+    if (w < 40 || w > 75) outside.push(`${kind} ${w.toFixed(0)}%`);
+    console.log([pad(`  ${kind}`, 20), rpad(r, 9), rpad(w.toFixed(0), 8), rpad(pct(k.dread, k.dn).toFixed(0), 9), rpad(String(k.out), 9)].join(''));
+  }
+  console.log('\n  by role:');
+  for (const [r, x] of roles) console.log(`    ${pad(r, 9)} ${pct(x.won, x.n).toFixed(1)}%  (with its Dread ${pct(x.dread, x.dn).toFixed(1)}%)`);
+  console.log('  by army:');
+  for (const [id, x] of byArmy) console.log(`    ${pad(id, 10)} ${pct(x.won, x.n).toFixed(1)}%`);
+  console.log('  by Might:');
+  for (const [m, x] of byMight) console.log(`    ${pad(String(m), 4)} ${pct(x.won, x.n).toFixed(1)}%`);
+  console.log('  by foe:');
+  for (const [t, x] of byTarget) console.log(`    ${pad(t, 8)} ${pct(x.won, x.n).toFixed(1)}%`);
+  const all = [...byKind.values()].reduce((s, k) => ({ won: s.won + k.won, n: s.n + k.n, dread: s.dread + k.dread, dn: s.dn + k.dn }), { won: 0, n: 0, dread: 0, dn: 0 });
+  console.log(`\n  in all: ${pct(all.won, all.n).toFixed(1)}% (the band: 55 to 65%), with its Dread ${pct(all.dread, all.dn).toFixed(1)}% (about 70%)`);
+  console.log(`  kinds outside 40 to 75%: ${outside.length ? outside.join(', ') : 'none'}`);
+  console.log(`  (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
 }
 
 if (process.argv.includes('--no-tables')) {
@@ -564,9 +815,18 @@ if (process.argv.includes('--no-tables')) {
   armies();
 }
 if (process.argv.includes('--stand') || process.argv.includes('--tower')) standTable();
+// (DEPTH-BUILD: --no-provisions measures the Calamity without them)
+if (process.argv.includes('--no-provisions')) PROVISIONS.on = false;
 if (process.argv.includes('--calamity')) calamityTable();
 if (process.argv.includes('--climb')) realClimb();
 if (process.argv.includes('--maxed')) maxedCastle();
 if (process.argv.includes('--tiers')) tiers();
 if (process.argv.includes('--deep')) deepLevels();
+// (phase 4: the War's bot takes the duels it is offered, in the Council it grows and the runs it measures; `--duels off` as phase 3 did)
+if (process.argv.includes('--nemesis')) {
+  WAR_BOT.duels = flag('--duels') !== 'off';
+  nemesisTable();
+  WAR_BOT.duels = false;
+}
+if (process.argv.includes('--duel')) duelTable();
 console.log('');

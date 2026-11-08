@@ -901,5 +901,229 @@
     "motif": "five small falling gold celestial stars forming a curved constellation with long silver tails",
     "atlas": 8,
     "cell": 0
+  },
+  {
+    "id": "spell:firewall",
+    "name": "firewall",
+    "motif": "a roaring line of flame rising, burning and dispersing",
+    "atlas": 9,
+    "cell": 0
+  },
+  {
+    "id": "spell:icewall",
+    "name": "icewall",
+    "motif": "a jagged blue crystal wall with frost glints and shattering shards",
+    "atlas": 9,
+    "cell": 1
+  },
+  {
+    "id": "spell:shatter",
+    "name": "shatter",
+    "motif": "an empty frozen shell bursting into blue shards",
+    "atlas": 9,
+    "cell": 2
+  },
+  {
+    "id": "spell:gale",
+    "name": "gale",
+    "motif": "sweeping teal wind with leaves and curved streaks",
+    "atlas": 9,
+    "cell": 3
+  },
+  {
+    "id": "spell:thunderclap",
+    "name": "thunderclap",
+    "motif": "an overhead thunder burst and a flattened shockwave ring",
+    "atlas": 9,
+    "cell": 4
+  },
+  {
+    "id": "spell:snare",
+    "name": "snare",
+    "motif": "dark thorny vines erupting and wrapping an empty space",
+    "atlas": 9,
+    "cell": 5
+  },
+  {
+    "id": "spell:charm",
+    "name": "charm",
+    "motif": "pink-violet hearts and swirling glamour",
+    "atlas": 9,
+    "cell": 6
+  },
+  {
+    "id": "spell:foresight",
+    "name": "foresight",
+    "motif": "a golden third eye under a soft violet veil",
+    "atlas": 9,
+    "cell": 7
+  },
+  {
+    "id": "spell:sunbeam",
+    "name": "sunbeam",
+    "motif": "a golden shaft of sunlight and spreading radiance",
+    "atlas": 9,
+    "cell": 8
+  },
+  {
+    "id": "spell:venom",
+    "name": "venom",
+    "motif": "spectral green serpent fangs striking",
+    "atlas": 9,
+    "cell": 9
+  },
+  {
+    "id": "spell:mirage",
+    "name": "mirage",
+    "motif": "wavering coloured heat-haze after-images",
+    "atlas": 9,
+    "cell": 10
+  },
+  {
+    "id": "spell:drain",
+    "name": "drain",
+    "motif": "a crimson ribbon of life drawn away",
+    "atlas": 9,
+    "cell": 11
+  },
+  {
+    "id": "spell:bonewall",
+    "name": "bonewall",
+    "motif": "ivory bones and skulls rising through violet mist",
+    "atlas": 9,
+    "cell": 12
+  },
+  {
+    "id": "spell:raisedead",
+    "name": "raisedead",
+    "motif": "a flattened necromantic sigil and a rising skeletal hand",
+    "atlas": 9,
+    "cell": 13
+  },
+  {
+    "id": "skill:Crimson Lunge",
+    "name": "Crimson Lunge",
+    "motif": "a long curved crimson blade-arc of blood trailing red droplets",
+    "atlas": 10,
+    "cell": 0
+  },
+  {
+    "id": "skill:Banquet of Blood",
+    "name": "Banquet of Blood",
+    "motif": "a black eclipse disc ringed by blood-red corona flames and four small arrows",
+    "atlas": 10,
+    "cell": 1
+  },
+  {
+    "id": "skill:Sanguine Lash",
+    "name": "Sanguine Lash",
+    "motif": "an S-shaped blood whip tether dripping dark red drops at both ends",
+    "atlas": 10,
+    "cell": 2
+  },
+  {
+    "id": "skill:Blood Tithe",
+    "name": "Blood Tithe",
+    "motif": "a bright red star of branching blood-vessel lines bursting from one core",
+    "atlas": 10,
+    "cell": 3
+  },
+  {
+    "id": "skill:Dusk Dive",
+    "name": "Dusk Dive",
+    "motif": "a purple-veined bat wing as a swooping spear, violet streaks trailing",
+    "atlas": 10,
+    "cell": 4
+  },
+  {
+    "id": "skill:Belfry Swoop",
+    "name": "Belfry Swoop",
+    "motif": "a pale crescent moon wrapped in a ring of dark bats in violet mist",
+    "atlas": 10,
+    "cell": 5
+  },
+  {
+    "id": "skill:Gargoyle Crash",
+    "name": "Gargoyle Crash",
+    "motif": "a grey stone block slamming down in a red-lit rubble burst",
+    "atlas": 10,
+    "cell": 6
+  },
+  {
+    "id": "skill:Cathedral Perch",
+    "name": "Cathedral Perch",
+    "motif": "a gothic cathedral spire with a perched stone gargoyle in rose mist",
+    "atlas": 10,
+    "cell": 7
+  },
+  {
+    "id": "skill:Silver Stake",
+    "name": "Silver Stake",
+    "motif": "a silver arrow bolt pinned into cracked grey stone with a white glint",
+    "atlas": 10,
+    "cell": 8
+  },
+  {
+    "id": "skill:Silver Requiem",
+    "name": "Silver Requiem",
+    "motif": "a fan of five long silver stakes with violet twilight streaks",
+    "atlas": 10,
+    "cell": 9
+  },
+  {
+    "id": "skill:Thunder Beat",
+    "name": "Thunder Beat",
+    "motif": "a red lacquered gold-trimmed taiko drum struck by a stick in a golden ring",
+    "atlas": 10,
+    "cell": 10
+  },
+  {
+    "id": "skill:Ten Thousand Drums",
+    "name": "Ten Thousand Drums",
+    "motif": "five red drums in a blue storm cloud split by white lightning",
+    "atlas": 10,
+    "cell": 11
+  },
+  {
+    "id": "skill:Tectonic Shove",
+    "name": "Tectonic Shove",
+    "motif": "a tall cracked stone pillar erupting from glowing amber fissures",
+    "atlas": 10,
+    "cell": 12
+  },
+  {
+    "id": "skill:Mountain's Embrace",
+    "name": "Mountain's Embrace",
+    "motif": "a ring of amber-lit jagged crags rising round a glowing core",
+    "atlas": 10,
+    "cell": 13
+  },
+  {
+    "id": "skill:Bronze Peal",
+    "name": "Bronze Peal",
+    "motif": "a bronze temple bell ringing on cracked ground, gold sparks flaring",
+    "atlas": 10,
+    "cell": 14
+  },
+  {
+    "id": "skill:Midnight Knell",
+    "name": "Midnight Knell",
+    "motif": "a huge dark chained bell over a violet rune ring",
+    "atlas": 10,
+    "cell": 15
+  },
+  {
+    "id": "skill:Falcon Stoop",
+    "name": "Falcon Stoop",
+    "motif": "a diving falcon in a cyan streak, wings swept back",
+    "atlas": 9,
+    "cell": 14
+  },
+  {
+    "id": "skill:Sky Hunt",
+    "name": "Sky Hunt",
+    "motif": "a flock of falcons spiralling down two blue ribbons of wind",
+    "atlas": 9,
+    "cell": 15
   }
 ]

@@ -1,5 +1,7 @@
 ## The mix: music and effects matched by measurement
 
+**Changed by [battle-music-2.md](battle-music-2.md):** the music files are now all mastered to -18 LUFS and every loop plays at one level (-30 LUFS at the speakers, `MUSIC_LEVEL` 0.251, every loop's trim 1); the stings keep their targets. The effects' levels below are unchanged.
+
 Branch: `claude/audio-mix` (from main 0.233.0). The owner's ask: "Adjust the audio so the music and sound effects are better
 matches in volume."
 

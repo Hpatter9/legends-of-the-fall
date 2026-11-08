@@ -4,27 +4,30 @@ import { Rectangle, Sprite, Texture } from 'pixi.js';
 import { loadImage } from './loadImage';
 import atlasUrl from '../art/fx/cinematic/painted-atlas.png';
 import accentsUrl from '../art/fx/cinematic/accents-atlas.png';
-import { FORMS, PALETTE, formOf, paintedPose, type Form, type PaintedElement } from './cinematicRules';
+import motionUrl from '../art/finishing/spell-motion.webp';
+import { paintedFrame, paintedMotionRow } from './paintedAnimation';
+import { FORMS, PALETTE, formOf, paintedPose, type Form, type PaintedElement, type PaintedPose } from './cinematicRules';
 import type { Element, Family } from './fxRules';
 
-interface Material { family: Family }
+interface Material { family: Family; form?: Form; clip?: readonly Texture[] }
 const materials = new WeakMap<Texture, Material>();
 const sources = new Map<string, Texture>();
 const strips = new Map<string, Texture[]>();
 let atlas: HTMLImageElement;
 let accents: HTMLImageElement;
+let motion: HTMLImageElement;
 let loading: Promise<void> | undefined;
 
 export function loadPaintedArt(): Promise<void> {
-  return loading ??= Promise.all([loadImage(atlasUrl), loadImage(accentsUrl)]).then(([main, detail]) => { atlas = main; accents = detail; });
+  return loading ??= Promise.all([loadImage(atlasUrl), loadImage(accentsUrl), loadImage(motionUrl)]).then(([main, detail, frames]) => { atlas = main; accents = detail; motion = frames; });
 }
 
 const native: Partial<Record<Form, Element>> = { slash: 'wind', orb: 'fire', fire: 'fire', bolt: 'lightning', ice: 'ice', shield: 'light', rune: 'light', heal: 'forest', poison: 'poison', dark: 'dark', spark: 'light', stone: 'earth', wind: 'wind', blood: 'blood', pillar: 'light',
   arrow: 'wind', bone: 'earth', heart: 'light', cross: 'forest', ripple: 'ice', splash: 'ice', sparks: 'light', dust: 'earth', dash: 'wind', soul: 'dark', fireRing: 'fire', vines: 'forest', beam: 'light', snare: 'earth', nova: 'dark', electric: 'lightning' };
 
 /** Keep native painted colour; other elements receive a luminance-preserving palette, with pale hot cores. */
-function surface(form: Form, el: PaintedElement): Texture {
-  const key = `${form}/${el}`;
+function surface(form: Form, el: PaintedElement, frame = 0): Texture {
+  const key = `${form}/${el}/${frame}`;
   const existing = sources.get(key);
   if (existing) return existing;
   const size = 128;
@@ -32,11 +35,12 @@ function surface(form: Form, el: PaintedElement): Texture {
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   const slot = FORMS.indexOf(form);
-  const image = slot < 16 ? atlas : accents;
-  const cell = image.width / 4;
+  const row = paintedMotionRow(form);
+  const image = row >= 0 ? motion : slot < 16 ? atlas : accents;
+  const cell = image.width / (row >= 0 ? 6 : 4);
   const index = slot % 16;
   // Insets prevent neighbouring cells from bleeding into a filtered texture.
-  ctx.drawImage(image, (index % 4) * cell + 2, Math.floor(index / 4) * cell + 2, cell - 4, cell - 4, 4, 4, size - 8, size - 8);
+  ctx.drawImage(image, (row >= 0 ? frame : index % 4) * cell + 2, (row >= 0 ? row : Math.floor(index / 4)) * cell + 2, cell - 4, cell - 4, 4, 4, size - 8, size - 8);
   {
     const pixels = ctx.getImageData(0, 0, size, size);
     const c = PALETTE[el];
@@ -67,29 +71,48 @@ export function paintedStrip(el: PaintedElement, family: Family, form = formOf(e
   const existing = strips.get(key);
   if (existing) return existing;
   const base = surface(form, el);
-  const frames = materialFrames(base, family);
+  const sequence = paintedMotionRow(form) >= 0 ? Array.from({ length: 6 }, (_, i) => surface(form, el, i)) : undefined;
+  const frames = materialFrames(base, family, form, sequence);
   strips.set(key, frames);
   return frames;
 }
 
 /** Register a shared source with a logical 32px frame and continuous material motion. */
-export function materialFrames(base: Texture, family: Family): Texture[] {
-  base.source.style.scaleMode = 'linear';
-  const texture = new Texture({ source: base.source, frame: new Rectangle(0, 0, base.source.width, base.source.height), orig: new Rectangle(0, 0, 32, 32) });
-  materials.set(texture, { family });
+export function materialFrames(base: Texture, family: Family, form?: Form, sequence?: readonly Texture[]): Texture[] {
+  const logical = (source: Texture): Texture => {
+    source.source.style.scaleMode = 'linear';
+    return new Texture({ source: source.source, frame: new Rectangle(0, 0, source.source.width, source.source.height), orig: new Rectangle(0, 0, 32, 32) });
+  };
+  if (sequence) {
+    const clip = sequence.map(logical);
+    const material = { family, form, clip };
+    for (const texture of clip) materials.set(texture, material);
+    return clip;
+  }
+  const texture = logical(base);
+  materials.set(texture, { family, form });
   return Array<Texture>(6).fill(texture);
 }
 
-/** Return false for ordinary fighter/prop textures, which retain their own animation and blending. */
-export function paintSprite(sp: Sprite, elapsed: number, life: number, scale: number, rotation: number, alpha: number, loop: boolean, calm: boolean): boolean {
+/** Pose a painted still for this moment (see `paintedPose`); false for ordinary fighter/prop textures, which keep their own animation and blending.
+ *  `flat`: it is drawn squashed on the ground, so it must not turn (a turned ellipse would spin its squash). The pose's `dx`/`dy` are for the
+ *  caller to apply (a particle keeps them off its own drift: `Particles`). */
+export function paintSprite(sp: Sprite, elapsed: number, life: number, scale: number, rotation: number, alpha: number, loop: boolean, calm: boolean, flat = false): PaintedPose | false {
   const material = materials.get(sp.texture);
   if (!material) return false;
-  const pose = paintedPose(material.family, elapsed / Math.max(1, life), elapsed, loop, calm);
+  if (material.clip) sp.texture = material.clip[paintedFrame(elapsed, life, loop, calm)];
+  const pose = paintedPose(material.family, elapsed / Math.max(1, life), elapsed, loop, calm, material.form);
+  if (flat) pose.turn = 0;
   sp.scale.set(scale * pose.x, scale * pose.y);
   sp.rotation = rotation + pose.turn;
   sp.alpha = alpha * pose.alpha;
   // Normal blending preserves coloured flames, smoky edges and crystal detail under overlapping spell layers.
   // Only the tiny sparks add light; large additive paintings would wash the fighters out.
   sp.blendMode = material.family === 'sparkle' || material.family === 'cross' ? 'add' : 'normal';
-  return true;
+  return pose;
+}
+
+/** Pose a painted still that is simply held for a while (a flame on the ground, a ward): all its motion, none of the fade-in and out. */
+export function paintHeld(sp: Sprite, elapsed: number, scale: number, rotation: number, alpha: number, calm: boolean, flat = false): PaintedPose | false {
+  return paintSprite(sp, elapsed, elapsed * 2 + 1, scale, rotation, alpha, true, calm, flat);
 }

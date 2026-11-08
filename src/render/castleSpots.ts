@@ -4,7 +4,11 @@
 // own pixels (the art's own pixels: the scene is drawn whole-number times bigger); `y` is a building's foot line, which the scene sorts by.
 
 import { buildLand, type Land } from './castleLand';
-import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, newCastle, spellBudget, type BuildingId } from '../sim/castle';
+// (the Armoury's repair cut and the Library's study, docs/notes/shop-books-gear.md)
+import { ARMOURY_REPAIR_CUT } from '../sim/wear';
+import { STUDY_CUT, studentCap } from '../sim/books';
+import { BUILDING_IDS, BUILDINGS, GOLD_PER_LEVEL, HP_PER_LEVEL, ATK_PER_LEVEL, MANA_PER_LEVEL, MOVE_PER_LEVEL, XP_PER_LEVEL, maxLevel, isRoomBuilding, siteName, siteTop, type BuildingId, type SiteId } from '../sim/castle';
+import { roomsOpenedAt, roomToast } from '../sim/rooms';
 
 /** How many looks a building has: 0 an empty plot, 1 small, 2 bigger, 3 grand. */
 export const STAGES = 4;
@@ -48,6 +52,7 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   grass_tile: [89, 59],
   great: [136, 153],
   great_hall: [146, 147],
+  hall_of_legends: [119, 112],
   hay: [48, 51],
   hedge: [112, 95],
   herb: [94, 59],
@@ -64,6 +69,7 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   shrine: [77, 86],
   sign: [34, 64],
   signpost: [37, 74],
+  smithy: [95, 110],
   spiral: [68, 128],
   stable: [176, 135],
   stall: [69, 75],
@@ -74,10 +80,14 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   thatch: [129, 118],
   wall: [93, 121],
   watchtower: [79, 134],
+  watchtower_grand: [79, 134],
   well: [50, 81],
   woodpile: [50, 54],
   workshop: [95, 110],
 };
+
+/** The pictures only a building card shows (the three room buildings' own paintings, not in the yard's looks: `lookPicture` in src/castle.ts). */
+export const CARD_SPRITES: readonly string[] = ['smithy', 'watchtower_grand', 'hall_of_legends'];
 
 /** One picture in a look: its centre across and where its bottom edge sits, from the building's plot (y down, 0 = the foot line). */
 export interface Part {
@@ -605,13 +615,13 @@ export function effectText(id: BuildingId, level: number): string {
     case 'barracks':
       return `+${Math.round(HP_PER_LEVEL * level * 100)}% hp for every hero`;
     case 'armoury':
-      return `+${Math.round(ATK_PER_LEVEL * level * 100)}% attack for every hero`;
+      return `+${Math.round(ATK_PER_LEVEL * level * 100)}% attack for every hero${level > 0 ? `; repairs ${Math.round(ARMOURY_REPAIR_CUT * Math.min(7, level) * 100)}% cheaper` : ''}`;
     case 'stable':
       return `heroes walk ${Math.round(MOVE_PER_LEVEL * level * 100)}% faster`;
     case 'library':
-      return `heroes earn ${Math.round(XP_PER_LEVEL * level * 100)}% more XP from every fight`;
+      return `heroes earn ${Math.round(XP_PER_LEVEL * level * 100)}% more XP from every fight${level > 0 ? `; study ${Math.round(STUDY_CUT * level * 100)}% shorter, ${studentCap(level)} students at once` : ''}`;
     case 'mageTower':
-      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster, +${spellBudget({ ...newCastle(), mageTower: level }) - spellBudget()} spell power`;
+      return `mana fills ${Math.round(MANA_PER_LEVEL * level * 100)}% faster`;
   }
 }
 
@@ -623,6 +633,19 @@ export const BLURB: Record<BuildingId, string> = {
   stable: 'Horses and a farrier: your heroes cover the ground quicker. The horses have opinions on pay.',
   library: 'Shelves of old campaigns: every hero learns more from every fight. Duchess has eaten the index.',
 };
+
+/** A finished build's popup words (UI batch 1): the building and level raised, and what it gives (the Chapel opens the spellbook). */
+export function builtWords(site: SiteId, level: number): { title: string; level: string; gives: string } {
+  // (DEPTH-BUILD: the Chapel has levels, and the room buildings give only rooms)
+  if (site === 'chapel' || isRoomBuilding(site)) {
+    const opened = roomsOpenedAt(site, level).map((r) => r.name);
+    const first = site === 'chapel' && level <= 1 ? 'The spellbook is open: study the ruler\'s spells.' : '';
+    const rooms = opened.length ? `Opens the ${opened.join(' and ')}.` : '';
+    return { title: siteName(site), level: site === 'chapel' && level <= 1 ? 'built' : `level ${level} of ${siteTop(site)}`, gives: [first, rooms].filter(Boolean).join(' ') || 'Built.' };
+  }
+  const rooms = roomsOpenedAt(site, level).map((r) => roomToast(r) + '.');
+  return { title: BUILDINGS[site].name, level: `level ${level} of ${maxLevel(site)}`, gives: [effectText(site, level), ...rooms].join(' ') };
+}
 
 export const NAME_OF = (id: BuildingId): string => BUILDINGS[id].name;
 export { BUILDING_IDS };

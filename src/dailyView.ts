@@ -2,6 +2,8 @@
 // clearing it pays. The rules are in `src/sim/daily.ts` and `modes.ts`; this only draws them.
 
 import { dailyBoss, DAILY_MID, DAILY_WAVES } from './sim/daily';
+import { autoButton } from './autoAsk';
+import { canAutoDaily } from './sim/autoReplay';
 import { dailyStatus } from './sim/modes';
 import { dailyArea } from './sim/dailySeed';
 import { MAX_RETRIES } from './sim/run';
@@ -27,7 +29,7 @@ export function dayName(date: number): string {
 }
 
 /** Show the start card for a date: `go` starts the run (a replay of a played date is practice), `back` closes the card. */
-export function showDailyStart(m: Meta, date: number, go: () => void, back: () => void): void {
+export function showDailyStart(m: Meta, date: number, go: (auto?: number) => void, back: () => void): void {
   const played = (m.daily[String(date)]?.plays ?? 0) > 0;
   const boss = UNITS[dailyBoss(date)];
   // (a themed day: its block under the heading, and a smaller boss: DAILY-BUILDS)
@@ -59,7 +61,7 @@ export function showDailyStart(m: Meta, date: number, go: () => void, back: () =
   const status = el('div', 'dayStatus', `Today: ${dailyStatus(m, date)}`);
   const row = el('div', 'dayBtns');
   const fight = el('button', 'primary', played ? 'Practice' : 'Fight!');
-  const leave = el('button', '', 'Back');
+  const leave = el('button', '', '‹ Back');
   fight.addEventListener('click', () => {
     root.remove();
     go();
@@ -69,6 +71,10 @@ export function showDailyStart(m: Meta, date: number, go: () => void, back: () =
     back();
   });
   row.append(fight, leave);
+  // (a daily already cleared today can be repeated as practice on its own, within the day's auto tickets)
+  if (canAutoDaily(m, date)) {
+    row.append(autoButton(m, 'Daily challenge (practice, no reward)', (n) => (root.remove(), go(n)), ''));
+  }
   if (theme) {
     // (the boss beside its name, to leave room for the theme)
     const bossRow = el('div', 'dayBossRow');

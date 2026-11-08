@@ -8,7 +8,9 @@ import { drawAura, drawAuraGlow } from './render/auraCanvas';
 import { auraParts, type AuraPart } from './render/auraStyles';
 import type { Army } from './sim/armies';
 import { sheetInfo } from './render/sheets';
-import { canvasOf, ROWS, shrinkRig, type Small } from './render/smallRig';
+import { canvasOf, gradeSmall, ROWS, shrinkRig, type Small } from './render/smallRig';
+import { lookMatrix } from './sim/heroLooks';
+import { fieldedOf, stageOfKind } from './sim/dynasty';
 import { loadImage } from './render/loadImage';
 import { onSettings, settings } from './settings';
 import { EMOTE_NAMES, EMOTES } from './tavern';
@@ -29,7 +31,9 @@ import {
   type Goat,
 } from './render/duchessRules';
 import type { Camp } from './render/campSpots';
-import { CAMP_PAINT, scoutCamp, overlookLayout, overlookCrew, overlookRanks } from './render/overlookLayout';
+import { CAMP_PAINT, scoutCamp, overlookLayout, overlookCrew, overlookRanks, STAND_TOWER } from './render/overlookLayout';
+import { cliffIn, onLedge, pickSpot, ROAM, type Pt } from './render/cliffRoam';
+import { TowerLife } from './render/standTowerLife';
 import { UNITS } from './sim/units';
 import { AREA_NAMES } from './menuArt';
 import overlookUrl from './art/camp/overlook.png';
@@ -65,22 +69,28 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
-const chance = (p: number) => Math.random() < p;
 
-type Mood = 'idle' | 'out' | 'pause' | 'back' | 'flourish';
+/** CLIFF-ROAM: a hero idles where they stand, walks to a new spot on the ledge, or now and then swings their weapon. */
+type Mood = 'idle' | 'walk' | 'flourish';
 
 interface Actor {
   kind: string;
+  /** Where the hero stood as the camp opened (and stays, with motion reduced). */
   spot: { x: number; y: number; face: 1 | -1 };
+  /** The layout it was placed for: a new one (the page resized) carries it to the same place on the new ledge. */
+  in: Camp;
   small: Small;
   /** The sheet's figure height the shrink was cut for (a new form re-cuts it). */
   cut: string;
+  /** Where its feet are now (scene pixels; `y` is also what it sorts by), and where it is walking to. */
   x: number;
+  y: number;
   face: 1 | -1;
   mood: Mood;
   at: number;
   clock: number;
-  target: number;
+  tx: number;
+  ty: number;
   clip: string;
   emote: { name: string; until: number } | null;
   phase: number;
@@ -111,9 +121,13 @@ export class CampScene {
   readonly root = el('div', 'cpWrap');
   /** Earned chests rest by the supplies at the left of the ledge. */
   readonly stashMount = el('div', 'cpStash');
-  /** Two mode plaques below the company and the distant Calamity landmark. */
-  readonly dailySlot = el('div', 'cpSlot');
-  readonly towerSlot = el('div', 'cpSlot');
+  /** The Daily board's plaque below the company, the Last Stand's watchtower on the left (OVERLOOK-STAND) and the distant Calamity landmark. */
+  readonly dailySlot = el('div', 'cpSlot cpDailySlot');
+  readonly towerSlot = el('div', 'cpSlot cpTowerSlot');
+  /** The Nemesis War's Dark Council (`nemesisView.ts`): above the Daily, once the War is open. */
+  readonly councilSlot = el('div', 'cpSlot cpCouncilSlot');
+  /** The watchtower's lights, embers and crows (OVERLOOK-STAND). */
+  private towerLife = new TowerLife();
   readonly calamitySlot = el('div', 'cpSlot cpPortalSlot');
   private heading = el('div', 'cpHeading');
   private armyRigs = new Map<string, Small>();
@@ -125,8 +139,12 @@ export class CampScene {
   private canvas = el('canvas', 'cpRoom');
   private ctx = this.canvas.getContext('2d')!;
   private camp: Camp | null = null;
+  /** CLIFF-ROAM: the ledge the heroes wander, in scene pixels (`cliffRoam.ts`). */
+  private ledge: Pt[] = [];
   /** Css pixels per scene pixel: a whole number of device pixels each (`k`) over the device pixel ratio, so it stays crisp. */
   private unit = 1;
+  /** The page's width as `fit` last measured it (MENU-GLITCH: `at` reads this, not the layout, so a redraw forces no reflow). */
+  private boxW = 0;
   private back: HTMLCanvasElement | null = null;
   private glow: HTMLCanvasElement | null = null;
   private flame: { base: HTMLCanvasElement; layer: HTMLCanvasElement; w: number; h: number } | null = null;
@@ -154,10 +172,12 @@ export class CampScene {
     private onParty: () => void,
   ) {
     this.plate.addEventListener('click', () => this.onParty());
-    this.heading.append(el('span', 'cpEyebrow', 'THE WAR COUNCIL'), el('h2', '', 'Battle Overlook'), el('p', '', 'Scout the approaching army'));
+    // (camp-declutter: the heading is its name alone; the small eyebrow and the strapline are gone)
+    this.heading.append(el('h2', '', 'Battle Overlook'));
     this.canvas.setAttribute('role', 'img');
-    this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Calamity citadel on the horizon.');
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
+    this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army, with the Last Stand’s watchtower on the left and the Calamity citadel on the horizon.');
+    // (CLIFF-ROAM: Hester's Stall, and the front ground drawn over it, left the ledge for the tavern; one canvas holds the whole scene again)
+    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.councilSlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -182,7 +202,12 @@ export class CampScene {
     this.next = next;
     if (art && this.camp) {
       this.dress(meta);
-      if (changed || !this.bossRig) this.prepareArmy();
+      if (changed || !this.bossRig) {
+        this.prepareArmy();
+        // (MENU-GLITCH: the canvas keeps its last picture while the camp is stopped, so a new army is painted at once: the camp never
+        //  shows the old army's land for a frame as the home screen comes back)
+        this.draw();
+      }
       this.layPlate();
     }
   }
@@ -191,7 +216,9 @@ export class CampScene {
   private dress(meta: Meta): void {
     const camp = this.camp!;
     this.party.forEach((kind, i) => {
-      const sheet = lookKey(meta, kind);
+      // (Dynasties: the roaming hero wears its bearer's look, the touch of the years and an heir's tint, cut in once; a new look re-cuts it)
+      const look = lookMatrix(kind, stageOfKind(meta, kind), fieldedOf(meta, kind)?.look);
+      const sheet = `${lookKey(meta, kind)}|${look ? look.map((x) => x.toFixed(3)).join(',') : ''}`;
       const rig = heroRig(meta, kind);
       const spot = camp.heroes[i];
       if (!rig || !spot) return;
@@ -201,11 +228,22 @@ export class CampScene {
       if (a) {
         a.step = step;
         a.aura = aura;
-        a.x += spot.x - a.spot.x;
-        a.target += spot.x - a.spot.x;
+        // (CLIFF-ROAM: a hero keeps wandering from wherever they are when the party's order changes; a new layout (the page resized)
+        //  carries them to the same place on the new ledge, kept on the rock)
+        if (a.in !== camp && this.reduced) {
+          // (with motion reduced they keep to their spots, so a new layout puts them on the new ones)
+          [a.x, a.y, a.tx, a.ty, a.mood] = [spot.x, spot.y, spot.x, spot.y, 'idle'];
+          a.in = camp;
+        } else if (a.in !== camp) {
+          const sx = camp.w / a.in.w;
+          const sy = camp.h / a.in.h;
+          [a.x, a.y] = onLedge([a.x * sx, a.y * sy], this.ledge);
+          [a.tx, a.ty] = onLedge([a.tx * sx, a.ty * sy], this.ledge);
+          a.in = camp;
+        }
         a.spot = spot;
         if (a.cut !== sheet) {
-          a.small = shrinkRig(rig, 46);
+          a.small = gradeSmall(shrinkRig(rig, 46), look);
           a.cut = sheet;
         }
         return;
@@ -213,14 +251,17 @@ export class CampScene {
       this.actors.set(kind, {
         kind,
         spot,
-        small: shrinkRig(rig, 46),
+        in: camp,
+        small: gradeSmall(shrinkRig(rig, 46), look),
         cut: sheet,
         x: spot.x,
+        y: spot.y,
         face: spot.face,
         mood: 'idle',
         at: this.now + rand(500, 3500) + i * 400,
         clock: rand(0, 4000),
-        target: spot.x,
+        tx: spot.x,
+        ty: spot.y,
         clip: 'idle',
         emote: null,
         phase: rand(0, 6),
@@ -242,6 +283,16 @@ export class CampScene {
     });
   }
 
+  /** Paint one still picture without starting the loop (MENU-GLITCH: the page has its picture before it ever slides into view). */
+  paintOnce(): void {
+    if (this.raf || document.hidden) return;
+    void loadArt().then(() => {
+      if (this.raf) return;
+      this.fit();
+      this.draw();
+    });
+  }
+
   stop(): void {
     this.running = false;
     this.halt();
@@ -258,15 +309,22 @@ export class CampScene {
     const bw = this.root.clientWidth;
     const bh = this.root.clientHeight;
     if (!bw || !bh || !art) return;
+    const widthWas = this.boxW;
+    this.boxW = bw;
     // (a scene pixel is `k` device pixels, about a css pixel: the canvas holds the scene one to one and the page stretches it by whole device pixels)
     const dpr = window.devicePixelRatio || 1;
     const k = Math.max(1, Math.round(dpr));
     this.unit = k / dpr;
     const w = Math.ceil((bw * dpr) / k);
     const h = Math.ceil((bh * dpr) / k);
-    if (this.camp && this.camp.w === w && this.camp.h === h && this.back) return;
+    if (this.camp && this.camp.w === w && this.camp.h === h && this.back) {
+      // (the page's width can change by less than a scene pixel: the pieces over the canvas follow it)
+      if (bw !== widthWas) this.layOut();
+      return;
+    }
     const camp = overlookLayout(w, h);
     this.camp = camp;
+    this.ledge = cliffIn(w, h);
     this.ranks = overlookRanks(w, h);
     this.canvas.width = w;
     this.canvas.height = h;
@@ -284,9 +342,18 @@ export class CampScene {
     this.layOut();
   }
 
+  /** The middle of the Last Stand's painted tower in css pixels inside the scene's box: its entry zooms in there (OVERLOOK-STAND). */
+  standFocus(): { x: number; y: number } | null {
+    const camp = this.camp;
+    if (!camp) return null;
+    const t = STAND_TOWER;
+    const p = this.at(camp.w * ((t.left + t.right) / 2), camp.h * ((t.top + t.base) / 2));
+    return { x: parseFloat(p.left), y: parseFloat(p.top) };
+  }
+
   /** Where a scene pixel is on the page. */
   private at(x: number, y: number): { left: string; top: string } {
-    const ox = (this.root.clientWidth - this.camp!.w * this.unit) / 2;
+    const ox = ((this.boxW || this.root.clientWidth) - this.camp!.w * this.unit) / 2;
     return { left: `${ox + x * this.unit}px`, top: `${y * this.unit}px` };
   }
 
@@ -297,9 +364,12 @@ export class CampScene {
     const box = (e: HTMLElement, r: { x: number; y: number; w: number; h: number }) => Object.assign(e.style, this.at(r.x, r.y), { width: `${r.w * u}px`, height: `${r.h * u}px` });
     box(this.stashMount, camp.stash);
     box(this.dailySlot, camp.places.daily.box);
+    // (the Dark Council stands over the Daily, the same size, a little gap between)
+    const d = camp.places.daily.box;
+    box(this.councilSlot, { ...d, y: d.y - d.h - 14 });
     box(this.towerSlot, camp.places.tower.box);
     box(this.calamitySlot, camp.places.calamity.box);
-    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', '44px');
+    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', `${e === this.towerSlot ? camp.places.tower.plate.h : 44}px`);
     this.layPlate();
   }
 
@@ -309,12 +379,21 @@ export class CampScene {
     const n = this.next;
     this.plate.hidden = !n;
     if (!n) return;
-    this.plate.replaceChildren(el('span', 'cpEyebrow', 'THE ENEMY BELOW'), el('b', '', n.army.name), el('small', '', `${scoutCamp(n.army.id).name} · ${n.boss}`));
+    // (MENU-GLITCH: written only when it reads differently, so a home refresh leaves the plate as it is)
+    const line = `${scoutCamp(n.army.id).name} · ${n.boss}`;
+    if (this.plate.dataset.key !== `${n.army.name}|${line}`) {
+      this.plate.dataset.key = `${n.army.name}|${line}`;
+      this.plate.replaceChildren(el('span', 'cpEyebrow', 'THE ENEMY BELOW'), el('b', '', n.army.name), el('small', '', line));
+    }
     this.root.dataset.army = n.army.id;
     this.root.dataset.area = n.army.area;
-    this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Calamity citadel looms on the horizon.`);
+    this.canvas.setAttribute('aria-label', `Your company on a cliff above ${n.army.name}, led by ${n.boss}, in ${AREA_NAMES[n.army.area]}. The Last Stand’s watchtower stands on the left; the Calamity citadel looms on the horizon.`);
     this.plate.setAttribute('aria-label', `War council: ${n.army.name}, led by ${n.boss}. Opens your party.`);
-    Object.assign(this.plate.style, this.at(camp.table.x, camp.table.y + 1));
+    // (the owner's call: the plate sits low in the scene, in the clear ground above the bottom bar, rather than just under the party:
+    //  never higher than the table's own spot, and 10 px above the scene's foot)
+    const spot = this.at(camp.table.x, camp.table.y + 1);
+    const room = this.root.clientHeight - (this.plate.offsetHeight || 60) - 10;
+    Object.assign(this.plate.style, { left: spot.left, top: `${Math.max(parseFloat(spot.top), room)}px` });
   }
 
   /** The shared cliff and horizon surround a different painted base for each army. */
@@ -485,45 +564,46 @@ export class CampScene {
 
   // ---- behaviour ----
 
+  /** CLIFF-ROAM: an idle hero, when their time comes, turns, says something, swings, or (most often) strolls to a new spot on the
+   *  ledge, picked by `cliffRoam.ts` so the walk never leaves the rock (or ends on top of another hero). */
   private think(a: Actor, now: number): void {
-    if (a.mood === 'idle' && now >= a.at) {
-      const roll = Math.random();
-      if (roll < 0.3) a.face = a.face === 1 ? -1 : 1;
-      else if (roll < 0.62) a.emote = { name: EMOTE_NAMES[Math.floor(Math.random() * EMOTE_NAMES.length)], until: now + rand(1800, 3000) };
-      else if (!this.reduced && roll < 0.84) {
-        a.target = a.spot.x + (chance(0.5) ? 1 : -1) * rand(8, 18);
-        a.face = a.target > a.x ? 1 : -1;
-        a.mood = 'out';
-        a.clock = 0;
-      } else if (!this.reduced) {
-        a.mood = 'flourish';
-        a.clip = 'attack';
-        a.clock = 0;
-      }
-      a.at = now + rand(2500, 8000);
+    if (a.mood !== 'idle' || now < a.at) return;
+    const roll = Math.random();
+    a.at = now + rand(2500, 7000);
+    if (roll < 0.5) {
+      const others = [...this.actors.values()].filter((o) => o !== a).flatMap((o): Pt[] => [[o.x, o.y], [o.tx, o.ty]]);
+      const to = pickSpot([a.x, a.y], this.ledge, others, Math.random);
+      if (!to) return;
+      [a.tx, a.ty] = to;
+      a.face = a.tx > a.x ? 1 : -1;
+      a.mood = 'walk';
+      a.clock = 0;
+    } else if (roll < 0.66) a.face = a.face === 1 ? -1 : 1;
+    else if (roll < 0.9) a.emote = { name: EMOTE_NAMES[Math.floor(Math.random() * EMOTE_NAMES.length)], until: now + rand(1800, 3000) };
+    else {
+      a.mood = 'flourish';
+      a.clip = 'attack';
+      a.clock = 0;
     }
   }
 
   private step(a: Actor, dt: number, now: number): void {
     a.clock += dt;
-    if (a.mood === 'out' || a.mood === 'back') {
-      const goal = a.mood === 'out' ? a.target : a.spot.x;
-      const dx = goal - a.x;
-      const move = 18 * (dt / 1000);
-      if (Math.abs(dx) <= move) {
-        a.x = goal;
-        if (a.mood === 'out') {
-          a.mood = 'pause';
-          a.at = now + rand(1500, 3000);
-        } else {
-          a.mood = 'idle';
-          a.face = a.spot.face;
-          a.at = now + rand(2000, 6000);
-        }
-      } else a.x += Math.sign(dx) * move;
-    } else if (a.mood === 'pause' && now >= a.at) {
-      a.mood = 'back';
-      a.face = a.spot.x > a.x ? 1 : -1;
+    if (a.mood === 'walk') {
+      const dx = a.tx - a.x;
+      const dy = a.ty - a.y;
+      const far = Math.hypot(dx, dy);
+      const move = ROAM.speed * (dt / 1000);
+      if (far <= move) {
+        a.x = a.tx;
+        a.y = a.ty;
+        // (arrived: a pause to idle before the next thing)
+        a.mood = 'idle';
+        a.at = now + rand(2000, 6500);
+      } else {
+        a.x += (dx / far) * move;
+        a.y += (dy / far) * move;
+      }
     } else if (a.mood === 'flourish') {
       if (a.clock >= (a.small.counts.attack ?? 1) * 110) {
         a.mood = 'idle';
@@ -548,6 +628,7 @@ export class CampScene {
     }
     this.stepGoat(dt);
     this.burn(dt);
+    if (this.camp) this.towerLife.step(dt, this.camp.w, this.camp.h, !this.towerSlot.classList.contains('shut'), this.reduced);
     this.draw();
   }
 
@@ -574,8 +655,8 @@ export class CampScene {
       this.goat.x = hayX;
       this.goat.at = this.now + 12000;
     }
-    // (heroes' feet along her strip: she may go and nibble one)
-    const friends = [...this.actors.values()].map((a) => a.x);
+    // (heroes' feet along her strip: she may go and nibble one; CLIFF-ROAM: only those standing near her line, not far up or down the ledge)
+    const friends = [...this.actors.values()].filter((a) => Math.abs(a.y - ground.y) < 22).map((a) => a.x);
     stepGoat(this.goat, dt, this.now, { min: ground.min, max: ground.max, friends }, Math.random, this.reduced);
     // (a nibble starts: now and then she says so)
     if (this.goat.mode === 'nibble' && this.goatWas !== 'nibble') this.goatSpeak('nibble');
@@ -619,13 +700,14 @@ export class CampScene {
     g.drawImage(this.back, 0, 0);
     this.army(g, camp);
     this.mist(g, camp);
-    const list: { depth: number; paint: () => void }[] = [];
-    list.push({ depth: camp.fire.y, paint: () => this.fire(g, camp) });
-    for (const actor of this.actors.values()) list.push({ depth: actor.spot.y, paint: () => this.hero(g, actor) });
-    if (this.goat && this.goatArt) list.push({ depth: this.goatGround(camp).y, paint: () => this.duchess(g, camp) });
+    this.towerLife.draw(g, camp.w, camp.h, this.now, !this.towerSlot.classList.contains('shut'), this.reduced);
+    const list: { depth: number; paint: (c: CanvasRenderingContext2D) => void }[] = [];
+    list.push({ depth: camp.fire.y, paint: (c) => this.fire(c, camp) });
+    // (CLIFF-ROAM: a wandering hero sorts by where their feet are now, so whichever of two heroes, the fire and Duchess stands nearer is drawn in front)
+    for (const actor of this.actors.values()) list.push({ depth: actor.y, paint: (c) => this.hero(c, actor) });
+    if (this.goat && this.goatArt) list.push({ depth: this.goatGround(camp).y, paint: (c) => this.duchess(c, camp) });
     list.sort((p, q) => p.depth - q.depth);
-    for (const e of list) e.paint();
-    this.sparksDraw(g);
+    for (const e of list) e.paint(g);
     g.globalCompositeOperation = 'lighter';
     if (this.glow) {
       g.globalAlpha = 0.8;
@@ -633,6 +715,7 @@ export class CampScene {
     }
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;
+    this.sparksDraw(g);
     // (the emote bubbles stay clear of the dusk)
     for (const actor of this.actors.values()) if (actor.emote) this.bubble(g, actor);
   }
@@ -664,7 +747,7 @@ export class CampScene {
   /** What row and frame a hero shows now. */
   private pose(a: Actor): { row: number; i: number; lift: number } {
     if (this.reduced) return { row: 0, i: 0, lift: 0 };
-    const walking = a.mood === 'out' || a.mood === 'back';
+    const walking = a.mood === 'walk';
     const name = a.mood === 'flourish' ? 'attack' : walking ? 'walk' : 'idle';
     const n = a.small.counts[name] ?? 1;
     const per = a.mood === 'flourish' ? 110 : walking ? 100 : 150;
@@ -677,7 +760,7 @@ export class CampScene {
     const { small } = a;
     const { row, i, lift } = this.pose(a);
     const fx = Math.round(a.x);
-    const fy = a.spot.y;
+    const fy = Math.round(a.y);
     g.fillStyle = 'rgba(8, 3, 1, 0.4)';
     const sw = Math.max(8, Math.round(small.figure * 0.28));
     g.fillRect(fx - sw, fy - 1, sw * 2, 2);
@@ -741,7 +824,7 @@ export class CampScene {
   }
 
   private bubble(g: CanvasRenderingContext2D, a: Actor): void {
-    const y = a.spot.y - a.small.fh - 14 + (Math.floor(this.now / 380) % 2);
+    const y = Math.round(a.y) - a.small.fh - 14 + (this.reduced ? 0 : Math.floor(this.now / 380) % 2);
     g.drawImage(this.bubbleArt(a.emote!.name), Math.round(a.x) - 6, y);
   }
 
@@ -778,18 +861,29 @@ export class CampScene {
         return;
       }
     }
-    // (generous: the hero whose body is nearest the finger wins, within a reach a little wider and taller than the body)
+    const kind = this.heroAt(e.clientX, e.clientY);
+    if (kind) return this.onPick(kind);
+    // The painted war table at the left of the ledge also opens the party.
+    if (rx < camp.w * 0.2 && ry > camp.h * 0.62 && ry < camp.h * 0.75) this.onParty();
+  }
+
+  /** The hero a finger at this point on the page picks: the hero whose body is nearest the finger wins, within a reach a little wider
+   *  and taller than the body, on a tie the nearer one. CLIFF-ROAM: it looks where each hero is this frame, so a walking hero is
+   *  as easy to tap as a standing one. */
+  private heroAt(clientX: number, clientY: number): string | null {
+    if (!this.camp) return null;
+    const box = this.canvas.getBoundingClientRect();
+    const rx = (clientX - box.left) / this.unit;
+    const ry = (clientY - box.top) / this.unit;
     let best: { kind: string; d: number; y: number } | null = null;
     for (const a of this.actors.values()) {
       const half = Math.max(16, a.small.fw / 4) + 10;
       const tall = a.small.fh + 8;
-      if (rx < a.x - half || rx > a.x + half || ry < a.spot.y - tall || ry > a.spot.y + 12) continue;
-      const d = Math.hypot((rx - a.x) / half, (ry - (a.spot.y - tall / 2)) / (tall / 2));
-      if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && a.spot.y > best.y)) best = { kind: a.kind, d, y: a.spot.y };
+      if (rx < a.x - half || rx > a.x + half || ry < a.y - tall || ry > a.y + 12) continue;
+      const d = Math.hypot((rx - a.x) / half, (ry - (a.y - tall / 2)) / (tall / 2));
+      if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && a.y > best.y)) best = { kind: a.kind, d, y: a.y };
     }
-    if (best) return this.onPick(best.kind);
-    // The painted war table at the left of the ledge also opens the party.
-    if (rx < camp.w * 0.2 && ry > camp.h * 0.62 && ry < camp.h * 0.75) this.onParty();
+    return best?.kind ?? null;
   }
 
   private claimHaystackTreat(): void {

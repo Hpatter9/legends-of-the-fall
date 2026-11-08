@@ -73,7 +73,7 @@ export interface Cast {
 
 /** The kind of fighter a cast member is, or null when there is none to draw. */
 export function kindOf(role: CastMember['role'], p: Players): string | null {
-  if (role === 'duchess') return null;
+  if (role === 'duchess' || role.startsWith('face:')) return null;
   if (role === 'hero') return p.lead ?? p.party[0] ?? null;
   if (role.startsWith('unit:')) return UNITS[role.slice(5)] ? role.slice(5) : null;
   const i = Number(role.slice(6));
@@ -85,7 +85,7 @@ export function castOf(scene: Scene, p: Players): Record<string, Cast> {
   const out: Record<string, Cast> = {};
   for (const [id, m] of Object.entries(scene.cast)) {
     const kind = kindOf(m.role, p);
-    out[id] = { kind, name: kind ? UNITS[kind].name : m.role === 'duchess' ? 'Duchess' : id };
+    out[id] = { kind, name: m.name ?? (kind ? UNITS[kind].name : m.role === 'duchess' ? 'Duchess' : id) };
   }
   return out;
 }
@@ -132,6 +132,20 @@ export function momentText(mo: Moment): string {
       return 'The first Ascension.';
     case 'dailyBoss':
       return "The first daily's boss.";
+    case 'calAct':
+      return `The end of the Calamity's Act ${mo.map === 1 ? 'I' : 'II'}, as its crossroads opens.`;
+    case 'bond':
+      return `Two heroes reach bond level ${mo.level} together; it plays at the camp or the castle.`;
+    case 'armyIntro':
+      return 'The first time an army marches on the keep.';
+    case 'questBattle':
+      return 'A quest battle, before it begins and after it is won.';
+    case 'eidolon':
+      return "An Eidolon's chain, as its giver tells it.";
+    case 'vengeance':
+      return 'A hero slays the nemesis that slew its Sworn partner; it plays at the camp.';
+    case 'heir':
+      return 'Two Sworn heroes name an heir; it plays at the camp.';
   }
 }
 

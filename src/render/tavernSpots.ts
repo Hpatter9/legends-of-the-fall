@@ -3,7 +3,9 @@
 // own pixels, across from its left edge; `y` is where the hero's feet stand and what the scene sorts by, front to back (a bigger
 // `depth` is drawn later, so nearer).
 
-import { MAX_RANK } from '../sim/meta';
+import { MAX_RANK, type Meta } from '../sim/meta';
+import { newStock } from '../sim/stall';
+import { caravanHere, gloamingHere } from '../sim/traders';
 import { formOf, UNITS } from '../sim/units';
 import sheets from '../art/units/sheets.json';
 
@@ -65,6 +67,8 @@ export const PROPS: readonly Prop[] = [
   { sprite: 'table', x: H + 60, y: 280 },
   { sprite: 'table', x: H + 324, y: 280 },
   { sprite: 'crates', x: H + 366, y: 232 },
+  // (CLIFF-ROAM: Hester's crate of wares, in front of her at her stall's corner)
+  { sprite: 'crates', x: H + 292, y: 232 },
   { sprite: 'barrels', x: H + 18, y: 232 },
   // the games room: two card tables, the bard's stage, barrels
   { sprite: 'table', x: H * 2 + 150, y: 280 },
@@ -91,9 +95,29 @@ export const GLOWS: readonly { x: number; y: number; r: number; al: number }[] =
   { x: H * 2 + 287, y: 50, r: 44, al: 0.16 },
 ];
 
+/**
+ * Hester's corner (CLIFF-ROAM, docs/notes/cliff-roam.md): her stall came in off the cliff and stands against the hearth hall's right
+ * wall, by the doorway to the back room. `stall` is her stall's picture (centre across, its foot), `hester` where she stands at its
+ * left, her crate in front of her (in PROPS), and `visitor` where a visiting trader stands at its right, behind the crates there.
+ * `box` is the tap box over the whole corner: it opens her stall.
+ */
+export const HESTER = {
+  stall: { x: H + 324, foot: 206 },
+  hester: { x: H + 292, foot: 222 },
+  visitor: { x: H + 360, foot: 222 },
+  box: { x0: H + 280, x1: H + 382, y0: 128, y1: 224 },
+} as const;
+
+/** What Hester's corner has to tell (the tavern's marks and the Heroes tab's): the day's stock is new and unseen, and which trader
+ *  visits, if one does (the Gloaming Dealer before the caravan, as the stall's page shows them). */
+export function hesterNews(m: Meta, day: number): { fresh: boolean; visitor: 'dealer' | 'caravan' | null } {
+  return { fresh: newStock(m, day), visitor: gloamingHere(m, day) ? 'dealer' : caravanHere(m, day) ? 'caravan' : null };
+}
+
 const S = (x: number, y: number, facing: 1 | -1, seat: SeatKind = 'none', depth = y): Spot => ({ x, y, depth, facing, seat });
 
-/** A spot for every hero (`ALL_HEROES`): the starting five sit along the bar in the first room so a young tavern still looks lived-in. */
+/** A spot for every hero (`ALL_HEROES`): the starting five sit along the bar in the first room so a young tavern still looks lived-in. What each
+ *  does there, and why that hero at that spot, is `LIFE` in `tavernLife.ts`. */
 export const SPOTS: Record<string, Spot> = {
   // ---- the bar room ----
   // at the bar
@@ -105,16 +129,16 @@ export const SPOTS: Record<string, Spot> = {
   peasant: S(130, 196, 1),
   // by the little hearth
   ninjaMonk: S(30, 190, 1, 'chair'),
-  yamabushi: S(74, 190, 1, 'stool'),
+  yamabushi: S(74, 190, -1, 'stool'),
   // the round table on the left
   wanderer: S(48, 258, 1, 'chair'),
   lightningMage: S(104, 258, -1, 'chair'),
   gorgon: S(76, 296, 1, 'stool'),
-  // the long table
+  // the long table (its two front stools: the arm-wrestle)
   paladin: S(152, 258, 1, 'chair'),
   cleric: S(228, 258, -1, 'chair'),
   barbarian: S(164, 296, 1, 'stool'),
-  ranger: S(216, 296, -1, 'stool'),
+  minotaur: S(216, 296, -1, 'stool'),
 
   // ---- the hearth hall ----
   // standing at the fire
@@ -136,13 +160,13 @@ export const SPOTS: Record<string, Spot> = {
   // standing about between the tables
   werewolf: S(H + 138, 256, 1),
   karasu: S(H + 192, 250, -1),
-  minotaur: S(H + 246, 250, -1),
+  ranger: S(H + 246, 250, -1),
 
   // ---- the games room ----
-  // darts at the board
-  dragoon: S(H * 2 + 88, 184, -1),
+  // darts: the scorekeeper under the board, the two players at the line
+  dreadPirate: S(H * 2 + 88, 184, 1),
   lancer: S(H * 2 + 136, 184, -1),
-  dreadPirate: S(H * 2 + 184, 184, -1),
+  dragoon: S(H * 2 + 184, 184, -1),
   // the first card table
   sage: S(H * 2 + 122, 258, 1, 'chair'),
   demonSwordsman: S(H * 2 + 178, 258, -1, 'chair'),
@@ -159,6 +183,16 @@ export const SPOTS: Record<string, Spot> = {
   reaper: S(H * 2 + 34, 230, 1),
   kraken: S(H * 2 + 80, 240, 1),
   beastmaster: S(H * 2 + 366, 266, -1),
+  // ---- the nine that joined from the twenty (docs/notes/heroes-join.md): three more in each room, standing
+  nightstalker: S(330, 188, -1),
+  bloodGargoyle: S(20, 230, 1),
+  dhampir: S(352, 270, -1),
+  vampireLord: S(416, 200, 1),
+  hemomancer: S(674, 290, -1),
+  geomancer: S(584, 280, 1),
+  warDrummer: S(1068, 230, -1),
+  falconer: S(990, 274, 1),
+  bellWarden: S(800, 270, 1),
 };
 
 /** The look a hero has in the tavern from their rank: rank 2 wears the second form, the top rank the third. */

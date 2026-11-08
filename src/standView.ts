@@ -4,18 +4,26 @@
 // wave comes in by, the spell cards, and the bottom shop bar. The rules are `sim/stand.ts`; this file only shows them and passes
 // the player's taps on. It draws into the page's own Pixi canvas, with the board of the ordinary fights hidden meanwhile.
 
-import { ORES } from './sim/awakenMats';
 import { Container, Graphics, Sprite, type Application } from 'pixi.js';
 import { tileAt } from './sim/board';
-import { TICK_MS, type BattleEvent, type Unit } from './sim/battle';
+import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
+import { TICK_MS, type Battle, type BattleEvent, type Unit } from './sim/battle';
+import { autoSpellsFor } from './sim/autoCast';
 import { ARMIES, armyUnlocked } from './sim/armies';
-import { castSpell, canAfford, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { castSpell, canAfford, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
+import { snapSpell } from './sim/spellAim';
+import { castList, schoolOf } from './sim/schools';
+import { armDecree } from './sim/decrees';
+import { fightRanks } from './sim/spellRanks';
+import { bindDecree, refreshDecree } from './decreeHud';
 import {
   autoPlace, swapPosts, standing, buyLevel, buyRelic, dropStand, foesAlive, goNow, healCost, healKing, levelBlock, levelCost, loadStand, newStandRun, offerCost, pickEight, postHero, relicLine, holdPurse, purseLine,
   saveStand, settleStand, setupFromMeta, snapshot, startFirstWave, startStand, stepStand, waveSpec, weakestHero, type Stand, type StandNote, type StandSummary,
   canSave, fallBack, finishRetreat, hallNow, holdTheLine,
 } from './sim/stand';
 import { ACT_NUMERALS, RETREAT_MS, reachRoom, ROOM_NAMES } from './sim/standActs';
+import { actScene, ACT_LOOKS } from './sim/cineMoments';
+import type { Scene } from './sim/sceneKit';
 import { lostLine, roomLine } from './standRetreatLines';
 import { standRoomTrack } from './render/standMusic';
 import { canPost, EDGES, FIELD, KING_AT, ringOf, type Edge } from './sim/standField';
@@ -23,10 +31,24 @@ import { heroSays, kingSays, newQuipScene, standFoeGrumbles } from './quips';
 import { hideQuip, type Anchor } from './quipView';
 import { closeCalls, KING_LOW_HP, ultimatesCast } from './render/quipRules';
 import { heroRank, saveMeta, type Meta } from './sim/meta';
+import { settleStudy } from './sim/books';
+
+import { settleWear } from './sim/wear';
 import { FightHud } from './fightHud';
+import { HoldPress, UnitInfoCard } from './unitInfo';
+import { infoOf } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { fullScene } from './ultMomentRules';
 import { portrait } from './render/sheets';
+import { heroFace } from './heroFace';
+// (JRPG-RECAP: the end card's results: each hero's run levels and the stats they added, the MVP, the crowns counted up)
+import { playResults, type JrHero, type JrPlayer } from './jrpgRecapView';
+import { standGrowth, statsAt } from './sim/jrpgRecap';
+import { facePortrait, mvpArt, spoilsPage } from './jrpgResults';
+import { standSpoilGains } from './sim/runSpoils';
+import { heroTitle } from './sim/heroNames';
+import { awakenedOf } from './sim/awaken';
+import { rankMult } from './sim/meta';
 import { battleSheet, lookSheet } from './render/awakenLook';
 import { UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
@@ -48,6 +70,11 @@ import { spellIconHtml } from './spellIcons';
 import { clockSeed } from './modes';
 import { settings } from './settings';
 import { rulerOf, rulerWords } from './rulerRules';
+import { noteQuests, standFight } from './sim/quests';
+import { noteChains } from './sim/eidolonChains';
+import { EidolonCall } from './eidolonCall';
+import { addHorn, standHornGain } from './sim/warHorn';
+import { BOSS_EVERY } from './sim/stand';
 
 /** What the page lends the Last Stand: the canvas, the save, the way home. */
 export interface StandHost {
@@ -58,6 +85,10 @@ export interface StandHost {
   onHome(): void;
   /** Play a cinematic due at a moment (the run waits while it plays). */
   moment(m: { kind: 'spire'; floor: number }): Promise<void>;
+  /** Play a cinematic made on the spot with these heroes (CINE-001: an act card); true if it played, false with cinematics off. */
+  film?(scene: Scene, party: readonly string[]): Promise<boolean>;
+  /** Quests the run's end completed (QUESTS: the page toasts them). */
+  questsDone?(ids: string[]): void;
 }
 
 /** How long the title card of a new room stays (ms) unless it is tapped away (STAND-RETREAT). */
@@ -143,10 +174,17 @@ export class StandView {
   /** The eight heroes' rows (`fightHud.ts`, BATTLE-HUD): two columns of compact rows, their pools, skills and ultimates (a tap fires one); its Auto
    *  switch stands by the spell orbs under the top bar. */
   private hud!: FightHud;
+  /** UNIT-INFO (docs/notes/unit-info.md): a press-and-hold on a unit in the deploy or a break opens its info card (the break waits while it is open). */
+  private press = new HoldPress();
+  private info = new UnitInfoCard();
   /** The ultimates' moments (`ultMoment.ts`, ULT-CUTIN). */
   private ultm!: UltMoments;
   private shown = new Map<string, string>();
   private summary: StandSummary | null = null;
+  /** The skills that rose a level by use in the run just ended (the skills overhaul's batch 5), for the end card. */
+  private skillUps: string[] = [];
+  /** EIDOLONS: the War Horn and the Eidolon's call (`eidolonCall.ts`). */
+  private eid!: EidolonCall;
 
   constructor(host: StandHost) {
     this.host = host;
@@ -157,10 +195,12 @@ export class StandView {
     if (this.ready) return;
     this.ready = true;
     this.holder.sortableChildren = true;
-    this.holder.addChild(this.marks, this.rings, this.foeBars, this.fx.dimLayer, this.fx.root);
+    this.holder.addChild(this.marks, this.fx.ground, this.rings, this.foeBars, this.fx.dimLayer, this.fx.root);
     // (the post marks and the heroes' rings lie on the floor, under everyone; the foes' bars over everyone)
     this.marks.zIndex = -5e5;
     this.rings.zIndex = -4e5;
+    // (FIXES-4: the effects' tile marks over the hall's floor and the posts' marks, under the fighters)
+    this.fx.ground.zIndex = -4.5e5;
     this.foeBars.zIndex = 9e5;
     this.world.addChild(this.holder);
     this.board.renderer = this.host.app.renderer;
@@ -234,6 +274,7 @@ export class StandView {
     const spells = el('div', 'stSpells');
     const mana = el('div', 'stMana');
     mana.innerHTML = '<i><span></span></i><b></b>';
+    bindDecree(mana, () => this.s?.b, () => this.refreshSpells());
     const cards = el('div', 'stCards');
     spells.append(mana, cards);
     const heroes = el('div', 'stHeroes');
@@ -242,7 +283,7 @@ export class StandView {
         const m = this.host.meta();
         m.ultAuto = on;
         saveMeta(m);
-        if (this.s) this.s.b.autoUlt = on;
+        if (this.s) this.setAutoOn(this.s.b);
       },
       autoOn: () => !!this.host.meta().ultAuto,
       // (a tap on a row also takes the camera to that hero)
@@ -269,10 +310,48 @@ export class StandView {
       },
       art: (u) => heroArtUrl(u.def, u.awaken ?? 0),
       fx: this.fx,
+      // (ULT-SHOW: the showcase stages the real sprites, and the save counts the full moments seen)
+      sprite: (id) => this.sprites.get(id),
+      world: (u, v) => {
+        const b = this.state?.b;
+        const t = b ? tileAt(b.board, u, v) : undefined;
+        return t ? at(u, v, t.h) : null;
+      },
+      seen: (kind) => seenOf(this.host.meta(), kind),
+      toClient: (x, y) => {
+        const k = this.world.scale.x;
+        return { x: this.world.x + x * k, y: this.world.y + y * k };
+      },
+      saw: (kind) => {
+        noteSeen(this.host.meta(), kind);
+        saveMeta(this.host.meta());
+      },
     });
     // (the king's spells as orbs under the top bar, with the Auto switch at the row's end: BATTLE-HUD)
     const orbs = el('div', 'stOrbs');
     orbs.append(spells, this.hud.autoEl);
+    // (EIDOLONS: the War Horn at the row's left end; the Last Stand is one long fight, so it is blown once a run)
+    this.eid = new EidolonCall({
+      meta: () => this.host.meta(),
+      save: () => saveMeta(this.host.meta()),
+      fx: this.fx,
+      anchor: (id) => {
+        const sp = this.sprites.get(id);
+        if (!sp) return null;
+        const k = this.world.scale.x;
+        return { x: this.world.x + sp.x * k, y: this.world.y + (sp.y - sp.tall / 2) * k };
+      },
+      tile: (u, v) => {
+        const b = this.state?.b;
+        const t = b ? tileAt(b.board, u, v) : undefined;
+        if (!t) return null;
+        const [wx, wy] = at(u, v, t.h);
+        const k = this.world.scale.x;
+        return { x: this.world.x + wx * k, y: this.world.y + wy * k };
+      },
+      stage: () => this.host.app.canvas,
+    });
+    orbs.prepend(this.eid.horn.root);
     const offer = el('div', 'stOffer');
     const bar = el('div', 'stBar');
     const btn = (id: string, label: string, run: () => void) => {
@@ -359,6 +438,10 @@ export class StandView {
     const s = this.s;
     if (!s || !startFirstWave(s)) return;
     this.ultm.warm(s.b);
+    this.eid.arm(s.b);
+    // (KING-SPELLS batch 2: the ruler's Decree, once a run: the Last Stand is one long fight)
+    armDecree(s.b, schoolOf(settings().ruler).decree);
+    s.b.spells.ranks = fightRanks(this.host.meta().spellbook);
     this.music(s.run.seed);
     this.picked = null;
     this.drawMarks();
@@ -386,14 +469,31 @@ export class StandView {
     const card = el('div', 'stCard stPickCard');
     card.append(el('h2', '', 'Last Stand'), el('p', 'stDim', 'Eight heroes hold the keep: pick them, or let the game fill the party. Once the first wave begins nobody needs moving.'));
     const grid = el('div', 'stGrid');
+    // (UX-FIXES: the eight picked are portraits in a strip above the pool, empty posts as dashes, so the choice is not just a colour)
+    const strip = el('div', 'stStrip');
     const count = el('p', 'stBig');
     const go = el('button', 'primary', 'To the keep');
     const draw = () => {
       grid.replaceChildren();
+      strip.replaceChildren();
+      for (let i = 0; i < 8; i++) {
+        const slot = el('button', 'stSlot');
+        slot.type = 'button';
+        const kind = chosen[i];
+        if (kind && UNITS[kind]) {
+          slot.append(portrait(lookSheet(kind, heroRank(m, kind), 1), 36, 1));
+          slot.setAttribute('aria-label', `${UNITS[kind].name}: tap to drop`);
+          slot.addEventListener('click', () => {
+            chosen.splice(i, 1);
+            draw();
+          });
+        } else slot.classList.add('empty');
+        strip.append(slot);
+      }
       for (const kind of [...m.unlocked].sort((x, y) => levelOfKind(m, y) - levelOfKind(m, x))) {
         if (UNITS[kind]?.summon) continue;
         const b = el('button', chosen.includes(kind) ? 'on' : '');
-        b.append(el('span', '', UNITS[kind].name), el('em', '', `Lv ${levelOfKind(m, kind)}`));
+        b.append(portrait(lookSheet(kind, heroRank(m, kind), 1), 40, 1), el('span', '', `${chosen.includes(kind) ? '✓ ' : ''}${UNITS[kind].name}`), el('em', '', `Lv ${levelOfKind(m, kind)}`));
         b.addEventListener('click', () => {
           const i = chosen.indexOf(kind);
           if (i >= 0) chosen.splice(i, 1);
@@ -410,7 +510,7 @@ export class StandView {
       chosen.splice(0, chosen.length, ...pickEight(m, chosen));
       draw();
     });
-    const home = el('button', '', 'Back');
+    const home = el('button', '', '‹ Back');
     home.addEventListener('click', () => {
       box.hidden = true;
       this.leave();
@@ -422,7 +522,7 @@ export class StandView {
     });
     const row = el('div', 'stRow');
     row.append(home, auto, go);
-    card.append(count, grid, row);
+    card.append(count, strip, grid, row);
     box.append(card);
     box.hidden = false;
     draw();
@@ -447,7 +547,7 @@ export class StandView {
     this.host.hideBoard(true);
     this.world.visible = true;
     this.root.hidden = false;
-    this.parts.end.hidden = true;
+    this.closeEnd();
     this.parts.ask.hidden = true;
     this.endTitle();
     this.parts.choice.hidden = true;
@@ -477,6 +577,7 @@ export class StandView {
     this.hud.hideFloating();
     this.root.hidden = true;
     this.world.visible = false;
+    this.closeEnd();
     this.parts.ask.hidden = true;
     this.showSky(false);
     this.hallFor++;
@@ -662,6 +763,9 @@ export class StandView {
     let drag: { x: number; y: number; ghost: HTMLElement | null } | null = null;
     card.addEventListener('pointerdown', (e) => {
       drag = { x: e.clientX, y: e.clientY, ghost: null };
+      // (UNIT-INFO: a finger resting on the card opens the hero's info card)
+      const unit = this.s?.b.units.find((u) => u.side === 'hero' && u.tag === id);
+      if (unit) this.press.start(e.clientX, e.clientY, () => ((drag = null), this.openInfo(unit)));
       try {
         card.setPointerCapture(e.pointerId);
       } catch {
@@ -669,6 +773,7 @@ export class StandView {
       }
     });
     card.addEventListener('pointermove', (e) => {
+      this.press.move(e.clientX, e.clientY);
       if (!drag) return;
       if (!drag.ghost && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 10) {
         const pic = card.querySelector('canvas');
@@ -683,6 +788,7 @@ export class StandView {
       if (drag.ghost) drag.ghost.style.transform = `translate(${e.clientX - 24}px, ${e.clientY - 56}px)`;
     });
     const up = (e: PointerEvent) => {
+      this.press.cancel();
       const d = drag;
       drag = null;
       if (!d || !this.s) return;
@@ -832,6 +938,7 @@ export class StandView {
       }
       this.pointers.set(e.pointerId, { x: e.clientX - colLeft(), y: e.clientY });
       if (this.pointers.size === 2) {
+        this.press.cancel();
         const [a, b] = [...this.pointers.values()];
         this.gesture = { kind: 'pinch', x: 0, y: 0, cx: this.cx, cy: this.cy, moved: true, d0: Math.hypot(a.x - b.x, a.y - b.y), s0: this.tscale };
         return;
@@ -839,12 +946,16 @@ export class StandView {
       const x = e.clientX - colLeft();
       const hero = this.heroAt(x, e.clientY);
       this.gesture = { kind: hero !== null ? 'hero' : 'pan', x, y: e.clientY, cx: this.cx, cy: this.cy, moved: false, hero: hero ?? undefined };
+      // (UNIT-INFO: a finger resting on a unit in the deploy or a break opens its card; the gesture it began is let go)
+      const held = this.s && (this.s.phase === 'deploy' || this.s.phase === 'break') && !this.spell ? this.unitAt(x, e.clientY) : undefined;
+      if (held) this.press.start(e.clientX, e.clientY, () => ((this.gesture = null), this.openInfo(held)));
     });
     inp.addEventListener('pointermove', (e) => {
       const p = this.pointers.get(e.pointerId);
       if (!p || !this.gesture) return;
       p.x = e.clientX - colLeft();
       p.y = e.clientY;
+      this.press.move(e.clientX, e.clientY);
       const g = this.gesture;
       if (g.kind === 'pinch' && this.pointers.size >= 2) {
         const [a, b] = [...this.pointers.values()];
@@ -861,6 +972,7 @@ export class StandView {
     });
     const up = (e: PointerEvent) => {
       const g = this.gesture;
+      this.press.cancel();
       this.pointers.delete(e.pointerId);
       if (!g) return;
       if (g.kind === 'pinch') {
@@ -894,7 +1006,7 @@ export class StandView {
       const tile = this.tileAtScreen(x, e.clientY);
       if (!tile || !this.s) return;
       if (this.spell) {
-        if (castSpell(this.s.b, this.spell, tile[0], tile[1])) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
+        if (castSpell(this.s.b, this.spell, ...snapSpell(this.s.b, this.spell, tile[0], tile[1]))) this.hall.react('cast'); // (the spell's own cast sound plays from its event: spellSfx.ts)
         this.spell = null;
         this.refreshSpells();
         return;
@@ -942,6 +1054,35 @@ export class StandView {
   }
   /** A hero just found (its ring pulses a moment). */
   private flashAt: { id: number; left: number } | null = null;
+
+  /** UNIT-INFO: any unit under a point on the screen (its sprite), nearest first: the heroes, the king, the foes. */
+  private unitAt(sx: number, sy: number): Unit | undefined {
+    const s = this.s;
+    if (!s) return undefined;
+    const wx = (sx - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
+    let best: Unit | undefined;
+    let near = Infinity;
+    for (const u of s.b.units) {
+      const sp = u.alive ? this.sprites.get(u.id) : undefined;
+      if (!sp) continue;
+      const d = Math.hypot(Math.abs(wx - sp.x) / 1.3, wy - (sp.y - sp.tall / 2));
+      if (d < Math.max(22, sp.tall * 0.55) && d < near) {
+        near = d;
+        best = u;
+      }
+    }
+    return best;
+  }
+
+  /** UNIT-INFO: the card of unit `u` (a pure read of it). */
+  private openInfo(u: Unit): void {
+    const m = this.host.meta();
+    // (HUD-FACES: a standing hero shows its painted face; summons and foes keep their sprite)
+    const pic = u.side === 'hero' && u.tag !== undefined ? heroFace(u.def, u.awaken ?? 0, 96, portrait(lookSheet(u.def, heroRank(m, u.def), 1), 48, 1)) : portrait(u.look ?? UNITS[u.def].sheet, 48, 1);
+    this.info.open(infoOf(this.s!.b, u, { meta: m, autoUlt: !!m.ultAuto }), pic);
+    play('tap');
+  }
 
   /** The roster id of the hero under a point on the screen (its sprite), if any. */
   private heroAt(sx: number, sy: number): number | null {
@@ -1084,27 +1225,35 @@ export class StandView {
     const t0 = performance.now();
     // (a skill's sheet open on the hero rows holds the fight too: BATTLE-HUD)
     const live = s.phase === 'wave' || s.phase === 'break' || s.phase === 'retreat';
-    const fighting = live && !this.hold && !this.paused && !this.hud.holding;
+    const fighting = live && !this.hold && !this.paused && !this.hud.holding && !this.info.isOpen && !this.eid.sheetOpen;
+    // (EIDOLONS: the call's cinematic moves on in real time, the fight held under it but for the strike's one tick)
+    this.eid.see(s.b);
+    this.eid.frame(dt, !live);
     // (an ultimate's moment (ULT-CUTIN) moves on in real time; while it holds the fight only its effects move)
     if (live) this.ultm.frame(s.b, dt, !fighting);
     else if (this.ultm.queue.current) this.ultm.clear();
-    if (fighting && this.ultm.queue.holdsBattle) {
+    if (fighting && (this.ultm.queue.holdsBattle || this.eid.holds)) {
       this.acc = 0;
       if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
       this.hud.refresh(s.b);
     } else if (fighting) {
       // (the walk to the door goes at its own pace, whatever the speed: STAND-RETREAT)
-      this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : this.speed * this.fx.timeScale());
+      // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed)
+      this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale());
       let guard = 0;
       const ts = performance.now();
       // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
-      s.b.autoUlt = !!this.host.meta().ultAuto;
-      while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle) {
+      this.setAutoOn(s.b);
+      if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
+      while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = s.b.units.length;
+        // (ULT-SHOW: where everyone stood before the tick, for a showcase to start a moved foe from)
+        const before = new Map(s.b.units.map((u) => [u.id, { u: u.u, v: u.v }]));
         const events = stepStand(s);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
-        if (fullScene(settings().ultFull, !!this.host.meta().ultAuto) && this.ultm.note(s.b, events, s.b.units.slice(born))) this.acc = 0;
+        if (fullScene(settings().ultFull, !!this.host.meta().ultAuto) && this.ultm.note(s.b, events, s.b.units.slice(born), before)) this.acc = 0;
+        if (this.eid.noteEvents(s.b, events)) this.acc = 0;
         this.hud.onEvents(s.b, events);
         for (const e of events) {
           if (e.kind === 'ultLapse') this.hud.lapse(e.by);
@@ -1139,6 +1288,8 @@ export class StandView {
     const t = s.phase === 'deploy' ? performance.now() : s.b.t - TICK_MS + this.acc;
     const view = this.fx.view;
     const tu = performance.now();
+    // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
+    if (s.phase !== 'deploy') this.ultm.stage();
     for (const [, sp] of this.sprites) {
       // (a fighter far off the screen is not drawn, and is looked at only now and then)
       const off = sp.x < view.x0 - 80 || sp.x > view.x1 + 80 || sp.y < view.y0 - 120 || sp.y > view.y1 + 80;
@@ -1194,7 +1345,7 @@ export class StandView {
         kingSays(n.boss ? 'bossWave' : 'waveStart', () => this.anchorOf(s.king.id));
         this.grumbleAt = s.b.t + GRUMBLE_AFTER_MS;
         this.grumbleBoss = n.boss;
-        this.music(s.run.seed);
+        this.music(s.run.seed, n.boss);
         if (n.boss) play('standBoss');
         this.hall.burst(waveSpec(s.run.seed, s.run.armies, n.n, s.run.hall).edges);
         this.picked = null;
@@ -1237,6 +1388,7 @@ export class StandView {
         this.drawChoice(n.n, n.to);
       } else if (n.kind === 'hold') {
         this.showPlate('ONE MORE WAVE', 'HOLD THE LINE', 'boss');
+        this.music(s.run.seed, n.boss);
         newQuipScene();
         kingSays('bossWave', () => this.anchorOf(s.king.id));
         play('standBoss');
@@ -1305,13 +1457,13 @@ export class StandView {
     });
   }
 
-  /** The battle music: one track for the whole run (`standTrack`: the general battle track), started with its first wave and kept, boss waves
-   *  and breaks included, until the king falls or the run is left (`battleMusic.ts`). */
+  /** The battle music: the battle track for the whole run (`standTrack`), started with its first wave and kept, breaks included, until
+   *  the king falls or the run is left; the boss track takes over for a boss wave, and the battle track comes back after it (`battleMusic.ts`). */
   private hold = false;
   private track = '';
-  private music(seed: number): void {
+  private music(seed: number, boss = false): void {
     // (one hook for the rooms of the retreat: `standMusic.ts`; today every room keeps the run's track)
-    const want = standRoomTrack(seed, this.s ? hallNow(this.s.run) : 'courtyard');
+    const want = standRoomTrack(seed, this.s ? hallNow(this.s.run) : 'courtyard', boss);
     if (want === this.track) return;
     this.track = want;
     startFight(want);
@@ -1440,6 +1592,22 @@ export class StandView {
     this.save();
     this.refreshBar(true);
     const words = roomLine(s.run.seed, hall, s.run.heroes.filter(standing).map((h) => h.kind));
+    // (CINE-001: with cinematics on, the act's card is a short film of the room, the ruler's line and the heroes; the run waits for it)
+    if (this.host.film) {
+      const up = s.run.heroes.filter(standing).map((h) => h.kind);
+      const film = actScene(ACT_NUMERALS[act], ROOM_NAMES[hall].title, ACT_LOOKS[hall], words.line, words.duchess, up.length, act === 3);
+      this.hold = true;
+      void this.host.film(film, up).then((played) => {
+        if (played) this.hold = false;
+        else this.titleCard(hall, act, words);
+      });
+      return;
+    }
+    this.titleCard(hall, act, words);
+  }
+
+  /** The room's title card: the act, the room, the ruler's line (and Duchess's), held until tapped or its time is up. */
+  private titleCard(hall: HallKind, act: number, words: { line: string; duchess: string | null }): void {
     const t = this.parts.title;
     const card = el('div', 'stTitleCard');
     card.append(el('small', '', `Act ${ACT_NUMERALS[act]}`), el('b', '', ROOM_NAMES[hall].title));
@@ -1488,7 +1656,7 @@ export class StandView {
   private buildSpells(): void {
     const cards = this.parts.cards;
     cards.replaceChildren();
-    for (const id of this.host.meta().spellbook.equipped) {
+    for (const id of castList(this.host.meta().spellbook)) {
       const sp = SPELLS[id];
       const card = el('button', 'stSpell');
       card.dataset.id = id;
@@ -1506,13 +1674,21 @@ export class StandView {
     }
   }
 
+  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  private setAutoOn(b: Battle): void {
+    const on = !!this.host.meta().ultAuto;
+    b.autoUlt = on;
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.host.meta().spellbook));
+  }
+
   private refreshSpells(): void {
     const s = this.s;
     if (!s) return;
     const b = s.b;
     if (this.spell && !canAfford(b, this.spell)) this.spell = null;
     ((this.parts.mana.querySelector('i span')) as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
-    this.text('mana', this.parts.mana.querySelector('b'), `${Math.floor(b.spells.mana)}/${MANA_MAX}`);
+    this.text('mana', this.parts.mana.querySelector('b'), manaText(b.spells));
+    refreshDecree(this.parts.mana, b);
     for (const card of this.parts.cards.children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
       // (Resurrect has nobody to lift in the Last Stand: the fallen stay down)
@@ -1562,7 +1738,7 @@ export class StandView {
     p.bar.hidden = s.phase === 'deploy';
     if (s.phase === 'deploy') this.drawTray();
     p.pause.hidden = s.phase !== 'wave' && s.phase !== 'break';
-    p.spells.hidden = !this.host.meta().spellbook.equipped.length || s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
+    p.spells.hidden = !castList(this.host.meta().spellbook).length || s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
     // (the orbs' row also holds the Auto switch: it shows while the hero rows do)
     p.orbs.hidden = s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
     p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';
@@ -1630,11 +1806,14 @@ export class StandView {
     const offer = this.parts.offer;
     offer.replaceChildren();
     offer.hidden = !run.offer.length || over || s.phase === 'deploy';
-    const price = offerCost(s);
+    // (RELICS-2: a run whose relics were just converted says so once, until its next wave begins; a Rare costs more, so each has its price)
+    if (run.relicNote && s.phase === 'wave') run.relicNote = undefined;
+    if (run.relicNote && !offer.hidden) offer.append(el('small', 'relicNote', run.relicNote));
     run.offer.forEach((id, i) => {
+      const price = offerCost(s, i);
       const b = el('button', 'stRelic');
       b.title = relicLine(id);
-      b.append(el('span', '', RELICS[id].name), el('small', '', RELICS[id].text), el('em', '', `${price} gold`));
+      b.append(el('span', '', RELICS[id].name), el('small', '', RELICS[id].text + (RELICS[id].price ? `; ${RELICS[id].price}` : '')), el('em', '', `${price} gold`));
       b.disabled = run.gold < price;
       b.addEventListener('click', () => this.buy(() => buyRelic(s, i) !== null));
       offer.append(b);
@@ -1673,15 +1852,16 @@ export class StandView {
     const card = el('div', 'stCard stSheetCard');
     const king = el('div', 'stSheetKing');
     const kb = el('div');
-    kb.append(el('span', '', `The King · wave ${sh.wave} · ${sh.gold} gold`), el('b', '', `${sh.king.hp} / ${sh.king.maxHp}`), this.barEl(sh.king.hp / sh.king.maxHp, 'hp'));
+    kb.append(el('span', '', `${rulerOf(settings().ruler).name} · wave ${sh.wave} · ${sh.gold} gold`), el('b', '', `${sh.king.hp} / ${sh.king.maxHp}`), this.barEl(sh.king.hp / sh.king.maxHp, 'hp'));
     king.append(el('i', 'stCrown'), kb);
     card.append(el('i', 'stCrest'), el('h2', '', 'Paused'), king);
     const list = el('div', 'stSheetList');
     for (const h of sh.heroes) {
       const row = el('div', `stSheetRow${h.fallen ? ' fallen' : ''}`);
       const head = el('div', 'stSheetHead');
-      const pic = portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1);
-      pic.className = 'stSheetPic';
+      // (HUD-FACES: the painted face, as in the fight's rows)
+      const pic = heroFace(h.kind, this.s?.b.units.find((x) => x.side === 'hero' && x.tag === h.id)?.awaken ?? 0, 64, portrait(lookSheet(h.kind, heroRank(this.host.meta(), h.kind), 1), 32, 1));
+      pic.classList.add('stSheetPic');
       head.append(pic, el('span', '', h.name), el('em', '', h.fallen ? 'Fallen' : `Lv ${h.level}${h.runLv ? ` +${h.runLv}` : ''}`));
       row.append(head, this.barEl(h.maxHp ? h.hp / h.maxHp : 0, 'hp'));
       if (h.pool) row.append(this.barEl(h.pool.now / h.pool.max, h.pool.kind));
@@ -1720,14 +1900,36 @@ export class StandView {
   private finish(): void {
     const s = this.s!;
     const m = this.host.meta();
+    const first = !s.run.summary;
+    this.skillUps = [];
     this.summary = settleStand(m, s.run, s.run.armies);
+    // (the waves the run cleared count for the quests taken, once: QUESTS)
+    // (EIDOLONS: the run fills the War Horn at the Stand's share, its boss waves and its foes, at most 300; none if it was blown in it)
+    if (first && this.summary) addHorn(m, standHornGain(Math.floor(this.summary.cleared / BOSS_EVERY), Math.max(0, this.summary.kills - Math.floor(this.summary.cleared / BOSS_EVERY)), s.b.eidolon?.called !== undefined));
+    if (first && this.summary) {
+      const sf = standFight(this.summary.cleared, { best: this.summary.best, act: this.summary.act, held: this.summary.holds });
+      this.host.questsDone?.(noteQuests(m, sf));
+      // (EIDOLON-CHAINS: a chain's part may ask for the Last Stand too; its piece shows in the quest log)
+      noteChains(m, sf);
+      // (SHOP-BOOKS-GEAR: every wave the guard fought is a fight of study, and a wave's wear on the gear they wear; told nowhere but the sheets)
+      const kinds = [...new Set(s.run.heroes.map((h) => h.kind))];
+      for (let w = 0; w < s.run.wave; w++) {
+        settleStudy(m, kinds);
+        settleWear(m, kinds.map((kind) => ({ kind, fell: false })));
+      }
+      // (the skills overhaul's batch 5: the Last Stand is a separate game, so its skill use counts towards nothing: the owner's later answer)
+      this.skillUps = [];
+    }
     saveMeta(m);
     dropStand();
     const end = this.parts.end;
     end.replaceChildren();
-    const card = el('div', 'stCard stEndCard');
+    const card = el('div', 'stCard stEndCard jrStand');
     const sum = this.summary!;
-    card.append(el('i', 'stCrest'), el('h2', '', 'The king has fallen'), el('p', 'stBig', `Wave ${sum.best}`));
+    // (JRPG-RECAP: the results screen's banner and party head the card; the run's facts follow as they were)
+    const jrHead = el('div');
+    const jrBody = el('div');
+    card.append(jrHead);
     // (where it ended, in the retreat's rooms: STAND-RETREAT)
     if (sum.room) card.append(el('p', 'stFell', `Fell in ${ROOM_NAMES[sum.room].the}, wave ${sum.best}${sum.held ? ', holding the line' : ''}`));
     if (sum.act === 3) card.append(el('p', 'stThrone', '♛ Reached the throne room'));
@@ -1736,16 +1938,28 @@ export class StandView {
     const row = (a: string, b: string) => rows.append(Object.assign(el('div'), { innerHTML: `<span>${a}</span><b>${b}</b>` }));
     row('Waves cleared', String(sum.cleared));
     row('Foes felled', String(sum.kills));
-    row('Crowns', `+${sum.crowns}`);
-    const chests = [sum.bronze && `${sum.bronze} bronze`, sum.silver && `${sum.silver} silver`, sum.gold && `${sum.gold} gold`].filter(Boolean).join(', ');
-    if (chests) row('Chests', chests);
-    if (sum.gear.length) row('Equipment', sum.gear.join(', '));
-    // (a record past a tenth wave pays a couple of rift ores: AWAKEN-MATS)
-    if (sum.ores?.length) row('Rift ores', sum.ores.map((d) => `${d.n} ${ORES[d.trait]?.name ?? d.trait}`).join(', '));
+    // (RECAP-SPOILS: the chests, equipment, rift ores (a record past a tenth wave, AWAKEN-MATS) and relics (those holding the line
+    // paid among them, STAND-HOLD-RELIC) moved to the results screen's spoils page)
     row('Heroes held', String(sum.heroes));
-    // (the relics the run gathered, those holding the line paid among them: STAND-HOLD-RELIC)
-    if (sum.relics) row('Relics', `${sum.relics}${sum.heldRelics ? ` (${sum.heldRelics} for holding the line)` : ''}`);
-    card.append(rows);
+    card.append(jrBody, rows);
+    this.endResults?.stop();
+    this.endResults = playResults({ head: jrHead, body: jrBody }, {
+      won: false,
+      title: 'THE KING HAS FALLEN',
+      sub: `Wave ${sum.best}`,
+      facts: [
+        { label: 'Waves cleared', value: String(sum.cleared) },
+        { label: 'Foes felled', value: String(sum.kills) },
+        { label: 'Heroes held', value: String(sum.heroes) },
+      ],
+      heroes: this.endHeroes(m),
+      ...this.endMvp(m),
+      counts: [],
+      items: [],
+      spoils: spoilsPage(standSpoilGains(sum, m.equipment ?? []), sum.crowns),
+      lines: this.skillUps.map((text) => ({ kind: 'skill' as const, text })),
+    });
+    card.addEventListener('click', (e) => void (!(e.target as HTMLElement).closest('button') && this.endResults?.finish()));
     const btns = el('div', 'stRow');
     const again = el('button', 'primary', 'Stand again');
     again.addEventListener('click', () => void this.open());
@@ -1754,10 +1968,45 @@ export class StandView {
     btns.append(again, home);
     card.append(btns);
     end.append(card);
-    window.setTimeout(() => {
+    window.clearTimeout(this.endTimer);
+    this.endTimer = window.setTimeout(() => {
       end.hidden = false;
     }, 900);
     play('defeat');
+  }
+
+  /** JRPG-RECAP: the end card's results screen, while it counts up. */
+  private endResults: JrPlayer | null = null;
+  /** The end card's short wait before it shows. */
+  private endTimer = 0;
+
+  /** CLOSE-SCREENS: the end card is closed for good (leaving, or standing again): its count-ups stopped, its wait cleared, emptied. */
+  private closeEnd(): void {
+    window.clearTimeout(this.endTimer);
+    this.endResults?.stop();
+    this.endResults = null;
+    this.parts.end.hidden = true;
+    this.parts.end.replaceChildren();
+  }
+
+  /** The eight's rows for the end card: each one's run levels (from 0) and the hp and attack they added on its stats as it came in. */
+  private endHeroes(m: Meta): JrHero[] {
+    const best = this.endBest();
+    return (this.s?.run.heroes ?? []).map((h) => {
+      const k = rankMult(heroRank(m, h.kind));
+      const base = statsAt(h.kind, levelOfKind(m, h.kind), 'lasting', { hp: k, atk: k });
+      return { kind: h.kind, growth: standGrowth(h.kind, h.lv, h.xp, base), face: heroFace(h.kind, awakenedOf(m, h.kind), 112, facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1))), fell: !!h.fallen, mvp: h.id === best?.id, note: `${h.kills ?? 0} felled` };
+    });
+  }
+  /** The hero that felled the most (none when nobody felled any). */
+  private endBest() {
+    const list = [...(this.s?.run.heroes ?? [])].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0) || b.lv - a.lv);
+    return list[0] && (list[0].kills ?? 0) > 0 ? list[0] : undefined;
+  }
+  private endMvp(m: Meta) {
+    const h = this.endBest();
+    if (!h) return {};
+    return { mvp: { face: mvpArt(h.kind, awakenedOf(m, h.kind), facePortrait(battleSheet(h.kind, awakenedOf(m, h.kind), 1))), name: heroTitle(h.kind), line: `Felled the most foes · ${h.kills ?? 0} felled · run level ${h.lv}` } };
   }
 
   /** For tests and screenshots: the pause sheet of the run in play. */

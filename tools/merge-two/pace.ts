@@ -5,6 +5,7 @@
 //
 //   node tools/merge-two/run.mjs orcs:4:55 infernal:0:55          SAVES (default 24) tries a cell
 //   node tools/merge-two/run.mjs early:beasts:20 spire:max         the starting five at a level (no castle or talents); the spire's climb
+import '../joint/off';
 import { ARMIES, armyById } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { TIERS } from '../../src/sim/tiers';
@@ -17,7 +18,7 @@ import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, st
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
-import { playArmy, playTower, savedAt } from '../autoplay';
+import { maybeSpells, playArmy, playTower, savedAt } from '../autoplay';
 import { HEROES } from '../../src/sim/units';
 import { startedMeta } from '../../src/sim/meta';
 import * as run_ from '../../src/sim/run';
@@ -125,6 +126,7 @@ for (const cell of process.argv.slice(2)) {
       const b = startStage(run);
       autoDeploy(b, run, meta, bf);
       fight(b);
+      maybeSpells(b, meta, run.castle);
       playOut(b);
       const ok = b.phase === 'won';
       if (!ok && HEARTS && canRetry(run)) {

@@ -1,6 +1,9 @@
 // The difficulty curve (`docs/notes/difficulty.md`): which hero level each army tier is for, pinned loosely (a tier is hard at the level it opens
 // for and a first-try clear only well above it), the escorts and boss form a high tier brings, and the foes of the spire and the Calamity answering
 // the castle. The tries are measured with the greedy player of `tools/autoplay.ts`, as `npm run balance -- --deep` does.
+// (SPELLS-RETUNE, an owner-approved change of requirement, docs/notes/spells-retune.md: the greedy player of `tools/autoplay.ts` now casts the
+// king's spells as the page's Auto does, `botSpells`, and the armies, the daily, the Last Stand and the Calamity were retuned so the bars below
+// hold for that player; no bar was moved.)
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -105,7 +108,10 @@ test('Legendary needs the 60s: not a first-try clear at level 45, even with tale
 });
 
 test('Mythic is still not a first-try clear at level 100 with every talent, on the late armies', () => {
-  for (const army of ['infernal', 'yokai', 'golems']) assert.ok(meanTries(army, 4, 100, true) > 1.5, army);
+  // (ONE-OF-EACH, docs/notes/one-of-each.md: over six saves, not three. With one of each hero on the field the first three saves of the Golem
+  // Forge took 2, 1 and 1 tries (1.33); over eight saves it takes 2.6 tries (2.25 before the rule), the Infernal Host 2.1 (4.25) and the Yokai
+  // 2.4 (4.1). The bar is as it was; three saves were too few to tell the Golem Forge's mean from its luck.)
+  for (const army of ['infernal', 'yokai', 'golems']) assert.ok(meanTries(army, 4, 100, true, 6) > 1.5, army);
   // (and a level-100 party does win it in the end: it is a hard tier, not a wall)
   assert.ok(tries('golems', 4, 100, true, 1, 25) <= 25);
 });

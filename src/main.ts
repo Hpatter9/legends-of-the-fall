@@ -1,27 +1,37 @@
+import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { socketStrip } from './runeTray';
+import { mergesReady } from './sim/runes';
+import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
 import * as toolkit from './sim/toolkit';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
+import { isCastHero, canJoin, sitsOut, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
 import { pickHero } from './calamityView';
-import { closeMapLeg, noteFightStats, notePayout, noteWave, recapOf } from './sim/runRecap';
+import { closeMapLeg, heartsBurned, noteFightStats, notePayout, noteWave, noteXpStart, recapOf } from './sim/runRecap';
 import { towerHeadline, waveHeadline, waveNotes, type WaveMoments } from './sim/waveCard';
 import { gainsSince, snapGains } from './sim/waveGains';
 import { drawWaveNotes } from './waveCardView';
+// (JRPG-RECAP: the results screen after every fight and atop the run's end recap)
+import { playResults, type JrData, type JrPlayer } from './jrpgRecapView';
+import { questLines } from './sim/jrpgRecap';
+import { fightResult, questSnap, questsMoved, runResult } from './jrpgResults';
+import { noteSpoils } from './sim/runSpoils';
 import { showRecap } from './recapView';
+import { foundList, foundRow } from './foundRow';
 import { campArtReady } from './camp';
 import { comebackTips, type ComebackGo } from './sim/comeback';
-import { ARMIES, armyById, armyXpShare, bossOf, armyUnlocked, settleWave, type ArmyPay } from './sim/armies';
-import { drawRunStars, showUnlock } from './armiesView';
+import { ARMIES, armyById, armyIndex, armyXpShare, bossOf, armyUnlocked, landsOf, settleWave, waveFoes, type ArmyPay } from './sim/armies';
+import { drawRunStars } from './armiesView';
 import { modeOpen } from './sim/modeUnlock';
 import { spellIconHtml } from './spellIcons';
 import { settleArmyRun, type StarResult } from './sim/armyStars';
@@ -31,18 +41,31 @@ import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
+import { settleStudy, studyWords } from './sim/books';
+import { fightUse, levelUpWords, settleSkillUse, useOf, useShare } from './sim/skillLevels';
+import { settleWear, wearWords } from './sim/wear';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
 import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
-import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen } from './sim/sceneRules';
+import { direct } from './sim/cineDirector';
+import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
+import { revealCard, revealOf, type RevealGo } from './sim/sceneReveal';
+import type { Reveal } from './sim/sceneKit';
+import { ascOpenedBy, tellsByCard, unlockOfReveal } from './sim/unlockTell';
+import { ascOf } from './sim/ascension';
+import { showEndCard } from './revealCard';
+import { ACT_HALLS, ACT_NUMERALS, ROOM_NAMES } from './sim/standActs';
+import { roomLine } from './standRetreatLines';
+import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen, seenScene } from './sim/sceneRules';
 import { onAwakened } from './awakenView';
-import { SCENES, SCENE_ORDER, type Moment } from './sim/sceneScripts';
+import { SCENES, SCENE_ORDER, type Moment, type Scene } from './sim/sceneScripts';
 import { previewFrames } from './render/sceneClock';
-import { xpRate } from './sim/castle';
+import { siteLevel, xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
+import { isReal, runKitStats, settleFinds, spareFinds, settleRunWear, slotTaken } from './sim/runGear';
 import { powerOf, powerText } from './sim/power';
 import { benchXp, fightXp, gainXp, levelOfKind, type LevelUp } from './sim/levels';
 import { levelBadge } from './levelBadge';
@@ -51,11 +74,15 @@ import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
 import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from './sim/featureUnlocks';
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
-import { afterFight, maxSpeed, spendTicket, startAuto, stopAuto, type AutoReplay } from './sim/autoReplay';
+import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
+import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, guestsHere, splitGuestXp, takeGuest } from './sim/guest';
+import { sitOutWords, twinNote, twinWords } from './oneEachNote';
+import { afterFight, canAutoQuest, maxSpeed, spendTicket, startAuto, startAutoDaily, startAutoQuest, stopAuto, type AutoReplay } from './sim/autoReplay';
 import { Gacha } from './gacha';
 import { queueReveal } from './summonTarot';
 import { Events } from './events';
 import { TowerView } from './towerView';
+import { updateAltarHud } from './altarHud';
 import { StandView } from './standView';
 import { loadStand, migrateOldClimb, standContinueLine } from './sim/stand';
 import { showTwistBanner } from './twistView';
@@ -66,20 +93,67 @@ import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
 import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
+import { showBuilt } from './builtCard';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastJoined, toastLines, toastSpells, toastStones } from './achievementsView';
+import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
+import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
+import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
+import { defaultPicks, marchChoice, marchLine, openMarchOrders, ordersOf, showAnvil, showLectern } from './marchCard';
+import { markedHero } from './sim/march';
+import { repairAll, repairAllCost } from './sim/wear';
+import { lecternDue, lecternSwap } from './sim/lectern';
+import { applyVigil } from './sim/chapelRooms';
+import { journeyBoost, landAt } from './sim/calJourney';
+import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
+import { nemesisLines, type NemNote } from './sim/nemesis';
+import { markSeen as markTaunted, planRun } from './sim/revenge';
+import { TauntCuts } from './tauntCut';
+import { acceptDuel, contenders, duelOffer, offerSnap, refuseDuel, settleDuelRun, startDuel, type DuelOffer } from './sim/duel';
+import { DUEL_MS } from './sim/duelRing';
+import { duelAhead, duelBar, duelTaunt } from './duelRules';
+import { openDuelCard } from './duelView';
+import { noteWar } from './sim/council';
+import type { OrnateMenu } from './ornateMenu';
+import { warmGearTextures } from './render/gearTex';
+import { tauntFor, wavesTaunts } from './tauntCutRules';
+import { dreadOf } from './sim/nemesisTraits';
+import { startNemesisTally, tallyNemesis, type NemesisTally } from './sim/nemesisLog';
+import { bondScenesDue } from './sim/bondScenes';
+import { legacyBoost, legacySnapshot, mentoredXp } from './sim/legacy';
+import { counselXp, fieldedOf, noteServed, stageOfKind } from './sim/dynasty';
+import { addSnapshots, birthrightSnapshot, lapsedLegacy, promiseXp, regularOf, takeRide } from './sim/heirs';
+import { heirSceneId } from './sim/heirScenes';
+import { agedLines } from './housesView';
+import { roomOpen } from './sim/rooms';
+import { readyQuests, ultsIn } from './sim/quests';
+import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
+import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
+import { startMuster } from './sim/muster';
+import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
+import { secretsOf } from './sim/secretHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
 import { tips, type Box } from './tips';
 import { FightHud } from './fightHud';
+import { HoldPress, UnitInfoCard } from './unitInfo';
+import { heroFace } from './heroFace';
+import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
+import { BossMoments } from './bossMoment';
 import { fullScene } from './ultMomentRules';
+import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
-import { canAfford, castSpell, cooldownLeft, MANA_MAX, SPELLS, type SpellId } from './sim/spells';
+import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
+import { autoSpellsFor } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
+import { snapSpell } from './sim/spellAim';
+import { castList, fitSchool, schoolOf } from './sim/schools';
+import { armDecree } from './sim/decrees';
+import { fightRanks } from './sim/spellRanks';
+import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { WeatherView } from './render/weatherView';
@@ -87,12 +161,12 @@ import { weatherOf, type Weather } from './sim/weather';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
-import { traitBadge } from './traitBadge';
+import { battleTraitBadge } from './battleTraitArt';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
-import { RISE_MS, UnitSprite } from './render/unitView';
+import { RISE_MS, setAgeLooks, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
@@ -103,11 +177,12 @@ import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, endFight, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
+import { installTapGuard } from './tapGuard';
 import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
@@ -117,10 +192,41 @@ import { Rng } from './sim/rng';
 import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip } from './quips';
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
-import { hideQuip, showQuip, type Anchor } from './quipView';
+import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
+import { fightToastTop } from './hudClear';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
-import heartUrl from './art/rogue/heart.png';
+import heartUrl from './art/ui/combat-heart.png';
+import { COMBAT_ART } from './combatArtAssets';
+import { EidolonCall } from './eidolonCall';
+import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
+import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
+import { chainById } from './sim/eidolonChainData';
+import { trialOfBattle } from './sim/eidolonTrials';
+import { hornLine } from './eidolonRules';
+import { hornFightOf, midBossWave } from './sim/hornFill';
+import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHorn';
+import { hornEcho } from './sim/relicSets';
+import { EIDOLON_IDS } from './sim/eidolons';
+import { openScreen, openScreens } from './screens';
+import { TacticsView } from './tacticsView';
+import { setTactic } from './sim/tactics';
+import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
+import { pickedFormation, pickedTactic, pickFormation, pickTactic } from './sim/tacticPick';
+
+/** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
+/** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
+function farSightLine(run: Run, army: ReturnType<typeof waveArmyOf>, stage: number): string[] {
+  // (only after a win, when the run has moved on: to the wave it goes to, past any a forced march skips)
+  const next = run.stage;
+  if (!army || run.over || !farSight(run.castle) || next <= stage || next > army.waves.length) return [];
+  const names = [...new Set(waveFoes(army, next, tierOfRun(run)).map((id) => UNITS[id]?.name ?? id))];
+  return [`Far Sight · next wave: ${names.join(', ')}`];
+}
+const toastQuests = (ids: readonly string[]): void => toastLines(ids.map((id) => `Quest done: ${questById(id)?.title ?? id} · return to the tavern`));
+/** A toast for a quest a fight has turned up (QUESTS-1b: spoils on a boss, the rift's voice): it waits on the quest board. */
+const toastFound = (ids: readonly string[]): void =>
+  toastLines(ids.map((id) => `${questById(id)?.giver === 'rift' ? 'A voice in the rift' : 'Spoils found'}: ${questById(id)?.title ?? id} · see the quest board`));
 
 TextureSource.defaultOptions.scaleMode = 'nearest';
 
@@ -148,6 +254,9 @@ const HURTING = new Set<SpellId>(['meteor', 'smite', 'chain', 'poison', 'frost']
 // (the loading screen's tip: one of the jokes, while the page gets ready)
 const loadTip = document.querySelector('.ldTip');
 if (loadTip) loadTip.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+
+/** The padlock on a quest's required hero's bench card (QUEST-BATTLES), drawn so it needs no file. */
+const QUEST_LOCK = '<svg viewBox="0 0 12 14" width="12" height="14" aria-hidden="true"><path d="M3 6V4a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="1.5" y="6" width="9" height="7" rx="1.2" fill="currentColor"/></svg>';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -192,7 +301,7 @@ class Game {
   private run!: Run;
   private meta!: Meta;
   private gacha!: Gacha;
-  private events = new Events((kind) => awakenedOf(this.meta, kind));
+  private events = Object.assign(new Events((kind) => awakenedOf(this.meta, kind)), { metaOf: () => this.meta as Meta | undefined });
   private towerView!: TowerView;
   /** The Last Stand (`standView.ts`): while it is up the ordinary board is hidden and this page's own frame does nothing. */
   private stand!: StandView;
@@ -205,6 +314,9 @@ class Game {
   private crownGain = 0;
   /** Whether the fight's end has been settled into the run. */
   private settled = false;
+  /** The Nemesis War, phase 4: the challenge this wave opens with, waiting for its cut-in to play before its card opens; the card while up. */
+  private duelWait: DuelOffer | null = null;
+  private duelCard: OrnateMenu | null = null;
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
   /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the fallen heroes rise, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
@@ -218,6 +330,13 @@ class Game {
   private passing: { wait: number; marched: boolean } | null = null;
   /** The settled wave's short card (WAVE-RECAP): its number, its count of waves, and the moments worth a line; null for a card that keeps the full report (the spire and the Calamity). */
   private waveCard: (WaveMoments & { wave: number; of: number | null; title?: string }) | null = null;
+  /** JRPG-RECAP: the results screen's data once a fight is settled, and its player once the card is up. */
+  private jrData: JrData | null = null;
+  private jr: JrPlayer | null = null;
+  /** CLOSE-SCREENS: the result card has been left (the run's recap, the home screen, the next wave): it stays shut until the next fight
+   *  ends, and its closer in the screen stack while it is up. */
+  private resultDone = false;
+  private resultCloser: (() => void) | null = null;
   /** What an army's last settled fight paid (null for any other run). */
   private pay: ArmyPay | null = null;
   /** What a daily's last settled fight paid (null for any other run). */
@@ -227,7 +346,12 @@ class Game {
   /** Where each hero (by roster id) was placed, so the next stage puts them back. */
   private placed = new Map<string, [number, number]>();
   private chosen: string | null = null;
+  /** ONE-OF-EACH: the fielded hero whose tile is lit after a copy of it was refused, and until when. */
+  private twinLit: { tag: number; until: number } | null = null;
   private drag: Drag | null = null;
+  /** UNIT-INFO (docs/notes/unit-info.md): a press-and-hold on a unit in a deploy opens its info card; a move first lets it go as a drag. */
+  private hold!: HoldPress;
+  private info!: UnitInfoCard;
   private hover: [number, number] | null = null;
   /** The fight speed: kept from wave to wave and fight to fight, and the last choice is remembered in the settings. */
   private speed: 1 | 2 | 3 = settings().speed;
@@ -242,6 +366,11 @@ class Game {
   private spellGhost = document.createElement('div');
   /** The fight's numbers for each hero, tallied as the ticks come in. */
   private stats: FightStats = [];
+  /** The Nemesis War's tally of the fight going (`nemesisLog.ts`), and what the last settled fight meant for the War. */
+  private nemTally: NemesisTally = startNemesisTally();
+  private nemNote: NemNote | undefined;
+  /** The ultimates fired this fight, one hero kind each (QUESTS-1b: the quests' goals read them when the fight settles). */
+  private ultsFired: string[] = [];
   /** A boss's title card: how long it has been on, and the boss it is about. */
   private intro: { t: number; boss: Unit; slammed: boolean } | null = null;
   /** The stages whose boss has had its card this session (a stage's card plays once). */
@@ -262,7 +391,12 @@ class Game {
     const fonts = Promise.all(['900 16px "Cinzel Decorative"', '700 16px "Alegreya Sans"', '16px "Press Start 2P"'].map((f) => document.fonts.load(f))).catch(() => {});
     await Promise.all([loadSheets(), loadBoardArt(), loadFx(), Promise.race([fonts, new Promise((ok) => setTimeout(ok, 2500))])]);
     this.world.sortableChildren = true;
+    // (Dynasties: a Veteran's or an Elder's sprite wears the touch of the years; looks only)
+    setAgeLooks((kind) => stageOfKind(this.meta, kind), (kind) => fieldedOf(this.meta, kind)?.look);
     this.boardView.keep.push(this.fx.dimLayer, this.fx.root, this.weather.lights);
+    // (FIXES-4: the effects lay their tile marks on the tiles' own ground, under the fighters)
+    this.fx.groundAt = (u, v) => this.boardView.groundAt(u, v);
+    this.fx.groundRow = (d) => this.boardView.groundRow(d);
     this.boardView.root.addChild(...this.boardView.keep);
     this.world.addChild(this.boardView.root);
     this.boardView.renderer = this.app.renderer;
@@ -274,15 +408,26 @@ class Game {
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
     this.meta = loadMeta((Date.now() % 100000) + 1);
+    // (EIDOLONS: a hidden dev flag, `?eidolons=all`, binds all six Eidolons and fills the War Horn, to try the call before the quest chains
+    // bind them; in normal play the horn fills but no Eidolon answers it yet)
+    if (query.get('eidolons') === 'all') {
+      for (const id of EIDOLON_IDS) bindEidolon(this.meta, id);
+      addHorn(this.meta, HORN_FULL);
+    }
     await loadAwakenedSheets(Object.keys(this.meta.awakened ?? {}));
     saveMeta(this.meta);
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
+    let firstSession = false;
     if (needsStarter(this.meta)) {
+      // (UX-FIXES: a new save goes from the pick straight to wave 1's deploy: the opening is the one title sequence, so the Orc Warband's
+      // own intro film is marked seen and not played again behind it; the Scenes list still has it)
+      firstSession = !seed;
       // (the opening cinematic comes first, before the pick: the player has no heroes yet, so a fixed trio plays it; a test page with a seed has none)
       if (!seed) await this.playDue({ kind: 'starter' }, { party: [...(SCENES.opening.trio ?? [])] });
       if (seed) pickStarter(this.meta, 0);
       else await chooseStarter(this.meta);
+      if (firstSession) markSeen(this.meta, `intro:${ARMIES[0].id}`);
       saveMeta(this.meta);
     }
     // (a save from before the summoning stones was given a few, once: it says so)
@@ -326,13 +471,36 @@ class Game {
       },
       onContinue: () => this.resume(),
       // (an army starts from wave 1 once its party is picked)
-      onArmy: (id, tier, auto) =>
+      onArmy: (id, tier, auto) => {
+        // (the run's seed is fixed as the War Council opens, so the March orders it shows (a Cursed march's curse) are the run's own)
+        const runSeed = seed && isScenario(scenario) ? seed : clockSeed();
+        // (UI-STANDARD: the March orders are a button on the War Council, once any order is open; March starts with them as set.
+        //  An auto replay marches plain)
+        const marching = !auto && marchChoice(this.meta, id, tier);
+        let picks = defaultPicks(this.meta, id, this.meta.party);
         this.party.open('start', () => {
-          const next = armyRun(seed && isScenario(scenario) ? seed : clockSeed(), id, this.meta.party, this.meta.castle, tier);
+          const next = armyRun(runSeed, id, this.meta.party, this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
+          if (marching) {
+            const orders = ordersOf(picks, next.seed, this.meta.party);
+            if (orders) next.orders = orders;
+            // (DEPTH-BUILD: Far Sight's road: the run is fought on that land of the army's)
+            const army = armyById(id);
+            const road = army ? routeLand(orders, landsOf(army)) : undefined;
+            if (road) next.area = road;
+          }
           this.startRun(next);
-          if (auto) this.beginAuto(id, tier, auto);
-        }),
+          if (auto) this.beginAuto({ army: id, tier }, auto);
+        });
+        if (marching)
+          this.party.setOrders({
+            line: () => marchLine(picks),
+            open: (party, redraw) => openMarchOrders(this.meta, id, tier, runSeed, party, picks, (p) => {
+              picks = p;
+              redraw();
+            }),
+          });
+      },
       onParty: () =>
         this.party.open('edit', () => {
           // (a run going on draws from the new party from now on)
@@ -345,7 +513,10 @@ class Game {
       onDaily: () => {
         if (dailyInProgress(loadRun(), todayKey())) return this.resume();
         // (the start card names the boss and the land; a tap on Fight! starts the run, the first of the date counting)
-        showDailyStart(this.meta, todayKey(), () => this.startRun(startDaily(this.meta, todayKey())), () => this.home.open());
+        showDailyStart(this.meta, todayKey(), (auto) => {
+          this.startRun(startDaily(this.meta, todayKey()));
+          if (auto) this.beginAuto({ daily: todayKey() }, auto);
+        }, () => this.home.open());
       },
       onTower: () => this.openStand(),
       onCalamity: () => this.openMode('calamity'),
@@ -360,6 +531,46 @@ class Game {
       },
       onScene: () => this.syncScene(),
       onWatchScene: (id) => void this.playScene(id),
+      // (QUEST-BATTLES: a quest battle from the log, a giver's card or a replay; and the one saved part-way, if any)
+      onQuestBattle: (id, auto) => this.openQuestBattle(id, auto),
+      // (EIDOLON-CHAINS: a chain's prologue, played over the home screen whatever the Cinematics setting: it is the chain's sense)
+      onStory: (scene) => this.scenes.play(scene, this.players()),
+      questSaved: () => {
+        const r = loadSlot('quest');
+        return r?.mode?.kind === 'quest' ? r.mode.quest : null;
+      },
+      // (the Nemesis War: the Warchief's Muster, from the Dark Council's board; a Muster saved part-way carries on)
+      onMuster: () => this.openMuster(),
+      musterSaved: () => !!loadSlot('muster'),
+      // (EIDOLONS: the War Horn's chip beside the stones, put in once and kept to the save)
+      onTopBar: () => {
+        if (!this.eid) return;
+        if (!this.eid.camp.root.isConnected) $('hmStones').after(this.eid.camp.root);
+        this.eid.refreshCamp();
+      },
+      // (DEPTH-BUILD: a bond scene due plays when the camp or the castle opens, one at a time)
+      onOpened: () => {
+        if (!this.scenesOn()) return;
+        const id = bondScenesDue(this.meta, (x) => seenScene(this.meta, x))[0];
+        const sc = id ? SCENES[id] : undefined;
+        if (sc) void this.queueScene(sc.moment);
+        // (the Nemesis War, phase 3: an Avenger's Vengeance plays its scene, once a pair)
+        const pair = this.meta.war?.vengeance?.[0];
+        if (pair) {
+          this.meta.war!.vengeance = this.meta.war!.vengeance!.slice(1);
+          if (!this.meta.war!.vengeance.length) delete this.meta.war!.vengeance;
+          saveMeta(this.meta);
+          void this.queueScene({ kind: 'vengeance', pair });
+        }
+        // (Dynasties, phase 6: a pair that named an heir plays its heir scene, once)
+        const heirPair = this.meta.dynasty?.scenes?.[0];
+        if (heirPair && !pair) {
+          this.meta.dynasty!.scenes = this.meta.dynasty!.scenes!.slice(1);
+          if (!this.meta.dynasty!.scenes.length) delete this.meta.dynasty!.scenes;
+          saveMeta(this.meta);
+          if (SCENES[heirSceneId(heirPair)]) void this.queueScene({ kind: 'heir', pair: heirPair });
+        }
+      },
       onBuilt: (site) => {
         // (a Mage Tower level teaches its spells the moment it stands)
         const learnt = grantSpells(this.meta);
@@ -367,12 +578,15 @@ class Game {
           saveMeta(this.meta);
           toastSpells(learnt);
         }
-        void this.queueScene({ kind: 'castle', site });
+        // (a popup, no cinematic: UI batch 1)
+        showBuilt(site, siteLevel(this.meta.castle, site, site === 'chapel'));
       },
     });
     this.towerView = new TowerView({
       meta: () => this.meta,
       events: this.events,
+      // (DEPTH-BUILD: the Calamity's act scene, once, as its crossroads opens)
+      onActEnd: (act) => void this.queueScene({ kind: 'calAct', map: act }),
       onFight: () => {
         saveRun(this.run);
         this.newBattle();
@@ -387,6 +601,8 @@ class Game {
       hideBoard: (hidden) => this.hideBoard(hidden),
       onHome: () => this.home.open(),
       moment: (m) => this.playDue(m),
+      film: (scene, party) => (this.scenesOn() ? this.scenes.play(scene, { party: [...party] }).then(() => true) : Promise.resolve(false)),
+      questsDone: (ids) => toastQuests(ids),
     });
     // (the map opening or closing changes the music)
     new MutationObserver(() => this.syncScene()).observe($('towerMap'), { attributes: true, attributeFilter: ['hidden'] });
@@ -394,11 +610,29 @@ class Game {
     bindSpellbook(this.meta, () => {
       saveMeta(this.meta);
       this.home.refresh();
-    });
+    }, () => settings().ruler);
+    // (KING-SPELLS batch 2: the loadout follows the ruler's school, on load and whenever the ruler is changed)
+    let school = '';
+    const fit = () => {
+      if (school === settings().ruler && this.meta.spellbook.school === school) return;
+      school = settings().ruler;
+      fitSchool(this.meta.spellbook, school);
+      saveMeta(this.meta);
+    };
+    fit();
+    onSettings(fit);
     this.wire();
     this.newBattle();
     // (the game opens on the castle, unless a seed is given in the address)
-    if (!seed) this.home.open(closed ?? undefined);
+    // (UX-FIXES: ... except a new save's first session, which starts on wave 1 of the first army: the run is saved, and Home is one tap away)
+    // (UX-FIXES: the home screen's opening tells the unlock cards held back during a run)
+    const homeOpen = this.home.open.bind(this.home);
+    this.home.open = (...a: Parameters<Home['open']>) => {
+      homeOpen(...a);
+      if (this.heldReveals.length) setTimeout(() => this.flushReveals(), 400);
+    };
+    if (firstSession) saveRun(this.run);
+    else if (!seed) this.home.open(closed ?? undefined);
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
@@ -420,10 +654,13 @@ class Game {
       return said;
     });
     window.addEventListener('resize', () => this.layout());
+    this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
     const home = $('home');
     const sync = () => {
       this.homeUp = !home.hidden;
+      // (FIXES3: the home screen shown is the home screen seen: a Calamity map left up would cover it and every mode begun from it)
+      if (this.homeUp) this.towerView.dismiss();
       this.syncAct();
       this.syncScene();
       this.app.stage.renderable = !this.homeUp;
@@ -432,7 +669,9 @@ class Game {
       if (!this.homeUp) this.app.ticker.start();
       // (an earned deploy helper is told on the deploy screen the player comes back to: DEPLOY-ZOOM)
       if (!this.homeUp && this.b.phase === 'deploy' && !this.auto) this.tellUnlocks();
-      else if (this.b.phase !== 'fight') this.app.ticker.stop();
+      // (only under the home screen: a quest battle begun from the home screen just after a run was won used to find its ticker stopped
+      //  here, the old fight's 'won' still on the board, and its fight never moved; EIDOLON-CHAINS)
+      else if (this.homeUp && this.b.phase !== 'fight') this.app.ticker.stop();
     };
     // (the tips on the home screen are still looked after, a few times a second)
     setInterval(() => this.homeUp && tips.update(), 250);
@@ -444,8 +683,13 @@ class Game {
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
+    (window as unknown as { __screens: () => string[] }).__screens = openScreens;
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
+    // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
+    (window as unknown as { __settleFinds: typeof settleFinds }).__settleFinds = settleFinds;
+    // (the screenshot tool draws the wave card's lines from given moments)
+    (window as unknown as { __waveNotes: (m: WaveMoments) => void }).__waveNotes = (m) => drawWaveNotes($('waveNotes'), waveNotes(m), []);
     // (a hero's first awakening has its cinematic)
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
@@ -457,6 +701,11 @@ class Game {
 
   /** A fresh fight for the run's stage, with the squad back where it stood (or on the first free tiles). */
   private newBattle(): void {
+    // (a fight left running behind the home screen and never finished (a new run begun from the camp) is over: its battle music
+    // goes with it, so the new board has the deployment's music, not the old battle's)
+    if (this.b?.phase === 'fight') endFight();
+    // (FIXES3: one screen at a time: a Calamity map still up is shut, so it never covers the new board)
+    this.towerView.dismiss();
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
@@ -473,6 +722,9 @@ class Game {
     this.heartsBurned = 0;
     this.passing = null;
     $('result').classList.remove('passing', 'leaving');
+    // (CLOSE-SCREENS: the last fight's card is closed; the new fight's comes up when it ends)
+    this.closeResult();
+    this.resultDone = false;
     this.placeSquad();
     this.acc = 0;
     this.chosen = null;
@@ -501,8 +753,105 @@ class Game {
     this.refresh();
     // (a fight's cinematics come before the boss's own card: a Calamity's herald, a first elite, the tower's milestones ...)
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
-    if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro());
+    if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro(true));
     else this.startIntro();
+    this.queueTaunts();
+    this.queueDuel();
+  }
+
+  /** The Nemesis War, phase 4: a challenge on this wave (`duel.ts`): its cut-in queued after the taunts, its card when the screen is free.
+   *  None under auto-replay. A card still up from a wave before is put away without answering it. */
+  private queueDuel(): void {
+    this.duelWait = null;
+    const card = this.duelCard;
+    this.duelCard = null;
+    card?.close();
+    document.body.classList.toggle('inDuel', !!this.b.duel);
+    if (this.auto || this.b.phase !== 'deploy' || this.b.duel) return;
+    const o = duelOffer(this.run);
+    const s = o && offerSnap(this.run, o);
+    if (!o || !s) return;
+    this.duelWait = o;
+    this.taunts.add([duelTaunt(o, s, this.run.seed)], settings().nemesisCut);
+  }
+
+  /** The challenge's card (`duelView.ts`), once its cut-in has played. */
+  private openDuel(): void {
+    const o = this.duelWait;
+    const s = o && offerSnap(this.run, o);
+    if (!o || !s || this.duelCard) return;
+    this.taunts.clear();
+    this.duelCard = openDuelCard(o, s, contenders(this.run), (id) => this.answerDuel(o, id));
+  }
+
+  /** The player's answer: a champion (Accept: the duel's fight begins at once) or none (Refuse: the wave as usual, the nemesis Mocking). */
+  private answerDuel(o: DuelOffer, heroId: number | null): void {
+    if (this.duelWait !== o || this.b.phase !== 'deploy') return;
+    this.duelWait = null;
+    this.duelCard = null;
+    const s = offerSnap(this.run, o);
+    if (heroId === null) {
+      refuseDuel(this.run, o);
+      saveRun(this.run);
+      if (s) toastLines([`${s.name} is Mocking: +5% attack for the rest of the run`]);
+      // (the wave's fight is made again with the nemesis Mocking, the squad put back where it stood)
+      this.b = startStage(this.run, this.duchessWish());
+      this.placeSquad();
+      const section = chainOf(this.run)?.[this.run.stage - 1];
+      this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+      this.syncChain();
+      this.syncSprites(true);
+      this.layout();
+      this.refresh();
+      return;
+    }
+    const h = heroOf(this.run, heroId);
+    if (!h) return;
+    acceptDuel(this.run, o, heroId);
+    saveRun(this.run);
+    // (the duel's own fight: the wave's board with the two in its middle ring, `startDuel`)
+    this.b = startDuel(this.run, o, heroId, this.boostFor(h));
+    const section = chainOf(this.run)?.[this.run.stage - 1];
+    this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.boardView.ring(this.b.duel!);
+    document.body.classList.add('inDuel');
+    this.syncChain();
+    this.syncSprites(true);
+    this.layout();
+    this.refresh();
+    this.begin();
+  }
+
+  /** A duel lost or run out of time (`duel.ts`): the War reads it (the nemesis's deed, its escape), the run takes its outcome (the champion
+   *  at half, the nemesis a Might stronger, or gone from the wave), and the wave's own fight is set up. A duel won is settled as the wave. */
+  private endDuel(): void {
+    const b = this.b;
+    const note = noteWar(this.meta, this.run, b, this.nemTally, false, this.run.stage, todayKey());
+    settleDuelRun(this.run, b);
+    saveMeta(this.meta);
+    saveRun(this.run);
+    toastLines(note.council ?? []);
+    this.newBattle();
+  }
+
+  /** The Nemesis War, phase 3: the cut-ins of the nemeses this wave brings that the run has not met yet (none under auto-replay). */
+  private queueTaunts(): void {
+    this.taunts.clear();
+    const rn = this.run.nemesis;
+    if (rn?.members.some((x) => x.trophies?.length)) warmGearTextures();
+    if (!rn || this.auto || this.b.phase !== 'deploy') return;
+    const shown = this.taunted.get(this.run.seed) ?? new Set<number>();
+    this.taunted.set(this.run.seed, shown);
+    const field = [...new Set([...this.run.roster.map((h) => h.kind), ...this.b.units.filter((u) => u.side === 'hero' && u.owner === undefined).map((u) => u.def)])];
+    const snaps = wavesTaunts(rn, this.run.stage, shown);
+    this.taunts.onOpen = (t) => void shown.add(t.id);
+    // (a first meeting, once played, is kept on the nemesis: later ones follow the setting)
+    this.taunts.onShown = (t) => {
+      if (!t.first || !this.meta.war) return;
+      markTaunted(this.meta.war, t.id);
+      saveMeta(this.meta);
+    };
+    this.taunts.add(snaps.map((s) => tauntFor(s, field, this.run.seed)), settings().nemesisCut);
   }
 
   /** The squad onto the deploy rows, each where it stood last when it still can. */
@@ -511,7 +860,8 @@ class Game {
       const h = heroOf(this.run, id);
       if (!h) continue;
       // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
-      const was = this.placed.get(String(id));
+      // (a mirror's clone standing in for its original takes the original's spot: ONE-OF-EACH)
+      const was = this.placed.get(String(id)) ?? (h.standsFor !== undefined ? this.placed.get(String(h.standsFor)) : undefined);
       const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
       if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
@@ -522,6 +872,11 @@ class Game {
    *  is made again with it and the squad put back, so the choice counts in this fight (the deploy was made before the card opened). The camera,
    *  the intro and the cinematics are left alone. */
   private afterEvent(buffWas: string): void {
+    // (GUEST-HERO: a guest bought at the cart steps onto the board at once, beside the five)
+    if (this.b.phase === 'deploy' && this.run.squad.some((id) => !this.b.units.some((u) => u.side === 'hero' && u.tag === id))) {
+      this.placeSquad();
+      this.syncSprites();
+    }
     if (JSON.stringify(this.run.buff ?? null) === buffWas || this.b.phase !== 'deploy') return;
     this.b = startStage(this.run, this.duchessWish());
     this.placeSquad();
@@ -545,10 +900,12 @@ class Game {
     const out: Moment[] = [];
     const mode = run.mode?.kind;
     if (mode === 'calamity' && run.tower) {
-      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.tower.act });
+      if (isBossRun(run)) out.push({ kind: 'calBoss', map: run.rift ? landAt(run.tower.journey, run.tower.act) : run.tower.act });
       if ((run.mode as { ascension?: number }).ascension === 1) out.push({ kind: 'ascension' });
     }
     if (mode === 'tower' && [10, 25, 50].includes(run.stage)) out.push({ kind: 'spire', floor: run.stage });
+    // (an army's first march on the keep, CINE-001: on its first wave, once a save; an army already cleared before this scene existed is not introduced)
+    if (run.mode?.kind === 'army' && run.stage === 1 && !seenScene(this.meta, `clear:${run.mode.army}`)) out.push({ kind: 'armyIntro', army: run.mode.army });
     if (mode === 'army' && tierOfRun(run) >= TIERS.length - 1) out.push({ kind: 'mythic' });
     if (mode === 'daily' && isBossRun(run)) out.push({ kind: 'dailyBoss' });
     if (run.tower?.cur?.fight?.elite) out.push({ kind: 'elite' });
@@ -567,7 +924,10 @@ class Game {
   /** Queue the cinematic due at a moment, if there is one: they play one after another, and the returned promise is done when this one is. */
   private queueScene(moment: Moment, party?: readonly string[]): Promise<void> {
     const players = party ? { ...this.players(), party: [...party] } : undefined;
-    if (!this.scenesOn() || !dueScene(this.meta, moment)) return this.sceneChain;
+    const id = dueScene(this.meta, moment);
+    if (!id || this.auto) return this.sceneChain;
+    // (UNLOCK-ONCE: with cinematics off, a film that opened something still has its end card, alone: it is the one thing that tells it)
+    if (!this.scenesOn() && !SCENES[id]?.reveal) return this.sceneChain;
     this.sceneHold++;
     this.sceneChain = this.sceneChain
       .then(() => this.playDue(moment, players))
@@ -620,6 +980,61 @@ class Game {
     markSeen(this.meta, id);
     saveMeta(this.meta);
     if (settings().cinematics) await this.scenes.play(id, players);
+    // (REVEAL: a film that revealed something ends on its card, played through or skipped; with cinematics off the card comes alone,
+    // UNLOCK-ONCE: it is the only thing that tells the player)
+    await this.endCard(id);
+  }
+
+  /** The end cards shown this session, by key (REVEAL): an unlock whose film's card was shown is not told again. */
+  private revealed = new Set<string>();
+
+  /** UNLOCK-ONCE (`sim/unlockTell.ts`): tell an unlock whose film did not play (seen already, or the unlock came another way) with the
+   *  film's own end card, unless this session has shown it. Resolves `true` when the player took the card's button. */
+  private async tellUnlock(r: Reveal, mayGo = true): Promise<boolean> {
+    if (!tellsByCard(unlockOfReveal(r))) return false;
+    const card = revealCard(r, this.meta);
+    if (!card || this.revealed.has(card.key)) return false;
+    // (UX-FIXES: an unlock card never lands over a wave result in the middle of a run: it waits for the home screen and shows then)
+    if (!this.home.isOpen && $('home').hidden && !this.run.over && !this.run.cleared) {
+      this.heldReveals.push([r, mayGo]);
+      return false;
+    }
+    this.revealed.add(card.key);
+    const to = card.go?.to;
+    const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
+    return showEndCard(card, go);
+  }
+
+  /** UX-FIXES: a road event's card waits until the wave result card is gone, so two cards never fight for focus. */
+  private openEventWhenClear(open: () => void): void {
+    const go = () => ($('result').hidden && !document.querySelector('.rvCard, .unlock') ? open() : setTimeout(go, 300));
+    go();
+  }
+
+  /** Unlock cards held back while a run was going (UX-FIXES): told, one at a time, once the home screen is open. */
+  private heldReveals: [Reveal, boolean][] = [];
+  private flushReveals(): void {
+    const held = this.heldReveals.splice(0);
+    void held.reduce((p, [r, go]) => p.then(() => this.tellUnlock(r, go).then(() => undefined)), Promise.resolve());
+  }
+
+  /** A film's end card, if it revealed something (REVEAL, `sim/sceneReveal.ts`): its button goes there only from the home screen (never
+   *  out of a fight or its result, nor out of the Scenes list's replay, `mayGo` false); elsewhere it says where, with Continue. */
+  private async endCard(id: string, mayGo = true): Promise<void> {
+    const card = revealOf(id, this.meta);
+    if (!card || !tellsByCard(unlockOfReveal(SCENES[id].reveal!))) return;
+    this.revealed.add(card.key);
+    const to = card.go?.to;
+    const go = mayGo && to && this.home.isOpen ? () => this.revealGo(to) : undefined;
+    await showEndCard(card, go);
+  }
+
+  /** Where an end card's button goes (REVEAL). */
+  private revealGo(to: RevealGo): void {
+    if (to.to === 'calamity') return this.home.enterCalamity();
+    if (to.to === 'armies') return this.home.openArmies(to.army);
+    if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
+    this.home.show(to.to);
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -628,7 +1043,31 @@ class Game {
   }
 
   sceneFrames(id: string): [number, number, number][] {
-    return previewFrames(SCENES[id]);
+    // (the frames of the scene as it is played: cut into shots by the director, CINE-001)
+    const sc = SCENES[id] ?? this.filmOf(id);
+    return sc ? previewFrames(direct(sc, { calm: matchMedia('(prefers-reduced-motion: reduce)').matches })) : [];
+  }
+
+  /** A film made on the spot, by a preview key (CINE-001; for the Scenes previews and the screenshots): `quest:<battle>` and
+   *  `questAfter:<battle>` (its story before and after, with its first cast), `chain:<id>` (an Eidolon chain's prologue), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
+   *  Last Stand's act card of act n, 1 to 3, with a line of the ruler's). */
+  private filmOf(key: string): Scene | null {
+    const [kind, arg = ''] = key.split(':');
+    if (kind === 'quest' || kind === 'questAfter') {
+      const qb = questBattleById(arg);
+      if (!qb) return null;
+      const cast = qb.cast.map((x) => x.heroes[0]);
+      return kind === 'quest' ? qb.before(cast) : qb.after(cast);
+    }
+    if (kind === 'chain') return chainById(arg)?.prologue ?? null;
+    if (kind === 'arrive' && UNITS[arg]) return arrivalScene(arg, UNITS[arg].name, titleOf(arg), 'volcano');
+    if (kind === 'act') {
+      const act = Math.max(1, Math.min(3, Number(arg) || 1));
+      const hall = ACT_HALLS[act];
+      const words = roomLine(7, hall, this.meta.party);
+      return actScene(ACT_NUMERALS[act], ROOM_NAMES[hall].title, ACT_LOOKS[hall], words.line, words.duchess, Math.min(2, this.meta.party.length), act === 3);
+    }
+    return null;
   }
 
   /** The heroes earned in play since the last result was closed: each has its reveal, once, before the game goes on. */
@@ -651,7 +1090,13 @@ class Game {
     // (a Last Oath is played by its set's five, however it is started)
     const mo = SCENES[id]?.moment;
     const five = mo && (mo.kind === 'combo' || mo.kind === 'comboCut') ? comboById(mo.set)?.heroes : undefined;
-    return this.scenes.play(id, five ? { ...this.players(), party: [...five] } : this.players());
+    const film = SCENES[id] ? id : this.filmOf(id);
+    if (!film) return Promise.resolve('skipped');
+    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players()).then(async (e) => {
+      // (REVEAL: a replay ends on its card too, with Continue only)
+      if (SCENES[id]) await this.endCard(id, false);
+      return e;
+    });
   }
 
   /** The long map behind this wave's section (an army run's; any other run has none). Finished waves are baked, with no animation: this is also how a run resumed from a save comes up. */
@@ -708,7 +1153,7 @@ class Game {
   }
 
   /** A boss's first meeting: the screen dims, the boss's portrait slides in, its name on a ribbon slams down with its title, and the camera glides to it. Once a save for each boss (`cardDue`): a new run, a restart or a new day does not replay it. */
-  private startIntro(): void {
+  private startIntro(sceneJustPlayed = false): void {
     const key = `${this.run.seed}:${this.run.stage}`;
     // (a boss, or the named elite of an elite node, gets the card)
     const elite = this.run.tower?.cur?.fight?.elite ? ELITE_BY_ID[this.run.tower.cur.fight.elite] : undefined;
@@ -716,16 +1161,30 @@ class Game {
     if (!boss || this.introduced.has(key)) return;
     this.introduced.add(key);
     // (a boss's card plays once a save, the first time that boss is met: not again on a new run, a retry or a new day)
-    const card0 = cardKey(boss.def, elite?.id);
+    // (QUEST-BATTLES: a quest battle's boss is a name and title of its own, on a boss's look; its card plays once, for that battle)
+    const qb = questBattleOfRun(this.run);
+    const named = qb?.boss && boss.def === questBossOf(qb) ? qb.boss : undefined;
+    const card0 = named ? `quest:${qb!.id}` : cardKey(boss.def, elite?.id);
     if (!cardDue(this.meta, card0)) return;
     markCard(this.meta, card0);
     saveMeta(this.meta);
     this.goat.react('boss');
+    // (CINE-001: with cinematics on, the boss makes a film villain's entrance instead of the card, unless a scene has just introduced it)
+    if (!sceneJustPlayed && this.scenesOn()) {
+      const def0 = UNITS[boss.def];
+      const film = arrivalScene(boss.def, named ? named.name : elite ? elite.name : def0.name, named ? named.title : elite ? elite.epithet : titleOf(boss.def), this.b.board.area);
+      this.sceneHold++;
+      this.sceneChain = this.sceneChain
+        .then(() => this.scenes.play(film, this.players()))
+        .catch(() => undefined)
+        .then(() => void this.sceneHold--);
+      return;
+    }
     this.intro = { t: 0, boss, slammed: false };
     const card = $('bossCard');
     const def = UNITS[boss.def];
     card.classList.toggle('elite', !!elite);
-    const name = (elite ? elite.name : def.name).toUpperCase();
+    const name = (named ? named.name : elite ? elite.name : def.name).toUpperCase();
     const nameEl = card.querySelector('b')!;
     nameEl.textContent = name;
     // (the name's size, a multiple of 12, the largest whose longest word fits the ribbon and that takes two lines at most (three at 24px); the
@@ -747,12 +1206,23 @@ class Game {
     const px = [48, 36, 24].find(fits) ?? 12;
     nameEl.style.fontSize = `${px}px`;
     nameEl.style.letterSpacing = `${px >= 36 ? 4 : 2}px`;
-    card.querySelector('span')!.textContent = elite ? elite.epithet : titleOf(boss.def);
+    card.querySelector('span')!.textContent = named ? named.title : elite ? elite.epithet : titleOf(boss.def);
+    // (DEPTH-BUILD: the boss's weakness, once learnt in full or read with the Library's Archive)
+    card.querySelector('em.weakLine')?.remove();
+    // (a Scouted march knows the final boss's weakness for that run)
+    const scouted = this.run.orders?.mod === 'scouted';
+    const known = WEAKNESS[boss.def] ? knownClues(boss.def, scouted ? { clues: 3, marks: [] } : this.meta.weak?.[boss.def], roomOpen(this.run.castle, 'archive')) : null;
+    if (known?.full) {
+      const line = document.createElement('em');
+      line.className = 'weakLine';
+      line.textContent = `Known weakness: ${known.lines[2]}`;
+      card.append(line);
+    }
     // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
-    const old = card.querySelector('canvas')!;
+    const old = card.querySelector('canvas, .heraldIntro')!;
     // (the sheets face right; a boss that faces left looks the other way, mirrored in the drawing so the slide-in keeps it)
-    const face = wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
+    const face = heraldPortrait(boss.def, 'heraldIntro') ?? wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
     old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
@@ -793,11 +1263,22 @@ class Game {
   /** The boss's name and health across the top, during the fight (none once it has fallen). */
   private refreshBossBar(): void {
     const bar = $('bossBar');
-    const boss = this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
+    // (phase 4: in a duel the bar is the nemesis's, with the seconds left)
+    const duel = this.b.duel;
+    const boss = duel ? this.b.units.find((u) => u.id === duel.nem) : this.b.units.find((u) => u.side === 'foe' && (u.size ?? 1) > 1);
     const show = this.b.phase === 'fight' && !!boss?.alive;
-    if (bar.hidden === show) bar.hidden = !show;
+    if (bar.hidden === show) {
+      bar.hidden = !show;
+      // (COMBAT-HUD: the bar is placed under the spell row as it is drawn now, before the quip is set clear of it)
+      if (show) {
+        bar.querySelector('b')!.textContent = boss!.nem?.name ?? this.questBossName(boss!.def) ?? UNITS[boss!.def].name;
+        this.placeTopHud();
+        reclearQuip();
+      }
+    }
     if (!boss || !show) return;
-    bar.querySelector('b')!.textContent = UNITS[boss.def].name;
+    // (the Nemesis War: a boss that is a nemesis goes by its own name)
+    bar.querySelector('b')!.textContent = duel ? duelBar(boss.nem?.name ?? UNITS[boss.def].name, (this.b.timeLimit ?? DUEL_MS) - this.b.t) : boss.nem?.name ?? this.questBossName(boss.def) ?? UNITS[boss.def].name;
     (bar.querySelector('span') as HTMLElement).style.width = `${(boss.hp / boss.maxHp) * 100}%`;
   }
 
@@ -809,19 +1290,38 @@ class Game {
   }
 
   private begin(): void {
+    // (the Nemesis War, phase 4: a challenge waiting for its answer is answered first)
+    if (this.duelWait && this.b.phase === 'deploy') return this.openDuel();
+    // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
+    if (this.questBlock()) return void this.refresh();
+    // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
+    setTactic(this.b, pickedTactic(this.meta.tactics, this.run.mode));
+    setFormations(this.b, autoPlaceOpen(this.meta));
     if (!fight(this.b)) return;
+    // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
+    // in its own trial as a great being, EIDOLON-TRIAL)
+    const qbNow = questBattleOfRun(this.run);
+    // (phase 4: a duel has no War Horn and no Decree: the king stays out of it)
+    if (!this.b.duel) this.eid.arm(this.b, midBossWave(this.run, this.run.stage), !!qbNow && !!trialOfBattle(qbNow.id));
+    // (KING-SPELLS batch 2: the ruler's Decree, once a fight)
+    if (!this.b.duel) armDecree(this.b, schoolOf(settings().ruler).decree);
+    // (KING-SPELLS batch 3: the save's spell ranks)
+    this.b.spells.ranks = fightRanks(this.meta.spellbook);
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
-    this.b.autoUlt = this.ultAutoOn();
+    this.setAutoOn(this.b);
     this.hud.setAuto(this.ultAutoOn());
     this.hud.build(this.b);
     this.ultm.clear();
     this.ultm.warm(this.b);
     this.evolved = new Set();
     this.endIntro();
+    this.taunts.clear();
     newQuipScene();
     // (the opening grumble belongs to a new fight)
     foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
+    this.nemTally = startNemesisTally();
+    this.ultsFired = [];
     // (the music: the battle's one track, the same for every wave of an army or a daily, `battleMusic.ts`)
     startFight(trackOfRun(this.run));
     startSynergies(countTraits(kindsOf(this.b.units)), this.b.combo, duoCombosOf(kindsOf(this.b.units)));
@@ -839,6 +1339,7 @@ class Game {
       this.place();
     }
     this.refresh();
+    reclearQuip();
   }
 
   /** Where to point a speech bubble at a hero of this kind on the board: above the head of one of their sprites (page pixels), or null. */
@@ -885,6 +1386,7 @@ class Game {
   /** The Last Stand takes the canvas (the board of the ordinary fights is hidden and not drawn) or gives it back. */
   private hideBoard(hidden: boolean): void {
     this.standOn = hidden;
+    if (hidden) this.towerView.dismiss();
     document.body.toggleAttribute('data-stand', hidden);
     this.world.visible = !hidden;
     this.weather.root.visible = !hidden;
@@ -902,6 +1404,8 @@ class Game {
   private frame(dt: number, elapsed = dt): void {
     const b = this.b;
     tips.update();
+    // (ALTAR-CLEAR: the altar's chip in a Calamity fight; it only reads the battle)
+    updateAltarHud(this.standOn || this.homeUp ? undefined : b);
     if (this.standOn) return;
     if (this.homeUp && b.phase !== 'fight') {
       this.app.ticker.stop();
@@ -909,29 +1413,51 @@ class Game {
     }
     if (this.auto) this.autoTick(dt);
     // (an ultimate's moment (ULT-CUTIN) moves on in real time, whatever the fight's speed; it stands still while a scene or a sheet is up)
-    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding;
-    if (b.phase === 'fight') this.ultm.frame(b, dt, !!held);
+    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding || this.eid.sheetOpen;
+    // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
+    this.eid.see(b);
+    this.eid.frame(dt, this.sceneHold > 0);
+    // (ULT-SHOW: a showcase whose ultimate ended the fight still plays out, and the result waits for it)
+    if (b.phase === 'fight' || (b.phase !== 'deploy' && this.ultm.queue.current?.show)) this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
+    // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
+    if (b.phase === 'fight') this.bossm.frame(dt, !!held);
+    else this.bossm.clear();
+    // (the Nemesis War: a taunt cut-in plays over the deploy, after the boss's card or a scene has had the screen)
+    if (b.phase === 'deploy') this.taunts.frame(dt, !!held || !!this.intro);
+    else if (this.taunts.busy) this.taunts.clear();
+    // (phase 4: the challenge's card, once its cut-in and anything else has had the screen)
+    if (this.duelWait && b.phase === 'deploy' && !this.taunts.busy && !held && !this.intro && !this.duelCard) this.openDuel();
     if (b.phase === 'fight' && held) {
       // (a cinematic is up, or a skill's sheet is open (BATTLE-HUD): the fight is held where it is)
-    } else if (b.phase === 'fight' && this.ultm.queue.holdsBattle) {
+    } else if (b.phase === 'fight' && (this.ultm.queue.holdsBattle || this.eid.holds)) {
       // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
       this.acc = 0;
+      // (a boss's cut-in holds the board still too, so its marks fill with the windup's own time)
       if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
-      this.acc += Math.min(dt, 250) * this.speed * this.fx.timeScale();
-      b.autoUlt = this.ultAutoOn();
-      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle) {
+      // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed; the short versions keep it)
+      this.acc += Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale();
+      // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
+      if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
+      this.setAutoOn(b);
+      while (this.acc >= TICK_MS && b.phase === 'fight' && this.sceneHold === 0 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
         this.acc -= TICK_MS;
         const born = b.units.length;
+        // (ULT-SHOW: where everyone stood before the tick, for a showcase to start a moved foe from)
+        const before = new Map(b.units.map((u) => [u.id, { u: u.u, v: u.v }]));
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
-        if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born))) this.acc = 0;
+        if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born), before)) this.acc = 0;
+        this.bossm.note(b, events);
+        if (this.eid.noteEvents(b, events)) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
         this.hud.onEvents(b, events);
         tally(this.stats, events, b.units);
+        tallyNemesis(this.nemTally, events, b.units, b.t);
+        this.ultsFired.push(...ultsIn(events, b.units));
         this.fx.show(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
@@ -939,7 +1465,8 @@ class Game {
         playEvents(b, events, this.speed);
         // (the battle's music: on through a wave won with more to come or a fall a heart revives; the victory music at a battle won, the defeat sting at one lost)
         const end = events.find((e) => e.kind === 'end');
-        if (end) endWave(endOfFight(this.run, end.won));
+        // (phase 4: a duel lost or run out of time has the wave still to fight: the battle music plays on)
+        if (end) endWave(b.duel && !end.won ? 'none' : endOfFight(this.run, end.won));
         // (Duchess has wandered on: the first time, her cinematic (not in an auto-replay), then her card; and her bubbles as she fights)
         if (events.some((e) => e.kind === 'duchess')) void this.queueScene({ kind: 'duchessJoins' }).then(() => showDuchessCard(() => $('panel').getBoundingClientRect().top));
         if (this.b.duchess) duchessFightSays(b, events, () => this.anchorOfKind('duchess'));
@@ -975,8 +1502,9 @@ class Game {
     } else if (b.phase !== 'deploy') {
       // (the fallen finish falling after the end; the recap comes up once the wait is over)
       this.acc += dt;
-      this.fx.step(dt);
-      if (this.endWait < END_WAIT_MS) {
+      if (!this.ultm.queue.current || this.ultm.queue.runsEffects) this.fx.step(dt);
+      // (EIDOLONS: a strike that ended the fight plays out before the result comes up; ULT-SHOW: so does a showcase)
+      if (this.endWait < END_WAIT_MS && !this.eid.playing && !this.ultm.queue.current) {
         this.endWait += dt;
         if (this.endWait >= END_WAIT_MS) this.refresh();
       }
@@ -987,6 +1515,8 @@ class Game {
     this.refreshBossBar();
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
+    // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
+    if (b.phase !== 'deploy') this.ultm.stage();
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
       else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
@@ -1005,6 +1535,8 @@ class Game {
     if (this.survey) this.standBack(dt);
     this.boardView.pump();
     this.boardView.step(dt);
+    // (a Calamity zone's pillars and statues fade while a fighter stands behind them, `zoneLife.ts`)
+    this.boardView.fadeOver([...this.sprites.values()], dt);
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
@@ -1168,6 +1700,11 @@ class Game {
         if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
         else if (this.b.phase === 'fight') this.fx.summoned(this.b, u);
       }
+    // (the Nemesis War: a nemesis's plate wears a skull while the hero it dreads stands on the field)
+    for (const u of this.b.units) {
+      const dread = u.nem ? dreadOf(u.nem.weak) : undefined;
+      if (dread) this.sprites.get(u.id)?.setDread(this.b.units.some((h) => h.alive && h.side === 'hero' && h.owner === undefined && h.def === dread));
+    }
   }
 
   /* -------------------------------------------------------------- the camera */
@@ -1215,28 +1752,62 @@ class Game {
     return Math.min(1, (this.area.w - 20) / (x1 - x0) / this.scale);
   }
 
-  /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
-  private layout(): void {
-    this.fx.fitScreen(viewW(), viewH());
-    this.weather.resize(this.app.screen.width, this.app.screen.height);
+  /** The fight's top parts, each under the measured bottom of the ones above it (COMBAT-HUD, docs/notes/combat-hud.md): a twist's banner
+   *  under the top bar, the spell row under that, then the boss's bar under the whole spell row as it is drawn now (one line: since
+   *  AUTO-RIGHT the row never wraps, Auto staying right of the last orb), and the synergies under the lowest. Run by `layout` and
+   *  again whenever the spell row or the boss's bar changes size or shows (`watchTopHud`). Returns the bottom of the parts over the board
+   *  before the boss's bar, and the boss's bar's bottom (with its gap). */
+  private placeTopHud(): { below: number; barBottom: number } {
     const top = $('top').getBoundingClientRect();
-    const panel = $('panel').getBoundingClientRect();
     const bar = $('bossBar');
-    bar.style.top = `${top.bottom + 4}px`;
     bar.style.right = '12px';
     // (a floor's twist banner sits under the top bar; the bar for a boss goes below it)
     const twist = $('twistBanner');
     twist.style.top = `${top.bottom + 2}px`;
     const below = twist.hidden ? top.bottom : twist.getBoundingClientRect().bottom + 2;
-    // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky: the boss's bar and the combo bar go under
-    // them, while the board's own room (its fit) is reckoned as it was, from the top bar)
-    $('hudSpells').style.top = `${below + 6}px`;
-    const orbs = ORBS_ROW;
-    bar.style.top = `${below + orbs + 4}px`;
+    // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky)
+    const row = $('hudSpells');
+    row.style.top = `${below + 6}px`;
+    // (the row's real bottom when it shows (the War Horn, the mana, the orbs and Auto, on one line); before the fight, when it is not drawn, a
+    // single row's height)
+    const drawn = row.getBoundingClientRect();
+    const rowBottom = drawn.height > 0 ? Math.max(drawn.bottom, below + 6 + ORBS_ROW) : below + 6 + ORBS_ROW;
+    bar.style.top = `${rowBottom + 4}px`;
     const barBottom = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
-    // (the row of active synergies sits under the bars during a fight)
-    placeSynergies(bar.hidden ? below + orbs : barBottom);
-    const head = bar.hidden ? below : barBottom - orbs;
+    // (the row of active synergies and the combo bar sit under the bars during a fight)
+    placeSynergies(bar.hidden ? rowBottom : barBottom);
+    return { below, barBottom };
+  }
+
+  /** Lay the top parts out again whenever the spell row or the boss's bar changes size (the War Horn given, a spell added, the
+   *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs; and set a toast and a quip clear again. */
+  private watchTopHud(): void {
+    if (typeof ResizeObserver !== 'function') return;
+    let busy = false;
+    const watch = new ResizeObserver(() => {
+      if (busy) return;
+      busy = true;
+      this.placeTopHud();
+      // (a toast in the lane goes under the parts as they now stand, and a quip's bubble is set clear of them all: the spell row coming in
+      // as the fight begins, the bar moving as the row changes)
+      const lane = fightToastTop();
+      if (lane !== undefined) for (const t of document.querySelectorAll<HTMLElement>('.toast.lane')) t.style.top = `${Math.round(lane)}px`;
+      reclearQuip();
+      busy = false;
+    });
+    // (the panel and the tactic button too: its fight rows and the button over them come in as the fight begins, and a quip
+    // said at the deploy must clear them)
+    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn']) watch.observe($(id));
+  }
+
+  /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
+  private layout(): void {
+    this.fx.fitScreen(viewW(), viewH());
+    this.weather.resize(this.app.screen.width, this.app.screen.height);
+    const panel = $('panel').getBoundingClientRect();
+    const { below, barBottom } = this.placeTopHud();
+    const bar = $('bossBar');
+    const head = bar.hidden ? below : barBottom - ORBS_ROW;
     const area = { x: 0, y: head, w: viewW(), h: panel.top - head };
     const b = this.b.board;
     let x0 = Infinity;
@@ -1454,6 +2025,42 @@ class Game {
     return best;
   }
 
+  /** UNIT-INFO: any unit standing under a point on the screen (the nearest in front), for the hold's card. */
+  private unitAtScreen(sx: number, sy: number): Unit | undefined {
+    const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
+    const live = this.b.units.filter((x) => x.alive).sort((a, c) => c.u + c.v - (a.u + a.v));
+    for (const u of live) {
+      const s = this.sprites.get(u.id);
+      if (s && Math.abs(wx - s.x) < 16 * Math.max(1, u.size ?? 1) && wy < s.y + 6 && wy > s.y - s.tall) return u;
+    }
+    return undefined;
+  }
+
+  /** UNIT-INFO: the hold has fired on unit `u`: the drag it began is let go where it was, and its card opens (a pure read of the unit). */
+  private openInfo(u: Unit): void {
+    if (this.drag) {
+      this.drag = null;
+      this.endDrag();
+    }
+    const h = u.side === 'hero' && u.tag !== undefined ? heroOf(this.run, u.tag) : undefined;
+    const grade = u.grade ?? 1;
+    const sprite = h ? portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 48, h.grade) : portrait(u.look ?? UNITS[u.def].sheet, 48, u.side === 'hero' ? grade : 1);
+    // (HUD-FACES: a hero of the party, or a guest, shows its painted face, its awakened form's once awakened)
+    const pic = h ? heroFace(h.kind, this.run.local ? (u.awaken ?? 0) : awakenedOf(this.meta, h.kind), 96, sprite) : sprite;
+    // (GUEST-HERO: a guest the player does not own reads none of its kind's lasting talents or gear; a guest wears a GUEST tag)
+    this.info.open(infoOf(this.b, u, { meta: this.run.local || (h?.guest && !guestOwned(this.meta, h)) ? undefined : this.meta, gear: h?.gear, autoUlt: this.ultAutoOn() }), pic, !!h?.guest);
+    play('tap');
+  }
+
+  /** UNIT-INFO: the card of a bench hero: the one on the board if it stands there, else as it would be placed. */
+  private openBenchInfo(id: number): void {
+    const on = this.b.units.find((x) => x.side === 'hero' && x.tag === id);
+    const h = heroOf(this.run, id);
+    if (on || !h) return on ? this.openInfo(on) : undefined;
+    this.openInfo(previewUnit(this.b, h.kind, this.boostFor(h), id));
+  }
+
   /** The placed hero under a point on the screen. */
   private heroAtScreen(sx: number, sy: number): string | null {
     const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
@@ -1502,20 +2109,43 @@ class Game {
   private hud!: FightHud;
   /** The ultimates' moments (`ultMoment.ts`, ULT-CUTIN): the slash, the name and the dim, the fight held while they play. */
   private ultm!: UltMoments;
+  /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
+  private bossm = new BossMoments();
+  /** The Nemesis War, phase 3: the taunt cut-ins before a nemesis's first wave of a run (`tauntCut.ts`), and the nemeses each run (by its
+   *  seed) has already been shown. */
+  private taunts = new TauntCuts();
+  private taunted = new Map<number, Set<number>>();
+  /** EIDOLON-CHAINS: a piece a quest battle's win found, shown once its beat after has played. */
+  private pendingPiece: PieceFound | null = null;
+  /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
+  private eid!: EidolonCall;
+  private tactics!: TacticsView;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
   }
+  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  private setAutoOn(b: Battle): void {
+    const on = this.ultAutoOn();
+    b.autoUlt = on;
+    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.meta.spellbook));
+  }
 
   private wire(): void {
+    // (KING-SPELLS batch 2: the mana box casts the ruler's Decree once its meter is full)
+    bindDecree($('mana'), () => this.b, () => this.refreshSpells());
+    // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
+    this.hold = new HoldPress();
+    this.info = new UnitInfoCard();
     this.hud = new FightHud($('fightHud'), {
       equipmentStep: (kind) => awakenedOf(this.meta, kind),
       onAuto: (on) => {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
-        this.b.autoUlt = this.ultAutoOn();
+        this.setAutoOn(this.b);
       },
       autoOn: () => this.ultAutoOn(),
+      useOf: (kind, key) => useOf(this.meta, kind, key),
       dockTop: () => $('panel').getBoundingClientRect().top,
       ultFull: () => fullScene(settings().ultFull, this.ultAutoOn()),
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
@@ -1532,9 +2162,58 @@ class Game {
       },
       art: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
       fx: this.fx,
+      // (ULT-SHOW: the showcase stages the real sprites, and the save counts the full moments seen)
+      sprite: (id) => this.sprites.get(id),
+      world: (u, v) => {
+        const t = tileAt(this.b.board, u, v);
+        return t ? at(u, v, t.h) : null;
+      },
+      seen: (kind) => seenOf(this.meta, kind),
+      toClient: (x, y) => this.toClient(x, y),
+      saw: (kind) => {
+        noteSeen(this.meta, kind);
+        saveMeta(this.meta);
+      },
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autoEl);
+    // (the party's tactic: the button under Auto in the fight, which cycles the tactic mid-fight, and the prep screen's Formation button;
+    // docs/notes/tactics.md, docs/notes/tactics-overview.md)
+    this.tactics = new TacticsView({
+      pick: (t) => {
+        pickTactic(this.meta, this.run.mode, t);
+        saveMeta(this.meta);
+      },
+      // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
+      formationsOpen: () => autoPlaceOpen(this.meta),
+      formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
+      picked: () => pickedFormation(this.meta.formations, this.run.mode),
+      arrange: (f) => this.arrangeFormation(f),
+    });
+    // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
+    this.eid = new EidolonCall({
+      meta: () => this.meta,
+      save: () => saveMeta(this.meta),
+      fx: this.fx,
+      anchor: (id) => {
+        const s = this.sprites.get(id);
+        return s && s.root.visible ? this.toClient(s.x, s.y - s.tall * 0.45) : null;
+      },
+      tile: (u, v) => {
+        const t = tileAt(this.b.board, u, v);
+        return t ? this.toClient(...at(u, v, t.h)) : null;
+      },
+      // (a hero standing answers the strike with a line of its own: the owner's "lines")
+      cheer: (b, text) => {
+        const hero = b.units.find((u) => u.side === 'hero' && u.alive && !UNITS[u.def].summon);
+        const at = hero && this.anchorOfKind(hero.def);
+        if (at && settings().quips) showQuip(at, text, { who: heroName(hero.def), hold: 3200 });
+      },
+      stage: () => this.app.canvas,
+      // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
+      gallery: () => this.home.openGallery(),
+    });
+    $('hudSpells').prepend(this.eid.horn.root);
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
       // (two fingers on the board pinch it: any drag the first began is let go where it was, FIGHT-FIXES)
@@ -1546,14 +2225,17 @@ class Game {
       const id = this.b.phase === 'deploy' ? this.heroAtScreen(e.clientX, e.clientY) : null;
       this.drag = { id: id ?? '', x: e.clientX, y: e.clientY, moved: false, fromBoard: true, pan: id ? undefined : { cx: this.cx, cy: this.cy } };
       this.aim(e);
+      // (UNIT-INFO: a finger resting on any unit in a deploy opens its card)
+      const held = this.b.phase === 'deploy' && !this.spell ? this.unitAtScreen(e.clientX, e.clientY) : undefined;
+      if (held) this.hold.start(e.clientX, e.clientY, () => this.openInfo(held));
     });
-    window.addEventListener('pointermove', (e) => (this.touches.has(e.pointerId) && this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY }), this.pinch ? this.pinchMove() : this.dragMove(e)));
+    window.addEventListener('pointermove', (e) => (this.touches.has(e.pointerId) && this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY }), this.hold.move(e.clientX, e.clientY), this.pinch ? this.pinchMove() : this.dragMove(e)));
     const lift = (e: PointerEvent) => {
       this.touches.delete(e.pointerId);
       if (this.touches.size < 2) this.pinch = null;
     };
-    window.addEventListener('pointerup', (e) => (lift(e), this.dragEnd(e)));
-    window.addEventListener('pointercancel', (e) => (lift(e), this.endDrag()));
+    window.addEventListener('pointerup', (e) => (lift(e), this.hold.cancel(), this.dragEnd(e)));
+    window.addEventListener('pointercancel', (e) => (lift(e), this.hold.cancel(), this.endDrag()));
     // (a mouse wheel zooms about the pointer, at any time in a fight or a deploy)
     canvas.addEventListener(
       'wheel',
@@ -1604,10 +2286,18 @@ class Game {
     // (a tap anywhere hurries the heart-burn: the wave starts at once, and the line goes)
     document.addEventListener('pointerdown', () => this.skipRevive(), true);
     // (a tap on the short card over the march goes straight on to the next wave)
+    // (JRPG-RECAP: a first tap hurries the count-ups to their end; once they are done, a tap between waves goes on, and at a fight's end
+    // with one way on, it presses that way)
     $('result').addEventListener('click', (e) => {
-      if (this.passing && !(e.target as HTMLElement).closest('button')) this.passOn();
+      if ((e.target as HTMLElement).closest('button')) return;
+      if (this.jr && this.jr.finish()) return;
+      if (this.passing) this.passOn();
+      else if (this.jr?.done() && $('qbLeave').hidden && !$('result').hidden) ($('next') as HTMLButtonElement).click();
     });
+    $('qbLeave').addEventListener('click', () => this.leaveQuest());
     $('next').addEventListener('click', () => {
+      // (QUEST-BATTLES: a quest battle's end has no run recap: a win has its beat and goes to the tavern; a loss tries again)
+      if (this.run.over && this.run.mode?.kind === 'quest') return this.questEnd();
       if (this.run.over && !this.run.tower && !this.auto) return this.showRunRecap();
       this.afterResult();
     });
@@ -1652,14 +2342,43 @@ class Game {
 
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
 
-  /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out by `autoFormation`. The player can still move anyone by hand after. */
+  /** Set the placed heroes out in a formation's shape (the prep screen's Formation sheet, `tacticsView.ts`): each taken back and placed again at its tile of the shape
+   *  (`formationSpots`), or where it stood if that tile will not take it. */
+  private arrangeFormation(shape: Formation | undefined): void {
+    const b = this.b;
+    if (b.phase !== 'deploy') return;
+    // (the pick is kept for this mode or army, so Auto place sets the heroes out in it from now on; Loose forgets it: COMBAT-HUD)
+    pickFormation(this.meta, this.run.mode, shape);
+    saveMeta(this.meta);
+    if (!shape) return this.refresh();
+    const heroes = b.units.filter((u) => u.side === 'hero' && u.tag !== undefined && !UNITS[u.def].summon).map((u) => ({ def: u.def, tag: u.tag!, was: [u.u, u.v] as [number, number], h: this.run.roster.find((r) => r.id === u.tag) }));
+    if (!heroes.length) return;
+    const spots = formationSpots(b.board, heroes.map((x) => x.def), shape);
+    for (const x of heroes) unplace(b, x.def, x.tag);
+    heroes.forEach((x, i) => {
+      const boost = x.h ? this.boostFor(x.h) : undefined;
+      const s = spots[i];
+      const at: [number, number] = s && place(b, x.def, s.u, s.v, x.tag, boost) ? [s.u, s.v] : x.was;
+      if (at === x.was) place(b, x.def, at[0], at[1], x.tag, boost);
+      this.placed.set(String(x.tag), at);
+    });
+    saveRun(this.run);
+    this.syncSprites();
+    play('summon');
+    this.refresh();
+  }
+
+  /** The Auto button: choose the squad (the heroes already placed stay, the strongest fill the rest) and set them out in the formation picked
+   *  on the Formation sheet for this mode or army, or by `autoFormation` when none is (`deploySpots`, COMBAT-HUD). The player can still move
+   *  anyone by hand after. */
   private autoArrange(manual = false): void {
     const b = this.b;
     if (b.phase !== 'deploy') return;
     const keep = manual ? this.run.squad : [];
     this.run.squad = pickSquad(this.run, this.meta, keep).map((h) => h.id);
     this.placed.clear();
-    for (const s of autoDeploy(b, this.run, this.meta, (h) => this.boostFor(h))) this.placed.set(String(s.id), [s.u, s.v]);
+    const shape = autoPlaceOpen(this.meta) ? pickedFormation(this.meta.formations, this.run.mode) : undefined;
+    for (const s of autoDeploy(b, this.run, this.meta, (h) => this.boostFor(h), shape)) this.placed.set(String(s.id), [s.u, s.v]);
     this.chosen = null;
     saveRun(this.run);
     this.syncSprites();
@@ -1677,8 +2396,9 @@ class Game {
   }
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
-  private beginAuto(army: string, tier: number, count: number): void {
-    const a = startAuto(this.meta, army, tier, count, todayKey());
+  private beginAuto(what: { army: string; tier: number } | { quest: string } | { daily: number }, count: number): void {
+    const day = todayKey();
+    const a = 'quest' in what ? startAutoQuest(this.meta, what.quest, count, day) : 'daily' in what ? startAutoDaily(this.meta, what.daily, count) : startAuto(this.meta, what.army, what.tier, count, day);
     if (!a || !spendTicket(this.meta, todayKey())) return;
     saveMeta(this.meta);
     this.auto = a;
@@ -1714,7 +2434,9 @@ class Game {
       // (each run spends a day's auto ticket; a new day mid-replay refills them)
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
-      const nextRun = armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      // (a quest battle's next try, or the daily's next practice run, or the army's next run)
+      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      if (!nextRun) return void this.endAuto('stopped');
       if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
       this.startRun(nextRun);
       this.autoPrep();
@@ -1729,9 +2451,11 @@ class Game {
     bar.hidden = !a;
     if (!a) return;
     const army = armyOfRun(this.run);
+    const fixed = waveArmyOf(this.run);
+    const name = a.kind === 'quest' ? questBattleById(a.quest!)?.title : a.kind === 'daily' ? 'Daily' : army?.name;
     bar.classList.toggle('paused', document.hidden);
     bar.querySelector('b')!.textContent = `Auto ${a.run}/${a.count}`;
-    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : army ? `${army.name} · wave ${Math.min(this.run.stage, army.waves.length)}/${army.waves.length}` : '';
+    bar.querySelector('span')!.textContent = document.hidden ? 'Paused' : name && fixed ? `${name} · wave ${Math.min(this.run.stage, fixed.waves.length)}/${fixed.waves.length}` : name ?? '';
   }
 
   /** The replay is over (the count ran out, a run was lost, or Stop was tapped): the banner goes and the summary card shows the totals. */
@@ -1743,8 +2467,16 @@ class Game {
     this.auto = null;
     this.autoNext = null;
     this.refreshAuto();
-    const army = armyById(a.army)!;
+    // (what was repeated, in words: "the Ashen Host", "Kenji's tale", "the daily")
+    const army = { name: a.kind === 'quest' ? questBattleById(a.quest!)?.title ?? 'battle' : a.kind === 'daily' ? 'daily' : armyById(a.army)!.name };
     const card = $('autoSum');
+    // (CLOSE-SCREENS: a flow screen: its rows and finds go as it closes; one already up is closed first)
+    this.autoSumCloser = openScreen('autoSum', () => {
+      this.autoSumCloser = null;
+      card.hidden = true;
+      card.querySelector('.asumRows')!.replaceChildren();
+      card.querySelector('.asumFinds')?.remove();
+    });
     card.querySelector('h2')!.textContent = why === 'done' ? 'Auto-replay done' : why === 'loss' ? 'Auto-replay stopped' : 'Auto-replay stopped';
     card.querySelector('.asumWhy')!.textContent =
       why === 'done'
@@ -1759,18 +2491,26 @@ class Game {
     for (const [label, n] of [['Crowns', a.totals.crowns], ['XP', a.totals.xp], ['Chests', a.totals.chests], ['Gear found', a.totals.gear], ...(a.totals.ores ? [['Rift ores', a.totals.ores] as const] : []), ...(a.totals.drops ? [['Rare drops', a.totals.drops] as const] : [])] as const) {
       rows.append(Object.assign(document.createElement('span'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: String(n) }));
     }
-    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : 'To the armies';
+    // (RUN-GEAR-2: the real pieces the runs brought home, best first, each in its grade frame; the same icons as the Found row)
+    card.querySelector('.asumFinds')?.remove();
+    const finds = foundList(a.totals.finds ?? []);
+    if (finds) rows.after(finds);
+    $('asumOk').textContent = why === 'stopped' ? 'Back to the board' : a.kind && a.kind !== 'army' ? 'Home' : 'To the armies';
     card.dataset.why = why;
+    card.dataset.kind = a.kind && a.kind !== 'army' ? 'other' : 'army';
     card.hidden = false;
     this.refresh();
   }
+  private autoSumCloser: (() => void) | null = null;
 
   private closeAutoSummary(): void {
     const card = $('autoSum');
-    card.hidden = true;
     const why = card.dataset.why;
+    if (this.autoSumCloser) this.autoSumCloser();
+    else card.hidden = true;
     // (a run that was stopped carries on by hand where it stands; a finished one goes on to the armies, a lost one home)
-    if (why === 'done') this.armyWon();
+    const army = !this.auto && card.dataset.kind !== 'other';
+    if (why === 'done') army ? void this.armyWon() : this.goHome();
     else if (why === 'loss') this.goHome();
   }
 
@@ -1782,7 +2522,154 @@ class Game {
   /** ARMY-DROPS: the won army wave's rare drop (shards, a tome), or null. */
   private dropGain: DropPaid | null = null;
 
+  /* -------------------------------------------------------------- quest battles (QUEST-BATTLES, batch 2 of the quests) */
+
+  /** A quest battle's Fight: the one saved part-way carries on; else the party screen with its cast locked in, then a new try. */
+  private openQuestBattle(id: string, auto?: number): void {
+    // (an auto-replay of a battle already won: a fresh try with the saved party, no picker; the cast is kept by the squad pick)
+    if (auto) {
+      if (!canAutoQuest(this.meta, id)) return this.home.open();
+      return this.beginQuestTry(id, this.meta.party, auto);
+    }
+    const saved = loadSlot('quest');
+    if (saved?.mode?.kind === 'quest' && saved.mode.quest === id) {
+      this.run = saved;
+      this.syncPool();
+      this.placed.clear();
+      return this.newBattle();
+    }
+    const qb = questBattleById(id);
+    const cast = qb && castOf(this.meta, qb);
+    if (!qb || !cast || !canFightBattle(this.meta, id)) return this.home.open();
+    this.party.openQuest(cast, qb.title, castWords(qb, cast), (k) => mayFight(qb, k), (picked) => this.beginQuestTry(id, picked));
+  }
+
+  /** The Warchief's Muster (the Nemesis War, `muster.ts`): the one saved part-way carries on; else the party is picked and it begins, in its
+   *  own slot (an army run saved is not touched). */
+  private openMuster(): void {
+    const saved = loadSlot('muster');
+    if (saved) {
+      this.run = saved;
+      this.syncPool();
+      this.placed.clear();
+      return this.newBattle();
+    }
+    this.party.open('start', () => {
+      const run = startMuster(this.meta, this.meta.party, clockSeed());
+      if (!run) return this.home.open('The Muster is not open.');
+      this.startRun(run);
+    });
+  }
+
+  /** A new try of a quest battle with the party picked: its own seed and slot (an army run saved is not touched), then its story, the first time. */
+  private beginQuestTry(id: string, picked: readonly string[], auto?: number): void {
+    const run = startQuestBattle(this.meta, id, picked);
+    if (!run) return this.home.open();
+    this.startRun(run);
+    if (auto) return this.beginAuto({ quest: id }, auto);
+    void this.tellQuestStory(id);
+  }
+
+  /** The story before a quest battle, over its deploy, once a save (it is the quest's sense, so it plays whatever the cinematics setting). */
+  private async tellQuestStory(id: string): Promise<void> {
+    const qb = questBattleById(id);
+    if (!qb || !storyDue(this.meta, id) || this.run.mode?.kind !== 'quest') return;
+    markStoryTold(this.meta, id);
+    saveMeta(this.meta);
+    this.sceneHold++;
+    try {
+      await this.scenes.play(qb.before(this.run.mode.cast), this.players());
+    } finally {
+      this.sceneHold--;
+    }
+  }
+
+  /** Why a quest battle's fight cannot begin yet, in words ("Place Kenji to begin"), or null (any other run: null). */
+  private questBlock(): string | null {
+    const run = this.run;
+    const qb = questBattleOfRun(run);
+    if (!qb || run.mode?.kind !== 'quest' || this.b.phase !== 'deploy') return null;
+    const placed = this.b.units.filter((u) => u.side === 'hero' && u.def !== 'duchess' && !UNITS[u.def]?.summon).map((u) => u.def);
+    return notReadyWords(notReady(qb, run.mode.cast, placed), run.mode.cast);
+  }
+
+  /** A quest battle's boss's own name, for a boss of this kind in the run's quest battle (else undefined). */
+  private questBossName(def: string): string | undefined {
+    const qb = questBattleOfRun(this.run);
+    return qb?.boss && def === questBossOf(qb) ? qb.boss.name : undefined;
+  }
+
+  /** A quest battle has ended: a win plays its beat and goes to the tavern's quest log (the quest waits to be handed in); a loss
+   *  begins a new try at once, with the same party (losing costs nothing). */
+  private questEnd(): void {
+    const run = this.run;
+    const qb = questBattleOfRun(run);
+    if (run.mode?.kind !== 'quest' || !qb) return this.goHome();
+    this.closeResult();
+    endVictory();
+    if (!run.cleared) {
+      const next = startQuestBattle(this.meta, qb.id, run.pool ?? run.mode.cast);
+      if (!next) return this.leaveQuest();
+      return this.startRun(next);
+    }
+    const practice = !!run.mode.practice;
+    this.sceneHold++;
+    void this.scenes
+      .play(qb.after(run.mode.cast), this.players())
+      .catch(() => undefined)
+      .then(() => {
+        this.sceneHold--;
+        void this.revealEarned().then(() => {
+          // (EIDOLON-TRIAL: the trial won, the binding plays at once)
+          if (!practice && trialOfBattle(qb.id) && readyToBind(this.meta)?.id === trialOfBattle(qb.id)!.chain) {
+            this.home.open(`${qb.title} won! The Summoner is waiting at the altar.`);
+            void this.home.bindAfterTrial();
+            return;
+          }
+          // (EIDOLON-CHAINS: a chain's battle hands no quest in: its piece was found, and the log opens on the chain)
+          const chain = chainOfBattle(qb.id);
+          this.home.open(practice ? `${qb.title}: won again, for practice.` : chain ? `${qb.title} won! A piece of the pact is found.` : `${qb.title} won! Hand the quest in at the tavern.`);
+          if (!practice) this.home.openQuests(chain ? 'eidolons' : 'active');
+          const piece = this.pendingPiece;
+          this.pendingPiece = null;
+          if (piece) showPieceCard(piece, { next: nextWords(this.meta, piece), onClose: () => this.home.openQuests('eidolons') });
+        });
+      });
+  }
+
+  /** Leave a lost quest battle (the result card's Leave): back to the quest log, where its Fight waits. */
+  private leaveQuest(): void {
+    this.closeResult();
+    endVictory();
+    const qb = questBattleOfRun(this.run);
+    this.home.open(qb ? `${qb.title} waits in your quest log. Losing costs nothing.` : undefined);
+    this.home.openQuests(qb && chainOfBattle(qb.id) ? 'eidolons' : 'active');
+  }
+
   private startRun(run: Run): void {
+    // (DEPTH-BUILD: an army run keeps a snapshot of the bonds as it starts, so its fights replay)
+    if (run.mode?.kind === 'army' && !run.bonds) {
+      const snap = bondSnapshot(this.meta);
+      if (Object.keys(snap).length) run.bonds = snap;
+    }
+    // (the Nemesis War: the army's nemeses this run meets, and the waves they stand in, frozen as it starts)
+    if (run.mode?.kind === 'army' && !run.nemesis) {
+      const named = planRun(this.meta, run);
+      if (named) run.nemesis = named;
+      // (a trophy on a name plate is drawn from the gear atlas: it starts loading now)
+      if (named?.members.some((x) => x.trophies?.length)) warmGearTextures();
+    }
+    // (and of the mentors' perks; Dynasties, phase 6: with the fielded bearers' birthrights, and without the perk of a mentor the banner
+    //  fields in its heir's place, whose honour lapses for the run)
+    if (run.mode?.kind === 'army' && !run.legacy) {
+      const snap = addSnapshots(legacySnapshot(lapsedLegacy(this.meta), this.meta.party), birthrightSnapshot(this.meta, this.meta.party));
+      if (Object.keys(snap).length) run.legacy = snap;
+    }
+    // (Dynasties, phase 6: an elder of the Elders' table asked to ride today joins as the guest, free, if its heir is not in the run)
+    if (!run.over && run.stage <= 1 && !guestOf(run)) {
+      const ride = takeRide(this.meta, [...(run.pool ?? []), ...run.roster.map((h) => h.kind), ...this.meta.party], guestsHere(run), todayKey());
+      if (ride && takeGuest(run, ride, 0)) toastLines([`${regularOf(this.meta, ride)?.bearer.name ?? heroName(ride)} rides with the march as your guest`]);
+    }
     this.run = run;
     this.syncPool();
     this.placed.clear();
@@ -1791,11 +2678,22 @@ class Game {
     this.newBattle();
   }
 
+  /** The deploy line's count: "4 of 5 placed", and "+ guest" when the run's guest stands on the field too (GUEST-HERO). */
+  private placedWords(n: number): string {
+    const g = guestOf(this.run);
+    const gOn = !!g && this.b.units.some((u) => u.side === 'hero' && u.tag === g.id);
+    return `${n - (gOn ? 1 : 0)} of ${squadLimit(this.run)} placed${gOn ? ' + guest' : ''}`;
+  }
+
   /** A roster hero's boost for the fight: its grade, rank, level, gear and equipment, and the tower's wounds. */
   private boostFor(h: Owned): Boost {
     // (a run that levels its own heroes reads nothing of the meta's levels, gear or talents)
-    if (this.run.local) return { ...localBoost(h), carry: hpShare(this.run, h.id) };
-    return { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), heroStats(this.meta, h.kind)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) };
+    if (this.run.local) return { ...localBoost(h, this.run), carry: hpShare(this.run, h.id) };
+    // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
+    if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
+    // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
+    // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
+    return journeyBoost(this.run.tower?.journey, h.id, legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) }));
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -1834,6 +2732,7 @@ class Game {
     const run = this.run;
     if (!abandonTower(run)) return this.home.open();
     const summary = settleTower(this.meta, run)!;
+    settleFinds(this.meta, run);
     saveMeta(this.meta);
     saveRun(run);
     dropSlot(run.mode?.kind === 'calamity' ? 'calamity' : 'tower');
@@ -1849,7 +2748,7 @@ class Game {
     this.newBattle();
     if (this.run.event) {
       const buffWas = JSON.stringify(this.run.buff ?? null);
-      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+      this.openEventWhenClear(() => this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh())));
     }
   }
 
@@ -1857,7 +2756,12 @@ class Game {
   private syncPool(): void {
     // (a calamity hires from every hero owned; a tower run's pool is the party)
     if (this.run.mode?.kind === 'calamity') this.run.pool = [...this.meta.unlocked];
-    else if (this.run.mode?.kind !== 'daily') this.run.pool = [...this.meta.party];
+    // (a quest battle keeps the party picked for it: QUEST-BATTLES)
+    else if (this.run.mode?.kind !== 'daily' && this.run.mode?.kind !== 'quest') this.run.pool = [...this.meta.party];
+    // (SECRET-HEROES: the heroes still secret are never offered as a guest or a Calamity hire)
+    const hide = secretsOf(this.meta);
+    if (hide.length) this.run.hide = hide;
+    else delete this.run.hide;
   }
 
   /** The result screen's stars: each pops in (CSS) with its reason and what it pays, and a chime; none for a loss. */
@@ -1901,11 +2805,40 @@ class Game {
     const card = $('result');
     if (!p || card.hidden) return;
     if (document.body.dataset.move) p.marched = true;
+    // (JRPG-RECAP: the results screen waits for a tap, as a JRPG's does; the march goes on behind it)
+    if (this.jr) return;
     if (document.body.dataset.move || this.sceneHold || this.homeUp || this.destinationReveal) return;
     p.wait += dt;
     const stay = p.marched ? PASS_AFTER_MARCH_MS : PASS_NO_MARCH_MS;
     if (p.wait >= stay - PASS_FADE_MS) card.classList.add('leaving');
     if (p.wait >= stay) this.passOn();
+  }
+
+  /** JRPG-RECAP: the results screen is going (a new fight): its clock stops and its parts are emptied. */
+  /** CLOSE-SCREENS: the fight's result card is done with: hidden, emptied and its count-ups stopped, and kept shut while the battle
+   *  stays ended (`refresh` would otherwise put it back up under whatever opens next: the owner's chest over the last recap). */
+  private closeResult(): void {
+    const shut = this.resultCloser;
+    if (shut) shut();
+    else this.dropResult();
+  }
+  private dropResult(): void {
+    this.resultCloser = null;
+    this.resultDone = true;
+    $('result').hidden = true;
+    this.stopResults();
+    for (const id of ['banner', 'summary', 'joke', 'stars', 'armyStars', 'oreDrop', 'dayResult', 'waveNotes', 'xp', 'fightStats']) $(id).replaceChildren();
+  }
+
+  private stopResults(): void {
+    this.jr?.stop();
+    this.jr = null;
+    this.jrData = null;
+    for (const id of ['jrHead', 'jrBody']) {
+      $(id).hidden = true;
+      $(id).replaceChildren();
+    }
+    $('result').classList.remove('jr');
   }
 
   /** The short card is done: the next wave. */
@@ -1919,22 +2852,34 @@ class Game {
 
   /** The result screen's way on, once any recap has been seen. */
   private afterResult(): void {
+    // (CLOSE-SCREENS: the result card is left, whichever way the game goes on)
+    this.closeResult();
     // (a won battle's victory music ends with its results)
     endVictory();
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
-      $('result').hidden = true;
+      this.closeResult();
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
     }
-    if (this.run.cleared && !this.run.tower) return this.armyWon();
+    // (the Warchief's Muster won: home, and the Dark Council's Fallen, where his Head now hangs)
+    if (this.run.cleared && this.run.mode?.kind === 'muster') {
+      this.home.open('The Warchief has fallen: the Dark Council reshuffles.');
+      return this.home.openCouncil('fallen');
+    }
+    if (this.run.cleared && !this.run.tower) return void this.armyWon();
     // (the tower: a lost run shows its summary, a won floor goes back to the map)
     if (this.run.tower) {
-      $('result').hidden = true;
+      this.closeResult();
       saveRun(this.run);
       if (this.run.over) {
         const show = (): void => this.towerView.showSummary(this.run, this.run.tower?.summary ?? settleTower(this.meta, this.run)!, () => this.home.open(`${this.run.mode?.kind === 'calamity' ? (this.run.cleared ? 'The calamity is ended' : 'The calamity ended') : 'The climb ended'} ${this.run.mode?.kind === 'calamity' ? `in ${this.run.rift?.expedition ? 'region' : 'map'} ${Math.min(this.run.tower!.act, this.run.tower!.maps ?? CAL_MAPS)}` : `on floor ${this.run.stage}`}: +${this.run.tower!.summary?.crowns ?? this.run.tower!.crowns} crowns earned`));
-        // (a Calamity cleared whole has its ending cinematic first, then the victory card)
-        if (this.run.cleared && this.run.mode?.kind === 'calamity') void this.queueScene({ kind: 'calVictory' }).then(show);
+        // (a Calamity cleared whole has its ending cinematic first, then the victory card; UNLOCK-ONCE: an Ascension level it opened is
+        // told by the film's end card, or by that card alone once the film has been seen)
+        const level = ascOf(this.run);
+        if (this.run.cleared && this.run.mode?.kind === 'calamity')
+          void this.queueScene({ kind: 'calVictory' })
+            .then(() => (ascOpenedBy(level, this.meta) ? this.tellUnlock({ kind: 'ascension' }, false) : false))
+            .then(show);
         else show();
         return;
       }
@@ -1947,7 +2892,7 @@ class Game {
     // (an event waits between two fights: its card opens over the new stage's board)
     if (this.run.event) {
       const buffWas = JSON.stringify(this.run.buff ?? null);
-      this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh()));
+      this.openEventWhenClear(() => this.events.openEvent(this.run, () => (saveRun(this.run), this.afterEvent(buffWas), this.refresh())));
     }
   }
 
@@ -1958,9 +2903,15 @@ class Game {
 
   /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the fight resumes by itself. */
   private beginRevive(): void {
-    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine('A heart burns. The party rises.', this.reviveTimes().end) };
+    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine(this.reviveWords(), this.reviveTimes().end) };
     play('sparkle');
     this.drawLives(this.run);
+  }
+
+  /** UX-FIXES: what a lost wave says: which wave, and how many hearts (your lives) are left once this one is spent. */
+  private reviveWords(): string {
+    const left = Math.max(0, retriesLeft(this.run) - 1);
+    return `Wave ${this.run.stage} lost · a heart burns, ${left} ${left === 1 ? 'heart (life)' : 'hearts (lives)'} left. The party rises.`;
   }
 
   /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (and sends the line away). */
@@ -1992,6 +2943,8 @@ class Game {
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
       reviveParty(this.b);
+      // (DEPTH-BUILD: the Chapel's Vigil: how the party rises, chosen on the march card)
+      applyVigil(this.b, fallen, this.run.orders?.vigil);
       // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
       this.fx.undim();
       this.acc = 0;
@@ -2024,13 +2977,14 @@ class Game {
     const left = retriesLeft(run);
     // (a fall with a heart left: the last full heart burns until the fight resumes and spends it)
     const burning = this.revive && !this.revive.swapped ? left - 1 : -1;
-    const key = `${left}:${burning}`;
+    const key = `${left}:${burning}:${run.orders?.mod ?? ''}`;
     if (box.dataset.key === key) return;
     box.dataset.key = key;
     box.replaceChildren();
     box.title = `${left} ${left === 1 ? 'life' : 'lives'} left`;
     box.setAttribute('aria-label', box.title);
-    for (let i = 0; i < MAX_RETRIES; i++) {
+    // (DEPTH-BUILD: a cursed march has one heart instead of two; the orders' badge sits beside them, a tap says what they are)
+    for (let i = 0; i < MAX_RETRIES - heartsLost(run.orders); i++) {
       const img = document.createElement('img');
       img.src = heartUrl;
       img.alt = '';
@@ -2042,6 +2996,19 @@ class Game {
         box.append(heart);
         burnHeart(heart, img, this.reviveTimes().swap);
       } else box.append(img);
+    }
+    const line = ordersLine(run.orders);
+    if (line && run.orders?.mod) {
+      const badge = document.createElement('button');
+      badge.className = 'marchBadge';
+      badge.textContent = marchDef(run.orders.mod).icon;
+      badge.title = line;
+      badge.setAttribute('aria-label', line);
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toastLines([line]);
+      });
+      box.append(badge);
     }
   }
 
@@ -2073,7 +3040,12 @@ class Game {
     const army = armyOfRun(run);
     const won = !!run.cleared;
     const daily = run.mode?.kind === 'daily' ? run.mode.date : 0;
-    const head = daily
+    const muster = run.mode?.kind === 'muster';
+    const head = muster
+      ? won
+        ? { title: 'The Warchief falls!', tone: 'won' as const, line: `The Dark Council’s Muster is broken in ${run.recap?.fights ?? 0} fights` }
+        : { title: 'The Muster holds', tone: 'lost' as const, line: `The Warchief’s Council stopped you at wave ${run.best} of 3. Losing costs nothing: call the Muster again.` }
+      : daily
       ? won
         ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${this.dailyBossOf(run)} has fallen in ${run.recap?.fights ?? 0} fights` }
         : { title: `Daily over · wave ${run.best}/${DAILY_WAVES}`, tone: 'lost' as const, line: `The ${this.dailyBossOf(run)} was not reached: ${dailyCleared(run)} waves cleared` }
@@ -2083,31 +3055,39 @@ class Game {
     const joke = Rng.from(run.seed, won ? 0x7e1 : 0x7e2).pick(won ? RECAP_WIN : RECAP_LOSS);
     // (a real defeat, no heart left: a few pointers on how to come back stronger, each with its way there once the recap is left)
     const advice = !won && !this.auto ? { tips: comebackTips(this.meta, { army: army?.id, tier: army ? tierOfRun(run) : 0, party: this.meta.party }), onGo: (go: ComebackGo) => void this.revealEarned().then(() => (this.afterResult(), this.home.goTo(go))) } : undefined;
-    showRecap($('recap'), recapOf(run), { ...head, joke, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
+    // (JRPG-RECAP: the run's results screen at the top: each hero's XP over the run, the MVP, the gold and crowns counted up)
+    const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) }, run);
+    // (RUN-GEAR: the pieces the run brought home, and Sell the Commons)
+    const found = foundRow(this.meta, run.foundHome, todayKey(), () => saveMeta(this.meta));
+    showRecap($('recap'), recapOf(run), { ...head, joke, results, found, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
   private goHome(): void {
     const r = this.run;
     const army = armyOfRun(r);
-    $('result').hidden = true;
-    this.home.open(r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
+    this.closeResult();
+    this.home.open(r.mode?.kind === 'muster' ? (r.cleared ? 'The Warchief has fallen: the Dark Council reshuffles.' : 'The Warchief’s Muster holds. Call it again from the Dark Council.') : r.mode?.kind === 'daily' ? `Daily over at wave ${r.best}/${DAILY_WAVES}. Tomorrow's boss waits.` : army ? `The ${army.name} stopped you at wave ${r.best}/${army.waves.length}. Heroes keep their levels: go again.` : `The run ended at stage ${r.best}: +${this.crownGain} crowns earned`);
   }
 
-  /** An army's last boss has fallen: if that opens the next army, its banner rises first ("A new army marches"), then the armies screen. */
-  private armyWon(): void {
+  /** An army's last boss has fallen: if that opens the next army, its end card comes first (UNLOCK-ONCE: unless the army's last-stand
+   *  film already showed it), then the armies screen. */
+  private async armyWon(): Promise<void> {
     const army = armyOfRun(this.run)!;
-    $('result').hidden = true;
+    this.closeResult();
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
     // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
     const focus = this.runStars?.chests.length ? army.id : undefined;
-    if (next) showUnlock(next, army, () => this.home.openArmies(focus));
-    else this.home.openArmies(focus);
+    // (the card's own button goes to the new army; Continue to the armies, on the one just cleared)
+    const before = next ? ARMIES[armyIndex(next.id) - 1] : undefined;
+    if (before && (await this.tellUnlock({ kind: 'nextArmy', after: before.id }))) return;
+    this.home.openArmies(focus);
   }
 
   /** Two fingers are down on the board: a pinch begins (a hero being dragged stays where it was). */
   private startPinch(): void {
+    this.hold.cancel();
     if (this.drag) {
       this.drag = null;
       this.endDrag();
@@ -2155,8 +3135,15 @@ class Game {
     }
     if (!d.id) return;
     if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
+    const first = !d.moved;
     d.moved = true;
     this.chosen = d.id;
+    // (ONE-OF-EACH: a bench copy of a kind already on the field says so as it is picked up; it can still merge into it or swap in on its tile)
+    if (first && !d.fromBoard && !this.onBoard(d.id)) {
+      const twin = fieldTwin(this.b, this.run, Number(d.id));
+      const h = heroOf(this.run, Number(d.id));
+      if (twin?.tag !== undefined && h && !canMerge(this.run, h.id, twin.tag)) twinNote(sitsOut(this.run, h.id) ? sitOutWords(heroName(h.kind)) : twinWords(heroName(h.kind), false), e.clientX, e.clientY - 40);
+    }
     // (a card dragged off the bench in the deploy phase shows the recycle area; over it the card is let go to sell it)
     if (!d.fromBoard && this.b.phase === 'deploy') {
       $('recycleGold').textContent = `+${recycleValue(this.run)}`;
@@ -2189,7 +3176,7 @@ class Game {
     // (a tap on the board with a spell chosen casts it there)
     if (this.b.phase === 'fight' && this.spell && !d.moved && (e.target as HTMLElement) === this.app.canvas) {
       const tile = this.tileAtScreen(e.clientX, e.clientY);
-      if (tile && castSpell(this.b, this.spell, ...tile)) this.spell = null;
+      if (tile && castSpell(this.b, this.spell, ...snapSpell(this.b, this.spell, ...tile))) this.spell = null;
       return this.endDrag();
     }
     if (this.b.phase !== 'deploy' || (d.pan && d.moved)) return this.endDrag();
@@ -2201,7 +3188,9 @@ class Game {
       else if (!d.fromBoard && overRecycle(e.clientX, e.clientY)) this.recycleDropped(d.id);
       // (BENCH-TITLES: a hero on the board let go anywhere over the bench's wide area, or flicked down toward it, goes back)
       else if (this.onBoard(d.id) && (overReturn(e.clientX, e.clientY) || (d.fromBoard && flickToBench([...(d.trail ?? []), { x: e.clientX, y: e.clientY, t: e.timeStamp }], panelBox())))) this.takeBack(d.id);
-      else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
+      else if (tile && this.twinDrop(d.id, tile, e.clientX, e.clientY)) {
+        /* (ONE-OF-EACH: swapped in for its twin, or refused with a note) */
+      } else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
     } else if (d.fromBoard && (e.target as HTMLElement) === this.app.canvas) {
@@ -2214,6 +3203,8 @@ class Game {
       } else if (this.chosen && there?.tag !== undefined && canMerge(this.run, Number(this.chosen), there.tag)) {
         // (a chosen hero tapped onto its match on the board merges into it)
         this.mergeHeroes(Number(this.chosen), there.tag);
+      } else if (this.chosen && tile && this.twinDrop(this.chosen, tile, e.clientX, e.clientY)) {
+        this.chosen = null;
       } else if (this.chosen && tile && this.canPut(this.chosen, tile)) {
         this.put(this.chosen, tile);
         this.chosen = null;
@@ -2302,11 +3293,49 @@ class Game {
     return UNITS[heroOf(this.run, Number(id))!.kind];
   }
 
+  /** ONE-OF-EACH: hero `id` let go (or tapped down) on a deploy tile while another of its kind stands on the field. On the twin's own tile it
+   *  swaps in (the twin goes back to the bench: `swapTwin`); anywhere else on the rows it is refused, with a note by the finger and the twin's
+   *  tile lit. Returns false when there is no twin (an ordinary drop), so the caller places it as before. */
+  private twinDrop(id: string, tile: [number, number], x: number, y: number): boolean {
+    const h = heroOf(this.run, Number(id));
+    const twin = h && !this.onBoard(id) ? fieldTwin(this.b, this.run, h.id) : undefined;
+    if (!h || !twin || twin.tag === undefined || !isDeployTile(tile[1], this.b.board.d)) return false;
+    if (twin.u === tile[0] && twin.v === tile[1] && canSwapTwin(this.b, this.run, h.id)) {
+      const was = String(twin.tag);
+      const out = swapTwin(this.b, this.run, h.id, this.boostFor(h));
+      if (out === null) return false;
+      this.placed.delete(was);
+      this.placed.set(id, tile);
+      saveRun(this.run);
+      this.syncSprites();
+      play('summon');
+      heroSays(h.kind, 'placed', () => this.anchorOfKind(h.kind));
+      return true;
+    }
+    twinNote(sitsOut(this.run, h.id) ? sitOutWords(heroName(h.kind)) : twinWords(heroName(h.kind), canMerge(this.run, h.id, twin.tag)), x, y);
+    play('block');
+    this.flashTwin(twin.tag);
+    return true;
+  }
+
+  /** Light the tile of the hero `tag` on the field for a moment (the one a refused copy met: ONE-OF-EACH). */
+  private flashTwin(tag: number): void {
+    this.twinLit = { tag, until: performance.now() + 2400 };
+    this.markTiles();
+    setTimeout(() => {
+      if (this.twinLit?.tag === tag && performance.now() >= this.twinLit.until - 20) {
+        this.twinLit = null;
+        this.markTiles();
+      }
+    }, 2400);
+  }
+
   /** Whether a hero may go on a tile: free ground on the heroes' rows, and room in the squad if it isn't in it. */
   private canPut(id: string, [u, v]: [number, number]): boolean {
     const h = heroOf(this.run, Number(id));
     if (!h || !canPlace(this.b, h.kind, u, v, h.id)) return false;
-    return this.run.squad.includes(h.id) || this.run.squad.length < squadLimit(this.run);
+    // (room in the squad, no twin in it and not sitting out for a mirror's clone: ONE-OF-EACH)
+    return this.run.squad.includes(h.id) || canJoin(this.run, h.id);
   }
 
   private put(id: string, tile: [number, number]): void {
@@ -2371,14 +3400,17 @@ class Game {
 
   /** A hero's level: its own in a run that levels its heroes, else its kind's lasting level. */
   private levelOf(h: Owned): number {
-    return this.run.local ? heroLevel(h) : levelOfKind(this.meta, h.kind);
+    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta, h) : levelOfKind(this.meta, h.kind);
   }
 
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
   private buildBench(): void {
     const bench = $('bench');
     const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
-    const key = `${summonCost(this.run)};${[...ready].join('.')};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
+    // (SEVEN-SLOT GEAR batch 5: the Pack button says how many rune merges are ready)
+    const merges = this.run.runes && this.b.phase === 'deploy' ? mergesReady(this.run.runes) : 0;
+    $('pack').textContent = merges ? `Pack · ${merges} merge${merges === 1 ? '' : 's'}` : 'Pack';
+    const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};${this.run.runes ? JSON.stringify(this.run.runes.worn) + this.b.phase : ''};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
     bench.replaceChildren();
@@ -2387,10 +3419,20 @@ class Game {
       const id = String(h.id);
       const card = document.createElement('div');
       // (a hero with a match ready to merge glows: MERGE-TWO)
-      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}`;
+      // (QUEST-BATTLES: a quest's required hero wears a gold frame and a padlock, and cannot be recycled)
+      const castHero = this.run.mode?.kind === 'quest' && this.run.mode.cast.includes(h.kind);
+      card.className = `card g${h.grade}${this.evolved.has(h.id) ? ' evolve' : ''}${ready.has(h.id) ? ' ready' : ''}${castHero ? ' quest' : ''}${h.guest ? ' guest' : ''}`;
       card.dataset.id = id;
       const stars = document.createElement('em');
-      stars.textContent = '★'.repeat(h.grade);
+      stars.className = 'benchGrade';
+      stars.setAttribute('aria-label', `Rank ${h.grade}`);
+      for (let i = 0; i < h.grade; i++) {
+        const mark = document.createElement('img');
+        mark.src = COMBAT_ART.star;
+        mark.alt = '';
+        mark.draggable = false;
+        stars.append(mark);
+      }
       const name = document.createElement('b');
       name.textContent = heroName(h.kind);
       const bar = document.createElement('i');
@@ -2432,14 +3474,26 @@ class Game {
       pw.className = 'pw';
       pw.textContent = `Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.append(portrait(lookSheet(h.kind, heroRank(this.meta, h.kind), h.grade), 96, h.grade), stars, name, lv, pw, marks, bar);
+      // (SEVEN-SLOT GEAR batch 5: a rune run shows each hero's three sockets over its card, twins rimmed, on the deploy screen)
+      if (this.run.runes && !h.guest && this.b.phase === 'deploy') card.append(socketStrip(this.run.runes, h.kind));
+      // (ONE-OF-EACH: a copy of a kind already on the field is dimmed and marked, unless it can merge with it: `refreshBench`)
+      card.append(Object.assign(document.createElement('span'), { className: 'twinMark', textContent: 'On field' }));
+      // (the Nemesis War: a skull on the hero a nemesis in this wave dreads, so the player sees the answer)
+      const dreads = this.b.units.filter((u) => u.alive && u.nem && dreadOf(u.nem.weak) === h.kind);
+      if (dreads.length) card.append(Object.assign(document.createElement('span'), { className: 'dreadMark', textContent: '☠', title: `${dreads.map((u) => u.nem!.name).join(' and ')} ${dreads.length > 1 ? 'dread' : 'dreads'} ${heroName(h.kind)}` }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
-      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id) card.append(sell);
+      if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
+      // (GUEST-HERO: a guest wears a GUEST badge, and is not the party's to recycle)
+      if (h.guest) card.append(Object.assign(document.createElement('span'), { className: 'guestMark', textContent: 'Guest', title: `${heroName(h.kind)} is a guest: a sixth hero for this run only` }));
+      if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h) && !h.guest) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
         if (this.b.phase !== 'deploy') return;
         e.preventDefault();
         this.drag = { id, x: e.clientX, y: e.clientY, moved: false, fromBoard: false };
+        // (UNIT-INFO: a finger resting on the card opens the hero's info card)
+        this.hold.start(e.clientX, e.clientY, () => this.openBenchInfo(h.id));
       });
       bench.append(card);
     }
@@ -2451,7 +3505,7 @@ class Game {
   private buildSpells(): void {
     const cards = $('spellCards');
     cards.replaceChildren();
-    for (const id of this.meta.spellbook.equipped) {
+    for (const id of castList(this.meta.spellbook)) {
       const sp = SPELLS[id];
       const card = document.createElement('button');
       card.className = 'spell';
@@ -2502,7 +3556,9 @@ class Game {
     this.spellGhost.hidden = false;
     this.spellGhost.style.left = `${e.clientX}px`;
     this.spellGhost.style.top = `${e.clientY - 40}px`;
-    this.hover = this.spellTile(e.clientX, e.clientY);
+    const at = this.spellTile(e.clientX, e.clientY);
+    // (the 3x3 shown is where the soft snap will put it: KING-SPELLS batch 1)
+    this.hover = at && snapSpell(this.b, d.id, ...at);
     this.markTiles();
     this.refreshSpells();
   }
@@ -2513,7 +3569,7 @@ class Game {
     if (!d) return;
     if (d.moved) {
       const tile = ok ? this.spellTile(e.clientX, e.clientY) : null;
-      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...tile);
+      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...snapSpell(this.b, d.id, ...tile));
       this.spell = null;
       this.hover = null;
       this.spellDragged = true;
@@ -2532,7 +3588,8 @@ class Game {
   /** While a spell is chosen, the finger or pointer shows the 3x3 it would hit. */
   private aim(e: PointerEvent): void {
     if (this.b.phase !== 'fight' || !this.spell) return;
-    this.hover = this.tileAtScreen(e.clientX, e.clientY);
+    const at = this.tileAtScreen(e.clientX, e.clientY);
+    this.hover = at && snapSpell(this.b, this.spell, ...at);
     this.markTiles();
   }
 
@@ -2542,7 +3599,8 @@ class Game {
     const dropped = this.spell && !canAfford(b, this.spell);
     if (dropped) this.spell = null;
     ($('mana').querySelector('i span') as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
-    $('mana').querySelector('b')!.textContent = `${Math.floor(b.spells.mana)}/${MANA_MAX}`;
+    $('mana').querySelector('b')!.textContent = manaText(b.spells);
+    refreshDecree($('mana'), b);
     for (const card of $('spellCards').children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
       card.classList.toggle('dim', !canAfford(b, id));
@@ -2553,7 +3611,8 @@ class Game {
     const caster = b.phase === 'fight' ? b.units.find((u) => u.side === 'hero' && u.alive && u.ks?.at1 !== undefined) : undefined;
     if (caster) tips.offer('skill', () => this.spriteBox(caster.id));
     if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('fightHud'));
-    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].text}: let go over the grid to cast, or back on the cards to cancel` : `${SPELLS[this.spell].text}: tap a tile, or drag a card onto the grid (tap the card again to cancel)`) : '';
+    // (one short line above the orbs, off the board; the spell's full words are on its orb's title and in the spellbook)
+    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].name}: let go on the grid · back here to cancel` : `${SPELLS[this.spell].name}: tap a tile · tap the orb to cancel`) : '';
     if (dropped) this.markTiles();
   }
 
@@ -2573,11 +3632,17 @@ class Game {
   private refresh(): void {
     const b = this.b;
     const run = this.run;
+    this.tactics.refresh(b);
     this.syncAct();
     this.syncScene();
     const n = heroesPlaced(b);
     const ended = b.phase === 'won' || b.phase === 'lost';
     const ready = ended && (!!this.auto || this.endWait >= END_WAIT_MS);
+    // (the Nemesis War, phase 4: a duel lost or run out of time is not the wave lost: its own settle, then the wave's fight)
+    if (ready && b.duel && b.phase === 'lost' && !this.settled) {
+      this.settled = true;
+      return this.endDuel();
+    }
     // (the first defeat has its cinematic as the loss shows, but only a real one: a fall a heart revives is not a defeat)
     // (checked before a heart burns: with one left the moments are none, and the check waits for the next fall)
     if (ready && b.phase === 'lost' && !this.lossScened && !this.auto && !this.revive) {
@@ -2599,6 +3664,8 @@ class Game {
       // (RECAP-REVEAL: what the save and run held before the wave is settled, so the card can list everything it brought in)
       const held = snapGains(this.meta, run);
       noteFight(run, b);
+      // (phase 4: a duel won is this wave won: the run keeps its outcome)
+      if (b.duel) settleDuelRun(run, b);
       // (the heroes' skills keep their charge for the next wave)
       if (won) keepCharges(run, b);
       this.bossDown = !!run.tower && run.tower.cur?.kind === 'boss' && won;
@@ -2615,26 +3682,68 @@ class Game {
       const openBefore = army ? ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id) : [];
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
+      // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
+      if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
+      // (DEPTH-BUILD: the Mage Tower's Spell Lectern, at the camp after the mid-boss: swap the run's spare spell in, once)
+      const spare = run.orders?.spare as SpellId | undefined;
+      const midWon = won && !!army && army.waves[stage - 1]?.boss === 'mid' && !this.auto;
+      // (and the Smithy's Field Anvil there: mend the party's worn gear at the stall's price)
+      const anvil = () => {
+        if (!midWon || !roomOpen(run.castle, 'fieldAnvil')) return;
+        const kinds = run.roster.map((h) => h.kind);
+        const { items, cost } = repairAllCost(this.meta, kinds);
+        if (items.length) showAnvil(items.length, cost, this.meta.crowns >= cost, () => {
+          repairAll(this.meta, kinds);
+          saveMeta(this.meta);
+        });
+      };
+      if (midWon && lecternDue(spare, run.orders?.spareUsed, true) && roomOpen(run.castle, 'spellLectern'))
+        showLectern(this.meta, spare!, (out) => {
+          run.orders!.spareUsed = true;
+          if (out) lecternSwap(this.meta.spellbook, spare!, out, this.meta.spellbook.school);
+          saveMeta(this.meta);
+          saveRun(run);
+          anvil();
+        });
+      else anvil();
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
-      this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : earn(this.meta, stage, won, rating.stars);
+      // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)
+      const quest = run.mode?.kind === 'quest';
+      this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : quest ? 0 : earn(this.meta, stage, won, rating.stars);
       if (run.tower) run.tower.crowns += this.crownGain;
       if (run.tower && run.over) settleTower(this.meta, run);
-      if (won && !army && !daily && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
-      const earned = settleRun(this.meta, run, { won, stage, stars: rating.stars, battle: b });
+      // (RUN-GEAR: a run that has ended brings its finds home, once: worn for real, to the stash, the cart or sold)
+      if (run.over) settleFinds(this.meta, run, !!this.auto);
+      if (won && !army && !daily && !quest && run.mode?.kind !== 'calamity') recordStars(this.meta, stage, rating.stars);
+      // (QUESTS: the quests this fight completes are told after the achievements' toasts)
+      const readyBefore = readyQuests(this.meta);
+      const questsBefore = questSnap(this.meta);
+      // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
+      const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
+      const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey() };
+      const earned = settleRun(this.meta, run, settled);
+      // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
+      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
+      // (the Nemesis War's lines go on the wave card below)
+      this.nemNote = settled.war;
+      // (and what slaying a nemesis paid counts in the wave's crowns)
+      if (settled.war?.crowns) this.crownGain += settled.war.crowns;
+      const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
+      // (QUESTS-1b: spoils found on a boss, or the rift's voice, go on the board: a line says so)
+      const questsFound = (this.meta.quests?.offers ?? []).filter((o) => !offersBefore.includes(o.id)).map((o) => o.id);
       this.runStars = settleArmyRun(this.meta, run);
       // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
       this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
       // (ARMY-DROPS: a won army wave now and then drops shards or a tome, from a side stream of the run's seed and the wave; `window.__forceDrop` = 'shards' | 'tome' | 'both' forces one for screenshots)
       this.dropGain = army ? settleArmyDrop(this.meta, won, army.waves[stage - 1]?.boss, tierOfRun(run), run.seed, stage, (window as unknown as { __forceDrop?: 'shards' | 'tome' | 'both' }).__forceDrop) : null;
-      if (this.dropGain?.joined && this.dropGain.drop.shards) toastJoined([this.dropGain.drop.shards.kind]);
       // (the stars this run won may have opened an army: its banner rises when the run's result is left)
       if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
-      // (a milestone this fight reached may bring in a hero)
+      // (a milestone this fight reached may bring in a hero: its reveal tells it, UNLOCK-ONCE, as the result is left)
       const joined = grantContent(this.meta);
-      toastJoined(joined);
       // (and may teach a spell)
-      toastSpells(grantSpells(this.meta), joined.length);
+      toastSpells(grantSpells(this.meta));
       // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
       // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)
@@ -2642,11 +3751,33 @@ class Game {
       this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
-      const gains = own ? own.gains : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) : 1));
+      // (a quest battle replayed for practice pays nothing, XP neither)
+      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) * marchPay(run.orders).xp : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
-      const bench = own ? {} : benchXp(gains, run.roster.map((h) => h.kind));
-      const ups = own ? own.ups : gainXp(this.meta, { ...gains, ...bench });
+      const bench = own ? {} : benchXp(gains, run.roster.filter((h) => !h.guest).map((h) => h.kind));
+      // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
+      if (!own) noteXpStart(run, Object.fromEntries(Object.keys({ ...gains, ...bench }).map((k) => [k, this.meta.xp[k] ?? 0])));
+      // (GUEST-HERO: the guest's share stays with the guest, for this run: nothing lasting for its kind)
+      // (DEPTH-BUILD: an apprentice below half its mentor's level earns half again, `legacy.ts`)
+      // (Dynasties, phase 5: an Elder on the field gives the rest of the party Elder's Counsel, +5% XP)
+      const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
+      // (Dynasties, phase 6: an heir in its first season has the Heir's Promise, +25% XP)
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, promiseXp(this.meta, counselXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }, fielded), todayKey())));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
+      // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
+      // under auto-replay, except in the runs whose heroes start bare, where it does not count)
+      const placed = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def));
+      const studied = studyWords(settleStudy(this.meta, placed.map((u) => u.def)), heroName);
+      // (the skills overhaul's batch 5: the placed heroes' skills earn use points, half under auto-replay, none in a practice replay; the spire and
+      // the Calamity count too, though their heroes fight at Level 1 there: the owner's answers)
+      const useCut = useShare(run.mode, !!this.auto);
+      const skillUps = useCut > 0 ? levelUpWords(settleSkillUse(this.meta, fightUse(b, this.meta.unlocked), useCut)) : [];
+      // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
+      const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
+      const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot) || markedHero(run, kind)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
+      // (Dynasties, phase 5: the heroes who fought count the wave towards their season, half under auto-replay, where the waves fought count;
+      // the bench never ages. A season that ended since is settled first, and a stage reached is told)
+      if (!run.local) toastLines(agedLines(noteServed(this.meta, fought.map((f) => f.kind), this.auto ? 0.5 : 1, todayKey())));
       // (WAVE-RECAP: the wave's line for the end recap's strip, and anything it found; the short card takes its moments from the same)
       // (a calamity's fights are counted one by one, its stage standing still; WAVE-RECAP-2)
       noteWave(run, { wave: run.mode?.kind === 'calamity' ? recapOf(run).fights : stage, won, stars: won ? rating.stars : 0, ms: b.t, mvp: mvpOf(this.stats)?.kind, ...(this.heartsBurned ? { hearts: this.heartsBurned } : {}) }, [...(this.dropGain?.words ?? []), ...(run.found ?? [])]);
@@ -2656,7 +3787,22 @@ class Game {
       // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
       this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
       const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
-      this.waveCard = { wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: run.found ?? [], gains: gainsSince(held, this.meta, run).filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}) };
+      // (EIDOLONS: the War Horn takes the fight's share: a boss wave 100, each foe slain 1, an auto-replay half; nothing in a fight lost,
+      // practised, or one in which it was blown)
+      // (RELICS-3: a whole Eidolon's reliquary, with that Eidolon answering the horn, fills it 25% faster)
+      const horn = addHorn(this.meta, hornGain(hornFightOf(run, stage, b, won, !!this.auto)) * hornEcho(run.relics, chosenOf(this.meta)));
+      if (horn.added > 0) this.eid.gained(horn.added);
+      const hornSaid = hornLine(horn);
+      // (JRPG-RECAP: the quests the fight moved, a short line each on the card and in the results screen)
+      const questMoved = questsMoved(this.meta, questsBefore, questsDone, questsFound);
+      // (RECAP-SPOILS: the wave's gains go into the run's spoils, for its final recap)
+      const waveGains = gainsSince(held, this.meta, run);
+      // (phase 4: a challenge the next wave opens with is told on this wave's card)
+      const next = won && !run.over && !this.auto ? duelOffer(run) : undefined;
+      const nextSnap = next && offerSnap(run, next);
+      const ahead = next && nextSnap ? duelAhead(next, nextSnap) : undefined;
+      noteSpoils(recapOf(run), waveGains);
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -2677,19 +3823,37 @@ class Game {
           gear: over ? gearCount(run) : 0,
           ores: this.oreGain?.drops.reduce((n, d) => n + d.n, 0) ?? 0,
           drops: this.dropGain?.words.length ?? 0,
+          finds: over ? run.foundHome?.pieces : undefined,
         });
         this.autoWait = 900;
       } else {
-        this.showStars(won ? rating : null);
+        // (a quest battle's stars pay nothing, so it shows none: QUEST-BATTLES)
+        this.showStars(won && !quest ? rating : null);
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         drawOreGain($('oreDrop'), this.oreGain);
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
         drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : [], this.waveCard?.gains ?? []);
         for (const id of ['xp', 'fightStats']) $(id).hidden = true;
+        // (JRPG-RECAP, the owner's call: between waves the short card above; the full results screen only where a run ends with no
+        // end recap after it (a spire's or Calamity's last fight, a quest battle's end). An army's, the daily's and an endless run's
+        // last card stays short too: their end recap, one tap on, is the results screen)
+        const share = this.pay?.replay ? 'a replay pays a share' : run.mode?.kind === 'daily' && run.mode.practice ? 'practice' : '';
+        if (run.over && (run.tower || quest)) this.jrData = fightResult(
+          { meta: this.meta, run, b, stats: this.stats, won, card: this.waveCard, gains, bench, own, gold: this.gain, crowns: quest ? null : this.crownGain, ...(share ? { crownNote: share } : {}), notes: this.pay?.firstClear ? ['First clear!'] : [], quests: questMoved },
+          '',
+          this.passing ? 'Tap to continue' : undefined,
+        );
       }
       saveMeta(this.meta);
       saveRun(run);
       toastAchievements(earned);
+      if (questsDone.length) setTimeout(() => toastQuests(questsDone), earned.length * 2800);
+      if (questsFound.length) setTimeout(() => toastFound(questsFound), (earned.length + (questsDone.length ? 1 : 0)) * 2800);
+      // (EIDOLON-CHAINS: a piece found: its card over the result, a moment after it shows; an auto-replay keeps going, and the log has it)
+      const pieces = (this.meta.quests?.pieces ?? []).filter((id) => !piecesBefore.includes(id)).map(pieceInfo).filter((p) => !!p);
+      // (a quest battle's piece waits for its beat after: the card shows over the quest log, `questEnd`)
+      if (pieces.length && quest) this.pendingPiece = pieces[0];
+      else if (pieces.length && !this.auto) setTimeout(() => showPieceCard(pieces[0], { next: nextWords(this.meta, pieces[0]) }), 900);
     }
     document.body.dataset.phase = b.phase;
     document.body.dataset.roster = run.roster.length ? 'some' : 'none';
@@ -2701,7 +3865,7 @@ class Game {
     const combo = b.phase === 'deploy' ? comboOf(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def)) : undefined;
     const deployCombo = combo ? ` · ${COMBO_NAME}: ${combo.name}` : '';
     $('status').textContent =
-      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${n} of ${squadLimit(run)} placed${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? `${stage} · Fight!` : b.phase === 'won' ? 'Victory' : 'Defeat';
+      b.phase === 'deploy' ? (this.chosen ? `Place the ${this.defOf(this.chosen).name}` : this.questBlock() ? `${stage} · ${this.questBlock()}` : benchFull(run) ? `${stage} · bench full: merge or recycle a hero to hire` : n ? `${stage} · ${this.placedWords(n)}${deployCombo}` : run.roster.length ? `${stage} · drag heroes onto the blue tiles` : `${stage} · no heroes yet: hire two`) : b.phase === 'fight' ? (b.tactic && b.tactic.metAt === undefined ? `${stage} · ${b.tactic.kind === 'hold' ? 'Holding the line' : 'The line advances'}` : `${stage} · Fight!`) : b.phase === 'won' ? 'Victory' : 'Defeat';
     $('gold').textContent = `${run.gold} gold`;
     this.drawLives(run);
     const buy = $('summon') as HTMLButtonElement;
@@ -2710,6 +3874,10 @@ class Game {
     const block = hireBlock(run);
     buy.textContent = block === 'bench' ? 'Bench full' : `Hire · ${summonCost(run)}`;
     buy.disabled = block !== null;
+    // (UX-FIXES: an empty deploy board says what to do: hire. Hire is the lit button until a hero is on the bench, then Fight! takes over)
+    const needHire = b.phase === 'deploy' && !run.roster.length && block === null && run.mode?.kind !== 'calamity';
+    $('hireHint').hidden = !needHire;
+    buy.classList.toggle('primary', needHire);
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
     // (DEPLOY-ZOOM: Auto merge is earned by beating the second army, Auto place the fourth, `featureUnlocks.ts`; each is told once)
@@ -2720,16 +3888,19 @@ class Game {
     mergeAll.hidden = pairs === 0;
     mergeAll.textContent = `Auto merge · ${pairs}`;
     mergeAll.title = pairs ? `Merge every pair ready (${pairs}), and the pairs those make, up to rank 4` : '';
-    ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0;
+    ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0 || !!this.questBlock();
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    result.hidden = this.resultDone || !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    // (CLOSE-SCREENS: the card is one step of the fight's end: in the screen stack while it is up, so the next screen closes it)
+    if (!result.hidden && !this.resultCloser) this.resultCloser = openScreen('result', () => this.dropResult());
     if (!result.hidden) {
       const left = b.units.filter((x) => x.alive && x.side === 'hero' && !UNITS[x.def].summon).length;
       const cal = run.mode?.kind === 'calamity';
       const daily = run.mode?.kind === 'daily';
       const practice = run.mode?.kind === 'daily' && run.mode.practice;
-      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
+      const qrun = run.mode?.kind === 'quest';
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : run.mode?.kind === 'muster' ? 'The Warchief falls!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
       // (WAVE-RECAP: a short card's heading names the wave and how it went, "Wave 4 of 15 won", bar the end of a cleared run)
@@ -2751,13 +3922,21 @@ class Game {
             ? `The ${army.name} holds at wave ${run.best} of ${army.waves.length}. It starts again from wave 1; your heroes keep their levels.`
             : `The run ends at stage ${run.best} · ${run.roster.length} heroes owned · ${run.summons} summons · +${this.crownGain} crowns${modeNote(run)}`;
       // (a short card's pay line drops the finds, which have lines of their own, and the dry aside)
-      if (card && b.phase === 'won') $('summary').textContent = `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
+      if (card && b.phase === 'won') $('summary').textContent = qrun ? `+${this.gain} gold · ${clock(b.t)}` : `+${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}`;
       result.classList.toggle('short', !!card);
-      result.classList.toggle('passing', !!this.passing);
+      // (JRPG-RECAP: the results screen, started the first time the card shows; it keeps the card's heading as its line)
+      if (this.jrData && !this.jr) this.jr = playResults({ head: $('jrHead'), body: $('jrBody') }, this.jrData);
+      this.jr?.setSub($('banner').textContent ?? '');
+      result.classList.toggle('jr', !!this.jr);
+      result.classList.toggle('jrWon', !!this.jr && b.phase === 'won');
+      result.classList.toggle('passing', !!this.passing && !this.jr);
       if (card) $('joke').hidden = true;
       else this.showJoke(b.phase === 'won');
       this.drawDailyResult(run);
-      $('next').textContent = run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
+      // (QUEST-BATTLES: a quest battle's last wave won goes on to its beat; one lost for good is tried again, free, or left)
+      if (qrun && run.over && !run.cleared) $('summary').textContent = `${this.questBossName(questBossOf(questBattleOfRun(run)!) ?? '') ?? 'The foe'} holds. Losing costs nothing: try again with a new board, or come back to it from the quest log.`;
+      $('qbLeave').hidden = !(qrun && run.over && !run.cleared);
+      $('next').textContent = qrun && run.over ? (run.cleared ? 'Onward' : 'Try again') : run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
     if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());
@@ -2793,7 +3972,9 @@ class Game {
     // (a themed daily's featured trait leads the strip)
     const lead = this.theme()?.trait;
     const counts = countTraits(kindsOf(this.b.units)).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
-    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick;
+    // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot, as a Bonds chip at the end)
+    const pairs = placedPairs(this.run.bonds, kindsOf(this.b.units));
+    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join();
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
     const featured = lead;
@@ -2810,7 +3991,7 @@ class Game {
       const next = c.trait.tiers[c.tier + 1];
       const head = document.createElement('span');
       head.className = 'thead';
-      head.append(traitBadge(c.trait.id, { small: true }), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
+      head.append(battleTraitBadge(c.trait.id), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
       pill.append(head);
       if (next) {
         const fx = document.createElement('small');
@@ -2823,8 +4004,28 @@ class Game {
       });
       strip.append(pill);
     }
+    if (pairs.length) {
+      const pill = document.createElement('button');
+      pill.className = `trait bonds on${this.traitPick === 'bonds' ? ' picked' : ''}`;
+      const head = document.createElement('span');
+      head.className = 'thead';
+      head.append(battleTraitBadge(pairs.some((p) => p.lv < 0) ? 'rival' : 'bonds'), document.createTextNode(`Bonds ${pairs.length}`));
+      const fx = document.createElement('small');
+      fx.textContent = pairs.map((p) => p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' & ')).join(', ');
+      pill.append(head, fx);
+      pill.addEventListener('click', () => {
+        this.traitPick = this.traitPick === 'bonds' ? undefined : 'bonds';
+        this.refreshTraits();
+      });
+      strip.append(pill);
+    }
     this.traitTiers = new Map(counts.map((c) => [c.trait.id, c.tier]));
     strip.dataset.drawn = '1';
+    if (this.traitPick === 'bonds' && pairs.length) {
+      hint.classList.remove('wake');
+      hint.textContent = pairs.map((p) => `${p.key.split('|').map((k) => UNITS[k]?.name ?? k).join(' and ')}, ${pairWords(p.lv)}`).join('; ');
+      return;
+    }
     const picked = counts.find((c) => c.trait.id === this.traitPick);
     const near = closestTrait(counts);
     hint.classList.toggle('wake', woke.length > 0);
@@ -2846,8 +4047,16 @@ class Game {
       card.classList.toggle('placed', !!u);
       card.classList.toggle('chosen', this.chosen === id);
       card.classList.toggle('fallen', !!u && !u.alive);
-      const share = u ? u.hp / u.maxHp : 1;
+      // (ONE-OF-EACH: another of its kind stands on the field and this one cannot merge into it)
+      const twin = !u && this.b.phase === 'deploy' ? fieldTwin(this.b, this.run, Number(id)) : undefined;
+      card.classList.toggle('twinOn', !!twin && !(twin.tag !== undefined && canMerge(this.run, Number(id), twin.tag)));
+      const mark = card.querySelector<HTMLElement>('.twinMark');
+      if (mark) mark.textContent = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
+      // (SEVEN-SLOT GEAR batch 6: a hero risen at half shows its wound before the fight, with a bandage mark)
+      const wound = !u && !this.run.tower ? hpShare(this.run, Number(id)) : 1;
+      const share = u ? u.hp / u.maxHp : wound;
       (card.querySelector('i span') as HTMLElement).style.width = `${Math.round(share * 100)}%`;
+      card.classList.toggle('wounded', !u && wound < 1);
     }
   }
 
@@ -2870,7 +4079,10 @@ class Game {
         const tag = here?.side === 'hero' ? here.tag : undefined;
         const mergeHere = tag !== undefined && (who ? canMerge(this.run, Number(who), tag) : matches.has(tag));
         const ok = who ? this.canPut(who, [u, v]) : !here;
-        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && (ok || mergeHere) ? 'hover' : 'bad');
+        // (ONE-OF-EACH: the twin of the hero held stands on a lit tile (drop there to swap), as does one a refused copy just met)
+        const twinHere = tag !== undefined && ((!!who && !mergeHere && fieldTwin(b, this.run, Number(who))?.tag === tag && !this.onBoard(who)) || this.twinLit?.tag === tag);
+        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && (ok || mergeHere || twinHere) ? 'hover' : 'bad');
+        else if (twinHere) this.boardView.mark(u, v, 'twin');
         else if (here && who && String(here.tag) === who) this.boardView.mark(u, v, 'chosen');
         else if (mergeHere) this.boardView.mark(u, v, 'merge');
         else if (ok) this.boardView.mark(u, v, 'deploy');
@@ -2906,8 +4118,12 @@ function overBench(x: number, y: number): boolean {
   return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 }
 
+// (MENU-GLITCH: a tap that opens a panel does not also press what of it is under the finger)
+installTapGuard();
 new Game().start().catch((err) => {
   $('loading').textContent = `Could not start: ${err}`;
 });
 
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
+// (the app bundles every file itself, so its page skips the service worker; the web page keeps it)
+checkAppUpdate(__GAME_VERSION__);
+if (!inApp() && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});

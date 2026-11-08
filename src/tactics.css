@@ -1,0 +1,39 @@
+/* The party's tactics (docs/notes/tactics.md, docs/notes/tactics-overview.md, `tacticsView.ts`): the fight's tactic button above the hero rows
+   and the word it shows, and the prep screen's Formation button and its sheet. */
+#tacticSheet { position: fixed; inset: 0; z-index: 9; display: flex; align-items: flex-end; justify-content: center; background: rgb(var(--s0-rgb) / 0.72); padding: 0 0 env(safe-area-inset-bottom, 0px); }
+#tacticSheet[hidden] { display: none; }
+#tacticSheet .tacCard { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 16px; background: var(--wood); border-top: 2px solid var(--gold); border-radius: 12px 12px 0 0; box-shadow: 0 -6px 18px #0008; }
+#tacticSheet h2 { margin: 0 0 2px; font-family: var(--display); font-size: 18px; color: var(--gold-hi); text-align: center; }
+#tacticSheet .tacClose { align-self: center; min-width: 120px; margin-top: 2px; }
+#tacticSheet h3 { margin: 6px 0 0; font-size: 14px; color: var(--gold-hi); }
+#tacticSheet .tacForms { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#tacticSheet .tacForm { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; text-align: left; padding: 7px 9px; min-width: 0; }
+#tacticSheet .tacForm b { font-size: 14px; }
+#tacticSheet .tacForm span { font-weight: normal; font-size: 12px; color: var(--dim); line-height: 1.2; }
+#tacticSheet .tacForm.on { border-color: var(--gold); background: linear-gradient(var(--e4), var(--e1)); }
+#tacticSheet .tacForm.on span { color: var(--ink); }
+#tacticSheet .tacAdvice { margin: -2px 0 2px; font-size: 13px; color: var(--dim); text-align: center; }
+/* (the fight's button: at the right, riding on the panel's top edge just above the hero rows (COMBAT-HUD); a thumb finds it) */
+#panel .fhTactic { position: absolute; z-index: 2; right: 8px; top: auto; bottom: calc(100% + 10px); width: 52px; height: 52px; min-height: 0; padding: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  color: var(--gold-hi); background: linear-gradient(#3a3122, #1c1710); border: 1px solid var(--gold); border-radius: 8px; box-shadow: 0 2px 6px #0009; }
+#panel .fhTactic[hidden] { display: none; }
+#panel .fhTactic small { font: 700 9px/9px var(--body); letter-spacing: 0.2px; opacity: 0.85; color: var(--ink); }
+#panel .fhTactic[data-tactic='charge'] { background: linear-gradient(var(--r4), var(--e1)); }
+#panel .fhTactic[data-tactic='hold'] { background: linear-gradient(#2d3a4a, #141c26); }
+/* (the mode's word beside it, to its left, after a tap: it rises in, stays readable, then fades; it never takes a tap) */
+#panel .fhTacticWord { position: absolute; z-index: 2; right: 74px; top: auto; bottom: calc(100% + 33px); white-space: nowrap; min-width: 52px; padding: 2px 6px; box-sizing: border-box; text-align: center; pointer-events: none;
+  font: 700 13px/16px var(--body); color: #fff3d0; background: rgb(0 0 0 / 0.62); border: 1px solid rgb(246 219 145 / 0.5); border-radius: 4px; text-shadow: 0 1px 2px #000;
+  opacity: 0; visibility: hidden; }
+#panel .fhTacticWord.up { visibility: visible; animation: tacWord 1.6s ease-out both; }
+@keyframes tacWord { 0% { opacity: 0; transform: translateY(-4px); } 12% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  #panel .fhTacticWord.up { animation: none; opacity: 1; }
+}
+/* (the prep screen's Formation button: at the right of the board, under the top bar, once the formations are open) */
+#formBtn { position: fixed; z-index: 4; right: max(8px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 96px); min-width: 64px; min-height: 44px; padding: 4px 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; box-shadow: 0 2px 8px #0009; }
+#formBtn[hidden] { display: none; }
+body:not([data-phase='deploy']) #formBtn { display: none; }
+#formBtn small { font-size: 10px; font-weight: normal; color: var(--gold-hi); }
+#formBtn b { font-size: 14px; }
+

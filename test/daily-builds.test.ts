@@ -77,8 +77,8 @@ test('every theme is sound: its heroes are real, its goal can be met from its po
     assert.equal(new Set(themePool(t)).size, themePool(t).length, `${t.id} pool has no repeats`);
     const featured = themePool(t).filter((k) => membersOf(t.trait).includes(k));
     assert.ok(featured.length >= t.need, `${t.id} can reach ${t.need}`);
-    // (the five alone fall short of the goal: it asks for a hire)
-    assert.ok(t.five.filter((k) => membersOf(t.trait).includes(k)).length < t.need, t.id);
+    // (the goal is met by the five alone: a Hire draws at random, so no goal leans on one; docs/notes/goals-audit.md)
+    assert.ok(t.five.filter((k) => membersOf(t.trait).includes(k)).length >= t.need, t.id);
     assert.ok(DAILY_ARMIES.includes(t.host), t.host);
     if (t.twist) assert.ok(TWISTS[t.twist], t.twist);
   }
@@ -131,9 +131,10 @@ test("a swarm day doubles the field waves' foes, to at most eight, at a share of
 test('the goal is met by the heroes fielded against the boss of the day, and earns a third bonus star', () => {
   const t = DAILY_THEMES.find((x) => x.id === 'beasts')!;
   const date = dateOf('beasts');
-  assert.equal(themeGoalMet(t, ['werewolf', 'minotaur', 'satyr']), false);
-  assert.equal(themeGoalMet(t, ['werewolf', 'minotaur', 'satyr', 'gorgon', 'knight']), true);
-  for (const kinds of [['werewolf', 'minotaur', 'satyr', 'gorgon', 'knight'], ['werewolf', 'minotaur', 'satyr', 'knight', 'archer']]) {
+  // (three Beasts, the five's own: the goal never leans on a Hire; docs/notes/goals-audit.md)
+  assert.equal(themeGoalMet(t, ['werewolf', 'minotaur']), false);
+  assert.equal(themeGoalMet(t, ['werewolf', 'minotaur', 'satyr', 'knight', 'archer']), true);
+  for (const kinds of [['werewolf', 'minotaur', 'satyr', 'gorgon', 'knight'], ['werewolf', 'minotaur', 'knight', 'archer', 'wizard']]) {
     const run = dailyRun(date);
     run.stage = DAILY_WAVES;
     const b = startStage(run);
@@ -144,7 +145,7 @@ test('the goal is met by the heroes fielded against the boss of the day, and ear
     assert.equal(run.cleared, true);
     const stars = dailyBonus(run);
     assert.equal(stars.length, 3);
-    assert.equal(stars[2].earned, kinds.includes('gorgon'), kinds.join());
+    assert.equal(stars[2].earned, kinds.includes('satyr'), kinds.join());
   }
   // (an old day has only the two stars)
   const old = dailyRun(after(from, -1));

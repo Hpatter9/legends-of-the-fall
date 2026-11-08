@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { statMults } from '../src/sim/statPower';
 import assert from 'node:assert/strict';
 import { addUnit, hurt, place, playOut, fight, startBattle } from '../src/sim/battle';
 import { benchXp, BENCH_SHARE } from '../src/sim/levels';
@@ -10,7 +11,8 @@ import { HEROES, UNITS } from '../src/sim/units';
 import { readyBattle } from './helpers';
 
 test('a fight gives every hero that fought XP, and a win pays more', () => {
-  const b = readyBattle(4);
+  // (HEROES-JOIN, docs/notes/heroes-join.md: re-staged from seed 4, where the five no longer make a kill, to seed 1; 28 of seeds 1 to 30 do)
+  const b = readyBattle(1);
   fight(b);
   playOut(b);
   const gains = fightXp(b);
@@ -25,7 +27,7 @@ test('a fight gives every hero that fought XP, and a win pays more', () => {
   const lost = fightXp({ ...b, phase: 'lost' });
   for (const k of HEROES) assert.ok(won[k] > lost[k], `${k}: a win pays more`);
   // and the counters are the same every time the seed plays out
-  const again = readyBattle(4);
+  const again = readyBattle(1);
   fight(again);
   playOut(again);
   assert.deepEqual(fightXp(again), gains);
@@ -68,7 +70,8 @@ test('a killing blow adds the foe\'s worth to the killer\'s XP', () => {
   const b = startBattle(3);
   const h = addUnit(b, 'knight', 0, 8, {}, 1);
   const foe = addUnit(b, 'skeleton', 0, 7, {});
-  hurt(b, h, foe, foe.hp, false, false, []);
+  // (a blow twice its health: the skeleton's Bone Shield turns an eighth of a blow from the front, FOE-STYLES)
+  hurt(b, h, foe, foe.hp * 2, false, false, []);
   assert.equal(foe.alive, false);
   assert.equal(h.kills, 1);
   assert.ok(Math.abs((h.slain ?? 0) - killXp(foe)) < 1e-9);
@@ -148,8 +151,10 @@ test('a level stacks with the grade and rank in the hero boost, and reaches the 
   const b = startBattle(2);
   place(b, 'knight', 0, 8, 1, gradeBoost(1, 0, 5));
   const u = b.units.find((x) => x.side === 'hero')!;
-  assert.equal(u.maxHp, Math.round(UNITS.knight.hp * levelBoost(5).hp));
-  assert.ok(Math.abs(u.power! - levelBoost(5).atk) < 1e-9);
+  // (times what the Knight's scores at level 5 make of them, over the roster's mean: STATS batch 2)
+  const st = statMults('knight', { level: 5 });
+  assert.equal(u.maxHp, Math.round(UNITS.knight.hp * levelBoost(5).hp * st.hp));
+  assert.ok(Math.abs(u.power! - levelBoost(5).atk * st.blow) < 1e-9);
 });
 
 test('old saves load with no XP, and bad XP is dropped', () => {

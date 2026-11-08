@@ -283,6 +283,69 @@ const SHAPES: Record<Step['s'], Draw> = {
   pop(st, f, sc) {
     for (const t of targets(st, sc)) put(sc, st, f, t.x, body(t));
   },
+  // (KING-SPELLS batch 5: the schools' fourteen spells' releases; a row runs across the line to the foes, as a wall stands)
+  wall(st, f, sc) {
+    const n = count(st, 5, sc);
+    const c = front(sc, st.r ?? 40);
+    for (let i = 0; i < n; i++) {
+      const k = i - (n - 1) / 2;
+      put(sc, st, f, c.x + k * 22, c.y + k * 6, { delay: after(st, i * 70), vy: -0.02 });
+    }
+  },
+  crystal(st, f, sc) {
+    const n = count(st, 4, sc);
+    const c = front(sc, st.r ?? 40);
+    for (let i = 0; i < n; i++) {
+      const k = i - (n - 1) / 2;
+      put(sc, st, f, c.x + k * 24, c.y + k * 6 + 18, { vy: -0.08, life: 600 });
+    }
+  },
+  rise(st, f, sc) {
+    const n = count(st, 5, sc);
+    const c = front(sc, st.r ?? 40);
+    for (let i = 0; i < n; i++) {
+      const k = i - (n - 1) / 2;
+      put(sc, st, f, c.x + k * 22, c.y + k * 6 + 14, { delay: after(st, Math.abs(k) * 90), vy: -0.05 });
+    }
+  },
+  shards(st, f, sc) {
+    const n = count(st, 6, sc);
+    for (const t of targets(st, sc).slice(0, 6))
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        put(sc, st, f, t.x, body(t), { vx: Math.cos(a) * 0.09, vy: Math.sin(a) * 0.07 - 0.04, gravity: 0.0003, spin: jit(0.01), delay: after(st, i * 15) });
+      }
+  },
+  vines(st, f, sc) {
+    const n = count(st, 3, sc);
+    for (const t of targets(st, sc).slice(0, 6))
+      for (let i = 0; i < n; i++) {
+        const k = i - (n - 1) / 2;
+        put(sc, st, f, t.x + k * 12, t.y - 4, { delay: after(st, i * 80), vy: -0.03, vx: -k * 0.008 });
+      }
+  },
+  hearts(st, f, sc) {
+    const n = count(st, 3, sc);
+    for (const t of targets(st, sc).slice(0, 6))
+      for (let i = 0; i < n; i++) put(sc, st, f, t.x + jit(12), body(t), { delay: after(st, i * 130), vy: -0.05, vx: jit(0.02), spin: jit(0.004) });
+  },
+  eye(st, f, sc) {
+    const all = sc.allies.length ? sc.allies : [sc.self];
+    const x = all.reduce((n, t) => n + t.x, 0) / all.length;
+    const y = Math.min(...all.map((t) => t.y - t.tall)) - 30;
+    put(sc, st, f, x, y, { grow: 0.0006, life: Math.max(700, sc.ms) });
+  },
+  haze(st, f, sc) {
+    const n = count(st, 2, sc);
+    for (const t of targets(st, sc).slice(0, 6))
+      for (let i = 0; i < n; i++) put(sc, { ...st, a: (st.a ?? 0.7) * 0.8 }, f, t.x + (i % 2 ? 18 : -18), body(t), { delay: after(st, i * 90), vx: (i % 2 ? 1 : -1) * 0.015 });
+  },
+  sigil(st, f, sc) {
+    for (const t of targets(st, sc).slice(0, 4)) {
+      put(sc, { ...st, z: (st.z ?? 2) * 1.2 }, f, t.x, t.y - 2, { stretchY: 0.5, life: 800 });
+      put(sc, { ...st, z: (st.z ?? 2) * 0.8 }, f, t.x, t.y - 10, { delay: after(st, 300), vy: -0.06 });
+    }
+  },
 };
 
 /** Play steps against a scene. A step whose strip is not loaded is skipped. */

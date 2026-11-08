@@ -18,6 +18,7 @@ import { newCastle } from '../src/sim/castle';
 import { ARMIES } from '../src/sim/armies';
 import { newMeta } from '../src/sim/meta';
 import { TICK_MS } from '../src/sim/battle';
+import { STARTER_SPELLS } from '../src/sim/spells';
 import { ALL_RELIC_IDS, RELICS } from '../src/sim/relics';
 
 const setupAt = (level: number): StandSetup => ({ boost: () => gradeBoost(1, 0, level), castle: newCastle() });
@@ -59,7 +60,10 @@ test('the acts: the courtyard for waves 1-5, the library 6-10, the chapel 11-15,
 });
 
 test('a strong party falls back room by room, in order, and each new room is laid out with the heroes at the ring plan\'s posts', () => {
-  const s = startStand(newStandRun(21, EIGHT, armies), setupAt(100));
+  // (FOE-STYLES on 0.350: re-staged from seed 21, which now falls in wave 15, to seed 1; 11 of seeds 1 to 12 reach the fourth room)
+  // (HEROES-JOIN, docs/notes/heroes-join.md: nine more heroes move the roster means every hero's numbers are sized against, so the party
+  // falls a little sooner: 7 of seeds 1 to 14 now reach the fourth room, seed 1 among them)
+  const s = startStand(newStandRun(1, EIGHT, armies), setupAt(100));
   startFirstWave(s);
   const rooms: { hall: HallKind; wave: number }[] = [];
   const notes: StandNote[] = [];
@@ -68,6 +72,9 @@ test('a strong party falls back room by room, in order, and each new room is lai
       assert.ok(retreatAfter(s.run.wave - 1, s.run.hall!), 'the choice comes at an act\'s end');
       assert.ok(fallBack(s));
     }
+    // (SPELLS-RETUNE, docs/notes/spells-retune.md: the waves are tuned for a stand whose Auto casts the king's spells, so this strong party
+    // casts the starting three on its own, as the page's Auto does; without them it no longer reaches the fourth room)
+    if (!s.b.autoSpells) s.b.autoSpells = [...STARTER_SPELLS];
     stepStand(s);
     for (const n of s.notes.splice(0)) {
       notes.push(n);

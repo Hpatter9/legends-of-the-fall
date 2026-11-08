@@ -12,6 +12,7 @@ import { compactXp, levelBadge } from './levelBadge';
 import { portrait } from './render/sheets';
 import { play } from './render/sound';
 import { TOME_ICON } from './tomeArt';
+import { menuFoot, ornateMenu } from './ornateMenu';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -47,13 +48,15 @@ export function tomeControl(m: Meta, kind: string, after: () => void): HTMLEleme
 
 /** The tome sheet over the page. `after` runs when it is closed (the page redraws with the new level). */
 export function openTomeSheet(m: Meta, kind: string, after: () => void): void {
-  document.getElementById('tomeSheet')?.remove();
-  const root = el('div', 'tomeSheet');
-  root.id = 'tomeSheet';
-  root.setAttribute('role', 'dialog');
-  root.setAttribute('aria-label', `Use an XP tome on ${UNITS[kind].name}`);
-  const card = el('div', 'tomeCard');
-  const title = el('h3', '', 'Use an XP tome');
+  const timers: number[] = [];
+  // (a standard ornate menu, INT-386: the hero's row, the tomes and the hint in its body, Close in its footer)
+  const menu = ornateMenu({
+    id: 'tomeSheet', eyebrow: UNITS[kind].name, title: 'Use an XP tome', label: `Use an XP tome on ${UNITS[kind].name}`,
+    onClose: () => {
+      timers.forEach(clearTimeout);
+      after();
+    },
+  });
   // (the hero's row, in the after-fight XP row's shape)
   const row = el('div', 'tomeRow');
   const face = el('div', 'tomeFace');
@@ -78,9 +81,6 @@ export function openTomeSheet(m: Meta, kind: string, after: () => void): void {
   fill.style.width = `${share(xpOf(m, kind))}%`;
   xpWords();
   const buttons = el('div', 'tomeButtons');
-  const close = el('button', 'tomeClose', 'Done');
-  close.type = 'button';
-  const timers: number[] = [];
   const drawButtons = () => {
     buttons.replaceChildren(
       ...TOME_SIZES.map((size) => {
@@ -156,16 +156,9 @@ export function openTomeSheet(m: Meta, kind: string, after: () => void): void {
   };
   drawButtons();
   const hint = el('p', 'tomeHint', 'A tome gives its XP to this hero. Tomes come from chests; a hero at the level cap cannot read one, and XP past the cap is lost.');
-  card.append(title, row, buttons, hint, close);
-  root.append(card);
-  const shut = () => {
-    timers.forEach(clearTimeout);
-    root.remove();
-    after();
-  };
-  close.addEventListener('click', shut);
-  root.addEventListener('click', (e) => {
-    if (e.target === root) shut();
+  menu.body.append(row, buttons, hint);
+  menuFoot(menu, { back: { word: 'close' } });
+  menu.root.addEventListener('click', (e) => {
+    if (e.target === menu.root) menu.close();
   });
-  document.body.append(root);
 }

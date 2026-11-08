@@ -10,8 +10,7 @@
 // A new section goes on the side of the one before: straight on (its foes' side), or either flank, never back over the edge the
 // road came in by, and never on top of an earlier section. Its heroes' edge (its board's v = D - 1 row) lies against that side.
 
-import { boardOk, CLIMB_MAX, D, DEPLOY_ROWS, DIRS, makeBoard, RAMP, standable, TOP, W, tileAt, type Area, type Board, type Tile } from './board';
-import { walkFrom } from './path';
+import { boardOk, canStep, CLIMB_MAX, D, DEPLOY_ROWS, DIRS, FLY_JUMP, makeBoard, RAMP, standable, TOP, W, tileAt, type Area, type Board, type Tile } from './board';
 import { mixSeed, Rng } from './rng';
 import { footDims, turnDir, turnTile, unturnTile, type Rot } from './turn';
 
@@ -335,16 +334,38 @@ export function seam(a: Section, b: Section): { board: Board; minU: number; minV
   return { board: { seed: b.board.seed, area: b.board.area, w, d, tiles }, minU, minV };
 }
 
-/** The world tiles a walker takes from `from` on the old section to `to` on the new, both ends included. A walker that jumps `jump` never climbs a cliff; a path that cannot be found is a straight dash. */
-export function walkAcross(old: Section, next: Section, from: { u: number; v: number }, to: { u: number; v: number }, jump: number): { u: number; v: number }[] {
+/** How high a walker between waves steps up or down at a stride: any hill a fighter could stand on, but never over deep water or
+ *  scenery (that is still flying, `FLY_JUMP`). */
+export const WALK_JUMP = FLY_JUMP - 1;
+
+/** The world tiles a walker takes from `from` on the old section to `to` on the new, both ends included: the fewest tiles, a climb
+ *  costing no more than a level step (the walk between waves is not a fight, and every hero takes it at the same brisk pace). A walker
+ *  that jumps `jump` never climbs higher than that at a stride; a path that cannot be found is a straight dash. */
+export function walkAcross(old: Section, next: Section, from: { u: number; v: number }, to: { u: number; v: number }, jump = WALK_JUMP): { u: number; v: number }[] {
   const { board, minU, minV } = seam(old, next);
   const [fu, fv] = worldOf(old, from.u, from.v);
   const [tu, tv] = worldOf(next, to.u, to.v);
-  const start = { u: fu - minU, v: fv - minV };
-  const w = walkFrom(board, start, jump, new Set());
+  const start = (fv - minV) * board.w + (fu - minU);
   const goal = (tv - minV) * board.w + (tu - minU);
-  if (!Number.isFinite(w.cost[goal])) return [{ u: fu, v: fv }, { u: tu, v: tv }];
+  // (a plain breadth-first walk, the directions always in the same order, so the path is the same every time)
+  const prev = new Array<number>(board.w * board.d).fill(-2);
+  prev[start] = -1;
+  const queue = [start];
+  for (let q = 0; q < queue.length && prev[goal] === -2; q++) {
+    const i = queue[q];
+    const u = i % board.w;
+    const v = Math.floor(i / board.w);
+    for (const [du, dv] of DIRS) {
+      const t = tileAt(board, u + du, v + dv);
+      if (!t) continue;
+      const j = (v + dv) * board.w + u + du;
+      if (prev[j] !== -2 || canStep(board.tiles[i], t, jump) === null) continue;
+      prev[j] = i;
+      queue.push(j);
+    }
+  }
+  if (prev[goal] === -2) return [{ u: fu, v: fv }, { u: tu, v: tv }];
   const path: { u: number; v: number }[] = [];
-  for (let j = goal; j >= 0; j = w.from[j]) path.push({ u: (j % board.w) + minU, v: Math.floor(j / board.w) + minV });
+  for (let j = goal; j >= 0; j = prev[j]) path.push({ u: (j % board.w) + minU, v: Math.floor(j / board.w) + minV });
   return path.reverse();
 }

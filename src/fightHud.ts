@@ -16,19 +16,21 @@ import { keyOf, type Skill } from './sim/abilities';
 import { heroKitOf } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
 import { portrait } from './render/sheets';
+import { heroFace } from './heroFace';
+import { paintedSkillIcon } from './combatSkillArt';
 import { battleSheet } from './render/awakenLook';
 import { GLOW, skillElement, type Element } from './render/fxRules';
-import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type Which } from './fightHudRules';
-import atlasUrl from './art/fx/pack/atlas.png';
-import atlas from './art/fx/pack/atlas.json';
+import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type ChipView, type Which } from './fightHudRules';
 
 export interface FightHudOpts {
   /** Permanent equipment can stay awakened in modes with local combat stats. */
   equipmentStep?: (kind: string) => number;
-  /** The Auto switch was flipped: the page keeps it (`Meta.ultAuto`) and tells the battle. */
+  /** The Auto switch was flipped: the page keeps it (`Meta.ultAuto`, which now covers the spells too: AUTO-CAST) and tells the battle. */
   onAuto: (on: boolean) => void;
   /** Whether the ultimates fire on their own now (the ultimate's sheet says so). */
   autoOn?: () => boolean;
+  /** A hero kind's use points with a skill (by key), for its sheet's level line (`skillLevels.ts`). */
+  useOf?: (kind: string, key: string) => number;
   /** A tap was refused (a locked or unfilled ultimate). */
   onRefused?: (u: Unit) => void;
   /** Any tap on a hero's row (before its ultimate is ordered or refused): the Last Stand pans its camera to the hero. */
@@ -47,27 +49,12 @@ interface Row {
   last: string;
 }
 
-const SHEET = atlas as unknown as Record<string, [number, number, number]>;
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 const elOf = (s: Skill): Element => skillElement(keyOf(s));
-let styled = false;
 
-/** A skill's icon: a frame of its element's strip from the Pixel Effects atlas (the strips its effects play), `px` pixels square. */
+/** The skill's painted motif at the control's requested size. */
 function skillIcon(s: Skill, px: number, heals = false): string {
-  if (!styled) {
-    styled = true;
-    const style = document.createElement('style');
-    // (one copy of the atlas's data URL, shared by every icon)
-    style.textContent = `.fhIcon { background-image: url(${atlasUrl}); }`;
-    document.head.append(style);
-  }
-  const el = elOf(s);
-  const tries = heals ? [`${el}-gather`, `${el}-orb`] : [`${el}-orb`, `${el}-strike`, `${el}-hit`, 'light-orb'];
-  const strip = tries.find((t) => SHEET[t]);
-  if (!strip) return `<i class="fhIcon none" style="width:${px}px;height:${px}px"></i>`;
-  const at = SHEET[strip];
-  const k = px / 32;
-  return `<i class="fhIcon" style="width:${px}px;height:${px}px;background-position:${-(at[0] + 2 * 32) * k}px ${-at[1] * k}px;background-size:${1024 * k}px ${1824 * k}px"></i>`;
+  return paintedSkillIcon(s, px, heals);
 }
 
 export class FightHud {
@@ -94,8 +81,10 @@ export class FightHud {
     this.autoEl = document.createElement('button');
     this.autoEl.type = 'button';
     this.autoEl.className = 'fhAuto';
+    // (AUTO-CAST: one switch for both, the heroes' ultimates and the king's spells; its small line says so)
     this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i>';
-    this.autoEl.title = 'Auto: fire every ultimate the moment it is ready';
+    this.autoEl.title = 'Auto: ultimates + spells. Every ultimate fires when it is ready, and your spells are cast where they are worth it';
+    this.autoEl.setAttribute('aria-label', 'Auto: ultimates + spells');
     this.autoEl.addEventListener('click', (e) => {
       e.stopPropagation();
       const on = !this.autoEl.classList.contains('on');
@@ -110,7 +99,7 @@ export class FightHud {
       const tab = t.closest<HTMLElement>('[data-tab]');
       if (tab && this.open) {
         const w = tab.dataset.tab!;
-        return this.openInfo(this.open.id, w === 'ult' ? 'ult' : (Number(w) as 1 | 2));
+        return this.openInfo(this.open.id, w === 'ult' ? 'ult' : (Number(w) as 1 | 2 | 3));
       }
       if (t === this.sheet || t.closest('.fsClose')) this.closeInfo();
     });
@@ -156,24 +145,26 @@ export class FightHud {
     el.className = `fhRow${(u.grade ?? 1) > 3 ? ' g4' : ''}`;
     el.dataset.unit = String(u.id);
     el.setAttribute('role', 'button');
-    const chip = (n: 1 | 2, s: Skill, heals = false) =>
-      `<span class="fhChip" data-skill="${n}" role="button" tabindex="0" style="--el:${hex(GLOW[elOf(s)])}">${skillIcon(s, this.compact ? 14 : 18, heals)}<span class="fhSk"><b></b><em></em></span><i class="fhCd"></i><i class="fhPay"></i></span>`;
+    const chip = (n: 1 | 2 | 3, s: Skill, heals = false) =>
+      `<span class="fhChip" data-skill="${n}" role="button" tabindex="0" style="--el:${hex(GLOW[elOf(s)])}">${this.compact ? '' : skillIcon(s, 14, heals)}<span class="fhSk"><b></b><em></em></span><i class="fhCd"></i><i class="fhPay"></i></span>`;
     el.innerHTML =
       '<i class="fhPearl"></i><i class="fhSheen"></i>' +
       '<span class="fhPic"><span class="fhPlate" hidden>TAP</span></span>' +
       '<span class="fhName"></span>' +
       `<span class="fhBar hp"><i></i><b></b></span><span class="fhBar res ${hk.pool}"><i></i><b></b></span>` +
-      `<span class="fhChips">${chip(1, hk.s1.skill, hk.s1.heals)}${chip(2, hk.s2.skill, hk.s2.heals)}</span>` +
+      `<span class="fhChips">${chip(1, hk.s1.skill, hk.s1.heals)}${chip(2, hk.s2.skill, hk.s2.heals)}${hk.s3 ? chip(3, hk.s3.skill, hk.s3.heals) : ''}</span>` +
       '<span class="fhCast"></span>';
-    const pic = portrait(battleSheet(u.def, this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0, u.grade ?? 1), 40, u.grade ?? 1);
-    pic.className = 'fhPortrait';
+    const step = this.opts.equipmentStep?.(u.def) ?? u.awaken ?? 0;
+    // (HUD-FACES: the hero's painted face, cut to its face box; the pixel portrait until the painting loads, and for any without one)
+    const pic = heroFace(u.def, step, 72, portrait(battleSheet(u.def, step, u.grade ?? 1), 40, u.grade ?? 1));
+    pic.classList.add('fhPortrait');
     el.querySelector('.fhPic')!.prepend(pic);
     el.querySelector('.fhName')!.textContent = heroName(u.def);
     for (const c of el.querySelectorAll<HTMLElement>('.fhChip')) {
       c.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.press?.fired) return void (this.press = null);
-        this.openInfo(u.id, Number(c.dataset.skill) as 1 | 2);
+        this.openInfo(u.id, Number(c.dataset.skill) as 1 | 2 | 3);
       });
     }
     // (a long press anywhere on the row opens the ultimate's sheet; a tap fires the ultimate, as the hero bar's portrait did)
@@ -231,9 +222,9 @@ export class FightHud {
       if (!u) continue;
       const ult = ultOf(b, u);
       const bars = barNumbers(u);
-      const chips = [chipOf(b, u, 1)!, chipOf(b, u, 2)!];
+      const chips = ([1, 2, 3] as const).map((n) => chipOf(b, u, n)).filter((c): c is ChipView => !!c);
       const lines = chips.map((c) => chipLine(c, this.compact));
-      const state = `${Math.round(ult.meter * 60)}|${bars.hp}|${bars.pool}|${lines.join(',')}|${chips.map((c) => `${c.name}${+c.short}${Math.round(c.cd * 24)}${Math.round(c.pay * 24)}`).join()}|${+ult.ready}${+ult.queued}${+ult.locked}${+u.alive}`;
+      const state = `${Math.round(ult.meter * 60)}|${bars.hp}|${bars.pool}|${lines.join(',')}|${chips.map((c) => `${c.chip}${+c.short}${Math.round(c.cd * 24)}${Math.round(c.pay * 24)}`).join()}|${+ult.ready}${+ult.queued}${+ult.locked}${+u.alive}`;
       if (state === r.last) continue;
       r.last = state;
       const el = r.el;
@@ -258,7 +249,7 @@ export class FightHud {
         ce.classList.toggle('short', c.short);
         ce.classList.toggle('cool', c.open && c.cd > 0);
         ce.classList.toggle('revive', c.revive);
-        ce.querySelector('b')!.textContent = c.name;
+        ce.querySelector('b')!.textContent = c.chip;
         ce.querySelector('em')!.textContent = lines[i];
         ce.title = `${c.name}: ${c.open ? `${c.cost} ${c.tag}` : lines[i]} (tap for more)`;
       });
@@ -275,18 +266,19 @@ export class FightHud {
     const b = this.b;
     const u = b?.units.find((x) => x.id === id);
     if (!b || !u) return;
-    const v = sheetOf(b, u, which, this.opts.autoOn?.() ?? false);
+    const use = this.opts.useOf;
+    const v = sheetOf(b, u, which, this.opts.autoOn?.() ?? false, use ? (key) => use(u.def, key) : undefined);
     if (!v) return;
     const hk = heroKitOf(u)!;
-    const heals = which === 1 ? hk.s1.heals : which === 2 ? hk.s2.heals : false;
+    const heals = which === 'ult' ? false : hk.slots[which - 1]?.heals;
     const el = elOf(v.skill);
     const tab = (w: Which, label: string) => `<button type="button" data-tab="${w}" class="${w === which ? 'on' : ''}"${w === which ? ' aria-current="true"' : ''}>${label}</button>`;
     const card = document.createElement('div');
     card.className = 'fsCard';
     card.style.setProperty('--el', hex(GLOW[el]));
     card.innerHTML =
-      `<div class="fsHead">${skillIcon(v.skill, 32, heals)}<div><b></b><small></small></div><button type="button" class="fsClose" aria-label="Close">×</button></div>` +
-      `<div class="fsTabs">${tab(1, 'Skill 1')}${tab(2, 'Skill 2')}${tab('ult', 'Ultimate')}</div>` +
+      `<div class="fsHead">${skillIcon(v.skill, 32, heals)}<div><b></b><small></small></div><button type="button" class="fsClose" aria-label="Close">Close</button></div>` +
+      `<div class="fsTabs">${tab(1, 'Skill 1')}${tab(2, 'Skill 2')}${hk.s3 ? tab(3, 'Skill 3') : ''}${tab('ult', 'Ultimate')}</div>` +
       '<p></p><dl></dl><ul class="fsTiers"></ul><div class="fsHeld">Fight paused · tap outside to resume</div>';
     card.querySelector('.fsHead b')!.textContent = v.name;
     card.querySelector('.fsHead small')!.textContent = `${heroName(u.def)} · ${v.label} · ${el}`;
@@ -354,7 +346,7 @@ export class FightHud {
     const hk = u && heroKitOf(u);
     if (!u || !hk) return;
     this.keep = true;
-    const s = which === 1 ? hk.s1.skill : which === 2 ? hk.s2.skill : undefined;
+    const s = which === 'ult' ? undefined : hk.slots[which - 1]?.skill;
     this.cast(u, which, s ? keyOf(s) : '');
     this.keep = false;
   }
@@ -372,7 +364,7 @@ export class FightHud {
   private cast(u: Unit, which: Which, key: string): void {
     const hk = heroKitOf(u)!;
     const ult = ultOf(this.b!, u).skill;
-    const s = which === 'ult' ? ult : which === 1 ? hk.s1.skill : hk.s2.revive && keyOf(hk.s2.revive.skill) === key ? hk.s2.revive.skill : hk.s2.skill;
+    const s = which === 'ult' ? ult : which === 2 && hk.s2.revive && keyOf(hk.s2.revive.skill) === key ? hk.s2.revive.skill : hk.slots[which - 1]?.skill;
     const r = this.rows.find((x) => x.id === u.id);
     if (!s || !r) return;
     const colour = hex(GLOW[elOf(s)]);

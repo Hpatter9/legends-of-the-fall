@@ -3,7 +3,8 @@
 // locked, available, learned or ruled out (the other of its pair was chosen). A tap on a tile opens a box over the page with what
 // it does, what it costs, and Learn (spend the point) or Back; the bar below has the shard exchange and the Respec (which asks for a
 // second tap). Reads and changes the meta only through `talents.ts`; the icons are the talent glyphs (`talentArt.ts`: 32px, drawn
-// at 2x, never smoothed), one for each kind of effect (`sim/talentGlyph.ts`).
+// at 2x, never smoothed), one for each kind of effect (`sim/talentGlyph.ts`). Over the tree, "Auto" (TALENT-AUTO) shows the nodes
+// `sim/talentAuto.ts` would learn for the free points, in order, in the same box, and learns them on Confirm.
 
 import { saveMeta, type Meta } from './sim/meta';
 import { UNITS } from './sim/units';
@@ -18,6 +19,8 @@ import { warmIcon } from './menuArt';
 // (the talent pictures are decoded as the page loads, so a tree redrawn after a pick shows no empty frame)
 for (const u of Object.values(TALENT_ICONS)) warmIcon(u);
 import { glyphOf } from './sim/talentGlyph';
+import { autoPlan, planCost } from './sim/talentAuto';
+import { menuFoot, menuNote, menuWell, ornateMenu } from './ornateMenu';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -59,8 +62,27 @@ export function nodeTile(n: TalentNode, state: NodeState): HTMLButtonElement {
   return tile;
 }
 
-/** The panel for a hero kind. `changed` is told after anything is learned, bought or respecced. */
-export function drawTalents(meta: Meta, kind: string, changed: () => void = () => {}): HTMLElement {
+/** TALENT-AUTO's list of nodes, in the order they would be learned: each one's picture, name, row and cost. */
+export function planList(kind: string, ids: readonly string[]): HTMLElement {
+  const list = el('ol', 'tPlan');
+  for (const id of ids) {
+    const n = nodeOf(kind, id);
+    if (!n) continue;
+    const li = el('li');
+    const pic = el('img');
+    pic.alt = '';
+    pic.draggable = false;
+    pic.decoding = 'sync';
+    pic.src = TALENT_ICONS[glyphOf(n)];
+    li.append(pic, el('b', '', n.name), el('small', '', `Tier ${n.tier} · ${costOf(n)} pt`));
+    li.title = n.text;
+    list.append(li);
+  }
+  return list;
+}
+
+/** The panel for a hero kind. `changed` is told after anything is learned, bought or respecced; `open` shows the tree at once. */
+export function drawTalents(meta: Meta, kind: string, changed: () => void = () => {}, open = false): HTMLElement {
   const panel = el('div', 'tPanel');
   const tree = TREES[kind];
   const commit = () => {
@@ -89,53 +111,78 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     panel.append(open);
   };
 
-  /** The box over the page for a node: its picture, name, cost, what it does, and Learn or Back. */
+  /** The box over the page for a node: its picture, name, cost, what it does, and Learn or Close. A standard ornate menu (INT-386). */
   const ask = (n: TalentNode) => {
     const state = stateOf(meta, kind, n);
-    const back = el('div', 'tModal');
-    const box = el('div', 'tBox');
-    const close = () => {
-      back.remove();
-      sel = undefined;
-      view();
-    };
-    const title = el('div', 'tTitle');
+    const menu = ornateMenu({
+      id: 'talentAsk', eyebrow: `Tier ${n.tier} · ${costOf(n)} point${costOf(n) > 1 ? 's' : ''}`, title: n.name,
+      onClose: () => {
+        sel = undefined;
+        view();
+      },
+    });
+    const well = menuWell(menu.body);
+    well.classList.add('tAskWell');
     const pic = el('img', 'tBig');
     pic.decoding = 'sync';
     pic.src = TALENT_ICONS[glyphOf(n)];
     pic.alt = '';
     pic.draggable = false;
-    title.append(pic, el('b', '', n.name), el('small', '', `Tier ${n.tier} · ${costOf(n)} point${costOf(n) > 1 ? 's' : ''}`));
-    box.append(title, el('p', '', n.text));
+    well.append(pic, el('p', '', n.text));
     if (n.tier === 2 || n.tier === 4) {
       const skill = KITS[kind]?.skill;
-      if (skill) box.append(el('small', 'dim', `Changes ${skill.name}.`));
+      if (skill) menuNote(menu.body, `Changes ${skill.name}.`);
     }
     const free = pointsFree(meta, kind);
-    const row = el('div', 'tBtns');
-    if (state === 'taken') box.append(el('small', 'tGood', 'Learned.'));
-    else if (state === 'available') {
-      box.append(el('small', 'dim', `You have ${free} point${free === 1 ? '' : 's'}.`));
-      const go = button(`Learn (${costOf(n)} point${costOf(n) > 1 ? 's' : ''})`, 'primary');
-      go.addEventListener('click', () => {
-        if (learn(meta, kind, n.id)) popped = n.id;
-        back.remove();
-        sel = undefined;
-        commit();
-        view();
-      });
-      row.append(go);
-    } else box.append(el('small', 'tBad', whyNot(meta, kind, n.id) ?? ''));
-    const no = button('Back');
-    no.addEventListener('click', close);
-    row.append(no);
-    box.append(row);
-    back.append(box);
-    // (a tap outside the box is Back too)
-    back.addEventListener('click', (e) => {
-      if (e.target === back) close();
+    if (state === 'taken') menuNote(menu.body, 'Learned.').classList.add('tGood');
+    else if (state === 'available') menuNote(menu.body, `You have ${free} point${free === 1 ? '' : 's'}.`);
+    else menuNote(menu.body, whyNot(meta, kind, n.id) ?? '').classList.add('tBad');
+    menuFoot(menu, {
+      back: { word: 'close' },
+      primary: state === 'available' ? {
+        label: `Learn (${costOf(n)} point${costOf(n) > 1 ? 's' : ''})`,
+        onClick: () => {
+          if (learn(meta, kind, n.id)) popped = n.id;
+          commit();
+          menu.close();
+        },
+      } : undefined,
     });
-    document.body.append(back);
+    // (a tap outside the box is Close too)
+    menu.root.addEventListener('click', (e) => {
+      if (e.target === menu.root) menu.close();
+    });
+  };
+
+  /** TALENT-AUTO: the box over the page with what Auto would learn, in order, and Confirm (learn them, as a tap on each would) or Cancel.
+   *  A standard ornate menu (INT-386). */
+  const autoAsk = (plan: string[]) => {
+    const free = pointsFree(meta, kind);
+    const cost = planCost(kind, plan);
+    const menu = ornateMenu({ id: 'talentAuto', eyebrow: 'Auto-spend', title: UNITS[kind].name });
+    menuNote(menu.body, `Learns ${plan.length} talent${plan.length === 1 ? '' : 's'} for ${cost} of your ${free} point${free === 1 ? '' : 's'}, chosen to suit the hero and taken down the tree, in this order:`);
+    menuWell(menu.body).append(planList(kind, plan));
+    if (free > cost) menuNote(menu.body, `${free - cost} point${free - cost === 1 ? '' : 's'} kept for the next row.`);
+    const { primary } = menuFoot(menu, {
+      back: { word: 'Cancel' },
+      primary: {
+        label: 'Confirm',
+        onClick: () => {
+          for (const id of plan) {
+            if (!learn(meta, kind, id)) break;
+            popped = id;
+          }
+          menu.close();
+          sel = undefined;
+          commit();
+          view();
+        },
+      },
+    });
+    menu.root.addEventListener('click', (e) => {
+      if (e.target === menu.root) menu.close();
+    });
+    primary!.focus();
   };
 
   const view = () => {
@@ -144,6 +191,16 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     const head = el('div', 'tHead');
     head.append(el('h4', '', `${UNITS[kind].name} · Talents`), el('b', 'tPoints', `${free} / ${pointsEarned(meta, kind)}`));
     panel.append(head, el('small', 'tSub', 'Points free of points earned. Learn two of the first row to open the second, and one of a row to open the next. The last four rows open at levels 40, 60, 80 and 100.'));
+    // (TALENT-AUTO: only when there is something the free points can learn now)
+    const plan = autoPlan(meta, kind);
+    if (plan.length) {
+      const auto = button(`Auto: spend ${planCost(kind, plan)} point${planCost(kind, plan) === 1 ? '' : 's'}`, 'primary tAuto');
+      auto.addEventListener('click', () => {
+        confirming = false;
+        autoAsk(plan);
+      });
+      panel.append(auto);
+    }
 
     // the tree: lines under the tiles
     const box = el('div', 'tTree');
@@ -218,7 +275,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     });
     bar.append(buy, re);
     panel.append(bar, el('small', 'tSub', `${shardsToSpend(meta, kind)} spare shard${shardsToSpend(meta, kind) === 1 ? '' : 's'} · ${bought} of ${MAX_SHARD_POINTS} shard points bought. Spending shards never lowers a rank. You have ${meta.crowns} crowns.`));
-    const back = button('Back');
+    const back = button('‹ Back');
     back.addEventListener('click', () => {
       confirming = false;
       overview();
@@ -226,6 +283,8 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     panel.append(back);
   };
 
-  overview();
+  // (TALENT-ARROWS: the Upgrades list's "Spend" opens the tree itself)
+  if (open) view();
+  else overview();
   return panel;
 }

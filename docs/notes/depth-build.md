@@ -1,0 +1,304 @@
+# The depth build (DEPTH-BUILD)
+
+The build of the approved depth design (`depth-design.md`, all eighteen recommended answers). It goes in the design's order, in batches,
+each with its tests. This note says what each batch built, what it measured and what is left.
+
+## Batch 1: the castle's rooms
+
+- **Rooms** (`src/sim/rooms.ts`): seventeen rooms, each `{ id, building, level, name, line, icon }`, at the fixed levels of the design's
+  table. `roomOpen(castle, id)` is the only question the rest of the game asks. No room does anything yet; each is wired in its own batch.
+- **Three new buildings** (`ROOM_BUILDINGS` in `castle.ts`): the Smithy (3 levels: 150, 400, 900 crowns), the Watchtower (3: 120, 350, 800)
+  and the Hall of Legends (4: 600, 1200, 2000, 3000). They give no number of their own, only rooms. Their build times are the usual table.
+- **The Chapel is levelled** (3 levels: 200, 450, 1000). Level 1 is the old purchase and takes as long as before; levels 2 and 3 take one
+  step longer than a building's (20 minutes, 1 hour). The level lives in `castle.chapel`; `Meta.chapel` is kept as the flag the spellbook
+  reads, set whenever the level is 1 or more.
+- **Saves:** the new levels are optional keys of `Castle`. `readCastle` keeps them only when built, so a castle from before reads with
+  exactly its old keys (and the tools that loop over a castle's keys see what they did). `loadMeta` reads `chapel: true` as Chapel level 1.
+  `readWorks` accepts the new sites. `startSite` raises any site; `siteLevel`, `siteNextCost`, `siteTop`, `siteName` answer for any site.
+- **The page:** the castle page's chamber grid gains the three buildings' cards (pictures from the isometric kits: the workshop, the
+  watchtower, the longhouse, until their own are made), and every card with rooms gets a **Rooms** strip (names only in the grid; each
+  room's line on the building's own card). A raised level's popup names the rooms it opened ("The Smithy's Field Anvil is open").
+  The castle page no longer draws the courtyard plots (it is the throne room and its cards), so the design's "new plots" batch is these cards.
+- Tests: `test/rooms.test.ts`. Shots: `node tools/depth/shots.mjs castle` and `card-smithy` (`docs/samples/depth-*`).
+
+## Batch 2: bosses you learn
+
+- **Weaknesses** (`src/sim/weakness.ts`): all 25 bosses with signature attacks have one (Q7.3), made of four rule shapes:
+  - `breakWindup` (Orc Chieftain, Orc Warlord, Minotaur Champion, Oni King, Calamity guardian 4): a stun or freeze laid while its great
+    attack is marked breaks it: the attack is lost and the boss is dazed 2 s. (Noted as the windup begins: `BossWarning.stun0`.)
+  - `cracks` (Bone Captain, Lich King, Shaman King and guardian 3 to devout heroes; the Grove Spearlord to arcane; the Nine-Tailed Fox to
+    wild; Karnok to eight martial blows): so many blows from heroes of a calling crack its guard; it takes 15 to 25% more harm after.
+  - `shelter` (behind: Alpha Werewolf, Gorgon Queen; water: Devil Leader, Demon Lord, guardian 1; high ground, two steps up: Boar King;
+    tall grass: Wood Raider): heroes standing there are untouched by its great attacks.
+  - `sapped` (burn: Thorn Warden, Sapphire Colossus, guardian 2; chill: Horned Ogre, Forge Titan, guardian 5): while it suffers the
+    ailment its great attacks land at half.
+  - It is always in the rules (Q7.1). A use is noted in `Battle.exploited` and a `weakness` event, which the page shows as a gold
+    "Weakness!" over the boss (one every 1.5 s at most). `WEAK.on` is the switch for tools and tests. No stream is drawn from.
+- **Learning:** `Meta.weak?: Record<boss, { clues, marks, escorts? }>` (optional; `readWeak` cleans it). `noteWeakness` (from `settleRun`,
+  beside `noteFoes`; not for a quest's stand-in): meeting the boss writes clue 1, 50 of its escorts felled (foes that fell on a board where
+  it stood) clue 2, and each loss to it (lost with it standing) one more, up to 3. The Library's **Archive** writes any clue found in full.
+- **Marks:** a win with the weakness used earns its Hunter's mark for the run's tier (0 Normal to 4 Mythic; other modes count as Normal),
+  once; the first mark of a tier pays the trophy drop's crowns (`MARK_CROWNS`: 40, 60, 90, 130, 180, until the economy design's table
+  lands); all five give its trophy (the recap line says so). Marks are not army stars (Q7.2), so the army pace does not move by them.
+- **The page:** the codex's boss page gains a **Weakness** block (each clue written or a dark bar saying how to learn more, and the five
+  marks as badges); the boss's entrance card shows "Known weakness: ..." once the full rule is known; a clue or a mark found comes as a toast.
+- Tests: `test/weakness.test.ts`. Shot: `node tools/depth/shots.mjs codex-boss`.
+
+### Batch 2 measure (the bosses' weaknesses, the bot that does not seek them)
+
+`node tools/army-pace/run.mjs cell orcs:1 undead:8 beasts:15 wildwood:22 labyrinth:35 ogres:45 infernal:58 yokai:65 golems:74`, with
+`WEAK=0` (new switch) and without; mean tries to clear each army's Normal at its recommended level, 12 saves:
+
+| Army @ level | Without | With |
+|---|---|---|
+| Orc Warband @ 1 | 2.0 | 2.0 |
+| Undead Legion @ 8 | 3.3 | 2.9 |
+| Beast Packs @ 15 | 1.6 | 1.6 |
+| The Wildwood @ 22 | 1.0 | 1.0 |
+| The Labyrinth @ 35 | 2.3 | 2.3 |
+| Ogre Clans @ 45 | 2.3 | 2.3 |
+| Infernal Host @ 58 | 10.8 | 10.8 |
+| Yokai Night Parade @ 65 | 21.5 | 21.1 |
+| Golem Forge @ 74 | 9.4 | 9.8 |
+
+The Undead Legion moves most: the recruits' party has two devout heroes (Paladin, Cleric), so the Lich King's and Bone Captain's guards
+crack in most fights. 0.4 tries is inside the bar (no army's mean tries falls by more than one), so no boss's health was raised.
+
+## Batch 3: march orders
+
+- **Rules** (`src/sim/march.ts`): the five tiles (Plain, Cursed, Scouted, Night, Forced) and `Run.orders?: { mod, curse, ... }` (optional;
+  `readOrders` drops odd values; a run saved before is a plain march).
+  - **Cursed** (opens with the army cleared at the tier): foes +20% health, one heart instead of two (`heartsLost` in `retriesLeft`), and a
+    curse drawn from the run's seed by its own side stream (`0x6d61`): *Withered Hands* (the heroes' healing halved, the stage's `heal`),
+    *Unbroken* (the final boss's second form at 65%) or *Empty Stalls* (no passing cart on the road: the army road has no mid-boss shop
+    of its own, so this is the nearest thing; the drawn card is dropped, the stream untouched). Pays crowns and XP x1.4 and one extra chest
+    on a clear (side stream `0x6d62`), and the tier's **laurel** (`ArmyRecord.cursed`). Stars are earned as usual (Q5.2).
+  - **Scouted** (Watchtower 1, Lookout): the scouts' report after March names the final boss, its two great attacks and its weakness, and
+    the boss's entrance card shows the weakness for that run. Crowns x0.9. (The design's "every wave's foes shown before it" is Far Sight's,
+    not yet built.)
+  - **Night march** (Watchtower 2, Night Watch): `Battle.night`, fixed at the fight's start: a shooter standing below height 2 reaches a
+    tile less (in `strikeDef`, beside fog); foes heal half (`Battle.foeHeal`, the foes' side of `healMult`). A moonlit chest on a clear.
+    The design's "Tricksters and Yokai act 10% faster" is left out for now; no night grade on the battle's look yet (art list).
+  - **Forced march** (army cleared at the tier): waves 4, 6, 11 and 13 skipped (`finish` steps over them; their gold is not paid). XP x0.8.
+  - Pay: `marchCrowns` adds the difference to the wave's pay once (the page, after `settleWave`); `marchPay(...).xp` multiplies the fight's XP.
+- **The page:** `src/marchCard.ts`, a sheet that rises after the party is picked, only once some modifier is open (a new player never sees
+  it; an auto replay marches plain). Tiles in two columns (three from 400 px), locked ones with their lock line, the cursed tile names the
+  run's curse. In the run, a badge beside the hearts (a cursed run shows one heart); a tap says the orders.
+- Tests: `test/march.test.ts`. Shots: `node tools/depth/shots.mjs march`, `march-report`.
+
+## Batch 4: the Chapel's and the Library's rooms
+
+- **Vigil** (Chapel 2; `src/sim/chapelRooms.ts`): chosen on the march card (a second row of three tiles, Shielded by default; the card
+  now also comes up when only the Vigil is open) and kept in `Run.orders.vigil`. When a heart burns the page calls `applyVigil` after
+  `reviveParty`: Shielded (a shield of 15% of health), Swift (hasted 4 s) or Cleansed (every ailment gone).
+- **Last Rites** (Chapel 3): an army run that has not spent it starts each fight with `Battle.rites` (the stage's `rites`). The first
+  hero to fall is marked (`ritesFall`, from `hurt`) and rises at 15% of its health 10 s later (`tickRites`); `noteFight` keeps
+  `Run.ritesUsed`, so it comes once a run. If the whole party falls inside those 10 s, the wave is lost as before.
+  - **Measured** (`CHAPEL=3`, new switch in `tools/army-pace`; mean tries at each army's recommended level, 12 saves): at the design's
+    numbers (a quarter of health after 5 s) the Yokai fell from 20.9 to 17.7 tries and the Golem Forge from 7.7 to 6.2, past the bar of
+    one. Softened to 15% after 10 s: Yokai 20.9 → 20.9, Golem Forge 7.7 → 6.8, Infernal Host 11.8 → 10.7, the rest within a few tenths.
+    (`RITES_HP` / `RITES_MS` try other numbers.)
+- **Reading Room** (Library 2): `queueStudy` / `unqueueStudy` and `Meta.studyNext` (optional): a student queues its next book (the copy
+  leaves the bag at once); `settleStudy` starts it, with any kept progress, when the first is learnt. The book page's reader gains
+  "Queue next" and the queued row.
+- **Scriptorium** (Library 5): `crossOk`: one book of another calling a hero (never a lost technique), which `slotFor` teaches at
+  `CROSS_TUNE` (0.75) of its strength. The reader marks such a book.
+- **Left for later:** the Smithy's three rooms wait for the gear build (`claude/gear-build`), which is changing wear and the slots now;
+  the Mage Tower's Spell Lectern needs a mid-run spell swap the page does not have yet.
+- Tests: `test/chapel-rooms.test.ts`, `test/library-rooms.test.ts`.
+
+## Batch 5: hero bonds and rivalries
+
+- **Rules** (`src/sim/bonds.ts`): 40 kindred pairs (the eight duo combos and 32 written from the heroes' stories) and 15 rival pairs.
+  `Meta.bonds?` (points by pair key, the two kinds in alphabetical order), `Meta.bondSettled?`, `Meta.bondScenes?` (all optional).
+  `noteBonds` (from `settleRun`, army runs only): a won wave gives every pair placed together a point. Levels at 10 / 40 / 120 / 300 / 600;
+  a pair that is not kindred stops at 2 (Comrades). Rivals who win 10 waves together settle into a kindred pair at level 1.
+- **In the fight:** the run keeps a snapshot as it starts (`Run.bonds`: each pair's level, -1 for rivals; the page takes it in
+  `startRun`), the stage carries it, and `startBonds` fixes the placed pairs as the fight starts. `tickBonds` sets each hero's
+  `bondAtk` / `bondCd` for where it stands (two tiles, the same walking distance the rest of the fight uses): Comrades +3% attack,
+  Shieldmates +6% and skills 5% quicker (`cdOf`), rivals' skills 10% slower. Sworn (3+): once a wave, a blow that would fell one has 20%
+  of it taken on the partner's guard, never felling the partner (`bondCover`, in `hurt`). A rival who sees the other fall fights 10% harder
+  for the rest of the wave (`bondFury`). The formations design adds no adjacency rule of its own, so there is one distance and one drawing.
+- **The page:** the hero sheet's **Bonds** block (three strongest partners, rivals marked, "All bonds" for the rest); a **Bonds** chip at
+  the end of the deploy board's trait strip, a tap for each pair's words; a level risen or a rivalry settled comes as a toast after the
+  wave. The gold thread and red spark on the board itself, the tavern seating, the Sparring Yard and the scenes are still to come.
+- Tests: `test/bonds.test.ts`. Shots: `node tools/depth/shots.mjs bonds-sheet`, `bonds-deploy`.
+- **Scenes, batch 1** (`src/sim/bondScenes.ts`): the first ten kindred pairs' level-1 scenes (the eight duo pairs, Knight and Paladin,
+  Archer and Ranger), drafted for the owner to read: one backdrop, the two walk on, four or five lines, a push in for the last word. A new
+  moment kind (`{ kind: 'bond', pair, level }`, its key carries the level), the family "Bonds between heroes" in the Scenes list. The
+  page plays one due scene when the camp or the castle opens (`HomeHooks.onOpened`). Levels 3 and 5, the rest of the pairs and the
+  settling scenes follow in batches of ten. Shot: `node tools/depth/shots.mjs bond-scene`.
+
+## Batch 6: hero legacy
+
+- **Rules** (`src/sim/legacy.ts`; the callings from `READS`, `legacyData.ts`): a hero of lasting level 60 or more retires to the Hall of
+  Legends (`retire`): one mentor a calling and one seat a Hall level (`whyNotRetire` says what is missing). It leaves the party (a hero
+  not in it takes its place when there is one), its worn gear goes back to the stash (`Meta.equipped[kind]` dropped). `recall` frees the
+  seat and shuts it for seven days (`Meta.recalled`). `Meta.mentors?` and `Meta.recalled?` are optional (`readMentors`).
+- **What a mentor gives** every other hero of its calling: +50% fight XP while the apprentice is below half the mentor's level
+  (`apprenticeXp`, `mentoredXp` on the page's lasting XP), and its **legacy perk** (`PERKS`, one a hero, 45): a shield at the start of each
+  wave (4 / 6 / 8%), attack (2 / 3 / 4%) or health (3 / 4.5 / 6%) by the mentor's band (60, 80, 100); a bonded partner of the mentor
+  (bond level 3 or more, so a kindred pair) has it at double strength (Q8.3). Perks are fixed into the run as it starts (`Run.legacy`,
+  `legacySnapshot`), laid on the hero's boost (`legacyBoost`, the page and the bot alike), in the armies only.
+- **Dropped:** the taught talent row (the director's call). The farewell scenes come with the scene batches.
+- **The page:** the hero sheet's legacy block (an apprentice's "Mentored by ..." line; from level 60 the perk it would give, how many
+  heroes it would reach and Retire, with a confirm tap); the party picker marks a mentor "In the Hall" and will not take it; the Hall of
+  Legends' card shows its four plinths (mentor, level, perk, Recall with a confirm tap, or what an empty seat needs).
+- Tests: `test/legacy.test.ts`. Shots: `node tools/depth/shots.mjs retire`, `hall`.
+
+### Bonds measured (and changed)
+
+`BONDS=n` (new switch in `tools/army-pace`) gives the recruits' party (Knight, Paladin, Archer, Warlock, Cleric) its kindred pairs (Knight
+and Paladin, Paladin and Cleric) at level n and every other pair Comrades at most. Mean tries at the recommended level, after the merge of
+0.340.0 (seven gear slots); Golem Forge over 24 saves, the others 12:
+
+| Army | No bonds | Level 1 (no power) | Level 2 | Level 4 as designed | Level 4 now |
+|---|---|---|---|---|---|
+| Infernal Host @ 58 | 11.8 | 11.8 | 5.5 | 6.6 | 6.6 |
+| Yokai Night Parade @ 65 | 20.9 | | 20.8 | 17.3 | 18.3 |
+| Golem Forge @ 74 | 6.3 | | 5.9 | 4.2 | 5.1 |
+
+- Changed: a hero takes its **best** bond only (they stacked across all four partners before); Shieldmates is +4.5% attack and skills 3%
+  quicker (was +6% and 5%); the **cover is off** (`BOND.COVER = 0`), as the design says goes first; Sworn is a scene's level now.
+- **Open (for the owner):** the Infernal Host's cell is a cliff: a party-wide +3% attack (Comrades, which any pair reaches at 40 wins)
+  halves its tries, so no attack bonus at all passes the "within one try" bar there, while the Yokai and Golems sit near it. Level 1
+  (threads, no power) leaves every fight exactly as it was. The choices are to keep these small numbers, cut the attack to the kindred pairs
+  only, or make bonds story only (Q4.1's other answer).
+
+### The director's three calls (the owner told the director to go with the recommendations)
+
+1. **Bonds never hold back the Infernal bar.** Bond power is for the two of the pair only, with no party-wide attack: **Comrades** (any pair)
+   now guards rather than strikes, blows on either landing 3% lighter while the other is within two tiles (`BOND.GUARD2`, `Unit.bondGuard`,
+   in `hurt`); **Shieldmates** (kindred only) add +3% attack and skills 2% quicker for the two of them. Measured (`BONDS=n`, mean tries):
+   Infernal Host @ 58: 11.8 without bonds, 13.7 at level 2, 13.0 at level 4 (inside the bar; the rise is the cell's noise). Yokai and Golem
+   Forge at level 4: 20.9 → 19.8 and 6.3 → 5.4 (Golems over 24 saves), about one try each.
+2. **The taught talent row is dropped.** A mentor teaches catch-up XP and its perk, nothing else.
+3. **The second Calamity crossroads offers a boon** (or a harder or easier last act), since only Karnok is left by then (below).
+
+## Batch 7: the Calamity's journey
+
+- The Calamity is three regions now (the rift's guardians 1, 3 and 6, `RIFT_BOSSES`), not the design's six maps, so each region is an
+  act and the journey is the same length (Q6.3), Karnok always last (Q6.2). `src/sim/calJourney.ts`:
+  - **The crossroads** after Act I (`crossroadsAfter`, its own side stream `0xc055`): three rifts, each a guardian not yet met, drawn from
+    the four between Gorvak and Karnok; the one taken (`chooseLand`) waits at the end of Act II (`TowerState.journey.route`). The fight's
+    band takes the journey's guardian (`landAt`); its strength stays the act's (`calBossBoost` of the place), so any choice is as hard.
+  - **The last crossroads** after Act II (stream `0xb007`): three of four boons: the Healer's Rift (every hero mended), the Gilded Rift
+    (+80 gold), the Burning Rift (+150 gold, the last act's foes 15% stronger), the Quiet Rift (the last act's foes 10% weaker).
+  - A run that never chooses, and every run saved before, keeps the fixed order fight for fight (a test).
+- **The page** (`towerView.ts`): the crossroads card comes after the cleared region's recap (and again on coming back, it is kept in the
+  run); the map's title reads "Act II of III"; the boss gate and the guardian's entrance scene follow the journey's guardian (the scene was
+  keyed by the act before, so Act II played Thorn Warden's scene before Malphas; it now plays the guardian's own).
+- **Not built yet:** oaths, scars, travellers, provisions and the act scenes (the design's 6.3 to 6.5), and the greedy bot's choices for the
+  Calamity measure (the bot takes no crossroads, so its numbers are the fixed order's).
+- Tests: `test/cal-journey.test.ts`.
+
+## Batch 8: provisions and the Sparring Yard
+
+- **Provisions** (`calJourney.ts`, `TowerState.journey.provisions`, missing is the start's three): a Calamity campfire's rest eats one
+  (`rest` in `tower.ts`); with none left the party rests hungry at half the healing. Six at most; a shop sells a sack for 25 gold (the
+  shop card's Provisions row); the campfire's Rest says how many are left. The greedy bot rests only while it has provisions.
+  - Measured: `npm run balance -- --no-tables --calamity --attempts 200` with and without (`--no-provisions`, new switch): identical, the
+    guardians felled by 100 / 55 / 5% of runs either way (the bot seldom rests three times before it falls or clears), so they add a choice
+    without moving the pace.
+- **The Sparring Yard** (Barracks 3; `bonds.ts`): `startSparring` / `settleSparring`, `Meta.sparring?` (optional): one pair at a time,
+  eight hours for five bond points (a rivalry counts them towards settling). The Barracks' card shows the yard once its room stands: two
+  pickers and Spar, or the pair sparring and its time left; it settles when the card opens.
+- Tests: `test/cal-journey.test.ts`, `test/bonds.test.ts`.
+
+## Batch 9: oaths and scars
+
+- **Oaths** (`calJourney.ts`, `TowerState.journey.oaths`): about one Calamity campfire in two offers one (`oathOffer`, its own side stream
+  `0x0a7b` by act and spot, never one already sworn). Swearing it takes the fire's turn (instead of resting or training). Three at most; a
+  fourth replaces the oldest (the card says which; the design's "ask which to drop" is left for a later pass). Four oaths:
+  - Iron: heroes +8% health; foes +5% health. Ember: heroes +6% attack; rests heal a quarter less.
+  - Coin: fights pay 30% more gold; foes +6% health. Vigil: rests heal a third more; heroes −4% attack.
+  The heroes' parts are laid on each hero's boost (`journeyBoost`, the page and the bot alike); the foes' in the Calamity's fight spec;
+  the gold in the tower's pay; the rest in `rest`.
+- **Scars:** at a Calamity campfire a hero may take a scar for 60 gold (−10% health for the rest of the run, each scar again;
+  `journey.scars` by roster id), also taking the fire's turn. (The design puts scars on mysteries; the campfire is where the choice
+  already sits, so it went there first.)
+- The campfire card lists the oaths sworn. Not yet: the pennant banner in the Sanctuary, travellers, act scenes.
+- Measured (`CAL_OATHS=1`, new switch: the bot swears every oath offered instead of resting or training; `npm run balance -- --no-tables --calamity --attempts 300`): guardians felled by 100 / 53 / 3% of runs with none, 100 / 53 / 5% with every oath, inside the design's two points.
+- Tests: `test/cal-journey.test.ts`.
+
+## Batch 10: travellers
+
+- **Travellers** (`calJourney.ts`, `journey.met`): the Pilgrim, the Deserter and the Cartographer. One of them (by the run's seed, side
+  stream `0x7a7e`) sits at the first campfire of Act I: help them (40 gold) or wrong them (+40 gold); neither takes the fire's turn. They
+  come back once, at the first campfire of Act II or III: helped, the Pilgrim mends every hero, the Deserter brings 100 gold, the
+  Cartographer two sacks of provisions; wronged, any of them springs a trap (every hero loses 15% of their health).
+- The design's return gifts were a free hire, a map with its fog lifted, or a trap; the hire and the fog need the recruit and fog code to
+  take a gift from outside, so the first pass gives a mend, gold and provisions instead. The bot meets no traveller, so the Calamity's
+  measure is unchanged. Travellers are written and shown on the campfire card; their sprites are on the art list.
+- Not yet: the act scenes.
+- Tests: `test/cal-journey.test.ts`.
+
+## Batch 11: Far Sight and the roads
+
+- **Far Sight** (Watchtower 3; `march.ts`): the card after a won wave names the next wave's foes ("Far Sight · next wave: ..."; past any
+  wave a forced march skips).
+- **The roads:** the armies' battlefields are hand-shaped by their scenarios now (`scenarioForArmy`, every army), so a road cannot pick the
+  layouts the design's routes were to draw from. A road picks the **land** instead: each army has two (`landsOf`: the Orc Warband's War Camp
+  and Highlands, the Undead Legion's Graveyard and Dungeon ...), and with Far Sight the march card offers "By the War Camp" / "By the
+  Highlands" (`routesOf`, `Orders.route`); the run is then fought on that land (`Run.area`, which `chainOf` already honoured). Without a road
+  the seed picks the land as before. The land changes the ground (water, grass, lava ...) and the weather, not the foes.
+- Tests: `test/march.test.ts`. Shot: `node tools/depth/shots.mjs march` (now with the Vigil and the road rows).
+
+## Batch 12: the Spell Lectern
+
+- **Spell Lectern** (Mage Tower 3; `src/sim/lectern.ts`): the march card offers the spells the save knows and has not equipped
+  (`spareChoices`); the one taken is the run's spare (`Orders.spare`). After the mid-boss's wave is won, the Lectern sheet offers to swap it
+  in for one equipped spell (`lecternSwap`, which keeps the loadout's own rules: a school's spell in a school slot or the open slot, any
+  other in the open slot), or to keep the loadout; once a run (`Orders.spareUsed`). The swap changes the save's loadout, as the spellbook
+  does. The design's "within the power budget": the budget went when the schools came, so the slot rules stand in for it. Not in an auto
+  replay.
+- Tests: `test/lectern.test.ts`.
+
+## Batch 13: the Smithy's rooms
+
+- **Field Anvil** (Smithy 1): after the mid-boss's wave is won (after the Lectern, when both are due), a sheet offers to mend every worn
+  piece the run's heroes wear, as one payment at the stall's price (`repairAllCost` / `repairAll`, the Armoury's cut included). No new
+  prices: the gear build's own.
+- **Patchwork** (Smithy 2; `equipStats`): a broken piece keeps `PATCH_SHARE` (half) of its numbers until mended, with no ability, power or
+  set count; without the room a broken piece gives nothing, as before. (A real-gear run's own finds keep the old rule.)
+- **Master's Mark** (Smithy 3): the march card picks one hero of the party (`Orders.marked`) whose lasting gear does not wear this run
+  (`markedHero`, the page's `settleWear` skip).
+- Balance: the army pace tool dresses fresh gear, so none of these moves its numbers; Patchwork only softens a broken piece the player
+  has not mended.
+- Tests: `test/smithy-rooms.test.ts`.
+- The march card, with every room open, is now taller than the phone and scrolls inside its sheet; a later pass could fold the room rows (Vigil, road, spare, mark) behind a 'Camp orders' row.
+
+## Batch 14: scenes
+
+- **Bond scenes, batch 2** (`bondScenes.ts`): ten more kindred pairs' level-1 scenes (Ninja Monk and Yamabushi, Samurai and Samurai
+  Commander, Cleric and Priestess, Druid and Satyr, Druid and Wolf Bard, Werewolf and Wolf Bard, Beastmaster and Minotaur, Gorgon and
+  Minotaur, Kraken and Buccaneer, Buccaneer and Dread Pirate): twenty in all, drafted for the owner to read.
+- **The Calamity's act scenes** (`src/sim/actScenes.ts`): "The Road Forks" (end of Act I) and "The Hollow Heart Calls" (end of Act II),
+  the run's lead hero on the road, a narrator line and two of the hero's; a new moment (`{ kind: 'calAct', map }`), Calamity scenes (they wait
+  for it to open). The page plays each once as its crossroads card opens (`TowerHooks.onActEnd`).
+- `docs/lines/new-lines.json` carries every new scene's words (its test checks them); `scene-fixes.test.ts`'s list of the Calamity's scenes
+  gains the two act scenes.
+- Still to write: bond levels 3 and 5, the other twenty pairs, the settling scenes, the farewell scenes.
+
+## Batch 15: settling scenes, the Calamity's header
+
+- **Rivalries settled** (`bondScenes.ts`, batch 3): ten settling scenes, one each for ten of the fifteen rival pairs. A rival pair reaches
+  bond level 1 only when it settles, so its level-1 scene is its settling scene and plays the next time the camp or the castle opens
+  (a test). Thirty bond scenes in all; every word is in `docs/lines/new-lines.json`.
+- **The Calamity's header** (`dungeonHeader` in `towerView.ts`, the header the Calamity actually uses; batch 7's act line had gone to the
+  old map header): "The Calamity · Act II of III", a chip with the provisions carried, and one pennant (the packs' banner) for each oath
+  sworn, a tap for its words. Not shot: it needs a save part-way through a Calamity.
+- Art: what the copied packs have is used (the banner); the sack, the travellers and coloured pennants are on `depth-art-todo.md`.
+
+## Batch 16: every pair's first scene
+
+- **Bond scenes, batch 4** (`bondScenes.ts`): the last twenty kindred pairs' level-1 scenes and the last five rivalries' settling scenes.
+  Every one of the forty kindred pairs and fifteen rivalries now has its first scene (55 in all; a test checks each pair has one). All
+  words in `docs/lines/new-lines.json`, drafted for the owner to read.
+- Still to write: the kindred pairs' level-3 and level-5 scenes, and the farewell scenes.
+
+## Batch 17: the first Sworn scenes
+
+- **Bond scenes, batch 5:** level 3 ("Sworn") for the first ten kindred pairs (the eight duo pairs, Knight and Paladin, Archer and Ranger),
+  65 bond scenes in all. A level-3 scene is due once the pair is Sworn (a test). The other thirty pairs' level 3 and every pair's level 5
+  follow in batches of ten.

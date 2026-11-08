@@ -3,9 +3,10 @@
 // army, hero or building is a row, not a script. Pure data; it imports only the kit, the fighters' table and the lore
 // (not the armies or the battle, which load this file's way round).
 
-import { say, tell, wide, close, type Scene, type Shot } from './sceneKit';
+import { say, shoot, tell, wide, close, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
 import { ALL_HEROES, UNITS } from './units';
+import { TRIALS } from './eidolonTrials';
 
 /* ------------------------------------------------------------ the first clear of each army */
 
@@ -127,6 +128,8 @@ const clearScene = (c: ArmyClear): Scene => ({
   blurb: c.blurb,
   moment: { kind: 'armyClear', army: c.army },
   family: 'clear',
+  // (REVEAL: the army this clear opens, if the stars allow it)
+  reveal: { kind: 'nextArmy', after: c.army },
   cast: {
     boss: { role: `unit:${c.boss}`, x: 400, facing: 'left', scale: 1.5 },
     escort: { role: `unit:${c.escort}`, x: 480, facing: 'left', hidden: true },
@@ -138,11 +141,13 @@ const clearScene = (c: ArmyClear): Scene => ({
     {
       look: c.area,
       cam: close(['hero', 'boss'], 1),
+      ...shoot('high', 'boss', 'pullOut'),
       fx: ['fadeIn', 'darken'],
       caption: c.cap ?? `${c.name} cleared`,
       acts: [{ who: 'hero', enter: 280, from: 200 }, { who: 'mate', enter: 240, from: 160 }, { who: 'boss', pose: 'hurt' }],
-      lines: [tell(c.setup), say('boss', c.last, 'shout')],
+      lines: [tell(c.setup)],
     },
+    { cam: close('boss', 2), ...shoot('dutch', 'boss', 'drift'), lines: [say('boss', c.last, 'shout')] },
     {
       cam: close(['boss', 'escort'], 1.5),
       acts: [{ who: 'escort', enter: 480, from: 575 }],
@@ -156,6 +161,7 @@ const clearScene = (c: ArmyClear): Scene => ({
     },
     {
       cam: wide(330, 205),
+      ...shoot('high', undefined, 'pullOut', 'dissolve'),
       acts: [{ who: 'boss', pose: 'down' }],
       fx: ['fadeOut'],
       cue: 'boom',
@@ -163,6 +169,75 @@ const clearScene = (c: ArmyClear): Scene => ({
     },
   ],
 });
+
+
+/* ------------------------------------------------------------ an army's first march (CINE-001) */
+
+/** Each army's entrance, the first time it marches on the keep: the narrator over the land, its warlord's arrival seen from the
+ *  ground with a title card, its boast, an underling's aside, and a hero's answer. The voice of the last stands: the villains are
+ *  short of staff and long on grievances. */
+interface ArmyIntro {
+  army: string;
+  title: string;
+  /** The warlord's title card line (its title, as the boss card has it). */
+  epithet: string;
+  setup: string;
+  boast: string;
+  aside: string;
+  answer: string;
+  tail: string;
+}
+
+const INTROS: ArmyIntro[] = [
+  { army: 'orcs', title: 'The Red Tusk Rides', epithet: 'Lord of the Red Tusk', setup: 'Smoke on the horizon. Drums. A great many boots, most of them on the wrong feet.', boast: 'I HAVE BURNED NINE KEEPS! YOURS WILL BE A *ROUND TEN*!', aside: 'It was eight, boss. One was a barn.', answer: 'Then we shall be the one that does not burn.', tail: 'The Orc Warband was on the road. It had brought its own kindling.' },
+  { army: 'undead', title: 'The Frozen Crown', epithet: 'The Frozen Crown', setup: 'The graves along the old road have been opened from the inside. Tidily, at least.', boast: 'THE LIVING ARE A *PASSING PHASE*. I HAVE COME TO PASS THEM.', aside: 'Clack. Clack-clack. (It always agrees.)', answer: 'He is very cold for someone so keen on fire.', tail: 'The Undead Legion marched. It was in no hurry. It never is.' },
+  { army: 'beasts', title: 'The Thundering Herd', epithet: 'King of the Thundering Herd', setup: 'Out on the plains, the grass has been flattened in a line that points at the keep.', boast: 'THE HERD DOES NOT STOP. THE HERD DOES NOT *TURN*. THE HERD...', aside: 'Has stopped for clover again, sire.', answer: 'A very large pig with a very large grudge.', tail: 'The Beast Packs came on at a gallop, with stops for clover.' },
+  { army: 'wildwood', title: 'The Wood Remembers', epithet: 'Spear of the Old Grove', setup: 'The forest has moved closer in the night. The rangers have measured it twice.', boast: 'EVERY AXE YOU EVER SWUNG, THE GROVE HAS *COUNTED*.', aside: 'He keeps a ledger on birch bark. It is very long.', answer: 'I have only ever chopped kindling. Mostly.', tail: 'The Wildwood advanced, one root at a time, holding every grudge.' },
+  { army: 'labyrinth', title: 'The Maze Comes Calling', epithet: 'Champion of the Labyrinth', setup: 'A labyrinth has unfolded across the valley overnight. It has a gift shop.', boast: 'NONE WHO ENTER MY MAZE HAVE *EVER* FOUND THE WAY OUT!', aside: 'Because you keep moving the walls, boss.', answer: 'Then we shall walk straight through them.', tail: 'The Labyrinth marched on the keep. It took the scenic route.' },
+  { army: 'ogres', title: 'The Clans Come Down', epithet: 'The Mountain That Walks', setup: 'The mountain clans have come down from the crags. The crags are relieved.', boast: 'OGRE CLANS CRUSH! OGRE CLANS SMASH! OGRE CLANS... WHAT IS FOR *LUNCH*?', aside: 'Broth, chief. Again.', answer: 'If we hold until noon, they will stop to eat.', tail: 'The Ogre Clans came down the pass, arguing about mutton.' },
+  { army: 'infernal', title: 'Terms and Conditions', epithet: 'Master of the Imp Hordes', setup: 'The sky over the volcano has turned the colour of an unpaid bill.', boast: 'SIGN OVER THE KEEP, AND I SHALL MAKE IT *QUICK*.', aside: 'There is a cooling-off period of six hundred years, sire.', answer: 'We do not sign. We read the small print and then we hit you.', tail: 'The Infernal Host advanced, in triplicate.' },
+  { army: 'yokai', title: 'The Night Parade', epithet: 'Lord of the Night Parade', setup: 'Paper lanterns on the mountain path, a hundred of them, and none of them carried by hands.', boast: 'WHERE THE PARADE PASSES, NOTHING IS *EVER* THE SAME AGAIN.', aside: 'The last village did get very good at lantern-making.', answer: 'Then let it pass round us. We are staying the same.', tail: 'The Yokai Night Parade wound down the mountain, drums and all.' },
+  { army: 'golems', title: 'The Forge Wakes', epithet: 'Master of the Eternal Forge', setup: 'The old forge in the hills has been lit again. Something in it is hammering itself.', boast: 'FORGE. HOT. KEEP. *FLAT*.', aside: 'He means it in the nicest way. He means it literally.', answer: 'I have never been hammered by a building before.', tail: 'The Golem Forge marched, glowing, and every step rang like an anvil.' },
+];
+
+const introScene = (i: ArmyIntro): Scene => {
+  const c = CLEARS.find((x) => x.army === i.army)!;
+  return {
+    id: `intro:${i.army}`,
+    title: i.title,
+    blurb: `${c.name} marches on the keep for the first time.`,
+    moment: { kind: 'armyIntro', army: i.army },
+    family: 'intro',
+    music: 'gorvak',
+    sting: 'sceneBoss',
+    out: 'smash',
+    cast: {
+      boss: { role: `unit:${c.boss}`, x: 400, facing: 'left', hidden: true, scale: 1.5 },
+      escort: { role: `unit:${c.escort}`, x: 470, facing: 'left', hidden: true },
+      hero: { role: 'party:0', x: 250, facing: 'right', hidden: true },
+      mate: { role: 'party:1', x: 212, facing: 'right', hidden: true },
+    },
+    shots: [
+      // (CINE-STORY: one backdrop, the land the army marches from. The two defenders hold the road as the narrator sets the scene; the
+      // escort runs in first, the warlord arrives from below with his title card, and the exchange is one conversation the director cuts
+      // speaker by speaker, ending on the narrator's wide.)
+      {
+        look: c.area,
+        cam: wide(300, 205),
+        ...shoot('wide', undefined, 'pan'),
+        fx: ['fadeIn', 'darken'],
+        cue: 'earthRumble',
+        caption: c.name,
+        acts: [{ who: 'hero', enter: 250, from: 150 }, { who: 'mate', enter: 212, from: 110 }],
+        lines: [tell(i.setup)],
+      },
+      { cam: close('escort'), ...shoot('medium', 'escort', 'track'), acts: [{ who: 'escort', enter: 470, from: 'right' }], hold: 0.6 },
+      { cam: wide(400, 205), ...shoot('low', 'boss', 'pushIn', 'smash'), acts: [{ who: 'boss', enter: 400, from: 560 }], fx: ['shake', 'darken'], cue: 'boom', title: { over: i.epithet, name: UNITS[c.boss]?.name ?? c.boss }, hold: 1.8 },
+      { cam: close(['hero', 'boss', 'escort'], 1), fx: ['darken'], lines: [say('boss', i.boast, 'shout'), say('escort', i.aside), say('hero', i.answer)] },
+      { cam: wide(320, 205), ...shoot('high', undefined, 'pullOut'), fx: ['darken'], lines: [tell(i.tail)] },
+    ],
+  };
+};
 
 /* ------------------------------------------------------------ a hero awakened */
 
@@ -213,6 +288,15 @@ const AWAKE_LINES: Readonly<Record<string, readonly [string, string]>> = {
   sage: ['He contemplated the heavens so long the constellations began taking notes.', 'The cosmos has yielded another footnote! Highly destructive, and cited.'],
   demonSwordsman: ['He drinks what he cleaves, and the fiend bound in the iron drinks him.', 'The blade is howling with glee. Do ignore the ominous reddish vapour.'],
   tyrant: ['He governs by iron decree, shattering the insolent and rallying the ranks.', 'My imperial authority is officially doubled! Kneel with greater enthusiasm!'],
+  vampireLord: ['Vladislav has held his red keep for four centuries, and has not once been late to a feast.', 'The blood runs thicker, and the cloak somehow longer. I approve of both.'],
+  hemomancer: ['Carmilla pours a vintage no cellar has ever stocked, and never spills a drop.', 'The chalice brims over. Do not worry, darling; it is only slightly yours.'],
+  nightstalker: ['Sorin keeps to the rafters of the crypt, and has never once been seen arriving.', 'Wings wider, eyes redder. You may now scream; I shall wait.'],
+  bloodGargoyle: ['Gavril watched a cathedral rise from its first stone, and has opinions on the mortar.', 'The stone cracks and settles. I feel remarkably, unfashionably heavy.'],
+  dhampir: ['Klara was born between the grave and the daylight, and has chosen her side.', 'Silver on the string, sun on my back. They should have run sooner.'],
+  warDrummer: ['Raiden strikes the great drum before dawn, and the whole keep wakes ready.', 'The drum hums in my bones now. Louder, I think; louder!'],
+  geomancer: ['Tenzin listens to the crags until they tell him where they would like to move.', 'The mountain nods. I shall try not to take it as permission to be smug.'],
+  bellWarden: ['Kavi guards the bronze bell that tolls only for the guilty, and sleeps beside it.', 'It rings in the marrow now. Even the hills have gone quiet to listen.'],
+  falconer: ['Aisling reads the glen by the flight of a single bird, and has never once been lost.', 'Wing and bow as one. Mind your hats; she stoops from a great height.'],
 };
 
 const AWAKE_AREAS: Area[] = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon'];
@@ -223,6 +307,7 @@ const awakenScene = (kind: string, i: number): Scene => ({
   blurb: 'A hero awakens: radiant light, a heightened presence and a dry observation.',
   moment: { kind: 'awaken', hero: kind },
   family: 'awaken',
+  reveal: { kind: 'awaken', hero: kind },
   cast: {
     hero: { role: `unit:${kind}`, x: 285, facing: 'right', hidden: true },
     duchess: { role: 'duchess', x: 215, facing: 'right', hidden: true },
@@ -231,6 +316,8 @@ const awakenScene = (kind: string, i: number): Scene => ({
     {
       look: AWAKE_AREAS[i % AWAKE_AREAS.length],
       cam: close('hero', 1.5),
+      ...shoot('medium', 'hero', 'rack'),
+      rays: true,
       fx: ['fadeIn', 'darken'],
       caption: 'Awakening',
       acts: [{ who: 'hero', enter: 285, from: 215 }],
@@ -238,6 +325,8 @@ const awakenScene = (kind: string, i: number): Scene => ({
     },
     {
       cam: close('hero', 2),
+      ...shoot('low', 'hero', 'pushIn', 'flash'),
+      rays: true,
       fx: ['glow', 'flash'],
       cue: 'boom',
       acts: [{ who: 'hero', look: 1 }, { who: 'hero', pose: 'cast' }],
@@ -247,7 +336,7 @@ const awakenScene = (kind: string, i: number): Scene => ({
       cam: close(['hero', 'duchess'], 1.5),
       fx: ['glow'],
       acts: [{ who: 'hero', look: 1 }, { who: 'duchess', enter: 215, from: 130 }],
-      lines: [tell('{hero} has awakened. The heightened splendour is quite blinding.'), say('duchess', 'Mehh.')],
+      lines: [say('duchess', 'Mehh.'), tell('The light took a long moment to leave {hero}, as if it liked the company.')],
     },
   ],
 });
@@ -349,6 +438,7 @@ const buildScene = (b: Build): Scene => ({
   blurb: b.blurb,
   moment: { kind: 'castle', site: b.site },
   family: 'castle',
+  reveal: { kind: 'building', site: b.site },
   cast: {
     mason: { role: 'unit:peasant', x: 250, facing: 'right', hidden: true },
     sawyer: { role: 'unit:peasant', x: 310, facing: 'left', hidden: true },
@@ -386,6 +476,14 @@ const STANDS: { wave: number; look: Area; title: string; blurb: string; lines: [
   { wave: 50, look: 'shrine', title: 'The Last Stand', blurb: 'Fifty waves round the throne, and the bards are already arguing over the song.', lines: ['Fifty waves round the throne. Out in the land, the bards have begun the song already.', 'They say no guard ever held a throne room this long.', 'They also say we are nine feet tall. Let them.', 'Whatever comes through that door, the Last Keep stands while you do.'] },
 ];
 
+const STAND_TAILS: Record<number, string> = {
+  10: 'Behind them, the last of the outer wall finished falling down.',
+  25: 'Beyond the doors, something began to drum.',
+  50: 'Far off in the land, a bard hit a wrong note and started the verse again.',
+};
+
+// (CINE-STORY: the ruler is on the stage from the second shot, so the guard's talk of him is said with him there; the three talk as one
+// conversation the director cuts speaker by speaker; a narrator button closes each.)
 const standScene = (f: (typeof STANDS)[number]): Scene => ({
   id: `spire:${f.wave}`,
   title: `Wave ${f.wave}: ${f.title}`,
@@ -405,18 +503,16 @@ const standScene = (f: (typeof STANDS)[number]): Scene => ({
       fx: ['fadeIn', 'darken', 'rumble'],
       cue: 'earthRumble',
       caption: `Wave ${f.wave}`,
+      ...shoot('wide', undefined, 'pan'),
       acts: [{ who: 'hero', enter: 290, from: 200 }, { who: 'mate', enter: 250, from: 160 }],
       lines: [tell(f.lines[0])],
     },
     {
-      cam: close(['hero', 'mate'], 1.5),
-      lines: [say('hero', f.lines[1]), say('mate', f.lines[2])],
+      cam: close(['hero', 'mate', 'king'], 1),
+      acts: [{ who: 'king', enter: 195, from: 100, line: 1 }],
+      lines: [say('hero', f.lines[1]), say('mate', f.lines[2]), say('king', f.lines[3])],
     },
-    {
-      cam: close(['king', 'mate'], 1.5),
-      acts: [{ who: 'king', enter: 195, from: 100 }],
-      lines: [say('king', f.lines[3])],
-    },
+    { cam: wide(240, 205), ...shoot('high', undefined, 'pullOut', 'dissolve'), fx: ['darken'], lines: [tell(STAND_TAILS[f.wave] ?? '')] },
   ],
 });
 
@@ -445,6 +541,8 @@ const FORMS: Form[] = [
   { boss: 'calBoss4', area: 'snow', line: 'THE CRAG STRIDES FORWARD! BRACE FOR IMPACT!' },
   { boss: 'calBoss5', area: 'desert', line: 'FEAST UPON THE WRATH OF THE FINAL CINDER!' },
   { boss: 'calBoss6', area: 'volcano', line: 'THERE IS NO HORIZON BEYOND MY STRIDE!' },
+  // (EIDOLON-TRIAL: each Eidolon in its own trial, its words from its trial's data)
+  ...TRIALS.map((t) => ({ boss: t.boss.id, area: t.land, line: t.phase.line })),
 ];
 
 /** The beat before a boss's new form, slowed to half pace, then its words. About three seconds all told; the page holds the fight meanwhile. Once a save for each boss (the owner: "Boss cinematics only need to play once"). */
@@ -459,8 +557,8 @@ const formScene = (f: Form): Scene => ({
   short: true,
   cast: { boss: { role: `unit:${f.boss}`, x: 290, facing: 'left', scale: 1.6 } },
   shots: [
-    { look: f.area, cam: close('boss', 1.5), to: close('boss', 2), acts: [{ who: 'boss', pose: 'hurt' }], fx: ['darken'], cue: 'boom', hold: SLOW_BEAT, slow: 0.5 },
-    { cam: close('boss', 2), acts: [{ who: 'boss', pose: 'cast' }], fx: ['flash', 'glow'], lines: [say('boss', f.line, 'shout')] },
+    { look: f.area, cam: close('boss', 1.5), to: close('boss', 2), ...shoot('low', 'boss', 'snapZoom', 'smash'), acts: [{ who: 'boss', pose: 'hurt' }], fx: ['darken'], cue: 'boom', hold: SLOW_BEAT, slow: 0.5 },
+    { cam: close('boss', 2), ...shoot('dutch', 'boss', 'shake', 'flash'), acts: [{ who: 'boss', pose: 'cast' }], fx: ['flash', 'glow'], lines: [say('boss', f.line, 'shout')] },
   ],
 });
 
@@ -504,6 +602,9 @@ const OATHS: Oath[] = [
   { set: 'dreadCourt', name: 'The Dread Court', area: 'dungeon', cap: 'Dread Court · Oath', blurb: 'The tyrants and denizens of the crypt swear their final, binding court verdict.',
     oaths: ['I swear! The sentence is passed without appeal!', 'I swear! The harvest is long overdue on this field!', 'I swear! Purgatory is shockingly overbooked today!', 'Hrrngh. Sworn upon my spare tibia. Hrrngh.', 'I swore this covenant three dynasties ago. Still applies.'],
     shared: 'The court convenes, the ledgers open, and the sentence falls!' },
+  { set: 'bloodCourt', name: 'The Night Kin', area: 'dungeon', cap: 'Night Kin · Oath', blurb: 'The five of the blood swear their Last Oath beneath a rising blood moon.',
+    oaths: ['I swear upon four centuries of red wine and older grudges.', 'I swear! Do mind the chalice; it spills on its own.', 'I swear from the rafters. You will not see me say it.', 'Sworn in stone. I shall be here at dawn, and long after.', 'I swear with silver on the string. They did say I was half the problem.'],
+    shared: 'One blood, one night, and a moon that answers us!' },
 ];
 
 /** The five, in a line-up: the cast of both versions (the page fills them with the five who cast the move). */
@@ -548,6 +649,7 @@ const oathCut = (o: Oath): Scene => ({
 /* ------------------------------------------------------------ the lot */
 
 export const FAMILY_SCENES: Scene[] = [
+  ...INTROS.map(introScene),
   ...CLEARS.map(clearScene),
   ...ALL_HEROES.map((k, i) => awakenScene(k, i)),
   ...BUILDS.map(buildScene),
@@ -562,6 +664,7 @@ export const OATH_SETS: readonly { set: string; name: string }[] = OATHS;
 
 /** The names of the families, for the Scenes list. */
 export const FAMILY_NAMES: Record<string, string> = {
+  intro: 'The armies on the march',
   clear: 'The armies’ last stands',
   awaken: 'Awakenings',
   earned: 'Heroes earned',
@@ -570,4 +673,5 @@ export const FAMILY_NAMES: Record<string, string> = {
   form: 'Bosses changing form',
   oath: 'The Last Oaths',
   oathcut: 'The Last Oaths, in short',
+  bond: 'Bonds between heroes',
 };

@@ -1,73 +1,58 @@
-# Home and loss fixes, menu flicker
+# UX audit fixes
 
-UX-002, branch `claude/ux-fixes` (from main 0.170.0), owner Claude. Three asks from the owner.
+Fixes for the findings of `docs/notes/ux-audit.md` (branch `claude/ux-audit`), in batches. Findings #2 (the Developer menu) and #8's redesign
+are left out on the owner's word: Developer stays as it is, and the deploy board still starts empty after the War Council.
+"Before" shots are the audit's own, in `docs/samples/ux-audit/` on that branch; "after" shots are in `docs/samples/ux-fixes/`.
 
-## 1. The current army is not named on every launch
+## Batch 1: words, tips and small layouts
 
-What showed on every launch was the Battle page's ribbon over the Battle! button ("Undead Legion · next · Lv 8", or the run's army and level). No intro card, splash or war-table opening plays on launch; the war table's own name plate in the camp scene stays as it was.
+- #23 Words: the achievements say waves ("Win a wave", "Ten Waves", "Twenty Waves", "Thirty Waves"; the ids are unchanged, so saves keep them).
+  The first tip names the real button: "Tap Choose your battle to send your heroes out."
+- #15 A game tip (deploy, fight and so on) waits while the party picker, Settings, a card or a film is over the board (`pageUp` in `tips.ts`).
+- #22 An end card whose own button goes to the place leaves out its "Where:" line.
+- #16 "Open all" sits inside the stash box (it ran 7 px off the left edge) and is 44 px tall.
+- #14 The Upgrades list header counts what "Upgrade all" would take, so the two numbers agree; Awaken uses the game's green primary button.
+- #13 Sell is a small button under a full-width Equip. Epic pieces and the last of a base still ask for a second tap.
+- #12 (part) A Settings sub-page shows only its "‹ Back" (no second Close). The equipment picker's way back is a "‹ Back" at its top,
+  so the sheet's Back is the only one at the foot.
+- #8 (the owner's variant) The empty deploy board shows "Hire to start..." above a lit Hire button (`#hireHint`); Fight! stays dim until a hero is placed.
 
-The ribbon now shows only when the army it names is new to the player: the first time an army becomes the one in front (an unlock, or the one before it cleared), or after a run against a different army. Once named, it stays up for the rest of that visit and is quiet on the next launches. What was last named is kept in localStorage under `lotf-army-shown` (`src/armyShown.ts`, `announceArmy`), and that key is in `SAVE_KEYS` (`src/settings.ts`), so Start over clears it. Blocked storage names the army every visit, as before. No Meta field and no save change.
 
-## 2. "How to come back stronger" after a real defeat
+## Batch 2: the rest of the report (on 0.353.0, the ornate restyle)
 
-When an army or daily run ends with no heart left, the run recap (the screen that already follows a lost run's result) leads with a short card of two to four pointers drawn from the save. Each has a button that closes the recap, goes home as before, then opens the right screen (`Home.goTo`). A heart that revives the party settles nothing, so no recap and no card. Auto-replay shows no recap, and the card is also gated on it. Tower and Calamity summaries are unchanged.
+The owner's calls: #1 one title sequence, then straight into wave 1; #12 one close button everywhere; #13 a confirm on Sell, no undo toast; #2 untouched.
 
-The pointers come from `comebackTips(meta, { army, tier, party })` in `src/sim/comeback.ts` (pure, deterministic, tested in `test/comeback.test.ts`). In order of use, at most one of each:
+- #1 A new save goes from the starter pick straight to wave 1's deploy (the board and the deploy tip, with the hire prompt). The opening is the one
+  title sequence: the Orc Warband's intro film is marked seen for a new save and does not play behind it (the Scenes list still has it). Home is one tap away.
+- #13 Every Sell now asks for a second tap ("Sell for N? Tap again"); before, only Epic pieces and a base's last copy asked.
+- #3 Fight HUD: rows are 46 px with 44 px skill chips and 13 px HP/SP numbers for a party of five or fewer (a party over five keeps its compact two-column rows,
+  where there is no room); the in-row skill-name overlay is gone (the cut-in banner above the rows already names the skill) and the row flashes its edge instead;
+  the spell orbs start at 112 px, below the crest; the AUTO label is 9 px (was 7).
+- #9 A lost wave says "Wave N lost · a heart burns, M hearts (lives) left. The party rises." in 20 px, wrapped. (A full defeat card with the first faller and
+  Retry / Change party was not built: the revive is automatic and the sim does not record who fell first.)
+- #5 Toasts queue (one at a time) in one lane under the top bar (118 px). A road event's card waits for the wave result card to go. An unlock card told in the
+  middle of a run is held and told when the home screen opens. Hero quips are not moved (they were already hidden under a film).
+- #4 Badges: none on the Battle tab or the main Battle button, "fresh" castle news no longer lights the Castle tab, and the Heroes tab shows the count of heroes
+  with an upgrade ready instead of a bare dot.
+- #6, #10 Tap targets and text: the Party link is a 44 px button, army tiers, arrows and Back 44 px, dots have a 44 px hit area, Spells' "To the Castle" 44 px;
+  small labels on the Overlook, Castle and army picker are 11 px or more. The ornate restyle's own tap floor already covered much of the rest.
+- #11 One door per place: the Castle's Tavern/Spells/March shortcuts, the Achievements chip and Reset tips chip are gone (the boss trophy wall button stays: it has no tab).
+- #12 Full pages say "‹ Back" (Settings, Achievements and the other home sub-pages, the hero sheet, Hester's Stall, the army picker, War Council, the equipment
+  picker, talents, skill books, daily, Calamity, Last Stand). Cards and pop-ups keep "Close". A deviation from the report (which said "×" for sheets): kept as words so the
+  one rule is "pages Back, cards Close".
+- #7 Films: the picture band is 1.8 x the width (was 1.4), the top bar thinner, the foot 18 % of the height; subtitles are 15 px and the title name 28 px.
+- #17 Hero Overview leads with power, health, attack and armour; scores, figures and speeds fold under "Details". The Equipment tab shows "Equip best" and a "More" fold.
+- #18 The Spells tab is dimmed with a lock until the Chapel is built; a tap goes to its page, which says why.
+- #20 Hester's Stall with visiting traders (seven or eight tabs) shows two rows of 13 px labels.
+- #21 The Last Stand picker shows the eight as a strip of portraits above the pool, with portraits and a tick on the picked. (Not screenshotted: the picker would not open in my harness.)
 
-| id | When | Button |
-| --- | --- | --- |
-| train | the party's average lasting level is 2+ under what the army is meant for (`meantLevel`: Normal is `Army.level`; Hard to Mythic at least 25, 45, 65, 85 from `difficulty.md`) | Heroes |
-| easier | with *train*: drop a tier, or farm the strongest open army the party is up to (a cleared one first) | Armies (on that card) |
-| rank | a party hero has a rank-up or awakening waiting | Rank up (hero sheet, Progression) |
-| talents | a party hero has unspent talent points and a talent it can learn | Talents (hero sheet, Progression) |
-| gear | `bestFor` would change a party hero's gear from the bag | Gear (hero sheet, Equipment) |
-| chests | unopened chests on the cart | Chests (Battle page) |
-| castle | the castle is open, the builders are free and a building is affordable | Castle |
-| summon | crowns for a summon | Summon |
-| synergy | a trait one hero short of its next tier, with an owned hero on the bench who has it | Party |
-| front | no front-liner in the party (`roleOf`) | Party |
-| ground, again | plain advice to fill to two: tanks in front and shooters on high ground; heroes keep their levels | none |
+Not done: #19 (the ten-card summon grouping), the quips off the HUD and headings, a defeat card with Retry / Change party, #17's three-up headline (it stacks).
 
-The card's text is 12px and its heading 24px, never bold (`.rcAdvice` in `src/pixel.css`).
+## Batch 3
 
-## 3. Menu and camp flicker
-
-Measured with `tools/ux-fixes/flicker-probe.mjs` and `dropouts.py`. For each screen: 2.4 s of composited frames, about 80 ms apart, from a CDP screencast. Also frames while each screen opens, in-screen actions, a tab cycle and an overlay closing. A DOM log records pictures (`img`/`canvas`) replaced, nodes removed, `hidden` toggles and undecoded images. The screens: camp, tavern, roster, dossier (switch hero, Progression, Equipment), party council (and a tap), summoning sanctum, castle, spells, codex (and a tab), settings, achievements, armies (open, swipe, close). Full numbers for all three sizes are in `docs/samples/ux-fixes-flicker.json`. `tools/ux-fixes/evidence.mjs` makes the launch measurement and the slowed-slide stills.
-
-| Where | What vanished or blinked | Fix | Before | After |
-| --- | --- | --- | --- | --- |
-| Switching tabs two or more apart (e.g. Recruit to Battle) | the hidden page in between slid across the view as an empty dark band | pages more than one tab away wait just off screen (`translateX` clamped to ±100%) | dark band mid-slide ([before](../samples/ux-fixes-flicker-slide-before-393x852.png)) | the two pages meet edge to edge ([after](../samples/ux-fixes-flicker-slide-after-393x852.png)) |
-| Launch | the loading screen went before the camp's pictures had loaded: an empty field | the page waits for the camp's art (`campArtReady`, at most 2.5 s) and two frames before removing the loading screen | 3 frames, about 2.9 s, of empty camp (software renderer) | 0 frames |
-| Heroes tab | the tavern never painted under the roster, so leaving the tab slid an empty page past | `Tavern.paintOnce()`: one still picture under the roster | empty canvas while the roster is up | painted (100% of the canvas, within 50 ms) |
-| Every home refresh (each tab switch, claim, build) | the crowns chip's icon, the Battle bar, the chest cart and the three camp plates were rebuilt each time, new pictures and all | the crowns number is written only when it changes; the bar, cart and plates are swapped in only when their markup differs (`swapIn`; the cart is keyed by the stash) | 17 pictures and 76 nodes replaced per switch; tab cycle 120 and 465 | 16 and 69 (the 16 are the castle's, below); tab cycle 114 and 423 |
-| Hero dossier, talents, gear, roster | plain `<img>`s that decode late on a rebuild (talent tiles after a pick, gear icons after an equip, class banners) | `decoding = 'sync'` and warmed as the page loads, like `menuArt.icon` | probe dropouts: Progression tab 28, Equipment tab 22 (393×852) | 2 and 2 (the hero's idle animation) |
-| Steady screens | none found | none | 0 pictures replaced, 0 nodes removed, 0 undecoded on every screen at all three sizes | the same |
-
-The pixel counts are an upper bound: idle animations (the army cards' figures, the dossier portrait, tavern patrons) count as well, and the software renderer sometimes delivers frames out of step. They vary between runs. The DOM counts and the stills are the firmer evidence.
-
-**Castle tab (the other AI's area; reported, not changed).** `CastleScene.update` rebuilds all 14 chamber cards' pictures on every home refresh, even with the castle tab hidden. While the builders work, the builders' clock calls it every second, so the castle tab replaces about 11 pictures a second (56 images, 128 nodes in 5 s). `Home.drawCastle` also rebuilds the castle bar's two chip icons on each refresh. Both would want the same "only when changed" treatment.
-
-**Also seen.** An intermittent page error, "Cannot read properties of undefined (reading 'frame')", appeared in 3 of about 10 full probe runs, on both the old and the new build, so it predates this work. It did not recur with stack capture on. A `.frame` read on an undefined Pixel Effects texture is the likely shape (`castle.ts` `drawVfx`, `partyScene.ts` `effect`), but the source is unconfirmed.
-
-## Files
-
-`src/armyShown.ts` (new), `src/sim/comeback.ts` (new), `src/home.ts`, `src/main.ts`, `src/recapView.ts`, `src/settings.ts` (one key), `src/camp.ts` (`campArtReady`), `src/tavern.ts` (`paintOnce`), `src/menuHeroes.ts`, `src/talentView.ts`, `src/equipView.ts`, `src/pixel.css`; tests `test/comeback.test.ts`, `test/army-shown.test.ts`; tools `tools/ux-fixes/`; screenshots `docs/samples/ux-fixes-*`.
-
-## Validation
-
-- `npm run typecheck`: passed.
-- `npm test -- comeback army-shown settings no-flicker camp talents equip heart-revive tips party`: 11 files, 85 tests passed.
-- `npm run web`: passed.
-- `node tools/ux-fixes/shots.mjs <port>` at 393×852, 360×780 and 412×915, all passed with no page errors:
-  - the ribbon shows on the first launch and not on the reopen;
-  - a fall with a heart left revives, with no result, recap or card;
-  - a real defeat reaches the recap card with 2–4 pointers and no sideways overflow;
-  - Heroes goes to the Heroes tab.
-  - Screenshots: `ux-fixes-home-first-*`, `ux-fixes-home-reopen-*`, `ux-fixes-loss-advice-*` and `ux-fixes-loss-to-heroes-*`.
-- The flicker probe ran before and after at all three sizes; the summary is in the table above and the full numbers are in the JSON.
-
-## Open
-
-- The owner may also want the war table's name plate in the camp scene quietened, since it still names the army on every visit. It was left alone as part of the scene.
-- Castle tab rebuilds, as reported above.
-- The intermittent `frame` page error.
+- #19 The ten-card summon: a new hero is a large card (two to a row, 120 px art) at the top; the repeats follow as small cards in the grid below; when two or
+  more repeats turned into crowns, one line under the cards says "N × already at top rank → M crowns" and their cards carry no text of their own.
+  Bar labels are 11 px.
+- Quips (`quipView.ts`): a bubble that would cover the top bar, the fight's hero rows or the starter pick's heading is moved to the nearest clear spot
+  (below the bar, or above the rows). Not screenshotted: a bubble is random and short-lived.
+- The Last Stand picker's screenshot (`after-laststand-393.png`): the strip of eight portraits, the pool with portraits and ticks.

@@ -2,9 +2,9 @@
 // doorways) with every unlocked hero idling at a spot of their own (tavernSpots.ts); a locked hero's spot stays an empty seat,
 // so the rooms fill as you recruit. The rooms are baked once into one big picture (walls, floors, rugs, doorways) and each frame
 // only blits the part on the screen, then draws the furniture and the heroes near it. The view pans sideways by a drag, with
-// a little momentum, or by a tap on a room's name. Heroes wander through random idles: turn round, sip, hum, nod off, stroll a
-// few steps and back, now and then a flourish. It only draws (Math.random is fine here: nothing that is played depends on it)
-// and runs only while the tab is showing.
+// a little momentum, or by a tap on a room's name. Each hero does one fixed thing at their spot (drinks, plays darts, sings, dozes...:
+// `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`), the same every time. It only draws (Math.random, for Duchess, is fine here:
+// nothing that is played depends on it) and runs only while the tab is showing.
 
 import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -18,7 +18,8 @@ import { goatHalfSheet } from './duchess';
 import { goatSays } from './quips';
 import { showQuip } from './quipView';
 import { chewBob, drawDuchessCosmetic, DUCHESS_COSMETICS, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
-import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
+import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, HESTER, hesterNews, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
+import { todayKey } from './modes';
 import { TrophyWallModal } from './trophyWall';
 import wallUrl from './art/tavern/wall.png';
 import wallHearthUrl from './art/tavern/wall_hearth.png';
@@ -35,6 +36,20 @@ import longtableUrl from './art/tavern/longtable.png';
 import barrelsUrl from './art/tavern/barrels.png';
 import cratesUrl from './art/tavern/crates.png';
 import stageUrl from './art/tavern/stage.png';
+// (CLIFF-ROAM: Hester's corner, cut from the books-and-shop art by tools/cliff-roam/tavern-art.py at three screen pixels a room pixel)
+import hesterStallUrl from './art/tavern/hester-stall.webp';
+import hesterUrl from './art/tavern/hester.webp';
+import traderCaravanUrl from './art/tavern/trader-caravan.webp';
+import traderDealerUrl from './art/tavern/trader-dealer.webp';
+import { BOARD, GWEN } from './questArt';
+import { giverMark } from './questCard';
+import { questsWaiting } from './sim/quests';
+// (TAVERN-RANKUP: the gold chevron over a hero with a rank or an awakening ready, and the quick Upgrades list's button)
+import { markReady } from './sim/upgradesReady';
+import { upMark } from './rankUpList';
+// (TAVERN LIFE: what each hero does at their spot, `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`)
+import { LIFE } from './render/tavernLife';
+import { drawGwenPainted, drawGwenWipe, drawLifeFront, drawPainted, hasPainted, hipsAt, HIP, lifePose, loadLife, seatInFront, sitDrop, sits, type Body, type LifeCtx } from './tavernLifeDraw';
 
 const ART: Record<string, string> = {
   wall: wallUrl,
@@ -52,12 +67,19 @@ const ART: Record<string, string> = {
   barrels: barrelsUrl,
   crates: cratesUrl,
   stage: stageUrl,
+  // (QUESTS: Gwen Tallow behind the bar, and the quest board on the wall: pack placeholders, `questArt.ts`)
+  gwen: GWEN.url,
+  board: BOARD,
+  hesterStall: hesterStallUrl,
+  hester: hesterUrl,
+  caravan: traderCaravanUrl,
+  dealer: traderDealerUrl,
 };
 let art: Record<string, HTMLImageElement> | null = null;
 async function loadArt(): Promise<Record<string, HTMLImageElement>> {
   if (art) return art;
   const got: Record<string, HTMLImageElement> = {};
-  await Promise.all(Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))));
+  await Promise.all([...Object.entries(ART).map(async ([k, url]) => (got[k] = await loadImage(url))), loadLife()]);
   return (art = got);
 }
 
@@ -83,6 +105,44 @@ export const EMOTES: Record<string, { rows: string[]; ink: Record<string, string
   bang: { rows: ['..###..', '..###..', '..###..', '...#...', '.......', '..###..', '..###..'], ink: { '#': '#d02a2a' } },
 };
 export const EMOTE_NAMES = ['mug', 'mug', 'note', 'note', 'zz', 'bang'];
+// (QUESTS: the gold "!" of a quest on offer and the gold tick of one to hand in, over Gwen and the board; never drawn at random)
+EMOTES.quest = { rows: ['..###..', '..###..', '..###..', '..###..', '.......', '..###..', '..###..'], ink: { '#': '#c08a10' } };
+// (CLIFF-ROAM: a gold coin over Hester while the day's stock is new and unseen)
+EMOTES.coin = { rows: ['..###..', '.#woo#.', '#wo#oo#', '#o###o#', '#oo#od#', '.#odd#.', '..###..'], ink: { '#': '#7a5410', w: '#fff0b0', o: '#f0c040', d: '#c08a10' } };
+EMOTES.ready = { rows: ['.......', '......#', '.....##', '#...##.', '##.##..', '.###...', '..#....'], ink: { '#': '#c08a10' } };
+
+/** Where Gwen stands behind the bar (her feet hidden by it) and where the quest board leans on the wall, left of the bar. */
+export const GWEN_SPOT = { x: 273, foot: 194, depth: 200 };
+export const BOARD_SPOT = { x: 204, foot: 142 };
+
+/** What the tavern's quest pieces open (QUESTS batch 1). */
+export interface TavernQuests {
+  onGwen(): void;
+  onBoard(): void;
+  onQuests(): void;
+  /** A giver in the tavern tapped (QUESTS-1b: a hero with a quest of their own, `hero:<kind>`, or Duchess with one). */
+  onGiver?(key: string): void;
+}
+
+/** What Hester's corner opens (CLIFF-ROAM): her stall's page. */
+export interface TavernShop {
+  onStall(): void;
+}
+
+/** Dynasties, phase 6: the Elders' table in the Hearth Hall (`housesView.ts`): its button shows while an elder sits there or a cadet
+ *  line exists. */
+export interface TavernElders {
+  onElders(): void;
+  shown(meta: Meta): boolean;
+}
+
+/** What the tavern's upgrade pieces open (TAVERN-RANKUP). */
+export interface TavernUpgrades {
+  /** The Upgrades button: the quick list of every hero with a step ready. */
+  onUpgrades(): void;
+  /** A hero's gold chevron tapped: their Rank up card straight away. */
+  onRise(kind: string): void;
+}
 
 interface Rig {
   img: HTMLImageElement;
@@ -92,6 +152,8 @@ interface Rig {
   counts: Record<string, number>;
   figure: number;
   facesRight: boolean;
+  /** Frames to a row of the sheet (a longer clip runs on into the next row). */
+  perRow?: number;
 }
 
 type Mood = 'idle' | 'out' | 'pause' | 'back' | 'flourish';
@@ -115,6 +177,8 @@ interface Actor {
   /** Its awakened step, and the parts of its class's aura (none below the first step). */
   step: number;
   aura: readonly AuraPart[];
+  /** (TAVERN LIFE) where and how it was drawn this frame, for its props drawn after it (and after the seat in front of it). */
+  body?: Body;
 }
 
 
@@ -158,13 +222,31 @@ export class Tavern {
   private watch: ResizeObserver;
   private meta: Meta | null = null;
   private trophyModal = new TrophyWallModal();
+  /** The Quests button (it wears a gold dot while something waits), and when Gwen last began to talk (a tap on her). */
+  private questBtn = el('button', 'tvQuests', 'Quests');
+  private gwenTalk = -1e9;
+  /** (TAVERN-RANKUP) the heroes with a step ready (worked out on each update), the Upgrades button and its count, and where each
+   *  chevron was drawn this frame (room pixels), so a tap on one opens that hero's card. */
+  private rise = new Set<string>();
+  private upBtn = el('button', 'tvUpgrades');
+  private upCount = el('b', 'tvUpN');
+  private eldersBtn = el('button', 'tvRoster tvElders', 'Elders’ table');
+  private riseHits = new Map<string, { x: number; y: number }>();
+  /** CLIFF-ROAM: what Hester's corner shows (worked out on each update): new stock, and a visiting trader. */
+  private news: ReturnType<typeof hesterNews> = { fresh: false, visitor: null };
 
   constructor(
     private onPick: (kind: string) => void,
     onRoster: () => void,
+    private quests?: TavernQuests,
+    private upgrades?: TavernUpgrades,
+    private shop?: TavernShop,
+    private elders?: TavernElders,
   ) {
-    const roster = el('button', 'tvRoster', 'Roster');
+    const roster = el('button', 'tvRoster', 'All heroes');
     roster.addEventListener('click', onRoster);
+    this.questBtn.append(el('i', 'qDot'));
+    this.questBtn.addEventListener('click', () => this.quests?.onQuests());
     const trophies = el('button', 'tvTrophies', '🏆 Trophies');
     trophies.title = 'Defeated Boss Trophy Wall';
     trophies.addEventListener('click', () => {
@@ -173,11 +255,24 @@ export class Tavern {
     ROOM_NAMES.forEach((r, i) => {
       if (i) this.nav.append(el('span', 'tvDot', '·'));
       const b = el('button', 'tvRoom1', r.name);
+      // (CLIFF-ROAM: the hearth hall's name wears a gold dot while Hester has new stock or a trader visits, so it is seen from the bar)
+      if (r.id === 'hearth') b.append(el('i', 'tvShopDot'));
       b.addEventListener('click', () => this.goTo(r.focus));
       this.roomBtns.push(b);
       this.nav.append(b);
     });
-    this.root.append(this.canvas, this.count, trophies, roster, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
+    // (the three buttons top right, in a column so they fit beside the count on the narrowest phone)
+    const btns = el('div', 'tvBtns');
+    // (TAVERN-RANKUP: the Upgrades button shows only while a hero has a step ready, with how many)
+    this.upBtn.append(upMark('tvUpMark'), 'Upgrades', this.upCount);
+    this.upBtn.hidden = true;
+    this.upBtn.addEventListener('click', () => this.upgrades?.onUpgrades());
+    // (Dynasties, phase 6: the Elders' table, while anyone sits at it)
+    this.eldersBtn.hidden = true;
+    this.eldersBtn.addEventListener('click', () => this.elders?.onElders());
+    btns.append(this.questBtn, this.upBtn, this.eldersBtn, trophies, roster);
+    if (!this.quests) this.questBtn.hidden = true;
+    this.root.append(this.canvas, this.count, btns, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -249,7 +344,19 @@ export class Tavern {
   /** Show these heroes (the meta's unlocked ones, at their ranks). Keeps the ones already there as they are. */
   update(meta: Meta): void {
     this.meta = meta;
+    this.questBtn.classList.toggle('new', questsWaiting(meta));
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
+    // (TALENT-ARROWS: talent points to spend mark a hero too)
+    this.rise = new Set(have.filter((k) => markReady(meta, k)));
+    this.upBtn.hidden = !this.upgrades || !this.rise.size;
+    this.eldersBtn.hidden = !this.elders?.shown(meta);
+    this.upCount.textContent = String(this.rise.size);
+    this.upBtn.setAttribute('aria-label', `Upgrades: ${this.rise.size} ${this.rise.size === 1 ? 'hero has' : 'heroes have'} a rank, an awakening or talent points ready`);
+    this.news = hesterNews(meta, todayKey());
+    const hall = this.roomBtns[ROOM_NAMES.findIndex((r) => r.id === 'hearth')];
+    hall?.classList.toggle('shop', !!this.shop && (this.news.fresh || !!this.news.visitor));
+    hall?.classList.toggle('dealer', this.news.visitor === 'dealer');
+    hall?.setAttribute('aria-label', this.shop && (this.news.fresh || this.news.visitor) ? `Hearth: Hester's stall${this.news.visitor ? `, ${this.news.visitor === 'dealer' ? 'the Gloaming Dealer' : 'the caravan'} visiting` : ''}${this.news.fresh ? ', new stock' : ''}` : 'Hearth');
     this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · swipe to look'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
     for (const kind of have) {
@@ -464,6 +571,8 @@ export class Tavern {
   // ---- behaviour ----
 
   private think(a: Actor, now: number): void {
+    // (TAVERN LIFE: a hero with a fixed activity does that, not random idles; `tavernLife.ts`)
+    if (LIFE[a.kind]) return;
     const home = a.spot.x;
     if (a.mood === 'idle' && now >= a.at) {
       const roll = Math.random();
@@ -582,6 +691,8 @@ export class Tavern {
     const dy = foot - f - lift - bob;
     g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, dy, f, f);
     drawDuchessCosmetic(g, settings().duchessHat, x - f / 2, dy, 0.5, goat.face, 0);
+    const mark = this.quests && this.meta ? giverMark(this.meta, 'duchess') : null;
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', x, dy - 14);
   }
 
   /** The room names and edge arrows under the picture: which room the view is on, and which ways there is more to see. */
@@ -605,6 +716,7 @@ export class Tavern {
     const a = art;
     if (!a || !this.still) return;
     g.globalAlpha = 1;
+    this.riseHits.clear();
     // (the view is a whole number of screen pixels from the baked picture, so the pixels stay crisp)
     const px = Math.round(this.camX * s);
     const py = Math.round(this.camY * s);
@@ -629,9 +741,28 @@ export class Tavern {
       const actor = this.actors.get(kind);
       // (an empty seat: no one is recruited yet, or they have wandered off)
       if (spot.seat !== 'none' && (!actor || Math.abs(actor.x - spot.x) > 3)) list.push({ depth: spot.depth - 0.5, paint: () => this.seat(a, spot) });
+      // (TAVERN LIFE: a sitter's seat: a stool or bench in front hiding where the legs join, a chair behind; a painted sheet has its own)
+      else if (actor && sits(kind, spot) && !hasPainted(kind)) list.push({ depth: spot.depth + (seatInFront(spot) ? 0.25 : -0.5), paint: () => this.seat(a, spot) });
       if (actor) list.push({ depth: spot.depth, paint: () => this.hero(actor) });
+      if (actor && LIFE[kind]) list.push({ depth: spot.depth + 0.3, paint: () => this.lifeFront(actor) });
     }
     if (this.goat && this.goatArt && Tavern.GOAT.min - 30 < right && Tavern.GOAT.max + 30 > left) list.push({ depth: Tavern.GOAT.y, paint: () => this.duchess() });
+    // (QUESTS: the board leans on the wall, and Gwen stands behind the bar, drawn before it so the bar hides her legs)
+    if (this.quests && BOARD_SPOT.x - 40 < right && BOARD_SPOT.x + 40 > left) list.push({ depth: BOARD_SPOT.foot, paint: () => this.board(a) });
+    if (this.quests && GWEN_SPOT.x - 40 < right && GWEN_SPOT.x + 40 > left) {
+      list.push({ depth: GWEN_SPOT.depth, paint: () => this.gwen(a) });
+      // (TAVERN LIFE: now and then she wipes a mug, held up over the bar's top, so drawn after the bar)
+      const bar = PROPS.find((p) => p.sprite === 'bar')!;
+      list.push({ depth: bar.y + 0.5, paint: () => drawGwenWipe(this.lifeCtx(), GWEN_SPOT.x, bar.y - a.bar.height + 2, this.now - this.gwenTalk < 1600) });
+    }
+    // (CLIFF-ROAM: Hester's corner: her stall against the wall, Hester at its left behind her crate, a visiting trader at its right)
+    const hb = HESTER.box;
+    if (this.shop && hb.x0 - 20 < right && hb.x1 + 20 > left) {
+      list.push({ depth: HESTER.stall.foot, paint: () => this.painted(a.hesterStall, HESTER.stall.x, HESTER.stall.foot) });
+      list.push({ depth: HESTER.hester.foot, paint: () => this.hester(a) });
+      const v = this.news.visitor;
+      if (v) list.push({ depth: HESTER.visitor.foot, paint: () => this.painted(a[v], HESTER.visitor.x, HESTER.visitor.foot, -1) });
+    }
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     // (the fire and the lamps burn steadily: no flicker)
@@ -646,6 +777,62 @@ export class Tavern {
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;
     g.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  /** (CLIFF-ROAM) a painted piece of Hester's corner, cut at three screen pixels a room pixel: drawn smoothly at the room's scale (they
+   *  are paintings, not pixel art), centred on `x` with its foot at `foot`, mirrored when `face` is -1. */
+  private painted(im: HTMLImageElement, x: number, foot: number, face: 1 | -1 = 1, lift = 0): void {
+    const g = this.ctx;
+    const w = im.width / 3;
+    const h = im.height / 3;
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    if (face === -1) {
+      g.transform(-1, 0, 0, 1, x * 2, 0);
+      g.drawImage(im, x - w / 2, foot - h - lift, w, h);
+      this.reset(this.scale);
+    } else g.drawImage(im, x - w / 2, foot - h - lift, w, h);
+    g.imageSmoothingEnabled = false;
+  }
+
+  /** (CLIFF-ROAM) Hester at her stall, breathing a pixel now and then (still when motion is reduced), with a gold coin over her while the
+   *  day's stock is new. Her picture is cut at the knee: her crate, drawn after her, stands in front of that. */
+  private hester(a: Record<string, HTMLImageElement>): void {
+    const { x, foot } = HESTER.hester;
+    const lift = !this.reduced && Math.sin(this.now / 700 + 1) > 0.5 ? 1 : 0;
+    this.painted(a.hester, x, foot, 1, lift);
+    if (this.news.fresh) this.bubbleAt('coin', x, foot - a.hester.height / 3 - 15);
+  }
+
+  /** The quest board, with a gold "!" over it while anything is on offer. */
+  private board(a: Record<string, HTMLImageElement>): void {
+    const im = a.board;
+    const x = Math.round(BOARD_SPOT.x - im.width / 2);
+    const y = BOARD_SPOT.foot - im.height;
+    this.ctx.drawImage(im, x, y);
+    if (this.meta?.quests?.offers.length) this.bubbleAt('quest', BOARD_SPOT.x, y - 16);
+  }
+
+  /** Gwen behind the bar: her stand, breathing a pixel, or her talking frames for a moment after a tap; a gold "!" or tick over her. */
+  private gwen(a: Record<string, HTMLImageElement>): void {
+    const g = this.ctx;
+    const c = GWEN.cell;
+    const talking = this.now - this.gwenTalk < 1600 && !this.reduced;
+    const row = talking ? 1 : 0;
+    const i = talking ? Math.floor((this.now - this.gwenTalk) / 160) % GWEN.talk : 0;
+    const lift = !talking && !this.reduced && Math.sin(this.now / 640) > 0.4 ? 1 : 0;
+    let top = GWEN_SPOT.foot - c - lift;
+    // (TAVERN LIFE: her painted figure where it has landed, `tavernLifeDraw.ts`; the pack placeholder otherwise)
+    if (drawGwenPainted(this.lifeCtx(), GWEN_SPOT.x, GWEN_SPOT.foot, talking, this.now - this.gwenTalk)) top = GWEN_SPOT.foot - 64;
+    else g.drawImage(a.gwen, i * c, row * c, c, c, Math.round(GWEN_SPOT.x - c / 2), top, c, c);
+    const mark = this.meta ? giverMark(this.meta, 'gwen') : null;
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', GWEN_SPOT.x, top + 1);
+  }
+
+  /** A bubble (by its emote's name) with its tail at `cx`, its top at `top`; it hops a pixel now and then, unless motion is reduced. */
+  private bubbleAt(name: string, cx: number, top: number): void {
+    const y = top + (this.reduced ? 0 : Math.floor(this.now / 380) % 2);
+    this.ctx.drawImage(this.bubbleArt(name), Math.round(cx) - 6, y, 13, 15);
   }
 
   private seat(a: Record<string, HTMLImageElement>, spot: Spot): void {
@@ -678,37 +865,122 @@ export class Tavern {
     return { row, i: a.mood === 'flourish' ? Math.min(i, n - 1) : i, lift };
   }
 
+  /** (TAVERN LIFE) what the life drawer needs from the frame. */
+  private lifeCtx(): LifeCtx {
+    return { g: this.ctx, now: this.now, s: this.scale, reduced: this.reduced, saver: this.saver };
+  }
+
   private hero(a: Actor): void {
     const g = this.ctx;
     const s = this.scale;
     const { rig, k } = a;
-    const { row, i, lift } = this.pose(a);
-    const r = rig.rows.indexOf(rig.rows.includes(row) ? row : 'idle');
-    const fx = Math.round(a.x);
+    // (TAVERN LIFE: the hero's activity sets its pose, a shift and its facing, and sits it down into its seat)
+    const life = LIFE[a.kind];
+    const lp = life ? lifePose(a.kind, a.spot, rig.counts, this.now, this.reduced, SPOTS) : null;
+    const { row, i, lift } = lp ?? this.pose(a);
+    const face = lp ? lp.face : a.face;
+    // (a long clip runs on into the next row of the sheet: the walk's eight frames take two rows of four)
+    const r0 = rig.rows.indexOf(rig.rows.includes(row) ? row : 'idle');
+    const per = rig.perRow || 99;
+    const r = r0 + Math.floor(i / per);
+    const col = i % per;
+    const fx = Math.round(a.x + (lp ? lp.dx : 0));
     const fy = a.spot.y;
+    const drop = life ? sitDrop(a.kind, a.spot, rig.figure * k) : 0;
+    a.body = { kind: a.kind, fx, fy, tall: rig.figure * k, face, drop };
     // (a shadow under the feet)
     g.fillStyle = 'rgba(8, 3, 1, 0.38)';
     const sw = Math.round(rig.figure * k * 0.34);
     g.fillRect(fx - sw, fy, sw * 2, 2);
     g.fillRect(fx - sw + 2, fy - 1, (sw - 2) * 2, 1);
     const dw = rig.w * k;
-    const dh = rig.h * k;
-    const dy = fy - lift - dh;
-    const flip = (a.face === 1) !== rig.facesRight;
+    // (a sitter: the top half down to the hips sits on the seat, the legs below are squeezed between the seat and the floor)
+    const hips = life ? hipsAt(a.kind, a.spot) : 0;
+    const legs = hips ? rig.figure * HIP : 0;
+    const sh = rig.h - legs;
+    const dh = sh * k;
+    const dy = fy + drop - lift - rig.h * k;
+    const flip = (face === 1) !== rig.facesRight;
+    const legsAt = (x0: number) => hips && g.drawImage(rig.img, col * rig.w, r * rig.h + sh, rig.w, legs, x0, fy - hips - lift, dw, hips + lift);
     // (an awakened hero stands in its class's aura: the glow and the parts behind it, then the parts in front)
     const tall = rig.figure * k;
     if (a.step) {
       drawAuraGlow(g, a.kind, a.step, fx, fy, tall);
-      drawAura(g, a.aura, fx, fy, tall, this.now, 'back', a.face, this.reduced);
+      drawAura(g, a.aura, fx, fy, tall, this.now, 'back', face, this.reduced);
     }
-    if (flip) {
+    if (life && hasPainted(a.kind)) drawPainted(this.lifeCtx(), a.body);
+    else if (flip) {
       // (a mirrored transform set and put back by hand: save and restore are slow on a phone's canvas)
       g.transform(-1, 0, 0, 1, fx, 0);
-      g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, -dw / 2, dy, dw, dh);
+      g.drawImage(rig.img, col * rig.w, r * rig.h, rig.w, sh, -dw / 2, dy, dw, dh);
+      legsAt(-dw / 2);
       this.reset(s);
-    } else g.drawImage(rig.img, i * rig.w, r * rig.h, rig.w, rig.h, fx - dw / 2, dy, dw, dh);
-    if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', a.face, this.reduced);
-    if (a.emote) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
+    } else {
+      g.drawImage(rig.img, col * rig.w, r * rig.h, rig.w, sh, fx - dw / 2, dy, dw, dh);
+      legsAt(fx - dw / 2);
+    }
+    if (a.step) drawAura(g, a.aura, fx, fy, tall, this.now, 'front', face, this.reduced);
+    // (TAVERN-RANKUP: a hero with an upgrade ready wears its chevron, not a passing emote)
+    if (a.emote && !this.rise.has(a.kind)) this.bubble(a, fx, fy - Math.round(rig.figure * k) - 15);
+    // (TAVERN LIFE: a hero with an activity wears its mark after its props, `lifeFront`, so nothing it gives off covers it)
+    else if (!life) this.patronMark(a, fx, fy - Math.round(rig.figure * k) - 15);
+  }
+
+  /** (QUESTS-1b) a patron with a quest of their own wears the gold "!", or the tick while theirs waits to be handed in; (TAVERN-RANKUP)
+   *  one with an upgrade ready wears the gold chevron, beside the "!" when there is one (the "!" on the left, the chevron on the right). */
+  private patronMark(a: Actor, cx: number, top: number): boolean {
+    const mark = this.quests && this.meta ? giverMark(this.meta, `hero:${a.kind}`) : null;
+    const up = this.rise.has(a.kind);
+    if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', up ? cx - 7 : cx, top);
+    if (up) this.chevron(a.kind, mark ? cx + 8 : cx, top + 2);
+    return !!mark || up;
+  }
+
+  /** (TAVERN-RANKUP) the gold chevron badge, its middle at `cx`, its top near `top`: it bobs a pixel up and down, slowly and smoothly
+   *  (held still when motion is reduced), and never blinks. */
+  private chevron(kind: string, cx: number, top: number): void {
+    const y = top + (this.reduced ? 0 : Math.round(Math.sin(this.now / 480) * 1.2));
+    this.ctx.drawImage(this.chevronArt(), Math.round(cx) - 6, y, 13, 13);
+    this.riseHits.set(kind, { x: cx, y: y + 6 });
+  }
+
+  /** The chevron badge drawn once a scale: a gold disc with a dark rim and a dark up-chevron (13 room pixels square). */
+  private chevronArt(): HTMLCanvasElement {
+    const key = `rise@${this.scale}`;
+    let c = this.bubbles.get(key);
+    if (c) return c;
+    const s = this.scale;
+    c = document.createElement('canvas');
+    c.width = c.height = 13 * s;
+    const g = c.getContext('2d')!;
+    // (the rim, a round-cornered square of pixels, then the gold face with a lighter top half)
+    const disc = (inset: number, colour: string): void => {
+      g.fillStyle = colour;
+      g.fillRect((inset + 2) * s, inset * s, (9 - inset * 2) * s, (13 - inset * 2) * s);
+      g.fillRect(inset * s, (inset + 2) * s, (13 - inset * 2) * s, (9 - inset * 2) * s);
+      g.fillRect((inset + 1) * s, (inset + 1) * s, (11 - inset * 2) * s, (11 - inset * 2) * s);
+    };
+    disc(0, '#2a1806');
+    disc(1, '#c08a10');
+    g.fillStyle = '#f6d167';
+    g.fillRect(3 * s, 2 * s, 7 * s, 4 * s);
+    g.fillRect(2 * s, 3 * s, 9 * s, 3 * s);
+    // (the chevron: two strokes two pixels thick, its point at the top)
+    g.fillStyle = '#2a1806';
+    const rows: [number, number[]][] = [[4, [6]], [5, [5, 6, 7]], [6, [4, 5, 7, 8]], [7, [3, 4, 8, 9]], [8, [3, 9]]];
+    for (const [y, xs] of rows) for (const x of xs) g.fillRect(x * s, y * s, s, s);
+    this.bubbles.set(key, c);
+    return c;
+  }
+
+  /** (TAVERN LIFE) the props in front of a hero at their activity, then their quest mark over their head (over a sitter's lower head
+   *  too); a hero with a mark gives off nothing over their head (no notes, z's or speech), so the mark stays clear. */
+  private lifeFront(a: Actor): void {
+    const b = a.body;
+    if (!b) return;
+    const marked = !!(this.quests && this.meta && giverMark(this.meta, `hero:${a.kind}`)) || this.rise.has(a.kind);
+    drawLifeFront(this.lifeCtx(), { ...b, marked }, SPOTS);
+    if (marked) this.patronMark(a, b.fx, b.fy + b.drop - Math.round(b.tall) - 15);
   }
 
   /** The speech bubbles drawn once each (a bubble is a couple of hundred pixel rectangles, too many to redraw every frame). */
@@ -757,6 +1029,11 @@ export class Tavern {
     const ry = this.camY + (e.clientY - box.top) / this.scale;
     // (Duchess first: a tap on her few pixels is hers, and she hops)
     if (this.goat && this.goatArt && Math.abs(rx - this.goat.x) < 12 && ry > Tavern.GOAT.y - 20 && ry < Tavern.GOAT.y + 6) {
+      // (QUESTS-1b: while she has a quest for you, a tap is her card, not her hat)
+      if (this.quests?.onGiver && this.meta && giverMark(this.meta, 'duchess')) {
+        this.quests.onGiver('duchess');
+        return;
+      }
       if (tapGoat(this.goat, this.now)) {
         try {
           const raw = localStorage.getItem('legends.meta');
@@ -770,6 +1047,29 @@ export class Tavern {
         }
         this.cycleDuchessHat(e.clientX, box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale);
       }
+      return;
+    }
+    // (TAVERN-RANKUP: a hero's gold chevron opens their Rank up card; a reach a little wider than it, short of a "!" beside it)
+    if (this.upgrades)
+      for (const [kind, h] of this.riseHits)
+        if (Math.abs(rx - h.x) < 9 && Math.abs(ry - h.y) < 11) {
+          this.upgrades.onRise(kind);
+          return;
+        }
+    // (QUESTS: Gwen behind the bar, then the board on the wall)
+    if (this.quests && Math.abs(rx - GWEN_SPOT.x) < 16 && ry > GWEN_SPOT.foot - 58 && ry < GWEN_SPOT.foot - 12) {
+      this.gwenTalk = this.now;
+      this.quests.onGwen();
+      return;
+    }
+    if (this.quests && Math.abs(rx - BOARD_SPOT.x) < 34 && ry > BOARD_SPOT.foot - 70 && ry < BOARD_SPOT.foot + 4) {
+      this.quests.onBoard();
+      return;
+    }
+    // (CLIFF-ROAM: Hester's corner opens her stall, as the stall on the cliff did)
+    const hb = HESTER.box;
+    if (this.shop && rx >= hb.x0 && rx <= hb.x1 && ry >= hb.y0 && ry <= hb.y1) {
+      this.shop.onStall();
       return;
     }
     // (decorative trophy wall plaque in the hearth hall)
@@ -793,7 +1093,9 @@ export class Tavern {
       const d = Math.hypot((rx - cx) / half, (ry - (spot.y - tall / 2)) / (tall / 2));
       if (!best || d < best.d - 0.15 || (Math.abs(d - best.d) <= 0.15 && spot.depth > best.depth)) best = { kind, d, depth: spot.depth };
     }
-    if (best) this.onPick(best.kind);
+    // (QUESTS-1b: a hero with a quest for you opens their card; a tap on them again, once it is taken, is their sheet as ever)
+    if (best && this.quests?.onGiver && this.meta && giverMark(this.meta, `hero:${best.kind}`)) this.quests.onGiver(`hero:${best.kind}`);
+    else if (best) this.onPick(best.kind);
   }
 
   private cycleDuchessHat(x: number, y: number): void {

@@ -16,6 +16,7 @@ import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
+import { fadeTall, loadZoneArt, noMotion, ZoneAir, zoneProps, type ZoneMotion } from './zoneLife';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
 
@@ -25,14 +26,20 @@ const STONY = 3;
 const ROAD_SKIRT = 5;
 
 /** A tile's mark; `merge` is a hero on the field with a match ready to merge (MERGE-TWO). */
-type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | 'merge' | null;
+type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | 'merge' | 'twin' | null;
 const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
   deploy: [0x4a9cff, 0.28],
   hover: [0xffe066, 0.5],
   bad: [0xff4a4a, 0.4],
   chosen: [0x6dff8a, 0.45],
   merge: [0xffb43a, 0.6],
+  // (ONE-OF-EACH: the hero of a kind already on the field, where a copy held may swap in)
+  twin: [0xff8ad8, 0.55],
 };
+
+/** A duel's ring (phase 4): a light gilt on its tiles, a brass line round its edge's. */
+const RING_GILT = 0xe8c770;
+const RING_BRASS = 0xc9a24a;
 
 /** The colour of the lip at the edge of a tile's top: grass-like, then stony. */
 const LIP: Record<Area, [string, string]> = {
@@ -108,7 +115,7 @@ export async function loadBoardArt(): Promise<void> {
   const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
   const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
   const [gate, tower] = await all([gateUrl, towerUrl]);
-  await loadRoadArt();
+  await Promise.all([loadRoadArt(), loadZoneArt()]);
   artEpoch++;
   art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower) };
 }
@@ -118,11 +125,18 @@ interface Built {
   landmark: Container | null;
   tiles: Container[];
   marks: Graphics[];
+  /** The Nemesis War, phase 4: each tile's layer for a duel's ring (`ring`), over its mark. */
+  rings: Graphics[];
+  /** Each tile's ground (FIXES-4): an empty layer just over its top and its mark, under its props and every fighter, where the effects lay
+   *  their tile marks (a boss's windup, a hazard's tell, a burning ground), so a fighter standing in one shows over it. */
+  grounds: Container[];
   tex: ColumnLease<Texture>[];
   /** The powder barrels still standing (by tile index), so a blast can take one away. */
   barrels: Map<number, Sprite>;
   /** What moves on its own (an army's road): swaying growth, flickering lights, running water, falls. */
   live: Live;
+  /** A Calamity zone's things that move (`zoneLife.ts`). */
+  zone: ZoneMotion;
 }
 /** The living land's moving parts on a section (looks only): each is a sprite made once and only moved or re-framed each frame. */
 interface Live {
@@ -183,6 +197,7 @@ export class BoardView {
   private columns = new ColumnTextures<Texture>((texture) => texture.destroy(true));
   get columnStats() { return this.columns.stats; }
   private marks: Graphics[] = [];
+  private rings: Graphics[] = [];
   private board: Board | null = null;
   private built: Built | null = null;
   /** Layers that outlive a rebuild (the effects': `build` must not destroy them, or nothing in a fight would show). */
@@ -218,12 +233,28 @@ export class BoardView {
     if (!keepOld) {
       for (const c of this.root.removeChildren()) if (!this.keep.includes(c)) c.destroy({ children: true });
       this.dropOld();
+      this.rows.clear();
       this.root.addChild(...this.keep);
     }
     this.freeBuilt();
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
     this.marks = this.built.marks;
+    this.rings = this.built.rings;
     this.root.addChild(...this.built.tiles);
+    // (a Calamity zone: its air over and under the field, `zoneLife.ts`; it goes with the board's other children on the next build)
+    this.air = null;
+    if (b.props?.length || b.tiles.some((t) => t.chasm)) {
+      this.air = new ZoneAir(b, { rot, ou: 0, ov: 0, w: b.w, d: b.d }, this.built.zone, settings().saver);
+      this.root.addChild(this.air.over, this.air.under);
+    }
+  }
+
+  /** A Calamity zone's air (fog, motes, shafts, drips, bats), while its board is the one shown. */
+  private air: ZoneAir | null = null;
+
+  /** Each frame, with the fighters' places (world px): a zone's tall things fade while a fighter stands behind them. */
+  fadeOver(who: readonly { x: number; y: number; tall: number }[], dt: number): void {
+    if (this.built?.zone.tall.length) fadeTall(this.built.zone, who, dt);
   }
 
   /** A whole board baked into one sprite, for a big field (the Last Stand's 24 x 24 is 576 columns): drawn once, with the boulders and growth in it, and then it is a single quad each frame. The sprite is at the world's origin, behind everything (`zIndex`). */
@@ -262,6 +293,7 @@ export class BoardView {
     });
     this.old = { ...this.built, rot: this.rot, ou, ov, section };
     for (const g of this.old.marks) g.clear();
+    for (const g of this.old.rings) g.clear();
     this.built = null;
   }
 
@@ -311,6 +343,14 @@ export class BoardView {
       }
       for (const lp of live.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
     }
+    // (a Calamity zone: its runes, totems and candles loop, its glows breathe, its chains and banners swing, its air moves)
+    const zone = this.built?.zone;
+    if (zone) {
+      for (const lp of zone.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
+      for (const q of zone.pulses) q.sp.alpha = q.base + Math.sin(t * q.rate + q.ph) * q.amp;
+      for (const q of zone.swings) q.sp.rotation = Math.sin(t * 1.1 + q.ph) * q.amp + Math.sin(t * 2.7 + q.ph) * q.amp * 0.3;
+    }
+    this.air?.step(settings().saver ? dt * 2 : dt);
   }
 
   /** A tile of the host falls: `dy` px above where it lies (up is negative), `alpha` how much of it shows. */
@@ -421,9 +461,12 @@ export class BoardView {
   private section(b: Board, look: Look, f: Frame): Built {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
+    const rings: Graphics[] = [];
+    const grounds: Container[] = [];
     const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
     const live = noLive();
+    const zone = noMotion();
     // (an army's road: the land beside it sinks a little and its far edge is left ragged, so a section reads as a road through the land, not a slab)
     const depth = b.tiles.some((t) => t.scene) ? sceneDepth(b) : null;
     const held = new Set((b.pieces ?? []).map((p) => p.v * b.w + p.u));
@@ -438,23 +481,36 @@ export class BoardView {
         if (depth && far >= 3 && !held.has(v * b.w + u) && raw.scene !== 'water' && raw.scene !== 'lava' && edge < 1 + ((mixSeed(b.seed, 0xed9e, u, v) >>> 0) % 3)) {
           // (trimmed: nothing drawn, the tile is still there to the rules as land nobody stands on)
           const mark = new Graphics();
-          tile.addChild(mark);
+          const ring = new Graphics();
+          const ground = new Container();
+          tile.addChild(mark, ring, ground);
           marks.push(mark);
+          rings.push(ring);
+          grounds.push(ground);
           tiles.push(tile);
           continue;
         }
         const sink = raw.scene ? Math.min(2, Math.max(0, far - 1)) : 0;
         const t: Tile = raw.scene === 'water' || raw.scene === 'lava' ? { ...raw, h: raw.h - sink, ground: raw.scene === 'water' ? 'deep' : 'lava' } : sink ? { ...raw, h: raw.h - sink } : raw;
         const [x, y] = project(f, u, v, t.h);
-        const ct = this.column(t, u, v, b.area, depth ? !!t.paved : !!look.boss, !!depth);
-        tex.push(ct);
-        const col = new Sprite(ct.value);
-        col.position.set(x - TW / 2, y - TH / 2);
-        tile.addChild(col);
+        // (a Calamity zone's chasm draws no column: the void shows through, `zoneLife.ts` lights it from below)
+        if (!t.chasm) {
+          const ct = this.column(t, u, v, b.area, depth ? !!t.paved : !!look.boss, !!depth);
+          tex.push(ct);
+          const col = new Sprite(ct.value);
+          col.position.set(x - TW / 2, y - TH / 2);
+          tile.addChild(col);
+        }
         const mark = new Graphics();
         mark.position.set(x, y);
-        tile.addChild(mark);
+        const ring = new Graphics();
+        ring.position.set(x, y);
+        // (the ground layer is at the world's origin, so an effect lays a mark at its tile's world point as it would anywhere)
+        const ground = new Container();
+        tile.addChild(mark, ring, ground);
         marks.push(mark);
+        rings.push(ring);
+        grounds.push(ground);
         const set = art?.areas[b.area];
         if (t.scene === 'grave') {
           addPic(tile, { name: 'gravestones', scale: 0.62, ay: 0.86, dx: 0, dy: 4 }, x, y, live);
@@ -548,6 +604,8 @@ export class BoardView {
       if (b.riftWorld && p.kind !== 'riftPortal') picture.scale *= p.v === 1 ? 1.8 : 1.25;
       addPic(tile, picture, x, y, live);
     }
+    // a Calamity zone's things on its tiles (`zoneLife.ts`)
+    zoneProps(b, f, tiles, zone);
     // a few small birds at the road's edge, pecking (on the land beside it, a tile off the road)
     if (depth) {
       let n = 0;
@@ -612,7 +670,7 @@ export class BoardView {
         landmark.addChild(sp);
       }
     }
-    return { tiles, marks, tex, barrels, landmark, live };
+    return { tiles, marks, rings, grounds, tex, barrels, landmark, live, zone };
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
@@ -652,8 +710,49 @@ export class BoardView {
     // (the tile's own column is the same without it)
   }
 
+  /** The ground layer of the host's tile (`Built.grounds`), or null off the board or with none built. */
+  groundAt(u: number, v: number): Container | null {
+    const b = this.board;
+    if (!b || !this.built || u < 0 || v < 0 || u >= b.w || v >= b.d) return null;
+    const g = this.built.grounds[v * b.w + u];
+    return g && !g.destroyed ? g : null;
+  }
+
+  /** FIXES-4: the layer just over one diagonal row of the host's tiles (`depthIn`), under the fighters on it and the nearer rows: where a
+   *  painted ground loop's piece for that row is laid (`GroundPaint`). Made when first asked for; a rebuild takes it with the board. */
+  groundRow(depth: number): Container | null {
+    if (!this.built) return null;
+    let c = this.rows.get(depth);
+    if (!c || c.destroyed || c.parent !== this.root) {
+      c = new Container();
+      c.zIndex = depth + 1;
+      this.root.addChild(c);
+      this.rows.set(depth, c);
+    }
+    return c;
+  }
+  private rows = new Map<number, Container>();
+
   clearMarks(): void {
     for (const g of this.marks) g.clear();
+  }
+
+  /** The Nemesis War, phase 4: a duel's ring, the middle 5x5 its two keep to (`duelRing.ts`): its edge's tiles outlined in brass over a light
+   *  gilt, the tiles inside it a fainter gilt. Steady, and kept through the fight (`clearMarks` leaves it); null takes it away. */
+  ring(d: { mid: { u: number; v: number }; r: number } | null): void {
+    for (const g of this.rings) g.clear();
+    const b = this.board;
+    if (!d || !b) return;
+    for (let dv = -d.r; dv <= d.r; dv++)
+      for (let du = -d.r; du <= d.r; du++) {
+        const u = d.mid.u + du;
+        const v = d.mid.v + dv;
+        const g = u >= 0 && v >= 0 && u < b.w && v < b.d ? this.rings[v * b.w + u] : undefined;
+        if (!g) continue;
+        const edge = Math.abs(du) === d.r || Math.abs(dv) === d.r;
+        g.poly([0, -TH / 2 + 3, TW / 2 - 4, 0, 0, TH / 2 - 3, -TW / 2 + 4, 0]).fill({ color: RING_GILT, alpha: edge ? 0.2 : 0.08 });
+        if (edge) g.stroke({ color: RING_BRASS, alpha: 0.85, width: 2 });
+      }
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */

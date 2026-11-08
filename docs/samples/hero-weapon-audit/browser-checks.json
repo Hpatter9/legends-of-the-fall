@@ -1,0 +1,29 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "galleryScenes": 5,
+    "unreleasedAssetPreviews": 1,
+    "cutouts": 2,
+    "offline": true,
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "galleryScenes": 5,
+    "unreleasedAssetPreviews": 1,
+    "cutouts": 2,
+    "offline": false,
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "galleryScenes": 5,
+    "unreleasedAssetPreviews": 1,
+    "cutouts": 2,
+    "offline": false,
+    "errors": []
+  }
+]

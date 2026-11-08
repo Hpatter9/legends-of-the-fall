@@ -9,12 +9,22 @@
 //
 // Randomness: none here. The skills that roll (the Buccaneer's dice) use the battle's skill stream (`roll`), as every skill does.
 
+import { NEM_CTX } from './nemesisTraits';
 import type { Battle, BattleEvent, Unit } from './battle';
-import { CHARGE_MAX, keyOf, kitOf, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
+import { CHARGE_MAX, keyOf, kitOf, KITS, powered, began, tal, ultimateOf, ultTune, type Skill } from './abilities';
+import { derivedOf, JOINT, PER_POINT, profileOf, STAM_BASE, MANA_BASE, type Ability, type StatInput, type StatProfile } from './stats';
+import { cooldownOf, heroDerived, REST, rosterMean, ultFillOf } from './statRest';
+import { skillShare, skillStatOf } from './statPower';
 import { UNITS } from './units';
+import { kitWithLoadout } from './books';
 import { HERO_TABLE } from './kits/table';
+import { comingHeroKits } from './kits/coming';
 import { SKILL2_WHEN } from './kits/when';
 import { REVIVE, fallenFor, raiseFallen, type ReviveFace } from './kits/revive';
+import { CLASS_RANGE, CLASS_WEIGHT, type SkillClass } from './skillRules';
+import { relicCharge } from './relicFight';
+import { kitWithLevels, noteCast, REVIVE_POINTS } from './skillLevels';
+import { castGate, isOpener } from './tactics';
 
 export type Pool = 'mana' | 'stamina';
 
@@ -35,13 +45,20 @@ export const RES = {
   STAM_ON_HIT: 3,
   STAM_ON_DODGE: 1,
   WINDED_MS: 1000,
-  GAP_MANA_MS: 5000,
-  GAP_STAM_MS: 3000,
-  /** A hero skips skill 1 when saving for skill 2 would see it cast within this long (stamina, mana). */
+  /** The breath (the skills overhaul's rule 5): after a skill's cast ends, this long before the hero casts another of its skills (the ultimate,
+   *  a healer's revive and a guard's emergency ignore it), so heroes still strike and walk between casts. (The pools' own gaps, 3 s for
+   *  stamina and 5 s for mana, went with the overhaul's batch 2: every skill has a cooldown of its own, from its class.) */
+  BREATH_MS: 800,
+  /** A hero passes over a lighter skill when saving would see a heavier one, whose cooldown ends within this long, paid for (stamina, mana). */
   HOLD_STAM_MS: 1500,
   HOLD_MANA_MS: 3000,
-  /** Skill 2 that found nothing to do is not waited for until this long has passed. */
+  /** A skill that found nothing to do is not saved for until this long has passed. */
   IDLE_MS: 2000,
+  /** Once skill 3 is open (level 20): a skill not cast for this long goes before the others when it can be paid, and is never held
+   *  (SKILLS-10, docs/notes/skills-10.md: skill 3 is the kit's big skill, and without this its cost could keep a hero's skill 1 from ever coming
+   *  round). The others are not held back for it: in the Last Stand's long waves that cost a level-100 party more than it gave. A guard waits
+   *  for its trigger as always. */
+  STALE_MS: 12000,
   /** A mana healer keeps its heal's cost in reserve while an ally is under this share of its health. */
   RESERVE_UNDER: 0.6,
   /** The pace of every gain above (the refill and the gains from blows): the tuning pass's one knob for how often skills come round, so their
@@ -49,17 +66,21 @@ export const RES = {
   PACE: 0.45,
   /** Once skill 2 is open (level 10), the pool comes back this much faster (mana, stamina): a hero that has learnt its second skill draws on a deeper
    *  well, so both skills come round in a fight. */
-  SKILL2_PACE_MANA: 1.6,
-  SKILL2_PACE_STAM: 1.15,
+  SKILL2_PACE_MANA: 1.45,
+  SKILL2_PACE_STAM: 1.05,
+  /** Once skill 3 is open (level 20), the pool comes back this much faster again (the skills overhaul's `SKILL3_PACE`, batch 4): a third skill
+   *  to feed, so the well deepens a little more. (SKILLS-10 tried it lower to answer the stronger skill 3, and skills 1 and 2 stopped coming
+   *  round; it stays, and `RES.STALE_MS` keeps every skill in use.) */
+  SKILL3_PACE: 1.1,
 } as const;
 
 /** The level skill 2 opens at (skill 1 is open from level 1; the ultimate at `ULT_LEVEL`). */
 export const SKILL2_LEVEL = 10;
+/** The level skill 3 opens at (the skills overhaul's batch 4, the owner's answer: halfway between skill 2 and the ultimate). */
+export const SKILL3_LEVEL = 20;
 /** What the old charge gifts (a tier skill's charge rider, a combo's beat, a gear ability, a bard's tune, a kill's charge back) are worth to a hero's pool:
  *  this share of the pool for each point of charge. A cast used to take 100 charge, and a skill now costs about half a pool, so a cast's worth is a cast's worth. */
 export const CHARGE_TO_POOL = 0.5;
-/** A tier 3 hero's other skill (the one its tier skill does not improve) costs this much less. */
-export const TIER3_DISCOUNT = 0.85;
 
 /** The ultimate's meter, from level 30: what fills it. Per the hero's own max health dealt (or healed) and taken, and per second; times the ultimate's
  *  `tuned.rate` and the hero's `ultRate` talent. A blow turned aside by a guard counts at half (the guard halves the damage that reaches here).
@@ -77,15 +98,17 @@ export const ULT_FILL = {
   STAND: 0.5,
 };
 
-/** One of a hero's two skills: the skill, what it costs, how much of the caster's attack it carries (`tune`, the balance knob), the shortest gap
- *  between two casts of it, and the AI's flags. */
+/** One of a hero's skills: the skill, its class, what it costs, how much of the caster's attack it carries (`tune`, the balance knob), its
+ *  cooldown, and the AI's flags. */
 export interface Slot {
   skill: Skill;
+  /** Its class (the skills overhaul, `skillRules.ts`): the range its cost, cooldown and cast time sit in, and how the AI weighs it. */
+  cls: SkillClass;
   cost: number;
   /** Strength: times the caster's attack while it casts (the damage, healing and what is called up). */
   tune: number;
-  /** The shortest time between two casts of this skill (ms); the pool's own gap when unset. */
-  gap?: number;
+  /** Its cooldown: the shortest time between two casts of this skill (ms), from the start of one cast. */
+  cd: number;
   /** A share of the hero's max health it also costs (the Barbarian's and Demon Swordsman's blood). */
   hpCost?: number;
   /** When this holds the skill goes before anything but a queued ultimate (a heal for a dying friend, an escape). */
@@ -96,22 +119,36 @@ export interface Slot {
   onHit?: (b: Battle, me: Unit, to: Unit, out: BattleEvent[]) => void;
   /** A healer's skill 2 has a revive face (RPG-SPELLS batch 2, `kits/revive.ts`): cast instead when a friend lies fallen and it is ready. */
   revive?: ReviveFace;
+  /** Its skill level by use, when above 1 (the skills overhaul's batch 5, `skillLevels.ts`: its strength, cost and cooldown are already that
+   *  level's), its Level 1 cooldown (what a cast earns), and what it adds to the caster's talents while it is cast (durations, the Level 5 step). */
+  lv?: number;
+  baseCd?: number;
+  mods?: Record<string, number>;
 }
 
 export interface HeroKit {
   pool: Pool;
+  /** Its skills in slot order (skill 1 opens at level 1, skill 2 at `SKILL2_LEVEL`, skill 3 at `SKILL3_LEVEL`). `s1` and `s2` are the first two,
+   *  the same objects; `s3` the third, when the kit has one. */
+  slots: Slot[];
   s1: Slot;
   s2: Slot;
+  s3?: Slot;
   /** A new role line for the hero's card (the design's archetype). */
   role: string;
 }
 
 /** The per-hero state the kits keep (all optional, so a battle in a save or a test reads as before). */
 export interface KitState {
-  /** When each skill was last cast (1 and 2), and when skill 2 was last tried and had nothing to do. */
+  /** When each skill was last cast (slots 1, 2 and 3), and when each was last tried and had nothing to do. */
   at1?: number;
   at2?: number;
+  at3?: number;
+  idle1?: number;
   idle2?: number;
+  idle3?: number;
+  /** Until when the hero takes its breath after a cast (`RES.BREATH_MS`). */
+  breath?: number;
   /** When it was last struck (a mana hero's focus), and until when a stamina hero is winded. */
   hitAt?: number;
   winded?: number;
@@ -127,18 +164,74 @@ export const HERO_KITS = (): Record<string, HeroKit> => (table ??= HERO_TABLE())
 export function heroKitOf(u: Unit): HeroKit | undefined {
   if (u.side !== 'hero' || u.owner !== undefined || u.kit) return undefined;
   if (UNITS[u.def]?.summon) return undefined;
-  return HERO_KITS()[u.def];
+  // (a hero with skills from books in its slots: its kit with those two, `books.ts`)
+  const kit = u.book ? kitWithLoadout(u.def, u.book) : (HERO_KITS()[u.def] ?? comingHeroKits()[u.def]);
+  // (and its skills at the levels they have reached by use, `skillLevels.ts`; looked up once a fighter, as this is read every tick)
+  if (!kit || !u.skillLv) return kit;
+  const had = levelled.get(u.skillLv);
+  if (had && had.base === kit) return had.kit;
+  const out = kitWithLevels(kit, u.book ? `${u.def}|${u.book.join('|')}` : u.def, u.skillLv);
+  levelled.set(u.skillLv, { base: kit, kit: out });
+  return out;
 }
+/** A fighter's levelled kit, by its levels' array (each fighter has its own), with the kit it was built from. */
+const levelled = new WeakMap<number[], { base: HeroKit; kit: HeroKit }>();
 
 export const poolOf = (u: Unit): Pool | undefined => heroKitOf(u)?.pool;
+/** A pool's written size, before the scores (`topOf` is a hero's own). */
 export const resMax = (pool: Pool): number => (pool === 'mana' ? RES.MANA_MAX : RES.STAM_MAX);
+
+// ---- Pools by score (STATS batch 6, `statRest.ts`): a stamina hero's pool follows its CON, a mana hero's its casting ability. Each point of
+// modifier adds 3 SP (5 MP) to the top and fills the pool 4% faster (its refill and its gains from blows), counted from a modifier of +0
+// (the joint rebalance, `JOINT.pools`; batch 6 counted it against the roster's mean for that pool at the same level). ----
+
+/** The ability that sets a pool. */
+export const poolAbility = (p: StatProfile, pool: Pool): Ability => (pool === 'stamina' ? 'con' : p.cast);
+let poolKinds: Record<Pool, string[]> | undefined;
+/** A hero kind's pool at a level, rank, grade and extra: which it is, its top in points and how much faster it fills, against the roster's
+ *  mean for that pool at that level (the fight and the page read the same numbers). Undefined for a kind with no kit or no profile. */
+export function poolNumbers(kind: string, at: StatInput = {}): { pool: Pool; top: number; fill: number } | undefined {
+  // (a hero still to join the roster reads its own kit; the roster's means below are the roster's)
+  const hk = HERO_KITS()[kind] ?? comingHeroKits()[kind];
+  const p = profileOf(kind);
+  if (!hk || !p) return undefined;
+  const pool = hk.pool;
+  if (!poolKinds) {
+    poolKinds = { mana: [], stamina: [] };
+    for (const [k, x] of Object.entries(HERO_KITS())) if (profileOf(k)) poolKinds[x.pool].push(k);
+  }
+  // (counted from a modifier of +0 since the joint rebalance, `JOINT.pools`; against the roster's mean for the pool before)
+  const mean = JOINT.pools ? 0 : rosterMean(`pool-${pool}`, at.level ?? 1, (q, m) => m[poolAbility(q, pool)], poolKinds[pool]);
+  const shift = derivedOf(p, at).mods[poolAbility(p, pool)] - mean;
+  return {
+    pool,
+    top: pool === 'mana' ? MANA_BASE + PER_POINT.MANA_TOP * shift : STAM_BASE + PER_POINT.STAM_TOP * shift,
+    fill: (1 + PER_POINT.REFILL * (mean + shift)) / (1 + PER_POINT.REFILL * mean),
+  };
+}
+/** A fighter's pool's top and fill (worked out once a fighter: nothing they read changes in a fight; its pool is its kit's). */
+const poolMemo = new WeakMap<Unit, { top: number; fill: number }>();
+function poolStats(u: Unit, pool: Pool): { top: number; fill: number } {
+  let s = poolMemo.get(u);
+  if (!s) {
+    const n = REST.pools && heroDerived(u) ? poolNumbers(u.def, { level: u.level ?? 1, grade: u.grade ?? 1, rank: u.rank ?? 0, extra: u.eq?.scores }) : undefined;
+    s = n && n.pool === pool ? { top: n.top, fill: n.fill } : { top: resMax(pool), fill: 1 };
+    poolMemo.set(u, s);
+  }
+  return s;
+}
+/** A hero's pool's top in points: the written size, +3 SP (+5 MP) a point of its pool's ability over the roster's mean. */
+export const topOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => poolStats(u, pool).top;
+/** How much faster a hero's pool fills (its refill and its gains): 4% a point of its pool's ability over the roster's mean. */
+export const fillOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => poolStats(u, pool).fill;
+
 /** The pool's points (mana or stamina). */
-export const resOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => (u.charge / CHARGE_MAX) * resMax(pool);
+export const resOf = (u: Unit, pool: Pool = poolOf(u) ?? 'mana'): number => (u.charge / CHARGE_MAX) * topOf(u, pool);
 /** Add (or take, below zero) points of a hero's pool; nothing for a fighter without one. */
 export function addRes(u: Unit, n: number): void {
   const pool = poolOf(u);
   if (!pool || !u.alive) return;
-  u.charge = Math.max(0, Math.min(CHARGE_MAX, u.charge + (n / resMax(pool)) * CHARGE_MAX));
+  u.charge = Math.max(0, Math.min(CHARGE_MAX, u.charge + (n / topOf(u, pool)) * CHARGE_MAX));
 }
 const ks = (u: Unit): KitState => (u.ks ??= {});
 
@@ -146,30 +239,31 @@ const ks = (u: Unit): KitState => (u.ks ??= {});
 export function startPool(u: Unit, carried?: number): void {
   const pool = poolOf(u);
   if (!pool) return;
-  u.charge = carried !== undefined ? Math.min(CHARGE_MAX, carried) : ((pool === 'mana' ? RES.MANA_START : RES.STAM_START) / resMax(pool)) * CHARGE_MAX;
+  u.charge = carried !== undefined ? Math.min(CHARGE_MAX, carried) : Math.min(CHARGE_MAX, ((pool === 'mana' ? RES.MANA_START : RES.STAM_START) / topOf(u, pool)) * CHARGE_MAX);
 }
 
 /** A blow (or shot) this hero dealt landed. */
 export function poolOnDealt(u: Unit): void {
   const pool = poolOf(u);
-  if (pool) addRes(u, (pool === 'mana' ? RES.MANA_ON_BLOW : RES.STAM_ON_BLOW) * RES.PACE * skill2Pace(u, pool));
+  if (pool) addRes(u, (pool === 'mana' ? RES.MANA_ON_BLOW : RES.STAM_ON_BLOW) * RES.PACE * skill2Pace(u, pool) * fillOf(u, pool));
 }
 /** This hero was struck (a blow or a skill, not burning), or slipped a blow. */
 export function poolOnTaken(b: Battle, u: Unit, dodged = false): void {
   const pool = poolOf(u);
   if (!pool) return;
   if (!dodged) ks(u).hitAt = b.t;
-  if (pool === 'stamina') addRes(u, (dodged ? RES.STAM_ON_DODGE : RES.STAM_ON_HIT) * RES.PACE * skill2Pace(u, pool));
+  if (pool === 'stamina') addRes(u, (dodged ? RES.STAM_ON_DODGE : RES.STAM_ON_HIT) * RES.PACE * skill2Pace(u, pool) * fillOf(u, pool));
 }
 
-/** How much faster the pool comes back once skill 2 is open. */
-const skill2Pace = (u: Unit, pool: Pool): number => (skill2Open(u) ? (pool === 'mana' ? RES.SKILL2_PACE_MANA : RES.SKILL2_PACE_STAM) : 1);
+/** How much faster the pool comes back once skill 2 is open, and again once skill 3 is (for a kit that has one). */
+const skill2Pace = (u: Unit, pool: Pool): number =>
+  (skill2Open(u) ? (pool === 'mana' ? RES.SKILL2_PACE_MANA : RES.SKILL2_PACE_STAM) : 1) * (skill3Open(u) && heroKitOf(u)?.s3 ? RES.SKILL3_PACE : 1);
 
 /** The pool's refill a second: the pool's own, faster for a mana hero left alone, none while a stamina hero is winded; times the team's and its gear's refill. */
 export function regenOf(b: Battle, u: Unit): number {
   const pool = poolOf(u);
   if (!pool) return 0;
-  const k = RES.PACE * skill2Pace(u, pool) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0));
+  const k = RES.PACE * skill2Pace(u, pool) * fillOf(u, pool) * (b.traits?.charge ?? 1) * (1 + (u.eq?.charge ?? 0)) * relicCharge(b, u);
   const s = u.ks;
   if (pool === 'stamina') return s?.winded !== undefined && s.winded > b.t ? 0 : RES.STAM_REGEN * k;
   const focus = s?.hitAt === undefined || b.t - s.hitAt >= RES.FOCUS_MS ? RES.FOCUS_MULT : 1;
@@ -186,7 +280,8 @@ export function tickPool(b: Battle, u: Unit, tickMs: number): void {
 function fillUlt(u: Unit, n: number): void {
   const ult = ultimateOf(u);
   if (!ult || !u.alive || n <= 0) return;
-  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate')) * (u.ultPace ?? 1);
+  // (CHA's inspiration, STATS batch 6: the meter fills 3% faster a point, against the roster's mean)
+  const rate = (ultTune(u, ult)?.rate ?? 1) * (1 + tal(u, 'ultRate')) * (u.ultPace ?? 1) * ultFillOf(u);
   u.charge2 = Math.min(CHARGE_MAX, (u.charge2 ?? 0) + n * rate);
 }
 /** The ultimate meter's share of a fight's damage or healing: `amount` points of health dealt (or healed) or taken by a hero with a kit. */
@@ -197,37 +292,92 @@ export function ultOnDamage(u: Unit, amount: number, taken: boolean): void {
 
 /** Whether a hero's skill 2 is open at the level it fights at. */
 export const skill2Open = (u: Unit): boolean => (u.level ?? 1) >= SKILL2_LEVEL;
+/** Whether a hero's skill 3 is open at the level it fights at. */
+export const skill3Open = (u: Unit): boolean => (u.level ?? 1) >= SKILL3_LEVEL;
 
-/** What a skill costs this hero: its slot's cost, less for the skill a tier 3 hero's tier skill does not improve. */
-export function costOf(u: Unit, slot: Slot): number {
-  const tierSkill = kitOf(u)?.skill;
-  return (u.grade ?? 1) >= 3 && slot.skill !== tierSkill ? slot.cost * TIER3_DISCOUNT : slot.cost;
-}
+/** What a skill costs this hero: its slot's cost (the same at every rank since the skills overhaul's batch 3: the tier 3 discount went with the
+ *  tier skills). */
+export const costOf = (_u: Unit, slot: Slot): number => slot.cost;
 
-const gapOf = (pool: Pool, slot: Slot) => slot.gap ?? (pool === 'mana' ? RES.GAP_MANA_MS : RES.GAP_STAM_MS);
-const lastAt = (u: Unit, n: 1 | 2) => (n === 1 ? u.ks?.at1 : u.ks?.at2);
+/** The level each slot opens at (slot 1, 2, ...). */
+export const SLOT_LEVELS: readonly number[] = [1, SKILL2_LEVEL, SKILL3_LEVEL];
+/** Whether a hero's skill in slot `n` (1, 2, ...) is open at the level it fights at. */
+export const slotOpen = (u: Unit, n: number): boolean => (u.level ?? 1) >= (SLOT_LEVELS[n - 1] ?? Infinity);
+/** The open slots, from the highest down (skill 2 is weighed before skill 1). */
+const openSlots = (u: Unit, hk: HeroKit): number[] => hk.slots.map((_, i) => i + 1).filter((n) => slotOpen(u, n)).reverse();
 
-/** Whether the hero could cast this skill now: it can pay (pool and blood), and the gap since its last cast is past. */
-export function canPay(b: Battle, u: Unit, hk: HeroKit, n: 1 | 2): boolean {
-  const slot = n === 1 ? hk.s1 : hk.s2;
-  if (n === 2 && !skill2Open(u)) return false;
+type SlotKey = 'at1' | 'at2' | 'at3';
+type IdleKey = 'idle1' | 'idle2' | 'idle3';
+/** When slot `n` was last cast, and when it last found nothing to do. */
+export const lastAt = (u: Unit, n: number): number | undefined => u.ks?.[`at${n}` as SlotKey];
+const idleAt = (u: Unit, n: number): number | undefined => u.ks?.[`idle${n}` as IdleKey];
+
+/** Whether the hero could cast its skill in slot `n` now: it is open, it can pay (pool and blood), and its cooldown has run. */
+export function canPay(b: Battle, u: Unit, hk: HeroKit, n: number): boolean {
+  const slot = hk.slots[n - 1];
+  if (!slot || !slotOpen(u, n)) return false;
   if (resOf(u, hk.pool) + 1e-9 < costOf(u, slot)) return false;
   if (slot.hpCost && u.hp <= u.maxHp * slot.hpCost * 2) return false;
   const at = lastAt(u, n);
-  return at === undefined || b.t - at >= gapOf(hk.pool, slot);
+  return at === undefined || b.t - at >= cdOf(u, slot);
+}
+
+/** A hero's cooldown on a skill: the slot's (its class's and its skill level's), 2% shorter a point of INT against the roster's mean, at most
+ *  10% either way (STATS batch 6, `statRest.ts`), and never moved out of its class's range. */
+export function cdOf(u: Unit, slot: Slot): number {
+  // (DEPTH-BUILD: a bond or a rivalry within two tiles, `bonds.ts`)
+  // (the Nemesis War, phase 3: an Avenger against its partner's slayer)
+  const k = cooldownOf(u) * (u.bondCd ?? 1) * (u.avenge?.cd ?? 1);
+  if (k === 1) return slot.cd;
+  const [lo, hi] = CLASS_RANGE[slot.cls].cd;
+  return Math.max(Math.min(lo, slot.cd), Math.min(Math.max(hi, slot.cd), slot.cd * k));
+}
+
+/** Whether the hero is still taking its breath after its last cast. */
+const breathing = (b: Battle, u: Unit): boolean => u.ks?.breath !== undefined && b.t < u.ks.breath;
+
+/** The hero each skill belongs to (its home kit), by key: a book's skill keeps the ability it is cast with at home (`skillStatOf`). */
+let homes: Map<string, string> | undefined;
+function homeOf(key: string): string | undefined {
+  if (!homes) {
+    homes = new Map();
+    for (const [kind, hk] of Object.entries(HERO_KITS())) for (const s of hk.slots) if (!homes.has(keyOf(s.skill))) homes.set(keyOf(s.skill), kind);
+    for (const kind of Object.keys(HERO_KITS())) {
+      const ult = KITS[kind]?.ultimate;
+      if (ult && !homes.has(keyOf(ult))) homes.set(keyOf(ult), kind);
+    }
+  }
+  return homes.get(key);
+}
+/** How much a skill's own ability lifts it over the hero's blows (STATS batch 2: a spell by the casting ability, a breath by CON, a weapon
+ *  skill as its blows already are); 1 for a hero whose scores move nothing. */
+function statShare(me: Unit, s: Skill): number {
+  if (!me.stats) return 1;
+  const key = keyOf(s);
+  return skillShare(me.stats, skillStatOf(key, profileOf(homeOf(key) ?? me.def)));
 }
 
 /** Cast one of a hero's skills (it pays, and its marks are left on what it hit), or false if it had nothing to do. */
-function fire(b: Battle, me: Unit, hk: HeroKit, n: 1 | 2, out: BattleEvent[]): boolean {
-  const slot = n === 1 ? hk.s1 : hk.s2;
+function fire(b: Battle, me: Unit, hk: HeroKit, n: number, out: BattleEvent[]): boolean {
+  const slot = hk.slots[n - 1];
   const from = out.length;
-  if (!powered(b, me, slot.skill, slot.tune - 1, out)) return false;
+  // (a levelled skill's durations and Level 5 step sit on the caster's talents while it is cast: `skillLevels.ts`)
+  if (slot.mods) me.castMods = slot.mods;
+  let ok: boolean;
+  try {
+    ok = powered(b, me, slot.skill, slot.tune - 1, out, statShare(me, slot.skill));
+  } finally {
+    if (slot.mods) delete me.castMods;
+  }
+  if (!ok) return false;
+  noteCast(me, n, slot);
   const cost = costOf(me, slot);
   addRes(me, -cost);
   if (slot.hpCost) me.hp = Math.max(1, Math.round(me.hp - me.maxHp * slot.hpCost));
   const s = ks(me);
-  if (n === 1) s.at1 = b.t;
-  else s.at2 = b.t;
+  s[`at${n}` as SlotKey] = b.t;
+  // (with no breath, none is kept: an interrupted cast leaves the hero free at once, as before the rule)
+  if (RES.BREATH_MS > 0) s.breath = b.t + slot.skill.castMs + RES.BREATH_MS;
   if (hk.pool === 'stamina' && resOf(me, hk.pool) < 0.5) s.winded = b.t + RES.WINDED_MS;
   if (slot.onHit) {
     const hit = new Set<number>();
@@ -243,65 +393,108 @@ function fire(b: Battle, me: Unit, hk: HeroKit, n: 1 | 2, out: BattleEvent[]): b
   // (a talent's "charge back" gives back that share of what the cast cost)
   const refund = me.eq?.tal?.refund;
   if (refund) addRes(me, (cost * refund) / 100);
+  // (skill 3 counts as skill 1 for the talents' cast effects: most are cheap, quick jabs, which would otherwise double their worth)
   return began(b, me, slot.skill, out, n === 2 ? 'skill2' : 'skill');
 }
 
-/** Whether the hero should save skill 1's cost for skill 2. The two take turns: once skill 1 was the last cast, skill 1 waits for skill 2 while
- *  skill 2 has something to do (its `SKILL2_WHEN` look, `kits/when.ts`, and it did not just find nothing). Otherwise skill 1 waits only when saving
- *  would see skill 2 cast within the short hold. */
-function holding(b: Battle, me: Unit, hk: HeroKit): boolean {
-  if (!skill2Open(me)) return false;
-  const s = me.ks;
-  if (s?.idle2 !== undefined && b.t - s.idle2 < RES.IDLE_MS) return false;
-  const when = SKILL2_WHEN[keyOf(hk.s2.skill)];
-  if (when && !when(b, me)) return false;
-  const need = costOf(me, hk.s2) - resOf(me, hk.pool);
-  if (need <= 0) return false;
-  if (s?.at1 !== undefined && (s.at2 === undefined || s.at1 > s.at2)) return true;
-  const mana = hk.pool === 'mana';
-  const hold = mana ? RES.HOLD_MANA_MS : RES.HOLD_STAM_MS;
-  const at2 = s?.at2;
-  if (at2 !== undefined && b.t + hold < at2 + gapOf(hk.pool, hk.s2)) return false;
+/** Whether a skill has something to do, as far as saving for it goes: its `SKILL2_WHEN` look (`kits/when.ts`), and it did not just find nothing. */
+function hasWork(b: Battle, me: Unit, hk: HeroKit, m: number): boolean {
+  const idle = idleAt(me, m);
+  if (idle !== undefined && b.t - idle < RES.IDLE_MS) return false;
+  const when = SKILL2_WHEN[keyOf(hk.slots[m - 1].skill)];
+  return !when || when(b, me);
+}
+
+/** Whether the hero should pass over slot `n` to save for slot `m` (the design's step 5, the old holding rule made general): `m` is of a heavier
+ *  class and has something to do, its cooldown ends within the hold, and paying for `n` now would leave it short when its cooldown ends. So a
+ *  heavy skill is saved for (its cost is what holds it back), and a lighter one waits only while the heavier one is coming round. A jab is held
+ *  the same way (the skills overhaul's batch 4: at the measured income a jab cast whenever it is ready drinks nearly the whole refill, so the
+ *  design's "a jab is never held" starved the heavies); with nothing heavier coming round it jabs whenever its cooldown allows. */
+function holdsFor(b: Battle, me: Unit, hk: HeroKit, n: number, m: number): boolean {
+  const light = hk.slots[n - 1];
+  const heavy = hk.slots[m - 1];
+  if (CLASS_WEIGHT[heavy.cls] <= CLASS_WEIGHT[light.cls]) return false;
+  if (!hasWork(b, me, hk, m)) return false;
+  const hold = hk.pool === 'mana' ? RES.HOLD_MANA_MS : RES.HOLD_STAM_MS;
+  const at = lastAt(me, m);
+  const cdLeft = at === undefined ? 0 : Math.max(0, at + cdOf(me, heavy) - b.t);
+  if (cdLeft > hold) return false;
   const rate = Math.max(0.1, regenOf(b, me));
-  return (need / rate) * 1000 <= hold;
+  const res = resOf(me, hk.pool);
+  const cost = costOf(me, heavy);
+  return res - costOf(me, light) + (rate * cdLeft) / 1000 < cost;
+}
+
+/** Whether the hero should pass over slot `n` to save for another open slot. */
+function holding(b: Battle, me: Unit, hk: HeroKit, n: number): boolean {
+  for (let m = 1; m <= hk.slots.length; m++) if (m !== n && slotOpen(me, m) && holdsFor(b, me, hk, n, m)) return true;
+  return false;
 }
 
 /** Whether a mana healer must keep its heal's cost back: a friend is under `RESERVE_UNDER` and this skill is not the heal. */
-function reserve(b: Battle, me: Unit, hk: HeroKit, n: 1 | 2): boolean {
+function reserve(b: Battle, me: Unit, hk: HeroKit, n: number): boolean {
   if (hk.pool !== 'mana') return false;
-  const slot = n === 1 ? hk.s1 : hk.s2;
+  const slot = hk.slots[n - 1];
   if (slot.heals) return false;
-  const heal = hk.s1.heals ? hk.s1 : hk.s2.heals && skill2Open(me) ? hk.s2 : undefined;
+  const heal = hk.slots.find((x, i) => x.heals && slotOpen(me, i + 1));
   if (!heal) return false;
   if (!b.units.some((a) => a.alive && a.side === me.side && a.hp < a.maxHp * RES.RESERVE_UNDER)) return false;
   return resOf(me, hk.pool) - costOf(me, slot) < costOf(me, heal);
 }
 
-/** A free hero with a kit decides what to cast (the design's section 3): a queued ultimate; an emergency; the ultimate on Auto; skill 2, then skill 1,
- *  each when open, affordable, past its gap and with something to do (its cast's own check), skill 1 held back while skill 2 is nearly affordable.
- *  False when it casts nothing (it strikes or walks instead). */
+/** Once skill 3 is open, the open skills (not a guard) that have gone `RES.STALE_MS` without a cast (from the fight's start, for one never cast)
+ *  and have something to do, the longest idle first. */
+function staleSlots(b: Battle, me: Unit, hk: HeroKit, open: number[]): number[] {
+  if (!hk.s3 || !skill3Open(me)) return [];
+  const since = (n: number) => b.t - (lastAt(me, n) ?? 0);
+  return open.filter((n) => hk.slots[n - 1].cls !== 'guard' && since(n) >= RES.STALE_MS && hasWork(b, me, hk, n)).sort((x, y) => since(y) - since(x) || x - y);
+}
+
+/** The order a hero weighs its open skills in (the design's steps 4 and 6): heavy, then utility, then strike, then jab, then guard; among
+ *  equals the one cast longest ago first (so two strikes take turns), then the higher slot. A fixed order over the fight's state. */
+function pickOrder(me: Unit, hk: HeroKit, open: number[]): number[] {
+  const at = (n: number) => lastAt(me, n) ?? -Infinity;
+  return [...open].sort((x, y) => CLASS_WEIGHT[hk.slots[y - 1].cls] - CLASS_WEIGHT[hk.slots[x - 1].cls] || at(x) - at(y) || y - x);
+}
+
+/** A free hero with a kit decides what to cast (the design's section 3): a healer's revive; a queued ultimate; an emergency; the ultimate on
+ *  Auto; then its skills in `pickOrder`, each when open, affordable, off cooldown, past its breath and with something to do (its cast's own
+ *  check), a lighter one passed over while saving would soon pay for a heavier one (`holding`). False when it casts nothing (it strikes or walks instead). */
 export function castHero(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): boolean {
   // (a healer's revive goes before anything but an ultimate the player has queued, RPG-SPELLS batch 2)
   if (hk.s2.revive && me.ultOrder === undefined && castRevive(b, me, hk, out)) return true;
   const ult = ultimateOf(me);
-  if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false)) {
-    if (powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out)) {
+  // (a hero held by the party's tactic saves an ultimate that would carry it into the foe, `tactics.ts`)
+  if (ult && (me.charge2 ?? 0) >= ult.need && (me.ultOrder !== undefined || b.autoUlt !== false) && !(castGate.held && isOpener(ult))) {
+    // (the Nemesis War: an ultimate's blows on the nemesis that dreads this hero stagger it, `nemesisTraits.ts`)
+    NEM_CTX.ult = me.id;
+    const cast = powered(b, me, ult, (1 + tal(me, 'ultPow')) * (ultTune(me, ult)?.power ?? 1) - 1, out, statShare(me, ult));
+    NEM_CTX.ult = 0;
+    if (cast) {
       me.charge2 = (me.charge2 ?? 0) - ult.need;
       delete me.ultOrder;
       return began(b, me, ult, out, 'ult');
     }
   }
-  const order: (1 | 2)[] = skill2Open(me) ? [2, 1] : [1];
-  for (const n of order) {
-    const slot = n === 1 ? hk.s1 : hk.s2;
+  const open = openSlots(me, hk);
+  const breath = breathing(b, me);
+  // (emergencies: guards first, then the highest slot first; only a guard's ignores the breath)
+  const urgent = [...open].sort((x, y) => Number(hk.slots[y - 1].cls === 'guard') - Number(hk.slots[x - 1].cls === 'guard'));
+  for (const n of urgent) {
+    const slot = hk.slots[n - 1];
+    if (breath && slot.cls !== 'guard') continue;
+    if (castGate.held && isOpener(slot.skill)) continue;
     if (slot.emergency && canPay(b, me, hk, n) && slot.emergency(b, me) && fire(b, me, hk, n, out)) return true;
   }
-  for (const n of order) {
+  if (breath) return false;
+  const stale = staleSlots(b, me, hk, open);
+  for (const n of [...stale, ...pickOrder(me, hk, open).filter((x) => !stale.includes(x))]) {
     if (!canPay(b, me, hk, n)) continue;
-    if (n === 1 && holding(b, me, hk)) continue;
+    if (castGate.held && isOpener(hk.slots[n - 1].skill)) continue;
+    if (!stale.includes(n) && holding(b, me, hk, n)) continue;
     if (reserve(b, me, hk, n)) continue;
     if (fire(b, me, hk, n, out)) return true;
-    if (n === 2) ks(me).idle2 = b.t;
+    ks(me)[`idle${n}` as IdleKey] = b.t;
   }
   return false;
 }
@@ -323,7 +516,7 @@ export const ultFull = (u: Unit): boolean => {
 export function skillShown(u: Unit, key: string): string {
   const hk = heroKitOf(u);
   const kit = kitOf(u);
-  for (const s of [hk?.s1.skill, hk?.s2.skill, hk?.s2.revive?.skill, kit?.skill, ultimateOf(u), kit?.ultimate]) if (s && keyOf(s) === key) return s.name;
+  for (const s of [...(hk?.slots.map((x) => x.skill) ?? []), hk?.s2.revive?.skill, kit?.skill, ultimateOf(u), kit?.ultimate]) if (s && keyOf(s) === key) return s.name;
   return key;
 }
 
@@ -349,6 +542,7 @@ function castRevive(b: Battle, me: Unit, hk: HeroKit, out: BattleEvent[]): boole
   addRes(me, -reviveCost(hk));
   ks(me).atRev = b.t;
   b.revives = (b.revives ?? 0) + 1;
+  noteCast(me, 2, hk.s2, REVIVE_POINTS);
   raiseFallen(b, me, x, REVIVE.SHARE, out, (u) => startPool(u));
   return began(b, me, hk.s2.revive!.skill, out, 'skill2');
 }

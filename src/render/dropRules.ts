@@ -48,5 +48,6 @@ export function dropEnd(w = W, d = D): number {
   return end;
 }
 
-/** The ms a walker spends on one step: a hero's own pace, quickened for a walk between waves, within bounds. */
-export const stepMs = (moveMs: number): number => Math.max(230, Math.min(420, moveMs * 0.55));
+/** The ms a walker spends on one step between waves: the same brisk pace for every hero, whatever their own pace in a fight
+ *  (the owner's ask: a slow hero, or one going uphill, made the walk to the next section drag). Not a fight, so no hero is slower. */
+export const WALK_STEP_MS = 230;

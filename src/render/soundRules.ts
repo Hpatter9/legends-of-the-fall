@@ -9,6 +9,7 @@ import { keyOfKit, kitOf, ultKeyOf } from '../sim/abilities';
 import type { Shot } from '../sim/units';
 import { BIG_FOE_HP } from './skillFx';
 import { SPELL_ELEMENT, deathKind, impactElement, isBackstab, missileOf, skillElement, type Element } from './fxRules';
+import { soundOf } from '../sim/spellSounds';
 
 /** Every sound the page can make. The first group is the page's own (taps, summons, stingers); the rest are the fight's. */
 export type Cue =
@@ -29,6 +30,8 @@ export type Cue =
   | 'ultimate' | 'bossSkill' | 'kingCast' | 'kingSpell'
   // an ultimate's moment (ULT-EPIC, `ultMoment.ts`): the band slashing across, and the blow landing
   | 'ultSlash' | 'ultImpact'
+  // a boss's signature attack (BOSS-BIG, `bossFx.ts`): its windup's sting, and its blow landing, both darker than the ultimate's
+  | 'bossSlash' | 'bossImpact'
   // the summoning hall's build-up and stinger, and a ribbon slamming in
   | 'riseSummon' | 'stingSummon' | 'slam'
   // deaths
@@ -39,6 +42,9 @@ export type Cue =
   | 'coinRecycle' | 'coinClaim' | 'sparkle' | 'autoStart' | 'autoStop' | 'autoDone'
   // the cinematics' stings, for any scene to reuse: a boss arriving, and a victory
   | 'sceneBoss' | 'sceneVictory'
+  // the cinematics' shot language (CINE-001, `cineShots.ts`): a voice's blips under its words, a smash cut's hit, a whoosh through a
+  // flash or a snap zoom, a swell under a reveal
+  | 'blipQuill' | 'blipHero' | 'blipBoss' | 'blipBeast' | 'blipKing' | 'blipGoat' | 'cineHit' | 'cineWhoosh' | 'cineSwell'
   // the Last Stand: a boss wave is coming, and the king takes a hit
   | 'standBoss' | 'kingHit';
 
@@ -76,6 +82,16 @@ export const CUES: Record<Cue, CueSpec> = {
   kingHit: c(350, 500, 2, 2, 1),
   sceneBoss: c(0, 3000, 2, 2, 0.77),
   sceneVictory: c(0, 3000, 2, 2, 0.95),
+  // (the blips are faint on purpose: a texture under the words, never a beep)
+  blipQuill: c(45, 60, 1, 0, 0.35),
+  blipHero: c(45, 70, 1, 0, 0.4),
+  blipBoss: c(60, 110, 1, 0, 0.45),
+  blipBeast: c(60, 100, 1, 0, 0.4),
+  blipKing: c(45, 80, 1, 0, 0.4),
+  blipGoat: c(90, 120, 1, 0, 0.35),
+  cineHit: c(150, 900, 3, 3, 0.9),
+  cineWhoosh: c(150, 500, 2, 2, 1.2),
+  cineSwell: c(400, 2600, 2, 2, 0.8),
   setChime2: c(0, 1200, 3, 2, 0.76),
   setChime3: c(0, 1800, 4, 3, 0.71),
   coinRecycle: c(100, 600, 2, 1, 0.94),
@@ -137,6 +153,8 @@ export const CUES: Record<Cue, CueSpec> = {
   bossSkill: c(500, 900, 4, 3, 1.43),
   ultSlash: c(0, 700, 3, 3, 2.49),
   ultImpact: c(0, 1400, 5, 3, 1),
+  bossSlash: c(0, 900, 3, 3, 1.6),
+  bossImpact: c(0, 1600, 5, 3, 1),
   kingCast: c(0, 600, 2, 3),
   kingSpell: c(0, 1200, 3, 3),
 
@@ -224,6 +242,9 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: 'miss' }];
     case 'boom':
       return [{ cue: 'fireBoom', gain: 0.9 }];
+    // (BOSS-BIG: a boss's signature: its windup's dark sting, its blow's deep boom; a fizzle is quiet)
+    case 'bossSig':
+      return e.phase === 'warn' ? [{ cue: 'bossSlash' }] : e.phase === 'land' ? [{ cue: 'bossImpact' }] : [];
     case 'hazard':
       // (the living land: a strike is heard as it goes off; the river's current and a spring's welling are quiet)
       if (e.phase !== 'go') return [];
@@ -381,6 +402,8 @@ export function spellCues(id: keyof typeof SPELL_ELEMENT): Cued[] {
     case 'wolves': return [{ cue: 'windGust', gain: 0.8 }, { cue: 'shadowHum', gain: 0.5, delay: 100 }];
     // (each meteor's fall and boom come from its own `area` event)
     case 'starfall': return [{ cue: 'fireWhoosh', gain: 0.5 }];
+    // (a school's new spell borrows its cue: KING-SPELLS batch 4)
+    default: return spellCues(soundOf(id));
   }
 }
 

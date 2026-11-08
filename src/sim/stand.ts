@@ -11,6 +11,7 @@
 // again from it. Pure rules: no Pixi, no DOM; every draw is a side stream of the run's seed.
 
 import { ULT_FILL } from './heroKits';
+import { addUse, unitUse, type UseGain } from './skillLevels';
 import { grantOres, standOres, type OreDrop } from './awakenMats';
 import { startBattle, addUnit, stepBattle, TICK_MS, creditOf, FOG_RANGE, type Battle, type BattleEvent, type Boost, type Unit } from './battle';
 import { weatherOf } from './weather';
@@ -24,7 +25,9 @@ import { CLASS_OF } from './starter';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
 import { armyById, ARMIES, armyIndex, armyUnlocked } from './armies';
 import { mixSeed, Rng } from './rng';
-import { ALL_RELIC_IDS, mergeEffects, relicEffects, RELICS } from './relics';
+import { RELIC_IDS, convertRelics, fightRelics, mergeEffects, pickRelic, pricedFor, RELIC_BOOK, RELIC_NOTE, relicEffects, relicPriceOf, RELICS, type RelicMarks } from './relics';
+import { relicFoe, relicStart } from './relicFight';
+import { addRelicMarks, relicCtx } from './run';
 import { fxStart } from './equipFx';
 import { kindsOf, traitEffects } from './traits';
 import { killXp, levelOfKind } from './levels';
@@ -32,12 +35,15 @@ import { boostOf, FOE_START } from './run';
 import { heroBoost, manaRate, moveRate, type Castle } from './castle';
 import { heroRank, type Meta, type StashChest } from './meta';
 import { heroStats } from './talents';
+import { legacyBoost } from './legacy';
+import { birthrightSnapshot } from './heirs';
 import { awakenedOf } from './awaken';
 import { chestsFor, gearChance, settleTower } from './tower';
 import type { Run } from './run';
 import { grantEquipment, rollEquipment, itemName } from './equipment';
 import { UNITS } from './units';
 import { ailmentsOf } from './ailments';
+import { depthProficiency, STAND_PROF_PER } from './stats';
 
 /* ------------------------------------------------------------------ the numbers */
 
@@ -56,16 +62,18 @@ export const WAVE_START = FOE_START;
 export const WAVE_GROWTH = 0.4;
 /** From wave `WAVE_KNEE` on the climb eases to `WAVE_GROWTH_LATE` a wave: steep at first, so the early waves bite at once; gentler later, so a stronger party still goes further. */
 export const WAVE_KNEE = 10;
-export const WAVE_GROWTH_LATE = 0.26;
+export const WAVE_GROWTH_LATE = 0.39; // (the joint rebalance: 0.35 to 0.39, a level-30 stand back to wave 15, docs/notes/joint-rebalance.md)
 /** The castle's rooms (STAND-003) bring the foes in by two or three breaches, onto the posts: their strength is eased by this to keep the agreed pace
- *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: now 0.88, with a steeper late and deep climb). */
-export const HALL_EASE = 0.88;
+ *  (0.85 until the idle heroes went to help, STAND-004, which made the waves easier: 0.88, with a steeper late and deep climb; SPELLS-RETUNE 1.2, so a
+ *  stand whose Auto casts the king's spells holds the waves it did for a bot that never cast, `docs/notes/spells-retune.md`; KING-SPELLS batch 6 1.36 (1.3 on main 0.346.0), for the default
+ *  ruler's player with his school, Decree and ranks, `docs/notes/king-spells-b6.md`). */
+export const HALL_EASE = 1.3; // (FOE-STYLES composed on 1.36: 1.2 to 1.15, x0.958)
 /** From wave `WAVE_DEEP` the climb steepens again by `WAVE_GROWTH_DEEP` a wave (STAND-003: the strongest parties kept near the agreed pace, about wave 25 at level 100;
  *  STAND-004 moved it from wave 22 at 0.6 to wave 18 at 0.35, and the late climb from 0.1 to 0.14, for the heroes who go to help; ULT-CHARGE, for the
  *  ultimates that now come round about once a wave, the late climb to 0.2 and the deep one to 0.29, so the climb past wave 18 is as steep as it was;
  *  STATUS-FX, for the heroes' ailments, which carried a level-30 party three waves further, the late climb to 0.26 and the deep one to 0.24). */
 export const WAVE_DEEP = 18;
-export const WAVE_GROWTH_DEEP = 0.24;
+export const WAVE_GROWTH_DEEP = 0.21; // (FOE-STYLES: 0.22 to 0.21, with `HALL_EASE`) (the joint rebalance: 0.24 to 0.22, with the steeper late climb, so a level-100 stand keeps about wave 25)
 /** A wave's size: foes at wave 1 and the foes each wave adds. */
 export const WAVE_BASE = 4;
 export const WAVE_STEP = 2;
@@ -148,8 +156,16 @@ export interface StandRun {
   heroes: StandHero[];
   nextId: number;
   relics: string[];
+  /** RELICS-2: the run's tally the growing relics read (waves won, elites felled, heroes fallen, the Phoenix's rises); absent until a wave is cleared. */
+  relicMarks?: RelicMarks;
+  /** The relics' catalogue the run was saved with (`RELIC_BOOK`); absent in a save from before RELICS-2, converted as it loads. */
+  relicBook?: number;
+  /** A line for the next break, once (the relics converted). */
+  relicNote?: string;
   /** The relics holding the line has paid this run (STAND-HOLD-RELIC; already in `relics` too). Absent until one is won. */
   heldRelics?: string[];
+  /** How many times the line has been held (the bonus wave won) this run (QUESTS-1b); none in a run from before. */
+  holds?: number;
   offer: string[];
   /** The king's health as a share of the whole. */
   king: number;
@@ -160,6 +176,9 @@ export interface StandRun {
   over: boolean;
   best: number;
   summary?: StandSummary;
+  /** Skill levels by use (the skills overhaul's batch 5, `skillLevels.ts`): the use points the guard's skills have earned in the waves fought so
+   *  far, by hero kind and skill key, counted into the save when the run ends. Absent until a wave is fought (and in older saves). */
+  use?: UseGain;
 }
 
 /** What a finished run pays (kept on the run, shown on the end screen). */
@@ -176,6 +195,8 @@ export interface StandSummary {
   relics: number;
   /** How many of them holding the line paid (absent when none). */
   heldRelics?: number;
+  /** How many times the line was held (absent when none). */
+  holds?: number;
   newBest: boolean;
   /** Rift ores a new record paid (`awakenMats.ts`: a couple for each tenth wave passed for the first time); missing when none. */
   ores?: OreDrop[];
@@ -251,6 +272,8 @@ export interface Stand {
   kingGrace: number;
   /** The idle heroes' helping (`standHelp.ts`): who has had nothing to do since when; not saved. Absent on a stand made by hand is a fresh one. */
   help?: HelpBook;
+  /** The fallen heroes whose last wave's use has been counted (`foldUse`); not saved (a run built again leaves the fallen off the field). */
+  useDown?: number[];
   /** The retreat (STAND-RETREAT): the choice's time left, the walk's time left, the bonus wave under way, when the last foes' running is over. */
   choiceLeft?: number;
   retreatLeft?: number;
@@ -349,10 +372,12 @@ export const standContinueLine = (run: StandRun): string => `Wave ${run.wave} ·
 /** The setup of a save: the kinds' boosts as the armies would give them. */
 export function setupFromMeta(m: Meta): StandSetup {
   return {
-    boost: (kind) => ({
-      ...boostOf({ id: 0, kind, grade: 1 }, heroRank(m, kind), levelOfKind(m, kind), heroStats(m, kind)),
-      ...(awakenedOf(m, kind) ? { awaken: awakenedOf(m, kind) } : {}),
-    }),
+    // (Dynasties, phase 6: a fielded bearer's birthright counts where talents do, the Last Stand among them; a save with no heir has none)
+    boost: (kind) =>
+      legacyBoost(birthrightSnapshot(m, [kind]), kind, {
+        ...boostOf({ id: 0, kind, grade: 1 }, heroRank(m, kind), levelOfKind(m, kind), heroStats(m, kind)),
+        ...(awakenedOf(m, kind) ? { awaken: awakenedOf(m, kind) } : {}),
+      }),
     castle: m.castle,
   };
 }
@@ -371,8 +396,12 @@ export function newStandRun(seed: number, party: readonly string[], armies: read
 function boostFor(s: Stand, h: StandHero): Boost {
   const base = s.setup.boost(h.kind);
   const lv = lvMult(h.lv);
-  return { ...base, hp: (base.hp ?? 1) * lv.hp, atk: (base.atk ?? 1) * lv.atk };
+  return { ...base, hp: (base.hp ?? 1) * lv.hp * backOf(s.b, h.kind), atk: (base.atk ?? 1) * lv.atk };
 }
+
+/** RELICS-2: the Sentry's Cloak's back row in the Last Stand is its inner ring (the shooters and healers by the king, farthest from the
+ *  foes; `roleOfKind`): their health is this much more. */
+const backOf = (b: Battle, kind: string): number => (b.relics?.hooks?.backHp && roleOfKind(kind) === 'inner' ? 1 + b.relics.hooks.backHp : 1);
 
 /** Whether a hero of the run is on the field: posted, and not fallen. */
 export const standing = (h: StandHero): boolean => !!h.post && !h.fallen;
@@ -385,16 +414,16 @@ export const roleOfKind = (kind: string): Role => (UNITS[kind] && isTank(UNITS[k
 
 /** The battle, the king and the run's heroes: a run from a save (the heroes whole; those with a post on it, the rest to be placed). */
 export function startStand(run: StandRun, setup: StandSetup): Stand {
-  const rl = relicEffects(run.relics);
+  const rl = relicEffects(run.relics, relicCtx(run));
   const castle = heroBoost(setup.castle);
   const mana = manaRate(setup.castle) * (rl.mana ?? 1);
-  const { atk, hp, mana: _m, first, revive, gold: _g, set, ...team } = rl;
+  const { atk, hp, relics } = fightRelics(rl);
   const b = startBattle(run.seed, [], {
     board: standBoard(run.seed, undefined, run.hall ?? hallOf(run.seed)),
     heroes: { hp: castle.hp! * (hp ?? 1), atk: castle.atk! * (atk ?? 1) },
     mana,
     move: moveRate(setup.castle),
-    relics: { team, first, revive, set },
+    relics: relics ?? { team: {} },
   });
   b.phase = 'fight';
   const king = addUnit(b, KING_DEF, KING_AT.u, KING_AT.v, { size: 1.25 });
@@ -572,7 +601,10 @@ function beginWave(s: Stand, hold?: WaveSpec): void {
   s.waveAt = b.t;
   s.rageAt = b.t + ENRAGE_AFTER;
   b.revived = false;
-  b.foeBoost = { hp: spec.hp, atk: spec.atk };
+  // (RELICS-2: a wave is the Last Stand's fight for the relics' start-of-fight rules: the king's first mana, the Ember's and the Ring's prices)
+  relicStart(b, true);
+  // (the foes' proficiency by the wave, the joint rebalance's depth: +2, and +1 each `STAND_PROF_PER` waves)
+  b.foeBoost = { hp: spec.hp, atk: spec.atk, prof: depthProficiency(run.wave, STAND_PROF_PER) };
   const gap = Math.max(100, Math.min(600, SPAWN_SPAN / spec.foes.length));
   s.queue = spec.foes.map((def, i) => ({
     at: i * gap,
@@ -617,10 +649,13 @@ export function goNow(s: Stand): boolean {
 
 /** A relic offer for the break before wave `n`: up to `OFFER` unowned ones, drawn from a side stream of the run. */
 export function drawOffer(run: StandRun, n: number): string[] {
-  const rest = ALL_RELIC_IDS.filter((id) => !run.relics.includes(id));
+  const rest = RELIC_IDS.filter((id) => !run.relics.includes(id));
   const rng = new Rng(mixSeed(run.seed, 0x57a7, n));
   const out: string[] = [];
-  while (out.length < OFFER && rest.length) out.push(rest.splice(rng.int(0, rest.length - 1), 1)[0]);
+  while (out.length < OFFER && rest.length) {
+    const id = pickRelic(() => rng.next(), rest);
+    out.push(rest.splice(rest.indexOf(id), 1)[0]);
+  }
   return out;
 }
 
@@ -628,9 +663,12 @@ export function drawOffer(run: StandRun, n: number): string[] {
 function clearWave(s: Stand): void {
   const run = s.run;
   const n = run.wave;
-  const gold = clearGold(n) + (relicEffects(run.relics).gold ?? 0);
+  const gold = Math.max(0, clearGold(n) + (relicEffects(run.relics, relicCtx(run)).gold ?? 0));
   run.gold += gold;
   run.earned += gold;
+  // (RELICS-2: the wave's tally for the growing relics, and their new size)
+  standMarks(s);
+  foldUse(s);
   for (const h of run.heroes) if (standing(h)) giveXp(s, h, waveXp(n));
   // (the heroes standing get their breath back: the hurt mend a little; the fallen stay down)
   for (const u of s.b.units) {
@@ -680,9 +718,10 @@ export function fallBack(s: Stand): boolean {
  * every other draw are as they were). Null when every relic is owned.
  */
 export function holdRelic(run: Pick<StandRun, 'seed' | 'relics'>, n: number): string | null {
-  const rest = ALL_RELIC_IDS.filter((id) => !run.relics.includes(id));
+  const rest = RELIC_IDS.filter((id) => !run.relics.includes(id));
   if (!rest.length) return null;
-  return rest[new Rng(mixSeed(run.seed, 0x401e, n)).int(0, rest.length - 1)];
+  const rng = new Rng(mixSeed(run.seed, 0x401e, n));
+  return pickRelic(() => rng.next(), rest);
 }
 
 /** What holding the line after wave `n` pays: `holdGold(n)` and a relic, or, when every relic is owned, twice the gold and no relic. */
@@ -700,8 +739,12 @@ function clearHold(s: Stand): void {
   const n = run.wave - 1;
   const relic = holdRelic(run, n);
   const gold = holdPurse(run, n).gold;
+  // (QUESTS-1b: every hold of the line won is counted, relic or none, for the quests that ask for one)
+  run.holds = (run.holds ?? 0) + 1;
   run.gold += gold;
   run.earned += gold;
+  standMarks(s);
+  foldUse(s);
   if (relic) {
     takeRelic(s, relic);
     run.heldRelics = [...(run.heldRelics ?? []), relic];
@@ -883,6 +926,7 @@ export function stepStand(s: Stand): BattleEvent[] {
       const foe = addUnit(b, sp.def, at.u, at.v, sp.boost);
       foe.facing = at.v === 0 ? 1 : at.v === FIELD_LAST ? 3 : at.u === 0 ? 0 : 2;
       if (b.relics?.first) foe.busyUntil = b.t + b.relics.first;
+      relicFoe(b, foe);
     }
     // (a wave that drags on is enraged)
     if (b.t >= s.rageAt) {
@@ -933,6 +977,22 @@ export function stepStand(s: Stand): BattleEvent[] {
 
 const FIELD_LAST = 23;
 
+/** A wave is over (cleared, held or lost): what the guard's skills earned in it goes into the run's tally (`skillLevels.ts`): each hero's casts
+ *  this wave, and the wave's points for each open skill of every hero that stood in it or fell in it (one fallen in an earlier wave is
+ *  counted no more). The casts are taken off the fighters, so the next wave counts from nothing. */
+function foldUse(s: Stand): void {
+  const done = (s.useDown ??= []);
+  for (const u of s.b.units) {
+    if (u.side !== 'hero' || u.tag === undefined || u.owner !== undefined) continue;
+    const id = Number(u.tag);
+    if (done.includes(id)) continue;
+    if (!u.alive) done.push(id);
+    const gain = unitUse(u);
+    delete u.usePts;
+    if (Object.keys(gain).length) addUse((s.run.use ??= {}), { [u.def]: gain });
+  }
+}
+
 /** A hero whose unit has fallen is marked so, for good: no rising at the clear, no XP, no levels, and it is left off the field when the run is built again. */
 function markFallen(s: Stand): void {
   for (const h of s.run.heroes) {
@@ -964,6 +1024,8 @@ function dropCorpses(s: Stand): void {
 }
 
 function endRun(s: Stand, events: BattleEvent[]): BattleEvent[] {
+  // (the wave the king fell in was fought too: its skills' use counts)
+  if (s.phase === 'wave') foldUse(s);
   s.phase = 'over';
   s.run.over = true;
   s.run.king = 0;
@@ -995,13 +1057,17 @@ export function buyLevel(s: Stand, id?: number): number | null {
 }
 
 /** The price of the relic at `i` of the offer. */
-export const offerCost = (s: Stand): number => relicCost(s.run.relics.length, s.run.wave);
+export const offerCost = (s: Stand, i = 0): number => {
+  const base = relicCost(s.run.relics.length, s.run.wave);
+  // (RELICS-2: a Rare costs half as much again, and the Tax Ingot makes every price dearer)
+  return pricedFor(s.run.relics, s.run.offer[i] ? relicPriceOf(s.run.offer[i], base) : base);
+};
 
 /** Buy the relic at `i` of the break's offer: it works at once for the whole team. */
 export function buyRelic(s: Stand, i: number): string | null {
   const id = s.run.offer[i];
-  if (!id || s.phase === 'over' || s.run.gold < offerCost(s)) return null;
-  s.run.gold -= offerCost(s);
+  if (!id || s.phase === 'over' || s.run.gold < offerCost(s, i)) return null;
+  s.run.gold -= offerCost(s, i);
   s.run.offer.splice(i, 1);
   takeRelic(s, id);
   return id;
@@ -1010,10 +1076,32 @@ export function buyRelic(s: Stand, i: number): string | null {
 /** A relic joins the run (bought, or paid for holding the line): it works at once for the whole team. */
 function takeRelic(s: Stand, id: string): void {
   s.run.relics.push(id);
-  const rl = relicEffects(s.run.relics);
+  refreshRelics(s);
+}
+
+/** A wave won (cleared, or the line held): the battle's tally added to the run's, and the growing relics given their new size. */
+function standMarks(s: Stand): void {
+  addRelicMarks(s.run, { phase: 'won', relicTally: s.b.relicTally } as Battle);
+  s.b.relicTally = undefined;
+  refreshRelics(s);
+}
+
+/** The relics as the run holds them now, put on the battle: hp and attack rise at once by the difference from what they gave before. */
+function refreshRelics(s: Stand): void {
+  const rl = relicEffects(s.run.relics, relicCtx(s.run));
   const b = s.b;
-  const { atk, hp, mana, first, revive, gold: _g, set, ...team } = rl;
-  b.relics = { team, first, revive, set };
+  const { atk, hp, relics } = fightRelics(rl);
+  const mana = rl.mana;
+  // (the Sentry's Cloak taken now: the inner ring's health rises by it at once, as `boostFor` gives it to heroes placed later)
+  const back = new Map(heroUnits(s).map((u) => [u.id, backOf(b, u.def)]));
+  b.relics = relics ?? { team: {} };
+  for (const u of heroUnits(s)) {
+    const r = backOf(b, u.def) / back.get(u.id)!;
+    if (r === 1) continue;
+    const was = u.maxHp;
+    u.maxHp = Math.round(u.maxHp * r);
+    u.hp = Math.min(u.maxHp, u.hp + (u.maxHp - was));
+  }
   // (hp and attack rise at once, by the difference from what the relics gave before)
   const rh = (hp ?? 1) / s.relicHp;
   const ra = (atk ?? 1) / s.relicAtk;
@@ -1070,8 +1158,10 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
   const open = armies.filter((id) => armyById(id) && armyUnlocked(m, id));
   const army = armyById(open[Math.min(open.length - 1, Math.floor(cleared / 13))] ?? ARMIES[0].id)!;
   let n = 0;
+  // (QUESTS-3: stones only in the chests of a new best; a climb that does not pass the record pays crowns and gear)
+  const dry = !(run.best > (m.stand ?? 0));
   const give = (at: number, count: number) => {
-    for (let i = 0; i < count; i++) m.stash.push({ army: army.id, at, tier: 0, seed: mixSeed(run.seed, 0x70e7, ++n), tower: true } satisfies StashChest);
+    for (let i = 0; i < count; i++) m.stash.push({ army: army.id, at, tier: 0, seed: mixSeed(run.seed, 0x70e7, ++n), tower: true, ...(dry ? { dry: true } : {}) } satisfies StashChest);
   };
   give(3, c.bronze);
   give(5, c.silver);
@@ -1091,13 +1181,13 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
   // (the room the king fell in, and the furthest act of the retreat a run has reached: STAND-RETREAT)
   const room = hallNow(run);
   if (run.act !== undefined) m.standAct = Math.max(m.standAct ?? 0, run.act);
-  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, ...(run.heldRelics?.length ? { heldRelics: run.heldRelics.length } : {}), newBest, ...(ores.length ? { ores } : {}), room, ...(run.act !== undefined ? { act: run.act } : {}), ...(run.retreat?.hold ? { held: true } : {}) };
+  run.summary = { best: run.best, cleared, crowns, ...c, gear, kills: run.kills, heroes: run.heroes.length, relics: run.relics.length, ...(run.heldRelics?.length ? { heldRelics: run.heldRelics.length } : {}), ...(run.holds ? { holds: run.holds } : {}), newBest, ...(ores.length ? { ores } : {}), room, ...(run.act !== undefined ? { act: run.act } : {}), ...(run.retreat?.hold ? { held: true } : {}) };
   return run.summary;
 }
 
 export const STAND_KEY = 'legends.stand';
 
-export const saveStand = (run: StandRun, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(STAND_KEY, JSON.stringify(run));
+export const saveStand = (run: StandRun, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(STAND_KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
 export const dropStand = (store: Pick<Storage, 'removeItem'> = localStorage) => store.removeItem(STAND_KEY);
 /** The run saved in the Last Stand's slot, if it is a run still going. */
 export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): StandRun | null {
@@ -1108,7 +1198,20 @@ export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): Stand
     const act = Number.isInteger(r.act) && r.act! >= 0 && r.act! <= 3 ? r.act : undefined;
     const retreat = r.retreat && isHall(r.retreat.to) ? { to: r.retreat.to } : undefined;
     const heldRelics = Array.isArray(r.heldRelics) ? r.heldRelics.filter((id) => typeof id === 'string') : undefined;
-    return { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: isHall(r.hall) ? r.hall : undefined, act, retreat, heldRelics };
+    const out: StandRun = { ...r, offer: Array.isArray(r.offer) ? r.offer : [], armies: Array.isArray(r.armies) ? r.armies : [], hall: isHall(r.hall) ? r.hall : undefined, act, retreat, heldRelics };
+    // (RELICS-2: a run saved before the relics were catalogued anew: the merged ones renamed, a pair now one paid back in gold, one line for the break)
+    if (out.relicBook !== RELIC_BOOK) {
+      const first = out.relicBook === undefined;
+      const { ids, refund, changed } = convertRelics(out.relics);
+      const had = out.relics.length > 0 && (first || changed);
+      out.relics = ids;
+      out.gold += refund;
+      out.offer = convertRelics(out.offer).ids.filter((id) => !ids.includes(id));
+      if (out.heldRelics) out.heldRelics = convertRelics(out.heldRelics).ids;
+      out.relicBook = RELIC_BOOK;
+      if (had) out.relicNote = RELIC_NOTE;
+    }
+    return out;
   } catch {
     return null;
   }

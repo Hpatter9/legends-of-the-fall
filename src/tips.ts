@@ -22,19 +22,19 @@ interface TipDef {
 }
 
 export const TIPS: Readonly<Record<TipId, TipDef>> = {
-  home: { text: 'Start a New run to send your heroes out.', page: 'home' },
+  home: { text: 'Tap Choose your battle to send your heroes out.', page: 'home' },
   deploy: { text: 'Drag your heroes onto the blue tiles. High ground hits harder; blows from behind hit hardest.', page: 'game', during: 'deploy' },
   fight: { text: 'Press Fight! Your heroes fight on their own.', page: 'game', during: 'deploy' },
   mana: { text: 'Tap a spell card, then a tile, to cast.', page: 'game', during: 'fight' },
   skill: { text: 'Heroes cast their skills on their own, paid from the blue mana or gold stamina bar under each portrait.', page: 'game', during: 'fight' },
-  ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto switch fires them for you.', page: 'game', during: 'fight' },
+  ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto switch fires them for you, and casts your spells too.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Drag a hero onto another of the same kind and star to merge them into a stronger one (up to four stars), or tap one then the other. Beating the second army unlocks Auto merge.', page: 'game', during: 'deploy' },
   crowns: { text: 'Crowns buy chests in the Recruit tab, and chests hold summoning stones. Each stone gives a hero shard. Army stars open the Castle, the Last Stand and the Calamity.', page: 'home' },
   calamity: { text: 'Calamity: start with one hero, recruit a team and evolve your altar across three regions. Your starter grows stronger.', page: 'home' },
   tower: { text: 'Last Stand: guard your ruler on the keep as wave after wave comes in from every side. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
   castle: { text: 'Each build takes real time, and the builders do one at a time. It carries on while the game is closed.', page: 'home' },
-  spellbook: { text: 'The Chapel holds the ruler\'s spells. Pick three, within the power budget, to cast in a fight.', page: 'home' },
+  spellbook: { text: 'The Chapel holds your spells: three of your ruler\'s school and one of any. Spare mana fills your Decree.', page: 'home' },
   stash: { text: 'Chests from army stars wait on the cart. Tap one to open it.', page: 'home' },
   equipment: { text: 'Equip best puts the strongest spare gear on this hero. Chests drop more.', page: 'any' },
   recycle: { text: 'Drag a hero you do not need onto Recycle to turn it back into gold.', page: 'game', during: 'deploy' },
@@ -253,6 +253,8 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 function pageUp(page: TipDef['page']): boolean {
   const up = (id: string) => !$(id).hidden;
   if (up('gacha')) return false;
+  // (a game tip waits while a sheet, a card or a film is over the board: the party picker, Settings, an unlock or a cutscene)
+  if (page === 'game' && (up('party') || up('settings') || document.querySelector('.rvCard, .unlock, #cutscene:not([hidden])'))) return false;
   if (page === 'any') return true;
   if (page === 'result') return !up('home') && up('result');
   return page === 'home' ? up('home') : !up('home') && !up('result');

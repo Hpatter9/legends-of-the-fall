@@ -5,6 +5,8 @@
 // (`tower.ts`) that opens once a run has fought stage 10; its floors are the run's own stages. Pure rules: no Pixi, no DOM; the
 // date is passed in as yyyymmdd.
 
+import { newRunes } from './runes';
+import { grantRemedy } from './remedies';
 import { checkAchievements, type Achievement } from './achievements';
 import type { Battle } from './battle';
 import { dailyArea, dailySeed, dateKey } from './dailySeed';
@@ -12,10 +14,11 @@ import { dailyBossName, dailyChestSeed, dailyWaveCrowns, DAILY_WAVES } from './d
 import { kindPower, powerOf } from './power';
 import { levelOfKind } from './levels';
 import { ULT_LEVEL } from './abilities';
-import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, START_GOLD, SUMMON_BASE, type Run } from './run';
+import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, tierOfRun, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { RIFT_ROWS } from './rift';
+import { noteHeart } from './vaelkharHeart';
 import { CAL_SCALE, CAL_START_GOLD } from './calamity';
 import { armyUnlocked, ARMIES } from './armies';
 import { modeOpen, MODE_NEED, opensAt } from './modeUnlock';
@@ -23,8 +26,17 @@ import { HEROES } from './units';
 import type { Meta } from './meta';
 import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
+import { noteWeakness, type WeakNote } from './weakness';
+import { noteBonds, type BondNote } from './bonds';
+import { openWar, type NemNote } from './nemesis';
+import { endOfRun, noteWar, turnLines } from './council';
+import type { NemesisTally } from './nemesisLog';
 import { noteCombos } from './combos';
 import { dailyTheme, themeGoalText, themePool } from './dailyThemes';
+import { noteQuests, offerAfterFight, questFightOf, type FightExtra } from './quests';
+import { noteBattleWon } from './questRun';
+import { noteChains } from './eidolonChains';
+import { shopArmyIndex } from './chestShop';
 
 /** The stage the endless tower opens at (reached in any run), or once the first army has been beaten. */
 export const TOWER_UNLOCK = 10;
@@ -52,6 +64,9 @@ export function dailyRun(date: number, practice = false, scale = 1): Run {
     area: dailyArea(date),
     mode: { kind: 'daily', date, practice, ...(scale > 1 ? { scale } : {}), ...(theme ? { theme: theme.id } : {}) },
     stars: 0,
+    // (RUN-GEAR: it finds real pieces; the page sets `findAt` to the save's furthest army for their item levels; SEVEN-SLOT GEAR: runes)
+    real: true,
+    runes: newRunes(),
   };
   for (const kind of five) {
     run.roster.push({ id: run.nextId, kind, grade: 1 });
@@ -85,7 +100,10 @@ export function startDaily(m: Meta, date: number): Run {
   const entry = (m.daily[key] ??= { best: 0, plays: 0 });
   const practice = entry.plays > 0;
   entry.plays++;
-  return dailyRun(date, practice, dailyScale(m, date));
+  const run = dailyRun(date, practice, dailyScale(m, date));
+  // (RUN-GEAR: its finds' item levels follow the save's furthest army)
+  run.findAt = shopArmyIndex(m);
+  return run;
 }
 
 /** The daily run saved for a date, if it is still going (so Daily resumes it rather than starting over). */
@@ -155,6 +173,8 @@ export function settleDaily(m: Meta, run: Run, fight: { won: boolean; stage: num
     entry.stars = bonus;
     m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, date), daily: date, bonus });
     chest = true;
+    // (SEVEN-SLOT GEAR batch 6: a cleared daily gives a Bandage Roll)
+    grantRemedy(m, 'bandage');
   }
   if (run.over) {
     entry.over = true;
@@ -169,7 +189,7 @@ export function settleDaily(m: Meta, run: Run, fight: { won: boolean; stage: num
  * it stands, and the first act's map (`tower.ts`).
  */
 export function towerRun(seed: number, m: Meta): Run {
-  const run: Run = { seed, gold: START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.party], castle: { ...m.castle }, local: true };
+  const run: Run = { seed, gold: START_GOLD + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.party], castle: { ...m.castle }, local: true, real: true, runes: newRunes(), findAt: shopArmyIndex(m) };
   for (const kind of m.party) run.squad.push(recruit(run, kind, SUMMON_BASE).id);
   run.mode = { kind: 'tower' };
   run.tower = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
@@ -180,7 +200,7 @@ export function towerRun(seed: number, m: Meta): Run {
 export function calamityRun(seed: number, m: Meta, hero: string, ascension = 0): Run {
   const level = Math.max(0, Math.min(Math.floor(ascension) || 0, ascUnlocked(m)));
   const kind = m.unlocked.includes(hero) ? hero : m.party[0];
-  const run: Run = { seed, gold: Math.max(0, CAL_START_GOLD - ascRules(level).startGold) + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true };
+  const run: Run = { seed, gold: Math.max(0, CAL_START_GOLD - ascRules(level).startGold) + bonusGold(m.castle), stage: 1, summons: 0, roster: [], nextId: 1, squad: [], over: false, best: 1, pool: [...m.unlocked], castle: { ...m.castle }, local: true, real: true, runes: newRunes(), findAt: shopArmyIndex(m) };
   run.squad.push(recruit(run, kind, 0).id);
   run.mode = level ? { kind: 'calamity', ascension: level } : { kind: 'calamity' };
   const t = newTower(seed, ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id), m.tower);
@@ -203,18 +223,49 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle }): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote; /** The page's day key (the Council's turn after a run, and the War Trophies' daily cap); the tools leave it out, and no turn is taken. */ day?: number } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
   const boss = fixed ? (isBossRun(run, fight.stage) ? fixed.waves[fight.stage - 1].foes[0] : '') : run.tower ? run.tower.lastBoss ?? '' : isBossStage(fight.stage) ? bandFor(fight.stage) : '';
-  if (fight.won && boss && !m.bosses.includes(boss)) m.bosses.push(boss);
+  // (a quest battle's boss is a named stand-in on a boss's look: it is not that boss beaten)
+  const quest = run.mode?.kind === 'quest';
+  // (nor is the Warchief's Muster's last: its boss is the warchief, any fighter at the head of his army's last band)
+  if (fight.won && boss && !quest && run.mode?.kind !== 'muster' && !m.bosses.includes(boss)) m.bosses.push(boss);
   if (run.mode?.kind === 'tower') m.tower = Math.max(m.tower, floorsCleared(run));
+  // (VAELKHAR-HEART: a run that holds his Heart is noted in the save)
+  noteHeart(m, run.relics);
   // (the codex notes the foes this fight met and felled)
   if (fight.battle) noteFoes(m, fight.battle);
+  // (DEPTH-BUILD: the bosses' weaknesses: clues by meeting, escorts and losing; a Hunter's mark for a win with one used; not for a quest's stand-in)
+  if (fight.battle && !quest) fight.weak = noteWeakness(m, fight.battle, fight.won, tierOfRun(run));
+  // (DEPTH-BUILD: bond points, in the armies only: a won wave gives every pair placed together one)
+  if (fight.battle && run.mode?.kind === 'army' && fixed) fight.bonds = noteBonds(m, fight.battle, fight.won);
+  // (the Nemesis War: the nemeses met are slain or promoted, and the foes who slew, maimed or escaped are named; the War opens on the
+  // Undead Legion's first Normal clear, `nemesis.ts`)
+  // (phase 2: and what it means for the Dark Council, `council.ts`; an army run that has ended gives the Council its turn)
+  if (fight.battle && !quest) fight.war = noteWar(m, run, fight.battle, fight.nemesis, fight.won, fight.stage, fight.day);
+  else openWar(m);
+  if (fight.day !== undefined && run.over) {
+    const turn = endOfRun(m, run, fight.day);
+    if (turn?.length && fight.war) fight.war.council = [...(fight.war.council ?? []), ...turnLines(turn)];
+  }
   // (and a combo that went off is seen, for the codex)
   if (fight.battle) noteCombos(m, fight.battle);
-  return checkAchievements({ battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m });
+  const ctx = { battle: fight.battle, won: fight.won, stage: fight.stage, stars: fight.stars, run, meta: m };
+  // (the quests taken count the fight too, from the same facts and the page's tallies: `quests.ts`; the page sees a quest done by
+  // `readyQuests`; a boss won may turn up spoils, or the rift's voice, on the quest board)
+  const qf = questFightOf(ctx, { stats: fight.stats, ults: fight.ults });
+  // (a replay of a quest battle already won is practice: it counts for nothing)
+  if (!(run.mode?.kind === 'quest' && run.mode.practice)) {
+    noteQuests(m, qf);
+    // (EIDOLON-CHAINS: and the Eidolon chain's part going; the page sees a piece found in `Meta.quests.pieces`)
+    noteChains(m, qf);
+  }
+  // (a quest battle's last wave won: remembered, so a replay after is practice)
+  if (fight.won && fight.battle) noteBattleWon(m, run);
+  if (fight.battle) offerAfterFight(m, qf, run.seed, fight.stage);
+  return checkAchievements(ctx);
 }
 
 /** The daily's standing for a date, in words: "not tried", "wave 4/10" (a run going), "fell at 6/10" or "cleared ✓". */

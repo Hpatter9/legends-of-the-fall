@@ -15,6 +15,8 @@ export interface WaveMoments {
   /** Hearts burned in the wave, and how many are left after. */
   hearts: number;
   heartsLeft: number;
+  /** A guest hero's farewell as the run ends (GUEST-HERO, `guest.ts`); none for any other card. */
+  farewell?: string;
   /** Gear and prizes picked up (the run's `found`). */
   found: readonly string[];
   /** Everything the wave brought in, grouped (RECAP-REVEAL, `waveGains.ts`): the card lists them as chips, and a `found` line they
@@ -22,11 +24,25 @@ export interface WaveMoments {
   gains?: readonly WaveGain[];
   /** The army wave's rare drop, in words ("3 shards of Kwame · Knight", "a medium XP tome"; `armyDrops.ts`; missing is none). */
   drops?: readonly string[];
+  /** The War Horn's line (EIDOLONS: "War Horn +100 · 740/1000", or "The War Horn is full"; missing is none). */
+  horn?: string;
+  /** The heroes' study this wave (`books.ts`: "Kwame: Whirlwind, 2 fights left", or "Kwame learned Whirlwind"); missing is none. */
+  study?: readonly { text: string; learned: boolean }[];
+  /** The skills that reached a new level by use this wave (the skills overhaul's batch 5, `skillLevels.ts`: "Shield Rush reached Level 3!"); missing is none. */
+  skills?: readonly string[];
+  /** Gear that turned worn or broke this wave (`wear.ts`: "Kenji's Runed Blade broke"); missing is none. */
+  wear?: readonly string[];
+  /** RUN-GEAR-2: finds waiting in the run's pack that no hero wears (`spareFinds`); missing or 0 is none. */
+  waiting?: number;
+  /** The quests the wave moved, in words (JRPG-RECAP: "Quest complete: ...", "Quest: Hunt the wolves 3/5"; missing is none). */
+  quests?: readonly string[];
+  /** The Nemesis War's lines (`nemesis.ts`, `nemesisLines`: a foe named, a nemesis slain or grown, a secret learned); missing is none. */
+  nemesis?: readonly string[];
 }
 
 /** One line on the card, with its kind (the line's mark and colour). */
 export interface WaveNote {
-  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart';
+  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest' | 'learned' | 'skill' | 'study' | 'wear' | 'guest' | 'pack' | 'nemesis';
   text: string;
 }
 
@@ -53,11 +69,23 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (best.size) out.push({ kind: 'level', text: `Level up: ${[...best].map(([k, lv]) => `${nameOf(k)} Lv ${lv}`).join(', ')}` });
   const ult = [...new Set(m.ups.filter((u) => u.from < ULT_LEVEL && u.to >= ULT_LEVEL).map((u) => u.kind))];
   if (ult.length) out.push({ kind: 'ult', text: `Ultimate unlocked: ${names(ult)}` });
+  // (a skill learned from a book is the wave's big moment after a level: docs/notes/shop-books-gear.md)
+  for (const s of m.study ?? []) if (s.learned) out.push({ kind: 'learned', text: s.text });
+  // (and so is a skill that rose a level by use)
+  for (const s of m.skills ?? []) out.push({ kind: 'skill', text: s });
+  // (the Nemesis War: a foe named, a nemesis slain or grown; a story worth a glance)
+  for (const l of m.nemesis ?? []) out.push({ kind: 'nemesis', text: l });
   // (a rare drop comes first of the finds: it is the one worth the cheer)
   for (const d of m.drops ?? []) out.push({ kind: 'drop', text: `Found: ${d}` });
+  if (m.horn) out.push({ kind: 'horn', text: m.horn });
+  for (const q of m.quests ?? []) out.push({ kind: 'quest', text: q });
   for (const f of m.gains ? otherFinds(m.found, m.gains) : m.found) out.push({ kind: 'found', text: `Found ${f}` });
+  if (m.farewell) out.push({ kind: 'guest', text: m.farewell });
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
+  for (const w of m.wear ?? []) out.push({ kind: 'wear', text: w });
+  if (m.waiting) out.push({ kind: 'pack', text: m.waiting > 1 ? `${m.waiting} finds wait in the pack` : 'A find waits in the pack' });
+  for (const s of m.study ?? []) if (!s.learned) out.push({ kind: 'study', text: s.text });
   return out;
 }
 

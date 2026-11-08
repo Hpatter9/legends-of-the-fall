@@ -13,7 +13,13 @@ export const calBossBoost = (map: number, phaseAt = 0.5, shield = 0): { size: nu
 export const CAL_ROWS: readonly number[] = [6, 7, 7, 8, 8, 8];
 export const CAL_MAPS = CAL_ROWS.length;
 /** Foes' hp and attack on a floor are `start` x (1 + `growth` x (floor - 1)), the floors running on through the maps. Each hero past the fifth makes them `perHero` stronger (more heroes would otherwise make every fight easy), and each map after the first adds `step` of itself on top. The last map's fights (not its boss) have `final` more of both, so the last map is the hardest. From the second map on the foes' attack (not their hp) is `atkBias` more, so the fights draw blood: the heroes end them hurt, as the bigger squads and tiers would otherwise let them walk through. */
-export const CAL_SCALE = { start: 0.435, growth: 0.05, perHero: 0.06, step: 0.64, bossHp: 0.75, bossStep: 0.06, atkBias: 0.45, final: 1 };
+// (SPELLS-RETUNE: `start` 0.435 to 0.6, so a climb whose Auto casts the king's spells clears the maps it did for a bot that never cast, `docs/notes/spells-retune.md`)
+// (the joint rebalance: `start` 0.6 to 0.66 and `bossStep` 0.06 to 0.12, so a fresh climb clears the maps main's did, 74 of 100 past the second, once
+// the foes fought at their depth's proficiency and the bosses with their blocks, docs/notes/joint-rebalance.md)
+// (KING-SPELLS batch 6: `start` 0.66 to 0.7, the default ruler's player with his school, Decree and ranks back to about the runs that reached
+// map 2 before, 21 of 30 against 19, docs/notes/king-spells-b6.md)
+// (SKILLS-10: `start` 0.7 to 0.71, its heroes' skill 3 stronger, so a climb clears the maps main 0.357's does: 1.57 maps against 1.53, docs/notes/skills-10.md)
+export const CAL_SCALE = { start: 0.71, growth: 0.05, perHero: 0.06, step: 0.64, bossHp: 0.75, bossStep: 0.12, atkBias: 0.45, final: 1 };
 /** A built castle makes a Calamity's foes answer it by this much more power than the spire's (`CASTLE_ANSWER`): the castle's hp and attack boost, to the power `CASTLE_ANSWER.share` + this. A Calamity's heroes also gain tiers, so with the same answer a built castle would carry them through the middle maps. */
 export const CAL_CASTLE_EXTRA = 0.3;
 
@@ -38,8 +44,11 @@ export function fitBand(band: readonly string[], heroes: number, boss: boolean):
 }
 
 /** A hero's tier (its grade, shown as stars) follows its level in the run: a Calamity has no merging. `levels` are the run levels that give tier 2 and tier 3; tier 3 is meant for late in the run (maps 5 and 6), the starting hero
- *  reaching it around the end of map 4 and the heroes hired later after it (`docs/notes/cal-roster.md`). `mult` is what each tier above the first multiplies a hero's hp and attack by (a merge's `GRADE_MULT` is far bigger: a tier here comes on top of the levels that earned it). */
-export const CAL_TIER = { levels: [12, 22] as number[], mult: 1.2 };
+ *  reaching it around the end of map 4 and the heroes hired later after it (`docs/notes/cal-roster.md`). `mult` is what each tier above the first multiplies a hero's hp and attack by (a merge's `GRADE_MULT` is far bigger: a tier here comes on top of the levels that earned it). It was 1.2
+ *  while a tier also gave a tier skill; since the skills overhaul's batch 3 a tier is health and attack only, and 1.28 keeps the Calamity's maps
+ *  where they were (`node tools/balance.mjs --no-tables --calamity --attempts 150`: 1.28 gave a mean of 1.38 maps, 1.37 before; with SPELLS-RETUNE's
+ *  casting bot and `CAL_SCALE.start` 0.6, 1.32 gives 1.65, main's 1.65). */
+export const CAL_TIER = { levels: [12, 22] as number[], mult: 1.32 };
 /** The tier a run level earns. */
 export const tierOfLevel = (level: number): number => 1 + CAL_TIER.levels.filter((l) => level >= l).length;
 

@@ -6,7 +6,7 @@ For each hero id given (or every pair found), it reads the two originals from `a
   <id>-cutout.png   the same character alone on a transparent background, whole figure, standing, 2:3
 and writes what the game loads, with the settings the existing gallery used (tools/anime-heroes/pack.cjs):
   src/art/heroes/<id>.webp            the scene, fitted inside 1024x1536, WebP quality 88
-  src/art/heroes/<id>-portrait.webp   the cutout, fitted inside 320x480, WebP quality 85, lossless alpha
+  src/art/heroes/<id>-portrait.webp   the cutout, fitted inside 640x960, WebP quality 94, lossless alpha
 No code changes are needed: `build.mjs` copies every .webp in that folder and lists it for offline play.
 
   python3 tools/heritage/import-art.py              # every pair in art-source/heritage-heroes/
@@ -14,7 +14,17 @@ No code changes are needed: `build.mjs` copies every .webp in that folder and li
   python3 tools/heritage/import-art.py --check      # only check the originals, write nothing
 """
 import os, re, sys
+import numpy as np
 from PIL import Image
+
+
+def solidify_interior_alpha(im_pil):
+    """Clamp soft interior matting alpha (>= 145) to 255 so skin, eyes, and white cloth never bleed background through."""
+    im = np.array(im_pil.convert('RGBA'))
+    a = im[..., 3].astype(np.float32)
+    new_a = np.where(a <= 8.0, 0.0, np.clip((a - 8.0) / (145.0 - 8.0) * 255.0, 0.0, 255.0))
+    im[..., 3] = np.round(new_a).astype(np.uint8)
+    return Image.fromarray(im, 'RGBA')
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SRC = os.path.join(ROOT, 'art-source', 'heritage-heroes')
@@ -81,8 +91,8 @@ def main():
             continue
         scene = Image.open(os.path.join(SRC, f'{hid}.png')).convert('RGB')
         fit(scene, 1024, 1536).save(os.path.join(OUT, f'{hid}.webp'), 'WEBP', quality=88, method=4)
-        cut = Image.open(os.path.join(SRC, f'{hid}-cutout.png')).convert('RGBA')
-        fit(cut, 320, 480).save(os.path.join(OUT, f'{hid}-portrait.webp'), 'WEBP', quality=85, alpha_quality=100, method=4)
+        cut = solidify_interior_alpha(Image.open(os.path.join(SRC, f'{hid}-cutout.png')).convert('RGBA'))
+        fit(cut, 640, 960).save(os.path.join(OUT, f'{hid}-portrait.webp'), 'WEBP', quality=94, alpha_quality=100, method=4)
         print(f'{hid}: src/art/heroes/{hid}.webp, src/art/heroes/{hid}-portrait.webp')
 
 

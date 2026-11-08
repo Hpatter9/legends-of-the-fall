@@ -1,4 +1,5 @@
-// Positions on the painted overlook, in the same scene pixels as the party rigs.
+// Positions on the painted overlook, in the same scene pixels as the party rigs. The five hero spots are where the party stands as the
+// camp opens (and stays, with motion reduced); from there they wander the ledge (`cliffRoam.ts`).
 // Relative positions keep the distant army and foreground feet on their own ground
 // when the portrait changes height. Mode buttons occupy a separate strip at the foot.
 import type { Camp, Place } from './campSpots';
@@ -22,12 +23,38 @@ export function overlookLayout(w: number, h: number): Camp {
     cart: { x: Math.round(w * 0.17), y: h - 65 },
     stash: { x: 8, y: h - 114, w: 58, h: 54 },
     places: {
-      daily: place(10, h - 56, Math.floor((w - 28) / 2), 48),
-      tower: place(Math.ceil((w + 8) / 2), h - 56, Math.floor((w - 28) / 2), 48),
+      // (the Daily is a small icon at the right edge, so it no longer takes a plaque's room across the scene; DAILY-LOW: it sits down in
+      //  the scene's bottom corner, its foot level with the enemy banner's beside it, not floating over the cliff)
+      daily: place(w - DAILY_ICON - 8, h - DAILY_FOOT - DAILY_ICON, DAILY_ICON, DAILY_ICON),
+      // (the Last Stand's place is the watchtower painted on the left of the overlook, as the Calamity's is the citadel on the right)
+      tower: standPlace(h),
       calamity: place(w - 116, 4, 108, Math.max(112, Math.round(h * 0.23))),
+      // (CLIFF-ROAM: Hester's Stall has left the ledge for the tavern, so the heroes have its ground to wander; `cliffRoam.ts`)
     },
     buttonTop: h - 60,
   };
+}
+
+/** The Daily's icon button at the scene's right edge: a thumb's width, square. */
+export const DAILY_ICON = 56;
+/** The gap under the Daily's icon to the scene's foot (DAILY-LOW: was 68, which left it floating halfway up the cliff). */
+export const DAILY_FOOT = 12;
+
+/** The watchtower in the overlook painting (`art/camp/overlook.png`, drawn over the whole scene), as fractions of the scene: its body,
+ *  its lit window, its doorway and the lamp at its foot. The Last Stand's place sits over it; its life is drawn at these points. */
+export const STAND_TOWER = {
+  left: 0.07, right: 0.135, top: 0.088, base: 0.182,
+  window: [0.111, 0.117] as const,
+  door: [0.115, 0.155] as const,
+  lamp: [0.143, 0.176] as const,
+};
+/** The Last Stand's place: the tap box over the painted tower, its plate under the tower's foot (the Calamity's plate hangs under its citadel the same way). */
+export const STAND = { w: 132, plate: 40 };
+function standPlace(h: number): Place {
+  const x = 4;
+  const top = Math.round(h * (STAND_TOWER.top - 0.02));
+  const foot = Math.round(h * STAND_TOWER.base) + 2;
+  return { x: x + STAND.w / 2, foot, box: { x, y: top, w: STAND.w, h: foot + STAND.plate - top }, plate: { x, y: foot, w: STAND.w, h: STAND.plate } };
 }
 
 /** The actual army's field troops, excluding its bosses, in first-seen order. */

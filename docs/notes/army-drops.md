@@ -9,7 +9,7 @@ The owner's ask: "I want shards and tomes to be able to drop from armies too. It
   - **shards** of one hero: 2, one more on a boss wave, and a 50% chance of one more again (2 to 4). The hero is a pullable hero
     **not yet owned**, a begun one likelier (`1 + STICKY x shards held`, the stone's own weight); never a content hero. Once every
     pullable hero is owned, the shards are rank shards of a hero owned. They go in through `giveShards`, so an early hero whose bar
-    fills joins at once (a toast says so, and the card's line ends "(joins you!)").
+    fills joins at once (its first-time reveal tells it, once, as the run's result is left: `docs/notes/unlock-once.md`).
   - **an XP tome**: small 60, medium 35, large 5 by weight; each tier above Normal moves 9 of weight from small to medium (6) and
     large (3).
 - **The chances** (`SHARD_CHANCE`, `TOME_CHANCE`), each tier above Normal lifting both by `TIER_LIFT` (15%: Hard x1.15, Mythic x1.6):

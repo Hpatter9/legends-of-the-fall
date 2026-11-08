@@ -1,5 +1,7 @@
 # Epic music
 
+**Changed by [battle-music-2.md](battle-music-2.md):** the battles play one `battle` track and a `boss` track; every file is levelled to -18 LUFS (`tools/epic-music/level.mjs`, `loudness.json`).
+
 The owner's note: "Music sucks, try again. Make it more epic. Similar to Castlevania: Symphony of the Night." The brief was gothic and
 symphonic: minor keys, driving bass ostinatos, pipe organ and harpsichord, string sections, a choir pad, timpani and taiko, brass, a
 distorted guitar and a rock kit in the battles, a lone piano or music box when it is quiet, and a real reverb and master.

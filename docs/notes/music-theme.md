@@ -1,5 +1,7 @@
 # The main theme: one tune, every army in its own dress
 
+**Changed by [battle-music-2.md](battle-music-2.md):** the armies' own arrangements and `calbattle` are gone from the game (the owner: "One good battle music for all the battles, with a more intense one for bosses"); `battle` and `boss` were re-arranged on the same theme and every battle plays one of them. The theme itself below still holds.
+
 The owner's ask: "I'm still not a fan of the battle music. What can we do to make it more unique? Catchy? Ours?" The owner chose:
 our own generator (`tools/epic-music/`, nothing from outside), classic JRPG battle music (fast, melodic, a tune you hum later;
 original, imitating and quoting nothing), and **the same main theme for every army, in a different flavour each**.

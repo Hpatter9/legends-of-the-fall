@@ -53,7 +53,7 @@ export type Beat =
   | { k: 'mendFive'; share: number };
 
 /** The look of a combo's move: the page reads it for colours and the effect layers (`render/comboFx.ts`). */
-export type ComboTone = 'holy' | 'arcane' | 'shadow' | 'sea' | 'wild' | 'spirit' | 'earth' | 'dark';
+export type ComboTone = 'holy' | 'arcane' | 'shadow' | 'sea' | 'wild' | 'spirit' | 'earth' | 'dark' | 'blood';
 
 export interface Combo {
   id: string;
@@ -109,9 +109,21 @@ export const COMBOS: readonly Combo[] = [
     text: 'The court passes judgement: every foe is cursed for 5s and slowed, and the five drink back a little of their health',
     beats: [{ k: 'hurt', mult: 0.35 }, { k: 'burn', mult: 0.04, ms: 5000, kind: 'curse' }, { k: 'slow', ms: 2500 }, { k: 'mendFive', share: 0.05 }],
   },
+  {
+    id: 'bloodCourt', heroes: ['vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir'], name: 'The Night Kin', move: 'Blood Moon', tone: 'blood',
+    text: 'A blood moon rises over the field: every foe is struck and bleeds for 4s, while the five drink back a tenth of their health and every ally is hastened for 4s',
+    beats: [{ k: 'hurt', mult: 0.65 }, { k: 'burn', mult: 0.055, ms: 4000, kind: 'bleed' }, { k: 'mendFive', share: 0.1 }, { k: 'haste', ms: 4000 }],
+  },
 ];
 
-export const comboById = (id: string): Combo | undefined => COMBOS.find((c) => c.id === id);
+/** The Last Oaths still to join the roster: the Vampires' Night Kin (once the Crimson Court) (the director's yes, docs/notes/twenty-heroes-audit.md). Its five have
+ *  their kits but wait for their battle sheets; a fight with all five forms it like any other, while the codex and the roster's rules
+ *  (`COMBOS`: five to eight, every member a hero of `ALL_HEROES`) leave it out until they join and it moves into `COMBOS`. */
+export const COMING_COMBOS: readonly Combo[] = [
+];
+const ANY_COMBO: readonly Combo[] = [...COMBOS, ...COMING_COMBOS];
+
+export const comboById = (id: string): Combo | undefined => ANY_COMBO.find((c) => c.id === id);
 
 /** What a fight keeps of its combo: which one, how full the bar is, how many times it has gone off, and whether a member has fallen. */
 export interface ComboState {
@@ -129,7 +141,7 @@ export interface ComboState {
 }
 
 /** The combo whose five heroes are all among these kinds (the first one, if two are). */
-export const comboOf = (kinds: readonly string[]): Combo | undefined => COMBOS.find((c) => c.heroes.every((k) => kinds.includes(k)));
+export const comboOf = (kinds: readonly string[]): Combo | undefined => ANY_COMBO.find((c) => c.heroes.every((k) => kinds.includes(k)));
 
 /** Look for a combo among the placed heroes as the fight starts. */
 export function startCombo(b: Battle): void {
@@ -257,4 +269,4 @@ export function noteCombos(m: Meta, b: Pick<Battle, 'combo'>): string[] {
 }
 
 /** A saved list of the combos seen, read safely. */
-export const readCombosSeen = (raw: unknown): string[] => (Array.isArray(raw) ? [...new Set(raw.filter((x): x is string => typeof x === 'string' && COMBOS.some((c) => c.id === x)))] : []);
+export const readCombosSeen = (raw: unknown): string[] => (Array.isArray(raw) ? [...new Set(raw.filter((x): x is string => typeof x === 'string' && ANY_COMBO.some((c) => c.id === x)))] : []);

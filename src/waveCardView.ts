@@ -1,3 +1,4 @@
+import { battleNoteSource } from './battleNoteArt';
 // The short wave card's one-liners (WAVE-RECAP, `sim/waveCard.ts`): a level gained, gear found, a hero fallen, a heart burned.
 // Each line fades in once; nothing loops. A quiet wave has none, and the list hides. Above them, every item the wave brought in
 // (RECAP-REVEAL, `sim/waveGains.ts`), as small chips with the packs' icons that wrap onto a second row when there are many.
@@ -16,8 +17,6 @@ import { ICONS } from './menuArt';
 import { itemIcon } from './equipView';
 import { chestPicture } from './chestStash';
 
-const MARKS: Record<WaveNote['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥' };
-
 const img = (src: string): HTMLElement => {
   const i = document.createElement('img');
   i.src = src;
@@ -27,7 +26,7 @@ const img = (src: string): HTMLElement => {
 };
 
 /** A gain's picture: the hero's face, the gear's or relic's icon, the chest, the tome, the stone or the ore. */
-function gainIcon(g: WaveGain): HTMLElement | null {
+export function gainIcon(g: WaveGain): HTMLElement | null {
   if (g.kind === 'joined' || g.kind === 'recruit' || g.kind === 'shard' || g.kind === 'unlockShard') return UNITS[g.id] ? portrait(UNITS[g.id].sheet, 40) : null;
   if (g.kind === 'gear') {
     const [slot, tier] = g.id.split(':');
@@ -82,8 +81,8 @@ export function drawWaveNotes(root: HTMLElement, notes: readonly WaveNote[], gai
     const line = document.createElement('p');
     line.className = `wn ${n.kind}`;
     line.style.setProperty('--i', String(Math.min(i, 6)));
-    const mark = document.createElement('span');
-    mark.textContent = MARKS[n.kind];
+    const mark = img(battleNoteSource(n.kind));
+    mark.className = 'battleNoteIcon';
     mark.setAttribute('aria-hidden', 'true');
     line.append(mark, document.createTextNode(n.text));
     root.append(line);

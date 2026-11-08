@@ -7,13 +7,18 @@
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
-const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
+import { checkPaintedCombat } from './painted-checks.mjs';
+import { checkBattlePopups } from './popup-checks.mjs';
+import { checkBattleReports } from './report-checks.mjs';
+import { checkDeployment } from './deploy-checks.mjs';
+const { chromium } = createRequire(existsSync('/opt/node-tools/node_modules/') ? '/opt/node-tools/node_modules/' : import.meta.url)('playwright');
 const PORT = Number(process.env.PORT ?? 8641);
 const root = 'out/web';
 const args = process.argv.slice(2);
 // (the ultimate's moment, ULT-CUTIN: `node tools/battle-hud/shots.mjs ult-cutin slash name dim linger short`)
 const ULT_SCENES = ['slash', 'name', 'dim', 'linger', 'short'];
-const prefix = args[0] && ![...SCENES(), ...ULT_SCENES].includes(args[0]) ? args.shift() : 'battle-hud-final';
+const REVIEW_SCENES = ['painted', 'popups', 'reports', 'finish'];
+const prefix = args[0] && ![...SCENES(), ...ULT_SCENES, ...REVIEW_SCENES].includes(args[0]) ? args.shift() : 'battle-hud-final';
 const want = args.length ? args : SCENES();
 function SCENES() { return ['deploy', 'fight', 'sheet', 'ult', 'cast', 'spells', 'daily', 'calamity', 'stand', 'kits']; }
 const SIZES = (process.env.SIZES ?? '393,360,412').split(',').map((w) => ({ 393: [393, 852], 360: [360, 780], 412: [412, 915] })[w]);
@@ -24,7 +29,8 @@ const srv = createServer((q, r) => {
   r.writeHead(200, { 'content-type': types[p.split('.').pop()] ?? 'application/octet-stream' });
   r.end(readFileSync(p));
 }).listen(PORT);
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROME ?? (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'), args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+process.once('SIGINT', async () => { await browser.close(); srv.close(); process.exit(130); });
 mkdirSync('docs/samples', { recursive: true });
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
 let errors = 0;
@@ -48,7 +54,7 @@ async function open(w, h, extra = {}) {
     localStorage.setItem('lotf-tips-off', '1');
     localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed: 1 }));
   }, [ALL, PARTY, xpAt(32), extra]);
-  await page.goto(`http://localhost:${PORT}/`);
+  await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
@@ -132,9 +138,9 @@ for (const [w, h] of SIZES) {
     try {
       if (scene === 'deploy') {
         await army(page, PARTY, false);
-      } else if (scene === 'fight' || scene === 'sheet' || scene === 'ult' || scene === 'cast' || scene === 'spells') {
-        await army(page, PARTY);
-        await stage(page);
+      } else if (scene === 'fight' || scene === 'sheet' || scene === 'ult' || scene === 'cast' || scene === 'spells' || REVIEW_SCENES.includes(scene)) {
+        await army(page, PARTY, scene !== 'finish');
+        if (scene !== 'finish') await stage(page);
         if (scene === 'sheet') {
           // (the second hero's skill 1: a tier 3 hero, so the sheet shows the tier it has reached)
           await tap(page, '.fhRow [data-skill="1"]', 1);
@@ -239,9 +245,17 @@ for (const [w, h] of SIZES) {
       await page.waitForTimeout(400);
       console.log(scene, `${w}x${h}`, JSON.stringify(await measure(page)));
       await shot(page, scene, w);
+      if (scene === 'painted') await checkPaintedCombat(page, { prefix, w });
+      if (scene === 'popups') await checkBattlePopups(page, { prefix, w });
+      if (scene === 'reports') await checkBattleReports(page, { prefix, w });
+      if (scene === 'finish') await checkDeployment(page, { prefix, w });
     } catch (e) {
       errors++;
       console.log('FAILED', scene, w, String(e.message).split('\n')[0]);
+      if (scene === 'finish') {
+        console.log(e.message);
+        await page.screenshot({ path: `docs/samples/${prefix}-failure-${w}.png` }).catch(() => {});
+      }
     }
     await ctx.close();
   }
@@ -249,3 +263,4 @@ for (const [w, h] of SIZES) {
 console.log('page errors:', errors);
 await browser.close();
 srv.close();
+if (errors) process.exitCode = 1;

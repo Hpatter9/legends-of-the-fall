@@ -11,9 +11,9 @@
 import type { Meta } from './meta';
 import { mixSeed, Rng } from './rng';
 import { TOMES, grantTomes, type TomeSize } from './tomes';
-import { giveShards, haveOf, toCollect } from './unlock';
+import { giveShards, toCollect } from './unlock';
 import { heroTitle } from './heroNames';
-import { STICKY, PULL_HEROES } from './unlockRules';
+import { PULL_HEROES } from './unlockRules';
 
 /** The salt of a wave's drop stream (mixed with the run's seed and the wave's number). */
 export const DROP_SALT = 0xd409;
@@ -46,18 +46,12 @@ export function dropChances(boss: WaveBoss, tier: number): { shards: number; tom
   return { shards: SHARD_CHANCE[key] * lift, tome: TOME_CHANCE[key] * lift };
 }
 
-/** The hero a shard drop is for: a pullable hero not owned (one begun likelier, by `STICKY` for each shard held, as a stone's pull),
- *  or once every pullable hero is owned, any hero owned (for rank shards). */
+/** The hero a shard drop is for: a pullable hero not owned, each as likely as any other (FAIR-SUMMONS), or once every pullable hero is
+ *  owned, any hero owned (for rank shards). */
 function dropKind(m: Meta, rng: Rng): string {
   const left = toCollect(m);
   if (!left.length) return rng.pick(m.unlocked.length ? m.unlocked : PULL_HEROES);
-  const weight = (k: string) => 1 + STICKY * haveOf(m, k);
-  let r = rng.next() * left.reduce((s, k) => s + weight(k), 0);
-  for (const k of left) {
-    r -= weight(k);
-    if (r < 0) return k;
-  }
-  return left[left.length - 1];
+  return left[Math.min(left.length - 1, Math.floor(rng.next() * left.length))];
 }
 
 /** What a won army wave drops (none for most): the same run's seed and wave always roll the same. The draws are always made in the
@@ -110,6 +104,5 @@ export function settleArmyDrop(m: Meta, won: boolean, boss: WaveBoss, tier: numb
   }
   if (drop.tome) grantTomes(m, { [drop.tome]: 1 });
   const words = dropWords(drop);
-  if (joined) words[0] += ' (joins you!)';
   return { drop, words, joined };
 }

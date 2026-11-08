@@ -1,6 +1,8 @@
 // The armies' pace (ARMY-PACE, `docs/notes/army-pace.md`): the owner's ask, "getting to harder armies is harder; the final armies
 // probably won't be clearable before the player clears all the stars on the first army". The late armies' Normal is steep, their
 // harder tiers are lifted (`tierLift`) to stay above it, and the first four armies' Normal is as it was.
+// (SPELLS-RETUNE, an owner-approved change of requirement, `docs/notes/spells-retune.md`: every army, the first four included, is now tuned for a
+// player whose Auto casts the king's spells, and the cells below are measured with the greedy player casting them, `botSpells`.)
 import { test } from 'node:test';
 import { TIERS } from '../src/sim/tiers';
 import assert from 'node:assert/strict';
@@ -12,6 +14,7 @@ import { mixSeed } from '../src/sim/rng';
 import { boostOf, type Owned } from '../src/sim/run';
 import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { playArmy, savedAt } from '../tools/autoplay';
+import { giveMastery } from '../tools/skills/mastery';
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 /** A castle of `n` levels spread over its buildings, the lowest first (the castle a climb has: 17 levels at about hero level 45, every one at 80, `tools/army-pace`). */
@@ -29,6 +32,9 @@ function castleOf(n: number): Castle {
 function clears(army: string, level: number, save: number, cap: number, built: number): boolean {
   const castle = castleOf(built);
   const meta = savedAt(level, party, save);
+  // (SKILLS-10, the owner's answer: the late armies are tuned for the skill levels a player of that level really has, every skill mastered
+  // from hero level 40, `tools/skills/mastery.ts`, docs/notes/skills-10.md)
+  giveMastery(meta, party, level);
   for (const k of party) {
     if (!meta.unlocked.includes(k)) meta.unlocked.push(k);
     for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, t)) learn(meta, k, n.id);
@@ -55,12 +61,21 @@ test('a tier lift multiplies that tier’s foes, hp and attack, and never Normal
   for (const a of ARMIES.slice(0, 4)) assert.equal(a.tierLift, undefined, a.id);
 });
 
-test('the early armies are as they were: the first four keep their Normal strength and levels', () => {
-  assert.deepEqual(ARMIES.slice(0, 4).map((a) => [a.id, a.level, a.start, a.growth]), [
-    ['orcs', 1, 0.39, 0.176],
-    ['undead', 8, 1.48, 0.05],
-    ['beasts', 15, 1.66, 0.05],
-    ['wildwood', 22, 2.01, 0.05],
+// (SPELLS-RETUNE, an owner-approved change of requirement, docs/notes/spells-retune.md: the armies are tuned for a player whose Auto casts the
+// king's spells, so the first four's Normal strength rose (it was 0.39, 1.48, 1.66 and 2.01) and each keeps its old XP through `xpStart`; their
+// levels and curves are as they were. RUN-GEAR, the owner's answer: saves keep and wear what their runs find, so the Undead's, Beasts' and
+// Wildwood's Normal strength rose again (1.7, 2.17, 2.52 to 1.74, 2.27, 2.7) to keep the realistic climb's tries, with the same `xpStart`,
+// docs/notes/run-gear.md. The joint rebalance, the owner's retune once the D&D stats' held-back rules were switched on: 0.58, 1.74, 2.27, 2.7 to
+// 0.62, 2.02, 2.39, 2.8, so the realistic climb takes the tries 0.321.0 set, with the same `xpStart`, docs/notes/joint-rebalance.md)
+// (KING-SPELLS batch 6, the owner-approved spell revamp's re-measure, docs/notes/king-spells-b6.md: the balance bot now plays the default
+// ruler's school, Decree and ranks, so the Undead's, Beasts' and Wildwood's Normal strength rose (2.02, 2.39, 2.8 to 2.19, 2.45, 3.17), with the same `xpStart`)
+test('the early armies keep their levels and curves, at the strength SPELLS-RETUNE measured for a player who casts', () => {
+  // (SEVEN-SLOT GEAR's balance, batch 8, moved the Beast Packs' start 2.39 to 2.3 for the seven-slot kit and the runes, docs/notes/gear-build.md)
+  assert.deepEqual(ARMIES.slice(0, 4).map((a) => [a.id, a.level, a.start, a.growth, a.xpStart]), [
+    ['orcs', 1, 0.62, 0.176, 0.39],
+    ['undead', 8, 2.19, 0.05, 1.48],
+    ['beasts', 15, 2.36, 0.05, 1.66],
+    ['wildwood', 22, 3.17, 0.05, 2.01],
   ]);
 });
 
@@ -78,11 +93,13 @@ test('and a strong party does clear them in the end: the Golem Forge at level 80
   assert.ok([1, 2].some((save) => clears('golems', 80, save, 3, 99)));
 });
 
-test('a steeper army pays the XP it did before: its added toughness is taken back out of a fight’s XP, and the other armies pay in full', () => {
+test('a steeper army pays the XP it did before: its added toughness is taken back out of a fight’s XP, on every army and tier', () => {
   // (and a tier's answer to the ultimates, ULT-CHARGE, is taken back out on every army: Legendary and Mythic)
   const answer = (t: number) => TIERS[t].answer ?? 1;
-  for (const a of ARMIES.slice(0, 4)) for (const t of [0, 1, 2, 3, 4]) assert.ok(Math.abs(armyXpShare(a, t) * answer(t) - 1) < 1e-9, `${a.id} tier ${t}`);
-  for (const a of ARMIES.slice(4)) {
+  // (SPELLS-RETUNE made every army steeper on Normal, the first four included, so every army now pays its old XP through `xpStart`; the first
+  // four still have no tier lift, so their harder tiers pay in full but for the tiers' answer)
+  for (const a of ARMIES.slice(0, 4)) for (const t of [1, 2, 3, 4]) assert.ok(Math.abs(armyXpShare(a, t) * answer(t) - 1) < 1e-9, `${a.id} tier ${t}`);
+  for (const a of ARMIES) {
     assert.ok(a.xpStart !== undefined && a.xpStart < a.start, a.id);
     assert.ok(Math.abs(armyXpShare(a, 0) * a.start - a.xpStart!) < 1e-9, a.id);
     for (const t of [1, 2, 3, 4]) assert.ok(Math.abs(armyXpShare(a, t) * (a.tierLift?.[t] ?? 1) * answer(t) - 1) < 1e-9, `${a.id} tier ${t}`);

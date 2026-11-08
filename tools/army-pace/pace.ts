@@ -14,6 +14,9 @@
 // Environment: SAVES (default 12), CAP (25 tries a tier, or to clear), ONLY (army ids), START, GROWTH (army:value,...), ARMY (the army `stars` chases: orcs),
 // HEARTS=1 (a lost wave burns a heart and is fought again, as the page does; by default a loss ends the try, as every figure in the notes was
 // measured; the star "clear without using a heart" is then met by every clear).
+import { WEAK } from '../../src/sim/weakness';
+import { RITES } from '../../src/sim/chapelRooms';
+import { BOND, KINDRED, RIVALS, bondKey } from '../../src/sim/bonds';
 import { ARMIES, ARMY_WAVES, armyById, armyUnlocked } from '../../src/sim/armies';
 import { armyRules } from '../../src/sim/armyStars';
 import { fight, playOut, type Boost } from '../../src/sim/battle';
@@ -26,9 +29,14 @@ import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
 import { TIERS } from '../../src/sim/tiers';
-import { savedAt } from '../autoplay';
+import { maybeSpells, savedAt } from '../autoplay';
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
+// (DEPTH-BUILD: WEAK=0 measures the armies without the bosses' weaknesses, `weakness.ts`)
+if (process.env.WEAK === '0') WEAK.on = false;
+// (RITES_HP / RITES_MS try other numbers for the Chapel's Last Rites)
+if (process.env.RITES_HP) RITES.HP = Number(process.env.RITES_HP);
+if (process.env.RITES_MS) RITES.DELAY_MS = Number(process.env.RITES_MS);
 const SAVES = Number(process.env.SAVES ?? 12);
 const CAP = Number(process.env.CAP ?? 25);
 const HEARTS = process.env.HEARTS === '1';
@@ -50,6 +58,8 @@ export function castleAt(L: number): Castle {
     const id = open.sort((a, b) => c[a] - c[b])[0];
     c[id]++;
   }
+  // (DEPTH-BUILD: CHAPEL=3 gives the player the Chapel's Last Rites, to measure it)
+  if (process.env.CHAPEL) c.chapel = Number(process.env.CHAPEL);
   return c;
 }
 const set = (env: string | undefined, key: 'start' | 'growth') => {
@@ -90,6 +100,16 @@ function attempt(meta: Meta, id: string, seed: number, castle: Castle, tier: num
   const army = armyById(id)!;
   dress(meta);
   const run: Run = armyRun(seed, id, party, castle, tier);
+  // (DEPTH-BUILD: BONDS=n gives the party's kindred pairs bond level n and every other pair Comrades at most, to measure the bonds)
+  if (process.env.BOND_COVER) BOND.COVER = Number(process.env.BOND_COVER);
+  if (process.env.BONDS) {
+    const n = Number(process.env.BONDS);
+    run.bonds = {};
+    for (let i = 0; i < party.length; i++) for (let j = i + 1; j < party.length; j++) {
+      const key = bondKey(party[i], party[j]);
+      run.bonds[key] = RIVALS.includes(key) ? -1 : KINDRED.includes(key) ? n : Math.min(2, n);
+    }
+  }
   const bf = boostFor(meta);
   let won = 0;
   while (!run.over) {
@@ -97,6 +117,7 @@ function attempt(meta: Meta, id: string, seed: number, castle: Castle, tier: num
     const b = startStage(run);
     autoDeploy(b, run, meta, bf);
     fight(b);
+    maybeSpells(b, meta, castle);
     playOut(b);
     const ok = b.phase === 'won';
     if (!ok && HEARTS && canRetry(run)) {

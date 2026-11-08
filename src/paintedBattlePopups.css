@@ -1,0 +1,92 @@
+/* Continue the approved combat materials on existing popup components.
+   This changes their skin and readability, not their lifecycle or game rules. */
+.fhSheet .fsCard,
+#tacticSheet .tacCard,
+#events .evcard,
+#stand .stSheetCard,
+:is(#marchOrders, #relicCard) .om {
+  box-sizing: border-box;
+  border: 6px solid transparent;
+  border-image: url(ui/combat-panel.png) 24 fill / 9px / 0 stretch;
+  border-radius: 0;
+  background: #0b1b12;
+  color: #f1e7cf;
+  box-shadow: 0 12px 32px #000b;
+  image-rendering: auto;
+  font-family: var(--body);
+}
+.fhSheet .fsCard { max-height: calc(100dvh - var(--fs-dock, 8px) - 36px); padding: 12px; font-size: 14.5px; line-height: 1.35; }
+.fhSheet .fsHead { gap: 10px; }
+.fhSheet .fsHead b { font: 700 21px/1.12 var(--display); color: #f1d29a; text-shadow: none; }
+.fhSheet .fsHead small { font: 400 13px/1.25 var(--body); color: #c5c7b5; }
+.fhSheet .fsClose { width: 62px; flex: 0 0 62px; min-height: 44px; font-size: 14px; }
+.fhSheet .fsTabs { gap: 4px; margin-top: 12px; }
+.fhSheet .fsTabs button { min-height: 44px; font-size: 13px; line-height: 1.1; }
+.fhSheet .fsCard p { margin: 12px 0; }
+.fhSheet .fsCard dl { gap: 7px 12px; margin-bottom: 12px; }
+.fhSheet .fsCard dt { color: #dfc08a; }
+.fhSheet .fsCard dd { min-width: 0; overflow-wrap: anywhere; }
+.fhSheet .fsTiers { gap: 7px; }
+.fhSheet .fsTiers li { padding: 8px; font-size: 14px; border-left-width: 2px; }
+.fhSheet .fsHeld { bottom: -12px; margin: 12px -12px -12px; padding: 9px 8px; font: 400 13px/1.25 var(--body); color: #c9c8b6; background: #101d14; }
+
+/* Buttons use a different painted material so choices stand apart from panels. */
+.fhSheet .fsCard button,
+#tacticSheet .tacCard button,
+#events .evcard :is(button, .opt, .pick),
+#stand .stSheetCard button,
+:is(#marchOrders, #relicCard) .om button {
+  border: 2px solid transparent;
+  border-image: url(ui/combat-skill.png) 28 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: #24170f;
+  color: #f5e6c7;
+  min-height: 44px;
+  text-shadow: none;
+}
+.fhSheet .fsTabs button.on,
+#tacticSheet .tacForm.on,
+#events .evcard .pick.on,
+:is(#marchOrders, #relicCard) .omChoice.on {
+  box-shadow: inset 0 0 0 2px #efd292, inset 0 0 16px #cda35928;
+  color: #fff2cc;
+}
+.fhSheet .fsCard button:focus-visible,
+#tacticSheet .tacCard button:focus-visible,
+#events .evcard button:focus-visible,
+#stand .stSheetCard button:focus-visible,
+:is(#marchOrders, #relicCard) .om button:focus-visible {
+  outline: 2px solid #ffe4a5; outline-offset: 2px;
+}
+#tacticSheet { padding: 12px 10px calc(env(safe-area-inset-bottom) + 10px); }
+#tacticSheet .tacCard { max-height: calc(100dvh - 36px); overflow-y: auto; padding: 18px 12px 12px; }
+#tacticSheet h2 { font-size: 25px; color: #f1d29a; margin-bottom: 6px; }
+#tacticSheet .tacAdvice { font-size: 14px; line-height: 1.35; color: #c5c7b5; }
+#tacticSheet .tacForms { gap: 8px; }
+#tacticSheet .tacForm { padding: 10px; min-height: 76px; }
+#tacticSheet .tacForm b { font-size: 16px; color: #f0d6a6; }
+#tacticSheet .tacForm span { font-size: 13px; line-height: 1.3; color: #d0c9b7; }
+#tacticSheet .tacClose { width: 100%; }
+
+#events .evcard { padding: 18px 14px; }
+#events .evcard h2 { font: 700 25px/1.15 var(--display); color: #f1d29a; }
+#events .evcard p { font-size: 15px; line-height: 1.4; }
+#events .evcard .opt { padding: 12px; gap: 10px; }
+#events .evcard .opt b { font-size: 16px; color: #f0d6a6; }
+#events .evcard .opt small { font-size: 14px; line-height: 1.35; color: #d0c9b7; }
+#events .evcard .opt em { color: #f3d391; }
+#events .evcard button:disabled { opacity: .5; }
+
+#stand .stSheet { padding: 14px 10px; }
+#stand .stSheetCard { margin-top: env(safe-area-inset-top); max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 28px); padding: 30px 12px 12px; overflow: hidden; }
+#stand .stSheetCard h2 { color: #f1d29a; }
+#stand .stSheetList { min-height: 0; max-height: none; flex: 1 1 auto; gap: 8px; padding: 2px; }
+#stand .stSheetRow { flex-shrink: 0; border: 1px solid #9c8051; background: #07110c99; padding: 9px; font: 400 14px/1.3 var(--body); }
+#stand .stSheetHead { align-items: center; }
+#stand .stSheetHead span { color: #f0d6a6; }
+#stand .stSheetHead em { white-space: nowrap; flex-shrink: 0; }
+#stand .stSheetPic { flex: none; image-rendering: auto; }
+#stand .stResume { flex-shrink: 0; width: 100%; }
+:is(#marchOrders, #relicCard) .omTitle { color: #f1d29a; }
+:is(#marchOrders, #relicCard) .omWell { background: #07110c99; border-color: #9c8051; }
+:is(#marchOrders, #relicCard) .omFoot { background: #0c1810; }
