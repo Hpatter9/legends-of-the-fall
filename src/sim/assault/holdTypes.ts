@@ -41,6 +41,8 @@ export interface AssaultInput {
   auto?: boolean;
   /** The bot's second style (the balance tool's Tactical): it silences the drums and flies to the wall-walk. */
   tactical?: boolean;
+  /** The siege works bought at the muster (phase 1b): the platoons (by hero kind) that carry a ladder, and the one that pushes the ram. */
+  siege?: { ladders?: string[]; ram?: string };
 }
 
 /** A platoon's order (3.5): attack-move, hold, charge, fall back, strike a structure, or kill one foe first. */
@@ -52,7 +54,13 @@ export type PlatoonOrder =
   | { kind: 'assault'; fort: string }
   | { kind: 'focus'; unit: number }
   /** Go round a foe to its far side, then strike it (the owner's Flank). */
-  | { kind: 'flank'; unit: number };
+  | { kind: 'flank'; unit: number }
+  /** Put the platoon's ladder up against the stone wall by this tile, and climb (phase 1b). */
+  | { kind: 'scale'; at: At }
+  /** Loose fire arrows at a hut of the hold until it burns (phase 1b). */
+  | { kind: 'fire'; hut: string }
+  /** Keep the shooters on the wall-top foes round this tile: their blows land half as hard while the volleys fall (phase 1b). */
+  | { kind: 'suppress'; at: At };
 
 /** An order as the log keeps it: the platoon (its index), the battle time it was asked for, and what. */
 export type AssaultLogEntry =
@@ -94,9 +102,66 @@ export interface PlatoonState {
   acting?: number;
   /** Its blows counted for the Archers' volley: the battle time of each archer's last loose, by id. */
   loosed?: Record<number, number>;
+  /** It carries a ladder kit not yet put up; the foot and top of the wall it scales, and when it began to raise the ladder there. */
+  ladder?: boolean;
+  aim?: { foot: number; top: number } | null;
+  raising?: number;
+}
+
+/** A siege ladder against the stone wall (phase 1b): the two tiles it joins, its hp (the defenders push it down), the platoon that raised
+ *  it, and whether it still stands. */
+export interface LadderState {
+  id: number;
+  foot: number;
+  top: number;
+  hp: number;
+  platoon: number;
+  up: boolean;
+}
+
+/** A hut of the hold that fire arrows can set alight (phase 1b): its tiles, the fire arrows in it, until when it burns, and whether it has
+ *  burnt out. */
+export interface HutState {
+  id: string;
+  name: string;
+  tiles: number[];
+  fire: number;
+  burning?: number;
+  burnt?: boolean;
+}
+
+/** The siege works on the field (phase 1b). */
+export interface SiegeState {
+  ladders: LadderState[];
+  /** The ram (its unit id, the platoon pushing it, when it may strike again), if one was bought. */
+  ram?: { id: number; platoon: number; next: number };
+  huts: HutState[];
+  /** The fire arrows on their way (they land after the loose). */
+  arrows: { at: number; hut: number }[];
+  /** The suppressed spots this tick: each platoon's suppress order with a shooter near enough to keep it. */
+  zones: At[];
+}
+
+/** The Warpath (phase 1b): reinforcements march down it until it is held; ours have stood at its camp unopposed since `since`. */
+export interface WarpathState {
+  held: boolean;
+  since?: number;
+  /** The bands on the march (their post and when they set out). */
+  marching: { post: number; ids: number[] }[];
 }
 
 export type PostMood = 'posted' | 'alerted' | 'sally' | 'routed';
+
+/** A post's errand from the hold's reactive mind (phase 1b): to a threatened gate (where a feint draws it), a captain's or the lord's sally
+ *  at a weakened platoon, the wolves riding round the flank, or a band marching down the Warpath. */
+export interface PostErrand {
+  kind: 'reinforce' | 'sally' | 'flank' | 'march';
+  until: number;
+  /** The gate it goes to, or the platoon it hunts. */
+  fort?: string;
+  platoon?: number;
+  at?: At;
+}
 
 export interface PostState {
   def: PostDef;
@@ -112,6 +177,11 @@ export interface PostState {
   muster: number;
   /** A reinforcement band that joined it. */
   joined?: number;
+  /** Its home as posted (a reinforcing post goes back to it when its own gate is struck), and its errand now. */
+  origin?: At;
+  errand?: PostErrand;
+  /** The wolves have ridden round the flank once. */
+  rode?: boolean;
 }
 
 export interface FortState {
@@ -139,7 +209,15 @@ export type HoldEvent =
   | { kind: 'wake'; group: number }
   | { kind: 'rise'; platoon: number; id: number }
   | { kind: 'lordFell' }
-  | { kind: 'fell'; platoon: number; soldier: number; index: number };
+  | { kind: 'fell'; platoon: number; soldier: number; index: number }
+  | { kind: 'ladder'; platoon: number; tiles: number[]; up: boolean }
+  | { kind: 'burn'; hut: string }
+  | { kind: 'ram'; fort: string }
+  | { kind: 'feint'; post: number; fort: string }
+  | { kind: 'captain'; post: number; platoon: number }
+  | { kind: 'wolves'; post: number; platoon: number }
+  | { kind: 'march'; post: number }
+  | { kind: 'held' };
 
 export type AssaultOutcome = 'won' | 'lost' | 'night' | 'withdrawn';
 
@@ -191,4 +269,9 @@ export interface HoldState {
   kills: Record<number, number>;
   /** The soldiers already counted fallen (by unit id). */
   down: Record<number, true>;
+  /** The siege works (phase 1b) and the Warpath. */
+  siege: SiegeState;
+  warpath: WarpathState;
+  /** The lord has sallied from the throne once (phase 1b). */
+  lordSallied?: boolean;
 }

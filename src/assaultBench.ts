@@ -13,11 +13,13 @@
 //   &spike=1                    phase 0's engine spike instead of the hold
 //   &lod=mid | far              start at Mid or Far
 //   &speed=2                    the battle at double speed (the sim runs twice a tick's work a frame-second)
+//   &siege=1 &skip=1500 &at=u,v &zoom=0.6   the siege works; the first ticks played at once; the camera held on a tile at a zoom
 //   &seed=7                     the first fight's seed
 
 import { Application } from 'pixi.js';
 import { startSpike, stepSpike, SPIKE_PLATOONS, SPIKE_TROOPS, type FieldEvent } from './sim/assault/spike';
 import { startAssault, stepAssault } from './sim/assault/assault';
+import { breakFort } from './sim/assault/forts';
 import { benchInput } from './sim/assault/benchInput';
 import { TICK_MS, type Battle, type BattleEvent } from './sim/battle';
 import { UNITS } from './sim/units';
@@ -116,18 +118,23 @@ export async function startAssaultBench(): Promise<void> {
   let simWorst = 0;
   // (the blows of the last three seconds, by bucket: the camera's "fiercest fight")
   let heat: { t: number; k: number }[] = [];
-  const cam = { x: 0, y: 0, zoom: ZOOM[(query.get('lod') as Detail) in ZOOM ? (query.get('lod') as Detail) : 'near'] };
+  const cam = { x: 0, y: 0, zoom: Number(query.get('zoom')) || ZOOM[(query.get('lod') as Detail) in ZOOM ? (query.get('lod') as Detail) : 'near'] };
   let follow = true;
   const begin = () => {
     view?.destroy();
-    b = spike ? startSpike(seed) : startAssault(benchInput(seed));
+    // (`&siege=1`: the siege works of phase 1b, the ram with the knight and ladders with the samurai and the archer, the bot's Tactical style)
+    b = spike ? startSpike(seed) : startAssault(query.get('siege') ? { ...benchInput(seed), siege: { ram: 'knight', ladders: ['samurai', 'archer'] }, tactical: true } : benchInput(seed));
     view = new FieldView(b, app.renderer);
     app.stage.removeChildren();
     app.stage.addChild(view.root);
     run++;
     heat = [];
-    // (the camera starts over our Landing)
-    const [x, y] = rawAt(90, 90, 1);
+    // (`&skip=n`: the first n ticks played at once, for a look at a fight under way)
+    for (let i = Number(query.get('skip')) || 0; i > 0 && b.phase === 'fight'; i--) stepAssault(b);
+    // (the camera starts over our Landing, or over `&at=u,v` and stays there: the screenshots' views)
+    const at = query.get('at')?.split(',').map(Number);
+    const [x, y] = at?.length === 2 ? rawAt(at[0], at[1], 3) : rawAt(90, 90, 1);
+    if (at?.length === 2) follow = false;
     cam.x = x;
     cam.y = y;
   };
@@ -201,6 +208,18 @@ export async function startAssaultBench(): Promise<void> {
   let shown = 0;
   const stats: BenchStats = { seed, run, ticks: 0, simMean: 0, simP95: 0, simWorst: 0, fps: 0, frameMean: 0, frameP95: 0, workMean: 0, detail: 'near', zoom: cam.zoom, fighters: 0, chunks: 0, wanted: 0, alive: 0 };
   (window as unknown as { __bench: BenchStats }).__bench = stats;
+  // (for the screenshots of the structures' states: strike one to a share of its hp, or break it, as a blow would)
+  (window as unknown as { __benchStrike: (id: string, share: number) => void }).__benchStrike = (id, share) => {
+    const h = b.field?.hold;
+    const i = h?.forts.findIndex((x) => x.spec.id === id) ?? -1;
+    if (!h || i < 0) return;
+    const f = h.forts[i];
+    if (share > 0) f.hp = Math.round(f.maxHp * share);
+    else {
+      breakFort(b, h, i);
+      view.breach(h.events.filter((e) => e.kind === 'breach').flatMap((e) => (e.kind === 'breach' ? e.tiles : [])));
+    }
+  };
 
   const frame = (now: number) => {
     requestAnimationFrame(frame);

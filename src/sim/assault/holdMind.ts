@@ -9,7 +9,8 @@
 //   soldiers near that port. One sally at a time.
 // - MORALE (off for phase 1, the owner's choice: `MORALE.on`) belongs to the foes only. A post routs when it has lost 60% and its leader is
 //   down, or when its leader flees; never within eight tiles of a drum still beating. Everyone routs when the lord falls.
-// - The DRUMS: while any beats, a band of five comes every 90 seconds from 1:30 (four at most); foes near one strike a tenth harder.
+// - The DRUMS: foes near one strike a tenth harder; while any beats, the Warpath's bands come quicker (`react.ts`, phase 1b, with the feints,
+//   the captains' and the lord's sallies and the wolves).
 // - A GATE whose crew has all fallen, with one of ours inside the wall near it, opens from inside after ten seconds.
 // - A downed hero RISES at the rally flag after 45 seconds, at half health, while three or more of its soldiers stand.
 // - The ACOLYTES mend: each heals the most hurt friend within two tiles for 4% of its health a second, soldiers first.
@@ -21,7 +22,8 @@ import type { Battle, BattleEvent, Unit } from '../battle';
 import type { At } from '../board';
 import { forNear, type FieldState } from './field';
 import { ringOf } from './fieldMap';
-import { archersOnly, freeNear, reinforce } from './garrison';
+import { archersOnly, freeNear } from './garrison';
+import { errandMark, reactSecond } from './react';
 import { breakFort, drumsBeating, openPort } from './forts';
 import type { HoldState, PostState } from './holdTypes';
 import { ELITE_TRICK, rankOf, TRICKS } from './troops';
@@ -36,8 +38,6 @@ export const ROUT_LOSS = 0.6;
 /** A drum's reach: its foes strike harder and stand firm within it. */
 export const DRUM_REACH = 8;
 export const DRUM_BLOW = 1.1;
-/** The reinforcements: every this long while a drum beats, from the first. */
-export const BAND_MS = 90_000;
 /** A platoon alone has no friendly platoon within this; a sally goes for one this near an open port, and gives up after this long. */
 export const ALONE = 8;
 export const SALLY_NEAR = 14;
@@ -68,7 +68,7 @@ export function holdTick(b: Battle, f: FieldState, h: HoldState, out: BattleEven
   if (slice !== 0) return;
   hornSecond(b, f, h);
   sallySecond(b, f, h);
-  drumSecond(b, f, h);
+  reactSecond(b, f, h, (k) => anchorOf(f, h.platoons[k]));
   gateSecond(b, f, h);
   riseSecond(b, f, h, out);
   mendSecond(b, f, h, out);
@@ -94,6 +94,8 @@ function postSecond(b: Battle, f: FieldState, h: HoldState, p: PostState): void 
     return;
   }
   if (p.mood === 'routed') return;
+  // (an errand of the reactive mind: a feint's call, a captain's sally, the wolves' ride, a band's march)
+  if (errandMark(b, f, h, p, (k) => anchorOf(f, h.platoons[k]))) return;
   // (morale: a post routs having lost the most of its band with its leader down, or when its leader flees; never by a drum still beating)
   const lead = f.byId[g.leader];
   const lost = 1 - living.length / Math.max(1, p.muster);
@@ -228,14 +230,6 @@ export function anchorOf(f: FieldState, pl: HoldState['platoons'][number]): Unit
   if (hero?.alive) return hero;
   if (pl.acting !== undefined && f.byId[pl.acting]?.alive) return f.byId[pl.acting];
   return pl.soldiers.map((s) => f.byId[s.id]).find((x) => x?.alive);
-}
-
-/** The drums: a band every `BAND_MS` while any beats, four at most. */
-function drumSecond(b: Battle, f: FieldState, h: HoldState): void {
-  if (h.lordFell !== undefined || h.bands >= h.bp.reinforce.bands || !drumsBeating(h).length) return;
-  if (b.t < BAND_MS * (h.bands + 1)) return;
-  const post = reinforce(b, f, h, h.bp);
-  if (post) h.events.push({ kind: 'reinforce', post: h.posts.indexOf(post), n: h.bp.reinforce.roster.replace(/ /g, '').length });
 }
 
 /** A gate whose crew has all fallen opens from inside, ten seconds after one of ours stands inside the wall near it. */

@@ -116,6 +116,16 @@ for (const f of readdirSync('src/art/heroes').filter(f => f.endsWith('.webp'))) 
   copyFileSync(`src/art/heroes/${f}`, `${out}/heroes/${f}`);
   HERO_ART_FILES.push(`heroes/${f}`);
 }
+// (the Assault's holds' own art, phase 1b: `tools/assault/cut-sheets.py` cuts them into src/art/assault/<army>/; loaded by URL when an
+// assault first opens, so game.js stays small; the service worker keeps them for offline play)
+const ASSAULT_ART_FILES = [];
+for (const army of readdirSync('src/art/assault')) {
+  mkdirSync(`${out}/assault/${army}`, { recursive: true });
+  for (const f of readdirSync(`src/art/assault/${army}`).filter((f) => f.endsWith('.webp'))) {
+    copyFileSync(`src/art/assault/${army}/${f}`, `${out}/assault/${army}/${f}`);
+    ASSAULT_ART_FILES.push(`assault/${army}/${f}`);
+  }
+}
 // (RPG-SPELLS: the painted spell effects' atlases, one a session (tools/spell-fx/import-spell-art.py), load by URL when a fight
 // first needs them, so game.js stays small; the service worker keeps them all for offline play)
 const SPELL_ART_FILES = [];
@@ -229,7 +239,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ASSAULT_ART_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;

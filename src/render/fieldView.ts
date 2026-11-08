@@ -10,6 +10,13 @@
 //
 // The levels change with a band either side of each threshold (`fieldDetail.ts`), so a pinch at the edge does not flicker. Fighters out
 // of view have no sprite: theirs goes back to a pool. The renderer only reads the battle; it never changes it.
+//
+// Phase 1b (the art plan's 1.2, `docs/notes/assault-art-plan.md`): with the hold's own art (`src/art/assault/<army>/`, cut by
+// `tools/assault/cut-sheets.py`), a chunk is baked from the looks of `fieldLooks.ts`: each tile's ground material (a 256 px texture over
+// 4 x 4 tiles, so no 64 px repeat shows), the fringes where materials meet, the faces of each column (a lip, a body of four steps and a
+// foot, with a dark band at the foot of the tall ones), the decals and the low clutter. The standing pieces (the structures in their
+// states, the longhouses and huts, the keep, the towers, the trees) stand among the fighters; a structure's picture follows its hp
+// (whole, battered, broken), a drum beats, a hut burns, the ladders lean on the wall and the ram rolls.
 
 import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
 import type { Battle, Unit } from '../sim/battle';
@@ -26,6 +33,10 @@ import { facesRight, FOOT, HH, rawAt, TH, TW } from './iso';
 import { facesRightOf, figureOf, framesOf, type Anim } from './sheets';
 import { detailFor, type Detail } from './fieldDetail';
 import { CHUNK, chunkHeights, chunksInView, focusOnScreen, viewRect, type PlayArea, type WorldRect } from './fieldCull';
+import { clutterOf, decalOf, DEEP, faceOf, fortLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
+import { DECALS, EDGES, FACES, SPRITES } from './assaultOrcAtlas';
+import { VFX, loadVfxArt } from './vfxArt';
+import { holdMapOf, blueprintOf } from '../sim/assault/assault';
 
 export { MID_AT, NEAR_AT, type Detail } from './fieldDetail';
 import gateUrl from '../art/camp/gate.png';
@@ -68,7 +79,87 @@ interface FieldArt {
 }
 let art: FieldArt | null = null;
 
+/** The hold's own art (phase 1b): the standing sprites' atlas, the ground textures, the transitions and decals turned four ways, the faces. */
+interface HoldArt {
+  sprites: HTMLImageElement;
+  ground: HTMLImageElement;
+  /** Each transition (by its `EDGES` name) and decal (`DECALS`), as four canvases, one a quarter turn. */
+  edges: Record<string, HTMLCanvasElement[]>;
+  decals: Record<string, HTMLCanvasElement[]>;
+  faces: HTMLImageElement;
+  tex: Map<string, Texture>;
+  /** The kit's tall grass, dried to the highland's straw (it is drawn many times a chunk). */
+  grass: HTMLCanvasElement | null;
+}
+let hold: HoldArt | null = null;
+/** The hold's art files, by URL (copied by `build.mjs` and kept by the service worker for offline play). */
+const holdUrl = (army: string, f: string) => `assault/${army === 'orcs' ? 'orc' : army}/${f}.webp`;
+/** The kit pieces are drawn at the Chronos kits' scale (a tile about 54 px once halved): this lifts them to the field's 64. */
+const KIT_SCALE = 1.15;
+
+/** Turn a square picture's cell four ways (a quarter turn clockwise each). */
+function turned(img: HTMLImageElement, sx: number, sy: number, size: number): HTMLCanvasElement[] {
+  return [0, 1, 2, 3].map((q) => {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d')!;
+    g.translate(size / 2, size / 2);
+    g.rotate((q * Math.PI) / 2);
+    g.drawImage(img, sx, sy, size, size, -size / 2, -size / 2, size, size);
+    return c;
+  });
+}
+
+/** Load the hold's own art (the Orcs' for Bloodtusk Hold). It falls back to the lands' art if a file cannot be had. */
+export async function loadHoldArt(army = 'orcs'): Promise<void> {
+  if (hold) return;
+  try {
+    const [sprites, ground, edges, decals, faces] = await Promise.all(['sprites', 'ground', 'edges', 'decals', 'faces'].map((f) => loadImage(holdUrl(army, f))));
+    const e: Record<string, HTMLCanvasElement[]> = {};
+    EDGES.forEach((n, i) => (e[n] = turned(edges, (i % 4) * 64, Math.floor(i / 4) * 64, 64)));
+    const d: Record<string, HTMLCanvasElement[]> = {};
+    DECALS.forEach((n, i) => (d[n] = turned(decals, (i % 4) * 128, Math.floor(i / 4) * 128, 128)));
+    let grass: HTMLCanvasElement | null = null;
+    const gr = SPRITES.tallGrass?.r;
+    if (gr) {
+      grass = document.createElement('canvas');
+      grass.width = gr[2];
+      grass.height = gr[3];
+      const gg = grass.getContext('2d')!;
+      gg.drawImage(sprites, gr[0], gr[1], gr[2], gr[3], 0, 0, gr[2], gr[3]);
+      gg.globalCompositeOperation = 'source-atop';
+      gg.fillStyle = 'rgba(150,128,64,0.55)';
+      gg.fillRect(0, 0, gr[2], gr[3]);
+    }
+    hold = { sprites, ground, edges: e, decals: d, faces, tex: new Map(), grass };
+  } catch {
+    hold = null;
+  }
+  await loadVfxArt().catch(() => undefined);
+}
+
+/** A standing sprite of the hold's atlas, cut once. */
+function holdTex(name: string): Texture | null {
+  if (!hold || !SPRITES[name]) return null;
+  let t = hold.tex.get(name);
+  if (!t) {
+    const [x, y, w, h] = SPRITES[name].r;
+    const src = (hold.tex.get('') ?? hold.tex.set('', Texture.from(hold.sprites)).get(''))!.source;
+    t = new Texture({ source: src, frame: new Rectangle(x, y, w, h) });
+    hold.tex.set(name, t);
+  }
+  return t;
+}
+
 /** Load the field's art (the land's ground, sides and boulders, the ruins, the gate, a spark and an arrow from the fx packs). */
+/** A hash of two numbers, 0 to 1 (looks only: the clutter's offsets). */
+const hashOf = (a: number, b: number): number => (((Math.imul(a * 73856093 ^ b * 19349663, 0x9e3779b1) >>> 0) % 1000) / 1000);
+/** Whether a piece is one of the Chronos kits' (drawn at their scale), not the hold's sheets'. */
+const KIT_NAMES = new Set(['longhouse', 'boneHut', 'hideHut', 'forge', 'forgeFire', 'wargPen', 'pigPen', 'watchtower', 'lookout', 'warDrum', 'skullTotem', 'skullTorch', 'spearSign', 'bonfire', 'weaponStall', 'skullPile', 'warCart', 'granary', 'meatRacks', 'meatPile', 'barrels', 'chests', 'stockpile', 'woodpile', 'well', 'hides', 'logBridge', 'ruin1', 'ruin2', 'rubblePile', 'brazier', 'pine1', 'pine2', 'pineSmall', 'burntTree', 'gnarledTree', 'bareTree', 'thornBush', 'shrub1', 'shrub2', 'fern', 'stump1', 'stump2', 'fallenLog', 'boulders', 'rocks', 'darkRocks', 'darkRocksB', 'standingStone', 'reeds1', 'reeds2', 'bones1', 'bones2', 'bones3', 'flowers1', 'flowers2', 'pebbles', 'tallGrass', 'kitSpikedWall', 'kitSpikedCorner', 'kitSkullGate', 'kitStakeFence']);
+const isKit = (name: string): boolean => KIT_NAMES.has(name);
+/** The one-tile pieces big enough to show on the overview. */
+const BIG = new Set(['longhouse', 'watchtower', 'wargPen', 'pigPen', 'throne', 'greatBanner', 'warTent', 'hideHut', 'bonfire']);
+
 export async function loadFieldArt(): Promise<void> {
   if (art) return;
   const land = async (a: 'highlands' | 'warcamp'): Promise<LandArt> => {
@@ -83,6 +174,7 @@ export async function loadFieldArt(): Promise<void> {
   ]);
   // (the set pieces' atlas: the drums, tents, flags, fires and braziers of the arenas)
   await loadRoadArt();
+  await loadHoldArt();
   // (the impact strip: seven frames of 48 x 48)
   const sparks = Array.from({ length: 7 }, (_, i) => new Texture({ source: impact.source, frame: new Rectangle(i * 48, 0, 48, 48) }));
   art = { highlands, warcamp, water, planks, bushes, walls, gate, sparks, arrow };
@@ -93,6 +185,14 @@ interface Chunk {
   /** Its tall things (boulders, walls, gates), in the fighters' layer. */
   props: Sprite[];
   used: number;
+}
+
+/** A standing piece whose picture follows the battle: a structure's state, a drum's beat, a hut's fire. */
+interface Live {
+  sp: Sprite;
+  p: Placement;
+  /** Its foot's height (for the fire's place). */
+  h: number;
 }
 
 interface FxLive {
@@ -131,6 +231,13 @@ export class FieldView {
   private brokenGates = new Set<number>();
   /** Each chunk's highest and lowest ground, for culling. */
   private heights: ReturnType<typeof chunkHeights>;
+  /** The hold's looks (phase 1b): each tile's material, the standing pieces by the chunk they sort in, the pieces that follow the battle. */
+  private mats: Uint8Array | null = null;
+  private placed = new Map<number, Placement[]>();
+  private live = new Map<number, Live[]>();
+  private works = new Container();
+  private fires: Sprite[] = [];
+  private ladders: Sprite[] = [];
 
   constructor(private b: Battle, private renderer: { generateTexture: (o: Container | { target: Container }) => Texture }) {
     this.unitLayer.sortableChildren = true;
@@ -148,6 +255,21 @@ export class FieldView {
     for (const p of this.b.board.pieces ?? []) this.pieceAt.set(p.v * w + p.u, p.kind);
     // (the hold's gates: the camp's gate on each one's first tile; the drums are set pieces)
     for (const f of this.b.field?.hold?.forts ?? []) if (f.spec.kind !== 'palisade' && f.spec.kind !== 'drum') this.gateAt.add(f.spec.tiles[0]);
+    // (the hold's looks, when its own art is loaded: each tile's material and every standing piece, by its chunk)
+    const bp = this.b.field?.hold?.bp ?? blueprintOf('orcs');
+    const map = bp ? holdMapOf(bp.army) : undefined;
+    if (hold && bp && map && this.b.field) {
+      this.mats = materialsOf(this.b.board, this.b.field.zone, bp);
+      for (const p of placementsOf(this.b.board, this.b.field.zone, bp, this.b.field.hold?.forts.map((x) => x.spec) ?? map.forts)) {
+        const key = Math.floor(Math.floor(p.front / w) / CHUNK) * 100 + Math.floor((p.front % w) / CHUNK);
+        let list = this.placed.get(key);
+        if (!list) this.placed.set(key, (list = []));
+        list.push(p);
+      }
+    }
+    this.unitLayer.addChild(this.works);
+    this.works.zIndex = 0;
+    this.works.sortableChildren = false;
     this.bakeOverview();
     const bd = this.b.board;
     this.heights = chunkHeights(bd.w, bd.d, (u, v) => bd.tiles[v * bd.w + u].h);
@@ -218,6 +340,51 @@ export class FieldView {
       g.closePath();
       g.fill();
     };
+    // (the hold's art: a face of the sheet, a lip on the top step, a foot on the lowest, the body's four steps between; a dark band at the
+    //  foot of a face three steps or more; a shade over it all)
+    const H = hold;
+    const mats = this.mats;
+    const tall: number[] = [];
+    const sheetFace = (name: string, a: [number, number], z: [number, number], steps: number, shade: number) => {
+      const col = FACES.indexOf(name as (typeof FACES)[number]);
+      const sx = (col % 6) * 64;
+      const sy = Math.floor(col / 6) * 120;
+      for (let k = 0; k < steps; k++) {
+        const part = k === 0 ? 0 : k === steps - 1 && steps >= 2 ? 100 : 20 + ((k - 1) % 4) * 20;
+        g.setTransform(((z[0] - a[0]) / 64) * S, ((z[1] - a[1]) / 64) * S, 0, (HH / 20) * S, (a[0] + ox) * S, (a[1] + oy + k * HH) * S);
+        g.drawImage(H!.faces, sx, sy + part, 64, 20, 0, 0, 64, 20);
+      }
+      g.setTransform(S, 0, 0, S, ox * S, oy * S);
+      const quad = (y0: number, y1: number, fill: string | CanvasGradient) => {
+        g.fillStyle = fill;
+        g.beginPath();
+        g.moveTo(a[0], a[1] + y0);
+        g.lineTo(z[0], z[1] + y0);
+        g.lineTo(z[0], z[1] + y1);
+        g.lineTo(a[0], a[1] + y1);
+        g.closePath();
+        g.fill();
+      };
+      quad(0, steps * HH, `rgba(0,0,0,${shade})`);
+      if (steps >= 3) {
+        const yb = Math.max(a[1], z[1]) + steps * HH;
+        const grad = g.createLinearGradient(0, yb - HH * 1.5, 0, yb);
+        grad.addColorStop(0, 'rgba(10,6,4,0)');
+        grad.addColorStop(1, 'rgba(10,6,4,0.45)');
+        quad(steps * HH - HH * 1.5, steps * HH, grad);
+      }
+    };
+    // (a material's quarter of its 256 px texture: the tile's place in its 4 x 4)
+    const matTop = (m: number, u: number, v: number, h: number) => {
+      const [x, y] = rawAt(u - 0.5, v - 0.5, h);
+      g.setTransform(((TW / 2) / 64) * S, ((TH / 2) / 64) * S, (-(TW / 2) / 64) * S, ((TH / 2) / 64) * S, (x + ox) * S, (y + oy) * S);
+      g.drawImage(H!.ground, (m % 4) * 256 + (u % 4) * 64, Math.floor(m / 4) * 256 + (v % 4) * 64, 64, 64, 0, 0, 64, 64);
+    };
+    const overlay = (c: HTMLCanvasElement, u: number, v: number, h: number, span = 1) => {
+      const [x, y] = rawAt(u - 0.5 - (span - 1) / 2, v - 0.5 - (span - 1) / 2, h);
+      g.setTransform(((TW / 2) * span / c.width) * S, ((TH / 2) * span / c.width) * S, (-(TW / 2) * span / c.height) * S, ((TH / 2) * span / c.height) * S, (x + ox) * S, (y + oy) * S);
+      g.drawImage(c, 0, 0);
+    };
     // back to front: by u + v, then u
     for (let s = u0 + v0; s <= u1 + v1; s++)
       for (let u = Math.max(u0, s - v1); u <= Math.min(u1, s - v0); u++) {
@@ -228,25 +395,78 @@ export class FieldView {
         // (the bottom-right face, over the +u neighbour, and the bottom-left, over the +v one)
         const dr = Math.ceil(t.h - hOf(u + 1, v));
         const dl = Math.ceil(t.h - hOf(u, v + 1));
+        if (H && mats) {
+          const zone = this.f.zone;
+          if (dr > 0) sheetFace(faceOf(b, zone, i, u + 1 < b.w ? i + 1 : -1), rawAt(u + 0.5, v - 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dr, 0.22);
+          if (dl > 0) sheetFace(faceOf(b, zone, i, v + 1 < b.d ? i + b.w : -1), rawAt(u - 0.5, v + 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dl, 0.06);
+          const m = mats[i];
+          if (m === DEEP) {
+            top(art!.water, u, v, t.h);
+            g.setTransform(S, 0, 0, S, ox * S, oy * S);
+            this.diamond(g, u, v, t.h, 'rgba(20,50,120,0.45)');
+          } else matTop(m, u, v, t.h);
+          for (const fr of fringesOf(b, mats, u, v)) overlay(H.edges[fr.edge][fr.turn], u, v, t.h);
+          if (t.ground === 'tall') tall.push(i);
+          continue;
+        }
         if (dr > 0) face(land.side, rawAt(u + 0.5, v - 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dr, 0.32);
         if (dl > 0) face(land.side, rawAt(u - 0.5, v + 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dl, 0.12);
         top(this.topOf(t, land), u, v, t.h);
         if (t.ground === 'deep' || t.ground === 'water') {
           g.setTransform(S, 0, 0, S, ox * S, oy * S);
           this.diamond(g, u, v, t.h, t.ground === 'deep' ? 'rgba(20,50,120,0.45)' : 'rgba(120,190,255,0.12)');
-        } else if (t.ground === 'tall') {
-          // (tufts of tall grass, the land's own, in front of the tile's middle)
-          const [x, y] = rawAt(u, v, t.h);
-          for (let k = 0; k < 5; k++) {
-            const img = land.tall[(t.deco + k) % land.tall.length];
-            const a = ((t.deco >> 2) + k * 2.1) % 6.283;
-            const px = x + Math.cos(a) * 15;
-            const py = y + 4 + Math.sin(a) * 5;
-            g.setTransform(S * 3, 0, 0, S * 3, (px + ox) * S - (img.width * 3 * S) / 2, (py + oy) * S - img.height * 3 * S);
-            g.drawImage(img, 0, 0);
-          }
-        }
+        } else if (t.ground === 'tall') this.tufts(g, land, u, v, t.h, S, ox, oy);
       }
+    // (the hold's art: the decals on the flat tiles away from the chunk's edge, then the low clutter, the tall grass and the low pieces, back
+    //  to front)
+    if (H && mats) {
+      const flat = (u: number, v: number, h: number) => {
+        for (let dv = -1; dv <= 1; dv++) for (let du = -1; du <= 1; du++) if (Math.abs(hOf(u + du, v + dv) - h) >= 1) return false;
+        return true;
+      };
+      const bp = this.f.hold?.bp;
+      if (bp)
+        for (let v = v0 + 1; v < v1; v++)
+          for (let u = u0 + 1; u < u1; u++) {
+            const t = b.tiles[v * b.w + u];
+            const dc = decalOf(b, this.f.zone, mats, bp, u, v);
+            if (!dc || !flat(u, v, t.h)) continue;
+            g.globalAlpha = dc.alpha;
+            overlay(H.decals[dc.name][dc.turn], u, v, t.h, 2);
+            g.globalAlpha = 1;
+          }
+      const low: { u: number; v: number; h: number; tex: Texture; ax: number; ay: number; scale: number; img?: HTMLCanvasElement }[] = [];
+      for (let v = v0; v <= v1; v++)
+        for (let u = u0; u <= u1; u++) {
+          const t = b.tiles[v * b.w + u];
+          const c = clutterOf(b, this.f.zone, mats, u, v);
+          const tex = c ? holdTex(c) : null;
+          if (tex && c) low.push({ u: u + (hashOf(u, v) - 0.5) * 0.4, v: v + (hashOf(v, u) - 0.5) * 0.4, h: t.h, tex, ax: SPRITES[c].foot[0], ay: SPRITES[c].foot[1], scale: 0.7 });
+        }
+      const grass = holdTex('tallGrass');
+      if (grass)
+        for (const i of tall) {
+          const u = i % b.w;
+          const v = Math.floor(i / b.w);
+          for (let k = 0; k < 3; k++)
+            low.push({ u: u - 0.3 + (k % 2) * 0.55 + (hashOf(u + k, v) - 0.5) * 0.2, v: v - 0.3 + (k === 1 ? 0.55 : 0.2) + (hashOf(v, u + k) - 0.5) * 0.2, h: b.tiles[i].h, tex: grass, ax: SPRITES.tallGrass.foot[0], ay: SPRITES.tallGrass.foot[1], scale: 0.7, img: H.grass ?? undefined });
+        }
+      for (const p of this.placed.get(cy * 100 + cx) ?? []) {
+        if (!p.low) continue;
+        const tex = holdTex(p.name);
+        if (!tex) continue;
+        const t = b.tiles[p.front];
+        low.push({ u: p.u, v: p.v, h: t.h, tex, ax: SPRITES[p.name].foot[0], ay: SPRITES[p.name].foot[1], scale: (p.scale ?? 1) * (isKit(p.name) ? KIT_SCALE : 1) });
+      }
+      low.sort((x, y) => x.u + x.v - (y.u + y.v));
+      for (const l of low) {
+        const [x, y] = rawAt(l.u, l.v, l.h);
+        const fr = l.tex.frame;
+        g.setTransform(S * l.scale, 0, 0, S * l.scale, (x + ox) * S - l.ax * l.scale * S, (y + oy) * S - l.ay * l.scale * S);
+        if (l.img) g.drawImage(l.img, 0, 0);
+        else g.drawImage(H.sprites, fr.x, fr.y, fr.width, fr.height, 0, 0, fr.width, fr.height);
+      }
+    }
     const texture = Texture.from(canvas);
     texture.source.scaleMode = 'nearest';
     const sprite = new Sprite(texture);
@@ -255,6 +475,27 @@ export class FieldView {
     sprite.zIndex = cx + cy;
     // the tall things on the chunk's tiles, as sprites among the fighters
     const props: Sprite[] = [];
+    if (H && mats) {
+      const live: Live[] = [];
+      for (const p of this.placed.get(cy * 100 + cx) ?? []) {
+        if (p.low) continue;
+        const sp = this.standing(p);
+        if (!sp) continue;
+        const t = b.tiles[p.front];
+        // (a structure stands at its floor, not on top of its own solid tiles)
+        const h = p.fort !== undefined ? this.floorOf(p) : t.h;
+        const [x, y] = rawAt(p.u, p.v, h);
+        sp.position.set(x, y);
+        const at = p.depth ?? p.front;
+        sp.zIndex = ((at % b.w) + Math.floor(at / b.w)) * 10 + (p.depth !== undefined ? 1 : 4);
+        props.push(sp);
+        this.unitLayer.addChild(sp);
+        if (p.fort !== undefined || p.hut !== undefined) live.push({ sp, p, h });
+      }
+      this.live.set(cy * 100 + cx, live);
+      this.drawn.baked++;
+      return { sprite, props, used: this.frame };
+    }
     for (let v = v0; v <= v1; v++)
       for (let u = u0; u <= u1; u++) {
         const i = v * b.w + u;
@@ -269,6 +510,80 @@ export class FieldView {
       }
     this.drawn.baked++;
     return { sprite, props, used: this.frame };
+  }
+
+  /** Tufts of tall grass, the land's own, in front of the tile's middle. */
+  private tufts(g: CanvasRenderingContext2D, land: LandArt, u: number, v: number, h: number, S: number, ox: number, oy: number): void {
+    const t = this.b.board.tiles[v * this.b.board.w + u];
+    const [x, y] = rawAt(u, v, h);
+    for (let k = 0; k < 5; k++) {
+      const img = land.tall[(t.deco + k) % land.tall.length];
+      const a = ((t.deco >> 2) + k * 2.1) % 6.283;
+      const px = x + Math.cos(a) * 15;
+      const py = y + 4 + Math.sin(a) * 5;
+      g.setTransform(S * 3, 0, 0, S * 3, (px + ox) * S - (img.width * 3 * S) / 2, (py + oy) * S - img.height * 3 * S);
+      g.drawImage(img, 0, 0);
+    }
+  }
+
+  /** A standing piece's sprite: the hold's own picture on its foot point (or an arena set piece), mirrored for a run along v. */
+  private standing(p: Placement): Sprite | null {
+    if (p.road) {
+      const pic = setPiece(p.road as Parameters<typeof setPiece>[0], this.b.board.area);
+      const tex = piece(pic.name);
+      if (!tex) return null;
+      const s = new Sprite(tex);
+      s.anchor.set(pic.ax ?? 0.5, pic.ay ?? 0.84);
+      s.scale.set(pic.scale);
+      return s;
+    }
+    if (p.name === 'landBoulder') {
+      const set = art!.highlands.boulders;
+      const tex = set[this.b.board.tiles[p.front].deco % set.length];
+      const s = new Sprite(tex);
+      s.anchor.set(0.5, 0.8);
+      s.scale.set(Math.min(56 / tex.width, 66 / tex.height));
+      return s;
+    }
+    const name = this.lookOf(p);
+    const tex = holdTex(name);
+    if (!tex) return null;
+    const s = new Sprite(tex);
+    this.footOn(s, name, p);
+    if (p.tint !== undefined) s.tint = p.tint;
+    return s;
+  }
+
+  /** Stand a sprite on its picture's foot point, at the piece's scale, mirrored if it runs along v. */
+  private footOn(s: Sprite, name: string, p: Placement): void {
+    const def = SPRITES[name];
+    s.anchor.set(def.foot[0] / def.r[2], def.foot[1] / def.r[3]);
+    const k = (p.scale ?? 1) * (isKit(name) ? KIT_SCALE : 1);
+    s.scale.set(p.flip ? -k : k, k);
+  }
+
+  /** The picture a piece shows now: a structure's by its state, a hut's once burnt. */
+  private lookOf(p: Placement): string {
+    const h = this.f.hold;
+    if (p.fort !== undefined && h) {
+      const f = h.forts[p.fort];
+      let look = fortLook(f.spec.kind, f.hp, f.maxHp, f.broken, !!f.open);
+      if (look === 'palisadeRun' && p.inner) look = 'palisadeInner';
+      // (a breached segment: the ramp of logs on the ring's outer row only)
+      if (look === 'palisadeBreach' && Math.max(Math.abs(p.u - 49.5), Math.abs(p.v - 49.5)) < 23) return 'gatePost';
+      return look;
+    }
+    if (p.hut !== undefined && h?.siege.huts[p.hut]?.burnt) return 'burntHeap';
+    return p.name;
+  }
+
+  /** The floor a structure stands on: the lowest of its tiles' open neighbours (a gate on its passage, a segment on the bank). */
+  private floorOf(p: Placement): number {
+    const b = this.b.board;
+    const f = this.f.hold?.forts[p.fort!];
+    if (!f) return b.tiles[p.front].h;
+    if (f.spec.kind === 'palisade' || f.spec.kind === 'drum') return b.tiles[p.front].h;
+    return f.spec.floor;
   }
 
   private topOf(t: Tile, land: LandArt): HTMLImageElement {
@@ -359,14 +674,33 @@ export class FieldView {
         const v = s - u;
         const i = v * b.w + u;
         const t = b.tiles[i];
-        const img = this.topOf(t, this.landOf(i));
         const [x, y] = rawAt(u - 0.5, v - 0.5, t.h);
-        g.setTransform(((TW / 2) / img.width) * S, ((TH / 2) / img.width) * S, (-(TW / 2) / img.height) * S, ((TH / 2) / img.height) * S, (x - left) * S, (y - topY) * S);
-        g.drawImage(img, 0, 0);
+        const m = this.mats?.[i];
+        if (hold && m !== undefined && m !== DEEP) {
+          // (the hold's art: the tile's material, its own quarter of the texture)
+          g.setTransform(((TW / 2) / 64) * S, ((TH / 2) / 64) * S, (-(TW / 2) / 64) * S, ((TH / 2) / 64) * S, (x - left) * S, (y - topY) * S);
+          g.drawImage(hold.ground, (m % 4) * 256 + (u % 4) * 64, Math.floor(m / 4) * 256 + (v % 4) * 64, 64, 64, 0, 0, 64, 64);
+        } else {
+          const img = this.topOf(t, this.landOf(i));
+          g.setTransform(((TW / 2) / img.width) * S, ((TH / 2) / img.width) * S, (-(TW / 2) / img.height) * S, ((TH / 2) / img.height) * S, (x - left) * S, (y - topY) * S);
+          g.drawImage(img, 0, 0);
+        }
         g.setTransform(S, 0, 0, S, -left * S, -topY * S);
         const shade = t.rock || t.wall ? 'rgba(40,30,20,0.55)' : t.ground === 'deep' ? 'rgba(20,50,120,0.45)' : `rgba(0,0,0,${Math.max(0, 0.25 - t.h * 0.03)})`;
         this.diamond(g, u, v, t.h, shade);
       }
+    // (the hold's art: its landmarks shrunk onto the overview, so the field reads as places at Far)
+    if (hold)
+      for (const list of this.placed.values())
+        for (const p of list) {
+          const def = SPRITES[p.name];
+          if (!def || p.low || (def.fp[0] * def.fp[1] < 4 && !BIG.has(p.name))) continue;
+          const h = b.tiles[p.front].h;
+          const [x, y] = rawAt(p.u, p.v, h);
+          const k = (p.scale ?? 1) * (isKit(p.name) ? KIT_SCALE : 1) * S;
+          g.setTransform(p.flip ? -k : k, 0, 0, k, (x - left) * S, (y - topY) * S);
+          g.drawImage(hold.sprites, def.r[0], def.r[1], def.r[2], def.r[3], -def.foot[0], -def.foot[1], def.r[2], def.r[3]);
+        }
     const texture = Texture.from(canvas);
     this.overview = new Sprite(texture);
     this.overview.position.set(left, topY);
@@ -386,6 +720,7 @@ export class FieldView {
 
   private dropChunk(key: number): void {
     const c = this.chunks.get(key);
+    this.live.delete(key);
     if (!c) return;
     c.sprite.texture.destroy(true);
     c.sprite.destroy();
@@ -411,9 +746,11 @@ export class FieldView {
     // the world rectangle in view, and a margin
     const view = viewRect(cam, vw, vh, focus);
     this.drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0 };
+    this.simT = simT;
     if (far) this.drawFar(simT, cam.zoom);
     else {
       this.drawChunks(view);
+      this.drawWorks(view);
       this.drawFighters(view, simT, events);
     }
   }
@@ -445,6 +782,7 @@ export class FieldView {
       }
       c.used = this.frame;
       if (!c.sprite.parent) this.chunkLayer.addChild(c.sprite);
+      for (const l of this.live.get(key) ?? []) this.liveLook(l);
       for (const p of c.props) {
         const gate = p.label?.startsWith('gate:') && this.brokenGates.has(Number(p.label.slice(5)));
         p.visible = !gate;
@@ -466,6 +804,77 @@ export class FieldView {
     }
   }
 
+  /** A piece that follows the battle: its state's picture, a drum's beat (a small squash), a hut's fire. */
+  private liveLook(l: Live): void {
+    const name = this.lookOf(l.p);
+    const tex = holdTex(name);
+    if (tex && l.sp.texture !== tex) {
+      l.sp.texture = tex;
+      this.footOn(l.sp, name, l.p);
+    }
+    if (name === 'drumStruck') {
+      const k = (l.p.scale ?? 1);
+      const beat = Math.max(0, Math.sin(this.simT / 140)) ** 6;
+      l.sp.scale.set((l.p.flip ? -k : k) * (1 + beat * 0.04), k * (1 - beat * 0.05));
+    }
+  }
+
+  /** The siege works that move (phase 1b): a fire over each burning hut, a ladder against the wall at each one up. Pooled; drawn at Near and Mid. */
+  private drawWorks(view: WorldRect): void {
+    const h = this.f.hold;
+    const b = this.b.board;
+    let nf = 0;
+    let nl = 0;
+    if (h && hold) {
+      const flame = VFX.flameFire;
+      const smoke = VFX.smokeDark;
+      for (const hut of h.siege.huts) {
+        if (hut.burning === undefined) continue;
+        for (const [k, t] of hut.tiles.entries()) {
+          const u = t % b.w;
+          const v = Math.floor(t / b.w);
+          const [x, y] = rawAt(u, v, b.tiles[t].h);
+          if (x < view.x0 || x > view.x1 || y < view.y0 || y > view.y1) continue;
+          for (const [set, dy, sc] of [[flame, -10, 1.6], [smoke, -46, 2.2]] as const) {
+            if (!set?.length) continue;
+            const sp = (this.fires[nf] ??= this.works.addChild(new Sprite()));
+            sp.visible = true;
+            sp.anchor.set(0.5, 1);
+            sp.texture = set[Math.floor(this.simT / 90 + k * 2) % set.length];
+            sp.position.set(x, y + dy);
+            sp.scale.set(sc);
+            sp.alpha = set === smoke ? 0.7 : 1;
+            sp.zIndex = (u + v) * 10 + 8;
+            this.unitLayer.addChild(sp);
+            nf++;
+          }
+        }
+      }
+      const tex = holdTex('ladder');
+      for (const l of h.siege.ladders) {
+        if (!l.up || !tex) continue;
+        const fu = l.foot % b.w;
+        const fv = Math.floor(l.foot / b.w);
+        const tu = l.top % b.w;
+        const tv = Math.floor(l.top / b.w);
+        const [x, y] = rawAt((fu + tu) / 2, (fv + tv) / 2, b.tiles[l.foot].h);
+        if (x < view.x0 || x > view.x1 || y < view.y0 || y > view.y1) continue;
+        const sp = (this.ladders[nl] ??= new Sprite(tex));
+        sp.visible = true;
+        // (the art leans to the upper right, onto a wall at -v; mirrored for a wall at -u)
+        this.footOn(sp, 'ladder', { name: 'ladder', u: 0, v: 0, front: 0, flip: tu < fu || tv > fv, scale: 1.25 });
+        sp.position.set(x, y);
+        sp.zIndex = (fu + fv) * 10 + 6;
+        this.unitLayer.addChild(sp);
+        nl++;
+      }
+    }
+    for (let i = nf; i < this.fires.length; i++) this.fires[i].visible = false;
+    for (let i = nl; i < this.ladders.length; i++) this.ladders[i].visible = false;
+  }
+
+  private simT = 0;
+
   private drawFighters(view: WorldRect, simT: number, events: readonly FieldEvent[]): void {
     const f = this.f;
     const mid = this.detail === 'mid';
@@ -483,6 +892,22 @@ export class FieldView {
         s.ring.anchor.set(0.5, 0.5);
         this.unitLayer.addChild(s.ring, s.body);
         this.sprites.set(x.id, s);
+      }
+      // (the ram: the hold's picture of it, rolling, mirrored to its way; a red tint as it is struck)
+      if (x.def === 'siegeRam') {
+        const tex = holdTex('ram');
+        if (tex) {
+          s.body.texture = tex;
+          this.footOn(s.body, 'ram', { name: 'ram', u: 0, v: 0, front: 0, flip: x.facing === 0 || x.facing === 3, scale: 0.85 });
+          s.body.position.set(px, py + 2 + (x.step && simT < x.step.at + x.step.ms ? Math.sin(simT / 60) : 0));
+          s.body.zIndex = depth + 5;
+          s.body.visible = true;
+          s.body.alpha = x.alive ? 1 : Math.max(0, 1 - (simT - (x.diedAt ?? 0)) / 1200);
+          s.body.tint = x.alive && x.hurtAt !== undefined && simT - x.hurtAt < 120 ? 0xff9a9a : 0xffffff;
+          s.ring.visible = false;
+          this.drawn.fighters++;
+          continue;
+        }
       }
       // (a fighter a skill called up has no place in the field's lists: its own kind's numbers and sheet)
       const info = f.info[x.id] ?? { def: UNITS[x.def], sheet: UNITS[x.def].sheet, role: 'leader' as const, group: -1, slot: 0 };
