@@ -499,6 +499,8 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 ## Anime hero gallery
 
+- Painted weapon repairs (November 2026): Peasant, Mercenary, Harpooner, Samurai Commander, Samurai and Ranger full scenes, plus Samurai and Samurai Commander transparent menu cutouts, edited from the game's existing original artwork with OpenAI image generation at the owner's request. Corrected rigid weapon geometry, grips, scabbard support and bowstring connections while retaining character designs and scenes. See `docs/notes/hero-weapon-fixes.md`.
+
 - `src/art/heroes/*.webp`: 45 original anime hero scenes and 45 transparent menu cutouts generated with OpenAI image generation in October 2026 for the owner's hero overview request. Each full illustration has an individual pose and situation. Kitsune, Gorgon, Illusionist and Time Witch follow the owner's supplied redesign concept; the other heroes draw on their established game identities and colours.
 - `tools/anime-heroes/catalogue.json` and `scenes.json` record the character directions and scene briefs. Generated production atlases are split into individual assets and transcoded for the offline gallery by `extract.cjs` and `pack.cjs`. Battle animation artwork and its existing credits remain separate.
 
@@ -596,6 +598,10 @@ The cozy seated tavern extension adds 108 original OpenAI-generated resting hero
 ### Five Mythic heroes
 
 Vael, Astrax, Ilyra, Orrun and Nyxara are original character designs and artwork generated with OpenAI image generation for this game. Painted portraits (`src/art/heroes/{vael,astrax,ilyra,orrun,nyxara}*.webp`), ten pixel battle sheets (`src/art/units/mythic_*.png`) and ten resting tavern cutouts (`src/art/tavern/guests/{vael,astrax,ilyra,orrun,nyxara}-*.webp`) retain their sources under `art-source/mythics/`. The battle sprites reference the game's existing hero-remake lineup for its pixel style, proportions, shading and paired facings; the tavern paintings reference the existing credited seated knight. `tools/mythics/pack.py` packages complete drawn poses using the existing hero extraction workflow, shared nearest-neighbour scale and alpha extraction, without recolouring or inventing animation frames. Mythic skill icons and effects reuse the game's existing credited painted motifs and signatures. All runtime assets are included in offline caching.
+
+## Living tavern illustrations
+
+OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper tables and individual off-duty activity illustrations for all 54 heroes. Generated against the existing credited hero identities and owner-approved tavern concept. Original sources, briefs and packing metadata: `art-source/tavern/living/`; runtime cutouts: `src/art/tavern/guests/*-activity.webp` and `living-*.webp`. These replace the uniform armchair composition on the Heroes page.
 
 ## Remaining Nemesis trait symbols
 

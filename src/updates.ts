@@ -1,4 +1,4 @@
-// What's new: the releases the Updates and notes page in Settings lists, newest first, in plain words for the player (no
+﻿// What's new: the releases the Updates and notes page in Settings lists, newest first, in plain words for the player (no
 // code talk). Pure data, so the tests can check it. Whoever merges a release adds its entry at the top of UPDATES with the
 // same version as package.json (a test fails if the newest entry and package.json disagree), a date and two to five short
 // lines of what changed. Older history is summed up a range at a time in EARLIER.
@@ -27,14 +27,34 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
-    version: '0.395.0',
-    date: '2026-11-07',
+    version: '0.397.0',
+    date: '2026-11-08',
     title: 'Five legends beyond the veil',
     notes: [
       'Five Mythic heroes wait behind hidden endgame quest chains and difficult trials. They never appear in ordinary summons.',
       'Each brings powerful abilities, painted portraits, matching pixel battle animations and resting tavern artwork.',
       'Only one Mythic may fight in a squad, including Last Stand. Earned Mythics arrive at level 30 with their full kit ready.',
       'Secret progress and all new artwork remain available offline.',
+    ],
+  },
+  {
+    version: '0.396.0',
+    date: '2026-11-08',
+    title: 'A livelier tavern',
+    notes: [
+      'Your strongest heroes now gather around the bar, games table and hearth, each with their own activity: music, meals, crafts, cards and more.',
+      'Gentle movement, rolling dice, steam and warm firelight bring the room to life, with quieter options for reduced motion and battery saver.',
+      'Gwen stands behind the counter, guests stay clear to tap, and stray rectangular shadows around the heroes are gone.',
+    ],
+  },
+  {
+    version: '0.395.0',
+    date: '2026-11-07',
+    title: 'Straighter steel and sturdier spears',
+    notes: [
+      'Painted hero illustrations have clearer weapon shapes, with a straighter Peasant spear and an aligned Mercenary sword grip.',
+      'Samurai artwork has cleaner sword grips and scabbards, and the Ranger's drawn bowstring connects correctly.',
+      'The revised paintings and matching menu portraits remain available offline.',
     ],
   },
   {
