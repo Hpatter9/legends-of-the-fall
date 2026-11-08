@@ -15,11 +15,11 @@ const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as 
 test('every actual hero, ultimate, enemy skill and king spell has individual authored artwork', () => {
   // (FOE-STYLES: a common foe's kit has no skill)
   const names = new Set(Object.values(KITS).filter(hasSkill).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
-  assert.equal(names.size, 136);
+  assert.equal(names.size, 158);
   const expected = [...names].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
   // (136 skills and ultimates and the king's 35 spells: KING-SPELLS batch 5 painted the schools' fourteen, docs/notes/king-spells-b5.md;
-  // the five Mythics' skill 1 and ultimate took ten more, atlas-11, docs/notes/fix-main-mythics.md)
-  assert.equal(expected.length, 171);
+  // the five Mythics' skill 1 and ultimate took ten more, atlas-11, docs/notes/fix-main-mythics.md; the other eleven of the twenty took twenty-two, atlas-11 and atlas-12, docs/notes/heroes-join-2.md)
+  assert.equal(expected.length, 193);
   assert.deepEqual(Object.keys(ABILITY_LOOKS).sort(), expected.sort());
   assert.equal(new Set(ABILITY_ART.map(row => row.id)).size, expected.length);
   assert.equal(new Set(ABILITY_ART.map(row => abilitySource(row.id))).size, expected.length, 'different names must resolve to different source cells');

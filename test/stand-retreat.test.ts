@@ -63,7 +63,8 @@ test('a strong party falls back room by room, in order, and each new room is lai
   // (FOE-STYLES on 0.350: re-staged from seed 21, which now falls in wave 15, to seed 1; 11 of seeds 1 to 12 reach the fourth room)
   // (HEROES-JOIN, docs/notes/heroes-join.md: nine more heroes move the roster means every hero's numbers are sized against, so the party
   // falls a little sooner: 7 of seeds 1 to 14 now reach the fourth room, seed 1 among them)
-  const s = startStand(newStandRun(1, EIGHT, armies), setupAt(100));
+  // (HEROES-JOIN 2, docs/notes/heroes-join-2.md: eleven more move them again, and seed 1 now falls before the fourth room: re-staged from seed 1 to seed 3, which does reach it)
+  const s = startStand(newStandRun(3, EIGHT, armies), setupAt(100));
   startFirstWave(s);
   const rooms: { hall: HallKind; wave: number }[] = [];
   const notes: StandNote[] = [];

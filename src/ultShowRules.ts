@@ -115,7 +115,7 @@ export const SHOWCASES: Record<string, Showcase> = {
   mirageDancer: { style: 'blinks', el: 'wind', line: 'Seven shimmering dancers spin out of the sand; she cuts through each foe in turn and leaves her mirages standing behind' },
   plagueDoctor: { style: 'burst', el: 'poison', hit: 'smite', line: 'A black plague cloud towers up round him; each foe within it is struck and sickened as the censer smoke rolls out' },
   bombardier: { style: 'sky', el: 'fire', line: 'He rocket-jumps clear of the fray and calls down the salvos; shells rain across the field in a storm of fire' },
-  astrologer: { style: 'burst', el: 'light', hit: 'smite', line: 'The planets align over the crowd, drag the foes together and fall as two supernovas that scatter golden light' },
+  astrologer: { style: 'sky', el: 'light', line: 'The planets align over the crowd, drag the foes together and fall as two supernovas that scatter golden light' },
   inquisitor: { style: 'shots', el: 'light', draw: 600, line: 'The Tribunal sits in a ring of sun discs; a bolt of judgement is loosed at each of the three strongest foes in turn' },
   seraph: { style: 'sky', el: 'light', line: 'A host of golden wings descends from the sky on the thickest crowd, throwing the foes back from her friends' },
   corsairSurgeon: { style: 'bless', el: 'forest', line: 'He raises a ship\'s rum cask and passes the tin cups round; every friend is cleansed and mended in a healing spray' },
