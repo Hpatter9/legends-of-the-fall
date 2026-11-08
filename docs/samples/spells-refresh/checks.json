@@ -1,0 +1,258 @@
+[
+  {
+    "name": "painting decodes 393",
+    "ok": true
+  },
+  {
+    "name": "correct school 393",
+    "ok": true
+  },
+  {
+    "name": "four loadout slots 393",
+    "ok": true
+  },
+  {
+    "name": "no page overflow 393",
+    "ok": true
+  },
+  {
+    "name": "all controls at least 44px 393",
+    "ok": true
+  },
+  {
+    "name": "unequip saves 393",
+    "ok": true
+  },
+  {
+    "name": "equip saves 393",
+    "ok": true
+  },
+  {
+    "name": "rank spends exactly one mark 393",
+    "ok": true
+  },
+  {
+    "name": "rank rider accessible 393",
+    "ok": true
+  },
+  {
+    "name": "school filter includes locked spells 393",
+    "ok": true
+  },
+  {
+    "name": "locked filter has no equip actions 393",
+    "ok": true
+  },
+  {
+    "name": "unlock routes visible 393",
+    "ok": true
+  },
+  {
+    "name": "blocked equip explained 393",
+    "ok": true
+  },
+  {
+    "name": "Decree guidance accessible 393",
+    "ok": true
+  },
+  {
+    "name": "overlay uses standard dialog",
+    "ok": true
+  },
+  {
+    "name": "overlay fits phone",
+    "ok": true
+  },
+  {
+    "name": "Escape closes overlay",
+    "ok": true
+  },
+  {
+    "name": "Close closes overlay",
+    "ok": true
+  },
+  {
+    "name": "ambient pauses on stop",
+    "ok": true
+  },
+  {
+    "name": "ambient resumes on start",
+    "ok": true
+  },
+  {
+    "name": "rank survives reload",
+    "ok": true
+  },
+  {
+    "name": "offline study and spellbook load",
+    "ok": true
+  },
+  {
+    "name": "offline parchment decodes",
+    "ok": true
+  },
+  {
+    "name": "top rank removes rank action and retains focus",
+    "ok": true
+  },
+  {
+    "name": "zero marks disables further rank spending",
+    "ok": true
+  },
+  {
+    "name": "complete collection has clear empty state",
+    "ok": true
+  },
+  {
+    "name": "no page errors 393",
+    "ok": true
+  },
+  {
+    "name": "Chapel gate 393",
+    "ok": true
+  },
+  {
+    "name": "Chapel gate navigates to Castle 393",
+    "ok": true
+  },
+  {
+    "name": "painting decodes 360",
+    "ok": true
+  },
+  {
+    "name": "correct school 360",
+    "ok": true
+  },
+  {
+    "name": "four loadout slots 360",
+    "ok": true
+  },
+  {
+    "name": "no page overflow 360",
+    "ok": true
+  },
+  {
+    "name": "all controls at least 44px 360",
+    "ok": true
+  },
+  {
+    "name": "unequip saves 360",
+    "ok": true
+  },
+  {
+    "name": "equip saves 360",
+    "ok": true
+  },
+  {
+    "name": "rank spends exactly one mark 360",
+    "ok": true
+  },
+  {
+    "name": "rank rider accessible 360",
+    "ok": true
+  },
+  {
+    "name": "school filter includes locked spells 360",
+    "ok": true
+  },
+  {
+    "name": "locked filter has no equip actions 360",
+    "ok": true
+  },
+  {
+    "name": "unlock routes visible 360",
+    "ok": true
+  },
+  {
+    "name": "blocked equip explained 360",
+    "ok": true
+  },
+  {
+    "name": "Decree guidance accessible 360",
+    "ok": true
+  },
+  {
+    "name": "no page errors 360",
+    "ok": true
+  },
+  {
+    "name": "Chapel gate 360",
+    "ok": true
+  },
+  {
+    "name": "Chapel gate navigates to Castle 360",
+    "ok": true
+  },
+  {
+    "name": "painting decodes 412",
+    "ok": true
+  },
+  {
+    "name": "correct school 412",
+    "ok": true
+  },
+  {
+    "name": "four loadout slots 412",
+    "ok": true
+  },
+  {
+    "name": "no page overflow 412",
+    "ok": true
+  },
+  {
+    "name": "all controls at least 44px 412",
+    "ok": true
+  },
+  {
+    "name": "unequip saves 412",
+    "ok": true
+  },
+  {
+    "name": "equip saves 412",
+    "ok": true
+  },
+  {
+    "name": "rank spends exactly one mark 412",
+    "ok": true
+  },
+  {
+    "name": "rank rider accessible 412",
+    "ok": true
+  },
+  {
+    "name": "school filter includes locked spells 412",
+    "ok": true
+  },
+  {
+    "name": "locked filter has no equip actions 412",
+    "ok": true
+  },
+  {
+    "name": "unlock routes visible 412",
+    "ok": true
+  },
+  {
+    "name": "blocked equip explained 412",
+    "ok": true
+  },
+  {
+    "name": "Decree guidance accessible 412",
+    "ok": true
+  },
+  {
+    "name": "reduced motion hides ambient layer",
+    "ok": true
+  },
+  {
+    "name": "no page errors 412",
+    "ok": true
+  },
+  {
+    "name": "Chapel gate 412",
+    "ok": true
+  },
+  {
+    "name": "Chapel gate navigates to Castle 412",
+    "ok": true
+  }
+]

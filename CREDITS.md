@@ -631,3 +631,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 - Beside them, about sixty single pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`: Orcs, Dwarves,
   Liches, Moonpack, Knights and the wild flair), halved the same way and packed into the same atlas (`sprites.webp`, listed in
   `src/render/assaultOrcAtlas.ts`). Chronos credits the kits as drawn with ChatGPT's image generation from prompts written for that game.
+
+### Painted Spells study
+
+- `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.

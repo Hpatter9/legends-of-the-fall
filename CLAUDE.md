@@ -33,9 +33,8 @@ Chronos later, so keep its conventions.
   system takes its own side stream, so existing fights play out the same.
 - **The renderer never changes the battle** except through the sim's own functions (`place`, `unplace`, `fight`,
   `stepBattle`). Modules the tests import must not import Pixi or touch the DOM.
-- **Visual effects and texture stability.** Intentional flashy effects, glows, pulses and flourishes are allowed.
-  The owner's “no flashing” note means textures must not disappear completely or flash off and on in a glitchy
-  way; it is not a blanket ban on animated brightness or deliberate effects. Preserve reduced-motion support.
+- **Visual effects.** Flashy effects, glows, pulses, flicker and flourishes are all allowed; there is no "no flashing"
+  rule (the owner withdrew it, 2026-11-08). Preserve reduced-motion support.
 - **Upright phone only.** The game is played upright only (the owner's call): design and check every change at 393x852 (and 360x780, 412x915). There is no sideways layout to keep: a phone held sideways is asked to turn upright (`#turnUp`), and the manifest asks for portrait.
 - **Use the asset packs, not code-drawn art**, wherever a pack has the thing. The packs are in the private repo
   `hpatter9/chronos-assets` (clone it next to this one). Copy only the sprites used into `src/art/`, credit them in
