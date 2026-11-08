@@ -1,5 +1,7 @@
 # No flicker
 
+**Withdrawn, 2026-11-08.** The owner removed the rule ("it was misinterpreted"). Looping brightness, glows and flicker are allowed; only reduced-motion support stays. `test/no-flicker.test.ts` is gone. What follows is history.
+
 Owner clarification, 2026-10-27: intentional flashy effects, glows, pulses and flourishes are allowed. The ‘no flashing’ request concerns textures disappearing completely or flashing off and on in a glitchy way. It is not a blanket prohibition on brightness animation. Preserve reduced-motion support.
 
 The implementation history below records the earlier, broader interpretation. Its steady-light choices and flash limits describe that implementation, not current requirements for every new effect.

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.408.0',
+    date: '2026-11-08',
+    title: 'Effects may pulse and flicker freely',
+    notes: ['The old no-flashing limit is lifted: glows, pulses and flickering firelight are welcome. Reduced motion still calms everything.'],
+  },
+  {
     version: '0.407.0',
     date: '2026-11-08',
     title: 'A painted Spells screen',
