@@ -38,9 +38,6 @@
 .rosterTomes small { width: 100%; text-align: left; font-size: 12px; }
 
 /* the tome sheet */
-.tomeSheet { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px); background: rgb(var(--s0-rgb) / 0.82); overflow: hidden auto; overscroll-behavior: contain; }
-.tomeCard { width: min(360px, 100%); display: flex; flex-direction: column; gap: 10px; padding: 12px; background: linear-gradient(#24261f, #141611); border: 2px solid var(--kk-rim, var(--gold-lo)); border-radius: 6px; box-shadow: 0 8px 24px #000a; color: var(--kk-text, var(--ink)); }
-.tomeCard h3 { margin: 0; text-align: center; font: 400 24px var(--display); color: var(--gold-hi); }
 .tomeRow { position: relative; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto auto; align-items: center; column-gap: 10px; row-gap: 4px; padding: 8px 10px; background: rgb(var(--black-rgb) / 0.3); border: 2px solid var(--s8); border-radius: 6px; overflow: hidden; }
 .tomeFace { grid-row: span 4; position: relative; width: 64px; height: 64px; display: grid; place-items: center; background: rgb(var(--black-rgb) / 0.4); border: 2px solid var(--s8); }
 .tomeFace canvas { width: 56px; height: 56px; image-rendering: pixelated; display: block; }
@@ -70,5 +67,4 @@
 .tomeBtn.large:not(:disabled) { border-color: var(--e7); }
 .tomeBtn:disabled { opacity: 0.5; }
 .tomeHint { margin: 0; font: 400 12px/1.4 var(--body); color: var(--kk-muted, var(--dim)); }
-.tomeClose { min-height: 48px; font: 400 24px var(--display); color: var(--gold-hi); }
 @media (prefers-reduced-motion: reduce) { .tomeNote span, .tomeRow.up .tomeLv, .tomeRow .xpStamp { animation: none; } .tomeRow .xpSparks, .tomeRow .xpWash { display: none; } .tomeBar span { transition: none; } }

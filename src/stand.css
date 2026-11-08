@@ -220,3 +220,10 @@ body[data-stand] #version { top: auto; bottom: 2px; }
 .stTitleTap { margin-top: 10px; color: var(--dim); }
 @keyframes stTitleIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .stSkip { transition: none; } }
+/* UX-FIXES: the eight picked as a strip of portraits above the pool (a tap drops one), and the pool with portraits and a tick on the picked */
+.stStrip { width: 100%; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; margin: 6px 0; }
+.stSlot { min-height: 44px; padding: 2px; display: flex; align-items: center; justify-content: center; background: #1b231d; border: 1px solid #ad8e50; border-radius: 3px; }
+.stSlot.empty { border-style: dashed; border-color: #5d5642; background: none; }
+.stSlot canvas { width: 32px; height: 32px; image-rendering: pixelated; }
+.stGrid button canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+.stGrid button.on { box-shadow: inset 0 0 0 2px #f6db91; }

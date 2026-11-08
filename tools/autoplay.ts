@@ -3,14 +3,19 @@
 // behind, on high ground; see `src/sim/autoplay.ts`, which the Auto button and the auto-replay share) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
 // XP goes into, the save's meta, as the page does.
 
+import { PROVISIONS, oathOffer, provisionsOf, swearOath } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
+import { planRun } from '../src/sim/revenge';
+import { noteWar } from '../src/sim/council';
+import { acceptDuel, championFor, duelOffer, settleDuelRun, startDuel } from '../src/sim/duel';
+import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { ARMIES, armyById, armyCleared } from '../src/sim/armies';
-import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, type Owned, type Run } from '../src/sim/run';
+import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, waveArmyOf, type Owned, type Run } from '../src/sim/run';
 import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
@@ -30,6 +35,7 @@ import { RANK_MAX, STARTER_SPELLS, type SpellId } from '../src/sim/spells';
 import { castList, DEFAULT_SCHOOL, fitSchool, schoolOf } from '../src/sim/schools';
 import { armDecree } from '../src/sim/decrees';
 import { TOWER_SPELLS } from '../src/sim/spellSources';
+import { giveMastery, MASTERY_AUTO } from './skills/mastery';
 
 export { strengthOf };
 
@@ -92,6 +98,14 @@ export function frontSpots(b: Battle): [number, number][] {
   return spots.sort((a, c) => a[1] - c[1] || Math.abs(a[0] - mid) - Math.abs(c[0] - mid) || a[0] - c[0]);
 }
 
+/** The Nemesis War in the bot's runs: off, a save's War is met but never changed (the balance tool's frozen Council); on, each wave is
+ *  settled for the War as the page settles it (`tools/nemesis/warBot.ts` grows a Council this way). */
+export const WAR_BOT = { settle: false, duels: false };
+
+/** Phase 4: the duels the bot fought (with `WAR_BOT.duels` on, it accepts every challenge, its champion the hero named or else its
+ *  strongest), for the war simulator's report. */
+export const duelLog: { army: string; kind: string; why: string; rank: string; out: 'won' | 'lost' | 'timeout' }[] = [];
+
 /**
  * One attempt at an army from wave 1, as a greedy player: returns the waves won and whether the army fell. Gains XP into `meta`.
  * With `castle` the run takes its buildings (and the library's share of XP); `gear` dresses the squad with the pieces the run finds.
@@ -99,17 +113,48 @@ export function frontSpots(b: Battle): [number, number][] {
 export function playArmy(meta: Meta, armyId: string, seed: number, party: readonly string[], castle: Castle = newCastle(), gear = false, tier = 0, boostFor?: (h: Owned) => Boost): { won: number; cleared: boolean; stars: number } {
   const army = armyById(armyId)!;
   const run: Run = armyRun(seed, armyId, party, castle, tier);
+  // (the Nemesis War: a save with a War meets its army's nemeses, frozen as the run starts; `WAR_BOT.settle` also names and promotes them)
+  if (meta.war) run.nemesis = planRun(meta, run);
+  const won = playWaves(meta, run, castle, gear, boostFor);
+  const cleared = !!run.cleared && won === army.waves.length;
+  return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
+}
+
+/** Play a run of fixed waves to its end as the greedy player (an army's, or the Nemesis War's Muster): returns the last wave won. */
+export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? newCastle(), gear = false, boostFor?: (h: Owned) => Boost): number {
+  const army = waveArmyOf(run)!;
   let won = 0;
   while (!run.over) {
     autoRound(run, meta, gear);
+    // (phase 4: a challenge on the wave, accepted when the bot takes duels; a duel won is the wave won)
+    const offer = WAR_BOT.duels ? duelOffer(run) : undefined;
+    if (offer) {
+      const id = championFor(run, offer)!;
+      const h = run.roster.find((x) => x.id === id)!;
+      acceptDuel(run, offer, id);
+      const d = startDuel(run, offer, id, boostFor?.(h) ?? botBoost(meta, h, run));
+      fight(d);
+      const dt = WAR_BOT.settle && meta.war ? playOutTallied(d) : (playOut(d), undefined);
+      const out = settleDuelRun(run, d)!;
+      duelLog.push({ army: army.id, kind: h.kind, why: offer.why, rank: run.nemesis?.members.find((x) => x.id === offer.id)?.rank ?? '', out });
+      if (dt) noteWar(meta, run, d, dt, out === 'won', run.stage);
+      if (out === 'won') {
+        won = run.stage;
+        noteFight(run, d);
+        finish(run, true, ratingOf(d, isBossRun(run)).stars);
+        gainXp(meta, fightXp(d, xpRate(castle)));
+        continue;
+      }
+    }
     const b = startStage(run);
     autoDeploy(b, run, meta, boostFor);
     fight(b);
     maybeSpells(b, meta, castle);
     maybeEidolon(b, run.stage, army.waves[run.stage - 1]?.boss === 'mid');
-    playOut(b);
+    const tally = WAR_BOT.settle && meta.war ? playOutTallied(b) : (playOut(b), undefined);
     const ok = b.phase === 'won';
     if (ok) won = run.stage;
+    if (tally) noteWar(meta, run, b, tally, ok, run.stage);
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(castle)));
@@ -117,8 +162,7 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   // (RUN-GEAR: what the run found comes home, worn or to the stash, so the save's later runs fight in it; `RUN_GEAR_KEEP=0`, a tuning
   // switch, leaves it in the run, to see what keeping it does)
   if (typeof process === 'undefined' || process.env?.RUN_GEAR_KEEP !== '0') settleFinds(meta, run);
-  const cleared = !!run.cleared && won === army.waves.length;
-  return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
+  return won;
 }
 
 /**
@@ -173,6 +217,8 @@ export function playFinal(meta: Meta, armyId: string, seed: number, party: reado
 export function savedAt(level: number, party: readonly string[], seed: number): Meta {
   const m = startedMeta(seed);
   for (const k of party) m.xp[k] = xpFor(level);
+  // (`--mastery auto`: the skill levels a player of that hero level has, SKILLS-10)
+  if (MASTERY_AUTO) giveMastery(m, party, level);
   return m;
 }
 
@@ -361,7 +407,14 @@ function playClimb(meta: Meta, run: Run, maxFloors: number): { floors: number; b
     };
     if (cur.fight) fightIt();
     else if (cur.kind === 'campfire') {
-      if (squadHealth(run) < 0.75) rest(run);
+      // (DEPTH-BUILD: the greedy bot rests while it has provisions, and trains when it has none, `calJourney.ts`)
+      const fed = !(run.mode?.kind === 'calamity' && run.rift && PROVISIONS.on) || provisionsOf(run.tower!.journey) > 0;
+      // (DEPTH-BUILD: CAL_OATHS=1 has the bot swear every oath a campfire offers, in place of its rest or training, to measure them)
+      const oath = process.env.CAL_OATHS === '1' && run.mode?.kind === 'calamity' && run.rift ? oathOffer(run.seed, run.tower!.act, cur.id, run.tower!.journey) : undefined;
+      if (oath) {
+        swearOath((run.tower!.journey ??= {}), oath);
+        cur.camp = 'oath';
+      } else if (squadHealth(run) < 0.75 && fed) rest(run);
       else {
         const hero = [...run.roster].sort((a, b) => strengthOf(meta, b) - strengthOf(meta, a))[0];
         const t = train(run, hero.id);

@@ -288,6 +288,15 @@ const AWAKE_LINES: Readonly<Record<string, readonly [string, string]>> = {
   sage: ['He contemplated the heavens so long the constellations began taking notes.', 'The cosmos has yielded another footnote! Highly destructive, and cited.'],
   demonSwordsman: ['He drinks what he cleaves, and the fiend bound in the iron drinks him.', 'The blade is howling with glee. Do ignore the ominous reddish vapour.'],
   tyrant: ['He governs by iron decree, shattering the insolent and rallying the ranks.', 'My imperial authority is officially doubled! Kneel with greater enthusiasm!'],
+  vampireLord: ['Vladislav has held his red keep for four centuries, and has not once been late to a feast.', 'The blood runs thicker, and the cloak somehow longer. I approve of both.'],
+  hemomancer: ['Carmilla pours a vintage no cellar has ever stocked, and never spills a drop.', 'The chalice brims over. Do not worry, darling; it is only slightly yours.'],
+  nightstalker: ['Sorin keeps to the rafters of the crypt, and has never once been seen arriving.', 'Wings wider, eyes redder. You may now scream; I shall wait.'],
+  bloodGargoyle: ['Gavril watched a cathedral rise from its first stone, and has opinions on the mortar.', 'The stone cracks and settles. I feel remarkably, unfashionably heavy.'],
+  dhampir: ['Klara was born between the grave and the daylight, and has chosen her side.', 'Silver on the string, sun on my back. They should have run sooner.'],
+  warDrummer: ['Raiden strikes the great drum before dawn, and the whole keep wakes ready.', 'The drum hums in my bones now. Louder, I think; louder!'],
+  geomancer: ['Tenzin listens to the crags until they tell him where they would like to move.', 'The mountain nods. I shall try not to take it as permission to be smug.'],
+  bellWarden: ['Kavi guards the bronze bell that tolls only for the guilty, and sleeps beside it.', 'It rings in the marrow now. Even the hills have gone quiet to listen.'],
+  falconer: ['Aisling reads the glen by the flight of a single bird, and has never once been lost.', 'Wing and bow as one. Mind your hats; she stoops from a great height.'],
 };
 
 const AWAKE_AREAS: Area[] = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon'];
@@ -593,6 +602,9 @@ const OATHS: Oath[] = [
   { set: 'dreadCourt', name: 'The Dread Court', area: 'dungeon', cap: 'Dread Court · Oath', blurb: 'The tyrants and denizens of the crypt swear their final, binding court verdict.',
     oaths: ['I swear! The sentence is passed without appeal!', 'I swear! The harvest is long overdue on this field!', 'I swear! Purgatory is shockingly overbooked today!', 'Hrrngh. Sworn upon my spare tibia. Hrrngh.', 'I swore this covenant three dynasties ago. Still applies.'],
     shared: 'The court convenes, the ledgers open, and the sentence falls!' },
+  { set: 'bloodCourt', name: 'The Night Kin', area: 'dungeon', cap: 'Night Kin · Oath', blurb: 'The five of the blood swear their Last Oath beneath a rising blood moon.',
+    oaths: ['I swear upon four centuries of red wine and older grudges.', 'I swear! Do mind the chalice; it spills on its own.', 'I swear from the rafters. You will not see me say it.', 'Sworn in stone. I shall be here at dawn, and long after.', 'I swear with silver on the string. They did say I was half the problem.'],
+    shared: 'One blood, one night, and a moon that answers us!' },
 ];
 
 /** The five, in a line-up: the cast of both versions (the page fills them with the five who cast the move). */

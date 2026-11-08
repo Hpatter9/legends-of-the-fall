@@ -126,3 +126,5 @@ button.primary, .hmBig, .hmBattle, .hmBattle *, .hmTab.hero, .hmTab.hero *, .set
 }
 /* DEPTH-BUILD: the march orders' badge beside the hearts */
 #lives .marchBadge { min-width: 22px; height: 22px; padding: 0 3px; margin-left: 4px; border-radius: 6px; border: 1px solid rgba(255, 215, 0, 0.45); background: rgba(0, 0, 0, 0.45); font-size: 13px; line-height: 1; }
+/* UX-FIXES: the lost-wave line is two lines of 18px and wraps, so the wave and the hearts left read at arm's length */
+.reviveLine { font-size: 20px; line-height: 26px; white-space: normal; width: auto; max-width: min(340px, calc(100vw - 32px)); }

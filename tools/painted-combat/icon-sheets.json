@@ -1,0 +1,6 @@
+{
+  "martial": ["spear", "fist", "dagger", "shuriken", "staff", "axe", "fangs", "claw", "horns", "banner", "pistol", "trap", "cannon", "chain", "wings", "drum"],
+  "magic": ["lightning", "ice", "poison", "vial", "skull", "roots", "wind", "wave", "book", "clock", "moon", "mirror", "meteor", "phoenix", "tentacle", "chalice"],
+  "utility": ["helmet", "bag", "merge", "formation", "recycle", "gate", "swords", "bell", "fox", "treant", "paw", "dragon", "golem", "bat", "hook", "dice"],
+  "special": ["serpent", "pipes", "scythe", "ship", "hood", "feather", "rapier", "stake", "smoke", "thorns", "portal", "angel", "drone", "keg", "star", "blood"]
+}

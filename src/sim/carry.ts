@@ -27,11 +27,11 @@ export const TIMER = {
   /** The Samurai Commander's Plant the Standard. */
   standard: 30000,
   /** The Werewolf's Shapechange: the Hunter or the Brute. */
-  wolfForm: 40000,
+  wolfForm: 25000, // (TACTICS batch 6: 40 s to 25 s, level-10 parity: under Advance he shifts before he meets the foe, docs/notes/tactics.md)
   /** The Druid's Wild Shape. */
   wildShape: 20000,
   /** The Kitsune's Alter Self. */
-  alterSelf: 15000,
+  alterSelf: 6000, // (TACTICS batch 6: 15 s to 6 s, level-10 parity, docs/notes/tactics.md)
   /** The ultimates' forms: the Werewolf's Full Moon, the Demon Swordsman's Metamorphosis. */
   moon: 15000,
   demon: 15000,
@@ -156,6 +156,8 @@ export function keptOf(b: Battle, u: Unit): Kept {
  *  fell, or that sat the wave out, keeps none: what it had is dismissed. */
 export function keepSummons(run: Run, b: Battle): void {
   for (const h of run.roster) {
+    // (phase 4: a hero who stood out of a duel keeps what it had)
+    if (b.duel && !b.units.some((x) => x.side === 'hero' && x.tag === h.id)) continue;
     h.summons = undefined;
     h.form = undefined;
     if (!CARRY.on) continue;
@@ -272,7 +274,7 @@ function keepForm(b: Battle, me: Unit, f: KeptForm): void {
 }
 
 /** The most the Kitsune's guise lifts her attack by (x1.4 before the timers, when it lasted 5s; tuned with them: docs/notes/summon-timers.md). */
-export const GUISE_CAP = 1.3;
+export const GUISE_CAP = 1.1; // (TACTICS batch 6: 1.3 to 1.1, the Kitsune's level-10 parity, docs/notes/tactics.md)
 /** The share of her health the Druid's Wild Shape adds (a third before the timers; tuned with them: docs/notes/summon-timers.md). */
 export const TREE_SHARE = 0.2;
 

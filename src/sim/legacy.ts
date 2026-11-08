@@ -53,19 +53,30 @@ export const PERKS: Readonly<Record<string, Perk>> = {
   wolfBard: hp('Marching Song'), beastmaster: at('Kennel Lore'), kraken: hp('Deep Pressure'), lancer: at('Couched Lance'), reaper: at('Last Harvest'),
   timeWitch: sh('Borrowed Second'), arcBlade: at('Arc Edge'), dreadPirate: at('Black Flag'), siegeBot: sh('Plated Hull'), priestess: sh('Sanctuary'),
   dragoon: at('High Jump'), juggernaut: hp('Unstoppable'), sage: sh('Patient Mind'), demonSwordsman: at('Hellforged Edge'), tyrant: at('Iron Decree'),
+  vampireLord: at('Old Blood'), hemomancer: sh('Blood Ward'), nightstalker: at('Night Wings'), bloodGargoyle: sh('Granite Skin'), dhampir: at('Silver Edge'), warDrummer: hp('War Cadence'), geomancer: hp('Bedrock'), bellWarden: sh('Bronze Toll'), falconer: at('Falcon\'s Eye'),
+};
+
+/** The twenty coming heroes' legacy perks (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
+export const COMING_PERKS: Readonly<Record<string, Perk>> = {
+  banneret: sh('Under the Standard'),
+  astralSphinx: sh('Starlit Riddle'), mirageDancer: at('Shifting Sands'), plagueDoctor: hp('Bitter Tonic'), bombardier: at('Short Fuse'), astrologer: sh('Fixed Stars'),
+  inquisitor: at('Burning Writ'), seraph: sh('Golden Wings'), corsairSurgeon: hp('Ship\'s Surgeon'), harpooner: at('Barbed Line'), seaReaver: hp('Salt Hide'),
 };
 export const perkLine = (p: Perk, v: number): string =>
   p.kind === 'shield' ? `apprentices start each wave with a ${Math.round(v * 100)}% shield` : p.kind === 'atk' ? `apprentices +${Math.round(v * 1000) / 10}% attack` : `apprentices +${Math.round(v * 1000) / 10}% health`;
 
 /** The slice of the save legacy reads and changes. */
 export type LegacyMeta = Pick<Meta, 'xp' | 'party' | 'unlocked' | 'castle' | 'equipped' | 'bonds' | 'bondSettled'> & {
-  mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
+  mentors?: Partial<Record<Calling, { kind: string; since: number; heir?: true }>>;
   recalled?: Partial<Record<Calling, number>>;
 };
 
 export const mentorsOf = (m: LegacyMeta) => m.mentors ?? {};
-/** Whether a hero is in the Hall (retired, mentoring). */
-export const retired = (m: LegacyMeta, kind: string): boolean => Object.values(mentorsOf(m)).some((x) => x?.kind === kind);
+/** Whether a hero is in the Hall (retired, mentoring) and so out of the party. Dynasties, phase 6: a mentor whose line goes on through an
+ *  heir (`heir`) is the elder of its House, and its kind stays in the party through the heir. */
+export const retired = (m: LegacyMeta, kind: string): boolean => Object.values(mentorsOf(m)).some((x) => x?.kind === kind && !x.heir);
+/** Whether a kind's mentor sits in the Hall at all, with an heir or without (phase 6). */
+export const seatedMentor = (m: LegacyMeta, kind: string): boolean => Object.values(mentorsOf(m)).some((x) => x?.kind === kind);
 /** The Hall's seats: one a level of the Hall of Legends. */
 export const seats = (m: LegacyMeta): number => siteLevel(m.castle, 'hall');
 const seated = (m: LegacyMeta): number => Object.values(mentorsOf(m)).filter(Boolean).length;
@@ -74,7 +85,7 @@ const seated = (m: LegacyMeta): number => Object.values(mentorsOf(m)).filter(Boo
 export function whyNotRetire(m: LegacyMeta, kind: string, now: number): string | null {
   const c = callingOf(kind);
   if (!c || !m.unlocked.includes(kind)) return 'Not yours';
-  if (retired(m, kind)) return 'In the Hall already';
+  if (seatedMentor(m, kind)) return 'In the Hall already';
   if (levelOfKind(m as Meta, kind) < LEGACY.RETIRE_LEVEL) return `Level ${LEGACY.RETIRE_LEVEL} or more to retire`;
   if (seats(m) <= 0) return 'Build the Hall of Legends first';
   if (mentorsOf(m)[c]) return `The ${c} seat is taken`;
@@ -97,6 +108,28 @@ export function retire(m: LegacyMeta, kind: string, now: number): boolean {
     else m.party.splice(at, 1);
   }
   if (m.equipped?.[kind]) delete m.equipped[kind];
+  return true;
+}
+
+/** Why an elder passing the mantle cannot take the Hall's seat as its honour (null when it can; phase 6, `heirs.ts`). The heir keeps the
+ *  kind in the party, so the party and the level are not asked; the seat's rules are the Hall's own. */
+export function whyNotSeat(m: LegacyMeta, kind: string, now: number): string | null {
+  const c = callingOf(kind);
+  if (!c || !m.unlocked.includes(kind)) return 'Not yours';
+  if (seats(m) <= 0) return 'Build the Hall of Legends first';
+  const held = mentorsOf(m)[c];
+  if (held && held.kind !== kind) return `The ${c} seat is taken`;
+  if (held) return null;
+  if ((m.recalled?.[c] ?? 0) > now) return `The ${c} seat is empty for a while yet`;
+  if (seated(m) >= seats(m)) return 'Every seat of the Hall is taken: build it up for more';
+  return null;
+}
+/** Seat an elder in the Hall as its honour, its line going on through an heir: the kind stays in the party, and its gear stays the heir's. */
+export function seatMentor(m: LegacyMeta, kind: string, now: number): boolean {
+  if (whyNotSeat(m, kind, now)) return false;
+  const c = callingOf(kind)!;
+  const held = mentorsOf(m)[c];
+  (m.mentors ??= {})[c] = { kind, since: held?.since ?? now, heir: true };
   return true;
 }
 
@@ -161,7 +194,7 @@ export function readMentors(raw: unknown): LegacyMeta['mentors'] {
   const out: NonNullable<LegacyMeta['mentors']> = {};
   for (const c of CALLINGS) {
     const x = (raw as Record<string, { kind?: unknown; since?: unknown }>)[c];
-    if (x && typeof x.kind === 'string' && callingOf(x.kind) === c) out[c] = { kind: x.kind, since: Number(x.since) || 0 };
+    if (x && typeof x.kind === 'string' && callingOf(x.kind) === c) out[c] = { kind: x.kind, since: Number(x.since) || 0, ...((x as { heir?: unknown }).heir === true ? { heir: true as const } : {}) };
   }
   return Object.keys(out).length ? out : undefined;
 }

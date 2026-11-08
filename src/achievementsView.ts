@@ -5,6 +5,8 @@ import { AWARD_JOKES } from './quipData';
 import { ACHIEVEMENTS, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
 import { SPELLS, type SpellId } from './sim/spells';
+import { fightToastTop } from './hudClear';
+import { reclearQuip } from './quipView';
 
 /** The Achievements page: every achievement, the earned ones marked, the counting ones with a bar. One earned and not yet
  *  claimed has a Claim button (they come first), and `claim` takes its crowns and stones (or every waiting one's, for Claim all). */
@@ -66,12 +68,13 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
 
 /** Pop up a toast for each achievement just earned, one after another. */
 export function toastAchievements(list: readonly Achievement[]): void {
-  list.forEach((a, i) => setTimeout(() => toast(`Achievement: ${a.name} · claim ${a.crowns} crowns and ${stoneWord(stonesOfAchievement(a))}`), i * 2800));
+  for (const a of list) toast(`Achievement: ${a.name} · claim ${a.crowns} crowns and ${stoneWord(stonesOfAchievement(a))}`);
 }
 
 /** A toast for each spell a milestone or the Mage Tower has just taught (`grantSpells`), after `after` toasts already queued. */
 export function toastSpells(ids: readonly SpellId[], after = 0): void {
-  ids.forEach((id, i) => setTimeout(() => toast(`Spell learnt: ${SPELLS[id].name} · equip it in the spellbook`), (after + i) * 2800));
+  void after;
+  for (const id of ids) toast(`Spell learnt: ${SPELLS[id].name} · equip it in the spellbook`);
 }
 
 /** The one-time toast for a save from before the summoning stones: the stones it was given so it is not set back. */
@@ -81,18 +84,45 @@ export function toastStones(n: number): void {
 
 /** Toasts for these lines, one after another (DEPLOY-ZOOM: an earned deploy helper's unlocking). */
 export function toastLines(lines: readonly string[]): void {
-  lines.forEach((line, i) => setTimeout(() => toast(line), i * 2800));
+  for (const line of lines) toast(line);
 }
 
+/** UX-FIXES: toasts wait in one queue and show one at a time in one lane under the top bar (they covered the crowns, the gear and the version line). */
+const waiting: string[] = [];
+let showing = false;
+
 function toast(line: string): void {
+  waiting.push(line);
+  if (!showing) next();
+}
+
+function next(): void {
+  const line = waiting.shift();
+  if (line === undefined) {
+    showing = false;
+    return;
+  }
+  showing = true;
   const el = document.createElement('div');
   el.className = 'toast';
   el.setAttribute('role', 'status');
   el.textContent = line;
+  // (COMBAT-HUD: in a fight the lane is under the spell row and the boss's bar, and the toast fades in there rather than sliding down
+  // over them)
+  const lane = fightToastTop();
+  if (lane !== undefined) {
+    el.classList.add('lane');
+    el.style.top = `${Math.round(lane)}px`;
+  }
   document.body.append(el);
+  // (a quip's bubble already up steps out of the toast's lane)
+  if (lane !== undefined) reclearQuip();
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => {
     el.classList.remove('show');
-    setTimeout(() => el.remove(), 400);
+    setTimeout(() => {
+      el.remove();
+      next();
+    }, 450);
   }, 2400);
 }

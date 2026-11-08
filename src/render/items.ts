@@ -120,7 +120,14 @@ const GEAR_ICONS: Record<string, readonly string[]> = {
   charm: [charm1, charm2, charm3],
 };
 
-export const relicIcon = (id: string): string => RELIC_ICONS[id] ?? '';
+// (INT-341: the painted relic icons, src/art/relics/<id>.webp cut by tools/relics/import-relic-icons.py, loaded by URL and kept for offline play by
+// build.mjs; a relic without a painting keeps its old tile above)
+const PAINTED_RELICS = new Set<string>(['ashTooth', 'banner', 'beastHarness', 'bookOfNames', 'cinderCollar', 'copperTorc', 'dawnChart', 'doomHelm', 'dragonHeart', 'dragonScale', 'dragonSigil', 'emberBrand', 'emberRuby', 'featherCharm', 'frostSapphire', 'gildedIngot', 'glacierStep', 'graniteHeart', 'hawkEye', 'holyChalice', 'hourglass', 'ironShield', 'jewelCrown', 'luckyCoin', 'maneThread', 'mossBell', 'oathRing', 'phoenix', 'quarryGauntlet', 'rimePearl', 'saintMedal', 'scholarScroll', 'shadowCloak', 'spyglass', 'stormRing', 'sunCrown', 'swiftBoots', 'tempestRing', 'thunderHorn', 'unfinishedChronicle', 'viperFang', 'voidLens', 'voidShard', 'warDrum', 'whetstone', 'winterCloak', 'wolfFang', 'wyrmVial']);
+const PAINTED_PREFIX = 'relics/';
+
+export const relicIcon = (id: string): string => (PAINTED_RELICS.has(id) ? `${PAINTED_PREFIX}${id}.webp` : RELIC_ICONS[id] ?? '');
+/** Whether an icon's source is a painting (drawn smooth) and not one of the 16 x 16 tiles (drawn crisp). */
+export const isPainted = (src: string): boolean => src.startsWith(PAINTED_PREFIX);
 export const gearIcon = (slot: string, tier: number): string => GEAR_ICONS[slot]?.[Math.max(1, Math.min(3, tier)) - 1] ?? '';
 
 /** A pixel-art icon as an <img> (drawn crisp, enlarged by the page's CSS). */
@@ -128,7 +135,7 @@ export function iconImg(src: string, label: string): HTMLImageElement {
   const img = document.createElement('img');
   img.src = src;
   img.alt = label;
-  img.className = 'icon';
+  img.className = isPainted(src) ? 'icon painted' : 'icon';
   img.draggable = false;
   return img;
 }

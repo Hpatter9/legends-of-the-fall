@@ -169,11 +169,13 @@ export class Gacha {
     ($('summonRules') as HTMLDetailsElement).open = false;
     box.replaceChildren();
     box.className = got.length === 1 ? 'tarotSingle' : 'tarotSpread';
-    const px = got.length === 1 ? 230 : 70;
+    // (UX-FIXES: a new hero gets a large card of its own; a repeat turned to crowns is a small bare card, and the repeats are told as one line below)
+    const pxOf = (p: Pull): number => (got.length === 1 ? 230 : p.isNew ? 120 : 70);
     let turned = 0;
     got.forEach((p) => {
+      const px = pxOf(p);
       const res = document.createElement('div');
-      res.className = `tarotResult${p.isNew ? ' joined' : ''}${p.lucky ? ' lucky' : ''}`;
+      res.className = `tarotResult${p.isNew ? ' joined' : ''}${p.lucky ? ' lucky' : ''}${got.length > 1 && !p.isNew && p.crowns ? ' dupe' : ''}`;
       res.dataset.kind = p.kind;
       const turn = document.createElement('div');
       turn.className = 'tarotTurn';
@@ -214,6 +216,14 @@ export class Gacha {
       box.append(res);
       this.revealCards.push(turn);
     });
+    const dupes = got.filter((p) => got.length > 1 && !p.isNew && p.crowns);
+    if (dupes.length > 1) {
+      const total = dupes.reduce((n, p) => n + (p.crowns ?? 0), 0);
+      const line = document.createElement('p');
+      line.className = 'tarotDupes';
+      line.textContent = `${dupes.length} × already at top rank → ${total} crowns`;
+      box.append(line);
+    }
     // (the cards turn by themselves, left to right)
     let at = 260;
     for (const card of this.revealCards) {
@@ -225,9 +235,9 @@ export class Gacha {
 
   /** Every join of the batch plays its first-time reveal in turn; then its card shows the hero, and the screen is free again. */
   private async playJoins(got: Pull[], batch: number): Promise<void> {
-    const px = got.length === 1 ? 230 : 70;
     for (const p of got) {
       if (!p.isNew) continue;
+      const px = got.length === 1 ? 230 : 120;
       await queueReveal(this.meta, p.kind, { lucky: p.lucky, force: true });
       if (batch !== this.batch) return;
       const res = $('reveal').querySelector<HTMLElement>(`.tarotResult.joined[data-kind="${p.kind}"]`);

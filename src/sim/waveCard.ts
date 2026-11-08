@@ -36,11 +36,13 @@ export interface WaveMoments {
   waiting?: number;
   /** The quests the wave moved, in words (JRPG-RECAP: "Quest complete: ...", "Quest: Hunt the wolves 3/5"; missing is none). */
   quests?: readonly string[];
+  /** The Nemesis War's lines (`nemesis.ts`, `nemesisLines`: a foe named, a nemesis slain or grown, a secret learned); missing is none. */
+  nemesis?: readonly string[];
 }
 
 /** One line on the card, with its kind (the line's mark and colour). */
 export interface WaveNote {
-  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest' | 'learned' | 'skill' | 'study' | 'wear' | 'guest' | 'pack';
+  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest' | 'learned' | 'skill' | 'study' | 'wear' | 'guest' | 'pack' | 'nemesis';
   text: string;
 }
 
@@ -71,6 +73,8 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   for (const s of m.study ?? []) if (s.learned) out.push({ kind: 'learned', text: s.text });
   // (and so is a skill that rose a level by use)
   for (const s of m.skills ?? []) out.push({ kind: 'skill', text: s });
+  // (the Nemesis War: a foe named, a nemesis slain or grown; a story worth a glance)
+  for (const l of m.nemesis ?? []) out.push({ kind: 'nemesis', text: l });
   // (a rare drop comes first of the finds: it is the one worth the cheer)
   for (const d of m.drops ?? []) out.push({ kind: 'drop', text: `Found: ${d}` });
   if (m.horn) out.push({ kind: 'horn', text: m.horn });

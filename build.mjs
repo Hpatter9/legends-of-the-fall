@@ -4,7 +4,7 @@
 //   npm run web     build once
 //   npm run dev     build, then serve out/web and rebuild on every change (http://localhost:8000)
 import * as esbuild from 'esbuild';
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const serve = process.argv.includes('--serve');
@@ -23,6 +23,12 @@ const version = `${pkg.version} · ${commit}${serve ? ' · dev-' + Math.floor(Da
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 
+// (UI-STANDARD: the painted tactic icons, once drawn (docs/notes/ui-standard.md): src/art/ui/tactics/<id>.png, or the art branch's
+//  art-source/ui/tactics/<id>.png until they are copied in. Each found is served as ui/tactics/<id>.png and cached; the button shows it in
+//  place of its drawn icon. None found: the drawn icons, as now)
+const TACTIC_IDS = ['advance', 'hold', 'charge'];
+const tacticArt = (id) => [`src/art/ui/tactics/${id}.png`, `art-source/ui/tactics/${id}.png`].find((p) => existsSync(p));
+const TACTIC_ART = TACTIC_IDS.filter((id) => tacticArt(id));
 const options = {
   entryPoints: ['src/main.ts'],
   outfile: `${out}/game.js`,
@@ -35,7 +41,7 @@ const options = {
   logLevel: 'warning',
   // (the large paintings are WebP, data URLs as the PNGs are: bundled, so offline needs nothing in FILES)
   loader: { '.png': 'dataurl', '.webp': 'dataurl' },
-  define: { __GAME_VERSION__: JSON.stringify(version), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
+  define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
@@ -68,6 +74,17 @@ mkdirSync(`${out}/ui`, { recursive: true });
 for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f.startsWith('tab-'))) {
   copyFileSync(`src/art/ui/${f}`, `${out}/ui/${f}`);
   UI_FILES.push(`ui/${f}`);
+}
+if (TACTIC_ART.length) mkdirSync(`${out}/ui/tactics`, { recursive: true });
+// Tavern activity paintings are separate from battle/roster illustrations.
+mkdirSync(`${out}/ui/tavern`, { recursive: true });
+for (const f of readdirSync('src/art/tavern/guests').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/tavern/guests/${f}`, `${out}/ui/tavern/${f}`);
+  UI_FILES.push(`ui/tavern/${f}`);
+}
+for (const id of TACTIC_ART) {
+  copyFileSync(tacticArt(id), `${out}/ui/tactics/${id}.png`);
+  UI_FILES.push(`ui/tactics/${id}.png`);
 }
 // (the epic music: rendered offline by tools/epic-music/ into src/audio/*.opus, served as audio/<name>.opus and cached by the service
 // worker with everything else, so it plays offline; the old synthesised tracks (src/render/musicBake.ts) are the fallback if a browser cannot decode them)
@@ -135,6 +152,12 @@ for (const f of readdirSync('src/art/shop').filter((f) => f.endsWith('.webp'))) 
   copyFileSync(`src/art/shop/${f}`, `${out}/shop/${f}`);
   GEAR_ART_FILES.push(`shop/${f}`);
 }
+// (INT-341: the relics' painted icons (tools/relics/import-relic-icons.py), by URL and kept for offline play)
+mkdirSync(`${out}/relics`, { recursive: true });
+for (const f of readdirSync('src/art/relics').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/relics/${f}`, `${out}/relics/${f}`);
+  GEAR_ART_FILES.push(`relics/${f}`);
+}
 // (the loading illustration is embedded in the cached page, so it appears before game.js and works offline)
 const dataUrl = (f) => `data:image/${f.endsWith('.webp') ? 'webp' : 'png'};base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = { __LD_KEEP__: 'src/art/loading/last-keep.webp' };
@@ -176,7 +199,7 @@ const writeIndexHtml = () => {
             readFileSync('src/eidolonChains.css', 'utf8') +
             readFileSync('src/stall.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8') + readFileSync('src/nemesis.css', 'utf8') + readFileSync('src/houses.css', 'utf8') + readFileSync('src/paintedCombat.css', 'utf8') + readFileSync('src/paintedBattlePopups.css', 'utf8') + readFileSync('src/paintedBattleReports.css', 'utf8') + readFileSync('src/paintedDeployment.css', 'utf8') + readFileSync('src/paintedTavern.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );

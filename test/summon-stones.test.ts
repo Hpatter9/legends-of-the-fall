@@ -132,7 +132,9 @@ test('shards come from stones and the armies\' rare drop: no other source calls 
   // (ARMY-DROPS, the owner's later ask: an army wave's rare drop also gives shards, `armyDrops.ts`; its rates are tested in `army-drops.test.ts`)
   // (QUESTS-1b, the owner's ask for quest rewards: a few quests pay a fitting hero's shards at their hand-in, `quests.ts` `payReward`; which
   // quests, and how many, is tested in `quests-content.test.ts`)
-  assert.deepEqual(callers.sort(), ['src/sim/armyDrops.ts', 'src/sim/devGrant.ts', 'src/sim/meta.ts', 'src/sim/quests.ts'], 'only pullOnce (the stone draw), the armies\' rare drop and a few quests\' rewards give shards in play');
+  // (the Nemesis War's Spoils, the owner-approved expansion design (2.11): an unlock shard for six War Trophies, one a week at most,
+  // `council.ts` `buyShard`; the cap is tested in `council.test.ts`)
+  assert.deepEqual(callers.sort(), ['src/sim/armyDrops.ts', 'src/sim/council.ts', 'src/sim/devGrant.ts', 'src/sim/meta.ts', 'src/sim/quests.ts'], 'only pullOnce (the stone draw), the armies\' rare drop, a few quests\' rewards and the War\'s Spoils give shards in play');
 });
 
 test('crowns buy no pull; chests give stones (every chest source), and a stone is the only way to a shard', () => {
@@ -256,7 +258,9 @@ test('the pace holds its shape: stones a day from the shop and the chests are bo
     while (useStones(m, 1, { lucky: false })) if (m.unlocked.length >= 5) break;
     if (ownedCount(m) >= 5) five++;
   }
-  assert.ok(five >= 20, `${five} of 40`);
+  // (HEROES-JOIN, docs/notes/heroes-join.md: with nine more heroes in the pool, 18 of 40 saves have a fifth hero on the first day (it was 20 or more
+  // of 45 heroes); the bar moves with the pool, no other pace rule does)
+  assert.ok(five >= 18, `${five} of 40`);
   assert.ok(needOf(fresh(1)) <= 3);
   void ALL_HEROES;
 });

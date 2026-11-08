@@ -1,0 +1,383 @@
+{
+  "pieces": [
+    {
+      "id": "bladedFan",
+      "name": "Bladed Fan",
+      "slot": "off"
+    },
+    {
+      "id": "frostBoots",
+      "name": "Rimewalker Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "stormBoots",
+      "name": "Stormstrider Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "vanguardGreaves",
+      "name": "Vanguard Greaves",
+      "slot": "feet"
+    },
+    {
+      "id": "radiantSandals",
+      "name": "Sandals of the Radiant Order",
+      "slot": "feet"
+    },
+    {
+      "id": "wyrmTalons",
+      "name": "Wyrmclaw Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "peakCrampons",
+      "name": "Peakwarden's Crampons",
+      "slot": "feet"
+    },
+    {
+      "id": "tideBoots",
+      "name": "Tidewalker Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "stalkerBoots",
+      "name": "Stalker's Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "ashSlippers",
+      "name": "Ashen Slippers",
+      "slot": "feet"
+    },
+    {
+      "id": "nightTabi",
+      "name": "Nightblade Tabi",
+      "slot": "feet"
+    },
+    {
+      "id": "graveBoots",
+      "name": "Gravewalker Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "leatherBoots",
+      "name": "Leather Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "ironGreaves",
+      "name": "Iron Greaves",
+      "slot": "feet"
+    },
+    {
+      "id": "wadingBoots",
+      "name": "Wading Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "climberBoots",
+      "name": "Climber's Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "sabatons",
+      "name": "Sabatons",
+      "slot": "feet"
+    },
+    {
+      "id": "softSlippers",
+      "name": "Soft Slippers",
+      "slot": "feet"
+    },
+    {
+      "id": "ironshodBoots",
+      "name": "Ironshod Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "roadSandals",
+      "name": "Sandals of the Road",
+      "slot": "feet"
+    },
+    {
+      "id": "furBoots",
+      "name": "Fur Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "spurredBoots",
+      "name": "Spurred Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "tabi",
+      "name": "Tabi",
+      "slot": "feet"
+    },
+    {
+      "id": "emberTreads",
+      "name": "Ember Treads",
+      "slot": "feet"
+    },
+    {
+      "id": "windSandals",
+      "name": "Windborne Sandals",
+      "slot": "feet"
+    },
+    {
+      "id": "bogStriders",
+      "name": "Bog Striders",
+      "slot": "feet"
+    },
+    {
+      "id": "stiltBoots",
+      "name": "Stilt Boots",
+      "slot": "feet"
+    },
+    {
+      "id": "frostSash",
+      "name": "Sash of the Winter Court",
+      "slot": "belt"
+    },
+    {
+      "id": "stormGirdle",
+      "name": "Stormcaller's Girdle",
+      "slot": "belt"
+    },
+    {
+      "id": "vanguardBelt",
+      "name": "Vanguard Girdle",
+      "slot": "belt"
+    },
+    {
+      "id": "radiantCord",
+      "name": "Cord of the Radiant Order",
+      "slot": "belt"
+    },
+    {
+      "id": "wyrmBelt",
+      "name": "Wyrmhide Belt",
+      "slot": "belt"
+    },
+    {
+      "id": "tideSash",
+      "name": "Kelp Sash",
+      "slot": "belt"
+    },
+    {
+      "id": "peakRope",
+      "name": "Peakwarden's Rope",
+      "slot": "belt"
+    },
+    {
+      "id": "windSash",
+      "name": "Windrunner's Sash",
+      "slot": "belt"
+    },
+    {
+      "id": "emberGirdle",
+      "name": "Emberforged Girdle",
+      "slot": "belt"
+    },
+    {
+      "id": "shogunObi",
+      "name": "Shogun's Obi",
+      "slot": "belt"
+    },
+    {
+      "id": "graveChain",
+      "name": "Gravewalker's Chain",
+      "slot": "belt"
+    },
+    {
+      "id": "leatherBelt",
+      "name": "Leather Belt",
+      "slot": "belt"
+    },
+    {
+      "id": "strengthGirdle",
+      "name": "Girdle of Strength",
+      "slot": "belt"
+    },
+    {
+      "id": "alchemistSash",
+      "name": "Alchemist's Sash",
+      "slot": "belt"
+    },
+    {
+      "id": "bandolier",
+      "name": "Bandolier",
+      "slot": "belt"
+    },
+    {
+      "id": "herbPouch",
+      "name": "Herb Pouch",
+      "slot": "belt"
+    },
+    {
+      "id": "coinPurse",
+      "name": "Coin Purse",
+      "slot": "belt"
+    },
+    {
+      "id": "championBelt",
+      "name": "Champion's Belt",
+      "slot": "belt"
+    },
+    {
+      "id": "studdedGirdle",
+      "name": "Studded Girdle",
+      "slot": "belt"
+    },
+    {
+      "id": "dancerSash",
+      "name": "Sash of the Dancer",
+      "slot": "belt"
+    },
+    {
+      "id": "flaskBelt",
+      "name": "Flask Belt",
+      "slot": "belt"
+    },
+    {
+      "id": "sapperBelt",
+      "name": "Sapper's Belt",
+      "slot": "belt"
+    },
+    {
+      "id": "wolfBelt",
+      "name": "Wolf-Pelt Belt",
+      "slot": "belt"
+    },
+    {
+      "id": "gamblerBelt",
+      "name": "Gambler's Belt",
+      "slot": "belt"
+    },
+    {
+      "id": "stormRing",
+      "name": "Stormcaller's Ring",
+      "slot": "acc"
+    },
+    {
+      "id": "vanguardSignet",
+      "name": "Vanguard Signet",
+      "slot": "acc"
+    },
+    {
+      "id": "radiantAmulet",
+      "name": "Radiant Amulet",
+      "slot": "acc"
+    },
+    {
+      "id": "peakCharm",
+      "name": "Peakwarden's Charm",
+      "slot": "acc"
+    },
+    {
+      "id": "windFeather",
+      "name": "Windrunner's Feather",
+      "slot": "acc"
+    },
+    {
+      "id": "ashQuill",
+      "name": "Ashen Quill",
+      "slot": "acc"
+    },
+    {
+      "id": "shogunSeal",
+      "name": "Shogun's Seal",
+      "slot": "acc"
+    },
+    {
+      "id": "boneRing",
+      "name": "Bone Ring",
+      "slot": "acc"
+    },
+    {
+      "id": "sunBrooch",
+      "name": "Sun Brooch",
+      "slot": "acc"
+    },
+    {
+      "id": "keepSignet",
+      "name": "Signet of the Keep",
+      "slot": "acc"
+    },
+    {
+      "id": "owlFeather",
+      "name": "Owl Feather",
+      "slot": "acc"
+    },
+    {
+      "id": "hagStone",
+      "name": "Hag Stone",
+      "slot": "acc"
+    },
+    {
+      "id": "wishbone",
+      "name": "Wishbone",
+      "slot": "acc"
+    },
+    {
+      "id": "locket",
+      "name": "Locket",
+      "slot": "acc"
+    },
+    {
+      "id": "blackPearl",
+      "name": "Black Pearl",
+      "slot": "acc"
+    },
+    {
+      "id": "toothNecklace",
+      "name": "Tooth Necklace",
+      "slot": "acc"
+    },
+    {
+      "id": "opalEye",
+      "name": "Opal Eye",
+      "slot": "acc"
+    },
+    {
+      "id": "thiefRing",
+      "name": "Thief's Ring",
+      "slot": "acc"
+    }
+  ],
+  "sheets": [
+    {
+      "batch": 0,
+      "path": "art-source/gear/completion/sheet-1.png"
+    },
+    {
+      "batch": 1,
+      "path": "art-source/gear/completion/sheet-2.png"
+    },
+    {
+      "batch": 2,
+      "path": "art-source/gear/completion/sheet-3.png"
+    },
+    {
+      "batch": 3,
+      "path": "art-source/gear/completion/sheet-4.png"
+    },
+    {
+      "batch": 4,
+      "path": "art-source/gear/completion/sheet-5.png"
+    },
+    {
+      "batch": 5,
+      "path": "art-source/gear/completion/sheet-6.png"
+    },
+    {
+      "batch": 6,
+      "path": "art-source/gear/completion/sheet-7.png"
+    },
+    {
+      "batch": 7,
+      "path": "art-source/gear/completion/sheet-8.png"
+    }
+  ]
+}

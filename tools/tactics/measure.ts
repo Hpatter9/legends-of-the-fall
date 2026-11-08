@@ -96,8 +96,8 @@ for (let g = 0; g < GAMES; g++) {
   const seed = g + 1;
   const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
   const b = startBattle(seed, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(STAGE));
-  const advice = ADVICE_ON ? adviseTactic(b.units.filter((u) => u.side === 'foe').map((u) => u.def), 'advance') : undefined;
-  const shape = FORMATION;
+  const advice = ADVICE_ON ? adviseTactic(b.units.filter((u) => u.side === 'foe').map((u) => u.def), team, 'advance') : undefined;
+  const shape = advice ? advice.formation : FORMATION;
   const spots = shape ? formationSpots(b.board, team, shape).map((a) => [a.u, a.v] as [number, number]) : PLACED === 'random' ? random(b, seed) : sensible(b, team);
   if (FORMATION || ADVICE_ON || process.argv.includes('--formations-on')) setFormations(b, true);
   team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(1, LEVEL)));

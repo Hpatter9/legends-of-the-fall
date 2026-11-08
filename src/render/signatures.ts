@@ -649,6 +649,97 @@ export const SIGNATURES: Record<string, Signature> = {
     [s('cone', 'fire-aura', { n: 8, r: 210, z: 2, f: 70 }), s('ripple', 'fire-rune', { n: 3, z: 4.4 }), s('spray', 'fire-sparkle', { n: 16, r: 110, t: 0xffe0a0 })],
     [s('pop', 'fire-vortex', { z: 1.2 })],
   ),
+  // ---- the nine heroes that joined from the twenty: skill 1 and ultimate (docs/notes/heroes-join.md)
+  'Crimson Lunge': sig(
+    [s('orbit', 'blood-sparkle', { n: 6, r: 18 })],
+    [s('dash', 'blood-strike', { z: 2 }), s('spray', 'blood-sparkle', { n:8, t: 0xff2a48 })],
+    [s('pop', 'blood-hit', { z: 1.2 })],
+  ),
+  'Banquet of Blood': sig(
+    [s('orbit', 'blood-sparkle', { n: 6, r: 18 })],
+    [s('flare', 'blood-vortex', { z: 2 }), s('ring', 'blood-circle', { z:3.4, t: 0xc41e3a }), s('inward', 'blood-gather', { n:10, r:60, on:'foes', t: 0xff5a70 })],
+    [s('pop', 'blood-hit', { z: 1.2 })],
+  ),
+  'Sanguine Lash': sig(
+    [s('orbit', 'blood-sparkle', { n: 6, r: 18 })],
+    [s('beam', 'blood-wave', { z: 2 }), s('spray', 'blood-puff', { n:8, t: 0xff6a80 })],
+    [s('pop', 'blood-hit', { z: 1.2 })],
+  ),
+  'Blood Tithe': sig(
+    [s('orbit', 'blood-sparkle', { n: 6, r: 18 })],
+    [s('inward', 'blood-gather', { z: 2 }), s('ring', 'blood-rune', { z:3, t: 0xb01030 }), s('orbit', 'blood-aura', { n:6, r:24, t: 0xff7a8a })],
+    [s('pop', 'blood-hit', { z: 1.2 })],
+  ),
+  'Dusk Dive': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 18 })],
+    [s('meteor', 'dark-flame', { z: 2 }), s('dash', 'dark-puff', { n:6, r:80, a:0.7, t: 0x9070c8 })],
+    [s('pop', 'dark-hit', { z: 1.2 })],
+  ),
+  'Belfry Swoop': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 18 })],
+    [s('flare', 'dark-nova', { z: 2 }), s('ripple', 'dark-wave', { n:3, z:4, t: 0x7a5ac0 }), s('spiral', 'dark-sparkle', { n:10, r:30, t: 0xc0a0ff })],
+    [s('pop', 'dark-hit', { z: 1.2 })],
+  ),
+  'Gargoyle Crash': sig(
+    [s('orbit', 'earth-sparkle', { n: 6, r: 18 })],
+    [s('pop', 'earth-explosion', { z: 2 }), s('ripple', 'earth-nova', { n:2, z:3.2, t: 0xc8b8d0 })],
+    [s('pop', 'earth-hit', { z: 1.2 })],
+  ),
+  'Cathedral Perch': sig(
+    [s('orbit', 'earth-sparkle', { n: 6, r: 18 })],
+    [s('ring', 'earth-vortex', { z: 2 }), s('ripple', 'earth-wave', { n:3, z:4.4, t: 0xb0a8c0 }), s('spray', 'earth-puff', { n:10, r:100, t: 0xd8d0e0 })],
+    [s('pop', 'earth-hit', { z: 1.2 })],
+  ),
+  'Silver Stake': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('beam', 'light-spikes', { z: 2 }), s('spray', 'light-sparkle', { n:8, t: 0xe8f0ff })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Silver Requiem': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('fan', 'light-flame', { z: 2 }), s('ripple', 'light-circle', { n:3, z:4, t: 0xc8d8ff }), s('spray', 'light-sparkle', { n:12, r:90, t: 0xf0f4ff })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Thunder Beat': sig(
+    [s('orbit', 'lightning-sparkle', { n: 6, r: 18 })],
+    [s('ripple', 'lightning-nova', { z: 2 }), s('spray', 'lightning-sparkle', { n:8, t: 0xffd060 })],
+    [s('pop', 'lightning-hit', { z: 1.2 })],
+  ),
+  'Ten Thousand Drums': sig(
+    [s('orbit', 'lightning-sparkle', { n: 6, r: 18 })],
+    [s('rain', 'lightning-explosion', { z: 2 }), s('ripple', 'lightning-circle', { n:3, z:4, t: 0xffb040 }), s('pillars', 'lightning-spikes', { n:6, r:70, z:1.6, t: 0xfff0b0 })],
+    [s('pop', 'lightning-hit', { z: 1.2 })],
+  ),
+  'Tectonic Shove': sig(
+    [s('orbit', 'earth-sparkle', { n: 6, r: 18 })],
+    [s('pillar', 'earth-strike', { z: 2 }), s('spikes', 'earth-spikes', { n:3, r:80, z:1.6, t: 0xd8a850 })],
+    [s('pop', 'earth-hit', { z: 1.2 })],
+  ),
+  "Mountain's Embrace": sig(
+    [s('orbit', 'earth-sparkle', { n: 6, r: 18 })],
+    [s('dome', 'earth-cross', { z: 2 }), s('ring', 'earth-circle', { z:3, t: 0xe0a040 }), s('spikes', 'earth-spikes', { n:5, r:90, z:1.7, t: 0xc09050 })],
+    [s('pop', 'earth-hit', { z: 1.2 })],
+  ),
+  'Bronze Peal': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('ripple', 'light-nova', { z: 2 }), s('spray', 'light-sparkle', { n:8, t: 0xffd070 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Midnight Knell': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 18 })],
+    [s('ring', 'dark-aura', { z: 2 }), s('ripple', 'dark-circle', { n:3, z:4.4, t: 0x6a48b0 }), s('orbit', 'dark-sparkle', { n:8, r:30, t: 0xb090ff })],
+    [s('pop', 'dark-hit', { z: 1.2 })],
+  ),
+  'Falcon Stoop': sig(
+    [s('orbit', 'wind-sparkle', { n: 6, r: 18 })],
+    [s('meteor', 'wind-explosion', { z: 2 }), s('dash', 'wind-puff', { n:6, r:80, a:0.7, t: 0xe8f0c0 })],
+    [s('pop', 'wind-hit', { z: 1.2 })],
+  ),
+  'Sky Hunt': sig(
+    [s('orbit', 'wind-sparkle', { n: 6, r: 18 })],
+    [s('rain', 'wind-flame', { z: 2 }), s('spiral', 'wind-vortex', { n:5, r:40, z:2, t: 0x8fd8ff }), s('ripple', 'wind-wave', { n:3, z:4.4, t: 0xb8e8ff })],
+    [s('pop', 'wind-hit', { z: 1.2 })],
+  ),
 };
 
 // The original arrangements remain, but every release and corresponding hit has its own authored silhouette.

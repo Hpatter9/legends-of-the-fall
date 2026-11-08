@@ -365,6 +365,18 @@
   i.badge { display: block; }
   .hmTab:not(.new) i.badge { display: none; }
   #hmBest { flex: 1 1 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+  /* TOPBAR-FIT: the top row (crowns, stones, the War Horn, the season, the trophy and the gear) stays one line on every phone: the trophy and
+     the gear are 44 px rounds side by side, the gaps 4 px, and the money chips no wider than their numbers */
+  #hmTop { column-gap: 4px; }
+  #hmTop > .chip { min-width: 0; padding-right: 6px; }
+  #hmTop #hmTrophy, #hmTop #hmGear { width: 44px; height: 44px; flex: none; }
+  #hmTop #hmTrophy::before, #hmTop #hmGear::before { width: 28px; height: 28px; background-size: 28px 28px; }
+  #hmTop #hmGear { margin-left: 0; }
+  #hmTop #hmBest { align-items: center; justify-content: flex-start; gap: 8px; min-height: 24px; }
+  @media (max-width: 380px) {
+    #hmTop > .chip { gap: 3px; padding-left: 3px; font-size: 10px; }
+    #hmTop > .chip img { width: 18px; height: 18px; }
+  }
   #hmPages { grid-area: pages; position: relative; overflow: hidden; }
   /* (MENU-GLITCH: the pages ride one strip, moved as one by home.ts; a page not on screen or sliding is hidden) */
   .hmTrack { position: absolute; inset: 0; }
@@ -445,6 +457,15 @@
   .tvNav .tvRoom1 { min-height: 36px; padding: 0 10px; font: inherit; color: var(--s11); background: none; border: 0; }
   .tvNav .tvRoom1.on { color: var(--gold-hi); }
   .tvNav .tvDot { color: var(--s8); }
+  /* CLIFF-ROAM: Hester's stall is in the tavern's hearth hall. While her stock is new or a trader visits, a small gilded coin sits on the
+     Heroes tab (the way to the tavern) and a dot on the Hearth's name; the caravan's is warm gold, the Gloaming Dealer's dusk violet.
+     Steady: no pulse. */
+  .hmTab i.sbadge { position: absolute; top: 24px; right: 24%; display: none; width: 12px; height: 12px; box-sizing: border-box; border: 1px solid #f5e4ba; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1c4, #d8b062 45%, #7a5a22); box-shadow: 0 0 0 1px #3a2c12, 0 0 6px #e9c77a99; pointer-events: none; }
+  .hmTab.shop i.sbadge { display: block; }
+  .hmTab.dealer i.sbadge, .tvNav .tvRoom1.shop.dealer .tvShopDot { border-color: #e3d2ff; background: radial-gradient(circle at 35% 30%, #f1e6ff, #9b7ad6 45%, #3c2a62); box-shadow: 0 0 0 1px #20152f, 0 0 6px #b79ae699; }
+  .tvNav .tvRoom1 { position: relative; }
+  .tvNav .tvRoom1 .tvShopDot { position: absolute; top: 3px; right: 1px; display: none; width: 8px; height: 8px; box-sizing: border-box; border: 1px solid #f5e4ba; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1c4, #d8b062 45%, #7a5a22); box-shadow: 0 0 0 1px #3a2c12; }
+  .tvNav .tvRoom1.shop .tvShopDot { display: block; }
   .tvEdge { position: absolute; top: 50%; width: 0; height: 0; margin-top: -9px; border: 9px solid transparent; opacity: 0; transition: opacity 0.4s; pointer-events: none; }
   .tvEdge.on { opacity: 0.55; }
   .tvEdgeL { left: 4px; border-right-color: var(--gold-hi); border-left-width: 0; }
@@ -828,8 +849,8 @@
   <div id="fightHud"></div>
   <div id="traits"></div><div id="traitHint"></div>
   <div id="relics" hidden></div>
-  <div id="benchWrap"><button id="mergeAll" hidden>Auto merge</button><div id="bench"></div><div id="recycleZone" hidden><svg viewBox="0 0 12 14" width="18" height="21" aria-hidden="true"><path d="M1 3h10v1H1zM4 0h4v2H4zM2 5h8l-1 9H3z" fill="currentColor"/></svg><b>Recycle</b><span id="recycleGold"></span></div></div>
-  <div id="buttons"><div id="hireHint" hidden role="status">Hire to start: your five are the pool you hire from. Tap Hire below to put two on the board.</div><button id="summon">Hire</button><button id="pack">Pack</button><button id="auto" title="Place the heroes for me"><svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" fill="currentColor"/></svg>Auto</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
+  <div id="benchWrap"><button id="mergeAll" hidden>Auto merge</button><div id="bench"></div><div id="recycleZone" hidden><img class="deployIcon" src="ui/combat-icon-recycle.png" alt="" draggable="false"><b>Recycle</b><span id="recycleGold"></span></div></div>
+  <div id="buttons"><div id="hireHint" hidden role="status">Hire to start: your five are the pool you hire from. Tap Hire below to put two on the board.</div><button id="summon">Hire</button><button id="pack">Pack</button><button id="auto" title="Place the heroes for me">Auto</button><button id="homeBtn">Home</button><button id="fight" class="primary" disabled>Fight!</button></div>
 </div>
 <div id="result" hidden>
   <div id="banner"></div>
@@ -873,7 +894,7 @@
   <div id="hmTabs"></div>
   <div id="leaves"><span style="--x:5%;--s:8px;--c:#d9573f;--t:9s;--d:-0.0s"></span><span style="--x:18%;--s:13px;--c:#f0a030;--t:12s;--d:-2.3s"></span><span style="--x:31%;--s:11px;--c:#c8741a;--t:9s;--d:-4.6s"></span><span style="--x:44%;--s:9px;--c:#b8401e;--t:12s;--d:-6.9s"></span><span style="--x:57%;--s:14px;--c:#e8c050;--t:9s;--d:-9.2s"></span><span style="--x:70%;--s:12px;--c:#9a3a1a;--t:12s;--d:-11.5s"></span><span style="--x:83%;--s:10px;--c:#d9573f;--t:9s;--d:-13.8s"></span><span style="--x:0%;--s:8px;--c:#f0a030;--t:12s;--d:-16.1s"></span><span style="--x:13%;--s:13px;--c:#c8741a;--t:9s;--d:-18.4s"></span><span style="--x:26%;--s:11px;--c:#b8401e;--t:12s;--d:-20.7s"></span></div>
   <div id="hmSub" hidden>
-    <header><h2 id="hmSubTitle"></h2><button id="hmSubBack">Back</button></header>
+    <header><h2 id="hmSubTitle"></h2><button id="hmSubBack">‹ Back</button></header>
     <div id="hmSubBody"></div>
   </div>
   <div id="hmSheet" hidden><div id="hmSheetBox"></div></div>
@@ -896,7 +917,7 @@
   <div id="ptSheet" hidden><div id="ptSheetBox"></div></div>
 </div>
 <div id="settings" hidden>
-  <header><div class="settingsTitleWrap"><small class="settingsEyebrow">ROYAL DECREES &amp; ARCHIVES</small><h2>Settings</h2></div><button id="settingsClose">Close</button></header>
+  <header><div class="settingsTitleWrap"><small class="settingsEyebrow">ROYAL DECREES &amp; ARCHIVES</small><h2>Settings</h2></div><button id="settingsClose">‹ Back</button></header>
   <div id="settingsBody"></div>
 </div>
 <div id="tip" hidden><div class="tipCrest"><span class="tipEyebrow">✦ ROYAL COUNSEL ✦</span></div><p id="tipText"></p><div class="tipRow"><button id="tipSkip">Skip tutorial</button><button id="tipGot" class="primary">Got it</button></div><i></i></div>

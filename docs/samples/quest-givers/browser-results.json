@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "cards": 15,
+      "paintedLogFaces": 15
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "cards": 15,
+      "paintedLogFaces": 15
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "cards": 15,
+      "paintedLogFaces": 15
+    }
+  ],
+  "errors": []
+}

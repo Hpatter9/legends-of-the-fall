@@ -834,49 +834,11 @@ button.danger:active:not(:disabled) {
   width: 100%;
 }
 
-/* Talents Inspection Modal (.tModal, .tBox) */
-.tModal {
-  background: radial-gradient(circle at center, rgba(16, 20, 15, 0.78), rgba(5, 7, 5, 0.94));
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  z-index: 100;
-}
-
-.tBox {
-  width: min(380px, calc(100vw - 32px));
-  max-width: 100%;
-  padding: 18px 16px 14px;
-  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
-              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
-              url(ui/page.png);
-  border: var(--ornate-border-double);
-  border-radius: 6px;
-  box-shadow: var(--ornate-shadow);
-  box-sizing: border-box;
-}
-
-.tBox .tTitle b {
-  font-family: var(--display);
-  font-size: 18px;
-  color: var(--ornate-brass);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
-}
-
+/* the talent box's picture (now in a standard ornate menu, INT-386) */
 .tBig {
   border: 2px solid var(--ornate-brass-mid);
   border-radius: 6px;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8), 0 0 10px rgba(219, 193, 139, 0.3);
-}
-
-.tBox p {
-  color: #ede5d3;
-  line-height: 1.45;
-  font-size: 13px;
-}
-
-.tBtns button {
-  min-height: 46px;
-  font-size: 14px;
 }
 
 /* Equipment Picker & Comparison Rows */
@@ -1657,7 +1619,6 @@ body #spellbook h2 {
   #autoSum,
   .spOverlay,
   .ruBack,
-  .tModal,
   .cxOverlay,
   .cvVeil,
   .turnUpMedallion {
@@ -1710,3 +1671,621 @@ body #spellbook h2 {
 #settingsBody .newDot {
   font-size: 11px;
 }
+
+/* UX-FIXES: the toast lane sits under the top bar and its crest (it covered the crowns, the gear and the version line) */
+.toast { top: calc(env(safe-area-inset-top) + 118px); }
+/* COMBAT-HUD: in a fight the lane is under the spell row and the boss's bar (`hudClear.ts` sets its top); there the toast fades in and out
+   in place rather than sliding down over the orbs */
+.toast.lane { transform: translate(-50%, 0); opacity: 0; transition: opacity 0.3s ease-out; }
+.toast.lane.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .toast.lane { transition: none; } }
+
+/* --------------------------------------------------------------------------
+   UX-FIXES (the audit's #6 and #10): tap targets of 44 px and a text floor of 11 px
+   -------------------------------------------------------------------------- */
+/* the Party link beside Choose your battle: a real secondary button */
+.hmLink, .hmLink.hmSide { min-height: 44px; min-width: 120px; padding: 0 14px; font-size: 14px; border: 1px solid #ad8e50; border-radius: 3px; background: #1b231dd8; color: #e8cb86; }
+/* the army picker: tier buttons, arrows, Back and the dots (the dot stays small, its hit area is not) */
+.asTier { min-height: 44px; }
+.asArrow { min-width: 44px; min-height: 44px; }
+.asBack { min-width: 64px; min-height: 44px; }
+.asDot { position: relative; }
+.asDot::before { content: ''; position: absolute; inset: -17px -8px; }
+.lbGo { min-height: 44px; }
+/* text: nothing under 11 px */
+.cpEyebrow, .hm-battle .cpPlate .cpEyebrow { font-size: 11px; letter-spacing: 1px; }
+.ctCrestSub, .ctTapSaluteHint, .ctLvPill, .ctRelicSub, .ctPortalChip, .asTier small, .asTier i { font-size: 11px; }
+.ctChip small, .ctChip b { font-size: 12px; }
+.ctPowerPill small, .ctPowerPill b { font-size: 11px; }
+.ctThrone small, .ctThrone span, .ctGuard span, .ctGuard small { font-size: 11px; }
+.hm-battle .cpEyebrow { font-size: 11px; }
+.ctGuardPlaque span { font-size: 11px; letter-spacing: 0.16em; }
+#home .lbLock .lbGo { min-height: 44px; }
+.hmPage.hm-battle { --hmBar: 130px; }
+.hmPage.hm-battle:not(:has(.hmBanner)) { --hmBar: 108px; }
+.hm-battle .hmGo { grid-template-rows: 48px 44px; }
+.hm-battle .hmLink.hmSide { min-height: 44px; min-width: 120px; justify-self: center; border: 1px solid #ad8e50; border-radius: 3px; background: #1b231dd8; color: #e8cb86; font-size: 14px; }
+.hm-battle .hmLink.hmSide b, .hm-battle .hmLink.hmSide small { font-size: 14px; }
+
+/* --------------------------------------------------------------------------
+   23. UI-CONSISTENCY (docs/notes/ui-consistency.md): the screens that came in after the restyle, brought into it with this
+   sheet's own tokens: the double brass rim, the gilded selection, the slate wells. Batch 1: the most visible.
+   -------------------------------------------------------------------------- */
+/* The prep screen's Formation button: under every layer laid over the board (the home screen, the party, Settings, a card), where it
+   used to float over them all (it came after #home in the page at the same z-index); and gilded, as the HUD's own buttons are. */
+#formBtn {
+  z-index: 3;
+  border: 1px solid var(--ornate-brass-mid);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #3a3d31 0%, #1f221b 100%);
+  box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.22), 0 3px 8px rgba(0, 0, 0, 0.7);
+}
+#formBtn small { font-size: 11px; color: var(--ornate-brass-mid); letter-spacing: 0.08em; text-transform: uppercase; }
+#formBtn b { font-family: var(--display); color: var(--ornate-brass-hi); text-shadow: 0 1px 2px #000; }
+
+/* The Formation sheet: the ornate card, and the chosen shape gilded (it was the old ember orange) */
+#tacticSheet { background: radial-gradient(circle at 50% 80%, rgba(16, 20, 15, 0.7), rgba(5, 7, 5, 0.9)); }
+#tacticSheet .tacCard {
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  border: var(--ornate-border-double);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: var(--ornate-shadow);
+}
+#tacticSheet h2 { color: var(--ornate-brass); font-size: 22px; letter-spacing: 0.05em; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(219, 193, 139, 0.25); }
+#tacticSheet h2::after { content: ''; display: block; width: 140px; height: 1px; margin: 6px auto 0; background: linear-gradient(90deg, transparent, var(--ornate-brass-mid), transparent); }
+#tacticSheet .tacForm {
+  border: 1px solid #6b5c40;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+#tacticSheet .tacForm b { font-family: var(--display); color: var(--ornate-brass); }
+#tacticSheet .tacForm span { color: #c4ba9f; }
+#tacticSheet .tacForm.on {
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 12px rgba(219, 193, 139, 0.3);
+}
+#tacticSheet .tacForm.on b { color: var(--ornate-brass-hi); }
+#tacticSheet .tacForm.on span { color: #e6dcc4; }
+
+/* The "Unlocked" end card and the new-army card: a gilded banner and a brass bezel in place of the old pixel ribbon's slate and orange */
+.unlockRib {
+  min-height: 56px;
+  padding: 0 34px;
+  border-image: none;
+  border: var(--ornate-border-double);
+  border-width: 3px 0;
+  background: linear-gradient(90deg, transparent 0, #1a1e16 14%, #2c3325 50%, #1a1e16 86%, transparent 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  position: relative;
+  image-rendering: auto;
+}
+.unlockRib::before,
+.unlockRib::after {
+  content: '✦';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ornate-brass);
+  font-size: 16px;
+  text-shadow: 0 0 8px rgba(219, 193, 139, 0.5);
+}
+.unlockRib::before { left: 10px; }
+.unlockRib::after { right: 10px; }
+.rvArt {
+  border: 3px solid var(--ornate-brass);
+  border-radius: 8px;
+  background: radial-gradient(circle at center, #3d4635, #141810);
+  box-shadow: inset 0 0 0 1px #11140e, inset 0 0 14px rgba(0, 0, 0, 0.85), 0 0 20px rgba(219, 193, 139, 0.35);
+}
+.rvWhere { font-size: 13px; color: #c9bfab; }
+.rvWhere i { color: var(--ornate-brass); }
+
+/* The castle's building cards (the levelled buildings and the room buildings): the double brass rim of the other cards, rooms and
+   seats in slate wells, the Sparring Yard's two pickers as the game's own fields (they were the browser's), its button on a row of its
+   own (it ran off the card), and the small print at 11 px (it was 10) */
+.bcard {
+  border: var(--ornate-border-double);
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  box-shadow: var(--ornate-shadow);
+}
+.bcard .bhead { border-bottom: 0; position: relative; padding-bottom: 12px; }
+.bcard .bhead::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--ornate-brass-mid), transparent); }
+.bcard h3 { color: var(--ornate-brass); letter-spacing: 0.04em; }
+.bcard p i { color: var(--ornate-brass); }
+.hsheet .hint { font-size: 11px; color: #b8af9a; }
+.bcard .ctRooms, .bcard .hallPlinths {
+  padding: 6px;
+  border: 1px solid #4a3e29;
+  border-radius: 4px;
+  background: #0f130ecc;
+  box-shadow: var(--ornate-well);
+}
+.bcard .hallPlinths > small { color: var(--ornate-brass); font-family: var(--display); font-size: 14px; padding: 2px 2px 0; }
+.bcard .hallPlinth { border-radius: 4px; background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%); box-shadow: inset 0 0 0 1px #6b5c40; }
+.bcard .hallPlinth:has(> select) { flex-wrap: wrap; }
+.bcard .hallPlinth > select {
+  flex: 1 1 40%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 28px 0 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  font: 700 14px var(--body);
+  color: #f1ead9;
+  border: 1px solid var(--ornate-brass-mid);
+  border-radius: 4px;
+  background: linear-gradient(45deg, transparent 50%, var(--ornate-brass) 50%) right 14px center / 6px 6px no-repeat,
+              linear-gradient(-45deg, transparent 50%, var(--ornate-brass) 50%) right 9px center / 6px 6px no-repeat,
+              linear-gradient(180deg, #373a30 0%, #20231c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+.bcard .hallPlinth > select + select + button { flex: 1 1 100%; }
+
+/* Hester's Stall: the header's Back the size of every other page's (it was a 30 px glyph) */
+.hsHead .hsBack {
+  min-width: 64px;
+  padding: 0 12px;
+  font: 700 14px var(--body);
+  letter-spacing: 0.03em;
+  color: #f1ead9;
+  border: 1px solid var(--ornate-brass-mid);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #373a30 0%, #20231c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.6), 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+/* The Last Stand's pick: the chosen eight gilded (they were the old ember orange) */
+.stGrid button.on {
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 10px rgba(219, 193, 139, 0.3);
+}
+.stGrid button.on em { color: #e6dcc4; }
+
+/* UI-CONSISTENCY batch 2: the full pages that closed with a cross say "‹ Back" (the UX rule: pages Back, cards Close), with the page
+   heading in brass over a filigree rule; the filter chips and the trait chips as the sheet's rows and gilded choice; the Stall's rows;
+   the Calamity campfire's choices. */
+.qlShut, .ecnShut, .ulClose, .twCloseBtn {
+  width: auto;
+  min-width: 64px;
+  min-height: 44px;
+  height: auto;
+  padding: 0 12px;
+  font: 700 14px var(--body);
+  letter-spacing: 0.03em;
+  color: #f1ead9;
+  border: 1px solid var(--ornate-brass-mid);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #373a30 0%, #20231c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.6), 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+.twCloseBtn:hover, .twCloseBtn:focus-visible { transform: none; background: linear-gradient(180deg, #43473a 0%, #272a21 100%); }
+.qlHead, .ecnGHead, .ulHead { position: relative; padding-bottom: 10px; margin-bottom: 4px; }
+.qlHead::after, .ecnGHead::after, .ulHead::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--ornate-brass-mid), rgba(156, 132, 84, 0.15));
+}
+.qlHead h3, .ecnGHead h3, .ulHead h3 {
+  font: 400 22px var(--display);
+  color: var(--ornate-brass);
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(219, 193, 139, 0.2);
+}
+.ulHead { flex-wrap: wrap; }
+.ulHead .ulClose { margin-left: auto; }
+.ulCount { color: #b8af9a; font-size: 12px; }
+
+/* filter chips (Quests' sort and length, the Stall's Sell filter): rows of the sheet, the chosen one gilded, 44 px tall */
+.qlChip, .hsPill {
+  min-height: 44px;
+  padding: 0 12px;
+  font: 700 13px var(--body);
+  color: #d9cfb3;
+  border: 1px solid #6b5c40;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+.qlChip.on, .hsPill.on {
+  color: var(--ornate-brass-hi);
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 10px rgba(219, 193, 139, 0.3);
+}
+
+/* the deploy board's trait chips: the sheet's row, an active trait gilded (they were the old pixel chips, slate and ember) */
+#traits .trait, .trait {
+  border-image: none;
+  border: 1px solid #6b5c40;
+  border-radius: 4px;
+  padding: 3px 8px;
+  color: #e6dcc4;
+  background: linear-gradient(180deg, #292d22f2 0%, #1a1d15f2 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+#traits .trait small, .trait small { font-size: 11px; color: #b8af9a; }
+#traits .trait.on, .trait.on {
+  color: var(--ornate-brass-hi);
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 10px rgba(219, 193, 139, 0.3);
+}
+#traits .trait.on small, .trait.on small { color: #e6dcc4; }
+.trait.picked { outline: 2px solid var(--ornate-brass-hi); outline-offset: 1px; }
+
+/* Hester's Stall: its rows (sell, repair, enchant) as the sheet's rows */
+.hsRow {
+  border: 1px solid #6b5c40;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* the Calamity's cards (campfire, shop, treasure): the choices as the sheet's rows with a brass heading, the traveller's choices too,
+   the heroes to train in small wells, the small print at 11 px */
+.rtCard .rtChoice, .rtCard .rtItem, .rtCard > button:not(.primary):not(.rtTrainHero) {
+  min-height: 52px;
+  padding: 8px 12px;
+  text-align: left;
+  border: 1px solid #6b5c40;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+.rtCard > button:not(.primary):not(.rtTrainHero) { color: var(--ornate-brass-hi); font-weight: 700; }
+.rtCard .rtChoice b, .rtCard .rtItem b { font-family: var(--display); color: var(--ornate-brass); }
+.rtCard .rtChoice small, .rtCard .rtItem small { color: #c4ba9f; }
+.rtTrainHero {
+  padding: 4px 2px;
+  border: 1px solid #4a3e29;
+  border-radius: 4px;
+  background: #0f130ecc;
+  box-shadow: var(--ornate-well);
+}
+.rtTrainHero small, .rtTrainHero em, .rtHero small { font-size: 11px; }
+/* the trophy wall's heading gives its Back room (the title wraps rather than running under it) */
+.twHeader { gap: 10px; align-items: flex-end; } /* (its Back at the foot of the heading, clear of the version line, top right) */
+.twTitleBox { flex: 1 1 auto; min-width: 0; }
+.twCloseBtn { flex: none; }
+
+/* UI-CONSISTENCY batch 3: the daily's theme block rimmed like the other cards; the pack's section labels in brass; the hero sheet's foot
+   Back the plain secondary every other Back is; and the last small print and short buttons up to 11 px and 44 px. */
+/* (the march card itself is now the standard menu: section 24) */
+
+/* the daily's theme block: the double brass rim; the day's heroes in brass frames */
+.dayTheme {
+  border: var(--ornate-border-double);
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  box-shadow: var(--ornate-shadow);
+}
+.dtHead b { color: var(--ornate-brass); }
+.dtHero { border: 1px solid var(--ornate-brass-mid); border-radius: 3px; }
+.dtHero.feat { border-color: var(--ornate-brass-hi); box-shadow: 0 0 8px rgba(219, 193, 139, 0.45); }
+.dayPrize { border-radius: 6px; }
+
+/* the pack: its section labels ("The bag", "Remedies") as brass headings */
+.rnHead, .evcard.pack .rmHead { font: 400 14px var(--display); color: var(--ornate-brass); letter-spacing: 0.04em; margin-top: 4px; }
+.rnWords small { font-size: 11px; }
+
+/* the hero sheet's foot: Back as the plain secondary button, full width */
+.heroFootBack { width: 100%; min-height: 48px; font-size: 15px; border: 1px solid var(--ornate-brass-mid); }
+
+/* the hero sheet's toolbar: Next upgrade and Use tome at 44 px */
+.heroNextUp, .tomeUse { min-height: 44px; }
+/* the War Council's eyebrow and its heroes' info marks: 11 px (the info mark keeps its round shape, its tap area the hero's card) */
+#party .ptEyebrow, #party header small, .ptHead small { font-size: 11px; }
+#party .ptInfo { width: 20px; height: 20px; font-size: 13px; line-height: 20px; }
+/* the army picker's small labels ("Rift ores") at 11 px */
+.asOres small, .asOre small { font-size: 11px; }
+
+/* --------------------------------------------------------------------------
+   24. THE STANDARD ORNATE MENU (src/ornateMenu.ts, docs/notes/ui-standard.md): every new card, sheet and menu is built with it.
+   The veil; the card on the double brass rim over slate and parchment; a header with the battle crest, an eyebrow, the title and a
+   filigree rule; sections with brass headings; gilded choice rows; slate wells; a footer with the way out and the primary button.
+   MENU-POLISH (docs/notes/menu-polish.md): a light veil, so the page still reads through it; the drawer; text a step larger.
+   -------------------------------------------------------------------------- */
+.om { --om-text: 14.5px; --om-small: 13px; }
+.omVeil {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
+  /* (a light dim, no blur: the page under the menu still reads, and the card's own shadow holds it in front) */
+  background: radial-gradient(circle at center, rgba(10, 13, 9, 0.42), rgba(5, 7, 5, 0.6));
+  animation: ornateFadeIn 0.2s ease-out;
+}
+.omVeil.omSheet, .omVeil.omDrawer { align-items: flex-end; padding-bottom: 0; }
+/* the drawer: a lighter veil still, and only on the foot of the screen, so the page above stays in sight */
+.omVeil.omDrawer { background: linear-gradient(180deg, rgba(5, 7, 5, 0.12) 0%, rgba(5, 7, 5, 0.3) 45%, rgba(5, 7, 5, 0.55) 100%); animation: none; }
+.om {
+  position: relative;
+  width: min(420px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: radial-gradient(ellipse at 50% 0%, #3e483540 0%, transparent 70%), linear-gradient(180deg, #242720fa 0%, #151812fd 100%), url(ui/page.png);
+  border: var(--ornate-border-double);
+  border-radius: 8px;
+  box-shadow: var(--ornate-shadow), 0 0 0 1px #0a0c08, 0 14px 40px rgba(0, 0, 0, 0.75);
+  color: #f1ead9;
+}
+.omSheet .om, .omDrawer .om { width: min(480px, 100%); max-height: 92%; border-bottom: 0; border-radius: 10px 10px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+/* the drawer stops at two thirds of the screen (its body scrolls) and slides up into place */
+.omDrawer .om { max-height: 66%; box-shadow: var(--ornate-shadow), 0 -10px 30px rgba(0, 0, 0, 0.7); animation: omDrawerUp 0.26s cubic-bezier(0.2, 0.8, 0.25, 1); }
+@keyframes omDrawerUp { from { transform: translateY(100%); } to { transform: none; } }
+/* the four brass corner studs */
+.om::before, .om::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #f5e4ba, #9c8454);
+  box-shadow: 0 0 6px rgba(219, 193, 139, 0.45);
+  pointer-events: none;
+}
+.om::before { left: 6px; }
+.om::after { right: 6px; }
+.omHead {
+  flex: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 18px 12px;
+  text-align: center;
+  border-bottom: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(219, 193, 139, 0.08), transparent 70%);
+}
+.omCrest {
+  display: block;
+  width: 96px;
+  height: 34px;
+  margin: -2px auto 2px;
+  background: url(ui/battle-crest.png) center / contain no-repeat;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+}
+.omEyebrow { font: 700 11px var(--body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ornate-brass-mid); }
+.omTitle {
+  margin: 0;
+  font: 400 24px/1.15 var(--display);
+  letter-spacing: 0.05em;
+  color: var(--ornate-brass);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 12px rgba(219, 193, 139, 0.3);
+}
+.omSub { margin: 2px 0 0; font: 400 var(--om-text)/1.35 var(--body); color: #c4ba9f; }
+/* the filigree rule: a brass line fading out each way, a diamond at its heart */
+.omRule {
+  position: relative;
+  display: block;
+  width: 78%;
+  height: 1px;
+  margin: 10px auto 0;
+  background: linear-gradient(90deg, transparent, var(--ornate-brass-mid) 20%, var(--ornate-brass) 50%, var(--ornate-brass-mid) 80%, transparent);
+}
+.omRule::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--ornate-brass);
+  box-shadow: 0 0 0 2px #1a1d16, 0 0 8px rgba(219, 193, 139, 0.5);
+}
+.omBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 14px 12px;
+}
+.omSection { display: flex; flex-direction: column; gap: 6px; }
+.omSectionHead {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding-bottom: 4px;
+  font: 400 15px var(--display);
+  letter-spacing: 0.04em;
+  color: var(--ornate-brass);
+  border-bottom: 1px solid rgba(156, 132, 84, 0.4);
+}
+.omSectionHead::before { content: '◆'; font-size: 9px; color: var(--ornate-brass-mid); align-self: center; }
+.omSectionHead small { font: 400 var(--om-small) var(--body); letter-spacing: 0; color: #b8af9a; }
+.omGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 380px) { .omGrid[data-cols='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* four short rows across at every width (the Auto card's 1, 3, 5, 10) */
+.omGrid[data-cols='4'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.omGrid[data-cols='4'] .omChoice { align-items: center; justify-content: center; min-height: 48px; }
+.omChoice {
+  min-width: 0;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 8px 9px;
+  text-align: left;
+  font-weight: 400;
+  color: #f1ead9;
+  border: 1px solid #6b5c40;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #292d22 0%, #1a1d15 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+.omChoice b { font: 400 15px/1.2 var(--display); color: var(--ornate-brass); overflow-wrap: anywhere; }
+.omChoice .omIco { font-size: 20px; line-height: 1; margin-bottom: 2px; }
+.omLine { font: 400 var(--om-small)/1.3 var(--body); color: #c4ba9f; overflow-wrap: anywhere; }
+.omLine.omPay { color: #9fe39a; }
+.omLine.omLock { color: #9a9a8e; font-style: italic; }
+.omChoice.on {
+  border-color: #f2dc9f;
+  background: linear-gradient(180deg, #444c38 0%, #293021 100%);
+  box-shadow: inset 0 0 0 1px #d8b97660, 0 0 12px rgba(219, 193, 139, 0.3);
+}
+.omChoice.on b { color: var(--ornate-brass-hi); }
+.omChoice.on .omLine:not(.omPay) { color: #e6dcc4; }
+.omChoice:disabled { opacity: 0.55; }
+.omChoice:disabled .omIco { filter: grayscale(1); }
+.omWell {
+  padding: 10px 12px;
+  border: 1px solid #4a3e29;
+  border-radius: 4px;
+  background: #0f130ecc;
+  box-shadow: var(--ornate-well);
+  font: 400 var(--om-text)/1.4 var(--body);
+  color: #dfd7c5;
+}
+.omWell p { margin: 4px 0; }
+.omNote { margin: 0; min-height: 1.3em; font: 400 var(--om-text)/1.35 var(--body); color: #e6dcc4; }
+.omFoot {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  position: relative;
+}
+.omFoot::before { content: ''; position: absolute; left: 14px; right: 14px; top: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(156, 132, 84, 0.6), transparent); }
+.omFoot:empty { display: none; }
+.omBack { flex: 0 1 auto; min-width: 96px; min-height: 48px; font-size: 15px; border: 1px solid var(--ornate-brass-mid); }
+.omPrimary { flex: 1 1 auto; min-height: 48px; font: 400 18px var(--display); letter-spacing: 0.04em; }
+.omBack:only-child { flex: 1 1 auto; }
+@media (prefers-reduced-motion: reduce) { .omVeil, .omDrawer .om { animation: none; } }
+
+/* the War Council's March orders button (UI-STANDARD): a gilded row over March naming the orders set; a tap opens the orders menu */
+#party .ptOrders {
+  width: 100%;
+  min-height: 52px;
+  margin: 0 0 6px;
+  padding: 6px 34px 6px 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  text-align: left;
+  border: var(--ornate-border-double);
+  border-radius: 5px;
+  background: radial-gradient(ellipse at 0% 50%, rgba(219, 193, 139, 0.12), transparent 60%), linear-gradient(180deg, #2c3125 0%, #1a1d15 100%);
+  box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.18), 0 3px 8px rgba(0, 0, 0, 0.55);
+}
+#party .ptOrders[hidden] { display: none; }
+#party .ptOrders small { font: 700 11px var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ornate-brass-mid); }
+#party .ptOrders b { max-width: 100%; font: 400 15px/1.25 var(--display); color: var(--ornate-brass-hi); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#party .ptOrders .ptOrdersGo { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: normal 26px/1 var(--display); color: var(--ornate-brass); }
+
+/* --------------------------------------------------------------------------
+   25. THE FIGHT'S AUTO SWITCH AND TACTIC BUTTON (the owner: "Move the auto cast button up next to the spells", "Make the tactic button
+   more ornate"). The Auto switch sits straight after the spell orbs on their row; the tactic button has its own spot at the right edge
+   just above the hero rows (COMBAT-HUD: "down on the right side, above the heroes' bars"), a gilded medallion as the camp's Daily is: the double brass rim, the tactic's icon (painted once drawn, ui/tactics/<id>.png)
+   in a brass ring, its name under it. Its word pops up to its left. Steady light; no pulse.
+   -------------------------------------------------------------------------- */
+#hudSpells .fhAuto { margin-left: 0; }
+#panel .fhTactic {
+  right: 8px;
+  width: 58px;
+  height: 66px;
+  padding: 4px 2px 3px;
+  justify-content: flex-start;
+  gap: 2px;
+  color: var(--ornate-brass-hi);
+  border: var(--ornate-border-double);
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%);
+  box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.22), 0 3px 10px #000c, 0 0 10px rgba(219, 193, 139, 0.18);
+}
+#panel .fhTactic[data-tactic='charge'], #panel .fhTactic[data-tactic='hold'] { background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%); }
+#panel .fhTactic .fhTacticFace {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid #c9ad72;
+  background: radial-gradient(circle at 50% 40%, #3a4130, #12150e 75%);
+  box-shadow: inset 0 0 6px #000, 0 0 6px rgba(219, 193, 139, 0.25);
+}
+/* (each tactic's ring takes a little of its colour: Charge ember, Hold steel; Advance the brass) */
+#panel .fhTactic[data-tactic='charge'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #6a2a1c, #1d0c08 75%); border-color: #e3a36b; }
+#panel .fhTactic[data-tactic='hold'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #2d3a4a, #10161f 75%); border-color: #a9bed3; }
+#panel .fhTactic svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 1px #000); }
+#panel .fhTactic .fhTacticArt { width: 32px; height: 32px; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 1px 2px #000); pointer-events: none; }
+#panel .fhTactic small { font: 700 11px/1.1 var(--display); letter-spacing: 0.04em; color: var(--ornate-brass); opacity: 1; text-shadow: 0 1px 2px #000; }
+#panel .fhTactic:active:not(:disabled) { transform: translateY(1px); }
+#panel .fhTacticWord { min-width: 58px; }
+
+/* The Battle page's bar without its Party button (the owner's call): Choose your battle alone, with Continue centred under it while a run
+   is going; with no run the second row goes and the bar closes up */
+.hm-battle .hmGo { grid-template-columns: 1fr; }
+.hm-battle .hmGo .hmCont { grid-column: 1; justify-self: center; min-width: 220px; }
+.hm-battle .hmGo:not(:has(.hmCont)) { grid-template-rows: 48px; }
+.hmPage.hm-battle:not(:has(.hmCont)) { --hmBar: 83px; }
+.hmPage.hm-battle:not(:has(.hmBanner)):not(:has(.hmCont)) { --hmBar: 61px; }
+
+/* --------------------------------------------------------------------------
+   26. INT-386 (docs/notes/int-386.md): the bodies of the dialogs PR #386 restyled, now standard ornate menus. Only what a body of its own
+   needs: the card, rim, header, wells and footer are section 24's.
+   -------------------------------------------------------------------------- */
+/* notes in a standard body that say yes or no (a talent learned, one not yet open) */
+.omNote.tGood { color: #9fe39a; }
+.omNote.tBad, .omNote.hsWhy { color: #9a9a8e; font-style: italic; }
+/* the talent box: the talent's picture beside what it does, in a well */
+.om .tAskWell { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
+.om .tAskWell .tBig { width: 88px; height: 88px; padding: 5px; image-rendering: pixelated; background: #141712; }
+.om .tAskWell p { margin: 0; font-size: 15px; }
+/* "How the altar works": its five lines, brass markers */
+.om .altarHelpList { margin: 0; padding-left: 18px; display: grid; gap: 7px; }
+.om .altarHelpList li::marker { color: var(--ornate-brass); }
+/* a finished build: its picture over what it gives */
+.om .bpWell { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.om .bpPic { width: 72px; height: 72px; object-fit: contain; image-rendering: pixelated; }
+/* the relic card's body sits on the menu's slate: its own frame goes (the rarity still names itself in colour) */
+.om .rlCard { width: 100%; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.om .rlPiece small, .om .rlRarity { font-size: 12px; }
+/* MENU-POLISH: the bodies' own words a step larger too, as the standard's (--om-text, --om-small) */
+.om .rlCard p, .om .rlSet h3 { font-size: var(--om-text); }
+/* (relicCard.css sets these two with !important, so only !important lifts them) */
+.om .rlCard .rlStory, .om .rlCard .rlTier { font-size: var(--om-small) !important; }
+.om .hsLine, .om .hsStat { font-size: var(--om-text); }
+.om .hsHistory { font-size: 15.5px; }
+.om .hsSmall { font-size: var(--om-small); }
+.om .tomeName, .om .tomeXp, .om .tomeBtnName, .om .tomeHint, .om .tomeRow small { font-size: var(--om-small); }
+/* a ware's sheet at Hester's Stall: the art centred, the price on the primary button */
+.om .hsSheetArt { display: flex; justify-content: center; }
+.om .hsStat:last-child { border-bottom: 0; }
+.omPrimary.hsBuy { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+/* the tome sheet's hero row on the slate */
+#tomeSheet .tomeRow { border-color: #4a3e29; box-shadow: var(--ornate-well); }
+
+/* Not standard menus yet (still on the list in test/ui-standard.test.ts), but PR #386's two fixes kept as plain rules: */
+/* the fight's unit card says "Close" (cards say Close), a 44 px tap */
+.uiCard .fsClose { width: auto; min-width: 64px; min-height: 44px; padding: 0 10px; font: 700 13px var(--body); }
+/* the full artwork viewer on the standard double brass rim and shadow */
+dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--ornate-shadow); }

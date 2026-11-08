@@ -1,8 +1,6 @@
-// The quests' pictures, by key, so the owner's painted art can take their place without touching the screens: the givers'
-// card portraits (`FACES`; the painted busts of Gwen, the pedlar, the pilgrim, the messenger and the hunter, and the notice's paper, come
-// from `art-source/eidolons/givers` and `board` by `tools/eidolons/import.py`, listed in `PAINTED`), Gwen's sprite behind the bar and
-// the quest board in the tavern (`BOARD`, to be pinned papers from `art-source/eidolons/board/*.png`). Until then each is a pack
-// placeholder cut by `tools/quests/cut.py` (see CREDITS.md). Bundled as data URLs, so nothing is added to the offline list.
+// Shared quest portraits and tavern props. Original painted givers come from tools/eidolons/import.py;
+// fifteen additional painted tellers come from tools/quest-givers/import.py. Their sources and credits
+// are retained in art-source/. Images are bundled as data URLs for offline play; world sprites stay unchanged.
 
 import type { GiverId } from './sim/questData';
 import gwenFace from './art/quests/gwen-face.png';
@@ -21,6 +19,12 @@ import heraldFace from './art/quests/herald-face.png';
 import clockFace from './art/quests/clock-face.png';
 import falconerFace from './art/quests/falconer-face.png';
 import archivistFace from './art/quests/archivist-face.png';
+import oswyFace from './art/quests/oswy-face.png';
+import tealFace from './art/quests/teal-face.png';
+import pimFace from './art/quests/pim-face.png';
+import widowFace from './art/quests/widow-face.png';
+import sorrelFace from './art/quests/sorrel-face.png';
+import lostFace from './art/quests/lost-face.png';
 import spoilsFace from './art/items/star_chart.png';
 import riftFace from './art/items/rift_shard.png';
 import gwenSheet from './art/quests/gwen.png';
@@ -42,11 +46,11 @@ export const FACES: Record<GiverId, string> = {
   spoils: spoilsFace,
   rift: riftFace,
   duchess: duchessFace,
-  // (SECRET-HEROES: the hero quests' tellers, LPC layers composed by `tools/hero-quests/cut.py`)
+  // Painted hero-tale tellers, imported by tools/quest-givers/import.py.
   shepherd: shepherdFace,
   gaoler: gaolerFace,
   smith: smithFace,
-  // (HERO-TALES-2: the other seven tellers, by the same tool)
+  // The other seven hero-tale tellers.
   sexton: sextonFace,
   pawnbroker: pawnbrokerFace,
   lantern: lanternFace,
@@ -54,14 +58,14 @@ export const FACES: Record<GiverId, string> = {
   clock: clockFace,
   falconer: falconerFace,
   archivist: archivistFace,
-  // (LOST-TECHNIQUES: a part with no hero to speak it is told by the page itself: a book's picture is a gear icon for now)
-  lost: spoilsFace,
-  // (QUESTS-3: the new givers, with the pack faces nearest them until painted ones are cut)
-  oswy: smithFace,
-  teal: pilgrimFace,
-  pim: archivistFace,
-  widow: shepherdFace,
-  sorrel: pawnbrokerFace,
+  // Lost Techniques without a speaking hero use the approved painted manuscript.
+  lost: lostFace,
+  // Campaign and proving-ground givers each have their own painted face.
+  oswy: oswyFace,
+  teal: tealFace,
+  pim: pimFace,
+  widow: widowFace,
+  sorrel: sorrelFace,
 };
 
 /** Gwen behind the bar: 64 px cells, facing left; row 0 her stand (1 frame), row 1 talking (5 frames). */
@@ -71,4 +75,4 @@ export const GWEN = { url: gwenSheet, cell: 64, stand: 1, talk: 5 } as const;
 export const BOARD = boardUrl;
 
 /** The givers whose face is a painting (drawn smooth, not as the pixel placeholders are). */
-export const PAINTED = new Set(['gwen', 'pedlar', 'pilgrim', 'messenger', 'hunter', 'notice', 'patron', 'teal']);
+export const PAINTED = new Set(['gwen', 'pedlar', 'pilgrim', 'messenger', 'hunter', 'notice', 'patron', 'shepherd', 'gaoler', 'smith', 'sexton', 'pawnbroker', 'lantern', 'herald', 'clock', 'falconer', 'archivist', 'oswy', 'teal', 'pim', 'widow', 'sorrel', 'lost']);

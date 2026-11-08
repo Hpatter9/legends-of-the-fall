@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "paintings": 8,
+      "optionsPreserved": true,
+      "costsPreserved": true,
+      "choicesReachable": true,
+      "poorState": true,
+      "followupsUnillustrated": true,
+      "renderingUnchanged": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "paintings": 8,
+      "optionsPreserved": true,
+      "costsPreserved": true,
+      "choicesReachable": true,
+      "poorState": true,
+      "followupsUnillustrated": true,
+      "renderingUnchanged": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "paintings": 8,
+      "optionsPreserved": true,
+      "costsPreserved": true,
+      "choicesReachable": true,
+      "poorState": true,
+      "followupsUnillustrated": true,
+      "renderingUnchanged": true
+    }
+  ],
+  "errors": []
+}

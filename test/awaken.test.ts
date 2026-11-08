@@ -6,7 +6,7 @@ import { ABILITIES } from '../src/sim/equipBases';
 import { boostOf } from '../src/sim/run';
 import { ALL_HEROES } from '../src/sim/units';
 import { buyPoint, canBuyPoint, heroStats, shardsToSpend } from '../src/sim/talents';
-import { lookSheet, stepOfRank } from '../src/render/awakenLook';
+import { AWAKENED_SHEETS_LATER, lookSheet, stepOfRank } from '../src/render/awakenLook';
 import { ORE_TRAITS } from '../src/sim/awakenMats';
 
 const store = () => {
@@ -167,7 +167,8 @@ test('the awakened look unlocks legendary equipment, retaining the same form at 
   assert.equal(lookSheet('werewolf', 5, 3), 'awakened_werewolfBrute');
   assert.equal(lookSheet('werewolf', 6, 3), 'awakened_werewolfBrute');
   assert.equal(lookSheet('paladin', 5, 3), 'awakened_paladin');
-  for (const k of ALL_HEROES) {
+  // (a hero whose awakened sheets come later keeps its plain sprite, as `awakened-forms.test.ts` holds)
+  for (const k of ALL_HEROES.filter((h) => !AWAKENED_SHEETS_LATER.has(h))) {
     assert.notEqual(lookSheet(k, 5, 3), lookSheet(k, 4, 3), `${k}: first awakening changes gear`);
     assert.equal(lookSheet(k, 6, 3), lookSheet(k, 5, 3), `${k}: second step keeps that gear`);
   }

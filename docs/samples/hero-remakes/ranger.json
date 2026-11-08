@@ -1,0 +1,808 @@
+{
+  "hero": "ranger",
+  "source": "art-source/hero-remakes/ranger.png",
+  "sha256": "e32edd41288802033a2ab8d9de8dfef16d40669f5c3dbef8d7cde39053d3874e",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {},
+  "extraClip": null,
+  "scale": 0.5962732919254659,
+  "cell": [
+    160,
+    120
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_ranger",
+      "row": "idle",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        50,
+        16,
+        152,
+        177
+      ],
+      "pixels": 10804
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "idle",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        217,
+        16,
+        321,
+        177
+      ],
+      "pixels": 10871
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "idle",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        385,
+        16,
+        488,
+        177
+      ],
+      "pixels": 10613
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "idle",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        554,
+        16,
+        659,
+        177
+      ],
+      "pixels": 10607
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "walk",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        44,
+        194,
+        150,
+        349
+      ],
+      "pixels": 9780
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "walk",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        210,
+        196,
+        310,
+        349
+      ],
+      "pixels": 9267
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "walk",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        374,
+        196,
+        476,
+        348
+      ],
+      "pixels": 9055
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "walk",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        541,
+        196,
+        647,
+        349
+      ],
+      "pixels": 8805
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "_walk",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        38,
+        367,
+        154,
+        514
+      ],
+      "pixels": 9507
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "_walk",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        205,
+        368,
+        316,
+        515
+      ],
+      "pixels": 9440
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "_walk",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        374,
+        367,
+        484,
+        516
+      ],
+      "pixels": 8970
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "_walk",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        542,
+        367,
+        654,
+        514
+      ],
+      "pixels": 9043
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 24,
+      "sourceBox": [
+        22,
+        537,
+        141,
+        686
+      ],
+      "pixels": 10617
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 25,
+      "sourceBox": [
+        191,
+        529,
+        324,
+        686
+      ],
+      "pixels": 11040
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 26,
+      "sourceBox": [
+        362,
+        529,
+        491,
+        686
+      ],
+      "pixels": 10534
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 27,
+      "sourceBox": [
+        528,
+        524,
+        651,
+        686
+      ],
+      "pixels": 10915
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "hurt",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        28,
+        704,
+        134,
+        843
+      ],
+      "pixels": 9471
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "hurt",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        195,
+        711,
+        314,
+        842
+      ],
+      "pixels": 9610
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "hurt",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        369,
+        713,
+        477,
+        843
+      ],
+      "pixels": 8540
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "hurt",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        536,
+        705,
+        642,
+        842
+      ],
+      "pixels": 8970
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "dead",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        26,
+        859,
+        135,
+        996
+      ],
+      "pixels": 9602
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "dead",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        187,
+        879,
+        299,
+        992
+      ],
+      "pixels": 7888
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "dead",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        338,
+        903,
+        463,
+        992
+      ],
+      "pixels": 7474
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "dead",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        492,
+        925,
+        659,
+        988
+      ],
+      "pixels": 6354
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack2",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        19,
+        1020,
+        140,
+        1158
+      ],
+      "pixels": 9828
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack2",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        177,
+        1045,
+        308,
+        1158
+      ],
+      "pixels": 8598
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack2",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        337,
+        1044,
+        481,
+        1158
+      ],
+      "pixels": 8666
+    },
+    {
+      "sheet": "hero_res_ranger",
+      "row": "attack2",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        525,
+        1014,
+        654,
+        1158
+      ],
+      "pixels": 9775
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "idle",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        713,
+        17,
+        823,
+        178
+      ],
+      "pixels": 10317
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "idle",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        886,
+        18,
+        990,
+        177
+      ],
+      "pixels": 9768
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "idle",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1056,
+        17,
+        1156,
+        177
+      ],
+      "pixels": 9724
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "idle",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1217,
+        18,
+        1315,
+        178
+      ],
+      "pixels": 9436
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "walk",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        710,
+        197,
+        826,
+        347
+      ],
+      "pixels": 9773
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "walk",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        876,
+        196,
+        987,
+        350
+      ],
+      "pixels": 9463
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "walk",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1041,
+        196,
+        1151,
+        347
+      ],
+      "pixels": 9407
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "walk",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1199,
+        196,
+        1316,
+        343
+      ],
+      "pixels": 9015
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        715,
+        369,
+        828,
+        515
+      ],
+      "pixels": 9536
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        875,
+        369,
+        994,
+        516
+      ],
+      "pixels": 9721
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1043,
+        370,
+        1160,
+        513
+      ],
+      "pixels": 8988
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1206,
+        368,
+        1322,
+        514
+      ],
+      "pixels": 9082
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 28,
+      "sourceBox": [
+        691,
+        533,
+        820,
+        685
+      ],
+      "pixels": 10263
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 29,
+      "sourceBox": [
+        864,
+        534,
+        997,
+        686
+      ],
+      "pixels": 10131
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 30,
+      "sourceBox": [
+        1029,
+        529,
+        1162,
+        686
+      ],
+      "pixels": 10169
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 31,
+      "sourceBox": [
+        1195,
+        528,
+        1310,
+        686
+      ],
+      "pixels": 9972
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        710,
+        704,
+        807,
+        844
+      ],
+      "pixels": 8718
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        865,
+        707,
+        984,
+        844
+      ],
+      "pixels": 9435
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1034,
+        711,
+        1150,
+        841
+      ],
+      "pixels": 8725
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1206,
+        703,
+        1312,
+        843
+      ],
+      "pixels": 8789
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "dead",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        695,
+        858,
+        804,
+        993
+      ],
+      "pixels": 8353
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "dead",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        845,
+        883,
+        958,
+        991
+      ],
+      "pixels": 7561
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "dead",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        995,
+        911,
+        1131,
+        990
+      ],
+      "pixels": 6807
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "dead",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1156,
+        925,
+        1334,
+        988
+      ],
+      "pixels": 6428
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "ranger.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        688,
+        1026,
+        803,
+        1157
+      ],
+      "pixels": 9280
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "ranger.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        842,
+        1047,
+        984,
+        1158
+      ],
+      "pixels": 8244
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "ranger.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1012,
+        1054,
+        1151,
+        1158
+      ],
+      "pixels": 7764
+    },
+    {
+      "sheet": "hero_res_ranger_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "ranger.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1190,
+        1014,
+        1323,
+        1158
+      ],
+      "pixels": 9294
+    }
+  ]
+}

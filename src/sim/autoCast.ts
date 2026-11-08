@@ -351,7 +351,8 @@ const isBuff = (id: SpellId) => id === 'haste' || id === 'rally' || id === 'warc
  *  `AUTO_GAP_MS` between two. Returns the spell cast. */
 export function autoCast(b: Battle): SpellId | undefined {
   const ids = b.autoSpells;
-  if (!ids?.length || b.phase !== 'fight') return;
+  // (and out of a duel, phase 4)
+  if (!ids?.length || b.phase !== 'fight' || b.duel) return;
   if (b.spells.autoAt !== undefined && b.t - b.spells.autoAt < AUTO_GAP_MS) return;
   // (the ruler's Decree, by its own rule, before any spell: KING-SPELLS batch 2)
   if (autoDecree(b)) {

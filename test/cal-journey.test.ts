@@ -63,3 +63,87 @@ test('the second crossroads offers three boons; each gives what it says, once', 
   assert.equal(boonFoes({ boon: 'easier' }, 3), 0.9);
   assert.equal(crossroadsAfter(4, { route: [1, 2, 6] }, 2, 6), undefined, 'only a three-act Calamity');
 });
+
+import { PROVISIONS, buyProvision, eatProvision, provisionsOf } from '../src/sim/calJourney';
+import { rest } from '../src/sim/tower';
+
+test('provisions: three to start, six at most; a rest eats one, and with none the party rests at half', () => {
+  const j: Journey = {};
+  assert.equal(provisionsOf(j), PROVISIONS.START, 'a run saved before has the start\'s three');
+  for (let i = 0; i < PROVISIONS.START; i++) assert.equal(eatProvision(j), 1);
+  assert.equal(provisionsOf(j), 0);
+  assert.equal(eatProvision(j), PROVISIONS.HUNGRY);
+  const purse = { gold: 1000 };
+  for (let i = 0; i < 10; i++) buyProvision(purse, j);
+  assert.equal(provisionsOf(j), PROVISIONS.MAX);
+  assert.equal(purse.gold, 1000 - PROVISIONS.MAX * PROVISIONS.COST);
+  assert.equal(buyProvision({ gold: 0 }, { provisions: 1 }), false, 'too poor');
+});
+
+test('a Calamity campfire rest eats a provision', () => {
+  const run = calamityRun(3, startedMeta(1), 'knight');
+  const t = run.tower!;
+  t.cur = { id: 0, kind: 'campfire' } as never;
+  assert.ok(rest(run));
+  assert.equal(provisionsOf(t.journey), PROVISIONS.START - 1);
+  t.journey!.provisions = 0;
+  t.cur = { id: 0, kind: 'campfire' } as never;
+  rest(run);
+  assert.match((t.cur as { camp?: string }).camp ?? '', /hungry/);
+});
+
+import { OATHS, OATH_MAX, SCAR, journeyBoost, oathFoeHp, oathGold, oathOffer, swearOath, takeScar } from '../src/sim/calJourney';
+
+test('oaths: three at most, a fourth replaces the oldest; each rule applies', () => {
+  const j: Journey = {};
+  assert.equal(swearOath(j, 'iron'), undefined);
+  swearOath(j, 'ember');
+  swearOath(j, 'coin');
+  assert.equal(j.oaths!.length, OATH_MAX);
+  assert.equal(swearOath(j, 'vigil'), 'iron', 'the oldest goes');
+  assert.deepEqual(j.oaths, ['ember', 'coin', 'vigil']);
+  assert.equal(swearOath(j, 'coin'), undefined, 'not twice');
+  assert.ok(Math.abs(oathFoeHp(j) - OATHS.coin.foeHp!) < 1e-9);
+  assert.ok(Math.abs(oathGold(j) - 1.3) < 1e-9);
+  const b = journeyBoost(j, 1, { hp: 2, atk: 2 });
+  assert.ok(Math.abs(b.atk! - 2 * 1.06 * 0.96) < 1e-9);
+  assert.deepEqual(journeyBoost(undefined, 1, { hp: 2 }), { hp: 2 });
+  // (an offer is fixed by the seed and the spot, and never an oath already sworn)
+  assert.equal(oathOffer(5, 1, 3, j), oathOffer(5, 1, 3, j));
+  for (let n = 0; n < 40; n++) {
+    const o = oathOffer(5, 1, n, j);
+    if (o) assert.ok(!j.oaths!.includes(o));
+  }
+});
+
+test('a scar: gold now, −10% health on that hero for the rest of the run', () => {
+  const j: Journey = {};
+  const run = { gold: 10 };
+  takeScar(run, j, 4);
+  assert.equal(run.gold, 10 + SCAR.GOLD);
+  assert.ok(Math.abs(journeyBoost(j, 4, { hp: 1 }).hp! - SCAR.HP) < 1e-9);
+  assert.equal(journeyBoost(j, 5, { hp: 1 }).hp, 1, 'only the scarred hero');
+});
+
+import { TRAVEL, meetTraveller, travellerAt, travellerBack, travellerReturns } from '../src/sim/calJourney';
+
+test('a traveller is met once in Act I and returns at most once, in Act II or III, as helped or wronged', () => {
+  const j: Journey = {};
+  assert.equal(travellerAt(3, 2, j), undefined, 'only in Act I');
+  const who = travellerAt(3, 1, j)!;
+  assert.equal(travellerAt(3, 1, j), who, 'fixed by the seed');
+  assert.equal(travellerReturns(j, 2), false, 'not met, no return');
+  const run = { gold: 100 };
+  assert.ok(meetTraveller(run, j, who, true));
+  assert.equal(run.gold, 100 - TRAVEL.GOLD);
+  assert.equal(travellerAt(3, 1, j), undefined, 'once');
+  assert.equal(meetTraveller(run, j, who, false), false);
+  assert.equal(travellerReturns(j, 1), false, 'not in Act I');
+  assert.ok(travellerReturns(j, 2));
+  const back = travellerBack(j);
+  assert.equal(back.hurt, 0, 'a helped traveller thanks the party');
+  assert.equal(travellerReturns(j, 3), false, 'at most once');
+  const w: Journey = {};
+  meetTraveller({ gold: 0 }, w, 'deserter', false);
+  assert.equal(travellerBack(w).hurt, TRAVEL.TRAP, 'a wronged one sets a trap');
+});

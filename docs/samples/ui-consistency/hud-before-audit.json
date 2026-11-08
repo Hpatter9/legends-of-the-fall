@@ -1,0 +1,54 @@
+{
+ "fight": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"ULT+SPELL\" 9px",
+   "small \"TACTIC\" 9px"
+  ],
+  "headingFonts": {}
+ },
+ "fight-start": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"ULT+SPELL\" 9px",
+   "small \"TACTIC\" 9px"
+  ],
+  "headingFonts": {}
+ },
+ "fight-mid": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"ULT+SPELL\" 9px",
+   "small \"TACTIC\" 9px"
+  ],
+  "headingFonts": {}
+ },
+ "fight-tap": {
+  "small": [
+   "button#mute \"\" 40x44",
+   "button#gear.hasNews \"⚙\" 40x44",
+   "button#speed \"×1\" 40x40"
+  ],
+  "tiny": [
+   "button#gear.hasNews \"⚙\" 0px",
+   "small \"ULT+SPELL\" 9px",
+   "small \"TACTIC\" 9px"
+  ],
+  "headingFonts": {}
+ }
+}

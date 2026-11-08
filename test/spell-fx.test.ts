@@ -48,7 +48,7 @@ const webpSize = (path: string): [number, number] => {
   return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
 };
 
-test('the manifest lists the brief: 158 sheets, 302 rows (with the ultimate\'s kit, ULT-EPIC, and the king\'s fourteen, KING-SPELLS batch 5), each row a known part with a sane range and size', () => {
+test('the manifest lists the brief: 166 sheets, 318 rows (with the ultimate\'s kit, ULT-EPIC, the king\'s fourteen, KING-SPELLS batch 5, and the Vampires\' eight, docs/notes/twenty-heroes.md), each row a known part with a sane range and size', () => {
   let sheets = 0;
   let rows = 0;
   for (const keys of Object.values(sessions))
@@ -64,8 +64,8 @@ test('the manifest lists the brief: 158 sheets, 302 rows (with the ultimate\'s k
         assert.ok(size > 0 && size <= 8, `${key}.${part}: ${size} tiles`);
       }
     }
-  assert.equal(sheets, 158);
-  assert.equal(rows, 302);
+  assert.equal(sheets, 166);
+  assert.equal(rows, 318);
   assert.equal(SRC_CELL, 256);
 });
 

@@ -48,10 +48,10 @@ test('the eight class heroes are registered, drawn at a sensible size, with a fo
   assert.equal(ALL_HEROES.length, new Set(ALL_HEROES).size);
 });
 
-test('the new traits have two to four heroes, one origin and one class each', () => {
+test('the new traits have two to five heroes (owner call for the twenty), one origin and one class each', () => {
   for (const t of ['holy', 'wild', 'arcane', 'frontier', 'warden']) {
     const n = membersOf(t).length;
-    assert.ok(TRAITS[t] && n >= 2 && n <= 4, `${t} ${n}`);
+    assert.ok(TRAITS[t] && n >= 2 && n <= 5, `${t} ${n}`);
   }
   for (const id of CLASSES) assert.equal(TRAITS[HERO_TRAITS[id][0]].kind, 'origin');
 });

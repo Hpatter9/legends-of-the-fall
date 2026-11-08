@@ -7,6 +7,7 @@
 // same boost the levels and grades use (`Boost.equip`, read by `addUnit` in battle.ts). Pure rules: no Pixi, no DOM;
 // the roll draws only from the stream it is given.
 
+import { roomOpen } from './rooms';
 import type { Meta } from './meta';
 import type { Rng } from './rng';
 import { ALL_HEROES, UNITS } from './units';
@@ -15,6 +16,7 @@ import type { Scores } from './stats';
 import { SET_OF_BASE, setBonus, type GearSet, type SetBonus } from './gearSets';
 import { legendStrength } from './legendRenown';
 import { GLYPHS, MAX_GLYPHS } from './glyphs';
+import { HERO_NAMES } from './heroNames';
 
 import { ABILITIES, BASE_SCORE, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST, OLD_BASES, RARITY_SCORE, type Ability, type Calling, type EquipSlot, type Kind, type MainKey } from './equipBases';
 export { ABILITIES, EQUIP_BASES, EQUIP_BASE_IDS, EQUIP_LIST };
@@ -184,11 +186,15 @@ export interface Equipment {
   scars?: number;
   /** The enchanting glyphs on it, up to three (`enchant.ts`). */
   glyphs?: string[];
+  /** Dynasties, phase 6 (`heirs.ts`): an heirloom, handed down as the mantle passed. `marks` is the generations it has passed through (1
+   *  to 3: +3% of its main stats each), `house` the kind whose House it belongs to and `bearer` the heir it was handed to. An heirloom is
+   *  never sold or combined, as a named legend is not. */
+  heirloom?: { marks: number; house: string; bearer: string };
   /** RUN-GEAR: found in the run of this id (the run's seed) and not yet home: fresh from the field, it gives its main stats times
    *  `FIELD_BOOST` in that run, and only such a piece takes a run's upgrades (`runGear.ts`). Cleared when the run ends. */
   found?: number;
 }
-export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found' | 'renown' | 'xp' | 'scars' | 'glyphs'>;
+export type NewEquipment = Omit<Equipment, 'id' | 'wear' | 'found' | 'renown' | 'xp' | 'scars' | 'glyphs' | 'heirloom'>;
 
 /** Durability by grade before the item level is added (index 0 is unused): Common 30 to Mythic 90 (`wear.ts`). */
 export const DUR: readonly number[] = [0, 30, 40, 55, 70, 90];
@@ -212,12 +218,28 @@ export const abilityScale = (rarity: number, level: number): number => ABILITY_S
 /** What an item is called: its base's name, or the Mythic name at Mythic. */
 export const itemName = (it: NewEquipment | Equipment): string => (it.rarity >= 5 ? EQUIP_BASES[it.base]?.mythic : EQUIP_BASES[it.base]?.name) ?? 'Unknown';
 
+/** Dynasties, phase 6: an heirloom's generation marks, +3% of its main stats each, three at most (+9%). */
+export const HEIRLOOM_STEP = 0.03;
+export const HEIRLOOM_MAX = 3;
+export const heirloomMarks = (it: Pick<Equipment, 'heirloom'>): number => Math.max(0, Math.min(HEIRLOOM_MAX, Math.floor(it.heirloom?.marks ?? 0)));
+export const heirloomMult = (it: Pick<Equipment, 'heirloom'>): number => 1 + HEIRLOOM_STEP * heirloomMarks(it);
+/** Whether a piece is kept for good: a named legend or an heirloom is never sold or combined. */
+export const keptForGood = (it: Pick<Equipment, 'base' | 'heirloom'>): boolean => !!EQUIP_BASES[it.base]?.legend || !!it.heirloom;
+
+/** An heirloom's line on its card: "Ama’s Iron Helm, an heirloom of the House of Kwame · +6% of its stats (2 generations)". */
+export function heirloomLine(it: Pick<Equipment, 'heirloom' | 'base' | 'rarity'>): string {
+  const h = it.heirloom;
+  if (!h) return '';
+  const n = heirloomMarks(it);
+  return `${h.bearer}’s ${itemName(it as NewEquipment)}, an heirloom of the House of ${HERO_NAMES[h.house]?.name ?? h.house} · +${Math.round(n * HEIRLOOM_STEP * 100)}% of its stats (${n} ${n === 1 ? 'generation' : 'generations'}). Never sold or combined.`;
+}
+
 /** The numbers one item gives a hero of `kind` (a `kind` makes the calling bonus count). */
 export function itemStats(it: NewEquipment | Equipment, kind?: string): EquipStats {
   const base = EQUIP_BASES[it.base];
   const out = emptyStats();
   if (!base) return out;
-  const k = MAIN_SCALE * (OLD_BASES.has(base.id) ? 1 : SLOT_SCALE[base.slot]) * RARITY_SCALE[it.rarity] * (1 + LEVEL_STEP * (it.level - 1)) * (kind && base.calling && base.calling === callingOf(kind) ? CALLING_BONUS : 1);
+  const k = MAIN_SCALE * (OLD_BASES.has(base.id) ? 1 : SLOT_SCALE[base.slot]) * RARITY_SCALE[it.rarity] * (1 + LEVEL_STEP * (it.level - 1)) * (kind && base.calling && base.calling === callingOf(kind) ? CALLING_BONUS : 1) * heirloomMult(it as Equipment);
   for (const [stat, v] of Object.entries(base.main) as [MainKey, number][]) out[stat] = stat === 'range' ? Math.floor((v * (it.rarity + 1)) / 3) : stat === 'jump' ? v : v * k;
   if (base.legend) {
     // (a named legend: its power at its renown's strength, and its flat stats as they are: `legends.ts`)
@@ -251,13 +273,22 @@ export function wornIn(m: Meta, kind: string, slot: EquipSlot): Equipment | unde
   return id === undefined ? undefined : m.equipment?.find((x) => x.id === id);
 }
 
+/** The share of its numbers a broken piece keeps with the Smithy's Patchwork. */
+export const PATCH_SHARE = 0.5;
+
 /** What a hero kind's equipment adds in a fight; undefined when it wears nothing (so the fight is exactly as before). */
 export function equipStats(m: Meta, kind: string): EquipStats | undefined {
   // (a broken piece gives nothing at all until mended: `wear.ts`)
   const worn = EQUIP_SLOTS.map((slot) => wornIn(m, kind, slot)).filter((x): x is Equipment => !!x && !brokenPiece(x));
-  if (!worn.length) return undefined;
+  // (DEPTH-BUILD: the Smithy's Patchwork: a broken piece keeps half its numbers, no ability and no set count, until mended)
+  const patched = roomOpen(m.castle, 'patchwork') ? EQUIP_SLOTS.map((slot) => wornIn(m, kind, slot)).filter((x): x is Equipment => !!x && brokenPiece(x)) : [];
+  if (!worn.length && !patched.length) return undefined;
   const total = emptyStats();
   for (const it of worn) addStats(total, itemStats(it, kind));
+  for (const it of patched) {
+    const half = itemStats(it, kind);
+    for (const k of STAT_KEYS) total[k] += (half[k] ?? 0) * PATCH_SHARE;
+  }
   return capStats(addSetBonus(total, worn.map((x) => x.base)));
 }
 
@@ -371,8 +402,8 @@ export function sellPrice(it: Equipment): number {
 /** Turn a spare item into crowns. Returns the crowns (0, and nothing changes, when it is worn or not owned). */
 export function salvageItem(m: Meta, id: number): number {
   const i = spareEquipment(m).findIndex((x) => x.id === id);
-  // (a named legend is never sold: a save holds its one copy for good)
-  if (i < 0 || EQUIP_BASES[spareEquipment(m)[i].base]?.legend) return 0;
+  // (a named legend is never sold: a save holds its one copy for good; nor is an heirloom, phase 6)
+  if (i < 0 || keptForGood(spareEquipment(m)[i])) return 0;
   const it = spareEquipment(m)[i];
   m.equipment = m.equipment!.filter((x) => x.id !== id);
   const n = sellPrice(it);
@@ -401,7 +432,7 @@ export interface CombineGroup {
 export function combineGroups(m: Meta): CombineGroup[] {
   const groups = new Map<string, CombineGroup>();
   for (const it of spareEquipment(m)) {
-    if (!canCombineGrade(it.rarity) || EQUIP_BASES[it.base]?.legend) continue;
+    if (!canCombineGrade(it.rarity) || keptForGood(it)) continue;
     const key = `${it.base}:${it.rarity}`;
     const g = groups.get(key) ?? { base: it.base, rarity: it.rarity, items: [] };
     g.items.push(it);
@@ -426,7 +457,7 @@ export function combineItems(m: Meta, ids: readonly number[]): Equipment | null 
   const used = ids.map((id) => spare.find((x) => x.id === id));
   if (used.some((x) => !x)) return null;
   const [first] = used as Equipment[];
-  if (!canCombineGrade(first.rarity) || (used as Equipment[]).some((x) => x.base !== first.base || x.rarity !== first.rarity)) return null;
+  if (!canCombineGrade(first.rarity) || (used as Equipment[]).some((x) => x.base !== first.base || x.rarity !== first.rarity || keptForGood(x))) return null;
   const level = Math.max(...(used as Equipment[]).map((x) => x.level));
   m.equipment = m.equipment!.filter((x) => !ids.includes(x.id));
   const made = grantEquipment(m, { base: first.base, rarity: (first.rarity + 1) as Rarity, level });
@@ -535,6 +566,10 @@ export function readEquipment(raw: unknown): Equipment[] {
         const glyphs = x.glyphs.filter((g): g is string => typeof g === 'string' && !!GLYPHS[g]).slice(0, MAX_GLYPHS);
         if (glyphs.length) made.glyphs = glyphs;
       }
+      // (Dynasties, phase 6: an heirloom's marks, 1 to 3, and the House it belongs to)
+      const h = x.heirloom;
+      if (h && typeof h === 'object' && typeof h.house === 'string' && typeof h.bearer === 'string' && Number.isFinite(Number(h.marks)) && Number(h.marks) >= 1)
+        made.heirloom = { marks: Math.min(HEIRLOOM_MAX, Math.floor(Number(h.marks))), house: h.house.slice(0, 30), bearer: h.bearer.slice(0, 40) };
       if (made.wear !== undefined) made.wear = Math.min(maxDurability(made), made.wear);
       out.push(made);
     }

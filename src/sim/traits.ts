@@ -33,6 +33,10 @@ export interface TraitEffects {
   yokaiWisp?: boolean;
   /** Guardian milestone (three Guardians): an emergency Aegis shield the first time a hero drops below 30% health. */
   guardianShield?: boolean;
+  /** The share of the damage a hero's blows deal that it drinks back as health (the Vampires). */
+  leech?: number;
+  /** Vampire milestone (five Vampires): a Vampire brought below 30% health bursts into bats, mends and slips away, once a fight. */
+  vampireSwarm?: boolean;
 }
 
 export interface TraitTier {
@@ -126,6 +130,11 @@ export const TRAITS: Record<string, Trait> = {
   ] },
   arcanist: { id: 'arcanist', name: 'Arcanist', kind: 'class', short: 'Ac', tiers: [{ need: 2, effects: { mana: 1.15, charge: 1.1 }, text: "The king's mana fills 15% faster, and pools refill 10% faster" }] },
   bulwark: { id: 'bulwark', name: 'Bulwark', kind: 'class', short: 'Bw', tiers: [{ need: 2, effects: { guard: 0.04, hp: 1.03 }, text: 'All heroes take 4% less damage, and have 3% more health' }] },
+  vampire: { id: 'vampire', name: 'Vampire', kind: 'origin', short: 'Vm', tiers: [
+    { need: 2, effects: { leech: 0.06 }, text: 'Blows leech 6% of the damage dealt as health' },
+    { need: 4, effects: { leech: 0.12, atk: 1.06 }, text: 'Blows leech 12% of the damage dealt, and +6% attack' },
+    { need: 5, effects: { leech: 0.15, atk: 1.1, vampireSwarm: true }, text: 'Blows leech 15%, +10% attack; once a fight a Vampire brought low bursts into bats' },
+  ] },
 };
 
 /** Each hero's origin and class. Every trait has two to four heroes. */
@@ -175,9 +184,42 @@ export const HERO_TRAITS: Record<string, readonly [string, string]> = {
   sage: ['mystic', 'arcanist'],
   demonSwordsman: ['royal', 'vanguard'],
   tyrant: ['royal', 'caster'],
+  vampireLord: ['vampire', 'blade'],
+  hemomancer: ['vampire', 'caster'],
+  nightstalker: ['vampire', 'assassin'],
+  bloodGargoyle: ['vampire', 'bulwark'],
+  dhampir: ['vampire', 'gunner'],
+  warDrummer: ['samurai', 'support'],
+  geomancer: ['mystic', 'bulwark'],
+  bellWarden: ['yokai', 'bulwark'],
+  falconer: ['wild', 'marksman'],
 };
 
-export const traitsOf = (kind: string): readonly string[] => HERO_TRAITS[kind] ?? [];
+/** The traits still to join the roster: the Vampire origin, whose five heroes have their kits but wait for their battle sheets
+ *  (docs/notes/twenty-heroes.md). A fight reads them like any other trait; the page's lists and the roster's rules (every trait two to
+ *  four heroes) do not, until the five join `ALL_HEROES` and the trait moves into `TRAITS`. */
+export const COMING_TRAITS: Record<string, Trait> = {
+};
+
+/** The waiting heroes' origin and class (as `HERO_TRAITS`), until they join the roster. */
+export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
+  banneret: ['knightly', 'warden'],
+  astralSphinx: ['arcane', 'beast'],
+  mirageDancer: ['frontier', 'trickster'],
+  plagueDoctor: ['undead', 'arcanist'],
+  bombardier: ['machine', 'gunner'],
+  astrologer: ['royal', 'arcanist'],
+  inquisitor: ['holy', 'arcanist'],
+  seraph: ['holy', 'guardian'],
+  corsairSurgeon: ['pirate', 'support'],
+  harpooner: ['pirate', 'gunner'],
+  seaReaver: ['pirate', 'vanguard'],
+};
+
+/** A trait by id, the coming ones included. */
+export const traitById = (id: string): Trait | undefined => TRAITS[id] ?? COMING_TRAITS[id];
+
+export const traitsOf = (kind: string): readonly string[] => HERO_TRAITS[kind] ?? COMING_HERO_TRAITS[kind] ?? [];
 
 /** The heroes (by kind) that carry a trait. */
 export const membersOf = (trait: string): string[] => Object.keys(HERO_TRAITS).filter((k) => HERO_TRAITS[k].includes(trait));
@@ -197,7 +239,7 @@ export interface TraitCount {
 export function countTraits(kinds: Iterable<string>): TraitCount[] {
   const seen = new Set(kinds);
   const out: TraitCount[] = [];
-  for (const trait of Object.values(TRAITS)) {
+  for (const trait of [...Object.values(TRAITS), ...Object.values(COMING_TRAITS)]) {
     const count = [...seen].filter((k) => traitsOf(k).includes(trait.id)).length;
     if (!count) continue;
     let tier = -1;
@@ -214,15 +256,16 @@ export function countTraits(kinds: Iterable<string>): TraitCount[] {
 export function traitEffects(kinds: Iterable<string>): TraitEffects {
   const fx: TraitEffects = {};
   const mult = (k: 'atk' | 'hp' | 'speed' | 'charge' | 'mana', v: number) => (fx[k] = (fx[k] ?? 1) * v);
-  const add = (k: 'guard' | 'dodge' | 'crit' | 'reach', v: number) => (fx[k] = (fx[k] ?? 0) + v);
+  const add = (k: 'guard' | 'dodge' | 'crit' | 'reach' | 'leech', v: number) => (fx[k] = (fx[k] ?? 0) + v);
   for (const c of countTraits(kinds)) {
     if (!c.active) continue;
     const e = c.trait.tiers[c.tier].effects;
     for (const k of ['atk', 'hp', 'speed', 'charge', 'mana'] as const) if (e[k]) mult(k, e[k]!);
-    for (const k of ['guard', 'dodge', 'crit', 'reach'] as const) if (e[k]) add(k, e[k]!);
+    for (const k of ['guard', 'dodge', 'crit', 'reach', 'leech'] as const) if (e[k]) add(k, e[k]!);
     if (e.tricksterLog) fx.tricksterLog = true;
     if (e.yokaiWisp) fx.yokaiWisp = true;
     if (e.guardianShield) fx.guardianShield = true;
+    if (e.vampireSwarm) fx.vampireSwarm = true;
   }
   return fx;
 }
