@@ -6,6 +6,10 @@ import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen } from '../
 import { SCENES, SCENE_ORDER, type Moment } from '../src/sim/sceneScripts';
 import { grantContent } from '../src/sim/contentHeroes';
 import { MODE_NEED } from '../src/sim/modeUnlock';
+import { setModesHidden } from '../src/sim/hiddenModes';
+
+// (the Last Stand and the Calamity are hidden in the game for now; this file tests their own rules, which stay, so it shows them: docs/notes/hide-modes.md)
+setModesHidden(false);
 
 // The cinematic fixes (docs/notes/scenes-fixes.md): the first-loss scene only on a final defeat, boss scenes and cards once a save, the king
 // always the player (never Duchess), the Calamity's scenes after it opens, and the Last Stand and the Calamity told without towers.

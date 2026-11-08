@@ -28,6 +28,10 @@ import { KIT_LOOKS, kitSignature } from '../src/render/kitLooks';
 import { SIGNATURES } from '../src/render/signatures';
 import { HUD_FACES } from '../src/heroFaceRules';
 import { bareBoard } from './bare';
+import { setModesHidden } from '../src/sim/hiddenModes';
+
+// (the Last Stand and the Calamity are hidden in the game for now; this file tests their own rules, which stay, so it shows them: docs/notes/hide-modes.md)
+setModesHidden(false);
 
 const DAY = 20261107;
 function proven() {
