@@ -1,0 +1,808 @@
+{
+  "hero": "peasant",
+  "source": "art-source/hero-remakes/peasant.png",
+  "sha256": "ff83303debf69420aa24300cfcbc78fd71ffe5aba808cb843e23bf2cdbba993c",
+  "sourceRows": 7,
+  "selectedRows": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "poseSelections": {},
+  "extraClip": null,
+  "scale": 0.6486486486486487,
+  "cell": [
+    160,
+    120
+  ],
+  "frames": [
+    {
+      "sheet": "hero_res_peasant",
+      "row": "idle",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 0,
+      "sourceBox": [
+        48,
+        15,
+        155,
+        163
+      ],
+      "pixels": 7391
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "idle",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 1,
+      "sourceBox": [
+        216,
+        15,
+        322,
+        163
+      ],
+      "pixels": 7276
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "idle",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 2,
+      "sourceBox": [
+        384,
+        14,
+        489,
+        163
+      ],
+      "pixels": 7481
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "idle",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 3,
+      "sourceBox": [
+        554,
+        15,
+        656,
+        163
+      ],
+      "pixels": 7277
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "walk",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 8,
+      "sourceBox": [
+        37,
+        183,
+        151,
+        330
+      ],
+      "pixels": 7234
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "walk",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 9,
+      "sourceBox": [
+        212,
+        183,
+        320,
+        330
+      ],
+      "pixels": 7039
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "walk",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 10,
+      "sourceBox": [
+        380,
+        181,
+        486,
+        329
+      ],
+      "pixels": 6880
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "walk",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 11,
+      "sourceBox": [
+        546,
+        181,
+        653,
+        329
+      ],
+      "pixels": 6386
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "_walk",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 16,
+      "sourceBox": [
+        46,
+        352,
+        152,
+        496
+      ],
+      "pixels": 6863
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "_walk",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 17,
+      "sourceBox": [
+        216,
+        352,
+        321,
+        497
+      ],
+      "pixels": 6903
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "_walk",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 18,
+      "sourceBox": [
+        382,
+        352,
+        488,
+        496
+      ],
+      "pixels": 6820
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "_walk",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 19,
+      "sourceBox": [
+        549,
+        350,
+        655,
+        495
+      ],
+      "pixels": 6134
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 24,
+      "sourceBox": [
+        18,
+        522,
+        152,
+        661
+      ],
+      "pixels": 7514
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 25,
+      "sourceBox": [
+        179,
+        525,
+        332,
+        661
+      ],
+      "pixels": 7808
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 26,
+      "sourceBox": [
+        340,
+        531,
+        511,
+        661
+      ],
+      "pixels": 7800
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 27,
+      "sourceBox": [
+        520,
+        525,
+        664,
+        661
+      ],
+      "pixels": 6949
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "hurt",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 32,
+      "sourceBox": [
+        37,
+        682,
+        148,
+        825
+      ],
+      "pixels": 7484
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "hurt",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 33,
+      "sourceBox": [
+        191,
+        681,
+        313,
+        825
+      ],
+      "pixels": 7324
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "hurt",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 34,
+      "sourceBox": [
+        374,
+        687,
+        489,
+        825
+      ],
+      "pixels": 6951
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "hurt",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 35,
+      "sourceBox": [
+        539,
+        686,
+        653,
+        824
+      ],
+      "pixels": 6705
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "dead",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 40,
+      "sourceBox": [
+        32,
+        847,
+        135,
+        979
+      ],
+      "pixels": 6747
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "dead",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 41,
+      "sourceBox": [
+        173,
+        872,
+        323,
+        979
+      ],
+      "pixels": 6392
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "dead",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 42,
+      "sourceBox": [
+        333,
+        897,
+        483,
+        978
+      ],
+      "pixels": 5958
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "dead",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 43,
+      "sourceBox": [
+        488,
+        922,
+        671,
+        980
+      ],
+      "pixels": 5650
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack2",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 48,
+      "sourceBox": [
+        28,
+        1006,
+        140,
+        1159
+      ],
+      "pixels": 7642
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack2",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 49,
+      "sourceBox": [
+        195,
+        1007,
+        310,
+        1160
+      ],
+      "pixels": 7586
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack2",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 50,
+      "sourceBox": [
+        364,
+        1006,
+        477,
+        1159
+      ],
+      "pixels": 7711
+    },
+    {
+      "sheet": "hero_res_peasant",
+      "row": "attack2",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 51,
+      "sourceBox": [
+        534,
+        1008,
+        647,
+        1159
+      ],
+      "pixels": 7439
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "idle",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 4,
+      "sourceBox": [
+        721,
+        12,
+        825,
+        162
+      ],
+      "pixels": 7527
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "idle",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 5,
+      "sourceBox": [
+        888,
+        13,
+        992,
+        162
+      ],
+      "pixels": 7626
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "idle",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 6,
+      "sourceBox": [
+        1055,
+        12,
+        1160,
+        162
+      ],
+      "pixels": 7634
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "idle",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 7,
+      "sourceBox": [
+        1223,
+        13,
+        1327,
+        162
+      ],
+      "pixels": 7603
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "walk",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 12,
+      "sourceBox": [
+        714,
+        182,
+        824,
+        330
+      ],
+      "pixels": 7330
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "walk",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 13,
+      "sourceBox": [
+        884,
+        183,
+        990,
+        330
+      ],
+      "pixels": 7060
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "walk",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 14,
+      "sourceBox": [
+        1050,
+        183,
+        1158,
+        329
+      ],
+      "pixels": 7091
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "walk",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 15,
+      "sourceBox": [
+        1216,
+        183,
+        1326,
+        328
+      ],
+      "pixels": 6811
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "_walk",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 20,
+      "sourceBox": [
+        721,
+        350,
+        823,
+        496
+      ],
+      "pixels": 7061
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "_walk",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 21,
+      "sourceBox": [
+        883,
+        352,
+        990,
+        495
+      ],
+      "pixels": 7199
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "_walk",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 22,
+      "sourceBox": [
+        1045,
+        350,
+        1159,
+        495
+      ],
+      "pixels": 7257
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "_walk",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 23,
+      "sourceBox": [
+        1215,
+        349,
+        1328,
+        488
+      ],
+      "pixels": 6478
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 28,
+      "sourceBox": [
+        691,
+        524,
+        818,
+        661
+      ],
+      "pixels": 7343
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 29,
+      "sourceBox": [
+        848,
+        526,
+        1005,
+        662
+      ],
+      "pixels": 7755
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 30,
+      "sourceBox": [
+        1011,
+        533,
+        1184,
+        661
+      ],
+      "pixels": 7350
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 31,
+      "sourceBox": [
+        1194,
+        524,
+        1329,
+        661
+      ],
+      "pixels": 7000
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "hurt",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 36,
+      "sourceBox": [
+        712,
+        683,
+        817,
+        824
+      ],
+      "pixels": 7693
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "hurt",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 37,
+      "sourceBox": [
+        861,
+        682,
+        988,
+        824
+      ],
+      "pixels": 7603
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "hurt",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 38,
+      "sourceBox": [
+        1033,
+        688,
+        1161,
+        824
+      ],
+      "pixels": 7158
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "hurt",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 39,
+      "sourceBox": [
+        1213,
+        685,
+        1325,
+        825
+      ],
+      "pixels": 6812
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "dead",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 44,
+      "sourceBox": [
+        706,
+        847,
+        808,
+        977
+      ],
+      "pixels": 6777
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "dead",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 45,
+      "sourceBox": [
+        845,
+        875,
+        992,
+        980
+      ],
+      "pixels": 6661
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "dead",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 46,
+      "sourceBox": [
+        1001,
+        898,
+        1158,
+        979
+      ],
+      "pixels": 5916
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "dead",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 47,
+      "sourceBox": [
+        1163,
+        924,
+        1339,
+        979
+      ],
+      "pixels": 4728
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack2",
+      "col": 0,
+      "source": "peasant.png",
+      "sourceSlot": 52,
+      "sourceBox": [
+        701,
+        1009,
+        812,
+        1160
+      ],
+      "pixels": 7672
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack2",
+      "col": 1,
+      "source": "peasant.png",
+      "sourceSlot": 53,
+      "sourceBox": [
+        872,
+        1009,
+        979,
+        1160
+      ],
+      "pixels": 7512
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack2",
+      "col": 2,
+      "source": "peasant.png",
+      "sourceSlot": 54,
+      "sourceBox": [
+        1036,
+        1011,
+        1151,
+        1160
+      ],
+      "pixels": 7921
+    },
+    {
+      "sheet": "hero_res_peasant_back",
+      "row": "attack2",
+      "col": 3,
+      "source": "peasant.png",
+      "sourceSlot": 55,
+      "sourceBox": [
+        1208,
+        1010,
+        1320,
+        1160
+      ],
+      "pixels": 7863
+    }
+  ]
+}

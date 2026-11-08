@@ -1,5 +1,18 @@
 # Shared task board
 
+### HERO-SPRITE-REMAKES — Completely remake the ten automatic repaints
+
+- **Owner / branch / worktree:** Codex; `audit/hero-repaint-faces`; `/workspace/legends-of-the-fall`.
+- **Scope:** full portrait-led sprite and animation remakes for Cleric, Buccaneer, Fire Wizard, Illusionist, Time Witch, Peasant, Ranger, Queen Dragoon, Lightning Mage and Great Sage; preserve identities, kits and intended skin tones.
+- **Completion:** visual direction approved, consistent front/rear animations, production asset/layout integration and affected tests, typecheck/build and portrait-size game review.
+- **Status:** owner approved the direction; all ten complete remakes implemented in 20 front/rear sheets (560 frames). Original skin colours retained, compatibility copies identical, and the legacy recolouring command skips all remakes. Typecheck/build, 45 affected tests and pixel validation passed. Browser review passed at all three phone sizes: 30 dossiers, 960 walk/facing checks, combat/reduced motion and offline reload at 393; no page errors. Owner requested merge; latest main integrated and release 0.391.0 validated: typecheck/build, 52 tests, frame validation and repeated three-size browser/offline checks passed. Owner-authorised merge: [PR #426](https://github.com/Hpatter9/legends-of-the-fall/pull/426). [Handoff](notes/hero-sprite-remakes.md), [production lineup](samples/hero-remakes/lineup.png).
+
+### HERO-REPAINT-AUDIT — Identify blotchy faces after skin repainting
+
+- **Owner / branch / worktree:** Codex; `audit/hero-repaint-faces`; `/workspace/legends-of-the-fall`.
+- **Scope / completion:** audit the twelve heritage heroes, inspect current source/repaint frames and show comparisons before repairs; no production sprite changes.
+- **Status:** audit complete. Highest priorities: Cleric, Buccaneer and Fire Wizard; Illusionist, Time Witch and Peasant need secondary review. All 24 source/repaint pairs preserve dimensions/alpha across 672 declared frames; seven relevant asset tests passed. Initial audit completed; the subsequently approved full remakes are implemented under HERO-SPRITE-REMAKES. [Handoff](notes/hero-repaint-audit.md), [comparisons](samples/hero-repaint-audit/comparisons.png), [Cleric walk](samples/hero-repaint-audit/cleric-walk.gif).
+
 Project: **Legend of the Last Keep**  
 Initial coordination snapshot: 2026-10-26
 
@@ -48,6 +61,55 @@ The manager maintains the integrated board. Workers propose their task updates i
 - **Completion:** fifteen distinct paintings integrated in shared quest cards/log, small-size visual review, typecheck/build and three portrait viewport checks.
 - **Status:** complete locally, ready for review. Fifteen portraits integrated; typecheck/build and 45 card captures plus three quest-log checks passed at all three portrait sizes, with no browser errors. [Handoff](notes/quest-giver-portraits.md). No push, merge or deployment.
 
+
+### TAVERN-POSES — Relaxed hero paintings for the tavern
+
+- **Release:** owner authorised merging. PR #426 reached main during preparation, so the tavern release is 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), preserving the integrated ten hero remakes. Final typecheck/build, seven focused test files and all 21 repeated release browser/offline checks passed. Owner-authorised for merge.
+
+- **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall`; preserves the completed uncommitted tavern implementation.
+- **Scope:** paint two relaxed variants for all 54 heroes, integrate compatible five-seat composition, validate and then refine the tavern UI. Preserve simulation, full roster and version.
+- **Direction:** owner requested new tavern-specific hero art, approximately two spots per hero, matching the cozy concept. Proposed two reusable inward-facing seated poses across five compatible positions to avoid seat conflicts for arbitrary strongest-five combinations.
+- **Completion:** reviewed two-pose samples and room proposal; then approved pose coverage, deterministic seating, three-size/offline validation and handoff.
+- **Status:** complete, ready for review. All 54 heroes have two seated paintings; layered cozy room and subsequent hero/services UI are integrated. Export validation, typecheck/build, five focused test files and all 55 final browser checks pass across three portrait sizes, reduced motion and offline. Sources retained in `art-source/tavern/`. [Handoff](notes/tavern-poses.md). No merge or deployment.
+
+### TAVERN-PAINT — Painted tavern with the five strongest heroes
+
+- **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall` (from merged PR #425).
+- **Scope:** painted room artwork, dynamic hero presentation, existing tavern actions and shared painted UI materials; selection by existing dossier power. Preserve roster, saves and game rules.
+- **Direction:** owner approved painted tavern concept, shared PR #425 styling and the five strongest owned heroes at the time.
+- **Completion:** dynamic top-five updates, working hero/actions, focused tests/typecheck/build and three portrait previews including reduced motion/offline.
+- **Status:** complete, ready for review. Typecheck/web build and five focused test files pass; all 40 browser checks pass across three portrait sizes, reduced motion and offline. [Handoff](notes/painted-tavern.md). No merge or deployment.
+
+### PAINTED-DEPLOY-ICONS — Complete deployment chrome and battle icon coverage
+
+- **Release:** owner authorised main integration before tavern work; [PR #425](https://github.com/Hpatter9/legends-of-the-fall/pull/425), version 0.390.0. Integrated main 0.389.0; typecheck/build, 88 relevant tests and a fresh 40-check 393px interaction/reduced-motion/offline pass succeeded.
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** deployment header/panel/buttons, bench/selection/recycle indicators; painted icon coverage across current hero skills/ultimates/revives, king spells and wave-note marks. Reuse credited painted art where suitable and add missing motifs. Preserve roster layout, simulation, saves, labels, touch/drag and unlock behavior; no version change, merge or deployment.
+- **Completion:** explicit icon coverage checked against real kit/spell data; typecheck/build, affected tests; deployment/combat and icon-sheet browser checks at three portrait sizes, keyboard/touch states, reduced motion and offline new assets. Handoff and any exceptions recorded.
+- **Status:** complete and ready for owner review. Typecheck/build and 60 relevant tests passed. All 116 browser checks passed at 393×852, 360×780 and 412×915, with zero page errors/overflow; keyboard/touch, real deployment interactions, reduced motion, all 76 motifs and offline artwork passed. All 54 current hero kits and 35 king spells have painted coverage. [Handoff](notes/painted-deployment-icons.md). No merge or deployment.
+
+### PAINTED-BATTLE-REPORTS — Painted boss/cast announcements and result screens
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** boss signature and small hero cast banners, short victory/defeat cards, results/rewards and run recaps, replay/route/Last Stand end report surfaces; painted materials and focused review tools. Preserve existing animation timing, non-blocking boss announcements, live rewards, navigation, saves, simulation and version.
+- **Completion:** typecheck/build, relevant report/boss tests, browser interaction and visual checks at 393×852, 360×780 and 412×915, long reports, reduced motion and offline artwork verification. No merge or deployment.
+- **Status:** complete and ready for owner review. Typecheck/build and 35 relevant tests passed. All 146 browser checks passed at the three portrait sizes, with zero page errors/overflow, non-blocking boss warnings, onward navigation, report scrolling, reduced motion and offline crimson artwork. [Handoff](notes/painted-battle-reports.md). No merge or deployment.
+
+### PAINTED-BATTLE-POPUPS — Continue the accepted painted battle UI
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** skin existing skill details, formations, Last Stand pause, between-wave event/equipment choices, March orders and relic sheets using the approved combat paintings. Preserve their existing components and handlers; no new menu component, simulation, save or version changes.
+- **Completion:** typecheck/build, relevant UI tests, real popup interactions and screenshots at 393×852, 360×780 and 412×915; reduced motion and long-content scrolling. Handoff and remaining limitations recorded. No merge or deployment.
+- **Status:** complete and ready for owner review. Typecheck/build and 24 relevant tests passed. All 132 browser checks passed across the three portrait sizes, including real controls, disabled choices, scrolling, pause/resume and reduced motion; zero page errors or horizontal overflow. [Handoff](notes/painted-battle-popups.md). Earlier HUD work remains in this branch. Boss/cast banners and result materials are now covered by PAINTED-BATTLE-REPORTS; no merge or deployment.
+
+### PAINTED-COMBAT-HUD — Approved painted battle controls, first working pass
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Goal:** implement the owner-approved painted combat HUD concept with reusable textured frames and sockets while preserving battlefield space and live controls.
+- **Allowed scope:** combat HUD styles, necessary HUD art/build wiring, credits, focused browser evidence and handoff. Existing shared menu component retained. Roster, simulation, saves, version, result screens and broader popup redesign excluded from this first pass.
+- **Completion:** actual combat HUD reviewed at 393×852, 360×780 and 412×915, including larger parties, skills, spell states and reduced motion; typecheck/build, affected tests and offline asset check. No merge or deployment.
+- **Status:** first combat HUD pass ready for owner review. Typecheck/build, 21 affected tests and 63 browser checks passed across all three portrait sizes, including reduced motion, control interactions, ten-hero presentation fixture and real offline reload; zero page errors. [Handoff](notes/painted-combat-hud.md). Popup and report materials are covered by PAINTED-BATTLE-POPUPS and PAINTED-BATTLE-REPORTS; deployment and current skill icon coverage are completed by PAINTED-DEPLOY-ICONS. No merge or deployment.
 
 ### ART-RELEASE — Release the completed art passes as 0.389.0
 

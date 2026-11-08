@@ -1,0 +1,93 @@
+/* Painted combat materials. Frames resize independently of the live text, fills,
+   cooldowns and focus states. The shared menu component keeps its own skin. */
+body[data-phase='fight'] #top,
+body[data-phase='fight'] #panel {
+  border: 0;
+  border-image: url(ui/combat-panel.png) 24 fill / 7px / 0 stretch;
+  background: #09170f;
+}
+body[data-phase='fight'] #top { padding-left: 10px; padding-right: 10px; }
+body[data-phase='fight'] #panel { padding-left: 7px; padding-right: 7px; }
+body[data-phase='fight'] #panel::before { display: none; }
+body[data-phase='fight'] #top button,
+#hudSpells .fhAuto {
+  border: 0;
+  border-image: url(ui/combat-skill.png) 28 fill / 7px / 0 stretch;
+  background: #1b140e;
+  color: #f4e1b8;
+}
+body[data-phase='fight'] #top button:active,
+#hudSpells .fhAuto:active { filter: brightness(1.2); }
+body[data-phase='fight'] #lives img { image-rendering: auto; object-fit: contain; }
+
+/* Keep the established 46px touch rows and compact larger-party layout. */
+.fightHud .fhRow {
+  border-color: transparent;
+  border-radius: 0;
+  border-image: url(ui/combat-panel.png) 24 fill / 4px / 0 stretch;
+  background: #0b1b12;
+}
+.fightHud .fhPic::after {
+  content: ''; position: absolute; inset: 0; z-index: 2;
+  background: url(ui/combat-portrait.png) center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+.fightHud .fhPortrait { image-rendering: auto; box-sizing: border-box; padding: 3px; box-shadow: none; }
+.fightHud .fhPlate { z-index: 3; }
+.fightHud .fhName { color: #f8e4b9; }
+.fightHud .fhBar {
+  border-color: #9d8147; border-radius: 2px;
+  box-shadow: inset 0 1px 2px #000c;
+}
+.fightHud .fhBar b { text-shadow: 0 1px 1px #000, 1px 0 1px #000, -1px 0 1px #000; }
+.fightHud:not(.pairs) .fhChips { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+/* Some kits have three skills; keep all of them reachable. */
+.fightHud:not(.pairs) .fhChips:has(.fhChip:nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fightHud .fhChip {
+  border: 0;
+  border-image: url(ui/combat-skill.png) 28 fill / 5px / 0 stretch;
+  background: #21150e; padding-left: 4px; padding-right: 4px;
+  box-shadow: inset 0 -2px var(--el, transparent);
+}
+.fightHud .fhChip:focus-visible { outline: 2px solid #ffe2a0; outline-offset: -2px; }
+.fightHud .fhSk b { color: #fff0cf; font-family: var(--body); font-size: 13px; }
+.fightHud .fhSk em { color: #c6ddeb; font-family: var(--body); }
+.fhPaintedIcon { object-fit: contain; image-rendering: auto; background-image: none !important; }
+.fightHud.pairs .fhChip { padding: 0 3px; border-image-width: 2px; }
+.fightHud .fhRow.ready { border-image: none; border-color: #f6db91; }
+.fightHud .fhRow.queued { border-image: none; border-color: #d9b2ff; }
+
+/* The artwork forms the socket; the existing spell art, cost and cooldown stay live. */
+/* placeTopHud measures the translated row when positioning boss and synergy bars;
+   this leaves the hanging crest clear of the orbs without adding header height. */
+body[data-phase='fight'] #hudSpells { transform: translateY(28px); }
+body[data-phase='fight'] #hudSpells #spellCards .spell,
+#stand .stOrbs .stSpell {
+  border: 0; border-image: none;
+  background: url(ui/combat-orb.png) center / 100% 100% no-repeat;
+  box-shadow: 0 2px 5px #0009;
+}
+body[data-phase='fight'] #hudSpells #spellCards .spell.armed,
+#stand .stOrbs .stSpell.armed { box-shadow: 0 0 0 2px #ffe5a6, 0 0 12px #eac56b; }
+body[data-phase='fight'] #hudSpells #spellCards .spell::after {
+  border-color: #b59a61; border-radius: 2px; background: #173d69;
+}
+#hudSpells #mana,
+#stand .stOrbs .stMana {
+  border: 0;
+  border-image: url(ui/combat-panel.png) 24 fill / 5px / 0 stretch;
+  background: #0b1b12;
+}
+#hudSpells #mana.decreeReady,
+#stand .stOrbs .stMana.decreeReady { border-image: none; border: 1px solid #ffe08a; }
+#panel .fhTactic,
+#panel .fhTactic[data-tactic='charge'],
+#panel .fhTactic[data-tactic='hold'] {
+  border: 0;
+  border-image: url(ui/combat-panel.png) 24 fill / 6px / 0 stretch;
+  background: #0b1b12;
+}
+#panel .fhTactic .fhTacticFace {
+  border: 0; background: url(ui/combat-orb.png) center / 100% 100% no-repeat;
+  box-shadow: none;
+}

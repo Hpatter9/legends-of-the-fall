@@ -17,11 +17,10 @@ import { heroKitOf } from './sim/heroKits';
 import { canOrderUltimate, orderUltimate } from './sim/orders';
 import { portrait } from './render/sheets';
 import { heroFace } from './heroFace';
+import { paintedSkillIcon } from './combatSkillArt';
 import { battleSheet } from './render/awakenLook';
 import { GLOW, skillElement, type Element } from './render/fxRules';
 import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type ChipView, type Which } from './fightHudRules';
-import atlasUrl from './art/fx/pack/atlas.png';
-import atlas from './art/fx/pack/atlas.json';
 
 export interface FightHudOpts {
   /** Permanent equipment can stay awakened in modes with local combat stats. */
@@ -50,27 +49,12 @@ interface Row {
   last: string;
 }
 
-const SHEET = atlas as unknown as Record<string, [number, number, number]>;
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 const elOf = (s: Skill): Element => skillElement(keyOf(s));
-let styled = false;
 
-/** A skill's icon: a frame of its element's strip from the Pixel Effects atlas (the strips its effects play), `px` pixels square. */
+/** The skill's painted motif at the control's requested size. */
 function skillIcon(s: Skill, px: number, heals = false): string {
-  if (!styled) {
-    styled = true;
-    const style = document.createElement('style');
-    // (one copy of the atlas's data URL, shared by every icon)
-    style.textContent = `.fhIcon { background-image: url(${atlasUrl}); }`;
-    document.head.append(style);
-  }
-  const el = elOf(s);
-  const tries = heals ? [`${el}-gather`, `${el}-orb`] : [`${el}-orb`, `${el}-strike`, `${el}-hit`, 'light-orb'];
-  const strip = tries.find((t) => SHEET[t]);
-  if (!strip) return `<i class="fhIcon none" style="width:${px}px;height:${px}px"></i>`;
-  const at = SHEET[strip];
-  const k = px / 32;
-  return `<i class="fhIcon" style="width:${px}px;height:${px}px;background-position:${-(at[0] + 2 * 32) * k}px ${-at[1] * k}px;background-size:${1024 * k}px ${1824 * k}px"></i>`;
+  return paintedSkillIcon(s, px, heals);
 }
 
 export class FightHud {
@@ -293,7 +277,7 @@ export class FightHud {
     card.className = 'fsCard';
     card.style.setProperty('--el', hex(GLOW[el]));
     card.innerHTML =
-      `<div class="fsHead">${skillIcon(v.skill, 32, heals)}<div><b></b><small></small></div><button type="button" class="fsClose" aria-label="Close">×</button></div>` +
+      `<div class="fsHead">${skillIcon(v.skill, 32, heals)}<div><b></b><small></small></div><button type="button" class="fsClose" aria-label="Close">Close</button></div>` +
       `<div class="fsTabs">${tab(1, 'Skill 1')}${tab(2, 'Skill 2')}${hk.s3 ? tab(3, 'Skill 3') : ''}${tab('ult', 'Ultimate')}</div>` +
       '<p></p><dl></dl><ul class="fsTiers"></ul><div class="fsHeld">Fight paused · tap outside to resume</div>';
     card.querySelector('.fsHead b')!.textContent = v.name;

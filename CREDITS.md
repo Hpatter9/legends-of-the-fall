@@ -506,9 +506,10 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - The twenty new heroes (docs/notes/twenty-heroes.md: the five Vampires and fifteen more, waiting to join the roster): their scenes, cutouts and awakened figures (`src/art/heroes/<id>.webp`, `<id>-portrait.webp` and `awakened-<id>.webp`): original artwork generated with OpenAI image generation for this game (PRs #345 to #349, from the prompts in docs/notes/twenty-heroes-art-prompts.md), except the Vampire Lord's and the Hemomancer's scenes, which the owner made on the branch `feat/twenty-heroes-vampire`. The sources are in `art-source/heroes-20/`; `node tools/anime-heroes/pack.cjs --from art-source/heroes-20` sizes them to the gallery's formats.
 - The battle sprites of nine of the twenty (`src/art/units/hero_res_<id>.png` and `hero_res_<id>_back.png`, the Vampire Lord, Hemomancer, Nightstalker, Blood Gargoyle, Dhampir, War Drummer, Bell Warden, Falconer and Geomancer, joined to the roster in docs/notes/heroes-join.md): original front and back reference sheets generated with OpenAI image generation for this game (`art-source/heroes-20/sheets/<id>/`, and the Nightstalker's single frames in `art-source/heroes-20/sprites/`), cropped, scaled and packed into the game's sheet grid by `tools/heroes-20/pack-sheets.py`.
 
-## Heritage looks
+## Heritage looks and complete sprite remakes
 
-- `src/art/units/*_{deep,brown,tan,olive}.png` (23 sheets, front and rear, for twelve human heroes; the Cleric's back shows no skin and is used as it is; the Knight's two are now copies of his plain form, above, which already has his tone): the Resonance hero sheets credited above (original generated pixel artwork), with only their skin (and, for the Knight and the Paladin, their hair) recoloured to another tone by `tools/heritage/recolour.py`. No new artwork was generated or drawn; every other pixel, the outlines and the alpha are the source's. The source sheets stay in `src/art/units/` as the tool's input; the game bundles the re-toned sheets in their place. See `docs/notes/heritage-looks.md`.
+- The original heritage pass recoloured the Resonance hero sheets using `tools/heritage/recolour.py`; see `docs/notes/heritage-looks.md`. Those automatic repaints are now superseded by complete remakes.
+- Cleric, Buccaneer, Fire Wizard, Illusionist, Time Witch, Peasant, Ranger, Queen Dragoon, Lightning Mage and Great Sage: original pixel artwork generated with OpenAI image generation in November 2026 for the owner-approved portrait-led sprite remake. Each has separate front/rear idle, eight-frame walk, attack, hurt, death and ability poses. Sources and the approved concept are retained in `art-source/hero-remakes/`; `tools/hero-remakes/pack.py` extracts complete figures and applies shared nearest-neighbour scaling and hard transparency. The new figures are drawn in their intended skin tones from the start. Their `src/art/units/*_{deep,brown,tan,olive}.png` files are exact compatibility copies of the new plain sheets, without further recolouring. Knight and Paladin retain their separately credited plain remakes. See `docs/notes/hero-sprite-remakes.md`.
 
 
 ## Last Stand ornate room artwork (`src/art/stand/ornate/`)
@@ -544,6 +545,14 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 - **Rank badges, Council medallion, duel banner and the two taunt banners**, and the **tactic icons** (Advance, Hold, Charge): original commissioned art for this project. The sheets were cut and sized with ImageMagick (see `docs/notes/art-in.md`) and are bundled into game.js (the tactic icons are served as files and cached by the service worker).
 
+## Painted combat HUD (`src/art/ui/combat-*.png`)
+
+- Original brass-and-leather panel, spell socket, ruby heart, portrait frame, skill inset and twelve skill icons generated for this game with OpenAI image generation. Sources: `art-source/ui/painted-combat/`. Runtime assets are trimmed and resized from the sources with ImageMagick; dynamic labels, meters and cooldowns are rendered by the game.
+
+- **Crimson combat panel** (`src/art/ui/combat-crimson.png`): original generated oxblood-leather variant of the painted combat panel, used for boss signature bands and defeat headings. Source: `art-source/ui/painted-combat/crimson-source.png`; resized by the same import script and precached by the existing UI asset build loop.
+
+- **Expanded painted combat motifs** (`src/art/ui/combat-icon-*.png`): the martial, magic, utility and special sheets in `art-source/ui/painted-combat/` are original artwork generated for this game with OpenAI image generation. `tools/painted-combat/icons.mjs` slices the four regular sheets and normalises their icons; the initial twelve motifs are normalised by the existing import script. The same credited motifs are shared by related skills, king spells, deployment controls and battle synergy badges. Existing painted school emblems, War Horn art and repair artwork retain their earlier credits.
+
 ## Equipment painting completion
 
 - The remaining 69 equipment paintings (Bladed Fan, 26 footwear pieces, 24 belts and 18 accessories) are original artwork generated with OpenAI image generation for the owner-approved equipment style. Sources are retained in `art-source/gear/completion/` with their item mapping; individual icons are in `art-source/gear/off/`, `feet/`, `belt/` and `acc/`. `tools/gear/cut-completion.py` crops, centres and downsamples the paintings, and the existing gear importer cleans and packs them into the offline-cached gear atlases. No third-party source art was used for this batch.
@@ -577,3 +586,9 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 - House shield and heirloom keepsake (`src/art/dynasty/{house,heirloom}.webp`) are original OpenAI-generated paintings in the owner-approved style, retained in `art-source/dynasty-finish/house-heirloom.png`.
 - Season/fate symbols, twelve Nemesis trait symbols, and Houses/Council backdrops reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` crops symbols and downsamples the backdrops; original source art remains unchanged. All new imports are bundled for offline play.
+
+### Painted tavern hearth
+
+The tavern background (`src/art/ui/tavern-hearth.png`) is original AI-generated artwork made with OpenAI image generation for this game. Sources: `art-source/tavern/hearth-source.png` (first study) and `art-source/tavern/cozy-room-source.png` (current seated scene). Heroes remain the existing credited character illustrations; panel, button, portrait and service icons reuse the shared painted combat UI assets.
+
+The cozy seated tavern extension adds 108 original OpenAI-generated resting hero illustrations (two poses for each of the 54 existing hero identities), an empty cozy room painting and two shared table props. Sources, approved studies and corrected transparency/identity variants are retained in `art-source/tavern/`. These paintings reference the existing credited hero designs; they do not replace the battle sprites or roster portraits. `tools/tavern/pack.py` imports padded transparent WebP cutouts into `src/art/tavern/guests/`; all are precached for offline use.
