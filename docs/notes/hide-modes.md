@@ -14,7 +14,7 @@ rules calls `setModesHidden(false)` (each test file runs in its own process).
 - **Entry points:** `Home.enterCalamity`, `Main.openStand`, `Main.openMode`, the "Take me there" button for a mode goal (goes to the
   Armies instead) and the end card's "To the Calamity" button all do nothing / fall back while hidden.
 - **Quests:** `canOffer` refuses a quest that needs either mode (its `needs`, an objective on a mode, or a Last Stand / Calamity goal),
-  and `refreshOffers` takes down such an offer already on a board. 77 of the 383 quests (now 71: six hero chains were re-pointed, 18 quests, see below) (the `rift` giver, the Clock, Archivist, Herald,
+  and `refreshOffers` takes down such an offer already on a board. 77 of the 383 quests (now 60: the 17 quests of six hero chains were re-pointed, see below) (the `rift` giver, the Clock, Archivist, Herald,
   Falconer, Gaoler and others). A quest already taken stays in the log and can be dropped; its destination falls back to the Armies.
 - **Achievements:** "Hold the Keep" (`tower1`) and "Last Stand" (`tower20`) are not listed, counted or earned. One already earned
   stays listed and claimable.
@@ -49,7 +49,7 @@ compares by id, since a patched quest is a new object.
 - Everything the Last Stand and the Calamity paid: their crowns per wave and map, Calamity trophies (the trophy wall's heralds stay
   locked) and the `rift` giver's spoils.
 - Achievements `tower1` (10 crowns) and `tower20` (40 crowns, 3 stones).
-- The pay of the 71 other hidden quests (crowns, stones, chests, ores, tomes, books, keepsakes). No hero is among them: all six
+- The pay of the 60 quests still hidden (crowns, stones, chests, ores, tomes, books, keepsakes). No hero is among them: all six
   hero-giving chains above are re-pointed. (Quests that follow a still-hidden quest in a chain never appear.)
 
 No player is stuck: every hidden quest and achievement is removed from the board and list rather than left asking for something
