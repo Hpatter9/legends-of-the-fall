@@ -1,6 +1,7 @@
 # Sound pass: the music's volume, and ambience to match the screens
 
-The owner: **"the music volume still feels very bad."** Branch `claude/sound-pass` (from main 0.408.0).
+The owner: **"the music volume still feels very bad."** Then, more exactly: **"Music is too quiet and muffled in battle."**
+Branch `claude/sound-pass` (from main 0.408.0).
 
 I cannot hear sound, so everything below was found and checked by measurement: ffmpeg's EBU R128 meter on the files, the page's
 own audio code rendered offline in headless Chromium and metered (`tools/audio-mix/measure.mjs`), the page's engine state in
@@ -50,9 +51,10 @@ The files were fine; what the page did with them was not.
   (`node tools/epic-music/level.mjs --check` writes it; `meterPhone` in `loudness.mjs`). No file was re-encoded.
 - **The place's music at -25 LUFS** at the speakers (`MUSIC_TARGET`; `MUSIC_LEVEL` 0.531, was 0.251): menus, maps, the deployment,
   scenes.
-- **A battle's track 3.5 dB under that** (`FIGHT_MUSIC_DB`, `FIGHT_LEVEL`), steady through every wave, every break and every
-  deploy between waves, so it never bobs. The step comes inside the crossfade from the deployment's track, so it is heard as the
-  fight's music, not a drop. The music now sits **about 4 to 5.5 LU under the fight** (was 6 to 7).
+- **A battle's track about as loud as the camp's: 1.5 dB under it** (`FIGHT_MUSIC_DB`, `FIGHT_LEVEL`), steady through every wave,
+  every break and every deploy between waves, so it never bobs. The music now sits **about 2 to 3.5 LU under the fight's sounds**
+  (was 6 to 8.6), and the blows' peaks still stand about 7 LU over it (momentary max -16 to -19 against the music's -25), so the
+  effects stay on top. (A first cut of this pass had it 3.5 dB under; the owner's "too quiet in battle" moved it up.)
 - The stings by their loudness at the speakers (`STING_LUFS`): the victory fanfare -23.5 (a fight's own), the defeat -25.5.
 - The effects are untouched (their mix was measured in `audio-mix.md` and holds).
 
@@ -62,8 +64,9 @@ The files were fine; what the page did with them was not.
 |---|---|---|
 | a sheet (hero roster, party, auto-run summary), an event's card | -8 dB, 1.4 kHz | **-4 dB**, no low-pass |
 | a cinematic | -8 dB, 1.4 kHz, dipped and lifted each line | **-3 dB**, no low-pass, held from the first line to the scene's end |
-| a boss's card | -8 dB, 1.4 kHz | -6 dB, 5 kHz |
-| the summoning show, a reveal, an eidolon's call, a binding (their own big sounds) | -8 dB, 1.4 kHz | -9 dB, 1.8 kHz |
+| a boss's card (2.4 s, as the boss track comes in) | -8 dB, 1.4 kHz | **-2 dB**, no low-pass |
+| an eidolon's call (mid-fight) | -8 dB, 1.4 kHz for the whole call | **-4 dB**, no low-pass; let go whenever a fight starts or ends |
+| the summoning show, a hero's reveal, a binding (off the battlefield, their own big sounds) | -8 dB, 1.4 kHz | -9 dB, 1.8 kHz |
 | **the settings, the Armies screen and the codex** | -8 dB, 1.4 kHz | **not ducked** |
 
 The deepest reason held wins. Down over about 0.35 s, up over about 1 s (`DUCK_DOWN_S`, `DUCK_UP_S`), and a lift waits 0.3 s
@@ -113,8 +116,8 @@ Music at the speakers, both sliders at 100 % (integrated LUFS, plain; "phone" af
 | deploy | -30.2 | -23.8 | -26.5 |
 | tower | -30.1 | -23.5 | -26.7 |
 | calmap | -30.1 | -23.1 | -27.2 |
-| battle (in a fight, at `FIGHT_LEVEL`) | -30.2 | -28.2 | -29.4 |
-| boss (in a fight) | -30.2 | -27.1 | -30.2 |
+| battle (in a fight, at `FIGHT_LEVEL`) | -30.2 | -26.2 | -27.4 |
+| boss (in a fight) | -30.2 | -25.1 | -28.2 |
 | triumph (victory bed) | -34.6 | -28.7 | |
 | opening | -30.1 | -24.9 | -25.4 |
 | gorvak, herald2 to herald6 | -30.1 to -30.3 | -23.0 to -23.6 | -27.0 to -27.5 |
@@ -131,14 +134,49 @@ momentary max / peak dBFS):
 
 | Fight | Its sounds | Music before | Music after | Gap before | Gap after | Everything, after |
 |---|---|---|---|---|---|---|
-| skeletons, battle | -24.1 | -30.4 | -28.2 | 6.3 LU | 4.1 LU | -23.0 / -17.6 / -1.8 |
-| orcs, battle | -24.5 | -30.2 | -28.1 | 5.7 LU | 3.6 LU | -23.1 / -18.3 / -5.0 |
-| ogres, battle | -23.7 | -30.3 | -28.2 | 6.6 LU | 4.5 LU | -22.5 / -17.2 / -3.4 |
-| Demon Lord, boss | -21.6 | -30.2 | -27.1 | 8.6 LU | 5.5 LU | -21.2 / -16.2 / -4.1 |
+| skeletons, battle | -24.1 | -30.4 | -26.2 | 6.3 LU | 2.1 LU | -22.3 / -17.4 / -1.7 |
+| orcs, battle | -24.5 | -30.2 | -26.1 | 5.7 LU | 1.6 LU | -22.4 / -18.0 / -4.8 |
+| ogres, battle | -23.7 | -30.3 | -26.2 | 6.6 LU | 2.5 LU | -21.9 / -16.9 / -3.2 |
+| Demon Lord, boss | -21.6 | -30.2 | -25.1 | 8.6 LU | 3.5 LU | -20.7 / -16.0 / -3.7 |
 
 The limiter is reached in none (0.0 % of 10 ms windows over -1.5 dBFS).
 
 Under a sheet the menus' music was about -38 LUFS and muffled; now about -29 (and -28 under a cinematic's words, steady).
+
+## "Too quiet and muffled in battle"
+
+Checked one by one, each suspect, in the real page (`node tools/sound-pass/fight-probe.mjs [port] [root]`: an army run's wave 7 and
+its boss wave 8, `__audioDebug()` every quarter second; "gain" is the music bus × the player's level × the ducker, before the file's
+trim, and the duck's average is a power average), and by meter:
+
+| | Main (0.408.0) | Now |
+|---|---|---|
+| music gain, the deployment (no fight) | -12.0 dB | -5.5 dB |
+| music gain, a plain wave, average (lowest) | -12.0 dB (-12.0) | -7.0 dB (-7.0) |
+| music gain, the boss's wave, average (lowest) | -12.2 dB (-20.0) | -7.2 dB (-9.0) |
+| the ducker in a plain wave | never | never |
+| the ducker in the boss's wave | 9 % of the time (the card), -8 dB, **low-pass 1.4 kHz** | 19 % of the time (the card and its 0.3 s hold), -2 dB, **no low-pass** |
+| an eidolon's call (by the rules) | -8 dB, **low-pass 1.4 kHz**, for the whole call | -4 dB, no low-pass |
+| the music player's own low-pass | 20 kHz (open) | 20 kHz (open) |
+| the battle track at the speakers in a fight | -30.2 LUFS | -26.2 LUFS (the camp's -25.0) |
+| the boss track in a fight | -30.2 LUFS | -25.1 LUFS |
+
+1. **Ducking.** Nothing ducks the music under the fight's own effects (no side-chain). The only dips in battle were the boss's
+   card (2.4 s as the boss track comes in, -8 dB *and* muffled to 1.4 kHz, so the boss track arrived muffled) and an eidolon's
+   call (the same, for the whole call). Both are now light and open. An eidolon's call was counted by hand (`duck(true)` and
+   `duck(false)`), so a call begun twice and ended once would have held the battle music down and muffled **for good**: a fight
+   starting or ending now lets it go (`FIGHT_DUCKS`, `DuckCounter.drop`).
+2. **A filter on the music bus.** None in battle on main: the player's act low-pass only touches the synthesised stand-in tracks,
+   and an epic file never takes it (20 kHz throughout, measured). The ducker's 1.4 kHz under the boss card and the eidolon's call
+   was the only muffle, and it was always released after them. One case can muffle every track: **a browser that cannot decode
+   the Opus files** plays the synthesised stand-ins, which are darker and quieter. `__audioDebug().fallback` now lists any track
+   that fell back; on the owner's phone it should be empty.
+3. **The battle arrangement** is not dark: by band against the camp (LUFS of each band of the file): under 250 Hz -25.8 (camp
+   -30.2), 250 Hz to 2 kHz -21.5 (-20.4), over 2 kHz -26.2 (-27.4), over 6 kHz -37.5 (-44.3). It is brighter than the camp's. The
+   boss track has more bass (-22.0 under 250 Hz), which a phone drops; its trim accounts for that (`playbackLufs`).
+4. **The music bus gain was lower in battle**, in effect: every track played at -30 LUFS, and in a fight the effects (-24) mask
+   the music's middle, so -30 under them heard as quiet and dull. Now the battle music is about the camp's loudness, 2 to 3.5 LU
+   under the fight's sounds, which still peak about 7 LU over it.
 
 ## Ambience to match the screens
 
@@ -185,7 +223,9 @@ the music under the shows. Music at Off turns them off with it, as before.
 - `src/render/audioProcessors.ts`: `glide`, the native limiters with their makeup taken off, the bed's high-pass and limiter,
   `setDuck(to)`; the music player's fades on the curve.
 - `src/render/audioBeds.ts`: `setScene(scene, land)`, the new one-shots.
-- `src/render/sound.ts`: the slider curve, the duck by reason with its hold, the fades on hide and back, `setScene(scene, map, land)`.
+- `src/render/sound.ts`: the slider curve, the duck by reason with its hold, the fight's own holds let go as a fight starts and
+  ends, the fades on hide and back, `setScene(scene, map, land)`; `__audioDebug()` also gives `duckHz`, `cutoff` and `fallback`.
+- `tools/sound-pass/fight-probe.mjs` (new): the music's gain, ducker and filters through a real fight, sampled.
 - `src/render/sceneView.ts`: the cinematic's duck held for the scene.
 - `src/main.ts`: the land passed to `setScene`; the settings and the Armies screen no longer ducked.
 - `src/settings.ts`: the slider (step 5, live), `volCurve` and the old saves' move to the curve.
@@ -199,7 +239,7 @@ the music under the shows. Music at Off turns them off with it, as before.
 
 ## Checked
 
-- `npm run typecheck`; the full `npm test` (2,815 tests, all pass); `npm run web`.
+- `npm run typecheck`; the full `npm test` (2,816 tests, all pass); `npm run web`.
 - `node tools/epic-music/level.mjs --check`; `node tools/audio-mix/measure.mjs --only music,beds,fights` before (the old code, with
   the probe's bed fix) and after: the tables above.
 - In Chromium at 393x852, 360x780 and 412x915 on the built page: the limiter took over (`limiter: true`); an old save's music 50 %
@@ -215,7 +255,7 @@ that `BEDS` and `shot` can retune.
 ## If it still feels wrong
 
 - The music's loudness everywhere: `MUSIC_TARGET` (-25; +1 dB is -24).
-- The music against the fight: `FIGHT_MUSIC_DB` (-3.5; nearer 0 is louder in a fight).
+- The music against the fight: `FIGHT_MUSIC_DB` (-1.5; 0 is exactly the camp's level).
 - How far a sheet lowers it: `DUCKS.sheet.db`.
 - A track that still stands out on the phone: its loudness in `loudness.json` (`phone`) sets its trim; how much the phone counts
   is the half in `playbackLufs`.

@@ -16,7 +16,7 @@ import type { Battle, BattleEvent } from '../sim/battle';
 import { onSettings, settings } from '../settings';
 import { BusMixer, CueSynth, MusicPlayer } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
-import { DUCK_HOLD_S, DuckCounter, WAKE_FADE_S, duckChange, duckOf, panOfEvent, sliderGain, type PlannedCue, type Scene } from './audioRules';
+import { DUCK_HOLD_S, DuckCounter, FIGHT_DUCKS, WAKE_FADE_S, duckChange, duckOf, panOfEvent, sliderGain, type PlannedCue, type Scene } from './audioRules';
 import type { Area } from '../sim/board';
 import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
 import { BOSS_TRACK, atPlace, crossfadeOf, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
@@ -209,6 +209,7 @@ function syncMusic(): void {
  *  over the battle track. A victory's music still up (an auto-replay going straight on) gives way. */
 export function startFight(track: MusicId): void {
   mixer.reset();
+  releaseFightDucks();
   const was = music.battle;
   music = { ...music, battle: track, fighting: true, victory: false };
   if (was !== track) engine?.music.stopSting();
@@ -228,6 +229,7 @@ export function endFight(): void {
  *  triumph loop under the results; a lost one's defeat sting, the place's music after it; a wave won with more to come, the
  *  battle track playing on (back from the boss track after a boss's wave); or nothing (a fall a heart revives). */
 export function endWave(end: BattleEnd): void {
+  releaseFightDucks();
   if (end === 'none') return;
   // (a fight that ended behind the home screen rings nothing there: `endAt`)
   const next = endAt(music, end);
@@ -396,6 +398,14 @@ export function duck(on: boolean, reason: string): void {
   }, DUCK_HOLD_S * 1000);
 }
 
+/** A fight begins or ends: an eidolon's call still holding the music down is let go, so the battle music can never be left held
+ *  down by a call that began twice and ended once. */
+function releaseFightDucks(): void {
+  const before = ducks.reasons;
+  for (const r of FIGHT_DUCKS) ducks.drop(r);
+  if (duckChange(before, ducks.reasons)) engine?.mixer.setDuck(duckOf(ducks.reasons));
+}
+
 /** Ducks while `el` is showing (not `hidden`), for `reason`: a screen's root element is enough. Checks it now and on every change. */
 export function bindDuck(el: HTMLElement, reason: string): void {
   let on = false;
@@ -421,6 +431,8 @@ function debugState(): unknown {
     level: player.level,
     sounding: player.sounding,
     sting: player.stingId,
+    // (tracks playing from the synthesised stand-in because their file could not be decoded here: muffled and quieter)
+    fallback: player.fallback,
     place: music.place,
     battle: music.battle,
     fighting: music.fighting,
@@ -435,6 +447,9 @@ function debugState(): unknown {
     master: m.params.master.read(),
     buses: { music: m.params.music.read(), sfx: m.params.sfx.read(), ui: m.params.ui.read(), ambience: m.params.ambience.read() },
     duckGain: m.params.duck.read(),
+    duckHz: m.params.duckHz.read(),
+    // (the music player's own low-pass: open at 20 kHz unless a synthesised tower track takes an act's colour)
+    cutoff: player.params.cutoff.read(),
   };
 }
 
