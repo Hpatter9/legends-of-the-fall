@@ -2,8 +2,7 @@
 // default all three). Writes docs/samples/dynasty-7/<scene>-<w>.png: the Houses' "The fallen" filter, Kenji's House in mourning (the
 // candle, the slayer's chip), his card (the Oath's section), the knight's heir's House with its Legend's gold frame, the March orders with the Legend
 // Oath on Hard (and locked on Normal), the War Horn's card with the Shades and the Shades' card (and greyed with no horn held), the honour
-// card with the Shade greyed, the party picker's mourning, the tavern's ghosts (at Kenji's seat with a candle, and in the Hearth Hall's
-// corner), and a fight under the Oath with Kenji's Shade called. Also checks no page scrolls sideways.
+// card with the Shade greyed, the party picker's mourning, the painted tavern's ghosts (pale at a seat with a candle, and by the hearth), and a fight under the Oath with Kenji's Shade called. Also checks no page scrolls sideways.
 import * as esbuild from 'esbuild';
 import { mkdirSync } from 'node:fs';
 import { serve, launch, SIZES } from '../calmap/lib.mjs';
@@ -144,24 +143,11 @@ for (const [w, h] of sizes) {
     await ctx.close();
   }
   if (want('tavern')) {
+    // (the painted tavern: Kenji, whose House mourns, pale at his seat with a candle if he is among the five; the fallen by the hearth)
     const { ctx, page } = await open(w, h);
     await page.evaluate(() => window.__game.home.show('heroes'));
-    await page.waitForTimeout(1500);
-    for (const [room, name] of [['Hearth', 'tavern-corner'], ['Bar', 'tavern-ghost']]) {
-      await page.evaluate((r) => [...document.querySelectorAll('.tvNav button')].find((b) => b.textContent.includes(r))?.click(), room);
-      await page.waitForTimeout(1600);
-      // (the Hearth Hall's corner is left of its middle: a drag to the right brings it in)
-      if (room === 'Hearth') {
-        const box = await page.locator('.tvRoom').boundingBox();
-        await page.mouse.move(box.x + 60, box.y + box.height * 0.6);
-        await page.mouse.down();
-        await page.mouse.move(box.x + 60 + w * 0.55, box.y + box.height * 0.6, { steps: 12 });
-        await page.waitForTimeout(400);
-        await page.mouse.up();
-        await page.waitForTimeout(1200);
-      }
-      await shoot(page, `${OUT}/${name}-${w}.png`);
-    }
+    await page.waitForTimeout(1800);
+    await shoot(page, `${OUT}/tavern-ghosts-${w}.png`);
     await ctx.close();
   }
   if (want('fight')) {

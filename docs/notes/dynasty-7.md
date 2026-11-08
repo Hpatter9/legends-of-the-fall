@@ -12,7 +12,7 @@ Phase 7's list is:
 - a trained heir taking up the mantle at once, or the mourning and the foundling heir;
 - the Shades on the War Horn: their strike, their riders, their slayer, their short call;
 - the Shade honour wired to its horn call, greyed until a Shade can answer;
-- the tavern's ghosts (at the fallen's seat with a candle, then in the Hearth Hall's corner);
+- the tavern's ghosts (pale at the fallen's place with a candle, then by the hearth);
 - Legend renown, the Legend title and its gold frame, and the Legend-slayers;
 - the Oath's pay;
 - the Houses' "The fallen" filter, and the fallen on the family tree (the candle, the slayer's chip).
@@ -102,12 +102,16 @@ The bearer who dies is the one fielded for the kind: the current bearer, or an e
 - **The Shades' card** (the standard ornate menu, "Close") opens from the War Horn's card's new "The Shades (n)" button. It lists every
   Shade, its House, its slayer and its gift, and "The Eidolon answers" to send a chosen one back.
 
-### The tavern's ghosts (`src/tavern.ts`)
+### The tavern's ghosts (`src/paintedTavern.ts`)
 
-- **While the House mourns** (its current bearer slain), the hero at the kind's own seat is drawn **pale and translucent** (a steady 42%
-  alpha and a grey, never a flicker), at its old activity, with **a candle** by it (the ember brand icon, steady).
-- **Once the line has a bearer again**, the seat is the new bearer's, and the fallen's **ghost moves to a corner seat of the Hearth Hall**
-  (three corner places by the barrels, still and pale).
+Main's painted tavern (five guests, the strongest heroes) replaced the side-view tavern while this phase was built, so the ghosts were
+moved onto it in the merge:
+
+- **While the House mourns** (its current bearer slain), its hero, if it is among the five guests, sits at its own place **pale and
+  translucent** (a steady low opacity and a grey, never a flicker), at its painted activity, with **a candle** by it (the painted fallen
+  icon, steady).
+- **By the hearth** stand, still and pale and not tappable, a House in mourning whose hero is not among the guests, and the **fallen elders
+  whose Houses have a bearer again** (the design's "corner seat of the Hearth Hall"): three places beside the fireplace.
 
 ### Legend renown and the Legend-slayers
 
@@ -237,8 +241,8 @@ Each would be credited in `CREDITS.md` when it is made.
    then?
 4. **A duel lost under the Oath.** The champion of a lost duel is wounded (at half), not fallen, so it does not count towards the Oath. Is
    that right, or should a duel lost count as a fall?
-5. **The ghosts' corner.** The Hearth Hall's corner has three places by the barrels; a fourth fallen elder's ghost is not drawn. Should the
-   oldest ghosts give their place to the newest (as now, the first three of the Houses' order), or should there be more places?
+5. **The ghosts by the hearth.** There are three places by the painted tavern's fireplace; a fourth ghost is not drawn (the Houses in
+   mourning come first, then the fallen elders in the Houses' order). Should the newest take the places, or should there be more?
 
 ## Tools
 
@@ -251,7 +255,7 @@ Each would be credited in `CREDITS.md` when it is made.
     mourning;
   - the War Horn's card and the Shades' card;
   - the honour card with the Shade greyed (no horn held), and a fallen bearer's card with its Shade greyed;
-  - the tavern's ghosts: at Kenji's seat with the candle, and in the Hearth Hall's corner;
+  - the painted tavern's ghosts: Kenji pale at his place with the candle, and Kohaku by the hearth;
   - a deploy under the Oath, Kenji's Shade called (its short call), and the board after its strike.
 - **`npm run balance -- … --eidolon <wave>:shade[-<calling>]`** calls a Shade in place of an Eidolon (`tools/autoplay.ts`).
 - **`node tools/dynasty/oathPay.mjs [--saves 6] [--runs 4] [--cells 60:1,65:2,90:3] [--only …]`** measures the Oath's pay against its risk.
@@ -259,8 +263,9 @@ Each would be credited in `CREDITS.md` when it is made.
 ## Checks
 
 - `npm run typecheck`: clean. `npm run web`: built.
-- **The full `npm test`:** 2,651 tests, all passing (2,636 at phase 6, with 14 new in `oath.test.ts` and 1 more in `ui-standard`), the
-  identity and regression fixtures among them (`nemesis-regression`, `stand-regression`, `spells-identity`, `ailments-identical`).
+- **Merged with main at 0.399.0** (`git merge origin/main`; main's version of the phase 6 files, with phase 7 laid on top).
+- **The full `npm test`, after the merge:** 2,739 tests, all passing (before the merge, 2,651: 2,636 at phase 6, with 14 new in
+  `oath.test.ts` and 1 more in `ui-standard`), the identity and regression fixtures among them (`nemesis-regression`, `stand-regression`, `spells-identity`, `ailments-identical`).
   - `test/oath.test.ts` (14 new tests) covers:
     - swearing the Oath: the first Passing of the Mantle, Hard or harder, per run, never by auto;
     - slain only under the Oath and only by its two rules (a second fall in the run, a fall in a wave lost), the heart's burn counting;
@@ -278,6 +283,6 @@ Each would be credited in `CREDITS.md` when it is made.
     - no fight file reading the Oath.
   - `test/ui-standard.test.ts` gains a test that the Shades' card is a standard menu that says Close, the Houses filter has "The fallen",
     and the March orders carry the Oath in a standard section.
-- **The combat HUD probe** (`node tools/combat-hud/probe.mjs`): 100 cases at 393x852, 360x780, 412x915, 360x640 and 393x852 with a notch (an army's five and the Calamity's eight; start, mid-fight, boss waves with 2 to 4 spells and the War Horn, the tactic tap, an ultimate, the duel), **0 overlaps**. The Shade's short call is a passing overlay over the board, as the ultimate's words are.
+- **The combat HUD probe** (`node tools/combat-hud/probe.mjs`), run before and again after the merge: 100 cases at 393x852, 360x780, 412x915, 360x640 and 393x852 with a notch (an army's five and the Calamity's eight; start, mid-fight, boss waves with 2 to 4 spells and the War Horn, the tactic tap, an ultimate, the duel), **0 overlaps**. The Shade's short call is a passing overlay over the board, as the ultimate's words are.
 - **The balance:** above. The deep table is phase 6's digit for digit.
-- **The screenshots:** `docs/samples/dynasty-7/`, 57 shots at 393x852, 360x780 and 412x915, with no page scrolling sideways.
+- **The screenshots:** `docs/samples/dynasty-7/`, 54 shots (after the merge) at 393x852, 360x780 and 412x915, with no page scrolling sideways.
