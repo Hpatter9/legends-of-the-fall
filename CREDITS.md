@@ -620,3 +620,14 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 ## Calamity herald portraits
 
 - Six original OpenAI-generated painted herald portraits and face crops (`src/art/heralds/`) were made from the currently credited battle sprite references and owner-approved three-portrait proposal. Sources, reference crops and mapping are retained in `art-source/herald-portraits/`; `tools/herald-art/import.py` reproduces the exports. Original sprite and pack credits remain in force. No battle sprites were replaced. Paintings are bundled for offline play.
+
+## The Assault's Bloodtusk Hold (`src/art/assault/orc/`)
+
+- The owner's thirteen Orc sheets (`art-source/assault/orc/orc-01` to `orc-13`: the palisade and its gates, the Iron Gate and the towers, the cliff and
+  wall faces, the ground textures and their transitions, the keep and the throne, the wall's dressing and stairs, the war camp and its props, the siege
+  works and ruins, the river pieces, the ground decals), original art generated with OpenAI image generation from the prompts in the art plan
+  (`docs/notes/assault-art-plan.md`). `tools/assault/cut-sheets.py` cuts them: the standing pieces trimmed and halved by a 2x2 box average, the ground
+  textures made seamless, the transitions, decals and faces reduced.
+- Beside them, about sixty single pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`: Orcs, Dwarves,
+  Liches, Moonpack, Knights and the wild flair), halved the same way and packed into the same atlas (`sprites.webp`, listed in
+  `src/render/assaultOrcAtlas.ts`). Chronos credits the kits as drawn with ChatGPT's image generation from prompts written for that game.
