@@ -3,6 +3,7 @@ import { heraldPortrait } from './heraldArt';
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
 import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
@@ -4120,9 +4121,15 @@ function overBench(x: number, y: number): boolean {
 
 // (MENU-GLITCH: a tap that opens a panel does not also press what of it is under the finger)
 installTapGuard();
-new Game().start().catch((err) => {
-  $('loading').textContent = `Could not start: ${err}`;
-});
+// (ASSAULT-0: `?bench=assault` is the Assault's engine bench, `assaultBench.ts`; it plays instead of the game and touches no save)
+if (isAssaultBench())
+  startAssaultBench().catch((err) => {
+    $('loading').textContent = `Could not start the bench: ${err}`;
+  });
+else
+  new Game().start().catch((err) => {
+    $('loading').textContent = `Could not start: ${err}`;
+  });
 
 // (the app bundles every file itself, so its page skips the service worker; the web page keeps it)
 checkAppUpdate(__GAME_VERSION__);

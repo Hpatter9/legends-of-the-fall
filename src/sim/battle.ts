@@ -403,6 +403,9 @@ export type BattleEvent =
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
+  /** The Assault's big field (`src/sim/assault/field.ts`, `docs/notes/assault-0.md`): its occupancy grid, buckets and sector graph.
+   *  Absent on every other fight; nothing outside `src/sim/assault/` reads it, so no existing fight changes. */
+  field?: import('./assault/field').FieldState;
   rift?: Rift;
   riftBoss?: boolean;
   /** GUARDIAN-PULSE: the corrupted guardian's own unit id, fixed as the fight starts; its Calamity pulse comes from it alone (`riftBattle.ts`). */
