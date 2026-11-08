@@ -2,7 +2,7 @@
 // the bot (which loses heroes)"; docs/notes/dynasty-7.md). The greedy bot of `tools/autoplay.ts` plays a save's army runs for 14 days,
 // RUNS a day, each army in ONLY in turn, at a level and tier, once with no Oath and once with every run sworn. Under the Oath every wave is
 // settled as the page settles it (`settleOath`): a hero slain leaves the run, its House mourns three days (it marches with no army run
-// until then: `armyParty`), and a foundling takes up the mantle after. Crowns are the waves' pay (`settleWave`, ×1.5 under the Oath). The
+// until then: `armyParty`), and a foundling takes up the mantle after. Crowns are the waves' pay (`settleWave`, ×`OATH.PAY` under the Oath). The
 // bot fights without hearts, as every figure in the notes, so a lost wave ends the run (and slays its fallen under the Oath).
 //
 //   node tools/dynasty/oathPay.mjs [--saves 6] [--runs 4] [--cells 60:1,65:2,90:3] [--only orcs,undead,beasts]
@@ -10,7 +10,7 @@ import { ARMIES, armyById, settleWave } from '../../src/sim/armies';
 import { fight, playOut } from '../../src/sim/battle';
 import { newCastle } from '../../src/sim/castle';
 import { openDynasty } from '../../src/sim/dynasty';
-import { armyParty, settleMourning, settleOath } from '../../src/sim/oath';
+import { armyParty, oathPay, settleMourning, settleOath } from '../../src/sim/oath';
 import { armyRun, finish, isBossRun, noteFight, startStage, type Run } from '../../src/sim/run';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
@@ -51,7 +51,7 @@ function playRun(m: Meta, army: string, seed: number, tier: number, oath: boolea
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     const pay = settleWave(m, a.id, stage, ok, ratingOf(b, isBossRun(run)).stars, tier);
-    crowns += Math.round(pay.crowns * (oath ? 1.5 : 1));
+    crowns += Math.round(pay.crowns * oathPay(run));
     if (oath) slain += settleOath(m, run, b, ok, { now: T0 + day * DAY, day: dayKey(day) })?.slain.length ?? 0;
   }
   return { crowns, slain, cleared: !!run.cleared };

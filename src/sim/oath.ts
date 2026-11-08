@@ -14,7 +14,8 @@
 //     is: the heir still holds the slot.
 //   - **The Shades.** The fallen, and the elders honoured as Shades (kind level 100), wait on the War Horn: one may be chosen on the horn's
 //     card to answer it in the Eidolon's place (`warHorn.ts` `shade`; the strike and riders are `eidolons.ts`'s `SHADE`). Auto never calls.
-//   - **The Oath pays**: ×1.5 crowns and XP, +1 War Trophy a wave won (inside the daily cap of 12), and **Legend renown** on each bearer of
+//   - **The Oath pays**: ×1.3 crowns and XP (the design said ×1.5; it is brought to the design's own bar of 1.3×, docs/notes/dynasty-7.md),
+//     +1 War Trophy a wave won (inside the daily cap of 12), and **Legend renown** on each bearer of
 //     the run when it is cleared. Three Oath clears make a bearer a **Legend** (a gold frame on the family tree). The nemesis that slays a
 //     Legend becomes a **Legend-slayer**: +2 Might, and the bearer's name in its epithet ("Gash, Ravi-Killer").
 //
@@ -46,7 +47,7 @@ export const OATH = {
   /** A line whose bearer was slain with no heir trained mourns this many real days. */
   MOURN_DAYS: 3,
   /** The Oath's pay: crowns and XP. */
-  PAY: 1.5,
+  PAY: 1.3,
   /** War Trophies a wave won (inside the daily cap). */
   TROPHY: 1,
   /** Oath clears that make a bearer a Legend. */
@@ -84,7 +85,7 @@ export function swearOath(m: Pick<Meta, 'dynasty'>, run: Run): boolean {
   run.oath = true;
   return true;
 }
-/** The Oath's pay for a run: ×1.5 crowns and XP under it, ×1 otherwise. */
+/** The Oath's pay for a run: ×1.3 crowns and XP under it, ×1 otherwise. */
 export const oathPay = (run: Pick<Run, 'oath'> | undefined): number => (run?.oath ? OATH.PAY : 1);
 /** The wave's crowns under the Oath (as the March orders' `marchCrowns`): the extra half added to the save and the pay. Returns it. */
 export function oathCrowns(m: { crowns: number }, pay: { crowns: number }, run: Pick<Run, 'oath'>): number {

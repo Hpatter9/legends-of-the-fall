@@ -118,8 +118,9 @@ The bearer who dies is the one fielded for the kind: the current bearer, or an e
 
 ### The Oath pays
 
-- **×1.5 crowns** on each wave's pay (`oathCrowns`, after the March orders' `marchCrowns`) and **×1.5 XP** (`oathPay` in the page's XP
-  rate).
+- **×1.3 crowns** on each wave's pay (`oathCrowns`, after the March orders' `marchCrowns`) and **×1.3 XP** (`oathPay` in the page's XP
+  rate). The design wrote ×1.5; it measured 1.41× to 1.52× against the design's own bar of "under 1.3×" (below), so it is ×1.3, the
+  director's recommendation while the owner's answer is pending (`OATH.PAY`, one number to change).
 - **+1 War Trophy a wave won**, inside the War's daily cap of 12.
 - **Legend renown** at a clear (above).
 
@@ -226,12 +227,10 @@ Each would be credited in `CREDITS.md` when it is made.
 
 ## Questions for the owner
 
-1. **The Oath's pay is over the design's bar.** It measured 1.52× on Hard at level 60 (where the Oath opens, and the bot almost never loses
-   a hero), 1.42× on Elite at 65 and 1.41× on Legendary at 90, against the design's "under 1.3×". Built as written (×1.5 on Hard or
-   harder). Should it be:
-   - (a) left as it is;
-   - (b) open on Elite or harder only; or
-   - (c) paid by tier: ×1.2 on Hard, ×1.35 on Elite, ×1.5 on Legendary and Mythic?
+1. **The Oath's pay.** As the design wrote it (×1.5) it measured 1.52× on Hard at level 60 (where the Oath opens, and the bot almost never
+   loses a hero), 1.42× on Elite at 65 and 1.41× on Legendary at 90, against the design's "under 1.3×". It is ×1.3 now, the director's
+   recommendation (measured below). Is ×1.3 right, or should it be paid by tier (×1.2 on Hard, ×1.35 on Elite, ×1.5 on Legendary and
+   Mythic), or open on Elite or harder only?
 2. **Leaving mid-fight.** A run is saved as each wave begins, so closing the page during a wave and coming back plays the wave again, and a
    death under the Oath can be dodged that way (as a lost heart can be today). Should an Oath run save its falls as they happen, so a wave
    left part-way counts as lost?

@@ -256,16 +256,16 @@ test('Legend renown: each bearer of an Oath run cleared; three clears make a Leg
   assert.equal(m2.war!.members[0].might, 3);
 });
 
-test('the Oath pays: ×1.5 crowns and XP, and +1 War Trophy a wave won, inside the daily cap', () => {
+test('the Oath pays: ×1.3 crowns and XP (the design’s bar), and +1 War Trophy a wave won, inside the daily cap', () => {
   const m = sworn();
   const run = oathRun(m);
-  assert.equal(oathPay(run), 1.5);
+  assert.equal(oathPay(run), 1.3);
   assert.equal(oathPay(oathRun(m, false)), 1);
   const pay = { crowns: 100 };
   const was = m.crowns;
-  assert.equal(oathCrowns(m, pay, run), 50);
-  assert.equal(pay.crowns, 150);
-  assert.equal(m.crowns, was + 50);
+  assert.equal(oathCrowns(m, pay, run), 30);
+  assert.equal(pay.crowns, 130);
+  assert.equal(m.crowns, was + 30);
   assert.equal(oathCrowns(m, { crowns: 100 }, oathRun(m, false)), 0);
   const t0 = m.war!.trophies;
   assert.equal(settle(m, run, [], true).trophies, 1);
