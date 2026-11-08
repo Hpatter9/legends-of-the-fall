@@ -1,3 +1,4 @@
+import { mythicFits, oneMythic } from './mythicRules';
 // Party suggestion: from the heroes a player owns, pick a party that wakes good trait tiers and has a sensible mix of
 // roles (a front-liner, a striker, a back-liner, support). A greedy climb from each possible first hero, scored by the
 // traits woken and the roles covered; ties go to the stronger hero, then by name, so the answer is always the same.
@@ -41,7 +42,7 @@ export function partyScore(kinds: readonly string[]): number {
  */
 export function suggestParty(owned: readonly string[], size = 5, power: (kind: string) => number = () => 0): string[] {
   const pool = [...new Set(owned)].filter((k) => UNITS[k]).sort();
-  if (pool.length <= size) return pool;
+  if (pool.length <= size) return oneMythic(pool, k => k);
   let best: string[] = [];
   let bestScore = -1;
   let bestPower = -1;
@@ -52,7 +53,7 @@ export function suggestParty(owned: readonly string[], size = 5, power: (kind: s
       let pickScore = -1;
       let pickPower = -1;
       for (const k of pool) {
-        if (party.includes(k)) continue;
+        if (party.includes(k) || !mythicFits(party, k)) continue;
         const s = partyScore([...party, k]);
         const p = power(k);
         if (s > pickScore || (s === pickScore && p > pickPower)) {
@@ -61,6 +62,7 @@ export function suggestParty(owned: readonly string[], size = 5, power: (kind: s
           pickPower = p;
         }
       }
+      if (!pick) break;
       party.push(pick);
     }
     const s = partyScore(party);

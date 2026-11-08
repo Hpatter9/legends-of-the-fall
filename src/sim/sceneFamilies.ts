@@ -243,6 +243,11 @@ const introScene = (i: ArmyIntro): Scene => {
 
 /** What each hero says as they awaken: the narrator's line about them, then their own words. */
 const AWAKE_LINES: Readonly<Record<string, readonly [string, string]>> = {
+  vael: ['An eclipse settles behind Vael’s crown. The torches bow towards him.', 'At last. A throne with adequate legroom.'],
+  astrax: ['The star in Astrax’s chest burns brighter than the dawn.', 'The heavens remember.'],
+  ilyra: ['The pieces of Ilyra’s halo turn as one. The old wounds close.', 'Death may lodge a complaint. I shall be busy.'],
+  orrun: ['A forest stirs in Orrun’s antlers. Roots clasp the oldest stones.', 'Stand beside me.'],
+  nyxara: ['Six futures shatter in Nyxara’s hands. She chooses a seventh.', 'This ending will do. For now.'],
   knight: ['Sir Aldric held the outer gate for forty winters without questioning the king.', 'I feel three inches taller, and my pauldron seems to have doubled in acreage.'],
   samurai: ['He crossed the eastern strait bearing a single cold katana and a sacred vow.', 'The blade hums with cold fire. I shall attempt not to smile; it ruins my mystique.'],
   kunoichi: ['Moonlit slates and a whisper of wind are all she requires to work.', 'Now with forty percent more theatrical smoke and thirty percent less visibility.'],

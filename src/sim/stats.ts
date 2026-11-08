@@ -55,6 +55,11 @@ type Row = [number, number, number, number, number, number, Ability, Ability, Ar
 
 // The design's section 4, "The scores at level 1" (owner-approved, 31 October 2026). The primary is the 17, the weakness the 8.
 const ROWS: Readonly<Record<string, Row>> = {
+  vael: [17, 10, 15, 8, 12, 13, 'str', 'cha', 'heavy', 'wis', 'cha', 'Mythic sovereign'],
+  astrax: [13, 8, 15, 17, 12, 10, 'int', 'int', 'heavy', 'con', 'int', 'Mythic star dragon'],
+  ilyra: [13, 10, 15, 8, 17, 12, 'str', 'wis', 'heavy', 'wis', 'cha', 'Mythic warrior saint'],
+  orrun: [15, 8, 17, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Mythic world guardian'],
+  nyxara: [8, 15, 12, 17, 13, 10, 'int', 'int', 'robes', 'int', 'wis', 'Mythic fateweaver'],
   knight: [15, 8, 17, 10, 13, 12, 'str', 'str', 'heavy', 'str', 'con', 'Fighter (defender)'],
   samurai: [15, 17, 13, 10, 12, 8, 'dex', 'dex', 'medium', 'dex', 'wis', 'Fighter (kensei)'],
   kunoichi: [8, 17, 12, 13, 10, 15, 'dex', 'dex', 'light', 'dex', 'int', 'Rogue (shadow)'],

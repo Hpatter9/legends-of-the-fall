@@ -1,3 +1,4 @@
+import { isMythic } from './sim/mythicRules';
 // HUD-FACES (docs/notes/hud-faces.md): where each hero's face sits in its painted art, so the fight's stat views (the hero rows, the unit
 // info card, the Last Stand's paused sheet) can show the painting cropped to the face instead of the pixel sprite. Pure data and maths: no
 // DOM, so the tests read it. The crops were framed by eye against a contact sheet (docs/samples/hud-faces-sheet.png).
@@ -9,6 +10,11 @@ export type FaceBox = readonly [cx: number, cy: number, side: number];
 
 /** Each hero's face in its two paintings: the plain art (`heroes/<kind>-portrait.webp`) and the awakened form (`heroes/awakened-<kind>.webp`). */
 export const HUD_FACES: Readonly<Record<string, { art: FaceBox; awakened: FaceBox }>> = {
+  vael: { art: [0.51, 0.235, 0.28], awakened: [0.51, 0.235, 0.28] },
+  astrax: { art: [0.59, 0.21, 0.32], awakened: [0.59, 0.21, 0.32] },
+  ilyra: { art: [0.52, 0.19, 0.27], awakened: [0.52, 0.19, 0.27] },
+  orrun: { art: [0.57, 0.25, 0.4], awakened: [0.57, 0.25, 0.4] },
+  nyxara: { art: [0.51, 0.205, 0.27], awakened: [0.51, 0.205, 0.27] },
   knight: { art: [0.57, 0.115, 0.26], awakened: [0.57, 0.2, 0.34] },
   samurai: { art: [0.68, 0.33, 0.42], awakened: [0.54, 0.39, 0.3] },
   kunoichi: { art: [0.59, 0.22, 0.3], awakened: [0.669, 0.338, 0.437] },
@@ -66,7 +72,7 @@ export const HUD_FACES: Readonly<Record<string, { art: FaceBox; awakened: FaceBo
 };
 
 /** The painting a hero's face is cut from: the awakened form's once it has awakened, else the plain art's half-length portrait. */
-export const faceUrl = (kind: string, awakened: number): string => (awakened > 0 ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
+export const faceUrl = (kind: string, awakened: number): string => (awakened > 0 && !isMythic(kind) ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
 
 /** The face's box for `kind` in the painting `faceUrl` names, or none (a summon, a guest, a foe, a hero without a painting: they keep their sprite). */
 export function faceBox(kind: string, awakened: number): FaceBox | undefined {

@@ -1,3 +1,4 @@
+import { mythicFits, oneMythic } from './mythicRules';
 // The Last Stand: an endless battle on a big square field (`standField.ts`). The king stands on his keep in the middle, the
 // heroes guard posts round him (`standAi.ts`), and wave after wave of foes comes in from the edges, bigger each time. Every
 // fifth wave is a boss. A hero who falls stays down for the rest of the run (`StandHero.fallen`); when a wave is down to its last
@@ -388,7 +389,7 @@ export function newStandRun(seed: number, party: readonly string[], armies: read
   void prevHall;
   const hall = hallOfWave(1);
   const run: StandRun = { v: 1, seed, area: standArea(seed, hall), hall, act: 0, armies: [...armies], wave: 1, gold: START_GOLD, heroes: [], nextId: 1, relics: [], offer: [], king: 1, kills: 0, earned: 0, prevBest, over: false, best: 1 };
-  for (const kind of party) run.heroes.push({ id: run.nextId++, kind, lv: 0, xp: 0, post: null });
+  for (const kind of oneMythic(party, k => k)) run.heroes.push({ id: run.nextId++, kind, lv: 0, xp: 0, post: null });
   return run;
 }
 
@@ -1253,8 +1254,8 @@ export function migrateOldClimb(m: Meta, store: Pick<Storage, 'getItem' | 'remov
 
 /** The eight heroes of a run from a save: the ones chosen (kept, in order), then the strongest owned (by level) that are left. Fewer if fewer are owned. */
 export function pickEight(m: Meta, chosen: readonly string[] = m.party): string[] {
-  const out = [...new Set(chosen)].filter((k) => m.unlocked.includes(k)).slice(0, FIELD_HEROES);
+  const out = oneMythic([...new Set(chosen)].filter((k) => m.unlocked.includes(k)), k => k).slice(0, FIELD_HEROES);
   const rest = m.unlocked.filter((k) => !out.includes(k) && !UNITS[k]?.summon).sort((x, y) => levelOfKind(m, y) - levelOfKind(m, x));
-  while (out.length < FIELD_HEROES && rest.length) out.push(rest.shift()!);
+  while (out.length < FIELD_HEROES && rest.length) { const kind = rest.shift()!; if (mythicFits(out, kind)) out.push(kind); }
   return out;
 }

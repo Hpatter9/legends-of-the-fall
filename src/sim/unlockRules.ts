@@ -3,9 +3,10 @@
 // the game instead (`contentHeroes.ts`). See `unlock.ts` for the pulls and the shards, and `docs/notes/hero-shards.md`.
 
 import { ALL_HEROES } from './units';
+import { MYTHIC_KINDS } from './mythicRules';
 
 /** The heroes that join on a milestone, never from a pull or a chest (their milestones are in `contentHeroes.ts`). */
-export const CONTENT_KINDS: readonly string[] = ['werewolf', 'reaper', 'demonSwordsman', 'samuraiCommander', 'juggernaut', 'dreadPirate', 'tyrant', 'timeWitch', 'dragoon', 'sage'];
+export const CONTENT_KINDS: readonly string[] = ['werewolf', 'reaper', 'demonSwordsman', 'samuraiCommander', 'juggernaut', 'dreadPirate', 'tyrant', 'timeWitch', 'dragoon', 'sage', ...MYTHIC_KINDS];
 export const isContent = (kind: string): boolean => CONTENT_KINDS.includes(kind);
 /** The heroes pulls and chests can unlock, collected by shards. */
 export const PULL_HEROES: readonly string[] = ALL_HEROES.filter((k) => !isContent(k));

@@ -5,6 +5,7 @@ import { Rectangle, Texture } from 'pixi.js';
 import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
 import layout from '../art/units/sheets.json';
+import { MYTHIC_URLS } from './mythicArt';
 import { RESONANCE_URLS } from './resonanceArt';
 import { AWAKENED_URLS } from './awakenedArt';
 import awakened from '../art/awakened/manifest.json';
@@ -169,6 +170,7 @@ interface Layout {
 
 const URLS: Record<string, string> = {
   ...RESONANCE_URLS,
+  ...MYTHIC_URLS,
   ...AWAKENED_URLS,
   knight_1: knight,
   knight_2: knight2,

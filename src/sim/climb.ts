@@ -1,3 +1,4 @@
+import { isMythic } from './mythicRules';
 // Heroes that level within a run. A tower climb and a calamity start every hero at level 1, with no worn equipment and no
 // talents (the meta's levels, gear and talents are not read, and not changed); the hero's level comes from the XP it earns
 // in the run (`Owned.xp`), by the same curve as the lasting levels (`levels.ts`), and its gear is what the run finds.
@@ -113,7 +114,7 @@ export const ownsKind = (run: Run, kind: string): boolean => run.roster.some((h)
 export function hireable(run: Run): string[] {
   if (run.mode?.kind !== 'calamity') return (run.pool?.length ? run.pool : ALL_HEROES).filter((k) => !!UNITS[k]);
   // (SECRET-HEROES: never a hero still secret to the save)
-  return ALL_HEROES.filter((k) => !!UNITS[k] && !ownsKind(run, k) && !run.hide?.includes(k));
+  return ALL_HEROES.filter((k) => !isMythic(k) && !!UNITS[k] && !ownsKind(run, k) && !run.hide?.includes(k));
 }
 
 /** Hire a hero for `paid` gold: it joins at the run's catch-up XP (and the tier that level earns, in a calamity), and (in a calamity, unless told otherwise) takes a place in the squad if there is room. */

@@ -7,6 +7,7 @@
 // ask it, so none of them can leak a name by forgetting. Pure rules: no Pixi, no DOM.
 
 import type { Meta } from './meta';
+import { isMythic } from './mythicRules';
 import { CONTENT_KINDS, isContent } from './unlockRules';
 import { UNITS } from './units';
 
@@ -27,7 +28,7 @@ export const secretsOf = (m: Pick<Meta, 'unlocked'>): string[] => CONTENT_KINDS.
 
 /** The vague hint a secret hero's row may give: a tale for a hero quest (a deed of note for a milestone, while some came that way). Never
  *  which tale. */
-export const secretHint = (kind: string): string => (TALE_HEROES.includes(kind) ? 'A hero waits for a tale to be told in the tavern' : 'A hero waits for a deed of note');
+export const secretHint = (kind: string): string => (isMythic(kind) ? 'Some legends leave traces only the proven can recognise.' : TALE_HEROES.includes(kind) ? 'A hero waits for a tale to be told in the tavern' : 'A hero waits for a deed of note');
 
 /** A hero's name as a screen may show it to this save: its own (given by `name`), or "???" while it is secret. */
 export const shownName = (m: Pick<Meta, 'unlocked'>, kind: string, name: string): string => (isSecret(m, kind) ? SECRET_NAME : name);

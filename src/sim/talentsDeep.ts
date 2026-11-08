@@ -24,6 +24,11 @@ export const CALLING_NAMES: Readonly<Record<Calling, string>> = {
 
 /** Each hero's calling, and the names of its skill and ultimate (the test checks them against the kits). */
 export const DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string; plain?: true }>> = {
+  vael: { calling: 'duelist', skill: 'Eclipse Cleave', ult: 'Kneel Before Night', plain: true },
+  astrax: { calling: 'archmage', skill: 'Starbreath', ult: 'Heavenfall', plain: true },
+  ilyra: { calling: 'healer', skill: 'Saint’s Spear', ult: 'Death Denied', plain: true },
+  orrun: { calling: 'bulwark', skill: 'Rootquake', ult: 'The World Stands', plain: true },
+  nyxara: { calling: 'support', skill: 'Fate Shard', ult: 'Rewrite Fate', plain: true },
   knight: { calling: 'bulwark', skill: 'Shield Wall', ult: 'Indomitable' },
   samurai: { calling: 'duelist', skill: 'Iaido', ult: 'Issen' },
   kunoichi: { calling: 'duelist', skill: 'Sneak Attack', ult: 'Assassinate' },

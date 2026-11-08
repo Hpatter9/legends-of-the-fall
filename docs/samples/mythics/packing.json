@@ -1,0 +1,57 @@
+{
+  "vael": {
+    "source": "art-source/mythics/vael-atlas.png",
+    "sha256": "510f4572d2fc5621a8b3188e95e03c204aa60c9b3499626123af186efb0ba85b",
+    "scale": 0.6956521739130435,
+    "cell": [
+      180,
+      130
+    ],
+    "figure": 96,
+    "frames": 56
+  },
+  "astrax": {
+    "source": "art-source/mythics/astrax-atlas.png",
+    "sha256": "d1144f52afca26e3f4eb7ea9e927ea6ee67e02f7613f964054acd12af64695f7",
+    "scale": 0.9105691056910569,
+    "cell": [
+      180,
+      150
+    ],
+    "figure": 112,
+    "frames": 56
+  },
+  "ilyra": {
+    "source": "art-source/mythics/ilyra-atlas.png",
+    "sha256": "4392f4af4f0c1595cd65b33f691f972453e9506a7875f867ab3a1e2f14c119b5",
+    "scale": 0.6808510638297872,
+    "cell": [
+      180,
+      124
+    ],
+    "figure": 96,
+    "frames": 56
+  },
+  "orrun": {
+    "source": "art-source/mythics/orrun-atlas.png",
+    "sha256": "2bc0c351da131170c28d64b4b33a691b4ccd286dace23ecf3b5e41568acd81b7",
+    "scale": 0.8549618320610687,
+    "cell": [
+      180,
+      146
+    ],
+    "figure": 112,
+    "frames": 56
+  },
+  "nyxara": {
+    "source": "art-source/mythics/nyxara-atlas.png",
+    "sha256": "d1c76f64dce15d37f67817873bb609f4df6085326b09139b6c80d34cb4ec97c1",
+    "scale": 0.6956521739130435,
+    "cell": [
+      180,
+      124
+    ],
+    "figure": 96,
+    "frames": 56
+  }
+}

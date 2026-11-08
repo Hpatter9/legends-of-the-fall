@@ -1,3 +1,11 @@
+### MYTHIC-HEROES — Five hidden world legends
+
+- **Owner / branch / worktree:** current Codex chat; `feature/mythic-heroes`; `/workspace/legends-of-the-fall`.
+- **Scope:** approved Vael, Astrax, Ilyra, Orrun and Nyxara designs; painted portraits/battle assets, distinct combat kits, secret endgame quest chains, one Mythic per squad across manual/automatic selection and deployment, save/offline integration, regression tests and visual evidence.
+- **Direction:** owner approved five painted concepts and requested implementation. Existing quests/modes provide the discovery and trial route; no new overworld assumed.
+- **Completion:** five playable earnable heroes with hidden identities, reliable trial rewards, persistent progress, one-Mythic rule, affected tests, typecheck/build and three portrait-size checks. No merge/deployment/version bump.
+- **Status:** ready for owner review. Five playable secret Mythics and their three-part quest chains are implemented with matching pixel sprites (280 frames), portraits and tavern art. Typecheck/build, 169 focused tests, asset validation and three-size browser review passed; all five trials were beaten by the level-90 endgame sample. [Handoff](notes/mythic-heroes.md), [sprite lineup](samples/mythics/lineup.png), [browser checks](samples/mythics/browser/checks.json). No merge/deployment/version bump.
+
 # Shared task board
 
 ### HERO-SPRITE-REMAKES — Completely remake the ten automatic repaints

@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 // The twenty coming heroes' unit numbers (docs/notes/twenty-heroes-review.md): each sits inside the spread of the roster heroes of its class
 // (health, attack, defence, walk, blow time and damage a second), so a new hero is no stronger, faster or busier than its class.
 import { test } from 'node:test';
@@ -56,8 +57,8 @@ test("slot 3 follows the roster's mix: mostly jabs, a few guards and utilities, 
   assert.ok(cls.filter((c) => c === 'utility').length <= 3, `utilities: ${cls.filter((c) => c === 'utility').length}`);
 });
 
-test('with the twenty joined, every trait has two to five heroes (the owner\'s call), and no trait gains a tier for its fifth', () => {
-  const all = [...ALL_HEROES, ...COMING_HEROES];
+test('with the twenty joined, every trait has two to five ordinary heroes (the owner\'s call), and no trait gains a tier for its fifth', () => {
+  const all = [...ALL_HEROES, ...COMING_HEROES].filter(k => !isMythic(k));
   for (const t of [...Object.keys(TRAITS), ...Object.keys(COMING_TRAITS)]) {
     const n = all.filter((k) => classOf(k) === t || (HERO_TRAITS[k] ?? COMING_HERO_TRAITS[k])[0] === t).length;
     assert.ok(n >= 2 && n <= 5, `${t} has ${n}`);

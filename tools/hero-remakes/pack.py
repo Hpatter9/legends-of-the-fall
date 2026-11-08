@@ -24,10 +24,10 @@ HEROES = ['cleric', 'buccaneer', 'wizard', 'illusionist', 'timeWitch',
           'peasant', 'ranger', 'dragoon', 'lightningMage', 'sage']
 
 
-def extract(path, source_rows=7, columns=8):
+def extract(path, source_rows=7, columns=8, alpha_threshold=128):
     a = np.array(Image.open(path).convert('RGBA'))
     height, width = a.shape[:2]
-    labels, _ = ndimage.label(a[:, :, 3] >= 128, np.ones((3, 3)))
+    labels, _ = ndimage.label(a[:, :, 3] >= alpha_threshold, np.ones((3, 3)))
     sizes = np.bincount(labels.ravel())
     groups = [[] for _ in range(source_rows * columns)]
     for label, box in enumerate(ndimage.find_objects(labels), 1):

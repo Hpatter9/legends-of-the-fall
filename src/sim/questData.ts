@@ -16,6 +16,7 @@ import { DUCHESS_QUESTS } from './questData/duchess';
 import { REPEAT_QUESTS } from './questData/repeat';
 import { BATTLE_QUESTS } from './questData/battles';
 import { TALE_QUESTS } from './questData/tales';
+import { MYTHIC_QUESTS } from './mythicQuests';
 import { LOST_QUESTS } from './questData/lost';
 import { RETUNE } from './questRetune';
 import { NEW_QUESTS } from './questData/newQuests';
@@ -348,6 +349,7 @@ const BASE_QUESTS: readonly QuestDef[] = [
   ...BATTLE_QUESTS,
   // (SECRET-HEROES: the hero quests, each ending with a secret hero joining; ten since HERO-TALES-2)
   ...TALE_QUESTS,
+  ...MYTHIC_QUESTS,
   // (LOST-TECHNIQUES: the four chains of the Legendary books)
   ...LOST_QUESTS,
   // (QUESTS-3: the new quests, Q6 to Q8)

@@ -12,7 +12,7 @@
 // Pure rules: no Pixi, no DOM.
 
 import type { Meta } from './meta';
-import { castOf, questBattleById, questSeed, type QuestBattle } from './questBattles';
+import { castOf, mayFight, questBattleById, questSeed, type QuestBattle } from './questBattles';
 import { questById } from './questData';
 import { blankQuests } from './quests';
 import { chainWantsBattle } from './eidolonChains';
@@ -75,7 +75,7 @@ export function markTold(m: Meta, id: string): void {
 export function startQuestBattle(m: Meta, id: string, party: readonly string[]): Run | null {
   const qb = questBattleById(id);
   const cast = qb && castOf(m, qb);
-  if (!qb || !cast || !canFightBattle(m, id)) return null;
+  if (!qb || !cast || !canFightBattle(m, id) || party.some(k => qb.noMythics && !mayFight(qb, k))) return null;
   const s = (m.quests ??= blankQuests());
   const n = ((s.tries ??= {})[id] = (s.tries[id] ?? 0) + 1);
   const pool = [...new Set([...cast, ...party.filter((k) => m.unlocked.includes(k))])];

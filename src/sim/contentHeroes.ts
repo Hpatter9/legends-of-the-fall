@@ -1,3 +1,4 @@
+import { welcomeMythic } from './mythicProgression';
 // The heroes earned by content: ten heroes that never come from a pull or a chest. They joined on a milestone of the game (an army's
 // hard tier, the Last Stand, the calamity, the codex); now each joins at the end of a hero quest instead, a tale told in the tavern
 // (`questData/tales.ts`: three since SECRET-HEROES, all ten since HERO-TALES-2), and every one of the ten is a secret until it joins
@@ -5,6 +6,7 @@
 // (the hand-in brings it at once; a save loaded after it gets it then; one that already owns it keeps it). Pure rules: no Pixi, no DOM.
 
 import type { Meta } from './meta';
+import { MYTHIC_KINDS } from './mythicRules';
 import { CONTENT_KINDS } from './unlockRules';
 import { haveOf, needOf } from './unlock';
 import { secretHint } from './secretHeroes';
@@ -39,6 +41,7 @@ export const CONTENT_HEROES: readonly ContentHero[] = [
   { kind: 'timeWitch', ...tale("Yesterday's Visitor", 'taleClockHour') },
   { kind: 'dragoon', ...tale('The Scorched Eyrie', 'taleEyrieNest') },
   { kind: 'sage', ...tale('The Fallen Star', 'taleStarHome') },
+  ...MYTHIC_KINDS.map(kind => ({ kind, ...tale('an ancient rumour', `mythic-${kind}-trial`) })),
 ];
 
 export const contentOf = (kind: string): ContentHero | undefined => CONTENT_HEROES.find((c) => c.kind === kind);
@@ -49,6 +52,7 @@ export function grantContent(m: Meta): string[] {
   for (const c of CONTENT_HEROES) {
     if (m.unlocked.includes(c.kind) || !c.met(m)) continue;
     m.unlocked.push(c.kind);
+    welcomeMythic(m, c.kind);
     delete m.unlock?.[c.kind];
     joined.push(c.kind);
   }

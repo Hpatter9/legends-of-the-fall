@@ -8,6 +8,7 @@ export type StarterClass = 'front' | 'striker' | 'shooter' | 'caster' | 'support
 
 /** What each hero is for, as the starter pick tells it. Every hero is in exactly one class. */
 export const CLASS_OF: Readonly<Record<string, StarterClass>> = {
+  vael: 'striker', astrax: 'caster', ilyra: 'support', orrun: 'front', nyxara: 'caster',
   knight: 'front', paladin: 'front', juggernaut: 'front', minotaur: 'front', shambler: 'front', mummy: 'front', kraken: 'front', dreadPirate: 'front', yamabushi: 'front', peasant: 'front',
   samurai: 'striker', kunoichi: 'striker', ninjaMonk: 'striker', kitsune: 'striker', karasu: 'striker', werewolf: 'striker', barbarian: 'striker', mercenary: 'striker', buccaneer: 'striker', lancer: 'striker',
   reaper: 'striker', arcBlade: 'striker', dragoon: 'striker', demonSwordsman: 'striker', illusionist: 'striker', beastmaster: 'striker', tyrant: 'striker', samuraiCommander: 'striker',
