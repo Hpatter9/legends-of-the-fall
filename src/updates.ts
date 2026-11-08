@@ -27,6 +27,27 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.394.0',
+    date: '2026-11-07',
+    title: 'Painted roads and the six heralds',
+    notes: [
+      'Eight road encounters now have painted scenes, from the Pale Lady’s shrine to the refugee caravan, with every choice and price kept clear.',
+      'The six Calamity heralds have painted portraits matching their battle appearances, shown on introduction cards and once discovered in the codex.',
+      'Twelve new Nemesis symbols complete all twenty-four traits. Unknown traits keep their symbols hidden until learned.',
+    ],
+  },
+  {
+    version: '0.393.0',
+    date: '2026-11-07',
+    title: 'Painted faces, trophies and the Houses',
+    notes: [
+      'Fifteen quest-givers now have their own painted portraits, and Lost Techniques has a weathered manuscript.',
+      'All eighteen boss trophies are painted keepsakes on oak plaques, with empty mounts waiting for bosses still at large.',
+      'The Houses and Dark Council have painted backdrops, with new season, honour, House, heirloom and War Trophy symbols.',
+      'Council news uses its own artwork, and twelve learned Nemesis traits now show their symbols. Unknown traits keep their secrets.',
+    ],
+  },
+  {
     version: '0.392.0',
     date: '2026-11-07',
     title: 'A cozy home for your heroes',

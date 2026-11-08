@@ -1,3 +1,4 @@
+import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
@@ -1219,9 +1220,9 @@ class Game {
     }
     // (the whole figure, weapons and all, at a whole-number scale: up to 80% of the width and 38% of the height, so nothing is cut)
     const info = sheetInfo(def.sheet);
-    const old = card.querySelector('canvas')!;
+    const old = card.querySelector('canvas, .heraldIntro')!;
     // (the sheets face right; a boss that faces left looks the other way, mirrored in the drawing so the slide-in keeps it)
-    const face = wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
+    const face = heraldPortrait(boss.def, 'heraldIntro') ?? wholeFigure(def.sheet, viewW() * 0.8, viewH() * 0.38, !!info && !info.facesRight);
     old.replaceWith(face);
     card.classList.remove('out');
     card.hidden = false;
