@@ -12,6 +12,9 @@ import { armyById, armyIndex, armyStars, ARMIES } from '../armies';
 export const MARKS_MAX = 99;
 /** The prices (6.1): one table, easy to retune. Scouts reveal where the Council's members stand, until the next assault is fought. */
 export const ASSAULT_PRICES = { recruit: 60, scouts: 100 } as const;
+/** The siege works' prices at the muster (phase 1b; the design's 6.1): a ladder kit a platoon, and the ram. They are bought for one assault;
+ *  a ladder never put up, and the ram if it still stands, are paid back after it. */
+export const SIEGE_PRICES = { ladder: 100, ram: 400 } as const;
 /** A platoon at most this many soldiers. */
 export const PLATOON_SIZE = 10;
 /** The stars an army needs before its hold can be stormed: its tenth, the Legendary star (1.2). */
@@ -37,6 +40,8 @@ export interface AssaultMeta {
   /** The holds scouted since their last assault (the Council's posts shown on the War Plan). */
   scouted?: Record<string, true>;
   formations?: Record<string, 'line' | 'wedge' | 'wall' | 'loose'>;
+  /** The siege works chosen on the muster (phase 1b): the platoons carrying a ladder, and the one pushing the ram. Paid at the march. */
+  siege?: { ladders?: string[]; ram?: string };
 }
 
 export const newAssault = (): AssaultMeta => ({ v: 1, troops: {}, conquered: {}, tries: {} });
@@ -78,6 +83,11 @@ export function readAssault(raw: unknown): AssaultMeta | undefined {
   }
   const forms = pick(r.formations, ['line', 'wedge', 'wall', 'loose'] as const);
   if (forms) out.formations = forms;
+  if (r.siege && typeof r.siege === 'object') {
+    const ladders = Array.isArray(r.siege.ladders) ? [...new Set(r.siege.ladders.filter((k): k is string => typeof k === 'string'))].slice(0, 5) : [];
+    const ram = typeof r.siege.ram === 'string' ? r.siege.ram : undefined;
+    if (ladders.length || ram) out.siege = { ...(ladders.length ? { ladders } : {}), ...(ram ? { ram } : {}) };
+  }
   return out;
 }
 
@@ -161,4 +171,25 @@ export function claimTribute(m: Meta, day: number): number {
   m.crowns += n;
   assaultOf(m).tribute = day;
   return n;
+}
+
+/** What a muster's siege works cost (the ladders on the party's platoons, and the ram if it is with one). */
+export function siegeCost(party: readonly string[], siege: AssaultMeta['siege']): number {
+  const ladders = (siege?.ladders ?? []).filter((k) => party.includes(k)).length;
+  return ladders * SIEGE_PRICES.ladder + (siege?.ram && party.includes(siege.ram) ? SIEGE_PRICES.ram : 0);
+}
+
+/** Pay for the siege works at the march: what the crowns cover, the ram first, then the ladders in the party's order. The works bought. */
+export function buySiege(m: Meta, party: readonly string[], siege: AssaultMeta['siege']): { ladders: string[]; ram?: string } {
+  const out: { ladders: string[]; ram?: string } = { ladders: [] };
+  if (siege?.ram && party.includes(siege.ram) && m.crowns >= SIEGE_PRICES.ram) {
+    m.crowns -= SIEGE_PRICES.ram;
+    out.ram = siege.ram;
+  }
+  for (const k of party)
+    if (siege?.ladders?.includes(k) && m.crowns >= SIEGE_PRICES.ladder) {
+      m.crowns -= SIEGE_PRICES.ladder;
+      out.ladders.push(k);
+    }
+  return out;
 }

@@ -1,14 +1,13 @@
 // ASSAULT-SIEGE (docs/notes/assault-1.md; the design's section 5 and 7.6): a structure struck to 0 opens its tiles and tells of the breach,
 // a blow on one has its riders off, a flier reaches the wall-walk and a walker cannot, a gate opens from inside ten seconds after its crew
-// falls, and the drums' reinforcements stop when the drums are silenced.
+// falls. (The drums' reinforcements are the Warpath's now: `assault-react`.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { breakFort, hitFort, strikeFort, landFortHits } from '../src/sim/assault/forts';
+import { hitFort, strikeFort, landFortHits } from '../src/sim/assault/forts';
 import { jumpClass, reaches } from '../src/sim/assault/sectors';
 import { holdMapOf } from '../src/sim/assault/assault';
-import { BAND_MS, GATE_OPEN_MS } from '../src/sim/assault/holdMind';
+import { GATE_OPEN_MS } from '../src/sim/assault/holdMind';
 import { orderPlatoon } from '../src/sim/assault/platoons';
-import { stepBattle } from '../src/sim/battle';
 import { fell, quiet, steps } from './assaultKit';
 
 test('a gate struck to nothing opens its tiles, the way is found again, and the page is told of the breach', () => {
@@ -71,17 +70,4 @@ test('the Iron Gate opens from inside ten seconds after its crew falls, with one
   assert.ok(!gate.broken, 'not yet');
   steps(b, GATE_OPEN_MS / 100 + 10);
   assert.ok(gate.broken, 'the bar is lifted');
-});
-
-test('while a drum beats a band comes every ninety seconds; with the drums silenced, none', () => {
-  const beating = quiet();
-  steps(beating, BAND_MS / 100 + 12);
-  assert.equal(beating.field!.hold!.bands, 1);
-  assert.equal(beating.units.filter((x) => x.side === 'foe').length, 185);
-  const silent = quiet();
-  const h = silent.field!.hold!;
-  h.forts.forEach((f, i) => f.spec.kind === 'drum' && breakFort(silent, h, i));
-  steps(silent, BAND_MS / 100 + 12);
-  assert.equal(h.bands, 0);
-  stepBattle(silent);
 });

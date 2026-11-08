@@ -3,7 +3,7 @@
 // soldiers already fallen; marks are paid; tribute pays once a day; the save round-trips, and an older save loads with no assault.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ASSAULT_PRICES, assaultOpen, buyRecruit, canAssault, claimTribute, fillCost, fillRanks, marksEarned, noteFallen, readAssault, spoilsOf, troopsOf, tributeDue } from '../src/sim/assault/economy';
+import { ASSAULT_PRICES, assaultOpen, buyRecruit, buySiege, siegeCost, SIEGE_PRICES, canAssault, claimTribute, fillCost, fillRanks, marksEarned, noteFallen, readAssault, spoilsOf, troopsOf, tributeDue } from '../src/sim/assault/economy';
 import { settleAssault, assaultXp, FOUGHT_MS } from '../src/sim/assault/assaultMode';
 import { startedMeta, loadMeta, saveMeta, type Meta } from '../src/sim/meta';
 import { recordOf } from '../src/sim/armies';
@@ -145,4 +145,16 @@ test('a retreat sounded at the start earns no marks for living and no XP', () =>
   const r = settleAssault(m, b, 20261108);
   assert.equal(r.xp, 0);
   assert.ok(troopsOf(m, 'archer').every((x) => x === 0));
+});
+
+test('the siege works are chosen on the muster, paid at the march as far as the crowns go (the ram first), and kept in the save', () => {
+  const party = ['knight', 'samurai', 'archer'];
+  const choice = { ladders: ['samurai', 'archer', 'nobody'], ram: 'knight' };
+  assert.equal(siegeCost(party, choice), 2 * SIEGE_PRICES.ladder + SIEGE_PRICES.ram);
+  const m = { crowns: SIEGE_PRICES.ram + SIEGE_PRICES.ladder + 50 } as unknown as Parameters<typeof buySiege>[0];
+  const got = buySiege(m, party, choice);
+  assert.deepEqual(got, { ram: 'knight', ladders: ['samurai'] });
+  assert.equal(m.crowns, 50);
+  assert.deepEqual(readAssault({ siege: { ladders: ['samurai', 'samurai', 3], ram: 'knight' } })!.siege, { ladders: ['samurai'], ram: 'knight' });
+  assert.equal(readAssault({ siege: { ladders: 'x' } })!.siege, undefined);
 });

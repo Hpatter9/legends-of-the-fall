@@ -28,6 +28,7 @@ import { fightRanks } from './sim/spellRanks';
 import { assaultScore, startAssault, stepAssault, ASSAULT_LIMIT_MS, AROUND } from './sim/assault/assault';
 import { assaultInput, settleAssault, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
 import { noteFallen } from './sim/assault/economy';
+import { hasShooters, scaleAim } from './sim/assault/siege';
 import { orderPlatoon, setFormation, soundRetreat, setAuto, FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
@@ -178,13 +179,22 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   const formBtn = el('button', '', 'Wall');
   const followBtn = el('button', '', 'Follow');
   orders.append(holdBtn, chargeBtn, flankBtn, backBtn, formBtn, followBtn);
+  // (the siege orders, phase 1b, for a chosen platoon that can give them: Ladder with a kit, Fire and Suppress with shooters)
+  const works = el('div', 'asOrders asWorks');
+  works.hidden = true;
+  const ladderBtn = el('button', '', 'Ladder');
+  ladderBtn.setAttribute('aria-label', 'Scale the wall with a ladder');
+  const fireBtn = el('button', '', 'Fire');
+  fireBtn.setAttribute('aria-label', 'Fire arrows at a hut');
+  const suppressBtn = el('button', '', 'Suppress');
+  works.append(ladderBtn, fireBtn, suppressBtn);
   const bar = el('div', 'asPlatoons');
   const spells = el('div', 'asSpells');
   const mana = el('span', 'mana');
   const manaFill = el('i');
   mana.append(manaFill);
   spells.append(mana);
-  bottom.append(orders, bar, spells);
+  bottom.append(works, orders, bar, spells);
   host.append(top, mini, bottom);
   const toast = el('div', 'asToast');
   toast.hidden = true;
@@ -267,6 +277,17 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     formBtn.disabled = chosen === 5;
     followBtn.classList.toggle('on', follow);
     holdBtn.classList.toggle('on', pl?.order.kind === 'hold');
+    // (the works row: only what the chosen can do)
+    const list = chosenList();
+    const kit = list.some((k) => h.platoons[k].ladder);
+    const bows = list.some((k) => hasShooters(b, b.field!, h.platoons[k]));
+    ladderBtn.hidden = !kit;
+    fireBtn.hidden = suppressBtn.hidden = !bows;
+    works.hidden = orders.hidden || (!kit && !bows);
+    flankBtn.classList.toggle('on', readied === 'flank');
+    ladderBtn.classList.toggle('on', readied === 'scale');
+    fireBtn.classList.toggle('on', readied === 'fire');
+    suppressBtn.classList.toggle('on', readied === 'suppress');
   };
   holdBtn.addEventListener('click', () => {
     for (const k of chosenList()) {
@@ -312,13 +333,18 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     syncOrders();
     say(FORMATION_NAMES[next]);
   });
-  // (Flank: the next tap on a foe sends the chosen platoon round it)
-  let flanking = false;
-  flankBtn.addEventListener('click', () => {
-    flanking = !flanking;
-    flankBtn.classList.toggle('on', flanking);
-    if (flanking) say('Flank: tap a foe');
-  });
+  // (Flank, Ladder, Fire, Suppress: the next tap on the field gives the order there)
+  let readied: 'flank' | 'scale' | 'fire' | 'suppress' | null = null;
+  const READY_SAY = { flank: 'Flank: tap a foe', scale: 'Ladder: tap the stone wall', fire: 'Fire arrows: tap a hut', suppress: 'Suppress: tap the archers' } as const;
+  const ready = (what: NonNullable<typeof readied>) => {
+    readied = readied === what ? null : what;
+    syncOrders();
+    if (readied) say(READY_SAY[readied]);
+  };
+  flankBtn.addEventListener('click', () => ready('flank'));
+  ladderBtn.addEventListener('click', () => ready('scale'));
+  fireBtn.addEventListener('click', () => ready('fire'));
+  suppressBtn.addEventListener('click', () => ready('suppress'));
   followBtn.addEventListener('click', () => {
     follow = !follow;
     syncOrders();
@@ -483,14 +509,31 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       if (k >= 0) choose(k);
       return;
     }
-    // (a Flank readied: a tap on a foe sends the platoons round it; anywhere else lets it go)
-    if (flanking) {
-      flanking = false;
-      flankBtn.classList.remove('on');
-      const target = near('foe');
-      if (target === undefined) return say('Flank: no foe there');
-      for (const k of list) orderPlatoon(b, k, { kind: 'flank', unit: target });
-      return say(`Flank: ${UNITS[f.byId[target].def].name}`);
+    // (an order readied: Flank on a foe, Ladder on the wall, Fire on a hut, Suppress on a spot; a tap that fits none lets it go)
+    if (readied) {
+      const what = readied;
+      readied = null;
+      syncOrders();
+      if (what === 'flank') {
+        const target = near('foe');
+        if (target === undefined) return say('Flank: no foe there');
+        for (const k of list) orderPlatoon(b, k, { kind: 'flank', unit: target });
+        return say(`Flank: ${UNITS[f.byId[target].def].name}`);
+      }
+      if (what === 'scale') {
+        if (!scaleAim(b, f, t)) return say('Ladder: no stone wall there');
+        for (const k of list) if (h.platoons[k].ladder) orderPlatoon(b, k, { kind: 'scale', at: { u: t.u, v: t.v } });
+        return say('Ladder: to the wall!');
+      }
+      const bows = list.filter((k) => hasShooters(b, f, h.platoons[k]));
+      if (what === 'fire') {
+        const hut = h.siege.huts.find((x) => x.burning === undefined && !x.burnt && x.tiles.some((i) => Math.abs((i % f.w) - t.u) + Math.abs(Math.floor(i / f.w) - t.v) <= 1));
+        if (!hut) return say('Fire: tap a hut that stands');
+        for (const k of bows) orderPlatoon(b, k, { kind: 'fire', hut: hut.id });
+        return say(`Fire arrows: ${hut.name}`);
+      }
+      for (const k of bows) orderPlatoon(b, k, { kind: 'suppress', at: { u: t.u, v: t.v } });
+      return say('Suppress!');
     }
     const fortIx = h.fortAt.get(t.v * f.w + t.u);
     const fort = fortIx !== undefined ? h.forts[fortIx] : undefined;
@@ -634,7 +677,15 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
             hooks.save();
           } else if (e.kind === 'horn') say('The great horn sounds!');
           else if (e.kind === 'silenced') say('A war drum falls silent');
-          else if (e.kind === 'reinforce') say('Reinforcements from the Warpath');
+          else if (e.kind === 'reinforce' || e.kind === 'march') say('A band marches down the Warpath');
+          else if (e.kind === 'held') say('The Warpath is held: no more bands will come');
+          else if (e.kind === 'ladder') {
+            say(e.up ? 'A ladder is up!' : 'A ladder is pushed down');
+            syncOrders();
+          } else if (e.kind === 'burn') say(`${h.siege.huts.find((x) => x.id === e.hut)?.name ?? 'A hut'} is burning!`);
+          else if (e.kind === 'feint') say(`${h.posts[e.post].def.name} goes to ${h.forts.find((x) => x.spec.id === e.fort)?.spec.name ?? 'the wall'}`);
+          else if (e.kind === 'captain') say(h.posts[e.post].def.id === 'throne' ? 'The lord comes down from the throne!' : `A captain sallies at ${heroName(h.platoons[e.platoon].hero)}`);
+          else if (e.kind === 'wolves') say(`The wolves ride round for ${heroName(h.platoons[e.platoon].hero)}`);
           else if (e.kind === 'lordFell') say('The lord of the hold falls!');
           else if (e.kind === 'rise') say(`${heroName(h.platoons[e.platoon].hero)} rises at the rally flag`);
           if (e.kind === 'breach') say('The way is open!');

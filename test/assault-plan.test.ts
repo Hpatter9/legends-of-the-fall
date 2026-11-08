@@ -16,14 +16,17 @@ test('the four formations are the owner\'s: line, wedge, shield wall, loose', ()
   assert.deepEqual(FORMATIONS.map((f) => FORMATION_NAMES[f]), ['Line', 'Wedge', 'Shield Wall', 'Loose']);
 });
 
-test('the default plan gives every platoon a part; a flanking platoon makes for the North Gate on its own', () => {
+test('the default plan gives every platoon a part; a flanking platoon makes for the Warpath on its own, then the North Gate', () => {
   assert.deepEqual(Object.values(defaultPlan(PARTY).roles!), ['main', 'main', 'cover', 'flank', 'main']);
   const b = startAssault(input({ roles: { knight: 'main', samurai: 'main', archer: 'cover', wizard: 'flank', dragoon: 'main' } }));
   const h = b.field!.hold!;
-  // (the opening walk first; once its route is walked, the flank's part sends it for the North Gate)
+  // (the opening walk first; once its route is walked, the flank's part sends it to hold the Warpath's camp (phase 1b), then the North Gate)
   h.platoons[3].route = [h.platoons[3].route[h.platoons[3].route.length - 1]];
   steps(b, 30);
   assert.equal(h.platoons[3].role, 'flank');
+  assert.deepEqual(h.platoons[3].order, { kind: 'move', at: h.bp.warpath });
+  h.warpath.held = true;
+  steps(b, 10);
   assert.deepEqual(h.platoons[3].order, { kind: 'assault', fort: 'northGate' });
 });
 

@@ -30,6 +30,7 @@ import { DEFAULT_ROLES } from './assault';
 import { assaultOf, marksEarned, spoilsOf, TROPHY_MULT, troopsOf } from './economy';
 import { MARKS_MAX } from './economy';
 import { rankOf, type PlatoonFormation } from './troops';
+import { siegeRefund } from './siege';
 
 /** The grade the heroes fight at in the Assault: the late waves' merged third grade of an army run. */
 export const ASSAULT_GRADE = 3;
@@ -44,6 +45,8 @@ export interface AssaultPlan {
   approaches: Record<string, ApproachId>;
   roles?: Record<string, PlatoonRole>;
   formations?: Record<string, PlatoonFormation>;
+  /** The siege works bought for this assault (phase 1b). */
+  siege?: { ladders?: string[]; ram?: string };
 }
 
 /** The party that storms the hold: the saved party, at most five. */
@@ -75,6 +78,7 @@ export function assaultInput(m: Meta, army: string, seed: number, plan: AssaultP
     approaches: plan.approaches,
     ...(plan.roles ? { roles: plan.roles } : {}),
     ...(plan.formations ? { formations: plan.formations } : {}),
+    ...(plan.siege ? { siege: plan.siege } : {}),
     castle: heroBoost(m.castle),
     council,
     ...(chief ? { warchief: decorate(m, snapOf(chief), chief) } : {}),
@@ -114,6 +118,8 @@ export interface AssaultResult {
   war?: NemNote;
   /** The first conquest of this hold. */
   first: boolean;
+  /** The crowns the siege works not used paid back. */
+  refund: number;
 }
 
 /** Settle an assault into the save (its soldiers' kills as `stepAssault` counted them). */
@@ -156,6 +162,9 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
     a.troops[pl.hero] = list.filter((x) => x >= 0);
     return { hero: pl.hero, survivors, fallen, fallenRanks, promoted };
   });
+  // (the siege works not used paid back: a ladder never put up, the ram still standing)
+  const refund = siegeRefund(b, h);
+  m.crowns += refund;
   // the heroes' XP
   const xp = fought ? assaultXp(army, won) : 0;
   const levelUps = gainXp(m, Object.fromEntries(h.platoons.map((pl) => [pl.hero, xp])));
@@ -182,7 +191,7 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
       a.conquered[army] = { day, tier: 3, wins: 1 };
     } else a.conquered[army].wins++;
   }
-  return { army, outcome: h.outcome, won, attempt: a.tries[army], platoons, xp, levelUps, spoils, chest, war, first };
+  return { army, outcome: h.outcome, won, attempt: a.tries[army], platoons, xp, levelUps, spoils, chest, war, first, refund };
 }
 
 /** The name of the army's lord for the muster's line: the warchief's, if one sits, else the army's last boss's. */

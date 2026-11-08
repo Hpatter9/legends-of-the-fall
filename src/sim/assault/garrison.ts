@@ -18,7 +18,7 @@ import { TIER_PROFICIENCY } from '../stats';
 import { UNITS } from '../units';
 import type { FieldGroup, FieldState } from './field';
 import { occPut } from './field';
-import type { Blueprint, PostDef } from './blueprint';
+import type { PostDef } from './blueprint';
 import type { AssaultInput, HoldState, PostState } from './holdTypes';
 import { WAR_WOLF } from './troops';
 
@@ -38,7 +38,7 @@ export const ASSAULT = {
 export const GARRISON_SALT = 0x6a7715;
 
 /** The roster's letters. */
-const KIND: Record<string, string> = { G: 'orcGrunt', A: 'orcArcher', B: 'orcBrute', W: WAR_WOLF.id };
+export const KIND: Record<string, string> = { G: 'orcGrunt', A: 'orcArcher', B: 'orcBrute', W: WAR_WOLF.id };
 /** The order the Council's ranks take the posts' leaders' places (4.2). */
 export const LIEUTENANT_POSTS = ['bridge', 'drumW', 'drumE', 'drumS', 'westTower', 'eastTower'] as const;
 export const CAPTAIN_POSTS = ['southGate', 'ironGate', 'throne', 'throne'] as const;
@@ -189,37 +189,6 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
 /** A member's nemesis place (its traits, its hp and attack on its wall): `nemesisBand`'s own, for a band of one. */
 function placeOf(s: NemSnap): ReturnType<typeof nemesisBand>['place'][number] | undefined {
   return nemesisBand({ members: [s], waves: { '1': [s.id] } }, 1, [s.base], ASSAULT.tier).place[0];
-}
-
-/** A reinforcement band (4.4): five from the Warpath, in by the North Gate, joining the post that has lost the most. */
-export function reinforce(b: Battle, f: FieldState, h: HoldState, bp: Blueprint): PostState | undefined {
-  let best: PostState | undefined;
-  let lost = 0;
-  for (const p of h.posts) {
-    if (p.mood === 'routed') continue;
-    const g = f.groups[p.group];
-    const gone = p.muster - g.members.filter((id) => f.byId[id].alive).length;
-    if (gone > lost) {
-      lost = gone;
-      best = p;
-    }
-  }
-  const post = best ?? h.posts.find((p) => p.def.id === 'throne')!;
-  const g = f.groups[post.group];
-  const { foes } = garrisonBoosts(h.input.army, h.input.foeShare ?? ASSAULT.foeShare);
-  for (const c of bp.reinforce.roster.replace(/ /g, '')) {
-    const at = freeNear(b, f, bp.reinforce.at, false);
-    const unit = addFieldUnit(b, f, KIND[c], at, foes, g.id, g.members.length);
-    unit.busyUntil = b.t;
-    g.members.push(unit.id);
-    h.garrison.push(unit.id);
-  }
-  post.joined = (post.joined ?? 0) + 1;
-  post.muster += bp.reinforce.roster.replace(/ /g, '').length;
-  if (post.mood === 'posted') post.mood = 'alerted';
-  g.awake = true;
-  h.bands++;
-  return post;
 }
 
 /** Whether a post is all archers (it keeps to its perch, its wall or its bank and shoots from there). */
