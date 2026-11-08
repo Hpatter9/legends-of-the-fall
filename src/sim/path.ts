@@ -14,6 +14,8 @@ export interface Walk {
  *  `side` through). */
 export function walkFrom(b: Board, start: At, jump: number, blocked: ReadonlySet<number>, side?: 'hero' | 'foe'): Walk {
   const n = b.w * b.d;
+  // (the Assault's big field: a walk bounded to the window round the walker, `walkWindow`; no other board is near this big)
+  if (n > BIG_WALK) return walkWindow(b, start, jump, blocked, side);
   const cost = new Array<number>(n).fill(Infinity);
   const from = new Array<number>(n).fill(-1);
   const s = start.v * b.w + start.u;
@@ -204,4 +206,34 @@ export function nearFirstStep(w: NearWalk, boardW: number, goal: number): number
     j = f;
     k = nearIndex(w, boardW, j);
   }
+}
+
+/** A board bigger than this many tiles (only the Assault's 100 x 100 field: the biggest other board is 252) is walked by `walkWindow`. */
+export const BIG_WALK = 2500;
+/** How far either way the big field's `walkFrom` looks (a 25 x 25 window). */
+export const WINDOW_HALF = 12;
+/** The big field's walks are written into these, four in turn (a caller holds at most two at once, as `decide` does), so a walk on a
+ *  10,000-tile field makes no garbage. They hold until the fourth `walkFrom` after. */
+const windowPool: Walk[] = [];
+let windowNext = 0;
+
+/** `walkFrom` on the Assault's big field (phase 1, `docs/notes/assault-1.md`): the same walk inside a window of `WINDOW_HALF` tiles round
+ *  the walker (`walkNear`, a heap in the same order), written into a whole-board walk with every tile outside the window unreached. So
+ *  the battle's own minds and kits (a kite, a flank, a perch, a feared step, a charge) work on the field as on a board, a window's walk
+ *  away, at a window's cost. */
+function walkWindow(b: Board, start: At, jump: number, blocked: ReadonlySet<number>, side?: 'hero' | 'foe'): Walk {
+  const n = b.w * b.d;
+  let walk = windowPool[windowNext];
+  if (!walk || walk.cost.length !== n) walk = windowPool[windowNext] = { cost: new Array<number>(n).fill(Infinity), from: new Array<number>(n).fill(-1) };
+  windowNext = (windowNext + 1) % 4;
+  walk.cost.fill(Infinity);
+  walk.from.fill(-1);
+  const near = walkNear(b, start, jump, (i) => blocked.has(i), WINDOW_HALF, side);
+  for (let k = 0; k < near.cost.length; k++) {
+    if (near.cost[k] === Infinity) continue;
+    const i = (near.v0 + Math.floor(k / near.w)) * b.w + near.u0 + (k % near.w);
+    walk.cost[i] = near.cost[k];
+    walk.from[i] = near.from[k];
+  }
+  return walk;
 }
