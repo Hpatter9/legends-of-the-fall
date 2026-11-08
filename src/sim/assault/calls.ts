@@ -6,6 +6,7 @@ import { orderPlatoon, setAuto, setFormation, soundRetreat } from './platoons';
 import { orderUltimate } from '../orders';
 import { castSpell } from '../spells';
 import { callVolley } from './works';
+import { acceptDuel, refuseDuel } from './gateDuel';
 
-export const CALLS = { orderPlatoon, setFormation, setAuto, soundRetreat, orderUltimate, castSpell, callVolley } as const;
+export const CALLS = { orderPlatoon, setFormation, setAuto, soundRetreat, orderUltimate, castSpell, callVolley, acceptDuel, refuseDuel } as const;
 export type CallName = keyof typeof CALLS;

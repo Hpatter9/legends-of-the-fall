@@ -62,7 +62,7 @@ export function holdTick(b: Battle, f: FieldState, h: HoldState, out: BattleEven
   if (h.lordFell === undefined && !f.byId[h.lord]?.alive) {
     h.lordFell = b.t;
     h.events.push({ kind: 'lordFell' });
-    if (MORALE.on) for (const p of h.posts) rout(f, h, p);
+    if (MORALE.on) for (const p of h.posts) routPost(f, h, p);
   }
   for (const p of h.posts) if (p.group % 10 === slice) postSecond(b, f, h, p);
   if (slice !== 0) return;
@@ -101,7 +101,7 @@ function postSecond(b: Battle, f: FieldState, h: HoldState, p: PostState): void 
   const lost = 1 - living.length / Math.max(1, p.muster);
   const fled = !!lead.fled;
   if (MORALE.on && (fled || (lost >= ROUT_LOSS && !lead.alive)) && !nearDrum(b, h, g.home)) {
-    rout(f, h, p);
+    routPost(f, h, p);
     return;
   }
   if (p.mood === 'sally' && h.sally?.post === h.posts.indexOf(p)) {
@@ -145,7 +145,8 @@ export function wake(f: FieldState, h: HoldState, p: PostState, call: boolean): 
   for (const o of h.posts) if (o.mood === 'posted' && !o.def.horn && dist(f.groups[o.group].home, home) <= CALL) wake(f, h, o, false);
 }
 
-function rout(f: FieldState, h: HoldState, p: PostState): void {
+/** A post breaks and runs for the throne (for the North Gate once the lord has fallen). */
+export function routPost(f: FieldState, h: HoldState, p: PostState): void {
   if (p.mood === 'routed') return;
   p.mood = 'routed';
   f.groups[p.group].awake = true;

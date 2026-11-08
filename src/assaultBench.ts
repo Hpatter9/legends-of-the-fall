@@ -23,6 +23,8 @@ import { AssaultSim } from './assaultSim';
 import type { HoldEvent } from './sim/assault/holdTypes';
 import { breakFort } from './sim/assault/forts';
 import { breachWall, callVolley, wallStretch } from './sim/assault/works';
+import { acceptDuel } from './sim/assault/gateDuel';
+import { openGateDuelCard } from './gateDuelView';
 import { benchInput } from './sim/assault/benchInput';
 import { TICK_MS, type Battle, type BattleEvent } from './sim/battle';
 import { UNITS } from './sim/units';
@@ -277,6 +279,16 @@ export async function startAssaultBench(): Promise<void> {
       }
     } else if (what === 'keg') h.siege.keg = { platoon: 0, at: v * w + u, target: v * w + u, lit: b.t + 60_000 };
     else if (what === 'carry') h.siege.keg = { platoon: 0 };
+    else if (what === 'card') {
+      // (the challenge's card, over the bench, for its screenshots: a stand-in Vain captain)
+      const heroes = h.platoons.map((p) => b.field!.byId[p.heroId]).map((x) => ({ id: x.id, kind: x.def }));
+      openGateDuelCard({ id: 0, base: 'orcBrute', name: 'Grashnak', epithet: 'the Vain', rank: 'captain', might: 4, scars: 1, traits: [], weak: ['vain'] }, heroes, () => {});
+    } else if (what === 'duel') {
+      // (the Iron Gate's captain calls out the first hero, whatever his weaknesses, and the ring is staked)
+      const post = h.posts.findIndex((p) => p.def.id === 'ironGate');
+      h.duel = { post, captain: b.field!.groups[h.posts[post].group].leader, state: 'offered', until: b.t + 20_000 };
+      acceptDuel(b, h.platoons[u]?.heroId ?? h.platoons[0].heroId);
+    }
   };
 
   const frame = (now: number) => {

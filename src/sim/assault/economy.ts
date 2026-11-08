@@ -7,6 +7,9 @@
 
 import type { Meta } from '../meta';
 import { armyById, armyIndex, armyStars, ARMIES } from '../armies';
+import type { Castle } from '../castle';
+import { roomOpen } from '../rooms';
+import { RANKS } from './troops';
 
 /** The most marks a soldier keeps (6.3). */
 export const MARKS_MAX = 99;
@@ -109,7 +112,7 @@ export const canAssault = (m: Meta, army: string): boolean => {
   const a = armyById(army);
   return !!a && armyStars(m, a).got >= ASSAULT_STARS;
 };
-/** Whether the mode is open at all: the first army to reach ten stars opens it (and the Barracks' buying with it). */
+/** Whether the mode is open at all: the first army to reach ten stars opens it (and the buying of troops with it). */
 export const assaultOpen = (m: Meta): boolean => ARMIES.some((a) => armyStars(m, a).got >= ASSAULT_STARS);
 /** Whether an army's hold has fallen. */
 export const conquered = (m: Meta, army: string): boolean => !!m.assault?.conquered[army];
@@ -119,13 +122,16 @@ export const troopsOf = (m: Meta, hero: string): number[] => (m.assault?.troops[
 /** What filling a platoon's empty places costs. */
 export const fillCost = (m: Meta, hero: string): number => (PLATOON_SIZE - troopsOf(m, hero).length) * ASSAULT_PRICES.recruit;
 
-/** Buy one recruit for a platoon: false when it is full or the crowns run short. */
+/** The marks a new recruit joins with: the castle's Drill Yard (phase 3) drills them Blooded at its first level, Veterans at its second. */
+export const recruitMarks = (castle: Castle | undefined): number => (roomOpen(castle, 'veteranDrill') ? RANKS[2].marks : roomOpen(castle, 'bloodedDrill') ? RANKS[1].marks : 0);
+
+/** Buy one recruit for a platoon (at the Drill Yard's rank): false when it is full or the crowns run short. */
 export function buyRecruit(m: Meta, hero: string): boolean {
   const a = assaultOf(m);
   const list = (a.troops[hero] ??= []).filter((x) => x >= 0);
   if (list.length >= PLATOON_SIZE || m.crowns < ASSAULT_PRICES.recruit) return false;
   m.crowns -= ASSAULT_PRICES.recruit;
-  list.push(0);
+  list.push(recruitMarks(m.castle));
   a.troops[hero] = list;
   return true;
 }

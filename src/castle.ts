@@ -246,6 +246,19 @@ export const CHAMBERS: ChamberDef[] = [
     perLevelShort: 'One seat / Lv',
     lore: 'Where retired heroes stand and teach the young of their calling.',
   },
+  {
+    // (the Assault's Drill Yard, phase 3: the weapon rack stands in for its picture until the painting in
+    //  docs/notes/assault-3-art-prompts.md lands)
+    id: 'drillYard',
+    name: 'Drill Yard',
+    relicName: 'Sergeant\'s Baton',
+    edificeUrl: rackUrl,
+    icon: shieldUrl,
+    glow: '#fca5a5',
+    statName: 'Recruits\' rank',
+    perLevelShort: 'Blooded, then Veteran',
+    lore: 'A parade ground and its sergeants: the Assault\'s new recruits come to their platoons already drilled.',
+  },
 ];
 
 /** A building card's Rooms strip (DEPTH-BUILD): one row per room, lit once its level stands, else "Level 3" in stone grey. */

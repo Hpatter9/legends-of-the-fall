@@ -5,6 +5,7 @@
 import type { Boost } from '../battle';
 import type { At } from '../board';
 import type { NemSnap } from '../nemesis';
+import type { GateDuel, GateDuelOut } from './gateDuel';
 import type { Blueprint, FortKind, PostDef } from './blueprint';
 import type { FortSpec } from './fieldMap';
 import type { PlatoonFormation, TroopKind } from './troops';
@@ -233,7 +234,10 @@ export type HoldEvent =
   | { kind: 'campBurnt' }
   | { kind: 'volleyTold'; tiles: number[] }
   | { kind: 'volley'; tiles: number[] }
-  | { kind: 'keg'; platoon: number; state: 'carried' | 'lit' | 'boom'; tile: number };
+  | { kind: 'keg'; platoon: number; state: 'carried' | 'lit' | 'boom'; tile: number }
+  | { kind: 'duelCalled'; post: number; captain: number }
+  | { kind: 'duelRing'; up: boolean; tiles: number[]; hero: number; captain: number }
+  | { kind: 'duelOver'; out: GateDuelOut; captain: number; hero?: number };
 
 export type AssaultOutcome = 'won' | 'lost' | 'night' | 'withdrawn';
 
@@ -287,6 +291,8 @@ export interface HoldState {
   down: Record<number, true>;
   /** The siege works (phase 1b) and the Warpath. */
   siege: SiegeState;
+  /** The Vain captain's duel at the Iron Gate (phase 3), once called. */
+  duel?: GateDuel;
   warpath: WarpathState;
   /** The lord has sallied from the throne once (phase 1b). */
   lordSallied?: boolean;

@@ -16,7 +16,7 @@
 
 import { defOf, fight, fieldHooks, hurt, startBattle, stepBattle, stepTo, strikeDef, swing, canStrike, wayTo, WAIT_MS, type Battle, type BattleEvent, type Boost, type Unit } from '../battle';
 import { canStep, DIRS, type At } from '../board';
-import { flankStep } from '../battle';
+import { flankStep, flankValue } from '../battle';
 import { isBoss } from '../foes';
 import { hidden } from '../equipFx';
 import { nearFirstStep, nearIndex, nearPath, walkNear } from '../path';
@@ -35,6 +35,7 @@ import type { AssaultInput, AssaultLogEntry, AssaultOutcome, HoldState, PlatoonR
 import { ELITE_TRICK, kindOfUnit, rankOf, troopBoost, troopUnitOf, troopOf, TRICKS } from './troops';
 import { SPLASH_SHARE } from '../units';
 import { callVolley, carrying, KEG_SLOW, plantGoal, worksTick } from './works';
+import { duelBlow, duelSight, duelTick, inDuel } from './gateDuel';
 import { FIRE_RANGE, hasShooters, hutNear, looseFire, ramMind, RAM, scaleAim, scaleGoal, siegeBlow, siegeTick, startSiege, SUPPRESS_R, SUPPRESS_RANGE } from './siege';
 
 /** The assault's longest: twelve minutes of battle time (5.5); the rout runs this long after the lord falls before the hold is taken. */
@@ -156,13 +157,15 @@ function tick(b: Battle, out: BattleEvent[]): void {
     }
     if (x.alive && !x.under) f.occ[x.v * f.w + x.u] = x.id;
   }
-  rebuildBuckets(f, b.units);
+  // (the two in a duel's ring are left out of the buckets: nobody outside it looks for them)
+  rebuildBuckets(f, h.duel?.state === 'fighting' ? b.units.filter((x) => !inDuel(h, x.id)) : b.units);
   landFortHits(b, h, out);
   landCleaves(b, h, out);
   noteFalls(f, h);
   holdTick(b, f, h, out);
   siegeTick(b, f, h, (pl) => anchorOf(f, pl), out);
   worksTick(b, h, (pl) => anchorOf(f, pl), out);
+  duelTick(b, f, h, out);
   // (the platoons' own upkeep: a charge runs out, a soldier walks for a downed hero)
   h.platoons.forEach((pl, k) => {
     if (pl.order.kind === 'charge' && b.t >= (pl.chargeUntil ?? 0)) {
@@ -232,6 +235,8 @@ function cheapDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): boolean
   const h = f.hold;
   const info = f.info[me.id];
   if (!h || !info || info.group < 0) return false;
+  // (the two in a duel's ring fight by their own whole minds, each seeing only the other)
+  if (inDuel(h, me.id)) return false;
   const g = f.groups[info.group];
   if (me.side === 'hero') {
     if (info.slot === 0) return false;
@@ -372,6 +377,7 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
   const h = f.hold;
   const info = f.info[me.id];
   if (!h || !info || info.group < 0) return false;
+  if (inDuel(h, me.id)) return false;
   const g = f.groups[info.group];
   if (me.side === 'foe') {
     const post = h.posts.find((p) => p.group === g.id);
@@ -792,6 +798,9 @@ function blow(b: Battle, me: Unit, to: Unit): number {
         if (id >= 0 && id !== me.id && kindOfUnit(f.byId[id].def) === 'beasts') n++;
       }
       m *= 1 + Math.min(TRICKS.packMost, TRICKS.pack * n) * elite;
+    } else if (kind === 'skirmishers') {
+      // (an Elite's flank: its blow from the side or the back lands harder)
+      if (elite > 1 && flankValue(me, to) > 0) m *= TRICKS.flank;
     } else if (kind === 'blades') {
       const n = (h.blows[me.id] = (h.blows[me.id] ?? 0) + 1);
       if (n % TRICKS.cleaveEvery === 0) {
@@ -813,15 +822,27 @@ function blow(b: Battle, me: Unit, to: Unit): number {
     }
   }
   if (me.side === 'foe' && drumsBeating(h).length && nearDrum(b, h, me)) m *= DRUM_BLOW;
-  return m * siegeBlow(b, h, me, to);
+  return m * siegeBlow(b, h, me, to) * duelBlow(h, me, to);
 }
 
 const platoonOf = (h: HoldState, u: Unit) => h.platoons.find((p) => p.heroId === u.id || p.soldiers.some((s) => s.id === u.id));
 const soldierOf = (pl: PlatoonState, id: number) => pl.soldiers.find((s) => s.id === id);
 
-/** The Gunners' pierce: armour their shot ignores. */
-function pierce(_b: Battle, me: Unit): number {
-  return kindOfUnit(me.def) === 'gunners' ? TRICKS.pierce : 0;
+/** Whether a soldier of ours is an Elite (its trick half again as strong). */
+function isElite(b: Battle, me: Unit): boolean {
+  const h = b.field?.hold;
+  const pl = h && me.side === 'hero' ? platoonOf(h, me) : undefined;
+  return !!pl && rankOf(soldierOf(pl, me.id)?.marks ?? 0).rank === 'elite';
+}
+
+/** The Gunners' pierce: armour their shot ignores (an Elite's, half again as much). */
+function pierce(b: Battle, me: Unit): number {
+  return kindOfUnit(me.def) === 'gunners' ? TRICKS.pierce * (isElite(b, me) ? ELITE_TRICK : 1) : 0;
+}
+
+/** The Battlemages' splash: an Elite's fire lands on the foes beside half again as hard. */
+function splash(b: Battle, me: Unit): number {
+  return kindOfUnit(me.def) === 'battlemages' && isElite(b, me) ? ELITE_TRICK : 1;
 }
 
 function unitAtField(b: Battle, u: number, v: number): Unit | undefined {
@@ -1043,7 +1064,7 @@ export const AROUND = 16;
  *  every time); a fighter a skill calls up meanwhile joins the whole list after. */
 function around(b: Battle, me: Unit, run: () => void): void {
   const all = b.units;
-  const near = all.filter((x) => Math.abs(x.u - me.u) + Math.abs(x.v - me.v) <= AROUND);
+  const near = duelSight(b.field?.hold, me, all).filter((x) => Math.abs(x.u - me.u) + Math.abs(x.v - me.v) <= AROUND);
   const n = near.length;
   b.units = near;
   try {
@@ -1063,6 +1084,7 @@ fieldHooks.lead = lead;
 fieldHooks.sight = sight;
 fieldHooks.blow = blow;
 fieldHooks.pierce = pierce;
+fieldHooks.splash = splash;
 fieldHooks.unitAt = unitAtField;
 fieldHooks.moved = moved;
 fieldHooks.blast = blast;

@@ -32,6 +32,7 @@ import { noteLive } from './sim/assault/snapshot';
 import { clearBattle, saveBattle } from './assaultSave';
 import { hasShooters, scaleAim } from './sim/assault/siege';
 import { canVolley, isWallWalk } from './sim/assault/works';
+import { openGateDuelCard } from './gateDuelView';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
@@ -103,6 +104,7 @@ const CSS = `
 .asSpells .spIcon{transform:scale(.36);margin:-20px -20px;flex:none}
 .asSpells button span{overflow:hidden;text-overflow:ellipsis}
 @media (max-width:400px){.asSpells button span{display:none}}
+.asDuel{position:absolute;left:50%;top:50px;transform:translateX(-50%);z-index:3;background:#2a1410e6;border:1px solid #e0603a;border-radius:8px;padding:4px 10px;font:700 13px "Alegreya Sans";color:#ffe0c0;pointer-events:none;white-space:nowrap;max-width:86vw;overflow:hidden;text-overflow:ellipsis}.asDuel[hidden]{display:none}
 .asToast{position:absolute;left:50%;top:60px;transform:translateX(-50%);z-index:4;background:#1b1610e6;border:1px solid #c9a24a;border-radius:8px;padding:6px 12px;font:700 14px "Alegreya Sans";pointer-events:none;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:400px){.asTop{gap:4px;padding:0 5px}.asTop b{font-size:12px}.asTop button{padding:0 6px;font-size:12px;min-height:32px}.asDrums i{width:10px;height:10px}}
 @media (max-width:370px){.asPort{width:54px}.asPort canvas{width:44px;height:44px}.asAll{width:40px;font-size:0}.asAll::after{content:"⚑";font-size:18px}}
@@ -216,6 +218,11 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   spells.append(mana, volleyBtn);
   bottom.append(works, orders, bar, spells);
   host.append(top, mini, bottom);
+  // (the duel at the Iron Gate: its clock while it is fought)
+  const duelTag = el('div', 'asDuel');
+  duelTag.hidden = true;
+  host.append(duelTag);
+  let duelCard = false;
   const toast = el('div', 'asToast');
   toast.hidden = true;
   host.append(toast);
@@ -707,7 +714,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     last = now;
     const events: FieldEvent[] = [];
     const sound: BattleEvent[] = [];
-    if (b.phase === 'fight' && !paused) {
+    if (b.phase === 'fight' && !paused && !duelCard) {
       acc += dt * (slow ? SLOW : speed);
       let n = 0;
       // (the ticks the time asks for, eight at most a frame: stepped now on the page, or a frame later from the worker)
@@ -738,6 +745,26 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
             else view.blast(e.tile % b.board.w, Math.floor(e.tile / b.board.w), true);
             syncOrders();
           } else if (e.kind === 'campBurnt') say('The reserve camp burns: no more bands will come');
+          else if (e.kind === 'duelCalled') {
+            const cap = b.field!.byId[e.captain];
+            const s = h.input.council?.find((n) => n.id === h.posts[e.post].council);
+            say(`${s?.name ?? UNITS[cap.def].name} calls out a champion!`);
+            // (the king answers: the battle waits on the card; Auto has named its champion already)
+            if (!h.auto && s && h.duel?.state === 'offered') {
+              duelCard = true;
+              const heroes = h.platoons.map((pl) => b.field!.byId[pl.heroId]).filter((x) => x.alive).map((x) => ({ id: x.id, kind: x.def }));
+              openGateDuelCard(s, heroes, (id) => {
+                duelCard = false;
+                if (id !== null && sim.call('acceptDuel', id)) say(`${heroName(b.field!.byId[id].def)} steps into the ring`);
+                else if (sim.call('refuseDuel')) say('The challenge refused: he mocks you from the gate');
+              });
+            }
+          } else if (e.kind === 'duelRing' && e.up) say('The ring is staked before the Iron Gate');
+          else if (e.kind === 'duelOver') {
+            if (e.out === 'won') say('The champion wins! His band breaks and runs');
+            else if (e.out === 'lost') say('The champion falls in the ring');
+            else if (e.out === 'timeout') say('Time: he goes back to the gate');
+          }
           else if (e.kind === 'fell') {
             noteFallen(m, h.platoons[e.platoon].hero, e.index);
             hooks.save();
@@ -848,6 +875,12 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     });
     manaFill.style.width = `${Math.round((100 * b.spells.mana) / MANA_MAX)}%`;
     spellBtns.forEach((x, i) => (x.disabled = !canAfford(b, loadout[i])));
+    const du = h.duel;
+    duelTag.hidden = du?.state !== 'fighting';
+    if (du?.state === 'fighting') {
+      const s = h.input.council?.find((n) => n.id === h.posts[du.post].council);
+      duelTag.textContent = `Duel · ${heroName(b.field!.byId[du.hero!].def)} vs ${s?.name ?? 'the captain'} · ${clockWords(Math.max(0, du.until - b.t))}`;
+    }
     const reload = Math.ceil((h.siege.trebReady - b.t) / 1000);
     volleyBtn.textContent = h.siege.volley ? 'Volley…' : reload > 0 ? `Volley ${reload}s` : 'Volley';
     volleyBtn.disabled = !!h.siege.volley || reload > 0;

@@ -1016,6 +1016,8 @@ export interface FieldHooks {
   blow?: (b: Battle, me: Unit, to: Unit) => number;
   /** Armour a blow ignores on the field (the Gunners' pierce). */
   pierce?: (b: Battle, me: Unit) => number;
+  /** A splash's share on the field (an Elite Battlemage's fire spreads further). */
+  splash?: (b: Battle, me: Unit) => number;
   /** Who stands on a tile, read from the occupancy grid. */
   unitAt?: (b: Battle, u: number, v: number) => Unit | undefined;
   /** A fighter stepped off tile `from` (the grid follows it). */
@@ -1200,7 +1202,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   }
   if (def.splash)
     for (const n of b.units)
-      if (n.alive && n.side === target.side && n !== target && apart(n, target) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
+      if (n.alive && n.side === target.side && n !== target && apart(n, target) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE * (b.field && fieldHooks.splash ? fieldHooks.splash(b, by) : 1))), false, true, out);
 }
 
 /** Apply a hit; return whether it reached health, including a lethal hit or revival. */

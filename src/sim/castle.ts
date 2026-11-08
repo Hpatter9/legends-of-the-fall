@@ -31,13 +31,15 @@ export type Castle = Record<BuildingId, number> & Partial<Record<RoomBuildingId 
 
 /* -------------------------------------------------------------- the room buildings (DEPTH-BUILD, docs/notes/depth-build.md) */
 
-/** The three buildings that add no number of their own, only rooms (`rooms.ts`): the Smithy, the Watchtower and the Hall of Legends. */
-export type RoomBuildingId = 'smithy' | 'watchtower' | 'hall';
-export const ROOM_BUILDING_IDS: RoomBuildingId[] = ['smithy', 'watchtower', 'hall'];
+/** The buildings that add no number of their own, only rooms (`rooms.ts`): the Smithy, the Watchtower, the Hall of Legends, and the
+ *  Assault's Drill Yard (phase 3, `docs/notes/assault-3.md`: its rooms raise the rank the Assault's new recruits join at). */
+export type RoomBuildingId = 'smithy' | 'watchtower' | 'hall' | 'drillYard';
+export const ROOM_BUILDING_IDS: RoomBuildingId[] = ['smithy', 'watchtower', 'hall', 'drillYard'];
 export const ROOM_BUILDINGS: Record<RoomBuildingId, { id: RoomBuildingId; name: string; blurb: string; costs: readonly number[] }> = {
   smithy: { id: 'smithy', name: 'Smithy', blurb: 'A forge for the road: mending at the camp, patched gear, one hero whose gear never wears.', costs: [150, 400, 900] },
   watchtower: { id: 'watchtower', name: 'Watchtower', blurb: 'Scouts and lookouts: opens march orders before a run, and in time the roads an army takes.', costs: [120, 350, 800] },
   hall: { id: 'hall', name: 'Hall of Legends', blurb: 'Where retired heroes stand and teach: one mentor seat a level, one for each calling.', costs: [600, 1200, 2000, 3000] },
+  drillYard: { id: 'drillYard', name: 'Drill Yard', blurb: 'Sergeants and a parade ground for the Assault\'s troops: new recruits join already Blooded, and in time already Veterans.', costs: [500, 1500] },
 };
 /** The Chapel's levels: level 1 is the old one purchase (`CHAPEL_COST`), then Vigil and Last Rites. */
 export const CHAPEL_COSTS: readonly number[] = [200, 450, 1000];

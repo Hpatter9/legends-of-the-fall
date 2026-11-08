@@ -312,6 +312,8 @@ export class FieldView {
   private keg: Sprite | null = null;
   private fuse: Sprite | null = null;
   private blasts: { u: number; v: number; h: number; start: number; big: boolean; sp: Sprite[] }[] = [];
+  /** The stakes round a duel's ring (phase 3), pooled. */
+  private stakes: Sprite[] = [];
 
   constructor(private b: Battle, private renderer: { generateTexture: (o: Container | { target: Container }) => Texture }) {
     this.unitLayer.sortableChildren = true;
@@ -1292,6 +1294,37 @@ export class FieldView {
     }
     if (this.keg) this.keg.visible = showKeg;
     if (this.fuse) this.fuse.visible = showFuse;
+    // (a duel's ring: its stakes round it, the ground inside it marked in the gate's torchlight)
+    const du = h?.duel;
+    const stex = holdTex('stakeLine');
+    let ns = 0;
+    if (du?.state === 'fighting' && du.mid && stex) {
+      const r = du.r ?? 2;
+      const pulse = steady ? 0.8 : 0.6 + 0.4 * Math.abs(Math.sin(this.simT / 400));
+      for (let dv = -r; dv <= r; dv++)
+        for (let dx = -r; dx <= r; dx++) {
+          const u = du.mid.u + dx;
+          const v = du.mid.v + dv;
+          const [x, y] = rawAt(u, v, b.tiles[v * b.w + u].h);
+          g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]);
+          g.fill({ color: 0xd8a040, alpha: 0.16 + 0.1 * pulse });
+        }
+      for (const i of du.fence ?? []) {
+        const u = i % b.w;
+        const v = Math.floor(i / b.w);
+        const [x, y] = rawAt(u, v, b.tiles[i].h);
+        if (x < view.x0 || x > view.x1 || y < view.y0 || y > view.y1) continue;
+        const sp = (this.stakes[ns] ??= new Sprite(stex));
+        sp.visible = true;
+        // (the stakes run along u on the ring's near and far rows, along v on its sides)
+        this.footOn(sp, 'stakeLine', { name: 'stakeLine', u: 0, v: 0, front: 0, flip: Math.abs(u - du.mid.u) > r, scale: 0.7 });
+        sp.position.set(x, y);
+        sp.zIndex = (u + v) * 10 + 5;
+        this.unitLayer.addChild(sp);
+        ns++;
+      }
+    }
+    for (let i = ns; i < this.stakes.length; i++) this.stakes[i].visible = false;
     // (the blasts: fire thrown up, dust round it, smoke rising after)
     for (let i = this.blasts.length - 1; i >= 0; i--) {
       const e = this.blasts[i];
