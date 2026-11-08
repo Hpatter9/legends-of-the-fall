@@ -620,3 +620,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 ## Calamity herald portraits
 
 - Six original OpenAI-generated painted herald portraits and face crops (`src/art/heralds/`) were made from the currently credited battle sprite references and owner-approved three-portrait proposal. Sources, reference crops and mapping are retained in `art-source/herald-portraits/`; `tools/herald-art/import.py` reproduces the exports. Original sprite and pack credits remain in force. No battle sprites were replaced. Paintings are bundled for offline play.
+
+### Painted Spells study
+
+- `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.

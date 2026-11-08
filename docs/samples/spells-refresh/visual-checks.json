@@ -1,0 +1,42 @@
+[
+  {
+    "name": "painted art uses smooth scaling 393",
+    "ok": true
+  },
+  {
+    "name": "final layout has no overflow 393",
+    "ok": true
+  },
+  {
+    "name": "final cards use smooth parchment 393",
+    "ok": true
+  },
+  {
+    "name": "painted art uses smooth scaling 360",
+    "ok": true
+  },
+  {
+    "name": "final layout has no overflow 360",
+    "ok": true
+  },
+  {
+    "name": "final cards use smooth parchment 360",
+    "ok": true
+  },
+  {
+    "name": "painted art uses smooth scaling 412",
+    "ok": true
+  },
+  {
+    "name": "final layout has no overflow 412",
+    "ok": true
+  },
+  {
+    "name": "final cards use smooth parchment 412",
+    "ok": true
+  },
+  {
+    "name": "final smooth-art pass has no page errors",
+    "ok": true
+  }
+]

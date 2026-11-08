@@ -1,3 +1,12 @@
+### SPELLS-REFRESH — Bring the Spells screen in line with the painted game
+
+- **Owner / branch / worktree:** current Codex chat; `design/spells-screen-refresh`; `/workspace/legends-of-the-fall`.
+- **Authorisation / scope:** owner requested and confirmed a visual and usability refresh; preserve spell balance, school rules, unlocks and saves. Library scene, spellbook presentation, relevant styles/assets, focused validation and handoff.
+- **Direction:** owner approved the painted candlelit study mockup and requested implementation, including new art as needed. Prominent four-slot loadout and clearer collection browsing.
+- **Completion:** approved visual direction, implemented screen, relevant checks, typecheck/build, three portrait sizes and reduced-motion/offline review.
+- **Status:** ready for owner review. New painted study/parchment art, four-slot loadout, collection filters and readable ornate spell cards implemented. Typecheck/build, 33 focused tests, all 64 browser checks and 10 final visual checks passed at three portrait sizes, including reduced motion and offline reload. No merge or release bump.
+- **Handoff:** [Spells refresh](notes/spells-screen-refresh.md).
+
 ### MYTHIC-HEROES — Five hidden world legends
 
 - **Owner / branch / worktree:** current Codex chat; `feature/mythic-heroes`; `/workspace/legends-of-the-fall`.
