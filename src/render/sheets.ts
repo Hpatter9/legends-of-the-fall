@@ -362,6 +362,11 @@ export async function loadSheets(): Promise<void> {
   await Promise.all([loadRulers(), ...[...required].filter(id => URLS[id] && LAYOUT[id]).map(loadSheet)]);
 }
 
+/** Load only these sheets (the Assault's bench page, `assaultBench.ts`, which draws a handful of kinds). */
+export async function loadSomeSheets(ids: readonly string[]): Promise<void> {
+  await Promise.all(ids.filter((id) => URLS[id] && LAYOUT[id]).map(loadSheet));
+}
+
 /** An animation's frames (idle when the sheet has no such row). */
 export const framesOf = (sheet: string, anim: Anim): Texture[] => frames.get(`${sheet}:${anim}`) ?? frames.get(`${sheet}:idle`)!;
 /** Whether a sheet's figures face right as drawn (so a mirror is needed to face left). */
