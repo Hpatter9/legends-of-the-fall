@@ -19,13 +19,14 @@
 .lbGo { min-height: 48px; }
 .lbSealed .lbPainting { filter: brightness(.65); }
 .lbMagic { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-.lbMagic i { position: absolute; left: 47%; top: 62%; width: 3px; height: 3px; border-radius: 50%; background: #c8f5ff; box-shadow: 0 0 7px 2px #79cfff; animation: lbWisp 5s ease-out infinite; animation-play-state: paused; opacity: 0; }
+.lbMagic i { position: absolute; left: 47%; top: 62%; width: 3px; height: 3px; border-radius: 50%; background: #c8f5ff; box-shadow: 0 0 7px 2px #79cfff; animation: lbWisp 5s ease-out infinite; animation-play-state: paused; opacity: .8; transform: scale(0); }
 .lbMagic i:nth-child(2) { left: 52%; animation-delay: -1s; }
 .lbMagic i:nth-child(3) { left: 45%; animation-delay: -2s; }
 .lbMagic i:nth-child(4) { left: 56%; animation-delay: -3s; }
 .lbMagic i:nth-child(5) { left: 50%; animation-delay: -4s; }
 .lbAlive .lbMagic i { animation-play-state: running; }
-@keyframes lbWisp { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: .8; } 100% { opacity: 0; transform: translate(8px, -55px); } }
+/* (a wisp rises and thins by shape alone: a steady brightness, no looping opacity: the no-flashing rule) */
+@keyframes lbWisp { 0% { transform: translate(0, 0) scale(0); } 20% { transform: translate(2px, -11px) scale(1); } 100% { transform: translate(8px, -55px) scale(0); } }
 .sbBody { image-rendering: auto; display: flex; flex-direction: column; gap: 10px; max-width: 500px; width: 100%; margin: 0 auto; font: 14px/1.4 var(--body); color: #f1e2be; }
 .sbBody *, .lbWrap * { box-sizing: border-box; }
 .sbBody button, .sbBody summary { -webkit-tap-highlight-color: transparent; }
