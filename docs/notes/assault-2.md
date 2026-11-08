@@ -19,8 +19,10 @@ Built on 1b (`docs/notes/assault-1.md`), on `claude/assault-2`. The director's n
   not the bake. A fresh phone bench is asked for.
 - **Liveliness** (`src/render/fieldLife.ts`, new). Embers rise and drift off the fires (the bonfires, the braziers, the gates' torches, the
   drums), and rings spread now and then on the deep water, at Near only, pooled (sixty embers, eight rings at most), and none for reduced
-  motion. The firelight already flickers (1b). `claude/alive`'s shared ambient module is not on the remote yet, so this is a light local
-  stand-in: the field's view calls only its `update`, so it swaps for that module's emitters when it lands.
+  motion. The firelight already flickers (1b). The motion is now the shared ambient module's (`ambient.ts`): each ember is `emberAt` and
+  each ring a slot hashed by `hash01` over the river, pure functions of the battle's clock, so a fixed pool of sprites is set in place
+  each frame and holds still across a pause; `motionPlan` gives the amount (none for reduced motion, read live; half for the battery
+  saver).
 
 ## Checks
 
@@ -60,9 +62,7 @@ Built on 1b (`docs/notes/assault-1.md`), on `claude/assault-2`. The director's n
 `assault-restorm` (the week from the day key; only a conquered hold regroups, once a week; the Mythic garrison, half a chest, the week
 spent). Screenshots: `docs/samples/assault-2/regroups-393.jpg`, `resume-393.jpg`.
 
-Not done of the design's phase 2: the trebuchet volley, the sappers' kegs and stone walls that breach (the director asked for the resume
-and the re-storm), and the Warpath camp's burning as an objective (its tents burn, but burning them does not yet stop the bands; holding
-the camp does).
+The heavy works and the camp's burning followed (below).
 
 ## The simulation's cost, and the Web Worker
 
@@ -100,3 +100,27 @@ the worker's battle does.
 In the worker a tick takes about 0.8 ms (p95 1.4); the throttle does not reach the worker, so that is its own thread's time, not the page's.
 The page's share is now within the asked 1.5 ms mean and 3 ms p95 at 4x. The bench's readout shows both (`Sim (worker)` and `Page's copy`),
 and `&worker=0` runs it on the page for comparison. The owner's phone should be re-tested.
+
+## The heavy works (`src/sim/assault/works.ts`; the design's 5.2)
+
+- **The trebuchet.** One a battle, free, standing in our camp at the Landing (the siege park, `blueprint.park`, a tent's place drawn as the
+  hold sheet's trebuchet). The **Volley** button in the spell row arms it, like a spell; the next tap on the field calls a 3 x 3 strike
+  there, within sixty tiles of the park. It is told three seconds before it lands (the nine tiles marked on the ground, pulsing faster as
+  it comes, and the stone flying in its arc from the trebuchet), deals 3,000 at the garrison's toughness to each structure under it and a
+  fifth of their health to the foes under it, and reloads in forty-five seconds (the button counts it down; the first is ready twenty
+  seconds in). The Tactical bot looses at the Iron Gate when a platoon nears it.
+- **The stone wall breaches.** Each volley is a hit on each stretch of the stone wall under it (a stretch is three tiles along, the wall's
+  thickness through); the third hit breaks it to a ramp of rubble a step above the baileys, so any walker crosses, and the sector graph is
+  rebuilt. Its crenels fall to rubble piles and its braziers go (`lookOf`).
+- **Sappers' kegs.** The **Keg** order (the works row, one platoon chosen) and a tap on the stone wall or a gate: the platoon fetches the
+  nearest powder barrel still standing (the bridge fort's, the forge's), carries it over its leader's head at half its pace, sets it at the
+  outer foot of the wall, lights it and runs back five tiles. Five seconds later (the fuse fizzing faster as it runs out) it goes off: the
+  stretch breaks, or a structure within two tiles of it, and whoever stands beside it takes a quarter of their health. One keg at a time.
+- **Burning the Warpath camp.** Every Reserve tent burnt (by fire arrows, as in 1b) stops the bands as holding the camp does
+  (`react.ts`, `campBurnt`; the owner's answer: either stops them).
+- **The worker.** The page's copy now drops what the worker's battle no longer has (a volley landed, a keg gone off: the mirror's nested
+  objects lose their missing keys), and takes the barrels still standing and the tiles a keg changed.
+
+Tests: `assault-heavy` (the volley told, landing and reloading; three volleys breach a stretch to a walkable ramp; the keg fetched,
+carried, set and going off; the burnt camp stops the bands), and a second `assault-mirror` test (the volley and the keg leave the copy, the
+lifted barrel leaves its tile).

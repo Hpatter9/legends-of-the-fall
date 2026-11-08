@@ -371,7 +371,9 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
     } else if (s.kind === 'piece') {
       const t = s.at.v * w + s.at.u;
       const n0 = out.length;
-      if (s.piece === 'tent') out.push({ name: 'conicalTent', u: s.at.u, v: s.at.v, front: t, tint: 0x8fb4ff });
+      // (the king's trebuchet stands in our camp at the siege park, in a tent's place: its volleys are thrown from here)
+      if (s.piece === 'tent' && bp.park && s.at.u === bp.park.u && s.at.v === bp.park.v) out.push({ name: 'trebuchet', u: s.at.u, v: s.at.v, front: t, scale: 0.9 });
+      else if (s.piece === 'tent') out.push({ name: 'conicalTent', u: s.at.u, v: s.at.v, front: t, tint: 0x8fb4ff });
       else if (s.piece === 'skulls') out.push(s.at.u === 48 && s.at.v === 47 ? { name: 'throne', u: s.at.u, v: s.at.v, front: t, scale: 1.2 } : { name: 'skullPile', u: s.at.u, v: s.at.v, front: t });
       else if (s.piece === 'flag') out.push(s.at.u === 49 && s.at.v === 46 ? { name: 'greatBanner', u: s.at.u, v: s.at.v, front: t } : { name: 'flag', road: 'flag', u: s.at.u, v: s.at.v, front: t });
       else if (s.piece === 'campfire') out.push(s.at.u === 34 && s.at.v === 50 ? { name: 'bonefire', u: s.at.u, v: s.at.v, front: t, scale: 0.6 } : { name: 'bonfire', u: s.at.u, v: s.at.v, front: t, scale: 0.6 });

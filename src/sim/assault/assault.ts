@@ -34,6 +34,7 @@ import { applyQueued, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, giveP
 import type { AssaultInput, AssaultLogEntry, AssaultOutcome, HoldState, PlatoonRole, PlatoonState, PostState } from './holdTypes';
 import { ELITE_TRICK, kindOfUnit, rankOf, troopBoost, troopUnitOf, troopOf, TRICKS } from './troops';
 import { SPLASH_SHARE } from '../units';
+import { callVolley, carrying, KEG_SLOW, plantGoal, worksTick } from './works';
 import { FIRE_RANGE, hasShooters, hutNear, looseFire, ramMind, RAM, scaleAim, scaleGoal, siegeBlow, siegeTick, startSiege, SUPPRESS_R, SUPPRESS_RANGE } from './siege';
 
 /** The assault's longest: twelve minutes of battle time (5.5); the rout runs this long after the lord falls before the hold is taken. */
@@ -94,7 +95,7 @@ export function startAssault(input: AssaultInput): Battle {
   const h: HoldState = {
     bp, input, forts, fortAt: new Map(), posts: [], platoons: [], lord: -1, bands: 0, auto: !!input.auto, queue: [], log: [], events: [], fallen: [], foesTotal: 0, garrison: [], fortKills: {},
     kinds: Object.fromEntries(forts.map((x) => [x.spec.id, x.spec.kind])), hits: [], cleaves: [], blows: {}, down: {}, kills: {}, stakes: new Uint8Array(b.board.w * b.board.d),
-    siege: { ladders: [], huts: [], arrows: [], zones: [] }, warpath: { held: false, marching: [] },
+    siege: { ladders: [], huts: [], arrows: [], zones: [], trebReady: 0, wallHits: {} }, warpath: { held: false, marching: [] },
   };
   for (const hz of b.board.hazards ?? []) if (hz.kind === 'spikes') for (const t of hz.tiles) h.stakes[t] = 1;
   forts.forEach((x, i) => x.spec.tiles.forEach((t) => h.fortAt.set(t, i)));
@@ -161,6 +162,7 @@ function tick(b: Battle, out: BattleEvent[]): void {
   noteFalls(f, h);
   holdTick(b, f, h, out);
   siegeTick(b, f, h, (pl) => anchorOf(f, pl), out);
+  worksTick(b, h, (pl) => anchorOf(f, pl), out);
   // (the platoons' own upkeep: a charge runs out, a soldier walks for a downed hero)
   h.platoons.forEach((pl, k) => {
     if (pl.order.kind === 'charge' && b.t >= (pl.chargeUntil ?? 0)) {
@@ -172,6 +174,13 @@ function tick(b: Battle, out: BattleEvent[]): void {
     // (a platoon plays its part in the plan on its own until the player orders it; Auto hands them all back to it)
     if ((h.auto || !pl.manual) && f.stats.ticks % 10 === (k * 2) % 10) bot(b, f, h, k);
   });
+  // (the bot's Tactical style calls the trebuchet on the Iron Gate once a platoon of ours is near it)
+  if (h.input.tactical && f.stats.ticks % 10 === 5) {
+    const iron = h.forts.find((x) => x.spec.kind === 'ironGate');
+    const t = iron?.spec.tiles[0];
+    if (iron && !iron.broken && t !== undefined && h.platoons.some((pl) => { const a = anchorOf(f, pl); return !!a && dist(a, iron.spec.front) <= 15; }))
+      callVolley(b, t % b.board.w, Math.floor(t / b.board.w));
+  }
 }
 
 /** The soldiers fallen since the last tick: each is gone for good, written to the save as it happens (`assaultMode.ts` reads the events). */
@@ -345,6 +354,15 @@ function orderGoal(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, me:
     case 'suppress':
       // (the shooters within range of the spot; the platoon holds there)
       return { at: dist(me, o.at) > SUPPRESS_RANGE - 2 ? o.at : null, fights: true };
+    case 'plant': {
+      // (for a barrel, then with the keg to the wall's foot, not stopping for blows; no barrel left or the keg another's, it holds)
+      const at = plantGoal(b, h, pl, me, o.at);
+      if (!at) {
+        pl.order = { kind: 'hold', at: { u: me.u, v: me.v } };
+        return { at: null, fights: true };
+      }
+      return { at, fights: false };
+    }
   }
 }
 
@@ -366,7 +384,7 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
   const goal = orderGoal(b, f, h, pl, me);
   // (fall back: walk for the rally flag or a friend, no blows; a flank: walk round, no stopping for blows)
   if (!goal.fights) {
-    if (goal.at && dist(me, goal.at) > 2) return leaderWalk(b, f, h, pl, me, goal.at, out);
+    if (goal.at && dist(me, goal.at) > (pl.order.kind === 'plant' ? 1 : 2)) return leaderWalk(b, f, h, pl, me, goal.at, out);
     if (pl.order.kind === 'fallback') pl.order = { kind: 'hold', at: { u: me.u, v: me.v } };
     return false;
   }
@@ -453,6 +471,7 @@ function pace(b: Battle, h: HoldState, pl: PlatoonState, me: Unit): void {
   let ms = me.step.ms;
   if (pl.order.kind === 'charge' && b.t < (pl.chargeUntil ?? 0)) ms = Math.round(ms / CHARGE_MOVE);
   else if (pl.order.kind === 'fallback') ms = Math.max(ms, FALLBACK_MS);
+  else if (carrying(h, pl)) ms = Math.round(ms * KEG_SLOW);
   else return;
   me.step.ms = ms;
   me.busyUntil = b.t + ms;
