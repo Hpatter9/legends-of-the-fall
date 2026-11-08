@@ -76,7 +76,7 @@ for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f
   UI_FILES.push(`ui/${f}`);
 }
 if (TACTIC_ART.length) mkdirSync(`${out}/ui/tactics`, { recursive: true });
-// The seated tavern guests are separate from their battle/roster illustrations.
+// Tavern activity paintings are separate from battle/roster illustrations.
 mkdirSync(`${out}/ui/tavern`, { recursive: true });
 for (const f of readdirSync('src/art/tavern/guests').filter((f) => f.endsWith('.webp'))) {
   copyFileSync(`src/art/tavern/guests/${f}`, `${out}/ui/tavern/${f}`);

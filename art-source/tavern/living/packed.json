@@ -1,0 +1,1028 @@
+{
+  "knight-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      42,
+      40,
+      449,
+      489
+    ]
+  },
+  "samurai-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      138,
+      8,
+      354,
+      496
+    ]
+  },
+  "kunoichi-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      133,
+      19,
+      400,
+      490
+    ]
+  },
+  "archer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      95,
+      7,
+      428,
+      497
+    ]
+  },
+  "wizard-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      90,
+      20,
+      409,
+      495
+    ]
+  },
+  "peasant-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      123,
+      8,
+      381,
+      498
+    ]
+  },
+  "ninjaMonk-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      87,
+      31,
+      467,
+      472
+    ]
+  },
+  "wanderer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      73,
+      12,
+      410,
+      496
+    ]
+  },
+  "lightningMage-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      63,
+      8,
+      404,
+      502
+    ]
+  },
+  "kitsune-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      98,
+      0,
+      456,
+      497
+    ]
+  },
+  "karasu-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      81,
+      7,
+      424,
+      496
+    ]
+  },
+  "yamabushi-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      114,
+      0,
+      372,
+      505
+    ]
+  },
+  "werewolf-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      112,
+      25,
+      437,
+      499
+    ]
+  },
+  "minotaur-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      71,
+      11,
+      397,
+      491
+    ]
+  },
+  "satyr-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      147,
+      14,
+      341,
+      512
+    ]
+  },
+  "gorgon-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      78,
+      15,
+      457,
+      483
+    ]
+  },
+  "samuraiCommander-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      56,
+      0,
+      450,
+      494
+    ]
+  },
+  "paladin-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      82,
+      0,
+      395,
+      494
+    ]
+  },
+  "cleric-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      82,
+      24,
+      400,
+      498
+    ]
+  },
+  "druid-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      113,
+      3,
+      365,
+      502
+    ]
+  },
+  "barbarian-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      23,
+      35,
+      465,
+      497
+    ]
+  },
+  "ranger-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      81,
+      19,
+      436,
+      506
+    ]
+  },
+  "warlock-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      124,
+      2,
+      402,
+      506
+    ]
+  },
+  "illusionist-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      106,
+      5,
+      395,
+      507
+    ]
+  },
+  "gunslinger-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      88,
+      8,
+      465,
+      501
+    ]
+  },
+  "shambler-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      70,
+      39,
+      380,
+      494
+    ]
+  },
+  "rifleBot-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      95,
+      4,
+      350,
+      498
+    ]
+  },
+  "mercenary-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      167,
+      5,
+      457,
+      506
+    ]
+  },
+  "mummy-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      72,
+      4,
+      372,
+      506
+    ]
+  },
+  "buccaneer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      11,
+      24,
+      410,
+      500
+    ]
+  },
+  "wolfBard-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      112,
+      18,
+      425,
+      492
+    ]
+  },
+  "beastmaster-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      4,
+      77,
+      499,
+      487
+    ]
+  },
+  "kraken-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      103,
+      15,
+      371,
+      495
+    ]
+  },
+  "lancer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      155,
+      0,
+      421,
+      500
+    ]
+  },
+  "reaper-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      68,
+      2,
+      424,
+      497
+    ]
+  },
+  "timeWitch-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      47,
+      9,
+      410,
+      495
+    ]
+  },
+  "arcBlade-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      106,
+      5,
+      381,
+      499
+    ]
+  },
+  "dreadPirate-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      64,
+      13,
+      418,
+      492
+    ]
+  },
+  "siegeBot-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      88,
+      3,
+      393,
+      494
+    ]
+  },
+  "priestess-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      62,
+      4,
+      412,
+      499
+    ]
+  },
+  "dragoon-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      76,
+      0,
+      407,
+      496
+    ]
+  },
+  "juggernaut-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      50,
+      25,
+      447,
+      496
+    ]
+  },
+  "sage-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      152,
+      8,
+      412,
+      507
+    ]
+  },
+  "demonSwordsman-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      88,
+      8,
+      353,
+      509
+    ]
+  },
+  "tyrant-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      26,
+      25,
+      448,
+      498
+    ]
+  },
+  "vampireLord-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      129,
+      3,
+      461,
+      504
+    ]
+  },
+  "hemomancer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      53,
+      16,
+      418,
+      501
+    ]
+  },
+  "nightstalker-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      68,
+      21,
+      445,
+      499
+    ]
+  },
+  "bloodGargoyle-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      512,
+      512
+    ],
+    "opaqueBounds": [
+      76,
+      11,
+      424,
+      507
+    ]
+  },
+  "dhampir-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      0,
+      1024,
+      512
+    ],
+    "opaqueBounds": [
+      52,
+      20,
+      463,
+      503
+    ]
+  },
+  "warDrummer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      0,
+      1536,
+      512
+    ],
+    "opaqueBounds": [
+      114,
+      9,
+      349,
+      507
+    ]
+  },
+  "geomancer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      512,
+      512,
+      1024
+    ],
+    "opaqueBounds": [
+      122,
+      0,
+      427,
+      502
+    ]
+  },
+  "bellWarden-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      512,
+      512,
+      1024,
+      1024
+    ],
+    "opaqueBounds": [
+      58,
+      8,
+      410,
+      498
+    ]
+  },
+  "falconer-activity": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      1024,
+      512,
+      1536,
+      1024
+    ],
+    "opaqueBounds": [
+      81,
+      9,
+      405,
+      503
+    ]
+  },
+  "living-gwen": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      0,
+      0,
+      887,
+      887
+    ],
+    "opaqueBounds": [
+      276,
+      7,
+      603,
+      882
+    ]
+  },
+  "living-table-dice": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      887,
+      0,
+      1774,
+      443
+    ],
+    "opaqueBounds": [
+      88,
+      34,
+      637,
+      443
+    ]
+  },
+  "living-table-supper": {
+    "size": [
+      384,
+      440
+    ],
+    "sourceBox": [
+      887,
+      443,
+      1774,
+      887
+    ],
+    "opaqueBounds": [
+      67,
+      0,
+      654,
+      427
+    ]
+  }
+}

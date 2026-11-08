@@ -27,6 +27,16 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.396.0',
+    date: '2026-11-08',
+    title: 'A livelier tavern',
+    notes: [
+      'Your strongest heroes now gather around the bar, games table and hearth, each with their own activity: music, meals, crafts, cards and more.',
+      'Gentle movement, rolling dice, steam and warm firelight bring the room to life, with quieter options for reduced motion and battery saver.',
+      'Gwen stands behind the counter, guests stay clear to tap, and stray rectangular shadows around the heroes are gone.',
+    ],
+  },
+  {
     version: '0.395.0',
     date: '2026-11-07',
     title: 'Straighter steel and sturdier spears',

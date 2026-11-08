@@ -48,6 +48,17 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### TAVERN-NATURAL — Living painted tavern
+
+- **Release:** owner requested merging. Integrated main 0.395.0 and its hero weapon repairs; prepared 0.396.0 with matching Updates entry. Final typecheck/build, 34 focused tests and all 36 release browser/offline checks passed. Earlier three-size/reduced-motion coverage: 88 checks passed. Owner-authorised merge: [PR #430](https://github.com/Hpatter9/legends-of-the-fall/pull/430).
+
+- **Review follow-up:** owner reported Gwen covering Ayame and rectangular shadows around heroes. Same owner/branch/scope: correct keeper depth/counter masking and remove inherited scene-button shadows; completed with typecheck/build, 13 focused tests and all 88 browser checks passing. All three portrait screenshots visually reviewed; screenshots and recording replaced in PR #430.
+
+- **Owner / branch / worktree:** Codex; `design/living-tavern`; `/workspace/legends-of-the-fall`.
+- **Scope:** approved natural bar/table/hearth composition, varied relaxed hero poses and subtle ambient animation; preserve strongest-five selection, tappable heroes, services, saves and offline support.
+- **Completion:** new room and compatible character layers, reduced-motion/lifecycle support, focused tests, typecheck/build and three portrait-size browser/offline review.
+- **Status:** complete, ready for owner review. All 54 heroes have individual activity paintings; natural bar/table/hearth grouping, tappable Gwen and gentle motion are integrated. Typecheck/build, 30 focused tests, 54 export checks and all 82 browser checks passed across three portrait sizes, reduced motion and offline. [Handoff](notes/living-tavern.md), [activity gallery](samples/living-tavern-activities.jpg), [implemented motion](samples/living-tavern-motion.webm). Latest main 0.394.0 integrated into the feature branch; repeated validation passed, including Settings battery saver. Draft [PR #430](https://github.com/Hpatter9/legends-of-the-fall/pull/430). No merge into main, deployment or new release.
+
 ### HERALD-PORTRAITS — Six Calamity herald paintings and final art release
 
 - **Owner:** Codex director. **Branch/worktree:** `art/calamity-herald-portraits`, `/workspace/legends-of-the-fall`; includes completed trait and road-art commits.

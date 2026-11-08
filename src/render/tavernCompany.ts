@@ -4,17 +4,38 @@ import type { Meta } from '../sim/meta';
 import { kindPower } from '../sim/power';
 import { ALL_HEROES } from '../sim/units';
 
-/** Two paintings per hero can occupy any of these five compatible seats. */
+/** Five physical gathering places; each hero keeps its own painted activity. */
 export const TAVERN_SEATS = [
-  { id: 'front-left', facing: 'right' },
-  { id: 'front-right', facing: 'left' },
-  { id: 'rear-left', facing: 'right' },
-  { id: 'rear-centre', facing: 'right' },
-  { id: 'rear-right', facing: 'left' },
+  { id: 'bar' }, { id: 'dice-left' }, { id: 'dice-right' },
+  { id: 'hearth' }, { id: 'supper' },
 ] as const;
 
-export const tavernGuestArt = (kind: string, place: number): string =>
-  `ui/tavern/${kind}-${TAVERN_SEATS[place].facing}.webp`;
+export const tavernGuestArt = (kind: string): string => `ui/tavern/${kind}-activity.webp`;
+
+export { default as TAVERN_ACTIVITIES } from './tavernActivities.json';
+import activities from './tavernActivities.json';
+
+/** Find the closest compatible gathering places without moving anyone on refresh.
+ * Search at most 120 arrangements; strongest guests win equally good ties. */
+export function tavernPlaces(kinds: string[]): number[] {
+  let best: number[] = [];
+  let bestCost = Infinity;
+  const visit = (places: number[], available: number[], cost: number): void => {
+    if (cost >= bestCost) return;
+    if (places.length === kinds.length) { best = places; bestCost = cost; return; }
+    const kind = kinds[places.length] as keyof typeof activities;
+    const preferred = TAVERN_SEATS.findIndex(place => place.id === activities[kind].place);
+    for (const place of available) {
+      // Both sides of the games table work for tabletop activities. Bar and
+      // hearth are the other standing spaces; supper has room for a stool.
+      const near = (preferred === 1 || preferred === 2) && (place === 1 || place === 2);
+      const penalty = place === preferred ? 0 : near ? 1 : 3;
+      visit([...places, place], available.filter(next => next !== place), cost + penalty);
+    }
+  };
+  visit([], TAVERN_SEATS.map((_, i) => i), 0);
+  return best;
+}
 
 export function tavernCompany(meta: Meta): { kind: string; power: number }[] {
   return ALL_HEROES.filter((kind) => meta.unlocked.includes(kind))

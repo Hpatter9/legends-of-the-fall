@@ -595,6 +595,10 @@ The tavern background (`src/art/ui/tavern-hearth.png`) is original AI-generated 
 
 The cozy seated tavern extension adds 108 original OpenAI-generated resting hero illustrations (two poses for each of the 54 existing hero identities), an empty cozy room painting and two shared table props. Sources, approved studies and corrected transparency/identity variants are retained in `art-source/tavern/`. These paintings reference the existing credited hero designs; they do not replace the battle sprites or roster portraits. `tools/tavern/pack.py` imports padded transparent WebP cutouts into `src/art/tavern/guests/`; all are precached for offline use.
 
+## Living tavern illustrations
+
+OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper tables and individual off-duty activity illustrations for all 54 heroes. Generated against the existing credited hero identities and owner-approved tavern concept. Original sources, briefs and packing metadata: `art-source/tavern/living/`; runtime cutouts: `src/art/tavern/guests/*-activity.webp` and `living-*.webp`. These replace the uniform armchair composition on the Heroes page.
+
 ## Remaining Nemesis trait symbols
 
 - Twelve original OpenAI-generated gothic game symbols (`src/art/nemesis-traits/`) complete the modelled trait set: Fireproof, Rime-hardened, Venom-blooded, Thick-hided, Grounded, Fearless, four Banes, Elusive and Legend-slayer. The owner approved the three-symbol style proposal against the existing commissioned icons. Sources and the unused hazy take are retained in `art-source/nemesis-traits/`. `tools/nemesis-trait-art/import.py` normalises footprints, hard alpha and palette, with nearest-neighbour packing. Original trait artwork retains its existing credits.
