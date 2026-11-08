@@ -187,16 +187,16 @@ The balance bar is no army's mean tries rising by more than 1.
   Orc Warband, Undead Legion and Beast Packs in turn, the recruits' party at the level; every wave under the Oath settled as the page
   settles it, a slain hero leaving its run and its House mourning three days; no hearts, as every figure in the notes):
 
-  | Level · tier | No Oath: crowns a day | clears a day | The Oath: crowns a day | clears a day | slain a day | Oath ÷ none |
-  |---|---|---|---|---|---|---|
-  | 60 · Hard | 709 | 4.0 | 1,074 | 4.0 | 0.1 | **1.52×** |
-  | 65 · Elite | 986 | 3.5 | 1,399 | 2.9 | 1.5 | **1.42×** |
-  | 90 · Legendary | 203 | 0.0 | 287 | 0.0 | 1.8 | **1.41×** |
+  | Level · tier | No Oath: crowns a day | clears a day | ×1.5 (as designed): crowns a day | ratio | **×1.3 (now): crowns a day** | clears a day | slain a day | **ratio** |
+  |---|---|---|---|---|---|---|---|---|
+  | 60 · Hard | 709 | 4.0 | 1,074 | 1.52× | 926 | 4.0 | 0.1 | **1.31×** |
+  | 65 · Elite | 986 | 3.5 | 1,399 | 1.42× | 1,203 | 2.9 | 1.5 | **1.22×** |
+  | 90 · Legendary | 203 | 0.0 | 287 | 1.41× | 247 | 0.0 | 1.8 | **1.22×** |
 
-  (4 saves a cell.) **This is over the design's bar of 1.3×.** On Hard at level 60, where the Oath first opens, the bot almost never loses
-  a hero, so the Oath is nearly free pay. On Elite and Legendary heroes are slain (one and a half to two a day) and runs are lost, but the
-  ×1.5 still outweighs it. The design's numbers are built as written (×1.5 on Hard or harder); the choice is the owner's (the questions
-  below).
+  (4 saves a cell, the same saves and seeds both times.) As designed (×1.5) it was over the design's bar of 1.3× everywhere. At ×1.3 it
+  is 1.22× on Elite and Legendary, where the bot loses heroes (one and a half to two a day) and runs. On Hard at level 60, where the Oath
+  first opens, the bot almost never loses a hero, so the Oath is its full pay: 1.31× (1.306), the bar itself: the extra is each wave’s crowns
+  rounded to a whole crown).
 
 ## Art: placeholders and the images to make
 
