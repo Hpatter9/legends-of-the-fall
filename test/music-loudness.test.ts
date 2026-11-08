@@ -33,9 +33,9 @@ test('every music file is measured, and within 1 LU of the one target (-18 LUFS)
 });
 
 // (changed by the sound pass, docs/notes/sound-pass.md, for the owner's "the music volume still feels very bad": at -30 LUFS the
-//  menus' music was all but silent on a phone and the battle music 7 LU under the fight, buried; now the place's music plays at
-//  -25, and a battle's 3.5 dB under that, about 5 LU under the fight's own sounds)
-test('at the speakers every loop plays at -25 LUFS, a battle\'s 3.5 dB under, about 5 LU under the fight; the fanfare at the fight\'s loudness', () => {
+//  menus' music was all but silent on a phone and the battle music 7 LU under the fight, buried; then "music is too quiet and
+//  muffled in battle": now the place's music plays at -25, and a battle's about as loud, 1.5 dB under, still under the fight)
+test('at the speakers every loop plays at -25 LUFS, a battle\'s about as loud (1.5 dB under), still under the fight; the fanfare at the fight\'s loudness', () => {
   // (a file's loudness at the page's output, both sliders at 100 %: its own, the bus level and its trim; the fight's effects
   //  together sit about -23.5 LUFS, docs/notes/audio-mix.md)
   const FIGHT = -23.5;
@@ -51,7 +51,8 @@ test('at the speakers every loop plays at -25 LUFS, a battle\'s 3.5 dB under, ab
   assert.equal(MUSIC_TARGET, -25);
   for (const id of ['battle', 'boss']) {
     const inFight = playback(id) + db(FIGHT_LEVEL);
-    assert.ok(FIGHT - inFight >= 4 && FIGHT - inFight <= 6.5, `${id} sits ${(FIGHT - inFight).toFixed(1)} LU under the fight`);
+    assert.ok(FIGHT - inFight >= 1.5 && FIGHT - inFight <= 4, `${id} sits ${(FIGHT - inFight).toFixed(1)} LU under the fight`);
+    assert.ok(MUSIC_TARGET - inFight <= 2, `${id} in a fight is about as loud as the camp's music`);
   }
   // (the battle and the boss track at one level: the boss is more intense by its arrangement, not by jumping out)
   assert.ok(Math.abs(playback('battle') - playback('boss')) <= 0.01);

@@ -90,16 +90,23 @@ export const DUCKS: Readonly<Record<string, DuckDepth>> = {
   sheet: { db: -4, hz: OPEN_HZ },
   // (an event's card)
   event: { db: -4, hz: OPEN_HZ },
-  // (a boss's card, which rings its own sting)
-  boss: { db: -6, hz: 5000 },
+  // (a boss's card, 2.4 s as the boss track comes in: a touch, never muffled, so the boss track arrives clear)
+  boss: { db: -2, hz: OPEN_HZ },
   // (a cinematic: held down a little for the whole scene, under its words, never dipping and lifting line by line)
   cinematic: { db: -3, hz: OPEN_HZ },
-  // (the shows with their own big sounds: the summoning show, a hero's or an eidolon's reveal, a binding)
+  // (an eidolon's call, in the middle of a fight: lower, but the battle music stays clear (it was -8 dB and muffled to 1.4 kHz for
+  //  the whole call, the owner's "muffled in battle"))
+  eidolon: { db: -4, hz: OPEN_HZ },
+  // (the shows off the battlefield with their own big sounds: the summoning show, a hero's reveal, a binding)
   summon: { db: -9, hz: 1800 },
   reveal: { db: -9, hz: 1800 },
-  eidolon: { db: -9, hz: 1800 },
   binding: { db: -9, hz: 1800 },
 };
+/** The reasons that belong to a fight's own moments and are counted by hand (an eidolon's call): a fight starting or ending lets
+ *  them go whatever their count, so a call begun twice and ended once can never leave the battle music held down. (The boss's
+ *  card follows its element, `bindDuck`, so it cannot stick.) */
+export const FIGHT_DUCKS: readonly string[] = ['eidolon'];
+
 /** A reason with no depth of its own. */
 export const DUCK_OTHER: DuckDepth = { db: -6, hz: 4000 };
 
@@ -150,6 +157,11 @@ export class DuckCounter {
 
   get ducked(): boolean {
     return this.counts.size > 0;
+  }
+
+  /** Lets go of `reason` however many holds it has. */
+  drop(reason: string): void {
+    this.counts.delete(reason);
   }
 
   /** The reasons holding it now (for the debug view). */

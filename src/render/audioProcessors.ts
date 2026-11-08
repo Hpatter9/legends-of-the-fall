@@ -1040,6 +1040,11 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     return [...this.loops.keys()];
   }
 
+  /** The tracks that fell back to the synthesised stand-in (their file would not decode), for the debug view. */
+  get fallback(): MusicId[] {
+    return [...this.synth];
+  }
+
   /** The sting ringing now, or null (for the debug view). */
   get stingId(): StingId | null {
     return this.stingNow?.id ?? null;
