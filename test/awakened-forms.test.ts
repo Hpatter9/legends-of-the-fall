@@ -1,4 +1,6 @@
-import { isMythic } from '../src/sim/mythicRules';
+import { MYTHIC_KINDS, isMythic } from '../src/sim/mythicRules';
+import { mythicPainting } from '../src/mythicCutRules';
+import { SHOWCASES } from '../src/ultShowRules';
 import { faceUrl } from '../src/heroFaceRules';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -70,6 +72,19 @@ test('every upgraded animation has production assets, matched views and complete
       if (row === '_walk') continue;
       assert.ok(upgraded.rows.includes(row) || upgraded.rows.includes(upgraded.aliases?.[row] ?? ''), `${kind}: retains ${row}`);
     }
+  }
+});
+
+test('an awakened Mythic shows its awakened painting everywhere (portrait, face, cut-in); only its battle sprites stay the base ones', () => {
+  for (const kind of MYTHIC_KINDS) {
+    assert.equal(faceUrl(kind, 1), `heroes/awakened-${kind}.webp`);
+    assert.equal(faceUrl(kind, 0), `heroes/${kind}-portrait.webp`);
+    assert.equal(mythicPainting(kind, 1), `heroes/awakened-${kind}.webp`);
+    assert.equal(mythicPainting(kind), `heroes/${kind}.webp`);
+    assert.ok(existsSync(`src/art/heroes/awakened-${kind}.webp`), `${kind}: its awakened painting`);
+    assert.ok(existsSync(`src/art/ult-show/mythic-pose-${kind}.webp`), `${kind}: its showcase pose`);
+    assert.equal(SHOWCASES[kind].poses?.call, `mythic-pose-${kind}`, `${kind}: the showcase uses the pose`);
+    assert.ok(AWAKENED_SHEETS_LATER.has(kind), `${kind}: battle sprites stay the base ones`);
   }
 });
 

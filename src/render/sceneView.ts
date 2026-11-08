@@ -1,4 +1,3 @@
-import { isMythic } from '../sim/mythicRules';
 // Playing a cinematic (sim/sceneScripts.ts; the clock in sceneClock.ts; which fighters play it in sim/sceneRules.ts). Since CINE-001
 // a scene is played as a film is cut (`sim/cineDirector.ts` turns the written shots into coverage; `cineShots.ts` holds the numbers):
 // every shot has a framing (wide, medium, close, extreme, over the shoulder, low, high, Dutch), a move (push in, pull out, pan,
@@ -89,7 +88,7 @@ const portraits = new Map<string, Promise<Portrait | null>>();
 /** The portraits loaded so far (null: none to be had), read as the frames are drawn. */
 const portraitsReady = new Map<string, Portrait | null>();
 /** The art a hero's close-up uses: the awakened picture once awakened, else the portrait cutout (both kept offline by the build). */
-const portraitUrl = (kind: string, look: number): string => (look > 0 && !isMythic(kind) ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
+const portraitUrl = (kind: string, look: number): string => (look > 0 ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
 /** Heads the scan below cannot find (a weapon held high, a banner, a plume), set by eye: the head's middle across and its top, as
  *  shares of the portrait cutout. */
 const FACE_AT: Readonly<Record<string, readonly [number, number]>> = {

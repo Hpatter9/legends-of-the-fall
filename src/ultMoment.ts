@@ -1,4 +1,3 @@
-import { isMythic } from './sim/mythicRules';
 // The ultimate's moment on the page (ULT-CUTIN, docs/notes/battle-hud.md; the rules and timings are `ultMomentRules.ts`). The owner's ask: an
 // ultimate should feel special. In full (the default setting), as it fires the fight is held: a slash crosses the screen carrying the hero's
 // painted art and the ultimate's name pops up, and the rest of the screen darkens but for what the ultimate touches, where its effect
@@ -53,8 +52,11 @@ export interface UltMomentOpts {
   toClient?: (x: number, y: number) => { x: number; y: number } | null;
 }
 
+/** Whether the art a slash was given is a hero's awakened painting (a Mythic's frame then shows its awakened one). */
+const awakenedArt = (url: string): number => (url.startsWith('heroes/awakened-') ? 1 : 0);
+
 /** A hero's painted art: the awakened art once awakened, else the portrait (every one of the 45 has both, cached for offline play). */
-export const heroArtUrl = (kind: string, awakened: number): string => (awakened > 0 && !isMythic(kind) ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
+export const heroArtUrl = (kind: string, awakened: number): string => (awakened > 0 ? `heroes/awakened-${kind}.webp` : `heroes/${kind}-portrait.webp`);
 
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 const NONE: UltTargets = { struck: [], helped: [], tiles: [] };
@@ -104,7 +106,7 @@ export class UltMoments {
       if (u.side !== 'hero' || !ultimateOf(u)) continue;
       // (a Mythic's cut-in shows its whole painting and its sigil as well)
       const cut = mythicCut(u.def);
-      for (const url of [this.opts.art(u), ...(cut ? [mythicPainting(u.def), showArtUrl(cut.sigil)] : [])]) {
+      for (const url of [this.opts.art(u), ...(cut ? [mythicPainting(u.def, awakenedArt(this.opts.art(u))), showArtUrl(cut.sigil)] : [])]) {
         if (this.warmed.has(url)) continue;
         this.warmed.add(url);
         const img = new Image();
@@ -393,7 +395,7 @@ export class UltMoments {
     art.className = 'umPainting';
     art.alt = '';
     art.decoding = 'async';
-    art.src = mythicPainting(u.def);
+    art.src = mythicPainting(u.def, awakenedArt(this.opts.art(u)));
     // (the portrait is the fallback: a painting that will not load leaves no empty frame)
     art.onerror = () => {
       art.onerror = null;

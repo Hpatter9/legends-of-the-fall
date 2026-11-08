@@ -39,6 +39,12 @@ import mythicStarChart from '../art/ult-show/mythic-star-chart.webp';
 import mythicSaintHalo from '../art/ult-show/mythic-saint-halo.webp';
 import mythicWorldTree from '../art/ult-show/mythic-world-tree.webp';
 import mythicFateClock from '../art/ult-show/mythic-fate-clock.webp';
+// (and the five Mythics' showcase poses, pixel art made for the project: art-source/mythics/poses, docs/notes/mythic-art-in.md)
+import mythicPoseVael from '../art/ult-show/mythic-pose-vael.webp';
+import mythicPoseAstrax from '../art/ult-show/mythic-pose-astrax.webp';
+import mythicPoseIlyra from '../art/ult-show/mythic-pose-ilyra.webp';
+import mythicPoseOrrun from '../art/ult-show/mythic-pose-orrun.webp';
+import mythicPoseNyxara from '../art/ult-show/mythic-pose-nyxara.webp';
 
 const URLS = {
   'arc-blade-lightning-strip': arcBladeLightningStrip,
@@ -73,6 +79,11 @@ const URLS = {
   'mythic-saint-halo': mythicSaintHalo,
   'mythic-world-tree': mythicWorldTree,
   'mythic-fate-clock': mythicFateClock,
+  'mythic-pose-vael': mythicPoseVael,
+  'mythic-pose-astrax': mythicPoseAstrax,
+  'mythic-pose-ilyra': mythicPoseIlyra,
+  'mythic-pose-orrun': mythicPoseOrrun,
+  'mythic-pose-nyxara': mythicPoseNyxara,
 } as const;
 
 export type ShowArt = keyof typeof URLS;
