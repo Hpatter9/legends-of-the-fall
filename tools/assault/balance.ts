@@ -1,6 +1,7 @@
 // The Assault's balance table (phase 1, docs/notes/assault-1.md; the design's 7.6): `npm run balance -- --assault orcs` plays the party bot
 // through the hold, with a full host at the army's Legendary-star level, in two styles: Auto (the opening plan, then the nearest gate) and
-// Tactical (the bot also silences the drums near its approach and flies a flying hero onto the wall-walk). It reports the wins, the share of
+// Tactical (the bot also silences the drums near its approach and flies a flying hero onto the wall-walk), and Siege (Tactical with the
+// siege works of phase 1b: the ram and two ladders). It reports the wins, the share of
 // the host lost, the time taken and the sim's cost a tick.
 //
 // The targets: Auto wins 40 to 60% and loses 40 to 60% of the host; Tactical wins 75% or more and loses 25 to 40%; tactics worth at least
@@ -30,7 +31,8 @@ for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id
 console.log(`\nTHE ASSAULT: ${army}  (${party.map((k) => UNITS[k].name).join(', ')}; a full host, a maxed castle${talents ? ', talents learned' : ''}; foeShare ${share ?? ASSAULT.foeShare}, officerShare ${ASSAULT.officerShare}; ${seeds} seeds a cell)\n`);
 console.log('level  style      wins   host lost   time (won)   sim ms/tick (mean, worst)');
 for (const L of levels)
-  for (const tactical of [false, true]) {
+  for (const style of ['Auto', 'Tactical', 'Siege'] as const) {
+    const tactical = style !== 'Auto';
     let wins = 0;
     let lost = 0;
     let host = 0;
@@ -49,6 +51,8 @@ for (const L of levels)
       input.troops = Object.fromEntries(party.map((k) => [k, Array(10).fill(0)]));
       input.auto = true;
       input.tactical = tactical;
+      // (Siege: Tactical with the siege works, phase 1b: the ram with the first platoon, ladders with the second and third)
+      if (style === 'Siege') input.siege = { ram: party[0], ladders: [party[1], party[2]] };
       if (share !== undefined) input.foeShare = share;
       const b = startAssault(input);
       let last = performance.now();
@@ -70,5 +74,5 @@ for (const L of levels)
       lost += sc.platoons.reduce((n, p) => n + (10 - p.soldiers), 0);
     }
     const t = wins ? Math.round(time / wins / 1000) : 0;
-    console.log(`${String(L).padEnd(7)}${(tactical ? 'Tactical' : 'Auto').padEnd(11)}${`${Math.round((100 * wins) / seeds)}%`.padEnd(7)}${`${Math.round((100 * lost) / host)}%`.padEnd(12)}${(wins ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` : '-').padEnd(13)}${(ms / ticks).toFixed(3)}, ${worst.toFixed(1)}`);
+    console.log(`${String(L).padEnd(7)}${style.padEnd(11)}${`${Math.round((100 * wins) / seeds)}%`.padEnd(7)}${`${Math.round((100 * lost) / host)}%`.padEnd(12)}${(wins ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` : '-').padEnd(13)}${(ms / ticks).toFixed(3)}, ${worst.toFixed(1)}`);
   }

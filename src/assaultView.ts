@@ -11,7 +11,7 @@ import { UNITS } from './sim/units';
 import { nemesisLines } from './sim/nemesis';
 import { openNemesisCard } from './nemesisView';
 import { blueprintOf, holdMapOf } from './sim/assault/assault';
-import { assaultOf, ASSAULT_PRICES, buyRecruit, fillCost, fillRanks, PLATOON_SIZE, scouted, scoutHold, troopsOf } from './sim/assault/economy';
+import { assaultOf, ASSAULT_PRICES, buyRecruit, buySiege, fillCost, fillRanks, PLATOON_SIZE, scouted, scoutHold, siegeCost, SIEGE_PRICES, troopsOf } from './sim/assault/economy';
 import { assaultParty, defaultPlan, lordLine, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
 import { rankOf, troopOf, troopStats, TROOPS, lookOf, troopUnitOf, type PlatoonFormation } from './sim/assault/troops';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
@@ -44,7 +44,7 @@ const ROLE_NAME: Readonly<Record<PlatoonRole, string>> = { main: 'Main push', co
 const ROLE_TEXT: Readonly<Record<PlatoonRole, string>> = {
   main: 'Straight for the nearest gate, then the throne',
   cover: 'Keeps a few tiles behind the main push: shooters on the high ground',
-  flank: 'Goes round for the North Gate, where the Warpath comes in',
+  flank: 'Holds the Warpath’s camp so no more bands come down it, then breaks the North Gate',
 };
 const pips = (marks: number) => '◆'.repeat(rankOf(marks).pips);
 /** A platoon's veterans in words (" · 1 Elite, 2 Blooded"; nothing for recruits alone). */
@@ -198,10 +198,12 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       menuChoice(planGrid, {
         title: heroName(k),
         icon: ' ',
-        lines: [`By ${APPROACH_NAME[plan.approaches[k]]}`, ROLE_NAME[plan.roles![k]]],
+        lines: [`By ${APPROACH_NAME[plan.approaches[k]]}`, `${ROLE_NAME[plan.roles![k]]}${worksOf(k)}`],
         onPick: () => openOrders(k),
       }) && face(planGrid.lastElementChild as HTMLElement, UNITS[k].sheet, 28);
     menuNote(planGrid.parentElement!, planLine(party, plan));
+    const works = siegeCost(party, st.siege);
+    if (works) menuNote(planGrid.parentElement!, `The siege works: ${works} crowns at the march (${m.crowns >= works ? 'paid back for what is not used' : 'more than you have: what the crowns cover goes'}).`);
     // the hold
     const hold = menuSection(menu.body, 'The hold', 'what the scouts saw', 2);
     const intel = menuWell(hold.parentElement!);
@@ -211,8 +213,8 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       const n = posts.reduce((s, p) => s + p.roster.replace(/ /g, '').length, 0);
       intel.append(el('p', '', `${name}: ${n} at ${posts.length} posts`));
     }
-    intel.append(el('p', '', 'The Warpath: 20 more, in by the North Gate while the drums beat'));
-    intel.append(el('p', '', 'Three war drums call reinforcements while they beat'));
+    intel.append(el('p', '', 'The Warpath: 20 more, marching down to the North Gate until its camp is held'));
+    intel.append(el('p', '', 'Three war drums hurry the bands while they beat'));
     hold.parentElement!.append(hold);
     const war = m.war;
     const chief = warchiefOf(war);
@@ -246,7 +248,18 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     for (const n of others) menuNote(hold.parentElement!, `${n.name} keeps to the ${armyById(n.army)?.name.replace(/^The /, '') ?? n.army}: this is not their war.`);
     menuFoot(menu, {
       back: { word: 'back', onClick: () => { menu?.close(); hooks.onBack(); } },
-      primary: { label: short ? `March · ${short} platoon${short === 1 ? '' : 's'} short` : 'March', onClick: () => { st.plan = { ...plan.approaches }; st.roles = { ...plan.roles }; hooks.save(); menu?.close(); hooks.onMarch({ approaches: { ...plan.approaches }, roles: { ...plan.roles }, formations: { ...st.formations } }); } },
+      primary: {
+        label: short ? `March · ${short} platoon${short === 1 ? '' : 's'} short` : 'March',
+        onClick: () => {
+          st.plan = { ...plan.approaches };
+          st.roles = { ...plan.roles };
+          // (the siege works paid now, as far as the crowns go)
+          const siege = buySiege(m, party, st.siege);
+          hooks.save();
+          menu?.close();
+          hooks.onMarch({ approaches: { ...plan.approaches }, roles: { ...plan.roles }, formations: { ...st.formations }, ...(siege.ram || siege.ladders.length ? { siege } : {}) });
+        },
+      },
     });
   };
   // (a platoon's orders in the plan: its way over the river, with each way's cost, and its part)
@@ -264,7 +277,43 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       st.roles = { ...plan.roles };
       hooks.save();
     });
+    // (the siege works it carries: a ladder kit, the ram; paid at the march)
+    const works = menuSection(card.body, 'Siege works', 'paid at the march; what is not used is paid back', 2);
+    const drawWorks = () => {
+      works.replaceChildren();
+      const ladder = !!st.siege?.ladders?.includes(k);
+      const ram = st.siege?.ram === k;
+      menuChoice(works, {
+        title: `A ladder · ${SIEGE_PRICES.ladder}`,
+        icon: '🪜',
+        on: ladder,
+        lines: ['Scale the stone wall: up in four seconds, pushed down by its defenders', ladder ? '✓ Carried' : 'Tap to carry one'],
+        onPick: () => {
+          const list = (st.siege?.ladders ?? []).filter((x) => x !== k);
+          st.siege = { ...st.siege, ladders: ladder ? list : [...list, k] };
+          hooks.save();
+          drawWorks();
+        },
+      });
+      menuChoice(works, {
+        title: `The ram · ${SIEGE_PRICES.ram}`,
+        icon: '⛏',
+        on: ram,
+        lines: ['Batters the gate the platoon assaults; slow, and the archers burn it', ram ? '✓ Pushed by this platoon' : st.siege?.ram ? `With ${heroName(st.siege.ram)} now: tap to take it` : 'Tap to push it'],
+        onPick: () => {
+          st.siege = { ...st.siege, ram: ram ? undefined : k };
+          hooks.save();
+          drawWorks();
+        },
+      });
+    };
+    drawWorks();
     menuFoot(card, { back: { word: 'close' } });
+  };
+  // (" · a ladder, the ram")
+  const worksOf = (k: string): string => {
+    const w = [st.siege?.ladders?.includes(k) ? 'a ladder' : '', st.siege?.ram === k ? 'the ram' : ''].filter(Boolean);
+    return w.length ? ` · ${w.join(', ')}` : '';
   };
   const redraw = () => {
     const scroll = (menu?.body.scrollTop ?? 0);
@@ -358,6 +407,10 @@ export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack():
       if (r.chest) w.append(el('p', '', 'The Conquest chest waits on the cart at camp'));
       w.append(el('p', '', 'A cart of tribute will come to camp each morning'));
     } else w.append(el('p', '', 'The hold is taken again'));
+  }
+  if (r.refund) {
+    const sec = menuSection(menu.body, 'Siege works', undefined, 2);
+    menuWell(sec.parentElement!).append(el('p', '', `The works not used are paid back: ${r.refund} crowns`));
   }
   menuFoot(menu, {
     back: { word: 'back', onClick: () => { menu.close(); hooks.onBack(); } },
