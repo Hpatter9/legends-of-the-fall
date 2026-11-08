@@ -9,8 +9,13 @@ import type { Goal, Need, QuestDef } from './questData';
  *  turns it off for its own file with `setModesHidden(false)` (each test file runs in its own process). */
 let hidden = true;
 export const modesHidden = (): boolean => hidden;
+const listeners: (() => void)[] = [];
+/** Something derived from the flag (the quest list) asks to be told when it changes. */
+export const onModesHiddenChange = (fn: () => void): void => void listeners.push(fn);
 export const setModesHidden = (on: boolean): void => {
+  if (hidden === on) return;
   hidden = on;
+  for (const fn of listeners) fn();
 };
 
 export type HideableMode = 'tower' | 'calamity';

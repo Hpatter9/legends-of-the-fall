@@ -10,6 +10,11 @@ import { ACHIEVEMENTS, checkAchievements, shownAchievements, type AchievementCtx
 import { newRun } from '../src/sim/run';
 import { startedMeta } from '../src/sim/meta';
 import { dueScene } from '../src/sim/sceneRules';
+import { setModesHidden } from '../src/sim/hiddenModes';
+import { CONTENT_HEROES } from '../src/sim/contentHeroes';
+import { questById } from '../src/sim/questData';
+import { questBattleById } from '../src/sim/questBattles';
+import { ALL_HEROES } from '../src/sim/units';
 
 const open = (): ReturnType<typeof startedMeta> => {
   const m = startedMeta(7);
@@ -66,4 +71,51 @@ test('the camp builds no place for either mode, and the page has no other way in
   assert.match(main, /private openStand\(\): void \{\s*if \(!modeShown\('tower'\)\) return;/);
   assert.match(main, /if \(!modeShown\(kind\)\) return;/);
   assert.match(main, /modeShown\('calamity'\) && modeOpen\(this\.meta, 'calamity'\)/);
+});
+
+/** The quests of a chain, the last one first (each `after` the one before). */
+const chainOf = (last: string): string[] => {
+  const out: string[] = [];
+  for (let q = questById(last); q; q = q.after ? questById(q.after) : undefined) out.push(q.id);
+  return out;
+};
+
+test('every hero, tale hero and Mythic has a reachable earning path while the modes are hidden', () => {
+  assert.equal(modesHidden(), true);
+  const content = new Map(CONTENT_HEROES.map((c) => [c.kind, c]));
+  for (const kind of ALL_HEROES) {
+    const c = content.get(kind);
+    // (a hero not earned by a quest is collected by shards from summoning stones, which no mode gates)
+    if (!c) continue;
+    // the hero's last quest is the one whose reward makes it join
+    const lastQuest = QUESTS.find((q) => (q.reward as { hero?: { kind: string } }).hero?.kind === kind);
+    assert.ok(lastQuest, `${kind} has a hero quest`);
+    for (const id of chainOf(lastQuest!.id)) {
+      const q = questById(id)!;
+      assert.ok(questShown(q), `${kind}: ${id} is offered while hidden`);
+      for (const g of objectivesOf(q)) {
+        assert.ok(!['standWave', 'standRoom', 'holdLine', 'calGuardian', 'calClear'].includes(g.kind), `${kind}: ${id} goal ${g.kind}`);
+        if (g.kind === 'battle') assert.ok(questBattleById(g.battle), `${kind}: ${id} battle exists`);
+      }
+    }
+  }
+});
+
+test('the six re-pointed hero chains keep their original goals when the modes return', () => {
+  const taken = ['taleChainsWorth', 'taleThroneSummons', 'taleClockStopped', 'taleEyrieAsh', 'mythic-astrax-trace', 'mythic-nyxara-trace'].map((id) => questById(id)!.goal.kind);
+  assert.ok(!taken.some((k) => ['standWave', 'calGuardian', 'calClear'].includes(k)));
+  setModesHidden(false);
+  try {
+    assert.deepEqual(['taleChainsWorth', 'taleThroneSummons', 'taleClockStopped', 'taleEyrieAsh', 'mythic-astrax-trace', 'mythic-nyxara-trace'].map((id) => questById(id)!.goal.kind), ['standWave', 'standWave', 'calGuardian', 'calClear', 'calGuardian', 'calGuardian']);
+  } finally {
+    setModesHidden(true);
+  }
+  assert.equal(questById('taleChainsWorth')!.goal.kind, 'wavesWon');
+});
+
+test('the re-pointed Mythic chains stay endgame: Legendary or Mythic tier army goals', () => {
+  for (const id of ['mythic-astrax-trace', 'mythic-astrax-rite', 'mythic-nyxara-trace', 'mythic-nyxara-rite']) {
+    const g = questById(id)!.goal as { tier?: number };
+    assert.ok((g.tier ?? 0) >= 3, id);
+  }
 });
