@@ -16,6 +16,11 @@ export interface HeroName {
 }
 
 export const HERO_NAMES: Record<string, HeroName> = {
+  vael: { name: 'Vael', title: 'the Eclipse Sovereign', heritage: 'an ancient eclipsed kingdom' },
+  astrax: { name: 'Astrax', title: 'the Last Star', heritage: 'a celestial dragon' },
+  ilyra: { name: 'Ilyra', title: 'the Unburied Saint', heritage: 'the forgotten battlefields' },
+  orrun: { name: 'Orrun', title: 'the Worldroot', heritage: 'the forest beneath the world' },
+  nyxara: { name: 'Nyxara', title: 'Queen of the Unwritten', heritage: 'the unwritten futures' },
   knight: { name: 'Kwame', title: 'Shield of the Dawn', heritage: 'Ghanaian (Akan)' },
   samurai: { name: 'Kenji', title: 'Sword of the Eastern Sea', heritage: 'Japanese' },
   kunoichi: { name: 'Ayame', title: 'Smoke on the Rooftops', heritage: 'Japanese' },

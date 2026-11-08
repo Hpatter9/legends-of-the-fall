@@ -7,6 +7,26 @@ import type { Element } from './fxRules';
 
 /** Each new skill: the existing skill whose signature it plays, a tint for it (none keeps the painting's own colours), and its element. */
 export const KIT_LOOKS: Readonly<Record<string, { as: string; tint?: number; el: Element }>> = {
+  "Eclipse Cleave": { as: "Hellblade Sweep", el: "dark", tint: 0xffdc87 },
+  "Solar Aegis": { as: "Holy Challenge", el: "light", tint: 0xffdc87 },
+  "Crownfall": { as: "Earthquake", el: "earth", tint: 0xffdc87 },
+  "Kneel Before Night": { as: "Judgement", el: "dark", tint: 0xffdc87 },
+  "Starbreath": { as: "Dragon Breath", el: "fire", tint: 0x9bc9ff },
+  "Star Hunger": { as: "Hex", el: "dark", tint: 0x9bc9ff },
+  "Comet Lance": { as: "Meteor", el: "light", tint: 0x9bc9ff },
+  "Heavenfall": { as: "Starfall", el: "light", tint: 0x9bc9ff },
+  "Saint’s Spear": { as: "Judgement", el: "light", tint: 0xfff0d6 },
+  "Unburied Mercy": { as: "Sanctuary", el: "light", tint: 0xfff0d6 },
+  "Broken Halo": { as: "Holy Light", el: "light", tint: 0xfff0d6 },
+  "Death Denied": { as: "Resurrection", el: "light", tint: 0xfff0d6 },
+  "Rootquake": { as: "Earthquake", el: "earth", tint: 0x94d998 },
+  "Living Sanctuary": { as: "Heart of the Grove", el: "forest", tint: 0x94d998 },
+  "Heartwood": { as: "Call Treant", el: "forest", tint: 0x94d998 },
+  "The World Stands": { as: "Heart of the Grove", el: "forest", tint: 0x94d998 },
+  "Fate Shard": { as: "Hex", el: "dark", tint: 0xbda2ff },
+  "Stolen Tomorrow": { as: "Temporal Surge", el: "lightning", tint: 0xbda2ff },
+  "Unmake": { as: "Temporal Surge", el: "lightning", tint: 0xbda2ff },
+  "Rewrite Fate": { as: "Temporal Surge", el: "lightning", tint: 0xbda2ff },
   // (the nine of the twenty that joined: borrowed looks until their own are painted, docs/notes/heroes-join.md)
   'Impaling Thrust': { as: 'Ravage', tint: 0xff5060, el: 'dark' },
   'Mist Step': { as: 'Shadow Step', tint: 0xd04060, el: 'dark' },

@@ -26,6 +26,11 @@ export interface AwakenPassive {
 
 /** The passive of every hero kind. */
 export const PASSIVES: Readonly<Record<string, AwakenPassive>> = {
+  vael: { name: 'Eclipse Riposte', ability: 'parryBlow', text: 'Incoming blows can briefly strengthen his guard' },
+  astrax: { name: 'Stellar Scales', ability: 'scaleFlare', text: 'Attackers can be scorched by the stellar core' },
+  ilyra: { name: 'The Unfinished Prayer', ability: 'prayer', text: 'Periodically mends the weakest ally' },
+  orrun: { name: 'Ancient Sap', ability: 'growthPulse', text: 'A pulse of growth periodically mends an ally' },
+  nyxara: { name: 'Abandoned Futures', ability: 'witherHex', text: 'Her blows can leave a withering curse' },
   knight: { name: 'Oathbound', ability: 'unyielding', text: 'Now and then the blows it takes are halved for a moment' },
   samurai: { name: 'Thousand Cuts', ability: 'iaijutsu', text: 'A crit makes the foe bleed' },
   kunoichi: { name: 'Smoke Step', ability: 'shadowVeil', text: 'Starts each fight unseen' },

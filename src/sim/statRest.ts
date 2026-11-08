@@ -1,3 +1,4 @@
+import { isMythic } from './mythicRules';
 // STATS batch 6, "The rest" (docs/notes/stats-6.md; the design is docs/notes/rpg-stats-design.md, sections 3.1, 3.4, 6 and 7). What the
 // scores do besides power, AC, to hit and saves:
 //
@@ -66,7 +67,7 @@ export function rosterMean(tag: string, level: number, f: (p: StatProfile, mods:
   const key = `${tag}|${level}`;
   let m = means.get(key);
   if (m === undefined) {
-    const ps = (kinds ?? Object.keys(STAT_PROFILES)).map((k) => STAT_PROFILES[k]).filter(Boolean);
+    const ps = (kinds ?? Object.keys(STAT_PROFILES)).filter(k => !isMythic(k)).map((k) => STAT_PROFILES[k]).filter(Boolean);
     m = ps.reduce((n, p) => {
       const s = scoresAtLevel(p, level);
       const mods = Object.fromEntries(ABILITIES.map((a) => [a, modOf(s[a])])) as Record<Ability, number>;

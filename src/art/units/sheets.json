@@ -5684,5 +5684,270 @@
   "facesRight": true,
   "lies": true,
   "front": "hero_res_geomancer"
+ },
+ "mythic_vael": {
+  "w": 180,
+  "h": 130,
+  "figure": 96,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true,
+  "rear": "mythic_vael_back"
+ },
+ "mythic_vael_back": {
+  "w": 180,
+  "h": 130,
+  "figure": 96,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true
+ },
+ "mythic_astrax": {
+  "w": 180,
+  "h": 150,
+  "figure": 112,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true,
+  "rear": "mythic_astrax_back"
+ },
+ "mythic_astrax_back": {
+  "w": 180,
+  "h": 150,
+  "figure": 112,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true
+ },
+ "mythic_ilyra": {
+  "w": 180,
+  "h": 124,
+  "figure": 96,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true,
+  "rear": "mythic_ilyra_back"
+ },
+ "mythic_ilyra_back": {
+  "w": 180,
+  "h": 124,
+  "figure": 96,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true
+ },
+ "mythic_orrun": {
+  "w": 180,
+  "h": 146,
+  "figure": 112,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true,
+  "rear": "mythic_orrun_back"
+ },
+ "mythic_orrun_back": {
+  "w": 180,
+  "h": 146,
+  "figure": 112,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true
+ },
+ "mythic_nyxara": {
+  "w": 180,
+  "h": 124,
+  "figure": 96,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true,
+  "rear": "mythic_nyxara_back"
+ },
+ "mythic_nyxara_back": {
+  "w": 180,
+  "h": 124,
+  "figure": 96,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "facesRight": true,
+  "lies": true
  }
 }

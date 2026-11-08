@@ -1,3 +1,4 @@
+import { mythicKits } from './mythicCombat';
 // The heroes' kits (and the bosses'), King God Castle style: a skill that fires on its own when its charge fills (blows dealt and blows
 // taken charge it, and so does time), and a passive that is always on. A kit is data (`KITS`) plus one `cast` function
 // for the skill; the rules that read it are generic. The fight (`battle.ts`) calls `tryCast` when a hero is free,
@@ -1642,7 +1643,7 @@ KITS.forgeTitan = {
 
 // (FOE-STYLES: the common foes' and the armies' kinds' own kits, each its own way of fighting, `foeKits.ts`; the yokai witch and seer, the iron
 // golem above are its starting points)
-Object.assign(KITS, foeKits(KITS));
+Object.assign(KITS, foeKits(KITS), mythicKits());
 
 // Every other hero's ultimate (`ultimates.ts`), unlocked at `ULT_LEVEL`; the first eight's are retuned there.
 const OWN_ULTIMATES = new Map<string, Skill>(Object.entries(KITS).filter(([, k]) => k.ultimate).map(([kind, k]) => [kind, k.ultimate!]));
@@ -1946,7 +1947,7 @@ export const rageOf = (u: Unit): number => {
   const r = (kitOf(u)?.passive.rage ?? 0) + tal(u, 'rage');
   return r ? 1 + r * (1 - u.hp / u.maxHp) : 1;
 };
-export const pierceOf = (by: Unit): number => kitOf(by)?.passive.pierce ?? 0;
+export const pierceOf = (by: Unit): number => (kitOf(by)?.passive.pierce ?? 0) + (by.def === 'vael' && by.mythic?.eclipsed ? 12 : 0);
 /** How much more a pack's blow deals (FOE-STYLES' `gang`): a share for each other ally of the striker's beside the target, up to three. */
 export function gangOf(b: Battle, by: Unit, to: Unit): number {
   const g = kitOf(by)?.passive.gang;

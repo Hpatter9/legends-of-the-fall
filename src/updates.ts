@@ -27,6 +27,17 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.397.0',
+    date: '2026-11-08',
+    title: 'Five legends beyond the veil',
+    notes: [
+      'Five Mythic heroes wait behind hidden endgame quest chains and difficult trials. They never appear in ordinary summons.',
+      'Each brings powerful abilities, painted portraits, matching pixel battle animations and resting tavern artwork.',
+      'Only one Mythic may fight in a squad, including Last Stand. Earned Mythics arrive at level 30 with their full kit ready.',
+      'Secret progress and all new artwork remain available offline.',
+    ],
+  },
+  {
     version: '0.396.0',
     date: '2026-11-08',
     title: 'A livelier tavern',

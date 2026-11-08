@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, atkOf, startBattle } from '../src/sim/battle';
@@ -59,12 +60,13 @@ const MAIN_MEAN: Readonly<Record<number, number>> = { 1: 790.8, 4: 1264.5, 8: 18
 
 test("the mean hero's power at every level is within 1% of main's", () => {
   for (const [level, main] of Object.entries(MAIN_MEAN)) {
-    const mean = ALL_HEROES.reduce((n, k) => n + powerOf(k, gradeBoost(1, 0, Number(level))), 0) / ALL_HEROES.length;
+    const ordinary = ALL_HEROES.filter(k => !isMythic(k));
+    const mean = ordinary.reduce((n, k) => n + powerOf(k, gradeBoost(1, 0, Number(level))), 0) / ordinary.length;
     assert.ok(Math.abs(mean / main - 1) <= 0.01, `level ${level}: ${mean.toFixed(1)} against main's ${main}`);
   }
   // (and at every level from 1 to 100 the curve's trim keeps the mean shares at 1)
   for (let level = 1; level <= 100; level++) {
-    const all = ALL_HEROES.map((k) => statMults(k, { level }));
+    const all = ALL_HEROES.filter(k => !isMythic(k)).map((k) => statMults(k, { level }));
     for (const key of ['hp', 'blow', 'cast'] as const) {
       const mean = all.reduce((n, m) => n + m[key], 0) / all.length;
       assert.ok(Math.abs(mean - 1) < 1e-9, `level ${level} ${key}: ${mean}`);

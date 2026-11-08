@@ -1,3 +1,4 @@
+import { mythicHeroKits } from '../mythicCombat';
 // The 45 heroes' kits (COMBAT-002, docs/notes/hero-kits.md section 6): each hero's pool, skill 1 and skill 2, with costs and strengths. Every hero's
 // old skill stays (the same object as in `KITS`, so its painting, its tier skills and the foes that borrow it are untouched): as skill 1 for 43
 // heroes, and as skill 2 for the Cleric and the Wanderer, who gain a new skill 1. Each hero gains one new skill. The ultimates are in `ultimates.ts`.
@@ -431,6 +432,6 @@ export function HERO_TABLE(): Record<string, HeroKit> {
     k.slots.push(s3);
   }
   // (the heroes that joined from the twenty keep their kits in their own rows, `kits/coming.ts`)
-  Object.assign(kits, joinedHeroKits());
+  Object.assign(kits, joinedHeroKits(), mythicHeroKits());
   return kits;
 }

@@ -58,6 +58,10 @@ function scene(kind: string, close: boolean): { b: Battle; me: Unit } {
   dead.alive = false;
   dead.hp = 0;
   dead.diedAt = b.t - 1000;
+  // Conditional Mythic skills need their authored triggers, like the older marks and rewind above.
+  if (kind === 'astrax') a.shield = { hp: 100, until: b.t + 3000 };
+  if (kind === 'orrun') me.mythic = { wounds: 100 };
+  if (kind === 'nyxara') me.mythic = { memories: [{ at: b.t - 3500, allies: [{ id: ally.id, hp: ally.maxHp, u: 4, v: 8 }] }] };
   me.kx = { stored: 1000 };
   me.charge = CHARGE_MAX;
   me.charge2 = CHARGE_MAX;

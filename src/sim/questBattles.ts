@@ -28,6 +28,8 @@ import { QUEST_BATTLES } from './questBattleData';
 import { CHAIN_BATTLES } from './chainBattleData';
 import { TALE_BATTLES } from './taleBattleData';
 import { LOST_BATTLES } from './lostBattleData';
+import { MYTHIC_BATTLES } from './mythicQuests';
+import { isMythic, validMythicSquad } from './mythicRules';
 import { NEW_BATTLES } from './questBattleData/newBattles';
 
 /** The side stream a quest battle's seed is drawn from. */
@@ -64,6 +66,8 @@ export interface QuestBattle {
   cast: readonly CastSlot[];
   /** Every hero fielded must fit this (the warlock's audit: only spellcasters). */
   only?: With;
+  /** Secret trials must be earned without another Mythic. */
+  noMythics?: boolean;
   /** At most this many heroes fielded (a small room). */
   most?: number;
   /** QUESTS-3 (Q5): the battle's own rules: protect a guest, survive, race, spare a foe, and mutators (`questRules.ts`). */
@@ -77,7 +81,7 @@ export interface QuestBattle {
 
 // (EIDOLON-CHAINS: the chains' own battles are found by id too; no quest in the log opens them, a chain's part does. SECRET-HEROES: the
 // hero quests' battles, each opened by its tale's last part as any battle quest is)
-const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES, ...NEW_BATTLES].map((q) => [q.id, q]));
+const BY_ID = new Map([...QUEST_BATTLES, ...CHAIN_BATTLES, ...TALE_BATTLES, ...LOST_BATTLES, ...NEW_BATTLES, ...MYTHIC_BATTLES].map((q) => [q.id, q]));
 export const questBattleById = (id: string): QuestBattle | undefined => BY_ID.get(id);
 export { QUEST_BATTLES, CHAIN_BATTLES, TALE_BATTLES, LOST_BATTLES, NEW_BATTLES };
 
@@ -155,7 +159,7 @@ export function castWords(qb: QuestBattle, cast: readonly string[]): string {
   const rule = qb.only?.traits ? ` · only ${qb.only.traits.map((t) => TRAITS[t]?.name ?? t).join(', ').replace(/, ([^,]*)$/, ' or $1')} heroes` : '';
   const most = qb.most !== undefined ? ` · ${qb.most} heroes at most` : '';
   const rules = rulesWords(qb.rules, (k) => UNITS[k]?.name ?? k).map((r) => ` · ${r}`).join('');
-  return who + rule + most + rules;
+  return (cast.length ? who : 'Choose your own company') + rule + most + rules + (qb.noMythics ? ' · No Mythics' : '');
 }
 
 /** Why the fight cannot begin yet, in words for the deploy line ("Place Kenji to begin"), or null. */
@@ -163,21 +167,23 @@ export function notReadyWords(why: NotReady | null, cast: readonly string[]): st
   if (!why) return null;
   if (why.kind === 'none') return `Place ${andList(cast.map(heroName))} to begin`;
   if (why.kind === 'missing') return `Place ${andList(why.heroes.map(heroName))} to begin`;
+  if (why.kind === 'mythic') return 'This trial must be earned without a Mythic.';
   if (why.kind === 'only') return `Only spellcasters fight here: take ${andList(why.heroes.map(heroName))} off`;
   return `${why.most} heroes at most in here: take one off`;
 }
 
 /** Whether a hero kind may fight in a battle (its rule, if it has one). */
-export const mayFight = (qb: QuestBattle, kind: string): boolean => !qb.only || fits(qb.only, kind);
+export const mayFight = (qb: QuestBattle, kind: string): boolean => !(qb.noMythics && isMythic(kind)) && (!qb.only || fits(qb.only, kind));
 
 /** Whether a hero kind fits a rider. */
 const fits = (w: With, kind: string): boolean => !!w.heroes?.includes(kind) || !!w.traits?.some((t) => traitsOf(kind).includes(t));
 
 /** Why the fight cannot begin yet, from the hero kinds on the board: a required hero missing (by kind), a hero who does not fit the
  *  battle's rule, or too many fielded. Null when it may begin. */
-export type NotReady = { kind: 'missing'; heroes: string[] } | { kind: 'only'; heroes: string[] } | { kind: 'most'; most: number } | { kind: 'none' };
+export type NotReady = { kind: 'missing'; heroes: string[] } | { kind: 'only'; heroes: string[] } | { kind: 'most'; most: number } | { kind: 'none' } | { kind: 'mythic' };
 export function notReady(qb: QuestBattle, cast: readonly string[], placed: readonly string[]): NotReady | null {
   if (!placed.length) return { kind: 'none' };
+  if (!validMythicSquad(placed) || (qb.noMythics && placed.some(isMythic))) return { kind: 'mythic' };
   const missing = cast.filter((k) => !placed.includes(k));
   if (missing.length) return { kind: 'missing', heroes: missing };
   if (qb.only) {

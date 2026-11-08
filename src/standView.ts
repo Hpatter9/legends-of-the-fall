@@ -1,3 +1,4 @@
+import { mythicFits, MYTHIC_LIMIT_WORDS } from './sim/mythicRules';
 // The Last Stand's page (`docs/notes/last-stand.md`): the big field drawn as one baked picture with the fighters on it, the camera
 // (the player's own: it starts on the king, a finger pans it and two pinch it, in whole-number steps of pixels, and it goes back
 // to the king only when the crown button is tapped; STAND-003), the pause button and its sheet of the heroes, the top bar (wave, the king's health, gold), the countdown of the break with the arrows of the edges the next
@@ -494,10 +495,12 @@ export class StandView {
         if (UNITS[kind]?.summon) continue;
         const b = el('button', chosen.includes(kind) ? 'on' : '');
         b.append(portrait(lookSheet(kind, heroRank(m, kind), 1), 40, 1), el('span', '', `${chosen.includes(kind) ? '✓ ' : ''}${UNITS[kind].name}`), el('em', '', `Lv ${levelOfKind(m, kind)}`));
+        b.title = !chosen.includes(kind) && !mythicFits(chosen, kind) ? MYTHIC_LIMIT_WORDS : '';
+        (b as HTMLButtonElement).disabled = !chosen.includes(kind) && !mythicFits(chosen, kind);
         b.addEventListener('click', () => {
           const i = chosen.indexOf(kind);
           if (i >= 0) chosen.splice(i, 1);
-          else if (chosen.length < 8) chosen.push(kind);
+          else if (chosen.length < 8 && mythicFits(chosen, kind)) chosen.push(kind);
           draw();
         });
         grid.append(b);

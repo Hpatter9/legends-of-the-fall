@@ -1,3 +1,4 @@
+import { welcomeMythic } from './mythicProgression';
 // Quests (batch 1 of the quests and Eidolons design, `docs/notes/quests-summons-design.md`, and batch 1b: repeats, drops, the hundred
 // and thirty quests and their givers): the givers' offers, taking one, dropping one, the goals counted after each settled fight, and
 // the hand-in that pays. Pure rules: no Pixi, no DOM, no clock: the page passes in the date (yyyymmdd, `todayKey()`), as the daily
@@ -442,6 +443,7 @@ export function payReward(m: Meta, r: Reward, id: string, times = 0, stones = tr
     if (m.unlocked.includes(r.hero.kind)) payReward(m, r.hero.instead, `${id}:instead`, times, stones);
     else {
       m.unlocked.push(r.hero.kind);
+      welcomeMythic(m, r.hero.kind);
       delete m.unlock?.[r.hero.kind];
     }
   }

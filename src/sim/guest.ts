@@ -1,3 +1,4 @@
+import { isMythic } from './mythicRules';
 // The guest hero (GUEST-HERO, `docs/notes/guest-hero.md`). The owner's ask: "Sometimes you can hire a new hero from the store you randomly
 // come by. That hero should be allowed as a guest hero and be allowed as the 6th on the field, making them quite valuable." The passing cart
 // between an army's or the daily's waves (MID-EVENTS, `market.ts`) now and then has a guest for hire: a hero from outside the party (one the
@@ -48,7 +49,7 @@ export const guestsHere = (run: Run): boolean => !run.tower && (run.mode?.kind =
 export function guestKinds(run: Run): string[] {
   // (SECRET-HEROES: never a hero still secret to the save)
   const party = new Set([...(run.pool ?? []), ...run.roster.map((h) => h.kind), ...(run.hide ?? [])]);
-  return ALL_HEROES.filter((k) => !!UNITS[k] && !UNITS[k].summon && !party.has(k));
+  return ALL_HEROES.filter((k) => !isMythic(k) && !!UNITS[k] && !UNITS[k].summon && !party.has(k));
 }
 
 /** A guest's price at the cart: `GUEST_HIRES` sellswords to the nearest 5, at least `GUEST_FLOOR` (`_stage` kept for the cart's other

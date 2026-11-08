@@ -5,6 +5,7 @@
 import { ELITE_FOES } from './eliteFoes';
 import { CAL_BOSS_FOES } from './calamityBosses';
 import { FOES } from './foes';
+import { MYTHIC_KINDS } from './mythicRules';
 
 export type Side = 'hero' | 'foe';
 export type Shot = 'arrow' | 'bone' | 'fire' | 'bolt' | 'holy' | 'leaf' | 'curse' | 'bullet';
@@ -52,6 +53,11 @@ export const SPLASH_SHARE = 0.5;
 
 export const UNITS: Record<string, UnitDef> = {
   ...FOES,
+  vael: { id: 'vael', name: 'Eclipse Sovereign', side: 'hero', sheet: 'mythic_vael', scale: 0.625, hp: 370, atk: 37, def: 11, range: 1, moveMs: 670, atkMs: 1150, jump: 2, role: 'Mythic commander: builds an eclipse, sunders armour and shields the squad' },
+  astrax: { id: 'astrax', name: 'Last Star', side: 'hero', sheet: 'mythic_astrax', scale: 0.535714, hp: 340, atk: 43, def: 7, range: 4, moveMs: 850, atkMs: 1900, jump: 9, flies: true, shot: 'fire', splash: true, role: 'Mythic dragon: consumes shields and burns clustered foes with starfire' },
+  ilyra: { id: 'ilyra', name: 'Unburied Saint', side: 'hero', sheet: 'mythic_ilyra', scale: 0.625, hp: 330, atk: 31, def: 9, range: 2, moveMs: 640, atkMs: 1100, jump: 2, role: 'Mythic healer: earns mercy through combat and denies death once a battle' },
+  orrun: { id: 'orrun', name: 'Worldroot', side: 'hero', sheet: 'mythic_orrun', scale: 0.535714, hp: 530, atk: 26, def: 14, range: 1, moveMs: 1100, atkMs: 1600, jump: 2, role: 'Mythic guardian: roots a sanctuary, stores wounds and shelters the squad' },
+  nyxara: { id: 'nyxara', name: 'Fateweaver', side: 'hero', sheet: 'mythic_nyxara', scale: 0.625, hp: 250, atk: 29, def: 5, range: 4, moveMs: 660, atkMs: 1500, jump: 3, shot: 'curse', role: 'Mythic tactician: steals tomorrow and rewrites allies’ health and positions' },
   ...ELITE_FOES,
   ...CAL_BOSS_FOES,
   knight: { id: 'knight', name: 'Knight', side: 'hero', sheet: 'hero_soldier', scale: 0.521, hp: 300, atk: 11, def: 10, range: 1, moveMs: 760, atkMs: 1100, jump: 2, role: 'A wall of a man: draws the foes and bashes them back' },
@@ -161,6 +167,9 @@ export const UNITS: Record<string, UnitDef> = {
   boneArcher: { id: 'boneArcher', name: 'Skeleton Archer', side: 'foe', sheet: 'skeleton_archer', scale: 0.79, hp: 195, atk: 23, def: 3, range: 4, moveMs: 700, atkMs: 1400, jump: 2, shot: 'bone', role: 'Bone arrows, backs off' },
 };
 
+const MYTHIC_ASPECTS: Record<string, string> = { vael: 'Crown Without Dawn', astrax: 'Heart of the Fallen Sky', ilyra: 'Unfinished Farewell', orrun: 'Heart Beneath the Roots', nyxara: 'Unwritten Presence' };
+for (const kind of MYTHIC_KINDS) UNITS[`trial_${kind}`] = { ...UNITS[kind], id: `trial_${kind}`, name: MYTHIC_ASPECTS[kind], side: 'foe' };
+
 /** The heroes whose kits are in but who wait for their battle sheets before they join `ALL_HEROES` (a fight can field them; the roster,
  *  the page and the unlocks cannot). Each moves into `ALL_HEROES` with its sheets (docs/notes/twenty-heroes.md). */
 export const COMING_HEROES: readonly string[] = ['banneret', 'astralSphinx', 'mirageDancer', 'plagueDoctor', 'bombardier', 'astrologer', 'inquisitor', 'seraph', 'corsairSurgeon', 'harpooner', 'seaReaver'];
@@ -171,4 +180,4 @@ export const TWENTY_HEROES: readonly string[] = ['vampireLord', 'hemomancer', 'n
 /** The heroes on the bench, in order. */
 export const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'] as const;
 /** Every hero there is (the old starting five first; a new save unlocks a starter pack of three, and more come from recruiting). */
-export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander', 'paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock', 'illusionist', 'gunslinger', 'shambler', 'rifleBot', 'mercenary', 'mummy', 'buccaneer', 'wolfBard', 'beastmaster', 'kraken', 'lancer', 'reaper', 'timeWitch', 'arcBlade', 'dreadPirate', 'siegeBot', 'priestess', 'dragoon', 'juggernaut', 'sage', 'demonSwordsman', 'tyrant', 'vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'geomancer', 'bellWarden', 'falconer'];
+export const ALL_HEROES: readonly string[] = [...HEROES, 'peasant', 'ninjaMonk', 'wanderer', 'lightningMage', 'kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'samuraiCommander', 'paladin', 'cleric', 'druid', 'barbarian', 'ranger', 'warlock', 'illusionist', 'gunslinger', 'shambler', 'rifleBot', 'mercenary', 'mummy', 'buccaneer', 'wolfBard', 'beastmaster', 'kraken', 'lancer', 'reaper', 'timeWitch', 'arcBlade', 'dreadPirate', 'siegeBot', 'priestess', 'dragoon', 'juggernaut', 'sage', 'demonSwordsman', 'tyrant', 'vampireLord', 'hemomancer', 'nightstalker', 'bloodGargoyle', 'dhampir', 'warDrummer', 'geomancer', 'bellWarden', 'falconer', ...MYTHIC_KINDS];

@@ -139,6 +139,7 @@ export const TRAITS: Record<string, Trait> = {
 
 /** Each hero's origin and class. Every trait has two to four heroes. */
 export const HERO_TRAITS: Record<string, readonly [string, string]> = {
+  vael: ['royal', 'guardian'], astrax: ['arcane', 'arcanist'], ilyra: ['holy', 'support'], orrun: ['wild', 'guardian'], nyxara: ['arcane', 'arcanist'],
   samurai: ['samurai', 'blade'],
   kunoichi: ['samurai', 'trickster'],
   archer: ['samurai', 'marksman'],

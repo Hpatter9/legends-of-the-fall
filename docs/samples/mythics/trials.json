@@ -1,0 +1,122 @@
+[
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-vael",
+    "level": 75,
+    "wins": 0,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-astrax",
+    "level": 75,
+    "wins": 1,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-ilyra",
+    "level": 75,
+    "wins": 3,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-orrun",
+    "level": 75,
+    "wins": 2,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-nyxara",
+    "level": 75,
+    "wins": 3,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-vael",
+    "level": 90,
+    "wins": 2,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-astrax",
+    "level": 90,
+    "wins": 3,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-ilyra",
+    "level": 90,
+    "wins": 3,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-orrun",
+    "level": 90,
+    "wins": 3,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  },
+  {
+    "build": "rank 5, max castle, seven Legendary level-20 items; Auto talents and level-5 skills; Auto Steel-school king spells; no Mythics",
+    "trial": "mythic-nyxara",
+    "level": 90,
+    "wins": 3,
+    "tries": 3,
+    "ended": [
+      4,
+      4,
+      4
+    ]
+  }
+]

@@ -263,3 +263,13 @@ export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms:
 
 /** A foe this big (its full health) that dies is a big kill: a burst, a white flash, a hard shake. */
 export const BIG_FOE_HP = 400;
+
+// Mythic ultimate wind-ups reuse the existing painted effects; their full
+// signature plans and individual tints live in kitLooks.ts.
+Object.assign(SKILL_FX, {
+  'Kneel Before Night': SKILL_FX.Judgement,
+  Heavenfall: SKILL_FX.Starfall,
+  'Death Denied': SKILL_FX.Resurrection,
+  'The World Stands': SKILL_FX['Heart of the Grove'],
+  'Rewrite Fate': SKILL_FX['Temporal Surge'],
+});

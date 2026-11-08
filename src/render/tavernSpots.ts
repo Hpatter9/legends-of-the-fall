@@ -119,6 +119,11 @@ const S = (x: number, y: number, facing: 1 | -1, seat: SeatKind = 'none', depth 
 /** A spot for every hero (`ALL_HEROES`): the starting five sit along the bar in the first room so a young tavern still looks lived-in. What each
  *  does there, and why that hero at that spot, is `LIFE` in `tavernLife.ts`. */
 export const SPOTS: Record<string, Spot> = {
+  vael: S(234, 134, 1),
+  astrax: S(1034, 134, 1),
+  ilyra: S(114, 134, 1),
+  orrun: S(438, 134, 1),
+  nyxara: S(618, 134, 1),
   // ---- the bar room ----
   // at the bar
   archer: S(180, 220, 1, 'stool'),

@@ -595,6 +595,10 @@ The tavern background (`src/art/ui/tavern-hearth.png`) is original AI-generated 
 
 The cozy seated tavern extension adds 108 original OpenAI-generated resting hero illustrations (two poses for each of the 54 existing hero identities), an empty cozy room painting and two shared table props. Sources, approved studies and corrected transparency/identity variants are retained in `art-source/tavern/`. These paintings reference the existing credited hero designs; they do not replace the battle sprites or roster portraits. `tools/tavern/pack.py` imports padded transparent WebP cutouts into `src/art/tavern/guests/`; all are precached for offline use.
 
+### Five Mythic heroes
+
+Vael, Astrax, Ilyra, Orrun and Nyxara are original character designs and artwork generated with OpenAI image generation for this game. Painted portraits (`src/art/heroes/{vael,astrax,ilyra,orrun,nyxara}*.webp`), ten pixel battle sheets (`src/art/units/mythic_*.png`) and ten resting tavern cutouts (`src/art/tavern/guests/{vael,astrax,ilyra,orrun,nyxara}-*.webp`) retain their sources under `art-source/mythics/`. The battle sprites reference the game's existing hero-remake lineup for its pixel style, proportions, shading and paired facings; the tavern paintings reference the existing credited seated knight. `tools/mythics/pack.py` packages complete drawn poses using the existing hero extraction workflow, shared nearest-neighbour scale and alpha extraction, without recolouring or inventing animation frames. Mythic skill icons and effects reuse the game's existing credited painted motifs and signatures. All runtime assets are included in offline caching.
+
 ## Living tavern illustrations
 
 OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper tables and individual off-duty activity illustrations for all 54 heroes. Generated against the existing credited hero identities and owner-approved tavern concept. Original sources, briefs and packing metadata: `art-source/tavern/living/`; runtime cutouts: `src/art/tavern/guests/*-activity.webp` and `living-*.webp`. These replace the uniform armchair composition on the Heroes page.

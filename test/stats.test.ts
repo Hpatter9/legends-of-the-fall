@@ -13,7 +13,7 @@ const row = (s: Scores) => ABILITIES.map((a) => s[a]).join(' ');
 const p = (kind: string) => STAT_PROFILES[kind];
 
 test('every hero has a profile, and only heroes do', () => {
-  assert.equal(ALL_HEROES.length, 54);
+  assert.equal(ALL_HEROES.length, 59);
   assert.deepEqual(Object.keys(STAT_PROFILES).sort(), [...ALL_HEROES].sort());
 });
 

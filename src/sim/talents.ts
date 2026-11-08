@@ -1,3 +1,4 @@
+import { MYTHIC_KINDS } from './mythicRules';
 // Hero talents: a small tree for every hero kind, kept per kind in the meta like levels and shards. Four cheap stat nodes
 // (tier 1), a choice between two changes to the hero's own skill (tier 2) and a capstone choice between two strong, flavourful
 // options (tier 3): eight nodes, of which a hero takes at most seven (one of each pair). A node costs its tier in points (1, 2,
@@ -811,8 +812,24 @@ export const TREES: Readonly<Record<string, TalentTree>> = {
   ),
 };
 
+// Mythics retain the same talent progression and gear rules as the other heroes.
+for (const kind of MYTHIC_KINDS) {
+  (TREES as Record<string, TalentTree>)[kind] = tree(kind,
+    [['Ancient Heart', 'emerald', { hp: HP }], ['Mythic Might', 'sword', { atk: ATK }], ['Timeless Ward', 'plate', { def: 1 }], ['Deep Resolve', 'orb', { charge: 0.1 }]],
+    [{ name: 'Gathering Power', icon: 'orb', text: 'Skills hit and heal 30% harder.', tal: { pow: 0.3 } }, { name: 'Unbroken Will', icon: 'aegis', text: 'After skill 2 or an ultimate, gain a shield worth 10% of maximum health.', tal: { castShield: 0.1 } }],
+    [{ name: 'Legend Unbound', icon: 'circlet', text: 'Ultimates are 25% stronger.', tal: { ultPow: 0.25 } }, { name: 'Deathless Memory', icon: 'emerald', text: 'Gain 12% health and 8% resistance.', stats: { hp: 0.12, resist: 0.08 } }]);
+}
+
 // ---- the deep rows (tiers 4 to 7), added to every tree ----
 for (const [kind, t] of Object.entries(TREES)) t.nodes.push(...deepNodes(kind, t.nodes.filter((n) => n.tier === 2), ALL_HEROES.indexOf(kind), ab, statText));
+// A remembered health value is exact; Nyxara improves the frequency of Rewrite
+// rather than claiming a strength increase that cannot change that memory.
+for (const node of TREES.nyxara.nodes) if (node.tal?.ultPow) {
+  node.tal.ultRate = (node.tal.ultRate ?? 0) + node.tal.ultPow;
+  delete node.tal.ultPow;
+  node.text = `Rewrite Fate charges ${Math.round(node.tal.ultRate * 100)}% faster.`;
+}
+
 
 /** The twenty coming heroes' trees (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`), with their deep rows as theirs will be once they join (each one's place after the 45). */
 export const COMING_TREES: Readonly<Record<string, TalentTree>> = {

@@ -1,3 +1,4 @@
+import { isMythic } from '../src/sim/mythicRules';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
@@ -23,14 +24,14 @@ const started = (kinds: string[]): Battle => {
 const hero = (b: Battle, kind: string) => b.units.find((x) => x.def === kind)!;
 
 // (two to five: the owner's call when the twenty were planned, docs/notes/twenty-heroes.md; it was two to four)
-test('every hero has an origin and a class, and every trait has two to five heroes', () => {
+test('every hero has an origin and a class, and every trait has two to five ordinary heroes', () => {
   for (const k of ALL_HEROES) {
     const [o, c] = HERO_TRAITS[k];
     assert.equal(TRAITS[o].kind, 'origin');
     assert.equal(TRAITS[c].kind, 'class');
   }
   for (const t of Object.keys(TRAITS)) {
-    const n = membersOf(t).length;
+    const n = membersOf(t).filter(k => !isMythic(k)).length;
     assert.ok(n >= 2 && n <= 5, `${t} has ${n}`);
   }
 });
