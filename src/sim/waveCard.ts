@@ -84,7 +84,7 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
   for (const w of m.wear ?? []) out.push({ kind: 'wear', text: w });
-  if (m.waiting) out.push({ kind: 'pack', text: m.waiting > 1 ? `${m.waiting} finds wait in the pack` : 'A find waits in the pack' });
+  if (m.waiting) out.push({ kind: 'pack', text: m.waiting > 1 ? `${m.waiting} finds wait in the satchel` : 'A find waits in the satchel' });
   for (const s of m.study ?? []) if (!s.learned) out.push({ kind: 'study', text: s.text });
   return out;
 }
