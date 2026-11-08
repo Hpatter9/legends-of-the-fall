@@ -22,6 +22,7 @@ import { startAssault, stepAssault } from './sim/assault/assault';
 import { AssaultSim } from './assaultSim';
 import type { HoldEvent } from './sim/assault/holdTypes';
 import { breakFort } from './sim/assault/forts';
+import { breachWall, callVolley, wallStretch } from './sim/assault/works';
 import { benchInput } from './sim/assault/benchInput';
 import { TICK_MS, type Battle, type BattleEvent } from './sim/battle';
 import { UNITS } from './sim/units';
@@ -252,6 +253,32 @@ export async function startAssaultBench(): Promise<void> {
     }
   };
 
+  /** The heavy works' looks (phase 2): a volley's or a keg's blast, a barrel lifted from its tile. */
+  const heavy = (hold: readonly HoldEvent[]) => {
+    const w = b.board.w;
+    for (const e of hold)
+      if (e.kind === 'volley') view.blast(e.tiles.reduce((x, i) => x + (i % w), 0) / e.tiles.length, e.tiles.reduce((x, i) => x + Math.floor(i / w), 0) / e.tiles.length, true);
+      else if (e.kind === 'keg' && e.state === 'carried') view.retile([e.tile]);
+      else if (e.kind === 'keg' && e.state === 'boom') view.blast(e.tile % w, Math.floor(e.tile / w), true);
+  };
+  // (for the screenshots of the heavy works, with `&worker=0`: a volley called on a tile, a stretch of the stone wall broken, a keg set)
+  (window as unknown as { __benchWorks: (what: string, u: number, v: number) => void }).__benchWorks = (what, u, v) => {
+    const h = b.field?.hold;
+    if (!h) return;
+    const w = b.board.w;
+    if (what === 'volley') {
+      h.siege.trebReady = 0;
+      callVolley(b, u, v);
+    } else if (what === 'wall') {
+      const st = wallStretch(b, v * w + u);
+      if (st) {
+        breachWall(b, h, st.tiles);
+        view.breach(st.tiles);
+      }
+    } else if (what === 'keg') h.siege.keg = { platoon: 0, at: v * w + u, target: v * w + u, lit: b.t + 60_000 };
+    else if (what === 'carry') h.siege.keg = { platoon: 0 };
+  };
+
   const frame = (now: number) => {
     requestAnimationFrame(frame);
     const dt = Math.min(250, now - last);
@@ -284,7 +311,10 @@ export async function startAssaultBench(): Promise<void> {
           n++;
         }
       else if (sim) {
-        for (const tk of sim.pump(Math.min(8, Math.floor(acc / TICK_MS)))) batches.push(fieldEvents(b, tk.ev, tk.hold));
+        for (const tk of sim.pump(Math.min(8, Math.floor(acc / TICK_MS)))) {
+          batches.push(fieldEvents(b, tk.ev, tk.hold));
+          heavy(tk.hold);
+        }
         for (const ms of sim.copyMs.splice(0)) {
           copyMs.push(ms);
           if (copyMs.length > TICK_WINDOW) copyMs.shift();

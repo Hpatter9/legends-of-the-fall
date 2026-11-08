@@ -23,13 +23,15 @@ export interface MirrorMsg {
   phase: Battle['phase'];
   units: Unit[];
   spells: Battle['spells'];
+  /** The powder barrels still standing (a sapper lifts them). */
+  barrels?: number[];
   pause?: number;
   /** The hold's changing parts (its plain data, without the blueprint, the input, the stakes or the order log). */
   hold: Partial<HoldState>;
   groups: FieldGroup[];
   /** The field records of fighters new since the last batch. */
   info: Record<number, FieldInfo>;
-  /** The tiles a breach, an opening or a ladder changed in this batch. */
+  /** The tiles a breach, an opening, a ladder or a keg changed in this batch. */
   tiles: [number, Tile][];
   ticks: TickOut[];
   /** Each tick's milliseconds in the worker. */
@@ -53,13 +55,17 @@ export function packMirror(b: Battle, ticks: TickOut[], ms: number[], sentInfo: 
     }
   const changed = new Set<number>();
   for (const t of ticks)
-    for (const e of t.hold) if (e.kind === 'breach' || e.kind === 'open' || e.kind === 'ladder') for (const i of e.tiles) changed.add(i);
+    for (const e of t.hold) {
+      if (e.kind === 'breach' || e.kind === 'open' || e.kind === 'ladder') for (const i of e.tiles) changed.add(i);
+      if (e.kind === 'keg') changed.add(e.tile);
+    }
   return {
     t: b.t,
     rng: b.rng,
     phase: b.phase,
     units: b.units,
     spells: b.spells,
+    ...(b.barrels ? { barrels: b.barrels } : {}),
     ...(b.pause ? { pause: b.pause } : {}),
     hold,
     groups: f.groups,
@@ -70,17 +76,23 @@ export function packMirror(b: Battle, ticks: TickOut[], ms: number[], sentInfo: 
   };
 }
 
-/** Merge a source into a target in place: plain objects key by key, arrays of objects item by item (so the page's references hold). */
-function merge(target: Record<string, unknown>, source: Record<string, unknown>): void {
+const plain = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
+
+/** Merge a source into a target in place: plain objects key by key, arrays of objects item by item (so the page's references hold). Below
+ *  the top, a key the source no longer has is dropped (a keg gone off, a volley landed); at the top the hold's static parts are left out of
+ *  the source on purpose, so they stay. */
+function merge(target: Record<string, unknown>, source: Record<string, unknown>, top = true): void {
+  if (!top) for (const k of Object.keys(target)) if (!(k in source)) delete target[k];
   for (const [k, v] of Object.entries(source)) {
     const old = target[k];
-    if (Array.isArray(v) && Array.isArray(old) && v.every((x) => x && typeof x === 'object' && !Array.isArray(x))) {
+    if (Array.isArray(v) && Array.isArray(old) && v.every(plain)) {
       v.forEach((x, i) => {
-        if (old[i] && typeof old[i] === 'object') merge(old[i] as Record<string, unknown>, x as Record<string, unknown>);
+        if (plain(old[i])) merge(old[i] as Record<string, unknown>, x, false);
         else old[i] = x;
       });
       old.length = v.length;
-    } else target[k] = v;
+    } else if (plain(v) && plain(old)) merge(old, v, false);
+    else target[k] = v;
   }
 }
 
@@ -92,6 +104,7 @@ export function applyMirror(b: Battle, msg: MirrorMsg): void {
   b.rng = msg.rng;
   b.phase = msg.phase;
   b.spells = msg.spells;
+  if (msg.barrels) b.barrels = msg.barrels;
   b.pause = msg.pause ?? 0;
   // (the fighters by id: the same objects, their numbers replaced; the new ones added)
   const byId = new Map(b.units.map((x) => [x.id, x]));

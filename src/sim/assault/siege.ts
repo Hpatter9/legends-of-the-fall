@@ -50,6 +50,8 @@ export const CHOKE = 0.75;
 export const SUPPRESS_R = 2;
 export const SUPPRESS_RANGE = 8;
 export const SUPPRESSED = 0.5;
+/** The trebuchet is set up and loaded this long after the assault opens (phase 2). */
+export const TREB_FIRST_MS = 20_000;
 
 /** The ram's own numbers: slow (the Shieldguard's walk), hard to hurt, striking only walls (its blows are the siege's, not the battle's). */
 export const RAM: UnitDef = {
@@ -74,7 +76,7 @@ export function startSiege(b: Battle, f: FieldState, h: HoldState): SiegeState {
     const k = (n[s.name] = (n[s.name] ?? 0) + 1);
     huts.push({ id: `${s.name.toLowerCase().replace(/[^a-z]+/g, '-')}-${k}`, name: s.name, tiles, fire: 0 });
   }
-  const siege: SiegeState = { ladders: [], huts, arrows: [], zones: [] };
+  const siege: SiegeState = { ladders: [], huts, arrows: [], zones: [], trebReady: TREB_FIRST_MS, wallHits: {} };
   const kit = h.input.siege;
   for (const pl of h.platoons) if (kit?.ladders?.includes(pl.hero)) pl.ladder = true;
   const k = h.platoons.findIndex((p) => p.hero === kit?.ram);

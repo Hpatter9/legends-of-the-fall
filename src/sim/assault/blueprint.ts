@@ -106,8 +106,10 @@ export interface Blueprint {
   posts: readonly PostDef[];
   /** Where the reinforcements enter (inside the North Gate), and how many bands of which roster at most. */
   reinforce: { at: Spot; roster: string; bands: number };
-  /** The Warpath's reserve camp, where the bands gather and set out (phase 1b): held by ours, it sends no more. */
+  /** The Warpath's reserve camp, where the bands gather and set out (phase 1b): held by ours, or burnt, it sends no more. */
   warpath: Spot;
+  /** The siege park at the Landing, where the trebuchet stands (phase 2): one of our camp's tents, drawn as the trebuchet. */
+  park: Spot;
   approaches: readonly Approach[];
   /** The rally flag at the Landing, and the five platoons' muster places round it. */
   rally: Spot;
