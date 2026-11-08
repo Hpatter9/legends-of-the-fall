@@ -10,6 +10,7 @@
 // one: no save casts more), with and without the War Horn (held once an Eidolon is bound, it widens the row until Auto wraps under the orbs
 // on a narrow phone), in an army, the Calamity's guardian and an Eidolon's trial, and also at 360x640 and at 393x852 with a 24 px top
 // safe-area inset (`393s`: the top bar's inset put in by hand, as a phone's notch would). `KITS=boss` runs only those cases.
+// PARTY=<five kinds> fields another party (the first fires the `ult` scene's ultimate); SCENES=ult,mid runs only those scenes.
 // AUTO-RIGHT (docs/notes/auto-right.md): each case also fails when Auto is not on the orbs' line right of the last orb, runs past the
 // screen's edge, or a tap in the row (Auto, the horn, an orb) is under 44 px; a boss case prints its bar's top.
 import { createRequire } from 'node:module';
@@ -32,7 +33,9 @@ const srv = createServer((q, r) => {
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 if (shots) mkdirSync('docs/samples/combat-hud', { recursive: true });
 
-const PARTY = ['knight', 'cleric', 'wizard', 'archer', 'samurai'];
+// (PARTY=vael,knight,cleric,wizard,archer fields another party: the first is the one whose ultimate the `ult` scene fires, so a Mythic there
+// probes its own cut-in, docs/notes/mythics-finish.md)
+const PARTY = (process.env.PARTY ?? 'knight,cleric,wizard,archer,samurai').split(',');
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
 
 /** The fight screen's parts: a name and a selector each; `text` measures the text inside rather than the box. */

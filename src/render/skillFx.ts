@@ -293,12 +293,12 @@ export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms:
 /** A foe this big (its full health) that dies is a big kill: a burst, a white flash, a hard shake. */
 export const BIG_FOE_HP = 400;
 
-// Mythic ultimate wind-ups reuse the existing painted effects; their full
-// signature plans and individual tints live in kitLooks.ts.
+// The Mythics' ultimates: their own sheets in their own colours, larger than an ordinary skill's (docs/notes/mythics-finish.md; before, each
+// borrowed another hero's ultimate's entry).
 Object.assign(SKILL_FX, {
-  'Kneel Before Night': SKILL_FX.Judgement,
-  Heavenfall: SKILL_FX.Starfall,
-  'Death Denied': SKILL_FX.Resurrection,
-  'The World Stands': SKILL_FX['Heart of the Grove'],
-  'Rewrite Fate': SKILL_FX['Temporal Surge'],
-});
+  'Kneel Before Night': { cast: { sheet: 'darkCircle', scale: 2.6, tint: 0xf3c86a }, hit: { sheet: 'darkSlash', scale: 1.4, tint: 0xffd77a } },
+  Heavenfall: { cast: { sheet: 'lightCircle', scale: 2.6, tint: 0x9bc9ff }, hit: { sheet: 'lightningStrike', scale: 1.5, tint: 0xbfdcff } },
+  'Death Denied': { cast: { sheet: 'lightGather', scale: 2.4, tint: 0xfff0d6 }, hit: { sheet: 'goldBurst', scale: 1.2, tint: 0xffe2c8 } },
+  'The World Stands': { cast: { sheet: 'earthShield', scale: 2.6, tint: 0x94d998 }, hit: { sheet: 'earthExplosion', scale: 1.3, tint: 0xa8e08a } },
+  'Rewrite Fate': { cast: { sheet: 'windVortex', scale: 2.4, tint: 0xbda2ff }, hit: { sheet: 'lightningBurst', scale: 1.2, tint: 0xd2c0ff } },
+} satisfies Record<string, SkillFx>);

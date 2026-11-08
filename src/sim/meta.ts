@@ -206,6 +206,8 @@ export interface Meta {
   /** ULT-SHOW: how many full moments of each hero kind's ultimate the player has seen (only heroes with a showcase are counted; the first
    *  and every Nth play the long showcase: `ultShowRules.ts`). Saves from before have none: every showcase still to see. */
   ultSeen?: Record<string, number>;
+  /** The day (yyyymmdd) each Mythic was last paid rank shards for a replay of its trial won (`mythicEcho.ts`); saves from before have none. */
+  trialShards?: Record<string, number>;
   /** The party's tactic picked, by mode and by army (`tacticPick.ts`, docs/notes/tactics.md); Advance together where none is. Saves from before have none. */
   tactics?: Record<string, string>;
   /** The formation picked on the prep screen, by mode and by army (`tacticPick.ts`), which Auto place sets the heroes out in; none: Auto places as before. */
@@ -623,6 +625,10 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (m.ultSeen && typeof m.ultSeen === 'object' && !Array.isArray(m.ultSeen))
         m.ultSeen = Object.fromEntries(Object.entries(m.ultSeen).filter(([, n]) => typeof n === 'number' && Number.isFinite(n) && n > 0).map(([k, n]) => [k, Math.floor(n)]));
       else delete m.ultSeen;
+      // (saves from before the Mythics' trial shards have been paid none)
+      if (m.trialShards && typeof m.trialShards === 'object' && !Array.isArray(m.trialShards))
+        m.trialShards = Object.fromEntries(Object.entries(m.trialShards).filter(([k, n]) => ALL_HEROES.includes(k) && typeof n === 'number' && Number.isFinite(n)).map(([k, n]) => [k, Math.floor(n)]));
+      else delete m.trialShards;
       // (saves from before the earned deploy helpers have told none: `featureUnlocks.ts`)
       if (Array.isArray(m.featuresTold)) m.featuresTold = m.featuresTold.filter((x) => typeof x === 'string');
       else delete m.featuresTold;

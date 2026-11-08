@@ -53,6 +53,7 @@ import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot 
 import { comboById, COMBO_NAME } from '../sim/combos';
 import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
+import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
@@ -1223,10 +1224,12 @@ export class Fx {
     }
     this.casting.set(byId, name);
     const signature = kitSignature(name);
-    if (signature) playSteps(signature.wind, this.sceneOf(by, ms, ultimate ? 1.45 : 1.15));
+    // (a Mythic's skills and ultimate are drawn a size larger than any other hero's: docs/notes/mythics-finish.md)
+    const size = (ultimate ? 1.45 : 1.15) * (by.unit.side === 'hero' && isMythic(by.unit.def) ? 1.2 : 1);
+    if (signature) playSteps(signature.wind, this.sceneOf(by, ms, size));
     else windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
     const cast = signature ? undefined : SKILL_FX[name]?.cast;
-    if (signature) this.later(ms, () => playSteps(signature.cast, this.sceneOf(this.sprites.get(byId) ?? by, ms, ultimate ? 1.45 : 1.15)));
+    if (signature) this.later(ms, () => playSteps(signature.cast, this.sceneOf(this.sprites.get(byId) ?? by, ms, size)));
     if (ultimate) {
       this.trauma = Math.max(this.trauma, 0.5);
       this.flash(0.3, 100);

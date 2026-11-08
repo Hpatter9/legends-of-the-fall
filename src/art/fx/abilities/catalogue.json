@@ -1349,5 +1349,75 @@
     "motif": "an iron anchor framed by red coral in surf",
     "atlas": 12,
     "cell": 15
+  },
+  {
+    "id": "skill:Solar Aegis",
+    "name": "Solar Aegis",
+    "motif": "a blazing golden shield before a white-gold sunburst",
+    "atlas": 13,
+    "cell": 0
+  },
+  {
+    "id": "skill:Crownfall",
+    "name": "Crownfall",
+    "motif": "a black-gold eclipse ring slamming into a molten golden crack",
+    "atlas": 13,
+    "cell": 1
+  },
+  {
+    "id": "skill:Star Hunger",
+    "name": "Star Hunger",
+    "motif": "a blue spiral galaxy swallowing a violet orb of stolen power",
+    "atlas": 13,
+    "cell": 2
+  },
+  {
+    "id": "skill:Comet Lance",
+    "name": "Comet Lance",
+    "motif": "three white-blue comets streaking behind a burning star head",
+    "atlas": 13,
+    "cell": 3
+  },
+  {
+    "id": "skill:Unburied Mercy",
+    "name": "Unburied Mercy",
+    "motif": "a red grave-lily blooming in a pale golden mist",
+    "atlas": 13,
+    "cell": 4
+  },
+  {
+    "id": "skill:Broken Halo",
+    "name": "Broken Halo",
+    "motif": "a cracked golden halo with a burst of light in its gap",
+    "atlas": 13,
+    "cell": 5
+  },
+  {
+    "id": "skill:Living Sanctuary",
+    "name": "Living Sanctuary",
+    "motif": "a ring of green living runes round a wheel of emerald light",
+    "atlas": 13,
+    "cell": 6
+  },
+  {
+    "id": "skill:Heartwood",
+    "name": "Heartwood",
+    "motif": "a knot of thorned heartwood round a glowing emerald heart",
+    "atlas": 13,
+    "cell": 7
+  },
+  {
+    "id": "skill:Stolen Tomorrow",
+    "name": "Stolen Tomorrow",
+    "motif": "a violet star chart drawn over a stopped clock face",
+    "atlas": 13,
+    "cell": 8
+  },
+  {
+    "id": "skill:Unmake",
+    "name": "Unmake",
+    "motif": "violet shards of a shattered future spun round a cracked web of light",
+    "atlas": 13,
+    "cell": 9
   }
 ]
