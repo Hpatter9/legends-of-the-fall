@@ -147,6 +147,11 @@ export const LIFE: Record<string, Life> = {
   warDrummer: { act: 'cheer', why: 'Raiden by the stage: the thunder of the keep beats time on his thigh and cheers the bard' },
   falconer: { act: 'sharpen', why: 'Aisling in the games room: she oils her bowstring while the falcon watches the room' },
   bellWarden: { act: 'tea', why: 'Kavi by the games room door: the keeper of the toll takes a quiet cup under the temple bell\'s calm' },
+  vael: { act: 'lean', why: 'Vael stands in contemplation: the edge of totality rests in quiet thought' },
+  astrax: { act: 'lean', why: 'Astrax watches the room: the celestial dragon keeps vigil over the keep' },
+  ilyra: { act: 'conjure', tint: 'star', why: 'Ilyra stands in gentle luminescence: a radiant sanctuary in the warm room' },
+  orrun: { act: 'lean', why: 'Orrun rests against the timber pillar: the earth bastion stands unwavering' },
+  nyxara: { act: 'coin', why: 'Nyxara flips a fateful silver token: the weaver watches the threads align' },
 };
 
 /** The fixtures the activities face: the two hearths, the dartboard on the games room's wall, the bard's stage. */

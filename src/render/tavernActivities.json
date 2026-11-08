@@ -322,5 +322,35 @@
     "motion": "tend",
     "label": "Feeding a falcon",
     "facing": "right"
+  },
+  "vael": {
+    "place": "bar",
+    "motion": "tend",
+    "label": "Contemplating totality",
+    "facing": "right"
+  },
+  "astrax": {
+    "place": "hearth",
+    "motion": "tend",
+    "label": "Tracing constellations",
+    "facing": "right"
+  },
+  "ilyra": {
+    "place": "supper",
+    "motion": "read",
+    "label": "Offering a silent prayer",
+    "facing": "left"
+  },
+  "orrun": {
+    "place": "dice-left",
+    "motion": "play",
+    "label": "Carving a stone talisman",
+    "facing": "right"
+  },
+  "nyxara": {
+    "place": "dice-right",
+    "motion": "read",
+    "label": "Reading threads of fate",
+    "facing": "left"
   }
 }
