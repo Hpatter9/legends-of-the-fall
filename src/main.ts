@@ -43,6 +43,7 @@ import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
+import { trialShardsLine } from './sim/mythicEcho';
 import { settleStudy, studyWords } from './sim/books';
 import { fightUse, levelUpWords, settleSkillUse, useOf, useShare } from './sim/skillLevels';
 import { settleWear, wearWords } from './sim/wear';
@@ -3739,7 +3740,7 @@ class Game {
       // (Dynasties, phase 7: the slain under the Oath, its trophy and renown, on the wave card with the War's lines)
       if (settled.oath?.lines.length) this.nemNote = { ...(settled.war ?? { born: [], grew: [], slain: [], held: [], learned: [], crowns: 0 }), council: [...(settled.war?.council ?? []), ...settled.oath.lines] };
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
-      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k)]);
+      toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k), ...(settled.trialShards ? [trialShardsLine(heroName(settled.trialShards.kind), settled.trialShards.n)] : [])]);
       // (the Nemesis War's lines go on the wave card below)
       if (!settled.oath?.lines.length) this.nemNote = settled.war;
       // (and what slaying a nemesis paid counts in the wave's crowns)

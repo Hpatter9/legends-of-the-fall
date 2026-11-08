@@ -33,6 +33,12 @@ import siegeBotTargetingReticle from '../art/ult-show/siege-bot-targeting-reticl
 import timeWitchGroundClock from '../art/ult-show/time-witch-ground-clock.webp';
 import werewolfRisingMoon from '../art/ult-show/werewolf-rising-moon.webp';
 import wizardMeteor from '../art/ult-show/wizard-meteor.webp';
+// (the five Mythics' props, layered from the painted spell sheets by tools/mythics/finish-art.py: docs/notes/mythics-finish.md)
+import mythicBlackSun from '../art/ult-show/mythic-black-sun.webp';
+import mythicStarChart from '../art/ult-show/mythic-star-chart.webp';
+import mythicSaintHalo from '../art/ult-show/mythic-saint-halo.webp';
+import mythicWorldTree from '../art/ult-show/mythic-world-tree.webp';
+import mythicFateClock from '../art/ult-show/mythic-fate-clock.webp';
 
 const URLS = {
   'arc-blade-lightning-strip': arcBladeLightningStrip,
@@ -62,6 +68,11 @@ const URLS = {
   'time-witch-ground-clock': timeWitchGroundClock,
   'werewolf-rising-moon': werewolfRisingMoon,
   'wizard-meteor': wizardMeteor,
+  'mythic-black-sun': mythicBlackSun,
+  'mythic-star-chart': mythicStarChart,
+  'mythic-saint-halo': mythicSaintHalo,
+  'mythic-world-tree': mythicWorldTree,
+  'mythic-fate-clock': mythicFateClock,
 } as const;
 
 export type ShowArt = keyof typeof URLS;
@@ -93,6 +104,9 @@ export function loadShowArt(): Promise<void> {
   })();
   return loading;
 }
+
+/** A prop's own picture (bundled, so it plays offline), for the page's layers: a Mythic's cut-in shows its sigil. */
+export const showArtUrl = (k: ShowArt): string => URLS[k];
 
 /** A frame by name, or null until it has loaded. */
 export const showArt = (k: ShowArt): Texture | null => tex.get(k) ?? null;

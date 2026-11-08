@@ -8,6 +8,8 @@
 
 import { autoButton } from './autoAsk';
 import { canAutoQuest } from './sim/autoReplay';
+import { heroName } from './sim/heroNames';
+import { TRIAL_SHARDS, trialMythic } from './sim/mythicEcho';
 import { giverKeyOf, giverName, giverWords, offerFrom, questFace, rewardText } from './questCard';
 import { questById } from './sim/questData';
 import { rewardOf } from './sim/questPay';
@@ -278,7 +280,9 @@ function drawDone(list: HTMLElement, m: Meta, hooks: LogHooks): void {
     if (qb && hooks.fight && canFightBattle(m, qb.id)) {
       const side = el('div', 'qlSide');
       const again = el('button', 'qlReplay', hooks.saved?.() === qb.id ? 'Continue' : 'Replay');
-      again.title = 'Fight it again for practice: no reward';
+      // (a Mythic's trial is the one replay that pays: a few rank shards for that Mythic, once a day, `mythicEcho.ts`)
+      const mythic = trialMythic(qb.id);
+      again.title = mythic && m.unlocked.includes(mythic) ? `Fight it again: won, ${heroName(mythic)} gains ${TRIAL_SHARDS} rank shards (once a day)` : 'Fight it again for practice: no reward';
       again.addEventListener('click', () => hooks.fight!(qb.id));
       side.append(again);
       // (a battle already won can also be repeated on its own: Auto, within the day's tickets)

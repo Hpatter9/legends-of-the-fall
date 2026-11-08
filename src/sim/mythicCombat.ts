@@ -196,7 +196,15 @@ function build() {
     attack(5, 2.5, 2500)(b, me, out); burst(out, me); return true;
   }, 1500));
   add('nyxara', 'mana', 'fate tactician', { name: 'Unwritten Futures', text: 'Remember living allies’ health and positions over five seconds. Spent resources remain spent.' }, [
-    sk('Fate Shard', 'Hurl an abandoned future at a foe.', 'Eldritch Blast', (b, me, out) => { const f = foesNear(b, me, 6)[0]; if (!f) return false; strike(b, me, f, 2, out); return true; }),
+    // (docs/notes/mythics-finish.md: a foe she has foretold is the one she aims at, takes the shard almost twice as hard and stays foretold a
+    // second longer, so her three skills work as one: foretell, shatter, unmake)
+    sk('Fate Shard', 'Hurl an abandoned future at a foe. A foe she has foretold takes it far harder and stays foretold a second longer.', 'Eldritch Blast', (b, me, out) => {
+      const near = foesNear(b, me, 6);
+      const marked = (f: Unit) => f.mythic?.foretold?.by === me.id && f.mythic.foretold.until > b.t;
+      const f = near.find(marked) ?? near[0]; if (!f) return false;
+      if (marked(f)) { strike(b, me, f, 3.6, out, true); f.mythic!.foretold!.until += 1000; } else strike(b, me, f, 2, out);
+      return true;
+    }),
     sk('Stolen Tomorrow', 'Reveal the strongest nearby foe. Interrupting it weakens its damage by 40% for the mark’s remaining six seconds.', 'Condemn', (b, me, out) => {
       const f = foesNear(b, me, 7).sort((a, z) => atkOf(z) - atkOf(a) || a.id - z.id).find(f => (f.mythic?.foretold?.until ?? 0) <= b.t); if (!f) return false;
       state(f).foretold = { by: me.id, until: b.t + 6000 }; out.push({ kind: 'gaze', by: me.id, to: f.id }); return true;
