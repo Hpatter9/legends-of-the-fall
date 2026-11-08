@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.414.0',
+    date: '2026-11-08',
+    title: 'Resume an assault; more scenes come alive',
+    notes: ['Leave an assault and resume it later, or storm a conquered hold at Mythic once a week. The summoning hall, spell study and throne now flicker and stir.'],
+  },
+  {
     version: '0.413.0',
     date: '2026-11-08',
     title: 'Battle music as clear as the camp\'s',
