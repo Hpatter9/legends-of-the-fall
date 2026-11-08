@@ -86,7 +86,7 @@ export function startAssault(input: AssaultInput): Battle {
   const f = newField(b.board, map.zone);
   b.field = f;
   const share = input.foeShare ?? ASSAULT.foeShare;
-  const forts = makeForts(map.forts, input.army, share);
+  const forts = makeForts(map.forts, input.army, share, input.tier);
   const h: HoldState = {
     bp, input, forts, fortAt: new Map(), posts: [], platoons: [], lord: -1, bands: 0, auto: !!input.auto, queue: [], log: [], events: [], fallen: [], foesTotal: 0, garrison: [], fortKills: {},
     kinds: Object.fromEntries(forts.map((x) => [x.spec.id, x.spec.kind])), hits: [], cleaves: [], blows: {}, down: {}, kills: {}, stakes: new Uint8Array(b.board.w * b.board.d),

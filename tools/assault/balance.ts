@@ -7,7 +7,7 @@
 // The targets: Auto wins 40 to 60% and loses 40 to 60% of the host; Tactical wins 75% or more and loses 25 to 40%; tactics worth at least
 // 20 points of win rate.
 //
-//   npm run balance -- --assault orcs [--levels 65,75] [--seeds 8] [--share 0.2] [--party recruits|starters] [--talents]
+//   npm run balance -- --assault orcs [--levels 65,75] [--seeds 8] [--share 0.2] [--party recruits|starters] [--talents] [--tier 4]
 import { savedAt } from '../autoplay';
 import { BUILDINGS, maxLevel, newCastle, type BuildingId } from '../../src/sim/castle';
 import { mixSeed } from '../../src/sim/rng';
@@ -23,6 +23,8 @@ const levels = (flag('--levels') ?? '65,75').split(',').map(Number);
 const seeds = Number(flag('--seeds') ?? 8);
 const share = flag('--share') ? Number(flag('--share')) : undefined;
 const talents = process.argv.includes('--talents');
+// (`--tier 4`: the Warband regrouped, phase 2's weekly re-storm at Mythic)
+const tier = flag('--tier') ? Number(flag('--tier')) : undefined;
 const PARTIES: Record<string, readonly string[]> = { starters: HEROES, recruits: ['knight', 'paladin', 'archer', 'warlock', 'cleric'], design: ['knight', 'samurai', 'archer', 'wizard', 'dragoon'] };
 const party = PARTIES[flag('--party') ?? 'design'];
 const maxed = newCastle();
@@ -54,6 +56,7 @@ for (const L of levels)
       // (Siege: Tactical with the siege works, phase 1b: the ram with the first platoon, ladders with the second and third)
       if (style === 'Siege') input.siege = { ram: party[0], ladders: [party[1], party[2]] };
       if (share !== undefined) input.foeShare = share;
+      if (tier !== undefined) input.tier = tier;
       const b = startAssault(input);
       let last = performance.now();
       playAssault(b, [], () => {

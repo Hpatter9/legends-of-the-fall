@@ -15,7 +15,7 @@ import { openFort, type FortSpec } from './fieldMap';
 import type { FortKind } from './blueprint';
 import type { FortState, HoldState } from './holdTypes';
 import { kindOfUnit, rankOf, TRICKS, ELITE_TRICK } from './troops';
-import { garrisonBoosts, ASSAULT } from './garrison';
+import { garrisonBoosts, holdBoosts, ASSAULT } from './garrison';
 
 /** Each structure's hp (before the garrison's toughness) and defence (5.1). */
 export const FORT_STATS: Readonly<Record<FortKind, { hp: number; def: number; name: string }>> = {
@@ -32,8 +32,8 @@ export const BARREL_FORT = 2000;
 const FORT_WINDUP = 350;
 
 /** The hold's structures as the assault opens, at the garrison's toughness (its hp multiplier, so a gate stands as long as its keepers). */
-export function makeForts(specs: readonly FortSpec[], army: string, share: number = ASSAULT.foeShare): FortState[] {
-  const k = garrisonBoosts(army, share).foes.hp ?? 1;
+export function makeForts(specs: readonly FortSpec[], army: string, share: number = ASSAULT.foeShare, tier: number = ASSAULT.tier): FortState[] {
+  const k = garrisonBoosts(army, share, tier).foes.hp ?? 1;
   return specs.map((spec) => {
     const st = FORT_STATS[spec.kind];
     const hp = Math.round(st.hp * k);
@@ -159,7 +159,7 @@ export function barrelOnForts(b: Battle, h: HoldState, i: number, out: BattleEve
   const w = b.board.w;
   const u = i % w;
   const v = Math.floor(i / w);
-  const k = garrisonBoosts(h.input.army, h.input.foeShare ?? ASSAULT.foeShare).foes.hp ?? 1;
+  const k = holdBoosts(h).foes.hp ?? 1;
   h.forts.forEach((f, n) => {
     if (f.broken || f.open) return;
     if (f.spec.tiles.some((j) => Math.max(Math.abs((j % w) - u), Math.abs(Math.floor(j / w) - v)) <= 1)) hitFort(b, h, n, Math.round(BARREL_FORT * k), 0, out);

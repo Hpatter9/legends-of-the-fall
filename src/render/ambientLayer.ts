@@ -18,6 +18,8 @@ export type { Fit };
 const reducedQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
 const layers = new Set<AmbientLayer>();
 let raf = 0;
+/** While every layer on the screen is on a hidden page, the loop only looks again a few times a second. */
+let idle = 0;
 let last = 0;
 let saver = false;
 let hooked = false;
@@ -42,15 +44,23 @@ const plan = (): MotionPlan => motionPlan({ reduced: !!reducedQuery?.matches, sa
 
 /** Start the shared loop if a layer is showing and things may move; it stops itself when none is. */
 function wake(): void {
-  if (raf || !plan().run || ![...layers].some((l) => l.showing)) return;
+  if (raf || idle || !plan().run || ![...layers].some((l) => l.showing)) return;
   last = 0;
   raf = requestAnimationFrame(tick);
 }
 function tick(now: number): void {
   raf = 0;
   const p = plan();
-  const live = [...layers].filter((l) => l.showing);
-  if (!p.run || !live.length) return;
+  const shown = [...layers].filter((l) => l.showing);
+  if (!p.run || !shown.length) return;
+  const live = shown.filter((l) => l.visible(now));
+  if (!live.length) {
+    idle = window.setTimeout(() => {
+      idle = 0;
+      wake();
+    }, 300);
+    return;
+  }
   raf = requestAnimationFrame(tick);
   if (last && now - last < p.gap) return;
   last = now;
@@ -71,8 +81,15 @@ export class AmbientLayer {
   /** On the screen (and laid out), as the page's observer last said. */
   showing = false;
   private inView = false;
+  /** Whether it has been on a page at all (a layer made with a card that is later thrown away goes when the card does). */
+  private placed = false;
+  get gone(): boolean {
+    return this.placed && !this.root.isConnected;
+  }
   private seen = new IntersectionObserver((e) => {
     this.inView = e.some((x) => x.isIntersecting);
+    this.placed ||= this.root.isConnected;
+    if (this.placed && !this.root.isConnected) return this.dispose();
     this.showing = this.inView && !!this.place;
     if (this.inView) this.paintStill();
     wake();
@@ -86,6 +103,8 @@ export class AmbientLayer {
     cls = '',
   ) {
     hook();
+    // (layers whose cards have been thrown away go now)
+    for (const l of layers) if (l.gone) l.dispose();
     this.painter = new LifePainter(life);
     this.lit = new LifePainter(life, false, true);
     this.root.className = `ambLayer${cls ? ` ${cls}` : ''}`;
@@ -102,6 +121,17 @@ export class AmbientLayer {
     layers.add(this);
   }
 
+  private vis = { at: -1e9, on: true };
+  /** Whether it can be seen: an observer counts a page hidden by `visibility` (the home's pages, all but the one on show) as on the
+   *  screen, so that is asked of the page itself, a few times a second. */
+  visible(now: number): boolean {
+    if (now - this.vis.at > 300) {
+      const r = this.root as HTMLElement & { checkVisibility?: (o: object) => boolean };
+      this.vis = { at: now, on: r.checkVisibility ? r.checkVisibility({ visibilityProperty: true, opacityProperty: true }) : true };
+    }
+    return this.vis.on;
+  }
+
   /** Stop for good (the page that held it is gone). */
   dispose(): void {
     this.seen.disconnect();
@@ -112,6 +142,7 @@ export class AmbientLayer {
 
   private layout(): void {
     const im = this.img;
+    this.placed ||= this.root.isConnected;
     const w = this.root.clientWidth;
     const h = this.root.clientHeight;
     if (!im || !w || !h) return;

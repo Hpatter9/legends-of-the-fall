@@ -16,6 +16,9 @@ import { onSettings, settings } from './settings';
 import { beamKind, fanSpots, hallLayout, MIN_H, ROOM_W, type BeamKind, type HallLayout, type Timeline } from './render/hallSpots';
 import { cardAt, dimAt, shakeAt, showcaseAt, skipAction, summonPlan, type ShowPlan } from './render/summonRules';
 import { duck, hushSummon, play as playSfx } from './render/sound';
+import { flicker, motionPlan } from './render/ambient';
+import { LifePainter } from './render/ambientPaint';
+import { SCENE_LIFE } from './render/ambientScenes';
 import sanctumUrl from './art/hall/sanctum.png';
 import { summoner } from './summoner';
 import { chainsShown, hallPlaque } from './sim/eidolonChains';
@@ -303,6 +306,8 @@ export class SummoningHall {
   private pull10 = el('button', 'primary');
   private still: HTMLCanvasElement | null = null;
   private glow: HTMLCanvasElement | null = null;
+  /** ALIVE: the hall's own life: its candles gutter, its banners stir, the shards float, green light breathes (`ambientPaint.ts`). */
+  private life = new LifePainter(SCENE_LIFE.sanctum, true);
   private lay: HallLayout = hallLayout(MIN_H);
   private scale = 2;
   private meta: Meta | null = null;
@@ -565,6 +570,7 @@ export class SummoningHall {
     this.canvas.style.left = `${Math.round((w - ROOM_W * s) / 2)}px`;
     this.ctx.imageSmoothingEnabled = false;
     this.still = this.paintStill(art, s);
+    this.life.layout(this.still, this.still.width, this.still.height, { x: 0, y: 0, w: this.still.width, h: this.still.height });
     this.glow = this.paintGlow(s);
     this.glowTint = this.paintGlow(s, '255, 190, 60');
   }
@@ -786,6 +792,9 @@ export class SummoningHall {
     const sc = plan ? showcaseAt(plan, t) : null;
     g.globalAlpha = 1;
     g.drawImage(this.still, 0, 0);
+    const life = motionPlan({ reduced: this.reduced, saver: this.saver, hidden: false });
+    const lt = this.now / 1000;
+    this.life.regions(g, lt, life);
 
     // A casting trail joins the priest's outstretched hand to the live altar light.
     if (show && c > 0 && !this.reduced) {
@@ -807,10 +816,10 @@ export class SummoningHall {
       g.fillRect(0, 0, W, H);
     }
 
-    // the circle's glow: steady at rest, ramping up while it charges (gold in the grand show)
+    // the circle's glow: breathing at rest (ALIVE; steady with reduced motion), ramping up while it charges (gold in the grand show)
     const charged = c;
     g.globalCompositeOperation = 'lighter';
-    const breathe = 0.5;
+    const breathe = life.run ? 0.5 + 0.5 * Math.sin(lt * 1.4) : 0.5;
     const grow = grand ? 1.6 : 1;
     g.fillStyle = `rgba(${grand ? ACCENT.rgb : '65, 205, 139'}, ${0.1 + 0.08 * breathe + 0.3 * charged})`;
     this.ellipse(circle.x, circle.y, 30 + Math.round(4 * charged * grow), 14 + Math.round(2 * charged * grow));
@@ -954,10 +963,10 @@ export class SummoningHall {
     }
     g.globalAlpha = 1;
 
-    // the braziers and crystals glow steadily; in the grand show they flare gold
+    // the braziers and crystals glow, guttering (ALIVE); in the grand show they flare gold
     if (this.glow) {
       g.globalCompositeOperation = 'lighter';
-      g.globalAlpha = 0.6;
+      g.globalAlpha = 0.6 * (life.run ? flicker(lt, 17, 'fire') : 1);
       g.drawImage(this.glow, 0, 0);
       const tint = grand ? this.glowTint : null;
       if (tint && show) {
@@ -969,6 +978,9 @@ export class SummoningHall {
       g.globalCompositeOperation = 'source-over';
       g.globalAlpha = 1;
     }
+    this.life.lights(g, lt, life);
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
     // the grand show leaves the room in gold
     if (show && plan && grand && t >= show.tl.flare) {
       const k = Math.min(1, (t - show.tl.flare) / 600);

@@ -28,7 +28,7 @@ import { FIRST_CLEAR_CHEST } from '../armyStars';
 import type { AssaultInput, ApproachId, HoldState, PlatoonRole } from './holdTypes';
 import { DEFAULT_ROLES } from './assault';
 import { assaultOf, marksEarned, spoilsOf, TROPHY_MULT, troopsOf } from './economy';
-import { MARKS_MAX } from './economy';
+import { MARKS_MAX, RESTORM_TIER } from './economy';
 import { rankOf, type PlatoonFormation } from './troops';
 import { siegeRefund } from './siege';
 
@@ -47,6 +47,8 @@ export interface AssaultPlan {
   formations?: Record<string, PlatoonFormation>;
   /** The siege works bought for this assault (phase 1b). */
   siege?: { ladders?: string[]; ram?: string };
+  /** Storm the Warband regrouped (phase 2): a conquered hold again, at Mythic. */
+  restorm?: boolean;
 }
 
 /** The party that storms the hold: the saved party, at most five. */
@@ -79,6 +81,7 @@ export function assaultInput(m: Meta, army: string, seed: number, plan: AssaultP
     ...(plan.roles ? { roles: plan.roles } : {}),
     ...(plan.formations ? { formations: plan.formations } : {}),
     ...(plan.siege ? { siege: plan.siege } : {}),
+    ...(plan.restorm ? { tier: RESTORM_TIER } : {}),
     castle: heroBoost(m.castle),
     council,
     ...(chief ? { warchief: decorate(m, snapOf(chief), chief) } : {}),
@@ -87,18 +90,18 @@ export function assaultInput(m: Meta, army: string, seed: number, plan: AssaultP
 
 /** The XP each hero earns from an assault (1.5): a boss wave's at the army's Legendary tier, split among five, twice over on a win and half on
  *  a loss or withdrawal. */
-export function assaultXp(army: string, won: boolean): number {
+export function assaultXp(army: string, won: boolean, tier = 3): number {
   const a = armyById(army)!;
   const n = a.waves.length;
-  const st = waveBoost(a, n, 3);
+  const st = waveBoost(a, n, tier);
   let kill = 0;
-  waveFoes(a, n, 3).forEach((id, i) => {
+  waveFoes(a, n, tier).forEach((id, i) => {
     const def = UNITS[id];
     const boss = i === 0 && st.boss ? st.boss : undefined;
     const hp = def.hp * (st.foes?.hp ?? 1) * (boss?.hp ?? 1);
     kill += hp * KILL_HP_SHARE * (isBoss(id) ? BOSS_KILL : 1);
   });
-  const each = (kill / 5 + XP_TAKE_PART + XP_WIN) * armyXpShare(a, 3);
+  const each = (kill / 5 + XP_TAKE_PART + XP_WIN) * armyXpShare(a, tier);
   return Math.round(each * (won ? 2 : 0.5));
 }
 
@@ -120,6 +123,8 @@ export interface AssaultResult {
   first: boolean;
   /** The crowns the siege works not used paid back. */
   refund: number;
+  /** It was the Warband regrouped, at Mythic (phase 2). */
+  regroup: boolean;
 }
 
 /** Settle an assault into the save (its soldiers' kills as `stepAssault` counted them). */
@@ -130,6 +135,8 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
   const won = h.outcome === 'won';
   const a = assaultOf(m);
   a.tries[army] = (a.tries[army] ?? 0) + 1;
+  // (no longer under way: phase 2's resume note goes)
+  delete a.live;
   // (the scouts' report is spent: the hold's posts change before the next)
   if (a.scouted?.[army]) {
     delete a.scouted[army];
@@ -157,7 +164,8 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
       const k = (kills[s.id] ?? 0) + (h.fortKills[s.id] ?? 0);
       const marks = Math.min(MARKS_MAX, s.marks + (fought ? marksEarned(k, won) : Math.floor(k / 3)));
       if (rankOf(marks).rank !== was) promoted++;
-      if (s.index < list.length && list[s.index] >= 0) list[s.index] = marks;
+      // (the battle is the truth: a soldier the save had struck off after the snapshot it resumed from, and who stands now, stands)
+      if (s.index < list.length) list[s.index] = marks;
     }
     a.troops[pl.hero] = list.filter((x) => x >= 0);
     return { hero: pl.hero, survivors, fallen, fallenRanks, promoted };
@@ -166,13 +174,14 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
   const refund = siegeRefund(b, h);
   m.crowns += refund;
   // the heroes' XP
-  const xp = fought ? assaultXp(army, won) : 0;
+  const tier = h.input.tier ?? 3;
+  const xp = fought ? assaultXp(army, won, tier) : 0;
   const levelUps = gainXp(m, Object.fromEntries(h.platoons.map((pl) => [pl.hero, xp])));
   // the War: as an army run's settle, on the Legendary tier
   let war: NemNote | undefined;
   if (m.war) {
-    const run = armyRun(h.input.seed, army, h.platoons.map((p) => p.hero), m.castle, 3);
-    run.mode = { kind: 'army', army, tier: 3, assault: true };
+    const run = armyRun(h.input.seed, army, h.platoons.map((p) => p.hero), m.castle, tier);
+    run.mode = { kind: 'army', army, tier, assault: true };
     const members = [...(h.input.council ?? []), ...(h.input.warchief ? [h.input.warchief] : [])];
     if (members.length) run.nemesis = { members, waves: { '1': members.map((x) => x.id) } };
     war = noteWar(m, run, b, undefined, won, 1, day);
@@ -182,7 +191,14 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
   let spoils = 0;
   let chest = false;
   const first = won && !a.conquered[army];
-  if (won) {
+  const regroup = won && !first && tier >= RESTORM_TIER;
+  if (regroup) {
+    // (the Warband regrouped and beaten again: half a Conquest chest, and the week's re-storm is spent)
+    m.stash.push({ army, at: FIRST_CLEAR_CHEST[RESTORM_TIER], tier: RESTORM_TIER, seed: mixSeed(m.seed, CONQUEST_SALT, armyIndex(army) + 1, day), conquest: true, half: true });
+    chest = true;
+    a.conquered[army].wins++;
+    a.conquered[army].regrouped = day;
+  } else if (won) {
     if (first) {
       spoils = spoilsOf(army);
       m.crowns += spoils;
@@ -191,7 +207,7 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
       a.conquered[army] = { day, tier: 3, wins: 1 };
     } else a.conquered[army].wins++;
   }
-  return { army, outcome: h.outcome, won, attempt: a.tries[army], platoons, xp, levelUps, spoils, chest, war, first, refund };
+  return { army, outcome: h.outcome, won, attempt: a.tries[army], platoons, xp, levelUps, spoils, chest, war, first, refund, regroup: tier >= RESTORM_TIER };
 }
 
 /** The name of the army's lord for the muster's line: the warchief's, if one sits, else the army's last boss's. */

@@ -41,6 +41,8 @@ export interface AssaultInput {
   auto?: boolean;
   /** The bot's second style (the balance tool's Tactical): it silences the drums and flies to the wall-walk. */
   tactical?: boolean;
+  /** The garrison's tier: Legendary (3, the default) or Mythic (4, the Warband regrouped, phase 2's weekly re-storm). */
+  tier?: number;
   /** The siege works bought at the muster (phase 1b): the platoons (by hero kind) that carry a ladder, and the one that pushes the ram. */
   siege?: { ladders?: string[]; ram?: string };
 }
