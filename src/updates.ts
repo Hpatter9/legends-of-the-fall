@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.404.0',
+    date: '2026-11-08',
+    title: 'The Mythics in full glory',
+    notes: ['Every Mythic move has its own grand painted look, each ultimate its own gilded cut-in, and winning a Mythic\'s trial again pays its rank shards.'],
+  },
+  {
     version: '0.403.0',
     date: '2026-11-08',
     title: 'Assault test map draws in full',
