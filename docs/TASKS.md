@@ -29,6 +29,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### TAVERN-NATURAL — Living painted tavern
+
+- **Owner / branch / worktree:** Codex; `design/living-tavern`; `/workspace/legends-of-the-fall`.
+- **Scope:** approved natural bar/table/hearth composition, varied relaxed hero poses and subtle ambient animation; preserve strongest-five selection, tappable heroes, services, saves and offline support.
+- **Completion:** new room and compatible character layers, reduced-motion/lifecycle support, focused tests, typecheck/build and three portrait-size browser/offline review.
+- **Status:** complete, ready for owner review. All 54 heroes have individual activity paintings; natural bar/table/hearth grouping, tappable Gwen and gentle motion are integrated. Typecheck/build, 30 focused tests, 54 export checks and all 80 browser checks passed across three portrait sizes, reduced motion and offline. [Handoff](notes/living-tavern.md), [activity gallery](samples/living-tavern-activities.jpg), [implemented motion](samples/living-tavern-motion.webm). No merge, deployment or version change.
+
+
 ### TAVERN-POSES — Relaxed hero paintings for the tavern
 
 - **Release:** owner authorised merging. PR #426 reached main during preparation, so the tavern release is 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), preserving the integrated ten hero remakes. Final typecheck/build, seven focused test files and all 21 repeated release browser/offline checks passed. Owner-authorised for merge.

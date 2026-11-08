@@ -574,3 +574,7 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 The tavern background (`src/art/ui/tavern-hearth.png`) is original AI-generated artwork made with OpenAI image generation for this game. Sources: `art-source/tavern/hearth-source.png` (first study) and `art-source/tavern/cozy-room-source.png` (current seated scene). Heroes remain the existing credited character illustrations; panel, button, portrait and service icons reuse the shared painted combat UI assets.
 
 The cozy seated tavern extension adds 108 original OpenAI-generated resting hero illustrations (two poses for each of the 54 existing hero identities), an empty cozy room painting and two shared table props. Sources, approved studies and corrected transparency/identity variants are retained in `art-source/tavern/`. These paintings reference the existing credited hero designs; they do not replace the battle sprites or roster portraits. `tools/tavern/pack.py` imports padded transparent WebP cutouts into `src/art/tavern/guests/`; all are precached for offline use.
+
+## Living tavern illustrations
+
+OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper tables and individual off-duty activity illustrations for all 54 heroes. Generated against the existing credited hero identities and owner-approved tavern concept. Original sources, briefs and packing metadata: `art-source/tavern/living/`; runtime cutouts: `src/art/tavern/guests/*-activity.webp` and `living-*.webp`. These replace the uniform armchair composition on the Heroes page.

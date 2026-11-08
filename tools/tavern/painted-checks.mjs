@@ -14,7 +14,7 @@ const server = createServer((q, r) => {
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const owned = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'cleric', 'ranger', 'barbarian'];
 const allHeroes = JSON.parse(readFileSync('art-source/tavern/guests/batches.json', 'utf8')).flat();
-const paintingPaths = allHeroes.flatMap(kind => ['right', 'left'].map(facing => `ui/tavern/${kind}-${facing}.webp`));
+const paintingPaths = allHeroes.map(kind => `ui/tavern/${kind}-activity.webp`);
 const failures = [];
 let checks = 0;
 const check = (name, result) => { checks++; console.log(result ? 'ok' : 'FAIL', name); if (!result) failures.push(name); };
@@ -44,14 +44,39 @@ try {
     const rows = await page.locator('.ptHeroPick').evaluateAll(nodes => nodes.map(node => node.dataset.kind));
     check(`five live guests match roster rows ${width}`, guests.length === 5 && JSON.stringify(guests) === JSON.stringify(rows));
     check(`unique compatible seats ${width}`, await page.locator('.ptGuest').evaluateAll(nodes => new Set(nodes.map(node => node.dataset.seat)).size === nodes.length));
-    check(`guests use seated paintings ${width}`, await page.locator('.ptGuestArt').evaluateAll(images => images.every(image => /ui\/tavern\/.+-(left|right)\.webp$/.test(image.src))));
+    check(`guests use activity paintings ${width}`, await page.locator('.ptGuestArt').evaluateAll(images => images.every(image => /ui\/tavern\/.+-activity\.webp$/.test(image.src))));
     check(`room and characters decoded ${width}`, await page.locator('.ptScene img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)));
     check(`no horizontal overflow ${width}`, await page.locator('.ptTavern').evaluate(node => node.scrollWidth <= node.clientWidth + 1));
     check(`hero targets fit ${width}`, await page.locator('.ptGuest').evaluateAll(nodes => nodes.every(node => { const r = node.getBoundingClientRect(); return r.width >= 44 && r.height >= 44 && r.x >= 0 && r.right <= innerWidth; })));
-    await page.screenshot({ path: `docs/samples/painted-tavern-${width}.png` });
-    await page.locator('.ptGuest').first().click();
-    check(`hero opens ${width}`, await page.locator('#hmSheet').isVisible());
-    await page.evaluate(() => window.__game.home.closeSheet());
+    await page.screenshot({ path: `docs/samples/living-tavern-${width}.png` });
+    check(`motion respects preference ${width}`, await page.locator('.ptGuestArt').first().evaluate((node) => matchMedia('(prefers-reduced-motion: reduce)').matches ? getComputedStyle(node).animationName === 'none' : getComputedStyle(node).animationName !== 'none'));
+    check(`scene runs when visible ${width}`, await page.locator('.ptTavern').evaluate(node => node.classList.contains('ptAlive')));
+    if (width === 393) {
+      await page.evaluate(() => window.__game.home.tavern.stop());
+      check('motion pauses on stop', await page.locator('.ptGuestArt').first().evaluate(node => getComputedStyle(node).animationPlayState === 'paused'));
+      await page.evaluate(() => window.__game.home.tavern.start());
+      check('motion resumes on start', await page.locator('.ptGuestArt').first().evaluate(node => getComputedStyle(node).animationPlayState === 'running'));
+      const nodeBefore = await page.locator('.ptGuestArt').first().evaluate(node => getComputedStyle(node).transform);
+      await page.waitForFunction(before => getComputedStyle(document.querySelector('.ptGuestArt')).transform !== before, nodeBefore, { timeout: 12000 });
+      check('hero activity motion actually moves', true);
+      await page.locator('#hmGear').click();
+      await page.locator('#settingsBody .setMenu[data-page="display"]').click();
+      const saver = page.locator('#settingsBody .setting').filter({ hasText: 'Battery saver' }).locator('button.toggle');
+      await saver.click();
+      check('battery saver pauses motion through Settings', await page.locator('.ptGuestArt').first().evaluate(node => getComputedStyle(node).animationPlayState === 'paused'));
+      await saver.click();
+      check('disabling battery saver resumes motion through Settings', await page.locator('.ptGuestArt').first().evaluate(node => getComputedStyle(node).animationPlayState === 'running'));
+      await page.locator('#settingsBody .setBack').click();
+      await page.locator('#settingsClose').click();
+    }
+    await page.locator('.ptKeeper').click();
+    check(`Gwen opens ${width}`, await page.locator('.qcWrap').isVisible());
+    await page.locator('.qcWrap').getByRole('button', { name: /^(Close|Not now)$/ }).click();
+    for (const kind of guests) {
+      await page.locator(`.ptGuest[data-kind='${kind}']`).click();
+      check(`hero ${kind} opens ${width}`, await page.locator('#hmSheet').isVisible());
+      await page.evaluate(() => window.__game.home.closeSheet());
+    }
     await page.locator('.ptRoster').click();
     check(`full roster opens ${width}`, await page.locator('#hmSheet .heroRoster').isVisible());
     await page.evaluate(() => { window.__game.home.show('battle'); window.__game.home.show('heroes'); });
@@ -74,7 +99,7 @@ try {
     }
     await page.locator('.ptActions').scrollIntoViewIfNeeded();
     check(`service targets fit ${width}`, await page.locator('.ptActions .ptButton:visible').evaluateAll(nodes => nodes.every(node => { const r = node.getBoundingClientRect(); return r.width >= 44 && r.height >= 44 && r.x >= 0 && r.right <= innerWidth; })));
-    if (width === 393) await page.screenshot({ path: 'docs/samples/painted-tavern-services-393.png' });
+    if (width === 393) await page.screenshot({ path: 'docs/samples/living-tavern-services-393.png' });
     // Give an off-screen hero a large XP increase and refresh: it must join the room.
     const outsider = owned.find(kind => !guests.includes(kind));
     await page.evaluate(kind => { const home = window.__game.home; home.meta.xp[kind] = 10000000; home.refresh(); }, outsider);
@@ -86,12 +111,13 @@ try {
         const images = await Promise.all(paths.map(async path => { const image = new Image(); image.src = path; await image.decode(); return image; }));
         return images.every(image => image.naturalWidth === 384 && image.naturalHeight === 440);
       }, paintingPaths);
-      check('all 108 seated paintings decode', decoded);
+      check('all 54 individual activity paintings decode', decoded);
       const sw = readFileSync('out/web/sw.js', 'utf8');
-      check('all seated paintings are precached', paintingPaths.every(path => sw.includes(`'${path}'`)));
+      check('room, keeper and table layers are precached', ['ui/tavern-hearth.png', 'ui/tavern/living-gwen.webp', 'ui/tavern/living-table-dice.webp', 'ui/tavern/living-table-supper.webp'].every(path => sw.includes(`'${path}'`)));
+      check('all activity paintings are precached', paintingPaths.every(path => sw.includes(`'${path}'`)));
       await page.evaluate(() => { const home = window.__game.home; home.meta.unlocked = ['gorgon', 'kraken', 'siegeBot', 'bloodGargoyle', 'nightstalker']; home.refresh(); document.querySelector('.ptTavern').scrollTop = 0; });
       await page.locator('.ptScene img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
-      await page.screenshot({ path: 'docs/samples/painted-tavern-creatures-393.png' });
+      await page.screenshot({ path: 'docs/samples/living-tavern-creatures-393.png' });
       check('unusual company has five distinct seats', await page.locator('.ptGuest').count() === 5);
     }
     check(`no page errors ${width}`, errors.length === 0);

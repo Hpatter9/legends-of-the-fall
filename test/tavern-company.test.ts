@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tavernCompany, tavernGuestArt, TAVERN_SEATS } from '../src/render/tavernCompany';
+import { tavernCompany, tavernGuestArt, TAVERN_SEATS, TAVERN_ACTIVITIES, tavernPlaces } from '../src/render/tavernCompany';
 import { existsSync } from 'node:fs';
 import { startedMeta } from '../src/sim/meta';
 import { kindPower } from '../src/sim/power';
@@ -43,13 +43,24 @@ test('a young or empty save shows only its recruited heroes without placeholders
   assert.deepEqual(tavernCompany(meta), []);
 });
 
-test('every hero can occupy every distinct seat with one of its two real seated paintings', () => {
+test('every hero has an individual activity painting and an appropriate place', () => {
   assert.equal(new Set(TAVERN_SEATS.map((seat) => seat.id)).size, 5);
-  assert.equal(TAVERN_SEATS[0].facing, 'right');
-  assert.equal(TAVERN_SEATS[1].facing, 'left');
+  assert.deepEqual(Object.keys(TAVERN_ACTIVITIES).sort(), [...ALL_HEROES].sort());
+  assert.equal(new Set(Object.values(TAVERN_ACTIVITIES).map(activity => activity.label)).size, ALL_HEROES.length);
   for (const kind of ALL_HEROES) {
-    const paths = new Set(TAVERN_SEATS.map((_, place) => tavernGuestArt(kind, place)));
-    assert.equal(paths.size, 2, `${kind} needs exactly two paintings`);
-    for (const path of paths) assert.ok(existsSync(path.replace('ui/tavern/', 'src/art/tavern/guests/')), path);
+    const activity = TAVERN_ACTIVITIES[kind as keyof typeof TAVERN_ACTIVITIES];
+    assert.ok(TAVERN_SEATS.some(place => place.id === activity.place));
+    const path = tavernGuestArt(kind);
+    assert.ok(existsSync(path.replace('ui/tavern/', 'src/art/tavern/guests/')), path);
   }
+});
+
+test('activity places are unique and deterministic even when all guests prefer one place', () => {
+  for (const kinds of [[], ['knight'], ['knight', 'barbarian', 'karasu', 'buccaneer', 'dhampir'], ['samurai', 'ninjaMonk', 'ranger', 'paladin', 'reaper']]) {
+    const places = tavernPlaces(kinds);
+    assert.equal(new Set(places).size, kinds.length);
+    assert.deepEqual(tavernPlaces(kinds), places);
+  }
+  const kinds = ['kunoichi', 'knight', 'wizard', 'samurai', 'archer'];
+  assert.deepEqual(tavernPlaces(kinds), [0, 1, 2, 3, 4]);
 });
