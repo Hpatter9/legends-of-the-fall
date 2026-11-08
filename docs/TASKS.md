@@ -29,6 +29,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ART-393-RELEASE — Merge completed artwork and plan the next original paintings
+
+- **Owner:** Codex director. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`.
+- **Scope:** release all four completed art batches, integrate main through 0.392.0, release metadata/checks, create PR and owner-authorised merge; preserve a concrete next-artwork plan.
+- **Status:** 0.393.0 ready for owner-authorised merge. Integrated main; typecheck/build, 100 focused tests, all three release browser sizes and reduced motion passed with no browser errors. [Release handoff](notes/art-release-393.md).
+- **Plan:** [next original artwork](notes/new-artwork-plan.md): twelve remaining trait symbols, eight road encounters, six Calamity herald portraits. No new generation in this release.
+
+
 ### DYNASTY-ART — Seasons, fates, backdrops, traits and dynasty symbols
 
 - **Owner:** Codex. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`; previous art batches preserved.
