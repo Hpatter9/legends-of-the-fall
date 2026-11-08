@@ -37,6 +37,7 @@ await page.waitForFunction(() => window.__mix);
 const run = (fn, ...a) => page.evaluate(([fn, a]) => window.__mix[fn](...a), [fn, a]);
 
 const f = (x) => (Number.isFinite(x) ? x.toFixed(1) : '-');
+const ph = (m) => (m.phone === undefined ? '' : ` ${f(m.phone)} |`);
 const row = (name, m, extra = '') => `| ${name} | ${f(m.lufs)} | ${f(m.mMax)} | ${f(m.peak)} | ${(m.overLimit * 100).toFixed(1)} |${extra}`;
 const HEAD = '| | integrated LUFS | momentary max | peak dBFS | % over limiter |\n|---|---|---|---|---|';
 const out = { gains: await run('gains') };
@@ -44,11 +45,11 @@ const out = { gains: await run('gains') };
 if (want('music')) {
   const TRACKS = ['camp', 'tavern', 'deploy', 'tower', 'calmap', 'battle', 'boss', 'triumph', 'opening', 'gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6', 'comic', 'solemn', 'spire'];
   out.music = {};
-  console.log('\n## Music (at its playing level)\n' + HEAD);
+  console.log('\n## Music (at its playing level; the last column is on a phone\'s speaker)\n' + HEAD.replace('|\n', '| phone LUFS |\n') + '---|');
   for (const id of TRACKS) {
     const m = await run('music', id, 1);
     out.music[id] = m;
-    console.log(row(id, m));
+    console.log(row(id, m, ph(m)));
   }
   const bed = await run('music', 'triumph', await page.evaluate(() => window.__mix.VICTORY_BED));
   out.music.triumphBed = bed;
@@ -73,14 +74,17 @@ if (want('spells')) {
 }
 if (want('beds')) {
   out.beds = {};
-  console.log('\n## Ambience beds\n' + HEAD);
-  for (const s of ['camp', 'tavern', 'field', 'tower1', 'tower3']) {
+  console.log('\n## Ambience beds (the last column is on a phone\'s speaker)\n' + HEAD.replace('|\n', '| phone LUFS |\n') + '---|');
+  const BEDS = [['camp'], ['tavern'], ['hall'], ['castle'], ['spells'], ['armies'], ['field'], ['tower1'], ['tower2'], ['tower3'],
+    ...['plains', 'forest', 'snow', 'desert', 'oasis', 'volcano', 'forge', 'dungeon', 'swamp', 'graveyard', 'ruins'].map((l) => ['field', l])];
+  for (const [s, land] of BEDS) {
+    const name = land ? `field (${land})` : s;
     try {
-      const m = await run('bed', s);
-      out.beds[s] = m;
-      console.log(row(s, m));
+      const m = await run('bed', s, land ?? null);
+      out.beds[name] = m;
+      console.log(row(name, m, ph(m)));
     } catch (e) {
-      console.log(`| ${s} | (${e.message}) |`);
+      console.log(`| ${name} | (${e.message}) |`);
     }
   }
 }
@@ -97,7 +101,7 @@ if (want('fights')) {
     const name = `${band} (seed ${seed}, ${r.seconds} s, ${r.cues} cues, over ${track})`;
     out.fights[name] = r;
     console.log(`\n## Fight: ${name}\n` + HEAD);
-    for (const k of ['all', 'hits', 'shots', 'skills', 'deaths', 'musicAlone', 'withMusic']) if (r[k]) console.log(row(k, r[k]));
+    for (const k of ['all', 'hits', 'shots', 'skills', 'deaths', 'musicAlone', 'withMusic', 'bedAlone', 'withAll']) if (r[k]) console.log(row(k === 'bedAlone' ? `bedAlone (${r.land})` : k, r[k]));
   }
 }
 if (jsonAt) writeFileSync(jsonAt, JSON.stringify(out, null, 1));

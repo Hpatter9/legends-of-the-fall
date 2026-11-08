@@ -11,11 +11,12 @@ export class FakeParam {
   linearRampToValueAtTime(v: number, t: number) { this.calls.push(['lin', v, t]); return this; }
   exponentialRampToValueAtTime(v: number, t: number) { this.calls.push(['exp', v, t]); return this; }
   setTargetAtTime(v: number, t: number, tc: number) { this.calls.push(['target', v, t, tc]); return this; }
+  setValueCurveAtTime(c: ArrayLike<number>, t: number, d: number) { this.calls.push(['curve', c[c.length - 1], t, d, c[0]]); return this; }
   cancelScheduledValues(t: number) { this.calls.push(['cancel', t]); return this; }
   cancelAndHoldAtTime(t: number) { this.calls.push(['hold', t]); return this; }
-  /** The last target this param was sent to by `setTargetAtTime`. */
+  /** The last target this param was sent to by `setTargetAtTime` or a fade's curve (its end). */
   get target(): number | undefined {
-    const c = [...this.calls].reverse().find((x) => x[0] === 'target');
+    const c = [...this.calls].reverse().find((x) => x[0] === 'target' || x[0] === 'curve');
     return c?.[1];
   }
 }

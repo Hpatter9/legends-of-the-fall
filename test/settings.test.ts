@@ -9,7 +9,7 @@ test('nothing saved gives the defaults', () => {
 });
 
 test('a saved choice is kept, and the rest stays the default', () => {
-  const s = parseSettings(JSON.stringify({ music: 40, speed: 2, saver: true }));
+  const s = parseSettings(JSON.stringify({ music: 40, volCurve: true, speed: 2, saver: true }));
   assert.equal(s.music, 40);
   assert.equal(s.speed, 2);
   assert.equal(s.saver, true);
@@ -18,10 +18,24 @@ test('a saved choice is kept, and the rest stays the default', () => {
 });
 
 test('volumes are kept within 0 to 100 and whole', () => {
-  assert.equal(parseSettings('{"music":250,"effects":-5}').music, 100);
-  assert.equal(parseSettings('{"music":250,"effects":-5}').effects, 0);
-  assert.equal(parseSettings('{"music":33.6}').music, 34);
+  assert.equal(parseSettings('{"music":250,"effects":-5,"volCurve":true}').music, 100);
+  assert.equal(parseSettings('{"music":250,"effects":-5,"volCurve":true}').effects, 0);
+  assert.equal(parseSettings('{"music":33.6,"volCurve":true}').music, 34);
   assert.equal(parseSettings('{"music":"loud"}').music, DEFAULTS.music);
+});
+
+// (the sound pass, docs/notes/sound-pass.md: the sliders moved from a straight gain to a perceptual curve; a volume saved before
+//  keeps the loudness the player chose)
+test('a volume saved on the old straight slider is moved to the curve, keeping its loudness; once moved it stays', () => {
+  const old = parseSettings('{"music":50,"effects":10}');
+  assert.equal(old.music, 65, '50 % was -6 dB, which is 65 % on the curve');
+  assert.equal(old.effects, 25, '10 % was -20 dB, which is 25 % on the curve');
+  assert.equal(old.volCurve, true);
+  assert.equal(parseSettings('{"music":0,"effects":100}').music, 0, 'off stays off');
+  assert.equal(parseSettings('{"music":0,"effects":100}').effects, 100);
+  // (saved again with the flag, it is read as it is: never moved twice)
+  assert.equal(parseSettings(JSON.stringify(old)).music, 65);
+  assert.equal(parseSettings(null).volCurve, true, 'a new save is on the curve');
 });
 
 test('a wrong type or a speed other than 1 or 2 falls back to the default', () => {
@@ -54,7 +68,7 @@ test('the chosen ruler is saved by identity; missing and malformed choices get t
 
 // The King was retired in DEFAULT-RULER (the owner's call): a save that chose him loads as the Iron Stag, quietly, with every other setting kept.
 test('a saved The King loads as the Iron Stag and keeps every other setting', () => {
-  const saved = { ruler: 'the_king', rulerPicked: true, music: 40, effects: 25, speed: 2, shake: false, quips: false };
+  const saved = { ruler: 'the_king', rulerPicked: true, music: 40, effects: 25, volCurve: true, speed: 2, shake: false, quips: false };
   const got = parseSettings(JSON.stringify(saved));
   assert.equal(got.ruler, 'iron_stag');
   assert.deepEqual({ ...got, ruler: 'x' }, { ...parseSettings(JSON.stringify({ ...saved, ruler: 'iron_stag' })), ruler: 'x' });
