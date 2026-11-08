@@ -37,6 +37,7 @@ import { clutterOf, decalOf, DEEP, MAT, faceOf, fortLook, fringesOf, materialsOf
 import { DECALS, EDGES, FACES, SPRITES } from './assaultOrcAtlas';
 import { VFX, loadVfxArt } from './vfxArt';
 import { holdMapOf, blueprintOf } from '../sim/assault/assault';
+import { FieldLife } from './fieldLife';
 
 export { MID_AT, NEAR_AT, type Detail } from './fieldDetail';
 import gateUrl from '../art/camp/gate.png';
@@ -46,8 +47,10 @@ import arrowUrl from '../art/fx/arrow.png';
 export { CHUNK, type PlayArea } from './fieldCull';
 /** The chunks' bake resolution (of the world's pixels). */
 const BAKE_RES = 0.5;
-/** At most this many chunks are baked in one frame. */
+/** At most this many chunks are baked in one frame, and only while the frame's baking has taken less than `BAKE_BUDGET_MS`; with every chunk
+ *  in view baked, one in the ring just outside it is baked ahead (prewarmed), so a pan finds it ready. */
 const BAKES_A_FRAME = 2;
+const BAKE_BUDGET_MS = 6;
 /** The chunk cache: this many kept, the whole 10 x 10 of them (about 28 MB at half resolution; a tall phone at Mid wants 70 in view,
  *  and chunks in view are never let go). */
 const CACHE = 100;
@@ -158,7 +161,7 @@ export async function loadHoldArt(army = 'orcs'): Promise<void> {
       const gg = grass.getContext('2d')!;
       gg.drawImage(sprites, gr[0], gr[1], gr[2], gr[3], 0, 0, gr[2], gr[3]);
       gg.globalCompositeOperation = 'source-atop';
-      gg.fillStyle = 'rgba(150,128,64,0.55)';
+      gg.fillStyle = 'rgba(122,108,62,0.68)';
       gg.fillRect(0, 0, gr[2], gr[3]);
     }
     const shaded = (k: number) => {
@@ -285,7 +288,7 @@ export class FieldView {
   private frame = 0;
   detail: Detail = 'near';
   /** What the last frame drew (for the bench's readout). */
-  drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0 };
+  drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0, bakeMs: 0 };
   private brokenGates = new Set<number>();
   /** Each chunk's highest and lowest ground, for culling. */
   private heights: ReturnType<typeof chunkHeights>;
@@ -298,6 +301,8 @@ export class FieldView {
   /** The firelight of each chunk's lights: a warm glow added over the scene, flickering. */
   private glows = new Map<number, { sp: Sprite; base: number; seed: number; big: boolean }[]>();
   private glowTex: Texture | null = null;
+  /** The small life: embers off the fires, rings on the river (`fieldLife.ts`, a stand-in for the shared ambient module). */
+  private life: FieldLife | null = null;
   private ladders: Sprite[] = [];
 
   constructor(private b: Battle, private renderer: { generateTexture: (o: Container | { target: Container }) => Texture }) {
@@ -334,6 +339,12 @@ export class FieldView {
         if (!list) this.placed.set(key, (list = []));
         list.push(p);
       }
+    }
+    if (this.mats) {
+      const water: [number, number, number][] = [];
+      this.mats.forEach((m, i) => m === DEEP && water.push([i % w, Math.floor(i / w), this.b.board.tiles[i].h]));
+      this.life = new FieldLife(this.renderer as never, water);
+      this.unitLayer.addChild(this.life.layer);
     }
     this.unitLayer.addChild(this.works);
     this.works.zIndex = 0;
@@ -469,11 +480,12 @@ export class FieldView {
           if (dr > 0) sheetFace(faceOf(b, zone, i, u + 1 < b.w ? i + 1 : -1), rawAt(u + 0.5, v - 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dr, 0.22);
           if (dl > 0) sheetFace(faceOf(b, zone, i, v + 1 < b.d ? i + b.w : -1), rawAt(u - 0.5, v + 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dl, 0.06);
           const m = mats[i];
+          // (deep water: the sheet's water over its stones, darkened to the deep's blue-green)
+          matTop(m === DEEP ? MAT_SHALLOWS : m, u, v, t.h);
           if (m === DEEP) {
-            top(art!.water, u, v, t.h);
             g.setTransform(S, 0, 0, S, ox * S, oy * S);
-            this.diamond(g, u, v, t.h, 'rgba(20,50,120,0.45)');
-          } else matTop(m, u, v, t.h);
+            this.diamond(g, u, v, t.h, 'rgba(18,56,88,0.38)');
+          }
           for (const fr of fringesOf(b, mats, u, v)) overlay(H.edges[fr.edge][fr.turn], u, v, t.h);
           if (t.ground === 'tall') tall.push(i);
           continue;
@@ -512,13 +524,30 @@ export class FieldView {
           const tex = c ? holdTex(c) : null;
           if (tex && c) low.push({ u: u + (hashOf(u, v) - 0.5) * 0.4, v: v + (hashOf(v, u) - 0.5) * 0.4, h: t.h, tex, ax: SPRITES[c].foot[0], ay: SPRITES[c].foot[1], scale: 0.7 });
         }
+      // (the tall grass: a few dried tufts a tile, fewer at a patch's edge and leaning in from it, each its own size, so a patch has no hard
+      //  outline; the ground under it is the heath's)
       const grass = holdTex('tallGrass');
+      const isTall = (u: number, v: number) => u >= 0 && v >= 0 && u < b.w && v < b.d && b.tiles[v * b.w + u].ground === 'tall';
       if (grass)
         for (const i of tall) {
           const u = i % b.w;
           const v = Math.floor(i / b.w);
-          for (let k = 0; k < 3; k++)
-            low.push({ u: u - 0.3 + (k % 2) * 0.55 + (hashOf(u + k, v) - 0.5) * 0.2, v: v - 0.3 + (k === 1 ? 0.55 : 0.2) + (hashOf(v, u + k) - 0.5) * 0.2, h: b.tiles[i].h, tex: grass, ax: SPRITES.tallGrass.foot[0], ay: SPRITES.tallGrass.foot[1], scale: 0.7, img: H.grass ?? undefined });
+          const open = [isTall(u - 1, v), isTall(u + 1, v), isTall(u, v - 1), isTall(u, v + 1)].filter((x) => !x).length;
+          const tufts = open >= 2 ? 1 : open === 1 ? 1 + (hashOf(u, v) < 0.5 ? 1 : 0) : 2;
+          // (leaning in: away from the open sides)
+          const lu = (isTall(u - 1, v) ? 0 : 0.18) - (isTall(u + 1, v) ? 0 : 0.18);
+          const lv = (isTall(u, v - 1) ? 0 : 0.18) - (isTall(u, v + 1) ? 0 : 0.18);
+          for (let k = 0; k < tufts; k++)
+            low.push({
+              u: u + lu + (hashOf(u + k * 7, v) - 0.5) * 0.7,
+              v: v + lv + (hashOf(v, u + k * 7) - 0.5) * 0.7,
+              h: b.tiles[i].h,
+              tex: grass,
+              ax: SPRITES.tallGrass.foot[0],
+              ay: SPRITES.tallGrass.foot[1],
+              scale: 0.45 + hashOf(u * 3 + k, v * 5) * 0.3,
+              img: H.grass ?? undefined,
+            });
         }
       for (const p of this.placed.get(cy * 100 + cx) ?? []) {
         if (!p.low) continue;
@@ -769,7 +798,7 @@ export class FieldView {
           const k = Math.min(1, (d / SKIRT) ** 1.1);
           const e = Math.max(0, Math.min(b.d - 1, v)) * b.w + Math.max(0, Math.min(b.w - 1, u));
           const wet = this.mats![e] === DEEP || this.mats![e] === MAT_SHALLOWS;
-          const base = wet ? [40, 80, 150] : hashOf(u, v) < 0.12 + d * 0.05 ? [40, 58, 40] : [92, 104, 60];
+          const base = wet ? [52, 78, 92] : hashOf(u, v) < 0.12 + d * 0.05 ? [40, 58, 40] : [92, 104, 60];
           const c = base.map((x, j) => Math.round(x + (FOG_RGB[j] - x) * k));
           this.diamond(g, u, v, b.tiles[e].h, `rgb(${c.join(',')})`);
         }
@@ -851,13 +880,18 @@ export class FieldView {
     this.farLayer.visible = far;
     // the world rectangle in view, and a margin
     const view = viewRect(cam, vw, vh, focus);
-    this.drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0 };
+    this.drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0, bakeMs: 0 };
     this.simT = simT;
     if (far) this.drawFar(simT, cam.zoom);
     else {
       this.drawSkirt(view);
       this.drawChunks(view);
       this.drawWorks(view);
+      if (this.life) {
+        const fires: [number, number][] = [];
+        for (const key of this.wanted) for (const g of this.glows.get(key) ?? []) if (g.big && g.sp.visible) fires.push([g.sp.x, g.sp.y]);
+        this.life.update(simT, view, fires, this.detail === 'near');
+      }
       this.drawFighters(view, simT, events);
     }
   }
@@ -958,14 +992,12 @@ export class FieldView {
         const n = noiseOf(u, v);
         const m = wet ? MAT_SHALLOWS : n < 0.3 ? 2 : n < 0.55 ? 0 : 1;
         const [x, y] = rawAt(u - 0.5, v - 0.5, h);
+        g.setTransform(((TW / 2) / 64) * S, ((TH / 2) / 64) * S, (-(TW / 2) / 64) * S, ((TH / 2) / 64) * S, (x + ox) * S, (y + oy) * S);
+        g.drawImage(H.ground, (m % 4) * 256 + (((u % 4) + 4) % 4) * 64, Math.floor(m / 4) * 256 + (((v % 4) + 4) % 4) * 64, 64, 64, 0, 0, 64, 64);
+        // (the deep river running on, as the field's own deep water)
         if (wet && this.mats![e] === DEEP) {
-          g.setTransform(((TW / 2) / art!.water.width) * S, ((TH / 2) / art!.water.width) * S, (-(TW / 2) / art!.water.height) * S, ((TH / 2) / art!.water.height) * S, (x + ox) * S, (y + oy) * S);
-          g.drawImage(art!.water, 0, 0);
           g.setTransform(S, 0, 0, S, ox * S, oy * S);
-          this.diamond(g, u, v, h, 'rgba(20,50,120,0.45)');
-        } else {
-          g.setTransform(((TW / 2) / 64) * S, ((TH / 2) / 64) * S, (-(TW / 2) / 64) * S, ((TH / 2) / 64) * S, (x + ox) * S, (y + oy) * S);
-          g.drawImage(H.ground, (m % 4) * 256 + (((u % 4) + 4) % 4) * 64, Math.floor(m / 4) * 256 + (((v % 4) + 4) % 4) * 64, 64, 64, 0, 0, 64, 64);
+          this.diamond(g, u, v, h, 'rgba(18,56,88,0.38)');
         }
         g.setTransform(S, 0, 0, S, ox * S, oy * S);
         this.diamond(g, u, v, h, `rgba(${FOG_RGB.join(',')},${k})`);
@@ -998,14 +1030,25 @@ export class FieldView {
     want.sort((p, q) => mid(p) - mid(q));
     this.wanted = want;
     let baked = 0;
+    let spent = 0;
+    const bake = (key: number): Chunk => {
+      const t0 = performance.now();
+      const c = this.bakeChunk(key % 100, Math.floor(key / 100));
+      spent += performance.now() - t0;
+      this.chunks.set(key, c);
+      baked++;
+      return c;
+    };
     const showing = new Set(want);
+    let missing = false;
     for (const key of want) {
       let c = this.chunks.get(key);
       if (!c) {
-        if (baked >= BAKES_A_FRAME) continue;
-        c = this.bakeChunk(key % 100, Math.floor(key / 100));
-        this.chunks.set(key, c);
-        baked++;
+        if (baked >= BAKES_A_FRAME || spent >= BAKE_BUDGET_MS) {
+          missing = true;
+          continue;
+        }
+        c = bake(key);
       }
       c.used = this.frame;
       if (!c.sprite.parent) this.chunkLayer.addChild(c.sprite);
@@ -1026,7 +1069,20 @@ export class FieldView {
       this.drawn.chunks++;
       this.drawn.props += c.props.length;
     }
+    // (all in view baked and time to spare: one chunk of the ring round the view, baked ahead and left hidden till it is wanted)
+    if (!missing && baked === 0 && this.chunks.size < CACHE - 4) {
+      const m = CHUNK * TW;
+      const ring = chunksInView({ x0: view.x0 - m, x1: view.x1 + m, y0: view.y0 - m / 2, y1: view.y1 + m / 2 }, b.w, b.d, this.heights)
+        .filter((k) => !this.chunks.has(k))
+        .sort((p, q) => mid(p) - mid(q));
+      if (ring.length) {
+        const c = bake(ring[0]);
+        c.used = this.frame;
+        for (const p of c.props) p.visible = false;
+      }
+    }
     this.drawn.baked = baked;
+    this.drawn.bakeMs = spent;
     this.chunkLayer.sortableChildren = true;
     // (chunks out of view leave the scene; past the cache's size, the longest unused are let go)
     for (const [key, c] of this.chunks) {

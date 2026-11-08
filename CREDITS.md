@@ -635,12 +635,3 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.
-## The Assault's Bloodtusk Hold (`src/art/assault/orc/`)
-- The owner's thirteen Orc sheets (`art-source/assault/orc/orc-01` to `orc-13`: the palisade and its gates, the Iron Gate and the towers, the cliff and
-  wall faces, the ground textures and their transitions, the keep and the throne, the wall's dressing and stairs, the war camp and its props, the siege
-  works and ruins, the river pieces, the ground decals), original art generated with OpenAI image generation from the prompts in the art plan
-  (`docs/notes/assault-art-plan.md`). `tools/assault/cut-sheets.py` cuts them: the standing pieces trimmed and halved by a 2x2 box average, the ground
-  textures made seamless, the transitions, decals and faces reduced.
-- Beside them, about sixty single pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`: Orcs, Dwarves,
-  Liches, Moonpack, Knights and the wild flair), halved the same way and packed into the same atlas (`sprites.webp`, listed in
-  `src/render/assaultOrcAtlas.ts`). Chronos credits the kits as drawn with ChatGPT's image generation from prompts written for that game.
