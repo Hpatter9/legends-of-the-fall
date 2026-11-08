@@ -17,14 +17,15 @@ const atlas = JSON.parse(readFileSync('src/art/fx/pack/atlas.json', 'utf8')) as 
 test('every actual hero, ultimate, enemy skill and king spell has individual authored artwork', () => {
   // (FOE-STYLES: a common foe's kit has no skill)
   const names = new Set(Object.values(KITS).filter(hasSkill).flatMap(k => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
-  assert.equal(names.size, 136);
-  // (the five Mythics' skills 2 and 3 are painted too, atlas-12: every move a Mythic has is its own, docs/notes/mythics-finish.md)
+  assert.equal(names.size, 158);
+  // (the five Mythics' skills 2 and 3 are painted too, atlas-13: every move a Mythic has is its own, docs/notes/mythics-finish.md)
   const mythicMoves = MYTHIC_KINDS.flatMap(k => HERO_KITS()[k].slots.map(s => keyOf(s.skill))).filter(n => !names.has(n));
   assert.equal(mythicMoves.length, 10);
   const expected = [...names, ...mythicMoves].map(n => `skill:${n}`).concat(SPELL_IDS.map(id => `spell:${id}`));
   // (136 skills and ultimates and the king's 35 spells: KING-SPELLS batch 5 painted the schools' fourteen, docs/notes/king-spells-b5.md;
-  // the five Mythics' skill 1 and ultimate took ten more, atlas-11, docs/notes/fix-main-mythics.md; their skills 2 and 3 ten more, atlas-12)
-  assert.equal(expected.length, 181);
+  // the five Mythics' skill 1 and ultimate took ten more, atlas-11, docs/notes/fix-main-mythics.md; the other eleven of the twenty took twenty-two, atlas-11 and atlas-12, docs/notes/heroes-join-2.md;
+  // the Mythics' skills 2 and 3 ten more, atlas-13, docs/notes/mythics-finish.md)
+  assert.equal(expected.length, 203);
   assert.deepEqual(Object.keys(ABILITY_LOOKS).sort(), expected.sort());
   assert.equal(new Set(ABILITY_ART.map(row => row.id)).size, expected.length);
   assert.equal(new Set(ABILITY_ART.map(row => abilitySource(row.id))).size, expected.length, 'different names must resolve to different source cells');

@@ -20,8 +20,10 @@ import a9 from '../art/fx/abilities/atlas-9.png';
 import a10 from '../art/fx/abilities/atlas-10.png';
 // (the five Mythics: their skill 1 and ultimate leads, cut from the painted spell sheets by `tools/mythics/ability-art.py`)
 import a11 from '../art/fx/abilities/atlas-11.png';
-// (and their skills 2 and 3, layered from the same painted sheets by `tools/mythics/finish-art.py`)
+// (the other eleven of the twenty: their skill 1 and ultimate leads, `tools/heroes-20/import-ability-icons-2.py`; six share atlas-11)
 import a12 from '../art/fx/abilities/atlas-12.png';
+// (the five Mythics' skills 2 and 3, layered from the painted spell sheets by `tools/mythics/finish-art.py`)
+import a13 from '../art/fx/abilities/atlas-13.png';
 
 const bases = new Map<string, Texture>();
 const frames = new Map<string, Texture[]>();
@@ -29,7 +31,7 @@ let loading: Promise<void> | undefined;
 
 export function loadAbilityArt(): Promise<void> {
   return loading ??= (async () => {
-    const images = await Promise.all([a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12].map(loadImage));
+    const images = await Promise.all([a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13].map(loadImage));
     for (const row of ABILITY_ART) {
       const image = images[row.atlas];
       const columns = row.atlas === 8 ? 1 : 4;

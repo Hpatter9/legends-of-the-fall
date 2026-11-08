@@ -47,7 +47,8 @@ test('the shards a new hero needs rise with the heroes owned: few at first, many
     assert.ok(unlockNeed(n) >= last, `${n}`);
     last = unlockNeed(n);
   }
-  assert.ok(unlockNeed(6) <= 3 && unlockNeed(10) <= 12 && unlockNeed(30) >= 50);
+  // (30 of 44 pullable heroes was two thirds of the way; with 55 pullable it is 37: docs/notes/heroes-join-2.md)
+  assert.ok(unlockNeed(6) <= 3 && unlockNeed(10) <= 12 && unlockNeed(37) >= 50);
   const m = fresh(1);
   assert.equal(ownedCount(m), 3);
   assert.equal(needOf(m), 1);

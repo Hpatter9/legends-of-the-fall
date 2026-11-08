@@ -1,8 +1,10 @@
+import { modeShown } from './sim/hiddenModes';
 import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
+import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
 import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
@@ -101,6 +103,7 @@ import { toastAchievements, toastLines, toastSpells, toastStones } from './achie
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
 import { defaultPicks, marchChoice, marchLine, openMarchOrders, ordersOf, showAnvil, showLectern } from './marchCard';
+import { armyParty, noteOathFalls, oathCrowns, oathPay, swearOath } from './sim/oath';
 import { markedHero } from './sim/march';
 import { repairAll, repairAllCost } from './sim/wear';
 import { lecternDue, lecternSwap } from './sim/lectern';
@@ -480,9 +483,12 @@ class Game {
         const marching = !auto && marchChoice(this.meta, id, tier);
         let picks = defaultPicks(this.meta, id, this.meta.party);
         this.party.open('start', () => {
-          const next = armyRun(runSeed, id, this.meta.party, this.meta.castle, tier);
+          // (Dynasties, phase 7: a line in mourning cannot march with the armies)
+          const next = armyRun(runSeed, id, armyParty(this.meta, todayKey()), this.meta.castle, tier);
           if (seed && isScenario(scenario) && next.mode?.kind === 'army') next.mode.scenario = scenario;
           if (marching) {
+            // (and the Legend Oath, sworn for this run on the March orders)
+            if (picks.oath) swearOath(this.meta, next);
             const orders = ordersOf(picks, next.seed, this.meta.party);
             if (orders) next.orders = orders;
             // (DEPTH-BUILD: Far Sight's road: the run is fought on that land of the army's)
@@ -1032,7 +1038,7 @@ class Game {
 
   /** Where an end card's button goes (REVEAL). */
   private revealGo(to: RevealGo): void {
-    if (to.to === 'calamity') return this.home.enterCalamity();
+    if (to.to === 'calamity') return modeShown('calamity') ? this.home.enterCalamity() : undefined;
     if (to.to === 'armies') return this.home.openArmies(to.army);
     if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
     this.home.show(to.to);
@@ -1398,6 +1404,7 @@ class Game {
 
   /** The Tower's place at the camp is the Last Stand: a saved run carries on, else a new one begins with the party. */
   private openStand(): void {
+    if (!modeShown('tower')) return;
     if (!modeOpen(this.meta, 'tower') && !loadStand()) return;
     void this.stand.open();
   }
@@ -2436,7 +2443,7 @@ class Game {
       if (!spendTicket(this.meta, todayKey())) return void this.endAuto('tickets');
       saveMeta(this.meta);
       // (a quest battle's next try, or the daily's next practice run, or the army's next run)
-      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, this.meta.party, this.meta.castle, a.tier);
+      const nextRun = a.kind === 'quest' ? startQuestBattle(this.meta, a.quest!, this.run.pool ?? this.meta.party) : a.kind === 'daily' ? startDaily(this.meta, a.daily!) : armyRun(clockSeed(), a.army, armyParty(this.meta, todayKey()), this.meta.castle, a.tier);
       if (!nextRun) return void this.endAuto('stopped');
       if (nextRun.mode?.kind === 'army' && this.run.mode?.kind === 'army' && this.run.mode.scenario) nextRun.mode.scenario = this.run.mode.scenario;
       this.startRun(nextRun);
@@ -2710,6 +2717,7 @@ class Game {
   /** The tower or the calamity from the home screen: its saved run carries on where it stood; with none, a new one begins (the calamity asks for its hero first). */
   private openMode(kind: 'calamity'): void {
     // (a shut mode has a disabled button; a run begun before it shut is still let in)
+    if (!modeShown(kind)) return;
     if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
     // (the Calamity's reveal, if it has not played yet (cinematics were off as it opened, or the save opened it before the reveal existed), comes first)
     if (dueScene(this.meta, { kind: 'calOpen' }) && this.scenesOn()) return void this.queueScene({ kind: 'calOpen' }).then(() => this.openMode(kind));
@@ -2943,6 +2951,8 @@ class Game {
       saveRun(this.run);
       // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
       const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
+      // (Dynasties, phase 7: under the Legend Oath each of them has fallen once; the wave's end decides who is slain)
+      noteOathFalls(this.run, this.b);
       reviveParty(this.b);
       // (DEPTH-BUILD: the Chapel's Vigil: how the party rises, chosen on the march card)
       applyVigil(this.b, fallen, this.run.orders?.vigil);
@@ -3685,6 +3695,8 @@ class Game {
       this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
       // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
       if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
+      // (Dynasties, phase 7: the Legend Oath pays half again)
+      if (this.pay) oathCrowns(this.meta, this.pay, run);
       // (DEPTH-BUILD: the Mage Tower's Spell Lectern, at the camp after the mid-boss: swap the run's spare spell in, once)
       const spare = run.orders?.spare as SpellId | undefined;
       const midWon = won && !!army && army.waves[stage - 1]?.boss === 'mid' && !this.auto;
@@ -3723,12 +3735,14 @@ class Game {
       // (EIDOLON-CHAINS: the pieces of a pact found by this fight show as a card over its result)
       const piecesBefore = [...(this.meta.quests?.pieces ?? [])];
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
-      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey() };
+      const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey(), now: Date.now() };
       const earned = settleRun(this.meta, run, settled);
+      // (Dynasties, phase 7: the slain under the Oath, its trophy and renown, on the wave card with the War's lines)
+      if (settled.oath?.lines.length) this.nemNote = { ...(settled.war ?? { born: [], grew: [], slain: [], held: [], learned: [], crowns: 0 }), council: [...(settled.war?.council ?? []), ...settled.oath.lines] };
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
       toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k), ...(settled.trialShards ? [trialShardsLine(heroName(settled.trialShards.kind), settled.trialShards.n)] : [])]);
       // (the Nemesis War's lines go on the wave card below)
-      this.nemNote = settled.war;
+      if (!settled.oath?.lines.length) this.nemNote = settled.war;
       // (and what slaying a nemesis paid counts in the wave's crowns)
       if (settled.war?.crowns) this.crownGain += settled.war.crowns;
       const questsDone = readyQuests(this.meta).filter((id) => !readyBefore.includes(id));
@@ -3748,12 +3762,12 @@ class Game {
       // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
       // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)
-      if (modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
+      if (modeShown('calamity') && modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
       this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       // (a quest battle replayed for practice pays nothing, XP neither)
-      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) * marchPay(run.orders).xp : 1));
+      const gains = own ? own.gains : run.mode?.kind === 'quest' && run.mode.practice ? {} : fightXp(b, xpRate(this.meta.castle) * tierOf(tierOfRun(run)).xp * (army ? armyXpShare(army, tierOfRun(run)) * marchPay(run.orders).xp * oathPay(run) : 1));
       // (the heroes of the run that sat out the fight earn a small share, to power-level the low ones)
       const bench = own ? {} : benchXp(gains, run.roster.filter((h) => !h.guest).map((h) => h.kind));
       // (JRPG-RECAP: each kind's XP before this fight paid, for the run's end screen)
@@ -4121,9 +4135,15 @@ function overBench(x: number, y: number): boolean {
 
 // (MENU-GLITCH: a tap that opens a panel does not also press what of it is under the finger)
 installTapGuard();
-new Game().start().catch((err) => {
-  $('loading').textContent = `Could not start: ${err}`;
-});
+// (ASSAULT-0: `?bench=assault` is the Assault's engine bench, `assaultBench.ts`; it plays instead of the game and touches no save)
+if (isAssaultBench())
+  startAssaultBench().catch((err) => {
+    $('loading').textContent = `Could not start the bench: ${err}`;
+  });
+else
+  new Game().start().catch((err) => {
+    $('loading').textContent = `Could not start: ${err}`;
+  });
 
 // (the app bundles every file itself, so its page skips the service worker; the web page keeps it)
 checkAppUpdate(__GAME_VERSION__);

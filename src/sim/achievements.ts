@@ -3,6 +3,7 @@
 // `Meta.achievements`; `checkAchievements` returns what was new, for the toast. The crowns and stones wait until the player taps Claim on
 // the achievements page (`claimAchievement`); the ones already paid are kept in `Meta.claimed`.
 
+import { achievementShown } from './hiddenModes';
 import type { Battle } from './battle';
 import { BOSS_IDS } from './foes';
 import type { Meta } from './meta';
@@ -180,7 +181,7 @@ export const achievementById = (id: string): Achievement | undefined => ACHIEVEM
 export function checkAchievements(c: AchievementCtx): Achievement[] {
   const got: Achievement[] = [];
   for (const a of ACHIEVEMENTS) {
-    if (c.meta.achievements.includes(a.id) || !a.earned(c)) continue;
+    if (c.meta.achievements.includes(a.id) || !achievementShown(a.id, c.meta.achievements) || !a.earned(c)) continue;
     c.meta.achievements.push(a.id);
     got.push(a);
   }
@@ -191,6 +192,8 @@ export function checkAchievements(c: AchievementCtx): Achievement[] {
 export const claimable = (m: Meta, id: string): boolean => m.achievements.includes(id) && !(m.claimed ?? []).includes(id);
 /** The achievements earned whose crowns are still waiting. */
 export const unclaimed = (m: Meta): Achievement[] => ACHIEVEMENTS.filter((a) => claimable(m, a.id));
+/** The achievements the page lists: every one but those only a hidden mode can earn (unless already earned). */
+export const shownAchievements = (m: Meta): readonly Achievement[] => ACHIEVEMENTS.filter((a) => achievementShown(a.id, m.achievements));
 
 /** Take an earned achievement's crowns and stones. Returns the crowns paid (0 when it isn't earned, or was claimed already). */
 export function claimAchievement(m: Meta, id: string): number {

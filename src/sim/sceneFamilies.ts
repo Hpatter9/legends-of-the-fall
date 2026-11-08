@@ -302,6 +302,17 @@ const AWAKE_LINES: Readonly<Record<string, readonly [string, string]>> = {
   geomancer: ['Tenzin listens to the crags until they tell him where they would like to move.', 'The mountain nods. I shall try not to take it as permission to be smug.'],
   bellWarden: ['Kavi guards the bronze bell that tolls only for the guilty, and sleeps beside it.', 'It rings in the marrow now. Even the hills have gone quiet to listen.'],
   falconer: ['Aisling reads the glen by the flight of a single bird, and has never once been lost.', 'Wing and bow as one. Mind your hats; she stoops from a great height.'],
+  banneret: ['Isolde plants the standard, and the whole rampart straightens behind it.', 'The guidon is heavier now, and I carry it more lightly. Let them see it from the far wall.'],
+  astralSphinx: ['Nenet sets one paw in a star-rift, and the constellations lean in to hear her riddle.', 'The sky has answered at last. It was never very good at keeping secrets.'],
+  mirageDancer: ['Zahara turns once on the sand, and for a moment there are seven of her to bow.', 'Now you see me, and now you see her, and now the sirocco does the rest.'],
+  plagueDoctor: ['Corvus swings the censer, and a green hush settles over the keep.', 'Crows and ash: the prescription is the same, but the dose is better.'],
+  bombardier: ['Soren packs the last shell and lights the fuse with a grin that has never once been sensible.', 'Wider shells, longer fuses and a much bigger hat. Stand well back!'],
+  astrologer: ['Cyra holds up her astrolabe, and the planets begin to line up for her.', 'The stars were always going to say yes. I only had to ask in the right order.'],
+  inquisitor: ['Soraya lowers her brow, and the sun itself leans in to hear the verdict.', 'The scales are mine to hold, and the light will do the rest.'],
+  seraph: ['Gabriela unfolds her wings, and the shadows of the keep stand a little taller for the light.', 'Mercy is not weakness. Stand behind me and watch it work.'],
+  corsairSurgeon: ['Tariq rolls up his sleeves and sets down his saw, and the ship goes quiet for his work.', 'The rum is for the patients. Mostly. Hold still and trust the sawbones.'],
+  harpooner: ['Siku coils the line over his arm and looks out to the horizon, where something very large waits.', 'The deep has been watching me, and now I am ready to be seen back.'],
+  seaReaver: ['Nakoa sets his anchor on the stone, and the sea itself seems to hold its breath.', 'The hull breaks. The tide turns. And I am the one who still stands in the surf.'],
 };
 
 const AWAKE_AREAS: Area[] = ['highlands', 'forest', 'snow', 'desert', 'volcano', 'dungeon'];

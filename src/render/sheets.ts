@@ -151,6 +151,29 @@ import HeroResFalconer from '../art/units/hero_res_falconer.png';
 import HeroResFalconerBack from '../art/units/hero_res_falconer_back.png';
 import HeroResGeomancer from '../art/units/hero_res_geomancer.png';
 import HeroResGeomancerBack from '../art/units/hero_res_geomancer_back.png';
+// The other eleven of the twenty (docs/notes/heroes-join-2.md): packed by tools/heroes-20/pack-sheets.py.
+import HeroResBanneret from '../art/units/hero_res_banneret.png';
+import HeroResBanneretBack from '../art/units/hero_res_banneret_back.png';
+import HeroResAstralSphinx from '../art/units/hero_res_astral_sphinx.png';
+import HeroResAstralSphinxBack from '../art/units/hero_res_astral_sphinx_back.png';
+import HeroResMirageDancer from '../art/units/hero_res_mirage_dancer.png';
+import HeroResMirageDancerBack from '../art/units/hero_res_mirage_dancer_back.png';
+import HeroResPlagueDoctor from '../art/units/hero_res_plague_doctor.png';
+import HeroResPlagueDoctorBack from '../art/units/hero_res_plague_doctor_back.png';
+import HeroResBombardier from '../art/units/hero_res_bombardier.png';
+import HeroResBombardierBack from '../art/units/hero_res_bombardier_back.png';
+import HeroResAstrologer from '../art/units/hero_res_astrologer.png';
+import HeroResAstrologerBack from '../art/units/hero_res_astrologer_back.png';
+import HeroResInquisitor from '../art/units/hero_res_inquisitor.png';
+import HeroResInquisitorBack from '../art/units/hero_res_inquisitor_back.png';
+import HeroResSeraph from '../art/units/hero_res_seraph.png';
+import HeroResSeraphBack from '../art/units/hero_res_seraph_back.png';
+import HeroResCorsairSurgeon from '../art/units/hero_res_corsair_surgeon.png';
+import HeroResCorsairSurgeonBack from '../art/units/hero_res_corsair_surgeon_back.png';
+import HeroResHarpooner from '../art/units/hero_res_harpooner.png';
+import HeroResHarpoonerBack from '../art/units/hero_res_harpooner_back.png';
+import HeroResSeaReaver from '../art/units/hero_res_sea_reaver.png';
+import HeroResSeaReaverBack from '../art/units/hero_res_sea_reaver_back.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -305,6 +328,28 @@ const URLS: Record<string, string> = {
   hero_res_falconer_back: HeroResFalconerBack,
   hero_res_geomancer: HeroResGeomancer,
   hero_res_geomancer_back: HeroResGeomancerBack,
+  hero_res_banneret: HeroResBanneret,
+  hero_res_banneret_back: HeroResBanneretBack,
+  hero_res_astral_sphinx: HeroResAstralSphinx,
+  hero_res_astral_sphinx_back: HeroResAstralSphinxBack,
+  hero_res_mirage_dancer: HeroResMirageDancer,
+  hero_res_mirage_dancer_back: HeroResMirageDancerBack,
+  hero_res_plague_doctor: HeroResPlagueDoctor,
+  hero_res_plague_doctor_back: HeroResPlagueDoctorBack,
+  hero_res_bombardier: HeroResBombardier,
+  hero_res_bombardier_back: HeroResBombardierBack,
+  hero_res_astrologer: HeroResAstrologer,
+  hero_res_astrologer_back: HeroResAstrologerBack,
+  hero_res_inquisitor: HeroResInquisitor,
+  hero_res_inquisitor_back: HeroResInquisitorBack,
+  hero_res_seraph: HeroResSeraph,
+  hero_res_seraph_back: HeroResSeraphBack,
+  hero_res_corsair_surgeon: HeroResCorsairSurgeon,
+  hero_res_corsair_surgeon_back: HeroResCorsairSurgeonBack,
+  hero_res_harpooner: HeroResHarpooner,
+  hero_res_harpooner_back: HeroResHarpoonerBack,
+  hero_res_sea_reaver: HeroResSeaReaver,
+  hero_res_sea_reaver_back: HeroResSeaReaverBack,
 };
 
 const LAYOUT: Record<string, Layout> = { ...layout, ...awakened.layouts };
@@ -360,6 +405,11 @@ export async function loadSheets(): Promise<void> {
   const required = new Set([...Object.values(UNITS).flatMap(def => [def.sheet, ...(def.forms ?? [])]), ...SUMMON_SHEETS]);
   for (const id of [...required]) if (LAYOUT[id]?.rear) required.add(LAYOUT[id].rear!);
   await Promise.all([loadRulers(), ...[...required].filter(id => URLS[id] && LAYOUT[id]).map(loadSheet)]);
+}
+
+/** Load only these sheets (the Assault's bench page, `assaultBench.ts`, which draws a handful of kinds). */
+export async function loadSomeSheets(ids: readonly string[]): Promise<void> {
+  await Promise.all(ids.filter((id) => URLS[id] && LAYOUT[id]).map(loadSheet));
 }
 
 /** An animation's frames (idle when the sheet has no such row). */

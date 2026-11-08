@@ -2,7 +2,7 @@
 drawn in code and nothing is repainted. Each picture layers two painted frames, scaled and recoloured, so none repeats a cell another
 skill or spell already uses.
 
-- src/art/fx/abilities/atlas-12.png: skill 2 and skill 3 of each Mythic (ten cells), with their rows in the catalogue. Before this
+- src/art/fx/abilities/atlas-13.png: skill 2 and skill 3 of each Mythic (ten cells), with their rows in the catalogue. Before this
   they borrowed another hero's look (KIT_LOOKS).
 - src/art/ult-show/mythic-*.webp: each Mythic's showcase prop (the black sun, the star chart, the halo, the world tree, the clock of
   fate). The ultimate's cut-in shows the same prop as its sigil.
@@ -127,8 +127,8 @@ if __name__ == '__main__':
     rows = []
     for i, (name, motif, make) in enumerate(MOVES):
         atlas.alpha_composite(fit(make(), CELL), ((i % 4) * CELL, (i // 4) * CELL))
-        rows.append({'id': f'skill:{name}', 'name': name, 'motif': motif, 'atlas': 12, 'cell': i})
-    atlas.save(OUT / 'atlas-12.png', optimize=True)
+        rows.append({'id': f'skill:{name}', 'name': name, 'motif': motif, 'atlas': 13, 'cell': i})
+    atlas.save(OUT / 'atlas-13.png', optimize=True)
     cat = json.loads((OUT / 'catalogue.json').read_text())
     have = {r['id'] for r in cat}
     cat += [r for r in rows if r['id'] not in have]

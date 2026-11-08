@@ -5,6 +5,7 @@
 // them; the page parts only touch the DOM when they are used.
 
 import { colLeft, viewH, viewW } from './viewport';
+import { modeShown } from './sim/hiddenModes';
 import { SYSTEM_FINDERS } from './systemTips';
 
 /** Every tip, by the moment it is for. */
@@ -29,7 +30,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   skill: { text: 'Heroes cast their skills on their own, paid from the blue mana or gold stamina bar under each portrait.', page: 'game', during: 'fight' },
   ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto switch fires them for you, and casts your spells too.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Drag a hero onto another of the same kind and star to merge them into a stronger one (up to four stars), or tap one then the other. Beating the second army unlocks Auto merge.', page: 'game', during: 'deploy' },
-  crowns: { text: 'Crowns buy chests in the Recruit tab, and chests hold summoning stones. Each stone gives a hero shard. Army stars open the Castle, the Last Stand and the Calamity.', page: 'home' },
+  crowns: { text: 'Crowns buy chests in the Recruit tab, and chests hold summoning stones. Each stone gives a hero shard. Army stars open the Castle.', page: 'home' },
   calamity: { text: 'Calamity: start with one hero, recruit a team and evolve your altar across three regions. Your starter grows stronger.', page: 'home' },
   tower: { text: 'Last Stand: guard your ruler on the keep as wave after wave comes in from every side. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
@@ -146,6 +147,8 @@ class Tips {
     this.lastScan = now;
     if (!this.known().has('home')) return;
     for (const id of Object.keys(SYSTEM_FINDERS) as SystemTipId[]) {
+      // (the Last Stand's and the Calamity's tips wait while those modes are hidden)
+      if ((id === 'tower' || id === 'calamity') && !modeShown(id)) continue;
       if (this.known().has(id) || this.shown?.id === id || this.queue.some((q) => q.id === id)) continue;
       const found = SYSTEM_FINDERS[id]!();
       if (found) this.offer(id, found);

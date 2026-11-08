@@ -5,6 +5,7 @@
 // (`tower.ts`) that opens once a run has fought stage 10; its floors are the run's own stages. Pure rules: no Pixi, no DOM; the
 // date is passed in as yyyymmdd.
 
+import { settleOath, type OathNote } from './oath';
 import { newRunes } from './runes';
 import { grantRemedy } from './remedies';
 import { checkAchievements, type Achievement } from './achievements';
@@ -224,7 +225,7 @@ export const floorsCleared = (run: Run): number => run.stage - 1;
  * score once it is over. Then check the achievements. `battle` is the finished fight (absent for a check on the run).
  * Returns the achievements earned now (their crowns are paid).
  */
-export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote; /** The page's day key (the Council's turn after a run, and the War Trophies' daily cap); the tools leave it out, and no turn is taken. */ day?: number; /** Filled in: a Mythic's rank shards for its trial replayed and won (`mythicEcho.ts`). */ trialShards?: { kind: string; n: number } } & FightExtra): Achievement[] {
+export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: number; stars: number; battle?: Battle; /** Filled in: what the fight taught of the bosses' weaknesses (DEPTH-BUILD), for the page. */ weak?: WeakNote; /** Filled in: the bonds risen or settled (DEPTH-BUILD). */ bonds?: BondNote; /** The Nemesis War's tally of the fight (`nemesisLog.ts`, the page's), and filled in: what it meant for the War. */ nemesis?: NemesisTally; war?: NemNote; /** The page's day key (the Council's turn after a run, and the War Trophies' daily cap); the tools leave it out, and no turn is taken. */ day?: number; /** The page's clock (ms): a trained heir's readiness when a bearer is slain under the Oath. */ now?: number; /** Filled in: what the Legend Oath made of the wave (Dynasties, phase 7). */ oath?: OathNote; /** Filled in: a Mythic's rank shards for its trial replayed and won (`mythicEcho.ts`). */ trialShards?: { kind: string; n: number } } & FightExtra): Achievement[] {
   // (an army's waves are not stages of the endless climb: they keep their own record, `settleWave`; nor are a daily's, `settleDaily`)
   const fixed = waveArmyOf(run);
   if (!fixed && run.mode?.kind !== 'calamity') m.bestStage = Math.max(m.bestStage, run.best);
@@ -247,6 +248,8 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   // (phase 2: and what it means for the Dark Council, `council.ts`; an army run that has ended gives the Council its turn)
   if (fight.battle && !quest) fight.war = noteWar(m, run, fight.battle, fight.nemesis, fight.won, fight.stage, fight.day);
   else openWar(m);
+  // (Dynasties, phase 7: a wave under the Legend Oath: the slain, the War Trophy, and renown at a clear, `oath.ts`)
+  if (fight.battle && run.oath && fight.day !== undefined) fight.oath = settleOath(m, run, fight.battle, fight.won, { tally: fight.nemesis, note: fight.war, now: fight.now ?? 0, day: fight.day }) ?? undefined;
   if (fight.day !== undefined && run.over) {
     const turn = endOfRun(m, run, fight.day);
     if (turn?.length && fight.war) fight.war.council = [...(fight.war.council ?? []), ...turnLines(turn)];

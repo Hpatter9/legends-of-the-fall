@@ -296,7 +296,7 @@ test('every hero has an awakening scene (their own sheet, their new look), and t
     // (the new look is switched on in the scene, once the light comes)
     assert.ok(sc.shots.some((s) => s.acts?.some((a) => 'look' in a && a.look === 1)), k);
   }
-  assert.equal(ALL_HEROES.filter((k) => dueScene(m, { kind: 'awaken', hero: k })).length, 59);
+  assert.equal(ALL_HEROES.filter((k) => dueScene(m, { kind: 'awaken', hero: k })).length, 70);
   for (const c of CONTENT_HEROES) assert.equal(dueScene(m, { kind: 'earned', hero: c.kind }), `earned:${c.kind}`);
   assert.equal(dueScene(m, { kind: 'earned', hero: 'knight' }), null, 'a hero not earned by play has no arrival');
 });
@@ -400,6 +400,10 @@ test('the preview frames name a real moment of each shot, for the screenshot str
 
 import { COMBOS } from '../src/sim/combos';
 import { OATH_SETS } from '../src/sim/sceneFamilies';
+import { setModesHidden } from '../src/sim/hiddenModes';
+
+// (the Last Stand and the Calamity are hidden in the game for now; this file tests their own rules, which stay, so it shows them: docs/notes/hide-modes.md)
+setModesHidden(false);
 
 test('every set of five has its Last Oath: the fuller scene the first time, the short one after, with a line from each of the five', () => {
   assert.deepEqual(OATH_SETS.map((o) => [o.set, o.name]), COMBOS.map((c) => [c.id, c.name]));

@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.402.0',
+    date: '2026-11-08',
+    title: 'The Legend Oath and the Shades',
+    notes: ['Swear the Legend Oath on Hard or above for 1.3x pay: a hero may truly fall, but nothing is lost. The fallen return as Shades on the War Horn.'],
+  },
+  {
+    version: '0.401.0',
+    date: '2026-11-08',
+    title: 'All twenty new heroes join',
+    notes: ['Isolde, Nenet, Zahara, Corvus, Soren, Cyra, Soraya, Gabriela, Tariq, Siku and Nakoa join: 65 heroes to collect, plus the Mythics.'],
+  },
+  {
+    version: '0.400.0',
+    date: '2026-11-08',
+    title: 'The Last Stand and Calamity rest a while',
+    notes: ['Both modes are hidden while they are remade; your saves are kept. Six heroes\' quests now run through the armies, so every hero can still be earned.'],
+  },
+  {
+    version: '0.399.0',
+    date: '2026-11-08',
+    title: 'Assault engine test page',
+    notes: ['A test of the coming Assault mode: 55 against 200 on a 100x100 map. Open the game with ?bench=assault to see how smoothly your phone runs it.'],
+  },
+  {
     version: '0.398.0',
     date: '2026-11-08',
     title: 'Mythic heroes completed',

@@ -34,10 +34,10 @@ export const RARITY_GRADE: Readonly<Record<BookRarity, number>> = { common: 1, u
 
 /** Who reads what (the owner's rule: only the kinds suited to a hero's calling, plus the universal books). One line to change. */
 export const READS: Readonly<Record<Exclude<BookKind, 'universal'>, readonly string[]>> = {
-  manual: ['knight', 'samurai', 'kunoichi', 'archer', 'peasant', 'ninjaMonk', 'samuraiCommander', 'barbarian', 'ranger', 'gunslinger', 'rifleBot', 'mercenary', 'buccaneer', 'beastmaster', 'lancer', 'reaper', 'arcBlade', 'dreadPirate', 'siegeBot', 'dragoon', 'juggernaut', 'demonSwordsman', 'vampireLord', 'nightstalker', 'dhampir', 'warDrummer', 'falconer', 'vael'],
-  grimoire: ['wizard', 'lightningMage', 'warlock', 'illusionist', 'tyrant', 'hemomancer', 'geomancer', 'nyxara'],
-  hymnal: ['cleric', 'priestess', 'wanderer', 'druid', 'paladin', 'wolfBard', 'timeWitch', 'sage', 'bellWarden', 'ilyra', 'orrun'],
-  bestiary: ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'mummy', 'kraken', 'bloodGargoyle', 'astrax'],
+  manual: ['knight', 'samurai', 'kunoichi', 'archer', 'peasant', 'ninjaMonk', 'samuraiCommander', 'barbarian', 'ranger', 'gunslinger', 'rifleBot', 'mercenary', 'buccaneer', 'beastmaster', 'lancer', 'reaper', 'arcBlade', 'dreadPirate', 'siegeBot', 'dragoon', 'juggernaut', 'demonSwordsman', 'vampireLord', 'nightstalker', 'dhampir', 'warDrummer', 'falconer', 'banneret', 'mirageDancer', 'bombardier', 'harpooner', 'seaReaver', 'vael'],
+  grimoire: ['wizard', 'lightningMage', 'warlock', 'illusionist', 'tyrant', 'hemomancer', 'geomancer', 'plagueDoctor', 'astrologer', 'nyxara'],
+  hymnal: ['cleric', 'priestess', 'wanderer', 'druid', 'paladin', 'wolfBard', 'timeWitch', 'sage', 'bellWarden', 'inquisitor', 'seraph', 'corsairSurgeon', 'ilyra', 'orrun'],
+  bestiary: ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'mummy', 'kraken', 'bloodGargoyle', 'astralSphinx', 'astrax'],
 };
 
 /** The first catalogue (the design's table): Common and Uncommon on the stall's shelf, Rare found in chests. */

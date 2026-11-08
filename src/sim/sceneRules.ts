@@ -4,6 +4,7 @@
 // save from before has none, and one that had already picked its heroes counts the opening as seen, so no old save is
 // greeted with a new save's opening). Pure rules: no Pixi, no DOM.
 
+import { modeShown } from './hiddenModes';
 import type { Meta } from './meta';
 import { momentKey, SCENES, SCENE_ORDER, type CastMember, type Moment, type Scene } from './sceneScripts';
 import { FAMILY_NAMES } from './sceneFamilies';
@@ -29,7 +30,9 @@ export function dueScene(m: Meta, moment: Moment): string | null {
   const key = momentKey(moment);
   for (const id of SCENE_ORDER) {
     const s = SCENES[id];
-    if (s.calamity && !modeOpen(m, 'calamity')) continue;
+    if (s.calamity && (!modeShown('calamity') || !modeOpen(m, 'calamity'))) continue;
+    // (the Calamity's reveal waits too while the mode is hidden)
+    if (!modeShown('calamity') && s.moment.kind === 'calOpen') continue;
     if (momentKey(s.moment) === key && (s.again || !seenScene(m, id))) return id;
   }
   return null;

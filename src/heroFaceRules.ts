@@ -69,6 +69,17 @@ export const HUD_FACES: Readonly<Record<string, { art: FaceBox; awakened: FaceBo
   geomancer: { art: [0.49, 0.1, 0.18], awakened: [0.53, 0.43, 0.28] },
   bellWarden: { art: [0.4, 0.18, 0.24], awakened: [0.52, 0.37, 0.26] },
   falconer: { art: [0.53, 0.1, 0.2], awakened: [0.63, 0.43, 0.28] },
+  banneret: { art: [0.51, 0.2, 0.17], awakened: [0.42, 0.31, 0.25] },
+  astralSphinx: { art: [0.65, 0.18, 0.19], awakened: [0.65, 0.3, 0.25] },
+  mirageDancer: { art: [0.5, 0.09, 0.18], awakened: [0.5, 0.25, 0.25] },
+  plagueDoctor: { art: [0.46, 0.12, 0.18], awakened: [0.43, 0.3, 0.25] },
+  bombardier: { art: [0.5, 0.12, 0.2], awakened: [0.45, 0.26, 0.25] },
+  astrologer: { art: [0.45, 0.11, 0.16], awakened: [0.5, 0.36, 0.25] },
+  inquisitor: { art: [0.48, 0.1, 0.16], awakened: [0.53, 0.34, 0.25] },
+  seraph: { art: [0.5, 0.15, 0.19], awakened: [0.45, 0.35, 0.25] },
+  corsairSurgeon: { art: [0.48, 0.1, 0.18], awakened: [0.51, 0.34, 0.25] },
+  harpooner: { art: [0.47, 0.1, 0.19], awakened: [0.47, 0.3, 0.25] },
+  seaReaver: { art: [0.5, 0.1, 0.19], awakened: [0.4, 0.33, 0.25] },
 };
 
 /** The painting a hero's face is cut from: the awakened form's once it has awakened, else the plain art's half-length portrait. */

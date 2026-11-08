@@ -2477,6 +2477,468 @@
     "Guard me! My endings are running short!",
     "Unravelling! Someone tie off this thread!"
    ]
+  },
+  "banneret": {
+   "hired": [
+    "The keep's colours never touch the mud while I draw breath.",
+    "Lance couched, guidon ironed, horse brushed. Ready for duty.",
+    "Follow the silk standard and try to look heroic, everyone."
+   ],
+   "placed": [
+    "Planting the colours right here! Form up around me!",
+    "A brisk canter first, then we plant the pole in their toes.",
+    "Eyes on the pennant! Backs straight!"
+   ],
+   "won": [
+    "The banner flies proud over a thoroughly tidy field!",
+    "A textbook charge! Even the squires kept formation!",
+    "Not a speck of mud on the royal silk. Splendid."
+   ],
+   "lost": [
+    "Hold the pole up! Do not let the colours trail!",
+    "Unhorsed! By a common footpad! The shame of it!",
+    "We shall mend the silk and ride again at dawn."
+   ],
+   "levelUp": [
+    "Gold fringe on the banner! Finer steel on the lance!",
+    "Promoted in the field! Wait till the chapter hears!",
+    "Our standard shines like a beacon on the hill!"
+   ],
+   "ultimate": [
+    "GRAND CRUSADE! FOR THE KEEP AND THE CROWN!",
+    "RALLY TO THE COLOURS! CHARGE!",
+    "NO STEP BACKWARD!"
+   ],
+   "revived": [
+    "Standard raised once more! The fight is not over!",
+    "Back in the stirrups! Form on me!",
+    "You cannot haul down these colours so easily!"
+   ],
+   "lowHp": [
+    "The flagpole is taking an awful lot of arrows!",
+    "Shield arm is numb, but the banner stays high!",
+    "Rally to me quickly, or the silk hits the turf!"
+   ]
+  },
+  "astralSphinx": {
+   "hired": [
+    "What walks on four paws and flattens warlords? Me. Riddle solved.",
+    "I have watched ten empires rise and fall. Yours has nice snacks.",
+    "Do not scratch behind my ears unless you mean to keep doing it."
+   ],
+   "placed": [
+    "Lounging in starlight until someone answers my riddle poorly.",
+    "The constellations favour this tile. Also it is sunny.",
+    "Paws planted. Wings preened. Ask your question, mortals."
+   ],
+   "won": [
+    "They failed the riddle. The penalty was being pounced on.",
+    "Wisdom triumphs, assisted by four hundred stone of lion.",
+    "A cosmic certainty. Now, is there any roast lamb?"
+   ],
+   "lost": [
+    "An insoluble paradox! Or just a very large club!",
+    "The stars were misaligned by three degrees! I protest!",
+    "Taking a sphinx nap. Wake me in a dynasty or two."
+   ],
+   "levelUp": [
+    "Brighter starlight in the mane! Heavier paws on the pounce!",
+    "Another millennium of cosmic riddles remembered!",
+    "My roar now echoes across three astral planes!"
+   ],
+   "ultimate": [
+    "RIDDLE OF AGES! ANSWER OR BE UNDONE!",
+    "THE FIRMAMENT WEIGHS YOUR SOULS!",
+    "KNEEL BEFORE THE ETERNAL SPHINX!"
+   ],
+   "revived": [
+    "A sphinx is eternal! That was merely a dramatic pause!",
+    "Starlight knits the lion whole again!",
+    "Did you think the riddle ended at the first verse?!"
+   ],
+   "lowHp": [
+    "My gilded wings are looking decidedly ruffled!",
+    "Even an immortal sphinx dislikes being poked with spears!",
+    "A little astral healing would be most welcome!"
+   ]
+  },
+  "mirageDancer": {
+   "hired": [
+    "Watch the veils, darling. While you blink, my scimitars do the work.",
+    "Hot sand, cold steel, and three illusions that look just like me.",
+    "I dance through swords without snagging a single hem."
+   ],
+   "placed": [
+    "Music, maestro! Or just the clash of iron, I can dance to that.",
+    "That one over there is already swinging at my shadow.",
+    "Twin blades poised. Seven veils spinning."
+   ],
+   "won": [
+    "Not a grain of sand in my slippers! Flawless routine!",
+    "They chased my mirage all the way into the ditch.Bless them.",
+    "Take a bow, girls! Oh wait, the other two vanished."
+   ],
+   "lost": [
+    "Stepped on my own veil! Who put a pebble on the stage?!",
+    "They guessed the real one on the first swing! Lucky brutes!",
+    "Out of breath and out of decoys. Curtain down."
+   ],
+   "levelUp": [
+    "Swifter spins! Brighter illusions! Keener scimitars!",
+    "Even the desert wind cannot catch my hem now!",
+    "A fourth veil and twice the dazzle!"
+   ],
+   "ultimate": [
+    "DANCE OF SEVEN VEILS! CATCH ME IF YOU CAN!",
+    "SPIN THE DESERT STORM!",
+    "BLADES IN THE SHIMMERING HEAT!"
+   ],
+   "revived": [
+    "Surprise! You only struck a sand phantom after all!",
+    "Encore! The dancer takes the stage once more!",
+    "Silk shaken out and scimitars flashing again!"
+   ],
+   "lowHp": [
+    "Running out of mirages to hide behind here!",
+    "Silk veils make terrible plate armour, it turns out!",
+    "Someone step in while I catch my breath!"
+   ]
+  },
+  "plagueDoctor": {
+   "hired": [
+    "The beak is stuffed with lavender and sage. Mostly because of you lot.",
+    "I practise aggressive preventative medicine. Emphasis on aggressive.",
+    "Cough once for a tonic, cough twice for a noxious flask."
+   ],
+   "placed": [
+    "Deploying the mobile apothecary. Mind the green puddles.",
+    "The enemy looks feverish. Let us prescribe some corrosive vapour.",
+    "Satchel open, vials corked, mask strapped tight."
+   ],
+   "won": [
+    "The infection has been purged! Along with the enemy vanguard!",
+    "All patients on our side are breathing. A medical triumph!",
+    "Please do not step in the lingering miasma on your way out."
+   ],
+   "lost": [
+    "Dropped the whole crate of vials! Hold your breath, everyone!",
+    "A fatal misdiagnosis on my own constitution!",
+    "The physician requires a physician. How ironic."
+   ],
+   "levelUp": [
+    "Stronger acids for them! Sweeter cordials for us!",
+    "Upgraded the lavender in the beak! Fresh as a daisy!",
+    "Certified Master of Pestilence and Poultices!"
+   ],
+   "ultimate": [
+    "GREAT PESTILENCE! BREATHE DEEP, SINNERS!",
+    "A DOSE OF THE BLACK MIASMA!",
+    "THE APOTHECARY IS OPEN FOR BUSINESS!"
+   ],
+   "revived": [
+    "Smelling salts in the mask! Woke me right up!",
+    "Self-medicated and back on my rounds!",
+    "You cannot write off the doctor before the bill is paid!"
+   ],
+   "lowHp": [
+    "My glass spectacles are cracked and my coat is leaking!",
+    "I am down to my last emergency leech here!",
+    "Heal the doctor, or nobody gets their tonic!"
+   ]
+  },
+  "bombardier": {
+   "hired": [
+    "I have forty pounds of black powder and a very short match! Hello!",
+    "If it doesn't move, blow it up! If it does move, lead the target!",
+    "Do not smoke near my satchel unless you fancy visiting the moon."
+   ],
+   "placed": [
+    "Lining up the mortar! Everyone in the front row, plug your ears!",
+    "If they get close, I just blast myself backwards! Works every time!",
+    "Fuses trimmed, powder dry, goggles down!"
+   ],
+   "won": [
+    "HAHA! Look at the size of those craters! Magnificent!",
+    "Still got all ten fingers and most of my eyebrows! Result!",
+    "Nothing left but smoke and boots! My favourite!"
+   ],
+   "lost": [
+    "Damp powder! Who spilled tea in the magazine?!",
+    "Blew myself into a thornbush! Give me a hand up!",
+    "Fizzled on the fuse. How utterly tragic."
+   ],
+   "levelUp": [
+    "More saltpetre! Bigger iron shells! Louder kaboom!",
+    "I just invented a cluster bomb that bounces twice!",
+    "Stand back, this new batch is proper spicy!"
+   ],
+   "ultimate": [
+    "GRAND SALVO! FIRE EVERYTHING AT ONCE!",
+    "CATCH THE WHOLE MAGAZINE, LADS!",
+    "EARTH-SHATTERING KABOOM INCOMING!"
+   ],
+   "revived": [
+    "Spark landed on my belt and jumped me right back up!",
+    "Fuse relit! Mortar upright! Who wants seconds?!",
+    "You cannot put out a proper powder-monkey!"
+   ],
+   "lowHp": [
+    "Sparks near the powder keg! This is getting dicey!",
+    "My blast apron is smouldering! Water! Or a cleric!",
+    "One more hit and I go up like Guy Fawkes!"
+   ]
+  },
+  "astrologer": {
+   "hired": [
+    "According to Saturn's third house, today is dreadful for our foes.",
+    "I chart the heavens. Then I pull a piece of them down on someone.",
+    "Mind the brass astrolabe; it is calibrated to the nearest arc-second."
+   ],
+   "placed": [
+    "Setting the tripod here. The zenith looks particularly heavy today.",
+    "A slight gravitational tug here, a falling meteorite there.",
+    "Ink wet, telescope focussed, comets queued."
+   ],
+   "won": [
+    "Just as the ephemeris foretold! To the very second!",
+    "The stars have spoken, and their vocabulary is surprisingly blunt.",
+    "Another horoscopic triumph. I shall note it in the margin."
+   ],
+   "lost": [
+    "Cloud cover! How can an astrologer work in this overcast drizzle?!",
+    "I misread Mars for a smudge on the lens! Fatal error!",
+    "The stars were right; I was simply standing on the wrong tile."
+   ],
+   "levelUp": [
+    "Wider lens! Brighter comets! Deeper gravity wells!",
+    "I have discovered a ninth planet, and it is heading for that orc!",
+    "Master of the Celestial Spheres!"
+   ],
+   "ultimate": [
+    "CELESTIAL CONJUNCTION! THE HEAVENS FALL!",
+    "ALL STARS ALIGN FOR YOUR RUIN!",
+    "GRAVITY OF THE COSMOS, OBEY!"
+   ],
+   "revived": [
+    "My star chart said I had three more chapters left!",
+    "Realigned with the pole star and back on my feet!",
+    "A brief eclipse! The sun returns!"
+   ],
+   "lowHp": [
+    "My telescope is bent at a forty-five degree angle!",
+    "The horoscope for the next ten seconds looks grim!",
+    "Need a ward before my orbit decays completely!"
+   ]
+  },
+  "inquisitor": {
+   "hired": [
+    "Nobody expects an audit on the battlefield. Yet here is my ledger.",
+    "Silver quarrels, blessed chains, and zero patience for excuses.",
+    "I have a signed warrant for every monster on this board."
+   ],
+   "placed": [
+    "Crossbow levelled. Let us see who steps out of line first.",
+    "One bolt to pin the guilty, one brand to warm their boots.",
+    "Watching the field. Taking names. Loading silver."
+   ],
+   "won": [
+    "Case closed, verdict delivered, ledger balanced.",
+    "The heretics have been thoroughly audited and found wanting.",
+    "Sign here to confirm receipt of righteous justice."
+   ],
+   "lost": [
+    "Contempt of court! They struck the presiding inquisitor!",
+    "My warrant was ignored! I shall fetch a bigger crossbow!",
+    "Adjourned due to excessive blunt trauma."
+   ],
+   "levelUp": [
+    "Heavier arbalest! Hotter brands! Stricter clauses!",
+    "Promoted to Grand Inquisitor of the Outer Shires!",
+    "Not a single loophole left in my aim!"
+   ],
+   "ultimate": [
+    "FINAL VERDICT! GUILTY AS CHARGED!",
+    "BURN IN THE SIGIL OF JUDGEMENT!",
+    "NO APPEAL! NO MERCY!"
+   ],
+   "revived": [
+    "The court is back in session! Overruled, mortality!",
+    "My writ does not expire until the battle is won!",
+    "Dusted off the coat and cocked the iron!"
+   ],
+   "lowHp": [
+    "The defence is being overly aggressive with the prosecutor!",
+    "My wide-brimmed hat just took a battleaxe!",
+    "Requesting immediate bailiff support at the back!"
+   ]
+  },
+  "seraph": {
+   "hired": [
+    "Fear not! Though with six wings and a flaming halberd, most do.",
+    "I descend from the upper choir to keep your knees unbruised.",
+    "Mind the feathers; they shed golden sparks when I turn quickly."
+   ],
+   "placed": [
+    "Hovering cleanly above the mud. A perk of the six wings.",
+    "Stand beneath my pinions and no shadow shall touch you.",
+    "Halberd lit with morning starfire. Ready."
+   ],
+   "won": [
+    "The choir rejoices! And nobody had to use the spare bandages!",
+    "Evil scatters before the dawn, as it always does.",
+    "Six wings, zero feathers ruffled. Glory be."
+   ],
+   "lost": [
+    "Even a seraph must fold her wings when the sky falls.",
+    "My halo is dented. That will take an age to hammer out.",
+    "Returning to the clouds for a brief restorative hymn."
+   ],
+   "levelUp": [
+    "Brighter pinions! Hotter starfire! Louder trumpets!",
+    "Ascended another rung in the celestial hierarchy!",
+    "My halberd shines like midday in July!"
+   ],
+   "ultimate": [
+    "HEAVENLY HOST! DESCEND IN GLORY!",
+    "RISE, YE FAITHFUL, AND SHINE!",
+    "DAWN BREAKS UPON THE WICKED!"
+   ],
+   "revived": [
+    "Grace is undying! My wings catch the updraught once more!",
+    "The choir called an encore, and here I am!",
+    "Risen in golden fire! Stand fast, friends!"
+   ],
+   "lowHp": [
+    "My left three wings are cramping terribly!",
+    "Even celestial plate dents under enough ogre clubs!",
+    "A prayer for the seraph would be lovely right now!"
+   ]
+  },
+  "corsairSurgeon": {
+   "hired": [
+    "Doctor on deck! Have a swig of rum and bite on this leather strap!",
+    "I do amputations, stitchings, and boarding actions! Sometimes at once!",
+    "Qualified? I have a certificate from a fine tavern in Tortuga!"
+   ],
+   "placed": [
+    "Saw sharpened, rum uncorked, cutlass in the other hand.",
+    "Whoever gets chopped first gets the top-shelf medicinal spiced rum!",
+    "Standing ready by the gunwale. Well, the hedge."
+   ],
+   "won": [
+    "All hands accounted for! And only two extra wooden pegs needed!",
+    "A tot of rum for the winners, and the bill goes to the king!",
+    "Patched them up faster than they could bleed. Textbook!"
+   ],
+   "lost": [
+    "Man overboard! And that man is the ship's surgeon!",
+    "They smashed the medicine chest! That was forty-year-old rum!",
+    "Out cold on the deck. Somebody wake me with the smelling salts."
+   ],
+   "levelUp": [
+    "Finer catgut! Stronger rum! Quicker cutlass!",
+    "Promoted to Fleet Surgeon! My apron is almost clean!",
+    "I can stitch a wound mid-somersault now!"
+   ],
+   "ultimate": [
+    "DEAD MAN'S CHEST! RUM AND STEEL FOR ALL!",
+    "NOBODY GOES TO DAVY JONES TODAY!",
+    "ALL HANDS ON DECK, UP YOU GET!"
+   ],
+   "revived": [
+    "A whiff of hartshorn and a swig of grog! Right as rain!",
+    "The sawbones is back! Who needs a stitch?!",
+    "Too pickled in spiced rum to die that easily!"
+   ],
+   "lowHp": [
+    "The surgeon is leaking claret! This is backwards!",
+    "Down to my last bandage and the bottom of the flask!",
+    "Cover the sawbones, you scurvy dogs!"
+   ]
+  },
+  "harpooner": {
+   "hired": [
+    "Whales, krakens, orc warlords: if it is big, I can gaff it.",
+    "Fifty fathoms of hemp line and a barbed iron that never slips.",
+    "Point me at the fattest brute and stand clear of the line."
+   ],
+   "placed": [
+    "Coils neat at my boots. Iron balanced in the palm.",
+    "Let that chap at the back think he is safe. Watch this.",
+    "Braced at the rail. Ready to haul."
+   ],
+   "won": [
+    "Hauled in, gaffed, and landed on the deck! Fine catch!",
+    "Coiling the line back up. Not a single knot frayed.",
+    "They never expect to be reeled in like a codfish."
+   ],
+   "lost": [
+    "Line tangled round my own ankles! Dragged right off my feet!",
+    "The big one snapped the hemp and got away!",
+    "Flat on the planks. Like a landed halibut."
+   ],
+   "levelUp": [
+    "Thicker hawser! Keener barbs! Stronger back for the haul!",
+    "I could reel a castle tower across the moat with this!",
+    "Master Whaler of the High Seas!"
+   ],
+   "ultimate": [
+    "LEVIATHAN TOW! HAUL THE LOT OF THEM IN!",
+    "ALL IRONS FLY! REEL THEM HOME!",
+    "NO ESCAPE FROM THE GAFF!"
+   ],
+   "revived": [
+    "Hauled myself back up by my own boot-straps!",
+    "Rope untangled and iron back in hand!",
+    "Takes more than a wave to wash this whaler away!"
+   ],
+   "lowHp": [
+    "Rope burn on both palms and an axe in my oilskins!",
+    "This brute is pulling harder than a sperm whale!",
+    "Lend a hand on the line, mates, I am slipping!"
+   ]
+  },
+  "seaReaver": {
+   "hired": [
+    "Most sailors drop the anchor. I prefer to swing it at people.",
+    "Two hundredweight of iron and barnacles on a chain. Mind your head.",
+    "Washed ashore in a gale and decided to keep walking inland."
+   ],
+   "placed": [
+    "Swinging the fluke to get the momentum going. Stand two tiles back.",
+    "They look like they need a heavy piece of ship hardware.",
+    "Chain wrapped round the forearm. Boots in the mud."
+   ],
+   "won": [
+    "Dropped anchor right on their chieftain's helmet! Clang!",
+    "Nothing clears a deck faster than a swinging iron fluke.",
+    "Barnacles intact. Foes thoroughly bilged."
+   ],
+   "lost": [
+    "Dragged under by the weight of my own iron!",
+    "Chain snapped at the shackle! Rotten dockyard forging!",
+    "Sunk to the bottom. Wake me at high tide."
+   ],
+   "levelUp": [
+    "Heavier anchor! Thicker links! Deeper undertow!",
+    "Salvaged a dreadnought fluke! Look at the size of it!",
+    "Even the tide pulls where I swing now!"
+   ],
+   "ultimate": [
+    "DEPTH CHARGE! DRAG THEM TO THE ABYSS!",
+    "DROP THE GREAT ANCHOR! CRUSH THE DECK!",
+    "THE WHOLE OCEAN COMES DOWN!"
+   ],
+   "revived": [
+    "Breached from the deep! Still swinging the chain!",
+    "Tide brought me back, and I am twice as salty!",
+    "Haul up the iron! We are not sunk yet!"
+   ],
+   "lowHp": [
+    "Taking on water fast here, shipmates!",
+    "My barnacle plate is cracked right through!",
+    "Need a patch on the hull before I go under!"
+   ]
   }
  },
  "banter": {
@@ -3328,7 +3790,18 @@
   "astrax": "Astrax swallowed the final spark of a dying constellation and taught it to burn again. The star within its chest answers no astronomer, but it recognises courage.",
   "ilyra": "Ilyra was buried beneath the names of everyone she failed to save. She returned with a broken halo and an unfinished vow: this time, everyone comes home.",
   "orrun": "The first forest grew in Orrun’s antlers, long before anyone thought to name a tree. Beneath his stone ribs, an emerald heart still remembers every root.",
-  "nyxara": "Nyxara once ruled a future that the world chose to forget. Each of her spectral hands holds another ending, and she is becoming remarkably selective."
+  "nyxara": "Nyxara once ruled a future that the world chose to forget. Each of her spectral hands holds another ending, and she is becoming remarkably selective.",
+  "banneret": "Isolde carries the keep's silk guidon at the tip of her couched lance. When she plants the standard in the thick of the press, even the most bruised footmen straighten their backs and swing harder.",
+  "astralSphinx": "Nenet is older than the desert pyramids and twice as fond of riddles. She lounges in starlight until a foe steps too close, and a wrong answer sends the asker flying.",
+  "mirageDancer": "Zahara spins across the dunes in a haze of shimmering silk and twin scimitars. Foes who swing at her find only a laughing sand-mirage while she cuts from behind.",
+  "plagueDoctor": "Doctor Corvus insists his bubbling green vials are strictly preventative medicine, though the enemy rarely survives the dosage. His miasma rots hostile armour while his tinctures patch up the party.",
+  "bombardier": "Soren measures black powder by eye and considers eyebrows an entirely optional feature. When the front rank crowds too close, he lights a fuse at his feet and rocket-jumps merrily to safety.",
+  "astrologer": "Cyra charts the motion of the spheres with a brass astrolabe and a very long quill. At her word, stray stars tumble onto enemy heads while their gravity drags the formation into a tidy heap.",
+  "inquisitor": "Armed with a sanctified arbalest and a ledger of heresies, Soraya chains the wicked to the earth with solar fire. Any foe who weighs light on her golden scales receives an immediate, fiery audit.",
+  "seraph": "Six golden wings carry Gabriela above the smoke of the fray, her halberd gleaming like daybreak. She dives upon the wicked in a pillar of light and calls fallen comrades back to their feet.",
+  "corsairSurgeon": "Tariq learned his anatomy during pitch-black boarding actions and sees no reason to slow down on dry land. A splash of spiced rum and a brisk stitch put the wounded right back into the scrap.",
+  "harpooner": "Siku spent twenty winters hauling leviathans from the icy main and treats enemy warlords much the same. Once his barbed iron bites, a sharp haul on the line drags the quarry straight to his boots.",
+  "seaReaver": "Nakoa swings a barnacle-crusted ship's anchor as though it were a willow switch. Each sweeping haul drags clustered foes into the surf before his crushing overhead slam splits the deck."
  },
  "foe_lore": {
   "skeleton": "Bound to a long-dead king, he still hoists his rusted rim for an impact that never arrived.",
@@ -16247,6 +16720,457 @@
       {
        "who": "hero",
        "text": "Then let it. We were going that way anyway."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:banneret": {
+   "title": "Banneret: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:banneret",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Isolde plants the standard, and the whole rampart straightens behind it."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The guidon is heavier now, and I carry it more lightly. Let them see it from the far wall."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:astralSphinx": {
+   "title": "Astral Sphinx: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:astralSphinx",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Nenet sets one paw in a star-rift, and the constellations lean in to hear her riddle."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The sky has answered at last. It was never very good at keeping secrets."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:mirageDancer": {
+   "title": "Mirage Dancer: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:mirageDancer",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Zahara turns once on the sand, and for a moment there are seven of her to bow."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Now you see me, and now you see her, and now the sirocco does the rest."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:plagueDoctor": {
+   "title": "Plague Doctor: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:plagueDoctor",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Corvus swings the censer, and a green hush settles over the keep."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Crows and ash: the prescription is the same, but the dose is better."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:bombardier": {
+   "title": "Bombardier: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:bombardier",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Soren packs the last shell and lights the fuse with a grin that has never once been sensible."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Wider shells, longer fuses and a much bigger hat. Stand well back!"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:astrologer": {
+   "title": "Astrologer: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:astrologer",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Cyra holds up her astrolabe, and the planets begin to line up for her."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The stars were always going to say yes. I only had to ask in the right order."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:inquisitor": {
+   "title": "Inquisitor: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:inquisitor",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Soraya lowers her brow, and the sun itself leans in to hear the verdict."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The scales are mine to hold, and the light will do the rest."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:seraph": {
+   "title": "Seraph: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:seraph",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Gabriela unfolds her wings, and the shadows of the keep stand a little taller for the light."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Mercy is not weakness. Stand behind me and watch it work."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:corsairSurgeon": {
+   "title": "Corsair Surgeon: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:corsairSurgeon",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Tariq rolls up his sleeves and sets down his saw, and the ship goes quiet for his work."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The rum is for the patients. Mostly. Hold still and trust the sawbones."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:harpooner": {
+   "title": "Harpooner: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:harpooner",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Siku coils the line over his arm and looks out to the horizon, where something very large waits."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The deep has been watching me, and now I am ready to be seen back."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:seaReaver": {
+   "title": "Sea Reaver: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:seaReaver",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Nakoa sets his anchor on the stone, and the sea itself seems to hold its breath."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The hull breaks. The tide turns. And I am the one who still stands in the surf."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
       }
      ]
     }

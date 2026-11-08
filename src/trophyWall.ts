@@ -1,6 +1,7 @@
 // Defeated Boss Trophy Wall: a decorative wooden plaque & trophy rack in the Tavern & Castle Hall
 // showcasing caricatures/tokens of defeated Calamity and Spire bosses with humorous defeat blurbs.
 
+import { modesHidden } from './sim/hiddenModes';
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
 import { trophyPicture } from './trophyArt';
@@ -420,7 +421,7 @@ export class TrophyWallModal {
       const lore = el('p', 'twLoreText', trophy.humorousLore);
       body.append(quote, loreTitle, lore);
     } else {
-      const lockedMsg = el('p', 'twLockedMsg', 'This dread boss continues to roam unchallenged! Conquer them in the Spire or the Calamity maps to secure their trophy and preserve the humiliating details for posterity.');
+      const lockedMsg = el('p', 'twLockedMsg', modesHidden() ? 'This dread boss continues to roam unchallenged! Its trophy is kept for a later day.' : 'This dread boss continues to roam unchallenged! Conquer them in the Spire or the Calamity maps to secure their trophy and preserve the humiliating details for posterity.');
       body.append(lockedMsg);
     }
 

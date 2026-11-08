@@ -33,7 +33,11 @@ test('a hero who joins by shards is not seen until its reveal plays, and stays d
   const kind = toCollect(m)[0];
   (m.unlock ??= {})[kind] = needOf(m) - 1;
   // (pull until the shard lands on it: the draw favours a hero begun)
-  for (let i = 0; i < 400 && !m.unlocked.includes(kind); i++) pullOnce(m, { lucky: false });
+  // (each hero that joins raises the need, so with 55 heroes to draw from the shard has to be topped up to one short each time, or the race is lost: docs/notes/heroes-join-2.md)
+  for (let i = 0; i < 400 && !m.unlocked.includes(kind); i++) {
+    m.unlock![kind] = Math.max(m.unlock![kind] ?? 0, needOf(m) - 1);
+    pullOnce(m, { lucky: false });
+  }
   assert.ok(m.unlocked.includes(kind), 'the hero joined');
   assert.deepEqual(unseenHeroes(m), m.unlocked.filter((k) => !(HEROES as readonly string[]).includes(k)));
   assert.ok(!heroSeen(m, kind));

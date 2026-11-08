@@ -52,5 +52,16 @@
   "warDrummer": ["drum", "drum", "drum", "drum"],
   "geomancer": ["golem", "roots", "staff", "golem"],
   "bellWarden": ["bell", "bell", "shield", "bell"],
-  "falconer": ["feather", "trap", "wings", "feather"]
+  "falconer": ["feather", "trap", "wings", "feather"],
+  "banneret": ["banner", "shield", "spear", "banner"],
+  "astralSphinx": ["paw", "wave", "arcane", "star"],
+  "mirageDancer": ["slash", "mirror", "smoke", "mirror"],
+  "plagueDoctor": ["vial", "feather", "thorns", "poison"],
+  "bombardier": ["cannon", "rush", "fireball", "volley"],
+  "astrologer": ["arcane", "clock", "star", "meteor"],
+  "inquisitor": ["chain", "firewall", "book", "star"],
+  "seraph": ["angel", "wings", "spear", "prayer"],
+  "corsairSurgeon": ["pistol", "heal", "hook", "vial", "keg"],
+  "harpooner": ["spear", "hook", "dagger", "serpent"],
+  "seaReaver": ["rush", "fist", "hook", "wave"]
 }

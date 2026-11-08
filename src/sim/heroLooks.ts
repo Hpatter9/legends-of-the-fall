@@ -40,6 +40,8 @@ export const HERO_LOOKS: Record<string, { tone: Tone; hair?: Hair }> = {
 
 /** The heroes who are not people (spirits, beasts, the undead, machines, a gargoyle, a strigoi, a temple-bell yokai): they keep their looks, and are never re-toned. */
 export const NOT_HUMAN: readonly string[] = ['kitsune', 'karasu', 'yamabushi', 'werewolf', 'minotaur', 'satyr', 'gorgon', 'shambler', 'rifleBot', 'mummy', 'wolfBard', 'kraken', 'reaper', 'dreadPirate', 'siegeBot', 'bloodGargoyle', 'nightstalker', 'bellWarden',
+  // (a star-lioness and a seraph, from the other eleven of the twenty, docs/notes/heroes-join-2.md)
+  'astralSphinx', 'seraph',
   // (the five Mythics are ageless legends, not people: a star dragon, the world's root, a risen saint, a fate spirit and an undying eclipse king)
   'vael', 'astrax', 'ilyra', 'orrun', 'nyxara'];
 

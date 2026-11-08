@@ -194,16 +194,6 @@ export const HERO_TRAITS: Record<string, readonly [string, string]> = {
   geomancer: ['mystic', 'bulwark'],
   bellWarden: ['yokai', 'bulwark'],
   falconer: ['wild', 'marksman'],
-};
-
-/** The traits still to join the roster: the Vampire origin, whose five heroes have their kits but wait for their battle sheets
- *  (docs/notes/twenty-heroes.md). A fight reads them like any other trait; the page's lists and the roster's rules (every trait two to
- *  four heroes) do not, until the five join `ALL_HEROES` and the trait moves into `TRAITS`. */
-export const COMING_TRAITS: Record<string, Trait> = {
-};
-
-/** The waiting heroes' origin and class (as `HERO_TRAITS`), until they join the roster. */
-export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
   banneret: ['knightly', 'warden'],
   astralSphinx: ['arcane', 'beast'],
   mirageDancer: ['frontier', 'trickster'],
@@ -215,6 +205,16 @@ export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
   corsairSurgeon: ['pirate', 'support'],
   harpooner: ['pirate', 'gunner'],
   seaReaver: ['pirate', 'vanguard'],
+};
+
+/** The traits still to join the roster: the Vampire origin, whose five heroes have their kits but wait for their battle sheets
+ *  (docs/notes/twenty-heroes.md). A fight reads them like any other trait; the page's lists and the roster's rules (every trait two to
+ *  four heroes) do not, until the five join `ALL_HEROES` and the trait moves into `TRAITS`. */
+export const COMING_TRAITS: Record<string, Trait> = {
+};
+
+/** The waiting heroes' origin and class (as `HERO_TRAITS`), until they join the roster. */
+export const COMING_HERO_TRAITS: Record<string, readonly [string, string]> = {
 };
 
 /** A trait by id, the coming ones included. */
