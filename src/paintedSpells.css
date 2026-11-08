@@ -1,0 +1,98 @@
+/* The approved painted-study direction, on the game's standard ornate wells and
+   existing painted combat frames. All controls remain live DOM above the art. */
+.lbWrap { image-rendering: auto; position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; color: #f1e2be; background: #0c1c14; scrollbar-width: thin; scrollbar-color: #9b8050 #101d15; }
+.lbWrap [hidden], .sbBody [hidden] { display: none !important; }
+.lbScene { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; isolation: isolate; background: #15241e; }
+.lbPainting { display: block; width: 100%; height: 100%; object-fit: cover; }
+.lbScene::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#07150dcc, transparent 45%, transparent 80%, #0c1c14); }
+.lbTitle { position: absolute; z-index: 1; top: 10px; left: 12px; right: 12px; text-align: center; text-shadow: 0 2px 5px #000, 0 0 15px #000; }
+.lbTitle small { color: #e4cb91; text-transform: uppercase; letter-spacing: .18em; font: 11px/1.4 var(--body); }
+.lbTitle h2 { margin: 2px 0 5px; color: #f8dfa0; font: 700 29px/1.2 var(--display); letter-spacing: .08em; }
+.lbTitle .lbSchool { display: inline-block; margin: 0; padding: 3px 13px; color: #f5e4b9; background: #14251cdb; border-block: 1px solid #b59a59; font: 600 14px/1.3 var(--body); }
+.lbLedger { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 14px 8px; color: #d4c19a; font: 12px/1.4 var(--body); }
+.lbKnown { color: #edd9a9; }
+.lbPanel { position: relative; padding: 0 10px 20px; max-width: 500px; margin: 0 auto; }
+.lbPage { padding: 0; background: none; box-shadow: none; }
+.lbLock.omWell { padding: 20px 16px; text-align: center; }
+.lbLock h2 { margin: 0; color: #f5d89c; font: 700 21px/1.3 var(--display); }
+.lbLock p { font: 15px/1.5 var(--body); }
+.lbGo { min-height: 48px; }
+.lbSealed .lbPainting { filter: brightness(.65); }
+.lbMagic { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.lbMagic i { position: absolute; left: 47%; top: 62%; width: 3px; height: 3px; border-radius: 50%; background: #c8f5ff; box-shadow: 0 0 7px 2px #79cfff; animation: lbWisp 5s ease-out infinite; animation-play-state: paused; opacity: 0; }
+.lbMagic i:nth-child(2) { left: 52%; animation-delay: -1s; }
+.lbMagic i:nth-child(3) { left: 45%; animation-delay: -2s; }
+.lbMagic i:nth-child(4) { left: 56%; animation-delay: -3s; }
+.lbMagic i:nth-child(5) { left: 50%; animation-delay: -4s; }
+.lbAlive .lbMagic i { animation-play-state: running; }
+@keyframes lbWisp { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: .8; } 100% { opacity: 0; transform: translate(8px, -55px); } }
+.sbBody { image-rendering: auto; display: flex; flex-direction: column; gap: 10px; max-width: 500px; width: 100%; margin: 0 auto; font: 14px/1.4 var(--body); color: #f1e2be; }
+.sbBody *, .lbWrap * { box-sizing: border-box; }
+.sbBody button, .sbBody summary { -webkit-tap-highlight-color: transparent; }
+.sbBody button:focus-visible, .sbBody summary:focus-visible, .lbGo:focus-visible { outline: 2px solid #c1e8ff; outline-offset: -3px; }
+.sbLoadout.omWell { margin: 0; padding: 10px 8px 7px; border: 0; border-image: url(ui/combat-panel.png) 24 / 7px / 0 stretch; background: #102319; box-shadow: none; }
+.sbLoadout .omSection { margin: 0; }
+.sbLoadout .omSectionHead { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 3px; margin: 0 3px 8px; padding: 0; border: 0; color: #f0d395; font: 700 15px/1.3 var(--display); }
+.sbLoadout .omSectionHead small { display: inline; margin: 0; color: #cdbc94; font: 11px/1.3 var(--body); }
+.sbBody .sbSlots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.sbBody .sbSlot.omChoice { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; min-width: 0; min-height: 118px; padding: 6px 3px; border: 0; border-image: url(ui/combat-skill.png) 28 / 5px / 0 stretch; background: #12261b; border-radius: 0; color: #e9d5a9; box-shadow: none; text-align: center; }
+.sbBody .sbSlot.on { background: #273a25; }
+.sbBody .sbSlot.open { background: #152b30; }
+.sbSlot small { color: #c6b990; font: 10px/1.2 var(--body); text-transform: uppercase; letter-spacing: .07em; }
+.sbBody .sbSlot b { display: block; margin: 0; font: 600 12px/1.15 var(--body); overflow-wrap: anywhere; }
+.sbSlot em { color: #afd5e9; font: 11px/1.2 var(--body); }
+.sbBody .sbSlot .spIcon { zoom: 1; width: 64px; height: 64px; margin: -4px -6px; transform: scale(.78); }
+.sbEmpty { display: flex; align-items: center; justify-content: center; width: 52px; height: 56px; font: 34px/1 var(--body); color: #aa9b70; }
+.sbHint { margin: 5px 0 0; color: #c4b994; text-align: center; font: 12px/1.4 var(--body); }
+.sbSchool { border-bottom: 1px solid #77643c; padding: 0 6px; color: #dbcdac; }
+.sbSchool summary, .sbMarks summary, .sbDetails summary { min-height: 44px; padding: 12px 2px; cursor: pointer; font: 13px/1.4 var(--body); }
+.sbSchool summary { color: #e9d39c; }
+.sbSchool p, .sbMarks p { margin: 0 0 12px; font: 13px/1.45 var(--body); }
+.sbFilters { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 4px; }
+.sbBody .sbFilter { min-height: 46px; min-width: 0; padding: 8px 4px; color: #dbc99f; font: 600 14px/1.2 var(--body); border: 0; border-image: url(ui/combat-skill.png) 28 / 5px / 0 stretch; background: #14271c; border-radius: 0; box-shadow: none; }
+.sbBody .sbFilter.on { color: #fff0c8; background: #345033; }
+.sbMarks { text-align: center; color: #e6ce93; border-block: 1px solid #76613b; }
+.sbMarks summary { font-size: 15px; padding-block: 10px; }
+.sbMarks p { padding: 0 10px; color: #cdbf9d; }
+.sbNote { color: #d1edc1; text-align: center; font-size: 13px; }
+.sbNote:empty { display: none; }
+.sbCollection { display: flex; flex-direction: column; gap: 12px; }
+.sbBody .sbCard.omWell { display: grid; grid-template-columns: 70px minmax(0, 1fr); align-items: start; gap: 8px 10px; margin: 0; padding: 14px 12px 12px; color: #30291d; border: 0; border-image: url(ui/combat-panel.png) 24 / 6px / 0 stretch; border-radius: 0; background: #efe0b9 url(ui/spells-parchment.png) center / cover no-repeat; box-shadow: 0 3px 7px #0005; }
+.sbArt { display: flex; align-items: center; justify-content: center; width: 70px; height: 76px; padding: 3px; background: #233225; border: 0; border-image: url(ui/combat-skill.png) 28 / 5px / 0 stretch; }
+.sbArt .spIcon { zoom: 1; display: block; width: 64px; height: 64px; }
+.sbCopy { min-width: 0; }
+.sbTop { display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px 7px; }
+.sbTop h3 { margin: 0; font: 700 19px/1.2 var(--display); color: #253823; overflow-wrap: anywhere; }
+.sbEquipped, .sbLocked { font: 600 11px/1.3 var(--body); color: #3c5b30; }
+.sbLocked { color: #6b5942; }
+.sbCard .stats { margin: 4px 0; color: #365467; font: 600 12px/1.3 var(--body); }
+.sbCard .text { margin: 4px 0 6px; color: #3b3528; font: 14px/1.4 var(--body); }
+.sbCard .rank { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font: 12px/1.3 var(--body); color: #51452f; }
+.sbCard .rank i { font-style: normal; letter-spacing: 2px; color: #6a5025; }
+.sbBody .sbCard.on { background: linear-gradient(#fff9d014, #c2a77714), url(ui/spells-parchment.png) center / cover no-repeat; }
+.sbCard.locked .sbArt { filter: saturate(.45); }
+.sbCard.locked { opacity: 1; }
+.sbDetails { grid-column: 1 / -1; border-top: 1px solid #8c764944; }
+.sbDetails summary { color: #4c5136; padding-block: 11px; }
+.sbDetails p { margin: 0 0 7px; font: 13px/1.4 var(--body); }
+.sbDetails .rider.on { color: #31552c; }
+.sbCard .acts { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.sbBody .sbCard button { flex: 1; min-height: 46px; padding: 8px 7px; border: 0; border-image: url(ui/combat-skill.png) 28 / 5px / 0 stretch; border-radius: 0; background: #3e3120; color: #f6e5be; box-shadow: none; font: 600 14px/1.2 var(--body); }
+.sbBody .sbCard .sbEquip { background: #263d26; }
+.sbBody button:disabled { opacity: .55; cursor: default; filter: saturate(.5); }
+.sbBody button:not(:disabled):active { filter: brightness(1.15); }
+.sbCard .how, .sbBlocked { grid-column: 1 / -1; margin: 0; color: #57482f; font: 12px/1.4 var(--body); }
+.sbCard progress { display: block; width: 100%; height: 8px; margin-top: 8px; accent-color: #536b37; }
+.sbComplete { padding: 25px 12px; }
+/* The legacy spellbook ID had its own page styles; the overlay now uses the
+   shared builder with its own header, scrolling body and Close footer. */
+body #spellbook.sbOverlay { display: flex; padding: 0; background: #0009; }
+body #spellbook.sbOverlay .om { max-height: 94dvh; }
+body #spellbook.sbOverlay header.omHead { display: block; padding: 15px; border: 0; background: none; box-shadow: none; }
+body #spellbook.sbOverlay h2.omTitle { margin: 0; padding: 0; background: none; border: 0; font-size: 24px; color: #f0d398; text-align: center; }
+.sbOverlay .omBody { padding: 10px; }
+@media (prefers-reduced-motion: reduce) { .lbMagic { display: none; } }
+@media (max-width: 375px) { .lbTitle h2 { font-size: 26px; } .sbLoadout .omSectionHead { font-size: 14px; } .sbBody .sbSlot b { font-size: 11px; } .sbTop h3 { font-size: 17px; } }
+
+.sbLoadout .omSection { gap: 0; }
+.sbLoadout .omSectionHead::before { display: none; }
